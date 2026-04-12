@@ -1,105 +1,294 @@
 #!/usr/bin/env python3
 """
-AR Platform — Daily Market Data Fetcher
-Pulls live price, financial, and technical data for all portfolio positions.
-Outputs JSON to public/data/market_data.json for frontend consumption.
+AR Platform — Full Market Universe Data Fetcher
+Pulls ALL A-share + HK stock data via AKShare bulk APIs + Yahoo Finance for focus stocks.
 
-Data Sources:
-  - Yahoo Finance (yfinance): Price, volume, financials, analyst targets
-  - AKShare (akshare): A-share specific data, northbound flow, sector indicators
+Output:
+  public/data/universe_a.json   — Full A-share universe (~5000 stocks)
+  public/data/universe_hk.json  — Full HK universe (~2500 stocks)
+  public/data/market_data.json  — Detailed data for focus stocks (5 positions)
 
-Run: python scripts/fetch_data.py
-Schedule: GitHub Actions daily at 08:00 HKT (00:00 UTC)
+Run: python3 scripts/fetch_data.py
+Schedule: GitHub Actions daily at 08:00 HKT
 """
 
 import json
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
-# ── Config ──────────────────────────────────────────────────────────────────
-TICKERS = {
-    "300308.SZ": {"yahoo": "300308.SZ", "akshare": "300308", "exchange": "SZ", "name_en": "Innolight", "name_zh": "中际旭创"},
-    "700.HK":    {"yahoo": "0700.HK",   "akshare": None,     "exchange": "HK", "name_en": "Tencent",   "name_zh": "腾讯控股"},
-    "9999.HK":   {"yahoo": "9999.HK",   "akshare": None,     "exchange": "HK", "name_en": "NetEase",   "name_zh": "网易"},
+OUTPUT_DIR = Path(__file__).parent.parent / "public" / "data"
+
+# ── Focus stocks (detailed Yahoo Finance data) ─────────────────────────────
+FOCUS_TICKERS = {
+    "300308.SZ": {"yahoo": "300308.SZ", "akshare": "300308", "exchange": "SZ", "name_en": "Innolight",       "name_zh": "中际旭创"},
+    "700.HK":    {"yahoo": "0700.HK",   "akshare": None,     "exchange": "HK", "name_en": "Tencent",         "name_zh": "腾讯控股"},
+    "9999.HK":   {"yahoo": "9999.HK",   "akshare": None,     "exchange": "HK", "name_en": "NetEase",         "name_zh": "网易"},
     "6160.HK":   {"yahoo": "6160.HK",   "akshare": None,     "exchange": "HK", "name_en": "BeOne Medicines", "name_zh": "百济神州"},
-    "002594.SZ": {"yahoo": "002594.SZ", "akshare": "002594", "exchange": "SZ", "name_en": "BYD",       "name_zh": "比亚迪"},
+    "002594.SZ": {"yahoo": "002594.SZ", "akshare": "002594", "exchange": "SZ", "name_en": "BYD",             "name_zh": "比亚迪"},
 }
 
-OUTPUT_DIR = Path(__file__).parent.parent / "public" / "data"
-OUTPUT_FILE = OUTPUT_DIR / "market_data.json"
 
-# ── Yahoo Finance Fetcher ───────────────────────────────────────────────────
-def fetch_yahoo_data(ticker_map: dict) -> dict:
-    """Fetch price, volume, financials, and analyst data from Yahoo Finance."""
+# ══════════════════════════════════════════════════════════════════════════════
+# PART 1: Full A-Share Universe via AKShare
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_a_share_universe() -> list:
+    """Fetch ALL A-share stocks in one bulk call. Returns ~5000 stocks."""
+    try:
+        import akshare as ak
+    except ImportError:
+        print("ERROR: akshare not installed. Run: pip3 install akshare")
+        return []
+
+    print("  Calling ak.stock_zh_a_spot_em()...")
+    try:
+        df = ak.stock_zh_a_spot_em()
+        if df is None or df.empty:
+            print("  WARNING: Empty A-share data returned")
+            return []
+
+        print(f"  Raw rows: {len(df)}, columns: {list(df.columns)}")
+
+        stocks = []
+        for _, row in df.iterrows():
+            try:
+                code = str(row.get("代码", "")).strip()
+                name = str(row.get("名称", "")).strip()
+                if not code or not name:
+                    continue
+
+                # Determine exchange
+                if code.startswith("6"):
+                    exchange = "SH"
+                    ticker = f"{code}.SH"
+                elif code.startswith("0") or code.startswith("3"):
+                    exchange = "SZ"
+                    ticker = f"{code}.SZ"
+                elif code.startswith("4") or code.startswith("8"):
+                    exchange = "BJ"
+                    ticker = f"{code}.BJ"
+                else:
+                    exchange = "SZ"
+                    ticker = f"{code}.SZ"
+
+                price = _safe_float(row.get("最新价"))
+                prev_close = _safe_float(row.get("昨收"))
+
+                stock = {
+                    "ticker": ticker,
+                    "code": code,
+                    "name": name,
+                    "exchange": exchange,
+                    "price": price,
+                    "change_pct": _safe_float(row.get("涨跌幅")),
+                    "change_amt": _safe_float(row.get("涨跌额")),
+                    "volume": _safe_float(row.get("成交量")),
+                    "turnover": _safe_float(row.get("成交额")),
+                    "amplitude": _safe_float(row.get("振幅")),
+                    "high": _safe_float(row.get("最高")),
+                    "low": _safe_float(row.get("最低")),
+                    "open": _safe_float(row.get("今开")),
+                    "prev_close": prev_close,
+                    "volume_ratio": _safe_float(row.get("量比")),
+                    "turnover_rate": _safe_float(row.get("换手率")),
+                    "pe": _safe_float(row.get("市盈率-动态")),
+                    "pb": _safe_float(row.get("市净率")),
+                    "market_cap": _safe_float(row.get("总市值")),
+                    "float_cap": _safe_float(row.get("流通市值")),
+                    "high_52w": _safe_float(row.get("52周最高")),
+                    "low_52w": _safe_float(row.get("52周最低")),
+                    "roe": _safe_float(row.get("ROE")),
+                    "gross_margin": _safe_float(row.get("毛利率")),
+                    "net_margin": _safe_float(row.get("净利率")),
+                    "revenue_growth": _safe_float(row.get("营收同比")),
+                    "profit_growth": _safe_float(row.get("净利润同比")),
+                }
+                stocks.append(stock)
+            except Exception as e:
+                continue
+
+        print(f"  Parsed {len(stocks)} A-share stocks")
+        return stocks
+
+    except Exception as e:
+        print(f"  ERROR fetching A-share universe: {e}")
+        return []
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PART 2: Full HK Stock Universe via AKShare
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_hk_universe() -> list:
+    """Fetch ALL HK stocks in one bulk call. Returns ~2500 stocks."""
+    try:
+        import akshare as ak
+    except ImportError:
+        return []
+
+    print("  Calling ak.stock_hk_spot_em()...")
+    try:
+        df = ak.stock_hk_spot_em()
+        if df is None or df.empty:
+            print("  WARNING: Empty HK data returned")
+            return []
+
+        print(f"  Raw rows: {len(df)}, columns: {list(df.columns)}")
+
+        stocks = []
+        for _, row in df.iterrows():
+            try:
+                code = str(row.get("代码", "")).strip()
+                name = str(row.get("名称", "")).strip()
+                if not code or not name:
+                    continue
+
+                ticker = f"{code}.HK"
+                price = _safe_float(row.get("最新价"))
+
+                stock = {
+                    "ticker": ticker,
+                    "code": code,
+                    "name": name,
+                    "exchange": "HK",
+                    "price": price,
+                    "change_pct": _safe_float(row.get("涨跌幅")),
+                    "change_amt": _safe_float(row.get("涨跌额")),
+                    "volume": _safe_float(row.get("成交量")),
+                    "turnover": _safe_float(row.get("成交额")),
+                    "amplitude": _safe_float(row.get("振幅")),
+                    "high": _safe_float(row.get("最高")),
+                    "low": _safe_float(row.get("最低")),
+                    "open": _safe_float(row.get("今开")),
+                    "prev_close": _safe_float(row.get("昨收")),
+                    "volume_ratio": _safe_float(row.get("量比")),
+                    "turnover_rate": _safe_float(row.get("换手率")),
+                    "pe": _safe_float(row.get("市盈率")),
+                    "pb": _safe_float(row.get("市净率")),
+                    "market_cap": _safe_float(row.get("总市值")),
+                    "high_52w": _safe_float(row.get("52周最高")),
+                    "low_52w": _safe_float(row.get("52周最低")),
+                }
+                stocks.append(stock)
+            except Exception:
+                continue
+
+        print(f"  Parsed {len(stocks)} HK stocks")
+        return stocks
+
+    except Exception as e:
+        print(f"  ERROR fetching HK universe: {e}")
+        return []
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PART 3: Northbound Flow (沪深港通北向资金)
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_northbound() -> dict:
+    """Fetch aggregate northbound capital flow data."""
+    try:
+        import akshare as ak
+    except ImportError:
+        return {}
+
+    print("  Fetching northbound flow...")
+    try:
+        df = ak.stock_hsgt_north_net_flow_in_em(symbol="北向")
+        if df is None or df.empty:
+            return {}
+
+        recent = df.tail(20)
+        # Column names vary by akshare version; try common variants
+        flow_col = None
+        for col in ["净买入", "当日净流入", "净流入"]:
+            if col in recent.columns:
+                flow_col = col
+                break
+
+        if not flow_col:
+            print(f"  WARNING: Cannot find flow column. Available: {list(recent.columns)}")
+            return {}
+
+        latest = float(recent.iloc[-1][flow_col])
+        cum_5d = float(recent.tail(5)[flow_col].sum())
+        cum_20d = float(recent[flow_col].sum())
+
+        result = {
+            "latest_net_flow": latest,
+            "5d_cumulative": cum_5d,
+            "20d_cumulative": cum_20d,
+            "trend": "inflow" if cum_5d > 0 else "outflow",
+            "updated": datetime.now().strftime("%Y-%m-%d"),
+        }
+        print(f"  OK: Latest = {latest:,.0f}, 5D = {cum_5d:,.0f}")
+        return result
+
+    except Exception as e:
+        print(f"  ERROR fetching northbound: {e}")
+        return {}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PART 4: Detailed Yahoo Finance data for focus stocks
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_focus_yahoo() -> dict:
+    """Detailed data for 5 focus stocks via Yahoo Finance."""
     try:
         import yfinance as yf
     except ImportError:
-        print("WARNING: yfinance not installed. Run: pip install yfinance")
+        print("  WARNING: yfinance not installed. Run: pip3 install yfinance")
         return {}
 
     results = {}
-    for platform_id, config in ticker_map.items():
-        yahoo_id = config["yahoo"]
-        print(f"  Fetching Yahoo data for {yahoo_id}...")
+    for pid, cfg in FOCUS_TICKERS.items():
+        yid = cfg["yahoo"]
+        print(f"  Fetching {yid}...")
         try:
-            tk = yf.Ticker(yahoo_id)
+            tk = yf.Ticker(yid)
             info = tk.info or {}
-
-            # Price data
             hist = tk.history(period="6mo")
             if hist.empty:
-                print(f"    WARNING: No price history for {yahoo_id}")
                 continue
 
             latest = hist.iloc[-1]
-            prev_close = hist.iloc[-2]["Close"] if len(hist) > 1 else latest["Close"]
-
-            # 52-week range
-            hist_1y = tk.history(period="1y")
-            high_52w = hist_1y["High"].max() if not hist_1y.empty else None
-            low_52w = hist_1y["Low"].min() if not hist_1y.empty else None
-
-            # Volume metrics
-            avg_vol_20d = hist.tail(20)["Volume"].mean() if len(hist) >= 20 else hist["Volume"].mean()
-
-            # Technical indicators (simple)
+            prev = hist.iloc[-2]["Close"] if len(hist) > 1 else latest["Close"]
             closes = hist["Close"]
-            sma_20 = closes.tail(20).mean() if len(closes) >= 20 else None
-            sma_50 = closes.tail(50).mean() if len(closes) >= 50 else None
-            sma_200 = closes.tail(200).mean() if len(closes) >= 200 else None
+            vols = hist["Volume"]
 
-            # RSI (14-day)
-            rsi_14 = _calc_rsi(closes, 14)
+            # Technicals
+            sma20 = float(closes.tail(20).mean()) if len(closes) >= 20 else None
+            sma50 = float(closes.tail(50).mean()) if len(closes) >= 50 else None
+            sma200 = float(closes.tail(200).mean()) if len(closes) >= 200 else None
+            rsi = _calc_rsi(closes, 14)
+            macd_val, sig_val, hist_val = _calc_macd(closes)
 
-            # MACD
-            macd, signal, histogram = _calc_macd(closes)
+            avg_vol = float(vols.tail(20).mean()) if len(vols) >= 20 else float(vols.mean())
+            vol_ratio = float(latest["Volume"]) / avg_vol if avg_vol > 0 else None
 
-            results[platform_id] = {
+            results[pid] = {
                 "price": {
-                    "last": round(latest["Close"], 2),
-                    "prev_close": round(prev_close, 2),
-                    "change_pct": round((latest["Close"] - prev_close) / prev_close * 100, 2),
-                    "high": round(latest["High"], 2),
-                    "low": round(latest["Low"], 2),
+                    "last": round(float(latest["Close"]), 2),
+                    "prev_close": round(float(prev), 2),
+                    "change_pct": round((float(latest["Close"]) - float(prev)) / float(prev) * 100, 2),
+                    "high": round(float(latest["High"]), 2),
+                    "low": round(float(latest["Low"]), 2),
                     "volume": int(latest["Volume"]),
-                    "avg_volume_20d": int(avg_vol_20d),
-                    "volume_ratio": round(latest["Volume"] / avg_vol_20d, 2) if avg_vol_20d > 0 else None,
-                    "high_52w": round(high_52w, 2) if high_52w else None,
-                    "low_52w": round(low_52w, 2) if low_52w else None,
+                    "avg_volume_20d": int(avg_vol),
+                    "volume_ratio": round(vol_ratio, 2) if vol_ratio else None,
+                    "high_52w": round(float(hist["High"].max()), 2),
+                    "low_52w": round(float(hist["Low"].min()), 2),
                 },
                 "technical": {
-                    "sma_20": round(sma_20, 2) if sma_20 else None,
-                    "sma_50": round(sma_50, 2) if sma_50 else None,
-                    "sma_200": round(sma_200, 2) if sma_200 else None,
-                    "rsi_14": round(rsi_14, 1) if rsi_14 else None,
-                    "macd": round(macd, 4) if macd else None,
-                    "macd_signal": round(signal, 4) if signal else None,
-                    "macd_histogram": round(histogram, 4) if histogram else None,
-                    "above_sma_20": latest["Close"] > sma_20 if sma_20 else None,
-                    "above_sma_50": latest["Close"] > sma_50 if sma_50 else None,
-                    "above_sma_200": latest["Close"] > sma_200 if sma_200 else None,
+                    "sma_20": round(sma20, 2) if sma20 else None,
+                    "sma_50": round(sma50, 2) if sma50 else None,
+                    "sma_200": round(sma200, 2) if sma200 else None,
+                    "rsi_14": round(rsi, 1) if rsi else None,
+                    "macd": round(macd_val, 4) if macd_val else None,
+                    "macd_signal": round(sig_val, 4) if sig_val else None,
+                    "macd_histogram": round(hist_val, 4) if hist_val else None,
+                    "above_sma_20": float(latest["Close"]) > sma20 if sma20 else None,
+                    "above_sma_50": float(latest["Close"]) > sma50 if sma50 else None,
+                    "above_sma_200": float(latest["Close"]) > sma200 if sma200 else None,
                 },
                 "fundamentals": {
                     "market_cap": info.get("marketCap"),
@@ -126,95 +315,33 @@ def fetch_yahoo_data(ticker_map: dict) -> dict:
                 },
                 "meta": {
                     "currency": info.get("currency", ""),
-                    "exchange": config["exchange"],
-                    "name_en": config["name_en"],
-                    "name_zh": config["name_zh"],
+                    "exchange": cfg["exchange"],
+                    "name_en": cfg["name_en"],
+                    "name_zh": cfg["name_zh"],
                 }
             }
-            print(f"    OK: {yahoo_id} @ {latest['Close']:.2f}")
-
+            print(f"    OK: {yid} @ {latest['Close']:.2f}")
         except Exception as e:
-            print(f"    ERROR fetching {yahoo_id}: {e}")
-            results[platform_id] = {"error": str(e)}
+            print(f"    ERROR: {yid} — {e}")
 
     return results
 
 
-# ── AKShare Fetcher (A-share specific) ──────────────────────────────────────
-def fetch_akshare_data(ticker_map: dict) -> dict:
-    """Fetch A-share specific data: northbound flow, margin trading, block trades."""
+# ══════════════════════════════════════════════════════════════════════════════
+# Helpers
+# ══════════════════════════════════════════════════════════════════════════════
+def _safe_float(val):
+    """Convert to float, return None if not possible."""
+    if val is None:
+        return None
     try:
-        import akshare as ak
-    except ImportError:
-        print("WARNING: akshare not installed. Run: pip install akshare")
-        return {}
-
-    results = {}
-
-    # 1. Northbound (沪深港通北向资金) — portfolio-level signal
-    print("  Fetching northbound flow data...")
-    try:
-        # Daily northbound net buy
-        north_df = ak.stock_hsgt_north_net_flow_in_em(symbol="北向")
-        if north_df is not None and not north_df.empty:
-            recent = north_df.tail(20)
-            results["northbound"] = {
-                "latest_net_flow": float(recent.iloc[-1].get("净买入", 0)),
-                "5d_cumulative": float(recent.tail(5).get("净买入", 0).sum()) if "净买入" in recent.columns else None,
-                "20d_cumulative": float(recent.get("净买入", 0).sum()) if "净买入" in recent.columns else None,
-                "trend": "inflow" if float(recent.tail(5).get("净买入", 0).sum()) > 0 else "outflow",
-                "updated": datetime.now().strftime("%Y-%m-%d"),
-            }
-            print(f"    OK: Northbound net flow = {results['northbound']['latest_net_flow']:.0f}")
-    except Exception as e:
-        print(f"    ERROR fetching northbound: {e}")
-        results["northbound"] = {"error": str(e)}
-
-    # 2. Per-stock A-share specific data
-    for platform_id, config in ticker_map.items():
-        ak_code = config.get("akshare")
-        if not ak_code:
-            continue
-
-        print(f"  Fetching AKShare data for {ak_code}...")
-        stock_data = {}
-
-        # Northbound holding for specific stock
-        try:
-            hold_df = ak.stock_hsgt_individual_em(symbol=ak_code)
-            if hold_df is not None and not hold_df.empty:
-                latest_hold = hold_df.iloc[-1]
-                stock_data["northbound_holding"] = {
-                    "shares_held": float(latest_hold.get("持股数量", 0)),
-                    "pct_of_float": float(latest_hold.get("持股占比", 0)),
-                    "change_pct": float(latest_hold.get("持股变动", 0)) if "持股变动" in hold_df.columns else None,
-                }
-        except Exception as e:
-            stock_data["northbound_holding"] = {"error": str(e)}
-
-        # Margin trading data (融资融券)
-        try:
-            margin_df = ak.stock_margin_detail_sse(code=ak_code) if config["exchange"] == "SH" else None
-            # Note: Different function for SZ exchange
-            if margin_df is not None and not margin_df.empty:
-                latest_margin = margin_df.iloc[-1]
-                stock_data["margin"] = {
-                    "margin_balance": float(latest_margin.get("融资余额", 0)),
-                    "short_balance": float(latest_margin.get("融券余额", 0)),
-                }
-        except Exception as e:
-            stock_data["margin"] = {"error": str(e)}
-
-        if stock_data:
-            results[platform_id] = stock_data
-            print(f"    OK: {ak_code} AKShare data fetched")
-
-    return results
+        f = float(val)
+        return None if f != f else f  # NaN check
+    except (ValueError, TypeError):
+        return None
 
 
-# ── Technical Indicator Helpers ─────────────────────────────────────────────
 def _calc_rsi(closes, period=14):
-    """Calculate RSI from a pandas Series of closing prices."""
     if len(closes) < period + 1:
         return None
     delta = closes.diff()
@@ -222,11 +349,11 @@ def _calc_rsi(closes, period=14):
     loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
-    return float(rsi.iloc[-1]) if not rsi.empty else None
+    val = float(rsi.iloc[-1])
+    return val if val == val else None
 
 
 def _calc_macd(closes, fast=12, slow=26, signal_period=9):
-    """Calculate MACD, Signal, and Histogram."""
     if len(closes) < slow + signal_period:
         return None, None, None
     ema_fast = closes.ewm(span=fast, adjust=False).mean()
@@ -237,86 +364,68 @@ def _calc_macd(closes, fast=12, slow=26, signal_period=9):
     return float(macd_line.iloc[-1]), float(signal_line.iloc[-1]), float(histogram.iloc[-1])
 
 
-# ── Sector Indicators (from public sources) ─────────────────────────────────
-def fetch_sector_indicators() -> dict:
-    """Fetch macro / sector indicators that refresh daily."""
-    indicators = {}
-
-    try:
-        import akshare as ak
-
-        # China PMI
-        try:
-            pmi_df = ak.macro_china_pmi()
-            if pmi_df is not None and not pmi_df.empty:
-                latest_pmi = pmi_df.iloc[-1]
-                indicators["china_pmi"] = {
-                    "value": float(latest_pmi.get("制造业PMI", 0)),
-                    "date": str(latest_pmi.get("日期", "")),
-                }
-        except Exception:
-            pass
-
-        # CNY/USD exchange rate
-        try:
-            fx_df = ak.fx_spot_quote()
-            if fx_df is not None and not fx_df.empty:
-                usd_row = fx_df[fx_df["货币对"].str.contains("USD/CNY")]
-                if not usd_row.empty:
-                    indicators["usd_cny"] = {
-                        "value": float(usd_row.iloc[0].get("最新价", 0)),
-                    }
-        except Exception:
-            pass
-
-    except ImportError:
-        pass
-
-    return indicators
-
-
-# ── Main ────────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# Main
+# ══════════════════════════════════════════════════════════════════════════════
 def main():
-    print(f"=== AR Platform Data Fetcher ===")
+    print(f"{'='*60}")
+    print(f"AR Platform — Full Market Data Fetcher")
     print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print()
+    print(f"{'='*60}\n")
 
-    # Ensure output directory exists
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    output = {
-        "_meta": {
-            "fetched_at": datetime.now().isoformat(),
-            "version": "1.0",
-            "tickers": list(TICKERS.keys()),
-        },
-        "yahoo": {},
-        "akshare": {},
-        "sector_indicators": {},
+    # 1. Full A-share universe
+    print("[1/4] A-Share Universe (AKShare bulk)...")
+    a_stocks = fetch_a_share_universe()
+    if a_stocks:
+        a_output = {
+            "_meta": {"fetched_at": datetime.now().isoformat(), "count": len(a_stocks), "exchange": "A-share", "source": "akshare"},
+            "stocks": a_stocks,
+        }
+        with open(OUTPUT_DIR / "universe_a.json", "w", encoding="utf-8") as f:
+            json.dump(a_output, f, ensure_ascii=False, default=str)
+        print(f"  Written: universe_a.json ({len(a_stocks)} stocks, {(OUTPUT_DIR / 'universe_a.json').stat().st_size:,} bytes)\n")
+
+    # 2. Full HK universe
+    print("[2/4] HK Universe (AKShare bulk)...")
+    hk_stocks = fetch_hk_universe()
+    if hk_stocks:
+        hk_output = {
+            "_meta": {"fetched_at": datetime.now().isoformat(), "count": len(hk_stocks), "exchange": "HK", "source": "akshare"},
+            "stocks": hk_stocks,
+        }
+        with open(OUTPUT_DIR / "universe_hk.json", "w", encoding="utf-8") as f:
+            json.dump(hk_output, f, ensure_ascii=False, default=str)
+        print(f"  Written: universe_hk.json ({len(hk_stocks)} stocks, {(OUTPUT_DIR / 'universe_hk.json').stat().st_size:,} bytes)\n")
+
+    # 3. Northbound flow
+    print("[3/4] Northbound Flow...")
+    northbound = fetch_northbound()
+    print()
+
+    # 4. Detailed focus stocks (Yahoo Finance)
+    print("[4/4] Focus Stocks (Yahoo Finance)...")
+    focus = fetch_focus_yahoo()
+    focus_output = {
+        "_meta": {"fetched_at": datetime.now().isoformat(), "version": "2.0", "tickers": list(FOCUS_TICKERS.keys())},
+        "yahoo": focus,
+        "akshare": {"northbound": northbound} if northbound else {},
     }
+    with open(OUTPUT_DIR / "market_data.json", "w", encoding="utf-8") as f:
+        json.dump(focus_output, f, ensure_ascii=False, indent=2, default=str)
+    print(f"  Written: market_data.json\n")
 
-    # Yahoo Finance
-    print("[1/3] Yahoo Finance...")
-    output["yahoo"] = fetch_yahoo_data(TICKERS)
-    print()
-
-    # AKShare (A-share specific)
-    print("[2/3] AKShare...")
-    output["akshare"] = fetch_akshare_data(TICKERS)
-    print()
-
-    # Sector indicators
-    print("[3/3] Sector Indicators...")
-    output["sector_indicators"] = fetch_sector_indicators()
-    print()
-
-    # Write output
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2, default=str)
-
-    print(f"Output written to {OUTPUT_FILE}")
-    print(f"File size: {OUTPUT_FILE.stat().st_size:,} bytes")
-    print("Done.")
+    # Summary
+    print(f"{'='*60}")
+    print(f"DONE")
+    print(f"  A-shares:  {len(a_stocks):,} stocks")
+    print(f"  HK stocks: {len(hk_stocks):,} stocks")
+    print(f"  Focus:     {len(focus)} detailed")
+    print(f"  Northbound: {'OK' if northbound else 'FAILED'}")
+    total_size = sum(f.stat().st_size for f in OUTPUT_DIR.glob("*.json"))
+    print(f"  Total size: {total_size:,} bytes ({total_size/1024/1024:.1f} MB)")
+    print(f"{'='*60}")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "fetched_at": "2026-04-13T00:23:05.001103",
-    "version": "1.0",
+    "fetched_at": "2026-04-13T00:37:06.232493",
+    "version": "2.0",
     "tickers": [
       "300308.SZ",
       "700.HK",
@@ -22,7 +22,7 @@
         "avg_volume_20d": 29639343,
         "volume_ratio": 1.12,
         "high_52w": 743.04,
-        "low_52w": 75.53
+        "low_52w": 337.0
       },
       "technical": {
         "sma_20": 607.08,
@@ -32,8 +32,8 @@
         "macd": 29.7812,
         "macd_signal": 15.9096,
         "macd_histogram": 13.8715,
-        "above_sma_20": "True",
-        "above_sma_50": "True",
+        "above_sma_20": true,
+        "above_sma_50": true,
         "above_sma_200": null
       },
       "fundamentals": {
@@ -76,8 +76,8 @@
         "volume": 20671874,
         "avg_volume_20d": 27442217,
         "volume_ratio": 0.75,
-        "high_52w": 683.0,
-        "low_52w": 428.26
+        "high_52w": 669.0,
+        "low_52w": 476.0
       },
       "technical": {
         "sma_20": 515.27,
@@ -87,8 +87,8 @@
         "macd": -11.1202,
         "macd_signal": -12.6396,
         "macd_histogram": 1.5195,
-        "above_sma_20": "False",
-        "above_sma_50": "False",
+        "above_sma_20": false,
+        "above_sma_50": false,
         "above_sma_200": null
       },
       "fundamentals": {
@@ -131,8 +131,8 @@
         "volume": 3826959,
         "avg_volume_20d": 5401533,
         "volume_ratio": 0.71,
-        "high_52w": 247.56,
-        "low_52w": 143.97
+        "high_52w": 244.36,
+        "low_52w": 169.2
       },
       "technical": {
         "sma_20": 178.94,
@@ -142,8 +142,8 @@
         "macd": -2.9285,
         "macd_signal": -3.6127,
         "macd_histogram": 0.6842,
-        "above_sma_20": "False",
-        "above_sma_50": "False",
+        "above_sma_20": false,
+        "above_sma_50": false,
         "above_sma_200": null
       },
       "fundamentals": {
@@ -187,7 +187,7 @@
         "avg_volume_20d": 4071848,
         "volume_ratio": 0.68,
         "high_52w": 229.4,
-        "low_52w": 125.1
+        "low_52w": 159.2
       },
       "technical": {
         "sma_20": 175.04,
@@ -197,8 +197,8 @@
         "macd": -0.4822,
         "macd_signal": -3.9105,
         "macd_histogram": 3.4282,
-        "above_sma_20": "True",
-        "above_sma_50": "False",
+        "above_sma_20": true,
+        "above_sma_50": false,
         "above_sma_200": null
       },
       "fundamentals": {
@@ -218,9 +218,9 @@
         "free_cash_flow": 727117760
       },
       "analyst": {
-        "target_mean": 252.25444,
-        "target_high": 298.32892,
-        "target_low": 212.3201,
+        "target_mean": 252.24156,
+        "target_high": 298.3137,
+        "target_low": 212.30925,
         "recommendation": "strong_buy",
         "num_analysts": 17
       },
@@ -241,7 +241,7 @@
         "volume": 60573135,
         "avg_volume_20d": 70673788,
         "volume_ratio": 0.86,
-        "high_52w": 137.07,
+        "high_52w": 111.82,
         "low_52w": 85.88
       },
       "technical": {
@@ -252,8 +252,8 @@
         "macd": 0.8297,
         "macd_signal": 1.6598,
         "macd_histogram": -0.8301,
-        "above_sma_20": "False",
-        "above_sma_50": "True",
+        "above_sma_20": false,
+        "above_sma_50": true,
         "above_sma_200": null
       },
       "fundamentals": {
@@ -287,32 +287,5 @@
       }
     }
   },
-  "akshare": {
-    "northbound": {
-      "error": "module 'akshare' has no attribute 'stock_hsgt_north_net_flow_in_em'"
-    },
-    "300308.SZ": {
-      "northbound_holding": {
-        "shares_held": 87019321.0,
-        "pct_of_float": 0.0,
-        "change_pct": null
-      }
-    },
-    "002594.SZ": {
-      "northbound_holding": {
-        "shares_held": 81136023.0,
-        "pct_of_float": 0.0,
-        "change_pct": null
-      }
-    }
-  },
-  "sector_indicators": {
-    "china_pmi": {
-      "value": 0.0,
-      "date": ""
-    },
-    "usd_cny": {
-      "value": 0.0
-    }
-  }
+  "akshare": {}
 }

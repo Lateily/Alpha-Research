@@ -31,6 +31,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data/market_data.json
+          git add public/data/market_data.json public/data/universe_a.json public/data/universe_hk.json
           git diff --cached --quiet || git commit -m "data: daily market update $(date -u +%Y-%m-%d)"
           git push
