@@ -3,7 +3,7 @@ import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
          Shield, Zap, Globe, Eye, Target, Filter, Radio, Crosshair,
          AlertCircle, CheckCircle, ArrowUpRight, ArrowDownRight,
          Database, RefreshCw, Layers, BookOpen, Info, Calendar,
-         Activity, DollarSign, PieChart, ListChecks, CircleDot, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
+         Sun, Moon, ChevronLeft, ChevronRight, Circle } from "lucide-react";
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
 
 /* ── THEME ─────────────────────────────────────────────────────────────────── */
@@ -203,24 +203,22 @@ const Card = ({ title, sub, open, onToggle, children, C }) => (
 );
 
 const VPRing = ({ score, sz=90, C }) => {
-  const data = [{ value: score, name: 'vp' }];
-  const colorMap = score>=75?C.green : score>=55?C.blue : score>=40?C.gold : C.red;
+  const r=sz*.42, circ=2*Math.PI*r, cx=sz/2;
+  const c = score>=75?C.green : score>=55?C.blue : score>=40?C.gold : C.red;
   return (
-    <div style={{position:'relative', width:sz, height:sz}}>
-      <ResponsiveContainer width={sz} height={sz}>
-        <RadialBarChart data={data} innerRadius='70%' outerRadius='100%'>
-          <RadialBar dataKey='value' fill={colorMap} />
-        </RadialBarChart>
-      </ResponsiveContainer>
-      <div style={{position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', color:C.dark, fontWeight:700, fontSize:sz*.28}}>
-        {score}
-      </div>
-    </div>
+    <svg width={sz} height={sz}>
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={C.border} strokeWidth="7"/>
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={c} strokeWidth="7"
+        strokeDasharray={circ} strokeDashoffset={circ-(score/100)*circ}
+        strokeLinecap="round" style={{transform:'rotate(-90deg)', transformOrigin:`${cx}px ${cx}px`}}/>
+      <text x={cx} y={cx} textAnchor="middle" dominantBaseline="central"
+        style={{fontSize:sz*.28, fontWeight:700, fill:C.dark}}>{score}</text>
+    </svg>
   );
 };
 
 /* ── SCANNER TAB ────────────────────────────────────────────────────────── */
-function Scanner({ L, open, toggle, C }) {
+function Scanner({ L, lk, open, toggle, C }) {
   const colors = [C.blue, C.gold, C.green, C.red, C.blue];
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
@@ -236,7 +234,7 @@ function Scanner({ L, open, toggle, C }) {
             </div>
           ))}
         </div>
-        <div style={{fontSize:11, color:C.mid, lineHeight:1.6}}>{MACRO[0].note[lang]}</div>
+        <div style={{fontSize:11, color:C.mid, lineHeight:1.6}}>{MACRO[0].note[lk]}</div>
       </Card>
 
       <Card title={L('Factor Momentum','因子动量')} open={open.factors} onToggle={()=>toggle('factors')} C={C}>
@@ -282,7 +280,7 @@ function Scanner({ L, open, toggle, C }) {
                 </div>
               ))}
             </div>
-            <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{a.note[lang]}</div>
+            <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{a.note[lk]}</div>
           </div>
         ))}
       </Card>
@@ -303,7 +301,7 @@ function Screener({ L, onSelect, C }) {
               <VPRing score={s.vp} sz={48} C={C}/>
             </div>
             <div style={{fontSize:12, fontWeight:600, color:C.dark, marginBottom:6}}>{s.price}</div>
-            <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{s.pulse[lang]}</div>
+            <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{s.pulse[lk]}</div>
           </div>
         ))}
       </div>
@@ -312,7 +310,7 @@ function Screener({ L, onSelect, C }) {
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, ticker, open, toggle, C }) {
+function Research({ L, lk, ticker, open, toggle, C }) {
   if (!ticker || !STOCKS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = STOCKS[ticker];
 
@@ -331,11 +329,11 @@ function Research({ L, ticker, open, toggle, C }) {
       </Card>
 
       <Card title={L('Business Model','商业模式')} open={open.biz} onToggle={()=>toggle('biz')} C={C}>
-        <div style={{fontSize:11, lineHeight:1.8, color:C.dark}}>{s.biz[lang]}</div>
+        <div style={{fontSize:11, lineHeight:1.8, color:C.dark}}>{s.biz[lk]}</div>
       </Card>
 
       <Card title={L('Variant Thesis','变体论点')} open={open.variant} onToggle={()=>toggle('variant')} C={C}>
-        <div style={{fontSize:11, lineHeight:1.8, color:C.dark}}>{s.variant[lang]}</div>
+        <div style={{fontSize:11, lineHeight:1.8, color:C.dark}}>{s.variant[lk]}</div>
       </Card>
 
       <Card title={L('VP Decomposition','VP分解')} open={open.vp} onToggle={()=>toggle('vp')} C={C}>
@@ -359,7 +357,7 @@ function Research({ L, ticker, open, toggle, C }) {
       <Card title={L('Catalysts','催化剂')} open={open.cats} onToggle={()=>toggle('cats')} C={C}>
         {s.catalysts.map((c,i)=>(
           <div key={i} style={{marginBottom:10, paddingBottom:10, borderBottom:i<s.catalysts.length-1?`1px solid ${C.border}`:'none'}}>
-            <div style={{...S.row, gap:8, marginBottom:4}}><span style={{fontSize:11, fontWeight:700, color:C.dark}}>{c[lang]}</span><Tag text={c.t} c={C.blue} C={C}/><Tag text={c.imp} c={c.imp==='HIGH'?C.green:C.gold} C={C}/></div>
+            <div style={{...S.row, gap:8, marginBottom:4}}><span style={{fontSize:11, fontWeight:700, color:C.dark}}>{c[lk]}</span><Tag text={c.t} c={C.blue} C={C}/><Tag text={c.imp} c={c.imp==='HIGH'?C.green:C.gold} C={C}/></div>
           </div>
         ))}
       </Card>
@@ -367,14 +365,14 @@ function Research({ L, ticker, open, toggle, C }) {
       <Card title={L('Risks','风险')} open={open.risks} onToggle={()=>toggle('risks')} C={C}>
         {s.risks.map((r,i)=>(
           <div key={i} style={{marginBottom:10, paddingBottom:10, borderBottom:i<s.risks.length-1?`1px solid ${C.border}`:'none'}}>
-            <div style={{...S.row, gap:8, marginBottom:4}}><span style={{fontSize:11, fontWeight:700, color:C.dark}}>{r[lang]}</span><Tag text={r.p} c={r.p==='HIGH'?C.red:r.p==='MED'?C.gold:C.green} C={C}/></div>
+            <div style={{...S.row, gap:8, marginBottom:4}}><span style={{fontSize:11, fontWeight:700, color:C.dark}}>{r[lk]}</span><Tag text={r.p} c={r.p==='HIGH'?C.red:r.p==='MED'?C.gold:C.green} C={C}/></div>
           </div>
         ))}
       </Card>
 
       <Card title={L('Next Actions','下一步行动')} open={open.actions} onToggle={()=>toggle('actions')} C={C}>
         {s.nextActions.map((a,i)=>(
-          <div key={i} style={{marginBottom:8, fontSize:11, color:C.dark}}>• {a[lang]}</div>
+          <div key={i} style={{marginBottom:8, fontSize:11, color:C.dark}}>• {a[lk]}</div>
         ))}
       </Card>
     </div>
@@ -422,8 +420,11 @@ function Watchlist({ L, C }) {
       <Card title={L('Portfolio Sectors','投资组合行业')} open={true} C={C}>
         <div style={{height:250, display:'flex', justifyContent:'center'}}>
           <ResponsiveContainer width='100%' height='100%'>
-            <RechartsPie data={sectorData} cx='50%' cy='50%' innerRadius={50} outerRadius={80} dataKey='value' label={(e)=>`${e.name} ${e.value}%`}>
-              {sectorData.map((e,i)=><Cell key={i} fill={e.fill} />)}
+            <RechartsPie>
+              <Pie data={sectorData} cx='50%' cy='50%' innerRadius={50} outerRadius={80} dataKey='value' label={({name,value})=>`${name} ${value}%`} labelLine={false} fontSize={10}>
+                {sectorData.map((e,i)=><Cell key={i} fill={e.fill} />)}
+              </Pie>
+              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:11}} />
             </RechartsPie>
           </ResponsiveContainer>
         </div>
@@ -492,6 +493,7 @@ export default function Dashboard() {
 
   const C = dark ? DARK : LIGHT;
   const L = (e,z) => lang==='en' ? e : z;
+  const lk = lang==='en' ? 'e' : 'z';
   const toggle = k => setOpen(p=>({...p,[k]:!p[k]}));
 
   const goStock = tk => { setTicker(tk); setTab('research'); setShowSuggestions(false); };
@@ -596,9 +598,9 @@ export default function Dashboard() {
 
         {/* Content */}
         <div style={{flex:1, overflowY:'auto', padding:16}}>
-          {tab==='scanner'  && <Scanner L={L} open={open} toggle={toggle} C={C}/>}
+          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C}/>}
           {tab==='screener' && <Screener L={L} onSelect={goStock} C={C}/>}
-          {tab==='research' && <Research L={L} ticker={ticker} open={open} toggle={toggle} C={C}/>}
+          {tab==='research' && <Research L={L} lk={lk} ticker={ticker} open={open} toggle={toggle} C={C}/>}
           {tab==='tracker'  && <Tracker L={L} C={C}/>}
           {tab==='watchlist'&& <Watchlist L={L} C={C}/>}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
