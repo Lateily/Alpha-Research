@@ -321,20 +321,21 @@ const RiskHeatMap = ({ risks, C }) => {
 const FinCompare = ({ fin, peerAvg, C }) => {
   if (!fin || !peerAvg) return null;
 
+  const parse = v => { const n = typeof v==='number'?v:parseFloat(v); return isNaN(n)?null:n; };
   const metrics = [
-    {label:'P/E', stock:fin.pe, peer:peerAvg.pe, unit:''},
-    {label:'EV/EBITDA', stock:fin.ev_ebitda, peer:peerAvg.ev_ebitda, unit:''},
-    {label:'Gross Margin', stock:parseFloat(fin.gm), peer:parseFloat(peerAvg.gm), unit:'%'},
+    {label:'P/E', stock:parse(fin.pe), peer:parse(peerAvg.pe), unit:''},
+    {label:'EV/EBITDA', stock:parse(fin.ev_ebitda), peer:parse(peerAvg.ev_ebitda), unit:''},
+    {label:'Gross Margin', stock:parse(fin.gm), peer:parse(peerAvg.gm), unit:'%'},
   ];
 
   return (
     <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginBottom:14}}>
       {metrics.map((m,i) => {
-        const stockVal = typeof m.stock === 'string' ? parseFloat(m.stock) : m.stock;
-        const peerVal = typeof m.peer === 'string' ? parseFloat(m.peer) : m.peer;
-        const maxVal = Math.max(stockVal || 0, peerVal || 0) * 1.1;
-        const stockW = stockVal ? (stockVal/maxVal)*100 : 0;
-        const peerW = peerVal ? (peerVal/maxVal)*100 : 0;
+        const stockVal = m.stock;
+        const peerVal = m.peer;
+        const maxVal = Math.max(stockVal || 0, peerVal || 0) * 1.1 || 1;
+        const stockW = stockVal != null ? (stockVal/maxVal)*100 : 0;
+        const peerW = peerVal != null ? (peerVal/maxVal)*100 : 0;
 
         return (
           <div key={i} style={{padding:10, background:C.soft, borderRadius:6}}>
@@ -345,14 +346,14 @@ const FinCompare = ({ fin, peerAvg, C }) => {
                 <div style={{flex:1, height:6, background:C.border, borderRadius:3, overflow:'hidden'}}>
                   <div style={{height:'100%', background:C.blue, width:`${stockW}%`}}/>
                 </div>
-                <div style={{fontSize:10, fontWeight:600, color:C.dark, width:40, textAlign:'right'}}>{stockVal?.toFixed(1)}{m.unit}</div>
+                <div style={{fontSize:10, fontWeight:600, color:C.dark, width:40, textAlign:'right'}}>{stockVal!=null?stockVal.toFixed(1):'N/M'}{stockVal!=null?m.unit:''}</div>
               </div>
               <div style={{display:'flex', alignItems:'center', gap:4}}>
                 <div style={{fontSize:9, color:C.mid, width:30}}>Peer</div>
                 <div style={{flex:1, height:6, background:C.border, borderRadius:3, overflow:'hidden'}}>
                   <div style={{height:'100%', background:C.gold, width:`${peerW}%`}}/>
                 </div>
-                <div style={{fontSize:10, fontWeight:600, color:C.dark, width:40, textAlign:'right'}}>{peerVal?.toFixed(1)}{m.unit}</div>
+                <div style={{fontSize:10, fontWeight:600, color:C.dark, width:40, textAlign:'right'}}>{peerVal!=null?peerVal.toFixed(1):'N/M'}{peerVal!=null?m.unit:''}</div>
               </div>
             </div>
           </div>

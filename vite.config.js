@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  base: process.env.VERCEL ? '/' : '/Alpha-Research/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
