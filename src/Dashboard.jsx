@@ -1264,43 +1264,69 @@ export default function Dashboard() {
     goStock(tk);
   };
 
-  const handleSearch = () => {
-    const q = search.toLowerCase().trim();
-    if (!q) return;
-    // Search focus stocks first
-    const found = Object.entries(allStocks).find(([tk,s]) =>
-      tk.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.en.toLowerCase().includes(q)
-    );
-    if (found) { goStock(found[0]); return; }
-    // Search universe
-    const uMatch = universeStocks.find(s =>
-      s.ticker.toLowerCase().includes(q) || s.code.includes(q) || s.name.includes(q)
-    );
-    if (uMatch) { goStock(uMatch.ticker); return; }
-    // Not found — offer deep research
-    setShowDeepResearch(true); setTab('research');
-  };
+  /* ── Full-market search engine ─────────────────────────────────────── */
+  const fmtCap = v => { if(!v) return ''; if(v>=1e12) return (v/1e12).toFixed(1)+'T'; if(v>=1e8) return (v/1e8).toFixed(0)+'亿'; if(v>=1e4) return (v/1e4).toFixed(0)+'万'; return String(v); };
 
   const searchResults = (() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return Object.entries(allStocks).slice(0, 5).map(([tk,s]) => ({...s, ticker:tk, source:'focus'}));
-    // Focus stocks first
-    const focus = Object.entries(allStocks)
-      .filter(([tk,s]) => tk.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.en.toLowerCase().includes(q))
-      .map(([tk,s]) => ({...s, ticker:tk, source:'focus'}));
-    // Then universe
+    const q = search.trim();
+    if (!q) return [];
+    const ql = q.toLowerCase();
+
+    // Score function: lower = better match. Exact name match scores highest.
+    const scoreMatch = (name, code, ticker) => {
+      if (name === q) return 0;                              // exact name
+      if (code === q || code === ql) return 1;               // exact code
+      if (name.startsWith(q)) return 2;                      // name starts with
+      if (code.startsWith(ql)) return 3;                     // code starts with
+      if (ticker.toLowerCase().startsWith(ql)) return 4;     // ticker starts with
+      if (name.includes(q)) return 5;                        // name contains
+      if (code.includes(ql)) return 6;                       // code contains
+      if (ticker.toLowerCase().includes(ql)) return 7;       // ticker contains
+      return -1;                                             // no match
+    };
+
+    // Search focus stocks
+    const focusResults = Object.entries(allStocks)
+      .map(([tk,s]) => {
+        const sc = scoreMatch(s.name, tk.split('.')[0].toLowerCase(), tk);
+        const scEn = s.en ? (s.en.toLowerCase().includes(ql) ? 5 : -1) : -1;
+        const best = sc >= 0 ? sc : scEn;
+        return best >= 0 ? { ticker:tk, name:s.name, en:s.en, code:tk.split('.')[0],
+          exchange: tk.includes('.HK') ? 'HK' : tk.includes('.SH') ? 'SH' : 'SZ',
+          price:s.price, change_pct:null, pe: typeof s.fin?.pe === 'number' ? s.fin.pe : null,
+          market_cap:null, vp:s.vp, source:'focus', _score:best } : null;
+      }).filter(Boolean);
+
+    // Search universe
     const uniResults = universeStocks
-      .filter(s => s.ticker.toLowerCase().includes(q) || s.code.includes(q) || s.name.includes(q))
-      .slice(0, 8 - focus.length)
-      .map(s => ({
-        ticker: s.ticker, name: s.name, en: s.name, vp: null,
-        sector: s.exchange === 'HK' ? 'HK' : 'A-Share',
-        price: s.price ? (s.exchange === 'HK' ? 'HK$' : '¥') + s.price.toFixed(2) : '—',
-        change_pct: s.change_pct, pe: s.pe, market_cap: s.market_cap,
-        source: 'universe',
-      }));
-    return [...focus, ...uniResults].slice(0, 8);
+      .reduce((acc, s) => {
+        if (acc.length >= 200) return acc; // early exit for perf
+        const sc = scoreMatch(s.name, s.code, s.ticker);
+        if (sc >= 0) acc.push({
+          ticker:s.ticker, name:s.name, en:null, code:s.code,
+          exchange:s.exchange, price:s.price, change_pct:s.change_pct,
+          pe:s.pe, market_cap:s.market_cap, vp:null, source:'universe', _score:sc,
+        });
+        return acc;
+      }, []);
+
+    // Merge, deduplicate (focus wins), sort by score then market cap
+    const seen = new Set(focusResults.map(r => r.code));
+    const merged = [
+      ...focusResults,
+      ...uniResults.filter(r => !seen.has(r.code)),
+    ];
+    merged.sort((a,b) => {
+      if (a._score !== b._score) return a._score - b._score;
+      return (b.market_cap||0) - (a.market_cap||0); // bigger cap first
+    });
+    return merged.slice(0, 10);
   })();
+
+  const handleSearch = () => {
+    if (searchResults.length > 0) { goStock(searchResults[0].ticker); return; }
+    if (search.trim()) { setShowDeepResearch(true); setTab('research'); }
+  };
 
   const TABS = [
     { id:'scanner',  label:L('Scanner','扫描'),   icon:<Radio size={14}/> },
@@ -1344,48 +1370,82 @@ export default function Dashboard() {
       <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden'}}>
         {/* Topbar */}
         <div style={{background:C.card, borderBottom:`1px solid ${C.border}`, padding:'8px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12}}>
-          <div style={{position:'relative', display:'flex', gap:6, alignItems:'center', flex:1, maxWidth:380}}>
+          <div style={{position:'relative', display:'flex', gap:6, alignItems:'center', flex:1, maxWidth:480}}>
             <input value={search}
               onChange={e=>{setSearch(e.target.value); setShowSuggestions(true)}}
-              onKeyDown={e=>e.key==='Enter'&&handleSearch()}
-              onFocus={()=>setShowSuggestions(true)}
+              onKeyDown={e=>{if(e.key==='Enter')handleSearch(); if(e.key==='Escape'){setShowSuggestions(false);}}}
+              onFocus={()=>{if(search.trim()) setShowSuggestions(true);}}
               onBlur={()=>setTimeout(()=>setShowSuggestions(false), 200)}
-              placeholder={L('Search ticker / name…','搜索代码/名称…')}
-              style={{flex:1, padding:'5px 10px', border:`1px solid ${C.border}`, borderRadius:6, fontSize:12, outline:'none', background:C.soft, color:C.dark}}/>
+              placeholder={L('Search 10,000+ A+HK stocks by name or code…','搜索10,000+只A股港股，输入名称或代码…')}
+              style={{flex:1, padding:'6px 12px', border:`1px solid ${C.border}`, borderRadius:6, fontSize:12, outline:'none', background:C.soft, color:C.dark}}/>
             <button onClick={handleSearch} style={{padding:'5px 10px', background:C.blue, color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12}}>
               <Search size={13}/>
             </button>
             <button onClick={()=>{setShowDeepResearch(true); setTab('research');}} title={L('Deep Research','深度研究')} style={{padding:'5px 10px', background:`${C.green}15`, color:C.green, border:`1px solid ${C.green}40`, borderRadius:6, cursor:'pointer', fontSize:10, fontWeight:700, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4}}>
               <Zap size={12}/>{L('Deep','深度')}
             </button>
-            {showSuggestions && (
-              <div style={{position:'absolute', top:'100%', left:0, right:0, marginTop:4, background:C.card, border:`1px solid ${C.border}`, borderRadius:6, maxHeight:320, overflowY:'auto', zIndex:10}}>
-                {search.trim() && universeStocks.length > 0 && (
-                  <div style={{padding:'6px 10px', fontSize:9, color:C.mid, borderBottom:`1px solid ${C.border}`, background:C.soft}}>
-                    {L(`Searching ${universeStocks.length.toLocaleString()} A+HK stocks`,`搜索 ${universeStocks.length.toLocaleString()} 只A股+港股`)}
+            {showSuggestions && search.trim() && (
+              <div style={{position:'absolute', top:'100%', left:0, right:60, marginTop:4, background:C.card, border:`1px solid ${C.border}`, borderRadius:8, maxHeight:420, overflowY:'auto', zIndex:20, boxShadow:'0 8px 32px rgba(0,0,0,.25)'}}>
+                {/* Header */}
+                <div style={{padding:'6px 12px', fontSize:9, color:C.mid, borderBottom:`1px solid ${C.border}`, background:C.soft, display:'flex', justifyContent:'space-between', borderRadius:'8px 8px 0 0'}}>
+                  <span>{universeStocks.length > 0 ? (universeStocks.length.toLocaleString() + L(' stocks loaded',' 只股票已加载')) : L('Focus stocks only','仅持仓股票')}</span>
+                  <span>{searchResults.length > 0 ? searchResults.length + L(' matches',' 个匹配') : ''}</span>
+                </div>
+                {/* Column headers */}
+                {searchResults.length > 0 && (
+                  <div style={{display:'flex', padding:'4px 12px', fontSize:8, color:C.mid, borderBottom:`1px solid ${C.border}`, background:C.soft, gap:4}}>
+                    <span style={{flex:'1 1 140px'}}>{L('Stock','股票')}</span>
+                    <span style={{width:65, textAlign:'right'}}>{L('Price','价格')}</span>
+                    <span style={{width:55, textAlign:'right'}}>{L('Chg%','涨跌%')}</span>
+                    <span style={{width:50, textAlign:'right'}}>PE</span>
+                    <span style={{width:60, textAlign:'right'}}>{L('Mkt Cap','市值')}</span>
                   </div>
                 )}
-                {searchResults.map((s,i)=>(
-                  <div key={i} onClick={()=>goStock(s.ticker)} style={{padding:10, cursor:'pointer', borderBottom:i<searchResults.length-1?`1px solid ${C.border}`:'none', transition:'background .15s', background:'transparent'}} onMouseOver={e=>e.currentTarget.style.background=C.soft} onMouseOut={e=>e.currentTarget.style.background='transparent'}>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                      <div>
-                        <div style={{fontSize:11, fontWeight:700, color:C.dark}}>{s.ticker} · {s.name}</div>
-                        <div style={{fontSize:9, color:C.mid}}>
-                          {s.source === 'focus' ? (s.en + ' · VP ' + s.vp) : (
-                            (s.price || '') +
-                            (s.change_pct != null ? (s.change_pct > 0 ? ' +' : ' ') + s.change_pct.toFixed(2) + '%' : '') +
-                            (s.pe != null ? ' · PE ' + s.pe.toFixed(1) : '')
-                          )}
+                {/* Results */}
+                {searchResults.map((s,i)=>{
+                  const chgC = s.change_pct > 0 ? C.red : s.change_pct < 0 ? C.green : C.mid;
+                  const curr = s.exchange === 'HK' ? 'HK$' : '¥';
+                  return (
+                    <div key={s.ticker+i} onClick={()=>goStock(s.ticker)}
+                      style={{display:'flex', alignItems:'center', padding:'8px 12px', cursor:'pointer', gap:4,
+                        borderBottom:i<searchResults.length-1?`1px solid ${C.border}`:'none',
+                        transition:'background .1s', background:'transparent'}}
+                      onMouseOver={e=>e.currentTarget.style.background=C.soft}
+                      onMouseOut={e=>e.currentTarget.style.background='transparent'}>
+                      {/* Name + Code */}
+                      <div style={{flex:'1 1 140px', minWidth:0}}>
+                        <div style={{display:'flex', alignItems:'center', gap:5}}>
+                          <span style={{fontSize:12, fontWeight:700, color:C.dark, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{s.name}</span>
+                          {s.source === 'focus' && <span style={{fontSize:7, fontWeight:800, color:C.blue, background:`${C.blue}15`, padding:'1px 4px', borderRadius:3, flexShrink:0}}>VP {s.vp}</span>}
                         </div>
+                        <div style={{fontSize:9, color:C.mid, fontFamily:'monospace'}}>{s.code} · {s.exchange}</div>
                       </div>
-                      {s.source === 'focus' && <span style={{...S.tag(C.blue), fontSize:8}}>{L('FOCUS','持仓')}</span>}
-                      {s.source === 'universe' && <span style={{...S.tag(C.mid), fontSize:8}}>{s.sector}</span>}
+                      {/* Price */}
+                      <div style={{width:65, textAlign:'right', fontSize:11, fontWeight:700, fontFamily:'monospace', color:C.dark}}>
+                        {s.price != null ? (typeof s.price === 'string' ? s.price : curr + s.price.toFixed(2)) : '—'}
+                      </div>
+                      {/* Change% */}
+                      <div style={{width:55, textAlign:'right', fontSize:11, fontWeight:700, fontFamily:'monospace', color:chgC}}>
+                        {s.change_pct != null ? (s.change_pct > 0 ? '+' : '') + s.change_pct.toFixed(2) + '%' : '—'}
+                      </div>
+                      {/* PE */}
+                      <div style={{width:50, textAlign:'right', fontSize:10, fontFamily:'monospace', color:C.mid}}>
+                        {s.pe != null ? s.pe.toFixed(1) : '—'}
+                      </div>
+                      {/* Market Cap */}
+                      <div style={{width:60, textAlign:'right', fontSize:10, fontFamily:'monospace', color:C.mid}}>
+                        {fmtCap(s.market_cap)}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {search.trim() && searchResults.length === 0 && (
-                  <div style={{padding:10, fontSize:11, color:C.mid, textAlign:'center'}}>
-                    {L('No results. Try Deep Research →','未找到。尝试深度研究 →')}
+                  );
+                })}
+                {searchResults.length === 0 && (
+                  <div style={{padding:16, textAlign:'center'}}>
+                    <div style={{fontSize:12, color:C.mid, marginBottom:8}}>{L('No matches found','未找到匹配项')}</div>
+                    <button onClick={()=>{setShowDeepResearch(true); setTab('research'); setShowSuggestions(false);}}
+                      style={{padding:'6px 14px', background:C.green, color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:11, fontWeight:600}}>
+                      {L('Deep Research this ticker','深度研究该代码')}
+                    </button>
                   </div>
                 )}
               </div>
