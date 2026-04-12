@@ -1,6 +1,6 @@
 {
   "name": "ar-equity-research-platform",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "lucide-react": "^0.383.0",
-    "recharts": "^2.12.0"
+    "recharts": "^2.12.0",
+    "@anthropic-ai/sdk": "^0.39.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",

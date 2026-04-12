@@ -478,8 +478,8 @@ function Scanner({ L, lk, open, toggle, C }) {
 }
 
 /* ── SCREENER TAB ────────────────────────────────────────────────────────── */
-function Screener({ L, lk, onSelect, C }) {
-  const stocks = Object.entries(STOCKS).map(([tk,s])=>({...s, ticker:tk})).sort((a,b)=>b.vp-a.vp);
+function Screener({ L, lk, stocks: stocksMap, onSelect, C }) {
+  const stocks = Object.entries(stocksMap || STOCKS).map(([tk,s])=>({...s, ticker:tk})).sort((a,b)=>b.vp-a.vp);
   return (
     <div>
       <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:14}}>
@@ -499,9 +499,10 @@ function Screener({ L, lk, onSelect, C }) {
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, open, toggle, C }) {
-  if (!ticker || !STOCKS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
-  const s = STOCKS[ticker];
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C }) {
+  const allS = stocksMap || STOCKS;
+  if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
+  const s = allS[ticker];
 
   const decompData = Object.entries(s.decomp).map(([k,v])=>({name:k.replace(/_/g,' '), value:v.s}));
   const sectorIdx = PORTFOLIO.sectors.findIndex(sc=>sc.name===s.sector);
@@ -650,8 +651,8 @@ function Research({ L, lk, ticker, open, toggle, C }) {
 }
 
 /* ── TRACKER TAB ────────────────────────────────────────────────────────── */
-function Tracker({ L, C }) {
-  const stocks = Object.entries(STOCKS).slice(0,3).map(([tk,s])=>({...s, ticker:tk}));
+function Tracker({ L, stocks: stocksMap, C }) {
+  const stocks = Object.entries(stocksMap || STOCKS).slice(0,3).map(([tk,s])=>({...s, ticker:tk}));
   return (
     <div>
       <Card title={L('Key Metrics Tracker','关键指标追踪')} open={true} C={C}>
@@ -681,8 +682,8 @@ function Tracker({ L, C }) {
 }
 
 /* ── WATCHLIST TAB ────────────────────────────────────────────────────────── */
-function Watchlist({ L, C }) {
-  const stocks = Object.entries(STOCKS).map(([tk,s])=>({...s, ticker:tk}));
+function Watchlist({ L, stocks: stocksMap, C }) {
+  const stocks = Object.entries(stocksMap || STOCKS).map(([tk,s])=>({...s, ticker:tk}));
   const sectorData = PORTFOLIO.sectors.map((sec,i)=>({name:sec.name, value:sec.pct, fill:[C.blue,'#7B6BA5',C.gold,C.green,C.red][i]}));
 
   return (
@@ -750,6 +751,133 @@ function SystemTab({ L, C }) {
   );
 }
 
+/* ── DEEP RESEARCH PANEL ─────────────────────────────────────────────────── */
+function DeepResearchPanel({ L, lk, onComplete, C }) {
+  const [drTicker, setDrTicker] = useState('');
+  const [drDir, setDrDir] = useState('NEUTRAL');
+  const [drContext, setDrContext] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0);
+
+  const runResearch = async () => {
+    if (!drTicker.trim()) return;
+    setLoading(true); setError(null); setProgress(10);
+
+    const steps = [
+      {p:15, t:L('Analyzing macro context...','分析宏观背景...')},
+      {p:30, t:L('Building business model...','构建商业模式...')},
+      {p:50, t:L('Identifying variant perception...','识别变体认知...')},
+      {p:70, t:L('Mapping catalysts & risks...','映射催化剂与风险...')},
+      {p:85, t:L('Scoring VP decomposition...','计算VP分解评分...')},
+    ];
+    let stepIdx = 0;
+    const timer = setInterval(() => {
+      if (stepIdx < steps.length) { setProgress(steps[stepIdx].p); stepIdx++; }
+    }, 3000);
+
+    try {
+      const res = await fetch('/api/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker: drTicker.trim(), direction: drDir, context: drContext || undefined }),
+      });
+      clearInterval(timer);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Request failed');
+      setProgress(100);
+      onComplete(drTicker.trim(), json.data);
+    } catch (err) {
+      clearInterval(timer);
+      setError(err.message);
+      setProgress(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:20, maxWidth:480}}>
+      <div style={{...S.row, gap:8, marginBottom:16}}>
+        <Crosshair size={16} style={{color:C.blue}}/>
+        <div style={{fontSize:14, fontWeight:700, color:C.dark}}>{L('Deep Research','深度研究')}</div>
+        <span style={{fontSize:9, padding:'2px 6px', background:`${C.blue}15`, color:C.blue, borderRadius:3, fontWeight:700}}>AI</span>
+      </div>
+      <div style={{fontSize:10, color:C.mid, marginBottom:16, lineHeight:1.6}}>
+        {L('Enter any ticker to generate a full buy-side research report powered by Claude AI. The 6-stage workflow produces institutional-grade analysis in ~15 seconds.',
+           '输入任意股票代码，由Claude AI驱动生成完整的买方研究报告。6阶段工作流约15秒生成机构级分析。')}
+      </div>
+
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:10, fontWeight:600, color:C.mid, marginBottom:4}}>{L('Ticker','代码')} *</div>
+        <input value={drTicker} onChange={e=>setDrTicker(e.target.value.toUpperCase())}
+          onKeyDown={e=>e.key==='Enter'&&!loading&&runResearch()}
+          placeholder={L('e.g. NVDA, 688981.SH, 9888.HK','如 NVDA, 688981.SH, 9888.HK')}
+          disabled={loading}
+          style={{width:'100%', padding:'8px 10px', border:`1px solid ${C.border}`, borderRadius:6, fontSize:12, background:C.soft, color:C.dark, outline:'none'}}/>
+      </div>
+
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:10, fontWeight:600, color:C.mid, marginBottom:4}}>{L('Direction Bias','方向偏好')}</div>
+        <div style={{display:'flex', gap:4}}>
+          {['LONG','NEUTRAL','SHORT'].map(d=>(
+            <button key={d} onClick={()=>setDrDir(d)} disabled={loading} style={{
+              flex:1, padding:'6px 0', border:`1px solid ${drDir===d?(d==='LONG'?C.green:d==='SHORT'?C.red:C.blue):C.border}`,
+              background:drDir===d?`${d==='LONG'?C.green:d==='SHORT'?C.red:C.blue}15`:'transparent',
+              color:drDir===d?(d==='LONG'?C.green:d==='SHORT'?C.red:C.blue):C.mid,
+              borderRadius:5, cursor:'pointer', fontSize:10, fontWeight:700, transition:'all .15s',
+            }}>{d}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:10, fontWeight:600, color:C.mid, marginBottom:4}}>{L('Context (optional)','研究背景（选填）')}</div>
+        <textarea value={drContext} onChange={e=>setDrContext(e.target.value)}
+          placeholder={L('What prompted this research? e.g. "Earnings beat, want to check if thesis holds"','什么触发了这次研究？如"财报超预期，想检验论点"')}
+          disabled={loading} rows={2}
+          style={{width:'100%', padding:'8px 10px', border:`1px solid ${C.border}`, borderRadius:6, fontSize:11, background:C.soft, color:C.dark, outline:'none', resize:'vertical', fontFamily:'inherit'}}/>
+      </div>
+
+      {loading && (
+        <div style={{marginBottom:14}}>
+          <div style={{height:4, background:C.soft, borderRadius:2, overflow:'hidden', marginBottom:6}}>
+            <div style={{height:'100%', background:C.blue, borderRadius:2, width:`${progress}%`, transition:'width .5s'}}/>
+          </div>
+          <div style={{fontSize:10, color:C.blue, fontWeight:600, textAlign:'center'}}>
+            {progress < 20 ? L('Connecting to Claude...','连接Claude...') :
+             progress < 40 ? L('Analyzing macro context...','分析宏观背景...') :
+             progress < 60 ? L('Building business model...','构建商业模式...') :
+             progress < 80 ? L('Mapping catalysts & risks...','映射催化剂与风险...') :
+             progress < 100 ? L('Scoring VP decomposition...','计算VP分解评分...') :
+             L('Complete!','完成！')}
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div style={{marginBottom:14, padding:10, background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:6}}>
+          <div style={{fontSize:11, color:C.red, fontWeight:600, marginBottom:4}}>{L('Error','错误')}</div>
+          <div style={{fontSize:10, color:C.dark, lineHeight:1.5}}>{error}</div>
+        </div>
+      )}
+
+      <button onClick={runResearch} disabled={loading || !drTicker.trim()} style={{
+        width:'100%', padding:'10px 0', border:'none', borderRadius:6, cursor:loading?'wait':'pointer',
+        background:loading?C.soft:C.blue, color:loading?C.mid:'#fff', fontSize:12, fontWeight:700,
+        transition:'all .2s', opacity:!drTicker.trim()?0.5:1,
+      }}>
+        {loading ? L('Generating Report...','生成报告中...') : L('Generate Buy-Side Research','生成买方研究报告')}
+      </button>
+
+      <div style={{fontSize:9, color:C.mid, marginTop:10, textAlign:'center', lineHeight:1.4}}>
+        {L('Powered by Claude Sonnet · Evidence only, no investment conclusions',
+           'Claude Sonnet驱动 · 仅提供证据，不提供投资结论')}
+      </div>
+    </div>
+  );
+}
+
 /* ── DASHBOARD ────────────────────────────────────────────────────────────── */
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
@@ -760,24 +888,34 @@ export default function Dashboard() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, ta:false, actions:true});
+  const [dynamicStocks, setDynamicStocks] = useState({});
+  const [showDeepResearch, setShowDeepResearch] = useState(false);
+
+  const allStocks = { ...STOCKS, ...dynamicStocks };
 
   const C = dark ? DARK : LIGHT;
   const L = (e,z) => lang==='en' ? e : z;
   const lk = lang==='en' ? 'e' : 'z';
   const toggle = k => setOpen(p=>({...p,[k]:!p[k]}));
 
-  const goStock = tk => { setTicker(tk); setTab('research'); setShowSuggestions(false); };
+  const goStock = tk => { setTicker(tk); setTab('research'); setShowSuggestions(false); setShowDeepResearch(false); };
+
+  const handleDeepResearchComplete = (tk, data) => {
+    setDynamicStocks(prev => ({ ...prev, [tk]: data }));
+    goStock(tk);
+  };
 
   const handleSearch = () => {
     const q = search.toLowerCase().trim();
-    const found = Object.entries(STOCKS).find(([tk,s]) =>
+    const found = Object.entries(allStocks).find(([tk,s]) =>
       tk.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.en.toLowerCase().includes(q)
     );
     if (found) goStock(found[0]);
+    else { setShowDeepResearch(true); setTab('research'); }
   };
 
   const searchResults = search.trim() ?
-    Object.entries(STOCKS)
+    Object.entries(allStocks)
       .filter(([tk,s]) =>
         tk.toLowerCase().includes(search.toLowerCase()) ||
         s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -785,7 +923,7 @@ export default function Dashboard() {
       )
       .slice(0, 5)
       .map(([tk,s]) => ({...s, ticker:tk}))
-    : Object.entries(STOCKS).slice(0, 5).map(([tk,s]) => ({...s, ticker:tk}));
+    : Object.entries(allStocks).slice(0, 5).map(([tk,s]) => ({...s, ticker:tk}));
 
   const TABS = [
     { id:'scanner',  label:L('Scanner','扫描'),   icon:<Radio size={14}/> },
@@ -802,7 +940,7 @@ export default function Dashboard() {
       <div style={{width:collapsed?48:170, background:C.card, borderRight:`1px solid ${C.border}`, display:'flex', flexDirection:'column', flexShrink:0, transition:'width .3s', overflow:'hidden'}}>
         <div style={{padding:collapsed?'14px 10px':'14px 14px 10px', borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap'}}>
           <div style={{fontSize:collapsed?16:22, fontWeight:800, color:C.blue, letterSpacing:collapsed?0:'-.02em'}}>AR</div>
-          {!collapsed && <div style={{fontSize:8, color:C.mid, letterSpacing:'.1em', marginTop:1}}>ALPHA RESEARCH v5.2</div>}
+          {!collapsed && <div style={{fontSize:8, color:C.mid, letterSpacing:'.1em', marginTop:1}}>ALPHA RESEARCH v9.0</div>}
         </div>
         <div style={{flex:1, paddingTop:4, overflow:'hidden'}}>
           {TABS.map(t=>(
@@ -840,6 +978,9 @@ export default function Dashboard() {
             <button onClick={handleSearch} style={{padding:'5px 10px', background:C.blue, color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12}}>
               <Search size={13}/>
             </button>
+            <button onClick={()=>{setShowDeepResearch(true); setTab('research');}} title={L('Deep Research','深度研究')} style={{padding:'5px 10px', background:`${C.green}15`, color:C.green, border:`1px solid ${C.green}40`, borderRadius:6, cursor:'pointer', fontSize:10, fontWeight:700, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4}}>
+              <Zap size={12}/>{L('Deep','深度')}
+            </button>
             {showSuggestions && (
               <div style={{position:'absolute', top:'100%', left:0, right:0, marginTop:4, background:C.card, border:`1px solid ${C.border}`, borderRadius:6, maxHeight:240, overflowY:'auto', zIndex:10}}>
                 {searchResults.map((s,i)=>(
@@ -869,10 +1010,17 @@ export default function Dashboard() {
         {/* Content */}
         <div style={{flex:1, overflowY:'auto', padding:16}}>
           {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C}/>}
-          {tab==='screener' && <Screener L={L} lk={lk} onSelect={goStock} C={C}/>}
-          {tab==='research' && <Research L={L} lk={lk} ticker={ticker} open={open} toggle={toggle} C={C}/>}
-          {tab==='tracker'  && <Tracker L={L} C={C}/>}
-          {tab==='watchlist'&& <Watchlist L={L} C={C}/>}
+          {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C}/>}
+          {tab==='research' && (
+            (!ticker || !allStocks[ticker] || showDeepResearch) ? (
+              <div>
+                {ticker && allStocks[ticker] && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C}/></div>}
+                <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C}/>
+              </div>
+            ) : <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C}/>
+          )}
+          {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C}/>}
+          {tab==='watchlist'&& <Watchlist L={L} stocks={allStocks} C={C}/>}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
         </div>
       </div>
