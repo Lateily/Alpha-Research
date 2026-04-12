@@ -3,25 +3,28 @@ import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
          Shield, Zap, Globe, Eye, Target, Filter, Radio, Crosshair,
          AlertCircle, CheckCircle, ArrowUpRight, ArrowDownRight,
          Database, RefreshCw, Layers, BookOpen, Info, Calendar,
-         Activity, DollarSign, PieChart, ListChecks, CircleDot } from "lucide-react";
+         Activity, DollarSign, PieChart, ListChecks, CircleDot, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
+import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
 
 /* ── THEME ─────────────────────────────────────────────────────────────────── */
-const C = { blue:'#4A90D9', gold:'#BFA76A', green:'#3D8B6E', red:'#C25450',
-            dark:'#2C3E50', mid:'#7F8C8D', bg:'#FAFAF7', card:'#fff', border:'#E8E2D4',
-            soft:'#F5F3ED' };
+const DARK = { blue:'#5BA0E0', gold:'#D4B878', green:'#4CAF7A', red:'#E06060',
+               dark:'#E8E8E8', mid:'#8899AA', bg:'#0D1117', card:'#161B22', border:'#30363D', soft:'#21262D' };
+const LIGHT = { blue:'#4A90D9', gold:'#BFA76A', green:'#3D8B6E', red:'#C25450',
+                dark:'#2C3E50', mid:'#7F8C8D', bg:'#FAFAF7', card:'#fff', border:'#E8E2D4', soft:'#F5F3ED' };
+
 const S = {
-  card:{ background:C.card, border:`1px solid ${C.border}`, borderRadius:10, marginBottom:14, overflow:'hidden' },
+  card:{ background:'none', border:'1px solid currentColor', borderRadius:10, marginBottom:14, overflow:'hidden' },
   cardHd:{ padding:'13px 16px', cursor:'pointer', display:'flex', justifyContent:'space-between',
-           alignItems:'center', borderBottom:`1px solid ${C.border}` },
+           alignItems:'center', borderBottom:'1px solid currentColor' },
   cardBd:{ padding:'13px 16px' },
   row:{ display:'flex', alignItems:'center', gap:8 },
   flex:{ display:'flex' },
   tag:(c)=>({ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:3,
                background:`${c}18`, color:c, border:`1px solid ${c}30` }),
   mono:{ fontFamily:'monospace' },
-  label:{ fontSize:11, color:C.mid, fontWeight:600 },
-  val:{ fontSize:13, fontWeight:700, color:C.dark },
-  sec:{ fontSize:12, color:C.dark, lineHeight:1.7 },
+  label:{ fontSize:11, color:'currentColor', fontWeight:600, opacity:0.7 },
+  val:{ fontSize:13, fontWeight:700, color:'currentColor' },
+  sec:{ fontSize:12, color:'currentColor', lineHeight:1.7 },
 };
 
 /* ── DATA ───────────────────────────────────────────────────────────────────── */
@@ -59,11 +62,11 @@ const SECTOR_IND = [
 const PORTFOLIO = {
   netExposure: '82%', grossExposure: '100%', positions: 5, regimeAlign: 87,
   sectors: [
-    { name:'AI Infra', pct:25, c:C.blue },
-    { name:'Platform', pct:20, c:'#7B6BA5' },
-    { name:'Gaming', pct:15, c:C.gold },
-    { name:'Biotech', pct:22, c:C.green },
-    { name:'EV/Auto', pct:18, c:C.red },
+    { name:'AI Infra', pct:25 },
+    { name:'Platform', pct:20 },
+    { name:'Gaming', pct:15 },
+    { name:'Biotech', pct:22 },
+    { name:'EV/Auto', pct:18 },
   ],
 };
 
@@ -140,7 +143,7 @@ const STOCKS = {
 };
 
 const SCANNER = {
-  regime:{ status:'Permissive', color:C.green, e:'China policy in expansion mode. Risk-on for quality growth. A-share liquidity improving.', z:'中国政策扩张模式。优质成长风险偏好提升。A股流动性改善。' },
+  regime:{ status:'Permissive', e:'China policy in expansion mode. Risk-on for quality growth. A-share liquidity improving.', z:'中国政策扩张模式。优质成长风险偏好提升。A股流动性改善。' },
   date:{ e:'April 12, 2025 · Pre-Market', z:'2025年4月12日 · 盘前' },
   factors:[
     { name:'Momentum', val:68, t:'up' },{ name:'Value', val:44, t:'down' },
@@ -152,372 +155,134 @@ const SCANNER = {
   ],
 };
 
+const MACRO_ANCHORS = [
+  { macro:'CNY/USD', stocks:['002594.SZ'], impact:'positive', weight:'medium',
+    note:{e:'Weaker CNY benefits BYD export competitiveness',z:'人民币贬值利好比亚迪出口竞争力'} },
+  { macro:'CN 10Y', stocks:['700.HK','9999.HK'], impact:'negative', weight:'low',
+    note:{e:'Rising rates mildly pressure growth multiples',z:'利率上升温和压制成长股估值'} },
+  { macro:'PMI', stocks:['300308.SZ'], impact:'positive', weight:'high',
+    note:{e:'Manufacturing expansion drives optical component demand',z:'制造业扩张推动光器件需求'} },
+  { macro:'US 10Y', stocks:['6160.HK'], impact:'negative', weight:'medium',
+    note:{e:'Higher US rates pressure biotech DCF valuations',z:'美国利率上升压制生物科技DCF估值'} },
+  { macro:'VIX', stocks:['700.HK','9999.HK','300308.SZ'], impact:'positive', weight:'medium',
+    note:{e:'Lower VIX supports risk-on positioning in China tech',z:'VIX下降支持中国科技风险偏好'} },
+];
+
 const PEERS = [
   { pair:'Innolight vs Eoptolink', ticker:'300308 vs 603488', div:'VP 79 vs 45', corr:0.82, betaAdj:1.12, catalystDiv:{e:'1.6T qualification timing gap',z:'1.6T认证时间差'}, invalidation:{e:'Eoptolink closes SiPh gap within 2 quarters',z:'易飞光电2个季度内缩小硅光差距'}, e:'SiPh premium vs margin compression. Pair trade on qualification delta.', z:'硅光溢价vs利润率压缩。认证差异配对交易。' },
   { pair:'Tencent vs Alibaba', ticker:'700 vs 9988', div:'VP 64 vs 48', corr:0.75, betaAdj:0.95, catalystDiv:{e:'AI monetization timeline divergence',z:'AI变现时间线分化'}, invalidation:{e:'BABA restructuring unlocks >20% re-rating',z:'阿里重组触发>20%重估'}, e:'WeChat AI vs restructuring overhang. Long TENCENT / short BABA.', z:'微信AI vs 重组阴影。做多腾讯/做空阿里。' },
 ];
 
 /* ── MINI COMPONENTS ─────────────────────────────────────────────────────── */
-const Tag = ({ text, c=C.blue }) => <span style={S.tag(c)}>{text}</span>;
-const EQR = ({ lvl }) => {
+const Tag = ({ text, c, C }) => <span style={S.tag(c)}>{text}</span>;
+const EQR = ({ lvl, C }) => {
   const c = lvl==='HIGH'?C.green : lvl==='MED-HIGH'?C.blue : lvl==='MED'?C.gold : C.red;
   return <span style={{...S.tag(c), fontSize:9}}>EQR: {lvl}</span>;
 };
-const TI = ({ t }) => t==='up' ? <TrendingUp size={13} style={{color:C.green}} />
+const TI = ({ t, C }) => t==='up' ? <TrendingUp size={13} style={{color:C.green}} />
                    : t==='down' ? <TrendingDown size={13} style={{color:C.red}} />
                    : <Minus size={13} style={{color:C.mid}} />;
-const Pill = ({ n, label, c=C.blue }) => (
+const Pill = ({ n, label, c, C }) => (
   <div style={{textAlign:'center', padding:'8px 12px', background:`${c}10`, borderRadius:8}}>
     <div style={{fontSize:20, fontWeight:700, color:c}}>{n}</div>
     <div style={{fontSize:10, color:C.mid}}>{label}</div>
   </div>
 );
 
-const Card = ({ title, sub, open, onToggle, children }) => (
-  <div style={S.card}>
-    <div style={S.cardHd} onClick={onToggle}>
+const Card = ({ title, sub, open, onToggle, children, C }) => (
+  <div style={{...S.card, borderColor:C.border, background:C.card}}>
+    <div style={{...S.cardHd, borderColor:C.border, color:C.dark}} onClick={onToggle}>
       <div>
         <div style={{fontSize:13, fontWeight:600, color:C.dark}}>{title}</div>
         {sub && <div style={{fontSize:10, color:C.mid, marginTop:1}}>{sub}</div>}
       </div>
       <ChevronDown size={15} style={{color:C.mid, transform:open?'rotate(180deg)':'', transition:'transform .2s', flexShrink:0}} />
     </div>
-    {open && <div style={S.cardBd}>{children}</div>}
+    {open && <div style={{...S.cardBd, color:C.dark}}>{children}</div>}
   </div>
 );
 
-const VPRing = ({ score, sz=90 }) => {
-  const r=sz*.42, circ=2*Math.PI*r, cx=sz/2;
-  const c = score>=75?C.green : score>=55?C.blue : score>=40?C.gold : C.red;
+const VPRing = ({ score, sz=90, C }) => {
+  const data = [{ value: score, name: 'vp' }];
+  const colorMap = score>=75?C.green : score>=55?C.blue : score>=40?C.gold : C.red;
   return (
-    <svg width={sz} height={sz}>
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke={C.border} strokeWidth="7"/>
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke={c} strokeWidth="7"
-        strokeDasharray={circ} strokeDashoffset={circ-(score/100)*circ}
-        strokeLinecap="round" style={{transform:'rotate(-90deg)', transformOrigin:`${cx}px ${cx}px`}}/>
-      <text x={cx} y={cx} textAnchor="middle" dominantBaseline="central"
-        style={{fontSize:sz*.28, fontWeight:700, fill:C.dark}}>{score}</text>
-    </svg>
+    <div style={{position:'relative', width:sz, height:sz}}>
+      <ResponsiveContainer width={sz} height={sz}>
+        <RadialBarChart data={data} innerRadius='70%' outerRadius='100%'>
+          <RadialBar dataKey='value' fill={colorMap} />
+        </RadialBarChart>
+      </ResponsiveContainer>
+      <div style={{position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', color:C.dark, fontWeight:700, fontSize:sz*.28}}>
+        {score}
+      </div>
+    </div>
   );
 };
 
-const Bar = ({ v, max, c=C.blue }) => (
-  <div style={{display:'flex', alignItems:'center', gap:6}}>
-    <div style={{width:50, height:4, background:C.border, borderRadius:2, overflow:'hidden'}}>
-      <div style={{height:'100%', background:c, width:`${Math.min(100,(v/max)*100)}%`}}/>
-    </div>
-    <span style={{fontSize:10, fontFamily:'monospace', color:c, fontWeight:600}}>{v}</span>
-  </div>
-);
+/* ── SCANNER TAB ────────────────────────────────────────────────────────── */
+function Scanner({ L, open, toggle, C }) {
+  const colors = [C.blue, C.gold, C.green, C.red, C.blue];
+  const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
-/* ── TAB RENDERERS ────────────────────────────────────────────────────────── */
-function Scanner({ L, open, toggle }) {
   return (
     <div>
-      <div style={{...S.row, justifyContent:'space-between', marginBottom:14}}>
-        <div>
-          <div style={{fontSize:10, fontWeight:700, letterSpacing:'.1em', color:C.mid}}>{L('MORNING SCANNER','早间扫描')}</div>
-          <div style={{fontSize:18, fontWeight:700, color:C.dark}}>{L(SCANNER.date.e, SCANNER.date.z)}</div>
-        </div>
-        <Tag text={SCANNER.regime.status} c={SCANNER.regime.color}/>
-      </div>
-
-      <div style={{background:`${SCANNER.regime.color}10`, border:`1px solid ${SCANNER.regime.color}30`, borderRadius:8, padding:12, marginBottom:14, fontSize:12, color:C.dark, lineHeight:1.7}}>
-        <Radio size={13} style={{color:SCANNER.regime.color, marginRight:6}}/>
-        <strong>{L('Regime:','制度:')}</strong> {L(SCANNER.regime.e, SCANNER.regime.z)}
-      </div>
-
-      <Card title={L('Macro Dashboard','宏观仪表盘')} open={open.macro} onToggle={()=>toggle('macro')}>
-        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px,1fr))', gap:12}}>
-          {MACRO.map((m,i) => {
-            const chgColor = m.chg.startsWith('-') || m.chg.includes('down') ? C.red : C.green;
-            return (
-              <div key={i} style={{background:C.soft, padding:10, borderRadius:6, borderLeft:`3px solid ${chgColor}`}}>
-                <div style={{fontSize:10, fontWeight:600, color:C.mid, marginBottom:4}}>{m.name}</div>
-                <div style={{fontSize:16, fontWeight:700, color:C.dark, fontFamily:'monospace', marginBottom:2}}>{m.val}</div>
-                <div style={{...S.row, justifyContent:'space-between', marginBottom:4, gap:4}}>
-                  <span style={{fontSize:10, fontWeight:600, color:chgColor}}>{m.chg}</span>
-                  <TI t={m.trend}/>
-                </div>
-                <div style={{fontSize:9, color:C.mid, lineHeight:1.4}}>{L(m.note.e, m.note.z)}</div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      <Card title={L('Sector Leading Indicators','行业领先指标')} open={open.leading} onToggle={()=>toggle('leading')}>
-        {SECTOR_IND.map((sect,si) => (
-          <div key={si} style={{marginBottom:si<SECTOR_IND.length-1?16:0}}>
-            <div style={{fontSize:12, fontWeight:700, color:C.blue, marginBottom:8}}>{sect.sector}</div>
-            {sect.indicators.map((ind,ii) => {
-              const sigCol = ind.signal>=70?C.green : ind.signal>=50?C.blue : ind.signal>=30?C.gold : C.red;
-              return (
-                <div key={ii} style={{fontSize:11, marginBottom:8, paddingLeft:10}}>
-                  <div style={{...S.row, justifyContent:'space-between', marginBottom:3}}>
-                    <span style={{color:C.dark, fontWeight:600}}>{L(ind.name.e, ind.name.z)}</span>
-                    <div style={{...S.row, gap:6}}>
-                      <Tag text={ind.fresh} c={C.mid}/>
-                      <TI t={ind.trend}/>
-                    </div>
-                  </div>
-                  <Bar v={ind.signal} max={100} c={sigCol}/>
-                  <div style={{fontSize:9, color:C.mid, marginTop:2}}>{ind.src}</div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </Card>
-
-      <Card title={L('Factor Momentum','因子动量')} open={open.factors} onToggle={()=>toggle('factors')}>
-        <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8}}>
-          {SCANNER.factors.map((f,i) => (
-            <div key={i} style={{background:C.soft, padding:10, borderRadius:6, textAlign:'center'}}>
-              <div style={{fontSize:10, color:C.mid, fontWeight:600}}>{f.name}</div>
-              <div style={{fontSize:18, fontWeight:700, color:f.val>60?C.green:f.val>40?C.gold:C.red, marginTop:2}}>{f.val}</div>
-              <TI t={f.t}/>
+      <Card title={L('Macro Dashboard','宏观仪表盘')} open={open.macro} onToggle={()=>toggle('macro')} C={C}>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:10, marginBottom:14}}>
+          {MACRO.map((m,i)=>(
+            <div key={i} style={{padding:12, background:C.soft, borderRadius:8}}>
+              <div style={{fontSize:10, color:C.mid, fontWeight:600}}>{m.name}</div>
+              <div style={{fontSize:13, fontWeight:700, color:C.dark, marginTop:4}}>{m.val}</div>
+              <div style={{...S.row, gap:3, marginTop:4}}><TI t={m.trend} C={C}/><span style={{fontSize:9, color:C.mid}}>{m.chg}</span></div>
             </div>
           ))}
         </div>
+        <div style={{fontSize:11, color:C.mid, lineHeight:1.6}}>{MACRO[0].note[lang]}</div>
       </Card>
 
-      <Card title={L('Screening Funnel','筛选漏斗')} sub="L0→L4" open={open.funnel} onToggle={()=>toggle('funnel')}>
-        {SCANNER.funnel.map((f,i) => (
-          <div key={i} style={{...S.row, padding:'7px 0', borderBottom:i<SCANNER.funnel.length-1?`1px solid ${C.border}`:'none'}}>
-            <div style={{width:90, fontSize:11, fontWeight:600, color:C.blue}}>{f.s}</div>
-            <div style={{width:50, fontSize:14, fontWeight:700, color:C.dark, fontFamily:'monospace'}}>{f.n}</div>
-            <div style={{fontSize:10, color:C.mid}}>{f.r}</div>
+      <Card title={L('Factor Momentum','因子动量')} open={open.factors} onToggle={()=>toggle('factors')} C={C}>
+        <div style={{height:220}}>
+          <ResponsiveContainer width='100%' height='100%'>
+            <BarChart data={SCANNER.factors}>
+              <XAxis dataKey='name' tick={{fontSize:11}} />
+              <YAxis tick={{fontSize:10}} domain={[0,100]} />
+              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6}} />
+              <Bar dataKey='val' fill={C.blue} radius={[4,4,0,0]}>
+                {SCANNER.factors.map((f,i)=>(
+                  <Cell key={i} fill={f.val>60?C.green: f.val>40?C.gold:C.red} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <Card title={L('Screening Funnel','筛选漏斗')} open={open.funnel} onToggle={()=>toggle('funnel')} C={C}>
+        {SCANNER.funnel.map((f,i)=>(
+          <div key={i} style={{...S.row, marginBottom:i<SCANNER.funnel.length-1?10:0, justifyContent:'space-between'}}>
+            <div><div style={{fontSize:11, fontWeight:600, color:C.dark}}>{f.s}</div><div style={{fontSize:9, color:C.mid}}>{f.r}</div></div>
+            <div style={{fontSize:13, fontWeight:700, color:C.blue}}>{f.n}</div>
           </div>
         ))}
       </Card>
 
-      <Card title={L('Pair Trade Ideas','配对交易')} open={open.pairs} onToggle={()=>toggle('pairs')}>
-        {PEERS.map((p,i) => (
-          <div key={i} style={{background:C.soft, borderRadius:8, padding:12, marginBottom:i<PEERS.length-1?10:0}}>
-            <div style={{...S.row, justifyContent:'space-between', marginBottom:6}}>
-              <div style={{fontSize:12, fontWeight:700, color:C.dark}}>{p.pair}</div>
-              <Tag text={p.div} c={C.blue}/>
+      <Card title={L('AI Portfolio Impact','AI投资组合影响')} open={open.macro} onToggle={()=>toggle('macro')} C={C}>
+        {MACRO_ANCHORS.map((a,i)=>(
+          <div key={i} style={{padding:10, marginBottom:10, background:C.soft, borderRadius:8}}>
+            <div style={{...S.row, gap:8, marginBottom:6}}>
+              <span style={{fontSize:11, fontWeight:700, color:C.dark}}>{a.macro}</span>
+              <span style={{...S.tag(a.impact==='positive'?C.green:a.impact==='negative'?C.red:C.gold), fontSize:9}}>
+                {a.impact===('positive')?'⬆':a.impact==='negative'?'⬇':'→'}
+              </span>
+              <span style={{...S.tag(C.blue), fontSize:9}}>{a.weight}</span>
             </div>
-            <div style={{fontSize:11, color:C.mid, marginBottom:6}}>corr {p.corr} · beta {p.betaAdj} · {p.ticker}</div>
-            <div style={{fontSize:10, color:C.dark, lineHeight:1.5, marginBottom:6}}>
-              <div style={{fontWeight:600, marginBottom:2}}>{L('Catalyst divergence:','催化差异：')}</div>
-              <div>{L(p.catalystDiv.e, p.catalystDiv.z)}</div>
-            </div>
-            <div style={{fontSize:10, color:C.mid, lineHeight:1.5, marginBottom:6}}>
-              <div style={{fontWeight:600, marginBottom:2}}>{L('Invalidation:','证伪：')}</div>
-              <div>{L(p.invalidation.e, p.invalidation.z)}</div>
-            </div>
-            <div style={{fontSize:11, color:C.dark, lineHeight:1.6}}>{L(p.e, p.z)}</div>
-          </div>
-        ))}
-      </Card>
-    </div>
-  );
-}
-
-function Screener({ L, onSelect }) {
-  const stocks = Object.entries(STOCKS);
-  return (
-    <div>
-      <div style={{...S.row, marginBottom:14}}>
-        <Filter size={14} style={{color:C.mid}}/>
-        <span style={{fontSize:10, fontWeight:700, letterSpacing:'.1em', color:C.mid}}>{L('SCREENER — 5 POSITIONS','筛选器 — 5 持仓')}</span>
-      </div>
-      <div style={{background:C.soft, borderRadius:8, marginBottom:14, overflow:'hidden'}}>
-        <table style={{width:'100%', borderCollapse:'collapse', fontSize:12}}>
-          <thead>
-            <tr style={{borderBottom:`1px solid ${C.border}`}}>
-              {[L('Ticker','代码'),L('Name','名称'),L('Sector','板块'),L('Dir','方向'),'VP',L('Price','价格'),L('Mkt Cap','市值'),L('Rev Gr','营收增'),L('GM','毛利'),L('P/E','市盈率')].map((h,i)=>(
-                <th key={i} style={{padding:'8px 10px', textAlign:i>4?'right':'left', fontSize:10, fontWeight:700, color:C.mid, letterSpacing:'.05em'}}>{h}</th>
+            <div style={{...S.row, gap:6, marginBottom:6, flexWrap:'wrap'}}>
+              {a.stocks.map((s,j)=>(
+                <div key={j} style={{fontSize:9, fontWeight:600, padding:'2px 8px', background:C.blue, color:'#fff', borderRadius:4, cursor:'pointer', opacity:0.8}}>
+                  {s}
+                </div>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {stocks.map(([tk,s],i) => (
-              <tr key={tk} onClick={()=>onSelect(tk)}
-                style={{borderBottom:`1px solid ${C.border}`, cursor:'pointer', background:i%2?C.soft:C.card, ':hover':{background:`${C.blue}08`}}}>
-                <td style={{padding:'9px 10px', fontFamily:'monospace', fontWeight:700, color:C.blue, fontSize:11}}>{tk}</td>
-                <td style={{padding:'9px 10px'}}>
-                  <div style={{fontWeight:600, color:C.dark}}>{s.name}</div>
-                  <div style={{fontSize:10, color:C.mid}}>{s.en}</div>
-                </td>
-                <td style={{padding:'9px 10px'}}><Tag text={s.sector} c={C.mid}/></td>
-                <td style={{padding:'9px 10px'}}><Tag text={s.dir} c={s.dir==='LONG'?C.green:C.red}/></td>
-                <td style={{padding:'9px 10px'}}>
-                  <div style={{display:'flex', alignItems:'center', gap:6}}>
-                    <VPRing score={s.vp} sz={36}/>
-                  </div>
-                </td>
-                <td style={{padding:'9px 10px', textAlign:'right', fontFamily:'monospace', fontWeight:600, color:C.dark}}>{s.price}</td>
-                <td style={{padding:'9px 10px', textAlign:'right', fontFamily:'monospace', fontSize:11, color:C.mid}}>{s.mktcap}</td>
-                <td style={{padding:'9px 10px', textAlign:'right', fontWeight:600, color:s.fin.revGr.startsWith('+')?C.green:C.red}}>{s.fin.revGr}</td>
-                <td style={{padding:'9px 10px', textAlign:'right', color:C.dark}}>{s.fin.gm}</td>
-                <td style={{padding:'9px 10px', textAlign:'right', color:C.dark}}>{s.fin.pe}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div style={{fontSize:10, color:C.mid, textAlign:'center'}}>
-        {L('Click any row to open Research','点击任意行打开研究报告')} · EQR + variant perception + catalysts
-      </div>
-    </div>
-  );
-}
-
-const VP_KEYS = [
-  { k:'expectation_gap', w:30, label:'Expectation Gap' },
-  { k:'fundamental_acc', w:25, label:'Fundamental Acc.' },
-  { k:'narrative_shift', w:20, label:'Narrative Shift' },
-  { k:'low_coverage',   w:15, label:'Low Coverage' },
-  { k:'catalyst_prox',  w:10, label:'Catalyst Proximity' },
-];
-
-function Research({ L, ticker, open, toggle }) {
-  if (!ticker) return (
-    <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:300, color:C.mid, gap:12}}>
-      <Crosshair size={36} style={{color:C.border}}/>
-      <div style={{fontSize:13}}>{L('Select a stock from Screener','请从筛选器选择一只股票')}</div>
-    </div>
-  );
-  const s = STOCKS[ticker];
-  const vzParts = L(s.variant.e, s.variant.z).split('→');
-  const vzLabels = [L('Market believes','市场认为'), L('We believe','我们认为'), L('Mechanism','机制'), L('✓ Right if','✓ 验证'), L('✗ Wrong if','✗ 证伪')];
-  const vzColors = [C.mid, C.blue, '#7B6BA5', C.green, C.red];
-  const pricingColor = s.pricing.level==='LOW'?C.green : s.pricing.level==='MID'?C.gold : C.red;
-  const pricingLabel = s.pricing.level==='LOW'?L('Room to Run','上升空间') : s.pricing.level==='MID'?L('Partially Priced','部分入价') : L('Crowded','拥挤');
-
-  return (
-    <div>
-      {/* Header */}
-      <div style={{...S.row, justifyContent:'space-between', marginBottom:14, flexWrap:'wrap', gap:8}}>
-        <div>
-          <div style={{...S.row, gap:8, marginBottom:4}}>
-            <span style={{fontSize:20, fontWeight:800, color:C.dark}}>{s.name}</span>
-            <span style={{fontSize:14, color:C.mid}}>{s.en}</span>
-            <Tag text={s.dir} c={s.dir==='LONG'?C.green:C.red}/>
-            <Tag text={s.sector} c={C.mid}/>
-          </div>
-          <div style={{...S.row, gap:6, flexWrap:'wrap'}}>
-            <EQR lvl={s.eqr.overall}/>
-            {['biz','variant','catalysts','risks'].map(k=>(
-              <span key={k} style={{fontSize:9, color:C.mid}}>{k}:<EQR lvl={s.eqr[k]}/></span>
-            ))}
-          </div>
-        </div>
-        <div style={{...S.row, gap:16}}>
-          <VPRing score={s.vp} sz={72}/>
-          <div>
-            <div style={{fontSize:11, color:C.mid, marginBottom:4}}>{L('Financials','财务')}</div>
-            {[['Rev',s.fin.rev],['Growth',s.fin.revGr],['GM',s.fin.gm],['P/E',s.fin.pe]].map(([l,v])=>(
-              <div key={l} style={{...S.row, gap:6, marginBottom:2}}>
-                <span style={{fontSize:10, color:C.mid, width:42}}>{l}</span>
-                <span style={{fontSize:11, fontWeight:700, fontFamily:'monospace', color:C.dark}}>{v}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Pulse */}
-      <div style={{background:`${C.blue}08`, border:`1px solid ${C.blue}25`, borderRadius:8, padding:12, marginBottom:14, fontSize:12, lineHeight:1.7, color:C.dark}}>
-        <Zap size={12} style={{color:C.gold, marginRight:6}}/><strong>{L('Pulse:','脉搏:')}</strong> {L(s.pulse.e, s.pulse.z)}
-      </div>
-
-      {/* AI Disclaimer */}
-      <div style={{background:`${C.gold}08`, border:`1px solid ${C.gold}30`, borderRadius:6, padding:'8px 12px', marginBottom:14, fontSize:10, color:C.mid, lineHeight:1.6}}>
-        <Info size={11} style={{color:C.gold, marginRight:5}}/>{L('AI-generated evidence & signals only. Not investment advice. Human judgment required.','AI生成证据和信号，仅供参考。非投资建议。需要人工判断。')}
-      </div>
-
-      {/* Business Model */}
-      <Card title={L('Business Model','商业模型')} sub="① Problem → ② Mechanism → ③ Money Flow" open={open.biz} onToggle={()=>toggle('biz')}>
-        {L(s.biz.e, s.biz.z).split(/①|②|③/).filter(Boolean).map((seg,i)=>(
-          <div key={i} style={{display:'flex', gap:10, marginBottom:10}}>
-            <span style={{fontWeight:800, fontSize:16, color:[C.blue,'#7B6BA5',C.green][i], flexShrink:0, width:20}}>{'①②③'[i]}</span>
-            <span style={{fontSize:12, color:C.dark, lineHeight:1.7}}>{seg.trim()}</span>
-          </div>
-        ))}
-      </Card>
-
-      {/* Variant Perception */}
-      <Card title="Variant Perception" sub="Market believes → We believe → Mechanism → Right if → Wrong if" open={open.variant} onToggle={()=>toggle('variant')}>
-        {vzParts.filter(Boolean).map((seg,i)=>(
-          <div key={i} style={{borderLeft:`3px solid ${vzColors[i]||C.mid}`, paddingLeft:10, marginBottom:10}}>
-            <div style={{fontSize:10, fontWeight:700, color:vzColors[i]||C.mid, marginBottom:2}}>{vzLabels[i]||'—'}</div>
-            <div style={{fontSize:12, color:C.dark, lineHeight:1.6}}>{seg.trim()}</div>
-          </div>
-        ))}
-      </Card>
-
-      {/* VP Decomposition */}
-      <Card title={L('VP Score Decomposition','VP评分分解')} sub={`Total: ${s.vp}/100`} open={open.vp} onToggle={()=>toggle('vp')}>
-        {VP_KEYS.map(({k,w,label})=>{
-          const d = s.decomp[k]; if(!d) return null;
-          const c = d.s>=70?C.green:d.s>=50?C.blue:d.s>=30?C.gold:C.red;
-          return (
-            <div key={k} style={{marginBottom:10}}>
-              <div style={{...S.row, justifyContent:'space-between', marginBottom:3}}>
-                <span style={{fontSize:11, color:C.dark}}>{label}</span>
-                <span style={{fontSize:10, color:C.mid}}>wt {w}%</span>
-              </div>
-              <Bar v={d.s} max={100} c={c}/>
-              <div style={{fontSize:10, color:C.mid, marginTop:2}}>{L(d.e,d.z)}</div>
             </div>
-          );
-        })}
-        <div style={{marginTop:12, paddingTop:12, borderTop:`1px solid ${C.border}`}}>
-          <div style={{...S.row, justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
-            <span style={{fontSize:11, fontWeight:600, color:C.dark}}>{L('VP Pricing Check','VP定价检查')}</span>
-            <span style={{...S.tag(pricingColor)}}>{pricingLabel}</span>
-          </div>
-          <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{L(s.pricing.crowd.e, s.pricing.crowd.z)}</div>
-        </div>
-      </Card>
-
-      {/* Catalysts */}
-      <Card title={L('Catalysts','催化剂')} open={open.cats} onToggle={()=>toggle('cats')}>
-        {s.catalysts.map((c,i)=>(
-          <div key={i} style={{...S.row, justifyContent:'space-between', padding:'7px 0', borderBottom:i<s.catalysts.length-1?`1px solid ${C.border}`:'none', flexWrap:'wrap', gap:6}}>
-            <div style={{flex:1, fontSize:12, color:C.dark}}>{L(c.e, c.z)}</div>
-            <div style={{...S.row, gap:6}}>
-              <Tag text={c.t} c={C.mid}/>
-              <Tag text={c.imp} c={c.imp==='HIGH'?C.green:C.gold}/>
-            </div>
-          </div>
-        ))}
-      </Card>
-
-      {/* Risks */}
-      <Card title={L('Key Risks','关键风险')} open={open.risks} onToggle={()=>toggle('risks')}>
-        {s.risks.map((r,i)=>(
-          <div key={i} style={{...S.row, gap:10, padding:'7px 0', borderBottom:i<s.risks.length-1?`1px solid ${C.border}`:'none', flexWrap:'wrap'}}>
-            <AlertCircle size={13} style={{color:r.p==='HIGH'?C.red:C.gold, flexShrink:0}}/>
-            <div style={{flex:1, fontSize:12, color:C.dark}}>{L(r.e, r.z)}</div>
-            <div style={{...S.row, gap:4}}>
-              <Tag text={`P:${r.p}`} c={r.p==='HIGH'?C.red:C.gold}/>
-              <Tag text={`I:${r.imp}`} c={r.imp==='HIGH'?C.red:C.gold}/>
-            </div>
-          </div>
-        ))}
-      </Card>
-
-      {/* TA Pending */}
-      <Card title={L('Technical Analysis','技术分析')} sub={L('Pending AKShare integration','等待AKShare接入')} open={open.ta} onToggle={()=>toggle('ta')}>
-        <div style={{fontSize:11, color:C.mid, lineHeight:1.8}}>
-          <div>⏳ {L('Framework ready: 20/60d MA · RSI(14) · MACD · Volume spikes','框架已就绪：20/60日均线 · RSI(14) · MACD · 成交量异动')}</div>
-          <div style={{marginTop:6, fontSize:10}}>
-            <Tag text={L('Awaiting live data feed','等待实时数据接入')} c={C.gold}/>
-          </div>
-        </div>
-      </Card>
-
-      {/* Next Actions */}
-      <Card title={L('Required Next Steps','所需下一步')} sub={L('Verification tasks before position action','头寸操作前的验证任务')} open={open.actions} onToggle={()=>toggle('actions')}>
-        {s.nextActions.map((act,i) => (
-          <div key={i} style={{...S.row, gap:10, padding:'8px 0', borderBottom:i<s.nextActions.length-1?`1px solid ${C.border}`:'none'}}>
-            <CircleDot size={12} style={{color:C.blue, flexShrink:0, marginTop:2}}/>
-            <div style={{fontSize:12, color:C.dark, lineHeight:1.5}}>{L(act.e, act.z)}</div>
+            <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{a.note[lang]}</div>
           </div>
         ))}
       </Card>
@@ -525,32 +290,20 @@ function Research({ L, ticker, open, toggle }) {
   );
 }
 
-function Tracker({ L }) {
-  const stocks = Object.values(STOCKS);
+/* ── SCREENER TAB ────────────────────────────────────────────────────────── */
+function Screener({ L, onSelect, C }) {
+  const stocks = Object.entries(STOCKS).map(([tk,s])=>({...s, ticker:tk})).sort((a,b)=>b.vp-a.vp);
   return (
     <div>
-      <div style={{...S.row, marginBottom:14}}>
-        <Target size={14} style={{color:C.mid}}/>
-        <span style={{fontSize:10, fontWeight:700, letterSpacing:'.1em', color:C.mid}}>{L('POSITION TRACKER','持仓追踪')}</span>
-      </div>
-      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px,1fr))', gap:12}}>
+      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:14}}>
         {stocks.map((s,i)=>(
-          <div key={i} style={{...S.card, padding:14}}>
+          <div key={i} style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:14, cursor:'pointer', transition:'all .2s', opacity:0.85}} onClick={()=>onSelect(s.ticker)}>
             <div style={{...S.row, justifyContent:'space-between', marginBottom:8}}>
-              <div>
-                <div style={{fontWeight:700, color:C.dark}}>{s.name}</div>
-                <div style={{fontSize:10, color:C.mid}}>{s.en}</div>
-              </div>
-              <Tag text={s.dir} c={s.dir==='LONG'?C.green:C.red}/>
+              <div><div style={{fontSize:12, fontWeight:700, color:C.dark}}>{s.ticker}</div><div style={{fontSize:10, color:C.mid}}>{s.name}/{s.en}</div></div>
+              <VPRing score={s.vp} sz={48} C={C}/>
             </div>
-            <div style={{...S.row, justifyContent:'space-between', marginBottom:8}}>
-              <VPRing score={s.vp} sz={52}/>
-              <div style={{textAlign:'right'}}>
-                <div style={{fontSize:16, fontWeight:700, color:C.dark}}>{s.price}</div>
-                <div style={{fontSize:11, color:s.fin.revGr.startsWith('+')?C.green:C.red}}>{s.fin.revGr}</div>
-              </div>
-            </div>
-            <EQR lvl={s.eqr.overall}/>
+            <div style={{fontSize:12, fontWeight:600, color:C.dark, marginBottom:6}}>{s.price}</div>
+            <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{s.pulse[lang]}</div>
           </div>
         ))}
       </div>
@@ -558,65 +311,148 @@ function Tracker({ L }) {
   );
 }
 
-function Watchlist({ L }) {
-  const candidates = [
-    { name:'寒武纪', en:'Cambricon', tk:'688256.SH', why:L('AI chip domestic substitute play, SMIC 7nm ramp','国产AI芯片替代，SMIC 7nm爬坡'), vp:44, status:'monitoring' },
-    { name:'中芯国际', en:'SMIC', tk:'688981.SH', why:L('Foundry capacity + mature node capex cycle inflection','先进封装+成熟节点资本周期拐点'), vp:38, status:'monitoring' },
-    { name:'赛力斯', en:'Seres', tk:'601127.SH', why:L('Huawei AITO premium EV margin expansion thesis','华为AITO高端EV利润率扩张'), vp:41, status:'watching' },
-  ];
+/* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
+function Research({ L, ticker, open, toggle, C }) {
+  if (!ticker || !STOCKS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
+  const s = STOCKS[ticker];
+
+  const decompData = Object.entries(s.decomp).map(([k,v])=>({name:k.replace(/_/g,' '), value:v.s}));
+  const sectorIdx = PORTFOLIO.sectors.findIndex(sc=>sc.name===s.sector);
+  const sectorColor = sectorIdx>=0 ? [C.blue,'#7B6BA5',C.gold,C.green,C.red][sectorIdx] : C.mid;
+
   return (
     <div>
-      {/* Portfolio Exposure Header */}
-      <div style={{marginBottom:16, padding:14, background:C.soft, borderRadius:10}}>
-        <div style={{fontSize:11, fontWeight:700, color:C.mid, marginBottom:10, letterSpacing:'.1em'}}>{L('PORTFOLIO EXPOSURE','投资组合敞口')}</div>
-        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(100px,1fr))', gap:10, marginBottom:12}}>
-          <Pill n={PORTFOLIO.netExposure} label={L('Net Exposure','净敞口')} c={C.blue}/>
-          <Pill n={PORTFOLIO.grossExposure} label={L('Gross Exposure','总敞口')} c={C.gold}/>
-          <Pill n={PORTFOLIO.positions} label={L('Positions','持仓')} c={C.green}/>
-          <Pill n={`${PORTFOLIO.regimeAlign}%`} label={L('Regime Align','制度对齐')} c={'#7B6BA5'}/>
+      <Card title={`${s.ticker} · ${s.name}`} sub={`${s.en} · VP ${s.vp}`} open={true} C={C}>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginBottom:14}}>
+          <div><div style={S.label}>Price</div><div style={S.val}>{s.price}</div></div>
+          <div><div style={S.label}>Market Cap</div><div style={S.val}>{s.mktcap}</div></div>
+          <div><div style={S.label}>Direction</div><div style={{...S.val, color:C.green}}>{s.dir}</div></div>
         </div>
-        <div style={{fontSize:10, color:C.mid, marginBottom:6}}>{L('Sector Concentration','行业集中度')}</div>
-        <div style={{display:'flex', height:20, borderRadius:4, overflow:'hidden', gap:1, background:'#fff'}}>
-          {PORTFOLIO.sectors.map((sec,i) => (
-            <div key={i} style={{flex:sec.pct, background:sec.c, position:'relative', display:'flex', alignItems:'center', justifyContent:'center', fontSize:8, fontWeight:700, color:'#fff', textShadow:'0 1px 2px rgba(0,0,0,0.2)'}}>
-              {sec.pct>8 ? sec.name : ''}
-            </div>
-          ))}
-        </div>
-      </div>
+      </Card>
 
-      {/* Watchlist Section */}
-      <div style={{...S.row, marginBottom:14}}>
-        <Eye size={14} style={{color:C.mid}}/>
-        <span style={{fontSize:10, fontWeight:700, letterSpacing:'.1em', color:C.mid}}>{L('WATCHLIST — CANDIDATES','关注列表 — 候选')}</span>
-      </div>
-      {candidates.map((c,i)=>(
-        <div key={i} style={{...S.card, padding:14}}>
-          <div style={{...S.row, justifyContent:'space-between', marginBottom:8}}>
-            <div style={{...S.row, gap:8}}>
-              <span style={{fontWeight:700, color:C.dark}}>{c.name}</span>
-              <span style={{fontSize:10, color:C.mid}}>{c.en} · {c.tk}</span>
-            </div>
-            <div style={{...S.row, gap:6}}>
-              <Tag text={c.status} c={c.status==='monitoring'?C.blue:C.gold}/>
-              <div style={{...S.row, gap:4}}><VPRing score={c.vp} sz={32}/></div>
-            </div>
-          </div>
-          <div style={{fontSize:11, color:C.dark, lineHeight:1.6}}>{c.why}</div>
+      <Card title={L('Business Model','商业模式')} open={open.biz} onToggle={()=>toggle('biz')} C={C}>
+        <div style={{fontSize:11, lineHeight:1.8, color:C.dark}}>{s.biz[lang]}</div>
+      </Card>
+
+      <Card title={L('Variant Thesis','变体论点')} open={open.variant} onToggle={()=>toggle('variant')} C={C}>
+        <div style={{fontSize:11, lineHeight:1.8, color:C.dark}}>{s.variant[lang]}</div>
+      </Card>
+
+      <Card title={L('VP Decomposition','VP分解')} open={open.vp} onToggle={()=>toggle('vp')} C={C}>
+        <div style={{height:200, marginBottom:14}}>
+          <ResponsiveContainer width='100%' height='100%'>
+            <BarChart data={decompData} layout='vertical'>
+              <XAxis type='number' tick={{fontSize:10}} domain={[0,100]} />
+              <YAxis dataKey='name' type='category' tick={{fontSize:9}} width={80} />
+              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6}} />
+              <Bar dataKey='value' fill={C.blue} radius={[0,4,4,0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      ))}
+        {decompData.map((d,i)=>(
+          <div key={i} style={{fontSize:10, marginBottom:6}}>
+            <strong>{d.name}:</strong> <span style={{color:C.mid}}>{Object.values(s.decomp)[i].e}</span>
+          </div>
+        ))}
+      </Card>
+
+      <Card title={L('Catalysts','催化剂')} open={open.cats} onToggle={()=>toggle('cats')} C={C}>
+        {s.catalysts.map((c,i)=>(
+          <div key={i} style={{marginBottom:10, paddingBottom:10, borderBottom:i<s.catalysts.length-1?`1px solid ${C.border}`:'none'}}>
+            <div style={{...S.row, gap:8, marginBottom:4}}><span style={{fontSize:11, fontWeight:700, color:C.dark}}>{c[lang]}</span><Tag text={c.t} c={C.blue} C={C}/><Tag text={c.imp} c={c.imp==='HIGH'?C.green:C.gold} C={C}/></div>
+          </div>
+        ))}
+      </Card>
+
+      <Card title={L('Risks','风险')} open={open.risks} onToggle={()=>toggle('risks')} C={C}>
+        {s.risks.map((r,i)=>(
+          <div key={i} style={{marginBottom:10, paddingBottom:10, borderBottom:i<s.risks.length-1?`1px solid ${C.border}`:'none'}}>
+            <div style={{...S.row, gap:8, marginBottom:4}}><span style={{fontSize:11, fontWeight:700, color:C.dark}}>{r[lang]}</span><Tag text={r.p} c={r.p==='HIGH'?C.red:r.p==='MED'?C.gold:C.green} C={C}/></div>
+          </div>
+        ))}
+      </Card>
+
+      <Card title={L('Next Actions','下一步行动')} open={open.actions} onToggle={()=>toggle('actions')} C={C}>
+        {s.nextActions.map((a,i)=>(
+          <div key={i} style={{marginBottom:8, fontSize:11, color:C.dark}}>• {a[lang]}</div>
+        ))}
+      </Card>
     </div>
   );
 }
 
-function SystemTab({ L }) {
+/* ── TRACKER TAB ────────────────────────────────────────────────────────── */
+function Tracker({ L, C }) {
+  const stocks = Object.entries(STOCKS).slice(0,3).map(([tk,s])=>({...s, ticker:tk}));
+  return (
+    <div>
+      <Card title={L('Key Metrics Tracker','关键指标追踪')} open={true} C={C}>
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%', fontSize:11, borderCollapse:'collapse'}}>
+            <thead><tr style={{borderBottom:`1px solid ${C.border}`}}>
+              <th style={{textAlign:'left', padding:8, fontWeight:700, color:C.dark}}>Ticker</th>
+              <th style={{textAlign:'left', padding:8, fontWeight:700, color:C.dark}}>Revenue</th>
+              <th style={{textAlign:'left', padding:8, fontWeight:700, color:C.dark}}>Growth</th>
+              <th style={{textAlign:'left', padding:8, fontWeight:700, color:C.dark}}>GM%</th>
+            </tr></thead>
+            <tbody>
+              {stocks.map((s,i)=>(
+                <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}>
+                  <td style={{padding:8, color:C.dark, fontWeight:600}}>{s.ticker}</td>
+                  <td style={{padding:8, color:C.dark}}>{s.fin.rev}</td>
+                  <td style={{padding:8, color:C.green}}>{s.fin.revGr}</td>
+                  <td style={{padding:8, color:C.dark}}>{s.fin.gm}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* ── WATCHLIST TAB ────────────────────────────────────────────────────────── */
+function Watchlist({ L, C }) {
+  const stocks = Object.entries(STOCKS).map(([tk,s])=>({...s, ticker:tk}));
+  const sectorData = PORTFOLIO.sectors.map((sec,i)=>({name:sec.name, value:sec.pct, fill:[C.blue,'#7B6BA5',C.gold,C.green,C.red][i]}));
+
+  return (
+    <div>
+      <Card title={L('Portfolio Sectors','投资组合行业')} open={true} C={C}>
+        <div style={{height:250, display:'flex', justifyContent:'center'}}>
+          <ResponsiveContainer width='100%' height='100%'>
+            <RechartsPie data={sectorData} cx='50%' cy='50%' innerRadius={50} outerRadius={80} dataKey='value' label={(e)=>`${e.name} ${e.value}%`}>
+              {sectorData.map((e,i)=><Cell key={i} fill={e.fill} />)}
+            </RechartsPie>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <Card title={L('Positions','持仓')} open={true} C={C}>
+        {stocks.map((s,i)=>(
+          <div key={i} style={{marginBottom:10, paddingBottom:10, borderBottom:i<stocks.length-1?`1px solid ${C.border}`:'none'}}>
+            <div style={{...S.row, justifyContent:'space-between'}}>
+              <div><div style={{fontSize:11, fontWeight:700, color:C.dark}}>{s.ticker}</div><div style={{fontSize:9, color:C.mid}}>{s.sector}</div></div>
+              <div style={{textAlign:'right'}}><div style={{fontSize:11, fontWeight:700, color:C.dark}}>VP {s.vp}</div></div>
+            </div>
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+}
+
+/* ── SYSTEM TAB ────────────────────────────────────────────────────────── */
+function SystemTab({ L, C }) {
   const layers = [
-    { l:'L0', n:L('Data Ingestion + Calendar','数据摄取+日历'), c:C.mid, status:'live' },
-    { l:'L1', n:L('Security Master','标的主数据'), c:C.gold, status:'live' },
-    { l:'L2', n:L('Daily Screening Engine','每日筛选引擎'), c:C.blue, status:'integrated' },
-    { l:'L3', n:L('LLM Research Builder','LLM研究构建'), c:C.red, status:'integrated' },
-    { l:'L4', n:L('VP Score + Watchlist','VP评分+关注列表'), c:C.green, status:'integrated' },
+    { l:'L0', n:L('Data Ingestion + Calendar','数据摄取+日历'), status:'live' },
+    { l:'L1', n:L('Security Master','标的主数据'), status:'live' },
+    { l:'L2', n:L('Daily Screening Engine','每日筛选引擎'), status:'integrated' },
+    { l:'L3', n:L('LLM Research Builder','LLM研究构建'), status:'integrated' },
+    { l:'L4', n:L('VP Score + Watchlist','VP评分+关注列表'), status:'integrated' },
   ];
+  const layerColors = [C.mid, C.gold, C.blue, C.red, C.green];
   return (
     <div>
       <div style={{...S.row, marginBottom:14}}>
@@ -624,20 +460,20 @@ function SystemTab({ L }) {
         <span style={{fontSize:10, fontWeight:700, letterSpacing:'.1em', color:C.mid}}>{L('5-LAYER ARCHITECTURE','五层架构')}</span>
       </div>
       {layers.map((l,i)=>(
-        <div key={i} style={{...S.card, padding:12, borderLeft:`4px solid ${l.c}`}}>
+        <div key={i} style={{...S.card, padding:12, borderLeftColor:layerColors[i], borderLeftWidth:4, borderColor:C.border, background:C.card, marginBottom:12}}>
           <div style={{...S.row, justifyContent:'space-between'}}>
             <div style={{...S.row, gap:8}}>
-              <span style={{fontFamily:'monospace', fontWeight:800, color:l.c}}>{l.l}</span>
+              <span style={{fontFamily:'monospace', fontWeight:800, color:layerColors[i]}}>{l.l}</span>
               <span style={{fontSize:12, fontWeight:600, color:C.dark}}>{l.n}</span>
             </div>
-            <Tag text={l.status} c={l.status==='live'?C.green:C.blue}/>
+            <Tag text={l.status} c={l.status==='live'?C.green:C.blue} C={C}/>
           </div>
         </div>
       ))}
-      <div style={{marginTop:14, padding:12, background:C.soft, borderRadius:8, fontSize:11, color:C.mid, lineHeight:1.8}}>
+      <div style={{marginTop:14, padding:12, background:C.soft, borderRadius:8, fontSize:10, color:C.mid, lineHeight:1.8}}>
         <div><strong>VP Formula:</strong> 30% Expectation Gap + 25% Fundamental Acc + 20% Narrative Shift + 15% Low Coverage + 10% Catalyst Proximity</div>
         <div><strong>EV Formula:</strong> (P_win × Upside) − (P_loss × Downside)</div>
-        <div><strong>Alpha Engines:</strong> A=Earnings Surprise (30) · B=Multiple Expansion (40) · C=Capital Revaluation (30)</div>
+        <div><strong>Alpha Engines:</strong> A=Earnings Surprise · B=Multiple Expansion · C=Capital Revaluation</div>
       </div>
     </div>
   );
@@ -646,14 +482,19 @@ function SystemTab({ L }) {
 /* ── DASHBOARD ────────────────────────────────────────────────────────────── */
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
+  const [dark, setDark] = useState(true);
   const [tab, setTab] = useState('scanner');
   const [ticker, setTicker] = useState(null);
   const [search, setSearch] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, ta:false, actions:true});
 
+  const C = dark ? DARK : LIGHT;
   const L = (e,z) => lang==='en' ? e : z;
   const toggle = k => setOpen(p=>({...p,[k]:!p[k]}));
-  const goStock = tk => { setTicker(tk); setTab('research'); };
+
+  const goStock = tk => { setTicker(tk); setTab('research'); setShowSuggestions(false); };
 
   const handleSearch = () => {
     const q = search.toLowerCase().trim();
@@ -662,6 +503,17 @@ export default function Dashboard() {
     );
     if (found) goStock(found[0]);
   };
+
+  const searchResults = search.trim() ?
+    Object.entries(STOCKS)
+      .filter(([tk,s]) =>
+        tk.toLowerCase().includes(search.toLowerCase()) ||
+        s.name.toLowerCase().includes(search.toLowerCase()) ||
+        s.en.toLowerCase().includes(search.toLowerCase())
+      )
+      .slice(0, 5)
+      .map(([tk,s]) => ({...s, ticker:tk}))
+    : Object.entries(STOCKS).slice(0, 5).map(([tk,s]) => ({...s, ticker:tk}));
 
   const TABS = [
     { id:'scanner',  label:L('Scanner','扫描'),   icon:<Radio size={14}/> },
@@ -675,60 +527,81 @@ export default function Dashboard() {
   return (
     <div style={{display:'flex', height:'100vh', fontFamily:'Inter,"Noto Sans SC",system-ui,sans-serif', background:C.bg, color:C.dark, overflow:'hidden'}}>
       {/* Sidebar */}
-      <div style={{width:160, background:C.card, borderRight:`1px solid ${C.border}`, display:'flex', flexDirection:'column', flexShrink:0}}>
-        <div style={{padding:'14px 14px 10px', borderBottom:`1px solid ${C.border}`}}>
-          <div style={{fontSize:22, fontWeight:800, color:C.blue, letterSpacing:'-.02em'}}>AR</div>
-          <div style={{fontSize:8, color:C.mid, letterSpacing:'.1em', marginTop:1}}>ALPHA RESEARCH v5.2</div>
+      <div style={{width:collapsed?48:170, background:C.card, borderRight:`1px solid ${C.border}`, display:'flex', flexDirection:'column', flexShrink:0, transition:'width .3s', overflow:'hidden'}}>
+        <div style={{padding:collapsed?'14px 10px':'14px 14px 10px', borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap'}}>
+          <div style={{fontSize:collapsed?16:22, fontWeight:800, color:C.blue, letterSpacing:collapsed?0:'-.02em'}}>AR</div>
+          {!collapsed && <div style={{fontSize:8, color:C.mid, letterSpacing:'.1em', marginTop:1}}>ALPHA RESEARCH v5.2</div>}
         </div>
-        <div style={{flex:1, paddingTop:4}}>
+        <div style={{flex:1, paddingTop:4, overflow:'hidden'}}>
           {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            <button key={t.id} onClick={()=>setTab(t.id)} title={collapsed?t.label:''} style={{
               width:'100%', padding:'9px 12px', display:'flex', alignItems:'center', gap:8,
               border:'none', background:tab===t.id?`${C.blue}10`:'transparent', cursor:'pointer',
               color:tab===t.id?C.blue:C.mid, fontSize:12, fontWeight:tab===t.id?700:400,
               borderLeft:`3px solid ${tab===t.id?C.blue:'transparent'}`, textAlign:'left',
-              transition:'all .15s',
+              transition:'all .15s', whiteSpace:'nowrap', justifyContent:collapsed?'center':'flex-start',
             }}>
-              {t.icon}<span>{t.label}</span>
+              {t.icon}{!collapsed && <span>{t.label}</span>}
             </button>
           ))}
         </div>
-        <div style={{padding:'10px 12px', borderTop:`1px solid ${C.border}`, fontSize:9, color:C.mid}}>
-          {L('Evidence only. Not advice.','仅证据。非建议。')}
+        <div style={{padding:'10px 12px', borderTop:`1px solid ${C.border}`, fontSize:9, color:C.mid, textAlign:'center', whiteSpace:'nowrap'}}>
+          {!collapsed && L('Evidence only.','仅证据。')}
         </div>
+        <button onClick={()=>setCollapsed(!collapsed)} title={collapsed?'Expand':'Collapse'} style={{width:'100%', padding:'8px', border:'none', background:'transparent', color:C.mid, cursor:'pointer', display:'flex', justifyContent:'center', borderTop:`1px solid ${C.border}`}}>
+          {collapsed ? <ChevronRight size={14}/> : <ChevronLeft size={14}/>}
+        </button>
       </div>
 
       {/* Main */}
       <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden'}}>
         {/* Topbar */}
         <div style={{background:C.card, borderBottom:`1px solid ${C.border}`, padding:'8px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12}}>
-          <div style={{display:'flex', gap:6, alignItems:'center', flex:1, maxWidth:380}}>
-            <input value={search} onChange={e=>setSearch(e.target.value)}
+          <div style={{position:'relative', display:'flex', gap:6, alignItems:'center', flex:1, maxWidth:380}}>
+            <input value={search}
+              onChange={e=>{setSearch(e.target.value); setShowSuggestions(true)}}
               onKeyDown={e=>e.key==='Enter'&&handleSearch()}
+              onFocus={()=>setShowSuggestions(true)}
+              onBlur={()=>setTimeout(()=>setShowSuggestions(false), 200)}
               placeholder={L('Search ticker / name…','搜索代码/名称…')}
-              style={{flex:1, padding:'5px 10px', border:`1px solid ${C.border}`, borderRadius:6, fontSize:12, outline:'none', background:C.soft}}/>
+              style={{flex:1, padding:'5px 10px', border:`1px solid ${C.border}`, borderRadius:6, fontSize:12, outline:'none', background:C.soft, color:C.dark}}/>
             <button onClick={handleSearch} style={{padding:'5px 10px', background:C.blue, color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12}}>
               <Search size={13}/>
             </button>
+            {showSuggestions && (
+              <div style={{position:'absolute', top:'100%', left:0, right:0, marginTop:4, background:C.card, border:`1px solid ${C.border}`, borderRadius:6, maxHeight:240, overflowY:'auto', zIndex:10}}>
+                {searchResults.map((s,i)=>(
+                  <div key={i} onClick={()=>goStock(s.ticker)} style={{padding:10, cursor:'pointer', borderBottom:i<searchResults.length-1?`1px solid ${C.border}`:'none', transition:'background .15s', background:'transparent'}} onMouseOver={e=>e.target.style.background=C.soft} onMouseOut={e=>e.target.style.background='transparent'}>
+                    <div style={{fontSize:11, fontWeight:700, color:C.dark}}>{s.ticker} · {s.name}</div>
+                    <div style={{fontSize:9, color:C.mid}}>{s.en} · VP {s.vp}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <div style={{display:'flex', gap:3, background:C.soft, padding:2, borderRadius:5}}>
-            {['en','zh'].map(l=>(
-              <button key={l} onClick={()=>setLang(l)} style={{
-                padding:'3px 10px', border:'none', background:lang===l?C.blue:'transparent',
-                color:lang===l?'#fff':C.mid, borderRadius:4, cursor:'pointer', fontSize:10, fontWeight:700, transition:'all .15s',
-              }}>{l==='en'?'EN':'中文'}</button>
-            ))}
+          <div style={{display:'flex', gap:8, alignItems:'center'}}>
+            <button onClick={()=>setDark(!dark)} title={dark?'Light mode':'Dark mode'} style={{padding:'5px 8px', border:`1px solid ${C.border}`, background:'transparent', color:C.mid, cursor:'pointer', borderRadius:6, display:'flex', alignItems:'center'}}>
+              {dark ? <Sun size={14}/> : <Moon size={14}/>}
+            </button>
+            <div style={{display:'flex', gap:3, background:C.soft, padding:2, borderRadius:5}}>
+              {['en','zh'].map(l=>(
+                <button key={l} onClick={()=>setLang(l)} style={{
+                  padding:'3px 10px', border:'none', background:lang===l?C.blue:'transparent',
+                  color:lang===l?'#fff':C.mid, borderRadius:4, cursor:'pointer', fontSize:10, fontWeight:700, transition:'all .15s',
+                }}>{l==='en'?'EN':'中文'}</button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Content */}
         <div style={{flex:1, overflowY:'auto', padding:16}}>
-          {tab==='scanner'  && <Scanner L={L} open={open} toggle={toggle}/>}
-          {tab==='screener' && <Screener L={L} onSelect={goStock}/>}
-          {tab==='research' && <Research L={L} ticker={ticker} open={open} toggle={toggle}/>}
-          {tab==='tracker'  && <Tracker L={L}/>}
-          {tab==='watchlist'&& <Watchlist L={L}/>}
-          {tab==='system'   && <SystemTab L={L}/>}
+          {tab==='scanner'  && <Scanner L={L} open={open} toggle={toggle} C={C}/>}
+          {tab==='screener' && <Screener L={L} onSelect={goStock} C={C}/>}
+          {tab==='research' && <Research L={L} ticker={ticker} open={open} toggle={toggle} C={C}/>}
+          {tab==='tracker'  && <Tracker L={L} C={C}/>}
+          {tab==='watchlist'&& <Watchlist L={L} C={C}/>}
+          {tab==='system'   && <SystemTab L={L} C={C}/>}
         </div>
       </div>
     </div>
