@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
          Shield, Zap, Globe, Eye, Target, Filter, Radio, Crosshair,
          AlertCircle, CheckCircle, ArrowUpRight, ArrowDownRight,
-         Database, RefreshCw, Layers, BookOpen, Info, Calendar } from "lucide-react";
+         Database, RefreshCw, Layers, BookOpen, Info, Calendar,
+         Activity, DollarSign, PieChart, ListChecks, CircleDot } from "lucide-react";
 
 /* ── THEME ─────────────────────────────────────────────────────────────────── */
 const C = { blue:'#4A90D9', gold:'#BFA76A', green:'#3D8B6E', red:'#C25450',
@@ -24,6 +25,48 @@ const S = {
 };
 
 /* ── DATA ───────────────────────────────────────────────────────────────────── */
+const MACRO = [
+  { name:'CNY/USD', val:'7.24', chg:'-0.3%', trend:'stable', note:{e:'PBOC maintaining stability band',z:'央行维持稳定区间'} },
+  { name:'CN 10Y', val:'2.31%', chg:'+4bp', trend:'up', note:{e:'Mild tightening signal, watch for RRR cut',z:'温和收紧信号，关注降准'} },
+  { name:'PMI', val:'50.8', chg:'+0.3', trend:'up', note:{e:'Manufacturing expansion accelerating',z:'制造业扩张加速'} },
+  { name:'US 10Y', val:'4.38%', chg:'+8bp', trend:'up', note:{e:'Higher for longer narrative intact',z:'长期高利率叙事持续'} },
+  { name:'VIX', val:'16.2', chg:'-1.4', trend:'down', note:{e:'Risk appetite improving globally',z:'全球风险偏好改善'} },
+];
+
+const SECTOR_IND = [
+  { sector:'AI Infra', indicators:[
+    { name:{e:'Hyperscaler CapEx',z:'超大规模资本支出'}, signal:85, trend:'up', fresh:'2d', src:'MSFT/META Q1' },
+    { name:{e:'800G/1.6T Orders',z:'800G/1.6T订单'}, signal:78, trend:'up', fresh:'1w', src:'LightCounting' },
+    { name:{e:'GPU Shipments',z:'GPU出货量'}, signal:72, trend:'up', fresh:'3d', src:'NVIDIA channel' },
+  ]},
+  { sector:'HK Internet', indicators:[
+    { name:{e:'Online Ad Spend',z:'在线广告支出'}, signal:68, trend:'up', fresh:'2w', src:'CTR Media' },
+    { name:{e:'Gaming Licence Pace',z:'版号审批节奏'}, signal:55, trend:'stable', fresh:'1m', src:'NPPA' },
+    { name:{e:'WeChat MAU Growth',z:'微信MAU增长'}, signal:62, trend:'stable', fresh:'1q', src:'Tencent IR' },
+  ]},
+  { sector:'Biotech', indicators:[
+    { name:{e:'NMPA Approvals',z:'NMPA审批'}, signal:70, trend:'up', fresh:'1w', src:'NMPA.gov' },
+    { name:{e:'BTK Inhibitor Scripts',z:'BTK抑制剂处方量'}, signal:76, trend:'up', fresh:'2w', src:'IQVIA' },
+    { name:{e:'IRA Negotiation Status',z:'IRA谈判进展'}, signal:40, trend:'down', fresh:'1m', src:'CMS.gov' },
+  ]},
+  { sector:'EV/Auto', indicators:[
+    { name:{e:'NEV Monthly Sales',z:'新能源月销量'}, signal:74, trend:'up', fresh:'5d', src:'CPCA' },
+    { name:{e:'Battery Material Price',z:'电池材料价格'}, signal:52, trend:'stable', fresh:'1w', src:'SMM' },
+    { name:{e:'EU Tariff Risk',z:'欧盟关税风险'}, signal:35, trend:'down', fresh:'2w', src:'EU Commission' },
+  ]},
+];
+
+const PORTFOLIO = {
+  netExposure: '82%', grossExposure: '100%', positions: 5, regimeAlign: 87,
+  sectors: [
+    { name:'AI Infra', pct:25, c:C.blue },
+    { name:'Platform', pct:20, c:'#7B6BA5' },
+    { name:'Gaming', pct:15, c:C.gold },
+    { name:'Biotech', pct:22, c:C.green },
+    { name:'EV/Auto', pct:18, c:C.red },
+  ],
+};
+
 const STOCKS = {
   '300308.SZ': {
     name:'中际旭创', en:'Innolight', sector:'AI Infra', dir:'LONG', vp:79, price:'¥138.50', mktcap:'¥184B',
@@ -38,6 +81,8 @@ const STOCKS = {
     ],
     decomp:{ expectation_gap:{s:72,e:'Consensus underprices 1.6T speed',z:'共识低估1.6T进度'}, fundamental_acc:{s:80,e:'SiPh GM expansion accelerating',z:'硅光毛利快速扩张'}, narrative_shift:{s:65,e:'AI infra proxy re-rating',z:'AI基础设施重估'}, low_coverage:{s:55,e:'Limited sell-side SiPh model depth',z:'卖方硅光建模不足'}, catalyst_prox:{s:85,e:'Q2 qual event imminent',z:'Q2认证事件临近'} },
     risks:[{ e:'1.6T qualification delay beyond Q3 2025', z:'1.6T认证推迟至Q3+', p:'LOW', imp:'HIGH' },{ e:'Hyperscaler CapEx cut (recessionary)', z:'超大规模资本支出削减', p:'LOW', imp:'HIGH' },{ e:'SiPh yield ramp slower than guided', z:'硅光良率爬坡慢于指引', p:'MED', imp:'MED' }],
+    pricing:{level:'LOW',crowd:{e:'Limited hedge fund positioning; sell-side models do not yet incorporate SiPh margin expansion',z:'对冲基金持仓有限；卖方模型尚未纳入硅光利润率扩张'}},
+    nextActions:[{e:'Verify Q2 SiPh mix from channel checks',z:'通过渠道检查验证Q2硅光占比'},{e:'Cross-check 1.6T timeline vs NVIDIA roadmap',z:'交叉验证1.6T时间线与NVIDIA路线图'},{e:'Monitor ByteDance capex guidance update',z:'监控字节跳动资本支出指引更新'}],
     fin:{ rev:'¥16.8B', revGr:'+47%', gm:'39%', pe:28, ev_ebitda:18, fcf:'¥2.1B' },
   },
   '700.HK': {
@@ -49,6 +94,8 @@ const STOCKS = {
     catalysts:[{ e:'Weixin AI feature launch metrics (MAU/ARPU)', z:'微信AI功能上线数据', t:'Q2 2025', imp:'HIGH' },{ e:'Q4 2024 earnings — gaming international', z:'Q4财报海外游戏', t:'Mar 2025', imp:'MED' }],
     decomp:{ expectation_gap:{s:68,e:'AI monetisation not in consensus',z:'AI变现未入共识'}, fundamental_acc:{s:70,e:'Gaming + ads dual recovery',z:'游戏+广告双复苏'}, narrative_shift:{s:75,e:'State endorsement changes narrative',z:'国家背书改变叙事'}, low_coverage:{s:40,e:'Well-covered stock',z:'覆盖充分'}, catalyst_prox:{s:60,e:'AI launch timing uncertain',z:'AI上线时机不确定'} },
     risks:[{ e:'Regulatory re-tightening on gaming', z:'游戏监管重新收紧', p:'MED', imp:'HIGH' },{ e:'Macro consumption weakness', z:'宏观消费疲软', p:'MED', imp:'MED' }],
+    pricing:{level:'MID',crowd:{e:'Consensus has partial AI narrative but underestimates ARPU uplift magnitude',z:'共识部分反映AI叙事但低估ARPU提升幅度'}},
+    nextActions:[{e:'Track Weixin AI feature rollout metrics',z:'跟踪微信AI功能推出数据'},{e:'Compare Q1 ad revenue vs consensus',z:'对比Q1广告收入与市场共识'},{e:'Monitor gaming regulatory signals',z:'监控游戏监管信号'}],
     fin:{ rev:'HK$660B', revGr:'+8%', gm:'52%', pe:16, ev_ebitda:12, fcf:'HK$180B' },
   },
   '9999.HK': {
@@ -60,6 +107,8 @@ const STOCKS = {
     catalysts:[{ e:'Marvel Rivals Season 2 launch metrics', z:'漫威对决S2上线数据', t:'Q2 2025', imp:'HIGH' },{ e:'Japan revenue disclosure in Q1 results', z:'Q1财报日本营收披露', t:'May 2025', imp:'MED' }],
     decomp:{ expectation_gap:{s:62,e:'Japan TAM underestimated',z:'日本TAM被低估'}, fundamental_acc:{s:55,e:'IP economics improving',z:'IP经济学改善'}, narrative_shift:{s:50,e:'Post-Blizzard recovery narrative',z:'后暴雪复苏叙事'}, low_coverage:{s:45,e:'Moderate coverage',z:'覆盖适中'}, catalyst_prox:{s:65,e:'S2 launch imminent',z:'S2即将发布'} },
     risks:[{ e:'Marvel Rivals user retention falls', z:'漫威对决留存下降', p:'MED', imp:'HIGH' },{ e:'China gaming licence delays', z:'国内版号延迟', p:'LOW', imp:'MED' }],
+    pricing:{level:'MID',crowd:{e:'Japan expansion partially recognized; Marvel Rivals success somewhat priced',z:'日本扩张部分被认可；漫威对决成功部分入价'}},
+    nextActions:[{e:'Check Marvel Rivals S2 first-week DAU',z:'检查漫威对决S2首周DAU'},{e:'Verify Japan revenue in Q1 report',z:'在Q1财报中验证日本营收'},{e:'Track Steam concurrent user trends',z:'跟踪Steam同时在线趋势'}],
     fin:{ rev:'¥102B', revGr:'+7%', gm:'63%', pe:14, ev_ebitda:9, fcf:'¥28B' },
   },
   '6160.HK': {
@@ -71,6 +120,8 @@ const STOCKS = {
     catalysts:[{ e:'Q1 2025 EU revenue disclosure', z:'Q1欧盟营收披露', t:'May 2025', imp:'HIGH' },{ e:'GAAP profitability announcement', z:'GAAP盈利公告', t:'Q3 2026', imp:'HIGH' }],
     decomp:{ expectation_gap:{s:74,e:'EU adoption speed mismodelled',z:'欧盟采纳速度建模错误'}, fundamental_acc:{s:68,e:'Revenue ramp non-linear',z:'营收爬坡非线性'}, narrative_shift:{s:60,e:'Profitability inflection re-rates stock',z:'盈利拐点重估股价'}, low_coverage:{s:50,e:'Good coverage but EU undermodelled',z:'覆盖尚可但欧盟建模不足'}, catalyst_prox:{s:80,e:'Q1 results in 4 weeks',z:'Q1财报4周内'} },
     risks:[{ e:'IRA Brukinsa price negotiation', z:'IRA泽布替尼价格谈判', p:'MED', imp:'HIGH' },{ e:'PD-1 combo Phase III futility', z:'PD-1联合Phase III无效', p:'LOW', imp:'MED' }],
+    pricing:{level:'LOW',crowd:{e:'EU adoption speed not in sell-side models; profitability timing mispriced',z:'欧盟采纳速度未入卖方模型；盈利时间线定价错误'}},
+    nextActions:[{e:'Monitor Q2 EU Brukinsa prescription data (IQVIA)',z:'监控Q2欧盟泽布替尼处方数据（IQVIA）'},{e:'Track IRA negotiation milestones',z:'跟踪IRA谈判里程碑'},{e:'Verify profitability timeline in Q1 call',z:'在Q1电话会验证盈利时间线'}],
     fin:{ rev:'$3.2B', revGr:'+63%', gm:'85%', pe:'NM', ev_ebitda:'NM', fcf:'-$0.4B' },
   },
   '002594.SZ': {
@@ -82,6 +133,8 @@ const STOCKS = {
     catalysts:[{ e:'Brazil factory opening + local pricing', z:'巴西工厂开业+本地定价', t:'Q2 2025', imp:'MED' },{ e:'DM6 announcement (3rd-gen hybrid)', z:'DM6发布（第三代混动）', t:'H2 2025', imp:'MED' }],
     decomp:{ expectation_gap:{s:55,e:'EM volume undermodelled',z:'新兴市场产量建模不足'}, fundamental_acc:{s:60,e:'DM5 ASP holding up',z:'DM5均价维持'}, narrative_shift:{s:45,e:'Global EV leader narrative building',z:'全球EV领导者叙事构建'}, low_coverage:{s:35,e:'High coverage stock',z:'高覆盖股票'}, catalyst_prox:{s:50,e:'Brazil opening in weeks',z:'巴西工厂数周内开业'} },
     risks:[{ e:'EU/US tariff escalation on Chinese EVs', z:'欧美对中国EV加征关税', p:'HIGH', imp:'HIGH' },{ e:'China EV price war deepens margins', z:'中国EV价格战加剧', p:'MED', imp:'MED' }],
+    pricing:{level:'HIGH',crowd:{e:'Well-followed stock; EM export thesis gaining traction in sell-side notes',z:'高关注度股票；新兴市场出口论点逐渐进入卖方报告'}},
+    nextActions:[{e:'Track Brazil factory output ramp data',z:'跟踪巴西工厂产出爬坡数据'},{e:'Monitor EU tariff vote timeline',z:'监控欧盟关税投票时间线'},{e:'Check DM5 monthly sales vs DM-i cannibalization',z:'检查DM5月销量vs DM-i蚕食效应'}],
     fin:{ rev:'¥770B', revGr:'+28%', gm:'23%', pe:22, ev_ebitda:14, fcf:'¥38B' },
   },
 };
@@ -100,8 +153,8 @@ const SCANNER = {
 };
 
 const PEERS = [
-  { pair:'Innolight vs Eoptolink', ticker:'300308 vs 603488', div:'VP 79 vs 45', corr:0.82, e:'SiPh premium vs margin compression. Pair trade on qualification delta.', z:'硅光溢价vs利润率压缩。认证差异配对交易。' },
-  { pair:'Tencent vs Alibaba', ticker:'700 vs 9988', div:'VP 64 vs 48', corr:0.75, e:'WeChat AI vs restructuring overhang. Long TENCENT / short BABA.', z:'微信AI vs 重组阴影。做多腾讯/做空阿里。' },
+  { pair:'Innolight vs Eoptolink', ticker:'300308 vs 603488', div:'VP 79 vs 45', corr:0.82, betaAdj:1.12, catalystDiv:{e:'1.6T qualification timing gap',z:'1.6T认证时间差'}, invalidation:{e:'Eoptolink closes SiPh gap within 2 quarters',z:'易飞光电2个季度内缩小硅光差距'}, e:'SiPh premium vs margin compression. Pair trade on qualification delta.', z:'硅光溢价vs利润率压缩。认证差异配对交易。' },
+  { pair:'Tencent vs Alibaba', ticker:'700 vs 9988', div:'VP 64 vs 48', corr:0.75, betaAdj:0.95, catalystDiv:{e:'AI monetization timeline divergence',z:'AI变现时间线分化'}, invalidation:{e:'BABA restructuring unlocks >20% re-rating',z:'阿里重组触发>20%重估'}, e:'WeChat AI vs restructuring overhang. Long TENCENT / short BABA.', z:'微信AI vs 重组阴影。做多腾讯/做空阿里。' },
 ];
 
 /* ── MINI COMPONENTS ─────────────────────────────────────────────────────── */
@@ -174,6 +227,49 @@ function Scanner({ L, open, toggle }) {
         <strong>{L('Regime:','制度:')}</strong> {L(SCANNER.regime.e, SCANNER.regime.z)}
       </div>
 
+      <Card title={L('Macro Dashboard','宏观仪表盘')} open={open.macro} onToggle={()=>toggle('macro')}>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px,1fr))', gap:12}}>
+          {MACRO.map((m,i) => {
+            const chgColor = m.chg.startsWith('-') || m.chg.includes('down') ? C.red : C.green;
+            return (
+              <div key={i} style={{background:C.soft, padding:10, borderRadius:6, borderLeft:`3px solid ${chgColor}`}}>
+                <div style={{fontSize:10, fontWeight:600, color:C.mid, marginBottom:4}}>{m.name}</div>
+                <div style={{fontSize:16, fontWeight:700, color:C.dark, fontFamily:'monospace', marginBottom:2}}>{m.val}</div>
+                <div style={{...S.row, justifyContent:'space-between', marginBottom:4, gap:4}}>
+                  <span style={{fontSize:10, fontWeight:600, color:chgColor}}>{m.chg}</span>
+                  <TI t={m.trend}/>
+                </div>
+                <div style={{fontSize:9, color:C.mid, lineHeight:1.4}}>{L(m.note.e, m.note.z)}</div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card title={L('Sector Leading Indicators','行业领先指标')} open={open.leading} onToggle={()=>toggle('leading')}>
+        {SECTOR_IND.map((sect,si) => (
+          <div key={si} style={{marginBottom:si<SECTOR_IND.length-1?16:0}}>
+            <div style={{fontSize:12, fontWeight:700, color:C.blue, marginBottom:8}}>{sect.sector}</div>
+            {sect.indicators.map((ind,ii) => {
+              const sigCol = ind.signal>=70?C.green : ind.signal>=50?C.blue : ind.signal>=30?C.gold : C.red;
+              return (
+                <div key={ii} style={{fontSize:11, marginBottom:8, paddingLeft:10}}>
+                  <div style={{...S.row, justifyContent:'space-between', marginBottom:3}}>
+                    <span style={{color:C.dark, fontWeight:600}}>{L(ind.name.e, ind.name.z)}</span>
+                    <div style={{...S.row, gap:6}}>
+                      <Tag text={ind.fresh} c={C.mid}/>
+                      <TI t={ind.trend}/>
+                    </div>
+                  </div>
+                  <Bar v={ind.signal} max={100} c={sigCol}/>
+                  <div style={{fontSize:9, color:C.mid, marginTop:2}}>{ind.src}</div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </Card>
+
       <Card title={L('Factor Momentum','因子动量')} open={open.factors} onToggle={()=>toggle('factors')}>
         <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8}}>
           {SCANNER.factors.map((f,i) => (
@@ -203,7 +299,15 @@ function Scanner({ L, open, toggle }) {
               <div style={{fontSize:12, fontWeight:700, color:C.dark}}>{p.pair}</div>
               <Tag text={p.div} c={C.blue}/>
             </div>
-            <div style={{fontSize:11, color:C.mid, marginBottom:4}}>corr {p.corr} · {p.ticker}</div>
+            <div style={{fontSize:11, color:C.mid, marginBottom:6}}>corr {p.corr} · beta {p.betaAdj} · {p.ticker}</div>
+            <div style={{fontSize:10, color:C.dark, lineHeight:1.5, marginBottom:6}}>
+              <div style={{fontWeight:600, marginBottom:2}}>{L('Catalyst divergence:','催化差异：')}</div>
+              <div>{L(p.catalystDiv.e, p.catalystDiv.z)}</div>
+            </div>
+            <div style={{fontSize:10, color:C.mid, lineHeight:1.5, marginBottom:6}}>
+              <div style={{fontWeight:600, marginBottom:2}}>{L('Invalidation:','证伪：')}</div>
+              <div>{L(p.invalidation.e, p.invalidation.z)}</div>
+            </div>
             <div style={{fontSize:11, color:C.dark, lineHeight:1.6}}>{L(p.e, p.z)}</div>
           </div>
         ))}
@@ -281,6 +385,8 @@ function Research({ L, ticker, open, toggle }) {
   const vzParts = L(s.variant.e, s.variant.z).split('→');
   const vzLabels = [L('Market believes','市场认为'), L('We believe','我们认为'), L('Mechanism','机制'), L('✓ Right if','✓ 验证'), L('✗ Wrong if','✗ 证伪')];
   const vzColors = [C.mid, C.blue, '#7B6BA5', C.green, C.red];
+  const pricingColor = s.pricing.level==='LOW'?C.green : s.pricing.level==='MID'?C.gold : C.red;
+  const pricingLabel = s.pricing.level==='LOW'?L('Room to Run','上升空间') : s.pricing.level==='MID'?L('Partially Priced','部分入价') : L('Crowded','拥挤');
 
   return (
     <div>
@@ -360,6 +466,13 @@ function Research({ L, ticker, open, toggle }) {
             </div>
           );
         })}
+        <div style={{marginTop:12, paddingTop:12, borderTop:`1px solid ${C.border}`}}>
+          <div style={{...S.row, justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+            <span style={{fontSize:11, fontWeight:600, color:C.dark}}>{L('VP Pricing Check','VP定价检查')}</span>
+            <span style={{...S.tag(pricingColor)}}>{pricingLabel}</span>
+          </div>
+          <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{L(s.pricing.crowd.e, s.pricing.crowd.z)}</div>
+        </div>
       </Card>
 
       {/* Catalysts */}
@@ -397,6 +510,16 @@ function Research({ L, ticker, open, toggle }) {
             <Tag text={L('Awaiting live data feed','等待实时数据接入')} c={C.gold}/>
           </div>
         </div>
+      </Card>
+
+      {/* Next Actions */}
+      <Card title={L('Required Next Steps','所需下一步')} sub={L('Verification tasks before position action','头寸操作前的验证任务')} open={open.actions} onToggle={()=>toggle('actions')}>
+        {s.nextActions.map((act,i) => (
+          <div key={i} style={{...S.row, gap:10, padding:'8px 0', borderBottom:i<s.nextActions.length-1?`1px solid ${C.border}`:'none'}}>
+            <CircleDot size={12} style={{color:C.blue, flexShrink:0, marginTop:2}}/>
+            <div style={{fontSize:12, color:C.dark, lineHeight:1.5}}>{L(act.e, act.z)}</div>
+          </div>
+        ))}
       </Card>
     </div>
   );
@@ -443,6 +566,26 @@ function Watchlist({ L }) {
   ];
   return (
     <div>
+      {/* Portfolio Exposure Header */}
+      <div style={{marginBottom:16, padding:14, background:C.soft, borderRadius:10}}>
+        <div style={{fontSize:11, fontWeight:700, color:C.mid, marginBottom:10, letterSpacing:'.1em'}}>{L('PORTFOLIO EXPOSURE','投资组合敞口')}</div>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(100px,1fr))', gap:10, marginBottom:12}}>
+          <Pill n={PORTFOLIO.netExposure} label={L('Net Exposure','净敞口')} c={C.blue}/>
+          <Pill n={PORTFOLIO.grossExposure} label={L('Gross Exposure','总敞口')} c={C.gold}/>
+          <Pill n={PORTFOLIO.positions} label={L('Positions','持仓')} c={C.green}/>
+          <Pill n={`${PORTFOLIO.regimeAlign}%`} label={L('Regime Align','制度对齐')} c={'#7B6BA5'}/>
+        </div>
+        <div style={{fontSize:10, color:C.mid, marginBottom:6}}>{L('Sector Concentration','行业集中度')}</div>
+        <div style={{display:'flex', height:20, borderRadius:4, overflow:'hidden', gap:1, background:'#fff'}}>
+          {PORTFOLIO.sectors.map((sec,i) => (
+            <div key={i} style={{flex:sec.pct, background:sec.c, position:'relative', display:'flex', alignItems:'center', justifyContent:'center', fontSize:8, fontWeight:700, color:'#fff', textShadow:'0 1px 2px rgba(0,0,0,0.2)'}}>
+              {sec.pct>8 ? sec.name : ''}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Watchlist Section */}
       <div style={{...S.row, marginBottom:14}}>
         <Eye size={14} style={{color:C.mid}}/>
         <span style={{fontSize:10, fontWeight:700, letterSpacing:'.1em', color:C.mid}}>{L('WATCHLIST — CANDIDATES','关注列表 — 候选')}</span>
@@ -506,7 +649,7 @@ export default function Dashboard() {
   const [tab, setTab] = useState('scanner');
   const [ticker, setTicker] = useState(null);
   const [search, setSearch] = useState('');
-  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, biz:true, variant:true, vp:true, cats:true, risks:false, ta:false});
+  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, ta:false, actions:true});
 
   const L = (e,z) => lang==='en' ? e : z;
   const toggle = k => setOpen(p=>({...p,[k]:!p[k]}));
