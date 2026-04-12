@@ -1,0 +1,318 @@
+{
+  "_meta": {
+    "fetched_at": "2026-04-13T00:23:05.001103",
+    "version": "1.0",
+    "tickers": [
+      "300308.SZ",
+      "700.HK",
+      "9999.HK",
+      "6160.HK",
+      "002594.SZ"
+    ]
+  },
+  "yahoo": {
+    "300308.SZ": {
+      "price": {
+        "last": 734.65,
+        "prev_close": 693.02,
+        "change_pct": 6.01,
+        "high": 743.04,
+        "low": 694.01,
+        "volume": 33080075,
+        "avg_volume_20d": 29639343,
+        "volume_ratio": 1.12,
+        "high_52w": 743.04,
+        "low_52w": 75.53
+      },
+      "technical": {
+        "sma_20": 607.08,
+        "sma_50": 583.26,
+        "sma_200": null,
+        "rsi_14": 70.1,
+        "macd": 29.7812,
+        "macd_signal": 15.9096,
+        "macd_histogram": 13.8715,
+        "above_sma_20": "True",
+        "above_sma_50": "True",
+        "above_sma_200": null
+      },
+      "fundamentals": {
+        "market_cap": 816283123712,
+        "pe_trailing": 75.737114,
+        "pe_forward": 24.790781,
+        "ev_ebitda": 56.892,
+        "pb": 27.424593,
+        "dividend_yield": 0.12,
+        "revenue": 38239936512,
+        "revenue_growth": 1.021,
+        "gross_margin": 0.41719002,
+        "operating_margin": 0.36398998,
+        "net_margin": 0.28236,
+        "roe": 0.44611,
+        "debt_to_equity": 5.065,
+        "free_cash_flow": 5384610816
+      },
+      "analyst": {
+        "target_mean": 677.045,
+        "target_high": 888.0,
+        "target_low": 430.0,
+        "recommendation": "strong_buy",
+        "num_analysts": 16
+      },
+      "meta": {
+        "currency": "CNY",
+        "exchange": "SZ",
+        "name_en": "Innolight",
+        "name_zh": "中际旭创"
+      }
+    },
+    "700.HK": {
+      "price": {
+        "last": 504.5,
+        "prev_close": 508.5,
+        "change_pct": -0.79,
+        "high": 514.0,
+        "low": 501.0,
+        "volume": 20671874,
+        "avg_volume_20d": 27442217,
+        "volume_ratio": 0.75,
+        "high_52w": 683.0,
+        "low_52w": 428.26
+      },
+      "technical": {
+        "sma_20": 515.27,
+        "sma_50": 536.28,
+        "sma_200": null,
+        "rsi_14": 34.2,
+        "macd": -11.1202,
+        "macd_signal": -12.6396,
+        "macd_histogram": 1.5195,
+        "above_sma_20": "False",
+        "above_sma_50": "False",
+        "above_sma_200": null
+      },
+      "fundamentals": {
+        "market_cap": 4559115649024,
+        "pe_trailing": 18.212996,
+        "pe_forward": 12.947237,
+        "ev_ebitda": 16.927,
+        "pb": 3.4525974,
+        "dividend_yield": 1.05,
+        "revenue": 751766011904,
+        "revenue_growth": 0.127,
+        "gross_margin": 0.5625,
+        "operating_margin": 0.33134997,
+        "net_margin": 0.29909,
+        "roe": 0.20027,
+        "debt_to_equity": 32.746,
+        "free_cash_flow": 139386503168
+      },
+      "analyst": {
+        "target_mean": 720.07385,
+        "target_high": 885.9108,
+        "target_low": 482.67535,
+        "recommendation": "strong_buy",
+        "num_analysts": 44
+      },
+      "meta": {
+        "currency": "HKD",
+        "exchange": "HK",
+        "name_en": "Tencent",
+        "name_zh": "腾讯控股"
+      }
+    },
+    "9999.HK": {
+      "price": {
+        "last": 178.4,
+        "prev_close": 177.0,
+        "change_pct": 0.79,
+        "high": 180.7,
+        "low": 176.6,
+        "volume": 3826959,
+        "avg_volume_20d": 5401533,
+        "volume_ratio": 0.71,
+        "high_52w": 247.56,
+        "low_52w": 143.97
+      },
+      "technical": {
+        "sma_20": 178.94,
+        "sma_50": 185.59,
+        "sma_200": null,
+        "rsi_14": 37.0,
+        "macd": -2.9285,
+        "macd_signal": -3.6127,
+        "macd_histogram": 0.6842,
+        "above_sma_20": "False",
+        "above_sma_50": "False",
+        "above_sma_200": null
+      },
+      "fundamentals": {
+        "market_cap": 574888411136,
+        "pe_trailing": 14.841929,
+        "pe_forward": 11.263247,
+        "ev_ebitda": 10.976,
+        "pb": 3.0980315,
+        "dividend_yield": 2.61,
+        "revenue": 112625803264,
+        "revenue_growth": 0.03,
+        "gross_margin": 0.64285004,
+        "operating_margin": 0.30200002,
+        "net_margin": 0.29975,
+        "roe": 0.22625,
+        "debt_to_equity": 3.867,
+        "free_cash_flow": 31503472640
+      },
+      "analyst": {
+        "target_mean": 254.91098,
+        "target_high": 313.2479,
+        "target_low": 141.92523,
+        "recommendation": "strong_buy",
+        "num_analysts": 22
+      },
+      "meta": {
+        "currency": "HKD",
+        "exchange": "HK",
+        "name_en": "NetEase",
+        "name_zh": "网易"
+      }
+    },
+    "6160.HK": {
+      "price": {
+        "last": 189.1,
+        "prev_close": 187.9,
+        "change_pct": 0.64,
+        "high": 191.1,
+        "low": 187.8,
+        "volume": 2774161,
+        "avg_volume_20d": 4071848,
+        "volume_ratio": 0.68,
+        "high_52w": 229.4,
+        "low_52w": 125.1
+      },
+      "technical": {
+        "sma_20": 175.04,
+        "sma_50": 190.75,
+        "sma_200": null,
+        "rsi_14": 63.5,
+        "macd": -0.4822,
+        "macd_signal": -3.9105,
+        "macd_histogram": 3.4282,
+        "above_sma_20": "True",
+        "above_sma_50": "False",
+        "above_sma_200": null
+      },
+      "fundamentals": {
+        "market_cap": 284071985152,
+        "pe_trailing": 126.91276,
+        "pe_forward": 30.60181,
+        "ev_ebitda": 465.218,
+        "pb": 7.975869,
+        "dividend_yield": null,
+        "revenue": 5343032832,
+        "revenue_growth": 0.328,
+        "gross_margin": 0.87488,
+        "operating_margin": 0.123509996,
+        "net_margin": 0.0537,
+        "roe": 0.07459,
+        "debt_to_equity": 25.058,
+        "free_cash_flow": 727117760
+      },
+      "analyst": {
+        "target_mean": 252.25444,
+        "target_high": 298.32892,
+        "target_low": 212.3201,
+        "recommendation": "strong_buy",
+        "num_analysts": 17
+      },
+      "meta": {
+        "currency": "HKD",
+        "exchange": "HK",
+        "name_en": "BeOne Medicines",
+        "name_zh": "百济神州"
+      }
+    },
+    "002594.SZ": {
+      "price": {
+        "last": 101.67,
+        "prev_close": 99.03,
+        "change_pct": 2.67,
+        "high": 102.2,
+        "low": 99.03,
+        "volume": 60573135,
+        "avg_volume_20d": 70673788,
+        "volume_ratio": 0.86,
+        "high_52w": 137.07,
+        "low_52w": 85.88
+      },
+      "technical": {
+        "sma_20": 102.9,
+        "sma_50": 96.7,
+        "sma_200": null,
+        "rsi_14": 47.6,
+        "macd": 0.8297,
+        "macd_signal": 1.6598,
+        "macd_histogram": -0.8301,
+        "above_sma_20": "False",
+        "above_sma_50": "True",
+        "above_sma_200": null
+      },
+      "fundamentals": {
+        "market_cap": 926945443840,
+        "pe_trailing": 28.39944,
+        "pe_forward": 17.409096,
+        "ev_ebitda": 8.398,
+        "pb": 4.059331,
+        "dividend_yield": 1.3,
+        "revenue": 803964977152,
+        "revenue_growth": -0.135,
+        "gross_margin": 0.17543,
+        "operating_margin": 0.036960002,
+        "net_margin": 0.040570002,
+        "roe": 0.14768,
+        "debt_to_equity": 48.02,
+        "free_cash_flow": -116073783296
+      },
+      "analyst": {
+        "target_mean": 121.44217,
+        "target_high": 167.0,
+        "target_low": 88.0,
+        "recommendation": "buy",
+        "num_analysts": 23
+      },
+      "meta": {
+        "currency": "CNY",
+        "exchange": "SZ",
+        "name_en": "BYD",
+        "name_zh": "比亚迪"
+      }
+    }
+  },
+  "akshare": {
+    "northbound": {
+      "error": "module 'akshare' has no attribute 'stock_hsgt_north_net_flow_in_em'"
+    },
+    "300308.SZ": {
+      "northbound_holding": {
+        "shares_held": 87019321.0,
+        "pct_of_float": 0.0,
+        "change_pct": null
+      }
+    },
+    "002594.SZ": {
+      "northbound_holding": {
+        "shares_held": 81136023.0,
+        "pct_of_float": 0.0,
+        "change_pct": null
+      }
+    }
+  },
+  "sector_indicators": {
+    "china_pmi": {
+      "value": 0.0,
+      "date": ""
+    },
+    "usd_cny": {
+      "value": 0.0
+    }
+  }
+}

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
          Shield, Zap, Globe, Eye, Target, Filter, Radio, Crosshair,
          AlertCircle, CheckCircle, ArrowUpRight, ArrowDownRight,
          Database, RefreshCw, Layers, BookOpen, Info, Calendar,
-         Sun, Moon, ChevronLeft, ChevronRight, Circle } from "lucide-react";
+         Sun, Moon, ChevronLeft, ChevronRight, Circle,
+         Wifi, WifiOff } from "lucide-react";
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 /* ── THEME ─────────────────────────────────────────────────────────────────── */
@@ -148,28 +149,33 @@ const STOCKS = {
     peerAvg:{ pe:16, ev_ebitda:11, gm:'60%' },
   },
   '6160.HK': {
-    name:'百济神州', en:'BeiGene', sector:'Biotech', dir:'LONG', vp:71, price:'HK$108', mktcap:'HK$149B',
-    eqr:{ overall:'MED-HIGH', biz:'MED-HIGH', variant:'MED', catalysts:'HIGH', risks:'MED' },
-    pulse:{ e:'Brukinsa EU market share curve faster than US models. Profitability pull-forward likely Q3 2026.', z:'泽布替尼欧盟份额爬坡快于美国模型。盈利时间线可能提前至Q3 2026。' },
+    name:'百济神州 (BeOne)', en:'BeOne Medicines (fka BeiGene)', sector:'Biotech', dir:'LONG', vp:65, price:'HK$1,440', mktcap:'HK$154B',
+    eqr:{ overall:'MED-HIGH', biz:'HIGH', variant:'MED-HIGH', catalysts:'HIGH', risks:'MED' },
+    pulse:{ e:'Sonrotoclax+Brukinsa combo (ZS) = potential best-in-class fixed-duration CLL regimen. CELESTIAL Ph3 uMRD data H2 2026. Pirtobrutinib long-term share threat underappreciated by bulls.', z:'泽布替尼+sonrotoclax联合(ZS)=潜在最佳固定疗程CLL方案。CELESTIAL三期uMRD数据2026下半年。多替布鲁替尼长期份额威胁被多头低估。' },
     biz:{
-      problem:{ e:'CLL/MCL patients need BTK inhibitors with better cardiac safety than ibrutinib.', z:'CLL/MCL患者需要比伊布替尼心脏安全性更好的BTK抑制剂。' },
-      mechanism:{ e:'Brukinsa (zanubrutinib) = 2nd-gen BTK inhibitor, >99% occupancy, ALPINE trial proved superiority.', z:'泽布替尼=第二代BTK抑制剂，ALPINE试验证明优越性。' },
-      moneyFlow:{ e:'$15,000/patient/month US. 40+ country ex-China rollout. Royalties from BMS partnership.', z:'美国每患者每月1.5万美元，40+国家推广。' }
+      problem:{ e:'CLL/MCL patients on single-agent BTK face indefinite treatment duration + acquired resistance. Need fixed-duration combos.', z:'单药BTK的CLL/MCL患者面临无限期治疗+获得性耐药，需要固定疗程联合方案。' },
+      mechanism:{ e:'Brukinsa (zanubrutinib, 2nd-gen covalent BTK) + sonrotoclax (next-gen BCL2) = all-oral fixed-duration combo. ZS showed best-in-class uMRD rates in early data vs venetoclax+obinutuzumab.', z:'泽布替尼(二代共价BTK)+sonrotoclax(新一代BCL2)=全口服固定疗程。ZS的uMRD率在早期数据中优于维奈托克+奥比妥珠单抗。' },
+      moneyFlow:{ e:'Brukinsa FY2025 $3.9B (+49%). $15K/patient/month US. ZS combo at premium pricing = $5-8B peak franchise. 60+ countries. Redomiciled to Switzerland (May 2025) as BeOne Medicines.', z:'泽布替尼2025全年39亿美元(+49%)。ZS联合方案峰值50-80亿美元。已迁册瑞士更名BeOne。' }
     },
     variant:{
-      marketBelieves:{ e:'EU 2L CLL share = 32%; profitability Q4 2026.', z:'欧盟2L CLL份额32%；Q4 2026盈利。' },
-      weBelieve:{ e:'EU share reaches 40% by end 2025 driven by faster EU oncologist adoption; profitability Q3 2026.', z:'欧盟份额40%，Q3盈利提前。' },
-      mechanism:{ e:'French/German prescriber data shows +28% QoQ scripts Q4 2025.', z:'法国/德国医生处方数据显示增长。' },
-      rightIf:{ e:'Q2 2025 EU revenue >$380M.', z:'Q2欧盟营收>3.8亿美元。' },
-      wrongIf:{ e:'IRA negotiation cuts US price >30%.', z:'IRA谈判削价>30%。' }
+      marketBelieves:{ e:'Brukinsa is a maturing single-product franchise; pirtobrutinib (Jaypirca) will capture 60% CLL BTK share by 2032; FY26 guidance miss ($6.2-6.4B vs $6.44B consensus) signals deceleration.', z:'泽布替尼是成熟单品；多替布鲁替尼将占2032年60% CLL BTK份额；FY26指引低于共识信号减速。' },
+      weBelieve:{ e:'ZS combo creates a second growth curve worth $5-8B at peak, making Brukinsa single-agent share erosion irrelevant. CELESTIAL Phase 3 uMRD data in H2 2026 is the catalyst for re-rating from single-drug to platform.', z:'ZS联合方案创造第二增长曲线峰值50-80亿美元，使单药份额流失不重要。CELESTIAL三期数据是从单品到平台重估的催化剂。' },
+      mechanism:{ e:'Fixed-duration ZS eliminates the indefinite-treatment economics that make pirtobrutinib competitive. Physicians prefer finite courses; ZS early data shows superior uMRD vs standard of care.', z:'固定疗程ZS消除无限期治疗经济学(多替布鲁替尼的竞争优势)。医生偏好限期疗程；ZS早期数据uMRD优于标准治疗。' },
+      rightIf:{ e:'CELESTIAL Phase 3 uMRD rate >65% (vs ~55% for venetoclax+obinutuzumab historical) AND FY26 revenue exceeds $6.4B.', z:'CELESTIAL三期uMRD率>65%且FY26营收超64亿美元。' },
+      wrongIf:{ e:'CELESTIAL uMRD data disappoints (<50%) OR pirtobrutinib Phase 3 1L CLL data shows superior PFS, undermining ZS rationale.', z:'CELESTIAL uMRD数据不及预期(<50%)或多替布鲁替尼1L CLL数据PFS更优。' }
     },
-    catalysts:[{ e:'Q1 2025 EU revenue disclosure', z:'Q1欧盟营收披露', t:'May 2025', date:'2025-05-30', imp:'HIGH' },{ e:'GAAP profitability announcement', z:'GAAP盈利公告', t:'Q3 2026', date:'2026-08-15', imp:'HIGH' }],
-    decomp:{ expectation_gap:{s:74,e:'EU adoption speed mismodelled',z:'欧盟采纳速度建模错误'}, fundamental_acc:{s:68,e:'Revenue ramp non-linear',z:'营收爬坡非线性'}, narrative_shift:{s:60,e:'Profitability inflection re-rates stock',z:'盈利拐点重估股价'}, low_coverage:{s:50,e:'Good coverage but EU undermodelled',z:'覆盖尚可但欧盟建模不足'}, catalyst_prox:{s:80,e:'Q1 results in 4 weeks',z:'Q1财报4周内'} },
-    risks:[{ e:'IRA Brukinsa price negotiation', z:'IRA泽布替尼价格谈判', p:'MED', imp:'HIGH' },{ e:'PD-1 combo Phase III futility', z:'PD-1联合Phase III无效', p:'LOW', imp:'MED' }],
-    pricing:{level:'LOW',crowd:{e:'EU adoption speed not in sell-side models; profitability timing mispriced',z:'欧盟采纳速度未入卖方模型；盈利时间线定价错误'}},
-    nextActions:[{e:'Monitor Q2 EU Brukinsa prescription data (IQVIA)',z:'监控Q2欧盟泽布替尼处方数据（IQVIA）'},{e:'Track IRA negotiation milestones',z:'跟踪IRA谈判里程碑'},{e:'Verify profitability timeline in Q1 call',z:'在Q1电话会验证盈利时间线'}],
-    fin:{ rev:'$3.2B', revGr:'+63%', gm:'85%', pe:'NM', ev_ebitda:'NM', fcf:'-$0.4B' },
-    peerAvg:{ pe:'NM', ev_ebitda:24, gm:'80%' },
+    catalysts:[
+      { e:'CELESTIAL Phase 3 uMRD data (ZS vs VO in 1L CLL)', z:'CELESTIAL三期uMRD数据(ZS vs VO 一线CLL)', t:'H2 2026', date:'2026-09-15', imp:'HIGH' },
+      { e:'Q1 2026 earnings (Apr 30) — Brukinsa quarterly run-rate trajectory', z:'Q1 2026财报(4月30日)——泽布替尼季度运营轨迹', t:'Apr 2026', date:'2026-04-30', imp:'HIGH' },
+      { e:'BGB-16673 (BTK degrader) pivotal Phase 2 R/R CLL data', z:'BGB-16673(BTK降解剂)关键二期R/R CLL数据', t:'H2 2026', date:'2026-10-15', imp:'MED' },
+      { e:'Sonrotoclax NDA/MAA filing for MCL (positive Ph2 topline)', z:'Sonrotoclax MCL适应症NDA/MAA申报(二期积极)', t:'2026', date:'2026-12-01', imp:'MED' },
+    ],
+    decomp:{ expectation_gap:{s:72,e:'Market models Brukinsa as single-drug franchise; ZS combo TAM not in consensus models',z:'市场将泽布替尼建模为单药；ZS联合TAM未入共识模型'}, fundamental_acc:{s:65,e:'Brukinsa Q4 2025 $1.1B (+38% QoQ sequential); revenue acceleration intact',z:'泽布替尼Q4 2025 11亿美元环比+38%；营收加速持续'}, narrative_shift:{s:68,e:'Redomiciliation to Switzerland signals platform ambition; 15 pipeline drugs + $4B cash',z:'迁册瑞士信号平台野心；15个管线药物+40亿现金'}, low_coverage:{s:45,e:'Well-covered but ZS combo modeling sparse among sell-side',z:'覆盖充分但卖方ZS联合建模稀缺'}, catalyst_prox:{s:70,e:'Q1 2026 earnings in 18 days; CELESTIAL data within 6 months',z:'Q1财报18天内；CELESTIAL数据6个月内'} },
+    risks:[{ e:'CELESTIAL Phase 3 uMRD data misses expectations (<50%)', z:'CELESTIAL三期uMRD数据不及预期(<50%)', p:'MED', imp:'HIGH' },{ e:'Pirtobrutinib 1L CLL Phase 3 shows superior PFS, commoditizing covalent BTK class', z:'多替布鲁替尼1L CLL三期PFS更优，共价BTK类别商品化', p:'MED', imp:'HIGH' },{ e:'IRA price negotiation reduces US Brukinsa pricing >25%', z:'IRA价格谈判削减美国泽布替尼定价>25%', p:'MED', imp:'MED' },{ e:'Sonrotoclax safety signal in long-term follow-up', z:'Sonrotoclax长期随访安全性信号', p:'LOW', imp:'HIGH' }],
+    pricing:{level:'MID',crowd:{e:'Stock at $185 vs avg analyst target $330 — 78% upside in consensus. Market pricing single-drug deceleration narrative; ZS combo optionality largely unpriced.',z:'股价$185 vs 分析师均值$330——78%上行空间。市场定价单品减速叙事；ZS联合期权价值未充分入价。'}},
+    nextActions:[{e:'Model ZS combo peak revenue scenarios ($5B/$6.5B/$8B) with probability weights',z:'建模ZS联合峰值营收情景(50/65/80亿)及概率权重'},{e:'Track pirtobrutinib 1L CLL Phase 3 enrollment/timeline for competitive read-through',z:'跟踪多替布鲁替尼1L CLL三期入组/时间线'},{e:'Verify Q1 2026 Brukinsa geographic mix (US vs EU vs RoW) on Apr 30 call',z:'4月30日电话会验证Q1泽布替尼地理结构'},{e:'Monitor sonrotoclax MCL Phase 2 full dataset for filing timeline clarity',z:'监控sonrotoclax MCL二期完整数据评估申报时间线'}],
+    fin:{ rev:'$3.9B', revGr:'+49%', gm:'84%', pe:38, ev_ebitda:28, fcf:'$0.3B' },
+    peerAvg:{ pe:35, ev_ebitda:24, gm:'80%' },
   },
   '002594.SZ': {
     name:'比亚迪', en:'BYD', sector:'EV/Auto', dir:'LONG', vp:52, price:'¥298', mktcap:'¥866B',
@@ -500,7 +506,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C }) {
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData }) {
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
@@ -640,6 +646,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C }) {
             <div style={S.val}>{s.fin.gm}</div>
           </div>
         </div>
+      </Card>
+
+      <Card title={L('Technical Analysis','技术分析')} open={open.ta} onToggle={()=>toggle('ta')} C={C}>
+        <TechnicalAnalysis ticker={ticker} liveData={liveData} L={L} lk={lk} C={C}/>
       </Card>
 
       <Card title={L('Next Actions','下一步行动')} open={open.actions} onToggle={()=>toggle('actions')} C={C}>
@@ -879,6 +889,219 @@ function DeepResearchPanel({ L, lk, onComplete, C }) {
   );
 }
 
+/* ── TECHNICAL ANALYSIS COMPONENT ───────────────────────────────────────── */
+const TechnicalAnalysis = ({ ticker, liveData, L, lk, C }) => {
+  const yd = liveData?.yahoo?.[ticker];
+  if (!yd || yd.error) return (
+    <div style={{padding:16, textAlign:'center', color:C.mid, fontSize:12}}>
+      <WifiOff size={16} style={{marginBottom:6}}/><br/>
+      {L('No live data available. Run the data fetcher or push to GitHub to enable automated updates.',
+         '暂无实时数据。运行数据脚本或推送至GitHub以启用自动更新。')}
+    </div>
+  );
+
+  const p = yd.price || {};
+  const t = yd.technical || {};
+  const f = yd.fundamentals || {};
+  const a = yd.analyst || {};
+  const nb = liveData?.akshare?.northbound;
+  const isAShare = yd.meta?.exchange === 'SZ' || yd.meta?.exchange === 'SH';
+
+  const fmt = (v, suffix='') => v != null ? (typeof v === 'number' ? v.toLocaleString() + suffix : v + suffix) : '—';
+  const fmtPct = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
+  const rsiColor = t.rsi_14 > 70 ? C.red : t.rsi_14 < 30 ? C.green : C.blue;
+  const chgColor = p.change_pct > 0 ? C.green : p.change_pct < 0 ? C.red : C.mid;
+
+  // SMA trend bar component
+  const SmaBar = ({ label, val, above }) => (
+    <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:4}}>
+      <span style={{fontSize:10, color:C.mid, width:52}}>{label}</span>
+      <span style={{fontSize:11, fontFamily:'monospace', fontWeight:700, color:C.dark}}>{fmt(val)}</span>
+      {above != null && (
+        <span style={{...S.tag(above ? C.green : C.red), fontSize:9}}>
+          {above ? (lk==='e'?'ABOVE':'上方') : (lk==='e'?'BELOW':'下方')}
+        </span>
+      )}
+    </div>
+  );
+
+  return (
+    <div>
+      {/* Price Action Header */}
+      <div style={{display:'flex', gap:12, flexWrap:'wrap', marginBottom:14}}>
+        <div style={{flex:'1 1 160px', padding:12, background:`${C.blue}08`, borderRadius:8, border:`1px solid ${C.blue}20`}}>
+          <div style={{fontSize:10, color:C.mid, marginBottom:4}}>{L('Last Price','最新价')}</div>
+          <div style={{fontSize:22, fontWeight:800, color:chgColor, fontFamily:'monospace'}}>
+            {yd.meta?.currency === 'CNY' ? '¥' : 'HK$'}{fmt(p.last)}
+          </div>
+          <div style={{fontSize:11, color:chgColor, fontWeight:600}}>
+            {p.change_pct > 0 ? '+' : ''}{fmt(p.change_pct, '%')}
+          </div>
+        </div>
+        <div style={{flex:'1 1 160px', padding:12, background:`${C.soft}`, borderRadius:8, border:`1px solid ${C.border}`}}>
+          <div style={{fontSize:10, color:C.mid, marginBottom:4}}>{L('52W Range','52周区间')}</div>
+          <div style={{fontSize:13, fontWeight:700, fontFamily:'monospace', color:C.dark}}>
+            {fmt(p.low_52w)} — {fmt(p.high_52w)}
+          </div>
+          <div style={{marginTop:6, height:6, background:`${C.border}`, borderRadius:3, position:'relative'}}>
+            {p.low_52w && p.high_52w && p.last && (
+              <div style={{
+                position:'absolute', left:`${Math.min(100,Math.max(0,(p.last-p.low_52w)/(p.high_52w-p.low_52w)*100))}%`,
+                top:-2, width:10, height:10, borderRadius:5, background:C.blue, transform:'translateX(-5px)'
+              }}/>
+            )}
+          </div>
+        </div>
+        <div style={{flex:'1 1 120px', padding:12, background:`${C.soft}`, borderRadius:8, border:`1px solid ${C.border}`}}>
+          <div style={{fontSize:10, color:C.mid, marginBottom:4}}>{L('Volume Ratio','量比')}</div>
+          <div style={{fontSize:18, fontWeight:800, fontFamily:'monospace', color: p.volume_ratio > 1.5 ? C.gold : p.volume_ratio > 1 ? C.green : C.mid}}>
+            {fmt(p.volume_ratio, 'x')}
+          </div>
+          <div style={{fontSize:9, color:C.mid}}>{L('vs 20d avg','vs 20日均量')}</div>
+        </div>
+      </div>
+
+      {/* Technical Indicators Grid */}
+      <div style={{display:'flex', gap:12, flexWrap:'wrap', marginBottom:14}}>
+        {/* Moving Averages */}
+        <div style={{flex:'1 1 180px', padding:12, background:C.soft, borderRadius:8, border:`1px solid ${C.border}`}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:8}}>{L('Moving Averages','均线')}</div>
+          <SmaBar label="SMA 20" val={t.sma_20} above={t.above_sma_20}/>
+          <SmaBar label="SMA 50" val={t.sma_50} above={t.above_sma_50}/>
+          <SmaBar label="SMA 200" val={t.sma_200} above={t.above_sma_200}/>
+        </div>
+
+        {/* RSI */}
+        <div style={{flex:'1 1 120px', padding:12, background:C.soft, borderRadius:8, border:`1px solid ${C.border}`, textAlign:'center'}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:8}}>RSI (14)</div>
+          <div style={{fontSize:28, fontWeight:800, fontFamily:'monospace', color:rsiColor}}>{fmt(t.rsi_14)}</div>
+          <div style={{marginTop:6, height:6, background:C.border, borderRadius:3, position:'relative'}}>
+            <div style={{position:'absolute', left:0, width:'30%', height:'100%', background:`${C.green}40`, borderRadius:'3px 0 0 3px'}}/>
+            <div style={{position:'absolute', right:0, width:'30%', height:'100%', background:`${C.red}40`, borderRadius:'0 3px 3px 0'}}/>
+            {t.rsi_14 && <div style={{position:'absolute', left:`${t.rsi_14}%`, top:-2, width:10, height:10, borderRadius:5, background:rsiColor, transform:'translateX(-5px)'}}/>}
+          </div>
+          <div style={{display:'flex', justifyContent:'space-between', fontSize:8, color:C.mid, marginTop:2}}>
+            <span>{L('Oversold','超卖')}</span><span>{L('Overbought','超买')}</span>
+          </div>
+        </div>
+
+        {/* Analyst Consensus */}
+        <div style={{flex:'1 1 160px', padding:12, background:C.soft, borderRadius:8, border:`1px solid ${C.border}`}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:8}}>{L('Analyst Targets','分析师目标价')}</div>
+          {a.target_mean && (
+            <div>
+              <div style={{display:'flex', justifyContent:'space-between', marginBottom:4}}>
+                <span style={{fontSize:10, color:C.mid}}>{L('Mean','均值')}</span>
+                <span style={{fontSize:12, fontWeight:700, fontFamily:'monospace', color:C.dark}}>{fmt(a.target_mean)}</span>
+              </div>
+              <div style={{display:'flex', justifyContent:'space-between', marginBottom:4}}>
+                <span style={{fontSize:10, color:C.mid}}>{L('Range','区间')}</span>
+                <span style={{fontSize:10, fontFamily:'monospace', color:C.mid}}>{fmt(a.target_low)} — {fmt(a.target_high)}</span>
+              </div>
+              {p.last && a.target_mean && (
+                <div style={{display:'flex', justifyContent:'space-between', marginTop:6}}>
+                  <span style={{fontSize:10, color:C.mid}}>{L('Upside','上行空间')}</span>
+                  <span style={{...S.tag(((a.target_mean-p.last)/p.last) > 0 ? C.green : C.red), fontSize:10, fontWeight:700}}>
+                    {(((a.target_mean-p.last)/p.last)*100).toFixed(1)}%
+                  </span>
+                </div>
+              )}
+              <div style={{fontSize:9, color:C.mid, marginTop:4}}>{fmt(a.num_analysts)} {L('analysts','位分析师')}</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Live Fundamentals Override */}
+      <div style={{padding:12, background:C.soft, borderRadius:8, border:`1px solid ${C.border}`, marginBottom:14}}>
+        <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:8}}>{L('Live Fundamentals','实时基本面')}</div>
+        <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
+          {[
+            {label:'P/E (TTM)', val: f.pe_trailing},
+            {label:'P/E (Fwd)', val: f.pe_forward},
+            {label:'EV/EBITDA', val: f.ev_ebitda},
+            {label:L('Gross Margin','毛利率'), val: f.gross_margin, pct:true},
+            {label:L('Op Margin','营业利润率'), val: f.operating_margin, pct:true},
+            {label:'ROE', val: f.roe, pct:true},
+            {label:L('Rev Growth','营收增速'), val: f.revenue_growth, pct:true},
+          ].map((item,i) => (
+            <div key={i} style={{minWidth:80}}>
+              <div style={{fontSize:9, color:C.mid}}>{item.label}</div>
+              <div style={{fontSize:12, fontWeight:700, fontFamily:'monospace', color:C.dark}}>
+                {item.pct ? fmtPct(item.val) : fmt(item.val != null ? +item.val.toFixed(1) : null)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Northbound Flow (A-share only) */}
+      {isAShare && nb && !nb.error && (
+        <div style={{padding:12, background:`${nb.trend === 'inflow' ? C.green : C.red}08`, borderRadius:8, border:`1px solid ${nb.trend === 'inflow' ? C.green : C.red}25`, marginBottom:14}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:8, display:'flex', alignItems:'center', gap:6}}>
+            <Globe size={13}/> {L('Northbound Flow (沪深港通)','北向资金(沪深港通)')}
+            <span style={{...S.tag(nb.trend === 'inflow' ? C.green : C.red), fontSize:9}}>
+              {nb.trend === 'inflow' ? L('NET INFLOW','净流入') : L('NET OUTFLOW','净流出')}
+            </span>
+          </div>
+          <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
+            <div>
+              <div style={{fontSize:9, color:C.mid}}>{L('Latest Daily','最新日度')}</div>
+              <div style={{fontSize:13, fontWeight:700, fontFamily:'monospace', color: nb.latest_net_flow > 0 ? C.green : C.red}}>
+                {(nb.latest_net_flow / 1e8).toFixed(1)}{L('B CNY','亿元')}
+              </div>
+            </div>
+            <div>
+              <div style={{fontSize:9, color:C.mid}}>{L('5D Cumulative','5日累计')}</div>
+              <div style={{fontSize:13, fontWeight:700, fontFamily:'monospace', color: nb['5d_cumulative'] > 0 ? C.green : C.red}}>
+                {(nb['5d_cumulative'] / 1e8).toFixed(1)}{L('B CNY','亿元')}
+              </div>
+            </div>
+            <div>
+              <div style={{fontSize:9, color:C.mid}}>{L('20D Cumulative','20日累计')}</div>
+              <div style={{fontSize:13, fontWeight:700, fontFamily:'monospace', color: nb['20d_cumulative'] > 0 ? C.green : C.red}}>
+                {(nb['20d_cumulative'] / 1e8).toFixed(1)}{L('B CNY','亿元')}
+              </div>
+            </div>
+          </div>
+          <div style={{fontSize:9, color:C.mid, marginTop:6}}>
+            {L('Key A-share alpha signal. Persistent northbound inflow historically correlates with 2-4 week price momentum.',
+               'A股关键alpha信号。持续北向净流入历史上与2-4周价格动量正相关。')}
+          </div>
+        </div>
+      )}
+
+      {/* AI Limitation */}
+      <div style={{fontSize:9, color:C.mid, padding:'8px 0', borderTop:`1px solid ${C.border}`}}>
+        <AlertCircle size={10} style={{verticalAlign:'middle', marginRight:4}}/>
+        {L('Technical indicators computed from daily close data. RSI/SMA may lag intraday moves. Northbound flow is T+1. Volume data excludes dark pool.',
+           '技术指标基于日收盘数据计算。RSI/SMA可能滞后于盘中波动。北向资金为T+1。成交量数据不含暗池。')}
+      </div>
+    </div>
+  );
+};
+
+/* ── DATA FRESHNESS BADGE ──────────────────────────────────────────────── */
+const DataBadge = ({ liveData, C, L }) => {
+  if (!liveData) return (
+    <div style={{display:'flex', alignItems:'center', gap:4, fontSize:9, color:C.mid, padding:'3px 8px', borderRadius:4, background:`${C.red}10`, border:`1px solid ${C.red}30`}}>
+      <WifiOff size={10}/> {L('Offline','离线')}
+    </div>
+  );
+  const fetchedAt = liveData?._meta?.fetched_at;
+  if (!fetchedAt) return null;
+  const age = (Date.now() - new Date(fetchedAt).getTime()) / (1000*60*60);
+  const stale = age > 24;
+  const color = stale ? C.gold : C.green;
+  const label = age < 1 ? L('Live','实时') : age < 24 ? Math.round(age) + L('h ago','小时前') : Math.round(age/24) + L('d ago','天前');
+  return (
+    <div style={{display:'flex', alignItems:'center', gap:4, fontSize:9, color, padding:'3px 8px', borderRadius:4, background:`${color}10`, border:`1px solid ${color}30`, cursor:'default'}}
+         title={L('Data fetched: ','数据更新: ') + new Date(fetchedAt).toLocaleString()}>
+      <Wifi size={10}/> {label}
+    </div>
+  );
+};
+
 /* ── DASHBOARD ────────────────────────────────────────────────────────────── */
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
@@ -888,9 +1111,19 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, ta:false, actions:true});
+  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, ta:true, actions:true});
   const [dynamicStocks, setDynamicStocks] = useState({});
   const [showDeepResearch, setShowDeepResearch] = useState(false);
+  const [liveData, setLiveData] = useState(null);
+
+  /* Fetch live market data on mount */
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL || '/';
+    fetch(base + 'data/market_data.json')
+      .then(r => { if (!r.ok) throw new Error('No data file'); return r.json(); })
+      .then(d => setLiveData(d))
+      .catch(() => setLiveData(null));
+  }, []);
 
   const allStocks = { ...STOCKS, ...dynamicStocks };
 
@@ -941,7 +1174,7 @@ export default function Dashboard() {
       <div style={{width:collapsed?48:170, background:C.card, borderRight:`1px solid ${C.border}`, display:'flex', flexDirection:'column', flexShrink:0, transition:'width .3s', overflow:'hidden'}}>
         <div style={{padding:collapsed?'14px 10px':'14px 14px 10px', borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap'}}>
           <div style={{fontSize:collapsed?16:22, fontWeight:800, color:C.blue, letterSpacing:collapsed?0:'-.02em'}}>AR</div>
-          {!collapsed && <div style={{fontSize:8, color:C.mid, letterSpacing:'.1em', marginTop:1}}>ALPHA RESEARCH v9.0</div>}
+          {!collapsed && <div style={{fontSize:8, color:C.mid, letterSpacing:'.1em', marginTop:1}}>ALPHA RESEARCH v10.0</div>}
         </div>
         <div style={{flex:1, paddingTop:4, overflow:'hidden'}}>
           {TABS.map(t=>(
@@ -994,6 +1227,7 @@ export default function Dashboard() {
             )}
           </div>
           <div style={{display:'flex', gap:8, alignItems:'center'}}>
+            <DataBadge liveData={liveData} C={C} L={L}/>
             <button onClick={()=>setDark(!dark)} title={dark?'Light mode':'Dark mode'} style={{padding:'5px 8px', border:`1px solid ${C.border}`, background:'transparent', color:C.mid, cursor:'pointer', borderRadius:6, display:'flex', alignItems:'center'}}>
               {dark ? <Sun size={14}/> : <Moon size={14}/>}
             </button>
@@ -1015,10 +1249,10 @@ export default function Dashboard() {
           {tab==='research' && (
             (!ticker || !allStocks[ticker] || showDeepResearch) ? (
               <div>
-                {ticker && allStocks[ticker] && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C}/></div>}
+                {ticker && allStocks[ticker] && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData}/></div>}
                 <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C}/>
               </div>
-            ) : <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C}/>
+            ) : <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData}/>
           )}
           {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C}/>}
           {tab==='watchlist'&& <Watchlist L={L} stocks={allStocks} C={C}/>}

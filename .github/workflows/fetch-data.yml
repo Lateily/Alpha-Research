@@ -1,0 +1,36 @@
+name: Daily Market Data Fetch
+
+on:
+  schedule:
+    # Run at 00:00 UTC = 08:00 HKT (after HK market close)
+    - cron: '0 0 * * 1-5'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install yfinance akshare pandas
+
+      - name: Run data fetcher
+        run: python scripts/fetch_data.py
+
+      - name: Commit and push data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/market_data.json
+          git diff --cached --quiet || git commit -m "data: daily market update $(date -u +%Y-%m-%d)"
+          git push
