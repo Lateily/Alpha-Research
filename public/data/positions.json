@@ -1,0 +1,28 @@
+{
+  "as_of": "2026-04-13T23:59:45.866658",
+  "positions": [
+    {
+      "ticker": "300308.SZ",
+      "name": "中际旭创",
+      "market": "SZ",
+      "sector_sw": "电子",
+      "currency": "CNY",
+      "quantity": 100,
+      "avg_cost": 736.1193,
+      "current_price": 738.0,
+      "market_value": 73800.0,
+      "cost_value": 73611.93,
+      "pnl_abs": 188.07,
+      "pnl_pct": 0.26,
+      "holding_days": 0,
+      "as_of": "2026-04-13",
+      "weight_pct": 100.0
+    }
+  ],
+  "summary": {
+    "total_value": 73800.0,
+    "total_cost": 73611.93,
+    "total_pnl": 188.07,
+    "total_pnl_pct": 0.26
+  }
+}

@@ -1,0 +1,15 @@
+[
+  {
+    "id": "example-001",
+    "date": "2026-04-13",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "market": "SZ",
+    "side": "BUY",
+    "quantity": 100,
+    "price": 734.65,
+    "currency": "CNY",
+    "sector_sw": "电子",
+    "notes": "VP 79. 1.6T SiPh qualification imminent. RSI 70.1 — trim risk, small starter."
+  }
+]

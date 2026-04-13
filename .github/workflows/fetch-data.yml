@@ -1,36 +1,86 @@
-name: Daily Market Data Fetch
+name: Daily Market Data + Alerts
 
 on:
   schedule:
-    # Run at 00:00 UTC = 08:00 HKT (after HK market close)
-    - cron: '0 0 * * 1-5'
-  workflow_dispatch: # Allow manual trigger
+    # 00:30 UTC = 08:30 HKT  (30 min after HK open; also captures A-share pre-market)
+    # 08:30 UTC = 16:30 CST  (after A-share + HK close — main data run)
+    - cron: '30 8 * * 1-5'   # Primary: after-close digest
+    - cron: '0 1  * * 1-5'   # Secondary: pre-market snapshot
+  workflow_dispatch:          # Manual trigger from Actions tab
 
 permissions:
   contents: write
 
 jobs:
-  fetch:
+  fetch-and-alert:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install yfinance akshare pandas
+        run: |
+          pip install \
+            yfinance \
+            akshare \
+            pandas \
+            requests \
+            supabase \
+            --quiet
 
-      - name: Run data fetcher
+      # ── Step 1: Fetch all market data ──────────────────────────────────────
+      - name: Run data fetcher v4.0
         run: python scripts/fetch_data.py
 
+      # ── Step 2: Paper trading P&L update ──────────────────────────────────
+      - name: Run paper trading engine
+        run: python scripts/paper_trading.py
+
+      # ── Step 2b: VP Score backtest ─────────────────────────────────────────
+      - name: Run backtest engine
+        run: python scripts/backtest.py --threshold 60
+
+      # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
+      - name: Sync to Supabase
+        if: env.SUPABASE_URL != ''
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/supabase_sync.py
+
+      # ── Step 4: Commit all JSON files ─────────────────────────────────────
       - name: Commit and push data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data/market_data.json public/data/universe_a.json public/data/universe_hk.json
-          git diff --cached --quiet || git commit -m "data: daily market update $(date -u +%Y-%m-%d)"
+          git add \
+            public/data/market_data.json \
+            public/data/universe_a.json \
+            public/data/universe_hk.json \
+            public/data/ohlc_*.json \
+            public/data/fin_*.json \
+            public/data/earnings_calendar.json \
+            public/data/flow_data.json \
+            public/data/vp_snapshot.json \
+            public/data/positions.json \
+            public/data/analytics.json \
+            public/data/snapshots.json \
+            public/data/backtest_results.json
+          git diff --cached --quiet || \
+            git commit -m "data: daily update $(date -u +'%Y-%m-%d %H:%M') UTC"
           git push
+
+      # ── Step 5: Telegram alerts (runs only if secrets are set) ────────────
+      - name: Send Telegram alerts
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/telegram_alert.py
