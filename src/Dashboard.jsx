@@ -724,7 +724,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
 }
 
 /* ── TRACKER TAB ────────────────────────────────────────────────────────── */
-function Tracker({ L, stocks: stocksMap, C }) {
+function Tracker({ L, stocks: stocksMap, C, predictions }) {
   const stocks = Object.entries(stocksMap || STOCKS).slice(0,3).map(([tk,s])=>({...s, ticker:tk}));
   return (
     <div>
@@ -750,6 +750,128 @@ function Tracker({ L, stocks: stocksMap, C }) {
           </table>
         </div>
       </Card>
+
+      <Card title={L('Prediction Log','预测记录')} sub={L('Variant views with explicit verification & falsification conditions','带验证/证伪条件的变体观点追踪')} open={true} C={C}>
+        <PredictionLog predictions={predictions || []} L={L} C={C}/>
+      </Card>
+    </div>
+  );
+}
+
+/* ── PREDICTION LOG ──────────────────────────────────────────────────────── */
+function DetailRow({ label, value, color, C }) {
+  if (!value) return null;
+  return (
+    <div style={{marginBottom:10}}>
+      <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:2}}>{label}</div>
+      <div style={{fontSize:11, color: color || C.dark, lineHeight:1.6}}>{value}</div>
+    </div>
+  );
+}
+
+function PredictionLog({ predictions, L, C }) {
+  const [expanded, setExpanded] = useState(null);
+
+  const resolved  = predictions.filter(p => p.status === 'VERIFIED' || p.status === 'FALSIFIED');
+  const hits      = resolved.filter(p => p.status === 'VERIFIED').length;
+  const hitRatePct = resolved.length > 0 ? Math.round(hits / resolved.length * 100) : null;
+  const openCount  = predictions.filter(p => p.status === 'OPEN').length;
+
+  const statusStyle = (status) => {
+    if (status === 'VERIFIED')     return { bg: C.green,  color: '#fff' };
+    if (status === 'FALSIFIED')    return { bg: C.red,    color: '#fff' };
+    if (status === 'EXPIRED')      return { bg: C.mid,    color: '#fff' };
+    if (status === 'INCONCLUSIVE') return { bg: C.gold,   color: '#fff' };
+    return { bg: C.blue, color: '#fff' }; // OPEN
+  };
+
+  const statusLabel = (status) => ({
+    OPEN: 'Open', VERIFIED: 'Verified ✓', FALSIFIED: 'Falsified ✗',
+    EXPIRED: 'Expired', INCONCLUSIVE: 'Inconclusive',
+  }[status] || status);
+
+  const daysLeft = (targetDate) => {
+    const diff = new Date(targetDate) - new Date();
+    return Math.ceil(diff / 86400000);
+  };
+
+  return (
+    <div style={{marginTop:16}}>
+      {/* Header */}
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
+        <div>
+          <span style={{fontSize:13, fontWeight:700, color:C.dark}}>{L('Prediction Log','预测记录')}</span>
+          <span style={{fontSize:10, color:C.mid, marginLeft:8}}>{openCount} {L('open','进行中')} · {predictions.length} {L('total','总计')}</span>
+        </div>
+        {hitRatePct !== null ? (
+          <div style={{textAlign:'right'}}>
+            <span style={{fontSize:18, fontWeight:800, fontFamily:'monospace', color: hitRatePct >= 60 ? C.green : C.red}}>{hitRatePct}%</span>
+            <span style={{fontSize:9, color:C.mid, marginLeft:4}}>{L('hit rate','胜率')} ({hits}/{resolved.length} {L('resolved','已结')})</span>
+          </div>
+        ) : (
+          <span style={{fontSize:10, color:C.mid}}>{L('No resolved predictions yet','暂无已结案预测')}</span>
+        )}
+      </div>
+
+      {/* Cards */}
+      {predictions.map(pred => {
+        const ss    = statusStyle(pred.status);
+        const days  = daysLeft(pred.target_date);
+        const isExp = expanded === pred.id;
+        const confColor = pred.confidence >= 70 ? C.green : pred.confidence >= 50 ? C.gold : C.red;
+
+        return (
+          <div key={pred.id} onClick={() => setExpanded(isExp ? null : pred.id)}
+            style={{marginBottom:8, padding:'12px 14px', background:C.card, border:`1px solid ${C.border}`,
+                    borderRadius:8, cursor:'pointer', transition:'border-color .15s',
+                    borderLeftWidth:3, borderLeftColor: ss.bg}}>
+
+            {/* Row 1: ticker + status + confidence */}
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6}}>
+              <div style={{display:'flex', alignItems:'center', gap:8}}>
+                <span style={{fontFamily:'monospace', fontSize:11, fontWeight:700, color:C.dark}}>{pred.ticker}</span>
+                <span style={{fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:10, background:ss.bg, color:ss.color}}>{statusLabel(pred.status)}</span>
+                {pred.status === 'OPEN' && (
+                  <span style={{fontSize:9, color: days < 30 ? C.gold : C.mid}}>
+                    {days > 0 ? `${days}d ${L('left','剩余')}` : `${Math.abs(days)}d ${L('overdue','逾期')}`}
+                  </span>
+                )}
+              </div>
+              <div style={{display:'flex', alignItems:'center', gap:6}}>
+                <div style={{width:40, height:3, background:C.soft, borderRadius:2, overflow:'hidden'}}>
+                  <div style={{height:'100%', width:`${pred.confidence}%`, background:confColor, borderRadius:2}}/>
+                </div>
+                <span style={{fontSize:10, color:C.mid, fontFamily:'monospace'}}>{pred.confidence}%</span>
+              </div>
+            </div>
+
+            {/* Row 2: We Believe */}
+            <div style={{fontSize:11, color:C.dark, lineHeight:1.6}}>{pred.we_believe}</div>
+
+            {/* Expanded */}
+            {isExp && (
+              <div style={{marginTop:12, paddingTop:12, borderTop:`1px solid ${C.border}`}}>
+                <DetailRow label={L('Market Believes','市场认为')} value={pred.market_believes} color={C.mid} C={C}/>
+                <DetailRow label={L('Mechanism','机制')} value={pred.mechanism} C={C}/>
+                <DetailRow label={L('Verified if','验证条件')} value={pred.verification_condition} color={C.green} C={C}/>
+                <DetailRow label={L('Falsified if','证伪条件')} value={pred.falsification_condition} color={C.red} C={C}/>
+                {pred.actual_outcome && <DetailRow label={L('Outcome','结果')} value={pred.actual_outcome} color={C.gold} C={C}/>}
+                {pred.notes && <div style={{fontSize:10, color:C.mid, fontStyle:'italic', marginTop:4, lineHeight:1.5}}>{pred.notes}</div>}
+                <div style={{fontSize:9, color:C.mid, marginTop:8}}>
+                  {L('Created','创建于')} {pred.created_at} · {L('Target','目标日期')} {pred.target_date}
+                  {pred.resolved_at && ` · ${L('Resolved','结案于')} ${pred.resolved_at}`}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {predictions.length === 0 && (
+        <div style={{padding:20, textAlign:'center', color:C.mid, fontSize:11}}>
+          {L('No predictions yet. Edit public/data/prediction_log.json to add entries.','暂无预测记录。编辑 public/data/prediction_log.json 添加记录。')}
+        </div>
+      )}
     </div>
   );
 }
@@ -2322,6 +2444,16 @@ export default function Dashboard() {
   const [universeA, setUniverseA] = useState(null);
   const [universeHK, setUniverseHK] = useState(null);
   const [eqrData, setEqrData] = useState({});
+  const [predictions, setPredictions] = useState([]);
+
+  /* Fetch prediction log on mount */
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL || '/';
+    fetch(base + 'data/prediction_log.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.predictions) setPredictions(d.predictions); })
+      .catch(() => {});
+  }, []);
 
   /* Fetch EQR ratings on mount */
   useEffect(() => {
@@ -2632,7 +2764,7 @@ export default function Dashboard() {
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C}/>;
           })()}
-          {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C}/>}
+          {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C} predictions={predictions}/>}
           {tab==='watchlist'&& <Watchlist L={L} stocks={allStocks} C={C}/>}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
         </div>
