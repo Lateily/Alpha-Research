@@ -74,7 +74,6 @@ const PORTFOLIO = {
 const STOCKS = {
   '300308.SZ': {
     name:'中际旭创', en:'Innolight', sector:'AI Infra', dir:'LONG', vp:79, price:'¥138.50', mktcap:'¥184B',
-    eqr:{ overall:'MED-HIGH', biz:'HIGH', variant:'MED', catalysts:'HIGH', risks:'MED' },
     pulse:{ e:'800G/1.6T demand peak. SiPh ramp inflection. Hyperscaler orders accelerating.', z:'800G/1.6T需求旺盛，硅光放量拐点，超大规模订单加速。' },
     biz:{
       problem:{ e:'AI GPUs need >100Gbps per port; copper fails beyond 3m.', z:'AI GPU每端口需100Gbps+，铜线3米外衰减失效。' },
@@ -102,7 +101,6 @@ const STOCKS = {
   },
   '700.HK': {
     name:'腾讯控股', en:'Tencent', sector:'Platform', dir:'LONG', vp:64, price:'HK$392', mktcap:'HK$3.8T',
-    eqr:{ overall:'MED-HIGH', biz:'HIGH', variant:'MED-HIGH', catalysts:'MED', risks:'MED' },
     pulse:{ e:'WeChat AI monetisation underpriced. Buyback acceleration. State Council digital support.', z:'微信AI变现被低估。回购加速。国务院数字经济支持。' },
     biz:{
       problem:{ e:'Digital attention fragmented; advertisers need reach, developers need distribution.', z:'数字注意力碎片化。' },
@@ -126,7 +124,6 @@ const STOCKS = {
   },
   '9999.HK': {
     name:'网易', en:'NetEase', sector:'Gaming', dir:'LONG', vp:58, price:'HK$152', mktcap:'HK$207B',
-    eqr:{ overall:'MED', biz:'MED-HIGH', variant:'MED', catalysts:'MED', risks:'MED' },
     pulse:{ e:'Stable gaming IP monetisation undervalued. Japan market penetration accelerating.', z:'稳定游戏IP变现被低估。日本市场渗透加速。' },
     biz:{
       problem:{ e:'Gaming hits have short lifecycles; studios need durable IP revenue.', z:'游戏爆款生命周期短。' },
@@ -150,7 +147,6 @@ const STOCKS = {
   },
   '6160.HK': {
     name:'百济神州 (BeOne)', en:'BeOne Medicines (fka BeiGene)', sector:'Biotech', dir:'LONG', vp:65, price:'HK$1,440', mktcap:'HK$154B',
-    eqr:{ overall:'MED-HIGH', biz:'HIGH', variant:'MED-HIGH', catalysts:'HIGH', risks:'MED' },
     pulse:{ e:'Sonrotoclax+Brukinsa combo (ZS) = potential best-in-class fixed-duration CLL regimen. CELESTIAL Ph3 uMRD data H2 2026. Pirtobrutinib long-term share threat underappreciated by bulls.', z:'泽布替尼+sonrotoclax联合(ZS)=潜在最佳固定疗程CLL方案。CELESTIAL三期uMRD数据2026下半年。多替布鲁替尼长期份额威胁被多头低估。' },
     biz:{
       problem:{ e:'CLL/MCL patients on single-agent BTK face indefinite treatment duration + acquired resistance. Need fixed-duration combos.', z:'单药BTK的CLL/MCL患者面临无限期治疗+获得性耐药，需要固定疗程联合方案。' },
@@ -179,7 +175,6 @@ const STOCKS = {
   },
   '002594.SZ': {
     name:'比亚迪', en:'BYD', sector:'EV/Auto', dir:'LONG', vp:52, price:'¥298', mktcap:'¥866B',
-    eqr:{ overall:'MED', biz:'HIGH', variant:'MED', catalysts:'MED', risks:'MED' },
     pulse:{ e:'Overseas EV infrastructure building. DM5 hybrid tech moat widening. EM exposure underestimated.', z:'海外EV基础设施布局。DM5混动技术护城河扩大。新兴市场敞口被低估。' },
     biz:{
       problem:{ e:'ICE vehicles face regulatory phase-out; consumers need affordable EVs with range anxiety solved.', z:'燃油车面临政策淘汰，消费者需要解决里程焦虑的平价电动车。' },
@@ -506,10 +501,11 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C }) {
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData }) {
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
+  const eqr = eqrData?.[ticker] || null;
 
   const decompData = Object.entries(s.decomp).map(([k,v])=>({name:k.replace(/_/g,' '), value:v.s}));
   const sectorIdx = PORTFOLIO.sectors.findIndex(sc=>sc.name===s.sector);
@@ -522,6 +518,12 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData 
           <div><div style={S.label}>Price</div><div style={S.val}>{s.price}</div></div>
           <div><div style={S.label}>Market Cap</div><div style={S.val}>{s.mktcap}</div></div>
           <div><div style={S.label}>Direction</div><div style={{...S.val, color:C.green}}>{s.dir}</div></div>
+        </div>
+        {/* EQR overall badge */}
+        <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
+          <EQR lvl={eqr ? eqr.overall : '…'} C={C}/>
+          {eqr && <span style={{fontSize:9, color:C.mid}}>{L('Research quality auto-rated · updated ','研究质量自动评级 · 更新于 ')}{eqr.generated_at?.slice(0,10)}</span>}
+          {!eqr && <span style={{fontSize:9, color:C.mid}}>{L('Run fetch_data.py to generate EQR ratings','运行 fetch_data.py 以生成EQR评级')}</span>}
         </div>
       </Card>
 
@@ -667,6 +669,50 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData 
       <Card title={L('Company Profile','公司概况')} sub={L('Sector, fundamentals, external links','行业、基本面、外部链接')} open={open.company} onToggle={()=>toggle('company')} C={C}>
         <CompanyInfoPanel ticker={ticker} liveData={liveData} L={L} lk={lk} C={C}/>
       </Card>
+
+      {/* EQR Detail Card */}
+      {eqr && (
+        <Card title={L('Research Quality (EQR)','研究质量评级 (EQR)')} sub={L('Auto-generated · degrades with data age','自动生成 · 随数据老化自动降级')} open={open.variant} onToggle={()=>toggle('variant')} C={C}>
+          {/* Section grid */}
+          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:8, marginBottom:14}}>
+            {Object.values(eqr.sections || {}).map((sec, i) => {
+              const c = sec.rating==='HIGH' ? C.green : sec.rating==='MED-HIGH' ? C.blue : sec.rating==='MED' ? C.gold : C.red;
+              return (
+                <div key={i} style={{padding:'10px 12px', background:`${c}08`, border:`1px solid ${c}30`, borderRadius:7}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
+                    <div style={{fontSize:10, fontWeight:700, color:C.dark}}>{sec.label}</div>
+                    <span style={{...S.tag(c), fontSize:8}}>{sec.rating}</span>
+                  </div>
+                  <div style={{fontSize:9, color:C.mid, lineHeight:1.5}}>{sec.source}</div>
+                  {sec.data_age_days < 999 && (
+                    <div style={{fontSize:8, color: sec.data_age_days > 90 ? C.gold : C.mid, marginTop:3}}>
+                      {sec.data_age_days}d {L('old','天前')}
+                      {sec.data_age_days > 90 ? ' ⚠️' : ''}
+                    </div>
+                  )}
+                  {sec.note && <div style={{fontSize:8, color:C.gold, marginTop:3, lineHeight:1.4}}>{sec.note}</div>}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* AI Limitations */}
+          <div style={{padding:'10px 14px', background:`${C.gold}08`, border:`1px solid ${C.gold}25`, borderRadius:7}}>
+            <div style={{fontSize:10, fontWeight:700, color:C.gold, marginBottom:8, letterSpacing:'0.04em'}}>
+              ⚠ {L('AI LIMITATIONS — read before acting','AI局限性 — 行动前必读')}
+            </div>
+            {(eqr.ai_limitations || []).map((lim, i) => (
+              <div key={i} style={{display:'flex', gap:8, marginBottom:5}}>
+                <span style={{color:C.mid, flexShrink:0, fontSize:10}}>—</span>
+                <span style={{fontSize:10, color:C.dark, lineHeight:1.5}}>{lim}</span>
+              </div>
+            ))}
+            <div style={{fontSize:9, color:C.mid, marginTop:8, borderTop:`1px solid ${C.border}`, paddingTop:6}}>
+              {L('Generated: ','生成时间: ')}{eqr.generated_at ? new Date(eqr.generated_at).toLocaleString() : '—'}
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card title={L('Next Actions','下一步行动')} open={open.actions} onToggle={()=>toggle('actions')} C={C}>
         {s.nextActions.map((a,i)=>(
@@ -2275,6 +2321,31 @@ export default function Dashboard() {
   const [liveData, setLiveData] = useState(null);
   const [universeA, setUniverseA] = useState(null);
   const [universeHK, setUniverseHK] = useState(null);
+  const [eqrData, setEqrData] = useState({});
+
+  /* Fetch EQR ratings on mount */
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL || '/';
+    const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
+    Promise.all(
+      ids.map(id =>
+        fetch(base + `data/eqr_${id}.json`)
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
+      )
+    ).then(results => {
+      const map = {};
+      ids.forEach((id, i) => {
+        if (results[i]) {
+          // Convert safe_id back to ticker: 300308_SZ → 300308.SZ
+          const lastUnderscore = id.lastIndexOf('_');
+          const ticker = id.slice(0, lastUnderscore) + '.' + id.slice(lastUnderscore + 1);
+          map[ticker] = results[i];
+        }
+      });
+      setEqrData(map);
+    });
+  }, []);
 
   /* Fetch live market data + universe on mount */
   useEffect(() => {
@@ -2553,11 +2624,11 @@ export default function Dashboard() {
             const isUniverse = ticker && !isFocus && universeStocks.find(s => s.ticker === ticker);
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
-                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData}/></div>}
+                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData}/></div>}
                 <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C}/>
               </div>
             );
-            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData}/>;
+            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C}/>;
           })()}

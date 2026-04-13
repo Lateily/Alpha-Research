@@ -16,7 +16,7 @@ Run: python3 scripts/fetch_data.py
 """
 
 import json, os, time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 OUTPUT_DIR = Path(__file__).parent.parent / "public" / "data"
@@ -48,6 +48,135 @@ VP_SCORES = {
     "002594.SZ": {"vp": 52, "expectation_gap": 55, "fundamental_accel": 60,
                   "narrative_shift": 45, "low_coverage": 35, "catalyst_prox": 50},
 }
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EQR Auto-Rating Engine
+# ══════════════════════════════════════════════════════════════════════════════
+_EQR_LEVELS = ["LOW", "MED", "MED-HIGH", "HIGH"]
+
+def _eqr_idx(level):
+    return _EQR_LEVELS.index(level) if level in _EQR_LEVELS else 0
+
+def _eqr_from_idx(i):
+    return _EQR_LEVELS[max(0, min(i, 3))]
+
+def _eqr_degrade(level, steps=1):
+    return _eqr_from_idx(_eqr_idx(level) - steps)
+
+def _auto_eqr_rating(base_level, data_age_days, cross_referenced=False, is_llm_inference=False):
+    """
+    Mandatory degradation waterfall:
+    1. LLM inference → always LOW
+    2. data_age > 180 days → force LOW
+    3. data_age > 90 days  → degrade 1 level
+    4. single source and rating >= MED-HIGH → degrade 1 level
+    """
+    if is_llm_inference:
+        return "LOW"
+    rating = base_level
+    if data_age_days > 180:
+        return "LOW"
+    if data_age_days > 90:
+        rating = _eqr_degrade(rating, 1)
+    if not cross_referenced and _eqr_idx(rating) >= _eqr_idx("MED-HIGH"):
+        rating = _eqr_degrade(rating, 1)
+    return rating
+
+def generate_eqr(ticker, market, data_dates):
+    """
+    Generate the full EQR JSON for one ticker.
+    data_dates: { "financials": "YYYY-MM-DD", "price": ..., "consensus": ..., "news": ... }
+    """
+    today = datetime.now(timezone.utc).date()
+
+    def age(date_str):
+        if not date_str:
+            return 999
+        try:
+            d = datetime.fromisoformat(str(date_str)).date()
+            return (today - d).days
+        except Exception:
+            return 999
+
+    fin_age  = age(data_dates.get("financials"))
+    px_age   = age(data_dates.get("price"))
+    con_age  = age(data_dates.get("consensus"))
+    news_age = age(data_dates.get("news"))
+
+    sections = {
+        "business_model": {
+            "label": "Business Model",
+            "rating": _auto_eqr_rating("HIGH", fin_age, cross_referenced=True),
+            "source": "Company annual report + AKShare financials",
+            "data_age_days": fin_age,
+        },
+        "variant_thesis": {
+            "label": "Variant Thesis",
+            "rating": _auto_eqr_rating(
+                "MED-HIGH" if con_age < 90 else "MED",
+                con_age,
+                cross_referenced=con_age < 90,
+            ),
+            "source": "Consensus estimates (yfinance/AKShare) + LLM synthesis",
+            "data_age_days": con_age,
+            "note": "Expectation gap component uses LLM reasoning — verify independently",
+        },
+        "catalysts": {
+            "label": "Catalysts",
+            "rating": _auto_eqr_rating("HIGH", fin_age, cross_referenced=True),
+            "source": "Management guidance + regulatory calendar",
+            "data_age_days": fin_age,
+        },
+        "risks": {
+            "label": "Risks",
+            "rating": _auto_eqr_rating("MED", news_age, cross_referenced=False),
+            "source": "News analysis + industry reports",
+            "data_age_days": news_age,
+        },
+        "financials": {
+            "label": "Financials",
+            "rating": _auto_eqr_rating("HIGH", fin_age, cross_referenced=True),
+            "source": "AKShare / yfinance financial statements",
+            "data_age_days": fin_age,
+        },
+        "technical": {
+            "label": "Technical",
+            "rating": _auto_eqr_rating("HIGH", px_age, cross_referenced=True),
+            "source": "AKShare / yfinance daily OHLCV",
+            "data_age_days": px_age,
+        },
+    }
+
+    # Overall = second-lowest section rating (one weak section shouldn't tank all)
+    sorted_idxs = sorted(_eqr_idx(s["rating"]) for s in sections.values())
+    overall = _eqr_from_idx(sorted_idxs[1] if len(sorted_idxs) > 1 else sorted_idxs[0])
+
+    # AI limitations — always explicit
+    con_src = "yfinance" if market == "HK" else "AKShare"
+    ai_limitations = [
+        f"Consensus estimates via {con_src}, not Bloomberg/Capital IQ",
+        "Management intent and insider dynamics are not observable from public data",
+        "Variant thesis expectation gap uses LLM reasoning — treat as hypothesis, not fact",
+        "Geopolitical tail risk is narrative-based; not quantified",
+    ]
+    if fin_age > 90:
+        ai_limitations.append(
+            f"⚠️ Financial data is {fin_age} days old — EQR automatically degraded"
+        )
+    if con_age > 90:
+        ai_limitations.append(
+            f"⚠️ Consensus estimates are {con_age} days old — expectation gap may be stale"
+        )
+
+    return {
+        "ticker":       ticker,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "overall":      overall,
+        "sections":     sections,
+        "ai_limitations": ai_limitations,
+        "data_freshness": data_dates,
+    }
+
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
 def _safe_float(val):
@@ -671,7 +800,7 @@ def fetch_focus_stocks():
 # ══════════════════════════════════════════════════════════════════════════════
 def main():
     print(f"{'='*62}")
-    print(f"AR Platform v4.0 — Full Market + Consensus + Flow + Insider")
+    print(f"AR Platform v4.1 — Full Market + Consensus + Flow + EQR Auto-Rating")
     print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*62}\n")
 
@@ -728,6 +857,47 @@ def main():
     with open(OUTPUT_DIR / "earnings_calendar.json", "w", encoding="utf-8") as f:
         json.dump({"fetched_at": datetime.now().isoformat(), "entries": earnings_cal},
                   f, ensure_ascii=False, indent=2, default=str)
+    print()
+
+    # ── EQR auto-ratings (one file per focus stock) ──
+    print("[EQR] Generating data-driven EQR ratings...")
+    today_str = datetime.now(timezone.utc).date().isoformat()
+    for pid, cfg in FOCUS_TICKERS.items():
+        # Estimate data dates from what we just fetched
+        fin_fetched = focus.get(pid, {}).get("meta", {})
+        # Price data is always today; financials we estimate from last quarterly date
+        # Use yfinance income_stmt most-recent column date if available, else 90d ago
+        fin_date = None
+        safe_id  = pid.replace(".", "_")
+        fin_file = OUTPUT_DIR / f"fin_{safe_id}.json"
+        if fin_file.exists():
+            try:
+                fin_json = json.loads(fin_file.read_text())
+                is_cols  = list((fin_json.get("income_statement") or {}).keys())
+                if is_cols:
+                    fin_date = sorted(is_cols)[-1][:10]
+            except Exception:
+                pass
+        con_date = None
+        if pid in consensus:
+            con_date = today_str   # we just fetched it
+
+        data_dates = {
+            "financials": fin_date or (datetime.now(timezone.utc).date()
+                          - timedelta(days=90)).isoformat(),
+            "price":      today_str,
+            "consensus":  con_date,
+            "news":       today_str,
+        }
+        eqr = generate_eqr(
+            ticker=pid,
+            market=cfg["exchange"],
+            data_dates=data_dates,
+        )
+        with open(OUTPUT_DIR / f"eqr_{safe_id}.json", "w", encoding="utf-8") as f:
+            json.dump(eqr, f, ensure_ascii=False, indent=2)
+        print(f"  {pid} → overall: {eqr['overall']}  "
+              f"(fin:{data_dates['financials']}, con:{data_dates['consensus']})")
     print()
 
     # ── Write market_data.json (master for focus stocks) ──
@@ -791,6 +961,8 @@ def main():
     print(f"  D&T entries:  {len(dragon_tiger)}")
     print(f"  Margin:       {len(margin)} focus stocks")
     print(f"  Earnings cal: {len(earnings_cal)} entries")
+    eqr_files = list(OUTPUT_DIR.glob("eqr_*.json"))
+    print(f"  EQR ratings: {len(eqr_files)} stocks")
     files = list(OUTPUT_DIR.glob("*.json"))
     total = sum(f.stat().st_size for f in files)
     print(f"  JSON files:   {len(files)} ({total/1024/1024:.1f} MB)")
