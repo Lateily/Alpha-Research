@@ -1338,7 +1338,11 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
     }, 3000);
 
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      // Auto-detect: GitHub Pages → call Vercel API; Vercel → call local API
+      const apiBase = import.meta.env.VITE_API_BASE_URL
+        || (typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')
+            ? 'https://equity-research-ten.vercel.app'
+            : '');
       const res = await fetch(`${apiBase}/api/research`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
