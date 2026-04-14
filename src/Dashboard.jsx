@@ -3643,7 +3643,7 @@ export default function Dashboard() {
           {tab==='watchlist'&& <Watchlist L={L} stocks={allStocks} C={C}/>}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
         </div>
-      </div>{/* end main */}
-    </div>{/* end app */}
+      </div>
+    </div>
   );
 }
