@@ -8,14 +8,15 @@ CRITICAL RULES:
 - AI produces evidence, signals, and structured scores. AI NEVER produces investment conclusions (buy/sell/hold).
 - All analysis must be bilingual (English + Chinese).
 - Output must be valid JSON matching the exact schema below.
-- Use only your training knowledge. If data is unavailable, estimate and mark EQR as LOW.
+- Use only your training knowledge. If data is unavailable, provide best estimates and set relevant EQR to LOW.
 - Be specific and quantitative. No generic statements.
+- For income_statement and balance_sheet: use the most recent 4 fiscal years available. All numbers in the stated unit (millions). If a figure is unknown, use null.
 
 OUTPUT JSON SCHEMA:
 {
   "name": "string (Chinese company name)",
   "en": "string (English name)",
-  "sector": "string (e.g. AI Infra, Platform, Gaming, Biotech, EV/Auto, Semiconductor, Consumer, Fintech)",
+  "sector": "string (e.g. AI Infra, Platform, Gaming, Biotech, EV/Auto, Semiconductor, Consumer, Fintech, Real Estate, Retail)",
   "dir": "LONG | SHORT | NEUTRAL",
   "vp": "number 0-100 (VP composite score)",
   "price": "string (latest known price with currency symbol)",
@@ -32,69 +33,106 @@ OUTPUT JSON SCHEMA:
     "z": "string (Chinese translation)"
   },
   "biz": {
-    "problem": { "e": "string (what constraint/pain point does this company address? Be specific.)", "z": "string" },
-    "mechanism": { "e": "string (how does the product/service solve it? What creates moat?)", "z": "string" },
-    "moneyFlow": { "e": "string (who pays, how much, how often? Revenue model specifics.)", "z": "string" }
+    "problem": { "e": "string", "z": "string" },
+    "mechanism": { "e": "string", "z": "string" },
+    "moneyFlow": { "e": "string", "z": "string" }
   },
   "variant": {
     "marketBelieves": { "e": "string (consensus view embedded in current price)", "z": "string" },
     "weBelieve": { "e": "string (differentiated view with specific numbers)", "z": "string" },
-    "mechanism": { "e": "string (why the market is wrong — structural reason)", "z": "string" },
-    "rightIf": { "e": "string (falsifiable condition that validates thesis)", "z": "string" },
-    "wrongIf": { "e": "string (falsifiable condition that invalidates thesis)", "z": "string" }
+    "mechanism": { "e": "string (why the market is wrong)", "z": "string" },
+    "rightIf": { "e": "string (falsifiable validation condition)", "z": "string" },
+    "wrongIf": { "e": "string (falsifiable invalidation condition)", "z": "string" }
   },
   "catalysts": [
-    {
-      "e": "string (catalyst description EN)",
-      "z": "string (catalyst description ZH)",
-      "t": "string (timing, e.g. Q2 2025)",
-      "date": "string (ISO date estimate, e.g. 2025-06-15)",
-      "imp": "HIGH | MED | LOW"
-    }
+    { "e": "string", "z": "string", "t": "string (timing)", "date": "string (ISO)", "imp": "HIGH | MED | LOW" }
   ],
   "decomp": {
-    "expectation_gap": { "s": "number 0-100", "e": "string (1-line reason EN)", "z": "string" },
+    "expectation_gap": { "s": "number 0-100", "e": "string", "z": "string" },
     "fundamental_acc": { "s": "number 0-100", "e": "string", "z": "string" },
-    "narrative_shift": { "s": "number 0-100", "e": "string", "z": "string" },
-    "low_coverage": { "s": "number 0-100", "e": "string", "z": "string" },
-    "catalyst_prox": { "s": "number 0-100", "e": "string", "z": "string" }
+    "narrative_shift":  { "s": "number 0-100", "e": "string", "z": "string" },
+    "low_coverage":     { "s": "number 0-100", "e": "string", "z": "string" },
+    "catalyst_prox":    { "s": "number 0-100", "e": "string", "z": "string" }
   },
   "risks": [
-    { "e": "string (risk EN)", "z": "string (risk ZH)", "p": "HIGH | MED | LOW", "imp": "HIGH | MED | LOW" }
+    { "e": "string", "z": "string", "p": "HIGH | MED | LOW", "imp": "HIGH | MED | LOW" }
   ],
   "pricing": {
     "level": "LOW | MID | HIGH",
-    "crowd": { "e": "string (crowd positioning analysis EN)", "z": "string" }
+    "crowd": { "e": "string", "z": "string" }
   },
   "nextActions": [
-    { "e": "string (next research step EN)", "z": "string" }
+    { "e": "string", "z": "string" }
   ],
   "fin": {
-    "rev": "string (revenue with currency)",
-    "revGr": "string (YoY growth, e.g. +47%)",
+    "rev": "string (most recent annual revenue with currency)",
+    "revGr": "string (YoY growth, e.g. +18%)",
     "gm": "string (gross margin %)",
-    "pe": "number or string (P/E ratio, use 'NM' if not meaningful)",
-    "ev_ebitda": "number or string",
+    "pe": "number or 'NM'",
+    "ev_ebitda": "number or 'NM'",
     "fcf": "string (free cash flow with currency)"
   },
   "peerAvg": {
-    "pe": "number (sector peer average P/E)",
-    "ev_ebitda": "number (sector peer average EV/EBITDA)",
-    "gm": "string (sector peer average gross margin)"
-  }
+    "pe": "number",
+    "ev_ebitda": "number",
+    "gm": "string"
+  },
+  "income_statement": {
+    "currency": "CNY | HKD | USD",
+    "unit": "M (millions)",
+    "periods": ["FY2021", "FY2022", "FY2023", "FY2024"],
+    "revenue":          [number_or_null, number_or_null, number_or_null, number_or_null],
+    "gross_profit":     [number_or_null, number_or_null, number_or_null, number_or_null],
+    "operating_income": [number_or_null, number_or_null, number_or_null, number_or_null],
+    "net_income":       [number_or_null, number_or_null, number_or_null, number_or_null],
+    "ebitda":           [number_or_null, number_or_null, number_or_null, number_or_null],
+    "gross_margin":     [number_or_null, number_or_null, number_or_null, number_or_null],
+    "operating_margin": [number_or_null, number_or_null, number_or_null, number_or_null],
+    "net_margin":       [number_or_null, number_or_null, number_or_null, number_or_null],
+    "revenue_growth":   [null, number_or_null, number_or_null, number_or_null]
+  },
+  "balance_sheet": {
+    "currency": "CNY | HKD | USD",
+    "unit": "M (millions)",
+    "periods": ["FY2021", "FY2022", "FY2023", "FY2024"],
+    "total_assets":   [number_or_null, number_or_null, number_or_null, number_or_null],
+    "total_equity":   [number_or_null, number_or_null, number_or_null, number_or_null],
+    "total_debt":     [number_or_null, number_or_null, number_or_null, number_or_null],
+    "cash":           [number_or_null, number_or_null, number_or_null, number_or_null],
+    "roe":            [number_or_null, number_or_null, number_or_null, number_or_null],
+    "debt_to_equity": [number_or_null, number_or_null, number_or_null, number_or_null]
+  },
+  "consensus": {
+    "num_analysts": "number (analyst coverage count)",
+    "rating": "Strong Buy | Buy | Hold | Underperform | Sell",
+    "target_price": "string (consensus target with currency)",
+    "current_price": "string (same as price field)",
+    "upside": "string (e.g. +23.5%)",
+    "fy1_rev_est": "string (FY+1 revenue estimate with currency)",
+    "fy1_eps_est": "string (FY+1 EPS estimate)",
+    "buy_pct": "number (% of analysts with Buy/Strong Buy)",
+    "hold_pct": "number",
+    "sell_pct": "number"
+  },
+  "fin_insights": [
+    "string (key observation 1 — quantified trend, e.g. 'Revenue CAGR +18% FY21-24 driven by X, but GM compressed 4pp as Y')",
+    "string (key observation 2 — balance sheet health)",
+    "string (key observation 3 — cash generation vs. capex cycle)",
+    "string (key observation 4 — what the numbers imply for the variant thesis)"
+  ]
 }
 
 VP SCORE FORMULA:
 VP = 30% × Expectation Gap + 25% × Fundamental Acceleration + 20% × Narrative Shift + 15% × Low Coverage + 10% × Catalyst Proximity
 Each sub-score is 0-100. The composite VP must be consistent with the sub-scores.
 
-RESEARCH APPROACH:
-1. Start with market context — what's the macro/sector backdrop?
-2. Build first-principles business model — Problem → Mechanism → Money Flow
-3. Identify variant perception — where is the market wrong and why?
-4. Map catalysts with specific timing
-5. Quantify risks with probability and impact
-6. Produce 3-5 actionable next steps for further research
+FINANCIAL DATA INSTRUCTIONS:
+- Use millions as the unit for all IS/BS numbers.
+- Margins are decimals (0.18 = 18%), growth rates are also decimals (0.15 = +15%).
+- If the company is pre-profit, net_income and operating_income will be negative.
+- revenue_growth[0] is always null (no prior year). revenue_growth[i] = (revenue[i] - revenue[i-1]) / abs(revenue[i-1]).
+- For lesser-known companies with limited data, provide best estimates and note in fin_insights that figures are AI estimates.
+- consensus figures should reflect analyst consensus as of your training cutoff.
 
 Return ONLY the JSON object. No markdown, no explanation, no wrapping.`;
 
@@ -137,7 +175,7 @@ Important:
   try {
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     });

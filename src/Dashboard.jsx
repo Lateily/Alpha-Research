@@ -862,7 +862,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
 
       <Card title={L('Financials','财务')} open={open.fin} onToggle={()=>toggle('fin')} C={C}>
         <FinCompare fin={s.fin} peerAvg={s.peerAvg} C={C}/>
-        <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12}}>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginBottom: (s.income_statement || s.balance_sheet) ? 16 : 0}}>
           <div>
             <div style={S.label}>Revenue</div>
             <div style={S.val}>{s.fin.rev}</div>
@@ -877,17 +877,36 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
             <div style={S.val}>{s.fin.gm}</div>
           </div>
         </div>
+        {/* Full IS/BS/Consensus from Deep Research */}
+        <DeepResearchFinancials stock={s} L={L} lk={lk} C={C}/>
       </Card>
 
       <Card title={L('Technical Analysis','技术分析')} open={open.ta} onToggle={()=>toggle('ta')} C={C}>
         <TechnicalAnalysis ticker={ticker} liveData={liveData} L={L} lk={lk} C={C}/>
+        {/* For Deep Research stocks: show AI-estimated technical posture */}
+        {s.pricing && !liveData?.yahoo?.[ticker] && (
+          <div style={{marginTop:10, padding:'8px 12px', background:`${C.gold}08`, border:`1px solid ${C.gold}20`, borderRadius:6}}>
+            <div style={{fontSize:9, fontWeight:700, color:C.gold, marginBottom:4}}>
+              {L('AI Estimated Posture (no live data)','AI估算技术形态（无实时数据）')}
+            </div>
+            <div style={{...S.row, gap:10}}>
+              <div>
+                <span style={S.label}>{L('Valuation','估值位置')}</span>
+                <span style={{...S.tag(s.pricing.level==='LOW'?C.green:s.pricing.level==='HIGH'?C.red:C.gold), marginLeft:6}}>
+                  {s.pricing.level}
+                </span>
+              </div>
+            </div>
+            <div style={{fontSize:10, color:C.mid, marginTop:6, lineHeight:1.5}}>{s.pricing.crowd[lk]}</div>
+          </div>
+        )}
       </Card>
 
       <Card title={L('K-Line Chart','K线图')} sub={L('90-day OHLC + Volume','90日K线+成交量')} open={open.kline} onToggle={()=>toggle('kline')} C={C}>
         <CandlestickChart ticker={ticker} L={L} lk={lk} C={C}/>
       </Card>
 
-      <Card title={L('Financial Statements','财务报表')} sub={L('IS / BS / CF','利润表/资产负债表/现金流量表')} open={open.statements} onToggle={()=>toggle('statements')} C={C}>
+      <Card title={L('Financial Statements','财务报表')} sub={L('IS / BS / CF — live data from yfinance/AKShare','利润表/资产负债表/现金流量表 — 来自yfinance/AKShare')} open={open.statements} onToggle={()=>toggle('statements')} C={C}>
         <FinancialStatements ticker={ticker} L={L} lk={lk} C={C}/>
       </Card>
 
@@ -2582,6 +2601,202 @@ const UniverseStockView = ({ ticker, universeStocks, liveData, L, lk, C, onDeepR
     </div>
   );
 };
+
+/* ── DEEP RESEARCH FINANCIALS ─────────────────────────────────────────── */
+function DeepResearchFinancials({ stock, L, lk, C }) {
+  const [tab, setTab] = useState('is');
+  const is  = stock?.income_statement;
+  const bs  = stock?.balance_sheet;
+  const con = stock?.consensus;
+  const ins = stock?.fin_insights || [];
+  if (!is && !bs && !con) return null;
+
+  const curr = is?.currency || bs?.currency || 'CNY';
+  const unit = 'M';
+
+  const fmtN = (n) => {
+    if (n == null) return <span style={{color:C.mid}}>—</span>;
+    const abs = Math.abs(n);
+    const str = abs >= 10000 ? `${(n/1000).toFixed(1)}B` : abs >= 1000 ? `${(n/1000).toFixed(2)}B` : `${n.toFixed(0)}M`;
+    return <span style={{color: n < 0 ? C.red : C.dark}}>{n < 0 ? str : str}</span>;
+  };
+  const fmtPct = (n) => {
+    if (n == null) return <span style={{color:C.mid}}>—</span>;
+    const pct = (n * 100).toFixed(1) + '%';
+    return <span style={{color: n < 0 ? C.red : n > 0.25 ? C.green : C.dark}}>{pct}</span>;
+  };
+  const fmtGrowth = (n) => {
+    if (n == null) return <span style={{color:C.mid}}>—</span>;
+    const pct = (n >= 0 ? '+' : '') + (n * 100).toFixed(1) + '%';
+    return <span style={{color: n > 0 ? C.green : C.red, fontWeight:600}}>{pct}</span>;
+  };
+
+  const thStyle = {padding:'7px 10px', fontSize:10, fontWeight:700, color:C.mid, textAlign:'right', borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap'};
+  const tdStyle = {padding:'7px 10px', fontSize:11, textAlign:'right', borderBottom:`1px solid ${C.border}40`};
+  const labelStyle = {padding:'7px 10px', fontSize:10, color:C.mid, borderBottom:`1px solid ${C.border}40`, whiteSpace:'nowrap'};
+  const sectionStyle = {padding:'5px 10px', fontSize:9, fontWeight:700, color:C.mid, background:C.soft, letterSpacing:'0.05em', textTransform:'uppercase'};
+
+  const periods = is?.periods || bs?.periods || [];
+
+  return (
+    <div>
+      {/* Tab bar */}
+      <div style={{display:'flex', gap:4, marginBottom:12, borderBottom:`1px solid ${C.border}`, paddingBottom:8}}>
+        {[
+          {id:'is',  label:L('Income Statement','利润表')},
+          {id:'bs',  label:L('Balance Sheet','资产负债表')},
+          {id:'con', label:L('Consensus','分析师共识')},
+        ].filter(t => (t.id==='is'&&is)||(t.id==='bs'&&bs)||(t.id==='con'&&con)).map(t => (
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            padding:'5px 12px', fontSize:10, fontWeight:600, borderRadius:5, border:'none', cursor:'pointer',
+            background: tab===t.id ? C.blue : 'transparent',
+            color: tab===t.id ? '#fff' : C.mid,
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {/* Income Statement */}
+      {tab==='is' && is && (
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
+            <thead>
+              <tr>
+                <th style={{...thStyle, textAlign:'left', width:160}}>{curr} {unit}</th>
+                {periods.map((p,i) => <th key={i} style={thStyle}>{p}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colSpan={periods.length+1} style={sectionStyle}>Revenue</td></tr>
+              <tr>
+                <td style={labelStyle}>{L('Revenue','营业收入')}</td>
+                {is.revenue.map((v,i)=><td key={i} style={tdStyle}>{fmtN(v)}</td>)}
+              </tr>
+              <tr>
+                <td style={{...labelStyle, paddingLeft:18}}>{L('YoY Growth','同比增长')}</td>
+                {is.revenue_growth.map((v,i)=><td key={i} style={tdStyle}>{fmtGrowth(v)}</td>)}
+              </tr>
+              <tr><td colSpan={periods.length+1} style={sectionStyle}>Profitability</td></tr>
+              <tr>
+                <td style={labelStyle}>{L('Gross Profit','毛利润')}</td>
+                {is.gross_profit.map((v,i)=><td key={i} style={tdStyle}>{fmtN(v)}</td>)}
+              </tr>
+              <tr>
+                <td style={{...labelStyle, paddingLeft:18}}>{L('Gross Margin','毛利率')}</td>
+                {is.gross_margin.map((v,i)=><td key={i} style={tdStyle}>{fmtPct(v)}</td>)}
+              </tr>
+              <tr>
+                <td style={labelStyle}>{L('Operating Income','营业利润')}</td>
+                {is.operating_income.map((v,i)=><td key={i} style={tdStyle}>{fmtN(v)}</td>)}
+              </tr>
+              <tr>
+                <td style={{...labelStyle, paddingLeft:18}}>{L('Operating Margin','营业利润率')}</td>
+                {is.operating_margin.map((v,i)=><td key={i} style={tdStyle}>{fmtPct(v)}</td>)}
+              </tr>
+              <tr>
+                <td style={labelStyle}>{L('Net Income','净利润')}</td>
+                {is.net_income.map((v,i)=><td key={i} style={tdStyle}>{fmtN(v)}</td>)}
+              </tr>
+              <tr>
+                <td style={{...labelStyle, paddingLeft:18}}>{L('Net Margin','净利率')}</td>
+                {is.net_margin.map((v,i)=><td key={i} style={tdStyle}>{fmtPct(v)}</td>)}
+              </tr>
+              {is.ebitda && <tr>
+                <td style={labelStyle}>EBITDA</td>
+                {is.ebitda.map((v,i)=><td key={i} style={tdStyle}>{fmtN(v)}</td>)}
+              </tr>}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Balance Sheet */}
+      {tab==='bs' && bs && (
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
+            <thead>
+              <tr>
+                <th style={{...thStyle, textAlign:'left', width:160}}>{curr} {unit}</th>
+                {(bs.periods||[]).map((p,i)=><th key={i} style={thStyle}>{p}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colSpan={(bs.periods||[]).length+1} style={sectionStyle}>Assets & Liabilities</td></tr>
+              <tr><td style={labelStyle}>{L('Total Assets','总资产')}</td>{bs.total_assets.map((v,i)=><td key={i} style={tdStyle}>{fmtN(v)}</td>)}</tr>
+              <tr><td style={labelStyle}>{L('Total Equity','股东权益')}</td>{bs.total_equity.map((v,i)=><td key={i} style={tdStyle}>{fmtN(v)}</td>)}</tr>
+              <tr><td style={labelStyle}>{L('Total Debt','有息负债')}</td>{bs.total_debt.map((v,i)=><td key={i} style={tdStyle}>{fmtN(v)}</td>)}</tr>
+              <tr><td style={labelStyle}>{L('Cash & Equivalents','货币资金')}</td>{bs.cash.map((v,i)=><td key={i} style={tdStyle}>{fmtN(v)}</td>)}</tr>
+              <tr><td colSpan={(bs.periods||[]).length+1} style={sectionStyle}>Return & Leverage</td></tr>
+              <tr>
+                <td style={labelStyle}>{L('ROE','净资产收益率')}</td>
+                {bs.roe.map((v,i)=><td key={i} style={tdStyle}>{fmtPct(v)}</td>)}
+              </tr>
+              <tr>
+                <td style={labelStyle}>{L('Debt / Equity','资产负债率')}</td>
+                {bs.debt_to_equity.map((v,i)=><td key={i} style={tdStyle}>{v!=null?<span style={{color:v>1?C.red:C.dark}}>{v.toFixed(2)}x</span>:<span style={{color:C.mid}}>—</span>}</td>)}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Consensus */}
+      {tab==='con' && con && (
+        <div>
+          <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:10, marginBottom:14}}>
+            <div style={{padding:12, background:C.soft, borderRadius:8}}>
+              <div style={{fontSize:9, color:C.mid, fontWeight:700, marginBottom:4}}>{L('Consensus Rating','分析师评级')}</div>
+              <div style={{fontSize:15, fontWeight:800, color:C.green}}>{con.rating}</div>
+              <div style={{fontSize:9, color:C.mid, marginTop:2}}>{con.num_analysts} {L('analysts','位分析师')}</div>
+            </div>
+            <div style={{padding:12, background:C.soft, borderRadius:8}}>
+              <div style={{fontSize:9, color:C.mid, fontWeight:700, marginBottom:4}}>{L('Target Price','目标价')}</div>
+              <div style={{fontSize:15, fontWeight:800, color:C.dark}}>{con.target_price}</div>
+              <div style={{fontSize:9, color:parseFloat(con.upside)>0?C.green:C.red, marginTop:2, fontWeight:600}}>{con.upside}</div>
+            </div>
+            <div style={{padding:12, background:C.soft, borderRadius:8}}>
+              <div style={{fontSize:9, color:C.mid, fontWeight:700, marginBottom:4}}>{L('FY+1 Revenue Est.','FY+1营收预测')}</div>
+              <div style={{fontSize:13, fontWeight:700, color:C.dark}}>{con.fy1_rev_est}</div>
+              <div style={{fontSize:9, color:C.mid, marginTop:2}}>EPS: {con.fy1_eps_est}</div>
+            </div>
+          </div>
+          {/* Rating distribution bar */}
+          <div style={{marginBottom:10}}>
+            <div style={{fontSize:9, color:C.mid, marginBottom:5, fontWeight:700}}>{L('Rating Distribution','评级分布')}</div>
+            <div style={{display:'flex', height:8, borderRadius:4, overflow:'hidden', gap:1}}>
+              <div style={{width:`${con.buy_pct||0}%`, background:C.green}}/>
+              <div style={{width:`${con.hold_pct||0}%`, background:C.gold}}/>
+              <div style={{width:`${con.sell_pct||0}%`, background:C.red}}/>
+            </div>
+            <div style={{display:'flex', gap:12, marginTop:5}}>
+              <span style={{fontSize:9, color:C.green}}>Buy {con.buy_pct}%</span>
+              <span style={{fontSize:9, color:C.gold}}>Hold {con.hold_pct}%</span>
+              <span style={{fontSize:9, color:C.red}}>Sell {con.sell_pct}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Financial Insights */}
+      {ins.length > 0 && (
+        <div style={{marginTop:14, padding:'10px 14px', background:`${C.blue}08`, border:`1px solid ${C.blue}20`, borderRadius:7}}>
+          <div style={{fontSize:9, fontWeight:700, color:C.blue, marginBottom:8, letterSpacing:'0.05em', textTransform:'uppercase'}}>
+            {L('Financial Insights (AI-generated)','财务洞察（AI生成）')}
+          </div>
+          {ins.map((insight, i) => (
+            <div key={i} style={{display:'flex', gap:8, marginBottom:6}}>
+              <span style={{color:C.blue, flexShrink:0, fontSize:11}}>·</span>
+              <span style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{insight}</span>
+            </div>
+          ))}
+          <div style={{fontSize:8, color:C.mid, marginTop:8, borderTop:`1px solid ${C.border}`, paddingTop:6}}>
+            ⚠ {L('Figures are AI estimates from training data — verify against official filings before acting.',
+                   '数据为AI基于训练知识的估算，采取行动前请与官方财报核对。')}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ── REVERSE DCF PANEL ────────────────────────────────────────────────── */
 function MetricBox({ label, value, sub, color, C }) {
