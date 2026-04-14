@@ -501,11 +501,12 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C }) {
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData }) {
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
-  const eqr = eqrData?.[ticker] || null;
+  const eqr  = eqrData?.[ticker]  || null;
+  const rdcf = rdcfData?.[ticker] || null;
 
   const decompData = Object.entries(s.decomp).map(([k,v])=>({name:k.replace(/_/g,' '), value:v.s}));
   const sectorIdx = PORTFOLIO.sectors.findIndex(sc=>sc.name===s.sector);
@@ -713,6 +714,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
           </div>
         </Card>
       )}
+
+      {/* Reverse DCF Card */}
+      <ReverseDCF rdcf={rdcf} L={L} C={C} open={open} toggle={toggle}/>
 
       <Card title={L('Next Actions','下一步行动')} open={open.actions} onToggle={()=>toggle('actions')} C={C}>
         {s.nextActions.map((a,i)=>(
@@ -2222,6 +2226,130 @@ const UniverseStockView = ({ ticker, universeStocks, liveData, L, lk, C, onDeepR
   );
 };
 
+/* ── REVERSE DCF PANEL ────────────────────────────────────────────────── */
+function MetricBox({ label, value, sub, color, C }) {
+  const c = color || C.dark;
+  return (
+    <div style={{padding:'10px 14px', background:`${c}08`, border:`1px solid ${c}25`, borderRadius:7}}>
+      <div style={{fontSize:9, fontWeight:700, color:C.mid, letterSpacing:'0.06em', marginBottom:4, textTransform:'uppercase'}}>{label}</div>
+      <div style={{fontSize:16, fontWeight:800, color:c, fontFamily:'monospace'}}>{value}</div>
+      {sub && <div style={{fontSize:9, color:C.mid, marginTop:3, lineHeight:1.4}}>{sub}</div>}
+    </div>
+  );
+}
+
+function ReverseDCF({ rdcf, L, C, open, toggle }) {
+  if (!rdcf) return null;
+
+  const isA = rdcf.market === 'A' || rdcf.market === 'SH' || rdcf.market === 'SZ';
+  const curr = isA ? '¥' : 'HK$';
+  const err  = rdcf.error;
+
+  const signalColor = rdcf.signal === 'UNDERPRICED' ? C.green
+                    : rdcf.signal === 'OVERPRICED'  ? C.red
+                    : C.gold;
+  const signalLabel = rdcf.signal === 'UNDERPRICED' ? L('UNDERPRICED ↑','估值偏低 ↑')
+                    : rdcf.signal === 'OVERPRICED'  ? L('OVERPRICED ↓','估值偏高 ↓')
+                    : L('FAIRLY VALUED','合理估值');
+
+  const fmtPct = v => v != null ? `${(v * 100).toFixed(1)}%` : '—';
+  const fmtDelta = v => v != null ? `${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}pp` : '—';
+
+  const isStdFcf    = rdcf.model_type === 'standard_fcf';
+  const isBiotech   = rdcf.model_type === 'biotech_revenue';
+  const impliedG    = isStdFcf ? rdcf.implied_fcf_growth : rdcf.implied_rev_growth;
+  const ourG        = isStdFcf ? rdcf.our_fcf_growth     : rdcf.our_rev_growth;
+  const gLabel      = isStdFcf ? L('FCF Growth','FCF增速') : L('Revenue Growth','营收增速');
+  const baseLabel   = isStdFcf ? L('Base FCF','基准FCF') : L('Base Revenue','基准营收');
+  const baseVal     = isStdFcf ? rdcf.fcf0 : rdcf.rev0;
+
+  const fmtBig = v => {
+    if (v == null) return '—';
+    const abs = Math.abs(v);
+    if (abs >= 1e12) return `${curr}${(v/1e12).toFixed(2)}T`;
+    if (abs >= 1e9)  return `${curr}${(v/1e9).toFixed(1)}B`;
+    if (abs >= 1e6)  return `${curr}${(v/1e6).toFixed(0)}M`;
+    return `${curr}${v.toFixed(0)}`;
+  };
+
+  const w = rdcf.wacc_detail || {};
+
+  return (
+    <Card title={L('Reverse DCF · Expectation Gap','反向DCF · 市场预期差')}
+          sub={L('What growth rate is the market pricing in?','市场定价隐含的增速是多少？')}
+          open={open?.rdcf !== false} onToggle={toggle ? ()=>toggle('rdcf') : undefined} C={C}>
+
+      {/* Error state */}
+      {err && (
+        <div style={{padding:'12px 14px', background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:7, color:C.red, fontSize:11}}>
+          ⚠ {L('RDCF unavailable: ','反向DCF不可用：')}{err}
+          <div style={{fontSize:9, color:C.mid, marginTop:4}}>
+            {L('Run fetch_data.py to generate data','运行 fetch_data.py 生成数据')}
+          </div>
+        </div>
+      )}
+
+      {!err && (
+        <>
+          {/* Signal banner */}
+          <div style={{padding:'10px 16px', background:`${signalColor}12`, border:`1px solid ${signalColor}35`, borderRadius:7, marginBottom:14, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+            <div>
+              <span style={{fontSize:13, fontWeight:800, color:signalColor, letterSpacing:'0.04em'}}>{signalLabel}</span>
+              <span style={{fontSize:10, color:C.mid, marginLeft:10}}>
+                {L('Gap Score: ','预期差得分: ')}<b style={{color:signalColor}}>{rdcf.expectation_gap_score}</b>/100
+              </span>
+            </div>
+            <div style={{fontSize:9, color:C.mid}}>{L('δ = our − implied','δ = 我们 − 市场')}: <b style={{color:signalColor}}>{fmtDelta(rdcf.delta)}</b></div>
+          </div>
+
+          {/* Core metrics */}
+          <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:10, marginBottom:14}}>
+            <MetricBox
+              label={`${L('Market-Implied','市场隐含')} ${gLabel}`}
+              value={fmtPct(impliedG)}
+              sub={L('What market prices in','市场定价隐含')}
+              color={C.mid} C={C}
+            />
+            <MetricBox
+              label={`${L('Our View','我们预测')} ${gLabel}`}
+              value={fmtPct(ourG)}
+              sub={L('Our base case','我方基准预测')}
+              color={ourG > impliedG ? C.green : C.red} C={C}
+            />
+            <MetricBox
+              label={L('Expectation Gap (δ)','预期差 (δ)')}
+              value={fmtDelta(rdcf.delta)}
+              sub={`${L('Gap Score','预期差得分')}: ${rdcf.expectation_gap_score}/100`}
+              color={signalColor} C={C}
+            />
+          </div>
+
+          {/* Secondary metrics */}
+          <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:8, marginBottom:14}}>
+            <MetricBox label={L('WACC','加权平均资本成本')} value={fmtPct(w.wacc)} sub={`β=${(w.beta||'—')}`} color={C.blue} C={C}/>
+            <MetricBox label={baseLabel} value={fmtBig(baseVal)} sub={isStdFcf ? (rdcf.fcf_note || '') : `${L('Prof offset: ','盈利年差: ')}${rdcf.profitability_offset}yr`} color={C.mid} C={C}/>
+            <MetricBox label={L('Market Cap','市值')} value={fmtBig(rdcf.market_cap)} sub="" color={C.mid} C={C}/>
+            <MetricBox label={L('Net Debt','净债务')} value={fmtBig(rdcf.net_debt)} sub={rdcf.net_debt > 0 ? L('debt net','净负债') : L('net cash','净现金')} color={rdcf.net_debt > 0 ? C.red : C.green} C={C}/>
+          </div>
+
+          {/* WACC breakdown */}
+          <div style={{padding:'8px 12px', background:`${C.blue}08`, border:`1px solid ${C.blue}20`, borderRadius:6, fontSize:10, color:C.mid}}>
+            <b style={{color:C.blue}}>WACC</b> = rf {fmtPct(w.rf)} + β({(w.beta||'—')}) × ERP {fmtPct(w.erp)} = <b style={{color:C.blue}}>{fmtPct(w.wacc)}</b>
+            <span style={{marginLeft:10, fontSize:9}}>({w.beta_source || '—'})</span>
+          </div>
+
+          {/* Model note */}
+          <div style={{marginTop:8, fontSize:9, color:C.mid, lineHeight:1.6}}>
+            {isBiotech && <span>🧬 {L('Biotech model: revenue CAGR → FCF via ','生物科技模型：营收CAGR → 终态FCF利润率 ')}{fmtPct(rdcf.terminal_fcf_margin)}</span>}
+            {isStdFcf  && <span>📊 {L('Standard FCF model · 5Y horizon · terminal g = ','标准FCF模型 · 5年预测期 · 终态增速 ')}{fmtPct(w?.erp ? rdcf.market_cap : null) || '2.5%'}</span>}
+            <span style={{float:'right', fontSize:8}}>{L('Generated: ','生成: ')}{rdcf.generated_at?.slice(0,10) || '—'}</span>
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
 /* ── BACKTEST PANEL ───────────────────────────────────────────────────── */
 function BacktestPanel({ L, C }) {
   const [bt, setBt] = useState(null);
@@ -2437,13 +2565,14 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true});
+  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true, rdcf:true});
   const [dynamicStocks, setDynamicStocks] = useState({});
   const [showDeepResearch, setShowDeepResearch] = useState(false);
   const [liveData, setLiveData] = useState(null);
   const [universeA, setUniverseA] = useState(null);
   const [universeHK, setUniverseHK] = useState(null);
-  const [eqrData, setEqrData] = useState({});
+  const [eqrData, setEqrData]   = useState({});
+  const [rdcfData, setRdcfData] = useState({});
   const [predictions, setPredictions] = useState([]);
 
   /* Fetch prediction log on mount */
@@ -2476,6 +2605,29 @@ export default function Dashboard() {
         }
       });
       setEqrData(map);
+    });
+  }, []);
+
+  /* Fetch Reverse DCF data on mount */
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL || '/';
+    const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
+    Promise.all(
+      ids.map(id =>
+        fetch(base + `data/rdcf_${id}.json`)
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
+      )
+    ).then(results => {
+      const map = {};
+      ids.forEach((id, i) => {
+        if (results[i]) {
+          const lastUnderscore = id.lastIndexOf('_');
+          const ticker = id.slice(0, lastUnderscore) + '.' + id.slice(lastUnderscore + 1);
+          map[ticker] = results[i];
+        }
+      });
+      setRdcfData(map);
     });
   }, []);
 
@@ -2756,11 +2908,11 @@ export default function Dashboard() {
             const isUniverse = ticker && !isFocus && universeStocks.find(s => s.ticker === ticker);
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
-                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData}/></div>}
+                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData}/></div>}
                 <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C}/>
               </div>
             );
-            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData}/>;
+            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C}/>;
           })()}

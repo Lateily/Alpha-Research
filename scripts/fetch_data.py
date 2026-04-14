@@ -178,6 +178,324 @@ def generate_eqr(ticker, market, data_dates):
     }
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Reverse DCF Engine  (v13.3 — no scipy, pure-Python bisection)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# WACC parameters by market
+MARKET_PARAMS = {
+    "A":  {"rf": 0.023, "erp": 0.065},   # 10Y CGB 2.3% + A-share ERP 6.5%
+    "HK": {"rf": 0.038, "erp": 0.0725},  # HIBOR-linked 3.8% + US ERP 5% + China CRP 2.25%
+    "SH": {"rf": 0.023, "erp": 0.065},
+    "SZ": {"rf": 0.023, "erp": 0.065},
+}
+BENCH_TICKERS = {"A": "000300.SS", "HK": "^HSI", "SH": "000300.SS", "SZ": "000300.SS"}
+SECTOR_BETA_DEFAULTS = {
+    "Technology":           1.25,
+    "Consumer Cyclical":    1.10,
+    "Healthcare":           1.40,
+    "Communication Services":0.90,
+    "Industrials":          1.05,
+}
+DEFAULT_BETA = 1.15
+DCF_HORIZON  = 5   # forecast years
+
+
+def _bisect(f, lo, hi, tol=1e-7, maxiter=200):
+    """Pure-Python bisection. Returns None if root not bracketed."""
+    flo, fhi = f(lo), f(hi)
+    if flo * fhi > 0:
+        return None                  # not bracketed → no solution in range
+    for _ in range(maxiter):
+        mid = (lo + hi) / 2.0
+        if (hi - lo) < tol:
+            return mid
+        fmid = f(mid)
+        if fmid == 0:
+            return mid
+        if flo * fmid < 0:
+            hi, fhi = mid, fmid
+        else:
+            lo, flo = mid, fmid
+    return (lo + hi) / 2.0
+
+
+def _calc_beta_from_hist(stock_hist, bench_hist):
+    """
+    Compute beta from daily Close returns using last 60 trading days.
+    stock_hist, bench_hist: pandas DataFrames with a 'Close' column.
+    Returns float beta, or DEFAULT_BETA on failure.
+    """
+    try:
+        s = stock_hist["Close"].pct_change().dropna()
+        b = bench_hist["Close"].pct_change().dropna()
+        # Align on shared dates
+        common = s.index.intersection(b.index)
+        if len(common) < 20:
+            return DEFAULT_BETA
+        s = s.loc[common].tail(60)
+        b = b.loc[common].tail(60)
+        cov  = float(((s - s.mean()) * (b - b.mean())).mean())
+        var  = float(((b - b.mean()) ** 2).mean())
+        if var == 0:
+            return DEFAULT_BETA
+        beta = cov / var
+        # Clamp to reasonable range (0.3 – 2.5)
+        return round(max(0.30, min(2.50, beta)), 4)
+    except Exception:
+        return DEFAULT_BETA
+
+
+def _calc_wacc(beta, market):
+    p   = MARKET_PARAMS.get(market, MARKET_PARAMS["HK"])
+    return p["rf"] + beta * p["erp"]
+
+
+def _dcf_equity_value(fcf0, g, wacc, g_terminal, n_years, net_debt):
+    """
+    Intrinsic equity value = PV of FCF stream + PV of terminal value − net debt.
+    FCF_t = fcf0 × (1 + g)^t
+    TV    = FCF_n × (1 + g_t) / (wacc − g_t)
+    Guard: wacc must exceed g_terminal.
+    """
+    if wacc <= g_terminal:
+        return float("inf")
+    pv = 0.0
+    fcf_t = fcf0
+    for t in range(1, n_years + 1):
+        fcf_t = fcf0 * ((1.0 + g) ** t)
+        pv   += fcf_t / ((1.0 + wacc) ** t)
+    tv  = fcf_t * (1.0 + g_terminal) / (wacc - g_terminal)
+    pv += tv / ((1.0 + wacc) ** n_years)
+    return pv - net_debt
+
+
+def _biotech_equity_value(rev0, g, wacc, g_terminal, n_years,
+                           profitability_offset, terminal_fcf_margin, tax_rate, net_debt):
+    """
+    Revenue-growth model for pre-profit biotech.
+    Years before profitability_offset: FCF = 0 (pre-profit burn handled via net_debt).
+    Years from profitability_offset onward: FCF = Rev_t × terminal_fcf_margin × (1 − tax).
+    """
+    if wacc <= g_terminal:
+        return float("inf")
+    pv = 0.0
+    fcf_last = 0.0
+    for t in range(1, n_years + 1):
+        rev_t = rev0 * ((1.0 + g) ** t)
+        if t < profitability_offset:
+            fcf_t = 0.0
+        else:
+            fcf_t = rev_t * terminal_fcf_margin * (1.0 - tax_rate)
+        fcf_last = rev_t * terminal_fcf_margin * (1.0 - tax_rate)
+        pv += fcf_t / ((1.0 + wacc) ** t)
+    tv  = fcf_last * (1.0 + g_terminal) / (wacc - g_terminal)
+    pv += tv / ((1.0 + wacc) ** n_years)
+    return pv - net_debt
+
+
+def _expectation_gap_score(delta):
+    """
+    Map (our_growth − implied_growth) → 0..100 score.
+    Positive delta = market underprices our thesis → higher score.
+    Scaled so delta = +15pp → ~75, delta = +30pp → ~90.
+    """
+    if delta is None:
+        return 50
+    # Sigmoid-ish: score = 50 + 50 × tanh(delta / 0.20)
+    import math
+    return round(50 + 50 * math.tanh(delta / 0.20), 1)
+
+
+def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
+    """
+    Compute Reverse DCF for one focus stock.
+    Returns a dict ready to be written to rdcf_{safe_id}.json.
+    """
+    result = {
+        "ticker":       pid,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model_type":   rdcf_cfg["model_type"],
+        "market":       rdcf_cfg["market"],
+        "error":        None,
+    }
+
+    try:
+        fund  = focus_data.get("fundamentals", {})
+        mkt   = rdcf_cfg["market"]
+
+        # ── Market cap and net debt ──
+        market_cap = fund.get("market_cap")
+        total_debt = fund.get("total_debt") or 0.0
+        total_cash = fund.get("total_cash") or 0.0
+        if not market_cap or market_cap <= 0:
+            result["error"] = "market_cap_unavailable"
+            return result
+        net_debt = total_debt - total_cash
+
+        # ── Beta ──
+        if rdcf_cfg.get("beta_override"):
+            beta = rdcf_cfg["beta_override"]
+            beta_source = "manual_override"
+        elif stock_hist is not None and bench_hist is not None:
+            beta = _calc_beta_from_hist(stock_hist, bench_hist)
+            beta_source = "yfinance_60d"
+        else:
+            sector = focus_data.get("meta", {}).get("sector", "")
+            beta = SECTOR_BETA_DEFAULTS.get(sector, DEFAULT_BETA)
+            beta_source = f"sector_default({sector or 'unknown'})"
+
+        wacc          = _calc_wacc(beta, mkt)
+        g_terminal    = rdcf_cfg["terminal_growth"]
+        tax_rate      = rdcf_cfg["tax_rate"]
+
+        result["wacc_detail"] = {
+            "rf":          MARKET_PARAMS.get(mkt, {}).get("rf"),
+            "erp":         MARKET_PARAMS.get(mkt, {}).get("erp"),
+            "beta":        round(beta, 4),
+            "beta_source": beta_source,
+            "wacc":        round(wacc, 4),
+            "market":      mkt,
+        }
+
+        # ── Model-specific reverse DCF ──
+        if rdcf_cfg["model_type"] == "standard_fcf":
+            our_growth = rdcf_cfg["our_fcf_growth"]
+            fcf0 = fund.get("free_cash_flow")
+            # Fallback: use operating CF × 0.7 if FCF is negative or missing
+            if not fcf0 or fcf0 <= 0:
+                ocf = fund.get("operating_cash_flow")
+                if ocf and ocf > 0:
+                    fcf0 = ocf * 0.70
+                    result["fcf_note"] = "FCF<=0; proxied as OCF×0.70"
+                else:
+                    result["error"] = "fcf_and_ocf_both_nonpositive"
+                    return result
+
+            def obj(g):
+                return _dcf_equity_value(fcf0, g, wacc, g_terminal, DCF_HORIZON, net_debt) - market_cap
+
+            implied_g = _bisect(obj, lo=-0.15, hi=0.95)
+            if implied_g is None:
+                result["error"] = "bisection_no_root"
+                result["bisect_debug"] = {
+                    "obj_lo": round(_dcf_equity_value(fcf0, -0.15, wacc, g_terminal, DCF_HORIZON, net_debt) - market_cap, 0),
+                    "obj_hi": round(_dcf_equity_value(fcf0,  0.95, wacc, g_terminal, DCF_HORIZON, net_debt) - market_cap, 0),
+                }
+                return result
+
+            delta     = our_growth - implied_g
+            gap_score = _expectation_gap_score(delta)
+            signal    = "UNDERPRICED" if delta > 0.05 else ("OVERPRICED" if delta < -0.05 else "FAIRLY_VALUED")
+
+            result.update({
+                "fcf0":         round(fcf0, 0),
+                "implied_fcf_growth": round(implied_g, 4),
+                "our_fcf_growth":     round(our_growth, 4),
+                "delta":              round(delta, 4),
+                "expectation_gap_score": gap_score,
+                "signal":             signal,
+                "net_debt":           round(net_debt, 0),
+                "market_cap":         round(market_cap, 0),
+            })
+
+        elif rdcf_cfg["model_type"] == "biotech_revenue":
+            our_growth     = rdcf_cfg["our_rev_growth"]
+            prof_year_abs  = rdcf_cfg["profitability_year"]
+            current_year   = datetime.now().year
+            prof_offset    = max(1, prof_year_abs - current_year)
+            term_fcf_marg  = rdcf_cfg["terminal_fcf_margin"]
+            rev0 = fund.get("revenue")
+            if not rev0 or rev0 <= 0:
+                result["error"] = "revenue_unavailable"
+                return result
+
+            def obj(g):
+                return _biotech_equity_value(
+                    rev0, g, wacc, g_terminal, DCF_HORIZON,
+                    prof_offset, term_fcf_marg, tax_rate, net_debt
+                ) - market_cap
+
+            implied_g = _bisect(obj, lo=-0.10, hi=1.20)
+            if implied_g is None:
+                result["error"] = "bisection_no_root"
+                return result
+
+            delta     = our_growth - implied_g
+            gap_score = _expectation_gap_score(delta)
+            signal    = "UNDERPRICED" if delta > 0.05 else ("OVERPRICED" if delta < -0.05 else "FAIRLY_VALUED")
+
+            result.update({
+                "rev0":          round(rev0, 0),
+                "implied_rev_growth":    round(implied_g, 4),
+                "our_rev_growth":        round(our_growth, 4),
+                "profitability_offset":  prof_offset,
+                "terminal_fcf_margin":   term_fcf_marg,
+                "delta":                 round(delta, 4),
+                "expectation_gap_score": gap_score,
+                "signal":                signal,
+                "net_debt":              round(net_debt, 0),
+                "market_cap":            round(market_cap, 0),
+            })
+
+    except Exception as e:
+        result["error"] = str(e)
+
+    return result
+
+
+def generate_rdcf_for_all(focus_data, hist_cache, rdcf_config):
+    """
+    Run Reverse DCF for all focus stocks.
+    focus_data:  dict  pid → {price, technical, fundamentals, meta, ...}
+    hist_cache:  dict  pid → pandas DataFrame (6mo OHLCV)
+    rdcf_config: dict  pid → config from rdcf_config.json
+    Returns dict pid → rdcf result.
+    """
+    try:
+        import yfinance as yf
+    except ImportError:
+        print("  ERROR: yfinance not installed"); return {}
+
+    # Fetch benchmarks once per market
+    bench_cache = {}
+    for mkt, bench_sym in BENCH_TICKERS.items():
+        if bench_sym not in bench_cache:
+            try:
+                bench_cache[bench_sym] = yf.Ticker(bench_sym).history(period="6mo")
+                print(f"  Benchmark {bench_sym}: {len(bench_cache[bench_sym])} rows")
+            except Exception as e:
+                print(f"  Benchmark {bench_sym} error: {e}")
+
+    results = {}
+    for pid, cfg in FOCUS_TICKERS.items():
+        rdcf_cfg = rdcf_config.get(pid)
+        if not rdcf_cfg:
+            print(f"  [{pid}] No RDCF config — skipping")
+            continue
+        mkt       = rdcf_cfg["market"]
+        bench_sym = BENCH_TICKERS.get(mkt)
+        bench_h   = bench_cache.get(bench_sym)
+        stock_h   = hist_cache.get(pid)
+        fd        = focus_data.get(pid, {})
+
+        rdcf = generate_rdcf(pid, rdcf_cfg, fd, stock_h, bench_h)
+        results[pid] = rdcf
+
+        if rdcf.get("error"):
+            print(f"  [{pid}] RDCF error: {rdcf['error']}")
+        else:
+            sig = rdcf.get("signal", "?")
+            delta = rdcf.get("delta", 0)
+            print(f"  [{pid}] signal={sig}  delta={delta:+.1%}  gap_score={rdcf.get('expectation_gap_score')}")
+
+        safe_id = pid.replace(".", "_")
+        with open(OUTPUT_DIR / f"rdcf_{safe_id}.json", "w", encoding="utf-8") as f:
+            json.dump(rdcf, f, ensure_ascii=False, indent=2)
+
+    return results
+
+
 # ── Helpers ─────────────────────────────────────────────────────────────────
 def _safe_float(val):
     if val is None: return None
@@ -641,10 +959,11 @@ def fetch_focus_stocks():
     try:
         import yfinance as yf
     except ImportError:
-        print("  ERROR: yfinance not installed"); return {}, {}
+        print("  ERROR: yfinance not installed"); return {}, {}, {}
 
     results = {}
     consensus_results = {}
+    hist_cache = {}   # pid → DataFrame for RDCF beta calculation
 
     for pid, cfg in FOCUS_TICKERS.items():
         yid = cfg["yahoo"]
@@ -740,6 +1059,9 @@ def fetch_focus_stocks():
                 },
             }
 
+            # ── Cache hist for RDCF beta calculation ──
+            hist_cache[pid] = hist
+
             # ── OHLC history ──
             ohlc_data = []
             for idx, row in hist.iterrows():
@@ -792,7 +1114,7 @@ def fetch_focus_stocks():
                 print(f"    Consensus: {cons['num_analysts']} analysts")
             time.sleep(0.5)
 
-    return results, consensus_results
+    return results, consensus_results, hist_cache
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -848,7 +1170,7 @@ def main():
 
     # 7. Focus stocks + consensus
     print("[7/8] Focus Stocks (price + OHLC + financials + consensus)...")
-    focus, consensus = fetch_focus_stocks()
+    focus, consensus, hist_cache = fetch_focus_stocks()
     print()
 
     # 8. Earnings calendar (new)
@@ -898,6 +1220,21 @@ def main():
             json.dump(eqr, f, ensure_ascii=False, indent=2)
         print(f"  {pid} → overall: {eqr['overall']}  "
               f"(fin:{data_dates['financials']}, con:{data_dates['consensus']})")
+    print()
+
+    # ── Reverse DCF (one file per focus stock) ──
+    print("[RDCF] Running Reverse DCF engine...")
+    rdcf_cfg_path = OUTPUT_DIR / "rdcf_config.json"
+    rdcf_config   = {}
+    if rdcf_cfg_path.exists():
+        try:
+            rdcf_config = json.loads(rdcf_cfg_path.read_text())
+        except Exception as e:
+            print(f"  WARNING: could not load rdcf_config.json: {e}")
+    if rdcf_config:
+        generate_rdcf_for_all(focus, hist_cache, rdcf_config)
+    else:
+        print("  SKIPPED: rdcf_config.json not found or empty")
     print()
 
     # ── Write market_data.json (master for focus stocks) ──
@@ -961,8 +1298,10 @@ def main():
     print(f"  D&T entries:  {len(dragon_tiger)}")
     print(f"  Margin:       {len(margin)} focus stocks")
     print(f"  Earnings cal: {len(earnings_cal)} entries")
-    eqr_files = list(OUTPUT_DIR.glob("eqr_*.json"))
+    eqr_files  = list(OUTPUT_DIR.glob("eqr_*.json"))
+    rdcf_files = list(OUTPUT_DIR.glob("rdcf_*.json"))
     print(f"  EQR ratings: {len(eqr_files)} stocks")
+    print(f"  RDCF files:  {len(rdcf_files)} stocks")
     files = list(OUTPUT_DIR.glob("*.json"))
     total = sum(f.stat().st_size for f in files)
     print(f"  JSON files:   {len(files)} ({total/1024/1024:.1f} MB)")

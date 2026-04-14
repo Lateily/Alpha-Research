@@ -1,0 +1,49 @@
+{
+  "300308.SZ": {
+    "model_type": "standard_fcf",
+    "our_fcf_growth": 0.341,
+    "terminal_growth": 0.025,
+    "tax_rate": 0.15,
+    "market": "A",
+    "beta_override": null,
+    "notes": "硅光子渗透率驱动FCF高增长，税率享受高新技术企业15%优惠"
+  },
+  "002594.SZ": {
+    "model_type": "standard_fcf",
+    "our_fcf_growth": 0.28,
+    "terminal_growth": 0.025,
+    "tax_rate": 0.25,
+    "market": "A",
+    "beta_override": null,
+    "notes": "出口扩张+DM5混动溢价，但资本开支强度高，FCF转化率约45-50%"
+  },
+  "700.HK": {
+    "model_type": "standard_fcf",
+    "our_fcf_growth": 0.18,
+    "terminal_growth": 0.03,
+    "tax_rate": 0.165,
+    "market": "HK",
+    "beta_override": null,
+    "notes": "Weixin AI ARPU驱动广告，稳态FCF利润率约35%，香港法定税率16.5%"
+  },
+  "9999.HK": {
+    "model_type": "standard_fcf",
+    "our_fcf_growth": 0.15,
+    "terminal_growth": 0.025,
+    "tax_rate": 0.165,
+    "market": "HK",
+    "beta_override": null,
+    "notes": "日本市场增量+稳定游戏管线，FCF利润率约30%"
+  },
+  "6160.HK": {
+    "model_type": "biotech_revenue",
+    "our_rev_growth": 0.35,
+    "profitability_year": 2026,
+    "terminal_fcf_margin": 0.25,
+    "terminal_growth": 0.025,
+    "tax_rate": 0.165,
+    "market": "HK",
+    "beta_override": 1.55,
+    "notes": "泽布替尼EU+US扩张驱动营收，预计2026年扭亏；beta手动设为1.55（生物科技行业基准）"
+  }
+}

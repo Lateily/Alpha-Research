@@ -72,7 +72,9 @@ jobs:
             public/data/positions.json \
             public/data/analytics.json \
             public/data/snapshots.json \
-            public/data/backtest_results.json
+            public/data/backtest_results.json \
+            public/data/rdcf_*.json \
+            public/data/eqr_*.json
           git diff --cached --quiet || \
             git commit -m "data: daily update $(date -u +'%Y-%m-%d %H:%M') UTC"
           git push
