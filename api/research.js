@@ -150,7 +150,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { ticker, direction, context } = req.body;
+  const { ticker, direction, context, company } = req.body;
 
   if (!ticker) {
     return res.status(400).json({ error: 'Ticker is required' });
@@ -160,7 +160,9 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured. Add it in Vercel project settings → Environment Variables.' });
   }
 
-  const userPrompt = `Generate a complete buy-side equity research report for: ${ticker}
+  const userPrompt = `Generate a complete buy-side equity research report for: ${ticker}${company ? ` — ${company}` : ''}
+
+IMPORTANT: Use the company name "${company || ticker}" as the definitive identity. The stock code may have undergone name changes or reverse mergers — always research the CURRENT company associated with this code, not any prior holder of the ticker.
 
 Initial direction bias: ${direction || 'NEUTRAL'}
 Research context: ${context || 'General screening — no specific catalyst prompted this research.'}

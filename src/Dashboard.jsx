@@ -1261,6 +1261,7 @@ function SystemTab({ L, C }) {
 function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
   const [query, setQuery]           = useState('');
   const [drTicker, setDrTicker]     = useState('');
+  const [drCompany, setDrCompany]   = useState('');   // resolved company name
   const [suggestions, setSuggestions] = useState([]);
   const [showSug, setShowSug]       = useState(false);
   const [drDir, setDrDir]           = useState('NEUTRAL');
@@ -1309,6 +1310,7 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
 
   const selectStock = (s) => {
     setDrTicker(s.ticker);
+    setDrCompany(s.name || '');
     setQuery(`${s.name}  ${s.ticker}`);
     setSuggestions([]);
     setShowSug(false);
@@ -1316,6 +1318,7 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
 
   const handleQueryChange = (val) => {
     setDrTicker('');   // clear resolved ticker until user picks
+    setDrCompany('');
     searchStocks(val);
   };
 
@@ -1347,7 +1350,7 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticker: tk, direction: drDir, context: drContext || undefined }),
+        body: JSON.stringify({ ticker: tk, company: drCompany || undefined, direction: drDir, context: drContext || undefined }),
       });
       clearInterval(timer);
       const text = await res.text();
@@ -1385,7 +1388,14 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
       <div style={{marginBottom:12, position:'relative'}}>
         <div style={{fontSize:10, fontWeight:600, color:C.mid, marginBottom:4}}>
           {L('Stock','股票')} *
-          {resolvedTicker && <span style={{marginLeft:8, color:C.blue, fontFamily:'monospace'}}>{resolvedTicker}</span>}
+          {resolvedTicker && (
+            <span style={{marginLeft:8, display:'inline-flex', alignItems:'center', gap:6,
+                          background:`${C.blue}12`, border:`1px solid ${C.blue}30`,
+                          borderRadius:5, padding:'1px 8px'}}>
+              <span style={{color:C.blue, fontFamily:'monospace', fontSize:11}}>{resolvedTicker}</span>
+              {drCompany && <span style={{color:C.dark, fontSize:11}}>· {drCompany}</span>}
+            </span>
+          )}
         </div>
         <input
           value={query}
