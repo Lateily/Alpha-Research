@@ -8,49 +8,54 @@ import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
 /* ── THEME ─────────────────────────────────────────────────────────────────── */
-/* ── NAVY THEME ─────────────────────────────────────────────────────────────── */
-const DARK = {
-  blue:  '#3B82F6',   // accent
-  gold:  '#FCD34D',   // amber
-  green: '#34D399',   // emerald
-  red:   '#F87171',   // rose
-  dark:  '#E2EAF4',   // primary text
-  mid:   '#6B87A8',   // secondary text
-  bg:    '#07111F',   // deepest navy
-  card:  '#0E1C33',   // card surface
-  border:'#1A2E4A',   // border
-  soft:  '#0B1628',   // hover / subtle bg
-};
+/* ══════════════════════════════════════════════════════════════════
+   CAPITAL IQ–INSPIRED THEME SYSTEM
+   Light = default (clinical blue-grey, dense tables)
+   Dark  = navy terminal
+═══════════════════════════════════════════════════════════════════ */
 const LIGHT = {
-  blue:  '#2563EB',
-  gold:  '#B45309',
-  green: '#16A34A',
-  red:   '#DC2626',
-  dark:  '#0A1C35',
-  mid:   '#4A6A8A',
-  bg:    '#EDF1FA',
-  card:  '#FFFFFF',
-  border:'#C8D6EC',
-  soft:  '#F3F7FF',
+  blue:  '#0B5ED7',   // CIQ signature blue
+  gold:  '#9A5E00',   // amber, used sparingly
+  green: '#1A7A45',   // forest green
+  red:   '#C0392B',   // firm red
+  dark:  '#182536',   // near-black
+  mid:   '#4E6680',   // steel-blue secondary
+  bg:    '#EEF2F8',   // light blue-grey page bg
+  card:  '#FFFFFF',   // white panels
+  border:'#BAC9DC',   // subtle blue-grey border
+  soft:  '#E6EDF6',   // hover/stripe tint
+};
+const DARK = {
+  blue:  '#5B9CF6',
+  gold:  '#FBC02D',
+  green: '#34D399',
+  red:   '#F87171',
+  dark:  '#DCE8F8',
+  mid:   '#6B87A8',
+  bg:    '#07111F',
+  card:  '#0E1C33',
+  border:'#1A2E4A',
+  soft:  '#0B1628',
 };
 
-/* ── SHARED STYLE TOKENS (Capital IQ compact) ──────────────────────────────── */
+/* ── SHARED STYLE TOKENS ────────────────────────────────────────────────────── */
 const MONO = "'JetBrains Mono','Courier New',monospace";
 const S = {
-  card:{ background:'none', border:'1px solid currentColor', borderRadius:4,
-         marginBottom:10, overflow:'hidden' },
-  cardHd:{ padding:'9px 14px', cursor:'pointer', display:'flex', justifyContent:'space-between',
+  /* Zero border-radius on all panels — CIQ house style */
+  card:{ background:'none', borderRadius:0, marginBottom:6, overflow:'hidden',
+         borderLeft:'3px solid currentColor', border:'1px solid currentColor' },
+  cardHd:{ padding:'5px 10px', cursor:'pointer', display:'flex', justifyContent:'space-between',
            alignItems:'center', borderBottom:'1px solid currentColor' },
-  cardBd:{ padding:'10px 14px' },
-  row:{ display:'flex', alignItems:'center', gap:8 },
+  cardBd:{ padding:'8px 10px' },
+  row:{ display:'flex', alignItems:'center', gap:6 },
   flex:{ display:'flex' },
-  tag:(c)=>({ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:2,
-               background:`${c}15`, color:c, border:`1px solid ${c}28`, letterSpacing:'0.03em' }),
+  tag:(c)=>({ fontSize:8, fontWeight:700, padding:'1px 5px', borderRadius:1,
+               background:`${c}14`, color:c, border:`1px solid ${c}26`, letterSpacing:'0.04em' }),
   mono:{ fontFamily:MONO },
-  label:{ fontSize:10, color:'currentColor', fontWeight:600, opacity:0.55,
-          textTransform:'uppercase', letterSpacing:'0.05em' },
-  val:{ fontSize:13, fontWeight:700, color:'currentColor', fontFamily:MONO },
-  sec:{ fontSize:11, color:'currentColor', lineHeight:1.7 },
+  label:{ fontSize:9, color:'currentColor', fontWeight:700, opacity:0.5,
+          textTransform:'uppercase', letterSpacing:'0.07em' },
+  val:{ fontSize:12, fontWeight:700, color:'currentColor', fontFamily:MONO },
+  sec:{ fontSize:11, color:'currentColor', lineHeight:1.65 },
 };
 
 /* ── DATA ───────────────────────────────────────────────────────────────────── */
@@ -409,15 +414,27 @@ const Pill = ({ n, label, c, C }) => (
 );
 
 const Card = ({ title, sub, open, onToggle, children, C }) => (
-  <div style={{...S.card, borderColor:C.border, background:C.card}}>
-    <div style={{...S.cardHd, borderColor:C.border, color:C.dark}} onClick={onToggle}>
-      <div>
-        <div style={{fontSize:13, fontWeight:600, color:C.dark}}>{title}</div>
-        {sub && <div style={{fontSize:10, color:C.mid, marginTop:1}}>{sub}</div>}
+  <div style={{
+    background: C.card,
+    border: `1px solid ${C.border}`,
+    borderLeft: `3px solid ${C.blue}`,
+    borderRadius: 0,
+    marginBottom: 6,
+    overflow: 'hidden',
+  }}>
+    <div style={{
+      ...S.cardHd, borderColor: C.border, color: C.dark,
+      background: `${C.blue}07`,   /* very subtle blue tint on header */
+    }} onClick={onToggle}>
+      <div style={{display:'flex', alignItems:'baseline', gap:8}}>
+        <span style={{fontSize:11, fontWeight:700, color:C.dark,
+                      textTransform:'uppercase', letterSpacing:'0.05em'}}>{title}</span>
+        {sub && <span style={{fontSize:9, color:C.mid}}>{sub}</span>}
       </div>
-      <ChevronDown size={15} style={{color:C.mid, transform:open?'rotate(180deg)':'', transition:'transform .2s', flexShrink:0}} />
+      {onToggle && <ChevronDown size={12} style={{color:C.mid, transform:open?'rotate(180deg)':'',
+                                                   transition:'transform .2s', flexShrink:0}}/>}
     </div>
-    {open && <div style={{...S.cardBd, color:C.dark}}>{children}</div>}
+    {open !== false && <div style={{...S.cardBd, color:C.dark}}>{children}</div>}
   </div>
 );
 
@@ -3170,7 +3187,7 @@ const DataBadge = ({ liveData, C, L }) => {
 /* ── DASHBOARD ────────────────────────────────────────────────────────────── */
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
-  const [dark, setDark] = useState(true);
+  const [dark, setDark] = useState(false); // CIQ default: light mode
   const [tab, setTab] = useState('scanner');
   const [ticker, setTicker] = useState(null);
   const [search, setSearch] = useState('');
@@ -3369,38 +3386,93 @@ export default function Dashboard() {
   ];
 
   return (
-    <div style={{display:'flex', height:'100vh', fontFamily:'Inter,"Noto Sans SC",system-ui,sans-serif', background:C.bg, color:C.dark, overflow:'hidden'}}>
+    <div style={{display:'flex', flexDirection:'column', height:'100vh',
+                 fontFamily:"'Inter','Noto Sans SC',system-ui,sans-serif",
+                 background:C.bg, color:C.dark, overflow:'hidden',
+                 fontSize:11}}>
+
+      {/* ── MACRO TICKER STRIP ──────────────────────────────────────────── */}
+      <div style={{background:C.blue, color:'#fff', padding:'3px 12px',
+                   display:'flex', gap:0, alignItems:'center', flexShrink:0,
+                   borderBottom:`1px solid ${C.blue}`, overflowX:'auto',
+                   scrollbarWidth:'none'}}>
+        <span style={{fontSize:9, fontWeight:700, marginRight:16, opacity:0.7,
+                      letterSpacing:'0.08em', whiteSpace:'nowrap'}}>LIVE MACRO</span>
+        {MACRO.map((m,i) => (
+          <span key={i} style={{display:'inline-flex', alignItems:'center', gap:5,
+                                 marginRight:20, whiteSpace:'nowrap', fontSize:10}}>
+            <span style={{opacity:0.75, fontWeight:600}}>{m.name}</span>
+            <span style={{fontFamily:MONO, fontWeight:700}}>{m.val}</span>
+            <span style={{opacity:0.8, fontSize:9, color:
+              m.trend==='up' ? '#7EF5B0' : m.trend==='down' ? '#FFB3B0' : '#CBD5E1'}}>
+              {m.chg}
+            </span>
+          </span>
+        ))}
+      </div>
+
+      {/* ── BODY (sidebar + main) ───────────────────────────────────────── */}
+      <div style={{display:'flex', flex:1, overflow:'hidden'}}>
       {/* Sidebar */}
-      <div style={{width:collapsed?48:170, background:C.card, borderRight:`1px solid ${C.border}`, display:'flex', flexDirection:'column', flexShrink:0, transition:'width .3s', overflow:'hidden'}}>
-        <div style={{padding:collapsed?'14px 10px':'14px 14px 10px', borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap'}}>
-          <div style={{fontSize:collapsed?16:22, fontWeight:800, color:C.blue, letterSpacing:collapsed?0:'-.02em'}}>AR</div>
-          {!collapsed && <div style={{fontSize:8, color:C.mid, letterSpacing:'.1em', marginTop:1}}>ALPHA RESEARCH v13.0</div>}
+      <div style={{width:collapsed?42:156, background:C.card,
+                   borderRight:`1px solid ${C.border}`,
+                   display:'flex', flexDirection:'column', flexShrink:0,
+                   transition:'width .2s', overflow:'hidden'}}>
+        {/* Logo */}
+        <div style={{padding: collapsed ? '10px 8px' : '10px 12px',
+                     borderBottom:`1px solid ${C.border}`,
+                     background: C.blue, whiteSpace:'nowrap'}}>
+          <div style={{fontSize:collapsed?14:16, fontWeight:800, color:'#fff',
+                       letterSpacing:collapsed?0:'.04em', fontFamily:MONO}}>
+            {collapsed ? 'AR' : 'ALPHA RESEARCH'}
+          </div>
+          {!collapsed && <div style={{fontSize:7, color:'rgba(255,255,255,.55)',
+                                      letterSpacing:'.12em', marginTop:1}}>v13.0 · PLATFORM</div>}
         </div>
-        <div style={{flex:1, paddingTop:4, overflow:'hidden'}}>
+
+        {/* Nav items */}
+        <div style={{flex:1, paddingTop:2, overflowY:'auto', overflowX:'hidden'}}>
           {TABS.map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} title={collapsed?t.label:''} style={{
-              width:'100%', padding:'9px 12px', display:'flex', alignItems:'center', gap:8,
-              border:'none', background:tab===t.id?`${C.blue}10`:'transparent', cursor:'pointer',
-              color:tab===t.id?C.blue:C.mid, fontSize:12, fontWeight:tab===t.id?700:400,
-              borderLeft:`3px solid ${tab===t.id?C.blue:'transparent'}`, textAlign:'left',
-              transition:'all .15s', whiteSpace:'nowrap', justifyContent:collapsed?'center':'flex-start',
+              width:'100%', padding: collapsed ? '9px 0' : '7px 12px',
+              display:'flex', alignItems:'center', gap:7,
+              border:'none', cursor:'pointer', textAlign:'left',
+              background: tab===t.id ? `${C.blue}12` : 'transparent',
+              color: tab===t.id ? C.blue : C.mid,
+              fontSize:10, fontWeight: tab===t.id ? 700 : 500,
+              borderLeft: `2px solid ${tab===t.id ? C.blue : 'transparent'}`,
+              letterSpacing:'.03em', textTransform:'uppercase',
+              transition:'all .1s', whiteSpace:'nowrap',
+              justifyContent: collapsed ? 'center' : 'flex-start',
             }}>
-              {t.icon}{!collapsed && <span>{t.label}</span>}
+              {t.icon}
+              {!collapsed && <span>{t.label}</span>}
             </button>
           ))}
         </div>
-        <div style={{padding:'10px 12px', borderTop:`1px solid ${C.border}`, fontSize:9, color:C.mid, textAlign:'center', whiteSpace:'nowrap'}}>
-          {!collapsed && L('Evidence only.','仅证据。')}
+
+        {/* Footer */}
+        <div style={{borderTop:`1px solid ${C.border}`}}>
+          {!collapsed && <div style={{padding:'5px 12px', fontSize:8, color:C.mid,
+                                      letterSpacing:'.06em', opacity:0.7}}>
+            {L('EVIDENCE ONLY · NO INVESTMENT CONCLUSIONS',
+               '仅供证据参考 · 不构成投资建议')}
+          </div>}
+          <button onClick={()=>setCollapsed(!collapsed)} style={{
+            width:'100%', padding:'6px', border:'none', background:'transparent',
+            color:C.mid, cursor:'pointer', display:'flex', justifyContent:'center',
+          }}>
+            {collapsed ? <ChevronRight size={12}/> : <ChevronLeft size={12}/>}
+          </button>
         </div>
-        <button onClick={()=>setCollapsed(!collapsed)} title={collapsed?'Expand':'Collapse'} style={{width:'100%', padding:'8px', border:'none', background:'transparent', color:C.mid, cursor:'pointer', display:'flex', justifyContent:'center', borderTop:`1px solid ${C.border}`}}>
-          {collapsed ? <ChevronRight size={14}/> : <ChevronLeft size={14}/>}
-        </button>
       </div>
 
       {/* Main */}
       <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden'}}>
         {/* Topbar */}
-        <div style={{background:C.card, borderBottom:`1px solid ${C.border}`, padding:'8px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:12}}>
+        <div style={{background:C.card, borderBottom:`2px solid ${C.blue}`,
+                     padding:'5px 12px', display:'flex',
+                     justifyContent:'space-between', alignItems:'center', gap:10}}>
           <div style={{position:'relative', display:'flex', gap:6, alignItems:'center', flex:1, maxWidth:480}}>
             <input value={search}
               onChange={e=>{setSearch(e.target.value); setShowSuggestions(true)}}
@@ -3408,12 +3480,12 @@ export default function Dashboard() {
               onFocus={()=>{if(search.trim()) setShowSuggestions(true);}}
               onBlur={()=>setTimeout(()=>setShowSuggestions(false), 200)}
               placeholder={L('Search 10,000+ A+HK stocks by name or code…','搜索10,000+只A股港股，输入名称或代码…')}
-              style={{flex:1, padding:'6px 12px', border:`1px solid ${C.border}`, borderRadius:6, fontSize:12, outline:'none', background:C.soft, color:C.dark}}/>
-            <button onClick={handleSearch} style={{padding:'5px 10px', background:C.blue, color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12}}>
-              <Search size={13}/>
+              style={{flex:1, padding:'4px 10px', border:`1px solid ${C.border}`, borderRadius:0, fontSize:11, outline:'none', background:C.soft, color:C.dark, fontFamily:'inherit'}}/>
+            <button onClick={handleSearch} style={{padding:'4px 10px', background:C.blue, color:'#fff', border:'none', borderRadius:0, cursor:'pointer', fontSize:11}}>
+              <Search size={12}/>
             </button>
-            <button onClick={()=>{setShowDeepResearch(true); setTab('research');}} title={L('Deep Research','深度研究')} style={{padding:'5px 10px', background:`${C.green}15`, color:C.green, border:`1px solid ${C.green}40`, borderRadius:6, cursor:'pointer', fontSize:10, fontWeight:700, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4}}>
-              <Zap size={12}/>{L('Deep','深度')}
+            <button onClick={()=>{setShowDeepResearch(true); setTab('research');}} title={L('Deep Research','深度研究')} style={{padding:'4px 9px', background:`${C.green}15`, color:C.green, border:`1px solid ${C.green}35`, borderRadius:0, cursor:'pointer', fontSize:9, fontWeight:700, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:3, letterSpacing:'.04em'}}>
+              <Zap size={11}/>{L('DEEP','深度')}
             </button>
             {showSuggestions && search.trim() && (
               <div style={{position:'absolute', top:'100%', left:0, right:60, marginTop:4, background:C.card, border:`1px solid ${C.border}`, borderRadius:8, maxHeight:420, overflowY:'auto', zIndex:20, boxShadow:'0 8px 32px rgba(0,0,0,.25)'}}>
@@ -3484,14 +3556,17 @@ export default function Dashboard() {
           </div>
           <div style={{display:'flex', gap:8, alignItems:'center'}}>
             <DataBadge liveData={liveData} C={C} L={L}/>
-            <button onClick={()=>setDark(!dark)} title={dark?'Light mode':'Dark mode'} style={{padding:'5px 8px', border:`1px solid ${C.border}`, background:'transparent', color:C.mid, cursor:'pointer', borderRadius:6, display:'flex', alignItems:'center'}}>
-              {dark ? <Sun size={14}/> : <Moon size={14}/>}
+            <button onClick={()=>setDark(!dark)} title={dark?'Light':'Dark'} style={{padding:'4px 7px', border:`1px solid ${C.border}`, background:'transparent', color:C.mid, cursor:'pointer', borderRadius:0, display:'flex', alignItems:'center'}}>
+              {dark ? <Sun size={12}/> : <Moon size={12}/>}
             </button>
-            <div style={{display:'flex', gap:3, background:C.soft, padding:2, borderRadius:5}}>
+            <div style={{display:'flex', border:`1px solid ${C.border}`}}>
               {['en','zh'].map(l=>(
                 <button key={l} onClick={()=>setLang(l)} style={{
-                  padding:'3px 10px', border:'none', background:lang===l?C.blue:'transparent',
-                  color:lang===l?'#fff':C.mid, borderRadius:4, cursor:'pointer', fontSize:10, fontWeight:700, transition:'all .15s',
+                  padding:'3px 8px', border:'none',
+                  background:lang===l ? C.blue : 'transparent',
+                  color:lang===l ? '#fff' : C.mid,
+                  cursor:'pointer', fontSize:9, fontWeight:700,
+                  letterSpacing:'.04em',
                 }}>{l==='en'?'EN':'中文'}</button>
               ))}
             </div>
@@ -3499,7 +3574,7 @@ export default function Dashboard() {
         </div>
 
         {/* Content */}
-        <div style={{flex:1, overflowY:'auto', padding:16}}>
+        <div style={{flex:1, overflowY:'auto', padding:'10px 12px'}}>
           {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C}/>}
           {tab==='flow'     && (
@@ -3542,6 +3617,7 @@ export default function Dashboard() {
           {tab==='system'   && <SystemTab L={L} C={C}/>}
         </div>
       </div>
+      </div>{/* end body flex */}
     </div>
   );
 }
