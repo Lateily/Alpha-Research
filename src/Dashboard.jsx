@@ -1175,24 +1175,79 @@ function SystemTab({ L, C }) {
 }
 
 /* ── DEEP RESEARCH PANEL ─────────────────────────────────────────────────── */
-function DeepResearchPanel({ L, lk, onComplete, C }) {
-  const [drTicker, setDrTicker] = useState('');
-  const [drDir, setDrDir] = useState('NEUTRAL');
-  const [drContext, setDrContext] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [progress, setProgress] = useState(0);
+function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
+  const [query, setQuery]           = useState('');
+  const [drTicker, setDrTicker]     = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSug, setShowSug]       = useState(false);
+  const [drDir, setDrDir]           = useState('NEUTRAL');
+  const [drContext, setDrContext]   = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState(null);
+  const [progress, setProgress]     = useState(0);
+
+  /* ── fuzzy search ── */
+  const searchStocks = (q) => {
+    setQuery(q);
+    if (!q || q.length < 1) { setSuggestions([]); setShowSug(false); return; }
+    const qn = q.toLowerCase().replace(/[.\s]/g, '');
+
+    // Focus stocks always at top if they match
+    const focusKeys = Object.keys(STOCKS);
+    const focusMatches = focusKeys
+      .filter(tk => {
+        const s = STOCKS[tk];
+        return tk.toLowerCase().replace(/\./g,'').includes(qn)
+          || s.name.includes(q) || s.en.toLowerCase().includes(q.toLowerCase());
+      })
+      .map(tk => ({ ticker: tk, name: STOCKS[tk].name, en: STOCKS[tk].en, isFocus: true }));
+
+    // Universe search
+    const univMatches = (universeStocks || [])
+      .filter(s => {
+        const tkn = (s.ticker || '').toLowerCase().replace(/\./g,'');
+        const nm  = s.name || '';
+        const code = (s.code || '').toLowerCase();
+        return tkn.includes(qn) || nm.includes(q) || code.includes(qn);
+      })
+      .slice(0, 10)
+      .map(s => ({ ticker: s.ticker, name: s.name, en: s.name, exchange: s.exchange }));
+
+    // Merge, deduplicate
+    const seen = new Set(focusMatches.map(s => s.ticker));
+    const merged = [
+      ...focusMatches,
+      ...univMatches.filter(s => !seen.has(s.ticker)),
+    ].slice(0, 10);
+
+    setSuggestions(merged);
+    setShowSug(merged.length > 0);
+  };
+
+  const selectStock = (s) => {
+    setDrTicker(s.ticker);
+    setQuery(`${s.name}  ${s.ticker}`);
+    setSuggestions([]);
+    setShowSug(false);
+  };
+
+  const handleQueryChange = (val) => {
+    setDrTicker('');   // clear resolved ticker until user picks
+    searchStocks(val);
+  };
+
+  /* If query looks exactly like a ticker, use it directly */
+  const resolvedTicker = drTicker || (
+    /^[A-Z0-9]{4,9}\.(SZ|SH|HK|US)$/i.test(query.trim()) ? query.trim().toUpperCase() : ''
+  );
 
   const runResearch = async () => {
-    if (!drTicker.trim()) return;
+    const tk = resolvedTicker.trim();
+    if (!tk) return;
     setLoading(true); setError(null); setProgress(10);
 
     const steps = [
-      {p:15, t:L('Analyzing macro context...','分析宏观背景...')},
-      {p:30, t:L('Building business model...','构建商业模式...')},
-      {p:50, t:L('Identifying variant perception...','识别变体认知...')},
-      {p:70, t:L('Mapping catalysts & risks...','映射催化剂与风险...')},
-      {p:85, t:L('Scoring VP decomposition...','计算VP分解评分...')},
+      {p:15},{p:30},{p:50},{p:70},{p:85},
     ];
     let stepIdx = 0;
     const timer = setInterval(() => {
@@ -1204,16 +1259,30 @@ function DeepResearchPanel({ L, lk, onComplete, C }) {
       const res = await fetch(`${apiBase}/api/research`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticker: drTicker.trim(), direction: drDir, context: drContext || undefined }),
+        body: JSON.stringify({ ticker: tk, direction: drDir, context: drContext || undefined }),
       });
       clearInterval(timer);
+      // Detect HTML 404 (GitHub Pages serving static 404)
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(L(
+          'API unreachable — access the platform via your Vercel URL to use Deep Research.',
+          '无法连接API — 请通过 Vercel 部署地址访问平台以使用深度研究功能。'
+        ));
+      }
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Request failed');
       setProgress(100);
-      onComplete(drTicker.trim(), json.data);
+      onComplete(tk, json.data);
     } catch (err) {
       clearInterval(timer);
-      setError(err.message);
+      const msg = err.message || '';
+      setError(
+        msg.includes('Unexpected token') || msg.includes('not valid JSON')
+          ? L('API unreachable — access the platform via your Vercel URL to use Deep Research.',
+              '无法连接API — 请通过 Vercel 部署地址访问平台以使用深度研究功能。')
+          : msg
+      );
       setProgress(0);
     } finally {
       setLoading(false);
@@ -1221,24 +1290,75 @@ function DeepResearchPanel({ L, lk, onComplete, C }) {
   };
 
   return (
-    <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:20, maxWidth:480}}>
+    <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:20, maxWidth:520}}>
       <div style={{...S.row, gap:8, marginBottom:16}}>
         <Crosshair size={16} style={{color:C.blue}}/>
         <div style={{fontSize:14, fontWeight:700, color:C.dark}}>{L('Deep Research','深度研究')}</div>
         <span style={{fontSize:9, padding:'2px 6px', background:`${C.blue}15`, color:C.blue, borderRadius:3, fontWeight:700}}>AI</span>
       </div>
       <div style={{fontSize:10, color:C.mid, marginBottom:16, lineHeight:1.6}}>
-        {L('Enter any ticker to generate a full buy-side research report powered by Claude AI. The 6-stage workflow produces institutional-grade analysis in ~15 seconds.',
-           '输入任意股票代码，由Claude AI驱动生成完整的买方研究报告。6阶段工作流约15秒生成机构级分析。')}
+        {L('Search by name or code — Chinese, English, or ticker. Claude AI generates institutional-grade buy-side analysis in ~15 seconds.',
+           '输入公司名称（中/英文）或股票代码均可搜索。Claude AI 约15秒生成机构级买方研究报告。')}
       </div>
 
-      <div style={{marginBottom:12}}>
-        <div style={{fontSize:10, fontWeight:600, color:C.mid, marginBottom:4}}>{L('Ticker','代码')} *</div>
-        <input value={drTicker} onChange={e=>setDrTicker(e.target.value.toUpperCase())}
-          onKeyDown={e=>e.key==='Enter'&&!loading&&runResearch()}
-          placeholder={L('e.g. NVDA, 688981.SH, 9888.HK','如 NVDA, 688981.SH, 9888.HK')}
+      {/* ── Fuzzy stock search ── */}
+      <div style={{marginBottom:12, position:'relative'}}>
+        <div style={{fontSize:10, fontWeight:600, color:C.mid, marginBottom:4}}>
+          {L('Stock','股票')} *
+          {resolvedTicker && <span style={{marginLeft:8, color:C.blue, fontFamily:'monospace'}}>{resolvedTicker}</span>}
+        </div>
+        <input
+          value={query}
+          onChange={e => handleQueryChange(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !loading) { setShowSug(false); runResearch(); }
+            if (e.key === 'Escape') setShowSug(false);
+          }}
+          onBlur={() => setTimeout(() => setShowSug(false), 150)}
+          onFocus={() => suggestions.length > 0 && setShowSug(true)}
+          placeholder={L('潮宏基 / Chow Tai Fook / 3600.HK / 300308','潮宏基 / 中际旭创 / 3600.HK / 300308')}
           disabled={loading}
-          style={{width:'100%', padding:'8px 10px', border:`1px solid ${C.border}`, borderRadius:6, fontSize:12, background:C.soft, color:C.dark, outline:'none'}}/>
+          style={{width:'100%', padding:'9px 11px', border:`1.5px solid ${resolvedTicker ? C.blue : C.border}`,
+                  borderRadius:6, fontSize:12, background:C.soft, color:C.dark, outline:'none',
+                  boxSizing:'border-box'}}
+        />
+
+        {/* Dropdown */}
+        {showSug && suggestions.length > 0 && (
+          <div style={{
+            position:'absolute', top:'100%', left:0, right:0, zIndex:999,
+            background:C.card, border:`1px solid ${C.border}`, borderRadius:7,
+            boxShadow:'0 6px 24px rgba(0,0,0,0.18)', maxHeight:280, overflowY:'auto', marginTop:3,
+          }}>
+            {suggestions.map((s, i) => (
+              <div key={i}
+                onMouseDown={() => selectStock(s)}
+                style={{
+                  display:'flex', alignItems:'center', justifyContent:'space-between',
+                  padding:'9px 12px', cursor:'pointer', borderBottom:i<suggestions.length-1?`1px solid ${C.border}`:'none',
+                  background: s.isFocus ? `${C.blue}08` : 'transparent',
+                  transition:'background .1s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = `${C.blue}12`}
+                onMouseLeave={e => e.currentTarget.style.background = s.isFocus ? `${C.blue}08` : 'transparent'}
+              >
+                <div>
+                  <span style={{fontSize:12, fontWeight:700, color:C.dark}}>{s.name}</span>
+                  {s.isFocus && <span style={{marginLeft:5, fontSize:9, color:C.blue, fontWeight:600}}>★ focus</span>}
+                  {s.en && s.en !== s.name && (
+                    <span style={{marginLeft:6, fontSize:10, color:C.mid}}>{s.en}</span>
+                  )}
+                </div>
+                <span style={{fontSize:10, fontFamily:'monospace', color:C.blue, flexShrink:0, marginLeft:10}}>
+                  {s.ticker}
+                </span>
+              </div>
+            ))}
+            <div style={{padding:'6px 12px', fontSize:9, color:C.mid, borderTop:`1px solid ${C.border}`}}>
+              {L('↵ Enter to search · click to select','↵ 回车搜索 · 点击选中')}
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{marginBottom:12}}>
@@ -1286,12 +1406,17 @@ function DeepResearchPanel({ L, lk, onComplete, C }) {
         </div>
       )}
 
-      <button onClick={runResearch} disabled={loading || !drTicker.trim()} style={{
+      <button onClick={runResearch} disabled={loading || !resolvedTicker} style={{
         width:'100%', padding:'10px 0', border:'none', borderRadius:6, cursor:loading?'wait':'pointer',
-        background:loading?C.soft:C.blue, color:loading?C.mid:'#fff', fontSize:12, fontWeight:700,
-        transition:'all .2s', opacity:!drTicker.trim()?0.5:1,
+        background:loading?C.soft:resolvedTicker?C.blue:C.soft,
+        color:loading||!resolvedTicker?C.mid:'#fff', fontSize:12, fontWeight:700,
+        transition:'all .2s',
       }}>
-        {loading ? L('Generating Report...','生成报告中...') : L('Generate Buy-Side Research','生成买方研究报告')}
+        {loading
+          ? L('Generating Report...','生成报告中...')
+          : resolvedTicker
+            ? `${L('Generate Research','生成研究')} · ${resolvedTicker}`
+            : L('Search and select a stock above','请先搜索并选择股票')}
       </button>
 
       <div style={{fontSize:9, color:C.mid, marginTop:10, textAlign:'center', lineHeight:1.4}}>
@@ -3144,12 +3269,12 @@ export default function Dashboard() {
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
                 {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData}/></div>}
-                <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C}/>
+                <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks}/>
               </div>
             );
             if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
-            return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C}/>;
+            return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks}/>;
           })()}
           {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C} predictions={predictions}/>}
           {tab==='watchlist'&& <Watchlist L={L} stocks={allStocks} C={C}/>}

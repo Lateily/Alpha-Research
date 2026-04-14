@@ -1,0 +1,298 @@
+{
+  "generated_at": "2026-04-14T10:03:04.381263+00:00",
+  "portfolio_weights": {
+    "300308.SZ": 0.25,
+    "002594.SZ": 0.18,
+    "700.HK": 0.22,
+    "9999.HK": 0.15,
+    "6160.HK": 0.2
+  },
+  "scenarios": {
+    "risk_off": {
+      "name": "Risk-off 全面收缩",
+      "description": "全球避险情绪爆发，美元大幅走强，中美利率双升，VIX飙升",
+      "probability": 0.2,
+      "color": "danger",
+      "shocks": {
+        "cny_usd": 0.03,
+        "cn_10y": 0.2,
+        "us_10y": 0.5,
+        "vix": 15
+      },
+      "stock_impacts": {
+        "300308.SZ": {
+          "name": "中际旭创",
+          "total_return": -0.226,
+          "factors": {
+            "cny_usd": 0.024,
+            "cn_10y": -0.03,
+            "us_10y": -0.1,
+            "vix": -0.12,
+            "sector_override": 0
+          }
+        },
+        "002594.SZ": {
+          "name": "比亚迪",
+          "total_return": -0.184,
+          "factors": {
+            "cny_usd": 0.006,
+            "cn_10y": -0.05,
+            "us_10y": -0.05,
+            "vix": -0.09,
+            "sector_override": 0
+          }
+        },
+        "700.HK": {
+          "name": "腾讯",
+          "total_return": -0.3805,
+          "factors": {
+            "cny_usd": -0.0105,
+            "cn_10y": -0.04,
+            "us_10y": -0.15,
+            "vix": -0.18,
+            "sector_override": 0
+          }
+        },
+        "9999.HK": {
+          "name": "网易",
+          "total_return": -0.2945,
+          "factors": {
+            "cny_usd": -0.0045,
+            "cn_10y": -0.03,
+            "us_10y": -0.125,
+            "vix": -0.135,
+            "sector_override": 0
+          }
+        },
+        "6160.HK": {
+          "name": "百济神州",
+          "total_return": -0.532,
+          "factors": {
+            "cny_usd": 0.003,
+            "cn_10y": -0.01,
+            "us_10y": -0.225,
+            "vix": -0.3,
+            "sector_override": 0
+          }
+        }
+      },
+      "portfolio_return": -0.3239,
+      "ev_contribution": -0.0648
+    },
+    "china_stimulus": {
+      "name": "China stimulus 中国刺激",
+      "description": "PBOC降息+财政扩张，人民币升值，风险偏好改善",
+      "probability": 0.3,
+      "color": "success",
+      "shocks": {
+        "cny_usd": -0.02,
+        "cn_10y": -0.3,
+        "us_10y": 0.1,
+        "vix": -3
+      },
+      "stock_impacts": {
+        "300308.SZ": {
+          "name": "中际旭创",
+          "total_return": 0.033,
+          "factors": {
+            "cny_usd": -0.016,
+            "cn_10y": 0.045,
+            "us_10y": -0.02,
+            "vix": 0.024,
+            "sector_override": 0
+          }
+        },
+        "002594.SZ": {
+          "name": "比亚迪",
+          "total_return": 0.079,
+          "factors": {
+            "cny_usd": -0.004,
+            "cn_10y": 0.075,
+            "us_10y": -0.01,
+            "vix": 0.018,
+            "sector_override": 0
+          }
+        },
+        "700.HK": {
+          "name": "腾讯",
+          "total_return": 0.073,
+          "factors": {
+            "cny_usd": 0.007,
+            "cn_10y": 0.06,
+            "us_10y": -0.03,
+            "vix": 0.036,
+            "sector_override": 0
+          }
+        },
+        "9999.HK": {
+          "name": "网易",
+          "total_return": 0.05,
+          "factors": {
+            "cny_usd": 0.003,
+            "cn_10y": 0.045,
+            "us_10y": -0.025,
+            "vix": 0.027,
+            "sector_override": 0
+          }
+        },
+        "6160.HK": {
+          "name": "百济神州",
+          "total_return": 0.028,
+          "factors": {
+            "cny_usd": -0.002,
+            "cn_10y": 0.015,
+            "us_10y": -0.045,
+            "vix": 0.06,
+            "sector_override": 0
+          }
+        }
+      },
+      "portfolio_return": 0.0516,
+      "ev_contribution": 0.0155
+    },
+    "fed_hike": {
+      "name": "Fed surprise 美联储意外紧缩",
+      "description": "美国通胀反弹，美联储重启加息，EM资金外流，港股估值压缩",
+      "probability": 0.2,
+      "color": "warning",
+      "shocks": {
+        "cny_usd": 0.025,
+        "cn_10y": 0.1,
+        "us_10y": 0.75,
+        "vix": 10
+      },
+      "stock_impacts": {
+        "300308.SZ": {
+          "name": "中际旭创",
+          "total_return": -0.225,
+          "factors": {
+            "cny_usd": 0.02,
+            "cn_10y": -0.015,
+            "us_10y": -0.15,
+            "vix": -0.08,
+            "sector_override": 0
+          }
+        },
+        "002594.SZ": {
+          "name": "比亚迪",
+          "total_return": -0.155,
+          "factors": {
+            "cny_usd": 0.005,
+            "cn_10y": -0.025,
+            "us_10y": -0.075,
+            "vix": -0.06,
+            "sector_override": 0
+          }
+        },
+        "700.HK": {
+          "name": "腾讯",
+          "total_return": -0.3737,
+          "factors": {
+            "cny_usd": -0.0087,
+            "cn_10y": -0.02,
+            "us_10y": -0.225,
+            "vix": -0.12,
+            "sector_override": 0
+          }
+        },
+        "9999.HK": {
+          "name": "网易",
+          "total_return": -0.2963,
+          "factors": {
+            "cny_usd": -0.0037,
+            "cn_10y": -0.015,
+            "us_10y": -0.1875,
+            "vix": -0.09,
+            "sector_override": 0
+          }
+        },
+        "6160.HK": {
+          "name": "百济神州",
+          "total_return": -0.54,
+          "factors": {
+            "cny_usd": 0.0025,
+            "cn_10y": -0.005,
+            "us_10y": -0.3375,
+            "vix": -0.2,
+            "sector_override": 0
+          }
+        }
+      },
+      "portfolio_return": -0.3188,
+      "ev_contribution": -0.0638
+    },
+    "tariff_escalation": {
+      "name": "Tariff escalation 关税升级",
+      "description": "中美贸易战再度升温，科技出口管制扩大，供应链重组压力",
+      "probability": 0.3,
+      "color": "warning",
+      "shocks": {
+        "cny_usd": 0.02,
+        "cn_10y": 0.1,
+        "us_10y": 0.2,
+        "vix": 20
+      },
+      "stock_impacts": {
+        "300308.SZ": {
+          "name": "中际旭创",
+          "total_return": -0.279,
+          "factors": {
+            "cny_usd": 0.016,
+            "cn_10y": -0.015,
+            "us_10y": -0.04,
+            "vix": -0.16,
+            "sector_override": -0.08
+          }
+        },
+        "002594.SZ": {
+          "name": "比亚迪",
+          "total_return": -0.211,
+          "factors": {
+            "cny_usd": 0.004,
+            "cn_10y": -0.025,
+            "us_10y": -0.02,
+            "vix": -0.12,
+            "sector_override": -0.05
+          }
+        },
+        "700.HK": {
+          "name": "腾讯",
+          "total_return": -0.327,
+          "factors": {
+            "cny_usd": -0.007,
+            "cn_10y": -0.02,
+            "us_10y": -0.06,
+            "vix": -0.24,
+            "sector_override": 0
+          }
+        },
+        "9999.HK": {
+          "name": "网易",
+          "total_return": -0.248,
+          "factors": {
+            "cny_usd": -0.003,
+            "cn_10y": -0.015,
+            "us_10y": -0.05,
+            "vix": -0.18,
+            "sector_override": 0
+          }
+        },
+        "6160.HK": {
+          "name": "百济神州",
+          "total_return": -0.493,
+          "factors": {
+            "cny_usd": 0.002,
+            "cn_10y": -0.005,
+            "us_10y": -0.09,
+            "vix": -0.4,
+            "sector_override": 0
+          }
+        }
+      },
+      "portfolio_return": -0.3155,
+      "ev_contribution": -0.0946
+    }
+  },
+  "expected_portfolio_return": -0.2077,
+  "worst_scenario": "risk_off"
+}
