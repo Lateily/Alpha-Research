@@ -8,24 +8,49 @@ import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
 /* ── THEME ─────────────────────────────────────────────────────────────────── */
-const DARK = { blue:'#5BA0E0', gold:'#D4B878', green:'#4CAF7A', red:'#E06060',
-               dark:'#E8E8E8', mid:'#8899AA', bg:'#0D1117', card:'#161B22', border:'#30363D', soft:'#21262D' };
-const LIGHT = { blue:'#4A90D9', gold:'#BFA76A', green:'#3D8B6E', red:'#C25450',
-                dark:'#2C3E50', mid:'#7F8C8D', bg:'#FAFAF7', card:'#fff', border:'#E8E2D4', soft:'#F5F3ED' };
+/* ── NAVY THEME ─────────────────────────────────────────────────────────────── */
+const DARK = {
+  blue:  '#3B82F6',   // accent
+  gold:  '#FCD34D',   // amber
+  green: '#34D399',   // emerald
+  red:   '#F87171',   // rose
+  dark:  '#E2EAF4',   // primary text
+  mid:   '#6B87A8',   // secondary text
+  bg:    '#07111F',   // deepest navy
+  card:  '#0E1C33',   // card surface
+  border:'#1A2E4A',   // border
+  soft:  '#0B1628',   // hover / subtle bg
+};
+const LIGHT = {
+  blue:  '#2563EB',
+  gold:  '#B45309',
+  green: '#16A34A',
+  red:   '#DC2626',
+  dark:  '#0A1C35',
+  mid:   '#4A6A8A',
+  bg:    '#EDF1FA',
+  card:  '#FFFFFF',
+  border:'#C8D6EC',
+  soft:  '#F3F7FF',
+};
 
+/* ── SHARED STYLE TOKENS (Capital IQ compact) ──────────────────────────────── */
+const MONO = "'JetBrains Mono','Courier New',monospace";
 const S = {
-  card:{ background:'none', border:'1px solid currentColor', borderRadius:10, marginBottom:14, overflow:'hidden' },
-  cardHd:{ padding:'13px 16px', cursor:'pointer', display:'flex', justifyContent:'space-between',
+  card:{ background:'none', border:'1px solid currentColor', borderRadius:4,
+         marginBottom:10, overflow:'hidden' },
+  cardHd:{ padding:'9px 14px', cursor:'pointer', display:'flex', justifyContent:'space-between',
            alignItems:'center', borderBottom:'1px solid currentColor' },
-  cardBd:{ padding:'13px 16px' },
+  cardBd:{ padding:'10px 14px' },
   row:{ display:'flex', alignItems:'center', gap:8 },
   flex:{ display:'flex' },
-  tag:(c)=>({ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:3,
-               background:`${c}18`, color:c, border:`1px solid ${c}30` }),
-  mono:{ fontFamily:'monospace' },
-  label:{ fontSize:11, color:'currentColor', fontWeight:600, opacity:0.7 },
-  val:{ fontSize:13, fontWeight:700, color:'currentColor' },
-  sec:{ fontSize:12, color:'currentColor', lineHeight:1.7 },
+  tag:(c)=>({ fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:2,
+               background:`${c}15`, color:c, border:`1px solid ${c}28`, letterSpacing:'0.03em' }),
+  mono:{ fontFamily:MONO },
+  label:{ fontSize:10, color:'currentColor', fontWeight:600, opacity:0.55,
+          textTransform:'uppercase', letterSpacing:'0.05em' },
+  val:{ fontSize:13, fontWeight:700, color:'currentColor', fontFamily:MONO },
+  sec:{ fontSize:11, color:'currentColor', lineHeight:1.7 },
 };
 
 /* ── DATA ───────────────────────────────────────────────────────────────────── */
@@ -231,91 +256,94 @@ const PEERS = [
 
 /* ── VISUALIZATION COMPONENTS ─────────────────────────────────────────────── */
 
-const CatalystTimeline = ({ catalysts, C }) => {
+const CatalystTimeline = ({ catalysts, lk, C }) => {
   if (!catalysts || catalysts.length === 0) return null;
-
-  const sortedCats = [...catalysts].sort((a,b) => new Date(a.date) - new Date(b.date));
-  const minDate = new Date(sortedCats[0].date);
-  const maxDate = new Date(sortedCats[sortedCats.length-1].date);
-  const endDate = new Date(maxDate.getTime() + 30*24*60*60*1000);
-
-  const svgW = 580, svgH = 80;
-  const margin = 40, axisY = 50;
-  const plotW = svgW - 2*margin;
-
-  const getX = (d) => {
-    const range = endDate - minDate;
-    const offset = new Date(d) - minDate;
-    return margin + (offset/range) * plotW;
-  };
-
-  const startX = getX(minDate);
-  const endX = getX(endDate);
-
+  const sorted = [...catalysts].sort((a,b) => new Date(a.date) - new Date(b.date));
+  const lkk = lk || 'e';
   return (
-    <svg width={svgW} height={svgH} style={{marginBottom:14}}>
-      <line x1={startX} y1={axisY} x2={endX} y2={axisY} stroke={C.border} strokeWidth="2"/>
-      {sortedCats.map((cat,i) => {
-        const x = getX(cat.date);
-        const color = cat.imp === 'HIGH' ? C.green : C.gold;
+    <div style={{position:'relative', paddingLeft:20}}>
+      {/* Vertical rail */}
+      <div style={{position:'absolute', left:6, top:6, bottom:6,
+                   width:1, background:C.border}}/>
+      {sorted.map((cat, i) => {
+        const color = cat.imp === 'HIGH' ? C.green : cat.imp === 'MED' ? C.gold : C.mid;
+        const dateStr = cat.date
+          ? new Date(cat.date).toLocaleDateString('en-US', {month:'short', year:'2-digit'})
+          : cat.t || '';
         return (
-          <g key={i}>
-            <circle cx={x} cy={axisY} r="5" fill={color}/>
-            <text x={x} y={axisY+20} textAnchor="middle" fontSize="9" fill={C.mid} fontFamily="monospace">
-              {new Date(cat.date).toLocaleDateString('en-US', {month:'short', day:'numeric'})}
-            </text>
-          </g>
+          <div key={i} style={{position:'relative', marginBottom:i < sorted.length-1 ? 14 : 0}}>
+            {/* Dot */}
+            <div style={{
+              position:'absolute', left:-17, top:3,
+              width:8, height:8, borderRadius:'50%',
+              background:color,
+              boxShadow:`0 0 0 2px ${C.bg}, 0 0 0 3px ${color}40`,
+            }}/>
+            <div style={{display:'flex', alignItems:'center', gap:6, marginBottom:3}}>
+              <span style={{...S.tag(color), fontSize:8}}>{cat.imp}</span>
+              <span style={{fontSize:9, color:C.mid, fontFamily:MONO}}>{dateStr}</span>
+            </div>
+            <div style={{fontSize:11, color:C.dark, lineHeight:1.55}}>{cat[lkk]}</div>
+          </div>
         );
       })}
-    </svg>
+    </div>
   );
 };
 
-const RiskHeatMap = ({ risks, C }) => {
+const RiskHeatMap = ({ risks, lk, C }) => {
   if (!risks || risks.length === 0) return null;
-
-  const svgW = 280, svgH = 200;
-  const quadrants = [
-    {x:10, y:10, p:'HIGH', imp:'HIGH', label:'Critical'},
-    {x:105, y:10, p:'HIGH', imp:'MED', label:'Monitor'},
-    {x:200, y:10, p:'HIGH', imp:'LOW', label:'Watch'},
-    {x:10, y:95, p:'MED', imp:'HIGH', label:'High'},
-    {x:105, y:95, p:'MED', imp:'MED', label:'Med'},
-    {x:200, y:95, p:'MED', imp:'LOW', label:'Low'},
-    {x:10, y:180, p:'LOW', imp:'HIGH', label:'Track'},
-    {x:105, y:180, p:'LOW', imp:'MED', label:'Minor'},
-    {x:200, y:180, p:'LOW', imp:'LOW', label:'Ignore'},
-  ];
-
-  const getColor = (p,imp) => {
-    if(p==='HIGH' && imp==='HIGH') return C.red;
-    if((p==='HIGH'||imp==='HIGH')) return C.gold;
-    return C.green;
+  const lkk = lk || 'e';
+  const levels = ['HIGH','MED','LOW'];
+  const cellColor = (p, imp) => {
+    const score = (p==='HIGH'?3:p==='MED'?2:1) * (imp==='HIGH'?3:imp==='MED'?2:1);
+    return score >= 6 ? C.red : score >= 3 ? C.gold : C.green;
   };
-
-  const riskMap = {};
+  const risksByCell = {};
   risks.forEach(r => {
-    const key = `${r.p}_${r.imp}`;
-    riskMap[key] = (riskMap[key] || 0) + 1;
+    const k = `${r.p}_${r.imp}`;
+    (risksByCell[k] = risksByCell[k] || []).push(r);
   });
-
   return (
-    <svg width={svgW} height={svgH} style={{marginBottom:14, border:`1px solid ${C.border}`, borderRadius:6, padding:10}}>
-      {quadrants.map((q,i) => {
-        const key = `${q.p}_${q.imp}`;
-        const count = riskMap[key] || 0;
-        const color = getColor(q.p, q.imp);
-        return (
-          <g key={i}>
-            <rect x={q.x} y={q.y} width="80" height="75" fill={color} opacity="0.1" stroke={color} strokeWidth="1" rx="4"/>
-            <text x={q.x+40} y={q.y+35} textAnchor="middle" fontSize="11" fontWeight="600" fill={color}>{q.label}</text>
-            {count > 0 && <circle cx={q.x+70} cy={q.y+8} r="8" fill={color}/>}
-            {count > 0 && <text x={q.x+70} y={q.y+12} textAnchor="middle" fontSize="10" fontWeight="700" fill="#fff">{count}</text>}
-          </g>
-        );
-      })}
-      <text x={140} y={svgH-5} textAnchor="middle" fontSize="9" fill={C.mid}>Probability →</text>
-    </svg>
+    <div>
+      {/* Header row */}
+      <div style={{display:'grid', gridTemplateColumns:'52px repeat(3,1fr)', gap:2, marginBottom:2}}>
+        <div style={{fontSize:8, color:C.mid, textAlign:'center', paddingBottom:3, fontWeight:700}}>P＼Impact</div>
+        {['HIGH','MED','LOW'].map(imp => (
+          <div key={imp} style={{fontSize:8, color:C.mid, textAlign:'center', fontWeight:700, letterSpacing:'0.04em'}}>{imp}</div>
+        ))}
+      </div>
+      {/* 3×3 grid */}
+      {levels.map(p => (
+        <div key={p} style={{display:'grid', gridTemplateColumns:'52px repeat(3,1fr)', gap:2, marginBottom:2}}>
+          <div style={{fontSize:8, color:C.mid, display:'flex', alignItems:'center',
+                       justifyContent:'flex-end', paddingRight:6, fontWeight:700, letterSpacing:'0.04em'}}>{p}</div>
+          {levels.map(imp => {
+            const color = cellColor(p, imp);
+            const cellRisks = risksByCell[`${p}_${imp}`] || [];
+            return (
+              <div key={imp} style={{
+                background:`${color}0D`, border:`1px solid ${color}25`, borderRadius:3,
+                padding:'5px 7px', minHeight:44,
+              }}>
+                {cellRisks.length === 0
+                  ? <div style={{fontSize:8, color:`${color}40`, textAlign:'center', marginTop:6}}>—</div>
+                  : cellRisks.map((r, i) => (
+                    <div key={i} style={{fontSize:9, color:color, lineHeight:1.4, marginBottom:i<cellRisks.length-1?3:0}}>
+                      {r[lkk]}
+                    </div>
+                  ))
+                }
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      <div style={{display:'flex', justifyContent:'space-between', marginTop:4}}>
+        <span style={{fontSize:8, color:C.mid, opacity:0.6}}>← lower risk</span>
+        <span style={{fontSize:8, color:C.mid, opacity:0.6}}>higher risk →</span>
+      </div>
+    </div>
   );
 };
 
@@ -394,16 +422,27 @@ const Card = ({ title, sub, open, onToggle, children, C }) => (
 );
 
 const VPRing = ({ score, sz=90, C }) => {
-  const r=sz*.42, circ=2*Math.PI*r, cx=sz/2;
-  const c = score>=75?C.green : score>=55?C.blue : score>=40?C.gold : C.red;
+  const r = sz * 0.40, circ = 2 * Math.PI * r, cx = sz / 2;
+  const c = score >= 75 ? C.green : score >= 55 ? C.blue : score >= 40 ? C.gold : C.red;
+  const filled = (score / 100) * circ;
+  const label = score >= 75 ? 'HIGH' : score >= 55 ? 'MED' : 'LOW';
   return (
-    <svg width={sz} height={sz}>
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke={C.border} strokeWidth="7"/>
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke={c} strokeWidth="7"
-        strokeDasharray={circ} strokeDashoffset={circ-(score/100)*circ}
-        strokeLinecap="round" style={{transform:'rotate(-90deg)', transformOrigin:`${cx}px ${cx}px`}}/>
-      <text x={cx} y={cx} textAnchor="middle" dominantBaseline="central"
-        style={{fontSize:sz*.28, fontWeight:700, fill:C.dark}}>{score}</text>
+    <svg width={sz} height={sz} style={{flexShrink:0}}>
+      {/* Track */}
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={`${c}18`} strokeWidth={sz*0.08}/>
+      {/* Progress arc */}
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={c} strokeWidth={sz*0.08}
+        strokeDasharray={`${filled} ${circ - filled}`}
+        strokeLinecap="round"
+        style={{transform:'rotate(-90deg)', transformOrigin:`${cx}px ${cx}px`,
+                transition:'stroke-dasharray 0.6s cubic-bezier(.4,0,.2,1)'}}/>
+      {/* Score number */}
+      <text x={cx} y={cx - sz*0.04} textAnchor="middle" dominantBaseline="middle"
+        style={{fontSize:sz*0.30, fontWeight:800, fill:c, fontFamily:MONO}}>{score}</text>
+      {/* Label */}
+      <text x={cx} y={cx + sz*0.25} textAnchor="middle"
+        style={{fontSize:sz*0.13, fontWeight:600, fill:c, opacity:0.75, fontFamily:MONO,
+                letterSpacing:'0.06em', textTransform:'uppercase'}}>{label}</text>
     </svg>
   );
 };
@@ -839,7 +878,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       </Card>
 
       <Card title={L('Catalysts','催化剂')} open={open.cats} onToggle={()=>toggle('cats')} C={C}>
-        <CatalystTimeline catalysts={s.catalysts} C={C}/>
+        <CatalystTimeline catalysts={s.catalysts} lk={lk} C={C}/>
         {s.catalysts.map((c,i)=>(
           <div key={i} style={{marginBottom:10, paddingBottom:10, borderBottom:i<s.catalysts.length-1?`1px solid ${C.border}`:'none'}}>
             <div style={{...S.row, gap:8, marginBottom:4}}><span style={{fontSize:11, fontWeight:700, color:C.dark}}>{c[lk]}</span><Tag text={c.t} c={C.blue} C={C}/><Tag text={c.imp} c={c.imp==='HIGH'?C.green:C.gold} C={C}/></div>
@@ -848,7 +887,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       </Card>
 
       <Card title={L('Risks','风险')} open={open.risks} onToggle={()=>toggle('risks')} C={C}>
-        <RiskHeatMap risks={s.risks} C={C}/>
+        <RiskHeatMap risks={s.risks} lk={lk} C={C}/>
         {s.risks.map((r,i)=>(
           <div key={i} style={{marginBottom:10, paddingBottom:10, borderBottom:i<s.risks.length-1?`1px solid ${C.border}`:'none'}}>
             <div style={{...S.row, gap:8, marginBottom:4}}><span style={{fontSize:11, fontWeight:700, color:C.dark}}>{r[lk]}</span><Tag text={r.p} c={r.p==='HIGH'?C.red:r.p==='MED'?C.gold:C.green} C={C}/></div>
