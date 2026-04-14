@@ -3502,12 +3502,10 @@ export default function Dashboard() {
             <input value={search}
               onChange={e=>{setSearch(e.target.value); setShowSuggestions(true)}}
               onKeyDown={e=>{if(e.key==='Enter')handleSearch(); if(e.key==='Escape'){setShowSuggestions(false);}}}
-              onFocus={()=>{if(search.trim()) setShowSuggestions(true);}}
-              onBlur={()=>setTimeout(()=>setShowSuggestions(false), 200)}
+              onFocus={e=>{if(search.trim()) setShowSuggestions(true); e.target.style.borderColor=C.blue;}}
+              onBlur={e=>{setTimeout(()=>setShowSuggestions(false), 200); e.target.style.borderColor=C.border;}}
               placeholder={L('Search 10,000+ A+HK stocks by name or code…','搜索10,000+只A股港股，输入名称或代码…')}
-              style={{flex:1, padding:'7px 14px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:12, outline:'none', background:C.soft, color:C.dark, fontFamily:'inherit', transition:'border-color .15s'}}
-              onFocus={e=>e.target.style.borderColor=C.blue}
-              onBlur={e=>e.target.style.borderColor=C.border}/>
+              style={{flex:1, padding:'7px 14px', border:`1.5px solid ${C.border}`, borderRadius:8, fontSize:12, outline:'none', background:C.soft, color:C.dark, fontFamily:'inherit', transition:'border-color .15s'}}/>
             <button onClick={handleSearch} style={{padding:'7px 14px', background:C.blue, color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500}}>
               <Search size={14}/>
             </button>
