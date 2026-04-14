@@ -496,6 +496,103 @@ def generate_rdcf_for_all(focus_data, hist_cache, rdcf_config):
     return results
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Macro Stress Test Engine  (v13.4)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def compute_stress_test(config_path=None):
+    """
+    Load stress_config.json, apply macro factor shocks to each stock via
+    linear sensitivity model, aggregate to portfolio level.
+
+    Sensitivity convention (all per unit of shock):
+      cny_usd : stock return per 1% CNY/USD move (positive = CNY depreciation = USD↑)
+      cn_10y  : stock return per 100bp CN 10Y yield increase
+      us_10y  : stock return per 100bp US 10Y yield increase
+      vix     : stock return per 1 VIX point increase
+
+    shock values in config are in natural units (e.g. cny_usd=0.03 = 3% depreciation,
+    cn_10y=0.20 = 20bp, us_10y=0.50 = 50bp, vix=15 = 15 VIX points).
+    """
+    if config_path is None:
+        config_path = OUTPUT_DIR / "stress_config.json"
+
+    cfg_path = Path(config_path)
+    if not cfg_path.exists():
+        raise FileNotFoundError(f"stress_config.json not found at {cfg_path}")
+
+    with open(cfg_path, "r", encoding="utf-8") as f:
+        cfg = json.load(f)
+
+    weights   = cfg["portfolio_weights"]
+    sens_map  = cfg["sensitivities"]
+    scenarios = cfg["scenarios"]
+    tickers   = list(weights.keys())
+
+    results = {
+        "generated_at":      datetime.now(timezone.utc).isoformat(),
+        "portfolio_weights": weights,
+        "scenarios":         {},
+    }
+
+    for scen_key, scen in scenarios.items():
+        shocks    = scen["shocks"]
+        overrides = scen.get("sector_overrides", {})
+        stock_impacts = {}
+
+        for ticker in tickers:
+            s = sens_map.get(ticker, {})
+
+            # Factor-by-factor decomposition
+            impact_cny = s.get("cny_usd", 0) * shocks.get("cny_usd", 0)
+            impact_cn  = s.get("cn_10y",  0) * shocks.get("cn_10y",  0)
+            impact_us  = s.get("us_10y",  0) * shocks.get("us_10y",  0)
+            impact_vix = s.get("vix",     0) * shocks.get("vix",     0)
+            override   = overrides.get(ticker, 0)
+            total      = impact_cny + impact_cn + impact_us + impact_vix + override
+
+            stock_impacts[ticker] = {
+                "name":         s.get("name", ticker),
+                "total_return": round(total, 4),
+                "factors": {
+                    "cny_usd":        round(impact_cny, 4),
+                    "cn_10y":         round(impact_cn,  4),
+                    "us_10y":         round(impact_us,  4),
+                    "vix":            round(impact_vix, 4),
+                    "sector_override":round(override, 4),
+                },
+            }
+
+        # Portfolio-level impact (weighted sum)
+        portfolio_return = sum(
+            weights.get(t, 0) * stock_impacts[t]["total_return"]
+            for t in tickers
+        )
+        ev_contribution = scen.get("probability", 0) * portfolio_return
+
+        results["scenarios"][scen_key] = {
+            "name":             scen["name"],
+            "description":      scen["description"],
+            "probability":      scen.get("probability", 0),
+            "color":            scen.get("color", "info"),
+            "shocks":           shocks,
+            "stock_impacts":    stock_impacts,
+            "portfolio_return": round(portfolio_return, 4),
+            "ev_contribution":  round(ev_contribution, 4),
+        }
+
+    # Probability-weighted expected portfolio return
+    results["expected_portfolio_return"] = round(
+        sum(v["ev_contribution"] for v in results["scenarios"].values()), 4
+    )
+    # Worst-case scenario key
+    results["worst_scenario"] = min(
+        results["scenarios"],
+        key=lambda k: results["scenarios"][k]["portfolio_return"]
+    )
+    return results
+
+
 # ── Helpers ─────────────────────────────────────────────────────────────────
 def _safe_float(val):
     if val is None: return None
@@ -631,45 +728,82 @@ def fetch_hk_universe():
 # ══════════════════════════════════════════════════════════════════════════════
 # 3. Northbound Flow
 # ══════════════════════════════════════════════════════════════════════════════
+def _parse_hsgt_df(df):
+    """Extract flow fields from an AKShare HSGT dataframe regardless of column names."""
+    if df is None or df.empty:
+        return None
+    flow_col = next((c for c in [
+        "净买入", "当日净流入", "净流入", "净额",
+        "当日净买额", "沪深港通净买入",
+    ] if c in df.columns), None)
+    if not flow_col:
+        # Last resort: try numeric columns > 0 in last row
+        num_cols = df.select_dtypes(include="number").columns.tolist()
+        if not num_cols:
+            return None
+        flow_col = num_cols[0]
+    recent = df.tail(20)
+    return {
+        "latest_net_flow": _safe_float(recent.iloc[-1][flow_col]),
+        "5d_cumulative":   _safe_float(recent.tail(5)[flow_col].sum()),
+        "20d_cumulative":  _safe_float(recent[flow_col].sum()),
+        "trend": "inflow" if float(recent.tail(5)[flow_col].sum()) > 0 else "outflow",
+        "updated": datetime.now().strftime("%Y-%m-%d"),
+    }
+
 def fetch_northbound():
+    """Try multiple AKShare endpoints in sequence — AKShare API changes frequently."""
     try:
         import akshare as ak
-        df = ak.stock_hsgt_north_net_flow_in_em(symbol="北向")
-        if df is None or df.empty: return {}
-        recent = df.tail(20)
-        flow_col = next((c for c in ["净买入", "当日净流入", "净流入"] if c in recent.columns), None)
-        if not flow_col: return {}
-        return {
-            "latest_net_flow": _safe_float(recent.iloc[-1][flow_col]),
-            "5d_cumulative":   _safe_float(recent.tail(5)[flow_col].sum()),
-            "20d_cumulative":  _safe_float(recent[flow_col].sum()),
-            "trend": "inflow" if float(recent.tail(5)[flow_col].sum()) > 0 else "outflow",
-            "updated": datetime.now().strftime("%Y-%m-%d"),
-        }
-    except Exception as e:
-        print(f"  Northbound error: {e}"); return {}
+    except ImportError:
+        return {}
+
+    attempts = [
+        lambda: ak.stock_hsgt_north_net_flow_in_em(symbol="北向"),
+        lambda: ak.stock_hsgt_north_net_flow_in_em(symbol="沪深港通"),
+        lambda: ak.stock_hsgt_hist_em(symbol="北向资金"),
+        lambda: ak.stock_hsgt_north_acc_flow_in_em(symbol="北向"),
+    ]
+    for i, fn in enumerate(attempts):
+        try:
+            df = fn()
+            result = _parse_hsgt_df(df)
+            if result:
+                print(f"  Northbound: OK (attempt {i+1})")
+                return result
+        except Exception as e:
+            print(f"  Northbound attempt {i+1} failed: {type(e).__name__}: {e}")
+    print("  Northbound: all attempts failed — returning empty")
+    return {}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 4. Southbound Flow (new in v4.0)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_southbound():
+    """Try multiple AKShare endpoints in sequence for southbound flow."""
     try:
         import akshare as ak
-        df = ak.stock_hsgt_south_net_flow_in_em(symbol="南向")
-        if df is None or df.empty: return {}
-        recent = df.tail(20)
-        flow_col = next((c for c in ["净买入", "当日净流入", "净流入"] if c in recent.columns), None)
-        if not flow_col: return {}
-        return {
-            "latest_net_flow": _safe_float(recent.iloc[-1][flow_col]),
-            "5d_cumulative":   _safe_float(recent.tail(5)[flow_col].sum()),
-            "20d_cumulative":  _safe_float(recent[flow_col].sum()),
-            "trend": "inflow" if float(recent.tail(5)[flow_col].sum()) > 0 else "outflow",
-            "updated": datetime.now().strftime("%Y-%m-%d"),
-        }
-    except Exception as e:
-        print(f"  Southbound error: {e}"); return {}
+    except ImportError:
+        return {}
+
+    attempts = [
+        lambda: ak.stock_hsgt_south_net_flow_in_em(symbol="南向"),
+        lambda: ak.stock_hsgt_south_net_flow_in_em(symbol="沪深港通"),
+        lambda: ak.stock_hsgt_hist_em(symbol="南向资金"),
+        lambda: ak.stock_hsgt_south_acc_flow_in_em(symbol="南向"),
+    ]
+    for i, fn in enumerate(attempts):
+        try:
+            df = fn()
+            result = _parse_hsgt_df(df)
+            if result:
+                print(f"  Southbound: OK (attempt {i+1})")
+                return result
+        except Exception as e:
+            print(f"  Southbound attempt {i+1} failed: {type(e).__name__}: {e}")
+    print("  Southbound: all attempts failed — returning empty")
+    return {}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1237,6 +1371,20 @@ def main():
         print("  SKIPPED: rdcf_config.json not found or empty")
     print()
 
+    # ── Macro Stress Test ──
+    print("[STRESS] Running macro stress test...")
+    try:
+        stress_result = compute_stress_test(OUTPUT_DIR / "stress_config.json")
+        with open(OUTPUT_DIR / "stress_test.json", "w", encoding="utf-8") as f:
+            json.dump(stress_result, f, ensure_ascii=False, indent=2)
+        worst     = stress_result["worst_scenario"]
+        worst_ret = stress_result["scenarios"][worst]["portfolio_return"]
+        exp_ret   = stress_result["expected_portfolio_return"]
+        print(f"  Worst case: {worst} ({worst_ret:+.1%})  |  Expected: {exp_ret:+.1%}")
+    except Exception as e:
+        print(f"  STRESS ERROR: {e}")
+    print()
+
     # ── Write market_data.json (master for focus stocks) ──
     market_data = {
         "_meta": {
@@ -1298,10 +1446,12 @@ def main():
     print(f"  D&T entries:  {len(dragon_tiger)}")
     print(f"  Margin:       {len(margin)} focus stocks")
     print(f"  Earnings cal: {len(earnings_cal)} entries")
-    eqr_files  = list(OUTPUT_DIR.glob("eqr_*.json"))
-    rdcf_files = list(OUTPUT_DIR.glob("rdcf_*.json"))
+    eqr_files    = list(OUTPUT_DIR.glob("eqr_*.json"))
+    rdcf_files   = list(OUTPUT_DIR.glob("rdcf_*.json"))
+    stress_exists = (OUTPUT_DIR / "stress_test.json").exists()
     print(f"  EQR ratings: {len(eqr_files)} stocks")
     print(f"  RDCF files:  {len(rdcf_files)} stocks")
+    print(f"  Stress test: {'OK' if stress_exists else 'MISSING'}")
     files = list(OUTPUT_DIR.glob("*.json"))
     total = sum(f.stat().st_size for f in files)
     print(f"  JSON files:   {len(files)} ({total/1024/1024:.1f} MB)")

@@ -1,0 +1,143 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "calibration": "first-principles estimates, NOT historical regressions",
+    "recalibrate_after": "60 days of live daily P&L data",
+    "sensitivity_units": {
+      "cny_usd": "stock_return_per_1pct_CNY_depreciation",
+      "cn_10y":  "stock_return_per_100bp_CN10Y_increase",
+      "us_10y":  "stock_return_per_100bp_US10Y_increase",
+      "vix":     "stock_return_per_1_VIX_point_increase"
+    },
+    "known_calibration_flags": [
+      "6160.HK vix=-0.020/pt is aggressive: 15pt shock = -30% from VIX alone. Review after 2 earnings cycles.",
+      "Expected portfolio return (-20.8%) reflects 70% probability weight on negative scenarios. Revisit scenario probs if macro regime shifts.",
+      "HK ERP=7.25% (US base 5% + China CRP 2.25%) is Damodaran-methodology; recalibrate if HKD peg regime changes."
+    ]
+  },
+
+  "portfolio_weights": {
+    "300308.SZ": 0.25,
+    "002594.SZ": 0.18,
+    "700.HK":    0.22,
+    "9999.HK":   0.15,
+    "6160.HK":   0.20
+  },
+
+  "sensitivities": {
+    "300308.SZ": {
+      "name": "中际旭创",
+      "cny_usd": 0.80,
+      "cn_10y": -0.15,
+      "us_10y": -0.20,
+      "vix":    -0.008,
+      "notes": {
+        "cny_usd": "海外收入90%+为USD计价，CNY贬值直接提升CNY营收",
+        "us_10y":  "A股科技，受美债传导有限",
+        "vix":     "外资持仓比例中等，risk-off抛售压力可控"
+      }
+    },
+    "002594.SZ": {
+      "name": "比亚迪",
+      "cny_usd": 0.20,
+      "cn_10y": -0.25,
+      "us_10y": -0.10,
+      "vix":    -0.006,
+      "notes": {
+        "cny_usd": "出口受益抵消进口零部件成本上升，净效应偏正",
+        "cn_10y":  "汽车消费贷款对国内利率敏感",
+        "us_10y":  "A股，美债传导较弱"
+      }
+    },
+    "700.HK": {
+      "name": "腾讯",
+      "cny_usd": -0.35,
+      "cn_10y": -0.20,
+      "us_10y": -0.30,
+      "vix":    -0.012,
+      "notes": {
+        "cny_usd": "港股HKD计价，CNY收入占主体，USD升值使港元价值相对下降",
+        "us_10y":  "港元钉住美元，美债利率直接影响港股估值折现率",
+        "vix":     "机构持仓重、流动性高，risk-off首先被抛售"
+      }
+    },
+    "9999.HK": {
+      "name": "网易",
+      "cny_usd": -0.15,
+      "cn_10y": -0.15,
+      "us_10y": -0.25,
+      "vix":    -0.009,
+      "notes": {
+        "cny_usd": "日本收入增长中但占比仍低，FX敞口小于腾讯",
+        "us_10y":  "港股，受美债影响，但估值较低缓冲部分风险"
+      }
+    },
+    "6160.HK": {
+      "name": "百济神州",
+      "cny_usd": 0.10,
+      "cn_10y": -0.05,
+      "us_10y": -0.45,
+      "vix":    -0.020,
+      "notes": {
+        "cny_usd": "美国Brukinsa销售为USD，略正",
+        "us_10y":  "未盈利长久期生物医药对美债极敏感：100bp↑≈股价-15%至-20%",
+        "vix":     "创新药在risk-off环境最先被机构减持"
+      }
+    }
+  },
+
+  "scenarios": {
+    "risk_off": {
+      "name": "Risk-off 全面收缩",
+      "description": "全球避险情绪爆发，美元大幅走强，中美利率双升，VIX飙升",
+      "probability": 0.20,
+      "shocks": {
+        "cny_usd": 0.03,
+        "cn_10y":  0.20,
+        "us_10y":  0.50,
+        "vix":     15
+      },
+      "color": "danger"
+    },
+    "china_stimulus": {
+      "name": "China stimulus 中国刺激",
+      "description": "PBOC降息+财政扩张，人民币升值，风险偏好改善",
+      "probability": 0.30,
+      "shocks": {
+        "cny_usd": -0.02,
+        "cn_10y":  -0.30,
+        "us_10y":   0.10,
+        "vix":     -3
+      },
+      "color": "success"
+    },
+    "fed_hike": {
+      "name": "Fed surprise 美联储意外紧缩",
+      "description": "美国通胀反弹，美联储重启加息，EM资金外流，港股估值压缩",
+      "probability": 0.20,
+      "shocks": {
+        "cny_usd": 0.025,
+        "cn_10y":  0.10,
+        "us_10y":  0.75,
+        "vix":     10
+      },
+      "color": "warning"
+    },
+    "tariff_escalation": {
+      "name": "Tariff escalation 关税升级",
+      "description": "中美贸易战再度升温，科技出口管制扩大，供应链重组压力",
+      "probability": 0.30,
+      "shocks": {
+        "cny_usd": 0.02,
+        "cn_10y":  0.10,
+        "us_10y":  0.20,
+        "vix":     20
+      },
+      "sector_overrides": {
+        "300308.SZ": -0.08,
+        "002594.SZ": -0.05
+      },
+      "color": "warning"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "last_updated": "2026-04-14",
   "predictions": [
     {
@@ -31,10 +31,11 @@
       "falsification_condition": "监管对游戏未成年人限制扩大 或 宏观消费显著走弱导致广告主削减预算",
       "target_date": "2026-03-31",
       "confidence": 64,
-      "status": "OPEN",
-      "actual_outcome": null,
-      "resolved_at": null,
-      "notes": "财报季关注广告分部收入增速及AI功能MAU披露"
+      "status": "VERIFIED",
+      "actual_outcome": "FY2025全年网络广告（Marketing Services）收入RMB 1,450亿（同比+19%），折算约HKD 1,667亿，大幅超过HKD 120B门槛。Weixin AI MAU未单独披露，但广告收入加速印证AI变现逻辑成立。",
+      "resolved_at": "2026-04-14",
+      "resolution_source": "Tencent FY2025 Annual Results (March 2026)",
+      "notes": "广告收入门槛验证（✓），Weixin AI MAU未经独立披露，从保守角度算部分验证。收入加速超出市场共识预期，支持变体论点。"
     },
     {
       "id": "pred_003",
@@ -48,10 +49,11 @@
       "falsification_condition": "Marvel Rivals DAU跌破200万 或 日本市场出现强劲本土竞争者",
       "target_date": "2025-11-30",
       "confidence": 58,
-      "status": "OPEN",
-      "actual_outcome": null,
-      "resolved_at": null,
-      "notes": "日本市场数据透明度低，需结合SteamSpy等第三方数据交叉验证"
+      "status": "INCONCLUSIVE",
+      "actual_outcome": "网易财报不单独披露日本MAU数据。Marvel Rivals全球累计玩家2025年4月突破4000万（全平台），但无日本细分数据。无法根据公开信息验证300万MAU门槛。",
+      "resolved_at": "2026-04-14",
+      "resolution_source": "NetEase Q3 2025 earnings, Marvel Rivals global player announcements",
+      "notes": "验证条件设计缺陷：网易不按地区披露MAU。下一版预测应改为可核实的指标，如日本区App Store收入排名或网易财报中的国际收入分部披露。"
     },
     {
       "id": "pred_004",
@@ -65,10 +67,11 @@
       "falsification_condition": "IRA谈判将美国定价降超30% 或 竞争对手新BTK抑制剂获欧洲批准",
       "target_date": "2025-08-31",
       "confidence": 71,
-      "status": "OPEN",
-      "actual_outcome": null,
-      "resolved_at": null,
-      "notes": "高置信度来自法德处方数据，但IRA尾部风险定价困难"
+      "status": "FALSIFIED",
+      "actual_outcome": "2025年H1欧洲Brukinsa合计约$2.7亿（Q1约$1.16亿，Q2约$1.54亿）。Q2单季约$1.54亿，距$3.8亿门槛差距约59%。市场份额增长方向正确但速度远低于预期。",
+      "resolved_at": "2026-04-14",
+      "resolution_source": "BeiGene Q1 2025 / H1 2025 earnings reports",
+      "notes": "方向正确（BTK抑制剂市场份额持续提升），但规模预测过于激进——$3.8亿门槛隐含了Q2环比翻番的假设，与季度节奏不符。下调EU营收增速预期，但不改变中长期市占率扩张的变体论点。"
     },
     {
       "id": "pred_005",
@@ -82,10 +85,11 @@
       "falsification_condition": "欧盟关税超35% 且 巴西实施本地含量要求",
       "target_date": "2026-02-28",
       "confidence": 52,
-      "status": "OPEN",
-      "actual_outcome": null,
-      "resolved_at": null,
-      "notes": "地缘政治变量多，置信度相对最低"
+      "status": "VERIFIED",
+      "actual_outcome": "2025年全年海外销量104.6万台（同比+150.7%），远超35万台门槛。本地化组装+新兴市场策略执行力超出模型预期，实际结果接近3倍于验证门槛。",
+      "resolved_at": "2026-04-14",
+      "resolution_source": "BYD FY2025 Annual Sales Data (reported March 2026)",
+      "notes": "显著超预期验证。需更新变体论点：原始预测的35万台已被证明过于保守，应将2026年预测锚点升至150-180万台海外，并重新评估EU关税对整体出口结构的实际影响。"
     }
   ]
 }

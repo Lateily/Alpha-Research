@@ -41,10 +41,12 @@ jobs:
 
       # ── Step 2: Paper trading P&L update ──────────────────────────────────
       - name: Run paper trading engine
+        continue-on-error: true          # non-critical; don't block data commit
         run: python scripts/paper_trading.py
 
       # ── Step 2b: VP Score backtest ─────────────────────────────────────────
       - name: Run backtest engine
+        continue-on-error: true          # non-critical; don't block data commit
         run: python scripts/backtest.py --threshold 60
 
       # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
@@ -74,7 +76,8 @@ jobs:
             public/data/snapshots.json \
             public/data/backtest_results.json \
             public/data/rdcf_*.json \
-            public/data/eqr_*.json
+            public/data/eqr_*.json \
+            public/data/stress_test.json
           git diff --cached --quiet || \
             git commit -m "data: daily update $(date -u +'%Y-%m-%d %H:%M') UTC"
           git push

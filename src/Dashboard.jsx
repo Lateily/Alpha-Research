@@ -409,7 +409,227 @@ const VPRing = ({ score, sz=90, C }) => {
 };
 
 /* ── SCANNER TAB ────────────────────────────────────────────────────────── */
-function Scanner({ L, lk, open, toggle, C }) {
+/* ── MACRO STRESS TEST COMPONENTS ────────────────────────────────────── */
+function _returnColor(r, C) {
+  if (r == null) return C.mid;
+  if (r >=  0.03) return C.green;
+  if (r <= -0.10) return C.red;
+  if (r <  -0.04) return C.gold;
+  return C.mid;
+}
+
+function _scenColor(colorKey, C) {
+  const map = {
+    danger:  { bg: `${C.red}15`,  text: C.red  },
+    success: { bg: `${C.green}15`,text: C.green },
+    warning: { bg: `${C.gold}15`, text: C.gold  },
+    info:    { bg: `${C.blue}15`, text: C.blue  },
+  };
+  return map[colorKey] || map.info;
+}
+
+function _fmtPct(n, digits=1) {
+  if (n == null) return '—';
+  return `${n >= 0 ? '+' : ''}${(n * 100).toFixed(digits)}%`;
+}
+
+function FactorBar({ label, value, maxAbs=0.15, C }) {
+  const width = Math.min(Math.abs(value || 0) / maxAbs * 100, 100);
+  const color = (value || 0) >= 0 ? C.green : C.red;
+  return (
+    <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:5}}>
+      <span style={{width:70, fontSize:10, color:C.mid, flexShrink:0}}>{label}</span>
+      <div style={{flex:1, height:5, background:`${C.border}`, borderRadius:3, overflow:'hidden', position:'relative'}}>
+        <div style={{
+          position:'absolute', height:'100%', width:`${width}%`,
+          background:color, borderRadius:3,
+          left: (value||0) >= 0 ? 0 : 'auto',
+          right: (value||0) < 0  ? 0 : 'auto',
+        }}/>
+      </div>
+      <span style={{width:48, fontSize:10, textAlign:'right', color:_returnColor(value,C), flexShrink:0, fontFamily:'monospace'}}>
+        {_fmtPct(value)}
+      </span>
+    </div>
+  );
+}
+
+function MacroStressTest({ stressData, L, C }) {
+  const [activeScenario, setActiveScenario] = useState(null);
+  const [expandedStock,  setExpandedStock]  = useState(null);
+
+  if (!stressData?.scenarios) return (
+    <div style={{padding:'14px 16px', background:`${C.gold}08`, border:`1px solid ${C.gold}25`, borderRadius:8, fontSize:11, color:C.mid}}>
+      {L('Stress test data not yet generated — run fetch_data.py','压力测试数据未生成，请运行 fetch_data.py')}
+    </div>
+  );
+
+  const scenarioKeys = Object.keys(stressData.scenarios);
+  const active = activeScenario ?? scenarioKeys[0];
+  const scen   = stressData.scenarios[active];
+  const tickers = stressData.portfolio_weights ? Object.keys(stressData.portfolio_weights) : [];
+
+  return (
+    <div>
+      {/* Header row */}
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
+        <div style={{fontSize:12, fontWeight:700, color:C.dark}}>{L('Macro Stress Test','宏观压力测试')}</div>
+        <div style={{fontSize:11, color:C.mid}}>
+          {L('Expected return: ','预期收益: ')}
+          <span style={{color:_returnColor(stressData.expected_portfolio_return, C), fontWeight:700}}>
+            {_fmtPct(stressData.expected_portfolio_return)}
+          </span>
+        </div>
+      </div>
+
+      {/* Scenario tabs */}
+      <div style={{display:'flex', gap:6, marginBottom:12, flexWrap:'wrap'}}>
+        {scenarioKeys.map(key => {
+          const s   = stressData.scenarios[key];
+          const cfg = _scenColor(s.color, C);
+          const isActive = key === active;
+          return (
+            <button key={key}
+              onClick={() => { setActiveScenario(key); setExpandedStock(null); }}
+              style={{
+                padding:'5px 12px', fontSize:11, borderRadius:20, cursor:'pointer',
+                border: isActive ? `1.5px solid ${cfg.text}` : `1px solid ${C.border}`,
+                background: isActive ? cfg.bg : 'transparent',
+                color: isActive ? cfg.text : C.mid,
+              }}
+            >
+              {s.name}
+              <span style={{marginLeft:5, opacity:0.65}}>
+                {(s.probability * 100).toFixed(0)}%
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Scenario description + shock values */}
+      <div style={{padding:'10px 14px', background:C.soft, borderRadius:8, marginBottom:12}}>
+        <div style={{fontSize:11, color:C.mid, marginBottom:8, lineHeight:1.6}}>{scen.description}</div>
+        <div style={{display:'flex', gap:18, flexWrap:'wrap'}}>
+          {[
+            {label:'CNY/USD', val:scen.shocks.cny_usd,  mult:100, unit:'%',   positiveIsGood:true  },
+            {label:'CN 10Y',  val:scen.shocks.cn_10y,   mult:100, unit:'bp',  positiveIsGood:false },
+            {label:'US 10Y',  val:scen.shocks.us_10y,   mult:100, unit:'bp',  positiveIsGood:false },
+            {label:'VIX',     val:scen.shocks.vix,      mult:1,   unit:'pts', positiveIsGood:false },
+          ].map(({label, val, mult, unit, positiveIsGood}) => {
+            const isPos  = val >= 0;
+            const color  = (positiveIsGood ? isPos : !isPos) ? C.green : C.red;
+            return (
+              <div key={label}>
+                <div style={{fontSize:9, color:C.mid, fontWeight:600}}>{label}</div>
+                <div style={{fontSize:14, fontWeight:700, color, fontFamily:'monospace', marginTop:2}}>
+                  {val >= 0 ? '+' : ''}{(val * mult).toFixed(1)}{unit}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Portfolio NAV impact — prominent */}
+      <div style={{
+        padding:'12px 18px', marginBottom:12,
+        background:C.card, border:`1px solid ${C.border}`, borderRadius:10,
+        display:'flex', justifyContent:'space-between', alignItems:'center',
+      }}>
+        <div style={{fontSize:12, color:C.mid}}>{L('Portfolio NAV impact','组合净值影响')}</div>
+        <div style={{fontSize:28, fontWeight:800, color:_returnColor(scen.portfolio_return, C), fontFamily:'monospace'}}>
+          {_fmtPct(scen.portfolio_return, 1)}
+        </div>
+      </div>
+
+      {/* Per-stock breakdown */}
+      <div style={{display:'flex', flexDirection:'column', gap:6}}>
+        {tickers.map(ticker => {
+          const imp    = scen.stock_impacts?.[ticker];
+          const weight = stressData.portfolio_weights?.[ticker];
+          if (!imp) return null;
+          const isOpen  = expandedStock === ticker;
+          const factors = imp.factors || {};
+          return (
+            <div key={ticker} style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:8, overflow:'hidden'}}>
+              {/* Collapsed row */}
+              <div onClick={() => setExpandedStock(isOpen ? null : ticker)}
+                style={{display:'flex', alignItems:'center', padding:'10px 14px', cursor:'pointer', gap:12}}>
+                <span style={{fontFamily:'monospace', fontSize:11, color:C.mid, width:88, flexShrink:0}}>{ticker}</span>
+                <span style={{fontSize:12, flex:1, color:C.dark}}>{imp.name}</span>
+                <span style={{fontSize:10, color:C.mid}}>{((weight||0)*100).toFixed(0)}%</span>
+                <span style={{fontSize:16, fontWeight:700, minWidth:60, textAlign:'right',
+                              color:_returnColor(imp.total_return, C), fontFamily:'monospace'}}>
+                  {_fmtPct(imp.total_return)}
+                </span>
+                <span style={{fontSize:10, color:C.mid, marginLeft:4}}>{isOpen ? '▲' : '▼'}</span>
+              </div>
+
+              {/* Expanded factor bars */}
+              {isOpen && (
+                <div style={{padding:'0 14px 12px', borderTop:`1px solid ${C.border}`}}>
+                  <div style={{marginTop:10}}>
+                    <FactorBar label="CNY/USD"  value={factors.cny_usd} C={C}/>
+                    <FactorBar label="CN 10Y"   value={factors.cn_10y}  C={C}/>
+                    <FactorBar label="US 10Y"   value={factors.us_10y}  C={C}/>
+                    <FactorBar label="VIX"      value={factors.vix}     C={C}/>
+                    {factors.sector_override !== 0 && (
+                      <FactorBar label="Sector"  value={factors.sector_override} C={C}/>
+                    )}
+                  </div>
+                  <div style={{marginTop:8, fontSize:10, color:C.mid}}>
+                    {L('Weighted NAV impact: ','加权净值影响: ')}
+                    <span style={{color:_returnColor(imp.total_return * (weight||0), C), fontWeight:700}}>
+                      {_fmtPct(imp.total_return * (weight||0))}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* All-scenarios matrix */}
+      <div style={{marginTop:16}}>
+        <div style={{fontSize:9, fontWeight:700, color:C.mid, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:8}}>
+          {L('All scenarios — portfolio return','全场景 — 组合收益')}
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:`repeat(${scenarioKeys.length}, 1fr)`, gap:6}}>
+          {scenarioKeys.map(key => {
+            const s   = stressData.scenarios[key];
+            const cfg = _scenColor(s.color, C);
+            const isActive = key === active;
+            return (
+              <div key={key} onClick={() => setActiveScenario(key)}
+                style={{
+                  padding:'8px 6px', borderRadius:8, cursor:'pointer', textAlign:'center',
+                  background: isActive ? cfg.bg : C.soft,
+                  border: isActive ? `1px solid ${cfg.text}` : `1px solid ${C.border}`,
+                }}
+              >
+                <div style={{fontSize:9, color:C.mid, marginBottom:4}}>
+                  {s.name.split(' ')[0]}
+                </div>
+                <div style={{fontSize:15, fontWeight:700, color:_returnColor(s.portfolio_return, C), fontFamily:'monospace'}}>
+                  {_fmtPct(s.portfolio_return, 1)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{marginTop:10, fontSize:9, color:C.mid, lineHeight:1.5}}>
+        ⚠ {L('Sensitivities are first-principles estimates, not historical regressions. Recalibrate after 60+ days of live data.',
+             '敏感度系数为基本面逻辑估算，非历史回归。积累60天以上真实数据后应重新校准。')}
+      </div>
+    </div>
+  );
+}
+
+function Scanner({ L, lk, open, toggle, C, stressData }) {
   const colors = [C.blue, C.gold, C.green, C.red, C.blue];
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
@@ -474,6 +694,10 @@ function Scanner({ L, lk, open, toggle, C }) {
             <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{a.note[lk]}</div>
           </div>
         ))}
+      </Card>
+
+      <Card title={L('Macro Stress Test','宏观压力测试')} sub={L('Factor sensitivity · 4 scenarios','因子敏感度 · 4场景')} open={open.macroImpact} onToggle={()=>toggle('macroImpact')} C={C}>
+        <MacroStressTest stressData={stressData} L={L} C={C}/>
       </Card>
     </div>
   );
@@ -976,7 +1200,8 @@ function DeepResearchPanel({ L, lk, onComplete, C }) {
     }, 3000);
 
     try {
-      const res = await fetch('/api/research', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const res = await fetch(`${apiBase}/api/research`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticker: drTicker.trim(), direction: drDir, context: drContext || undefined }),
@@ -2571,8 +2796,9 @@ export default function Dashboard() {
   const [liveData, setLiveData] = useState(null);
   const [universeA, setUniverseA] = useState(null);
   const [universeHK, setUniverseHK] = useState(null);
-  const [eqrData, setEqrData]   = useState({});
-  const [rdcfData, setRdcfData] = useState({});
+  const [eqrData, setEqrData]     = useState({});
+  const [rdcfData, setRdcfData]   = useState({});
+  const [stressData, setStressData] = useState(null);
   const [predictions, setPredictions] = useState([]);
 
   /* Fetch prediction log on mount */
@@ -2629,6 +2855,15 @@ export default function Dashboard() {
       });
       setRdcfData(map);
     });
+  }, []);
+
+  /* Fetch macro stress test data on mount */
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL || '/';
+    fetch(base + 'data/stress_test.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setStressData(d); })
+      .catch(() => {});
   }, []);
 
   /* Fetch live market data + universe on mount */
@@ -2879,7 +3114,7 @@ export default function Dashboard() {
 
         {/* Content */}
         <div style={{flex:1, overflowY:'auto', padding:16}}>
-          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C}/>}
+          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C}/>}
           {tab==='flow'     && (
             <div>
