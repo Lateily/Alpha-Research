@@ -1337,39 +1337,31 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
       if (stepIdx < steps.length) { setProgress(steps[stepIdx].p); stepIdx++; }
     }, 3000);
 
+    const VERCEL_URL = 'https://equity-research-ten.vercel.app';
+    const isGHPages = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+    const apiBase   = import.meta.env.VITE_API_BASE_URL || (isGHPages ? VERCEL_URL : '');
+    const endpoint  = `${apiBase}/api/research`;
+
     try {
-      // Auto-detect: GitHub Pages → call Vercel API; Vercel → call local API
-      const apiBase = import.meta.env.VITE_API_BASE_URL
-        || (typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')
-            ? 'https://equity-research-ten.vercel.app'
-            : '');
-      const res = await fetch(`${apiBase}/api/research`, {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticker: tk, direction: drDir, context: drContext || undefined }),
       });
       clearInterval(timer);
-      // Detect HTML 404 (GitHub Pages serving static 404)
-      const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error(L(
-          'API unreachable — access the platform via your Vercel URL to use Deep Research.',
-          '无法连接API — 请通过 Vercel 部署地址访问平台以使用深度研究功能。'
-        ));
+      const text = await res.text();
+      let json;
+      try { json = JSON.parse(text); }
+      catch {
+        // Show exact response for diagnosis
+        throw new Error(`[${res.status}] ${endpoint}\nResponse: ${text.slice(0,200)}`);
       }
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Request failed');
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
       setProgress(100);
       onComplete(tk, json.data);
     } catch (err) {
       clearInterval(timer);
-      const msg = err.message || '';
-      setError(
-        msg.includes('Unexpected token') || msg.includes('not valid JSON')
-          ? L('API unreachable — access the platform via your Vercel URL to use Deep Research.',
-              '无法连接API — 请通过 Vercel 部署地址访问平台以使用深度研究功能。')
-          : msg
-      );
+      setError(err.message);
       setProgress(0);
     } finally {
       setLoading(false);
