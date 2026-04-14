@@ -1337,9 +1337,10 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
       if (stepIdx < steps.length) { setProgress(steps[stepIdx].p); stepIdx++; }
     }, 3000);
 
-    const VERCEL_URL = 'https://equity-research-ten.vercel.app';
+    // GitHub Pages → always use stable Vercel URL (hardcoded, immune to stale secrets)
+    // Vercel itself → relative /api (same origin, no CORS)
     const isGHPages = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
-    const apiBase   = import.meta.env.VITE_API_BASE_URL || (isGHPages ? VERCEL_URL : '');
+    const apiBase   = isGHPages ? 'https://equity-research-ten.vercel.app' : '';
     const endpoint  = `${apiBase}/api/research`;
 
     try {
