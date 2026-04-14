@@ -1835,10 +1835,17 @@ const FlowPanel = ({ liveData, L, lk, C }) => {
       )}
 
       {(!nb.latest_net_flow && !sb.latest_net_flow && dt.length === 0) && (
-        <div style={{padding:20, textAlign:'center', color:C.mid, fontSize:11}}>
-          <WifiOff size={14} style={{marginBottom:4}}/><br/>
-          {L('No flow data. Run python3 scripts/fetch_data.py to fetch southbound + Dragon & Tiger data.',
-             '暂无资金流向数据。运行 python3 scripts/fetch_data.py 以获取南向+龙虎榜数据。')}
+        <div style={{padding:'16px 20px', background:`${C.gold}08`, border:`1px solid ${C.gold}25`, borderRadius:8, fontSize:11, color:C.mid, lineHeight:1.7}}>
+          <div style={{...S.row, gap:6, marginBottom:6}}>
+            <WifiOff size={13} style={{color:C.gold, flexShrink:0}}/>
+            <span style={{fontWeight:700, color:C.gold}}>{L('Flow data unavailable','资金流向数据暂不可用')}</span>
+          </div>
+          <div>{L('AKShare northbound/southbound APIs are geo-restricted — they only work from mainland China servers. GitHub Actions (US-based) cannot reach them.',
+                   'AKShare 北上/南向资金 API 有地域限制，仅境内服务器可访问。GitHub Actions（美国节点）无法获取此数据。')}</div>
+          <div style={{marginTop:6, color:C.blue, fontSize:10}}>
+            {L('Workaround: run python scripts/fetch_data.py locally and push the generated flow_data.json manually.',
+               '解决方案：本地运行 python scripts/fetch_data.py，将生成的 flow_data.json 手动推送至 GitHub。')}
+          </div>
         </div>
       )}
     </div>
