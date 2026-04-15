@@ -768,21 +768,36 @@ function Scanner({ L, lk, open, toggle, C, stressData }) {
 }
 
 /* ── SCREENER TAB ────────────────────────────────────────────────────────── */
-function Screener({ L, lk, stocks: stocksMap, onSelect, C }) {
+function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData }) {
   const stocks = Object.entries(stocksMap || STOCKS).map(([tk,s])=>({...s, ticker:tk})).sort((a,b)=>b.vp-a.vp);
   return (
     <div>
       <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:14}}>
-        {stocks.map((s,i)=>(
-          <div key={i} style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:14, cursor:'pointer', transition:'all .2s', opacity:0.85}} onClick={()=>onSelect(s.ticker)}>
-            <div style={{...S.row, justifyContent:'space-between', marginBottom:8}}>
-              <div><div style={{fontSize:12, fontWeight:700, color:C.dark}}>{s.ticker}</div><div style={{fontSize:10, color:C.mid}}>{s.name}/{s.en}</div></div>
-              <VPRing score={s.vp} sz={48} C={C}/>
+        {stocks.map((s,i)=>{
+          const lv  = liveData?.yahoo?.[s.ticker];
+          const px  = lv?.price?.last;
+          const chg = lv?.price?.change_pct;
+          const isHK = s.ticker.endsWith('.HK');
+          const c = isHK ? 'HK$' : '¥';
+          const priceStr = px != null ? `${c}${px.toFixed(2)}` : s.price;
+          return (
+            <div key={i} style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:14, cursor:'pointer', transition:'all .2s'}} onClick={()=>onSelect(s.ticker)}>
+              <div style={{...S.row, justifyContent:'space-between', marginBottom:8}}>
+                <div><div style={{fontSize:12, fontWeight:700, color:C.dark}}>{s.ticker}</div><div style={{fontSize:10, color:C.mid}}>{s.name}/{s.en}</div></div>
+                <VPRing score={s.vp} sz={48} C={C}/>
+              </div>
+              <div style={{...S.row, gap:8, marginBottom:6}}>
+                <div style={{fontSize:13, fontWeight:700, color:C.dark, fontFamily:MONO}}>{priceStr}</div>
+                {chg != null && (
+                  <div style={{fontSize:10, fontWeight:600, color:chg>0?C.green:chg<0?C.red:C.mid}}>
+                    {chg>0?'+':''}{chg.toFixed(2)}%
+                  </div>
+                )}
+              </div>
+              <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{s.pulse[lk]}</div>
             </div>
-            <div style={{fontSize:12, fontWeight:600, color:C.dark, marginBottom:6}}>{s.price}</div>
-            <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{s.pulse[lk]}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -802,13 +817,61 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const sectorIdx = PORTFOLIO.sectors.findIndex(sc=>sc.name===s.sector);
   const sectorColor = sectorIdx>=0 ? [C.blue,'#7B6BA5',C.gold,C.green,C.red][sectorIdx] : C.mid;
 
+  // ── Live data helpers ──────────────────────────────────────────────────────
+  const live   = liveData?.yahoo?.[ticker];
+  const livePx = live?.price;
+  const liveFn = live?.fundamentals;
+  const isHK   = ticker.endsWith('.HK');
+  const curr   = isHK ? 'HK$' : '¥';
+
+  const fmtPrice = livePx?.last != null
+    ? `${curr}${livePx.last.toFixed(2)}`
+    : s.price;
+
+  const fmtChg = livePx?.change_pct != null
+    ? livePx.change_pct
+    : null;
+
+  const fmtMktCap = (() => {
+    const mc = liveFn?.market_cap;
+    if (!mc) return s.mktcap;
+    const b = mc / 1e9;
+    return b >= 1000 ? `${curr}${(mc/1e12).toFixed(2)}T` : `${curr}${b.toFixed(1)}B`;
+  })();
+
+  const liveFin = {
+    rev:      liveFn?.revenue      ? `${curr}${(liveFn.revenue/1e9).toFixed(1)}B`       : s.fin?.rev,
+    revGr:    liveFn?.revenue_growth != null ? `${liveFn.revenue_growth>0?'+':''}${(liveFn.revenue_growth*100).toFixed(0)}%` : s.fin?.revGr,
+    gm:       liveFn?.gross_margin != null   ? `${(liveFn.gross_margin*100).toFixed(1)}%` : s.fin?.gm,
+    pe:       liveFn?.pe_trailing  ?? s.fin?.pe,
+    ev_ebitda:liveFn?.ev_ebitda    ?? s.fin?.ev_ebitda,
+    fcf:      liveFn?.free_cash_flow != null ? `${curr}${(liveFn.free_cash_flow/1e9).toFixed(1)}B` : s.fin?.fcf,
+  };
+
   return (
     <div>
       <Card title={`${ticker} · ${s.name}`} sub={`${s.en} · VP ${s.vp}`} open={true} C={C}>
         <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginBottom:14}}>
-          <div><div style={S.label}>Price</div><div style={S.val}>{s.price}</div></div>
-          <div><div style={S.label}>Market Cap</div><div style={S.val}>{s.mktcap}</div></div>
-          <div><div style={S.label}>Direction</div><div style={{...S.val, color:C.green}}>{s.dir}</div></div>
+          <div>
+            <div style={S.label}>Price</div>
+            <div style={S.val}>{fmtPrice}</div>
+            {fmtChg != null && (
+              <div style={{fontSize:10, fontWeight:600, marginTop:2,
+                           color: fmtChg > 0 ? C.green : fmtChg < 0 ? C.red : C.mid}}>
+                {fmtChg > 0 ? '+' : ''}{fmtChg.toFixed(2)}%
+              </div>
+            )}
+            {livePx && <div style={{fontSize:8, color:C.mid, marginTop:1}}>live</div>}
+          </div>
+          <div>
+            <div style={S.label}>Market Cap</div>
+            <div style={S.val}>{fmtMktCap}</div>
+            {liveFn?.market_cap && <div style={{fontSize:8, color:C.mid, marginTop:1}}>live</div>}
+          </div>
+          <div>
+            <div style={S.label}>Direction</div>
+            <div style={{...S.val, color:s.dir==='LONG'?C.green:s.dir==='SHORT'?C.red:C.mid}}>{s.dir}</div>
+          </div>
         </div>
         {/* EQR overall badge */}
         <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
@@ -931,16 +994,16 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
         <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginBottom: (s.income_statement || s.balance_sheet) ? 16 : 0}}>
           <div>
             <div style={S.label}>Revenue</div>
-            <div style={S.val}>{s.fin.rev}</div>
-            <div style={{fontSize:9, color:C.green, marginTop:2}}>{s.fin.revGr}</div>
+            <div style={S.val}>{liveFin.rev}</div>
+            <div style={{fontSize:9, color:C.green, marginTop:2}}>{liveFin.revGr}</div>
           </div>
           <div>
             <div style={S.label}>FCF</div>
-            <div style={S.val}>{s.fin.fcf}</div>
+            <div style={S.val}>{liveFin.fcf}</div>
           </div>
           <div>
             <div style={S.label}>Gross Margin</div>
-            <div style={S.val}>{s.fin.gm}</div>
+            <div style={S.val}>{liveFin.gm}</div>
           </div>
         </div>
         {/* Full IS/BS/Consensus from Deep Research */}
@@ -1081,9 +1144,9 @@ function Tracker({ L, stocks: stocksMap, C, predictions }) {
               {stocks.map((s,i)=>(
                 <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}>
                   <td style={{padding:8, color:C.dark, fontWeight:600}}>{s.ticker}</td>
-                  <td style={{padding:8, color:C.dark}}>{s.fin.rev}</td>
-                  <td style={{padding:8, color:C.green}}>{s.fin.revGr}</td>
-                  <td style={{padding:8, color:C.dark}}>{s.fin.gm}</td>
+                  <td style={{padding:8, color:C.dark}}>{s.fin?.rev}</td>
+                  <td style={{padding:8, color:C.green}}>{s.fin?.revGr}</td>
+                  <td style={{padding:8, color:C.dark}}>{s.fin?.gm}</td>
                 </tr>
               ))}
             </tbody>
@@ -3891,7 +3954,7 @@ export default function Dashboard() {
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
           {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData}/>}
-          {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C}/>}
+          {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData}/>}
           {tab==='flow'     && (
             <div>
               <Card title={L('Capital Flow Dashboard','资金流向仪表盘')} sub={L('Northbound · Southbound · Dragon & Tiger · Margin','北向·南向·龙虎榜·融资融券')} open={true} C={C}>
