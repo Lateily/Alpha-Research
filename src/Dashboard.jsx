@@ -1025,6 +1025,18 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       {/* Reverse DCF Card */}
       <ReverseDCF rdcf={rdcf} L={L} C={C} open={open} toggle={toggle}/>
 
+      {/* Multi-Agent Debate */}
+      <Card
+        title={L('Multi-Agent Debate','多模型辩论')}
+        sub={L('Gemini Bull · GPT-4o Bear · Claude Forensic → CIO Synthesis',
+               'Gemini 做多 · GPT-4o 做空 · Claude 取证 → 首席综合判断')}
+        open={open.debate !== false}
+        onToggle={()=>toggle('debate')}
+        C={C}
+      >
+        <DebatePanel ticker={ticker} company={s.name} C={C} L={L} lk={lk}/>
+      </Card>
+
       <Card title={L('Next Actions','下一步行动')} open={open.actions} onToggle={()=>toggle('actions')} C={C}>
         {s.nextActions.map((a,i)=>(
           <div key={i} style={{marginBottom:8, fontSize:11, color:C.dark}}>• {a[lk]}</div>
@@ -2993,6 +3005,258 @@ function ReverseDCF({ rdcf, L, C, open, toggle }) {
   );
 }
 
+/* ── MULTI-AGENT DEBATE PANEL ─────────────────────────────────────────── */
+function DebatePanel({ ticker, company, C, L, lk }) {
+  const [loading, setLoading] = useState(false);
+  const [result,  setResult]  = useState(null);
+  const [error,   setError]   = useState(null);
+  const [context, setContext] = useState('');
+
+  const ROLE_CFG = {
+    BULL:     { label:'Bull',     color:C.green, model:'Gemini 1.5 Pro',   icon:'⬆' },
+    BEAR:     { label:'Bear',     color:C.red,   model:'GPT-4o',           icon:'⬇' },
+    FORENSIC: { label:'Forensic', color:C.gold,  model:'Claude Sonnet',    icon:'🔍' },
+  };
+
+  const VERDICT_COLOR = (v, C) => {
+    if (!v) return C.mid;
+    if (['STRONG_BULL','BULL','CLEAN'].includes(v)) return C.green;
+    if (['STRONG_BEAR','BEAR','RED_FLAG'].includes(v)) return C.red;
+    if (v === 'CAUTION') return C.gold;
+    return C.mid;
+  };
+
+  const runDebate = async () => {
+    if (!ticker) return;
+    setLoading(true); setError(null); setResult(null);
+    const isGHPages = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+    const base = isGHPages ? 'https://equity-research-ten.vercel.app' : '';
+    try {
+      const res = await fetch(`${base}/api/debate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker, company, context: context || undefined }),
+      });
+      const text = await res.text();
+      let json;
+      try { json = JSON.parse(text); } catch { throw new Error(`[${res.status}] ${text.slice(0,200)}`); }
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      setResult(json);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const AnalystCard = ({ role, data }) => {
+    const cfg = ROLE_CFG[role] || {};
+    if (!data) return null;
+    if (data.error) return (
+      <div style={{flex:1, padding:14, background:C.soft, borderRadius:8, border:`1px solid ${C.border}`}}>
+        <div style={{fontSize:10, fontWeight:700, color:cfg.color}}>{cfg.icon} {cfg.label} · {cfg.model}</div>
+        <div style={{fontSize:10, color:C.red, marginTop:6}}>Failed: {data.error}</div>
+      </div>
+    );
+    const vc = VERDICT_COLOR(data.verdict, C);
+    return (
+      <div style={{flex:1, background:C.card, borderRadius:10, border:`1px solid ${C.border}`,
+                   boxShadow:SHADOW_SM, overflow:'hidden', minWidth:0}}>
+        {/* Header */}
+        <div style={{padding:'10px 14px', background:`${cfg.color}10`,
+                     borderBottom:`1px solid ${C.border}`}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <div>
+              <span style={{fontSize:13, fontWeight:700, color:cfg.color}}>{cfg.icon} {cfg.label}</span>
+              <span style={{fontSize:9, color:C.mid, marginLeft:8}}>{cfg.model}</span>
+            </div>
+            <span style={{...S.tag(vc), fontSize:9}}>{data.verdict}</span>
+          </div>
+          <div style={{fontSize:11, color:C.dark, marginTop:6, lineHeight:1.5}}>{data.headline}</div>
+        </div>
+        {/* Arguments */}
+        <div style={{padding:'10px 14px'}}>
+          {(data.top_arguments||[]).map((a,i) => {
+            const sc = a.strength==='HIGH' ? C.red : a.strength==='MED' ? C.gold : C.mid;
+            return (
+              <div key={i} style={{marginBottom:8, paddingBottom:8,
+                                   borderBottom:i<(data.top_arguments.length-1)?`1px solid ${C.border}`:'none'}}>
+                <div style={{display:'flex', gap:6, alignItems:'flex-start'}}>
+                  <span style={{...S.tag(sc), fontSize:7, flexShrink:0, marginTop:1}}>{a.strength}</span>
+                  <div>
+                    <div style={{fontSize:11, fontWeight:600, color:C.dark}}>{a.point}</div>
+                    <div style={{fontSize:9, color:C.mid, marginTop:2, lineHeight:1.4}}>{a.evidence}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {data.key_number && (
+            <div style={{padding:'6px 10px', background:`${cfg.color}08`, borderRadius:5,
+                         fontSize:11, fontWeight:600, color:cfg.color, marginTop:4}}>
+              📊 {data.key_number}
+            </div>
+          )}
+          {data.killer_question && (
+            <div style={{marginTop:8, fontSize:10, color:C.mid, fontStyle:'italic', lineHeight:1.5}}>
+              ❓ {data.killer_question}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      {/* Trigger */}
+      {!result && (
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:10, color:C.mid, marginBottom:6}}>
+            {L('Research context (optional — same as Deep Research)','研究背景（选填）')}
+          </div>
+          <textarea value={context} onChange={e=>setContext(e.target.value)}
+            placeholder={L('e.g. Q1 earnings beat, checking if thesis holds','如：Q1财报超预期，验证论点是否成立')}
+            rows={2} disabled={loading}
+            style={{width:'100%', padding:'7px 10px', border:`1px solid ${C.border}`, borderRadius:6,
+                    fontSize:11, background:C.soft, color:C.dark, outline:'none',
+                    resize:'none', fontFamily:'inherit', boxSizing:'border-box'}}/>
+          <button onClick={runDebate} disabled={loading || !ticker} style={{
+            marginTop:8, width:'100%', padding:'10px 0', border:'none', borderRadius:8,
+            background: loading ? C.soft : `linear-gradient(135deg, ${C.green}, ${C.blue})`,
+            color: loading ? C.mid : '#fff', fontSize:12, fontWeight:700,
+            cursor: loading ? 'wait' : 'pointer',
+          }}>
+            {loading
+              ? L('Running debate — 3 analysts working in parallel (~30s)…',
+                  '辩论进行中 — 3个AI分析师并行工作（约30秒）…')
+              : `${L('Start Debate','开始辩论')} · ${ticker}${company ? ` · ${company}` : ''}`}
+          </button>
+          {loading && (
+            <div style={{marginTop:10, display:'flex', gap:8, justifyContent:'center',
+                         fontSize:10, color:C.mid}}>
+              <span style={{color:C.green}}>⬆ Gemini · Bull</span>
+              <span style={{color:C.mid}}>·</span>
+              <span style={{color:C.red}}>⬇ GPT-4o · Bear</span>
+              <span style={{color:C.mid}}>·</span>
+              <span style={{color:C.gold}}>🔍 Claude · Forensic</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {error && (
+        <div style={{padding:12, background:`${C.red}10`, border:`1px solid ${C.red}25`,
+                     borderRadius:8, fontSize:11, color:C.red, marginBottom:12}}>
+          {error}
+        </div>
+      )}
+
+      {result && (
+        <div>
+          {/* Three analyst columns */}
+          <div style={{display:'flex', gap:10, marginBottom:14, flexWrap:'wrap'}}>
+            <AnalystCard role="BULL"     data={result.analysts?.bull}/>
+            <AnalystCard role="BEAR"     data={result.analysts?.bear}/>
+            <AnalystCard role="FORENSIC" data={result.analysts?.forensic}/>
+          </div>
+
+          {/* Synthesis */}
+          {result.synthesis && (() => {
+            const s = result.synthesis;
+            const bc = s.balance==='BULL' ? C.green : s.balance==='BEAR' ? C.red : C.gold;
+            return (
+              <div style={{background:C.card, borderRadius:10, border:`2px solid ${bc}40`,
+                           boxShadow:SHADOW, overflow:'hidden'}}>
+                <div style={{padding:'12px 16px', background:`${bc}08`, borderBottom:`1px solid ${bc}30`,
+                             display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <span style={{fontSize:14, fontWeight:800, color:bc}}>
+                    ⚖ {L('CIO Synthesis','首席投资官综合判断')} · {s.balance}
+                  </span>
+                  <span style={{fontSize:11, color:C.mid}}>
+                    {L('Conviction','置信度')} {s.conviction}/100
+                  </span>
+                </div>
+                <div style={{padding:'14px 16px'}}>
+                  <p style={{fontSize:12, color:C.dark, lineHeight:1.7, marginBottom:12}}>{s.summary}</p>
+
+                  <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12}}>
+                    {s.agreements?.length > 0 && (
+                      <div>
+                        <div style={{...S.label, color:C.green, marginBottom:6}}>
+                          ✓ {L('All analysts agree','三方共识')}
+                        </div>
+                        {s.agreements.map((a,i) => (
+                          <div key={i} style={{fontSize:10, color:C.dark, marginBottom:4,
+                                               paddingLeft:10, borderLeft:`2px solid ${C.green}`}}>
+                            {a}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {s.disagreements?.length > 0 && (
+                      <div>
+                        <div style={{...S.label, color:C.red, marginBottom:6}}>
+                          ✗ {L('Unresolved tensions','未解争议')}
+                        </div>
+                        {s.disagreements.map((d,i) => (
+                          <div key={i} style={{fontSize:10, color:C.dark, marginBottom:4,
+                                               paddingLeft:10, borderLeft:`2px solid ${C.red}`}}>
+                            {d}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {s.decisive_factor && (
+                    <div style={{padding:'10px 14px', background:`${bc}10`,
+                                 border:`1px solid ${bc}30`, borderRadius:7, marginBottom:10}}>
+                      <div style={{...S.label, color:bc, marginBottom:4}}>
+                        🎯 {L('Decisive factor','决定性因素')}
+                      </div>
+                      <div style={{fontSize:11, color:C.dark, fontWeight:600}}>{s.decisive_factor}</div>
+                    </div>
+                  )}
+
+                  {s.must_monitor?.length > 0 && (
+                    <div>
+                      <div style={{...S.label, color:C.mid, marginBottom:6}}>
+                        📌 {L('Monitor in next 90 days','未来90天监控项')}
+                      </div>
+                      {s.must_monitor.map((m,i) => (
+                        <div key={i} style={{fontSize:10, color:C.mid, marginBottom:3,
+                                             display:'flex', gap:6}}>
+                          <span style={{color:C.blue, flexShrink:0}}>→</span>{m}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {s.action && (
+                    <div style={{marginTop:12, padding:'10px 14px', background:C.soft,
+                                 borderRadius:7, fontSize:11, color:C.dark, lineHeight:1.6,
+                                 fontStyle:'italic'}}>
+                      {s.action}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          <button onClick={()=>{setResult(null);setError(null);}}
+            style={{marginTop:10, padding:'6px 14px', border:`1px solid ${C.border}`,
+                    background:'transparent', borderRadius:6, color:C.mid,
+                    cursor:'pointer', fontSize:10}}>
+            {L('Run new debate','重新辩论')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── BACKTEST PANEL ───────────────────────────────────────────────────── */
 function BacktestPanel({ L, C }) {
   const [bt, setBt] = useState(null);
@@ -3208,7 +3472,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true, rdcf:true});
+  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true, rdcf:true, debate:false});
   const [dynamicStocks, setDynamicStocks] = useState({});
   const [showDeepResearch, setShowDeepResearch] = useState(false);
   const [liveData, setLiveData] = useState(null);
