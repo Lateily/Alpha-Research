@@ -1,167 +1,131 @@
 /**
  * AR Platform — Multi-Agent Research Debate
  *
- * Three AI analysts argue simultaneously:
- *   Bull    → Gemini 1.5 Pro   (finds the strongest investment case)
- *   Bear    → GPT-4o           (finds risks, fraud signals, short thesis)
- *   Forensic→ Claude Sonnet    (three-statement consistency, red flags)
+ * Three AI analysts argue simultaneously via REST APIs (no extra npm packages):
+ *   Bull     → Gemini 1.5 Pro   (strongest investment case)
+ *   Bear     → GPT-4o           (risks, fraud signals, short thesis)
+ *   Forensic → Claude Sonnet    (three-statement integrity check)
  *
- * Then Claude synthesizes the debate into an actionable verdict.
+ * Claude then synthesizes all three into a CIO verdict.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import OpenAI    from 'openai';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// ── Output schema every analyst must follow ─────────────────────────────────
-const ANALYST_SCHEMA = `
-Return ONLY valid JSON in this exact shape:
+// ── Shared output schema ─────────────────────────────────────────────────────
+const SCHEMA = `Return ONLY valid JSON:
 {
-  "verdict":       "STRONG_BULL | BULL | NEUTRAL | BEAR | STRONG_BEAR",
-  "confidence":    number (0-100),
-  "headline":      "string (one punchy sentence)",
-  "top_arguments": [
-    { "point": "string", "strength": "HIGH|MED|LOW", "evidence": "string (specific data)" }
-  ],
-  "killer_question": "string (the one question whose answer determines everything)",
-  "monitoring":    ["string (specific metric/event to watch)"],
-  "key_number":    "string (the single most important quantitative fact)"
+  "verdict":       "STRONG_BULL|BULL|NEUTRAL|BEAR|STRONG_BEAR",
+  "confidence":    0-100,
+  "headline":      "one punchy sentence",
+  "top_arguments": [{"point":"string","strength":"HIGH|MED|LOW","evidence":"specific data"}],
+  "killer_question":"the one question whose answer determines everything",
+  "monitoring":    ["specific metric or event to watch"],
+  "key_number":    "the single most important quantitative fact"
 }`;
 
-// ── Bull analyst prompt (Gemini) ─────────────────────────────────────────────
-const bullPrompt = (ticker, company, context) => `
-You are a conviction bull analyst at a top long-only fund.
-Your mandate: build the STRONGEST possible investment case for ${ticker}${company ? ` (${company})` : ''}.
-
-Find every reason to own this stock:
-- What is the market missing or underpricing?
-- What asymmetric upside catalyst exists in the next 12 months?
-- Why is the bear case wrong or already priced in?
-- What would make this a 2-3x from here?
-
-Context: ${context || 'General screening.'}
-${ANALYST_SCHEMA}`;
-
-// ── Bear analyst prompt (GPT-4o) ─────────────────────────────────────────────
-const bearPrompt = (ticker, company, context) => `
-You are a short-seller and skeptical analyst at an activist fund.
-Your mandate: build the STRONGEST possible bear case for ${ticker}${company ? ` (${company})` : ''}.
-
-Hunt for every weakness:
-- Is the valuation justified by fundamentals?
-- What structural headwinds does the business face?
-- Where could earnings disappoint consensus?
-- Are there accounting red flags, related-party transactions, or auditor concerns?
-- What is the realistic downside scenario?
-
-Context: ${context || 'General screening.'}
-${ANALYST_SCHEMA}`;
-
-// ── Forensic analyst prompt (Claude) ─────────────────────────────────────────
-const forensicPrompt = (ticker, company, context) => `
-You are a forensic accountant and due diligence specialist.
-Your mandate: stress-test the integrity of ${ticker}${company ? ` (${company})` : ''}.
-
-Examine systematically:
-1. THREE-STATEMENT CONSISTENCY: Does OCF match net income? Is working capital reasonable?
-2. REVENUE QUALITY: Are receivables growing faster than revenue? Channel stuffing signals?
-3. AUDIT QUALITY: Is the auditor reputable? Any qualifications, restatements, or auditor changes?
-4. MANAGEMENT CREDIBILITY: Track record of guidance accuracy. Insider selling patterns.
-5. LEGAL/REGULATORY: Any litigation, regulatory investigations, or sanctions?
-6. RELATED PARTIES: Unusual transactions with related entities?
-7. CAPITAL ALLOCATION: Does management create or destroy value with free cash flow?
-
-Context: ${context || 'General screening.'}
-
-Return ONLY valid JSON:
+const FORENSIC_SCHEMA = `Return ONLY valid JSON:
 {
-  "verdict":       "CLEAN | CAUTION | RED_FLAG",
-  "confidence":    number (0-100),
-  "headline":      "string",
-  "top_arguments": [
-    { "point": "string", "strength": "HIGH|MED|LOW", "evidence": "string" }
-  ],
-  "killer_question": "string",
+  "verdict":       "CLEAN|CAUTION|RED_FLAG",
+  "confidence":    0-100,
+  "headline":      "one sentence summary",
+  "top_arguments": [{"point":"string","strength":"HIGH|MED|LOW","evidence":"specific data"}],
+  "killer_question":"string",
   "monitoring":    ["string"],
   "key_number":    "string"
 }`;
 
-// ── Synthesis prompt (Claude) ─────────────────────────────────────────────────
-const synthesisPrompt = (ticker, company, bull, bear, forensic) => `
-You are the Chief Investment Officer synthesizing a three-way analyst debate on ${ticker}${company ? ` (${company})` : ''}.
+// ── Prompts ──────────────────────────────────────────────────────────────────
+const bullPrompt = (ticker, company, ctx) =>
+`You are a conviction bull analyst at a top long-only fund.
+Build the STRONGEST investment case for ${ticker}${company?` (${company})`:''}.
+Find what the market is missing. Identify asymmetric upside catalysts in 12 months.
+Explain why the bear case is wrong or already priced in.
+Context: ${ctx||'General screening.'}
+${SCHEMA}`;
 
-BULL ANALYST SAID:
-${JSON.stringify(bull, null, 2)}
+const bearPrompt = (ticker, company, ctx) =>
+`You are a short-seller and skeptical analyst.
+Build the STRONGEST bear case for ${ticker}${company?` (${company})`:''}.
+Hunt for: accounting red flags, competitive threats, earnings disappointment risk, valuation excess.
+Context: ${ctx||'General screening.'}
+${SCHEMA}`;
 
-BEAR ANALYST SAID:
-${JSON.stringify(bear, null, 2)}
+const forensicPrompt = (ticker, company, ctx) =>
+`You are a forensic accountant doing due diligence on ${ticker}${company?` (${company})`:''}.
+Examine: (1) OCF vs net income consistency, (2) receivables vs revenue growth,
+(3) auditor quality and changes, (4) management guidance track record,
+(5) related party transactions, (6) litigation/regulatory risks, (7) capital allocation quality.
+Context: ${ctx||'General screening.'}
+${FORENSIC_SCHEMA}`;
 
-FORENSIC ANALYST SAID:
-${JSON.stringify(forensic, null, 2)}
+const synthesisPrompt = (ticker, company, bull, bear, forensic) =>
+`You are the CIO synthesizing a three-analyst debate on ${ticker}${company?` (${company})`:''}.
 
-Synthesize into a balanced verdict. Where do they agree? What are the unresolved tensions?
-What is the one thing that will determine who is right?
+BULL (Gemini): ${JSON.stringify(bull)}
+BEAR (GPT-4o): ${JSON.stringify(bear)}
+FORENSIC (Claude): ${JSON.stringify(forensic)}
 
 Return ONLY valid JSON:
 {
-  "balance":          "BULL | NEUTRAL | BEAR",
-  "conviction":       number (0-100, how confident you are in the balance call),
-  "summary":          "string (2-3 sentences, what the debate reveals)",
-  "agreements":       ["string (things all three analysts agree on)"],
-  "disagreements":    ["string (key unresolved tensions between analysts)"],
-  "decisive_factor":  "string (the one thing that determines who is right)",
-  "must_monitor":     ["string (3-5 specific things to watch in next 90 days)"],
-  "action":           "string (what a rational investor should do with this information)"
+  "balance":         "BULL|NEUTRAL|BEAR",
+  "conviction":      0-100,
+  "summary":         "2-3 sentences on what the debate reveals",
+  "agreements":      ["things all analysts agree on"],
+  "disagreements":   ["unresolved tensions"],
+  "decisive_factor": "the one thing that determines who is right",
+  "must_monitor":    ["3-5 specific things to watch in 90 days"],
+  "action":          "what a rational investor should do with this information"
 }`;
 
-// ── Model runners ─────────────────────────────────────────────────────────────
-async function runBull(ticker, company, context) {
-  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-  const result = await model.generateContent(bullPrompt(ticker, company, context));
-  const text = result.response.text();
-  const match = text.match(/\{[\s\S]*\}/);
-  const json = JSON.parse(match ? match[0] : text);
-  return { ...json, model: 'gemini-1.5-pro', role: 'BULL' };
-}
-
-async function runBear(ticker, company, context) {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const resp = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [{ role: 'user', content: bearPrompt(ticker, company, context) }],
-    max_tokens: 2048,
-    temperature: 0.7,
+// ── REST callers (no SDK for OpenAI / Gemini) ─────────────────────────────────
+async function callGemini(prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+    }),
   });
-  const text = resp.choices[0].message.content;
-  const match = text.match(/\{[\s\S]*\}/);
-  const json = JSON.parse(match ? match[0] : text);
-  return { ...json, model: 'gpt-4o', role: 'BEAR' };
+  if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+  const d = await r.json();
+  const text = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const m = text.match(/\{[\s\S]*\}/);
+  return JSON.parse(m ? m[0] : text);
 }
 
-async function runForensic(ticker, company, context) {
+async function callOpenAI(prompt) {
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type':  'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 2048,
+      temperature: 0.7,
+    }),
+  });
+  if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
+  const d = await r.json();
+  const text = d.choices?.[0]?.message?.content || '';
+  const m = text.match(/\{[\s\S]*\}/);
+  return JSON.parse(m ? m[0] : text);
+}
+
+async function callClaude(prompt) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const msg = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 2048,
-    messages: [{ role: 'user', content: forensicPrompt(ticker, company, context) }],
+    messages: [{ role: 'user', content: prompt }],
   });
   const text = msg.content[0].text;
-  const match = text.match(/\{[\s\S]*\}/);
-  const json = JSON.parse(match ? match[0] : text);
-  return { ...json, model: 'claude-sonnet', role: 'FORENSIC' };
-}
-
-async function runSynthesis(ticker, company, bull, bear, forensic) {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const msg = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: synthesisPrompt(ticker, company, bull, bear, forensic) }],
-  });
-  const text = msg.content[0].text;
-  const match = text.match(/\{[\s\S]*\}/);
-  return JSON.parse(match ? match[0] : text);
+  const m = text.match(/\{[\s\S]*\}/);
+  return JSON.parse(m ? m[0] : text);
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -170,37 +134,36 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' });
 
   const { ticker, company, context } = req.body;
-  if (!ticker) return res.status(400).json({ error: 'Ticker required' });
+  if (!ticker) return res.status(400).json({ error: 'ticker required' });
 
-  // Check API keys
   const missing = [];
   if (!process.env.ANTHROPIC_API_KEY) missing.push('ANTHROPIC_API_KEY');
   if (!process.env.OPENAI_API_KEY)    missing.push('OPENAI_API_KEY');
   if (!process.env.GOOGLE_AI_API_KEY) missing.push('GOOGLE_AI_API_KEY');
-  if (missing.length > 0) {
-    return res.status(500).json({ error: `Missing API keys: ${missing.join(', ')}. Add them in Vercel → Settings → Environment Variables.` });
-  }
+  if (missing.length) return res.status(500).json({
+    error: `Missing Vercel env vars: ${missing.join(', ')}`,
+  });
 
   try {
-    // Run all three analysts in parallel
-    const [bullRes, bearRes, forensicRes] = await Promise.allSettled([
-      runBull(ticker, company, context),
-      runBear(ticker, company, context),
-      runForensic(ticker, company, context),
+    // All three analysts run in parallel
+    const [bR, beR, fR] = await Promise.allSettled([
+      callGemini(bullPrompt(ticker, company, context)).then(d => ({ ...d, role:'BULL',     model:'gemini-1.5-pro' })),
+      callOpenAI(bearPrompt(ticker, company, context)).then(d => ({ ...d, role:'BEAR',     model:'gpt-4o' })),
+      callClaude(forensicPrompt(ticker, company, context)).then(d => ({ ...d, role:'FORENSIC', model:'claude-sonnet' })),
     ]);
 
-    const bull     = bullRes.status     === 'fulfilled' ? bullRes.value     : { role:'BULL',     error: bullRes.reason?.message };
-    const bear     = bearRes.status     === 'fulfilled' ? bearRes.value     : { role:'BEAR',     error: bearRes.reason?.message };
-    const forensic = forensicRes.status === 'fulfilled' ? forensicRes.value : { role:'FORENSIC', error: forensicRes.reason?.message };
+    const bull     = bR.status  === 'fulfilled' ? bR.value  : { role:'BULL',     error: bR.reason?.message  };
+    const bear     = beR.status === 'fulfilled' ? beR.value : { role:'BEAR',     error: beR.reason?.message };
+    const forensic = fR.status  === 'fulfilled' ? fR.value  : { role:'FORENSIC', error: fR.reason?.message  };
 
-    // Only synthesize if at least two analysts succeeded
-    const succeeded = [bull, bear, forensic].filter(a => !a.error);
+    // Synthesize if at least 2 analysts succeeded
     let synthesis = null;
-    if (succeeded.length >= 2) {
-      synthesis = await runSynthesis(ticker, company, bull, bear, forensic);
+    const ok = [bull, bear, forensic].filter(a => !a.error);
+    if (ok.length >= 2) {
+      synthesis = await callClaude(synthesisPrompt(ticker, company, bull, bear, forensic));
     }
 
     return res.status(200).json({
