@@ -793,8 +793,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
-  const eqr  = eqrData?.[ticker]  || null;
-  const rdcf = rdcfData?.[ticker] || null;
+  const eqr      = eqrData?.[ticker]  || null;
+  const rdcf     = rdcfData?.[ticker] || null;
+  // Deep Research stocks have no live data files — only AI-generated fields
+  const isDynamic = !STOCKS[ticker] && !!allS[ticker];
 
   const decompData = Object.entries(s.decomp).map(([k,v])=>({name:k.replace(/_/g,' '), value:v.s}));
   const sectorIdx = PORTFOLIO.sectors.findIndex(sc=>sc.name===s.sector);
@@ -945,38 +947,53 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
         <DeepResearchFinancials stock={s} L={L} lk={lk} C={C}/>
       </Card>
 
-      <Card title={L('Technical Analysis','技术分析')} open={open.ta} onToggle={()=>toggle('ta')} C={C}>
-        <TechnicalAnalysis ticker={ticker} liveData={liveData} L={L} lk={lk} C={C}/>
-        {/* For Deep Research stocks: show AI-estimated technical posture */}
-        {s.pricing && !liveData?.yahoo?.[ticker] && (
-          <div style={{marginTop:10, padding:'8px 12px', background:`${C.gold}08`, border:`1px solid ${C.gold}20`, borderRadius:6}}>
-            <div style={{fontSize:9, fontWeight:700, color:C.gold, marginBottom:4}}>
-              {L('AI Estimated Posture (no live data)','AI估算技术形态（无实时数据）')}
-            </div>
-            <div style={{...S.row, gap:10}}>
-              <div>
-                <span style={S.label}>{L('Valuation','估值位置')}</span>
-                <span style={{...S.tag(s.pricing.level==='LOW'?C.green:s.pricing.level==='HIGH'?C.red:C.gold), marginLeft:6}}>
+      {/* Live-data sections: only render for focus stocks */}
+      {isDynamic ? (
+        <div style={{padding:'12px 14px', background:C.soft, borderRadius:8,
+                     border:`1px solid ${C.border}`, marginBottom:10, fontSize:11, color:C.mid}}>
+          <div style={{fontWeight:600, color:C.dark, marginBottom:6}}>
+            📊 {L('AI-generated financials are shown in the Financials card above.',
+                   'AI生成的财务数据已显示在上方财务卡片中。')}
+          </div>
+          <div style={{lineHeight:1.7}}>
+            {L('Live technical analysis, K-line charts, financial statements and company profile are only available for the 5 Focus Stocks (300308.SZ, 002594.SZ, 700.HK, 9999.HK, 6160.HK). To get live data for this stock, add it to FOCUS_TICKERS in fetch_data.py.',
+               '实时技术分析、K线图、财务报表和公司概况仅支持5只Focus股票。如需此股票的实时数据，请将其加入 fetch_data.py 的 FOCUS_TICKERS。')}
+          </div>
+          {/* Still show AI technical posture */}
+          {s.pricing && (
+            <div style={{marginTop:10, paddingTop:10, borderTop:`1px solid ${C.border}`}}>
+              <div style={{fontSize:9, fontWeight:700, color:C.gold, marginBottom:6}}>
+                {L('AI Technical Posture','AI估算技术形态')}
+              </div>
+              <div style={{...S.row, gap:10, marginBottom:4}}>
+                <span style={S.label}>{L('Valuation level','估值位置')}</span>
+                <span style={{...S.tag(s.pricing.level==='LOW'?C.green:s.pricing.level==='HIGH'?C.red:C.gold)}}>
                   {s.pricing.level}
                 </span>
               </div>
+              <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{s.pricing.crowd?.[lk]}</div>
             </div>
-            <div style={{fontSize:10, color:C.mid, marginTop:6, lineHeight:1.5}}>{s.pricing.crowd[lk]}</div>
-          </div>
-        )}
-      </Card>
+          )}
+        </div>
+      ) : (
+        <>
+          <Card title={L('Technical Analysis','技术分析')} open={open.ta} onToggle={()=>toggle('ta')} C={C}>
+            <TechnicalAnalysis ticker={ticker} liveData={liveData} L={L} lk={lk} C={C}/>
+          </Card>
 
-      <Card title={L('K-Line Chart','K线图')} sub={L('90-day OHLC + Volume','90日K线+成交量')} open={open.kline} onToggle={()=>toggle('kline')} C={C}>
-        <CandlestickChart ticker={ticker} L={L} lk={lk} C={C}/>
-      </Card>
+          <Card title={L('K-Line Chart','K线图')} sub={L('90-day OHLC + Volume','90日K线+成交量')} open={open.kline} onToggle={()=>toggle('kline')} C={C}>
+            <CandlestickChart ticker={ticker} L={L} lk={lk} C={C}/>
+          </Card>
 
-      <Card title={L('Financial Statements','财务报表')} sub={L('IS / BS / CF — live data from yfinance/AKShare','利润表/资产负债表/现金流量表 — 来自yfinance/AKShare')} open={open.statements} onToggle={()=>toggle('statements')} C={C}>
-        <FinancialStatements ticker={ticker} L={L} lk={lk} C={C}/>
-      </Card>
+          <Card title={L('Financial Statements','财务报表')} sub={L('IS / BS / CF','利润表/资产负债表/现金流量表')} open={open.statements} onToggle={()=>toggle('statements')} C={C}>
+            <FinancialStatements ticker={ticker} L={L} lk={lk} C={C}/>
+          </Card>
 
-      <Card title={L('Company Profile','公司概况')} sub={L('Sector, fundamentals, external links','行业、基本面、外部链接')} open={open.company} onToggle={()=>toggle('company')} C={C}>
-        <CompanyInfoPanel ticker={ticker} liveData={liveData} L={L} lk={lk} C={C}/>
-      </Card>
+          <Card title={L('Company Profile','公司概况')} sub={L('Sector, fundamentals, external links','行业、基本面、外部链接')} open={open.company} onToggle={()=>toggle('company')} C={C}>
+            <CompanyInfoPanel ticker={ticker} liveData={liveData} L={L} lk={lk} C={C}/>
+          </Card>
+        </>
+      )}
 
       {/* EQR Detail Card */}
       {eqr && (
