@@ -34,22 +34,29 @@ export default async function handler(req, res) {
 
 Your role is to generate ONE exclusive, non-consensus macro insight. This is the most important section of the daily brief.
 
-STRICT FORMAT — output valid JSON only, no markdown, no preamble:
+STRICT FORMAT — output valid JSON only, no markdown, no preamble.
+Every text field must appear in BOTH English (_en) and Simplified Chinese (_zh):
 {
-  "market_reads": "The consensus interpretation of the most significant recent macro development (1-2 sentences, specific)",
-  "we_think": "Our non-consensus interpretation — what the market is missing (1-2 sentences, specific number or mechanism)",
-  "mechanism": "The causal chain explaining WHY the market reading is incomplete (2-3 sentences)",
-  "implication": "Specific implication for our portfolio or sector positioning (1-2 sentences, name specific tickers or sectors)",
-  "watch_for": "The one leading indicator to monitor in the next 5-10 trading days that will confirm or deny our view",
+  "market_reads_en": "The consensus interpretation of the most significant recent macro development (1-2 sentences, specific)",
+  "market_reads_zh": "以上内容的简体中文版本（1-2句，具体）",
+  "we_think_en": "Our non-consensus interpretation — what the market is missing (1-2 sentences, specific number or mechanism)",
+  "we_think_zh": "以上内容的简体中文版本（1-2句，具体数字或机制）",
+  "mechanism_en": "The causal chain explaining WHY the market reading is incomplete (2-3 sentences)",
+  "mechanism_zh": "以上内容的简体中文版本（2-3句传导机制）",
+  "implication_en": "Specific implication for our portfolio or sector positioning (1-2 sentences, name specific tickers or sectors)",
+  "implication_zh": "以上内容的简体中文版本（1-2句，点名具体代码或板块）",
+  "watch_for_en": "The one leading indicator to monitor in the next 5-10 trading days that will confirm or deny our view",
+  "watch_for_zh": "以上内容的简体中文版本（5-10交易日内需监控的一个领先指标）",
   "confidence": "MEDIUM",
   "horizon": "5-10 trading days"
 }
 
 RULES:
-- Be genuinely non-consensus. If you cannot form a differentiated view, say "insufficient signal" in market_reads and explain why.
+- Be genuinely non-consensus. If you cannot form a differentiated view, say "insufficient signal" and explain why.
 - Never say "BUY" or "SELL". Describe implications for positioning, not decisions.
 - Be specific. "Tech sector" is too vague. "300308.SZ optical transceivers" is specific.
-- The confidence field must be HIGH, MEDIUM, or LOW based on how much evidence supports your non-consensus view.
+- The confidence field must be HIGH, MEDIUM, or LOW.
+- The _zh translations must be natural financial Chinese, not literal translation.
 - This is for a sophisticated single investor — do not add disclaimers or hedging language.`;
 
   const userPrompt = `Current sector regime classifications:
@@ -64,7 +71,7 @@ Generate the Exclusive Insight for today's macro brief. Focus on what the consen
   try {
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 800,
+      max_tokens: 1400,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
     });
@@ -74,17 +81,18 @@ Generate the Exclusive Insight for today's macro brief. Focus on what the consen
     // Parse JSON from response
     let insight;
     try {
-      // Strip any markdown fences if present
       const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       insight = JSON.parse(cleaned);
     } catch {
-      // If parsing fails, return structured error
+      // Fallback: bilingual error fields
       insight = {
-        market_reads: 'Failed to parse AI response.',
-        we_think: raw.slice(0, 200),
-        mechanism: '',
-        implication: '',
-        watch_for: '',
+        market_reads_en: 'Failed to parse AI response.',
+        market_reads_zh: 'AI响应解析失败。',
+        we_think_en: raw.slice(0, 200),
+        we_think_zh: '',
+        mechanism_en: '', mechanism_zh: '',
+        implication_en: '', implication_zh: '',
+        watch_for_en: '', watch_for_zh: '',
         confidence: 'LOW',
         horizon: 'N/A'
       };

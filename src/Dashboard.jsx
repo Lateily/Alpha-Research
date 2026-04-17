@@ -750,59 +750,88 @@ function RegimePanel({ regimeData, L, lk, C }) {
   );
 }
 
-function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, C }) {
+function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, lk, C }) {
+  const [countdown, setCountdown] = React.useState(30 * 60);
+
+  // Count down to next auto-refresh
+  React.useEffect(() => {
+    if (!macroInsight) return;
+    setCountdown(30 * 60);
+    const t = setInterval(() => setCountdown(p => p > 0 ? p - 1 : 30 * 60), 1000);
+    return () => clearInterval(t);
+  }, [macroInsight]);
+
+  const fmtCountdown = s => {
+    const m = Math.floor(s / 60), sec = s % 60;
+    return `${m}:${String(sec).padStart(2,'0')}`;
+  };
+
   const confidenceColor = c =>
-    c === 'HIGH'   ? C.green :
-    c === 'LOW'    ? C.red   : C.gold;
+    c === 'HIGH' ? C.green : c === 'LOW' ? C.red : C.gold;
+
+  // Pick the right language field
+  const t = (ins, field) => lk === 'z'
+    ? (ins[`${field}_zh`] || ins[`${field}_en`] || '')
+    : (ins[`${field}_en`] || ins[field] || '');  // fallback to old non-bilingual field
 
   return (
     <div>
       <div style={{...S.row, justifyContent:'space-between', marginBottom:12}}>
-        <div style={{fontSize:11, color:C.mid, lineHeight:1.6, maxWidth:'70%'}}>
-          {L(
-            'AI-generated non-consensus interpretation of current macro conditions.',
-            'AI生成的当前宏观环境非共识解读。'
+        <div style={{fontSize:11, color:C.mid, lineHeight:1.6}}>
+          {L('AI-generated non-consensus interpretation · auto-refreshes every 30 min',
+             'AI生成非共识解读 · 每30分钟自动刷新')}
+          {macroInsight && !insightLoading && (
+            <span style={{marginLeft:8, fontSize:9, color:C.mid}}>
+              ({L('next in','下次刷新')} {fmtCountdown(countdown)})
+            </span>
           )}
         </div>
         <button
           onClick={onGenerateInsight}
           disabled={insightLoading}
           style={{
-            padding:'7px 16px', borderRadius:7, border:'none', cursor: insightLoading ? 'not-allowed' : 'pointer',
+            padding:'7px 16px', borderRadius:7, border:'none',
+            cursor: insightLoading ? 'not-allowed' : 'pointer',
             background: insightLoading ? C.mid : C.blue, color:'#fff',
             fontSize:11, fontWeight:700, letterSpacing:'0.03em',
-            opacity: insightLoading ? 0.7 : 1, transition:'all .15s',
+            opacity: insightLoading ? 0.7 : 1, transition:'all .15s', flexShrink:0,
           }}
         >
-          {insightLoading ? L('Generating…','生成中…') : L('⚡ Generate Insight','⚡ 生成洞察')}
+          {insightLoading ? L('Generating…','生成中…') : L('⚡ Refresh','⚡ 立即刷新')}
         </button>
       </div>
 
-      {macroInsight && (() => {
+      {insightLoading && (
+        <div style={{textAlign:'center', padding:'20px 0', color:C.mid, fontSize:11}}>
+          {L('Generating insight…','正在生成洞察…')}
+        </div>
+      )}
+
+      {macroInsight && !insightLoading && (() => {
         const ins = macroInsight.insight || {};
         return (
           <div style={{display:'flex', flexDirection:'column', gap:10}}>
-            {/* Header row: confidence + horizon */}
-            <div style={{...S.row, gap:8}}>
+            {/* Header: confidence + horizon + timestamp */}
+            <div style={{...S.row, gap:8, flexWrap:'wrap'}}>
               <span style={{
                 fontSize:9, fontWeight:700, color:'#fff',
                 background:confidenceColor(ins.confidence),
                 padding:'2px 9px', borderRadius:4, letterSpacing:'0.05em',
-              }}>{ins.confidence} CONFIDENCE</span>
+              }}>{ins.confidence} {lk==='z'?'置信度':'CONFIDENCE'}</span>
               <span style={{...S.tag(C.blue), fontSize:9}}>⏱ {ins.horizon}</span>
               {macroInsight.generated_at && (
                 <span style={{fontSize:9, color:C.mid, marginLeft:'auto'}}>
-                  {L('Generated','生成于')} {new Date(macroInsight.generated_at).toLocaleTimeString()}
+                  {L('Generated at','生成于')} {new Date(macroInsight.generated_at).toLocaleTimeString()}
                 </span>
               )}
             </div>
 
-            {/* Market reads */}
+            {/* Market Reads */}
             <div style={{padding:'10px 14px', background:C.soft, borderRadius:8, borderLeft:`3px solid ${C.mid}`}}>
               <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
                 {L('Market Reads','市场共识解读')}
               </div>
-              <div style={{fontSize:12, color:C.dark, lineHeight:1.6}}>{ins.market_reads}</div>
+              <div style={{fontSize:12, color:C.dark, lineHeight:1.6}}>{t(ins,'market_reads')}</div>
             </div>
 
             {/* We Think */}
@@ -810,36 +839,36 @@ function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, 
               <div style={{fontSize:9, fontWeight:700, color:C.blue, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
                 {L('We Think (Non-Consensus)','我们的判断（非共识）')}
               </div>
-              <div style={{fontSize:12, color:C.dark, lineHeight:1.6, fontWeight:600}}>{ins.we_think}</div>
+              <div style={{fontSize:12, color:C.dark, lineHeight:1.6, fontWeight:600}}>{t(ins,'we_think')}</div>
             </div>
 
             {/* Mechanism */}
-            {ins.mechanism && (
+            {t(ins,'mechanism') && (
               <div style={{padding:'10px 14px', background:C.soft, borderRadius:8}}>
                 <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
                   {L('Mechanism','传导机制')}
                 </div>
-                <div style={{fontSize:11.5, color:C.dark, lineHeight:1.7}}>{ins.mechanism}</div>
+                <div style={{fontSize:11.5, color:C.dark, lineHeight:1.7}}>{t(ins,'mechanism')}</div>
               </div>
             )}
 
             {/* Implication */}
-            {ins.implication && (
+            {t(ins,'implication') && (
               <div style={{padding:'10px 14px', background:`${C.green}10`, borderRadius:8, borderLeft:`3px solid ${C.green}`}}>
                 <div style={{fontSize:9, fontWeight:700, color:C.green, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
                   {L('Portfolio Implication','持仓含义')}
                 </div>
-                <div style={{fontSize:11.5, color:C.dark, lineHeight:1.6}}>{ins.implication}</div>
+                <div style={{fontSize:11.5, color:C.dark, lineHeight:1.6}}>{t(ins,'implication')}</div>
               </div>
             )}
 
             {/* Watch For */}
-            {ins.watch_for && (
+            {t(ins,'watch_for') && (
               <div style={{padding:'10px 14px', background:`${C.gold}12`, borderRadius:8, borderLeft:`3px solid ${C.gold}`}}>
                 <div style={{fontSize:9, fontWeight:700, color:C.gold, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
                   {L('Watch For (5–10 days)','监控信号（5-10交易日）')}
                 </div>
-                <div style={{fontSize:11.5, color:C.dark, lineHeight:1.6, fontWeight:600}}>{ins.watch_for}</div>
+                <div style={{fontSize:11.5, color:C.dark, lineHeight:1.6, fontWeight:600}}>{t(ins,'watch_for')}</div>
               </div>
             )}
           </div>
@@ -848,7 +877,7 @@ function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, 
 
       {!macroInsight && !insightLoading && (
         <div style={{textAlign:'center', padding:'24px 0', color:C.mid, fontSize:11}}>
-          {L('Press Generate to produce today\'s exclusive macro insight.','点击生成按钮获取今日独家宏观洞察。')}
+          {L('Loading insight…','洞察加载中…')}
         </div>
       )}
     </div>
@@ -871,6 +900,7 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
           insightLoading={insightLoading}
           onGenerateInsight={onGenerateInsight}
           L={L}
+          lk={lk}
           C={C}
         />
       </Card>
@@ -3807,13 +3837,63 @@ export default function Dashboard() {
       .catch(() => {});
   }, []);
 
-  /* Fetch sector regime config on mount */
+  /* Fetch sector regime config on mount, then auto-generate first insight */
   useEffect(() => {
     const base = import.meta.env.BASE_URL || '/';
     fetch(base + 'data/regime_config.json')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setRegimeData(d); })
+      .then(d => {
+        if (!d) return;
+        setRegimeData(d);
+        // Auto-generate insight immediately after regime data loads
+        setInsightLoading(true);
+        const apiBase = 'https://equity-research-ten.vercel.app';
+        fetch(`${apiBase}/api/macro`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ regime_data: d }),
+        })
+          .then(r => r.ok ? r.json() : Promise.reject(`API ${r.status}`))
+          .then(data => { setMacroInsight(data); setInsightLoading(false); })
+          .catch(err => {
+            setMacroInsight({
+              insight: {
+                market_reads_en: `Auto-load error: ${err}`,
+                market_reads_zh: `自动加载错误：${err}`,
+                we_think_en:'', we_think_zh:'',
+                mechanism_en:'', mechanism_zh:'',
+                implication_en:'', implication_zh:'',
+                watch_for_en:'', watch_for_zh:'',
+                confidence:'LOW', horizon:'N/A',
+              },
+              generated_at: new Date().toISOString(),
+            });
+            setInsightLoading(false);
+          });
+      })
       .catch(() => {});
+  }, []);
+
+  /* Auto-refresh insight every 30 minutes */
+  useEffect(() => {
+    const INTERVAL_MS = 30 * 60 * 1000;
+    const timer = setInterval(() => {
+      setRegimeData(prev => {
+        if (!prev) return prev;
+        setInsightLoading(true);
+        const apiBase = 'https://equity-research-ten.vercel.app';
+        fetch(`${apiBase}/api/macro`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ regime_data: prev }),
+        })
+          .then(r => r.ok ? r.json() : Promise.reject(`API ${r.status}`))
+          .then(data => { setMacroInsight(data); setInsightLoading(false); })
+          .catch(() => setInsightLoading(false));
+        return prev;
+      });
+    }, INTERVAL_MS);
+    return () => clearInterval(timer);
   }, []);
 
   /* Fetch live market data + universe on mount */
