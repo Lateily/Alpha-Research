@@ -751,14 +751,14 @@ function RegimePanel({ regimeData, L, lk, C }) {
 }
 
 function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, lk, C }) {
-  const [countdown, setCountdown] = React.useState(30 * 60);
+  const [countdown, setCountdown] = useState(30 * 60);
 
   // Count down to next auto-refresh
-  React.useEffect(() => {
+  useEffect(() => {
     if (!macroInsight) return;
     setCountdown(30 * 60);
-    const t = setInterval(() => setCountdown(p => p > 0 ? p - 1 : 30 * 60), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setCountdown(p => p > 0 ? p - 1 : 30 * 60), 1000);
+    return () => clearInterval(timer);
   }, [macroInsight]);
 
   const fmtCountdown = s => {
