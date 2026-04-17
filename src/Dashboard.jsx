@@ -693,7 +693,7 @@ function MacroStressTest({ stressData, L, C }) {
   );
 }
 
-function RegimePanel({ regimeData, L, C }) {
+function RegimePanel({ regimeData, L, lk, C }) {
   if (!regimeData) return (
     <div style={{padding:'14px 0', textAlign:'center', fontSize:11, color:C.mid}}>
       {L('Loading regime data…','政体数据加载中…')}
