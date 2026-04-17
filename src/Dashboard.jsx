@@ -693,12 +693,188 @@ function MacroStressTest({ stressData, L, C }) {
   );
 }
 
-function Scanner({ L, lk, open, toggle, C, stressData }) {
+function RegimePanel({ regimeData, L, C }) {
+  if (!regimeData) return (
+    <div style={{padding:'14px 0', textAlign:'center', fontSize:11, color:C.mid}}>
+      {L('Loading regime data…','政体数据加载中…')}
+    </div>
+  );
+
+  const regimeColor = r =>
+    r === 'PERMISSIVE'   ? C.green :
+    r === 'RESTRICTIVE'  ? C.red   : C.gold;
+
+  const regimeLabel = (r, lk) => {
+    if (lk === 'z') return r === 'PERMISSIVE' ? '宽松' : r === 'RESTRICTIVE' ? '收紧' : '中性';
+    return r;
+  };
+
+  return (
+    <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:10}}>
+      {regimeData.sectors.map(sector => (
+        <div key={sector.id} style={{
+          padding:'12px 14px',
+          background: C.soft,
+          borderRadius:10,
+          borderLeft:`3px solid ${regimeColor(sector.regime)}`,
+        }}>
+          <div style={{...S.row, justifyContent:'space-between', marginBottom:6}}>
+            <span style={{fontSize:11, fontWeight:700, color:C.dark}}>
+              {lk === 'z' ? sector.name_zh : sector.name_en}
+            </span>
+            <span style={{
+              fontSize:9, fontWeight:700, letterSpacing:'0.04em',
+              color:'#fff', background:regimeColor(sector.regime),
+              padding:'2px 7px', borderRadius:4,
+            }}>
+              {regimeLabel(sector.regime, lk)}
+            </span>
+          </div>
+          <div style={{fontSize:9.5, color:C.mid, lineHeight:1.5}}>
+            {lk === 'z' ? sector.rationale_zh : sector.rationale_en}
+          </div>
+          {sector.tickers.length > 0 && (
+            <div style={{...S.row, gap:4, marginTop:7, flexWrap:'wrap'}}>
+              {sector.tickers.map(t => (
+                <span key={t} style={{
+                  fontSize:9, color:C.blue, background:C.card,
+                  border:`1px solid ${C.border}`, borderRadius:4, padding:'1px 6px',
+                  fontFamily:"'JetBrains Mono','Courier New',monospace",
+                }}>{t}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, C }) {
+  const confidenceColor = c =>
+    c === 'HIGH'   ? C.green :
+    c === 'LOW'    ? C.red   : C.gold;
+
+  return (
+    <div>
+      <div style={{...S.row, justifyContent:'space-between', marginBottom:12}}>
+        <div style={{fontSize:11, color:C.mid, lineHeight:1.6, maxWidth:'70%'}}>
+          {L(
+            'AI-generated non-consensus interpretation of current macro conditions.',
+            'AI生成的当前宏观环境非共识解读。'
+          )}
+        </div>
+        <button
+          onClick={onGenerateInsight}
+          disabled={insightLoading}
+          style={{
+            padding:'7px 16px', borderRadius:7, border:'none', cursor: insightLoading ? 'not-allowed' : 'pointer',
+            background: insightLoading ? C.mid : C.blue, color:'#fff',
+            fontSize:11, fontWeight:700, letterSpacing:'0.03em',
+            opacity: insightLoading ? 0.7 : 1, transition:'all .15s',
+          }}
+        >
+          {insightLoading ? L('Generating…','生成中…') : L('⚡ Generate Insight','⚡ 生成洞察')}
+        </button>
+      </div>
+
+      {macroInsight && (() => {
+        const ins = macroInsight.insight || {};
+        return (
+          <div style={{display:'flex', flexDirection:'column', gap:10}}>
+            {/* Header row: confidence + horizon */}
+            <div style={{...S.row, gap:8}}>
+              <span style={{
+                fontSize:9, fontWeight:700, color:'#fff',
+                background:confidenceColor(ins.confidence),
+                padding:'2px 9px', borderRadius:4, letterSpacing:'0.05em',
+              }}>{ins.confidence} CONFIDENCE</span>
+              <span style={{...S.tag(C.blue), fontSize:9}}>⏱ {ins.horizon}</span>
+              {macroInsight.generated_at && (
+                <span style={{fontSize:9, color:C.mid, marginLeft:'auto'}}>
+                  {L('Generated','生成于')} {new Date(macroInsight.generated_at).toLocaleTimeString()}
+                </span>
+              )}
+            </div>
+
+            {/* Market reads */}
+            <div style={{padding:'10px 14px', background:C.soft, borderRadius:8, borderLeft:`3px solid ${C.mid}`}}>
+              <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
+                {L('Market Reads','市场共识解读')}
+              </div>
+              <div style={{fontSize:12, color:C.dark, lineHeight:1.6}}>{ins.market_reads}</div>
+            </div>
+
+            {/* We Think */}
+            <div style={{padding:'10px 14px', background:`${C.blue}12`, borderRadius:8, borderLeft:`3px solid ${C.blue}`}}>
+              <div style={{fontSize:9, fontWeight:700, color:C.blue, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
+                {L('We Think (Non-Consensus)','我们的判断（非共识）')}
+              </div>
+              <div style={{fontSize:12, color:C.dark, lineHeight:1.6, fontWeight:600}}>{ins.we_think}</div>
+            </div>
+
+            {/* Mechanism */}
+            {ins.mechanism && (
+              <div style={{padding:'10px 14px', background:C.soft, borderRadius:8}}>
+                <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
+                  {L('Mechanism','传导机制')}
+                </div>
+                <div style={{fontSize:11.5, color:C.dark, lineHeight:1.7}}>{ins.mechanism}</div>
+              </div>
+            )}
+
+            {/* Implication */}
+            {ins.implication && (
+              <div style={{padding:'10px 14px', background:`${C.green}10`, borderRadius:8, borderLeft:`3px solid ${C.green}`}}>
+                <div style={{fontSize:9, fontWeight:700, color:C.green, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
+                  {L('Portfolio Implication','持仓含义')}
+                </div>
+                <div style={{fontSize:11.5, color:C.dark, lineHeight:1.6}}>{ins.implication}</div>
+              </div>
+            )}
+
+            {/* Watch For */}
+            {ins.watch_for && (
+              <div style={{padding:'10px 14px', background:`${C.gold}12`, borderRadius:8, borderLeft:`3px solid ${C.gold}`}}>
+                <div style={{fontSize:9, fontWeight:700, color:C.gold, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:5}}>
+                  {L('Watch For (5–10 days)','监控信号（5-10交易日）')}
+                </div>
+                <div style={{fontSize:11.5, color:C.dark, lineHeight:1.6, fontWeight:600}}>{ins.watch_for}</div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {!macroInsight && !insightLoading && (
+        <div style={{textAlign:'center', padding:'24px 0', color:C.mid, fontSize:11}}>
+          {L('Press Generate to produce today\'s exclusive macro insight.','点击生成按钮获取今日独家宏观洞察。')}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight }) {
   const colors = [C.blue, C.gold, C.green, C.red, C.blue];
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
   return (
     <div>
+      <Card title={L('Sector Regime Classification','板块政体分类')} sub={L('PERMISSIVE · NEUTRAL · RESTRICTIVE — manually curated, updated on policy shifts','宽松·中性·收紧 — 人工维护，重大政策变动后更新')} open={open.regime} onToggle={()=>toggle('regime')} C={C}>
+        <RegimePanel regimeData={regimeData} L={L} lk={lk} C={C}/>
+      </Card>
+
+      <Card title={L('Exclusive Insight','独家洞察')} sub={L('Non-consensus macro interpretation · AI-generated · Not investment advice','非共识宏观解读 · AI生成 · 非投资建议')} open={open.exclusiveInsight} onToggle={()=>toggle('exclusiveInsight')} C={C}>
+        <ExclusiveInsight
+          macroInsight={macroInsight}
+          insightLoading={insightLoading}
+          onGenerateInsight={onGenerateInsight}
+          L={L}
+          C={C}
+        />
+      </Card>
+
       <Card title={L('Macro Dashboard','宏观仪表盘')} open={open.macro} onToggle={()=>toggle('macro')} C={C}>
         <div style={{display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:10, marginBottom:14}}>
           {MACRO.map((m,i)=>(
@@ -3552,7 +3728,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true, rdcf:true, debate:false});
+  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true, rdcf:true, debate:false, regime:true, exclusiveInsight:true});
   const [dynamicStocks, setDynamicStocks] = useState({});
   const [showDeepResearch, setShowDeepResearch] = useState(false);
   const [liveData, setLiveData] = useState(null);
@@ -3562,6 +3738,9 @@ export default function Dashboard() {
   const [rdcfData, setRdcfData]   = useState({});
   const [stressData, setStressData] = useState(null);
   const [predictions, setPredictions] = useState([]);
+  const [regimeData, setRegimeData] = useState(null);
+  const [macroInsight, setMacroInsight] = useState(null);
+  const [insightLoading, setInsightLoading] = useState(false);
 
   /* Fetch prediction log on mount */
   useEffect(() => {
@@ -3628,6 +3807,15 @@ export default function Dashboard() {
       .catch(() => {});
   }, []);
 
+  /* Fetch sector regime config on mount */
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL || '/';
+    fetch(base + 'data/regime_config.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setRegimeData(d); })
+      .catch(() => {});
+  }, []);
+
   /* Fetch live market data + universe on mount */
   useEffect(() => {
     const base = import.meta.env.BASE_URL || '/';
@@ -3665,6 +3853,35 @@ export default function Dashboard() {
   const handleDeepResearchComplete = (tk, data) => {
     setDynamicStocks(prev => ({ ...prev, [tk]: data }));
     goStock(tk);
+  };
+
+  const handleGenerateInsight = async () => {
+    if (insightLoading || !regimeData) return;
+    setInsightLoading(true);
+    setMacroInsight(null);
+    try {
+      const apiBase = 'https://equity-research-ten.vercel.app';
+      const resp = await fetch(`${apiBase}/api/macro`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regime_data: regimeData }),
+      });
+      if (!resp.ok) throw new Error(`API error ${resp.status}`);
+      const data = await resp.json();
+      setMacroInsight(data);
+    } catch (err) {
+      setMacroInsight({
+        insight: {
+          market_reads: `Error: ${err.message}`,
+          we_think: 'Failed to reach macro API.',
+          mechanism: '', implication: '', watch_for: '',
+          confidence: 'LOW', horizon: 'N/A',
+        },
+        generated_at: new Date().toISOString(),
+      });
+    } finally {
+      setInsightLoading(false);
+    }
   };
 
   /* ── Full-market search engine ─────────────────────────────────────── */
@@ -3953,7 +4170,7 @@ export default function Dashboard() {
 
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
-          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData}/>}
+          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData}/>}
           {tab==='flow'     && (
             <div>

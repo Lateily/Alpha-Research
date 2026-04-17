@@ -1,0 +1,72 @@
+{
+  "updated_at": "2026-04-17",
+  "note": "Manually curated. Update after each significant policy event or macro shift.",
+  "sectors": [
+    {
+      "id": "ai_infra",
+      "name_zh": "AI基础设施",
+      "name_en": "AI Infrastructure",
+      "regime": "PERMISSIVE",
+      "rationale_zh": "政策持续支持算力投资，国产替代加速，北向资金系统性流入AI算力板块",
+      "rationale_en": "Policy supports compute capex; domestic substitution accelerating; northbound systematically accumulating AI names",
+      "key_signals": ["算力补贴政策延续", "北向持续净买入", "数据中心订单超预期"],
+      "last_changed": "2026-03-01",
+      "tickers": ["300308.SZ"]
+    },
+    {
+      "id": "internet",
+      "name_zh": "互联网平台",
+      "name_en": "Internet / Platform",
+      "regime": "NEUTRAL",
+      "rationale_zh": "反垄断压力边际缓和，但广告景气度与消费复苏挂钩，宏观能见度有限",
+      "rationale_en": "Anti-monopoly pressure easing at margin; ad cycle tied to consumer recovery — macro visibility limited",
+      "key_signals": ["反垄断执法频率", "消费者信心指数", "广告主ROI回升"],
+      "last_changed": "2026-02-15",
+      "tickers": ["700.HK", "9999.HK"]
+    },
+    {
+      "id": "biotech",
+      "name_zh": "创新药",
+      "name_en": "Biotech / Pharma",
+      "regime": "NEUTRAL",
+      "rationale_zh": "医保谈判压力持续，海外BD交易活跃但兑现节奏不确定；关注NMPA加速审批信号",
+      "rationale_en": "NRDL pricing pressure persists; overseas BD active but timing uncertain; watch for NMPA expedited approval signals",
+      "key_signals": ["NMPA优先审评", "海外BD交易公告", "医保谈判结果"],
+      "last_changed": "2026-04-01",
+      "tickers": ["6160.HK"]
+    },
+    {
+      "id": "ev_auto",
+      "name_zh": "新能源汽车",
+      "name_en": "EV / Auto",
+      "regime": "PERMISSIVE",
+      "rationale_zh": "出口增长超预期，政府以旧换新补贴持续，竞争格局向头部集中利好龙头",
+      "rationale_en": "Export growth beating estimates; trade-in subsidies ongoing; competitive consolidation favours leaders",
+      "key_signals": ["月度出口数据", "补贴政策延续", "海外建厂进度"],
+      "last_changed": "2026-03-15",
+      "tickers": ["002594.SZ"]
+    },
+    {
+      "id": "consumer",
+      "name_zh": "消费",
+      "name_en": "Consumer",
+      "regime": "NEUTRAL",
+      "rationale_zh": "内需复苏斜率低于预期，消费者信心仍弱；关注五一假期数据验证",
+      "rationale_en": "Domestic demand recovery below expectations; consumer confidence still fragile; watch May Golden Week data",
+      "key_signals": ["社消零售同比", "五一旅游人次", "线下客流恢复率"],
+      "last_changed": "2026-04-10",
+      "tickers": []
+    },
+    {
+      "id": "financials",
+      "name_zh": "大金融",
+      "name_en": "Financials",
+      "regime": "NEUTRAL",
+      "rationale_zh": "净息差压力触底，险资举牌活动增加；但地产敞口风险尚未完全出清",
+      "rationale_en": "NIM pressure bottoming; insurance buyouts increasing; property exposure risk not fully cleared",
+      "key_signals": ["LPR调降预期", "险资举牌公告", "地产销售数据"],
+      "last_changed": "2026-04-05",
+      "tickers": []
+    }
+  ]
+}
