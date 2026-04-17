@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import React from "react";
 import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
          Shield, Zap, Globe, Eye, Target, Filter, Radio, Crosshair,
          AlertCircle, CheckCircle, ArrowUpRight, ArrowDownRight,
@@ -693,6 +694,221 @@ function MacroStressTest({ stressData, L, C }) {
   );
 }
 
+/* ── HELPERS ─────────────────────────────────────────────────────────────── */
+function timeAgo(isoStr) {
+  const diff = Math.floor((Date.now() - new Date(isoStr)) / 1000);
+  if (diff < 60)  return `${diff}s`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h`;
+  return `${Math.floor(diff/86400)}d`;
+}
+
+/* ── NEWS PANEL ──────────────────────────────────────────────────────────── */
+function NewsPanel({ articles, loading, lastFetched, onOpenArticle, L, lk, C }) {
+  const tickerColor = ticker => {
+    if (ticker === 'HSI' || ticker === 'CHINA') return C.gold;
+    if (ticker === '700.HK' || ticker === '9999.HK') return C.blue;
+    if (ticker === '6160.HK') return C.green;
+    return C.mid;
+  };
+
+  return (
+    <div>
+      {/* Live status bar */}
+      <div style={{...S.row, justifyContent:'space-between', marginBottom:12}}>
+        <div style={{...S.row, gap:8}}>
+          <span style={{
+            width:8, height:8, borderRadius:'50%',
+            background: loading ? C.gold : C.green,
+            display:'inline-block',
+            boxShadow: loading ? 'none' : `0 0 0 3px ${C.green}30`,
+            animation: loading ? 'none' : 'pulse 2s infinite',
+          }}/>
+          <span style={{fontSize:10, color:C.mid, fontWeight:600}}>
+            {loading ? L('Fetching…','获取中…') : L('LIVE','实时')}
+          </span>
+          {lastFetched && (
+            <span style={{fontSize:9, color:C.mid}}>
+              {L('Updated','更新于')} {lastFetched.toLocaleTimeString()}
+            </span>
+          )}
+        </div>
+        <span style={{fontSize:9, color:C.mid}}>
+          {articles.length} {L('articles','条新闻')} · {L('auto-refresh 3 min','每3分钟刷新')}
+        </span>
+      </div>
+
+      {/* Article list */}
+      {articles.length === 0 && !loading && (
+        <div style={{textAlign:'center', padding:'18px 0', color:C.mid, fontSize:11}}>
+          {L('No articles yet — loading on mount…','暂无新闻，启动时自动加载…')}
+        </div>
+      )}
+
+      <div style={{display:'flex', flexDirection:'column', gap:1}}>
+        {articles.map((a, i) => (
+          <div
+            key={a.id}
+            onClick={() => onOpenArticle(a)}
+            style={{
+              padding:'10px 12px',
+              background: i % 2 === 0 ? C.soft : C.card,
+              borderRadius:6,
+              cursor:'pointer',
+              transition:'background .12s',
+              borderLeft:`2px solid ${tickerColor(a.ticker)}`,
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = `${C.blue}10`}
+            onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? C.soft : C.card}
+          >
+            <div style={{...S.row, justifyContent:'space-between', gap:8}}>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{...S.row, gap:6, marginBottom:4}}>
+                  <span style={{
+                    fontSize:8, fontWeight:700, color:'#fff',
+                    background:tickerColor(a.ticker),
+                    padding:'1px 5px', borderRadius:3, flexShrink:0,
+                    fontFamily:"'JetBrains Mono','Courier New',monospace",
+                  }}>{a.ticker}</span>
+                  <span style={{
+                    fontSize:8, color:C.mid,
+                    background: a.category === 'MACRO' ? `${C.gold}20` : `${C.blue}15`,
+                    padding:'1px 5px', borderRadius:3, flexShrink:0,
+                  }}>{a.category}</span>
+                </div>
+                <div style={{
+                  fontSize:11.5, fontWeight:600, color:C.dark,
+                  lineHeight:1.4,
+                  overflow:'hidden', textOverflow:'ellipsis',
+                  display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical',
+                }}>{a.title}</div>
+                <div style={{fontSize:9, color:C.mid, marginTop:3}}>
+                  {a.source} · {timeAgo(a.published_at)} {L('ago','')}
+                </div>
+              </div>
+              <div style={{
+                flexShrink:0, fontSize:9, color:C.blue, fontWeight:700,
+                padding:'4px 8px', border:`1px solid ${C.blue}40`,
+                borderRadius:5, whiteSpace:'nowrap', alignSelf:'center',
+              }}>
+                {L('Ask →','问 →')}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+    </div>
+  );
+}
+
+/* ── ARTICLE CHAT ────────────────────────────────────────────────────────── */
+function ArticleChat({ article, messages, input, loading, onInputChange, onSend, onClose, L, lk, C }) {
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior:'smooth' });
+  }, [messages]);
+
+  const handleKey = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } };
+
+  return (
+    <div style={{
+      position:'fixed', top:0, right:0, bottom:0, width:400,
+      background:C.card, borderLeft:`1px solid ${C.border}`,
+      display:'flex', flexDirection:'column', zIndex:1000,
+      boxShadow:'-4px 0 24px rgba(50,90,160,0.15)',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding:'14px 16px', borderBottom:`1px solid ${C.border}`,
+        background:C.dark, color:'#fff', flexShrink:0,
+      }}>
+        <div style={{...S.row, justifyContent:'space-between', marginBottom:6}}>
+          <span style={{fontSize:11, fontWeight:700, letterSpacing:'0.04em'}}>
+            {L('Article Analysis','文章分析')}
+          </span>
+          <button
+            onClick={onClose}
+            style={{background:'transparent', border:'none', color:'rgba(255,255,255,0.7)',
+                    cursor:'pointer', fontSize:16, lineHeight:1, padding:'0 2px'}}
+          >✕</button>
+        </div>
+        <div style={{
+          fontSize:9, fontWeight:700,
+          color: article.ticker === 'HSI' || article.ticker === 'CHINA' ? '#FFC947' : '#7EB8FF',
+          fontFamily:"'JetBrains Mono','Courier New',monospace",
+          marginBottom:4,
+        }}>{article.ticker} · {article.source} · {timeAgo(article.published_at)} {L('ago','前')}</div>
+        <div style={{fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.92)', lineHeight:1.4}}>
+          {article.title}
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div style={{flex:1, overflowY:'auto', padding:'12px 14px', display:'flex', flexDirection:'column', gap:10}}>
+        {messages.map((msg, i) => (
+          <div key={i} style={{
+            display:'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+          }}>
+            <div style={{
+              maxWidth:'88%', padding:'9px 13px', borderRadius:10,
+              background: msg.role === 'user'
+                ? C.blue
+                : msg.loading ? C.soft : `${C.blue}0D`,
+              color: msg.role === 'user' ? '#fff' : C.dark,
+              fontSize:12, lineHeight:1.6,
+              borderBottomRightRadius: msg.role === 'user' ? 3 : 10,
+              borderBottomLeftRadius: msg.role === 'user' ? 10 : 3,
+            }}>
+              {msg.loading
+                ? <span style={{color:C.mid, fontSize:11}}>{L('Analysing…','分析中…')}</span>
+                : msg.content}
+            </div>
+          </div>
+        ))}
+        <div ref={bottomRef}/>
+      </div>
+
+      {/* Input */}
+      <div style={{
+        padding:'10px 12px', borderTop:`1px solid ${C.border}`,
+        background:C.soft, flexShrink:0,
+      }}>
+        <div style={{...S.row, gap:8}}>
+          <textarea
+            value={input}
+            onChange={e => onInputChange(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder={L('Ask about this article… (Enter to send)','就这篇文章提问…（Enter发送）')}
+            rows={2}
+            style={{
+              flex:1, resize:'none', padding:'8px 10px',
+              border:`1px solid ${C.border}`, borderRadius:7,
+              fontSize:11, fontFamily:'inherit', color:C.dark,
+              background:C.card, outline:'none', lineHeight:1.5,
+            }}
+          />
+          <button
+            onClick={onSend}
+            disabled={loading || !input.trim()}
+            style={{
+              padding:'8px 14px', borderRadius:7, border:'none',
+              background: loading || !input.trim() ? C.mid : C.blue,
+              color:'#fff', fontSize:11, fontWeight:700,
+              cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
+              flexShrink:0, alignSelf:'flex-end',
+            }}
+          >{loading ? '…' : L('Send','发送')}</button>
+        </div>
+        <div style={{fontSize:9, color:C.mid, marginTop:5}}>
+          {L('Responding as buy-side analyst · A/H equity focus','以买方分析师视角回复 · 聚焦A/H股')}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RegimePanel({ regimeData, L, lk, C }) {
   if (!regimeData) return (
     <div style={{padding:'14px 0', textAlign:'center', fontSize:11, color:C.mid}}>
@@ -884,12 +1100,22 @@ function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, 
   );
 }
 
-function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight }) {
+function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsArticles, newsLoading, newsLastFetched, onOpenArticle }) {
   const colors = [C.blue, C.gold, C.green, C.red, C.blue];
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
   return (
     <div>
+      <Card title={L('Market News Intelligence','市场新闻情报')} sub={L('Live feed · Click any article to analyse & chat · auto-refreshes every 3 min','实时新闻 · 点击文章进行分析问答 · 每3分钟自动刷新')} open={open.newsPanel} onToggle={()=>toggle('newsPanel')} C={C}>
+        <NewsPanel
+          articles={newsArticles}
+          loading={newsLoading}
+          lastFetched={newsLastFetched}
+          onOpenArticle={onOpenArticle}
+          L={L} lk={lk} C={C}
+        />
+      </Card>
+
       <Card title={L('Sector Regime Classification','板块政体分类')} sub={L('PERMISSIVE · NEUTRAL · RESTRICTIVE — manually curated, updated on policy shifts','宽松·中性·收紧 — 人工维护，重大政策变动后更新')} open={open.regime} onToggle={()=>toggle('regime')} C={C}>
         <RegimePanel regimeData={regimeData} L={L} lk={lk} C={C}/>
       </Card>
@@ -3758,7 +3984,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true, rdcf:true, debate:false, regime:true, exclusiveInsight:true});
+  const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true, rdcf:true, debate:false, regime:true, exclusiveInsight:true, newsPanel:true});
   const [dynamicStocks, setDynamicStocks] = useState({});
   const [showDeepResearch, setShowDeepResearch] = useState(false);
   const [liveData, setLiveData] = useState(null);
@@ -3771,6 +3997,13 @@ export default function Dashboard() {
   const [regimeData, setRegimeData] = useState(null);
   const [macroInsight, setMacroInsight] = useState(null);
   const [insightLoading, setInsightLoading] = useState(false);
+  const [newsArticles, setNewsArticles] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [newsLastFetched, setNewsLastFetched] = useState(null);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
 
   /* Fetch prediction log on mount */
   useEffect(() => {
@@ -3896,6 +4129,59 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  /* Fetch news on mount, then poll every 3 minutes */
+  useEffect(() => {
+    const apiBase = 'https://equity-research-ten.vercel.app';
+    let prevIds = new Set();
+
+    const fetchNews = (regime) => {
+      setNewsLoading(true);
+      fetch(`${apiBase}/api/news`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(data => {
+          const articles = data.articles || [];
+          setNewsArticles(articles);
+          setNewsLastFetched(new Date());
+          setNewsLoading(false);
+
+          // Detect truly new articles since last fetch
+          const newArrivals = articles.filter(a => !prevIds.has(a.id));
+          prevIds = new Set(articles.map(a => a.id));
+
+          // If new articles arrived AND we have regime data, refresh insight
+          if (newArrivals.length > 0 && regime) {
+            const newsCtx = articles.slice(0, 5).map(a =>
+              `[${a.ticker}] ${a.title} (${new Date(a.published_at).toLocaleTimeString()})`
+            ).join('\n');
+            setInsightLoading(true);
+            fetch(`${apiBase}/api/macro`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                regime_data: regime,
+                macro_snapshot: { recent_news: newsCtx, updated_at: new Date().toISOString() },
+              }),
+            })
+              .then(r => r.ok ? r.json() : Promise.reject(r.status))
+              .then(d => { setMacroInsight(d); setInsightLoading(false); })
+              .catch(() => setInsightLoading(false));
+          }
+        })
+        .catch(() => setNewsLoading(false));
+    };
+
+    // First fetch — wait for regimeData to be available
+    const bootTimer = setTimeout(() => {
+      setRegimeData(rd => { fetchNews(rd); return rd; });
+    }, 2000);
+
+    const pollTimer = setInterval(() => {
+      setRegimeData(rd => { fetchNews(rd); return rd; });
+    }, 3 * 60 * 1000);
+
+    return () => { clearTimeout(bootTimer); clearInterval(pollTimer); };
+  }, []);
+
   /* Fetch live market data + universe on mount */
   useEffect(() => {
     const base = import.meta.env.BASE_URL || '/';
@@ -3929,6 +4215,68 @@ export default function Dashboard() {
   const toggle = k => setOpen(p=>({...p,[k]:!p[k]}));
 
   const goStock = tk => { setTicker(tk); setTab('research'); setShowSuggestions(false); setShowDeepResearch(false); };
+
+  const handleOpenArticle = (article) => {
+    setSelectedArticle(article);
+    // Reset chat and auto-load initial analysis
+    setChatMessages([{ role: 'assistant', content: null, loading: true }]);
+    setChatLoading(true);
+    const apiBase = 'https://equity-research-ten.vercel.app';
+    fetch(`${apiBase}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        article,
+        history: [],
+        regime_data: regimeData,
+        is_auto_analysis: true,
+      }),
+    })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => {
+        setChatMessages([{ role: 'assistant', content: data.content }]);
+        setChatLoading(false);
+      })
+      .catch(() => {
+        setChatMessages([{ role: 'assistant', content: 'Failed to load analysis.' }]);
+        setChatLoading(false);
+      });
+  };
+
+  const handleChatSend = () => {
+    const q = chatInput.trim();
+    if (!q || chatLoading || !selectedArticle) return;
+    const updated = [...chatMessages, { role: 'user', content: q }];
+    setChatMessages([...updated, { role: 'assistant', content: null, loading: true }]);
+    setChatInput('');
+    setChatLoading(true);
+    const apiBase = 'https://equity-research-ten.vercel.app';
+    fetch(`${apiBase}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        article: selectedArticle,
+        question: q,
+        history: updated.filter(m => m.content),
+        regime_data: regimeData,
+      }),
+    })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => {
+        setChatMessages(prev => {
+          const msgs = prev.filter(m => !m.loading);
+          return [...msgs, { role: 'assistant', content: data.content }];
+        });
+        setChatLoading(false);
+      })
+      .catch(() => {
+        setChatMessages(prev => {
+          const msgs = prev.filter(m => !m.loading);
+          return [...msgs, { role: 'assistant', content: 'Error — please retry.' }];
+        });
+        setChatLoading(false);
+      });
+  };
 
   const handleDeepResearchComplete = (tk, data) => {
     setDynamicStocks(prev => ({ ...prev, [tk]: data }));
@@ -4250,7 +4598,7 @@ export default function Dashboard() {
 
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
-          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight}/>}
+          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsArticles={newsArticles} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData}/>}
           {tab==='flow'     && (
             <div>
@@ -4292,6 +4640,20 @@ export default function Dashboard() {
           {tab==='system'   && <SystemTab L={L} C={C}/>}
         </div>
       </div>
+
+      {/* Article Chat overlay — fixed right panel */}
+      {selectedArticle && (
+        <ArticleChat
+          article={selectedArticle}
+          messages={chatMessages}
+          input={chatInput}
+          loading={chatLoading}
+          onInputChange={setChatInput}
+          onSend={handleChatSend}
+          onClose={() => { setSelectedArticle(null); setChatMessages([]); setChatInput(''); }}
+          L={L} lk={lk} C={C}
+        />
+      )}
     </div>
   );
 }
