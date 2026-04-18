@@ -25,6 +25,22 @@ An institutional-grade personal research platform that systematises buy-side equ
 | Modern SaaS UI (white cards) | ✅ Live |
 | Custom Cowork Skills (3) | ✅ Live |
 
+## v13.5 — In Progress / Recently Shipped
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Full market screener (10,461 stocks) | ✅ Built | api/live-quotes.js → Eastmoney push2, Screener tab |
+| Real-time price charts | ✅ Built | api/price-chart.js → Yahoo Finance v8, any ticker |
+| News Chinese translation | ✅ Built | api/translate.js → Claude Haiku; auto on lang switch |
+| Capital flow via Vercel API | ✅ Built | api/capital-flow.js → Eastmoney datacenter (bypasses AKShare) |
+| Yahoo Finance UA bypass | ⏳ Pending push | fetch_data.py fix committed locally; user needs to git push |
+| AKShare replacement | 🔶 Partial | Capital flow done; universe data still uses AKShare |
+
+### Known Data Pipeline Limitations
+- **AKShare is geo-blocked from GitHub Actions (US)**: affects universe_a/hk updates, margin data, dragon tiger
+- **Fix options**: (A) HK/SG VPS ~$5/month runs AKShare locally; (B) replace remaining AKShare calls with direct Eastmoney API
+- **Recommendation**: Add HK VPS for batch data; keep Vercel for real-time APIs
+
 ---
 
 ## v14 — Next Sprint

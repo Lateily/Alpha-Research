@@ -3321,21 +3321,38 @@ const ConsensusPanel = ({ ticker, liveData, L, lk, C }) => {
   );
 };
 
-/* ── FLOW PANEL (Southbound + Dragon & Tiger + Margin) ───────────────── */
+/* ── FLOW PANEL (Northbound + Southbound + Dragon & Tiger + Margin) ──────── */
 const FlowPanel = ({ liveData, L, lk, C }) => {
-  const [flowData, setFlowData] = useState(null);
+  const [apiData,  setApiData]  = useState(null);   // live from api/capital-flow
+  const [apiErr,   setApiErr]   = useState(false);
+  const [apiLoading, setApiLoading] = useState(true);
+  const [staticData, setStaticData] = useState(null); // fallback: flow_data.json
+
+  // ── 1. Try live Vercel API ──────────────────────────────────────────────
+  useEffect(() => {
+    const API_BASE = import.meta.env.VITE_API_BASE || 'https://equity-research-ten.vercel.app';
+    fetch(`${API_BASE}/api/capital-flow`)
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(d => { setApiData(d); setApiLoading(false); })
+      .catch(() => { setApiErr(true); setApiLoading(false); });
+  }, []);
+
+  // ── 2. Static fallback (flow_data.json committed by local run) ─────────
   useEffect(() => {
     const base = import.meta.env.BASE_URL || '/';
     fetch(base + 'data/flow_data.json')
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-      .then(d => setFlowData(d))
-      .catch(() => setFlowData(null));
+      .then(d => setStaticData(d))
+      .catch(() => {});
   }, []);
 
-  const nb = liveData?.akshare?.northbound || flowData?.northbound || {};
-  const sb = flowData?.southbound || liveData?.akshare?.southbound || {};
-  const dt = flowData?.dragon_tiger || liveData?.akshare?.dragon_tiger || [];
-  const margin = flowData?.margin || liveData?.akshare?.margin || {};
+  // Merge: live API wins; fall back to akshare in liveData; then static JSON
+  const nb     = (apiData?.available && apiData?.northbound) || liveData?.akshare?.northbound || staticData?.northbound || {};
+  const sb     = (apiData?.available && apiData?.southbound) || liveData?.akshare?.southbound || staticData?.southbound || {};
+  const dt     = staticData?.dragon_tiger || liveData?.akshare?.dragon_tiger || [];
+  const margin = staticData?.margin || liveData?.akshare?.margin || {};
+  const hist   = apiData?.history || [];
+  const dataSource = apiData?.source || (staticData ? 'flow_data.json' : null);
 
   const FlowCard = ({ title, data, icon }) => {
     if (!data || Object.keys(data).length === 0) return null;
@@ -3424,17 +3441,57 @@ const FlowPanel = ({ liveData, L, lk, C }) => {
         </div>
       )}
 
-      {(!nb.latest_net_flow && !sb.latest_net_flow && dt.length === 0) && (
+      {/* 20-day flow history bar chart */}
+      {hist.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:8}}>
+            {L('20-Day Flow History (亿 CNY)','20日资金流向(亿元)')}
+            {dataSource && <span style={{fontSize:9, color:C.mid, marginLeft:6, fontWeight:400}}>{dataSource}</span>}
+          </div>
+          <div style={{height:90}}>
+            <ResponsiveContainer width='100%' height='100%'>
+              <BarChart data={[...hist].reverse()} barGap={1}>
+                <XAxis dataKey='date' tick={{fontSize:7}} tickFormatter={d=>d.slice(5)} interval='preserveStartEnd'/>
+                <YAxis tick={{fontSize:7}} width={28} tickFormatter={v=>`${v}亿`}/>
+                <Tooltip
+                  contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:9}}
+                  formatter={(v,n)=>[`${v}亿`, n==='north_net'?'北向':'南向']}
+                  labelFormatter={l=>l}
+                />
+                <ReferenceLine y={0} stroke={C.border}/>
+                <Bar dataKey='north_net' name='north_net' radius={[2,2,0,0]}
+                  fill={C.blue} opacity={0.85}
+                  // color each bar based on sign
+                  label={false}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Error / loading state */}
+      {apiLoading && !apiData && (
+        <div style={{padding:'12px 16px', background:C.soft, borderRadius:8, fontSize:11, color:C.mid}}>
+          {L('Fetching live flow data…','正在获取实时资金流向…')}
+        </div>
+      )}
+
+      {(!nb.latest_net_flow && !sb.latest_net_flow && dt.length === 0 && !apiLoading) && (
         <div style={{padding:'16px 20px', background:`${C.gold}08`, border:`1px solid ${C.gold}25`, borderRadius:8, fontSize:11, color:C.mid, lineHeight:1.7}}>
           <div style={{...S.row, gap:6, marginBottom:6}}>
             <WifiOff size={13} style={{color:C.gold, flexShrink:0}}/>
             <span style={{fontWeight:700, color:C.gold}}>{L('Flow data unavailable','资金流向数据暂不可用')}</span>
           </div>
-          <div>{L('AKShare northbound/southbound APIs are geo-restricted — they only work from mainland China servers. GitHub Actions (US-based) cannot reach them.',
-                   'AKShare 北上/南向资金 API 有地域限制，仅境内服务器可访问。GitHub Actions（美国节点）无法获取此数据。')}</div>
+          <div>{L(
+            'Capital flow API attempted but Eastmoney HSGT endpoints may be geo-restricted from Vercel. No local flow_data.json found either.',
+            '已尝试调用东方财富 HSGT API，但该接口可能对 Vercel 节点也有地域限制。本地 flow_data.json 也未找到。'
+          )}</div>
           <div style={{marginTop:6, color:C.blue, fontSize:10}}>
-            {L('Workaround: run python scripts/fetch_data.py locally and push the generated flow_data.json manually.',
-               '解决方案：本地运行 python scripts/fetch_data.py，将生成的 flow_data.json 手动推送至 GitHub。')}
+            {L(
+              'Fix: run  python scripts/fetch_data.py  locally and push the generated flow_data.json.',
+              '解决方案：本地运行 python scripts/fetch_data.py，将生成的 flow_data.json 推送至 GitHub。'
+            )}
           </div>
         </div>
       )}
