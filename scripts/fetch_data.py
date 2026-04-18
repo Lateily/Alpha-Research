@@ -15,7 +15,7 @@ Output files:
 Run: python3 scripts/fetch_data.py
 """
 
-import json, os, time
+import json, os, time, urllib.request, urllib.error
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -1089,6 +1089,121 @@ def fetch_consensus_hk(tk_obj):
 # ══════════════════════════════════════════════════════════════════════════════
 # 10. Focus Stocks — Yahoo Finance detailed + OHLC + financials + consensus
 # ══════════════════════════════════════════════════════════════════════════════
+# ── Direct Yahoo Finance price fetch ─────────────────────────────────────────
+# Uses urllib directly with a browser User-Agent — bypasses the yfinance package
+# which is frequently rate-limited/blocked by Yahoo Finance from GitHub Actions IPs.
+# Same approach used in morning-report.yml which reliably works from GitHub Actions.
+_YF_HEADERS = {
+    'User-Agent': (
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+        'AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/124.0.0.0 Safari/537.36'
+    ),
+    'Accept': 'application/json',
+    'Accept-Language': 'en-US,en;q=0.9',
+}
+
+def _fetch_price_direct(yf_ticker, retries=3, delay=2):
+    """
+    Fetch live price + 5d OHLCV via direct Yahoo Finance v8 API.
+    Returns dict with price, prev_close, change_pct, ohlcv list — or None on failure.
+    """
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{yf_ticker}"
+           f"?interval=1d&range=5d")
+    fallback_url = (f"https://query2.finance.yahoo.com/v8/finance/chart/{yf_ticker}"
+                    f"?interval=1d&range=5d")
+
+    for attempt, u in enumerate([url, fallback_url] * retries):
+        if attempt >= retries * 2:
+            break
+        try:
+            req = urllib.request.Request(u, headers=_YF_HEADERS)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+            result = data['chart']['result'][0]
+            meta   = result.get('meta', {})
+            price  = meta.get('regularMarketPrice') or meta.get('previousClose')
+            prev   = meta.get('chartPreviousClose') or meta.get('previousClose')
+            if not price:
+                continue
+
+            # Extract last-day OHLCV from indicator arrays
+            ts    = result.get('timestamp', [])
+            quote = (result.get('indicators', {}).get('quote') or [{}])[0]
+            opens  = quote.get('open',   [])
+            highs  = quote.get('high',   [])
+            lows   = quote.get('low',    [])
+            closes = quote.get('close',  [])
+            vols   = quote.get('volume', [])
+
+            # Last non-null close (in case today's candle is partial/null)
+            last_close = next((c for c in reversed(closes) if c is not None), price)
+            last_open  = next((o for o in reversed(opens)  if o is not None), price)
+            last_high  = next((h for h in reversed(highs)  if h is not None), price)
+            last_low   = next((l for l in reversed(lows)   if l is not None), price)
+            last_vol   = next((v for v in reversed(vols)   if v is not None), 0)
+
+            ohlcv = []
+            for i, t in enumerate(ts):
+                c = closes[i] if i < len(closes) else None
+                if c is None:
+                    continue
+                ohlcv.append({
+                    "date":   datetime.utcfromtimestamp(t).strftime("%Y-%m-%d"),
+                    "open":   round(opens[i],  2) if i < len(opens)  and opens[i]  else c,
+                    "high":   round(highs[i],  2) if i < len(highs)  and highs[i]  else c,
+                    "low":    round(lows[i],   2) if i < len(lows)   and lows[i]   else c,
+                    "close":  round(c, 2),
+                    "volume": int(vols[i]) if i < len(vols) and vols[i] else 0,
+                })
+
+            chg_pct = round((last_close - prev) / prev * 100, 2) if prev else None
+            return {
+                "price":      round(last_close, 2),
+                "prev_close": round(prev, 2),
+                "change_pct": chg_pct,
+                "high":       round(last_high, 2),
+                "low":        round(last_low,  2),
+                "open":       round(last_open, 2),
+                "volume":     int(last_vol),
+                "ohlcv":      ohlcv,   # last 5 trading days
+            }
+        except Exception as e:
+            print(f"    Direct price fetch attempt {attempt+1} failed for {yf_ticker}: {type(e).__name__}: {e}")
+            if attempt < retries - 1:
+                time.sleep(delay)
+    return None
+
+
+def _yf_ticker_with_session(yf_ticker):
+    """Return a yfinance Ticker with a browser-like session to reduce rate limit hits."""
+    try:
+        import yfinance as yf
+        import requests
+        session = requests.Session()
+        session.headers.update(_YF_HEADERS)
+        return yf.Ticker(yf_ticker, session=session)
+    except Exception:
+        import yfinance as yf
+        return yf.Ticker(yf_ticker)
+
+
+def _yf_history_with_retry(tk, period="6mo", retries=3, delay=3):
+    """Call tk.history() with retries — yfinance sometimes returns empty on first call."""
+    import pandas as pd
+    for i in range(retries):
+        try:
+            hist = tk.history(period=period)
+            if hist is not None and not hist.empty:
+                return hist
+            print(f"    yfinance returned empty history (attempt {i+1}/{retries})")
+        except Exception as e:
+            print(f"    yfinance history error (attempt {i+1}/{retries}): {e}")
+        if i < retries - 1:
+            time.sleep(delay)
+    return pd.DataFrame()
+
+
 def fetch_focus_stocks():
     try:
         import yfinance as yf
@@ -1102,140 +1217,211 @@ def fetch_focus_stocks():
     for pid, cfg in FOCUS_TICKERS.items():
         yid = cfg["yahoo"]
         print(f"  [{pid}] {cfg['name_en']}...")
+
+        # ── Step A: Get live price via direct API (reliable from GitHub Actions) ──
+        direct = _fetch_price_direct(yid)
+        if direct:
+            print(f"    Direct price: {direct['price']} (chg: {direct['change_pct']}%)")
+        else:
+            print(f"    Direct price fetch failed — will try yfinance fallback")
+
+        # ── Step B: Get fundamentals + OHLC via yfinance (with session + retries) ──
         try:
-            tk = yf.Ticker(yid)
+            tk   = _yf_ticker_with_session(yid)
             info = tk.info or {}
-            hist = tk.history(period="6mo")
-            if hist.empty: continue
+            hist = _yf_history_with_retry(tk, period="6mo")
+        except Exception as e:
+            print(f"    yfinance error: {e}")
+            info = {}
+            import pandas as pd
+            hist = pd.DataFrame()
 
-            latest = hist.iloc[-1]
-            prev   = hist.iloc[-2]["Close"] if len(hist) > 1 else latest["Close"]
-            closes = hist["Close"]
-            vols   = hist["Volume"]
-            sma20  = float(closes.tail(20).mean())  if len(closes) >= 20  else None
-            sma50  = float(closes.tail(50).mean())  if len(closes) >= 50  else None
-            sma200 = float(closes.tail(200).mean()) if len(closes) >= 200 else None
-            rsi    = _calc_rsi(closes, 14)
-            macd_v, sig_v, hist_v = _calc_macd(closes)
-            avg_vol = float(vols.tail(20).mean()) if len(vols) >= 20 else float(vols.mean())
-            vr = float(latest["Volume"]) / avg_vol if avg_vol > 0 else None
+        # ── Step C: Build price block — direct API wins, yfinance as fallback ──
+        if direct:
+            # Use direct API for price accuracy; augment with yfinance vol if available
+            avg_vol = None
+            if not hist.empty:
+                avg_vol = float(hist["Volume"].tail(20).mean()) if len(hist) >= 20 else float(hist["Volume"].mean())
+                vr = direct["volume"] / avg_vol if avg_vol and avg_vol > 0 else None
+                high_52w = round(float(hist["High"].max()), 2)
+                low_52w  = round(float(hist["Low"].min()),  2)
+            else:
+                vr       = None
+                high_52w = direct["high"]
+                low_52w  = direct["low"]
 
-            results[pid] = {
-                "price": {
-                    "last":          round(float(latest["Close"]), 2),
-                    "prev_close":    round(float(prev), 2),
-                    "change_pct":    round((float(latest["Close"]) - float(prev)) / float(prev) * 100, 2),
-                    "high":          round(float(latest["High"]), 2),
-                    "low":           round(float(latest["Low"]),  2),
-                    "volume":        int(latest["Volume"]),
-                    "avg_volume_20d":int(avg_vol),
-                    "volume_ratio":  round(vr, 2) if vr else None,
-                    "high_52w":      round(float(hist["High"].max()), 2),
-                    "low_52w":       round(float(hist["Low"].min()),  2),
-                },
-                "technical": {
-                    "sma_20":        round(sma20,   2) if sma20   else None,
-                    "sma_50":        round(sma50,   2) if sma50   else None,
-                    "sma_200":       round(sma200,  2) if sma200  else None,
-                    "rsi_14":        round(rsi,     1) if rsi     else None,
-                    "macd":          round(macd_v,  4) if macd_v  else None,
-                    "macd_signal":   round(sig_v,   4) if sig_v   else None,
-                    "macd_histogram":round(hist_v,  4) if hist_v  else None,
-                    "above_sma_20":  float(latest["Close"]) > sma20  if sma20  else None,
-                    "above_sma_50":  float(latest["Close"]) > sma50  if sma50  else None,
-                    "above_sma_200": float(latest["Close"]) > sma200 if sma200 else None,
-                },
-                "fundamentals": {
-                    "market_cap":        info.get("marketCap"),
-                    "pe_trailing":       info.get("trailingPE"),
-                    "pe_forward":        info.get("forwardPE"),
-                    "ev_ebitda":         info.get("enterpriseToEbitda"),
-                    "ev_revenue":        info.get("enterpriseToRevenue"),
-                    "ps_ratio":          info.get("priceToSalesTrailing12Months"),
-                    "pb":                info.get("priceToBook"),
-                    "dividend_yield":    info.get("dividendYield"),
-                    "revenue":           info.get("totalRevenue"),
-                    "revenue_growth":    info.get("revenueGrowth"),
-                    "gross_margin":      info.get("grossMargins"),
-                    "operating_margin":  info.get("operatingMargins"),
-                    "net_margin":        info.get("profitMargins"),
-                    "roe":               info.get("returnOnEquity"),
-                    "roa":               info.get("returnOnAssets"),
-                    "debt_to_equity":    info.get("debtToEquity"),
-                    "current_ratio":     info.get("currentRatio"),
-                    "quick_ratio":       info.get("quickRatio"),
-                    "free_cash_flow":    info.get("freeCashflow"),
-                    "operating_cash_flow":info.get("operatingCashflow"),
-                    "total_cash":        info.get("totalCash"),
-                    "total_debt":        info.get("totalDebt"),
-                    "ebitda":            info.get("ebitda"),
-                    "earnings_growth":   info.get("earningsGrowth"),
-                    "book_value":        info.get("bookValue"),
-                    "enterprise_value":  info.get("enterpriseValue"),
-                },
-                "analyst": {
-                    "target_mean":   info.get("targetMeanPrice"),
-                    "target_high":   info.get("targetHighPrice"),
-                    "target_low":    info.get("targetLowPrice"),
-                    "target_median": info.get("targetMedianPrice"),
-                    "recommendation":info.get("recommendationKey"),
-                    "num_analysts":  info.get("numberOfAnalystOpinions"),
-                },
-                "meta": {
-                    "currency":    info.get("currency", ""),
-                    "exchange":    cfg["exchange"],
-                    "name_en":     cfg["name_en"],
-                    "name_zh":     cfg["name_zh"],
-                    "sector":      info.get("sector", ""),
-                    "industry":    info.get("industry", ""),
-                    "website":     info.get("website", ""),
-                    "description": (info.get("longBusinessSummary") or "")[:500],
-                },
+            price_block = {
+                "last":          direct["price"],
+                "prev_close":    direct["prev_close"],
+                "change_pct":    direct["change_pct"],
+                "high":          direct["high"],
+                "low":           direct["low"],
+                "volume":        direct["volume"],
+                "avg_volume_20d":int(avg_vol) if avg_vol else None,
+                "volume_ratio":  round(vr, 2) if vr else None,
+                "high_52w":      high_52w,
+                "low_52w":       low_52w,
             }
+        elif not hist.empty:
+            # Fallback: construct from yfinance history
+            latest  = hist.iloc[-1]
+            prev_c  = float(hist.iloc[-2]["Close"]) if len(hist) > 1 else float(latest["Close"])
+            avg_vol = float(hist["Volume"].tail(20).mean()) if len(hist) >= 20 else float(hist["Volume"].mean())
+            vr      = float(latest["Volume"]) / avg_vol if avg_vol > 0 else None
+            price_block = {
+                "last":          round(float(latest["Close"]), 2),
+                "prev_close":    round(prev_c, 2),
+                "change_pct":    round((float(latest["Close"]) - prev_c) / prev_c * 100, 2),
+                "high":          round(float(latest["High"]), 2),
+                "low":           round(float(latest["Low"]),  2),
+                "volume":        int(latest["Volume"]),
+                "avg_volume_20d":int(avg_vol),
+                "volume_ratio":  round(vr, 2) if vr else None,
+                "high_52w":      round(float(hist["High"].max()), 2),
+                "low_52w":       round(float(hist["Low"].min()),  2),
+            }
+        else:
+            print(f"    [{pid}] Both direct API and yfinance failed — skipping")
+            continue
 
-            # ── Cache hist for RDCF beta calculation ──
-            hist_cache[pid] = hist
+        # ── Step D: Technical indicators (requires 6mo history from yfinance) ──
+        tech_block = {"sma_20":None,"sma_50":None,"sma_200":None,"rsi_14":None,
+                      "macd":None,"macd_signal":None,"macd_histogram":None,
+                      "above_sma_20":None,"above_sma_50":None,"above_sma_200":None}
+        if not hist.empty:
+            try:
+                closes = hist["Close"]
+                sma20  = float(closes.tail(20).mean())  if len(closes) >= 20  else None
+                sma50  = float(closes.tail(50).mean())  if len(closes) >= 50  else None
+                sma200 = float(closes.tail(200).mean()) if len(closes) >= 200 else None
+                rsi    = _calc_rsi(closes, 14)
+                macd_v, sig_v, hist_v = _calc_macd(closes)
+                cur_px = price_block["last"]
+                tech_block = {
+                    "sma_20":        round(sma20,  2) if sma20  else None,
+                    "sma_50":        round(sma50,  2) if sma50  else None,
+                    "sma_200":       round(sma200, 2) if sma200 else None,
+                    "rsi_14":        round(rsi,    1) if rsi    else None,
+                    "macd":          round(macd_v, 4) if macd_v else None,
+                    "macd_signal":   round(sig_v,  4) if sig_v  else None,
+                    "macd_histogram":round(hist_v, 4) if hist_v else None,
+                    "above_sma_20":  cur_px > sma20  if sma20  else None,
+                    "above_sma_50":  cur_px > sma50  if sma50  else None,
+                    "above_sma_200": cur_px > sma200 if sma200 else None,
+                }
+                hist_cache[pid] = hist
+            except Exception as e:
+                print(f"    Technical indicators error: {e}")
 
-            # ── OHLC history ──
-            ohlc_data = []
-            for idx, row in hist.iterrows():
-                ohlc_data.append({
-                    "date":   idx.strftime("%Y-%m-%d"),
-                    "open":   round(float(row["Open"]),   2),
-                    "high":   round(float(row["High"]),   2),
-                    "low":    round(float(row["Low"]),    2),
-                    "close":  round(float(row["Close"]),  2),
-                    "volume": int(row["Volume"]),
-                })
-            safe_id = pid.replace(".", "_")
-            with open(OUTPUT_DIR / f"ohlc_{safe_id}.json", "w") as f:
-                json.dump({"ticker": pid, "data": ohlc_data,
-                           "fetched_at": datetime.now().isoformat()}, f, default=str)
+        # ── Step E: Write results[pid] ──
+        results[pid] = {
+            "price":        price_block,
+            "technical":    tech_block,
+            "fundamentals": {
+                "market_cap":          info.get("marketCap"),
+                "pe_trailing":         info.get("trailingPE"),
+                "pe_forward":          info.get("forwardPE"),
+                "ev_ebitda":           info.get("enterpriseToEbitda"),
+                "ev_revenue":          info.get("enterpriseToRevenue"),
+                "ps_ratio":            info.get("priceToSalesTrailing12Months"),
+                "pb":                  info.get("priceToBook"),
+                "dividend_yield":      info.get("dividendYield"),
+                "revenue":             info.get("totalRevenue"),
+                "revenue_growth":      info.get("revenueGrowth"),
+                "gross_margin":        info.get("grossMargins"),
+                "operating_margin":    info.get("operatingMargins"),
+                "net_margin":          info.get("profitMargins"),
+                "roe":                 info.get("returnOnEquity"),
+                "roa":                 info.get("returnOnAssets"),
+                "debt_to_equity":      info.get("debtToEquity"),
+                "current_ratio":       info.get("currentRatio"),
+                "quick_ratio":         info.get("quickRatio"),
+                "free_cash_flow":      info.get("freeCashflow"),
+                "operating_cash_flow": info.get("operatingCashflow"),
+                "total_cash":          info.get("totalCash"),
+                "total_debt":          info.get("totalDebt"),
+                "ebitda":              info.get("ebitda"),
+                "earnings_growth":     info.get("earningsGrowth"),
+                "book_value":          info.get("bookValue"),
+                "enterprise_value":    info.get("enterpriseValue"),
+            },
+            "analyst": {
+                "target_mean":    info.get("targetMeanPrice"),
+                "target_high":    info.get("targetHighPrice"),
+                "target_low":     info.get("targetLowPrice"),
+                "target_median":  info.get("targetMedianPrice"),
+                "recommendation": info.get("recommendationKey"),
+                "num_analysts":   info.get("numberOfAnalystOpinions"),
+            },
+            "meta": {
+                "currency":    info.get("currency", ""),
+                "exchange":    cfg["exchange"],
+                "name_en":     cfg["name_en"],
+                "name_zh":     cfg["name_zh"],
+                "sector":      info.get("sector", ""),
+                "industry":    info.get("industry", ""),
+                "website":     info.get("website", ""),
+                "description": (info.get("longBusinessSummary") or "")[:500],
+            },
+            "price_source": "direct_api" if direct else "yfinance",
+        }
+        print(f"    OK @ {price_block['last']} ({'+' if (price_block['change_pct'] or 0)>=0 else ''}{price_block.get('change_pct','?')}%) [{results[pid]['price_source']}]")
 
-            # ── Financial statements ──
+        # ── Step F: OHLC history ──
+        safe_id = pid.replace(".", "_")
+        try:
+            if not hist.empty:
+                # Prefer full 6mo history from yfinance
+                ohlc_data = []
+                for idx, row in hist.iterrows():
+                    ohlc_data.append({
+                        "date":   idx.strftime("%Y-%m-%d"),
+                        "open":   round(float(row["Open"]),  2),
+                        "high":   round(float(row["High"]),  2),
+                        "low":    round(float(row["Low"]),   2),
+                        "close":  round(float(row["Close"]), 2),
+                        "volume": int(row["Volume"]),
+                    })
+            elif direct and direct.get("ohlcv"):
+                # Fallback: 5d OHLCV from direct API
+                ohlc_data = direct["ohlcv"]
+                print(f"    OHLC: using 5d direct-API data (yfinance unavailable)")
+            else:
+                ohlc_data = []
+
+            if ohlc_data:
+                with open(OUTPUT_DIR / f"ohlc_{safe_id}.json", "w") as f:
+                    json.dump({"ticker": pid, "data": ohlc_data,
+                               "fetched_at": datetime.now().isoformat()}, f, default=str)
+        except Exception as e:
+            print(f"    OHLC write error: {e}")
+
+        # ── Step G: Financial statements (from yfinance, non-critical) ──
+        try:
             fin_data = {"ticker": pid, "fetched_at": datetime.now().isoformat()}
-            for attr, key in [("income_stmt", "income_statement"),
-                               ("balance_sheet", "balance_sheet"),
-                               ("cashflow", "cash_flow")]:
-                try:
-                    df = getattr(tk, attr)
-                    if df is not None and not df.empty:
-                        fin_data[key] = _df_to_dict(df)
-                except: pass
+            if 'tk' in dir():  # tk may not exist if yfinance import failed
+                for attr, key in [("income_stmt", "income_statement"),
+                                   ("balance_sheet", "balance_sheet"),
+                                   ("cashflow", "cash_flow")]:
+                    try:
+                        df = getattr(tk, attr)
+                        if df is not None and not df.empty:
+                            fin_data[key] = _df_to_dict(df)
+                    except: pass
             with open(OUTPUT_DIR / f"fin_{safe_id}.json", "w", encoding="utf-8") as f:
                 json.dump(fin_data, f, ensure_ascii=False, default=str)
+        except Exception as e:
+            print(f"    Financials write error: {e}")
 
-            # ── Consensus estimates (HK via yfinance) ──
-            if cfg["exchange"] == "HK":
+        # ── Step H: Consensus estimates (HK via yfinance, non-critical) ──
+        try:
+            if cfg["exchange"] == "HK" and 'tk' in dir() and info:
                 cons = fetch_consensus_hk(tk)
                 if cons:
                     consensus_results[pid] = cons
                     print(f"    Consensus: OK ({len(cons)} sections)")
-
-            print(f"    OK @ {latest['Close']:.2f}")
-
         except Exception as e:
-            print(f"    ERROR: {yid} — {e}")
+            print(f"    Consensus error: {e}")
 
     # ── A-share consensus via AKShare ──
     for pid, cfg in FOCUS_TICKERS.items():

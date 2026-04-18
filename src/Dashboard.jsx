@@ -970,15 +970,14 @@ function PriceChart({ ticker, C, L, lk }) {
   );
 }
 
-function ArticleRow({ a, onOpenArticle, accent, C, L, translation, onTranslate }) {
+function ArticleRow({ a, onOpenArticle, accent, C, L, lk, translation }) {
   const [hov, setHov] = useState(false);
-  const hasTranslation = translation?.zh && !translation?.loading;
-  const isTranslating  = translation?.loading;
 
-  const handleTranslate = (e) => {
-    e.stopPropagation(); // don't open chat panel
-    if (!isTranslating && !hasTranslation) onTranslate(a);
-  };
+  // Display logic: Chinese mode → show translated title; English mode → show original
+  const showChinese   = lk === 'z';
+  const isTranslating = showChinese && translation?.loading;
+  const zhTitle       = showChinese && translation?.zh;
+  const displayTitle  = zhTitle || a.title;
 
   return (
     <div
@@ -1013,45 +1012,26 @@ function ArticleRow({ a, onOpenArticle, accent, C, L, translation, onTranslate }
             <SourceBadge source={a.source} C={C}/>
           </div>
 
-          {/* English title */}
-          <div style={{
-            fontSize:11.5, fontWeight:600, color:C.dark, lineHeight:1.4,
-            overflow:'hidden', textOverflow:'ellipsis',
-            display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical',
-          }}>{a.title}</div>
-
-          {/* Chinese translation — shows when available */}
-          {(hasTranslation || isTranslating) && (
-            <div style={{
-              fontSize:11, color: isTranslating ? C.mid : C.blue,
-              lineHeight:1.5, marginTop:5,
-              paddingTop:5, borderTop:`1px dashed ${C.border}`,
-              fontStyle: isTranslating ? 'italic' : 'normal',
-            }}>
-              {isTranslating
-                ? '翻译中…'
-                : translation.zh}
+          {/* Title — Chinese or English depending on lk */}
+          {isTranslating ? (
+            <div style={{fontSize:11.5, fontWeight:600, color:C.mid, lineHeight:1.4, fontStyle:'italic'}}>
+              翻译中…
             </div>
+          ) : (
+            <div style={{
+              fontSize:11.5, fontWeight:600,
+              color: zhTitle ? C.blue : C.dark,
+              lineHeight:1.4,
+              overflow:'hidden', textOverflow:'ellipsis',
+              display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical',
+            }}>{displayTitle}</div>
           )}
 
-          {/* Time + translate button row */}
-          <div style={{...S.row, gap:8, marginTop:4}}>
+          {/* Time */}
+          <div style={{marginTop:4}}>
             <span style={{fontSize:9, color:C.mid}}>
               {timeAgo(a.published_at)} {L('ago','')}
             </span>
-            {/* Translate toggle — only show if not yet translated */}
-            {!hasTranslation && (
-              <button
-                onClick={handleTranslate}
-                disabled={isTranslating}
-                style={{
-                  fontSize:9, color: isTranslating ? C.mid : C.gold,
-                  background:'transparent', border:'none', cursor: isTranslating ? 'default' : 'pointer',
-                  padding:'0 2px', fontFamily:'inherit', fontWeight:600,
-                  opacity: isTranslating ? 0.6 : 1,
-                }}
-              >{isTranslating ? '…' : '🌐 译'}</button>
-            )}
           </div>
         </div>
 
@@ -1066,15 +1046,17 @@ function ArticleRow({ a, onOpenArticle, accent, C, L, translation, onTranslate }
 }
 
 function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onOpenArticle, L, lk, C }) {
-  const [newsTab, setNewsTab] = useState('macro');
-  // translations: { [articleId]: { zh: string|null, loading: bool } }
+  const [newsTab,      setNewsTab]      = useState('macro');
+  // translations cache: { [articleId]: { zh: string|null, loading: bool } }
   const [translations, setTranslations] = useState({});
+  const translationsRef = useRef(translations);
+  translationsRef.current = translations;
 
   const API_BASE = 'https://equity-research-ten.vercel.app';
 
-  const handleTranslate = async (article) => {
+  const translateArticle = async (article) => {
     const id = article.id;
-    if (translations[id]?.zh || translations[id]?.loading) return;
+    if (translationsRef.current[id]?.zh || translationsRef.current[id]?.loading) return;
     setTranslations(p => ({ ...p, [id]: { zh: null, loading: true } }));
     try {
       const context = article.ticker
@@ -1092,18 +1074,17 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
     }
   };
 
-  // Auto-translate all visible articles when user switches to Chinese mode
-  const prevLk = useRef(lk);
+  // Auto-translate all visible articles when in Chinese mode
+  // Fires on: language switch to 'z', tab switch (while in 'z'), new articles arriving
   useEffect(() => {
-    if (lk === 'z' && prevLk.current !== 'z') {
-      // Translate the currently visible list on language switch
-      const list = newsTab === 'macro' ? macroArticles : portfolioArticles;
-      list.slice(0, 10).forEach(a => {
-        if (!translations[a.id]?.zh && !translations[a.id]?.loading) handleTranslate(a);
-      });
-    }
-    prevLk.current = lk;
-  }, [lk]); // eslint-disable-line
+    if (lk !== 'z') return;
+    const list = newsTab === 'macro' ? macroArticles : portfolioArticles;
+    // Stagger requests slightly to avoid hammering the API
+    list.forEach((a, i) => {
+      setTimeout(() => translateArticle(a), i * 80);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lk, newsTab, macroArticles.length, portfolioArticles.length]);
 
   const macroAccent = (tag) => ({
     'FED':'#8B5CF6', 'CHINA-MACRO':'#EF4444', 'GEO':'#F59E0B',
@@ -1118,9 +1099,13 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
 
   const activeList = newsTab === 'macro' ? macroArticles : portfolioArticles;
 
+  // Count how many translations are done vs pending (for status indicator in Chinese mode)
+  const zhDone    = lk === 'z' ? activeList.filter(a => translations[a.id]?.zh).length : 0;
+  const zhPending = lk === 'z' ? activeList.filter(a => translations[a.id]?.loading).length : 0;
+
   return (
     <div>
-      {/* Status + tab bar */}
+      {/* Status bar */}
       <div style={{...S.row, justifyContent:'space-between', marginBottom:10}}>
         <div style={{...S.row, gap:6}}>
           <span style={{
@@ -1136,15 +1121,15 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
           )}
         </div>
         <div style={{...S.row, gap:8}}>
-          {/* Translate-all button */}
-          <button
-            onClick={() => activeList.slice(0,15).forEach(a => handleTranslate(a))}
-            style={{
-              fontSize:9, fontWeight:700, color:C.gold,
-              background:`${C.gold}12`, border:`1px solid ${C.gold}40`,
-              borderRadius:5, padding:'2px 8px', cursor:'pointer',
-            }}
-          >🌐 {L('Translate all','全部翻译')}</button>
+          {/* Chinese mode: show translation progress */}
+          {lk === 'z' && (
+            <span style={{fontSize:9, color: zhPending > 0 ? C.gold : C.mid}}>
+              {zhPending > 0
+                ? `正在翻译 ${zhPending} 条…`
+                : `${zhDone}/${activeList.length} 条已翻译`
+              }
+            </span>
+          )}
           <span style={{fontSize:9, color:C.mid}}>
             {L('FT · WSJ · Bloomberg · Reuters · CNBC','金融时报·华尔街日报·彭博·路透·CNBC')}
           </span>
@@ -1171,9 +1156,7 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
       {/* Article list */}
       {activeList.length === 0 && !loading && (
         <div style={{textAlign:'center', padding:'20px 0', color:C.mid, fontSize:11}}>
-          {loading
-            ? L('Fetching news…','获取新闻中…')
-            : L('Loading on mount — check back shortly.','启动时加载，请稍候。')}
+          {L('Loading on mount — check back shortly.','启动时加载，请稍候。')}
         </div>
       )}
 
@@ -1182,9 +1165,8 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
           <ArticleRow
             key={a.id} a={a} onOpenArticle={onOpenArticle}
             accent={newsTab === 'macro' ? macroAccent(a.tag) : portfolioAccent(a.ticker)}
-            C={C} L={L}
+            C={C} L={L} lk={lk}
             translation={translations[a.id]}
-            onTranslate={handleTranslate}
           />
         ))}
       </div>

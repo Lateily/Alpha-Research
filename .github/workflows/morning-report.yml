@@ -1,0 +1,225 @@
+name: Morning Report (07:00 HKT)
+
+on:
+  schedule:
+    - cron: '0 23 * * 1-5'    # 23:00 UTC = 07:00 HKT, Monday–Friday
+  workflow_dispatch:            # manual trigger from GitHub Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  morning-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      VERCEL_URL: https://equity-research-ten.vercel.app
+      RECIPIENT:  j.liu199@lse.ac.uk
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # ── Step 1: Fetch live prices from Yahoo Finance ──────────────────────
+      - name: Fetch live prices
+        id: prices
+        run: |
+          python3 - << 'PYEOF'
+          import json, urllib.request, os
+
+          TICKERS = {
+            '700.HK':    {'yf': '0700.HK',  'en': 'Tencent',   'vp': 65, 'dir': 'LONG', 'sector': 'Internet'},
+            '9999.HK':   {'yf': '9999.HK',  'en': 'NetEase',   'vp': 58, 'dir': 'LONG', 'sector': 'Gaming'},
+            '6160.HK':   {'yf': '6160.HK',  'en': 'BeiGene',   'vp': 65, 'dir': 'LONG', 'sector': 'Biotech'},
+            '002594.SZ': {'yf': '002594.SZ','en': 'BYD',       'vp': 61, 'dir': 'LONG', 'sector': 'EV/Auto'},
+            '300308.SZ': {'yf': '300308.SZ','en': 'Innolight', 'vp': 72, 'dir': 'LONG', 'sector': 'AI Infra'},
+          }
+
+          portfolio = []
+          for ticker, meta in TICKERS.items():
+            try:
+              yf_ticker = meta['yf']
+              url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yf_ticker}?interval=1d&range=5d"
+              req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+              with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read())
+              result = data['chart']['result'][0]
+              meta_d = result.get('meta', {})
+              price  = meta_d.get('regularMarketPrice') or meta_d.get('previousClose')
+              prev   = meta_d.get('chartPreviousClose') or meta_d.get('previousClose')
+              chg    = round((price - prev) / prev * 100, 2) if price and prev else None
+              portfolio.append({
+                'ticker': ticker, 'company': meta['en'],
+                'vp': meta['vp'], 'dir': meta['dir'], 'sector': meta['sector'],
+                'current_price': round(price, 2) if price else None,
+                'price_change_pct': chg,
+              })
+            except Exception as e:
+              print(f"Price fetch failed for {ticker}: {e}")
+              portfolio.append({'ticker': ticker, 'company': meta['en'], 'vp': meta['vp'], 'dir': meta['dir'], 'sector': meta['sector']})
+
+          with open('/tmp/portfolio.json', 'w') as f:
+            json.dump(portfolio, f)
+          print(f"Fetched prices for {len(portfolio)} stocks")
+          PYEOF
+
+      # ── Step 2: Read static data from repo ───────────────────────────────
+      - name: Read static data
+        id: static
+        run: |
+          # predictions log
+          if [ -f public/data/prediction_log.json ]; then
+            cp public/data/prediction_log.json /tmp/predictions.json
+          else
+            echo '{"predictions":[]}' > /tmp/predictions.json
+          fi
+          # regime config
+          if [ -f public/data/regime_config.json ]; then
+            cp public/data/regime_config.json /tmp/regime.json
+          else
+            echo '{"sectors":[]}' > /tmp/regime.json
+          fi
+          echo "Static files ready"
+
+      # ── Step 3: Fetch news from our API ──────────────────────────────────
+      - name: Fetch news
+        id: news
+        run: |
+          python3 - << 'PYEOF'
+          import json, urllib.request
+
+          try:
+            url = "${{ env.VERCEL_URL }}/api/news"
+            req = urllib.request.Request(url, headers={'User-Agent': 'AR-Morning-Report/1.0'})
+            with urllib.request.urlopen(req, timeout=12) as resp:
+              data = json.loads(resp.read())
+            macro     = data.get('macro', [])[:8]
+            portfolio = data.get('portfolio', [])[:10]
+          except Exception as e:
+            print(f"News fetch failed: {e}")
+            macro, portfolio = [], []
+
+          with open('/tmp/news_macro.json', 'w') as f:
+            json.dump(macro, f)
+          with open('/tmp/news_portfolio.json', 'w') as f:
+            json.dump(portfolio, f)
+          print(f"News: {len(macro)} macro, {len(portfolio)} portfolio articles")
+          PYEOF
+
+      # ── Step 4: Call morning-report API ──────────────────────────────────
+      - name: Generate morning report
+        id: report
+        run: |
+          python3 - << 'PYEOF'
+          import json, urllib.request, urllib.error, sys
+          from datetime import datetime, timezone, timedelta
+
+          # Read all data
+          with open('/tmp/portfolio.json')     as f: portfolio    = json.load(f)
+          with open('/tmp/predictions.json')   as f: pred_data    = json.load(f)
+          with open('/tmp/regime.json')        as f: regime_data  = json.load(f)
+          with open('/tmp/news_macro.json')    as f: macro_news   = json.load(f)
+          with open('/tmp/news_portfolio.json')as f: portfolio_news= json.load(f)
+
+          hkt = timezone(timedelta(hours=8))
+          today = datetime.now(hkt).strftime('%Y-%m-%d')
+
+          payload = {
+            'date':           today,
+            'portfolio':      portfolio,
+            'macro_news':     macro_news,
+            'portfolio_news': portfolio_news,
+            'regime_data':    regime_data,
+            'predictions':    pred_data.get('predictions', []),
+            'is_github_action': True,
+          }
+
+          body = json.dumps(payload).encode('utf-8')
+          url  = "${{ env.VERCEL_URL }}/api/morning-report"
+          req  = urllib.request.Request(url, data=body,
+                   headers={'Content-Type': 'application/json', 'User-Agent': 'AR-Morning-Report/1.0'},
+                   method='POST')
+
+          try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+              result = json.loads(resp.read())
+          except urllib.error.HTTPError as e:
+            print(f"API error {e.code}: {e.read().decode()}")
+            sys.exit(1)
+          except Exception as e:
+            print(f"Request failed: {e}")
+            sys.exit(1)
+
+          if not result.get('success'):
+            print(f"Report generation failed: {result.get('error')}")
+            sys.exit(1)
+
+          report = result['report']
+          print(f"Report generated: {report.get('headline', 'OK')}")
+          print(f"Tokens used: {report.get('tokens_used', '?')}")
+
+          # Save HTML and subject for email step
+          html_email = report.get('html_email', '<p>Report unavailable</p>')
+          mood = report.get('market_mood', 'NEUTRAL')
+          headline = report.get('headline', 'AR Morning Report')
+          subject = f"[AR] {today} · {mood} · {headline[:60]}"
+
+          with open('/tmp/email.html', 'w') as f:
+            f.write(html_email)
+          with open('/tmp/email_subject.txt', 'w') as f:
+            f.write(subject)
+
+          print(f"Email subject: {subject}")
+          PYEOF
+
+      # ── Step 5: Send email via Resend ─────────────────────────────────────
+      - name: Send email via Resend
+        run: |
+          python3 - << 'PYEOF'
+          import json, urllib.request, urllib.error, sys
+
+          resend_key = "${{ secrets.RESEND_API_KEY }}"
+          if not resend_key or resend_key == '':
+            print("RESEND_API_KEY not set — skipping email delivery")
+            sys.exit(0)
+
+          with open('/tmp/email.html')        as f: html    = f.read()
+          with open('/tmp/email_subject.txt') as f: subject = f.read().strip()
+
+          # Resend free tier: from must be onboarding@resend.dev or your verified domain
+          # To use a custom from address, verify your domain at resend.com/domains
+          from_addr = "${{ secrets.RESEND_FROM_EMAIL }}"
+          if not from_addr:
+            from_addr = "AR Platform <onboarding@resend.dev>"
+
+          payload = {
+            'from':    from_addr,
+            'to':      ["${{ env.RECIPIENT }}"],
+            'subject': subject,
+            'html':    html,
+          }
+
+          body = json.dumps(payload).encode('utf-8')
+          req  = urllib.request.Request(
+            'https://api.resend.com/emails',
+            data=body,
+            headers={
+              'Authorization': f'Bearer {resend_key}',
+              'Content-Type':  'application/json',
+            },
+            method='POST'
+          )
+
+          try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+              result = json.loads(resp.read())
+              print(f"Email sent! ID: {result.get('id')}")
+          except urllib.error.HTTPError as e:
+            body = e.read().decode()
+            print(f"Resend error {e.code}: {body}")
+            sys.exit(1)
+          except Exception as e:
+            print(f"Email send failed: {e}")
+            sys.exit(1)
+          PYEOF
