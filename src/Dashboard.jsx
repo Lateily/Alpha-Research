@@ -1156,12 +1156,203 @@ function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, 
   );
 }
 
-function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsMacro, newsPortfolio, newsLoading, newsLastFetched, onOpenArticle }) {
+function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsMacro, newsPortfolio, newsLoading, newsLastFetched, onOpenArticle, liveData, universeA, universeHK }) {
   const colors = [C.blue, C.gold, C.green, C.red, C.blue];
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
+  // ── Live data derivation ────────────────────────────────────────────────
+  const FOCUS = [
+    { id:'300308.SZ', name:'Innolight', sector:'AI Infra',  vp:79 },
+    { id:'700.HK',    name:'Tencent',   sector:'Internet',  vp:65 },
+    { id:'9999.HK',   name:'NetEase',   sector:'Gaming',    vp:58 },
+    { id:'6160.HK',   name:'BeiGene',   sector:'Biotech',   vp:65 },
+    { id:'002594.SZ', name:'BYD',       sector:'EV/Auto',   vp:61 },
+  ];
+  const yahoo    = liveData?.yahoo    || {};
+  const akshare  = liveData?.akshare  || {};
+  const fetchedAt = liveData?._meta?.fetched_at;
+  const dataAgeH  = fetchedAt ? Math.round((Date.now() - new Date(fetchedAt)) / 3600000) : null;
+  const dataFresh = dataAgeH !== null && dataAgeH < 30;
+
+  // Derive live factor scores from actual technical / fundamental data
+  const liveFactors = (() => {
+    const vals = FOCUS.map(t => yahoo[t.id]).filter(Boolean);
+    if (!vals.length) return SCANNER.factors;
+    const avgChg  = vals.reduce((s,v) => s + (v.price?.change_pct || 0), 0) / vals.length;
+    const avgRsi  = vals.reduce((s,v) => s + (v.technical?.rsi_14  || 50), 0) / vals.length;
+    const avgRoe  = vals.reduce((s,v) => s + (v.fundamentals?.roe  ||  0), 0) / vals.length;
+    const peVals  = vals.map(v => v.fundamentals?.pe_forward).filter(p => p && p > 0);
+    const avgPe   = peVals.length ? peVals.reduce((s,p) => s+p,0)/peVals.length : 25;
+    const inno    = yahoo['300308.SZ'];
+    const momentum  = Math.max(5, Math.min(95, 50 + avgChg * 8));
+    const value     = Math.max(5, Math.min(95, 85 - avgPe));
+    const quality   = Math.max(5, Math.min(95, avgRoe * 130));
+    const sentiment = Math.max(5, Math.min(95, avgRsi));
+    const aiBeta    = inno ? Math.max(5, Math.min(95, (inno.technical?.rsi_14 || 60) * 1.12)) : 75;
+    return [
+      { name:'Momentum', val:Math.round(momentum),  t: momentum>50?'up':'down' },
+      { name:'Value',    val:Math.round(value),     t: value>50?'up':'down' },
+      { name:'Quality',  val:Math.round(quality),   t: quality>60?'up':'stable' },
+      { name:'Sentiment',val:Math.round(sentiment), t: sentiment>55?'up':'down' },
+      { name:'AI Beta',  val:Math.round(aiBeta),    t: aiBeta>65?'up':'stable' },
+    ];
+  })();
+
+  // Live universe counts for funnel
+  const liveUniverse = (universeA?.stocks?.length||0) + (universeHK?.stocks?.length||0);
+  const liveFunnel = liveUniverse > 0 ? [
+    { s:'Universe',    n: liveUniverse.toLocaleString(), r:'A+HK listed' },
+    ...SCANNER.funnel.slice(1),
+  ] : SCANNER.funnel;
+
   return (
     <div>
+      {/* ── Live Portfolio Snapshot ─────────────────────────────────────── */}
+      <Card title={L('Live Portfolio Snapshot','持仓实时行情')} sub={L('Focus stocks · prices from last GitHub Actions sync','持仓股票 · 来自 GitHub Actions 定时抓取')} open={open.liveSnapshot !== false} onToggle={()=>toggle('liveSnapshot')} C={C}>
+        {/* Freshness bar */}
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12}}>
+          <div style={{display:'flex', alignItems:'center', gap:6}}>
+            {dataFresh
+              ? <Wifi size={11} color={C.green}/>
+              : <WifiOff size={11} color={C.gold}/>}
+            <span style={{fontSize:10, color: dataFresh ? C.green : C.gold, fontFamily:'inherit'}}>
+              {dataAgeH !== null
+                ? `${L('Synced','已同步')} ${dataAgeH}h ${L('ago','前')} · ${new Date(fetchedAt).toLocaleDateString()}`
+                : L('No live data — awaiting next GitHub Actions run','暂无实时数据，等待下一次同步')}
+            </span>
+          </div>
+          <span style={{fontSize:9, color:C.mid}}>{L('Auto-sync: 08:30 & 16:30 HKT weekdays','自动同步: 工作日 08:30 & 16:30 港时')}</span>
+        </div>
+
+        {/* Column headers */}
+        <div style={{display:'flex', padding:'4px 0', borderBottom:`1px solid ${C.border}`, marginBottom:4}}>
+          <span style={{flex:'1 1 130px', fontSize:9, color:C.mid, fontWeight:600}}>{L('STOCK','股票')}</span>
+          <span style={{width:72, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>{L('PRICE','价格')}</span>
+          <span style={{width:60, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>{L('CHG%','涨跌%')}</span>
+          <span style={{width:40, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>VP</span>
+          <span style={{width:54, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>RSI</span>
+          <span style={{width:60, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>{L('VOL/AVG','量比')}</span>
+        </div>
+
+        {FOCUS.map((tk, i) => {
+          const d   = yahoo[tk.id];
+          const px  = d?.price?.last;
+          const chg = d?.price?.change_pct;
+          const rsi = d?.technical?.rsi_14;
+          const volR= d?.price?.volume_ratio;
+          const isHK = tk.id.endsWith('.HK');
+          const ccy  = isHK ? 'HK$' : '¥';
+          const chgColor = chg > 0 ? C.green : chg < 0 ? C.red : C.mid;
+          const rsiColor = rsi > 70 ? C.red : rsi < 30 ? C.green : C.mid;
+          return (
+            <div key={i} style={{display:'flex', alignItems:'center', padding:'7px 0',
+              borderBottom: i < FOCUS.length-1 ? `1px solid ${C.border}` : 'none'}}>
+              <div style={{flex:'1 1 130px'}}>
+                <div style={{fontSize:11, fontWeight:700, color:C.dark}}>{tk.name}</div>
+                <div style={{fontSize:9, color:C.mid}}>{tk.id} · <span style={{color:C.blue}}>{tk.sector}</span></div>
+              </div>
+              <div style={{width:72, textAlign:'right', fontSize:13, fontWeight:700, color:C.dark, fontFamily:'JetBrains Mono,monospace'}}>
+                {px != null ? `${ccy}${px >= 100 ? px.toFixed(0) : px.toFixed(2)}` : '—'}
+              </div>
+              <div style={{width:60, textAlign:'right'}}>
+                <span style={{fontSize:11, fontWeight:600, color:chgColor}}>
+                  {chg != null ? `${chg>0?'+':''}${chg.toFixed(2)}%` : '—'}
+                </span>
+              </div>
+              <div style={{width:40, textAlign:'right'}}>
+                <span style={{fontSize:10, fontWeight:600, color:C.blue}}>{tk.vp}</span>
+              </div>
+              <div style={{width:54, textAlign:'right'}}>
+                <span style={{fontSize:10, color:rsiColor, fontFamily:'JetBrains Mono,monospace'}}>
+                  {rsi != null ? rsi.toFixed(1) : '—'}
+                </span>
+              </div>
+              <div style={{width:60, textAlign:'right'}}>
+                <span style={{fontSize:10, color: volR > 1.5 ? C.green : volR < 0.5 ? C.red : C.mid, fontFamily:'JetBrains Mono,monospace'}}>
+                  {volR != null ? `${volR.toFixed(2)}x` : '—'}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </Card>
+
+      {/* ── Capital Flow Intelligence ─────────────────────────────────── */}
+      {(akshare.northbound || akshare.southbound) && (
+        <Card title={L('Capital Flow Intelligence','资金流向')} sub={L('Northbound · Southbound · Dragon & Tiger','北向 · 南向 · 龙虎榜')} open={open.flowIntel !== false} onToggle={()=>toggle('flowIntel')} C={C}>
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom: akshare.dragon_tiger?.length ? 12 : 0}}>
+            {[
+              { label: L('Northbound 北向','北向资金'), data: akshare.northbound, dir:'N' },
+              { label: L('Southbound 南向','南向资金'), data: akshare.southbound, dir:'S' },
+            ].map(({label, data, dir}) => {
+              if (!data || !data.latest_net_flow) return (
+                <div key={dir} style={{padding:12, background:C.soft, borderRadius:8}}>
+                  <div style={{fontSize:10, color:C.mid, fontWeight:600, marginBottom:6}}>{label}</div>
+                  <div style={{fontSize:10, color:C.mid}}>{L('No data','暂无数据')}</div>
+                </div>
+              );
+              const isInflow = data.trend === 'inflow';
+              const fmtBn = v => {
+                if (v == null) return '—';
+                const bn = Math.abs(v) / 1e8;
+                return `${v >= 0 ? '+' : '-'}¥${bn.toFixed(1)}亿`;
+              };
+              return (
+                <div key={dir} style={{padding:12, background:C.soft, borderRadius:8}}>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
+                    <span style={{fontSize:10, color:C.mid, fontWeight:600}}>{label}</span>
+                    <span style={{fontSize:9, fontWeight:700, padding:'2px 8px', borderRadius:10,
+                      background: isInflow ? `${C.green}18` : `${C.red}18`,
+                      color: isInflow ? C.green : C.red}}>
+                      {isInflow ? '▲ INFLOW' : '▼ OUTFLOW'}
+                    </span>
+                  </div>
+                  <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:6}}>
+                    <div>
+                      <div style={{fontSize:9, color:C.mid}}>{L('Today','今日')}</div>
+                      <div style={{fontSize:12, fontWeight:700, color: (data.latest_net_flow||0)>=0?C.green:C.red, fontFamily:'JetBrains Mono,monospace'}}>
+                        {fmtBn(data.latest_net_flow)}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:9, color:C.mid}}>{L('5-Day','5日累计')}</div>
+                      <div style={{fontSize:12, fontWeight:700, color: (data['5d_cumulative']||0)>=0?C.green:C.red, fontFamily:'JetBrains Mono,monospace'}}>
+                        {fmtBn(data['5d_cumulative'])}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Dragon & Tiger focus entries */}
+          {(() => {
+            const dtEntries = (akshare.dragon_tiger || []).filter(e => e.focus);
+            if (!dtEntries.length) return null;
+            return (
+              <div>
+                <div style={{fontSize:10, color:C.mid, fontWeight:600, marginBottom:6}}>
+                  {L('Dragon & Tiger Board — Focus Stocks','龙虎榜 — 持仓股票')}
+                </div>
+                {dtEntries.slice(0,5).map((e,i) => (
+                  <div key={i} style={{display:'flex', alignItems:'center', justifyContent:'space-between',
+                    padding:'6px 0', borderBottom: i < dtEntries.length-1 ? `1px solid ${C.border}` : 'none'}}>
+                    <div>
+                      <span style={{fontSize:11, fontWeight:600, color:C.dark}}>{e.name}</span>
+                      <span style={{fontSize:9, color:C.mid, marginLeft:6}}>{e.date} · {e.reason}</span>
+                    </div>
+                    <span style={{fontSize:11, fontWeight:700, color:(e.net_amt||0)>=0?C.green:C.red, fontFamily:'JetBrains Mono,monospace'}}>
+                      {e.net_amt != null ? `${e.net_amt>=0?'+':''}${(e.net_amt/1e8).toFixed(2)}亿` : '—'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </Card>
+      )}
+
       <Card title={L('Market News Intelligence','市场新闻情报')} sub={L('Live feed · Click any article to analyse & chat · auto-refreshes every 3 min','实时新闻 · 点击文章进行分析问答 · 每3分钟自动刷新')} open={open.newsPanel} onToggle={()=>toggle('newsPanel')} C={C}>
         <NewsPanel
           macroArticles={newsMacro}
@@ -1201,15 +1392,15 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
         <div style={{fontSize:11, color:C.mid, lineHeight:1.6}}>{MACRO[0].note[lk]}</div>
       </Card>
 
-      <Card title={L('Factor Momentum','因子动量')} open={open.factors} onToggle={()=>toggle('factors')} C={C}>
+      <Card title={L('Factor Momentum','因子动量')} sub={liveData ? L('Derived from live market data','从实时市场数据计算') : L('Static estimates','静态估算')} open={open.factors} onToggle={()=>toggle('factors')} C={C}>
         <div style={{height:220}}>
           <ResponsiveContainer width='100%' height='100%'>
-            <BarChart data={SCANNER.factors}>
+            <BarChart data={liveFactors}>
               <XAxis dataKey='name' tick={{fontSize:11}} />
               <YAxis tick={{fontSize:10}} domain={[0,100]} />
               <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6}} />
               <Bar dataKey='val' fill={C.blue} radius={[4,4,0,0]}>
-                {SCANNER.factors.map((f,i)=>(
+                {liveFactors.map((f,i)=>(
                   <Cell key={i} fill={f.val>60?C.green: f.val>40?C.gold:C.red} />
                 ))}
               </Bar>
@@ -1218,11 +1409,11 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
         </div>
       </Card>
 
-      <Card title={L('Screening Funnel','筛选漏斗')} open={open.funnel} onToggle={()=>toggle('funnel')} C={C}>
-        {SCANNER.funnel.map((f,i)=>(
-          <div key={i} style={{...S.row, marginBottom:i<SCANNER.funnel.length-1?10:0, justifyContent:'space-between'}}>
+      <Card title={L('Screening Funnel','筛选漏斗')} sub={liveUniverse > 0 ? L('Live universe count','实时股票池') : L('Static estimates','静态估算')} open={open.funnel} onToggle={()=>toggle('funnel')} C={C}>
+        {liveFunnel.map((f,i)=>(
+          <div key={i} style={{...S.row, marginBottom:i<liveFunnel.length-1?10:0, justifyContent:'space-between'}}>
             <div><div style={{fontSize:11, fontWeight:600, color:C.dark}}>{f.s}</div><div style={{fontSize:9, color:C.mid}}>{f.r}</div></div>
-            <div style={{fontSize:13, fontWeight:700, color:C.blue}}>{f.n}</div>
+            <div style={{fontSize:13, fontWeight:700, color: i===0 ? C.blue : i===liveFunnel.length-1 ? C.green : C.blue}}>{f.n}</div>
           </div>
         ))}
       </Card>
@@ -5253,7 +5444,7 @@ export default function Dashboard() {
 
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
-          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle}/>}
+          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData}/>}
           {tab==='flow'     && (
             <div>
