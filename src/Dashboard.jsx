@@ -704,100 +704,156 @@ function timeAgo(isoStr) {
 }
 
 /* ── NEWS PANEL ──────────────────────────────────────────────────────────── */
-function NewsPanel({ articles, loading, lastFetched, onOpenArticle, L, lk, C }) {
-  const tickerColor = ticker => {
-    if (ticker === 'HSI' || ticker === 'CHINA') return C.gold;
-    if (ticker === '700.HK' || ticker === '9999.HK') return C.blue;
-    if (ticker === '6160.HK') return C.green;
-    return C.mid;
-  };
+const SOURCE_STYLE = {
+  'Financial Times':        { short:'FT',      bg:'#FFF1E5', color:'#C9400A' },
+  'Wall Street Journal':    { short:'WSJ',     bg:'#1A1A1A', color:'#fff'    },
+  'Bloomberg':              { short:'BBG',     bg:'#1A1A1A', color:'#FF6F0F' },
+  'Reuters':                { short:'Reuters', bg:'#FF6F0F', color:'#fff'    },
+  'CNBC':                   { short:'CNBC',    bg:'#0F0F0F', color:'#FFD700' },
+  'The Economist':          { short:'Econ',    bg:'#E3120B', color:'#fff'    },
+  'South China Morning Post':{ short:'SCMP',   bg:'#003366', color:'#fff'    },
+  'Caixin Global':          { short:'Caixin',  bg:'#0066CC', color:'#fff'    },
+  'Nikkei Asia':            { short:'Nikkei',  bg:'#D82B2B', color:'#fff'    },
+  'MarketWatch':            { short:'MW',      bg:'#16C784', color:'#fff'    },
+};
+
+function SourceBadge({ source, C }) {
+  const style = SOURCE_STYLE[source] || { short: source?.split(' ')[0] || '?', bg: C.mid, color:'#fff' };
+  return (
+    <span style={{
+      fontSize:8, fontWeight:700, padding:'1px 5px', borderRadius:3,
+      background: style.bg, color: style.color, flexShrink:0,
+      letterSpacing:'0.03em',
+    }}>{style.short}</span>
+  );
+}
+
+function ArticleRow({ a, onOpenArticle, accent, C, L }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      onClick={() => onOpenArticle(a)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        padding:'9px 12px', borderRadius:6, cursor:'pointer',
+        background: hov ? `${C.blue}0D` : 'transparent',
+        borderLeft:`2px solid ${accent}`,
+        transition:'background .1s',
+      }}
+    >
+      <div style={{...S.row, justifyContent:'space-between', gap:8, alignItems:'flex-start'}}>
+        <div style={{flex:1, minWidth:0}}>
+          <div style={{...S.row, gap:5, marginBottom:4, flexWrap:'wrap'}}>
+            {a.tag && (
+              <span style={{
+                fontSize:8, fontWeight:700, letterSpacing:'0.04em',
+                color: accent === '#D08000' ? '#92600C' : '#fff',
+                background: accent, padding:'1px 6px', borderRadius:3, flexShrink:0,
+              }}>{a.tag || a.label}</span>
+            )}
+            {a.ticker && a.category === 'PORTFOLIO' && (
+              <span style={{
+                fontSize:8, color:C.blue, background:`${C.blue}15`,
+                padding:'1px 5px', borderRadius:3, flexShrink:0,
+                fontFamily:"'JetBrains Mono','Courier New',monospace",
+              }}>{a.ticker}</span>
+            )}
+            <SourceBadge source={a.source} C={C}/>
+          </div>
+          <div style={{
+            fontSize:11.5, fontWeight:600, color:C.dark, lineHeight:1.4,
+            overflow:'hidden', textOverflow:'ellipsis',
+            display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical',
+          }}>{a.title}</div>
+          <div style={{fontSize:9, color:C.mid, marginTop:3}}>
+            {timeAgo(a.published_at)} {L('ago','')}
+          </div>
+        </div>
+        <span style={{
+          flexShrink:0, fontSize:9, color:C.blue, fontWeight:700,
+          padding:'3px 8px', border:`1px solid ${C.blue}40`,
+          borderRadius:5, whiteSpace:'nowrap', alignSelf:'center',
+        }}>{L('Ask →','问 →')}</span>
+      </div>
+    </div>
+  );
+}
+
+function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onOpenArticle, L, lk, C }) {
+  const [newsTab, setNewsTab] = useState('macro');
+
+  const macroAccent = (tag) => ({
+    'FED':'#8B5CF6', 'CHINA-MACRO':'#EF4444', 'GEO':'#F59E0B',
+    'MARKETS':'#3A6FD8', 'COMMODITIES':'#D08000', 'HK-A':'#10B981', 'TRADE':'#6366F1',
+  })[tag] || '#6B82A0';
+
+  const portfolioAccent = (ticker) => ({
+    '700.HK':'#3A6FD8', '9999.HK':'#7B6BA5', '002594.SZ':'#1E9C5A',
+    '6160.HK':'#D94040', '300308.SZ':'#D08000',
+    'AI-INFRA':'#0EA5E9', 'BIOTECH':'#EC4899', 'EV-SECTOR':'#22C55E',
+  })[ticker] || '#6B82A0';
+
+  const activeList = newsTab === 'macro' ? macroArticles : portfolioArticles;
 
   return (
     <div>
-      {/* Live status bar */}
-      <div style={{...S.row, justifyContent:'space-between', marginBottom:12}}>
-        <div style={{...S.row, gap:8}}>
+      {/* Status + tab bar */}
+      <div style={{...S.row, justifyContent:'space-between', marginBottom:10}}>
+        <div style={{...S.row, gap:6}}>
           <span style={{
-            width:8, height:8, borderRadius:'50%',
+            width:7, height:7, borderRadius:'50%', display:'inline-block',
             background: loading ? C.gold : C.green,
-            display:'inline-block',
-            boxShadow: loading ? 'none' : `0 0 0 3px ${C.green}30`,
-            animation: loading ? 'none' : 'pulse 2s infinite',
+            boxShadow: loading ? 'none' : `0 0 0 3px ${C.green}35`,
           }}/>
-          <span style={{fontSize:10, color:C.mid, fontWeight:600}}>
-            {loading ? L('Fetching…','获取中…') : L('LIVE','实时')}
+          <span style={{fontSize:10, fontWeight:700, color: loading ? C.gold : C.green}}>
+            {loading ? L('FETCHING','获取中') : L('LIVE','实时')}
           </span>
-          {lastFetched && (
-            <span style={{fontSize:9, color:C.mid}}>
-              {L('Updated','更新于')} {lastFetched.toLocaleTimeString()}
-            </span>
+          {lastFetched && !loading && (
+            <span style={{fontSize:9, color:C.mid}}>{lastFetched.toLocaleTimeString()}</span>
           )}
         </div>
         <span style={{fontSize:9, color:C.mid}}>
-          {articles.length} {L('articles','条新闻')} · {L('auto-refresh 3 min','每3分钟刷新')}
+          {L('FT · WSJ · Bloomberg · Reuters · CNBC · Economist','金融时报·华尔街日报·彭博·路透·CNBC')}
         </span>
       </div>
 
+      {/* Tab switcher */}
+      <div style={{...S.row, gap:2, marginBottom:10, background:C.soft, borderRadius:8, padding:3}}>
+        {[
+          { id:'macro',     icon:'🌍', en:`Macro  ${macroArticles.length}`,     zh:`宏观  ${macroArticles.length}` },
+          { id:'portfolio', icon:'📊', en:`Portfolio Radar  ${portfolioArticles.length}`, zh:`持仓雷达  ${portfolioArticles.length}` },
+        ].map(tab => (
+          <button key={tab.id} onClick={() => setNewsTab(tab.id)} style={{
+            flex:1, padding:'6px 8px', border:'none', borderRadius:6, cursor:'pointer',
+            background: newsTab === tab.id ? C.card : 'transparent',
+            color: newsTab === tab.id ? C.dark : C.mid,
+            fontSize:11, fontWeight: newsTab === tab.id ? 700 : 500,
+            boxShadow: newsTab === tab.id ? '0 1px 4px rgba(50,90,160,0.12)' : 'none',
+            transition:'all .15s',
+          }}>{tab.icon} {lk === 'z' ? tab.zh : tab.en}</button>
+        ))}
+      </div>
+
       {/* Article list */}
-      {articles.length === 0 && !loading && (
-        <div style={{textAlign:'center', padding:'18px 0', color:C.mid, fontSize:11}}>
-          {L('No articles yet — loading on mount…','暂无新闻，启动时自动加载…')}
+      {activeList.length === 0 && !loading && (
+        <div style={{textAlign:'center', padding:'20px 0', color:C.mid, fontSize:11}}>
+          {loading
+            ? L('Fetching news…','获取新闻中…')
+            : L('Loading on mount — check back shortly.','启动时加载，请稍候。')}
         </div>
       )}
 
-      <div style={{display:'flex', flexDirection:'column', gap:1}}>
-        {articles.map((a, i) => (
-          <div
-            key={a.id}
-            onClick={() => onOpenArticle(a)}
-            style={{
-              padding:'10px 12px',
-              background: i % 2 === 0 ? C.soft : C.card,
-              borderRadius:6,
-              cursor:'pointer',
-              transition:'background .12s',
-              borderLeft:`2px solid ${tickerColor(a.ticker)}`,
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = `${C.blue}10`}
-            onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? C.soft : C.card}
-          >
-            <div style={{...S.row, justifyContent:'space-between', gap:8}}>
-              <div style={{flex:1, minWidth:0}}>
-                <div style={{...S.row, gap:6, marginBottom:4}}>
-                  <span style={{
-                    fontSize:8, fontWeight:700, color:'#fff',
-                    background:tickerColor(a.ticker),
-                    padding:'1px 5px', borderRadius:3, flexShrink:0,
-                    fontFamily:"'JetBrains Mono','Courier New',monospace",
-                  }}>{a.ticker}</span>
-                  <span style={{
-                    fontSize:8, color:C.mid,
-                    background: a.category === 'MACRO' ? `${C.gold}20` : `${C.blue}15`,
-                    padding:'1px 5px', borderRadius:3, flexShrink:0,
-                  }}>{a.category}</span>
-                </div>
-                <div style={{
-                  fontSize:11.5, fontWeight:600, color:C.dark,
-                  lineHeight:1.4,
-                  overflow:'hidden', textOverflow:'ellipsis',
-                  display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical',
-                }}>{a.title}</div>
-                <div style={{fontSize:9, color:C.mid, marginTop:3}}>
-                  {a.source} · {timeAgo(a.published_at)} {L('ago','')}
-                </div>
-              </div>
-              <div style={{
-                flexShrink:0, fontSize:9, color:C.blue, fontWeight:700,
-                padding:'4px 8px', border:`1px solid ${C.blue}40`,
-                borderRadius:5, whiteSpace:'nowrap', alignSelf:'center',
-              }}>
-                {L('Ask →','问 →')}
-              </div>
-            </div>
-          </div>
+      <div style={{display:'flex', flexDirection:'column', gap:2, maxHeight:500, overflowY:'auto'}}>
+        {activeList.map(a => (
+          <ArticleRow
+            key={a.id} a={a} onOpenArticle={onOpenArticle}
+            accent={newsTab === 'macro' ? macroAccent(a.tag) : portfolioAccent(a.ticker)}
+            C={C} L={L}
+          />
         ))}
       </div>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}`}</style>
     </div>
   );
 }
@@ -1100,7 +1156,7 @@ function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, 
   );
 }
 
-function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsArticles, newsLoading, newsLastFetched, onOpenArticle }) {
+function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsMacro, newsPortfolio, newsLoading, newsLastFetched, onOpenArticle }) {
   const colors = [C.blue, C.gold, C.green, C.red, C.blue];
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
@@ -1108,7 +1164,8 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
     <div>
       <Card title={L('Market News Intelligence','市场新闻情报')} sub={L('Live feed · Click any article to analyse & chat · auto-refreshes every 3 min','实时新闻 · 点击文章进行分析问答 · 每3分钟自动刷新')} open={open.newsPanel} onToggle={()=>toggle('newsPanel')} C={C}>
         <NewsPanel
-          articles={newsArticles}
+          macroArticles={newsMacro}
+          portfolioArticles={newsPortfolio}
           loading={newsLoading}
           lastFetched={newsLastFetched}
           onOpenArticle={onOpenArticle}
@@ -3998,6 +4055,8 @@ export default function Dashboard() {
   const [macroInsight, setMacroInsight] = useState(null);
   const [insightLoading, setInsightLoading] = useState(false);
   const [newsArticles, setNewsArticles] = useState([]);
+  const [newsMacro, setNewsMacro] = useState([]);
+  const [newsPortfolio, setNewsPortfolio] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsLastFetched, setNewsLastFetched] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -4139,8 +4198,12 @@ export default function Dashboard() {
       fetch(`${apiBase}/api/news`)
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(data => {
-          const articles = data.articles || [];
+          const macro     = data.macro     || [];
+          const portfolio = data.portfolio || [];
+          const articles  = data.articles  || [...macro, ...portfolio];
           setNewsArticles(articles);
+          setNewsMacro(macro);
+          setNewsPortfolio(portfolio);
           setNewsLastFetched(new Date());
           setNewsLoading(false);
 
@@ -4598,7 +4661,7 @@ export default function Dashboard() {
 
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
-          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsArticles={newsArticles} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle}/>}
+          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData}/>}
           {tab==='flow'     && (
             <div>
