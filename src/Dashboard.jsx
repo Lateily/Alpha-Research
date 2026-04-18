@@ -4195,7 +4195,7 @@ export default function Dashboard() {
 
     const fetchNews = (regime) => {
       setNewsLoading(true);
-      fetch(`${apiBase}/api/news`)
+      fetch(`${apiBase}/api/news?_cb=${Date.now()}`)
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(data => {
           const macro     = data.macro     || [];
@@ -4236,11 +4236,11 @@ export default function Dashboard() {
     // First fetch — wait for regimeData to be available
     const bootTimer = setTimeout(() => {
       setRegimeData(rd => { fetchNews(rd); return rd; });
-    }, 2000);
+    }, 1500);
 
     const pollTimer = setInterval(() => {
       setRegimeData(rd => { fetchNews(rd); return rd; });
-    }, 3 * 60 * 1000);
+    }, 60 * 1000);   // 1-minute poll
 
     return () => { clearTimeout(bootTimer); clearInterval(pollTimer); };
   }, []);

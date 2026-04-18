@@ -1,65 +1,52 @@
-// api/news.js — Dual-category market news aggregator
-// Sources: Google News RSS (aggregates FT · WSJ · Bloomberg · Reuters · CNBC · Economist · SCMP)
-// No API key required — works from Vercel US servers
-// Returns: { macro: Article[], portfolio: Article[], fetched_at }
-
-// ─── MACRO FEEDS ────────────────────────────────────────────────────────────
-// Global macro events: central banks, geopolitics, commodities, trade policy
-const MACRO_FEEDS = [
-  { query: 'Federal Reserve interest rate monetary policy inflation CPI', label: 'Fed / Central Banks', tag: 'FED' },
-  { query: 'China economy PBOC stimulus GDP trade surplus yuan', label: 'China Macro', tag: 'CHINA-MACRO' },
-  { query: 'US Iran geopolitical tension Middle East oil supply OPEC', label: 'Geopolitics', tag: 'GEO' },
-  { query: 'global stock market equity correction bull bear risk', label: 'Global Markets', tag: 'MARKETS' },
-  { query: 'oil gold dollar bond yield commodity futures', label: 'Commodities / FX', tag: 'COMMODITIES' },
-  { query: 'Hong Kong Hang Seng China A-share stock market', label: 'HK / A-Share Market', tag: 'HK-A' },
-  { query: 'trade tariff WTO deal sanctions economic agreement M&A', label: 'Trade / Policy', tag: 'TRADE' },
-];
+// api/news.js v4 — Source-specific RSS aggregator
+// Root cause of v3 bug: Google News RSS rate-limits from Vercel shared IPs,
+// returning identical cached responses regardless of query.
+//
+// Fix: dedicated RSS feeds per source. Portfolio = per-ticker Yahoo Finance.
+// Macro = CNBC + MarketWatch + Reuters + Yahoo Finance index/ETF feeds.
+// These are structurally different feeds → zero overlap between tabs.
 
 // ─── PORTFOLIO FEEDS ─────────────────────────────────────────────────────────
-// Company-specific + sector impact
+// Per-stock Yahoo Finance RSS + sector ETFs. Updated every ~15min by Yahoo.
 const PORTFOLIO_FEEDS = [
-  { query: 'Tencent WeChat gaming advertising AI earnings revenue', label: 'Tencent', ticker: '700.HK' },
-  { query: 'BYD electric vehicle EV sales exports solid state battery', label: 'BYD', ticker: '002594.SZ' },
-  { query: 'NetEase gaming mobile Japan Blizzard revenue ARPU', label: 'NetEase', ticker: '9999.HK' },
-  { query: 'BeiGene BeOne Medicines Brukinsa zanubrutinib BTK lymphoma', label: 'BeOne Medicines', ticker: '6160.HK' },
-  { query: 'Innolight optical transceiver 800G 1.6T AI data center Nvidia', label: 'Innolight', ticker: '300308.SZ' },
-  { query: 'China AI semiconductor Huawei Nvidia ban technology policy', label: 'AI Infra Sector', ticker: 'AI-INFRA' },
-  { query: 'China biotech NMPA drug approval oncology clinical trial BD deal', label: 'Biotech Sector', ticker: 'BIOTECH' },
-  { query: 'China EV Europe tariff battery supply chain solid state export', label: 'EV / Auto Sector', ticker: 'EV-SECTOR' },
+  // Focus stocks
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=0700.HK&region=US&lang=en-US',   ticker: '700.HK',       label: 'Tencent' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=9999.HK&region=US&lang=en-US',   ticker: '9999.HK',      label: 'NetEase' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=6160.HK&region=US&lang=en-US',   ticker: '6160.HK',      label: 'BeOne Medicines' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=BYDDY&region=US&lang=en-US',     ticker: '002594.SZ',    label: 'BYD' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=ITRUF&region=US&lang=en-US',     ticker: '300308.SZ',    label: 'Innolight' },
+  // Sector proxies
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=SMH&region=US&lang=en-US',       ticker: 'AI-INFRA',     label: 'AI / Semis Sector' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=XBI&region=US&lang=en-US',       ticker: 'BIOTECH',      label: 'Biotech / Pharma Sector' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=KWEB&region=US&lang=en-US',      ticker: 'CHINA-INTERNET', label: 'China Internet Sector' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=KARS&region=US&lang=en-US',      ticker: 'EV-SECTOR',    label: 'EV / Auto Sector' },
 ];
 
-// Known publishers and their brand colors (for badge rendering on frontend)
-const SOURCE_META = {
-  'Financial Times': { short: 'FT',        bg: '#FFF1E5', color: '#C9400A' },
-  'Wall Street Journal': { short: 'WSJ',   bg: '#1A1A1A', color: '#fff' },
-  'Bloomberg': { short: 'BBG',             bg: '#000',    color: '#FF6F0F' },
-  'Reuters': { short: 'Reuters',           bg: '#FF6F0F', color: '#fff' },
-  'CNBC': { short: 'CNBC',                 bg: '#0F0F0F', color: '#FFD700' },
-  'The Economist': { short: 'Econ',        bg: '#E3120B', color: '#fff' },
-  'South China Morning Post': { short: 'SCMP', bg: '#003366', color: '#fff' },
-  'Caixin Global': { short: 'Caixin',      bg: '#0066CC', color: '#fff' },
-  'Nikkei Asia': { short: 'Nikkei',        bg: '#D82B2B', color: '#fff' },
-  'MarketWatch': { short: 'MW',            bg: '#16C784', color: '#fff' },
-  'Barron\'s': { short: "Barron's",        bg: '#1D1D1B', color: '#E8C96A' },
-  'Seeking Alpha': { short: 'SA',          bg: '#3C7ABF', color: '#fff' },
-  'Yahoo Finance': { short: 'Yahoo',       bg: '#6001D2', color: '#fff' },
-};
+// ─── MACRO FEEDS ─────────────────────────────────────────────────────────────
+// Distinct from portfolio: financial news outlets + index/macro ETF feeds.
+const MACRO_FEEDS = [
+  // Financial news outlets (structurally different from Yahoo ticker RSS)
+  { url: 'https://feeds.marketwatch.com/marketwatch/topstories/',                              tag: 'MARKETS',     label: 'MarketWatch', source: 'MarketWatch' },
+  { url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',                             tag: 'MARKETS',     label: 'CNBC Business', source: 'CNBC' },
+  { url: 'https://feeds.reuters.com/reuters/businessNews',                                     tag: 'MACRO',       label: 'Reuters Business', source: 'Reuters' },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',                         tag: 'MACRO',       label: 'NYT Business', source: 'New York Times' },
+  // Macro market proxies via Yahoo Finance index feeds (news about rates, gold, FX)
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EHSI&region=US&lang=en-US',   tag: 'HK-A',        label: 'Hang Seng', source: 'Yahoo Finance' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US',  tag: 'MARKETS',     label: 'S&P 500', source: 'Yahoo Finance' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=TLT&region=US&lang=en-US',      tag: 'FED',         label: 'US Rates / Bonds', source: 'Yahoo Finance' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=GLD&region=US&lang=en-US',      tag: 'COMMODITIES', label: 'Gold / Macro', source: 'Yahoo Finance' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=USO&region=US&lang=en-US',      tag: 'GEO',         label: 'Oil / Geopolitics', source: 'Yahoo Finance' },
+];
 
-// Build Google News RSS URL
-function gnRSS(query) {
-  const encoded = encodeURIComponent(query);
-  return `https://news.google.com/rss/search?q=${encoded}&hl=en-US&gl=US&ceid=US:en`;
-}
-
-// Parse Google News RSS XML → article array
-function parseGoogleNewsRSS(xmlText, meta) {
+// ─── RSS PARSER ──────────────────────────────────────────────────────────────
+function parseRSS(xmlText, meta) {
   const items = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
   let m;
+
   while ((m = itemRegex.exec(xmlText)) !== null) {
     const block = m[1];
 
-    // Extract text content, stripping CDATA wrappers
     const get = (tag) => {
       const r = block.match(
         new RegExp(`<${tag}(?:[^>]*)>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`)
@@ -67,103 +54,116 @@ function parseGoogleNewsRSS(xmlText, meta) {
       return r ? r[1].replace(/<[^>]+>/g, '').trim() : '';
     };
 
-    // Google News <source url="...">Publisher Name</source>
-    const sourceMatch = block.match(/<source[^>]*>([^<]+)<\/source>/);
-    const publisher = sourceMatch ? sourceMatch[1].trim() : 'Unknown';
-    const sourceMeta = SOURCE_META[publisher] || { short: publisher.split(' ')[0], bg: '#3A6FD8', color: '#fff' };
-
-    // Title sometimes appended with " - Publisher"
-    let title = get('title');
-    title = title.replace(new RegExp(`\\s*-\\s*${publisher.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '').trim();
-
+    const title   = get('title');
     const pubDate = get('pubDate');
-    const link = get('link') || block.match(/https?:\/\/[^\s<"]+/)?.[0] || '';
+    const link    = get('link') || (block.match(/https?:\/\/[^\s<"']+/)?.[0] ?? '');
+    const desc    = get('description').slice(0, 400);
 
-    if (!title || title.length < 10) continue;
+    // Skip empty or placeholder items
+    if (!title || title.length < 12) continue;
 
-    const id = `${meta.ticker || meta.tag}-${Buffer.from(title.slice(0, 40)).toString('base64').slice(0, 16)}`;
+    // Source: use meta.source if provided, else fall back to domain
+    let source = meta.source || '';
+    if (!source && link) {
+      try { source = new URL(link).hostname.replace('www.', ''); } catch {}
+    }
+
+    // Build stable ID: category + ticker/tag + title fingerprint
+    const fp = title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40);
+    const id  = `${meta.category === 'MACRO' ? 'M' : 'P'}-${(meta.ticker || meta.tag || 'x')}-${fp}`;
 
     items.push({
       id,
       title,
-      summary: '',                // Google News doesn't provide summaries
-      source: publisher,
-      source_meta: sourceMeta,
+      summary: desc,
+      source,
       url: link,
       published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
-      ticker: meta.ticker || null,
-      tag: meta.tag || null,
-      label: meta.label,
-      category: meta.category || 'PORTFOLIO',
+      ticker:   meta.ticker || null,
+      tag:      meta.tag    || null,
+      label:    meta.label,
+      category: meta.category,
     });
   }
   return items;
 }
 
-// Fetch one feed with 5s timeout
-async function fetchFeed(feedMeta) {
-  const url = gnRSS(feedMeta.query);
+// ─── FETCH ONE FEED ──────────────────────────────────────────────────────────
+async function fetchFeed(meta) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  const timeout = setTimeout(() => controller.abort(), 6000);
   try {
-    const res = await fetch(url, {
+    const res = await fetch(meta.url, {
       signal: controller.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MarketIntelligenceBot/1.0)' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+      },
     });
     clearTimeout(timeout);
     if (!res.ok) return [];
     const xml = await res.text();
-    return parseGoogleNewsRSS(xml, feedMeta);
+    return parseRSS(xml, meta);
   } catch {
     clearTimeout(timeout);
     return [];
   }
 }
 
-// Deduplicate by normalised title prefix
-function dedupe(articles) {
+// ─── DEDUP + FRESHNESS ───────────────────────────────────────────────────────
+function dedup(articles) {
   const seen = new Set();
   return articles.filter(a => {
-    const key = a.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 50);
+    const key = a.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 45);
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
 }
 
+function isRecent(isoDate, maxHours = 72) {
+  try { return (Date.now() - new Date(isoDate)) < maxHours * 3_600_000; }
+  catch { return true; }
+}
+
+// ─── HANDLER ─────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  // NO caching — always return fresh data
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-  res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=60');
 
   try {
-    const macroFeeds   = MACRO_FEEDS.map(f => ({ ...f, category: 'MACRO' }));
-    const portfolioFeeds = PORTFOLIO_FEEDS.map(f => ({ ...f, category: 'PORTFOLIO' }));
+    const macroWithCat   = MACRO_FEEDS.map(f => ({ ...f, category: 'MACRO' }));
+    const portfolioWithCat = PORTFOLIO_FEEDS.map(f => ({ ...f, category: 'PORTFOLIO' }));
 
-    // Fetch all feeds in parallel
+    // Fetch both categories in parallel
     const [macroResults, portfolioResults] = await Promise.all([
-      Promise.allSettled(macroFeeds.map(fetchFeed)),
-      Promise.allSettled(portfolioFeeds.map(fetchFeed)),
+      Promise.allSettled(macroWithCat.map(fetchFeed)),
+      Promise.allSettled(portfolioWithCat.map(fetchFeed)),
     ]);
 
-    const macroAll     = macroResults.flatMap(r => r.status === 'fulfilled' ? r.value : []);
-    const portfolioAll = portfolioResults.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+    const macroRaw     = macroResults.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+    const portfolioRaw = portfolioResults.flatMap(r => r.status === 'fulfilled' ? r.value : []);
 
-    const sortByDate = arr => [...arr].sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+    const sortDesc = arr => [...arr].sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
-    const macro     = sortByDate(dedupe(macroAll)).slice(0, 30);
-    const portfolio = sortByDate(dedupe(portfolioAll)).slice(0, 30);
+    const macro     = sortDesc(dedup(macroRaw.filter(a => isRecent(a.published_at)))).slice(0, 30);
+    const portfolio = sortDesc(dedup(portfolioRaw.filter(a => isRecent(a.published_at)))).slice(0, 30);
 
     return res.status(200).json({
       macro,
       portfolio,
-      // Flat combined for backwards compat
       articles: [...macro, ...portfolio],
       fetched_at: new Date().toISOString(),
       macro_count: macro.length,
       portfolio_count: portfolio.length,
+      macro_sources:   [...new Set(macro.map(a => a.source))].filter(Boolean),
+      portfolio_sources: [...new Set(portfolio.map(a => a.source || a.ticker))].filter(Boolean),
     });
   } catch (err) {
     console.error('news.js error:', err);
