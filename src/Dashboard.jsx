@@ -1783,37 +1783,341 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
 }
 
 /* ── SCREENER TAB ────────────────────────────────────────────────────────── */
-function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData }) {
-  const stocks = Object.entries(stocksMap || STOCKS).map(([tk,s])=>({...s, ticker:tk})).sort((a,b)=>b.vp-a.vp);
+function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, universeHK }) {
+  const PAGE_SIZE = 100;
+  const POLL_MS   = 3000;
+
+  const [page,       setPage]       = useState(0);
+  const [sortBy,     setSortBy]     = useState('pct');
+  const [sortDir,    setSortDir]    = useState('desc');
+  const [mktFilter,  setMktFilter]  = useState('all');   // all | A | HK
+  const [dirFilter,  setDirFilter]  = useState('all');   // all | up | dn | lu | ld
+  const [searchQ,    setSearchQ]    = useState('');
+  const [liveQuotes, setLiveQuotes] = useState({});      // emKey → quote obj
+  const [polling,    setPolling]    = useState(true);
+  const pollRef  = useRef(null);
+  const codesRef = useRef([]);
+
+  /* ── master list ─────────────────────────────────────────────────────────── */
+  const masterList = React.useMemo(() => {
+    const arr = [];
+    if (universeA?.stocks)  arr.push(...universeA.stocks.map(s => ({...s, market:'A'})));
+    if (universeHK?.stocks) arr.push(...universeHK.stocks.map(s => ({...s, market:'HK'})));
+    return arr;
+  }, [universeA, universeHK]);
+
+  const toEMCode = s => {
+    if (!s?.code) return null;
+    if (s.exchange === 'SH') return `1.${s.code}`;
+    if (s.exchange === 'HK') return `116.${s.code.padStart(5,'0')}`;
+    return `0.${s.code}`;  // SZ / BJ
+  };
+
+  /* ── market summary stats ────────────────────────────────────────────────── */
+  const stats = React.useMemo(() => {
+    let up=0, dn=0, fl=0, lu=0, ld=0;
+    for (const s of masterList) {
+      const pct = s.change_pct;
+      if (pct == null) continue;
+      if      (pct >= 9.9)  lu++;
+      else if (pct > 0)     up++;
+      else if (pct <= -9.9) ld++;
+      else if (pct < 0)     dn++;
+      else                  fl++;
+    }
+    return { up, dn, fl, lu, ld, total: masterList.length };
+  }, [masterList]);
+
+  /* ── effective price (live wins over static) ─────────────────────────────── */
+  const getEff = s => {
+    const key = toEMCode(s);
+    const lv  = key ? liveQuotes[key] : null;
+    return lv
+      ? { price:lv.price, pct:lv.change_pct, amt:lv.change_amt, vol:lv.volume, turn:lv.turnover, pe:lv.pe, live:true }
+      : { price:s.price,  pct:s.change_pct,  amt:s.change_amt,  vol:s.volume,  turn:s.turnover,  pe:s.pe,  live:false };
+  };
+
+  /* ── filter + sort ───────────────────────────────────────────────────────── */
+  const filtered = React.useMemo(() => {
+    let arr = masterList;
+    if (mktFilter !== 'all') arr = arr.filter(s => s.market === mktFilter);
+    if (searchQ.trim()) {
+      const q = searchQ.toLowerCase();
+      arr = arr.filter(s => s.name?.toLowerCase().includes(q) || s.code?.includes(q) || s.ticker?.toLowerCase().includes(q));
+    }
+    if (dirFilter === 'up') arr = arr.filter(s => (s.change_pct ?? 0) > 0);
+    if (dirFilter === 'dn') arr = arr.filter(s => (s.change_pct ?? 0) < 0);
+    if (dirFilter === 'lu') arr = arr.filter(s => (s.change_pct ?? 0) >= 9.9);
+    if (dirFilter === 'ld') arr = arr.filter(s => (s.change_pct ?? 0) <= -9.9);
+
+    return [...arr].sort((a, b) => {
+      const ea = getEff(a), eb = getEff(b);
+      let va, vb;
+      if      (sortBy==='pct')    { va=ea.pct;   vb=eb.pct; }
+      else if (sortBy==='px')     { va=ea.price; vb=eb.price; }
+      else if (sortBy==='vol')    { va=ea.vol;   vb=eb.vol; }
+      else if (sortBy==='turn')   { va=ea.turn;  vb=eb.turn; }
+      else if (sortBy==='mktcap') { va=a.market_cap; vb=b.market_cap; }
+      else if (sortBy==='pe')     { va=ea.pe;    vb=eb.pe; }
+      else                        { va=ea.pct;   vb=eb.pct; }
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      return sortDir==='desc' ? vb - va : va - vb;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [masterList, mktFilter, searchQ, dirFilter, sortBy, sortDir, liveQuotes]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const visible    = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  // reset to page 0 on filter change
+  useEffect(() => { setPage(0); }, [mktFilter, dirFilter, searchQ]);
+
+  /* ── live quote polling — only visible stocks ────────────────────────────── */
+  useEffect(() => {
+    codesRef.current = visible.map(toEMCode).filter(Boolean);
+
+    const doPoll = async () => {
+      if (!codesRef.current.length || !polling) return;
+      try {
+        const base = import.meta.env.VITE_API_BASE || 'https://equity-research-ten.vercel.app';
+        const r = await fetch(`${base}/api/live-quotes?codes=${codesRef.current.join(',')}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (d.quotes?.length) {
+          setLiveQuotes(prev => {
+            const next = {...prev};
+            for (const q of d.quotes) next[q.em_key] = q;
+            return next;
+          });
+        }
+      } catch {}
+    };
+
+    doPoll();
+    clearInterval(pollRef.current);
+    if (polling) pollRef.current = setInterval(doPoll, POLL_MS);
+    return () => clearInterval(pollRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, filtered.length, polling]);
+
+  /* ── helpers ─────────────────────────────────────────────────────────────── */
+  const fmtVol = n => {
+    if (n == null) return '—';
+    if (n >= 1e8) return `${(n/1e8).toFixed(1)}亿`;
+    if (n >= 1e4) return `${(n/1e4).toFixed(1)}万`;
+    return String(Math.round(n));
+  };
+
+  const ColHd = ({ field, label, align='right' }) => (
+    <div style={{textAlign:align, cursor:'pointer', userSelect:'none', whiteSpace:'nowrap',
+                 color: sortBy===field ? C.blue : 'inherit', fontWeight: sortBy===field ? 700 : 600}}
+         onClick={() => { if (sortBy===field) setSortDir(d=>d==='desc'?'asc':'desc'); else { setSortBy(field); setSortDir('desc'); } }}>
+      {label}{sortBy===field ? (sortDir==='desc'?'↓':'↑') : ''}
+    </div>
+  );
+
+  const FBtn = ({ val, stateVal, setter, color, children }) => (
+    <button onClick={()=>setter(val)} style={{
+      fontSize:10, padding:'3px 9px', borderRadius:16,
+      border:`1px solid ${val===stateVal ? (color||C.blue) : C.border}`,
+      background: val===stateVal ? `${color||C.blue}1A` : 'transparent',
+      color: val===stateVal ? (color||C.blue) : C.mid,
+      fontWeight: val===stateVal ? 700 : 400, cursor:'pointer',
+    }}>{children}</button>
+  );
+
+  /* ── empty state ─────────────────────────────────────────────────────────── */
+  if (!universeA && !universeHK) return (
+    <div style={{textAlign:'center', padding:60, color:C.mid}}>
+      <Database size={36} style={{marginBottom:10, opacity:0.35}}/>
+      <div style={{fontSize:12}}>{L('Loading full universe…','全市场数据加载中…')}</div>
+    </div>
+  );
+
+  const liveCount = Object.keys(liveQuotes).length;
+  const COLS = '32px 1fr 80px 80px 80px 80px 10px';
+
   return (
     <div>
-      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:14}}>
-        {stocks.map((s,i)=>{
-          const lv  = liveData?.yahoo?.[s.ticker];
-          const px  = lv?.price?.last;
-          const chg = lv?.price?.change_pct;
-          const isHK = s.ticker.endsWith('.HK');
-          const c = isHK ? 'HK$' : '¥';
-          const priceStr = px != null ? `${c}${px.toFixed(2)}` : s.price;
-          return (
-            <div key={i} style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:14, cursor:'pointer', transition:'all .2s'}} onClick={()=>onSelect(s.ticker)}>
-              <div style={{...S.row, justifyContent:'space-between', marginBottom:8}}>
-                <div><div style={{fontSize:12, fontWeight:700, color:C.dark}}>{s.ticker}</div><div style={{fontSize:10, color:C.mid}}>{s.name}/{s.en}</div></div>
-                <VPRing score={s.vp} sz={48} C={C}/>
-              </div>
-              <div style={{...S.row, gap:8, marginBottom:6}}>
-                <div style={{fontSize:13, fontWeight:700, color:C.dark, fontFamily:MONO}}>{priceStr}</div>
-                {chg != null && (
-                  <div style={{fontSize:10, fontWeight:600, color:chg>0?C.green:chg<0?C.red:C.mid}}>
-                    {chg>0?'+':''}{chg.toFixed(2)}%
-                  </div>
-                )}
-              </div>
-              <div style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{s.pulse[lk]}</div>
-            </div>
-          );
-        })}
+      {/* ── MARKET SUMMARY BAR ─────────────────────────────────────────────── */}
+      <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10,
+                   padding:'10px 16px', marginBottom:10,
+                   display:'flex', alignItems:'center', gap:16, flexWrap:'wrap'}}>
+        <div style={{fontSize:10, fontWeight:700, color:C.mid, letterSpacing:'0.05em'}}>
+          {L('TODAY','今日')}
+        </div>
+        <div style={{display:'flex', gap:14, flexWrap:'wrap'}}>
+          {[
+            { val:'lu', label:L('Limit↑','涨停'), count:stats.lu,  clr:'#EF4444' },
+            { val:'up', label:L('Up','上涨'),      count:stats.up,  clr:C.green },
+            { val:'',   label:L('Flat','平家'),    count:stats.fl,  clr:C.mid },
+            { val:'dn', label:L('Down','下跌'),    count:stats.dn,  clr:C.red },
+            { val:'ld', label:L('Limit↓','跌停'), count:stats.ld,  clr:'#9333EA' },
+          ].map(({val, label, count, clr}) => (
+            <span key={val||'fl'} onClick={()=>val&&setDirFilter(val===dirFilter?'all':val)}
+                  style={{cursor:val?'pointer':'default', display:'flex', gap:4, alignItems:'baseline'}}>
+              <span style={{fontSize:13, fontWeight:700, color:clr, fontFamily:MONO}}>{count}</span>
+              <span style={{fontSize:10, color:C.mid}}>{label}</span>
+            </span>
+          ))}
+        </div>
+        <div style={{marginLeft:'auto', display:'flex', alignItems:'center', gap:8}}>
+          <span style={{fontSize:10, color: polling ? C.green : C.mid, display:'flex', alignItems:'center', gap:4}}>
+            {polling
+              ? <><span style={{width:6,height:6,borderRadius:'50%',background:C.green,display:'inline-block'}}/>{L('Live','实时')} · {liveCount}{L(' refreshed',' 只已刷新')}</>
+              : <><WifiOff size={11}/> {L('Paused','暂停中')}</>
+            }
+          </span>
+          <button onClick={()=>setPolling(p=>!p)} style={{
+            fontSize:10, padding:'2px 8px', borderRadius:10,
+            border:`1px solid ${C.border}`, background:'transparent', color:C.mid, cursor:'pointer',
+          }}>{polling ? L('Pause','暂停') : L('Resume','恢复')}</button>
+        </div>
       </div>
+
+      {/* ── CONTROLS ───────────────────────────────────────────────────────── */}
+      <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10,
+                   padding:'10px 14px', marginBottom:10,
+                   display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
+        {/* Search */}
+        <div style={{position:'relative'}}>
+          <Search size={11} style={{position:'absolute', left:8, top:'50%', transform:'translateY(-50%)', color:C.mid}}/>
+          <input value={searchQ} onChange={e=>setSearchQ(e.target.value)}
+            placeholder={L('Name / Code…','名称/代码…')}
+            style={{paddingLeft:24, paddingRight:8, height:28, width:160, fontSize:11,
+                    background:C.soft, border:`1px solid ${C.border}`, borderRadius:6,
+                    color:C.dark, outline:'none'}}/>
+        </div>
+        {/* Market */}
+        <div style={{display:'flex', gap:4}}>
+          <FBtn val='all' stateVal={mktFilter} setter={setMktFilter}>{L('All','全部')}</FBtn>
+          <FBtn val='A'   stateVal={mktFilter} setter={setMktFilter}>A股</FBtn>
+          <FBtn val='HK'  stateVal={mktFilter} setter={setMktFilter}>港股</FBtn>
+        </div>
+        {/* Direction */}
+        <div style={{display:'flex', gap:4}}>
+          <FBtn val='all' stateVal={dirFilter} setter={setDirFilter}>{L('All','全部')}</FBtn>
+          <FBtn val='lu'  stateVal={dirFilter} setter={setDirFilter} color='#EF4444'>{L('↑Limit','涨停')}</FBtn>
+          <FBtn val='up'  stateVal={dirFilter} setter={setDirFilter} color={C.green}>{L('Up','上涨')}</FBtn>
+          <FBtn val='dn'  stateVal={dirFilter} setter={setDirFilter} color={C.red}>{L('Down','下跌')}</FBtn>
+          <FBtn val='ld'  stateVal={dirFilter} setter={setDirFilter} color='#9333EA'>{L('↓Limit','跌停')}</FBtn>
+        </div>
+        <div style={{marginLeft:'auto', fontSize:10, color:C.mid}}>
+          {filtered.length.toLocaleString()} {L('stocks','只')}
+          {totalPages > 1 && ` · P${page+1}/${totalPages}`}
+        </div>
+      </div>
+
+      {/* ── TABLE ──────────────────────────────────────────────────────────── */}
+      <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, overflow:'hidden', marginBottom:10}}>
+        {/* header row */}
+        <div style={{display:'grid', gridTemplateColumns:COLS, gap:'0 6px',
+                     padding:'7px 12px', background:C.soft, borderBottom:`1px solid ${C.border}`,
+                     fontSize:10, color:C.mid}}>
+          <div style={{color:C.mid}}>#</div>
+          <div style={{color:C.mid}}>{L('Name · Code','名称 · 代码')}</div>
+          <ColHd field='px'     label={L('Price','价格')}/>
+          <ColHd field='pct'    label={L('Chg%','涨跌%')}/>
+          <ColHd field='vol'    label={L('Volume','量')}/>
+          <ColHd field='turn'   label={L('Turnover','额')}/>
+          <div/>
+        </div>
+
+        {visible.length === 0
+          ? <div style={{textAlign:'center', padding:40, color:C.mid, fontSize:12}}>
+              {L('No stocks match','无匹配股票')}
+            </div>
+          : visible.map((s, i) => {
+              const eff  = getEff(s);
+              const pct  = eff.pct;
+              const clr  = pct == null ? C.mid : pct > 0 ? C.green : pct < 0 ? C.red : C.mid;
+              const isLU = pct != null && pct >= 9.9;
+              const isLD = pct != null && pct <= -9.9;
+              const rank = page * PAGE_SIZE + i + 1;
+              const oddBg = i%2===0 ? 'transparent' : C.soft;
+
+              return (
+                <div key={s.ticker}
+                  onClick={() => onSelect(s.ticker)}
+                  style={{display:'grid', gridTemplateColumns:COLS, gap:'0 6px',
+                          padding:'6px 12px', borderBottom:`1px solid ${C.border}`,
+                          cursor:'pointer', background:oddBg, transition:'background .1s'}}
+                  onMouseEnter={e=>e.currentTarget.style.background=`${C.blue}0D`}
+                  onMouseLeave={e=>e.currentTarget.style.background=oddBg}>
+
+                  {/* rank */}
+                  <div style={{fontSize:10, color:C.mid, alignSelf:'center'}}>{rank}</div>
+
+                  {/* name + code */}
+                  <div style={{alignSelf:'center', minWidth:0}}>
+                    <div style={{fontSize:11, fontWeight:600, color:C.dark,
+                                 overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                      {isLU && <span style={{fontSize:8, background:'#EF4444', color:'#fff',
+                                             borderRadius:3, padding:'0 3px', marginRight:3}}>涨停</span>}
+                      {isLD && <span style={{fontSize:8, background:'#9333EA', color:'#fff',
+                                             borderRadius:3, padding:'0 3px', marginRight:3}}>跌停</span>}
+                      {s.name}
+                    </div>
+                    <div style={{fontSize:9, color:C.mid, fontFamily:MONO}}>
+                      {s.code} <span style={{opacity:0.6}}>{s.market==='HK'?'港':s.exchange}</span>
+                    </div>
+                  </div>
+
+                  {/* price */}
+                  <div style={{textAlign:'right', alignSelf:'center', fontFamily:MONO,
+                               fontSize:11, fontWeight:600, color:clr}}>
+                    {eff.price != null ? eff.price.toFixed(eff.price < 10 ? 3 : 2) : '—'}
+                  </div>
+
+                  {/* chg% */}
+                  <div style={{textAlign:'right', alignSelf:'center', fontFamily:MONO,
+                               fontSize:11, fontWeight:700, color:clr}}>
+                    {pct != null ? `${pct>0?'+':''}${pct.toFixed(2)}%` : '—'}
+                  </div>
+
+                  {/* volume */}
+                  <div style={{textAlign:'right', alignSelf:'center', fontSize:10, color:C.mid, fontFamily:MONO}}>
+                    {fmtVol(eff.vol)}
+                  </div>
+
+                  {/* turnover */}
+                  <div style={{textAlign:'right', alignSelf:'center', fontSize:10, color:C.mid, fontFamily:MONO}}>
+                    {fmtVol(eff.turn)}
+                  </div>
+
+                  {/* live dot */}
+                  <div style={{alignSelf:'center', textAlign:'center'}}>
+                    {eff.live && <span style={{width:5, height:5, borderRadius:'50%',
+                                              background:C.green, display:'inline-block'}}/>}
+                  </div>
+                </div>
+              );
+            })
+        }
+      </div>
+
+      {/* ── PAGINATION ─────────────────────────────────────────────────────── */}
+      {totalPages > 1 && (
+        <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:8, paddingBottom:8}}>
+          <button onClick={()=>setPage(p=>Math.max(0,p-1))} disabled={page===0}
+            style={{padding:'4px 12px', borderRadius:6, border:`1px solid ${C.border}`,
+                    background:'transparent', color:page===0?C.mid:C.dark,
+                    cursor:page===0?'default':'pointer', fontSize:11, display:'flex', alignItems:'center', gap:2}}>
+            <ChevronLeft size={12}/> {L('Prev','上页')}
+          </button>
+          <span style={{fontSize:11, color:C.mid}}>
+            {(page*PAGE_SIZE+1).toLocaleString()}–{Math.min((page+1)*PAGE_SIZE, filtered.length).toLocaleString()}
+            {' '}{L('of','/共')}{' '}{filtered.length.toLocaleString()}
+          </span>
+          <button onClick={()=>setPage(p=>Math.min(totalPages-1,p+1))} disabled={page===totalPages-1}
+            style={{padding:'4px 12px', borderRadius:6, border:`1px solid ${C.border}`,
+                    background:'transparent', color:page===totalPages-1?C.mid:C.dark,
+                    cursor:page===totalPages-1?'default':'pointer', fontSize:11, display:'flex', alignItems:'center', gap:2}}>
+            {L('Next','下页')} <ChevronRight size={12}/>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -5786,7 +6090,7 @@ export default function Dashboard() {
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
           {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
-          {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData}/>}
+          {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
           {tab==='flow'     && (
             <div>
               <Card title={L('Capital Flow Dashboard','资金流向仪表盘')} sub={L('Northbound · Southbound · Dragon & Tiger · Margin','北向·南向·龙虎榜·融资融券')} open={true} C={C}>
