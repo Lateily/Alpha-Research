@@ -45,11 +45,12 @@ An institutional-grade personal research platform that systematises buy-side equ
 
 ## v14 — Next Sprint
 
-### v14.1 — Swing Trading Signal Module
+### v14.1 — Swing Trading Signal Module ✅
 **Goal**: Rule-based entry/exit zone detection (not AI, deterministic)  
-**Signals**: MA20/MA60 crossover, RSI(14) zones, volume breakout  
-**Output**: `public/data/signals_[ticker].json` → `SwingSignal` component in Scanner tab  
-**Effort**: ~1 session
+**Signals**: MA20/MA60 crossover, RSI(14) zones, volume breakout, MA bounce  
+**Output**: `public/data/signals_[ticker].json` → `SwingSignal` component in Scanner + Research tabs  
+**Effort**: ~1 session  
+**Shipped**: 2026-04-18
 
 ### v14.2 — UBS Pitch Framework
 **Goal**: Deep Research outputs in IB pitch structure (Situation/Complication/Question/Answer/Evidence/Risk)  

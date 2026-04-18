@@ -1,0 +1,27 @@
+{
+  "ticker": "9999.HK",
+  "generated_at": "2026-04-18",
+  "price": 175.7,
+  "zone": "BEARISH",
+  "entry_zone": false,
+  "exit_zone": false,
+  "signals": [],
+  "signal_count": {
+    "bullish": 0,
+    "bearish": 0,
+    "total": 0
+  },
+  "indicators": {
+    "ma5": 176.9,
+    "ma20": 178.51,
+    "ma60": 189.95,
+    "rsi14": 44.0,
+    "vol_ma20": 5273004,
+    "vol_ratio": 0.74,
+    "price_vs_ma20": -1.58,
+    "price_vs_ma60": -7.5,
+    "change_1d": -1.51,
+    "change_5d": -0.23,
+    "change_20d": -4.6
+  }
+}

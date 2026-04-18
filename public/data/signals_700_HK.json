@@ -1,0 +1,27 @@
+{
+  "ticker": "700.HK",
+  "generated_at": "2026-04-18",
+  "price": 490.0,
+  "zone": "BEARISH",
+  "entry_zone": false,
+  "exit_zone": false,
+  "signals": [],
+  "signal_count": {
+    "bullish": 0,
+    "bearish": 0,
+    "total": 0
+  },
+  "indicators": {
+    "ma5": 500.04,
+    "ma20": 512.17,
+    "ma60": 547.3,
+    "rsi14": 40.1,
+    "vol_ma20": 26118098,
+    "vol_ratio": 0.81,
+    "price_vs_ma20": -4.33,
+    "price_vs_ma60": -10.47,
+    "change_1d": -2.87,
+    "change_5d": -1.33,
+    "change_20d": -11.23
+  }
+}

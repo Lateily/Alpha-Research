@@ -1473,7 +1473,172 @@ function ExclusiveInsight({ macroInsight, insightLoading, onGenerateInsight, L, 
   );
 }
 
-function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsMacro, newsPortfolio, newsLoading, newsLastFetched, onOpenArticle, liveData, universeA, universeHK }) {
+// ── SwingSignal ───────────────────────────────────────────────────────────────
+// Shared component — used in Scanner (summary row) and Research (detail card).
+// `signals` = one ticker's signals_*.json object (or null/undefined if loading).
+// `mode`    = 'compact' (Scanner row) | 'detail' (Research card)
+
+const ZONE_STYLE = (zone, C) => {
+  const map = {
+    BULLISH:    { bg:`${C.green}18`, color:C.green,   label:{e:'Bullish',   z:'看涨'} },
+    BEARISH:    { bg:`${C.red}18`,   color:C.red,     label:{e:'Bearish',   z:'看跌'} },
+    OVERBOUGHT: { bg:`${C.gold}18`,  color:C.gold,    label:{e:'Overbought',z:'超买'} },
+    OVERSOLD:   { bg:`${C.blue}18`,  color:C.blue,    label:{e:'Oversold',  z:'超卖'} },
+    NEUTRAL:    { bg:`${C.mid}14`,   color:C.mid,     label:{e:'Neutral',   z:'中性'} },
+  };
+  return map[zone] || map.NEUTRAL;
+};
+
+const SIGNAL_COLOR = (sig, C) => sig.bullish ? C.green : C.red;
+const SIGNAL_ICON  = (sig) => sig.bullish ? '↑' : '↓';
+const STRENGTH_OPACITY = { strong:1, moderate:0.75 };
+
+function SwingSignalBadge({ zone, C, lk }) {
+  const style = ZONE_STYLE(zone, C);
+  return (
+    <span style={{
+      fontSize:9, fontWeight:700, padding:'2px 7px',
+      borderRadius:20, background:style.bg, color:style.color,
+      letterSpacing:'0.02em', whiteSpace:'nowrap',
+    }}>
+      {style.label[lk] || style.label.e}
+    </span>
+  );
+}
+
+function SwingSignalCompact({ signals, C, lk }) {
+  // One-liner summary for Scanner table rows
+  if (!signals) return <span style={{fontSize:9, color:C.mid}}>—</span>;
+  const sc = signals.signal_count;
+  const zone = signals.zone;
+  const zs   = ZONE_STYLE(zone, C);
+  const ind  = signals.indicators;
+  const entry = signals.entry_zone;
+  const exit  = signals.exit_zone;
+  const topSig = signals.signals[0];
+
+  return (
+    <div style={{display:'flex', alignItems:'center', gap:6, flexWrap:'wrap'}}>
+      <SwingSignalBadge zone={zone} C={C} lk={lk}/>
+      {sc.total > 0 && (
+        <span style={{fontSize:9, fontFamily:'JetBrains Mono,monospace'}}>
+          {sc.bullish > 0 && <span style={{color:C.green}}>{sc.bullish}↑</span>}
+          {sc.bullish > 0 && sc.bearish > 0 && <span style={{color:C.mid}}> </span>}
+          {sc.bearish > 0 && <span style={{color:C.red}}>{sc.bearish}↓</span>}
+        </span>
+      )}
+      {entry && !exit && <span style={{fontSize:8, color:C.green, fontWeight:600}}>ENTRY</span>}
+      {exit  && !entry && <span style={{fontSize:8, color:C.red,   fontWeight:600}}>EXIT</span>}
+      {entry && exit   && <span style={{fontSize:8, color:C.gold,  fontWeight:600}}>⚠ WATCH</span>}
+      {topSig && (
+        <span style={{fontSize:9, color:C.mid, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+          {topSig.description[lk] || topSig.description.e}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function SwingSignalDetail({ signals, C, L, lk }) {
+  // Full detail card for Research tab
+  if (!signals) return (
+    <div style={{padding:'12px 0', color:C.mid, fontSize:11}}>
+      {L('No swing signal data — run fetch-data workflow','暂无摆动信号数据，请运行fetch-data工作流')}
+    </div>
+  );
+
+  const { zone, entry_zone, exit_zone, signals: sigs, signal_count: sc, indicators: ind, price, generated_at } = signals;
+  const zs = ZONE_STYLE(zone, C);
+
+  return (
+    <div>
+      {/* Header: zone + entry/exit badges + generated date */}
+      <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:12, flexWrap:'wrap'}}>
+        <SwingSignalBadge zone={zone} C={C} lk={lk}/>
+        {entry_zone && (
+          <span style={{fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:20,
+            background:`${C.green}18`, color:C.green}}>
+            {L('Entry Zone ✓','入场区 ✓')}
+          </span>
+        )}
+        {exit_zone && (
+          <span style={{fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:20,
+            background:`${C.red}18`, color:C.red}}>
+            {L('Exit Zone ⚠','退场区 ⚠')}
+          </span>
+        )}
+        <span style={{fontSize:9, color:C.mid, marginLeft:'auto'}}>
+          {L('as of','截至')} {generated_at}
+        </span>
+      </div>
+
+      {/* Indicator grid */}
+      <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:8, marginBottom:12}}>
+        {[
+          { label:'MA20',          val: ind.ma20  != null ? ind.ma20.toFixed(1)  : '—' },
+          { label:'MA60',          val: ind.ma60  != null ? ind.ma60.toFixed(1)  : '—' },
+          { label:'RSI(14)',       val: ind.rsi14 != null ? ind.rsi14.toFixed(1) : '—',
+            color: ind.rsi14 > 70 ? C.red : ind.rsi14 < 30 ? C.green : C.dark },
+          { label:L('Vol Ratio','量比'), val: ind.vol_ratio != null ? `${ind.vol_ratio.toFixed(2)}×` : '—',
+            color: ind.vol_ratio >= 2 ? C.green : ind.vol_ratio < 0.5 ? C.red : C.dark },
+          { label:L('vs MA20','偏MA20'), val: ind.price_vs_ma20 != null ? `${ind.price_vs_ma20>0?'+':''}${ind.price_vs_ma20.toFixed(1)}%` : '—',
+            color: ind.price_vs_ma20 > 0 ? C.green : C.red },
+          { label:L('vs MA60','偏MA60'), val: ind.price_vs_ma60 != null ? `${ind.price_vs_ma60>0?'+':''}${ind.price_vs_ma60.toFixed(1)}%` : '—',
+            color: ind.price_vs_ma60 > 0 ? C.green : C.red },
+          { label:L('1D Chg','1日'), val: ind.change_1d  != null ? `${ind.change_1d>0?'+':''}${ind.change_1d.toFixed(2)}%`  : '—',
+            color: ind.change_1d  > 0 ? C.green : C.red },
+          { label:L('5D Chg','5日'), val: ind.change_5d  != null ? `${ind.change_5d>0?'+':''}${ind.change_5d.toFixed(2)}%`  : '—',
+            color: ind.change_5d  > 0 ? C.green : C.red },
+        ].map(({ label, val, color }) => (
+          <div key={label} style={{background:C.soft, borderRadius:8, padding:'8px 10px'}}>
+            <div style={{fontSize:9, color:C.mid, fontWeight:600, marginBottom:3}}>{label}</div>
+            <div style={{fontSize:12, fontWeight:700, fontFamily:'JetBrains Mono,monospace',
+                         color: color || C.dark}}>{val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Signal list */}
+      {sigs.length === 0 ? (
+        <div style={{fontSize:11, color:C.mid, padding:'8px 0'}}>
+          {L('No active signals — market is quiet','暂无信号，市场处于静默期')}
+        </div>
+      ) : (
+        <div>
+          {sigs.map((sig, i) => {
+            const col = SIGNAL_COLOR(sig, C);
+            const opc = STRENGTH_OPACITY[sig.strength] || 0.8;
+            return (
+              <div key={i} style={{display:'flex', alignItems:'flex-start', gap:8, padding:'7px 0',
+                borderBottom: i < sigs.length-1 ? `1px solid ${C.border}` : 'none',
+                opacity: opc}}>
+                {/* Strength bar */}
+                <div style={{width:3, borderRadius:3, alignSelf:'stretch', minHeight:24,
+                  background: col, flexShrink:0}}/>
+                <div style={{flex:1}}>
+                  <div style={{display:'flex', alignItems:'center', gap:6, marginBottom:2}}>
+                    <span style={{fontSize:10, fontWeight:700, color:col}}>
+                      {SIGNAL_ICON(sig)} {sig.type.replace(/_/g,' ')}
+                    </span>
+                    <span style={{fontSize:8, color:C.mid, textTransform:'uppercase',
+                      padding:'1px 5px', background:C.soft, borderRadius:8}}>
+                      {sig.strength}
+                    </span>
+                  </div>
+                  <div style={{fontSize:11, color:C.mid, lineHeight:1.5}}>
+                    {sig.description[lk] || sig.description.e}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsMacro, newsPortfolio, newsLoading, newsLastFetched, onOpenArticle, liveData, universeA, universeHK, signalsData }) {
   const colors = [C.blue, C.gold, C.green, C.red, C.blue];
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
@@ -1592,6 +1757,42 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
             </div>
           );
         })}
+      </Card>
+
+      {/* ── Swing Trading Signals ────────────────────────────────────────── */}
+      <Card title={L('Swing Trading Signals','摆动交易信号')}
+            sub={L('MA20/60 crossover · RSI(14) · Volume breakout — deterministic, rule-based','MA20/60交叉 · RSI(14) · 放量突破 — 确定性规则信号')}
+            open={open.swingSignals !== false} onToggle={()=>toggle('swingSignals')} C={C}>
+        {/* Column headers */}
+        <div style={{display:'flex', alignItems:'center', padding:'4px 0',
+          borderBottom:`1px solid ${C.border}`, marginBottom:4}}>
+          <span style={{flex:'1 1 120px', fontSize:9, color:C.mid, fontWeight:600}}>{L('STOCK','股票')}</span>
+          <span style={{width:90,  fontSize:9, color:C.mid, fontWeight:600}}>{L('ZONE','区域')}</span>
+          <span style={{flex:'3 1 0', fontSize:9, color:C.mid, fontWeight:600}}>{L('SIGNALS','信号')}</span>
+        </div>
+        {FOCUS.map((tk, i) => {
+          const sig = signalsData?.[tk.id];
+          return (
+            <div key={i} style={{display:'flex', alignItems:'center', padding:'8px 0',
+              borderBottom: i < FOCUS.length-1 ? `1px solid ${C.border}` : 'none', gap:0}}>
+              <div style={{flex:'1 1 120px'}}>
+                <div style={{fontSize:11, fontWeight:700, color:C.dark}}>{tk.name}</div>
+                <div style={{fontSize:9, color:C.mid}}>{tk.id}</div>
+              </div>
+              <div style={{width:90}}>
+                {sig ? <SwingSignalBadge zone={sig.zone} C={C} lk={lk}/> : <span style={{fontSize:9, color:C.mid}}>—</span>}
+              </div>
+              <div style={{flex:'3 1 0'}}>
+                <SwingSignalCompact signals={sig} C={C} lk={lk}/>
+              </div>
+            </div>
+          );
+        })}
+        {!signalsData || Object.keys(signalsData).length === 0 ? (
+          <div style={{fontSize:10, color:C.mid, padding:'8px 0', textAlign:'center'}}>
+            {L('Signal data not yet available — will appear after next GitHub Actions run','信号数据暂不可用，下次工作流运行后显示')}
+          </div>
+        ) : null}
       </Card>
 
       {/* ── Capital Flow Intelligence ─────────────────────────────────── */}
@@ -2105,7 +2306,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData }) {
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
@@ -2156,6 +2357,14 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
 
       {/* Daily Pulse — auto-runs once per day, shows at top of Research view */}
       <PulseCard pulse={pulse} loading={pulseLoading} ticker={ticker} onRunPulse={onRunPulse} L={L} lk={lk} C={C}/>
+
+      {/* Swing Trading Signals */}
+      <Card title={L('Swing Trading Signals','摆动交易信号')}
+            sub={L('Deterministic MA/RSI/Volume signals · Updated daily','确定性MA/RSI/量能信号 · 每日更新')}
+            open={open['swingDetail_' + ticker] !== false}
+            onToggle={() => toggle('swingDetail_' + ticker)} C={C}>
+        <SwingSignalDetail signals={signalsData?.[ticker]} C={C} L={L} lk={lk}/>
+      </Card>
 
       <Card title={`${ticker} · ${s.name}`} sub={`${s.en} · VP ${s.vp}`} open={true} C={C}>
         <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginBottom:14}}>
@@ -5441,6 +5650,24 @@ export default function Dashboard() {
     });
   }, []);
 
+  /* Fetch swing signals on mount */
+  const [signalsData, setSignalsData] = useState({});
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL || '/';
+    const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
+    Promise.all(
+      ids.map(id =>
+        fetch(base + `data/signals_${id}.json`)
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
+      )
+    ).then(results => {
+      const map = {};
+      results.forEach(d => { if (d?.ticker) map[d.ticker] = d; });
+      setSignalsData(map);
+    });
+  }, []);
+
   /* Fetch macro stress test data on mount */
   useEffect(() => {
     const base = import.meta.env.BASE_URL || '/';
@@ -6128,7 +6355,7 @@ export default function Dashboard() {
 
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
-          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
+          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK} signalsData={signalsData}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
           {tab==='flow'     && (
             <div>
@@ -6162,11 +6389,11 @@ export default function Dashboard() {
             }
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
-                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }}/></div>}
+                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData}/></div>}
                 <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>
               </div>
             );
-            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }}/>;
+            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
           })()}

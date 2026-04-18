@@ -1,0 +1,38 @@
+{
+  "ticker": "002594.SZ",
+  "generated_at": "2026-04-18",
+  "price": 104.25,
+  "zone": "BULLISH",
+  "entry_zone": true,
+  "exit_zone": false,
+  "signals": [
+    {
+      "type": "MA20_BOUNCE",
+      "strength": "moderate",
+      "date": "2026-04-13",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA20 (102.9) — near-term support held",
+        "z": "股价从MA20(102.9)附近反弹，短期支撑有效"
+      }
+    }
+  ],
+  "signal_count": {
+    "bullish": 1,
+    "bearish": 0,
+    "total": 1
+  },
+  "indicators": {
+    "ma5": 100.83,
+    "ma20": 103.13,
+    "ma60": 96.72,
+    "rsi14": 57.0,
+    "vol_ma20": 71390645,
+    "vol_ratio": 0.93,
+    "price_vs_ma20": 1.09,
+    "price_vs_ma60": 7.78,
+    "change_1d": 2.54,
+    "change_5d": 5.29,
+    "change_20d": 4.6
+  }
+}

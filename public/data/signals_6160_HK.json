@@ -1,0 +1,27 @@
+{
+  "ticker": "6160.HK",
+  "generated_at": "2026-04-18",
+  "price": 187.1,
+  "zone": "NEUTRAL",
+  "entry_zone": false,
+  "exit_zone": false,
+  "signals": [],
+  "signal_count": {
+    "bullish": 0,
+    "bearish": 0,
+    "total": 0
+  },
+  "indicators": {
+    "ma5": 187.82,
+    "ma20": 175.45,
+    "ma60": 192.41,
+    "rsi14": 55.8,
+    "vol_ma20": 4046521,
+    "vol_ratio": 0.69,
+    "price_vs_ma20": 6.64,
+    "price_vs_ma60": -2.76,
+    "change_1d": -1.06,
+    "change_5d": 1.14,
+    "change_20d": 4.64
+  }
+}
