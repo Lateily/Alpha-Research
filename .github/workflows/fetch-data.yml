@@ -36,7 +36,12 @@ jobs:
             --quiet
 
       # ── Step 1: Fetch all market data ──────────────────────────────────────
+      # continue-on-error: akshare frequently fails from GitHub US IPs due to
+      # Chinese data source restrictions. We still want the commit/push steps
+      # to run so that whatever data WAS fetched successfully gets saved.
       - name: Run data fetcher v4.0
+        id: fetcher
+        continue-on-error: true
         run: python scripts/fetch_data.py
 
       # ── Step 2: Paper trading P&L update ──────────────────────────────────
@@ -58,16 +63,19 @@ jobs:
         run: python scripts/supabase_sync.py
 
       # ── Step 4: Commit all JSON files ─────────────────────────────────────
+      # Uses 'git add -f --ignore-errors' so missing glob expansions (e.g. no
+      # ohlc_*.json yet) don't abort the step. git diff --cached guard means
+      # we only commit when there are actual changes.
       - name: Commit and push data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add \
+
+          # Add known fixed-name files only if they exist
+          for f in \
             public/data/market_data.json \
             public/data/universe_a.json \
             public/data/universe_hk.json \
-            public/data/ohlc_*.json \
-            public/data/fin_*.json \
             public/data/earnings_calendar.json \
             public/data/flow_data.json \
             public/data/vp_snapshot.json \
@@ -75,12 +83,21 @@ jobs:
             public/data/analytics.json \
             public/data/snapshots.json \
             public/data/backtest_results.json \
-            public/data/rdcf_*.json \
-            public/data/eqr_*.json \
-            public/data/stress_test.json
-          git diff --cached --quiet || \
-            git commit -m "data: daily update $(date -u +'%Y-%m-%d %H:%M') UTC"
-          git push
+            public/data/stress_test.json; do
+            [ -f "$f" ] && git add "$f"
+          done
+
+          # Add glob patterns — only if matching files exist (prevents git error)
+          shopt -s nullglob
+          files=(public/data/ohlc_*.json public/data/fin_*.json \
+                 public/data/rdcf_*.json public/data/eqr_*.json)
+          shopt -u nullglob
+          [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
+
+          # Only commit if something changed
+          git diff --cached --quiet && echo "No data changes to commit." || \
+            git commit -m "data: daily update $(date -u +'%Y-%m-%d %H:%M') UTC [fetcher:${{ steps.fetcher.outcome }}]"
+          git push || echo "Nothing to push."
 
       # ── Step 5: Telegram alerts (runs only if secrets are set) ────────────
       - name: Send Telegram alerts

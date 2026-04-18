@@ -1459,4 +1459,24 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n[INTERRUPTED] Fetch aborted by user.")
+        sys.exit(130)
+    except Exception as e:
+        # Catch any unhandled top-level exception so GitHub Actions reports the
+        # error details in the step log rather than sending a vague failure email.
+        # The 'continue-on-error: true' in the workflow means subsequent steps
+        # (git commit, push) still run even when we exit non-zero here.
+        import traceback
+        print(f"\n{'='*62}")
+        print(f"FATAL ERROR — fetch_data.py crashed with unhandled exception:")
+        print(f"  {type(e).__name__}: {e}")
+        print(f"Traceback:")
+        traceback.print_exc()
+        print(f"{'='*62}")
+        print("Partial data (if any) was already written to public/data/.")
+        print("Check the step log above for details on which steps succeeded.")
+        sys.exit(1)
