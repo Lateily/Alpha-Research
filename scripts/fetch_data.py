@@ -21,6 +21,14 @@ from pathlib import Path
 
 OUTPUT_DIR = Path(__file__).parent.parent / "public" / "data"
 
+# ── Optional API keys (set as GitHub Secrets → env vars) ───────────────────
+# Twelve Data:   https://twelvedata.com      Free: 800 req/day, 8/min
+# Alpha Vantage: https://alphavantage.co     Free: 25 req/day
+# Tushare Pro:   https://tushare.pro         Points required (see below)
+TWELVE_DATA_KEY    = os.getenv('TWELVE_DATA_KEY', '')
+ALPHA_VANTAGE_KEY  = os.getenv('ALPHA_VANTAGE_KEY', '')
+TUSHARE_TOKEN      = os.getenv('TUSHARE_TOKEN', '')
+
 # ── Focus stock config ──────────────────────────────────────────────────────
 FOCUS_TICKERS = {
     "300308.SZ": {"yahoo": "300308.SZ", "akshare": "300308", "exchange": "SZ",
@@ -1102,6 +1110,305 @@ _YF_HEADERS = {
     'Accept': 'application/json',
     'Accept-Language': 'en-US,en;q=0.9',
 }
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Twelve Data — OHLCV history (primary, replaces yfinance history calls)
+# https://twelvedata.com  Free: 800 req/day, 8/min  No geo-restriction.
+# Stock codes: HK → "0700:HKSE"  A-share → "300308:SZSE" or "600519:SHSE"
+# ══════════════════════════════════════════════════════════════════════════════
+def _to_twelvedata_symbol(yf_ticker):
+    """Convert Yahoo Finance ticker to Twelve Data symbol format."""
+    if yf_ticker.endswith('.HK'):
+        code = yf_ticker[:-3].zfill(4)          # 0700.HK → 0700:HKSE
+        return f"{code}:HKSE"
+    if yf_ticker.endswith('.SZ'):
+        return f"{yf_ticker[:-3]}:SZSE"          # 300308.SZ → 300308:SZSE
+    if yf_ticker.endswith('.SH') or (yf_ticker.endswith('.SS')):
+        return f"{yf_ticker[:-3]}:SHSE"
+    # Plain ticker (US-listed ADR etc.)
+    return yf_ticker
+
+def _fetch_ohlcv_twelvedata(yf_ticker, days=90):
+    """
+    Fetch daily OHLCV history via Twelve Data REST API.
+    Returns list of {date, open, high, low, close, volume} or None on failure.
+    Requires TWELVE_DATA_KEY env var.  Uses ~1 API call.
+    """
+    if not TWELVE_DATA_KEY:
+        return None
+    symbol   = _to_twelvedata_symbol(yf_ticker)
+    out_size = min(days, 5000)
+    url = (
+        f"https://api.twelvedata.com/time_series"
+        f"?symbol={symbol}&interval=1day&outputsize={out_size}"
+        f"&apikey={TWELVE_DATA_KEY}&format=JSON"
+    )
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+
+        if data.get('status') == 'error' or 'values' not in data:
+            print(f"    Twelve Data {symbol}: {data.get('message','no values')}")
+            return None
+
+        ohlcv = []
+        for bar in reversed(data['values']):   # API returns newest-first
+            try:
+                ohlcv.append({
+                    "date":   bar['datetime'][:10],
+                    "open":   round(float(bar['open']),   3),
+                    "high":   round(float(bar['high']),   3),
+                    "low":    round(float(bar['low']),    3),
+                    "close":  round(float(bar['close']),  3),
+                    "volume": int(float(bar.get('volume', 0))),
+                })
+            except (KeyError, ValueError):
+                continue
+        print(f"    Twelve Data {symbol}: {len(ohlcv)} bars OK")
+        return ohlcv if ohlcv else None
+    except Exception as e:
+        print(f"    Twelve Data {symbol} error: {type(e).__name__}: {e}")
+        return None
+
+
+def _fetch_quote_twelvedata(yf_ticker):
+    """
+    Fetch latest quote (price, prev_close, change_pct) via Twelve Data.
+    Uses ~1 API call.  Complements _fetch_ohlcv_twelvedata.
+    """
+    if not TWELVE_DATA_KEY:
+        return None
+    symbol = _to_twelvedata_symbol(yf_ticker)
+    url = (
+        f"https://api.twelvedata.com/quote"
+        f"?symbol={symbol}&apikey={TWELVE_DATA_KEY}"
+    )
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            d = json.loads(resp.read())
+
+        if d.get('status') == 'error':
+            return None
+
+        price = float(d.get('close') or d.get('price') or 0)
+        prev  = float(d.get('previous_close') or 0)
+        chg   = float(d.get('percent_change') or 0)
+        if not price:
+            return None
+
+        return {
+            "price":      round(price, 3),
+            "prev_close": round(prev,  3),
+            "change_pct": round(chg,   3),
+            "high":       round(float(d.get('high', price)), 3),
+            "low":        round(float(d.get('low',  price)), 3),
+            "open":       round(float(d.get('open', price)), 3),
+            "volume":     int(float(d.get('volume', 0))),
+        }
+    except Exception as e:
+        print(f"    Twelve Data quote {symbol} error: {e}")
+        return None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Alpha Vantage — Fundamentals + Earnings Surprise
+# https://alphavantage.co  Free: 25 req/day  No geo-restriction.
+# ══════════════════════════════════════════════════════════════════════════════
+def _to_av_symbol(yf_ticker):
+    """Convert Yahoo ticker to Alpha Vantage symbol.
+    AV uses: HK → '0700.HKG', A-share → '300308.SHZ'/'600519.SHH'
+    """
+    if yf_ticker.endswith('.HK'):
+        return yf_ticker[:-3].zfill(4) + '.HKG'    # 0700.HK → 0700.HKG
+    if yf_ticker.endswith('.SZ'):
+        return yf_ticker[:-3] + '.SHZ'              # 300308.SZ → 300308.SHZ
+    if yf_ticker.endswith('.SH') or yf_ticker.endswith('.SS'):
+        return yf_ticker[:-3] + '.SHH'
+    return yf_ticker
+
+def _fetch_earnings_av(yf_ticker):
+    """
+    Fetch quarterly earnings (actual EPS vs estimate) from Alpha Vantage.
+    Returns list of {fiscal_date, reported_eps, estimated_eps, surprise_pct}
+    or None on failure.  Uses 1 API call.
+    """
+    if not ALPHA_VANTAGE_KEY:
+        return None
+    symbol = _to_av_symbol(yf_ticker)
+    url = (
+        f"https://www.alphavantage.co/query"
+        f"?function=EARNINGS&symbol={symbol}&apikey={ALPHA_VANTAGE_KEY}"
+    )
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            d = json.loads(resp.read())
+
+        if 'Note' in d:                 # rate limit hit
+            print(f"    AV rate limit hit for {symbol}")
+            return None
+        if 'Information' in d:          # invalid key
+            print(f"    AV key issue: {d['Information'][:80]}")
+            return None
+
+        qtrs = d.get('quarterlyEarnings', [])
+        results = []
+        for q in qtrs[:8]:              # last 8 quarters
+            try:
+                rep = float(q.get('reportedEPS')    or 0)
+                est = float(q.get('estimatedEPS')   or 0)
+                spct= float(q.get('surprisePercentage') or 0)
+                results.append({
+                    "fiscal_date":    q.get('fiscalDateEnding', '')[:10],
+                    "reported_eps":   round(rep,  3),
+                    "estimated_eps":  round(est,  3),
+                    "surprise_pct":   round(spct, 2),
+                    "beat":           rep > est if est else None,
+                })
+            except (TypeError, ValueError):
+                continue
+        print(f"    AV earnings {symbol}: {len(results)} quarters OK")
+        return results if results else None
+    except Exception as e:
+        print(f"    AV earnings {symbol} error: {type(e).__name__}: {e}")
+        return None
+
+
+def _fetch_overview_av(yf_ticker):
+    """
+    Fetch company overview (PE, EPS, market cap, etc.) from Alpha Vantage.
+    Returns dict or None.  Uses 1 API call.
+    """
+    if not ALPHA_VANTAGE_KEY:
+        return None
+    symbol = _to_av_symbol(yf_ticker)
+    url = (
+        f"https://www.alphavantage.co/query"
+        f"?function=OVERVIEW&symbol={symbol}&apikey={ALPHA_VANTAGE_KEY}"
+    )
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            d = json.loads(resp.read())
+
+        if not d.get('Symbol') or 'Note' in d:
+            return None
+
+        def _f(key):
+            v = d.get(key)
+            if v in (None, 'None', '-', ''):
+                return None
+            try:
+                return float(v)
+            except ValueError:
+                return v
+
+        return {
+            "pe_ratio":       _f('PERatio'),
+            "peg_ratio":      _f('PEGRatio'),
+            "eps_ttm":        _f('EPS'),
+            "book_value":     _f('BookValue'),
+            "dividend_yield": _f('DividendYield'),
+            "profit_margin":  _f('ProfitMargin'),
+            "roe":            _f('ReturnOnEquityTTM'),
+            "revenue_growth": _f('RevenueGrowthYOY'),
+            "earnings_growth":_f('QuarterlyEarningsGrowthYOY'),
+            "market_cap":     _f('MarketCapitalization'),
+            "52w_high":       _f('52WeekHigh'),
+            "52w_low":        _f('52WeekLow'),
+            "analyst_target": _f('AnalystTargetPrice'),
+            "sector":         d.get('Sector', ''),
+            "industry":       d.get('Industry', ''),
+        }
+    except Exception as e:
+        print(f"    AV overview {symbol} error: {e}")
+        return None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tushare Pro — A-share financials + northbound flow (requires token + points)
+# https://tushare.pro  Free tier: 120 points  Sign up free, earn more by usage
+#
+# Key APIs this platform needs:
+#   moneyflow_hsgt(trade_date=today)  → northbound/southbound daily net flow
+#   stock_basic()                     → full A-share listing (replaces AKShare)
+#   daily(ts_code, start_date, end_date) → daily OHLCV
+#   income(ts_code, period)           → income statement
+#   pro.stk_factor(ts_code, start_date, end_date) → technical factors
+#
+# Points needed:
+#   120 pts: moneyflow_hsgt, stock_basic, daily, income (all accessible free)
+#   2000 pts: analyst forecasts (stk_forecast)
+#
+# Setup: TUSHARE_TOKEN env var → GitHub Secret
+# Usage: pip install tushare && ts.set_token(TUSHARE_TOKEN) && pro = ts.pro_api()
+# ══════════════════════════════════════════════════════════════════════════════
+def _fetch_northbound_tushare():
+    """
+    Fetch today's northbound/southbound flow via Tushare Pro.
+    Returns { northbound: {...}, southbound: {...} } or None on failure.
+    This REPLACES the AKShare geo-blocked version.
+    Requires TUSHARE_TOKEN env var.
+    """
+    if not TUSHARE_TOKEN:
+        return None
+    try:
+        import tushare as ts
+        ts.set_token(TUSHARE_TOKEN)
+        pro = ts.pro_api()
+
+        today = datetime.now().strftime('%Y%m%d')
+        # Try last 5 trading days to handle holidays
+        df = pro.moneyflow_hsgt(start_date=(datetime.now() - timedelta(days=7)).strftime('%Y%m%d'),
+                                end_date=today)
+        if df is None or df.empty:
+            return None
+
+        df = df.sort_values('trade_date', ascending=False)
+        latest = df.iloc[0]
+
+        def _safe(v):
+            try: return float(v) if v is not None else 0.0
+            except: return 0.0
+
+        # north_money = SH+SZ northbound net (亿元); south_money = southbound
+        north_today = _safe(latest.get('north_money'))   * 1e8   # convert 亿 → 元
+        south_today = _safe(latest.get('south_money'))   * 1e8
+
+        # 5-day and 20-day cumulative
+        north_5d  = df.head(5)['north_money'].apply(_safe).sum() * 1e8
+        north_20d = df.head(20)['north_money'].apply(_safe).sum() * 1e8
+        south_5d  = df.head(5)['south_money'].apply(_safe).sum() * 1e8
+        south_20d = df.head(20)['south_money'].apply(_safe).sum() * 1e8
+
+        updated = str(latest.get('trade_date', ''))
+        if len(updated) == 8:
+            updated = f"{updated[:4]}-{updated[4:6]}-{updated[6:]}"
+
+        return {
+            "northbound": {
+                "latest_net_flow": round(north_today, 0),
+                "5d_cumulative":   round(north_5d, 0),
+                "20d_cumulative":  round(north_20d, 0),
+                "trend": "inflow" if north_5d > 0 else "outflow",
+                "updated": updated,
+                "source": "tushare",
+            },
+            "southbound": {
+                "latest_net_flow": round(south_today, 0),
+                "5d_cumulative":   round(south_5d, 0),
+                "20d_cumulative":  round(south_20d, 0),
+                "trend": "inflow" if south_5d > 0 else "outflow",
+                "updated": updated,
+                "source": "tushare",
+            },
+        }
+    except Exception as e:
+        print(f"  Tushare northbound error: {type(e).__name__}: {e}")
+        return None
+
 
 def _fetch_price_direct(yf_ticker, retries=3, delay=2):
     """
