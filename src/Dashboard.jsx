@@ -1293,7 +1293,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData }) {
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse }) {
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
@@ -1339,6 +1339,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
 
   return (
     <div>
+      {/* Daily Pulse — auto-runs once per day, shows at top of Research view */}
+      <PulseCard pulse={pulse} loading={pulseLoading} ticker={ticker} onRunPulse={onRunPulse} L={L} lk={lk} C={C}/>
+
       <Card title={`${ticker} · ${s.name}`} sub={`${s.en} · VP ${s.vp}`} open={true} C={C}>
         <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:12, marginBottom:14}}>
           <div>
@@ -1839,7 +1842,7 @@ function SystemTab({ L, C }) {
 }
 
 /* ── DEEP RESEARCH PANEL ─────────────────────────────────────────────────── */
-function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
+function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentData }) {
   const [query, setQuery]           = useState('');
   const [drTicker, setDrTicker]     = useState('');
   const [drCompany, setDrCompany]   = useState('');   // resolved company name
@@ -1850,6 +1853,7 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState(null);
   const [progress, setProgress]     = useState(0);
+  const [lastResearchMeta, setLastResearchMeta] = useState(null); // { consensus_source, pass1_search_results, enrichment_used, tavily_enabled }
 
   /* ── fuzzy search ── */
   const searchStocks = (q) => {
@@ -1913,13 +1917,58 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
     if (!tk) return;
     setLoading(true); setError(null); setProgress(10);
 
+    // Two-pass generation: Pass 1 ~10s (consensus), Pass 2 ~20s (full research)
+    // Progress ticks are spread over ~30s total
     const steps = [
-      {p:15},{p:30},{p:50},{p:70},{p:85},
+      {p:12},{p:25},{p:40},{p:55},{p:70},{p:82},{p:90},
     ];
     let stepIdx = 0;
     const timer = setInterval(() => {
       if (stepIdx < steps.length) { setProgress(steps[stepIdx].p); stepIdx++; }
-    }, 3000);
+    }, 4000);
+
+    // ── Build enrichment context from Dashboard state ──────────────────────
+    // Collect the four real-time signals before the API call fires.
+    // None of this requires new endpoints — everything is already in Dashboard state.
+    let enrichment_context = null;
+    if (enrichmentData) {
+      const { liveData, newsPortfolio, regimeData, predictions } = enrichmentData;
+
+      // 1. Live price signal
+      const liveYahoo = liveData?.yahoo?.[tk];
+      const livePrice = liveYahoo?.price?.last;
+      const liveChangePct = liveYahoo?.price?.change_pct;
+
+      // 2. Recent news (ticker-specific, last 5 days)
+      const fiveDaysAgo = Date.now() - 5 * 24 * 3600 * 1000;
+      const recentNews = (newsPortfolio || [])
+        .filter(a => a.ticker === tk && new Date(a.published_at).getTime() > fiveDaysAgo)
+        .slice(0, 6)
+        .map(a => ({ title: a.title, source: a.source, published_at: a.published_at, summary: a.summary }));
+
+      // 3. Sector regime — match ticker to sector via tickers[] array
+      let sectorRegime = null;
+      if (regimeData?.sectors) {
+        const sector = regimeData.sectors.find(s => (s.tickers || []).includes(tk));
+        if (sector) sectorRegime = sector.regime; // PERMISSIVE | NEUTRAL | RESTRICTIVE
+      }
+
+      // 4. Prior predictions for this ticker
+      const priorPredictions = (predictions || [])
+        .filter(p => p.ticker === tk)
+        .map(p => ({ prediction: p.thesis || p.prediction, outcome: p.status, date: p.date, reason: p.notes }));
+
+      // Only pass enrichment if we have at least one signal
+      if (livePrice || recentNews.length > 0 || sectorRegime || priorPredictions.length > 0) {
+        enrichment_context = {
+          live_price: livePrice ? `${livePrice.toFixed(2)}` : null,
+          live_change_pct: liveChangePct ?? null,
+          recent_news: recentNews,
+          sector_regime: sectorRegime,
+          prior_predictions: priorPredictions,
+        };
+      }
+    }
 
     // GitHub Pages → always use stable Vercel URL (hardcoded, immune to stale secrets)
     // Vercel itself → relative /api (same origin, no CORS)
@@ -1931,7 +1980,13 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticker: tk, company: drCompany || undefined, direction: drDir, context: drContext || undefined }),
+        body: JSON.stringify({
+          ticker: tk,
+          company: drCompany || undefined,
+          direction: drDir,
+          context: drContext || undefined,
+          enrichment_context: enrichment_context || undefined,
+        }),
       });
       clearInterval(timer);
       const text = await res.text();
@@ -1943,6 +1998,17 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
       }
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
       setProgress(100);
+      // Store metadata about how this research was generated
+      setLastResearchMeta({
+        consensus_source:   json.consensus_source,
+        sources_used:       json.sources_used || [],
+        eastmoney_count:    json.eastmoney_count    || 0,
+        tonghuashun_count:  json.tonghuashun_count  || 0,
+        tavily_count:       json.tavily_count       || 0,
+        enrichment_used:    json.enrichment_used,
+        tavily_enabled:     json.tavily_enabled,
+        views_count:        (json.consensus_views || []).length,
+      });
       onComplete(tk, json.data);
     } catch (err) {
       clearInterval(timer);
@@ -1960,9 +2026,47 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks }) {
         <div style={{fontSize:14, fontWeight:700, color:C.dark}}>{L('Deep Research','深度研究')}</div>
         <span style={{fontSize:9, padding:'2px 6px', background:`${C.blue}15`, color:C.blue, borderRadius:3, fontWeight:700}}>AI</span>
       </div>
-      <div style={{fontSize:10, color:C.mid, marginBottom:16, lineHeight:1.6}}>
-        {L('Search by name or code — Chinese, English, or ticker. Claude AI generates institutional-grade buy-side analysis in ~15 seconds.',
-           '输入公司名称（中/英文）或股票代码均可搜索。Claude AI 约15秒生成机构级买方研究报告。')}
+      <div style={{fontSize:10, color:C.mid, marginBottom:12, lineHeight:1.6}}>
+        {L('Search by name or code — Chinese, English, or ticker. Claude AI runs a two-pass analysis (consensus enumeration → differentiated research) in ~30 seconds. Live price, sector regime, and recent news are injected automatically.',
+           '输入公司名称（中/英文）或股票代码均可搜索。Claude AI 两阶段生成：先枚举卖方共识，再产出差异化研究，约30秒完成。实时价格、板块政体和最新新闻自动注入。')}
+      </div>
+
+      {/* Data source status row */}
+      <div style={{display:'flex', gap:5, marginBottom:16, flexWrap:'wrap'}}>
+        {lastResearchMeta ? (
+          lastResearchMeta.consensus_source === 'live' ? (
+            <>
+              {lastResearchMeta.eastmoney_count > 0 && (
+                <span style={{fontSize:9, padding:'2px 7px', borderRadius:3, fontWeight:700, background:`${C.green}18`, color:C.green}}>
+                  📑 {L(`Eastmoney · ${lastResearchMeta.eastmoney_count} reports`, `东方财富 · ${lastResearchMeta.eastmoney_count}篇`)}
+                </span>
+              )}
+              {lastResearchMeta.tonghuashun_count > 0 && (
+                <span style={{fontSize:9, padding:'2px 7px', borderRadius:3, fontWeight:700, background:`${C.green}18`, color:C.green}}>
+                  📑 {L(`Tonghuashun · ${lastResearchMeta.tonghuashun_count} reports`, `同花顺 · ${lastResearchMeta.tonghuashun_count}篇`)}
+                </span>
+              )}
+              {lastResearchMeta.tavily_count > 0 && (
+                <span style={{fontSize:9, padding:'2px 7px', borderRadius:3, fontWeight:700, background:`${C.green}18`, color:C.green}}>
+                  🌐 {L(`Intl search · ${lastResearchMeta.tavily_count} results`, `国际搜索 · ${lastResearchMeta.tavily_count}条`)}
+                </span>
+              )}
+            </>
+          ) : (
+            <span style={{fontSize:9, padding:'2px 7px', borderRadius:3, fontWeight:700, background:`${C.gold}18`, color:C.gold}}>
+              🧠 {L('AI knowledge · no live data (东方财富+同花顺+Tavily returned empty)', 'AI知识兜底 · 三路来源均未返回数据')}
+            </span>
+          )
+        ) : (
+          <span style={{fontSize:9, padding:'2px 7px', borderRadius:3, fontWeight:700, background:`${C.blue}12`, color:C.blue}}>
+            {L('东方财富 + 同花顺 + Intl search → Pass 2 full research', '东方财富 + 同花顺 + 国际搜索 → 完整研究')}
+          </span>
+        )}
+        {lastResearchMeta?.enrichment_used && (
+          <span style={{fontSize:9, padding:'2px 7px', borderRadius:3, fontWeight:700, background:`${C.blue}12`, color:C.blue}}>
+            📡 {L('Price + news + regime injected', '实时价格+新闻+政体已注入')}
+          </span>
+        )}
       </div>
 
       {/* ── Fuzzy stock search ── */}
@@ -3254,6 +3358,106 @@ const UniverseStockView = ({ ticker, universeStocks, liveData, L, lk, C, onDeepR
   );
 };
 
+/* ── TODAY'S PULSE CARD ───────────────────────────────────────────────── */
+function PulseCard({ pulse, loading, ticker, onRunPulse, L, lk, C }) {
+  const STATUS_COLOR = { INTACT:'#22c55e', WATCH:'#eab308', REVIEW:'#f97316', BROKEN:'#ef4444' };
+  const RISK_COLOR   = { LOW:'#22c55e', MED:'#eab308', HIGH:'#ef4444' };
+  const ENTRY_COLOR  = { VALID:'#22c55e', ADJUSTED:'#eab308', STALE:'#ef4444' };
+
+  // Loading skeleton
+  if (loading) return (
+    <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:8, padding:'12px 16px', marginBottom:12, display:'flex', alignItems:'center', gap:10}}>
+      <div style={{width:8, height:8, borderRadius:'50%', background:C.blue, animation:'pulse 1.5s infinite'}}/>
+      <span style={{fontSize:10, color:C.mid}}>{L('Running daily pulse check…','正在运行每日脉冲检查…')}</span>
+    </div>
+  );
+
+  // No pulse yet + has stored research → show trigger button
+  if (!pulse) {
+    const hasStored = (() => { try { return !!localStorage.getItem(`ar_research_${ticker}`); } catch { return false; } })();
+    if (!hasStored) return null;
+    return (
+      <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:8, padding:'10px 16px', marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+        <span style={{fontSize:10, color:C.mid}}>{L("Today's pulse not yet run","今日脉冲尚未运行")}</span>
+        <button onClick={() => onRunPulse(ticker)} style={{fontSize:9, padding:'3px 10px', background:`${C.blue}15`, color:C.blue, border:`1px solid ${C.blue}30`, borderRadius:4, cursor:'pointer', fontWeight:700}}>
+          {L('Run Pulse','运行脉冲')}
+        </button>
+      </div>
+    );
+  }
+
+  const vColor = STATUS_COLOR[pulse.variant_status] || C.mid;
+  const eColor = ENTRY_COLOR[pulse.entry_status]    || C.mid;
+  const rColor = RISK_COLOR[pulse.headline_risk]    || C.mid;
+
+  return (
+    <div style={{background:C.card, border:`1.5px solid ${vColor}30`, borderRadius:8, padding:'12px 16px', marginBottom:12}}>
+      {/* Header row */}
+      <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+        <div style={{width:7, height:7, borderRadius:'50%', background:vColor, flexShrink:0}}/>
+        <span style={{fontSize:11, fontWeight:700, color:C.dark}}>{L("Today's Pulse","今日脉冲")}</span>
+        <span style={{fontSize:9, color:C.mid, marginLeft:'auto'}}>{pulse.pulse_date}</span>
+        {pulse.thesis_age_flag && (
+          <span style={{fontSize:9, padding:'1px 6px', background:'#f9731620', color:'#f97316', borderRadius:3, fontWeight:700}}>
+            ⚠ {L('>30d stale','>30天未更新')}
+          </span>
+        )}
+        {pulse.large_move_flag && (
+          <span style={{fontSize:9, padding:'1px 6px', background:'#ef444420', color:'#ef4444', borderRadius:3, fontWeight:700}}>
+            ⚡ {L('>15% move','>15%价格变动')}
+          </span>
+        )}
+      </div>
+
+      {/* Three status pills */}
+      <div style={{display:'flex', gap:8, marginBottom:10, flexWrap:'wrap'}}>
+        <div style={{flex:1, minWidth:120, background:`${vColor}10`, border:`1px solid ${vColor}30`, borderRadius:6, padding:'6px 10px'}}>
+          <div style={{fontSize:9, color:C.mid, marginBottom:2}}>{L('Variant','论点')}</div>
+          <div style={{fontSize:10, fontWeight:700, color:vColor}}>{pulse.variant_status}</div>
+          <div style={{fontSize:9, color:C.dark, marginTop:3, lineHeight:1.4}}>{pulse.variant_reason}</div>
+        </div>
+        <div style={{flex:1, minWidth:120, background:`${eColor}10`, border:`1px solid ${eColor}30`, borderRadius:6, padding:'6px 10px'}}>
+          <div style={{fontSize:9, color:C.mid, marginBottom:2}}>{L('Entry','进场')}</div>
+          <div style={{fontSize:10, fontWeight:700, color:eColor}}>{pulse.entry_status}</div>
+          <div style={{fontSize:9, color:C.dark, marginTop:3, lineHeight:1.4}}>
+            {pulse.entry_note}
+            {pulse.adjusted_entry && <span style={{color:C.blue, fontWeight:700}}> → {pulse.adjusted_entry}</span>}
+          </div>
+        </div>
+        <div style={{flex:1, minWidth:100, background:`${rColor}10`, border:`1px solid ${rColor}30`, borderRadius:6, padding:'6px 10px'}}>
+          <div style={{fontSize:9, color:C.mid, marginBottom:2}}>{L('News Risk','新闻风险')}</div>
+          <div style={{fontSize:10, fontWeight:700, color:rColor}}>{pulse.headline_risk}</div>
+          <div style={{fontSize:9, color:C.dark, marginTop:3, lineHeight:1.4}}>{pulse.headline_note}</div>
+        </div>
+      </div>
+
+      {/* Prediction updates (only if any flagged) */}
+      {pulse.prediction_updates?.length > 0 && (
+        <div style={{borderTop:`1px solid ${C.border}`, paddingTop:8}}>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, marginBottom:6}}>{L('Prediction Updates','预测更新')}</div>
+          {pulse.prediction_updates.map((u, i) => {
+            const ac = u.action === 'VERIFY' ? C.green : u.action === 'FALSIFY' ? C.red : C.gold;
+            return (
+              <div key={i} style={{display:'flex', gap:8, alignItems:'flex-start', marginBottom:4}}>
+                <span style={{fontSize:9, padding:'1px 6px', borderRadius:3, fontWeight:700, background:`${ac}15`, color:ac, flexShrink:0}}>{u.action}</span>
+                <span style={{fontSize:9, color:C.dark, lineHeight:1.4}}>{u.reason}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Token cost footer */}
+      <div style={{fontSize:8, color:C.mid, marginTop:6, display:'flex', gap:8}}>
+        {pulse.tokens_used && <span>~{pulse.tokens_used} tokens</span>}
+        <button onClick={() => onRunPulse(ticker)} style={{fontSize:8, padding:'1px 6px', background:'transparent', color:C.mid, border:`1px solid ${C.border}`, borderRadius:3, cursor:'pointer'}}>
+          {L('Refresh','刷新')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── DEEP RESEARCH FINANCIALS ─────────────────────────────────────────── */
 function DeepResearchFinancials({ stock, L, lk, C }) {
   const [tab, setTab] = useState('is');
@@ -4062,6 +4266,9 @@ export default function Dashboard() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
+  // Pulse state: { [ticker]: { ...pulseResult } }
+  const [pulseData, setPulseData] = useState({});
+  const [pulseLoading, setPulseLoading] = useState({});
   const [chatLoading, setChatLoading] = useState(false);
 
   /* Fetch prediction log on mount */
@@ -4343,7 +4550,125 @@ export default function Dashboard() {
 
   const handleDeepResearchComplete = (tk, data) => {
     setDynamicStocks(prev => ({ ...prev, [tk]: data }));
+
+    // Persist research to localStorage so pulse can read it across sessions
+    // Schema: ar_research_{ticker} = { current, generated_at, price_at_research, vp_history }
+    try {
+      const liveYahoo   = liveData?.yahoo?.[tk];
+      const currentPrice = liveYahoo?.price?.last ?? null;
+      const storageKey   = `ar_research_${tk}`;
+      const existing     = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      const now          = new Date().toISOString();
+
+      const updated = {
+        current:          data,
+        generated_at:     now,
+        price_at_research: currentPrice,
+        previous:         existing.current  || null,
+        prev_generated_at: existing.generated_at || null,
+        thesis_state:     'ACTIVE',
+        vp_history: [
+          ...(existing.vp_history || []).slice(-9),          // keep last 9
+          { date: now.slice(0, 10), vp: data.vp || 0 },
+        ],
+      };
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    } catch (e) {
+      console.warn('localStorage write failed:', e.message);
+    }
+
     goStock(tk);
+  };
+
+  // ── Research Pulse ────────────────────────────────────────────────────────
+  // Runs for a ticker when research tab loads (once per day per ticker).
+  // Reads stored research from localStorage, passes to api/research-pulse.
+  const runPulse = async (tk) => {
+    // Read stored research
+    let stored;
+    try {
+      const raw = localStorage.getItem(`ar_research_${tk}`);
+      if (!raw) return;                          // no stored research yet
+      stored = JSON.parse(raw);
+    } catch { return; }
+
+    if (!stored?.current) return;
+
+    // Only run once per day per ticker
+    const todayKey = `ar_pulse_${tk}_${new Date().toISOString().slice(0, 10)}`;
+    try {
+      const cached = localStorage.getItem(todayKey);
+      if (cached) {
+        setPulseData(prev => ({ ...prev, [tk]: JSON.parse(cached) }));
+        return;
+      }
+    } catch {}
+
+    setPulseLoading(prev => ({ ...prev, [tk]: true }));
+
+    try {
+      const liveYahoo     = liveData?.yahoo?.[tk];
+      const currentPrice  = liveYahoo?.price?.last ?? null;
+      const priceAtRes    = stored.price_at_research ?? null;
+      const priceChangePct = (currentPrice && priceAtRes)
+        ? ((currentPrice - priceAtRes) / priceAtRes) * 100
+        : null;
+      const generatedAt   = stored.generated_at ? new Date(stored.generated_at) : null;
+      const daysSince     = generatedAt
+        ? Math.floor((Date.now() - generatedAt.getTime()) / 86400000)
+        : null;
+
+      // Recent news for this ticker (last 48h)
+      const twoDaysAgo  = Date.now() - 2 * 24 * 3600 * 1000;
+      const recentNews  = (newsPortfolio || [])
+        .filter(a => a.ticker === tk && new Date(a.published_at).getTime() > twoDaysAgo)
+        .slice(0, 5)
+        .map(a => ({ title: a.title, source: a.source, published_at: a.published_at }));
+
+      // Sector regime
+      let sectorRegime = null;
+      if (regimeData?.sectors) {
+        const sector = regimeData.sectors.find(s => (s.tickers || []).includes(tk));
+        if (sector) sectorRegime = sector.regime;
+      }
+
+      // Active predictions for this ticker (OPEN/PENDING only)
+      const activePredictions = (predictions || [])
+        .filter(p => p.ticker === tk && (!p.status || p.status === 'OPEN' || p.status === 'PENDING'))
+        .map(p => ({ id: p.id, thesis: p.thesis || p.prediction, target: p.target, deadline: p.deadline }));
+
+      const isGHPages = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+      const apiBase   = isGHPages ? 'https://equity-research-ten.vercel.app' : '';
+
+      const res = await fetch(`${apiBase}/api/research-pulse`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker: tk,
+          company: stored.current?.en || stored.current?.name || tk,
+          stored_research:      stored.current,
+          current_price:        currentPrice,
+          price_at_research:    priceAtRes,
+          price_change_pct:     priceChangePct,
+          days_since_research:  daysSince,
+          recent_news:          recentNews,
+          sector_regime:        sectorRegime,
+          active_predictions:   activePredictions,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Pulse API ${res.status}`);
+      const pulse = await res.json();
+
+      // Cache result for today
+      try { localStorage.setItem(todayKey, JSON.stringify(pulse)); } catch {}
+
+      setPulseData(prev => ({ ...prev, [tk]: pulse }));
+    } catch (err) {
+      console.warn(`[Pulse] ${tk}:`, err.message);
+    } finally {
+      setPulseLoading(prev => ({ ...prev, [tk]: false }));
+    }
   };
 
   const handleGenerateInsight = async () => {
@@ -4688,15 +5013,20 @@ export default function Dashboard() {
           {tab==='research' && (() => {
             const isFocus = ticker && allStocks[ticker];
             const isUniverse = ticker && !isFocus && universeStocks.find(s => s.ticker === ticker);
+            // Auto-run pulse for any ticker that has stored research (once/day)
+            // Use a deferred call to avoid blocking the render
+            if (ticker && !pulseLoading[ticker] && !pulseData[ticker]) {
+              setTimeout(() => runPulse(ticker), 800);
+            }
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
-                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData}/></div>}
-                <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks}/>
+                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }}/></div>}
+                <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>
               </div>
             );
-            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData}/>;
+            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
-            return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks}/>;
+            return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
           })()}
           {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C} predictions={predictions}/>}
           {tab==='watchlist'&& <Watchlist L={L} stocks={allStocks} C={C}/>}
