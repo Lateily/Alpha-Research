@@ -3358,6 +3358,236 @@ const UniverseStockView = ({ ticker, universeStocks, liveData, L, lk, C, onDeepR
   );
 };
 
+/* ── MORNING REPORT PAGE ─────────────────────────────────────────────── */
+function MorningReportPage({ L, lk, C, reportData, reportLoading, onGenerate, liveData, newsPortfolio, newsMacro, regimeData, predictions, allStocks }) {
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+  const MOOD_COLOR   = { 'RISK-ON': C.green, NEUTRAL: C.mid,  'RISK-OFF': C.red };
+  const STATUS_COLOR = { CLEAR: C.green,     WATCH: C.gold,   ACTION: '#f97316', ALERT: C.red };
+  const URGENCY_COLOR= { HIGH: C.red,        MED: C.gold,     LOW: C.green };
+  const IMPACT_COLOR = { HIGH: C.red,        MED: C.gold,     LOW: C.green };
+
+  // ── trigger ───────────────────────────────────────────────────────────────
+  const handleRun = () => {
+    // Collect current portfolio state to pass to API
+    const portfolio = Object.entries(allStocks || {}).map(([tk, s]) => {
+      const lv    = liveData?.yahoo?.[tk];
+      const price = lv?.price?.last;
+      const chg   = lv?.price?.change_pct;
+      let sectorRegime = null;
+      if (regimeData?.sectors) {
+        const sec = regimeData.sectors.find(se => (se.tickers||[]).includes(tk));
+        if (sec) sectorRegime = sec.regime;
+      }
+      return {
+        ticker: tk, company: s.en || s.name,
+        vp: s.vp, dir: s.dir, sector: s.sector,
+        current_price:    price  ?? null,
+        price_change_pct: chg    ?? null,
+        sector_regime:    sectorRegime,
+        variant_brief:    s.variant?.weBelieve?.e || null,
+      };
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+    const recentMacro  = (newsMacro     || []).slice(0, 8).map(n=>({ title:n.title, source:n.source }));
+    const recentPort   = (newsPortfolio || []).slice(0, 10).map(n=>({ title:n.title, source:n.source, ticker:n.ticker }));
+
+    onGenerate({ date: today, portfolio, macro_news: recentMacro, portfolio_news: recentPort, regime_data: regimeData, predictions: (predictions||[]) });
+  };
+
+  // ── loading state ─────────────────────────────────────────────────────────
+  if (reportLoading) return (
+    <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:300, gap:16}}>
+      <div style={{width:36, height:36, border:`3px solid ${C.border}`, borderTop:`3px solid ${C.blue}`, borderRadius:'50%', animation:'spin 0.8s linear infinite'}}/>
+      <div style={{fontSize:12, color:C.mid}}>{L('Generating morning brief…','正在生成早报…')}</div>
+      <div style={{fontSize:10, color:C.mid}}>{L('~15 seconds','约15秒')}</div>
+    </div>
+  );
+
+  // ── empty state ───────────────────────────────────────────────────────────
+  if (!reportData) return (
+    <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:20}}>
+      <div style={{fontSize:40}}>🌅</div>
+      <div style={{fontSize:16, fontWeight:700, color:C.dark}}>{L("Today's Morning Brief","今日早报")}</div>
+      <div style={{fontSize:12, color:C.mid, textAlign:'center', maxWidth:340, lineHeight:1.7}}>
+        {L('Claude analyzes overnight news, portfolio status, open predictions, and sector regimes to generate a 5-minute actionable brief.',
+           'Claude 分析隔夜新闻、持仓状态、开放预测和板块政体，生成5分钟可操作早报。')}
+      </div>
+      <button onClick={handleRun} style={{
+        padding:'12px 32px', background:C.blue, color:'#fff', border:'none', borderRadius:8,
+        cursor:'pointer', fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:8,
+      }}>
+        <Zap size={16}/> {L('Generate Morning Report','生成早报')}
+      </button>
+      <div style={{fontSize:10, color:C.mid}}>{L('~2500 tokens · 15 seconds','约2500 tokens · 15秒')}</div>
+    </div>
+  );
+
+  // ── report view ───────────────────────────────────────────────────────────
+  const r         = reportData;
+  const moodColor = MOOD_COLOR[r.market_mood] || C.mid;
+
+  return (
+    <div style={{maxWidth:860, margin:'0 auto', paddingBottom:40}}>
+
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div style={{background:'#1a1a2e', borderRadius:10, padding:'20px 24px', marginBottom:3}}>
+        <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:9, color:'#8b8fc7', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:6}}>
+              AR Platform · {r.date || new Date().toISOString().slice(0,10)}
+            </div>
+            <div style={{fontSize:18, fontWeight:800, color:'#fff', lineHeight:1.3}}>
+              {r.headline || L('Morning Brief','早报')}
+            </div>
+          </div>
+          <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6, flexShrink:0}}>
+            <span style={{fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:5, background:`${moodColor}25`, color:moodColor}}>
+              {r.market_mood || 'NEUTRAL'}
+            </span>
+            <button onClick={handleRun} style={{fontSize:9, padding:'3px 10px', background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.5)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:4, cursor:'pointer', fontWeight:600}}>
+              {L('↺ Refresh','↺ 刷新')}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Macro Summary ──────────────────────────────────────────────── */}
+      {r.macro_summary && (
+        <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:0, padding:'16px 24px', marginBottom:3}}>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:10}}>
+            📰 {L('Macro Overview','宏观概况')}
+          </div>
+          <div style={{fontSize:12, color:C.dark, lineHeight:1.8}}>{r.macro_summary[lk]}</div>
+          {r.top_story && (
+            <div style={{marginTop:12, padding:'10px 14px', background:`${C.blue}08`, borderLeft:`3px solid ${C.blue}`, borderRadius:'0 6px 6px 0'}}>
+              <div style={{fontSize:10, fontWeight:700, color:C.blue, marginBottom:4}}>
+                {r.top_story.source && <span style={{marginRight:6}}>[{r.top_story.source}]</span>}
+                {r.top_story.title}
+              </div>
+              <div style={{fontSize:11, color:C.dark, lineHeight:1.6}}>{r.top_story[lk==='z'?'impact_z':'impact_e']}</div>
+              {r.top_story.tickers_affected?.length > 0 && (
+                <div style={{fontSize:10, color:C.mid, marginTop:4}}>
+                  {L('Affects:','影响:')} {r.top_story.tickers_affected.map(t => (
+                    <span key={t} style={{fontFamily:'monospace', fontWeight:700, color:C.dark, marginLeft:4}}>{t}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {r.regime_notes && r.regime_notes !== 'No regime changes today' && (
+            <div style={{marginTop:10, fontSize:10, color:C.gold, padding:'6px 10px', background:`${C.gold}10`, borderRadius:4}}>
+              ⚡ {r.regime_notes}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Portfolio Flags ────────────────────────────────────────────── */}
+      {r.portfolio_flags?.length > 0 && (
+        <div style={{background:C.card, border:`1px solid ${C.border}`, padding:'16px 24px', marginBottom:3}}>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:12}}>
+            📊 {L('Portfolio Status','持仓状态')}
+          </div>
+          <div style={{display:'flex', flexDirection:'column', gap:8}}>
+            {r.portfolio_flags.map((f, i) => {
+              const sc = STATUS_COLOR[f.status] || C.mid;
+              return (
+                <div key={i} style={{display:'flex', gap:12, alignItems:'flex-start', padding:'10px 12px', background:`${sc}08`, border:`1px solid ${sc}20`, borderRadius:6}}>
+                  <div style={{flexShrink:0, display:'flex', flexDirection:'column', gap:4, minWidth:100}}>
+                    <span style={{fontFamily:'monospace', fontSize:11, fontWeight:700, color:C.dark}}>{f.ticker}</span>
+                    <span style={{fontSize:9, padding:'1px 7px', borderRadius:3, fontWeight:700, background:`${sc}18`, color:sc, display:'inline-block', textAlign:'center'}}>{f.status}</span>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:11, color:C.dark, lineHeight:1.6}}>{lk==='z' ? f.note_z : f.note_e}</div>
+                    {f.action_required && (
+                      <div style={{fontSize:9, color:C.red, fontWeight:700, marginTop:4}}>⚡ {L('Action required today','今日需要操作')}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Trade Ideas ────────────────────────────────────────────────── */}
+      {r.trade_ideas?.length > 0 && (
+        <div style={{background:C.card, border:`1px solid ${C.border}`, padding:'16px 24px', marginBottom:3}}>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:12}}>
+            💡 {L("Today's Trade Ideas","今日交易思路")}
+          </div>
+          <div style={{display:'flex', flexDirection:'column', gap:10}}>
+            {r.trade_ideas.map((t, i) => {
+              const uc = URGENCY_COLOR[t.urgency] || C.mid;
+              return (
+                <div key={i} style={{padding:'12px 14px', background:C.bg, border:`1px solid ${C.border}`, borderLeft:`3px solid ${uc}`, borderRadius:'0 6px 6px 0'}}>
+                  <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:6}}>
+                    <span style={{fontFamily:'monospace', fontSize:12, fontWeight:700, color:C.dark}}>{t.ticker}</span>
+                    <span style={{fontSize:9, padding:'1px 6px', borderRadius:3, fontWeight:700, background:`${uc}18`, color:uc}}>{t.urgency}</span>
+                  </div>
+                  <div style={{fontSize:12, color:C.dark, lineHeight:1.6, marginBottom:4}}>{lk==='z' ? t.idea_z : t.idea_e}</div>
+                  {t.entry && <div style={{fontSize:10, color:C.blue, fontWeight:600}}>📍 {t.entry}</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Event Radar + Prediction Updates (side by side) ────────────── */}
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:3, marginBottom:3}}>
+        {r.event_radar?.length > 0 && (
+          <div style={{background:C.card, border:`1px solid ${C.border}`, padding:'16px 20px'}}>
+            <div style={{fontSize:9, fontWeight:700, color:C.mid, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:10}}>
+              📅 {L('Event Radar','事件雷达')}
+            </div>
+            {r.event_radar.map((e, i) => {
+              const ic = IMPACT_COLOR[e.impact] || C.mid;
+              return (
+                <div key={i} style={{display:'flex', gap:8, marginBottom:8, fontSize:11}}>
+                  <span style={{color:C.mid, fontSize:9, whiteSpace:'nowrap', paddingTop:2}}>{e.date}</span>
+                  <div style={{flex:1}}>
+                    <div style={{color:C.dark, lineHeight:1.5}}>{e.event}</div>
+                    {e.ticker && <span style={{fontFamily:'monospace', fontSize:9, color:C.mid}}>{e.ticker}</span>}
+                  </div>
+                  <span style={{fontSize:9, fontWeight:700, color:ic, flexShrink:0}}>{e.impact}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {r.prediction_updates?.length > 0 && (
+          <div style={{background:C.card, border:`1px solid ${C.border}`, padding:'16px 20px'}}>
+            <div style={{fontSize:9, fontWeight:700, color:C.mid, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:10}}>
+              🎯 {L('Prediction Updates','预测更新')}
+            </div>
+            {r.prediction_updates.map((p, i) => {
+              const ac = { 'ON-TRACK':C.green, VERIFY:C.green, FALSIFY:C.red, MONITOR:C.gold }[p.action] || C.mid;
+              return (
+                <div key={i} style={{display:'flex', gap:8, alignItems:'flex-start', marginBottom:8}}>
+                  <span style={{fontSize:9, padding:'2px 6px', borderRadius:3, fontWeight:700, background:`${ac}18`, color:ac, whiteSpace:'nowrap', flexShrink:0}}>{p.action}</span>
+                  <div>
+                    <span style={{fontFamily:'monospace', fontSize:10, fontWeight:700, color:C.dark}}>{p.ticker} </span>
+                    <span style={{fontSize:10, color:C.mid, lineHeight:1.5}}>{p.reason}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Footer ─────────────────────────────────────────────────────── */}
+      <div style={{fontSize:9, color:C.mid, textAlign:'center', paddingTop:12}}>
+        {r.generated_at && L(`Generated ${new Date(r.generated_at).toLocaleString('en-HK',{timeZone:'Asia/Hong_Kong',hour12:false})} HKT · ${r.tokens_used||'—'} tokens`,
+                               `生成于 ${new Date(r.generated_at).toLocaleString('zh-CN',{timeZone:'Asia/Hong_Kong'})} HKT · ${r.tokens_used||'—'} tokens`)}
+      </div>
+    </div>
+  );
+}
+
 /* ── TODAY'S PULSE CARD ───────────────────────────────────────────────── */
 function PulseCard({ pulse, loading, ticker, onRunPulse, L, lk, C }) {
   const STATUS_COLOR = { INTACT:'#22c55e', WATCH:'#eab308', REVIEW:'#f97316', BROKEN:'#ef4444' };
@@ -4269,6 +4499,15 @@ export default function Dashboard() {
   // Pulse state: { [ticker]: { ...pulseResult } }
   const [pulseData, setPulseData] = useState({});
   const [pulseLoading, setPulseLoading] = useState({});
+  // Morning report state
+  const [morningReport, setMorningReport] = useState(() => {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const cached = localStorage.getItem(`ar_morning_report_${today}`);
+      return cached ? JSON.parse(cached) : null;
+    } catch { return null; }
+  });
+  const [morningReportLoading, setMorningReportLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
 
   /* Fetch prediction log on mount */
@@ -4580,6 +4819,33 @@ export default function Dashboard() {
     goStock(tk);
   };
 
+  // ── Morning Report ────────────────────────────────────────────────────────
+  const handleGenerateMorningReport = async (payload) => {
+    setMorningReportLoading(true);
+    const isGHPages = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+    const apiBase   = isGHPages ? 'https://equity-research-ten.vercel.app' : '';
+    try {
+      const res  = await fetch(`${apiBase}/api/morning-report`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || 'API error');
+      const report = json.report;
+      setMorningReport(report);
+      // Cache for today
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        localStorage.setItem(`ar_morning_report_${today}`, JSON.stringify(report));
+      } catch {}
+    } catch (err) {
+      console.error('[MorningReport]', err.message);
+    } finally {
+      setMorningReportLoading(false);
+    }
+  };
+
   // ── Research Pulse ────────────────────────────────────────────────────────
   // Runs for a ticker when research tab loads (once per day per ticker).
   // Reads stored research from localStorage, passes to api/research-pulse.
@@ -4772,6 +5038,7 @@ export default function Dashboard() {
     { id:'earnings', label:L('Earnings','财报'),  icon:<Calendar size={14}/> },
     { id:'paper',    label:L('Portfolio','组合'),  icon:<BarChart3 size={14}/> },
     { id:'backtest', label:L('Backtest','回测'),   icon:<TrendingUp size={14}/> },
+    { id:'morning',  label:L('Morning','早报'),    icon:<Zap size={14}/> },
     { id:'tracker',  label:L('Tracker','追踪'),   icon:<Target size={14}/> },
     { id:'watchlist',label:L('Watchlist','关注'), icon:<Eye size={14}/> },
     { id:'system',   label:L('System','系统'),    icon:<Layers size={14}/> },
@@ -5028,6 +5295,7 @@ export default function Dashboard() {
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
           })()}
+          {tab==='morning'  && <MorningReportPage L={L} lk={lk} C={C} reportData={morningReport} reportLoading={morningReportLoading} onGenerate={handleGenerateMorningReport} liveData={liveData} newsPortfolio={newsPortfolio} newsMacro={newsMacro} regimeData={regimeData} predictions={predictions} allStocks={allStocks}/>}
           {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C} predictions={predictions}/>}
           {tab==='watchlist'&& <Watchlist L={L} stocks={allStocks} C={C}/>}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
