@@ -728,8 +728,16 @@ function SourceBadge({ source, C }) {
   );
 }
 
-function ArticleRow({ a, onOpenArticle, accent, C, L }) {
+function ArticleRow({ a, onOpenArticle, accent, C, L, translation, onTranslate }) {
   const [hov, setHov] = useState(false);
+  const hasTranslation = translation?.zh && !translation?.loading;
+  const isTranslating  = translation?.loading;
+
+  const handleTranslate = (e) => {
+    e.stopPropagation(); // don't open chat panel
+    if (!isTranslating && !hasTranslation) onTranslate(a);
+  };
+
   return (
     <div
       onClick={() => onOpenArticle(a)}
@@ -744,6 +752,7 @@ function ArticleRow({ a, onOpenArticle, accent, C, L }) {
     >
       <div style={{...S.row, justifyContent:'space-between', gap:8, alignItems:'flex-start'}}>
         <div style={{flex:1, minWidth:0}}>
+          {/* Tag + source row */}
           <div style={{...S.row, gap:5, marginBottom:4, flexWrap:'wrap'}}>
             {a.tag && (
               <span style={{
@@ -761,15 +770,49 @@ function ArticleRow({ a, onOpenArticle, accent, C, L }) {
             )}
             <SourceBadge source={a.source} C={C}/>
           </div>
+
+          {/* English title */}
           <div style={{
             fontSize:11.5, fontWeight:600, color:C.dark, lineHeight:1.4,
             overflow:'hidden', textOverflow:'ellipsis',
             display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical',
           }}>{a.title}</div>
-          <div style={{fontSize:9, color:C.mid, marginTop:3}}>
-            {timeAgo(a.published_at)} {L('ago','')}
+
+          {/* Chinese translation — shows when available */}
+          {(hasTranslation || isTranslating) && (
+            <div style={{
+              fontSize:11, color: isTranslating ? C.mid : C.blue,
+              lineHeight:1.5, marginTop:5,
+              paddingTop:5, borderTop:`1px dashed ${C.border}`,
+              fontStyle: isTranslating ? 'italic' : 'normal',
+            }}>
+              {isTranslating
+                ? '翻译中…'
+                : translation.zh}
+            </div>
+          )}
+
+          {/* Time + translate button row */}
+          <div style={{...S.row, gap:8, marginTop:4}}>
+            <span style={{fontSize:9, color:C.mid}}>
+              {timeAgo(a.published_at)} {L('ago','')}
+            </span>
+            {/* Translate toggle — only show if not yet translated */}
+            {!hasTranslation && (
+              <button
+                onClick={handleTranslate}
+                disabled={isTranslating}
+                style={{
+                  fontSize:9, color: isTranslating ? C.mid : C.gold,
+                  background:'transparent', border:'none', cursor: isTranslating ? 'default' : 'pointer',
+                  padding:'0 2px', fontFamily:'inherit', fontWeight:600,
+                  opacity: isTranslating ? 0.6 : 1,
+                }}
+              >{isTranslating ? '…' : '🌐 译'}</button>
+            )}
           </div>
         </div>
+
         <span style={{
           flexShrink:0, fontSize:9, color:C.blue, fontWeight:700,
           padding:'3px 8px', border:`1px solid ${C.blue}40`,
@@ -782,6 +825,43 @@ function ArticleRow({ a, onOpenArticle, accent, C, L }) {
 
 function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onOpenArticle, L, lk, C }) {
   const [newsTab, setNewsTab] = useState('macro');
+  // translations: { [articleId]: { zh: string|null, loading: bool } }
+  const [translations, setTranslations] = useState({});
+
+  const API_BASE = 'https://equity-research-ten.vercel.app';
+
+  const handleTranslate = async (article) => {
+    const id = article.id;
+    if (translations[id]?.zh || translations[id]?.loading) return;
+    setTranslations(p => ({ ...p, [id]: { zh: null, loading: true } }));
+    try {
+      const context = article.ticker
+        ? `${article.ticker}${article.tag ? ' · ' + article.tag : ''}`
+        : article.tag || '';
+      const res = await fetch(`${API_BASE}/api/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: article.title, context }),
+      });
+      const data = await res.json();
+      setTranslations(p => ({ ...p, [id]: { zh: data.translated || article.title, loading: false } }));
+    } catch {
+      setTranslations(p => ({ ...p, [id]: { zh: null, loading: false } }));
+    }
+  };
+
+  // Auto-translate all visible articles when user switches to Chinese mode
+  const prevLk = useRef(lk);
+  useEffect(() => {
+    if (lk === 'z' && prevLk.current !== 'z') {
+      // Translate the currently visible list on language switch
+      const list = newsTab === 'macro' ? macroArticles : portfolioArticles;
+      list.slice(0, 10).forEach(a => {
+        if (!translations[a.id]?.zh && !translations[a.id]?.loading) handleTranslate(a);
+      });
+    }
+    prevLk.current = lk;
+  }, [lk]); // eslint-disable-line
 
   const macroAccent = (tag) => ({
     'FED':'#8B5CF6', 'CHINA-MACRO':'#EF4444', 'GEO':'#F59E0B',
@@ -813,9 +893,20 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
             <span style={{fontSize:9, color:C.mid}}>{lastFetched.toLocaleTimeString()}</span>
           )}
         </div>
-        <span style={{fontSize:9, color:C.mid}}>
-          {L('FT · WSJ · Bloomberg · Reuters · CNBC · Economist','金融时报·华尔街日报·彭博·路透·CNBC')}
-        </span>
+        <div style={{...S.row, gap:8}}>
+          {/* Translate-all button */}
+          <button
+            onClick={() => activeList.slice(0,15).forEach(a => handleTranslate(a))}
+            style={{
+              fontSize:9, fontWeight:700, color:C.gold,
+              background:`${C.gold}12`, border:`1px solid ${C.gold}40`,
+              borderRadius:5, padding:'2px 8px', cursor:'pointer',
+            }}
+          >🌐 {L('Translate all','全部翻译')}</button>
+          <span style={{fontSize:9, color:C.mid}}>
+            {L('FT · WSJ · Bloomberg · Reuters · CNBC','金融时报·华尔街日报·彭博·路透·CNBC')}
+          </span>
+        </div>
       </div>
 
       {/* Tab switcher */}
@@ -850,6 +941,8 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
             key={a.id} a={a} onOpenArticle={onOpenArticle}
             accent={newsTab === 'macro' ? macroAccent(a.tag) : portfolioAccent(a.ticker)}
             C={C} L={L}
+            translation={translations[a.id]}
+            onTranslate={handleTranslate}
           />
         ))}
       </div>
