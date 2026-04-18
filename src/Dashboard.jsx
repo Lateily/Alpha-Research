@@ -728,6 +728,248 @@ function SourceBadge({ source, C }) {
   );
 }
 
+/* ── PRICE CHART ─────────────────────────────────────────────────────────── */
+
+// Normalize any ticker to Yahoo Finance 4-digit HK format
+function toYahooTicker(ticker) {
+  if (!ticker) return ticker;
+  if (ticker.endsWith('.HK')) {
+    const code    = ticker.slice(0, -3);           // strip ".HK"
+    const digits  = code.replace(/^0+/, '') || '0'; // remove leading zeros
+    return digits.padStart(4, '0') + '.HK';        // pad to 4 digits
+  }
+  return ticker;
+}
+
+const API_BASE = 'https://equity-research-ten.vercel.app';
+const RANGES   = ['1d', '5d', '1mo', '3mo', '1y'];
+const RANGE_LABELS = { '1d':'1D', '5d':'5D', '1mo':'1M', '3mo':'3M', '1y':'1Y' };
+
+function PriceChart({ ticker, C, L, lk }) {
+  const [range,    setRange]    = useState('1mo');
+  const [chartData, setChart]   = useState(null);
+  const [meta,     setMeta]     = useState(null);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState(null);
+  const [lastFetch,setLastFetch]= useState(null);
+  const timerRef = useRef(null);
+
+  const yTicker = toYahooTicker(ticker);
+
+  const fetchChart = async (rng = range) => {
+    if (!yTicker) return;
+    setLoading(true); setError(null);
+    try {
+      const res  = await fetch(`${API_BASE}/api/price-chart?ticker=${encodeURIComponent(yTicker)}&range=${rng}`);
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Fetch failed');
+      setChart(data.data || []);
+      setMeta({
+        current:      data.current,
+        change_pct:   data.change_pct,
+        day_high:     data.day_high,
+        day_low:      data.day_low,
+        volume:       data.volume,
+        prev_close:   data.prev_close,
+        currency:     data.currency,
+        market_state: data.market_state,
+        name:         data.name,
+        exchange:     data.exchange,
+      });
+      setLastFetch(new Date());
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch on ticker/range change
+  useEffect(() => {
+    fetchChart(range);
+    // Auto-refresh every 60 s for intraday
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (range === '1d') {
+      timerRef.current = setInterval(() => fetchChart('1d'), 60000);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [ticker, range]); // eslint-disable-line
+
+  // Derived chart metrics
+  const prices   = (chartData || []).map(d => d.close);
+  const minPrice = prices.length ? Math.min(...prices) : 0;
+  const maxPrice = prices.length ? Math.max(...prices) : 0;
+  const priceRange = maxPrice - minPrice;
+  const domainLo = +(minPrice - priceRange * 0.05).toFixed(4);
+  const domainHi = +(maxPrice + priceRange * 0.05).toFixed(4);
+
+  const isUp  = (meta?.change_pct ?? 0) >= 0;
+  const lineC = isUp ? C.green : C.red;
+  const ccy   = meta?.currency === 'HKD' ? 'HK$' : meta?.currency === 'CNY' ? '¥' : (meta?.currency || '');
+
+  // X-axis time formatter
+  const fmtX = (ts) => {
+    const d = new Date(ts);
+    if (range === '1d')  return d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:false });
+    if (range === '5d')  return d.toLocaleDateString('en-US', { weekday:'short' }) + ' ' + d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:false });
+    if (range === '1y')  return d.toLocaleDateString('en-US', { month:'short', year:'2-digit' });
+    return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  };
+
+  const fmtVol = (v) => {
+    if (v == null) return '—';
+    if (v >= 1e8)  return (v/1e8).toFixed(1)  + '亿';
+    if (v >= 1e6)  return (v/1e6).toFixed(1)  + 'M';
+    if (v >= 1e4)  return (v/1e4).toFixed(1)  + 'w';
+    return v.toLocaleString();
+  };
+
+  return (
+    <div style={{ background: C.card, borderRadius: 10, border: `1px solid ${C.border}`, overflow:'hidden', marginBottom: 12 }}>
+      {/* Header */}
+      <div style={{ padding: '12px 16px 8px', borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }}>
+          {/* Price block */}
+          <div>
+            {meta ? (
+              <>
+                <div style={{ display:'flex', alignItems:'baseline', gap:8 }}>
+                  <span style={{ fontSize:22, fontWeight:800, color:C.dark, fontFamily:'JetBrains Mono,monospace' }}>
+                    {ccy}{meta.current != null ? meta.current.toFixed(meta.current >= 100 ? 2 : 3) : '—'}
+                  </span>
+                  <span style={{ fontSize:13, fontWeight:700, color: isUp ? C.green : C.red }}>
+                    {meta.change_pct != null ? `${isUp?'+':''}${meta.change_pct.toFixed(2)}%` : '—'}
+                  </span>
+                  {/* Market state badge */}
+                  {meta.market_state && meta.market_state !== 'REGULAR' && (
+                    <span style={{ fontSize:8, padding:'2px 6px', borderRadius:4, background:`${C.gold}20`, color:C.gold, fontWeight:700 }}>
+                      {meta.market_state === 'CLOSED' ? L('CLOSED','已收盘') : meta.market_state}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display:'flex', gap:14, marginTop:4 }}>
+                  {[
+                    { label:'H', val: meta.day_high  != null ? `${ccy}${meta.day_high.toFixed(2)}`  : '—' },
+                    { label:'L', val: meta.day_low   != null ? `${ccy}${meta.day_low.toFixed(2)}`   : '—' },
+                    { label:L('Vol','量'), val: fmtVol(meta.volume) },
+                    { label:L('Prev','昨收'), val: meta.prev_close != null ? `${ccy}${meta.prev_close.toFixed(2)}` : '—' },
+                  ].map(({ label, val }) => (
+                    <div key={label}>
+                      <span style={{ fontSize:9, color:C.mid }}>{label} </span>
+                      <span style={{ fontSize:10, fontWeight:700, color:C.dark, fontFamily:'JetBrains Mono,monospace' }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize:11, color:C.mid }}>
+                {loading ? L('Loading…','加载中…') : error ? L('Price unavailable','无法获取价格') : ''}
+              </div>
+            )}
+          </div>
+
+          {/* Range selector + refresh */}
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6 }}>
+            <div style={{ display:'flex', gap:3 }}>
+              {RANGES.map(r => (
+                <button key={r} onClick={() => setRange(r)} style={{
+                  padding:'3px 9px', fontSize:10, fontWeight:700, border:'none',
+                  borderRadius:5, cursor:'pointer',
+                  background: range === r ? C.blue : C.soft,
+                  color:      range === r ? '#fff'  : C.mid,
+                  transition:'all .15s',
+                }}>
+                  {RANGE_LABELS[r]}
+                </button>
+              ))}
+              <button onClick={() => fetchChart(range)} disabled={loading} title={L('Refresh','刷新')} style={{
+                padding:'3px 7px', fontSize:10, border:'none', borderRadius:5,
+                background: C.soft, color: C.mid, cursor: loading ? 'default' : 'pointer',
+              }}>
+                {loading ? '…' : '↻'}
+              </button>
+            </div>
+            {lastFetch && (
+              <span style={{ fontSize:8, color:C.mid }}>
+                {L('Updated','更新') + ' ' + lastFetch.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' })}
+                {range === '1d' && <span style={{ color:C.green }}> · {L('auto','自动')}</span>}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div style={{ padding:'8px 0 0' }}>
+        {error && !chartData && (
+          <div style={{ textAlign:'center', padding:'28px 0', fontSize:11, color:C.mid }}>
+            {error}
+          </div>
+        )}
+        {!error && chartData && chartData.length > 0 && (
+          <ResponsiveContainer width='100%' height={180}>
+            <LineChart data={chartData} margin={{ top:4, right:16, bottom:0, left:4 }}>
+              <defs>
+                <linearGradient id={`grad_${ticker.replace(/\./g,'_')}`} x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='5%'  stopColor={lineC} stopOpacity={0.25}/>
+                  <stop offset='95%' stopColor={lineC} stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey='time'
+                tickFormatter={fmtX}
+                tick={{ fontSize:9, fill:C.mid }}
+                axisLine={false} tickLine={false}
+                interval='preserveStartEnd'
+                minTickGap={50}
+              />
+              <YAxis
+                domain={[domainLo, domainHi]}
+                tick={{ fontSize:9, fill:C.mid }}
+                axisLine={false} tickLine={false}
+                width={50}
+                tickFormatter={v => `${ccy}${v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(v>=100?0:2)}`}
+              />
+              <Tooltip
+                contentStyle={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:11 }}
+                labelFormatter={ts => new Date(ts).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}
+                formatter={(val, name) => [`${ccy}${Number(val).toFixed(4)}`, L('Price','价格')]}
+              />
+              <ReferenceLine y={meta?.prev_close} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
+              <Line
+                type='monotone' dataKey='close'
+                stroke={lineC} strokeWidth={1.5}
+                dot={false} activeDot={{ r:3, fill:lineC }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+        {!error && chartData && chartData.length === 0 && !loading && (
+          <div style={{ textAlign:'center', padding:'28px 0', fontSize:11, color:C.mid }}>
+            {L('No chart data for this range','该时间段暂无数据')}
+          </div>
+        )}
+        {!chartData && loading && (
+          <div style={{ height:180, display:'flex', alignItems:'center', justifyContent:'center', color:C.mid, fontSize:11 }}>
+            {L('Loading chart…','图表加载中…')}
+          </div>
+        )}
+
+        {/* Volume bar strip */}
+        {chartData && chartData.length > 0 && (
+          <ResponsiveContainer width='100%' height={40}>
+            <BarChart data={chartData} margin={{ top:0, right:16, bottom:4, left:4 }}>
+              <Bar dataKey='volume' fill={lineC} opacity={0.35} radius={0}/>
+              <YAxis hide domain={['auto','auto']}/>
+              <XAxis dataKey='time' hide/>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ArticleRow({ a, onOpenArticle, accent, C, L, translation, onTranslate }) {
   const [hov, setHov] = useState(false);
   const hasTranslation = translation?.zh && !translation?.loading;
@@ -1623,6 +1865,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
 
   return (
     <div>
+      {/* Live price chart — auto-refreshes on 1D range */}
+      <PriceChart ticker={ticker} C={C} L={L} lk={lk}/>
+
       {/* Daily Pulse — auto-runs once per day, shows at top of Research view */}
       <PulseCard pulse={pulse} loading={pulseLoading} ticker={ticker} onRunPulse={onRunPulse} L={L} lk={lk} C={C}/>
 
@@ -3547,6 +3792,9 @@ const UniverseStockView = ({ ticker, universeStocks, liveData, L, lk, C, onDeepR
 
   return (
     <div>
+      {/* Live price chart — works for any A/HK stock */}
+      <PriceChart ticker={stock.ticker} C={C} L={L} lk={lk}/>
+
       {/* Header Card */}
       <div style={{...S.card, borderColor:C.border}}>
         <div style={{padding:16}}>
