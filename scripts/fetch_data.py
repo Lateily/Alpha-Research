@@ -28,6 +28,7 @@ OUTPUT_DIR = Path(__file__).parent.parent / "public" / "data"
 TWELVE_DATA_KEY    = os.getenv('TWELVE_DATA_KEY', '')
 ALPHA_VANTAGE_KEY  = os.getenv('ALPHA_VANTAGE_KEY', '')
 TUSHARE_TOKEN      = os.getenv('TUSHARE_TOKEN', '')
+VERCEL_URL         = os.getenv('VERCEL_URL', 'https://equity-research-ten.vercel.app')
 
 # ── Focus stock config ──────────────────────────────────────────────────────
 FOCUS_TICKERS = {
@@ -1410,6 +1411,63 @@ def _fetch_northbound_tushare():
         return None
 
 
+def _sina_code(yahoo_ticker):
+    """Yahoo Finance ticker → Sina Finance code.
+    0700.HK → hk00700   300308.SZ → sz300308   002594.SZ → sz002594"""
+    if yahoo_ticker.endswith('.HK'):
+        return 'hk' + yahoo_ticker[:-3].zfill(5)
+    if yahoo_ticker.endswith('.SZ'):
+        return 'sz' + yahoo_ticker[:-3]
+    if yahoo_ticker.endswith('.SS') or yahoo_ticker.endswith('.SH'):
+        return 'sh' + yahoo_ticker[:-3]
+    return yahoo_ticker
+
+
+def _fetch_prices_via_vercel(yahoo_tickers):
+    """
+    Batch-fetch live prices via our own Vercel /api/a-quote endpoint.
+    Vercel → Sina Finance — no geo-restriction, no IP ban from GitHub Actions.
+    Returns {yahoo_ticker: {price, prev_close, change_pct, high, low, open, volume, ohlcv:[]}}
+    """
+    sina_codes = [_sina_code(t) for t in yahoo_tickers]
+    code_map   = {_sina_code(t): t for t in yahoo_tickers}  # reverse lookup
+
+    url = f"{VERCEL_URL}/api/a-quote?codes={','.join(sina_codes)}"
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read())
+
+        quotes = data.get('quotes', [])
+        if not quotes:
+            print(f"  [vercel/sina] Empty response — no quotes returned")
+            return {}
+
+        result = {}
+        for q in quotes:
+            full_code = q.get('full_code', '')   # e.g. "sz300308"
+            yahoo_tk  = code_map.get(full_code)
+            if not yahoo_tk or not q.get('price'):
+                continue
+            result[yahoo_tk] = {
+                'price':      q['price'],
+                'prev_close': q.get('prev_close') or q['price'],
+                'change_pct': q.get('change_pct'),
+                'high':       q.get('high') or q['price'],
+                'low':        q.get('low')  or q['price'],
+                'open':       q.get('open') or q['price'],
+                'volume':     int(q.get('volume') or 0),
+                'ohlcv':      [],   # history comes from ohlc_*.json, not Sina
+            }
+        print(f"  [vercel/sina] {len(result)}/{len(yahoo_tickers)} prices fetched "
+              f"(source: {data.get('source','?')})")
+        return result
+
+    except Exception as e:
+        print(f"  [vercel/sina] Failed: {type(e).__name__}: {e}")
+        return {}
+
+
 def _fetch_price_direct(yf_ticker, retries=3, delay=2):
     """
     Fetch live price + 5d OHLCV via direct Yahoo Finance v8 API.
@@ -1521,16 +1579,24 @@ def fetch_focus_stocks():
     consensus_results = {}
     hist_cache = {}   # pid → DataFrame for RDCF beta calculation
 
+    # ── Pre-fetch all prices via Vercel/Sina (bypasses GitHub Actions IP blocks) ──
+    all_yf_ids     = [cfg["yahoo"] for cfg in FOCUS_TICKERS.values()]
+    vercel_prices  = _fetch_prices_via_vercel(all_yf_ids)
+
     for pid, cfg in FOCUS_TICKERS.items():
         yid = cfg["yahoo"]
         print(f"  [{pid}] {cfg['name_en']}...")
 
-        # ── Step A: Get live price via direct API (reliable from GitHub Actions) ──
-        direct = _fetch_price_direct(yid)
+        # ── Step A: Price — Vercel/Sina first, Yahoo direct as fallback ──────────
+        direct = vercel_prices.get(yid)
         if direct:
-            print(f"    Direct price: {direct['price']} (chg: {direct['change_pct']}%)")
+            print(f"    Price (Vercel/Sina): {direct['price']} (chg: {direct['change_pct']}%)")
         else:
-            print(f"    Direct price fetch failed — will try yfinance fallback")
+            direct = _fetch_price_direct(yid)
+            if direct:
+                print(f"    Price (Yahoo direct): {direct['price']} (chg: {direct['change_pct']}%)")
+            else:
+                print(f"    All price sources failed for {yid}")
 
         # ── Step B: Get fundamentals + OHLC via yfinance (with session + retries) ──
         try:
