@@ -8,6 +8,14 @@ import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
          Wifi, WifiOff } from "lucide-react";
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
+/* ── DATA BASE URL ──────────────────────────────────────────────────────────── */
+// On GitHub Pages (or any non-localhost host), fetch data files directly from the
+// raw GitHub repo so market_data.json is always fresh the moment fetch-data.yml
+// pushes — no redeploy needed.  Local dev continues to use the Vite dev server.
+const DATA_BASE = (typeof window !== 'undefined' && window.location.hostname !== 'localhost')
+  ? 'https://raw.githubusercontent.com/Lateily/Alpha-Research/main/public/'
+  : (import.meta.env.BASE_URL || '/');
+
 /* ── THEME ─────────────────────────────────────────────────────────────────── */
 /* ══════════════════════════════════════════════════════════════════
    MODERN SAAS THEME  (ref: clean dashboard, white cards + blue page)
@@ -3548,7 +3556,7 @@ const FlowPanel = ({ liveData, L, lk, C }) => {
 
   // ── 2. Static fallback (flow_data.json committed by local run) ─────────
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + 'data/flow_data.json')
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(d => setStaticData(d))
@@ -3712,7 +3720,7 @@ const FlowPanel = ({ liveData, L, lk, C }) => {
 const EarningsCalendar = ({ L, lk, C }) => {
   const [calData, setCalData] = useState(null);
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + 'data/earnings_calendar.json')
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(d => setCalData(d))
@@ -3793,7 +3801,7 @@ function PaperTrading({ L, lk, C }) {
   const [newTrade, setNewTrade] = useState({ ticker:'', name:'', market:'SZ', side:'BUY', quantity:'', price:'', sector_sw:'', notes:'' });
 
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + 'data/positions.json').then(r=>r.ok?r.json():null).then(d=>setPositions(d)).catch(()=>{});
     fetch(base + 'data/analytics.json').then(r=>r.ok?r.json():null).then(d=>setAnalytics(d)).catch(()=>{});
     fetch(base + 'data/snapshots.json').then(r=>r.ok?r.json():null).then(d=>setSnapshots(d?.snapshots||[])).catch(()=>{});
@@ -3975,7 +3983,7 @@ const CandlestickChart = ({ ticker, L, lk, C }) => {
   useEffect(() => {
     setLoading(true); setOhlc(null); setHover(null);
     const safeId = ticker.replace('.', '_');
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + `data/ohlc_${safeId}.json`)
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(d => { setOhlc(d.data || []); setLoading(false); })
@@ -4125,7 +4133,7 @@ const FinancialStatements = ({ ticker, L, lk, C }) => {
   useEffect(() => {
     setLoading(true); setFin(null);
     const safeId = ticker.replace('.', '_');
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + `data/fin_${safeId}.json`)
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(d => { setFin(d); setLoading(false); })
@@ -5350,7 +5358,7 @@ function BacktestPanel({ L, C }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + 'data/backtest_results.json')
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(d => { setBt(d); setLoading(false); })
@@ -5596,7 +5604,7 @@ export default function Dashboard() {
 
   /* Fetch prediction log on mount */
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + 'data/prediction_log.json')
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.predictions) setPredictions(d.predictions); })
@@ -5605,7 +5613,7 @@ export default function Dashboard() {
 
   /* Fetch EQR ratings on mount */
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
     Promise.all(
       ids.map(id =>
@@ -5629,7 +5637,7 @@ export default function Dashboard() {
 
   /* Fetch Reverse DCF data on mount */
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
     Promise.all(
       ids.map(id =>
@@ -5653,7 +5661,7 @@ export default function Dashboard() {
   /* Fetch swing signals on mount */
   const [signalsData, setSignalsData] = useState({});
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
     Promise.all(
       ids.map(id =>
@@ -5670,7 +5678,7 @@ export default function Dashboard() {
 
   /* Fetch macro stress test data on mount */
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + 'data/stress_test.json')
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setStressData(d); })
@@ -5679,7 +5687,7 @@ export default function Dashboard() {
 
   /* Fetch sector regime config on mount, then auto-generate first insight */
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + 'data/regime_config.json')
       .then(r => r.ok ? r.json() : null)
       .then(d => {
@@ -5795,7 +5803,7 @@ export default function Dashboard() {
 
   /* Fetch live market data + universe on mount */
   useEffect(() => {
-    const base = import.meta.env.BASE_URL || '/';
+    const base = DATA_BASE;
     fetch(base + 'data/market_data.json')
       .then(r => { if (!r.ok) throw new Error('No data file'); return r.json(); })
       .then(d => setLiveData(d))
