@@ -1,0 +1,57 @@
+{
+  "ticker": "6160.HK",
+  "generated_at": "2026-04-19T10:29:51.877668+00:00",
+  "overall": "MED-HIGH",
+  "sections": {
+    "business_model": {
+      "label": "Business Model",
+      "rating": "MED-HIGH",
+      "source": "Company annual report + AKShare financials",
+      "data_age_days": 109
+    },
+    "variant_thesis": {
+      "label": "Variant Thesis",
+      "rating": "MED-HIGH",
+      "source": "Consensus estimates (yfinance/AKShare) + LLM synthesis",
+      "data_age_days": 0,
+      "note": "Expectation gap component uses LLM reasoning — verify independently"
+    },
+    "catalysts": {
+      "label": "Catalysts",
+      "rating": "MED-HIGH",
+      "source": "Management guidance + regulatory calendar",
+      "data_age_days": 109
+    },
+    "risks": {
+      "label": "Risks",
+      "rating": "MED",
+      "source": "News analysis + industry reports",
+      "data_age_days": 0
+    },
+    "financials": {
+      "label": "Financials",
+      "rating": "MED-HIGH",
+      "source": "AKShare / yfinance financial statements",
+      "data_age_days": 109
+    },
+    "technical": {
+      "label": "Technical",
+      "rating": "HIGH",
+      "source": "AKShare / yfinance daily OHLCV",
+      "data_age_days": 0
+    }
+  },
+  "ai_limitations": [
+    "Consensus estimates via yfinance, not Bloomberg/Capital IQ",
+    "Management intent and insider dynamics are not observable from public data",
+    "Variant thesis expectation gap uses LLM reasoning — treat as hypothesis, not fact",
+    "Geopolitical tail risk is narrative-based; not quantified",
+    "⚠️ Financial data is 109 days old — EQR automatically degraded"
+  ],
+  "data_freshness": {
+    "financials": "2025-12-31",
+    "price": "2026-04-19",
+    "consensus": "2026-04-19",
+    "news": "2026-04-19"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "ticker": "300308.SZ",
+  "generated_at": "2026-04-19T10:29:52.037091+00:00",
+  "model_type": "standard_fcf",
+  "market": "A",
+  "error": "bisection_no_root",
+  "wacc_detail": {
+    "rf": 0.023,
+    "erp": 0.065,
+    "beta": 2.123,
+    "beta_source": "yfinance_60d",
+    "wacc": 0.161,
+    "market": "A"
+  },
+  "bisect_debug": {
+    "obj_lo": -919479332359.0,
+    "obj_hi": -388525820966.0
+  }
+}
