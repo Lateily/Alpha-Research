@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write    # needed to dispatch deploy.yml via gh workflow run
 
 jobs:
   fetch-and-alert:
@@ -112,3 +113,11 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/telegram_alert.py
+
+      # ── Step 6: Trigger GitHub Pages redeploy ─────────────────────────────
+      # github-actions[bot] push commits do NOT auto-trigger other workflows.
+      # We explicitly dispatch deploy.yml via workflow_dispatch (allowed with GITHUB_TOKEN).
+      - name: Redeploy GitHub Pages
+        run: gh workflow run deploy.yml --ref main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
