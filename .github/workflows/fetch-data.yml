@@ -97,7 +97,7 @@ jobs:
           shopt -s nullglob
           files=(public/data/ohlc_*.json public/data/fin_*.json \
                  public/data/rdcf_*.json public/data/eqr_*.json \
-                 public/data/signals_*.json)
+                 public/data/signals_*.json public/data/cflow_*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 
