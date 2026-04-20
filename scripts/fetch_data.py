@@ -1569,6 +1569,78 @@ def _yf_history_with_retry(tk, period="6mo", retries=3, delay=3):
     return pd.DataFrame()
 
 
+def fetch_capital_flow(pid, cfg, days=20):
+    """
+    Fetch daily capital flow (大单净流入) for A-share stocks from Eastmoney.
+    Returns list of {date, close, main_net, extra_large_net, large_net} dicts,
+    or empty list for HK stocks (not supported by this API).
+
+    Eastmoney fflow/kline endpoint:
+      secid format: "0.300308" (SZ), "1.600519" (SH)
+      klt=101 → daily; lmt=0 → max records (returns ~180 days)
+    main_net (主力净流入) = extra_large_net + large_net, in 万元 (CNY 10k units)
+    """
+    exchange = cfg.get("exchange", "")
+    if exchange not in ("SZ", "SH"):
+        return []   # HK / US not supported
+
+    mkt_prefix = "0" if exchange == "SZ" else "1"
+    code       = pid.split(".")[0]
+    secid      = f"{mkt_prefix}.{code}"
+
+    url = (
+        "https://push2his.eastmoney.com/api/qt/stock/fflow/kline/get"
+        f"?lmt=0&klt=101&secid={secid}"
+        "&fields1=f1,f2,f3,f4"
+        "&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
+        "&cb=jgj0"
+    )
+
+    try:
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://data.eastmoney.com/",
+        })
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            raw = resp.read().decode("utf-8")
+
+        # Strip JSONP wrapper: jgj0({...})
+        if raw.startswith("jgj0("):
+            raw = raw[5:]
+            if raw.endswith(")"):
+                raw = raw[:-1]
+
+        obj    = json.loads(raw)
+        klines = (obj.get("data") or {}).get("klines") or []
+
+        rows = []
+        for line in klines[-days:]:          # keep only most recent `days`
+            parts = line.split(",")
+            if len(parts) < 7:
+                continue
+            def _f(i):
+                try:
+                    v = float(parts[i])
+                    return None if v == 0.0 and parts[i] in ("0", "0.00") else v
+                except (ValueError, IndexError):
+                    return None
+            rows.append({
+                "date":            parts[0],
+                "close":           _f(1),
+                "main_net":        _f(2),   # 主力净流入 万元 (extra_large + large)
+                "main_pct":        _f(3),   # 占比 %
+                "extra_large_net": _f(4),   # 超大单净流入
+                "large_net":       _f(6),   # 大单净流入
+            })
+
+        print(f"    [cflow] {pid} — {len(rows)} daily rows from Eastmoney fflow")
+        return rows
+
+    except Exception as e:
+        print(f"    [cflow] {pid} — fetch failed: {e}")
+        return []
+
+
 def fetch_focus_stocks():
     try:
         import yfinance as yf
@@ -1864,6 +1936,21 @@ def main():
     # 7. Focus stocks + consensus
     print("[7/8] Focus Stocks (price + OHLC + financials + consensus)...")
     focus, consensus, hist_cache = fetch_focus_stocks()
+    print()
+
+    # 7b. Capital flow (CVD proxy) — A-share only
+    print("[7b/8] Capital Flow (东财大单净流入 — A-share CVD proxy)...")
+    for pid, cfg in FOCUS_TICKERS.items():
+        flow_rows = fetch_capital_flow(pid, cfg, days=20)
+        if flow_rows:
+            safe_id = pid.replace(".", "_")
+            with open(OUTPUT_DIR / f"cflow_{safe_id}.json", "w", encoding="utf-8") as f:
+                json.dump({
+                    "ticker":     pid,
+                    "fetched_at": datetime.now(timezone.utc).isoformat(),
+                    "unit":       "万元 (CNY 10k)",
+                    "data":       flow_rows,
+                }, f, ensure_ascii=False, indent=2)
     print()
 
     # 8. Earnings calendar (new)
