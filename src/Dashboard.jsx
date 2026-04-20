@@ -2105,13 +2105,14 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     return [...arr].sort((a, b) => {
       const ea = getEff(a), eb = getEff(b);
       let va, vb;
-      if      (sortBy==='pct')    { va=ea.pct;   vb=eb.pct; }
-      else if (sortBy==='px')     { va=ea.price; vb=eb.price; }
-      else if (sortBy==='vol')    { va=ea.vol;   vb=eb.vol; }
-      else if (sortBy==='turn')   { va=ea.turn;  vb=eb.turn; }
-      else if (sortBy==='mktcap') { va=a.market_cap; vb=b.market_cap; }
-      else if (sortBy==='pe')     { va=ea.pe;    vb=eb.pe; }
-      else                        { va=ea.pct;   vb=eb.pct; }
+      if      (sortBy==='pct')    { va=ea.pct;          vb=eb.pct; }
+      else if (sortBy==='px')     { va=ea.price;        vb=eb.price; }
+      else if (sortBy==='vol')    { va=ea.vol;          vb=eb.vol; }
+      else if (sortBy==='turn')   { va=ea.turn;         vb=eb.turn; }
+      else if (sortBy==='mktcap') { va=a.market_cap;    vb=b.market_cap; }
+      else if (sortBy==='pe')     { va=ea.pe;           vb=eb.pe; }
+      else if (sortBy==='alpha')  { va=a.alpha_score;   vb=b.alpha_score; }
+      else                        { va=ea.pct;          vb=eb.pct; }
       if (va == null) return 1;
       if (vb == null) return -1;
       return sortDir==='desc' ? vb - va : va - vb;
@@ -2188,7 +2189,10 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   );
 
   const liveCount = Object.keys(liveQuotes).length;
-  const COLS = '32px 1fr 80px 80px 80px 80px 10px';
+  const hasAlphaScores = masterList.some(s => s.alpha_score != null && s.alpha_score > 0);
+  const COLS = hasAlphaScores
+    ? '32px 1fr 80px 80px 80px 80px 46px 10px'   // with α column
+    : '32px 1fr 80px 80px 80px 80px 10px';        // without (scores not yet generated)
 
   return (
     <div>
@@ -2255,6 +2259,14 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
           <FBtn val='dn'  stateVal={dirFilter} setter={setDirFilter} color={C.red}>{L('Down','下跌')}</FBtn>
           <FBtn val='ld'  stateVal={dirFilter} setter={setDirFilter} color='#9333EA'>{L('↓Limit','跌停')}</FBtn>
         </div>
+        {/* Alpha sort shortcut */}
+        {hasAlphaScores && (
+          <div style={{display:'flex', gap:4}}>
+            <FBtn val='alpha' stateVal={sortBy} setter={v=>{setSortBy(v);setSortDir('desc');}} color={C.gold}>
+              α {L('Top','排名')}
+            </FBtn>
+          </div>
+        )}
         <div style={{marginLeft:'auto', fontSize:10, color:C.mid}}>
           {filtered.length.toLocaleString()} {L('stocks','只')}
           {totalPages > 1 && ` · P${page+1}/${totalPages}`}
@@ -2273,6 +2285,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
           <ColHd field='pct'    label={L('Chg%','涨跌%')}/>
           <ColHd field='vol'    label={L('Volume','量')}/>
           <ColHd field='turn'   label={L('Turnover','额')}/>
+          {hasAlphaScores && <ColHd field='alpha' label='α'/>}
           <div/>
         </div>
 
@@ -2337,6 +2350,22 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
                   <div style={{textAlign:'right', alignSelf:'center', fontSize:10, color:C.mid, fontFamily:MONO}}>
                     {fmtVol(eff.turn)}
                   </div>
+
+                  {/* α score (Barra-lite) */}
+                  {hasAlphaScores && (() => {
+                    const sc = s.alpha_score;
+                    const scClr = sc == null || sc === 0 ? C.mid
+                      : sc >= 65 ? C.green
+                      : sc >= 50 ? C.blue
+                      : sc >= 35 ? C.mid
+                      : C.red;
+                    return (
+                      <div style={{textAlign:'right', alignSelf:'center', fontSize:10,
+                                   fontFamily:MONO, fontWeight:700, color:scClr}}>
+                        {sc != null && sc > 0 ? sc.toFixed(0) : '—'}
+                      </div>
+                    );
+                  })()}
 
                   {/* live dot */}
                   <div style={{alignSelf:'center', textAlign:'center'}}>

@@ -643,6 +643,203 @@ def _df_to_dict(df):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# 0. Universe Scorer — Barra CNE5-lite cross-sectional factor model
+# ══════════════════════════════════════════════════════════════════════════════
+def score_universe(stocks):
+    """
+    Cross-sectional factor scoring for a universe of stocks.
+    Adds 'alpha_score' (0-100) and 'factors' sub-scores in-place.
+
+    Factors (Barra CNE5 lite — all cross-sectional percentile ranks 0-100):
+      value_rank:   lower PE + lower PB → higher rank (cheap is better)
+      quality_rank: higher ROE → higher rank
+      momentum_rank: higher 1-day change_pct → higher rank
+      size_rank:    mid-size preference — very large AND very small penalised
+                    (log cap closest to 60th-pct gets highest rank; avoids
+                    micro-cap liquidity traps AND mega-cap priced-in effect)
+      low_vol_rank: lower amplitude → higher rank (quiet stocks, quality moves)
+
+    Composite weights (sum=1.0):
+      value     25%  quality   25%  momentum  20%  size  15%  low_vol  15%
+
+    Stocks with missing data on a factor receive the median rank for that factor
+    (neutral, not penalised). Stocks with price < 2 or market_cap < 5e8 (500M)
+    are excluded from scoring and receive alpha_score=0 (liquidity filter).
+    """
+    import math
+
+    if not stocks:
+        return stocks
+
+    # ── Helpers ───────────────────────────────────────────────────────────────
+    def _pct_rank(values):
+        """Return 0-100 percentile rank array (ties: average rank)."""
+        n   = len(values)
+        idx = sorted(range(n), key=lambda i: values[i] if values[i] is not None else float('-inf'))
+        ranks  = [0.0] * n
+        i = 0
+        while i < n:
+            j = i
+            while j < n - 1 and values[idx[j]] == values[idx[j + 1]]:
+                j += 1
+            avg_rank = (i + j) / 2.0 / (n - 1) * 100.0 if n > 1 else 50.0
+            for k in range(i, j + 1):
+                ranks[idx[k]] = avg_rank
+            i = j + 1
+        return ranks
+
+    def _neutral_rank(ranks):
+        """Median rank for missing-value fill."""
+        valid = [r for r in ranks if r is not None]
+        if not valid:
+            return 50.0
+        s = sorted(valid)
+        mid = len(s) // 2
+        return (s[mid - 1] + s[mid]) / 2 if len(s) % 2 == 0 else float(s[mid])
+
+    # ── Liquidity filter ──────────────────────────────────────────────────────
+    MIN_PRICE  = 2.0
+    MIN_CAP    = 5e8    # 5亿 CNY / HKD
+
+    eligible   = []
+    ineligible = set()
+
+    for i, s in enumerate(stocks):
+        px  = s.get('price')
+        cap = s.get('market_cap')
+        if (px  is not None and px  < MIN_PRICE) or \
+           (cap is not None and cap < MIN_CAP):
+            ineligible.add(i)
+        else:
+            eligible.append(i)
+
+    n = len(eligible)
+    if n < 10:
+        # Insufficient data — zero-fill and return
+        for s in stocks:
+            s['alpha_score'] = 0
+            s['factors']     = {}
+        return stocks
+
+    # ── Extract factor raw values (eligible stocks only) ─────────────────────
+    def _get(field):
+        return [stocks[i].get(field) for i in eligible]
+
+    pe_raw  = _get('pe')
+    pb_raw  = _get('pb')
+    roe_raw = _get('roe')
+    chg_raw = _get('change_pct')
+    cap_raw = _get('market_cap')
+    amp_raw = _get('amplitude')
+
+    # ── Value: winsorize PE (1–200) and PB (0.1–30) before ranking ───────────
+    def _winsor(vals, lo, hi):
+        return [max(lo, min(hi, v)) if v is not None and v > 0 else None
+                for v in vals]
+
+    pe_w  = _winsor(pe_raw,  1.0,  200.0)
+    pb_w  = _winsor(pb_raw,  0.1,  30.0)
+
+    # Invert: low PE/PB → high rank; replace None with median before rank
+    pe_inv  = [None if v is None else -v for v in pe_w]
+    pb_inv  = [None if v is None else -v for v in pb_w]
+
+    pe_rank  = _pct_rank(pe_inv)
+    pb_rank  = _pct_rank(pb_inv)
+    # Value = average of PE-rank and PB-rank (use whichever available)
+    value_rank = []
+    for pr, pbr in zip(pe_rank, pb_rank):
+        if pe_w[len(value_rank)] is None and pb_w[len(value_rank)] is None:
+            value_rank.append(None)
+        elif pe_w[len(value_rank)] is None:
+            value_rank.append(pbr)
+        elif pb_w[len(value_rank)] is None:
+            value_rank.append(pr)
+        else:
+            value_rank.append((pr + pbr) / 2.0)
+
+    # ── Quality: ROE (cap at -50%..+80%) ─────────────────────────────────────
+    roe_w    = _winsor(roe_raw, -50.0, 80.0)
+    quality_rank = _pct_rank(roe_w)
+
+    # ── Momentum: 1-day change_pct ────────────────────────────────────────────
+    momentum_rank = _pct_rank(chg_raw)
+
+    # ── Size: mid-size preference using log(cap) ──────────────────────────────
+    log_cap  = [math.log(v) if v and v > 0 else None for v in cap_raw]
+    valid_lc = [v for v in log_cap if v is not None]
+    if valid_lc:
+        # 60th-percentile log-cap = "sweet spot" (large-mid, not mega)
+        sorted_lc = sorted(valid_lc)
+        p60_lc = sorted_lc[int(len(sorted_lc) * 0.60)]
+        # Distance from sweet spot (inverted: zero distance = rank 100)
+        dist_from_p60 = [abs(v - p60_lc) if v is not None else None for v in log_cap]
+        size_inv      = [None if v is None else -v for v in dist_from_p60]
+        size_rank     = _pct_rank(size_inv)
+    else:
+        size_rank = [50.0] * n
+
+    # ── Low-vol: lower amplitude = higher rank ────────────────────────────────
+    amp_inv  = [None if v is None else -v for v in amp_raw]
+    low_vol_rank = _pct_rank(amp_inv)
+
+    # ── Neutral-fill missing values ────────────────────────────────────────────
+    vr_med  = _neutral_rank(value_rank)
+    qr_med  = _neutral_rank(quality_rank)
+    mr_med  = _neutral_rank(momentum_rank)
+    sr_med  = _neutral_rank(size_rank)
+    lv_med  = _neutral_rank(low_vol_rank)
+
+    def _fill(rank_list, median):
+        return [median if v is None else v for v in rank_list]
+
+    vr  = _fill(value_rank,    vr_med)
+    qr  = _fill(quality_rank,  qr_med)
+    mr  = _fill(momentum_rank, mr_med)
+    sr  = _fill(size_rank,     sr_med)
+    lvr = _fill(low_vol_rank,  lv_med)
+
+    # ── Composite weights ──────────────────────────────────────────────────────
+    W_VALUE    = 0.25
+    W_QUALITY  = 0.25
+    W_MOMENTUM = 0.20
+    W_SIZE     = 0.15
+    W_LOW_VOL  = 0.15
+
+    # ── Write scores back ──────────────────────────────────────────────────────
+    for rank_idx, stock_idx in enumerate(eligible):
+        composite = (
+            W_VALUE    * vr[rank_idx]  +
+            W_QUALITY  * qr[rank_idx]  +
+            W_MOMENTUM * mr[rank_idx]  +
+            W_SIZE     * sr[rank_idx]  +
+            W_LOW_VOL  * lvr[rank_idx]
+        )
+        stocks[stock_idx]['alpha_score'] = round(composite, 1)
+        stocks[stock_idx]['factors']     = {
+            'value':    round(vr[rank_idx],  1),
+            'quality':  round(qr[rank_idx],  1),
+            'momentum': round(mr[rank_idx],  1),
+            'size':     round(sr[rank_idx],  1),
+            'low_vol':  round(lvr[rank_idx], 1),
+        }
+
+    for i in ineligible:
+        stocks[i]['alpha_score'] = 0
+        stocks[i]['factors']     = {'excluded': True}
+
+    # Summary stats
+    scored = [s['alpha_score'] for s in stocks if s['alpha_score'] > 0]
+    if scored:
+        top_n   = sorted(scored, reverse=True)[:10]
+        avg_top = sum(top_n) / len(top_n)
+        print(f"  [score_universe] {len(eligible)}/{len(stocks)} eligible, "
+              f"avg top-10 alpha={avg_top:.1f}, ineligible={len(ineligible)}")
+
+    return stocks
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # 1. Full A-Share Universe
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_a_share_universe():
@@ -1897,9 +2094,12 @@ def main():
     print("[1/8] A-Share Universe...")
     a_stocks = fetch_a_share_universe()
     if a_stocks:
+        print("  Scoring A-share universe (Barra-lite)...")
+        score_universe(a_stocks)
         with open(OUTPUT_DIR / "universe_a.json", "w", encoding="utf-8") as f:
             json.dump({"_meta": {"fetched_at": datetime.now().isoformat(),
-                                 "count": len(a_stocks), "version": "4.0"},
+                                 "count": len(a_stocks), "version": "4.1",
+                                 "scored": True, "scorer": "barra_lite_v1"},
                        "stocks": a_stocks}, f, ensure_ascii=False, default=str)
     print()
 
@@ -1907,9 +2107,12 @@ def main():
     print("[2/8] HK Universe...")
     hk_stocks = fetch_hk_universe()
     if hk_stocks:
+        print("  Scoring HK universe (Barra-lite)...")
+        score_universe(hk_stocks)
         with open(OUTPUT_DIR / "universe_hk.json", "w", encoding="utf-8") as f:
             json.dump({"_meta": {"fetched_at": datetime.now().isoformat(),
-                                 "count": len(hk_stocks), "version": "4.0"},
+                                 "count": len(hk_stocks), "version": "4.1",
+                                 "scored": True, "scorer": "barra_lite_v1"},
                        "stocks": hk_stocks}, f, ensure_ascii=False, default=str)
     print()
 
