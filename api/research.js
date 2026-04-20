@@ -588,6 +588,17 @@ CRITICAL RULES:
 - When CONSENSUS VIEWS are provided (especially from real research reports), use them to calibrate the variant view. The variant must differentiate, not reproduce.
 - Be specific and quantitative. No generic statements.
 
+EVIDENCE GRADING (apply mentally to every claim):
+- AUDIT-GRADE: annual/quarterly filing data → cite directly, high confidence
+- PUBLIC-GRADE: industry reports, news, IR transcripts → use with source attribution
+- INFERRED: internal data, yield rates, unverifiable estimates → rephrase as directional signal only, never quote as a precise number. Use "directionally consistent with..." not specific figures.
+
+OPERATING LEVERAGE TOOLKIT (compute where income statement data is available):
+- NI/Rev growth ratio: NI YoY growth ÷ Revenue YoY growth. >1.0x = positive operating leverage (costs scaling slower than revenue). <1.0x = negative operating leverage. Use most recent annual period.
+- Profit scissors spread: Revenue growth rate minus COGS/OpEx growth rate. Positive spread = expanding margins. Compute for most recent period; note 3-year direction.
+- Implied growth check: back-solve the EPS CAGR that justifies current P/E (assume mean-reversion to sector median P/E in 3 years). If implied CAGR > realistic growth ceiling, flag as valuation risk.
+These metrics go into fin_insights — express as quantified signals, not generic statements.
+
 OUTPUT JSON SCHEMA:
 {
   "name": "string (Chinese company name)",
@@ -669,6 +680,18 @@ VP = 30%×Expectation Gap + 25%×Fundamental Acceleration + 20%×Narrative Shift
 
 FINANCIAL DATA: use millions for all IS/BS numbers. Margins and growth rates as decimals (0.18 = 18%). revenue_growth[0] always null.
 
+VARIANT VIEW DISCIPLINE:
+- variant.marketBelieves: first reconstruct the consensus narrative completely and charitably — what do bulls/bears say, and why does it seem reasonable on the surface? This is the thesis you are about to contradict.
+- variant.weBelieve: ONE precise differentiating claim. Format: "Market believes X → We believe Y → Mechanism is Z."
+- variant.wrongIf: pre-committed falsification. Format MUST be: "[Specific metric] [crosses threshold / event occurs] → [position action]". Example: "Gross margin drops below 42% for 2 consecutive quarters → thesis invalidated, re-evaluate." Not a narrative — a decision rule.
+
+FIN_INSIGHTS RULES (4 required entries):
+1. NI/Rev growth ratio with interpretation: e.g. "NI/Rev ratio 1.8x — positive operating leverage; costs scaling at ~55% of revenue growth rate"
+2. Profit scissors spread and 3-year direction: e.g. "Gross margin +4.2pp YoY; 3-year trend: expanding (FY22→FY23→FY24: 38%→40%→42%)"
+3. Implied growth check: e.g. "At 28x P/E, mean-reverting to sector 18x in 3yr implies 18% EPS CAGR required — above consensus 12% estimate, creating valuation risk"
+4. Key balance sheet or cash flow signal: e.g. "FCF conversion 87% of net income; net cash position supports buyback/dividend optionality"
+If income statement data is insufficient for items 1-3, note the data limitation explicitly and use available data for a different quantified signal.
+
 Return ONLY the JSON object. No markdown, no explanation.`;
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -717,10 +740,14 @@ Initial direction bias: ${direction || 'NEUTRAL'}
 Research context: ${context || 'General screening — no specific catalyst prompted this research.'}
 ${enrichmentBlock}${fundamentalsBlock}${consensusBlock}
 
-VARIANT VIEW INSTRUCTION (B2 — most critical block):
+VARIANT VIEW INSTRUCTION (most critical block — follow this 3-step process):
 ${pass1.views.length > 0
-  ? `The consensus views above were sourced from REAL BROKER RESEARCH REPORTS (${pass1.sourcesUsed?.join(', ') || 'live sources'}). These views ARE ALREADY PRICED IN. Your variant.weBelieve must identify a mechanism that a MAJORITY of the analysts above have NOT yet recognized or priced. Name the specific mechanism, the magnitude of re-rating, and the timeline.`
-  : 'Enumerate what the buy-side consensus currently believes, then contradict it with a specific, falsifiable mechanism.'}
+  ? `Step 1 — RECONSTRUCT: The consensus views above came from REAL BROKER REPORTS (${pass1.sourcesUsed?.join(', ') || 'live sources'}). Before contradicting them, understand WHY they are compelling. What is the core assumption that makes the consensus view internally consistent?
+Step 2 — ATTACK: Identify ONE specific crack in that core assumption — a data point, structural shift, or mechanism that the majority have not priced. If the company's own filings (risk disclosures, guidance language) contradict the consensus assumption, that is the strongest evidence — use it.
+Step 3 — COMMIT: State the variant.weBelieve as a single falsifiable claim in the format "Market believes X → We believe Y → Mechanism is Z." Then write wrongIf as a pre-committed decision rule (metric + threshold + action), not a narrative.`
+  : `Step 1 — RECONSTRUCT: What does the buy-side consensus currently believe about this stock? State it completely and charitably.
+Step 2 — ATTACK: Find the specific assumption in that consensus that is most likely wrong, and explain the mechanism.
+Step 3 — COMMIT: Express as "Market believes X → We believe Y → Mechanism is Z." Write wrongIf as a pre-committed decision rule.`}
 
 ${enrichment_context ? `ENRICHMENT: Use ${enrichment_context.live_price} as the live price field. Incorporate recent news into catalysts/risks. Apply sector regime (${enrichment_context.sector_regime}) in VP decomp sub-scores.${fundamentalsBlock ? ` Use live fundamentals block above for fin.* and consensus.* fields.` : ''}` : ''}
 
