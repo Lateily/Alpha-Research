@@ -348,5 +348,143 @@ def score_universe(stocks, factors):
 
 ---
 
+---
+
+## 九、战略方向确认与落地路线（用户指令 2026-04-20）
+
+> 用户对7篇笔记的落地优先级指示，作为后续开发的权威参考
+
+---
+
+### 9A. 🔴 最高优先级 — FinceptTerminal 融合研究
+
+**用户指令**：把这个开源项目学习过来，融入到我们的模型中。看重它的数据和UI。
+
+**FinceptTerminal 核心能力（已研究，来源：GitHub + 官网搜索结果）**：
+
+| 模块 | 内容 | 对我们的价值 |
+|------|------|------------|
+| 数据源覆盖 | AkShare（A股）、Yahoo Finance、FRED、IMF、World Bank、DBnomics、Polygon | AkShare是关键——A股数据在其数据层 |
+| 市场数据 | 19,000+标的，OHLCV实时流，50+技术指标，多时间框架 | 技术指标体系比我们完整 |
+| 宏观数据 | GDP/通胀/债券收益率/100+经济指标 | 比我们的RegimePanel数据更丰富 |
+| AI模块 | 37个AI Agent（Trader/Investor/Economic/Geopolitics框架），本地LLM支持 | Agent分层思路可借鉴 |
+| 风险模型 | VaR, Sharpe, DCF, 组合优化，衍生品定价（embedded Python） | 与Barra方向一致 |
+| UI架构 | 原生C++20/Qt6桌面端；网页版用React+TypeScript+Rust | 终端式密集信息布局 |
+| 经纪商集成 | 16家broker，多账户交易，PIN认证 | 执行层（我们不做） |
+| 编程API | Q3 2026 roadmap — Programmatic API 上线 | **关键节点：届时可作为数据源接入** |
+
+**重要发现**：FinceptTerminal 本身是 C++ 桌面应用，**不能直接嵌入我们的 React 平台**。融合策略分两层：
+
+**Layer 1 — 立即可做：学习其模块架构，移植到我们的 Dashboard**
+
+FinceptTerminal 的模块拆分逻辑对我们 UI 重构有直接参考价值：
+
+```
+FinceptTerminal 模块结构（参考）        →  我们 Dashboard 对应 / 缺失
+──────────────────────────────────────────────────────────────
+Market Overview（全市场概览）           →  Scanner Tab（已有，需增强）
+Technical Analysis（50+指标）           →  swing_signals（已有，需扩展）
+Economic Dashboard（100+宏观指标）      →  RegimePanel（已有，数据薄）
+Portfolio Analytics（VaR/Sharpe）       →  ❌ 完全缺失
+Research Assistant（GenAI问答）         →  DeepResearch（已有）
+Alternative Data（Reddit/X情绪）        →  ❌ 缺失
+Earnings Calendar                      →  ❌ 缺失（已在规划）
+```
+
+**Layer 2 — Q3 2026：API接入**
+
+FinceptTerminal 的 Programmatic API 上线后，直接作为数据源接入 `fetch_data.py`：
+- 替代或补充 AkShare（他们已解决A股数据接入问题）
+- 接入其100+宏观经济指标到我们的 RegimePanel
+- 接入其情绪数据（Adanos Market Sentiment）
+
+**近期行动**：
+1. 在本地 clone FinceptTerminal 仓库，研究其 `data/` 目录的 AkShare 调用方式（解决我们被封的问题）
+2. 参考其 Economic Dashboard 的指标选取，扩展我们的 `api/macro.js`
+3. 参考其终端风格 UI，规划我们的 v15 UI 重构方向（替换卡片宫格为更密集的信息面板）
+
+---
+
+### 9B. 🔴 高优先级 — Barra风险模型 + AS模型纳入研究框架
+
+**用户指令**：纳入我们的研究框架。
+
+**Barra CNE5（规划路径）**：
+
+| 阶段 | 行动 | 时间线 |
+|------|------|--------|
+| 近期（v14.x） | 在 `score_universe()` 加入规模因子（流通市值）+ 波动率因子（20日标准差） | Sprint B1 |
+| 中期（v15.x） | 用5因子框架（市场/规模/动量/波动/价值）拆解我们的组合收益 | 下一sprint |
+| 长期（v16.x） | 完整Barra CNE5归因：识别我们的alpha是真实alpha还是风格暴露 | 3个月后 |
+
+**AS模型（近期可做）**：
+
+CVD信号加入 `swing_signals.py`，两个新信号：
+```python
+# 价格涨但CVD持续下降 → 做市商压制中，警惕砸盘
+'CVD_BEARISH_DIVERGENCE': price_change > 1% AND cvd_slope < 0 (5日)
+
+# CVD急跌后趋稳 → 库存释放完毕，可能反弹
+'CVD_FLOOR_FORMED': cvd_change_1d < -20% AND cvd_change_3d > -5%
+```
+
+数据来源：东财 `/api/qt/stock/fflow/kline/get`（`capital-flow.js` 已用过）
+
+---
+
+### 9C. 🟡 中期 — OpenClaw模式作为交易Agent参考
+
+**用户指令**：一个月后落地，现在先做 reference。
+
+**核心架构（学习要点）**：
+- Claude Code + 自定义Skills = 结构化交易决策流程
+- Skills 分层：入场规划 skill（静态分析）+ 实时监控 skill（事件触发）
+- 数据喂入：将股票数据结构化后注入 Claude context
+
+**与我们平台的接口设计（一个月后实现）**：
+```
+触发条件：持仓股价格变动超过VP阈值
+    ↓
+自动调用 DeepResearch（快速模式，不跑全流程）
+    ↓
+输出：更新后的入场/离场建议 → 推送到 morning-report
+```
+
+**参考资料**：OpenClaw GitHub（用户待提供链接），或从同花顺App获取数据的具体实现方式
+
+---
+
+### 9D. 🟡 中期 — 技术信号扩展（基于MA社区反馈）
+
+**用户指令**：想让你有更多思路。
+
+当前 `swing_signals.py` 已有：MA多头排列、RSI、成交量比。基于FinceptTerminal的50+指标体系，扩展建议：
+
+| 新信号 | 逻辑 | 实现难度 |
+|--------|------|---------|
+| MACD金叉/死叉 | DIF上穿/下穿DEA | 低 |
+| 布林带突破 | 收盘价突破上/下轨 | 低 |
+| KDJ超买超卖 | K>80 超买，K<20 超卖 | 低 |
+| 量能背离 | 价创新高但量萎缩 | 中 |
+| CVD背离（AS模型） | 见9B | 中 |
+| 相对强弱（行业内RS） | 个股涨/行业ETF涨 >1.2 | 中 |
+
+一次性加入前3个（MACD/布林带/KDJ），成本极低，直接在Sprint C1完成。
+
+---
+
+### 9E. 🟢 长期 — aidesigner MCP UI重构参考
+
+**用户指令**：功能完善后改善界面。
+
+**等待条件**：aidesigner MCP对复杂交互状态管理的支持成熟（当前仅适合静态页面）
+
+**届时规划**：
+- 参考FinceptTerminal终端风格：多面板、信息密度高、颜色编码
+- 用aidesigner MCP生成初版设计稿 → 人工调整交互逻辑 → 集成
+- 从"卡片宫格"向"终端面板"的视觉语言迁移
+
+---
+
 *本文档来源：平台现状分析 + A股量化社区通用策略 + 2026年4月用户提供的7篇小红书笔记（通过 Claude in Chrome + xsec_token 直接读取原文）*  
 *笔记ID：69d078c8（aidesigner MCP）· 69bcd0a6（OpenClaw）· 69e4c2d4（MA交叉入门）· 69e57696（FinceptTerminal）· 69d8f9cb（TradingAgents）· 69bab577（Barra CNE5）· 69e0ff50（AS模型/CVD）*
