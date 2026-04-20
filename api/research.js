@@ -484,6 +484,69 @@ function buildEnrichmentBlock(enrichment) {
   return '\n\n' + lines.join('\n');
 }
 
+// ── Fundamentals block — live yfinance data fed from Dashboard state ──────
+function buildFundamentalsBlock(f) {
+  if (!f) return '';
+
+  // Only emit the block if we have at least one meaningful data point
+  const hasValuation = f.pe_trailing != null || f.pe_forward != null || f.ev_ebitda != null;
+  const hasQuality   = f.roe != null || f.gross_margin != null || f.revenue_growth != null;
+  const hasAnalyst   = f.target_mean != null;
+  if (!hasValuation && !hasQuality && !hasAnalyst) return '';
+
+  const pct  = v => v != null ? `${(v * 100).toFixed(1)}%` : null;
+  const num1 = v => v != null ? v.toFixed(1) : null;
+  const num2 = v => v != null ? v.toFixed(2) : null;
+
+  const lines = [
+    '━━━ LIVE FUNDAMENTALS (yfinance — override AI training data for these values) ━━━',
+    'INSTRUCTION: Populate fin.pe, fin.revGr, fin.gm, and consensus.* from these live figures rather than training memory.',
+  ];
+
+  // Valuation multiples
+  if (hasValuation) {
+    const vals = [
+      f.pe_trailing != null ? `P/E TTM: ${num1(f.pe_trailing)}x` : null,
+      f.pe_forward  != null ? `P/E Fwd: ${num1(f.pe_forward)}x`  : null,
+      f.ev_ebitda   != null ? `EV/EBITDA: ${num1(f.ev_ebitda)}x` : null,
+    ].filter(Boolean);
+    lines.push(`VALUATION:  ${vals.join('  |  ')}`);
+  }
+
+  // Quality & growth
+  if (hasQuality) {
+    const ql = [
+      f.roe             != null ? `ROE: ${pct(f.roe)}`              : null,
+      f.gross_margin    != null ? `Gross Margin: ${pct(f.gross_margin)}` : null,
+      f.operating_margin!= null ? `Op Margin: ${pct(f.operating_margin)}` : null,
+      f.revenue_growth  != null ? `Rev Growth (TTM): ${pct(f.revenue_growth)}` : null,
+    ].filter(Boolean);
+    lines.push(`QUALITY/GROWTH:  ${ql.join('  |  ')}`);
+  }
+
+  // Analyst consensus targets
+  if (hasAnalyst) {
+    const upside = (f.live_price && f.target_mean)
+      ? `  →  ${(((f.target_mean - f.live_price) / f.live_price) * 100).toFixed(1)}% upside vs live`
+      : '';
+    const range = (f.target_low != null && f.target_high != null)
+      ? `  range ${num2(f.target_low)}–${num2(f.target_high)}`
+      : '';
+    lines.push(`ANALYST TARGETS:  mean ${num2(f.target_mean)}${range}  |  ${f.num_analysts || '?'} analysts${upside}`);
+  }
+
+  // 52W range context
+  if (f.low_52w != null && f.high_52w != null) {
+    const pos = (f.live_price && f.low_52w !== f.high_52w)
+      ? `  (price at ${(((f.live_price - f.low_52w) / (f.high_52w - f.low_52w)) * 100).toFixed(0)}% of 52W range)`
+      : '';
+    lines.push(`52W RANGE:  ${num2(f.low_52w)} — ${num2(f.high_52w)}${pos}`);
+  }
+
+  lines.push('━━━ END LIVE FUNDAMENTALS ━━━');
+  return '\n\n' + lines.join('\n');
+}
+
 function buildConsensusBlock(views, sourcesUsed) {
   if (!views?.length) return '';
 
@@ -637,8 +700,13 @@ export default async function handler(req, res) {
     }
 
     // ── Build context blocks ───────────────────────────────────────────────
-    const enrichmentBlock = buildEnrichmentBlock(enrichment_context);
-    const consensusBlock  = buildConsensusBlock(pass1.views, pass1.sourcesUsed);
+    const enrichmentBlock   = buildEnrichmentBlock(enrichment_context);
+    // Attach live_price into fundamentals object so buildFundamentalsBlock can compute upside
+    const fundInput = enrichment_context?.fundamentals
+      ? { ...enrichment_context.fundamentals, live_price: enrichment_context.live_price ? parseFloat(enrichment_context.live_price) : null }
+      : null;
+    const fundamentalsBlock = buildFundamentalsBlock(fundInput);
+    const consensusBlock    = buildConsensusBlock(pass1.views, pass1.sourcesUsed);
 
     // ── Pass 2: Full research generation ──────────────────────────────────
     const userPrompt = `Generate a complete buy-side equity research report for: ${ticker}${company ? ` — ${company}` : ''}
@@ -647,14 +715,14 @@ IMPORTANT: "${company || ticker}" is the definitive identity for this ticker. Re
 
 Initial direction bias: ${direction || 'NEUTRAL'}
 Research context: ${context || 'General screening — no specific catalyst prompted this research.'}
-${enrichmentBlock}${consensusBlock}
+${enrichmentBlock}${fundamentalsBlock}${consensusBlock}
 
 VARIANT VIEW INSTRUCTION (B2 — most critical block):
 ${pass1.views.length > 0
   ? `The consensus views above were sourced from REAL BROKER RESEARCH REPORTS (${pass1.sourcesUsed?.join(', ') || 'live sources'}). These views ARE ALREADY PRICED IN. Your variant.weBelieve must identify a mechanism that a MAJORITY of the analysts above have NOT yet recognized or priced. Name the specific mechanism, the magnitude of re-rating, and the timeline.`
   : 'Enumerate what the buy-side consensus currently believes, then contradict it with a specific, falsifiable mechanism.'}
 
-${enrichment_context ? `ENRICHMENT: Use ${enrichment_context.live_price} as the live price field. Incorporate recent news into catalysts/risks. Apply sector regime (${enrichment_context.sector_regime}) in VP decomp sub-scores.` : ''}
+${enrichment_context ? `ENRICHMENT: Use ${enrichment_context.live_price} as the live price field. Incorporate recent news into catalysts/risks. Apply sector regime (${enrichment_context.sector_regime}) in VP decomp sub-scores.${fundamentalsBlock ? ` Use live fundamentals block above for fin.* and consensus.* fields.` : ''}` : ''}
 
 Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return ONLY valid JSON.`;
 
@@ -686,6 +754,7 @@ Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return 
       tonghuashun_count:   pass1.thsCount,
       tavily_count:        pass1.tavilyCount,
       enrichment_used:     !!enrichment_context,
+      fundamentals_used:   !!(enrichment_context?.fundamentals && fundInput),
       tavily_enabled:      !!process.env.TAVILY_API_KEY,
     });
 

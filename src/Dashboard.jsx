@@ -3051,14 +3051,42 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentDat
         .filter(p => p.ticker === tk)
         .map(p => ({ prediction: p.thesis || p.prediction, outcome: p.status, date: p.date, reason: p.notes }));
 
+      // 5. Live fundamentals from yfinance (PE, PB, ROE, analyst targets, 52W range)
+      //    These override AI training memory in the Pass 2 prompt via buildFundamentalsBlock()
+      let liveFundamentals = null;
+      if (liveYahoo) {
+        const f = liveYahoo.fundamentals || {};
+        const a = liveYahoo.analyst     || {};
+        const p = liveYahoo.price       || {};
+        const candidate = {
+          pe_trailing:       f.pe_trailing       ?? null,
+          pe_forward:        f.pe_forward        ?? null,
+          ev_ebitda:         f.ev_ebitda         ?? null,
+          gross_margin:      f.gross_margin      ?? null,
+          operating_margin:  f.operating_margin  ?? null,
+          roe:               f.roe               ?? null,
+          revenue_growth:    f.revenue_growth    ?? null,
+          target_mean:       a.target_mean       ?? null,
+          target_low:        a.target_low        ?? null,
+          target_high:       a.target_high       ?? null,
+          num_analysts:      a.num_analysts      ?? null,
+          low_52w:           p.low_52w           ?? null,
+          high_52w:          p.high_52w          ?? null,
+        };
+        // Only include if at least one valuation or quality metric is present
+        const hasData = Object.values(candidate).some(v => v != null);
+        if (hasData) liveFundamentals = candidate;
+      }
+
       // Only pass enrichment if we have at least one signal
-      if (livePrice || recentNews.length > 0 || sectorRegime || priorPredictions.length > 0) {
+      if (livePrice || recentNews.length > 0 || sectorRegime || priorPredictions.length > 0 || liveFundamentals) {
         enrichment_context = {
           live_price: livePrice ? `${livePrice.toFixed(2)}` : null,
           live_change_pct: liveChangePct ?? null,
           recent_news: recentNews,
           sector_regime: sectorRegime,
           prior_predictions: priorPredictions,
+          fundamentals: liveFundamentals,
         };
       }
     }
@@ -3099,6 +3127,7 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentDat
         tonghuashun_count:  json.tonghuashun_count  || 0,
         tavily_count:       json.tavily_count       || 0,
         enrichment_used:    json.enrichment_used,
+        fundamentals_used:  json.fundamentals_used,
         tavily_enabled:     json.tavily_enabled,
         views_count:        (json.consensus_views || []).length,
       });
@@ -3158,6 +3187,11 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentDat
         {lastResearchMeta?.enrichment_used && (
           <span style={{fontSize:9, padding:'2px 7px', borderRadius:3, fontWeight:700, background:`${C.blue}12`, color:C.blue}}>
             📡 {L('Price + news + regime injected', '实时价格+新闻+政体已注入')}
+          </span>
+        )}
+        {lastResearchMeta?.fundamentals_used && (
+          <span style={{fontSize:9, padding:'2px 7px', borderRadius:3, fontWeight:700, background:`${C.green}12`, color:C.green}}>
+            📊 {L('Live fundamentals injected (PE/ROE/targets)', '实时基本面已注入 (PE/ROE/目标价)')}
           </span>
         )}
       </div>
