@@ -1,27 +1,38 @@
 {
   "ticker": "9999.HK",
-  "generated_at": "2026-04-19",
-  "price": 182.3,
+  "generated_at": "2026-04-20",
+  "price": 185.6,
   "zone": "NEUTRAL",
-  "entry_zone": false,
+  "entry_zone": true,
   "exit_zone": false,
-  "signals": [],
+  "signals": [
+    {
+      "type": "MA20_BOUNCE",
+      "strength": "moderate",
+      "date": "2026-04-20",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA20 (177.7) — near-term support held",
+        "z": "股价从MA20(177.7)附近反弹，短期支撑有效"
+      }
+    }
+  ],
   "signal_count": {
-    "bullish": 0,
+    "bullish": 1,
     "bearish": 0,
-    "total": 0
+    "total": 1
   },
   "indicators": {
-    "ma5": 179.52,
-    "ma20": 177.65,
-    "ma60": 187.34,
-    "rsi14": 52.8,
-    "vol_ma20": 5141877,
-    "vol_ratio": 0.78,
-    "price_vs_ma20": 2.62,
-    "price_vs_ma60": -2.69,
-    "change_1d": -2.3,
-    "change_5d": 2.19,
-    "change_20d": -2.41
+    "ma5": 181.5,
+    "ma20": 177.54,
+    "ma60": 186.84,
+    "rsi14": 56.4,
+    "vol_ma20": 5023379,
+    "vol_ratio": 0.45,
+    "price_vs_ma20": 4.54,
+    "price_vs_ma60": -0.67,
+    "change_1d": 1.81,
+    "change_5d": 5.63,
+    "change_20d": -1.17
   }
 }

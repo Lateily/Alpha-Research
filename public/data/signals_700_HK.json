@@ -1,27 +1,38 @@
 {
   "ticker": "700.HK",
-  "generated_at": "2026-04-19",
-  "price": 510.5,
+  "generated_at": "2026-04-20",
+  "price": 524.0,
   "zone": "NEUTRAL",
-  "entry_zone": false,
+  "entry_zone": true,
   "exit_zone": false,
-  "signals": [],
+  "signals": [
+    {
+      "type": "MA20_BOUNCE",
+      "strength": "moderate",
+      "date": "2026-04-20",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA20 (503.0) — near-term support held",
+        "z": "股价从MA20(503.0)附近反弹，短期支撑有效"
+      }
+    }
+  ],
   "signal_count": {
-    "bullish": 0,
+    "bullish": 1,
     "bearish": 0,
-    "total": 0
+    "total": 1
   },
   "indicators": {
-    "ma5": 501.94,
-    "ma20": 503.02,
-    "ma60": 539.2,
-    "rsi14": 49.5,
-    "vol_ma20": 25642636,
+    "ma5": 508.74,
+    "ma20": 501.7,
+    "ma60": 537.64,
+    "rsi14": 54.6,
+    "vol_ma20": 25260204,
     "vol_ratio": 0.54,
-    "price_vs_ma20": 1.49,
-    "price_vs_ma60": -5.32,
-    "change_1d": -1.26,
-    "change_5d": 1.19,
-    "change_20d": -7.18
+    "price_vs_ma20": 4.44,
+    "price_vs_ma60": -2.54,
+    "change_1d": 2.64,
+    "change_5d": 6.94,
+    "change_20d": -4.81
   }
 }
