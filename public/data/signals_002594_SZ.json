@@ -1,8 +1,8 @@
 {
   "ticker": "002594.SZ",
   "generated_at": "2026-04-20",
-  "price": 103.78,
-  "zone": "BULLISH",
+  "price": 102.91,
+  "zone": "NEUTRAL",
   "entry_zone": false,
   "exit_zone": false,
   "signals": [],
@@ -12,16 +12,16 @@
     "total": 0
   },
   "indicators": {
-    "ma5": 104.08,
+    "ma5": 103.82,
     "ma20": 103.36,
-    "ma60": 97.2,
-    "rsi14": 54.6,
-    "vol_ma20": 66288207,
-    "vol_ratio": 0.67,
-    "price_vs_ma20": 0.4,
-    "price_vs_ma60": 6.77,
-    "change_1d": -1.67,
-    "change_5d": 2.08,
-    "change_20d": 1.44
+    "ma60": 97.32,
+    "rsi14": 52.7,
+    "vol_ma20": 65062675,
+    "vol_ratio": 0.59,
+    "price_vs_ma20": -0.43,
+    "price_vs_ma60": 5.75,
+    "change_1d": -0.84,
+    "change_5d": -1.29,
+    "change_20d": -0.12
   }
 }

@@ -1,7 +1,7 @@
 {
   "ticker": "6160.HK",
   "generated_at": "2026-04-20",
-  "price": 191.2,
+  "price": 191.0,
   "zone": "NEUTRAL",
   "entry_zone": false,
   "exit_zone": false,
@@ -12,16 +12,16 @@
     "total": 0
   },
   "indicators": {
-    "ma5": 191.26,
-    "ma20": 179.77,
-    "ma60": 191.34,
-    "rsi14": 56.9,
-    "vol_ma20": 4161416,
-    "vol_ratio": 0.32,
-    "price_vs_ma20": 6.36,
-    "price_vs_ma60": -0.07,
-    "change_1d": -1.04,
-    "change_5d": 2.19,
-    "change_20d": 9.32
+    "ma5": 191.22,
+    "ma20": 179.76,
+    "ma60": 191.33,
+    "rsi14": 56.7,
+    "vol_ma20": 4238546,
+    "vol_ratio": 0.68,
+    "price_vs_ma20": 6.25,
+    "price_vs_ma60": -0.17,
+    "change_1d": -1.14,
+    "change_5d": 2.08,
+    "change_20d": 9.21
   }
 }

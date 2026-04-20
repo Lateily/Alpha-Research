@@ -1,7 +1,7 @@
 {
   "ticker": "700.HK",
   "generated_at": "2026-04-20",
-  "price": 524.0,
+  "price": 522.5,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
@@ -23,16 +23,16 @@
     "total": 1
   },
   "indicators": {
-    "ma5": 508.74,
-    "ma20": 501.7,
-    "ma60": 537.64,
-    "rsi14": 54.6,
-    "vol_ma20": 25260204,
-    "vol_ratio": 0.54,
-    "price_vs_ma20": 4.44,
-    "price_vs_ma60": -2.54,
-    "change_1d": 2.64,
-    "change_5d": 6.94,
-    "change_20d": -4.81
+    "ma5": 508.44,
+    "ma20": 501.62,
+    "ma60": 537.62,
+    "rsi14": 54.1,
+    "vol_ma20": 25746502,
+    "vol_ratio": 0.91,
+    "price_vs_ma20": 4.16,
+    "price_vs_ma60": -2.81,
+    "change_1d": 2.35,
+    "change_5d": 6.63,
+    "change_20d": -5.09
   }
 }

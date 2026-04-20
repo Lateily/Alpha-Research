@@ -1,7 +1,7 @@
 {
   "ticker": "300308.SZ",
   "generated_at": "2026-04-20",
-  "price": 851.0,
+  "price": 850.0,
   "zone": "OVERBOUGHT",
   "entry_zone": false,
   "exit_zone": true,
@@ -9,11 +9,11 @@
     {
       "type": "RSI_OVERBOUGHT",
       "strength": "strong",
-      "date": "2026-04-17",
+      "date": "2026-04-20",
       "bullish": false,
       "description": {
-        "e": "RSI(14) = 81.0 — overbought, watch for exhaustion",
-        "z": "RSI(14)=81.0，超买，注意回调风险"
+        "e": "RSI(14) = 80.7 — overbought, watch for exhaustion",
+        "z": "RSI(14)=80.7，超买，注意回调风险"
       }
     }
   ],
@@ -23,16 +23,16 @@
     "total": 1
   },
   "indicators": {
-    "ma5": 790.32,
-    "ma20": 664.56,
-    "ma60": 602.15,
-    "rsi14": 81.0,
-    "vol_ma20": 29810418,
-    "vol_ratio": 1.34,
-    "price_vs_ma20": 28.05,
-    "price_vs_ma60": 41.33,
-    "change_1d": 5.11,
-    "change_5d": 15.84,
-    "change_20d": 47.95
+    "ma5": 812.72,
+    "ma20": 676.46,
+    "ma60": 605.9,
+    "rsi14": 80.7,
+    "vol_ma20": 28481012,
+    "vol_ratio": 0.96,
+    "price_vs_ma20": 25.65,
+    "price_vs_ma60": 40.29,
+    "change_1d": -0.12,
+    "change_5d": 15.18,
+    "change_20d": 38.89
   }
 }

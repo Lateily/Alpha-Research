@@ -1,7 +1,7 @@
 {
   "ticker": "9999.HK",
   "generated_at": "2026-04-20",
-  "price": 185.6,
+  "price": 183.8,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
@@ -23,16 +23,16 @@
     "total": 1
   },
   "indicators": {
-    "ma5": 181.5,
-    "ma20": 177.54,
-    "ma60": 186.84,
-    "rsi14": 56.4,
-    "vol_ma20": 5023379,
-    "vol_ratio": 0.45,
-    "price_vs_ma20": 4.54,
-    "price_vs_ma60": -0.67,
-    "change_1d": 1.81,
-    "change_5d": 5.63,
-    "change_20d": -1.17
+    "ma5": 181.14,
+    "ma20": 177.45,
+    "ma60": 186.81,
+    "rsi14": 54.5,
+    "vol_ma20": 5183533,
+    "vol_ratio": 1.05,
+    "price_vs_ma20": 3.58,
+    "price_vs_ma60": -1.61,
+    "change_1d": 0.82,
+    "change_5d": 4.61,
+    "change_20d": -2.13
   }
 }
