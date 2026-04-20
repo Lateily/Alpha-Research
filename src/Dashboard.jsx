@@ -1538,6 +1538,21 @@ function SwingSignalCompact({ signals, C, lk }) {
       {entry && !exit && <span style={{fontSize:8, color:C.green, fontWeight:600}}>ENTRY</span>}
       {exit  && !entry && <span style={{fontSize:8, color:C.red,   fontWeight:600}}>EXIT</span>}
       {entry && exit   && <span style={{fontSize:8, color:C.gold,  fontWeight:600}}>⚠ WATCH</span>}
+      {/* MACD direction dot */}
+      {ind.macd_dif != null && ind.macd_dea != null && (
+        <span style={{fontSize:9, color:C.mid, fontFamily:'JetBrains Mono,monospace'}}>
+          MACD <span style={{color: ind.macd_dif > ind.macd_dea ? C.green : C.red}}>
+            {ind.macd_dif > ind.macd_dea ? '▲' : '▼'}
+          </span>
+        </span>
+      )}
+      {/* KDJ J extreme */}
+      {ind.kdj_j != null && (ind.kdj_j > 100 || ind.kdj_j < 0) && (
+        <span style={{fontSize:9, fontWeight:700,
+          color: ind.kdj_j > 100 ? C.red : C.green}}>
+          J={ind.kdj_j.toFixed(0)}
+        </span>
+      )}
       {topSig && (
         <span style={{fontSize:9, color:C.mid, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
           {topSig.description[lk] || topSig.description.e}
@@ -1580,8 +1595,8 @@ function SwingSignalDetail({ signals, C, L, lk }) {
         </span>
       </div>
 
-      {/* Indicator grid */}
-      <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:8, marginBottom:12}}>
+      {/* Indicator grid — Row 1: MA / RSI / Volume */}
+      <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:8, marginBottom:6}}>
         {[
           { label:'MA20',          val: ind.ma20  != null ? ind.ma20.toFixed(1)  : '—' },
           { label:'MA60',          val: ind.ma60  != null ? ind.ma60.toFixed(1)  : '—' },
@@ -1597,6 +1612,52 @@ function SwingSignalDetail({ signals, C, L, lk }) {
             color: ind.change_1d  > 0 ? C.green : C.red },
           { label:L('5D Chg','5日'), val: ind.change_5d  != null ? `${ind.change_5d>0?'+':''}${ind.change_5d.toFixed(2)}%`  : '—',
             color: ind.change_5d  > 0 ? C.green : C.red },
+        ].map(({ label, val, color }) => (
+          <div key={label} style={{background:C.soft, borderRadius:8, padding:'8px 10px'}}>
+            <div style={{fontSize:9, color:C.mid, fontWeight:600, marginBottom:3}}>{label}</div>
+            <div style={{fontSize:12, fontWeight:700, fontFamily:'JetBrains Mono,monospace',
+                         color: color || C.dark}}>{val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Indicator grid — Row 2: MACD / Bollinger / KDJ */}
+      <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:8, marginBottom:12}}>
+        {[
+          { label:'MACD DIF',
+            val: ind.macd_dif != null ? ind.macd_dif.toFixed(3) : '—',
+            color: ind.macd_dif != null ? (ind.macd_dif > (ind.macd_dea || 0) ? C.green : C.red) : C.dark,
+          },
+          { label:'MACD DEA',
+            val: ind.macd_dea != null ? ind.macd_dea.toFixed(3) : '—',
+            color: C.dark,
+          },
+          { label:L('MACD Hist','MACD柱'),
+            val: ind.macd_hist != null ? (ind.macd_hist > 0 ? '+' : '') + ind.macd_hist.toFixed(3) : '—',
+            color: ind.macd_hist != null ? (ind.macd_hist > 0 ? C.green : C.red) : C.dark,
+          },
+          { label:L('BB Width','布林宽度'),
+            val: ind.bb_bandwidth != null ? `${ind.bb_bandwidth.toFixed(1)}%` : '—',
+            color: ind.bb_bandwidth != null && ind.bb_bandwidth < 5 ? C.gold : C.dark,
+          },
+          { label:'BB Upper',
+            val: ind.bb_upper != null ? ind.bb_upper.toFixed(1) : '—',
+            color: C.red,
+          },
+          { label:'BB Lower',
+            val: ind.bb_lower != null ? ind.bb_lower.toFixed(1) : '—',
+            color: C.green,
+          },
+          { label:'KDJ K/D',
+            val: ind.kdj_k != null && ind.kdj_d != null
+              ? `${ind.kdj_k.toFixed(0)}/${ind.kdj_d.toFixed(0)}` : '—',
+            color: ind.kdj_k != null && ind.kdj_d != null
+              ? (ind.kdj_k > ind.kdj_d ? C.green : C.red) : C.dark,
+          },
+          { label:'KDJ J',
+            val: ind.kdj_j != null ? ind.kdj_j.toFixed(1) : '—',
+            color: ind.kdj_j != null ? (ind.kdj_j > 100 ? C.red : ind.kdj_j < 0 ? C.green : C.dark) : C.dark,
+          },
         ].map(({ label, val, color }) => (
           <div key={label} style={{background:C.soft, borderRadius:8, padding:'8px 10px'}}>
             <div style={{fontSize:9, color:C.mid, fontWeight:600, marginBottom:3}}>{label}</div>

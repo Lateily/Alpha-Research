@@ -5,15 +5,26 @@ Reads  public/data/ohlc_*.json
 Writes public/data/signals_{id}.json
 
 Signal types:
-  GOLDEN_CROSS    — MA20 crossed above MA60 within last 5 bars
-  DEATH_CROSS     — MA20 crossed below MA60 within last 5 bars
-  RSI_OVERSOLD    — RSI(14) < 30
-  RSI_OVERBOUGHT  — RSI(14) > 70
-  RSI_RECOVERING  — RSI rising from <40 back toward neutral
-  VOLUME_BREAKOUT — Volume > 2× MA20 AND price ≥ +2%
-  VOLUME_SELLOFF  — Volume > 2× MA20 AND price ≤ -2%
-  MA20_BOUNCE     — Price bounced off MA20 support (within 3%)
-  MA60_BOUNCE     — Price bounced off MA60 major support (within 3%)
+  GOLDEN_CROSS       — MA20 crossed above MA60 within last 5 bars
+  DEATH_CROSS        — MA20 crossed below MA60 within last 5 bars
+  RSI_OVERSOLD       — RSI(14) < 30
+  RSI_OVERBOUGHT     — RSI(14) > 70
+  RSI_RECOVERING     — RSI rising from <40 back toward neutral
+  VOLUME_BREAKOUT    — Volume > 2× MA20 AND price ≥ +2%
+  VOLUME_SELLOFF     — Volume > 2× MA20 AND price ≤ -2%
+  MA20_BOUNCE        — Price bounced off MA20 support (within 3%)
+  MA60_BOUNCE        — Price bounced off MA60 major support (within 3%)
+  BULLISH_ALIGNMENT  — MA5 > MA20 > MA60 AND price > MA5
+  CONTROLLED_ADVANCE — Volume < 60% MA20 AND price change > +1.5% (main-force control)
+  MACD_GOLDEN_CROSS  — MACD DIF crossed above DEA
+  MACD_DEATH_CROSS   — MACD DIF crossed below DEA
+  BB_UPPER_BREAK     — Price breaks above Bollinger upper band
+  BB_LOWER_BREAK     — Price touches Bollinger lower band (mean-reversion watch)
+  BB_SQUEEZE         — Bollinger bandwidth < 5% (volatility contraction)
+  KDJ_GOLDEN_CROSS   — KDJ K crossed above D in oversold zone
+  KDJ_DEATH_CROSS    — KDJ K crossed below D in overbought zone
+  KDJ_OVERSOLD       — KDJ J < 0 (extreme oversold)
+  KDJ_OVERBOUGHT     — KDJ J > 100 (extreme overbought)
 
 Zone values: BULLISH | BEARISH | NEUTRAL | OVERSOLD | OVERBOUGHT
 """
@@ -36,6 +47,18 @@ def sma(series, n):
     return result
 
 
+def ema(series, n):
+    """Exponential moving average (seed = SMA of first n values)."""
+    result = [None] * len(series)
+    if len(series) < n:
+        return result
+    result[n - 1] = sum(series[:n]) / n
+    k = 2.0 / (n + 1)
+    for i in range(n, len(series)):
+        result[i] = series[i] * k + result[i - 1] * (1.0 - k)
+    return result
+
+
 def rsi(closes, period=14):
     """
     Wilder's RSI — list same length as closes.
@@ -50,7 +73,6 @@ def rsi(closes, period=14):
     gains   = [max(c, 0.0) for c in changes]
     losses  = [abs(min(c, 0.0)) for c in changes]
 
-    # Seed: simple average over first period
     avg_gain = sum(gains[:period]) / period
     avg_loss = sum(losses[:period]) / period
 
@@ -67,6 +89,112 @@ def rsi(closes, period=14):
         result[i + 1] = _rsi_from(avg_gain, avg_loss)
 
     return result
+
+
+def macd_calc(closes, fast=12, slow=26, signal=9):
+    """
+    MACD indicator.
+    Returns (dif, dea, histogram) — all arrays of same length as closes.
+    DIF = EMA(fast) - EMA(slow)
+    DEA = EMA(signal) of DIF
+    HIST = (DIF - DEA) * 2
+    """
+    n = len(closes)
+    ema_fast = ema(closes, fast)
+    ema_slow = ema(closes, slow)
+
+    dif = [None] * n
+    for i in range(n):
+        if ema_fast[i] is not None and ema_slow[i] is not None:
+            dif[i] = ema_fast[i] - ema_slow[i]
+
+    # DEA = EMA(signal) of valid DIF values
+    dea  = [None] * n
+    hist = [None] * n
+
+    valid_dif_idx = [i for i, v in enumerate(dif) if v is not None]
+    if len(valid_dif_idx) < signal:
+        return dif, dea, hist
+
+    seed_pos = valid_dif_idx[signal - 1]
+    dea[seed_pos] = sum(dif[i] for i in valid_dif_idx[:signal]) / signal
+
+    k_sig = 2.0 / (signal + 1)
+    for i in range(seed_pos + 1, n):
+        if dif[i] is not None and dea[i - 1] is not None:
+            dea[i] = dif[i] * k_sig + dea[i - 1] * (1.0 - k_sig)
+
+    for i in range(n):
+        if dif[i] is not None and dea[i] is not None:
+            hist[i] = (dif[i] - dea[i]) * 2.0
+
+    return dif, dea, hist
+
+
+def bollinger_calc(closes, period=20, k=2.0):
+    """
+    Bollinger Bands.
+    Returns (upper, middle, lower) arrays.
+    """
+    n   = len(closes)
+    mid = sma(closes, period)
+    upper = [None] * n
+    lower = [None] * n
+
+    for i in range(period - 1, n):
+        window = closes[i - period + 1:i + 1]
+        mean   = mid[i]
+        stdev  = (sum((c - mean) ** 2 for c in window) / period) ** 0.5
+        upper[i] = mean + k * stdev
+        lower[i] = mean - k * stdev
+
+    return upper, mid, lower
+
+
+def kdj_calc(bars, period=9, m1=3, m2=3):
+    """
+    KDJ stochastic oscillator.
+    bars: list of dicts with 'close', 'high', 'low'.
+    Returns (K, D, J) arrays.
+    """
+    n      = len(bars)
+    highs  = [b['high']  for b in bars]
+    lows   = [b['low']   for b in bars]
+    closes = [b['close'] for b in bars]
+
+    rsv = [None] * n
+    for i in range(period - 1, n):
+        high_n = max(highs[i - period + 1:i + 1])
+        low_n  = min(lows[i  - period + 1:i + 1])
+        if high_n == low_n:
+            rsv[i] = 50.0
+        else:
+            rsv[i] = (closes[i] - low_n) / (high_n - low_n) * 100.0
+
+    k_arr = [None] * n
+    d_arr = [None] * n
+    j_arr = [None] * n
+
+    first = next((i for i, v in enumerate(rsv) if v is not None), None)
+    if first is None:
+        return k_arr, d_arr, j_arr
+
+    k_arr[first] = 50.0
+    d_arr[first] = 50.0
+
+    for i in range(first + 1, n):
+        if rsv[i] is None:
+            continue
+        prev_k = k_arr[i - 1] if k_arr[i - 1] is not None else 50.0
+        prev_d = d_arr[i - 1] if d_arr[i - 1] is not None else 50.0
+        k_arr[i] = (m1 - 1) / m1 * prev_k + rsv[i] / m1
+        d_arr[i] = (m2 - 1) / m2 * prev_d + k_arr[i] / m2
+
+    for i in range(n):
+        if k_arr[i] is not None and d_arr[i] is not None:
+            j_arr[i] = 3.0 * k_arr[i] - 2.0 * d_arr[i]
+
+    return k_arr, d_arr, j_arr
 
 
 # ── Signal engine ─────────────────────────────────────────────────────────────
@@ -91,9 +219,18 @@ def compute_signals(ticker, bars):
     rsi14_arr = rsi(closes, 14)
     vma20_arr = sma(volumes, 20)
 
+    # MACD
+    dif_arr, dea_arr, hist_arr = macd_calc(closes)
+
+    # Bollinger Bands
+    bb_upper_arr, bb_mid_arr, bb_lower_arr = bollinger_calc(closes)
+
+    # KDJ
+    k_arr, d_arr, j_arr = kdj_calc(bars)
+
     def at(arr, offset=0):
         idx = n - 1 - offset
-        return arr[idx] if 0 <= idx < len(arr) else None
+        return arr[idx] if (0 <= idx < len(arr) and arr[idx] is not None) else None
 
     price   = closes[-1]
     ma5     = at(ma5_arr)
@@ -103,6 +240,23 @@ def compute_signals(ticker, bars):
     vma20   = at(vma20_arr)
     vol_now = volumes[-1]
 
+    dif_curr = at(dif_arr)
+    dea_curr = at(dea_arr)
+    dif_prev = at(dif_arr, 1)
+    dea_prev = at(dea_arr, 1)
+
+    bb_upper  = at(bb_upper_arr)
+    bb_mid    = at(bb_mid_arr)
+    bb_lower  = at(bb_lower_arr)
+    bb_upper1 = at(bb_upper_arr, 1)
+    bb_lower1 = at(bb_lower_arr, 1)
+
+    k_curr = at(k_arr)
+    d_curr = at(d_arr)
+    j_curr = at(j_arr)
+    k_prev = at(k_arr, 1)
+    d_prev = at(d_arr, 1)
+
     # ── Price-change helpers ───────────────────────────────────────────────
     def pct_chg(n_bars):
         if n > n_bars:
@@ -110,10 +264,13 @@ def compute_signals(ticker, bars):
             return round((price - p0) / p0 * 100, 2) if p0 else None
         return None
 
+    prev_close = closes[-2] if n >= 2 else None
+    p1d_chg = (price - prev_close) / prev_close * 100 if prev_close else 0
+
     # ── Signals list ──────────────────────────────────────────────────────
     sigs = []
 
-    # 1. Golden / Death Cross (MA20 vs MA60 within last CROSS_WINDOW bars)
+    # ── 1. Golden / Death Cross (MA20 vs MA60) ─────────────────────────────
     CROSS_WINDOW = 5
     if ma20 is not None and ma60 is not None:
         for k in range(1, min(CROSS_WINDOW + 1, n)):
@@ -142,7 +299,7 @@ def compute_signals(ticker, bars):
                 })
                 break
 
-    # 2. RSI zones
+    # ── 2. RSI zones ───────────────────────────────────────────────────────
     if rsi_val is not None:
         rsi_prev = at(rsi14_arr, 1)
         if rsi_val < 30:
@@ -178,11 +335,10 @@ def compute_signals(ticker, bars):
                 }
             })
 
-    # 3. Volume breakout / selloff
+    # ── 3. Volume breakout / selloff ───────────────────────────────────────
     if vma20 is not None and vma20 > 0:
         vol_ratio = vol_now / vma20
         if vol_ratio >= 2.0 and n >= 2:
-            p1d_chg = (price - closes[-2]) / closes[-2] * 100 if closes[-2] else 0
             if p1d_chg >= 2.0:
                 sigs.append({
                     'type': 'VOLUME_BREAKOUT',
@@ -204,14 +360,14 @@ def compute_signals(ticker, bars):
                     }
                 })
 
-    # 4. MA20 bounce — price hovered near MA20 yesterday, closed above today
+    # ── 4. MA20 bounce ─────────────────────────────────────────────────────
     if n >= 3 and ma20 is not None:
-        prev_close = closes[-2]
-        prev_ma20  = ma20_arr[n - 2]
+        prev_close2 = closes[-2]
+        prev_ma20   = ma20_arr[n - 2]
         if (prev_ma20 is not None
-                and abs(prev_close - prev_ma20) / prev_ma20 < 0.03
+                and abs(prev_close2 - prev_ma20) / prev_ma20 < 0.03
                 and price > prev_ma20
-                and price > prev_close):
+                and price > prev_close2):
             sigs.append({
                 'type': 'MA20_BOUNCE', 'strength': 'moderate',
                 'date': dates[-1], 'bullish': True,
@@ -221,14 +377,14 @@ def compute_signals(ticker, bars):
                 }
             })
 
-    # 5. MA60 bounce — price hovered near MA60 yesterday, closed above today
+    # ── 5. MA60 bounce ─────────────────────────────────────────────────────
     if n >= 3 and ma60 is not None:
-        prev_close = closes[-2]
-        prev_ma60  = ma60_arr[n - 2]
+        prev_close2 = closes[-2]
+        prev_ma60   = ma60_arr[n - 2]
         if (prev_ma60 is not None
-                and abs(prev_close - prev_ma60) / prev_ma60 < 0.03
+                and abs(prev_close2 - prev_ma60) / prev_ma60 < 0.03
                 and price > prev_ma60
-                and price > prev_close):
+                and price > prev_close2):
             sigs.append({
                 'type': 'MA60_BOUNCE', 'strength': 'strong',
                 'date': dates[-1], 'bullish': True,
@@ -237,6 +393,156 @@ def compute_signals(ticker, bars):
                     'z': f'股价从MA60({prev_ma60:.1f})附近反弹，主要支撑有效',
                 }
             })
+
+    # ── 6. BULLISH_ALIGNMENT — MA5 > MA20 > MA60 AND price > MA5 ───────────
+    if (ma5 is not None and ma20 is not None and ma60 is not None
+            and ma5 > ma20 > ma60 and price > ma5):
+        sigs.append({
+            'type': 'BULLISH_ALIGNMENT', 'strength': 'strong',
+            'date': dates[-1], 'bullish': True,
+            'description': {
+                'e': f'MA5({ma5:.1f}) > MA20({ma20:.1f}) > MA60({ma60:.1f}), price above all — full bullish alignment',
+                'z': f'MA5({ma5:.1f})>MA20({ma20:.1f})>MA60({ma60:.1f})，均线多头排列，趋势强',
+            }
+        })
+
+    # ── 7. CONTROLLED_ADVANCE — light volume, price rising ─────────────────
+    if (vma20 is not None and vma20 > 0 and n >= 2):
+        vol_ratio_now = vol_now / vma20
+        if vol_ratio_now < 0.6 and p1d_chg > 1.5:
+            sigs.append({
+                'type': 'CONTROLLED_ADVANCE', 'strength': 'moderate',
+                'date': dates[-1], 'bullish': True,
+                'description': {
+                    'e': f'Price +{p1d_chg:.1f}% on light volume ({vol_ratio_now:.2f}× avg) — controlled accumulation',
+                    'z': f'缩量上涨{p1d_chg:.1f}%（量比{vol_ratio_now:.2f}×），主力控盘积累',
+                }
+            })
+
+    # ── 8. MACD cross ──────────────────────────────────────────────────────
+    if (dif_curr is not None and dea_curr is not None
+            and dif_prev is not None and dea_prev is not None):
+        if dif_prev <= dea_prev and dif_curr > dea_curr:
+            above_zero = dif_curr > 0
+            sigs.append({
+                'type': 'MACD_GOLDEN_CROSS',
+                'strength': 'strong' if above_zero else 'moderate',
+                'date': dates[-1], 'bullish': True,
+                'description': {
+                    'e': f'MACD DIF({dif_curr:.3f}) crossed above DEA({dea_curr:.3f})'
+                         f' {"above" if above_zero else "below"} zero — bullish momentum',
+                    'z': f'MACD DIF({dif_curr:.3f})上穿DEA({dea_curr:.3f})'
+                         f'{"零轴上方" if above_zero else "零轴下方"}金叉看涨',
+                }
+            })
+        elif dif_prev >= dea_prev and dif_curr < dea_curr:
+            below_zero = dif_curr < 0
+            sigs.append({
+                'type': 'MACD_DEATH_CROSS',
+                'strength': 'strong' if below_zero else 'moderate',
+                'date': dates[-1], 'bullish': False,
+                'description': {
+                    'e': f'MACD DIF({dif_curr:.3f}) crossed below DEA({dea_curr:.3f})'
+                         f' {"below" if below_zero else "above"} zero — bearish momentum',
+                    'z': f'MACD DIF({dif_curr:.3f})下穿DEA({dea_curr:.3f})'
+                         f'{"零轴下方" if below_zero else "零轴上方"}死叉看跌',
+                }
+            })
+
+    # ── 9. Bollinger Band signals ──────────────────────────────────────────
+    if bb_upper is not None and bb_lower is not None and bb_mid is not None:
+        bandwidth = (bb_upper - bb_lower) / bb_mid * 100.0
+
+        # Upper breakout
+        if (prev_close is not None and bb_upper1 is not None
+                and prev_close <= bb_upper1 and price > bb_upper):
+            sigs.append({
+                'type': 'BB_UPPER_BREAK', 'strength': 'moderate',
+                'date': dates[-1], 'bullish': True,
+                'description': {
+                    'e': f'Price ({price:.1f}) broke above Bollinger upper ({bb_upper:.1f}) — momentum breakout',
+                    'z': f'股价({price:.1f})突破布林上轨({bb_upper:.1f})，动能突破',
+                }
+            })
+
+        # Lower touch (mean reversion watch)
+        if (prev_close is not None and bb_lower1 is not None
+                and prev_close >= bb_lower1 and price < bb_lower):
+            sigs.append({
+                'type': 'BB_LOWER_BREAK', 'strength': 'moderate',
+                'date': dates[-1], 'bullish': True,
+                'description': {
+                    'e': f'Price ({price:.1f}) touched Bollinger lower ({bb_lower:.1f}) — oversold, mean reversion watch',
+                    'z': f'股价({price:.1f})触及布林下轨({bb_lower:.1f})，超卖，关注均值回归',
+                }
+            })
+
+        # Squeeze — bandwidth narrowing (volatility contraction)
+        if bandwidth < 5.0:
+            bb_upper5 = at(bb_upper_arr, 5)
+            bb_lower5 = at(bb_lower_arr, 5)
+            bb_mid5   = at(bb_mid_arr,   5)
+            if (bb_upper5 is not None and bb_lower5 is not None and bb_mid5 is not None):
+                bw5 = (bb_upper5 - bb_lower5) / bb_mid5 * 100.0
+                if bw5 > bandwidth * 1.3:
+                    sigs.append({
+                        'type': 'BB_SQUEEZE', 'strength': 'moderate',
+                        'date': dates[-1], 'bullish': True,
+                        'description': {
+                            'e': f'Bollinger width {bandwidth:.1f}% (was {bw5:.1f}%) — squeeze, pending directional breakout',
+                            'z': f'布林带收窄至{bandwidth:.1f}%（前5日{bw5:.1f}%），波动收缩，方向性突破即将来临',
+                        }
+                    })
+
+    # ── 10. KDJ signals ────────────────────────────────────────────────────
+    if k_curr is not None and d_curr is not None:
+
+        # KDJ Golden Cross in oversold zone
+        if (k_prev is not None and d_prev is not None
+                and k_prev <= d_prev and k_curr > d_curr and k_curr < 50):
+            sigs.append({
+                'type': 'KDJ_GOLDEN_CROSS',
+                'strength': 'strong' if k_curr < 30 else 'moderate',
+                'date': dates[-1], 'bullish': True,
+                'description': {
+                    'e': f'KDJ K({k_curr:.1f}) crossed above D({d_curr:.1f}) in oversold — reversal signal',
+                    'z': f'KDJ K({k_curr:.1f})上穿D({d_curr:.1f})，超卖区金叉看涨',
+                }
+            })
+
+        # KDJ Death Cross in overbought zone
+        elif (k_prev is not None and d_prev is not None
+              and k_prev >= d_prev and k_curr < d_curr and k_curr > 50):
+            sigs.append({
+                'type': 'KDJ_DEATH_CROSS',
+                'strength': 'strong' if k_curr > 70 else 'moderate',
+                'date': dates[-1], 'bullish': False,
+                'description': {
+                    'e': f'KDJ K({k_curr:.1f}) crossed below D({d_curr:.1f}) in overbought — reversal signal',
+                    'z': f'KDJ K({k_curr:.1f})下穿D({d_curr:.1f})，超买区死叉看跌',
+                }
+            })
+
+        # J extreme values
+        if j_curr is not None:
+            if j_curr < 0:
+                sigs.append({
+                    'type': 'KDJ_OVERSOLD', 'strength': 'strong',
+                    'date': dates[-1], 'bullish': True,
+                    'description': {
+                        'e': f'KDJ J={j_curr:.1f} (extreme <0) — high-probability reversal zone',
+                        'z': f'KDJ J={j_curr:.1f}极度超卖，高概率反转区间',
+                    }
+                })
+            elif j_curr > 100:
+                sigs.append({
+                    'type': 'KDJ_OVERBOUGHT', 'strength': 'strong',
+                    'date': dates[-1], 'bullish': False,
+                    'description': {
+                        'e': f'KDJ J={j_curr:.1f} (extreme >100) — high pullback risk',
+                        'z': f'KDJ J={j_curr:.1f}极度超买，回调风险高',
+                    }
+                })
 
     # ── Zone classification ───────────────────────────────────────────────
     if rsi_val is not None and rsi_val < 30:
@@ -253,18 +559,32 @@ def compute_signals(ticker, bars):
         zone = 'NEUTRAL'
 
     # ── Entry / exit zones ────────────────────────────────────────────────
-    bullish = [s for s in sigs if s['bullish']]
-    bearish = [s for s in sigs if not s['bullish']]
+    bullish_sigs = [s for s in sigs if s['bullish']]
+    bearish_sigs = [s for s in sigs if not s['bullish']]
 
-    entry_types = {'RSI_OVERSOLD', 'RSI_RECOVERING', 'GOLDEN_CROSS',
-                   'MA20_BOUNCE', 'MA60_BOUNCE', 'VOLUME_BREAKOUT'}
-    exit_types  = {'RSI_OVERBOUGHT', 'DEATH_CROSS', 'VOLUME_SELLOFF'}
+    entry_types = {
+        'RSI_OVERSOLD', 'RSI_RECOVERING', 'GOLDEN_CROSS',
+        'MA20_BOUNCE', 'MA60_BOUNCE', 'VOLUME_BREAKOUT',
+        'BULLISH_ALIGNMENT', 'CONTROLLED_ADVANCE',
+        'MACD_GOLDEN_CROSS', 'BB_LOWER_BREAK', 'BB_SQUEEZE',
+        'KDJ_GOLDEN_CROSS', 'KDJ_OVERSOLD',
+    }
+    exit_types = {
+        'RSI_OVERBOUGHT', 'DEATH_CROSS', 'VOLUME_SELLOFF',
+        'MACD_DEATH_CROSS', 'BB_UPPER_BREAK',
+        'KDJ_DEATH_CROSS', 'KDJ_OVERBOUGHT',
+    }
 
-    entry_zone = zone == 'OVERSOLD' or any(s['type'] in entry_types for s in bullish)
-    exit_zone  = zone == 'OVERBOUGHT' or any(s['type'] in exit_types for s in bearish)
+    entry_zone = zone == 'OVERSOLD' or any(s['type'] in entry_types for s in bullish_sigs)
+    exit_zone  = zone == 'OVERBOUGHT' or any(s['type'] in exit_types for s in bearish_sigs)
 
     # ── Vol ratio ─────────────────────────────────────────────────────────
     vol_ratio_val = round(vol_now / vma20, 2) if (vma20 and vma20 > 0) else None
+
+    # ── Bollinger bandwidth ───────────────────────────────────────────────
+    bb_bandwidth = None
+    if bb_upper is not None and bb_lower is not None and bb_mid is not None:
+        bb_bandwidth = round((bb_upper - bb_lower) / bb_mid * 100.0, 2)
 
     return {
         'ticker':       ticker,
@@ -275,22 +595,40 @@ def compute_signals(ticker, bars):
         'exit_zone':    exit_zone,
         'signals':      sigs,
         'signal_count': {
-            'bullish': len(bullish),
-            'bearish': len(bearish),
+            'bullish': len(bullish_sigs),
+            'bearish': len(bearish_sigs),
             'total':   len(sigs),
         },
         'indicators': {
+            # Moving averages
             'ma5':           round(ma5,  2) if ma5  is not None else None,
             'ma20':          round(ma20, 2) if ma20 is not None else None,
             'ma60':          round(ma60, 2) if ma60 is not None else None,
+            # RSI
             'rsi14':         round(rsi_val, 1) if rsi_val is not None else None,
+            # Volume
             'vol_ma20':      round(vma20)      if vma20   is not None else None,
             'vol_ratio':     vol_ratio_val,
+            # Price relative to MAs
             'price_vs_ma20': round((price - ma20) / ma20 * 100, 2) if ma20 else None,
             'price_vs_ma60': round((price - ma60) / ma60 * 100, 2) if ma60 else None,
+            # Price changes
             'change_1d':     pct_chg(1),
             'change_5d':     pct_chg(5),
             'change_20d':    pct_chg(20),
+            # MACD
+            'macd_dif':      round(dif_curr,  4) if dif_curr  is not None else None,
+            'macd_dea':      round(dea_curr,  4) if dea_curr  is not None else None,
+            'macd_hist':     round(at(hist_arr), 4) if at(hist_arr) is not None else None,
+            # Bollinger Bands
+            'bb_upper':      round(bb_upper, 2) if bb_upper is not None else None,
+            'bb_mid':        round(bb_mid,   2) if bb_mid   is not None else None,
+            'bb_lower':      round(bb_lower, 2) if bb_lower is not None else None,
+            'bb_bandwidth':  bb_bandwidth,
+            # KDJ
+            'kdj_k':         round(k_curr, 1) if k_curr is not None else None,
+            'kdj_d':         round(d_curr, 1) if d_curr is not None else None,
+            'kdj_j':         round(j_curr, 1) if j_curr is not None else None,
         },
     }
 
@@ -308,8 +646,8 @@ def main():
     print(f'[swing_signals] Found {len(files)} OHLC file(s)')
 
     for fpath in files:
-        fname   = os.path.basename(fpath)                   # e.g. ohlc_300308_SZ.json
-        safe_id = fname[len('ohlc_'):-len('.json')]         # e.g. 300308_SZ
+        fname   = os.path.basename(fpath)
+        safe_id = fname[len('ohlc_'):-len('.json')]
 
         try:
             with open(fpath, 'r', encoding='utf-8') as f:
@@ -334,9 +672,12 @@ def main():
             z   = result['zone']
             sc  = result['signal_count']
             ind = result['indicators']
-            rsi_s = f"RSI={ind['rsi14']}" if ind['rsi14'] else 'RSI=n/a'
+            rsi_s  = f"RSI={ind['rsi14']}"    if ind['rsi14']    else 'RSI=n/a'
+            macd_s = f"MACD={ind['macd_dif']}" if ind['macd_dif'] else ''
+            kdj_s  = f"KDJ-J={ind['kdj_j']}"  if ind['kdj_j']    else ''
+            extra  = '  '.join(x for x in [macd_s, kdj_s] if x)
             print(f'  ✓ {ticker:16s}  price={result["price"]:>8.2f}  zone={z:<11s}  '
-                  f'{rsi_s}  signals={sc["bullish"]}↑/{sc["bearish"]}↓')
+                  f'{rsi_s}  {extra}  signals={sc["bullish"]}↑/{sc["bearish"]}↓')
 
         except Exception as exc:
             print(f'  [error] {fname}: {exc}')
