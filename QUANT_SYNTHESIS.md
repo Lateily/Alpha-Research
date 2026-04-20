@@ -488,3 +488,301 @@ CVD信号加入 `swing_signals.py`，两个新信号：
 
 *本文档来源：平台现状分析 + A股量化社区通用策略 + 2026年4月用户提供的7篇小红书笔记（通过 Claude in Chrome + xsec_token 直接读取原文）*  
 *笔记ID：69d078c8（aidesigner MCP）· 69bcd0a6（OpenClaw）· 69e4c2d4（MA交叉入门）· 69e57696（FinceptTerminal）· 69d8f9cb（TradingAgents）· 69bab577（Barra CNE5）· 69e0ff50（AS模型/CVD）*
+
+---
+
+---
+
+## 十、FinceptTerminal 深度实测分析（Claude in Chrome 全站探查，2026-04-20）
+
+> 来源：通过 Claude in Chrome 直接在用户浏览器中访问 fincept.in（已登录账号 luvyears@outlook.com），实时爬取所有页面内容、性能计时API、JS代码扫描、直接调用每个发现的API端点，得到完整一手数据。  
+> 分析范围：全部9个主要路由 + API端点映射 + 数据结构分析 + 技术架构逆向
+
+---
+
+### 10A. 架构纠正 — Web Terminal，非C++桌面
+
+**重要修正**（9A节信息来源是XHS笔记摘要，有误）：
+
+FinceptTerminal 有**两个独立产品**：
+1. **Desktop Terminal（C++20/Qt6）** — GitHub开源版，6.5k Star，那是社区推荐的桌面版
+2. **Web Terminal（Next.js/React/FastAPI）** — `fincept.in`，这是他们的云版本，**这才是我们能直接学习和对标的版本**
+
+我们通过Chrome探查的是 **Web Terminal**，它的架构：
+
+```
+前端：Next.js (App Router) + IBM Plex Mono + #000/#EDE8C8/#FF7722
+后端：FastAPI Python（在 /api/market/* 等路由后面代理）
+数据库：PostgreSQL（/api/health 返回 database: true）
+市场数据：yfinance（API响应明确标注 "source": "yfinance"）
+新闻：Bloomberg RSS聚合（/api/rss/world-news）
+AI：Claude（研究助手对话）
+实时机制：requestAnimationFrame + ~4分钟批量刷新；WebSocket CONN:LIVE（状态栏每秒更新）
+GitHub：github.com/Fincept-Corporation/FinceptTerminal
+```
+
+**关键启示**：fincept.in 的市场数据后端用的是 yfinance，和我们 `research.js` 里用的同一个数据源。这意味着他们在数据获取上并没有神奇之处——差别在于**API封装层的完整性**和**UI信息密度**。
+
+---
+
+### 10B. 完整路由结构 + 页面功能映射
+
+通过逐一访问所有路由，确认以下完整路由表：
+
+| 路由 | F-Key | 功能 | 对应我们的模块 |
+|------|-------|------|--------------|
+| `/dashboard` | F1 DASH | 主终端：Agent聊天 + 实时行情 + 新闻 + Watchlist + Most Active | Dashboard 主面板 ✓ |
+| `/markets` | F2 MKT | 全市场概览：Equities/FX/Commodities/Fixed Income/Crypto 5个tab | Scanner（部分）|
+| `/watchlist` | F3 WL | 自选股（CRUD + 实时价格） | ❌ 缺失 |
+| `/portfolio` | F4 PORT | 持仓管理（P&L + 买价 + LIVE价格）| ❌ 缺失 |
+| `/news` | F5 NEWS | 新闻聚合（Bloomberg RSS + 分类）| NewsPanel ✓ |
+| `/economics` | F6 ECO | 宏观仪表盘（CB利率 + 主权债 + 经济指标）| RegimePanel（薄）|
+| `/agentic-world` | F7 AGENTS | 6个自主AI Agent实时监控 | ❌ 无对标 |
+| `/history` | F8 HIST | 会话历史（对话记录）| ❌ 无对标 |
+| `/research` | sidebar | 单股深度研究（快照 + 财报 + 历史）| DeepResearch ✓ |
+| `/dataroom` | sidebar | 私有文档上传与分析 | ❌ 无 |
+| `/alerts` | sidebar | 价格提醒 | ❌ 无 |
+
+**404路由**：`/agents`、`/fund-managers`（侧边栏写的是`/fund-manager`，暂未开放）
+
+---
+
+### 10C. 完整 API 端点映射（实测结果）
+
+通过 Performance Resource Timing API + 逐一主动探测，得到完整的 API 端点图：
+
+#### Next.js 层（内部路由，用户会话管理）
+
+```
+GET /api/health           → {timestamp, api:true, status:"healthy", database:true}
+GET /api/user/profile     → 用户信息（email, plan, credits）
+GET /api/user/session-pulse → 心跳（保持会话活跃）
+GET /api/auth/clear-session → 登出
+GET /api/chat/sessions    → {success, data:{sessions:[], total:0, limit:50}}
+GET /api/portfolio        → {data:[]}  （用户持仓列表）
+GET /api/watchlist        → {data:[]}  （用户自选股）
+GET /api/rss/world-news   → Bloomberg RSS 聚合
+GET /api/dataroom/files   → 上传文件列表
+GET /api/economics        → 宏观聚合数据（见10D详解）
+```
+
+#### FastAPI Python 后端层（代理到 Python 服务）
+
+```
+# 批量实时价格（ticker bar + watchlist 用）
+GET /api/market/batch/prices?symbols=AAPL,TSLA,NVDA
+    → {count:3, prices:{SYMBOL:{price:{symbol,open,high,low,close,volume}, source:"yfinance"}}}
+
+# 批量历史价格（图表用）
+GET /api/market/batch/history?symbols=AAPL&period=1mo
+    → {count, period, interval:"1d", history:{SYMBOL:[close_prices_array]}}
+
+# 股票搜索
+GET /api/market/search?q=AAPL
+    → {query, count:10, results:[{symbol,full_symbol,name,price,change_pct,volume,market_cap,sector,type,subtype,exchange,currency,country}]}
+
+# 单股完整快照（Research页面用）
+GET /api/market/snapshot/{SYMBOL}
+    → {symbol,exchange,price,info:{60+基本面字段},source:"yfinance",cached_for_minutes}
+
+# 单股财务报表
+GET /api/market/financials/{SYMBOL}
+    → {symbol,frequency,income_statement,balance_sheet,cash_flow,source,exchange}
+
+# 单股历史K线
+GET /api/market/history/{SYMBOL}
+    → {symbol,exchange,interval,period,start_date,end_date,count,history:{dates:[],prices:[]}}
+```
+
+---
+
+### 10D. /api/market/snapshot 数据结构（60+字段，完整清单）
+
+这是最重要的端点，一次调用返回一只股票的所有基本面数据：
+
+**价格层**（6字段）：symbol, open, high, low, close, volume
+
+**公司信息**（14字段）：short_name, long_name, display_name, quote_type, currency, financial_currency, exchange, full_exchange_name, market, industry, industry_key, sector, sector_key, long_business_summary, full_time_employees
+
+**实时报价**（11字段）：current_price, previous_close, open, day_low, day_high, regular_market_price, regular_market_change, regular_market_change_percent, regular_market_volume, bid, ask, bid_size, ask_size
+
+**估值倍数**（8字段）：market_cap, enterprise_value, trailing_pe, forward_pe, price_to_sales_trailing12_months, price_to_book, book_value, trailing_eps, forward_eps, eps_current_year
+
+**成长性**（4字段）：earnings_quarterly_growth, earnings_growth, revenue_growth
+
+**技术面**（8字段）：fifty_two_week_low/high, fifty_two_week_change_percent, fifty_day_average, two_hundred_day_average, average_volume, average_volume_10days
+
+**股权结构**（6字段）：shares_outstanding, shares_short, float_shares, held_percent_insiders, held_percent_institutions, short_ratio, short_percent_of_float
+
+**分红**（6字段）：dividend_rate, dividend_yield, ex_dividend_date, payout_ratio, five_year_avg_dividend_yield, trailing_annual_dividend_rate, trailing_annual_dividend_yield
+
+**财务健康**（12字段）：beta, total_cash, total_cash_per_share, total_debt, total_revenue, revenue_per_share, debt_to_equity, quick_ratio, current_ratio, gross_profits, ebitda, ebitda_margins, operating_margins, gross_margins, profit_margins, return_on_assets, return_on_equity, free_cashflow, operating_cashflow, enterprise_to_revenue, enterprise_to_ebitda, net_income_to_common
+
+**分析师预测**（5字段）：target_high_price, target_low_price, target_mean_price, target_median_price, recommendation_mean, recommendation_key, number_of_analyst_opinions
+
+**结论**：这个端点完全替代了我们在 `research.js` 中手工拼接 yfinance 数据的方式。但由于是他们自己的FastAPI服务，不能直接跨域调用——我们需要**自建同样的 FastAPI 层**，或者直接用 yfinance 本地复现。
+
+---
+
+### 10E. /api/economics 宏观数据结构（实测数据）
+
+```json
+{
+  "cards": [  // 8个美国核心宏观指标（实时更新）
+    {"name":"Core CPI Change (%)", "value":2.7505, "previous":2.8851, "period":"2026-01", "category":"Inflation"},
+    {"name":"Labour Productivity Growth (%)", "value":1.401, ...},
+    {"name":"Money Supply M2 (USD mn)", "value":22794279, ...},
+    {"name":"Nominal GDP Growth (%)", "value":5.9017, ...},
+    ...
+  ],
+  "cbRates": [  // 11+国央行利率 + 最新变动bp
+    {"country":"Australia","rate_pct":"3.85","change_bp":"25.0","period":"Feb/26"},
+    {"country":"USA","rate_pct":"4.50","change_bp":"-25.0","period":"Mar/26"},
+    ...
+  ],
+  "invertedYields": [  // 67国主权收益率曲线倒挂信号
+    {"country":"Australia","details":"52.6 bp | 14.0 bp | 3.0 bp"},
+    ...
+  ],
+  "topYields": [ ... ],  // 最高收益率国家排名
+  "topCds": [ ... ],     // 主权CDS信用风险排名
+  "categoryCounts": { ... }  // 经济指标分类统计
+}
+```
+
+**与我们的 RegimePanel 差距**：我们的 `api/macro.js` 只返回10个指标（CPI、PMI、失业率等），没有CB利率对比、没有主权债期限结构、没有CDS数据。这个结构是我们 RegimePanel 扩展的直接参考蓝图。
+
+---
+
+### 10F. Agentic World — 6个实时AI Agent（实测）
+
+访问 `/agentic-world`，确认6个持续运行的自主Agent：
+
+| Agent | 类别 | Velocity指数 |
+|-------|------|-------------|
+| Global Geopolitical Monitor | 地缘政治 & 冲突 | 9 |
+| Market Stress & Crisis Monitor | 市场压力 & 危机 | 8 |
+| Energy & Commodities Supply Monitor | 能源 & 大宗商品 | 6 |
+| Central Bank Policy Monitor | 央行 & 货币政策 | 5 |
+| Global Elections Monitor | 选举 & 政治 | 5 |
+| Macro Economic Data Monitor | 宏观经济数据 | 4 |
+
+**运行状态**（截至探查时刻）：
+- Total cycles: 8707（持续循环监控）
+- Total findings: 8707（累计发现事件数）
+- Auto-refresh: 每60秒
+- 每个Agent实时产出结构化情报（含Velocity评分，代表信号强度）
+
+**与我们平台的差距**：我们有 Morning Report（每日一次），但没有**持续运行的主题监控循环**。Agentic World 本质上是6个永不停歇的 Perplexity-like 监控循环，各自专注一个宏观主题。
+
+---
+
+### 10G. UI/UX 设计系统（可直接借鉴）
+
+从代码和页面中逆向提取的设计规范：
+
+```css
+/* 字体 */
+font-family: 'IBM Plex Mono', monospace;  /* 全站等宽字体 */
+
+/* 颜色系统 */
+--background: #000000;        /* 纯黑背景 */
+--primary-text: #EDE8C8;      /* 米黄主文字 */
+--accent: #FF7722;            /* 橙色强调（价格涨/重要数值）*/
+--dim: 约 #776A50;             /* 低亮度辅助文字 */
+--mid: 约 #AAA080;             /* 中间亮度（标签/描述）*/
+
+/* 布局逻辑 */
+terminalShell → terminalHeader + terminalBody + terminalFooter
+terminalBody  → [sidebar 导航] + mainContent
+mainContent   → contentArea（主内容区）+ 右侧栏（实时数据）
+
+/* 信息密度原则 */
+11px 字体；极小 padding；无圆角卡片；用空格对齐代替 grid；
+价格 = 橙色；文字 = 米黄；背景 = 纯黑；完全的Bloomberg终端美学
+```
+
+**终端交互模式**：
+- F1-F8 快捷键导航（无需鼠标）
+- 顶部滚动行情 ticker（无限循环）
+- 底部状态栏：用户信息 | API版本 | 延迟 | 连接状态 | 时间
+- 斜杠命令：`/stocks`, `/crypto`, `/forex`, `/portfolio`, `/watchlist` 等
+
+---
+
+### 10H. 对我们平台的具体集成路线（修订版）
+
+基于实测数据，对 9A 节的集成计划进行修订和细化：
+
+**❌ 原假设纠正**：
+- 原计划"Q3 2026等FinceptTerminal开放Programmatic API"——实际上 fincept.in 的 Web API **现在就可以用**（在浏览器里），但跨域限制使我们无法从自己的服务器直接调用
+- 正确策略：复现他们的数据层，而不是等待他们的API开放
+
+**✅ 修订后的三阶段计划**：
+
+**第一阶段（v14.3，本周内）— 数据层对齐**
+```python
+# 在 fetch_data.py 中参考 /api/market/snapshot 的字段结构，
+# 用 yfinance 本地复现同样的数据包，直接喂给 DeepResearch
+
+def fetch_stock_snapshot(symbol: str) -> dict:
+    import yfinance as yf
+    ticker = yf.Ticker(symbol)
+    info = ticker.info
+    return {
+        "price": {...},
+        "fundamentals": {
+            "trailing_pe": info.get("trailingPE"),
+            "forward_pe": info.get("forwardPE"),
+            "price_to_book": info.get("priceToBook"),
+            "roe": info.get("returnOnEquity"),
+            "revenue_growth": info.get("revenueGrowth"),
+            "target_mean_price": info.get("targetMeanPrice"),
+            "recommendation_key": info.get("recommendationKey"),
+            # ... 按 10D 节的60+字段全部填充
+        }
+    }
+```
+
+**第二阶段（v15.x，下个sprint）— 宏观层对齐**
+
+参考 `/api/economics` 数据结构，扩展我们的 `api/macro.js`：
+- 加入央行利率对比模块（FRED API 已支持）
+- 加入主权债期限结构（可用 FRED 或 stooq）
+- 加入67国经济指标（World Bank API，免费）
+- 目标：`api/macro.js` 响应结构与 `/api/economics` 保持一致
+
+**第三阶段（v16.x）— UI风格迁移**
+
+从"卡片宫格"向"终端面板"的视觉语言迁移：
+- 全站字体 → IBM Plex Mono
+- 配色 → #000 / #EDE8C8 / #FF7722
+- 布局 → terminalShell 框架（header + body + footer三栏）
+- 信息密度 → 11px字体、极小padding、无圆角
+
+---
+
+### 10I. 能力差距总结表（更新版）
+
+基于实测，更新 9A 节的差距分析：
+
+| 能力模块 | FinceptTerminal实现 | 我们现状 | 差距等级 | 修复路径 |
+|---------|-------------------|---------|---------|---------|
+| 市场数据快照 | yfinance 60+字段统一封装 | 散落在多个API中 | 中 | fetch_stock_snapshot() 统一封装（v14.3）|
+| 技术分析 | 50+指标（yfinance + ta-lib）| MA/RSI/成交量（6个）| 高 | 加MACD/布林/KDJ（Sprint C1）|
+| 全球宏观仪表盘 | /api/economics（CB利率+债券+67国）| 10个美国指标 | 高 | 参考其结构扩展macro.js（v15）|
+| 股票搜索 | /api/market/search（全球多交易所）| 无前端搜索 | 中 | yfinance search封装（v14.3）|
+| 财务报表 | income/balance/cashflow（完整）| 仅yfinance季报摘要 | 中 | 用yfinance financials复现（v15）|
+| 自选股/持仓 | /watchlist + /portfolio（DB存储）| ❌ 无 | 高 | 需要DB（v16）|
+| AI Agent持续监控 | 6个主题循环（8700+cycles）| Morning Report（每日1次）| 中 | 增加主题监控循环（v15后期）|
+| UI信息密度 | 终端风格（11px/等宽/纯黑）| 卡片宫格（现代web风格）| 高 | v16 UI重构参考之 |
+| 新闻聚合 | Bloomberg RSS（实时）| 已有（NewsPanel）| 低 | 直接对标，已完成 |
+| DeepResearch | Research Assistant（Claude）| DeepResearch（更完整）| 我们更强 | 无需改变 |
+
+**核心发现**：FinceptTerminal 的技术壁垒比预期低——数据源是 yfinance（和我们一样），UI是纯CSS终端风格（可复制），关键差距在于**数据封装的完整性**（60+字段统一接口）和**信息密度设计**（终端美学）。我们的 DeepResearch 和 Swing Signals 在分析深度上实际超过了他们。
+
+---
+
+*本次新增内容来源：Claude in Chrome 直接访问 fincept.in（tabId 297150974，账号 luvyears@outlook.com），2026-04-20 17:46-17:50 UTC+1*  
+*覆盖页面：/dashboard · /markets · /watchlist · /portfolio · /history · /economics · /research · /agentic-world*  
+*API实测：/api/market/snapshot/AAPL · /api/market/financials/AAPL · /api/market/batch/prices · /api/market/batch/history · /api/market/search · /api/economics · /api/health · /api/chat/sessions*
