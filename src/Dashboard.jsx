@@ -1707,7 +1707,7 @@ function SwingSignalDetail({ signals, C, L, lk }) {
   );
 }
 
-function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsMacro, newsPortfolio, newsLoading, newsLastFetched, onOpenArticle, liveData, universeA, universeHK, signalsData }) {
+function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsMacro, newsPortfolio, newsLoading, newsLastFetched, onOpenArticle, liveData, universeA, universeHK, signalsData, vpScores }) {
   const colors = [C.blue, C.gold, C.green, C.red, C.blue];
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
@@ -6731,7 +6731,7 @@ export default function Dashboard() {
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
           {tab==='desk'     && <TradingDesk L={L} lk={lk} C={C}/>}
-          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK} signalsData={signalsData}/>}
+          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK} signalsData={signalsData} vpScores={vpScores}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
           {tab==='flow'     && (
             <div>
