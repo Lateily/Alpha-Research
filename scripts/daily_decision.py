@@ -38,6 +38,7 @@ Design: zero AI calls. Pure rule-based logic. Fast, deterministic, free.
 
 import json
 import os
+import re
 from datetime import datetime, timezone, date
 from pathlib import Path
 
@@ -86,6 +87,177 @@ def get_regime(ticker, regime_data):
         if ticker in sector.get("tickers", []):
             return sector.get("regime", "NEUTRAL"), sector.get("name_en", "")
     return "NEUTRAL", ""
+
+
+def get_wrongif(ticker, vp_data):
+    """Return wrongIf strings for a ticker from vp_snapshot.json."""
+    for s in vp_data.get("snapshots", []):
+        if s.get("ticker") == ticker:
+            return s.get("wrongIf_e", ""), s.get("wrongIf_z", "")
+    return "", ""
+
+
+# ── wrongIf monitor ───────────────────────────────────────────────────────────
+# Lightweight pattern-matching against observable market indicators.
+# Binary events (clinical trial data, regulatory announcements) are flagged as
+# "manual check required" — we can't automate those.
+
+_NUMERIC_PATTERNS = [
+    # (regex, group_idx_for_threshold, indicator_key, direction)
+    # direction: 'above' = alert if indicator > threshold
+    #            'below' = alert if indicator < threshold
+    (r"rsi\s+(?:above|over|>)\s*(\d+(?:\.\d+)?)",        1, "rsi_14",     "above"),
+    (r"rsi\s+(?:below|under|<)\s*(\d+(?:\.\d+)?)",        1, "rsi_14",     "below"),
+    (r"dau\s+(?:drops?\s+below|falls?\s+below|<)\s*(\d+(?:\.\d+)?[MmBb]?)",
+                                                           1, "dau_proxy",  "below"),
+    (r"(?:capex|capital expenditure)\s+cut\s*>?\s*(\d+)%", 1, "capex_cut",  "above"),
+    (r"tariff[s]?\s+(?:above|over|>|exceed[s]?)\s*(\d+)%", 1, "tariff_pct", "above"),
+    (r"pe\s+(?:above|over|>)\s*(\d+)",                    1, "pe_forward",  "above"),
+    (r"(?:price\s+)?(?:drops?\s+below|falls?\s+below)\s*(\d+(?:\.\d+)?)",
+                                                           1, "price",      "below"),
+]
+
+_BINARY_KEYWORDS = [
+    "phase 3", "phase iii", "pivotal", "nda", "maa", "fda", "nmpa",
+    "approval", "data readout", "topline", "interim analysis",
+    "qualification", "slips", "misses", "disappoints", "superior pfs",
+    "uMRD", "celest", "pirtobrutinib", "clinical",
+]
+
+
+def _parse_threshold(val_str):
+    """Convert '2M', '200M', '1.5B', '35' to a float."""
+    s = val_str.strip().upper()
+    mult = 1
+    if s.endswith('B'):
+        mult = 1e9
+        s = s[:-1]
+    elif s.endswith('M'):
+        mult = 1e6
+        s = s[:-1]
+    elif s.endswith('K'):
+        mult = 1e3
+        s = s[:-1]
+    try:
+        return float(s) * mult
+    except ValueError:
+        return None
+
+
+def check_wrongif(ticker, wrongif_text, market_data):
+    """
+    Lightweight check of wrongIf string against live data.
+    Returns list of alert dicts:
+      { status: 'TRIGGERED'|'CLEAR'|'MANUAL', indicator, threshold, actual, text }
+    """
+    if not wrongif_text:
+        return []
+
+    alerts = []
+    text_lower = wrongif_text.lower()
+
+    # Extract observable numeric indicators from market_data
+    yd = market_data.get("yahoo", {}).get(ticker, {})
+    live = {
+        "rsi_14":      yd.get("technical", {}).get("rsi_14"),
+        "price":       yd.get("price", {}).get("last"),
+        "pe_forward":  yd.get("fundamentals", {}).get("pe_forward"),
+        # proxy checks — not real-time, flag as manual
+        "dau_proxy":   None,
+        "capex_cut":   None,
+        "tariff_pct":  None,
+    }
+
+    matched_any_numeric = False
+    for pattern, grp, indicator, direction in _NUMERIC_PATTERNS:
+        m = re.search(pattern, text_lower)
+        if not m:
+            continue
+        threshold = _parse_threshold(m.group(grp))
+        actual    = live.get(indicator)
+        if threshold is None:
+            continue
+
+        matched_any_numeric = True
+
+        if actual is None:
+            # Can't check automatically
+            alerts.append({
+                "status":    "MANUAL",
+                "indicator": indicator,
+                "threshold": threshold,
+                "actual":    None,
+                "text":      wrongif_text,
+                "note_e":    f"Cannot auto-verify '{indicator}' — manual check required.",
+                "note_z":    f"无法自动核验「{indicator}」——需人工检查。",
+            })
+        else:
+            triggered = (direction == "above" and actual > threshold) or \
+                        (direction == "below" and actual < threshold)
+            alerts.append({
+                "status":    "TRIGGERED" if triggered else "CLEAR",
+                "indicator": indicator,
+                "threshold": threshold,
+                "actual":    actual,
+                "text":      wrongif_text,
+                "note_e":    (
+                    f"⚠️ WRONGIF TRIGGERED: {indicator} = {actual:.1f} "
+                    f"{'>' if direction=='above' else '<'} {threshold:.1f}"
+                ) if triggered else (
+                    f"✅ Clear: {indicator} = {actual:.1f} (threshold {threshold:.1f})"
+                ),
+                "note_z":    (
+                    f"⚠️ wrongIf触发：{indicator} = {actual:.1f} "
+                    f"{'>' if direction=='above' else '<'} {threshold:.1f}"
+                ) if triggered else (
+                    f"✅ 正常：{indicator} = {actual:.1f}（阈值{threshold:.1f}）"
+                ),
+            })
+
+    # Binary event keywords — always flag as manual
+    binary_matches = [kw for kw in _BINARY_KEYWORDS if kw in text_lower]
+    if binary_matches and not matched_any_numeric:
+        alerts.append({
+            "status":    "MANUAL",
+            "indicator": "binary_event",
+            "threshold": None,
+            "actual":    None,
+            "text":      wrongif_text,
+            "note_e":    f"Binary event condition — manual monitoring required: {wrongif_text[:80]}",
+            "note_z":    f"二元事件条件——需人工监控：{wrongif_text[:80]}",
+        })
+    elif binary_matches:
+        # Mixed: some numeric + binary
+        alerts.append({
+            "status":    "MANUAL",
+            "indicator": "binary_event",
+            "threshold": None,
+            "actual":    None,
+            "text":      wrongif_text,
+            "note_e":    f"Binary component requires manual check: {', '.join(binary_matches[:3])}",
+            "note_z":    f"含二元事件条件，需人工核查：{', '.join(binary_matches[:3])}",
+        })
+
+    if not alerts:
+        alerts.append({
+            "status":    "MANUAL",
+            "indicator": "unstructured",
+            "threshold": None,
+            "actual":    None,
+            "text":      wrongif_text,
+            "note_e":    f"Unstructured condition — monitor manually: {wrongif_text[:80]}",
+            "note_z":    f"非结构化条件——需人工监控：{wrongif_text[:80]}",
+        })
+
+    return alerts
+
+
+def get_sizing(ticker, sizing_data):
+    """Return sizing recommendation for a ticker, or None."""
+    for s in sizing_data.get("sizing", []):
+        if s.get("ticker") == ticker:
+            return s
+    return None
 
 
 # ── Decision logic ────────────────────────────────────────────────────────────
@@ -191,10 +363,11 @@ def decide_held_position(pos, conf, vp_score):
     }
 
 
-def decide_watchlist_ticker(ticker, name, conf, vp_score, regime):
+def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
     """
     Generate a decision for a ticker in the universe but not currently held.
     Only recommend BUY_WATCH if both fundamental (VP) and technical (confluence) align.
+    sizing: dict from position_sizing.json or None
     """
     score    = conf["score"]    if conf else 0
     rat_e    = conf["rationale_e"] if conf else "No signal data"
@@ -207,11 +380,19 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime):
     if sig_ok and vp_ok and regime_ok:
         action   = "BUY_WATCH"
         priority = "MEDIUM"
+        size_note_e = (
+            f" Suggested size: {sizing['recommended_pct']:.1f}% "
+            f"(¥{sizing['recommended_value']:,.0f}) [{sizing['conviction_tier']}]."
+        ) if sizing else ""
+        size_note_z = (
+            f" 建议仓位：{sizing['recommended_pct']:.1f}%"
+            f"（¥{sizing['recommended_value']:,.0f}）[{sizing['conviction_tier_zh']}]。"
+        ) if sizing else ""
         reason_e = (f"PM + Quant aligned: VP {int(vp_score)} ≥ {VP_MIN_FOR_ENTRY} + "
                     f"signal score {score} ≥ {SCORE_ENTRY_MIN}. "
-                    f"{rat_e}. Regime: {regime}. Await human confirmation.")
+                    f"{rat_e}. Regime: {regime}.{size_note_e} Await human confirmation.")
         reason_z = (f"基本面+技术面共振：VP{int(vp_score)}≥{VP_MIN_FOR_ENTRY}，"
-                    f"信号评分{score}≥{SCORE_ENTRY_MIN}。{rat_z}。"
+                    f"信号评分{score}≥{SCORE_ENTRY_MIN}。{rat_z}。{size_note_z}"
                     f"等待人工确认后建仓。")
     elif sig_ok and not vp_ok:
         action   = "WATCH"
@@ -238,7 +419,7 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime):
         reason_e = f"No entry trigger. Score {score}, VP {vp_score}. {rat_e}."
         reason_z = f"无进场信号。评分{score}，VP{vp_score}。{rat_z}。"
 
-    return {
+    result = {
         "ticker":       ticker,
         "name":         name,
         "status":       "WATCHLIST",
@@ -255,6 +436,20 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime):
         "entry_target": "Await BUY_WATCH confirmation" if action == "BUY_WATCH" else None,
         "exit_trigger": None,
     }
+
+    # Attach sizing recommendation for BUY_WATCH candidates
+    if action == "BUY_WATCH" and sizing:
+        result["sizing"] = {
+            "recommended_pct":   sizing["recommended_pct"],
+            "recommended_value": sizing["recommended_value"],
+            "stop_distance_pct": sizing["stop_distance_pct"],
+            "conviction_tier":   sizing["conviction_tier"],
+            "conviction_tier_zh":sizing["conviction_tier_zh"],
+            "rationale_e":       sizing["rationale_e"],
+            "rationale_z":       sizing["rationale_z"],
+        }
+
+    return result
 
 
 # ── Portfolio risk checker ────────────────────────────────────────────────────
@@ -322,10 +517,12 @@ def compute_portfolio_risk(positions, regime_data):
 def main():
     print("[daily_decision] Starting Layer 2 decision engine...")
 
-    confluence_data = load_json(DATA_DIR / "confluence.json",    {"scores": []})
-    positions_data  = load_json(DATA_DIR / "positions.json",     {"positions": []})
-    vp_data         = load_json(DATA_DIR / "vp_snapshot.json",   {"snapshots": []})
-    regime_data     = load_json(DATA_DIR / "regime_config.json", {"sectors": []})
+    confluence_data = load_json(DATA_DIR / "confluence.json",       {"scores": []})
+    positions_data  = load_json(DATA_DIR / "positions.json",        {"positions": []})
+    vp_data         = load_json(DATA_DIR / "vp_snapshot.json",      {"snapshots": []})
+    regime_data     = load_json(DATA_DIR / "regime_config.json",    {"sectors": []})
+    sizing_data     = load_json(DATA_DIR / "position_sizing.json",  {"sizing": []})
+    market_data     = load_json(DATA_DIR / "market_data.json",      {})
 
     positions = positions_data.get("positions", [])
     held_tickers = {p["ticker"] for p in positions}
@@ -356,22 +553,70 @@ def main():
         ticker = entry["ticker"]
         if ticker in held_tickers:
             continue  # already handled above
-        vp      = get_vp(ticker, vp_data)
+        vp        = get_vp(ticker, vp_data)
         regime, _ = get_regime(ticker, regime_data)
+        sizing    = get_sizing(ticker, sizing_data)
         # Try to get a name from positions or signals data
         name    = ticker  # default; could enrich later
-        dec     = decide_watchlist_ticker(ticker, name, entry, vp, regime)
+        dec     = decide_watchlist_ticker(ticker, name, entry, vp, regime, sizing)
         decisions.append(dec)
         if dec["action"] == "BUY_WATCH":
             buy_watches.append(dec)
         icon = "🎯" if dec["action"] == "BUY_WATCH" else "👁️"
+        sz_note = f"  size={dec['sizing']['recommended_pct']:.1f}%" if dec.get("sizing") else ""
         print(f"  {icon} {ticker:16s} {dec['action']:12s} "
-              f"score={dec['confluence']:+4d}  VP={dec['vp_score']}")
+              f"score={dec['confluence']:+4d}  VP={dec['vp_score']}{sz_note}")
 
-    # ── 3. Portfolio risk ─────────────────────────────────────────────────────
+    # ── 3. wrongIf monitor ───────────────────────────────────────────────────
+    print("\n[wrongIf monitor]")
+    wrongif_alerts = []
+    all_tickers = list(held_tickers) + [e["ticker"] for e in all_scored if e["ticker"] not in held_tickers]
+    for ticker in all_tickers:
+        wi_e, wi_z = get_wrongif(ticker, vp_data)
+        if not wi_e:
+            continue
+        alerts = check_wrongif(ticker, wi_e, market_data)
+        triggered = [a for a in alerts if a["status"] == "TRIGGERED"]
+        manual    = [a for a in alerts if a["status"] == "MANUAL"]
+
+        if triggered:
+            for a in triggered:
+                wrongif_alerts.append({
+                    "ticker":   ticker,
+                    "severity": "HIGH",
+                    "status":   "TRIGGERED",
+                    "wrongIf_e": wi_e,
+                    "wrongIf_z": wi_z,
+                    "note_e":   a["note_e"],
+                    "note_z":   a["note_z"],
+                    "indicator":a["indicator"],
+                    "actual":   a.get("actual"),
+                    "threshold":a.get("threshold"),
+                })
+                print(f"  🚨 {ticker}: {a['note_e']}")
+        elif manual:
+            for a in manual[:1]:   # one manual alert per ticker is enough
+                wrongif_alerts.append({
+                    "ticker":   ticker,
+                    "severity": "LOW",
+                    "status":   "MANUAL",
+                    "wrongIf_e": wi_e,
+                    "wrongIf_z": wi_z,
+                    "note_e":   a["note_e"],
+                    "note_z":   a["note_z"],
+                    "indicator":a["indicator"],
+                    "actual":   None,
+                    "threshold":None,
+                })
+                print(f"  👁️ {ticker}: manual check — {wi_e[:60]}…")
+
+    if not wrongif_alerts:
+        print("  No wrongIf alerts.")
+
+    # ── 4. Portfolio risk ─────────────────────────────────────────────────────
     risk_flags = compute_portfolio_risk(positions, regime_data)
 
-    # ── 4. Market regime summary ──────────────────────────────────────────────
+    # ── 5. Market regime summary ──────────────────────────────────────────────
     regime_summary = []
     for sector in regime_data.get("sectors", []):
         regime_summary.append({
@@ -381,7 +626,7 @@ def main():
             "tickers":   sector.get("tickers", []),
         })
 
-    # ── 5. Build output ───────────────────────────────────────────────────────
+    # ── 6. Build output ───────────────────────────────────────────────────────
     # Sort: held positions first (by priority), then watchlist
     held_decisions  = [d for d in decisions if d["status"] == "HELD"]
     watch_decisions = [d for d in decisions if d["status"] == "WATCHLIST"]
@@ -424,11 +669,14 @@ def main():
         },
         "buy_watches":     [d["ticker"] for d in buy_watches],
         "portfolio_risk":  risk_flags,
+        "wrongif_alerts":  wrongif_alerts,
         "regime_summary":  regime_summary,
         "stats": {
-            "positions_held":  len(held_decisions),
-            "watchlist_count": len(watch_decisions),
-            "buy_watch_count": len(buy_watches),
+            "positions_held":    len(held_decisions),
+            "watchlist_count":   len(watch_decisions),
+            "buy_watch_count":   len(buy_watches),
+            "wrongif_triggered": sum(1 for a in wrongif_alerts if a["status"] == "TRIGGERED"),
+            "wrongif_manual":    sum(1 for a in wrongif_alerts if a["status"] == "MANUAL"),
         },
     }
 

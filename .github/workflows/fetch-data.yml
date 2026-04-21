@@ -65,7 +65,12 @@ jobs:
         continue-on-error: true          # non-critical; reads signals_*.json
         run: python scripts/signal_confluence.py
 
-      # ── Step 2e: Daily trading decisions (Layer 2 → Layer 1) ──────────────
+      # ── Step 2e: Position sizing (Layer 2) ───────────────────────────────
+      - name: Compute position sizing
+        continue-on-error: true          # non-critical; reads confluence + vp_snapshot
+        run: python scripts/position_sizing.py
+
+      # ── Step 2f: Daily trading decisions (Layer 2 → Layer 1) ──────────────
       - name: Generate daily trading decisions
         continue-on-error: true          # non-critical; reads confluence.json
         run: python scripts/daily_decision.py
@@ -101,7 +106,8 @@ jobs:
             public/data/backtest_results.json \
             public/data/stress_test.json \
             public/data/confluence.json \
-            public/data/daily_decision.json; do
+            public/data/daily_decision.json \
+            public/data/position_sizing.json; do
             [ -f "$f" ] && git add "$f"
           done
 

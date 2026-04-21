@@ -2908,6 +2908,7 @@ function PredictionLog({ predictions, L, C }) {
 /* ── TRADING DESK TAB ────────────────────────────────────────────────────── */
 function TradingDesk({ L, lk, C }) {
   const [decision, setDecision] = useState(null);
+  const [sizing,   setSizing]   = useState(null);
   const [loading,  setLoading]  = useState(true);
   const MONO = "'JetBrains Mono','Fira Code',monospace";
 
@@ -2915,8 +2916,10 @@ function TradingDesk({ L, lk, C }) {
     const base = DATA_BASE;
     Promise.all([
       fetch(base + 'data/daily_decision.json').then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([dd]) => {
+      fetch(base + 'data/position_sizing.json').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([dd, sz]) => {
       setDecision(dd);
+      setSizing(sz);
       setLoading(false);
     });
   }, []);
@@ -2952,11 +2955,14 @@ function TradingDesk({ L, lk, C }) {
     ADD: '📈', HOLD: '✅', BUY_WATCH: '🎯', WATCH: '👁️',
   };
 
-  const held  = decision.decisions?.held  || [];
-  const watch = decision.decisions?.watchlist || [];
-  const risks = decision.portfolio_risk || [];
-  const regimes = decision.regime_summary || [];
-  const brief = lk === 'z' ? decision.brief_z : decision.brief_e;
+  const held        = decision.decisions?.held       || [];
+  const watch       = decision.decisions?.watchlist  || [];
+  const risks       = decision.portfolio_risk        || [];
+  const regimes     = decision.regime_summary        || [];
+  const wrongifs    = decision.wrongif_alerts        || [];
+  const brief       = lk === 'z' ? decision.brief_z : decision.brief_e;
+  const sizingMap   = {};
+  (sizing?.sizing || []).forEach(s => { sizingMap[s.ticker] = s; });
 
   const ScoreBadge = ({ score }) => {
     const col = score >= 20 ? '#10b981' : score <= -20 ? '#ef4444' : '#6b7280';
@@ -3029,6 +3035,52 @@ function TradingDesk({ L, lk, C }) {
         </div>
       )}
 
+      {/* ── wrongIf Monitor ─────────────────────────────────────────────── */}
+      {wrongifs.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11, fontWeight:600, color:C.mid, marginBottom:8,
+                       textTransform:'uppercase', letterSpacing:0.5}}>
+            {lk==='z' ? '⚡ wrongIf 监控' : '⚡ wrongIf Monitor'} ({wrongifs.length})
+          </div>
+          {wrongifs.map((w, i) => {
+            const isTriggered = w.status === 'TRIGGERED';
+            const bg    = isTriggered ? '#fef2f2' : '#f8faff';
+            const border= isTriggered ? '#fca5a5' : C.border;
+            const col   = isTriggered ? '#dc2626' : C.mid;
+            const icon  = isTriggered ? '🚨' : '👁️';
+            return (
+              <div key={i} style={{
+                background: bg, border:`1px solid ${border}`, borderRadius:8,
+                padding:'10px 14px', marginBottom:6,
+              }}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:4}}>
+                  <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                    <span style={{fontSize:10, fontFamily:MONO, fontWeight:700, color:C.dark}}>{w.ticker}</span>
+                    <span style={{
+                      fontSize:9, fontWeight:700, padding:'2px 6px', borderRadius:3,
+                      background: isTriggered ? '#dc262620' : `${C.mid}15`,
+                      color: isTriggered ? '#dc2626' : C.mid,
+                    }}>{icon} {w.status}</span>
+                  </div>
+                  {w.actual != null && (
+                    <span style={{fontSize:9, fontFamily:MONO, color:col}}>
+                      actual: {typeof w.actual === 'number' ? w.actual.toFixed(1) : w.actual}
+                      {w.threshold != null ? ` / threshold: ${w.threshold}` : ''}
+                    </span>
+                  )}
+                </div>
+                <div style={{fontSize:10, color:C.mid, marginBottom:3, fontStyle:'italic'}}>
+                  wrongIf: {lk==='z' ? (w.wrongIf_z||w.wrongIf_e) : w.wrongIf_e}
+                </div>
+                <div style={{fontSize:11, color:col}}>
+                  {lk==='z' ? w.note_z : w.note_e}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* ── Held positions ───────────────────────────────────────────────── */}
       {held.length > 0 && (
         <div style={{marginBottom:14}}>
@@ -3086,24 +3138,72 @@ function TradingDesk({ L, lk, C }) {
           </div>
           {watch.map(d => {
             const isBuyWatch = d.action === 'BUY_WATCH';
+            // Use sizing from decision object (injected by daily_decision.py) or sizingMap fallback
+            const sz = d.sizing || sizingMap[d.ticker] || null;
             return (
               <div key={d.ticker} style={{
                 background: isBuyWatch ? `${C.blue}06` : C.card,
                 border: `1px solid ${isBuyWatch ? C.blue + '40' : C.border}`,
                 borderRadius:10, padding:'12px 16px', marginBottom:6,
-                display:'flex', justifyContent:'space-between', alignItems:'center',
               }}>
-                <div style={{display:'flex', alignItems:'center', gap:10}}>
-                  <span style={{fontFamily:MONO, fontSize:12, fontWeight:700, color:C.dark}}>{d.ticker}</span>
-                  <ActionBadge action={d.action} />
-                  <ScoreBadge score={d.confluence} />
-                  {d.vp_score != null && (
-                    <span style={{fontSize:10, color:C.mid}}>VP {d.vp_score}</span>
-                  )}
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom: isBuyWatch ? 8 : 0}}>
+                  <div style={{display:'flex', alignItems:'center', gap:10}}>
+                    <span style={{fontFamily:MONO, fontSize:12, fontWeight:700, color:C.dark}}>{d.ticker}</span>
+                    <ActionBadge action={d.action} />
+                    <ScoreBadge score={d.confluence} />
+                    {d.vp_score != null && (
+                      <span style={{fontSize:10, color:C.mid}}>VP {d.vp_score}</span>
+                    )}
+                  </div>
+                  <div style={{fontSize:11, color:C.mid, maxWidth:340, textAlign:'right', lineHeight:1.5}}>
+                    {lk==='z' ? d.reason_z : d.reason_e}
+                  </div>
                 </div>
-                <div style={{fontSize:11, color:C.mid, maxWidth:380, textAlign:'right', lineHeight:1.5}}>
-                  {lk==='z' ? d.reason_z : d.reason_e}
-                </div>
+                {/* Position sizing card — only for BUY_WATCH */}
+                {isBuyWatch && sz && (
+                  <div style={{
+                    display:'flex', gap:12, flexWrap:'wrap', alignItems:'center',
+                    padding:'8px 10px', background:C.soft, borderRadius:6,
+                    border:`1px solid ${C.blue}25`,
+                  }}>
+                    <div style={{display:'flex', flexDirection:'column', gap:1}}>
+                      <div style={{fontSize:9, color:C.mid, fontWeight:600, textTransform:'uppercase'}}>
+                        {lk==='z' ? '建议仓位' : 'Suggested Size'}
+                      </div>
+                      <div style={{fontSize:16, fontWeight:800, color:C.blue, fontFamily:MONO}}>
+                        {sz.recommended_pct}%
+                      </div>
+                    </div>
+                    <div style={{display:'flex', flexDirection:'column', gap:1}}>
+                      <div style={{fontSize:9, color:C.mid, fontWeight:600, textTransform:'uppercase'}}>
+                        {lk==='z' ? '金额' : 'Value'}
+                      </div>
+                      <div style={{fontSize:12, fontWeight:700, color:C.dark, fontFamily:MONO}}>
+                        ¥{(sz.recommended_value||0).toLocaleString(undefined,{maximumFractionDigits:0})}
+                      </div>
+                    </div>
+                    <div style={{display:'flex', flexDirection:'column', gap:1}}>
+                      <div style={{fontSize:9, color:C.mid, fontWeight:600, textTransform:'uppercase'}}>
+                        {lk==='z' ? 'ATR止损' : 'ATR Stop'}
+                      </div>
+                      <div style={{fontSize:12, fontWeight:700, color:C.gold, fontFamily:MONO}}>
+                        {sz.stop_distance_pct}%
+                      </div>
+                    </div>
+                    <div style={{
+                      marginLeft:'auto', fontSize:9, fontWeight:700, padding:'3px 8px',
+                      borderRadius:4,
+                      background: sz.conviction_tier === 'HIGH CONVICTION' ? `${C.green}18`
+                                : sz.conviction_tier === 'MEDIUM CONVICTION' ? `${C.blue}18`
+                                : `${C.mid}18`,
+                      color: sz.conviction_tier === 'HIGH CONVICTION' ? C.green
+                           : sz.conviction_tier === 'MEDIUM CONVICTION' ? C.blue
+                           : C.mid,
+                    }}>
+                      {lk==='z' ? (sz.conviction_tier_zh || sz.conviction_tier) : sz.conviction_tier}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -4164,15 +4264,74 @@ function PaperTrading({ L, lk, C }) {
   const pnlPct = summary.total_pnl_pct || 0;
   const pnlColor = pnl >= 0 ? C.green : C.red;
 
-  const handleAddTrade = () => {
+  const handleAddTrade = async () => {
+    // Fetch latest confluence data for signal attribution
+    let signalAttribution = null;
+    try {
+      const confResp = await fetch(DATA_BASE + 'data/confluence.json');
+      if (confResp.ok) {
+        const confData = await confResp.json();
+        const confEntry = (confData.scores || []).find(s => s.ticker === newTrade.ticker);
+        if (confEntry) {
+          signalAttribution = {
+            confluence_score:      confEntry.score,
+            action:                confEntry.action,
+            contributing_signals:  (confEntry.contributing_signals || []).slice(0, 6),
+            captured_at:           new Date().toISOString(),
+          };
+        }
+      }
+    } catch (e) { /* attribution is best-effort, don't block trade */ }
+
+    // Also try to capture VP score and wrongIf from vp_snapshot
+    let vpAtEntry = null, wrongIfAtEntry = null;
+    try {
+      const vpResp = await fetch(DATA_BASE + 'data/vp_snapshot.json');
+      if (vpResp.ok) {
+        const vpData = await vpResp.json();
+        const vpEntry = (vpData.snapshots || []).find(s => s.ticker === newTrade.ticker);
+        if (vpEntry) {
+          vpAtEntry      = vpEntry.vp_score;
+          wrongIfAtEntry = vpEntry.wrongIf_e || null;
+        }
+      }
+    } catch (e) {}
+
+    // Also check localStorage for most recent DeepResearch VP
+    try {
+      const lsRaw = localStorage.getItem(`ar_research_${newTrade.ticker}`);
+      if (lsRaw) {
+        const lsData = JSON.parse(lsRaw);
+        if (lsData?.current?.vp != null) vpAtEntry = lsData.current.vp;
+        if (lsData?.current?.wrongIf) wrongIfAtEntry = lsData.current.wrongIf;
+      }
+    } catch (e) {}
+
     // Save new trade to localStorage for manual sync
     const trades = JSON.parse(localStorage.getItem('ar_pending_trades') || '[]');
-    trades.push({ ...newTrade, id: 't' + Date.now(), date: new Date().toISOString().slice(0,10), quantity: +newTrade.quantity, price: +newTrade.price });
+    const tradeRecord = {
+      ...newTrade,
+      id:       't' + Date.now(),
+      date:     new Date().toISOString().slice(0, 10),
+      quantity: +newTrade.quantity,
+      price:    +newTrade.price,
+      // Signal attribution — closed-loop record of what triggered this entry
+      signal_attribution: signalAttribution,
+      vp_at_entry:        vpAtEntry,
+      wrongIf_at_entry:   wrongIfAtEntry,
+    };
+    trades.push(tradeRecord);
     localStorage.setItem('ar_pending_trades', JSON.stringify(trades));
     setShowAddTrade(false);
     setNewTrade({ ticker:'', name:'', market:'SZ', side:'BUY', quantity:'', price:'', sector_sw:'', notes:'' });
-    alert(L('Trade saved locally. To persist: copy trades from localStorage to public/data/trades.json and re-run python3 scripts/paper_trading.py',
-            '交易已保存到本地存储。要持久化：将交易复制到 public/data/trades.json 并重新运行 python3 scripts/paper_trading.py'));
+
+    const attrNote = signalAttribution
+      ? `\n\n📊 Signal Attribution captured:\n  Score: ${signalAttribution.confluence_score}\n  Signals: ${(signalAttribution.contributing_signals || []).map(s=>s.name||s).join(', ')}`
+      : '';
+    alert(L(
+      `Trade saved locally.${attrNote}\n\nTo persist: copy trades from localStorage to public/data/trades.json and re-run python3 scripts/paper_trading.py`,
+      `交易已保存到本地存储。${attrNote ? '\n\n信号归因已记录' : ''}\n\n要持久化：将交易复制到 public/data/trades.json 并重新运行 python3 scripts/paper_trading.py`
+    ));
   };
 
   return (

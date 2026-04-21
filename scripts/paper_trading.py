@@ -127,21 +127,43 @@ def compute_positions_output(holdings, market_data):
         first_buy = min(buy_dates) if buy_dates else today
         holding_days = (datetime.now() - datetime.strptime(first_buy, "%Y-%m-%d")).days
 
+        # Collect signal attribution from all BUY trades (most recent first)
+        buy_trades = sorted(
+            [t for t in h["trades"] if t["side"].upper() == "BUY"],
+            key=lambda x: x["date"], reverse=True
+        )
+        entry_attribution = None
+        vp_at_entry       = None
+        wrongif_at_entry  = None
+        for bt in buy_trades:
+            if bt.get("signal_attribution"):
+                entry_attribution = bt["signal_attribution"]
+            if bt.get("vp_at_entry") is not None:
+                vp_at_entry = bt["vp_at_entry"]
+            if bt.get("wrongIf_at_entry"):
+                wrongif_at_entry = bt["wrongIf_at_entry"]
+            if entry_attribution:
+                break   # use most recent BUY with attribution
+
         positions.append({
-            "ticker":        tk,
-            "name":          h["name"],
-            "market":        h["market"],
-            "sector_sw":     h["sector_sw"],
-            "currency":      h["currency"],
-            "quantity":      qty,
-            "avg_cost":      round(avg_cost, 4),
-            "current_price": round(current_price, 4),
-            "market_value":  round(mkt_value, 2),
-            "cost_value":    round(cost_value, 2),
-            "pnl_abs":       round(pnl_abs, 2),
-            "pnl_pct":       round(pnl_pct, 2),
-            "holding_days":  holding_days,
-            "as_of":         today,
+            "ticker":             tk,
+            "name":               h["name"],
+            "market":             h["market"],
+            "sector_sw":          h["sector_sw"],
+            "currency":           h["currency"],
+            "quantity":           qty,
+            "avg_cost":           round(avg_cost, 4),
+            "current_price":      round(current_price, 4),
+            "market_value":       round(mkt_value, 2),
+            "cost_value":         round(cost_value, 2),
+            "pnl_abs":            round(pnl_abs, 2),
+            "pnl_pct":            round(pnl_pct, 2),
+            "holding_days":       holding_days,
+            "as_of":              today,
+            # Signal attribution — enables signal quality feedback loop
+            "signal_attribution": entry_attribution,
+            "vp_at_entry":        vp_at_entry,
+            "wrongIf_at_entry":   wrongif_at_entry,
         })
         total_value_cny += mkt_value
         total_cost_cny  += cost_value
