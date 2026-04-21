@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-04-20T12:22:02.576963",
+  "fetched_at": "2026-04-21T12:00:40.938391",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-04-20"
+    "updated": "2026-04-21"
   },
   "southbound": {
-    "latest_net_flow": -39.0925,
-    "5d_cumulative": 195.9567,
-    "20d_cumulative": 457.4994,
+    "latest_net_flow": 37.3793,
+    "5d_cumulative": 253.5012,
+    "20d_cumulative": 232.9785,
     "trend": "inflow",
-    "updated": "2026-04-20"
+    "updated": "2026-04-21"
   },
   "dragon_tiger": [
     {
@@ -96,26 +96,6 @@
       "focus": false
     },
     {
-      "code": "000838",
-      "name": "财信发展",
-      "date": "",
-      "reason": "日跌幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "000889",
-      "name": "中嘉博创",
-      "date": "",
-      "reason": "日换手率达到20%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
       "code": "000889",
       "name": "中嘉博创",
       "date": "",
@@ -156,20 +136,10 @@
       "focus": false
     },
     {
-      "code": "000889",
-      "name": "中嘉博创",
+      "code": "000890",
+      "name": "法尔胜",
       "date": "",
       "reason": "日振幅值达到15%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "000889",
-      "name": "中嘉博创",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -180,16 +150,6 @@
       "name": "盈峰环境",
       "date": "",
       "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "000973",
-      "name": "佛塑科技",
-      "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -216,26 +176,6 @@
       "focus": false
     },
     {
-      "code": "001257",
-      "name": "盛龙股份",
-      "date": "",
-      "reason": "日换手率达到20%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "001270",
-      "name": "*ST铖昌",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
       "code": "001299",
       "name": "美能能源",
       "date": "",
@@ -256,38 +196,18 @@
       "focus": false
     },
     {
-      "code": "001299",
-      "name": "美能能源",
+      "code": "001312",
+      "name": "福恩股份",
       "date": "",
-      "reason": "日跌幅偏离值达到7%的前5只证券",
+      "reason": "无价格涨跌幅限制的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
       "focus": false
     },
     {
-      "code": "001896",
-      "name": "豫能控股",
-      "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "001896",
-      "name": "豫能控股",
-      "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "001896",
-      "name": "豫能控股",
+      "code": "001400",
+      "name": "江顺科技",
       "date": "",
       "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
@@ -299,7 +219,7 @@
       "code": "001896",
       "name": "豫能控股",
       "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -310,26 +230,6 @@
       "name": "大族激光",
       "date": "",
       "reason": "日涨幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002051",
-      "name": "中工国际",
-      "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002051",
-      "name": "中工国际",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -356,30 +256,10 @@
       "focus": false
     },
     {
-      "code": "002083",
-      "name": "孚日股份",
-      "date": "",
-      "reason": "日跌幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
       "code": "002124",
       "name": "天邦食品",
       "date": "",
       "reason": "日跌幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002124",
-      "name": "天邦食品",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -396,10 +276,20 @@
       "focus": false
     },
     {
-      "code": "002227",
-      "name": "奥特迅",
+      "code": "002201",
+      "name": "九鼎新材",
       "date": "",
-      "reason": "日跌幅偏离值达到7%的前5只证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002217",
+      "name": "合力泰",
+      "date": "",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -429,6 +319,16 @@
       "code": "002297",
       "name": "博云新材",
       "date": "",
+      "reason": "日换手率达到20%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002297",
+      "name": "博云新材",
+      "date": "",
       "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
@@ -446,40 +346,10 @@
       "focus": false
     },
     {
-      "code": "002297",
-      "name": "博云新材",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
       "code": "002328",
       "name": "新朋股份",
       "date": "",
       "reason": "日换手率达到20%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002328",
-      "name": "新朋股份",
-      "date": "",
-      "reason": "日换手率达到20%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002328",
-      "name": "新朋股份",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -506,10 +376,140 @@
       "focus": false
     },
     {
+      "code": "002338",
+      "name": "奥普光电",
+      "date": "",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002342",
+      "name": "巨力索具",
+      "date": "",
+      "reason": "日振幅值达到15%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002342",
+      "name": "巨力索具",
+      "date": "",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002342",
+      "name": "巨力索具",
+      "date": "",
+      "reason": "日换手率达到20%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002361",
+      "name": "神剑股份",
+      "date": "",
+      "reason": "日换手率达到20%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
       "code": "002361",
       "name": "神剑股份",
       "date": "",
       "reason": "日涨幅偏离值达到7%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002361",
+      "name": "神剑股份",
+      "date": "",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002361",
+      "name": "神剑股份",
+      "date": "",
+      "reason": "日换手率达到20%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002361",
+      "name": "神剑股份",
+      "date": "",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002361",
+      "name": "神剑股份",
+      "date": "",
+      "reason": "日换手率达到20%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002361",
+      "name": "神剑股份",
+      "date": "",
+      "reason": "日换手率达到20%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002361",
+      "name": "神剑股份",
+      "date": "",
+      "reason": "日振幅值达到15%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002418",
+      "name": "康盛股份",
+      "date": "",
+      "reason": "日振幅值达到15%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002418",
+      "name": "康盛股份",
+      "date": "",
+      "reason": "日跌幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,

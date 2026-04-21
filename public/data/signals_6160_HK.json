@@ -4,12 +4,23 @@
   "price": 191.0,
   "zone": "NEUTRAL",
   "entry_zone": false,
-  "exit_zone": false,
-  "signals": [],
+  "exit_zone": true,
+  "signals": [
+    {
+      "type": "KDJ_DEATH_CROSS",
+      "strength": "strong",
+      "date": "2026-04-20",
+      "bullish": false,
+      "description": {
+        "e": "KDJ K(70.8) crossed below D(76.2) in overbought — reversal signal",
+        "z": "KDJ K(70.8)下穿D(76.2)，超买区死叉看跌"
+      }
+    }
+  ],
   "signal_count": {
     "bullish": 0,
-    "bearish": 0,
-    "total": 0
+    "bearish": 1,
+    "total": 1
   },
   "indicators": {
     "ma5": 191.22,
@@ -22,6 +33,20 @@
     "price_vs_ma60": -0.17,
     "change_1d": -1.14,
     "change_5d": 2.08,
-    "change_20d": 9.21
+    "change_20d": 9.21,
+    "macd_dif": 2.5874,
+    "macd_dea": 0.2608,
+    "macd_hist": 4.6532,
+    "bb_upper": 201.55,
+    "bb_mid": 179.76,
+    "bb_lower": 157.97,
+    "bb_bandwidth": 24.24,
+    "kdj_k": 70.8,
+    "kdj_d": 76.2,
+    "kdj_j": 60.1,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
   }
 }

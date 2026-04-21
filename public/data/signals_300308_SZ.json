@@ -3,7 +3,7 @@
   "generated_at": "2026-04-20",
   "price": 850.0,
   "zone": "OVERBOUGHT",
-  "entry_zone": false,
+  "entry_zone": true,
   "exit_zone": true,
   "signals": [
     {
@@ -15,12 +15,22 @@
         "e": "RSI(14) = 80.7 — overbought, watch for exhaustion",
         "z": "RSI(14)=80.7，超买，注意回调风险"
       }
+    },
+    {
+      "type": "BULLISH_ALIGNMENT",
+      "strength": "strong",
+      "date": "2026-04-20",
+      "bullish": true,
+      "description": {
+        "e": "MA5(812.7) > MA20(676.5) > MA60(605.9), price above all — full bullish alignment",
+        "z": "MA5(812.7)>MA20(676.5)>MA60(605.9)，均线多头排列，趋势强"
+      }
     }
   ],
   "signal_count": {
-    "bullish": 0,
+    "bullish": 1,
     "bearish": 1,
-    "total": 1
+    "total": 2
   },
   "indicators": {
     "ma5": 812.72,
@@ -33,6 +43,20 @@
     "price_vs_ma60": 40.29,
     "change_1d": -0.12,
     "change_5d": 15.18,
-    "change_20d": 38.89
+    "change_20d": 38.89,
+    "macd_dif": 66.1822,
+    "macd_dea": 44.7133,
+    "macd_hist": 42.9378,
+    "bb_upper": 861.53,
+    "bb_mid": 676.46,
+    "bb_lower": 491.39,
+    "bb_bandwidth": 54.72,
+    "kdj_k": 91.5,
+    "kdj_d": 89.9,
+    "kdj_j": 94.8,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
   }
 }

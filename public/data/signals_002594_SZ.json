@@ -22,6 +22,20 @@
     "price_vs_ma60": 5.75,
     "change_1d": -0.84,
     "change_5d": -1.29,
-    "change_20d": -0.12
+    "change_20d": -0.12,
+    "macd_dif": 1.1301,
+    "macd_dea": 1.2767,
+    "macd_hist": -0.2933,
+    "bb_upper": 108.61,
+    "bb_mid": 103.36,
+    "bb_lower": 98.11,
+    "bb_bandwidth": 10.16,
+    "kdj_k": 67.8,
+    "kdj_d": 61.2,
+    "kdj_j": 81.0,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
   }
 }
