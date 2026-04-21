@@ -45,17 +45,25 @@ FOCUS_TICKERS = {
 }
 
 # ── VP scores for Supabase snapshot (kept in sync with Dashboard.jsx) ──────
+# VP_SCORES: seed/fallback values only.
+# These are overridden by DeepResearch output preserved in vp_snapshot.json.
+# Update last_updated when you manually recalibrate the seed values.
 VP_SCORES = {
     "300308.SZ": {"vp": 79, "expectation_gap": 72, "fundamental_accel": 80,
-                  "narrative_shift": 65, "low_coverage": 55, "catalyst_prox": 85},
+                  "narrative_shift": 65, "low_coverage": 55, "catalyst_prox": 85,
+                  "last_updated": "2026-04-13"},
     "700.HK":    {"vp": 64, "expectation_gap": 68, "fundamental_accel": 70,
-                  "narrative_shift": 75, "low_coverage": 40, "catalyst_prox": 60},
+                  "narrative_shift": 75, "low_coverage": 40, "catalyst_prox": 60,
+                  "last_updated": "2026-04-13"},
     "9999.HK":   {"vp": 58, "expectation_gap": 62, "fundamental_accel": 55,
-                  "narrative_shift": 50, "low_coverage": 45, "catalyst_prox": 65},
+                  "narrative_shift": 50, "low_coverage": 45, "catalyst_prox": 65,
+                  "last_updated": "2026-04-13"},
     "6160.HK":   {"vp": 65, "expectation_gap": 72, "fundamental_accel": 65,
-                  "narrative_shift": 68, "low_coverage": 45, "catalyst_prox": 70},
+                  "narrative_shift": 68, "low_coverage": 45, "catalyst_prox": 70,
+                  "last_updated": "2026-04-13"},
     "002594.SZ": {"vp": 52, "expectation_gap": 55, "fundamental_accel": 60,
-                  "narrative_shift": 45, "low_coverage": 35, "catalyst_prox": 50},
+                  "narrative_shift": 45, "low_coverage": 35, "catalyst_prox": 50,
+                  "last_updated": "2026-04-13"},
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2264,25 +2272,52 @@ def main():
     with open(OUTPUT_DIR / "flow_data.json", "w", encoding="utf-8") as f:
         json.dump(flow_data, f, ensure_ascii=False, indent=2, default=str)
 
-    # ── Write vp_snapshot.json (for Supabase sync) ──
+    # ── Write vp_snapshot.json (for Supabase sync + Dashboard) ──
+    # Priority: existing snapshot values (set by DeepResearch) > VP_SCORES seed dict
+    # This preserves VP scores updated via manual DeepResearch runs in the browser.
     today = datetime.now().strftime("%Y-%m-%d")
+
+    # Load existing snapshot to preserve any DeepResearch-updated scores
+    existing_vp = {}
+    vp_snapshot_path = OUTPUT_DIR / "vp_snapshot.json"
+    if vp_snapshot_path.exists():
+        try:
+            with open(vp_snapshot_path) as f:
+                existing_data = json.load(f)
+            for snap in existing_data.get("snapshots", []):
+                if snap.get("ticker"):
+                    existing_vp[snap["ticker"]] = snap
+        except Exception:
+            pass
+
     vp_snapshot = []
-    for ticker, vp in VP_SCORES.items():
-        close = focus.get(ticker, {}).get("price", {}).get("last")
+    for ticker, seed in VP_SCORES.items():
+        close  = focus.get(ticker, {}).get("price", {}).get("last")
         volume = focus.get(ticker, {}).get("price", {}).get("volume")
+        prev   = existing_vp.get(ticker, {})
+
+        # Use existing VP score only if it was set more recently than the seed
+        # (i.e., if the existing file has the same or newer date — DeepResearch updated it)
+        use_existing = bool(prev and prev.get("vp_score") is not None
+                            and prev.get("date", "") >= seed.get("last_updated", "2000-01-01"))
+
         vp_snapshot.append({
-            "ticker":           ticker,
-            "date":             today,
-            "vp_score":         vp["vp"],
-            "expectation_gap":  vp["expectation_gap"],
-            "fundamental_accel":vp["fundamental_accel"],
-            "narrative_shift":  vp["narrative_shift"],
-            "low_coverage":     vp["low_coverage"],
-            "catalyst_proximity":vp["catalyst_prox"],
-            "close":            close,
-            "volume":           volume,
+            "ticker":            ticker,
+            "date":              today,
+            "vp_score":          prev["vp_score"]          if use_existing else seed["vp"],
+            "expectation_gap":   prev.get("expectation_gap",  seed["expectation_gap"]),
+            "fundamental_accel": prev.get("fundamental_accel",seed["fundamental_accel"]),
+            "narrative_shift":   prev.get("narrative_shift",  seed["narrative_shift"]),
+            "low_coverage":      prev.get("low_coverage",     seed["low_coverage"]),
+            "catalyst_proximity":prev.get("catalyst_proximity",seed["catalyst_prox"]),
+            "close":             close,
+            "volume":            volume,
+            "source":            "deepresearch" if use_existing else "seed",
         })
-    with open(OUTPUT_DIR / "vp_snapshot.json", "w", encoding="utf-8") as f:
+        if use_existing:
+            print(f"  [vp_snapshot] {ticker}: preserved DeepResearch VP {prev['vp_score']} (seed={seed['vp']})")
+
+    with open(vp_snapshot_path, "w", encoding="utf-8") as f:
         json.dump({"date": today, "snapshots": vp_snapshot}, f, ensure_ascii=False, default=str)
 
     # ── Summary ──

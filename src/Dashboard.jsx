@@ -1712,13 +1712,25 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
   // ── Live data derivation ────────────────────────────────────────────────
-  const FOCUS = [
+  // VP Score seed values (fallback only — overridden by vp_snapshot.json + localStorage)
+  const FOCUS_SEED = [
     { id:'300308.SZ', name:'Innolight', sector:'AI Infra',  vp:79 },
     { id:'700.HK',    name:'Tencent',   sector:'Internet',  vp:65 },
     { id:'9999.HK',   name:'NetEase',   sector:'Gaming',    vp:58 },
     { id:'6160.HK',   name:'BeiGene',   sector:'Biotech',   vp:65 },
     { id:'002594.SZ', name:'BYD',       sector:'EV/Auto',   vp:61 },
   ];
+  // FOCUS uses live VP scores: localStorage (most recent DeepResearch) > vp_snapshot.json > seed
+  const FOCUS = FOCUS_SEED.map(f => {
+    const lsKey = `ar_research_${f.id}`;
+    let lsVp = null;
+    try {
+      const ls = JSON.parse(localStorage.getItem(lsKey) || '{}');
+      lsVp = ls?.current?.vp ?? null;
+    } catch { lsVp = null; }
+    const snapVp = vpScores?.[f.id] ?? null;
+    return { ...f, vp: lsVp ?? snapVp ?? f.vp };
+  });
   const yahoo    = liveData?.yahoo    || {};
   const akshare  = liveData?.akshare  || {};
   const fetchedAt = liveData?._meta?.fetched_at;
@@ -5940,6 +5952,7 @@ export default function Dashboard() {
   });
   const [morningReportLoading, setMorningReportLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
+  const [vpScores, setVpScores] = useState({});   // { ticker: vp_score } from vp_snapshot.json
 
   /* Fetch prediction log on mount */
   useEffect(() => {
@@ -6155,6 +6168,16 @@ export default function Dashboard() {
       .then(r => { if (!r.ok) throw new Error('No file'); return r.json(); })
       .then(d => setUniverseHK(d))
       .catch(() => setUniverseHK(null));
+    // VP Scores from vp_snapshot.json (written daily by fetch_data.py / GitHub Actions)
+    fetch(base + 'data/vp_snapshot.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d?.snapshots) return;
+        const map = {};
+        d.snapshots.forEach(s => { if (s.ticker && s.vp_score != null) map[s.ticker] = s.vp_score; });
+        setVpScores(map);
+      })
+      .catch(() => {});
   }, []);
 
   const allStocks = { ...STOCKS, ...dynamicStocks };
@@ -6238,6 +6261,10 @@ export default function Dashboard() {
 
   const handleDeepResearchComplete = (tk, data) => {
     setDynamicStocks(prev => ({ ...prev, [tk]: data }));
+    // Update live VP score state so FOCUS cards refresh immediately without reload
+    if (data?.vp != null) {
+      setVpScores(prev => ({ ...prev, [tk]: data.vp }));
+    }
 
     // Persist research to localStorage so pulse can read it across sessions
     // Schema: ar_research_{ticker} = { current, generated_at, price_at_research, vp_history }
