@@ -4,7 +4,7 @@
   "price": 522.5,
   "zone": "NEUTRAL",
   "entry_zone": true,
-  "exit_zone": false,
+  "exit_zone": true,
   "signals": [
     {
       "type": "MA20_BOUNCE",
@@ -15,12 +15,22 @@
         "e": "Price bounced off MA20 (503.0) — near-term support held",
         "z": "股价从MA20(503.0)附近反弹，短期支撑有效"
       }
+    },
+    {
+      "type": "KDJ_OVERBOUGHT",
+      "strength": "strong",
+      "date": "2026-04-20",
+      "bullish": false,
+      "description": {
+        "e": "KDJ J=101.0 (extreme >100) — high pullback risk",
+        "z": "KDJ J=101.0极度超买，回调风险高"
+      }
     }
   ],
   "signal_count": {
     "bullish": 1,
-    "bearish": 0,
-    "total": 1
+    "bearish": 1,
+    "total": 2
   },
   "indicators": {
     "ma5": 508.44,
@@ -33,6 +43,20 @@
     "price_vs_ma60": -2.81,
     "change_1d": 2.35,
     "change_5d": 6.63,
-    "change_20d": -5.09
+    "change_20d": -5.09,
+    "macd_dif": -5.126,
+    "macd_dea": -9.2946,
+    "macd_hist": 8.3371,
+    "bb_upper": 523.55,
+    "bb_mid": 501.62,
+    "bb_lower": 479.7,
+    "bb_bandwidth": 8.74,
+    "kdj_k": 77.7,
+    "kdj_d": 66.0,
+    "kdj_j": 101.0,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
   }
 }
