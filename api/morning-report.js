@@ -54,6 +54,7 @@ function buildReportPrompt(body) {
     portfolio_news = [],
     regime_data,
     predictions = [],
+    daily_decision = null,   // Layer 2 output: signal confluence + trade decisions
   } = body;
 
   // Format portfolio section
@@ -79,6 +80,30 @@ function buildReportPrompt(body) {
     ? regime_data.sectors.map(s => `${s.name_en}: ${s.regime}`).join(' | ')
     : 'Regime data unavailable.';
 
+  // Layer 2 signal confluence + decisions
+  let decisionSection = '';
+  if (daily_decision) {
+    const held  = (daily_decision.decisions?.held  || []);
+    const watch = (daily_decision.decisions?.watchlist || []).filter(d => d.action === 'BUY_WATCH');
+    const risks = (daily_decision.portfolio_risk || []);
+    const lines = [];
+    held.forEach(d => {
+      const icon = { EXIT:'🚨', TRIM:'⬇️', REVIEW_TRIM:'💰', REVIEW_STOP:'🔴', ADD:'📈', HOLD:'✅' }[d.action] || '─';
+      lines.push(`${icon} ${d.ticker} → ${d.action} (confluence ${d.confluence > 0 ? '+' : ''}${d.confluence}, VP${d.vp_score || '?'}, P&L ${d.pnl_pct != null ? (d.pnl_pct > 0 ? '+' : '') + d.pnl_pct + '%' : 'N/A'}): ${d.reason_e}`);
+    });
+    if (watch.length > 0) {
+      lines.push('');
+      lines.push('BUY WATCH signals (quant + fundamental aligned):');
+      watch.forEach(d => lines.push(`  🎯 ${d.ticker}: ${d.reason_e}`));
+    }
+    if (risks.length > 0) {
+      lines.push('');
+      lines.push('Portfolio risk flags:');
+      risks.forEach(r => lines.push(`  ${r}`));
+    }
+    decisionSection = lines.join('\n');
+  }
+
   // Open predictions only (most relevant for morning check)
   const openPreds = predictions.filter(p => p.status === 'OPEN' || p.status === 'PENDING');
   const predSection = openPreds.length > 0
@@ -102,11 +127,15 @@ ${macroSection}
 ═══ PORTFOLIO-SPECIFIC NEWS (last 24h) ═══
 ${portfolioSection2}
 
+═══ SIGNAL CONFLUENCE & DAILY DECISIONS (Layer 2 quantitative output) ═══
+${decisionSection || 'Signal data unavailable — rely on portfolio flags only.'}
+
 ═══ OPEN PREDICTIONS ═══
 ${predSection}
 
 ═══ INSTRUCTIONS ═══
 Write a morning brief that answers: What happened overnight? What do I need to act on today?
+Use the SIGNAL CONFLUENCE section to anchor trade_ideas and portfolio_flags — the quant signal layer has already processed all technical indicators; your role is to synthesise with macro news and fundamental context.
 
 RULES:
 - Cite specific news items by their reference [M1], [P1] etc. where relevant

@@ -60,6 +60,16 @@ jobs:
         continue-on-error: true          # non-critical; pure Python, no network
         run: python scripts/swing_signals.py
 
+      # ── Step 2d: Signal confluence scoring (Layer 2) ──────────────────────
+      - name: Compute signal confluence scores
+        continue-on-error: true          # non-critical; reads signals_*.json
+        run: python scripts/signal_confluence.py
+
+      # ── Step 2e: Daily trading decisions (Layer 2 → Layer 1) ──────────────
+      - name: Generate daily trading decisions
+        continue-on-error: true          # non-critical; reads confluence.json
+        run: python scripts/daily_decision.py
+
       # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
       - name: Sync to Supabase
         if: env.SUPABASE_URL != ''
@@ -89,7 +99,9 @@ jobs:
             public/data/analytics.json \
             public/data/snapshots.json \
             public/data/backtest_results.json \
-            public/data/stress_test.json; do
+            public/data/stress_test.json \
+            public/data/confluence.json \
+            public/data/daily_decision.json; do
             [ -f "$f" ] && git add "$f"
           done
 

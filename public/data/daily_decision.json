@@ -1,0 +1,155 @@
+{
+  "generated_at": "2026-04-21T12:22:29.141572+00:00",
+  "date": "2026-04-21",
+  "brief_e": "1 HOLD",
+  "brief_z": "HOLD1",
+  "decisions": {
+    "held": [
+      {
+        "ticker": "300308.SZ",
+        "name": "中际旭创",
+        "status": "HELD",
+        "action": "HOLD",
+        "priority": "LOW",
+        "confidence": 5,
+        "pnl_pct": 15.47,
+        "holding_days": 7,
+        "weight_pct": 100.0,
+        "vp_score": 79,
+        "confluence": 5,
+        "reason_e": "Signal neutral (score 5). P&L +15.5% after 7d. Hold — no new entry/exit trigger. Bullish: Bullish Alignment | Bearish: Rsi Overbought | RSI 81 | Price vs MA20 +25.6% | Regime: PERMISSIVE | VP 79.",
+        "reason_z": "信号中性（评分5），浮盈+15.5%，持有7天，无新触发条件。多头：均线多头排列 | 空头：RSI超买 | RSI 81 | 距MA20 +25.6% | 政策顺风 | VP 79。",
+        "entry_target": null,
+        "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
+      }
+    ],
+    "watchlist": [
+      {
+        "ticker": "9999.HK",
+        "name": "9999.HK",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 10,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 58,
+        "confluence": 10,
+        "reason_e": "No entry trigger. Score 10, VP 58. Bullish: Ma20 Bounce | RSI 54 | Price vs MA20 +3.6% | VP 58.",
+        "reason_z": "无进场信号。评分10，VP58。多头：MA20支撑反弹 | RSI 54 | 距MA20 +3.6% | VP 58。",
+        "entry_target": null,
+        "exit_trigger": null
+      },
+      {
+        "ticker": "700.HK",
+        "name": "700.HK",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 3,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 64,
+        "confluence": 3,
+        "reason_e": "VP 64 is strong but no technical entry yet (score 3). Wait for signal confirmation: MA bounce, oversold, or volume breakout.",
+        "reason_z": "VP64较强但技术面未就位（3分），等待均线支撑/超卖/放量突破等技术确认。",
+        "entry_target": null,
+        "exit_trigger": null
+      },
+      {
+        "ticker": "002594.SZ",
+        "name": "002594.SZ",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 0,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 52,
+        "confluence": 0,
+        "reason_e": "No entry trigger. Score 0, VP 52. RSI 53 | Price vs MA20 -0.4% | Regime: PERMISSIVE | VP 52.",
+        "reason_z": "无进场信号。评分0，VP52。RSI 53 | 距MA20 -0.4% | 政策顺风 | VP 52。",
+        "entry_target": null,
+        "exit_trigger": null
+      },
+      {
+        "ticker": "6160.HK",
+        "name": "6160.HK",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 6,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 65,
+        "confluence": -6,
+        "reason_e": "VP 65 is strong but no technical entry yet (score -6). Wait for signal confirmation: MA bounce, oversold, or volume breakout.",
+        "reason_z": "VP65较强但技术面未就位（-6分），等待均线支撑/超卖/放量突破等技术确认。",
+        "entry_target": null,
+        "exit_trigger": null
+      }
+    ]
+  },
+  "buy_watches": [],
+  "portfolio_risk": [
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 100% of portfolio — above 40.0% limit",
+    "⚠️ SECTOR RISK: 电子 = 100% of portfolio — above 60.0% limit",
+    "⚠️ SINGLE STOCK: Portfolio has only 1 position — extreme concentration risk"
+  ],
+  "regime_summary": [
+    {
+      "sector": "AI Infrastructure",
+      "sector_zh": "AI基础设施",
+      "regime": "PERMISSIVE",
+      "tickers": [
+        "300308.SZ"
+      ]
+    },
+    {
+      "sector": "Internet / Platform",
+      "sector_zh": "互联网平台",
+      "regime": "NEUTRAL",
+      "tickers": [
+        "700.HK",
+        "9999.HK"
+      ]
+    },
+    {
+      "sector": "Biotech / Pharma",
+      "sector_zh": "创新药",
+      "regime": "NEUTRAL",
+      "tickers": [
+        "6160.HK"
+      ]
+    },
+    {
+      "sector": "EV / Auto",
+      "sector_zh": "新能源汽车",
+      "regime": "PERMISSIVE",
+      "tickers": [
+        "002594.SZ"
+      ]
+    },
+    {
+      "sector": "Consumer",
+      "sector_zh": "消费",
+      "regime": "NEUTRAL",
+      "tickers": []
+    },
+    {
+      "sector": "Financials",
+      "sector_zh": "大金融",
+      "regime": "NEUTRAL",
+      "tickers": []
+    }
+  ],
+  "stats": {
+    "positions_held": 1,
+    "watchlist_count": 4,
+    "buy_watch_count": 0
+  }
+}
