@@ -44,6 +44,30 @@ RISK_FREE_ANNUAL = 0.020
 CSI300_TICKER  = "000300.SH"
 HSI_TICKER     = "HSI.HK"
 
+# Base currency: all NAV figures normalised to CNY
+BASE_CURRENCY  = "CNY"
+FX_FALLBACK    = {"HKDCNY": 0.9165}   # 1 HKD ≈ 0.9165 CNY (Apr 2026 fallback)
+
+
+def get_fx_rates(market_data: dict) -> dict:
+    """Return FX rates dict from market_data._meta, falling back to hardcoded."""
+    rates = market_data.get("_meta", {}).get("fx_rates", {})
+    out = dict(FX_FALLBACK)
+    out.update(rates)
+    return out
+
+
+def to_cny(value: float, currency: str, fx: dict) -> float:
+    """Convert value in given currency to CNY using fx rates."""
+    if currency in ("CNY", "RMB"):
+        return value
+    if currency == "HKD":
+        return value * fx.get("HKDCNY", FX_FALLBACK["HKDCNY"])
+    # USD fallback (not currently used)
+    if currency == "USD":
+        return value * fx.get("USDCNY", 7.25)
+    return value   # unknown — pass through
+
 
 def load_json(filename, default):
     f = DATA_DIR / filename
@@ -104,8 +128,13 @@ def build_positions(trades, market_data):
 
 
 def compute_positions_output(holdings, market_data):
-    """Enrich positions with current price + P&L."""
+    """Enrich positions with current price + P&L.
+    All CNY-normalised values use fx rates from market_data._meta.fx_rates.
+    P&L % is always in native currency (HKD for HK, CNY for A).
+    NAV / weights are in CNY.
+    """
     today = datetime.now().strftime("%Y-%m-%d")
+    fx    = get_fx_rates(market_data)
     positions = []
     total_value_cny = 0.0
     total_cost_cny  = 0.0
@@ -117,10 +146,16 @@ def compute_positions_output(holdings, market_data):
 
         qty       = h["qty"]
         avg_cost  = h["cost_basis"]
-        mkt_value = current_price * qty
-        cost_value= avg_cost * qty
-        pnl_abs   = mkt_value - cost_value
+        currency  = h["currency"]
+        mkt_value = current_price * qty          # native currency
+        cost_value= avg_cost * qty               # native currency
+        pnl_abs   = mkt_value - cost_value       # native currency
         pnl_pct   = (current_price / avg_cost - 1) * 100 if avg_cost > 0 else 0
+
+        # CNY-normalised versions for portfolio-level NAV
+        mkt_value_cny  = to_cny(mkt_value,  currency, fx)
+        cost_value_cny = to_cny(cost_value, currency, fx)
+        pnl_abs_cny    = mkt_value_cny - cost_value_cny
 
         # Holding period
         buy_dates = [t["date"] for t in h["trades"] if t["side"].upper() == "BUY"]
@@ -150,14 +185,20 @@ def compute_positions_output(holdings, market_data):
             "name":               h["name"],
             "market":             h["market"],
             "sector_sw":          h["sector_sw"],
-            "currency":           h["currency"],
+            "currency":           currency,
             "quantity":           qty,
             "avg_cost":           round(avg_cost, 4),
             "current_price":      round(current_price, 4),
+            # Native-currency values (for display in position currency)
             "market_value":       round(mkt_value, 2),
             "cost_value":         round(cost_value, 2),
             "pnl_abs":            round(pnl_abs, 2),
             "pnl_pct":            round(pnl_pct, 2),
+            # CNY-normalised values (for portfolio aggregation)
+            "market_value_cny":   round(mkt_value_cny, 2),
+            "cost_value_cny":     round(cost_value_cny, 2),
+            "pnl_abs_cny":        round(pnl_abs_cny, 2),
+            "fx_rate_used":       fx.get("HKDCNY") if currency == "HKD" else 1.0,
             "holding_days":       holding_days,
             "as_of":              today,
             # Signal attribution — enables signal quality feedback loop
@@ -165,12 +206,12 @@ def compute_positions_output(holdings, market_data):
             "vp_at_entry":        vp_at_entry,
             "wrongIf_at_entry":   wrongif_at_entry,
         })
-        total_value_cny += mkt_value
-        total_cost_cny  += cost_value
+        total_value_cny += mkt_value_cny
+        total_cost_cny  += cost_value_cny
 
-    # Compute weights
+    # Compute weights based on CNY-normalised values
     for p in positions:
-        p["weight_pct"] = round(p["market_value"] / total_value_cny * 100, 2) if total_value_cny > 0 else 0
+        p["weight_pct"] = round(p["market_value_cny"] / total_value_cny * 100, 2) if total_value_cny > 0 else 0
 
     return positions, total_value_cny, total_cost_cny
 
@@ -188,22 +229,23 @@ def compute_analytics(positions, snapshots_history):
     if not positions:
         return {}
 
-    total_value = sum(p["market_value"] for p in positions)
-    total_cost  = sum(p["cost_value"]   for p in positions)
+    # Use CNY-normalised values for all portfolio-level aggregates
+    total_value = sum(p.get("market_value_cny", p["market_value"]) for p in positions)
+    total_cost  = sum(p.get("cost_value_cny",   p["cost_value"])   for p in positions)
     total_pnl   = total_value - total_cost
     total_pnl_pct = (total_value / total_cost - 1) * 100 if total_cost > 0 else 0
 
-    # Hit rate
+    # Hit rate (native pnl_pct is fine — gain/loss sign is currency-invariant)
     winners = sum(1 for p in positions if p["pnl_pct"] > 0)
     hit_rate = winners / len(positions) * 100
 
-    # Sector weights
+    # Sector weights (already CNY-normalised via weight_pct)
     sector_weights = {}
     for p in positions:
         s = p.get("sector_sw", "Unknown")
         sector_weights[s] = sector_weights.get(s, 0) + p.get("weight_pct", 0)
 
-    # Daily return (from snapshots history)
+    # Daily return (from snapshots history — all snapshots store CNY NAV)
     daily_return = None
     if len(snapshots_history) >= 2:
         prev_nav = snapshots_history[-2].get("nav")
@@ -288,15 +330,22 @@ def main():
     # Analytics
     analytics = compute_analytics(positions, snap_history)
 
+    fx = get_fx_rates(market_data)
     # Save outputs
     save_json("positions.json", {
-        "as_of":     datetime.now().isoformat(),
-        "positions": positions,
+        "as_of":          datetime.now().isoformat(),
+        "base_currency":  BASE_CURRENCY,
+        "fx_rates":       fx,
+        "positions":      positions,
         "summary": {
-            "total_value": round(total_value, 2),
-            "total_cost":  round(total_cost, 2),
-            "total_pnl":   round(total_value - total_cost, 2),
-            "total_pnl_pct": round((total_value / total_cost - 1) * 100, 2) if total_cost > 0 else 0,
+            "total_value_cny": round(total_value, 2),
+            "total_cost_cny":  round(total_cost, 2),
+            "total_pnl_cny":   round(total_value - total_cost, 2),
+            "total_pnl_pct":   round((total_value / total_cost - 1) * 100, 2) if total_cost > 0 else 0,
+            # legacy aliases for backwards-compat with older dashboard reads
+            "total_value":     round(total_value, 2),
+            "total_cost":      round(total_cost, 2),
+            "total_pnl":       round(total_value - total_cost, 2),
         },
     })
     save_json("analytics.json", analytics)

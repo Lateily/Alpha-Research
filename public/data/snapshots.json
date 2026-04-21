@@ -1,24 +1,10 @@
 {
   "snapshots": [
     {
-      "date": "2026-04-13",
-      "nav": 73800.0,
-      "positions": 1
-    },
-    {
-      "date": "2026-04-19",
-      "nav": 85100.0,
-      "positions": 1
-    },
-    {
-      "date": "2026-04-20",
-      "nav": 85000.0,
-      "positions": 1
-    },
-    {
       "date": "2026-04-21",
-      "nav": 86486.0,
-      "positions": 1
+      "nav": 301228.0,
+      "positions": 5,
+      "note": "CNY-normalised (HKD@0.9165)"
     }
   ]
 }

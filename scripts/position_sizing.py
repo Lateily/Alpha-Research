@@ -10,7 +10,7 @@ Sizing methodology (Fixed-Fraction + ATR Stop):
   2. Base risk per trade = RISK_PCT_PER_TRADE × portfolio_value
   3. Raw size in value   = base_risk / stop_distance_pct
   4. VP multiplier       = vp_score / VP_BASE   (VP=70 → 1.0×; VP=85 → 1.21×)
-  5. Confluence mult.    = confluence_score / CONF_BASE  (capped 0.5×–1.3×)
+  5. Confluence mult.    = 1.0 + score/CONF_SCALE  (score=0→1.0, ±30→±1× adj, capped 0.5×–1.3×)
   6. Final size % = raw_size_pct × vp_mult × conf_mult, clamped [MIN_PCT, MAX_PCT]
 
 Reads:
@@ -35,7 +35,9 @@ DEFAULT_PORTFOLIO_CNY = 1_000_000   # fallback if no positions.json
 RISK_PCT_PER_TRADE    = 0.020       # risk 2% of portfolio per trade
 ATR_STOP_MULT         = 2.0         # stop placed at 2× ATR
 VP_BASE               = 70          # VP=70 → 1.0× multiplier
-CONF_BASE             = 70          # confluence 70 → 1.0×
+CONF_SCALE            = 30          # score ±30 spans full mult range
+# confluence score is a delta (typical range −50 … +50):
+#   score= 0 → 1.0×  score=+30 → 1.3× (cap)  score=−30 → 0.7× → floored 0.5×
 MIN_POSITION_PCT      = 2.0         # never go below 2%
 MAX_POSITION_PCT      = 25.0        # never exceed 25%
 VP_MULT_FLOOR         = 0.50
@@ -100,7 +102,9 @@ def compute_size(ticker, vp_score, conf_score, atr_pct, portfolio_value):
     vp_mult = max(VP_MULT_FLOOR, min(VP_MULT_CAP, vp_mult))
 
     # Confluence multiplier
-    conf_mult = (conf_score / CONF_BASE) if conf_score else 0.70
+    # Map delta score (−50…+50) to multiplier centred on 1.0
+    # score=0 → 1.0, score=+CONF_SCALE → 1.0+1 = 2.0 (capped at CAP)
+    conf_mult = 1.0 + (conf_score / CONF_SCALE) if conf_score is not None else 1.0
     conf_mult = max(CONF_MULT_FLOOR, min(CONF_MULT_CAP, conf_mult))
 
     # Final sizing
@@ -150,7 +154,8 @@ def main():
 
     # Derive portfolio value
     portfolio_value = (
-        positions_data.get("summary", {}).get("total_value")
+        positions_data.get("summary", {}).get("total_value_cny")
+        or positions_data.get("summary", {}).get("total_value")
         or DEFAULT_PORTFOLIO_CNY
     )
     print(f"  Portfolio value: ¥{portfolio_value:,.0f}")

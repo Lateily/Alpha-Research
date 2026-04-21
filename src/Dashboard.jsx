@@ -2907,10 +2907,11 @@ function PredictionLog({ predictions, L, C }) {
 
 /* ── TRADING DESK TAB ────────────────────────────────────────────────────── */
 function TradingDesk({ L, lk, C }) {
-  const [decision, setDecision] = useState(null);
-  const [sizing,   setSizing]   = useState(null);
-  const [quality,  setQuality]  = useState(null);
-  const [loading,  setLoading]  = useState(true);
+  const [decision,  setDecision]  = useState(null);
+  const [sizing,    setSizing]    = useState(null);
+  const [quality,   setQuality]   = useState(null);
+  const [snapshots, setSnapshots] = useState([]);
+  const [loading,   setLoading]   = useState(true);
   const MONO = "'JetBrains Mono','Fira Code',monospace";
 
   useEffect(() => {
@@ -2919,10 +2920,12 @@ function TradingDesk({ L, lk, C }) {
       fetch(base + 'data/daily_decision.json').then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(base + 'data/position_sizing.json').then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(base + 'data/signal_quality.json').then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([dd, sz, sq]) => {
+      fetch(base + 'data/snapshots.json').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([dd, sz, sq, sn]) => {
       setDecision(dd);
       setSizing(sz);
       setQuality(sq);
+      setSnapshots(sn?.snapshots || []);
       setLoading(false);
     });
   }, []);
@@ -3022,6 +3025,74 @@ function TradingDesk({ L, lk, C }) {
           })}
         </div>
       </div>
+
+      {/* ── NAV equity curve ─────────────────────────────────────────────── */}
+      {snapshots.length >= 2 && (() => {
+        const navs    = snapshots.map(s => s.nav);
+        const dates   = snapshots.map(s => s.date?.slice(5));   // MM-DD
+        const first   = navs[0];
+        const last    = navs[navs.length - 1];
+        const pct     = ((last / first) - 1) * 100;
+        const minNav  = Math.min(...navs) * 0.995;
+        const maxNav  = Math.max(...navs) * 1.005;
+        const w = 680, h = 54;
+        const pts = navs.map((v, i) => {
+          const x = (i / (navs.length - 1)) * w;
+          const y = h - ((v - minNav) / (maxNav - minNav)) * h;
+          return `${x},${y}`;
+        }).join(' ');
+        const col = pct >= 0 ? '#10b981' : '#ef4444';
+        return (
+          <div style={{
+            background:C.card, border:`1px solid ${C.border}`, borderRadius:10,
+            padding:'12px 16px', marginBottom:14,
+          }}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+              <div style={{fontSize:10, fontWeight:600, color:C.mid, textTransform:'uppercase', letterSpacing:0.5}}>
+                {lk==='z' ? '净值曲线 (CNY)' : 'NAV Equity Curve (CNY)'}
+              </div>
+              <div style={{display:'flex', gap:16, alignItems:'center'}}>
+                <span style={{fontFamily:MONO, fontSize:13, fontWeight:800, color:C.dark}}>
+                  ¥{last.toLocaleString(undefined, {maximumFractionDigits:0})}
+                </span>
+                <span style={{
+                  fontFamily:MONO, fontSize:11, fontWeight:700, color:col,
+                  background:`${col}12`, padding:'2px 8px', borderRadius:4,
+                }}>
+                  {pct >= 0 ? '+' : ''}{pct.toFixed(1)}%
+                </span>
+                <span style={{fontSize:9, color:C.mid}}>
+                  {lk==='z' ? '自' : 'since'} {snapshots[0].date}
+                </span>
+              </div>
+            </div>
+            <svg width="100%" viewBox={`0 0 ${w} ${h}`} style={{display:'block', overflow:'visible'}}>
+              <defs>
+                <linearGradient id="navGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={col} stopOpacity="0.25"/>
+                  <stop offset="100%" stopColor={col} stopOpacity="0.02"/>
+                </linearGradient>
+              </defs>
+              <polygon
+                points={`0,${h} ${pts} ${w},${h}`}
+                fill="url(#navGrad)"
+              />
+              <polyline points={pts} fill="none" stroke={col} strokeWidth="2" strokeLinejoin="round"/>
+              {navs.map((v, i) => {
+                const x = (i / (navs.length - 1)) * w;
+                const y = h - ((v - minNav) / (maxNav - minNav)) * h;
+                return <circle key={i} cx={x} cy={y} r="3" fill={col}/>;
+              })}
+            </svg>
+            {/* Date labels */}
+            <div style={{display:'flex', justifyContent:'space-between', marginTop:4}}>
+              {dates.map((d, i) => (
+                <span key={i} style={{fontSize:8, color:C.mid}}>{d}</span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Portfolio risk flags ─────────────────────────────────────────── */}
       {risks.some(f => f.includes('⚠️') || f.includes('🔴') || f.includes('💰')) && (

@@ -2257,12 +2257,23 @@ def main():
         print(f"  STRESS ERROR: {e}")
     print()
 
+    # ── Fetch FX rates (HKD/CNY for portfolio NAV normalisation) ──────────────
+    fx_rates = {"HKDCNY": 0.9165}   # fallback — 1 HKD ≈ 0.9165 CNY (Apr 2026)
+    try:
+        hkd_cny = yf.Ticker("HKDCNY=X").history(period="2d")
+        if not hkd_cny.empty:
+            fx_rates["HKDCNY"] = round(float(hkd_cny["Close"].iloc[-1]), 4)
+            print(f"  FX HKDCNY={fx_rates['HKDCNY']:.4f}")
+    except Exception as e:
+        print(f"  FX fetch failed ({e}), using fallback 0.9165")
+
     # ── Write market_data.json (master for focus stocks) ──
     market_data = {
         "_meta": {
             "fetched_at": datetime.now().isoformat(),
-            "version": "4.0",
+            "version": "4.1",
             "tickers": list(FOCUS_TICKERS.keys()),
+            "fx_rates": fx_rates,
         },
         "yahoo":     focus,
         "consensus": consensus,

@@ -1,5 +1,9 @@
 {
-  "as_of": "2026-04-21T15:38:37.413782",
+  "as_of": "2026-04-21T20:18:34.604138",
+  "base_currency": "CNY",
+  "fx_rates": {
+    "HKDCNY": 0.9165
+  },
   "positions": [
     {
       "ticker": "300308.SZ",
@@ -14,6 +18,10 @@
       "cost_value": 102204.0,
       "pnl_abs": 27525.0,
       "pnl_pct": 26.93,
+      "market_value_cny": 129729.0,
+      "cost_value_cny": 102204.0,
+      "pnl_abs_cny": 27525.0,
+      "fx_rate_used": 1.0,
       "holding_days": 42,
       "as_of": "2026-04-21",
       "signal_attribution": {
@@ -50,7 +58,7 @@
       },
       "vp_at_entry": 79,
       "wrongIf_at_entry": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
-      "weight_pct": 41.09
+      "weight_pct": 43.07
     },
     {
       "ticker": "6160.HK",
@@ -65,6 +73,10 @@
       "cost_value": 12690.56,
       "pnl_abs": 2469.44,
       "pnl_pct": 19.46,
+      "market_value_cny": 13894.14,
+      "cost_value_cny": 11630.9,
+      "pnl_abs_cny": 2263.24,
+      "fx_rate_used": 0.9165,
       "holding_days": 42,
       "as_of": "2026-04-21",
       "signal_attribution": {
@@ -96,7 +108,7 @@
       },
       "vp_at_entry": 65,
       "wrongIf_at_entry": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
-      "weight_pct": 4.8
+      "weight_pct": 4.61
     },
     {
       "ticker": "700.HK",
@@ -111,6 +123,10 @@
       "cost_value": 75902.4,
       "pnl_abs": 27897.6,
       "pnl_pct": 36.75,
+      "market_value_cny": 95132.7,
+      "cost_value_cny": 69564.55,
+      "pnl_abs_cny": 25568.15,
+      "fx_rate_used": 0.9165,
       "holding_days": 35,
       "as_of": "2026-04-21",
       "signal_attribution": {
@@ -147,7 +163,7 @@
       },
       "vp_at_entry": 64,
       "wrongIf_at_entry": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
-      "weight_pct": 32.87
+      "weight_pct": 31.58
     },
     {
       "ticker": "9999.HK",
@@ -162,6 +178,10 @@
       "cost_value": 43674.0,
       "pnl_abs": 11196.0,
       "pnl_pct": 25.64,
+      "market_value_cny": 50288.35,
+      "cost_value_cny": 40027.22,
+      "pnl_abs_cny": 10261.13,
+      "fx_rate_used": 0.9165,
       "holding_days": 28,
       "as_of": "2026-04-21",
       "signal_attribution": {
@@ -193,7 +213,7 @@
       },
       "vp_at_entry": 58,
       "wrongIf_at_entry": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
-      "weight_pct": 17.38
+      "weight_pct": 16.69
     },
     {
       "ticker": "002594.SZ",
@@ -208,6 +228,10 @@
       "cost_value": 11543.04,
       "pnl_abs": 640.56,
       "pnl_pct": 5.55,
+      "market_value_cny": 12183.6,
+      "cost_value_cny": 11543.04,
+      "pnl_abs_cny": 640.56,
+      "fx_rate_used": 1.0,
       "holding_days": 20,
       "as_of": "2026-04-21",
       "signal_attribution": {
@@ -234,13 +258,16 @@
       },
       "vp_at_entry": 52,
       "wrongIf_at_entry": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
-      "weight_pct": 3.86
+      "weight_pct": 4.04
     }
   ],
   "summary": {
-    "total_value": 315742.6,
-    "total_cost": 246014.0,
-    "total_pnl": 69728.6,
-    "total_pnl_pct": 28.34
+    "total_value_cny": 301227.79,
+    "total_cost_cny": 234969.71,
+    "total_pnl_cny": 66258.09,
+    "total_pnl_pct": 28.2,
+    "total_value": 301227.79,
+    "total_cost": 234969.71,
+    "total_pnl": 66258.09
   }
 }
