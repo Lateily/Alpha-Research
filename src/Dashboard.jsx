@@ -2909,6 +2909,7 @@ function PredictionLog({ predictions, L, C }) {
 function TradingDesk({ L, lk, C }) {
   const [decision, setDecision] = useState(null);
   const [sizing,   setSizing]   = useState(null);
+  const [quality,  setQuality]  = useState(null);
   const [loading,  setLoading]  = useState(true);
   const MONO = "'JetBrains Mono','Fira Code',monospace";
 
@@ -2917,9 +2918,11 @@ function TradingDesk({ L, lk, C }) {
     Promise.all([
       fetch(base + 'data/daily_decision.json').then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(base + 'data/position_sizing.json').then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([dd, sz]) => {
+      fetch(base + 'data/signal_quality.json').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([dd, sz, sq]) => {
       setDecision(dd);
       setSizing(sz);
+      setQuality(sq);
       setLoading(false);
     });
   }, []);
@@ -3210,11 +3213,125 @@ function TradingDesk({ L, lk, C }) {
         </div>
       )}
 
+      {/* ── Signal Quality (feedback loop) ──────────────────────────────── */}
+      {quality && quality.by_signal && quality.by_signal.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11, fontWeight:600, color:C.mid, marginBottom:8,
+                       textTransform:'uppercase', letterSpacing:0.5}}>
+            {lk==='z' ? '📈 信号质量反馈' : '📈 Signal Quality Feedback'}
+            <span style={{fontSize:9, fontWeight:400, marginLeft:8, opacity:0.7}}>
+              {quality.portfolio_summary?.open_positions} {lk==='z' ? '个持仓' : 'positions'} ·{' '}
+              {quality.portfolio_summary?.overall_win_rate}% {lk==='z' ? '胜率' : 'win rate'}
+            </span>
+          </div>
+
+          {/* Insights row */}
+          {quality.insights?.length > 0 && (
+            <div style={{
+              padding:'10px 14px', background:`${C.blue}06`,
+              border:`1px solid ${C.blue}20`, borderRadius:8, marginBottom:10,
+            }}>
+              {quality.insights.map((ins, i) => (
+                <div key={i} style={{fontSize:11, color:C.dark, lineHeight:1.7}}>
+                  💡 {ins}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Signal performance table */}
+          <div style={{overflowX:'auto', borderRadius:8, border:`1px solid ${C.border}`}}>
+            <table style={{width:'100%', fontSize:10, borderCollapse:'collapse'}}>
+              <thead>
+                <tr style={{background:C.soft}}>
+                  {[
+                    lk==='z' ? '信号类型' : 'Signal',
+                    lk==='z' ? '出现' : 'Count',
+                    lk==='z' ? '胜率' : 'Win%',
+                    lk==='z' ? '均盈亏' : 'Avg P&L',
+                    lk==='z' ? '最优' : 'Best',
+                    lk==='z' ? '最差' : 'Worst',
+                    lk==='z' ? '涉及标的' : 'Tickers',
+                  ].map((h, i) => (
+                    <th key={i} style={{
+                      padding:'7px 10px', textAlign: i < 2 ? 'left' : 'right',
+                      color:C.mid, fontWeight:600, borderBottom:`1px solid ${C.border}`,
+                      fontSize:9, letterSpacing:'0.04em',
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {quality.by_signal.map((s, i) => {
+                  const wr   = s.win_rate;
+                  const wrCol= wr >= 60 ? C.green : wr >= 40 ? C.gold : C.red;
+                  const pnlCol = s.avg_pnl >= 0 ? C.green : C.red;
+                  return (
+                    <tr key={i} style={{borderBottom:`1px solid ${C.border}`,
+                                        background: i%2===0 ? 'transparent' : C.soft+'80'}}>
+                      <td style={{padding:'7px 10px', fontFamily:MONO, fontWeight:700,
+                                  color:C.dark, fontSize:10}}>{s.signal}</td>
+                      <td style={{padding:'7px 10px', textAlign:'right', color:C.mid}}>{s.count}</td>
+                      <td style={{padding:'7px 10px', textAlign:'right'}}>
+                        <span style={{
+                          fontWeight:700, fontFamily:MONO, color:wrCol,
+                          background:`${wrCol}12`, padding:'2px 6px', borderRadius:3,
+                        }}>{wr}%</span>
+                      </td>
+                      <td style={{padding:'7px 10px', textAlign:'right', fontFamily:MONO,
+                                  fontWeight:700, color:pnlCol}}>
+                        {s.avg_pnl > 0 ? '+' : ''}{s.avg_pnl}%
+                      </td>
+                      <td style={{padding:'7px 10px', textAlign:'right', fontFamily:MONO,
+                                  color:C.green, fontSize:9}}>
+                        {s.best_pnl != null ? `+${s.best_pnl}%` : '—'}
+                      </td>
+                      <td style={{padding:'7px 10px', textAlign:'right', fontFamily:MONO,
+                                  color:C.red, fontSize:9}}>
+                        {s.worst_pnl != null ? `${s.worst_pnl}%` : '—'}
+                      </td>
+                      <td style={{padding:'7px 10px', textAlign:'right', color:C.mid, fontSize:9}}>
+                        {(s.tickers||[]).join(', ')}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* VP bucket summary */}
+          {quality.vp_buckets?.length > 0 && (
+            <div style={{display:'flex', gap:8, marginTop:10, flexWrap:'wrap'}}>
+              {quality.vp_buckets.map((b, i) => {
+                const col = b.win_rate >= 60 ? C.green : b.win_rate >= 40 ? C.gold : C.red;
+                return (
+                  <div key={i} style={{
+                    flex:1, minWidth:100, padding:'10px 12px',
+                    background:C.card, border:`1px solid ${C.border}`, borderRadius:8,
+                  }}>
+                    <div style={{fontSize:9, color:C.mid, fontWeight:600, marginBottom:4}}>
+                      {b.bucket}
+                    </div>
+                    <div style={{fontSize:16, fontWeight:800, color:col, fontFamily:MONO}}>
+                      {b.win_rate}%
+                    </div>
+                    <div style={{fontSize:9, color:C.mid}}>
+                      {b.count} {lk==='z' ? '笔' : 'trades'} · avg {b.avg_pnl > 0 ? '+' : ''}{b.avg_pnl}%
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <div style={{fontSize:10, color:C.mid, textAlign:'center', marginTop:8}}>
         {lk==='z'
-          ? '数据由 signal_confluence.py + daily_decision.py 生成 · 仅证据，不构成投资建议'
-          : 'Generated by signal_confluence.py + daily_decision.py · Evidence only, no investment conclusions'}
+          ? '数据由 signal_confluence.py + daily_decision.py + signal_quality.py 生成 · 仅证据，不构成投资建议'
+          : 'Generated by signal_confluence.py + daily_decision.py + signal_quality.py · Evidence only, no investment conclusions'}
       </div>
     </div>
   );

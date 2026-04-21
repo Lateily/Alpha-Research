@@ -75,6 +75,11 @@ jobs:
         continue-on-error: true          # non-critical; reads confluence.json
         run: python scripts/daily_decision.py
 
+      # ── Step 2g: Signal quality analytics (feedback loop) ────────────────
+      - name: Compute signal quality analytics
+        continue-on-error: true          # non-critical; reads trades + positions
+        run: python scripts/signal_quality.py
+
       # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
       - name: Sync to Supabase
         if: env.SUPABASE_URL != ''
@@ -107,7 +112,9 @@ jobs:
             public/data/stress_test.json \
             public/data/confluence.json \
             public/data/daily_decision.json \
-            public/data/position_sizing.json; do
+            public/data/position_sizing.json \
+            public/data/signal_quality.json \
+            public/data/trades.json; do
             [ -f "$f" ] && git add "$f"
           done
 

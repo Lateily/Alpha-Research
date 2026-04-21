@@ -1,15 +1,133 @@
 [
   {
-    "id": "example-001",
-    "date": "2026-04-13",
+    "id": "t001",
+    "date": "2026-03-10",
     "ticker": "300308.SZ",
     "name": "中际旭创",
     "market": "SZ",
     "side": "BUY",
-    "quantity": 100,
-    "price": 734.65,
+    "quantity": 150,
+    "price": 680.00,
     "currency": "CNY",
     "sector_sw": "电子",
-    "notes": "VP 79. 1.6T SiPh qualification imminent. RSI 70.1 — trim risk, small starter."
+    "notes": "VP 79. 1.6T SiPh thesis. GOLDEN_CROSS + CVD_FLOOR_FORMED. Starter position.",
+    "signal_attribution": {
+      "confluence_score": 82,
+      "action": "BUY_WATCH",
+      "contributing_signals": [
+        { "name": "GOLDEN_CROSS",       "weight": 18, "direction": "bullish" },
+        { "name": "CVD_FLOOR_FORMED",   "weight": 20, "direction": "bullish" },
+        { "name": "BULLISH_ALIGNMENT",  "weight": 12, "direction": "bullish" },
+        { "name": "OVERSOLD_RSI",       "weight": 15, "direction": "bullish" },
+        { "name": "EARNINGS_BEAT",      "weight": 12, "direction": "bullish" }
+      ],
+      "captured_at": "2026-03-10T09:35:00Z"
+    },
+    "vp_at_entry": 79,
+    "wrongIf_at_entry": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%"
+  },
+  {
+    "id": "t002",
+    "date": "2026-03-10",
+    "ticker": "6160.HK",
+    "name": "百济神州",
+    "market": "HK",
+    "side": "BUY",
+    "quantity": 80,
+    "price": 1320.00,
+    "currency": "HKD",
+    "sector_sw": "医药生物",
+    "notes": "VP 65. ZS combo thesis. BULLISH_ALIGNMENT + VOLUME_BREAKOUT.",
+    "signal_attribution": {
+      "confluence_score": 68,
+      "action": "BUY_WATCH",
+      "contributing_signals": [
+        { "name": "BULLISH_ALIGNMENT",   "weight": 12, "direction": "bullish" },
+        { "name": "VOLUME_BREAKOUT",     "weight": 14, "direction": "bullish" },
+        { "name": "EARNINGS_BEAT",       "weight": 12, "direction": "bullish" },
+        { "name": "GOLDEN_CROSS",        "weight": 18, "direction": "bullish" }
+      ],
+      "captured_at": "2026-03-10T09:40:00Z"
+    },
+    "vp_at_entry": 65,
+    "wrongIf_at_entry": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS"
+  },
+  {
+    "id": "t003",
+    "date": "2026-03-17",
+    "ticker": "700.HK",
+    "name": "腾讯控股",
+    "market": "HK",
+    "side": "BUY",
+    "quantity": 200,
+    "price": 378.00,
+    "currency": "HKD",
+    "sector_sw": "传媒互联网",
+    "notes": "VP 64. WeChat AI monetisation + buyback. MA support bounce.",
+    "signal_attribution": {
+      "confluence_score": 71,
+      "action": "BUY_WATCH",
+      "contributing_signals": [
+        { "name": "MA_SUPPORT_BOUNCE",   "weight": 12, "direction": "bullish" },
+        { "name": "BULLISH_ALIGNMENT",   "weight": 12, "direction": "bullish" },
+        { "name": "NORTHBOUND_INFLOW",   "weight": 10, "direction": "bullish" },
+        { "name": "EARNINGS_BEAT",       "weight": 12, "direction": "bullish" },
+        { "name": "CVD_FLOOR_FORMED",    "weight": 20, "direction": "bullish" }
+      ],
+      "captured_at": "2026-03-17T09:30:00Z"
+    },
+    "vp_at_entry": 64,
+    "wrongIf_at_entry": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply"
+  },
+  {
+    "id": "t004",
+    "date": "2026-03-24",
+    "ticker": "9999.HK",
+    "name": "网易",
+    "market": "HK",
+    "side": "BUY",
+    "quantity": 300,
+    "price": 145.00,
+    "currency": "HKD",
+    "sector_sw": "传媒互联网",
+    "notes": "VP 58. Marvel Rivals S2 catalyst. RSI bounce from oversold.",
+    "signal_attribution": {
+      "confluence_score": 62,
+      "action": "BUY_WATCH",
+      "contributing_signals": [
+        { "name": "OVERSOLD_RSI",        "weight": 15, "direction": "bullish" },
+        { "name": "MA_SUPPORT_BOUNCE",   "weight": 12, "direction": "bullish" },
+        { "name": "VOLUME_BREAKOUT",     "weight": 14, "direction": "bullish" },
+        { "name": "NORTHBOUND_INFLOW",   "weight": 10, "direction": "bullish" }
+      ],
+      "captured_at": "2026-03-24T09:45:00Z"
+    },
+    "vp_at_entry": 58,
+    "wrongIf_at_entry": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025"
+  },
+  {
+    "id": "t005",
+    "date": "2026-04-01",
+    "ticker": "002594.SZ",
+    "name": "比亚迪",
+    "market": "SZ",
+    "side": "BUY",
+    "quantity": 120,
+    "price": 285.00,
+    "currency": "CNY",
+    "sector_sw": "汽车",
+    "notes": "VP 52. EM export thesis. Brazil factory opening. Starter sizing — VP below conviction threshold.",
+    "signal_attribution": {
+      "confluence_score": 55,
+      "action": "WATCH",
+      "contributing_signals": [
+        { "name": "MA_SUPPORT_BOUNCE",   "weight": 12, "direction": "bullish" },
+        { "name": "GOLDEN_CROSS",        "weight": 18, "direction": "bullish" },
+        { "name": "NORTHBOUND_INFLOW",   "weight": 10, "direction": "bullish" }
+      ],
+      "captured_at": "2026-04-01T09:30:00Z"
+    },
+    "vp_at_entry": 52,
+    "wrongIf_at_entry": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules"
   }
 ]
