@@ -2893,6 +2893,221 @@ function PredictionLog({ predictions, L, C }) {
   );
 }
 
+/* ── TRADING DESK TAB ────────────────────────────────────────────────────── */
+function TradingDesk({ L, lk, C }) {
+  const [decision, setDecision] = useState(null);
+  const [loading,  setLoading]  = useState(true);
+  const MONO = "'JetBrains Mono','Fira Code',monospace";
+
+  useEffect(() => {
+    const base = DATA_BASE;
+    Promise.all([
+      fetch(base + 'data/daily_decision.json').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([dd]) => {
+      setDecision(dd);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return (
+    <div style={{display:'flex', alignItems:'center', justifyContent:'center',
+                 height:300, color:C.mid, fontSize:13}}>
+      Loading decision engine…
+    </div>
+  );
+  if (!decision) return (
+    <div style={{display:'flex', alignItems:'center', justifyContent:'center',
+                 height:300, flexDirection:'column', gap:8}}>
+      <div style={{fontSize:13, color:C.mid}}>No decision data yet</div>
+      <div style={{fontSize:11, color:C.mid, opacity:0.7}}>
+        Run GitHub Actions to generate daily_decision.json
+      </div>
+    </div>
+  );
+
+  const ACTION_COLOR = {
+    EXIT: '#ef4444', TRIM: '#f97316', REVIEW_TRIM: '#f59e0b',
+    REVIEW_STOP: '#ef4444', ADD: '#10b981', HOLD: '#22c55e',
+    BUY_WATCH: '#3b82f6', WATCH: '#6b7280', NEUTRAL: '#6b7280',
+  };
+  const ACTION_LABEL_ZH = {
+    EXIT: '离场', TRIM: '减仓', REVIEW_TRIM: '考虑减仓',
+    REVIEW_STOP: '复核止损', ADD: '可加仓', HOLD: '持有',
+    BUY_WATCH: '关注建仓', WATCH: '观望', NEUTRAL: '中性',
+  };
+  const ACTION_ICON = {
+    EXIT: '🚨', TRIM: '⬇️', REVIEW_TRIM: '💰', REVIEW_STOP: '🔴',
+    ADD: '📈', HOLD: '✅', BUY_WATCH: '🎯', WATCH: '👁️',
+  };
+
+  const held  = decision.decisions?.held  || [];
+  const watch = decision.decisions?.watchlist || [];
+  const risks = decision.portfolio_risk || [];
+  const regimes = decision.regime_summary || [];
+  const brief = lk === 'z' ? decision.brief_z : decision.brief_e;
+
+  const ScoreBadge = ({ score }) => {
+    const col = score >= 20 ? '#10b981' : score <= -20 ? '#ef4444' : '#6b7280';
+    return (
+      <span style={{
+        fontFamily: MONO, fontSize:11, fontWeight:700,
+        padding:'2px 7px', borderRadius:4,
+        background: col + '18', color: col,
+      }}>
+        {score > 0 ? '+' : ''}{score}
+      </span>
+    );
+  };
+
+  const ActionBadge = ({ action }) => {
+    const col = ACTION_COLOR[action] || '#6b7280';
+    const label = lk === 'z' ? (ACTION_LABEL_ZH[action] || action) : action;
+    return (
+      <span style={{
+        fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:4,
+        background: col + '18', color: col, letterSpacing:0.3,
+      }}>
+        {ACTION_ICON[action] || ''} {label}
+      </span>
+    );
+  };
+
+  return (
+    <div style={{maxWidth:960, margin:'0 auto'}}>
+
+      {/* ── Header brief ─────────────────────────────────────────────────── */}
+      <div style={{
+        background: C.card, border:`1px solid ${C.border}`, borderRadius:10,
+        padding:'14px 18px', marginBottom:14,
+        display:'flex', justifyContent:'space-between', alignItems:'center',
+      }}>
+        <div>
+          <div style={{fontSize:11, color:C.mid, marginBottom:3}}>
+            {lk==='z' ? '今日交易台' : 'Trading Desk'} · {decision.date || '—'}
+          </div>
+          <div style={{fontSize:13, fontWeight:600, color:C.dark}}>{brief}</div>
+        </div>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+          {regimes.map(r => {
+            const col = r.regime === 'PERMISSIVE' ? '#10b981' : r.regime === 'RESTRICTIVE' ? '#ef4444' : '#6b7280';
+            return (
+              <span key={r.sector} style={{
+                fontSize:9, fontWeight:700, padding:'3px 7px', borderRadius:4,
+                background: col + '15', color: col,
+              }}>
+                {lk==='z' ? r.sector_zh : r.sector} {r.regime}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Portfolio risk flags ─────────────────────────────────────────── */}
+      {risks.some(f => f.includes('⚠️') || f.includes('🔴') || f.includes('💰')) && (
+        <div style={{
+          background:'#fef9c3', border:'1px solid #fde047', borderRadius:8,
+          padding:'10px 14px', marginBottom:14,
+        }}>
+          <div style={{fontSize:10, fontWeight:700, color:'#a16207', marginBottom:6}}>
+            {lk==='z' ? '⚠️ 风险提示' : '⚠️ Portfolio Risk Flags'}
+          </div>
+          {risks.filter(f => f.includes('⚠️') || f.includes('🔴') || f.includes('💰')).map((f,i) => (
+            <div key={i} style={{fontSize:11, color:'#92400e', lineHeight:1.6}}>{f}</div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Held positions ───────────────────────────────────────────────── */}
+      {held.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11, fontWeight:600, color:C.mid, marginBottom:8, textTransform:'uppercase', letterSpacing:0.5}}>
+            {lk==='z' ? '当前持仓' : 'Held Positions'} ({held.length})
+          </div>
+          {held.map(d => (
+            <div key={d.ticker} style={{
+              background: C.card, border:`1px solid ${C.border}`, borderRadius:10,
+              padding:'14px 16px', marginBottom:8,
+              borderLeft: `3px solid ${ACTION_COLOR[d.action] || C.border}`,
+            }}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8}}>
+                <div style={{display:'flex', alignItems:'center', gap:10}}>
+                  <span style={{fontFamily:MONO, fontSize:12, fontWeight:700, color:C.dark}}>{d.ticker}</span>
+                  <ActionBadge action={d.action} />
+                  <ScoreBadge score={d.confluence} />
+                </div>
+                <div style={{display:'flex', gap:12, fontSize:11}}>
+                  {d.pnl_pct != null && (
+                    <span style={{color: d.pnl_pct >= 0 ? '#10b981' : '#ef4444', fontWeight:700, fontFamily:MONO}}>
+                      {d.pnl_pct > 0 ? '+' : ''}{d.pnl_pct}%
+                    </span>
+                  )}
+                  {d.vp_score != null && (
+                    <span style={{color:C.mid, fontSize:10}}>VP {d.vp_score}</span>
+                  )}
+                  {d.holding_days != null && (
+                    <span style={{color:C.mid, fontSize:10}}>{d.holding_days}d</span>
+                  )}
+                </div>
+              </div>
+              <div style={{fontSize:11, color:C.mid, lineHeight:1.7}}>
+                {lk==='z' ? d.reason_z : d.reason_e}
+              </div>
+              {d.exit_trigger && (
+                <div style={{
+                  marginTop:8, fontSize:10, color:'#92400e',
+                  background:'#fef3c7', padding:'4px 8px', borderRadius:4,
+                  fontFamily:MONO,
+                }}>
+                  ⚡ {lk==='z' ? '离场条件：' : 'Exit trigger: '}{d.exit_trigger}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Watchlist / BUY_WATCH ────────────────────────────────────────── */}
+      {watch.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:11, fontWeight:600, color:C.mid, marginBottom:8, textTransform:'uppercase', letterSpacing:0.5}}>
+            {lk==='z' ? '候选宇宙' : 'Universe Watchlist'} ({watch.length})
+          </div>
+          {watch.map(d => {
+            const isBuyWatch = d.action === 'BUY_WATCH';
+            return (
+              <div key={d.ticker} style={{
+                background: isBuyWatch ? `${C.blue}06` : C.card,
+                border: `1px solid ${isBuyWatch ? C.blue + '40' : C.border}`,
+                borderRadius:10, padding:'12px 16px', marginBottom:6,
+                display:'flex', justifyContent:'space-between', alignItems:'center',
+              }}>
+                <div style={{display:'flex', alignItems:'center', gap:10}}>
+                  <span style={{fontFamily:MONO, fontSize:12, fontWeight:700, color:C.dark}}>{d.ticker}</span>
+                  <ActionBadge action={d.action} />
+                  <ScoreBadge score={d.confluence} />
+                  {d.vp_score != null && (
+                    <span style={{fontSize:10, color:C.mid}}>VP {d.vp_score}</span>
+                  )}
+                </div>
+                <div style={{fontSize:11, color:C.mid, maxWidth:380, textAlign:'right', lineHeight:1.5}}>
+                  {lk==='z' ? d.reason_z : d.reason_e}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Footer ───────────────────────────────────────────────────────── */}
+      <div style={{fontSize:10, color:C.mid, textAlign:'center', marginTop:8}}>
+        {lk==='z'
+          ? '数据由 signal_confluence.py + daily_decision.py 生成 · 仅证据，不构成投资建议'
+          : 'Generated by signal_confluence.py + daily_decision.py · Evidence only, no investment conclusions'}
+      </div>
+    </div>
+  );
+}
+
 /* ── WATCHLIST TAB ────────────────────────────────────────────────────────── */
 function Watchlist({ L, stocks: stocksMap, C }) {
   const stocks = Object.entries(stocksMap || STOCKS).map(([tk,s])=>({...s, ticker:tk}));
@@ -6265,9 +6480,10 @@ export default function Dashboard() {
   };
 
   const TABS = [
+    { id:'desk',     label:L('Desk','交易台'),     icon:<Crosshair size={14}/> },
     { id:'scanner',  label:L('Scanner','扫描'),   icon:<Radio size={14}/> },
     { id:'screener', label:L('Screener','筛选'),  icon:<Filter size={14}/> },
-    { id:'research', label:L('Research','研究'),  icon:<Crosshair size={14}/> },
+    { id:'research', label:L('Research','研究'),  icon:<BookOpen size={14}/> },
     { id:'flow',     label:L('Flows','资金流'),   icon:<Globe size={14}/> },
     { id:'earnings', label:L('Earnings','财报'),  icon:<Calendar size={14}/> },
     { id:'paper',    label:L('Portfolio','组合'),  icon:<BarChart3 size={14}/> },
@@ -6487,6 +6703,7 @@ export default function Dashboard() {
 
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
+          {tab==='desk'     && <TradingDesk L={L} lk={lk} C={C}/>}
           {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK} signalsData={signalsData}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
           {tab==='flow'     && (
