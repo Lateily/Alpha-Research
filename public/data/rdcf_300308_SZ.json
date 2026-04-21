@@ -1,19 +1,19 @@
 {
   "ticker": "300308.SZ",
-  "generated_at": "2026-04-20T12:22:02.568056+00:00",
+  "generated_at": "2026-04-21T07:19:59.531691+00:00",
   "model_type": "standard_fcf",
   "market": "A",
   "error": "bisection_no_root",
   "wacc_detail": {
     "rf": 0.023,
     "erp": 0.065,
-    "beta": 2.0919,
+    "beta": 2.0876,
     "beta_source": "yfinance_60d",
-    "wacc": 0.159,
+    "wacc": 0.1587,
     "market": "A"
   },
   "bisect_debug": {
-    "obj_lo": -918172284600.0,
-    "obj_hi": -376487323122.0
+    "obj_lo": -934655959873.0,
+    "obj_hi": -391460037151.0
   }
 }

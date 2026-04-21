@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-04-20T12:22:02.800068",
+  "as_of": "2026-04-21T07:19:59.723939",
   "positions": [
     {
       "ticker": "300308.SZ",
@@ -9,20 +9,20 @@
       "currency": "CNY",
       "quantity": 100,
       "avg_cost": 736.1193,
-      "current_price": 850,
-      "market_value": 85000,
+      "current_price": 864.86,
+      "market_value": 86486.0,
       "cost_value": 73611.93,
-      "pnl_abs": 11388.07,
-      "pnl_pct": 15.47,
-      "holding_days": 7,
-      "as_of": "2026-04-20",
+      "pnl_abs": 12874.07,
+      "pnl_pct": 17.49,
+      "holding_days": 8,
+      "as_of": "2026-04-21",
       "weight_pct": 100.0
     }
   ],
   "summary": {
-    "total_value": 85000.0,
+    "total_value": 86486.0,
     "total_cost": 73611.93,
-    "total_pnl": 11388.07,
-    "total_pnl_pct": 15.47
+    "total_pnl": 12874.07,
+    "total_pnl_pct": 17.49
   }
 }

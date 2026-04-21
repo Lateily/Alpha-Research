@@ -1,11 +1,11 @@
 {
-  "as_of": "2026-04-20",
-  "total_value": 85000,
+  "as_of": "2026-04-21",
+  "total_value": 86486.0,
   "total_cost": 73611.93,
-  "total_pnl": 11388.07,
-  "total_pnl_pct": 15.47,
-  "daily_return_pct": -0.12,
-  "inception_return_pct": 15.18,
+  "total_pnl": 12874.07,
+  "total_pnl_pct": 17.49,
+  "daily_return_pct": 1.75,
+  "inception_return_pct": 17.19,
   "hit_rate_pct": 100.0,
   "num_positions": 1,
   "sector_weights": {

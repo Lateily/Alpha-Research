@@ -1,38 +1,62 @@
 {
   "ticker": "300308.SZ",
-  "generated_at": "2026-04-20",
-  "price": 850.0,
+  "generated_at": "2026-04-21",
+  "price": 864.86,
   "zone": "OVERBOUGHT",
-  "entry_zone": false,
+  "entry_zone": true,
   "exit_zone": true,
   "signals": [
     {
       "type": "RSI_OVERBOUGHT",
       "strength": "strong",
-      "date": "2026-04-20",
+      "date": "2026-04-21",
       "bullish": false,
       "description": {
-        "e": "RSI(14) = 80.7 — overbought, watch for exhaustion",
-        "z": "RSI(14)=80.7，超买，注意回调风险"
+        "e": "RSI(14) = 81.7 — overbought, watch for exhaustion",
+        "z": "RSI(14)=81.7，超买，注意回调风险"
+      }
+    },
+    {
+      "type": "BULLISH_ALIGNMENT",
+      "strength": "strong",
+      "date": "2026-04-21",
+      "bullish": true,
+      "description": {
+        "e": "MA5(831.1) > MA20(689.7) > MA60(610.0), price above all — full bullish alignment",
+        "z": "MA5(831.1)>MA20(689.7)>MA60(610.0)，均线多头排列，趋势强"
       }
     }
   ],
   "signal_count": {
-    "bullish": 0,
+    "bullish": 1,
     "bearish": 1,
-    "total": 1
+    "total": 2
   },
   "indicators": {
-    "ma5": 812.72,
-    "ma20": 676.46,
-    "ma60": 605.9,
-    "rsi14": 80.7,
-    "vol_ma20": 28481012,
-    "vol_ratio": 0.96,
-    "price_vs_ma20": 25.65,
-    "price_vs_ma60": 40.29,
-    "change_1d": -0.12,
-    "change_5d": 15.18,
-    "change_20d": 38.89
+    "ma5": 831.09,
+    "ma20": 689.72,
+    "ma60": 610.03,
+    "rsi14": 81.7,
+    "vol_ma20": 27843968,
+    "vol_ratio": 0.9,
+    "price_vs_ma20": 25.39,
+    "price_vs_ma60": 41.77,
+    "change_1d": 1.75,
+    "change_5d": 11.88,
+    "change_20d": 44.23,
+    "macd_dif": 70.569,
+    "macd_dea": 49.8822,
+    "macd_hist": 41.3736,
+    "bb_upper": 888.38,
+    "bb_mid": 689.72,
+    "bb_lower": 491.06,
+    "bb_bandwidth": 57.61,
+    "kdj_k": 92.0,
+    "kdj_d": 90.6,
+    "kdj_j": 94.8,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
   }
 }
