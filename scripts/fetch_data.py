@@ -402,18 +402,22 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
             def obj(g):
                 return _dcf_equity_value(fcf0, g, wacc, g_terminal, DCF_HORIZON, net_debt) - market_cap
 
-            implied_g = _bisect(obj, lo=-0.15, hi=0.95)
+            # Extended hi to 2.0 to handle hyper-growth names (e.g. 300308.SZ
+            # where implied growth ~118% sits outside the old 0.95 ceiling)
+            implied_g = _bisect(obj, lo=-0.15, hi=2.0)
             if implied_g is None:
                 result["error"] = "bisection_no_root"
                 result["bisect_debug"] = {
                     "obj_lo": round(_dcf_equity_value(fcf0, -0.15, wacc, g_terminal, DCF_HORIZON, net_debt) - market_cap, 0),
-                    "obj_hi": round(_dcf_equity_value(fcf0,  0.95, wacc, g_terminal, DCF_HORIZON, net_debt) - market_cap, 0),
+                    "obj_hi": round(_dcf_equity_value(fcf0,  2.00, wacc, g_terminal, DCF_HORIZON, net_debt) - market_cap, 0),
                 }
                 return result
 
             delta     = our_growth - implied_g
             gap_score = _expectation_gap_score(delta)
             signal    = "UNDERPRICED" if delta > 0.05 else ("OVERPRICED" if delta < -0.05 else "FAIRLY_VALUED")
+            # Flag hyper-growth: market pricing in >100% annual FCF growth
+            hyper_growth = implied_g > 1.0
 
             result.update({
                 "fcf0":         round(fcf0, 0),
@@ -422,6 +426,7 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
                 "delta":              round(delta, 4),
                 "expectation_gap_score": gap_score,
                 "signal":             signal,
+                "hyper_growth":       hyper_growth,
                 "net_debt":           round(net_debt, 0),
                 "market_cap":         round(market_cap, 0),
             })

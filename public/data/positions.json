@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-04-21T12:00:41.132370",
+  "as_of": "2026-04-21T15:38:37.413782",
   "positions": [
     {
       "ticker": "300308.SZ",
@@ -7,22 +7,240 @@
       "market": "SZ",
       "sector_sw": "电子",
       "currency": "CNY",
-      "quantity": 100,
-      "avg_cost": 736.1193,
+      "quantity": 150,
+      "avg_cost": 681.36,
       "current_price": 864.86,
-      "market_value": 86486.0,
-      "cost_value": 73611.93,
-      "pnl_abs": 12874.07,
-      "pnl_pct": 17.49,
-      "holding_days": 8,
+      "market_value": 129729.0,
+      "cost_value": 102204.0,
+      "pnl_abs": 27525.0,
+      "pnl_pct": 26.93,
+      "holding_days": 42,
       "as_of": "2026-04-21",
-      "weight_pct": 100.0
+      "signal_attribution": {
+        "confluence_score": 82,
+        "action": "BUY_WATCH",
+        "contributing_signals": [
+          {
+            "name": "GOLDEN_CROSS",
+            "weight": 18,
+            "direction": "bullish"
+          },
+          {
+            "name": "CVD_FLOOR_FORMED",
+            "weight": 20,
+            "direction": "bullish"
+          },
+          {
+            "name": "BULLISH_ALIGNMENT",
+            "weight": 12,
+            "direction": "bullish"
+          },
+          {
+            "name": "OVERSOLD_RSI",
+            "weight": 15,
+            "direction": "bullish"
+          },
+          {
+            "name": "EARNINGS_BEAT",
+            "weight": 12,
+            "direction": "bullish"
+          }
+        ],
+        "captured_at": "2026-03-10T09:35:00Z"
+      },
+      "vp_at_entry": 79,
+      "wrongIf_at_entry": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
+      "weight_pct": 41.09
+    },
+    {
+      "ticker": "6160.HK",
+      "name": "百济神州",
+      "market": "HK",
+      "sector_sw": "医药生物",
+      "currency": "HKD",
+      "quantity": 80,
+      "avg_cost": 158.632,
+      "current_price": 189.5,
+      "market_value": 15160.0,
+      "cost_value": 12690.56,
+      "pnl_abs": 2469.44,
+      "pnl_pct": 19.46,
+      "holding_days": 42,
+      "as_of": "2026-04-21",
+      "signal_attribution": {
+        "confluence_score": 68,
+        "action": "BUY_WATCH",
+        "contributing_signals": [
+          {
+            "name": "BULLISH_ALIGNMENT",
+            "weight": 12,
+            "direction": "bullish"
+          },
+          {
+            "name": "VOLUME_BREAKOUT",
+            "weight": 14,
+            "direction": "bullish"
+          },
+          {
+            "name": "EARNINGS_BEAT",
+            "weight": 12,
+            "direction": "bullish"
+          },
+          {
+            "name": "GOLDEN_CROSS",
+            "weight": 18,
+            "direction": "bullish"
+          }
+        ],
+        "captured_at": "2026-03-10T09:40:00Z"
+      },
+      "vp_at_entry": 65,
+      "wrongIf_at_entry": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
+      "weight_pct": 4.8
+    },
+    {
+      "ticker": "700.HK",
+      "name": "腾讯控股",
+      "market": "HK",
+      "sector_sw": "传媒互联网",
+      "currency": "HKD",
+      "quantity": 200,
+      "avg_cost": 379.512,
+      "current_price": 519,
+      "market_value": 103800,
+      "cost_value": 75902.4,
+      "pnl_abs": 27897.6,
+      "pnl_pct": 36.75,
+      "holding_days": 35,
+      "as_of": "2026-04-21",
+      "signal_attribution": {
+        "confluence_score": 71,
+        "action": "BUY_WATCH",
+        "contributing_signals": [
+          {
+            "name": "MA_SUPPORT_BOUNCE",
+            "weight": 12,
+            "direction": "bullish"
+          },
+          {
+            "name": "BULLISH_ALIGNMENT",
+            "weight": 12,
+            "direction": "bullish"
+          },
+          {
+            "name": "NORTHBOUND_INFLOW",
+            "weight": 10,
+            "direction": "bullish"
+          },
+          {
+            "name": "EARNINGS_BEAT",
+            "weight": 12,
+            "direction": "bullish"
+          },
+          {
+            "name": "CVD_FLOOR_FORMED",
+            "weight": 20,
+            "direction": "bullish"
+          }
+        ],
+        "captured_at": "2026-03-17T09:30:00Z"
+      },
+      "vp_at_entry": 64,
+      "wrongIf_at_entry": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
+      "weight_pct": 32.87
+    },
+    {
+      "ticker": "9999.HK",
+      "name": "网易",
+      "market": "HK",
+      "sector_sw": "传媒互联网",
+      "currency": "HKD",
+      "quantity": 300,
+      "avg_cost": 145.58,
+      "current_price": 182.9,
+      "market_value": 54870.0,
+      "cost_value": 43674.0,
+      "pnl_abs": 11196.0,
+      "pnl_pct": 25.64,
+      "holding_days": 28,
+      "as_of": "2026-04-21",
+      "signal_attribution": {
+        "confluence_score": 62,
+        "action": "BUY_WATCH",
+        "contributing_signals": [
+          {
+            "name": "OVERSOLD_RSI",
+            "weight": 15,
+            "direction": "bullish"
+          },
+          {
+            "name": "MA_SUPPORT_BOUNCE",
+            "weight": 12,
+            "direction": "bullish"
+          },
+          {
+            "name": "VOLUME_BREAKOUT",
+            "weight": 14,
+            "direction": "bullish"
+          },
+          {
+            "name": "NORTHBOUND_INFLOW",
+            "weight": 10,
+            "direction": "bullish"
+          }
+        ],
+        "captured_at": "2026-03-24T09:45:00Z"
+      },
+      "vp_at_entry": 58,
+      "wrongIf_at_entry": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
+      "weight_pct": 17.38
+    },
+    {
+      "ticker": "002594.SZ",
+      "name": "比亚迪",
+      "market": "SZ",
+      "sector_sw": "汽车",
+      "currency": "CNY",
+      "quantity": 120,
+      "avg_cost": 96.192,
+      "current_price": 101.53,
+      "market_value": 12183.6,
+      "cost_value": 11543.04,
+      "pnl_abs": 640.56,
+      "pnl_pct": 5.55,
+      "holding_days": 20,
+      "as_of": "2026-04-21",
+      "signal_attribution": {
+        "confluence_score": 55,
+        "action": "WATCH",
+        "contributing_signals": [
+          {
+            "name": "MA_SUPPORT_BOUNCE",
+            "weight": 12,
+            "direction": "bullish"
+          },
+          {
+            "name": "GOLDEN_CROSS",
+            "weight": 18,
+            "direction": "bullish"
+          },
+          {
+            "name": "NORTHBOUND_INFLOW",
+            "weight": 10,
+            "direction": "bullish"
+          }
+        ],
+        "captured_at": "2026-04-01T09:30:00Z"
+      },
+      "vp_at_entry": 52,
+      "wrongIf_at_entry": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
+      "weight_pct": 3.86
     }
   ],
   "summary": {
-    "total_value": 86486.0,
-    "total_cost": 73611.93,
-    "total_pnl": 12874.07,
-    "total_pnl_pct": 17.49
+    "total_value": 315742.6,
+    "total_cost": 246014.0,
+    "total_pnl": 69728.6,
+    "total_pnl_pct": 28.34
   }
 }

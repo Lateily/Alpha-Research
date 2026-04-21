@@ -5658,11 +5658,25 @@ function ReverseDCF({ rdcf, L, C, open, toggle }) {
 
       {/* Error state */}
       {err && (
-        <div style={{padding:'12px 14px', background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:7, color:C.red, fontSize:11}}>
-          ⚠ {L('RDCF unavailable: ','反向DCF不可用：')}{err}
-          <div style={{fontSize:9, color:C.mid, marginTop:4}}>
-            {L('Run fetch_data.py to generate data','运行 fetch_data.py 生成数据')}
+        <div style={{padding:'12px 14px', background:`${C.gold}10`, border:`1px solid ${C.gold}40`, borderRadius:7, fontSize:11}}>
+          <div style={{color:C.gold, fontWeight:700, marginBottom:6}}>
+            ⚠ {err === 'bisection_no_root'
+              ? L('Hyper-growth stock — market implies >95% annual FCF growth','超高增速股票 — 市场隐含年FCF增速>95%')
+              : L('RDCF unavailable: ','反向DCF不可用：') + err}
           </div>
+          {err === 'bisection_no_root' && rdcf.bisect_debug && (
+            <div style={{fontSize:9, color:C.mid, marginBottom:4}}>
+              {L('Bisection bounds: obj(lo)=','二分法边界：obj(lo)=')}{(rdcf.bisect_debug.obj_lo/1e9).toFixed(0)}B
+              {' · obj(hi)='}{(rdcf.bisect_debug.obj_hi/1e9).toFixed(0)}B
+              {rdcf.bisect_debug.obj_hi < 0 && L(' — root above upper bound, implied g >200% p.a.',' — 根在上界之外，隐含增速>200%')}
+            </div>
+          )}
+          {rdcf.wacc_detail && (
+            <div style={{fontSize:9, color:C.mid}}>
+              WACC {((rdcf.wacc_detail.wacc||0)*100).toFixed(1)}% · β {rdcf.wacc_detail.beta?.toFixed(2)}
+              {' · '}{L('Data will correct after next fetch-data run','下次数据抓取后自动修正')}
+            </div>
+          )}
         </div>
       )}
 
@@ -5670,9 +5684,14 @@ function ReverseDCF({ rdcf, L, C, open, toggle }) {
         <>
           {/* Signal banner */}
           <div style={{padding:'10px 16px', background:`${signalColor}12`, border:`1px solid ${signalColor}35`, borderRadius:7, marginBottom:14, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-            <div>
+            <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
               <span style={{fontSize:13, fontWeight:800, color:signalColor, letterSpacing:'0.04em'}}>{signalLabel}</span>
-              <span style={{fontSize:10, color:C.mid, marginLeft:10}}>
+              {rdcf.hyper_growth && (
+                <span style={{fontSize:9, fontWeight:700, color:'#fff', background:C.gold, borderRadius:4, padding:'2px 6px', letterSpacing:'0.05em'}}>
+                  {L('HYPER-GROWTH','超高增速')}
+                </span>
+              )}
+              <span style={{fontSize:10, color:C.mid}}>
                 {L('Gap Score: ','预期差得分: ')}<b style={{color:signalColor}}>{rdcf.expectation_gap_score}</b>/100
               </span>
             </div>

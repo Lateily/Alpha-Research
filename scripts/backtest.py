@@ -61,9 +61,14 @@ def save_json(filename, data):
 
 
 def load_ohlcv(ticker: str) -> list[dict]:
-    """Load OHLCV list for a ticker.  Returns [] if file missing."""
+    """Load OHLCV list for a ticker.  Returns [] if file missing.
+    Handles both flat list format and wrapped {ticker, data, fetched_at} format."""
     safe = ticker.replace("/", "_").replace(".", "_")
-    return load_json(f"ohlc_{safe}.json", [])
+    raw = load_json(f"ohlc_{safe}.json", [])
+    # Unwrap if fetch_data.py wrote {ticker, data, fetched_at}
+    if isinstance(raw, dict):
+        return raw.get("data", [])
+    return raw
 
 
 def ohlcv_to_price_series(records: list[dict]) -> dict[str, float]:
@@ -387,6 +392,16 @@ def run_backtest(threshold: int = 60, min_positions: int = 1) -> dict:
     # Use whichever benchmark has more data
     bench_series = bench_a_series if len(bench_a_series) >= len(bench_hk_series) else bench_hk_series
     bench_label  = "CSI 300" if bench_series is bench_a_series else "HSI"
+
+    # Fallback: if no benchmark OHLCV file exists yet (common before first
+    # full fetch-data run), synthesise a flat 100 series from the longest
+    # portfolio stock. This lets the backtest run but alpha = 0 by construction.
+    if not bench_series and all_price_series:
+        proxy_tk, proxy_ps = max(all_price_series.items(), key=lambda x: len(x[1]))
+        first_v = next(iter(proxy_ps.values()))
+        bench_series = {d: first_v for d in proxy_ps}   # flat = no benchmark drag
+        bench_label  = f"proxy ({proxy_tk}, flat)"
+        print(f"  No benchmark OHLCV — using flat proxy from {proxy_tk}")
 
     print(f"  Tickers with price data: {len(all_price_series)}")
     print(f"  Benchmark: {bench_label} ({len(bench_series)} days)")
