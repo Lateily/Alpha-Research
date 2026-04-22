@@ -1,0 +1,401 @@
+{
+  "generated_at": "2026-04-22T12:08:54.115435+00:00",
+  "tickers": {
+    "300308.SZ": {
+      "ticker": "300308.SZ",
+      "verdict": "STRONG_POSITIVE_LEVERAGE",
+      "rows": [
+        {
+          "year": "2025",
+          "rev_b": 38.24,
+          "ni_b": 10.8,
+          "gm_pct": 42.0,
+          "op_margin_pct": 35.4,
+          "ni_margin_pct": 28.2,
+          "rev_gr_pct": 60.3,
+          "ni_gr_pct": 108.8,
+          "ni_rev_ratio": 1.81,
+          "gm_delta_pp": 8.2,
+          "fcf_b": 8.14,
+          "fcf_ni_ratio": 0.75
+        },
+        {
+          "year": "2024",
+          "rev_b": 23.86,
+          "ni_b": 5.17,
+          "gm_pct": 33.8,
+          "op_margin_pct": 25.1,
+          "ni_margin_pct": 21.7,
+          "rev_gr_pct": 122.6,
+          "ni_gr_pct": 137.9,
+          "ni_rev_ratio": 1.12,
+          "gm_delta_pp": 0.8,
+          "fcf_b": 0.3,
+          "fcf_ni_ratio": 0.06
+        },
+        {
+          "year": "2023",
+          "rev_b": 10.72,
+          "ni_b": 2.17,
+          "gm_pct": 33.0,
+          "op_margin_pct": 21.0,
+          "ni_margin_pct": 20.3,
+          "rev_gr_pct": 11.2,
+          "ni_gr_pct": 77.6,
+          "ni_rev_ratio": 6.95,
+          "gm_delta_pp": 3.7,
+          "fcf_b": 0.19,
+          "fcf_ni_ratio": 0.09
+        },
+        {
+          "year": "2022",
+          "rev_b": 9.64,
+          "ni_b": 1.22,
+          "gm_pct": 29.3,
+          "op_margin_pct": 15.6,
+          "ni_margin_pct": 12.7,
+          "rev_gr_pct": null,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": null,
+          "fcf_b": 1.66,
+          "fcf_ni_ratio": 1.35
+        },
+        {
+          "year": "2021",
+          "rev_b": null,
+          "ni_b": null,
+          "gm_pct": null,
+          "op_margin_pct": null,
+          "ni_margin_pct": null,
+          "rev_gr_pct": null,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": null,
+          "fcf_b": null,
+          "fcf_ni_ratio": null
+        }
+      ],
+      "summary": {
+        "latest_ni_rev_ratio": 1.81,
+        "latest_gm_delta_pp": 8.2,
+        "latest_rev_gr_pct": 60.3,
+        "latest_ni_gr_pct": 108.8
+      }
+    },
+    "700.HK": {
+      "ticker": "700.HK",
+      "verdict": "POSITIVE_LEVERAGE",
+      "rows": [
+        {
+          "year": "2025",
+          "rev_b": 751.77,
+          "ni_b": 224.84,
+          "gm_pct": 56.2,
+          "op_margin_pct": 33.1,
+          "ni_margin_pct": 29.9,
+          "rev_gr_pct": 13.9,
+          "ni_gr_pct": 15.9,
+          "ni_rev_ratio": 1.14,
+          "gm_delta_pp": 3.3,
+          "fcf_b": 190.17,
+          "fcf_ni_ratio": 0.85
+        },
+        {
+          "year": "2024",
+          "rev_b": 660.26,
+          "ni_b": 194.07,
+          "gm_pct": 52.9,
+          "op_margin_pct": 31.6,
+          "ni_margin_pct": 29.4,
+          "rev_gr_pct": 8.4,
+          "ni_gr_pct": 68.4,
+          "ni_rev_ratio": 8.13,
+          "gm_delta_pp": 4.8,
+          "fcf_b": 162.47,
+          "fcf_ni_ratio": 0.84
+        },
+        {
+          "year": "2023",
+          "rev_b": 609.01,
+          "ni_b": 115.22,
+          "gm_pct": 48.1,
+          "op_margin_pct": 27.2,
+          "ni_margin_pct": 18.9,
+          "rev_gr_pct": 9.8,
+          "ni_gr_pct": -38.8,
+          "ni_rev_ratio": -3.95,
+          "gm_delta_pp": 5.1,
+          "fcf_b": 174.56,
+          "fcf_ni_ratio": 1.52
+        },
+        {
+          "year": "2022",
+          "rev_b": 554.55,
+          "ni_b": 188.24,
+          "gm_pct": 43.1,
+          "op_margin_pct": 20.5,
+          "ni_margin_pct": 33.9,
+          "rev_gr_pct": null,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": null,
+          "fcf_b": 95.24,
+          "fcf_ni_ratio": 0.51
+        },
+        {
+          "year": "2021",
+          "rev_b": null,
+          "ni_b": null,
+          "gm_pct": null,
+          "op_margin_pct": null,
+          "ni_margin_pct": null,
+          "rev_gr_pct": null,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": null,
+          "fcf_b": null,
+          "fcf_ni_ratio": null
+        }
+      ],
+      "summary": {
+        "latest_ni_rev_ratio": 1.14,
+        "latest_gm_delta_pp": 3.3,
+        "latest_rev_gr_pct": 13.9,
+        "latest_ni_gr_pct": 15.9
+      }
+    },
+    "9999.HK": {
+      "ticker": "9999.HK",
+      "verdict": "STRONG_POSITIVE_LEVERAGE",
+      "rows": [
+        {
+          "year": "2025",
+          "rev_b": 112.63,
+          "ni_b": 33.76,
+          "gm_pct": 64.3,
+          "op_margin_pct": 31.8,
+          "ni_margin_pct": 30.0,
+          "rev_gr_pct": 7.0,
+          "ni_gr_pct": 13.7,
+          "ni_rev_ratio": 1.96,
+          "gm_delta_pp": 1.8,
+          "fcf_b": 48.69,
+          "fcf_ni_ratio": 1.44
+        },
+        {
+          "year": "2024",
+          "rev_b": 105.3,
+          "ni_b": 29.7,
+          "gm_pct": 62.5,
+          "op_margin_pct": 28.1,
+          "ni_margin_pct": 28.2,
+          "rev_gr_pct": 1.8,
+          "ni_gr_pct": 1.0,
+          "ni_rev_ratio": 0.54,
+          "gm_delta_pp": 1.5,
+          "fcf_b": 37.47,
+          "fcf_ni_ratio": 1.26
+        },
+        {
+          "year": "2023",
+          "rev_b": 103.47,
+          "ni_b": 29.42,
+          "gm_pct": 60.9,
+          "op_margin_pct": 26.8,
+          "ni_margin_pct": 28.4,
+          "rev_gr_pct": 7.2,
+          "ni_gr_pct": 44.6,
+          "ni_rev_ratio": 6.18,
+          "gm_delta_pp": 6.3,
+          "fcf_b": 31.06,
+          "fcf_ni_ratio": 1.06
+        },
+        {
+          "year": "2022",
+          "rev_b": 96.5,
+          "ni_b": 20.34,
+          "gm_pct": 54.7,
+          "op_margin_pct": 20.3,
+          "ni_margin_pct": 21.1,
+          "rev_gr_pct": null,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": null,
+          "fcf_b": 25.07,
+          "fcf_ni_ratio": 1.23
+        },
+        {
+          "year": "2021",
+          "rev_b": null,
+          "ni_b": null,
+          "gm_pct": null,
+          "op_margin_pct": null,
+          "ni_margin_pct": null,
+          "rev_gr_pct": null,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": null,
+          "fcf_b": null,
+          "fcf_ni_ratio": null
+        }
+      ],
+      "summary": {
+        "latest_ni_rev_ratio": 1.96,
+        "latest_gm_delta_pp": 1.8,
+        "latest_rev_gr_pct": 7.0,
+        "latest_ni_gr_pct": 13.7
+      }
+    },
+    "6160.HK": {
+      "ticker": "6160.HK",
+      "verdict": "INSUFFICIENT_DATA",
+      "rows": [
+        {
+          "year": "2025",
+          "rev_b": 5.34,
+          "ni_b": 0.29,
+          "gm_pct": 87.5,
+          "op_margin_pct": 8.4,
+          "ni_margin_pct": 5.4,
+          "rev_gr_pct": 40.2,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": 3.1,
+          "fcf_b": 0.86,
+          "fcf_ni_ratio": 3.0
+        },
+        {
+          "year": "2024",
+          "rev_b": 3.81,
+          "ni_b": -0.64,
+          "gm_pct": 84.4,
+          "op_margin_pct": -14.9,
+          "ni_margin_pct": -16.9,
+          "rev_gr_pct": 55.0,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": -0.1,
+          "fcf_b": -0.67,
+          "fcf_ni_ratio": null
+        },
+        {
+          "year": "2023",
+          "rev_b": 2.46,
+          "ni_b": -0.88,
+          "gm_pct": 84.5,
+          "op_margin_pct": -49.1,
+          "ni_margin_pct": -35.9,
+          "rev_gr_pct": 73.7,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": 4.8,
+          "fcf_b": -1.75,
+          "fcf_ni_ratio": null
+        },
+        {
+          "year": "2022",
+          "rev_b": 1.42,
+          "ni_b": -2.0,
+          "gm_pct": 79.8,
+          "op_margin_pct": -126.4,
+          "ni_margin_pct": -141.5,
+          "rev_gr_pct": null,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": null,
+          "fcf_b": -1.97,
+          "fcf_ni_ratio": null
+        },
+        {
+          "year": "2021",
+          "rev_b": null,
+          "ni_b": null,
+          "gm_pct": null,
+          "op_margin_pct": null,
+          "ni_margin_pct": null,
+          "rev_gr_pct": null,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": null,
+          "fcf_b": null,
+          "fcf_ni_ratio": null
+        }
+      ],
+      "summary": {
+        "latest_ni_rev_ratio": null,
+        "latest_gm_delta_pp": 3.1,
+        "latest_rev_gr_pct": 40.2,
+        "latest_ni_gr_pct": null
+      }
+    },
+    "002594.SZ": {
+      "ticker": "002594.SZ",
+      "verdict": "NEGATIVE_LEVERAGE",
+      "rows": [
+        {
+          "year": "2025",
+          "rev_b": 803.96,
+          "ni_b": 32.62,
+          "gm_pct": 17.7,
+          "op_margin_pct": 4.8,
+          "ni_margin_pct": 4.1,
+          "rev_gr_pct": 3.5,
+          "ni_gr_pct": -19.0,
+          "ni_rev_ratio": -5.49,
+          "gm_delta_pp": -1.7,
+          "fcf_b": -97.67,
+          "fcf_ni_ratio": -2.99
+        },
+        {
+          "year": "2024",
+          "rev_b": 777.1,
+          "ni_b": 40.25,
+          "gm_pct": 19.4,
+          "op_margin_pct": 7.0,
+          "ni_margin_pct": 5.2,
+          "rev_gr_pct": 29.0,
+          "ni_gr_pct": 34.0,
+          "ni_rev_ratio": 1.17,
+          "gm_delta_pp": 0.9,
+          "fcf_b": 36.09,
+          "fcf_ni_ratio": 0.9
+        },
+        {
+          "year": "2023",
+          "rev_b": 602.32,
+          "ni_b": 30.04,
+          "gm_pct": 18.6,
+          "op_margin_pct": 6.4,
+          "ni_margin_pct": 5.0,
+          "rev_gr_pct": 42.0,
+          "ni_gr_pct": 80.7,
+          "ni_rev_ratio": 1.92,
+          "gm_delta_pp": 1.5,
+          "fcf_b": 47.63,
+          "fcf_ni_ratio": 1.59
+        },
+        {
+          "year": "2022",
+          "rev_b": 424.06,
+          "ni_b": 16.62,
+          "gm_pct": 17.0,
+          "op_margin_pct": 5.4,
+          "ni_margin_pct": 3.9,
+          "rev_gr_pct": null,
+          "ni_gr_pct": null,
+          "ni_rev_ratio": null,
+          "gm_delta_pp": null,
+          "fcf_b": 43.38,
+          "fcf_ni_ratio": 2.61
+        }
+      ],
+      "summary": {
+        "latest_ni_rev_ratio": -5.49,
+        "latest_gm_delta_pp": -1.7,
+        "latest_rev_gr_pct": 3.5,
+        "latest_ni_gr_pct": -19.0
+      }
+    }
+  }
+}

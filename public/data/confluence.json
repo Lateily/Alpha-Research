@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-22T07:19:29.116978+00:00",
+  "generated_at": "2026-04-22T12:09:50.306198+00:00",
   "tickers_scored": 5,
   "summary": {
     "entry_candidates": [],
@@ -8,14 +8,68 @@
   },
   "scores": [
     {
-      "ticker": "300308.SZ",
+      "ticker": "9999.HK",
       "score": 4,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "NEUTRAL",
+      "regime": "NEUTRAL",
+      "vp_score": 64.0,
+      "vp_signal_type": "VP_GOOD_CONVICTION",
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 1,
+        "bearish": 1
+      },
+      "contributing": [
+        {
+          "type": "KDJ_DEATH_CROSS",
+          "base_weight": -10,
+          "decay": 1.0,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "final_contribution": -10.0
+        },
+        {
+          "type": "VP_GOOD_CONVICTION",
+          "base_weight": 14,
+          "decay": 1.0,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "final_contribution": 14.0
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "VP_GOOD_CONVICTION",
+          "contribution": 14.0
+        },
+        {
+          "type": "KDJ_DEATH_CROSS",
+          "contribution": -10.0
+        }
+      ],
+      "rationale_e": "Bullish: Vp Good Conviction | Bearish: Kdj Death Cross | RSI 47 | Price vs MA20 +0.3% | VP 64",
+      "rationale_z": "多头：VP良好信念(基本面偏强) | 空头：KDJ死叉 | RSI 47 | 距MA20 +0.3% | VP 64",
+      "signal_types": [
+        "KDJ_DEATH_CROSS",
+        "VP_GOOD_CONVICTION"
+      ],
+      "computed_at": "2026-04-22T12:09:50.306190+00:00"
+    },
+    {
+      "ticker": "300308.SZ",
+      "score": 1,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "OVERBOUGHT",
       "regime": "PERMISSIVE",
-      "vp_score": 79.0,
-      "vp_adjustment": 2.9,
+      "vp_score": 53.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
       "staleness_factor": 1.0,
       "signal_count": {
         "bullish": 1,
@@ -41,33 +95,23 @@
           "final_contribution": 12.0
         }
       ],
-      "rationale_e": "Bullish: Bullish Alignment | Bearish: Rsi Overbought | RSI 83 | Price vs MA20 +26.0% | Regime: PERMISSIVE | VP 79",
-      "rationale_z": "多头：均线多头排列 | 空头：RSI超买 | RSI 83 | 距MA20 +26.0% | 政策顺风 | VP 79",
+      "contributing_signals": [
+        {
+          "type": "BULLISH_ALIGNMENT",
+          "contribution": 12.0
+        },
+        {
+          "type": "RSI_OVERBOUGHT",
+          "contribution": -11.2
+        }
+      ],
+      "rationale_e": "Bullish: Bullish Alignment | Bearish: Rsi Overbought | RSI 83 | Price vs MA20 +26.0% | Regime: PERMISSIVE | VP 53",
+      "rationale_z": "多头：均线多头排列 | 空头：RSI超买 | RSI 83 | 距MA20 +26.0% | 政策顺风 | VP 53",
       "signal_types": [
         "RSI_OVERBOUGHT",
         "BULLISH_ALIGNMENT"
       ],
-      "computed_at": "2026-04-22T07:19:29.116662+00:00"
-    },
-    {
-      "ticker": "6160.HK",
-      "score": 2,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "NEUTRAL",
-      "vp_score": 65.0,
-      "vp_adjustment": 1.5,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 0,
-        "bearish": 0
-      },
-      "contributing": [],
-      "rationale_e": "RSI 52 | Price vs MA20 +2.8% | VP 65",
-      "rationale_z": "RSI 52 | 距MA20 +2.8% | VP 65",
-      "signal_types": [],
-      "computed_at": "2026-04-22T07:19:29.116752+00:00"
+      "computed_at": "2026-04-22T12:09:50.304644+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -77,27 +121,52 @@
       "zone": "NEUTRAL",
       "regime": "PERMISSIVE",
       "vp_score": 52.0,
-      "vp_adjustment": 0.2,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
       "staleness_factor": 1.0,
       "signal_count": {
         "bullish": 0,
         "bearish": 0
       },
       "contributing": [],
+      "contributing_signals": [],
       "rationale_e": "RSI 50 | Price vs MA20 -1.1% | Regime: PERMISSIVE | VP 52",
       "rationale_z": "RSI 50 | 距MA20 -1.1% | 政策顺风 | VP 52",
       "signal_types": [],
-      "computed_at": "2026-04-22T07:19:29.116500+00:00"
+      "computed_at": "2026-04-22T12:09:50.304060+00:00"
+    },
+    {
+      "ticker": "6160.HK",
+      "score": 0,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "NEUTRAL",
+      "regime": "NEUTRAL",
+      "vp_score": 45.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 0,
+        "bearish": 0
+      },
+      "contributing": [],
+      "contributing_signals": [],
+      "rationale_e": "RSI 52 | Price vs MA20 +2.8% | VP 45",
+      "rationale_z": "RSI 52 | 距MA20 +2.8% | VP 45",
+      "signal_types": [],
+      "computed_at": "2026-04-22T12:09:50.305206+00:00"
     },
     {
       "ticker": "700.HK",
-      "score": -9,
+      "score": -10,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "NEUTRAL",
       "regime": "NEUTRAL",
-      "vp_score": 64.0,
-      "vp_adjustment": 1.4,
+      "vp_score": 51.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
       "staleness_factor": 1.0,
       "signal_count": {
         "bullish": 0,
@@ -114,44 +183,18 @@
           "final_contribution": -10.0
         }
       ],
-      "rationale_e": "Bearish: Kdj Death Cross | RSI 47 | Price vs MA20 +0.7% | VP 64",
-      "rationale_z": "空头：KDJ死叉 | RSI 47 | 距MA20 +0.7% | VP 64",
-      "signal_types": [
-        "KDJ_DEATH_CROSS"
-      ],
-      "computed_at": "2026-04-22T07:19:29.116856+00:00"
-    },
-    {
-      "ticker": "9999.HK",
-      "score": -9,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "NEUTRAL",
-      "vp_score": 58.0,
-      "vp_adjustment": 0.8,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 0,
-        "bearish": 1
-      },
-      "contributing": [
+      "contributing_signals": [
         {
           "type": "KDJ_DEATH_CROSS",
-          "base_weight": -10,
-          "decay": 1.0,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "final_contribution": -10.0
+          "contribution": -10.0
         }
       ],
-      "rationale_e": "Bearish: Kdj Death Cross | RSI 47 | Price vs MA20 +0.3% | VP 58",
-      "rationale_z": "空头：KDJ死叉 | RSI 47 | 距MA20 +0.3% | VP 58",
+      "rationale_e": "Bearish: Kdj Death Cross | RSI 47 | Price vs MA20 +0.7% | VP 51",
+      "rationale_z": "空头：KDJ死叉 | RSI 47 | 距MA20 +0.7% | VP 51",
       "signal_types": [
         "KDJ_DEATH_CROSS"
       ],
-      "computed_at": "2026-04-22T07:19:29.116966+00:00"
+      "computed_at": "2026-04-22T12:09:50.305751+00:00"
     }
   ]
 }

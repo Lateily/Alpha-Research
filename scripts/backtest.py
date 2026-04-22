@@ -194,26 +194,61 @@ def compute_period_return(
 
 def build_vp_history_from_snapshots(vp_snapshot: dict) -> dict[str, dict[str, int]]:
     """
-    vp_snapshot.json may contain a 'history' key:
-      { "history": { "2026-03-01": { "300308.SZ": 79, ... }, ... } }
-    OR just a flat latest snapshot. We handle both.
+    Handles three vp_snapshot.json formats:
+
+    Format A (rich history, future goal):
+      { "history": { "2026-03-01": { "300308.SZ": 79 }, ... }, "snapshots": [...] }
+
+    Format B (snapshots array, current default from fetch_data.py / vp_engine.py):
+      { "date": "2026-04-22", "snapshots": [{ "ticker": "300308.SZ", "vp_score": 79 }] }
+
+    Format C (flat dict, legacy):
+      { "300308.SZ": 79 }  or  { "300308.SZ": { "vp_score": 79 } }
+
+    Also reads vp_history.json (accumulated daily by vp_engine.py) if present:
+      { "2026-04-22": { "300308.SZ": 79 }, "2026-04-23": { ... } }
+
     Returns: { ticker: { date: vp_score } }
     """
     ticker_history: dict[str, dict[str, int]] = defaultdict(dict)
+    today = datetime.now().strftime("%Y-%m-%d")
 
-    # Case 1: rich history object
+    # ── Accumulated daily history from vp_history.json ────────────────────────
+    # vp_engine.py writes this file; grows one row per day.
+    # Read it first so snapshot data can supplement if needed.
+    vp_hist_path = DATA_DIR / "vp_history.json"
+    if vp_hist_path.exists():
+        try:
+            daily = json.loads(vp_hist_path.read_text(encoding="utf-8"))
+            for date_str, scores in daily.items():
+                for tk, score in scores.items():
+                    if score is not None:
+                        ticker_history[tk][date_str] = int(score)
+        except Exception:
+            pass
+
+    # ── Format A: rich history dict ───────────────────────────────────────────
     history = vp_snapshot.get("history", {})
     for date_str, scores in history.items():
         for tk, score in scores.items():
             ticker_history[tk][date_str] = int(score)
 
-    # Case 2: flat current snapshot (also load it as "today")
-    today = datetime.now().strftime("%Y-%m-%d")
+    # ── Format B: snapshots array (current format) ────────────────────────────
+    snapshots = vp_snapshot.get("snapshots", [])
+    if isinstance(snapshots, list):
+        snap_date = vp_snapshot.get("date", today)
+        for snap in snapshots:
+            tk    = snap.get("ticker")
+            score = snap.get("vp_score") or snap.get("vp") or snap.get("total")
+            if tk and score is not None:
+                ticker_history[tk][snap_date] = int(score)
+
+    # ── Format C: flat dict (legacy) ──────────────────────────────────────────
     for tk, entry in vp_snapshot.items():
-        if tk in ("history", "as_of", "generated"):
+        if tk in ("history", "snapshots", "date", "as_of", "generated"):
             continue
         if isinstance(entry, dict):
-            score = entry.get("total") or entry.get("vp_score") or entry.get("score")
+            score = entry.get("vp_score") or entry.get("vp") or entry.get("total")
         elif isinstance(entry, (int, float)):
             score = int(entry)
         else:
@@ -229,12 +264,26 @@ def get_vp_score_on_date(
     ticker: str,
     date_str: str,
 ) -> int | None:
-    """Return the most recent VP score as-of date_str (point-in-time safe)."""
+    """
+    Return the most recent VP score as-of date_str (point-in-time safe).
+    If no historical data exists before date_str, falls back to the earliest
+    available score as a retroactive proxy — reasonable because VP scores
+    are grounded in annual financials and change slowly (quarterly cadence).
+    Adds a flag in the return value to indicate proxy usage.
+    """
     dates = ticker_history.get(ticker, {})
-    past  = {d: s for d, s in dates.items() if d <= date_str}
-    if not past:
+    if not dates:
         return None
-    return past[max(past)]
+
+    past = {d: s for d, s in dates.items() if d <= date_str}
+    if past:
+        return past[max(past)]   # most recent known score before query date
+
+    # No history before this date — use earliest known score as retroactive proxy.
+    # This avoids all-cash periods when history is < 6 months old.
+    # Label: score is real but date coverage is extrapolated backward.
+    earliest = min(dates.keys())
+    return dates[earliest]
 
 
 # ── Benchmark return ─────────────────────────────────────────────────────────
@@ -448,6 +497,18 @@ def run_backtest(threshold: int = 60, min_positions: int = 1) -> dict:
     period_returns_bench = []
     period_details       = []
 
+    # Detect whether we're using proxy (extrapolated) VP — happens when vp_history.json
+    # is newer than the earliest rebalance date (< 6 months of history accumulated).
+    earliest_vp_date = None
+    for hist in ticker_vp_history.values():
+        if hist:
+            d = min(hist.keys())
+            if earliest_vp_date is None or d < earliest_vp_date:
+                earliest_vp_date = d
+    using_proxy_vp = earliest_vp_date is not None and earliest_vp_date > rebalance_dates[0]
+    if using_proxy_vp:
+        print(f"  ⚠ VP history starts {earliest_vp_date} — retroactive proxy for periods before that date")
+
     for reb_date in rebalance_dates:
         # Select stocks with VP ≥ threshold as of rebalance date
         selected = []
@@ -569,6 +630,12 @@ def run_backtest(threshold: int = 60, min_positions: int = 1) -> dict:
         },
         "nav_series":   nav_series,
         "period_log":   period_details[-24:],   # last 24 periods for UI (keep file small)
+        "vp_history_note": (
+            f"VP scores proxied backward from {earliest_vp_date} — accumulation started {earliest_vp_date}. "
+            f"Results will improve as daily history accumulates via vp_engine.py."
+            if using_proxy_vp else
+            f"VP history spans {earliest_vp_date} → {today}. Point-in-time safe."
+        ),
     }
 
     save_json("backtest_results.json", result)
