@@ -60,6 +60,14 @@ jobs:
         continue-on-error: true          # non-critical; pure Python, no network
         run: python scripts/swing_signals.py
 
+      # ── Step 2h: VP Score live engine ────────────────────────────────────
+      # Runs BEFORE confluence so updated VP scores flow into position sizing.
+      # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
+      # writes profit_scissors.json.
+      - name: Run VP Score live engine
+        continue-on-error: true          # non-critical; pure Python, no network
+        run: python scripts/vp_engine.py
+
       # ── Step 2d: Signal confluence scoring (Layer 2) ──────────────────────
       - name: Compute signal confluence scores
         continue-on-error: true          # non-critical; reads signals_*.json
@@ -114,7 +122,8 @@ jobs:
             public/data/daily_decision.json \
             public/data/position_sizing.json \
             public/data/signal_quality.json \
-            public/data/trades.json; do
+            public/data/trades.json \
+            public/data/profit_scissors.json; do
             [ -f "$f" ] && git add "$f"
           done
 

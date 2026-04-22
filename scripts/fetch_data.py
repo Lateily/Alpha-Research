@@ -2327,6 +2327,14 @@ def main():
         use_existing = bool(prev and prev.get("vp_score") is not None
                             and prev.get("date", "") >= seed.get("last_updated", "2000-01-01"))
 
+        # Preserve the actual source from the existing snapshot so we don't
+        # lose provenance: "deepresearch" = human-set via browser,
+        # "vp_engine" = live-computed by scripts/vp_engine.py,
+        # "seed" = fallback default.
+        # vp_engine.py runs AFTER this step and will overwrite fundamental_accel
+        # + expectation_gap + vp_score with freshly-computed values.
+        prev_source = prev.get("source", "seed") if use_existing else "seed"
+
         vp_snapshot.append({
             "ticker":            ticker,
             "date":              today,
@@ -2338,7 +2346,7 @@ def main():
             "catalyst_proximity":prev.get("catalyst_proximity",seed["catalyst_prox"]),
             "close":             close,
             "volume":            volume,
-            "source":            "deepresearch" if use_existing else "seed",
+            "source":            prev_source,   # accurate provenance (vp_engine / deepresearch / seed)
             # wrongIf preserved from DeepResearch if available, else use seed
             "wrongIf_e":         prev.get("wrongIf_e", seed.get("wrongIf_e", "")),
             "wrongIf_z":         prev.get("wrongIf_z", seed.get("wrongIf_z", "")),

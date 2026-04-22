@@ -76,6 +76,21 @@ SIGNAL_CONFIG = {
     "CONTROLLED_ADVANCE":   {"weight":  10, "ttl":  3, "group": "volume_flow"},  # Low vol +1.5%: MM accumulation
     "CVD_FLOOR_FORMED":     {"weight":  20, "ttl":  5, "group": "cvd"},          # Highest weight: flow confirmed
     "CVD_BEARISH_DIVERGENCE": {"weight": -20, "ttl": 3, "group": "cvd"},         # Price up but flow negative
+
+    # ── Fundamental quality / VP Score (Group: vp_quality) ───────────────────
+    # VP is synthesized from vp_snapshot.json — NOT from swing_signals.py.
+    # TTL=30 reflects fundamental quality changes slowly (quarterly earnings cadence).
+    # Only one VP signal is injected per ticker, so independence discount never fires.
+    # Score thresholds:
+    #   VP ≥ 75  → STRONG_CONVICTION  (+28)  undervalued + fundamental acceleration
+    #   VP 60-74 → GOOD_CONVICTION    (+14)  above-average fundamental profile
+    #   VP 40-59 → no signal injected  (0)   neutral band — don't force a view
+    #   VP 30-39 → WEAK_CONVICTION    (-14)  below-average, caution warranted
+    #   VP < 30  → POOR_CONVICTION    (-28)  poor fundamentals + overvaluation risk
+    "VP_STRONG_CONVICTION": {"weight":  28, "ttl": 30, "group": "vp_quality"},
+    "VP_GOOD_CONVICTION":   {"weight":  14, "ttl": 30, "group": "vp_quality"},
+    "VP_WEAK_CONVICTION":   {"weight": -14, "ttl": 30, "group": "vp_quality"},
+    "VP_POOR_CONVICTION":   {"weight": -28, "ttl": 30, "group": "vp_quality"},
 }
 
 # ── Independence discount ─────────────────────────────────────────────────────
@@ -200,10 +215,32 @@ def compute_confluence(ticker, signals_data, regime, vp_score):
       regime_applied : str regime that was applied
       vp_score       : float or None
     """
-    signals   = signals_data.get("signals", [])
-    generated = signals_data.get("generated_at", date.today().isoformat())
-    zone      = signals_data.get("zone", "NEUTRAL")
-    indicators = signals_data.get("indicators", {})
+    signals_raw = list(signals_data.get("signals", []))
+    generated   = signals_data.get("generated_at", date.today().isoformat())
+    zone        = signals_data.get("zone", "NEUTRAL")
+    indicators  = signals_data.get("indicators", {})
+
+    # ── Synthesize VP signal (fundamental quality group) ──────────────────────
+    # VP is a continuous 0-100 score; we map it to a categorical signal that
+    # participates in the same independence/decay/regime framework as all other
+    # signals.  Using today as the signal date so TTL=30 doesn't decay it.
+    vp_synthetic_type = None
+    if vp_score is not None:
+        if   vp_score >= 75:  vp_synthetic_type = "VP_STRONG_CONVICTION"
+        elif vp_score >= 60:  vp_synthetic_type = "VP_GOOD_CONVICTION"
+        elif vp_score < 30:   vp_synthetic_type = "VP_POOR_CONVICTION"
+        elif vp_score < 40:   vp_synthetic_type = "VP_WEAK_CONVICTION"
+        # 40-59 neutral band: no signal injected
+
+    if vp_synthetic_type:
+        signals_raw.append({
+            "type":    vp_synthetic_type,
+            "bullish": vp_synthetic_type in ("VP_STRONG_CONVICTION", "VP_GOOD_CONVICTION"),
+            "date":    str(date.today()),
+            "_synthetic": True,
+        })
+
+    signals = signals_raw
 
     # Age of signal file (days since generated_at)
     file_age = days_since(str(generated)[:10])
@@ -266,13 +303,9 @@ def compute_confluence(ticker, signals_data, regime, vp_score):
             "final_contribution":  round(contribution, 1),
         })
 
-    # VP Score bonus: high VP gives small nudge to bullish side (±5 points)
-    vp_adj = 0.0
-    if vp_score is not None:
-        vp_adj = (vp_score - 50) / 50 * 5  # VP50→0, VP80→+3, VP30→-2
-        raw_score += vp_adj
-
     # Clamp to [-100, +100]
+    # VP is now a full participant in raw_score via the synthetic VP signal above —
+    # no separate vp_adj needed.
     score = max(-100, min(100, int(round(raw_score))))
     action = score_to_action(score)
 
@@ -325,6 +358,10 @@ def compute_confluence(ticker, signals_data, regime, vp_score):
         "CVD_BEARISH_DIVERGENCE": "CVD背离(价涨资金撤)",
         "BB_LOWER_BREAK": "布林下轨支撑", "BB_UPPER_BREAK": "布林上轨压力",
         "BB_SQUEEZE": "布林收口(蓄势)",
+        "VP_STRONG_CONVICTION": "VP强烈信念(基本面加速+低估值)",
+        "VP_GOOD_CONVICTION":   "VP良好信念(基本面偏强)",
+        "VP_WEAK_CONVICTION":   "VP偏弱(基本面中性偏差)",
+        "VP_POOR_CONVICTION":   "VP信念差(基本面恶化或高估)",
     }
     if positive:
         top_bull_z = "、".join(SIGNAL_ZH.get(s["type"], s["type"]) for s in positive[:2])
@@ -346,22 +383,30 @@ def compute_confluence(ticker, signals_data, regime, vp_score):
         parts_z.append(f"VP {int(vp_score)}")
     rationale_z = " | ".join(parts_z) if parts_z else "暂无有效信号"
 
+    # Simplified signal list for position_sizing.py consumption
+    contributing_signals = [
+        {"type": c["type"], "contribution": c["final_contribution"]}
+        for c in sorted(contributions, key=lambda x: -abs(x["final_contribution"]))[:8]
+    ]
+
     return {
-        "ticker":          ticker,
-        "score":           score,
-        "action":          action,
-        "action_zh":       score_to_label_zh(score),
-        "zone":            zone,
-        "regime":          regime,
-        "vp_score":        vp_score,
-        "vp_adjustment":   round(vp_adj, 1),
-        "staleness_factor": round(staleness_factor, 2),
-        "signal_count":    {"bullish": len(positive), "bearish": len(negative)},
-        "contributing":    contributions,
-        "rationale_e":     rationale_e,
-        "rationale_z":     rationale_z,
-        "signal_types":    [s.get("type") for s in signals],
-        "computed_at":     datetime.now(timezone.utc).isoformat(),
+        "ticker":               ticker,
+        "score":                score,
+        "action":               action,
+        "action_zh":            score_to_label_zh(score),
+        "zone":                 zone,
+        "regime":               regime,
+        "vp_score":             vp_score,
+        "vp_signal_type":       vp_synthetic_type,   # which VP signal was injected
+        "vp_adjustment":        None,                 # deprecated — VP now in signal pool
+        "staleness_factor":     round(staleness_factor, 2),
+        "signal_count":         {"bullish": len(positive), "bearish": len(negative)},
+        "contributing":         contributions,           # full detail
+        "contributing_signals": contributing_signals,    # compact alias for position_sizing.py
+        "rationale_e":          rationale_e,
+        "rationale_z":          rationale_z,
+        "signal_types":         [s.get("type") for s in signals],
+        "computed_at":          datetime.now(timezone.utc).isoformat(),
     }
 
 

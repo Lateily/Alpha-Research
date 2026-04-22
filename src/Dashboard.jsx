@@ -2416,12 +2416,13 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData, scissorsData }) {
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
   const eqr      = eqrData?.[ticker]  || null;
   const rdcf     = rdcfData?.[ticker] || null;
+  const scissors = scissorsData?.[ticker] || null;
   // Deep Research stocks have no live data files — only AI-generated fields
   const isDynamic = !STOCKS[ticker] && !!allS[ticker];
 
@@ -2727,6 +2728,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
           </div>
         </Card>
       )}
+
+      {/* Profit Scissors / Financial Levers Card */}
+      <ProfitScissors scissors={scissors} L={L} C={C} open={open} toggle={toggle}/>
 
       {/* Reverse DCF Card */}
       <ReverseDCF rdcf={rdcf} L={L} C={C} open={open} toggle={toggle}/>
@@ -5686,6 +5690,110 @@ function MetricBox({ label, value, sub, color, C }) {
   );
 }
 
+/* ── Profit Scissors / Financial Levers ────────────────────────────────────── */
+function ProfitScissors({ scissors, L, C, open, toggle }) {
+  if (!scissors || scissors.error) return null;
+
+  const { rows = [], verdict, summary } = scissors;
+  if (!rows.length) return null;
+
+  const VERDICT_META = {
+    STRONG_POSITIVE_LEVERAGE: { label: L('Strong +Leverage','强正向杠杆'), color: C.green, icon: '↑↑' },
+    POSITIVE_LEVERAGE:        { label: L('+Leverage','正向杠杆'),        color: C.green, icon: '↑'  },
+    WEAK_LEVERAGE:            { label: L('Weak Leverage','弱杠杆'),      color: C.gold,  icon: '↗'  },
+    NEAR_ZERO_LEVERAGE:       { label: L('Flat','近零杠杆'),             color: C.mid,   icon: '→'  },
+    NEGATIVE_LEVERAGE:        { label: L('-Leverage','负向杠杆'),        color: C.red,   icon: '↓'  },
+    INSUFFICIENT_DATA:        { label: L('Insufficient Data','数据不足'), color: C.mid,  icon: '?'  },
+  };
+  const vm = VERDICT_META[verdict] || VERDICT_META.INSUFFICIENT_DATA;
+
+  const fmtRatio = (v) => v == null ? '—' : (
+    <span style={{color: v >= 1.5 ? C.green : v >= 1.0 ? '#1e8c5a' : v >= 0.5 ? C.gold : C.red, fontWeight:700}}>
+      {v.toFixed(2)}×
+    </span>
+  );
+  const fmtGr = (v) => v == null ? <span style={{color:C.mid}}>—</span> : (
+    <span style={{color: v > 0 ? C.green : C.red, fontWeight:600}}>{v > 0 ? '+' : ''}{v.toFixed(1)}%</span>
+  );
+  const fmtPp = (v) => v == null ? <span style={{color:C.mid}}>—</span> : (
+    <span style={{color: v > 0 ? C.green : C.red}}>{v > 0 ? '+' : ''}{v.toFixed(1)}pp</span>
+  );
+
+  const th = {padding:'6px 10px', fontSize:9, fontWeight:700, color:C.mid, textAlign:'right',
+               borderBottom:`1px solid ${C.border}`, whiteSpace:'nowrap'};
+  const td = {padding:'6px 10px', fontSize:10, textAlign:'right', borderBottom:`1px solid ${C.border}40`, fontFamily:"'JetBrains Mono','Courier New',monospace"};
+  const tdL = {...td, textAlign:'left', fontWeight:600, color:C.dark};
+
+  return (
+    <Card
+      title={L('Financial Levers (Profit Scissors)','财务杠杆 (利润剪刀差)')}
+      sub={L('NI/Rev ratio · GM trend · FCF quality','净利/营收比 · 毛利趋势 · FCF质量')}
+      open={open?.scissors !== false}
+      onToggle={toggle ? () => toggle('scissors') : undefined}
+      C={C}
+    >
+      {/* Verdict badge */}
+      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:14, padding:'10px 12px',
+                   background:`${vm.color}10`, border:`1px solid ${vm.color}30`, borderRadius:7}}>
+        <span style={{fontSize:18, lineHeight:1}}>{vm.icon}</span>
+        <div>
+          <div style={{fontWeight:700, color:vm.color, fontSize:12}}>{vm.label}</div>
+          <div style={{fontSize:9, color:C.mid, marginTop:2}}>
+            {summary?.latest_ni_rev_ratio != null && `NI/Rev ${summary.latest_ni_rev_ratio.toFixed(2)}× · `}
+            {summary?.latest_gm_delta_pp != null && `GM ${summary.latest_gm_delta_pp > 0 ? '+' : ''}${summary.latest_gm_delta_pp.toFixed(1)}pp · `}
+            {summary?.latest_rev_gr_pct  != null && `Rev ${summary.latest_rev_gr_pct > 0 ? '+' : ''}${summary.latest_rev_gr_pct.toFixed(1)}%`}
+          </div>
+        </div>
+        <div style={{marginLeft:'auto', fontSize:9, color:C.mid, lineHeight:1.5}}>
+          {L('NI/Rev > 1.0× = operating leverage · < 1.0× = margin compression',
+             'NI/Rev > 1.0× = 正向经营杠杆 · < 1.0× = 利润增速跑输收入')}
+        </div>
+      </div>
+
+      {/* Multi-year table */}
+      <div style={{overflowX:'auto'}}>
+        <table style={{width:'100%', borderCollapse:'collapse', fontSize:10}}>
+          <thead>
+            <tr>
+              <th style={{...th, textAlign:'left'}}>Year</th>
+              <th style={th}>Rev (B)</th>
+              <th style={th}>Rev YoY</th>
+              <th style={th}>NI (B)</th>
+              <th style={th}>NI YoY</th>
+              <th style={{...th, color: C.blue}}>NI/Rev</th>
+              <th style={th}>GM%</th>
+              <th style={{...th, color: C.blue}}>GM Δ</th>
+              <th style={th}>FCF/NI</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i} style={{background: i===0 ? `${C.blue}06` : 'transparent'}}>
+                <td style={{...tdL, fontSize:10}}>{row.year}{i===0 ? ' ★' : ''}</td>
+                <td style={td}>{row.rev_b ?? '—'}</td>
+                <td style={td}>{fmtGr(row.rev_gr_pct)}</td>
+                <td style={td}>{row.ni_b ?? '—'}</td>
+                <td style={td}>{fmtGr(row.ni_gr_pct)}</td>
+                <td style={{...td, fontWeight:700}}>{fmtRatio(row.ni_rev_ratio)}</td>
+                <td style={td}>{row.gm_pct != null ? `${row.gm_pct}%` : '—'}</td>
+                <td style={td}>{fmtPp(row.gm_delta_pp)}</td>
+                <td style={td}>{row.fcf_ni_ratio != null ? `${row.fcf_ni_ratio.toFixed(2)}×` : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Legend */}
+      <div style={{marginTop:10, fontSize:9, color:C.mid, lineHeight:1.7,
+                   padding:'8px 10px', background:C.soft, borderRadius:5}}>
+        {L('NI/Rev ratio = Net Income growth ÷ Revenue growth. Ratio ≥ 1.5× = strong positive operating leverage (Scissors spread widening). Ratio < 1.0× = negative leverage. FCF/NI ≥ 0.7× = high earnings quality.',
+           'NI/Rev比 = 净利润增速÷营收增速。≥1.5×=强正向经营杠杆（剪刀差扩大）；<1.0×=负向杠杆。FCF/NI≥0.7×=高利润质量。')}
+      </div>
+    </Card>
+  );
+}
+
 function ReverseDCF({ rdcf, L, C, open, toggle }) {
   if (!rdcf) return null;
 
@@ -6319,6 +6427,7 @@ export default function Dashboard() {
   const [morningReportLoading, setMorningReportLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const [vpScores, setVpScores] = useState({});   // { ticker: vp_score } from vp_snapshot.json
+  const [scissorsData, setScissorsData] = useState({});  // profit_scissors.json tickers dict
 
   /* Fetch prediction log on mount */
   useEffect(() => {
@@ -6392,6 +6501,15 @@ export default function Dashboard() {
       results.forEach(d => { if (d?.ticker) map[d.ticker] = d; });
       setSignalsData(map);
     });
+  }, []);
+
+  /* Fetch profit scissors data on mount */
+  useEffect(() => {
+    const base = DATA_BASE;
+    fetch(base + 'data/profit_scissors.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.tickers) setScissorsData(d.tickers); })
+      .catch(() => {});
   }, []);
 
   /* Fetch macro stress test data on mount */
@@ -7131,11 +7249,11 @@ export default function Dashboard() {
             }
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
-                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData}/></div>}
+                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData}/></div>}
                 <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>
               </div>
             );
-            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData}/>;
+            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
           })()}
