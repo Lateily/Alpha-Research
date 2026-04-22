@@ -1,6 +1,6 @@
 {
   "ticker": "6160.HK",
-  "generated_at": "2026-04-21T12:00:40.934236+00:00",
+  "generated_at": "2026-04-22T07:19:28.798185+00:00",
   "model_type": "biotech_revenue",
   "market": "HK",
   "error": null,
@@ -13,13 +13,13 @@
     "market": "HK"
   },
   "rev0": 5343032832,
-  "implied_rev_growth": 1.1849,
+  "implied_rev_growth": 1.1783,
   "our_rev_growth": 0.35,
   "profitability_offset": 1,
   "terminal_fcf_margin": 0.25,
-  "delta": -0.8349,
+  "delta": -0.8283,
   "expectation_gap_score": 0.0,
   "signal": "OVERPRICED",
   "net_debt": -3454686208,
-  "market_cap": 284672884736
+  "market_cap": 280616861696
 }

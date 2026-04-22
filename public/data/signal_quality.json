@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-04-21T19:18:34.622537+00:00",
-  "date": "2026-04-21",
+  "generated_at": "2026-04-22T07:19:29.232010+00:00",
+  "date": "2026-04-22",
   "portfolio_summary": {
     "total_attributed_trades": 5,
     "open_positions": 5,
     "closed_unknown": 0,
     "overall_win_rate": 100.0,
-    "avg_pnl": 22.87,
-    "best_position": 36.75,
-    "worst_position": 5.55
+    "avg_pnl": 21.75,
+    "best_position": 33.07,
+    "worst_position": 5.64
   },
   "by_signal": [
     {
@@ -16,9 +16,9 @@
       "count": 3,
       "win_count": 3,
       "win_rate": 100.0,
-      "avg_pnl": 17.31,
-      "best_pnl": 26.93,
-      "worst_pnl": 5.55,
+      "avg_pnl": 17.84,
+      "best_pnl": 30.13,
+      "worst_pnl": 5.64,
       "avg_weight": 18.0,
       "tickers": [
         "300308.SZ",
@@ -31,9 +31,9 @@
       "count": 2,
       "win_count": 2,
       "win_rate": 100.0,
-      "avg_pnl": 31.84,
-      "best_pnl": 36.75,
-      "worst_pnl": 26.93,
+      "avg_pnl": 31.6,
+      "best_pnl": 33.07,
+      "worst_pnl": 30.13,
       "avg_weight": 20.0,
       "tickers": [
         "300308.SZ",
@@ -45,9 +45,9 @@
       "count": 3,
       "win_count": 3,
       "win_rate": 100.0,
-      "avg_pnl": 27.71,
-      "best_pnl": 36.75,
-      "worst_pnl": 19.46,
+      "avg_pnl": 26.99,
+      "best_pnl": 33.07,
+      "worst_pnl": 17.76,
       "avg_weight": 12.0,
       "tickers": [
         "300308.SZ",
@@ -60,9 +60,9 @@
       "count": 2,
       "win_count": 2,
       "win_rate": 100.0,
-      "avg_pnl": 26.29,
-      "best_pnl": 26.93,
-      "worst_pnl": 25.64,
+      "avg_pnl": 26.13,
+      "best_pnl": 30.13,
+      "worst_pnl": 22.13,
       "avg_weight": 15.0,
       "tickers": [
         "300308.SZ",
@@ -74,9 +74,9 @@
       "count": 3,
       "win_count": 3,
       "win_rate": 100.0,
-      "avg_pnl": 27.71,
-      "best_pnl": 36.75,
-      "worst_pnl": 19.46,
+      "avg_pnl": 26.99,
+      "best_pnl": 33.07,
+      "worst_pnl": 17.76,
       "avg_weight": 12.0,
       "tickers": [
         "300308.SZ",
@@ -89,9 +89,9 @@
       "count": 2,
       "win_count": 2,
       "win_rate": 100.0,
-      "avg_pnl": 22.55,
-      "best_pnl": 25.64,
-      "worst_pnl": 19.46,
+      "avg_pnl": 19.95,
+      "best_pnl": 22.13,
+      "worst_pnl": 17.76,
       "avg_weight": 14.0,
       "tickers": [
         "6160.HK",
@@ -103,9 +103,9 @@
       "count": 3,
       "win_count": 3,
       "win_rate": 100.0,
-      "avg_pnl": 22.65,
-      "best_pnl": 36.75,
-      "worst_pnl": 5.55,
+      "avg_pnl": 20.28,
+      "best_pnl": 33.07,
+      "worst_pnl": 5.64,
       "avg_weight": 12.0,
       "tickers": [
         "700.HK",
@@ -118,9 +118,9 @@
       "count": 3,
       "win_count": 3,
       "win_rate": 100.0,
-      "avg_pnl": 22.65,
-      "best_pnl": 36.75,
-      "worst_pnl": 5.55,
+      "avg_pnl": 20.28,
+      "best_pnl": 33.07,
+      "worst_pnl": 5.64,
       "avg_weight": 10.0,
       "tickers": [
         "700.HK",
@@ -134,13 +134,13 @@
       "action": "BUY_WATCH",
       "count": 4,
       "win_rate": 100.0,
-      "avg_pnl": 27.2
+      "avg_pnl": 25.77
     },
     {
       "action": "WATCH",
       "count": 1,
       "win_rate": 100.0,
-      "avg_pnl": 5.55
+      "avg_pnl": 5.64
     }
   ],
   "vp_buckets": [
@@ -148,23 +148,23 @@
       "bucket": "VP 70+",
       "count": 1,
       "win_rate": 100.0,
-      "avg_pnl": 26.93
+      "avg_pnl": 30.13
     },
     {
       "bucket": "VP 60-70",
       "count": 2,
       "win_rate": 100.0,
-      "avg_pnl": 28.11
+      "avg_pnl": 25.41
     },
     {
       "bucket": "VP 50-60",
       "count": 2,
       "win_rate": 100.0,
-      "avg_pnl": 15.6
+      "avg_pnl": 13.88
     }
   ],
   "insights": [
-    "GOLDEN_CROSS best win rate 100% (3/3 trades, avg P&L +17.3%)",
-    "Portfolio: 100% win rate · avg P&L +22.9% across 5 open positions"
+    "GOLDEN_CROSS best win rate 100% (3/3 trades, avg P&L +17.8%)",
+    "Portfolio: 100% win rate · avg P&L +21.8% across 5 open positions"
   ]
 }

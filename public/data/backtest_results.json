@@ -1,12 +1,12 @@
 {
-  "as_of": "2026-04-21",
-  "generated": "2026-04-21T15:41:01.423720",
+  "as_of": "2026-04-22",
+  "generated": "2026-04-22T07:19:29.031158",
   "status": "ok",
   "config": {
     "vp_threshold": 60,
     "min_positions": 1,
     "forward_days": 20,
-    "benchmark": "proxy (300308.SZ, flat)",
+    "benchmark": "proxy (002594.SZ, flat)",
     "risk_free_annual": 0.02
   },
   "summary": {
