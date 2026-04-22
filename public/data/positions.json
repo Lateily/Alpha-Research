@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-04-22T07:19:28.981960",
+  "as_of": "2026-04-22T11:52:56.765649",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -58,7 +58,7 @@
       },
       "vp_at_entry": 79,
       "wrongIf_at_entry": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
-      "weight_pct": 44.28
+      "weight_pct": 43.68
     },
     {
       "ticker": "6160.HK",
@@ -68,14 +68,14 @@
       "currency": "HKD",
       "quantity": 80,
       "avg_cost": 158.632,
-      "current_price": 186.8,
-      "market_value": 14944.0,
+      "current_price": 189.5,
+      "market_value": 15160.0,
       "cost_value": 12690.56,
-      "pnl_abs": 2253.44,
-      "pnl_pct": 17.76,
-      "market_value_cny": 13696.18,
+      "pnl_abs": 2469.44,
+      "pnl_pct": 19.46,
+      "market_value_cny": 13894.14,
       "cost_value_cny": 11630.9,
-      "pnl_abs_cny": 2065.28,
+      "pnl_abs_cny": 2263.24,
       "fx_rate_used": 0.9165,
       "holding_days": 43,
       "as_of": "2026-04-22",
@@ -118,14 +118,14 @@
       "currency": "HKD",
       "quantity": 200,
       "avg_cost": 379.512,
-      "current_price": 505,
-      "market_value": 101000,
+      "current_price": 519,
+      "market_value": 103800,
       "cost_value": 75902.4,
-      "pnl_abs": 25097.6,
-      "pnl_pct": 33.07,
-      "market_value_cny": 92566.5,
+      "pnl_abs": 27897.6,
+      "pnl_pct": 36.75,
+      "market_value_cny": 95132.7,
       "cost_value_cny": 69564.55,
-      "pnl_abs_cny": 23001.95,
+      "pnl_abs_cny": 25568.15,
       "fx_rate_used": 0.9165,
       "holding_days": 36,
       "as_of": "2026-04-22",
@@ -163,7 +163,7 @@
       },
       "vp_at_entry": 64,
       "wrongIf_at_entry": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
-      "weight_pct": 30.82
+      "weight_pct": 31.24
     },
     {
       "ticker": "9999.HK",
@@ -173,14 +173,14 @@
       "currency": "HKD",
       "quantity": 300,
       "avg_cost": 145.58,
-      "current_price": 177.8,
-      "market_value": 53340.0,
+      "current_price": 182.9,
+      "market_value": 54870.0,
       "cost_value": 43674.0,
-      "pnl_abs": 9666.0,
-      "pnl_pct": 22.13,
-      "market_value_cny": 48886.11,
+      "pnl_abs": 11196.0,
+      "pnl_pct": 25.64,
+      "market_value_cny": 50288.35,
       "cost_value_cny": 40027.22,
-      "pnl_abs_cny": 8858.89,
+      "pnl_abs_cny": 10261.13,
       "fx_rate_used": 0.9165,
       "holding_days": 29,
       "as_of": "2026-04-22",
@@ -213,7 +213,7 @@
       },
       "vp_at_entry": 58,
       "wrongIf_at_entry": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
-      "weight_pct": 16.28
+      "weight_pct": 16.51
     },
     {
       "ticker": "002594.SZ",
@@ -258,16 +258,16 @@
       },
       "vp_at_entry": 52,
       "wrongIf_at_entry": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
-      "weight_pct": 4.06
+      "weight_pct": 4.0
     }
   ],
   "summary": {
-    "total_value_cny": 300336.19,
+    "total_value_cny": 304502.6,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 65366.48,
-    "total_pnl_pct": 27.82,
-    "total_value": 300336.19,
+    "total_pnl_cny": 69532.89,
+    "total_pnl_pct": 29.59,
+    "total_value": 304502.6,
     "total_cost": 234969.71,
-    "total_pnl": 65366.48
+    "total_pnl": 69532.89
   }
 }

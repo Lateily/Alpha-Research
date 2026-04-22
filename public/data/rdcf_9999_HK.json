@@ -1,24 +1,24 @@
 {
   "ticker": "9999.HK",
-  "generated_at": "2026-04-22T07:19:28.796422+00:00",
+  "generated_at": "2026-04-22T11:52:56.567275+00:00",
   "model_type": "standard_fcf",
   "market": "HK",
   "error": null,
   "wacc_detail": {
     "rf": 0.038,
     "erp": 0.0725,
-    "beta": 0.9829,
+    "beta": 0.9842,
     "beta_source": "yfinance_60d",
-    "wacc": 0.1093,
+    "wacc": 0.1094,
     "market": "HK"
   },
   "fcf0": 33487843328,
-  "implied_fcf_growth": 0.0264,
+  "implied_fcf_growth": 0.0263,
   "our_fcf_growth": 0.15,
-  "delta": 0.1236,
+  "delta": 0.1237,
   "expectation_gap_score": 77.5,
   "signal": "UNDERPRICED",
   "hyper_growth": false,
   "net_debt": -157510568448,
-  "market_cap": 567295934464
+  "market_cap": 566657810432
 }

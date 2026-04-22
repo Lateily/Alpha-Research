@@ -1,1 +1,220 @@
-{"date": "2026-04-22", "snapshots": [{"ticker": "300308.SZ", "date": "2026-04-22", "vp_score": 79, "expectation_gap": 72, "fundamental_accel": 80, "narrative_shift": 65, "low_coverage": 55, "catalyst_proximity": 85, "close": 886.62, "volume": 29438300, "source": "deepresearch", "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%", "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%"}, {"ticker": "700.HK", "date": "2026-04-22", "vp_score": 64, "expectation_gap": 68, "fundamental_accel": 70, "narrative_shift": 75, "low_coverage": 40, "catalyst_proximity": 60, "close": 505, "volume": 1864825700, "source": "deepresearch", "wrongIf_e": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply", "wrongIf_z": "游戏监管扩大或宏观消费急剧恶化"}, {"ticker": "9999.HK", "date": "2026-04-22", "vp_score": 58, "expectation_gap": 62, "fundamental_accel": 55, "narrative_shift": 50, "low_coverage": 45, "catalyst_proximity": 65, "close": 177.8, "volume": 268237200, "source": "deepresearch", "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025", "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万"}, {"ticker": "6160.HK", "date": "2026-04-22", "vp_score": 65, "expectation_gap": 72, "fundamental_accel": 65, "narrative_shift": 68, "low_coverage": 45, "catalyst_proximity": 70, "close": 186.8, "volume": 163749800, "source": "deepresearch", "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS", "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优"}, {"ticker": "002594.SZ", "date": "2026-04-22", "vp_score": 52, "expectation_gap": 55, "fundamental_accel": 60, "narrative_shift": 45, "low_coverage": 35, "catalyst_proximity": 50, "close": 101.62, "volume": 34373300, "source": "deepresearch", "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules", "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发"}]}
+{
+  "date": "2026-04-22",
+  "snapshots": [
+    {
+      "ticker": "300308.SZ",
+      "date": "2026-04-22",
+      "vp_score": 53,
+      "expectation_gap": 0,
+      "fundamental_accel": 79,
+      "narrative_shift": 65,
+      "low_coverage": 55,
+      "catalyst_proximity": 85,
+      "close": 886.62,
+      "volume": 2943829300,
+      "source": "vp_engine",
+      "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
+      "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%",
+      "vp_prev": 79,
+      "fa_detail": {
+        "score": 79,
+        "year_latest": "2025-12-31",
+        "year_prior": "2024-12-31",
+        "note": "NI/Rev=1.81x  Rev+60%  NI+109% | GM=42.0% (Δ+8.2pp) | FCF/NI=0.75x  FCF=8.1B",
+        "components": {
+          "ni_rev_score": 78,
+          "gm_trend_score": 90,
+          "fcf_quality": 72
+        },
+        "raw": {
+          "rev_gr": 60.3,
+          "ni_gr": 108.8,
+          "ni_rev_ratio": 1.81,
+          "gm_pct": 42.0,
+          "gm_delta_pp": 8.2,
+          "fcf_ni_ratio": 0.75
+        }
+      },
+      "eg_detail": {
+        "score": 0,
+        "source": "rdcf_live",
+        "signal": "OVERPRICED",
+        "implied_growth": 119.2,
+        "hyper_growth": true
+      },
+      "engine_run_at": "2026-04-22T11:52:56.896034+00:00"
+    },
+    {
+      "ticker": "700.HK",
+      "date": "2026-04-22",
+      "vp_score": 51,
+      "expectation_gap": 19,
+      "fundamental_accel": 66,
+      "narrative_shift": 75,
+      "low_coverage": 40,
+      "catalyst_proximity": 60,
+      "close": 519,
+      "volume": -289,
+      "source": "vp_engine",
+      "wrongIf_e": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
+      "wrongIf_z": "游戏监管扩大或宏观消费急剧恶化",
+      "vp_prev": 64,
+      "fa_detail": {
+        "score": 66,
+        "year_latest": "2025-12-31",
+        "year_prior": "2024-12-31",
+        "note": "NI/Rev=1.14x  Rev+14%  NI+16% | GM=56.2% (Δ+3.3pp) | FCF/NI=0.85x  FCF=190.2B",
+        "components": {
+          "ni_rev_score": 65,
+          "gm_trend_score": 62,
+          "fcf_quality": 72
+        },
+        "raw": {
+          "rev_gr": 13.9,
+          "ni_gr": 15.9,
+          "ni_rev_ratio": 1.14,
+          "gm_pct": 56.2,
+          "gm_delta_pp": 3.3,
+          "fcf_ni_ratio": 0.85
+        }
+      },
+      "eg_detail": {
+        "score": 19,
+        "source": "rdcf_live",
+        "signal": "OVERPRICED",
+        "implied_growth": 31.9,
+        "hyper_growth": false
+      },
+      "engine_run_at": "2026-04-22T11:52:56.896741+00:00"
+    },
+    {
+      "ticker": "9999.HK",
+      "date": "2026-04-22",
+      "vp_score": 64,
+      "expectation_gap": 77,
+      "fundamental_accel": 76,
+      "narrative_shift": 50,
+      "low_coverage": 45,
+      "catalyst_proximity": 65,
+      "close": 182.9,
+      "volume": -289,
+      "source": "vp_engine",
+      "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
+      "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万",
+      "vp_prev": 58,
+      "fa_detail": {
+        "score": 76,
+        "year_latest": "2025-12-31",
+        "year_prior": "2024-12-31",
+        "note": "NI/Rev=1.96x  Rev+7%  NI+14% | GM=64.3% (Δ+1.8pp) | FCF/NI=1.44x  FCF=48.7B",
+        "components": {
+          "ni_rev_score": 78,
+          "gm_trend_score": 62,
+          "fcf_quality": 88
+        },
+        "raw": {
+          "rev_gr": 7.0,
+          "ni_gr": 13.7,
+          "ni_rev_ratio": 1.96,
+          "gm_pct": 64.3,
+          "gm_delta_pp": 1.8,
+          "fcf_ni_ratio": 1.44
+        }
+      },
+      "eg_detail": {
+        "score": 77,
+        "source": "rdcf_live",
+        "signal": "UNDERPRICED",
+        "implied_growth": 2.6,
+        "hyper_growth": false
+      },
+      "engine_run_at": "2026-04-22T11:52:56.897429+00:00"
+    },
+    {
+      "ticker": "6160.HK",
+      "date": "2026-04-22",
+      "vp_score": 45,
+      "expectation_gap": 0,
+      "fundamental_accel": 57,
+      "narrative_shift": 68,
+      "low_coverage": 45,
+      "catalyst_proximity": 70,
+      "close": 189.5,
+      "volume": -142,
+      "source": "vp_engine",
+      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
+      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优",
+      "vp_prev": 65,
+      "fa_detail": {
+        "score": 57,
+        "year_latest": "2025-12-31",
+        "year_prior": "2024-12-31",
+        "note": "NI turnaround or persistent loss | GM=87.5% (Δ+3.1pp) | FCF/NI=3.00x  FCF=0.9B",
+        "components": {
+          "ni_rev_score": 30,
+          "gm_trend_score": 62,
+          "fcf_quality": 88
+        },
+        "raw": {
+          "rev_gr": 40.2,
+          "ni_gr": null,
+          "ni_rev_ratio": null,
+          "gm_pct": 87.5,
+          "gm_delta_pp": 3.1,
+          "fcf_ni_ratio": 3.0
+        }
+      },
+      "eg_detail": {
+        "score": 0,
+        "source": "rdcf_live",
+        "signal": "OVERPRICED",
+        "implied_growth": 117.8,
+        "hyper_growth": false
+      },
+      "engine_run_at": "2026-04-22T11:52:56.898056+00:00"
+    },
+    {
+      "ticker": "002594.SZ",
+      "date": "2026-04-22",
+      "vp_score": 52,
+      "expectation_gap": 98,
+      "fundamental_accel": 24,
+      "narrative_shift": 45,
+      "low_coverage": 35,
+      "catalyst_proximity": 50,
+      "close": 101.62,
+      "volume": 3437333700,
+      "source": "vp_engine",
+      "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
+      "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发",
+      "vp_prev": 52,
+      "fa_detail": {
+        "score": 24,
+        "year_latest": "2025-12-31",
+        "year_prior": "2024-12-31",
+        "note": "NI/Rev=-5.49x  Rev+3%  NI+-19% | GM=17.7% (Δ-1.7pp) | FCF/NI=-2.99x  FCF=-97.7B",
+        "components": {
+          "ni_rev_score": 20,
+          "gm_trend_score": 35,
+          "fcf_quality": 20
+        },
+        "raw": {
+          "rev_gr": 3.5,
+          "ni_gr": -19.0,
+          "ni_rev_ratio": -5.49,
+          "gm_pct": 17.7,
+          "gm_delta_pp": -1.7,
+          "fcf_ni_ratio": -2.99
+        }
+      },
+      "eg_detail": {
+        "score": 98,
+        "source": "rdcf_live",
+        "signal": "UNDERPRICED",
+        "implied_growth": -14.2,
+        "hyper_growth": false
+      },
+      "engine_run_at": "2026-04-22T11:52:56.898685+00:00"
+    }
+  ]
+}
