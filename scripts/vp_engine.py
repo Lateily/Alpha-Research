@@ -414,8 +414,30 @@ def main():
     with open(DATA_DIR / "profit_scissors.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2, default=str)
 
-    print(f"\n[vp_engine] Done → vp_snapshot.json + profit_scissors.json")
-    print(f"  Updated {len(updated)} ticker(s)")
+    # ── Accumulate vp_history.json (one row per day, for backtest point-in-time) ──
+    # Format: { "2026-04-22": { "300308.SZ": 53, "700.HK": 51, ... } }
+    from datetime import timedelta
+    today_str    = datetime.now().strftime("%Y-%m-%d")
+    vp_hist_path = DATA_DIR / "vp_history.json"
+    vp_hist: dict = {}
+    if vp_hist_path.exists():
+        try:
+            vp_hist = json.loads(vp_hist_path.read_text(encoding="utf-8"))
+        except Exception:
+            vp_hist = {}
+
+    today_row = {snap["ticker"]: snap["vp_score"] for snap in updated if snap.get("ticker")}
+    vp_hist[today_str] = today_row
+
+    # Keep only last 365 days
+    cutoff  = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+    vp_hist = {d: v for d, v in sorted(vp_hist.items()) if d >= cutoff}
+
+    with open(vp_hist_path, "w", encoding="utf-8") as f:
+        json.dump(vp_hist, f, ensure_ascii=False, indent=2)
+
+    print(f"\n[vp_engine] Done → vp_snapshot.json + profit_scissors.json + vp_history.json")
+    print(f"  Updated {len(updated)} ticker(s)  |  VP history: {len(vp_hist)} days accumulated")
 
 
 if __name__ == "__main__":
