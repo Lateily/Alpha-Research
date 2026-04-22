@@ -32,18 +32,21 @@ const LIGHT = {
   card:   '#FFFFFF',   // white card surface
   border: '#DCE5F3',   // very subtle border
   soft:   '#F0F5FC',   // hover row / stripe / input bg
+  orange: '#D06A00',   // Capital IQ accent orange
 };
+// Jason: Bloomberg Terminal palette — deep navy bg, sharp contrast, signature orange accent
 const DARK = {
-  blue:   '#5B9CF6',
-  gold:   '#FBC02D',
-  green:  '#34D399',
-  red:    '#F87171',
-  dark:   '#DCE8F8',
-  mid:    '#6B87A8',
-  bg:     '#07111F',
-  card:   '#0E1C33',
-  border: '#1A2E4A',
-  soft:   '#0B1628',
+  blue:   '#4B9EFF',   // secondary action blue
+  gold:   '#FFB800',   // amber warning / gold
+  green:  '#00D97E',   // up tick / success
+  red:    '#FF4757',   // down tick / danger
+  dark:   '#E2EEF9',   // primary text — crisp blue-white
+  mid:    '#4A6680',   // secondary text / muted labels
+  bg:     '#050D1A',   // Bloomberg black-navy — deep background
+  card:   '#091526',   // card surface
+  border: '#102038',   // subtle structural border
+  soft:   '#0D1E35',   // hover row / stripe
+  orange: '#FF8C00',   // Bloomberg signature orange — active/accent
 };
 
 /* ── SHARED STYLE TOKENS ────────────────────────────────────────────────────── */
@@ -423,10 +426,11 @@ const Pill = ({ n, label, c, C }) => (
   </div>
 );
 
+// Jason: Bloomberg/CIQ-style Card — terminal aesthetic with accent left-bar on header
 const Card = ({ title, sub, open, onToggle, children, C }) => (
   <div style={{
     background: C.card,
-    borderRadius: 12,
+    borderRadius: 10,
     marginBottom: 12,
     overflow: 'hidden',
     boxShadow: SHADOW,
@@ -436,13 +440,19 @@ const Card = ({ title, sub, open, onToggle, children, C }) => (
       ...S.cardHd,
       borderBottom: open !== false ? `1px solid ${C.border}` : 'none',
       cursor: onToggle ? 'pointer' : 'default',
+      // Bloomberg: subtle left accent bar on card headers
+      borderLeft: `3px solid ${C.orange || C.blue}`,
+      paddingLeft: 13,
     }} onClick={onToggle}>
       <div>
-        <div style={{fontSize:13, fontWeight:600, color:C.dark}}>{title}</div>
-        {sub && <div style={{fontSize:10, color:C.mid, marginTop:2}}>{sub}</div>}
+        <div style={{fontSize:12, fontWeight:700, color:C.dark, letterSpacing:'0.01em',
+                     textTransform:'uppercase', fontFamily:MONO}}>{title}</div>
+        {sub && <div style={{fontSize:9, color:C.mid, marginTop:3, fontWeight:400,
+                             letterSpacing:'0.01em', textTransform:'none',
+                             fontFamily:"'Inter',system-ui,sans-serif"}}>{sub}</div>}
       </div>
       {onToggle && (
-        <ChevronDown size={15} style={{
+        <ChevronDown size={14} style={{
           color:C.mid, flexShrink:0,
           transform:open?'rotate(180deg)':'',
           transition:'transform .2s',
@@ -455,28 +465,34 @@ const Card = ({ title, sub, open, onToggle, children, C }) => (
   </div>
 );
 
+// Jason: Bloomberg-style VPRing — orange for high-conviction, gradient track, grade label
 const VPRing = ({ score, sz=90, C }) => {
   const r = sz * 0.40, circ = 2 * Math.PI * r, cx = sz / 2;
-  const c = score >= 75 ? C.green : score >= 55 ? C.blue : score >= 40 ? C.gold : C.red;
+  // Bloomberg conviction colors: high = orange/green, mid = gold, low = red
+  const c = score >= 75 ? (C.orange || C.green) : score >= 55 ? C.gold : score >= 40 ? C.mid : C.red;
   const filled = (score / 100) * circ;
   const label = score >= 75 ? 'HIGH' : score >= 55 ? 'MED' : 'LOW';
   return (
     <svg width={sz} height={sz} style={{flexShrink:0}}>
-      {/* Track */}
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke={`${c}18`} strokeWidth={sz*0.08}/>
+      {/* Track (dimmed) */}
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={`${c}18`} strokeWidth={sz*0.07}/>
+      {/* Background track */}
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={`${c}10`} strokeWidth={sz*0.07}
+        strokeDasharray={`${circ} 0`}/>
       {/* Progress arc */}
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke={c} strokeWidth={sz*0.08}
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={c} strokeWidth={sz*0.07}
         strokeDasharray={`${filled} ${circ - filled}`}
         strokeLinecap="round"
         style={{transform:'rotate(-90deg)', transformOrigin:`${cx}px ${cx}px`,
-                transition:'stroke-dasharray 0.6s cubic-bezier(.4,0,.2,1)'}}/>
+                transition:'stroke-dasharray 0.6s cubic-bezier(.4,0,.2,1)',
+                filter: score >= 75 ? `drop-shadow(0 0 ${sz*0.05}px ${c}80)` : 'none'}}/>
       {/* Score number */}
       <text x={cx} y={cx - sz*0.04} textAnchor="middle" dominantBaseline="middle"
-        style={{fontSize:sz*0.30, fontWeight:800, fill:c, fontFamily:MONO}}>{score}</text>
-      {/* Label */}
-      <text x={cx} y={cx + sz*0.25} textAnchor="middle"
-        style={{fontSize:sz*0.13, fontWeight:600, fill:c, opacity:0.75, fontFamily:MONO,
-                letterSpacing:'0.06em', textTransform:'uppercase'}}>{label}</text>
+        style={{fontSize:sz*0.28, fontWeight:900, fill:c, fontFamily:MONO}}>{score}</text>
+      {/* Grade label */}
+      <text x={cx} y={cx + sz*0.26} textAnchor="middle"
+        style={{fontSize:sz*0.12, fontWeight:800, fill:c, opacity:0.85, fontFamily:MONO,
+                letterSpacing:'0.08em', textTransform:'uppercase'}}>{label}</text>
     </svg>
   );
 };
@@ -1768,8 +1784,104 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
     ...SCANNER.funnel.slice(1),
   ] : SCANNER.funnel;
 
+  // Jason: Market Pulse ticker items — macro + portfolio indicators
+  const PULSE_ITEMS = [
+    ...MACRO.map(m => ({
+      key: m.name,
+      val: m.val,
+      chg: m.chg,
+      up: m.trend === 'up',
+      dn: m.trend === 'down',
+    })),
+    { key:'PORTFOLIO', val:'5 POS', chg:'82% NET', up:true, dn:false },
+    { key:'REGIME',    val:regimeData?.regime_label || 'RISK-ON', chg:'', up:true, dn:false },
+  ];
+
   return (
     <div>
+      {/* Jason: Bloomberg Market Pulse Ticker Bar ─────────────────────── */}
+      <div style={{
+        background: C.card,
+        border: `1px solid ${C.border}`,
+        borderRadius: 8,
+        marginBottom: 12,
+        overflow: 'hidden',
+        height: 32,
+        display: 'flex',
+        alignItems: 'center',
+      }}>
+        {/* MARKET label */}
+        <div style={{
+          padding: '0 12px',
+          borderRight: `1px solid ${C.border}`,
+          height: '100%',
+          display: 'flex', alignItems: 'center',
+          background: C.orange ? `${C.orange}18` : `${C.blue}18`,
+          flexShrink: 0,
+        }}>
+          <span style={{
+            fontSize: 9, fontWeight: 800, fontFamily: MONO,
+            color: C.orange || C.blue, letterSpacing: '0.1em',
+          }}>MARKET</span>
+        </div>
+
+        {/* Scrolling ticker */}
+        <div style={{flex:1, overflow:'hidden', position:'relative'}}>
+          <div className="ar-ticker-track" style={{
+            display: 'flex', alignItems: 'center', gap: 0,
+            animation: 'ticker-scroll 40s linear infinite',
+            width: 'max-content',
+          }}>
+            {/* Duplicate items for seamless loop */}
+            {[...PULSE_ITEMS, ...PULSE_ITEMS].map((item, i) => {
+              const color = item.up ? C.green : item.dn ? C.red : C.mid;
+              return (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '0 20px',
+                  borderRight: `1px solid ${C.border}`,
+                  height: 32,
+                  flexShrink: 0,
+                }}>
+                  <span style={{fontSize:9, color:C.mid, fontFamily:MONO,
+                                letterSpacing:'0.05em', fontWeight:600}}>
+                    {item.key}
+                  </span>
+                  <span style={{fontSize:11, fontWeight:700, fontFamily:MONO, color:C.dark}}>
+                    {item.val}
+                  </span>
+                  {item.chg && (
+                    <span style={{fontSize:9, fontWeight:600, fontFamily:MONO, color}}>
+                      {item.chg}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Timestamp */}
+        <div style={{
+          padding: '0 12px',
+          borderLeft: `1px solid ${C.border}`,
+          flexShrink: 0,
+          display: 'flex', alignItems: 'center', gap: 5,
+        }}>
+          <div style={{width:5, height:5, borderRadius:'50%',
+            background: (liveData?._meta?.fetched_at &&
+              Math.abs(Date.now()-new Date(liveData._meta.fetched_at))/3600000 < 30)
+              ? C.green : C.gold,
+            animation:'blink 2s ease-in-out infinite',
+          }}/>
+          <span style={{fontSize:9, fontFamily:MONO, color:C.mid}}>
+            {liveData?._meta?.fetched_at
+              ? new Date(liveData._meta.fetched_at).toLocaleString('en-HK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
+              : L('AWAITING SYNC','等待同步')}
+          </span>
+        </div>
+      </div>
+
       {/* ── Live Portfolio Snapshot ─────────────────────────────────────── */}
       <Card title={L('Live Portfolio Snapshot','持仓实时行情')} sub={L('Focus stocks · prices from last GitHub Actions sync','持仓股票 · 来自 GitHub Actions 定时抓取')} open={open.liveSnapshot !== false} onToggle={()=>toggle('liveSnapshot')} C={C}>
         {/* Freshness bar */}
@@ -1787,14 +1899,23 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
           <span style={{fontSize:9, color:C.mid}}>{L('Auto-sync: 08:30 & 16:30 HKT weekdays','自动同步: 工作日 08:30 & 16:30 港时')}</span>
         </div>
 
-        {/* Column headers */}
-        <div style={{display:'flex', padding:'4px 0', borderBottom:`1px solid ${C.border}`, marginBottom:4}}>
-          <span style={{flex:'1 1 130px', fontSize:9, color:C.mid, fontWeight:600}}>{L('STOCK','股票')}</span>
-          <span style={{width:72, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>{L('PRICE','价格')}</span>
-          <span style={{width:60, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>{L('CHG%','涨跌%')}</span>
-          <span style={{width:40, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>VP</span>
-          <span style={{width:54, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>RSI</span>
-          <span style={{width:60, textAlign:'right', fontSize:9, color:C.mid, fontWeight:600}}>{L('VOL/AVG','量比')}</span>
+        {/* Jason: Bloomberg-style column headers with tabular alignment */}
+        <div style={{display:'flex', padding:'5px 8px', borderBottom:`1px solid ${C.border}`,
+                     marginBottom:2, background:C.soft, borderRadius:'6px 6px 0 0'}}>
+          <span style={{flex:'1 1 130px', fontSize:8, color:C.mid, fontWeight:700,
+                        letterSpacing:'0.08em', textTransform:'uppercase'}}>{L('STOCK','股票')}</span>
+          <span style={{width:76, textAlign:'right', fontSize:8, color:C.mid, fontWeight:700,
+                        letterSpacing:'0.08em', textTransform:'uppercase'}}>{L('PRICE','价格')}</span>
+          <span style={{width:66, textAlign:'right', fontSize:8, color:C.mid, fontWeight:700,
+                        letterSpacing:'0.08em', textTransform:'uppercase'}}>{L('CHG%','涨跌%')}</span>
+          <span style={{width:54, textAlign:'right', fontSize:8, color:C.mid, fontWeight:700,
+                        letterSpacing:'0.08em', textTransform:'uppercase'}}>VP</span>
+          <span style={{width:50, textAlign:'right', fontSize:8, color:C.mid, fontWeight:700,
+                        letterSpacing:'0.08em', textTransform:'uppercase'}}>RSI</span>
+          <span style={{width:56, textAlign:'right', fontSize:8, color:C.mid, fontWeight:700,
+                        letterSpacing:'0.08em', textTransform:'uppercase'}}>{L('VOL×','量比')}</span>
+          <span style={{width:62, textAlign:'right', fontSize:8, color:C.mid, fontWeight:700,
+                        letterSpacing:'0.08em', textTransform:'uppercase'}}>{L('SIGNAL','信号')}</span>
         </div>
 
         {FOCUS.map((tk, i) => {
@@ -1807,33 +1928,89 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
           const ccy  = isHK ? 'HK$' : '¥';
           const chgColor = chg > 0 ? C.green : chg < 0 ? C.red : C.mid;
           const rsiColor = rsi > 70 ? C.red : rsi < 30 ? C.green : C.mid;
+          // Jason: Bloomberg-style dense stock row with VP mini-bar + signal badge
+          const vpColor = tk.vp >= 70 ? C.green : tk.vp >= 50 ? C.gold : C.red;
+          const sig = signalsData?.[tk.id];
+          const sigLabel = sig?.swing_signal || sig?.overall_signal || null;
+          const sigColor = sigLabel?.includes('BUY') ? C.green
+                         : sigLabel?.includes('SELL')||sigLabel?.includes('EXIT') ? C.red : C.gold;
           return (
-            <div key={i} style={{display:'flex', alignItems:'center', padding:'7px 0',
-              borderBottom: i < FOCUS.length-1 ? `1px solid ${C.border}` : 'none'}}>
+            <div key={i} style={{
+              display:'flex', alignItems:'center', padding:'6px 8px',
+              borderRadius: 6,
+              borderBottom: i < FOCUS.length-1 ? `1px solid ${C.border}` : 'none',
+              background: i % 2 === 0 ? 'transparent' : `${C.soft}80`,
+              transition: 'background .12s',
+              cursor: 'pointer',
+            }}
+              onMouseEnter={e=>e.currentTarget.style.background=C.soft}
+              onMouseLeave={e=>e.currentTarget.style.background= i%2===0?'transparent':`${C.soft}80`}
+            >
+              {/* Stock name + ticker */}
               <div style={{flex:'1 1 130px'}}>
                 <div style={{fontSize:11, fontWeight:700, color:C.dark}}>{tk.name}</div>
-                <div style={{fontSize:9, color:C.mid}}>{tk.id} · <span style={{color:C.blue}}>{tk.sector}</span></div>
+                <div style={{fontSize:9, color:C.mid, fontFamily:MONO}}>
+                  {tk.id} · <span style={{color:C.orange||C.blue}}>{tk.sector}</span>
+                </div>
               </div>
-              <div style={{width:72, textAlign:'right', fontSize:13, fontWeight:700, color:C.dark, fontFamily:'JetBrains Mono,monospace'}}>
+
+              {/* Price */}
+              <div style={{width:76, textAlign:'right', fontSize:13, fontWeight:700,
+                           color:C.dark, fontFamily:MONO, letterSpacing:'-0.01em'}}>
                 {px != null ? `${ccy}${px >= 100 ? px.toFixed(0) : px.toFixed(2)}` : '—'}
               </div>
-              <div style={{width:60, textAlign:'right'}}>
-                <span style={{fontSize:11, fontWeight:600, color:chgColor}}>
-                  {chg != null ? `${chg>0?'+':''}${chg.toFixed(2)}%` : '—'}
-                </span>
+
+              {/* Change % — Bloomberg: styled pill */}
+              <div style={{width:66, textAlign:'right'}}>
+                {chg != null ? (
+                  <span style={{
+                    fontSize:10, fontWeight:700, fontFamily:MONO,
+                    padding:'2px 6px', borderRadius:4,
+                    background:`${chgColor}18`, color:chgColor,
+                    display:'inline-block',
+                  }}>
+                    {chg>0?'+':''}{chg.toFixed(2)}%
+                  </span>
+                ) : <span style={{fontSize:10, color:C.mid}}>—</span>}
               </div>
-              <div style={{width:40, textAlign:'right'}}>
-                <span style={{fontSize:10, fontWeight:600, color:C.blue}}>{tk.vp}</span>
-              </div>
+
+              {/* VP Score + mini bar */}
               <div style={{width:54, textAlign:'right'}}>
-                <span style={{fontSize:10, color:rsiColor, fontFamily:'JetBrains Mono,monospace'}}>
+                <div style={{fontSize:10, fontWeight:700, color:vpColor, fontFamily:MONO}}>{tk.vp}</div>
+                <div style={{height:3, borderRadius:2, background:`${vpColor}20`, marginTop:2, overflow:'hidden'}}>
+                  <div style={{height:'100%', width:`${tk.vp}%`, background:vpColor, borderRadius:2,
+                               transition:'width 0.6s ease'}}/>
+                </div>
+              </div>
+
+              {/* RSI */}
+              <div style={{width:50, textAlign:'right'}}>
+                <span style={{fontSize:10, color:rsiColor, fontFamily:MONO, fontWeight:600}}>
                   {rsi != null ? rsi.toFixed(1) : '—'}
                 </span>
               </div>
-              <div style={{width:60, textAlign:'right'}}>
-                <span style={{fontSize:10, color: volR > 1.5 ? C.green : volR < 0.5 ? C.red : C.mid, fontFamily:'JetBrains Mono,monospace'}}>
-                  {volR != null ? `${volR.toFixed(2)}x` : '—'}
+
+              {/* Volume ratio */}
+              <div style={{width:56, textAlign:'right'}}>
+                <span style={{fontSize:10, fontFamily:MONO,
+                  color: volR > 1.5 ? C.green : volR < 0.5 ? C.red : C.mid}}>
+                  {volR != null ? `${volR.toFixed(2)}×` : '—'}
                 </span>
+              </div>
+
+              {/* Signal badge */}
+              <div style={{width:62, textAlign:'right'}}>
+                {sigLabel ? (
+                  <span style={{
+                    fontSize:8, fontWeight:800, fontFamily:MONO, letterSpacing:'0.04em',
+                    padding:'2px 5px', borderRadius:3,
+                    background:`${sigColor}18`, color:sigColor,
+                    border:`1px solid ${sigColor}40`,
+                    display:'inline-block',
+                  }}>
+                    {sigLabel.replace('_',' ').split(' ')[0]}
+                  </span>
+                ) : <span style={{fontSize:9, color:C.mid}}>—</span>}
               </div>
             </div>
           );
@@ -6384,9 +6561,63 @@ const DataBadge = ({ liveData, C, L }) => {
 };
 
 /* ── DASHBOARD ────────────────────────────────────────────────────────────── */
+/* ── Jason: Bloomberg-grade Global Styles ───────────────────────────────────
+   Injects: custom scrollbars · @keyframes · tabular-nums · font loading
+   Keep this component mounted at all times (rendered at root of Dashboard).
+────────────────────────────────────────────────────────────────────────── */
+const GlobalStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; padding: 0; }
+
+    /* Bloomberg-style slim scrollbars */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1A3050; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2A4570; }
+    ::-webkit-scrollbar-corner { background: transparent; }
+
+    /* Skeleton shimmer animation */
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Market pulse ticker scroll */
+    @keyframes ticker-scroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Status dot blink */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* Subtle fade-in for cards */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Tabular numbers everywhere — critical for financial data alignment */
+    .ar-num {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    /* Ticker bar — pause on hover */
+    .ar-ticker-track:hover { animation-play-state: paused !important; }
+  `}</style>
+);
+
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
-  const [dark, setDark] = useState(false); // CIQ default: light mode
+  const [dark, setDark] = useState(true); // Jason: Bloomberg default — dark mode
   const [tab, setTab] = useState('scanner');
   const [ticker, setTicker] = useState(null);
   const [search, setSearch] = useState('');
@@ -6428,6 +6659,12 @@ export default function Dashboard() {
   const [chatLoading, setChatLoading] = useState(false);
   const [vpScores, setVpScores] = useState({});   // { ticker: vp_score } from vp_snapshot.json
   const [scissorsData, setScissorsData] = useState({});  // profit_scissors.json tickers dict
+  // Jason: Live clock for Bloomberg-style terminal header
+  const [nowTime, setNowTime] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNowTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   /* Fetch prediction log on mount */
   useEffect(() => {
@@ -7009,6 +7246,7 @@ export default function Dashboard() {
     <div style={{display:'flex', height:'100vh',
                  fontFamily:"'Inter','Noto Sans SC',system-ui,sans-serif",
                  background:C.bg, color:C.dark, overflow:'hidden'}}>
+      <GlobalStyles />
 
       {/* ── SIDEBAR ─────────────────────────────────────────────────────── */}
       <div style={{
@@ -7028,18 +7266,24 @@ export default function Dashboard() {
           justifyContent: collapsed ? 'center' : 'flex-start',
           gap:10, minHeight:60,
         }}>
+          {/* Jason: Bloomberg-style logo mark with orange accent */}
           <div style={{
-            width:32, height:32, borderRadius:8,
-            background:`linear-gradient(135deg, ${C.blue}, #6B9FF8)`,
+            width:32, height:32, borderRadius:6,
+            background: dark
+              ? `linear-gradient(135deg, ${C.orange||'#FF8C00'}, #CC6600)`
+              : `linear-gradient(135deg, ${C.blue}, #6B9FF8)`,
             display:'flex', alignItems:'center', justifyContent:'center',
-            flexShrink:0,
+            flexShrink:0, boxShadow: dark ? `0 0 12px ${C.orange||'#FF8C00'}30` : 'none',
           }}>
-            <span style={{fontSize:13, fontWeight:800, color:'#fff', fontFamily:MONO}}>AR</span>
+            <span style={{fontSize:13, fontWeight:900, color:'#fff', fontFamily:MONO,
+                          letterSpacing:'-0.03em'}}>AR</span>
           </div>
           {!collapsed && (
             <div>
-              <div style={{fontSize:13, fontWeight:700, color:C.dark}}>Alpha Research</div>
-              <div style={{fontSize:9, color:C.mid, marginTop:1}}>v13.0</div>
+              <div style={{fontSize:12, fontWeight:700, color:C.dark, letterSpacing:'0.02em',
+                           textTransform:'uppercase'}}>Alpha Research</div>
+              <div style={{fontSize:9, color:C.orange||C.mid, marginTop:1, fontFamily:MONO,
+                           letterSpacing:'0.05em'}}>TERMINAL v13</div>
             </div>
           )}
         </div>
@@ -7056,13 +7300,19 @@ export default function Dashboard() {
                   padding: collapsed ? '9px 0' : '9px 12px',
                   display:'flex', alignItems:'center',
                   gap:10, border:'none', cursor:'pointer',
-                  borderRadius:8, textAlign:'left',
-                  background: active ? `${C.blue}12` : 'transparent',
-                  color: active ? C.blue : C.mid,
-                  fontSize:12, fontWeight: active ? 600 : 400,
+                  borderRadius: collapsed ? 8 : 6, textAlign:'left',
+                  // Jason: Bloomberg orange left-border active indicator
+                  background: active ? `${C.orange||C.blue}14` : 'transparent',
+                  color: active ? (C.orange||C.blue) : C.mid,
+                  fontSize:12, fontWeight: active ? 700 : 400,
                   transition:'all .15s',
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   whiteSpace:'nowrap',
+                  letterSpacing: active ? '0.01em' : 'normal',
+                  // Inset box-shadow = no layout shift, Bloomberg-style left accent bar
+                  boxShadow: (!collapsed && active)
+                    ? `inset 3px 0 0 ${C.orange||C.blue}`
+                    : 'none',
                 }}
                 onMouseEnter={e=>{ if(!active) e.currentTarget.style.background=C.soft; }}
                 onMouseLeave={e=>{ if(!active) e.currentTarget.style.background='transparent'; }}
@@ -7070,7 +7320,7 @@ export default function Dashboard() {
                 <span style={{
                   width:18, height:18, display:'flex', alignItems:'center',
                   justifyContent:'center', flexShrink:0,
-                  color: active ? C.blue : C.mid,
+                  color: active ? (C.orange||C.blue) : C.mid,
                 }}>{t.icon}</span>
                 {!collapsed && t.label}
               </button>
@@ -7100,6 +7350,62 @@ export default function Dashboard() {
       {/* ── MAIN ────────────────────────────────────────────────────────── */}
       <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden'}}>
 
+        {/* Jason: Bloomberg-style thin terminal status strip */}
+        {dark && (
+          <div style={{
+            background: '#020912',
+            borderBottom: `1px solid ${C.border}`,
+            padding: '3px 20px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexShrink: 0, zIndex: 10,
+          }}>
+            <div style={{display:'flex', alignItems:'center', gap:16}}>
+              <span style={{fontSize:9, fontFamily:MONO, color:C.orange||'#FF8C00',
+                            fontWeight:700, letterSpacing:'0.08em'}}>
+                AR ALPHA RESEARCH TERMINAL
+              </span>
+              <span style={{fontSize:9, fontFamily:MONO, color:C.mid, letterSpacing:'0.04em'}}>
+                {nowTime.toLocaleDateString('en-HK', {weekday:'short', year:'numeric', month:'short', day:'numeric'})}
+              </span>
+            </div>
+            <div style={{display:'flex', alignItems:'center', gap:12}}>
+              {/* Market session indicator */}
+              {(() => {
+                const h = nowTime.getHours(), m = nowTime.getMinutes();
+                const hkt = h; // assumes local = HKT; adjust if needed
+                const isAHKOpen = hkt >= 9 && (hkt < 16 || (hkt === 16 && m === 0));
+                const isSZOpen  = hkt >= 9 && (hkt < 15 || (hkt === 15 && m === 0));
+                return (
+                  <>
+                    <div style={{display:'flex', alignItems:'center', gap:4}}>
+                      <div style={{width:5, height:5, borderRadius:'50%',
+                        background: isSZOpen ? '#00D97E' : C.mid,
+                        animation: isSZOpen ? 'blink 2s ease-in-out infinite' : 'none',
+                      }}/>
+                      <span style={{fontSize:9, fontFamily:MONO, color: isSZOpen ? '#00D97E' : C.mid}}>
+                        A-SH {isSZOpen ? 'OPEN' : 'CLOSED'}
+                      </span>
+                    </div>
+                    <div style={{display:'flex', alignItems:'center', gap:4}}>
+                      <div style={{width:5, height:5, borderRadius:'50%',
+                        background: isAHKOpen ? '#00D97E' : C.mid,
+                        animation: isAHKOpen ? 'blink 2s ease-in-out infinite' : 'none',
+                      }}/>
+                      <span style={{fontSize:9, fontFamily:MONO, color: isAHKOpen ? '#00D97E' : C.mid}}>
+                        HK {isAHKOpen ? 'OPEN' : 'CLOSED'}
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
+              <span style={{fontSize:10, fontFamily:MONO, color:C.orange||'#FF8C00',
+                            fontWeight:700, letterSpacing:'0.06em', minWidth:72, textAlign:'right'}}>
+                {nowTime.toLocaleTimeString('en-HK', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false})} HKT
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Topbar */}
         <div style={{
           background: C.card,
@@ -7107,7 +7413,7 @@ export default function Dashboard() {
           padding:'10px 20px',
           display:'flex', justifyContent:'space-between',
           alignItems:'center', gap:12,
-          boxShadow:'0 1px 6px rgba(50,90,160,0.07)',
+          boxShadow: dark ? 'none' : '0 1px 6px rgba(50,90,160,0.07)',
           zIndex:9, flexShrink:0,
         }}>
           <div style={{position:'relative', display:'flex', gap:6, alignItems:'center', flex:1, maxWidth:480}}>
@@ -7193,6 +7499,21 @@ export default function Dashboard() {
           </div>
           <div style={{display:'flex', gap:8, alignItems:'center'}}>
             <DataBadge liveData={liveData} C={C} L={L}/>
+            {/* Jason: Live clock in topbar — visible in light mode (dark mode has status strip) */}
+            {!dark && (
+              <div style={{
+                padding:'5px 12px', border:`1px solid ${C.border}`,
+                borderRadius:7, background:C.soft,
+                display:'flex', alignItems:'center', gap:6,
+              }}>
+                <div style={{width:5, height:5, borderRadius:'50%', background:C.green,
+                             animation:'blink 2s ease-in-out infinite'}}/>
+                <span style={{fontSize:11, fontFamily:MONO, color:C.dark, fontWeight:600,
+                              letterSpacing:'0.04em'}}>
+                  {nowTime.toLocaleTimeString('en-HK', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false})} HKT
+                </span>
+              </div>
+            )}
             <button onClick={()=>setDark(!dark)} style={{padding:'7px 9px', border:`1.5px solid ${C.border}`, background:'transparent', color:C.mid, cursor:'pointer', borderRadius:8, display:'flex', alignItems:'center', transition:'all .15s'}}
               onMouseEnter={e=>{e.currentTarget.style.background=C.soft;}}
               onMouseLeave={e=>{e.currentTarget.style.background='transparent';}}>
@@ -7202,7 +7523,7 @@ export default function Dashboard() {
               {['en','zh'].map(l=>(
                 <button key={l} onClick={()=>setLang(l)} style={{
                   padding:'5px 11px', border:'none',
-                  background: lang===l ? C.blue : 'transparent',
+                  background: lang===l ? (C.orange||C.blue) : 'transparent',
                   color: lang===l ? '#fff' : C.mid,
                   borderRadius:6, cursor:'pointer', fontSize:11, fontWeight:600,
                   transition:'all .15s',
@@ -7213,7 +7534,7 @@ export default function Dashboard() {
         </div>
 
         {/* Content area */}
-        <div style={{flex:1, overflowY:'auto', padding:'16px 20px', background:C.bg}}>
+        <div style={{flex:1, overflowY:'auto', padding:`14px 20px ${dark?'36px':'14px'} 20px`, background:C.bg}}>
           {tab==='desk'     && <TradingDesk L={L} lk={lk} C={C}/>}
           {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK} signalsData={signalsData} vpScores={vpScores}/>}
           {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
@@ -7263,6 +7584,34 @@ export default function Dashboard() {
           {tab==='system'   && <SystemTab L={L} C={C}/>}
         </div>
       </div>
+
+      {/* Jason: Bloomberg-style bottom statusbar */}
+      {dark && (
+        <div style={{
+          position:'fixed', bottom:0, left: collapsed ? 56 : 200,
+          right:0, height:22, zIndex:100,
+          background:'#020912',
+          borderTop:`1px solid ${C.border}`,
+          display:'flex', alignItems:'center',
+          padding:'0 16px', gap:20,
+          transition:'left .25s cubic-bezier(.4,0,.2,1)',
+        }}>
+          <span style={{fontSize:8, fontFamily:MONO, color:C.orange||C.mid, fontWeight:700,
+                        letterSpacing:'0.08em'}}>
+            AR TERMINAL
+          </span>
+          <span style={{fontSize:8, fontFamily:MONO, color:C.mid, letterSpacing:'0.04em'}}>
+            {L('Evidence-based · Not investment advice',
+               '基于证据 · 不构成投资建议')}
+          </span>
+          <span style={{marginLeft:'auto', fontSize:8, fontFamily:MONO, color:C.mid}}>
+            AUTO-SYNC 08:30 & 16:30 HKT
+          </span>
+          <span style={{fontSize:8, fontFamily:MONO, color:C.mid}}>
+            FOCUS: 5 STOCKS · A+HK
+          </span>
+        </div>
+      )}
 
       {/* Article Chat overlay — fixed right panel */}
       {selectedArticle && (
