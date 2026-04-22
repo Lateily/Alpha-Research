@@ -11,28 +11,6 @@ from pathlib import Path
 
 DATA = Path("public/data")
 
-
-def _load_safe_ids():
-    """
-    Return list of safe_id strings (e.g. '300308_SZ') derived from watchlist.json.
-    Falls back to hardcoded list on any failure.
-    """
-    wl_path = DATA / "watchlist.json"
-    try:
-        wl = json.loads(wl_path.read_text(encoding="utf-8"))
-        tickers = list(wl.get("tickers", {}).keys())
-        if not tickers:
-            raise ValueError("empty")
-        ids = [tk.replace(".", "_") for tk in tickers]
-        print(f"[verify] watchlist.json: {len(ids)} tickers")
-        return ids
-    except Exception as e:
-        print(f"[verify] watchlist.json unavailable ({e}), using hardcoded fallback")
-        return ["300308_SZ", "700_HK", "9999_HK", "6160_HK", "002594_SZ"]
-
-
-_ALL_SAFE_IDS = _load_safe_ids()
-
 OK   = "\033[92m✓\033[0m"
 FAIL = "\033[91m✗\033[0m"
 WARN = "\033[93m⚠\033[0m"
@@ -45,7 +23,8 @@ def check(label, condition, msg=""):
 
 # ── RDCF ──────────────────────────────────────────────────────────────────────
 print("\n=== Reverse DCF (rdcf_*.json) ===")
-for safe_id in _ALL_SAFE_IDS:
+rdcf_tickers = ["300308_SZ", "700_HK", "9999_HK", "6160_HK", "002594_SZ"]
+for safe_id in rdcf_tickers:
     path = DATA / f"rdcf_{safe_id}.json"
     if not path.exists():
         print(f"  {FAIL}  {safe_id}: FILE MISSING")
@@ -95,7 +74,8 @@ else:
 
 # ── EQR ───────────────────────────────────────────────────────────────────────
 print("\n=== EQR Ratings (eqr_*.json) ===")
-for safe_id in _ALL_SAFE_IDS:
+eqr_ids = ["300308_SZ", "700_HK", "9999_HK", "6160_HK", "002594_SZ"]
+for safe_id in eqr_ids:
     path = DATA / f"eqr_{safe_id}.json"
     if not path.exists():
         print(f"  {FAIL}  {safe_id}: FILE MISSING")

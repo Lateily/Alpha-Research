@@ -1,165 +1,94 @@
 {
   "as_of": "2026-04-22",
-  "generated": "2026-04-22T13:10:07.515349",
+  "generated": "2026-04-22T11:52:56.813867",
   "status": "ok",
   "config": {
     "vp_threshold": 60,
     "min_positions": 1,
     "forward_days": 20,
-    "benchmark": "proxy (300308.SZ, flat)",
+    "benchmark": "proxy (002594.SZ, flat)",
     "risk_free_annual": 0.02
   },
   "summary": {
     "periods": 5,
-    "annualised_return_pct": -35.97,
+    "annualised_return_pct": 0.0,
     "benchmark_return_pct": 0.0,
-    "alpha_annual_pct": -35.97,
+    "alpha_annual_pct": 0.0,
     "beta": 1.0,
-    "sharpe_ratio": -2.017,
+    "sharpe_ratio": 0.0,
     "benchmark_sharpe": 0.0,
-    "annualised_vol_pct": 18.82,
+    "annualised_vol_pct": 0.0,
     "benchmark_vol_pct": 0.0,
-    "max_drawdown_pct": -18.67,
+    "max_drawdown_pct": -0.0,
     "benchmark_max_dd_pct": -0.0,
-    "cumulative_return_pct": -17.49,
+    "cumulative_return_pct": 0.0,
     "benchmark_cumulative_pct": 0.0,
-    "hit_rate_pct": 20.0,
-    "bootstrap_ci_lo_pct": -7.77,
-    "bootstrap_ci_hi_pct": 0.38
+    "hit_rate_pct": 0.0,
+    "bootstrap_ci_lo_pct": 0.0,
+    "bootstrap_ci_hi_pct": 0.0
   },
   "nav_series": [
     {
       "date": "2025-10-31",
-      "portfolio": 0.9822,
+      "portfolio": 1.0,
       "benchmark": 1.0
     },
     {
       "date": "2025-11-28",
-      "portfolio": 1.0146,
+      "portfolio": 1.0,
       "benchmark": 1.0
     },
     {
       "date": "2025-12-31",
-      "portfolio": 0.9709,
+      "portfolio": 1.0,
       "benchmark": 1.0
     },
     {
       "date": "2026-01-30",
-      "portfolio": 0.8567,
+      "portfolio": 1.0,
       "benchmark": 1.0
     },
     {
       "date": "2026-02-27",
-      "portfolio": 0.8251,
+      "portfolio": 1.0,
       "benchmark": 1.0
     }
   ],
   "period_log": [
     {
       "date": "2025-10-31",
-      "selected": [
-        {
-          "ticker": "9999.HK",
-          "vp": 64
-        }
-      ],
-      "num_positions": 1,
-      "portfolio_return": -1.78,
+      "selected": [],
+      "portfolio_return": 0.0,
       "benchmark_return": 0,
-      "excess_return": -1.78,
-      "stock_detail": [
-        {
-          "ticker": "9999.HK",
-          "raw_return": -1.38,
-          "net_return": -1.78,
-          "tx_cost": 0.4
-        }
-      ]
+      "cash": true
     },
     {
       "date": "2025-11-28",
-      "selected": [
-        {
-          "ticker": "9999.HK",
-          "vp": 64
-        }
-      ],
-      "num_positions": 1,
-      "portfolio_return": 3.3,
+      "selected": [],
+      "portfolio_return": 0.0,
       "benchmark_return": 0,
-      "excess_return": 3.3,
-      "stock_detail": [
-        {
-          "ticker": "9999.HK",
-          "raw_return": 3.7,
-          "net_return": 3.3,
-          "tx_cost": 0.4
-        }
-      ]
+      "cash": true
     },
     {
       "date": "2025-12-31",
-      "selected": [
-        {
-          "ticker": "9999.HK",
-          "vp": 64
-        }
-      ],
-      "num_positions": 1,
-      "portfolio_return": -4.31,
+      "selected": [],
+      "portfolio_return": 0.0,
       "benchmark_return": 0,
-      "excess_return": -4.31,
-      "stock_detail": [
-        {
-          "ticker": "9999.HK",
-          "raw_return": -3.91,
-          "net_return": -4.31,
-          "tx_cost": 0.4
-        }
-      ]
+      "cash": true
     },
     {
       "date": "2026-01-30",
-      "selected": [
-        {
-          "ticker": "9999.HK",
-          "vp": 64
-        }
-      ],
-      "num_positions": 1,
-      "portfolio_return": -11.77,
+      "selected": [],
+      "portfolio_return": 0.0,
       "benchmark_return": 0,
-      "excess_return": -11.77,
-      "stock_detail": [
-        {
-          "ticker": "9999.HK",
-          "raw_return": -11.37,
-          "net_return": -11.77,
-          "tx_cost": 0.4
-        }
-      ]
+      "cash": true
     },
     {
       "date": "2026-02-27",
-      "selected": [
-        {
-          "ticker": "9999.HK",
-          "vp": 64
-        }
-      ],
-      "num_positions": 1,
-      "portfolio_return": -3.68,
+      "selected": [],
+      "portfolio_return": 0.0,
       "benchmark_return": 0,
-      "excess_return": -3.68,
-      "stock_detail": [
-        {
-          "ticker": "9999.HK",
-          "raw_return": -3.28,
-          "net_return": -3.68,
-          "tx_cost": 0.4
-        }
-      ]
+      "cash": true
     }
-  ],
-  "vp_history_note": "VP scores proxied backward from 2026-04-22 — accumulation started 2026-04-22. Results will improve as daily history accumulates via vp_engine.py."
+  ]
 }

@@ -28,42 +28,6 @@ from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "public" / "data"
 
-
-# ── Watchlist loader ──────────────────────────────────────────────────────────
-def _load_watchlist_tickers():
-    """
-    Return dict of {ticker: vp_seed_dict} from watchlist.json.
-    Used to auto-upsert new tickers into vp_snapshot.json without manual edits.
-    Returns empty dict on any failure (graceful degradation).
-    """
-    wl_path = DATA_DIR / "watchlist.json"
-    try:
-        wl = json.loads(wl_path.read_text(encoding="utf-8"))
-        tickers_cfg = wl.get("tickers", {})
-        result = {}
-        for tk, v in tickers_cfg.items():
-            seed = v.get("vp_seed", {})
-            result[tk] = {
-                "ticker":           tk,
-                "name_en":          v.get("name_en", tk),
-                "name_zh":          v.get("name_zh", tk),
-                "vp_score":         seed.get("vp", 50),
-                "expectation_gap":  seed.get("expectation_gap", 50),
-                "fundamental_accel":seed.get("fundamental_accel", 50),
-                "narrative_shift":  seed.get("narrative_shift", 50),
-                "low_coverage":     seed.get("low_coverage", 50),
-                "catalyst_proximity":seed.get("catalyst_prox", 50),
-                "wrongIf_e":        seed.get("wrongIf_e", ""),
-                "wrongIf_z":        seed.get("wrongIf_z", ""),
-                "source":           "seed",
-                "last_updated":     seed.get("last_updated", ""),
-            }
-        print(f"[vp_engine] watchlist.json loaded: {len(result)} tickers")
-        return result
-    except Exception as e:
-        print(f"[vp_engine] watchlist.json unavailable ({e}), relying on vp_snapshot.json only")
-        return {}
-
 # ── VP dimension weights ──────────────────────────────────────────────────────
 VP_WEIGHTS = {
     "expectation_gap":    0.25,   # rDCF-computed
@@ -375,16 +339,6 @@ def main():
     vp_snap_raw = load_json(DATA_DIR / "vp_snapshot.json", {"snapshots": []})
     snapshots   = vp_snap_raw.get("snapshots", [])
 
-    # ── Auto-upsert watchlist tickers into snapshot pool ─────────────────────
-    # Any ticker in watchlist.json but absent from vp_snapshot.json is seeded
-    # here so vp_engine processes it without requiring a manual vp_snapshot edit.
-    wl_tickers = _load_watchlist_tickers()
-    existing_tickers = {s.get("ticker") for s in snapshots if s.get("ticker")}
-    for tk, seed_snap in wl_tickers.items():
-        if tk not in existing_tickers:
-            print(f"  [watchlist] Auto-seeding new ticker: {tk}")
-            snapshots.append(seed_snap)
-
     updated    = []
     scissors_out = {}
 
@@ -445,12 +399,10 @@ def main():
             "engine_run_at":      datetime.now(timezone.utc).isoformat(),
         })
 
-    today_str = datetime.now().strftime("%Y-%m-%d")
-
     # Write updated vp_snapshot.json
     with open(DATA_DIR / "vp_snapshot.json", "w", encoding="utf-8") as f:
         json.dump({
-            "date":      today_str,
+            "date":      datetime.now().strftime("%Y-%m-%d"),
             "snapshots": updated,
         }, f, ensure_ascii=False, indent=2, default=str)
 
@@ -462,30 +414,8 @@ def main():
     with open(DATA_DIR / "profit_scissors.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2, default=str)
 
-    # ── Accumulate vp_history.json (one row per day, for backtest point-in-time) ──
-    # Format: { "2026-04-22": { "300308.SZ": 79, "700.HK": 64, ... } }
-    # backtest.py reads this so it knows VP scores at past rebalance dates.
-    from datetime import timedelta
-    vp_hist_path = DATA_DIR / "vp_history.json"
-    vp_hist: dict = {}
-    if vp_hist_path.exists():
-        try:
-            vp_hist = json.loads(vp_hist_path.read_text(encoding="utf-8"))
-        except Exception:
-            vp_hist = {}
-
-    today_row = {snap["ticker"]: snap["vp_score"] for snap in updated if snap.get("ticker")}
-    vp_hist[today_str] = today_row
-
-    # Keep only last 365 days — prevents unbounded file growth
-    cutoff = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
-    vp_hist = {d: v for d, v in sorted(vp_hist.items()) if d >= cutoff}
-
-    with open(vp_hist_path, "w", encoding="utf-8") as f:
-        json.dump(vp_hist, f, ensure_ascii=False, indent=2)
-
-    print(f"\n[vp_engine] Done → vp_snapshot.json + profit_scissors.json + vp_history.json")
-    print(f"  Updated {len(updated)} ticker(s)  |  VP history: {len(vp_hist)} days accumulated")
+    print(f"\n[vp_engine] Done → vp_snapshot.json + profit_scissors.json")
+    print(f"  Updated {len(updated)} ticker(s)")
 
 
 if __name__ == "__main__":
