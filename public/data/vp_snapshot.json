@@ -15,7 +15,7 @@
       "source": "vp_engine",
       "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
       "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%",
-      "vp_prev": 79,
+      "vp_prev": 53,
       "fa_detail": {
         "score": 79,
         "year_latest": "2025-12-31",
@@ -42,7 +42,7 @@
         "implied_growth": 119.2,
         "hyper_growth": true
       },
-      "engine_run_at": "2026-04-22T12:08:54.105056+00:00"
+      "engine_run_at": "2026-04-22T13:00:14.294609+00:00"
     },
     {
       "ticker": "700.HK",
@@ -58,7 +58,7 @@
       "source": "vp_engine",
       "wrongIf_e": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
       "wrongIf_z": "游戏监管扩大或宏观消费急剧恶化",
-      "vp_prev": 64,
+      "vp_prev": 51,
       "fa_detail": {
         "score": 66,
         "year_latest": "2025-12-31",
@@ -85,7 +85,7 @@
         "implied_growth": 31.9,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-22T12:08:54.110425+00:00"
+      "engine_run_at": "2026-04-22T13:00:14.295917+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -101,7 +101,7 @@
       "source": "vp_engine",
       "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
       "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万",
-      "vp_prev": 58,
+      "vp_prev": 64,
       "fa_detail": {
         "score": 76,
         "year_latest": "2025-12-31",
@@ -128,7 +128,7 @@
         "implied_growth": 2.6,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-22T12:08:54.112048+00:00"
+      "engine_run_at": "2026-04-22T13:00:14.297103+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -144,7 +144,7 @@
       "source": "vp_engine",
       "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
       "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优",
-      "vp_prev": 65,
+      "vp_prev": 45,
       "fa_detail": {
         "score": 57,
         "year_latest": "2025-12-31",
@@ -171,7 +171,7 @@
         "implied_growth": 117.8,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-22T12:08:54.113386+00:00"
+      "engine_run_at": "2026-04-22T13:00:14.298915+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -214,7 +214,7 @@
         "implied_growth": -14.2,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-22T12:08:54.114546+00:00"
+      "engine_run_at": "2026-04-22T13:00:14.300089+00:00"
     }
   ]
 }

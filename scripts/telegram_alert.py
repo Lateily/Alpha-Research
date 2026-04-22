@@ -32,14 +32,56 @@ VP_CHANGE_ALERT = 5       # alert if VP moves ±5 points vs yesterday
 NORTHBOUND_THRESHOLD = 5e9  # ±5B CNY daily net flow = significant
 EARNINGS_WARNING_DAYS = 5   # alert if earnings within N days
 
+
+# ── Watchlist loader ──────────────────────────────────────────────────────────
+def _load_watchlist():
+    """
+    Build TICKERS_ORDER and MACRO_STOCK_MAP from watchlist.json.
+    Returns (tickers_order_list, macro_stock_map_dict).
+    Falls back to hardcoded defaults on any failure.
+    """
+    wl_path = DATA_DIR / "watchlist.json"
+    try:
+        wl = json.loads(wl_path.read_text(encoding="utf-8"))
+        tickers_cfg = wl.get("tickers", {})
+        if not tickers_cfg:
+            raise ValueError("empty tickers section")
+
+        # Ticker display order = insertion order in watchlist.json
+        tickers_order = list(tickers_cfg.keys())
+
+        # Build macro map: {event: [(ticker, direction, magnitude), ...]}
+        macro_map = {}
+        for tk, v in tickers_cfg.items():
+            for event, impact in v.get("macro_sensitivity", {}).items():
+                entry = (tk, impact["direction"], impact["magnitude"])
+                macro_map.setdefault(event, []).append(entry)
+
+        print(f"[telegram] watchlist.json loaded: {len(tickers_order)} tickers, "
+              f"{len(macro_map)} macro events")
+        return tickers_order, macro_map
+    except Exception as e:
+        print(f"[telegram] watchlist.json unavailable ({e}), using hardcoded fallback")
+        return None, None
+
+
+_wl_order, _wl_macro = _load_watchlist()
+
+# ── Ticker display order ─────────────────────────────────────────────────────
+# Source of truth: public/data/watchlist.json (insertion order)
+_TICKERS_ORDER_DEFAULT = ["300308.SZ", "700.HK", "9999.HK", "6160.HK", "002594.SZ"]
+
 # ── Macro-event to stock impact map ─────────────────────────────────────────
-MACRO_STOCK_MAP = {
-    "pboc_rate_cut":   [("700.HK", "positive", "HIGH"), ("002594.SZ", "positive", "HIGH")],
-    "cpi_above_2pct":  [("700.HK", "negative", "MED"),  ("9999.HK",  "negative", "MED")],
-    "usd_cny_above_73":[("002594.SZ", "negative", "HIGH"), ("300308.SZ", "positive", "MED")],
-    "vix_spike_20":    [("700.HK", "negative", "MED"),  ("6160.HK",  "negative", "MED")],
-    "northbound_reversal": [("300308.SZ", "negative", "MED"), ("002594.SZ", "negative", "MED")],
+# Source of truth: public/data/watchlist.json (macro_sensitivity per ticker)
+_MACRO_STOCK_MAP_DEFAULT = {
+    "pboc_rate_cut":       [("700.HK",    "positive", "HIGH"), ("002594.SZ", "positive", "HIGH")],
+    "cpi_above_2pct":      [("700.HK",    "negative", "MED"),  ("9999.HK",  "negative", "MED")],
+    "usd_cny_above_73":    [("002594.SZ", "negative", "HIGH"), ("300308.SZ","positive", "MED")],
+    "vix_spike_20":        [("700.HK",    "negative", "MED"),  ("6160.HK",  "negative", "MED")],
+    "northbound_reversal": [("300308.SZ", "negative", "MED"),  ("002594.SZ","negative", "MED")],
 }
+
+MACRO_STOCK_MAP = _wl_macro or _MACRO_STOCK_MAP_DEFAULT
 
 
 def send_message(token, chat_id, text, parse_mode="HTML"):
@@ -150,7 +192,7 @@ def build_daily_digest(mdata, flow, daily_decision=None):
     ]
 
     yahoo = mdata.get("yahoo", {})
-    TICKERS_ORDER = ["300308.SZ", "700.HK", "9999.HK", "6160.HK", "002594.SZ"]
+    TICKERS_ORDER = _wl_order or _TICKERS_ORDER_DEFAULT
     for tk in TICKERS_ORDER:
         yd = yahoo.get(tk)
         if yd:

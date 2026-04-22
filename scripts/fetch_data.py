@@ -30,8 +30,46 @@ ALPHA_VANTAGE_KEY  = os.getenv('ALPHA_VANTAGE_KEY', '')
 TUSHARE_TOKEN      = os.getenv('TUSHARE_TOKEN', '')
 VERCEL_URL         = os.getenv('VERCEL_URL', 'https://equity-research-ten.vercel.app')
 
+# ── Watchlist loader — single source of truth ───────────────────────────────
+def _load_watchlist():
+    """
+    Load FOCUS_TICKERS + VP_SCORES from public/data/watchlist.json.
+    Falls back to hardcoded defaults if the file is missing or malformed.
+    Adding a new stock = edit watchlist.json only. No script changes needed.
+    """
+    wl_path = Path(__file__).parent.parent / "public" / "data" / "watchlist.json"
+    try:
+        wl = json.loads(wl_path.read_text(encoding="utf-8"))
+        tickers_cfg = wl.get("tickers", {})
+        if not tickers_cfg:
+            raise ValueError("empty tickers section")
+        focus = {
+            tk: {
+                "yahoo":    v["yahoo"],
+                "akshare":  v.get("akshare"),
+                "exchange": v["exchange"],
+                "name_en":  v["name_en"],
+                "name_zh":  v["name_zh"],
+            }
+            for tk, v in tickers_cfg.items()
+        }
+        vp_seeds = {
+            tk: v["vp_seed"]
+            for tk, v in tickers_cfg.items()
+            if "vp_seed" in v
+        }
+        print(f"[watchlist] Loaded {len(focus)} tickers from watchlist.json")
+        return focus, vp_seeds
+    except Exception as e:
+        print(f"[watchlist] Could not load watchlist.json ({e}), using hardcoded fallback")
+        return None, None
+
+
+_wl_focus, _wl_vp = _load_watchlist()
+
 # ── Focus stock config ──────────────────────────────────────────────────────
-FOCUS_TICKERS = {
+# Source of truth: public/data/watchlist.json (edit there to add stocks)
+FOCUS_TICKERS = _wl_focus or {
     "300308.SZ": {"yahoo": "300308.SZ", "akshare": "300308", "exchange": "SZ",
                   "name_en": "Innolight",       "name_zh": "中际旭创"},
     "700.HK":    {"yahoo": "0700.HK",   "akshare": None,     "exchange": "HK",
@@ -44,11 +82,10 @@ FOCUS_TICKERS = {
                   "name_en": "BYD",             "name_zh": "比亚迪"},
 }
 
-# ── VP scores for Supabase snapshot (kept in sync with Dashboard.jsx) ──────
-# VP_SCORES: seed/fallback values only.
-# These are overridden by DeepResearch output preserved in vp_snapshot.json.
-# Update last_updated when you manually recalibrate the seed values.
-VP_SCORES = {
+# ── VP scores — seed/fallback values only ───────────────────────────────────
+# Source of truth: public/data/watchlist.json (vp_seed block per ticker)
+# These are overridden by vp_engine.py output preserved in vp_snapshot.json.
+VP_SCORES = _wl_vp or {
     "300308.SZ": {"vp": 79, "expectation_gap": 72, "fundamental_accel": 80,
                   "narrative_shift": 65, "low_coverage": 55, "catalyst_prox": 85,
                   "last_updated": "2026-04-13",
