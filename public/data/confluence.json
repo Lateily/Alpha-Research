@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-22T11:52:56.938851+00:00",
+  "generated_at": "2026-04-23T07:18:56.542603+00:00",
   "tickers_scored": 5,
   "summary": {
     "entry_candidates": [],
@@ -9,29 +9,20 @@
   "scores": [
     {
       "ticker": "9999.HK",
-      "score": 4,
+      "score": 14,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
+      "zone": "BEARISH",
       "regime": "NEUTRAL",
-      "vp_score": 64.0,
+      "vp_score": 65.0,
       "vp_signal_type": "VP_GOOD_CONVICTION",
       "vp_adjustment": null,
       "staleness_factor": 1.0,
       "signal_count": {
         "bullish": 1,
-        "bearish": 1
+        "bearish": 0
       },
       "contributing": [
-        {
-          "type": "KDJ_DEATH_CROSS",
-          "base_weight": -10,
-          "decay": 1.0,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "final_contribution": -10.0
-        },
         {
           "type": "VP_GOOD_CONVICTION",
           "base_weight": 14,
@@ -46,19 +37,53 @@
         {
           "type": "VP_GOOD_CONVICTION",
           "contribution": 14.0
-        },
-        {
-          "type": "KDJ_DEATH_CROSS",
-          "contribution": -10.0
         }
       ],
-      "rationale_e": "Bullish: Vp Good Conviction | Bearish: Kdj Death Cross | RSI 46 | Price vs MA20 +0.2% | VP 64",
-      "rationale_z": "多头：VP良好信念(基本面偏强) | 空头：KDJ死叉 | RSI 46 | 距MA20 +0.2% | VP 64",
+      "rationale_e": "Bullish: Vp Good Conviction | RSI 41 | Price vs MA20 -2.7% | VP 65",
+      "rationale_z": "多头：VP良好信念(基本面偏强) | RSI 41 | 距MA20 -2.7% | VP 65",
       "signal_types": [
-        "KDJ_DEATH_CROSS",
         "VP_GOOD_CONVICTION"
       ],
-      "computed_at": "2026-04-22T11:52:56.938839+00:00"
+      "computed_at": "2026-04-23T07:18:56.542593+00:00"
+    },
+    {
+      "ticker": "6160.HK",
+      "score": 12,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "NEUTRAL",
+      "regime": "NEUTRAL",
+      "vp_score": 45.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 1,
+        "bearish": 0
+      },
+      "contributing": [
+        {
+          "type": "KDJ_OVERSOLD",
+          "base_weight": 12,
+          "decay": 1.0,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "final_contribution": 12.0
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "KDJ_OVERSOLD",
+          "contribution": 12.0
+        }
+      ],
+      "rationale_e": "Bullish: Kdj Oversold | RSI 49 | Price vs MA20 +0.7% | VP 45",
+      "rationale_z": "多头：KDJ极度超卖(J<0) | RSI 49 | 距MA20 +0.7% | VP 45",
+      "signal_types": [
+        "KDJ_OVERSOLD"
+      ],
+      "computed_at": "2026-04-23T07:18:56.542441+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -105,13 +130,13 @@
           "contribution": -11.2
         }
       ],
-      "rationale_e": "Bullish: Bullish Alignment | Bearish: Rsi Overbought | RSI 83 | Price vs MA20 +26.0% | Regime: PERMISSIVE | VP 53",
-      "rationale_z": "多头：均线多头排列 | 空头：RSI超买 | RSI 83 | 距MA20 +26.0% | 政策顺风 | VP 53",
+      "rationale_e": "Bullish: Bullish Alignment | Bearish: Rsi Overbought | RSI 84 | Price vs MA20 +25.1% | Regime: PERMISSIVE | VP 53",
+      "rationale_z": "多头：均线多头排列 | 空头：RSI超买 | RSI 84 | 距MA20 +25.1% | 政策顺风 | VP 53",
       "signal_types": [
         "RSI_OVERBOUGHT",
         "BULLISH_ALIGNMENT"
       ],
-      "computed_at": "2026-04-22T11:52:56.938514+00:00"
+      "computed_at": "2026-04-23T07:18:56.542327+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -130,19 +155,19 @@
       },
       "contributing": [],
       "contributing_signals": [],
-      "rationale_e": "RSI 50 | Price vs MA20 -1.1% | Regime: PERMISSIVE | VP 52",
-      "rationale_z": "RSI 50 | 距MA20 -1.1% | 政策顺风 | VP 52",
+      "rationale_e": "RSI 46 | Price vs MA20 -2.4% | Regime: PERMISSIVE | VP 52",
+      "rationale_z": "RSI 46 | 距MA20 -2.4% | 政策顺风 | VP 52",
       "signal_types": [],
-      "computed_at": "2026-04-22T11:52:56.938375+00:00"
+      "computed_at": "2026-04-23T07:18:56.542217+00:00"
     },
     {
-      "ticker": "6160.HK",
+      "ticker": "700.HK",
       "score": 0,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
+      "zone": "BEARISH",
       "regime": "NEUTRAL",
-      "vp_score": 45.0,
+      "vp_score": 51.0,
       "vp_signal_type": null,
       "vp_adjustment": null,
       "staleness_factor": 1.0,
@@ -152,49 +177,10 @@
       },
       "contributing": [],
       "contributing_signals": [],
-      "rationale_e": "RSI 52 | Price vs MA20 +2.8% | VP 45",
-      "rationale_z": "RSI 52 | 距MA20 +2.8% | VP 45",
+      "rationale_e": "RSI 44 | Price vs MA20 -1.2% | VP 51",
+      "rationale_z": "RSI 44 | 距MA20 -1.2% | VP 51",
       "signal_types": [],
-      "computed_at": "2026-04-22T11:52:56.938604+00:00"
-    },
-    {
-      "ticker": "700.HK",
-      "score": -10,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "NEUTRAL",
-      "vp_score": 51.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 0,
-        "bearish": 1
-      },
-      "contributing": [
-        {
-          "type": "KDJ_DEATH_CROSS",
-          "base_weight": -10,
-          "decay": 1.0,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "final_contribution": -10.0
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "KDJ_DEATH_CROSS",
-          "contribution": -10.0
-        }
-      ],
-      "rationale_e": "Bearish: Kdj Death Cross | RSI 47 | Price vs MA20 +0.5% | VP 51",
-      "rationale_z": "空头：KDJ死叉 | RSI 47 | 距MA20 +0.5% | VP 51",
-      "signal_types": [
-        "KDJ_DEATH_CROSS"
-      ],
-      "computed_at": "2026-04-22T11:52:56.938711+00:00"
+      "computed_at": "2026-04-23T07:18:56.542510+00:00"
     }
   ]
 }
