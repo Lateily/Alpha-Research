@@ -192,8 +192,25 @@ def compute_fundamental_accel(ticker: str) -> dict:
 
 def get_expectation_gap_from_rdcf(ticker: str, current_seed: int) -> dict:
     """
-    Read expectation_gap_score directly from rdcf_*.json (already computed).
-    Falls back to seed value if rDCF errored or file missing.
+    Compute expectation_gap score (0-100) from rdcf_*.json.
+
+    Core logic — expectation_gap measures OUR EDGE vs THE MARKET:
+      delta = our_growth - implied_growth   (already in rdcf JSON)
+      positive delta → we're more bullish than market → edge exists → HIGH gap
+      negative delta → market already priced in more than we think → LOW gap
+
+    This replaces the old binary OVERPRICED→0 / UNDERPRICED→100 mapping,
+    which incorrectly punished stocks where the market agrees with our thesis.
+
+    Mapping (delta = our_growth − implied_growth):
+      ≤ -0.50  →  10  (market wildly more bullish; bar we set is very high)
+      -0.50–-0.25 → 22
+      -0.25–-0.10 → 35
+      -0.10– 0.00 → 48  (near-neutral; market slightly ahead of us)
+       0.00–+0.10 → 55  (slight edge)
+      +0.10–+0.25 → 68
+      +0.25–+0.50 → 78
+        > +0.50  →  88  (we're massively more bullish; strong long edge)
     """
     safe_id = ticker.replace(".", "_")
     rdcf = load_json(DATA_DIR / f"rdcf_{safe_id}.json", {})
@@ -204,23 +221,36 @@ def get_expectation_gap_from_rdcf(ticker: str, current_seed: int) -> dict:
             "source": "seed_fallback",
             "reason": rdcf["error"],
             "signal": None,
-            "implied_growth": None,
+            "delta":  None,
         }
 
-    eg_score    = rdcf.get("expectation_gap_score")
-    signal      = rdcf.get("signal")
-    implied_g   = rdcf.get("implied_fcf_growth") or rdcf.get("implied_rev_growth")
+    delta        = rdcf.get("delta")          # our_growth − implied_growth
+    signal       = rdcf.get("signal")
+    implied_g    = rdcf.get("implied_fcf_growth") or rdcf.get("implied_rev_growth")
+    our_g        = rdcf.get("our_fcf_growth")  or rdcf.get("our_rev_growth")
     hyper_growth = rdcf.get("hyper_growth", False)
 
-    if eg_score is None:
-        return {"score": current_seed, "source": "seed_fallback", "reason": "no_score_in_rdcf"}
+    if delta is None:
+        return {"score": current_seed, "source": "seed_fallback", "reason": "no_delta_in_rdcf"}
+
+    # ── Delta → gap score ──────────────────────────────────────────────────────
+    if   delta <= -0.50:  gap = 10
+    elif delta <= -0.25:  gap = 22
+    elif delta <= -0.10:  gap = 35
+    elif delta <=  0.00:  gap = 48
+    elif delta <= +0.10:  gap = 55
+    elif delta <= +0.25:  gap = 68
+    elif delta <= +0.50:  gap = 78
+    else:                 gap = 88
 
     return {
-        "score":         int(eg_score),
-        "source":        "rdcf_live",
-        "signal":        signal,
+        "score":          gap,
+        "source":         "rdcf_delta",
+        "signal":         signal,
+        "delta":          round(delta, 3),
         "implied_growth": round(implied_g * 100, 1) if implied_g is not None else None,
-        "hyper_growth":  hyper_growth,
+        "our_growth":     round(our_g    * 100, 1) if our_g    is not None else None,
+        "hyper_growth":   hyper_growth,
     }
 
 

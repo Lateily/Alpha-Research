@@ -1,11 +1,11 @@
 {
-  "date": "2026-04-22",
+  "date": "2026-04-23",
   "snapshots": [
     {
       "ticker": "300308.SZ",
       "date": "2026-04-22",
-      "vp_score": 53,
-      "expectation_gap": 0,
+      "vp_score": 56,
+      "expectation_gap": 10,
       "fundamental_accel": 79,
       "narrative_shift": 65,
       "low_coverage": 55,
@@ -15,7 +15,7 @@
       "source": "vp_engine",
       "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
       "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%",
-      "vp_prev": 79,
+      "vp_prev": 53,
       "fa_detail": {
         "score": 79,
         "year_latest": "2025-12-31",
@@ -36,19 +36,21 @@
         }
       },
       "eg_detail": {
-        "score": 0,
-        "source": "rdcf_live",
+        "score": 10,
+        "source": "rdcf_delta",
         "signal": "OVERPRICED",
+        "delta": -0.851,
         "implied_growth": 119.2,
+        "our_growth": 34.1,
         "hyper_growth": true
       },
-      "engine_run_at": "2026-04-22T11:52:56.896034+00:00"
+      "engine_run_at": "2026-04-23T09:54:52.163356+00:00"
     },
     {
       "ticker": "700.HK",
       "date": "2026-04-22",
-      "vp_score": 51,
-      "expectation_gap": 19,
+      "vp_score": 55,
+      "expectation_gap": 35,
       "fundamental_accel": 66,
       "narrative_shift": 75,
       "low_coverage": 40,
@@ -58,7 +60,7 @@
       "source": "vp_engine",
       "wrongIf_e": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
       "wrongIf_z": "游戏监管扩大或宏观消费急剧恶化",
-      "vp_prev": 64,
+      "vp_prev": 51,
       "fa_detail": {
         "score": 66,
         "year_latest": "2025-12-31",
@@ -79,19 +81,21 @@
         }
       },
       "eg_detail": {
-        "score": 19,
-        "source": "rdcf_live",
+        "score": 35,
+        "source": "rdcf_delta",
         "signal": "OVERPRICED",
+        "delta": -0.139,
         "implied_growth": 31.9,
+        "our_growth": 18.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-22T11:52:56.896741+00:00"
+      "engine_run_at": "2026-04-23T09:54:52.164791+00:00"
     },
     {
       "ticker": "9999.HK",
       "date": "2026-04-22",
-      "vp_score": 64,
-      "expectation_gap": 77,
+      "vp_score": 62,
+      "expectation_gap": 68,
       "fundamental_accel": 76,
       "narrative_shift": 50,
       "low_coverage": 45,
@@ -101,7 +105,7 @@
       "source": "vp_engine",
       "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
       "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万",
-      "vp_prev": 58,
+      "vp_prev": 64,
       "fa_detail": {
         "score": 76,
         "year_latest": "2025-12-31",
@@ -122,19 +126,21 @@
         }
       },
       "eg_detail": {
-        "score": 77,
-        "source": "rdcf_live",
+        "score": 68,
+        "source": "rdcf_delta",
         "signal": "UNDERPRICED",
+        "delta": 0.124,
         "implied_growth": 2.6,
+        "our_growth": 15.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-22T11:52:56.897429+00:00"
+      "engine_run_at": "2026-04-23T09:54:52.166036+00:00"
     },
     {
       "ticker": "6160.HK",
       "date": "2026-04-22",
-      "vp_score": 45,
-      "expectation_gap": 0,
+      "vp_score": 47,
+      "expectation_gap": 10,
       "fundamental_accel": 57,
       "narrative_shift": 68,
       "low_coverage": 45,
@@ -144,7 +150,7 @@
       "source": "vp_engine",
       "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
       "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优",
-      "vp_prev": 65,
+      "vp_prev": 45,
       "fa_detail": {
         "score": 57,
         "year_latest": "2025-12-31",
@@ -165,19 +171,21 @@
         }
       },
       "eg_detail": {
-        "score": 0,
-        "source": "rdcf_live",
+        "score": 10,
+        "source": "rdcf_delta",
         "signal": "OVERPRICED",
+        "delta": -0.828,
         "implied_growth": 117.8,
+        "our_growth": 35.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-22T11:52:56.898056+00:00"
+      "engine_run_at": "2026-04-23T09:54:52.167255+00:00"
     },
     {
       "ticker": "002594.SZ",
       "date": "2026-04-22",
-      "vp_score": 52,
-      "expectation_gap": 98,
+      "vp_score": 47,
+      "expectation_gap": 78,
       "fundamental_accel": 24,
       "narrative_shift": 45,
       "low_coverage": 35,
@@ -208,13 +216,15 @@
         }
       },
       "eg_detail": {
-        "score": 98,
-        "source": "rdcf_live",
+        "score": 78,
+        "source": "rdcf_delta",
         "signal": "UNDERPRICED",
+        "delta": 0.422,
         "implied_growth": -14.2,
+        "our_growth": 28.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-22T11:52:56.898685+00:00"
+      "engine_run_at": "2026-04-23T09:54:52.168471+00:00"
     }
   ]
 }
