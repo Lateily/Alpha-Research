@@ -106,15 +106,27 @@ _NUMERIC_PATTERNS = [
     # (regex, group_idx_for_threshold, indicator_key, direction)
     # direction: 'above' = alert if indicator > threshold
     #            'below' = alert if indicator < threshold
-    (r"rsi\s+(?:above|over|>)\s*(\d+(?:\.\d+)?)",        1, "rsi_14",     "above"),
-    (r"rsi\s+(?:below|under|<)\s*(\d+(?:\.\d+)?)",        1, "rsi_14",     "below"),
+    (r"rsi\s+(?:above|over|>)\s*(\d+(?:\.\d+)?)",         1, "rsi_14",          "above"),
+    (r"rsi\s+(?:below|under|<)\s*(\d+(?:\.\d+)?)",         1, "rsi_14",          "below"),
     (r"dau\s+(?:drops?\s+below|falls?\s+below|<)\s*(\d+(?:\.\d+)?[MmBb]?)",
-                                                           1, "dau_proxy",  "below"),
-    (r"(?:capex|capital expenditure)\s+cut\s*>?\s*(\d+)%", 1, "capex_cut",  "above"),
-    (r"tariff[s]?\s+(?:above|over|>|exceed[s]?)\s*(\d+)%", 1, "tariff_pct", "above"),
-    (r"pe\s+(?:above|over|>)\s*(\d+)",                    1, "pe_forward",  "above"),
+                                                            1, "dau_proxy",       "below"),
+    (r"mau\s+miss(?:es)?\s+(\d+(?:\.\d+)?[MmBb]?)",       1, "mau_proxy",       "below"),
+    (r"(?:capex|capital expenditure)\s+cut\s*>?\s*(\d+)%", 1, "capex_cut",       "above"),
+    (r"tariff[s]?\s+(?:above|over|>|exceed[s]?)\s*(\d+)%", 1, "tariff_pct",      "above"),
+    (r"pe\s+(?:above|over|>)\s*(\d+)",                     1, "pe_forward",       "above"),
     (r"(?:price\s+)?(?:drops?\s+below|falls?\s+below)\s*(\d+(?:\.\d+)?)",
-                                                           1, "price",      "below"),
+                                                            1, "price",           "below"),
+    # Revenue / earnings decline proxies (observable from yfinance fundamentals)
+    (r"revenue.{0,30}(?:miss|declin|contract|shrink|negativ|weaken)",
+                                                            0, "revenue_growth",  "below_zero"),
+    (r"(?:sales|revenue).{0,30}cut\s*>?\s*(\d+)%",        1, "revenue_growth",  "below"),
+    (r"(?:earnings?|ni|net income|profit).{0,30}(?:miss|declin|fall|negativ)",
+                                                            0, "earnings_growth", "below_zero"),
+    (r"(?:macro\s+)?consumption\s+weakens",                0, "revenue_growth",  "below_zero"),
+    # Tariff / trade impact proxy → revenue growth as downstream signal
+    (r"tariff|local content|import duty|trade restriction", 0, "revenue_growth",  "below_zero"),
+    # DAU/MAU miss proxy → earnings growth as downstream signal (gaming cos)
+    (r"dau|mau|daily active|monthly active",               0, "earnings_growth", "below_zero"),
 ]
 
 _BINARY_KEYWORDS = [
@@ -157,13 +169,24 @@ def check_wrongif(ticker, wrongif_text, market_data):
     text_lower = wrongif_text.lower()
 
     # Extract observable numeric indicators from market_data
-    yd = market_data.get("yahoo", {}).get(ticker, {})
+    yd   = market_data.get("yahoo", {}).get(ticker, {})
+    fund = yd.get("fundamentals", {})
+    tech = yd.get("technical", {})
+    px   = yd.get("price", {})
+
+    # revenue_growth / earnings_growth: yfinance returns as decimal (0.14 = 14%)
+    rev_g = fund.get("revenue_growth")
+    ear_g = fund.get("earnings_growth")
+
     live = {
-        "rsi_14":      yd.get("technical", {}).get("rsi_14"),
-        "price":       yd.get("price", {}).get("last"),
-        "pe_forward":  yd.get("fundamentals", {}).get("pe_forward"),
-        # proxy checks — not real-time, flag as manual
+        "rsi_14":          tech.get("rsi_14"),
+        "price":           px.get("last"),
+        "pe_forward":      fund.get("pe_forward"),
+        "revenue_growth":  rev_g * 100 if rev_g is not None else None,   # convert to %
+        "earnings_growth": ear_g * 100 if ear_g is not None else None,
+        # proxy indicators — require external data not in yfinance
         "dau_proxy":   None,
+        "mau_proxy":   None,
         "capex_cut":   None,
         "tariff_pct":  None,
     }
@@ -173,15 +196,44 @@ def check_wrongif(ticker, wrongif_text, market_data):
         m = re.search(pattern, text_lower)
         if not m:
             continue
-        threshold = _parse_threshold(m.group(grp))
-        actual    = live.get(indicator)
-        if threshold is None:
-            continue
 
+        # below_zero patterns use group 0 (whole match) — no numeric threshold needed
+        if direction == "below_zero":
+            threshold = 0
+        else:
+            threshold = _parse_threshold(m.group(grp))
+            if threshold is None:
+                continue
+
+        actual = live.get(indicator)
         matched_any_numeric = True
 
+        # below_zero: triggered if actual < 0 (no threshold needed)
+        if direction == "below_zero":
+            if actual is None:
+                alerts.append({
+                    "status": "MANUAL", "indicator": indicator,
+                    "threshold": 0, "actual": None, "text": wrongif_text,
+                    "note_e": f"Cannot auto-verify '{indicator}' — manual check required.",
+                    "note_z": f"无法自动核验「{indicator}」——需人工检查。",
+                })
+            else:
+                triggered = actual < 0
+                sign = "▼" if triggered else "▲"
+                alerts.append({
+                    "status":    "TRIGGERED" if triggered else "CLEAR",
+                    "indicator": indicator,
+                    "threshold": 0,
+                    "actual":    round(actual, 1),
+                    "text":      wrongif_text,
+                    "note_e":    f"{'⚠️ PROXY TRIGGERED' if triggered else '✅ Clear'}: "
+                                 f"{indicator} = {actual:+.1f}% {sign}",
+                    "note_z":    f"{'⚠️ 代理指标触发' if triggered else '✅ 正常'}: "
+                                 f"{indicator} = {actual:+.1f}% {sign}",
+                })
+            continue
+
         if actual is None:
-            # Can't check automatically
             alerts.append({
                 "status":    "MANUAL",
                 "indicator": indicator,
@@ -198,7 +250,7 @@ def check_wrongif(ticker, wrongif_text, market_data):
                 "status":    "TRIGGERED" if triggered else "CLEAR",
                 "indicator": indicator,
                 "threshold": threshold,
-                "actual":    actual,
+                "actual":    round(actual, 1),
                 "text":      wrongif_text,
                 "note_e":    (
                     f"⚠️ WRONGIF TRIGGERED: {indicator} = {actual:.1f} "
