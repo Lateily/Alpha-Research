@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-04-23T07:18:56.221964",
+    "fetched_at": "2026-04-24T07:24:21.367638",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -16,38 +16,38 @@
   "yahoo": {
     "300308.SZ": {
       "price": {
-        "last": 897,
-        "prev_close": 886.62,
-        "change_pct": 1.171,
-        "high": 919.99,
-        "low": 877.78,
-        "volume": 3098694000,
-        "avg_volume_20d": 27773894,
-        "volume_ratio": 111.57,
+        "last": 886.99,
+        "prev_close": 897,
+        "change_pct": -1.116,
+        "high": 915,
+        "low": 854.53,
+        "volume": 3838844100,
+        "avg_volume_20d": 28379470,
+        "volume_ratio": 135.27,
         "high_52w": 919.99,
-        "low_52w": 425.7
+        "low_52w": 436.96
       },
       "technical": {
-        "sma_20": 717.32,
-        "sma_50": 622.61,
+        "sma_20": 730.96,
+        "sma_50": 629.15,
         "sma_200": null,
-        "rsi_14": 99.7,
-        "macd": 78.3404,
-        "macd_signal": 59.5874,
-        "macd_histogram": 18.753,
+        "rsi_14": 96.4,
+        "macd": 79.3066,
+        "macd_signal": 63.5256,
+        "macd_histogram": 15.781,
         "above_sma_20": true,
         "above_sma_50": true,
         "above_sma_200": null
       },
       "fundamentals": {
-        "market_cap": 998899646464,
-        "pe_trailing": 66.99029,
-        "pe_forward": 23.759386,
-        "ev_ebitda": 48.769,
-        "ev_revenue": 19.137,
-        "ps_ratio": 19.562426,
-        "pb": 28.006744,
-        "dividend_yield": 0.1,
+        "market_cap": 987752497152,
+        "pe_trailing": 65.89822,
+        "pe_forward": 23.494244,
+        "ev_ebitda": 49.345,
+        "ev_revenue": 19.363,
+        "ps_ratio": 19.34412,
+        "pb": 27.694204,
+        "dividend_yield": 0.21,
         "revenue": 51062157312,
         "revenue_growth": 1.921,
         "gross_margin": 0.44032001,
@@ -65,7 +65,7 @@
         "ebitda": 20036571136,
         "earnings_growth": 2.594,
         "book_value": 32.028,
-        "enterprise_value": 977167122432
+        "enterprise_value": 988700540928
       },
       "analyst": {
         "target_mean": 873.325,
@@ -89,38 +89,38 @@
     },
     "700.HK": {
       "price": {
-        "last": 504,
-        "prev_close": 500,
-        "change_pct": 0.8,
-        "high": 502,
-        "low": 495.2,
-        "volume": -170,
-        "avg_volume_20d": 22547649,
+        "last": 495.2,
+        "prev_close": 487,
+        "change_pct": 1.684,
+        "high": 495,
+        "low": 487,
+        "volume": -32,
+        "avg_volume_20d": 22081695,
         "volume_ratio": -0.0,
         "high_52w": 664.0,
         "low_52w": 476.0
       },
       "technical": {
-        "sma_20": 501.6,
-        "sma_50": 519.54,
+        "sma_20": 500.57,
+        "sma_50": 518.23,
         "sma_200": null,
-        "rsi_14": 54.5,
-        "macd": -4.5457,
-        "macd_signal": -6.7676,
-        "macd_histogram": 2.2218,
-        "above_sma_20": true,
+        "rsi_14": 48.9,
+        "macd": -5.2098,
+        "macd_signal": -6.4642,
+        "macd_histogram": 1.2544,
+        "above_sma_20": false,
         "above_sma_50": false,
         "above_sma_200": null
       },
       "fundamentals": {
-        "market_cap": 4480494469120,
-        "pe_trailing": 17.886003,
-        "pe_forward": 12.739565,
-        "ev_ebitda": 16.911,
-        "ev_revenue": 6.15,
-        "ps_ratio": 5.959959,
-        "pb": 3.3805795,
-        "dividend_yield": 1.05,
+        "market_cap": 4464228433920,
+        "pe_trailing": 17.814642,
+        "pe_forward": 12.6963,
+        "ev_ebitda": 16.62,
+        "ev_revenue": 6.044,
+        "ps_ratio": 5.9383216,
+        "pb": 3.3683064,
+        "dividend_yield": 1.07,
         "revenue": 751766011904,
         "revenue_growth": 0.127,
         "gross_margin": 0.5625,
@@ -138,15 +138,15 @@
         "ebitda": 273397006336,
         "earnings_growth": 0.141,
         "book_value": 146.66124,
-        "enterprise_value": 4623302131712
+        "enterprise_value": 4543813255168
       },
       "analyst": {
-        "target_mean": 718.94586,
-        "target_high": 885.4472,
-        "target_low": 482.42276,
-        "target_median": 721.8236,
+        "target_mean": 723.3165,
+        "target_high": 885.29266,
+        "target_low": 482.33853,
+        "target_median": 725.1221,
         "recommendation": "strong_buy",
-        "num_analysts": 44
+        "num_analysts": 42
       },
       "meta": {
         "currency": "HKD",
@@ -162,38 +162,38 @@
     },
     "9999.HK": {
       "price": {
-        "last": 177.6,
-        "prev_close": 174.7,
-        "change_pct": 1.66,
-        "high": 175.9,
-        "low": 171.8,
-        "volume": -298,
-        "avg_volume_20d": 4767527,
+        "last": 172.4,
+        "prev_close": 170.4,
+        "change_pct": 1.174,
+        "high": 171.5,
+        "low": 168.8,
+        "volume": -92,
+        "avg_volume_20d": 4834576,
         "volume_ratio": -0.0,
         "high_52w": 233.78,
-        "low_52w": 169.2
+        "low_52w": 168.8
       },
       "technical": {
-        "sma_20": 177.02,
-        "sma_50": 181.23,
+        "sma_20": 176.71,
+        "sma_50": 180.8,
         "sma_200": null,
-        "rsi_14": 52.0,
-        "macd": -0.9987,
-        "macd_signal": -1.3595,
-        "macd_histogram": 0.3608,
-        "above_sma_20": true,
+        "rsi_14": 43.6,
+        "macd": -1.5407,
+        "macd_signal": -1.3947,
+        "macd_histogram": -0.1459,
+        "above_sma_20": false,
         "above_sma_50": false,
         "above_sma_200": null
       },
       "fundamentals": {
-        "market_cap": 549747392512,
-        "pe_trailing": 14.310632,
-        "pe_forward": 10.91683,
-        "ev_ebitda": 10.877,
-        "ev_revenue": 3.678,
-        "ps_ratio": 4.881185,
-        "pb": 2.9871318,
-        "dividend_yield": 2.62,
+        "market_cap": 544961429504,
+        "pe_trailing": 14.19784,
+        "pe_forward": 10.821791,
+        "ev_ebitda": 10.441,
+        "ev_revenue": 3.53,
+        "ps_ratio": 4.8386908,
+        "pb": 2.9632583,
+        "dividend_yield": 2.7,
         "revenue": 112625803264,
         "revenue_growth": 0.03,
         "gross_margin": 0.64285004,
@@ -210,14 +210,14 @@
         "total_debt": 6729741824,
         "ebitda": 38082293760,
         "earnings_growth": -0.292,
-        "book_value": 57.68075,
-        "enterprise_value": 414216290304
+        "book_value": 57.639256,
+        "enterprise_value": 397617299456
       },
       "analyst": {
-        "target_mean": 254.34224,
-        "target_high": 313.08395,
-        "target_low": 141.85097,
-        "target_median": 255.33861,
+        "target_mean": 253.79842,
+        "target_high": 313.0293,
+        "target_low": 141.8262,
+        "target_median": 253.37154,
         "recommendation": "strong_buy",
         "num_analysts": 22
       },
@@ -235,37 +235,37 @@
     },
     "6160.HK": {
       "price": {
-        "last": 186.8,
-        "prev_close": 187.5,
-        "change_pct": -0.373,
-        "high": 189.5,
-        "low": 182.9,
-        "volume": -149,
-        "avg_volume_20d": 4023262,
+        "last": 183.7,
+        "prev_close": 182.5,
+        "change_pct": 0.658,
+        "high": 182.5,
+        "low": 177.5,
+        "volume": -157,
+        "avg_volume_20d": 4051653,
         "volume_ratio": -0.0,
         "high_52w": 229.4,
         "low_52w": 159.2
       },
       "technical": {
-        "sma_20": 182.76,
-        "sma_50": 187.81,
+        "sma_20": 183.46,
+        "sma_50": 187.23,
         "sma_200": null,
-        "rsi_14": 63.5,
-        "macd": 1.8604,
-        "macd_signal": 1.2027,
-        "macd_histogram": 0.6577,
+        "rsi_14": 44.2,
+        "macd": 1.2199,
+        "macd_signal": 1.2024,
+        "macd_histogram": 0.0175,
         "above_sma_20": true,
         "above_sma_50": false,
         "above_sma_200": null
       },
       "fundamentals": {
-        "market_cap": 276986396672,
-        "pe_trailing": 123.48993,
-        "pe_forward": 29.780916,
-        "ev_ebitda": 459.487,
-        "ev_revenue": 49.777,
-        "ps_ratio": 51.840668,
-        "pb": 7.7558365,
+        "market_cap": 261014765568,
+        "pe_trailing": 121.40939,
+        "pe_forward": 29.279171,
+        "ev_ebitda": 451.763,
+        "ev_revenue": 48.94,
+        "ps_ratio": 48.851425,
+        "pb": 7.625167,
         "dividend_yield": null,
         "revenue": 5343032832,
         "revenue_growth": 0.328,
@@ -284,13 +284,13 @@
         "ebitda": 578817984,
         "earnings_growth": null,
         "book_value": 23.72407,
-        "enterprise_value": 265959440384
+        "enterprise_value": 261488443392
       },
       "analyst": {
-        "target_mean": 252.27057,
-        "target_high": 298.35178,
-        "target_low": 212.33636,
-        "target_median": 244.28471,
+        "target_mean": 252.36688,
+        "target_high": 298.46567,
+        "target_low": 212.41743,
+        "target_median": 244.37798,
         "recommendation": "strong_buy",
         "num_analysts": 17
       },
@@ -308,38 +308,38 @@
     },
     "002594.SZ": {
       "price": {
-        "last": 99.98,
-        "prev_close": 101.62,
-        "change_pct": -1.614,
-        "high": 101.59,
-        "low": 99.01,
-        "volume": 4921637500,
-        "avg_volume_20d": 54591341,
-        "volume_ratio": 90.15,
+        "last": 99.46,
+        "prev_close": 99.98,
+        "change_pct": -0.52,
+        "high": 99.91,
+        "low": 98.7,
+        "volume": 3377387800,
+        "avg_volume_20d": 52118756,
+        "volume_ratio": 64.8,
         "high_52w": 111.82,
         "low_52w": 85.88
       },
       "technical": {
-        "sma_20": 102.47,
-        "sma_50": 98.76,
+        "sma_20": 102.29,
+        "sma_50": 98.97,
         "sma_200": null,
-        "rsi_14": 46.5,
-        "macd": 0.5123,
-        "macd_signal": 1.0003,
-        "macd_histogram": -0.4879,
+        "rsi_14": 51.0,
+        "macd": 0.2587,
+        "macd_signal": 0.8519,
+        "macd_histogram": -0.5933,
         "above_sma_20": false,
         "above_sma_50": true,
         "above_sma_200": null
       },
       "fundamentals": {
-        "market_cap": 911537405952,
-        "pe_trailing": 27.927376,
-        "pe_forward": 17.183449,
-        "ev_ebitda": 8.394,
-        "ev_revenue": 1.145,
-        "ps_ratio": 1.1338024,
-        "pb": 3.9918551,
-        "dividend_yield": 1.3,
+        "market_cap": 906796466176,
+        "pe_trailing": 27.782124,
+        "pe_forward": 17.094076,
+        "ev_ebitda": 8.258,
+        "ev_revenue": 1.127,
+        "ps_ratio": 1.1279055,
+        "pb": 3.9710932,
+        "dividend_yield": 1.32,
         "revenue": 803964977152,
         "revenue_growth": -0.135,
         "gross_margin": 0.17543,
@@ -357,10 +357,10 @@
         "ebitda": 109680508928,
         "earnings_growth": -0.405,
         "book_value": 25.046,
-        "enterprise_value": 920678367232
+        "enterprise_value": 905778888704
       },
       "analyst": {
-        "target_mean": 119.72955,
+        "target_mean": 119.59318,
         "target_high": 137.0,
         "target_low": 88.0,
         "target_median": 124.02,
@@ -396,13 +396,13 @@
           "num_analysts": 8.0
         },
         "0y": {
-          "avg": 30.3361,
+          "avg": 30.3111,
           "low": 27.2,
-          "high": 32.014,
+          "high": 31.95,
           "num_analysts": 34.0
         },
         "+1y": {
-          "avg": 33.9317,
+          "avg": 33.9059,
           "low": 29.34,
           "high": 36.37,
           "num_analysts": 32.0
@@ -410,7 +410,7 @@
       },
       "revenue_estimate": {
         "0q": {
-          "avg": 198365180380.0,
+          "avg": 198355968360.0,
           "low": 188562100000.0,
           "high": 203217000000.0
         },
@@ -420,12 +420,12 @@
           "high": 207022000000.0
         },
         "0y": {
-          "avg": 831184944640.0,
+          "avg": 831333522930.0,
           "low": 765567200000.0,
           "high": 854708152080.0
         },
         "+1y": {
-          "avg": 910685503460.0,
+          "avg": 910743298550.0,
           "low": 795737400000.0,
           "high": 958398000000.0
         }
@@ -444,16 +444,16 @@
           "90d_ago": 7.7025
         },
         "0y": {
-          "current": 30.3361,
+          "current": 30.3111,
           "7d_ago": 30.3656,
-          "30d_ago": 30.4953,
-          "90d_ago": 31.2302
+          "30d_ago": 30.5045,
+          "90d_ago": 31.2405
         },
         "+1y": {
-          "current": 33.9317,
+          "current": 33.9059,
           "7d_ago": 33.971,
-          "30d_ago": 34.2646,
-          "90d_ago": 35.1311
+          "30d_ago": 34.2638,
+          "90d_ago": 35.1479
         }
       },
       "beat_miss_history": [
@@ -487,25 +487,25 @@
     "9999.HK": {
       "eps_estimate": {
         "0q": {
-          "avg": 2.9126,
+          "avg": 2.8226,
           "low": 2.64,
-          "high": 3.24,
+          "high": 3.0203,
           "num_analysts": 4.0
         },
         "+1q": {
-          "avg": 2.967,
+          "avg": 2.9204,
           "low": 2.55,
           "high": 3.2011,
           "num_analysts": 3.0
         },
         "0y": {
-          "avg": 12.4158,
+          "avg": 12.3935,
           "low": 10.43,
           "high": 13.41,
           "num_analysts": 13.0
         },
         "+1y": {
-          "avg": 13.7719,
+          "avg": 13.7503,
           "low": 10.54,
           "high": 15.4613,
           "num_analysts": 13.0
@@ -513,50 +513,50 @@
       },
       "revenue_estimate": {
         "0q": {
-          "avg": 29648255500.0,
-          "low": 28843000000.0,
+          "avg": 29520470600.0,
+          "low": 27852263000.0,
           "high": 31306000000.0
         },
         "+1q": {
-          "avg": 29381792560.0,
-          "low": 28225000000.0,
+          "avg": 29183037060.0,
+          "low": 27658904000.0,
           "high": 30811000000.0
         },
         "0y": {
-          "avg": 120893747020.0,
-          "low": 117210000000.0,
+          "avg": 120784274320.0,
+          "low": 114934688000.0,
           "high": 126214779340.0
         },
         "+1y": {
-          "avg": 130963471230.0,
+          "avg": 130864220440.0,
           "low": 120770000000.0,
           "high": 143946054840.0
         }
       },
       "eps_trend": {
         "0q": {
-          "current": 2.9126,
-          "7d_ago": 3.1633,
-          "30d_ago": 3.075,
-          "90d_ago": 0.0
+          "current": 2.8226,
+          "7d_ago": 2.9126,
+          "30d_ago": 2.9126,
+          "90d_ago": 3.22
         },
         "+1q": {
-          "current": 2.967,
-          "7d_ago": 3.0467,
-          "30d_ago": 3.025,
-          "90d_ago": 0.0
+          "current": 2.9204,
+          "7d_ago": 2.967,
+          "30d_ago": 2.967,
+          "90d_ago": 3.0933
         },
         "0y": {
-          "current": 12.4158,
+          "current": 12.3935,
           "7d_ago": 12.4727,
           "30d_ago": 12.4727,
-          "90d_ago": 12.9882
+          "90d_ago": 13.0057
         },
         "+1y": {
-          "current": 13.7719,
+          "current": 13.7503,
           "7d_ago": 13.8088,
           "30d_ago": 13.8088,
-          "90d_ago": 14.5529
+          "90d_ago": 14.5874
         }
       },
       "beat_miss_history": [
@@ -666,13 +666,19 @@
     }
   },
   "akshare": {
-    "northbound": {},
+    "northbound": {
+      "latest_net_flow": null,
+      "5d_cumulative": 0.0,
+      "20d_cumulative": 0.0,
+      "trend": "outflow",
+      "updated": "2026-04-24"
+    },
     "southbound": {
-      "latest_net_flow": 48.9049,
-      "5d_cumulative": 260.1994,
-      "20d_cumulative": 491.9339,
+      "latest_net_flow": 85.9813,
+      "5d_cumulative": 303.2701,
+      "20d_cumulative": 280.636,
       "trend": "inflow",
-      "updated": "2026-04-23"
+      "updated": "2026-04-24"
     },
     "dragon_tiger": [
       {
@@ -690,6 +696,36 @@
         "name": "飞亚达",
         "date": "",
         "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000533",
+        "name": "顺钠股份",
+        "date": "",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000539",
+        "name": "粤电力A",
+        "date": "",
+        "reason": "日振幅值达到15%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000539",
+        "name": "粤电力A",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -719,6 +755,16 @@
         "code": "000890",
         "name": "法尔胜",
         "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000890",
+        "name": "法尔胜",
+        "date": "",
         "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
@@ -736,10 +782,40 @@
         "focus": false
       },
       {
+        "code": "000892",
+        "name": "欢瑞世纪",
+        "date": "",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "000913",
         "name": "钱江摩托",
         "date": "",
         "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "001234",
+        "name": "泰慕士",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "001267",
+        "name": "汇绿生态",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -786,10 +862,30 @@
         "focus": false
       },
       {
+        "code": "002008",
+        "name": "大族激光",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "002062",
         "name": "宏润建设",
         "date": "",
         "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002081",
+        "name": "金螳螂",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -866,10 +962,30 @@
         "focus": false
       },
       {
+        "code": "002263",
+        "name": "大东南",
+        "date": "",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "002289",
         "name": "*ST宇顺",
         "date": "",
         "reason": "连续三个交易日内，涨幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002297",
+        "name": "博云新材",
+        "date": "",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -919,26 +1035,6 @@
         "code": "002342",
         "name": "巨力索具",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002342",
-        "name": "巨力索具",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002342",
-        "name": "巨力索具",
-        "date": "",
         "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
@@ -946,10 +1042,20 @@
         "focus": false
       },
       {
-        "code": "002361",
-        "name": "神剑股份",
+        "code": "002342",
+        "name": "巨力索具",
         "date": "",
         "reason": "日换手率达到20%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002342",
+        "name": "巨力索具",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -959,7 +1065,7 @@
         "code": "002361",
         "name": "神剑股份",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -980,6 +1086,26 @@
         "name": "神剑股份",
         "date": "",
         "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002361",
+        "name": "神剑股份",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002361",
+        "name": "神剑股份",
+        "date": "",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -1019,7 +1145,7 @@
         "code": "002418",
         "name": "康盛股份",
         "date": "",
-        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -1048,128 +1174,8 @@
       {
         "code": "002418",
         "name": "康盛股份",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002428",
-        "name": "云南锗业",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002428",
-        "name": "云南锗业",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002428",
-        "name": "云南锗业",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002432",
-        "name": "九安医疗",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002475",
-        "name": "立讯精密",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002501",
-        "name": "利源股份",
-        "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002549",
-        "name": "凯美特气",
         "date": "",
         "reason": "日跌幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002560",
-        "name": "通达股份",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002560",
-        "name": "通达股份",
-        "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002565",
-        "name": "顺灏股份",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002565",
-        "name": "顺灏股份",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002565",
-        "name": "顺灏股份",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
