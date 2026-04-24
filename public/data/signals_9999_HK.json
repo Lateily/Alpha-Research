@@ -1,7 +1,7 @@
 {
   "ticker": "9999.HK",
   "generated_at": "2026-04-24",
-  "price": 170.8,
+  "price": 170.9,
   "zone": "BEARISH",
   "entry_zone": true,
   "exit_zone": true,
@@ -12,8 +12,8 @@
       "date": "2026-04-24",
       "bullish": false,
       "description": {
-        "e": "MACD DIF(-1.540) crossed below DEA(-1.394) below zero — bearish momentum",
-        "z": "MACD DIF(-1.540)下穿DEA(-1.394)零轴下方死叉看跌"
+        "e": "MACD DIF(-1.532) crossed below DEA(-1.393) below zero — bearish momentum",
+        "z": "MACD DIF(-1.532)下穿DEA(-1.393)零轴下方死叉看跌"
       }
     },
     {
@@ -22,8 +22,8 @@
       "date": "2026-04-24",
       "bullish": true,
       "description": {
-        "e": "KDJ J=-3.4 (extreme <0) — high-probability reversal zone",
-        "z": "KDJ J=-3.4极度超卖，高概率反转区间"
+        "e": "KDJ J=-3.0 (extreme <0) — high-probability reversal zone",
+        "z": "KDJ J=-3.0极度超卖，高概率反转区间"
       }
     }
   ],
@@ -33,27 +33,27 @@
     "total": 2
   },
   "indicators": {
-    "ma5": 177.5,
+    "ma5": 177.52,
     "ma20": 176.71,
     "ma60": 184.41,
-    "rsi14": 39.4,
-    "vol_ma20": 4834576,
-    "vol_ratio": 0.88,
-    "price_vs_ma20": -3.34,
-    "price_vs_ma60": -7.38,
-    "change_1d": -0.93,
-    "change_5d": -6.31,
-    "change_20d": -3.56,
-    "macd_dif": -1.5404,
-    "macd_dea": -1.3944,
-    "macd_hist": -0.2921,
-    "bb_upper": 185.43,
+    "rsi14": 39.5,
+    "vol_ma20": 4915668,
+    "vol_ratio": 1.2,
+    "price_vs_ma20": -3.29,
+    "price_vs_ma60": -7.33,
+    "change_1d": -0.87,
+    "change_5d": -6.25,
+    "change_20d": -3.5,
+    "macd_dif": -1.5325,
+    "macd_dea": -1.3928,
+    "macd_hist": -0.2793,
+    "bb_upper": 185.42,
     "bb_mid": 176.71,
-    "bb_lower": 167.98,
-    "bb_bandwidth": 9.88,
-    "kdj_k": 29.8,
+    "bb_lower": 168.0,
+    "bb_bandwidth": 9.86,
+    "kdj_k": 30.0,
     "kdj_d": 46.4,
-    "kdj_j": -3.4,
+    "kdj_j": -3.0,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
