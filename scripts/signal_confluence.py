@@ -91,6 +91,14 @@ SIGNAL_CONFIG = {
     "VP_GOOD_CONVICTION":   {"weight":  14, "ttl": 30, "group": "vp_quality"},
     "VP_WEAK_CONVICTION":   {"weight": -14, "ttl": 30, "group": "vp_quality"},
     "VP_POOR_CONVICTION":   {"weight": -28, "ttl": 30, "group": "vp_quality"},
+
+    # ── Industry Leading Indicators (Group: leading_indicator) ────────────────
+    # Derived from leading_indicators.json (NVDA revenue + hyperscaler CapEx + TSMC).
+    # TTL=90 days: quarterly earnings cycle — data stays valid until next quarter.
+    # Only injected for tickers with DIRECT relevance in stock_implications.
+    # MODERATE signal → no injection (neutral band, same logic as VP 40-59).
+    "AI_CAPEX_STRONG_CYCLE": {"weight":  20, "ttl": 90, "group": "leading_indicator"},
+    "AI_CAPEX_WEAKENING":    {"weight": -15, "ttl": 90, "group": "leading_indicator"},
 }
 
 # ── Independence discount ─────────────────────────────────────────────────────
@@ -199,9 +207,35 @@ def get_vp_score(ticker, vp_data):
     return None
 
 
+# ── Leading indicator loader ──────────────────────────────────────────────────
+
+def get_leading_indicator_signal(ticker: str, li_data: dict) -> str | None:
+    """
+    Return the AI capex signal type to inject for this ticker, or None.
+
+    Rules:
+      - Only injects for tickers with 'DIRECT' relevance in stock_implications
+      - STRONG_CAPEX_CYCLE → AI_CAPEX_STRONG_CYCLE (+20)
+      - MODERATE            → None (neutral band, no injection)
+      - WEAKENING           → AI_CAPEX_WEAKENING (-15)
+      - INSUFFICIENT_DATA   → None
+    """
+    if not li_data:
+        return None
+    impl = li_data.get("stock_implications", {}).get(ticker, {})
+    if impl.get("relevance") != "DIRECT":
+        return None   # only inject for directly affected tickers
+    composite = li_data.get("composite_signal", "")
+    if composite == "STRONG_CAPEX_CYCLE":
+        return "AI_CAPEX_STRONG_CYCLE"
+    if composite == "WEAKENING":
+        return "AI_CAPEX_WEAKENING"
+    return None   # MODERATE or INSUFFICIENT_DATA → neutral, no injection
+
+
 # ── Core scoring function ─────────────────────────────────────────────────────
 
-def compute_confluence(ticker, signals_data, regime, vp_score):
+def compute_confluence(ticker, signals_data, regime, vp_score, li_data=None):
     """
     Compute the confluence score for a single ticker.
 
@@ -238,6 +272,20 @@ def compute_confluence(ticker, signals_data, regime, vp_score):
             "bullish": vp_synthetic_type in ("VP_STRONG_CONVICTION", "VP_GOOD_CONVICTION"),
             "date":    str(date.today()),
             "_synthetic": True,
+        })
+
+    # ── Synthesize AI CapEx leading indicator signal ──────────────────────────
+    # Only fires for tickers with DIRECT upstream exposure to AI capex cycle.
+    # Current DIRECT: 300308.SZ (1.6T optical transceivers).
+    # TTL=90d because it's quarterly data; date = today so decay starts fresh.
+    li_signal_type = get_leading_indicator_signal(ticker, li_data or {})
+    if li_signal_type:
+        signals_raw.append({
+            "type":    li_signal_type,
+            "bullish": li_signal_type == "AI_CAPEX_STRONG_CYCLE",
+            "date":    str(date.today()),
+            "_synthetic": True,
+            "_source":  "leading_indicators",
         })
 
     signals = signals_raw
@@ -362,6 +410,8 @@ def compute_confluence(ticker, signals_data, regime, vp_score):
         "VP_GOOD_CONVICTION":   "VP良好信念(基本面偏强)",
         "VP_WEAK_CONVICTION":   "VP偏弱(基本面中性偏差)",
         "VP_POOR_CONVICTION":   "VP信念差(基本面恶化或高估)",
+        "AI_CAPEX_STRONG_CYCLE":"AI资本开支强周期(NVDA+超大规模厂商CapEx加速)",
+        "AI_CAPEX_WEAKENING":   "AI资本开支减速(超大规模厂商CapEx放缓)",
     }
     if positive:
         top_bull_z = "、".join(SIGNAL_ZH.get(s["type"], s["type"]) for s in positive[:2])
@@ -416,8 +466,13 @@ def main():
     print("[confluence] Starting signal confluence scoring...")
 
     # Load supporting data
-    regime_data = load_json(DATA_DIR / "regime_config.json", {"sectors": []})
-    vp_data     = load_json(DATA_DIR / "vp_snapshot.json",   {})
+    regime_data = load_json(DATA_DIR / "regime_config.json",      {"sectors": []})
+    vp_data     = load_json(DATA_DIR / "vp_snapshot.json",        {})
+    li_data     = load_json(DATA_DIR / "leading_indicators.json", {})
+
+    if li_data.get("composite_signal"):
+        print(f"[confluence] Leading indicator: {li_data['composite_signal']} "
+              f"(score={li_data.get('composite_score')})")
 
     # Find all signal files
     signal_files = sorted(glob.glob(str(DATA_DIR / "signals_*.json")))
@@ -442,7 +497,7 @@ def main():
         regime   = get_ticker_regime(ticker, regime_data)
         vp_score = get_vp_score(ticker, vp_data)
 
-        result = compute_confluence(ticker, signals_data, regime, vp_score)
+        result = compute_confluence(ticker, signals_data, regime, vp_score, li_data)
         results.append(result)
 
         direction = "▲" if result["score"] > 0 else ("▼" if result["score"] < 0 else "─")

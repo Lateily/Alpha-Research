@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-24T11:56:07.173497+00:00",
+  "generated_at": "2026-04-24T12:30:39.503259+00:00",
   "tickers_scored": 5,
   "summary": {
     "entry_candidates": [],
@@ -7,6 +7,87 @@
     "caution": []
   },
   "scores": [
+    {
+      "ticker": "300308.SZ",
+      "score": 22,
+      "action": "HOLD",
+      "action_zh": "温和多头，持有",
+      "zone": "OVERBOUGHT",
+      "regime": "PERMISSIVE",
+      "vp_score": 56.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 2,
+        "bearish": 2
+      },
+      "contributing": [
+        {
+          "type": "RSI_OVERBOUGHT",
+          "base_weight": -14,
+          "decay": 1.0,
+          "independence_factor": 1.0,
+          "regime_mult": 0.8,
+          "staleness": 1.0,
+          "final_contribution": -11.2
+        },
+        {
+          "type": "BULLISH_ALIGNMENT",
+          "base_weight": 10,
+          "decay": 1.0,
+          "independence_factor": 1.0,
+          "regime_mult": 1.2,
+          "staleness": 1.0,
+          "final_contribution": 12.0
+        },
+        {
+          "type": "KDJ_DEATH_CROSS",
+          "base_weight": -10,
+          "decay": 1.0,
+          "independence_factor": 0.4,
+          "regime_mult": 0.8,
+          "staleness": 1.0,
+          "final_contribution": -3.2
+        },
+        {
+          "type": "AI_CAPEX_STRONG_CYCLE",
+          "base_weight": 20,
+          "decay": 1.0,
+          "independence_factor": 1.0,
+          "regime_mult": 1.2,
+          "staleness": 1.0,
+          "final_contribution": 24.0
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "AI_CAPEX_STRONG_CYCLE",
+          "contribution": 24.0
+        },
+        {
+          "type": "BULLISH_ALIGNMENT",
+          "contribution": 12.0
+        },
+        {
+          "type": "RSI_OVERBOUGHT",
+          "contribution": -11.2
+        },
+        {
+          "type": "KDJ_DEATH_CROSS",
+          "contribution": -3.2
+        }
+      ],
+      "rationale_e": "Bullish: Ai Capex Strong Cycle, Bullish Alignment | Bearish: Rsi Overbought, Kdj Death Cross | RSI 81 | Price vs MA20 +21.4% | Regime: PERMISSIVE | VP 56",
+      "rationale_z": "多头：AI资本开支强周期(NVDA+超大规模厂商CapEx加速)、均线多头排列 | 空头：RSI超买、KDJ死叉 | RSI 81 | 距MA20 +21.4% | 政策顺风 | VP 56",
+      "signal_types": [
+        "RSI_OVERBOUGHT",
+        "BULLISH_ALIGNMENT",
+        "KDJ_DEATH_CROSS",
+        "AI_CAPEX_STRONG_CYCLE"
+      ],
+      "computed_at": "2026-04-24T12:30:39.502261+00:00"
+    },
     {
       "ticker": "9999.HK",
       "score": 14,
@@ -72,7 +153,7 @@
         "KDJ_OVERSOLD",
         "VP_GOOD_CONVICTION"
       ],
-      "computed_at": "2026-04-24T11:56:07.173483+00:00"
+      "computed_at": "2026-04-24T12:30:39.503252+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -111,7 +192,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-04-24T11:56:07.173177+00:00"
+      "computed_at": "2026-04-24T12:30:39.502652+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -133,7 +214,7 @@
       "rationale_e": "RSI 45 | Price vs MA20 -2.8% | Regime: PERMISSIVE | VP 44",
       "rationale_z": "RSI 45 | 距MA20 -2.8% | 政策顺风 | VP 44",
       "signal_types": [],
-      "computed_at": "2026-04-24T11:56:07.172896+00:00"
+      "computed_at": "2026-04-24T12:30:39.501860+00:00"
     },
     {
       "ticker": "700.HK",
@@ -155,74 +236,7 @@
       "rationale_e": "RSI 43 | Price vs MA20 -1.4% | VP 53",
       "rationale_z": "RSI 43 | 距MA20 -1.4% | VP 53",
       "signal_types": [],
-      "computed_at": "2026-04-24T11:56:07.173338+00:00"
-    },
-    {
-      "ticker": "300308.SZ",
-      "score": -2,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "OVERBOUGHT",
-      "regime": "PERMISSIVE",
-      "vp_score": 56.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 1,
-        "bearish": 2
-      },
-      "contributing": [
-        {
-          "type": "RSI_OVERBOUGHT",
-          "base_weight": -14,
-          "decay": 1.0,
-          "independence_factor": 1.0,
-          "regime_mult": 0.8,
-          "staleness": 1.0,
-          "final_contribution": -11.2
-        },
-        {
-          "type": "BULLISH_ALIGNMENT",
-          "base_weight": 10,
-          "decay": 1.0,
-          "independence_factor": 1.0,
-          "regime_mult": 1.2,
-          "staleness": 1.0,
-          "final_contribution": 12.0
-        },
-        {
-          "type": "KDJ_DEATH_CROSS",
-          "base_weight": -10,
-          "decay": 1.0,
-          "independence_factor": 0.4,
-          "regime_mult": 0.8,
-          "staleness": 1.0,
-          "final_contribution": -3.2
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "BULLISH_ALIGNMENT",
-          "contribution": 12.0
-        },
-        {
-          "type": "RSI_OVERBOUGHT",
-          "contribution": -11.2
-        },
-        {
-          "type": "KDJ_DEATH_CROSS",
-          "contribution": -3.2
-        }
-      ],
-      "rationale_e": "Bullish: Bullish Alignment | Bearish: Rsi Overbought, Kdj Death Cross | RSI 81 | Price vs MA20 +21.4% | Regime: PERMISSIVE | VP 56",
-      "rationale_z": "多头：均线多头排列 | 空头：RSI超买、KDJ死叉 | RSI 81 | 距MA20 +21.4% | 政策顺风 | VP 56",
-      "signal_types": [
-        "RSI_OVERBOUGHT",
-        "BULLISH_ALIGNMENT",
-        "KDJ_DEATH_CROSS"
-      ],
-      "computed_at": "2026-04-24T11:56:07.173041+00:00"
+      "computed_at": "2026-04-24T12:30:39.502980+00:00"
     }
   ]
 }
