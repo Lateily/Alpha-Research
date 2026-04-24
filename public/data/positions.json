@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-04-24T07:24:21.554349",
+  "as_of": "2026-04-24T11:56:06.957884",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -57,7 +57,7 @@
         "captured_at": "2026-03-10T09:35:00Z"
       },
       "vp_at_entry": 79,
-      "wrongIf_at_entry": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
+      "wrongIf_at_entry": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter",
       "weight_pct": 44.85
     },
     {
@@ -107,7 +107,7 @@
         "captured_at": "2026-03-10T09:40:00Z"
       },
       "vp_at_entry": 65,
-      "wrongIf_at_entry": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
+      "wrongIf_at_entry": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
       "weight_pct": 4.54
     },
     {
@@ -162,7 +162,7 @@
         "captured_at": "2026-03-17T09:30:00Z"
       },
       "vp_at_entry": 64,
-      "wrongIf_at_entry": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
+      "wrongIf_at_entry": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters",
       "weight_pct": 30.6
     },
     {
@@ -212,7 +212,7 @@
         "captured_at": "2026-03-24T09:45:00Z"
       },
       "vp_at_entry": 58,
-      "wrongIf_at_entry": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
+      "wrongIf_at_entry": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
       "weight_pct": 15.98
     },
     {
@@ -257,7 +257,7 @@
         "captured_at": "2026-04-01T09:30:00Z"
       },
       "vp_at_entry": 52,
-      "wrongIf_at_entry": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
+      "wrongIf_at_entry": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
       "weight_pct": 4.02
     }
   ],
