@@ -46,6 +46,62 @@ def load_json(path, default=None):
         return default if default is not None else {}
 
 
+# ── Watchlist loader ──────────────────────────────────────────────────────────
+def _load_watchlist_tickers() -> dict:
+    """
+    Return dict of {ticker: full_cfg_dict} from watchlist.json.
+    Each value includes all vp_seed fields PLUS name_en/name_zh for upsert.
+    Used to:
+      1. Auto-upsert new tickers into vp_snapshot (seed → snapshot)
+      2. Sync manual VP dimensions (narrative_shift, low_coverage, catalyst_prox)
+    Returns empty dict on failure (graceful degradation).
+    """
+    wl_path = DATA_DIR / "watchlist.json"
+    try:
+        wl = json.loads(wl_path.read_text(encoding="utf-8"))
+        result = {}
+        for tk, v in wl.get("tickers", {}).items():
+            seed = v.get("vp_seed", {})
+            result[tk] = {
+                "ticker":            tk,
+                "name_en":           v.get("name_en", tk),
+                "name_zh":           v.get("name_zh", tk),
+                "vp_score":          seed.get("vp", 50),
+                "expectation_gap":   seed.get("expectation_gap", 50),
+                "fundamental_accel": seed.get("fundamental_accel", 50),
+                "narrative_shift":   seed.get("narrative_shift", 50),
+                "low_coverage":      seed.get("low_coverage", 50),
+                "catalyst_proximity":seed.get("catalyst_prox", 50),
+                "wrongIf_e":         seed.get("wrongIf_e", ""),
+                "wrongIf_z":         seed.get("wrongIf_z", ""),
+                "source":            "seed",
+                "last_updated":      seed.get("last_updated", ""),
+            }
+        print(f"[vp_engine] watchlist.json loaded: {len(result)} tickers")
+        return result
+    except Exception as e:
+        print(f"[vp_engine] watchlist.json unavailable ({e}), relying on vp_snapshot.json only")
+        return {}
+
+
+def _load_watchlist_manual_dims() -> dict:
+    """Return {ticker: {narrative_shift, low_coverage, catalyst_proximity}} from watchlist."""
+    wl_path = DATA_DIR / "watchlist.json"
+    result = {}
+    try:
+        wl = json.loads(wl_path.read_text(encoding="utf-8"))
+        for tk, v in wl.get("tickers", {}).items():
+            seed = v.get("vp_seed", {})
+            result[tk] = {
+                "narrative_shift":    seed.get("narrative_shift", 50),
+                "low_coverage":       seed.get("low_coverage", 50),
+                "catalyst_proximity": seed.get("catalyst_prox", 50),
+            }
+    except Exception:
+        pass
+    return result
+
+
 # ── Fundamental Accel Scoring ─────────────────────────────────────────────────
 
 def _get_field(d, *keys):
@@ -369,6 +425,19 @@ def main():
     vp_snap_raw = load_json(DATA_DIR / "vp_snapshot.json", {"snapshots": []})
     snapshots   = vp_snap_raw.get("snapshots", [])
 
+    # ── Load manual dimensions from watchlist.json ────────────────────────────
+    # narrative_shift / low_coverage / catalyst_prox are human-edited in watchlist.json.
+    # vp_engine syncs them on every run so edits propagate automatically.
+    wl_manual = _load_watchlist_manual_dims()
+
+    # ── Auto-upsert new watchlist tickers into snapshot pool ──────────────────
+    wl_all = _load_watchlist_tickers()
+    existing_tickers = {s.get("ticker") for s in snapshots if s.get("ticker")}
+    for tk, seed_snap in wl_all.items():
+        if tk not in existing_tickers:
+            print(f"  [watchlist] Auto-seeding new ticker: {tk}")
+            snapshots.append(seed_snap)
+
     updated    = []
     scissors_out = {}
 
@@ -391,13 +460,22 @@ def main():
         new_eg = eg["score"]
         print(f"    expectation_gap:   {old_eg} → {new_eg}  (source={eg['source']}, signal={eg.get('signal')})")
 
-        # ── 3. Recompute VP score ─────────────────────────────────────────────
+        # ── 3. Manual dimensions from watchlist.json (refreshed every run) ───
+        manual = wl_manual.get(ticker, {})
+        ns  = manual.get("narrative_shift",    snap.get("narrative_shift",    50))
+        lc  = manual.get("low_coverage",       snap.get("low_coverage",       50))
+        cp  = manual.get("catalyst_proximity", snap.get("catalyst_proximity", 50))
+        old_ns = snap.get("narrative_shift", 50)
+        if ns != old_ns:
+            print(f"    narrative_shift:   {old_ns} → {ns}  (from watchlist.json)")
+
+        # ── 4. Recompute VP score ─────────────────────────────────────────────
         scores = {
             "expectation_gap":    new_eg,
             "fundamental_accel":  new_fa,
-            "narrative_shift":    snap.get("narrative_shift",    50),
-            "low_coverage":       snap.get("low_coverage",       50),
-            "catalyst_proximity": snap.get("catalyst_proximity", 50),
+            "narrative_shift":    ns,
+            "low_coverage":       lc,
+            "catalyst_proximity": cp,
         }
         new_vp = int(sum(VP_WEIGHTS[k] * scores[k] for k in VP_WEIGHTS))
         new_vp = max(0, min(100, new_vp))
@@ -405,7 +483,7 @@ def main():
         delta  = new_vp - old_vp
         print(f"    VP: {old_vp} → {new_vp}  (Δ{delta:+d})")
 
-        # ── 4. Profit scissors ────────────────────────────────────────────────
+        # ── 5. Profit scissors ────────────────────────────────────────────────
         ps = compute_profit_scissors(ticker)
         scissors_out[ticker] = ps
         if ps.get("verdict"):
@@ -418,10 +496,10 @@ def main():
             "vp_prev":            old_vp,
             "expectation_gap":    new_eg,
             "fundamental_accel":  new_fa,
-            # keep manual dimensions unchanged
-            "narrative_shift":    snap.get("narrative_shift",    50),
-            "low_coverage":       snap.get("low_coverage",       50),
-            "catalyst_proximity": snap.get("catalyst_proximity", 50),
+            # manual dimensions: refreshed from watchlist.json each run
+            "narrative_shift":    ns,
+            "low_coverage":       lc,
+            "catalyst_proximity": cp,
             # engine metadata
             "fa_detail":          fa,
             "eg_detail":          eg,
