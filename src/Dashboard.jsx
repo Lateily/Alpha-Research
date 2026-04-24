@@ -2593,7 +2593,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData, scissorsData }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData, scissorsData, liData }) {
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
@@ -2907,6 +2907,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       )}
 
       {/* Profit Scissors / Financial Levers Card */}
+      <LeadingIndicatorCard liData={liData} ticker={ticker} L={L} C={C} open={open} toggle={toggle}/>
       <ProfitScissors scissors={scissors} L={L} C={C} open={open} toggle={toggle}/>
 
       {/* Reverse DCF Card */}
@@ -5868,6 +5869,139 @@ function MetricBox({ label, value, sub, color, C }) {
 }
 
 /* ── Profit Scissors / Financial Levers ────────────────────────────────────── */
+// ── AI Infrastructure Leading Indicator Card ──────────────────────────────────
+function LeadingIndicatorCard({ liData, ticker, L, C, open, toggle }) {
+  // Only show for tickers with DIRECT upstream exposure to AI capex cycle
+  const impl = liData?.stock_implications?.[ticker];
+  if (!impl || impl.relevance !== 'DIRECT') return null;
+  if (!liData?.composite_signal || liData.composite_signal === 'INSUFFICIENT_DATA') return null;
+
+  const signal    = liData.composite_signal;
+  const score     = liData.composite_score;
+  const indicators = liData.indicators || {};
+  const nvda      = indicators.nvda_revenue || {};
+  const capex     = indicators.hyperscaler_capex || {};
+  const tsmc      = indicators.tsmc_revenue || {};
+  const momentum  = indicators.price_momentum || {};
+
+  const SIGNAL_META = {
+    STRONG_CAPEX_CYCLE: { label: L('Strong CapEx Cycle','强CapEx周期'), color: C.green,  icon: '🚀' },
+    MODERATE:           { label: L('Moderate','温和'),                  color: C.gold,   icon: '→'  },
+    WEAKENING:          { label: L('Weakening','减速'),                 color: C.red,    icon: '⚠️' },
+  };
+  const sm = SIGNAL_META[signal] || SIGNAL_META.MODERATE;
+
+  const fmtQoQ = (v) => v == null ? '—' : (
+    <span style={{color: v > 10 ? C.green : v > 0 ? C.gold : C.red, fontWeight:700}}>
+      {v > 0 ? '+' : ''}{v.toFixed(1)}%
+    </span>
+  );
+
+  const th = {padding:'5px 8px', fontSize:9, fontWeight:700, color:C.mid, textAlign:'right',
+               borderBottom:`1px solid ${C.border}`};
+  const td = {padding:'5px 8px', fontSize:10, textAlign:'right', borderBottom:`1px solid ${C.border}40`,
+               fontFamily:"'JetBrains Mono','Courier New',monospace"};
+  const tdL = {...td, textAlign:'left', fontWeight:600, color:C.dark};
+
+  // Latest 2 quarters for each indicator
+  const nvdaQ  = (nvda.quarters  || []).slice(0, 2);
+  const tsmc0  = (tsmc.quarters  || []).slice(0, 1);
+
+  return (
+    <Card
+      title={L('AI CapEx Cycle','AI资本开支周期')}
+      sub={L('NVDA · Hyperscaler CapEx · TSMC — upstream demand for optical transceivers',
+             'NVDA·超大规模CapEx·台积电 — 光模块上游需求指标')}
+      open={open?.aiCapex !== false}
+      onToggle={toggle ? () => toggle('aiCapex') : undefined}
+      C={C}
+    >
+      {/* Signal badge */}
+      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:14, padding:'10px 12px',
+                   background:`${sm.color}12`, border:`1px solid ${sm.color}30`, borderRadius:7}}>
+        <span style={{fontSize:20}}>{sm.icon}</span>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:700, color:sm.color, fontSize:12}}>{sm.label}</div>
+          <div style={{fontSize:9, color:C.mid, marginTop:1}}>
+            {L('Composite score','综合评分')}: {score?.toFixed(0)}/100 ·{' '}
+            {impl.rationale}
+          </div>
+        </div>
+        <div style={{fontSize:9, color:C.mid, textAlign:'right'}}>
+          {L('Lag','前置')}<br/>
+          <span style={{color:C.dark, fontWeight:700}}>{impl.lag_months}M</span>
+        </div>
+      </div>
+
+      {/* Data table */}
+      <table style={{width:'100%', borderCollapse:'collapse', fontSize:11}}>
+        <thead>
+          <tr>
+            <th style={{...th, textAlign:'left'}}>{L('Indicator','指标')}</th>
+            <th style={th}>{L('Latest QoQ','最新QoQ')}</th>
+            <th style={th}>{L('Prior QoQ','上季QoQ')}</th>
+            <th style={th}>{L('Signal','信号')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {/* NVDA */}
+          <tr>
+            <td style={tdL}>NVIDIA Revenue</td>
+            <td style={td}>{fmtQoQ(nvdaQ[0]?.qoq_pct)}</td>
+            <td style={td}>{fmtQoQ(nvdaQ[1]?.qoq_pct)}</td>
+            <td style={{...td, color: nvda.signal === 'ACCELERATING' ? C.green : nvda.signal === 'DECELERATING' ? C.red : C.gold}}>
+              {nvda.signal || '—'}
+            </td>
+          </tr>
+          {/* Hyperscaler CapEx */}
+          <tr>
+            <td style={tdL}>{L('Hyperscaler CapEx (4)','超大规模CapEx(4家)')}</td>
+            <td style={td}>{fmtQoQ(capex.combined_capex_qoq_pct)}</td>
+            <td style={{...td, color:C.mid}}>—</td>
+            <td style={{...td, color: capex.signal === 'EXPANDING' ? C.green : capex.signal === 'CONTRACTING' ? C.red : C.gold}}>
+              {capex.signal || '—'}
+            </td>
+          </tr>
+          {/* TSMC */}
+          <tr>
+            <td style={tdL}>TSMC Revenue</td>
+            <td style={td}>{fmtQoQ(tsmc0[0]?.qoq_pct)}</td>
+            <td style={{...td, color:C.mid}}>—</td>
+            <td style={{...td, color: tsmc.signal === 'STRONG' ? C.green : tsmc.signal === 'WEAK' ? C.red : C.gold}}>
+              {tsmc.signal || '—'}
+            </td>
+          </tr>
+          {/* Price momentum */}
+          <tr>
+            <td style={tdL}>{L('Hyperscaler Basket 3M','超大规模篮子3M')}</td>
+            <td style={td}>{fmtQoQ(momentum.basket_return_3m_pct)}</td>
+            <td style={{...td, color:C.mid}}>—</td>
+            <td style={{...td, color: momentum.signal === 'BULLISH' ? C.green : momentum.signal === 'BEARISH' ? C.red : C.gold}}>
+              {momentum.signal || '—'}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* CapEx breakdown mini row */}
+      {capex.combined_capex_latest_bn && (
+        <div style={{marginTop:10, padding:'8px 10px', background:C.soft, borderRadius:6,
+                     fontSize:9, color:C.mid}}>
+          {L('Combined CapEx (latest quarter)','合计CapEx(最新季度)')}: {' '}
+          <span style={{color:C.dark, fontWeight:700}}>${capex.combined_capex_latest_bn?.toFixed(1)}B</span>
+          {Object.entries(capex.components || {}).map(([tk, v]) => (
+            <span key={tk} style={{marginLeft:8}}>
+              {tk} <span style={{color: (v.latest_qoq||0) > 0 ? C.green : C.red}}>
+                {(v.latest_qoq||0) > 0 ? '+' : ''}{(v.latest_qoq||0).toFixed(0)}%
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function ProfitScissors({ scissors, L, C, open, toggle }) {
   if (!scissors || scissors.error) return null;
 
@@ -6659,6 +6793,7 @@ export default function Dashboard() {
   const [chatLoading, setChatLoading] = useState(false);
   const [vpScores, setVpScores] = useState({});   // { ticker: vp_score } from vp_snapshot.json
   const [scissorsData, setScissorsData] = useState({});  // profit_scissors.json tickers dict
+  const [liData, setLiData]             = useState({});  // leading_indicators.json
   // Jason: Live clock for Bloomberg-style terminal header
   const [nowTime, setNowTime] = useState(new Date());
   useEffect(() => {
@@ -6746,6 +6881,15 @@ export default function Dashboard() {
     fetch(base + 'data/profit_scissors.json')
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.tickers) setScissorsData(d.tickers); })
+      .catch(() => {});
+  }, []);
+
+  /* Fetch AI infrastructure leading indicators on mount */
+  useEffect(() => {
+    const base = DATA_BASE;
+    fetch(base + 'data/leading_indicators.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setLiData(d); })
       .catch(() => {});
   }, []);
 
@@ -7570,11 +7714,11 @@ export default function Dashboard() {
             }
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
-                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData}/></div>}
+                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData}/></div>}
                 <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>
               </div>
             );
-            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData}/>;
+            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
           })()}
