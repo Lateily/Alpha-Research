@@ -1,24 +1,24 @@
 {
   "ticker": "700.HK",
-  "generated_at": "2026-04-23T07:18:56.216294+00:00",
+  "generated_at": "2026-04-24T07:24:21.362123+00:00",
   "model_type": "standard_fcf",
   "market": "HK",
   "error": null,
   "wacc_detail": {
     "rf": 0.038,
     "erp": 0.0725,
-    "beta": 1.1926,
+    "beta": 1.1942,
     "beta_source": "yfinance_60d",
-    "wacc": 0.1245,
+    "wacc": 0.1246,
     "market": "HK"
   },
   "fcf0": 139386503168,
-  "implied_fcf_growth": 0.3149,
+  "implied_fcf_growth": 0.3142,
   "our_fcf_growth": 0.18,
-  "delta": -0.1349,
-  "expectation_gap_score": 20.6,
+  "delta": -0.1342,
+  "expectation_gap_score": 20.7,
   "signal": "OVERPRICED",
   "hyper_growth": false,
   "net_debt": -16153018368,
-  "market_cap": 4480494469120
+  "market_cap": 4464228433920
 }
