@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-04-27T09:32:58.488282",
+    "fetched_at": "2026-04-27T13:18:16.917868",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -141,10 +141,10 @@
         "enterprise_value": 4527554035712
       },
       "analyst": {
-        "target_mean": 724.8803,
-        "target_high": 887.1472,
-        "target_low": 483.34894,
-        "target_median": 726.64105,
+        "target_mean": 724.9435,
+        "target_high": 887.2245,
+        "target_low": 483.39105,
+        "target_median": 726.7044,
         "recommendation": "strong_buy",
         "num_analysts": 42
       },
@@ -192,7 +192,7 @@
         "ev_ebitda": 10.315,
         "ev_revenue": 3.488,
         "ps_ratio": 4.909515,
-        "pb": 3.0044684,
+        "pb": 3.0066316,
         "dividend_yield": 2.72,
         "revenue": 112625803264,
         "revenue_growth": 0.03,
@@ -210,14 +210,14 @@
         "total_debt": 6729741824,
         "ebitda": 38082293760,
         "earnings_growth": -0.292,
-        "book_value": 57.68075,
+        "book_value": 57.639256,
         "enterprise_value": 392829140992
       },
       "analyst": {
-        "target_mean": 254.33008,
-        "target_high": 313.68506,
-        "target_low": 142.1233,
-        "target_median": 253.90231,
+        "target_mean": 254.35223,
+        "target_high": 313.71237,
+        "target_low": 142.13568,
+        "target_median": 253.92442,
         "recommendation": "strong_buy",
         "num_analysts": 22
       },
@@ -265,7 +265,7 @@
         "ev_ebitda": 445.533,
         "ev_revenue": 48.265,
         "ps_ratio": 48.7164,
-        "pb": 7.6067142,
+        "pb": 7.6100526,
         "dividend_yield": null,
         "revenue": 5343032832,
         "revenue_growth": 0.328,
@@ -283,14 +283,14 @@
         "total_debt": 1092844032,
         "ebitda": 578817984,
         "earnings_growth": null,
-        "book_value": 23.715889,
+        "book_value": 23.705486,
         "enterprise_value": 257882800128
       },
       "analyst": {
-        "target_mean": 252.40263,
-        "target_high": 298.50797,
-        "target_low": 212.44753,
-        "target_median": 244.4126,
+        "target_mean": 252.42195,
+        "target_high": 298.5308,
+        "target_low": 212.46379,
+        "target_median": 244.4313,
         "recommendation": "strong_buy",
         "num_analysts": 17
       },
@@ -666,20 +666,8 @@
     }
   },
   "akshare": {
-    "northbound": {
-      "latest_net_flow": null,
-      "5d_cumulative": 0.0,
-      "20d_cumulative": 0.0,
-      "trend": "outflow",
-      "updated": "2026-04-27"
-    },
-    "southbound": {
-      "latest_net_flow": 34.6014,
-      "5d_cumulative": 167.7744,
-      "20d_cumulative": 588.8462,
-      "trend": "inflow",
-      "updated": "2026-04-27"
-    },
+    "northbound": {},
+    "southbound": {},
     "dragon_tiger": [
       {
         "code": "000004",

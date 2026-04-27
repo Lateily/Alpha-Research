@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-27T09:33:02.000478+00:00",
+  "generated_at": "2026-04-27T13:18:20.059396+00:00",
   "date": "2026-04-27",
   "brief_e": "2 REVIEW_TRIM",
   "brief_z": "REVIEW_TRIM2",
@@ -101,6 +101,18 @@
   ],
   "wrongif_alerts": [
     {
+      "ticker": "002594.SZ",
+      "severity": "HIGH",
+      "status": "TRIGGERED",
+      "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
+      "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发",
+      "note_e": "⚠️ PROXY TRIGGERED: revenue_growth = -13.5% ▼",
+      "note_z": "⚠️ 代理指标触发: revenue_growth = -13.5% ▼",
+      "indicator": "revenue_growth",
+      "actual": -13.5,
+      "threshold": 0
+    },
+    {
       "ticker": "300308.SZ",
       "severity": "LOW",
       "status": "MANUAL",
@@ -122,18 +134,6 @@
       "note_z": "⚠️ 代理指标触发: earnings_growth = -29.2% ▼",
       "indicator": "earnings_growth",
       "actual": -29.2,
-      "threshold": 0
-    },
-    {
-      "ticker": "002594.SZ",
-      "severity": "HIGH",
-      "status": "TRIGGERED",
-      "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
-      "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发",
-      "note_e": "⚠️ PROXY TRIGGERED: revenue_growth = -13.5% ▼",
-      "note_z": "⚠️ 代理指标触发: revenue_growth = -13.5% ▼",
-      "indicator": "revenue_growth",
-      "actual": -13.5,
       "threshold": 0
     },
     {

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-27T09:33:01.926527+00:00",
+  "generated_at": "2026-04-27T13:18:19.991543+00:00",
   "tickers_scored": 5,
   "summary": {
     "entry_candidates": [],
@@ -58,7 +58,7 @@
         "MA20_BOUNCE",
         "MA60_BOUNCE"
       ],
-      "computed_at": "2026-04-27T09:33:01.926128+00:00"
+      "computed_at": "2026-04-27T13:18:19.991126+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -111,7 +111,7 @@
         "RSI_RECOVERING",
         "VP_GOOD_CONVICTION"
       ],
-      "computed_at": "2026-04-27T09:33:01.926517+00:00"
+      "computed_at": "2026-04-27T13:18:19.991533+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -164,7 +164,7 @@
         "MACD_DEATH_CROSS",
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-04-27T09:33:01.926328+00:00"
+      "computed_at": "2026-04-27T13:18:19.991351+00:00"
     },
     {
       "ticker": "700.HK",
@@ -217,7 +217,7 @@
         "MACD_DEATH_CROSS",
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-04-27T09:33:01.926421+00:00"
+      "computed_at": "2026-04-27T13:18:19.991439+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -256,7 +256,7 @@
       "signal_types": [
         "RSI_OVERBOUGHT"
       ],
-      "computed_at": "2026-04-27T09:33:01.926223+00:00"
+      "computed_at": "2026-04-27T13:18:19.991222+00:00"
     }
   ]
 }

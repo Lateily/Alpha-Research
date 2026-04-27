@@ -1,19 +1,7 @@
 {
-  "fetched_at": "2026-04-27T09:32:58.489669",
-  "northbound": {
-    "latest_net_flow": null,
-    "5d_cumulative": 0.0,
-    "20d_cumulative": 0.0,
-    "trend": "outflow",
-    "updated": "2026-04-27"
-  },
-  "southbound": {
-    "latest_net_flow": 34.6014,
-    "5d_cumulative": 167.7744,
-    "20d_cumulative": 588.8462,
-    "trend": "inflow",
-    "updated": "2026-04-27"
-  },
+  "fetched_at": "2026-04-27T13:18:16.919215",
+  "northbound": {},
+  "southbound": {},
   "dragon_tiger": [
     {
       "code": "000004",
