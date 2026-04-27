@@ -1,0 +1,263 @@
+{
+  "generated_at": "2026-04-27T09:33:01.784414+00:00",
+  "industry": "ai_infrastructure",
+  "composite_score": 57.0,
+  "composite_signal": "MODERATE",
+  "interpretation": "Capex cycle healthy but not accelerating. Existing thesis intact; no incremental urgency.",
+  "component_scores": {
+    "nvda_revenue": 68,
+    "hyperscaler_capex": 72,
+    "tsmc_revenue": 15,
+    "price_momentum": 50
+  },
+  "indicators": {
+    "nvda_revenue": {
+      "ticker": "NVDA",
+      "name": "NVIDIA",
+      "role": "AI compute buildout proxy (~85% data center revenue)",
+      "quarters": [
+        {
+          "quarter": "2026-01-31",
+          "revenue_bn": 68.13,
+          "qoq_pct": 19.5
+        },
+        {
+          "quarter": "2025-10-31",
+          "revenue_bn": 57.01,
+          "qoq_pct": 22.0
+        },
+        {
+          "quarter": "2025-07-31",
+          "revenue_bn": 46.74,
+          "qoq_pct": 6.1
+        },
+        {
+          "quarter": "2025-04-30",
+          "revenue_bn": 44.06,
+          "qoq_pct": 12.0
+        }
+      ],
+      "price": {
+        "price": 208.27,
+        "return_3m_pct": 9.3
+      },
+      "latest_qoq": 19.5,
+      "score": 68,
+      "signal": "STABLE"
+    },
+    "hyperscaler_capex": {
+      "combined_capex_latest_bn": 118.6,
+      "combined_capex_qoq_pct": 22.0,
+      "score": 72,
+      "components": {
+        "MSFT": {
+          "name": "Microsoft",
+          "quarters": [
+            {
+              "quarter": "2025-12-31",
+              "capex_bn": 29.88,
+              "qoq_pct": 54.0
+            },
+            {
+              "quarter": "2025-09-30",
+              "capex_bn": 19.39,
+              "qoq_pct": 13.6
+            },
+            {
+              "quarter": "2025-06-30",
+              "capex_bn": 17.08,
+              "qoq_pct": 2.0
+            },
+            {
+              "quarter": "2025-03-31",
+              "capex_bn": 16.75,
+              "qoq_pct": 6.0
+            }
+          ],
+          "price": {
+            "price": 424.62,
+            "return_3m_pct": -12.7
+          },
+          "latest_qoq": 54.0,
+          "score": 90,
+          "weight": 0.3
+        },
+        "GOOGL": {
+          "name": "Alphabet",
+          "quarters": [
+            {
+              "quarter": "2025-12-31",
+              "capex_bn": 27.85,
+              "qoq_pct": 16.3
+            },
+            {
+              "quarter": "2025-09-30",
+              "capex_bn": 23.95,
+              "qoq_pct": 6.7
+            },
+            {
+              "quarter": "2025-06-30",
+              "capex_bn": 22.45,
+              "qoq_pct": 30.5
+            },
+            {
+              "quarter": "2025-03-31",
+              "capex_bn": 17.2,
+              "qoq_pct": 20.5
+            }
+          ],
+          "price": {
+            "price": 344.4,
+            "return_3m_pct": 9.9
+          },
+          "latest_qoq": 16.3,
+          "score": 65,
+          "weight": 0.25
+        },
+        "META": {
+          "name": "Meta",
+          "quarters": [
+            {
+              "quarter": "2025-12-31",
+              "capex_bn": 21.38,
+              "qoq_pct": 13.6
+            },
+            {
+              "quarter": "2025-09-30",
+              "capex_bn": 18.83,
+              "qoq_pct": 13.9
+            },
+            {
+              "quarter": "2025-06-30",
+              "capex_bn": 16.54,
+              "qoq_pct": 27.8
+            },
+            {
+              "quarter": "2025-03-31",
+              "capex_bn": 12.94,
+              "qoq_pct": -10.3
+            }
+          ],
+          "price": {
+            "price": 675.03,
+            "return_3m_pct": 1.9
+          },
+          "latest_qoq": 13.6,
+          "score": 65,
+          "weight": 0.2
+        },
+        "AMZN": {
+          "name": "Amazon",
+          "quarters": [
+            {
+              "quarter": "2025-12-31",
+              "capex_bn": 39.52,
+              "qoq_pct": 12.6
+            },
+            {
+              "quarter": "2025-09-30",
+              "capex_bn": 35.09,
+              "qoq_pct": 9.0
+            },
+            {
+              "quarter": "2025-06-30",
+              "capex_bn": 32.18,
+              "qoq_pct": 28.6
+            },
+            {
+              "quarter": "2025-03-31",
+              "capex_bn": 25.02,
+              "qoq_pct": -10.1
+            }
+          ],
+          "price": {
+            "price": 263.99,
+            "return_3m_pct": 13.5
+          },
+          "latest_qoq": 12.6,
+          "score": 65,
+          "weight": 0.25
+        }
+      },
+      "signal": "EXPANDING"
+    },
+    "tsmc_revenue": {
+      "ticker": "TSM",
+      "name": "TSMC",
+      "role": "Semiconductor supply chain health; HPC/AI chip fab proxy",
+      "quarters": [
+        {
+          "quarter": "2026-03-31",
+          "revenue_bn": NaN,
+          "qoq_pct": NaN
+        },
+        {
+          "quarter": "2025-12-31",
+          "revenue_bn": 1046.09,
+          "qoq_pct": 5.7
+        },
+        {
+          "quarter": "2025-09-30",
+          "revenue_bn": 989.92,
+          "qoq_pct": 6.0
+        },
+        {
+          "quarter": "2025-06-30",
+          "revenue_bn": 933.79,
+          "qoq_pct": 11.3
+        }
+      ],
+      "price": {
+        "price": 402.46,
+        "return_3m_pct": 33.3
+      },
+      "latest_qoq": NaN,
+      "score": 15,
+      "signal": "WEAK"
+    },
+    "price_momentum": {
+      "basket_return_3m_pct": 2.4,
+      "score": 50,
+      "signal": "NEUTRAL"
+    }
+  },
+  "stock_implications": {
+    "300308.SZ": {
+      "relevance": "DIRECT",
+      "rationale": "1.6T optical transceiver demand directly driven by hyperscaler CapEx cycle",
+      "direction": "positive",
+      "strength": "MED",
+      "lag_months": "1-3"
+    },
+    "700.HK": {
+      "relevance": "INDIRECT",
+      "rationale": "AI monetisation tailwind; benefits from cloud infrastructure growth",
+      "direction": "positive",
+      "strength": "LOW",
+      "lag_months": "3-6"
+    },
+    "9999.HK": {
+      "relevance": "INDIRECT",
+      "rationale": "AI features in games/apps; limited direct exposure to capex cycle",
+      "direction": "neutral",
+      "strength": "LOW",
+      "lag_months": "6-12"
+    },
+    "6160.HK": {
+      "relevance": "NONE",
+      "rationale": "Biotech; not driven by AI infrastructure cycle",
+      "direction": "neutral",
+      "strength": "NONE",
+      "lag_months": null
+    },
+    "002594.SZ": {
+      "relevance": "NONE",
+      "rationale": "EV/automotive; not driven by AI infrastructure cycle",
+      "direction": "neutral",
+      "strength": "NONE",
+      "lag_months": null
+    }
+  },
+  "manual_entries": [],
+  "next_update_note": "Quarterly data updates on NVDA/MSFT/GOOGL/META/AMZN earnings. Price momentum updates daily."
+}

@@ -1,49 +1,59 @@
 {
   "ticker": "6160.HK",
-  "generated_at": "2026-04-24",
-  "price": 181.2,
+  "generated_at": "2026-04-27",
+  "price": 180.4,
   "zone": "BEARISH",
   "entry_zone": true,
-  "exit_zone": false,
+  "exit_zone": true,
   "signals": [
+    {
+      "type": "MACD_DEATH_CROSS",
+      "strength": "moderate",
+      "date": "2026-04-27",
+      "bullish": false,
+      "description": {
+        "e": "MACD DIF(0.702) crossed below DEA(1.107) above zero — bearish momentum",
+        "z": "MACD DIF(0.702)下穿DEA(1.107)零轴上方死叉看跌"
+      }
+    },
     {
       "type": "KDJ_OVERSOLD",
       "strength": "strong",
-      "date": "2026-04-24",
+      "date": "2026-04-27",
       "bullish": true,
       "description": {
-        "e": "KDJ J=-4.1 (extreme <0) — high-probability reversal zone",
-        "z": "KDJ J=-4.1极度超卖，高概率反转区间"
+        "e": "KDJ J=-4.6 (extreme <0) — high-probability reversal zone",
+        "z": "KDJ J=-4.6极度超卖，高概率反转区间"
       }
     }
   ],
   "signal_count": {
     "bullish": 1,
-    "bearish": 0,
-    "total": 1
+    "bearish": 1,
+    "total": 2
   },
   "indicators": {
-    "ma5": 186.44,
-    "ma20": 183.47,
-    "ma60": 190.36,
-    "rsi14": 45.8,
-    "vol_ma20": 4104309,
-    "vol_ratio": 0.78,
-    "price_vs_ma20": -1.24,
-    "price_vs_ma60": -4.81,
-    "change_1d": -1.36,
-    "change_5d": -6.21,
-    "change_20d": 8.76,
-    "macd_dif": 1.2447,
-    "macd_dea": 1.2084,
-    "macd_hist": 0.0725,
-    "bb_upper": 201.05,
-    "bb_mid": 183.47,
-    "bb_lower": 165.9,
-    "bb_bandwidth": 19.16,
-    "kdj_k": 29.3,
-    "kdj_d": 46.0,
-    "kdj_j": -4.1,
+    "ma5": 184.32,
+    "ma20": 184.13,
+    "ma60": 189.97,
+    "rsi14": 45.0,
+    "vol_ma20": 4047926,
+    "vol_ratio": 0.5,
+    "price_vs_ma20": -2.03,
+    "price_vs_ma60": -5.04,
+    "change_1d": -0.44,
+    "change_5d": -5.55,
+    "change_20d": 7.83,
+    "macd_dif": 0.7018,
+    "macd_dea": 1.1066,
+    "macd_hist": -0.8095,
+    "bb_upper": 200.16,
+    "bb_mid": 184.13,
+    "bb_lower": 168.1,
+    "bb_bandwidth": 17.41,
+    "kdj_k": 24.3,
+    "kdj_d": 38.7,
+    "kdj_j": -4.6,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
