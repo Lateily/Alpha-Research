@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-28T09:38:57.977350+00:00",
+  "generated_at": "2026-04-28T16:22:00.428136+00:00",
   "date": "2026-04-28",
   "brief_e": "1 REVIEW_TRIM",
   "brief_z": "REVIEW_TRIM1",
@@ -11,14 +11,14 @@
         "status": "HELD",
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
-        "confidence": 12,
+        "confidence": 0,
         "pnl_pct": 26.11,
         "holding_days": 42,
         "weight_pct": 30.8,
         "vp_score": 53,
-        "confluence": 12,
-        "reason_e": "Large unrealised gain +26.1% after 42d. Signal still NEUTRAL (score 12). Consider partial trim to protect profit.",
-        "reason_z": "浮盈+26.1%（持有42天），信号12仍属信号中性，等待，可考虑部分减仓保护利润。",
+        "confluence": 0,
+        "reason_e": "Large unrealised gain +26.1% after 42d. Signal still NEUTRAL (score 0). Consider partial trim to protect profit.",
+        "reason_z": "浮盈+26.1%（持有42天），信号0仍属信号中性，等待，可考虑部分减仓保护利润。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → review trim opportunity"
       },
@@ -34,8 +34,8 @@
         "weight_pct": 43.5,
         "vp_score": 56,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L +21.1% after 49d. Hold — no new entry/exit trigger. RSI 64 | Price vs MA20 +9.2% | Regime: PERMISSIVE | VP 56.",
-        "reason_z": "信号中性（评分0），浮盈+21.1%，持有49天，无新触发条件。RSI 64 | 距MA20 +9.2% | 政策顺风 | VP 56。",
+        "reason_e": "Signal neutral (score 0). P&L +21.1% after 49d. Hold — no new entry/exit trigger. RSI nan | Price vs MA20 +nan% | Regime: PERMISSIVE | VP 56.",
+        "reason_z": "信号中性（评分0），浮盈+21.1%，持有49天，无新触发条件。RSI nan | 距MA20 +nan% | 政策顺风 | VP 56。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       },
@@ -45,14 +45,14 @@
         "status": "HELD",
         "action": "HOLD",
         "priority": "LOW",
-        "confidence": 12,
+        "confidence": 0,
         "pnl_pct": 13.72,
         "holding_days": 49,
         "weight_pct": 4.7,
         "vp_score": 51,
-        "confluence": 12,
-        "reason_e": "Signal neutral (score 12). P&L +13.7% after 49d. Hold — no new entry/exit trigger. Bullish: Kdj Oversold | RSI 43 | Price vs MA20 -3.2% | VP 51.",
-        "reason_z": "信号中性（评分12），浮盈+13.7%，持有49天，无新触发条件。多头：KDJ极度超卖(J<0) | RSI 43 | 距MA20 -3.2% | VP 51。",
+        "confluence": 0,
+        "reason_e": "Signal neutral (score 0). P&L +13.7% after 49d. Hold — no new entry/exit trigger. RSI nan | Price vs MA20 +nan% | VP 51.",
+        "reason_z": "信号中性（评分0），浮盈+13.7%，持有49天，无新触发条件。RSI nan | 距MA20 +nan% | VP 51。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       },
@@ -68,8 +68,8 @@
         "weight_pct": 16.8,
         "vp_score": 61,
         "confluence": 14,
-        "reason_e": "Signal neutral (score 14). P&L +19.0% after 35d. Hold — no new entry/exit trigger. Bullish: Vp Good Conviction | RSI 42 | Price vs MA20 -2.2% | VP 61.",
-        "reason_z": "信号中性（评分14），浮盈+19.0%，持有35天，无新触发条件。多头：VP良好信念(基本面偏强) | RSI 42 | 距MA20 -2.2% | VP 61。",
+        "reason_e": "Signal neutral (score 14). P&L +19.0% after 35d. Hold — no new entry/exit trigger. Bullish: Vp Good Conviction | RSI nan | Price vs MA20 +nan% | VP 61.",
+        "reason_z": "信号中性（评分14），浮盈+19.0%，持有35天，无新触发条件。多头：VP良好信念(基本面偏强) | RSI nan | 距MA20 +nan% | VP 61。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       },
@@ -85,8 +85,8 @@
         "weight_pct": 4.3,
         "vp_score": 44,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L +5.5% after 27d. Hold — no new entry/exit trigger. RSI 50 | Price vs MA20 -0.4% | Regime: PERMISSIVE | VP 44.",
-        "reason_z": "信号中性（评分0），浮盈+5.5%，持有27天，无新触发条件。RSI 50 | 距MA20 -0.4% | 政策顺风 | VP 44。",
+        "reason_e": "Signal neutral (score 0). P&L +5.5% after 27d. Hold — no new entry/exit trigger. RSI nan | Price vs MA20 +nan% | Regime: PERMISSIVE | VP 44.",
+        "reason_z": "信号中性（评分0），浮盈+5.5%，持有27天，无新触发条件。RSI nan | 距MA20 +nan% | 政策顺风 | VP 44。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
@@ -100,16 +100,16 @@
   ],
   "wrongif_alerts": [
     {
-      "ticker": "6160.HK",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
-      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优",
-      "note_e": "Binary event condition — manual monitoring required: CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 s",
-      "note_z": "二元事件条件——需人工监控：CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 s",
-      "indicator": "binary_event",
-      "actual": null,
-      "threshold": null
+      "ticker": "002594.SZ",
+      "severity": "HIGH",
+      "status": "TRIGGERED",
+      "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
+      "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发",
+      "note_e": "⚠️ PROXY TRIGGERED: revenue_growth = -13.5% ▼",
+      "note_z": "⚠️ 代理指标触发: revenue_growth = -13.5% ▼",
+      "indicator": "revenue_growth",
+      "actual": -13.5,
+      "threshold": 0
     },
     {
       "ticker": "9999.HK",
@@ -136,16 +136,16 @@
       "threshold": null
     },
     {
-      "ticker": "002594.SZ",
-      "severity": "HIGH",
-      "status": "TRIGGERED",
-      "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
-      "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发",
-      "note_e": "⚠️ PROXY TRIGGERED: revenue_growth = -13.5% ▼",
-      "note_z": "⚠️ 代理指标触发: revenue_growth = -13.5% ▼",
-      "indicator": "revenue_growth",
-      "actual": -13.5,
-      "threshold": 0
+      "ticker": "6160.HK",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
+      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优",
+      "note_e": "Binary event condition — manual monitoring required: CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 s",
+      "note_z": "二元事件条件——需人工监控：CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 s",
+      "indicator": "binary_event",
+      "actual": null,
+      "threshold": null
     }
   ],
   "regime_summary": [
