@@ -2340,7 +2340,6 @@ def main():
             "narrative_shift":   prev.get("narrative_shift",  seed["narrative_shift"]),
             "low_coverage":      prev.get("low_coverage",     seed["low_coverage"]),
             "catalyst_prox":       prev.get("catalyst_prox", prev.get("catalyst_proximity", seed["catalyst_prox"])),
-            "catalyst_proximity":  prev.get("catalyst_proximity", prev.get("catalyst_prox", seed["catalyst_prox"])),
             "close":             close,
             "volume":            volume,
             "source":            prev_source,   # accurate provenance (vp_engine / deepresearch / seed)

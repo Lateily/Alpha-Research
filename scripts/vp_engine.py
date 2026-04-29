@@ -10,7 +10,7 @@ Replaces two of the five hardcoded VP dimensions with live-computed values:
 The other three dimensions stay as manual inputs (human judgment required):
   narrative_shift    ← DeepResearch / analyst review
   low_coverage       ← sell-side coverage count (manual)
-  catalyst_proximity ← upcoming events calendar (manual)
+  catalyst_prox      ← upcoming events calendar (manual)
 
 VP recomputation:
   vp_score = Σ(weight_i × score_i)  where weights sum to 1.0
@@ -34,7 +34,7 @@ VP_WEIGHTS = {
     "fundamental_accel":  0.25,   # fin_*.json-computed
     "narrative_shift":    0.20,   # manual
     "low_coverage":       0.15,   # manual
-    "catalyst_proximity": 0.15,   # manual
+    "catalyst_prox":      0.15,   # manual
 }
 
 
@@ -71,7 +71,7 @@ def _load_watchlist_tickers() -> dict:
                 "fundamental_accel": seed.get("fundamental_accel", 50),
                 "narrative_shift":   seed.get("narrative_shift", 50),
                 "low_coverage":      seed.get("low_coverage", 50),
-                "catalyst_proximity":seed.get("catalyst_prox", 50),
+                "catalyst_prox":     seed.get("catalyst_prox", 50),
                 "wrongIf_e":         seed.get("wrongIf_e", ""),
                 "wrongIf_z":         seed.get("wrongIf_z", ""),
                 "source":            "seed",
@@ -85,7 +85,7 @@ def _load_watchlist_tickers() -> dict:
 
 
 def _load_watchlist_manual_dims() -> dict:
-    """Return {ticker: {narrative_shift, low_coverage, catalyst_proximity}} from watchlist."""
+    """Return {ticker: {narrative_shift, low_coverage, catalyst_prox}} from watchlist."""
     wl_path = DATA_DIR / "watchlist.json"
     result = {}
     try:
@@ -95,7 +95,7 @@ def _load_watchlist_manual_dims() -> dict:
             result[tk] = {
                 "narrative_shift":    seed.get("narrative_shift", 50),
                 "low_coverage":       seed.get("low_coverage", 50),
-                "catalyst_proximity": seed.get("catalyst_prox", 50),
+                "catalyst_prox":      seed.get("catalyst_prox", 50),
             }
     except Exception:
         pass
@@ -464,7 +464,7 @@ def main():
         manual = wl_manual.get(ticker, {})
         ns  = manual.get("narrative_shift",    snap.get("narrative_shift",    50))
         lc  = manual.get("low_coverage",       snap.get("low_coverage",       50))
-        cp  = manual.get("catalyst_proximity", snap.get("catalyst_proximity", 50))
+        cp  = manual.get("catalyst_prox", snap.get("catalyst_prox", snap.get("catalyst_proximity", 50)))
         old_ns = snap.get("narrative_shift", 50)
         if ns != old_ns:
             print(f"    narrative_shift:   {old_ns} → {ns}  (from watchlist.json)")
@@ -475,7 +475,7 @@ def main():
             "fundamental_accel":  new_fa,
             "narrative_shift":    ns,
             "low_coverage":       lc,
-            "catalyst_proximity": cp,
+            "catalyst_prox":      cp,
         }
         new_vp = int(sum(VP_WEIGHTS[k] * scores[k] for k in VP_WEIGHTS))
         new_vp = max(0, min(100, new_vp))
@@ -499,7 +499,7 @@ def main():
             # manual dimensions: refreshed from watchlist.json each run
             "narrative_shift":    ns,
             "low_coverage":       lc,
-            "catalyst_proximity": cp,
+            "catalyst_prox":      cp,
             # engine metadata
             "fa_detail":          fa,
             "eg_detail":          eg,
