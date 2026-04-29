@@ -254,6 +254,46 @@ git push
 
 ---
 
+## Session Behaviour — Non-Negotiable Patterns
+
+### 1. End-of-session action block (ALWAYS)
+
+Every work session must end with a `你现在需要做的操作` block containing exact terminal commands. No exceptions, even for documentation-only sessions. Format:
+
+```
+你现在需要做的操作：
+1. cd ~/Desktop/Stock/ar-platform
+2. git add <specific files only — never git add .>
+3. git commit -m "..."
+4. git push
+```
+
+If there is nothing to push, still close with the block and note "nothing to commit — session was analysis only."
+
+### 2. Numerical validation labelling (ALWAYS)
+
+Every number, weight, threshold, or formula in analysis, code comments, and documentation must carry one of two labels:
+- `[validated against data]` — tested against real trade history or external benchmark
+- `[unvalidated intuition]` — reasonable prior, not yet back-tested
+
+Current VP weights (25/25/20/15/15) are **[unvalidated intuition]**. Never upgrade this label without an explicit backtest. Never omit the label.
+
+### 3. Git conflict resolution (recurring pattern)
+
+GitHub Actions commits data JSONs daily. When `git push` is rejected:
+
+```bash
+git pull --no-rebase
+git checkout --ours public/data/
+git add public/data/
+git commit -m "merge: keep local data"
+git push
+```
+
+Do not use `git pull --rebase` on data directories — Actions commits do not have conflict markers that rebase can resolve cleanly.
+
+---
+
 ## Custom Skills (in Stock/.claude/skills/)
 
 | Skill | Use when |
