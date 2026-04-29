@@ -145,10 +145,22 @@ B2  VARIANT VIEW  ← most important block
     WRONG IF:        Pirtobrutinib Ph3 superiority in covalent BTK combo
 
 B3  VP SCORE DECOMPOSITION  (show all 5 components always)
-    Expectation Gap    30% · Fundamental Accel  25%
-    Narrative Shift    20% · Low Coverage       15%
-    Catalyst Proximity 10%
-    EGS formula: 50 + 50 × tanh(delta / 0.20)
+    Expectation Gap    25% · AUTO   · rDCF delta
+    Fundamental Accel  25% · AUTO   · fin_*.json
+    Narrative Shift    20% · MANUAL · watchlist.json
+    Low Coverage       15% · MANUAL · watchlist.json
+    Catalyst Prox      15% · MANUAL · watchlist.json
+
+    Expectation Gap mapping (delta = our_growth − implied_growth_from_rdcf):
+      delta ≤ -0.50 → 10   delta ≤ +0.10 → 55
+      delta ≤ -0.25 → 22   delta ≤ +0.25 → 68
+      delta ≤ -0.10 → 35   delta ≤ +0.50 → 78
+      delta ≤  0.00 → 48   delta  > +0.50 → 88
+
+    Validation disclosure [unvalidated intuition]:
+      Causal logic appears reasonable. The 25/25/20/15/15 weights and
+      mapping thresholds are unvalidated priors until calibrated by
+      backtest or live paper-trading evidence.
 
 B4  REVERSE DCF  [EQR:MED — yfinance TTM]
     Implied CAGR in price → compare to model → delta → EGS
