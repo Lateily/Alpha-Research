@@ -51,6 +51,43 @@ SCORE_CAUTION_MAX   = -20   # Below this → caution
 SCORE_EXIT_MAX      = -60   # Below this → exit signal
 
 PROFIT_TAKE_PCT     = 25.0  # Suggest trim when P&L > this
+
+# ── Signal direction map (for trade_attribution_capsules.json) ────────────────
+# Source of truth: bullish flag in scripts/swing_signals.py and scripts/signal_confluence.py.
+# If a new signal type is added to either producer, add it here.
+SIGNAL_DIRECTION = {
+    # Swing signals (swing_signals.py)
+    "BB_LOWER_BREAK":         "bullish",
+    "BB_SQUEEZE":             "bullish",
+    "BB_UPPER_BREAK":         "bullish",
+    "BULLISH_ALIGNMENT":      "bullish",
+    "CONTROLLED_ADVANCE":     "bullish",
+    "CVD_BEARISH_DIVERGENCE": "bearish",
+    "CVD_FLOOR_FORMED":       "bullish",
+    "DEATH_CROSS":            "bearish",
+    "GOLDEN_CROSS":           "bullish",
+    "KDJ_DEATH_CROSS":        "bearish",
+    "KDJ_GOLDEN_CROSS":       "bullish",
+    "KDJ_OVERBOUGHT":         "bearish",
+    "KDJ_OVERSOLD":           "bullish",
+    "MA20_BOUNCE":            "bullish",
+    "MA60_BOUNCE":            "bullish",
+    "MACD_DEATH_CROSS":       "bearish",
+    "MACD_GOLDEN_CROSS":      "bullish",
+    "RSI_OVERBOUGHT":         "bearish",
+    "RSI_OVERSOLD":           "bullish",
+    "RSI_RECOVERING":         "bullish",
+    "VOLUME_BREAKOUT":        "bullish",
+    "VOLUME_SELLOFF":         "bearish",
+    # VP-quality synthetic signals (signal_confluence.py)
+    "VP_STRONG_CONVICTION":   "bullish",
+    "VP_GOOD_CONVICTION":     "bullish",
+    "VP_WEAK_CONVICTION":     "bearish",
+    "VP_POOR_CONVICTION":     "bearish",
+    # AI CapEx leading-indicator synthetic signals (signal_confluence.py)
+    "AI_CAPEX_STRONG_CYCLE":  "bullish",
+    "AI_CAPEX_WEAKENING":     "bearish",
+}
 STOP_REVIEW_PCT     = -10.0 # Suggest review when P&L < this (not hard stop — human decides)
 CONCENTRATION_MAX   = 40.0  # Single position weight % warning threshold
 SECTOR_MAX_PCT      = 60.0  # Single sector weight % warning threshold
@@ -564,6 +601,76 @@ def compute_portfolio_risk(positions, regime_data):
     return flags
 
 
+# ── Trade attribution capsules (v15.1) ────────────────────────────────────────
+
+def write_attribution_capsules(confluence_data, vp_data):
+    """
+    Snapshot per-ticker signal attribution at decision time.
+
+    Provides a stable copy-paste source for new trade entries: confluence.json
+    regenerates daily and its `contributing[]` values can shift between today's
+    decision and the moment Junyan adds a trade. Pinning the snapshot at
+    decision time keeps the attribution honest.
+
+    Output: public/data/trade_attribution_capsules.json
+    Schema matches the `signal_attribution` shape in trades.json (name/weight/
+    direction), so the capsule can be copy-pasted into a new trade entry.
+    """
+    capsules = {}
+    now = datetime.now(timezone.utc).isoformat()
+
+    for entry in confluence_data.get("scores", []) or []:
+        ticker = entry.get("ticker")
+        if not ticker:
+            continue
+
+        contributing_signals = []
+        for sig in entry.get("contributing", []) or []:
+            sig_type = sig.get("type")
+            if not sig_type:
+                continue
+            contributing_signals.append({
+                "name":        sig_type,
+                "weight":      round(sig.get("final_contribution", sig.get("base_weight", 0)), 1),
+                "base_weight": sig.get("base_weight", 0),
+                "direction":   SIGNAL_DIRECTION.get(sig_type, "neutral"),
+            })
+
+        # Pull VP + wrongIf from snapshot for this ticker
+        vp_at_capture = None
+        wrongif_at_capture_e = ""
+        wrongif_at_capture_z = ""
+        for snap in vp_data.get("snapshots", []) or []:
+            if snap.get("ticker") == ticker:
+                vp_at_capture = snap.get("vp_score")
+                wrongif_at_capture_e = snap.get("wrongIf_e", "") or ""
+                wrongif_at_capture_z = snap.get("wrongIf_z", "") or ""
+                break
+
+        capsules[ticker] = {
+            "confluence_score":     entry.get("score"),
+            "action":               entry.get("action"),
+            "zone":                 entry.get("zone"),
+            "contributing_signals": contributing_signals,
+            "vp_at_capture":        vp_at_capture,
+            "wrongIf_at_capture_e": wrongif_at_capture_e,
+            "wrongIf_at_capture_z": wrongif_at_capture_z,
+            "captured_at":          now,
+        }
+
+    output = {
+        "generated_at": now,
+        "date":         date.today().isoformat(),
+        "note":         "Per-ticker attribution snapshot for new-trade entry. Schema matches trades.json signal_attribution shape. Pin to today's decision; do not regenerate after entering a trade.",
+        "capsules":     capsules,
+    }
+
+    out_path = DATA_DIR / "trade_attribution_capsules.json"
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(output, f, ensure_ascii=False, indent=2)
+    return out_path, len(capsules)
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -741,6 +848,10 @@ def main():
     print(f"  Risk flags:")
     for flag in risk_flags:
         print(f"    {flag}")
+
+    # ── 7. Trade attribution capsules (v15.1) ────────────────────────────────
+    cap_path, cap_count = write_attribution_capsules(confluence_data, vp_data)
+    print(f"\n[daily_decision] Attribution capsules → {cap_path}  ({cap_count} tickers)")
 
 
 if __name__ == "__main__":

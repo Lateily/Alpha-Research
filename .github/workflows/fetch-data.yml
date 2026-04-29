@@ -130,6 +130,7 @@ jobs:
             public/data/position_sizing.json \
             public/data/signal_quality.json \
             public/data/trades.json \
+            public/data/trade_attribution_capsules.json \
             public/data/profit_scissors.json \
             public/data/leading_indicators.json; do
             [ -f "$f" ] && git add "$f"

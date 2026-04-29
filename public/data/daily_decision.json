@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-29T15:37:28.770212+00:00",
+  "generated_at": "2026-04-29T21:53:11.152515+00:00",
   "date": "2026-04-29",
   "brief_e": "5 HOLD",
   "brief_z": "HOLD5",
@@ -99,18 +99,6 @@
   ],
   "wrongif_alerts": [
     {
-      "ticker": "9999.HK",
-      "severity": "HIGH",
-      "status": "TRIGGERED",
-      "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
-      "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万",
-      "note_e": "⚠️ PROXY TRIGGERED: earnings_growth = -29.2% ▼",
-      "note_z": "⚠️ 代理指标触发: earnings_growth = -29.2% ▼",
-      "indicator": "earnings_growth",
-      "actual": -29.2,
-      "threshold": 0
-    },
-    {
       "ticker": "300308.SZ",
       "severity": "LOW",
       "status": "MANUAL",
@@ -119,18 +107,6 @@
       "note_e": "Cannot auto-verify 'capex_cut' — manual check required.",
       "note_z": "无法自动核验「capex_cut」——需人工检查。",
       "indicator": "capex_cut",
-      "actual": null,
-      "threshold": null
-    },
-    {
-      "ticker": "6160.HK",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
-      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优",
-      "note_e": "Binary event condition — manual monitoring required: CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 s",
-      "note_z": "二元事件条件——需人工监控：CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 s",
-      "indicator": "binary_event",
       "actual": null,
       "threshold": null
     },
@@ -145,6 +121,30 @@
       "indicator": "revenue_growth",
       "actual": -13.5,
       "threshold": 0
+    },
+    {
+      "ticker": "9999.HK",
+      "severity": "HIGH",
+      "status": "TRIGGERED",
+      "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
+      "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万",
+      "note_e": "⚠️ PROXY TRIGGERED: earnings_growth = -29.2% ▼",
+      "note_z": "⚠️ 代理指标触发: earnings_growth = -29.2% ▼",
+      "indicator": "earnings_growth",
+      "actual": -29.2,
+      "threshold": 0
+    },
+    {
+      "ticker": "6160.HK",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
+      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优",
+      "note_e": "Binary event condition — manual monitoring required: CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 s",
+      "note_z": "二元事件条件——需人工监控：CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 s",
+      "indicator": "binary_event",
+      "actual": null,
+      "threshold": null
     }
   ],
   "regime_summary": [
