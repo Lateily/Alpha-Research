@@ -30,51 +30,47 @@ ALPHA_VANTAGE_KEY  = os.getenv('ALPHA_VANTAGE_KEY', '')
 TUSHARE_TOKEN      = os.getenv('TUSHARE_TOKEN', '')
 VERCEL_URL         = os.getenv('VERCEL_URL', 'https://equity-research-ten.vercel.app')
 
-# ── Focus stock config ──────────────────────────────────────────────────────
-FOCUS_TICKERS = {
-    "300308.SZ": {"yahoo": "300308.SZ", "akshare": "300308", "exchange": "SZ",
-                  "name_en": "Innolight",       "name_zh": "中际旭创"},
-    "700.HK":    {"yahoo": "0700.HK",   "akshare": None,     "exchange": "HK",
-                  "name_en": "Tencent",         "name_zh": "腾讯控股"},
-    "9999.HK":   {"yahoo": "9999.HK",   "akshare": None,     "exchange": "HK",
-                  "name_en": "NetEase",         "name_zh": "网易"},
-    "6160.HK":   {"yahoo": "6160.HK",   "akshare": None,     "exchange": "HK",
-                  "name_en": "BeOne Medicines", "name_zh": "百济神州"},
-    "002594.SZ": {"yahoo": "002594.SZ", "akshare": "002594", "exchange": "SZ",
-                  "name_en": "BYD",             "name_zh": "比亚迪"},
-}
+def _load_watchlist():
+    """
+    Load focus tickers and VP seed values from public/data/watchlist.json.
 
-# ── VP scores for Supabase snapshot (kept in sync with Dashboard.jsx) ──────
-# VP_SCORES: seed/fallback values only.
-# These are overridden by DeepResearch output preserved in vp_snapshot.json.
-# Update last_updated when you manually recalibrate the seed values.
-VP_SCORES = {
-    "300308.SZ": {"vp": 79, "expectation_gap": 72, "fundamental_accel": 80,
-                  "narrative_shift": 65, "low_coverage": 55, "catalyst_prox": 85,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
-                  "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%"},
-    "700.HK":    {"vp": 64, "expectation_gap": 68, "fundamental_accel": 70,
-                  "narrative_shift": 75, "low_coverage": 40, "catalyst_prox": 60,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
-                  "wrongIf_z": "游戏监管扩大或宏观消费急剧恶化"},
-    "9999.HK":   {"vp": 58, "expectation_gap": 62, "fundamental_accel": 55,
-                  "narrative_shift": 50, "low_coverage": 45, "catalyst_prox": 65,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
-                  "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万"},
-    "6160.HK":   {"vp": 65, "expectation_gap": 72, "fundamental_accel": 65,
-                  "narrative_shift": 68, "low_coverage": 45, "catalyst_prox": 70,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
-                  "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优"},
-    "002594.SZ": {"vp": 52, "expectation_gap": 55, "fundamental_accel": 60,
-                  "narrative_shift": 45, "low_coverage": 35, "catalyst_prox": 50,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
-                  "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发"},
-}
+    watchlist.json is the single source of truth for the monitored universe.
+    """
+    wl_path = OUTPUT_DIR / "watchlist.json"
+    with open(wl_path, encoding="utf-8") as f:
+        wl = json.load(f)
+
+    focus_tickers = {}
+    vp_scores = {}
+
+    for ticker, cfg in wl.get("tickers", {}).items():
+        seed = cfg.get("vp_seed", {})
+        focus_tickers[ticker] = {
+            "yahoo": cfg.get("yahoo", ticker),
+            "akshare": cfg.get("akshare"),
+            "exchange": cfg.get("exchange"),
+            "name_en": cfg.get("name_en", ticker),
+            "name_zh": cfg.get("name_zh", ticker),
+        }
+        vp_scores[ticker] = {
+            "vp": seed.get("vp", 50),
+            "expectation_gap": seed.get("expectation_gap", 50),
+            "fundamental_accel": seed.get("fundamental_accel", 50),
+            "narrative_shift": seed.get("narrative_shift", 50),
+            "low_coverage": seed.get("low_coverage", 50),
+            "catalyst_prox": seed.get("catalyst_prox", 50),
+            "last_updated": seed.get("last_updated", wl.get("_meta", {}).get("last_updated", "")),
+            "wrongIf_e": seed.get("wrongIf_e", ""),
+            "wrongIf_z": seed.get("wrongIf_z", ""),
+        }
+
+    if not focus_tickers:
+        raise RuntimeError(f"No tickers found in {wl_path}")
+    return focus_tickers, vp_scores
+
+
+# watchlist.json is the single source of truth.
+FOCUS_TICKERS, VP_SCORES = _load_watchlist()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # EQR Auto-Rating Engine
@@ -2343,7 +2339,8 @@ def main():
             "fundamental_accel": prev.get("fundamental_accel",seed["fundamental_accel"]),
             "narrative_shift":   prev.get("narrative_shift",  seed["narrative_shift"]),
             "low_coverage":      prev.get("low_coverage",     seed["low_coverage"]),
-            "catalyst_proximity":prev.get("catalyst_proximity",seed["catalyst_prox"]),
+            "catalyst_prox":       prev.get("catalyst_prox", prev.get("catalyst_proximity", seed["catalyst_prox"])),
+            "catalyst_proximity":  prev.get("catalyst_proximity", prev.get("catalyst_prox", seed["catalyst_prox"])),
             "close":             close,
             "volume":            volume,
             "source":            prev_source,   # accurate provenance (vp_engine / deepresearch / seed)
