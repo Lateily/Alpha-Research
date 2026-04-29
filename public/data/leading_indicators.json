@@ -1,0 +1,22 @@
+{
+  "composite_score": 74.0,
+  "composite_signal": "STRONG_CAPEX_CYCLE",
+  "stock_implications": {
+    "300308.SZ": {
+      "relevance": "DIRECT",
+      "direction": "positive"
+    },
+    "700.HK": {
+      "relevance": "INDIRECT"
+    },
+    "9999.HK": {
+      "relevance": "INDIRECT"
+    },
+    "6160.HK": {
+      "relevance": "NONE"
+    },
+    "002594.SZ": {
+      "relevance": "NONE"
+    }
+  }
+}
