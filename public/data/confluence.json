@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-29T09:24:54.273260+00:00",
+  "generated_at": "2026-04-29T15:37:28.685620+00:00",
   "tickers_scored": 5,
   "summary": {
     "entry_candidates": [],
@@ -58,7 +58,7 @@
         "VOLUME_BREAKOUT",
         "MA20_BOUNCE"
       ],
-      "computed_at": "2026-04-29T09:24:54.272780+00:00"
+      "computed_at": "2026-04-29T15:37:28.685123+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -97,7 +97,7 @@
       "signal_types": [
         "VP_GOOD_CONVICTION"
       ],
-      "computed_at": "2026-04-29T09:24:54.273248+00:00"
+      "computed_at": "2026-04-29T15:37:28.685608+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -136,7 +136,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-04-29T09:24:54.272993+00:00"
+      "computed_at": "2026-04-29T15:37:28.685336+00:00"
     },
     {
       "ticker": "700.HK",
@@ -189,7 +189,7 @@
         "RSI_RECOVERING",
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-04-29T09:24:54.273133+00:00"
+      "computed_at": "2026-04-29T15:37:28.685495+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -211,7 +211,7 @@
       "rationale_e": "RSI 67 | Price vs MA20 +9.9% | Regime: PERMISSIVE | VP 56",
       "rationale_z": "RSI 67 | 距MA20 +9.9% | 政策顺风 | VP 56",
       "signal_types": [],
-      "computed_at": "2026-04-29T09:24:54.272882+00:00"
+      "computed_at": "2026-04-29T15:37:28.685229+00:00"
     }
   ]
 }

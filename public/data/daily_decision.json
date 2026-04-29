@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-29T09:24:54.352246+00:00",
+  "generated_at": "2026-04-29T15:37:28.770212+00:00",
   "date": "2026-04-29",
   "brief_e": "5 HOLD",
   "brief_z": "HOLD5",
@@ -111,16 +111,16 @@
       "threshold": 0
     },
     {
-      "ticker": "002594.SZ",
-      "severity": "HIGH",
-      "status": "TRIGGERED",
-      "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
-      "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发",
-      "note_e": "⚠️ PROXY TRIGGERED: revenue_growth = -13.5% ▼",
-      "note_z": "⚠️ 代理指标触发: revenue_growth = -13.5% ▼",
-      "indicator": "revenue_growth",
-      "actual": -13.5,
-      "threshold": 0
+      "ticker": "300308.SZ",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
+      "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%",
+      "note_e": "Cannot auto-verify 'capex_cut' — manual check required.",
+      "note_z": "无法自动核验「capex_cut」——需人工检查。",
+      "indicator": "capex_cut",
+      "actual": null,
+      "threshold": null
     },
     {
       "ticker": "6160.HK",
@@ -135,16 +135,16 @@
       "threshold": null
     },
     {
-      "ticker": "300308.SZ",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
-      "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%",
-      "note_e": "Cannot auto-verify 'capex_cut' — manual check required.",
-      "note_z": "无法自动核验「capex_cut」——需人工检查。",
-      "indicator": "capex_cut",
-      "actual": null,
-      "threshold": null
+      "ticker": "002594.SZ",
+      "severity": "HIGH",
+      "status": "TRIGGERED",
+      "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
+      "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发",
+      "note_e": "⚠️ PROXY TRIGGERED: revenue_growth = -13.5% ▼",
+      "note_z": "⚠️ 代理指标触发: revenue_growth = -13.5% ▼",
+      "indicator": "revenue_growth",
+      "actual": -13.5,
+      "threshold": 0
     }
   ],
   "regime_summary": [
