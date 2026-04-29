@@ -169,7 +169,12 @@ def _get_quarterly_capex(tk, n_quarters: int = 5) -> list[dict]:
 
 
 def _get_price_momentum(tk) -> dict:
-    """Return current price + 3-month return."""
+    """Return current price + 3-month return + 3-month ATH + drawdown_from_ath_pct.
+
+    drawdown_3mo_pct is signed: 0 means latest is at the 3-month high,
+    -25.0 means latest is 25% below the 3-month high. Used by daily_decision.py's
+    hyperscaler-basket wrongIf monitor (v15.2).
+    """
     try:
         hist = tk.history(period="4mo", interval="1d")
         if hist.empty:
@@ -177,7 +182,16 @@ def _get_price_momentum(tk) -> dict:
         latest = float(hist["Close"].iloc[-1])
         ago_3m = float(hist["Close"].iloc[0]) if len(hist) > 60 else None
         pct_3m = round((latest / ago_3m - 1) * 100, 1) if ago_3m else None
-        return {"price": round(latest, 2), "return_3m_pct": pct_3m}
+        # 3-month window for "1 quarter" interpretation
+        window_3mo = hist.tail(63)  # ~63 trading days = 3 months
+        ath_3mo = float(window_3mo["Close"].max()) if not window_3mo.empty else latest
+        drawdown_pct = round((latest / ath_3mo - 1) * 100, 1) if ath_3mo > 0 else 0.0
+        return {
+            "price":            round(latest, 2),
+            "return_3m_pct":    pct_3m,
+            "ath_3mo":          round(ath_3mo, 2),
+            "drawdown_3mo_pct": drawdown_pct,
+        }
     except Exception as e:
         print(f"    [price] error: {e}")
         return {}
@@ -418,11 +432,43 @@ def main():
     # ── Build output ──────────────────────────────────────────────────────────
     implications = compute_implications(composite, signal)
 
+    # ── Hyperscaler basket (NVDA + MSFT + GOOGL drawdown for v15.2 wrongIf) ───
+    # 300308.SZ wrongIf monitors collective hyperscaler price drawdown >25% as
+    # a CapEx-pullback proxy. Aggregate drawdowns from already-fetched price
+    # records — no new yfinance calls.
+    hyperscaler_basket = {}
+    basket_drawdowns = []
+    nvda_px = nvda.get("price", {}) if isinstance(nvda, dict) else {}
+    if nvda_px.get("drawdown_3mo_pct") is not None:
+        hyperscaler_basket["NVDA"] = {
+            "price":            nvda_px.get("price"),
+            "ath_3mo":          nvda_px.get("ath_3mo"),
+            "drawdown_3mo_pct": nvda_px.get("drawdown_3mo_pct"),
+        }
+        basket_drawdowns.append(abs(nvda_px["drawdown_3mo_pct"]))
+    capex_components = capex_idx.get("components", {}) if isinstance(capex_idx, dict) else {}
+    for ticker_name in ("MSFT", "GOOGL"):
+        comp_px = capex_components.get(ticker_name, {}).get("price", {})
+        if comp_px.get("drawdown_3mo_pct") is not None:
+            hyperscaler_basket[ticker_name] = {
+                "price":            comp_px.get("price"),
+                "ath_3mo":          comp_px.get("ath_3mo"),
+                "drawdown_3mo_pct": comp_px.get("drawdown_3mo_pct"),
+            }
+            basket_drawdowns.append(abs(comp_px["drawdown_3mo_pct"]))
+    hyperscaler_basket["_avg_drawdown_pct"] = (
+        round(sum(basket_drawdowns) / len(basket_drawdowns), 1)
+        if basket_drawdowns else None
+    )
+    hyperscaler_basket["_window"] = "3 months (~63 trading days)"
+    hyperscaler_basket["_constituents"] = ["NVDA", "MSFT", "GOOGL"]
+
     output = {
         "generated_at":      datetime.now(timezone.utc).isoformat(),
         "industry":          "ai_infrastructure",
         "composite_score":   composite,
         "composite_signal":  signal,
+        "hyperscaler_basket": hyperscaler_basket,
         "interpretation": {
             "STRONG_CAPEX_CYCLE":  "Hyperscalers aggressively expanding AI infrastructure. "
                                    "Order visibility for 300308-type names is 1-2Q ahead.",

@@ -490,6 +490,7 @@ def main():
             print(f"    Scissors verdict: {ps['verdict']}")
 
         # Build updated snapshot entry
+        wl_seed = wl_all.get(ticker, {})
         updated.append({
             **snap,
             "vp_score":           new_vp,
@@ -500,6 +501,11 @@ def main():
             "narrative_shift":    ns,
             "low_coverage":       lc,
             "catalyst_prox":      cp,
+            # wrongIf strings: refreshed from watchlist.json each run (resolves
+            # CODEX_FINDINGS Finding 2 — stale wrongIf text persisting in snapshot
+            # because **snap spread preserved the legacy value).
+            "wrongIf_e":          wl_seed.get("wrongIf_e") or snap.get("wrongIf_e", ""),
+            "wrongIf_z":          wl_seed.get("wrongIf_z") or snap.get("wrongIf_z", ""),
             # engine metadata
             "fa_detail":          fa,
             "eg_detail":          eg,

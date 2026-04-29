@@ -164,6 +164,12 @@ _NUMERIC_PATTERNS = [
     (r"tariff|local content|import duty|trade restriction", 0, "revenue_growth",  "below_zero"),
     # DAU/MAU miss proxy → earnings growth as downstream signal (gaming cos)
     (r"dau|mau|daily active|monthly active",               0, "earnings_growth", "below_zero"),
+    # Hyperscaler basket collective drawdown (v15.2) — 300308.SZ wrongIf:
+    # "NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter"
+    # Indicator value comes from leading_indicators.json hyperscaler_basket._avg_drawdown_pct,
+    # stored as positive magnitude (28.5 means 28.5% drop).
+    (r"(?:nvda|msft|googl|hyperscaler).{0,100}?collectively.{0,40}?drop.{0,40}?(\d+)%",
+                                                            1, "hyperscaler_basket_drawdown_pct", "above"),
 ]
 
 _BINARY_KEYWORDS = [
@@ -193,11 +199,14 @@ def _parse_threshold(val_str):
         return None
 
 
-def check_wrongif(ticker, wrongif_text, market_data):
+def check_wrongif(ticker, wrongif_text, market_data, leading_indicators=None):
     """
     Lightweight check of wrongIf string against live data.
     Returns list of alert dicts:
       { status: 'TRIGGERED'|'CLEAR'|'MANUAL', indicator, threshold, actual, text }
+
+    leading_indicators (optional): leading_indicators.json dict. When provided,
+    enables global indicators like the hyperscaler basket drawdown (v15.2).
     """
     if not wrongif_text:
         return []
@@ -215,12 +224,22 @@ def check_wrongif(ticker, wrongif_text, market_data):
     rev_g = fund.get("revenue_growth")
     ear_g = fund.get("earnings_growth")
 
+    # Hyperscaler basket drawdown — global, ticker-agnostic (v15.2).
+    # Stored as positive magnitude in leading_indicators.json (28.5 = 28.5% drop).
+    basket_dd = None
+    if leading_indicators:
+        basket = leading_indicators.get("hyperscaler_basket", {}) or {}
+        avg_dd = basket.get("_avg_drawdown_pct")
+        if avg_dd is not None:
+            basket_dd = float(avg_dd)
+
     live = {
         "rsi_14":          tech.get("rsi_14"),
         "price":           px.get("last"),
         "pe_forward":      fund.get("pe_forward"),
         "revenue_growth":  rev_g * 100 if rev_g is not None else None,   # convert to %
         "earnings_growth": ear_g * 100 if ear_g is not None else None,
+        "hyperscaler_basket_drawdown_pct": basket_dd,
         # proxy indicators — require external data not in yfinance
         "dau_proxy":   None,
         "mau_proxy":   None,
@@ -682,6 +701,7 @@ def main():
     regime_data     = load_json(DATA_DIR / "regime_config.json",    {"sectors": []})
     sizing_data     = load_json(DATA_DIR / "position_sizing.json",  {"sizing": []})
     market_data     = load_json(DATA_DIR / "market_data.json",      {})
+    leading_data    = load_json(DATA_DIR / "leading_indicators.json", {})
 
     positions = positions_data.get("positions", [])
     held_tickers = {p["ticker"] for p in positions}
@@ -734,7 +754,7 @@ def main():
         wi_e, wi_z = get_wrongif(ticker, vp_data)
         if not wi_e:
             continue
-        alerts = check_wrongif(ticker, wi_e, market_data)
+        alerts = check_wrongif(ticker, wi_e, market_data, leading_indicators=leading_data)
         triggered = [a for a in alerts if a["status"] == "TRIGGERED"]
         manual    = [a for a in alerts if a["status"] == "MANUAL"]
 
