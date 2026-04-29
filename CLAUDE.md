@@ -1,7 +1,7 @@
 # AR Equity Research Platform — Project Context
 
 > This file is auto-loaded at the start of every Claude session. Read it fully before writing any code.
-> **Last updated: 2026-04-25** (reflects v12+ system with watchlist, leading indicators, wrongIf monitor)
+> **Last updated: 2026-04-29** (added session behaviour patterns, neat-freak + night-shift skills)
 
 ## What This Project Is
 
@@ -301,6 +301,8 @@ Do not use `git pull --rebase` on data directories — Actions commits do not ha
 | `ar-code-reviewer` | Any code review request, before push |
 | `ar-security-auditor` | Reviewing API/secrets/Vercel functions |
 | `ar-release-engineer` | Before git push, diagnosing CI failures |
+| `neat-freak` | End of every session — aligns CLAUDE.md, docs/, memory. Trigger: `/neat`, `整理一下`, `sync up` |
+| `night-shift` | Autonomous overnight work — **requires Claude Code CLI**, does NOT run in Cowork |
 
 ---
 
