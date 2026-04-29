@@ -6,3 +6,6 @@ __pycache__/
 *.pyc
 __pycache__/
 *.pyc
+
+# night-shift run state (per-shift, never commit)
+.night-shift/
