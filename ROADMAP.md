@@ -1,6 +1,7 @@
 # Platform Roadmap
 
-> Living document — update after each sprint
+> Living document — update after each sprint.
+> Last updated: 2026-04-29
 
 ## Vision
 
@@ -8,107 +9,119 @@ An institutional-grade personal research platform that systematises buy-side equ
 
 ---
 
-## v13.x — Current (Stable)
+## Current State — v14.3 (Shipped as of 2026-04-25)
+
+All features below are live in production:
 
 | Feature | Status |
 |---------|--------|
-| VP Score (3-engine) | ✅ Live |
-| Deep Research (Claude Sonnet) | ✅ Live |
+| VP Score — 5 dimensions (25/25/20/15/15) [unvalidated intuition] | ✅ Live |
+| watchlist.json as single source of truth | ✅ Live |
+| fetch_data.py loads tickers/seeds from watchlist.json | ✅ Fixed 2026-04-25 |
+| Deep Research (Claude Sonnet, UBS pitch framework) | ✅ Live |
 | Multi-Agent Debate (Gemini + GPT-4o + Claude) | ✅ Live |
-| Reverse DCF + Expectation Gap | ✅ Live |
+| Reverse DCF + Expectation Gap (piecewise mapping) | ✅ Live |
 | Macro Stress Test (4 scenarios) | ✅ Live |
-| Backtest Engine (monthly rebalance) | ✅ Live |
-| Prediction Log + Verification | ✅ v1.1 |
-| Supabase Snapshots | ✅ Live |
-| Telegram Alerts | ✅ Live |
-| Paper Trading | ✅ Live |
-| Modern SaaS UI (white cards) | ✅ Live |
-| Custom Cowork Skills (3) | ✅ Live |
-
-## v13.5 — In Progress / Recently Shipped
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Full market screener (10,461 stocks) | ✅ Built | api/live-quotes.js → Eastmoney push2, Screener tab |
-| Real-time price charts | ✅ Built | api/price-chart.js → Yahoo Finance v8, any ticker |
-| News Chinese translation | ✅ Built | api/translate.js → Claude Haiku; auto on lang switch |
-| Capital flow via Vercel API | ✅ Built | api/capital-flow.js → Eastmoney datacenter (bypasses AKShare) |
-| Yahoo Finance UA bypass | ⏳ Pending push | fetch_data.py fix committed locally; user needs to git push |
-| AKShare replacement | 🔶 Partial | Capital flow done; universe data still uses AKShare |
-
-### Known Data Pipeline Limitations
-- **AKShare is geo-blocked from GitHub Actions (US)**: affects universe_a/hk updates, margin data, dragon tiger
-- **Fix options**: (A) HK/SG VPS ~$5/month runs AKShare locally; (B) replace remaining AKShare calls with direct Eastmoney API
-- **Recommendation**: Add HK VPS for batch data; keep Vercel for real-time APIs
+| Backtest Engine (monthly rebalance, bootstrap CI) | ✅ Live |
+| Paper Trading (trades.json) | ✅ Live |
+| Swing Trading Signals (swing_signals.py, SwingSignalBadge) | ✅ Live |
+| Signal Confluence (signal_confluence.py) | ✅ Live |
+| Daily Decision Engine + wrongIf alerts (daily_decision.py) | ✅ Live |
+| Leading Indicators — NVDA/hyperscaler/TSMC composite | ✅ Live |
+| Supabase Snapshots + Telegram Alerts | ✅ Live |
+| Full market screener (10,461 stocks via Eastmoney) | ✅ Live |
+| Prediction Log + Verification (hit rate: 67%) | ✅ v1.1 |
+| Custom Skills (ar-code-reviewer, ar-security-auditor, ar-release-engineer, neat-freak, night-shift) | ✅ Live |
 
 ---
 
-## v14 — Next Sprint
+## Night Shift — Active (2026-04-29)
 
-### v14.1 — Swing Trading Signal Module ✅
-**Goal**: Rule-based entry/exit zone detection (not AI, deterministic)  
-**Signals**: MA20/MA60 crossover, RSI(14) zones, volume breakout, MA bounce  
-**Output**: `public/data/signals_[ticker].json` → `SwingSignal` component in Scanner + Research tabs  
-**Effort**: ~1 session  
-**Shipped**: 2026-04-18
+Currently running. Tier 1 objectives:
 
-### v14.2 — UBS Pitch Framework
-**Goal**: Deep Research outputs in IB pitch structure (Situation/Complication/Question/Answer/Evidence/Risk)  
-**Change**: Modify `api/research.js` prompt + add pitch section to Research tab  
+| Task | Status |
+|------|--------|
+| PROJECT_INSTRUCTIONS.md B3 — update VP weights (30→25, 10→15) and EGS formula (tanh→piecewise) | 🔄 In progress |
+| verify_outputs.py — extend to v14 modules (signals, confluence, daily_decision, leading_indicators) | 🔄 In progress |
+| catalyst_prox naming — canonicalize across pipeline | 🔄 In progress |
+
+---
+
+## v15 — Next Sprint (after Night Shift completes)
+
+### v15.1 — Signal Attribution [HIGH PRIORITY]
+**Goal**: Record which signals triggered each paper trade entry in trades.json
+**Why**: Without attribution, signal_quality.py cannot compute per-signal win rates
+**Changes**: `scripts/daily_decision.py` → write `triggered_signals` array to each trade
+**Output**: `public/data/trades.json` updated schema
+**Effort**: ~1 session
+**Upstream dependency**: None
+
+### v15.2 — wrongIf Auto-Monitor [HIGH PRIORITY]
+**Goal**: `daily_decision.py` checks wrongIf conditions against live data each run
+**Why**: Currently wrongIf status is updated manually; should auto-trigger when condition breached
+**Specific**: 300308.SZ monitors NVDA+MSFT+GOOGL price drop; 9999.HK monitors earnings_growth
+**Output**: Telegram alert when wrongIf fires
 **Effort**: ~1 session
 
-### v14.3 — Daily Auto-Brief
-**Goal**: Automated 08:30 weekday monitoring summary  
-**Output**: Cowork notification + Telegram message  
-**Covers**: VP changes, RDCF gap, threshold alerts  
+### v15.3 — Signal Quality Engine [HIGH PRIORITY]
+**Goal**: `scripts/signal_quality.py` — per-signal win rate and P&L attribution
+**Why**: Without this, signal weights remain [unvalidated intuition] forever
+**Input**: trades.json (requires v15.1 attribution first)
+**Output**: `public/data/signal_quality.json` → feeds back into confluence weights
+**Effort**: ~1 session
+**Upstream dependency**: v15.1 must ship first
+
+### v15.4 — Position Sizing Calculator
+**Goal**: ATR-based, VP-weighted position size recommendations in Trading Desk
+**Changes**: `scripts/position_sizing.py` + fetch-data.yml step + Dashboard UI
+**Output**: `public/data/position_sizing.json`
+**Effort**: ~1 session
+
+### v15.5 — Mock Portfolio Seed
+**Goal**: Seed trades.json with 5-stock mock portfolio + signal attribution
+**Why**: paper_trading.py and backtest need historical entries to compute meaningful P&L
 **Effort**: ~0.5 session
 
 ---
 
-## v15 — Phase 3 Features
+## v16 — Phase 3 (Deferred — needs real trade history first)
 
-### v15.1 — Claude Earnings Tone Analysis
-6-dimension transcript scoring: revenue guidance tone, margin commentary, capex signals, competition acknowledgement, management confidence, forward guidance specificity. ~$0.10/transcript via Claude API.
+### v16.1 — Claude Earnings Tone Analysis
+6-dimension transcript scoring: revenue guidance tone, margin commentary, capex signals, competition acknowledgement, management confidence, forward guidance specificity. ~$0.10/transcript. Implement after data pipeline stabilises.
 
-### v15.2 — Brinson-Fachler Attribution
-Sector allocation + stock selection decomposition vs CSI 300 / HSI benchmarks. Requires 3+ months of real paper trading P&L data to accumulate first.
+### v16.2 — Brinson-Fachler Attribution
+Sector allocation + stock selection decomposition vs CSI 300 / HSI benchmarks. Requires 3+ months real paper trading P&L.
 
-### v15.3 — VP Weight Calibration
-Use backtest results to optimise Earnings Surprise / Multiple Expansion / Capital Revaluation weights via grid search. Replace starting weights (30/40/30) with data-driven ones.
+### v16.3 — VP Weight Calibration
+Replace [unvalidated intuition] weights (25/25/20/15/15) with backtest-optimised values via grid search. Requires signal_quality.py output (v15.3) first.
 
-### v15.4 — Consensus Estimate Integration
-A-shares: `ak.stock_profit_forecast_em()` broker EPS forecasts  
-HK: yfinance `.earnings_estimate`  
-Goal: automate the consensus beat/miss calculation currently done manually.
+### v16.4 — Tushare Pro Integration
+User has paid access. Add TUSHARE_TOKEN to GitHub Secrets → unlocks real-time A-share quotes, capital flows, northbound data, margin data. Currently using AKShare (geo-blocked from GitHub Actions).
 
----
-
-## Future / Exploratory
-
-- **Multi-user collaboration** — share platform with research team (auth required, architecture TBD)
-- **Earnings call audio analysis** — tone/sentiment beyond transcript text
-- **Options flow integration** — unusual options activity as a Capital Revaluation signal
-- **Macro regime detection automation** — replace manual regime flags with rule-based detection
-- **BeOne Medicines CELESTIAL data** — Phase 3 uMRD readout expected H2 2026, major catalyst
+### v16.5 — Consensus Estimate Integration
+A-shares: ak.stock_profit_forecast_em() broker EPS forecasts
+HK: yfinance .earnings_estimate
+Goal: automate consensus beat/miss calculation.
 
 ---
 
 ## Thesis Refresh Queue
 
-These VP theses are outdated and need rebuilding before the next research cycle:
-
 | Ticker | Issue | Priority |
 |--------|-------|----------|
-| BYD 002594.SZ | Original thesis exceeded by 2.6× — needs full rebuild | High |
-| Innolight 300308.SZ | Directionally correct but 2026 data not incorporated | Medium |
+| BYD 002594.SZ | wrongIf TRIGGERED (revenue_growth -13.5%) — needs full thesis rebuild | High |
+| Innolight 300308.SZ | Directionally valid but 2026 1.6T mass production timing needs update | Medium |
+| BeiGene 6160.HK | VP=65 computed with old weights — re-verify against 25/25/20/15/15 | Medium |
 
 ---
 
-## Metrics to Track
+## Metrics
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Prediction hit rate | 67% (2/3) | > 65% at n ≥ 10 |
-| VP Score calibration | Starting weights | Backtest-optimised |
-| Research coverage | 5 focus + dynamic | 5 focus + 50 watchlist |
-| Daily data freshness | ~2 hrs post-market | Real-time (future) |
+| Prediction hit rate | 67% (2/3 decidable) | > 65% at n ≥ 10 |
+| VP Score calibration | [unvalidated intuition] | Backtest-validated (v16.3) |
+| Signal attribution | Not yet tracked | Per-signal win rate (v15.3) |
+| Research coverage | 5 focus stocks | 5 focus + expand when pipeline stable |
+| wrongIf monitoring | Manual | Automated (v15.2) |
