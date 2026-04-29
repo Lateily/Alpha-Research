@@ -1,13 +1,13 @@
 {
   "ticker": "002594.SZ",
-  "generated_at": "2026-04-28T16:21:56.704633+00:00",
+  "generated_at": "2026-04-29T09:24:51.334695+00:00",
   "overall": "MED",
   "sections": {
     "business_model": {
       "label": "Business Model",
       "rating": "MED-HIGH",
       "source": "Company annual report + AKShare financials",
-      "data_age_days": 118
+      "data_age_days": 119
     },
     "variant_thesis": {
       "label": "Variant Thesis",
@@ -20,7 +20,7 @@
       "label": "Catalysts",
       "rating": "MED-HIGH",
       "source": "Management guidance + regulatory calendar",
-      "data_age_days": 118
+      "data_age_days": 119
     },
     "risks": {
       "label": "Risks",
@@ -32,7 +32,7 @@
       "label": "Financials",
       "rating": "MED-HIGH",
       "source": "AKShare / yfinance financial statements",
-      "data_age_days": 118
+      "data_age_days": 119
     },
     "technical": {
       "label": "Technical",
@@ -46,13 +46,13 @@
     "Management intent and insider dynamics are not observable from public data",
     "Variant thesis expectation gap uses LLM reasoning — treat as hypothesis, not fact",
     "Geopolitical tail risk is narrative-based; not quantified",
-    "⚠️ Financial data is 118 days old — EQR automatically degraded",
+    "⚠️ Financial data is 119 days old — EQR automatically degraded",
     "⚠️ Consensus estimates are 999 days old — expectation gap may be stale"
   ],
   "data_freshness": {
     "financials": "2025-12-31",
-    "price": "2026-04-28",
+    "price": "2026-04-29",
     "consensus": null,
-    "news": "2026-04-28"
+    "news": "2026-04-29"
   }
 }

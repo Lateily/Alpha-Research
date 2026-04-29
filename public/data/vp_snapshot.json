@@ -1,17 +1,17 @@
 {
-  "date": "2026-04-28",
+  "date": "2026-04-29",
   "snapshots": [
     {
       "ticker": "300308.SZ",
-      "date": "2026-04-28",
+      "date": "2026-04-29",
       "vp_score": 56,
       "expectation_gap": 10,
       "fundamental_accel": 79,
       "narrative_shift": 72,
       "low_coverage": 50,
       "catalyst_proximity": 80,
-      "close": 825,
-      "volume": 2951090500,
+      "close": 846,
+      "volume": 2517308700,
       "source": "vp_engine",
       "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
       "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%",
@@ -39,24 +39,24 @@
         "score": 10,
         "source": "rdcf_delta",
         "signal": "OVERPRICED",
-        "delta": -0.814,
-        "implied_growth": 115.5,
+        "delta": -0.818,
+        "implied_growth": 115.9,
         "our_growth": 34.1,
         "hyper_growth": true
       },
-      "engine_run_at": "2026-04-28T16:22:00.275413+00:00"
+      "engine_run_at": "2026-04-29T09:24:54.230175+00:00"
     },
     {
       "ticker": "700.HK",
-      "date": "2026-04-28",
+      "date": "2026-04-29",
       "vp_score": 53,
       "expectation_gap": 35,
       "fundamental_accel": 66,
       "narrative_shift": 70,
       "low_coverage": 35,
       "catalyst_proximity": 58,
-      "close": 478.6,
-      "volume": -100,
+      "close": 473.8,
+      "volume": 118,
       "source": "vp_engine",
       "wrongIf_e": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
       "wrongIf_z": "游戏监管扩大或宏观消费急剧恶化",
@@ -89,19 +89,19 @@
         "our_growth": 18.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-28T16:22:00.276134+00:00"
+      "engine_run_at": "2026-04-29T09:24:54.230878+00:00"
     },
     {
       "ticker": "9999.HK",
-      "date": "2026-04-28",
+      "date": "2026-04-29",
       "vp_score": 61,
       "expectation_gap": 68,
       "fundamental_accel": 76,
       "narrative_shift": 45,
       "low_coverage": 48,
       "catalyst_proximity": 60,
-      "close": 173.3,
-      "volume": 11,
+      "close": 172.8,
+      "volume": 144,
       "source": "vp_engine",
       "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
       "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万",
@@ -129,24 +129,24 @@
         "score": 68,
         "source": "rdcf_delta",
         "signal": "UNDERPRICED",
-        "delta": 0.128,
-        "implied_growth": 2.2,
+        "delta": 0.121,
+        "implied_growth": 2.9,
         "our_growth": 15.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-28T16:22:00.276823+00:00"
+      "engine_run_at": "2026-04-29T09:24:54.231562+00:00"
     },
     {
       "ticker": "6160.HK",
-      "date": "2026-04-28",
+      "date": "2026-04-29",
       "vp_score": 51,
       "expectation_gap": 10,
       "fundamental_accel": 57,
       "narrative_shift": 75,
       "low_coverage": 55,
       "catalyst_proximity": 78,
-      "close": 180.4,
-      "volume": -49,
+      "close": 178.9,
+      "volume": 5,
       "source": "vp_engine",
       "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
       "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优",
@@ -174,24 +174,24 @@
         "score": 10,
         "source": "rdcf_delta",
         "signal": "OVERPRICED",
-        "delta": -0.79,
-        "implied_growth": 114.0,
+        "delta": -0.792,
+        "implied_growth": 114.2,
         "our_growth": 35.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-28T16:22:00.277432+00:00"
+      "engine_run_at": "2026-04-29T09:24:54.232175+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "date": "2026-04-28",
+      "date": "2026-04-29",
       "vp_score": 44,
       "expectation_gap": 78,
       "fundamental_accel": 24,
       "narrative_shift": 38,
       "low_coverage": 32,
       "catalyst_proximity": 45,
-      "close": 101.48,
-      "volume": 3615500400,
+      "close": 105.4,
+      "volume": 10565578100,
       "source": "vp_engine",
       "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
       "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发",
@@ -219,12 +219,12 @@
         "score": 78,
         "source": "rdcf_delta",
         "signal": "UNDERPRICED",
-        "delta": 0.42,
-        "implied_growth": -14.0,
+        "delta": 0.385,
+        "implied_growth": -10.5,
         "our_growth": 28.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-28T16:22:00.278065+00:00"
+      "engine_run_at": "2026-04-29T09:24:54.232825+00:00"
     }
   ]
 }
