@@ -234,6 +234,23 @@ def main():
             "avg_pnl":  round(avg, 2),
         })
 
+    # ── By ticker (v15.3 polish) ──────────────────────────────────────────────
+    # Per-ticker P&L slice complementing by_signal/by_conviction/vp_buckets.
+    # Sorted winners-first so dashboard can surface portfolio leaders.
+    by_ticker = []
+    for o in open_outcomes:
+        sigs = o["signals"] or []
+        top_signals = [s.get("name", "?") for s in sigs[:3]]
+        by_ticker.append({
+            "ticker":         o["ticker"],
+            "pnl_pct":        round(o["pnl"], 2) if o["pnl"] is not None else None,
+            "vp_at_entry":    o["vp"],
+            "conf_at_entry":  o["conf_score"],
+            "signal_count":   len(sigs),
+            "top_signals":    top_signals,
+        })
+    by_ticker.sort(key=lambda x: -(x["pnl_pct"] if x["pnl_pct"] is not None else -float("inf")))
+
     # ── Portfolio summary ─────────────────────────────────────────────────────
     open_pnls   = [o["pnl"] for o in open_outcomes if o["pnl"] is not None]
     overall_win = sum(1 for p in open_pnls if p > 0)
@@ -280,6 +297,14 @@ def main():
             f"{portfolio_summary['open_positions']} open positions"
         )
 
+    if by_ticker and by_ticker[0]["pnl_pct"] is not None:
+        leader = by_ticker[0]
+        insights.append(
+            f"{leader['ticker']} leads portfolio P&L at "
+            f"{leader['pnl_pct']:+.1f}% (VP={leader['vp_at_entry']}, "
+            f"conf={leader['conf_at_entry']:+d})"
+        )
+
     if not insights:
         insights.append("Insufficient data for insights — add more trades with signal attribution.")
 
@@ -291,6 +316,7 @@ def main():
         "by_signal":         by_signal,
         "by_conviction":     by_conviction,
         "vp_buckets":        vp_buckets,
+        "by_ticker":         by_ticker,
         "insights":          insights,
     }
 

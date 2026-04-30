@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-29T15:37:28.814656+00:00",
-  "date": "2026-04-29",
+  "generated_at": "2026-04-30T09:02:35.220706+00:00",
+  "date": "2026-04-30",
   "portfolio_summary": {
     "total_attributed_trades": 5,
     "open_positions": 5,
@@ -163,8 +163,71 @@
       "avg_pnl": 14.13
     }
   ],
+  "by_ticker": [
+    {
+      "ticker": "700.HK",
+      "pnl_pct": 24.84,
+      "vp_at_entry": 64,
+      "conf_at_entry": 71,
+      "signal_count": 5,
+      "top_signals": [
+        "MA_SUPPORT_BOUNCE",
+        "BULLISH_ALIGNMENT",
+        "NORTHBOUND_INFLOW"
+      ]
+    },
+    {
+      "ticker": "300308.SZ",
+      "pnl_pct": 24.16,
+      "vp_at_entry": 79,
+      "conf_at_entry": 82,
+      "signal_count": 5,
+      "top_signals": [
+        "GOLDEN_CROSS",
+        "CVD_FLOOR_FORMED",
+        "BULLISH_ALIGNMENT"
+      ]
+    },
+    {
+      "ticker": "9999.HK",
+      "pnl_pct": 18.7,
+      "vp_at_entry": 58,
+      "conf_at_entry": 62,
+      "signal_count": 4,
+      "top_signals": [
+        "OVERSOLD_RSI",
+        "MA_SUPPORT_BOUNCE",
+        "VOLUME_BREAKOUT"
+      ]
+    },
+    {
+      "ticker": "6160.HK",
+      "pnl_pct": 12.78,
+      "vp_at_entry": 65,
+      "conf_at_entry": 68,
+      "signal_count": 4,
+      "top_signals": [
+        "BULLISH_ALIGNMENT",
+        "VOLUME_BREAKOUT",
+        "EARNINGS_BEAT"
+      ]
+    },
+    {
+      "ticker": "002594.SZ",
+      "pnl_pct": 9.57,
+      "vp_at_entry": 52,
+      "conf_at_entry": 55,
+      "signal_count": 3,
+      "top_signals": [
+        "MA_SUPPORT_BOUNCE",
+        "GOLDEN_CROSS",
+        "NORTHBOUND_INFLOW"
+      ]
+    }
+  ],
   "insights": [
     "GOLDEN_CROSS best win rate 100% (3/3 trades, avg P&L +15.5%)",
-    "Portfolio: 100% win rate · avg P&L +18.0% across 5 open positions"
+    "Portfolio: 100% win rate · avg P&L +18.0% across 5 open positions",
+    "700.HK leads portfolio P&L at +24.8% (VP=64, conf=+71)"
   ]
 }
