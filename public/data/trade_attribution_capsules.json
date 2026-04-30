@@ -1,36 +1,37 @@
 {
-  "generated_at": "2026-04-30T09:05:44.279139+00:00",
+  "generated_at": "2026-04-30T09:27:19.154035+00:00",
   "date": "2026-04-30",
   "note": "Per-ticker attribution snapshot for new-trade entry. Schema matches trades.json signal_attribution shape. Pin to today's decision; do not regenerate after entering a trade.",
   "capsules": {
-    "002594.SZ": {
-      "confluence_score": 36,
-      "action": "HOLD",
-      "zone": "BULLISH",
+    "9999.HK": {
+      "confluence_score": 66,
+      "action": "ENTRY_CANDIDATE",
+      "zone": "NEUTRAL",
       "contributing_signals": [
         {
           "name": "VOLUME_BREAKOUT",
-          "weight": 21.6,
+          "weight": 18.0,
           "base_weight": 18,
           "direction": "bullish"
         },
         {
           "name": "MA20_BOUNCE",
-          "weight": 14.4,
+          "weight": 12.0,
           "base_weight": 12,
           "direction": "bullish"
-        }
-      ],
-      "vp_at_capture": 44,
-      "wrongIf_at_capture_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "wrongIf_at_capture_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "captured_at": "2026-04-30T09:05:44.279139+00:00"
-    },
-    "9999.HK": {
-      "confluence_score": 14,
-      "action": "NEUTRAL",
-      "zone": "BEARISH",
-      "contributing_signals": [
+        },
+        {
+          "name": "MACD_GOLDEN_CROSS",
+          "weight": 12.0,
+          "base_weight": 12,
+          "direction": "bullish"
+        },
+        {
+          "name": "KDJ_GOLDEN_CROSS",
+          "weight": 10.0,
+          "base_weight": 10,
+          "direction": "bullish"
+        },
         {
           "name": "VP_GOOD_CONVICTION",
           "weight": 14.0,
@@ -41,7 +42,24 @@
       "vp_at_capture": 61,
       "wrongIf_at_capture_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
       "wrongIf_at_capture_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
-      "captured_at": "2026-04-30T09:05:44.279139+00:00"
+      "captured_at": "2026-04-30T09:27:19.154035+00:00"
+    },
+    "002594.SZ": {
+      "confluence_score": 12,
+      "action": "NEUTRAL",
+      "zone": "BULLISH",
+      "contributing_signals": [
+        {
+          "name": "BULLISH_ALIGNMENT",
+          "weight": 12.0,
+          "base_weight": 10,
+          "direction": "bullish"
+        }
+      ],
+      "vp_at_capture": 44,
+      "wrongIf_at_capture_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_at_capture_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "captured_at": "2026-04-30T09:27:19.154035+00:00"
     },
     "6160.HK": {
       "confluence_score": 12,
@@ -58,7 +76,7 @@
       "vp_at_capture": 51,
       "wrongIf_at_capture_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
       "wrongIf_at_capture_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
-      "captured_at": "2026-04-30T09:05:44.279139+00:00"
+      "captured_at": "2026-04-30T09:27:19.154035+00:00"
     },
     "700.HK": {
       "confluence_score": 12,
@@ -66,14 +84,8 @@
       "zone": "BEARISH",
       "contributing_signals": [
         {
-          "name": "RSI_RECOVERING",
-          "weight": 7.0,
-          "base_weight": 7,
-          "direction": "bullish"
-        },
-        {
           "name": "KDJ_OVERSOLD",
-          "weight": 4.8,
+          "weight": 12.0,
           "base_weight": 12,
           "direction": "bullish"
         }
@@ -81,17 +93,30 @@
       "vp_at_capture": 53,
       "wrongIf_at_capture_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
       "wrongIf_at_capture_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
-      "captured_at": "2026-04-30T09:05:44.279139+00:00"
+      "captured_at": "2026-04-30T09:27:19.154035+00:00"
     },
     "300308.SZ": {
-      "confluence_score": 0,
+      "confluence_score": 2,
       "action": "NEUTRAL",
       "zone": "BULLISH",
-      "contributing_signals": [],
+      "contributing_signals": [
+        {
+          "name": "BULLISH_ALIGNMENT",
+          "weight": 12.0,
+          "base_weight": 10,
+          "direction": "bullish"
+        },
+        {
+          "name": "MACD_DEATH_CROSS",
+          "weight": -9.6,
+          "base_weight": -12,
+          "direction": "bearish"
+        }
+      ],
       "vp_at_capture": 56,
       "wrongIf_at_capture_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_at_capture_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "captured_at": "2026-04-30T09:05:44.279139+00:00"
+      "captured_at": "2026-04-30T09:27:19.154035+00:00"
     }
   }
 }
