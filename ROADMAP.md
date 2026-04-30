@@ -35,53 +35,64 @@ All features below are live in production:
 
 ---
 
-## Night Shift — Active (2026-04-29)
+## Night Shift — Completed (2026-04-29 → 2026-04-30)
 
-Currently running. Tier 1 objectives:
+Two shifts shipped Tier 1 protocol-drift items + the entire v15 sprint:
 
-| Task | Status |
-|------|--------|
-| PROJECT_INSTRUCTIONS.md B3 — update VP weights (30→25, 10→15) and EGS formula (tanh→piecewise) | 🔄 In progress |
-| verify_outputs.py — extend to v14 modules (signals, confluence, daily_decision, leading_indicators) | 🔄 In progress |
-| catalyst_prox naming — canonicalize across pipeline | 🔄 In progress |
+| Task | Status | Commit |
+|------|--------|--------|
+| PROJECT_INSTRUCTIONS.md B3 — VP weights 25/25/20/15/15 + piecewise EGS | ✅ Shipped | 3c923c3 |
+| verify_outputs.py — v14 module coverage (signals/confluence/daily_decision/leading_indicators) | ✅ Shipped | 2930471 |
+| catalyst_prox canonicalization across pipeline + Supabase boundary | ✅ Shipped | 1892b3a |
 
 ---
 
-## v15 — Next Sprint (after Night Shift completes)
+## v15 — Sprint Complete (Shipped 2026-04-30)
 
-### v15.1 — Signal Attribution [HIGH PRIORITY]
-**Goal**: Record which signals triggered each paper trade entry in trades.json
-**Why**: Without attribution, signal_quality.py cannot compute per-signal win rates
-**Changes**: `scripts/daily_decision.py` → write `triggered_signals` array to each trade
-**Output**: `public/data/trades.json` updated schema
-**Effort**: ~1 session
-**Upstream dependency**: None
+All five v15 items are live in production. Tagged `v15.0`.
 
-### v15.2 — wrongIf Auto-Monitor [HIGH PRIORITY]
-**Goal**: `daily_decision.py` checks wrongIf conditions against live data each run
-**Why**: Currently wrongIf status is updated manually; should auto-trigger when condition breached
-**Specific**: 300308.SZ monitors NVDA+MSFT+GOOGL price drop; 9999.HK monitors earnings_growth
-**Output**: Telegram alert when wrongIf fires
-**Effort**: ~1 session
+### v15.1 — Signal Attribution ✅ Shipped (commit b16b9d0)
+trades.json carries full `signal_attribution` schema (name/weight/direction
+per contributing signal). `daily_decision.py` emits a per-pipeline-run
+`trade_attribution_capsules.json` so new trades can be entered with the
+exact attribution snapshot pinned to today's confluence state. SIGNAL_DIRECTION
+covers 25 signal types from swing_signals.py + signal_confluence.py.
 
-### v15.3 — Signal Quality Engine [HIGH PRIORITY]
-**Goal**: `scripts/signal_quality.py` — per-signal win rate and P&L attribution
-**Why**: Without this, signal weights remain [unvalidated intuition] forever
-**Input**: trades.json (requires v15.1 attribution first)
-**Output**: `public/data/signal_quality.json` → feeds back into confluence weights
-**Effort**: ~1 session
-**Upstream dependency**: v15.1 must ship first
+### v15.2 — wrongIf Auto-Monitor ✅ Shipped (commit 6f73792, follow-up 7f09a01)
+`daily_decision.py:check_wrongif()` auto-fires alerts against live yfinance
+fundamentals + leading_indicators basket data:
+- 300308.SZ NVDA+MSFT+GOOGL collective drawdown (vs 25% threshold)
+- 9999.HK earnings_growth < -30% (post-7f09a01 below_neg pattern)
+- 002594.SZ revenue_growth/earnings_growth thresholds
+- 6160.HK / 700.HK binary-event clauses → MANUAL flag
+F2 stale-wrongIf-in-snapshot bug fixed as side benefit (vp_engine now
+refreshes wrongIf strings from watchlist on each run).
 
-### v15.4 — Position Sizing Calculator
-**Goal**: ATR-based, VP-weighted position size recommendations in Trading Desk
-**Changes**: `scripts/position_sizing.py` + fetch-data.yml step + Dashboard UI
-**Output**: `public/data/position_sizing.json`
-**Effort**: ~1 session
+### v15.3 — Signal Quality Engine ✅ Shipped (commit 6c8873c on top of pre-existing)
+`scripts/signal_quality.py` is in the fetch-data.yml pipeline + read by
+Dashboard.jsx. Computes by_signal/by_conviction/vp_buckets/by_ticker
+aggregations. Current portfolio (5 attributed positions): 100% win rate,
++18.0% avg P&L, GOLDEN_CROSS leads at 100% win rate across 3 trades.
 
-### v15.5 — Mock Portfolio Seed
-**Goal**: Seed trades.json with 5-stock mock portfolio + signal attribution
-**Why**: paper_trading.py and backtest need historical entries to compute meaningful P&L
-**Effort**: ~0.5 session
+### v15.4 — Position Sizing Calculator ✅ Shipped (was already live)
+`scripts/position_sizing.py` (206 lines, ATR-stop + VP-mult + conf-mult)
+runs in fetch-data.yml. Dashboard.jsx renders `recommended_pct`,
+`conviction_tier`, `risk_cny`, etc. (lines 3430-3459).
+
+### v15.5 — Mock Portfolio Seed ✅ Shipped (was already live)
+trades.json has 5 attributed entries (one per watchlist ticker, dated
+2026-03-10 through 2026-04-01). positions.json has 5 corresponding live
+positions with full P&L tracking and signal attribution.
+
+### Post-v15 follow-ups (queued, partially shipped)
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| KR4 | `<indicator> < -X%` wrongif pattern | ✅ Shipped (7f09a01) | Restores 9999.HK auto-monitoring, surfaces 2 extra 002594.SZ triggers |
+| KR5 | Drawdown-aware leader insight phrasing | 📦 In stash | Reviewer timed out; awaiting user review |
+| KR6 | Tighten price-drop regex (gross_margin false-fire) | 📦 In stash | Reviewer timed out; awaiting user review |
+| KR7 | Surface CLEAR alerts in wrongif_alerts (UX gap) | ⏳ Queued | Mentioned in 2 reviews; promote to next shift |
+| KR8 | Dedupe redundant `(ticker, indicator)` alerts | ⏳ Queued | KR4 review P3 |
 
 ---
 
@@ -122,6 +133,6 @@ Goal: automate consensus beat/miss calculation.
 |--------|---------|--------|
 | Prediction hit rate | 67% (2/3 decidable) | > 65% at n ≥ 10 |
 | VP Score calibration | [unvalidated intuition] | Backtest-validated (v16.3) |
-| Signal attribution | Not yet tracked | Per-signal win rate (v15.3) |
+| Signal attribution | Per-signal win rate live (v15.3) | n ≥ 10 attributed closed trades |
 | Research coverage | 5 focus stocks | 5 focus + expand when pipeline stable |
-| wrongIf monitoring | Manual | Automated (v15.2) |
+| wrongIf monitoring | Automated (v15.2) for 4 of 5 tickers | All 5 + history-aware persistence |
