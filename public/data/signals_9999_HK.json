@@ -1,38 +1,79 @@
 {
   "ticker": "9999.HK",
-  "generated_at": "2026-04-29",
-  "price": 175.0,
-  "zone": "BEARISH",
-  "entry_zone": false,
+  "generated_at": "2026-04-30",
+  "price": 179.0,
+  "zone": "NEUTRAL",
+  "entry_zone": true,
   "exit_zone": false,
-  "signals": [],
+  "signals": [
+    {
+      "type": "VOLUME_BREAKOUT",
+      "strength": "moderate",
+      "date": "2026-04-30",
+      "bullish": true,
+      "description": {
+        "e": "Volume 2.1× avg, price +2.3% — buying surge",
+        "z": "成交量2.1倍均量，股价+2.3%，放量上攻"
+      }
+    },
+    {
+      "type": "MA20_BOUNCE",
+      "strength": "moderate",
+      "date": "2026-04-30",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA20 (176.7) — near-term support held",
+        "z": "股价从MA20(176.7)附近反弹，短期支撑有效"
+      }
+    },
+    {
+      "type": "MACD_GOLDEN_CROSS",
+      "strength": "moderate",
+      "date": "2026-04-30",
+      "bullish": true,
+      "description": {
+        "e": "MACD DIF(-1.507) crossed above DEA(-1.600) below zero — bullish momentum",
+        "z": "MACD DIF(-1.507)上穿DEA(-1.600)零轴下方金叉看涨"
+      }
+    },
+    {
+      "type": "KDJ_GOLDEN_CROSS",
+      "strength": "moderate",
+      "date": "2026-04-30",
+      "bullish": true,
+      "description": {
+        "e": "KDJ K(37.5) crossed above D(34.7) in oversold — reversal signal",
+        "z": "KDJ K(37.5)上穿D(34.7)，超卖区金叉看涨"
+      }
+    }
+  ],
   "signal_count": {
-    "bullish": 0,
+    "bullish": 4,
     "bearish": 0,
-    "total": 0
+    "total": 4
   },
   "indicators": {
-    "ma5": 172.88,
-    "ma20": 176.71,
-    "ma60": 182.73,
-    "rsi14": 45.7,
-    "vol_ma20": 5142738,
-    "vol_ratio": 1.14,
-    "price_vs_ma20": -0.96,
-    "price_vs_ma60": -4.23,
-    "change_1d": 1.27,
-    "change_5d": -1.46,
-    "change_20d": 1.1,
-    "macd_dif": -1.8863,
-    "macd_dea": -1.623,
-    "macd_hist": -0.5266,
-    "bb_upper": 185.33,
-    "bb_mid": 176.71,
-    "bb_lower": 168.08,
-    "bb_bandwidth": 9.77,
-    "kdj_k": 28.6,
-    "kdj_d": 33.2,
-    "kdj_j": 19.2,
+    "ma5": 174.2,
+    "ma20": 177.04,
+    "ma60": 182.19,
+    "rsi14": 51.2,
+    "vol_ma20": 5431470,
+    "vol_ratio": 2.07,
+    "price_vs_ma20": 1.11,
+    "price_vs_ma60": -1.75,
+    "change_1d": 2.29,
+    "change_5d": 3.83,
+    "change_20d": 3.83,
+    "macd_dif": -1.5069,
+    "macd_dea": -1.5998,
+    "macd_hist": 0.1858,
+    "bb_upper": 185.48,
+    "bb_mid": 177.04,
+    "bb_lower": 168.59,
+    "bb_bandwidth": 9.54,
+    "kdj_k": 37.5,
+    "kdj_d": 34.7,
+    "kdj_j": 43.2,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,

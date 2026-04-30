@@ -1,6 +1,6 @@
 {
-  "as_of": "2026-04-29",
-  "generated": "2026-04-29T15:37:24.567402",
+  "as_of": "2026-04-30",
+  "generated": "2026-04-30T09:27:15.827985",
   "status": "ok",
   "config": {
     "vp_threshold": 60,
@@ -11,9 +11,9 @@
   },
   "summary": {
     "periods": 6,
-    "annualised_return_pct": 144.65,
+    "annualised_return_pct": 144.64,
     "benchmark_return_pct": 0.0,
-    "alpha_annual_pct": 144.65,
+    "alpha_annual_pct": 144.64,
     "beta": 1.0,
     "sharpe_ratio": 1.885,
     "benchmark_sharpe": 0.0,
@@ -247,8 +247,8 @@
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": 11.99,
-          "net_return": 11.79,
+          "raw_return": 11.98,
+          "net_return": 11.78,
           "tx_cost": 0.2
         },
         {
