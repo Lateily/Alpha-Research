@@ -776,6 +776,34 @@ def main():
         manual    = [a for a in alerts if a["status"] == "MANUAL"]
         clear     = [a for a in alerts if a["status"] == "CLEAR"]
 
+        # KR8: dedupe TRIGGERED alerts per indicator — keep the most-specific
+        # match (smallest |actual − threshold|). Multiple patterns can fire on
+        # the same indicator (e.g. 002594.SZ revenue_growth matches both
+        # below_zero (threshold=0, distance=13.5) AND below_neg
+        # (threshold=-10, distance=3.5) — both real, but the stricter threshold
+        # is the watchlist-author's intended gate; the looser match is noise).
+        # Applies WITHIN the TRIGGERED status only — MANUAL/CLEAR already cap
+        # at one per ticker.
+        if len(triggered) > 1:
+            best_per_indicator = {}
+            for a in triggered:
+                key = a.get("indicator")
+                actual = a.get("actual")
+                threshold = a.get("threshold")
+                existing = best_per_indicator.get(key)
+                if existing is None:
+                    best_per_indicator[key] = a
+                    continue
+                if actual is None or threshold is None:
+                    continue  # can't compute distance — keep existing
+                e_actual = existing.get("actual")
+                e_threshold = existing.get("threshold")
+                if e_actual is None or e_threshold is None:
+                    best_per_indicator[key] = a
+                elif abs(actual - threshold) < abs(e_actual - e_threshold):
+                    best_per_indicator[key] = a
+            triggered = list(best_per_indicator.values())
+
         # Mutually-exclusive selection: TRIGGERED rows take precedence (emit all),
         # then MANUAL (emit one), then CLEAR (emit one — confirms monitor active).
         # Without the CLEAR branch, auto-monitored-but-currently-clear tickers
