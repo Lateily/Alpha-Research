@@ -314,12 +314,45 @@ def _extract_price_metrics(ticker):
 
 def _is_loss_making_history(fin_m):
     """Detect whether the 5-year history is loss-making/biotech-style.
-    Heuristic: FCF positive in <40% of last 5 years.
-    Uses cash-runway F2 instead of FCF-consistency F2."""
+
+    Heuristic (CONJUNCTIVE — tightened in KR2):
+      op_margin_mean < 0  AND  fcf_positive_pct < 40
+
+    Both conditions required:
+      (a) op_margin_mean < 0 — structural state of the business is loss-
+          making at the operating line.
+      (b) fcf_positive_pct < 40 — cash flow has been historically
+          negative (i.e. the company has been burning cash, not just
+          intermittently FCF-negative).
+
+    Why conjunctive AND:
+      - (b) alone is too LOOSE — catches deep-cyclicals in downturns
+        (e.g. a commodity producer with 3 of 5 bad FCF years would
+        flip into biotech mode even though it's profitable on average).
+      - (a) alone is too TIGHT — misses biotechs that just turned
+        op-margin-positive but are still flipping FCF sign (rare
+        transition window).
+      - (a) AND (b) is the discriminating filter: rules out cyclicals
+        via (a), keeps structurally-loss-making businesses (clinical
+        biotech, early-stage growth burning to revenue) which trip
+        both conditions.
+
+    Verified on current watchlist 2026-04-30:
+      BeOne 6160.HK   op_margin -45.5%, FCF positive 25%  → both TRUE  → biotech-mode
+      Innolight       op_margin +24.3%, FCF positive 100% → (a) FALSE  → standard
+      Tencent         op_margin +28.1%, FCF positive 100% → (a) FALSE  → standard
+      NetEase         op_margin +26.8%, FCF positive 100% → (a) FALSE  → standard
+      BYD             op_margin  +5.9%, FCF positive 75%  → (a) FALSE  → standard
+
+    Uses cash-runway F2 instead of FCF-consistency F2 when this fires.
+    """
     if not fin_m:
         return False
     fcf_pos = fin_m.get("fcf_positive_pct")
-    return fcf_pos is not None and fcf_pos < 40
+    op_margin_mean = fin_m.get("op_margin_mean")
+    if fcf_pos is None or op_margin_mean is None:
+        return False
+    return op_margin_mean < 0 and fcf_pos < 40
 
 
 def compute_fragility(ticker):
