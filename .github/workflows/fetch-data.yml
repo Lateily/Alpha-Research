@@ -60,14 +60,14 @@ jobs:
         continue-on-error: true          # non-critical; pure Python, no network
         run: python scripts/swing_signals.py
 
-      # ── Step 2i: AI Infrastructure Leading Indicators ───────────────────
+      # ── Step 2d: AI Infrastructure Leading Indicators ───────────────────
       # Fetches hyperscaler CapEx + NVDA + TSMC quarterly data.
       # Runs early (after fetch) so composite signal is available for confluence.
       - name: Fetch leading indicators
         continue-on-error: true          # non-critical; US market data
         run: python scripts/leading_indicators.py
 
-      # ── Step 2h: VP Score live engine ────────────────────────────────────
+      # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
       # writes profit_scissors.json.
@@ -75,27 +75,27 @@ jobs:
         continue-on-error: true          # non-critical; pure Python, no network
         run: python scripts/vp_engine.py
 
-      # ── Step 2d: Signal confluence scoring (Layer 2) ──────────────────────
+      # ── Step 2f: Signal confluence scoring (Layer 2) ──────────────────────
       - name: Compute signal confluence scores
         continue-on-error: true          # non-critical; reads signals_*.json
         run: python scripts/signal_confluence.py
 
-      # ── Step 2e: Position sizing (Layer 2) ───────────────────────────────
+      # ── Step 2g: Position sizing (Layer 2) ───────────────────────────────
       - name: Compute position sizing
         continue-on-error: true          # non-critical; reads confluence + vp_snapshot
         run: python scripts/position_sizing.py
 
-      # ── Step 2f: Daily trading decisions (Layer 2 → Layer 1) ──────────────
+      # ── Step 2h: Daily trading decisions (Layer 2 → Layer 1) ──────────────
       - name: Generate daily trading decisions
         continue-on-error: true          # non-critical; reads confluence.json
         run: python scripts/daily_decision.py
 
-      # ── Step 2g: Signal quality analytics (feedback loop) ────────────────
+      # ── Step 2i: Signal quality analytics (feedback loop) ────────────────
       - name: Compute signal quality analytics
         continue-on-error: true          # non-critical; reads trades + positions
         run: python scripts/signal_quality.py
 
-      # ── Step 2h: Taleb-style fragility scoring (AHF-1) ───────────────────
+      # ── Step 2j: Taleb-style fragility scoring (AHF-1) ───────────────────
       # Per AHF_COMPARISON.md: fills the "no downside-fragility dimension"
       # gap. Reads fin_*.json + ohlc_*.json (already populated by step 2 +
       # step 2c). Output: public/data/fragility_*.json per ticker. NOT folded
@@ -104,7 +104,7 @@ jobs:
         continue-on-error: true          # non-critical; reads fin + ohlc
         run: python scripts/fragility_score.py
 
-      # ── Step 2i: Investor-persona overlay (AHF-3 v1) ─────────────────────
+      # ── Step 2k: Investor-persona overlay (AHF-3 v1) ─────────────────────
       # Per AHF_COMPARISON.md A3: deterministic Buffett/Burry/Damodaran
       # checklists. Reads market_data.json + rdcf_*.json + fin_*.json (all
       # populated upstream). Output: public/data/persona_overlay.json
