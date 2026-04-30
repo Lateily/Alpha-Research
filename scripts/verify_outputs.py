@@ -405,6 +405,71 @@ for ticker in _watchlist_tickers():
         print(f"  {FAIL}  {ticker}: exception while validating: {e}")
 
 
+# ── Persona Overlay (persona_overlay.json) ─────────────────────────────────────
+# AHF-3 v1: deterministic Buffett/Burry/Damodaran checklists per ticker.
+# Schema validation only — does not assert specific score values (those are
+# [unvalidated intuition] and may shift as thresholds are re-calibrated).
+print("\n=== Persona Overlay (persona_overlay.json) ===")
+PERSONA_NAMES = ("buffett", "burry", "damodaran")  # tuple = stable order
+PERSONA_MAX = {"buffett": 6, "burry": 4, "damodaran": 3}
+PERSONA_LABEL = {"buffett": "Buf", "burry": "Bur", "damodaran": "Dam"}
+KNOWN_ERR_CODES = {
+    "fundamentals_missing", "rdcf_missing", "fin_data_missing",
+    "market_data_stale", "market_data_missing",
+}
+po_path = DATA / "persona_overlay.json"
+if not po_path.exists():
+    print(f"  {WARN}  persona_overlay.json missing (persona_overlay.py not yet run)")
+else:
+    try:
+        po = json.loads(po_path.read_text())
+        personas_block = po.get("personas", {}) or {}
+        wl = _watchlist_tickers()
+        for ticker in wl:
+            block = personas_block.get(ticker)
+            if block is None:
+                print(f"  {FAIL}  {ticker}: missing from persona_overlay.json")
+                continue
+            problems = []
+            # Graceful-degradation case
+            if "error" in block:
+                err = block.get("error")
+                if err not in KNOWN_ERR_CODES:
+                    problems.append(f"unknown error code '{err}'")
+                if block.get("scores") is not None:
+                    problems.append("error block has non-null scores")
+                icon = WARN if not problems else FAIL
+                warn_suffix = "  [" + "; ".join(problems) + "]" if problems else ""
+                print(f"  {icon}  {ticker:12s}  degraded ({err}){warn_suffix}")
+                continue
+            # Full-block validation
+            line_parts = []
+            for pname in PERSONA_NAMES:
+                p = block.get(pname)
+                if not isinstance(p, dict):
+                    problems.append(f"{pname} not a dict")
+                    continue
+                score = p.get("score")
+                pmax  = p.get("max")
+                if pmax != PERSONA_MAX[pname]:
+                    problems.append(f"{pname}.max={pmax} != {PERSONA_MAX[pname]}")
+                if not isinstance(score, int) or not (0 <= score <= PERSONA_MAX[pname]):
+                    problems.append(f"{pname}.score={score} out of [0,{PERSONA_MAX[pname]}]")
+                criteria = p.get("criteria") or []
+                if len(criteria) != PERSONA_MAX[pname]:
+                    problems.append(f"{pname} criteria count {len(criteria)} != {PERSONA_MAX[pname]}")
+                for c in criteria:
+                    if not isinstance(c, dict) or "name" not in c or "passed" not in c:
+                        problems.append(f"{pname} criterion shape invalid")
+                        break
+                line_parts.append(f"{PERSONA_LABEL[pname]}={score}/{PERSONA_MAX[pname]}")
+            icon = OK if not problems else FAIL
+            warn_suffix = "  [" + "; ".join(problems) + "]" if problems else ""
+            print(f"  {icon}  {ticker:12s}  " + "  ".join(line_parts) + warn_suffix)
+    except Exception as e:
+        print(f"  {FAIL}  persona_overlay.json: exception while validating: {e}")
+
+
 print("\n" + "="*60)
 print("Tip: fields to use in rdcf JSON:")
 print("  implied growth : implied_fcf_growth  (standard) / implied_rev_growth (biotech)")

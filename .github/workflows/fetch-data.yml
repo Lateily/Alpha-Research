@@ -104,6 +104,16 @@ jobs:
         continue-on-error: true          # non-critical; reads fin + ohlc
         run: python scripts/fragility_score.py
 
+      # ── Step 2i: Investor-persona overlay (AHF-3 v1) ─────────────────────
+      # Per AHF_COMPARISON.md A3: deterministic Buffett/Burry/Damodaran
+      # checklists. Reads market_data.json + rdcf_*.json + fin_*.json (all
+      # populated upstream). Output: public/data/persona_overlay.json
+      # (single file, keyed by ticker). NOT folded into VP composite
+      # (INVARIANT 3). Read alongside VP for richer perspective.
+      - name: Compute persona overlay
+        continue-on-error: true          # non-critical; reads market + rdcf + fin
+        run: python scripts/persona_overlay.py
+
       # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
       - name: Sync to Supabase
         if: env.SUPABASE_URL != ''
@@ -146,7 +156,8 @@ jobs:
             public/data/fragility_700_HK.json \
             public/data/fragility_9999_HK.json \
             public/data/fragility_6160_HK.json \
-            public/data/fragility_002594_SZ.json; do
+            public/data/fragility_002594_SZ.json \
+            public/data/persona_overlay.json; do
             [ -f "$f" ] && git add "$f"
           done
 
