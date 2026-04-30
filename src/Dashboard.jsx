@@ -3093,23 +3093,49 @@ function TradingDesk({ L, lk, C }) {
   const [sizing,    setSizing]    = useState(null);
   const [quality,   setQuality]   = useState(null);
   const [snapshots, setSnapshots] = useState([]);
+  const [fragility, setFragility] = useState({});  // KR3: { ticker: fragility_data }
   const [loading,   setLoading]   = useState(true);
   const MONO = "'JetBrains Mono','Fira Code',monospace";
 
   useEffect(() => {
     const base = DATA_BASE;
-    Promise.all([
-      fetch(base + 'data/daily_decision.json').then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(base + 'data/position_sizing.json').then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(base + 'data/signal_quality.json').then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(base + 'data/snapshots.json').then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([dd, sz, sq, sn]) => {
-      setDecision(dd);
-      setSizing(sz);
-      setQuality(sq);
-      setSnapshots(sn?.snapshots || []);
-      setLoading(false);
-    });
+
+    // Fetch watchlist first (single source of truth per CLAUDE.md), then
+    // fan out fragility fetches per-ticker. Adding a 6th ticker to
+    // watchlist.json auto-renders its pill on next dashboard load — no
+    // Dashboard.jsx edit needed. Trade-off: 1 extra small fetch upfront
+    // vs hardcoded list. SOT compliance wins.
+    fetch(base + 'data/watchlist.json')
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null)
+      .then(wl => {
+        const tickers = Object.keys(wl?.tickers || {});
+        const fragilityFetches = tickers.map(t => {
+          const safe = t.replace('.', '_');
+          return fetch(base + `data/fragility_${safe}.json`)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null)
+            .then(d => ({ ticker: t, data: d }));
+        });
+
+        return Promise.all([
+          fetch(base + 'data/daily_decision.json').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(base + 'data/position_sizing.json').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(base + 'data/signal_quality.json').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(base + 'data/snapshots.json').then(r => r.ok ? r.json() : null).catch(() => null),
+          Promise.all(fragilityFetches),
+        ]);
+      })
+      .then(([dd, sz, sq, sn, fragArr] = [null, null, null, null, []]) => {
+        setDecision(dd);
+        setSizing(sz);
+        setQuality(sq);
+        setSnapshots(sn?.snapshots || []);
+        const fragMap = {};
+        (fragArr || []).forEach(({ ticker, data }) => { if (data) fragMap[ticker] = data; });
+        setFragility(fragMap);
+        setLoading(false);
+      });
   }, []);
 
   if (loading) return (
@@ -3151,6 +3177,48 @@ function TradingDesk({ L, lk, C }) {
   const brief       = lk === 'z' ? decision.brief_z : decision.brief_e;
   const sizingMap   = {};
   (sizing?.sizing || []).forEach(s => { sizingMap[s.ticker] = s; });
+
+  // KR3: small inline fragility pill — composite + band, color-coded by band.
+  // Uses CLAUDE.md design system colors only (frozen palette).
+  // Title attribute exposes the 5-component breakdown for hover.
+  const FragilityPill = ({ frag }) => {
+    if (!frag || frag.composite == null) return null;
+    const band = frag.band || 'INSUFFICIENT_DATA';
+    const colorByBand = {
+      FRAGILE:           { bg: `${C.red}15`,   fg: C.red   },
+      MODERATE:          { bg: `${C.gold}15`,  fg: C.gold  },
+      ROBUST:            { bg: `${C.green}15`, fg: C.green },
+      ANTIFRAGILE:       { bg: `${C.blue}15`,  fg: C.blue  },
+      INSUFFICIENT_DATA: { bg: `${C.mid}15`,   fg: C.mid   },
+    }[band] || { bg: `${C.mid}15`, fg: C.mid };
+    const comps = frag.components || {};
+    const tooltip = [
+      `Fragility composite: ${frag.composite} (${band})`,
+      `F1 leverage:          ${comps.F1_leverage ?? 'N/A'}`,
+      `F2 liquidity-survival:${comps.F2_liquidity_survival ?? 'N/A'} (${frag.f2_method || '?'})`,
+      `F3 tail risk:         ${comps.F3_tail_risk ?? 'N/A'}`,
+      `F4 vol regime:        ${comps.F4_vol_regime ?? 'N/A'}`,
+      `F5 max drawdown:      ${comps.F5_max_drawdown ?? 'N/A'}`,
+      frag.biotech_mode ? '[biotech-mode F2]' : '',
+      '',
+      'Measures FINANCIAL fragility only (leverage/liquidity/tails/vol/drawdown).',
+      'Does NOT measure business-model fragility (single-asset/concentration/binary-event tail risk).',
+      '[unvalidated intuition] thresholds.',
+    ].filter(Boolean).join('\n');
+    return (
+      <span
+        title={tooltip}
+        style={{
+          fontFamily: MONO, fontSize:9, fontWeight:700,
+          padding:'2px 6px', borderRadius:3,
+          background: colorByBand.bg, color: colorByBand.fg,
+          letterSpacing:0.3, cursor:'help',
+        }}
+      >
+        ⚠ {frag.composite}
+      </span>
+    );
+  };
 
   const ScoreBadge = ({ score }) => {
     const col = score >= 20 ? '#10b981' : score <= -20 ? '#ef4444' : '#6b7280';
@@ -3355,7 +3423,7 @@ function TradingDesk({ L, lk, C }) {
                   <ActionBadge action={d.action} />
                   <ScoreBadge score={d.confluence} />
                 </div>
-                <div style={{display:'flex', gap:12, fontSize:11}}>
+                <div style={{display:'flex', gap:12, fontSize:11, alignItems:'center'}}>
                   {d.pnl_pct != null && (
                     <span style={{color: d.pnl_pct >= 0 ? '#10b981' : '#ef4444', fontWeight:700, fontFamily:MONO}}>
                       {d.pnl_pct > 0 ? '+' : ''}{d.pnl_pct}%
@@ -3364,6 +3432,7 @@ function TradingDesk({ L, lk, C }) {
                   {d.vp_score != null && (
                     <span style={{color:C.mid, fontSize:10}}>VP {d.vp_score}</span>
                   )}
+                  <FragilityPill frag={fragility[d.ticker]} />
                   {d.holding_days != null && (
                     <span style={{color:C.mid, fontSize:10}}>{d.holding_days}d</span>
                   )}
@@ -3410,6 +3479,7 @@ function TradingDesk({ L, lk, C }) {
                     {d.vp_score != null && (
                       <span style={{fontSize:10, color:C.mid}}>VP {d.vp_score}</span>
                     )}
+                    <FragilityPill frag={fragility[d.ticker]} />
                   </div>
                   <div style={{fontSize:11, color:C.mid, maxWidth:340, textAlign:'right', lineHeight:1.5}}>
                     {lk==='z' ? d.reason_z : d.reason_e}
