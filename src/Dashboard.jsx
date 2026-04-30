@@ -3192,6 +3192,7 @@ function TradingDesk({ L, lk, C }) {
       INSUFFICIENT_DATA: { bg: `${C.mid}15`,   fg: C.mid   },
     }[band] || { bg: `${C.mid}15`, fg: C.mid };
     const comps = frag.components || {};
+    const f6 = frag.f6_concentration;
     const tooltip = [
       `Fragility composite: ${frag.composite} (${band})`,
       `F1 leverage:          ${comps.F1_leverage ?? 'N/A'}`,
@@ -3199,10 +3200,12 @@ function TradingDesk({ L, lk, C }) {
       `F3 tail risk:         ${comps.F3_tail_risk ?? 'N/A'}`,
       `F4 vol regime:        ${comps.F4_vol_regime ?? 'N/A'}`,
       `F5 max drawdown:      ${comps.F5_max_drawdown ?? 'N/A'}`,
+      f6 ? `F6 concentration:    ${f6.score} (separate dim, NOT in composite)` : '',
       frag.biotech_mode ? '[biotech-mode F2]' : '',
       '',
-      'Measures FINANCIAL fragility only (leverage/liquidity/tails/vol/drawdown).',
-      'Does NOT measure business-model fragility (single-asset/concentration/binary-event tail risk).',
+      'Composite measures FINANCIAL fragility (leverage/liquidity/tails/vol/drawdown).',
+      'F6 measures BUSINESS-MODEL concentration (single-asset/customer/segment) — MANUAL seed.',
+      'Read both together: high F6 + low composite still implies elevated overall tail risk.',
       '[unvalidated intuition] thresholds.',
     ].filter(Boolean).join('\n');
     return (

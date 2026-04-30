@@ -122,6 +122,37 @@ def _load_watchlist_tickers():
     return list(wl.get("tickers", {}).keys())
 
 
+def _load_concentration_seed(ticker):
+    """F6 single-asset/concentration risk seed from watchlist.json (MANUAL).
+
+    Returns dict {score, rationale_e, rationale_z} or None if not seeded.
+
+    F6 is NOT folded into the composite (would change band semantics
+    without Junyan approval per INVARIANT 3-style conservatism).
+    Reported as a separate field in fragility_*.json output. Surfaces
+    in the Dashboard pill tooltip alongside F1-F5.
+
+    Why MANUAL (not auto-derived from financials): single-asset /
+    customer / geographic / business-line concentration is judgment-
+    call data. Not reliably extractable from yfinance segment reports
+    or fin_*.json line items. Hand-seeded in watchlist.json (similar
+    to narrative_shift, catalyst_prox).
+    """
+    wl = _load_json("watchlist.json", {})
+    seed = (wl.get("tickers", {}) or {}).get(ticker, {}).get("vp_seed", {}) or {}
+    cs = seed.get("concentration_seed")
+    if not isinstance(cs, dict):
+        return None
+    score = cs.get("score")
+    if score is None:
+        return None
+    return {
+        "score":       score,
+        "rationale_e": cs.get("rationale_e", ""),
+        "rationale_z": cs.get("rationale_z", ""),
+    }
+
+
 # ── Component computations ───────────────────────────────────────────────────
 
 def _f1_leverage(de_ratio):
@@ -386,16 +417,23 @@ def compute_fragility(ticker):
     valid = [v for v in components.values() if v is not None]
     composite = round(mean(valid), 1) if valid else None
 
+    # F6 single-asset/concentration risk — MANUAL seed from watchlist.json,
+    # NOT folded into composite (separate dimension, judgment-call data,
+    # would change band semantics without explicit approval). Reported as
+    # standalone field for Dashboard pill tooltip + handoff doc reference.
+    f6 = _load_concentration_seed(ticker)
+
     return {
-        "ticker":         ticker,
-        "composite":      composite,
-        "components":     components,
-        "biotech_mode":   biotech_mode,
-        "f2_method":      f2_method,
-        "fundamentals":   fin_m,
-        "price_metrics":  price_m,
-        "label":          "[unvalidated intuition]",
-        "valid_components": len(valid),
+        "ticker":              ticker,
+        "composite":           composite,
+        "components":          components,
+        "f6_concentration":    f6,  # separate from composite — see note above
+        "biotech_mode":        biotech_mode,
+        "f2_method":           f2_method,
+        "fundamentals":        fin_m,
+        "price_metrics":       price_m,
+        "label":               "[unvalidated intuition]",
+        "valid_components":    len(valid),
     }
 
 
@@ -436,22 +474,26 @@ def main():
         composite = result["composite"]
         composite_str = f"{composite:5.1f}" if composite is not None else "  N/A"
         band = _band(composite)
-        print(f"  {ticker:12s}: composite={composite_str}  band={band:<13s}  {c_str}{mode_tag}")
+        f6 = result.get("f6_concentration")
+        f6_str = f"  F6={f6['score']:.0f}" if f6 else "  F6=N/A"
+        print(f"  {ticker:12s}: composite={composite_str}  band={band:<13s}  {c_str}{f6_str}{mode_tag}")
 
         # Per-ticker file output
         safe = ticker.replace(".", "_")
+        f6 = result.get("f6_concentration")
         out = {
-            "generated_at":   datetime.now(timezone.utc).isoformat(),
-            "ticker":         ticker,
-            "composite":      composite,
-            "band":           band,
-            "components":     comps,
-            "biotech_mode":   result["biotech_mode"],
-            "f2_method":      result["f2_method"],
+            "generated_at":     datetime.now(timezone.utc).isoformat(),
+            "ticker":           ticker,
+            "composite":        composite,
+            "band":             band,
+            "components":       comps,
+            "f6_concentration": f6,   # MANUAL seed from watchlist.json; NOT in composite
+            "biotech_mode":     result["biotech_mode"],
+            "f2_method":        result["f2_method"],
             "valid_components": result["valid_components"],
-            "fundamentals":   result["fundamentals"],
-            "price_metrics":  result["price_metrics"],
-            "label":          "[unvalidated intuition] — measures FINANCIAL fragility (leverage, liquidity, return-distribution tails, vol, drawdown). Does NOT measure business-model fragility (single-asset / concentration / regulatory-binary tail risk). For clinical-stage biotech with single-asset exposure, a 'ROBUST' band on this metric does NOT imply low overall tail risk. Pair with wrongIf monitor + future F6 concentration dimension. Thresholds are Taleb-literature priors, not validated against A-share/HK trade history.",
+            "fundamentals":     result["fundamentals"],
+            "price_metrics":    result["price_metrics"],
+            "label":            "[unvalidated intuition] — composite measures FINANCIAL fragility (leverage, liquidity, return-distribution tails, vol, drawdown). Does NOT measure business-model fragility — that lives in the SEPARATE f6_concentration field below (MANUAL seed from watchlist.json, NOT folded into composite). For clinical-stage biotech with single-asset exposure, read composite + f6 together: a 'ROBUST' composite + high f6 score still implies elevated overall tail risk. Pair with wrongIf monitor for binary-event coverage. Thresholds are Taleb-literature priors, not validated against A-share/HK trade history.",
             "weighting":      "equal-weight (F1..F5 each 20%) — fundamentals-tilted variant deferred per AHF_COMPARISON_CALIBRATION.md open question Q1",
             "history_window": "ohlc length used for F3/F5/vol; longer window (250+ days) would improve stability — current fetch_data limits to ~122 days",
         }

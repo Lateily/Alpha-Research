@@ -371,6 +371,16 @@ for ticker in _watchlist_tickers():
             problems.append(f"band={band} not in enum")
         if f2_method not in F2_METHODS:
             problems.append(f"f2_method={f2_method} not in enum")
+        # F6 concentration risk (KR1 this run): separate from composite,
+        # MANUAL seed from watchlist.json. Optional — only validate shape if present.
+        f6 = d.get("f6_concentration")
+        if f6 is not None:
+            if not isinstance(f6, dict):
+                problems.append("f6_concentration not a dict")
+            else:
+                f6_score = f6.get("score")
+                if f6_score is None or not (0 <= f6_score <= 100):
+                    problems.append(f"f6_concentration.score={f6_score} out of [0,100]")
         # Math invariant: band must match composite range
         if isinstance(composite, (int, float)):
             if   composite >= 50: expected_band = "FRAGILE"

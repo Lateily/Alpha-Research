@@ -5,11 +5,11 @@
     "last_updated": "2026-04-24",
     "how_to_add": "Copy any existing entry, change ticker/yahoo/akshare/exchange/names, set vp_seed to neutral defaults (vp:50, all dimensions:50), set last_updated to today. Push. Done.",
     "vp_dimension_guide": {
-      "expectation_gap":    "AUTO — computed from rdcf delta (our_growth vs implied_growth). Do not edit manually.",
-      "fundamental_accel":  "AUTO — computed from fin_*.json (NI/Rev ratio, GM trend, FCF quality). Do not edit manually.",
-      "narrative_shift":    "MANUAL — how much has the market narrative around this stock changed in our favour? 0=no change, 100=complete re-rating",
-      "low_coverage":       "MANUAL — inverse of sell-side coverage density. High score = few analysts = more edge. 0=everyone covers it, 100=nobody covers it",
-      "catalyst_prox":      "MANUAL — proximity to a near-term binary catalyst that could force thesis resolution. 0=no catalyst, 100=imminent"
+      "expectation_gap": "AUTO — computed from rdcf delta (our_growth vs implied_growth). Do not edit manually.",
+      "fundamental_accel": "AUTO — computed from fin_*.json (NI/Rev ratio, GM trend, FCF quality). Do not edit manually.",
+      "narrative_shift": "MANUAL — how much has the market narrative around this stock changed in our favour? 0=no change, 100=complete re-rating",
+      "low_coverage": "MANUAL — inverse of sell-side coverage density. High score = few analysts = more edge. 0=everyone covers it, 100=nobody covers it",
+      "catalyst_prox": "MANUAL — proximity to a near-term binary catalyst that could force thesis resolution. 0=no catalyst, 100=imminent"
     }
   },
   "tickers": {
@@ -28,14 +28,25 @@
         "catalyst_prox": 80,
         "last_updated": "2026-04-24",
         "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-        "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）"
+        "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+        "concentration_seed": {
+          "score": 60,
+          "rationale_e": "Optical transceivers are core (>90% revenue). Customer concentration with hyperscalers — NVDA + MSFT + GOOGL collectively likely majority of revenue. Single-product-category exposure. Tech-cycle correlated. High business-model concentration. [unvalidated intuition]",
+          "rationale_z": "光模块为核心（>90%营收）。客户集中于超大规模厂商——英伟达+微软+谷歌可能合计占多数营收。单一产品品类敞口。与科技周期高度相关。业务模式集中度高。[未验证直觉]"
+        }
       },
       "narrative_shift_rationale": "1.6T SiPh transceiver narrative fully mainstream — NVIDIA Blackwell, Google TPU v5, Azure all adopted. Shifted from 'will they qualify' to 'market leader in next-gen optics'. Raised from 65→72.",
       "low_coverage_rationale": "Mid-tier A-share components company. Moderate sell-side coverage from electronics analysts but niche enough to retain some edge. Held at 50.",
       "catalyst_prox_rationale": "1.6T volume ramp is near-term. 192% revenue growth validates. Slightly reduced 85→80 as primary catalyst (certification) is now delivered; next catalyst is volume scale.",
       "macro_sensitivity": {
-        "usd_cny_above_73":      {"direction": "positive", "magnitude": "MED"},
-        "northbound_reversal":   {"direction": "negative", "magnitude": "MED"}
+        "usd_cny_above_73": {
+          "direction": "positive",
+          "magnitude": "MED"
+        },
+        "northbound_reversal": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
       }
     },
     "700.HK": {
@@ -53,15 +64,29 @@
         "catalyst_prox": 58,
         "last_updated": "2026-04-24",
         "wrongIf_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
-        "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）"
+        "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
+        "concentration_seed": {
+          "score": 20,
+          "rationale_e": "Highly diversified across gaming, online ads, fintech (WeChat Pay), cloud, and social platforms. No single segment exceeds ~35% of revenue. Customer base is hundreds of millions of consumers + enterprise. Low business-model concentration. [unvalidated intuition]",
+          "rationale_z": "高度多元化：游戏、广告、金融科技（微信支付）、云、社交平台。没有单一板块超过营收35%。客户基础为数亿消费者+企业。业务模式集中度低。[未验证直觉]"
+        }
       },
       "narrative_shift_rationale": "Recovery narrative intact (PE 12.7x, buybacks, AI features) but fully absorbed. No incremental shift. Slight reduction 75→70.",
       "low_coverage_rationale": "Most covered HK stock. Zero alpha from coverage gap. Reduced 40→35.",
       "catalyst_prox_rationale": "Q1 earnings + WeChat AI premium tier launch ongoing. No single binary event near-term. Reduced 60→58.",
       "macro_sensitivity": {
-        "pboc_rate_cut":   {"direction": "positive", "magnitude": "HIGH"},
-        "cpi_above_2pct":  {"direction": "negative", "magnitude": "MED"},
-        "vix_spike_20":    {"direction": "negative", "magnitude": "MED"}
+        "pboc_rate_cut": {
+          "direction": "positive",
+          "magnitude": "HIGH"
+        },
+        "cpi_above_2pct": {
+          "direction": "negative",
+          "magnitude": "MED"
+        },
+        "vix_spike_20": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
       }
     },
     "9999.HK": {
@@ -79,13 +104,21 @@
         "catalyst_prox": 60,
         "last_updated": "2026-04-24",
         "wrongIf_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-        "wrongIf_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%"
+        "wrongIf_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
+        "concentration_seed": {
+          "score": 45,
+          "rationale_e": "Online games dominate (~70% revenue). Multiple game franchises (Identity V, Marvel Rivals, Justice, etc.) reduce single-game risk. Music + education + e-commerce add some segment diversification. Customer concentration low (millions of gamers). Moderate business-model concentration. [unvalidated intuition]",
+          "rationale_z": "在线游戏占主导（约70%营收）。多个游戏IP（第五人格、漫威争锋、逆水寒等）降低单一游戏风险。音乐+教育+电商增加少量板块多元化。客户集中度低（数百万玩家）。业务模式集中度中等。[未验证直觉]"
+        }
       },
       "narrative_shift_rationale": "Marvel Rivals DAU has declined from peak. Earnings growth -29.2% undermines 'NetEase can build global hits' thesis. Japan expansion still ongoing but unproven at scale. Reduced 50→45.",
       "low_coverage_rationale": "Less covered than Tencent, more edge from smaller analyst community. Slight increase 45→48.",
       "catalyst_prox_rationale": "Next game launch + Japan DAU/MAU data + Q1 earnings. Near-term but no single decisive event. Reduced 65→60.",
       "macro_sensitivity": {
-        "cpi_above_2pct": {"direction": "negative", "magnitude": "MED"}
+        "cpi_above_2pct": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
       }
     },
     "6160.HK": {
@@ -103,13 +136,21 @@
         "catalyst_prox": 78,
         "last_updated": "2026-04-24",
         "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
-        "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%"
+        "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
+        "concentration_seed": {
+          "score": 80,
+          "rationale_e": "Brukinsa is the primary commercial asset (~80% of revenue per public filings). Pipeline depth exists (15+ drugs) but only Brukinsa is materially revenue-generating today. Single-asset clinical exposure plus the upcoming CELESTIAL Phase 3 binary make business-model concentration high. [unvalidated intuition]",
+          "rationale_z": "泽布替尼是主要商业化资产（占营收约80%）。管线深度存在（15+药物）但目前仅泽布替尼实质性贡献营收。单一资产的临床敞口加上即将到来的CELESTIAL三期二元事件使业务模式集中度偏高。[未验证直觉]"
+        }
       },
       "narrative_shift_rationale": "Brukinsa is now the #1 BTKi globally in new patient share across multiple markets. Narrative shift from 'Chinese biotech' to 'globally competitive oncology platform' is real and underappreciated. Raised 68→75.",
       "low_coverage_rationale": "Biotech requires specialist knowledge — many generalists skip it. More coverage gap than large-cap HK stocks. Raised 45→55.",
       "catalyst_prox_rationale": "CELESTIAL data readout is a major near-term binary catalyst with large thesis resolution potential. Raised 70→78.",
       "macro_sensitivity": {
-        "vix_spike_20": {"direction": "negative", "magnitude": "MED"}
+        "vix_spike_20": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
       }
     },
     "002594.SZ": {
@@ -127,15 +168,29 @@
         "catalyst_prox": 45,
         "last_updated": "2026-04-24",
         "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-        "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%"
+        "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+        "concentration_seed": {
+          "score": 35,
+          "rationale_e": "Auto/NEV dominates (~80% revenue) but multiple segments (cars, batteries, electronics, semiconductors). Geographic spread broad (China + global expansion). Customer base diversified across consumers + B2B fleet + battery customers. [unvalidated intuition]",
+          "rationale_z": "汽车/新能源车占主导（约80%营收）但有多个业务板块（车、电池、电子、半导体）。地理分布广（中国+全球扩张）。客户基础多元化（消费者+B端车队+电池客户）。[未验证直觉]"
+        }
       },
       "narrative_shift_rationale": "Global EV champion narrative under severe pressure: EU tariffs, revenue -13.5%, earnings -40.5%, margin compression. The story is breaking down. Reduced 45→38.",
       "low_coverage_rationale": "Extremely well-covered A-share stock. Zero coverage edge. Reduced 35→32.",
       "catalyst_prox_rationale": "Monthly sales data (potential positive surprise) but no major structural catalyst near-term given tariff headwinds. Reduced 50→45.",
       "macro_sensitivity": {
-        "pboc_rate_cut":       {"direction": "positive", "magnitude": "HIGH"},
-        "usd_cny_above_73":    {"direction": "negative", "magnitude": "HIGH"},
-        "northbound_reversal": {"direction": "negative", "magnitude": "MED"}
+        "pboc_rate_cut": {
+          "direction": "positive",
+          "magnitude": "HIGH"
+        },
+        "usd_cny_above_73": {
+          "direction": "negative",
+          "magnitude": "HIGH"
+        },
+        "northbound_reversal": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
       }
     }
   }
