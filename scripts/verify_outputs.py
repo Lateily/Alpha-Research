@@ -49,7 +49,9 @@ for safe_id in rdcf_tickers:
     model = d.get("model_type", "?")
     signal = d.get("signal", "?")
     delta  = d.get("delta")
-    score  = d.get("expectation_gap_score")
+    # KR6: rdcf no longer emits `expectation_gap_score`. Canonical piecewise
+    # score is in vp_snapshot.json[snapshots[].expectation_gap]; rdcf-side
+    # range assertion dropped entirely (not replaced with "field absent" check).
     wacc   = d.get("wacc_detail", {}).get("wacc")
 
     if model == "standard_fcf":
@@ -63,7 +65,7 @@ for safe_id in rdcf_tickers:
 
     print(f"  {OK}  {ticker:12s}  signal={signal:13s}  "
           f"implied {g_label}={impl:.1%}  our={our:.1%}  "
-          f"δ={delta:+.1%}  gap={score:.0f}/100  WACC={wacc:.1%}")
+          f"δ={delta:+.1%}  WACC={wacc:.1%}")
 
 
 # ── Stress test ────────────────────────────────────────────────────────────────
@@ -474,6 +476,6 @@ print("\n" + "="*60)
 print("Tip: fields to use in rdcf JSON:")
 print("  implied growth : implied_fcf_growth  (standard) / implied_rev_growth (biotech)")
 print("  our estimate   : our_fcf_growth       (standard) / our_rev_growth      (biotech)")
-print("  gap            : delta (float), expectation_gap_score (0-100)")
+print("  gap            : delta (float)  — canonical piecewise score in vp_snapshot.json[snapshots[].expectation_gap]")
 print("  WACC           : wacc_detail.wacc")
 print("  NO scipy needed: pure-Python bisection is built-in")

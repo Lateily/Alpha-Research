@@ -1,6 +1,6 @@
 {
   "ticker": "700.HK",
-  "generated_at": "2026-04-30T15:30:36.712962+00:00",
+  "generated_at": "2026-04-30T19:50:06.654430+00:00",
   "model_type": "standard_fcf",
   "market": "HK",
   "error": null,
@@ -16,7 +16,6 @@
   "implied_fcf_growth": 0.3012,
   "our_fcf_growth": 0.18,
   "delta": -0.1212,
-  "expectation_gap_score": 22.9,
   "signal": "OVERPRICED",
   "hyper_growth": false,
   "net_debt": -16153018368,

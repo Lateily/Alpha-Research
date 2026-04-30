@@ -1,6 +1,6 @@
 {
   "ticker": "9999.HK",
-  "generated_at": "2026-04-30T15:30:36.714735+00:00",
+  "generated_at": "2026-04-30T19:50:06.654781+00:00",
   "model_type": "standard_fcf",
   "market": "HK",
   "error": null,
@@ -16,7 +16,6 @@
   "implied_fcf_growth": 0.0284,
   "our_fcf_growth": 0.15,
   "delta": 0.1216,
-  "expectation_gap_score": 77.1,
   "signal": "UNDERPRICED",
   "hyper_growth": false,
   "net_debt": -157510568448,

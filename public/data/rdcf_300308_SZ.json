@@ -1,6 +1,6 @@
 {
   "ticker": "300308.SZ",
-  "generated_at": "2026-04-30T15:30:36.711010+00:00",
+  "generated_at": "2026-04-30T19:50:06.653561+00:00",
   "model_type": "standard_fcf",
   "market": "A",
   "error": null,
@@ -16,7 +16,6 @@
   "implied_fcf_growth": 1.166,
   "our_fcf_growth": 0.341,
   "delta": -0.825,
-  "expectation_gap_score": 0.0,
   "signal": "OVERPRICED",
   "hyper_growth": true,
   "net_debt": -10500431744,

@@ -352,17 +352,12 @@ def _biotech_equity_value(rev0, g, wacc, g_terminal, n_years,
     return pv - net_debt
 
 
-def _expectation_gap_score(delta):
-    """
-    Map (our_growth − implied_growth) → 0..100 score.
-    Positive delta = market underprices our thesis → higher score.
-    Scaled so delta = +15pp → ~75, delta = +30pp → ~90.
-    """
-    if delta is None:
-        return 50
-    # Sigmoid-ish: score = 50 + 50 × tanh(delta / 0.20)
-    import math
-    return round(50 + 50 * math.tanh(delta / 0.20), 1)
+# KR6 (2026-04-30): the previous tanh-based `_expectation_gap_score` helper
+# was deleted to eliminate divergence with vp_engine.py's canonical piecewise
+# mapping. vp_engine.py is the SINGLE owner of the delta→score mapping (see
+# `get_expectation_gap_from_rdcf` + CLAUDE.md "VP Score Architecture"). rdcf
+# JSON now exposes only the raw `delta` field; consumers read the canonical
+# score from vp_snapshot.json's per-snapshot `expectation_gap` field.
 
 
 def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
@@ -447,7 +442,6 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
                 return result
 
             delta     = our_growth - implied_g
-            gap_score = _expectation_gap_score(delta)
             signal    = "UNDERPRICED" if delta > 0.05 else ("OVERPRICED" if delta < -0.05 else "FAIRLY_VALUED")
             # Flag hyper-growth: market pricing in >100% annual FCF growth
             hyper_growth = implied_g > 1.0
@@ -457,7 +451,8 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
                 "implied_fcf_growth": round(implied_g, 4),
                 "our_fcf_growth":     round(our_growth, 4),
                 "delta":              round(delta, 4),
-                "expectation_gap_score": gap_score,
+                # KR6: `expectation_gap_score` (tanh) field removed; canonical
+                # piecewise score is in vp_snapshot.json[snapshots[].expectation_gap].
                 "signal":             signal,
                 "hyper_growth":       hyper_growth,
                 "net_debt":           round(net_debt, 0),
@@ -487,7 +482,6 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
                 return result
 
             delta     = our_growth - implied_g
-            gap_score = _expectation_gap_score(delta)
             signal    = "UNDERPRICED" if delta > 0.05 else ("OVERPRICED" if delta < -0.05 else "FAIRLY_VALUED")
 
             result.update({
@@ -497,7 +491,7 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
                 "profitability_offset":  prof_offset,
                 "terminal_fcf_margin":   term_fcf_marg,
                 "delta":                 round(delta, 4),
-                "expectation_gap_score": gap_score,
+                # KR6: see standard_fcf path note above.
                 "signal":                signal,
                 "net_debt":              round(net_debt, 0),
                 "market_cap":            round(market_cap, 0),
@@ -552,7 +546,7 @@ def generate_rdcf_for_all(focus_data, hist_cache, rdcf_config):
         else:
             sig = rdcf.get("signal", "?")
             delta = rdcf.get("delta", 0)
-            print(f"  [{pid}] signal={sig}  delta={delta:+.1%}  gap_score={rdcf.get('expectation_gap_score')}")
+            print(f"  [{pid}] signal={sig}  delta={delta:+.1%}")
 
         safe_id = pid.replace(".", "_")
         with open(OUTPUT_DIR / f"rdcf_{safe_id}.json", "w", encoding="utf-8") as f:

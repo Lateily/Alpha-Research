@@ -2593,7 +2593,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData, scissorsData, liData }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData, scissorsData, liData, egapScores }) {
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
@@ -2911,7 +2911,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <ProfitScissors scissors={scissors} L={L} C={C} open={open} toggle={toggle}/>
 
       {/* Reverse DCF Card */}
-      <ReverseDCF rdcf={rdcf} L={L} C={C} open={open} toggle={toggle}/>
+      <ReverseDCF rdcf={rdcf} L={L} C={C} open={open} toggle={toggle} egapScore={egapScores?.[ticker]}/>
 
       {/* Multi-Agent Debate */}
       <Card
@@ -6325,8 +6325,13 @@ function ProfitScissors({ scissors, L, C, open, toggle }) {
   );
 }
 
-function ReverseDCF({ rdcf, L, C, open, toggle }) {
+function ReverseDCF({ rdcf, L, C, open, toggle, egapScore }) {
   if (!rdcf) return null;
+  // KR6: `egapScore` (canonical piecewise) replaces the deleted
+  // rdcf.expectation_gap_score (tanh) field. Sourced from vp_snapshot.json
+  // via the top-level Dashboard component → Research → ReverseDCF prop chain.
+  // Single canonical owner is vp_engine.py per CLAUDE.md.
+  const egapDisplay = egapScore != null ? egapScore : '—';
 
   const isA = rdcf.market === 'A' || rdcf.market === 'SH' || rdcf.market === 'SZ';
   const curr = isA ? '¥' : 'HK$';
@@ -6402,7 +6407,7 @@ function ReverseDCF({ rdcf, L, C, open, toggle }) {
                 </span>
               )}
               <span style={{fontSize:10, color:C.mid}}>
-                {L('Gap Score: ','预期差得分: ')}<b style={{color:signalColor}}>{rdcf.expectation_gap_score}</b>/100
+                {L('Gap Score: ','预期差得分: ')}<b style={{color:signalColor}}>{egapDisplay}</b>/100
               </span>
             </div>
             <div style={{fontSize:9, color:C.mid}}>{L('δ = our − implied','δ = 我们 − 市场')}: <b style={{color:signalColor}}>{fmtDelta(rdcf.delta)}</b></div>
@@ -6425,7 +6430,7 @@ function ReverseDCF({ rdcf, L, C, open, toggle }) {
             <MetricBox
               label={L('Expectation Gap (δ)','预期差 (δ)')}
               value={fmtDelta(rdcf.delta)}
-              sub={`${L('Gap Score','预期差得分')}: ${rdcf.expectation_gap_score}/100`}
+              sub={`${L('Gap Score','预期差得分')}: ${egapDisplay}/100`}
               color={signalColor} C={C}
             />
           </div>
@@ -7012,6 +7017,12 @@ export default function Dashboard() {
   const [morningReportLoading, setMorningReportLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const [vpScores, setVpScores] = useState({});   // { ticker: vp_score } from vp_snapshot.json
+  // KR6: separate state for canonical piecewise expectation_gap from
+  // vp_snapshot. Separate from vpScores to avoid migration risk on the
+  // existing flat `{ticker: number}` shape used by Scanner. vp_engine.py
+  // is the SINGLE owner of the delta→score piecewise mapping (per CLAUDE.md);
+  // Dashboard reads results, never recomputes.
+  const [egapScores, setEgapScores] = useState({});  // { ticker: expectation_gap }
   const [scissorsData, setScissorsData] = useState({});  // profit_scissors.json tickers dict
   const [liData, setLiData]             = useState({});  // leading_indicators.json
   // Jason: Live clock for Bloomberg-style terminal header
@@ -7258,9 +7269,16 @@ export default function Dashboard() {
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d?.snapshots) return;
-        const map = {};
-        d.snapshots.forEach(s => { if (s.ticker && s.vp_score != null) map[s.ticker] = s.vp_score; });
-        setVpScores(map);
+        const vpMap = {};
+        const egapMap = {};
+        d.snapshots.forEach(s => {
+          if (!s.ticker) return;
+          if (s.vp_score != null) vpMap[s.ticker] = s.vp_score;
+          // KR6: capture canonical piecewise expectation_gap alongside VP.
+          if (s.expectation_gap != null) egapMap[s.ticker] = s.expectation_gap;
+        });
+        setVpScores(vpMap);
+        setEgapScores(egapMap);
       })
       .catch(() => {});
   }, []);
@@ -7934,11 +7952,11 @@ export default function Dashboard() {
             }
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
-                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData}/></div>}
+                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/></div>}
                 <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>
               </div>
             );
-            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData}/>;
+            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
           })()}

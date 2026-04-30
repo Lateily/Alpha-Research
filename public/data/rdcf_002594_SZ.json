@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "generated_at": "2026-04-30T19:30:21.972674+00:00",
+  "generated_at": "2026-04-30T19:50:06.655654+00:00",
   "model_type": "standard_fcf",
   "market": "A",
   "error": null,
@@ -17,7 +17,6 @@
   "implied_fcf_growth": 0.1247,
   "our_fcf_growth": 0.28,
   "delta": 0.1553,
-  "expectation_gap_score": 82.5,
   "signal": "UNDERPRICED",
   "hyper_growth": false,
   "net_debt": -14809260032,
