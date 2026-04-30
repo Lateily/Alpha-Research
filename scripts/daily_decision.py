@@ -771,7 +771,14 @@ def main():
         alerts = check_wrongif(ticker, wi_e, market_data, leading_indicators=leading_data)
         triggered = [a for a in alerts if a["status"] == "TRIGGERED"]
         manual    = [a for a in alerts if a["status"] == "MANUAL"]
+        clear     = [a for a in alerts if a["status"] == "CLEAR"]
 
+        # Mutually-exclusive selection: TRIGGERED rows take precedence (emit all),
+        # then MANUAL (emit one), then CLEAR (emit one — confirms monitor active).
+        # Without the CLEAR branch, auto-monitored-but-currently-clear tickers
+        # silently disappeared from the dashboard, which read as "no monitor
+        # configured" instead of "monitor active and currently OK". KR7 surfaces
+        # them with severity NONE.
         if triggered:
             for a in triggered:
                 wrongif_alerts.append({
@@ -802,6 +809,21 @@ def main():
                     "threshold":None,
                 })
                 print(f"  👁️ {ticker}: manual check — {wi_e[:60]}…")
+        elif clear:
+            for a in clear[:1]:   # one CLEAR row per ticker — confirms monitor active
+                wrongif_alerts.append({
+                    "ticker":   ticker,
+                    "severity": "NONE",
+                    "status":   "CLEAR",
+                    "wrongIf_e": wi_e,
+                    "wrongIf_z": wi_z,
+                    "note_e":   a["note_e"],
+                    "note_z":   a["note_z"],
+                    "indicator":a["indicator"],
+                    "actual":   a.get("actual"),
+                    "threshold":a.get("threshold"),
+                })
+                print(f"  ✓ {ticker}: {a['note_e'][:80]}")
 
     if not wrongif_alerts:
         print("  No wrongIf alerts.")
@@ -870,6 +892,7 @@ def main():
             "buy_watch_count":   len(buy_watches),
             "wrongif_triggered": sum(1 for a in wrongif_alerts if a["status"] == "TRIGGERED"),
             "wrongif_manual":    sum(1 for a in wrongif_alerts if a["status"] == "MANUAL"),
+            "wrongif_clear":     sum(1 for a in wrongif_alerts if a["status"] == "CLEAR"),
         },
     }
 

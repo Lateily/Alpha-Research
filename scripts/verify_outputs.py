@@ -216,7 +216,10 @@ else:
 print("\n=== Daily Decision (daily_decision.json) ===")
 DEC_PRIORITIES   = {"LOW", "MEDIUM", "HIGH"}
 ALERT_STATUSES   = {"TRIGGERED", "MANUAL", "CLEAR"}
-ALERT_SEVERITIES = {"HIGH", "MEDIUM", "LOW"}
+# NONE allowed because KR7 surfaces CLEAR alerts (auto-monitor active,
+# threshold not breached) with severity NONE so the dashboard can show
+# "✓ monitoring active" instead of silently dropping the row.
+ALERT_SEVERITIES = {"HIGH", "MEDIUM", "LOW", "NONE"}
 dd_path = DATA / "daily_decision.json"
 if not dd_path.exists():
     print(f"  {FAIL}  daily_decision.json missing")
@@ -249,13 +252,19 @@ else:
 
         triggered_n = sum(1 for a in alerts if a.get("status") == "TRIGGERED")
         manual_n    = sum(1 for a in alerts if a.get("status") == "MANUAL")
+        clear_n     = sum(1 for a in alerts if a.get("status") == "CLEAR")
         wt_stat = stats.get("wrongif_triggered")
         wm_stat = stats.get("wrongif_manual")
+        wc_stat = stats.get("wrongif_clear")
         if wt_stat != triggered_n:
             print(f"  {FAIL}  stats.wrongif_triggered={wt_stat} != counted TRIGGERED={triggered_n}")
         if wm_stat != manual_n:
             print(f"  {FAIL}  stats.wrongif_manual={wm_stat} != counted MANUAL={manual_n}")
-        print(f"  {OK}  wrongif alerts: {triggered_n} TRIGGERED + {manual_n} MANUAL")
+        # wrongif_clear is optional (added in KR7); only check if present
+        if wc_stat is not None and wc_stat != clear_n:
+            print(f"  {FAIL}  stats.wrongif_clear={wc_stat} != counted CLEAR={clear_n}")
+        clear_suffix = f" + {clear_n} CLEAR" if clear_n else ""
+        print(f"  {OK}  wrongif alerts: {triggered_n} TRIGGERED + {manual_n} MANUAL{clear_suffix}")
 
         for a in alerts:
             tk  = a.get("ticker", "?")
