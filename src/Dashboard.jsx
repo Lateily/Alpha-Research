@@ -3295,11 +3295,19 @@ function TradingDesk({ L, lk, C }) {
     const verdict = lk === 'z' ? (persona.verdict_z || '') : (persona.verdict_e || '');
     // Per-criterion line: minimal parenthetical (NOT padEnd columns) — browser
     // title attribute uses proportional fonts so column alignment misrenders.
+    // KR7: format-aware actual rendering. Backward-compat: fall back to "ratio"
+    // (raw numeric .toFixed(3)) when format field is absent — handles stale
+    // gh-pages persona_overlay.json deployed before KR7's schema extension.
+    const fmtActual = (v, format) => {
+      if (v == null) return '—';
+      if (typeof v !== 'number') return String(v);
+      if (format === 'percent') return `${(v * 100).toFixed(1)}%`;
+      // ratio / absolute / undefined → raw numeric
+      return v.toFixed(3);
+    };
     const lines = (persona.criteria || []).map(c => {
       const mark = c.passed === true ? '✓' : c.passed === false ? '✗' : '—';
-      const actStr = c.actual == null
-        ? '—'
-        : (typeof c.actual === 'number' ? c.actual.toFixed(3) : String(c.actual));
+      const actStr = fmtActual(c.actual, c.format);
       return `${mark} ${c.name} (actual ${actStr})`;
     });
     const tooltip = [

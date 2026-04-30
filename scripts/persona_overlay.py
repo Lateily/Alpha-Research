@@ -157,8 +157,22 @@ def _eval_comparator(actual, threshold, comparator: str) -> bool | None:
     return None
 
 
-def _criterion(name: str, actual, threshold, comparator: str) -> dict:
-    """Build a per-criterion dict with auditable {actual, threshold, passed}."""
+def _criterion(name: str, actual, threshold, comparator: str,
+               format: str = "ratio") -> dict:
+    """Build a per-criterion dict with auditable {actual, threshold, passed, format}.
+
+    format: display-format hint for downstream consumers (KR7).
+        "percent"  → display via `actual * 100 + "%"` (canonical: percent-form
+                     actuals stored as DECIMAL, e.g. ROE 0.539 = 53.9%)
+        "ratio"    → display raw numeric (P/E, P/B, current_ratio, EV/EBITDA)
+        "absolute" → raw numeric (rare, future-proofing)
+
+    KR7 Resolution A: D/E from yfinance (which arrives as ALREADY-PERCENT,
+    e.g. 32.75 = 32.75%) is NORMALIZED to decimal at this producer (divide by
+    100). The threshold value is also decimal (0.5 instead of 50.0). This
+    yields a SINGLE display rule for all percent-format criteria — see
+    buffett_checklist for the de_normalized example.
+    """
     passed = _eval_comparator(actual, threshold, comparator)
     return {
         "name":       name,
@@ -166,6 +180,7 @@ def _criterion(name: str, actual, threshold, comparator: str) -> dict:
         "threshold":  threshold,                 # scalar or [lo, hi] for "in"
         "comparator": comparator,
         "passed":     passed,                    # True / False / None
+        "format":     format,                    # KR7: display hint
     }
 
 
@@ -224,17 +239,22 @@ def _net_cash(fin: dict) -> float | None:
 def buffett_checklist(fund: dict, mcap: float | None) -> dict:
     """6 criteria — quality + reasonable price.
 
-    NOTE: yfinance reports debt_to_equity in PERCENT units. Threshold 50.0
-    means D/E ratio of 0.5 (Buffett's classic low-leverage rule).
+    KR7 Resolution A: yfinance reports debt_to_equity in PERCENT units
+    (e.g., 32.75 = 32.75%). To unify display rules across all percent-format
+    criteria, this producer NORMALIZES D/E to decimal here (divide by 100).
+    Threshold also stored decimal (0.5, not 50.0). Comparator outcome
+    UNCHANGED (verified via 65-boolean diff).
     """
     fcfy = _fcf_yield(fund, mcap)
+    de_raw = fund.get("debt_to_equity")  # yfinance: already-percent (32.75 = 32.75%)
+    de_normalized = (de_raw / 100.0) if de_raw is not None else None  # → decimal (0.3275)
     criteria = [
-        _criterion("ROE > 15%",            fund.get("roe"),              0.15, ">"),
-        _criterion("Operating margin > 15%", fund.get("operating_margin"), 0.15, ">"),
-        _criterion("D/E < 50% (≈ ratio 0.5)", fund.get("debt_to_equity"), 50.0, "<"),
-        _criterion("FCF yield > 4%",       fcfy,                          0.04, ">"),
-        _criterion("Trailing P/E < 20",    fund.get("pe_trailing"),       20.0, "<"),
-        _criterion("Current ratio > 1.5",  fund.get("current_ratio"),     1.5,  ">"),
+        _criterion("ROE > 15%",            fund.get("roe"),              0.15, ">", "percent"),
+        _criterion("Operating margin > 15%", fund.get("operating_margin"), 0.15, ">", "percent"),
+        _criterion("D/E < 50%",            de_normalized,                 0.5,  "<", "percent"),
+        _criterion("FCF yield > 4%",       fcfy,                          0.04, ">", "percent"),
+        _criterion("Trailing P/E < 20",    fund.get("pe_trailing"),       20.0, "<", "ratio"),
+        _criterion("Current ratio > 1.5",  fund.get("current_ratio"),     1.5,  ">", "ratio"),
     ]
     score = sum(1 for c in criteria if c["passed"] is True)
     if score >= 5:
@@ -262,10 +282,10 @@ def burry_checklist(fund: dict, mcap: float | None, fin: dict) -> dict:
     nc = _net_cash(fin)
     nc_ratio = (nc / mcap) if (nc is not None and mcap and mcap > 0) else None
     criteria = [
-        _criterion("P/B < 1.5",                 fund.get("pb"),       1.5,  "<"),
-        _criterion("FCF yield > 8%",            fcfy,                 0.08, ">"),
-        _criterion("EV/EBITDA < 10",            fund.get("ev_ebitda"),10.0, "<"),
-        _criterion("Net cash > 20% of mkt cap", nc_ratio,             0.20, ">"),
+        _criterion("P/B < 1.5",                 fund.get("pb"),       1.5,  "<", "ratio"),
+        _criterion("FCF yield > 8%",            fcfy,                 0.08, ">", "percent"),
+        _criterion("EV/EBITDA < 10",            fund.get("ev_ebitda"),10.0, "<", "ratio"),
+        _criterion("Net cash > 20% of mkt cap", nc_ratio,             0.20, ">", "percent"),
     ]
     score = sum(1 for c in criteria if c["passed"] is True)
     if score >= 3:
@@ -303,9 +323,9 @@ def damodaran_checklist(rdcf: dict) -> dict:
         our_growth = rdcf.get("our_rev_growth")
 
     criteria = [
-        _criterion("|implied vs our growth gap| < ±5%", abs_delta, 0.05,         "<"),
-        _criterion("WACC in [8%, 15%]",                  wacc,      [0.08, 0.15], "in"),
-        _criterion("Our growth < 25% (terminal sanity)", our_growth,0.25,         "<"),
+        _criterion("|implied vs our growth gap| < ±5%", abs_delta, 0.05,         "<",  "percent"),
+        _criterion("WACC in [8%, 15%]",                  wacc,      [0.08, 0.15], "in", "percent"),
+        _criterion("Our growth < 25% (terminal sanity)", our_growth,0.25,         "<",  "percent"),
     ]
     score = sum(1 for c in criteria if c["passed"] is True)
     if score == 3:

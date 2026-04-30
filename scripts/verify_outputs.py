@@ -419,6 +419,10 @@ KNOWN_ERR_CODES = {
     "fundamentals_missing", "rdcf_missing", "fin_data_missing",
     "market_data_stale", "market_data_missing",
 }
+# KR7: format hint per criterion. STRICT — required for fresh pipeline output.
+# Dashboard has its own soft fallback to "ratio" for backward-compat with
+# stale gh-pages JSON, but verify_outputs only validates the current run.
+VALID_PERSONA_FORMATS = {"percent", "ratio", "absolute"}
 po_path = DATA / "persona_overlay.json"
 if not po_path.exists():
     print(f"  {WARN}  persona_overlay.json missing (persona_overlay.py not yet run)")
@@ -463,6 +467,15 @@ else:
                 for c in criteria:
                     if not isinstance(c, dict) or "name" not in c or "passed" not in c:
                         problems.append(f"{pname} criterion shape invalid")
+                        break
+                    # KR7 STRICT format check — fresh pipeline output must
+                    # include format field with valid value.
+                    fmt = c.get("format")
+                    if fmt is None:
+                        problems.append(f"{pname} criterion '{c.get('name')}' missing format field")
+                        break
+                    if fmt not in VALID_PERSONA_FORMATS:
+                        problems.append(f"{pname} criterion '{c.get('name')}' format='{fmt}' not in enum")
                         break
                 line_parts.append(f"{PERSONA_LABEL[pname]}={score}/{PERSONA_MAX[pname]}")
             icon = OK if not problems else FAIL

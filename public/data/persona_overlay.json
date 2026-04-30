@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-04-30T19:30:54.282916+00:00",
+    "generated_at": "2026-04-30T20:06:19.456245+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -21,42 +21,48 @@
             "actual": 0.53931,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "Operating margin > 15%",
             "actual": 0.39813,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
-            "name": "D/E < 50% (≈ ratio 0.5)",
-            "actual": 4.506,
-            "threshold": 50.0,
+            "name": "D/E < 50%",
+            "actual": 0.04506,
+            "threshold": 0.5,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "FCF yield > 4%",
             "actual": 0.00435875421356209,
             "threshold": 0.04,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "Trailing P/E < 20",
             "actual": 63.754646,
             "threshold": 20.0,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "Current ratio > 1.5",
             "actual": 2.461,
             "threshold": 1.5,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "ratio"
           }
         ],
         "verdict_e": "Mixed quality — passes most ratios, fails a value test.",
@@ -71,28 +77,32 @@
             "actual": 26.773449,
             "threshold": 1.5,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "FCF yield > 8%",
             "actual": 0.00435875421356209,
             "threshold": 0.08,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "EV/EBITDA < 10",
             "actual": 47.154,
             "threshold": 10.0,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "Net cash > 20% of mkt cap",
             "actual": 0.009766953748333317,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           }
         ],
         "verdict_e": "Growth-priced; not a deep-value candidate.",
@@ -107,7 +117,8 @@
             "actual": 0.825,
             "threshold": 0.05,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "WACC in [8%, 15%]",
@@ -117,14 +128,16 @@
               0.15
             ],
             "comparator": "in",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "Our growth < 25% (terminal sanity)",
             "actual": 0.341,
             "threshold": 0.25,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           }
         ],
         "verdict_e": "Aggressive thesis: our_growth diverges from market price meaningfully.",
@@ -141,42 +154,48 @@
             "actual": 0.20027,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "Operating margin > 15%",
             "actual": 0.33134997,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
-            "name": "D/E < 50% (≈ ratio 0.5)",
-            "actual": 32.746,
-            "threshold": 50.0,
+            "name": "D/E < 50%",
+            "actual": 0.32746000000000003,
+            "threshold": 0.5,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "FCF yield > 4%",
             "actual": 0.03297168059251598,
             "threshold": 0.04,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "Trailing P/E < 20",
             "actual": 16.857656,
             "threshold": 20.0,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "ratio"
           },
           {
             "name": "Current ratio > 1.5",
             "actual": 1.443,
             "threshold": 1.5,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           }
         ],
         "verdict_e": "Mixed quality — passes most ratios, fails a value test.",
@@ -191,28 +210,32 @@
             "actual": 3.1947834,
             "threshold": 1.5,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "FCF yield > 8%",
             "actual": 0.03297168059251598,
             "threshold": 0.08,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "EV/EBITDA < 10",
             "actual": 16.091,
             "threshold": 10.0,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "Net cash > 20% of mkt cap",
             "actual": null,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": null
+            "passed": null,
+            "format": "percent"
           }
         ],
         "verdict_e": "Growth-priced; not a deep-value candidate.",
@@ -227,7 +250,8 @@
             "actual": 0.1212,
             "threshold": 0.05,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "WACC in [8%, 15%]",
@@ -237,14 +261,16 @@
               0.15
             ],
             "comparator": "in",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "Our growth < 25% (terminal sanity)",
             "actual": 0.18,
             "threshold": 0.25,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           }
         ],
         "verdict_e": "Two checks pass — minor inconsistency in remaining.",
@@ -261,42 +287,48 @@
             "actual": 0.22625,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "Operating margin > 15%",
             "actual": 0.30200002,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
-            "name": "D/E < 50% (≈ ratio 0.5)",
-            "actual": 4.076,
-            "threshold": 50.0,
+            "name": "D/E < 50%",
+            "actual": 0.04076,
+            "threshold": 0.5,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "FCF yield > 4%",
             "actual": 0.05863490859264796,
             "threshold": 0.04,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "Trailing P/E < 20",
             "actual": 14.867109,
             "threshold": 20.0,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "ratio"
           },
           {
             "name": "Current ratio > 1.5",
             "actual": 3.449,
             "threshold": 1.5,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "ratio"
           }
         ],
         "verdict_e": "Buffett-style quality across the board.",
@@ -311,28 +343,32 @@
             "actual": 3.1105075,
             "threshold": 1.5,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "FCF yield > 8%",
             "actual": 0.05863490859264796,
             "threshold": 0.08,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "EV/EBITDA < 10",
             "actual": 10.659,
             "threshold": 10.0,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "Net cash > 20% of mkt cap",
             "actual": 0.2729369765054231,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           }
         ],
         "verdict_e": "Mostly growth-priced; one value indicator only.",
@@ -347,7 +383,8 @@
             "actual": 0.1216,
             "threshold": 0.05,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "WACC in [8%, 15%]",
@@ -357,14 +394,16 @@
               0.15
             ],
             "comparator": "in",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "Our growth < 25% (terminal sanity)",
             "actual": 0.15,
             "threshold": 0.25,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           }
         ],
         "verdict_e": "Two checks pass — minor inconsistency in remaining.",
@@ -381,42 +420,48 @@
             "actual": 0.07459,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "Operating margin > 15%",
             "actual": 0.123509996,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
-            "name": "D/E < 50% (≈ ratio 0.5)",
-            "actual": 25.058,
-            "threshold": 50.0,
+            "name": "D/E < 50%",
+            "actual": 0.25058,
+            "threshold": 0.5,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "FCF yield > 4%",
             "actual": 0.0028992466876341717,
             "threshold": 0.04,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "Trailing P/E < 20",
             "actual": 116.51007,
             "threshold": 20.0,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "Current ratio > 1.5",
             "actual": 3.409,
             "threshold": 1.5,
             "comparator": ">",
-            "passed": true
+            "passed": true,
+            "format": "ratio"
           }
         ],
         "verdict_e": "Weak Buffett fit — quality concerns or expensive.",
@@ -431,28 +476,32 @@
             "actual": 7.319299,
             "threshold": 1.5,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "FCF yield > 8%",
             "actual": 0.0028992466876341717,
             "threshold": 0.08,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "EV/EBITDA < 10",
             "actual": 440.55,
             "threshold": 10.0,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "Net cash > 20% of mkt cap",
             "actual": 0.013774917205042751,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           }
         ],
         "verdict_e": "Growth-priced; not a deep-value candidate.",
@@ -467,7 +516,8 @@
             "actual": 0.7774,
             "threshold": 0.05,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "WACC in [8%, 15%]",
@@ -477,14 +527,16 @@
               0.15
             ],
             "comparator": "in",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "Our growth < 25% (terminal sanity)",
             "actual": 0.35,
             "threshold": 0.25,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           }
         ],
         "verdict_e": "Aggressive thesis: our_growth diverges from market price meaningfully.",
@@ -501,42 +553,48 @@
             "actual": 0.14768,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "Operating margin > 15%",
             "actual": 0.036960002,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
-            "name": "D/E < 50% (≈ ratio 0.5)",
-            "actual": 48.02,
-            "threshold": 50.0,
+            "name": "D/E < 50%",
+            "actual": 0.4802,
+            "threshold": 0.5,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "FCF yield > 4%",
             "actual": -0.12362886874770047,
             "threshold": 0.04,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "Trailing P/E < 20",
             "actual": 52.810257,
             "threshold": 20.0,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "Current ratio > 1.5",
             "actual": 0.793,
             "threshold": 1.5,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           }
         ],
         "verdict_e": "Weak Buffett fit — quality concerns or expensive.",
@@ -551,28 +609,32 @@
             "actual": 4.1116347,
             "threshold": 1.5,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "ratio"
           },
           {
             "name": "FCF yield > 8%",
             "actual": -0.12362886874770047,
             "threshold": 0.08,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "EV/EBITDA < 10",
             "actual": 8.707,
             "threshold": 10.0,
             "comparator": "<",
-            "passed": true
+            "passed": true,
+            "format": "ratio"
           },
           {
             "name": "Net cash > 20% of mkt cap",
             "actual": 0.011541990751181097,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           }
         ],
         "verdict_e": "Mostly growth-priced; one value indicator only.",
@@ -587,7 +649,8 @@
             "actual": 0.1553,
             "threshold": 0.05,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           },
           {
             "name": "WACC in [8%, 15%]",
@@ -597,14 +660,16 @@
               0.15
             ],
             "comparator": "in",
-            "passed": true
+            "passed": true,
+            "format": "percent"
           },
           {
             "name": "Our growth < 25% (terminal sanity)",
             "actual": 0.28,
             "threshold": 0.25,
             "comparator": "<",
-            "passed": false
+            "passed": false,
+            "format": "percent"
           }
         ],
         "verdict_e": "Single sanity check — large gap or unusual assumption.",
