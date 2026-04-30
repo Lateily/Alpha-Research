@@ -223,6 +223,14 @@ SECTOR_BETA_DEFAULTS = {
 DEFAULT_BETA = 1.15
 DCF_HORIZON  = 5   # forecast years
 
+# KR5: when 60-day regression beta lands more than (1 - this_fraction) below
+# the sector default, the regression is more likely contaminated by short-
+# window noise / benchmark-tracking failure / regime shift than to reflect
+# a genuine low-correlation stock. Fall back to sector default in that case.
+# 0.7 → engages on >30% deviation. [unvalidated intuition].
+# Tune via this constant; do not hardcode in function body.
+BETA_FLOOR_THRESHOLD_FRACTION = 0.7
+
 
 def _bisect(f, lo, hi, tol=1e-7, maxiter=200):
     """Pure-Python bisection. Returns None if root not bracketed."""
@@ -243,11 +251,29 @@ def _bisect(f, lo, hi, tol=1e-7, maxiter=200):
     return (lo + hi) / 2.0
 
 
-def _calc_beta_from_hist(stock_hist, bench_hist):
+def _calc_beta_from_hist(stock_hist, bench_hist, sector=""):
     """
     Compute beta from daily Close returns using last 60 trading days.
     stock_hist, bench_hist: pandas DataFrames with a 'Close' column.
-    Returns float beta, or DEFAULT_BETA on failure.
+    sector: Yahoo sector tag (e.g. "Consumer Cyclical"); used for the
+        sector-aware off-prior floor. Empty string → falls back to
+        DEFAULT_BETA when the floor engages.
+
+    Returns (beta, source_tag) where source_tag is one of:
+        "yfinance_60d"          regression result (most common)
+        "sector_floor_engaged"  KR5: regression below 0.7× sector default
+        "fallback_default"      regression failed (data error)
+
+    Asymmetric design: floor only, no ceiling. Regression betas have a
+    plausible-zero LOWER bound (every stock has SOME market correlation;
+    a near-zero beta is more likely a regression artifact than a genuine
+    "uncorrelated" stock) but no plausible UPPER bound (high-vol periods
+    + concentrated risk genuinely produce high betas — e.g., clinical-
+    stage biotech, single-product semis). Floor anchors against
+    regression-window noise; a ceiling would mute genuine signal.
+
+    Sector defaults are inherited US-market priors. Calibrating
+    A/HK-specific defaults is a future KR.
     """
     try:
         s = stock_hist["Close"].pct_change().dropna()
@@ -255,18 +281,27 @@ def _calc_beta_from_hist(stock_hist, bench_hist):
         # Align on shared dates
         common = s.index.intersection(b.index)
         if len(common) < 20:
-            return DEFAULT_BETA
+            return DEFAULT_BETA, "fallback_default"
         s = s.loc[common].tail(60)
         b = b.loc[common].tail(60)
         cov  = float(((s - s.mean()) * (b - b.mean())).mean())
         var  = float(((b - b.mean()) ** 2).mean())
         if var == 0:
-            return DEFAULT_BETA
+            return DEFAULT_BETA, "fallback_default"
         beta = cov / var
         # Clamp to reasonable range (0.3 – 2.5)
-        return round(max(0.30, min(2.50, beta)), 4)
+        beta_raw = round(max(0.30, min(2.50, beta)), 4)
+
+        # KR5: sector-aware off-prior floor. When regression result is
+        # more than (1 - BETA_FLOOR_THRESHOLD_FRACTION) below the sector
+        # prior, fall back to sector default. See module-level constant
+        # for rationale.
+        sector_default = SECTOR_BETA_DEFAULTS.get(sector, DEFAULT_BETA)
+        if beta_raw < BETA_FLOOR_THRESHOLD_FRACTION * sector_default:
+            return sector_default, "sector_floor_engaged"
+        return beta_raw, "yfinance_60d"
     except Exception:
-        return DEFAULT_BETA
+        return DEFAULT_BETA, "fallback_default"
 
 
 def _calc_wacc(beta, market):
@@ -361,8 +396,10 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
             beta = rdcf_cfg["beta_override"]
             beta_source = "manual_override"
         elif stock_hist is not None and bench_hist is not None:
-            beta = _calc_beta_from_hist(stock_hist, bench_hist)
-            beta_source = "yfinance_60d"
+            sector = focus_data.get("meta", {}).get("sector", "")
+            # KR5: _calc_beta_from_hist now returns (beta, source_tag) and
+            # applies sector-aware off-prior floor internally.
+            beta, beta_source = _calc_beta_from_hist(stock_hist, bench_hist, sector)
         else:
             sector = focus_data.get("meta", {}).get("sector", "")
             beta = SECTOR_BETA_DEFAULTS.get(sector, DEFAULT_BETA)

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-04-30T15:30:41.451208+00:00",
+    "generated_at": "2026-04-30T19:30:54.282916+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -579,25 +579,25 @@
         "verdict_z": "整体成长定价；仅一项价值指标通过。"
       },
       "damodaran": {
-        "score": 0,
+        "score": 1,
         "max": 3,
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.3877,
+            "actual": 0.1553,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.0488,
+            "actual": 0.0945,
             "threshold": [
               0.08,
               0.15
             ],
             "comparator": "in",
-            "passed": false
+            "passed": true
           },
           {
             "name": "Our growth < 25% (terminal sanity)",
@@ -607,8 +607,8 @@
             "passed": false
           }
         ],
-        "verdict_e": "Aggressive thesis: our_growth diverges from market price meaningfully.",
-        "verdict_z": "激进假设：我们的增长预期与市场价格意义性背离。"
+        "verdict_e": "Single sanity check — large gap or unusual assumption.",
+        "verdict_z": "仅一项达标——存在显著差距或非常规假设。"
       }
     }
   }
