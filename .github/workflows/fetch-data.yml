@@ -95,6 +95,15 @@ jobs:
         continue-on-error: true          # non-critical; reads trades + positions
         run: python scripts/signal_quality.py
 
+      # ── Step 2h: Taleb-style fragility scoring (AHF-1) ───────────────────
+      # Per AHF_COMPARISON.md: fills the "no downside-fragility dimension"
+      # gap. Reads fin_*.json + ohlc_*.json (already populated by step 2 +
+      # step 2c). Output: public/data/fragility_*.json per ticker. NOT folded
+      # into VP composite (INVARIANT 3 requires Junyan approval).
+      - name: Compute fragility scores
+        continue-on-error: true          # non-critical; reads fin + ohlc
+        run: python scripts/fragility_score.py
+
       # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
       - name: Sync to Supabase
         if: env.SUPABASE_URL != ''
@@ -132,7 +141,12 @@ jobs:
             public/data/trades.json \
             public/data/trade_attribution_capsules.json \
             public/data/profit_scissors.json \
-            public/data/leading_indicators.json; do
+            public/data/leading_indicators.json \
+            public/data/fragility_300308_SZ.json \
+            public/data/fragility_700_HK.json \
+            public/data/fragility_9999_HK.json \
+            public/data/fragility_6160_HK.json \
+            public/data/fragility_002594_SZ.json; do
             [ -f "$f" ] && git add "$f"
           done
 

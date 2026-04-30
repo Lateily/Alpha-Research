@@ -346,6 +346,55 @@ else:
         print(f"  {FAIL}  exception while validating leading_indicators.json: {e}")
 
 
+# ── Fragility Scores (fragility_*.json) ────────────────────────────────────────
+print("\n=== Fragility Scores (fragility_*.json) ===")
+FRAG_BANDS = {"FRAGILE", "MODERATE", "ROBUST", "ANTIFRAGILE", "INSUFFICIENT_DATA"}
+F2_METHODS = {"fcf_consistency", "cash_runway"}
+for ticker in _watchlist_tickers():
+    safe_id = ticker.replace(".", "_")
+    path = DATA / f"fragility_{safe_id}.json"
+    if not path.exists():
+        print(f"  {WARN}  {ticker}: file missing (fragility_score.py not yet run for this ticker)")
+        continue
+    try:
+        d = json.loads(path.read_text())
+        composite = d.get("composite")
+        band = d.get("band", "?")
+        comps = d.get("components", {}) or {}
+        f2_method = d.get("f2_method", "?")
+        biotech = d.get("biotech_mode", False)
+
+        problems = []
+        if composite is not None and not (0 <= composite <= 100):
+            problems.append(f"composite={composite} out of [0,100]")
+        if band not in FRAG_BANDS:
+            problems.append(f"band={band} not in enum")
+        if f2_method not in F2_METHODS:
+            problems.append(f"f2_method={f2_method} not in enum")
+        # Math invariant: band must match composite range
+        if isinstance(composite, (int, float)):
+            if   composite >= 50: expected_band = "FRAGILE"
+            elif composite >= 30: expected_band = "MODERATE"
+            elif composite >= 15: expected_band = "ROBUST"
+            else:                 expected_band = "ANTIFRAGILE"
+            if band != expected_band:
+                problems.append(f"band={band} disagrees with composite={composite} (expected {expected_band})")
+        # Component sanity
+        for k, v in comps.items():
+            if v is not None and not (0 <= v <= 100):
+                problems.append(f"{k}={v} out of [0,100]")
+
+        icon = OK if not problems else WARN
+        comp_str = ", ".join(f"{k.split('_',1)[0]}={v:.0f}" if v is not None else f"{k.split('_',1)[0]}=N/A"
+                              for k, v in comps.items())
+        biotech_tag = " [biotech]" if biotech else ""
+        score_s = f"{composite:.1f}" if composite is not None else "N/A"
+        warn_suffix = "  [" + "; ".join(problems) + "]" if problems else ""
+        print(f"  {icon}  {ticker:12s}  composite={score_s:>5s}  band={band:<11s}  {comp_str}{biotech_tag}{warn_suffix}")
+    except Exception as e:
+        print(f"  {FAIL}  {ticker}: exception while validating: {e}")
+
+
 print("\n" + "="*60)
 print("Tip: fields to use in rdcf JSON:")
 print("  implied growth : implied_fcf_growth  (standard) / implied_rev_growth (biotech)")
