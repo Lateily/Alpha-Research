@@ -3094,6 +3094,7 @@ function TradingDesk({ L, lk, C }) {
   const [quality,   setQuality]   = useState(null);
   const [snapshots, setSnapshots] = useState([]);
   const [fragility, setFragility] = useState({});  // KR3: { ticker: fragility_data }
+  const [personaOverlay, setPersonaOverlay] = useState(null);  // KR4: AHF-3 persona overlay (single file, all tickers)
   const [loading,   setLoading]   = useState(true);
   const MONO = "'JetBrains Mono','Fira Code',monospace";
 
@@ -3124,9 +3125,13 @@ function TradingDesk({ L, lk, C }) {
           fetch(base + 'data/signal_quality.json').then(r => r.ok ? r.json() : null).catch(() => null),
           fetch(base + 'data/snapshots.json').then(r => r.ok ? r.json() : null).catch(() => null),
           Promise.all(fragilityFetches),
+          // KR4: AHF-3 persona overlay (single file, internal ticker enumeration).
+          // Adding a 6th watchlist ticker does NOT require an extra fetch here —
+          // persona_overlay.json regenerates with all current tickers each pipeline run.
+          fetch(base + 'data/persona_overlay.json').then(r => r.ok ? r.json() : null).catch(() => null),
         ]);
       })
-      .then(([dd, sz, sq, sn, fragArr] = [null, null, null, null, []]) => {
+      .then(([dd, sz, sq, sn, fragArr, personas] = [null, null, null, null, [], null]) => {
         setDecision(dd);
         setSizing(sz);
         setQuality(sq);
@@ -3134,6 +3139,7 @@ function TradingDesk({ L, lk, C }) {
         const fragMap = {};
         (fragArr || []).forEach(({ ticker, data }) => { if (data) fragMap[ticker] = data; });
         setFragility(fragMap);
+        setPersonaOverlay(personas);
         setLoading(false);
       });
   }, []);
@@ -3210,11 +3216,11 @@ function TradingDesk({ L, lk, C }) {
       : '';
     const tooltip = [
       `Fragility composite: ${frag.composite} (${band})`,
-      `F1 leverage:          ${comps.F1_leverage ?? 'N/A'}`,
-      `F2 liquidity-survival:${comps.F2_liquidity_survival ?? 'N/A'} (${frag.f2_method || '?'})`,
-      `F3 tail risk:         ${comps.F3_tail_risk ?? 'N/A'}`,
-      `F4 vol regime:        ${comps.F4_vol_regime ?? 'N/A'}`,
-      `F5 max drawdown:      ${comps.F5_max_drawdown ?? 'N/A'}`,
+      `F1 leverage:          ${comps.F1_leverage ?? '—'}`,
+      `F2 liquidity-survival:${comps.F2_liquidity_survival ?? '—'} (${frag.f2_method || '?'})`,
+      `F3 tail risk:         ${comps.F3_tail_risk ?? '—'}`,
+      `F4 vol regime:        ${comps.F4_vol_regime ?? '—'}`,
+      `F5 max drawdown:      ${comps.F5_max_drawdown ?? '—'}`,
       f6Render ? `F6 concentration:    ${f6.score} (separate dim, NOT in composite)` : '',
       frag.biotech_mode ? '[biotech-mode F2]' : '',
       '',
@@ -3249,6 +3255,115 @@ function TradingDesk({ L, lk, C }) {
             F6 {f6.score}
           </span>
         )}
+      </span>
+    );
+  };
+
+  // ─────────────────────────────────────────────────────────────────────
+  // KR4: AHF-3 persona overlay surfacing
+  //
+  // Renders Buffett / Burry / Damodaran score badges per ticker (3 small
+  // adjacent badges, each with its own tooltip). Not actionable —
+  // cross-check across named investor frameworks. Visually subordinate to
+  // F6 pill which is subordinate to composite pill (matches actionability
+  // ranking: financial-risk > concentration-risk > framework-cross-check).
+  //
+  // Four null-state paths (per KR4 decomp adversarial review observation ii):
+  //   1. overlay === null            → cluster returns null (loading, pre-fetch)
+  //   2. overlay.personas[t] missing → cluster returns null (ticker not in file)
+  //   3. block.error truthy          → renders "Persona —" placeholder
+  //   4. full data                   → renders 3 PersonaBadge components
+  //
+  // Criterion `name` field (e.g. "ROE > 15%") stays English-only by design —
+  // formula-like, locale-independent. Only verdict text + degraded-state
+  // error description respect lk='z' i18n.
+  // ─────────────────────────────────────────────────────────────────────
+  const PERSONA_ERROR_DESCRIPTIONS = {
+    rdcf_missing:         { e: 'DCF model not yet generated',  z: 'DCF模型尚未生成' },
+    fundamentals_missing: { e: 'Live data unavailable',         z: '实时数据不可用' },
+    fin_data_missing:     { e: 'Financial statements missing',  z: '财务报表缺失' },
+    market_data_stale:    { e: 'Market data is stale',          z: '市场数据已过期' },
+    market_data_missing:  { e: 'Market data unavailable',       z: '市场数据不可用' },
+  };
+
+  const PersonaBadge = ({ label, persona }) => {
+    if (!persona || persona.score == null) return null;
+    const ratio = persona.max ? persona.score / persona.max : 0;
+    // Threshold boundary semantics (KR4 decomp P3-v): inclusive on upper side.
+    //   ratio >= 0.7 → green, ratio >= 0.3 → gold, otherwise red.
+    const color = ratio >= 0.7 ? C.green : ratio >= 0.3 ? C.gold : C.red;
+    const verdict = lk === 'z' ? (persona.verdict_z || '') : (persona.verdict_e || '');
+    // Per-criterion line: minimal parenthetical (NOT padEnd columns) — browser
+    // title attribute uses proportional fonts so column alignment misrenders.
+    const lines = (persona.criteria || []).map(c => {
+      const mark = c.passed === true ? '✓' : c.passed === false ? '✗' : '—';
+      const actStr = c.actual == null
+        ? '—'
+        : (typeof c.actual === 'number' ? c.actual.toFixed(3) : String(c.actual));
+      return `${mark} ${c.name} (actual ${actStr})`;
+    });
+    const tooltip = [
+      `${label} ${persona.score}/${persona.max}` + (verdict ? ` — ${verdict}` : ''),
+      ...lines,
+      '',
+      '[unvalidated intuition] thresholds. Cross-check, NOT authority.',
+    ].join('\n');
+    return (
+      <span
+        title={tooltip}
+        style={{
+          fontFamily: MONO, fontSize: 7, fontWeight: 700,
+          padding: '1px 4px', borderRadius: 3,
+          background: `${color}12`, color,
+          letterSpacing: 0.3, cursor: 'help',
+        }}
+      >
+        {label} {persona.score}/{persona.max}
+      </span>
+    );
+  };
+
+  const PersonaCluster = ({ overlay, ticker }) => {
+    // Path 1: pre-fetch loading state — cluster silent (data hasn't arrived).
+    if (!overlay) return null;
+    const block = (overlay.personas || {})[ticker];
+    // Path 2: ticker entirely missing from file (e.g. future watchlist
+    // addition not yet computed) — cluster silent.
+    if (!block) return null;
+    // Path 3: typed graceful-degradation error — render single placeholder
+    // badge with translated error description. Visually distinct from
+    // "loading" and from "full data."
+    if (block.error) {
+      const desc = PERSONA_ERROR_DESCRIPTIONS[block.error]
+        || { e: block.error, z: block.error };
+      const tooltip = [
+        'Persona overlay unavailable',
+        lk === 'z' ? desc.z : desc.e,
+        '',
+        '[unvalidated intuition] cross-check, NOT authority.',
+      ].join('\n');
+      return (
+        <span style={{display:'inline-flex', gap:3, alignItems:'center'}}>
+          <span
+            title={tooltip}
+            style={{
+              fontFamily: MONO, fontSize: 7, fontWeight: 700,
+              padding: '1px 4px', borderRadius: 3,
+              background: `${C.mid}10`, color: C.mid,
+              letterSpacing: 0.3, cursor: 'help',
+            }}
+          >
+            Persona —
+          </span>
+        </span>
+      );
+    }
+    // Path 4: full data — render 3 separate badges with 3 separate tooltips.
+    return (
+      <span style={{display:'inline-flex', gap:3, alignItems:'center'}}>
+        <PersonaBadge label="Buf" persona={block.buffett} />
+        <PersonaBadge label="Bur" persona={block.burry} />
+        <PersonaBadge label="Dam" persona={block.damodaran} />
       </span>
     );
   };
@@ -3466,6 +3581,7 @@ function TradingDesk({ L, lk, C }) {
                     <span style={{color:C.mid, fontSize:10}}>VP {d.vp_score}</span>
                   )}
                   <FragilityPill frag={fragility[d.ticker]} />
+                  <PersonaCluster overlay={personaOverlay} ticker={d.ticker} />
                   {d.holding_days != null && (
                     <span style={{color:C.mid, fontSize:10}}>{d.holding_days}d</span>
                   )}
@@ -3513,6 +3629,7 @@ function TradingDesk({ L, lk, C }) {
                       <span style={{fontSize:10, color:C.mid}}>VP {d.vp_score}</span>
                     )}
                     <FragilityPill frag={fragility[d.ticker]} />
+                    <PersonaCluster overlay={personaOverlay} ticker={d.ticker} />
                   </div>
                   <div style={{fontSize:11, color:C.mid, maxWidth:340, textAlign:'right', lineHeight:1.5}}>
                     {lk==='z' ? d.reason_z : d.reason_e}
