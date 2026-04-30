@@ -151,7 +151,10 @@ _NUMERIC_PATTERNS = [
     (r"(?:capex|capital expenditure)\s+cut\s*>?\s*(\d+)%", 1, "capex_cut",       "above"),
     (r"tariff[s]?\s+(?:above|over|>|exceed[s]?)\s*(\d+)%", 1, "tariff_pct",      "above"),
     (r"pe\s+(?:above|over|>)\s*(\d+)",                     1, "pe_forward",       "above"),
-    (r"(?:price\s+)?(?:drops?\s+below|falls?\s+below)\s*(\d+(?:\.\d+)?)",
+    # NOTE: requires explicit "price" keyword — without it, the regex matched
+    # any "drops below X" text, including "gross_margin drops below 15%",
+    # producing a misleading price=N CLEAR alert. Tightened in KR6.
+    (r"\bprice\b\s+(?:drops?\s+below|falls?\s+below)\s*(\d+(?:\.\d+)?)",
                                                             1, "price",           "below"),
     # Revenue / earnings decline proxies (observable from yfinance fundamentals)
     (r"revenue.{0,30}(?:miss|declin|contract|shrink|negativ|weaken)",

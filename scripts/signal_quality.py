@@ -299,8 +299,12 @@ def main():
 
     if by_ticker and by_ticker[0]["pnl_pct"] is not None:
         leader = by_ticker[0]
+        # Symmetric phrasing: "leads at +X.X%" when in profit, "least drawn-down
+        # at -X.X%" when the leader is the least-negative position. Keeps the
+        # sentence honest in a portfolio drawdown.
+        verb = "leads portfolio P&L at" if leader["pnl_pct"] > 0 else "is least drawn-down at"
         insights.append(
-            f"{leader['ticker']} leads portfolio P&L at "
+            f"{leader['ticker']} {verb} "
             f"{leader['pnl_pct']:+.1f}% (VP={leader['vp_at_entry']}, "
             f"conf={leader['conf_at_entry']:+d})"
         )
