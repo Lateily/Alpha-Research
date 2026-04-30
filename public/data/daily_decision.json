@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-29T22:17:35.856125+00:00",
-  "date": "2026-04-29",
+  "generated_at": "2026-04-30T09:05:44.278425+00:00",
+  "date": "2026-04-30",
   "brief_e": "5 HOLD",
   "brief_z": "HOLD5",
   "decisions": {
@@ -111,18 +111,6 @@
       "threshold": null
     },
     {
-      "ticker": "700.HK",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
-      "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
-      "note_e": "Binary component requires manual check: approval",
-      "note_z": "含二元事件条件，需人工核查：approval",
-      "indicator": "binary_event",
-      "actual": null,
-      "threshold": null
-    },
-    {
       "ticker": "002594.SZ",
       "severity": "HIGH",
       "status": "TRIGGERED",
@@ -135,14 +123,38 @@
       "threshold": 0
     },
     {
-      "ticker": "9999.HK",
+      "ticker": "002594.SZ",
+      "severity": "HIGH",
+      "status": "TRIGGERED",
+      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "note_e": "⚠️ WRONGIF TRIGGERED: earnings_growth = -40.5 < -40.0",
+      "note_z": "⚠️ wrongIf触发：earnings_growth = -40.5 < -40.0",
+      "indicator": "earnings_growth",
+      "actual": -40.5,
+      "threshold": -40.0
+    },
+    {
+      "ticker": "002594.SZ",
+      "severity": "HIGH",
+      "status": "TRIGGERED",
+      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "note_e": "⚠️ WRONGIF TRIGGERED: revenue_growth = -13.5 < -10.0",
+      "note_z": "⚠️ wrongIf触发：revenue_growth = -13.5 < -10.0",
+      "indicator": "revenue_growth",
+      "actual": -13.5,
+      "threshold": -10.0
+    },
+    {
+      "ticker": "700.HK",
       "severity": "LOW",
       "status": "MANUAL",
-      "wrongIf_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-      "wrongIf_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
-      "note_e": "Unstructured condition — monitor manually: earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution ",
-      "note_z": "非结构化条件——需人工监控：earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution ",
-      "indicator": "unstructured",
+      "wrongIf_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
+      "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
+      "note_e": "Binary component requires manual check: approval",
+      "note_z": "含二元事件条件，需人工核查：approval",
+      "indicator": "binary_event",
       "actual": null,
       "threshold": null
     }
@@ -198,7 +210,7 @@
     "positions_held": 5,
     "watchlist_count": 0,
     "buy_watch_count": 0,
-    "wrongif_triggered": 1,
-    "wrongif_manual": 3
+    "wrongif_triggered": 3,
+    "wrongif_manual": 2
   }
 }

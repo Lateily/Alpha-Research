@@ -170,6 +170,14 @@ _NUMERIC_PATTERNS = [
     # stored as positive magnitude (28.5 means 28.5% drop).
     (r"(?:nvda|msft|googl|hyperscaler).{0,100}?collectively.{0,40}?drop.{0,40}?(\d+)%",
                                                             1, "hyperscaler_basket_drawdown_pct", "above"),
+    # Negative-threshold growth patterns (v15.2 follow-up — 9999.HK monitor) —
+    # matches strings like "earnings_growth < -30%" / "revenue_growth < -10%".
+    # Captures threshold magnitude as positive int; "below_neg" direction
+    # triggers when actual < -threshold (i.e. actual is more negative than the
+    # negated threshold). Live values come from yfinance fundamentals already
+    # in the live dict.
+    (r"earnings_growth\s*<\s*-\s*(\d+(?:\.\d+)?)%",         1, "earnings_growth", "below_neg"),
+    (r"revenue_growth\s*<\s*-\s*(\d+(?:\.\d+)?)%",          1, "revenue_growth",  "below_neg"),
 ]
 
 _BINARY_KEYWORDS = [
@@ -300,25 +308,31 @@ def check_wrongif(ticker, wrongif_text, market_data, leading_indicators=None):
                 "note_z":    f"无法自动核验「{indicator}」——需人工检查。",
             })
         else:
-            triggered = (direction == "above" and actual > threshold) or \
-                        (direction == "below" and actual < threshold)
+            # `below_neg` negates threshold: pattern captures positive magnitude,
+            # comparator uses negative target (e.g. captured 30 → target -30,
+            # triggered iff actual < -30).
+            target = -threshold if direction == "below_neg" else threshold
+            triggered = (direction == "above"     and actual > target) or \
+                        (direction == "below"     and actual < target) or \
+                        (direction == "below_neg" and actual < target)
+            cmp_sym = ">" if direction == "above" else "<"
             alerts.append({
                 "status":    "TRIGGERED" if triggered else "CLEAR",
                 "indicator": indicator,
-                "threshold": threshold,
+                "threshold": target,
                 "actual":    round(actual, 1),
                 "text":      wrongif_text,
                 "note_e":    (
                     f"⚠️ WRONGIF TRIGGERED: {indicator} = {actual:.1f} "
-                    f"{'>' if direction=='above' else '<'} {threshold:.1f}"
+                    f"{cmp_sym} {target:.1f}"
                 ) if triggered else (
-                    f"✅ Clear: {indicator} = {actual:.1f} (threshold {threshold:.1f})"
+                    f"✅ Clear: {indicator} = {actual:.1f} (threshold {target:.1f})"
                 ),
                 "note_z":    (
                     f"⚠️ wrongIf触发：{indicator} = {actual:.1f} "
-                    f"{'>' if direction=='above' else '<'} {threshold:.1f}"
+                    f"{cmp_sym} {target:.1f}"
                 ) if triggered else (
-                    f"✅ 正常：{indicator} = {actual:.1f}（阈值{threshold:.1f}）"
+                    f"✅ 正常：{indicator} = {actual:.1f}（阈值{target:.1f}）"
                 ),
             })
 
