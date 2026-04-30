@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-04-30T09:27:15.619013",
+    "fetched_at": "2026-04-30T15:30:36.719296",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -43,8 +43,8 @@
         "market_cap": 954912407552,
         "pe_trailing": 63.754646,
         "pe_forward": 22.713125,
-        "ev_ebitda": 46.517,
-        "ev_revenue": 18.253,
+        "ev_ebitda": 47.154,
+        "ev_revenue": 18.503,
         "ps_ratio": 18.700981,
         "pb": 26.773449,
         "dividend_yield": 0.22,
@@ -65,7 +65,7 @@
         "ebitda": 20036571136,
         "earnings_growth": 2.594,
         "book_value": 32.028,
-        "enterprise_value": 932033462272
+        "enterprise_value": 944811343872
       },
       "analyst": {
         "target_mean": 873.325,
@@ -141,10 +141,10 @@
         "enterprise_value": 4399288025088
       },
       "analyst": {
-        "target_mean": 724.0086,
-        "target_high": 886.0654,
-        "target_low": 482.75955,
-        "target_median": 725.755,
+        "target_mean": 724.1349,
+        "target_high": 886.22,
+        "target_low": 482.84378,
+        "target_median": 725.8816,
         "recommendation": "strong_buy",
         "num_analysts": 42
       },
@@ -192,7 +192,7 @@
         "ev_ebitda": 10.659,
         "ev_revenue": 3.604,
         "ps_ratio": 5.070993,
-        "pb": 3.1035805,
+        "pb": 3.1105075,
         "dividend_yield": 2.66,
         "revenue": 112625803264,
         "revenue_growth": 0.03,
@@ -210,14 +210,14 @@
         "total_debt": 6729741824,
         "ebitda": 38082293760,
         "earnings_growth": -0.292,
-        "book_value": 57.67532,
+        "book_value": 57.54688,
         "enterprise_value": 405916811264
       },
       "analyst": {
-        "target_mean": 252.26218,
-        "target_high": 313.30255,
-        "target_low": 141.95,
-        "target_median": 253.5927,
+        "target_mean": 252.30618,
+        "target_high": 313.35718,
+        "target_low": 141.97476,
+        "target_median": 253.63695,
         "recommendation": "strong_buy",
         "num_analysts": 22
       },
@@ -265,7 +265,7 @@
         "ev_ebitda": 440.55,
         "ev_revenue": 47.725,
         "ps_ratio": 46.938774,
-        "pb": 7.3199873,
+        "pb": 7.319299,
         "dividend_yield": null,
         "revenue": 5343032832,
         "revenue_growth": 0.328,
@@ -283,14 +283,14 @@
         "total_debt": 1092844032,
         "ebitda": 578817984,
         "earnings_growth": null,
-        "book_value": 23.715889,
+        "book_value": 23.718119,
         "enterprise_value": 254998265856
       },
       "analyst": {
-        "target_mean": 252.34947,
-        "target_high": 298.4451,
-        "target_low": 212.40279,
-        "target_median": 244.36113,
+        "target_mean": 252.31116,
+        "target_high": 298.39978,
+        "target_low": 212.37053,
+        "target_median": 244.32402,
         "recommendation": "strong_buy",
         "num_analysts": 17
       },
@@ -674,9 +674,9 @@
       "updated": "2026-04-30"
     },
     "southbound": {
-      "latest_net_flow": -39.5175,
-      "5d_cumulative": 185.3729,
-      "20d_cumulative": 425.8465,
+      "latest_net_flow": 121.9184,
+      "5d_cumulative": 221.31,
+      "20d_cumulative": 572.4323,
       "trend": "inflow",
       "updated": "2026-04-30"
     },
@@ -1095,7 +1095,7 @@
         "code": "002176",
         "name": "江特电机",
         "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -1105,7 +1105,7 @@
         "code": "002176",
         "name": "江特电机",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,

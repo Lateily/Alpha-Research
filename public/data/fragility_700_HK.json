@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-04-30T14:35:11.936212+00:00",
+  "generated_at": "2026-04-30T15:30:41.403507+00:00",
   "ticker": "700.HK",
-  "composite": 20.1,
+  "composite": 19.9,
   "band": "ROBUST",
   "components": {
-    "F1_leverage": 3.1,
+    "F1_leverage": 2.1,
     "F2_liquidity_survival": 0.0,
     "F3_tail_risk": 42.3,
     "F4_vol_regime": 24.3,
@@ -23,7 +23,7 @@
     "fcf_positive_pct": 100.0,
     "latest_cash": 141041000000.0,
     "latest_fcf_annual": 190171000000.0,
-    "de_ratio": 0.352119131622178,
+    "de_ratio": 0.3359462185223437,
     "op_margin_mean": 0.28115057746156924,
     "op_margin_cv": 0.2003422748884677
   },

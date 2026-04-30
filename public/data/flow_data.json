@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-04-30T09:27:15.620439",
+  "fetched_at": "2026-04-30T15:30:36.720796",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
@@ -8,9 +8,9 @@
     "updated": "2026-04-30"
   },
   "southbound": {
-    "latest_net_flow": -39.5175,
-    "5d_cumulative": 185.3729,
-    "20d_cumulative": 425.8465,
+    "latest_net_flow": 121.9184,
+    "5d_cumulative": 221.31,
+    "20d_cumulative": 572.4323,
     "trend": "inflow",
     "updated": "2026-04-30"
   },
@@ -429,7 +429,7 @@
       "code": "002176",
       "name": "江特电机",
       "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -439,7 +439,7 @@
       "code": "002176",
       "name": "江特电机",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,

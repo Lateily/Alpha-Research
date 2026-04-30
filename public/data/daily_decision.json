@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-30T12:33:49.482625+00:00",
+  "generated_at": "2026-04-30T15:30:41.279058+00:00",
   "date": "2026-04-30",
   "brief_e": "2 REVIEW_TRIM | 1 ADD",
   "brief_z": "REVIEW_TRIM2 | ADD1",
@@ -113,18 +113,6 @@
       "threshold": -30.0
     },
     {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 1.8 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 1.8（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 1.8,
-      "threshold": 25.0
-    },
-    {
       "ticker": "002594.SZ",
       "severity": "HIGH",
       "status": "TRIGGERED",
@@ -149,18 +137,6 @@
       "threshold": -40.0
     },
     {
-      "ticker": "6160.HK",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
-      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
-      "note_e": "Binary event condition — manual monitoring required: CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
-      "note_z": "二元事件条件——需人工监控：CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
-      "indicator": "binary_event",
-      "actual": null,
-      "threshold": null
-    },
-    {
       "ticker": "700.HK",
       "severity": "LOW",
       "status": "MANUAL",
@@ -168,6 +144,30 @@
       "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
       "note_e": "Binary component requires manual check: approval",
       "note_z": "含二元事件条件，需人工核查：approval",
+      "indicator": "binary_event",
+      "actual": null,
+      "threshold": null
+    },
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 4.6 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 4.6（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 4.6,
+      "threshold": 25.0
+    },
+    {
+      "ticker": "6160.HK",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
+      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
+      "note_e": "Binary event condition — manual monitoring required: CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
+      "note_z": "二元事件条件——需人工监控：CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
       "indicator": "binary_event",
       "actual": null,
       "threshold": null

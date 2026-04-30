@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-04-30T15:09:08.550613+00:00",
+    "generated_at": "2026-04-30T15:30:41.451208+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -82,7 +82,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 46.517,
+            "actual": 47.154,
             "threshold": 10.0,
             "comparator": "<",
             "passed": false
@@ -209,10 +209,10 @@
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.004814709972106832,
+            "actual": null,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": false
+            "passed": null
           }
         ],
         "verdict_e": "Growth-priced; not a deep-value candidate.",
@@ -308,7 +308,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.1035805,
+            "actual": 3.1105075,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false
@@ -428,7 +428,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 7.3199873,
+            "actual": 7.319299,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false
