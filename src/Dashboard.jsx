@@ -3193,6 +3193,21 @@ function TradingDesk({ L, lk, C }) {
     }[band] || { bg: `${C.mid}15`, fg: C.mid };
     const comps = frag.components || {};
     const f6 = frag.f6_concentration;
+    const f6Render = !!(f6 && f6.score != null);
+    // F6 pill always-on at current 5-ticker scale; consider conditional
+    // rendering (e.g., score >= 40) once watchlist scales beyond ~10 names.
+    // Threshold tints: <40 green / 40-69 gold / >=70 red. Visually subordinate
+    // to composite pill (smaller padding, fontSize, alpha) so action badges
+    // remain primary signal — KR2 review (i)(ii)(iii) decisions.
+    const f6Color = f6Render
+      ? (f6.score < 40 ? C.green : f6.score < 70 ? C.gold : C.red)
+      : null;
+    const f6Rationale = f6Render
+      ? (lk === 'z' ? (f6.rationale_z || '') : (f6.rationale_e || ''))
+      : '';
+    const f6Tooltip = f6Render
+      ? `F6 concentration: ${f6.score}\n${f6Rationale}\n\n[unvalidated intuition] — separate from financial fragility composite.`
+      : '';
     const tooltip = [
       `Fragility composite: ${frag.composite} (${band})`,
       `F1 leverage:          ${comps.F1_leverage ?? 'N/A'}`,
@@ -3200,7 +3215,7 @@ function TradingDesk({ L, lk, C }) {
       `F3 tail risk:         ${comps.F3_tail_risk ?? 'N/A'}`,
       `F4 vol regime:        ${comps.F4_vol_regime ?? 'N/A'}`,
       `F5 max drawdown:      ${comps.F5_max_drawdown ?? 'N/A'}`,
-      f6 ? `F6 concentration:    ${f6.score} (separate dim, NOT in composite)` : '',
+      f6Render ? `F6 concentration:    ${f6.score} (separate dim, NOT in composite)` : '',
       frag.biotech_mode ? '[biotech-mode F2]' : '',
       '',
       'Composite measures FINANCIAL fragility (leverage/liquidity/tails/vol/drawdown).',
@@ -3209,16 +3224,31 @@ function TradingDesk({ L, lk, C }) {
       '[unvalidated intuition] thresholds.',
     ].filter(Boolean).join('\n');
     return (
-      <span
-        title={tooltip}
-        style={{
-          fontFamily: MONO, fontSize:9, fontWeight:700,
-          padding:'2px 6px', borderRadius:3,
-          background: colorByBand.bg, color: colorByBand.fg,
-          letterSpacing:0.3, cursor:'help',
-        }}
-      >
-        ⚠ {frag.composite}
+      <span style={{display:'inline-flex', gap:3, alignItems:'center'}}>
+        <span
+          title={tooltip}
+          style={{
+            fontFamily: MONO, fontSize:9, fontWeight:700,
+            padding:'2px 6px', borderRadius:3,
+            background: colorByBand.bg, color: colorByBand.fg,
+            letterSpacing:0.3, cursor:'help',
+          }}
+        >
+          ⚠ {frag.composite}
+        </span>
+        {f6Render && (
+          <span
+            title={f6Tooltip}
+            style={{
+              fontFamily: MONO, fontSize:8, fontWeight:700,
+              padding:'1px 5px', borderRadius:3,
+              background: `${f6Color}12`, color: f6Color,
+              letterSpacing:0.3, cursor:'help',
+            }}
+          >
+            F6 {f6.score}
+          </span>
+        )}
       </span>
     );
   };

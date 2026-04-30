@@ -30,9 +30,9 @@
         "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
         "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
         "concentration_seed": {
-          "score": 60,
-          "rationale_e": "Optical transceivers are core (>90% revenue). Customer concentration with hyperscalers — NVDA + MSFT + GOOGL collectively likely majority of revenue. Single-product-category exposure. Tech-cycle correlated. High business-model concentration. [unvalidated intuition]",
-          "rationale_z": "光模块为核心（>90%营收）。客户集中于超大规模厂商——英伟达+微软+谷歌可能合计占多数营收。单一产品品类敞口。与科技周期高度相关。业务模式集中度高。[未验证直觉]"
+          "score": 70,
+          "rationale_e": "Optical transceivers >90% of revenue + hyperscaler customer concentration (NVDA/MSFT/GOOGL) — product AND customer concentration AND-compound.",
+          "rationale_z": "光模块业务占营收 >90% 且超大规模客户集中（英伟达/微软/谷歌）—— 产品与客户双重集中度叠加。"
         }
       },
       "narrative_shift_rationale": "1.6T SiPh transceiver narrative fully mainstream — NVIDIA Blackwell, Google TPU v5, Azure all adopted. Shifted from 'will they qualify' to 'market leader in next-gen optics'. Raised from 65→72.",

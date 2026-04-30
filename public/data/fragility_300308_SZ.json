@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-30T14:35:11.934630+00:00",
+  "generated_at": "2026-04-30T14:49:08.861763+00:00",
   "ticker": "300308.SZ",
   "composite": 22.4,
   "band": "ROBUST",
@@ -11,9 +11,9 @@
     "F5_max_drawdown": 8.8
   },
   "f6_concentration": {
-    "score": 60,
-    "rationale_e": "Optical transceivers are core (>90% revenue). Customer concentration with hyperscalers — NVDA + MSFT + GOOGL collectively likely majority of revenue. Single-product-category exposure. Tech-cycle correlated. High business-model concentration. [unvalidated intuition]",
-    "rationale_z": "光模块为核心（>90%营收）。客户集中于超大规模厂商——英伟达+微软+谷歌可能合计占多数营收。单一产品品类敞口。与科技周期高度相关。业务模式集中度高。[未验证直觉]"
+    "score": 70,
+    "rationale_e": "Optical transceivers >90% of revenue + hyperscaler customer concentration (NVDA/MSFT/GOOGL) — product AND customer concentration AND-compound.",
+    "rationale_z": "光模块业务占营收 >90% 且超大规模客户集中（英伟达/微软/谷歌）—— 产品与客户双重集中度叠加。"
   },
   "biotech_mode": false,
   "f2_method": "fcf_consistency",
