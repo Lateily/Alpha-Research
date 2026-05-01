@@ -123,6 +123,15 @@ jobs:
         continue-on-error: true          # non-critical; reads market_data + rdcf
         run: python scripts/ev_ebitda_valuation.py
 
+      # ── Step 2m: AHF-2 Method 3 — Residual Income (EBO) valuation ─────────
+      # Per AHF-2 strategic handoff: Edwards-Bell-Ohlson book-value-regime
+      # valuation. Third orthogonal estimator. WACC used as r_e proxy.
+      # Biotech + hyper-growth-EBO graceful-degradation paths. NOT folded
+      # into VP composite. KR3 (Aggregator) pending.
+      - name: Compute Residual Income valuation (AHF-2 Method 3)
+        continue-on-error: true          # non-critical; reads market_data + rdcf + fin
+        run: python scripts/residual_income_valuation.py
+
       # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
       - name: Sync to Supabase
         if: env.SUPABASE_URL != ''
@@ -167,7 +176,8 @@ jobs:
             public/data/fragility_6160_HK.json \
             public/data/fragility_002594_SZ.json \
             public/data/persona_overlay.json \
-            public/data/ev_ebitda_valuation.json; do
+            public/data/ev_ebitda_valuation.json \
+            public/data/residual_income_valuation.json; do
             [ -f "$f" ] && git add "$f"
           done
 

@@ -546,6 +546,69 @@ else:
         print(f"  {FAIL}  ev_ebitda_valuation.json: exception while validating: {e}")
 
 
+# ── Residual Income Valuation (residual_income_valuation.json) ────────────────
+# AHF-2 Method 3: Edwards-Bell-Ohlson book-value-regime valuation.
+# Schema validation only — does not assert specific delta_pp values
+# (those are [unvalidated intuition] and may shift as targets are
+# re-calibrated).
+print("\n=== Residual Income Valuation (residual_income_valuation.json) ===")
+RI_VALID_SIGNALS = {"UNDERPRICED", "FAIRLY_VALUED", "OVERPRICED"}
+RI_VALID_STATUS = {
+    "multi_method", "biotech_fallback", "hyper_growth_ebo_unstable",
+    "fundamentals_missing", "book_equity_missing", "negative_book_equity",
+    "roe_missing", "market_cap_missing", "wacc_missing", "wacc_anomalous",
+}
+ri_path = DATA / "residual_income_valuation.json"
+if not ri_path.exists():
+    print(f"  {WARN}  residual_income_valuation.json missing (residual_income_valuation.py not yet run)")
+else:
+    try:
+        ri = json.loads(ri_path.read_text())
+        ri_blocks = ri.get("tickers", {}) or {}
+        wl = _watchlist_tickers()
+        for ticker in wl:
+            block = ri_blocks.get(ticker)
+            if block is None:
+                print(f"  {FAIL}  {ticker}: missing from residual_income_valuation.json")
+                continue
+            problems = []
+            status = block.get("model_status")
+            if status not in RI_VALID_STATUS:
+                problems.append(f"unknown model_status '{status}'")
+
+            signal = block.get("signal")
+            delta_pp = block.get("delta_pp")
+
+            if status == "multi_method":
+                if signal not in RI_VALID_SIGNALS:
+                    problems.append(f"signal='{signal}' not in enum")
+                if not isinstance(delta_pp, (int, float)):
+                    problems.append(f"delta_pp={delta_pp} not numeric")
+                elif not (-200 <= delta_pp <= 200):
+                    problems.append(f"delta_pp={delta_pp} out of [-200, +200]pp")
+            else:
+                # All non-multi_method (biotech_fallback, hyper_growth, errors)
+                if signal is not None or delta_pp is not None:
+                    problems.append(f"degraded state '{status}' should have signal=null and delta_pp=null")
+
+            icon = OK if not problems else FAIL
+            warn_suffix = "  [" + "; ".join(problems) + "]" if problems else ""
+            if status == "multi_method":
+                line = (f"signal={signal:<13s}  delta={delta_pp:+6.1f}pp  "
+                        f"P/B={block.get('p_b_observed', 0):.2f}  "
+                        f"impROE={block.get('implied_future_roe_pct', 0):.1f}%  "
+                        f"curROE={block.get('current_roe_pct', 0):.1f}%")
+            elif status == "hyper_growth_ebo_unstable":
+                line = f"hyper_growth_ebo_unstable (P/B={block.get('p_b_observed', 0):.2f})"
+            elif status == "biotech_fallback":
+                line = "biotech_fallback (no recurring earnings stream)"
+            else:
+                line = f"degraded ({status})"
+            print(f"  {icon}  {ticker:12s}  {line}{warn_suffix}")
+    except Exception as e:
+        print(f"  {FAIL}  residual_income_valuation.json: exception while validating: {e}")
+
+
 print("\n" + "="*60)
 print("Tip: fields to use in rdcf JSON:")
 print("  implied growth : implied_fcf_growth  (standard) / implied_rev_growth (biotech)")

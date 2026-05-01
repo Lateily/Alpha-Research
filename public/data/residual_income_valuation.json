@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-01T10:44:15.152707+00:00",
+    "schema_version": 1,
+    "thresholds_status": "[unvalidated intuition]",
+    "method": "residual_income_no_growth_ebo",
+    "forecast_horizon_years": 5,
+    "signal_threshold_pp": 15.0,
+    "p_b_hyper_growth_ceiling": 10.0,
+    "wacc_anomalous_floor": 0.02,
+    "r_e_proxy": "wacc_from_rdcf_wacc_detail",
+    "delta_unit": "pp (percentage points of ROE)",
+    "note": "AHF-2 Method 3. NOT folded into VP composite (INVARIANT 3). WACC used as r_e proxy (handoff Q2 option a; cleaner pure ke computation deferred to future polish KR). KR3 aggregator must NOT cross-compare delta_pp (this method) vs delta_pct (KR1 EV/EBITDA) — only the {UNDERPRICED, FAIRLY_VALUED, OVERPRICED} signal enums are unit-comparable."
+  },
+  "tickers": {
+    "300308.SZ": {
+      "ticker": "300308.SZ",
+      "model_status": "hyper_growth_ebo_unstable",
+      "signal": null,
+      "delta_pp": null,
+      "p_b_observed": 32.08,
+      "book_equity": 29765156276.0,
+      "market_cap": 954912407552,
+      "reason": "P/B 32.08 > sanity ceiling 10; no-growth EBO produces implied future ROE >100% which is mathematical artifact, not valuation signal. Method 1 rdcf FCF DCF + Method 2 EV/EBITDA remain canonical.",
+      "reason_z": "P/B 32.08 > 合理上限 10；无增长EBO产生隐含未来ROE>100%，属数学伪影非估值信号。Method 1 rdcf FCF DCF + Method 2 EV/EBITDA 仍是标准估值。"
+    },
+    "700.HK": {
+      "ticker": "700.HK",
+      "model_status": "multi_method",
+      "signal": "OVERPRICED",
+      "delta_pp": -25.9,
+      "current_roe_pct": 20.03,
+      "implied_future_roe_pct": 45.93,
+      "p_b_observed": 3.66,
+      "annuity_factor": 7.9745,
+      "wacc_used_as_re": 0.1254,
+      "book_equity": 1154152000000.0,
+      "market_cap": 4227461283840,
+      "rationale_e": "P/B 3.66 → market implies forward ROE 45.9% over 5y; current ROE 20.0%; delta -25.9pp → OVERPRICED",
+      "rationale_z": "P/B 3.66 → 市场隐含未来5年ROE 45.9%；当前ROE 20.0%；delta -25.9pp → OVERPRICED"
+    },
+    "9999.HK": {
+      "ticker": "9999.HK",
+      "model_status": "multi_method",
+      "signal": "OVERPRICED",
+      "delta_pp": -16.28,
+      "current_roe_pct": 22.62,
+      "implied_future_roe_pct": 38.91,
+      "p_b_observed": 3.56,
+      "annuity_factor": 9.1575,
+      "wacc_used_as_re": 0.1092,
+      "book_equity": 160296119000.0,
+      "market_cap": 571124678656,
+      "rationale_e": "P/B 3.56 → market implies forward ROE 38.9% over 5y; current ROE 22.6%; delta -16.3pp → OVERPRICED",
+      "rationale_z": "P/B 3.56 → 市场隐含未来5年ROE 38.9%；当前ROE 22.6%；delta -16.3pp → OVERPRICED"
+    },
+    "6160.HK": {
+      "ticker": "6160.HK",
+      "model_status": "biotech_fallback",
+      "signal": null,
+      "delta_pp": null,
+      "reason": "Clinical-stage biotech: book-value-regime EBO assumes meaningful ROE from existing operations; clinical biotech has no recurring earnings stream. Method 1 rdcf biotech_revenue remains the canonical valuation.",
+      "reason_z": "临床期生物科技：账面价值法EBO假设现有经营产生稳定ROE，但临床期生物科技无经常性盈利。Method 1 rdcf biotech_revenue 仍是该股票的标准估值方法。"
+    },
+    "002594.SZ": {
+      "ticker": "002594.SZ",
+      "model_status": "multi_method",
+      "signal": "OVERPRICED",
+      "delta_pp": -24.88,
+      "current_roe_pct": 11.15,
+      "implied_future_roe_pct": 36.03,
+      "p_b_observed": 3.81,
+      "annuity_factor": 10.582,
+      "wacc_used_as_re": 0.0945,
+      "book_equity": 246274606000.0,
+      "market_cap": 938888986624,
+      "rationale_e": "P/B 3.81 → market implies forward ROE 36.0% over 5y; current ROE 11.1%; delta -24.9pp → OVERPRICED",
+      "rationale_z": "P/B 3.81 → 市场隐含未来5年ROE 36.0%；当前ROE 11.1%；delta -24.9pp → OVERPRICED"
+    }
+  }
+}
