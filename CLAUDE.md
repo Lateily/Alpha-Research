@@ -13,7 +13,7 @@
 3. `docs/research/THESIS_PROTOCOL.md` — if research-related work (7-step thesis)
 4. `docs/research/INVESTMENT_FRAMEWORK.md` — if research-related work (40+ perspective library)
 5. `docs/team/AGENT_PROTOCOL.md` — if multi-agent coordination
-6. `docs/team/REVIEW_REQUEST.md` — if exists, contains 学长's 反馈待处理
+6. `docs/team/REVIEW_REQUEST.md` — if exists, contains Franky's 反馈待处理
 
 If you skip STATUS.md you're working from stale mental model. Don't.
 

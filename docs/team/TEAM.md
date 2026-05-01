@@ -11,7 +11,7 @@ Junyan (Owner)
    │
    ├── Direction, final investment decisions, deployment approvals
    │
-   ├── 学长 (Research Director, part-time)
+   ├── Franky (Research Director, part-time)
    │       Weekly 1h: quality review + idea injection
    │       MIT信息流: external intelligence source
    │
@@ -40,7 +40,7 @@ Junyan (Owner)
 
 ---
 
-## 学长 — Research Director (Part-Time)
+## Franky — Research Director (Part-Time)
 
 **Role:** Quality gate. External intelligence. Idea injector.
 
@@ -70,7 +70,7 @@ Examples of useful pushback:
 - Telegram group: member (receives all daily platform alerts)
 - `REVIEW_REQUEST.md`: write access (his primary contribution channel)
 
-**What 学长 does NOT do:**
+**What Franky does NOT do:**
 - Write production code
 - Make investment decisions
 - Approve deployments
@@ -115,7 +115,7 @@ Examples of useful pushback:
 
 ## Decision Authority Matrix
 
-| Decision | Junyan | 学长 | Claude | Codex |
+| Decision | Junyan | Franky | Claude | Codex |
 |----------|--------|------|--------|-------|
 | Add/remove watchlist ticker | ✅ ONLY | advise | advise | — |
 | Merge to main | ✅ ONLY | — | propose | propose |
@@ -132,6 +132,6 @@ Examples of useful pushback:
 | Channel | Purpose | Frequency |
 |---------|---------|-----------|
 | Telegram group | Daily platform alerts, wrongIf alerts | Daily (automated) |
-| `REVIEW_REQUEST.md` | 学长 feedback → Claude input | Weekly |
+| `REVIEW_REQUEST.md` | Franky feedback → Claude input | Weekly |
 | GitHub Issues (future) | Bug reports, feature requests | As needed |
 | In-person / WeChat | Direction setting, weekly sync | Weekly |

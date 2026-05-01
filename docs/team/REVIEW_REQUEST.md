@@ -1,14 +1,14 @@
-# REVIEW REQUEST — 学长反馈通道
+# REVIEW REQUEST — Franky反馈通道
 
-> **Purpose:** 学长 (Strategic Advisor) 在这里写质疑、漏洞、新想法。
+> **Purpose:** Franky (Strategic Advisor) 在这里写质疑、漏洞、新想法。
 > Claude 每次新 shift 开始时**强制读取**此文件，把所有 status: NEW
 > 的条目转化为 KR 提案 / 答复 / 或标 deferred。
 >
-> **写入权限:** 学长直接写（push 或 PR）。Junyan 可以编辑/确认/批注。
+> **写入权限:** Franky直接写（push 或 PR）。Junyan 可以编辑/确认/批注。
 >
 > **处理流程:**
 > ```
-> 学长写 entry (status: NEW)
+> Franky写 entry (status: NEW)
 >     ↓
 > Claude 下次 shift 强制读取 → 答复 / 转 KR / deferred → 改 status
 >     ↓
@@ -17,7 +17,7 @@
 
 ---
 
-## 写入模板（学长用）
+## 写入模板（Franky用）
 
 ```markdown
 ### Entry [N] — [一句话标题] (YYYY-MM-DD)
@@ -41,7 +41,7 @@
 ```
 
 **Status 字段约定:**
-- `NEW` — 学长刚写，Claude 未处理
+- `NEW` — Franky刚写，Claude 未处理
 - `IN_PROGRESS` — Claude 已读，正在转化 / 实施
 - `RESOLVED` — 已完成（链接到 KR commit / handoff doc）
 - `DEFERRED` — 已读但暂缓，注明 defer 原因 + 何时重审
@@ -60,17 +60,17 @@
 **Target:** 整个研究流程
 
 **Description:**
-学长 onboarding 之前的 placeholder 条目。当前阶段（2026-05-01）平台
+Franky onboarding 之前的 placeholder 条目。当前阶段（2026-05-01）平台
 正在重组 + 搭建基础框架（STATUS.md / THESIS_PROTOCOL / INVESTMENT_FRAMEWORK
-/ TEAM 协议 / 数据源接入清单等）。学长正式纳入后，第一项工作建议是
+/ TEAM 协议 / 数据源接入清单等）。Franky正式纳入后，第一项工作建议是
 读取近期 1-2 份现有 Deep Research 报告，按 THESIS_PROTOCOL 7 步标准
 找漏洞写第一个真实 entry。
 
 **Why this matters:**
-确保学长知道这个文件的写法 + Claude 知道格式。
+确保Franky知道这个文件的写法 + Claude 知道格式。
 
 **Suggested action:**
-学长第一次 review 时把这条 status 改成 RESOLVED + 写 Entry 2
+Franky第一次 review 时把这条 status 改成 RESOLVED + 写 Entry 2
 （第一个真实质疑）。
 
 ---

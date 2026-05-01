@@ -357,7 +357,7 @@ DTC 占比 / 库存周转 ...
 9. 输出层只展示 top 6-8 最相关视角 (但 trace 保留完整 audit)
 ```
 
-### 输出层 (展示给 Junyan / 学长 / 客户)
+### 输出层 (展示给 Junyan / Franky / 客户)
 
 只展示对该股票 thesis **最相关** 的 6-8 个视角。例如 BYD 输出可能聚焦：
 - A1 业务模式 (auto + battery)

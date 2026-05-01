@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-01 evening (post AHF-2 v1 sprint completion)
+**Last updated:** 2026-05-01 night (post repo reorg + Franky onboarding + auto-work-mode rename)
 **Last shift:** `2026-04-30-2323` (4 KRs shipped, ended via DEFER_D consensus)
 **HEAD:** `04c87f7` on `main` (auto/2026-04-30 == main)
 
@@ -79,7 +79,7 @@
 - [ ] `INVESTMENT_FRAMEWORK.md` 视角库强制读取 (40+ perspective coverage)
 - [ ] 测试一只股票 → 看是否产出"经得起反问"的 thesis vs 现状的"数据堆砌"
 
-**判定标准：** 学长读 thesis 能挑不出"这个 evidence 缺前置 catalyst"
+**判定标准：** Franky读 thesis 能挑不出"这个 evidence 缺前置 catalyst"
 的漏洞。
 
 ### Bridge 2 — 数据源全面接入
@@ -96,8 +96,8 @@
 - [ ] orchestrator 雏形 (路由 + 成本追踪)
 
 ### Bridge 4 — 团队工作流
-- [ ] 学长入职文档 + GitHub read access
-- [ ] REVIEW_REQUEST.md 学长反馈通道
+- [ ] Franky入职文档 + GitHub read access
+- [ ] REVIEW_REQUEST.md Franky反馈通道
 - [ ] 周度 retrospective 模板
 
 ### Bridge 5 — USP 核心实现
@@ -126,15 +126,33 @@
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
 
+### 2026-05-01 night (post repo reorg + Franky/Codex protocol)
+1. **Repo 大洗牌**: ar-platform 内部 18 个 .md 平铺 → 6 个分类目录
+   (architecture/research/operations/team/strategy/archive). Stock/
+   根目录 10 个散落项目 → 3 个 (.claude / ar-platform / legacy).
+2. **学长正式纳入团队**: Franky (MIT). 角色 = 兼职研究总监, 核心动作
+   "挑漏洞". 异步反馈通道 = `docs/team/REVIEW_REQUEST.md`.
+3. **Skill 改名**: night-shift → auto-work-mode. `.night-shift/runs/`
+   目录路径保留 (历史 runs 不破坏).
+4. **早期项目历史归档**: `~/Desktop/Stock/legacy/` 含 3 个 ar-platform
+   前身——`AI-Powered_Platform_v2/` (v2.0 设计文档 + 早期 Vite/React
+   雏形, 2026-04-11), `early-react-prototype.jsx` (单文件 React v0),
+   `milestone_v13.html` (旧 milestone). 这些不进 git, 但 Claude 可以
+   随时 grep/read 来理解早期决策。已删除已被替代的: night-shift-main/
+   equity-research-skill/ Citadel_IE/ 两个 AR_Platform_*.md.
+5. **学到的哲学**: 思维链条上多个原则**互相支撑**, 而不是简单先后顺序——
+   "Idea 先行"是主轴, 但 catalyst+mechanism+contrarian+quantification
+   各点之间也是相互验证的网状结构, 不是线性的串。
+
 ### 2026-05-01 evening (post AHF-2 v1)
-1. **Thesis 链条结构性问题**: Davis double-kill 例子暴露"数据先行"
-   错误 — AI 跳过了 catalyst statement 直接到 evidence。需要硬编码
-   7 步协议。
-2. **覆盖深度问题**: 现在只有 3 个 personas (Buffett/Burry/Damodaran).
-   PM 真实工作中至少看 40+ 视角 (行业生命周期, 护城河类型, 催化剂分类,
-   多种估值视角, 宏观敏感性, ESG, 监管, 供应链, 技术周期...). 必须
-   扩成 INVESTMENT_FRAMEWORK.md 完整库。
-3. **大局感知缺失**: 之前的 shift 经常"上次到哪→接着做"模式, 缺
+6. **Thesis 链条结构性问题**: Davis double-kill 例子暴露"数据先行"
+   错误 — AI 跳过了 catalyst statement 直接到 evidence。已硬编码
+   7 步协议进 api/research.js + docs/research/THESIS_PROTOCOL.md.
+7. **覆盖深度问题**: 之前只有 3 个 personas (Buffett/Burry/Damodaran).
+   PM 真实工作中至少看 40+ 视角. 已扩展到 docs/research/
+   INVESTMENT_FRAMEWORK.md 完整视角库 (Universal 12 + Sector 4 +
+   Geographic 3 + USP narrative 3).
+8. **大局感知缺失**: 之前的 shift 经常"上次到哪→接着做"模式, 缺
    bridge-level 思考。STATUS.md (这文件) 的强制读取协议是修复方案。
 
 ### 2026-04-30 evening (post AHF-1 + AHF-3)

@@ -1,6 +1,6 @@
-# 学长 Onboarding — 一页纸平台简报
+# Franky Onboarding — 一页纸平台简报
 
-> 给学长看的版本。两分钟读完，不需要看代码。
+> 给Franky看的版本。两分钟读完，不需要看代码。
 > Last updated: 2026-05-01
 
 ---

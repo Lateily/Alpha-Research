@@ -96,7 +96,7 @@ catalyst → 业务运营变化 → 收入/成本/利润影响 →
 7. EPS 上修 × PE 上修 = 戴维斯双杀启动 (双重正向)
 ```
 
-**校验：** 任何一步是"unfounded leap"（缺乏理由），整条链失效。学长应该
+**校验：** 任何一步是"unfounded leap"（缺乏理由），整条链失效。Franky应该
 能挑出"第 4 步到第 5 步缺一个环节"这种漏洞。
 
 ---
@@ -318,9 +318,9 @@ expected_pnl_asymmetry:
 
 ---
 
-## 学长审核提示词
+## Franky审核提示词
 
-> "学长视角: 用 30 秒读完 thesis 报告, 找一个'这个 evidence 缺前置
+> "Franky视角: 用 30 秒读完 thesis 报告, 找一个'这个 evidence 缺前置
 > catalyst' 或 '这个 mechanism 跳过了一步' 的漏洞。如果挑不出来,
 > 这只股票通过 thesis 质量门。如果挑出来 → 标注 review_request,
 > 让 AI 重做。"
