@@ -485,6 +485,67 @@ else:
         print(f"  {FAIL}  persona_overlay.json: exception while validating: {e}")
 
 
+# ── EV/EBITDA Valuation (ev_ebitda_valuation.json) ─────────────────────────────
+# AHF-2 Method 2: target-multiple comparison per ticker. Schema validation
+# only — does not assert specific delta_pct values (those are
+# [unvalidated intuition] and may shift as targets are re-calibrated).
+print("\n=== EV/EBITDA Valuation (ev_ebitda_valuation.json) ===")
+EV_VALID_SIGNALS = {"UNDERPRICED", "FAIRLY_VALUED", "OVERPRICED"}
+EV_VALID_STATUS = {
+    "multi_method", "biotech_fallback",
+    "fundamentals_missing", "ebitda_missing", "ev_data_missing",
+}
+ev_path = DATA / "ev_ebitda_valuation.json"
+if not ev_path.exists():
+    print(f"  {WARN}  ev_ebitda_valuation.json missing (ev_ebitda_valuation.py not yet run)")
+else:
+    try:
+        ev = json.loads(ev_path.read_text())
+        ev_blocks = ev.get("tickers", {}) or {}
+        wl = _watchlist_tickers()
+        for ticker in wl:
+            block = ev_blocks.get(ticker)
+            if block is None:
+                print(f"  {FAIL}  {ticker}: missing from ev_ebitda_valuation.json")
+                continue
+            problems = []
+            status = block.get("model_status")
+            if status not in EV_VALID_STATUS:
+                problems.append(f"unknown model_status '{status}'")
+
+            signal = block.get("signal")
+            delta_pct = block.get("delta_pct")
+
+            if status == "multi_method":
+                if signal not in EV_VALID_SIGNALS:
+                    problems.append(f"signal='{signal}' not in enum")
+                if not isinstance(delta_pct, (int, float)):
+                    problems.append(f"delta_pct={delta_pct} not numeric")
+                elif not (-100 <= delta_pct <= 500):
+                    problems.append(f"delta_pct={delta_pct} out of [-100, +500]")
+            elif status == "biotech_fallback":
+                if signal is not None:
+                    problems.append(f"biotech_fallback should have signal=null, got '{signal}'")
+                if delta_pct is not None:
+                    problems.append(f"biotech_fallback should have delta_pct=null, got {delta_pct}")
+            else:
+                # degraded states (fundamentals_missing etc.)
+                if signal is not None or delta_pct is not None:
+                    problems.append(f"degraded state should have signal=null and delta_pct=null")
+
+            icon = OK if not problems else FAIL
+            warn_suffix = "  [" + "; ".join(problems) + "]" if problems else ""
+            if status == "multi_method":
+                line = f"signal={signal:<13s}  delta={delta_pct:+6.1f}%  current={block.get('current_ev_ebitda', 0):.2f}x"
+            elif status == "biotech_fallback":
+                line = f"biotech_fallback (current ev_ebitda={block.get('current_ev_ebitda', 0):.2f}x)"
+            else:
+                line = f"degraded ({status})"
+            print(f"  {icon}  {ticker:12s}  {line}{warn_suffix}")
+    except Exception as e:
+        print(f"  {FAIL}  ev_ebitda_valuation.json: exception while validating: {e}")
+
+
 print("\n" + "="*60)
 print("Tip: fields to use in rdcf JSON:")
 print("  implied growth : implied_fcf_growth  (standard) / implied_rev_growth (biotech)")
