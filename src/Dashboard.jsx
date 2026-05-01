@@ -3095,6 +3095,7 @@ function TradingDesk({ L, lk, C }) {
   const [snapshots, setSnapshots] = useState([]);
   const [fragility, setFragility] = useState({});  // KR3: { ticker: fragility_data }
   const [personaOverlay, setPersonaOverlay] = useState(null);  // KR4: AHF-3 persona overlay (single file, all tickers)
+  const [multiMethodValuation, setMultiMethodValuation] = useState(null);  // AHF-2 KR4: triangulated signal across FCF DCF + EV/EBITDA + EBO
   const [loading,   setLoading]   = useState(true);
   const MONO = "'JetBrains Mono','Fira Code',monospace";
 
@@ -3129,9 +3130,12 @@ function TradingDesk({ L, lk, C }) {
           // Adding a 6th watchlist ticker does NOT require an extra fetch here —
           // persona_overlay.json regenerates with all current tickers each pipeline run.
           fetch(base + 'data/persona_overlay.json').then(r => r.ok ? r.json() : null).catch(() => null),
+          // AHF-2 KR4: multi-method valuation triangulation (single file,
+          // internal ticker enumeration, output of scripts/multi_method_valuation.py).
+          fetch(base + 'data/multi_method_valuation.json').then(r => r.ok ? r.json() : null).catch(() => null),
         ]);
       })
-      .then(([dd, sz, sq, sn, fragArr, personas] = [null, null, null, null, [], null]) => {
+      .then(([dd, sz, sq, sn, fragArr, personas, mmv] = [null, null, null, null, [], null, null]) => {
         setDecision(dd);
         setSizing(sz);
         setQuality(sq);
@@ -3140,6 +3144,7 @@ function TradingDesk({ L, lk, C }) {
         (fragArr || []).forEach(({ ticker, data }) => { if (data) fragMap[ticker] = data; });
         setFragility(fragMap);
         setPersonaOverlay(personas);
+        setMultiMethodValuation(mmv);
         setLoading(false);
       });
   }, []);
@@ -3376,6 +3381,130 @@ function TradingDesk({ L, lk, C }) {
     );
   };
 
+  // ─────────────────────────────────────────────────────────────────────
+  // AHF-2 KR4: TriangulatedBadge — surfaces median-of-3 valuation signal
+  //
+  // Renders compact arrow notation (TRI ↓/↑/=/—) matching sibling badge
+  // pattern (no colon, like F6 + persona). Color-coded per signal:
+  //   OVERPRICED      → red    (↓ down arrow)
+  //   UNDERPRICED     → green  (↑ up arrow)
+  //   FAIRLY_VALUED   → gold   (= equals)
+  //   INSUFFICIENT_DATA → grey (— em dash)
+  //
+  // Hover tooltip shows per-method signals, skip reasons (translated via
+  // TRI_SKIP_DESCRIPTIONS map), and KR3 rationale text (i18n via lk).
+  //
+  // Visual subordination (smallest in hierarchy):
+  //   composite (alpha 15) > F6 (12) > persona (12) > TRI (10)
+  // Triangulated signal is SYNTHESIS across other lenses — context, not
+  // actionable trigger. Smaller alpha keeps actionable signals primary.
+  //
+  // Four null-state paths (matching KR3 PersonaCluster pattern):
+  //   1. overlay null            → cluster silent (loading, pre-fetch)
+  //   2. ticker missing in file  → cluster silent (e.g. new watchlist add)
+  //   3. INSUFFICIENT_DATA       → "TRI —" badge (all 3 methods skipped)
+  //   4. full data               → arrow notation badge
+  // ─────────────────────────────────────────────────────────────────────
+  const TRI_SKIP_DESCRIPTIONS = {
+    // Method 1 (FCF DCF) skip codes
+    'rdcf_missing':                 { e: 'rdcf JSON not yet generated',  z: 'rdcf JSON尚未生成' },
+    'rdcf_no_signal':               { e: 'rdcf signal field absent',     z: 'rdcf signal字段缺失' },
+    // Method 2 (EV/EBITDA) skip codes
+    'ev_ebitda_file_missing':       { e: 'EV/EBITDA module not run',     z: 'EV/EBITDA模块未运行' },
+    'ev_ebitda_ticker_missing':     { e: 'Ticker missing from output',   z: '股票从输出中缺失' },
+    'ev_ebitda_biotech_fallback':   { e: 'Inapplicable to biotech',      z: '不适用于生物科技' },
+    'ev_ebitda_fundamentals_missing': { e: 'Live data unavailable',      z: '实时数据不可用' },
+    'ev_ebitda_ebitda_missing':     { e: 'EBITDA not derivable',         z: 'EBITDA无法推导' },
+    'ev_ebitda_ev_data_missing':    { e: 'Market cap missing',           z: '市值数据缺失' },
+    // Method 3 (EBO) skip codes
+    'ri_file_missing':              { e: 'Residual Income module not run', z: 'Residual Income 模块未运行' },
+    'ri_ticker_missing':            { e: 'Ticker missing from output',   z: '股票从输出中缺失' },
+    'ri_biotech_fallback':          { e: 'Inapplicable to biotech',      z: '不适用于生物科技' },
+    'ri_hyper_growth_ebo_unstable': { e: 'P/B too high (hyper-growth)',  z: 'P/B过高（超高成长）' },
+  };
+
+  // Skip-code lookup with fallback chain: known map → rdcf_error:* prefix
+  // → raw code (for unknown / future codes). Bilingual via lk.
+  const lookupSkipDesc = (code) => {
+    if (!code) return '';
+    const desc = TRI_SKIP_DESCRIPTIONS[code];
+    if (desc) return lk === 'z' ? desc.z : desc.e;
+    if (code.startsWith('rdcf_error:')) {
+      const errCode = code.slice('rdcf_error:'.length);
+      return lk === 'z' ? `rdcf错误: ${errCode}` : `rdcf error: ${errCode}`;
+    }
+    return code;  // fallback: raw code
+  };
+
+  const TriangulatedBadge = ({ overlay, ticker }) => {
+    // Path 1: pre-fetch loading
+    if (!overlay) return null;
+    // Path 2: ticker missing entirely from file
+    const block = (overlay.tickers || {})[ticker];
+    if (!block) return null;
+
+    const sig = block.triangulated_signal;
+    const mc = block.methods_count || 0;
+    const isBio = block.is_biotech_fallback;
+    const isPartial = block.is_partial;
+
+    // Color mapping per signal
+    const color = sig === 'OVERPRICED'    ? C.red
+                : sig === 'UNDERPRICED'   ? C.green
+                : sig === 'FAIRLY_VALUED' ? C.gold
+                : C.mid;  // INSUFFICIENT_DATA → grey
+
+    // Arrow notation (no colon, sibling-pattern parity)
+    const arrow = sig === 'OVERPRICED'    ? '↓'
+                : sig === 'UNDERPRICED'   ? '↑'
+                : sig === 'FAIRLY_VALUED' ? '='
+                : '—';  // INSUFFICIENT_DATA
+
+    // Per-method signal lines with skip translation
+    const ms = block.method_signals || {};
+    const fmtMethodLine = (label, methodBlock) => {
+      if (!methodBlock) return `${label}: —`;
+      if (methodBlock.skip_reason) {
+        return `${label}: skipped (${lookupSkipDesc(methodBlock.skip_reason)})`;
+      }
+      return `${label}: ${methodBlock.signal || '—'}`;
+    };
+
+    const flagSuffix = isBio ? '  [biotech_fallback]'
+                     : isPartial ? '  [partial]'
+                     : '';
+    const rationale = lk === 'z' ? (block.rationale_z || '') : (block.rationale_e || '');
+
+    const tooltip = [
+      `TRI ${arrow} (${sig})  ·  n=${mc} methods${flagSuffix}`,
+      '─────────────────────────────────────────────',
+      fmtMethodLine('M1 (FCF DCF)', ms.FCF_DCF),
+      fmtMethodLine('M2 (EV/EBITDA)', ms.EV_EBITDA),
+      fmtMethodLine('M3 (Residual Income)', ms.Residual_Income_EBO),
+      '',
+      rationale,
+      '',
+      '[unvalidated intuition] tie-break + per-method thresholds.',
+      'NOT folded into VP composite.',
+    ].filter(Boolean).join('\n');
+
+    return (
+      <span title={tooltip} style={{
+        fontFamily: MONO,
+        fontSize: 7,
+        fontWeight: 700,
+        padding: '1px 4px',
+        borderRadius: 3,
+        background: `${color}10`,  // alpha 10 — smallest in hierarchy
+        color,
+        letterSpacing: 0.3,
+        cursor: 'help',
+      }}>
+        TRI {arrow}
+      </span>
+    );
+  };
+
   const ScoreBadge = ({ score }) => {
     const col = score >= 20 ? '#10b981' : score <= -20 ? '#ef4444' : '#6b7280';
     return (
@@ -3590,6 +3719,7 @@ function TradingDesk({ L, lk, C }) {
                   )}
                   <FragilityPill frag={fragility[d.ticker]} />
                   <PersonaCluster overlay={personaOverlay} ticker={d.ticker} />
+                  <TriangulatedBadge overlay={multiMethodValuation} ticker={d.ticker} />
                   {d.holding_days != null && (
                     <span style={{color:C.mid, fontSize:10}}>{d.holding_days}d</span>
                   )}
@@ -3638,6 +3768,7 @@ function TradingDesk({ L, lk, C }) {
                     )}
                     <FragilityPill frag={fragility[d.ticker]} />
                     <PersonaCluster overlay={personaOverlay} ticker={d.ticker} />
+                    <TriangulatedBadge overlay={multiMethodValuation} ticker={d.ticker} />
                   </div>
                   <div style={{fontSize:11, color:C.mid, maxWidth:340, textAlign:'right', lineHeight:1.5}}>
                     {lk==='z' ? d.reason_z : d.reason_e}
