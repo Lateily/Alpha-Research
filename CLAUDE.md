@@ -1,7 +1,24 @@
 # AR Equity Research Platform — Project Context
 
 > This file is auto-loaded at the start of every Claude session. Read it fully before writing any code.
-> **Last updated: 2026-04-29** (added session behaviour patterns, neat-freak + night-shift skills)
+> **Last updated: 2026-05-01** (post repo reorganization: docs/ structure +
+> auto-work-mode skill rename + STATUS.md mandatory pre-flight)
+
+## ⚡ MANDATORY PRE-FLIGHT (before any work)
+
+**Read these files in order, every session:**
+
+1. `STATUS.md` (root) — current state, bridges, recent lessons. **REQUIRED.**
+2. This file (`CLAUDE.md`) — architecture + immutable constraints
+3. `docs/research/THESIS_PROTOCOL.md` — if research-related work (7-step thesis)
+4. `docs/research/INVESTMENT_FRAMEWORK.md` — if research-related work (40+ perspective library)
+5. `docs/team/AGENT_PROTOCOL.md` — if multi-agent coordination
+6. `docs/team/REVIEW_REQUEST.md` — if exists, contains 学长's 反馈待处理
+
+If you skip STATUS.md you're working from stale mental model. Don't.
+
+After pre-flight, answer one sentence: "today's KR is on which Bridge?
+What systemic gap does it close?" If you can't answer → wrong KR.
 
 ## What This Project Is
 
@@ -302,7 +319,7 @@ Do not use `git pull --rebase` on data directories — Actions commits do not ha
 | `ar-security-auditor` | Reviewing API/secrets/Vercel functions |
 | `ar-release-engineer` | Before git push, diagnosing CI failures |
 | `neat-freak` | End of every session — aligns CLAUDE.md, docs/, memory. Trigger: `/neat`, `整理一下`, `sync up` |
-| `night-shift` | Autonomous continuous work mode — **requires Claude Code CLI** (`--dangerously-skip-permissions`), does NOT run in Cowork. Runs any time of day until interrupted. Triggers: `/auto`, `开始工作`, `工作`, `go ahead`. |
+| `auto-work-mode` | Autonomous continuous work mode (renamed 2026-05-01 from `night-shift`) — **requires Claude Code CLI** (`--dangerously-skip-permissions`), does NOT run in Cowork. Runs any time of day until interrupted. Triggers: `/auto`, `开始工作`, `工作`, `go ahead`. Legacy `.night-shift/runs/` directory preserved for historical run continuity. |
 
 ---
 
