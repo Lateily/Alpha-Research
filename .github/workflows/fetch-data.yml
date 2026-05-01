@@ -132,6 +132,16 @@ jobs:
         continue-on-error: true          # non-critical; reads market_data + rdcf + fin
         run: python scripts/residual_income_valuation.py
 
+      # ── Step 2n: AHF-2 Aggregator — median-of-3 triangulation ─────────────
+      # Synthesis step: combines Method 1 (rdcf signal) + Method 2
+      # (ev_ebitda) + Method 3 (residual_income) into ONE per-ticker
+      # triangulated signal. Median-of-SIGNALS (NOT deltas; units
+      # incompatible). Closes the AHF-2 v1 methodology backbone. NOT
+      # folded into VP composite (INVARIANT 3).
+      - name: Compute multi-method triangulated valuation (AHF-2 Aggregator)
+        continue-on-error: true          # non-critical; reads rdcf + ev_ebitda + ri JSON outputs
+        run: python scripts/multi_method_valuation.py
+
       # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
       - name: Sync to Supabase
         if: env.SUPABASE_URL != ''
@@ -177,7 +187,8 @@ jobs:
             public/data/fragility_002594_SZ.json \
             public/data/persona_overlay.json \
             public/data/ev_ebitda_valuation.json \
-            public/data/residual_income_valuation.json; do
+            public/data/residual_income_valuation.json \
+            public/data/multi_method_valuation.json; do
             [ -f "$f" ] && git add "$f"
           done
 

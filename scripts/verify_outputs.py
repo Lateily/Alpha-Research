@@ -609,6 +609,67 @@ else:
         print(f"  {FAIL}  residual_income_valuation.json: exception while validating: {e}")
 
 
+# ── Multi-Method Triangulated Valuation (multi_method_valuation.json) ─────────
+# AHF-2 Aggregator: median-of-3 triangulation across {FCF DCF, EV/EBITDA, EBO}.
+# Schema validation only — does not assert specific signal values (those depend
+# on the underlying method outputs which are validated in their own sections).
+print("\n=== Multi-Method Triangulated Valuation (multi_method_valuation.json) ===")
+MMV_VALID_SIGNALS = {"UNDERPRICED", "FAIRLY_VALUED", "OVERPRICED", "INSUFFICIENT_DATA"}
+MMV_METHOD_NAMES = {"FCF_DCF", "EV_EBITDA", "Residual_Income_EBO"}
+mmv_path = DATA / "multi_method_valuation.json"
+if not mmv_path.exists():
+    print(f"  {WARN}  multi_method_valuation.json missing (multi_method_valuation.py not yet run)")
+else:
+    try:
+        mmv = json.loads(mmv_path.read_text())
+        mmv_blocks = mmv.get("tickers", {}) or {}
+        wl = _watchlist_tickers()
+        for ticker in wl:
+            block = mmv_blocks.get(ticker)
+            if block is None:
+                print(f"  {FAIL}  {ticker}: missing from multi_method_valuation.json")
+                continue
+            problems = []
+            triangulated = block.get("triangulated_signal")
+            if triangulated not in MMV_VALID_SIGNALS:
+                problems.append(f"triangulated_signal='{triangulated}' not in enum")
+            mc = block.get("methods_count")
+            if not isinstance(mc, int) or not (0 <= mc <= 3):
+                problems.append(f"methods_count={mc} out of [0, 3]")
+            mu = block.get("methods_used") or []
+            if not isinstance(mu, list):
+                problems.append("methods_used not a list")
+            elif not all(m in MMV_METHOD_NAMES for m in mu):
+                problems.append(f"methods_used contains unknown method: {mu}")
+            elif len(mu) != mc:
+                problems.append(f"methods_count={mc} but methods_used has {len(mu)}")
+            ms = block.get("methods_skipped") or []
+            if not isinstance(ms, list):
+                problems.append("methods_skipped not a list")
+            else:
+                for entry in ms:
+                    if not isinstance(entry, dict) or "method" not in entry or "reason" not in entry:
+                        problems.append("methods_skipped entry shape invalid")
+                        break
+                # methods_count + len(methods_skipped) should == 3 (every method either used or skipped)
+                if mc + len(ms) != 3:
+                    problems.append(f"methods_count + methods_skipped count = {mc + len(ms)} != 3")
+            ibf = block.get("is_biotech_fallback")
+            ip = block.get("is_partial")
+            if not isinstance(ibf, bool) or not isinstance(ip, bool):
+                problems.append("is_biotech_fallback / is_partial must be bool")
+            if ibf and ip:
+                problems.append("is_biotech_fallback and is_partial both True (mutually exclusive)")
+
+            icon = OK if not problems else FAIL
+            warn_suffix = "  [" + "; ".join(problems) + "]" if problems else ""
+            flag = " [biotech]" if ibf else (" [partial]" if ip else "")
+            used_str = "+".join(m.split("_")[0][:3] for m in mu) if mu else "—"
+            print(f"  {icon}  {ticker:12s}  triangulated={triangulated:<16s}  n={mc}  used=[{used_str}]{flag}{warn_suffix}")
+    except Exception as e:
+        print(f"  {FAIL}  multi_method_valuation.json: exception while validating: {e}")
+
+
 print("\n" + "="*60)
 print("Tip: fields to use in rdcf JSON:")
 print("  implied growth : implied_fcf_growth  (standard) / implied_rev_growth (biotech)")
