@@ -1,6 +1,6 @@
 {
   "ticker": "6160.HK",
-  "generated_at": "2026-04-30",
+  "generated_at": "2026-05-01",
   "price": 173.6,
   "zone": "BEARISH",
   "entry_zone": true,
@@ -27,7 +27,7 @@
     "ma20": 185.25,
     "ma60": 188.58,
     "rsi14": 38.0,
-    "vol_ma20": 3959829,
+    "vol_ma20": 3959804,
     "vol_ratio": 0.96,
     "price_vs_ma20": -6.29,
     "price_vs_ma60": -7.95,

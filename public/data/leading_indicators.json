@@ -1,22 +1,22 @@
 {
-  "generated_at": "2026-04-30T15:30:41.023884+00:00",
+  "generated_at": "2026-05-01T08:31:49.323308+00:00",
   "industry": "ai_infrastructure",
-  "composite_score": 57.0,
-  "composite_signal": "MODERATE",
+  "composite_score": 52.8,
+  "composite_signal": "WEAKENING",
   "hyperscaler_basket": {
     "NVDA": {
-      "price": 201.41,
+      "price": 199.57,
       "ath_3mo": 216.61,
-      "drawdown_3mo_pct": -7.0
+      "drawdown_3mo_pct": -7.9
     },
     "MSFT": {
-      "price": 403.6,
+      "price": 407.78,
       "ath_3mo": 432.92,
-      "drawdown_3mo_pct": -6.8
+      "drawdown_3mo_pct": -5.8
     },
     "GOOGL": {
-      "price": 375.82,
-      "ath_3mo": 375.82,
+      "price": 384.8,
+      "ath_3mo": 384.8,
       "drawdown_3mo_pct": 0.0
     },
     "_avg_drawdown_pct": 4.6,
@@ -27,10 +27,10 @@
       "GOOGL"
     ]
   },
-  "interpretation": "Capex cycle healthy but not accelerating. Existing thesis intact; no incremental urgency.",
+  "interpretation": "CapEx growth decelerating. Monitor for order pushouts. Review thesis validity for 300308.",
   "component_scores": {
     "nvda_revenue": 68,
-    "hyperscaler_capex": 72,
+    "hyperscaler_capex": 60,
     "tsmc_revenue": 15,
     "price_momentum": 50
   },
@@ -62,23 +62,28 @@
         }
       ],
       "price": {
-        "price": 201.41,
-        "return_3m_pct": 7.4,
+        "price": 199.57,
+        "return_3m_pct": 5.7,
         "ath_3mo": 216.61,
-        "drawdown_3mo_pct": -7.0
+        "drawdown_3mo_pct": -7.9
       },
       "latest_qoq": 19.5,
       "score": 68,
       "signal": "STABLE"
     },
     "hyperscaler_capex": {
-      "combined_capex_latest_bn": 118.6,
-      "combined_capex_qoq_pct": 22.0,
-      "score": 72,
+      "combined_capex_latest_bn": 119.6,
+      "combined_capex_qoq_pct": 11.0,
+      "score": 60,
       "components": {
         "MSFT": {
           "name": "Microsoft",
           "quarters": [
+            {
+              "quarter": "2026-03-31",
+              "capex_bn": 30.88,
+              "qoq_pct": 3.3
+            },
             {
               "quarter": "2025-12-31",
               "capex_bn": 29.88,
@@ -93,21 +98,16 @@
               "quarter": "2025-06-30",
               "capex_bn": 17.08,
               "qoq_pct": 2.0
-            },
-            {
-              "quarter": "2025-03-31",
-              "capex_bn": 16.75,
-              "qoq_pct": 6.0
             }
           ],
           "price": {
-            "price": 403.6,
-            "return_3m_pct": -17.0,
+            "price": 407.78,
+            "return_3m_pct": -13.6,
             "ath_3mo": 432.92,
-            "drawdown_3mo_pct": -6.8
+            "drawdown_3mo_pct": -5.8
           },
-          "latest_qoq": 54.0,
-          "score": 90,
+          "latest_qoq": 3.3,
+          "score": 50,
           "weight": 0.3
         },
         "GOOGL": {
@@ -135,9 +135,9 @@
             }
           ],
           "price": {
-            "price": 375.82,
-            "return_3m_pct": 19.8,
-            "ath_3mo": 375.82,
+            "price": 384.8,
+            "return_3m_pct": 22.2,
+            "ath_3mo": 384.8,
             "drawdown_3mo_pct": 0.0
           },
           "latest_qoq": 16.3,
@@ -169,10 +169,10 @@
             }
           ],
           "price": {
-            "price": 606.47,
-            "return_3m_pct": -8.9,
+            "price": 611.91,
+            "return_3m_pct": -5.8,
             "ath_3mo": 715.89,
-            "drawdown_3mo_pct": -15.3
+            "drawdown_3mo_pct": -14.5
           },
           "latest_qoq": 13.6,
           "score": 65,
@@ -203,17 +203,17 @@
             }
           ],
           "price": {
-            "price": 258.77,
-            "return_3m_pct": 11.3,
-            "ath_3mo": 263.99,
-            "drawdown_3mo_pct": -2.0
+            "price": 265.06,
+            "return_3m_pct": 17.0,
+            "ath_3mo": 265.06,
+            "drawdown_3mo_pct": 0.0
           },
           "latest_qoq": 12.6,
           "score": 65,
           "weight": 0.25
         }
       },
-      "signal": "EXPANDING"
+      "signal": "STABLE"
     },
     "tsmc_revenue": {
       "ticker": "TSM",
@@ -242,17 +242,17 @@
         }
       ],
       "price": {
-        "price": 392.0,
-        "return_3m_pct": 31.2,
+        "price": 396.06,
+        "return_3m_pct": 24.3,
         "ath_3mo": 404.98,
-        "drawdown_3mo_pct": -3.2
+        "drawdown_3mo_pct": -2.2
       },
       "latest_qoq": NaN,
       "score": 15,
       "signal": "WEAK"
     },
     "price_momentum": {
-      "basket_return_3m_pct": 0.9,
+      "basket_return_3m_pct": 4.6,
       "score": 50,
       "signal": "NEUTRAL"
     }
@@ -261,14 +261,14 @@
     "300308.SZ": {
       "relevance": "DIRECT",
       "rationale": "1.6T optical transceiver demand directly driven by hyperscaler CapEx cycle",
-      "direction": "positive",
-      "strength": "MED",
+      "direction": "negative",
+      "strength": "LOW",
       "lag_months": "1-3"
     },
     "700.HK": {
       "relevance": "INDIRECT",
       "rationale": "AI monetisation tailwind; benefits from cloud infrastructure growth",
-      "direction": "positive",
+      "direction": "neutral",
       "strength": "LOW",
       "lag_months": "3-6"
     },

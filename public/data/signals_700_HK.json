@@ -1,6 +1,6 @@
 {
   "ticker": "700.HK",
-  "generated_at": "2026-04-30",
+  "generated_at": "2026-05-01",
   "price": 467.8,
   "zone": "BEARISH",
   "entry_zone": true,
@@ -27,7 +27,7 @@
     "ma20": 496.7,
     "ma60": 522.24,
     "rsi14": 35.6,
-    "vol_ma20": 23213693,
+    "vol_ma20": 23213663,
     "vol_ratio": 1.65,
     "price_vs_ma20": -5.82,
     "price_vs_ma60": -10.42,

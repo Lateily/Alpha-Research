@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-04-30T20:06:19.456245+00:00",
+    "generated_at": "2026-05-01T08:31:49.678315+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -50,7 +50,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 63.754646,
+            "actual": 63.70728,
             "threshold": 20.0,
             "comparator": "<",
             "passed": false,
@@ -183,7 +183,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 16.857656,
+            "actual": 16.894184,
             "threshold": 20.0,
             "comparator": "<",
             "passed": true,
@@ -223,7 +223,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 16.091,
+            "actual": 15.715,
             "threshold": 10.0,
             "comparator": "<",
             "passed": false,
@@ -316,7 +316,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 14.867109,
+            "actual": 14.904246,
             "threshold": 20.0,
             "comparator": "<",
             "passed": true,
@@ -340,7 +340,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.1105075,
+            "actual": 3.1106763,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -356,7 +356,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 10.659,
+            "actual": 10.994,
             "threshold": 10.0,
             "comparator": "<",
             "passed": false,
@@ -489,7 +489,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 440.55,
+            "actual": 426.596,
             "threshold": 10.0,
             "comparator": "<",
             "passed": false,
@@ -545,12 +545,12 @@
     },
     "002594.SZ": {
       "buffett": {
-        "score": 1,
+        "score": 0,
         "max": 6,
         "criteria": [
           {
             "name": "ROE > 15%",
-            "actual": 0.14768,
+            "actual": 0.11147001,
             "threshold": 0.15,
             "comparator": ">",
             "passed": false,
@@ -558,7 +558,7 @@
           },
           {
             "name": "Operating margin > 15%",
-            "actual": 0.036960002,
+            "actual": 0.04777,
             "threshold": 0.15,
             "comparator": ">",
             "passed": false,
@@ -566,15 +566,15 @@
           },
           {
             "name": "D/E < 50%",
-            "actual": 0.4802,
+            "actual": 0.5507,
             "threshold": 0.5,
             "comparator": "<",
-            "passed": true,
+            "passed": false,
             "format": "percent"
           },
           {
             "name": "FCF yield > 4%",
-            "actual": -0.12362886874770047,
+            "actual": -0.12471582875952208,
             "threshold": 0.04,
             "comparator": ">",
             "passed": false,
@@ -590,15 +590,15 @@
           },
           {
             "name": "Current ratio > 1.5",
-            "actual": 0.793,
+            "actual": 0.815,
             "threshold": 1.5,
             "comparator": ">",
             "passed": false,
             "format": "ratio"
           }
         ],
-        "verdict_e": "Weak Buffett fit — quality concerns or expensive.",
-        "verdict_z": "巴菲特维度偏弱——质量或估值受限。"
+        "verdict_e": "Not a Buffett name on these criteria.",
+        "verdict_z": "按此清单非巴菲特类标的。"
       },
       "burry": {
         "score": 1,
@@ -614,7 +614,7 @@
           },
           {
             "name": "FCF yield > 8%",
-            "actual": -0.12362886874770047,
+            "actual": -0.12471582875952208,
             "threshold": 0.08,
             "comparator": ">",
             "passed": false,
@@ -622,7 +622,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 8.707,
+            "actual": 8.645,
             "threshold": 10.0,
             "comparator": "<",
             "passed": true,
@@ -646,7 +646,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.1553,
+            "actual": 0.1215,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,

@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-04-30T15:30:36.720796",
+  "fetched_at": "2026-05-01T08:31:45.596429",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-04-30"
+    "updated": "2026-05-01"
   },
   "southbound": {
     "latest_net_flow": 121.9184,
     "5d_cumulative": 221.31,
     "20d_cumulative": 572.4323,
     "trend": "inflow",
-    "updated": "2026-04-30"
+    "updated": "2026-05-01"
   },
   "dragon_tiger": [
     {
@@ -429,7 +429,7 @@
       "code": "002176",
       "name": "江特电机",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -438,16 +438,6 @@
     {
       "code": "002176",
       "name": "江特电机",
-      "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002192",
-      "name": "融捷股份",
       "date": "",
       "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
@@ -460,6 +450,16 @@
       "name": "融捷股份",
       "date": "",
       "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "002192",
+      "name": "融捷股份",
+      "date": "",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,

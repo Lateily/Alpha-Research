@@ -1,6 +1,6 @@
 {
   "ticker": "9999.HK",
-  "generated_at": "2026-04-30",
+  "generated_at": "2026-05-01",
   "price": 179.0,
   "zone": "NEUTRAL",
   "entry_zone": true,
@@ -57,7 +57,7 @@
     "ma20": 177.04,
     "ma60": 182.19,
     "rsi14": 51.2,
-    "vol_ma20": 5431470,
+    "vol_ma20": 5431440,
     "vol_ratio": 2.07,
     "price_vs_ma20": 1.11,
     "price_vs_ma60": -1.75,

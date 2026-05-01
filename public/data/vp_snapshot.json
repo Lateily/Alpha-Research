@@ -1,9 +1,9 @@
 {
-  "date": "2026-04-30",
+  "date": "2026-05-01",
   "snapshots": [
     {
       "ticker": "300308.SZ",
-      "date": "2026-04-30",
+      "date": "2026-05-01",
       "vp_score": 56,
       "expectation_gap": 10,
       "fundamental_accel": 79,
@@ -44,11 +44,11 @@
         "our_growth": 34.1,
         "hyper_growth": true
       },
-      "engine_run_at": "2026-04-30T19:30:33.547820+00:00"
+      "engine_run_at": "2026-05-01T08:31:49.430375+00:00"
     },
     {
       "ticker": "700.HK",
-      "date": "2026-04-30",
+      "date": "2026-05-01",
       "vp_score": 53,
       "expectation_gap": 35,
       "fundamental_accel": 66,
@@ -56,7 +56,7 @@
       "low_coverage": 35,
       "catalyst_prox": 58,
       "close": 479.2,
-      "volume": -208,
+      "volume": -237,
       "source": "vp_engine",
       "wrongIf_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
       "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
@@ -89,11 +89,11 @@
         "our_growth": 18.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-30T19:30:33.548857+00:00"
+      "engine_run_at": "2026-05-01T08:31:49.430888+00:00"
     },
     {
       "ticker": "9999.HK",
-      "date": "2026-04-30",
+      "date": "2026-05-01",
       "vp_score": 61,
       "expectation_gap": 68,
       "fundamental_accel": 76,
@@ -101,7 +101,7 @@
       "low_coverage": 48,
       "catalyst_prox": 60,
       "close": 175,
-      "volume": 211,
+      "volume": 228,
       "source": "vp_engine",
       "wrongIf_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
       "wrongIf_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
@@ -134,11 +134,11 @@
         "our_growth": 15.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-30T19:30:33.549431+00:00"
+      "engine_run_at": "2026-05-01T08:31:49.431490+00:00"
     },
     {
       "ticker": "6160.HK",
-      "date": "2026-04-30",
+      "date": "2026-05-01",
       "vp_score": 51,
       "expectation_gap": 10,
       "fundamental_accel": 57,
@@ -179,11 +179,11 @@
         "our_growth": 35.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-30T19:30:33.550507+00:00"
+      "engine_run_at": "2026-05-01T08:31:49.431941+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "date": "2026-04-30",
+      "date": "2026-05-01",
       "vp_score": 42,
       "expectation_gap": 68,
       "fundamental_accel": 24,
@@ -195,7 +195,7 @@
       "source": "vp_engine",
       "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
       "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "vp_prev": 44,
+      "vp_prev": 42,
       "fa_detail": {
         "score": 24,
         "year_latest": "2025-12-31",
@@ -219,12 +219,12 @@
         "score": 68,
         "source": "rdcf_delta",
         "signal": "UNDERPRICED",
-        "delta": 0.155,
-        "implied_growth": 12.5,
+        "delta": 0.121,
+        "implied_growth": 15.8,
         "our_growth": 28.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-04-30T19:30:33.551423+00:00"
+      "engine_run_at": "2026-05-01T08:31:49.432369+00:00"
     }
   ]
 }
