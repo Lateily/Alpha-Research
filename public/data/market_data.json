@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-01T08:31:45.595259",
+    "fetched_at": "2026-05-01T11:47:59.354846",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -141,10 +141,10 @@
         "enterprise_value": 4296313929728
       },
       "analyst": {
-        "target_mean": 724.0717,
-        "target_high": 886.1427,
-        "target_low": 482.80167,
-        "target_median": 725.8183,
+        "target_mean": 724.2611,
+        "target_high": 886.37445,
+        "target_low": 482.92795,
+        "target_median": 726.0081,
         "recommendation": "strong_buy",
         "num_analysts": 42
       },
@@ -214,10 +214,10 @@
         "enterprise_value": 418685255680
       },
       "analyst": {
-        "target_mean": 252.28418,
-        "target_high": 313.32986,
-        "target_low": 141.96237,
-        "target_median": 253.61482,
+        "target_mean": 252.35016,
+        "target_high": 313.4118,
+        "target_low": 141.99951,
+        "target_median": 253.68115,
         "recommendation": "strong_buy",
         "num_analysts": 22
       },
@@ -261,7 +261,7 @@
       "fundamentals": {
         "market_cap": 250795409408,
         "pe_trailing": 116.51007,
-        "pe_forward": 28.080923,
+        "pe_forward": 28.076303,
         "ev_ebitda": 426.596,
         "ev_revenue": 46.214,
         "ps_ratio": 46.938774,
@@ -287,10 +287,10 @@
         "enterprise_value": 246921625600
       },
       "analyst": {
-        "target_mean": 252.34207,
-        "target_high": 298.43634,
-        "target_low": 212.39655,
-        "target_median": 244.35396,
+        "target_mean": 252.33788,
+        "target_high": 298.43137,
+        "target_low": 212.39302,
+        "target_median": 244.3499,
         "recommendation": "strong_buy",
         "num_analysts": 17
       },

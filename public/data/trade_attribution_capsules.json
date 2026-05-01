@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-01T08:31:49.537216+00:00",
+  "generated_at": "2026-05-01T11:48:02.612490+00:00",
   "date": "2026-05-01",
   "note": "Per-ticker attribution snapshot for new-trade entry. Schema matches trades.json signal_attribution shape. Pin to today's decision; do not regenerate after entering a trade.",
   "capsules": {
@@ -42,7 +42,7 @@
       "vp_at_capture": 61,
       "wrongIf_at_capture_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
       "wrongIf_at_capture_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
-      "captured_at": "2026-05-01T08:31:49.537216+00:00"
+      "captured_at": "2026-05-01T11:48:02.612490+00:00"
     },
     "002594.SZ": {
       "confluence_score": 11,
@@ -59,7 +59,7 @@
       "vp_at_capture": 42,
       "wrongIf_at_capture_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
       "wrongIf_at_capture_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "captured_at": "2026-05-01T08:31:49.537216+00:00"
+      "captured_at": "2026-05-01T11:48:02.612490+00:00"
     },
     "6160.HK": {
       "confluence_score": 8,
@@ -76,7 +76,7 @@
       "vp_at_capture": 51,
       "wrongIf_at_capture_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
       "wrongIf_at_capture_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
-      "captured_at": "2026-05-01T08:31:49.537216+00:00"
+      "captured_at": "2026-05-01T11:48:02.612490+00:00"
     },
     "700.HK": {
       "confluence_score": 8,
@@ -93,7 +93,7 @@
       "vp_at_capture": 53,
       "wrongIf_at_capture_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
       "wrongIf_at_capture_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
-      "captured_at": "2026-05-01T08:31:49.537216+00:00"
+      "captured_at": "2026-05-01T11:48:02.612490+00:00"
     },
     "300308.SZ": {
       "confluence_score": -10,
@@ -122,7 +122,7 @@
       "vp_at_capture": 56,
       "wrongIf_at_capture_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_at_capture_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "captured_at": "2026-05-01T08:31:49.537216+00:00"
+      "captured_at": "2026-05-01T11:48:02.612490+00:00"
     }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-01T08:31:49.536833+00:00",
+  "generated_at": "2026-05-01T11:48:02.611970+00:00",
   "date": "2026-05-01",
   "brief_e": "2 REVIEW_TRIM",
   "brief_z": "REVIEW_TRIM2",
@@ -101,6 +101,18 @@
   ],
   "wrongif_alerts": [
     {
+      "ticker": "700.HK",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
+      "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
+      "note_e": "Binary component requires manual check: approval",
+      "note_z": "含二元事件条件，需人工核查：approval",
+      "indicator": "binary_event",
+      "actual": null,
+      "threshold": null
+    },
+    {
       "ticker": "6160.HK",
       "severity": "LOW",
       "status": "MANUAL",
@@ -111,6 +123,18 @@
       "indicator": "binary_event",
       "actual": null,
       "threshold": null
+    },
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 4.6 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 4.6（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 4.6,
+      "threshold": 25.0
     },
     {
       "ticker": "002594.SZ",
@@ -135,30 +159,6 @@
       "indicator": "earnings_growth",
       "actual": -56.9,
       "threshold": -40.0
-    },
-    {
-      "ticker": "700.HK",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
-      "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
-      "note_e": "Binary component requires manual check: approval",
-      "note_z": "含二元事件条件，需人工核查：approval",
-      "indicator": "binary_event",
-      "actual": null,
-      "threshold": null
-    },
-    {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 4.6 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 4.6（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 4.6,
-      "threshold": 25.0
     },
     {
       "ticker": "9999.HK",
