@@ -126,7 +126,13 @@
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
 
-### 2026-05-01 night (post repo reorg + Franky/Codex protocol)
+### 2026-05-01 night (post repo reorg + Franky/Codex protocol + v0+ infra)
+0. **Multi-agent v0+ baseline shipped** (commit `ad80b07`): `bin/git-safe.sh`
+   防 `.git/index.lock` 冲突 + `.agent_tasks/{pending,in_progress,done,failed}/`
+   task 队列目录（gitignored）。Phase 1 锁定为**三终端**: T1 主 Claude (Opus,
+   orchestrator) + T2 Claude reviewer (Opus, 二审) + T3 OpenAI Codex CLI
+   (主 codegen, Junyan 开通订阅中)。AGENT_ORCHESTRATION.md §11 含明天的
+   Codex CLI 接入步骤。
 1. **Repo 大洗牌**: ar-platform 内部 18 个 .md 平铺 → 6 个分类目录
    (architecture/research/operations/team/strategy/archive). Stock/
    根目录 10 个散落项目 → 3 个 (.claude / ar-platform / legacy).

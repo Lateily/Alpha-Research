@@ -348,15 +348,65 @@ echo ".agent_tasks/" >> .gitignore
 
 ---
 
-## 10. 决策点 — 需要 Junyan 拍板
+## 10. 决策点 — Junyan 拍板结果（2026-05-01 night）
 
-| # | 决策 | 选项 | 我的推荐 |
+| # | 决策 | 结果 | 物证 |
 |---|---|---|---|
-| 1 | 第一步落地从哪里开始？ | A. v1 file watcher 全做 / B. 先 v0+ (lock 防护 + task dir) | **B** — 30 分钟搞定 + 立刻减少冲突 |
-| 2 | Codex CLI 用哪个? | OpenAI Codex / GitHub Copilot CLI / Claude Code (二号 session) | 待你确认 Codex 订阅状态 |
-| 3 | 成本预算月度上限? | 默认 $500 总预算 / 你定 | $500 默认起步, 1 个月后看 |
-| 4 | Gemini / Grok 现在接还是等 v2? | 现在接（学长 Franky review 时一起评估）/ 等 | **等** — 先把 Claude+Codex 跑顺再扩展 |
-| 5 | `.agent_tasks/` 进 git 吗? | 进 / 不进 | **不进** — 跟 .night-shift/ 一样 local-only |
+| 1 | 第一步落地从哪里开始？ | ✅ **B = v0+** | commit `ad80b07` |
+| 2 | Codex CLI 用哪个? | ✅ **OpenAI Codex CLI**（Junyan 开通订阅） | 见 §11 接入步骤 |
+| 3 | 成本预算月度上限? | 🟡 默认 $500 起步（Claude $300 + Codex $100 + 预留 $100） | 待 1 个月后审 |
+| 4 | Gemini / Grok 现在接还是等 v2? | ✅ **等** — Phase 2/3 再说 | — |
+| 5 | `.agent_tasks/` 进 git 吗? | ✅ **不进**（同 .night-shift/） | `.gitignore` 已加 |
+
+---
+
+## 11. Phase 1 终端配置（最终方案：双 Claude + Codex）
+
+**Junyan 需要开三个终端：**
+
+| # | 终端 | Agent | 角色 | 订阅 |
+|---|---|---|---|---|
+| 1 | Terminal 1 | Claude Code (Opus) | 主 orchestrator + thesis 设计 + KR 实施 | Claude Pro/Max（已有 ✓）|
+| 2 | Terminal 2 | Claude Code (Opus) | reviewer + 二审 + 备用并行任务 | 同账户 |
+| 3 | Terminal 3 | OpenAI Codex CLI | 主 codegen（≥ 20 行 Python/JS）+ 测试生成 | OpenAI API + ChatGPT Plus（Junyan 开通中）|
+
+**v0+ 阶段（现在）：** 三终端**手动协作**——主 Claude 写 task 到 `.agent_tasks/pending/`，Junyan 切到对应终端跑命令。
+
+**v1 阶段（一周内）：** 加 fswatch + `bin/agent-watch.sh` 让 Codex 终端自动监听 pending/，task 自动被处理。
+
+### Codex CLI 接入命令（Junyan 明天执行）
+
+```bash
+# 1. 安装 OpenAI Codex CLI
+npm install -g @openai/codex
+
+# 2. 拿 OpenAI API key
+#    浏览器 → https://platform.openai.com/api-keys → Create new secret key
+#    放 ~/.zshrc：
+export OPENAI_API_KEY='sk-...'
+source ~/.zshrc
+
+# 3. 第一次启动测试
+cd ~/Desktop/Stock/ar-platform
+codex --help
+
+# 4. 实际开始工作时（Phase 1 v0+ 模式 — 手动）
+#    主 Claude 写完 task 到 .agent_tasks/pending/<task_id>.json 后会告诉 Junyan：
+#    "请到 Codex 终端跑 codex < .agent_tasks/pending/<task_id>.json"
+#    Codex 处理完写到 .agent_tasks/done/YYYY-MM-DD/<task_id>.codex_output.json
+#    主 Claude 监听到后继续。
+```
+
+### Phase 1 任务路由（明确分工）
+
+| 任务类型 | 哪个终端 | 触发方式 |
+|---|---|---|
+| Thesis 设计、KR 提案、文档 | T1 主 Claude | Junyan 直接对话 |
+| Frontend (Dashboard.jsx) 改动 | T1 主 Claude | Junyan 直接对话 |
+| 写新 Python script (≥ 20 行) | T3 Codex | T1 主 Claude 写 task → Junyan 切到 T3 跑 |
+| 跑代码 review | T3 Codex（主） / T2 Claude（备）| T1 写 review-request → Junyan 切 T3 |
+| Adversarial 二审、辩论 | T2 Claude reviewer | T1 写 task → Junyan 切 T2 |
+| Franky REVIEW_REQUEST.md 处理 | T1 主 Claude | 强制每 session 读 |
 
 ---
 
