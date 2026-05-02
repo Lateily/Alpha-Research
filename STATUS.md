@@ -126,6 +126,22 @@
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
 
+### 2026-05-02 (Three-agent handshake VALIDATED — KR1 shipped)
+0. **First three-agent task complete ✓** — KR1 hello-world smoke test
+   passed end-to-end. Run ID `2026-05-02-three-agent-01`. Roundtrip:
+   T1 wrote task spec → T3 (Codex CLI) generated `scripts/hello_three_agents.py`
+   + ran tests + wrote codex_output.json → T2 (Claude reviewer) ran
+   adversarial review with full REVIEWER_CHECKLIST.md walkthrough →
+   verdict PASS with one P3 finding (Codex omitted shebang despite
+   project-wide convention).
+   **Critical meta-insight from T2**: Codex is **spec-strict, not
+   convention-aware**. Conventions (shebang / `_load_watchlist()` /
+   `_status` field / rate limits) MUST be written explicitly into
+   `must_satisfy` JSON bullets — Codex won't infer from "look around
+   the codebase". This carries forward to KR2 fetch_tushare task spec.
+   **Three-agent v0+ handshake is OPERATIONAL.** Ready to launch KR2
+   (fetch_tushare full integration: backend + pipeline + Dashboard).
+
 ### 2026-05-02 (Three-agent infra + Franky onboarding 详化 + Step 8 queued + 平台同步 gap 暴露)
 -2. **Junyan 关键反馈** (must address before any new feature work):
     1. 数据源工作**没接 pipeline + 没显示 Dashboard** — 我写了 5 fetcher 但
