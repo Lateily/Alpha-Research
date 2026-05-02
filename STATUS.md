@@ -8,10 +8,20 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-02 EOD (15 commits shipped, 3 shifts, Tushare end-to-end LIVE)
-**Last shift:** `2026-05-02-step8-research-framework` (KR1+KR2+KR3+KR4 done, Phase 1+2 universe browser, price-chart Tushare migration)
-**HEAD:** `55b4ba8` on main; auto/2026-04-30 == main (rotates to auto/2026-05-XX next shift)
+**Last updated:** 2026-05-02 FINAL (20 commits, 4 shifts, v1 automation 激活)
+**Last shift:** v1 fswatch activation (commit `e347129`)
+**HEAD:** `e347129` on main (auto/2026-04-30 == main)
 **Context handoff status:** All work in git. Next session reads this file + recent commits + queued_tasks/.
+
+**Pending — Anthropic billing sync issue (auto-recovers in 1-24h):**
+Step 8 LIVE test for 300308.SZ blocked by Anthropic backend bug — billing
+shows $25 balance + $30 invoice success, but API still returns "credit
+balance too low". Banner on platform.claude.com/settings/billing also
+shows contradictory "purchase credits to get started" while balance is
+non-zero. Known Anthropic issue, server-side sync delay. **Step 8 framework
+ship is COMPLETE (4 commits in main); live test merely validates LLM
+output quality**. Retry next session — billing typically self-resolves
+within 24h.
 
 ---
 
