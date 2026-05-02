@@ -2761,27 +2761,31 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 
                   {/* name + code */}
                   <div style={{alignSelf:'center', minWidth:0}}>
-                    <div style={{fontSize:11, fontWeight:600, color:C.dark,
-                                 overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
-                      {isLU && <span style={{fontSize:8, background:'#EF4444', color:'#fff',
-                                             borderRadius:3, padding:'0 3px', marginRight:3}}>涨停</span>}
-                      {isLD && <span style={{fontSize:8, background:'#9333EA', color:'#fff',
-                                             borderRadius:3, padding:'0 3px', marginRight:3}}>跌停</span>}
-                      {s.name}
+                    <div style={{display:'flex', alignItems:'baseline', gap:6, minWidth:0}}>
+                      <div style={{fontSize:11, fontWeight:600, color:C.dark,
+                                   overflow:'hidden', textOverflow:'ellipsis',
+                                   whiteSpace:'nowrap', flex:1, minWidth:0}}>
+                        {isLU && <span style={{fontSize:8, background:'#EF4444', color:'#fff',
+                                               borderRadius:3, padding:'0 3px', marginRight:3}}>涨停</span>}
+                        {isLD && <span style={{fontSize:8, background:'#9333EA', color:'#fff',
+                                               borderRadius:3, padding:'0 3px', marginRight:3}}>跌停</span>}
+                        {s.name}
+                      </div>
+                      {s.industry && (
+                        <span onClick={e=>{e.stopPropagation(); setIndustry(s.industry);}}
+                          style={{...S.tag(C.blue), cursor:'pointer', flexShrink:0,
+                                  whiteSpace:'nowrap'}}
+                          title={L(`Filter by ${s.industry}`,`按"${s.industry}"过滤`)}
+                          onMouseEnter={e=>e.currentTarget.style.background=`${C.blue}24`}
+                          onMouseLeave={e=>e.currentTarget.style.background=`${C.blue}14`}>
+                          {s.industry}
+                        </span>
+                      )}
                     </div>
                     <div style={{fontSize:9, color:C.mid, fontFamily:MONO,
                                  display:'flex', gap:4, alignItems:'baseline'}}>
                       <span>{s.code}</span>
                       <span style={{opacity:0.6}}>{s.market==='HK'?'港':s.exchange}</span>
-                      {s.industry && (
-                        <span onClick={e=>{e.stopPropagation(); setIndustry(s.industry);}}
-                          style={{padding:'0 4px', background:`${C.blue}15`, color:C.blue,
-                                  borderRadius:2, fontSize:8, fontFamily:'inherit',
-                                  cursor:'pointer'}}
-                          title={L(`Filter by ${s.industry}`,`按"${s.industry}"过滤`)}>
-                          {s.industry}
-                        </span>
-                      )}
                     </div>
                   </div>
 
