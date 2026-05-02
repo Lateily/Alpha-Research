@@ -28,7 +28,7 @@ Claude 完成实现 → 写 `code-review-request.txt` + `READY` 文件
 Codex 读取请求 → 写 `code-review.tmp` → rename → `code-review.txt`
 Claude 读取 code-review.txt → 如果 PASS 则 commit，否则修复再循环
 
-路径：`.night-shift/runs/<RUN_ID>/reviews/<timestamp>/`
+路径：`.shifts/runs/<RUN_ID>/reviews/<timestamp>/`
 
 这个协议已经跑通。下面是在它基础上扩展的新协议。
 

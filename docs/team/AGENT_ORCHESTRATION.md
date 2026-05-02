@@ -179,7 +179,7 @@ The v1 watcher trio replaces the earlier `bin/agent-watch.sh` draft:
   headless, writes `.codex_output.json`, archives the task spec, and keeps
   listening.
 - `bin/agent-watch-reviewer.sh` — Terminal 2 standby process. Watches
-  `.night-shift/runs/` recursively with `fswatch -0 -r`, filters for
+  `.shifts/runs/` recursively with `fswatch -0 -r`, filters for
   `*/reviews/*/READY`, runs `claude -p`, and atomically writes
   `code-review.txt`.
 - `bin/agent-watch-setup.sh` — one-time setup helper. Checks/installs
@@ -345,7 +345,7 @@ echo ".agent_tasks/" >> .gitignore
 | 2 | Codex CLI 用哪个? | ✅ **OpenAI Codex CLI**（Junyan 开通订阅） | 见 §11 接入步骤 |
 | 3 | 成本预算月度上限? | 🟡 默认 $500 起步（Claude $300 + Codex $100 + 预留 $100） | 待 1 个月后审 |
 | 4 | Gemini / Grok 现在接还是等 v2? | ✅ **等** — Phase 2/3 再说 | — |
-| 5 | `.agent_tasks/` 进 git 吗? | ✅ **不进**（同 .night-shift/） | `.gitignore` 已加 |
+| 5 | `.agent_tasks/` 进 git 吗? | ✅ **不进**（同 .shifts/） | `.gitignore` 已加 |
 
 ---
 

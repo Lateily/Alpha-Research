@@ -319,7 +319,7 @@ Do not use `git pull --rebase` on data directories — Actions commits do not ha
 | `ar-security-auditor` | Reviewing API/secrets/Vercel functions |
 | `ar-release-engineer` | Before git push, diagnosing CI failures |
 | `neat-freak` | End of every session — aligns CLAUDE.md, docs/, memory. Trigger: `/neat`, `整理一下`, `sync up` |
-| `auto-work-mode` | Autonomous continuous work mode (renamed 2026-05-01 from `night-shift`) — **requires Claude Code CLI** (`--dangerously-skip-permissions`), does NOT run in Cowork. Runs any time of day until interrupted. Triggers: `/auto`, `开始工作`, `工作`, `go ahead`. Legacy `.night-shift/runs/` directory preserved for historical run continuity. |
+| `auto-work-mode` | Autonomous continuous work mode (renamed 2026-05-01 from `night-shift`; directory `.shifts/` renamed 2026-05-02 from `.night-shift/`) — **requires Claude Code CLI** (`--dangerously-skip-permissions`), does NOT run in Cowork. Runs any time of day until interrupted. Triggers: `/auto`, `开始工作`, `工作`, `go ahead`. |
 
 ---
 

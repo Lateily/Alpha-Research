@@ -23,7 +23,7 @@ anchor + AHF-3 persona-deterministic-only philosophy).
 PROVENANCE
 ==========
 AHF_COMPARISON.md Tier 1 A2. Locked-in strategic decisions in
-`.night-shift/AHF-2_HANDOFF.md` from prior shift (KR9 DEFER_C):
+`.shifts/AHF-2_HANDOFF.md` from prior shift (KR9 DEFER_C):
   - 3 orthogonal estimators
   - Biotech blind spot Option 1 (Skip — 6160.HK falls back to Method 1
     biotech_revenue rdcf as canonical)

@@ -21,7 +21,7 @@ calibration anchor + KR3 persona-deterministic-only philosophy).
 PROVENANCE
 ==========
 AHF_COMPARISON.md Tier 1 A2 — strategic doc recommendation. Locked-in
-strategic decisions in `.night-shift/AHF-2_HANDOFF.md` from prior shift
+strategic decisions in `.shifts/AHF-2_HANDOFF.md` from prior shift
 2026-04-30-1532 (KR9 DEFER_C consensus):
   - 3 orthogonal estimators
   - Biotech blind spot: Option 1 (Skip) — 6160.HK falls back to

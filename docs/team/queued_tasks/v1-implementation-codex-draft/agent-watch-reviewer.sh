@@ -3,7 +3,7 @@ set -euo pipefail
 # Agent watcher for Claude T2 review auto mode.
 #
 # What it does:
-#   Monitors .night-shift/runs/ recursively for READY files.
+#   Monitors .shifts/runs/ recursively for READY files.
 #   Filters events to review folders only.
 #   Reads each code-review-request.txt once.
 #   Runs Claude print mode as the T2 reviewer.
@@ -12,7 +12,7 @@ set -euo pipefail
 # Prerequisites:
 #   fswatch must be installed and available in PATH.
 #   claude CLI must be installed and available in PATH.
-#   .night-shift/runs/ must exist before this watcher starts.
+#   .shifts/runs/ must exist before this watcher starts.
 #
 # Usage:
 #   From the repository root, run: bin/agent-watch-reviewer.sh
@@ -24,8 +24,8 @@ set -euo pipefail
 # Logs:
 #   Startup, per-review summaries, and errors are written to stderr.
 
-RUNS_DIR=".night-shift/runs"
-REVIEWS_GLOB=".night-shift/runs/*/reviews"
+RUNS_DIR=".shifts/runs"
+REVIEWS_GLOB=".shifts/runs/*/reviews"
 CHECKLIST_PATH="docs/team/REVIEWER_CHECKLIST.md"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -160,7 +160,7 @@ on_int() {
 trap on_int INT
 
 preflight
-log "agent-watch-reviewer.sh standby [PID $$] — monitoring .night-shift/runs/*/reviews/*/READY"
+log "agent-watch-reviewer.sh standby [PID $$] — monitoring .shifts/runs/*/reviews/*/READY"
 log "review roots glob: $REVIEWS_GLOB"
 
 fswatch -0 -r "$RUNS_DIR" | while IFS= read -r -d '' event; do

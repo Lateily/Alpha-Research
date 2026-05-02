@@ -23,7 +23,7 @@
              │                              │                              │
              └──────────────────────────────┴──────────────────────────────┘
                                             │
-                          File handshake via .agent_tasks/ + .night-shift/runs/<RUN>/reviews/
+                          File handshake via .agent_tasks/ + .shifts/runs/<RUN>/reviews/
 ```
 
 **No agent talks directly to another agent.** All coordination is through filesystem.
@@ -54,9 +54,9 @@ bin/agent-watch-codex.sh
 
 What Junyan sees:
 - T1 remains the normal interactive Claude session. T1 writes specs to
-  `.agent_tasks/pending/` and review requests under `.night-shift/runs/`.
+  `.agent_tasks/pending/` and review requests under `.shifts/runs/`.
 - T2 prints a standby banner and watches
-  `.night-shift/runs/*/reviews/*/READY`. It writes `code-review.txt`
+  `.shifts/runs/*/reviews/*/READY`. It writes `code-review.txt`
   automatically after `claude -p` returns.
 - T3 prints a standby banner and watches `.agent_tasks/pending/`. It claims
   the oldest task, runs `codex exec`, writes `.codex_output.json`, archives the
@@ -100,7 +100,7 @@ T1's responsibilities:
 - Decompose work into KRs
 - For codegen tasks (≥20 lines Python/JS): write task to `.agent_tasks/pending/`
   + tell Junyan to switch to T3
-- For code review: write request to `.night-shift/runs/<RUN>/reviews/<TS>/code-review-request.txt`
+- For code review: write request to `.shifts/runs/<RUN>/reviews/<TS>/code-review-request.txt`
   + write `READY` flag + tell Junyan to switch to T2
 - Read T2 verdict + T3 output, integrate, commit
 - All git ops via `bin/git-safe.sh`
@@ -124,9 +124,9 @@ claude --dangerously-skip-permissions
 
 ## 我的核心责任 (per docs/team/REVIEWER_CHECKLIST.md):
 
-1. **代码质量审查** — 读 .night-shift/runs/<RUN>/reviews/<TS>/code-review-request.txt
+1. **代码质量审查** — 读 .shifts/runs/<RUN>/reviews/<TS>/code-review-request.txt
    按 docs/team/REVIEWER_CHECKLIST.md 全 checklist 走一遍
-   写 verdict 到 .night-shift/runs/<RUN>/reviews/<TS>/code-review.tmp →
+   写 verdict 到 .shifts/runs/<RUN>/reviews/<TS>/code-review.tmp →
    完成时 rename 为 code-review.txt
 
 2. **Gap detection** — 这是我最重要的责任. T1 经常会:
@@ -146,7 +146,7 @@ claude --dangerously-skip-permissions
 3. 再读 docs/team/AGENT_PROTOCOL.md + AGENT_ORCHESTRATION.md (协议)
 4. 再读 docs/team/REVIEWER_CHECKLIST.md (我的具体 checklist)
 5. 再读 docs/team/REVIEW_REQUEST.md (Franky 反馈队列, 如果有 NEW entry 优先处理)
-6. 然后告诉我 "T2 ready, 监听 .night-shift/runs/" — 等任务
+6. 然后告诉我 "T2 ready, 监听 .shifts/runs/" — 等任务
 
 ## 工作时:
 - 不主动改代码, 不直接 commit (除非 T1 明确把 codegen 任务转给我 backup)
@@ -154,7 +154,7 @@ claude --dangerously-skip-permissions
 - 任何 PASS / REQUEST_CHANGES / BLOCKED 决定都要写完整 reasoning
 - 检测到的 gap 必须列具体文件 + 行号 + 缺的是什么
 
-确认理解后回 "T2 ready, 监听 .night-shift/runs/", 然后等任务.
+确认理解后回 "T2 ready, 监听 .shifts/runs/", 然后等任务.
 ```
 
 ---
@@ -191,7 +191,7 @@ My role is primary codegen + test generation (per docs/team/AGENT_ORCHESTRATION.
    - Tests must be runnable standalone
 
 3. **Backup code review** — if T2 (Claude reviewer) is unavailable, T1 may
-   reroute review tasks to me. Same handshake: read .night-shift/runs/<RUN>/reviews/<TS>/code-review-request.txt,
+   reroute review tasks to me. Same handshake: read .shifts/runs/<RUN>/reviews/<TS>/code-review-request.txt,
    write verdict.
 
 ## Hard rules (will be enforced by T2 reviewer):
@@ -292,7 +292,7 @@ verifies `status: "completed"`, prepares review request.
 
 ### Step 5 (T1) — Write review request, switch Junyan to T2
 
-T1 writes `.night-shift/runs/<RUN>/reviews/<TS>/code-review-request.txt`:
+T1 writes `.shifts/runs/<RUN>/reviews/<TS>/code-review-request.txt`:
 
 ```
 TASK: scripts/hello_three_agents.py — three-agent handshake validation
@@ -314,11 +314,11 @@ Then writes `READY` flag and tells Junyan: "Switch to T2."
 
 In T2 terminal (Claude reviewer):
 ```
-There's a new code-review-request.txt under .night-shift/runs/. Process it.
+There's a new code-review-request.txt under .shifts/runs/. Process it.
 ```
 
 T2 reads request, runs through REVIEWER_CHECKLIST.md, writes
-`.night-shift/runs/<RUN>/reviews/<TS>/code-review.tmp` then renames to `.txt`:
+`.shifts/runs/<RUN>/reviews/<TS>/code-review.tmp` then renames to `.txt`:
 
 ```
 VERDICT: PASS

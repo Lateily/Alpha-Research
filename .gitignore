@@ -7,8 +7,9 @@ __pycache__/
 __pycache__/
 *.pyc
 
-# night-shift run state (per-shift, never commit)
-.night-shift/
+# auto-work-mode run state (per-shift, never commit)
+.shifts/
 
 # multi-agent task queue (per-agent state, never commit)
 .agent_tasks/
+.agent_tasks/design/

@@ -3,7 +3,7 @@
 > Companion to `AHF_COMPARISON.md`. Run on 2026-04-30 with proxy fragility
 > scoring on 5 watchlist tickers using existing `fin_*.json` + `ohlc_*.json`.
 > Calibration script preserved at
-> `.night-shift/runs/2026-04-30-1257/key-results/KR6-AHF-1-calibration/research/calibration_check.py`
+> `.shifts/runs/2026-04-30-1257/key-results/KR6-AHF-1-calibration/research/calibration_check.py`
 > (gitignored shift folder; safe to delete after the production AHF-1 KR ships).
 
 ## Methodology

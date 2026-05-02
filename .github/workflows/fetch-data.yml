@@ -127,7 +127,7 @@ jobs:
         run: python scripts/persona_overlay.py
 
       # ── Step 2l: AHF-2 Method 2 — EV/EBITDA target-multiple valuation ────
-      # Per AHF-2 strategic handoff (.night-shift/AHF-2_HANDOFF.md from prior
+      # Per AHF-2 strategic handoff (.shifts/AHF-2_HANDOFF.md from prior
       # shift 2026-04-30-1532 KR9 DEFER_C consensus): three orthogonal
       # estimators, biotech Option 1 fallback for 6160.HK, NOT folded into
       # VP composite. KR2 (Residual Income) + KR3 (Aggregator) pending.

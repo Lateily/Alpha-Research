@@ -184,7 +184,7 @@ Infrastructure (5 commits):
 1. Read this STATUS.md (you're doing it now)
 2. `git log --oneline -20` to see commit history
 3. `cat docs/team/queued_tasks/README.md` for backlog
-4. `cat .night-shift/runs/2026-05-02-*/state.json` for shift histories
+4. `cat .shifts/runs/2026-05-02-*/state.json` for shift histories
 5. `cat docs/architecture/UNIVERSE_BROWSER_DESIGN.md §7` for approved decisions
 
 ### 2026-05-02 evening (Pivot: 研究框架优化 over infrastructure)
@@ -351,13 +351,13 @@ Infrastructure (5 commits):
    根目录 10 个散落项目 → 3 个 (.claude / ar-platform / legacy).
 2. **学长正式纳入团队**: Franky (MIT). 角色 = 兼职研究总监, 核心动作
    "挑漏洞". 异步反馈通道 = `docs/team/REVIEW_REQUEST.md`.
-3. **Skill 改名**: night-shift → auto-work-mode. `.night-shift/runs/`
+3. **Skill 改名**: auto-work-mode → auto-work-mode. `.shifts/runs/`
    目录路径保留 (历史 runs 不破坏).
 4. **早期项目历史归档**: `~/Desktop/Stock/legacy/` 含 3 个 ar-platform
    前身——`AI-Powered_Platform_v2/` (v2.0 设计文档 + 早期 Vite/React
    雏形, 2026-04-11), `early-react-prototype.jsx` (单文件 React v0),
    `milestone_v13.html` (旧 milestone). 这些不进 git, 但 Claude 可以
-   随时 grep/read 来理解早期决策。已删除已被替代的: night-shift-main/
+   随时 grep/read 来理解早期决策。已删除已被替代的: auto-work-mode-main/
    equity-research-skill/ Citadel_IE/ 两个 AR_Platform_*.md.
 5. **学到的哲学**: 思维链条上多个原则**互相支撑**, 而不是简单先后顺序——
    "Idea 先行"是主轴, 但 catalyst+mechanism+contrarian+quantification

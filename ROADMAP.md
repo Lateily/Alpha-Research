@@ -31,7 +31,7 @@ All features below are live in production:
 | Supabase Snapshots + Telegram Alerts | ✅ Live |
 | Full market screener (10,461 stocks via Eastmoney) | ✅ Live |
 | Prediction Log + Verification (hit rate: 67%) | ✅ v1.1 |
-| Custom Skills (ar-code-reviewer, ar-security-auditor, ar-release-engineer, neat-freak, night-shift) | ✅ Live |
+| Custom Skills (ar-code-reviewer, ar-security-auditor, ar-release-engineer, neat-freak, auto-work-mode) | ✅ Live |
 
 ---
 
