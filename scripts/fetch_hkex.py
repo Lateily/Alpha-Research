@@ -11,13 +11,38 @@ Empirical findings (verified 2026-05-02):
   ~2-7 fixed items regardless of stockId param. STOCK_CODE always 00362
   (C ZENITH CHEM) in our tests.
 
-Tried & failed:
+Tried & failed (1st attempt 2026-05-02 morning):
 - POST → 405 Method Not Allowed
 - GET with stockId variations (00700, 700, 0700) → same fixed result
 - searchType=0 / searchType=1 → no difference
 - With/without Referer + browser-like headers → no difference
 - Date range params → no difference
 - Alternative paths (categorysearchTimebucketServlet.do, /listedco/listconews/...) → 404
+
+Tried & failed (2nd attempt 2026-05-02 EOD):
+- HKExNews disclosure search modern URL → 404
+- di.hkex.com.hk/di/summary → 302 redirect to error
+- HKEx mobile / direct news URLs → wrong content
+- IRDataSearch endpoint → 404
+- csearch.do modern XHR variant → 404
+- Tushare alternatives: hk_announcement / hk_disclosure / hk_news (40101 invalid)
+                      anns_d (40203 no permission at 6000 tier)
+- Eastmoney np-anotice-stock /api/security/ann → returns global generic
+  notices, NOT filtered by stock_list parameter (same problem as HKEx)
+- Eastmoney datacenter RPT_HKLISTED_NOTICE → 9501 report doesn't exist
+
+Hypotheses for next session:
+1. HKEx new SPA uses session-token-protected XHR → need browser DevTools
+   to capture request with Cookie header, then replay via curl
+2. Eastmoney HK 公告 needs paid 数据中心 access (their B2B layer)
+3. Tushare anns_d at higher tier (8000+ or 10000+) may work
+4. Direct scrape of https://quote.eastmoney.com/hk/00700.html HTML
+   page (parsing rendered DOM via cheerio/jsdom server-side)
+
+Recommended next-session approach:
+- Use Chrome DevTools (Junyan opens hkexnews.hk → search 00700 → Network
+  tab → copy-paste working XHR request → replay)
+- 30 min focused session, not blind curl probing
 
 Hypothesis: HKEx may have moved to a session-based endpoint, or this
 servlet is deprecated. Modern HKEx UI may load from di.hkex.com.hk
