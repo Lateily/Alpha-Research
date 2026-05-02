@@ -281,7 +281,7 @@ const CatalystTimeline = ({ catalysts, lk, C }) => {
     <div style={{position:'relative', paddingLeft:20}}>
       {/* Vertical rail */}
       <div style={{position:'absolute', left:6, top:6, bottom:6,
-                   width:1, background:C.border}}/>
+                   width:1, background:C.border}}></div>
       {sorted.map((cat, i) => {
         const color = cat.imp === 'HIGH' ? C.green : cat.imp === 'MED' ? C.gold : C.mid;
         const dateStr = cat.date
@@ -295,7 +295,7 @@ const CatalystTimeline = ({ catalysts, lk, C }) => {
               width:8, height:8, borderRadius:'50%',
               background:color,
               boxShadow:`0 0 0 2px ${C.bg}, 0 0 0 3px ${color}40`,
-            }}/>
+            }}></div>
             <div style={{display:'flex', alignItems:'center', gap:6, marginBottom:3}}>
               <span style={{...S.tag(color), fontSize:8}}>{cat.imp}</span>
               <span style={{fontSize:9, color:C.mid, fontFamily:MONO}}>{dateStr}</span>
@@ -390,14 +390,14 @@ const FinCompare = ({ fin, peerAvg, C }) => {
               <div style={{display:'flex', alignItems:'center', gap:4, marginBottom:4}}>
                 <div style={{fontSize:9, color:C.mid, width:30}}>Stock</div>
                 <div style={{flex:1, height:6, background:C.border, borderRadius:3, overflow:'hidden'}}>
-                  <div style={{height:'100%', background:C.blue, width:`${stockW}%`}}/>
+                  <div style={{height:'100%', background:C.blue, width:`${stockW}%`}}></div>
                 </div>
                 <div style={{fontSize:10, fontWeight:600, color:C.dark, width:40, textAlign:'right'}}>{stockVal!=null?stockVal.toFixed(1):'N/M'}{stockVal!=null?m.unit:''}</div>
               </div>
               <div style={{display:'flex', alignItems:'center', gap:4}}>
                 <div style={{fontSize:9, color:C.mid, width:30}}>Peer</div>
                 <div style={{flex:1, height:6, background:C.border, borderRadius:3, overflow:'hidden'}}>
-                  <div style={{height:'100%', background:C.gold, width:`${peerW}%`}}/>
+                  <div style={{height:'100%', background:C.gold, width:`${peerW}%`}}></div>
                 </div>
                 <div style={{fontSize:10, fontWeight:600, color:C.dark, width:40, textAlign:'right'}}>{peerVal!=null?peerVal.toFixed(1):'N/M'}{peerVal!=null?m.unit:''}</div>
               </div>
@@ -534,7 +534,7 @@ function FactorBar({ label, value, maxAbs=0.15, C }) {
           background:color, borderRadius:3,
           left: (value||0) >= 0 ? 0 : 'auto',
           right: (value||0) < 0  ? 0 : 'auto',
-        }}/>
+        }}></div>
       </div>
       <span style={{width:48, fontSize:10, textAlign:'right', color:_returnColor(value,C), flexShrink:0, fontFamily:'monospace'}}>
         {_fmtPct(value)}
@@ -1264,7 +1264,7 @@ function ArticleChat({ article, messages, input, loading, onInputChange, onSend,
             </div>
           </div>
         ))}
-        <div ref={bottomRef}/>
+        <div ref={bottomRef}></div>
       </div>
 
       {/* Input */}
@@ -1699,7 +1699,7 @@ function SwingSignalDetail({ signals, C, L, lk }) {
                 opacity: opc}}>
                 {/* Strength bar */}
                 <div style={{width:3, borderRadius:3, alignSelf:'stretch', minHeight:24,
-                  background: col, flexShrink:0}}/>
+                  background: col, flexShrink:0}}></div>
                 <div style={{flex:1}}>
                   <div style={{display:'flex', alignItems:'center', gap:6, marginBottom:2}}>
                     <span style={{fontSize:10, fontWeight:700, color:col}}>
@@ -1873,7 +1873,7 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
               Math.abs(Date.now()-new Date(liveData._meta.fetched_at))/3600000 < 30)
               ? C.green : C.gold,
             animation:'blink 2s ease-in-out infinite',
-          }}/>
+          }}></div>
           <span style={{fontSize:9, fontFamily:MONO, color:C.mid}}>
             {liveData?._meta?.fetched_at
               ? new Date(liveData._meta.fetched_at).toLocaleString('en-HK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
@@ -1979,7 +1979,7 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
                 <div style={{fontSize:10, fontWeight:700, color:vpColor, fontFamily:MONO}}>{tk.vp}</div>
                 <div style={{height:3, borderRadius:2, background:`${vpColor}20`, marginTop:2, overflow:'hidden'}}>
                   <div style={{height:'100%', width:`${tk.vp}%`, background:vpColor, borderRadius:2,
-                               transition:'width 0.6s ease'}}/>
+                               transition:'width 0.6s ease'}}></div>
                 </div>
               </div>
 
@@ -2475,7 +2475,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
           <ColHd field='vol'    label={L('Volume','量')}/>
           <ColHd field='turn'   label={L('Turnover','额')}/>
           {hasAlphaScores && <ColHd field='alpha' label='α'/>}
-          <div/>
+          <div></div>
         </div>
 
         {visible.length === 0
@@ -2594,6 +2594,18 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
 function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData, scissorsData, liData, egapScores }) {
+  const [tushareData, setTushareData] = useState({});
+  useEffect(() => {
+    if (!ticker) return;
+    const base = DATA_BASE;
+    fetch(base + `data/tushare/${ticker}.json`)
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null)
+      .then(d => {
+        setTushareData(prev => ({ ...prev, [ticker]: d }));
+      });
+  }, [ticker]);
+
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
@@ -2636,6 +2648,93 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     pe:       liveFn?.pe_trailing  ?? s.fin?.pe,
     ev_ebitda:liveFn?.ev_ebitda    ?? s.fin?.ev_ebitda,
     fcf:      liveFn?.free_cash_flow != null ? `${curr}${(liveFn.free_cash_flow/1e9).toFixed(1)}B` : s.fin?.fcf,
+  };
+  const expandedStock = ticker;
+
+  const TushareDataCard = ({ data, ticker }) => {
+    const cardStyle = {
+      borderRadius:12,
+      boxShadow:SHADOW_SM,
+      border:`1px solid ${C.border}`,
+      background:C.card,
+      padding:12,
+      marginBottom:8,
+    };
+    if (!data) {
+      return (
+        <div style={{...cardStyle, color:C.mid, fontSize:11}}>
+          Loading Tushare data...
+        </div>
+      );
+    }
+    if (data._status === 'skipped') {
+      return (
+        <div style={{...cardStyle}}>
+          <div style={{fontSize:11, fontWeight:600, color:C.dark}}>Tushare 6000 数据</div>
+          <div style={{fontSize:10, color:C.mid, marginTop:6}}>
+            Tushare 6000 数据 — 仅 A 股 (HK ticker placeholder)
+          </div>
+        </div>
+      );
+    }
+    if (data._status === 'failed') {
+      return (
+        <div style={{...cardStyle}}>
+          <div style={{fontSize:11, fontWeight:600, color:C.dark}}>Tushare 6000 数据</div>
+          <div style={{fontSize:10, color:C.red, marginTop:6}}>
+            {data._error || 'Tushare data unavailable'}
+          </div>
+        </div>
+      );
+    }
+
+    const dailyBasic = data.data?.daily_basic?.rows?.[0] || null;
+    const daily = data.data?.daily?.rows?.[0] || null;
+    const pe = dailyBasic?.pe != null ? Number(dailyBasic.pe).toFixed(1) : '—';
+    const pb = dailyBasic?.pb != null ? Number(dailyBasic.pb).toFixed(1) : '—';
+    const turnover = dailyBasic?.turnover_rate != null ? Number(dailyBasic.turnover_rate).toFixed(2) + '%' : '—';
+    const close = daily?.close != null ? Number(daily.close).toFixed(2) : '—';
+    const change = daily?.change != null ? Number(daily.change).toFixed(2) : '—';
+    const changeColor = Number(daily?.change || 0) >= 0 ? C.green : C.red;
+
+    return (
+      <div style={cardStyle}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:10}}>
+          <div>
+            <div style={{fontSize:11, fontWeight:600, color:C.dark}}>Tushare 6000 数据</div>
+            <div style={{fontSize:9, color:C.mid}}>refreshed at {data.fetched_at}</div>
+          </div>
+          <div style={{fontSize:9, color:C.mid, fontFamily:MONO}}>{ticker}</div>
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:8, marginBottom:10}}>
+          {[
+            ['PE', pe],
+            ['PB', pb],
+            ['换手率', turnover],
+          ].map(([label, value]) => (
+            <div key={label} style={{padding:8, background:C.soft, borderRadius:6}}>
+              <div style={{fontSize:9, color:C.mid, marginBottom:3}}>{label}</div>
+              <div style={{fontSize:13, color:C.dark, fontWeight:700, fontFamily:MONO}}>{value}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 0', borderTop:`1px solid ${C.border}`}}>
+          <div style={{fontSize:10, color:C.mid}}>Latest close</div>
+          <div style={{fontSize:12, color:C.dark, fontWeight:700, fontFamily:MONO}}>
+            {close}
+            <span style={{marginLeft:8, color:changeColor}}>{change}</span>
+          </div>
+        </div>
+        {data.data?.forecast?._status === 'tier_locked' && (
+          <div style={{fontSize:10, color:C.gold, marginTop:8}}>
+            业绩预告 🔒 升级 Tushare 10000 解锁
+          </div>
+        )}
+        <div style={{fontSize:9, color:C.mid, marginTop:8}}>
+          Tushare 6000 数据完整度: {data.completeness_pct ?? 0}%
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -2813,6 +2912,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
         {/* Full IS/BS/Consensus from Deep Research */}
         <DeepResearchFinancials stock={s} L={L} lk={lk} C={C}/>
       </Card>
+
+      {/* Tushare 6000 data — KR2b 2026-05-02 */}
+      {expandedStock === ticker && <TushareDataCard data={tushareData[ticker]} ticker={ticker} />}
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
@@ -3050,7 +3152,7 @@ function PredictionLog({ predictions, L, C }) {
               </div>
               <div style={{display:'flex', alignItems:'center', gap:6}}>
                 <div style={{width:40, height:3, background:C.soft, borderRadius:2, overflow:'hidden'}}>
-                  <div style={{height:'100%', width:`${pred.confidence}%`, background:confColor, borderRadius:2}}/>
+                  <div style={{height:'100%', width:`${pred.confidence}%`, background:confColor, borderRadius:2}}></div>
                 </div>
                 <span style={{fontSize:10, color:C.mid, fontFamily:'monospace'}}>{pred.confidence}%</span>
               </div>
@@ -3096,6 +3198,8 @@ function TradingDesk({ L, lk, C }) {
   const [fragility, setFragility] = useState({});  // KR3: { ticker: fragility_data }
   const [personaOverlay, setPersonaOverlay] = useState(null);  // KR4: AHF-3 persona overlay (single file, all tickers)
   const [multiMethodValuation, setMultiMethodValuation] = useState(null);  // AHF-2 KR4: triangulated signal across FCF DCF + EV/EBITDA + EBO
+  const [tushareMarket, setTushareMarket] = useState(null);
+  const [tushareData, setTushareData] = useState({});
   const [loading,   setLoading]   = useState(true);
   const MONO = "'JetBrains Mono','Fira Code',monospace";
 
@@ -3119,6 +3223,12 @@ function TradingDesk({ L, lk, C }) {
             .catch(() => null)
             .then(d => ({ ticker: t, data: d }));
         });
+        const tushareFetches = tickers.map(t =>
+          fetch(base + `data/tushare/${t}.json`)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null)
+            .then(d => ({ ticker: t, data: d }))
+        );
 
         return Promise.all([
           fetch(base + 'data/daily_decision.json').then(r => r.ok ? r.json() : null).catch(() => null),
@@ -3133,9 +3243,11 @@ function TradingDesk({ L, lk, C }) {
           // AHF-2 KR4: multi-method valuation triangulation (single file,
           // internal ticker enumeration, output of scripts/multi_method_valuation.py).
           fetch(base + 'data/multi_method_valuation.json').then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(base + 'data/tushare_market.json').then(r => r.ok ? r.json() : null).catch(() => null),
+          Promise.all(tushareFetches),
         ]);
       })
-      .then(([dd, sz, sq, sn, fragArr, personas, mmv] = [null, null, null, null, [], null, null]) => {
+      .then(([dd, sz, sq, sn, fragArr, personas, mmv, tushareMarket, tushareDataArr] = [null, null, null, null, [], null, null, null, []]) => {
         setDecision(dd);
         setSizing(sz);
         setQuality(sq);
@@ -3145,6 +3257,10 @@ function TradingDesk({ L, lk, C }) {
         setFragility(fragMap);
         setPersonaOverlay(personas);
         setMultiMethodValuation(mmv);
+        setTushareMarket(tushareMarket);
+        const tushareDataMap = {};
+        (tushareDataArr || []).forEach(({ ticker, data }) => { if (data) tushareDataMap[ticker] = data; });
+        setTushareData(tushareDataMap);
         setLoading(false);
       });
   }, []);
@@ -3505,6 +3621,64 @@ function TradingDesk({ L, lk, C }) {
     );
   };
 
+  const HSGTBadge = ({ marketData, ticker }) => {
+    if (!marketData) return null;
+    if (!marketData.data?.moneyflow_hsgt?.rows) return null;
+
+    const badgeStyle = color => ({
+      fontFamily: MONO,
+      fontSize: 7,
+      fontWeight: 700,
+      padding: '1px 4px',
+      borderRadius: 3,
+      background: `${color}10`,
+      color,
+      letterSpacing: 0.3,
+      cursor: 'help',
+    });
+
+    if (!ticker.endsWith('.SZ') && !ticker.endsWith('.SH')) {
+      return (
+        <span title="HSGT data N/A — A-share only" style={badgeStyle(C.mid)}>
+          —
+        </span>
+      );
+    }
+
+    const flow = marketData.data.moneyflow_hsgt;
+    if (flow._status !== 'ok') {
+      return (
+        <span title={`HSGT data unavailable — status: ${flow._status || 'unknown'}`} style={badgeStyle(C.mid)}>
+          —
+        </span>
+      );
+    }
+
+    const rows = [...(flow.rows || [])]
+      .sort((a, b) => String(b.trade_date || '').localeCompare(String(a.trade_date || '')))
+      .slice(0, 5);
+    const net5d = rows.reduce((sum, row) => sum + (parseFloat(row.north_money) || 0), 0);
+    const color = net5d >= 50000 ? C.green
+                : net5d <= -50000 ? C.red
+                : C.mid;
+    const arrow = net5d >= 50000 ? '↑↑'
+                : net5d <= -50000 ? '↓↓'
+                : net5d > 0 ? '↑'
+                : net5d < 0 ? '↓'
+                : '=';
+    const tooltip = 'HSGT 5d net flow: ' + net5d.toFixed(0) + ' RMB万\n'
+      + 'north_money sum (last 5 days)\n'
+      + 'positive = foreign net buying via 沪深港通\n'
+      + 'negative = foreign net selling\n'
+      + '[USP-critical signal — feeds 中国双认知 layer]';
+
+    return (
+      <span title={tooltip} style={badgeStyle(color)}>
+        HSGT {arrow}
+      </span>
+    );
+  };
+
   const ScoreBadge = ({ score }) => {
     const col = score >= 20 ? '#10b981' : score <= -20 ? '#ef4444' : '#6b7280';
     return (
@@ -3720,6 +3894,7 @@ function TradingDesk({ L, lk, C }) {
                   <FragilityPill frag={fragility[d.ticker]} />
                   <PersonaCluster overlay={personaOverlay} ticker={d.ticker} />
                   <TriangulatedBadge overlay={multiMethodValuation} ticker={d.ticker} />
+                  <HSGTBadge marketData={tushareMarket} ticker={d.ticker} />
                   {d.holding_days != null && (
                     <span style={{color:C.mid, fontSize:10}}>{d.holding_days}d</span>
                   )}
@@ -3769,6 +3944,7 @@ function TradingDesk({ L, lk, C }) {
                     <FragilityPill frag={fragility[d.ticker]} />
                     <PersonaCluster overlay={personaOverlay} ticker={d.ticker} />
                     <TriangulatedBadge overlay={multiMethodValuation} ticker={d.ticker} />
+                    <HSGTBadge marketData={tushareMarket} ticker={d.ticker} />
                   </div>
                   <div style={{fontSize:11, color:C.mid, maxWidth:340, textAlign:'right', lineHeight:1.5}}>
                     {lk==='z' ? d.reason_z : d.reason_e}
@@ -4373,7 +4549,7 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentDat
       {loading && (
         <div style={{marginBottom:14}}>
           <div style={{height:4, background:C.soft, borderRadius:2, overflow:'hidden', marginBottom:6}}>
-            <div style={{height:'100%', background:C.blue, borderRadius:2, width:`${progress}%`, transition:'width .5s'}}/>
+            <div style={{height:'100%', background:C.blue, borderRadius:2, width:`${progress}%`, transition:'width .5s'}}></div>
           </div>
           <div style={{fontSize:10, color:C.blue, fontWeight:600, textAlign:'center'}}>
             {progress < 20 ? L('Connecting to Claude...','连接Claude...') :
@@ -4473,7 +4649,7 @@ const TechnicalAnalysis = ({ ticker, liveData, L, lk, C }) => {
               <div style={{
                 position:'absolute', left:`${Math.min(100,Math.max(0,(p.last-p.low_52w)/(p.high_52w-p.low_52w)*100))}%`,
                 top:-2, width:10, height:10, borderRadius:5, background:C.blue, transform:'translateX(-5px)'
-              }}/>
+              }}></div>
             )}
           </div>
         </div>
@@ -4501,9 +4677,9 @@ const TechnicalAnalysis = ({ ticker, liveData, L, lk, C }) => {
           <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:8}}>RSI (14)</div>
           <div style={{fontSize:28, fontWeight:800, fontFamily:'monospace', color:rsiColor}}>{fmt(t.rsi_14)}</div>
           <div style={{marginTop:6, height:6, background:C.border, borderRadius:3, position:'relative'}}>
-            <div style={{position:'absolute', left:0, width:'30%', height:'100%', background:`${C.green}40`, borderRadius:'3px 0 0 3px'}}/>
-            <div style={{position:'absolute', right:0, width:'30%', height:'100%', background:`${C.red}40`, borderRadius:'0 3px 3px 0'}}/>
-            {t.rsi_14 && <div style={{position:'absolute', left:`${t.rsi_14}%`, top:-2, width:10, height:10, borderRadius:5, background:rsiColor, transform:'translateX(-5px)'}}/>}
+            <div style={{position:'absolute', left:0, width:'30%', height:'100%', background:`${C.green}40`, borderRadius:'3px 0 0 3px'}}></div>
+            <div style={{position:'absolute', right:0, width:'30%', height:'100%', background:`${C.red}40`, borderRadius:'0 3px 3px 0'}}></div>
+            {t.rsi_14 && <div style={{position:'absolute', left:`${t.rsi_14}%`, top:-2, width:10, height:10, borderRadius:5, background:rsiColor, transform:'translateX(-5px)'}}></div>}
           </div>
           <div style={{display:'flex', justifyContent:'space-between', fontSize:8, color:C.mid, marginTop:2}}>
             <span>{L('Oversold','超卖')}</span><span>{L('Overbought','超买')}</span>
@@ -5635,7 +5811,7 @@ const UniverseStockView = ({ ticker, universeStocks, liveData, L, lk, C, onDeepR
               </div>
               <div style={{marginTop:6, height:6, background:C.border, borderRadius:3, position:'relative'}}>
                 {stock.low && stock.high && stock.price && (
-                  <div style={{position:'absolute', left:`${Math.min(100,Math.max(0,(stock.price-stock.low)/(stock.high-stock.low)*100))}%`, top:-2, width:10, height:10, borderRadius:5, background:C.blue, transform:'translateX(-5px)'}}/>
+                  <div style={{position:'absolute', left:`${Math.min(100,Math.max(0,(stock.price-stock.low)/(stock.high-stock.low)*100))}%`, top:-2, width:10, height:10, borderRadius:5, background:C.blue, transform:'translateX(-5px)'}}></div>
                 )}
               </div>
             </div>
@@ -5646,7 +5822,7 @@ const UniverseStockView = ({ ticker, universeStocks, liveData, L, lk, C, onDeepR
                   <span>{fmt(stock.low_52w)}</span><span>—</span><span>{fmt(stock.high_52w)}</span>
                 </div>
                 <div style={{marginTop:6, height:6, background:C.border, borderRadius:3, position:'relative'}}>
-                  <div style={{position:'absolute', left:`${Math.min(100,Math.max(0,(stock.price-stock.low_52w)/(stock.high_52w-stock.low_52w)*100))}%`, top:-2, width:10, height:10, borderRadius:5, background:C.blue, transform:'translateX(-5px)'}}/>
+                  <div style={{position:'absolute', left:`${Math.min(100,Math.max(0,(stock.price-stock.low_52w)/(stock.high_52w-stock.low_52w)*100))}%`, top:-2, width:10, height:10, borderRadius:5, background:C.blue, transform:'translateX(-5px)'}}></div>
                 </div>
               </div>
             )}
@@ -5730,7 +5906,7 @@ function MorningReportPage({ L, lk, C, reportData, reportLoading, onGenerate, li
   // ── loading state ─────────────────────────────────────────────────────────
   if (reportLoading) return (
     <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:300, gap:16}}>
-      <div style={{width:36, height:36, border:`3px solid ${C.border}`, borderTop:`3px solid ${C.blue}`, borderRadius:'50%', animation:'spin 0.8s linear infinite'}}/>
+      <div style={{width:36, height:36, border:`3px solid ${C.border}`, borderTop:`3px solid ${C.blue}`, borderRadius:'50%', animation:'spin 0.8s linear infinite'}}></div>
       <div style={{fontSize:12, color:C.mid}}>{L('Generating morning brief…','正在生成早报…')}</div>
       <div style={{fontSize:10, color:C.mid}}>{L('~15 seconds','约15秒')}</div>
     </div>
@@ -5928,7 +6104,7 @@ function PulseCard({ pulse, loading, ticker, onRunPulse, L, lk, C }) {
   // Loading skeleton
   if (loading) return (
     <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:8, padding:'12px 16px', marginBottom:12, display:'flex', alignItems:'center', gap:10}}>
-      <div style={{width:8, height:8, borderRadius:'50%', background:C.blue, animation:'pulse 1.5s infinite'}}/>
+      <div style={{width:8, height:8, borderRadius:'50%', background:C.blue, animation:'pulse 1.5s infinite'}}></div>
       <span style={{fontSize:10, color:C.mid}}>{L('Running daily pulse check…','正在运行每日脉冲检查…')}</span>
     </div>
   );
@@ -5955,7 +6131,7 @@ function PulseCard({ pulse, loading, ticker, onRunPulse, L, lk, C }) {
     <div style={{background:C.card, border:`1.5px solid ${vColor}30`, borderRadius:8, padding:'12px 16px', marginBottom:12}}>
       {/* Header row */}
       <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
-        <div style={{width:7, height:7, borderRadius:'50%', background:vColor, flexShrink:0}}/>
+        <div style={{width:7, height:7, borderRadius:'50%', background:vColor, flexShrink:0}}></div>
         <span style={{fontSize:11, fontWeight:700, color:C.dark}}>{L("Today's Pulse","今日脉冲")}</span>
         <span style={{fontSize:9, color:C.mid, marginLeft:'auto'}}>{pulse.pulse_date}</span>
         {pulse.thesis_age_flag && (
@@ -6180,9 +6356,9 @@ function DeepResearchFinancials({ stock, L, lk, C }) {
           <div style={{marginBottom:10}}>
             <div style={{fontSize:9, color:C.mid, marginBottom:5, fontWeight:700}}>{L('Rating Distribution','评级分布')}</div>
             <div style={{display:'flex', height:8, borderRadius:4, overflow:'hidden', gap:1}}>
-              <div style={{width:`${con.buy_pct||0}%`, background:C.green}}/>
-              <div style={{width:`${con.hold_pct||0}%`, background:C.gold}}/>
-              <div style={{width:`${con.sell_pct||0}%`, background:C.red}}/>
+              <div style={{width:`${con.buy_pct||0}%`, background:C.green}}></div>
+              <div style={{width:`${con.hold_pct||0}%`, background:C.gold}}></div>
+              <div style={{width:`${con.sell_pct||0}%`, background:C.red}}></div>
             </div>
             <div style={{display:'flex', gap:12, marginTop:5}}>
               <span style={{fontSize:9, color:C.green}}>Buy {con.buy_pct}%</span>
@@ -7902,7 +8078,7 @@ export default function Dashboard() {
                       <div style={{width:5, height:5, borderRadius:'50%',
                         background: isSZOpen ? '#00D97E' : C.mid,
                         animation: isSZOpen ? 'blink 2s ease-in-out infinite' : 'none',
-                      }}/>
+                      }}></div>
                       <span style={{fontSize:9, fontFamily:MONO, color: isSZOpen ? '#00D97E' : C.mid}}>
                         A-SH {isSZOpen ? 'OPEN' : 'CLOSED'}
                       </span>
@@ -7911,7 +8087,7 @@ export default function Dashboard() {
                       <div style={{width:5, height:5, borderRadius:'50%',
                         background: isAHKOpen ? '#00D97E' : C.mid,
                         animation: isAHKOpen ? 'blink 2s ease-in-out infinite' : 'none',
-                      }}/>
+                      }}></div>
                       <span style={{fontSize:9, fontFamily:MONO, color: isAHKOpen ? '#00D97E' : C.mid}}>
                         HK {isAHKOpen ? 'OPEN' : 'CLOSED'}
                       </span>
@@ -8028,7 +8204,7 @@ export default function Dashboard() {
                 display:'flex', alignItems:'center', gap:6,
               }}>
                 <div style={{width:5, height:5, borderRadius:'50%', background:C.green,
-                             animation:'blink 2s ease-in-out infinite'}}/>
+                             animation:'blink 2s ease-in-out infinite'}}></div>
                 <span style={{fontSize:11, fontFamily:MONO, color:C.dark, fontWeight:600,
                               letterSpacing:'0.04em'}}>
                   {nowTime.toLocaleTimeString('en-HK', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false})} HKT

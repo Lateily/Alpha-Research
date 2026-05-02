@@ -8,9 +8,9 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-02 (Tushare 6000 active + 5 public-source fetchers shipped)
-**Last shift:** `2026-04-30-2323` (4 KRs shipped, ended via DEFER_D consensus)
-**HEAD:** `81bfd1a` on `main` (auto/2026-04-30 == main; branch name will rotate to `auto/2026-05-02` on next shift)
+**Last updated:** 2026-05-02 (KR1 + KR2a + KR2b shipped via three-agent — platform-sync gap CLOSED)
+**Last shift:** `2026-05-02-three-agent-01` (3 KRs shipped clean, three-agent v0+ fully validated)
+**HEAD:** `e874e24` (KR2a) + KR2b commit pending; `auto/2026-04-30 == main`. Branch rotates next shift.
 
 ---
 
@@ -125,6 +125,36 @@
 
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
+
+### 2026-05-02 (KR2b shipped — Dashboard Tushare surfacing. PLATFORM-SYNC GAP CLOSED ✅)
+0. **Frontend production codegen via three-agent ✓** — `src/Dashboard.jsx` +204/-28
+   (T3 codegen, T2 review). Two render targets:
+   - **HSGTBadge** in Trading Desk row (peer of TRI badge, fontSize 7,
+     smallest tier). Shows 5-day north-bound flow direction (`↑↑/↑/↓/↓↓/=`)
+     based on `north_money` 5-day sum from `moneyflow_hsgt`. Color-coded
+     C.green/C.red/C.mid. **USP-critical signal now visible in portal.**
+   - **TushareDataCard** in Research per-ticker drill view. PE/PB/换手率
+     from daily_basic + close/change from daily + 🔒 tier_locked forecast
+     placeholder + completeness footer.
+   T2 verdict: PASS first try, zero P1/P2 findings. 3 P3 polish notes:
+   dual-state lifting opportunity (Research + TradingDesk each have own
+   tushareData), tooltip i18n consistency, STATUS update (this entry).
+1. **Visual hierarchy after KR2b** (Trading Desk row, ~14 elements):
+   `ticker | action | score | pnl% | VP | composite | F6 | Buf Bur Dam | TRI | HSGT | days`
+   Five orthogonal signal categories at glance level. Dashboard is now
+   genuinely "5-axis cross-check + USP institutional flow signal."
+2. **Junyan-2026-05-02 platform-sync gap CLOSED** — original critical
+   feedback "我刚刚查看了一下我们的portal terminal 我们改动了大部分东西尤其是
+   接入数据源这一块 还并没有在platform上体现". Full pipeline now flows
+   end-to-end: Tushare API → fetcher (KR2a) → JSON → pipeline commit (KR2a)
+   → Dashboard render (KR2b). After GitHub Pages deploys, Junyan opens
+   portal → sees Tushare data in two surfaces.
+3. **Three-agent v0+ FULLY VALIDATED** — 1 smoke (KR1) + 2 production
+   ships (KR2a backend + KR2b frontend) total ~2 hours. T2 catches real
+   gaps (KR2 round 1 found 2 P2 + 3 P3); REQUEST_CHANGES → PASS cycle
+   takes ~17 min. Pattern is mature for any task type. T2's conclusion:
+   "Three-agent pattern has now shipped 1 smoke + 2 production tasks
+   cleanly. Mature enough for any task type."
 
 ### 2026-05-02 (KR2a shipped — Tushare 6000 fetcher + pipeline integration. KR2b queued.)
 0. **First production codegen task complete ✓** — `scripts/fetch_tushare.py`
