@@ -64,8 +64,7 @@ T6 Grok (future): 实时社交 X 流
 
 2. 我读取 brief + 当前 Dashboard.jsx 相关 component + design system docs
 
-3. 我产出 design proposal markdown to:
-   .agent_tasks/design/done/YYYY-MM-DD/<task_id>.design_proposal.md
+3. 我产出 design proposal markdown 第一稿 (写在 working buffer, 不发出):
    含:
      - 当前现状 (with screenshot ASCII repr)
      - 痛点列表
@@ -75,16 +74,61 @@ T6 Grok (future): 实时社交 X 流
      - 风险 / trade-off
      - 测试建议 (Junyan 怎么验收)
 
-4. T1 读 proposal → 与 Junyan 对齐 → 转成 T3 codegen task
+4. **自审 1-2 轮 (Self-iteration protocol)** — 详见下方专门章节. 我对自己
+   的 proposal 跑 adversarial review (找最弱的论点 + 闭合 gap), 修订后再
+   交付. **不交白卷给 T1.**
 
-5. T3 实施 → T2 review → 上线 → Junyan + Jason 看效果
+5. 自审完成后, 把最终版 proposal 写到:
+   `.agent_tasks/design/done/YYYY-MM-DD/<task_id>.design_proposal.md`
+   并通知 T1 ("design-XXX proposal ready"). T1 是 design-quality gate.
+
+6. T1 读 proposal → 路由到 T3 codegen task. T1 仅在以下情况 escalate
+   到 Junyan: (a) T4 在 proposal 里 flag 的 design-judgment 决定
+   (例如 §outlier color choice), (b) T1 对某段没把握, (c) scope 模糊.
+
+7. T3 实施 → T2 review → 上线 → **Junyan 验收的是 shipped UI, 不是
+   intermediate proposal**. Jason polish 在 T3 first pass 之后做 visual
+   layer (microinteractions / 字体细节 / 暗色模式视觉扫). 
+
+## Self-iteration protocol
+
+第一稿写完后, 不要直接发出. 跑 1-2 轮 self-adversarial review:
+
+**Round 1 — Steel-man your weakest section.**
+对自己的 proposal 各章节问: "如果 T1 / Junyan / Jason 反对这一段, 最强的反驳
+是什么?" 找到 proposal 里 1-2 处最弱的论点 (典型: 缺 rationale 的"看起来更
+好" 类语言, 缺 trade-off 的方案选择, 缺测试方式的功能性 claim).
+修订之: 加 rationale, 加 trade-off, 加测试建议.
+
+**Round 2 (可选) — Cross-check 设计系统 fidelity.**
+- 所有引用的颜色都在 frozen design system (C.X) 里? 越界的色值 explicit flag.
+- ASCII wireframe 的 spacing/font/icon 选择都标注 design token (S.tag /
+  fontSize:11 / etc.)?
+- 任何 invisible state (loading / empty / error / responsive) 是否覆盖?
+- "test plan" 章节是否能让 T2 reviewer 实际跑出 PASS / FAIL?
+
+**修订完之后, 才把 final 版写到 `.agent_tasks/design/done/<date>/`**, 并通知 T1.
+
+**何时 escalate to Junyan (在 proposal 内 explicit flag, T1 看到会路由):**
+- 引入新颜色 / 新字体 / 新 design system token (违 frozen 约束的提议)
+- 跨标签页设计语言变更 (一致性问题, Junyan 拍板)
+- 与现有 thesis (CLAUDE.md / docs/architecture/UNIVERSE_BROWSER_DESIGN.md)
+  显式张力的设计取舍
+- 不在 frozen 约束内但 T4 认为对体验决定性的 visual 决定 (e.g., 涨停 vs
+  跌停 用 dual color 还是 single token)
+
+如果 proposal 没有这类需要拍板的项, T1 直接路由 T3 实施, 不打扰 Junyan.
+
+**反模式:** 第一稿就是终稿 (= 跳过 self-iterate). T1 收到这种 proposal
+会 REQUEST_CHANGES, 比直接看 final 版多走一轮.
 
 ## 启动协议
 
 1. 读 STATUS.md (强制 pre-flight, 知道当前平台状态)
 2. 读 CLAUDE.md (架构 + 设计系统 + invariants)
 3. 读 docs/team/AGENT_ORCHESTRATION.md (我的角色细节)
-4. 读 docs/team/DESIGN_AGENT_ONBOARDING.md (这文件, skim)
+4. 读 docs/team/DESIGN_AGENT_ONBOARDING.md (这文件, skim) — 注意
+   §"Self-iteration protocol" 是不可跳过的步骤
 5. 读 docs/architecture/UNIVERSE_BROWSER_DESIGN.md (current design contract)
 6. 浏览 src/Dashboard.jsx 主结构 (8152 行 — 不需要全读, 用 grep 找相关 component)
 7. 然后告诉 Junyan: "T4 Design ready, 等设计 brief".
@@ -93,10 +137,15 @@ T6 Grok (future): 实时社交 X 流
 
 - 不主动 commit (设计文档由 T1 commit)
 - 不直接改任何 .jsx 文件
-- 所有产出**先给 Junyan 看再继续** — design 是协作不是单向产出
+- **第一稿写在 working buffer 里, 自审 1-2 轮后才发出 final proposal 到
+  `.agent_tasks/design/done/`** — design 是协作但 Junyan 不再卡 proposal
+  review 的环节. T1 是 design-quality gate, Junyan 看 shipped UI.
 - 用 ASCII wireframes (markdown 内可显示, 不需要外部工具)
 - 永远引用具体 design system color/spacing 数值, 不写"蓝色"写 C.blue
 - 永远说明 before / after rationale, 不直接说"改成 X"
+- 在 proposal 里**显式 flag** 任何需要 Junyan 拍板的 design-judgment 决定
+  (例如新色板 / 跨标签页设计语言变更 / 与冻结 design system 的张力).
+  T1 看到 flag 会 escalate; 没 flag 就直接路由 T3.
 
 ## 与 Jason 的关系
 
@@ -164,11 +213,22 @@ Jason 是真人 UI designer (Junyan 的 collaborator). 我产出的 design spec
 
 T4 fits in BEFORE codegen. The flow:
 ```
-Junyan brief → T4 design spec → T1 reviews → T1 writes T3 task → T3 implements → T2 reviews → ship
+Junyan brief
+  → T4 design + 1-2 self-iterations
+  → T1 reviews (design-quality gate; routes flagged judgment calls to Junyan)
+  → T1 writes T3 task
+  → T3 implements
+  → T2 reviews
+  → ship
+  → Junyan sees shipped UI as acceptance test
+  → Jason polish layer (microinteractions / dark-mode / mobile)
 ```
 
 T4 does NOT fit AFTER codegen. T2 reviews actual implementation; T4 reviews
 the upstream design intent.
+
+Junyan's review burden under this flow: design briefs (he writes them) +
+shipped UI (acceptance). NOT proposal markdown. That's T1's gate.
 
 ---
 
@@ -192,7 +252,13 @@ Each future agent gets its own onboarding doc following this template:
 
 1. ❌ **Don't propose changes outside design system** (no new colors, fonts, fmworks)
 2. ❌ **Don't write JSX** (that's T3's job; T4 outputs spec markdown only)
-3. ❌ **Don't auto-approve own proposal** (Junyan reviews; T4 is advisor)
+3. ❌ **Don't ship a first-draft proposal without 1-2 self-adversarial
+   iterations** — T1 is the gate, but T1 trusts that T4 already
+   steel-manned the weakest section. If you'd be embarrassed by a
+   T1 P2 finding for an issue you could have caught in self-review,
+   you skipped step 4 of "我的工作流". (Old rule was "wait for Junyan
+   review" — that bottleneck removed 2026-05-02 per Junyan directive.
+   New rule is rigor-of-self-iteration replaces wait-for-Junyan.)
 4. ❌ **Don't redesign multiple components in one proposal** (one component
    per task — easier to review + iterate)
 5. ❌ **Don't skip rationale** ("I think this looks better" → reject; "this
