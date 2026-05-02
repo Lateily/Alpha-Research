@@ -2234,6 +2234,12 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   const [mktFilter,  setMktFilter]  = useState('all');   // all | A | HK
   const [dirFilter,  setDirFilter]  = useState('all');   // all | up | dn | lu | ld
   const [searchQ,    setSearchQ]    = useState('');
+  // Phase 1 universe browser: industry + PE + 涨跌幅 range filters (KR-B)
+  const [industry,   setIndustry]   = useState('');      // '' = all industries
+  const [peMin,      setPeMin]      = useState('');
+  const [peMax,      setPeMax]      = useState('');
+  const [pctMin,     setPctMin]     = useState('');      // 涨跌幅 lower bound (incl)
+  const [pctMax,     setPctMax]     = useState('');      // 涨跌幅 upper bound (incl)
   const [liveQuotes, setLiveQuotes] = useState({});      // emKey → quote obj
   const [polling,    setPolling]    = useState(true);
   const pollRef  = useRef(null);
@@ -2246,6 +2252,16 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     if (universeHK?.stocks) arr.push(...universeHK.stocks.map(s => ({...s, market:'HK'})));
     return arr;
   }, [universeA, universeHK]);
+
+  /* ── industries by stock count (descending, for filter dropdown) ─────────── */
+  const industries = React.useMemo(() => {
+    const counts = {};
+    for (const s of masterList) {
+      const ind = s.industry;
+      if (ind && ind.trim()) counts[ind] = (counts[ind] || 0) + 1;
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }, [masterList]);
 
   const toEMCode = s => {
     if (!s?.code) return null;
@@ -2284,12 +2300,28 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     if (mktFilter !== 'all') arr = arr.filter(s => s.market === mktFilter);
     if (searchQ.trim()) {
       const q = searchQ.toLowerCase();
-      arr = arr.filter(s => s.name?.toLowerCase().includes(q) || s.code?.includes(q) || s.ticker?.toLowerCase().includes(q));
+      // Search now also matches industry text
+      arr = arr.filter(s =>
+        s.name?.toLowerCase().includes(q) ||
+        s.code?.includes(q) ||
+        s.ticker?.toLowerCase().includes(q) ||
+        s.industry?.toLowerCase().includes(q)
+      );
     }
     if (dirFilter === 'up') arr = arr.filter(s => (s.change_pct ?? 0) > 0);
     if (dirFilter === 'dn') arr = arr.filter(s => (s.change_pct ?? 0) < 0);
     if (dirFilter === 'lu') arr = arr.filter(s => (s.change_pct ?? 0) >= 9.9);
     if (dirFilter === 'ld') arr = arr.filter(s => (s.change_pct ?? 0) <= -9.9);
+    // Phase 1 universe browser filters (KR-B)
+    if (industry) arr = arr.filter(s => s.industry === industry);
+    const peMinN = parseFloat(peMin);
+    if (!isNaN(peMinN)) arr = arr.filter(s => s.pe != null && s.pe > 0 && s.pe >= peMinN);
+    const peMaxN = parseFloat(peMax);
+    if (!isNaN(peMaxN)) arr = arr.filter(s => s.pe != null && s.pe > 0 && s.pe <= peMaxN);
+    const pctMinN = parseFloat(pctMin);
+    if (!isNaN(pctMinN)) arr = arr.filter(s => (s.change_pct ?? -999) >= pctMinN);
+    const pctMaxN = parseFloat(pctMax);
+    if (!isNaN(pctMaxN)) arr = arr.filter(s => (s.change_pct ?? 999) <= pctMaxN);
 
     return [...arr].sort((a, b) => {
       const ea = getEff(a), eb = getEff(b);
@@ -2307,13 +2339,14 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
       return sortDir==='desc' ? vb - va : va - vb;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [masterList, mktFilter, searchQ, dirFilter, sortBy, sortDir, liveQuotes]);
+  }, [masterList, mktFilter, searchQ, dirFilter, sortBy, sortDir, liveQuotes,
+      industry, peMin, peMax, pctMin, pctMax]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const visible    = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   // reset to page 0 on filter change
-  useEffect(() => { setPage(0); }, [mktFilter, dirFilter, searchQ]);
+  useEffect(() => { setPage(0); }, [mktFilter, dirFilter, searchQ, industry, peMin, peMax, pctMin, pctMax]);
 
   /* ── live quote polling — only visible stocks ────────────────────────────── */
   useEffect(() => {
@@ -2456,6 +2489,64 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
             </FBtn>
           </div>
         )}
+
+        {/* Industry filter (Phase 1 universe browser KR-B) */}
+        {industries.length > 0 && (
+          <select value={industry} onChange={e=>setIndustry(e.target.value)}
+            style={{height:24, fontSize:10, padding:'0 6px',
+                    background:industry?`${C.blue}1A`:C.soft,
+                    border:`1px solid ${industry?C.blue:C.border}`, borderRadius:6,
+                    color:industry?C.blue:C.dark, cursor:'pointer', outline:'none',
+                    fontWeight:industry?700:400, maxWidth:180}}>
+            <option value="">{L('All industries','全行业')}</option>
+            {industries.slice(0, 100).map(([ind, n]) => (
+              <option key={ind} value={ind}>{ind} ({n})</option>
+            ))}
+          </select>
+        )}
+
+        {/* PE range */}
+        <div style={{display:'flex', alignItems:'center', gap:3}}>
+          <span style={{fontSize:10, color:C.mid}}>PE</span>
+          <input value={peMin} onChange={e=>setPeMin(e.target.value)} type="number"
+            placeholder="min" step="any"
+            style={{width:48, height:24, fontSize:10, padding:'0 4px',
+                    background:C.soft, border:`1px solid ${C.border}`, borderRadius:5,
+                    color:C.dark, outline:'none', textAlign:'center'}}/>
+          <span style={{fontSize:10, color:C.mid}}>-</span>
+          <input value={peMax} onChange={e=>setPeMax(e.target.value)} type="number"
+            placeholder="max" step="any"
+            style={{width:48, height:24, fontSize:10, padding:'0 4px',
+                    background:C.soft, border:`1px solid ${C.border}`, borderRadius:5,
+                    color:C.dark, outline:'none', textAlign:'center'}}/>
+        </div>
+
+        {/* 涨跌幅 range */}
+        <div style={{display:'flex', alignItems:'center', gap:3}}>
+          <span style={{fontSize:10, color:C.mid}}>Δ%</span>
+          <input value={pctMin} onChange={e=>setPctMin(e.target.value)} type="number"
+            placeholder="min" step="any"
+            style={{width:48, height:24, fontSize:10, padding:'0 4px',
+                    background:C.soft, border:`1px solid ${C.border}`, borderRadius:5,
+                    color:C.dark, outline:'none', textAlign:'center'}}/>
+          <span style={{fontSize:10, color:C.mid}}>-</span>
+          <input value={pctMax} onChange={e=>setPctMax(e.target.value)} type="number"
+            placeholder="max" step="any"
+            style={{width:48, height:24, fontSize:10, padding:'0 4px',
+                    background:C.soft, border:`1px solid ${C.border}`, borderRadius:5,
+                    color:C.dark, outline:'none', textAlign:'center'}}/>
+        </div>
+
+        {/* Clear filters */}
+        {(industry || peMin || peMax || pctMin || pctMax || searchQ) && (
+          <button onClick={()=>{setIndustry('');setPeMin('');setPeMax('');setPctMin('');setPctMax('');setSearchQ('');}}
+            style={{height:24, fontSize:10, padding:'0 8px', borderRadius:5,
+                    background:'transparent', border:`1px solid ${C.border}`,
+                    color:C.mid, cursor:'pointer'}}>
+            {L('Clear','清除')}
+          </button>
+        )}
+
         <div style={{marginLeft:'auto', fontSize:10, color:C.mid}}>
           {filtered.length.toLocaleString()} {L('stocks','只')}
           {totalPages > 1 && ` · P${page+1}/${totalPages}`}
@@ -2513,8 +2604,19 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
                                              borderRadius:3, padding:'0 3px', marginRight:3}}>跌停</span>}
                       {s.name}
                     </div>
-                    <div style={{fontSize:9, color:C.mid, fontFamily:MONO}}>
-                      {s.code} <span style={{opacity:0.6}}>{s.market==='HK'?'港':s.exchange}</span>
+                    <div style={{fontSize:9, color:C.mid, fontFamily:MONO,
+                                 display:'flex', gap:4, alignItems:'baseline'}}>
+                      <span>{s.code}</span>
+                      <span style={{opacity:0.6}}>{s.market==='HK'?'港':s.exchange}</span>
+                      {s.industry && (
+                        <span onClick={e=>{e.stopPropagation(); setIndustry(s.industry);}}
+                          style={{padding:'0 4px', background:`${C.blue}15`, color:C.blue,
+                                  borderRadius:2, fontSize:8, fontFamily:'inherit',
+                                  cursor:'pointer'}}
+                          title={L(`Filter by ${s.industry}`,`按"${s.industry}"过滤`)}>
+                          {s.industry}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -7292,7 +7394,7 @@ const GlobalStyles = () => (
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
   const [dark, setDark] = useState(true); // Jason: Bloomberg default — dark mode
-  const [tab, setTab] = useState('scanner');
+  const [tab, setTab] = useState('browse');  // 2026-05-02: 'browse' is the new entry point per Junyan's "first interface clean" brief
   const [ticker, setTicker] = useState(null);
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -7924,18 +8026,22 @@ export default function Dashboard() {
     if (search.trim()) { setShowDeepResearch(true); setTab('research'); }
   };
 
+  // 2026-05-02 Phase 1 universe browser KR-C tab consolidation:
+  // - Renamed 'screener' → 'browse' (now Phase 1 enriched with industry/PE/Δ% filters)
+  // - DELETED 'watchlist' tab (duplicate of 'desk' which already shows watchlist 5)
+  // - Tab visual ordering: Browse first (most-used entry point), Desk second (持仓中心)
+  // - DEFERRED visual sidebar consolidation of scanner/flow/earnings/morning to Jason UI work
   const TABS = [
+    { id:'browse',   label:L('Browse','浏览'),    icon:<Filter size={14}/> },
     { id:'desk',     label:L('Desk','交易台'),     icon:<Crosshair size={14}/> },
-    { id:'scanner',  label:L('Scanner','扫描'),   icon:<Radio size={14}/> },
-    { id:'screener', label:L('Screener','筛选'),  icon:<Filter size={14}/> },
     { id:'research', label:L('Research','研究'),  icon:<BookOpen size={14}/> },
+    { id:'scanner',  label:L('Scanner','扫描'),   icon:<Radio size={14}/> },
     { id:'flow',     label:L('Flows','资金流'),   icon:<Globe size={14}/> },
     { id:'earnings', label:L('Earnings','财报'),  icon:<Calendar size={14}/> },
     { id:'paper',    label:L('Portfolio','组合'),  icon:<BarChart3 size={14}/> },
     { id:'backtest', label:L('Backtest','回测'),   icon:<TrendingUp size={14}/> },
     { id:'morning',  label:L('Morning','早报'),    icon:<Zap size={14}/> },
     { id:'tracker',  label:L('Tracker','追踪'),   icon:<Target size={14}/> },
-    { id:'watchlist',label:L('Watchlist','关注'), icon:<Eye size={14}/> },
     { id:'system',   label:L('System','系统'),    icon:<Layers size={14}/> },
   ];
 
@@ -8234,7 +8340,7 @@ export default function Dashboard() {
         <div style={{flex:1, overflowY:'auto', padding:`14px 20px ${dark?'36px':'14px'} 20px`, background:C.bg}}>
           {tab==='desk'     && <TradingDesk L={L} lk={lk} C={C}/>}
           {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK} signalsData={signalsData} vpScores={vpScores}/>}
-          {tab==='screener' && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
+          {(tab==='browse' || tab==='screener') && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
           {tab==='flow'     && (
             <div>
               <Card title={L('Capital Flow Dashboard','资金流向仪表盘')} sub={L('Northbound · Southbound · Dragon & Tiger · Margin','北向·南向·龙虎榜·融资融券')} open={true} C={C}>
@@ -8277,7 +8383,7 @@ export default function Dashboard() {
           })()}
           {tab==='morning'  && <MorningReportPage L={L} lk={lk} C={C} reportData={morningReport} reportLoading={morningReportLoading} onGenerate={handleGenerateMorningReport} liveData={liveData} newsPortfolio={newsPortfolio} newsMacro={newsMacro} regimeData={regimeData} predictions={predictions} allStocks={allStocks}/>}
           {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C} predictions={predictions}/>}
-          {tab==='watchlist'&& <Watchlist L={L} stocks={allStocks} C={C}/>}
+          {/* 'watchlist' tab DELETED 2026-05-02 — duplicate of 'desk'. Watchlist 5 持仓 is shown in TradingDesk. */}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
         </div>
       </div>
