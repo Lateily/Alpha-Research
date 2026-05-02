@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import React from "react";
-import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3,
+import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3, Flame, Sparkles,
          Shield, Zap, Globe, Eye, Target, Filter, Radio, Crosshair,
          AlertCircle, CheckCircle, ArrowUpRight, ArrowDownRight,
          Database, RefreshCw, Layers, BookOpen, Info, Calendar,
@@ -2224,6 +2224,51 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
 }
 
 /* ── SCREENER TAB ────────────────────────────────────────────────────────── */
+function HeroCard({ title, icon, accent, rows, onSeeAll, onRowClick, L, C, hide=false }) {
+  if (hide) return null;
+
+  const shownRows = rows.slice(0, 5);
+
+  return (
+    <div style={{borderRadius:12, boxShadow:SHADOW_SM, border:`1px solid ${C.border}`,
+                 background:C.card, borderLeft:`3px solid ${accent}`,
+                 padding:'10px 12px', height:210, display:'flex', flexDirection:'column'}}>
+      <div style={{display:'flex', alignItems:'center', gap:6, fontSize:11,
+                   fontWeight:700, color:C.dark, marginBottom:6, height:20}}>
+        {icon}<span>{title}</span>
+      </div>
+      <div style={{flex:1, display:'flex', flexDirection:'column', gap:1}}>
+        {shownRows.length === 0
+          ? <div style={{fontSize:10, color:C.mid, padding:'4px 4px'}}>{'— no data —'}</div>
+          : shownRows.map((row, i) => (
+              <div key={`${row.ticker || row.name || 'row'}-${i}`}
+                onClick={() => onRowClick(row.ticker ? row : null)}
+                style={{display:'flex', justifyContent:'space-between', alignItems:'baseline',
+                        padding:'4px 4px', fontSize:11, cursor:'pointer', borderRadius:4}}
+                onMouseEnter={e=>e.currentTarget.style.background=`${C.blue}0D`}
+                onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                <span style={{color:C.dark, fontWeight:600, overflow:'hidden',
+                              textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'70%', minWidth:0}}>
+                  {row.name}
+                </span>
+                <span style={{fontFamily:MONO, fontWeight:700, color:accent, whiteSpace:'nowrap'}}>
+                  {row.value}
+                </span>
+              </div>
+            ))
+        }
+      </div>
+      <div onClick={onSeeAll}
+           style={{fontSize:10, color:C.mid, cursor:'pointer', textAlign:'right',
+                   marginTop:6, padding:'2px 4px'}}
+           onMouseEnter={e=>e.currentTarget.style.color=C.blue}
+           onMouseLeave={e=>e.currentTarget.style.color=C.mid}>
+        {L('See all →','全部 →')}
+      </div>
+    </div>
+  );
+}
+
 function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, universeHK }) {
   const PAGE_SIZE = 100;
   const POLL_MS   = 3000;
@@ -2270,6 +2315,15 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     return `0.${s.code}`;  // SZ / BJ
   };
 
+  /* ── effective price (live wins over static) ─────────────────────────────── */
+  const getEff = s => {
+    const key = toEMCode(s);
+    const lv  = key ? liveQuotes[key] : null;
+    return lv
+      ? { price:lv.price, pct:lv.change_pct, amt:lv.change_amt, vol:lv.volume, turn:lv.turnover, pe:lv.pe, live:true }
+      : { price:s.price,  pct:s.change_pct,  amt:s.change_amt,  vol:s.volume,  turn:s.turnover,  pe:s.pe,  live:false };
+  };
+
   /* ── market summary stats ────────────────────────────────────────────────── */
   const stats = React.useMemo(() => {
     let up=0, dn=0, fl=0, lu=0, ld=0;
@@ -2285,14 +2339,26 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     return { up, dn, fl, lu, ld, total: masterList.length };
   }, [masterList]);
 
-  /* ── effective price (live wins over static) ─────────────────────────────── */
-  const getEff = s => {
-    const key = toEMCode(s);
-    const lv  = key ? liveQuotes[key] : null;
-    return lv
-      ? { price:lv.price, pct:lv.change_pct, amt:lv.change_amt, vol:lv.volume, turn:lv.turnover, pe:lv.pe, live:true }
-      : { price:s.price,  pct:s.change_pct,  amt:s.change_amt,  vol:s.volume,  turn:s.turnover,  pe:s.pe,  live:false };
-  };
+  const topMovers = React.useMemo(() => (
+    masterList.map(s => ({s, eff: getEff(s)}))
+      .filter(({eff}) => eff.pct != null)
+      .sort((a,b) => b.eff.pct - a.eff.pct)
+      .slice(0,5)
+  ), [masterList, liveQuotes]);
+
+  const topAlpha = React.useMemo(() => (
+    masterList.filter(s => typeof s.alpha_score === 'number')
+      .map(s => ({s, eff: getEff(s)}))
+      .sort((a,b) => (b.s.alpha_score||0) - (a.s.alpha_score||0))
+      .slice(0,5)
+  ), [masterList, liveQuotes]);
+
+  const topVolume = React.useMemo(() => (
+    masterList.map(s => ({s, eff: getEff(s)}))
+      .filter(({eff}) => eff.vol != null)
+      .sort((a,b) => (b.eff.vol||0) - (a.eff.vol||0))
+      .slice(0,5)
+  ), [masterList, liveQuotes]);
 
   /* ── filter + sort ───────────────────────────────────────────────────────── */
   const filtered = React.useMemo(() => {
@@ -2384,6 +2450,13 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   }, [visibleCodesSig, polling]);
 
   /* ── helpers ─────────────────────────────────────────────────────────────── */
+  const formatVolumeShort = vol => {
+    if (vol == null) return '—';
+    if (vol >= 1e8) return `${(vol/1e8).toFixed(1)}亿`;
+    if (vol >= 1e4) return `${Math.round(vol/1e4)}万`;
+    return String(Math.round(vol));
+  };
+
   const fmtVol = n => {
     if (n == null) return '—';
     if (n >= 1e8) return `${(n/1e8).toFixed(1)}亿`;
@@ -2425,14 +2498,21 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 
   return (
     <div>
-      {/* ── MARKET SUMMARY BAR ─────────────────────────────────────────────── */}
+      {/* ── SLIM LIVE PULSE BAR ───────────────────────────────────────────── */}
       <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10,
-                   padding:'10px 16px', marginBottom:10,
-                   display:'flex', alignItems:'center', gap:16, flexWrap:'wrap'}}>
-        <div style={{fontSize:10, fontWeight:700, color:C.mid, letterSpacing:'0.05em'}}>
-          {L('TODAY','今日')}
+                   padding:'6px 16px', marginBottom:8, height:32, display:'flex',
+                   alignItems:'center', gap:14, flexWrap:'wrap', fontSize:11}}>
+        <div style={{fontSize:11, color: polling ? C.green : C.mid,
+                     display:'flex', alignItems:'center', gap:5, whiteSpace:'nowrap'}}>
+          {polling
+            ? <span style={{width:6,height:6,borderRadius:'50%',background:C.green,display:'inline-block'}}/>
+            : <WifiOff size={11}/>
+          }
+          <span>
+            {polling ? L('Live','实时') : L('Paused','暂停中')} · {liveCount} {L('refreshed','只已刷新')} · {stats.total.toLocaleString()} {L('stocks','只')}
+          </span>
         </div>
-        <div style={{display:'flex', gap:14, flexWrap:'wrap'}}>
+        <div style={{display:'flex', gap:10, flexWrap:'wrap', alignItems:'center'}}>
           {[
             { val:'lu', label:L('Limit↑','涨停'), count:stats.lu,  clr:'#EF4444' },
             { val:'up', label:L('Up','上涨'),      count:stats.up,  clr:C.green },
@@ -2442,23 +2522,66 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
           ].map(({val, label, count, clr}) => (
             <span key={val||'fl'} onClick={()=>val&&setDirFilter(val===dirFilter?'all':val)}
                   style={{cursor:val?'pointer':'default', display:'flex', gap:4, alignItems:'baseline'}}>
-              <span style={{fontSize:13, fontWeight:700, color:clr, fontFamily:MONO}}>{count}</span>
-              <span style={{fontSize:10, color:C.mid}}>{label}</span>
+              <span style={{fontSize:10, fontWeight:700, color:clr, fontFamily:MONO}}>{count}</span>
+              <span style={{fontSize:9, fontWeight:400, color:C.mid}}>{label}</span>
             </span>
           ))}
         </div>
         <div style={{marginLeft:'auto', display:'flex', alignItems:'center', gap:8}}>
-          <span style={{fontSize:10, color: polling ? C.green : C.mid, display:'flex', alignItems:'center', gap:4}}>
-            {polling
-              ? <><span style={{width:6,height:6,borderRadius:'50%',background:C.green,display:'inline-block'}}/>{L('Live','实时')} · {liveCount}{L(' refreshed',' 只已刷新')}</>
-              : <><WifiOff size={11}/> {L('Paused','暂停中')}</>
-            }
-          </span>
           <button onClick={()=>setPolling(p=>!p)} style={{
             fontSize:10, padding:'2px 8px', borderRadius:10,
             border:`1px solid ${C.border}`, background:'transparent', color:C.mid, cursor:'pointer',
-          }}>{polling ? L('Pause','暂停') : L('Resume','恢复')}</button>
+          }}>
+            {polling ? <>⏸ {L('Pause','暂停')}</> : <>▶ {L('Resume','恢复')}</>}
+          </button>
         </div>
+      </div>
+
+      {/* ── HERO STANDOUTS ────────────────────────────────────────────────── */}
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10}}>
+        <HeroCard
+          title={L('Today Top 5 Movers','今日涨幅 Top 5')}
+          icon={<Flame size={14}/>}
+          accent={C.red}
+          rows={topMovers.map(({s,eff}) => ({
+            name: s.name,
+            ticker: s.ticker,
+            value: eff.pct != null ? `${eff.pct >= 0 ? '+' : ''}${eff.pct.toFixed(2)}%` : '—',
+          }))}
+          onSeeAll={() => { setSortBy('pct'); setSortDir('desc'); }}
+          onRowClick={s => { if (s?.ticker) onSelect(s.ticker); }}
+          L={L}
+          C={C}
+        />
+        <HeroCard
+          title={L('α Leaders Top 5','α-龙头 Top 5')}
+          icon={<Sparkles size={14}/>}
+          accent={C.gold}
+          rows={topAlpha.map(({s}) => ({
+            name: s.name,
+            ticker: s.ticker,
+            value: `α ${s.alpha_score}`,
+          }))}
+          onSeeAll={() => { setSortBy('alpha'); setSortDir('desc'); }}
+          onRowClick={s => { if (s?.ticker) onSelect(s.ticker); }}
+          L={L}
+          C={C}
+          hide={!hasAlphaScores}
+        />
+        <HeroCard
+          title={L('Top 5 by Volume','量爆 Top 5')}
+          icon={<BarChart3 size={14}/>}
+          accent={C.blue}
+          rows={topVolume.map(({s,eff}) => ({
+            name: s.name,
+            ticker: s.ticker,
+            value: formatVolumeShort(eff.vol),
+          }))}
+          onSeeAll={() => { setSortBy('vol'); setSortDir('desc'); }}
+          onRowClick={s => { if (s?.ticker) onSelect(s.ticker); }}
+          L={L}
+          C={C}
+        />
       </div>
 
       {/* ── CONTROLS ───────────────────────────────────────────────────────── */}

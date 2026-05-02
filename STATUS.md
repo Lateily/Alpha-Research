@@ -8,9 +8,9 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-02 FINAL (20 commits, 4 shifts, v1 automation 激活)
-**Last shift:** v1 fswatch activation (commit `e347129`)
-**HEAD:** `e347129` on main (auto/2026-04-30 == main)
+**Last updated:** 2026-05-02 (shift 5 in flight — auto-work-mode: T4 protocol simplified + design-001 Phase 1 ships)
+**Last shift:** auto-work-mode 2026-05-02-1958 (T1+T2+T3+T4 four-agent first real cycle)
+**HEAD:** `<pending>` on auto/2026-04-30
 **Context handoff status:** All work in git. Next session reads this file + recent commits + queued_tasks/.
 
 **Pending — Anthropic billing sync issue (auto-recovers in 1-24h):**
@@ -136,6 +136,28 @@ within 24h.
 
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
+
+### 2026-05-02 night — auto-work shift 5 (cont.): housekeeping + T4 protocol simplify + design-001 Phase 1
+
+**Run id:** `2026-05-02-1958`. Four-agent flow first real exercise (T1 main +
+T2 reviewer + T3 Codex + T4 design watchers). All ships PASSed T2 review.
+
+- **KR1 — queued_tasks/README.md cleanup** (commit `1ddbb7d`): mark v1 fswatch
+  trio as shipped; renumber backlog 2-7 → 1-6. T2 P3: STATUS.md positional
+  shorthand may drift in informal prose (advisory).
+- **KR2 — T4 design protocol simplified** (commit `a23653a`): Junyan
+  directive — T4 self-iterates 1-2 rounds adversarially → ships proposal
+  directly to T1 (T1 = design-quality gate); Junyan no longer reviews
+  intermediate spec, validates SHIPPED UI as acceptance test. T1 escalates
+  to Junyan only on T4-flagged judgment calls (4 explicit triggers in new
+  §"Self-iteration protocol"). T2 P3: a11y/contrast as 5th escalation
+  category — deferred for next polish pass.
+- **KR3 — design-001 Phase 1 (hero strip + slim live bar)** (commit
+  `<pending>`): Browse tab gets a 32px slim live-pulse bar + 3-card hero
+  standouts strip (Today Top 5 Movers / α Leaders Top 5 / Top 5 by Volume).
+  T3 codegen ~150 LOC; T2 PASS. **Junyan §4.4 outlier color decision: Option C**
+  (preserve `#EF4444` 涨停 + `#9333EA` 跌停 in-place as documented limit-only
+  exceptions). Subsequent design-001 phases (2/3/5/4) continue this shift.
 
 ### 2026-05-02 EOD (Phase 1+2 Universe Browser + price-chart end-to-end LIVE)
 
