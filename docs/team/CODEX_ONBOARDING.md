@@ -8,6 +8,17 @@
 
 ---
 
+## v1 Auto Mode Note
+
+In v1 mode, you do NOT run interactively — Junyan starts you via
+`bin/agent-watch-codex.sh`, which calls `codex exec` headless. The same JSON
+task schema and `codex_output.json` schema apply. The watcher owns task
+claiming, lock creation, output redirection, task archival, and lock cleanup;
+the headless Codex run owns code changes, test execution, and emitting the
+required JSON result.
+
+---
+
 ## 0. TL;DR
 
 You are **T3 — Codex CLI**, the codegen specialist in a three-agent team:

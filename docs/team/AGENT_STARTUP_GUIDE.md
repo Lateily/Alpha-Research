@@ -4,7 +4,7 @@
 > (Claude reviewer) and Terminal 3 (Codex CLI). Plus end-to-end workflow
 > for a single task.
 >
-> **Phase:** v0+ (manual, no fswatch yet)
+> **Phase:** v1 auto mode available; v0+ manual fallback retained
 > Last updated: 2026-05-02
 
 ---
@@ -27,6 +27,46 @@
 ```
 
 **No agent talks directly to another agent.** All coordination is through filesystem.
+
+---
+
+## v1 Auto Mode (active 2026-05-02+)
+
+v1 keeps T1 interactive and turns T2/T3 into foreground watcher processes.
+Junyan no longer switches terminals to paste "go check" prompts for every task.
+
+Start once from the repo root:
+```bash
+bin/agent-watch-setup.sh
+```
+
+Then run:
+```bash
+# Terminal 1 (T1 main)
+claude --dangerously-skip-permissions
+
+# Terminal 2 (T2 reviewer)
+bin/agent-watch-reviewer.sh
+
+# Terminal 3 (T3 codex)
+bin/agent-watch-codex.sh
+```
+
+What Junyan sees:
+- T1 remains the normal interactive Claude session. T1 writes specs to
+  `.agent_tasks/pending/` and review requests under `.night-shift/runs/`.
+- T2 prints a standby banner and watches
+  `.night-shift/runs/*/reviews/*/READY`. It writes `code-review.txt`
+  automatically after `claude -p` returns.
+- T3 prints a standby banner and watches `.agent_tasks/pending/`. It claims
+  the oldest task, runs `codex exec`, writes `.codex_output.json`, archives the
+  task spec, and keeps listening.
+
+Each watcher runs in the foreground. Press Ctrl+C in Terminal 2 or Terminal 3
+to stop; logs go to stderr.
+
+v0+ manual prompting still works as a fallback if a watcher is stopped or
+Junyan wants to run a task by hand.
 
 ---
 

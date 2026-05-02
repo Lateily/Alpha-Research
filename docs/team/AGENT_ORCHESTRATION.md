@@ -167,44 +167,33 @@ git "$@"
 - Claude 写 task 文件 → Junyan 手动到终端 2 跑
 - **缺点**：Junyan 变体力工
 
-### v1 — File Watcher（推荐先做这个）
+### v1 — File Watcher（active 2026-05-02+）
 
-```bash
-# bin/agent-watch.sh — 在 Codex 终端启动
-#!/bin/bash
-TASK_DIR=".agent_tasks/pending"
-fswatch -0 "$TASK_DIR" | while read -d "" event; do
-  task_file=$(ls -1t "$TASK_DIR"/*.json 2>/dev/null | head -1)
-  [ -z "$task_file" ] && continue
+Implemented 2026-05-02 in commit `<pending>`. Junyan triggers setup via
+`bin/agent-watch-setup.sh`.
 
-  task_id=$(basename "$task_file" .json)
-  # 检查 lock
-  if [ -f ".agent_tasks/in_progress/$task_id.lock" ]; then
-    continue
-  fi
+The v1 watcher trio replaces the earlier `bin/agent-watch.sh` draft:
 
-  # 拿任务
-  mv "$task_file" ".agent_tasks/in_progress/"
-  echo "{\"holder\":\"codex\",\"acquired_at\":\"$(date -u +%FT%TZ)\",\"pid\":$$}" \
-    > ".agent_tasks/in_progress/$task_id.lock"
-
-  # 触发 Codex 处理（命令依赖具体的 Codex CLI）
-  codex --task ".agent_tasks/in_progress/$task_id.json" \
-        --output ".agent_tasks/done/$(date +%F)/$task_id.codex_output.json"
-
-  # 清理 lock
-  rm ".agent_tasks/in_progress/$task_id.lock"
-  mv ".agent_tasks/in_progress/$task_id.json" \
-     ".agent_tasks/done/$(date +%F)/$task_id.research_task.json"
-done
-```
+- `bin/agent-watch-codex.sh` — Terminal 3 standby process. Watches
+  `.agent_tasks/pending/`, claims the oldest JSON task, runs `codex exec`
+  headless, writes `.codex_output.json`, archives the task spec, and keeps
+  listening.
+- `bin/agent-watch-reviewer.sh` — Terminal 2 standby process. Watches
+  `.night-shift/runs/` recursively with `fswatch -0 -r`, filters for
+  `*/reviews/*/READY`, runs `claude -p`, and atomically writes
+  `code-review.txt`.
+- `bin/agent-watch-setup.sh` — one-time setup helper. Checks/installs
+  `fswatch` on macOS, marks watcher scripts executable, and prints the three
+  terminal startup instructions.
 
 **Junyan 用法**：
-- 早上开 Codex 终端，跑 `bin/agent-watch.sh`
-- 之后 Claude 写 task 自动被处理
-- 一直挂着直到关电脑
+- 先跑 `bin/agent-watch-setup.sh`
+- Terminal 2 跑 `bin/agent-watch-reviewer.sh`
+- Terminal 3 跑 `bin/agent-watch-codex.sh`
+- Terminal 1 继续用 Claude 互动写 spec / review request
+- 三个终端都以前台运行；按 Ctrl+C 停止 watcher
 
-需要装：`brew install fswatch`（macOS）
+需要装：`brew install fswatch`（macOS；setup script 会处理）
 
 ### v2 — Orchestrator daemon（成熟版，未来）
 
