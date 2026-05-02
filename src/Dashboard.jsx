@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import React from "react";
-import { Search, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3, Flame, Sparkles,
+import { Search, SearchX, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3, Flame, Sparkles,
          Shield, Zap, Globe, Eye, Target, Filter, Radio, Crosshair,
          AlertCircle, CheckCircle, ArrowUpRight, ArrowDownRight,
          Database, RefreshCw, Layers, BookOpen, Info, Calendar,
@@ -1194,7 +1194,6 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
           />
         ))}
       </div>
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}`}</style>
     </div>
   );
 }
@@ -2496,19 +2495,32 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     }}>{children}</button>
   );
 
-  /* ── empty state ─────────────────────────────────────────────────────────── */
-  if (!universeA && !universeHK) return (
-    <div style={{textAlign:'center', padding:60, color:C.mid}}>
-      <Database size={36} style={{marginBottom:10, opacity:0.35}}/>
-      <div style={{fontSize:12}}>{L('Loading full universe…','全市场数据加载中…')}</div>
-    </div>
-  );
-
   const liveCount = Object.keys(liveQuotes).length;
   const hasAlphaScores = masterList.some(s => s.alpha_score != null && s.alpha_score > 0);
   const COLS = hasAlphaScores
     ? '32px 1fr 80px 80px 80px 80px 46px 10px'   // with α column
     : '32px 1fr 80px 80px 80px 80px 10px';        // without (scores not yet generated)
+
+  /* ── empty state ─────────────────────────────────────────────────────────── */
+  if (!universeA && !universeHK) return (
+    <div>
+      {/* loading skeleton — card chrome consistent with rendered table */}
+      <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, overflow:'hidden', marginBottom:10}}>
+        {/* header row (placeholder) */}
+        <div style={{display:'grid', gridTemplateColumns:COLS, gap:8, padding:'8px 12px', borderBottom:`1px solid ${C.border}`, background:C.soft, fontSize:9, color:C.mid, fontWeight:600, letterSpacing:'0.04em'}}>
+          <span/><span>{L('Loading…','加载中…')}</span><span/><span/><span/><span/>{hasAlphaScores && <span/>}<span/>
+        </div>
+        {/* 6 skeleton rows */}
+        {Array.from({length:6}).map((_, i) => (
+          <div key={i} style={{display:'grid', gridTemplateColumns:COLS, gap:8, padding:'8px 12px', borderBottom: i < 5 ? `1px solid ${C.border}` : 'none', alignItems:'center', background: i%2===0 ? 'transparent' : C.soft}}>
+            {Array.from({length: hasAlphaScores ? 8 : 7}).map((__, j) => (
+              <div key={j} style={{height:14, background:C.soft, borderRadius:3, animation:'pulse 1.5s ease-in-out infinite', animationDelay: `${(i*0.1) + (j*0.05)}s`, opacity:0.6}}></div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -2735,8 +2747,15 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
         </div>
 
         {visible.length === 0
-          ? <div style={{textAlign:'center', padding:40, color:C.mid, fontSize:12}}>
-              {L('No stocks match','无匹配股票')}
+          ? <div style={{textAlign:'center', padding:'40px 20px', color:C.mid}}>
+              <SearchX size={32} style={{marginBottom:10, color:C.mid}}/>
+              <div style={{fontSize:14, color:C.dark, fontWeight:600, marginBottom:14}}>
+                {L('No stocks match the current filters','没有股票匹配当前筛选')}
+              </div>
+              <button onClick={() => { setSearchQ(''); setIndustry(''); setPeMin(''); setPeMax(''); setPctMin(''); setPctMax(''); }}
+                style={{padding:'8px 18px', fontSize:12, borderRadius:6, background:'transparent', border:`1px solid ${C.blue}`, color:C.blue, cursor:'pointer', fontWeight:600}}>
+                {L('Clear all filters →','清除所有筛选 →')}
+              </button>
             </div>
           : visible.map((s, i) => {
               const eff  = getEff(s);
@@ -7540,6 +7559,12 @@ const GlobalStyles = () => (
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50%       { opacity: 0.3; }
+    }
+
+    /* Pulse — used by skeleton loaders + PulseCard dots */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.35; }
     }
 
     /* Subtle fade-in for cards */

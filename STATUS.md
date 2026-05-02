@@ -153,11 +153,38 @@ T2 reviewer + T3 Codex + T4 design watchers). All ships PASSed T2 review.
   §"Self-iteration protocol"). T2 P3: a11y/contrast as 5th escalation
   category — deferred for next polish pass.
 - **KR3 — design-001 Phase 1 (hero strip + slim live bar)** (commit
-  `<pending>`): Browse tab gets a 32px slim live-pulse bar + 3-card hero
+  `930e276`): Browse tab gets a 32px slim live-pulse bar + 3-card hero
   standouts strip (Today Top 5 Movers / α Leaders Top 5 / Top 5 by Volume).
   T3 codegen ~150 LOC; T2 PASS. **Junyan §4.4 outlier color decision: Option C**
   (preserve `#EF4444` 涨停 + `#9333EA` 跌停 in-place as documented limit-only
-  exceptions). Subsequent design-001 phases (2/3/5/4) continue this shift.
+  exceptions; Phase 4 row accent KR7 will reuse these literals).
+- **KR4 — design-001 Phase 2 (two-tier filter shelf + active filter pill bar)**
+  (commit `0aa319d`): single-row CONTROLS split into PRIMARY (always
+  visible) + ADVANCED (auto-expand on filter active) + new ACTIVE FILTER
+  PILL BAR with per-pill `×` removal + `Clear all`. New `FilterPill`
+  sub-component, `advancedExpanded` state, `advancedActiveCount` memo.
+  T3 codegen +52/-17; T2 PASS. 3 P3 (a11y on `×` button, advanced label
+  asymmetry, PE pill `?` placeholder — all advisory, deferred).
+- **KR5 — design-001 Phase 3 (industry chip promoted to row line-1)**
+  (commit `790a2fa`): industry chip lifts from line-2 fontSize:8 to
+  line-1 right-anchored using `S.tag(C.blue)` helper; click-to-filter
+  preserved + hover effect added (`${C.blue}24`). T3 codegen +20/-16; T2 PASS.
+- **KR6 — design-001 Phase 5 (skeleton loading + empty-state CTA)**
+  (commit `<pending>`): cold-start loading state replaced with a
+  card-chrome'd 6-row skeleton matching real table COLS + pulse animation;
+  empty-result state replaced with `SearchX` icon + message + `Clear all
+  filters →` CTA. **Bonus fix**: T2 caught a pre-existing fragility
+  where `@keyframes pulse` was scoped to NewsPanel — migrated to
+  GlobalStyles (KR6-rev2). Now PulseCard at line 6397 also benefits.
+  T3 codegen +37/-12 (incl. fix); T2 PASS rev2.
+
+**Phase 4 (row left-border accent) deferred to KR7** — reuses
+`#EF4444`/`#9333EA` literals per Junyan §4.4 Option C decision.
+
+**K-line scope (KR8+ queued)** — Junyan extended scope: full daily K-line,
+intraday 分时 view, multi-timeframe (1d/1w/1mo + minute intervals),
+Bollinger Bands, full technical indicators (MA/MACD/KDJ/RSI/etc).
+3+ KRs after design-001 wraps.
 
 ### 2026-05-02 EOD (Phase 1+2 Universe Browser + price-chart end-to-end LIVE)
 
