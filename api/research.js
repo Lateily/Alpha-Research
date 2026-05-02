@@ -399,7 +399,7 @@ Return ONLY a JSON array:
 No markdown. Return only the JSON array.`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-opus-4-7',
     max_tokens: 900,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -431,7 +431,7 @@ Return ONLY a JSON array:
 No markdown. Return only the JSON array.`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-opus-4-7',
     max_tokens: 700,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -889,7 +889,7 @@ ${enrichment_context ? `ENRICHMENT: Use ${enrichment_context.live_price} as the 
 Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return ONLY valid JSON.`;
 
     const message = await client.messages.create({
-      model:      'claude-sonnet-4-6',
+      model:      'claude-opus-4-7',
       max_tokens: 8192,
       system:     SYSTEM_PROMPT,
       messages:   [{ role: 'user', content: userPrompt }],
