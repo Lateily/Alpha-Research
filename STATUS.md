@@ -8,9 +8,9 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-01 night (post repo reorg + Franky onboarding + auto-work-mode rename)
+**Last updated:** 2026-05-02 (Tushare 6000 active + 5 public-source fetchers shipped)
 **Last shift:** `2026-04-30-2323` (4 KRs shipped, ended via DEFER_D consensus)
-**HEAD:** `04c87f7` on `main` (auto/2026-04-30 == main)
+**HEAD:** `81bfd1a` on `main` (auto/2026-04-30 == main; branch name will rotate to `auto/2026-05-02` on next shift)
 
 ---
 
