@@ -126,8 +126,20 @@
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
 
+### 2026-05-02 (Tushare Phase A 完整接入 + 6000 积分到账)
+0. **Tushare Pro 接入完成 ✓** — 6000 积分 tier 已激活（含资金流向 = 北向资金 +
+   概念板块 + 券商金股）。Token 在 ~/.zshrc 和 GitHub Actions secret 里。
+   Sanity check 全 4 测试通过：stock_basic / daily 300308.SZ /
+   moneyflow_hsgt 全部返回数据。USP layer 关键数据 **moneyflow_hsgt** 已可用。
+   Test artifact: `scripts/test_tushare.py`（reusable）。
+   下次 /auto 第一件事：按"forward-compatible architecture"原则写
+   `docs/architecture/TUSHARE_API_REGISTRY.md` + `UPGRADE_PLAYBOOK.md` +
+   `scripts/fetch_tushare.py` (graceful-degrade) + `scripts/data_completeness.py`。
+   关键架构原则：**代码为最高 tier 设计，运行时按当前 tier 优雅降级**——
+   schema 永远完整, missing 字段标 `_status: tier_locked` + `_need_tier: N`。
+
 ### 2026-05-01 night (post repo reorg + Franky/Codex protocol + v0+ infra)
-0. **Multi-agent v0+ baseline shipped** (commit `ad80b07`): `bin/git-safe.sh`
+1. **Multi-agent v0+ baseline shipped** (commit `ad80b07`): `bin/git-safe.sh`
    防 `.git/index.lock` 冲突 + `.agent_tasks/{pending,in_progress,done,failed}/`
    task 队列目录（gitignored）。Phase 1 锁定为**三终端**: T1 主 Claude (Opus,
    orchestrator) + T2 Claude reviewer (Opus, 二审) + T3 OpenAI Codex CLI
