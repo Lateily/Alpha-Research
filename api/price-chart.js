@@ -59,6 +59,17 @@ function isAShare(ticker) {
   return /\.(SZ|SH)$/i.test(ticker.trim());
 }
 
+function isHK(ticker) {
+  return /\.HK$/i.test(ticker.trim());
+}
+
+function toTushareHK(ticker) {
+  // Convert to Tushare's HK format: 5-digit zero-padded + .HK
+  // '700.HK' / '0700.HK' / '00700.HK' → '00700.HK'
+  const base = ticker.trim().toUpperCase().replace(/\.HK$/i, '');
+  return `${base.padStart(5, '0')}.HK`;
+}
+
 function formatYYYYMMDD(dateObj) {
   const y = dateObj.getUTCFullYear();
   const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
@@ -188,7 +199,129 @@ async function fetchTushareDaily(ticker, range) {
 }
 
 // ────────────────────────────────────────────────────────────────────────
-// Yahoo Finance branch (HK / US)
+// Tushare branch (HK via hk_daily — 6000-tier covers HK 低频行情)
+// ────────────────────────────────────────────────────────────────────────
+
+async function fetchTushareHK(ticker, range) {
+  const token = process.env.TUSHARE_TOKEN;
+  if (!token) {
+    console.warn('[price-chart] TUSHARE_TOKEN not set — falling back to Yahoo for HK', ticker);
+    return null;
+  }
+
+  const tsCode = toTushareHK(ticker);  // e.g. '700.HK' → '00700.HK'
+  const daysBack = TUSHARE_DAYS_MAP[range] || 35;
+  const now = new Date();
+  const startDate = new Date(now.getTime() - daysBack * 86400000);
+
+  const body = {
+    api_name: 'hk_daily',
+    token,
+    params: {
+      ts_code: tsCode,
+      start_date: formatYYYYMMDD(startDate),
+      end_date: formatYYYYMMDD(now),
+    },
+    fields: 'trade_date,open,high,low,close,vol,amount',
+  };
+
+  try {
+    const resp = await fetch('https://api.tushare.pro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (!resp.ok) {
+      console.error(`[price-chart-tushare-hk] HTTP ${resp.status} for ${tsCode}`);
+      return null;
+    }
+
+    const json = await resp.json();
+    if (json.code !== 0) {
+      console.error(`[price-chart-tushare-hk] API error for ${tsCode}: ${json.msg}`);
+      return null;
+    }
+
+    const fields = json.data?.fields || [];
+    const items  = json.data?.items  || [];
+    if (!items.length) return null;
+
+    const idxOf = (name) => fields.indexOf(name);
+    const iDate  = idxOf('trade_date');
+    const iOpen  = idxOf('open');
+    const iHigh  = idxOf('high');
+    const iLow   = idxOf('low');
+    const iClose = idxOf('close');
+    const iVol   = idxOf('vol');
+
+    const chartData = items
+      .map(row => {
+        const dateStr = String(row[iDate]);
+        if (!/^\d{8}$/.test(dateStr)) return null;
+        // HK market closes ~16:00 HKT = 08:00 UTC
+        const t = Date.UTC(
+          +dateStr.slice(0, 4),
+          +dateStr.slice(4, 6) - 1,
+          +dateStr.slice(6, 8),
+          8, 0, 0
+        );
+        const open  = row[iOpen]  != null ? +Number(row[iOpen]).toFixed(4)  : null;
+        const high  = row[iHigh]  != null ? +Number(row[iHigh]).toFixed(4)  : null;
+        const low   = row[iLow]   != null ? +Number(row[iLow]).toFixed(4)   : null;
+        const close = row[iClose] != null ? +Number(row[iClose]).toFixed(4) : null;
+        if (close == null) return null;
+        // HK Tushare vol is in shares directly (not 手 like A-share)
+        const volRaw = row[iVol] != null ? Number(row[iVol]) : 0;
+        return {
+          time:   t,
+          open:   open  ?? close,
+          high:   high  ?? close,
+          low:    low   ?? close,
+          close,
+          volume: Math.round(volRaw),
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.time - b.time);
+
+    if (!chartData.length) return null;
+
+    const last      = chartData[chartData.length - 1];
+    const prev      = chartData.length > 1 ? chartData[chartData.length - 2] : last;
+    const prevClose = prev.close;
+    const changePct = prevClose
+      ? +((last.close - prevClose) / prevClose * 100).toFixed(2)
+      : null;
+
+    return {
+      success:      true,
+      ticker:       tsCode,
+      name:         tsCode,
+      currency:     'HKD',
+      exchange:     'HKEx',
+      range,
+      interval:     '1d',
+      current:      last.close,
+      prev_close:   prevClose,
+      change_pct:   changePct,
+      day_high:     last.high,
+      day_low:      last.low,
+      volume:       last.volume,
+      market_state: 'CLOSED',
+      data:         chartData,
+      source:       'tushare-6000-hk',
+      fetched_at:   new Date().toISOString(),
+    };
+  } catch (err) {
+    console.error(`[price-chart-tushare-hk] ${tsCode}: ${err.message}`);
+    return null;
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Yahoo Finance branch (US / HK fallback)
 // ────────────────────────────────────────────────────────────────────────
 
 async function fetchYahooChart(ticker, range) {
@@ -292,25 +425,33 @@ export default async function handler(req, res) {
   if (isAShare(ticker)) {
     const tushareResult = await fetchTushareDaily(ticker, range);
     if (tushareResult) {
-      // 12-hour edge cache for A-share daily data (no intraday at 6000 tier;
-      // daily data only changes once per day after market close).
       res.setHeader('Cache-Control', 'public, s-maxage=43200, stale-while-revalidate=86400');
       return res.status(200).json(tushareResult);
     }
-    // Tushare failed — fall through to Yahoo as defense-in-depth backup
-    console.warn('[price-chart] Tushare failed for', ticker, '— falling back to Yahoo');
+    console.warn('[price-chart] Tushare A failed for', ticker, '— falling back to Yahoo');
   }
 
-  // ── Branch 2: HK / US / fallback for failed A-share via Yahoo ──────────
+  // ── Branch 2: HK via Tushare 6000 hk_daily (Yahoo rate-limits HK from
+  //              Vercel cloud IPs same as A-share) ────────────────────────
+  if (isHK(ticker)) {
+    const tushareHKResult = await fetchTushareHK(ticker, range);
+    if (tushareHKResult) {
+      res.setHeader('Cache-Control', 'public, s-maxage=43200, stale-while-revalidate=86400');
+      return res.status(200).json(tushareHKResult);
+    }
+    console.warn('[price-chart] Tushare HK failed for', ticker, '— falling back to Yahoo');
+  }
+
+  // ── Branch 3: US / fallback for failed A-share + HK via Yahoo ──────────
   const yahooResult = await fetchYahooChart(ticker, range);
   if (yahooResult) {
-    // 60s cache for Yahoo (intraday-capable, near-real-time)
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=30');
     return res.status(200).json(yahooResult);
   }
 
-  return res.status(502).json({
-    error: `Failed to fetch price data for "${ticker}". ` +
-           `${isAShare(ticker) ? 'Tushare and Yahoo both failed' : 'Yahoo Finance unavailable'}.`,
-  });
+  let errMsg = `Failed to fetch price data for "${ticker}". `;
+  if (isAShare(ticker))      errMsg += 'Tushare A + Yahoo both failed.';
+  else if (isHK(ticker))     errMsg += 'Tushare HK + Yahoo both failed.';
+  else                       errMsg += 'Yahoo Finance unavailable.';
+  return res.status(502).json({ error: errMsg });
 }
