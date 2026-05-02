@@ -34,6 +34,7 @@ jobs:
             pandas \
             requests \
             supabase \
+            tushare \
             --quiet
 
       # ── Step 1: Fetch all market data ──────────────────────────────────────
@@ -66,6 +67,17 @@ jobs:
       - name: Fetch leading indicators
         continue-on-error: true          # non-critical; US market data
         run: python scripts/leading_indicators.py
+
+      # ── Step 2d.5: Tushare A-share data ──────────────────────────────────
+      # Tushare 6000-tier active. Per-ticker A-share data + market-wide hsgt
+      # money flow. Forward-compatible per DATA_SOURCE_REGISTRY.md —
+      # tier-locked APIs (forecast) marked _status: tier_locked in output,
+      # populate when tier upgraded.
+      - name: "Step 2d.5: Fetch Tushare A-share data (6000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_tushare.py
 
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
@@ -178,6 +190,7 @@ jobs:
             public/data/signal_quality.json \
             public/data/trades.json \
             public/data/trade_attribution_capsules.json \
+            public/data/tushare_market.json \
             public/data/profit_scissors.json \
             public/data/leading_indicators.json \
             public/data/fragility_300308_SZ.json \
@@ -196,7 +209,8 @@ jobs:
           shopt -s nullglob
           files=(public/data/ohlc_*.json public/data/fin_*.json \
                  public/data/rdcf_*.json public/data/eqr_*.json \
-                 public/data/signals_*.json public/data/cflow_*.json)
+                 public/data/signals_*.json public/data/cflow_*.json \
+                 public/data/tushare/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 

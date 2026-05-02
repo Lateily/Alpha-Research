@@ -20,7 +20,7 @@
 
 | ID | Source | Tier | Auth | Tickers | Cadence | Status |
 |---|---|---|---|---|---|---|
-| `tushare` | Tushare Pro | Paid (6000 pts) | `TUSHARE_TOKEN` env | A-share | daily | ✅ ACTIVE |
+| `tushare` | Tushare Pro | Paid (6000 pts) | `TUSHARE_TOKEN` env | A-share | daily | ✅ ACTIVE 2026-05-02 (`scripts/fetch_tushare.py` shipped, pipeline integrated) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -95,7 +95,8 @@ public/data/tushare/<ticker>.json
 }
 ```
 
-**Implementation:** `scripts/fetch_tushare.py` (TODO — next /auto session per registry pattern).
+**Implementation:** ✅ `scripts/fetch_tushare.py` (296 LOC, shipped 2026-05-02,
+first three-agent production codegen task; T3 codegen + T2 review).
 
 ---
 

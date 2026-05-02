@@ -126,6 +126,30 @@
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
 
+### 2026-05-02 (KR2a shipped — Tushare 6000 fetcher + pipeline integration. KR2b queued.)
+0. **First production codegen task complete ✓** — `scripts/fetch_tushare.py`
+   (296 LOC, written by Codex T3) + `.github/workflows/fetch-data.yml`
+   pipeline integration (Step 2d.5). Output paths active:
+   - `public/data/tushare/<ticker>.json` (per A-share, currently 300308.SZ
+     验证完成 with completeness_pct: 75 — 6 ok APIs + dividend empty + forecast
+     tier_locked which is intended)
+   - `public/data/tushare_market.json` — **moneyflow_hsgt LIVE** (北向资金 40 行
+     including north_money + south_money fields). USP-critical 数据 unlocked.
+   T2 review: REQUEST_CHANGES → 2 P2 + 3 P3 → T1 applied all 5 fixes →
+   resubmit. Per-ticker outer try/except wrapper added (D4 compliance),
+   STATUS.md queue entry added (this entry, C3 compliance), dividend
+   genuineness comment, HK placeholder docstring, registry ACTIVE marking.
+
+1. **🔥 KR2b QUEUED for next session: Dashboard Tushare surfacing** —
+   Junyan's portal currently does NOT show this Tushare data. KR2a wired
+   backend + pipeline (C1 + C2); KR2b must wire Dashboard render path
+   (C3 + C4 documentation finalization). Specifically: add `tushareData`
+   state to Dashboard.jsx, useEffect fetch of `tushare_market.json` and
+   `tushare/<ticker>.json` for each watchlist ticker, render hsgt 5d
+   flow direction badge + last 5d daily basics (PE/PB) on each ticker
+   row. Forward-compat: gracefully handle null states for tier_locked
+   forecast field. Trigger: Junyan says "KR2b 上" or just "go" when ready.
+
 ### 2026-05-02 (Three-agent handshake VALIDATED — KR1 shipped)
 0. **First three-agent task complete ✓** — KR1 hello-world smoke test
    passed end-to-end. Run ID `2026-05-02-three-agent-01`. Roundtrip:
