@@ -2269,6 +2269,15 @@ function HeroCard({ title, icon, accent, rows, onSeeAll, onRowClick, L, C, hide=
   );
 }
 
+function FilterPill({ text, onRemove, C }) {
+  return (
+    <span style={{display:'inline-flex', alignItems:'center', gap:4, padding:'3px 4px 3px 9px', borderRadius:11, background:`${C.blue}14`, color:C.blue, fontSize:11, fontWeight:600}}>
+      {text}
+      <span onClick={onRemove} style={{cursor:'pointer', padding:'0 5px', color:C.blue, fontSize:13, lineHeight:1, opacity:0.65}} onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.65'}>×</span>
+    </span>
+  );
+}
+
 function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, universeHK }) {
   const PAGE_SIZE = 100;
   const POLL_MS   = 3000;
@@ -2287,6 +2296,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   const [pctMax,     setPctMax]     = useState('');      // 涨跌幅 upper bound (incl)
   const [liveQuotes, setLiveQuotes] = useState({});      // emKey → quote obj
   const [polling,    setPolling]    = useState(true);
+  const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const pollRef  = useRef(null);
   const codesRef = useRef([]);
 
@@ -2307,6 +2317,8 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     }
     return Object.entries(counts).sort((a, b) => b[1] - a[1]);
   }, [masterList]);
+
+  const advancedActiveCount = React.useMemo(() => [!!industry, (peMin !== '' || peMax !== ''), (pctMin !== '' || pctMax !== '')].filter(Boolean).length, [industry, peMin, peMax, pctMin, pctMax]);
 
   const toEMCode = s => {
     if (!s?.code) return null;
@@ -2413,6 +2425,8 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 
   // reset to page 0 on filter change
   useEffect(() => { setPage(0); }, [mktFilter, dirFilter, searchQ, industry, peMin, peMax, pctMin, pctMax]);
+
+  useEffect(() => { if (advancedActiveCount > 0) setAdvancedExpanded(true); }, [advancedActiveCount]);
 
   /* ── live quote polling — only visible stocks ────────────────────────────── */
   // 2026-05-02 Phase 3 audit fix: previous deps [page, filtered.length, polling]
@@ -2584,10 +2598,8 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
         />
       </div>
 
-      {/* ── CONTROLS ───────────────────────────────────────────────────────── */}
-      <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10,
-                   padding:'10px 14px', marginBottom:10,
-                   display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
+      {/* ── PRIMARY FILTER ROW ─────────────────────────────────────────────── */}
+      <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 14px', marginBottom:8, display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
         {/* Search */}
         <div style={{position:'relative'}}>
           <Search size={11} style={{position:'absolute', left:8, top:'50%', transform:'translateY(-50%)', color:C.mid}}/>
@@ -2620,6 +2632,20 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
           </div>
         )}
 
+        <button style={{height:24, fontSize:11, padding:'0 10px', borderRadius:6, background: advancedActiveCount > 0 ? `${C.blue}14` : 'transparent', border:`1px solid ${advancedActiveCount > 0 ? C.blue : C.border}`, color: advancedActiveCount > 0 ? C.blue : C.mid, cursor:'pointer', fontWeight: advancedActiveCount > 0 ? 700 : 400, display:'flex', alignItems:'center', gap:4, whiteSpace:'nowrap'}}
+          onClick={() => setAdvancedExpanded(v => !v)}>
+          {advancedExpanded || advancedActiveCount > 0 ? '▲' : '▼'} {L('Advanced','高级')}{advancedActiveCount > 0 && ` (${advancedActiveCount})`}
+        </button>
+
+        <div style={{marginLeft:'auto', fontSize:10, color:C.mid}}>
+          {filtered.length.toLocaleString()} {L('stocks','只')}
+          {totalPages > 1 && ` · P${page+1}/${totalPages}`}
+        </div>
+      </div>
+
+      {/* ── ADVANCED FILTER ROW ────────────────────────────────────────────── */}
+      {advancedExpanded && (
+      <div style={{background:C.card, border:`1px solid ${C.border}`, borderTop:`1px dashed ${C.border}`, borderRadius:10, padding:'8px 14px', marginBottom:8, display:'flex', gap:14, flexWrap:'wrap', alignItems:'center'}}>
         {/* Industry filter (Phase 1 universe browser KR-B) */}
         {industries.length > 0 && (
           <select value={industry} onChange={e=>setIndustry(e.target.value)}
@@ -2666,22 +2692,31 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
                     background:C.soft, border:`1px solid ${C.border}`, borderRadius:5,
                     color:C.dark, outline:'none', textAlign:'center'}}/>
         </div>
-
-        {/* Clear filters */}
-        {(industry || peMin || peMax || pctMin || pctMax || searchQ) && (
-          <button onClick={()=>{setIndustry('');setPeMin('');setPeMax('');setPctMin('');setPctMax('');setSearchQ('');}}
-            style={{height:24, fontSize:10, padding:'0 8px', borderRadius:5,
-                    background:'transparent', border:`1px solid ${C.border}`,
-                    color:C.mid, cursor:'pointer'}}>
-            {L('Clear','清除')}
-          </button>
-        )}
-
-        <div style={{marginLeft:'auto', fontSize:10, color:C.mid}}>
-          {filtered.length.toLocaleString()} {L('stocks','只')}
-          {totalPages > 1 && ` · P${page+1}/${totalPages}`}
-        </div>
       </div>
+      )}
+
+      {/* ── ACTIVE FILTER PILLS ────────────────────────────────────────────── */}
+      {(searchQ || advancedActiveCount > 0) && (
+        <div style={{display:'flex', gap:6, padding:'6px 14px', marginBottom:8, alignItems:'center', flexWrap:'wrap', fontSize:11}}>
+          <span style={{fontSize:10, color:C.mid, fontWeight:600}}>{L('Filtering:','正在筛选:')}</span>
+          {searchQ && (
+            <FilterPill text={`${L('Search:','搜索:')} ${searchQ}`} onRemove={() => setSearchQ('')} C={C}/>
+          )}
+          {industry && (
+            <FilterPill text={`${L('Industry','行业')}: ${industry}`} onRemove={() => setIndustry('')} C={C}/>
+          )}
+          {(peMin !== '' || peMax !== '') && (
+            <FilterPill text={`PE: ${peMin || '?'}–${peMax || '?'}`} onRemove={() => { setPeMin(''); setPeMax(''); }} C={C}/>
+          )}
+          {(pctMin !== '' || pctMax !== '') && (
+            <FilterPill text={`Δ%: ${pctMin || '?'}–${pctMax || '?'}`} onRemove={() => { setPctMin(''); setPctMax(''); }} C={C}/>
+          )}
+          <button style={{height:22, fontSize:10, padding:'0 8px', borderRadius:11, background:'transparent', border:`1px solid ${C.border}`, color:C.mid, cursor:'pointer', marginLeft:4}}
+            onClick={() => { setSearchQ(''); setIndustry(''); setPeMin(''); setPeMax(''); setPctMin(''); setPctMax(''); }}>
+            {L('Clear all','清除全部')}
+          </button>
+        </div>
+      )}
 
       {/* ── TABLE ──────────────────────────────────────────────────────────── */}
       <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, overflow:'hidden', marginBottom:10}}>
