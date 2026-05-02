@@ -1,0 +1,22 @@
+diff --git a/docs/team/CODEX_ONBOARDING.md b/docs/team/CODEX_ONBOARDING.md
+index 1115a51..306662e 100644
+--- a/docs/team/CODEX_ONBOARDING.md
++++ b/docs/team/CODEX_ONBOARDING.md
+@@ -8,6 +8,17 @@
+ 
+ ---
+ 
++## v1 Auto Mode Note
++
++In v1 mode, you do NOT run interactively — Junyan starts you via
++`bin/agent-watch-codex.sh`, which calls `codex exec` headless. The same JSON
++task schema and `codex_output.json` schema apply. The watcher owns task
++claiming, lock creation, output redirection, task archival, and lock cleanup;
++the headless Codex run owns code changes, test execution, and emitting the
++required JSON result.
++
++---
++
+ ## 0. TL;DR
+ 
+ You are **T3 — Codex CLI**, the codegen specialist in a three-agent team:

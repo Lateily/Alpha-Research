@@ -1,0 +1,124 @@
+{
+  "task_id": "03-v1-fswatch-trio",
+  "agent_target": "codex",
+  "intent": "v1 file-watcher trio — replaces v0+ manual prompting with auto-trigger via fswatch. After this lands, T3 + T2 transition from interactive Claude/Codex to standby shell scripts that auto-process new task files. Junyan stops manually switching terminals. Meta-bootstrap: this is the LAST task that requires manual T3 prompting — once it's running, all future tasks flow auto.",
+
+  "priority": "P0",
+  "estimated_loc": 280,
+  "estimated_codex_minutes": 60,
+
+  "context_files_required": [
+    "docs/team/AGENT_ORCHESTRATION.md (§4 v1 草稿 — implementation reference, but NOT verbatim — actual implementation must verify cmd syntax)",
+    "docs/team/AGENT_PROTOCOL.md (JSON schemas)",
+    "docs/team/AGENT_STARTUP_GUIDE.md (v0+ workflow patterns to extend)",
+    "bin/git-safe.sh (existing wrapper pattern to mirror style)",
+    ".gitignore (verify .agent_tasks/ already excluded)"
+  ],
+
+  "must_satisfy": [
+    "TASK_A — bin/agent-watch-codex.sh (NEW, ~110 LOC bash)",
+    "A1. Shebang: `#!/usr/bin/env bash` on line 1",
+    "A2. `set -euo pipefail` on line 2",
+    "A3. Top-of-file docstring (15-25 lines) explaining: (1) what it does, (2) prerequisites (fswatch + codex CLI in PATH), (3) usage `bin/agent-watch-codex.sh`, (4) how to stop (Ctrl+C), (5) where logs go (stderr)",
+    "A4. Define constants near top: PENDING_DIR=.agent_tasks/pending, IN_PROGRESS_DIR=.agent_tasks/in_progress, DONE_DIR_BASE=.agent_tasks/done",
+    "A5. Pre-flight check 1: `cd` to repo root (use `git rev-parse --show-toplevel || pwd` fallback). If not in a git repo + no fallback works, exit 1 with clear message",
+    "A6. Pre-flight check 2: verify fswatch is installed (`command -v fswatch`); if missing print install instructions + exit 1",
+    "A7. Pre-flight check 3: verify codex command exists in PATH; if missing print install instructions + exit 1 (do NOT call it yet — just check)",
+    "A8. Pre-flight check 4: ensure PENDING_DIR + IN_PROGRESS_DIR exist (mkdir -p)",
+    "A9. Print startup banner to stderr: 'agent-watch-codex.sh standby [PID $$] — monitoring .agent_tasks/pending/'",
+    "A10. Trap SIGINT (Ctrl+C) to print 'Watcher stopped cleanly' before exit",
+
+    "TASK_A — main loop logic",
+    "A11. Use `fswatch -0 \"$PENDING_DIR\"` piped to `while read -r -d '' event` (NUL-separated for safety)",
+    "A12. On each event: list current pending/*.json files, pick the OLDEST one (`ls -1t -r ... | head -1`) — process FIFO order, not LIFO",
+    "A13. If no pending files, continue loop (idempotent under spurious events)",
+    "A14. Compute task_id = basename without .json extension",
+    "A15. Skip if `.agent_tasks/in_progress/$task_id.lock` exists (another watcher claimed it)",
+    "A16. Move task file to in_progress: `mv \"$pending_file\" \"$IN_PROGRESS_DIR/\"`",
+    "A17. Write lock file at $IN_PROGRESS_DIR/$task_id.lock with holder=codex + acquired_at + pid + expires_at (acquired_at + 30 min)",
+    "A18. Compute today's done dir: DONE_TODAY=\"$DONE_DIR_BASE/$(date -u +%Y-%m-%d)\"; mkdir -p \"$DONE_TODAY\"",
+    "A19. Compute output path: OUT=\"$DONE_TODAY/$task_id.codex_output.json\"",
+    "A20. Run codex headless with task file as input. Spec note: as of 2026-05, OpenAI Codex CLI supports `codex exec` for non-interactive one-shot. Try in this order (use first that works at codegen time, fallback chain):\n      (a) `codex exec < \"$IN_PROGRESS_DIR/$task_id.json\" > \"$OUT\"`\n      (b) `codex --input \"$IN_PROGRESS_DIR/$task_id.json\" --output \"$OUT\"`\n      Write the WORKING command in the script + add comment showing the alternatives so Junyan can adjust if his codex CLI version differs",
+    "A21. Capture codex exit code in CODEX_EC. If non-zero: write a minimal failure-status JSON to $OUT (status: failed, agent: codex, error: 'codex exec exit $CODEX_EC') so T1 always sees an output even on failure",
+    "A22. Move task spec to done: `mv \"$IN_PROGRESS_DIR/$task_id.json\" \"$DONE_TODAY/$task_id.research_task.json\"`",
+    "A23. Remove lock: `rm -f \"$IN_PROGRESS_DIR/$task_id.lock\"`",
+    "A24. Log per-task summary to stderr: `[YYYY-MM-DDThh:mm:ssZ] codex processed $task_id (exit=$CODEX_EC) → $OUT`",
+    "A25. Continue main loop (do NOT exit after one task)",
+
+    "TASK_B — bin/agent-watch-reviewer.sh (NEW, ~110 LOC bash)",
+    "B1. Same shebang + set -euo pipefail + docstring pattern as TASK_A",
+    "B2. Constants: REVIEWS_GLOB='.night-shift/runs/*/reviews' — but fswatch needs concrete path; the script must dynamically iterate on first level (each run dir's reviews/) and watch each independently OR watch .night-shift/runs/ recursively",
+    "B3. Best approach: watch `.night-shift/runs/` recursively with fswatch (-r flag). Filter events to ONLY `*/reviews/*/READY` paths inside the loop",
+    "B4. Pre-flight checks: fswatch installed, claude command in PATH, .night-shift/runs/ exists",
+    "B5. Trap SIGINT clean exit",
+    "B6. Print banner: 'agent-watch-reviewer.sh standby [PID $$] — monitoring .night-shift/runs/*/reviews/*/READY'",
+
+    "TASK_B — reviewer main loop",
+    "B7. fswatch -0 -r \".night-shift/runs/\" piped to while loop",
+    "B8. For each event: glob match `*/reviews/*/READY` files that are NEW (no corresponding code-review.txt yet)",
+    "B9. For each unprocessed READY: extract folder = $(dirname $READY_path)",
+    "B10. Skip if `$folder/code-review.txt` already exists (already processed)",
+    "B11. Skip if `$folder/code-review.tmp` exists (another watcher mid-write)",
+    "B12. Read request: REQUEST=$(cat $folder/code-review-request.txt)",
+    "B13. Run claude headless: `claude -p \"...\"` with prompt that includes the request text + instructions to follow REVIEWER_CHECKLIST.md + write verdict to stdout. Capture to $folder/code-review.tmp",
+    "B14. Suggested prompt template (Codex must implement, this is illustrative): `claude -p \"You are T2 reviewer. Read REVIEWER_CHECKLIST.md and process this code-review-request.txt: $REQUEST. Write your verdict per the template at end of REVIEWER_CHECKLIST.md. Output format: VERDICT line first, then SUMMARY, CHECKLIST RESULTS, FINDINGS, TESTS_CHECKED, DEPLOYMENT_RISK, NOTES.\" > $folder/code-review.tmp`",
+    "B15. On claude exit 0: atomic rename `mv $folder/code-review.tmp $folder/code-review.txt`",
+    "B16. On claude non-zero: write a BLOCKED verdict to .tmp + rename to .txt + log error",
+    "B17. Log per-review summary to stderr: `[ts] reviewer processed $folder (exit=$EC)`",
+    "B18. Continue main loop",
+
+    "TASK_C — bin/agent-watch-setup.sh (NEW, ~50 LOC bash)",
+    "C1. Same shebang + set -euo pipefail + docstring pattern",
+    "C2. Step 1: detect OS (`uname -s`). If not Darwin (macOS), print warning that fswatch on Linux uses inotify-tools instead but proceed",
+    "C3. Step 2: check + install fswatch via brew (`brew list fswatch || brew install fswatch`). On Linux give equivalent apt-get instructions",
+    "C4. Step 3: chmod +x on all 3 watcher scripts (agent-watch-codex.sh + agent-watch-reviewer.sh + this setup script — defensive)",
+    "C5. Step 4: print colored (or formatted) startup instructions:\n    Terminal 1 (T1 main): you keep using `claude --dangerously-skip-permissions` interactive\n    Terminal 2 (T2 reviewer): run `bin/agent-watch-reviewer.sh` instead of interactive `claude`\n    Terminal 3 (T3 codex): run `bin/agent-watch-codex.sh` instead of interactive `codex`\n    Each watcher runs foreground; Ctrl+C to stop. Logs to stderr.",
+
+    "TASK_D — documentation updates",
+    "D1. Update docs/team/AGENT_ORCHESTRATION.md §4 'v1 — File Watcher (推荐先做这个)' subsection: replace the草稿 fswatch script with reference to bin/agent-watch-codex.sh. Same for reviewer. Add a paragraph: 'Implemented 2026-05-02 in commit <pending>. Junyan triggers via bin/agent-watch-setup.sh.'",
+    "D2. Update docs/team/AGENT_STARTUP_GUIDE.md: add new top-level section '## v1 Auto Mode (active 2026-05-02+)' BEFORE the existing v0+ sections. Document: (a) starting watchers via setup script, (b) what Junyan sees in each terminal, (c) how T1 still does spec-writing manually but T3+T2 are auto",
+    "D3. Update docs/team/CODEX_ONBOARDING.md: add note at top that 'In v1 mode, you do NOT run interactively — Junyan starts you via bin/agent-watch-codex.sh which calls codex exec headless. Same JSON schema applies.'",
+
+    "TASK_E — Hard prohibitions",
+    "E1. DO NOT modify bin/git-safe.sh or any existing bin/ script",
+    "E2. DO NOT modify .agent_tasks/ contents (the dirs are local-only state)",
+    "E3. DO NOT add new npm/pip dependencies",
+    "E4. DO NOT modify watchlist.json or any data files",
+    "E5. DO NOT modify any existing src/, scripts/, or api/ files",
+    "E6. DO NOT call codex or claude in this task's test_gate (unable to verify in T1 env; Junyan tests after script lands)",
+    "E7. DO NOT use bare `git` in any script — use `bin/git-safe.sh` if needed (but these watchers do NOT need git ops)",
+    "E8. DO NOT hardcode absolute paths — all paths must be relative to repo root (`git rev-parse --show-toplevel`)",
+    "E9. DO NOT remove SIGINT trap (Junyan must be able to Ctrl+C cleanly)"
+  ],
+
+  "test_gate": [
+    "cd /Users/years/Desktop/Stock/ar-platform && bash -n bin/agent-watch-codex.sh && echo 'codex-watcher syntax OK'",
+    "cd /Users/years/Desktop/Stock/ar-platform && bash -n bin/agent-watch-reviewer.sh && echo 'reviewer-watcher syntax OK'",
+    "cd /Users/years/Desktop/Stock/ar-platform && bash -n bin/agent-watch-setup.sh && echo 'setup syntax OK'",
+    "cd /Users/years/Desktop/Stock/ar-platform && [ -x bin/agent-watch-codex.sh ] && [ -x bin/agent-watch-reviewer.sh ] && [ -x bin/agent-watch-setup.sh ] && echo 'all 3 executable'",
+    "cd /Users/years/Desktop/Stock/ar-platform && grep -q 'set -euo pipefail' bin/agent-watch-codex.sh && grep -q 'set -euo pipefail' bin/agent-watch-reviewer.sh && grep -q 'set -euo pipefail' bin/agent-watch-setup.sh && echo 'safety mode set on all'",
+    "cd /Users/years/Desktop/Stock/ar-platform && grep -q 'fswatch' bin/agent-watch-codex.sh && grep -q 'fswatch' bin/agent-watch-reviewer.sh && echo 'fswatch referenced in both watchers'",
+    "cd /Users/years/Desktop/Stock/ar-platform && grep -q 'codex exec' bin/agent-watch-codex.sh && echo 'codex exec headless mode used'",
+    "cd /Users/years/Desktop/Stock/ar-platform && grep -q 'claude -p' bin/agent-watch-reviewer.sh && echo 'claude -p print mode used'",
+    "cd /Users/years/Desktop/Stock/ar-platform && grep -q '## v1 Auto Mode' docs/team/AGENT_STARTUP_GUIDE.md && echo 'v1 section in startup guide'",
+    "cd /Users/years/Desktop/Stock/ar-platform && grep -q 'agent-watch-codex.sh' docs/team/AGENT_ORCHESTRATION.md && echo 'orchestration doc references new script'"
+  ],
+
+  "review_required": true,
+  "lock_required": true,
+  "max_attempts": 3,
+
+  "completion_target_path": ".agent_tasks/done/2026-05-02/03-v1-fswatch-trio.codex_output.json",
+
+  "output_required": {
+    "files_created": "list (expect: bin/agent-watch-codex.sh, bin/agent-watch-reviewer.sh, bin/agent-watch-setup.sh)",
+    "files_modified": "list (expect: docs/team/AGENT_ORCHESTRATION.md, docs/team/AGENT_STARTUP_GUIDE.md, docs/team/CODEX_ONBOARDING.md)",
+    "test_gate_results": "per-command exit_code + stdout",
+    "satisfies": "per-bullet (A1-E9 = ~50 bullets) mark 'yes' or specific reason if 'no'",
+    "headless_command_chosen": "exact codex command used (e.g. 'codex exec < $task_file > $OUT') + exact claude command used",
+    "deviations_from_spec": "anything skipped or implemented differently"
+  },
+
+  "spec_author": "T1 (Claude main, 2026-05-02 UTC, run 2026-05-02-v1-automation KR1)",
+  "production_task_purpose": "Last manual-prompt task. After T1 commits + Junyan runs `bin/agent-watch-setup.sh` + restarts T2 and T3 terminals as watchers, future three-agent tasks flow without any manual terminal switching. T1 writes spec → T3 watcher picks up auto → T2 watcher reviews auto → T1 reads results."
+}
