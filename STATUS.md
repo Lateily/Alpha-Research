@@ -126,6 +126,29 @@
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
 
+### 2026-05-02 (Three-agent infra + Franky onboarding 详化 + Step 8 queued + 平台同步 gap 暴露)
+-2. **Junyan 关键反馈** (must address before any new feature work):
+    1. 数据源工作**没接 pipeline + 没显示 Dashboard** — 我写了 5 fetcher 但
+       fetch-data.yml + Dashboard.jsx 都没动. Junyan 在 portal 看不到任何
+       这次工作的产出. **下次 session 头号 KR**: 把 5 fetcher 接 pipeline +
+       接 Dashboard. T2 reviewer 必须按 REVIEWER_CHECKLIST.md §C 卡死这种 gap.
+    2. **leading_indicators 不该直接接 EDGAR** — 之前我说 "EDGAR feeds
+       leading_indicators" 是布线决定冒充研究决定. EDGAR 8-K 怎么进 leading
+       indicator 是 thesis quality 问题, 需要研究讨论, 不是简单 import.
+    3. **三 agent 协同优先级**: 先把 reviewer 监督机制做扎实, 再做单 KR.
+-1. **Three-agent infrastructure docs 完成**:
+    - `docs/team/AGENT_STARTUP_GUIDE.md` — paste-ready 启动 prompt for T2 + T3 +
+      end-to-end "hello-world" workflow
+    - `docs/team/REVIEWER_CHECKLIST.md` — T2 6 段 hard QC gates (Code / Invariants /
+      **Platform Integration §C — 这是 Junyan caught 的 gap** / Forward-compat /
+      Thesis quality / Process)
+    - `docs/team/CODEX_ONBOARDING.md` — T3 完整 primer (recent updates / 框架 /
+      责任 / hard rules / 工作流). 含近 7 天所有更新摘要.
+    - `docs/team/SENIOR_ONBOARDING.md` — Franky 详化版 (从 87 行 → 300+ 行):
+      职位明确 / 6 步入职 / FAQ / 反馈通道详解 / 第一份工作具体到哪份 thesis
+0. **Step 8 queued**: docs/research/STEP_8_QUEUE.md + case-study library
+   (含 pair_trade_innolight_short_tianfu_2026Apr.docx). Trigger = Junyan 说 "8 步上".
+
 ### 2026-05-02 night (4 公开数据源接入 — Solo mode)
 -1. **公开数据源框架 + 3 fetcher 落地** (commit 待):
     - `docs/architecture/DATA_SOURCE_REGISTRY.md` — 数据源单一真相源
