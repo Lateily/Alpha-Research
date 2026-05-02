@@ -178,8 +178,24 @@ T2 reviewer + T3 Codex + T4 design watchers). All ships PASSed T2 review.
   GlobalStyles (KR6-rev2). Now PulseCard at line 6397 also benefits.
   T3 codegen +37/-12 (incl. fix); T2 PASS rev2.
 
-**Phase 4 (row left-border accent) deferred to KR7** — reuses
-`#EF4444`/`#9333EA` literals per Junyan §4.4 Option C decision.
+- **KR7 — design-001 Phase 4 (row left-border accent + §4.4 CLAUDE.md doc)**
+  (commit `<pending>`): rows now compute `accent` (priority: 涨停 → C.red,
+  跌停 → `#9333EA`, α≥65 → C.gold, else transparent) + render
+  `borderLeft:4px solid ${accent}` with paddingLeft compensation
+  (8px + 4px border = 12px effective). Inline 涨停/跌停 fontSize:8
+  spans REMOVED (replaced by left-border per design §3.4 "dual-coding
+  is redundant"). CLAUDE.md gains §4.4 Limit-only Color Exceptions
+  subsection documenting the `#EF4444`/`#9333EA` literals + reuse policy
+  + asymmetry note (涨停 uses C.red palette token; only 跌停 needs the
+  literal because no purple token exists). T3 codegen +7/-5; T2 caught
+  [P2] doc inaccuracy → fixed → rev2 PASS.
+
+**design-001 fully shipped** (Phases 1-5). Browse tab transformed:
+hero strip (KR3) → two-tier filter shelf with active pill bar (KR4) →
+industry chip on row line-1 (KR5) → row left-border accent (KR7) →
+skeleton loading + empty-state CTA (KR6). Jason polish layer is now
+the next visual layer (microinteractions / dark mode sweep / mobile
+responsive); none of those block ship.
 
 **K-line scope (KR8+ queued)** — Junyan extended scope: full daily K-line,
 intraday 分时 view, multi-timeframe (1d/1w/1mo + minute intervals),

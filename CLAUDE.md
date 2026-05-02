@@ -98,6 +98,38 @@ const MONO = "'JetBrains Mono','Courier New',monospace"
 // Font: Inter for UI, JetBrains Mono for numbers/tickers
 ```
 
+### Limit-only color exceptions (Junyan 2026-05-02 §4.4 Option C)
+
+Two hex literals are NOT in the `C` palette but are documented exceptions
+for **limit-up / limit-down ONLY** indication on A-share stocks. They
+must NEVER be reused for any other purpose.
+
+| Literal   | Indication                    | Where used                                                           |
+|-----------|-------------------------------|----------------------------------------------------------------------|
+| `#EF4444` | 涨停 (upper price limit hit)  | Browse slim live bar count chip, FBtn direction chip                 |
+| `#9333EA` | 跌停 (lower price limit hit)  | Browse slim live bar count chip, FBtn direction chip, **row left-border accent (Phase 4)** |
+
+**Asymmetry note:** the 涨停 row left-border accent uses `C.red` (the
+palette token), NOT `#EF4444`. The 跌停 row accent uses `#9333EA` because
+no purple token exists in `C` to substitute. This asymmetry is intentional
+per design-001 §3.4 and §4.4 — `C.X` tokens are preferred wherever
+substitutable; the literals are kept ONLY where the palette has no
+equivalent (跌停 = purple) or where backwards-compat with already-shipped
+inline chips matters (the slim-bar count + FBtn).
+
+These two colors are **categorically different from up/down** (`C.green` /
+`C.red`) — they signal a limit-state event, not a magnitude. That's why
+they live outside the regular palette.
+
+**Reuse policy:** any new code that needs to represent 涨停/跌停 may
+reference these literals (don't introduce a third variant). Any new code
+that does NOT represent 涨停/跌停 must use `C.X` tokens, not these.
+
+If you find yourself wanting to use `#EF4444` for "very negative" or
+`#9333EA` for "highlighted purple", STOP — that's exactly the drift this
+exception was designed to prevent. Use `C.red` / `C.gold` / `C.blue`
+respectively.
+
 ---
 
 ## Current Watchlist (as of 2026-04-25)

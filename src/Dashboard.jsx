@@ -2765,12 +2765,18 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
               const isLD = pct != null && pct <= -9.9;
               const rank = page * PAGE_SIZE + i + 1;
               const oddBg = i%2===0 ? 'transparent' : C.soft;
+              const accent = isLU ? C.red
+                : isLD ? '#9333EA'
+                : (typeof s.alpha_score === 'number' && s.alpha_score >= 65) ? C.gold
+                : 'transparent';
 
               return (
                 <div key={s.ticker}
                   onClick={() => onSelect(s.ticker)}
                   style={{display:'grid', gridTemplateColumns:COLS, gap:'0 6px',
-                          padding:'6px 12px', borderBottom:`1px solid ${C.border}`,
+                          padding:'6px 12px 6px 8px',
+                          borderBottom:`1px solid ${C.border}`,
+                          borderLeft:`4px solid ${accent}`,
                           cursor:'pointer', background:oddBg, transition:'background .1s'}}
                   onMouseEnter={e=>e.currentTarget.style.background=`${C.blue}0D`}
                   onMouseLeave={e=>e.currentTarget.style.background=oddBg}>
@@ -2784,10 +2790,6 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
                       <div style={{fontSize:11, fontWeight:600, color:C.dark,
                                    overflow:'hidden', textOverflow:'ellipsis',
                                    whiteSpace:'nowrap', flex:1, minWidth:0}}>
-                        {isLU && <span style={{fontSize:8, background:'#EF4444', color:'#fff',
-                                               borderRadius:3, padding:'0 3px', marginRight:3}}>涨停</span>}
-                        {isLD && <span style={{fontSize:8, background:'#9333EA', color:'#fff',
-                                               borderRadius:3, padding:'0 3px', marginRight:3}}>跌停</span>}
                         {s.name}
                       </div>
                       {s.industry && (
