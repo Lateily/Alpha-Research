@@ -126,6 +126,33 @@
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
 
+### 2026-05-02 evening (Pivot: 研究框架优化 over infrastructure)
+
+**Junyan strategic re-direction (after KR2b ship):**
+
+1. **Real-time data ambition** — future KR: 全股 (8000+ universe) 实时数据,
+   "完美替代同花顺". Currently we only fetch detailed data for watchlist 5;
+   universe stocks show "No OHLC data" in K-line. Gap acknowledged. Scoped
+   as separate KR (need: lazy fetch on click via API endpoint OR bulk daily
+   universe fetch). Not blocking Step 8.
+
+2. **USP positioning RECALIBRATED** — "中国双认知" 框架**继续建** (it's a
+   valuable analytical lens), **but no longer positioned as headline USP**.
+   Junyan's intellectual honesty: "大投行以及 hedge fund 会深耕不同的国家"
+   — single-country deep-dive is NOT unique. Future doc updates: USP_VISION.md
+   to drop "卖点" framing, INVESTMENT_FRAMEWORK Layer E to be framed as
+   "Chinese institutional flow lens" (peer with other geographic lenses)
+   not as USP differentiator.
+
+3. **Priority shift: research framework optimization** — "开始我们的真正的工作".
+   Step 8 (PHASE_AND_TIMING per docs/research/STEP_8_QUEUE.md) starts
+   immediately. Then sequential framework KRs.
+
+4. **v1 fswatch automation DEFERRED** — task spec preserved at
+   docs/team/queued_tasks/v1-fswatch-trio.json. Reserved, not running.
+   Three-agent stays in v0+ manual mode for now. After Step 8 + a few
+   more research framework KRs, revisit v1.
+
 ### 2026-05-02 (KR2b shipped — Dashboard Tushare surfacing. PLATFORM-SYNC GAP CLOSED ✅)
 0. **Frontend production codegen via three-agent ✓** — `src/Dashboard.jsx` +204/-28
    (T3 codegen, T2 review). Two render targets:
