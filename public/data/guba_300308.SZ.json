@@ -1,0 +1,36 @@
+{
+  "_status": "stub_not_implemented",
+  "_decision": "Junyan 2026-05-02 selected option A — implementation deferred to dedicated session",
+  "_blocker": "Same as xueqiu — anti-scrape design required",
+  "_planned_output_schema": {
+    "ticker": "300308.SZ",
+    "fetched_at": "ISO timestamp",
+    "_status": "ok",
+    "posts": [
+      {
+        "post_id": "...",
+        "url": "https://guba.eastmoney.com/...",
+        "author_id": "...",
+        "title": "...",
+        "post_time": "ISO date",
+        "read_count": 0,
+        "comment_count": 0,
+        "sentiment_label": "bullish|bearish|neutral",
+        "is_official_post": false
+      }
+    ],
+    "summary": {
+      "n_posts_24h": 0,
+      "n_unique_authors_24h": 0,
+      "sentiment_distribution": {
+        "bullish": 0.0,
+        "bearish": 0.0,
+        "neutral": 0.0
+      },
+      "retail_attention_score": 0.0
+    }
+  },
+  "_pairing_with_xueqiu": "Used together — guba is more retail/noise, xueqiu has higher quality long-form posts. Cross-source agreement = strong signal.",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-02T11:31:41.614380+00:00"
+}

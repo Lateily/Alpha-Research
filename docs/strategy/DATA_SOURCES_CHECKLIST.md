@@ -9,15 +9,21 @@
 
 ## 优先级总览
 
-| # | 数据源 | 优先级 | 用途 | 你需要做的 |
-|---|---|---|---|---|
-| 1 | **Tushare Pro** | P0 | A 股全维度行情/财务/资金流 | 购买 + 拿 token |
-| 2 | **巨潮资讯网** | P0 | A 股年报/季报/公告 PDF | 无需注册（公开抓取）|
-| 3 | **财联社/东方财富新闻** | P0 | 实时新闻 + catalyst 识别 | 评估爬取 vs 第三方 API |
-| 4 | **SEC EDGAR** | P1 | 美股 10-K/10-Q/8-K | 无需注册 |
-| 5 | **HKEx Disclosure** | P1 | HK 个股公告 | 无需注册 |
-| 6 | **雪球评论 + 东财股吧** | P2 | 国内叙事追踪（USP 核心） | 反爬有难度，评估 |
-| 7 | **Choice 金融终端** | P3 | Wind 替代品 | 看预算 |
+| # | 数据源 | 优先级 | 用途 | 你需要做的 | 状态 (2026-05-02) |
+|---|---|---|---|---|---|
+| 1 | **Tushare Pro** | P0 | A 股全维度行情/财务/资金流 | 购买 + 拿 token | ✅ DONE (6000 tier active) |
+| 2 | **巨潮资讯网** | P0 | A 股年报/季报/公告 PDF | 无需注册（公开抓取）| ✅ DONE (`fetch_cninfo.py`, 30/ticker, 14-class taxonomy) |
+| 3 | **财联社/东方财富新闻** | P0 | 实时新闻 + catalyst 识别 | 评估爬取 vs 第三方 API | ⏳ DEFERRED (decision: c — try Tushare news first) |
+| 4 | **SEC EDGAR** | P1 | 美股 10-K/10-Q/8-K | 给我邮箱 (luvyears@outlook.com) | ✅ DONE (`fetch_edgar.py`, NVDA/MSFT/GOOGL/META/AMZN, 50/ticker) |
+| 5 | **HKEx Disclosure** | P1 | HK 个股公告 | 无需注册 | ⚠ FRAMEWORK READY, ENDPOINT NEEDS REVERSE-ENG |
+| 6 | **雪球评论 + 东财股吧** | P2 | 国内叙事追踪（USP 核心） | 决策: A 选择 (scrape multi-source) | 🟡 STUB (anti-scrape design needed) |
+| 7 | **Choice 金融终端** | P3 | Wind 替代品 | 看预算 | ⏸ DEFERRED |
+
+**Junyan 决策记录 (2026-05-02 night):**
+- EDGAR User-Agent email: `luvyears@outlook.com`
+- 财联社策略: **c** — 先用 Tushare news (6000 tier 已付), 不够再 scrape 东财
+- 社交数据: **A** — multi-source scrape (xueqiu + guba), Phase 2 加 B 兜底
+- 月度预算: 待确认 (默认推荐 $500)
 
 ---
 

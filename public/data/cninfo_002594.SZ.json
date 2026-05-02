@@ -1,0 +1,314 @@
+{
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-02T11:31:18.277319+00:00",
+  "_status": "ok",
+  "announcements": [
+    {
+      "title": "提名委员会实施细则（2026年4月）",
+      "category": "人事变动",
+      "announce_date": "2026-04-28",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-29/1225233075.PDF",
+      "size_bytes": 97,
+      "doc_id": "1225233075",
+      "raw_announcement_type": "01010503||010112||013105||013199",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "关于聘任公司副总裁的公告",
+      "category": "人事变动",
+      "announce_date": "2026-04-28",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-29/1225233074.PDF",
+      "size_bytes": 65,
+      "doc_id": "1225233074",
+      "raw_announcement_type": "01010503||010112||012303",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "第八届董事会第二十三次会议决议公告",
+      "category": "其他",
+      "announce_date": "2026-04-28",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-29/1225233073.PDF",
+      "size_bytes": 58,
+      "doc_id": "1225233073",
+      "raw_announcement_type": "01010503||010112||01239901",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "2026年一季度报告",
+      "category": "一季报",
+      "announce_date": "2026-04-28",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-29/1225233071.PDF",
+      "size_bytes": 301,
+      "doc_id": "1225233071",
+      "raw_announcement_type": "01010503||010112||010305",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（于二零二六年六月九日举行的股东周年大会（「股东周年大会」）或其任何续会适用的H股持有人代表委任表格）",
+      "category": "其他",
+      "announce_date": "2026-04-22",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-23/1225147072.PDF",
+      "size_bytes": 334,
+      "doc_id": "1225147072",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（截至二零二五年十二月三十一日止年度之末期股息(更新)）",
+      "category": "其他",
+      "announce_date": "2026-04-22",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-23/1225147071.PDF",
+      "size_bytes": 119,
+      "doc_id": "1225147071",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（股东周年大会通告）",
+      "category": "其他",
+      "announce_date": "2026-04-22",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-23/1225147070.PDF",
+      "size_bytes": 210,
+      "doc_id": "1225147070",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（通函）",
+      "category": "其他",
+      "announce_date": "2026-04-22",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-23/1225147069.PDF",
+      "size_bytes": 415,
+      "doc_id": "1225147069",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（暂停办理过户登记）",
+      "category": "其他",
+      "announce_date": "2026-04-22",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-23/1225147068.PDF",
+      "size_bytes": 154,
+      "doc_id": "1225147068",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "关于召开2025年度股东会的通知",
+      "category": "股东会",
+      "announce_date": "2026-04-22",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-23/1225147067.PDF",
+      "size_bytes": 217,
+      "doc_id": "1225147067",
+      "raw_announcement_type": "01010503||010112||011901",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（董事会会议通告）",
+      "category": "其他",
+      "announce_date": "2026-04-13",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-14/1225098089.PDF",
+      "size_bytes": 465,
+      "doc_id": "1225098089",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（股份发行人及根据《上市规则》第十九B章上市的香港预托证券发行人的证券变动月报表）",
+      "category": "其他",
+      "announce_date": "2026-04-01",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-02/1225072598.PDF",
+      "size_bytes": 145,
+      "doc_id": "1225072598",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "2026年3月产销快报",
+      "category": "其他",
+      "announce_date": "2026-04-01",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-04-02/1225072597.PDF",
+      "size_bytes": 53,
+      "doc_id": "1225072597",
+      "raw_announcement_type": "01010503||010112||012305",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（截至二零二五年十二月三十一日止年度的末期股息）",
+      "category": "其他",
+      "announce_date": "2026-03-30",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-31/1225052527.PDF",
+      "size_bytes": 119,
+      "doc_id": "1225052527",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（2025年年报）",
+      "category": "年度报告",
+      "announce_date": "2026-03-30",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-31/1225052526.PDF",
+      "size_bytes": 32268,
+      "doc_id": "1225052526",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "H股公告（二零二五年年度业绩公布）",
+      "category": "其他",
+      "announce_date": "2026-03-30",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-31/1225052525.PDF",
+      "size_bytes": 21211,
+      "doc_id": "1225052525",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "拟聘任会计师事务所的公告",
+      "category": "人事变动",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045376.PDF",
+      "size_bytes": 86,
+      "doc_id": "1225045376",
+      "raw_announcement_type": "01010503||010112||012301",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "2025年度独立董事述职报告（喻玲）",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045375.PDF",
+      "size_bytes": 110,
+      "doc_id": "1225045375",
+      "raw_announcement_type": "01011107||010112||013105",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "2025年度独立董事述职报告（蔡洪平）",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045374.PDF",
+      "size_bytes": 110,
+      "doc_id": "1225045374",
+      "raw_announcement_type": "01011107||010112||013105",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "2025年度独立董事述职报告（张敏）",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045373.PDF",
+      "size_bytes": 108,
+      "doc_id": "1225045373",
+      "raw_announcement_type": "01011107||010112||013105",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "关于召开2025年年度报告网上说明会并征集问题的公告",
+      "category": "年度报告",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045372.PDF",
+      "size_bytes": 187,
+      "doc_id": "1225045372",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "2025年度可持续发展报告",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045371.PDF",
+      "size_bytes": 30022,
+      "doc_id": "1225045371",
+      "raw_announcement_type": "01010503||010112||012330",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "2025年度内部控制审计报告",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045370.PDF",
+      "size_bytes": 3138,
+      "doc_id": "1225045370",
+      "raw_announcement_type": "01010903||010112||012913",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "2025年度内部控制自我评价报告",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045369.PDF",
+      "size_bytes": 242,
+      "doc_id": "1225045369",
+      "raw_announcement_type": "01010503||010112||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "董事、高级管理人员薪酬管理制度",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045368.PDF",
+      "size_bytes": 82,
+      "doc_id": "1225045368",
+      "raw_announcement_type": "01010503||010112||013105||013199",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "关于“质量回报双提升”行动方案的进展公告",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045367.PDF",
+      "size_bytes": 135,
+      "doc_id": "1225045367",
+      "raw_announcement_type": "01010503||010112||012333||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "关于2025年员工持股计划第一个锁定期解锁条件未成就的公告",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045366.PDF",
+      "size_bytes": 80,
+      "doc_id": "1225045366",
+      "raw_announcement_type": "01010503||010112||011303||012399",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "关于在比亚迪汽车金融有限公司办理存款业务暨关联交易的公告",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045365.PDF",
+      "size_bytes": 90,
+      "doc_id": "1225045365",
+      "raw_announcement_type": "01010503||010112||011719",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "2026年度日常关联交易预计公告",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045364.PDF",
+      "size_bytes": 168,
+      "doc_id": "1225045364",
+      "raw_announcement_type": "01010503||010112||011719",
+      "_pdf_downloaded": false
+    },
+    {
+      "title": "关于公司及其控股子公司提供对外担保额度的公告",
+      "category": "其他",
+      "announce_date": "2026-03-27",
+      "pdf_url": "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045363.PDF",
+      "size_bytes": 143,
+      "doc_id": "1225045363",
+      "raw_announcement_type": "01010503||010112||011711",
+      "_pdf_downloaded": false
+    }
+  ],
+  "_category_counts": {
+    "人事变动": 3,
+    "其他": 23,
+    "一季报": 1,
+    "股东会": 1,
+    "年度报告": 2
+  }
+}

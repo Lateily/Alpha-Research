@@ -1,0 +1,408 @@
+{
+  "ticker": "NVDA",
+  "cik": "0001045810",
+  "fetched_at": "2026-05-02T11:21:50.013138+00:00",
+  "_status": "ok",
+  "filings": [
+    {
+      "accession_no": "0001045810-26-000026",
+      "form": "8-K",
+      "filed_date": "2026-04-27",
+      "primary_doc": "nvda-20260424.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000026/nvda-20260424.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-26-000024",
+      "form": "8-K",
+      "filed_date": "2026-03-06",
+      "primary_doc": "nvda-20260302.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000024/nvda-20260302.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-26-000021",
+      "form": "10-K",
+      "filed_date": "2026-02-25",
+      "primary_doc": "nvda-20260125.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001045810-26-000019",
+      "form": "8-K",
+      "filed_date": "2026-02-25",
+      "primary_doc": "nvda-20260225.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000019/nvda-20260225.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-26-000003",
+      "form": "8-K",
+      "filed_date": "2026-01-23",
+      "primary_doc": "nvda-20260120.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000003/nvda-20260120.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-25-000230",
+      "form": "10-Q",
+      "filed_date": "2025-11-19",
+      "primary_doc": "nvda-20251026.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000230/nvda-20251026.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-25-000228",
+      "form": "8-K",
+      "filed_date": "2025-11-19",
+      "primary_doc": "nvda-20251119.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000228/nvda-20251119.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-25-000209",
+      "form": "10-Q",
+      "filed_date": "2025-08-27",
+      "primary_doc": "nvda-20250727.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000209/nvda-20250727.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-25-000207",
+      "form": "8-K",
+      "filed_date": "2025-08-27",
+      "primary_doc": "nvda-20250827.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000207/nvda-20250827.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-25-000197",
+      "form": "8-K",
+      "filed_date": "2025-08-05",
+      "primary_doc": "nvda-20250731.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000197/nvda-20250731.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-25-000179",
+      "form": "8-K",
+      "filed_date": "2025-07-01",
+      "primary_doc": "nvda-20250625.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000179/nvda-20250625.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-25-000116",
+      "form": "10-Q",
+      "filed_date": "2025-05-28",
+      "primary_doc": "nvda-20250427.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000116/nvda-20250427.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-25-000115",
+      "form": "8-K",
+      "filed_date": "2025-05-28",
+      "primary_doc": "nvda-20250528.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000115/nvda-20250528.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-25-000095",
+      "form": "DEF 14A",
+      "filed_date": "2025-05-13",
+      "primary_doc": "nvda-20250512.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000095/nvda-20250512.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001045810-25-000082",
+      "form": "8-K",
+      "filed_date": "2025-04-15",
+      "primary_doc": "nvda-20250409.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000082/nvda-20250409.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-25-000039",
+      "form": "8-K",
+      "filed_date": "2025-03-07",
+      "primary_doc": "nvda-20250303.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000039/nvda-20250303.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-25-000023",
+      "form": "10-K",
+      "filed_date": "2025-02-26",
+      "primary_doc": "nvda-20250126.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000023/nvda-20250126.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001045810-25-000021",
+      "form": "8-K",
+      "filed_date": "2025-02-26",
+      "primary_doc": "nvda-20250226.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000021/nvda-20250226.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-25-000007",
+      "form": "8-K",
+      "filed_date": "2025-01-17",
+      "primary_doc": "nvda-20250113.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581025000007/nvda-20250113.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-24-000316",
+      "form": "10-Q",
+      "filed_date": "2024-11-20",
+      "primary_doc": "nvda-20241027.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000316/nvda-20241027.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-24-000315",
+      "form": "8-K",
+      "filed_date": "2024-11-20",
+      "primary_doc": "nvda-20241120.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000315/nvda-20241120.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-24-000300",
+      "form": "8-K",
+      "filed_date": "2024-11-07",
+      "primary_doc": "nvda-20241107.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000300/nvda-20241107.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-24-000264",
+      "form": "10-Q",
+      "filed_date": "2024-08-28",
+      "primary_doc": "nvda-20240728.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000264/nvda-20240728.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-24-000262",
+      "form": "8-K",
+      "filed_date": "2024-08-28",
+      "primary_doc": "nvda-20240828.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000262/nvda-20240828.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-24-000206",
+      "form": "8-K",
+      "filed_date": "2024-07-02",
+      "primary_doc": "nvda-20240626.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000206/nvda-20240626.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-24-000144",
+      "form": "8-K",
+      "filed_date": "2024-06-07",
+      "primary_doc": "nvda-20240607.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000144/nvda-20240607.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-24-000124",
+      "form": "10-Q",
+      "filed_date": "2024-05-29",
+      "primary_doc": "nvda-20240428.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000124/nvda-20240428.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-24-000113",
+      "form": "8-K",
+      "filed_date": "2024-05-22",
+      "primary_doc": "nvda-20240522.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000113/nvda-20240522.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-24-000104",
+      "form": "DEF 14A",
+      "filed_date": "2024-05-14",
+      "primary_doc": "nvda-20240514.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000104/nvda-20240514.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001045810-24-000069",
+      "form": "8-K",
+      "filed_date": "2024-03-14",
+      "primary_doc": "nvda-20240308.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000069/nvda-20240308.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-24-000029",
+      "form": "10-K",
+      "filed_date": "2024-02-21",
+      "primary_doc": "nvda-20240128.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000029/nvda-20240128.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001045810-24-000028",
+      "form": "8-K",
+      "filed_date": "2024-02-21",
+      "primary_doc": "nvda-20240221.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000028/nvda-20240221.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-23-000227",
+      "form": "10-Q",
+      "filed_date": "2023-11-21",
+      "primary_doc": "nvda-20231029.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000227/nvda-20231029.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-23-000225",
+      "form": "8-K",
+      "filed_date": "2023-11-21",
+      "primary_doc": "nvda-20231121.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000225/nvda-20231121.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-23-000221",
+      "form": "8-K",
+      "filed_date": "2023-10-24",
+      "primary_doc": "nvda-20231023.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000221/nvda-20231023.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-23-000217",
+      "form": "8-K",
+      "filed_date": "2023-10-17",
+      "primary_doc": "nvda-20231017.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000217/nvda-20231017.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-23-000175",
+      "form": "10-Q",
+      "filed_date": "2023-08-28",
+      "primary_doc": "nvda-20230730.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000175/nvda-20230730.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-23-000171",
+      "form": "8-K",
+      "filed_date": "2023-08-23",
+      "primary_doc": "nvda-20230823.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000171/nvda-20230823.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-23-000164",
+      "form": "8-K",
+      "filed_date": "2023-07-24",
+      "primary_doc": "nvda-20230724.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000164/nvda-20230724.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-23-000146",
+      "form": "8-K",
+      "filed_date": "2023-06-27",
+      "primary_doc": "nvda-20230622.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000146/nvda-20230622.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-23-000093",
+      "form": "10-Q",
+      "filed_date": "2023-05-26",
+      "primary_doc": "nvda-20230430.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000093/nvda-20230430.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-23-000087",
+      "form": "8-K",
+      "filed_date": "2023-05-24",
+      "primary_doc": "nvda-20230524.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000087/nvda-20230524.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-23-000080",
+      "form": "DEF 14A",
+      "filed_date": "2023-05-08",
+      "primary_doc": "nvda-20230508.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000080/nvda-20230508.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001045810-23-000039",
+      "form": "8-K",
+      "filed_date": "2023-03-08",
+      "primary_doc": "nvda-20230302.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000039/nvda-20230302.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-23-000017",
+      "form": "10-K",
+      "filed_date": "2023-02-24",
+      "primary_doc": "nvda-20230129.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000017/nvda-20230129.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001045810-23-000014",
+      "form": "8-K",
+      "filed_date": "2023-02-22",
+      "primary_doc": "nvda-20230222.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581023000014/nvda-20230222.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-22-000166",
+      "form": "10-Q",
+      "filed_date": "2022-11-18",
+      "primary_doc": "nvda-20221030.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581022000166/nvda-20221030.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001045810-22-000163",
+      "form": "8-K",
+      "filed_date": "2022-11-16",
+      "primary_doc": "nvda-20221116.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581022000163/nvda-20221116.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-22-000151",
+      "form": "8-K",
+      "filed_date": "2022-09-01",
+      "primary_doc": "nvda-20220831.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581022000151/nvda-20220831.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001045810-22-000147",
+      "form": "10-Q",
+      "filed_date": "2022-08-31",
+      "primary_doc": "nvda-20220731.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581022000147/nvda-20220731.htm",
+      "category": "Quarterly Report"
+    }
+  ]
+}

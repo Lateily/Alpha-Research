@@ -1,0 +1,42 @@
+{
+  "_status": "stub_not_implemented",
+  "_decision": "Junyan 2026-05-02 selected option A (scrape) — implementation deferred to dedicated session",
+  "_blocker": "Requires anti-scrape design: UA rotation, cookies, proxy pool, frequency throttling",
+  "_planned_output_schema": {
+    "ticker": "300308.SZ",
+    "fetched_at": "ISO timestamp",
+    "_status": "ok",
+    "discussions": [
+      {
+        "url": "https://xueqiu.com/...",
+        "author": "...",
+        "title": "...",
+        "post_time": "ISO date",
+        "likes": 0,
+        "comments_count": 0,
+        "sentiment_label": "bullish|bearish|neutral",
+        "sentiment_confidence": 0.0,
+        "_classifier": "llm | keyword"
+      }
+    ],
+    "summary": {
+      "n_discussions_24h": 0,
+      "sentiment_distribution": {
+        "bullish": 0.0,
+        "bearish": 0.0,
+        "neutral": 0.0
+      },
+      "top_themes": [
+        "..."
+      ]
+    }
+  },
+  "_design_notes": [
+    "Phase 1: keyword-based sentiment (cheap, fast, ~70% accuracy)",
+    "Phase 2: LLM classification on filtered subset (high signal, 90%+ accuracy)",
+    "Phase 3: cross-source aggregation with eastmoney_guba for narrative confluence",
+    "Phase 4: USP signal — compare 雪球 sentiment vs north-bound flow direction (Tushare moneyflow_hsgt)"
+  ],
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-02T11:31:41.588402+00:00"
+}

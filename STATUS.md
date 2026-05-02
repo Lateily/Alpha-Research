@@ -126,7 +126,27 @@
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
 
-### 2026-05-02 (Tushare Phase A 完整接入 + 6000 积分到账)
+### 2026-05-02 night (4 公开数据源接入 — Solo mode)
+-1. **公开数据源框架 + 3 fetcher 落地** (commit 待):
+    - `docs/architecture/DATA_SOURCE_REGISTRY.md` — 数据源单一真相源
+      (11 sources × tier × auth × schema × consumer × graceful-degrade)
+    - `scripts/fetch_edgar.py` ✅ WORKING — NVDA/MSFT/GOOGL/META/AMZN
+      hyperscaler basket, 50 latest filings/ticker. UA email = luvyears@outlook.com
+    - `scripts/fetch_cninfo.py` ✅ WORKING — A 股 (300308/002594) 30 latest
+      公告/ticker, classifier 按 title 关键词分 14 类. 关键发现：cninfo's
+      `category` param 实际被忽略，必须客户端按 title 分类；composite
+      `stock=<code>,<orgId>` 是必需格式 (orgId 从 cninfo stock list 拉)
+    - `scripts/fetch_hkex.py` ⚠ FRAMEWORK READY, ENDPOINT BROKEN —
+      titleSearchServlet.do 不 honor stockId param, 返回固定 mock-like 数据.
+      Output 已标 `_status: "endpoint_broken"` + 详细 TODO. 下次专项 reverse-eng
+      (从浏览器 DevTools 抓真实 XHR).
+    - `scripts/fetch_xueqiu.py` 🟡 STUB (option A 选择) — 5 占位 JSON 写入,
+      production 实现需要 anti-scrape design (UA rotation + proxy pool +
+      Playwright). 单独 session 处理.
+    - `scripts/fetch_eastmoney_guba.py` 🟡 STUB (同上)
+    - **架构原则 lock:** 所有 fetcher 遵循 graceful-degrade — `_status`
+      字段标态 (ok/empty/partial/failed/stub_not_implemented/endpoint_broken),
+      missing 数据永不删字段, 输出 schema 永远稳定.
 0. **Tushare Pro 接入完成 ✓** — 6000 积分 tier 已激活（含资金流向 = 北向资金 +
    概念板块 + 券商金股）。Token 在 ~/.zshrc 和 GitHub Actions secret 里。
    Sanity check 全 4 测试通过：stock_basic / daily 300308.SZ /
