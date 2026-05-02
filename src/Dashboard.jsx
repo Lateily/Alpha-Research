@@ -768,6 +768,9 @@ function toYahooTicker(ticker) {
 const API_BASE = 'https://equity-research-ten.vercel.app';
 const RANGES   = ['1d', '5d', '1mo', '3mo', '1y'];
 const RANGE_LABELS = { '1d':'1D', '5d':'5D', '1mo':'1M', '3mo':'3M', '1y':'1Y' };
+const INTERVALS = ['1m', '5m', '15m', '30m', '60m', '1d', '1w', '1mo'];
+const INTERVAL_LABELS = { '1m':'1分', '5m':'5分', '15m':'15分', '30m':'30分', '60m':'60分', '1d':'日', '1w':'周', '1mo':'月' };
+const MINUTE_INTERVALS = new Set(['1m', '5m', '15m', '30m', '60m']);
 
 function PriceChart({ ticker, C, L, lk }) {
   const [range,    setRange]    = useState('1mo');
@@ -776,48 +779,73 @@ function PriceChart({ ticker, C, L, lk }) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState(null);
   const [lastFetch,setLastFetch]= useState(null);
+  const [interval, setIntervalState] = useState('1d');
+  const [tierLocked, setTierLocked] = useState(null);
   const timerRef = useRef(null);
 
   const yTicker = toYahooTicker(ticker);
 
-  const fetchChart = async (rng = range) => {
+  const fetchChart = async (rng = range, iv = interval) => {
     if (!yTicker) return;
     setLoading(true); setError(null);
     try {
-      const res  = await fetch(`${API_BASE}/api/price-chart?ticker=${encodeURIComponent(yTicker)}&range=${rng}`);
+      const res  = await fetch(`${API_BASE}/api/price-chart?ticker=${encodeURIComponent(yTicker)}&range=${rng}&interval=${iv}`);
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Fetch failed');
-      setChart(data.data || []);
-      setMeta({
-        current:      data.current,
-        change_pct:   data.change_pct,
-        day_high:     data.day_high,
-        day_low:      data.day_low,
-        volume:       data.volume,
-        prev_close:   data.prev_close,
-        currency:     data.currency,
-        market_state: data.market_state,
-        name:         data.name,
-        exchange:     data.exchange,
-      });
+      if (data._status === 'tier_locked') {
+        setTierLocked({
+          need_tier: data._need_tier,
+          attempted_endpoint: data._attempted_endpoint,
+          msg: data._tushare_msg,
+        });
+        setChart([]);
+        setMeta(prev => prev || {
+          current:      data.current,
+          change_pct:   data.change_pct,
+          day_high:     data.day_high,
+          day_low:      data.day_low,
+          volume:       data.volume,
+          prev_close:   data.prev_close,
+          currency:     data.currency,
+          market_state: data.market_state,
+          name:         data.name,
+          exchange:     data.exchange,
+        });
+      } else {
+        setTierLocked(null);
+        setChart(data.data || []);
+        setMeta({
+          current:      data.current,
+          change_pct:   data.change_pct,
+          day_high:     data.day_high,
+          day_low:      data.day_low,
+          volume:       data.volume,
+          prev_close:   data.prev_close,
+          currency:     data.currency,
+          market_state: data.market_state,
+          name:         data.name,
+          exchange:     data.exchange,
+        });
+      }
       setLastFetch(new Date());
     } catch (e) {
       setError(e.message);
+      setTierLocked(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch on ticker/range change
+  // Fetch on ticker/range/interval change
   useEffect(() => {
-    fetchChart(range);
-    // Auto-refresh every 60 s for intraday
+    fetchChart(range, interval);
     if (timerRef.current) clearInterval(timerRef.current);
-    if (range === '1d') {
-      timerRef.current = setInterval(() => fetchChart('1d'), 60000);
+    if (MINUTE_INTERVALS.has(interval)) {
+      const refreshMs = interval === '1m' ? 30000 : 60000;
+      timerRef.current = setInterval(() => fetchChart(range, interval), refreshMs);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [ticker, range]); // eslint-disable-line
+  }, [ticker, range, interval]); // eslint-disable-line
 
   // Derived chart metrics
   const prices   = (chartData || []).map(d => d.close);
@@ -894,6 +922,19 @@ function PriceChart({ ticker, C, L, lk }) {
 
           {/* Range selector + refresh */}
           <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6 }}>
+            <div style={{ display:'flex', gap:3, flexWrap:'wrap', justifyContent:'flex-end' }}>
+              {INTERVALS.map(iv => (
+                <button key={iv} onClick={() => setIntervalState(iv)} style={{
+                  padding:'2px 8px', fontSize:9, fontWeight:600, border:'none',
+                  borderRadius:4, cursor:'pointer',
+                  background: interval === iv ? C.gold : C.soft,
+                  color:      interval === iv ? '#fff'   : C.mid,
+                  transition:'all .15s',
+                }}>
+                  {INTERVAL_LABELS[iv]}
+                </button>
+              ))}
+            </div>
             <div style={{ display:'flex', gap:3 }}>
               {RANGES.map(r => (
                 <button key={r} onClick={() => setRange(r)} style={{
@@ -916,7 +957,7 @@ function PriceChart({ ticker, C, L, lk }) {
             {lastFetch && (
               <span style={{ fontSize:8, color:C.mid }}>
                 {L('Updated','更新') + ' ' + lastFetch.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' })}
-                {range === '1d' && <span style={{ color:C.green }}> · {L('auto','自动')}</span>}
+                {MINUTE_INTERVALS.has(interval) && <span style={{ color:C.green }}> · {L('auto','自动')}</span>}
               </span>
             )}
           </div>
@@ -928,6 +969,23 @@ function PriceChart({ ticker, C, L, lk }) {
         {error && !chartData && (
           <div style={{ textAlign:'center', padding:'28px 0', fontSize:11, color:C.mid }}>
             {error}
+          </div>
+        )}
+        {tierLocked && (
+          <div style={{ padding:'14px 16px', marginBottom:8, borderRadius:8, background:`${C.gold}14`, border:`1px solid ${C.gold}`, color:C.dark, fontSize:11, lineHeight:1.6 }}>
+            <div style={{ fontWeight:700, marginBottom:4, color:C.gold }}>
+              {L('🔒 Upgrade required','🔒 需升级套餐')}
+            </div>
+            <div>
+              {L(`This ${INTERVAL_LABELS[interval]} interval requires Tushare ${tierLocked.need_tier}-tier (currently 6000-tier).`,
+                 `当前 ${INTERVAL_LABELS[interval]} 周期需要 Tushare ${tierLocked.need_tier} 积分套餐 (当前 6000 积分)。`)}
+            </div>
+            {tierLocked.msg && (
+              <div style={{ marginTop:6, fontSize:10, color:C.mid, fontFamily:MONO }}>
+                <span>API: {tierLocked.attempted_endpoint || '?'}</span>
+                <span style={{ marginLeft:10 }}>Msg: {tierLocked.msg}</span>
+              </div>
+            )}
           </div>
         )}
         {!error && chartData && chartData.length > 0 && (
@@ -968,7 +1026,7 @@ function PriceChart({ ticker, C, L, lk }) {
             </LineChart>
           </ResponsiveContainer>
         )}
-        {!error && chartData && chartData.length === 0 && !loading && (
+        {!tierLocked && !error && chartData && chartData.length === 0 && !loading && (
           <div style={{ textAlign:'center', padding:'28px 0', fontSize:11, color:C.mid }}>
             {L('No chart data for this range','该时间段暂无数据')}
           </div>
