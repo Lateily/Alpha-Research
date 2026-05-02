@@ -8,9 +8,10 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-02 (KR1 + KR2a + KR2b shipped via three-agent — platform-sync gap CLOSED)
-**Last shift:** `2026-05-02-three-agent-01` (3 KRs shipped clean, three-agent v0+ fully validated)
-**HEAD:** `e874e24` (KR2a) + KR2b commit pending; `auto/2026-04-30 == main`. Branch rotates next shift.
+**Last updated:** 2026-05-02 EOD (15 commits shipped, 3 shifts, Tushare end-to-end LIVE)
+**Last shift:** `2026-05-02-step8-research-framework` (KR1+KR2+KR3+KR4 done, Phase 1+2 universe browser, price-chart Tushare migration)
+**HEAD:** `55b4ba8` on main; auto/2026-04-30 == main (rotates to auto/2026-05-XX next shift)
+**Context handoff status:** All work in git. Next session reads this file + recent commits + queued_tasks/.
 
 ---
 
@@ -125,6 +126,56 @@
 
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
+
+### 2026-05-02 EOD (Phase 1+2 Universe Browser + price-chart end-to-end LIVE)
+
+**今日总产出 (15 commits):**
+
+Tushare 接入 (3 commits):
+- `e874e24` KR2a fetch_tushare backend + pipeline integration (296 LOC)
+- `63841d7` KR2b Dashboard.jsx surfacing (HSGTBadge + TushareDataCard)
+- `0e09891` KR1 hello-world handshake validation
+
+Step 8 框架升级 (4 commits):
+- `27e7094` THESIS_PROTOCOL.md v2 (Step 8 PHASE_AND_TIMING)
+- `0fbe512` api/research.js Step 8 schema + SYSTEM_PROMPT injection
+- `e98d0f5` INVESTMENT_FRAMEWORK Layer E (reflexivity & time-axis)
+- `2f16f9b` PAIR_TRADE_PHASE_PLAYBOOK (天孚 short worked example)
+
+Universe Browser Phase 1+2 (3 commits):
+- `41cc043` Phase 1: industry/PE/Δ% filters + tab consolidation 12→11
+- `9df3a3e` Phase 2 v1: api/price-chart Tushare A-share branch
+- `a475c13` Phase 2 v2: + HK branch (hk_daily 2/min limit, cache mitigates)
+- `55b4ba8` Phase 2 v3: Yahoo deleted for A/HK, kept ONLY as US fallback
+              (Tushare us_daily 5/day at 6000 tier — unusable; will upgrade)
+
+Infrastructure (5 commits):
+- `462e4c4` v1 fswatch artifacts preserved (Codex draft, deferred)
+- `f4e7dc3` queued_tasks/README.md (7 future KRs prioritized)
+- `95d3696` Prep work (Opus 4.7 model + industry enrichment + design doc)
+- `801cef9` STATUS.md staleness fix (Junyan caught timezone + HEAD)
+- `39bb75e` three-agent docs (T2/T3 startup + reviewer checklist + Franky详化)
+
+**Production state verified 2026-05-02 EOD:**
+- A 股 K-line: ✅ tushare-6000-a (300033.SZ → close 235, +0.66%)
+- HK 股 K-line: ✅ tushare-6000-hk (700.HK → close 467.8)
+- US K-line: ⚠ theoretical failure (Yahoo rate-limited, no current user
+  path triggers since universe has no US tickers)
+- Browse tab: industry filter (5201/5846 stocks have industry, 89%)
+  + PE range + Δ% range + clickable industry tags
+- Watchlist tab: DELETED (consolidated into Desk)
+
+**Junyan's pending decisions (for next session):**
+- Tushare tier upgrade timing (when us_daily 5/day becomes blocking)
+- Vercel CLI install (saves ~5 min per ops; queued_tasks/README #2)
+- Step 8 real Deep Research test (he flagged 续费 token concern)
+
+**Context handoff (next session pre-flight):**
+1. Read this STATUS.md (you're doing it now)
+2. `git log --oneline -20` to see commit history
+3. `cat docs/team/queued_tasks/README.md` for backlog
+4. `cat .night-shift/runs/2026-05-02-*/state.json` for shift histories
+5. `cat docs/architecture/UNIVERSE_BROWSER_DESIGN.md §7` for approved decisions
 
 ### 2026-05-02 evening (Pivot: 研究框架优化 over infrastructure)
 
