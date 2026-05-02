@@ -1,0 +1,408 @@
+{
+  "ticker": "AMZN",
+  "cik": "0001018724",
+  "fetched_at": "2026-05-02T11:33:50.925854+00:00",
+  "_status": "ok",
+  "filings": [
+    {
+      "accession_no": "0001018724-26-000014",
+      "form": "10-Q",
+      "filed_date": "2026-04-30",
+      "primary_doc": "amzn-20260331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000014/amzn-20260331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-26-000012",
+      "form": "8-K",
+      "filed_date": "2026-04-29",
+      "primary_doc": "amzn-20260429.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000012/amzn-20260429.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-26-042880",
+      "form": "8-K",
+      "filed_date": "2026-04-14",
+      "primary_doc": "tm2611746d1_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465926042880/tm2611746d1_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-26-041034",
+      "form": "8-K",
+      "filed_date": "2026-04-09",
+      "primary_doc": "tm263815d2_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465926041034/tm263815d2_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-26-041026",
+      "form": "DEF 14A",
+      "filed_date": "2026-04-09",
+      "primary_doc": "tm261382-1_def14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465926041026/tm261382-1_def14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001104659-26-028556",
+      "form": "8-K",
+      "filed_date": "2026-03-16",
+      "primary_doc": "tm266670d9_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465926028556/tm266670d9_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-26-027729",
+      "form": "8-K",
+      "filed_date": "2026-03-13",
+      "primary_doc": "tm266670d8_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465926027729/tm266670d8_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-26-021050",
+      "form": "8-K",
+      "filed_date": "2026-02-27",
+      "primary_doc": "tm267374d1_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465926021050/tm267374d1_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-26-000004",
+      "form": "10-K",
+      "filed_date": "2026-02-06",
+      "primary_doc": "amzn-20251231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001018724-26-000002",
+      "form": "8-K",
+      "filed_date": "2026-02-05",
+      "primary_doc": "amzn-20260205.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000002/amzn-20260205.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-25-114647",
+      "form": "8-K",
+      "filed_date": "2025-11-20",
+      "primary_doc": "tm2530638d3_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465925114647/tm2530638d3_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-25-000123",
+      "form": "10-Q",
+      "filed_date": "2025-10-31",
+      "primary_doc": "amzn-20250930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872425000123/amzn-20250930.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-25-000121",
+      "form": "8-K",
+      "filed_date": "2025-10-30",
+      "primary_doc": "amzn-20251030.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872425000121/amzn-20251030.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-25-000086",
+      "form": "10-Q",
+      "filed_date": "2025-08-01",
+      "primary_doc": "amzn-20250630.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872425000086/amzn-20250630.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-25-000084",
+      "form": "8-K",
+      "filed_date": "2025-07-31",
+      "primary_doc": "amzn-20250731.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872425000084/amzn-20250731.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-25-052014",
+      "form": "8-K",
+      "filed_date": "2025-05-22",
+      "primary_doc": "tm2515134d1_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465925052014/tm2515134d1_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-25-000036",
+      "form": "10-Q",
+      "filed_date": "2025-05-02",
+      "primary_doc": "amzn-20250331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872425000036/amzn-20250331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-25-000034",
+      "form": "8-K",
+      "filed_date": "2025-05-01",
+      "primary_doc": "amzn-20250501.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872425000034/amzn-20250501.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-25-033450",
+      "form": "8-K",
+      "filed_date": "2025-04-10",
+      "primary_doc": "tm254123d2_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465925033450/tm254123d2_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-25-033442",
+      "form": "DEF 14A",
+      "filed_date": "2025-04-10",
+      "primary_doc": "tm252295-1_def14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465925033442/tm252295-1_def14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001018724-25-000004",
+      "form": "10-K",
+      "filed_date": "2025-02-07",
+      "primary_doc": "amzn-20241231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872425000004/amzn-20241231.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001018724-25-000002",
+      "form": "8-K",
+      "filed_date": "2025-02-06",
+      "primary_doc": "amzn-20250206.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872425000002/amzn-20250206.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-24-000161",
+      "form": "10-Q",
+      "filed_date": "2024-11-01",
+      "primary_doc": "amzn-20240930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872424000161/amzn-20240930.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-24-000158",
+      "form": "8-K",
+      "filed_date": "2024-10-31",
+      "primary_doc": "amzn-20241031.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872424000158/amzn-20241031.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-24-000130",
+      "form": "10-Q",
+      "filed_date": "2024-08-02",
+      "primary_doc": "amzn-20240630.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872424000130/amzn-20240630.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-24-000128",
+      "form": "8-K",
+      "filed_date": "2024-08-01",
+      "primary_doc": "amzn-20240801.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872424000128/amzn-20240801.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-24-065117",
+      "form": "8-K",
+      "filed_date": "2024-05-24",
+      "primary_doc": "tm2414140d1_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465924065117/tm2414140d1_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-24-061143",
+      "form": "8-K",
+      "filed_date": "2024-05-14",
+      "primary_doc": "tm2414460d1_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465924061143/tm2414460d1_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-24-057026",
+      "form": "8-K",
+      "filed_date": "2024-05-03",
+      "primary_doc": "tm2413032d1_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465924057026/tm2413032d1_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-24-000083",
+      "form": "10-Q",
+      "filed_date": "2024-05-01",
+      "primary_doc": "amzn-20240331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872424000083/amzn-20240331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-24-000081",
+      "form": "8-K",
+      "filed_date": "2024-04-30",
+      "primary_doc": "amzn-20240430.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872424000081/amzn-20240430.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-24-045915",
+      "form": "8-K",
+      "filed_date": "2024-04-11",
+      "primary_doc": "tm246113d2_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465924045915/tm246113d2_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-24-045910",
+      "form": "DEF 14A",
+      "filed_date": "2024-04-11",
+      "primary_doc": "tm2329302d4_def14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465924045910/tm2329302d4_def14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001018724-24-000008",
+      "form": "10-K",
+      "filed_date": "2024-02-02",
+      "primary_doc": "amzn-20231231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872424000008/amzn-20231231.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001018724-24-000006",
+      "form": "8-K",
+      "filed_date": "2024-02-01",
+      "primary_doc": "amzn-20240201.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872424000006/amzn-20240201.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-23-113444",
+      "form": "8-K",
+      "filed_date": "2023-11-01",
+      "primary_doc": "tm2329405d1_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465923113444/tm2329405d1_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-23-000018",
+      "form": "10-Q",
+      "filed_date": "2023-10-27",
+      "primary_doc": "amzn-20230930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872423000018/amzn-20230930.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-23-000016",
+      "form": "8-K",
+      "filed_date": "2023-10-26",
+      "primary_doc": "amzn-20231026.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872423000016/amzn-20231026.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-23-000014",
+      "form": "8-K",
+      "filed_date": "2023-09-13",
+      "primary_doc": "amzn-20230913.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872423000014/amzn-20230913.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-23-000012",
+      "form": "10-Q",
+      "filed_date": "2023-08-04",
+      "primary_doc": "amzn-20230630.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872423000012/amzn-20230630.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-23-000010",
+      "form": "8-K",
+      "filed_date": "2023-08-03",
+      "primary_doc": "amzn-20230803.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872423000010/amzn-20230803.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-23-065457",
+      "form": "8-K",
+      "filed_date": "2023-05-26",
+      "primary_doc": "tm2315877d1_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465923065457/tm2315877d1_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001018724-23-000008",
+      "form": "10-Q",
+      "filed_date": "2023-04-28",
+      "primary_doc": "amzn-20230331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872423000008/amzn-20230331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001018724-23-000006",
+      "form": "8-K",
+      "filed_date": "2023-04-27",
+      "primary_doc": "amzn-20230427.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872423000006/amzn-20230427.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-23-044715",
+      "form": "8-K",
+      "filed_date": "2023-04-13",
+      "primary_doc": "tm233697d2_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465923044715/tm233697d2_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001104659-23-044708",
+      "form": "DEF 14A",
+      "filed_date": "2023-04-13",
+      "primary_doc": "tm233694d2_def14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000110465923044708/tm233694d2_def14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001018724-23-000004",
+      "form": "10-K",
+      "filed_date": "2023-02-03",
+      "primary_doc": "amzn-20221231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872423000004/amzn-20221231.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001018724-23-000002",
+      "form": "8-K",
+      "filed_date": "2023-02-02",
+      "primary_doc": "amzn-20230202.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872423000002/amzn-20230202.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-003621",
+      "form": "8-K",
+      "filed_date": "2023-01-06",
+      "primary_doc": "d441973d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000119312523003621/d441973d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-000849",
+      "form": "8-K",
+      "filed_date": "2023-01-03",
+      "primary_doc": "d429499d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1018724/000119312523000849/d429499d8k.htm",
+      "category": "Material Event"
+    }
+  ]
+}

@@ -1,0 +1,408 @@
+{
+  "ticker": "GOOGL",
+  "cik": "0001652044",
+  "fetched_at": "2026-05-02T11:33:48.431293+00:00",
+  "_status": "ok",
+  "filings": [
+    {
+      "accession_no": "0001652044-26-000048",
+      "form": "10-Q",
+      "filed_date": "2026-04-30",
+      "primary_doc": "goog-20260331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000048/goog-20260331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001652044-26-000043",
+      "form": "8-K",
+      "filed_date": "2026-04-29",
+      "primary_doc": "goog-20260429.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000043/goog-20260429.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001308179-26-000342",
+      "form": "DEF 14A",
+      "filed_date": "2026-04-24",
+      "primary_doc": "goog-20260424.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000130817926000342/goog-20260424.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001652044-26-000034",
+      "form": "8-K",
+      "filed_date": "2026-04-10",
+      "primary_doc": "goog-20260407.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000034/goog-20260407.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-26-000031",
+      "form": "8-K",
+      "filed_date": "2026-04-02",
+      "primary_doc": "goog-20260330.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000031/goog-20260330.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-26-000026",
+      "form": "8-K",
+      "filed_date": "2026-03-06",
+      "primary_doc": "goog-20260304.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000026/goog-20260304.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-26-051423",
+      "form": "8-K",
+      "filed_date": "2026-02-13",
+      "primary_doc": "d946885d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312526051423/d946885d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-26-000018",
+      "form": "10-K",
+      "filed_date": "2026-02-05",
+      "primary_doc": "goog-20251231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001652044-26-000012",
+      "form": "8-K",
+      "filed_date": "2026-02-04",
+      "primary_doc": "goog-20260204.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000012/goog-20260204.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-269979",
+      "form": "8-K",
+      "filed_date": "2025-11-06",
+      "primary_doc": "d56115d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312525269979/d56115d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-25-000091",
+      "form": "10-Q",
+      "filed_date": "2025-10-30",
+      "primary_doc": "goog-20250930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000091/goog-20250930.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001652044-25-000087",
+      "form": "8-K",
+      "filed_date": "2025-10-29",
+      "primary_doc": "goog-20251029.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000087/goog-20251029.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-25-000074",
+      "form": "8-K",
+      "filed_date": "2025-09-05",
+      "primary_doc": "goog-20250905.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000074/goog-20250905.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-25-000067",
+      "form": "8-K",
+      "filed_date": "2025-09-03",
+      "primary_doc": "goog-20250902.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000067/goog-20250902.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-25-000062",
+      "form": "10-Q",
+      "filed_date": "2025-07-24",
+      "primary_doc": "goog-20250630.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000062/goog-20250630.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001652044-25-000056",
+      "form": "8-K",
+      "filed_date": "2025-07-23",
+      "primary_doc": "goog-20250723.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000056/goog-20250723.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-161225",
+      "form": "8-K",
+      "filed_date": "2025-07-18",
+      "primary_doc": "d21412d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312525161225/d21412d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-139948",
+      "form": "8-K",
+      "filed_date": "2025-06-12",
+      "primary_doc": "d949049d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312525139948/d949049d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-113864",
+      "form": "8-K",
+      "filed_date": "2025-05-06",
+      "primary_doc": "d859422d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312525113864/d859422d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-110020",
+      "form": "8-K",
+      "filed_date": "2025-05-01",
+      "primary_doc": "d884388d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312525110020/d884388d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001308179-25-000511",
+      "form": "DEF 14A",
+      "filed_date": "2025-04-25",
+      "primary_doc": "goog012701-def14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000130817925000511/goog012701-def14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001652044-25-000043",
+      "form": "10-Q",
+      "filed_date": "2025-04-25",
+      "primary_doc": "goog-20250331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000043/goog-20250331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001652044-25-000040",
+      "form": "8-K",
+      "filed_date": "2025-04-24",
+      "primary_doc": "goog-20250423.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000040/goog-20250423.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-25-000033",
+      "form": "8-K",
+      "filed_date": "2025-04-18",
+      "primary_doc": "goog-20250417.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000033/goog-20250417.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-25-000027",
+      "form": "8-K",
+      "filed_date": "2025-03-18",
+      "primary_doc": "goog-20250318.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000027/goog-20250318.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-25-000014",
+      "form": "10-K",
+      "filed_date": "2025-02-05",
+      "primary_doc": "goog-20241231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000014/goog-20241231.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001652044-25-000010",
+      "form": "8-K",
+      "filed_date": "2025-02-04",
+      "primary_doc": "goog-20250204.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204425000010/goog-20250204.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-24-000118",
+      "form": "10-Q",
+      "filed_date": "2024-10-30",
+      "primary_doc": "goog-20240930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000118/goog-20240930.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001652044-24-000115",
+      "form": "8-K",
+      "filed_date": "2024-10-29",
+      "primary_doc": "goog-20241029.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000115/goog-20241029.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-24-238769",
+      "form": "8-K",
+      "filed_date": "2024-10-17",
+      "primary_doc": "d627891d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312524238769/d627891d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-24-000097",
+      "form": "8-K",
+      "filed_date": "2024-09-24",
+      "primary_doc": "goog-20240924.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000097/goog-20240924.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-24-000085",
+      "form": "8-K",
+      "filed_date": "2024-08-06",
+      "primary_doc": "goog-20240805.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000085/goog-20240805.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-24-000079",
+      "form": "10-Q",
+      "filed_date": "2024-07-24",
+      "primary_doc": "goog-20240630.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000079/goog-20240630.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001652044-24-000076",
+      "form": "8-K",
+      "filed_date": "2024-07-23",
+      "primary_doc": "goog-20240723.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000076/goog-20240723.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-24-168745",
+      "form": "8-K",
+      "filed_date": "2024-06-26",
+      "primary_doc": "d809715d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312524168745/d809715d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-24-160721",
+      "form": "8-K",
+      "filed_date": "2024-06-13",
+      "primary_doc": "d805807d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312524160721/d805807d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-24-157498",
+      "form": "8-K",
+      "filed_date": "2024-06-07",
+      "primary_doc": "d787017d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312524157498/d787017d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-24-154725",
+      "form": "8-K",
+      "filed_date": "2024-06-05",
+      "primary_doc": "d837191d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312524154725/d837191d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001308179-24-000612",
+      "form": "DEF 14A",
+      "filed_date": "2024-04-26",
+      "primary_doc": "lgoog2024_def14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000130817924000612/lgoog2024_def14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001652044-24-000053",
+      "form": "10-Q",
+      "filed_date": "2024-04-26",
+      "primary_doc": "goog-20240331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000053/goog-20240331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001652044-24-000047",
+      "form": "8-K",
+      "filed_date": "2024-04-25",
+      "primary_doc": "goog-20240425.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000047/goog-20240425.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-24-000032",
+      "form": "8-K",
+      "filed_date": "2024-02-08",
+      "primary_doc": "goog-20240208.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000032/goog-20240208.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-24-000022",
+      "form": "10-K",
+      "filed_date": "2024-01-31",
+      "primary_doc": "goog-20231231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000022/goog-20231231.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0001652044-24-000014",
+      "form": "8-K",
+      "filed_date": "2024-01-30",
+      "primary_doc": "goog-20240130.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204424000014/goog-20240130.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-23-000094",
+      "form": "10-Q",
+      "filed_date": "2023-10-25",
+      "primary_doc": "goog-20230930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204423000094/goog-20230930.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001652044-23-000088",
+      "form": "8-K",
+      "filed_date": "2023-10-24",
+      "primary_doc": "goog-20231018.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204423000088/goog-20231018.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-23-000070",
+      "form": "10-Q",
+      "filed_date": "2023-07-26",
+      "primary_doc": "goog-20230630.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204423000070/goog-20230630.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001652044-23-000067",
+      "form": "8-K",
+      "filed_date": "2023-07-25",
+      "primary_doc": "goog-20230720.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204423000067/goog-20230720.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-163590",
+      "form": "8-K",
+      "filed_date": "2023-06-08",
+      "primary_doc": "d442583d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000119312523163590/d442583d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001652044-23-000045",
+      "form": "10-Q",
+      "filed_date": "2023-04-26",
+      "primary_doc": "goog-20230331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204423000045/goog-20230331.htm",
+      "category": "Quarterly Report"
+    }
+  ]
+}
