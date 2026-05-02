@@ -285,9 +285,12 @@ DTC 占比 / 库存周转 ...
 
 ---
 
-## Layer D — NARRATIVE OVERLAY (USP 核心层)
+## Layer D — NARRATIVE OVERLAY (中国 + 跨框架视角)
 
-> 这一层是平台的差异化所在。把它做深 = USP。
+> **2026-05-02 重新定位 (Junyan):** 这层不再被框架为"USP 核心层" — 大投行
+> 和 hedge fund 也深耕单国市场, single-country deep-dive 不是 unique edge.
+> 但**这些视角仍然必走** — 它们是分析严谨度 baseline, 不是 alpha 卖点.
+> 历史上的 USP framing 保留在 `docs/strategy/USP_VISION.md` 作为思考过程.
 
 ### D1. 政策信号解码 (China-Specific)
 
@@ -303,8 +306,10 @@ DTC 占比 / 库存周转 ...
 
 **数据源：** 国务院公报 / CSRC 官网 / 巨潮资讯 / 财联社政策口
 
-**为什么是 USP：** 99% 外资 PM 不具备这个解码能力；国内卖方有政策
-敏感度但缺国际框架严谨度。我们处在中间，能两边解读。
+**为什么这层值得做：** 99% 外资 PM 不具备这个解码能力；国内卖方有政策
+敏感度但缺国际框架严谨度。我们处在中间，能两边解读。这是**分析严谨度
+的 baseline**，不是 unique edge — 它让 thesis 经得起政策维度的反问，
+但不是产品 USP。
 
 ### D2. 国内叙事追踪 (China-Specific)
 
@@ -317,8 +322,9 @@ DTC 占比 / 库存周转 ...
 - D2.4 — 散户买入热度 (从龙虎榜推算)
 - D2.5 — 题材轮动节奏 (AI / 算力 / 机器人 / 出海 / 等)
 
-**为什么是 USP：** Gap 本身就是 alpha。国内炒作的叙事和国际机构的
-定价逻辑不一致时——leading indicator。
+**为什么这层值得做：** Gap 本身就是 alpha 信号 (国内炒作的叙事和国际
+机构定价逻辑不一致时是 leading indicator)。但它**不是产品 USP** — 任何
+深耕中国市场的 fund 都会做这个，只是工作量大。
 
 ### D3. 跨框架收敛 (Multi-Persona)
 
@@ -337,7 +343,143 @@ DTC 占比 / 库存周转 ...
 - "8 个框架中有 5 个 say BUY" (consensus 高)
 - "2 个框架显著分歧的根因 X" (深挖点)
 
-**为什么是 USP：** 没人同时做了国际 + 国内派的全谱。
+**为什么这层值得做：** 一站式同时跑 8-12 个框架的 cross-check 减少单框架
+偏见。但**它本身不是 USP** — 任何严谨买方都会做框架交叉，只是不像我们
+这样系统化进 LLM workflow。
+
+---
+
+## Layer E — REFLEXIVITY & TIME-AXIS (相位与时间维度) [v2 NEW]
+
+> **2026-05-02 加入 (Junyan 从天孚通信 pair-trade 复盘提炼):** 一个 thesis
+> 不是 0/1 二元判断 ("我们对 vs 市场错"), 而是**三元** ("我们对 + 市场目前
+> 看似也对 + 时间会让真相浮出"). Layer E 把这个时间-相位维度系统化, 是
+> Step 8 PHASE_AND_TIMING (THESIS_PROTOCOL.md) 的支撑分析层.
+
+### E1. Soros 反身性 (Reflexivity)
+
+**问题：** 价格不只是反映基本面，价格本身**影响**基本面吗？
+
+**核心洞察：** 自我加强的循环 — 股价上涨 → 公司更容易融资 → 真实改善基本面 →
+股价进一步上涨。或反向 — 股价下跌 → 评级下调 → 客户流失 → 业绩变差 →
+股价进一步下跌。市场**不仅仅**是发现器，市场是参与者。
+
+**应用例子：**
+- 中际旭创：1.6T 量产期间股价上涨 → 拿到更多 NVIDIA 订单 (优先供应认证厂) →
+  营收实际加速 → 股价继续上涨 (positive reflexivity)
+- 天孚通信：如果 Q2 报毛利继续下滑 → 卖方下调评级 → 大客户重新评估供应商
+  → 客户份额可能流失 → 进一步业绩压力 (negative reflexivity 启动)
+
+**输出：** thesis 中标识 reflexivity 方向 (positive/negative/none) + 关键
+节点 (什么事件激活 / 反转 reflexivity)。
+
+### E2. 价值-价格临时分离 (Buffett 式)
+
+**问题：** 我们的内在价值估算 vs 当前价格是 +X% 还是 -Y%? 这个 gap
+**多久会收敛**? Phase 1 (gap 维持) vs Phase 2 (gap 收敛) 的过渡条件是什么?
+
+**核心洞察：** Buffett 强调"市场短期是投票机, 长期是称重机". 这层显式问
+"短期 vs 长期"什么时候切换. 给定我们认为 fair value = $X, 当前价格 = $Y,
+我们必须回答**什么 catalyst** 让市场从短期投票切到长期称重.
+
+**应用例子：**
+- 天孚 short: 我们估 fair value $50 (基于 GM 压缩长期化), 当前 $200.
+  Gap = -75%. Phase 1: AI capex 牛叙事维持 → 价格暂时支撑. Phase 2 catalyst:
+  连续 2 个季度 GM 跌破 47% → 市场切换到 fundamentals view → 收敛.
+
+**输出：** 内在价值估算 + 当前 gap + catalyst for convergence + 估计
+convergence timing.
+
+### E3. Pair-trade 时间错位 (Time Mismatch)
+
+**问题：** Long-side 和 short-side 在同一个 pair-trade thesis cycle 里
+**何时各自激活**? 同时进场还是错时进场?
+
+**核心洞察：** 同一行业 cycle (如 AI capex 周期) 内, 行业受益的 long-side
+通常**比** 行业受损的 short-side **先激活** — 牛叙事先涨, 然后才出现
+分化. 简单地"同时 long+short"会两边吃止损.
+
+**应用例子：**
+- Innolight long / 天孚 short pair: AI 普涨期 (Phase 1), 两只都涨,
+  short 端被止损. 行业分化期 (Phase 2), Innolight 继续涨, 天孚开始跌.
+- **错时进场策略：** Phase 1 重仓 long Innolight + 不开仓 (或轻仓) short
+  天孚. Phase 2 catalyst 触发后才把 short 端 size up.
+
+**输出：** pair 的 long/short 各自的 phase entry triggers + sizing curve.
+
+### E4. Shortable-but-not-yet (Junyan 2026-05-02 命名)
+
+**问题：** 我们看到了真相, 市场还没看到, 但**会**看到. 现在该不该 short?
+
+**核心洞察：** "We are right, market hasn't realized yet, but will" 是
+最危险的 short setup — 因为"will realize" 的 timing 是 unknown 的, 早进
+场会被 carry cost / forced cover 杀死. **正确做法是** Phase 1 不进场 +
+等 phase_1_weakening signals + phase_2_catalyst 临近时再 size up.
+
+**应用例子：**
+- 天孚 short setup: 我们 2026-04 已经看到 GM 压缩 + 客户集中度风险.
+  市场 5 月还没定价这个. 我们**不**现在 short — 等 Q2 财报 (phase_1
+  weakening signal) → Q3 财报 (phase_2 catalyst confirm) → 重仓 short.
+
+**输出：** 明确的"not yet"判断 + 等待条件 + 进场触发条件.
+
+### E5. 国际机构资金流验证 (Institutional Flow Cross-Check)
+
+**问题：** 北向资金 (沪深港通) / QFII / 公募外资基金的 flow 方向, 是否
+验证我们的 phase 判断?
+
+**核心洞察：** 北向资金 (Tushare moneyflow_hsgt 数据已接, 6000 tier 解锁)
+代表国际机构对 A 股的看法. 如果我们的 phase 判断 "Phase 2 即将启动",
+但北向资金仍在大幅流入 (即外资仍买入), 说明国际机构没看到我们看到的
+真相 — 我们要么对了 (gap 是 alpha), 要么过早 (会被 carry 拖死).
+
+**注意：** 这个视角**不是 USP** (大行 HF 也都跑这个数据), 但它是 Layer E
+其他子层的 cross-check 工具.
+
+**应用例子：**
+- 天孚 short: 如果北向资金最近 5 日累计流出 (north_money 5d sum < 0),
+  这是 Phase 2 catalyst 提前信号. 如果仍大幅流入, Phase 2 timing 推后.
+
+**输出：** HSGT 5d net flow + 5w + 5m 三个时间维度的方向 vs 我们 phase
+判断的对照, 一致 / 分歧 / 可疑.
+
+### E6. 散户叙事-机构定价差距 (Retail-Institutional Gap)
+
+**问题：** 国内散户在炒什么? 国际/国内机构在定价什么? Gap 是 alpha 还是噪音?
+
+**核心洞察：** 雪球 / 东财股吧 上的散户讨论密度 + 情绪, 和北向资金 + 卖方
+评级形成对照. 散户极度狂热 + 机构在退出 = 拐点信号. 散户冷淡 + 机构在
+收购 = 底部信号.
+
+**注意：** 这个视角**不是 USP** (国内多家 fund 跑这个), 但它是 phase 切换
+的辅助验证信号 — 当散户情绪和机构 flow 出现明显分歧, 经常是 phase 切换
+临近的 leading indicator.
+
+**应用例子：**
+- 天孚 short Phase 2 触发条件之一: 散户雪球热度仍极高 + 北向资金 5d 流出.
+  Gap = 散户没意识到 + 机构开始撤. 这是经典 phase 切换信号.
+
+**输出：** 散户热度 (post 数 + 多空比) + 机构 flow 方向 + Gap 评估
+(aligned/diverged/extreme_diverged).
+
+---
+
+### Layer E 与 Step 8 的关系
+
+```
+Step 8 PHASE_AND_TIMING (THESIS_PROTOCOL.md) — 输出:
+  phase_1_market_belief / phase_2_reality_recognition / position_sizing_curve
+
+Layer E 视角 (this section) — 支撑 Step 8 输出的分析:
+  E1 Reflexivity      → 帮助识别 phase 切换会自我加强还是衰减
+  E2 Value-Price gap  → 帮助量化 phase 2 收敛幅度
+  E3 Pair-trade timing → 帮助决定 long/short 错时进场
+  E4 Shortable-not-yet → 直接 informs short_play.entry_trigger
+  E5 国际机构资金流    → cross-check phase 判断 (HSGT data live 2026-05-02)
+  E6 散户叙事 gap      → leading indicator for phase switch
+```
+
+跑 Layer E 是**为了产出**有质量的 Step 8 phase_timing 字段, 不是独立分析层.
 
 ---
 
@@ -347,14 +489,15 @@ DTC 占比 / 库存周转 ...
 
 ```
 1. 读 STATUS.md (大局感知)
-2. 读 THESIS_PROTOCOL.md (7 步骨架要求)
+2. 读 THESIS_PROTOCOL.md (8 步骨架要求, v2)
 3. 读 INVESTMENT_FRAMEWORK.md (这文件)
 4. 走 Layer A (12 个 universal 视角) - 必须全部覆盖, 缺哪个标 N/A 原因
 5. 激活 Layer B 中匹配的 sector profile (1-2 个)
 6. 应用 Layer C 中匹配的市场 overlay (按 ticker 后缀: .SZ/.SH=A, .HK=HK, US)
-7. 应用 Layer D 全部子模块 (USP 核心, 必走)
-8. 综合 → 用 7 步 THESIS_PROTOCOL 输出
-9. 输出层只展示 top 6-8 最相关视角 (但 trace 保留完整 audit)
+7. 应用 Layer D 全部子模块 (中国 + 跨框架视角, baseline 严谨度, 必走)
+8. 应用 Layer E 全部子模块 (相位与时间, 支撑 Step 8 phase_timing 输出, 必走)
+9. 综合 → 用 8 步 THESIS_PROTOCOL v2 输出 (含 Step 8 phase_and_timing)
+10. 输出层只展示 top 6-8 最相关视角 (但 trace 保留完整 audit)
 ```
 
 ### 输出层 (展示给 Junyan / Franky / 客户)
