@@ -2349,8 +2349,15 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   useEffect(() => { setPage(0); }, [mktFilter, dirFilter, searchQ, industry, peMin, peMax, pctMin, pctMax]);
 
   /* ── live quote polling — only visible stocks ────────────────────────────── */
+  // 2026-05-02 Phase 3 audit fix: previous deps [page, filtered.length, polling]
+  // missed cases where filter changes but result count is coincidentally identical
+  // (e.g., switching industries with same count) — codesRef stayed stale, polling
+  // fetched wrong tickers. Use string signature of visible codes so any actual
+  // ticker change triggers re-poll. React's === on strings compares by value.
+  const visibleCodesSig = visible.map(toEMCode).filter(Boolean).join(',');
+
   useEffect(() => {
-    codesRef.current = visible.map(toEMCode).filter(Boolean);
+    codesRef.current = visibleCodesSig ? visibleCodesSig.split(',') : [];
 
     const doPoll = async () => {
       if (!codesRef.current.length || !polling) return;
@@ -2374,7 +2381,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     if (polling) pollRef.current = setInterval(doPoll, POLL_MS);
     return () => clearInterval(pollRef.current);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filtered.length, polling]);
+  }, [visibleCodesSig, polling]);
 
   /* ── helpers ─────────────────────────────────────────────────────────────── */
   const fmtVol = n => {
