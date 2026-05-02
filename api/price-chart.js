@@ -1,22 +1,24 @@
-// api/price-chart.js — OHLCV chart data via Tushare 6000-tier (single-source)
+// api/price-chart.js — OHLCV chart data via Tushare paid API + US fallback
 //
-// 2026-05-02 v4 (Junyan: "yahoo 删了"):
-//   • Single-source via Tushare 6000-tier paid API (A + HK + US covered)
-//   • Yahoo Finance branch DELETED — was rate-limited on Vercel cloud IPs
-//   • Cleaner code, single point of debugging, paid SLA >99.9%
+// 2026-05-02 v5: multi-timeframe support (interval param: 1m/5m/15m/30m/60m + 1d/1w/1mo)
+//   • A + HK route through Tushare paid API; 6000-tier covers daily, 15000-tier unlocks intraday/extended candles
+//   • US branch keeps Yahoo Finance v8 fallback because Tushare us_daily 6000-tier is limited to 5 req/day
+//   • Cleaner code, single point of debugging, paid SLA >99.9% for Tushare-covered markets
+//   • Multi-timeframe schema is forward-compatible: tier-locked data returns success=true + data=[]
 //
-// GET /api/price-chart?ticker=300308.SZ&range=1mo
-// GET /api/price-chart?ticker=700.HK&range=3mo
-// GET /api/price-chart?ticker=NVDA&range=1y
+// GET /api/price-chart?ticker=300308.SZ&range=1mo&interval=1d
+// GET /api/price-chart?ticker=700.HK&interval=5m
+// GET /api/price-chart?ticker=NVDA&range=1y&interval=1w
 //
-// range:    1d | 5d | 1mo | 3mo | 6mo | 1y
+// range:    1d | 5d | 1mo | 3mo | 6mo | 1y  (lookback duration)
+// interval: 1m | 5m | 15m | 30m | 60m | 1d | 1w | 1mo
 // Returns:  { success, ticker, name, currency, current, change_pct,
 //             market_state, data: [...], source }
 //
 // Vercel env vars required:
-//   TUSHARE_TOKEN — Tushare 6000-tier token (set in project env)
+//   TUSHARE_TOKEN — Tushare paid token (set in project env)
 
-// Calendar-days lookback per range (Tushare daily candles only — no intraday at 6000)
+// Calendar-days lookback per range for legacy daily candle callers.
 const TUSHARE_DAYS_MAP = {
   '1d':   5,    // last 5 calendar days → ~3 trading sessions (covers weekends)
   '5d':   10,
@@ -24,6 +26,19 @@ const TUSHARE_DAYS_MAP = {
   '3mo':  95,
   '6mo':  185,
   '1y':   370,
+};
+
+const ALLOWED_INTERVALS = ['1m', '5m', '15m', '30m', '60m', '1d', '1w', '1mo'];
+
+const INTERVAL_LOOKBACK_DAYS_MAP = {
+  '1m':   1,
+  '5m':   5,
+  '15m':  15,
+  '30m':  30,
+  '60m':  60,
+  '1d':   35,
+  '1w':   365,
+  '1mo':  1825,
 };
 
 // ────────────────────────────────────────────────────────────────────────
@@ -51,30 +66,108 @@ function formatYYYYMMDD(dateObj) {
   return `${y}${m}${d}`;
 }
 
+function firstQueryValue(value) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function normalizeInterval(value) {
+  return String(value || '1d').trim().toLowerCase();
+}
+
+function isAllowedInterval(interval) {
+  return ALLOWED_INTERVALS.includes(interval);
+}
+
+function isMinuteInterval(interval) {
+  return intervalToTushareFreq(interval) != null;
+}
+
+function intervalToTushareFreq(interval) {
+  return {
+    '1m':  '1min',
+    '5m':  '5min',
+    '15m': '15min',
+    '30m': '30min',
+    '60m': '60min',
+  }[interval] || null;
+}
+
+function tushareApiNameFor(market, interval) {
+  if (market === 'A') {
+    if (interval === '1d')  return 'daily';
+    if (interval === '1w')  return 'weekly';
+    if (interval === '1mo') return 'monthly';
+    if (isMinuteInterval(interval)) return 'stk_mins';
+  }
+
+  if (market === 'HK') {
+    if (interval === '1d')  return 'hk_daily';
+    if (interval === '1w')  return 'hk_weekly';
+    if (interval === '1mo') return 'hk_monthly';
+    if (isMinuteInterval(interval)) return 'hk_mins';
+  }
+
+  return null;
+}
+
+function tushareLookbackDays(range, interval) {
+  if (range && interval === '1d') return TUSHARE_DAYS_MAP[range] || 35;
+  return INTERVAL_LOOKBACK_DAYS_MAP[interval] || 35;
+}
+
+function isTierLockedMsg(msg) {
+  return /权限|permission|tier/i.test(String(msg || ''));
+}
+
+function marketMetaFor(market, ticker) {
+  if (market === 'A') {
+    const tsCode = ticker.trim().toUpperCase();
+    return {
+      currency: 'CNY',
+      exchange: tsCode.endsWith('.SH') ? 'SSE' : 'SZSE',
+    };
+  }
+  if (market === 'HK') return { currency: 'HKD', exchange: 'HKEx' };
+  if (market === 'US') return { currency: 'USD', exchange: 'NYSE/NASDAQ' };
+  return { currency: 'USD', exchange: 'UNKNOWN' };
+}
+
+function parseTushareTradeTime(value) {
+  const raw = String(value || '').trim();
+  const match = raw.match(/^(\d{4})[-/]?(\d{2})[-/]?(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!match) return null;
+  const [, y, m, d, hh, mm, ss = '0'] = match;
+  return Date.UTC(+y, +m - 1, +d, +hh, +mm, +ss);
+}
+
 // ────────────────────────────────────────────────────────────────────────
 // Tushare HTTP API call (shared by A / HK / US branches)
 // ────────────────────────────────────────────────────────────────────────
 
-async function callTushare(apiName, tsCode, range) {
+async function callTushare(apiName, tsCode, range, interval = '1d', freq = null) {
   const token = process.env.TUSHARE_TOKEN;
   if (!token) {
     console.error(`[price-chart] TUSHARE_TOKEN not set in Vercel env`);
     return { error: 'tushare_token_missing' };
   }
 
-  const daysBack = TUSHARE_DAYS_MAP[range] || 35;
+  const daysBack = tushareLookbackDays(range, interval);
   const now = new Date();
   const startDate = new Date(now.getTime() - daysBack * 86400000);
+  const params = {
+    ts_code: tsCode,
+    start_date: formatYYYYMMDD(startDate),
+    end_date: formatYYYYMMDD(now),
+  };
+  if (freq) params.freq = freq;
 
   const body = {
     api_name: apiName,
     token,
-    params: {
-      ts_code: tsCode,
-      start_date: formatYYYYMMDD(startDate),
-      end_date: formatYYYYMMDD(now),
-    },
-    fields: 'trade_date,open,high,low,close,vol,amount',
+    params,
+    fields: freq
+      ? 'trade_time,open,high,low,close,vol,amount'
+      : 'trade_date,open,high,low,close,vol,amount',
   };
 
   try {
@@ -92,10 +185,11 @@ async function callTushare(apiName, tsCode, range) {
 
     const json = await resp.json();
     if (json.code !== 0) {
-      const isRateLimit = (json.msg || '').includes('频率超限') ||
-                          (json.msg || '').includes('rate');
+      const msg = String(json.msg || '');
+      const isRateLimit = msg.includes('频率超限') || /rate/i.test(msg);
       console.error(`[price-chart-tushare] ${apiName} code=${json.code} msg="${json.msg}" for ${tsCode}`);
-      return { error: isRateLimit ? 'rate_limit' : 'tushare_error', msg: json.msg };
+      if (isTierLockedMsg(msg)) return { error: 'tier_locked', msg, code: json.code };
+      return { error: isRateLimit ? 'rate_limit' : 'tushare_error', msg, code: json.code };
     }
 
     return { ok: true, fields: json.data?.fields || [], items: json.data?.items || [] };
@@ -111,29 +205,40 @@ async function callTushare(apiName, tsCode, range) {
 
 function transformToChartData(fields, items, marketCloseUTCHour, volMultiplier) {
   const idxOf = (name) => fields.indexOf(name);
+  const iTradeTime = idxOf('trade_time');
   const iDate  = idxOf('trade_date');
   const iOpen  = idxOf('open');
   const iHigh  = idxOf('high');
   const iLow   = idxOf('low');
   const iClose = idxOf('close');
   const iVol   = idxOf('vol');
+  const hasTradeTime = iTradeTime >= 0;
+  const numAt = (row, idx) => (idx >= 0 && row[idx] != null ? Number(row[idx]) : null);
+  const round4 = (value) => (value != null && Number.isFinite(value) ? +value.toFixed(4) : null);
 
   return items
     .map(row => {
-      const dateStr = String(row[iDate]);
-      if (!/^\d{8}$/.test(dateStr)) return null;
-      const t = Date.UTC(
-        +dateStr.slice(0, 4),
-        +dateStr.slice(4, 6) - 1,
-        +dateStr.slice(6, 8),
-        marketCloseUTCHour, 0, 0
-      );
-      const open  = row[iOpen]  != null ? +Number(row[iOpen]).toFixed(4)  : null;
-      const high  = row[iHigh]  != null ? +Number(row[iHigh]).toFixed(4)  : null;
-      const low   = row[iLow]   != null ? +Number(row[iLow]).toFixed(4)   : null;
-      const close = row[iClose] != null ? +Number(row[iClose]).toFixed(4) : null;
+      let t;
+      if (hasTradeTime) {
+        t = parseTushareTradeTime(row[iTradeTime]);
+      } else {
+        const dateStr = String(row[iDate]);
+        if (!/^\d{8}$/.test(dateStr)) return null;
+        t = Date.UTC(
+          +dateStr.slice(0, 4),
+          +dateStr.slice(4, 6) - 1,
+          +dateStr.slice(6, 8),
+          marketCloseUTCHour, 0, 0
+        );
+      }
+      if (t == null) return null;
+
+      const open  = round4(numAt(row, iOpen));
+      const high  = round4(numAt(row, iHigh));
+      const low   = round4(numAt(row, iLow));
+      const close = round4(numAt(row, iClose));
       if (close == null) return null;
-      const volRaw = row[iVol] != null ? Number(row[iVol]) : 0;
+      const volRaw = numAt(row, iVol) ?? 0;
       return {
         time:   t,
         open:   open  ?? close,
@@ -147,7 +252,7 @@ function transformToChartData(fields, items, marketCloseUTCHour, volMultiplier) 
     .sort((a, b) => a.time - b.time);  // ascending by date
 }
 
-function buildResponse(chartData, ticker, currency, exchange, range, source) {
+function buildResponse(chartData, ticker, currency, exchange, range, interval, source) {
   if (!chartData.length) return null;
   const last      = chartData[chartData.length - 1];
   const prev      = chartData.length > 1 ? chartData[chartData.length - 2] : last;
@@ -161,8 +266,8 @@ function buildResponse(chartData, ticker, currency, exchange, range, source) {
     name:         ticker,  // Tushare daily endpoints don't return name; UI gets from universe
     currency,
     exchange,
-    range,
-    interval:     '1d',
+    range:        range ?? null,
+    interval,
     current:      last.close,
     prev_close:   prev.close,
     change_pct:   changePct,
@@ -176,32 +281,87 @@ function buildResponse(chartData, ticker, currency, exchange, range, source) {
   };
 }
 
+function emptyCompatibleResponse(ticker, range, interval, market, status, extras = {}) {
+  const meta = marketMetaFor(market, ticker);
+  return {
+    success:      true,
+    ticker,
+    name:         ticker,
+    currency:     meta.currency,
+    exchange:     meta.exchange,
+    range:        range ?? null,
+    interval,
+    current:      null,
+    prev_close:   null,
+    change_pct:   null,
+    day_high:     null,
+    day_low:      null,
+    volume:       null,
+    market_state: 'UNKNOWN',
+    data:         [],
+    source:       extras.source || null,
+    _status:      status,
+    fetched_at:   new Date().toISOString(),
+    ...extras,
+  };
+}
+
+function tierLockedResponse(ticker, range, interval, market, attemptedEndpoint, errMsg) {
+  return emptyCompatibleResponse(ticker, range, interval, market, 'tier_locked', {
+    source:              `tushare-${interval}-${market.toLowerCase()}`,
+    _need_tier:          15000,
+    _attempted_endpoint: attemptedEndpoint,
+    _tushare_msg:        errMsg || null,
+  });
+}
+
+function unsupportedIntervalResponse(ticker, range, interval, market) {
+  return emptyCompatibleResponse(ticker, range, interval, market, 'unsupported_interval', {
+    _allowed_intervals: ALLOWED_INTERVALS,
+  });
+}
+
 // ────────────────────────────────────────────────────────────────────────
 // Per-market fetchers
 // ────────────────────────────────────────────────────────────────────────
 
-async function fetchA(ticker, range) {
+async function fetchA(ticker, range, interval) {
   const tsCode = ticker.trim().toUpperCase();
-  const r = await callTushare('daily', tsCode, range);
+  const apiName = tushareApiNameFor('A', interval);
+  if (!apiName) return unsupportedIntervalResponse(tsCode, range, interval, 'A');
+
+  const freq = intervalToTushareFreq(interval);
+  const r = await callTushare(apiName, tsCode, range, interval, freq);
+  if (r.error === 'tier_locked') {
+    return tierLockedResponse(tsCode, range, interval, 'A', apiName, r.msg);
+  }
   if (!r.ok) return null;
-  // A-share Tushare vol is in 手 (lot of 100 shares); multiply 100 to get shares
-  const chartData = transformToChartData(r.fields, r.items, 7, 100);
+  // A-share daily/weekly/monthly vol is in 手 (lot of 100 shares); minute vol is usually shares.
+  const volMultiplier = ['1d', '1w', '1mo'].includes(interval) ? 100 : 1;
+  const chartData = transformToChartData(r.fields, r.items, 7, volMultiplier);
   // 15:00 CST market close = 07:00 UTC
   return buildResponse(
     chartData, tsCode, 'CNY',
     tsCode.endsWith('.SH') ? 'SSE' : 'SZSE',
-    range, 'tushare-6000-a'
+    range, interval, `tushare-${interval}-a`
   );
 }
 
-async function fetchHK(ticker, range) {
+async function fetchHK(ticker, range, interval) {
   const tsCode = toTushareHK(ticker);
-  const r = await callTushare('hk_daily', tsCode, range);
+  const apiName = tushareApiNameFor('HK', interval);
+  if (!apiName) return unsupportedIntervalResponse(tsCode, range, interval, 'HK');
+
+  const freq = intervalToTushareFreq(interval);
+  const r = await callTushare(apiName, tsCode, range, interval, freq);
+  if (r.error === 'tier_locked') {
+    return tierLockedResponse(tsCode, range, interval, 'HK', apiName, r.msg);
+  }
   if (!r.ok) return null;
   // HK Tushare vol is in shares directly (no 手 conversion)
   const chartData = transformToChartData(r.fields, r.items, 8, 1);
   // 16:00 HKT market close = 08:00 UTC
-  return buildResponse(chartData, tsCode, 'HKD', 'HKEx', range, 'tushare-6000-hk');
+  return buildResponse(chartData, tsCode, 'HKD', 'HKEx', range, interval, `tushare-${interval}-hk`);
 }
 
 // US: Tushare us_daily at 6000 tier limited to 5 req/DAY (verified 2026-05-02)
@@ -219,17 +379,61 @@ const YF_HEADERS = {
 };
 
 const YF_INTERVAL_MAP = {
-  '1d':  '5m',  '5d':  '30m',  '1mo': '1d',
-  '3mo': '1d',  '6mo': '1d',   '1y':  '1wk',
+  '1m':  '1m',
+  '5m':  '5m',
+  '15m': '15m',
+  '30m': '30m',
+  '60m': '60m',
+  '1d':  '1d',
+  '1w':  '1wk',
+  '1mo': '1mo',
 };
 
-async function fetchUS(ticker, range) {
+const YF_RANGE_DAYS_MAP = {
+  '1d':  1,
+  '5d':  5,
+  '1mo': 30,
+  '3mo': 90,
+  '6mo': 180,
+  '1y':  365,
+};
+
+const YF_MAX_LOOKBACK_DAYS = {
+  '1m':  7,
+  '5m':  60,
+  '15m': 60,
+  '30m': 60,
+  '60m': 60,
+  '1d':  3650,
+  '1w':  3650,
+  '1mo': 3650,
+};
+
+function yfinanceRangeFor(range, interval) {
+  const requestedDays = range
+    ? (YF_RANGE_DAYS_MAP[range] || INTERVAL_LOOKBACK_DAYS_MAP[interval] || 30)
+    : (INTERVAL_LOOKBACK_DAYS_MAP[interval] || 30);
+  const cappedDays = Math.min(requestedDays, YF_MAX_LOOKBACK_DAYS[interval] || requestedDays);
+
+  if (cappedDays >= 1825) return '5y';
+  if (cappedDays >= 730) return '2y';
+  if (cappedDays >= 365) return '1y';
+  if (cappedDays >= 180) return '6mo';
+  if (cappedDays >= 90)  return '3mo';
+  if (cappedDays >= 30)  return '1mo';
+  if (cappedDays >= 5)   return '5d';
+  return '1d';
+}
+
+async function fetchUS(ticker, range, interval) {
   const tk = ticker.trim().toUpperCase();
-  const interval = YF_INTERVAL_MAP[range] || '1d';
+  const yfInterval = YF_INTERVAL_MAP[interval];
+  if (!yfInterval) return unsupportedIntervalResponse(tk, range, interval, 'US');
+  const yfRange = yfinanceRangeFor(range, interval);
   const enc = encodeURIComponent(tk);
   const urls = [
-    `https://query1.finance.yahoo.com/v8/finance/chart/${enc}?interval=${interval}&range=${range}`,
-    `https://query2.finance.yahoo.com/v8/finance/chart/${enc}?interval=${interval}&range=${range}`,
+    `https://query1.finance.yahoo.com/v8/finance/chart/${enc}?interval=${yfInterval}&range=${yfRange}`,
+    `https://query2.finance.yahoo.com/v8/finance/chart/${enc}?interval=${yfInterval}&range=${yfRange}`,
   ];
 
   for (const url of urls) {
@@ -276,7 +480,7 @@ async function fetchUS(ticker, range) {
         name:         meta.longName   || meta.shortName || tk,
         currency:     meta.currency   || 'USD',
         exchange:     meta.exchangeName || 'NYSE/NASDAQ',
-        range,
+        range:        range ?? null,
         interval,
         current:      meta.regularMarketPrice ?? lastClose,
         prev_close:   prevClose,
@@ -307,27 +511,34 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET')    return res.status(405).json({ error: 'GET only' });
 
-  const { ticker, range = '1mo' } = req.query;
+  const ticker = firstQueryValue(req.query.ticker);
+  const rawRange = firstQueryValue(req.query.range);
+  const interval = normalizeInterval(firstQueryValue(req.query.interval));
+  const range = rawRange || (interval === '1d' ? '1mo' : undefined);
   if (!ticker?.trim()) return res.status(400).json({ error: 'ticker is required' });
+  if (!isAllowedInterval(interval)) {
+    return res.status(400).json({
+      error: `unsupported interval "${interval}". Allowed intervals: ${ALLOWED_INTERVALS.join(', ')}`,
+    });
+  }
 
   let result = null;
   let market;
   if (isAShare(ticker)) {
     market = 'A';
-    result = await fetchA(ticker, range);
+    result = await fetchA(ticker, range, interval);
   } else if (isHK(ticker)) {
     market = 'HK';
-    result = await fetchHK(ticker, range);
+    result = await fetchHK(ticker, range, interval);
   } else {
     market = 'US';
-    result = await fetchUS(ticker, range);
+    result = await fetchUS(ticker, range, interval);
   }
 
   if (result) {
-    // 12-hour edge cache for daily data (data only changes once per day after market close).
-    // HK rate-limit (2/min) is mitigated by this cache: first hit fetches, subsequent
-    // 12h serve from Vercel CDN edge.
-    res.setHeader('Cache-Control', 'public, s-maxage=43200, stale-while-revalidate=86400');
+    // Minute candles refresh quickly; daily/weekly/monthly retain the 12-hour edge cache.
+    const maxAge = isMinuteInterval(interval) ? 60 : 43200;
+    res.setHeader('Cache-Control', `public, s-maxage=${maxAge}, stale-while-revalidate=86400`);
     return res.status(200).json(result);
   }
 
