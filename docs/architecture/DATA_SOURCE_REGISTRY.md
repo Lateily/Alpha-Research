@@ -22,6 +22,7 @@
 |---|---|---|---|---|---|---|
 | `tushare` | Tushare Pro | Paid (15000 pts; base fetcher 6000-compatible) | `TUSHARE_TOKEN` env | A-share | daily | ✅ ACTIVE 2026-05-02 (`scripts/fetch_tushare.py` shipped, pipeline integrated) |
 | `capital_flow` | Tushare Pro concept/industry capital flow | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide boards | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_capital_flow.py`, pipeline Step 2d.6) |
+| `chip_distribution` | Tushare Pro 筹码分布 / cost-basis distribution | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_chip_distribution.py`, pipeline Step 2d.7) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -71,6 +72,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | `fina_indicator` | 10000? | 财务指标 (ROE/ROA) | fundamental_accel upgrade |
 | **`moneyflow_cnt` / candidates** ⭐ | **15000** | Concept-board net inflow | Browse/research capital-flow heat |
 | **`moneyflow_ind_dc` / candidates** ⭐ | **15000** | Industry-board net inflow | Browse/research capital-flow heat |
+| **`cyq_chips` / candidates** ⭐ | **15000** | 筹码分布 by price level | Support/resistance inference (frontend KR4 queued) |
 
 ⭐⭐ = USP-critical
 ⭐ = Strong catalyst signal
@@ -154,6 +156,60 @@ Top-level `_status` is `ok` if both sections succeed, `partial` if one
 succeeds, and `endpoint_unavailable` if neither succeeds. The script exits 0
 for graceful endpoint unavailability and exits 1 only when auth is missing or
 an unhandled process-level exception occurs.
+
+#### 2.1.2 `chip_distribution` — Tushare 15000-tier 筹码分布
+
+**Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
+
+**Fetcher:** `scripts/fetch_chip_distribution.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.7, `continue-on-error: true`.
+
+**Output:** `public/data/chip_distribution/<ticker>.json`
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Endpoint fallback order:**
+- `cyq_chips` → `chip_distribution` → `shareholder_chips`
+
+**Schema (A-share success):**
+```json
+{
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T...",
+  "trade_date": "20260503",
+  "tier": 15000,
+  "_status": "ok",
+  "api_used": "cyq_chips",
+  "chips": [
+    {"price": 120.5, "percent": 1.23}
+  ]
+}
+```
+
+**Schema (HK/US/non-A-share placeholder):**
+```json
+{
+  "ticker": "700.HK",
+  "fetched_at": "2026-05-03T...",
+  "_status": "skipped",
+  "_reason": "not_a_share"
+}
+```
+
+**Graceful degrade behavior:** The fetcher writes one file per watchlist ticker.
+HK/US tickers are explicit skipped placeholders. A-share endpoint-name or
+availability failures write `_status: "endpoint_unavailable"`,
+`_attempted_endpoints`, and `chips: []`. Permission/tier failures write
+`_status: "tier_locked"`, `_need_tier: 15000`, and `chips: []`. Per-ticker
+failures write `_status: "fetch_failed"` with `_error` and do not stop the
+remaining watchlist. The process exits 0 after per-ticker completion and exits
+1 only when `TUSHARE_TOKEN` is missing.
+
+**Validation status:** Causal logic is valid because chip concentration by
+price level is a direct cost-basis distribution input for resistance/support
+inference. Specific resistance/support thresholds are not defined here and
+remain `[unvalidated intuition]` until KR4 surfaces and calibrates them.
 
 ---
 
