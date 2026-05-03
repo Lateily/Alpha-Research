@@ -574,6 +574,329 @@ function buildConsensusBlock(views, sourcesUsed) {
   return lines.join('\n');
 }
 
+// ─── THESIS QUALITY VALIDATION ──────────────────────────────────────────────
+const REWARD_TO_RISK_WARN_THRESHOLD = 1.75; // [unvalidated intuition] Junyan-selected warning threshold, not trade-history calibrated.
+// Per Junyan choice "B" (shift 10 C-3 P2 follow-up): asymmetric weighting prioritizes Step 8 (PHASE_AND_TIMING)
+// since audit identified it as the single biggest gap (entirely missing in baseline output, score 72.5/100).
+// Step 8 sub-checks each weight 10 → total 40 of 100. Others each 6.67 → total 60 of 100.
+// When Step 8 entirely missing (4 sub-checks fail): score = 9 × 6.67 = 60 → triggers FAIL → repair fires.
+// Calibration is [unvalidated intuition] — adjust based on real output stats per
+// memory/project_thesis_quality_weights.md.
+const STEP_8_CHECK_WEIGHT = 10;
+const NON_STEP_8_CHECK_WEIGHT = 6.67;
+const STEP_8_CHECK_NAMES_SET = new Set([
+  'step_8_phase_timing_concrete_not_boilerplate',
+  'step_8_early_signs_observable',
+  'step_8_catalyst_for_reversion_predatable',
+  'step_8_position_sizing_curve_monotonic',
+]);
+function checkWeight(name) {
+  return STEP_8_CHECK_NAMES_SET.has(name) ? STEP_8_CHECK_WEIGHT : NON_STEP_8_CHECK_WEIGHT;
+}
+
+const QUALITY_CHECK_NAMES = [
+  'step_1_specific_not_vague',
+  'step_2_no_unfounded_leaps',
+  'step_3_evidence_includes_quant_qual_contrarian',
+  'step_3_contrarian_view_has_what_changes_our_mind',
+  'step_4_has_specific_numbers_and_horizon',
+  'step_5_observable',
+  'step_6_observable',
+  'step_7_one_sentence_tagline',
+  'step_8_phase_timing_concrete_not_boilerplate',
+  'step_8_early_signs_observable',
+  'step_8_catalyst_for_reversion_predatable',
+  'step_8_position_sizing_curve_monotonic',
+  'reward_to_risk_at_least_threshold',
+];
+
+const QC_REQUIRED_KEYS = ['all_8_steps_complete', ...QUALITY_CHECK_NAMES];
+
+function extractJsonPayload(text) {
+  if (typeof text !== 'string') return '';
+  const cb = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (cb) return cb[1].trim();
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end > start) return text.slice(start, end + 1).trim();
+  return text.trim();
+}
+
+function isPlainObject(value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function getPath(obj, path) {
+  if (!path) return obj;
+  return path.split('.').reduce((acc, part) => (acc == null ? undefined : acc[part]), obj);
+}
+
+function setPath(obj, path, value) {
+  const parts = path.split('.');
+  let cursor = obj;
+  parts.slice(0, -1).forEach(part => {
+    if (!isPlainObject(cursor[part])) cursor[part] = {};
+    cursor = cursor[part];
+  });
+  cursor[parts[parts.length - 1]] = value;
+}
+
+function toText(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) return value.map(toText).filter(Boolean).join(' ');
+  if (isPlainObject(value)) return Object.values(value).map(toText).filter(Boolean).join(' ');
+  return '';
+}
+
+function isNonEmpty(value) {
+  if (value == null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0 && value.some(isNonEmpty);
+  if (isPlainObject(value)) return Object.keys(value).length > 0 && Object.values(value).some(isNonEmpty);
+  return true;
+}
+
+function pushMissing(missingFields, path) {
+  if (!missingFields.includes(path)) missingFields.push(path);
+}
+
+function requireNonEmpty(obj, path, missingFields) {
+  const value = getPath(obj, path);
+  if (!isNonEmpty(value)) {
+    pushMissing(missingFields, path);
+    return false;
+  }
+  return true;
+}
+
+function hasDateOrWindow(value) {
+  const text = toText(value);
+  return /\b(20\d{2}|FY\d{2,4}|Q[1-4]\s*20?\d{2,4}|[12]H\s*20?\d{2,4}|H[12]\s*20?\d{2,4}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December|week|month|quarter|半[年载]|季度|月|年)\b/i.test(text);
+}
+
+function hasSpecificMetric(value) {
+  const text = toText(value);
+  return /(\d|%|bps?|pp|x|倍|元|港元|美元|CNY|HKD|USD|Q[1-4]|FY|H[12]|[<>]=?|≥|≤|above|below|exceed|drop|rise|margin|revenue|EPS|GM|ROE|FCF)/i.test(text);
+}
+
+function isBoilerplate(value) {
+  const text = toText(value).toLowerCase();
+  if (!text) return true;
+  return /(long[- ]?term|near[- ]?term|soon|eventually|market wakes up|sentiment improves|fundamentals improve|industry tailwind|ai 普涨|市场情绪|基本面改善|长期|短期|未来)/i.test(text);
+}
+
+function parseRewardToRisk(value) {
+  const text = toText(value).replace(/，/g, ',');
+  if (!text) return null;
+
+  const colon = text.match(/([+-]?\d+(?:\.\d+)?)\s*(?:x|倍)?\s*[:：\/]\s*1\b/i);
+  if (colon) return parseFloat(colon[1]);
+
+  const xRatio = text.match(/([+-]?\d+(?:\.\d+)?)\s*(?:x|倍)\b/i);
+  if (xRatio) return parseFloat(xRatio[1]);
+
+  const rewardRiskWords = text.match(/reward\s*[- ]?to\s*[- ]?risk[^0-9]*([+-]?\d+(?:\.\d+)?)/i);
+  if (rewardRiskWords) return parseFloat(rewardRiskWords[1]);
+
+  const pct = [...text.matchAll(/([+-]?\d+(?:\.\d+)?)\s*%/g)].map(m => parseFloat(m[1]));
+  if (pct.length >= 2) {
+    const upside = Math.max(...pct.map(Math.abs));
+    const downside = Math.min(...pct.map(Math.abs).filter(n => n > 0));
+    if (downside > 0) return upside / downside;
+  }
+
+  return null;
+}
+
+function averagePercent(value) {
+  const nums = [...toText(value).matchAll(/([+-]?\d+(?:\.\d+)?)\s*%/g)].map(m => parseFloat(m[1]));
+  if (!nums.length) return null;
+  return nums.reduce((sum, n) => sum + n, 0) / nums.length;
+}
+
+function isPositionSizingCurveMonotonic(curve) {
+  const pre = averagePercent(curve?.pre_phase_1_weakening ?? curve?.prePhase1Weakening);
+  const mid = averagePercent(curve?.phase_1_weakening_confirmed ?? curve?.phase1WeakeningConfirmed);
+  const late = averagePercent(curve?.phase_2_catalyst_imminent ?? curve?.phase2CatalystImminent);
+  if ([pre, mid, late].some(v => v == null)) return false;
+  return pre <= mid && mid <= late && (pre < mid || mid < late);
+}
+
+function validateThesisQuality(parsedOutput) {
+  const missingFields = [];
+  const qcChecklistResults = {};
+  const root = isPlainObject(parsedOutput) ? parsedOutput : {};
+
+  const step1Fields = [
+    'step_1_catalyst.catalyst_event',
+    'step_1_catalyst.catalyst_date_or_window',
+    'step_1_catalyst.catalyst_type',
+    'step_1_catalyst.catalyst_source',
+  ];
+  const step1Present = step1Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  qcChecklistResults.step_1_specific_not_vague =
+    step1Present && hasDateOrWindow(getPath(root, 'step_1_catalyst.catalyst_date_or_window')) && !isBoilerplate(getPath(root, 'step_1_catalyst.catalyst_event'));
+  if (step1Present && !hasDateOrWindow(getPath(root, 'step_1_catalyst.catalyst_date_or_window'))) {
+    pushMissing(missingFields, 'step_1_catalyst.catalyst_date_or_window');
+  }
+
+  const mechanismChain = getPath(root, 'step_2_mechanism.mechanism_chain');
+  const step2Present = Array.isArray(mechanismChain) && mechanismChain.length >= 3 && mechanismChain.every(isNonEmpty);
+  if (!step2Present) pushMissing(missingFields, 'step_2_mechanism.mechanism_chain');
+  qcChecklistResults.step_2_no_unfounded_leaps = step2Present && mechanismChain.every(step => !isBoilerplate(step));
+
+  const step3Fields = [
+    'step_3_evidence.evidence_quantitative',
+    'step_3_evidence.evidence_qualitative',
+    'step_3_evidence.contrarian_view.market_consensus',
+    'step_3_evidence.contrarian_view.our_variant',
+    'step_3_evidence.contrarian_view.what_changes_our_mind',
+  ];
+  const step3Present = step3Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  qcChecklistResults.step_3_evidence_includes_quant_qual_contrarian =
+    step3Present && hasSpecificMetric(getPath(root, 'step_3_evidence.evidence_quantitative'));
+  qcChecklistResults.step_3_contrarian_view_has_what_changes_our_mind =
+    requireNonEmpty(root, 'step_3_evidence.contrarian_view.what_changes_our_mind', missingFields);
+
+  const step4Fields = [
+    'step_4_quantification.metric_target',
+    'step_4_quantification.current_value',
+    'step_4_quantification.predicted_value',
+    'step_4_quantification.predicted_range.low',
+    'step_4_quantification.predicted_range.mid',
+    'step_4_quantification.predicted_range.high',
+    'step_4_quantification.predicted_horizon',
+    'step_4_quantification.confidence',
+  ];
+  const step4Present = step4Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  qcChecklistResults.step_4_has_specific_numbers_and_horizon =
+    step4Present && hasSpecificMetric(getPath(root, 'step_4_quantification')) && hasDateOrWindow(getPath(root, 'step_4_quantification.predicted_horizon'));
+
+  const rightIf = getPath(root, 'step_5_proves_right_if');
+  const step5Present = Array.isArray(rightIf) && rightIf.length > 0 && rightIf.every(isNonEmpty);
+  if (!step5Present) pushMissing(missingFields, 'step_5_proves_right_if');
+  qcChecklistResults.step_5_observable = step5Present && hasSpecificMetric(rightIf) && !isBoilerplate(rightIf);
+
+  const wrongIf = getPath(root, 'step_6_proves_wrong_if');
+  const step6Present = Array.isArray(wrongIf) && wrongIf.length > 0 && wrongIf.every(isNonEmpty);
+  if (!step6Present) pushMissing(missingFields, 'step_6_proves_wrong_if');
+  qcChecklistResults.step_6_observable = step6Present && hasSpecificMetric(wrongIf) && !isBoilerplate(wrongIf);
+
+  const step7Fields = [
+    'step_7_variant_view.variant_view_one_sentence',
+    'step_7_variant_view.time_to_resolution',
+    'step_7_variant_view.expected_pnl_asymmetry.upside_if_right',
+    'step_7_variant_view.expected_pnl_asymmetry.downside_if_wrong',
+    'step_7_variant_view.expected_pnl_asymmetry.reward_to_risk',
+  ];
+  const step7Present = step7Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  const rewardToRisk = parseRewardToRisk(
+    getPath(root, 'step_7_variant_view.expected_pnl_asymmetry.reward_to_risk') ??
+    getPath(root, 'variant.rewardToRisk.ratio')
+  );
+  qcChecklistResults.step_7_one_sentence_tagline =
+    step7Present && toText(getPath(root, 'step_7_variant_view.variant_view_one_sentence')).length >= 30 && hasDateOrWindow(getPath(root, 'step_7_variant_view.time_to_resolution'));
+  qcChecklistResults.reward_to_risk_at_least_threshold =
+    rewardToRisk != null && rewardToRisk >= REWARD_TO_RISK_WARN_THRESHOLD;
+  qcChecklistResults.reward_to_risk_below_threshold =
+    rewardToRisk != null && rewardToRisk < REWARD_TO_RISK_WARN_THRESHOLD;
+
+  const step8Fields = [
+    'step_8_phase_and_timing.phase_1_market_belief.duration_estimate',
+    'step_8_phase_and_timing.phase_1_market_belief.why_market_keeps_buying',
+    'step_8_phase_and_timing.phase_1_market_belief.early_signs_phase_1_weakening',
+    'step_8_phase_and_timing.phase_1_market_belief.optional_long_play.direction',
+    'step_8_phase_and_timing.phase_1_market_belief.optional_long_play.sizing',
+    'step_8_phase_and_timing.phase_1_market_belief.optional_long_play.exit_trigger',
+    'step_8_phase_and_timing.phase_2_reality_recognition.catalyst_for_reversion',
+    'step_8_phase_and_timing.phase_2_reality_recognition.estimated_timing',
+    'step_8_phase_and_timing.phase_2_reality_recognition.short_play.direction',
+    'step_8_phase_and_timing.phase_2_reality_recognition.short_play.sizing',
+    'step_8_phase_and_timing.phase_2_reality_recognition.short_play.entry_trigger',
+    'step_8_phase_and_timing.position_sizing_curve.pre_phase_1_weakening',
+    'step_8_phase_and_timing.position_sizing_curve.phase_1_weakening_confirmed',
+    'step_8_phase_and_timing.position_sizing_curve.phase_2_catalyst_imminent',
+  ];
+  const step8Present = step8Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  const earlySigns = getPath(root, 'step_8_phase_and_timing.phase_1_market_belief.early_signs_phase_1_weakening');
+  const reversionCatalysts = getPath(root, 'step_8_phase_and_timing.phase_2_reality_recognition.catalyst_for_reversion');
+  const sizingCurve = getPath(root, 'step_8_phase_and_timing.position_sizing_curve');
+  qcChecklistResults.step_8_phase_timing_concrete_not_boilerplate =
+    step8Present && hasDateOrWindow(getPath(root, 'step_8_phase_and_timing.phase_1_market_belief.duration_estimate')) &&
+    hasDateOrWindow(getPath(root, 'step_8_phase_and_timing.phase_2_reality_recognition.estimated_timing')) &&
+    !isBoilerplate(getPath(root, 'step_8_phase_and_timing'));
+  qcChecklistResults.step_8_early_signs_observable =
+    Array.isArray(earlySigns) && earlySigns.length > 0 && hasSpecificMetric(earlySigns) && !isBoilerplate(earlySigns);
+  qcChecklistResults.step_8_catalyst_for_reversion_predatable =
+    Array.isArray(reversionCatalysts) && reversionCatalysts.length > 0 && hasDateOrWindow(reversionCatalysts) && !isBoilerplate(reversionCatalysts);
+  qcChecklistResults.step_8_position_sizing_curve_monotonic = isPositionSizingCurveMonotonic(sizingCurve);
+
+  qcChecklistResults.all_8_steps_complete =
+    step1Present && step2Present && step3Present && step4Present && step5Present && step6Present && step7Present && step8Present;
+
+  const reportedQc = getPath(root, 'qc_checklist');
+  QC_REQUIRED_KEYS.forEach(key => {
+    if (typeof reportedQc?.[key] !== 'boolean') pushMissing(missingFields, `qc_checklist.${key}`);
+  });
+
+  // Weighted scoring: Step 8 sub-checks weighted higher per Junyan choice B (audit follow-up).
+  // Sum weights of passed checks; cap at 100. Severity threshold: PASS ≥ 80, WARN 61-79, FAIL ≤ 60.
+  // FAIL threshold lowered to ≤ 60 so Step 8 entirely missing (9 × 6.67 = 60) triggers FAIL → repair.
+  const score = Math.min(100, Math.round(
+    QUALITY_CHECK_NAMES
+      .filter(name => qcChecklistResults[name])
+      .reduce((sum, name) => sum + checkWeight(name), 0)
+  ));
+  const severity = score >= 80 ? 'PASS' : (score > 60 ? 'WARN' : 'FAIL');
+
+  return { score, missingFields, qcChecklistResults, severity };
+}
+
+function buildQcFindings(quality) {
+  const failedChecks = QUALITY_CHECK_NAMES
+    .filter(name => quality.qcChecklistResults?.[name] === false)
+    .map(name => `failed:${name}`);
+  const missing = (quality.missingFields || []).map(path => `missing:${path}`);
+  return [...failedChecks, ...missing];
+}
+
+function mergeRepairPatch(target, patch) {
+  const output = isPlainObject(target) ? { ...target } : {};
+  Object.entries(patch || {}).forEach(([key, value]) => {
+    if (key.includes('.')) {
+      setPath(output, key, value);
+    } else if (isPlainObject(value) && isPlainObject(output[key])) {
+      output[key] = mergeRepairPatch(output[key], value);
+    } else {
+      output[key] = value;
+    }
+  });
+  return output;
+}
+
+async function repairMissingFields(originalResponse, missingFields, ticker, contextData = {}) {
+  const repairPrompt = `Original output was missing these required fields per THESIS_PROTOCOL: ${missingFields.join(', ')}. Fill them in for ticker ${ticker}. Output ONLY a JSON object with the missing field paths and values; do NOT regenerate other content.
+
+Context:
+${JSON.stringify(contextData).slice(0, 4000)}
+
+Original output:
+${JSON.stringify(originalResponse).slice(0, 12000)}`;
+
+  const repairMessage = await client.messages.create({
+    model:      'claude-opus-4-7',
+    max_tokens: 4096,
+    system:     'You repair incomplete thesis JSON. Return only the missing JSON paths requested. No markdown, no commentary.',
+    messages:   [{ role: 'user', content: repairPrompt }],
+  });
+
+  const repairRaw = repairMessage.content?.[0]?.text || '';
+  const repairPatch = JSON.parse(extractJsonPayload(repairRaw));
+  return mergeRepairPatch(originalResponse, repairPatch);
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // SYSTEM PROMPT (Pass 2)
 // ════════════════════════════════════════════════════════════════════════════
@@ -667,6 +990,27 @@ Step 8 — PHASE_AND_TIMING (相位与时间维度) [NEW v2]
   → REJECT if any field is boilerplate ("long term" / "AI 普涨" /
     "market wakes up" / "low/high" without numbers).
 
+REQUIRED CANONICAL THESIS FIELDS:
+In addition to the legacy UI fields in OUTPUT JSON SCHEMA below, every
+response MUST include top-level Step fields named exactly:
+step_1_catalyst, step_2_mechanism, step_3_evidence, step_4_quantification,
+step_5_proves_right_if, step_6_proves_wrong_if, step_7_variant_view,
+step_8_phase_and_timing, and qc_checklist.
+
+The qc_checklist field is REQUIRED. EVERY check below must be present as
+a boolean true/false. If a check fails, set false and still include it:
+all_8_steps_complete, step_1_specific_not_vague,
+step_2_no_unfounded_leaps,
+step_3_evidence_includes_quant_qual_contrarian,
+step_3_contrarian_view_has_what_changes_our_mind,
+step_4_has_specific_numbers_and_horizon, step_5_observable,
+step_6_observable, step_7_one_sentence_tagline,
+step_8_phase_timing_concrete_not_boilerplate,
+step_8_early_signs_observable,
+step_8_catalyst_for_reversion_predatable,
+step_8_position_sizing_curve_monotonic,
+reward_to_risk_at_least_threshold.
+
 QUALITY GATES (apply mentally before emitting JSON):
   ✓ Step 1 has a specific date OR explicit window (not "near-term"/"soon")
   ✓ Step 2 chain has no unfounded leaps; each step is consequence of prior
@@ -703,6 +1047,79 @@ These metrics go into fin_insights — express as quantified signals, not generi
 
 OUTPUT JSON SCHEMA:
 {
+  "ticker": "string",
+  "thesis_protocol_version": "v2",
+  "step_1_catalyst": {
+    "catalyst_event": "string",
+    "catalyst_date_or_window": "string",
+    "catalyst_type": "earnings_revision | product_launch | policy_change | industry_inflection | management_change | capacity_expansion | supply_chain_shift | m&a | regulatory | macro_inflection",
+    "catalyst_source": "string"
+  },
+  "step_2_mechanism": {
+    "mechanism_chain": ["1. string", "2. string", "3. string"]
+  },
+  "step_3_evidence": {
+    "evidence_quantitative": ["string"],
+    "evidence_qualitative": ["string"],
+    "contrarian_view": {
+      "market_consensus": { "e": "string", "z": "string" },
+      "our_variant": { "e": "string", "z": "string" },
+      "what_changes_our_mind": "string"
+    }
+  },
+  "step_4_quantification": {
+    "metric_target": "string",
+    "current_value": "number or string",
+    "predicted_value": "number or string",
+    "predicted_range": { "low": "number or string", "mid": "number or string", "high": "number or string" },
+    "predicted_horizon": "string",
+    "confidence": "number 0-1 or string percentage"
+  },
+  "step_5_proves_right_if": ["string"],
+  "step_6_proves_wrong_if": ["string"],
+  "step_7_variant_view": {
+    "variant_view_one_sentence": "string",
+    "time_to_resolution": "string",
+    "expected_pnl_asymmetry": {
+      "upside_if_right": "string",
+      "downside_if_wrong": "string",
+      "reward_to_risk": "string, e.g. 2.5:1"
+    }
+  },
+  "step_8_phase_and_timing": {
+    "phase_1_market_belief": {
+      "duration_estimate": "string",
+      "why_market_keeps_buying": ["string"],
+      "early_signs_phase_1_weakening": ["string"],
+      "optional_long_play": { "direction": "small_long | no_position | neutral", "sizing": "string", "exit_trigger": "string" }
+    },
+    "phase_2_reality_recognition": {
+      "catalyst_for_reversion": ["string"],
+      "estimated_timing": "string",
+      "short_play": { "direction": "core_short | long_dated_put | no_position", "sizing": "string", "entry_trigger": "string" }
+    },
+    "position_sizing_curve": {
+      "pre_phase_1_weakening": "string",
+      "phase_1_weakening_confirmed": "string",
+      "phase_2_catalyst_imminent": "string"
+    }
+  },
+  "qc_checklist": {
+    "all_8_steps_complete": true,
+    "step_1_specific_not_vague": true,
+    "step_2_no_unfounded_leaps": true,
+    "step_3_evidence_includes_quant_qual_contrarian": true,
+    "step_3_contrarian_view_has_what_changes_our_mind": true,
+    "step_4_has_specific_numbers_and_horizon": true,
+    "step_5_observable": true,
+    "step_6_observable": true,
+    "step_7_one_sentence_tagline": true,
+    "step_8_phase_timing_concrete_not_boilerplate": true,
+    "step_8_early_signs_observable": true,
+    "step_8_catalyst_for_reversion_predatable": true,
+    "step_8_position_sizing_curve_monotonic": true,
+    "reward_to_risk_at_least_threshold": true
+  },
   "name": "string (Chinese company name)",
   "en": "string (English name)",
   "sector": "string",
@@ -811,7 +1228,7 @@ OUTPUT JSON SCHEMA:
   "fin_insights": ["string","string","string","string"]
 }
 
-VP = 30%×Expectation Gap + 25%×Fundamental Acceleration + 20%×Narrative Shift + 15%×Low Coverage + 10%×Catalyst Proximity
+VP = 25%×Expectation Gap + 25%×Fundamental Acceleration + 20%×Narrative Shift + 15%×Low Coverage + 15%×Catalyst Proximity [unvalidated intuition]
 
 FINANCIAL DATA: use millions for all IS/BS numbers. Margins and growth rates as decimals (0.18 = 18%). revenue_growth[0] always null.
 
@@ -895,12 +1312,58 @@ Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return 
       messages:   [{ role: 'user', content: userPrompt }],
     });
 
-    const raw  = message.content[0].text;
-    let jsonStr = raw;
-    const cb   = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (cb) jsonStr = cb[1];
+    const raw = message.content?.[0]?.text || '';
+    let research;
+    let qualityMeta;
+    let repairAttempted = false;
 
-    const research = JSON.parse(jsonStr.trim());
+    try {
+      research = JSON.parse(extractJsonPayload(raw));
+      if (!isPlainObject(research)) throw new SyntaxError('Pass 2 JSON root was not an object');
+
+      let quality = validateThesisQuality(research);
+      console.log(`[ThesisQuality] ${ticker} score=${quality.score} severity=${quality.severity} missing=${quality.missingFields.length}`);
+
+      if (quality.severity === 'FAIL' && quality.missingFields.length > 0) {
+        repairAttempted = true;
+        try {
+          research = await repairMissingFields(research, quality.missingFields, ticker, {
+            company,
+            direction: direction || 'NEUTRAL',
+            context: context || '',
+            sources_used: pass1.sourcesUsed,
+            consensus_views: pass1.views?.slice(0, 5) || [],
+            enrichment_used: !!enrichment_context,
+          });
+          quality = validateThesisQuality(research);
+          console.log(`[ThesisQuality] ${ticker} repair score=${quality.score} severity=${quality.severity} missing=${quality.missingFields.length}`);
+        } catch (repairErr) {
+          console.warn(`[ThesisQuality] ${ticker} repair failed: ${repairErr.message}`);
+          quality.error = 'repair_failed';
+          quality.repairError = repairErr.message;
+        }
+      }
+
+      if (repairAttempted && quality.severity === 'FAIL') {
+        console.warn(`[ThesisQuality] ${ticker} still FAIL after repair; returning with quality metadata`);
+      }
+
+      qualityMeta = { ...quality, qc_findings: buildQcFindings(quality), repairAttempted };
+      research = { ...research, _quality: qualityMeta };
+    } catch (parseErr) {
+      qualityMeta = {
+        score: 0,
+        severity: 'FAIL',
+        missingFields: ['__root__'],
+        qcChecklistResults: {},
+        qc_findings: ['parse_failed'],
+        repairAttempted: false,
+        error: 'parse_failed',
+      };
+      console.log(`[ThesisQuality] ${ticker} score=0 severity=FAIL missing=1`);
+      console.warn(`[ThesisQuality] ${ticker} parse failed: ${parseErr.message}`);
+      research = { raw_output: raw, _quality: qualityMeta };
+    }
 
     return res.status(200).json({
       success:        true,
