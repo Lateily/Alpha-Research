@@ -31,6 +31,7 @@
 | `inst_research` | Tushare Pro 机构调研 / institutional survey records | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_inst_research.py`, pipeline Step 2d.13) |
 | `top_inst` | Tushare Pro 游资数据 / 龙虎榜机构成交明细 | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_top_inst.py`, pipeline Step 2d.14) |
 | `broker_recommend` | Tushare Pro 券商金股 / analyst stock recommendations | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_broker_recommend.py`, pipeline Step 2d.15) |
+| `pledge_stat` | Tushare Pro 股权质押 / pledge ratio risk reference data | Paid (5000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_pledge_stat.py`, pipeline Step 2d.16) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -74,7 +75,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | `dividend` | 120 | 分红送股 | total return |
 | **`moneyflow_hsgt`** ⭐⭐ | **6000** | **北向资金** | **USP layer (international institutional flow)** |
 | `top10_holders` | 5000 | 前十大股东 | F6 + insider movement |
-| `pledge_stat` | 5000 | 股权质押 | China-specific risk |
+| **`pledge_stat`** ⭐ | **5000** | **股权质押率 + pledge count/history** | **Risk panel + Bridge 6 portfolio-construction risk weighting** |
 | `forecast` | 10000 | 业绩预告 | Strongest A-share catalyst signal |
 | `express` | 10000 | 业绩快报 | Pre-earnings catalyst |
 | `fina_indicator` | 10000? | 财务指标 (ROE/ROA) | fundamental_accel upgrade |
@@ -911,7 +912,114 @@ thesis outcomes or trade history.
 
 ---
 
-#### 2.1.10 `concept_membership` — Tushare 15000-tier concept constituent mapping
+#### 2.1.10 `pledge_stat` — Tushare 5000-tier 股权质押
+
+**Auth:** `TUSHARE_TOKEN` env var with 5000-tier access. Junyan's current
+15000-tier account covers this endpoint.
+
+**Fetcher:** `scripts/fetch_pledge_stat.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.16, `continue-on-error: true`.
+
+**Output:** `public/data/pledge_stat/<ticker>.json` using the raw watchlist
+ticker filename, e.g. `300308.SZ.json`. The dot is intentionally preserved to
+match `top_inst`, `broker_recommend`, `lhb`, `quant_factors`,
+`chip_distribution`, and `consensus_forecast`.
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Strategic role:** `pledge_stat` is a China-specific risk reference layer.
+High shareholder pledge ratios can create forced-selling pressure and
+control-risk when a stock drops sharply, especially for controlling
+shareholders whose collateral can be liquidated. The fetcher writes raw
+evidence and a simple ratio-band summary only. Frontend Risk panel surfacing
+is a separate KR; Bridge 6 can later use this as one portfolio construction
+risk-weighting input alongside correlation, concentration, and VaR.
+
+**Endpoint:** `pledge_stat` only. No fallback chain is used because this is a
+known Tushare 5000-tier endpoint.
+
+**Fetch strategy:** Per-watchlist ticker. HK tickers write `_status:
+"skipped_hk"`; US/non-A-share tickers write `_status: "skipped_us"`.
+A-share tickers fetch full available history from `pledge_stat`, sort by
+`end_date` descending, and emit the latest 4 quarterly records `[task-scoped
+window; unvalidated intuition]`. Calls sleep `0.16s` between Tushare API
+calls.
+
+**Schema (A-share success):**
+```json
+{
+  "_status": "ok",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T...",
+  "api_used": "pledge_stat",
+  "window_quarters": 4,
+  "records": [
+    {
+      "ts_code": "300308.SZ",
+      "end_date": "20260331",
+      "pledge_ratio": 12.34,
+      "pledge_count": 2,
+      "unrest_pledge": 12345.0
+    }
+  ],
+  "summary": {
+    "latest_pledge_ratio": 12.34,
+    "latest_end_date": "2026-03-31",
+    "trend_direction": "rising",
+    "risk_level": "LOW",
+    "records_count": 1
+  }
+}
+```
+
+**Schema (empty A-share history):**
+```json
+{
+  "_status": "empty",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T...",
+  "api_used": "pledge_stat",
+  "window_quarters": 4,
+  "records": [],
+  "summary": {
+    "latest_pledge_ratio": null,
+    "latest_end_date": null,
+    "trend_direction": null,
+    "risk_level": null,
+    "records_count": 0
+  }
+}
+```
+
+**Signal interpretation (display/reference only):**
+- `pledge_ratio > 50%` → `HIGH`: forced-selling / control-risk warning if
+  the stock drops 30%+.
+- `20% <= pledge_ratio <= 50%` → `MED`: material collateral exposure, monitor
+  alongside price drawdown and insider-control context.
+- `pledge_ratio < 20%` → `LOW`: lower pledge-ratio risk, not a positive alpha
+  signal by itself.
+- Rising pledge ratio over the latest 4 quarterly records is a yellow flag:
+  insiders pledging more can indicate financing stress.
+
+**Graceful degrade behavior:** The strict ticker-level states are `ok`,
+`empty`, `skipped_hk`, `skipped_us`, and `api_error`. API failures write
+`_status: "api_error"` with `_error` and do not stop the remaining watchlist.
+There is no `all_failed` state because this fetcher uses a single known
+endpoint and no fallback chain. The process exits 0 after per-ticker
+completion and exits 1 only when `TUSHARE_TOKEN` is missing.
+
+**Validation status:** Causal logic is valid because pledged shares create a
+direct collateral channel from share-price declines to forced liquidation and
+possible controlling-shareholder instability. Specific HIGH/MED/LOW bands
+(>50%, 20-50%, <20%) and the 30% drawdown reference are task-specified
+unvalidated risk heuristics, not calibrated from platform trade history or
+portfolio loss data. Any future Bridge 6 weighting must be calibrated before
+being presented as a validated portfolio risk model.
+
+---
+
+#### 2.1.11 `concept_membership` — Tushare 15000-tier concept constituent mapping
 
 **Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
 
