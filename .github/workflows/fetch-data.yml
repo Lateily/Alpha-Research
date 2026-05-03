@@ -119,6 +119,16 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_lhb.py
 
+      # ── Step 2d.10: Tushare 量化因子 ────────────────────────────────────
+      # Tushare 15000-tier per-watchlist daily quant factors (PE/PB/PS/turnover/
+      # momentum/volatility/etc). STRATEGIC: data layer for future quant strategy
+      # KR. Forward-compatible: unavailable endpoint names/tiers preserve schema.
+      - name: "Step 2d.10: Fetch Tushare quant factors (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_quant_factors.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
@@ -254,7 +264,8 @@ jobs:
                  public/data/tushare/*.json \
                  public/data/chip_distribution/*.json \
                  public/data/consensus_forecast/*.json \
-                 public/data/lhb/*.json)
+                 public/data/lhb/*.json \
+                 public/data/quant_factors/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 

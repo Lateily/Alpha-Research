@@ -25,6 +25,7 @@
 | `chip_distribution` | Tushare Pro 筹码分布 / cost-basis distribution | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_chip_distribution.py`, pipeline Step 2d.7) |
 | `consensus_forecast` | Tushare Pro 盈利预测 / analyst consensus forecast | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_consensus_forecast.py`, pipeline Step 2d.8) |
 | `lhb` | Tushare Pro 龙虎榜 / daily top-list appearances | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_lhb.py`, pipeline Step 2d.9) |
+| `quant_factors` | Tushare Pro 量化因子 / Barra-like daily factor exposures **STRATEGIC** | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_quant_factors.py`, pipeline Step 2d.10) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -390,6 +391,107 @@ unusual-trading-activity data and directly supports a large-fund-activity
 evidence card. Specific top-list amounts and reasons are source data from
 Tushare when available; any future signal threshold or weighting remains
 `[unvalidated intuition]` until calibrated against real thesis outcomes.
+
+---
+
+#### 2.1.5 `quant_factors` — Tushare 15000-tier 量化因子 / Barra-like factors **STRATEGIC**
+
+**Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
+
+**Fetcher:** `scripts/fetch_quant_factors.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.10, `continue-on-error: true`.
+
+**Output:** `public/data/quant_factors/<ticker>.json`
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Strategic role:** This is the data layer for the AR platform's eventual
+"cleaned-up our own quant strategy" (per Junyan 2026-05-03 directive:
+"量化因子是我们的主要研究框架线路之一 之后我们要清洗之后形成我们自己的一套
+完整量化策略"). Display-only in v1; VP-score integration / factor weight
+calibration via backtest is a future KR.
+
+**Endpoint fallback order:**
+- `stk_factor_pro` → `stk_factor` → `stock_factor`
+
+**Fetch strategy:** One market-wide bulk call per run using `start_date` +
+`end_date` for a `days_window` of 30 `[unvalidated intuition; task window]`;
+the script filters the returned rows into per-watchlist A-share files in
+Python. It does not call Tushare once per ticker.
+
+**Schema (A-share success):**
+```json
+{
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T...",
+  "trade_date": "20260503",
+  "tier": 15000,
+  "_status": "ok",
+  "api_used": "stk_factor_pro",
+  "_attempted_endpoints": ["stk_factor_pro"],
+  "days_window": 30,
+  "factors": {
+    "pe": 18.5,
+    "pb": 4.2,
+    "ps": 3.1,
+    "turnover_rate": 2.5,
+    "volume_ratio": 1.2,
+    "momentum_5d": 0.04,
+    "momentum_20d": 0.08,
+    "volatility": 0.18,
+    "beta": 1.1,
+    "total_mv": 95000000000,
+    "circ_mv": 80000000000,
+    "dv_ratio": 1.5,
+    "dv_ttm": 1.8
+  },
+  "history": [
+    {"trade_date": "20260503", "pe": 18.5, "pb": 4.2, ...},
+    {"trade_date": "20260502", "pe": 18.3, "pb": 4.1, ...}
+  ],
+  "_factor_count": 13
+}
+```
+
+**Schema (HK/US/non-A-share placeholder):**
+```json
+{
+  "ticker": "700.HK",
+  "fetched_at": "2026-05-03T...",
+  "trade_date": "20260503",
+  "tier": 15000,
+  "_status": "skipped",
+  "_reason": "not_available_tushare_hk_us",
+  "api_used": null,
+  "_attempted_endpoints": [],
+  "days_window": 30,
+  "factors": {},
+  "history": [],
+  "_factor_count": 0
+}
+```
+
+**Graceful degrade behavior:** Same pattern as `lhb` (§2.1.4). HK/US tickers
+get `_status: "skipped"`; A-share tickers with no rows in window get
+`_status: "ok"` + empty `factors` + `history`; all-endpoints-fail writes
+`_status: "endpoint_unavailable"` with `_attempted_endpoints`. Permission/tier
+errors map to `_status: "tier_locked"` + `_need_tier: 15000`.
+
+**Validation status:** Causal logic is valid because Tushare's quant factors
+are computed from public OHLCV / fundamentals / market data (Barra-style
+exposures, not proprietary). Field set varies with Tushare endpoint; whatever
+Tushare returns gets passed through. Specific factor values are sourced
+data, not calibrated weights. Any signal generation built on top of these
+factors (future KR) must use `[unvalidated intuition]` labeling until
+backtest-validated against real thesis outcomes.
+
+**Future integration touchpoints:**
+- VP score: replace `[unvalidated intuition]` 25/25/20/15/15 weights with
+  factor-regression-derived weights once backtest infrastructure can ingest
+  these factors.
+- Cross-stock ranking: factor-quintile bucketing for screening (Tier-2 KR).
+- Pitch generation: factor-context inputs into Variant View precision.
 
 ---
 
