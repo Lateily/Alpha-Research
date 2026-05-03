@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-03T18:30:50.677076+00:00",
+  "generated_at": "2026-05-03T19:09:06.914699+00:00",
   "date": "2026-05-03",
   "brief_e": "2 REVIEW_TRIM",
   "brief_z": "REVIEW_TRIM2",
@@ -101,18 +101,6 @@
   ],
   "wrongif_alerts": [
     {
-      "ticker": "6160.HK",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
-      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
-      "note_e": "Binary event condition — manual monitoring required: CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
-      "note_z": "二元事件条件——需人工监控：CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
-      "indicator": "binary_event",
-      "actual": null,
-      "threshold": null
-    },
-    {
       "ticker": "002594.SZ",
       "severity": "HIGH",
       "status": "TRIGGERED",
@@ -137,18 +125,6 @@
       "threshold": -40.0
     },
     {
-      "ticker": "9999.HK",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-      "wrongIf_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
-      "note_e": "✅ Clear: earnings_growth = -29.2 (threshold -30.0)",
-      "note_z": "✅ 正常：earnings_growth = -29.2（阈值-30.0）",
-      "indicator": "earnings_growth",
-      "actual": -29.2,
-      "threshold": -30.0
-    },
-    {
       "ticker": "300308.SZ",
       "severity": "NONE",
       "status": "CLEAR",
@@ -161,6 +137,18 @@
       "threshold": 25.0
     },
     {
+      "ticker": "6160.HK",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
+      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
+      "note_e": "Binary event condition — manual monitoring required: CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
+      "note_z": "二元事件条件——需人工监控：CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
+      "indicator": "binary_event",
+      "actual": null,
+      "threshold": null
+    },
+    {
       "ticker": "700.HK",
       "severity": "LOW",
       "status": "MANUAL",
@@ -171,6 +159,18 @@
       "indicator": "binary_event",
       "actual": null,
       "threshold": null
+    },
+    {
+      "ticker": "9999.HK",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
+      "wrongIf_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
+      "note_e": "✅ Clear: earnings_growth = -29.2 (threshold -30.0)",
+      "note_z": "✅ 正常：earnings_growth = -29.2（阈值-30.0）",
+      "indicator": "earnings_growth",
+      "actual": -29.2,
+      "threshold": -30.0
     }
   ],
   "regime_summary": [

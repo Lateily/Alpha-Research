@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-03T18:30:50.591912+00:00",
+  "generated_at": "2026-05-03T19:09:06.849157+00:00",
   "tickers_scored": 5,
   "summary": {
     "entry_candidates": [],
@@ -100,7 +100,7 @@
         "KDJ_GOLDEN_CROSS",
         "VP_GOOD_CONVICTION"
       ],
-      "computed_at": "2026-05-03T18:30:50.591899+00:00"
+      "computed_at": "2026-05-03T19:09:06.849148+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -139,7 +139,7 @@
       "signal_types": [
         "BULLISH_ALIGNMENT"
       ],
-      "computed_at": "2026-05-03T18:30:50.591379+00:00"
+      "computed_at": "2026-05-03T19:09:06.848770+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -178,7 +178,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-05-03T18:30:50.591652+00:00"
+      "computed_at": "2026-05-03T19:09:06.848970+00:00"
     },
     {
       "ticker": "700.HK",
@@ -217,7 +217,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-05-03T18:30:50.591756+00:00"
+      "computed_at": "2026-05-03T19:09:06.849043+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -284,7 +284,7 @@
         "MACD_DEATH_CROSS",
         "AI_CAPEX_WEAKENING"
       ],
-      "computed_at": "2026-05-03T18:30:50.591526+00:00"
+      "computed_at": "2026-05-03T19:09:06.848879+00:00"
     }
   ]
 }

@@ -1,13 +1,9 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-03T18:29:51Z",
+  "fetched_at": "2026-05-03T19:06:59Z",
   "trade_date": "20260504",
   "tier": 15000,
-  "_status": "endpoint_unavailable",
-  "_attempted_endpoints": [
-    "cyq_chips",
-    "chip_distribution",
-    "shareholder_chips"
-  ],
+  "_status": "ok",
+  "api_used": "cyq_chips",
   "chips": []
 }

@@ -1,13 +1,10 @@
 {
-  "_status": "all_failed",
+  "_status": "empty",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-03T18:30:31Z",
-  "api_used": null,
+  "fetched_at": "2026-05-03T19:08:59Z",
+  "api_used": "top_inst",
   "_attempted_endpoints": [
-    "top_inst",
-    "lhb_inst",
-    "lhb_top_inst",
-    "top_list_inst"
+    "top_inst"
   ],
   "window_days": 30,
   "appearances": [],
@@ -17,6 +14,5 @@
     "top_buyer_30d": null,
     "top_seller_30d": null,
     "latest_date": null
-  },
-  "_error": "top_inst: RuntimeError: top_inst: Exception: 您的token不对，请确认。 | top_inst: Exception: 您的token不对，请确认。 | lhb_inst: RuntimeError: lhb_inst: Exception: 您的token不对，请确认。 | lhb_inst: Exception: 您的token不对，请确认。 | lhb_top_inst: RuntimeError: lhb_top_inst: Exception: 您的token不对，请确认。 | lhb_top_inst: Exception: 您的token不对，请确认。 | top_list_inst: RuntimeError: top_list_inst: Exception: 您的token不对，请确认。 | top_list_inst: Exception: 您的token不对，请确认。"
+  }
 }

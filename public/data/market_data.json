@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-03T18:29:14.443634",
+    "fetched_at": "2026-05-03T19:06:25.952968",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -265,7 +265,7 @@
         "ev_ebitda": 426.596,
         "ev_revenue": 46.214,
         "ps_ratio": 46.938774,
-        "pb": 7.3199873,
+        "pb": 7.3228555,
         "dividend_yield": null,
         "revenue": 5343032832,
         "revenue_growth": 0.328,
@@ -283,7 +283,7 @@
         "total_debt": 1092844032,
         "ebitda": 578817984,
         "earnings_growth": null,
-        "book_value": 23.715889,
+        "book_value": 23.7066,
         "enterprise_value": 246921625600
       },
       "analyst": {

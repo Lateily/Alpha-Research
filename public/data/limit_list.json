@@ -1,14 +1,11 @@
 {
-  "fetched_at": "2026-05-03T18:30:07Z",
+  "fetched_at": "2026-05-03T19:07:08Z",
   "trade_date": "20260504",
   "tier": 15000,
-  "_status": "endpoint_unavailable",
-  "api_used": null,
+  "_status": "ok",
+  "api_used": "limit_list_d",
   "_attempted_endpoints": [
-    "limit_list_d",
-    "limit_list",
-    "limit_list_ths",
-    "limit_step"
+    "limit_list_d"
   ],
   "limit_up": [],
   "limit_down": [],
@@ -17,6 +14,5 @@
     "lu_count": 0,
     "ld_count": 0,
     "fail_count": 0
-  },
-  "_error": "limit_list_d: Exception: 您的token不对，请确认。 | limit_list: Exception: 您的token不对，请确认。 | limit_list_ths: Exception: 您的token不对，请确认。 | limit_step: Exception: 您的token不对，请确认。"
+  }
 }

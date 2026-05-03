@@ -1,14 +1,476 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-03T18:29:56Z",
+  "fetched_at": "2026-05-03T19:07:01Z",
   "tier": 15000,
-  "_status": "endpoint_unavailable",
-  "api_used": null,
+  "_status": "ok",
+  "api_used": "forecast",
   "_attempted_endpoints": [
-    "forecast",
-    "express",
-    "profit_forecast",
-    "forecast_predict"
+    "forecast"
   ],
-  "forecasts": []
+  "forecasts": [
+    {
+      "end_date": "20250331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 925000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20231231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 3000000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20231231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 3000000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20230930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 2150000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20230930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 2150000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20230630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 1110000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20230630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 1110000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20221231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 1650000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20221231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 1650000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20220930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 930000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20220930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 930000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20220630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 320000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20220630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 320000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20220331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 80000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20220331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 80000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20210331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 25000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20210331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 25000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20201231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 440000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20200930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 350000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20200930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 290000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20200630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 170000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20200331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 10000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20191231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 167900.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20190930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 165500.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20190630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 155000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20190331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 80000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20181231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 292705.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20180930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 148000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20180630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 40000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20180331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 10000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20171231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 416500.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20170930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 283500.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20170630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 167500.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20170331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 60000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20161231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 510000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20160930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 365970.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20160630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 235000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20160331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 81000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20151231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 276500.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20151231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 242000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20150930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 199000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20150630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 44000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20150331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 12500.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20141231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 46500.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20140930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 38569.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20140630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 42000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20140331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 1000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20131231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 56510.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20130930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 45350.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20130630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 45000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20130331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 12000.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20121231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 6923.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20120930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 5291.0,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20120630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 4130.45,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20120331",
+      "eps": null,
+      "revenue": null,
+      "net_profit": null,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20111231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 126170.7,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20110930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 24325.2,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20110630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 24212.0,
+      "op_income": null,
+      "broker_count": null
+    }
+  ]
 }
