@@ -959,6 +959,32 @@ const INTERVALS = ['1m', '5m', '15m', '30m', '60m', '1d', '1w', '1mo'];
 const INTERVAL_LABELS = { '1m':'1分', '5m':'5分', '15m':'15分', '30m':'30分', '60m':'60分', '1d':'日', '1w':'周', '1mo':'月' };
 const MINUTE_INTERVALS = new Set(['1m', '5m', '15m', '30m', '60m']);
 
+const CandlestickShape = (C) => (props) => {
+  const { x, y, width, height, payload } = props;
+  if (!payload || payload.open == null || payload.high == null || payload.low == null || payload.close == null) return null;
+  const { open, high, low, close } = payload;
+  const range = high - low;
+  if (range === 0) {
+    return <line x1={x} x2={x + width} y1={y} y2={y} stroke={C.mid} strokeWidth={1.5}/>;
+  }
+  const openY = y + ((high - open) / range) * height;
+  const closeY = y + ((high - close) / range) * height;
+  const isUp = close > open;
+  const isDown = close < open;
+  const color = isUp ? C.red : (isDown ? C.green : C.mid);
+  const bodyTop = Math.min(openY, closeY);
+  const bodyHeight = Math.max(1, Math.abs(closeY - openY));
+  const cx = x + width / 2;
+  const bodyX = x + 1;
+  const bodyWidth = Math.max(1, width - 2);
+  return (
+    <g>
+      <line x1={cx} x2={cx} y1={y} y2={y + height} stroke={color} strokeWidth={1}/>
+      <rect x={bodyX} y={bodyTop} width={bodyWidth} height={bodyHeight} fill={color} stroke={color} strokeWidth={1} fillOpacity={0.85}/>
+    </g>
+  );
+};
+
 function PriceChart({ ticker, C, L, lk }) {
   const [range,    setRange]    = useState('1mo');
   const [chartData, setChart]   = useState(null);
@@ -1079,6 +1105,7 @@ function PriceChart({ ticker, C, L, lk }) {
     if (!chartData || !ind) return chartData || [];
     return chartData.map((d, i) => ({
       ...d,
+      priceRange: [d.low, d.high],
       ma5: ind.ma5[i],
       ma10: ind.ma10[i],
       ma20: ind.ma20[i],
@@ -1117,7 +1144,7 @@ function PriceChart({ ticker, C, L, lk }) {
   }, [chartData, avgLine, meta]);
 
   // Derived chart metrics
-  const prices   = (chartData || []).map(d => d.close);
+  const prices   = (chartData || []).flatMap(d => [d.low, d.high, d.close].filter(v => v != null));
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
   const priceRange = maxPrice - minPrice;
@@ -1380,13 +1407,7 @@ function PriceChart({ ticker, C, L, lk }) {
         )}
         {viewMode === 'kline' && !error && chartDataWithInd && chartDataWithInd.length > 0 && (
           <ResponsiveContainer width='100%' height={180}>
-            <LineChart data={chartDataWithInd} margin={{ top:4, right:16, bottom:0, left:4 }}>
-              <defs>
-                <linearGradient id={`grad_${ticker.replace(/\./g,'_')}`} x1='0' y1='0' x2='0' y2='1'>
-                  <stop offset='5%'  stopColor={lineC} stopOpacity={0.25}/>
-                  <stop offset='95%' stopColor={lineC} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
+            <ComposedChart data={chartDataWithInd} margin={{ top:4, right:16, bottom:0, left:4 }}>
               <XAxis
                 dataKey='time'
                 tickFormatter={fmtX}
@@ -1403,11 +1424,28 @@ function PriceChart({ ticker, C, L, lk }) {
                 tickFormatter={v => `${ccy}${v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(v>=100?0:2)}`}
               />
               <Tooltip
-                contentStyle={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:11 }}
+                contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:11, padding:'6px 10px'}}
                 labelFormatter={ts => new Date(ts).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}
-                formatter={(val, name) => [`${ccy}${Number(val).toFixed(4)}`, L('Price','价格')]}
+                content={({active, payload}) => {
+                  if (!active || !payload || !payload[0]) return null;
+                  const d = payload[0].payload;
+                  if (d.open == null) return null;
+                  const isUpCandle = d.close > d.open;
+                  const isDownCandle = d.close < d.open;
+                  const candleColor = isUpCandle ? C.red : (isDownCandle ? C.green : C.mid);
+                  const chg = d.open ? ((d.close - d.open) / d.open * 100) : 0;
+                  return (
+                    <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, padding:'6px 10px', fontSize:11, fontFamily:MONO}}>
+                      <div style={{color:C.mid, marginBottom:2}}>{new Date(d.time).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+                      <div>O: <span style={{color:C.dark}}>{ccy}{d.open.toFixed(2)}</span> H: <span style={{color:C.red}}>{ccy}{d.high.toFixed(2)}</span></div>
+                      <div>L: <span style={{color:C.green}}>{ccy}{d.low.toFixed(2)}</span> C: <span style={{color:candleColor, fontWeight:700}}>{ccy}{d.close.toFixed(2)}</span></div>
+                      <div style={{color:candleColor, fontSize:10}}>{isUpCandle?'+':''}{chg.toFixed(2)}% Vol: {fmtVol(d.volume)}</div>
+                    </div>
+                  );
+                }}
               />
               <ReferenceLine y={meta?.prev_close} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
+              <Bar dataKey='priceRange' shape={CandlestickShape(C)} isAnimationActive={false}/>
               {indicators.ma5 && <Line type='monotone' dataKey='ma5' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>}
               {indicators.ma10 && <Line type='monotone' dataKey='ma10' stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>}
               {indicators.ma20 && <Line type='monotone' dataKey='ma20' stroke={C.green} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>}
@@ -1417,12 +1455,7 @@ function PriceChart({ ticker, C, L, lk }) {
                 <Line type='monotone' dataKey='bollMid'   stroke={C.dark} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
                 <Line type='monotone' dataKey='bollLower' stroke={C.mid} strokeWidth={1} strokeDasharray='3 3' dot={false} isAnimationActive={false} connectNulls={false}/>
               </>)}
-              <Line
-                type='monotone' dataKey='close'
-                stroke={lineC} strokeWidth={1.5}
-                dot={false} activeDot={{ r:3, fill:lineC }}
-              />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         )}
 
@@ -3551,6 +3584,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [quantFactorsData, setQuantFactorsData] = useState({});
   const [instResearchData, setInstResearchData] = useState({});
   const [topInstData, setTopInstData] = useState({});
+  const [brokerRecommendData, setBrokerRecommendData] = useState({});
   useEffect(() => {
     if (!ticker) return;
     const base = DATA_BASE;
@@ -3579,6 +3613,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       .then(targets => Promise.all(targets.map(t =>
           fetchJson(`data/top_inst/${t}.json`).then(data => ({ ticker: t, data }))
         )));
+    const brokerRecommendFetches = watchlistTargets
+      .then(targets => Promise.all(targets.map(t =>
+          fetchJson(`data/broker_recommend/${t}.json`).then(data => ({ ticker: t, data }))
+        )));
     Promise.all([
       fetchJson(`data/tushare/${ticker}.json`),
       fetchJson(`data/chip_distribution/${ticker}.json`),
@@ -3587,7 +3625,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       quantFactorFetches,
       instResearchFetches,
       topInstFetches,
-    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr]) => {
+      brokerRecommendFetches,
+    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr, brokerRecommendArr]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
       setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
@@ -3603,6 +3642,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       const topInstDataMap = { [ticker]: null };
       (topInstArr || []).forEach(({ ticker: tk, data }) => { if (data) topInstDataMap[tk] = data; });
       setTopInstData(prev => ({ ...prev, ...topInstDataMap }));
+      const brokerRecommendDataMap = { [ticker]: null };
+      (brokerRecommendArr || []).forEach(({ ticker: tk, data }) => { if (data) brokerRecommendDataMap[tk] = data; });
+      setBrokerRecommendData(prev => ({ ...prev, ...brokerRecommendDataMap }));
     });
   }, [ticker]);
 
@@ -4248,6 +4290,113 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     );
   };
 
+  const BrokerRecommendCard = ({ data, ticker }) => {
+    if (!data || data._status === 'skipped_hk' || data._status === 'skipped_us') return null;
+    if (data._status === 'empty') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid}}>
+          券商金股 · 90 天无券商推荐
+        </div>
+      );
+    }
+    if (data._status === 'api_error' || data._status === 'all_failed') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid, whiteSpace:'nowrap'}}>
+          券商金股 数据暂时不可用
+        </div>
+      );
+    }
+    if (data._status !== 'ok') return null;
+
+    const summary = data.summary || {};
+    const recommendations = Array.isArray(data.recommendations) ? data.recommendations : [];
+    const total90d = finiteNumber(summary.total_90d) ?? recommendations.length;
+    const uniqueBrokers = finiteNumber(summary.unique_brokers_90d) ?? 0;
+    const avgTargetPrice = finiteNumber(summary.avg_target_price);
+    const targetPriceCount = finiteNumber(summary.target_price_count) ?? 0;
+    const latestRecommendation = summary.latest_recommendation || null;
+    const formatBrokerRecDate = (value) => {
+      const s = String(value || '');
+      if (s.length === 8) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+      return s || '—';
+    };
+    const truncateRec = (value, length) => {
+      const s = String(value || '—');
+      return s.length > length ? `${s.slice(0, length)}...` : s;
+    };
+    const ratingColor = (text) => {
+      const normalized = String(text || '').toLowerCase();
+      if (!normalized) return C.mid;
+      if (normalized.includes('买入') || normalized.includes('增持') || normalized.includes('strong buy') || normalized.includes('overweight') || normalized.includes('buy')) return C.red;
+      if (normalized.includes('中性') || normalized.includes('持有') || normalized.includes('equalweight') || normalized.includes('neutral') || normalized.includes('hold')) return C.gold;
+      if (normalized.includes('卖出') || normalized.includes('减持') || normalized.includes('underweight') || normalized.includes('sell')) return C.green;
+      return C.mid;
+    };
+    const RatingBadge = ({ rating }) => {
+      const color = ratingColor(rating);
+      return (
+        <span style={{fontSize:9, color, background:`${color}20`, border:`1px solid ${color}30`, borderRadius:3, padding:'1px 4px', whiteSpace:'nowrap'}}>
+          {truncateRec(rating, 6)}
+        </span>
+      );
+    };
+    const recentRecommendations = [...recommendations]
+      .sort((a, b) => String(b?.rec_date || '').localeCompare(String(a?.rec_date || '')))
+      .slice(0, 5);
+    const hasAnalyst = recentRecommendations.some(rec => rec?.analyst);
+
+    return (
+      <div style={{padding:'10px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:12, boxShadow:SHADOW, marginBottom:10}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:8}}>
+          <div style={{fontWeight:700, fontSize:11, color:C.dark}}>券商金股</div>
+          <div style={{fontSize:9, color:C.mid, fontFamily:MONO, textAlign:'right'}}>
+            {formatBrokerRecDate(summary.latest_date) || ticker}
+          </div>
+        </div>
+        <div style={{display:'flex', alignItems:'baseline', gap:4, marginBottom:6}}>
+          <span style={{fontFamily:MONO, fontSize:18, color:C.dark, fontWeight:700}}>{total90d}</span>
+          <span style={{fontSize:10, color:C.mid}}>次推荐 (90天)</span>
+        </div>
+        <div style={{display:'flex', columnGap:14, rowGap:5, flexWrap:'wrap', alignItems:'center', fontSize:10, color:C.mid, marginBottom:10}}>
+          <span>券商数: <span style={{fontFamily:MONO, color:C.dark}}>{uniqueBrokers}</span></span>
+          {avgTargetPrice != null && (
+            <span>均价目标: <span style={{fontFamily:MONO, color:C.dark}}>¥{avgTargetPrice.toFixed(2)}</span> (n={targetPriceCount})</span>
+          )}
+          {latestRecommendation && (
+            <span style={{display:'inline-flex', alignItems:'center', gap:4}}>
+              最新评级: <RatingBadge rating={latestRecommendation}/>
+            </span>
+          )}
+        </div>
+        {recentRecommendations.length > 0 && (
+          <div>
+            <div style={{fontSize:9, color:C.mid, textTransform:'uppercase', marginBottom:5}}>近期推荐</div>
+            <div style={{display:'grid', rowGap:4}}>
+              {recentRecommendations.map((rec, i) => {
+                const targetPrice = finiteNumber(rec.target_price);
+                return (
+                  <div key={`${rec.rec_date || 'date'}-${rec.broker || 'broker'}-${i}`} style={{display:'grid', gridTemplateColumns:hasAnalyst ? '74px 50px minmax(0, 1fr) 70px 58px' : '74px 50px minmax(0, 1fr) 70px', gap:6, alignItems:'center', fontSize:10}}>
+                    <span style={{fontFamily:MONO, fontSize:10, color:C.dark}}>{formatBrokerRecDate(rec.rec_date)}</span>
+                    <span><RatingBadge rating={rec.recommendation}/></span>
+                    <span style={{fontSize:10, color:C.dark, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{truncateRec(rec.broker, 12)}</span>
+                    <span style={{fontFamily:MONO, fontSize:10, color:C.mid, textAlign:'right'}}>
+                      {targetPrice != null ? `¥${targetPrice.toFixed(2)}` : '—'}
+                    </span>
+                    {hasAnalyst && (
+                      <span style={{fontSize:10, color:C.mid, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                        {rec.analyst ? truncateRec(rec.analyst, 8) : '—'}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Live price chart — auto-refreshes on 1D range */}
@@ -4432,6 +4581,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <QuantFactorsCard data={quantFactorsData[ticker]} ticker={ticker}/>
       <InstResearchCard data={instResearchData[ticker]} ticker={ticker}/>
       <TopInstCard data={topInstData[ticker]} ticker={ticker}/>
+      <BrokerRecommendCard data={brokerRecommendData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
