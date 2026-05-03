@@ -109,6 +109,16 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_consensus_forecast.py
 
+      # ── Step 2d.9: Tushare 龙虎榜 ───────────────────────────────────────
+      # Tushare 15000-tier per-watchlist 30-day 龙虎榜 appearances.
+      # Forward-compatible: unavailable endpoint names/tiers preserve schema
+      # with _status: endpoint_unavailable or tier_locked per ticker.
+      - name: "Step 2d.9: Fetch Tushare LHB top list (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_lhb.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
@@ -243,7 +253,8 @@ jobs:
                  public/data/signals_*.json public/data/cflow_*.json \
                  public/data/tushare/*.json \
                  public/data/chip_distribution/*.json \
-                 public/data/consensus_forecast/*.json)
+                 public/data/consensus_forecast/*.json \
+                 public/data/lhb/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 

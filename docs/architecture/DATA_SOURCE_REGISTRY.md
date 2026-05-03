@@ -24,6 +24,7 @@
 | `capital_flow` | Tushare Pro concept/industry capital flow | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide boards | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_capital_flow.py`, pipeline Step 2d.6) |
 | `chip_distribution` | Tushare Pro 筹码分布 / cost-basis distribution | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_chip_distribution.py`, pipeline Step 2d.7) |
 | `consensus_forecast` | Tushare Pro 盈利预测 / analyst consensus forecast | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_consensus_forecast.py`, pipeline Step 2d.8) |
+| `lhb` | Tushare Pro 龙虎榜 / daily top-list appearances | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_lhb.py`, pipeline Step 2d.9) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -75,6 +76,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | **`moneyflow_ind_dc` / candidates** ⭐ | **15000** | Industry-board net inflow | Browse/research capital-flow heat |
 | **`cyq_chips` / candidates** ⭐ | **15000** | 筹码分布 by price level | Support/resistance inference (frontend KR4 queued) |
 | **`profit_forecast` / `forecast_predict` candidates** ⭐ | **15000** | Analyst EPS/revenue/profit forecast candidates | Research consensus-vs-our-view delta |
+| **`top_list` / candidates** ⭐ | **15000** | 龙虎榜 daily top-list appearances | Research large-fund-activity signal |
 
 ⭐⭐ = USP-critical
 ⭐ = Strong catalyst signal
@@ -279,6 +281,115 @@ the external consensus side of the Research pitch's "market believes X / we
 believe Y" delta. Specific forecast values are source data from Tushare when
 available; any future consensus-vs-our-view threshold remains `[unvalidated
 intuition]` until calibrated against real thesis outcomes.
+
+#### 2.1.4 `lhb` — Tushare 15000-tier 龙虎榜 / daily top list
+
+**Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
+
+**Fetcher:** `scripts/fetch_lhb.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.9, `continue-on-error: true`.
+
+**Output:** `public/data/lhb/<ticker>.json`
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Endpoint fallback order:**
+- `top_list` → `lhb_detail` → `top_list_daily`
+
+**Fetch strategy:** One market-wide bulk call per run using `start_date` +
+`end_date` for a `days_window` of 30 `[unvalidated intuition; task window]`;
+the script filters the returned rows into per-watchlist A-share files in
+Python. It does not call Tushare once per ticker.
+
+**Schema (A-share success):**
+```json
+{
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T...",
+  "trade_date": "20260503",
+  "tier": 15000,
+  "_status": "ok",
+  "api_used": "top_list",
+  "_attempted_endpoints": ["top_list"],
+  "days_window": 30,
+  "appearances": [
+    {
+      "trade_date": "20260430",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "net_amount": 123000000.0,
+      "net_rate": 12.3,
+      "l_buy": 234000000.0,
+      "l_sell": 111000000.0
+    }
+  ],
+  "summary": {
+    "total_appearances": 1,
+    "total_net_amount": 123000000.0,
+    "last_appearance_date": "20260430",
+    "top_reason": "日涨幅偏离值达到7%的前5只证券"
+  }
+}
+```
+
+**Schema (A-share with no appearances in the window):**
+```json
+{
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T...",
+  "trade_date": "20260503",
+  "tier": 15000,
+  "_status": "ok",
+  "api_used": "top_list",
+  "_attempted_endpoints": ["top_list"],
+  "days_window": 30,
+  "appearances": [],
+  "summary": {
+    "total_appearances": 0,
+    "total_net_amount": 0,
+    "last_appearance_date": null,
+    "top_reason": null
+  }
+}
+```
+
+**Schema (HK/US/non-A-share placeholder):**
+```json
+{
+  "ticker": "700.HK",
+  "fetched_at": "2026-05-03T...",
+  "trade_date": "20260503",
+  "tier": 15000,
+  "_status": "skipped",
+  "_reason": "not_available_tushare_hk_us",
+  "api_used": null,
+  "_attempted_endpoints": [],
+  "days_window": 30,
+  "appearances": [],
+  "summary": {
+    "total_appearances": 0,
+    "total_net_amount": 0,
+    "last_appearance_date": null,
+    "top_reason": null
+  }
+}
+```
+
+**Graceful degrade behavior:** The fetcher writes one file per watchlist
+ticker. HK/US tickers are explicit skipped placeholders because this
+integration is A-share-only. If every candidate endpoint fails, A-share
+tickers write `_status: "endpoint_unavailable"`, `_attempted_endpoints`, and
+empty `appearances`. Permission/tier failures write `_status: "tier_locked"`,
+`_need_tier: 15000`, `_error`, and empty `appearances`. Per-ticker
+normalization/write failures write `_status: "fetch_failed"` with `_error`
+and do not stop the remaining watchlist. The process exits 0 after per-ticker
+completion and exits 1 only when `TUSHARE_TOKEN` is missing.
+
+**Validation status:** Causal logic is valid because 龙虎榜 is exchange-defined
+unusual-trading-activity data and directly supports a large-fund-activity
+evidence card. Specific top-list amounts and reasons are source data from
+Tushare when available; any future signal threshold or weighting remains
+`[unvalidated intuition]` until calibrated against real thesis outcomes.
 
 ---
 
