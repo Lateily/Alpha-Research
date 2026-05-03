@@ -8,9 +8,9 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-03 (shift 5 complete — 11 KRs: design-001 + K-line full deployment + Tushare 15000 顶配 unlock)
-**Last shift:** auto-work-mode 2026-05-02-1958 (T1+T2+T3 four-agent flow, 11 KRs, ~16 hours total elapsed across two days)
-**HEAD:** `9f5fde9` on auto/2026-04-30
+**Last updated:** 2026-05-03 (shift 6 complete — 9 KRs deploying premium APIs unlocked by Tushare 15000 顶配)
+**Last shift:** auto-work-mode 2026-05-03-1305 (9 KRs: 4 premium API full-stack integrations + design-002 polish toggle)
+**HEAD:** `3636df9` on auto/2026-04-30
 **Context handoff status:** All work in git. Next session reads this file + recent commits + queued_tasks/.
 
 **Pending — Anthropic billing sync issue (auto-recovers in 1-24h):**
@@ -198,6 +198,61 @@ the next visual layer (microinteractions / dark mode sweep / mobile
 responsive); none of those block ship.
 
 ---
+
+### 2026-05-03 afternoon — auto-work shift 6: premium API deployment (Tier-A + B start)
+
+**Run id:** `2026-05-03-1305`. 9 KRs shipped, all PASSed T2 review.
+Junyan directive: "把新解锁的数据源开始部署". Mid-shift Junyan went out
+shopping; T1 continued autonomously per "在我回来指挥之前一直工作".
+
+Three Tier-A premium APIs full-stack deployed (backend + pipeline + doc + frontend):
+
+- **KR1+KR2 — 资金流向 (capital flow)** (commits `a6175e6`, `02634b8`):
+  `scripts/fetch_capital_flow.py` (333 LOC) fetches concept + industry net
+  flow daily; Browse tab adds 2-card panel "今日热门概念 + 今日热门行业"
+  below the existing 3-card hero strip. Junyan's design-002 #2 color
+  resolution applied to FLOW direction (red=positive flow, Chinese habit).
+  Pipeline Step 2d.6.
+
+- **KR3+KR4 — 筹码分布 (cyq_chips)** (commits `21df951`, `2c8ed8a`):
+  `scripts/fetch_chip_distribution.py` (365 LOC) fetches shareholder
+  cost-basis density per watchlist A-share; Research detail adds
+  `ChipDistributionCard` with vertical bar chart (peak=C.red, others=C.gold)
+  + ReferenceLine at current price + peak-vs-current analysis (压力位/支撑位).
+  Pipeline Step 2d.7.
+
+- **KR5+KR6 — 盈利预测 (consensus forecast)** (commits `b4d1680`, `3631eb2`):
+  `scripts/fetch_consensus_forecast.py` (509 LOC) fetches analyst consensus
+  EPS/Revenue/NetProfit per A-share; Research detail adds
+  `ConsensusForecastCard` 4-row table with broker_count badge. Used for
+  consensus-vs-our-view delta in Variant View pitch logic. Pipeline Step 2d.8.
+
+One Tier-B premium API full-stack:
+
+- **KR-extra1+KR-extra2 — 龙虎榜 (top_list)** (commits `e06148a`, `3636df9`):
+  `scripts/fetch_lhb.py` (321 LOC) fetches 30-day top_list bulk + groups
+  per-watchlist; Research detail adds `LHBCard` 4-state render
+  (skipped/unavailable/0-appearances dim/has-appearances full card).
+  Pipeline Step 2d.9.
+
+One polish KR per Junyan's design-002 escalation resolution:
+
+- **KR-design002 — subplot layout + volume color toggles** (commit `d59416a`):
+  PriceChart now has 2 user-toggleable controls persisted to localStorage:
+  (1) MACD/KDJ/RSI subplot layout: 'stack' (default Chinese habit) ↔ 'tabs'
+  (only one subplot at a time with tab strip). (2) Volume bar color in 分时
+  mode: 'cn' (default red=up green=down) ↔ 'us' (Western). Three subplot
+  components extracted (MACDSubplot/KDJSubplot/RSISubplot) for DRY reuse.
+
+**4 new Tushare-15000-tier data files now flowing through pipeline daily:**
+public/data/capital_flow.json, public/data/chip_distribution/<ticker>.json,
+public/data/consensus_forecast/<ticker>.json, public/data/lhb/<ticker>.json.
+
+**Premium APIs still queued (Tier-B remaining):**
+- 涨停板单 (limit_list) — Browse "封板专化" view
+- 量化因子 (stk_factor_pro) — VP score external anchor
+- 机构调研 / 游资数据 — new USP-strength signals
+- 概念板块成分 (concept_detail) — concept→stock mapping for click-through
 
 ### 2026-05-03 — auto-work shift 5 (cont.): K-line full deployment + Tushare 15000 顶配 unlock
 
