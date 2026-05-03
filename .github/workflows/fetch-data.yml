@@ -129,6 +129,15 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_quant_factors.py
 
+      # ── Step 2d.11: Tushare 涨停板单 ───────────────────────────────────
+      # Tushare 15000-tier market-wide daily limit-up / limit-down board list.
+      # Forward-compatible: unavailable endpoint names/tiers preserve schema.
+      - name: "Step 2d.11: Fetch Tushare limit list (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_limit_list.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
@@ -244,6 +253,7 @@ jobs:
             public/data/profit_scissors.json \
             public/data/leading_indicators.json \
             public/data/capital_flow.json \
+            public/data/limit_list.json \
             public/data/fragility_300308_SZ.json \
             public/data/fragility_700_HK.json \
             public/data/fragility_9999_HK.json \

@@ -26,6 +26,7 @@
 | `consensus_forecast` | Tushare Pro 盈利预测 / analyst consensus forecast | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_consensus_forecast.py`, pipeline Step 2d.8) |
 | `lhb` | Tushare Pro 龙虎榜 / daily top-list appearances | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_lhb.py`, pipeline Step 2d.9) |
 | `quant_factors` | Tushare Pro 量化因子 / Barra-like daily factor exposures **STRATEGIC** | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_quant_factors.py`, pipeline Step 2d.10) |
+| `limit_list` | Tushare Pro 涨停板单 / daily limit-up and limit-down board list | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide stocks | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_limit_list.py`, pipeline Step 2d.11) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -78,6 +79,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | **`cyq_chips` / candidates** ⭐ | **15000** | 筹码分布 by price level | Support/resistance inference (frontend KR4 queued) |
 | **`profit_forecast` / `forecast_predict` candidates** ⭐ | **15000** | Analyst EPS/revenue/profit forecast candidates | Research consensus-vs-our-view delta |
 | **`top_list` / candidates** ⭐ | **15000** | 龙虎榜 daily top-list appearances | Research large-fund-activity signal |
+| **`limit_list_d` / candidates** ⭐ | **15000** | 涨停/跌停/炸板 daily board list with 连板 context | Browse 封板专化 view |
 
 ⭐⭐ = USP-critical
 ⭐ = Strong catalyst signal
@@ -492,6 +494,107 @@ backtest-validated against real thesis outcomes.
   these factors.
 - Cross-stock ranking: factor-quintile bucketing for screening (Tier-2 KR).
 - Pitch generation: factor-context inputs into Variant View precision.
+
+---
+
+#### 2.1.6 `limit_list` — Tushare 15000-tier 涨停板单 / daily limit board list
+
+**Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
+
+**Fetcher:** `scripts/fetch_limit_list.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.11, `continue-on-error: true`.
+
+**Output:** `public/data/limit_list.json`
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Strategic role:** Backend data layer for the Browse tab's next "封板专化"
+view. This is global market context, not per-watchlist ticker data, so the
+fetcher writes one fixed-name JSON file.
+
+**Endpoint fallback order:**
+- `limit_list_d` → `limit_list` → `limit_list_ths` → `limit_step`
+
+**Fetch strategy:** One market-wide Tushare call per successful run using
+`trade_date=<today Beijing date>`. The script tries endpoint names in order
+and stops on the first success. Returned rows are grouped by the Tushare
+limit-state field (`U` = 涨停, `D` = 跌停, `Z` = 炸板) into `limit_up`,
+`limit_down`, and `failed` arrays.
+
+**Schema (success):**
+```json
+{
+  "fetched_at": "2026-05-03T...",
+  "trade_date": "20260503",
+  "tier": 15000,
+  "_status": "ok",
+  "api_used": "limit_list_d",
+  "_attempted_endpoints": ["limit_list_d"],
+  "limit_up": [
+    {
+      "ts_code": "300308.SZ",
+      "name": "中际旭创",
+      "trade_date": "20260503",
+      "status": "U",
+      "fc_ratio": 12.3,
+      "fl_ratio": 1.2,
+      "turnover_ratio": 8.5,
+      "theme": "光通信",
+      "concept": "光通信",
+      "first_time": "093501",
+      "last_time": "145801",
+      "lu_desc": "AI算力",
+      "ld_desc": null,
+      "consecutive_limit_days": 2,
+      "is_first_limit": false,
+      "is_continuation": true,
+      "limit_sequence": "continuation"
+    }
+  ],
+  "limit_down": [],
+  "failed": [],
+  "summary": {
+    "lu_count": 1,
+    "ld_count": 0,
+    "fail_count": 0
+  }
+}
+```
+
+**Schema (all endpoints unavailable):**
+```json
+{
+  "fetched_at": "2026-05-03T...",
+  "trade_date": "20260503",
+  "tier": 15000,
+  "_status": "endpoint_unavailable",
+  "api_used": null,
+  "_attempted_endpoints": ["limit_list_d", "limit_list", "limit_list_ths", "limit_step"],
+  "limit_up": [],
+  "limit_down": [],
+  "failed": [],
+  "summary": {"lu_count": 0, "ld_count": 0, "fail_count": 0},
+  "_error": "..."
+}
+```
+
+**Graceful degrade behavior:** This fetcher has no `_status: "skipped"` path
+because the source is market-wide, not ticker-scoped. Successful empty market
+returns are `_status: "ok"` with empty arrays. If every candidate endpoint
+fails, the file is still written with `_status: "endpoint_unavailable"` or
+`_status: "tier_locked"` + `_need_tier: 15000` depending on the Tushare error
+text. Unexpected process-level failures write `_status: "fetch_failed"`.
+The process exits 0 after writing any graceful-degrade payload and exits 1
+only when `TUSHARE_TOKEN` is missing.
+
+**Validation status:** Causal logic is valid because limit-up / limit-down /
+炸板 status is exchange-mechanics data that directly describes daily market
+speculation pressure and board-sealing strength. Specific row values are
+sourced from Tushare when available, not generated by the platform. Any
+future signal weight, "封板强度" score, or Browse ranking threshold built on
+top of this data remains `[unvalidated intuition]` until backtest-validated
+against real thesis outcomes.
 
 ---
 
