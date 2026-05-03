@@ -3441,35 +3441,43 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [chipData, setChipData] = useState({});
   const [consensusData, setConsensusData] = useState({});
   const [lhbData, setLhbData] = useState({});
+  const [quantFactorsData, setQuantFactorsData] = useState({});
   useEffect(() => {
     if (!ticker) return;
     const base = DATA_BASE;
     const fetchJson = (path) => fetch(base + path)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
-    const lhbFetches = fetchJson('data/watchlist.json')
+    const watchlistTargets = fetchJson('data/watchlist.json')
       .then(wl => {
         const watchlistTickers = Object.keys(wl?.tickers || {});
-        const targets = [...new Set([ticker, ...watchlistTickers].filter(Boolean))];
-        return Promise.all(targets.map(t =>
-          fetchJson(`data/lhb/${t}.json`).then(data => ({ ticker: t, data }))
-        ));
+        return [...new Set([ticker, ...watchlistTickers].filter(Boolean))];
       })
-      .catch(() => Promise.all([
-        fetchJson(`data/lhb/${ticker}.json`).then(data => ({ ticker, data }))
-      ]));
+      .catch(() => [ticker]);
+    const lhbFetches = watchlistTargets
+      .then(targets => Promise.all(targets.map(t =>
+          fetchJson(`data/lhb/${t}.json`).then(data => ({ ticker: t, data }))
+        )));
+    const quantFactorFetches = watchlistTargets
+      .then(targets => Promise.all(targets.map(t =>
+          fetchJson(`data/quant_factors/${t}.json`).then(data => ({ ticker: t, data }))
+        )));
     Promise.all([
       fetchJson(`data/tushare/${ticker}.json`),
       fetchJson(`data/chip_distribution/${ticker}.json`),
       fetchJson(`data/consensus_forecast/${ticker}.json`),
       lhbFetches,
-    ]).then(([tushare, chip, consensus, lhbArr]) => {
+      quantFactorFetches,
+    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
       setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
       const lhbDataMap = { [ticker]: null };
       (lhbArr || []).forEach(({ ticker: tk, data }) => { if (data) lhbDataMap[tk] = data; });
       setLhbData(prev => ({ ...prev, ...lhbDataMap }));
+      const quantFactorsDataMap = { [ticker]: null };
+      (quantFactorArr || []).forEach(({ ticker: tk, data }) => { if (data) quantFactorsDataMap[tk] = data; });
+      setQuantFactorsData(prev => ({ ...prev, ...quantFactorsDataMap }));
     });
   }, [ticker]);
 
@@ -3543,6 +3551,25 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)}亿`;
     if (abs >= 1e4) return `${sign}${Math.round(abs/1e4)}万`;
     return `${sign}${Math.round(abs)}`;
+  };
+
+  const formatFactor = (value, type = 'plain') => {
+    const n = finiteNumber(value);
+    if (n == null) return '—';
+    if (type === 'pct') {
+      const pct = Math.abs(n) > 1 ? n : n * 100;
+      return `${pct.toFixed(2)}%`;
+    }
+    if (type === 'ratio') return n.toFixed(2);
+    if (type === 'mv') {
+      const sign = n < 0 ? '−' : '';
+      const abs = Math.abs(n);
+      if (abs >= 1e12) return `${sign}${(abs/1e12).toFixed(1)}万亿`;
+      if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)}亿`;
+      if (abs >= 1e4) return `${sign}${(abs/1e4).toFixed(1)}万`;
+      return `${sign}${abs.toFixed(1)}`;
+    }
+    return n.toFixed(2);
   };
 
   const TushareDataCard = ({ data, ticker }) => {
@@ -3774,6 +3801,140 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     );
   };
 
+  const QuantFactorsCard = ({ data, ticker }) => {
+    if (!data || data._status === 'skipped') return null;
+    if (data._status !== 'ok') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid, whiteSpace:'nowrap'}}>
+          量化因子 数据暂时不可用
+        </div>
+      );
+    }
+
+    const factors = data.factors || {};
+    const factorCount = Number(data._factor_count ?? Object.keys(factors).filter(k => finiteNumber(factors[k]) != null).length);
+    if (factorCount === 0) return null;
+
+    const history = Array.isArray(data.history) ? data.history : [];
+    const latestDate = String(data.trade_date || '');
+    const previousRows = [...history]
+      .filter(row => String(row?.trade_date || '') !== latestDate)
+      .sort((a, b) => String(b?.trade_date || '').localeCompare(String(a?.trade_date || '')));
+    const usedKeys = new Set();
+
+    const firstFactor = (keys) => {
+      for (const key of keys) {
+        if (finiteNumber(factors[key]) != null) return { key, value: factors[key] };
+      }
+      return null;
+    };
+
+    const factorChange = (factor, type) => {
+      if (!factor) return null;
+      const current = finiteNumber(factor.value);
+      const previous = finiteNumber(previousRows.find(row => finiteNumber(row?.[factor.key]) != null)?.[factor.key]);
+      if (current == null || previous == null || current === previous) return null;
+      const diff = current - previous;
+      const arrow = diff > 0 ? '▲' : '▼';
+      const formatted = type === 'pct'
+        ? (Math.abs(current) > 1 || Math.abs(previous) > 1 ? `${Math.abs(diff).toFixed(2)}%` : formatFactor(Math.abs(diff), 'pct'))
+        : formatFactor(Math.abs(diff), type);
+      return `${arrow}${formatted}`;
+    };
+
+    const factorItem = (label, factor, type = 'plain') => {
+      if (!factor) return null;
+      usedKeys.add(factor.key);
+      const change = factorChange(factor, type);
+      return { label, factor, type, change };
+    };
+
+    const valuationItems = [
+      factorItem('PE', firstFactor(['pe']), 'ratio'),
+      factorItem('PB', firstFactor(['pb']), 'ratio'),
+      factorItem('PS', firstFactor(['ps']), 'ratio'),
+      factorItem('PCF', firstFactor(['pcf']), 'ratio'),
+      factorItem('DV%', firstFactor(['dv_ratio']), 'pct'),
+      factorItem('DV TTM', firstFactor(['dv_ttm']), 'pct'),
+    ].filter(Boolean);
+    const activityItems = [
+      factorItem('Turn%', firstFactor(['turnover_rate', 'turnover_rate_f']), 'pct'),
+      factorItem('VolRatio', firstFactor(['volume_ratio', 'vol_ratio']), 'ratio'),
+    ].filter(Boolean);
+    const momentumItems = [
+      factorItem('5d', firstFactor(['momentum_5d', 'momentum_5', 'mom_5d', 'mom5', 'mmt_5d', 'mtm_5d', 'return_5d', 'return_5', 'ret_5d', 'ret5', 'pct_chg_5d', 'chg_pct_5d', 'chg_5d', 'roc_5d']), 'pct'),
+      factorItem('20d', firstFactor(['momentum_20d', 'momentum_20', 'mom_20d', 'mom20', 'mmt_20d', 'mtm_20d', 'return_20d', 'return_20', 'ret_20d', 'ret20', 'pct_chg_20d', 'chg_pct_20d', 'chg_20d', 'roc_20d']), 'pct'),
+      factorItem('60d', firstFactor(['momentum_60d', 'momentum_60', 'mom_60d', 'mom60', 'mmt_60d', 'mtm_60d', 'return_60d', 'return_60', 'ret_60d', 'ret60', 'pct_chg_60d', 'chg_pct_60d', 'chg_60d', 'roc_60d']), 'pct'),
+    ].filter(Boolean);
+    const riskItems = [
+      factorItem('Vol', firstFactor(['volatility', 'volatility_20d', 'volatility_60d']), 'pct'),
+      factorItem('Beta', firstFactor(['beta']), 'ratio'),
+    ].filter(Boolean);
+    const sizeItems = [
+      factorItem('MV', firstFactor(['total_mv']), 'mv'),
+      factorItem('Circ MV', firstFactor(['circ_mv']), 'mv'),
+    ].filter(Boolean);
+    const otherItems = Object.keys(factors)
+      .filter(key => !usedKeys.has(key) && finiteNumber(factors[key]) != null)
+      .slice(0, 8)
+      .map(key => factorItem(key.replace(/_/g, ' '), { key, value: factors[key] }, 'plain'))
+      .filter(Boolean);
+
+    const FactorSection = ({ title, items }) => {
+      if (!items.length) return null;
+      return (
+        <div style={{padding:8, background:C.soft, borderRadius:6, minWidth:0}}>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, marginBottom:6, textTransform:'uppercase'}}>{title}</div>
+          <div style={{display:'flex', flexWrap:'wrap', columnGap:10, rowGap:4}}>
+            {items.map(item => (
+              <span key={`${item.label}-${item.factor.key}`} style={{whiteSpace:'nowrap', fontSize:10}}>
+                <span style={{color:C.mid}}>{item.label}</span>{' '}
+                <span style={{fontFamily:MONO, color:C.dark, fontWeight:700}}>{formatFactor(item.factor.value, item.type)}</span>
+                {item.change && <span style={{fontFamily:MONO, color:C.mid, fontSize:8, marginLeft:3}}>{item.change}</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div style={{padding:'10px 14px', background:C.card, border:`1px solid ${C.border}`, borderRadius:10, marginBottom:10, borderLeft:`3px solid ${C.blue}`}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:8}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.dark}}>
+            量化因子 / Quant Factors
+            <span style={{marginLeft:6, padding:'1px 5px', border:`1px solid ${C.border}`, borderRadius:4, background:C.soft, color:C.blue, fontSize:8, fontFamily:MONO}}>T{data.tier || 15000}</span>
+          </div>
+          <div style={{fontSize:9, color:C.mid, fontFamily:MONO, textAlign:'right'}}>
+            {factorCount} factors · {data.trade_date || '—'}
+          </div>
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:8}}>
+          <FactorSection title='Valuation' items={valuationItems}/>
+          <FactorSection title='Activity' items={activityItems}/>
+          <FactorSection title='Momentum' items={momentumItems}/>
+          <FactorSection title='Risk' items={riskItems}/>
+        </div>
+        {sizeItems.length > 0 && (
+          <div style={{fontSize:9, color:C.mid, marginTop:7}}>
+            {sizeItems.map(item => (
+              <span key={`${item.label}-${item.factor.key}`} style={{marginRight:12, whiteSpace:'nowrap'}}>
+                {item.label}{' '}
+                <span style={{fontFamily:MONO, color:C.dark, fontWeight:600}}>{formatFactor(item.factor.value, item.type)}</span>
+                {item.change && <span style={{fontFamily:MONO, color:C.mid, fontSize:8, marginLeft:3}}>{item.change}</span>}
+              </span>
+            ))}
+          </div>
+        )}
+        {otherItems.length > 0 && (
+          <div style={{marginTop:8, paddingTop:7, borderTop:`1px dashed ${C.border}`}}>
+            <FactorSection title='Other' items={otherItems}/>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Live price chart — auto-refreshes on 1D range */}
@@ -3955,6 +4116,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <ChipDistributionCard data={chipData[ticker]} ticker={ticker} currentPrice={liveData?.yahoo?.[ticker]?.price ?? s.price}/>
       <ConsensusForecastCard data={consensusData[ticker]} ticker={ticker}/>
       <LHBCard data={lhbData[ticker]} ticker={ticker}/>
+      <QuantFactorsCard data={quantFactorsData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
