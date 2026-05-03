@@ -23,6 +23,7 @@
 | `tushare` | Tushare Pro | Paid (15000 pts; base fetcher 6000-compatible) | `TUSHARE_TOKEN` env | A-share | daily | ✅ ACTIVE 2026-05-02 (`scripts/fetch_tushare.py` shipped, pipeline integrated) |
 | `capital_flow` | Tushare Pro concept/industry capital flow | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide boards | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_capital_flow.py`, pipeline Step 2d.6) |
 | `chip_distribution` | Tushare Pro 筹码分布 / cost-basis distribution | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_chip_distribution.py`, pipeline Step 2d.7) |
+| `consensus_forecast` | Tushare Pro 盈利预测 / analyst consensus forecast | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_consensus_forecast.py`, pipeline Step 2d.8) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -73,6 +74,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | **`moneyflow_cnt` / candidates** ⭐ | **15000** | Concept-board net inflow | Browse/research capital-flow heat |
 | **`moneyflow_ind_dc` / candidates** ⭐ | **15000** | Industry-board net inflow | Browse/research capital-flow heat |
 | **`cyq_chips` / candidates** ⭐ | **15000** | 筹码分布 by price level | Support/resistance inference (frontend KR4 queued) |
+| **`profit_forecast` / `forecast_predict` candidates** ⭐ | **15000** | Analyst EPS/revenue/profit forecast candidates | Research consensus-vs-our-view delta |
 
 ⭐⭐ = USP-critical
 ⭐ = Strong catalyst signal
@@ -210,6 +212,73 @@ remaining watchlist. The process exits 0 after per-ticker completion and exits
 price level is a direct cost-basis distribution input for resistance/support
 inference. Specific resistance/support thresholds are not defined here and
 remain `[unvalidated intuition]` until KR4 surfaces and calibrates them.
+
+#### 2.1.3 `consensus_forecast` — Tushare 15000-tier 盈利预测
+
+**Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
+
+**Fetcher:** `scripts/fetch_consensus_forecast.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.8, `continue-on-error: true`.
+
+**Output:** `public/data/consensus_forecast/<ticker>.json`
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Endpoint fallback order:**
+- `forecast` → `express` → `profit_forecast` → `forecast_predict`
+
+**Schema (A-share success):**
+```json
+{
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T...",
+  "tier": 15000,
+  "_status": "ok",
+  "api_used": "forecast",
+  "_attempted_endpoints": ["forecast"],
+  "forecasts": [
+    {
+      "end_date": "20261231",
+      "eps": 3.2,
+      "revenue": 55000000000.0,
+      "net_profit": 9300000000.0,
+      "op_income": 12100000000.0,
+      "broker_count": 18
+    }
+  ]
+}
+```
+
+**Schema (HK/US/non-A-share placeholder):**
+```json
+{
+  "ticker": "700.HK",
+  "fetched_at": "2026-05-03T...",
+  "tier": 15000,
+  "_status": "skipped",
+  "_reason": "not_available_tushare_hk",
+  "api_used": null,
+  "_attempted_endpoints": [],
+  "forecasts": []
+}
+```
+
+**Graceful degrade behavior:** The fetcher writes one file per watchlist ticker.
+HK/US tickers are explicit skipped placeholders because Tushare consensus
+coverage is A-share-focused for this integration. A-share endpoint-name or
+availability failures write `_status: "endpoint_unavailable"`,
+`_attempted_endpoints`, and `forecasts: []`. Permission/tier failures write
+`_status: "tier_locked"`, `_need_tier: 15000`, `_error`, and `forecasts: []`.
+Per-ticker failures write `_status: "fetch_failed"` with `_error` and do not
+stop the remaining watchlist. The process exits 0 after per-ticker completion
+and exits 1 only when `TUSHARE_TOKEN` is missing.
+
+**Validation status:** Causal logic is valid because the forecast rows provide
+the external consensus side of the Research pitch's "market believes X / we
+believe Y" delta. Specific forecast values are source data from Tushare when
+available; any future consensus-vs-our-view threshold remains `[unvalidated
+intuition]` until calibrated against real thesis outcomes.
 
 ---
 
