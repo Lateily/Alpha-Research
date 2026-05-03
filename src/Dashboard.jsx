@@ -941,13 +941,13 @@ function SourceBadge({ source, C }) {
 
 /* ── PRICE CHART ─────────────────────────────────────────────────────────── */
 
-// Normalize any ticker to Yahoo Finance 4-digit HK format
+// Canonicalize HK tickers for the Tushare-backed chart API without dropping
+// significant leading zeros (for example 08219.HK must stay 08219.HK).
 function toYahooTicker(ticker) {
   if (!ticker) return ticker;
   if (ticker.endsWith('.HK')) {
-    const code    = ticker.slice(0, -3);           // strip ".HK"
-    const digits  = code.replace(/^0+/, '') || '0'; // remove leading zeros
-    return digits.padStart(4, '0') + '.HK';        // pad to 4 digits
+    const code = ticker.slice(0, -3);
+    return code.padStart(5, '0') + '.HK';
   }
   return ticker;
 }
@@ -1174,54 +1174,99 @@ function PriceChart({ ticker, C, L, lk }) {
     return v.toLocaleString();
   };
 
-  const MACDSubplot = ({ data }) => (
-    <ResponsiveContainer width='100%' height={70}>
-      <ComposedChart data={data} margin={{top:0, right:16, bottom:4, left:4}}>
-        <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50}/>
-        <XAxis dataKey='time' hide/>
-        <ReferenceLine y={0} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
-        <Bar dataKey='macdHist' isAnimationActive={false}
-          shape={(props) => {
-            if (props.height == null || props.width == null) return null;
-            const fill = props.payload.macdHist >= 0 ? C.green : C.red;
-            return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={0.6}/>;
-          }}/>
-        <Line type='monotone' dataKey='macdLine'   stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
-        <Line type='monotone' dataKey='macdSignal' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
-        <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
-          formatter={(val, name) => [val != null ? Number(val).toFixed(3) : '—', `MACD ${name.replace('macd','')}`]}/>
-      </ComposedChart>
-    </ResponsiveContainer>
+  const hasIndicatorData = (data, keys, minPeriods) => (
+    Array.isArray(data) &&
+    data.length >= minPeriods &&
+    data.some(d => keys.some(key => d[key] != null && Number.isFinite(Number(d[key]))))
   );
 
-  const KDJSubplot = ({ data }) => (
-    <ResponsiveContainer width='100%' height={70}>
-      <LineChart data={data} margin={{top:0, right:16, bottom:4, left:4}}>
-        <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
-        <XAxis dataKey='time' hide/>
-        <ReferenceLine y={50} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
-        <Line type='monotone' dataKey='kdjK' stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='K'/>
-        <Line type='monotone' dataKey='kdjD' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='D'/>
-        <Line type='monotone' dataKey='kdjJ' stroke={C.red}  strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='J'/>
-        <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
-          formatter={(val, name) => [val != null ? Number(val).toFixed(2) : '—', `KDJ-${name}`]}/>
-      </LineChart>
-    </ResponsiveContainer>
+  const SubplotHint = ({ label, minPeriods, showXAxis, data }) => (
+    <div style={{height:70, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, color:C.mid, background:C.soft, position:'relative'}}>
+      {label} · 数据不足 (需 ≥ {minPeriods} K线)
+      {showXAxis && data?.length > 0 && (
+        <div style={{position:'absolute', left:54, right:16, bottom:3, display:'flex', justifyContent:'space-between', fontSize:9, color:C.mid}}>
+          <span>{fmtX(data[0].time)}</span>
+          <span>{fmtX(data[data.length - 1].time)}</span>
+        </div>
+      )}
+    </div>
   );
 
-  const RSISubplot = ({ data }) => (
-    <ResponsiveContainer width='100%' height={70}>
-      <LineChart data={data} margin={{top:0, right:16, bottom:4, left:4}}>
-        <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
-        <XAxis dataKey='time' hide/>
-        <ReferenceLine y={70} stroke={C.red} strokeDasharray='3 3' strokeWidth={1}/>
-        <ReferenceLine y={30} stroke={C.green} strokeDasharray='3 3' strokeWidth={1}/>
-        <Line type='monotone' dataKey='rsi' stroke={C.blue} strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={false}/>
-        <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
-          formatter={(val) => [val != null ? Number(val).toFixed(2) : '—', 'RSI(14)']}/>
-      </LineChart>
-    </ResponsiveContainer>
+  const renderSubplotXAxis = (showXAxis) => (
+    showXAxis ? (
+      <XAxis dataKey='time' tickFormatter={fmtX} tick={{fontSize:9, fill:C.mid}} axisLine={false} tickLine={false} interval='preserveStartEnd' minTickGap={50}/>
+    ) : (
+      <XAxis dataKey='time' hide={true}/>
+    )
   );
+
+  const activeSubplotKeys = ['macd', 'kdj', 'rsi'].filter(key => indicators[key]);
+  const hasAnySubplot = activeSubplotKeys.length > 0;
+  const bottomStackSubplot = ['rsi', 'kdj', 'macd'].find(key => indicators[key]);
+
+  const MACDSubplot = ({ data, showXAxis = false }) => {
+    if (!hasIndicatorData(data, ['macdHist', 'macdLine', 'macdSignal'], 35)) {
+      return <SubplotHint label='MACD' minPeriods={35} showXAxis={showXAxis} data={data}/>;
+    }
+    return (
+      <ResponsiveContainer width='100%' height={70}>
+        <ComposedChart data={data} margin={{top:0, right:16, bottom:showXAxis ? 18 : 4, left:4}}>
+          <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={44} tickCount={3} domain={['dataMin', 'dataMax']}/>
+          {renderSubplotXAxis(showXAxis)}
+          <ReferenceLine y={0} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
+          <Bar dataKey='macdHist' isAnimationActive={false}
+            shape={(props) => {
+              if (props.height == null || props.width == null) return null;
+              const fill = props.payload.macdHist >= 0 ? C.green : C.red;
+              return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={0.6}/>;
+            }}/>
+          <Line type='monotone' dataKey='macdLine'   stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
+          <Line type='monotone' dataKey='macdSignal' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
+          <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+            formatter={(val, name) => [val != null ? Number(val).toFixed(3) : '—', `MACD ${name.replace('macd','')}`]}/>
+        </ComposedChart>
+      </ResponsiveContainer>
+    );
+  };
+
+  const KDJSubplot = ({ data, showXAxis = false }) => {
+    if (!hasIndicatorData(data, ['kdjK', 'kdjD', 'kdjJ'], 9)) {
+      return <SubplotHint label='KDJ' minPeriods={9} showXAxis={showXAxis} data={data}/>;
+    }
+    return (
+      <ResponsiveContainer width='100%' height={70}>
+        <LineChart data={data} margin={{top:0, right:16, bottom:showXAxis ? 18 : 4, left:4}}>
+          <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={44} domain={[0, 100]} ticks={[0, 50, 100]}/>
+          {renderSubplotXAxis(showXAxis)}
+          <ReferenceLine y={50} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
+          <Line type='monotone' dataKey='kdjK' stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='K'/>
+          <Line type='monotone' dataKey='kdjD' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='D'/>
+          <Line type='monotone' dataKey='kdjJ' stroke={C.red}  strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='J'/>
+          <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+            formatter={(val, name) => [val != null ? Number(val).toFixed(2) : '—', `KDJ-${name}`]}/>
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  };
+
+  const RSISubplot = ({ data, showXAxis = false }) => {
+    if (!hasIndicatorData(data, ['rsi'], 14)) {
+      return <SubplotHint label='RSI' minPeriods={14} showXAxis={showXAxis} data={data}/>;
+    }
+    return (
+      <ResponsiveContainer width='100%' height={70}>
+        <LineChart data={data} margin={{top:0, right:16, bottom:showXAxis ? 18 : 4, left:4}}>
+          <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={44} domain={[0, 100]} ticks={[0, 50, 100]}/>
+          {renderSubplotXAxis(showXAxis)}
+          <ReferenceLine y={70} stroke={C.red} strokeDasharray='3 3' strokeWidth={1}/>
+          <ReferenceLine y={30} stroke={C.green} strokeDasharray='3 3' strokeWidth={1}/>
+          <Line type='monotone' dataKey='rsi' stroke={C.blue} strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={false}/>
+          <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+            formatter={(val) => [val != null ? Number(val).toFixed(2) : '—', 'RSI(14)']}/>
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  };
 
   return (
     <div style={{ background: C.card, borderRadius: 10, border: `1px solid ${C.border}`, overflow:'hidden', marginBottom: 12 }}>
@@ -1411,10 +1456,11 @@ function PriceChart({ ticker, C, L, lk }) {
               <XAxis
                 dataKey='time'
                 tickFormatter={fmtX}
-                tick={{ fontSize:9, fill:C.mid }}
+                tick={hasAnySubplot ? false : { fontSize:9, fill:C.mid }}
                 axisLine={false} tickLine={false}
                 interval='preserveStartEnd'
                 minTickGap={50}
+                hide={hasAnySubplot}
               />
               <YAxis
                 domain={[domainLo, domainHi]}
@@ -1472,7 +1518,7 @@ function PriceChart({ ticker, C, L, lk }) {
                   }}/>
                 : <Bar dataKey='volume' fill={lineC} opacity={0.35} radius={0}/>
               }
-              <YAxis hide domain={['auto','auto']}/>
+              <YAxis hide={true} tick={false} axisLine={false} tickLine={false} width={0} domain={[0, 'auto']}/>
               <XAxis dataKey='time' hide/>
             </BarChart>
           </ResponsiveContainer>
@@ -1480,9 +1526,9 @@ function PriceChart({ ticker, C, L, lk }) {
         {viewMode === 'kline' && chartDataWithInd && chartDataWithInd.length > 0 && (
           subplotLayout === 'stack' ? (
             <>
-              {indicators.macd && <MACDSubplot data={chartDataWithInd}/>}
-              {indicators.kdj  && <KDJSubplot data={chartDataWithInd}/>}
-              {indicators.rsi  && <RSISubplot data={chartDataWithInd}/>}
+              {indicators.macd && <MACDSubplot data={chartDataWithInd} showXAxis={bottomStackSubplot === 'macd'}/>}
+              {indicators.kdj  && <KDJSubplot data={chartDataWithInd} showXAxis={bottomStackSubplot === 'kdj'}/>}
+              {indicators.rsi  && <RSISubplot data={chartDataWithInd} showXAxis={bottomStackSubplot === 'rsi'}/>}
             </>
           ) : (
             (() => {
@@ -1507,9 +1553,9 @@ function PriceChart({ ticker, C, L, lk }) {
                       }}>{t.label}</button>
                     ))}
                   </div>
-                  {currentTab === 'macd' && <MACDSubplot data={chartDataWithInd}/>}
-                  {currentTab === 'kdj'  && <KDJSubplot data={chartDataWithInd}/>}
-                  {currentTab === 'rsi'  && <RSISubplot data={chartDataWithInd}/>}
+                  {currentTab === 'macd' && <MACDSubplot data={chartDataWithInd} showXAxis={true}/>}
+                  {currentTab === 'kdj'  && <KDJSubplot data={chartDataWithInd} showXAxis={true}/>}
+                  {currentTab === 'rsi'  && <RSISubplot data={chartDataWithInd} showXAxis={true}/>}
                 </>
               );
             })()

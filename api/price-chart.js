@@ -544,6 +544,6 @@ export default async function handler(req, res) {
 
   return res.status(502).json({
     error: `Failed to fetch price data for "${ticker}" (market=${market}). ` +
-           `Tushare 6000-tier API failed. Check TUSHARE_TOKEN env var or rate limits.`,
+           `Tushare API failed for ${market} market. Check TUSHARE_TOKEN env var on Vercel matches the upgraded 15000-tier token, check Tushare daily quota, or check stock listing status.`,
   });
 }
