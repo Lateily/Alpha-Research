@@ -3649,6 +3649,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [instResearchData, setInstResearchData] = useState({});
   const [topInstData, setTopInstData] = useState({});
   const [brokerRecommendData, setBrokerRecommendData] = useState({});
+  const [pledgeData, setPledgeData] = useState({});
   useEffect(() => {
     if (!ticker) return;
     const base = DATA_BASE;
@@ -3681,6 +3682,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       .then(targets => Promise.all(targets.map(t =>
           fetchJson(`data/broker_recommend/${t}.json`).then(data => ({ ticker: t, data }))
         )));
+    const pledgeFetches = watchlistTargets
+      .then(targets => Promise.all(targets.map(t =>
+          fetchJson(`data/pledge_stat/${t}.json`).then(data => ({ ticker: t, data }))
+        )));
     Promise.all([
       fetchJson(`data/tushare/${ticker}.json`),
       fetchJson(`data/chip_distribution/${ticker}.json`),
@@ -3690,7 +3695,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       instResearchFetches,
       topInstFetches,
       brokerRecommendFetches,
-    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr, brokerRecommendArr]) => {
+      pledgeFetches,
+    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr, brokerRecommendArr, pledgeArr]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
       setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
@@ -3709,6 +3715,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       const brokerRecommendDataMap = { [ticker]: null };
       (brokerRecommendArr || []).forEach(({ ticker: tk, data }) => { if (data) brokerRecommendDataMap[tk] = data; });
       setBrokerRecommendData(prev => ({ ...prev, ...brokerRecommendDataMap }));
+      const pledgeDataMap = { [ticker]: null };
+      (pledgeArr || []).forEach(({ ticker: tk, data }) => { if (data) pledgeDataMap[tk] = data; });
+      setPledgeData(prev => ({ ...prev, ...pledgeDataMap }));
     });
   }, [ticker]);
 
@@ -4468,6 +4477,138 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     );
   };
 
+  const PledgeRiskCard = ({ data, ticker }) => {
+    if (!data || data._status === 'skipped_hk' || data._status === 'skipped_us') return null;
+    if (data._status === 'empty') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid}}>
+          股权质押 · 无质押历史
+        </div>
+      );
+    }
+    if (data._status === 'api_error') {
+      return (
+        <div style={{padding:'4px 8px', background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:6, marginBottom:10, fontSize:10, color:C.red}}>
+          股权质押 · 数据暂时不可用
+        </div>
+      );
+    }
+    if (data._status !== 'ok') return null;
+
+    const summary = data.summary || {};
+    const dateKey = (value) => String(value || '').replace(/-/g, '');
+    const records = Array.isArray(data.records)
+      ? [...data.records]
+          .sort((a, b) => dateKey(b?.end_date).localeCompare(dateKey(a?.end_date)))
+          .slice(0, 4)
+      : [];
+    const latestRatio = finiteNumber(summary.latest_pledge_ratio ?? records[0]?.pledge_ratio);
+    const riskLevel = summary.risk_level || null;
+    const riskColor = riskLevel === 'HIGH' ? C.red
+      : riskLevel === 'MED' ? C.gold
+      : riskLevel === 'LOW' ? C.green
+      : C.mid;
+    const riskLabel = riskLevel === 'HIGH' ? 'HIGH RISK'
+      : riskLevel === 'MED' ? 'MED RISK'
+      : riskLevel === 'LOW' ? 'LOW RISK'
+      : 'NO DATA';
+    const trendDirection = summary.trend_direction || null;
+    const trendMeta = trendDirection === 'rising'
+      ? { label:'↑ 上升', color:C.red }
+      : trendDirection === 'falling'
+        ? { label:'↓ 下降', color:C.green }
+        : { label:'→ 平稳', color:C.mid };
+    const formatPledgeDate = (value) => {
+      const s = String(value || '');
+      if (/^\d{8}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      return s || '—';
+    };
+    const formatPledgeRatio = (value) => {
+      const n = finiteNumber(value);
+      return n == null ? '—' : `${n.toFixed(1)}%`;
+    };
+    const ratioColor = (value) => {
+      const n = finiteNumber(value);
+      if (n == null) return C.mid;
+      if (n > 50) return C.red;
+      if (n >= 20) return C.gold;
+      return C.green;
+    };
+    const formatPledgeAmount = (value) => {
+      const n = finiteNumber(value);
+      if (n == null) return '—';
+      const sign = n < 0 ? '−' : '';
+      const abs = Math.abs(n);
+      if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)}亿`;
+      if (abs >= 1e4) return `${sign}${(abs/1e4).toFixed(1)}万`;
+      return `${sign}${Math.round(abs)}`;
+    };
+    const latestDate = formatPledgeDate(summary.latest_end_date || records[0]?.end_date);
+    const hasPledgeCount = records.some(row => finiteNumber(row?.pledge_count) != null);
+    const hasUnrestPledge = records.some(row => finiteNumber(row?.unrest_pledge) != null);
+    const tableGrid = ['82px', '64px', hasPledgeCount ? '42px' : null, hasUnrestPledge ? '70px' : null]
+      .filter(Boolean)
+      .join(' ');
+
+    return (
+      <div style={{padding:'10px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:12, boxShadow:SHADOW, marginBottom:10}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:8}}>
+          <div style={{fontWeight:700, fontSize:11, color:C.dark}}>股权质押</div>
+          <div title={ticker} style={{fontSize:9, color:C.mid, fontFamily:MONO, textAlign:'right', background:C.soft, border:`1px solid ${C.border}`, borderRadius:4, padding:'1px 5px'}}>
+            {latestDate}
+          </div>
+        </div>
+        <div style={{width:'100%', borderRadius:8, background:`${riskColor}10`, border:`1px solid ${riskColor}30`, padding:10, marginBottom:10}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:10}}>
+            <div>
+              <div style={{fontFamily:MONO, fontSize:22, lineHeight:1, color:riskColor, fontWeight:800}}>
+                {formatPledgeRatio(latestRatio)}
+              </div>
+              <div style={{fontSize:9, color:C.mid, marginTop:4}}>最新质押比例</div>
+            </div>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6}}>
+              <span style={{background:`${riskColor}30`, color:riskColor, borderRadius:4, padding:'2px 6px', fontSize:10, fontWeight:700, fontFamily:MONO}}>
+                {riskLabel}
+              </span>
+              <span style={{fontSize:10, color:trendMeta.color}}>
+                {trendMeta.label}
+              </span>
+            </div>
+          </div>
+        </div>
+        {records.length > 0 && (
+          <div>
+            <div style={{display:'grid', gridTemplateColumns:tableGrid, gap:6, padding:'0 0 4px', borderBottom:`1px solid ${C.border}`, fontSize:9, color:C.mid, fontWeight:700}}>
+              <span>报告期</span>
+              <span style={{textAlign:'right'}}>质押率</span>
+              {hasPledgeCount && <span style={{textAlign:'right'}}>次数</span>}
+              {hasUnrestPledge && <span style={{textAlign:'right'}}>未解押</span>}
+            </div>
+            {records.map((record, i) => (
+              <div key={`${record.end_date || 'date'}-${i}`} style={{display:'grid', gridTemplateColumns:tableGrid, gap:6, padding:'4px 0', borderBottom:i < records.length - 1 ? `1px dashed ${C.border}` : 'none', fontSize:10, alignItems:'center'}}>
+                <span style={{fontFamily:MONO, fontSize:10, color:C.dark}}>{formatPledgeDate(record.end_date)}</span>
+                <span style={{fontFamily:MONO, fontSize:10, color:ratioColor(record.pledge_ratio), textAlign:'right', fontWeight:700}}>
+                  {formatPledgeRatio(record.pledge_ratio)}
+                </span>
+                {hasPledgeCount && (
+                  <span style={{fontFamily:MONO, fontSize:10, color:C.dark, textAlign:'right'}}>
+                    {finiteNumber(record.pledge_count) != null ? Math.round(finiteNumber(record.pledge_count)) : '—'}
+                  </span>
+                )}
+                {hasUnrestPledge && (
+                  <span style={{fontFamily:MONO, fontSize:10, color:C.mid, textAlign:'right'}}>
+                    {formatPledgeAmount(record.unrest_pledge)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Live price chart — auto-refreshes on 1D range */}
@@ -4653,6 +4794,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <InstResearchCard data={instResearchData[ticker]} ticker={ticker}/>
       <TopInstCard data={topInstData[ticker]} ticker={ticker}/>
       <BrokerRecommendCard data={brokerRecommendData[ticker]} ticker={ticker}/>
+      <PledgeRiskCard data={pledgeData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
