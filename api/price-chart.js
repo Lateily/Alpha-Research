@@ -542,8 +542,12 @@ export default async function handler(req, res) {
     return res.status(200).json(result);
   }
 
+  const providerError = market === 'US'
+    ? 'Yahoo Finance API failed for US ticker. Yahoo may be rate-limiting or geo-blocking the Vercel IP. Try again later or upgrade to a paid US data source.'
+    : `Tushare API failed for ${market} market. Check TUSHARE_TOKEN env var on Vercel matches the upgraded 15000-tier token, check Tushare daily quota, or check stock listing status.`;
+
   return res.status(502).json({
     error: `Failed to fetch price data for "${ticker}" (market=${market}). ` +
-           `Tushare API failed for ${market} market. Check TUSHARE_TOKEN env var on Vercel matches the upgraded 15000-tier token, check Tushare daily quota, or check stock listing status.`,
+           providerError,
   });
 }

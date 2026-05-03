@@ -1203,6 +1203,11 @@ function PriceChart({ ticker, C, L, lk }) {
   const activeSubplotKeys = ['macd', 'kdj', 'rsi'].filter(key => indicators[key]);
   const hasAnySubplot = activeSubplotKeys.length > 0;
   const bottomStackSubplot = ['rsi', 'kdj', 'macd'].find(key => indicators[key]);
+  const SubplotFrame = ({ children }) => (
+    <div style={{borderTop:`1px solid ${C.border}`, paddingTop:2}}>
+      {children}
+    </div>
+  );
 
   const MACDSubplot = ({ data, showXAxis = false }) => {
     if (!hasIndicatorData(data, ['macdHist', 'macdLine', 'macdSignal'], 35)) {
@@ -1507,28 +1512,30 @@ function PriceChart({ ticker, C, L, lk }) {
 
         {/* Volume bar strip */}
         {chartDataWithInd && chartDataWithInd.length > 0 && (
-          <ResponsiveContainer width='100%' height={40}>
-            <BarChart data={viewMode === 'fenshi' ? chartDataWithFenshi : chartDataWithInd} margin={{ top:0, right:16, bottom:4, left:4 }}>
-              {/* K-line mode uses overall lineC; 分时 mode uses tick-by-tick convention. */}
-              {viewMode === 'fenshi'
-                ? <Bar dataKey='volume' isAnimationActive={false} shape={(props) => {
-                    if (props.height == null || props.width == null) return null;
-                    const fill = props.payload.upTick === null ? C.mid : props.payload.upTick ? volumeUpColor : volumeDownColor;
-                    return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={0.5}/>;
-                  }}/>
-                : <Bar dataKey='volume' fill={lineC} opacity={0.35} radius={0}/>
-              }
-              <YAxis hide={true} tick={false} axisLine={false} tickLine={false} width={0} domain={[0, 'auto']}/>
-              <XAxis dataKey='time' hide/>
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{position:'relative', overflow:'hidden'}}>
+            <ResponsiveContainer width='100%' height={40}>
+              <BarChart data={viewMode === 'fenshi' ? chartDataWithFenshi : chartDataWithInd} margin={{ top:0, right:16, bottom:4, left:4 }}>
+                {/* K-line mode uses overall lineC; 分时 mode uses tick-by-tick convention. */}
+                {viewMode === 'fenshi'
+                  ? <Bar dataKey='volume' isAnimationActive={false} shape={(props) => {
+                      if (props.height == null || props.width == null) return null;
+                      const fill = props.payload.upTick === null ? C.mid : props.payload.upTick ? volumeUpColor : volumeDownColor;
+                      return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={0.5}/>;
+                    }}/>
+                  : <Bar dataKey='volume' fill={lineC} opacity={0.35} radius={0}/>
+                }
+                <YAxis hide={true} tick={false} axisLine={false} tickLine={false} width={0} domain={[0, 'auto']}/>
+                <XAxis dataKey='time' hide/>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
         {viewMode === 'kline' && chartDataWithInd && chartDataWithInd.length > 0 && (
           subplotLayout === 'stack' ? (
             <>
-              {indicators.macd && <MACDSubplot data={chartDataWithInd} showXAxis={bottomStackSubplot === 'macd'}/>}
-              {indicators.kdj  && <KDJSubplot data={chartDataWithInd} showXAxis={bottomStackSubplot === 'kdj'}/>}
-              {indicators.rsi  && <RSISubplot data={chartDataWithInd} showXAxis={bottomStackSubplot === 'rsi'}/>}
+              {indicators.macd && <SubplotFrame><MACDSubplot data={chartDataWithInd} showXAxis={bottomStackSubplot === 'macd'}/></SubplotFrame>}
+              {indicators.kdj  && <SubplotFrame><KDJSubplot data={chartDataWithInd} showXAxis={bottomStackSubplot === 'kdj'}/></SubplotFrame>}
+              {indicators.rsi  && <SubplotFrame><RSISubplot data={chartDataWithInd} showXAxis={bottomStackSubplot === 'rsi'}/></SubplotFrame>}
             </>
           ) : (
             (() => {
@@ -1553,9 +1560,9 @@ function PriceChart({ ticker, C, L, lk }) {
                       }}>{t.label}</button>
                     ))}
                   </div>
-                  {currentTab === 'macd' && <MACDSubplot data={chartDataWithInd} showXAxis={true}/>}
-                  {currentTab === 'kdj'  && <KDJSubplot data={chartDataWithInd} showXAxis={true}/>}
-                  {currentTab === 'rsi'  && <RSISubplot data={chartDataWithInd} showXAxis={true}/>}
+                  {currentTab === 'macd' && <SubplotFrame><MACDSubplot data={chartDataWithInd} showXAxis={true}/></SubplotFrame>}
+                  {currentTab === 'kdj'  && <SubplotFrame><KDJSubplot data={chartDataWithInd} showXAxis={true}/></SubplotFrame>}
+                  {currentTab === 'rsi'  && <SubplotFrame><RSISubplot data={chartDataWithInd} showXAxis={true}/></SubplotFrame>}
                 </>
               );
             })()
@@ -3163,6 +3170,19 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     return `${sign}${Math.round(abs)}`;
   };
 
+  const hotConceptRows = (capitalFlow?.hot_concepts || []).slice(0, 5).map(c => ({
+    name: c.name,
+    ticker: c.ts_code,
+    value: formatFlowYuan(c.net_inflow_yuan),
+  }));
+  const hotIndustryRows = (capitalFlow?.hot_industries || []).slice(0, 5).map(i => ({
+    name: i.name,
+    ticker: i.ts_code,
+    value: formatFlowYuan(i.net_inflow_yuan),
+  }));
+  const hasHotConcepts = hotConceptRows.length > 0;
+  const hasHotIndustries = hotIndustryRows.length > 0;
+
   const fmtVol = n => {
     if (n == null) return '—';
     if (n >= 1e8) return `${(n/1e8).toFixed(1)}亿`;
@@ -3305,36 +3325,34 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 
       {capitalFlow && capitalFlow._status !== 'fetch_failed' && capitalFlow._status !== 'endpoint_unavailable' && (
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
-          <HeroCard
-            title={L('Hot Concepts (Net Flow)','今日热门概念 Top 5')}
-            icon={<Flame size={14}/>}
-            accent={C.red}
-            rows={(capitalFlow.hot_concepts || []).slice(0, 5).map(c => ({
-              name: c.name,
-              ticker: c.ts_code,
-              value: formatFlowYuan(c.net_inflow_yuan),
-            }))}
-            onSeeAll={() => {}}
-            onRowClick={(s) => { if (s?.name) setConceptFilter(s.name); }}
-            L={L}
-            C={C}
-            hide={!capitalFlow.hot_concepts || capitalFlow.hot_concepts.length === 0}
-          />
-          <HeroCard
-            title={L('Hot Industries (Net Flow)','今日行业资金流向 Top 5')}
-            icon={<BarChart3 size={14}/>}
-            accent={C.red}
-            rows={(capitalFlow.hot_industries || []).slice(0, 5).map(i => ({
-              name: i.name,
-              ticker: i.ts_code,
-              value: formatFlowYuan(i.net_inflow_yuan),
-            }))}
-            onSeeAll={() => {}}
-            onRowClick={() => {}}
-            L={L}
-            C={C}
-            hide={!capitalFlow.hot_industries || capitalFlow.hot_industries.length === 0}
-          />
+          {!hasHotConcepts && !hasHotIndustries ? (
+            <div style={{gridColumn:'1 / -1', padding:'8px 12px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:8, fontSize:10, color:C.mid}}>
+              资金流热度 · 当日数据未生成 ({capitalFlow.trade_date || '—'})
+            </div>
+          ) : (
+            <>
+              <HeroCard
+                title={hasHotConcepts ? L('Hot Concepts (Net Flow)','今日热门概念 Top 5') : L('Hot Concepts (Net Flow)','今日热门概念 暂无')}
+                icon={<Flame size={14}/>}
+                accent={hasHotConcepts ? C.red : C.mid}
+                rows={hotConceptRows}
+                onSeeAll={() => {}}
+                onRowClick={(s) => { if (s?.name) setConceptFilter(s.name); }}
+                L={L}
+                C={C}
+              />
+              <HeroCard
+                title={hasHotIndustries ? L('Hot Industries (Net Flow)','今日行业资金流向 Top 5') : L('Hot Industries (Net Flow)','今日行业资金流向 暂无')}
+                icon={<BarChart3 size={14}/>}
+                accent={hasHotIndustries ? C.red : C.mid}
+                rows={hotIndustryRows}
+                onSeeAll={() => {}}
+                onRowClick={() => {}}
+                L={L}
+                C={C}
+              />
+            </>
+          )}
         </div>
       )}
 
@@ -3804,9 +3822,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     if (data._status === 'skipped') {
       return (
         <div style={{...cardStyle}}>
-          <div style={{fontSize:11, fontWeight:600, color:C.dark}}>Tushare 6000 数据</div>
+          <div style={{fontSize:11, fontWeight:600, color:C.dark}}>Tushare 15000 数据</div>
           <div style={{fontSize:10, color:C.mid, marginTop:6}}>
-            Tushare 6000 数据 — 仅 A 股 (HK ticker placeholder)
+            Tushare 15000 数据 — 仅 A 股 (HK ticker placeholder)
           </div>
         </div>
       );
@@ -3814,7 +3832,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     if (data._status === 'failed') {
       return (
         <div style={{...cardStyle}}>
-          <div style={{fontSize:11, fontWeight:600, color:C.dark}}>Tushare 6000 数据</div>
+          <div style={{fontSize:11, fontWeight:600, color:C.dark}}>Tushare 15000 数据</div>
           <div style={{fontSize:10, color:C.red, marginTop:6}}>
             {data._error || 'Tushare data unavailable'}
           </div>
@@ -3835,7 +3853,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <div style={cardStyle}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:10}}>
           <div>
-            <div style={{fontSize:11, fontWeight:600, color:C.dark}}>Tushare 6000 数据</div>
+            <div style={{fontSize:11, fontWeight:600, color:C.dark}}>Tushare 15000 数据</div>
             <div style={{fontSize:9, color:C.mid}}>refreshed at {data.fetched_at}</div>
           </div>
           <div style={{fontSize:9, color:C.mid, fontFamily:MONO}}>{ticker}</div>
@@ -3860,12 +3878,12 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
           </div>
         </div>
         {data.data?.forecast?._status === 'tier_locked' && (
-          <div style={{fontSize:10, color:C.gold, marginTop:8}}>
-            业绩预告 🔒 升级 Tushare 10000 解锁
+          <div style={{fontSize:10, color:C.mid, marginTop:8, padding:'4px 6px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, display:'inline-block'}}>
+            业绩预告 暂无数据
           </div>
         )}
         <div style={{fontSize:9, color:C.mid, marginTop:8}}>
-          Tushare 6000 数据完整度: {data.completeness_pct ?? 0}%
+          Tushare 15000 数据完整度: {data.completeness_pct ?? 0}%
         </div>
       </div>
     );
@@ -3878,6 +3896,13 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       return (
         <div style={{padding:'8px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:8, marginBottom:10, fontSize:10, color:C.mid}}>
           筹码分布 数据暂时不可用
+        </div>
+      );
+    }
+    if (data._status === 'ok' && Array.isArray(data.chips) && data.chips.length === 0) {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid, whiteSpace:'nowrap'}}>
+          筹码分布 · 当日无筹码数据 ({data.trade_date || '—'})
         </div>
       );
     }
@@ -4619,7 +4644,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
         <DeepResearchFinancials stock={s} L={L} lk={lk} C={C}/>
       </Card>
 
-      {/* Tushare 6000 data — KR2b 2026-05-02 */}
+      {/* Tushare 15000 data — KR2b 2026-05-02 */}
       {expandedStock === ticker && <TushareDataCard data={tushareData[ticker]} ticker={ticker} />}
       <ChipDistributionCard data={chipData[ticker]} ticker={ticker} currentPrice={liveData?.yahoo?.[ticker]?.price ?? s.price}/>
       <ConsensusForecastCard data={consensusData[ticker]} ticker={ticker}/>
@@ -4684,6 +4709,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
           <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:8, marginBottom:14}}>
             {Object.values(eqr.sections || {}).map((sec, i) => {
               const c = sec.rating==='HIGH' ? C.green : sec.rating==='MED-HIGH' ? C.blue : sec.rating==='MED' ? C.gold : C.red;
+              const ageDays = sec.data_age_days != null ? Number(sec.data_age_days) : null;
+              const ageKnown = ageDays != null && Number.isFinite(ageDays) && ageDays < 999;
               return (
                 <div key={i} style={{padding:'10px 12px', background:`${c}08`, border:`1px solid ${c}30`, borderRadius:7}}>
                   <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
@@ -4691,12 +4718,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
                     <span style={{...S.tag(c), fontSize:8}}>{sec.rating}</span>
                   </div>
                   <div style={{fontSize:9, color:C.mid, lineHeight:1.5}}>{sec.source}</div>
-                  {sec.data_age_days < 999 && (
-                    <div style={{fontSize:8, color: sec.data_age_days > 90 ? C.gold : C.mid, marginTop:3}}>
-                      {sec.data_age_days}d {L('old','天前')}
-                      {sec.data_age_days > 90 ? ' ⚠️' : ''}
-                    </div>
-                  )}
+                  <div style={{fontSize:8, color: ageKnown && ageDays > 90 ? C.gold : C.mid, marginTop:3}}>
+                    {ageKnown ? `${ageDays}d ${L('old','天前')}` : L('age unknown','日期未知')}
+                    {ageKnown && ageDays > 90 ? ' ⚠️' : ''}
+                  </div>
                   {sec.note && <div style={{fontSize:8, color:C.gold, marginTop:3, lineHeight:1.4}}>{sec.note}</div>}
                 </div>
               );
@@ -5922,7 +5947,7 @@ function SystemTab({ L, C }) {
         </div>
       ))}
       <div style={{marginTop:14, padding:12, background:C.soft, borderRadius:8, fontSize:10, color:C.mid, lineHeight:1.8}}>
-        <div><strong>VP Formula:</strong> 30% Expectation Gap + 25% Fundamental Acc + 20% Narrative Shift + 15% Low Coverage + 10% Catalyst Proximity</div>
+        <div><strong>VP Formula:</strong> 25% Expectation Gap + 25% Fundamental Acc + 20% Narrative Shift + 15% Low Coverage + 15% Catalyst Proximity</div>
         <div><strong>EV Formula:</strong> (P_win × Upside) − (P_loss × Downside)</div>
         <div><strong>Alpha Engines:</strong> A=Earnings Surprise · B=Multiple Expansion · C=Capital Revaluation</div>
       </div>
@@ -6524,8 +6549,8 @@ const ConsensusPanel = ({ ticker, liveData, L, lk, C }) => {
   if (!cons) return (
     <div style={{padding:14, textAlign:'center', color:C.mid, fontSize:11}}>
       <Database size={14} style={{marginBottom:4}}/><br/>
-      {L('No consensus data. Run python3 scripts/fetch_data.py to generate.',
-         '暂无一致预期数据。运行 python3 scripts/fetch_data.py 以生成。')}
+      {L('No consensus data — pipeline run pending. Auto-populates from scripts/fetch_consensus_forecast.py at 08:30 UTC daily.',
+         '暂无 consensus 数据 — 等待 pipeline 运行 (scripts/fetch_consensus_forecast.py, UTC 08:30 每日自动跑).')}
     </div>
   );
 
@@ -8404,6 +8429,7 @@ function ReverseDCF({ rdcf, L, C, open, toggle, egapScore }) {
   const gLabel      = isStdFcf ? L('FCF Growth','FCF增速') : L('Revenue Growth','营收增速');
   const baseLabel   = isStdFcf ? L('Base FCF','基准FCF') : L('Base Revenue','基准营收');
   const baseVal     = isStdFcf ? rdcf.fcf0 : rdcf.rev0;
+  const terminalG   = rdcf.terminal_growth ?? rdcf.g_terminal;
 
   const fmtBig = v => {
     if (v == null) return '—';
@@ -8490,7 +8516,7 @@ function ReverseDCF({ rdcf, L, C, open, toggle, egapScore }) {
             <MetricBox label={L('WACC','加权平均资本成本')} value={fmtPct(w.wacc)} sub={`β=${(w.beta||'—')}`} color={C.blue} C={C}/>
             <MetricBox label={baseLabel} value={fmtBig(baseVal)} sub={isStdFcf ? (rdcf.fcf_note || '') : `${L('Prof offset: ','盈利年差: ')}${rdcf.profitability_offset}yr`} color={C.mid} C={C}/>
             <MetricBox label={L('Market Cap','市值')} value={fmtBig(rdcf.market_cap)} sub="" color={C.mid} C={C}/>
-            <MetricBox label={L('Net Debt','净债务')} value={fmtBig(rdcf.net_debt)} sub={rdcf.net_debt > 0 ? L('debt net','净负债') : L('net cash','净现金')} color={rdcf.net_debt > 0 ? C.red : C.green} C={C}/>
+            <MetricBox label={L('Net Debt','净债务')} value={rdcf.net_debt < 0 ? fmtBig(Math.abs(rdcf.net_debt)) : fmtBig(rdcf.net_debt)} sub={rdcf.net_debt > 0 ? L('debt net','净负债') : L('net cash','净现金')} color={rdcf.net_debt > 0 ? C.red : C.green} C={C}/>
           </div>
 
           {/* WACC breakdown */}
@@ -8502,7 +8528,7 @@ function ReverseDCF({ rdcf, L, C, open, toggle, egapScore }) {
           {/* Model note */}
           <div style={{marginTop:8, fontSize:9, color:C.mid, lineHeight:1.6}}>
             {isBiotech && <span>🧬 {L('Biotech model: revenue CAGR → FCF via ','生物科技模型：营收CAGR → 终态FCF利润率 ')}{fmtPct(rdcf.terminal_fcf_margin)}</span>}
-            {isStdFcf  && <span>📊 {L('Standard FCF model · 5Y horizon · terminal g = ','标准FCF模型 · 5年预测期 · 终态增速 ')}{fmtPct(w?.erp ? rdcf.market_cap : null) || '2.5%'}</span>}
+            {isStdFcf  && <span>📊 {L('Standard FCF model · 5Y horizon · terminal g = ','标准FCF模型 · 5年预测期 · 终态增速 ')}{terminalG != null ? fmtPct(terminalG) : '2.5%'}</span>}
             <span style={{float:'right', fontSize:8}}>{L('Generated: ','生成: ')}{rdcf.generated_at?.slice(0,10) || '—'}</span>
           </div>
         </>
