@@ -28,6 +28,7 @@
 | `quant_factors` | Tushare Pro 量化因子 / Barra-like daily factor exposures **STRATEGIC** | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_quant_factors.py`, pipeline Step 2d.10) |
 | `limit_list` | Tushare Pro 涨停板单 / daily limit-up and limit-down board list | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide stocks | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_limit_list.py`, pipeline Step 2d.11) |
 | `concept_membership` | Tushare Pro concept board constituent stocks | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide concept membership | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_concept_detail.py`, pipeline Step 2d.12) |
+| `inst_research` | Tushare Pro 机构调研 / institutional survey records | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_inst_research.py`, pipeline Step 2d.13) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -82,6 +83,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | **`top_list` / candidates** ⭐ | **15000** | 龙虎榜 daily top-list appearances | Research large-fund-activity signal |
 | **`limit_list_d` / candidates** ⭐ | **15000** | 涨停/跌停/炸板 daily board list with 连板 context | Browse 封板专化 view |
 | **`concept` + `concept_detail` / candidates** ⭐ | **15000** | Concept list and constituent-stock mapping | Browse concept click-through / universe filtering |
+| **`stk_surv` / candidates** ⭐⭐ | **15000** | 机构调研 / per-company institutional survey records | Research 调研频次 trend; future VP confluence signal |
 
 ⭐⭐ = USP-critical
 ⭐ = Strong catalyst signal
@@ -600,7 +602,100 @@ against real thesis outcomes.
 
 ---
 
-#### 2.1.7 `concept_membership` — Tushare 15000-tier concept constituent mapping
+#### 2.1.7 `inst_research` — Tushare stk_surv (机构调研)
+
+**Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
+
+**Fetcher:** `scripts/fetch_inst_research.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.13, `continue-on-error: true`.
+
+**Output:** `public/data/inst_research/<ticker_safe>.json` where
+`300308.SZ` becomes `300308SZ.json`.
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Strategic role:** 调研频次 is a leading A-share signal because unusually
+frequent institutional visits often appear before material disclosure,
+earnings-revision cycles, or narrative rotation. The fetcher records the raw
+evidence only. A future KR will surface 调研频次 as a Research detail card and
+may add it as a VP confluence signal; no VP score weighting is implemented
+here.
+
+**Endpoint fallback order:**
+- `stk_surv` -> `stk_holdertrade` -> `surv_holdertrade` -> `investor_research`
+
+**Fetch strategy:** Per-watchlist ticker. HK tickers write `_status:
+"skipped_hk"`; US/non-A-share tickers write `_status: "skipped_us"`. A-share
+tickers query the last 90 calendar days `[unvalidated intuition; task window]`
+using `start_date` + `end_date` when accepted by the endpoint, then fall back
+to ticker-only fetches with Python-side date filtering. Calls sleep `0.16s`
+between Tushare API attempts, below the 15000-tier 500 req/min ceiling.
+
+**Schema (A-share success):**
+```json
+{
+  "_status": "ok",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T...",
+  "api_used": "stk_surv",
+  "_attempted_endpoints": ["stk_surv"],
+  "window_days": 90,
+  "surveys": [
+    {
+      "ts_code": "300308.SZ",
+      "surv_date": "20260503",
+      "inst_count": 12,
+      "surv_type": "现场调研",
+      "description": "..."
+    }
+  ],
+  "summary": {
+    "total_30d": 3,
+    "total_90d": 9,
+    "unique_inst_30d": 21,
+    "latest_date": "2026-05-03"
+  }
+}
+```
+
+**Schema (empty A-share window):**
+```json
+{
+  "_status": "empty",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T...",
+  "api_used": "stk_surv",
+  "_attempted_endpoints": ["stk_surv", "stk_holdertrade", "surv_holdertrade", "investor_research"],
+  "window_days": 90,
+  "surveys": [],
+  "summary": {
+    "total_30d": 0,
+    "total_90d": 0,
+    "unique_inst_30d": null,
+    "latest_date": null
+  }
+}
+```
+
+**Graceful degrade behavior:** The strict ticker-level states are `ok`,
+`empty`, `skipped_hk`, `skipped_us`, `api_error`, and `all_failed`. If every
+candidate endpoint fails, the file still writes `_status: "all_failed"`,
+`_attempted_endpoints`, `_error`, and `_need_tier: 15000` only when the
+Tushare error text indicates a permission / tier issue. Unexpected per-ticker
+normalization or write failures write `_status: "api_error"` and do not stop
+the remaining watchlist. The process exits 0 after per-ticker completion and
+exits 1 only when `TUSHARE_TOKEN` is missing.
+
+**Validation status:** Causal logic is valid because institutional survey
+records are direct observations of professional investor attention and
+company access events in the A-share market. Specific windows, future
+frequency thresholds, and any VP confluence weights remain `[unvalidated
+intuition]` until calibrated against real thesis outcomes or trade history.
+
+---
+
+#### 2.1.8 `concept_membership` — Tushare 15000-tier concept constituent mapping
 
 **Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
 

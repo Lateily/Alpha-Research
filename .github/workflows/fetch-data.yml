@@ -147,6 +147,16 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_concept_detail.py
 
+      # ── Step 2d.13: Tushare 机构调研 ──────────────────────────────────
+      # Tushare 15000-tier per-watchlist institutional research / survey records.
+      # Forward-compatible: endpoint candidates preserve schema with all_failed
+      # and _attempted_endpoints for empirical verification.
+      - name: "Step 2d.13: Fetch institutional research (Tushare 15000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_inst_research.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
@@ -285,7 +295,8 @@ jobs:
                  public/data/chip_distribution/*.json \
                  public/data/consensus_forecast/*.json \
                  public/data/lhb/*.json \
-                 public/data/quant_factors/*.json)
+                 public/data/quant_factors/*.json \
+                 public/data/inst_research/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 
