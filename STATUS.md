@@ -8,9 +8,9 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-03 (shift 7 complete — 6 KRs Tier-B Top 3 premium APIs full-stack)
-**Last shift:** auto-work-mode 2026-05-03-1506 (6 KRs: 量化因子 / 涨停板单 / 概念板块成分 — backend+frontend each)
-**HEAD:** `4e441c1` on auto/2026-04-30
+**Last updated:** 2026-05-03 (shift 8 complete — 8 KRs: Tier-B remaining 3 pairs full-stack + comprehensive K-line polish)
+**Last shift:** auto-work-mode 2026-05-03-1630 (8 KRs: 机构调研 / 游资 / 券商金股 — each backend+frontend; +TRUE candlestick K-line; +5-bug subplot polish)
+**HEAD:** `dac1793` on auto/2026-04-30
 **Context handoff status:** All work in git. Next session reads this file + recent commits + queued_tasks/.
 
 **Pending — Anthropic billing sync issue (auto-recovers in 1-24h):**
@@ -198,6 +198,104 @@ the next visual layer (microinteractions / dark mode sweep / mobile
 responsive); none of those block ship.
 
 ---
+
+### 2026-05-03 night — auto-work shift 8: Tier-B remaining + K-line comprehensive polish
+
+**Run id:** `2026-05-03-1630`. 8 KRs shipped, all PASSed T2 review.
+Junyan directives: (1) "shift 7 push 后直接起 shift 8" + "Tier-B 剩余" →
+KR1-KR6; (2) mid-shift "我想要全面修复 今天的时间还多" after screenshots
+exposed K-line + HK widespread bugs → KR7-KR8.
+
+3 Tier-B premium APIs full-stack deployed (backend + pipeline + doc + frontend):
+
+- **KR1+KR2 — 机构调研 (stk_surv)** (commits `b615745`, `ed9c89a`):
+  `scripts/fetch_inst_research.py` (~558 LOC) per-watchlist daily
+  fetcher. 4-endpoint fallback (stk_surv → stk_holdertrade →
+  surv_holdertrade → investor_research). 6-state schema + 90-day window.
+  Research detail adds InstResearchCard with "30天/90天/机构数 30天/最新调研"
+  + top-5 recent surveys. Strategic role: 调研频次 = leading A-share
+  signal precursor to material disclosure / earnings revisions.
+  KR1 caught a P2 in rev1 (T3 silently renamed workflow job key
+  `fetch-and-alert` → `fetch` to satisfy buggy test_gate spec) → reverted
+  in rev2. Spec-hygiene constraints (`do_not_modify_workflow_job_key`,
+  `raw_ticker_filename`, validate test_gate refs) added to KR3+ specs.
+  Pipeline Step 2d.13.
+
+- **KR3+KR4 — 游资数据 (top_inst)** (commits `9865646`, `aafb533`):
+  `scripts/fetch_top_inst.py` (~546 LOC) per-watchlist seat-level
+  (营业部) LHB activity. 30-day window. Complements shift 6 lhb
+  (stock-level summary) with seat-level WHO data. Research adds
+  TopInstCard with C.red-tinted top buyer / C.green-tinted top seller
+  mini-cards + recent appearances list with side-colored badges.
+  Strategic role: cross-stock 营业部 ranking → 游资 footprint analysis
+  (future KR). Pipeline Step 2d.14.
+
+- **KR5+KR6 — 券商金股 (broker_recommend)** (commits `6d7e1f5`, `d168d04`):
+  `scripts/fetch_broker_recommend.py` (~526 LOC) per-watchlist analyst
+  recommendations + target prices. 90-day window (longer — broker recs
+  update slower). Research adds BrokerRecommendCard with rating-color
+  helper (买入/增持→C.red, 中性→C.gold, 减持/卖出→C.green CN convention)
+  + avg target price + recent recommendations table. Strategic
+  cross-check with consensus_forecast (Tier-A KR shipped shift 6)
+  documented in DATA_SOURCE_REGISTRY §2.1.9. Pipeline Step 2d.15.
+
+**K-line comprehensive polish (KR7+KR8):**
+
+- **KR7 — TRUE candlestick K-line** (commit `d168d04` — race-bundled
+  with KR6 due to T3 file-modification race during T1 git add; T2
+  reviewed both retrospectively):
+  Custom Recharts Bar shape `CandlestickShape(C)` renders OHLC: vertical
+  wick (low→high) + filled body (open↔close). CN convention colors
+  (close>open=C.red up, close<open=C.green down, close=open=C.mid doji).
+  Replaces single-line close-price chart Junyan called "没有直筒的K线".
+  ChartDataWithInd gains `priceRange: [low, high]` field for Recharts
+  range-bar dataKey. MA + Bollinger Line overlays preserved on top of
+  candles. Tooltip shows OHLC + Vol + chg%.
+
+- **KR8 — Comprehensive K-line polish (5 bugs + api error msg)**
+  (commit `dac1793`, `src/Dashboard.jsx + api/price-chart.js`):
+  - (1) HK ticker leading-zero PRESERVED — `toYahooTicker` now
+    `padStart(5, '0')` (was strip+pad-to-4 from old Yahoo era).
+    Fixes 08219.HK and similar HK codes that previously failed to load.
+  - (2) MACD/KDJ/RSI subplots get graceful "数据不足 (需 ≥ N K线)"
+    hints when range too short (35/9/14 K-line minimums).
+  - (3) Volume strip YAxis defensively hidden via belt-and-suspenders
+    props (was leaking 922362753 numeric labels into visual margin).
+  - (4) Subplot Y-axis isolation — MACD explicit dataMin/dataMax,
+    KDJ/RSI fixed [0,100] ticks 0/50/100.
+  - (5) Time axis routed to BOTTOM of stack — main K-line XAxis hides
+    when any subplot enabled; bottom-most enabled subplot (rsi → kdj
+    → macd reverse priority in stack mode; active tab in tabs mode)
+    shows XAxis via `showXAxis` prop + `renderSubplotXAxis` helper.
+  - (6) Bonus: api/price-chart.js error message no longer hardcodes
+    misleading "Tushare 6000-tier failed" — now diagnostic about
+    TUSHARE_TOKEN env mismatch / quota / listing status.
+    NOTE: api/price-chart.js requires Vercel redeploy to take effect
+    (serverless, not GH Pages auto-deploy).
+
+**3 new Tushare-15000-tier data files now flowing through pipeline daily:**
+public/data/inst_research/<safe>.json, public/data/top_inst/<ticker>.json,
+public/data/broker_recommend/<ticker>.json.
+
+**Tier-B 6-KR sequence COMPLETE** (machine + frontend each for all 3):
+机构调研 / 游资 / 券商金股. Combined with shift 6 + 7, all Tier-A + Tier-B
+premium APIs are now full-stack deployed. Junyan's "数据源全部部署" ask
+is ~85% complete — Tier-C reference (5 sources) + Tier-D peripheral
+(3 sources) still queued.
+
+**Process notes (this shift):**
+- T2 watcher start gap (~30 min for KR1 review). Same pattern as shift 5.
+- KR1 P2 caught real spec-hygiene bug (test_gate referenced wrong job
+  key); fix applied + propagated to KR3+ as explicit constraints. All
+  subsequent KRs PASS first round.
+- T3 file-modification race during KR6 git add bundled KR7 candlestick
+  code into d168d04. Per git safety (no-amend), code stays. Mitigation:
+  shift 9+ should add `bin/git-safe-add.sh` guard checking
+  `.agent_tasks/in_progress/` before staging.
+- Mid-shift Junyan screenshots (~17:51 BST) exposed K-line + HK bugs
+  beyond original Tier-B scope → expanded KR set per "全面修复 A+"
+  directive.
+- Wall clock ~2h12m for 8 KRs.
 
 ### 2026-05-03 evening — auto-work shift 7: Tier-B Top 3 premium API deployment
 
