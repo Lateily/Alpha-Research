@@ -3550,6 +3550,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [lhbData, setLhbData] = useState({});
   const [quantFactorsData, setQuantFactorsData] = useState({});
   const [instResearchData, setInstResearchData] = useState({});
+  const [topInstData, setTopInstData] = useState({});
   useEffect(() => {
     if (!ticker) return;
     const base = DATA_BASE;
@@ -3574,6 +3575,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       .then(targets => Promise.all(targets.map(t =>
           fetchJson(`data/inst_research/${t.replace(/\./g, '')}.json`).then(data => ({ ticker: t, data }))
         )));
+    const topInstFetches = watchlistTargets
+      .then(targets => Promise.all(targets.map(t =>
+          fetchJson(`data/top_inst/${t}.json`).then(data => ({ ticker: t, data }))
+        )));
     Promise.all([
       fetchJson(`data/tushare/${ticker}.json`),
       fetchJson(`data/chip_distribution/${ticker}.json`),
@@ -3581,7 +3586,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       lhbFetches,
       quantFactorFetches,
       instResearchFetches,
-    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr]) => {
+      topInstFetches,
+    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
       setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
@@ -3594,6 +3600,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       const instResearchDataMap = { [ticker]: null };
       (instResearchArr || []).forEach(({ ticker: tk, data }) => { if (data) instResearchDataMap[tk] = data; });
       setInstResearchData(prev => ({ ...prev, ...instResearchDataMap }));
+      const topInstDataMap = { [ticker]: null };
+      (topInstArr || []).forEach(({ ticker: tk, data }) => { if (data) topInstDataMap[tk] = data; });
+      setTopInstData(prev => ({ ...prev, ...topInstDataMap }));
     });
   }, [ticker]);
 
@@ -4124,6 +4133,121 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     );
   };
 
+  const TopInstCard = ({ data, ticker }) => {
+    if (!data || data._status === 'skipped_hk' || data._status === 'skipped_us') return null;
+    if (data._status === 'empty') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid}}>
+          游资动向 · 30 天无龙虎榜活动
+        </div>
+      );
+    }
+    if (data._status === 'api_error' || data._status === 'all_failed') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid, whiteSpace:'nowrap'}}>
+          游资动向 数据暂时不可用
+        </div>
+      );
+    }
+    if (data._status !== 'ok') return null;
+
+    const summary = data.summary || {};
+    const appearances = Array.isArray(data.appearances) ? data.appearances : [];
+    const totalAppearances = finiteNumber(summary.total_appearances_30d) ?? appearances.length;
+    const uniqueSeats = finiteNumber(summary.unique_seats_30d) ?? 0;
+    const formatTopInstDate = (value) => {
+      const s = String(value || '');
+      if (s.length === 8) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+      return s || '—';
+    };
+    const formatTopInstAmount = (value) => {
+      const n = finiteNumber(value);
+      if (n == null) return '—';
+      const sign = n > 0 ? '+' : n < 0 ? '−' : '';
+      const abs = Math.abs(n);
+      if (abs >= 1e6) return `${sign}${(abs/1e6).toFixed(1)}M`;
+      if (abs >= 1e3) return `${sign}${(abs/1e3).toFixed(1)}K`;
+      return `${sign}${Math.round(abs)}`;
+    };
+    const truncateSeat = (value) => {
+      const s = String(value || '—');
+      return s.length > 20 ? `${s.slice(0, 20)}...` : s;
+    };
+    const sideMeta = (side) => {
+      const normalized = String(side || '').toLowerCase();
+      if (normalized === 'buy') return { label:'B', color:C.red, background:`${C.red}20`, amountColor:C.red };
+      if (normalized === 'sell') return { label:'S', color:C.green, background:`${C.green}20`, amountColor:C.green };
+      return { label:'—', color:C.mid, background:C.soft, amountColor:C.mid };
+    };
+    const SeatCard = ({ label, seat, color }) => {
+      const hasSeat = !!seat?.exalter;
+      return (
+        <div style={{
+          padding:8,
+          background:hasSeat ? `${color}10` : C.soft,
+          border:`1px solid ${hasSeat ? `${color}30` : C.border}`,
+          borderRadius:6,
+          minWidth:0,
+        }}>
+          <div style={{fontSize:9, color:C.mid, textTransform:'uppercase', marginBottom:4}}>{label}</div>
+          <div style={{fontSize:10, fontWeight:700, color:C.dark, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+            {hasSeat ? truncateSeat(seat.exalter) : '—'}
+          </div>
+          <div style={{fontFamily:MONO, color:hasSeat ? color : C.mid, fontSize:11, fontWeight:700, marginTop:3}}>
+            {hasSeat ? formatTopInstAmount(seat.net_buy_amount) : '—'}
+          </div>
+        </div>
+      );
+    };
+    const recentAppearances = [...appearances]
+      .sort((a, b) => String(b?.trade_date || '').localeCompare(String(a?.trade_date || '')))
+      .slice(0, 5);
+
+    return (
+      <div style={{padding:'10px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:12, boxShadow:SHADOW, marginBottom:10}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:8}}>
+          <div style={{fontWeight:700, fontSize:11, color:C.dark}}>游资动向</div>
+          <div style={{fontSize:9, color:C.mid, fontFamily:MONO, textAlign:'right'}}>
+            {formatTopInstDate(summary.latest_date) || ticker}
+          </div>
+        </div>
+        <div style={{display:'flex', alignItems:'baseline', gap:4, marginBottom:6}}>
+          <span style={{fontFamily:MONO, fontSize:18, color:C.dark, fontWeight:700}}>{totalAppearances}</span>
+          <span style={{fontSize:10, color:C.mid}}>次 (30天)</span>
+        </div>
+        <div style={{display:'flex', columnGap:14, fontSize:10, color:C.mid}}>
+          <span>营业部数: <span style={{fontFamily:MONO, color:C.dark}}>{uniqueSeats}</span></span>
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:8}}>
+          <SeatCard label='TOP BUYER' seat={summary.top_buyer_30d} color={C.red}/>
+          <SeatCard label='TOP SELLER' seat={summary.top_seller_30d} color={C.green}/>
+        </div>
+        {recentAppearances.length > 0 && (
+          <div style={{marginTop:10}}>
+            <div style={{fontSize:9, color:C.mid, textTransform:'uppercase', marginBottom:5}}>近期席位</div>
+            <div style={{display:'grid', rowGap:4}}>
+              {recentAppearances.map((appearance, i) => {
+                const meta = sideMeta(appearance.side);
+                return (
+                  <div key={`${appearance.trade_date || 'date'}-${appearance.exalter || 'seat'}-${i}`} style={{display:'grid', gridTemplateColumns:'74px 24px minmax(0, 1fr) 70px', gap:6, alignItems:'center', fontSize:10}}>
+                    <span style={{fontFamily:MONO, fontSize:10, color:C.dark}}>{formatTopInstDate(appearance.trade_date)}</span>
+                    <span style={{fontFamily:MONO, fontSize:9, color:meta.color, background:meta.background, borderRadius:3, padding:'1px 4px', textAlign:'center'}}>
+                      {meta.label}
+                    </span>
+                    <span style={{fontSize:10, color:C.dark, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{truncateSeat(appearance.exalter)}</span>
+                    <span style={{fontFamily:MONO, fontSize:10, color:meta.amountColor, textAlign:'right', fontWeight:700}}>
+                      {formatTopInstAmount(appearance.net_buy_amount)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Live price chart — auto-refreshes on 1D range */}
@@ -4307,6 +4431,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <LHBCard data={lhbData[ticker]} ticker={ticker}/>
       <QuantFactorsCard data={quantFactorsData[ticker]} ticker={ticker}/>
       <InstResearchCard data={instResearchData[ticker]} ticker={ticker}/>
+      <TopInstCard data={topInstData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
