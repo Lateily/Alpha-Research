@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-01T11:48:02.564832+00:00",
-  "date": "2026-05-01",
+  "generated_at": "2026-05-03T19:09:06.879173+00:00",
+  "date": "2026-05-03",
   "portfolio_value": 290075.0,
   "risk_pct_per_trade": 0.02,
   "sizing": [
@@ -18,7 +18,7 @@
       "rationale_z": "高信念：ATR止损5.0% · VP系数0.87× · 信号系数1.30× → 仓位25.0%（¥72,519）",
       "ticker": "9999.HK",
       "vp_score": 61,
-      "conf_score": 54,
+      "conf_score": 30,
       "is_held": true,
       "signals": [
         {
@@ -26,20 +26,20 @@
           "contribution": 14.0
         },
         {
-          "type": "VOLUME_BREAKOUT",
-          "contribution": 12.0
-        },
-        {
           "type": "MACD_GOLDEN_CROSS",
-          "contribution": 10.8
+          "contribution": 8.4
         },
         {
           "type": "MA20_BOUNCE",
-          "contribution": 9.6
+          "contribution": 4.8
         },
         {
           "type": "KDJ_GOLDEN_CROSS",
-          "contribution": 7.5
+          "contribution": 2.5
+        },
+        {
+          "type": "VOLUME_BREAKOUT",
+          "contribution": 0.0
         }
       ]
     },
@@ -49,20 +49,20 @@
       "stop_distance_pct": 5.0,
       "atr_pct": 2.5,
       "vp_multiplier": 0.6,
-      "conf_multiplier": 1.3,
+      "conf_multiplier": 1.27,
       "risk_cny": 5802.0,
       "conviction_tier": "HIGH CONVICTION",
       "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.60× · conf-mult 1.30× → 25.0% of portfolio (¥72,519)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.60× · 信号系数1.30× → 仓位25.0%（¥72,519）",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.60× · conf-mult 1.27× → 25.0% of portfolio (¥72,519)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.60× · 信号系数1.27× → 仓位25.0%（¥72,519）",
       "ticker": "002594.SZ",
       "vp_score": 42,
-      "conf_score": 11,
+      "conf_score": 8,
       "is_held": true,
       "signals": [
         {
           "type": "BULLISH_ALIGNMENT",
-          "contribution": 10.8
+          "contribution": 8.4
         }
       ]
     },
@@ -72,20 +72,20 @@
       "stop_distance_pct": 5.0,
       "atr_pct": 2.5,
       "vp_multiplier": 0.73,
-      "conf_multiplier": 1.27,
+      "conf_multiplier": 1.0,
       "risk_cny": 5802.0,
       "conviction_tier": "HIGH CONVICTION",
       "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.73× · conf-mult 1.27× → 25.0% of portfolio (¥72,519)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.73× · 信号系数1.27× → 仓位25.0%（¥72,519）",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.73× · conf-mult 1.00× → 25.0% of portfolio (¥72,519)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.73× · 信号系数1.00× → 仓位25.0%（¥72,519）",
       "ticker": "6160.HK",
       "vp_score": 51,
-      "conf_score": 8,
+      "conf_score": 0,
       "is_held": true,
       "signals": [
         {
           "type": "KDJ_OVERSOLD",
-          "contribution": 8.0
+          "contribution": 0.0
         }
       ]
     },
@@ -95,20 +95,20 @@
       "stop_distance_pct": 5.0,
       "atr_pct": 2.5,
       "vp_multiplier": 0.76,
-      "conf_multiplier": 1.27,
+      "conf_multiplier": 1.0,
       "risk_cny": 5802.0,
       "conviction_tier": "HIGH CONVICTION",
       "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.76× · conf-mult 1.27× → 25.0% of portfolio (¥72,519)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.76× · 信号系数1.27× → 仓位25.0%（¥72,519）",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.76× · conf-mult 1.00× → 25.0% of portfolio (¥72,519)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.76× · 信号系数1.00× → 仓位25.0%（¥72,519）",
       "ticker": "700.HK",
       "vp_score": 53,
-      "conf_score": 8,
+      "conf_score": 0,
       "is_held": true,
       "signals": [
         {
           "type": "KDJ_OVERSOLD",
-          "contribution": 8.0
+          "contribution": 0.0
         }
       ]
     },
@@ -135,11 +135,11 @@
         },
         {
           "type": "BULLISH_ALIGNMENT",
-          "contribution": 10.8
+          "contribution": 8.4
         },
         {
           "type": "MACD_DEATH_CROSS",
-          "contribution": -8.6
+          "contribution": -6.7
         }
       ]
     }

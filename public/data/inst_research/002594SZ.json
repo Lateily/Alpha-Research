@@ -1,0 +1,130 @@
+{
+  "_status": "ok",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T19:08:18Z",
+  "api_used": "stk_surv",
+  "_attempted_endpoints": [
+    "stk_surv"
+  ],
+  "window_days": 90,
+  "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260409",
+      "fund_visitors": "--",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "投资经理、Guo Xiaolin",
+      "org_type": "--",
+      "comp_rece": "吴越,黄悦",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260409",
+      "fund_visitors": "研究员 Alex Su",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "Value Partners",
+      "org_type": "基金管理公司",
+      "comp_rece": "吴越,黄悦",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260407",
+      "fund_visitors": "研究员 王思聪",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "国寿资产",
+      "org_type": "保险资产管理公司",
+      "comp_rece": "吴越,黄悦",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260407",
+      "fund_visitors": "汽车分析师 张睿希",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "华创证券",
+      "org_type": "证券公司",
+      "comp_rece": "吴越,黄悦",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260402",
+      "fund_visitors": "分析师 Tina Hou",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "高盛",
+      "org_type": "其它",
+      "comp_rece": "吴越,常恩铭",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260402",
+      "fund_visitors": "--",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "特定对象调研",
+      "rece_org": "受邀投资人60人",
+      "org_type": "--",
+      "comp_rece": "比亚迪集团董事会秘书、投资处总经理 李黔,比亚迪王朝总经理 路天",
+      "inst_count": 1,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260401",
+      "fund_visitors": "--",
+      "rece_place": "直播观看地址:路演中:https://www.roadshowchina.cn/w/meet/p5aN7p",
+      "rece_mode": "业绩说明会",
+      "rece_org": "网络直播,面向所有投资人",
+      "org_type": "--",
+      "comp_rece": "公司董事长、总裁 王传福,独立董事 张敏,高级副总裁、财务总监 周亚琳,董事会秘书、公司秘书 李黔,证券事务代表 吴越",
+      "inst_count": 2,
+      "surv_type": "业绩说明会",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260330",
+      "fund_visitors": "--",
+      "rece_place": "香港四季酒店",
+      "rece_mode": "特定对象调研",
+      "rece_org": "受邀投资人159人",
+      "org_type": "--",
+      "comp_rece": "比亚迪集团董事长、总裁、比亚迪电子主席 王传福,比亚迪电子行政总裁、执行董事 王念强,比亚迪集团高级副总裁、财务总监、比亚迪电子财务总监 周亚琳,比亚迪集团董事会秘书、比亚迪、比亚迪电子公司秘书 李黔",
+      "inst_count": 1,
+      "surv_type": "特定对象调研",
+      "description": null
+    }
+  ],
+  "summary": {
+    "total_30d": 4,
+    "total_90d": 8,
+    "unique_inst_30d": 8,
+    "latest_date": "2026-04-09"
+  }
+}

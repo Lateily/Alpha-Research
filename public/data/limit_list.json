@@ -1,0 +1,18 @@
+{
+  "fetched_at": "2026-05-03T19:07:08Z",
+  "trade_date": "20260504",
+  "tier": 15000,
+  "_status": "ok",
+  "api_used": "limit_list_d",
+  "_attempted_endpoints": [
+    "limit_list_d"
+  ],
+  "limit_up": [],
+  "limit_down": [],
+  "failed": [],
+  "summary": {
+    "lu_count": 0,
+    "ld_count": 0,
+    "fail_count": 0
+  }
+}

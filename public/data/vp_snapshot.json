@@ -1,9 +1,9 @@
 {
-  "date": "2026-05-01",
+  "date": "2026-05-03",
   "snapshots": [
     {
       "ticker": "300308.SZ",
-      "date": "2026-05-01",
+      "date": "2026-05-03",
       "vp_score": 56,
       "expectation_gap": 10,
       "fundamental_accel": 79,
@@ -44,11 +44,11 @@
         "our_growth": 34.1,
         "hyper_growth": true
       },
-      "engine_run_at": "2026-05-01T11:48:02.475417+00:00"
+      "engine_run_at": "2026-05-03T19:09:06.812922+00:00"
     },
     {
       "ticker": "700.HK",
-      "date": "2026-05-01",
+      "date": "2026-05-03",
       "vp_score": 53,
       "expectation_gap": 35,
       "fundamental_accel": 66,
@@ -89,11 +89,11 @@
         "our_growth": 18.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-01T11:48:02.476067+00:00"
+      "engine_run_at": "2026-05-03T19:09:06.813426+00:00"
     },
     {
       "ticker": "9999.HK",
-      "date": "2026-05-01",
+      "date": "2026-05-03",
       "vp_score": 61,
       "expectation_gap": 68,
       "fundamental_accel": 76,
@@ -134,11 +134,11 @@
         "our_growth": 15.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-01T11:48:02.476686+00:00"
+      "engine_run_at": "2026-05-03T19:09:06.813907+00:00"
     },
     {
       "ticker": "6160.HK",
-      "date": "2026-05-01",
+      "date": "2026-05-03",
       "vp_score": 51,
       "expectation_gap": 10,
       "fundamental_accel": 57,
@@ -179,11 +179,11 @@
         "our_growth": 35.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-01T11:48:02.477258+00:00"
+      "engine_run_at": "2026-05-03T19:09:06.814355+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "date": "2026-05-01",
+      "date": "2026-05-03",
       "vp_score": 42,
       "expectation_gap": 68,
       "fundamental_accel": 24,
@@ -224,7 +224,7 @@
         "our_growth": 28.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-01T11:48:02.477790+00:00"
+      "engine_run_at": "2026-05-03T19:09:06.814770+00:00"
     }
   ]
 }

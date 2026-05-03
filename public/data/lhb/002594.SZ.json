@@ -1,0 +1,22 @@
+{
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T19:07:03Z",
+  "trade_date": "20260504",
+  "tier": 15000,
+  "_status": "endpoint_unavailable",
+  "api_used": null,
+  "_attempted_endpoints": [
+    "top_list",
+    "lhb_detail",
+    "top_list_daily"
+  ],
+  "days_window": 30,
+  "appearances": [],
+  "summary": {
+    "total_appearances": 0,
+    "total_net_amount": 0,
+    "last_appearance_date": null,
+    "top_reason": null
+  },
+  "_error": "top_list: Exception: 必填参数, trade_date | lhb_detail: Exception: 请指定正确的接口名 | top_list_daily: Exception: 请指定正确的接口名"
+}

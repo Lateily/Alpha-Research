@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-01T11:48:02.774848+00:00",
+    "generated_at": "2026-05-03T19:09:07.063769+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -207,7 +207,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.1947834,
+            "actual": 3.1909878,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -340,7 +340,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.1106763,
+            "actual": 3.1068118,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -473,7 +473,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 7.319299,
+            "actual": 7.3228555,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -606,7 +606,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 4.1116347,
+            "actual": 4.03416,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,

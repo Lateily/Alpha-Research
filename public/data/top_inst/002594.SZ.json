@@ -1,0 +1,18 @@
+{
+  "_status": "empty",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T19:08:59Z",
+  "api_used": "top_inst",
+  "_attempted_endpoints": [
+    "top_inst"
+  ],
+  "window_days": 30,
+  "appearances": [],
+  "summary": {
+    "total_appearances_30d": 0,
+    "unique_seats_30d": 0,
+    "top_buyer_30d": null,
+    "top_seller_30d": null,
+    "latest_date": null
+  }
+}

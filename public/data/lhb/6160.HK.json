@@ -1,0 +1,18 @@
+{
+  "ticker": "6160.HK",
+  "fetched_at": "2026-05-03T19:07:03Z",
+  "trade_date": "20260504",
+  "tier": 15000,
+  "_status": "skipped",
+  "api_used": null,
+  "_attempted_endpoints": [],
+  "days_window": 30,
+  "appearances": [],
+  "summary": {
+    "total_appearances": 0,
+    "total_net_amount": 0,
+    "last_appearance_date": null,
+    "top_reason": null
+  },
+  "_reason": "not_available_tushare_hk_us"
+}

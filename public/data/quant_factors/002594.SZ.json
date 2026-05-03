@@ -1,0 +1,18 @@
+{
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T19:07:06Z",
+  "trade_date": "20260504",
+  "tier": 15000,
+  "_status": "endpoint_unavailable",
+  "api_used": null,
+  "_attempted_endpoints": [
+    "stk_factor_pro",
+    "stk_factor",
+    "stock_factor"
+  ],
+  "days_window": 30,
+  "factors": {},
+  "history": [],
+  "_factor_count": 0,
+  "_error": "stk_factor_pro: Exception: 参数校验失败, ts_code,trade_date至少输入一个参数 | stk_factor: Exception: 参数校验失败, ts_code,trade_date至少输入一个参数 | stock_factor: Exception: 请指定正确的接口名"
+}
