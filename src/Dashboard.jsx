@@ -2761,6 +2761,64 @@ function HeroCard({ title, icon, accent, rows, onSeeAll, onRowClick, L, C, hide=
   );
 }
 
+function LimitBoardPanel({ data, L, C }) {
+  if (!data || data._status !== 'ok') return null;
+
+  const summary = data.summary || {};
+  const limitUp = Array.isArray(data.limit_up) ? data.limit_up : [];
+  const limitDown = Array.isArray(data.limit_down) ? data.limit_down : [];
+  const failed = Array.isArray(data.failed) ? data.failed : [];
+  const drillToResearch = typeof data._onSelect === 'function' ? data._onSelect : () => {};
+
+  const formatFc = row => {
+    const fcRatio = Number(row?.fc_ratio || 0);
+    return `${Number.isFinite(fcRatio) ? fcRatio.toFixed(0) : '0'}fc`;
+  };
+
+  const rowsFor = rows => rows.slice(0, 5).map(row => ({
+    name: row.name || row.ts_code || '—',
+    ticker: row.ts_code,
+    value: row.theme || formatFc(row),
+  }));
+
+  const handleRowClick = s => { if (s?.ticker) drillToResearch(s.ticker); };
+
+  return (
+    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10}}>
+      <HeroCard
+        title={`${L('Limit Up','涨停')} ${summary.lu_count ?? limitUp.length}`}
+        icon={<Flame size={14}/>}
+        accent={'#EF4444'}
+        rows={rowsFor(limitUp)}
+        onSeeAll={() => {}}
+        onRowClick={handleRowClick}
+        L={L}
+        C={C}
+      />
+      <HeroCard
+        title={`${L('Limit Down','跌停')} ${summary.ld_count ?? limitDown.length}`}
+        icon={<TrendingDown size={14}/>}
+        accent={'#9333EA'}
+        rows={rowsFor(limitDown)}
+        onSeeAll={() => {}}
+        onRowClick={handleRowClick}
+        L={L}
+        C={C}
+      />
+      <HeroCard
+        title={`${L('Failed Boards','炸板')} ${summary.fail_count ?? failed.length}`}
+        icon={<AlertCircle size={14}/>}
+        accent={C.gold}
+        rows={rowsFor(failed)}
+        onSeeAll={() => {}}
+        onRowClick={handleRowClick}
+        L={L}
+        C={C}
+      />
+    </div>
+  );
+}
+
 function FilterPill({ text, onRemove, C }) {
   return (
     <span style={{display:'inline-flex', alignItems:'center', gap:4, padding:'3px 4px 3px 9px', borderRadius:11, background:`${C.blue}14`, color:C.blue, fontSize:11, fontWeight:600}}>
@@ -2790,6 +2848,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   const [polling,    setPolling]    = useState(true);
   const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const [capitalFlow, setCapitalFlow] = useState(null);
+  const [limitListData, setLimitListData] = useState(null);
   const pollRef  = useRef(null);
   const codesRef = useRef([]);
 
@@ -2932,6 +2991,13 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
         console.warn('[capital-flow] capital_flow.json fetch failed');
         setCapitalFlow({ _status: 'fetch_failed' });
       });
+  }, []);
+
+  useEffect(() => {
+    fetch('data/limit_list.json')
+      .then(r => r.json())
+      .then(setLimitListData)
+      .catch(() => setLimitListData({_status: 'fetch_failed'}));
   }, []);
 
   /* ── live quote polling — only visible stocks ────────────────────────────── */
@@ -3160,6 +3226,12 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
           />
         </div>
       )}
+
+      <LimitBoardPanel
+        data={limitListData ? {...limitListData, _onSelect:onSelect} : limitListData}
+        L={L}
+        C={C}
+      />
 
       {/* ── PRIMARY FILTER ROW ─────────────────────────────────────────────── */}
       <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 14px', marginBottom:8, display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
