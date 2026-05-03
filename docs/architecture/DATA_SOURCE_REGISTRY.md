@@ -29,6 +29,7 @@
 | `limit_list` | Tushare Pro 涨停板单 / daily limit-up and limit-down board list | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide stocks | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_limit_list.py`, pipeline Step 2d.11) |
 | `concept_membership` | Tushare Pro concept board constituent stocks | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide concept membership | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_concept_detail.py`, pipeline Step 2d.12) |
 | `inst_research` | Tushare Pro 机构调研 / institutional survey records | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_inst_research.py`, pipeline Step 2d.13) |
+| `top_inst` | Tushare Pro 游资数据 / 龙虎榜机构成交明细 | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_top_inst.py`, pipeline Step 2d.14) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -81,6 +82,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | **`cyq_chips` / candidates** ⭐ | **15000** | 筹码分布 by price level | Support/resistance inference (frontend KR4 queued) |
 | **`profit_forecast` / `forecast_predict` candidates** ⭐ | **15000** | Analyst EPS/revenue/profit forecast candidates | Research consensus-vs-our-view delta |
 | **`top_list` / candidates** ⭐ | **15000** | 龙虎榜 daily top-list appearances | Research large-fund-activity signal |
+| **`top_inst` / candidates** ⭐⭐ | **15000** | 龙虎榜机构 / 营业部成交明细 | Research seat-level 游资 footprint; complements `top_list` |
 | **`limit_list_d` / candidates** ⭐ | **15000** | 涨停/跌停/炸板 daily board list with 连板 context | Browse 封板专化 view |
 | **`concept` + `concept_detail` / candidates** ⭐ | **15000** | Concept list and constituent-stock mapping | Browse concept click-through / universe filtering |
 | **`stk_surv` / candidates** ⭐⭐ | **15000** | 机构调研 / per-company institutional survey records | Research 调研频次 trend; future VP confluence signal |
@@ -695,7 +697,112 @@ intuition]` until calibrated against real thesis outcomes or trade history.
 
 ---
 
-#### 2.1.8 `concept_membership` — Tushare 15000-tier concept constituent mapping
+#### 2.1.8 `top_inst` — Tushare top_inst (游资数据 / 龙虎榜机构成交明细)
+
+**Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
+
+**Fetcher:** `scripts/fetch_top_inst.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.14, `continue-on-error: true`.
+
+**Output:** `public/data/top_inst/<ticker>.json` using the raw watchlist ticker
+filename, e.g. `300308.SZ.json`. The dot is intentionally preserved to match
+`lhb`, `quant_factors`, `chip_distribution`, and `consensus_forecast`.
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Strategic role:** `top_inst` is the seat-level companion to `lhb` (§2.1.4).
+`lhb` answers whether a stock appeared on 龙虎榜 and why; `top_inst` answers
+WHO traded it by preserving 营业部 / institution rows (`exalter`, buy, sell,
+net buy, reason). The most-active 营业部 across multiple watchlist stocks can
+approximate a 游资 footprint, especially when the same branch repeatedly
+appears around high-volatility catalysts. This fetcher writes raw evidence
+only. A future KR will surface cross-stock 营业部 rankings as 游资 footprint
+analysis; no reputation classification or signal weighting is implemented
+here.
+
+**Endpoint fallback order:**
+- `top_inst` -> `lhb_inst` -> `lhb_top_inst` -> `top_list_inst`
+
+**Fetch strategy:** Per-watchlist ticker. HK tickers write `_status:
+"skipped_hk"`; US/non-A-share tickers write `_status: "skipped_us"`. A-share
+tickers query the last 30 calendar days `[unvalidated intuition; task window]`
+using `start_date` + `end_date` when accepted by the endpoint. If the endpoint
+does not support range params, the fetcher falls back to ticker-only fetches
+with Python-side date filtering, then daily `trade_date` calls when needed.
+Calls sleep `0.16s` between Tushare API attempts, below the 15000-tier 500
+req/min ceiling.
+
+**Schema (A-share success):**
+```json
+{
+  "_status": "ok",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T...",
+  "api_used": "top_inst",
+  "_attempted_endpoints": ["top_inst"],
+  "window_days": 30,
+  "appearances": [
+    {
+      "trade_date": "20260503",
+      "exalter": "中信证券上海溧阳路营业部",
+      "buy": 123000000.0,
+      "sell": 23000000.0,
+      "net_buy_amount": 100000000.0,
+      "side": "both",
+      "reason": "日涨幅偏离值达到7%的前5只证券"
+    }
+  ],
+  "summary": {
+    "total_appearances_30d": 1,
+    "unique_seats_30d": 1,
+    "top_buyer_30d": {"exalter": "中信证券上海溧阳路营业部", "net_buy_amount": 100000000.0},
+    "top_seller_30d": null,
+    "latest_date": "2026-05-03"
+  }
+}
+```
+
+**Schema (empty A-share window):**
+```json
+{
+  "_status": "empty",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T...",
+  "api_used": "top_inst",
+  "_attempted_endpoints": ["top_inst"],
+  "window_days": 30,
+  "appearances": [],
+  "summary": {
+    "total_appearances_30d": 0,
+    "unique_seats_30d": 0,
+    "top_buyer_30d": null,
+    "top_seller_30d": null,
+    "latest_date": null
+  }
+}
+```
+
+**Graceful degrade behavior:** The strict ticker-level states are `ok`,
+`empty`, `skipped_hk`, `skipped_us`, `api_error`, and `all_failed`. If every
+candidate endpoint fails, the file still writes `_status: "all_failed"`,
+`_attempted_endpoints`, `_error`, and `_need_tier: 15000` only when the
+Tushare error text indicates a permission / tier issue. Unexpected per-ticker
+normalization or write failures write `_status: "api_error"` and do not stop
+the remaining watchlist. The process exits 0 after per-ticker completion and
+exits 1 only when `TUSHARE_TOKEN` is missing.
+
+**Validation status:** Causal logic is valid because 龙虎榜机构成交明细 is
+exchange-defined seat-level trading evidence: it directly identifies which
+营业部 / institutions supplied unusual buy or sell flow. Specific seat amounts
+are source data from Tushare when available. The 30-day window, future
+cross-stock 游资 ranking thresholds, and any confluence weights remain
+`[unvalidated intuition]` until calibrated against real thesis outcomes or
+trade history.
+
+---
+
+#### 2.1.9 `concept_membership` — Tushare 15000-tier concept constituent mapping
 
 **Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
 
