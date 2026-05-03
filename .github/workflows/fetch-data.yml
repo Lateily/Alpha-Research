@@ -166,6 +166,15 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_top_inst.py
 
+      # ── Step 2d.15: Tushare 券商金股 / analyst recommendations ─────────────
+      # Tushare 15000-tier per-watchlist broker recommendations and target
+      # prices. Complements consensus_forecast with rating-level analyst signal.
+      - name: "Step 2d.15: Fetch broker recommendations / 券商金股 (Tushare 15000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_broker_recommend.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
@@ -306,7 +315,8 @@ jobs:
                  public/data/lhb/*.json \
                  public/data/quant_factors/*.json \
                  public/data/inst_research/*.json \
-                 public/data/top_inst/*.json)
+                 public/data/top_inst/*.json \
+                 public/data/broker_recommend/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 

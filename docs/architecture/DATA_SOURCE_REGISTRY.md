@@ -30,6 +30,7 @@
 | `concept_membership` | Tushare Pro concept board constituent stocks | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide concept membership | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_concept_detail.py`, pipeline Step 2d.12) |
 | `inst_research` | Tushare Pro 机构调研 / institutional survey records | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_inst_research.py`, pipeline Step 2d.13) |
 | `top_inst` | Tushare Pro 游资数据 / 龙虎榜机构成交明细 | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_top_inst.py`, pipeline Step 2d.14) |
+| `broker_recommend` | Tushare Pro 券商金股 / analyst stock recommendations | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_broker_recommend.py`, pipeline Step 2d.15) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -83,6 +84,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | **`profit_forecast` / `forecast_predict` candidates** ⭐ | **15000** | Analyst EPS/revenue/profit forecast candidates | Research consensus-vs-our-view delta |
 | **`top_list` / candidates** ⭐ | **15000** | 龙虎榜 daily top-list appearances | Research large-fund-activity signal |
 | **`top_inst` / candidates** ⭐⭐ | **15000** | 龙虎榜机构 / 营业部成交明细 | Research seat-level 游资 footprint; complements `top_list` |
+| **`broker_recommend` / `report_rc` / candidates** ⭐⭐ | **15000** | 券商金股 / analyst recommendation ratings and target prices | Research analyst-signal layer; complements `consensus_forecast` |
 | **`limit_list_d` / candidates** ⭐ | **15000** | 涨停/跌停/炸板 daily board list with 连板 context | Browse 封板专化 view |
 | **`concept` + `concept_detail` / candidates** ⭐ | **15000** | Concept list and constituent-stock mapping | Browse concept click-through / universe filtering |
 | **`stk_surv` / candidates** ⭐⭐ | **15000** | 机构调研 / per-company institutional survey records | Research 调研频次 trend; future VP confluence signal |
@@ -802,7 +804,114 @@ trade history.
 
 ---
 
-#### 2.1.9 `concept_membership` — Tushare 15000-tier concept constituent mapping
+#### 2.1.9 `broker_recommend` — Tushare 15000-tier 券商金股 / analyst recommendations
+
+**Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
+
+**Fetcher:** `scripts/fetch_broker_recommend.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.15, `continue-on-error: true`.
+
+**Output:** `public/data/broker_recommend/<ticker>.json` using the raw
+watchlist ticker filename, e.g. `300308.SZ.json`. The dot is intentionally
+preserved to match `top_inst`, `lhb`, `quant_factors`, `chip_distribution`,
+and `consensus_forecast`.
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Strategic role:** `broker_recommend` is the rating-level analyst-signal
+companion to `consensus_forecast` (§2.1.3). `consensus_forecast` preserves
+numerical EPS/revenue/profit forecasts; `broker_recommend` preserves
+analyst/broker opinion rows: recommendation text, target price, analyst,
+broker name, report id, and report title. Both feed the Research analyst
+signal layer. Future cross-check: when both are available, compare
+`broker_recommend.summary.avg_target_price` against `consensus_forecast`
+EPS-implied valuation as a Variant View precision input. No automatic
+investment decision, VP score weight, or broker reputation weighting is
+implemented here.
+
+**Endpoint fallback order:**
+- `broker_recommend` -> `report_rc` -> `analyst_rec` -> `broker_monthly`
+
+**Fetch strategy:** Per-watchlist ticker. HK tickers write `_status:
+"skipped_hk"`; US/non-A-share tickers write `_status: "skipped_us"`.
+A-share tickers query the last 90 calendar days `[unvalidated intuition; task
+window]` using `start_date` + `end_date` when accepted by the endpoint, then
+fall back to ticker-only fetches with Python-side date filtering. Calls sleep
+`0.16s` between Tushare API attempts, below the 15000-tier request ceiling.
+
+**Schema (A-share success):**
+```json
+{
+  "_status": "ok",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T...",
+  "api_used": "broker_recommend",
+  "_attempted_endpoints": ["broker_recommend"],
+  "window_days": 90,
+  "recommendations": [
+    {
+      "rec_date": "20260503",
+      "broker": "中信证券",
+      "analyst": "张三",
+      "recommendation": "买入",
+      "target_price": 123.4,
+      "report_id": "R123",
+      "report_title": "中际旭创深度报告"
+    }
+  ],
+  "summary": {
+    "total_90d": 1,
+    "unique_brokers_90d": 1,
+    "latest_recommendation": "买入",
+    "avg_target_price": 123.4,
+    "target_price_count": 1,
+    "latest_date": "2026-05-03"
+  }
+}
+```
+
+**Schema (empty A-share window):**
+```json
+{
+  "_status": "empty",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T...",
+  "api_used": "broker_recommend",
+  "_attempted_endpoints": ["broker_recommend"],
+  "window_days": 90,
+  "recommendations": [],
+  "summary": {
+    "total_90d": 0,
+    "unique_brokers_90d": 0,
+    "latest_recommendation": null,
+    "avg_target_price": null,
+    "target_price_count": 0,
+    "latest_date": null
+  }
+}
+```
+
+**Graceful degrade behavior:** The strict ticker-level states are `ok`,
+`empty`, `skipped_hk`, `skipped_us`, `api_error`, and `all_failed`. If every
+candidate endpoint fails, the file still writes `_status: "all_failed"`,
+`_attempted_endpoints`, `_error`, and `_need_tier: 15000` only when the
+Tushare error text indicates a permission / tier issue. Unexpected per-ticker
+normalization or write failures write `_status: "api_error"` and do not stop
+the remaining watchlist. The process exits 0 after per-ticker completion and
+exits 1 only when `TUSHARE_TOKEN` is missing.
+
+**Validation status:** Causal logic is valid because analyst ratings and
+target prices are direct sell-side opinion evidence and provide an explicit
+cross-check against numerical consensus forecast data. Specific
+recommendation rows and target prices are source data from Tushare when
+available. The 90-day window and any future target-price disagreement
+thresholds remain `[unvalidated intuition]` until calibrated against real
+thesis outcomes or trade history.
+
+---
+
+#### 2.1.10 `concept_membership` — Tushare 15000-tier concept constituent mapping
 
 **Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
 
