@@ -8,9 +8,9 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-03 (shift 6 complete — 9 KRs deploying premium APIs unlocked by Tushare 15000 顶配)
-**Last shift:** auto-work-mode 2026-05-03-1305 (9 KRs: 4 premium API full-stack integrations + design-002 polish toggle)
-**HEAD:** `3636df9` on auto/2026-04-30
+**Last updated:** 2026-05-03 (shift 7 complete — 6 KRs Tier-B Top 3 premium APIs full-stack)
+**Last shift:** auto-work-mode 2026-05-03-1506 (6 KRs: 量化因子 / 涨停板单 / 概念板块成分 — backend+frontend each)
+**HEAD:** `4e441c1` on auto/2026-04-30
 **Context handoff status:** All work in git. Next session reads this file + recent commits + queued_tasks/.
 
 **Pending — Anthropic billing sync issue (auto-recovers in 1-24h):**
@@ -198,6 +198,62 @@ the next visual layer (microinteractions / dark mode sweep / mobile
 responsive); none of those block ship.
 
 ---
+
+### 2026-05-03 evening — auto-work shift 7: Tier-B Top 3 premium API deployment
+
+**Run id:** `2026-05-03-1506`. 6 KRs shipped, all PASSed T2 review.
+Junyan directive: "一批一批吧 先做 tier B top 3" + 量化因子 strategic
+("我们要清洗之后形成我们自己的一套完整量化策略").
+
+Mid-shift event: T3 (Codex CLI) failed exit 1 (Junyan billing depleted).
+T1 wrote KR1 fetch_quant_factors.py directly as fallback. Junyan
+recharged Codex; subsequent KRs (KR2-KR6) routed through T3 normally.
+
+3 Tier-B premium APIs full-stack deployed (backend + pipeline + doc + frontend):
+
+- **KR1+KR2 — 量化因子 (stk_factor_pro) STRATEGIC** (commits `9e4388d`, `db1cece`):
+  `scripts/fetch_quant_factors.py` (~280 LOC) fetches Tushare-native
+  Barra-like factors per A-share watchlist daily. Per-ticker output
+  has `factors` (latest day) + `history` (30 days). Research detail
+  adds `QuantFactorsCard` 2-column grouped grid (Valuation/Activity/
+  Momentum/Risk/Size). Pipeline Step 2d.10. Strategic positioning:
+  data layer for future quant strategy KR (per Junyan).
+- **KR3+KR4 — 涨停板单 (limit_list)** (commits `79fec61`, `e9d3d34`):
+  `scripts/fetch_limit_list.py` (~280 LOC, single-file output)
+  fetches today's 涨停/跌停/炸板 market-wide. Browse adds
+  LimitBoardPanel 3-card view (#EF4444 涨停 / #9333EA 跌停 / C.gold 炸板)
+  below capital flow panel. Pipeline Step 2d.11.
+- **KR5+KR6 — 概念板块成分 (concept_detail)** (commits `4f8fbdc`, `4e441c1`):
+  `scripts/fetch_concept_detail.py` (~280 LOC) fetches concept→stock
+  membership with two-tier fallback (bulk endpoint preferred; per-concept
+  fallback if bulk fails). Single output public/data/concept_membership.json
+  capped at 200 members per concept. Browse Hot Concepts panel (KR2
+  shift 6) now has CLICK-THROUGH: clicking a concept name filters Browse
+  table to that concept's member stocks; concept filter pill in active
+  pill bar. Pipeline Step 2d.12.
+
+**6 new Tushare-15000-tier data files / surfaces flowing through pipeline:**
+- public/data/quant_factors/<ticker>.json (per-watchlist daily factors)
+- public/data/limit_list.json (market-wide daily 封板)
+- public/data/concept_membership.json (concept→stock mapping)
+
+Plus KR4 reuses HeroCard component for limit board panel; KR6 adds
+~80 LOC of click-through wiring + pill bar integration.
+
+**Tier-B remaining (queued for next shift):**
+- 机构调研 (institutional research frequency) — USP-strength signal
+- 游资数据 (top retail/hot money brokers) — sentiment signal
+- 券商金股 (broker recommendations) — analyst-level signal
+- Plus Tier-C: 质押 / 解禁 / 回购 / 增减持 / 融资融券 (reference data)
+  + ETF / 期权 / 宏观 (peripheral data sources)
+
+**Process notes (this shift):**
+- T3 Codex outage at ~15:07 BST (billing depleted) → T1-codegen fallback
+  used for KR1. Junyan recharged ~15 min later; KR2-KR6 normal flow.
+- Pattern from KR-extra1 + KR3 + KR-extra2 + KR5 (single-file vs per-ticker
+  output) is now well-established. Backend fetcher template stable.
+- T2 caught zero substantive issues this shift (all 6 KRs PASS first round).
+  Pattern is mature; throughput is high.
 
 ### 2026-05-03 afternoon — auto-work shift 6: premium API deployment (Tier-A + B start)
 
