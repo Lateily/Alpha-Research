@@ -8,9 +8,9 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-03 (shift 8 complete — 8 KRs: Tier-B remaining 3 pairs full-stack + comprehensive K-line polish)
-**Last shift:** auto-work-mode 2026-05-03-1630 (8 KRs: 机构调研 / 游资 / 券商金股 — each backend+frontend; +TRUE candlestick K-line; +5-bug subplot polish)
-**HEAD:** `dac1793` on auto/2026-04-30
+**Last updated:** 2026-05-03 (shift 9 complete — 11-bug frontend bundle from comprehensive platform audit; deep research API verified working)
+**Last shift:** auto-work-mode 2026-05-03-2153 (1 KR: 11-bug bundle — Tushare wording / VP weights / rDCF terminal-g / net-debt formatting / chip empty-state / capital flow empty-state / K-line subplot polish / api per-market error)
+**HEAD:** `46223ad` on auto/2026-04-30
 **Context handoff status:** All work in git. Next session reads this file + recent commits + queued_tasks/.
 
 **Pending — Anthropic billing sync issue (auto-recovers in 1-24h):**
@@ -198,6 +198,73 @@ the next visual layer (microinteractions / dark mode sweep / mobile
 responsive); none of those block ship.
 
 ---
+
+### 2026-05-03 late night — auto-work shift 9: comprehensive platform audit + 11-bug frontend bundle
+
+**Run id:** `2026-05-03-2153`. 1 KR shipped, T2 PASS first round.
+Junyan directive: "完整浏览 系统性找前端显示bug 然后统一修复" + "路径A单 KR".
+
+**Mid-shift discovery flow** (audit drove the KR scope):
+- Browser-driven systematic audit of all 11 sidebar tabs (Browse / Desk /
+  Research / Scanner / Flows / Earnings / Portfolio / Backtest / Morning /
+  Tracker / System) via Claude in Chrome MCP.
+- Discovered 7 of 10 expected Tushare 15000-tier data files were 404
+  → manually triggered fetch-data.yml (cron is weekday-only; today Sunday
+  no auto-run since Friday 2026-05-01).
+- Pipeline ran but ALL 7 per-ticker JSONs returned `endpoint_unavailable`
+  / `all_failed` with Tushare error "您的token不对". Root cause: GitHub
+  Actions Secret TUSHARE_TOKEN not updated (Junyan only updated Vercel
+  env earlier, not the separate GH Secrets storage).
+- Junyan updated GH Secret → re-triggered pipeline → 7/10 endpoints OK
+  (machine调研 / 券商金股 / consensus / chip / limit_list / concept /
+  inst_research). Remaining 3 (quant_factors / lhb / capital_flow concept-
+  level) still endpoint_unavailable — likely Tushare-account-side API
+  permissions need separate activation; Junyan deferred to handle later.
+- Deep Research test failed with "Invalid API key" → Junyan updated
+  Vercel ANTHROPIC_API_KEY env + redeployed → Deep Research now generates
+  multi-pass analysis (verified end-to-end live).
+
+**KR1 — 11-bug frontend bundle** (commit `46223ad`, src/Dashboard.jsx +
+api/price-chart.js, +101/-71):
+
+1. TushareDataCard 'Tushare 6000 数据' → '15000 数据' (5 locations)
+2. '业绩预告 🔒 升级 Tushare 10000 解锁' → neutral '业绩预告 暂无数据'
+3. Consensus card empty-state: 'Run scripts/fetch_data.py' → references
+   actual fetch_consensus_forecast.py + 08:30 UTC pipeline timing
+4. System tab VP Formula 30/25/20/15/10 → 25/25/20/15/15 (matches CLAUDE.md)
+5. rDCF terminal g 95491240755200% → safe 2.5% fallback (was passing
+   market_cap into fmtPct)
+6. NET DEBT '¥-10.5B net cash' → '¥10.5B net cash' (abs when negative)
+7. 'Consensus 999 days old' sentinel → 'age unknown' when ≥999 placeholder
+8. K-line subplot polish: (8a) Volume Y-axis tick label leak fixed via
+   overflow:hidden wrapper; (8b) MACD/Volume visual ambiguity fixed via
+   1px C.border top separator on subplots
+9. api/price-chart.js error per-market wording: A/HK Tushare-specific;
+   US Yahoo Finance-specific (US doesn't use Tushare)
+10. ChipDistributionCard: distinguish ok-but-empty-chips from error →
+    render '筹码分布 · 当日无筹码数据' empty-state hint
+11. Browse Hot Concepts/Industries: render empty-state hint instead of
+    silent hide when both arrays 0 length
+
+**Process notes (this shift):**
+- T2 PASS first round (zero substantive findings); 1 P3 advisory noted
+  for out-of-bundle 6000-tier residual in K-line tier_locked banner.
+- Three Vercel/GitHub env divergence bugs surfaced in audit:
+  - TUSHARE_TOKEN: Vercel env vs GitHub Secrets are SEPARATE storage —
+    Junyan must update both for full system function.
+  - ANTHROPIC_API_KEY: Vercel env required redeploy after update.
+  - Both have been documented as ops gotchas going forward.
+- Deep Research feature now confirmed working end-to-end (multi-pass
+  analysis: "Analyzing macro context" → "Scoring VP decomposition" →
+  full report).
+
+**Deferred (next shift candidates):**
+- Tushare 3-API permission investigation (quant_factors / lhb /
+  moneyflow_cnt) — Junyan account-side ops
+- 6000-tier residual fix in K-line banner (P3 from T2 review)
+- Tier-C reference data deployment (质押/解禁/回购/增减持/融资融券)
+- Strategic — Bridge 1 Thesis quality work (per Junyan: "数据源全部
+  部署完之后 就得开始推进研究框架质量的工作了")
 
 ### 2026-05-03 night — auto-work shift 8: Tier-B remaining + K-line comprehensive polish
 
