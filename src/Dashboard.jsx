@@ -2848,6 +2848,8 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   const [polling,    setPolling]    = useState(true);
   const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const [capitalFlow, setCapitalFlow] = useState(null);
+  const [conceptMembership, setConceptMembership] = useState(null);
+  const [conceptFilter, setConceptFilter] = useState('');
   const [limitListData, setLimitListData] = useState(null);
   const pollRef  = useRef(null);
   const codesRef = useRef([]);
@@ -2871,6 +2873,19 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   }, [masterList]);
 
   const advancedActiveCount = React.useMemo(() => [!!industry, (peMin !== '' || peMax !== ''), (pctMin !== '' || pctMax !== '')].filter(Boolean).length, [industry, peMin, peMax, pctMin, pctMax]);
+
+  const conceptToTickers = React.useMemo(() => {
+    const map = new Map();
+    for (const concept of conceptMembership?.concepts || []) {
+      if (!concept?.name) continue;
+      const tickers = map.get(concept.name) || new Set();
+      for (const member of concept.members || []) {
+        if (member?.ts_code) tickers.add(member.ts_code);
+      }
+      map.set(concept.name, tickers);
+    }
+    return map;
+  }, [conceptMembership]);
 
   const toEMCode = s => {
     if (!s?.code) return null;
@@ -2942,6 +2957,10 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     if (dirFilter === 'dn') arr = arr.filter(s => (s.change_pct ?? 0) < 0);
     if (dirFilter === 'lu') arr = arr.filter(s => (s.change_pct ?? 0) >= 9.9);
     if (dirFilter === 'ld') arr = arr.filter(s => (s.change_pct ?? 0) <= -9.9);
+    if (conceptFilter) {
+      const tickers = conceptToTickers.get(conceptFilter);
+      arr = arr.filter(s => tickers?.has(s.ticker));
+    }
     // Phase 1 universe browser filters (KR-B)
     if (industry) arr = arr.filter(s => s.industry === industry);
     const peMinN = parseFloat(peMin);
@@ -2970,13 +2989,13 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [masterList, mktFilter, searchQ, dirFilter, sortBy, sortDir, liveQuotes,
-      industry, peMin, peMax, pctMin, pctMax]);
+      industry, peMin, peMax, pctMin, pctMax, conceptFilter, conceptToTickers]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const visible    = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   // reset to page 0 on filter change
-  useEffect(() => { setPage(0); }, [mktFilter, dirFilter, searchQ, industry, peMin, peMax, pctMin, pctMax]);
+  useEffect(() => { setPage(0); }, [mktFilter, dirFilter, searchQ, industry, peMin, peMax, pctMin, pctMax, conceptFilter]);
 
   useEffect(() => { if (advancedActiveCount > 0) setAdvancedExpanded(true); }, [advancedActiveCount]);
 
@@ -2990,6 +3009,19 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
       .catch(() => {
         console.warn('[capital-flow] capital_flow.json fetch failed');
         setCapitalFlow({ _status: 'fetch_failed' });
+      });
+  }, []);
+
+  useEffect(() => {
+    fetch('data/concept_membership.json')
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(setConceptMembership)
+      .catch(() => {
+        console.warn('[concept-membership] concept_membership.json fetch failed');
+        setConceptMembership({ _status: 'fetch_failed', concepts: [] });
       });
   }, []);
 
@@ -3204,7 +3236,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
               value: formatFlowYuan(c.net_inflow_yuan),
             }))}
             onSeeAll={() => {}}
-            onRowClick={() => {}}
+            onRowClick={(s) => { if (s?.name) setConceptFilter(s.name); }}
             L={L}
             C={C}
             hide={!capitalFlow.hot_concepts || capitalFlow.hot_concepts.length === 0}
@@ -3331,11 +3363,14 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
       )}
 
       {/* ── ACTIVE FILTER PILLS ────────────────────────────────────────────── */}
-      {(searchQ || advancedActiveCount > 0) && (
+      {(searchQ || conceptFilter || advancedActiveCount > 0) && (
         <div style={{display:'flex', gap:6, padding:'6px 14px', marginBottom:8, alignItems:'center', flexWrap:'wrap', fontSize:11}}>
           <span style={{fontSize:10, color:C.mid, fontWeight:600}}>{L('Filtering:','正在筛选:')}</span>
           {searchQ && (
             <FilterPill text={`${L('Search:','搜索:')} ${searchQ}`} onRemove={() => setSearchQ('')} C={C}/>
+          )}
+          {conceptFilter && (
+            <FilterPill text={`概念: ${conceptFilter}`} onRemove={() => setConceptFilter('')} C={C}/>
           )}
           {industry && (
             <FilterPill text={`${L('Industry','行业')}: ${industry}`} onRemove={() => setIndustry('')} C={C}/>
@@ -3347,7 +3382,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
             <FilterPill text={`Δ%: ${pctMin || '?'}–${pctMax || '?'}`} onRemove={() => { setPctMin(''); setPctMax(''); }} C={C}/>
           )}
           <button style={{height:22, fontSize:10, padding:'0 8px', borderRadius:11, background:'transparent', border:`1px solid ${C.border}`, color:C.mid, cursor:'pointer', marginLeft:4}}
-            onClick={() => { setSearchQ(''); setIndustry(''); setPeMin(''); setPeMax(''); setPctMin(''); setPctMax(''); }}>
+            onClick={() => { setSearchQ(''); setConceptFilter(''); setIndustry(''); setPeMin(''); setPeMax(''); setPctMin(''); setPctMax(''); }}>
             {L('Clear all','清除全部')}
           </button>
         </div>
@@ -3375,7 +3410,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
               <div style={{fontSize:14, color:C.dark, fontWeight:600, marginBottom:14}}>
                 {L('No stocks match the current filters','没有股票匹配当前筛选')}
               </div>
-              <button onClick={() => { setSearchQ(''); setIndustry(''); setPeMin(''); setPeMax(''); setPctMin(''); setPctMax(''); }}
+              <button onClick={() => { setSearchQ(''); setConceptFilter(''); setIndustry(''); setPeMin(''); setPeMax(''); setPctMin(''); setPctMax(''); }}
                 style={{padding:'8px 18px', fontSize:12, borderRadius:6, background:'transparent', border:`1px solid ${C.blue}`, color:C.blue, cursor:'pointer', fontWeight:600}}>
                 {L('Clear all filters →','清除所有筛选 →')}
               </button>
