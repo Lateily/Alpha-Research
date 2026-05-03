@@ -596,6 +596,137 @@ const FinCompare = ({ fin, peerAvg, C }) => {
   );
 };
 
+const THESIS_QC_CHECKS = [
+  'step_1_specific_not_vague',
+  'step_2_no_unfounded_leaps',
+  'step_3_evidence_includes_quant_qual_contrarian',
+  'step_3_contrarian_view_has_what_changes_our_mind',
+  'step_4_has_specific_numbers_and_horizon',
+  'step_5_observable',
+  'step_6_observable',
+  'step_7_one_sentence_tagline',
+  'step_8_phase_timing_concrete_not_boilerplate',
+  'step_8_early_signs_observable',
+  'step_8_catalyst_for_reversion_predatable',
+  'step_8_position_sizing_curve_monotonic',
+  'reward_to_risk_at_least_threshold',
+];
+
+const getThesisQualitySeverity = (quality) => {
+  const severity = String(quality?.severity || 'WARN').toUpperCase();
+  return ['PASS', 'WARN', 'FAIL'].includes(severity) ? severity : 'WARN';
+};
+
+const getThesisQualityColor = (quality, C) => {
+  const severity = getThesisQualitySeverity(quality);
+  if (severity === 'PASS') return C.green;
+  if (severity === 'FAIL') return C.red;
+  return C.gold;
+};
+
+const ThesisQualityBadge = ({ quality, C }) => {
+  if (!quality || quality.error === 'parse_failed') return null;
+  const severity = getThesisQualitySeverity(quality);
+  const color = getThesisQualityColor(quality, C);
+  const scoreNum = finiteNumber(quality.score);
+  const score = scoreNum == null ? '—' : Math.max(0, Math.min(100, Math.round(scoreNum)));
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        quality.onToggle?.();
+      }}
+      title="Open thesis quality details"
+      style={{
+        border:`1px solid ${color}30`,
+        background:`${color}10`,
+        color,
+        borderRadius:999,
+        padding:'5px 10px',
+        minWidth:66,
+        cursor:'pointer',
+        display:'flex',
+        flexDirection:'column',
+        alignItems:'center',
+        gap:1,
+        lineHeight:1,
+      }}
+    >
+      <span style={{display:'flex', alignItems:'baseline', gap:2}}>
+        <span style={{fontFamily:MONO, fontSize:16, fontWeight:900}}>{score}</span>
+        <span style={{fontFamily:MONO, fontSize:9, fontWeight:700, opacity:0.8}}>/100</span>
+      </span>
+      <span style={{fontFamily:MONO, fontSize:8, fontWeight:900, letterSpacing:'0.08em'}}>{severity}</span>
+    </button>
+  );
+};
+
+const QCFindingsPanel = ({ quality, C, onClose }) => {
+  if (!quality) return null;
+  const results = quality.qcChecklistResults || {};
+  const missingFields = Array.isArray(quality.missingFields) ? quality.missingFields : [];
+  const parseFailed = quality.error === 'parse_failed';
+  const repairAttempted = quality.repairAttempted === true;
+  return (
+    <div style={{marginTop:12, padding:12, background:C.soft, border:`1px solid ${C.border}`, borderRadius:8}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, marginBottom:10}}>
+        <div>
+          <div style={{fontSize:11, fontWeight:800, color:C.dark, fontFamily:MONO}}>QC FINDINGS</div>
+          <div style={{fontSize:9, color:C.mid, marginTop:2}}>
+            Score {finiteNumber(quality.score) == null ? '—' : Math.round(quality.score)}/100 · {getThesisQualitySeverity(quality)}
+          </div>
+        </div>
+        <button type="button" onClick={onClose} style={{border:`1px solid ${C.border}`, background:C.card, color:C.mid, borderRadius:5, padding:'3px 8px', fontSize:10, cursor:'pointer'}}>
+          Close
+        </button>
+      </div>
+
+      {parseFailed && (
+        <div style={{padding:'7px 10px', background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:6, color:C.red, fontSize:10, marginBottom:10, lineHeight:1.5}}>
+          LLM output could not be parsed as valid JSON. Re-generate the thesis before relying on this report.
+        </div>
+      )}
+
+      <table style={{width:'100%', borderCollapse:'collapse', fontSize:10, marginBottom:10}}>
+        <tbody>
+          {THESIS_QC_CHECKS.map((name) => {
+            const passed = results[name] === true;
+            const color = passed ? C.green : C.red;
+            return (
+              <tr key={name} style={{borderBottom:`1px solid ${C.border}`}}>
+                <td style={{padding:'5px 6px', width:24, color, fontWeight:900, fontFamily:MONO}}>
+                  {passed ? '✓' : '✗'}
+                </td>
+                <td style={{padding:'5px 6px', color:C.dark, fontFamily:MONO, wordBreak:'break-word'}}>
+                  {name}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {missingFields.length > 0 && (
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:9, color:C.mid, fontWeight:700, textTransform:'uppercase', marginBottom:5}}>Missing fields</div>
+          <div style={{display:'flex', flexDirection:'column', gap:4}}>
+            {missingFields.map((field, i) => (
+              <span key={`${field}-${i}`} style={{fontSize:10, color:C.gold, fontFamily:MONO, background:`${C.gold}10`, border:`1px solid ${C.gold}30`, borderRadius:4, padding:'3px 6px', wordBreak:'break-word'}}>
+                {field}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{fontSize:10, color:C.mid}}>
+        Repair attempted: <span style={{fontFamily:MONO, color:repairAttempted ? C.gold : C.dark, fontWeight:700}}>{repairAttempted ? 'yes' : 'no'}</span>
+      </div>
+    </div>
+  );
+};
+
 /* ── MINI COMPONENTS ─────────────────────────────────────────────────────── */
 const Tag = ({ text, c, C }) => <span style={S.tag(c)}>{text}</span>;
 const EQR = ({ lvl, C }) => {
@@ -614,7 +745,7 @@ const Pill = ({ n, label, c, C }) => (
 );
 
 // Jason: Bloomberg/CIQ-style Card — terminal aesthetic with accent left-bar on header
-const Card = ({ title, sub, open, onToggle, children, C }) => (
+const Card = ({ title, sub, open, onToggle, children, C, headerRight }) => (
   <div style={{
     background: C.card,
     borderRadius: 10,
@@ -638,13 +769,16 @@ const Card = ({ title, sub, open, onToggle, children, C }) => (
                              letterSpacing:'0.01em', textTransform:'none',
                              fontFamily:"'Inter',system-ui,sans-serif"}}>{sub}</div>}
       </div>
-      {onToggle && (
-        <ChevronDown size={14} style={{
-          color:C.mid, flexShrink:0,
-          transform:open?'rotate(180deg)':'',
-          transition:'transform .2s',
-        }}/>
-      )}
+      <div style={{display:'flex', alignItems:'center', gap:8, marginLeft:10}}>
+        {headerRight}
+        {onToggle && (
+          <ChevronDown size={14} style={{
+            color:C.mid, flexShrink:0,
+            transform:open?'rotate(180deg)':'',
+            transition:'transform .2s',
+          }}/>
+        )}
+      </div>
     </div>
     {open !== false && (
       <div style={{...S.cardBd, color:C.dark}}>{children}</div>
@@ -3640,7 +3774,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData, scissorsData, liData, egapScores }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, onGenerateResearch, signalsData, scissorsData, liData, egapScores }) {
   const [tushareData, setTushareData] = useState({});
   const [chipData, setChipData] = useState({});
   const [consensusData, setConsensusData] = useState({});
@@ -3650,6 +3784,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [topInstData, setTopInstData] = useState({});
   const [brokerRecommendData, setBrokerRecommendData] = useState({});
   const [pledgeData, setPledgeData] = useState({});
+  const [qualityPanelOpen, setQualityPanelOpen] = useState(false);
   useEffect(() => {
     if (!ticker) return;
     const base = DATA_BASE;
@@ -3720,17 +3855,29 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       setPledgeData(prev => ({ ...prev, ...pledgeDataMap }));
     });
   }, [ticker]);
+  useEffect(() => {
+    setQualityPanelOpen(false);
+  }, [ticker]);
 
   const allS = stocksMap || STOCKS;
   if (!ticker || !allS[ticker]) return <div style={{color:C.mid}}>{L('Select a stock','选择股票')}</div>;
   const s = allS[ticker];
+  const thesisQuality = s._quality && typeof s._quality === 'object' ? s._quality : null;
+  const thesisQualitySeverity = getThesisQualitySeverity(thesisQuality);
+  const thesisQualityParseFailed = thesisQuality?.error === 'parse_failed';
+  const thesisQualityForBadge = thesisQuality && !thesisQualityParseFailed
+    ? { ...thesisQuality, onToggle: () => setQualityPanelOpen(v => !v) }
+    : null;
+  const showThesisQualityWarning = !!thesisQuality && thesisQualitySeverity !== 'PASS' && !thesisQualityParseFailed;
+  const rewardToRiskWeak = thesisQuality?.qcChecklistResults?.reward_to_risk_below_threshold === true;
   const eqr      = eqrData?.[ticker]  || null;
   const rdcf     = rdcfData?.[ticker] || null;
   const scissors = scissorsData?.[ticker] || null;
   // Deep Research stocks have no live data files — only AI-generated fields
   const isDynamic = !STOCKS[ticker] && !!allS[ticker];
 
-  const decompData = Object.entries(s.decomp).map(([k,v])=>({name:k.replace(/_/g,' '), value:v.s}));
+  const decompEntries = Object.entries(s.decomp || {});
+  const decompData = decompEntries.map(([k,v])=>({name:k.replace(/_/g,' '), value:v.s}));
   const sectorIdx = PORTFOLIO.sectors.findIndex(sc=>sc.name===s.sector);
   const sectorColor = sectorIdx>=0 ? [C.blue,'#7B6BA5',C.gold,C.green,C.red][sectorIdx] : C.mid;
 
@@ -3811,6 +3958,29 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     }
     return n.toFixed(2);
   };
+
+  if (thesisQualityParseFailed && !s.variant) {
+    return (
+      <div>
+        <PriceChart ticker={ticker} C={C} L={L} lk={lk}/>
+        <PulseCard pulse={pulse} loading={pulseLoading} ticker={ticker} onRunPulse={onRunPulse} L={L} lk={lk} C={C}/>
+        <Card title={L('Variant Thesis','变体论点')} open={true} C={C}>
+          <div style={{padding:'8px 12px', background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:6, fontSize:11, color:C.red, display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
+            <span style={{flex:'1 1 auto'}}>{L('Parse error — thesis JSON could not be read. Re-generate before relying on this report.','解析错误 — 研报 JSON 无法读取。请重新生成后再使用。')}</span>
+            <button type="button" onClick={() => setQualityPanelOpen(true)} style={{border:`1px solid ${C.red}30`, background:C.card, color:C.red, borderRadius:5, padding:'2px 7px', fontSize:10, fontWeight:700, cursor:'pointer'}}>
+              {L('See details','看详情')}
+            </button>
+            <button type="button" onClick={() => onGenerateResearch?.(ticker)} style={{border:`1px solid ${C.red}30`, background:`${C.red}10`, color:C.red, borderRadius:5, padding:'2px 7px', fontSize:10, fontWeight:700, cursor:'pointer'}}>
+              {L('Re-generate now','立即重新生成')}
+            </button>
+          </div>
+          {qualityPanelOpen && thesisQuality && (
+            <QCFindingsPanel quality={thesisQuality} C={C} onClose={() => setQualityPanelOpen(false)}/>
+          )}
+        </Card>
+      </div>
+    );
+  }
 
   const TushareDataCard = ({ data, ticker }) => {
     const cardStyle = {
@@ -4684,14 +4854,45 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
         </div>
       </Card>
 
-      <Card title={L('Variant Thesis','变体论点')} open={open.variant} onToggle={()=>toggle('variant')} C={C}>
+      <Card title={L('Variant Thesis','变体论点')} open={open.variant} onToggle={()=>toggle('variant')} C={C}
+            headerRight={thesisQualityForBadge ? <ThesisQualityBadge quality={thesisQualityForBadge} C={C}/> : null}>
+        {showThesisQualityWarning && (() => {
+          const color = thesisQualitySeverity === 'FAIL' ? C.red : C.gold;
+          return (
+            <div style={{padding:'6px 12px', background:`${color}10`, border:`1px solid ${color}30`, borderRadius:6, marginBottom:8, fontSize:11, color, display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
+              <span style={{flex:'1 1 auto'}}>
+                ⚠️ {thesisQualitySeverity === 'FAIL'
+                  ? L('Thesis quality FAIL — strongly recommend re-generating','研报质量 FAIL — 强烈建议重新生成')
+                  : L('Thesis quality below recommended bar — review carefully before acting','研报质量低于推荐基线 — 行动前请仔细审查')}
+              </span>
+              <button type="button" onClick={() => setQualityPanelOpen(true)} style={{border:`1px solid ${color}30`, background:C.card, color, borderRadius:5, padding:'2px 7px', fontSize:10, fontWeight:700, cursor:'pointer'}}>
+                {L('See details','看详情')}
+              </button>
+              {thesisQualitySeverity === 'FAIL' && (
+                <button type="button" onClick={() => onGenerateResearch?.(ticker)} style={{border:`1px solid ${C.red}30`, background:`${C.red}10`, color:C.red, borderRadius:5, padding:'2px 7px', fontSize:10, fontWeight:700, cursor:'pointer'}}>
+                  {L('Re-generate now','立即重新生成')}
+                </button>
+              )}
+            </div>
+          );
+        })()}
+
+        {thesisQualityParseFailed && (
+          <div style={{padding:'5px 9px', background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:6, marginBottom:8, fontSize:10, color:C.red, display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
+            <span style={{flex:'1 1 auto'}}>{L('Parse error — thesis JSON could not be read','解析错误 — 研报 JSON 无法读取')}</span>
+            <button type="button" onClick={() => setQualityPanelOpen(true)} style={{border:`1px solid ${C.red}30`, background:C.card, color:C.red, borderRadius:5, padding:'2px 7px', fontSize:10, fontWeight:700, cursor:'pointer'}}>
+              {L('See details','看详情')}
+            </button>
+          </div>
+        )}
+
         <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12, marginBottom:14}}>
           <div style={{padding:12, background:`${C.red}10`, borderRadius:6, borderLeft:`3px solid ${C.red}`}}>
             <div style={{...S.row, gap:6, marginBottom:6}}>
               <Eye size={13} style={{color:C.red}}/>
               <div style={{fontSize:11, fontWeight:700, color:C.dark}}>Market Believes</div>
             </div>
-            <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant.marketBelieves[lk]}</div>
+            <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant?.marketBelieves?.[lk] || '—'}</div>
           </div>
 
           <div style={{padding:12, background:`${C.green}10`, borderRadius:6, borderLeft:`3px solid ${C.green}`}}>
@@ -4699,7 +4900,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
               <Target size={13} style={{color:C.green}}/>
               <div style={{fontSize:11, fontWeight:700, color:C.dark}}>We Believe</div>
             </div>
-            <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant.weBelieve[lk]}</div>
+            <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant?.weBelieve?.[lk] || '—'}</div>
           </div>
         </div>
 
@@ -4708,20 +4909,52 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
             <Zap size={13} style={{color:C.blue}}/>
             <div style={{fontSize:11, fontWeight:700, color:C.dark}}>Mechanism</div>
           </div>
-          <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant.mechanism[lk]}</div>
+          <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant?.mechanism?.[lk] || '—'}</div>
         </div>
+
+        {(s.variant?.rewardToRisk || rewardToRiskWeak) && (
+          <div style={{padding:12, background:`${C.gold}08`, border:`1px solid ${C.gold}25`, borderRadius:6, marginBottom:12}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, marginBottom:s.variant?.rewardToRisk ? 8 : 0, flexWrap:'wrap'}}>
+              <div style={{fontSize:11, fontWeight:700, color:C.dark}}>Reward / Risk</div>
+              {rewardToRiskWeak && (
+                <span style={{fontSize:9, fontWeight:700, color:C.gold, background:`${C.gold}10`, border:`1px solid ${C.gold}30`, borderRadius:5, padding:'2px 6px'}}>
+                  Reward-to-risk below 1.75:1 threshold
+                </span>
+              )}
+            </div>
+            {s.variant?.rewardToRisk && (
+              <div style={{display:'grid', gridTemplateColumns:'repeat(4, minmax(0, 1fr))', gap:8}}>
+                {[
+                  [L('Upside','上行'), s.variant.rewardToRisk.upsideIfRight, C.green],
+                  [L('Downside','下行'), s.variant.rewardToRisk.downsideIfWrong, C.red],
+                  [L('Ratio','比率'), s.variant.rewardToRisk.ratio, C.gold],
+                  [L('Timing','时间'), s.variant.rewardToRisk.timeToResolution, C.blue],
+                ].map(([label, value, color]) => (
+                  <div key={label} style={{minWidth:0}}>
+                    <div style={{fontSize:9, color:C.mid, marginBottom:3}}>{label}</div>
+                    <div style={{fontSize:10, color, fontFamily:MONO, fontWeight:700, lineHeight:1.4, wordBreak:'break-word'}}>{value || '—'}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12}}>
           <div style={{padding:12, borderLeft:`3px solid ${C.green}`, background:`${C.green}08`, borderRadius:6}}>
             <div style={{fontSize:11, fontWeight:700, color:C.green, marginBottom:6}}>✓ Right If</div>
-            <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant.rightIf[lk]}</div>
+            <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant?.rightIf?.[lk] || '—'}</div>
           </div>
 
           <div style={{padding:12, borderLeft:`3px solid ${C.red}`, background:`${C.red}08`, borderRadius:6}}>
             <div style={{fontSize:11, fontWeight:700, color:C.red, marginBottom:6}}>✗ Wrong If</div>
-            <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant.wrongIf[lk]}</div>
+            <div style={{fontSize:10, color:C.dark, lineHeight:1.6}}>{s.variant?.wrongIf?.[lk] || '—'}</div>
           </div>
         </div>
+
+        {qualityPanelOpen && thesisQuality && (
+          <QCFindingsPanel quality={thesisQuality} C={C} onClose={() => setQualityPanelOpen(false)}/>
+        )}
       </Card>
 
       <Card title={L('VP Decomposition','VP分解')} open={open.vp} onToggle={()=>toggle('vp')} C={C}>
@@ -4737,7 +4970,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
         </div>
         {decompData.map((d,i)=>(
           <div key={i} style={{fontSize:10, marginBottom:6}}>
-            <strong>{d.name}:</strong> <span style={{color:C.mid}}>{Object.values(s.decomp)[i][lk]}</span>
+            <strong>{d.name}:</strong> <span style={{color:C.mid}}>{decompEntries[i]?.[1]?.[lk]}</span>
           </div>
         ))}
       </Card>
@@ -10180,11 +10413,11 @@ export default function Dashboard() {
             }
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
-                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/></div>}
+                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} onGenerateResearch={tk => { setSearch(tk); setTicker(tk); setShowDeepResearch(true); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/></div>}
                 <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>
               </div>
             );
-            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/>;
+            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} onGenerateResearch={tk => { setSearch(tk); setTicker(tk); setShowDeepResearch(true); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
           })()}
