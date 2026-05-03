@@ -2711,6 +2711,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   const [liveQuotes, setLiveQuotes] = useState({});      // emKey → quote obj
   const [polling,    setPolling]    = useState(true);
   const [advancedExpanded, setAdvancedExpanded] = useState(false);
+  const [capitalFlow, setCapitalFlow] = useState(null);
   const pollRef  = useRef(null);
   const codesRef = useRef([]);
 
@@ -2842,6 +2843,19 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 
   useEffect(() => { if (advancedActiveCount > 0) setAdvancedExpanded(true); }, [advancedActiveCount]);
 
+  useEffect(() => {
+    fetch('data/capital_flow.json')
+      .then(r => r.json())
+      .then(d => {
+        if (d?._status === 'endpoint_unavailable') console.warn('[capital-flow] endpoint unavailable');
+        setCapitalFlow(d);
+      })
+      .catch(() => {
+        console.warn('[capital-flow] capital_flow.json fetch failed');
+        setCapitalFlow({ _status: 'fetch_failed' });
+      });
+  }, []);
+
   /* ── live quote polling — only visible stocks ────────────────────────────── */
   // 2026-05-02 Phase 3 audit fix: previous deps [page, filtered.length, polling]
   // missed cases where filter changes but result count is coincidentally identical
@@ -2883,6 +2897,15 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     if (vol >= 1e8) return `${(vol/1e8).toFixed(1)}亿`;
     if (vol >= 1e4) return `${Math.round(vol/1e4)}万`;
     return String(Math.round(vol));
+  };
+
+  const formatFlowYuan = (yuan) => {
+    if (yuan == null || isNaN(yuan)) return '—';
+    const sign = yuan >= 0 ? '+' : '−';
+    const abs = Math.abs(yuan);
+    if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)}亿`;
+    if (abs >= 1e4) return `${sign}${Math.round(abs/1e4)}万`;
+    return `${sign}${Math.round(abs)}`;
   };
 
   const fmtVol = n => {
@@ -3024,6 +3047,41 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
           C={C}
         />
       </div>
+
+      {capitalFlow && capitalFlow._status !== 'fetch_failed' && capitalFlow._status !== 'endpoint_unavailable' && (
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
+          <HeroCard
+            title={L('Hot Concepts (Net Flow)','今日热门概念 Top 5')}
+            icon={<Flame size={14}/>}
+            accent={C.red}
+            rows={(capitalFlow.hot_concepts || []).slice(0, 5).map(c => ({
+              name: c.name,
+              ticker: c.ts_code,
+              value: formatFlowYuan(c.net_inflow_yuan),
+            }))}
+            onSeeAll={() => {}}
+            onRowClick={() => {}}
+            L={L}
+            C={C}
+            hide={!capitalFlow.hot_concepts || capitalFlow.hot_concepts.length === 0}
+          />
+          <HeroCard
+            title={L('Hot Industries (Net Flow)','今日行业资金流向 Top 5')}
+            icon={<BarChart3 size={14}/>}
+            accent={C.red}
+            rows={(capitalFlow.hot_industries || []).slice(0, 5).map(i => ({
+              name: i.name,
+              ticker: i.ts_code,
+              value: formatFlowYuan(i.net_inflow_yuan),
+            }))}
+            onSeeAll={() => {}}
+            onRowClick={() => {}}
+            L={L}
+            C={C}
+            hide={!capitalFlow.hot_industries || capitalFlow.hot_industries.length === 0}
+          />
+        </div>
+      )}
 
       {/* ── PRIMARY FILTER ROW ─────────────────────────────────────────────── */}
       <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 14px', marginBottom:8, display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
