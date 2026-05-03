@@ -3549,6 +3549,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [consensusData, setConsensusData] = useState({});
   const [lhbData, setLhbData] = useState({});
   const [quantFactorsData, setQuantFactorsData] = useState({});
+  const [instResearchData, setInstResearchData] = useState({});
   useEffect(() => {
     if (!ticker) return;
     const base = DATA_BASE;
@@ -3569,13 +3570,18 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       .then(targets => Promise.all(targets.map(t =>
           fetchJson(`data/quant_factors/${t}.json`).then(data => ({ ticker: t, data }))
         )));
+    const instResearchFetches = watchlistTargets
+      .then(targets => Promise.all(targets.map(t =>
+          fetchJson(`data/inst_research/${t.replace(/\./g, '')}.json`).then(data => ({ ticker: t, data }))
+        )));
     Promise.all([
       fetchJson(`data/tushare/${ticker}.json`),
       fetchJson(`data/chip_distribution/${ticker}.json`),
       fetchJson(`data/consensus_forecast/${ticker}.json`),
       lhbFetches,
       quantFactorFetches,
-    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr]) => {
+      instResearchFetches,
+    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
       setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
@@ -3585,6 +3591,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       const quantFactorsDataMap = { [ticker]: null };
       (quantFactorArr || []).forEach(({ ticker: tk, data }) => { if (data) quantFactorsDataMap[tk] = data; });
       setQuantFactorsData(prev => ({ ...prev, ...quantFactorsDataMap }));
+      const instResearchDataMap = { [ticker]: null };
+      (instResearchArr || []).forEach(({ ticker: tk, data }) => { if (data) instResearchDataMap[tk] = data; });
+      setInstResearchData(prev => ({ ...prev, ...instResearchDataMap }));
     });
   }, [ticker]);
 
@@ -4042,6 +4051,79 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     );
   };
 
+  const InstResearchCard = ({ data, ticker }) => {
+    if (!data || data._status === 'skipped_hk' || data._status === 'skipped_us') return null;
+    if (data._status === 'empty') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid}}>
+          机构调研 · 90 天无机构调研记录
+        </div>
+      );
+    }
+    if (data._status === 'api_error' || data._status === 'all_failed') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid, whiteSpace:'nowrap'}}>
+          机构调研 数据暂时不可用
+        </div>
+      );
+    }
+    if (data._status !== 'ok') return null;
+
+    const summary = data.summary || {};
+    const surveys = Array.isArray(data.surveys) ? data.surveys : [];
+    const total30d = finiteNumber(summary.total_30d) ?? 0;
+    const total90d = finiteNumber(summary.total_90d) ?? 0;
+    const uniqueInst30d = finiteNumber(summary.unique_inst_30d);
+    const formatInstDate = (value) => {
+      const s = String(value || '');
+      if (s.length === 8) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+      return s || '—';
+    };
+    const truncateSurvey = (value) => {
+      const s = String(value || '—');
+      return s.length > 40 ? `${s.slice(0, 40)}...` : s;
+    };
+    const recentSurveys = [...surveys]
+      .sort((a, b) => String(b?.surv_date || '').localeCompare(String(a?.surv_date || '')))
+      .slice(0, 5);
+
+    return (
+      <div style={{padding:'10px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:12, boxShadow:SHADOW, marginBottom:10}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:8}}>
+          <div style={{fontWeight:700, fontSize:11, color:C.dark}}>机构调研</div>
+          <div style={{fontSize:9, color:C.mid, fontFamily:MONO, textAlign:'right'}}>
+            Latest: {summary.latest_date || '—'}
+          </div>
+        </div>
+        <div style={{display:'flex', alignItems:'baseline', gap:4, marginBottom:6}}>
+          <span style={{fontFamily:MONO, fontSize:18, color:C.dark, fontWeight:700}}>{total30d}</span>
+          <span style={{fontSize:10, color:C.mid}}>次 (30天)</span>
+        </div>
+        <div style={{display:'flex', columnGap:14, fontSize:10, color:C.mid, marginBottom:10}}>
+          <span>90天: <span style={{fontFamily:MONO, color:C.dark}}>{total90d}</span></span>
+          {uniqueInst30d != null && <span>机构数 30天: <span style={{fontFamily:MONO, color:C.dark}}>{uniqueInst30d}</span></span>}
+        </div>
+        {recentSurveys.length > 0 && (
+          <div>
+            <div style={{fontSize:9, color:C.mid, textTransform:'uppercase', marginBottom:5}}>近期调研</div>
+            <div style={{display:'grid', rowGap:4}}>
+              {recentSurveys.map((survey, i) => (
+                <div key={`${survey.surv_date || 'date'}-${i}`} style={{display:'grid', gridTemplateColumns:'74px 38px 64px minmax(0, 1fr)', gap:6, alignItems:'center', fontSize:10}}>
+                  <span style={{fontFamily:MONO, fontSize:10, color:C.dark}}>{formatInstDate(survey.surv_date)}</span>
+                  <span style={{fontFamily:MONO, fontSize:9, color:C.dark, background:C.soft, border:`1px solid ${C.border}`, borderRadius:5, padding:'1px 4px', textAlign:'center'}}>
+                    {finiteNumber(survey.inst_count) ?? '—'}
+                  </span>
+                  <span style={{color:C.mid, fontSize:10, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{survey.surv_type || '—'}</span>
+                  <span style={{color:C.mid, fontSize:10, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{truncateSurvey(survey.description)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Live price chart — auto-refreshes on 1D range */}
@@ -4224,6 +4306,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <ConsensusForecastCard data={consensusData[ticker]} ticker={ticker}/>
       <LHBCard data={lhbData[ticker]} ticker={ticker}/>
       <QuantFactorsCard data={quantFactorsData[ticker]} ticker={ticker}/>
+      <InstResearchCard data={instResearchData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
