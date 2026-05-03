@@ -1,0 +1,17 @@
+{
+  "_status": "skipped_hk",
+  "ticker": "700.HK",
+  "fetched_at": "2026-05-03T18:30:41Z",
+  "api_used": null,
+  "_attempted_endpoints": [],
+  "window_days": 90,
+  "recommendations": [],
+  "summary": {
+    "total_90d": 0,
+    "unique_brokers_90d": 0,
+    "latest_recommendation": null,
+    "avg_target_price": null,
+    "target_price_count": 0,
+    "latest_date": null
+  }
+}

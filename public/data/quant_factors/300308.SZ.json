@@ -1,0 +1,18 @@
+{
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T18:30:01Z",
+  "trade_date": "20260504",
+  "tier": 15000,
+  "_status": "endpoint_unavailable",
+  "api_used": null,
+  "_attempted_endpoints": [
+    "stk_factor_pro",
+    "stk_factor",
+    "stock_factor"
+  ],
+  "days_window": 30,
+  "factors": {},
+  "history": [],
+  "_factor_count": 0,
+  "_error": "stk_factor_pro: Exception: 您的token不对，请确认。 | stk_factor: Exception: 您的token不对，请确认。 | stock_factor: Exception: 您的token不对，请确认。"
+}

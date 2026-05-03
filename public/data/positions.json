@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-05-01T11:47:59.563638",
+  "as_of": "2026-05-03T18:29:14.644588",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -22,8 +22,8 @@
       "cost_value_cny": 102204.0,
       "pnl_abs_cny": 26421.0,
       "fx_rate_used": 1.0,
-      "holding_days": 52,
-      "as_of": "2026-05-01",
+      "holding_days": 54,
+      "as_of": "2026-05-03",
       "signal_attribution": {
         "confluence_score": 82,
         "action": "BUY_WATCH",
@@ -77,8 +77,8 @@
       "cost_value_cny": 11630.9,
       "pnl_abs_cny": 1508.05,
       "fx_rate_used": 0.9165,
-      "holding_days": 52,
-      "as_of": "2026-05-01",
+      "holding_days": 54,
+      "as_of": "2026-05-03",
       "signal_attribution": {
         "confluence_score": 68,
         "action": "BUY_WATCH",
@@ -127,8 +127,8 @@
       "cost_value_cny": 69564.55,
       "pnl_abs_cny": 18272.81,
       "fx_rate_used": 0.9165,
-      "holding_days": 45,
-      "as_of": "2026-05-01",
+      "holding_days": 47,
+      "as_of": "2026-05-03",
       "signal_attribution": {
         "confluence_score": 71,
         "action": "BUY_WATCH",
@@ -182,8 +182,8 @@
       "cost_value_cny": 40027.22,
       "pnl_abs_cny": 8089.03,
       "fx_rate_used": 0.9165,
-      "holding_days": 38,
-      "as_of": "2026-05-01",
+      "holding_days": 40,
+      "as_of": "2026-05-03",
       "signal_attribution": {
         "confluence_score": 62,
         "action": "BUY_WATCH",
@@ -232,8 +232,8 @@
       "cost_value_cny": 11543.04,
       "pnl_abs_cny": 814.56,
       "fx_rate_used": 1.0,
-      "holding_days": 30,
-      "as_of": "2026-05-01",
+      "holding_days": 32,
+      "as_of": "2026-05-03",
       "signal_attribution": {
         "confluence_score": 55,
         "action": "WATCH",

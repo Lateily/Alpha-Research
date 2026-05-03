@@ -1,0 +1,32 @@
+{
+  "fetched_at": "2026-05-03T18:29:47Z",
+  "trade_date": "20260504",
+  "tier": 15000,
+  "_status": "endpoint_unavailable",
+  "hot_concepts": [],
+  "cold_concepts": [],
+  "hot_industries": [],
+  "cold_industries": [],
+  "concept_meta": {
+    "api_used": null,
+    "_attempted_endpoints": [
+      "moneyflow_cnt",
+      "cnt_moneyflow",
+      "moneyflow_concept",
+      "concept_moneyflow"
+    ],
+    "row_count": 0,
+    "_status": "endpoint_unavailable"
+  },
+  "industry_meta": {
+    "api_used": null,
+    "_attempted_endpoints": [
+      "moneyflow_ind_dc",
+      "moneyflow_ind",
+      "industry_moneyflow",
+      "ind_moneyflow"
+    ],
+    "row_count": 0,
+    "_status": "endpoint_unavailable"
+  }
+}

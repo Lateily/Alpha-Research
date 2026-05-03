@@ -1,0 +1,21 @@
+{
+  "_status": "all_failed",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T18:30:20Z",
+  "api_used": null,
+  "_attempted_endpoints": [
+    "stk_surv",
+    "stk_holdertrade",
+    "surv_holdertrade",
+    "investor_research"
+  ],
+  "window_days": 90,
+  "surveys": [],
+  "summary": {
+    "total_30d": 0,
+    "total_90d": 0,
+    "unique_inst_30d": null,
+    "latest_date": null
+  },
+  "_error": "stk_surv: RuntimeError: stk_surv: Exception: 您的token不对，请确认。 | stk_surv: Exception: 您的token不对，请确认。 | stk_holdertrade: RuntimeError: stk_holdertrade: Exception: 您的token不对，请确认。 | stk_holdertrade: Exception: 您的token不对，请确认。 | surv_holdertrade: RuntimeError: surv_holdertrade: Exception: 您的token不对，请确认。 | surv_holdertrade: Exception: 您的token不对，请确认。 | investor_research: RuntimeError: investor_research: Exception: 您的token不对，请确认。 | investor_research: Exception: 您的token不对，请确认。"
+}

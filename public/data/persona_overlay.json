@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-01T11:48:02.774848+00:00",
+    "generated_at": "2026-05-03T18:30:50.829211+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -207,7 +207,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.1947834,
+            "actual": 3.1909878,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -231,10 +231,10 @@
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": null,
+            "actual": 0.004814709972106832,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": null,
+            "passed": false,
             "format": "percent"
           }
         ],
@@ -340,7 +340,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.1106763,
+            "actual": 3.1068118,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -473,7 +473,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 7.319299,
+            "actual": 7.3199873,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -606,7 +606,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 4.1116347,
+            "actual": 4.03416,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,

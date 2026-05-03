@@ -1,0 +1,10 @@
+{
+  "ticker": "6160.HK",
+  "fetched_at": "2026-05-03T18:29:54Z",
+  "tier": 15000,
+  "_status": "skipped",
+  "api_used": null,
+  "_attempted_endpoints": [],
+  "forecasts": [],
+  "_reason": "not_available_tushare_hk"
+}

@@ -1,0 +1,23 @@
+{
+  "_status": "all_failed",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-03T18:30:41Z",
+  "api_used": null,
+  "_attempted_endpoints": [
+    "broker_recommend",
+    "report_rc",
+    "analyst_rec",
+    "broker_monthly"
+  ],
+  "window_days": 90,
+  "recommendations": [],
+  "summary": {
+    "total_90d": 0,
+    "unique_brokers_90d": 0,
+    "latest_recommendation": null,
+    "avg_target_price": null,
+    "target_price_count": 0,
+    "latest_date": null
+  },
+  "_error": "broker_recommend: RuntimeError: broker_recommend: Exception: 您的token不对，请确认。 | broker_recommend: Exception: 您的token不对，请确认。 | broker_recommend: Exception: 您的token不对，请确认。 | broker_recommend: Exception: 您的token不对，请确认。 | report_rc: RuntimeError: report_rc: Exception: 您的token不对，请确认。 | report_rc: Exception: 您的token不对，请确认。 | report_rc: Exception: 您的token不对，请确认。 | report_rc: Exception: 您的token不对，请确认。 | analyst_rec: RuntimeError: analyst_rec: Exception: 您的token不对，请确认。 | analyst_rec: Exception: 您的token不对，请确认。 | analyst_rec: Exception: 您的token不对，请确认。 | analyst_rec: Exception: 您的token不对，请确认。 | broker_monthly: RuntimeError: broker_monthly: Exception: 您的token不对，请确认。 | broker_monthly: Exception: 您的token不对，请确认。 | broker_monthly: Exception: 您的token不对，请确认。 | broker_monthly: Exception: 您的token不对，请确认。"
+}

@@ -1,0 +1,17 @@
+{
+  "fetched_at": "2026-05-03T18:30:10Z",
+  "tier": 15000,
+  "_status": "endpoint_unavailable",
+  "api_used": null,
+  "_attempted_endpoints": [
+    "concept_detail",
+    "concept_membership",
+    "ths_concept_detail",
+    "concept",
+    "concept_detail(id)"
+  ],
+  "concepts": [],
+  "total_concepts": 0,
+  "total_memberships": 0,
+  "_error": "concept_detail: Exception: 您的token不对，请确认。 | concept_membership: Exception: 您的token不对，请确认。 | ths_concept_detail: Exception: 您的token不对，请确认。 | concept: Exception: 您的token不对，请确认。"
+}

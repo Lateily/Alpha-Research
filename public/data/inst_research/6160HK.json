@@ -1,0 +1,15 @@
+{
+  "_status": "skipped_hk",
+  "ticker": "6160.HK",
+  "fetched_at": "2026-05-03T18:30:15Z",
+  "api_used": null,
+  "_attempted_endpoints": [],
+  "window_days": 90,
+  "surveys": [],
+  "summary": {
+    "total_30d": 0,
+    "total_90d": 0,
+    "unique_inst_30d": null,
+    "latest_date": null
+  }
+}

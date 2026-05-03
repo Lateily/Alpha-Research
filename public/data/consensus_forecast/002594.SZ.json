@@ -1,0 +1,14 @@
+{
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-03T18:29:56Z",
+  "tier": 15000,
+  "_status": "endpoint_unavailable",
+  "api_used": null,
+  "_attempted_endpoints": [
+    "forecast",
+    "express",
+    "profit_forecast",
+    "forecast_predict"
+  ],
+  "forecasts": []
+}

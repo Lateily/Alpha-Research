@@ -1,0 +1,16 @@
+{
+  "_status": "skipped_hk",
+  "ticker": "9999.HK",
+  "fetched_at": "2026-05-03T18:30:26Z",
+  "api_used": null,
+  "_attempted_endpoints": [],
+  "window_days": 30,
+  "appearances": [],
+  "summary": {
+    "total_appearances_30d": 0,
+    "unique_seats_30d": 0,
+    "top_buyer_30d": null,
+    "top_seller_30d": null,
+    "latest_date": null
+  }
+}

@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-05-01T11:48:02.304817+00:00",
+  "generated_at": "2026-05-03T18:29:17.402620+00:00",
   "industry": "ai_infrastructure",
-  "composite_score": 52.8,
+  "composite_score": 51.0,
   "composite_signal": "WEAKENING",
   "hyperscaler_basket": {
     "NVDA": {
-      "price": 199.57,
+      "price": 198.45,
       "ath_3mo": 216.61,
-      "drawdown_3mo_pct": -7.9
+      "drawdown_3mo_pct": -8.4
     },
     "MSFT": {
-      "price": 407.78,
+      "price": 414.44,
       "ath_3mo": 432.92,
-      "drawdown_3mo_pct": -5.8
+      "drawdown_3mo_pct": -4.3
     },
     "GOOGL": {
-      "price": 384.8,
-      "ath_3mo": 384.8,
+      "price": 385.69,
+      "ath_3mo": 385.69,
       "drawdown_3mo_pct": 0.0
     },
-    "_avg_drawdown_pct": 4.6,
+    "_avg_drawdown_pct": 4.2,
     "_window": "3 months (~63 trading days)",
     "_constituents": [
       "NVDA",
@@ -30,7 +30,7 @@
   "interpretation": "CapEx growth decelerating. Monitor for order pushouts. Review thesis validity for 300308.",
   "component_scores": {
     "nvda_revenue": 68,
-    "hyperscaler_capex": 60,
+    "hyperscaler_capex": 55,
     "tsmc_revenue": 15,
     "price_momentum": 50
   },
@@ -62,19 +62,19 @@
         }
       ],
       "price": {
-        "price": 199.57,
-        "return_3m_pct": 5.7,
+        "price": 198.45,
+        "return_3m_pct": 5.1,
         "ath_3mo": 216.61,
-        "drawdown_3mo_pct": -7.9
+        "drawdown_3mo_pct": -8.4
       },
       "latest_qoq": 19.5,
       "score": 68,
       "signal": "STABLE"
     },
     "hyperscaler_capex": {
-      "combined_capex_latest_bn": 119.6,
-      "combined_capex_qoq_pct": 11.0,
-      "score": 60,
+      "combined_capex_latest_bn": 129.8,
+      "combined_capex_qoq_pct": 9.4,
+      "score": 55,
       "components": {
         "MSFT": {
           "name": "Microsoft",
@@ -101,10 +101,10 @@
             }
           ],
           "price": {
-            "price": 407.78,
-            "return_3m_pct": -13.6,
+            "price": 414.44,
+            "return_3m_pct": -12.2,
             "ath_3mo": 432.92,
-            "drawdown_3mo_pct": -5.8
+            "drawdown_3mo_pct": -4.3
           },
           "latest_qoq": 3.3,
           "score": 50,
@@ -113,6 +113,11 @@
         "GOOGL": {
           "name": "Alphabet",
           "quarters": [
+            {
+              "quarter": "2026-03-31",
+              "capex_bn": 35.67,
+              "qoq_pct": 28.1
+            },
             {
               "quarter": "2025-12-31",
               "capex_bn": 27.85,
@@ -127,26 +132,26 @@
               "quarter": "2025-06-30",
               "capex_bn": 22.45,
               "qoq_pct": 30.5
-            },
-            {
-              "quarter": "2025-03-31",
-              "capex_bn": 17.2,
-              "qoq_pct": 20.5
             }
           ],
           "price": {
-            "price": 384.8,
-            "return_3m_pct": 22.2,
-            "ath_3mo": 384.8,
+            "price": 385.69,
+            "return_3m_pct": 22.5,
+            "ath_3mo": 385.69,
             "drawdown_3mo_pct": 0.0
           },
-          "latest_qoq": 16.3,
-          "score": 65,
+          "latest_qoq": 28.1,
+          "score": 78,
           "weight": 0.25
         },
         "META": {
           "name": "Meta",
           "quarters": [
+            {
+              "quarter": "2026-03-31",
+              "capex_bn": 19.0,
+              "qoq_pct": -11.2
+            },
             {
               "quarter": "2025-12-31",
               "capex_bn": 21.38,
@@ -161,26 +166,26 @@
               "quarter": "2025-06-30",
               "capex_bn": 16.54,
               "qoq_pct": 27.8
-            },
-            {
-              "quarter": "2025-03-31",
-              "capex_bn": 12.94,
-              "qoq_pct": -10.3
             }
           ],
           "price": {
-            "price": 611.91,
-            "return_3m_pct": -5.8,
-            "ath_3mo": 715.89,
-            "drawdown_3mo_pct": -14.5
+            "price": 608.75,
+            "return_3m_pct": -6.3,
+            "ath_3mo": 705.81,
+            "drawdown_3mo_pct": -13.8
           },
-          "latest_qoq": 13.6,
-          "score": 65,
+          "latest_qoq": -11.2,
+          "score": 20,
           "weight": 0.2
         },
         "AMZN": {
           "name": "Amazon",
           "quarters": [
+            {
+              "quarter": "2026-03-31",
+              "capex_bn": 44.2,
+              "qoq_pct": 11.8
+            },
             {
               "quarter": "2025-12-31",
               "capex_bn": 39.52,
@@ -195,20 +200,15 @@
               "quarter": "2025-06-30",
               "capex_bn": 32.18,
               "qoq_pct": 28.6
-            },
-            {
-              "quarter": "2025-03-31",
-              "capex_bn": 25.02,
-              "qoq_pct": -10.1
             }
           ],
           "price": {
-            "price": 265.06,
-            "return_3m_pct": 17.0,
-            "ath_3mo": 265.06,
+            "price": 268.26,
+            "return_3m_pct": 18.4,
+            "ath_3mo": 268.26,
             "drawdown_3mo_pct": 0.0
           },
-          "latest_qoq": 12.6,
+          "latest_qoq": 11.8,
           "score": 65,
           "weight": 0.25
         }
@@ -242,17 +242,17 @@
         }
       ],
       "price": {
-        "price": 396.06,
-        "return_3m_pct": 24.3,
+        "price": 397.67,
+        "return_3m_pct": 24.8,
         "ath_3mo": 404.98,
-        "drawdown_3mo_pct": -2.2
+        "drawdown_3mo_pct": -1.8
       },
       "latest_qoq": NaN,
       "score": 15,
       "signal": "WEAK"
     },
     "price_momentum": {
-      "basket_return_3m_pct": 4.6,
+      "basket_return_3m_pct": 5.3,
       "score": 50,
       "signal": "NEUTRAL"
     }
