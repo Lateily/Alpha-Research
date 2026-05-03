@@ -970,6 +970,19 @@ function PriceChart({ ticker, C, L, lk }) {
   const [viewMode, setViewMode] = useState('kline'); // 'kline' | 'fenshi'
   const [tierLocked, setTierLocked] = useState(null);
   const [indicators, setIndicators] = useState({ ma5: true, ma10: true, ma20: true, ma60: false, boll: true, macd: true, kdj: false, rsi: false });
+  const [subplotLayout, setSubplotLayout] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kline_subplot_layout');
+      return saved === 'tabs' ? 'tabs' : 'stack';
+    } catch { return 'stack'; }
+  });
+  const [volumeConvention, setVolumeConvention] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kline_volume_convention');
+      return saved === 'us' ? 'us' : 'cn';
+    } catch { return 'cn'; }
+  });
+  const [activeSubplotTab, setActiveSubplotTab] = useState('macd');
   const timerRef = useRef(null);
 
   const yTicker = toYahooTicker(ticker);
@@ -1036,6 +1049,14 @@ function PriceChart({ ticker, C, L, lk }) {
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [ticker, range, interval]); // eslint-disable-line
+
+  useEffect(() => {
+    try { localStorage.setItem('kline_subplot_layout', subplotLayout); } catch {}
+  }, [subplotLayout]);
+
+  useEffect(() => {
+    try { localStorage.setItem('kline_volume_convention', volumeConvention); } catch {}
+  }, [volumeConvention]);
 
   const ind = React.useMemo(() => {
     if (!chartData || chartData.length === 0) return null;
@@ -1105,6 +1126,8 @@ function PriceChart({ ticker, C, L, lk }) {
 
   const isUp  = (meta?.change_pct ?? 0) >= 0;
   const lineC = isUp ? C.green : C.red;
+  const volumeUpColor = volumeConvention === 'cn' ? C.red : C.green;
+  const volumeDownColor = volumeConvention === 'cn' ? C.green : C.red;
   const ccy   = meta?.currency === 'HKD' ? 'HK$' : meta?.currency === 'CNY' ? '¥' : (meta?.currency || '');
 
   // X-axis time formatter
@@ -1123,6 +1146,55 @@ function PriceChart({ ticker, C, L, lk }) {
     if (v >= 1e4)  return (v/1e4).toFixed(1)  + 'w';
     return v.toLocaleString();
   };
+
+  const MACDSubplot = ({ data }) => (
+    <ResponsiveContainer width='100%' height={70}>
+      <ComposedChart data={data} margin={{top:0, right:16, bottom:4, left:4}}>
+        <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50}/>
+        <XAxis dataKey='time' hide/>
+        <ReferenceLine y={0} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
+        <Bar dataKey='macdHist' isAnimationActive={false}
+          shape={(props) => {
+            if (props.height == null || props.width == null) return null;
+            const fill = props.payload.macdHist >= 0 ? C.green : C.red;
+            return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={0.6}/>;
+          }}/>
+        <Line type='monotone' dataKey='macdLine'   stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
+        <Line type='monotone' dataKey='macdSignal' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
+        <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+          formatter={(val, name) => [val != null ? Number(val).toFixed(3) : '—', `MACD ${name.replace('macd','')}`]}/>
+      </ComposedChart>
+    </ResponsiveContainer>
+  );
+
+  const KDJSubplot = ({ data }) => (
+    <ResponsiveContainer width='100%' height={70}>
+      <LineChart data={data} margin={{top:0, right:16, bottom:4, left:4}}>
+        <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
+        <XAxis dataKey='time' hide/>
+        <ReferenceLine y={50} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
+        <Line type='monotone' dataKey='kdjK' stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='K'/>
+        <Line type='monotone' dataKey='kdjD' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='D'/>
+        <Line type='monotone' dataKey='kdjJ' stroke={C.red}  strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='J'/>
+        <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+          formatter={(val, name) => [val != null ? Number(val).toFixed(2) : '—', `KDJ-${name}`]}/>
+      </LineChart>
+    </ResponsiveContainer>
+  );
+
+  const RSISubplot = ({ data }) => (
+    <ResponsiveContainer width='100%' height={70}>
+      <LineChart data={data} margin={{top:0, right:16, bottom:4, left:4}}>
+        <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
+        <XAxis dataKey='time' hide/>
+        <ReferenceLine y={70} stroke={C.red} strokeDasharray='3 3' strokeWidth={1}/>
+        <ReferenceLine y={30} stroke={C.green} strokeDasharray='3 3' strokeWidth={1}/>
+        <Line type='monotone' dataKey='rsi' stroke={C.blue} strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={false}/>
+        <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+          formatter={(val) => [val != null ? Number(val).toFixed(2) : '—', 'RSI(14)']}/>
+      </LineChart>
+    </ResponsiveContainer>
+  );
 
   return (
     <div style={{ background: C.card, borderRadius: 10, border: `1px solid ${C.border}`, overflow:'hidden', marginBottom: 12 }}>
@@ -1276,6 +1348,19 @@ function PriceChart({ ticker, C, L, lk }) {
                 transition:'all .15s',
               }}>{label}</button>
             ))}
+            <div style={{borderLeft:`1px solid ${C.border}`, height:14, alignSelf:'center', margin:'0 4px'}}></div>
+            <button onClick={() => setSubplotLayout(prev => prev === 'stack' ? 'tabs' : 'stack')} style={{
+              padding:'2px 8px', fontSize:9, fontWeight:600, border:`1px solid ${C.border}`,
+              borderRadius:4, cursor:'pointer', background:'transparent', color:C.mid,
+            }} title={subplotLayout === 'stack' ? L('Switch to tab layout','切换为标签页布局') : L('Switch to stack layout','切换为堆叠布局')}>
+              {subplotLayout === 'stack' ? '⊞ ' + L('Tabs','标签') : '☰ ' + L('Stack','堆叠')}
+            </button>
+            <button onClick={() => setVolumeConvention(prev => prev === 'cn' ? 'us' : 'cn')} style={{
+              padding:'2px 8px', fontSize:9, fontWeight:600, border:`1px solid ${C.border}`,
+              borderRadius:4, cursor:'pointer', background:'transparent', color:C.mid,
+            }} title={volumeConvention === 'cn' ? L('Switch to Western color (green=up)','切换为美式涨绿跌红') : L('Switch to Chinese color (red=up)','切换为中式红涨绿跌')}>
+              {volumeConvention === 'cn' ? '红涨' : 'GR↑'}
+            </button>
           </div>
         )}
         {viewMode === 'fenshi' && chartDataWithFenshi.length > 0 && (
@@ -1345,10 +1430,11 @@ function PriceChart({ ticker, C, L, lk }) {
         {chartDataWithInd && chartDataWithInd.length > 0 && (
           <ResponsiveContainer width='100%' height={40}>
             <BarChart data={viewMode === 'fenshi' ? chartDataWithFenshi : chartDataWithInd} margin={{ top:0, right:16, bottom:4, left:4 }}>
+              {/* K-line mode uses overall lineC; 分时 mode uses tick-by-tick convention. */}
               {viewMode === 'fenshi'
                 ? <Bar dataKey='volume' isAnimationActive={false} shape={(props) => {
                     if (props.height == null || props.width == null) return null;
-                    const fill = props.payload.upTick === null ? C.mid : props.payload.upTick ? C.green : C.red;
+                    const fill = props.payload.upTick === null ? C.mid : props.payload.upTick ? volumeUpColor : volumeDownColor;
                     return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={0.5}/>;
                   }}/>
                 : <Bar dataKey='volume' fill={lineC} opacity={0.35} radius={0}/>
@@ -1358,51 +1444,43 @@ function PriceChart({ ticker, C, L, lk }) {
             </BarChart>
           </ResponsiveContainer>
         )}
-        {viewMode === 'kline' && indicators.macd && chartDataWithInd && chartDataWithInd.length > 0 && (
-          <ResponsiveContainer width='100%' height={70}>
-            <ComposedChart data={chartDataWithInd} margin={{top:0, right:16, bottom:4, left:4}}>
-              <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50}/>
-              <XAxis dataKey='time' hide/>
-              <ReferenceLine y={0} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
-              <Bar dataKey='macdHist' isAnimationActive={false}
-                shape={(props) => {
-                  if (props.height == null || props.width == null) return null;
-                  const fill = props.payload.macdHist >= 0 ? C.green : C.red;
-                  return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={0.6}/>;
-                }}/>
-              <Line type='monotone' dataKey='macdLine'   stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
-              <Line type='monotone' dataKey='macdSignal' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
-              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
-                formatter={(val, name) => [val != null ? Number(val).toFixed(3) : '—', `MACD ${name.replace('macd','')}`]}/>
-            </ComposedChart>
-          </ResponsiveContainer>
-        )}
-        {viewMode === 'kline' && indicators.kdj && chartDataWithInd && chartDataWithInd.length > 0 && (
-          <ResponsiveContainer width='100%' height={70}>
-            <LineChart data={chartDataWithInd} margin={{top:0, right:16, bottom:4, left:4}}>
-              <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
-              <XAxis dataKey='time' hide/>
-              <ReferenceLine y={50} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
-              <Line type='monotone' dataKey='kdjK' stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='K'/>
-              <Line type='monotone' dataKey='kdjD' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='D'/>
-              <Line type='monotone' dataKey='kdjJ' stroke={C.red}  strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='J'/>
-              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
-                formatter={(val, name) => [val != null ? Number(val).toFixed(2) : '—', `KDJ-${name}`]}/>
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-        {viewMode === 'kline' && indicators.rsi && chartDataWithInd && chartDataWithInd.length > 0 && (
-          <ResponsiveContainer width='100%' height={70}>
-            <LineChart data={chartDataWithInd} margin={{top:0, right:16, bottom:4, left:4}}>
-              <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
-              <XAxis dataKey='time' hide/>
-              <ReferenceLine y={70} stroke={C.red} strokeDasharray='3 3' strokeWidth={1}/>
-              <ReferenceLine y={30} stroke={C.green} strokeDasharray='3 3' strokeWidth={1}/>
-              <Line type='monotone' dataKey='rsi' stroke={C.blue} strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={false}/>
-              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
-                formatter={(val) => [val != null ? Number(val).toFixed(2) : '—', 'RSI(14)']}/>
-            </LineChart>
-          </ResponsiveContainer>
+        {viewMode === 'kline' && chartDataWithInd && chartDataWithInd.length > 0 && (
+          subplotLayout === 'stack' ? (
+            <>
+              {indicators.macd && <MACDSubplot data={chartDataWithInd}/>}
+              {indicators.kdj  && <KDJSubplot data={chartDataWithInd}/>}
+              {indicators.rsi  && <RSISubplot data={chartDataWithInd}/>}
+            </>
+          ) : (
+            (() => {
+              const enabledTabs = [
+                indicators.macd && {key:'macd', label:'MACD'},
+                indicators.kdj  && {key:'kdj',  label:'KDJ'},
+                indicators.rsi  && {key:'rsi',  label:'RSI'},
+              ].filter(Boolean);
+              if (enabledTabs.length === 0) return null;
+              const fallbackTab = enabledTabs[0].key;
+              const currentTab = enabledTabs.some(t => t.key === activeSubplotTab) ? activeSubplotTab : fallbackTab;
+              return (
+                <>
+                  <div style={{display:'flex', gap:4, padding:'4px 0', borderTop:`1px solid ${C.border}`, fontSize:9}}>
+                    {enabledTabs.map(t => (
+                      <button key={t.key} onClick={() => setActiveSubplotTab(t.key)} style={{
+                        padding:'2px 10px', fontSize:9, fontWeight:600,
+                        border:`1px solid ${currentTab === t.key ? C.blue : C.border}`,
+                        borderRadius:4, cursor:'pointer',
+                        background: currentTab === t.key ? `${C.blue}14` : 'transparent',
+                        color: currentTab === t.key ? C.blue : C.mid,
+                      }}>{t.label}</button>
+                    ))}
+                  </div>
+                  {currentTab === 'macd' && <MACDSubplot data={chartDataWithInd}/>}
+                  {currentTab === 'kdj'  && <KDJSubplot data={chartDataWithInd}/>}
+                  {currentTab === 'rsi'  && <RSISubplot data={chartDataWithInd}/>}
+                </>
+              );
+            })()
+          )
         )}
       </div>
     </div>
