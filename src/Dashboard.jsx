@@ -3360,15 +3360,21 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
 function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData, scissorsData, liData, egapScores }) {
   const [tushareData, setTushareData] = useState({});
+  const [chipData, setChipData] = useState({});
   useEffect(() => {
     if (!ticker) return;
     const base = DATA_BASE;
-    fetch(base + `data/tushare/${ticker}.json`)
-      .then(r => r.ok ? r.json() : null)
-      .catch(() => null)
-      .then(d => {
-        setTushareData(prev => ({ ...prev, [ticker]: d }));
-      });
+    Promise.all([
+      fetch(base + `data/tushare/${ticker}.json`)
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null),
+      fetch(base + `data/chip_distribution/${ticker}.json`)
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null),
+    ]).then(([tushare, chip]) => {
+      setTushareData(prev => ({ ...prev, [ticker]: tushare }));
+      setChipData(prev => ({ ...prev, [ticker]: chip }));
+    });
   }, [ticker]);
 
   const allS = stocksMap || STOCKS;
@@ -3415,6 +3421,13 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     fcf:      liveFn?.free_cash_flow != null ? `${curr}${(liveFn.free_cash_flow/1e9).toFixed(1)}B` : s.fin?.fcf,
   };
   const expandedStock = ticker;
+
+  const peakAnalysis = (peakPrice, currentPrice, L) => {
+    if (!peakPrice || !currentPrice) return '';
+    if (peakPrice > currentPrice) return L(`Peak ${peakPrice.toFixed(2)} above current — likely resistance`, `峰值 ${peakPrice.toFixed(2)} 在现价之上 — 压力位`);
+    if (peakPrice < currentPrice) return L(`Peak ${peakPrice.toFixed(2)} below current — likely support`, `峰值 ${peakPrice.toFixed(2)} 在现价之下 — 支撑位`);
+    return L('Peak at current price', '峰值在现价附近');
+  };
 
   const TushareDataCard = ({ data, ticker }) => {
     const cardStyle = {
@@ -3497,6 +3510,60 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
         )}
         <div style={{fontSize:9, color:C.mid, marginTop:8}}>
           Tushare 6000 数据完整度: {data.completeness_pct ?? 0}%
+        </div>
+      </div>
+    );
+  };
+
+  const ChipDistributionCard = ({ data, ticker, currentPrice }) => {
+    if (!data) return null;
+    if (data._status === 'skipped') return null;
+    if (data._status === 'endpoint_unavailable' || data._status === 'tier_locked') {
+      return (
+        <div style={{padding:'8px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:8, marginBottom:10, fontSize:10, color:C.mid}}>
+          筹码分布 数据暂时不可用
+        </div>
+      );
+    }
+    if (data._status !== 'ok' || !Array.isArray(data.chips) || data.chips.length === 0) return null;
+
+    const maxPercent = data.chips.reduce((m, c) => Math.max(m, c.percent || 0), 0);
+    const peakChip = data.chips.find(c => c.percent === maxPercent);
+    const maxPriceLevel = peakChip?.price;
+    const chipsSorted = [...data.chips].sort((a, b) => (a.price || 0) - (b.price || 0));
+    const normalizePrice = v => {
+      if (v?.last != null) return finiteNumber(v.last);
+      const direct = finiteNumber(v);
+      if (direct != null) return direct;
+      if (typeof v === 'string') return finiteNumber(v.replace(/[^\d.-]/g, ''));
+      return null;
+    };
+    const currentPriceValue = normalizePrice(currentPrice);
+    const peakPriceValue = finiteNumber(maxPriceLevel);
+
+    return (
+      <div style={{padding:'10px 14px', background:C.card, border:`1px solid ${C.border}`, borderRadius:10, marginBottom:10}}>
+        <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:6, display:'flex', justifyContent:'space-between'}}>
+          <span>{L('Chip Distribution','筹码分布')} <span style={{fontSize:9, color:C.mid, fontWeight:400}}>· {data.trade_date}</span></span>
+          <span style={{fontSize:9, color:C.mid}}>{L('Peak as resistance/support','峰值=压力位/支撑位')}</span>
+        </div>
+        <ResponsiveContainer width='100%' height={120}>
+          <BarChart data={chipsSorted} margin={{top:4, right:8, bottom:0, left:4}}>
+            <XAxis dataKey='price' tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} interval='preserveStartEnd' tickFormatter={v => Number(v).toFixed(1)}/>
+            <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={28} tickFormatter={v => `${v}%`}/>
+            {currentPriceValue && <ReferenceLine x={currentPriceValue} stroke={C.dark} strokeDasharray='3 3' strokeWidth={1} label={{value:'当前', fontSize:8, fill:C.dark, position:'top'}}/>}
+            <Bar dataKey='percent' isAnimationActive={false} shape={(props) => {
+              const isPeak = props.payload.percent === maxPercent;
+              const fill = isPeak ? C.red : C.gold;
+              return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={isPeak ? 0.85 : 0.55}/>;
+            }}/>
+            <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+              formatter={(val, name) => [val != null ? `${Number(val).toFixed(2)}%` : '—', L('Concentration','集中度')]}
+              labelFormatter={p => `¥${Number(p).toFixed(2)}`}/>
+          </BarChart>
+        </ResponsiveContainer>
+        <div style={{fontSize:9, color:C.mid, marginTop:4}}>
+          {peakAnalysis(peakPriceValue, currentPriceValue, L)}
         </div>
       </div>
     );
@@ -3680,6 +3747,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
 
       {/* Tushare 6000 data — KR2b 2026-05-02 */}
       {expandedStock === ticker && <TushareDataCard data={tushareData[ticker]} ticker={ticker} />}
+      <ChipDistributionCard data={chipData[ticker]} ticker={ticker} currentPrice={liveData?.yahoo?.[ticker]?.price ?? s.price}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
@@ -3965,6 +4033,7 @@ function TradingDesk({ L, lk, C }) {
   const [multiMethodValuation, setMultiMethodValuation] = useState(null);  // AHF-2 KR4: triangulated signal across FCF DCF + EV/EBITDA + EBO
   const [tushareMarket, setTushareMarket] = useState(null);
   const [tushareData, setTushareData] = useState({});
+  const [chipData, setChipData] = useState({});
   const [loading,   setLoading]   = useState(true);
   const MONO = "'JetBrains Mono','Fira Code',monospace";
 
@@ -3994,6 +4063,12 @@ function TradingDesk({ L, lk, C }) {
             .catch(() => null)
             .then(d => ({ ticker: t, data: d }))
         );
+        const chipDistributionFetches = tickers.map(t =>
+          fetch(base + `data/chip_distribution/${t}.json`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => ({ ticker: t, data: d }))
+            .catch(() => ({ ticker: t, data: null }))
+        );
 
         return Promise.all([
           fetch(base + 'data/daily_decision.json').then(r => r.ok ? r.json() : null).catch(() => null),
@@ -4010,9 +4085,10 @@ function TradingDesk({ L, lk, C }) {
           fetch(base + 'data/multi_method_valuation.json').then(r => r.ok ? r.json() : null).catch(() => null),
           fetch(base + 'data/tushare_market.json').then(r => r.ok ? r.json() : null).catch(() => null),
           Promise.all(tushareFetches),
+          Promise.all(chipDistributionFetches),
         ]);
       })
-      .then(([dd, sz, sq, sn, fragArr, personas, mmv, tushareMarket, tushareDataArr] = [null, null, null, null, [], null, null, null, []]) => {
+      .then(([dd, sz, sq, sn, fragArr, personas, mmv, tushareMarket, tushareDataArr, chipDataArr] = [null, null, null, null, [], null, null, null, [], []]) => {
         setDecision(dd);
         setSizing(sz);
         setQuality(sq);
@@ -4026,6 +4102,9 @@ function TradingDesk({ L, lk, C }) {
         const tushareDataMap = {};
         (tushareDataArr || []).forEach(({ ticker, data }) => { if (data) tushareDataMap[ticker] = data; });
         setTushareData(tushareDataMap);
+        const chipDataMap = {};
+        (chipDataArr || []).forEach(({ ticker, data }) => { if (data) chipDataMap[ticker] = data; });
+        setChipData(chipDataMap);
         setLoading(false);
       });
   }, []);
