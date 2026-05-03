@@ -184,6 +184,15 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_pledge_stat.py
 
+      # ── Step 2d.17: Tushare 限售股解禁 / share_float ─────────────────────
+      # Tushare 2000-tier per-watchlist upcoming restricted-share unlocks.
+      # China-specific risk reference data for short-term supply pressure.
+      - name: "Step 2d.17: Fetch restricted shares / 限售股解禁 (Tushare 2000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_restricted_shares.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
@@ -326,7 +335,8 @@ jobs:
                  public/data/inst_research/*.json \
                  public/data/top_inst/*.json \
                  public/data/broker_recommend/*.json \
-                 public/data/pledge_stat/*.json)
+                 public/data/pledge_stat/*.json \
+                 public/data/restricted_shares/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 
