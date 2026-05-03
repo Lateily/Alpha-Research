@@ -3440,23 +3440,36 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [tushareData, setTushareData] = useState({});
   const [chipData, setChipData] = useState({});
   const [consensusData, setConsensusData] = useState({});
+  const [lhbData, setLhbData] = useState({});
   useEffect(() => {
     if (!ticker) return;
     const base = DATA_BASE;
+    const fetchJson = (path) => fetch(base + path)
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
+    const lhbFetches = fetchJson('data/watchlist.json')
+      .then(wl => {
+        const watchlistTickers = Object.keys(wl?.tickers || {});
+        const targets = [...new Set([ticker, ...watchlistTickers].filter(Boolean))];
+        return Promise.all(targets.map(t =>
+          fetchJson(`data/lhb/${t}.json`).then(data => ({ ticker: t, data }))
+        ));
+      })
+      .catch(() => Promise.all([
+        fetchJson(`data/lhb/${ticker}.json`).then(data => ({ ticker, data }))
+      ]));
     Promise.all([
-      fetch(base + `data/tushare/${ticker}.json`)
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null),
-      fetch(base + `data/chip_distribution/${ticker}.json`)
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null),
-      fetch(base + `data/consensus_forecast/${ticker}.json`)
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null),
-    ]).then(([tushare, chip, consensus]) => {
+      fetchJson(`data/tushare/${ticker}.json`),
+      fetchJson(`data/chip_distribution/${ticker}.json`),
+      fetchJson(`data/consensus_forecast/${ticker}.json`),
+      lhbFetches,
+    ]).then(([tushare, chip, consensus, lhbArr]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
       setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
+      const lhbDataMap = { [ticker]: null };
+      (lhbArr || []).forEach(({ ticker: tk, data }) => { if (data) lhbDataMap[tk] = data; });
+      setLhbData(prev => ({ ...prev, ...lhbDataMap }));
     });
   }, [ticker]);
 
@@ -3517,6 +3530,16 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     if (n == null) return '—';
     const abs = Math.abs(n);
     const sign = n < 0 ? '−' : '';
+    if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)}亿`;
+    if (abs >= 1e4) return `${sign}${Math.round(abs/1e4)}万`;
+    return `${sign}${Math.round(abs)}`;
+  };
+
+  const formatLhbAmount = (yuan) => {
+    const n = finiteNumber(yuan);
+    if (n == null) return '—';
+    const sign = n >= 0 ? '+' : '−';
+    const abs = Math.abs(n);
     if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)}亿`;
     if (abs >= 1e4) return `${sign}${Math.round(abs/1e4)}万`;
     return `${sign}${Math.round(abs)}`;
@@ -3703,6 +3726,54 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     );
   };
 
+  const LHBCard = ({ data, ticker }) => {
+    if (!data || data._status === 'skipped') return null;
+    if (data._status !== 'ok') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid, whiteSpace:'nowrap'}}>
+          龙虎榜 数据暂时不可用
+        </div>
+      );
+    }
+
+    const summary = data.summary || {};
+    const totalAppearances = Number(summary.total_appearances || 0);
+    const appearances = Array.isArray(data.appearances) ? data.appearances : [];
+    if (totalAppearances === 0) {
+      return (
+        <div style={{fontSize:10, color:C.mid, padding:'2px 2px 8px', marginBottom:8}}>
+          过去30天未上龙虎榜
+        </div>
+      );
+    }
+
+    return (
+      <div style={{padding:'10px 14px', background:C.card, border:`1px solid ${C.border}`, borderRadius:10, marginBottom:10, borderLeft:`3px solid ${C.gold}`}}>
+        <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:6, display:'flex', justifyContent:'space-between'}}>
+          <span>{L('龙虎榜 30-day','龙虎榜 30天')} <span style={{fontSize:9, color:C.mid, fontWeight:400}}>· {summary.total_appearances}{L(' appearances',' 次上榜')}</span></span>
+          <span style={{fontSize:9, color:C.gold}}>{L('Top: ','主因: ')}{summary.top_reason || '—'}</span>
+        </div>
+        <div style={{fontSize:10, color:C.mid, marginBottom:6}}>
+          {L('Total net flow','累计净额')}:{' '}
+          <span style={{fontFamily:MONO, color: summary.total_net_amount >= 0 ? C.red : C.green, fontWeight:600}}>
+            {formatLhbAmount(summary.total_net_amount)}
+          </span>
+          {' · '}
+          {L('Last','最近')}: <span style={{fontFamily:MONO}}>{summary.last_appearance_date || '—'}</span>
+        </div>
+        <div style={{fontSize:10}}>
+          {appearances.slice(0, 3).map((a, i) => (
+            <div key={i} style={{display:'grid', gridTemplateColumns:'80px 1fr 100px', gap:8, padding:'3px 0', color:C.dark, alignItems:'baseline'}}>
+              <span style={{fontFamily:MONO, color:C.mid, fontSize:9}}>{a.trade_date || '—'}</span>
+              <span style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:10}}>{a.reason || '—'}</span>
+              <span style={{textAlign:'right', fontFamily:MONO, color: (a.net_amount || 0) >= 0 ? C.red : C.green, fontSize:10, fontWeight:600}}>{formatLhbAmount(a.net_amount)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Live price chart — auto-refreshes on 1D range */}
@@ -3883,6 +3954,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       {expandedStock === ticker && <TushareDataCard data={tushareData[ticker]} ticker={ticker} />}
       <ChipDistributionCard data={chipData[ticker]} ticker={ticker} currentPrice={liveData?.yahoo?.[ticker]?.price ?? s.price}/>
       <ConsensusForecastCard data={consensusData[ticker]} ticker={ticker}/>
+      <LHBCard data={lhbData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
