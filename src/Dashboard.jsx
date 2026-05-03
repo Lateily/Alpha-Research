@@ -6,7 +6,7 @@ import { Search, SearchX, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart
          Database, RefreshCw, Layers, BookOpen, Info, Calendar,
          Sun, Moon, ChevronLeft, ChevronRight, Circle,
          Wifi, WifiOff } from "lucide-react";
-import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, ComposedChart, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
 /* ── DATA BASE URL ──────────────────────────────────────────────────────────── */
 // On GitHub Pages (or any non-localhost host), fetch data files directly from the
@@ -53,6 +53,193 @@ const DARK = {
 const MONO = "'JetBrains Mono','Courier New',monospace";
 const SHADOW = '0 2px 12px rgba(50,90,160,0.10)';
 const SHADOW_SM = '0 1px 4px rgba(50,90,160,0.08)';
+
+function finiteNumber(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function ma(values, period) {
+  const out = Array(values?.length || 0).fill(null);
+  if (!Array.isArray(values) || period <= 0) return out;
+  let sum = 0;
+  let valid = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const next = finiteNumber(values[i]);
+    if (next != null) {
+      sum += next;
+      valid += 1;
+    }
+    if (i >= period) {
+      const prev = finiteNumber(values[i - period]);
+      if (prev != null) {
+        sum -= prev;
+        valid -= 1;
+      }
+    }
+    if (i >= period - 1 && valid === period) out[i] = sum / period;
+  }
+  return out;
+}
+
+function ema(values, period) {
+  const out = Array(values?.length || 0).fill(null);
+  if (!Array.isArray(values) || period <= 0) return out;
+  const alpha = 2 / (period + 1);
+  let prev = null;
+  for (let i = 0; i < values.length; i += 1) {
+    const current = finiteNumber(values[i]);
+    if (current == null) {
+      prev = null;
+      continue;
+    }
+    if (prev == null) {
+      if (i < period - 1) continue;
+      let sum = 0;
+      let ok = true;
+      for (let j = i - period + 1; j <= i; j += 1) {
+        const n = finiteNumber(values[j]);
+        if (n == null) {
+          ok = false;
+          break;
+        }
+        sum += n;
+      }
+      if (!ok) continue;
+      prev = sum / period;
+    } else {
+      prev = current * alpha + prev * (1 - alpha);
+    }
+    out[i] = prev;
+  }
+  return out;
+}
+
+function bollinger(closes, period = 20, k = 2) {
+  const mid = ma(closes, period);
+  const upper = Array(closes?.length || 0).fill(null);
+  const lower = Array(closes?.length || 0).fill(null);
+  if (!Array.isArray(closes) || period <= 0) return { mid, upper, lower };
+  for (let i = 0; i < closes.length; i += 1) {
+    if (mid[i] == null) continue;
+    let sumSq = 0;
+    let ok = true;
+    for (let j = i - period + 1; j <= i; j += 1) {
+      const n = finiteNumber(closes[j]);
+      if (n == null) {
+        ok = false;
+        break;
+      }
+      sumSq += (n - mid[i]) ** 2;
+    }
+    if (!ok) continue;
+    const sd = Math.sqrt(sumSq / period);
+    upper[i] = mid[i] + k * sd;
+    lower[i] = mid[i] - k * sd;
+  }
+  return { mid, upper, lower };
+}
+
+function macd(closes, fast = 12, slow = 26, signal = 9) {
+  const fastEma = ema(closes, fast);
+  const slowEma = ema(closes, slow);
+  const line = Array(closes?.length || 0).fill(null);
+  for (let i = 0; i < line.length; i += 1) {
+    if (fastEma[i] != null && slowEma[i] != null) line[i] = fastEma[i] - slowEma[i];
+  }
+  const sig = ema(line, signal);
+  const hist = line.map((v, i) => (v != null && sig[i] != null ? v - sig[i] : null));
+  return { line, signal: sig, hist };
+}
+
+function kdj(highs, lows, closes, period = 9) {
+  const len = Array.isArray(closes) ? closes.length : 0;
+  const k = Array(len).fill(null);
+  const d = Array(len).fill(null);
+  const j = Array(len).fill(null);
+  if (!Array.isArray(highs) || !Array.isArray(lows) || !Array.isArray(closes) || period <= 0) return { k, d, j };
+  let prevK = 50;
+  let prevD = 50;
+  for (let i = 0; i < len; i += 1) {
+    if (i < period - 1) continue;
+    let hi = -Infinity;
+    let lo = Infinity;
+    let ok = true;
+    for (let x = i - period + 1; x <= i; x += 1) {
+      const h = finiteNumber(highs[x]);
+      const l = finiteNumber(lows[x]);
+      if (h == null || l == null) {
+        ok = false;
+        break;
+      }
+      hi = Math.max(hi, h);
+      lo = Math.min(lo, l);
+    }
+    const close = finiteNumber(closes[i]);
+    if (!ok || close == null || !Number.isFinite(hi) || !Number.isFinite(lo)) {
+      prevK = 50;
+      prevD = 50;
+      continue;
+    }
+    const rsv = hi === lo ? 50 : ((close - lo) / (hi - lo)) * 100;
+    const nextK = (2 / 3) * prevK + (1 / 3) * rsv;
+    const nextD = (2 / 3) * prevD + (1 / 3) * nextK;
+    k[i] = nextK;
+    d[i] = nextD;
+    j[i] = 3 * nextK - 2 * nextD;
+    prevK = nextK;
+    prevD = nextD;
+  }
+  return { k, d, j };
+}
+
+function rsi(closes, period = 14) {
+  const out = Array(closes?.length || 0).fill(null);
+  if (!Array.isArray(closes) || period <= 0) return out;
+  let avgGain = null;
+  let avgLoss = null;
+  const calcRsi = (gain, loss) => {
+    if (loss === 0) return gain === 0 ? 50 : 100;
+    return 100 - (100 / (1 + gain / loss));
+  };
+  for (let i = 1; i < closes.length; i += 1) {
+    const current = finiteNumber(closes[i]);
+    const previous = finiteNumber(closes[i - 1]);
+    if (current == null || previous == null) {
+      avgGain = null;
+      avgLoss = null;
+      continue;
+    }
+    if (avgGain == null || avgLoss == null) {
+      if (i < period) continue;
+      let gainSum = 0;
+      let lossSum = 0;
+      let ok = true;
+      for (let j = i - period + 1; j <= i; j += 1) {
+        const cur = finiteNumber(closes[j]);
+        const prev = finiteNumber(closes[j - 1]);
+        if (cur == null || prev == null) {
+          ok = false;
+          break;
+        }
+        const diff = cur - prev;
+        gainSum += Math.max(diff, 0);
+        lossSum += Math.max(-diff, 0);
+      }
+      if (!ok) continue;
+      avgGain = gainSum / period;
+      avgLoss = lossSum / period;
+    } else {
+      const diff = current - previous;
+      avgGain = (avgGain * (period - 1) + Math.max(diff, 0)) / period;
+      avgLoss = (avgLoss * (period - 1) + Math.max(-diff, 0)) / period;
+    }
+    out[i] = calcRsi(avgGain, avgLoss);
+  }
+  return out;
+}
+
 const S = {
   card:{ background:'none', borderRadius:12, marginBottom:12,
          overflow:'hidden', boxShadow:SHADOW },
@@ -781,9 +968,11 @@ function PriceChart({ ticker, C, L, lk }) {
   const [lastFetch,setLastFetch]= useState(null);
   const [interval, setIntervalState] = useState('1d');
   const [tierLocked, setTierLocked] = useState(null);
+  const [indicators, setIndicators] = useState({ ma5: true, ma10: true, ma20: true, ma60: false, boll: true, macd: true, kdj: false, rsi: false });
   const timerRef = useRef(null);
 
   const yTicker = toYahooTicker(ticker);
+  const toggleInd = (key) => setIndicators(prev => ({ ...prev, [key]: !prev[key] }));
 
   const fetchChart = async (rng = range, iv = interval) => {
     if (!yTicker) return;
@@ -846,6 +1035,44 @@ function PriceChart({ ticker, C, L, lk }) {
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [ticker, range, interval]); // eslint-disable-line
+
+  const ind = React.useMemo(() => {
+    if (!chartData || chartData.length === 0) return null;
+    const closes = chartData.map(d => d.close);
+    const highs  = chartData.map(d => d.high);
+    const lows   = chartData.map(d => d.low);
+    return {
+      ma5: ma(closes, 5),
+      ma10: ma(closes, 10),
+      ma20: ma(closes, 20),
+      ma60: ma(closes, 60),
+      boll: bollinger(closes, 20, 2),
+      macd: macd(closes, 12, 26, 9),
+      kdj: kdj(highs, lows, closes, 9),
+      rsi: rsi(closes, 14),
+    };
+  }, [chartData]);
+
+  const chartDataWithInd = React.useMemo(() => {
+    if (!chartData || !ind) return chartData || [];
+    return chartData.map((d, i) => ({
+      ...d,
+      ma5: ind.ma5[i],
+      ma10: ind.ma10[i],
+      ma20: ind.ma20[i],
+      ma60: ind.ma60[i],
+      bollUpper: ind.boll.upper[i],
+      bollMid: ind.boll.mid[i],
+      bollLower: ind.boll.lower[i],
+      macdLine: ind.macd.line[i],
+      macdSignal: ind.macd.signal[i],
+      macdHist: ind.macd.hist[i],
+      kdjK: ind.kdj.k[i],
+      kdjD: ind.kdj.d[i],
+      kdjJ: ind.kdj.j[i],
+      rsi: ind.rsi[i],
+    }));
+  }, [chartData, ind]);
 
   // Derived chart metrics
   const prices   = (chartData || []).map(d => d.close);
@@ -988,9 +1215,31 @@ function PriceChart({ ticker, C, L, lk }) {
             )}
           </div>
         )}
-        {!error && chartData && chartData.length > 0 && (
+        {chartDataWithInd && chartDataWithInd.length > 0 && (
+          <div style={{display:'flex', flexWrap:'wrap', gap:4, padding:'6px 0', borderBottom:`1px solid ${C.border}`, marginBottom:6, fontSize:9}}>
+            {[
+              { key:'ma5',  label:'MA5',  color:C.gold },
+              { key:'ma10', label:'MA10', color:C.blue },
+              { key:'ma20', label:'MA20', color:C.green },
+              { key:'ma60', label:'MA60', color:C.red },
+              { key:'boll', label:'BOLL', color:C.dark },
+              { key:'macd', label:'MACD', color:C.blue },
+              { key:'kdj',  label:'KDJ',  color:C.gold },
+              { key:'rsi',  label:'RSI',  color:C.blue },
+            ].map(({key, label, color}) => (
+              <button key={key} onClick={() => toggleInd(key)} style={{
+                padding:'2px 8px', fontSize:9, fontWeight:600, border:`1px solid ${indicators[key] ? color : C.border}`,
+                borderRadius:4, cursor:'pointer',
+                background: indicators[key] ? `${color}14` : 'transparent',
+                color: indicators[key] ? color : C.mid,
+                transition:'all .15s',
+              }}>{label}</button>
+            ))}
+          </div>
+        )}
+        {!error && chartDataWithInd && chartDataWithInd.length > 0 && (
           <ResponsiveContainer width='100%' height={180}>
-            <LineChart data={chartData} margin={{ top:4, right:16, bottom:0, left:4 }}>
+            <LineChart data={chartDataWithInd} margin={{ top:4, right:16, bottom:0, left:4 }}>
               <defs>
                 <linearGradient id={`grad_${ticker.replace(/\./g,'_')}`} x1='0' y1='0' x2='0' y2='1'>
                   <stop offset='5%'  stopColor={lineC} stopOpacity={0.25}/>
@@ -1018,6 +1267,15 @@ function PriceChart({ ticker, C, L, lk }) {
                 formatter={(val, name) => [`${ccy}${Number(val).toFixed(4)}`, L('Price','价格')]}
               />
               <ReferenceLine y={meta?.prev_close} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
+              {indicators.ma5 && <Line type='monotone' dataKey='ma5' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>}
+              {indicators.ma10 && <Line type='monotone' dataKey='ma10' stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>}
+              {indicators.ma20 && <Line type='monotone' dataKey='ma20' stroke={C.green} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>}
+              {indicators.ma60 && <Line type='monotone' dataKey='ma60' stroke={C.red} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>}
+              {indicators.boll && (<>
+                <Line type='monotone' dataKey='bollUpper' stroke={C.mid} strokeWidth={1} strokeDasharray='3 3' dot={false} isAnimationActive={false} connectNulls={false}/>
+                <Line type='monotone' dataKey='bollMid'   stroke={C.dark} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
+                <Line type='monotone' dataKey='bollLower' stroke={C.mid} strokeWidth={1} strokeDasharray='3 3' dot={false} isAnimationActive={false} connectNulls={false}/>
+              </>)}
               <Line
                 type='monotone' dataKey='close'
                 stroke={lineC} strokeWidth={1.5}
@@ -1038,13 +1296,59 @@ function PriceChart({ ticker, C, L, lk }) {
         )}
 
         {/* Volume bar strip */}
-        {chartData && chartData.length > 0 && (
+        {chartDataWithInd && chartDataWithInd.length > 0 && (
           <ResponsiveContainer width='100%' height={40}>
-            <BarChart data={chartData} margin={{ top:0, right:16, bottom:4, left:4 }}>
+            <BarChart data={chartDataWithInd} margin={{ top:0, right:16, bottom:4, left:4 }}>
               <Bar dataKey='volume' fill={lineC} opacity={0.35} radius={0}/>
               <YAxis hide domain={['auto','auto']}/>
               <XAxis dataKey='time' hide/>
             </BarChart>
+          </ResponsiveContainer>
+        )}
+        {indicators.macd && chartDataWithInd && chartDataWithInd.length > 0 && (
+          <ResponsiveContainer width='100%' height={70}>
+            <ComposedChart data={chartDataWithInd} margin={{top:0, right:16, bottom:4, left:4}}>
+              <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50}/>
+              <XAxis dataKey='time' hide/>
+              <ReferenceLine y={0} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
+              <Bar dataKey='macdHist' isAnimationActive={false}
+                shape={(props) => {
+                  if (props.height == null || props.width == null) return null;
+                  const fill = props.payload.macdHist >= 0 ? C.green : C.red;
+                  return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={0.6}/>;
+                }}/>
+              <Line type='monotone' dataKey='macdLine'   stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
+              <Line type='monotone' dataKey='macdSignal' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false}/>
+              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+                formatter={(val, name) => [val != null ? Number(val).toFixed(3) : '—', `MACD ${name.replace('macd','')}`]}/>
+            </ComposedChart>
+          </ResponsiveContainer>
+        )}
+        {indicators.kdj && chartDataWithInd && chartDataWithInd.length > 0 && (
+          <ResponsiveContainer width='100%' height={70}>
+            <LineChart data={chartDataWithInd} margin={{top:0, right:16, bottom:4, left:4}}>
+              <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
+              <XAxis dataKey='time' hide/>
+              <ReferenceLine y={50} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>
+              <Line type='monotone' dataKey='kdjK' stroke={C.blue} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='K'/>
+              <Line type='monotone' dataKey='kdjD' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='D'/>
+              <Line type='monotone' dataKey='kdjJ' stroke={C.red}  strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} name='J'/>
+              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+                formatter={(val, name) => [val != null ? Number(val).toFixed(2) : '—', `KDJ-${name}`]}/>
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+        {indicators.rsi && chartDataWithInd && chartDataWithInd.length > 0 && (
+          <ResponsiveContainer width='100%' height={70}>
+            <LineChart data={chartDataWithInd} margin={{top:0, right:16, bottom:4, left:4}}>
+              <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
+              <XAxis dataKey='time' hide/>
+              <ReferenceLine y={70} stroke={C.red} strokeDasharray='3 3' strokeWidth={1}/>
+              <ReferenceLine y={30} stroke={C.green} strokeDasharray='3 3' strokeWidth={1}/>
+              <Line type='monotone' dataKey='rsi' stroke={C.blue} strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={false}/>
+              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:10}}
+                formatter={(val) => [val != null ? Number(val).toFixed(2) : '—', 'RSI(14)']}/>
+            </LineChart>
           </ResponsiveContainer>
         )}
       </div>
