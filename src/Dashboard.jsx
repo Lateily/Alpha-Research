@@ -967,6 +967,7 @@ function PriceChart({ ticker, C, L, lk }) {
   const [error,    setError]    = useState(null);
   const [lastFetch,setLastFetch]= useState(null);
   const [interval, setIntervalState] = useState('1d');
+  const [viewMode, setViewMode] = useState('kline'); // 'kline' | 'fenshi'
   const [tierLocked, setTierLocked] = useState(null);
   const [indicators, setIndicators] = useState({ ma5: true, ma10: true, ma20: true, ma60: false, boll: true, macd: true, kdj: false, rsi: false });
   const timerRef = useRef(null);
@@ -1074,6 +1075,26 @@ function PriceChart({ ticker, C, L, lk }) {
     }));
   }, [chartData, ind]);
 
+  const avgLine = React.useMemo(() => {
+    if (!chartData || chartData.length === 0) return [];
+    let sum = 0, count = 0;
+    return chartData.map(d => {
+      if (d.close == null) return null;
+      sum += d.close; count += 1;
+      return sum / count;
+    });
+  }, [chartData]);
+
+  const chartDataWithFenshi = React.useMemo(() => {
+    if (!chartData || chartData.length === 0) return [];
+    let prevClose = meta?.prev_close;
+    return chartData.map((d, i) => {
+      const ref = i === 0 ? prevClose : chartData[i-1].close;
+      const upTick = d.close != null && ref != null ? d.close >= ref : null;
+      return { ...d, avgPrice: avgLine[i], upTick };
+    });
+  }, [chartData, avgLine, meta]);
+
   // Derived chart metrics
   const prices   = (chartData || []).map(d => d.close);
   const minPrice = prices.length ? Math.min(...prices) : 0;
@@ -1149,9 +1170,19 @@ function PriceChart({ ticker, C, L, lk }) {
 
           {/* Range selector + refresh */}
           <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6 }}>
-            <div style={{ display:'flex', gap:3, flexWrap:'wrap', justifyContent:'flex-end' }}>
+            <div style={{display:'flex', gap:6, flexWrap:'wrap', justifyContent:'flex-end', alignItems:'center'}}>
+              <button onClick={() => {
+                if (viewMode === 'fenshi') { setViewMode('kline'); }
+                else { setViewMode('fenshi'); setIntervalState('1m'); setRange('1d'); }
+              }} style={{
+                padding:'2px 10px', fontSize:9, fontWeight:700, border:`1px solid ${viewMode === 'fenshi' ? C.red : C.border}`,
+                borderRadius:4, cursor:'pointer',
+                background: viewMode === 'fenshi' ? C.red : 'transparent',
+                color: viewMode === 'fenshi' ? '#fff' : C.mid,
+                marginRight:8,
+              }}>{L('Intraday','分时')}</button>
               {INTERVALS.map(iv => (
-                <button key={iv} onClick={() => setIntervalState(iv)} style={{
+                <button key={iv} onClick={() => { setIntervalState(iv); if (viewMode !== 'kline') setViewMode('kline'); }} style={{
                   padding:'2px 8px', fontSize:9, fontWeight:600, border:'none',
                   borderRadius:4, cursor:'pointer',
                   background: interval === iv ? C.gold : C.soft,
@@ -1164,7 +1195,7 @@ function PriceChart({ ticker, C, L, lk }) {
             </div>
             <div style={{ display:'flex', gap:3 }}>
               {RANGES.map(r => (
-                <button key={r} onClick={() => setRange(r)} style={{
+                <button key={r} onClick={() => { setRange(r); if (viewMode !== 'kline') setViewMode('kline'); }} style={{
                   padding:'3px 9px', fontSize:10, fontWeight:700, border:'none',
                   borderRadius:5, cursor:'pointer',
                   background: range === r ? C.blue : C.soft,
@@ -1215,7 +1246,17 @@ function PriceChart({ ticker, C, L, lk }) {
             )}
           </div>
         )}
-        {chartDataWithInd && chartDataWithInd.length > 0 && (
+        {!tierLocked && !error && chartData && chartData.length === 0 && !loading && (
+          <div style={{ textAlign:'center', padding:'28px 0', fontSize:11, color:C.mid }}>
+            {L('No chart data for this range','该时间段暂无数据')}
+          </div>
+        )}
+        {!chartData && loading && (
+          <div style={{ height:180, display:'flex', alignItems:'center', justifyContent:'center', color:C.mid, fontSize:11 }}>
+            {L('Loading chart…','图表加载中…')}
+          </div>
+        )}
+        {viewMode === 'kline' && chartDataWithInd && chartDataWithInd.length > 0 && (
           <div style={{display:'flex', flexWrap:'wrap', gap:4, padding:'6px 0', borderBottom:`1px solid ${C.border}`, marginBottom:6, fontSize:9}}>
             {[
               { key:'ma5',  label:'MA5',  color:C.gold },
@@ -1237,7 +1278,22 @@ function PriceChart({ ticker, C, L, lk }) {
             ))}
           </div>
         )}
-        {!error && chartDataWithInd && chartDataWithInd.length > 0 && (
+        {viewMode === 'fenshi' && chartDataWithFenshi.length > 0 && (
+          <ResponsiveContainer width='100%' height={180}>
+            <LineChart data={chartDataWithFenshi} margin={{top:4, right:16, bottom:0, left:4}}>
+              <XAxis dataKey='time' tickFormatter={fmtX} tick={{fontSize:9, fill:C.mid}} axisLine={false} tickLine={false} interval='preserveStartEnd' minTickGap={50}/>
+              <YAxis tick={{fontSize:9, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={['dataMin', 'dataMax']}
+                tickFormatter={v => `${ccy}${v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(v>=100?0:2)}`}/>
+              {meta?.prev_close && <ReferenceLine y={meta.prev_close} stroke={C.mid} strokeDasharray='3 3' strokeWidth={1}/>}
+              <Line type='monotone' dataKey='close' stroke={C.dark} strokeWidth={1.5} dot={false} isAnimationActive={false} name={L('Price','价')}/>
+              <Line type='monotone' dataKey='avgPrice' stroke={C.gold} strokeWidth={1} dot={false} isAnimationActive={false} name={L('Avg','均')}/>
+              <Tooltip contentStyle={{background:C.card, border:`1px solid ${C.border}`, borderRadius:6, fontSize:11}}
+                labelFormatter={ts => new Date(ts).toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}
+                formatter={(val) => [val != null ? `${ccy}${Number(val).toFixed(2)}` : '—']}/>
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+        {viewMode === 'kline' && !error && chartDataWithInd && chartDataWithInd.length > 0 && (
           <ResponsiveContainer width='100%' height={180}>
             <LineChart data={chartDataWithInd} margin={{ top:4, right:16, bottom:0, left:4 }}>
               <defs>
@@ -1284,28 +1340,25 @@ function PriceChart({ ticker, C, L, lk }) {
             </LineChart>
           </ResponsiveContainer>
         )}
-        {!tierLocked && !error && chartData && chartData.length === 0 && !loading && (
-          <div style={{ textAlign:'center', padding:'28px 0', fontSize:11, color:C.mid }}>
-            {L('No chart data for this range','该时间段暂无数据')}
-          </div>
-        )}
-        {!chartData && loading && (
-          <div style={{ height:180, display:'flex', alignItems:'center', justifyContent:'center', color:C.mid, fontSize:11 }}>
-            {L('Loading chart…','图表加载中…')}
-          </div>
-        )}
 
         {/* Volume bar strip */}
         {chartDataWithInd && chartDataWithInd.length > 0 && (
           <ResponsiveContainer width='100%' height={40}>
-            <BarChart data={chartDataWithInd} margin={{ top:0, right:16, bottom:4, left:4 }}>
-              <Bar dataKey='volume' fill={lineC} opacity={0.35} radius={0}/>
+            <BarChart data={viewMode === 'fenshi' ? chartDataWithFenshi : chartDataWithInd} margin={{ top:0, right:16, bottom:4, left:4 }}>
+              {viewMode === 'fenshi'
+                ? <Bar dataKey='volume' isAnimationActive={false} shape={(props) => {
+                    if (props.height == null || props.width == null) return null;
+                    const fill = props.payload.upTick === null ? C.mid : props.payload.upTick ? C.green : C.red;
+                    return <rect x={props.x} y={props.y} width={props.width} height={props.height} fill={fill} opacity={0.5}/>;
+                  }}/>
+                : <Bar dataKey='volume' fill={lineC} opacity={0.35} radius={0}/>
+              }
               <YAxis hide domain={['auto','auto']}/>
               <XAxis dataKey='time' hide/>
             </BarChart>
           </ResponsiveContainer>
         )}
-        {indicators.macd && chartDataWithInd && chartDataWithInd.length > 0 && (
+        {viewMode === 'kline' && indicators.macd && chartDataWithInd && chartDataWithInd.length > 0 && (
           <ResponsiveContainer width='100%' height={70}>
             <ComposedChart data={chartDataWithInd} margin={{top:0, right:16, bottom:4, left:4}}>
               <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50}/>
@@ -1324,7 +1377,7 @@ function PriceChart({ ticker, C, L, lk }) {
             </ComposedChart>
           </ResponsiveContainer>
         )}
-        {indicators.kdj && chartDataWithInd && chartDataWithInd.length > 0 && (
+        {viewMode === 'kline' && indicators.kdj && chartDataWithInd && chartDataWithInd.length > 0 && (
           <ResponsiveContainer width='100%' height={70}>
             <LineChart data={chartDataWithInd} margin={{top:0, right:16, bottom:4, left:4}}>
               <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
@@ -1338,7 +1391,7 @@ function PriceChart({ ticker, C, L, lk }) {
             </LineChart>
           </ResponsiveContainer>
         )}
-        {indicators.rsi && chartDataWithInd && chartDataWithInd.length > 0 && (
+        {viewMode === 'kline' && indicators.rsi && chartDataWithInd && chartDataWithInd.length > 0 && (
           <ResponsiveContainer width='100%' height={70}>
             <LineChart data={chartDataWithInd} margin={{top:0, right:16, bottom:4, left:4}}>
               <YAxis tick={{fontSize:8, fill:C.mid}} axisLine={false} tickLine={false} width={50} domain={[0, 100]}/>
