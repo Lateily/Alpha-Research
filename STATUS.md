@@ -8,10 +8,10 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-03 (shift 9 complete — 11-bug frontend bundle from comprehensive platform audit; deep research API verified working)
-**Last shift:** auto-work-mode 2026-05-03-2153 (1 KR: 11-bug bundle — Tushare wording / VP weights / rDCF terminal-g / net-debt formatting / chip empty-state / capital flow empty-state / K-line subplot polish / api per-market error)
-**HEAD:** `46223ad` on auto/2026-04-30
-**Context handoff status:** All work in git. Next session reads this file + recent commits + queued_tasks/.
+**Last updated:** 2026-05-04 (shift 10 complete — 7 KRs dual-track Tier-C + Bridge 1 thesis quality gating; Franky Strategic Advisor onboarded)
+**Last shift:** auto-work-mode 2026-05-03-2220 (7 KRs: pledge full-stack + 解禁 backend + Track C-1 audit + C-3 backend+frontend + Franky onboarding prompt)
+**HEAD:** `7c2e509` on auto/2026-04-30
+**Context handoff status:** All work in git. Next session reads this file + recent commits + handoff.md + queued_tasks/. Junyan TODO: Vercel redeploy + Tushare 3-API permissions + visual verify C-3 badge.
 
 **Pending — Anthropic billing sync issue (auto-recovers in 1-24h):**
 Step 8 LIVE test for 300308.SZ blocked by Anthropic backend bug — billing
@@ -198,6 +198,107 @@ the next visual layer (microinteractions / dark mode sweep / mobile
 responsive); none of those block ship.
 
 ---
+
+### 2026-05-03 night → 2026-05-04 midnight — auto-work shift 10: dual-track Tier-C + Bridge 1 quality gating + Franky onboarding
+
+**Run id:** `2026-05-03-2220`. 7 KRs shipped, all PASS T2 (1 P2 design
+fix applied). Junyan dual-track directive: "我们先将B跟C做起来"
+(Path B Tier-C reference data + Path C Bridge 1 research framework
+quality, parallel). Plus mid-shift Franky onboarding handoff.
+
+**Track B — Tier-C reference data (1.5 of 5 sources done):**
+
+- **KR1 + KR2 — 质押 (pledge_stat) full-stack** (commits `11539ab`,
+  `d60258b`): Per-watchlist A-share quarterly pledge_ratio fetcher
+  (Tushare 5000-tier, well below 15000 顶配). Single-API design.
+  5-state schema. Window: 4 quarters. Risk_level HIGH/MED/LOW
+  thresholds [unvalidated intuition]. Frontend PledgeRiskCard renders
+  big stat + risk badge + trend arrow + 4-quarter records table.
+  Pipeline Step 2d.16. Strategic role: future Bridge 6 portfolio
+  risk-weighting (concentration limit can incorporate pledge_ratio).
+- **KR3 — 解禁 (share_float) backend** (commit `f1667b2`): Per-watchlist
+  upcoming-180-day unlock event fetcher. Tushare 2000-tier. Same 5-state
+  template. Summary: upcoming_count + total_float_ratio_180d +
+  next_unlock_date + risk_level (HIGH >10% / MED 3-10% / LOW <3%).
+  Pipeline Step 2d.17. Frontend (RestrictedSharesCard) deferred to
+  next shift KR4.
+
+**Track C — Bridge 1 research framework quality (2 of 4 items done):**
+
+- **C-1 — THESIS_QUALITY_AUDIT.md baseline** (commit `d1bed39`):
+  Per-step 8-protocol rubric on live 300308 Deep Research output.
+  Score: 4✅ + 3⚠ + 1❌ = 58/80 = **72.5/100 baseline**. 5
+  cross-cutting issues identified (schema enforcement, QC checklist,
+  persona library underuse, optional fields, reward-to-risk missing).
+  5 ranked improvement KRs with ROI estimates. Sequencing per Junyan:
+  C-3 → C-1.5 → C-1.6 → C-2 → C-quant. Cumulative target 72.5 → ~98/100.
+- **C-3 backend — Quality gating + scoring + repair** (commit `359769b`):
+  api/research.js post-Pass-2 validator. validateThesisQuality runs 13
+  QC checks per protocol. repairMissingFields makes single targeted
+  LLM call to fill missing fields. _quality metadata attached to API
+  response. parseRewardToRisk handles 4 regex patterns (2.5:1 / 2.5x /
+  verbal). extractJsonPayload strips ```json``` fenced wrappers.
+  T2 P2 finding: Step 8 entirely missing (audit's biggest gap) only
+  scored 69 = WARN, repair didn't fire. Junyan choice "B" (asymmetric
+  weighting) applied: Step 8 sub-checks each 10 (total 40), others
+  6.67 (total 60), severity FAIL ≤ 60 → Step 8 missing alone triggers
+  FAIL → repair fires. Calibration is [unvalidated intuition], iterate
+  per memory/project_thesis_quality_weights.md.
+- **C-3 frontend — Variant Thesis quality badge + QC panel** (commit
+  `7c2e509`): ThesisQualityBadge (severity-colored pill, score/100,
+  click toggles QCFindingsPanel). QCFindingsPanel (13 checklist rows
+  + missing fields + repair status + parse_failed banner). severity=
+  WARN→yellow bar, FAIL→red bar + Re-generate button (publish ENABLED
+  per Junyan: user override, no hard block). Defensive nulls
+  throughout. Color: C palette tokens with hex-alpha pattern.
+
+**Plus Franky onboarding** (commit `65d9a80`):
+
+- **SENIOR_ONBOARDING_PROMPT.md** — Self-evolving Claude Code prompt
+  for Franky's Strategic Advisor sessions. 3-phase workflow (Phase 1
+  read 5 docs + summarize / Phase 2 review case study + 3 sharpness
+  levels / Phase 3 commit Entry 2). Hard guardrails: ✅ docs/team/* +
+  own files / ❌ src/scripts/api/.github/workflows/public/data +
+  STATUS.md + CLAUDE.md. Self-iteration via cat'ing the prompt file
+  on each new session.
+- Junyan upgraded Franky to Write collaborator + delivered prompt via
+  WeChat. Awaiting Franky's first Entry 2 commit.
+
+**Mid-shift discovery flow:**
+
+- Audit-driven KR plan (continued from shift 9.5 platform-wide audit).
+- 5 open questions in audit answered by Junyan: (1) score visible to
+  user, (2) yellow warning + user choice (no hard block), (3) reward-
+  risk threshold middle 1.75:1, (4) persona expansion stock-specific,
+  (5) re-run audit on 4 more tickers (deferred).
+- Anthropic API verified working (Deep Research generates high-quality
+  Eoptolink/NVIDIA dual-source thesis with 8-step structure mostly
+  populated; Step 8 still missing — repair will fix post-deploy).
+- Vercel/GitHub env divergence theme continues: TUSHARE_TOKEN (resolved
+  shift 9), ANTHROPIC_API_KEY (resolved shift 9.5), now Vercel
+  redeploy needed for C-3 backend (shift 10 close).
+
+**Process notes (this shift):**
+
+- 6 consecutive KRs (#2-7 of shift 10) honored spec hygiene constraints.
+  Pattern fully mature.
+- C-3 P2 fix exemplifies design-call workflow: T2 surfaces tradeoff,
+  Junyan decides (B), T1 implements, no rev2 review needed (small
+  calibration tweak in already-PASSed framework).
+- Memory entries created: project_tushare_3api_pending.md (Monday
+  reminder), project_thesis_quality_weights.md (iteration calibration
+  log).
+
+**Items deferred for next shift:**
+
+- Track B KR4 (解禁 frontend RestrictedSharesCard)
+- Track B KR5-10 (3 more pairs: 回购 / 增减持 / 融资融券)
+- Track C-1.5 (Step 8 enforcement strengthening)
+- Track C-1.6 (contrarian + reward-risk explicit fields)
+- Track C-2 (persona library multi-shift)
+- Multi-ticker audit re-run validation
+- ⚠ Junyan ops Monday morning: Tushare 3-API permissions + Vercel
+  redeploy + visual verify C-3 badge
 
 ### 2026-05-03 late night — auto-work shift 9: comprehensive platform audit + 11-bug frontend bundle
 
