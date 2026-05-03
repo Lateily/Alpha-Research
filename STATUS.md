@@ -8,9 +8,9 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-02 (shift 5 in flight — auto-work-mode: T4 protocol simplified + design-001 Phase 1 ships)
-**Last shift:** auto-work-mode 2026-05-02-1958 (T1+T2+T3+T4 four-agent first real cycle)
-**HEAD:** `<pending>` on auto/2026-04-30
+**Last updated:** 2026-05-03 (shift 5 complete — 11 KRs: design-001 + K-line full deployment + Tushare 15000 顶配 unlock)
+**Last shift:** auto-work-mode 2026-05-02-1958 (T1+T2+T3 four-agent flow, 11 KRs, ~16 hours total elapsed across two days)
+**HEAD:** `9f5fde9` on auto/2026-04-30
 **Context handoff status:** All work in git. Next session reads this file + recent commits + queued_tasks/.
 
 **Pending — Anthropic billing sync issue (auto-recovers in 1-24h):**
@@ -196,6 +196,93 @@ industry chip on row line-1 (KR5) → row left-border accent (KR7) →
 skeleton loading + empty-state CTA (KR6). Jason polish layer is now
 the next visual layer (microinteractions / dark mode sweep / mobile
 responsive); none of those block ship.
+
+---
+
+### 2026-05-03 — auto-work shift 5 (cont.): K-line full deployment + Tushare 15000 顶配 unlock
+
+**Same shift `2026-05-02-1958` continued past midnight.** 4 more KRs
+shipped (KR8-KR11). Junyan upgraded Tushare from 6000 → **15000 顶配
+tier (500 req/min)** mid-shift, unlocking minute K-line data plus a
+large set of premium APIs (concept boards, capital flow detail, 龙虎榜,
+量化因子, 盈利预测, 筹码分布, 涨停板单, etc.).
+
+- **KR8 — K-line backend multi-timeframe** (commit `5c91f02`):
+  api/price-chart.js v5 — NEW interval param (1m/5m/15m/30m/60m + 1d/1w/1mo).
+  A-share routes to Tushare daily/weekly/monthly/stk_mins; HK to
+  hk_daily/hk_weekly/hk_monthly/hk_mins; US to yfinance interval map.
+  Forward-compat schema for tier_locked: success=true + data=[] +
+  _status='tier_locked' + _need_tier=15000. Cache: minute 60s, daily 12h.
+  Backward compat preserved (default interval='1d'). +272/-61.
+- **KR9 — K-line frontend interval selector** (commit `244c32c`):
+  PriceChart gains 8 interval chips (gold-styled, 1分/5分/15分/30分/60分/
+  日/周/月) above range chips. tierLocked banner (gold-bordered 🔒) when
+  backend reports tier_locked. Auto-refresh extended to ALL minute
+  intervals (30s for 1m, 60s for 5m+). setInterval state setter renamed
+  to setIntervalState to avoid JS global shadow. +81/-23.
+- **Tushare 15000 顶配 upgrade (Junyan ops, 2026-05-03 mid-shift)** —
+  500 req/min rate limit + minute APIs unlock + many premium APIs (see
+  "Premium APIs newly available" below). NO code change needed — KR8
+  forward-compat made backend behavior auto-switch; tierLocked banners
+  stop appearing.
+- **KR11 — K-line technical indicators** (commit `bfae539`):
+  6 module-level pure math helpers (ma/ema/bollinger/macd/kdj/rsi),
+  null-safe; 8 indicator toggle chips above chart (default ON: ma5/ma10/
+  ma20/boll/macd; default OFF: ma60/kdj/rsi). MA + Bollinger overlays
+  on main chart; MACD + KDJ + RSI as separate subplots (70px each, only
+  rendered when toggled on). Tier-independent (pure JS on OHLCV).
+  +309/-5.
+- **KR10 — 分时 (intraday) view toggle** (commit `9f5fde9`):
+  NEW viewMode state ('kline' | 'fenshi'). 分时 button (C.red active)
+  before interval chips. Click 分时 → forces interval='1m' + range='1d'
+  + renders single-day price line + running cumulative avg + prev_close
+  baseline + tick-direction-colored volume bars (green up, red down,
+  mid neutral). KR11 indicator suite hidden in 分时 mode for visual clarity.
+  +73/-20.
+
+**K-line ask 全部完成**: "完整的每一天的 k 线 一天内再分时 不同时间区段
+以及 boling 线 技术指标全部加上去" — 4/4 deliverables shipped.
+
+### Premium APIs newly available (Tushare 15000 顶配)
+
+Junyan listed these as unlocked. NOT YET integrated; queue as next-shift KRs:
+
+| Data source | Tushare API name (likely) | Future KR idea |
+|---|---|---|
+| 资金流向 (concept-level) | `moneyflow_cnt`, `moneyflow_ind` | Browse tab adds 概念热度排行 + 板块流入热度 |
+| 龙虎榜 detail | `top_list`, `top_inst` | Research detail adds "大资金动向" 卡 |
+| 量化因子 (Tushare native) | `stk_factor_pro` | VP score adds objective external anchor |
+| 盈利预测 (consensus) | `forecast`, `express` | Research adds consensus delta card (vs our_growth) |
+| 筹码分布 | `cyq_chips` | Trading Desk adds 压力位/支撑位 indicator |
+| 概念板块成分 | `concept_detail` | Browse tab "今日热门概念" surface |
+| 机构调研 / 游资数据 | `stk_holdertrade`, `lhb_inst` | New USP-strength signal |
+| 涨停板单 | `limit_list` | Browse tab "封板特化" view |
+| 沪港通成分 | `hk_hold` | HSGTBadge enriched with composition trend |
+| 融资融券 | `margin_detail` | Risk panel adds 融资余额 trend |
+| 期权 / ETF list | `opt_basic`, `fund_basic` | Beyond watchlist scope — probably defer |
+
+These represent ~10+ KR-worth of new data integration work. Each
+unlocks new analytical surfaces. Junyan to prioritize next shift.
+
+### Process notes (this shift)
+
+- **T2 watcher behavior**: at first T2 wasn't running as watcher (Junyan
+  manually relayed for KR1+KR2). Junyan started `bin/agent-watch-reviewer.sh`
+  before KR3 → all subsequent reviews were auto. Pattern: watcher startup
+  is a one-time setup per shift.
+- **T3 watcher behavior**: ran from start. Codex CLI ~2-12 min per task
+  depending on size. JSX balance + npm build + verify_outputs.py test gate
+  ran consistently and reliably.
+- **T2 caught real bugs (P2 findings, both fixed in same shift)**:
+  - KR6 rev1 P2: pulse keyframe was NewsPanel-scoped; cold-start Browse
+    skeleton would render static. T2's recommended fix (move keyframe to
+    GlobalStyles) applied → KR6-rev2 PASS.
+  - KR7 rev1 P2: CLAUDE.md §4.4 doc table inaccurately listed `#EF4444`
+    as used in row left-border accent (actual code uses `C.red`). Fix
+    applied with explicit "Asymmetry note" → KR7-rev2 PASS.
+  Both: T2 doing its gap-detection job. Pattern is mature.
+- **Shift duration**: ~16 hours wall-clock total (with breaks for Junyan
+  limit reset + Tushare upgrade + sleep). 11 KRs net.
 
 **K-line scope (KR8+ queued)** — Junyan extended scope: full daily K-line,
 intraday 分时 view, multi-timeframe (1d/1w/1mo + minute intervals),
