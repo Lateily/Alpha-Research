@@ -3361,6 +3361,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, signalsData, scissorsData, liData, egapScores }) {
   const [tushareData, setTushareData] = useState({});
   const [chipData, setChipData] = useState({});
+  const [consensusData, setConsensusData] = useState({});
   useEffect(() => {
     if (!ticker) return;
     const base = DATA_BASE;
@@ -3371,9 +3372,13 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       fetch(base + `data/chip_distribution/${ticker}.json`)
         .then(r => r.ok ? r.json() : null)
         .catch(() => null),
-    ]).then(([tushare, chip]) => {
+      fetch(base + `data/consensus_forecast/${ticker}.json`)
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null),
+    ]).then(([tushare, chip, consensus]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
+      setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
     });
   }, [ticker]);
 
@@ -3427,6 +3432,16 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     if (peakPrice > currentPrice) return L(`Peak ${peakPrice.toFixed(2)} above current — likely resistance`, `峰值 ${peakPrice.toFixed(2)} 在现价之上 — 压力位`);
     if (peakPrice < currentPrice) return L(`Peak ${peakPrice.toFixed(2)} below current — likely support`, `峰值 ${peakPrice.toFixed(2)} 在现价之下 — 支撑位`);
     return L('Peak at current price', '峰值在现价附近');
+  };
+
+  const formatRevenue = (yuan) => {
+    const n = finiteNumber(yuan);
+    if (n == null) return '—';
+    const abs = Math.abs(n);
+    const sign = n < 0 ? '−' : '';
+    if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)}亿`;
+    if (abs >= 1e4) return `${sign}${Math.round(abs/1e4)}万`;
+    return `${sign}${Math.round(abs)}`;
   };
 
   const TushareDataCard = ({ data, ticker }) => {
@@ -3565,6 +3580,47 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
         <div style={{fontSize:9, color:C.mid, marginTop:4}}>
           {peakAnalysis(peakPriceValue, currentPriceValue, L)}
         </div>
+      </div>
+    );
+  };
+
+  const ConsensusForecastCard = ({ data, ticker }) => {
+    if (!data) return null;
+    if (data._status === 'skipped') return null;
+    if (data._status === 'endpoint_unavailable' || data._status === 'tier_locked' || data._status === 'fetch_failed') {
+      return (
+        <div style={{padding:'8px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:8, marginBottom:10, fontSize:10, color:C.mid}}>
+          盈利预测 数据暂时不可用
+        </div>
+      );
+    }
+    const forecasts = Array.isArray(data.forecasts)
+      ? [...data.forecasts].sort((a, b) => String(b.end_date || '').localeCompare(String(a.end_date || '')))
+      : [];
+    if (data._status !== 'ok' || forecasts.length === 0) return null;
+
+    return (
+      <div style={{padding:'10px 14px', background:C.card, border:`1px solid ${C.border}`, borderRadius:10, marginBottom:10}}>
+        <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:6, display:'flex', justifyContent:'space-between'}}>
+          <span>{L('Analyst Consensus','分析师一致预期')} <span style={{fontSize:9, color:C.mid, fontWeight:400}}>· {data.api_used || data.fetched_at?.slice(0,10)}</span></span>
+          <span style={{fontSize:9, color:C.mid}}>{L('Source: Tushare 15k tier','数据源：Tushare 15000 顶配')}</span>
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr 0.5fr', gap:6, fontSize:10, padding:'4px 0', borderBottom:`1px solid ${C.border}`, color:C.mid, fontWeight:600}}>
+          <span>{L('Period','报告期')}</span>
+          <span style={{textAlign:'right'}}>EPS</span>
+          <span style={{textAlign:'right'}}>{L('Revenue','营收')}</span>
+          <span style={{textAlign:'right'}}>{L('Net Profit','净利润')}</span>
+          <span style={{textAlign:'right'}}>{L('Brokers','机构')}</span>
+        </div>
+        {forecasts.slice(0, 4).map((f, i) => (
+          <div key={i} style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr 0.5fr', gap:6, fontSize:10, padding:'4px 0', borderBottom: i < Math.min(3, forecasts.length-1) ? `1px dashed ${C.border}` : 'none', color:C.dark}}>
+            <span style={{fontFamily:MONO, color:C.mid}}>{f.end_date || '—'}</span>
+            <span style={{textAlign:'right', fontFamily:MONO, fontWeight:600}}>{f.eps != null ? Number(f.eps).toFixed(2) : '—'}</span>
+            <span style={{textAlign:'right', fontFamily:MONO}}>{f.revenue != null ? formatRevenue(f.revenue) : '—'}</span>
+            <span style={{textAlign:'right', fontFamily:MONO}}>{f.net_profit != null ? formatRevenue(f.net_profit) : '—'}</span>
+            <span style={{textAlign:'right', fontFamily:MONO, color:C.gold}}>{f.broker_count || '—'}</span>
+          </div>
+        ))}
       </div>
     );
   };
@@ -3748,6 +3804,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       {/* Tushare 6000 data — KR2b 2026-05-02 */}
       {expandedStock === ticker && <TushareDataCard data={tushareData[ticker]} ticker={ticker} />}
       <ChipDistributionCard data={chipData[ticker]} ticker={ticker} currentPrice={liveData?.yahoo?.[ticker]?.price ?? s.price}/>
+      <ConsensusForecastCard data={consensusData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
@@ -4034,6 +4091,7 @@ function TradingDesk({ L, lk, C }) {
   const [tushareMarket, setTushareMarket] = useState(null);
   const [tushareData, setTushareData] = useState({});
   const [chipData, setChipData] = useState({});
+  const [consensusData, setConsensusData] = useState({});
   const [loading,   setLoading]   = useState(true);
   const MONO = "'JetBrains Mono','Fira Code',monospace";
 
@@ -4069,6 +4127,12 @@ function TradingDesk({ L, lk, C }) {
             .then(d => ({ ticker: t, data: d }))
             .catch(() => ({ ticker: t, data: null }))
         );
+        const consensusForecastFetches = tickers.map(t =>
+          fetch(base + `data/consensus_forecast/${t}.json`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => ({ ticker: t, data: d }))
+            .catch(() => ({ ticker: t, data: null }))
+        );
 
         return Promise.all([
           fetch(base + 'data/daily_decision.json').then(r => r.ok ? r.json() : null).catch(() => null),
@@ -4086,9 +4150,10 @@ function TradingDesk({ L, lk, C }) {
           fetch(base + 'data/tushare_market.json').then(r => r.ok ? r.json() : null).catch(() => null),
           Promise.all(tushareFetches),
           Promise.all(chipDistributionFetches),
+          Promise.all(consensusForecastFetches),
         ]);
       })
-      .then(([dd, sz, sq, sn, fragArr, personas, mmv, tushareMarket, tushareDataArr, chipDataArr] = [null, null, null, null, [], null, null, null, [], []]) => {
+      .then(([dd, sz, sq, sn, fragArr, personas, mmv, tushareMarket, tushareDataArr, chipDataArr, consensusDataArr] = [null, null, null, null, [], null, null, null, [], [], []]) => {
         setDecision(dd);
         setSizing(sz);
         setQuality(sq);
@@ -4105,6 +4170,9 @@ function TradingDesk({ L, lk, C }) {
         const chipDataMap = {};
         (chipDataArr || []).forEach(({ ticker, data }) => { if (data) chipDataMap[ticker] = data; });
         setChipData(chipDataMap);
+        const consensusDataMap = {};
+        (consensusDataArr || []).forEach(({ ticker, data }) => { if (data) consensusDataMap[ticker] = data; });
+        setConsensusData(consensusDataMap);
         setLoading(false);
       });
   }, []);
