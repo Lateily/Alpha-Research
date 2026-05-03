@@ -12,7 +12,7 @@
 > Schema is **always complete**. Consumers test for `null` and gracefully
 > degrade. **Never delete a field because it's not yet available.**
 >
-> Last updated: 2026-05-02
+> Last updated: 2026-05-03
 
 ---
 
@@ -20,7 +20,8 @@
 
 | ID | Source | Tier | Auth | Tickers | Cadence | Status |
 |---|---|---|---|---|---|---|
-| `tushare` | Tushare Pro | Paid (6000 pts) | `TUSHARE_TOKEN` env | A-share | daily | ✅ ACTIVE 2026-05-02 (`scripts/fetch_tushare.py` shipped, pipeline integrated) |
+| `tushare` | Tushare Pro | Paid (15000 pts; base fetcher 6000-compatible) | `TUSHARE_TOKEN` env | A-share | daily | ✅ ACTIVE 2026-05-02 (`scripts/fetch_tushare.py` shipped, pipeline integrated) |
+| `capital_flow` | Tushare Pro concept/industry capital flow | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share market-wide boards | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_capital_flow.py`, pipeline Step 2d.6) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -36,7 +37,7 @@
 
 ## 2. Per-Source Detail
 
-### 2.1 `tushare` — Tushare Pro (current tier: 6000)
+### 2.1 `tushare` — Tushare Pro (current account tier: 15000)
 
 **Auth:** `TUSHARE_TOKEN` env var (also stored in GitHub Actions secret).
 
@@ -48,7 +49,7 @@ pro = ts.pro_api()
 df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 ```
 
-**Tier-gated endpoints (current 6000 active vs higher):**
+**Tier-gated endpoints (base 6000 fetcher + newly unlocked 15000 premium APIs):**
 
 | Endpoint | Tier | What it gives | Consumer |
 |---|---|---|---|
@@ -68,6 +69,8 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | `forecast` | 10000 | 业绩预告 | Strongest A-share catalyst signal |
 | `express` | 10000 | 业绩快报 | Pre-earnings catalyst |
 | `fina_indicator` | 10000? | 财务指标 (ROE/ROA) | fundamental_accel upgrade |
+| **`moneyflow_cnt` / candidates** ⭐ | **15000** | Concept-board net inflow | Browse/research capital-flow heat |
+| **`moneyflow_ind_dc` / candidates** ⭐ | **15000** | Industry-board net inflow | Browse/research capital-flow heat |
 
 ⭐⭐ = USP-critical
 ⭐ = Strong catalyst signal
@@ -97,6 +100,60 @@ public/data/tushare/<ticker>.json
 
 **Implementation:** ✅ `scripts/fetch_tushare.py` (296 LOC, shipped 2026-05-02,
 first three-agent production codegen task; T3 codegen + T2 review).
+
+#### 2.1.1 `capital_flow` — Tushare 15000-tier concept + industry flow
+
+**Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
+
+**Fetcher:** `scripts/fetch_capital_flow.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.6, `continue-on-error: true`.
+
+**Output:** `public/data/capital_flow.json`
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Endpoint fallback order:**
+- Concept-level flow: `moneyflow_cnt` → `cnt_moneyflow` → `moneyflow_concept` → `concept_moneyflow`
+- Industry-level flow: `moneyflow_ind_dc` → `moneyflow_ind` → `industry_moneyflow` → `ind_moneyflow`
+
+**Schema:**
+```json
+{
+  "fetched_at": "2026-05-03T...",
+  "trade_date": "20260503",
+  "tier": 15000,
+  "_status": "ok | partial | endpoint_unavailable",
+  "hot_concepts": [
+    {"name": "光通信", "ts_code": "xxxx", "net_inflow_yuan": 123000000.0, "pct_chg": 2.1}
+  ],
+  "cold_concepts": [],
+  "hot_industries": [],
+  "cold_industries": [],
+  "concept_meta": {
+    "api_used": "moneyflow_cnt",
+    "_attempted_endpoints": ["moneyflow_cnt"],
+    "row_count": 86,
+    "_status": "ok"
+  },
+  "industry_meta": {
+    "api_used": "moneyflow_ind_dc",
+    "_attempted_endpoints": ["moneyflow_ind_dc"],
+    "row_count": 31,
+    "_status": "ok"
+  }
+}
+```
+
+**Graceful degrade behavior:** Concept and industry sections succeed
+independently. If all candidate endpoint names fail for one section because
+the API name is wrong, permission/tier is unavailable, or Tushare returns a
+not-found response, that section writes empty arrays, `_status:
+"endpoint_unavailable"`, and `_attempted_endpoints` with every tried name.
+Top-level `_status` is `ok` if both sections succeed, `partial` if one
+succeeds, and `endpoint_unavailable` if neither succeeds. The script exits 0
+for graceful endpoint unavailability and exits 1 only when auth is missing or
+an unhandled process-level exception occurs.
 
 ---
 
