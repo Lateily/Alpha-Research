@@ -1,0 +1,52 @@
+{
+  "_status": "ok",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-04T15:42:37Z",
+  "api_used": "pledge_stat",
+  "window_quarters": 4,
+  "records": [
+    {
+      "ts_code": "002594.SZ",
+      "end_date": "20260424",
+      "pledge_count": 76,
+      "unrest_pledge": 21593.45,
+      "rest_pledge": 0.0,
+      "total_share": 543379.76,
+      "pledge_ratio": 3.97
+    },
+    {
+      "ts_code": "002594.SZ",
+      "end_date": "20260417",
+      "pledge_count": 75,
+      "unrest_pledge": 21303.45,
+      "rest_pledge": 0.0,
+      "total_share": 543379.76,
+      "pledge_ratio": 3.92
+    },
+    {
+      "ts_code": "002594.SZ",
+      "end_date": "20260410",
+      "pledge_count": 75,
+      "unrest_pledge": 21303.45,
+      "rest_pledge": 0.0,
+      "total_share": 543379.76,
+      "pledge_ratio": 3.92
+    },
+    {
+      "ts_code": "002594.SZ",
+      "end_date": "20260403",
+      "pledge_count": 78,
+      "unrest_pledge": 22105.45,
+      "rest_pledge": 0.0,
+      "total_share": 543379.76,
+      "pledge_ratio": 4.07
+    }
+  ],
+  "summary": {
+    "latest_pledge_ratio": 3.97,
+    "latest_end_date": "2026-04-24",
+    "trend_direction": "falling",
+    "risk_level": "LOW",
+    "records_count": 4
+  }
+}

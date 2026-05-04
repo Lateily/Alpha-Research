@@ -1,0 +1,15 @@
+{
+  "_status": "skipped_hk",
+  "ticker": "9999.HK",
+  "fetched_at": "2026-05-04T15:42:37Z",
+  "api_used": "pledge_stat",
+  "window_quarters": 4,
+  "records": [],
+  "summary": {
+    "latest_pledge_ratio": null,
+    "latest_end_date": null,
+    "trend_direction": null,
+    "risk_level": null,
+    "records_count": 0
+  }
+}

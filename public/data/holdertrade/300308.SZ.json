@@ -1,0 +1,78 @@
+{
+  "_status": "ok",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-04T15:42:42Z",
+  "api_used": "stk_holdertrade",
+  "window_days": 180,
+  "events": [
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20260116",
+      "holder_name": "山东中际投资控股有限公司",
+      "holder_type": "C",
+      "in_de": "DE",
+      "change_vol": 5500000,
+      "change_ratio": 0.4975,
+      "after_share": 121440135.0,
+      "after_ratio": 10.9851,
+      "avg_price": 521.73,
+      "total_share": 121440135,
+      "begin_date": null,
+      "close_date": null
+    },
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20260116",
+      "holder_name": "山东中际投资控股有限公司",
+      "holder_type": "C",
+      "in_de": "DE",
+      "change_vol": 5500000,
+      "change_ratio": 0.4975,
+      "after_share": 121440135.0,
+      "after_ratio": 10.9851,
+      "avg_price": 521.73,
+      "total_share": 121440135,
+      "begin_date": null,
+      "close_date": null
+    },
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20251125",
+      "holder_name": "王晓东",
+      "holder_type": "G",
+      "in_de": "DE",
+      "change_vol": 708552,
+      "change_ratio": 0.0641,
+      "after_share": 10500.0,
+      "after_ratio": 0.0009,
+      "avg_price": 414.24,
+      "total_share": 2167657,
+      "begin_date": null,
+      "close_date": null
+    },
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20251125",
+      "holder_name": "王晓东",
+      "holder_type": "G",
+      "in_de": "DE",
+      "change_vol": 708552,
+      "change_ratio": 0.0641,
+      "after_share": 10500.0,
+      "after_ratio": 0.0009,
+      "avg_price": 414.24,
+      "total_share": 2167657,
+      "begin_date": null,
+      "close_date": null
+    }
+  ],
+  "summary": {
+    "total_count": 4,
+    "in_count": 0,
+    "de_count": 4,
+    "net_change_vol_180d": -12417104,
+    "net_change_ratio_180d": -1.1232,
+    "last_announce_date": "2026-01-16",
+    "signal_level": "NET_SELL_HIGH"
+  }
+}
