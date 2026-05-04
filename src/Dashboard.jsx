@@ -3784,6 +3784,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [topInstData, setTopInstData] = useState({});
   const [brokerRecommendData, setBrokerRecommendData] = useState({});
   const [pledgeData, setPledgeData] = useState({});
+  const [restrictedSharesData, setRestrictedSharesData] = useState({});
   const [qualityPanelOpen, setQualityPanelOpen] = useState(false);
   useEffect(() => {
     if (!ticker) return;
@@ -3821,6 +3822,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       .then(targets => Promise.all(targets.map(t =>
           fetchJson(`data/pledge_stat/${t}.json`).then(data => ({ ticker: t, data }))
         )));
+    const restrictedSharesFetches = watchlistTargets
+      .then(targets => Promise.all(targets.map(t =>
+          fetchJson(`data/restricted_shares/${t}.json`).then(data => ({ ticker: t, data }))
+        )));
     Promise.all([
       fetchJson(`data/tushare/${ticker}.json`),
       fetchJson(`data/chip_distribution/${ticker}.json`),
@@ -3831,7 +3836,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       topInstFetches,
       brokerRecommendFetches,
       pledgeFetches,
-    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr, brokerRecommendArr, pledgeArr]) => {
+      restrictedSharesFetches,
+    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr, brokerRecommendArr, pledgeArr, restrictedSharesArr]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
       setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
@@ -3853,6 +3859,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       const pledgeDataMap = { [ticker]: null };
       (pledgeArr || []).forEach(({ ticker: tk, data }) => { if (data) pledgeDataMap[tk] = data; });
       setPledgeData(prev => ({ ...prev, ...pledgeDataMap }));
+      const restrictedSharesDataMap = { [ticker]: null };
+      (restrictedSharesArr || []).forEach(({ ticker: tk, data }) => { if (data) restrictedSharesDataMap[tk] = data; });
+      setRestrictedSharesData(prev => ({ ...prev, ...restrictedSharesDataMap }));
     });
   }, [ticker]);
   useEffect(() => {
@@ -4779,6 +4788,129 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     );
   };
 
+  const RestrictedSharesCard = ({ data, ticker }) => {
+    if (!data || data._status === 'skipped_hk' || data._status === 'skipped_us') return null;
+    if (data._status === 'empty') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid}}>
+          限售解禁 · 未来180天无解禁
+        </div>
+      );
+    }
+    if (data._status === 'api_error') {
+      return (
+        <div style={{padding:'4px 8px', background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:6, marginBottom:10, fontSize:10, color:C.red}}>
+          限售解禁 · 数据暂时不可用
+        </div>
+      );
+    }
+    if (data._status !== 'ok') return null;
+
+    const summary = data.summary || {};
+    const dateKey = (value) => String(value || '').replace(/-/g, '');
+    const events = Array.isArray(data.events)
+      ? [...data.events]
+          .sort((a, b) => dateKey(a?.float_date).localeCompare(dateKey(b?.float_date)))
+          .slice(0, 4)
+      : [];
+    const totalRatio = finiteNumber(summary.total_float_ratio_180d);
+    const upcomingCount = finiteNumber(summary.upcoming_count);
+    const riskLevel = summary.risk_level || null;
+    const riskColor = riskLevel === 'HIGH' ? C.red
+      : riskLevel === 'MED' ? C.gold
+      : riskLevel === 'LOW' ? C.green
+      : C.mid;
+    const riskLabel = riskLevel === 'HIGH' ? 'HIGH'
+      : riskLevel === 'MED' ? 'MED'
+      : riskLevel === 'LOW' ? 'LOW'
+      : 'NO DATA';
+    const formatFloatDate = (value) => {
+      const s = String(value || '');
+      if (/^\d{8}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      return s || '—';
+    };
+    const formatFloatRatio = (value) => {
+      const n = finiteNumber(value);
+      return n == null ? '—' : `${n.toFixed(1)}%`;
+    };
+    const ratioColor = (value) => {
+      const n = finiteNumber(value);
+      if (n == null) return C.mid;
+      if (n > 5) return C.red;
+      if (n >= 1) return C.gold;
+      return C.green;
+    };
+    const truncateHolder = (value) => {
+      const s = String(value || '').trim();
+      if (!s) return '—';
+      return s.length > 10 ? `${s.slice(0, 10)}…` : s;
+    };
+    const hasShareType = events.some(row => row?.share_type);
+    const hasHolder = events.some(row => row?.holder_name);
+    const tableGrid = ['82px', '58px', hasShareType ? 'minmax(54px, 1fr)' : null, hasHolder ? 'minmax(72px, 1fr)' : null]
+      .filter(Boolean)
+      .join(' ');
+    const nextUnlockDate = formatFloatDate(summary.next_unlock_date);
+
+    return (
+      <div style={{padding:'10px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:12, boxShadow:SHADOW, marginBottom:10}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:8}}>
+          <div style={{fontWeight:700, fontSize:11, color:C.dark}}>限售解禁</div>
+          <div title={ticker} style={{fontSize:9, color:C.mid, fontFamily:MONO, textAlign:'right', background:C.soft, border:`1px solid ${C.border}`, borderRadius:4, padding:'1px 5px'}}>
+            {nextUnlockDate}
+          </div>
+        </div>
+        <div style={{width:'100%', borderRadius:8, background:`${riskColor}10`, border:`1px solid ${riskColor}30`, padding:10, marginBottom:10}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:10}}>
+            <div>
+              <div style={{fontFamily:MONO, fontSize:22, lineHeight:1, color:riskColor, fontWeight:800}}>
+                {formatFloatRatio(totalRatio)}
+              </div>
+              <div style={{fontSize:9, color:C.mid, marginTop:4}}>未来180天解禁占比</div>
+            </div>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6}}>
+              <span style={{background:`${riskColor}30`, color:riskColor, borderRadius:4, padding:'2px 6px', fontSize:10, fontWeight:700, fontFamily:MONO}}>
+                {riskLabel}
+              </span>
+              <span style={{fontSize:10, color:C.mid, fontFamily:MONO}}>
+                {upcomingCount != null ? Math.round(upcomingCount) : '—'} 起
+              </span>
+            </div>
+          </div>
+        </div>
+        {events.length > 0 && (
+          <div>
+            <div style={{display:'grid', gridTemplateColumns:tableGrid, gap:6, padding:'0 0 4px', borderBottom:`1px solid ${C.border}`, fontSize:9, color:C.mid, fontWeight:700}}>
+              <span>解禁日</span>
+              <span style={{textAlign:'right'}}>比例</span>
+              {hasShareType && <span>类型</span>}
+              {hasHolder && <span>股东</span>}
+            </div>
+            {events.map((event, i) => (
+              <div key={`${event.float_date || 'date'}-${i}`} style={{display:'grid', gridTemplateColumns:tableGrid, gap:6, padding:'4px 0', borderBottom:i < events.length - 1 ? `1px dashed ${C.border}` : 'none', fontSize:10, alignItems:'center'}}>
+                <span style={{fontFamily:MONO, fontSize:10, color:C.dark}}>{formatFloatDate(event.float_date)}</span>
+                <span style={{fontFamily:MONO, fontSize:10, color:ratioColor(event.float_ratio), textAlign:'right', fontWeight:700}}>
+                  {formatFloatRatio(event.float_ratio)}
+                </span>
+                {hasShareType && (
+                  <span style={{fontSize:10, color:C.mid, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                    {event.share_type || '—'}
+                  </span>
+                )}
+                {hasHolder && (
+                  <span title={event.holder_name || ''} style={{fontSize:10, color:C.mid, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                    {truncateHolder(event.holder_name)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Live price chart — auto-refreshes on 1D range */}
@@ -5028,6 +5160,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <TopInstCard data={topInstData[ticker]} ticker={ticker}/>
       <BrokerRecommendCard data={brokerRecommendData[ticker]} ticker={ticker}/>
       <PledgeRiskCard data={pledgeData[ticker]} ticker={ticker}/>
+      <RestrictedSharesCard data={restrictedSharesData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
