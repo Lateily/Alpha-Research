@@ -27,6 +27,12 @@ set -euo pipefail
 PENDING_DIR=".agent_tasks/pending"
 IN_PROGRESS_DIR=".agent_tasks/in_progress"
 DONE_DIR_BASE=".agent_tasks/done"
+STATUS_DIR=".agent_tasks/status"
+STATUS_FILE="$STATUS_DIR/codex.json"
+HEARTBEAT_FILE="$STATUS_DIR/codex.heartbeat.json"
+HEARTBEAT_INTERVAL="${T3_HEARTBEAT_INTERVAL:-15}"
+FSWATCH_PID=""
+EVENT_FIFO=""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -37,6 +43,60 @@ log() {
 
 ts() {
   date -u '+%Y-%m-%dT%H:%M:%SZ'
+}
+
+json_string_or_null() {
+  if [ -n "${1:-}" ]; then
+    printf '"%s"' "$1"
+  else
+    printf 'null'
+  fi
+}
+
+write_status() {
+  local state="$1"
+  local current_task="${2:-}"
+  local output_path="${3:-}"
+  local exit_code="${4:-}"
+  local last_task="${5:-}"
+  local exit_json="null"
+
+  if [ -n "$exit_code" ]; then
+    exit_json="$exit_code"
+  fi
+
+  mkdir -p "$STATUS_DIR"
+  cat > "$STATUS_FILE.tmp" <<JSON
+{
+  "_status": "ok",
+  "agent": "codex",
+  "state": "$state",
+  "pid": $$,
+  "updated_at": "$(ts)",
+  "pending_dir": "$PENDING_DIR",
+  "in_progress_dir": "$IN_PROGRESS_DIR",
+  "done_dir_base": "$DONE_DIR_BASE",
+  "current_task_id": $(json_string_or_null "$current_task"),
+  "last_task_id": $(json_string_or_null "$last_task"),
+  "output_path": $(json_string_or_null "$output_path"),
+  "last_exit_code": $exit_json
+}
+JSON
+  mv "$STATUS_FILE.tmp" "$STATUS_FILE"
+  write_heartbeat
+}
+
+write_heartbeat() {
+  mkdir -p "$STATUS_DIR"
+  cat > "$HEARTBEAT_FILE.tmp" <<JSON
+{
+  "_status": "ok",
+  "agent": "codex",
+  "pid": $$,
+  "updated_at": "$(ts)"
+}
+JSON
+  mv "$HEARTBEAT_FILE.tmp" "$HEARTBEAT_FILE"
 }
 
 plus_30m() {
@@ -78,7 +138,7 @@ preflight() {
     exit 1
   fi
 
-  mkdir -p "$PENDING_DIR" "$IN_PROGRESS_DIR" "$DONE_DIR_BASE"
+  mkdir -p "$PENDING_DIR" "$IN_PROGRESS_DIR" "$DONE_DIR_BASE" "$STATUS_DIR"
 }
 
 write_lock() {
@@ -126,19 +186,21 @@ process_task() {
     return 0
   fi
 
+  write_status "claimed" "$task_id" "" "" ""
   write_lock "$task_id"
 
   done_today="$DONE_DIR_BASE/$(date -u +%Y-%m-%d)"
   mkdir -p "$done_today"
   task_path="$IN_PROGRESS_DIR/$task_id.json"
   out="$done_today/$task_id.codex_output.json"
+  write_status "running" "$task_id" "$out" "" ""
 
   codex_prompt="You are T3 Codex for ar-platform. Process the JSON task spec from stdin. Follow docs/team/CODEX_ONBOARDING.md section 6, implement the requested changes, run the task's test_gate, and print only the required codex_output JSON object to stdout. The watcher has already claimed the task and will archive the spec after this process exits."
 
   # Verified 2026-05-02: codex exec reads the task spec from stdin.
   # Fallback for older CLI variants: codex --input "$task_path" --output "$out"
   set +e
-  codex exec -C "$REPO_ROOT" "$codex_prompt" < "$task_path" > "$out"
+  codex exec -m gpt-5.5 -C "$REPO_ROOT" "$codex_prompt" < "$task_path" > "$out"
   codex_ec=$?
   set -e
 
@@ -150,21 +212,79 @@ process_task() {
   rm -f "$IN_PROGRESS_DIR/$task_id.lock"
 
   log "[$(ts)] codex processed $task_id (exit=$codex_ec) -> $out"
+  write_status "standby" "" "$out" "$codex_ec" "$task_id"
 }
 
 on_int() {
+  write_status "stopped" "" "" "" ""
+  cleanup
   log "Watcher stopped cleanly"
   exit 0
 }
 
-trap on_int INT
+cleanup() {
+  if [ -n "$FSWATCH_PID" ]; then
+    kill "$FSWATCH_PID" 2>/dev/null || true
+    wait "$FSWATCH_PID" 2>/dev/null || true
+    FSWATCH_PID=""
+  fi
+
+  if [ -n "$EVENT_FIFO" ]; then
+    rm -f "$EVENT_FIFO"
+    EVENT_FIFO=""
+  fi
+}
+
+next_pending_file() {
+  ls -1t -r "$PENDING_DIR"/*.json 2>/dev/null | head -1 || true
+}
+
+drain_pending_tasks() {
+  local pending_file
+
+  while true; do
+    pending_file="$(next_pending_file)"
+    [ -z "$pending_file" ] && return 0
+    process_task "$pending_file"
+  done
+}
+
+watch_loop() {
+  local event read_ec
+
+  EVENT_FIFO="$(mktemp -u "${TMPDIR:-/tmp}/agent-watch-codex.XXXXXX")"
+  mkfifo "$EVENT_FIFO"
+  fswatch -0 "$PENDING_DIR" > "$EVENT_FIFO" &
+  FSWATCH_PID="$!"
+  exec 3< "$EVENT_FIFO"
+  rm -f "$EVENT_FIFO"
+  EVENT_FIFO=""
+
+  while true; do
+    write_heartbeat
+    drain_pending_tasks
+
+    set +e
+    IFS= read -r -d '' -t "$HEARTBEAT_INTERVAL" event <&3
+    read_ec=$?
+    set -e
+
+    if ! kill -0 "$FSWATCH_PID" 2>/dev/null; then
+      write_status "stopped" "" "" "" ""
+      log "ERROR: fswatch exited; watcher cannot continue."
+      exit 1
+    fi
+
+    if [ "$read_ec" -eq 0 ]; then
+      : "$event"
+    fi
+  done
+}
+
+trap on_int INT TERM
+trap cleanup EXIT
 
 preflight
+write_status "standby" "" "" "" ""
 log "agent-watch-codex.sh standby [PID $$] — monitoring .agent_tasks/pending/"
-
-fswatch -0 "$PENDING_DIR" | while IFS= read -r -d '' event; do
-  : "$event"
-  pending_file="$(ls -1t -r "$PENDING_DIR"/*.json 2>/dev/null | head -1 || true)"
-  [ -z "$pending_file" ] && continue
-  process_task "$pending_file"
-done
+watch_loop
