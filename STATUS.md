@@ -8,20 +8,23 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-04 (shift 10 complete — 7 KRs dual-track Tier-C + Bridge 1 thesis quality gating; Franky Strategic Advisor onboarded)
-**Last shift:** auto-work-mode 2026-05-03-2220 (7 KRs: pledge full-stack + 解禁 backend + Track C-1 audit + C-3 backend+frontend + Franky onboarding prompt)
-**HEAD:** `7c2e509` on auto/2026-04-30
-**Context handoff status:** All work in git. Next session reads this file + recent commits + handoff.md + queued_tasks/. Junyan TODO: Vercel redeploy + Tushare 3-API permissions + visual verify C-3 badge.
+**Last updated:** 2026-05-04 (shifts 11+12 complete — Tier-C 5/5 sources fully deployed = "数据源全部部署完成" Junyan ask achieved)
+**Last shift:** auto-work-mode shift 12 `2026-05-04-1638` (KR7 融资融券 frontend FINAL Tier-C card) — preceded by shift 11 (KR1-6 spanning Tier-C remaining 4 pairs + heartbeat infra + browser audit C2 gap fix)
+**HEAD:** `032bf8b` on auto/2026-04-30 (= main)
+**Context handoff status:** All work in git. Tier-C 5/5 deployed; 1 pending pipeline run to populate `public/data/repurchase/*.json` (next weekday cron OR Junyan `gh workflow run fetch-data.yml`). Browser audit driven by T1 (Chrome MCP) flagged + fixed.
 
-**Pending — Anthropic billing sync issue (auto-recovers in 1-24h):**
-Step 8 LIVE test for 300308.SZ blocked by Anthropic backend bug — billing
-shows $25 balance + $30 invoice success, but API still returns "credit
-balance too low". Banner on platform.claude.com/settings/billing also
-shows contradictory "purchase credits to get started" while balance is
-non-zero. Known Anthropic issue, server-side sync delay. **Step 8 framework
-ship is COMPLETE (4 commits in main); live test merely validates LLM
-output quality**. Retry next session — billing typically self-resolves
-within 24h.
+**Junyan ops still pending (carry-over from shift 10):**
+- Vercel redeploy `api/research.js` for C-3 quality gating to take effect on Variant Thesis cards
+- Tushare 3-API permissions (`stk_factor_pro` / `top_list` / `moneyflow_cnt`) — apply via 个人中心 → API Token → 申请权限
+- Visual verify C-3 quality badge after Vercel redeploy
+- Franky Entry 2 monitoring (REVIEW_REQUEST.md)
+
+**Watcher robustness debt (real bug observed, separate KR queued):**
+Reviewer watcher's `claude -p` subprocess hangs 45+ min after producing
+verdict file (orphaned PID survives parent bash kill). 2 incidents this
+shift cycle (KR5 review at 12:17, KR6 belated review). Mitigation: `setsid`
+process group + `gtimeout 600 claude -p` + 0-byte 15-min stale .tmp cleanup.
+Bundle with launchd 126 fix into single ops KR.
 
 ---
 
@@ -198,6 +201,53 @@ the next visual layer (microinteractions / dark mode sweep / mobile
 responsive); none of those block ship.
 
 ---
+
+### 2026-05-04 — auto-work shifts 11+12: Tier-C 5/5 data source deployment FINAL + browser audit C2 gap fix
+
+**Run ids:** shift 11 `2026-05-04-0957` (~5h, 6 KRs + heartbeat infra commit) + shift 12 `2026-05-04-1638` (KR7 + 1 audit-driven fix). 8 commits net to main spanning 2 shifts on a single calendar day.
+
+**🎯 MILESTONE: Junyan's "数据源全部部署完成" ask ACHIEVED.** All 5 Tier-C sources (pledge / 解禁 / 回购 / 增减持 / 融资融券) now have backend + pipeline + frontend cards full-stack deployed.
+
+**Shipped commits (chronological):**
+- `fc43227` — KR1 RestrictedSharesCard frontend (解禁 KR3 from shift 10 backend got its frontend)
+- `5cce369` — KR2 repurchase backend + Step 2d.18
+- `344083e` — KR3 BuybackCard frontend (positive confidence signal, HIGH=C.green)
+- `e783566` — heartbeat infra (Junyan-direct task to T3): bin/agent-watch-codex.sh status/heartbeat + bin/agent-status.sh CLI for runtime visibility (`bin/agent-status.sh --watch 5`)
+- `b09fb64` — KR4 stk_holdertrade backend + Step 2d.19 (BIDIRECTIONAL — first 5-tier signal_level)
+- `1652962` — KR5 HolderTradeCard frontend (3-color BIDIRECTIONAL via fontWeight intensity, 5 Chinese labels 强增持/.../强减持)
+- `94b0195` — KR6 margin_detail backend + Step 2d.20 (time-series records ASC sort, 5-tier LEVERAGE_BULL/BEAR)
+- `44e2c46`+`33e9808` (merge) — KR7 MarginCard frontend FINAL Tier-C (records-based, dual-balance breakout, no events table)
+- `032bf8b` — pipeline fix: add `public/data/repurchase/*.json` to daily-commit glob (browser audit caught KR2 missed C2 completeness)
+
+**3 archetypes of Tier-C signal cards now established in Research detail:**
+1. **Risk archetype** (Pledge / RestrictedShares): HIGH=C.red (more risk = more red)
+2. **Confidence archetype** (Buyback): HIGH=C.green (more positive = more green)
+3. **Bidirectional archetype** (HolderTrade / Margin): BUY=green / NEUTRAL=mid / SELL=red, 5 tiers via fontWeight intensity
+
+**Browser audit (T1 self-driven via Chrome MCP, 17:48 BST):**
+- 300308.SZ A-share: 4/5 cards render correctly (PledgeRisk LOW 1.5%, RestrictedShares empty badge correct, HolderTrade -1.1% 强减持 with 4 events table, Margin -1.0% 平衡 with dual-balance breakout)
+- BuybackCard 404 → root cause: KR2 backend missed daily-commit glob extension → `032bf8b` 1-line fix
+- 700.HK: all 5 cards correctly skipped (return null) — A-share-only filter works
+- 2 P3 advisory non-blocking: HolderTrade events "+0.5% 减" sign asymmetry (amount magnitude vs direction); Margin 融券变动 +26.8% green is mathematically positive but semantically bearish — design discussion for future polish
+
+**Watcher robustness real bug observed (separate KR queued):**
+Reviewer watcher's `claude -p` subprocess pattern: produces verdict file then HANGS for 45+ min instead of exiting. 2 incidents this cycle:
+- KR5 review (12:17 BST) — pid 8582 stuck 1+ hour, T2 V2 manual rescue, KR5 PASS via independent T2 invocation
+- KR6 review (belated, 16:00 BST after Junyan restart spawned new watchers fswatch'd old stale READY) — pid 52461 stuck 45 min, blocked KR7 review until I killed it
+- Caused mid-shift workflow disruptions but no data loss. Mitigation queued (separate ops KR): `setsid` process groups + `gtimeout 600 claude -p` hard cap + 0-byte 15-min stale .tmp auto-cleanup
+
+**Process notes (this cycle):**
+- 10 consecutive KRs (KR1 + KR2 + KR3 + KR4 + KR5 + KR6 + KR7 + heartbeat-infra + audit-fix) zero scope creep — pattern fully mature
+- Junyan-direct parallel task (heartbeat infra to T3) caused KR3 race-bundle false alarm — T1 over-eager reverted before checking with Junyan; recovered after parallel-task lesson learned (T3 can have 2 simultaneous task streams: T1-spec + Junyan-direct)
+- T1 self-prevented scope creep on 10/10 KRs without needing T2 to flag (matures from "rev1+rev2 catches" → "T1 self-detects")
+- Browser audit pattern (T1-driven via Chrome MCP) effective — caught 1 real production bug (BuybackCard 404) in ~5 min that pipeline cron wouldn't have surfaced for days
+
+**Items deferred for next shift:**
+- Pipeline trigger: `gh workflow run fetch-data.yml` to populate `public/data/repurchase/*.json` for BuybackCard production verification
+- Watcher robustness ops KR (setsid + gtimeout + 0-byte cleanup; bundle with launchd 126 fix)
+- Track B C-1.5 (Step 8 enforcement) + C-1.6 (contrarian + reward-risk explicit fields)
+- Track C multi-ticker audit re-run (needs Vercel redeploy first)
+- Bridge 1 sub-step continuation (post-Vercel-redeploy validation that thesis quality 72.5 → 80+)
 
 ### 2026-05-03 night → 2026-05-04 midnight — auto-work shift 10: dual-track Tier-C + Bridge 1 quality gating + Franky onboarding
 
