@@ -3787,6 +3787,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [restrictedSharesData, setRestrictedSharesData] = useState({});
   const [repurchaseData, setRepurchaseData] = useState({});
   const [holderTradeData, setHolderTradeData] = useState({});
+  const [marginData, setMarginData] = useState({});
   const [qualityPanelOpen, setQualityPanelOpen] = useState(false);
   useEffect(() => {
     if (!ticker) return;
@@ -3836,6 +3837,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       .then(targets => Promise.all(targets.map(t =>
           fetchJson(`data/holdertrade/${t}.json`).then(data => ({ ticker: t, data }))
         )));
+    const marginFetches = watchlistTargets
+      .then(targets => Promise.all(targets.map(t =>
+          fetchJson(`data/margin/${t}.json`).then(data => ({ ticker: t, data }))
+        )));
     Promise.all([
       fetchJson(`data/tushare/${ticker}.json`),
       fetchJson(`data/chip_distribution/${ticker}.json`),
@@ -3849,7 +3854,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       restrictedSharesFetches,
       repurchaseFetches,
       holderTradeFetches,
-    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr, brokerRecommendArr, pledgeArr, restrictedSharesArr, repurchaseArr, holderTradeArr]) => {
+      marginFetches,
+    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr, brokerRecommendArr, pledgeArr, restrictedSharesArr, repurchaseArr, holderTradeArr, marginArr]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
       setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
@@ -3880,6 +3886,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       const holderTradeDataMap = { [ticker]: null };
       (holderTradeArr || []).forEach(({ ticker: tk, data }) => { if (data) holderTradeDataMap[tk] = data; });
       setHolderTradeData(prev => ({ ...prev, ...holderTradeDataMap }));
+      const marginDataMap = { [ticker]: null };
+      (marginArr || []).forEach(({ ticker: tk, data }) => { if (data) marginDataMap[tk] = data; });
+      setMarginData(prev => ({ ...prev, ...marginDataMap }));
     });
   }, [ticker]);
   useEffect(() => {
@@ -5160,6 +5169,123 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     );
   };
 
+  const MarginCard = ({ data, ticker }) => {
+    if (!data || data._status === 'skipped_hk' || data._status === 'skipped_us') return null;
+    if (data._status === 'empty') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid}}>
+          融资融券 · 30天内无数据
+        </div>
+      );
+    }
+    if (data._status === 'api_error') {
+      return (
+        <div style={{padding:'4px 8px', background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:6, marginBottom:10, fontSize:10, color:C.red}}>
+          融资融券 · 数据暂时不可用
+        </div>
+      );
+    }
+    if (data._status !== 'ok') return null;
+
+    const summary = data.summary || {};
+    const signalLevel = summary.signal_level || null;
+    const signalColor = signalLevel === 'LEVERAGE_BULL_HIGH' || signalLevel === 'LEVERAGE_BULL_MED' ? C.green
+      : signalLevel === 'LEVERAGE_BEAR_HIGH' || signalLevel === 'LEVERAGE_BEAR_MED' ? C.red
+      : C.mid;
+    const signalWeight = signalLevel === 'LEVERAGE_BULL_HIGH' || signalLevel === 'LEVERAGE_BEAR_HIGH' ? 800 : 700;
+    const signalLabel = signalLevel === 'LEVERAGE_BULL_HIGH' ? '强多杠杆'
+      : signalLevel === 'LEVERAGE_BULL_MED' ? '多杠杆'
+      : signalLevel === 'NEUTRAL' ? '平衡'
+      : signalLevel === 'LEVERAGE_BEAR_MED' ? '空杠杆'
+      : signalLevel === 'LEVERAGE_BEAR_HIGH' ? '强空杠杆'
+      : 'NO DATA';
+    const totalCount = finiteNumber(summary.total_count);
+    const latestDate = (() => {
+      const s = String(summary.latest_date || '');
+      if (/^\d{8}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      return s || '—';
+    })();
+    const formatSignedPct = (value) => {
+      const n = finiteNumber(value);
+      if (n == null) return '—';
+      return `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
+    };
+    const pctColor = (value) => {
+      const n = finiteNumber(value);
+      if (n == null) return C.mid;
+      if (n > 0) return C.green;
+      if (n < 0) return C.red;
+      return C.mid;
+    };
+    const formatRMBAmount = (value) => {
+      const n = finiteNumber(value);
+      if (n == null) return '—';
+      const sign = n < 0 ? '-' : '';
+      const abs = Math.abs(n);
+      if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)}亿`;
+      if (abs >= 1e4) return `${sign}${(abs/1e4).toFixed(1)}万`;
+      return `${sign}${Math.round(abs)}`;
+    };
+
+    return (
+      <div style={{padding:'10px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:12, boxShadow:SHADOW, marginBottom:10}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:8}}>
+          <div style={{fontWeight:700, fontSize:11, color:C.dark}}>融资融券</div>
+          <div title={ticker} style={{fontSize:9, color:C.mid, fontFamily:MONO, textAlign:'right', background:C.soft, border:`1px solid ${C.border}`, borderRadius:4, padding:'1px 5px'}}>
+            {latestDate}
+          </div>
+        </div>
+        <div style={{width:'100%', borderRadius:8, background:`${signalColor}10`, border:`1px solid ${signalColor}30`, padding:10}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:10}}>
+            <div>
+              <div style={{fontFamily:MONO, fontSize:22, lineHeight:1, color:signalColor, fontWeight:signalWeight}}>
+                {formatSignedPct(summary.net_leverage_change_30d)}
+              </div>
+              <div style={{fontSize:9, color:C.mid, marginTop:4}}>30天净杠杆变化</div>
+            </div>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6}}>
+              <span style={{background:`${signalColor}30`, color:signalColor, borderRadius:4, padding:'2px 6px', fontSize:10, fontWeight:700, fontFamily:MONO}}>
+                {signalLabel}
+              </span>
+              <span style={{fontSize:10, color:C.mid, fontFamily:MONO}}>
+                {totalCount != null ? Math.round(totalCount) : '—'} 天
+              </span>
+            </div>
+          </div>
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:8, marginTop:10, fontSize:10}}>
+          <div style={{padding:8, background:C.soft, borderRadius:6}}>
+            <div style={{fontSize:9, color:C.mid, marginBottom:3}}>融资变动 30D</div>
+            <div style={{fontFamily:MONO, fontSize:13, color:pctColor(summary.rzye_change_30d_pct), fontWeight:700}}>
+              {formatSignedPct(summary.rzye_change_30d_pct)}
+            </div>
+          </div>
+          <div style={{padding:8, background:C.soft, borderRadius:6}}>
+            <div style={{fontSize:9, color:C.mid, marginBottom:3}}>融券变动 30D</div>
+            <div style={{fontFamily:MONO, fontSize:13, color:pctColor(summary.rqye_change_30d_pct), fontWeight:700}}>
+              {formatSignedPct(summary.rqye_change_30d_pct)}
+            </div>
+          </div>
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:8, marginTop:10, padding:'8px 0', borderTop:`1px solid ${C.border}`, fontSize:10}}>
+          <div>
+            <div style={{fontSize:9, color:C.mid, marginBottom:3}}>融资余额</div>
+            <div style={{fontFamily:MONO, fontSize:12, color:C.dark, fontWeight:700}}>
+              {formatRMBAmount(summary.latest_rzye)}
+            </div>
+          </div>
+          <div>
+            <div style={{fontSize:9, color:C.mid, marginBottom:3}}>融券余额</div>
+            <div style={{fontFamily:MONO, fontSize:12, color:C.dark, fontWeight:700}}>
+              {formatRMBAmount(summary.latest_rqye)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Live price chart — auto-refreshes on 1D range */}
@@ -5412,6 +5538,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <RestrictedSharesCard data={restrictedSharesData[ticker]} ticker={ticker}/>
       <BuybackCard data={repurchaseData[ticker]} ticker={ticker}/>
       <HolderTradeCard data={holderTradeData[ticker]} ticker={ticker}/>
+      <MarginCard data={marginData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
