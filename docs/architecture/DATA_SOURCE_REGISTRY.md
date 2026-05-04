@@ -12,7 +12,7 @@
 > Schema is **always complete**. Consumers test for `null` and gracefully
 > degrade. **Never delete a field because it's not yet available.**
 >
-> Last updated: 2026-05-03
+> Last updated: 2026-05-04
 
 ---
 
@@ -33,6 +33,7 @@
 | `broker_recommend` | Tushare Pro 券商金股 / analyst stock recommendations | Paid (15000 pts) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_broker_recommend.py`, pipeline Step 2d.15) |
 | `pledge_stat` | Tushare Pro 股权质押 / pledge ratio risk reference data | Paid (5000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_pledge_stat.py`, pipeline Step 2d.16) |
 | `restricted_shares` | Tushare Pro 限售股解禁 / restricted-share unlock events | Paid (2000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_restricted_shares.py`, pipeline Step 2d.17) |
+| `repurchase` | Tushare Pro 回购 / buyback program events | Paid (5000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-04 (`scripts/fetch_repurchase.py`, pipeline Step 2d.18) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -78,6 +79,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | `top10_holders` | 5000 | 前十大股东 | F6 + insider movement |
 | **`pledge_stat`** ⭐ | **5000** | **股权质押率 + pledge count/history** | **Risk panel + Bridge 6 portfolio-construction risk weighting** |
 | **`share_float`** ⭐ | **2000** | **限售股解禁 events + float ratio** | **Risk panel + Bridge 6 portfolio-construction supply-risk weighting** |
+| **`repurchase`** ⭐ | **5000** | **回购 program events + amount/status** | **Research detail card after KR3 frontend ships + Bridge 6 portfolio buyback overlay** |
 | `forecast` | 10000 | 业绩预告 | Strongest A-share catalyst signal |
 | `express` | 10000 | 业绩快报 | Pre-earnings catalyst |
 | `fina_indicator` | 10000? | 财务指标 (ROE/ROA) | fundamental_accel upgrade |
@@ -1134,7 +1136,125 @@ being presented as a validated portfolio risk model.
 
 ---
 
-#### 2.1.12 `concept_membership` — Tushare 15000-tier concept constituent mapping
+#### 2.1.12 `repurchase` — Tushare 5000-tier 回购
+
+**Auth:** `TUSHARE_TOKEN` env var with 5000-tier access. Junyan's current
+15000-tier account covers this endpoint.
+
+**Fetcher:** `scripts/fetch_repurchase.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.18, `continue-on-error: true`.
+
+**Registry row:**
+
+| Source | Endpoint | Tier | Output path | Consumer | Graceful degrade | Status |
+|---|---|---|---|---|---|---|
+| Tushare Pro | `repurchase` | 5000 | `public/data/repurchase/<ticker>.json` | Research detail card after KR3 frontend ships; future Bridge 6 portfolio buyback overlay | `skipped_hk` / `skipped_us`, `api_error` to neutral | ACTIVE — pipeline Step 2d.18 |
+
+**Output:** `public/data/repurchase/<ticker>.json` using the raw watchlist
+ticker filename, e.g. `300308.SZ.json`. The dot is intentionally preserved to
+match `pledge_stat` and `restricted_shares`.
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Strategic role:** `repurchase` is a China-specific insider-confidence and
+capital-allocation reference layer. Large committed buyback programs can
+reduce selling pressure, support EPS, and signal management confidence in
+intrinsic value. The fetcher writes raw evidence and a simple amount-band
+summary only. Frontend surfacing is KR3; Bridge 6 can later test whether this
+deserves a portfolio overlay alongside pledge ratio, unlock pressure,
+correlation, concentration, and VaR.
+
+**Endpoint:** `repurchase` only. The fetcher first tries `ts_code` +
+`start_date` + `end_date`, then falls back to `ts_code` only if the endpoint
+rejects range parameters.
+
+**Fetch strategy:** Per-watchlist ticker. HK tickers write `_status:
+"skipped_hk"`; US/non-A-share tickers write `_status: "skipped_us"`.
+A-share tickers query the past 180 calendar days `[task-scoped window;
+unvalidated intuition]` using `ann_date`, then sort events by `ann_date`
+descending. Calls sleep `0.16s` between Tushare API attempts.
+
+**Schema (A-share success):**
+```json
+{
+  "_status": "ok",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-04T...",
+  "api_used": "repurchase",
+  "window_days": 180,
+  "events": [
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20260504",
+      "end_date": "20261104",
+      "exp_date": "20261104",
+      "proc": "进行中",
+      "vol": 12345678,
+      "amount": 250000000.0,
+      "high_limit": 120.0,
+      "low_limit": 80.0
+    }
+  ],
+  "summary": {
+    "total_count": 1,
+    "total_amount_180d": 250000000.0,
+    "active_program": true,
+    "last_announce_date": "2026-05-04",
+    "signal_level": "MED"
+  }
+}
+```
+
+**Schema (empty A-share window):**
+```json
+{
+  "_status": "empty",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-04T...",
+  "api_used": "repurchase",
+  "window_days": 180,
+  "events": [],
+  "summary": {
+    "total_count": 0,
+    "total_amount_180d": 0.0,
+    "active_program": false,
+    "last_announce_date": null,
+    "signal_level": "LOW"
+  }
+}
+```
+
+**Signal interpretation (display/reference only; thresholds are
+`[unvalidated intuition]`):**
+- `total_amount_180d > 5e8` -> `HIGH`: strong buyback commitment
+  `[unvalidated intuition]`.
+- `1e8 <= total_amount_180d <= 5e8` -> `MED`: material buyback support
+  `[unvalidated intuition]`.
+- `total_amount_180d < 1e8` or no events -> `LOW`: neutral / weak signal
+  `[unvalidated intuition]`.
+- If events exist but no amount field is parseable, `signal_level` is `null`.
+- `active_program` is true when `proc` contains `进行`, `未完成`,
+  `in_progress`, or `ongoing`.
+
+**Graceful degrade behavior:** The strict ticker-level states are `ok`,
+`empty`, `skipped_hk`, `skipped_us`, and `api_error`. API failures write
+`_status: "api_error"` with `_error` and do not stop the remaining watchlist.
+Missing or empty `TUSHARE_TOKEN` writes per-A-share `api_error` payloads while
+HK/US tickers still write skipped payloads; the process exits 0.
+
+**Validation status:** Causal logic is valid because executed or committed
+buybacks can directly reduce float supply and signal management confidence,
+creating plausible support for EPS and selling-pressure reduction. Specific
+HIGH/MED/LOW amount bands (>5e8, 1e8-5e8, <1e8 RMB), the 180-day lookback, and
+active-program text matching are task-specified unvalidated heuristics, not
+calibrated from platform trade history or portfolio outcome data. Any future
+Bridge 6 weighting must be calibrated before being presented as a validated
+portfolio signal.
+
+---
+
+#### 2.1.13 `concept_membership` — Tushare 15000-tier concept constituent mapping
 
 **Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
 

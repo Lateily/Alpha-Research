@@ -193,6 +193,15 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_restricted_shares.py
 
+      # ── Step 2d.18: Tushare 回购 / repurchase ────────────────────────────
+      # Tushare 5000-tier per-watchlist 180-day buyback events.
+      # Buybacks are positive insider-confidence signals.
+      - name: "Step 2d.18: Fetch repurchase / 回购 (Tushare 5000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_repurchase.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
