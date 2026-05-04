@@ -3785,6 +3785,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const [brokerRecommendData, setBrokerRecommendData] = useState({});
   const [pledgeData, setPledgeData] = useState({});
   const [restrictedSharesData, setRestrictedSharesData] = useState({});
+  const [repurchaseData, setRepurchaseData] = useState({});
   const [qualityPanelOpen, setQualityPanelOpen] = useState(false);
   useEffect(() => {
     if (!ticker) return;
@@ -3826,6 +3827,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       .then(targets => Promise.all(targets.map(t =>
           fetchJson(`data/restricted_shares/${t}.json`).then(data => ({ ticker: t, data }))
         )));
+    const repurchaseFetches = watchlistTargets
+      .then(targets => Promise.all(targets.map(t =>
+          fetchJson(`data/repurchase/${t}.json`).then(data => ({ ticker: t, data }))
+        )));
     Promise.all([
       fetchJson(`data/tushare/${ticker}.json`),
       fetchJson(`data/chip_distribution/${ticker}.json`),
@@ -3837,7 +3842,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       brokerRecommendFetches,
       pledgeFetches,
       restrictedSharesFetches,
-    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr, brokerRecommendArr, pledgeArr, restrictedSharesArr]) => {
+      repurchaseFetches,
+    ]).then(([tushare, chip, consensus, lhbArr, quantFactorArr, instResearchArr, topInstArr, brokerRecommendArr, pledgeArr, restrictedSharesArr, repurchaseArr]) => {
       setTushareData(prev => ({ ...prev, [ticker]: tushare }));
       setChipData(prev => ({ ...prev, [ticker]: chip }));
       setConsensusData(prev => ({ ...prev, [ticker]: consensus }));
@@ -3862,6 +3868,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       const restrictedSharesDataMap = { [ticker]: null };
       (restrictedSharesArr || []).forEach(({ ticker: tk, data }) => { if (data) restrictedSharesDataMap[tk] = data; });
       setRestrictedSharesData(prev => ({ ...prev, ...restrictedSharesDataMap }));
+      const repurchaseDataMap = { [ticker]: null };
+      (repurchaseArr || []).forEach(({ ticker: tk, data }) => { if (data) repurchaseDataMap[tk] = data; });
+      setRepurchaseData(prev => ({ ...prev, ...repurchaseDataMap }));
     });
   }, [ticker]);
   useEffect(() => {
@@ -4911,6 +4920,119 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     );
   };
 
+  const BuybackCard = ({ data, ticker }) => {
+    if (!data || data._status === 'skipped_hk' || data._status === 'skipped_us') return null;
+    if (data._status === 'empty') {
+      return (
+        <div style={{padding:'4px 8px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:6, marginBottom:10, fontSize:10, color:C.mid}}>
+          回购 · 180天内无回购
+        </div>
+      );
+    }
+    if (data._status === 'api_error') {
+      return (
+        <div style={{padding:'4px 8px', background:`${C.red}10`, border:`1px solid ${C.red}30`, borderRadius:6, marginBottom:10, fontSize:10, color:C.red}}>
+          回购 · 数据暂时不可用
+        </div>
+      );
+    }
+    if (data._status !== 'ok') return null;
+
+    const summary = data.summary || {};
+    const events = Array.isArray(data.events) ? data.events.slice(0, 4) : [];
+    const signalLevel = summary.signal_level || null;
+    const signalColor = signalLevel === 'HIGH' ? C.green
+      : signalLevel === 'MED' ? C.gold
+      : C.mid;
+    const signalLabel = signalLevel === 'HIGH' ? 'HIGH'
+      : signalLevel === 'MED' ? 'MED'
+      : signalLevel === 'LOW' ? 'LOW'
+      : 'NO DATA';
+    const totalCount = finiteNumber(summary.total_count);
+    const totalAmount = finiteNumber(summary.total_amount_180d);
+    const formatBuybackDate = (value) => {
+      const s = String(value || '');
+      if (/^\d{8}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      return s || '—';
+    };
+    const formatBuybackAmount = (value) => {
+      const n = finiteNumber(value);
+      if (n == null) return '—';
+      const sign = n < 0 ? '−' : '';
+      const abs = Math.abs(n);
+      if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)} 亿`;
+      if (abs >= 1e4) return `${sign}${(abs/1e4).toFixed(1)} 万`;
+      return `${sign}${Math.round(abs)}`;
+    };
+    const truncateProc = (value) => {
+      const s = String(value || '').trim();
+      if (!s) return '—';
+      return s.length > 6 ? `${s.slice(0, 6)}…` : s;
+    };
+    const hasProc = events.some(row => String(row?.proc || '').trim());
+    const tableGrid = ['82px', '74px', hasProc ? 'minmax(58px, 1fr)' : null]
+      .filter(Boolean)
+      .join(' ');
+    const lastAnnounceDate = formatBuybackDate(summary.last_announce_date);
+
+    return (
+      <div style={{padding:'10px 12px', background:C.card, border:`1px solid ${C.border}`, borderRadius:12, boxShadow:SHADOW, marginBottom:10}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, marginBottom:8}}>
+          <div style={{fontWeight:700, fontSize:11, color:C.dark}}>回购</div>
+          <div title={ticker} style={{fontSize:9, color:C.mid, fontFamily:MONO, textAlign:'right', background:C.soft, border:`1px solid ${C.border}`, borderRadius:4, padding:'1px 5px'}}>
+            {lastAnnounceDate}
+          </div>
+        </div>
+        <div style={{width:'100%', borderRadius:8, background:`${signalColor}10`, border:`1px solid ${signalColor}30`, padding:10, marginBottom:10}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:10}}>
+            <div>
+              <div style={{fontFamily:MONO, fontSize:22, lineHeight:1, color:signalColor, fontWeight:800}}>
+                {formatBuybackAmount(totalAmount)}
+              </div>
+              <div style={{fontSize:9, color:C.mid, marginTop:4}}>180天累计回购</div>
+            </div>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6}}>
+              <span style={{background:`${signalColor}30`, color:signalColor, borderRadius:4, padding:'2px 6px', fontSize:10, fontWeight:700, fontFamily:MONO}}>
+                {signalLabel}
+              </span>
+              <span style={{fontSize:10, color:C.mid, fontFamily:MONO}}>
+                {totalCount != null ? Math.round(totalCount) : '—'} 起
+              </span>
+              {summary.active_program === true && (
+                <span style={{fontSize:9, fontFamily:MONO, background:`${C.green}20`, color:C.green, padding:'1px 4px', borderRadius:4}}>
+                  进行中
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        {events.length > 0 && (
+          <div>
+            <div style={{display:'grid', gridTemplateColumns:tableGrid, gap:6, padding:'0 0 4px', borderBottom:`1px solid ${C.border}`, fontSize:9, color:C.mid, fontWeight:700}}>
+              <span>公告日</span>
+              <span style={{textAlign:'right'}}>金额</span>
+              {hasProc && <span>状态</span>}
+            </div>
+            {events.map((event, i) => (
+              <div key={`${event.ann_date || 'date'}-${i}`} style={{display:'grid', gridTemplateColumns:tableGrid, gap:6, padding:'4px 0', borderBottom:i < events.length - 1 ? `1px dashed ${C.border}` : 'none', fontSize:10, alignItems:'center'}}>
+                <span style={{fontFamily:MONO, fontSize:10, color:C.dark}}>{formatBuybackDate(event.ann_date)}</span>
+                <span style={{fontFamily:MONO, fontSize:10, color:C.dark, textAlign:'right', fontWeight:700}}>
+                  {formatBuybackAmount(event.amount)}
+                </span>
+                {hasProc && (
+                  <span title={event.proc || ''} style={{fontSize:10, color:C.mid, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                    {truncateProc(event.proc)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Live price chart — auto-refreshes on 1D range */}
@@ -5161,6 +5283,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
       <BrokerRecommendCard data={brokerRecommendData[ticker]} ticker={ticker}/>
       <PledgeRiskCard data={pledgeData[ticker]} ticker={ticker}/>
       <RestrictedSharesCard data={restrictedSharesData[ticker]} ticker={ticker}/>
+      <BuybackCard data={repurchaseData[ticker]} ticker={ticker}/>
 
       {/* Live-data sections: only render for focus stocks */}
       {isDynamic ? (
