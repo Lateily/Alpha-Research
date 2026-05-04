@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-03T19:09:07.098609+00:00",
+    "generated_at": "2026-05-04T15:42:44.689147+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "ev_ebitda_target_multiple",
@@ -32,33 +32,33 @@
       "ticker": "700.HK",
       "model_status": "multi_method",
       "signal": "OVERPRICED",
-      "delta_pct": -22.01,
-      "current_ev_ebitda": 15.715,
+      "delta_pct": -22.87,
+      "current_ev_ebitda": 15.886,
       "current_ebitda": 273397006336,
       "target_multiple": 12.0,
       "fair_ev": 3280764076032.0,
       "fair_equity": 3296917094400.0,
-      "market_cap": 4227461283840,
+      "market_cap": 4274453479424,
       "net_debt": -16153018368,
       "market": "HK",
-      "rationale_e": "EV/EBITDA 15.71x vs HK-target 12x; fair_equity +3296.9B vs market_cap 4227.5B; delta -22.0% → OVERPRICED",
-      "rationale_z": "EV/EBITDA 15.71x，HK市场目标12x；公允股权 +3296.9B vs 市值 4227.5B；delta -22.0% → OVERPRICED"
+      "rationale_e": "EV/EBITDA 15.89x vs HK-target 12x; fair_equity +3296.9B vs market_cap 4274.5B; delta -22.9% → OVERPRICED",
+      "rationale_z": "EV/EBITDA 15.89x，HK市场目标12x；公允股权 +3296.9B vs 市值 4274.5B；delta -22.9% → OVERPRICED"
     },
     "9999.HK": {
       "ticker": "9999.HK",
       "model_status": "multi_method",
       "signal": "FAIRLY_VALUED",
-      "delta_pct": 7.59,
-      "current_ev_ebitda": 10.994,
+      "delta_pct": 5.88,
+      "current_ev_ebitda": 11.237,
       "current_ebitda": 38082293760,
       "target_multiple": 12.0,
       "fair_ev": 456987525120.0,
       "fair_equity": 614498093568.0,
-      "market_cap": 571124678656,
+      "market_cap": 580377509888,
       "net_debt": -157510568448,
       "market": "HK",
-      "rationale_e": "EV/EBITDA 10.99x vs HK-target 12x; fair_equity +614.5B vs market_cap 571.1B; delta +7.6% → FAIRLY_VALUED",
-      "rationale_z": "EV/EBITDA 10.99x，HK市场目标12x；公允股权 +614.5B vs 市值 571.1B；delta +7.6% → FAIRLY_VALUED"
+      "rationale_e": "EV/EBITDA 11.24x vs HK-target 12x; fair_equity +614.5B vs market_cap 580.4B; delta +5.9% → FAIRLY_VALUED",
+      "rationale_z": "EV/EBITDA 11.24x，HK市场目标12x；公允股权 +614.5B vs 市值 580.4B；delta +5.9% → FAIRLY_VALUED"
     },
     "6160.HK": {
       "ticker": "6160.HK",

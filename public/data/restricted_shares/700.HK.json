@@ -1,0 +1,15 @@
+{
+  "_status": "skipped_hk",
+  "ticker": "700.HK",
+  "fetched_at": "2026-05-04T15:42:39Z",
+  "api_used": "share_float",
+  "window_days": 180,
+  "events": [],
+  "summary": {
+    "upcoming_count": 0,
+    "total_float_ratio_180d": 0.0,
+    "next_unlock_date": null,
+    "next_unlock_ratio": null,
+    "risk_level": null
+  }
+}

@@ -1,9 +1,9 @@
 {
-  "date": "2026-05-03",
+  "date": "2026-05-04",
   "snapshots": [
     {
       "ticker": "300308.SZ",
-      "date": "2026-05-03",
+      "date": "2026-05-04",
       "vp_score": 56,
       "expectation_gap": 10,
       "fundamental_accel": 79,
@@ -44,19 +44,19 @@
         "our_growth": 34.1,
         "hyper_growth": true
       },
-      "engine_run_at": "2026-05-03T19:09:06.812922+00:00"
+      "engine_run_at": "2026-05-04T15:42:44.284287+00:00"
     },
     {
       "ticker": "700.HK",
-      "date": "2026-05-03",
+      "date": "2026-05-04",
       "vp_score": 53,
       "expectation_gap": 35,
       "fundamental_accel": 66,
       "narrative_shift": 70,
       "low_coverage": 35,
       "catalyst_prox": 58,
-      "close": 479.2,
-      "volume": -237,
+      "close": 467.8,
+      "volume": 136,
       "source": "vp_engine",
       "wrongIf_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
       "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
@@ -84,24 +84,24 @@
         "score": 35,
         "source": "rdcf_delta",
         "signal": "OVERPRICED",
-        "delta": -0.121,
-        "implied_growth": 30.1,
+        "delta": -0.124,
+        "implied_growth": 30.4,
         "our_growth": 18.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-03T19:09:06.813426+00:00"
+      "engine_run_at": "2026-05-04T15:42:44.284989+00:00"
     },
     {
       "ticker": "9999.HK",
-      "date": "2026-05-03",
+      "date": "2026-05-04",
       "vp_score": 61,
       "expectation_gap": 68,
       "fundamental_accel": 76,
       "narrative_shift": 45,
       "low_coverage": 48,
       "catalyst_prox": 60,
-      "close": 175,
-      "volume": 228,
+      "close": 179,
+      "volume": 217,
       "source": "vp_engine",
       "wrongIf_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
       "wrongIf_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
@@ -129,24 +129,24 @@
         "score": 68,
         "source": "rdcf_delta",
         "signal": "UNDERPRICED",
-        "delta": 0.122,
-        "implied_growth": 2.8,
+        "delta": 0.112,
+        "implied_growth": 3.8,
         "our_growth": 15.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-03T19:09:06.813907+00:00"
+      "engine_run_at": "2026-05-04T15:42:44.285682+00:00"
     },
     {
       "ticker": "6160.HK",
-      "date": "2026-05-03",
+      "date": "2026-05-04",
       "vp_score": 51,
       "expectation_gap": 10,
       "fundamental_accel": 57,
       "narrative_shift": 75,
       "low_coverage": 55,
       "catalyst_prox": 78,
-      "close": 179.2,
-      "volume": -312,
+      "close": 173.6,
+      "volume": 184,
       "source": "vp_engine",
       "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
       "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
@@ -174,16 +174,16 @@
         "score": 10,
         "source": "rdcf_delta",
         "signal": "OVERPRICED",
-        "delta": -0.777,
-        "implied_growth": 112.7,
+        "delta": -0.785,
+        "implied_growth": 113.5,
         "our_growth": 35.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-03T19:09:06.814355+00:00"
+      "engine_run_at": "2026-05-04T15:42:44.286295+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "date": "2026-05-03",
+      "date": "2026-05-04",
       "vp_score": 42,
       "expectation_gap": 68,
       "fundamental_accel": 24,
@@ -224,7 +224,7 @@
         "our_growth": 28.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-03T19:09:06.814770+00:00"
+      "engine_run_at": "2026-05-04T15:42:44.286918+00:00"
     }
   ]
 }
