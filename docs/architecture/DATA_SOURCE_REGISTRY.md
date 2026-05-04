@@ -35,6 +35,7 @@
 | `restricted_shares` | Tushare Pro 限售股解禁 / restricted-share unlock events | Paid (2000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_restricted_shares.py`, pipeline Step 2d.17) |
 | `repurchase` | Tushare Pro 回购 / buyback program events | Paid (5000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-04 (`scripts/fetch_repurchase.py`, pipeline Step 2d.18) |
 | `holdertrade` | Tushare Pro 股东增减持 / major-shareholder and executive share changes | Paid (2000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-04 (`scripts/fetch_holdertrade.py`, pipeline Step 2d.19) |
+| `margin` | Tushare Pro 融资融券 / margin trading balances | Paid (5000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-04 (`scripts/fetch_margin.py`, pipeline Step 2d.20) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -82,6 +83,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | **`share_float`** ⭐ | **2000** | **限售股解禁 events + float ratio** | **Risk panel + Bridge 6 portfolio-construction supply-risk weighting** |
 | **`repurchase`** ⭐ | **5000** | **回购 program events + amount/status** | **Research detail card after KR3 frontend ships + Bridge 6 portfolio buyback overlay** |
 | **`stk_holdertrade`** ⭐ | **2000** | **股东增减持 events + net change ratio/volume** | **Research detail card after KR5 frontend ships + Bridge 6 portfolio insider-trade overlay** |
+| **`margin_detail`** ⭐ | **5000** | **融资融券 daily rzye/rqye balances + net leverage trend** | **Research detail card after KR7 frontend ships + Bridge 6 portfolio leverage-trend overlay** |
 | `forecast` | 10000 | 业绩预告 | Strongest A-share catalyst signal |
 | `express` | 10000 | 业绩快报 | Pre-earnings catalyst |
 | `fina_indicator` | 10000? | 财务指标 (ROE/ROA) | fundamental_accel upgrade |
@@ -1385,7 +1387,136 @@ signal.
 
 ---
 
-#### 2.1.14 `concept_membership` — Tushare 15000-tier concept constituent mapping
+#### 2.1.14 `margin` — Tushare 5000-tier 融资融券
+
+**Auth:** `TUSHARE_TOKEN` env var with 5000-tier access. Junyan's current
+15000-tier account covers this endpoint.
+
+**Fetcher:** `scripts/fetch_margin.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.20, `continue-on-error: true`.
+
+**Registry row:**
+
+| Source | Endpoint | Tier | Output path | Consumer | Graceful degrade | Status |
+|---|---|---|---|---|---|---|
+| Tushare Pro | `margin_detail` | 5000 | `public/data/margin/<ticker>.json` | Research detail card after KR7 frontend ships; future Bridge 6 portfolio leverage-trend overlay | `skipped_hk` / `skipped_us`, `api_error` to neutral | ACTIVE — pipeline Step 2d.20 |
+
+**Output:** `public/data/margin/<ticker>.json` using the raw watchlist ticker
+filename, e.g. `300308.SZ.json`. The dot is intentionally preserved to match
+`pledge_stat`, `restricted_shares`, `repurchase`, and `holdertrade`.
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Strategic role:** `margin_detail` is a China-specific positioning reference
+layer. Rising 融资余额 (`rzye`) indicates leveraged-long demand; rising 融券余额
+(`rqye`) indicates securities-lending short exposure. The fetcher writes raw
+daily records plus a bidirectional net leverage trend. Frontend surfacing is
+KR7; Bridge 6 can later test whether margin-positioning pressure deserves a
+portfolio overlay alongside pledge ratio, unlock pressure, buybacks,
+holdertrade, correlation, concentration, and VaR.
+
+**Endpoint:** `margin_detail` only. The fetcher first tries `ts_code` +
+`start_date` + `end_date`, then falls back to `ts_code` only if the endpoint
+rejects range parameters.
+
+**Fetch strategy:** Per-watchlist ticker. HK tickers write `_status:
+"skipped_hk"`; US/non-A-share tickers write `_status: "skipped_us"`.
+A-share tickers query the past 30 calendar days `[task-scoped window;
+unvalidated intuition]` using `trade_date`, then sort records by `trade_date`
+ascending for chronological trend computation. Calls sleep `0.16s` between
+Tushare API attempts.
+
+**Schema (A-share success):**
+```json
+{
+  "_status": "ok",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-04T...",
+  "api_used": "margin_detail",
+  "window_days": 30,
+  "records": [
+    {
+      "ts_code": "300308.SZ",
+      "trade_date": "20260504",
+      "name": "中际旭创",
+      "rzye": 1230000000.0,
+      "rzmre": 120000000.0,
+      "rzche": 90000000.0,
+      "rqye": 45000000.0,
+      "rqmcl": 123000,
+      "rqchl": 95000,
+      "rzrqye": 1275000000.0
+    }
+  ],
+  "summary": {
+    "total_count": 20,
+    "latest_date": "2026-05-04",
+    "latest_rzye": 1230000000.0,
+    "latest_rqye": 45000000.0,
+    "rzye_change_30d_pct": 12.0,
+    "rqye_change_30d_pct": -8.0,
+    "net_leverage_change_30d": 20.0,
+    "signal_level": "LEVERAGE_BULL_MED"
+  }
+}
+```
+
+**Schema (empty A-share window):**
+```json
+{
+  "_status": "empty",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-04T...",
+  "api_used": "margin_detail",
+  "window_days": 30,
+  "records": [],
+  "summary": {
+    "total_count": 0,
+    "latest_date": null,
+    "latest_rzye": null,
+    "latest_rqye": null,
+    "rzye_change_30d_pct": null,
+    "rqye_change_30d_pct": null,
+    "net_leverage_change_30d": null,
+    "signal_level": null
+  }
+}
+```
+
+**Signal interpretation (display/reference only; thresholds are
+`[unvalidated intuition]`):**
+- `net_leverage_change_30d > 20.0` -> `LEVERAGE_BULL_HIGH`: leveraged-long
+  demand is growing much faster than short balance `[unvalidated intuition]`.
+- `5.0 < net_leverage_change_30d <= 20.0` -> `LEVERAGE_BULL_MED`: moderate
+  bullish leverage trend `[unvalidated intuition]`.
+- `-5.0 <= net_leverage_change_30d <= 5.0` -> `NEUTRAL`: balanced margin
+  positioning trend `[unvalidated intuition]`.
+- `-20.0 <= net_leverage_change_30d < -5.0` -> `LEVERAGE_BEAR_MED`: moderate
+  bearish short-balance trend `[unvalidated intuition]`.
+- `net_leverage_change_30d < -20.0` -> `LEVERAGE_BEAR_HIGH`: short balance is
+  growing much faster than leveraged-long balance `[unvalidated intuition]`.
+- If fewer than 2 records exist, or either `rzye` / `rqye` is not parseable
+  for the trend endpoints, `signal_level` is `null`.
+
+**Graceful degrade behavior:** The strict ticker-level states are `ok`,
+`empty`, `skipped_hk`, `skipped_us`, and `api_error`. API failures write
+`_status: "api_error"` with `_error` and do not stop the remaining watchlist.
+Missing or empty `TUSHARE_TOKEN` writes per-A-share `api_error` payloads while
+HK/US tickers still write skipped payloads; the process exits 0.
+
+**Validation status:** Causal logic is valid because margin financing and
+securities-lending balances are direct positioning measures for leveraged
+long and short demand. Specific LEVERAGE_BULL/NEUTRAL/LEVERAGE_BEAR bands
+(>20.0, 5.0-20.0, -5.0-5.0, -20.0--5.0, <-20.0), the 30-day lookback, and
+the net formula (`rzye_change_30d_pct - rqye_change_30d_pct`) are
+task-specified unvalidated heuristics, not calibrated from platform trade
+history or portfolio outcome data. Any future Bridge 6 weighting must be
+calibrated before being presented as a validated portfolio signal.
+
+---
+
+#### 2.1.15 `concept_membership` — Tushare 15000-tier concept constituent mapping
 
 **Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
 

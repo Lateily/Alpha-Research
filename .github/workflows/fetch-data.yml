@@ -211,6 +211,15 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_holdertrade.py
 
+      # ── Step 2d.20: Tushare 融资融券 / margin_detail ──────────────────
+      # Tushare 5000-tier per-watchlist 30-day margin trading details.
+      # Bidirectional signal: rising 融资 = bullish leverage / rising 融券 = bearish short.
+      - name: "Step 2d.20: Fetch margin trading / 融资融券 (Tushare 5000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_margin.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
@@ -355,7 +364,8 @@ jobs:
                  public/data/broker_recommend/*.json \
                  public/data/pledge_stat/*.json \
                  public/data/restricted_shares/*.json \
-                 public/data/holdertrade/*.json)
+                 public/data/holdertrade/*.json \
+                 public/data/margin/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 
