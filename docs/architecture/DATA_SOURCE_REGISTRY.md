@@ -34,6 +34,7 @@
 | `pledge_stat` | Tushare Pro 股权质押 / pledge ratio risk reference data | Paid (5000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_pledge_stat.py`, pipeline Step 2d.16) |
 | `restricted_shares` | Tushare Pro 限售股解禁 / restricted-share unlock events | Paid (2000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-03 (`scripts/fetch_restricted_shares.py`, pipeline Step 2d.17) |
 | `repurchase` | Tushare Pro 回购 / buyback program events | Paid (5000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-04 (`scripts/fetch_repurchase.py`, pipeline Step 2d.18) |
+| `holdertrade` | Tushare Pro 股东增减持 / major-shareholder and executive share changes | Paid (2000 pts; active under 15000 account) | `TUSHARE_TOKEN` env | A-share watchlist | daily | ✅ ACTIVE 2026-05-04 (`scripts/fetch_holdertrade.py`, pipeline Step 2d.19) |
 | `yfinance` | Yahoo Finance | Free | None | Global (HK/US/A) | daily | ✅ ACTIVE |
 | `akshare` | AKShare | Free | None | A-share enhanced | daily | ⚠ GeoBlocked on GH Actions |
 | `cninfo` | 巨潮资讯网 | Free | None | A-share announcements | event-driven | ✅ ACTIVE (2026-05-02) |
@@ -80,6 +81,7 @@ df = pro.daily(ts_code='300308.SZ', start_date='20260101', end_date='20260501')
 | **`pledge_stat`** ⭐ | **5000** | **股权质押率 + pledge count/history** | **Risk panel + Bridge 6 portfolio-construction risk weighting** |
 | **`share_float`** ⭐ | **2000** | **限售股解禁 events + float ratio** | **Risk panel + Bridge 6 portfolio-construction supply-risk weighting** |
 | **`repurchase`** ⭐ | **5000** | **回购 program events + amount/status** | **Research detail card after KR3 frontend ships + Bridge 6 portfolio buyback overlay** |
+| **`stk_holdertrade`** ⭐ | **2000** | **股东增减持 events + net change ratio/volume** | **Research detail card after KR5 frontend ships + Bridge 6 portfolio insider-trade overlay** |
 | `forecast` | 10000 | 业绩预告 | Strongest A-share catalyst signal |
 | `express` | 10000 | 业绩快报 | Pre-earnings catalyst |
 | `fina_indicator` | 10000? | 财务指标 (ROE/ROA) | fundamental_accel upgrade |
@@ -1254,7 +1256,136 @@ portfolio signal.
 
 ---
 
-#### 2.1.13 `concept_membership` — Tushare 15000-tier concept constituent mapping
+#### 2.1.13 `holdertrade` — Tushare 2000-tier 股东增减持
+
+**Auth:** `TUSHARE_TOKEN` env var with 2000-tier access. Junyan's current
+15000-tier account covers this endpoint.
+
+**Fetcher:** `scripts/fetch_holdertrade.py`
+
+**Pipeline:** `.github/workflows/fetch-data.yml` Step 2d.19, `continue-on-error: true`.
+
+**Registry row:**
+
+| Source | Endpoint | Tier | Output path | Consumer | Graceful degrade | Status |
+|---|---|---|---|---|---|---|
+| Tushare Pro | `stk_holdertrade` | 2000 | `public/data/holdertrade/<ticker>.json` | Research detail card after KR5 frontend ships; future Bridge 6 portfolio insider-trade overlay | `skipped_hk` / `skipped_us`, `api_error` to neutral | ACTIVE — pipeline Step 2d.19 |
+
+**Output:** `public/data/holdertrade/<ticker>.json` using the raw watchlist
+ticker filename, e.g. `300308.SZ.json`. The dot is intentionally preserved to
+match `pledge_stat`, `restricted_shares`, and `repurchase`.
+
+**Refresh cadence:** Daily, same schedule as the market data pipeline.
+
+**Strategic role:** `holdertrade` is a China-specific ownership-change
+reference layer. Major-shareholder / executive buying is a positive
+insider-confidence signal; selling is a negative supply-pressure and
+confidence-erosion signal. The fetcher writes raw event evidence and a simple
+net-change summary only. Frontend surfacing is KR5; Bridge 6 can later test
+whether this deserves a portfolio overlay alongside pledge ratio, unlock
+pressure, buybacks, correlation, concentration, and VaR.
+
+**Endpoint:** `stk_holdertrade` only. The fetcher first tries `ts_code` +
+`start_date` + `end_date`, then falls back to `ts_code` only if the endpoint
+rejects range parameters.
+
+**Fetch strategy:** Per-watchlist ticker. HK tickers write `_status:
+"skipped_hk"`; US/non-A-share tickers write `_status: "skipped_us"`.
+A-share tickers query the past 180 calendar days `[task-scoped window;
+unvalidated intuition]` using `ann_date`, then sort events by `ann_date`
+descending. Calls sleep `0.16s` between Tushare API attempts.
+
+**Schema (A-share success):**
+```json
+{
+  "_status": "ok",
+  "ticker": "300308.SZ",
+  "fetched_at": "2026-05-04T...",
+  "api_used": "stk_holdertrade",
+  "window_days": 180,
+  "events": [
+    {
+      "ts_code": "300308.SZ",
+      "ann_date": "20260504",
+      "holder_name": "Example holder",
+      "holder_type": "个人",
+      "in_de": "IN",
+      "change_vol": 1234567,
+      "change_ratio": 0.45,
+      "after_ratio": 5.67,
+      "avg_price": 120.0,
+      "total_share": 800000000,
+      "begin_date": "20260420",
+      "close_date": "20260504"
+    }
+  ],
+  "summary": {
+    "total_count": 1,
+    "in_count": 1,
+    "de_count": 0,
+    "net_change_vol_180d": 1234567,
+    "net_change_ratio_180d": 0.45,
+    "last_announce_date": "2026-05-04",
+    "signal_level": "NET_BUY_MED"
+  }
+}
+```
+
+**Schema (empty A-share window):**
+```json
+{
+  "_status": "empty",
+  "ticker": "002594.SZ",
+  "fetched_at": "2026-05-04T...",
+  "api_used": "stk_holdertrade",
+  "window_days": 180,
+  "events": [],
+  "summary": {
+    "total_count": 0,
+    "in_count": 0,
+    "de_count": 0,
+    "net_change_vol_180d": 0,
+    "net_change_ratio_180d": 0.0,
+    "last_announce_date": null,
+    "signal_level": "NEUTRAL"
+  }
+}
+```
+
+**Signal interpretation (display/reference only; thresholds are
+`[unvalidated intuition]`):**
+- `net_change_ratio_180d > 1.0` -> `NET_BUY_HIGH`: significant net insider
+  buying / confidence signal `[unvalidated intuition]`.
+- `0.3 < net_change_ratio_180d <= 1.0` -> `NET_BUY_MED`: moderate net buying
+  signal `[unvalidated intuition]`.
+- `-0.3 <= net_change_ratio_180d <= 0.3` or no events -> `NEUTRAL`: balanced
+  or no observable ownership-change signal `[unvalidated intuition]`.
+- `-1.0 <= net_change_ratio_180d < -0.3` -> `NET_SELL_MED`: moderate selling
+  pressure `[unvalidated intuition]`.
+- `net_change_ratio_180d < -1.0` -> `NET_SELL_HIGH`: significant selling
+  pressure / confidence erosion `[unvalidated intuition]`.
+- If events exist but no `change_ratio` field is parseable, `signal_level` is
+  `null`; `net_change_ratio_180d` is also `null`.
+
+**Graceful degrade behavior:** The strict ticker-level states are `ok`,
+`empty`, `skipped_hk`, `skipped_us`, and `api_error`. API failures write
+`_status: "api_error"` with `_error` and do not stop the remaining watchlist.
+Missing or empty `TUSHARE_TOKEN` writes per-A-share `api_error` payloads while
+HK/US tickers still write skipped payloads; the process exits 0.
+
+**Validation status:** Causal logic is valid because major-shareholder or
+executive buying/selling directly changes insider exposure and can also
+change tradable supply, creating a plausible confidence and supply-pressure
+channel. Specific NET_BUY/NEUTRAL/NET_SELL ratio bands (>1.0, 0.3-1.0,
+-0.3-0.3, -1.0--0.3, <-1.0), the 180-day lookback, and direction text
+normalization are task-specified unvalidated heuristics, not calibrated from
+platform trade history or portfolio outcome data. Any future Bridge 6
+weighting must be calibrated before being presented as a validated portfolio
+signal.
+
+---
+
+#### 2.1.14 `concept_membership` — Tushare 15000-tier concept constituent mapping
 
 **Auth:** `TUSHARE_TOKEN` env var with 15000-tier access.
 

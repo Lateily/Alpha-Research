@@ -202,6 +202,15 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_repurchase.py
 
+      # ── Step 2d.19: Tushare 股东增减持 / stk_holdertrade ──────────────────
+      # Tushare 2000-tier per-watchlist 180-day insider trade events.
+      # Bidirectional signal: net buying = positive, net selling = negative.
+      - name: "Step 2d.19: Fetch holder trades / 股东增减持 (Tushare 2000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_holdertrade.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
@@ -345,7 +354,8 @@ jobs:
                  public/data/top_inst/*.json \
                  public/data/broker_recommend/*.json \
                  public/data/pledge_stat/*.json \
-                 public/data/restricted_shares/*.json)
+                 public/data/restricted_shares/*.json \
+                 public/data/holdertrade/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 
