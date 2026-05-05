@@ -596,6 +596,7 @@ function checkWeight(name) {
 
 const QUALITY_CHECK_NAMES = [
   'step_1_specific_not_vague',
+  'step_1_catalyst_date_in_future', // FC.1 (2026-05-05): temporal validity — catalyst date must be > now − 14d. Validator-only check (LLM cannot reliably self-report future-ness).
   'step_2_no_unfounded_leaps',
   'step_3_evidence_includes_quant_qual_contrarian',
   'step_3_contrarian_view_has_what_changes_our_mind',
@@ -610,7 +611,16 @@ const QUALITY_CHECK_NAMES = [
   'reward_to_risk_at_least_threshold',
 ];
 
-const QC_REQUIRED_KEYS = ['all_8_steps_complete', ...QUALITY_CHECK_NAMES];
+// Validator-only checks: computed inside validateThesisQuality; the LLM is NOT
+// asked to self-report these in qc_checklist (would be unreliable / gameable).
+// Excluded from QC_REQUIRED_KEYS so missing self-report does not blow up
+// missingFields and trigger spurious repairs.
+const QC_VALIDATOR_ONLY_CHECKS = new Set(['step_1_catalyst_date_in_future']);
+
+const QC_REQUIRED_KEYS = [
+  'all_8_steps_complete',
+  ...QUALITY_CHECK_NAMES.filter(name => !QC_VALIDATOR_ONLY_CHECKS.has(name)),
+];
 
 function extractJsonPayload(text) {
   if (typeof text !== 'string') return '';
@@ -674,6 +684,105 @@ function requireNonEmpty(obj, path, missingFields) {
 function hasDateOrWindow(value) {
   const text = toText(value);
   return /\b(20\d{2}|FY\d{2,4}|Q[1-4]\s*20?\d{2,4}|[12]H\s*20?\d{2,4}|H[12]\s*20?\d{2,4}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December|week|month|quarter|半[年载]|季度|月|年)\b/i.test(text);
+}
+
+// FC.1 (2026-05-05): parse the LATEST plausible date from a catalyst window
+// string. Returns Date (UTC, end-of-period) or null if unparseable. Latest-bound
+// is the charitable interpretation: if even the LATEST possible interpretation
+// of the window is in the past, the catalyst has definitely already happened.
+// See docs/research/factcheck/700HK_pilot_2026-05-05.md §A1 for the failure
+// mode this catches.
+const _MONTH_NAME_TO_NUM = {
+  jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12,
+  january:1,february:2,march:3,april:4,june:6,july:7,august:8,
+  september:9,october:10,november:11,december:12,
+};
+function parseCatalystDate(value) {
+  const text = toText(value);
+  if (!text) return null;
+
+  // 1. ISO date YYYY-MM-DD anywhere; LAST occurrence wins (handles ranges
+  //    like "2025-11-12 to 2025-12-15" → 2025-12-15)
+  const isoMatches = [...text.matchAll(/(\d{4})-(\d{1,2})-(\d{1,2})\b/g)];
+  if (isoMatches.length) {
+    const [, y, m, d] = isoMatches[isoMatches.length - 1];
+    const dt = new Date(Date.UTC(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 2. Quarter: "Q1 2026", "Q3 2025", "2025 Q3", "2025-Q3". End of quarter.
+  const qMatches = [...text.matchAll(/(?:Q([1-4])\s*(\d{4})|(\d{4})[-\s]?Q([1-4]))/gi)];
+  if (qMatches.length) {
+    const last = qMatches[qMatches.length - 1];
+    const q = parseInt(last[1] || last[4], 10);
+    const y = parseInt(last[2] || last[3], 10);
+    const monthEnd = q * 3; // Q1→3, Q2→6, Q3→9, Q4→12
+    const day = monthEnd === 6 || monthEnd === 9 ? 30 : 31;
+    const dt = new Date(Date.UTC(y, monthEnd - 1, day, 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 3. Half-year: "1H 2026", "H1 2026", "H2 2025", "2H 2026", "2026 H1"
+  const hMatches = [...text.matchAll(/(?:H([12])\s*(\d{4})|([12])H\s*(\d{4})|(\d{4})\s*H([12]))/gi)];
+  if (hMatches.length) {
+    const last = hMatches[hMatches.length - 1];
+    const h = parseInt(last[1] || last[3] || last[5], 10);
+    const y = parseInt(last[2] || last[4] || last[6], 10);
+    const monthEnd = h === 1 ? 6 : 12;
+    const day = monthEnd === 6 ? 30 : 31;
+    const dt = new Date(Date.UTC(y, monthEnd - 1, day, 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 4. Month name + year: "November 2025", "Nov 2025"
+  const monMatches = [...text.matchAll(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{4})\b/gi)];
+  if (monMatches.length) {
+    const last = monMatches[monMatches.length - 1];
+    const m = _MONTH_NAME_TO_NUM[last[1].toLowerCase()];
+    const y = parseInt(last[2], 10);
+    if (m && y) {
+      // Use 28 to be cross-month-safe (Feb has 28; for non-Feb months we
+      // under-bound by ≤3 days — within the 14d backward tolerance window).
+      const dt = new Date(Date.UTC(y, m - 1, 28, 23, 59, 59));
+      if (!isNaN(dt)) return dt;
+    }
+  }
+
+  // 5. FY notation: "FY2025", "FY 25", "FY26"
+  const fyMatches = [...text.matchAll(/\bFY\s*(\d{2,4})\b/gi)];
+  if (fyMatches.length) {
+    const last = fyMatches[fyMatches.length - 1];
+    let y = parseInt(last[1], 10);
+    if (y < 100) y += 2000;
+    const dt = new Date(Date.UTC(y, 11, 31, 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 6. Year only "2026" — end of year
+  const yMatches = [...text.matchAll(/\b(20\d{2})\b/g)];
+  if (yMatches.length) {
+    const last = yMatches[yMatches.length - 1];
+    const y = parseInt(last[1], 10);
+    const dt = new Date(Date.UTC(y, 11, 31, 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 7. Vague phrases ("next 3 months", "soon", "near-term") → unparseable.
+  //    Existing isBoilerplate / hasDateOrWindow checks catch these before we
+  //    get here, but we return null defensively.
+  return null;
+}
+
+// Backward tolerance: thesis can reference a catalyst that occurred up to N
+// days before generation time (post-event retrospective). Anything older is
+// considered stale and fails the temporal validity check.
+const CATALYST_DATE_BACKWARD_TOLERANCE_DAYS = 14;
+
+function isCatalystDateInFuture(catalystDateRaw, generationDate = new Date()) {
+  const parsed = parseCatalystDate(catalystDateRaw);
+  if (!parsed) return null; // unparseable → check is N/A
+  const cutoff = new Date(generationDate.getTime() - CATALYST_DATE_BACKWARD_TOLERANCE_DAYS * 24 * 60 * 60 * 1000);
+  return parsed >= cutoff;
 }
 
 function hasSpecificMetric(value) {
@@ -740,6 +849,19 @@ function validateThesisQuality(parsedOutput) {
     step1Present && hasDateOrWindow(getPath(root, 'step_1_catalyst.catalyst_date_or_window')) && !isBoilerplate(getPath(root, 'step_1_catalyst.catalyst_event'));
   if (step1Present && !hasDateOrWindow(getPath(root, 'step_1_catalyst.catalyst_date_or_window'))) {
     pushMissing(missingFields, 'step_1_catalyst.catalyst_date_or_window');
+  }
+
+  // FC.1 (2026-05-05) — temporal validity. Closes the structurally-invisible
+  // failure mode surfaced in factcheck/700HK_pilot_2026-05-05.md §A1: thesis
+  // emits a catalyst date already in the past, structural validator passes
+  // because it only checked format. Now: parsed-date < (now − 14d) fails.
+  // If date is unparseable (parser returns null), skip — existing checks
+  // (hasDateOrWindow on step_1_specific_not_vague) handle that case.
+  if (step1Present) {
+    const inFuture = isCatalystDateInFuture(getPath(root, 'step_1_catalyst.catalyst_date_or_window'));
+    qcChecklistResults.step_1_catalyst_date_in_future = (inFuture === null) ? true : inFuture;
+  } else {
+    qcChecklistResults.step_1_catalyst_date_in_future = false;
   }
 
   const mechanismChain = getPath(root, 'step_2_mechanism.mechanism_chain');
@@ -1047,7 +1169,7 @@ step_8_position_sizing_curve_monotonic,
 reward_to_risk_at_least_threshold.
 
 QUALITY GATES (apply mentally before emitting JSON):
-  ✓ Step 1 has a specific date OR explicit window (not "near-term"/"soon")
+  ✓ Step 1 has a specific FUTURE date OR explicit forward window (not "near-term"/"soon"; NOT a date already in the past). If the named earnings/event has already occurred, use the NEXT scheduled occurrence — e.g., if today is past Q4 2025 earnings, anchor on Q1 2026 earnings instead. Catalyst dates more than 14 days in the past will fail validation.
   ✓ Step 2 chain has no unfounded leaps; each step is consequence of prior
   ✓ Step 3 includes "what changes our mind" (variant.whatChangesOurMind)
   ✓ Step 4 has specific numbers + time horizon
@@ -1301,6 +1423,20 @@ FINAL CHECK — BEFORE EMITTING JSON, verify your output contains:
   [ ] legacy UI mirrors variant.whatChangesOurMind and variant.rewardToRisk are also populated
 
 Return ONLY the JSON object. No markdown, no explanation.`;
+
+// ════════════════════════════════════════════════════════════════════════════
+// NAMED EXPORTS (test-only — Vercel ignores non-default exports for routing)
+// ════════════════════════════════════════════════════════════════════════════
+// Used by scripts/test_thesis_validator.mjs to validate FC.1 temporal check
+// without spending API tokens. These are pure functions with no side effects.
+export {
+  validateThesisQuality,
+  parseCatalystDate,
+  isCatalystDateInFuture,
+  CATALYST_DATE_BACKWARD_TOLERANCE_DAYS,
+  QUALITY_CHECK_NAMES,
+  QC_VALIDATOR_ONLY_CHECKS,
+};
 
 // ════════════════════════════════════════════════════════════════════════════
 // MAIN HANDLER
