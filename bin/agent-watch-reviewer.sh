@@ -28,6 +28,7 @@ set -m  # job control: each foreground command gets own process group, enabling 
 RUNS_DIR=".shifts/runs"
 REVIEWS_GLOB=".shifts/runs/*/reviews"
 CHECKLIST_PATH="docs/team/REVIEWER_CHECKLIST.md"
+CURRENT_CHILD_PID=""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -44,6 +45,67 @@ find_timeout() {
   if command -v gtimeout >/dev/null 2>&1; then echo gtimeout; return; fi
   if command -v timeout >/dev/null 2>&1; then echo timeout; return; fi
   echo ''
+}
+
+timeout_label() {
+  if [ -n "$TIMEOUT_BIN" ]; then
+    echo "$TIMEOUT_BIN"
+  else
+    echo "bash watchdog fallback"
+  fi
+}
+
+terminate_process_group() {
+  local pid="${1:-}"
+  [ -z "$pid" ] && return 0
+
+  kill -TERM "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+  sleep 2
+  kill -KILL "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+}
+
+run_with_timeout() {
+  local seconds="$1" cmd_pid watchdog_pid cmd_ec timed_out_file
+  shift
+
+  if [ -n "$TIMEOUT_BIN" ]; then
+    "$TIMEOUT_BIN" "$seconds" "$@"
+    return $?
+  fi
+
+  "$@" &
+  cmd_pid=$!
+  CURRENT_CHILD_PID="$cmd_pid"
+  timed_out_file="${TMPDIR:-/tmp}/agent-watch-timeout.$$.$cmd_pid"
+  rm -f "$timed_out_file" 2>/dev/null || true
+
+  (
+    sleep "$seconds"
+    if kill -0 "$cmd_pid" 2>/dev/null; then
+      : > "$timed_out_file"
+      terminate_process_group "$cmd_pid"
+    fi
+  ) &
+  watchdog_pid=$!
+
+  wait "$cmd_pid"
+  cmd_ec=$?
+  CURRENT_CHILD_PID=""
+
+  if [ -f "$timed_out_file" ]; then
+    rm -f "$timed_out_file" 2>/dev/null || true
+    wait "$watchdog_pid" 2>/dev/null || true
+    return 124
+  fi
+
+  if kill -0 "$watchdog_pid" 2>/dev/null; then
+    kill "$watchdog_pid" 2>/dev/null || true
+    wait "$watchdog_pid" 2>/dev/null || true
+    return "$cmd_ec"
+  fi
+
+  wait "$watchdog_pid" 2>/dev/null || true
+  return 124
 }
 
 cd_repo_root() {
@@ -152,11 +214,7 @@ $request
 Write your verdict per the template at the end of REVIEWER_CHECKLIST.md. Output format: VERDICT line first, then SUMMARY, CHECKLIST RESULTS, FINDINGS, TESTS_CHECKED, DEPLOYMENT_RISK, NOTES."
 
   set +e
-  if [ -n "$TIMEOUT_BIN" ]; then
-    "$TIMEOUT_BIN" 600 claude -p "$review_prompt" > "$tmp_path"
-  else
-    claude -p "$review_prompt" > "$tmp_path"  # no timeout available — tolerate stuck (logged P3)
-  fi
+  run_with_timeout 600 claude -p "$review_prompt" > "$tmp_path"
   claude_ec=$?
   set -e
 
@@ -183,6 +241,7 @@ cleanup_pg() {
   # Kill any child/grandchild processes that survived (e.g. stuck claude -p / codex exec)
   trap '' EXIT  # avoid recursion
   trap '' TERM
+  terminate_process_group "$CURRENT_CHILD_PID"
   kill 0 2>/dev/null || true  # send SIGTERM to entire process group
 }
 
@@ -196,7 +255,7 @@ trap 'cleanup_pg' EXIT
 
 preflight
 TIMEOUT_BIN="$(find_timeout)"
-log "timeout binary: ${TIMEOUT_BIN:-NONE (claude/codex hangs will not be capped — install brew coreutils for gtimeout)}"
+log "timeout mechanism: $(timeout_label)"
 log "agent-watch-reviewer.sh standby [PID $$] — monitoring .shifts/runs/*/reviews/*/READY"
 log "review roots glob: $REVIEWS_GLOB"
 

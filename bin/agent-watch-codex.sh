@@ -35,6 +35,7 @@ HEARTBEAT_INTERVAL="${T3_HEARTBEAT_INTERVAL:-15}"
 FSWATCH_PID=""
 EVENT_FIFO=""
 CLEANUP_DONE=0
+CURRENT_CHILD_PID=""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -51,6 +52,67 @@ find_timeout() {
   if command -v gtimeout >/dev/null 2>&1; then echo gtimeout; return; fi
   if command -v timeout >/dev/null 2>&1; then echo timeout; return; fi
   echo ''
+}
+
+timeout_label() {
+  if [ -n "$TIMEOUT_BIN" ]; then
+    echo "$TIMEOUT_BIN"
+  else
+    echo "bash watchdog fallback"
+  fi
+}
+
+terminate_process_group() {
+  local pid="${1:-}"
+  [ -z "$pid" ] && return 0
+
+  kill -TERM "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+  sleep 2
+  kill -KILL "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+}
+
+run_with_timeout() {
+  local seconds="$1" cmd_pid watchdog_pid cmd_ec timed_out_file
+  shift
+
+  if [ -n "$TIMEOUT_BIN" ]; then
+    "$TIMEOUT_BIN" "$seconds" "$@"
+    return $?
+  fi
+
+  "$@" &
+  cmd_pid=$!
+  CURRENT_CHILD_PID="$cmd_pid"
+  timed_out_file="${TMPDIR:-/tmp}/agent-watch-timeout.$$.$cmd_pid"
+  rm -f "$timed_out_file" 2>/dev/null || true
+
+  (
+    sleep "$seconds"
+    if kill -0 "$cmd_pid" 2>/dev/null; then
+      : > "$timed_out_file"
+      terminate_process_group "$cmd_pid"
+    fi
+  ) &
+  watchdog_pid=$!
+
+  wait "$cmd_pid"
+  cmd_ec=$?
+  CURRENT_CHILD_PID=""
+
+  if [ -f "$timed_out_file" ]; then
+    rm -f "$timed_out_file" 2>/dev/null || true
+    wait "$watchdog_pid" 2>/dev/null || true
+    return 124
+  fi
+
+  if kill -0 "$watchdog_pid" 2>/dev/null; then
+    kill "$watchdog_pid" 2>/dev/null || true
+    wait "$watchdog_pid" 2>/dev/null || true
+    return "$cmd_ec"
+  fi
+
+  wait "$watchdog_pid" 2>/dev/null || true
+  return 124
 }
 
 json_string_or_null() {
@@ -235,11 +297,7 @@ process_task() {
   # Verified 2026-05-02: codex exec reads the task spec from stdin.
   # Fallback for older CLI variants: codex --input "$task_path" --output "$out"
   set +e
-  if [ -n "$TIMEOUT_BIN" ]; then
-    "$TIMEOUT_BIN" 1800 codex exec -m gpt-5.5 -C "$REPO_ROOT" "$codex_prompt" < "$task_path" > "$out"
-  else
-    codex exec -m gpt-5.5 -C "$REPO_ROOT" "$codex_prompt" < "$task_path" > "$out"
-  fi
+  run_with_timeout 1800 codex exec -m gpt-5.5 -C "$REPO_ROOT" "$codex_prompt" < "$task_path" > "$out"
   codex_ec=$?
   set -e
 
@@ -279,6 +337,7 @@ cleanup() {
   fi
 
   trap '' TERM EXIT
+  terminate_process_group "$CURRENT_CHILD_PID"
   kill 0 2>/dev/null || true
 }
 
@@ -333,7 +392,7 @@ trap cleanup EXIT
 
 preflight
 TIMEOUT_BIN="$(find_timeout)"
-log "timeout binary: ${TIMEOUT_BIN:-NONE (claude/codex hangs will not be capped — install brew coreutils for gtimeout)}"
+log "timeout mechanism: $(timeout_label)"
 write_status "standby" "" "" "" ""
 log "agent-watch-codex.sh standby [PID $$] — monitoring .agent_tasks/pending/"
 watch_loop
