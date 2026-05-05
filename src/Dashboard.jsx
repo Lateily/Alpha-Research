@@ -727,6 +727,71 @@ const QCFindingsPanel = ({ quality, C, onClose }) => {
   );
 };
 
+// FC.5 (2026-05-05) — Variant Thesis fact-check warning panel.
+// Reads public/data/thesis_factcheck/<TICKER>.json (latest pointer; produced
+// by scripts/thesis_factcheck.py). Shows when MISMATCH count > 0; expands to
+// per-claim diff table. Closes the gap surfaced in
+// docs/research/factcheck/multi_ticker_2026-05-05_post_fc1_redeploy.md §1.2:
+// post-FC.4 the structural validator score differentiates correctly, but
+// multiplier mismatch needs its own surface — schema validator does not
+// cross-check claimed multiples vs ingested live data.
+const FactcheckWarningPanel = ({ factcheck, C, L }) => {
+  const [expanded, setExpanded] = useState(false);
+  if (!factcheck || !factcheck.results) return null;
+  const mismatches = factcheck.results.filter(r => r.status === 'MISMATCH');
+  if (!mismatches.length) return null;
+  const checkedAt = factcheck.fact_checked_at?.slice(0,10) || '—';
+  return (
+    <div style={{padding:'6px 12px', background:`${C.gold}10`, border:`1px solid ${C.gold}30`, borderRadius:6, marginBottom:8, fontSize:11, color:C.gold}}>
+      <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
+        <span style={{flex:'1 1 auto'}}>
+          ⚠️ {L(
+            `${mismatches.length} multiplier claim${mismatches.length>1?'s':''} diverge from market data (>${factcheck.tolerance_pct || 5}% tolerance)`,
+            `${mismatches.length} 个估值倍数 claim 与市场数据偏离 (>${factcheck.tolerance_pct || 5}% 容差)`
+          )}
+        </span>
+        <button type="button" onClick={() => setExpanded(v => !v)} style={{border:`1px solid ${C.gold}30`, background:C.card, color:C.gold, borderRadius:5, padding:'2px 7px', fontSize:10, fontWeight:700, cursor:'pointer'}}>
+          {expanded ? L('Hide','收起') : L('Details','详情')}
+        </button>
+      </div>
+      {expanded && (
+        <div style={{marginTop:8, fontSize:10, color:C.dark, background:C.card, border:`1px solid ${C.border}`, borderRadius:5, padding:8}}>
+          <div style={{marginBottom:8, fontSize:9, color:C.mid, fontStyle:'italic'}}>
+            {L('Cross-checked vs', '比对源:')} <span style={{fontFamily:MONO}}>{factcheck.ground_truth_source}</span>. {L('Last checked','最近检查')}: {checkedAt}.
+          </div>
+          {mismatches.map((m, i) => (
+            <div key={i} style={{padding:'6px 8px', borderTop: i ? `1px solid ${C.border}` : 'none'}}>
+              <div style={{display:'flex', flexWrap:'wrap', gap:8, alignItems:'baseline', marginBottom:3}}>
+                <span style={{fontWeight:700, color:C.dark, minWidth:110}}>{m.label}</span>
+                <span style={{fontFamily:MONO, color:C.dark}}>
+                  <span>{m.claimed_value?.toFixed(2)}x </span>
+                  <span style={{color:C.mid}}>vs actual </span>
+                  <span>{m.gt_value != null ? m.gt_value.toFixed(2) + 'x' : '—'} </span>
+                  <span style={{color: (m.diff_pct || 0) > 0 ? C.gold : C.blue, fontWeight:700, marginLeft:6}}>
+                    {(m.diff_pct || 0) > 0 ? '+' : ''}{m.diff_pct?.toFixed(1)}%
+                  </span>
+                </span>
+              </div>
+              <div style={{fontSize:9, color:C.mid, fontFamily:MONO, marginBottom:3}}>
+                path: {m.thesis_path}
+              </div>
+              <div style={{fontSize:9, color:C.mid, fontStyle:'italic'}}>
+                "...{m.context_snippet?.slice(0, 120)}..."
+              </div>
+            </div>
+          ))}
+          <div style={{marginTop:8, padding:'6px 8px', background:`${C.gold}05`, fontSize:9, color:C.mid, borderRadius:4, lineHeight:1.5}}>
+            {L(
+              'Divergence does not imply the thesis is wrong — model may be using a different time horizon (e.g., FY27 forward vs yahoo FY26 forward) or normalized earnings (biotech). Use as flag for review, not as verdict.',
+              '偏离不代表 thesis 错 — 模型可能用不同时间段 (如 FY27 vs yahoo FY26) 或调整后净利 (biotech 常用). 用作 review 标记, 不是定论.'
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ── MINI COMPONENTS ─────────────────────────────────────────────────────── */
 const Tag = ({ text, c, C }) => <span style={S.tag(c)}>{text}</span>;
 const EQR = ({ lvl, C }) => {
@@ -3774,7 +3839,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 }
 
 /* ── RESEARCH TAB ────────────────────────────────────────────────────────── */
-function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, pulse, pulseLoading, onRunPulse, onGenerateResearch, signalsData, scissorsData, liData, egapScores }) {
+function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData, eqrData, rdcfData, factcheckData, pulse, pulseLoading, onRunPulse, onGenerateResearch, signalsData, scissorsData, liData, egapScores }) {
   const [tushareData, setTushareData] = useState({});
   const [chipData, setChipData] = useState({});
   const [consensusData, setConsensusData] = useState({});
@@ -3906,6 +3971,9 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
     : null;
   const showThesisQualityWarning = !!thesisQuality && thesisQualitySeverity !== 'PASS' && !thesisQualityParseFailed;
   const rewardToRiskWeak = thesisQuality?.qcChecklistResults?.reward_to_risk_below_threshold === true;
+  // FC.5 — fact-check report (multiplier cross-check). null if not yet generated for this ticker.
+  const factcheck = factcheckData?.[ticker] || null;
+  const factcheckMismatchCount = factcheck?.summary?.MISMATCH || 0;
   const eqr      = eqrData?.[ticker]  || null;
   const rdcf     = rdcfData?.[ticker] || null;
   const scissors = scissorsData?.[ticker] || null;
@@ -5391,6 +5459,10 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
               {L('See details','看详情')}
             </button>
           </div>
+        )}
+
+        {factcheckMismatchCount > 0 && (
+          <FactcheckWarningPanel factcheck={factcheck} C={C} L={L}/>
         )}
 
         <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12, marginBottom:14}}>
@@ -9958,6 +10030,11 @@ export default function Dashboard() {
   const [universeHK, setUniverseHK] = useState(null);
   const [eqrData, setEqrData]     = useState({});
   const [rdcfData, setRdcfData]   = useState({});
+  // FC.5 (2026-05-05): per-ticker fact-check report from
+  // public/data/thesis_factcheck/<TICKER>.json (latest pointer; dated audit
+  // trail in <TICKER>_<DATE>.json). Generated by scripts/thesis_factcheck.py.
+  // Surfaces multiplier claims diverging from yahoo fundamentals.
+  const [factcheckData, setFactcheckData] = useState({});
   const [stressData, setStressData] = useState(null);
   const [predictions, setPredictions] = useState([]);
   const [regimeData, setRegimeData] = useState(null);
@@ -10030,6 +10107,29 @@ export default function Dashboard() {
         }
       });
       setEqrData(map);
+    });
+  }, []);
+
+  /* FC.5 — Fetch thesis fact-check reports on mount */
+  useEffect(() => {
+    const base = DATA_BASE;
+    const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
+    Promise.all(
+      ids.map(id =>
+        fetch(base + `data/thesis_factcheck/${id}.json`)
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
+      )
+    ).then(results => {
+      const map = {};
+      ids.forEach((id, i) => {
+        if (results[i]) {
+          const lastUnderscore = id.lastIndexOf('_');
+          const tk = id.slice(0, lastUnderscore) + '.' + id.slice(lastUnderscore + 1);
+          map[tk] = results[i];
+        }
+      });
+      setFactcheckData(map);
     });
   }, []);
 
@@ -10924,11 +11024,11 @@ export default function Dashboard() {
             }
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
-                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} onGenerateResearch={tk => { setSearch(tk); setTicker(tk); setShowDeepResearch(true); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/></div>}
+                {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} factcheckData={factcheckData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} onGenerateResearch={tk => { setSearch(tk); setTicker(tk); setShowDeepResearch(true); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/></div>}
                 <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>
               </div>
             );
-            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} onGenerateResearch={tk => { setSearch(tk); setTicker(tk); setShowDeepResearch(true); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/>;
+            if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} factcheckData={factcheckData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} onGenerateResearch={tk => { setSearch(tk); setTicker(tk); setShowDeepResearch(true); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
           })()}

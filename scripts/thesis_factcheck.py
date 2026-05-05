@@ -182,10 +182,17 @@ def main():
     print(f'Summary: {summary["MATCH"]} MATCH / {summary["MISMATCH"]} MISMATCH / {summary["UNVERIFIABLE"]} UNVERIFIABLE')
 
     # ── Save report ─────────────────────────────────────────────────────
+    # Two files written:
+    # 1. <TICKER>.json — "latest" pointer (frontend reads this; no date guessing)
+    # 2. <TICKER>_<DATE>.json — date-stamped audit trail (git history serves
+    #    as multi-day archive). On same-day re-runs the date-stamped file is
+    #    overwritten; differences across days remain in git log.
     out_dir = PUBLIC_DATA / 'thesis_factcheck'
     out_dir.mkdir(exist_ok=True)
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    out_file = out_dir / f'{ticker.replace(".", "_")}_{today}.json'
+    ticker_safe = ticker.replace('.', '_')
+    out_file_latest = out_dir / f'{ticker_safe}.json'
+    out_file_dated = out_dir / f'{ticker_safe}_{today}.json'
     report = {
         'ticker': ticker,
         'fact_checked_at': datetime.now(timezone.utc).isoformat(),
@@ -196,9 +203,12 @@ def main():
         'results': results,
         'summary': summary,
     }
-    with out_file.open('w') as f:
-        json.dump(report, f, indent=2, ensure_ascii=False)
-    print(f'\nReport saved: {out_file.relative_to(REPO_ROOT)}')
+    payload = json.dumps(report, indent=2, ensure_ascii=False)
+    out_file_latest.write_text(payload)
+    out_file_dated.write_text(payload)
+    print(f'\nReports saved:')
+    print(f'  latest: {out_file_latest.relative_to(REPO_ROOT)}')
+    print(f'  dated:  {out_file_dated.relative_to(REPO_ROOT)}')
     print(f'Exit code: {1 if summary["MISMATCH"] > 0 else 0} ({"MISMATCH found" if summary["MISMATCH"] > 0 else "no mismatch"})')
 
     # ── Exit code ───────────────────────────────────────────────────────
