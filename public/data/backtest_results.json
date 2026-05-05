@@ -1,6 +1,6 @@
 {
-  "as_of": "2026-05-04",
-  "generated": "2026-05-04T15:40:16.579198",
+  "as_of": "2026-05-05",
+  "generated": "2026-05-05T10:35:56.153534",
   "status": "ok",
   "config": {
     "vp_threshold": 60,
@@ -11,51 +11,51 @@
   },
   "summary": {
     "periods": 6,
-    "annualised_return_pct": 31.93,
+    "annualised_return_pct": 28.62,
     "benchmark_return_pct": 0.0,
-    "alpha_annual_pct": 31.93,
+    "alpha_annual_pct": 28.62,
     "beta": 1.0,
-    "sharpe_ratio": 0.769,
+    "sharpe_ratio": 0.687,
     "benchmark_sharpe": 0.0,
-    "annualised_vol_pct": 38.91,
+    "annualised_vol_pct": 38.75,
     "benchmark_vol_pct": 0.0,
     "max_drawdown_pct": -18.16,
     "benchmark_max_dd_pct": -0.0,
-    "cumulative_return_pct": 11.24,
+    "cumulative_return_pct": 9.86,
     "benchmark_cumulative_pct": 0.0,
     "hit_rate_pct": 66.7,
-    "bootstrap_ci_lo_pct": -6.55,
+    "bootstrap_ci_lo_pct": -6.92,
     "bootstrap_ci_hi_pct": 10.13
   },
   "nav_series": [
     {
       "date": "2025-10-31",
-      "portfolio": 1.0493,
+      "portfolio": 1.0363,
       "benchmark": 1.0
     },
     {
       "date": "2025-11-28",
-      "portfolio": 1.0778,
+      "portfolio": 1.0644,
       "benchmark": 1.0
     },
     {
       "date": "2025-12-31",
-      "portfolio": 1.1707,
+      "portfolio": 1.1562,
       "benchmark": 1.0
     },
     {
       "date": "2026-01-30",
-      "portfolio": 0.9688,
+      "portfolio": 0.9568,
       "benchmark": 1.0
     },
     {
       "date": "2026-02-27",
-      "portfolio": 0.9582,
+      "portfolio": 0.9463,
       "benchmark": 1.0
     },
     {
       "date": "2026-03-31",
-      "portfolio": 1.1124,
+      "portfolio": 1.0986,
       "benchmark": 1.0
     }
   ],
@@ -77,9 +77,9 @@
         }
       ],
       "num_positions": 3,
-      "portfolio_return": 4.93,
+      "portfolio_return": 3.63,
       "benchmark_return": 0,
-      "excess_return": 4.93,
+      "excess_return": 3.63,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
@@ -89,14 +89,14 @@
         },
         {
           "ticker": "6160.HK",
-          "raw_return": 8.92,
-          "net_return": 8.52,
+          "raw_return": 5.98,
+          "net_return": 5.58,
           "tx_cost": 0.4
         },
         {
           "ticker": "700.HK",
-          "raw_return": -1.91,
-          "net_return": -2.31,
+          "raw_return": -2.86,
+          "net_return": -3.26,
           "tx_cost": 0.4
         }
       ]

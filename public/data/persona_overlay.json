@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-04T15:42:44.648114+00:00",
+    "generated_at": "2026-05-05T10:39:01.282487+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -183,7 +183,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 17.081978,
+            "actual": 17.063492,
             "threshold": 20.0,
             "comparator": "<",
             "passed": true,
@@ -231,10 +231,10 @@
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.004761778341483502,
+            "actual": null,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           }
         ],
@@ -247,7 +247,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.1243,
+            "actual": 0.1238,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,
@@ -255,7 +255,7 @@
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.1253,
+            "actual": 0.1252,
             "threshold": [
               0.08,
               0.15
@@ -316,7 +316,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 15.145711,
+            "actual": 15.13311,
             "threshold": 20.0,
             "comparator": "<",
             "passed": true,
@@ -380,7 +380,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.1119,
+            "actual": 0.1074,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,
@@ -388,7 +388,7 @@
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.1107,
+            "actual": 0.1123,
             "threshold": [
               0.08,
               0.15
@@ -449,7 +449,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 118.5906,
+            "actual": 119.39189,
             "threshold": 20.0,
             "comparator": "<",
             "passed": false,
@@ -473,7 +473,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 7.4507008,
+            "actual": 7.4519854,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -489,7 +489,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 426.596,
+            "actual": 434.321,
             "threshold": 10.0,
             "comparator": "<",
             "passed": false,

@@ -1,121 +1,103 @@
 {
-  "generated_at": "2026-05-04T15:42:44.366295+00:00",
-  "date": "2026-05-04",
-  "portfolio_value": 288675.0,
+  "generated_at": "2026-05-05T10:39:01.072940+00:00",
+  "date": "2026-05-05",
+  "portfolio_value": 290653.0,
   "risk_pct_per_trade": 0.02,
   "sizing": [
     {
       "recommended_pct": 25.0,
-      "recommended_value": 72169.0,
+      "recommended_value": 72663.0,
       "stop_distance_pct": 5.0,
       "atr_pct": 2.5,
       "vp_multiplier": 0.87,
       "conf_multiplier": 1.3,
-      "risk_cny": 5773.0,
+      "risk_cny": 5813.0,
       "conviction_tier": "HIGH CONVICTION",
       "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.87× · conf-mult 1.30× → 25.0% of portfolio (¥72,169)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.87× · 信号系数1.30× → 仓位25.0%（¥72,169）",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.87× · conf-mult 1.30× → 25.0% of portfolio (¥72,663)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.87× · 信号系数1.30× → 仓位25.0%（¥72,663）",
       "ticker": "9999.HK",
       "vp_score": 61,
-      "conf_score": 26,
+      "conf_score": 14,
       "is_held": true,
       "signals": [
         {
           "type": "VP_GOOD_CONVICTION",
           "contribution": 14.0
-        },
-        {
-          "type": "MA20_BOUNCE",
-          "contribution": 12.0
         }
       ]
     },
     {
       "recommended_pct": 25.0,
-      "recommended_value": 72169.0,
-      "stop_distance_pct": 5.0,
-      "atr_pct": 2.5,
-      "vp_multiplier": 0.73,
-      "conf_multiplier": 1.3,
-      "risk_cny": 5773.0,
-      "conviction_tier": "HIGH CONVICTION",
-      "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.73× · conf-mult 1.30× → 25.0% of portfolio (¥72,169)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.73× · 信号系数1.30× → 仓位25.0%（¥72,169）",
-      "ticker": "6160.HK",
-      "vp_score": 51,
-      "conf_score": 17,
-      "is_held": true,
-      "signals": [
-        {
-          "type": "CONTROLLED_ADVANCE",
-          "contribution": 10.0
-        },
-        {
-          "type": "RSI_RECOVERING",
-          "contribution": 7.0
-        }
-      ]
-    },
-    {
-      "recommended_pct": 25.0,
-      "recommended_value": 72169.0,
+      "recommended_value": 72663.0,
       "stop_distance_pct": 5.0,
       "atr_pct": 2.5,
       "vp_multiplier": 0.6,
-      "conf_multiplier": 1.23,
-      "risk_cny": 5773.0,
+      "conf_multiplier": 1.2,
+      "risk_cny": 5813.0,
       "conviction_tier": "HIGH CONVICTION",
       "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.60× · conf-mult 1.23× → 25.0% of portfolio (¥72,169)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.60× · 信号系数1.23× → 仓位25.0%（¥72,169）",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.60× · conf-mult 1.20× → 25.0% of portfolio (¥72,663)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.60× · 信号系数1.20× → 仓位25.0%（¥72,663）",
       "ticker": "002594.SZ",
       "vp_score": 42,
-      "conf_score": 7,
+      "conf_score": 6,
       "is_held": true,
       "signals": [
         {
           "type": "BULLISH_ALIGNMENT",
-          "contribution": 7.2
+          "contribution": 6.0
         }
       ]
     },
     {
       "recommended_pct": 25.0,
-      "recommended_value": 72169.0,
+      "recommended_value": 72663.0,
+      "stop_distance_pct": 5.0,
+      "atr_pct": 2.5,
+      "vp_multiplier": 0.73,
+      "conf_multiplier": 1.0,
+      "risk_cny": 5813.0,
+      "conviction_tier": "HIGH CONVICTION",
+      "conviction_tier_zh": "高信念",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.73× · conf-mult 1.00× → 25.0% of portfolio (¥72,663)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.73× · 信号系数1.00× → 仓位25.0%（¥72,663）",
+      "ticker": "6160.HK",
+      "vp_score": 51,
+      "conf_score": 0,
+      "is_held": true,
+      "signals": []
+    },
+    {
+      "recommended_pct": 25.0,
+      "recommended_value": 72663.0,
       "stop_distance_pct": 5.0,
       "atr_pct": 2.5,
       "vp_multiplier": 0.76,
-      "conf_multiplier": 1.23,
-      "risk_cny": 5773.0,
+      "conf_multiplier": 1.0,
+      "risk_cny": 5813.0,
       "conviction_tier": "HIGH CONVICTION",
       "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.76× · conf-mult 1.23× → 25.0% of portfolio (¥72,169)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.76× · 信号系数1.23× → 仓位25.0%（¥72,169）",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.76× · conf-mult 1.00× → 25.0% of portfolio (¥72,663)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.76× · 信号系数1.00× → 仓位25.0%（¥72,663）",
       "ticker": "700.HK",
       "vp_score": 53,
-      "conf_score": 7,
+      "conf_score": 0,
       "is_held": true,
-      "signals": [
-        {
-          "type": "RSI_RECOVERING",
-          "contribution": 7.0
-        }
-      ]
+      "signals": []
     },
     {
       "recommended_pct": 20.3,
-      "recommended_value": 58505.0,
+      "recommended_value": 58906.0,
       "stop_distance_pct": 5.0,
       "atr_pct": 2.5,
       "vp_multiplier": 0.8,
       "conf_multiplier": 0.63,
-      "risk_cny": 5773.0,
+      "risk_cny": 5813.0,
       "conviction_tier": "HIGH CONVICTION",
       "conviction_tier_zh": "高信念",
-      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.80× · conf-mult 0.63× → 20.3% of portfolio (¥58,505)",
-      "rationale_z": "高信念：ATR止损5.0% · VP系数0.80× · 信号系数0.63× → 仓位20.3%（¥58,505）",
+      "rationale_e": "HIGH CONVICTION: ATR-stop 5.0% · VP-mult 0.80× · conf-mult 0.63× → 20.3% of portfolio (¥58,906)",
+      "rationale_z": "高信念：ATR止损5.0% · VP系数0.80× · 信号系数0.63× → 仓位20.3%（¥58,906）",
       "ticker": "300308.SZ",
       "vp_score": 56,
       "conf_score": -11,
@@ -127,11 +109,11 @@
         },
         {
           "type": "BULLISH_ALIGNMENT",
-          "contribution": 7.2
+          "contribution": 6.0
         },
         {
           "type": "MACD_DEATH_CROSS",
-          "contribution": -5.8
+          "contribution": -4.8
         }
       ]
     }

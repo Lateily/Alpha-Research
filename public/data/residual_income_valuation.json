@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-04T15:42:44.732039+00:00",
+    "generated_at": "2026-05-05T10:39:01.376211+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "residual_income_no_growth_ebo",
@@ -28,31 +28,31 @@
       "ticker": "700.HK",
       "model_status": "multi_method",
       "signal": "OVERPRICED",
-      "delta_pp": -26.38,
+      "delta_pp": -26.34,
       "current_roe_pct": 20.03,
-      "implied_future_roe_pct": 46.41,
+      "implied_future_roe_pct": 46.37,
       "p_b_observed": 3.7,
-      "annuity_factor": 7.9808,
-      "wacc_used_as_re": 0.1253,
+      "annuity_factor": 7.9872,
+      "wacc_used_as_re": 0.1252,
       "book_equity": 1154152000000.0,
       "market_cap": 4274453479424,
-      "rationale_e": "P/B 3.70 → market implies forward ROE 46.4% over 5y; current ROE 20.0%; delta -26.4pp → OVERPRICED",
-      "rationale_z": "P/B 3.70 → 市场隐含未来5年ROE 46.4%；当前ROE 20.0%；delta -26.4pp → OVERPRICED"
+      "rationale_e": "P/B 3.70 → market implies forward ROE 46.4% over 5y; current ROE 20.0%; delta -26.3pp → OVERPRICED",
+      "rationale_z": "P/B 3.70 → 市场隐含未来5年ROE 46.4%；当前ROE 20.0%；delta -26.3pp → OVERPRICED"
     },
     "9999.HK": {
       "ticker": "9999.HK",
       "model_status": "multi_method",
       "signal": "OVERPRICED",
-      "delta_pp": -17.46,
+      "delta_pp": -18.03,
       "current_roe_pct": 22.62,
-      "implied_future_roe_pct": 40.08,
+      "implied_future_roe_pct": 40.66,
       "p_b_observed": 3.62,
-      "annuity_factor": 9.0334,
-      "wacc_used_as_re": 0.1107,
+      "annuity_factor": 8.9047,
+      "wacc_used_as_re": 0.1123,
       "book_equity": 160296119000.0,
       "market_cap": 580377509888,
-      "rationale_e": "P/B 3.62 → market implies forward ROE 40.1% over 5y; current ROE 22.6%; delta -17.5pp → OVERPRICED",
-      "rationale_z": "P/B 3.62 → 市场隐含未来5年ROE 40.1%；当前ROE 22.6%；delta -17.5pp → OVERPRICED"
+      "rationale_e": "P/B 3.62 → market implies forward ROE 40.7% over 5y; current ROE 22.6%; delta -18.0pp → OVERPRICED",
+      "rationale_z": "P/B 3.62 → 市场隐含未来5年ROE 40.7%；当前ROE 22.6%；delta -18.0pp → OVERPRICED"
     },
     "6160.HK": {
       "ticker": "6160.HK",
