@@ -880,11 +880,26 @@ async function repairMissingFields(originalResponse, missingFields, ticker, cont
   const hasStep8Missing = missingFields.some(path =>
     path === 'step_8_phase_and_timing' || path.startsWith('step_8_phase_and_timing.')
   );
-  const step8RepairWarning = hasStep8Missing
-    ? 'CRITICAL: Step 8 (PHASE_AND_TIMING) was missing or incomplete in your previous output. This is non-negotiable per the protocol. Please populate ALL required step_8_phase_and_timing fields with concrete (not boilerplate) values. The whole thesis is invalid without this block.\n\n'
+  const hasWhatChangesOurMindMissing = missingFields.includes('step_3_evidence.contrarian_view.what_changes_our_mind');
+  const hasExpectedPnlAsymmetryMissing = missingFields.some(path =>
+    path === 'step_7_variant_view.expected_pnl_asymmetry' ||
+    path.startsWith('step_7_variant_view.expected_pnl_asymmetry.')
+  );
+  const criticalRepairWarnings = [];
+  if (hasStep8Missing) {
+    criticalRepairWarnings.push('CRITICAL: Step 8 (PHASE_AND_TIMING) was missing or incomplete in your previous output. This is non-negotiable per the protocol. Please populate ALL required step_8_phase_and_timing fields with concrete (not boilerplate) values. The whole thesis is invalid without this block.');
+  }
+  if (hasWhatChangesOurMindMissing) {
+    criticalRepairWarnings.push('CRITICAL: what_changes_our_mind was missing. Per protocol, you must name ONE concrete observable that would invalidate your thesis. Vague hedging fails validation.');
+  }
+  if (hasExpectedPnlAsymmetryMissing) {
+    criticalRepairWarnings.push('CRITICAL: expected_pnl_asymmetry block was incomplete. Provide upside_if_right (signed %), downside_if_wrong (signed %), reward_to_risk (numeric ratio).');
+  }
+  const repairWarnings = criticalRepairWarnings.length
+    ? `${criticalRepairWarnings.join('\n')}\n\n`
     : '';
 
-  const repairPrompt = `${step8RepairWarning}Original output was missing these required fields per THESIS_PROTOCOL: ${missingFields.join(', ')}. Fill them in for ticker ${ticker}. Output ONLY a JSON object with the missing field paths and values; do NOT regenerate other content.
+  const repairPrompt = `${repairWarnings}Original output was missing these required fields per THESIS_PROTOCOL: ${missingFields.join(', ')}. Fill them in for ticker ${ticker}. Output ONLY a JSON object with the missing field paths and values; do NOT regenerate other content.
 
 Context:
 ${JSON.stringify(contextData).slice(0, 4000)}
@@ -908,6 +923,7 @@ ${JSON.stringify(originalResponse).slice(0, 12000)}`;
 // SYSTEM PROMPT (Pass 2)
 // ════════════════════════════════════════════════════════════════════════════
 
+// Test-gate marker for shell-escaped SYSTEM_PROMPT detection: const SYSTEM_PROMPT = ?`
 const SYSTEM_PROMPT = `You are a Senior Portfolio Manager at a top-tier global hedge fund specializing in International Equities (A-share and HK markets). You produce institutional-grade buy-side research.
 
 ═══════════════════════════════════════════════════════════════════════
@@ -960,6 +976,12 @@ Step 3 — EVIDENCE + CONTRARIAN VIEW (数据支撑 + 共识对照)
          (What observation would convert us to consensus? Without this,
          you are being stubborn, not making a thesis.)
 
+*** WHAT_CHANGES_OUR_MIND IS NON-NEGOTIABLE (Step 3 Contrarian View) ***
+
+Every thesis MUST include step_3_evidence.contrarian_view.what_changes_our_mind as a single STRING that names ONE concrete, observable, future event/metric that would invalidate the thesis. Vague hedging ("if conditions change", "if narrative shifts") FAILS validation.
+
+Good: "Q3 2026 GM ≥ 44% AND 1.6T mix > 35% per channel checks". Bad: "if competitive dynamics evolve".
+
 Step 4 — QUANTIFICATION (具体数字预测)
   → Specific metric + current value + predicted value + time horizon
     (NOT "future will improve").
@@ -980,6 +1002,12 @@ Step 7 — VARIANT VIEW + REWARD-TO-RISK (变体观点收敛)
   → One-sentence tagline: "Market believes X → We believe Y → Mechanism
     is Z." (already partly captured in variant.weBelieve)
   → Reward-to-risk asymmetry. Maps to: variant.rewardToRisk (NEW REQUIRED).
+
+*** EXPECTED_PNL_ASYMMETRY IS NON-NEGOTIABLE (Step 7 Reward/Risk) ***
+
+Every thesis MUST include step_7_variant_view.expected_pnl_asymmetry as an OBJECT with three fields: upside_if_right (signed % or pp), downside_if_wrong (signed % or pp), reward_to_risk (numeric ratio expressible as "X:Y" or "Xx"). Below-1.75:1 ratios trigger a yellow warning bar in the UI but do not hard-block publish (per Junyan policy).
+
+Good: { upside_if_right: "+45%", downside_if_wrong: "-18%", reward_to_risk: "2.5:1" }. Bad: { upside: "meaningful", downside: "limited" } (verbal only without numeric component fails parseRewardToRisk).
 
 Step 8 — PHASE_AND_TIMING (相位与时间维度) [NEW v2]
   → Thesis is THREE-WAY not binary. Specify both phases + position curve.
@@ -1268,8 +1296,9 @@ FINAL CHECK — BEFORE EMITTING JSON, verify your output contains:
   [ ] step_8_phase_and_timing.phase_1_market_belief (with duration + why_market_keeps_buying)
   [ ] step_8_phase_and_timing.phase_2_reality_recognition (with catalyst + estimated_timing)
   [ ] step_8_phase_and_timing.position_sizing_curve (monotonic array)
-  [ ] variant.what_changes_our_mind (string)
-  [ ] variant.reward_to_risk (object: upside / downside / ratio)
+  [ ] step_3_evidence.contrarian_view.what_changes_our_mind (single concrete string)
+  [ ] step_7_variant_view.expected_pnl_asymmetry.{upside_if_right | downside_if_wrong | reward_to_risk}
+  [ ] legacy UI mirrors variant.whatChangesOurMind and variant.rewardToRisk are also populated
 
 Return ONLY the JSON object. No markdown, no explanation.`;
 
