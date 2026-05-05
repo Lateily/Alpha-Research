@@ -8,9 +8,9 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-04 (shifts 11+12 complete — Tier-C 5/5 sources fully deployed = "数据源全部部署完成" Junyan ask achieved)
-**Last shift:** auto-work-mode shift 12 `2026-05-04-1638` (KR7 融资融券 frontend FINAL Tier-C card) — preceded by shift 11 (KR1-6 spanning Tier-C remaining 4 pairs + heartbeat infra + browser audit C2 gap fix)
-**HEAD:** `032bf8b` on auto/2026-04-30 (= main)
+**Last updated:** 2026-05-05 (shift 13 complete — Track B Bridge 1 thesis quality 72.5→88.25/100 multi-ticker validated + watcher robustness hardening + audit-driven max_tokens fix)
+**Last shift:** auto-work-mode shift 13 `2026-05-05-0935` (A.1 watcher hardening + B.1 Step 8 enforcement + B.2 contrarian/reward-risk fields + watcher watchdog Junyan-direct + max_tokens 8192→16384 fix + Track C audit re-run validating +15.75pp lift)
+**HEAD:** `8ef84d3` on auto/2026-04-30 (= main, +1 shift 13 doc commit pending)
 **Context handoff status:** All work in git. Tier-C 5/5 deployed; 1 pending pipeline run to populate `public/data/repurchase/*.json` (next weekday cron OR Junyan `gh workflow run fetch-data.yml`). Browser audit driven by T1 (Chrome MCP) flagged + fixed.
 
 **Junyan ops still pending (carry-over from shift 10):**
@@ -201,6 +201,55 @@ the next visual layer (microinteractions / dark mode sweep / mobile
 responsive); none of those block ship.
 
 ---
+
+### 2026-05-05 — auto-work shift 13: Watcher robustness + Bridge 1 thesis quality 72.5→88.25 (multi-ticker validated)
+
+**Run id:** `2026-05-05-0935` (~3h wall-clock). 6 shipped commits + 1 audit re-run doc.
+
+**🎯 MILESTONE: Bridge 1 thesis quality framework cumulative lift validated empirically.** Multi-ticker audit re-run on 4 tickers (002594.SZ / 700.HK / 9999.HK / 6160.HK) measured **88.25/100 average** (vs 72.5 baseline single-ticker on 300308.SZ at shift 10). Lift +15.75 pp = 88% of audit doc §5 forecast achieved with C-1.5 + C-1.6 + max_tokens fix shipped (C-2 persona library still pending).
+
+**Shipped commits:**
+- `b8619c3` — A.1 Watcher robustness hardening: gtimeout/timeout wrapping (600s reviewer / 1800s codex), `set -m` job control, `kill 0` EXIT trap for process group cleanup, sweep_stale_tmps + sweep_stale_locks at startup. Fixes 2 real production bugs (PIDs 8582 + 52461 stuck claude -p 45+ min after verdict written, observed in shifts 11+12).
+- `38e599a` (merged via `3321f29`) — B.1 Step 8 PHASE_AND_TIMING prompt enforcement: 'STEP 8 IS NON-NEGOTIABLE' warning before JSON schema + 'BEFORE EMITTING JSON' final-check checklist + Step 8-specific repair prompt branch.
+- `fadaf7a` — Watcher watchdog fallback (Junyan-direct): real bash watchdog when no gtimeout (background sleep + kill -- -PG escalation + best-effort -KILL fallback). Pairs with A.1.
+- `7b800ff` — B.2 what_changes_our_mind + expected_pnl_asymmetry prompt enforcement: prominent warning blocks at Step 3 + Step 7 with concrete good/bad anchors (e.g., 'Q3 2026 GM ≥ 44%' vs 'if dynamics evolve'). FINAL CHECK list realigned to canonical C-3 paths.
+- `8ef84d3` — max_tokens fix discovered via audit re-run: Pass 2 8192→16384, repair 4096→8192. Round 1 audit returned all 4 tickers severity=FAIL because raw_output truncated mid-JSON; round 2 (post-fix + Junyan re-redeploy) returned PASS 90/90/90/83 = 88.25 avg.
+
+**Audit re-run findings (docs/research/THESIS_QUALITY_AUDIT_RERUN_2026-05-05.md):**
+
+Per-ticker scorecard:
+
+| Ticker | Severity | Score | Failed checks |
+|---|---|---|---|
+| 002594.SZ (BYD) | PASS | 90 | reward_to_risk_below_threshold; step_8_position_sizing_curve_monotonic |
+| 700.HK (Tencent) | PASS | 90 | (same 2) |
+| 9999.HK (NetEase) | PASS | 90 | (same 2) |
+| 6160.HK (BeOne biotech) | PASS | 83 | (same 2) + step_2_no_unfounded_leaps + step_8_phase_timing_concrete_not_boilerplate |
+
+`missingFields = 0` on all 4. `repairAttempted = False` on all 4 (initial Pass 2 passes validation without re-prompt). All B.1+B.2 targeted fields (step_8 phase_1+phase_2+sizing_curve / what_changes_our_mind / expected_pnl_asymmetry / reward_to_risk) present 100% across all 4 tickers.
+
+**Newly visible residual gaps (post audit re-run, future Track B sub-steps):**
+- C-1.7 candidate: tighten Step 8 example anchor — `position_sizing_curve` MUST be monotonically non-decreasing (3/4 tickers fail this check; +3-4 pp expected lift)
+- C-1.8 candidate: prompt nudge for asymmetric reward/risk targeting — 4/4 tickers carry ratios ≤ 1.75:1 yellow threshold (+2-3 pp expected)
+- Biotech sector-specific prompt expansion — 6160.HK is sole ticker dragging average (mechanism chain too short for biotech inference; phase timing too vague). Out-of-scope for shift 13; matches shift 10 audit §4.4 sector routing forecast.
+
+**Process notes (this shift):**
+
+- 6 consecutive KRs zero scope creep across shift 13 (mature pattern, 16 cumulative across shifts 11-13).
+- Junyan-direct parallel task pattern resurfaced (watcher watchdog enhancement on top of T1 spec'd A.1) — handled cleanly with split-commit workflow (T1 KR-B.1 + Junyan watcher enhancement = 2 separate commits, no race-bundle false alarm this time).
+- Audit re-run methodology validated: parallel curl POST direct against `/api/research` + JSON `data._quality` extraction. ~2-3 min per ticker, 4 in parallel = ~3 min total wall-clock. No UI involvement needed for measurement; fast iteration loop for future audits.
+- Truncation pattern caught at validation time (instead of shipping silently to production) demonstrates audit re-run is itself a production safety net.
+- watcher hardening + max_tokens fix means thesis-output stuck-detection is now guaranteed at backend (timeout wrapping fail-fast at 10/30 min) AND validation reflects real content (no truncated false-FAIL).
+
+**Items deferred for shift 14+:**
+
+- Track B C-1.7 sizing_curve_monotonic prompt tightening (single small KR)
+- Track B C-1.8 asymmetric reward/risk targeting prompt nudge (single small KR)
+- Track B C-2 persona library wiring (multi-shift)
+- Biotech sector-specific prompt expansion (single KR per audit re-run §4.3+§4.4)
+- KR-A.2 launchd 126 fix (brew bash + FDA + plist explicit `/opt/homebrew/bin/bash`)
+- Tushare 3-API perms — Junyan determined NOT possible without separate purchase; deferred indefinitely (use current 15000-tier deployed sources)
+- Franky Entry 2 monitoring (carry-over)
 
 ### 2026-05-04 — auto-work shifts 11+12: Tier-C 5/5 data source deployment FINAL + browser audit C2 gap fix
 
