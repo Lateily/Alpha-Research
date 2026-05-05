@@ -367,7 +367,8 @@ jobs:
                  public/data/holdertrade/*.json \
                  public/data/margin/*.json \
                  public/data/repurchase/*.json \
-                 public/data/thesis_factcheck/*.json)
+                 public/data/thesis_factcheck/*.json \
+                 public/data/thesis_attribution/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 

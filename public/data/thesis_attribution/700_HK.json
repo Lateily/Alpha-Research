@@ -1,0 +1,76 @@
+{
+  "ticker": "700.HK",
+  "thesis_logged_at": "2026-05-05T14:07:01.898583+00:00",
+  "thesis_source": "docs/research/factcheck/700HK_thesis_2026-05-05_1438BST.json",
+  "thesis_source_commit": "aefc16b",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "Tencent Q4 2025 / FY2025 results release — first full quarter showcasing Yuanbao + Hunyuan AI monetization inside Weixin search/ads, plus Marketing Services (ads) growth re-acceleration on AI-driven CTR uplift",
+    "date_or_window": "2026-03-19 (expected, based on prior-year cadence of mid-March results)",
+    "type": "earnings_revision",
+    "source": "Tencent IR historical reporting cadence; prior FY2024 results released 2025-03-19"
+  },
+  "mechanism_chain_length": 5,
+  "rightIf_conditions": [
+    "FY2025 Marketing Services revenue growth ≥18% YoY (consensus ~16%)",
+    "FY2025 non-IFRS operating margin ≥36% (vs FY2024 ~34%)",
+    "Q1 2026 results show Marketing Services >20% YoY, confirming AI ad-tech sustained acceleration",
+    "Buyback executes ≥HK$100bn in 2026, confirming capital return commitment"
+  ],
+  "wrongIf_conditions": [
+    "FY2025 Marketing Services revenue growth <15% YoY (deceleration from Q3 2025 17%)",
+    "Non-IFRS operating margin contracts QoQ for two consecutive quarters in 2026",
+    "AI capex guidance for 2026 exceeds RMB 130bn without offsetting revenue traction → ROIC compression dominates narrative",
+    "Major regulatory action against Weixin commerce or AI services"
+  ],
+  "what_changes_our_mind": "Q4 2025 Marketing Services revenue growth decelerates below 15% YoY AND non-IFRS operating margin contracts QoQ — would invalidate the AI-monetization-driving-margins thesis.",
+  "variant_view_one_sentence": "Market believes Tencent is a 12% EPS compounder at 15x P/E → We believe AI-monetization-in-Weixin drives FY2026 EPS 5-8% above consensus → Mechanism is AI-ad-tech eCPM uplift dropping to operating margin with near-zero marginal cost.",
+  "time_to_resolution": "9-12 months — FY2025 results (Mar 2026) and Q1/Q2 2026 prints",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "+30% to +40% (HK$640-720)",
+    "downside_if_wrong": "-12% to -15% (HK$420-440 fair-value floor on game franchise + buyback support)",
+    "reward_to_risk": "2.5:1"
+  },
+  "quantification": {
+    "metric_target": "FY2026 non-IFRS net income (RMB bn) and resulting fwd P/E multiple",
+    "current_value": "Consensus FY2026E non-IFRS NI ~RMB 255bn; current fwd P/E ~15x",
+    "predicted_value": "Our FY2026E non-IFRS NI ~RMB 270-275bn (+6% vs consensus); target fwd P/E 18-19x post-rerating",
+    "predicted_range": {
+      "low": "HK$540",
+      "mid": "HK$640",
+      "high": "HK$720"
+    },
+    "predicted_horizon": "9-12 months (through FY2025 results + Q1/Q2 2026 prints)",
+    "confidence": "0.55"
+  },
+  "qc_quality_at_log_time": {
+    "score": 90,
+    "missingFields": [],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": false,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": true,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "PASS",
+    "qc_findings": [
+      "failed:step_1_catalyst_date_in_future",
+      "failed:step_8_position_sizing_curve_monotonic"
+    ],
+    "repairAttempted": false
+  },
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

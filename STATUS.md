@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-05 (shift 13 complete + post-shift oversell correction + thesis fact-check pilot 700.HK + KR-FC.1 temporal validity check shipped + KR-FC.2 multiplier cross-check script shipped — Track B Bridge 1 **schema compliance** 72.5→88.25/100 multi-ticker; **investment quality NOT validated** but now have 2 concrete tools that catch the 2 structurally-invisible failure modes the pilot identified. Pending Junyan Vercel redeploy for FC.1 to take effect on production validator.)
+**Last updated:** 2026-05-05 (shift 13 complete + post-shift fact-check stack FC.1–FC.6 + Bridge-8 attribution scaffold — Track B Bridge 1 schema compliance 72.5→88.25 multi-ticker; investment quality NOT validated but stack now in place: FC.1 temporal-validity check, FC.2 multiplier cross-check script, FC.3 daily-commit glob, FC.4 score rebalance, FC.5 frontend warning panel, FC.6 v1 today-date prompt injection, Bridge-8 attribution log scaffold. Vercel redeployed once mid-session by Junyan; FC.4+FC.6 effects awaiting next redeploy.)
 **Last shift:** auto-work-mode shift 13 `2026-05-05-0935` (A.1 watcher hardening + B.1 Step 8 enforcement + B.2 contrarian/reward-risk fields + watcher watchdog Junyan-direct + max_tokens 8192→16384 fix + Track C audit re-run validating +15.75pp lift)
 **HEAD:** `8ef84d3` on auto/2026-04-30 (= main, +1 shift 13 doc commit pending)
 **Context handoff status:** All work in git. Tier-C 5/5 deployed; 1 pending pipeline run to populate `public/data/repurchase/*.json` (next weekday cron OR Junyan `gh workflow run fetch-data.yml`). Browser audit driven by T1 (Chrome MCP) flagged + fixed.
@@ -139,6 +139,100 @@ Bundle with launchd 126 fix into single ops KR.
 
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
+
+### 2026-05-05 (post shift 13, third wave) — KR-FC.3/FC.4/FC.5/FC.6 + Bridge-8 attribution scaffold
+
+Junyan triggered Vercel redeploy mid-session, then asked "fact check 两个都要"
+followed by "全做". 6 commits this wave, all Bridge-1 fact-check stack
+build-out + Bridge-8 attribution scaffold. 0 production behavior change
+that's user-visible without next Vercel redeploy + GH Pages deploy.
+
+**Multi-ticker re-run findings** (commit `7511ff0`, before this wave):
+4 tickers re-curl'd post-FC.1 redeploy. FC.1 LIVE confirmed (all
+qcChecklistResults include step_1_catalyst_date_in_future). 3/4 tickers
+(700/9999/6160) STILL anchor on past catalysts → 1-line SYSTEM_PROMPT
+not sufficient. FC.2 caught 9 of 9 multiplier claims as MISMATCH (100%)
+across 4 tickers — multiplier mismatch is SYSTEMATIC not one-off. Score
+saturated at 90 for all 4 even when 2 checks failed → score formula
+needs rebalance.
+
+**Commit `d653434` — KR-FC.4 score rebalance**:
+- NON_STEP_8_CHECK_WEIGHT 6.67 → 6.0. Total possible weight: 4×10 +
+  10×6.0 = 100 exactly. Score now differentiates (no cap saturation).
+- 700.HK saved-pilot thesis: 90 → 84 PASS post-FC.4 (failed FC.1 + step_8_sizing).
+- All 27 tests still pass.
+
+**Commit `0737b23` — KR-FC.6 v1 inject today's date into userPrompt**:
+- Prepends "TEMPORAL CONTEXT: Today is YYYY-MM-DD. Your training data
+  may end earlier..." to userPrompt at request time. Pushes model to
+  use NEXT scheduled occurrence rather than recently-past events.
+- Expected to flip 3/4 past-catalyst-date fail rate after redeploy.
+  FC.6 v2 (post-validation re-prompt) queued only if v1 insufficient.
+
+**Commit `31a36d6` — KR-FC.3 v1 pipeline glob**:
+- Added `public/data/thesis_factcheck/*.json` to fetch-data.yml
+  daily-commit glob. Manually-generated reports now survive daily
+  commit cycle. FC.3 v2 (auto-run inside pipeline) deferred — needs
+  architectural decision on thesis sourcing (cost ~$5/day to call
+  /api/research per ticker daily).
+
+**Commit `aefc16b` — KR-FC.5 Variant Thesis fact-check warning panel**:
+- New `factcheckData` state in Dashboard root (parallel to eqrData).
+  Fetches `data/thesis_factcheck/<ID>.json` (latest pointer) for 5
+  watchlist tickers on mount.
+- New `<FactcheckWarningPanel/>` component (~70 LOC) — shows when
+  MISMATCH count > 0. Collapsed: 1-line gold chip + Details button.
+  Expanded: per-claim diff table with caveat explaining divergence
+  ≠ thesis-wrong (different time horizons or normalized earnings).
+- `scripts/thesis_factcheck.py` extended to write BOTH
+  `<TICKER>.json` (latest, frontend reads) AND `<TICKER>_<DATE>.json`
+  (audit trail).
+- Vite production build PASS, JSX balance 0, 27 validator tests pass.
+
+**Commit `<pending>` — Bridge-8 attribution scaffold**:
+- New `scripts/log_thesis.py` (~150 LOC) — extracts catalyst /
+  rightIf / wrongIf / expected_pnl / quantification + git HEAD commit
+  from a thesis JSON, writes structured log. Same dual-output pattern
+  (latest + dated).
+- New dir `public/data/thesis_attribution/` with 8 files (4 tickers
+  × 2 outputs each). 16 wrongIf/rightIf conditions captured total.
+- `outcomes_recorded_at = null` and `outcomes = []` left for future
+  outcome-tracker (NOT in this scope — requires structured-condition
+  parsing + news/data integration).
+- Pipeline glob extended for `thesis_attribution/*.json`.
+- New `docs/research/attribution/README.md` documenting the schema
+  + what's NOT built (outcome tracker / auto-log / hit-rate / UI /
+  reconciliation with prediction_log.json).
+- Discipline note: don't auto-score "attribution score" — Goodhart
+  target. Hit rate by quality bucket is the right metric, but
+  not computable until n ≥ 10 paired outcomes.
+
+**Combined Bridge-1 status update**:
+
+§8 NOT-evidence-of items (audit doc) progress:
+- ❌ catalyst real → time-validity (FC.1) catches 75% (3/4 multi-ticker)
+- ❌ mechanism causal → still expert-review territory
+- ❌ falsification observable → still expert-review territory
+- ❌ variant view contrarian → still expert-review territory
+- ❌ numbers accurate → multiplier cross-check (FC.2) catches 100%
+  (9/9 multi-ticker); other dims (revenue/GM/segment) still uncovered
+
+2/5 partially closed via fact-check stack. 3/5 still need expert
+review or larger data-source integration. Bridge-8 outcome tracker
+is the remaining load-bearing piece for objective backtest validation.
+
+**Items deferred (carry-over)**:
+- Vercel redeploy needed for FC.4 + FC.6 v1 to take effect
+- FC.6 v2 — re-prompt mechanism if v1 insufficient (gated on next
+  multi-ticker re-run measurement)
+- FC.3 v2 — auto-run thesis_factcheck.py inside pipeline (architectural)
+- Bridge-8 outcome tracker — structured condition parsing + horizon checks
+- Auto-log on thesis generation (server-side or pipeline)
+- Frontend track-record tab once outcomes flow
+- Reconciliation with root-level `prediction_log.json` (manual + auto sources)
+- C-1.7 / C-1.8 prompt-tightening (de-prioritized given Goodhart caveats)
+- Tushare 3-API permanently deferred
+- Franky Entry 2 monitoring (REVIEW_REQUEST.md placeholder)
 
 ### 2026-05-05 (post shift 13, second wave) — KR-FC.1 temporal validity check + KR-FC.2 multiplier cross-check script
 
