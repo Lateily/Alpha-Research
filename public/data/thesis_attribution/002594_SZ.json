@@ -1,52 +1,51 @@
 {
   "ticker": "002594.SZ",
-  "thesis_logged_at": "2026-05-05T14:07:01.832354+00:00",
-  "thesis_source": "docs/research/factcheck/002594SZ_thesis_2026-05-05_1438BST.json",
-  "thesis_source_commit": "aefc16b",
+  "thesis_logged_at": "2026-05-05T14:31:48.131717+00:00",
+  "thesis_source": "docs/research/factcheck/002594SZ_thesis_2026-05-05_1530BST.json",
+  "thesis_source_commit": "0ed49e0",
   "thesis_protocol_version": "v2",
   "catalyst": {
-    "event": "BYD Q1 2026 earnings release expected to confirm gross margin compression below 18% (vs FY2024 ~20%) due to domestic price war intensification and overseas ramp costs, with management forced to lower 2026 volume guidance from 5.5M to ~5.0M units",
-    "date_or_window": "2026-04-28 (±5 days, BYD historical Q1 release window)",
+    "event": "BYD Q2 2026 earnings release — first full quarter reflecting price-war exhaustion impact on auto gross margin and the ramp of Yangwang/Denza premium mix; also first quarter with full European CKD plant (Hungary) contribution",
+    "date_or_window": "Late August 2026 (typical BYD H1 reporting window 2026-08-25 to 2026-08-30)",
     "type": "earnings_revision",
-    "source": "BYD prior 4 quarters earnings release pattern (late April Q1 disclosure); CPCA monthly wholesale data trend showing BYD domestic ASP declining QoQ since Q3 2025"
+    "source": "BYD historical reporting cadence; Hungary plant SOP guidance from FY2025 annual report"
   },
   "mechanism_chain_length": 5,
   "rightIf_conditions": [
-    "Q1 2026 reported gross margin prints below 18.0% (vs consensus 19.8%)",
-    "BYD FY2026 volume guidance cut from 5.5M to ≤5.1M units at any quarterly call before Q3 2026",
-    "FY2026 sell-side consensus EPS revised down ≥10% within 30 days of Q1 release",
-    "Forward P/E compresses to ≤17x within 4 months of Q1 release"
+    "Q2 2026 auto gross margin ≥ 19.5% (vs consensus ~18.5%)",
+    "Overseas monthly unit sales ≥ 55K by Aug 2026 (vs ~35K monthly run-rate Q1 2026)",
+    "Yangwang + Denza + Fangchengbao combined H1 2026 volume ≥ 280K units (>15% of group)",
+    "Hungary plant first vehicle off-line by end-September 2026 per current guidance"
   ],
   "wrongIf_conditions": [
-    "Q1 2026 gross margin ≥19.5% — exit short within 3 trading days",
-    "BYD raises FY2026 volume guidance OR overseas (ex-China) shipment ratio exceeds 20% in any quarter — cover entire position",
-    "Stock rallies >15% from entry on positive catalyst (e.g. major export order, new tech inflection like solid-state battery commercialization announcement) — stop loss"
+    "Q2 2026 auto gross margin < 18.5% — confirms price-war drag exceeds mix-up offset",
+    "Overseas monthly volume falls below 35K for two consecutive months Jun-Jul 2026",
+    "Hungary plant SOP delayed beyond Q4 2026 — removes Europe tariff arbitrage catalyst",
+    "Premium brand monthly volume (Yangwang+Denza+Fangchengbao) falls below 35K — indicates premium ramp stalling"
   ],
-  "what_changes_our_mind": "Q1 2026 reported gross margin ≥ 19.5% AND BYD maintains FY2026 volume guidance at ≥5.5M units AND overseas (ex-China) shipment ratio ≥18% — would invalidate the margin-compression thesis and confirm consensus operating leverage path.",
-  "variant_view_one_sentence": null,
-  "time_to_resolution": "6 months (through August 2026, covering Q1 and Q2 2026 earnings)",
+  "what_changes_our_mind": "Q2 2026 auto gross margin prints below 18.5% (vs our 19.5%+ expectation) AND overseas monthly volume falls below 35K units for two consecutive months in Jun-Jul 2026 — would confirm consensus 'commodity OEM' framing and invalidate mix-shift thesis.",
+  "variant_view_one_sentence": "Market believes BYD is a margin-compressed Chinese mass-market OEM stuck at 18x fwd P/E → We believe Q2 2026 will reveal mix-driven margin defense + Hungary SOP unlocking 'global platform' re-rating → Mechanism is premium brands + overseas volume offsetting >60% of domestic price-war GM compression in Q2 print.",
+  "time_to_resolution": "4-5 months until Q2 2026 earnings (~late August 2026)",
   "expected_pnl_asymmetry": {
-    "upside_if_right": "+25% to +35% (short P&L on price decline from current ~RMB 290 to fair value RMB 200-220)",
-    "downside_if_wrong": "-12% to -15% (cover stop on positive surprise rally)",
-    "reward_to_risk": "2.2:1"
+    "upside_if_right": "+35% to +50% over 6 months (re-rating to 22-24x fwd P/E on FY26E EPS)",
+    "downside_if_wrong": "-15% to -20% to ~14x fwd P/E floor if Q2 GM disappoints",
+    "reward_to_risk": "2.3:1"
   },
   "quantification": {
-    "metric_target": "Q1 2026 reported gross margin + FY2026 EPS consensus revision magnitude + forward P/E",
-    "current_value": "Q4 2025 GM 19.4%; FY2026 consensus EPS RMB 17.2; forward P/E ~22x",
-    "predicted_value": "Q1 2026 GM 17.0-17.8%; FY2026 EPS revised to RMB 14.5-15.0 (-13 to -16%); P/E compresses to 15-16x",
+    "metric_target": "FY2026E auto gross margin and overseas volume share",
+    "current_value": "FY24 auto GM 22.8%; FY25 overseas volume ~420K (~9% share)",
+    "predicted_value": "FY26E auto GM 20.5-21.0%; overseas volume 650-720K (~13-14% share)",
     "predicted_range": {
-      "low": "Q1 GM 16.5%, EPS revision -20%, target price RMB 200",
-      "mid": "Q1 GM 17.5%, EPS revision -15%, target price RMB 230",
-      "high": "Q1 GM 18.5%, EPS revision -8%, target price RMB 270"
+      "low": "Auto GM 19.0% / Overseas 580K",
+      "mid": "Auto GM 20.5% / Overseas 680K",
+      "high": "Auto GM 21.5% / Overseas 750K"
     },
-    "predicted_horizon": "6 months (through Q1 + Q2 2026 earnings cycle, resolution by August 2026)",
-    "confidence": "0.62"
+    "predicted_horizon": "FY2026 full year, key inflection at Q2 2026 print (Aug 2026)",
+    "confidence": "0.6"
   },
   "qc_quality_at_log_time": {
     "score": 90,
-    "missingFields": [
-      "step_7_variant_view.variant_view_one_sentence"
-    ],
+    "missingFields": [],
     "qcChecklistResults": {
       "step_1_specific_not_vague": true,
       "step_1_catalyst_date_in_future": true,
@@ -56,20 +55,18 @@
       "step_4_has_specific_numbers_and_horizon": true,
       "step_5_observable": true,
       "step_6_observable": true,
-      "step_7_one_sentence_tagline": false,
+      "step_7_one_sentence_tagline": true,
       "reward_to_risk_at_least_threshold": true,
       "reward_to_risk_below_threshold": false,
       "step_8_phase_timing_concrete_not_boilerplate": true,
       "step_8_early_signs_observable": true,
       "step_8_catalyst_for_reversion_predatable": true,
       "step_8_position_sizing_curve_monotonic": false,
-      "all_8_steps_complete": false
+      "all_8_steps_complete": true
     },
     "severity": "PASS",
     "qc_findings": [
-      "failed:step_7_one_sentence_tagline",
-      "failed:step_8_position_sizing_curve_monotonic",
-      "missing:step_7_variant_view.variant_view_one_sentence"
+      "failed:step_8_position_sizing_curve_monotonic"
     ],
     "repairAttempted": false
   },

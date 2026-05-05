@@ -151,14 +151,7 @@ def main():
     print(f'Multiplier claims:    {len(claims)} found')
     print()
 
-    if not claims:
-        print('No multiplier claims matched. Either the thesis avoids multiples')
-        print('or MULTIPLIER_PATTERNS needs expansion. Patterns currently covered:')
-        for _, gt_field, label in MULTIPLIER_PATTERNS:
-            print(f'  - {label:20s} → fundamentals.{gt_field}')
-        sys.exit(0)
-
-    # ── Per-claim cross-check ───────────────────────────────────────────
+    # ── Per-claim cross-check (works for empty list too) ────────────────
     summary = {'MATCH': 0, 'MISMATCH': 0, 'UNVERIFIABLE': 0}
     results = []
     for c in claims:
@@ -169,7 +162,14 @@ def main():
         results.append(c)
         summary[status] += 1
 
-    # ── Print table ─────────────────────────────────────────────────────
+    if not claims:
+        print('No multiplier claims matched. Either the thesis avoids multiples')
+        print('or MULTIPLIER_PATTERNS needs expansion. Patterns currently covered:')
+        for _, gt_field, label in MULTIPLIER_PATTERNS:
+            print(f'  - {label:20s} → fundamentals.{gt_field}')
+        print('(Continuing to write empty report so frontend reflects current state.)')
+
+    # ── Print table (skip if empty — header already showed "0 claims") ──
     marker = {'MATCH': '✓', 'MISMATCH': '✗', 'UNVERIFIABLE': '?'}
     for r in results:
         diff_str = f'{r["diff_pct"]:+.1f}%' if r['diff_pct'] is not None else 'N/A'

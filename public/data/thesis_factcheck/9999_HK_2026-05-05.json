@@ -1,59 +1,26 @@
 {
   "ticker": "9999.HK",
-  "fact_checked_at": "2026-05-05T14:01:58.491651+00:00",
-  "thesis_source": "docs/research/factcheck/9999HK_thesis_2026-05-05_1438BST.json",
+  "fact_checked_at": "2026-05-05T14:31:48.057964+00:00",
+  "thesis_source": "docs/research/factcheck/9999HK_thesis_2026-05-05_1530BST.json",
   "ground_truth_source": "public/data/market_data.json",
   "tolerance_pct": 5.0,
   "live_price": 181.9,
   "results": [
     {
-      "thesis_path": "step_2_mechanism.mechanism_chain[4]",
-      "matched_text": "15x forward P/E",
-      "claimed_value": 15.0,
-      "gt_field": "pe_forward",
-      "label": "forward P/E",
-      "context_snippet": "e-rating: stock currently trades at ~14-15x forward P/E (ex-cash ~11x) vs Tencent ~18x and hist",
-      "status": "MISMATCH",
-      "diff_pct": 30.09284205766287,
-      "gt_value": 11.530227
-    },
-    {
-      "thesis_path": "step_7_variant_view.expected_pnl_asymmetry.upside_if_right",
-      "matched_text": "17x forward P/E",
-      "claimed_value": 17.0,
-      "gt_field": "pe_forward",
-      "label": "forward P/E",
-      "context_snippet": "+30% to +45% (re-rate from 14.5x to 17x forward P/E + 10% EPS upgrade)",
-      "status": "MISMATCH",
-      "diff_pct": 47.43855433201792,
-      "gt_value": 11.530227
-    },
-    {
-      "thesis_path": "variant.rewardToRisk.upsideIfRight",
-      "matched_text": "17x forward P/E",
-      "claimed_value": 17.0,
-      "gt_field": "pe_forward",
-      "label": "forward P/E",
-      "context_snippet": "+30% to +45% over 12 months (re-rate to 17x forward P/E + 10% EPS upgrade)",
-      "status": "MISMATCH",
-      "diff_pct": 47.43855433201792,
-      "gt_value": 11.530227
-    },
-    {
       "thesis_path": "fin_insights[2]",
-      "matched_text": "14.5x forward P/E",
+      "matched_text": "14.5x P/E",
       "claimed_value": 14.5,
-      "gt_field": "pe_forward",
-      "label": "forward P/E",
-      "context_snippet": "Implied growth check: at 14.5x forward P/E mean-reverting to peer 17.5x in 3 years",
-      "status": "MISMATCH",
-      "diff_pct": 25.75641398907411,
-      "gt_value": 11.530227
+      "gt_field": "pe_trailing",
+      "label": "P/E (trailing)",
+      "context_snippet": "At 14.5x P/E vs sector 18x, NetEase trades at discou",
+      "status": "MATCH",
+      "diff_pct": -4.183607995977035,
+      "gt_value": 15.13311
     }
   ],
   "summary": {
-    "MATCH": 0,
-    "MISMATCH": 4,
+    "MATCH": 1,
+    "MISMATCH": 0,
     "UNVERIFIABLE": 0
   }
 }

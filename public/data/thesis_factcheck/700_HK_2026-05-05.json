@@ -1,37 +1,26 @@
 {
   "ticker": "700.HK",
-  "fact_checked_at": "2026-05-05T14:01:58.458336+00:00",
-  "thesis_source": "docs/research/factcheck/700HK_thesis_2026-05-05_1438BST.json",
+  "fact_checked_at": "2026-05-05T14:31:48.022816+00:00",
+  "thesis_source": "docs/research/factcheck/700HK_thesis_2026-05-05_1530BST.json",
   "ground_truth_source": "public/data/market_data.json",
   "tolerance_pct": 5.0,
   "live_price": 473,
   "results": [
     {
-      "thesis_path": "step_3_evidence.contrarian_view.market_consensus.e",
-      "matched_text": "15x P/E",
-      "claimed_value": 15.0,
-      "gt_field": "pe_trailing",
-      "label": "P/E (trailing)",
-      "context_snippet": "moat, and AI optionality at reasonable 15x P/E. Bears: macro China consumption weak, a",
-      "status": "MISMATCH",
-      "diff_pct": -12.093022928718225,
-      "gt_value": 17.063492
-    },
-    {
       "thesis_path": "step_7_variant_view.variant_view_one_sentence",
-      "matched_text": "15x P/E",
+      "matched_text": "15x forward P/E",
       "claimed_value": 15.0,
-      "gt_field": "pe_trailing",
-      "label": "P/E (trailing)",
-      "context_snippet": "eves Tencent is a 12% EPS compounder at 15x P/E → We believe AI-monetization-in-Weixin",
+      "gt_field": "pe_forward",
+      "label": "forward P/E",
+      "context_snippet": "e and multiple de-rating from 17x to 14-15x forward P/E.",
       "status": "MISMATCH",
-      "diff_pct": -12.093022928718225,
-      "gt_value": 17.063492
+      "diff_pct": 23.346509207446864,
+      "gt_value": 12.160863
     }
   ],
   "summary": {
     "MATCH": 0,
-    "MISMATCH": 2,
+    "MISMATCH": 1,
     "UNVERIFIABLE": 0
   }
 }

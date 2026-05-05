@@ -1,54 +1,52 @@
 {
   "ticker": "6160.HK",
-  "thesis_logged_at": "2026-05-05T14:07:01.975495+00:00",
-  "thesis_source": "docs/research/factcheck/6160HK_thesis_2026-05-05_1438BST.json",
-  "thesis_source_commit": "aefc16b",
+  "thesis_logged_at": "2026-05-05T14:31:48.264361+00:00",
+  "thesis_source": "docs/research/factcheck/6160HK_thesis_2026-05-05_1530BST.json",
+  "thesis_source_commit": "0ed49e0",
   "thesis_protocol_version": "v2",
   "catalyst": {
-    "event": "FY2025 full-year earnings release expected to confirm first full-year GAAP operating profit, with Tevimbra US/EU label expansion readouts (1L ESCC, 1L gastric IO+chemo) and BRUKINSA ex-US share data versus Calquence/Imbruvica",
-    "date_or_window": "2026-03-25 (±2 weeks) FY2025 results; Tevimbra label expansion decisions Q1-Q2 2026",
+    "event": "Q2 2026 earnings release — first full quarter test of whether BRUKINSA (zanubrutinib) ex-US growth + sonrotoclax (BCL-2) Phase 3 CELESTIAL-TN readout timeline can offset accelerating US BTK market saturation and Pfizer/AbbVie pricing pressure",
+    "date_or_window": "2026-08-06 (±5 days, Q2 2026 earnings; CELESTIAL-TN Phase 3 interim 4Q2026)",
     "type": "earnings_revision",
-    "source": "BeOne Medicines IR calendar; FDA/EMA action timelines; company 3Q25 guidance"
+    "source": "BeOne Medicines IR calendar; ClinicalTrials.gov NCT04830137 (CELESTIAL-TN); company 10-Q/20-F"
   },
   "mechanism_chain_length": 5,
   "rightIf_conditions": [
-    "FY2025 reported GAAP operating income positive (>$0)",
-    "BRUKINSA FY2025 global revenue ≥$2.9B (consensus ~$2.7B)",
-    "FY2026 consensus EPS revised upward by ≥20% within 60 days of FY2025 print",
-    "Tevimbra 1L gastric label expansion approval in EU by Q2 2026"
+    "Q2 26 BRUKINSA US sequential growth <+7% QoQ (vs +10% in Q4 25) — confirming class saturation",
+    "Non-GAAP operating margin <6% in Q2 26 OR Q3 26 — failing operating leverage narrative",
+    "CELESTIAL-TN interim shows hazard ratio >0.70 vs venetoclax-obinutuzumab — sonrotoclax differentiation insufficient"
   ],
   "wrongIf_conditions": [
-    "FY2025 GAAP operating loss (any negative number) reported",
-    "BRUKINSA US quarterly revenue growth slows to <10% YoY for 2 consecutive quarters",
-    "Sonrotoclax Phase 3 CELESTIAL-TN-CLL primary endpoint miss",
-    "FDA Complete Response Letter on any pending Tevimbra label expansion"
+    "Q2 26 BRUKINSA total revenue ≥$1.05B AND US QoQ ≥+8% — saturation thesis invalidated",
+    "Non-GAAP operating margin reaches ≥8% in Q2 26 with sustained trajectory toward 12% by Q4 26",
+    "CELESTIAL-TN interim shows HR ≤0.60 with clean safety — pipeline optionality confirmed, multi-asset franchise validated"
   ],
-  "what_changes_our_mind": "FY2025 results show GAAP operating loss (not profit) AND BRUKINSA US 4Q25 sequential growth <5% — would invalidate both the profitability inflection and the share-gain durability legs simultaneously.",
-  "variant_view_one_sentence": "Market believes BeiGene is fairly valued on P/S → We believe FY2025 GAAP profitability inflection triggers buy-side category-flip re-rating → Mechanism is mandate-driven institutional inflows once profitability filter passes.",
-  "time_to_resolution": "12 months (FY2025 print March 2026 + 60-90 days for consensus revision)",
+  "what_changes_our_mind": "Q2 2026 BRUKINSA total revenue ≥$1.05B (>+30% YoY) AND US sequential growth ≥+8% QoQ AND non-GAAP operating margin ≥8% — this combo would prove BTK saturation thesis wrong and validate consensus operating leverage view.",
+  "variant_view_one_sentence": "Market prices BeOne as a multi-asset growth platform at 6x EV/S → We believe US BTK saturation + Phase 3 binary risk create negative skew not in 97-analyst PT average → Mechanism is Q2/Q3 26 sequential deceleration triggering consensus EPS cuts before CELESTIAL-TN can rescue narrative.",
+  "time_to_resolution": "5-8 months (Q2 26 print Aug 2026 → CELESTIAL-TN interim Q4 2026)",
   "expected_pnl_asymmetry": {
-    "upside_if_right": "+35% to +50%",
-    "downside_if_wrong": "-15% to -20%",
-    "reward_to_risk": "2.3:1"
+    "upside_if_right": "-30% to -38% (multiple compression to 4x EV/S + EPS cuts 15-25%)",
+    "downside_if_wrong": "+18% to +25% (consensus PT $255 holds, sonrotoclax positive)",
+    "reward_to_risk": "1.6:1"
   },
   "quantification": {
-    "metric_target": "FY2025 GAAP operating margin and FY2026 consensus EPS revision",
-    "current_value": "FY2024 GAAP operating margin -22%; FY2025E consensus EPS ~$0.50 ADR",
-    "predicted_value": "FY2025 GAAP operating margin +3% to +5%; FY2026 EPS revised upward 25-40% post FY2025 print",
+    "metric_target": "Q2 2026 BRUKINSA revenue + non-GAAP operating margin + US sequential growth",
+    "current_value": "BRUKINSA Q4 25 ~$880M (est); non-GAAP op margin ~6%; US QoQ ~+10%",
+    "predicted_value": "BRUKINSA Q2 26 $920-980M; non-GAAP op margin 4-6%; US QoQ +5-7%",
     "predicted_range": {
-      "low": "+1%",
-      "mid": "+4%",
-      "high": "+7%"
+      "low": "$880M / 3% / +3%",
+      "mid": "$950M / 5% / +6%",
+      "high": "$1.02B / 7% / +9%"
     },
-    "predicted_horizon": "12 months (through Q1 2027)",
-    "confidence": "0.65"
+    "predicted_horizon": "Q2 2026 print (2026-08-06) and CELESTIAL-TN interim 4Q26",
+    "confidence": "0.55"
   },
   "qc_quality_at_log_time": {
-    "score": 90,
+    "score": 84,
     "missingFields": [],
     "qcChecklistResults": {
       "step_1_specific_not_vague": true,
-      "step_1_catalyst_date_in_future": false,
+      "step_1_catalyst_date_in_future": true,
       "step_2_no_unfounded_leaps": true,
       "step_3_evidence_includes_quant_qual_contrarian": true,
       "step_3_contrarian_view_has_what_changes_our_mind": true,
@@ -56,8 +54,8 @@
       "step_5_observable": true,
       "step_6_observable": true,
       "step_7_one_sentence_tagline": true,
-      "reward_to_risk_at_least_threshold": true,
-      "reward_to_risk_below_threshold": false,
+      "reward_to_risk_at_least_threshold": false,
+      "reward_to_risk_below_threshold": true,
       "step_8_phase_timing_concrete_not_boilerplate": true,
       "step_8_early_signs_observable": true,
       "step_8_catalyst_for_reversion_predatable": true,
@@ -66,8 +64,8 @@
     },
     "severity": "PASS",
     "qc_findings": [
-      "failed:step_1_catalyst_date_in_future",
-      "failed:step_8_position_sizing_curve_monotonic"
+      "failed:step_8_position_sizing_curve_monotonic",
+      "failed:reward_to_risk_at_least_threshold"
     ],
     "repairAttempted": false
   },

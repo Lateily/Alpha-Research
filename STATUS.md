@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-05 (shift 13 complete + post-shift fact-check stack FC.1–FC.6 + Bridge-8 attribution scaffold — Track B Bridge 1 schema compliance 72.5→88.25 multi-ticker; investment quality NOT validated but stack now in place: FC.1 temporal-validity check, FC.2 multiplier cross-check script, FC.3 daily-commit glob, FC.4 score rebalance, FC.5 frontend warning panel, FC.6 v1 today-date prompt injection, Bridge-8 attribution log scaffold. Vercel redeployed once mid-session by Junyan; FC.4+FC.6 effects awaiting next redeploy.)
+**Last updated:** 2026-05-05 (shift 13 complete + post-shift fact-check stack FC.1–FC.6 + Bridge-8 attribution scaffold + 2nd Vercel redeploy verification — FC.6 v1 confirmed 4/4 catalyst dates future-anchored, FC.4 score rebalance differentiates 6160 to 84 vs 90 others. Single remaining systemic prompt gap: step_8_position_sizing_curve_monotonic 0/4 universal fail (C-1.7 KR candidate, +10pp per ticker). Multiplier claim density dropped (9→2 across runs); needs n=3-5 per ticker to characterize variance. Investment quality still NOT validated; outcome tracker still load-bearing missing piece.)
 **Last shift:** auto-work-mode shift 13 `2026-05-05-0935` (A.1 watcher hardening + B.1 Step 8 enforcement + B.2 contrarian/reward-risk fields + watcher watchdog Junyan-direct + max_tokens 8192→16384 fix + Track C audit re-run validating +15.75pp lift)
 **HEAD:** `8ef84d3` on auto/2026-04-30 (= main, +1 shift 13 doc commit pending)
 **Context handoff status:** All work in git. Tier-C 5/5 deployed; 1 pending pipeline run to populate `public/data/repurchase/*.json` (next weekday cron OR Junyan `gh workflow run fetch-data.yml`). Browser audit driven by T1 (Chrome MCP) flagged + fixed.
@@ -139,6 +139,72 @@ Bundle with launchd 126 fix into single ops KR.
 
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
+
+### 2026-05-05 (post shift 13, fourth wave) — Redeploy verification: FC.4+FC.6 v1 effective, single systemic gap remaining
+
+Junyan completed second Vercel redeploy. Re-ran 4-ticker curl×4 to
+measure real production behavior with FC.4 + FC.6 v1 active. ~$4 API.
+
+**FC.6 v1 verified 4/4 (was 1/4 pre-redeploy):**
+- 002594.SZ: "Late August 2026" (+112d) — TRUE
+- 700.HK:    "2026-08-13"        (+100d) — TRUE
+- 9999.HK:   "2026-05-21"        (+16d)  — TRUE
+- 6160.HK:   "2026-08-06"        (+93d)  — TRUE
+
+The TEMPORAL CONTEXT prompt addition flipped model behavior cleanly.
+**FC.6 v2 (post-validation re-prompt) is NOT NEEDED** — v1 hits 100%.
+
+**FC.4 verified — score now differentiates:**
+- 002594/700/9999: 90 PASS
+- 6160.HK: **84** PASS (was hidden at 90 due to cap saturation pre-FC.4)
+- 6160 fails reward_to_risk_at_least_threshold (1.6:1 < 1.75 threshold)
+  in addition to step_8_sizing_curve. Score = 100 − 6 (R/R) − 10 (sizing)
+  = 84.
+
+**Per-check matrix (post-FC.4+FC.6) — almost all pass:**
+- ALL of step_1, step_2, step_3, step_4, step_5, step_6, step_7,
+  step_8_phase_timing_concrete, step_8_early_signs, step_8_catalyst_for_reversion
+  pass 4/4. Significant improvement from earlier shift-13 audit re-run
+  where 6160 dragged on step_2_unfounded_leaps + step_8_phase_timing.
+- **Single universal fail: `step_8_position_sizing_curve_monotonic` 0/4 = 100%**.
+  This is the C-1.7 KR candidate from audit doc §6.1. Now confirmed
+  systematic (was 3/4 in earlier observation). Worth tightening
+  SYSTEM_PROMPT example anchor.
+- 6160 R/R 1.6:1 (other tickers ≥ 1.9:1) — biotech R/R compression
+  consistent with shift-13 audit § 4.1.
+
+**FC.2 multiplier landscape changed (9 claims → 2 claims across 4 tickers):**
+- 002594.SZ: 0 claims (was 1)
+- 700.HK:    1 claim, 1 MISMATCH (15x forward P/E +23.3%)
+- 9999.HK:   1 claim, 1 MATCH ✓ (14.5x P/E within 5% tolerance)
+- 6160.HK:   0 claims (was 2)
+Possibly: TEMPORAL CONTEXT prompt shifted model attention toward
+"what changes in future" rather than current multiple snapshots, so
+fewer multiplier framings emerge. OR random sampling variance.
+Need n=3-5 runs per ticker to characterize. Single-shot is noisy.
+
+**Bridge-8 attribution log refreshed:**
+30 wrongIf/rightIf conditions captured this run (was 32). Files at
+`public/data/thesis_attribution/<TICKER>.json` (latest pointers).
+
+**Verification doc:** `docs/research/factcheck/multi_ticker_2026-05-05_post_fc4_fc6_redeploy.md`
+(~210 LOC) with full per-check matrix, FC.2 detection landscape change
+analysis, and recommended next-KR menu.
+
+**Recommended next high-ROI KR (newly visible from this run):**
+- **C-1.7** — tighten SYSTEM_PROMPT for position_sizing_curve monotonicity.
+  100% universal fail across all 4 tickers. Single small KR (~30 min),
+  expected lift +10pp per ticker (1 step-8 weight). Closes the remaining
+  systemic prompt-level gap.
+
+**Items deferred (carry-over, slightly updated):**
+- FC.6 v2 — NOT NEEDED, v1 hits 4/4
+- FC.3 v2 — auto-run script in pipeline (architectural cost call)
+- Bridge-8 outcome tracker — STILL load-bearing missing piece
+- C-1.8 R/R asymmetry prompt — LOW priority (Goodhart caveat, only 6160 fails)
+- Multi-ticker stability re-run (3-5× per ticker, ~$60) — characterize variance
+- Tushare 3-API permanently deferred
+- Franky Entry 2 monitoring (REVIEW_REQUEST.md placeholder)
 
 ### 2026-05-05 (post shift 13, third wave) — KR-FC.3/FC.4/FC.5/FC.6 + Bridge-8 attribution scaffold
 

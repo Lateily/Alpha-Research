@@ -1,46 +1,46 @@
 {
   "ticker": "9999.HK",
-  "thesis_logged_at": "2026-05-05T14:07:01.937359+00:00",
-  "thesis_source": "docs/research/factcheck/9999HK_thesis_2026-05-05_1438BST.json",
-  "thesis_source_commit": "aefc16b",
+  "thesis_logged_at": "2026-05-05T14:31:48.221233+00:00",
+  "thesis_source": "docs/research/factcheck/9999HK_thesis_2026-05-05_1530BST.json",
+  "thesis_source_commit": "0ed49e0",
   "thesis_protocol_version": "v2",
   "catalyst": {
-    "event": "Marvel Mystic Mayhem (漫威秘法狂潮) global launch and Q4 2025 / FY2025 earnings release — first quarter to fully reflect Where Winds Meet (燕云十六声) PC/mobile mature monetization plus Marvel IP launch contribution; management guidance on 2026 pipeline (Destiny: Rising, FragPunk console, Ananta) will be issued.",
-    "date_or_window": "2026-02-20 (±10 days, FY2025 results) and Marvel Mystic Mayhem global launch window 1H 2026",
+    "event": "NetEase Q1 2026 earnings release — key read on Marvel Rivals monetization sustainability (post-launch quarter 5), Where Winds Meet PC->mobile transition revenue recognition, and Naraka/Identity V grossing trajectory; management commentary on 2026 pipeline (Destiny: Rising, Ananta) and operating margin guidance after FY2025 GM compression",
+    "date_or_window": "2026-05-21 (expected Q1 2026 earnings; NetEase historically reports late May for Q1)",
     "type": "earnings_revision",
-    "source": "NetEase IR calendar; company prior earnings cadence; gaming pipeline announcements at ChinaJoy 2025 and TGS 2025"
+    "source": "NetEase IR calendar; historical Q1 release pattern (Q1 2025 released 2025-05-22)"
   },
   "mechanism_chain_length": 5,
   "rightIf_conditions": [
-    "Q4 2025 / FY2025 (reported Feb 2026) gaming revenue grows ≥12% YoY AND gaming GPM ≥68.5%",
-    "Where Winds Meet mobile remains iOS top-10 grossing in China through Mar 2026",
-    "Marvel Mystic Mayhem launches by Jun 2026 with ≥$50M first-month gross bookings (Sensor Tower observable)",
-    "FY2026 consensus EPS revised up by ≥8% within 90 days of Feb 2026 earnings"
+    "Q1 2026 online game revenue YoY ≤ +9% (vs consensus +12-13%)",
+    "Q1 2026 gross margin ≤ 61.2% (vs consensus 62%+)",
+    "Marvel Rivals Q1 2026 grossing (per Sensor Tower/AppMagic) down ≥25% vs Q1 2025 average",
+    "Sell-side cuts 2026 EPS by ≥5% within 2 weeks of print"
   ],
   "wrongIf_conditions": [
-    "Q4 2025 gaming GPM falls below 67% (signals monetization model erosion)",
-    "Where Winds Meet mobile drops out of iOS top-20 grossing for 8+ consecutive weeks",
-    "Regulatory body (NPPA) freezes new monetization approvals or reintroduces 2023-style draft minor-spending caps",
-    "Marvel Mystic Mayhem launch slips beyond Sep 2026 OR achieves <$20M first-month bookings"
+    "Q1 2026 online game revenue YoY ≥ +13% AND GM ≥ 62%",
+    "Marvel Rivals Q1 2026 grossing flat or up YoY per third-party trackers",
+    "Management announces Destiny: Rising hard launch date in 2026 with Apple/Google co-marketing",
+    "USD 5B buyback executed at >USD 1B/quarter pace, providing structural bid"
   ],
-  "what_changes_our_mind": "Q4 2025 results show gaming GPM falling below 67% AND Where Winds Meet mobile dropping out of iOS top-15 grossing for 8+ consecutive weeks before March 2026 — would indicate monetization peak passed and pipeline cannot offset legacy decay.",
-  "variant_view_one_sentence": "Market believes NetEase delivers smoothed mid-teens earnings growth → We believe FY2026 sees a non-linear earnings step-up from compressed catalyst density → Mechanism is Where Winds Meet deferred revenue recognition + Marvel/Destiny:Rising launches landing in overlapping quarters, forcing +10-15% EPS revisions.",
-  "time_to_resolution": "12 months — first signal at Feb 2026 FY2025 earnings; full resolution by Q3 2026 results",
+  "what_changes_our_mind": "Q1 2026 earnings (2026-05-21) prints online game revenue YoY ≥ +13% AND gross margin ≥ 62% AND management guides Destiny: Rising launch date within 2026 — that combination would invalidate the decay thesis and force us to consensus.",
+  "variant_view_one_sentence": "Market believes Marvel Rivals + 2026 pipeline sustains +12% growth and HKD 200+ → We believe Q1/Q2 2026 prints expose decay + GM mix shift, triggering 12-18% de-rate → Mechanism is consensus EPS cut after Q1 2026 earnings on 2026-05-21.",
+  "time_to_resolution": "16 days to Q1 2026 print; full thesis resolution by Q2 2026 (August 2026)",
   "expected_pnl_asymmetry": {
-    "upside_if_right": "+30% to +45% (re-rate from 14.5x to 17x forward P/E + 10% EPS upgrade)",
-    "downside_if_wrong": "-12% to -15% (net cash cushion + buyback floor)",
-    "reward_to_risk": "2.5:1"
+    "upside_if_right": "+15% short return (HK shares -12 to -18% from ~HKD 175 to HKD 145-155 range)",
+    "downside_if_wrong": "-8% (squeeze to HKD 190 if beat-and-raise, capped by valuation reality post-bounce)",
+    "reward_to_risk": "1.9:1"
   },
   "quantification": {
-    "metric_target": "FY2025 EPS and FY2026 gaming revenue growth",
-    "current_value": "Consensus FY2025 EPS RMB ~8.6; FY2026 gaming rev growth ~8-10%",
-    "predicted_value": "FY2025 EPS RMB 9.4-9.8 (8-12% beat); FY2026 gaming rev growth 14-17%",
+    "metric_target": "Q1 2026 online game revenue YoY growth and gross margin",
+    "current_value": "FY24 online games +6.5% YoY; GM 62.5%; Q4 2025 GM ~61.8% (est.)",
+    "predicted_value": "Q1 2026 online games +7-9% YoY (vs consensus +12-13%); GM 60.5-61.2% (vs consensus 62%+)",
     "predicted_range": {
-      "low": "FY2026 gaming rev +11%",
-      "mid": "+15%",
-      "high": "+18%"
+      "low": "rev +5%, GM 60.0%",
+      "mid": "rev +8%, GM 60.8%",
+      "high": "rev +11%, GM 61.5%"
     },
-    "predicted_horizon": "12 months (through Q4 2026 earnings ~Feb 2027)",
+    "predicted_horizon": "Q1 2026 print 2026-05-21; thesis resolution by Q2 2026 print (August 2026)",
     "confidence": "0.55"
   },
   "qc_quality_at_log_time": {
@@ -48,7 +48,7 @@
     "missingFields": [],
     "qcChecklistResults": {
       "step_1_specific_not_vague": true,
-      "step_1_catalyst_date_in_future": false,
+      "step_1_catalyst_date_in_future": true,
       "step_2_no_unfounded_leaps": true,
       "step_3_evidence_includes_quant_qual_contrarian": true,
       "step_3_contrarian_view_has_what_changes_our_mind": true,
@@ -66,7 +66,6 @@
     },
     "severity": "PASS",
     "qc_findings": [
-      "failed:step_1_catalyst_date_in_future",
       "failed:step_8_position_sizing_curve_monotonic"
     ],
     "repairAttempted": false
