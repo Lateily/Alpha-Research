@@ -582,8 +582,18 @@ const REWARD_TO_RISK_WARN_THRESHOLD = 1.75; // [unvalidated intuition] Junyan-se
 // When Step 8 entirely missing (4 sub-checks fail): score = 9 × 6.67 = 60 → triggers FAIL → repair fires.
 // Calibration is [unvalidated intuition] — adjust based on real output stats per
 // memory/project_thesis_quality_weights.md.
+// FC.4 (2026-05-05) — rebalance to total exactly 100 after FC.1 added 1 check.
+// Pre-FC.1: 4 step-8 × 10 + 9 non-step-8 × 6.67 = 100.03 (just over). Score
+// formula `min(100, sum_passed)` capped a perfect-score thesis at 100.
+// Post-FC.1 (pre-FC.4): 4 × 10 + 10 × 6.67 = 106.7. Cap squashed signal: a
+// thesis failing 1-2 checks still hit 90 because the cap absorbed the loss.
+// Multi-ticker run 2026-05-05 14:38 BST confirmed: all 4 audit-re-run tickers
+// scored 90 PASS regardless of which checks they failed. See
+// docs/research/factcheck/multi_ticker_2026-05-05_post_fc1_redeploy.md §1.3.
+// FC.4 fix: NON_STEP_8 weight 6.67 → 6.0. Total: 4×10 + 10×6.0 = 100 exactly.
+// Now each fail subtracts deterministically; score genuinely differentiates.
 const STEP_8_CHECK_WEIGHT = 10;
-const NON_STEP_8_CHECK_WEIGHT = 6.67;
+const NON_STEP_8_CHECK_WEIGHT = 6.0;
 const STEP_8_CHECK_NAMES_SET = new Set([
   'step_8_phase_timing_concrete_not_boilerplate',
   'step_8_early_signs_observable',

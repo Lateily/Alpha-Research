@@ -102,10 +102,10 @@ console.log(`  [${okPatched ? '✓' : '✗'}] expected step_1_catalyst_date_in_f
 
 // Score delta check: original should be 1 check lower than patched.
 const scoreDelta = patchedResult.score - orig.score;
-console.log(`\n  score delta (patched − original): +${scoreDelta} pp (expected ≈ +6.67 = 1 non-step-8 check)`);
-const okDelta = scoreDelta >= 6 && scoreDelta <= 8;
-record('e2e:score-delta-1-check', okDelta, `delta=${scoreDelta}; expected 6-8 (single non-step-8 check weight 6.67)`);
-console.log(`  [${okDelta ? '✓' : '✗'}] expected score delta in [6, 8]`);
+console.log(`\n  score delta (patched − original): +${scoreDelta} pp (expected ≈ +6 = 1 non-step-8 check post-FC.4)`);
+const okDelta = scoreDelta >= 5 && scoreDelta <= 7;
+record('e2e:score-delta-1-check', okDelta, `delta=${scoreDelta}; expected ~6 (single non-step-8 check weight 6.0 post-FC.4)`);
+console.log(`  [${okDelta ? '✓' : '✗'}] expected score delta in [5, 7]`);
 
 // missingFields check: new validator-only check should NOT pollute missingFields
 // even when not self-reported in qc_checklist (validator-only exclusion).
