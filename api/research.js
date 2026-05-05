@@ -909,7 +909,7 @@ ${JSON.stringify(originalResponse).slice(0, 12000)}`;
 
   const repairMessage = await client.messages.create({
     model:      'claude-opus-4-7',
-    max_tokens: 4096,
+    max_tokens: 8192,  // Bumped from 4096 in shift 13 — when Step 8 entirely missing the repair must populate phase_1+phase_2+sizing_curve at once, may exceed 4096
     system:     'You repair incomplete thesis JSON. Return only the missing JSON paths requested. No markdown, no commentary.',
     messages:   [{ role: 'user', content: repairPrompt }],
   });
@@ -1363,7 +1363,7 @@ Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return 
 
     const message = await client.messages.create({
       model:      'claude-opus-4-7',
-      max_tokens: 8192,
+      max_tokens: 16384,  // Bumped from 8192 in shift 13 — B.1+B.2 expanded thesis (Step 8 phase_1+phase_2+sizing_curve + variant.expected_pnl_asymmetry + qc_checklist) consistently truncated at 8192 ceiling, breaking JSON parse + C-3 validation
       system:     SYSTEM_PROMPT,
       messages:   [{ role: 'user', content: userPrompt }],
     });
