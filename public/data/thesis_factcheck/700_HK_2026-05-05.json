@@ -1,0 +1,48 @@
+{
+  "ticker": "700.HK",
+  "fact_checked_at": "2026-05-05T12:53:28.804664+00:00",
+  "thesis_source": "docs/research/factcheck/700HK_thesis_2026-05-05_1255BST.json",
+  "ground_truth_source": "public/data/market_data.json",
+  "tolerance_pct": 5.0,
+  "live_price": 473,
+  "results": [
+    {
+      "thesis_path": "step_2_mechanism.mechanism_chain[4]",
+      "matched_text": "17x forward P/E",
+      "claimed_value": 17.0,
+      "gt_field": "pe_forward",
+      "label": "forward P/E",
+      "context_snippet": "revisions and a re-rating from current ~17x forward P/E toward 19-20x as the AI/Hunyuan narrati",
+      "status": "MISMATCH",
+      "diff_pct": 39.79271043510644,
+      "gt_value": 12.160863
+    },
+    {
+      "thesis_path": "variant.marketBelieves.e",
+      "matched_text": "17x forward P/E",
+      "claimed_value": 17.0,
+      "gt_field": "pe_forward",
+      "label": "forward P/E",
+      "context_snippet": "is a defensive 13-15% EPS compounder at 17x forward P/E; AI capex creates margin headwind; Vide",
+      "status": "MISMATCH",
+      "diff_pct": 39.79271043510644,
+      "gt_value": 12.160863
+    },
+    {
+      "thesis_path": "fin_insights[2]",
+      "matched_text": "17x forward P/E",
+      "claimed_value": 17.0,
+      "gt_field": "pe_forward",
+      "label": "forward P/E",
+      "context_snippet": "Implied growth check: at 17x forward P/E, mean-reverting to peer 16x in 3yr impl",
+      "status": "MISMATCH",
+      "diff_pct": 39.79271043510644,
+      "gt_value": 12.160863
+    }
+  ],
+  "summary": {
+    "MATCH": 0,
+    "MISMATCH": 3,
+    "UNVERIFIABLE": 0
+  }
+}
