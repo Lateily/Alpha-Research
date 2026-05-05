@@ -1,6 +1,6 @@
 {
-  "fetched_at": "2026-05-04T15:40:57Z",
-  "trade_date": "20260504",
+  "fetched_at": "2026-05-05T10:36:41Z",
+  "trade_date": "20260505",
   "tier": 15000,
   "_status": "ok",
   "api_used": "limit_list_d",
@@ -11,7 +11,7 @@
     {
       "ts_code": "000007.SZ",
       "name": "全新好",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -42,7 +42,7 @@
     {
       "ts_code": "000066.SZ",
       "name": "中国长城",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -73,7 +73,7 @@
     {
       "ts_code": "000402.SZ",
       "name": "金 融 街",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -104,7 +104,7 @@
     {
       "ts_code": "000553.SZ",
       "name": "安道麦A",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -135,7 +135,7 @@
     {
       "ts_code": "000567.SZ",
       "name": "海德股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -166,7 +166,7 @@
     {
       "ts_code": "000628.SZ",
       "name": "高新发展",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -197,7 +197,7 @@
     {
       "ts_code": "000783.SZ",
       "name": "长江证券",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -228,7 +228,7 @@
     {
       "ts_code": "000790.SZ",
       "name": "华神科技",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -259,7 +259,7 @@
     {
       "ts_code": "000833.SZ",
       "name": "粤桂股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -290,7 +290,7 @@
     {
       "ts_code": "000980.SZ",
       "name": "众泰汽车",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -321,7 +321,7 @@
     {
       "ts_code": "001215.SZ",
       "name": "千味央厨",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -352,7 +352,7 @@
     {
       "ts_code": "001218.SZ",
       "name": "丽臣实业",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -383,7 +383,7 @@
     {
       "ts_code": "001268.SZ",
       "name": "联合精密",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -414,7 +414,7 @@
     {
       "ts_code": "001316.SZ",
       "name": "润贝航科",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -445,7 +445,7 @@
     {
       "ts_code": "002081.SZ",
       "name": "金 螳 螂",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -476,7 +476,7 @@
     {
       "ts_code": "002149.SZ",
       "name": "西部材料",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -507,7 +507,7 @@
     {
       "ts_code": "002158.SZ",
       "name": "汉钟精机",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -538,7 +538,7 @@
     {
       "ts_code": "002181.SZ",
       "name": "粤 传 媒",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -569,7 +569,7 @@
     {
       "ts_code": "002192.SZ",
       "name": "融捷股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -600,7 +600,7 @@
     {
       "ts_code": "002235.SZ",
       "name": "安妮股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -631,7 +631,7 @@
     {
       "ts_code": "002240.SZ",
       "name": "盛新锂能",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -662,7 +662,7 @@
     {
       "ts_code": "002453.SZ",
       "name": "华软科技",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -693,7 +693,7 @@
     {
       "ts_code": "002591.SZ",
       "name": "恒大高新",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -724,7 +724,7 @@
     {
       "ts_code": "002640.SZ",
       "name": "跨境通",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -755,7 +755,7 @@
     {
       "ts_code": "002645.SZ",
       "name": "华宏科技",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -786,7 +786,7 @@
     {
       "ts_code": "002685.SZ",
       "name": "华东重机",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -817,7 +817,7 @@
     {
       "ts_code": "002763.SZ",
       "name": "汇洁股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -848,7 +848,7 @@
     {
       "ts_code": "002785.SZ",
       "name": "万里石",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -879,7 +879,7 @@
     {
       "ts_code": "002805.SZ",
       "name": "丰元股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -910,7 +910,7 @@
     {
       "ts_code": "002842.SZ",
       "name": "翔鹭钨业",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -941,7 +941,7 @@
     {
       "ts_code": "002870.SZ",
       "name": "香山股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -972,7 +972,7 @@
     {
       "ts_code": "002929.SZ",
       "name": "润建股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1003,7 +1003,7 @@
     {
       "ts_code": "002989.SZ",
       "name": "中天精装",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1034,7 +1034,7 @@
     {
       "ts_code": "002990.SZ",
       "name": "盛视科技",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1065,12 +1065,12 @@
     {
       "ts_code": "300083.SZ",
       "name": "创世纪",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
       "fl_ratio": null,
-      "turnover_ratio": 26.82,
+      "turnover_ratio": 26.83,
       "theme": null,
       "concept": null,
       "first_time": "95542",
@@ -1088,7 +1088,7 @@
       "amount": 4039528832.0,
       "fd_amount": 5175501.0,
       "limit_amount": null,
-      "float_mv": 15208933830.66,
+      "float_mv": 15204725360.66,
       "total_mv": 16964949812.48,
       "open_times": 16.0,
       "industry": "自动化设"
@@ -1096,7 +1096,7 @@
     {
       "ts_code": "300632.SZ",
       "name": "光莆股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1127,7 +1127,7 @@
     {
       "ts_code": "300885.SZ",
       "name": "海昌新材",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1158,7 +1158,7 @@
     {
       "ts_code": "600052.SH",
       "name": "东望时代",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1189,7 +1189,7 @@
     {
       "ts_code": "600158.SH",
       "name": "中体产业",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1220,7 +1220,7 @@
     {
       "ts_code": "600208.SH",
       "name": "衢州发展",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1251,7 +1251,7 @@
     {
       "ts_code": "600246.SH",
       "name": "万通发展",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1282,7 +1282,7 @@
     {
       "ts_code": "600322.SH",
       "name": "津投城开",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1313,7 +1313,7 @@
     {
       "ts_code": "600379.SH",
       "name": "宝光股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1344,7 +1344,7 @@
     {
       "ts_code": "600400.SH",
       "name": "红豆股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1375,7 +1375,7 @@
     {
       "ts_code": "600433.SH",
       "name": "冠豪高新",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1406,7 +1406,7 @@
     {
       "ts_code": "600540.SH",
       "name": "新赛股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1437,7 +1437,7 @@
     {
       "ts_code": "600714.SH",
       "name": "金瑞矿业",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1468,7 +1468,7 @@
     {
       "ts_code": "601086.SH",
       "name": "国芳集团",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1499,7 +1499,7 @@
     {
       "ts_code": "601106.SH",
       "name": "中国一重",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1530,7 +1530,7 @@
     {
       "ts_code": "601588.SH",
       "name": "北辰实业",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1561,7 +1561,7 @@
     {
       "ts_code": "603030.SH",
       "name": "全筑股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1592,7 +1592,7 @@
     {
       "ts_code": "603045.SH",
       "name": "福达合金",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1623,7 +1623,7 @@
     {
       "ts_code": "603095.SH",
       "name": "越剑智能",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1654,7 +1654,7 @@
     {
       "ts_code": "603119.SH",
       "name": "浙江荣泰",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1685,7 +1685,7 @@
     {
       "ts_code": "603131.SH",
       "name": "上海沪工",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1716,7 +1716,7 @@
     {
       "ts_code": "603178.SH",
       "name": "圣龙股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1747,7 +1747,7 @@
     {
       "ts_code": "603190.SH",
       "name": "亚通精工",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1778,7 +1778,7 @@
     {
       "ts_code": "603360.SH",
       "name": "百傲化学",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1809,7 +1809,7 @@
     {
       "ts_code": "603375.SH",
       "name": "盛景微",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1840,7 +1840,7 @@
     {
       "ts_code": "603399.SH",
       "name": "永杉锂业",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1871,7 +1871,7 @@
     {
       "ts_code": "603687.SH",
       "name": "大胜达",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1902,7 +1902,7 @@
     {
       "ts_code": "603698.SH",
       "name": "航天工程",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1933,7 +1933,7 @@
     {
       "ts_code": "603711.SH",
       "name": "香飘飘",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1964,7 +1964,7 @@
     {
       "ts_code": "603717.SH",
       "name": "天域生物",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -1995,7 +1995,7 @@
     {
       "ts_code": "603726.SH",
       "name": "朗迪集团",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2026,7 +2026,7 @@
     {
       "ts_code": "603897.SH",
       "name": "长城科技",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2057,7 +2057,7 @@
     {
       "ts_code": "603937.SH",
       "name": "丽岛新材",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2088,7 +2088,7 @@
     {
       "ts_code": "605099.SH",
       "name": "共创草坪",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2119,7 +2119,7 @@
     {
       "ts_code": "605123.SH",
       "name": "派克新材",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2150,7 +2150,7 @@
     {
       "ts_code": "605222.SH",
       "name": "起帆电缆",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2181,7 +2181,7 @@
     {
       "ts_code": "605299.SH",
       "name": "舒华体育",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2212,7 +2212,7 @@
     {
       "ts_code": "605376.SH",
       "name": "博迁新材",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2243,7 +2243,7 @@
     {
       "ts_code": "688155.SH",
       "name": "先惠技术",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2274,7 +2274,7 @@
     {
       "ts_code": "688256.SH",
       "name": "寒武纪",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2305,7 +2305,7 @@
     {
       "ts_code": "688400.SH",
       "name": "凌云光",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2336,7 +2336,7 @@
     {
       "ts_code": "688521.SH",
       "name": "芯原股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2367,7 +2367,7 @@
     {
       "ts_code": "688531.SH",
       "name": "日联科技",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2398,7 +2398,7 @@
     {
       "ts_code": "688699.SH",
       "name": "明微电子",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2429,7 +2429,7 @@
     {
       "ts_code": "920125.SH",
       "name": "鸿仕达",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "U",
       "raw_status": "U",
       "fc_ratio": null,
@@ -2462,7 +2462,7 @@
     {
       "ts_code": "001896.SZ",
       "name": "豫能控股",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2493,7 +2493,7 @@
     {
       "ts_code": "002209.SZ",
       "name": "达 意 隆",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2524,7 +2524,7 @@
     {
       "ts_code": "002210.SZ",
       "name": "飞马国际",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2555,7 +2555,7 @@
     {
       "ts_code": "002368.SZ",
       "name": "太极股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2586,7 +2586,7 @@
     {
       "ts_code": "600545.SH",
       "name": "卓郎智能",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2617,7 +2617,7 @@
     {
       "ts_code": "600821.SH",
       "name": "金开新能",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2648,7 +2648,7 @@
     {
       "ts_code": "600965.SH",
       "name": "福成股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2679,7 +2679,7 @@
     {
       "ts_code": "601717.SH",
       "name": "中创智领",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2710,7 +2710,7 @@
     {
       "ts_code": "603113.SH",
       "name": "金能科技",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2741,7 +2741,7 @@
     {
       "ts_code": "603378.SH",
       "name": "亚士创能",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2772,7 +2772,7 @@
     {
       "ts_code": "603516.SH",
       "name": "淳中科技",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "D",
       "raw_status": "D",
       "fc_ratio": null,
@@ -2805,7 +2805,7 @@
     {
       "ts_code": "000042.SZ",
       "name": "中洲控股",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -2836,7 +2836,7 @@
     {
       "ts_code": "002025.SZ",
       "name": "航天电器",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -2867,7 +2867,7 @@
     {
       "ts_code": "002281.SZ",
       "name": "光迅科技",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -2898,7 +2898,7 @@
     {
       "ts_code": "600330.SH",
       "name": "天通股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -2929,7 +2929,7 @@
     {
       "ts_code": "600683.SH",
       "name": "京投发展",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -2960,7 +2960,7 @@
     {
       "ts_code": "600816.SH",
       "name": "建元信托",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -2991,7 +2991,7 @@
     {
       "ts_code": "600906.SH",
       "name": "财达证券",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -3022,7 +3022,7 @@
     {
       "ts_code": "603153.SH",
       "name": "上海建科",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -3053,7 +3053,7 @@
     {
       "ts_code": "603316.SH",
       "name": "诚邦股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -3084,7 +3084,7 @@
     {
       "ts_code": "603333.SH",
       "name": "尚纬股份",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -3115,7 +3115,7 @@
     {
       "ts_code": "603629.SH",
       "name": "利通电子",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -3146,7 +3146,7 @@
     {
       "ts_code": "605389.SH",
       "name": "长龄液压",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -3177,7 +3177,7 @@
     {
       "ts_code": "688655.SH",
       "name": "迅捷兴",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,
@@ -3208,7 +3208,7 @@
     {
       "ts_code": "920765.SH",
       "name": "美之高",
-      "trade_date": "20260504",
+      "trade_date": "20260505",
       "status": "Z",
       "raw_status": "Z",
       "fc_ratio": null,

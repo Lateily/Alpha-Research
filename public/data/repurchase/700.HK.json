@@ -1,0 +1,15 @@
+{
+  "_status": "skipped_hk",
+  "ticker": "700.HK",
+  "fetched_at": "2026-05-05T10:38:56Z",
+  "api_used": "repurchase",
+  "window_days": 180,
+  "events": [],
+  "summary": {
+    "total_count": 0,
+    "total_amount_180d": 0.0,
+    "active_program": false,
+    "last_announce_date": null,
+    "signal_level": "LOW"
+  }
+}

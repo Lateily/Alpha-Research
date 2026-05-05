@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-04T15:42:44.689147+00:00",
+    "generated_at": "2026-05-05T10:39:01.324591+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "ev_ebitda_target_multiple",
@@ -65,9 +65,9 @@
       "model_status": "biotech_fallback",
       "signal": null,
       "delta_pct": null,
-      "current_ev_ebitda": 426.596,
-      "reason": "Clinical-stage biotech: EV/EBITDA at 426.60x is a structural artifact of negative-or-near-zero EBITDA, not a valuation signal. Method 1 rdcf biotech_revenue remains the canonical valuation for this ticker.",
-      "reason_z": "临床期生物科技：EV/EBITDA = 426.60x 是负值或近零EBITDA的结构性产物，非估值信号。Method 1 rdcf biotech_revenue 仍是该股票的标准估值方法。"
+      "current_ev_ebitda": 434.321,
+      "reason": "Clinical-stage biotech: EV/EBITDA at 434.32x is a structural artifact of negative-or-near-zero EBITDA, not a valuation signal. Method 1 rdcf biotech_revenue remains the canonical valuation for this ticker.",
+      "reason_z": "临床期生物科技：EV/EBITDA = 434.32x 是负值或近零EBITDA的结构性产物，非估值信号。Method 1 rdcf biotech_revenue 仍是该股票的标准估值方法。"
     },
     "002594.SZ": {
       "ticker": "002594.SZ",

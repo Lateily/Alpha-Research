@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-05-04T15:42:44.601538+00:00",
+  "generated_at": "2026-05-05T10:39:01.235798+00:00",
   "ticker": "9999.HK",
   "composite": 13.6,
   "band": "ANTIFRAGILE",
   "components": {
     "F1_leverage": 0.0,
     "F2_liquidity_survival": 0.0,
-    "F3_tail_risk": 12.5,
+    "F3_tail_risk": 12.7,
     "F4_vol_regime": 32.1,
     "F5_max_drawdown": 23.4
   },
@@ -30,8 +30,8 @@
   "price_metrics": {
     "n_returns": 119,
     "annual_vol": 0.3286,
-    "skew": 0.526,
-    "excess_kurtosis": 0.626,
+    "skew": 0.534,
+    "excess_kurtosis": 0.634,
     "max_drawdown": 0.2552
   },
   "label": "[unvalidated intuition] — composite measures FINANCIAL fragility (leverage, liquidity, return-distribution tails, vol, drawdown). Does NOT measure business-model fragility — that lives in the SEPARATE f6_concentration field below (MANUAL seed from watchlist.json, NOT folded into composite). For clinical-stage biotech with single-asset exposure, read composite + f6 together: a 'ROBUST' composite + high f6 score still implies elevated overall tail risk. Pair with wrongIf monitor for binary-event coverage. Thresholds are Taleb-literature priors, not validated against A-share/HK trade history.",
