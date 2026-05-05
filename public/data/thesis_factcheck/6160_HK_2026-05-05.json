@@ -1,0 +1,37 @@
+{
+  "ticker": "6160.HK",
+  "fact_checked_at": "2026-05-05T13:40:35.516448+00:00",
+  "thesis_source": "docs/research/factcheck/6160HK_thesis_2026-05-05_1438BST.json",
+  "ground_truth_source": "public/data/market_data.json",
+  "tolerance_pct": 5.0,
+  "live_price": 176.7,
+  "results": [
+    {
+      "thesis_path": "nextActions[2].e",
+      "matched_text": "50x P/E",
+      "claimed_value": 50.0,
+      "gt_field": "pe_trailing",
+      "label": "P/E (trailing)",
+      "context_snippet": "+6%, target multiple 6x-9x sales OR 35x-50x P/E.",
+      "status": "MISMATCH",
+      "diff_pct": -58.121108561058875,
+      "gt_value": 119.39189
+    },
+    {
+      "thesis_path": "fin_insights[2]",
+      "matched_text": "38x P/E",
+      "claimed_value": 38.0,
+      "gt_field": "pe_trailing",
+      "label": "P/E (trailing)",
+      "context_snippet": "80 ADR if profitability holds, implies ~38x P/E vs sector specialty pharma 25-30x — pre",
+      "status": "MISMATCH",
+      "diff_pct": -68.17204250640475,
+      "gt_value": 119.39189
+    }
+  ],
+  "summary": {
+    "MATCH": 0,
+    "MISMATCH": 2,
+    "UNVERIFIABLE": 0
+  }
+}

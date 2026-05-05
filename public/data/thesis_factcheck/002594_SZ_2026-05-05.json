@@ -1,0 +1,26 @@
+{
+  "ticker": "002594.SZ",
+  "fact_checked_at": "2026-05-05T13:40:35.421944+00:00",
+  "thesis_source": "docs/research/factcheck/002594SZ_thesis_2026-05-05_1438BST.json",
+  "ground_truth_source": "public/data/market_data.json",
+  "tolerance_pct": 5.0,
+  "live_price": 102.98,
+  "results": [
+    {
+      "thesis_path": "fin_insights[2]",
+      "matched_text": "22x forward P/E",
+      "claimed_value": 22.0,
+      "gt_field": "pe_forward",
+      "label": "forward P/E",
+      "context_snippet": "Implied growth check: at 22x forward P/E mean-reverting to peer 18x in 3 years r",
+      "status": "MISMATCH",
+      "diff_pct": 20.917954145163662,
+      "gt_value": 18.194155
+    }
+  ],
+  "summary": {
+    "MATCH": 0,
+    "MISMATCH": 1,
+    "UNVERIFIABLE": 0
+  }
+}
