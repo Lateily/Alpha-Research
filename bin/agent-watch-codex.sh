@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+set -m  # job control: each foreground command gets own process group, enabling PG-wide cleanup
 # Agent watcher for Codex T3 auto mode.
 #
 # What it does:
@@ -33,6 +34,7 @@ HEARTBEAT_FILE="$STATUS_DIR/codex.heartbeat.json"
 HEARTBEAT_INTERVAL="${T3_HEARTBEAT_INTERVAL:-15}"
 FSWATCH_PID=""
 EVENT_FIFO=""
+CLEANUP_DONE=0
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -43,6 +45,12 @@ log() {
 
 ts() {
   date -u '+%Y-%m-%dT%H:%M:%SZ'
+}
+
+find_timeout() {
+  if command -v gtimeout >/dev/null 2>&1; then echo gtimeout; return; fi
+  if command -v timeout >/dev/null 2>&1; then echo timeout; return; fi
+  echo ''
 }
 
 json_string_or_null() {
@@ -123,6 +131,32 @@ cd_repo_root() {
   fi
 }
 
+sweep_stale_locks() {
+  local stale_count=0 lock_path
+
+  # Find lock files where expires_at is in the past (30-min TTL).
+  while IFS= read -r -d '' lock_path; do
+    local expires_at
+    expires_at="$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('expires_at',''))" "$lock_path" 2>/dev/null || echo '')"
+    if [ -n "$expires_at" ]; then
+      local now
+      now="$(ts)"
+      if [ "$now" \> "$expires_at" ]; then
+        local task_id
+        task_id="$(basename "$lock_path" .lock)"
+        # Move stale in_progress task back to pending for retry.
+        if [ -f "$IN_PROGRESS_DIR/$task_id.json" ]; then
+          mv "$IN_PROGRESS_DIR/$task_id.json" "$PENDING_DIR/" 2>/dev/null || true
+        fi
+        rm -f "$lock_path" 2>/dev/null && stale_count=$((stale_count + 1))
+      fi
+    fi
+  done < <(find "$IN_PROGRESS_DIR" -name '*.lock' -print0 2>/dev/null)
+
+  [ "$stale_count" -gt 0 ] && log "swept $stale_count expired locks (tasks moved back to pending)"
+  return 0
+}
+
 preflight() {
   cd_repo_root
 
@@ -139,6 +173,7 @@ preflight() {
   fi
 
   mkdir -p "$PENDING_DIR" "$IN_PROGRESS_DIR" "$DONE_DIR_BASE" "$STATUS_DIR"
+  sweep_stale_locks
 }
 
 write_lock() {
@@ -200,7 +235,11 @@ process_task() {
   # Verified 2026-05-02: codex exec reads the task spec from stdin.
   # Fallback for older CLI variants: codex --input "$task_path" --output "$out"
   set +e
-  codex exec -m gpt-5.5 -C "$REPO_ROOT" "$codex_prompt" < "$task_path" > "$out"
+  if [ -n "$TIMEOUT_BIN" ]; then
+    "$TIMEOUT_BIN" 1800 codex exec -m gpt-5.5 -C "$REPO_ROOT" "$codex_prompt" < "$task_path" > "$out"
+  else
+    codex exec -m gpt-5.5 -C "$REPO_ROOT" "$codex_prompt" < "$task_path" > "$out"
+  fi
   codex_ec=$?
   set -e
 
@@ -223,6 +262,11 @@ on_int() {
 }
 
 cleanup() {
+  if [ "$CLEANUP_DONE" -eq 1 ]; then
+    return 0
+  fi
+  CLEANUP_DONE=1
+
   if [ -n "$FSWATCH_PID" ]; then
     kill "$FSWATCH_PID" 2>/dev/null || true
     wait "$FSWATCH_PID" 2>/dev/null || true
@@ -233,6 +277,9 @@ cleanup() {
     rm -f "$EVENT_FIFO"
     EVENT_FIFO=""
   fi
+
+  trap '' TERM EXIT
+  kill 0 2>/dev/null || true
 }
 
 next_pending_file() {
@@ -285,6 +332,8 @@ trap on_int INT TERM
 trap cleanup EXIT
 
 preflight
+TIMEOUT_BIN="$(find_timeout)"
+log "timeout binary: ${TIMEOUT_BIN:-NONE (claude/codex hangs will not be capped — install brew coreutils for gtimeout)}"
 write_status "standby" "" "" "" ""
 log "agent-watch-codex.sh standby [PID $$] — monitoring .agent_tasks/pending/"
 watch_loop

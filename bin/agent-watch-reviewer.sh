@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+set -m  # job control: each foreground command gets own process group, enabling PG-wide cleanup
 # Agent watcher for Claude T2 review auto mode.
 #
 # What it does:
@@ -39,6 +40,12 @@ ts() {
   date -u '+%Y-%m-%dT%H:%M:%SZ'
 }
 
+find_timeout() {
+  if command -v gtimeout >/dev/null 2>&1; then echo gtimeout; return; fi
+  if command -v timeout >/dev/null 2>&1; then echo timeout; return; fi
+  echo ''
+}
+
 cd_repo_root() {
   cd "$REPO_ROOT" || {
     log "ERROR: cannot cd to repository root candidate: $REPO_ROOT"
@@ -53,6 +60,20 @@ cd_repo_root() {
       }
     fi
   fi
+}
+
+sweep_stale_tmps() {
+  local stale_count=0 tmp_path
+
+  # Find .tmp files that are 0 bytes AND mtime older than 15 min.
+  while IFS= read -r -d '' tmp_path; do
+    if [ ! -s "$tmp_path" ]; then
+      rm -f "$tmp_path" 2>/dev/null && stale_count=$((stale_count + 1))
+    fi
+  done < <(find "$RUNS_DIR" -name 'code-review.tmp' -mmin +15 -size 0 -print0 2>/dev/null)
+
+  [ "$stale_count" -gt 0 ] && log "swept $stale_count stale 0-byte code-review.tmp files"
+  return 0
 }
 
 preflight() {
@@ -74,6 +95,8 @@ preflight() {
     log "ERROR: $RUNS_DIR does not exist. Start T1 once so the run directory exists."
     exit 1
   fi
+
+  sweep_stale_tmps
 }
 
 write_blocked_review() {
@@ -129,7 +152,11 @@ $request
 Write your verdict per the template at the end of REVIEWER_CHECKLIST.md. Output format: VERDICT line first, then SUMMARY, CHECKLIST RESULTS, FINDINGS, TESTS_CHECKED, DEPLOYMENT_RISK, NOTES."
 
   set +e
-  claude -p "$review_prompt" > "$tmp_path"
+  if [ -n "$TIMEOUT_BIN" ]; then
+    "$TIMEOUT_BIN" 600 claude -p "$review_prompt" > "$tmp_path"
+  else
+    claude -p "$review_prompt" > "$tmp_path"  # no timeout available — tolerate stuck (logged P3)
+  fi
   claude_ec=$?
   set -e
 
@@ -152,14 +179,24 @@ process_ready_batch() {
   done
 }
 
+cleanup_pg() {
+  # Kill any child/grandchild processes that survived (e.g. stuck claude -p / codex exec)
+  trap '' EXIT  # avoid recursion
+  trap '' TERM
+  kill 0 2>/dev/null || true  # send SIGTERM to entire process group
+}
+
 on_int() {
   log "Watcher stopped cleanly"
   exit 0
 }
 
-trap on_int INT
+trap 'on_int' INT TERM
+trap 'cleanup_pg' EXIT
 
 preflight
+TIMEOUT_BIN="$(find_timeout)"
+log "timeout binary: ${TIMEOUT_BIN:-NONE (claude/codex hangs will not be capped — install brew coreutils for gtimeout)}"
 log "agent-watch-reviewer.sh standby [PID $$] — monitoring .shifts/runs/*/reviews/*/READY"
 log "review roots glob: $REVIEWS_GLOB"
 
