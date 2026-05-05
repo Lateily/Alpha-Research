@@ -877,7 +877,14 @@ function mergeRepairPatch(target, patch) {
 }
 
 async function repairMissingFields(originalResponse, missingFields, ticker, contextData = {}) {
-  const repairPrompt = `Original output was missing these required fields per THESIS_PROTOCOL: ${missingFields.join(', ')}. Fill them in for ticker ${ticker}. Output ONLY a JSON object with the missing field paths and values; do NOT regenerate other content.
+  const hasStep8Missing = missingFields.some(path =>
+    path === 'step_8_phase_and_timing' || path.startsWith('step_8_phase_and_timing.')
+  );
+  const step8RepairWarning = hasStep8Missing
+    ? 'CRITICAL: Step 8 (PHASE_AND_TIMING) was missing or incomplete in your previous output. This is non-negotiable per the protocol. Please populate ALL required step_8_phase_and_timing fields with concrete (not boilerplate) values. The whole thesis is invalid without this block.\n\n'
+    : '';
+
+  const repairPrompt = `${step8RepairWarning}Original output was missing these required fields per THESIS_PROTOCOL: ${missingFields.join(', ')}. Fill them in for ticker ${ticker}. Output ONLY a JSON object with the missing field paths and values; do NOT regenerate other content.
 
 Context:
 ${JSON.stringify(contextData).slice(0, 4000)}
@@ -1044,6 +1051,19 @@ OPERATING LEVERAGE TOOLKIT (compute where income statement data is available):
 - Profit scissors spread: Revenue growth rate minus COGS/OpEx growth rate. Positive spread = expanding margins. Compute for most recent period; note 3-year direction.
 - Implied growth check: back-solve the EPS CAGR that justifies current P/E (assume mean-reversion to sector median P/E in 3 years). If implied CAGR > realistic growth ceiling, flag as valuation risk.
 These metrics go into fin_insights — express as quantified signals, not generic statements.
+
+*** STEP 8 (PHASE_AND_TIMING) IS NON-NEGOTIABLE ***
+
+Every thesis you produce MUST include the step_8_phase_and_timing block. Skipping it OR leaving fields empty WILL fail validation and trigger an automatic re-prompt that costs additional latency.
+
+Minimal required Step 8 structure:
+step_8_phase_and_timing: {
+  phase_1_market_belief: { duration_estimate, why_market_keeps_buying, early_signs_phase_1_weakening, optional_long_play },
+  phase_2_reality_recognition: { catalyst_for_reversion, estimated_timing, short_play },
+  position_sizing_curve: [ ... monotonic 0% → X% → Y% ... ]
+}
+
+phase_1 must specify WHY the market is currently right (or appears right). phase_2 must specify WHEN and WHY this resolves. position_sizing_curve must show monotonic increase as conviction builds.
 
 OUTPUT JSON SCHEMA:
 {
@@ -1243,6 +1263,13 @@ FIN_INSIGHTS RULES (4 required entries):
 3. Implied growth check: e.g. "At 28x P/E, mean-reverting to sector 18x in 3yr implies 18% EPS CAGR required — above consensus 12% estimate, creating valuation risk"
 4. Key balance sheet or cash flow signal: e.g. "FCF conversion 87% of net income; net cash position supports buyback/dividend optionality"
 If income statement data is insufficient for items 1-3, note the data limitation explicitly and use available data for a different quantified signal.
+
+FINAL CHECK — BEFORE EMITTING JSON, verify your output contains:
+  [ ] step_8_phase_and_timing.phase_1_market_belief (with duration + why_market_keeps_buying)
+  [ ] step_8_phase_and_timing.phase_2_reality_recognition (with catalyst + estimated_timing)
+  [ ] step_8_phase_and_timing.position_sizing_curve (monotonic array)
+  [ ] variant.what_changes_our_mind (string)
+  [ ] variant.reward_to_risk (object: upside / downside / ratio)
 
 Return ONLY the JSON object. No markdown, no explanation.`;
 
