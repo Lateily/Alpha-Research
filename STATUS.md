@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-05 (shift 13 complete + post-shift oversell correction — Track B Bridge 1 **schema compliance** 72.5→88.25/100 multi-ticker; **investment quality NOT validated**, requires Bridge 8 + Franky. See audit doc §8 for the precise NOT-evidence-of list.)
+**Last updated:** 2026-05-05 (shift 13 complete + post-shift oversell correction + thesis fact-check pilot 700.HK — Track B Bridge 1 **schema compliance** 72.5→88.25/100 multi-ticker validated; **investment quality NOT validated**, see audit doc §8 + factcheck/700HK_pilot for the first manual fact-check that surfaced 2 structurally-invisible anomalies the validator does not catch.)
 **Last shift:** auto-work-mode shift 13 `2026-05-05-0935` (A.1 watcher hardening + B.1 Step 8 enforcement + B.2 contrarian/reward-risk fields + watcher watchdog Junyan-direct + max_tokens 8192→16384 fix + Track C audit re-run validating +15.75pp lift)
 **HEAD:** `8ef84d3` on auto/2026-04-30 (= main, +1 shift 13 doc commit pending)
 **Context handoff status:** All work in git. Tier-C 5/5 deployed; 1 pending pipeline run to populate `public/data/repurchase/*.json` (next weekday cron OR Junyan `gh workflow run fetch-data.yml`). Browser audit driven by T1 (Chrome MCP) flagged + fixed.
@@ -139,6 +139,48 @@ Bundle with launchd 126 fix into single ops KR.
 
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
+
+### 2026-05-05 (post shift 13) — Thesis fact-check pilot 700.HK + audit-doc §8 oversell correction
+
+Two doc-only commits closing oversell discipline gap. **No production code touched.**
+
+**Commit 1 — `af6a16d`** (`docs(research,status): add §8 NOT-evidence-of + STATUS shift-13 oversell correction`):
+- Added §8 to `THESIS_QUALITY_AUDIT_RERUN_2026-05-05.md` enumerating exactly what 88.25 is NOT evidence of (catalyst reality, mechanism logic soundness, falsification observability, contrarian-ness, numeric accuracy)
+- §8.3 explicit Goodhart caveat for ongoing prompt-tightening KRs
+- §8.4 what real investment-quality validation requires (Bridge 8 + Franky + cross-fact-check + wrongIf tracking)
+- §8.5 reusable bounded framing for external citation
+- STATUS.md shift-13 headline rewritten "validated empirically" → "schema-compliance lift verified empirically" + ⚠ Investment quality NOT validated paragraph
+
+**Commit 2 — `<pending>`** (thesis fact-check pilot 700.HK):
+- New dir `docs/research/factcheck/` with [README.md](docs/research/factcheck/README.md) (methodology) + [700HK_pilot_2026-05-05.md](docs/research/factcheck/700HK_pilot_2026-05-05.md) (~250 LOC report) + raw thesis JSON for reproducibility
+- Fresh `/api/research` call on 700.HK (cost ~$0.96 on Opus 4.7, 9171 input + 10734 output tokens) — got `_quality.severity=PASS, score=90` (matches shift-13 audit re-run)
+- Manual cross-check of numerical claims against `fin_700_HK.json` + `market_data.yahoo[700.HK].fundamentals` + `ohlc_700_HK.json`
+- **Result:** 4 VERIFIED within ±5% (FY24 buyback HKD 112B, FY25 buyback ≥80B floor, net cash range, GM TTM consistency) + **2 ANOMALIES the structural validator does not catch** + 4 UNVERIFIABLE from currently-ingested data
+- **Anomaly 1 (temporal):** `catalyst_date_or_window = "2025-11-12"` is 6 months in the past from thesis-generation date 2026-05-05; structural validator only checks date-format + non-boilerplate, not temporal validity
+- **Anomaly 2 (definitional):** thesis says "current ~17x forward P/E"; yahoo `pe_forward = 12.16x`; the 17.06x is **trailing**. Thesis mislabels trailing as forward, breaking the multiplier-expansion math
+- **Recommended smallest next KR:** `FC.1` — add temporal validity check to `validateThesisQuality` (~30 min). Closes anomaly-1 class. After FC.1, optionally `FC.2` (~2-3h) — `scripts/thesis_factcheck.py` automating multiplier cross-check (closes anomaly-2 class)
+
+**Why this matters in Bridge framing:**
+This is the FIRST attempt at the work §8.4 of the audit re-run flagged
+("automated cross-check of thesis numerics vs filings"). It's still
+manual, n=1, single-ticker — but it produces real evidence that
+fact-check catches structurally-invisible failure modes. Closes the
+loop on Junyan's "去验证 / 不能为了搭建而搭建 / 经得起推敲" rigor
+challenge: the methodology surfaces real anomalies that the structural
+validator passes.
+
+**What this does NOT prove:**
+- NOT generalisable from n=1 (need ≥3 pilots before claiming pattern)
+- NOT investment-quality validation by itself (mechanism logic +
+  contrarian-ness + wrongIf time-series still expert-review territory)
+- NOT a tool — pilot is documentation, not production code
+- NOT the only thing missing (Bridge 8 backtest still required)
+
+**Items deferred to next shift:**
+- FC.1 temporal validity check (concrete proposal in pilot §6)
+- FC.2 multiplier cross-check script (concrete proposal in pilot §6)
+- Multi-ticker re-pilot for generalisation (after FC.1+FC.2 ship)
+- All shift-13 carry-overs unchanged (C-1.7 / C-1.8 / launchd / Franky Entry 2 / Tushare 3-API permanently deferred)
 
 ### 2026-05-02 night — auto-work shift 5 (cont.): housekeeping + T4 protocol simplify + design-001 Phase 1
 
