@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-05 (shift 13 complete + post-shift oversell correction + thesis fact-check pilot 700.HK — Track B Bridge 1 **schema compliance** 72.5→88.25/100 multi-ticker validated; **investment quality NOT validated**, see audit doc §8 + factcheck/700HK_pilot for the first manual fact-check that surfaced 2 structurally-invisible anomalies the validator does not catch.)
+**Last updated:** 2026-05-05 (shift 13 complete + post-shift oversell correction + thesis fact-check pilot 700.HK + KR-FC.1 temporal validity check shipped + KR-FC.2 multiplier cross-check script shipped — Track B Bridge 1 **schema compliance** 72.5→88.25/100 multi-ticker; **investment quality NOT validated** but now have 2 concrete tools that catch the 2 structurally-invisible failure modes the pilot identified. Pending Junyan Vercel redeploy for FC.1 to take effect on production validator.)
 **Last shift:** auto-work-mode shift 13 `2026-05-05-0935` (A.1 watcher hardening + B.1 Step 8 enforcement + B.2 contrarian/reward-risk fields + watcher watchdog Junyan-direct + max_tokens 8192→16384 fix + Track C audit re-run validating +15.75pp lift)
 **HEAD:** `8ef84d3` on auto/2026-04-30 (= main, +1 shift 13 doc commit pending)
 **Context handoff status:** All work in git. Tier-C 5/5 deployed; 1 pending pipeline run to populate `public/data/repurchase/*.json` (next weekday cron OR Junyan `gh workflow run fetch-data.yml`). Browser audit driven by T1 (Chrome MCP) flagged + fixed.
@@ -140,7 +140,80 @@ Bundle with launchd 126 fix into single ops KR.
 > 每次 shift 结束时往这里追加 1-3 条。最新的在最上面。Claude 每次开新
 > session 必读最近 5 条 — 确保不会忘记 systemic gaps。
 
-### 2026-05-05 (post shift 13) — Thesis fact-check pilot 700.HK + audit-doc §8 oversell correction
+### 2026-05-05 (post shift 13, second wave) — KR-FC.1 temporal validity check + KR-FC.2 multiplier cross-check script
+
+Two concrete validators that close the 2 anomalies surfaced by the
+pilot. Real production code change (api/research.js) + new script.
+**Pending Junyan Vercel redeploy** for FC.1 to take effect in production
+(not auto-deployed). Until redeploy, FC.1 only fires in local tests.
+
+**Commit `ed64ae8` — KR-FC.1 temporal validity check** (api/research.js):
+- New `parseCatalystDate(value)` helper — parses ISO / quarter / half-
+  year / month name / FY / year-only formats, returns latest-bound Date
+  or null if unparseable
+- New `step_1_catalyst_date_in_future` check in QUALITY_CHECK_NAMES,
+  weight 6.67 (non-step-8). Fails if parsed catalyst date < (now − 14d
+  tolerance for post-event retrospectives)
+- Validator-only check (LLMs cannot reliably know "now"); excluded from
+  QC_REQUIRED_KEYS so old theses don't blow up missingFields with
+  spurious "missing self-report" entries
+- SYSTEM_PROMPT Quality Gates §: 1-line addition pushing model to use
+  NEXT scheduled occurrence when named event has passed (e.g. "if today
+  is past Q4 2025 earnings, anchor on Q1 2026 earnings instead")
+- Named exports for testability (validateThesisQuality, parseCatalystDate,
+  isCatalystDateInFuture, etc.) — Vercel ignores non-default exports
+- New `scripts/test_thesis_validator.mjs` — 27 PASS / 0 FAIL test gate:
+  8 parser cases + 7 future-check cases + 4 e2e on saved 700.HK thesis +
+  8 backward-compat cases. Run: `node scripts/test_thesis_validator.mjs`
+- Production behavior change after Vercel redeploy: 4 audit re-run tickers
+  drop from 90/90/90/83 to ~83/83/83/76 (all anchor on past-Q3-2025
+  catalysts). 6160.HK moves from PASS to WARN. Principled, not regression
+  — flags real quality issue. Once SYSTEM_PROMPT addition takes effect,
+  model should self-correct to future dates and scores recover.
+
+**Commit `16502c1` — KR-FC.2 thesis fact-check script** (scripts/thesis_factcheck.py):
+- Cross-checks multiplier claims (P/E forward / EV/EBITDA / P/S / P/E
+  trailing) against `market_data.yahoo[ticker].fundamentals` with ±5%
+  tolerance. Per-claim MATCH / MISMATCH / UNVERIFIABLE
+- Consumed-span tracking — "17x forward P/E" matches pe_forward only,
+  not also generic pe_trailing
+- Output: stdout table + JSON at `public/data/thesis_factcheck/<TICKER>_<DATE>.json`
+- Exit code 0/1 (CI-friendly)
+- First run on saved 700.HK thesis: surfaced 3 instances of "17x forward
+  P/E" claim, all MISMATCH at +39.8% from yahoo's actual pe_forward 12.16x.
+  Live evidence that fact-check methodology catches what schema validator
+  misses (pilot §A2 confirmed automated)
+
+**Combined impact:**
+- FC.1 closes pilot anomaly A1 (temporal). Each future thesis with a
+  past catalyst date now flagged at validation time, score lowered.
+- FC.2 closes pilot anomaly A2 (multiplier mislabeling). Thesis JSON
+  → cross-check report with concrete diff_pct against ingested live
+  data. Verifiable, traceable, doesn't depend on model self-reporting.
+- Together: 2 of 5 NOT-evidence-of items from audit doc §8.2 are now
+  partially addressed (catalyst reality time-validity + numeric accuracy
+  vs filings/live-data). Mechanism logic / falsification observability /
+  variant-view contrarian-ness still expert-review territory.
+
+**What remains DEFERRED (matches §6 of pilot doc):**
+- Multi-ticker re-pilot (run FC.2 on 9999/002594/6160/300308 to see if
+  multiplier mismatch is systematic vs one-off; ~$4 in API calls + 1h)
+- Quarterly granularity gap (akshare quarterly fetcher for HK tickers)
+- Segment-level disclosure (cninfo PDF for A-shares; HKEx for HK)
+- Non-IFRS reconciliation (parse earnings releases)
+- Bridge 8 backtest scaffold (still the load-bearing missing piece)
+
+**Items deferred from earlier (unchanged):**
+- Vercel redeploy `api/research.js` for FC.1 + C-3 quality gating
+  (carry-over from shift 10; FC.1 also needs this; one redeploy
+  covers both)
+- Tushare 3-API permanently deferred (memory rule)
+- Franky Entry 2 monitoring (REVIEW_REQUEST.md still placeholder)
+- C-1.7 sizing_curve / C-1.8 R/R prompt nudges — Goodhart caveats per
+  audit doc §8.3, low priority unless multi-ticker re-pilot reveals
+  the structural validator is materially under-firing
+
+### 2026-05-05 (post shift 13, first wave) — Thesis fact-check pilot 700.HK + audit-doc §8 oversell correction
 
 Two doc-only commits closing oversell discipline gap. **No production code touched.**
 
