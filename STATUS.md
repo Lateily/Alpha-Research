@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-05 (shift 13 complete — Track B Bridge 1 thesis quality 72.5→88.25/100 multi-ticker validated + watcher robustness hardening + audit-driven max_tokens fix)
+**Last updated:** 2026-05-05 (shift 13 complete + post-shift oversell correction — Track B Bridge 1 **schema compliance** 72.5→88.25/100 multi-ticker; **investment quality NOT validated**, requires Bridge 8 + Franky. See audit doc §8 for the precise NOT-evidence-of list.)
 **Last shift:** auto-work-mode shift 13 `2026-05-05-0935` (A.1 watcher hardening + B.1 Step 8 enforcement + B.2 contrarian/reward-risk fields + watcher watchdog Junyan-direct + max_tokens 8192→16384 fix + Track C audit re-run validating +15.75pp lift)
 **HEAD:** `8ef84d3` on auto/2026-04-30 (= main, +1 shift 13 doc commit pending)
 **Context handoff status:** All work in git. Tier-C 5/5 deployed; 1 pending pipeline run to populate `public/data/repurchase/*.json` (next weekday cron OR Junyan `gh workflow run fetch-data.yml`). Browser audit driven by T1 (Chrome MCP) flagged + fixed.
@@ -206,7 +206,9 @@ responsive); none of those block ship.
 
 **Run id:** `2026-05-05-0935` (~3h wall-clock). 6 shipped commits + 1 audit re-run doc.
 
-**🎯 MILESTONE: Bridge 1 thesis quality framework cumulative lift validated empirically.** Multi-ticker audit re-run on 4 tickers (002594.SZ / 700.HK / 9999.HK / 6160.HK) measured **88.25/100 average** (vs 72.5 baseline single-ticker on 300308.SZ at shift 10). Lift +15.75 pp = 88% of audit doc §5 forecast achieved with C-1.5 + C-1.6 + max_tokens fix shipped (C-2 persona library still pending).
+**🎯 MILESTONE: Bridge 1 schema-compliance lift verified empirically.** Multi-ticker audit re-run on 4 tickers (002594.SZ / 700.HK / 9999.HK / 6160.HK) measured **88.25/100 average** (vs 72.5 baseline single-ticker on 300308.SZ at shift 10). Lift +15.75 pp on schema compliance with C-1.5 + C-1.6 + max_tokens fix shipped (C-2 persona library still pending).
+
+**⚠ Investment quality NOT validated.** Schema compliance ≠ investment correctness. The validator does NOT check: catalyst reality (could be hallucinated date), mechanism logic soundness (4 wrong steps still parse), falsification observability ("Q3 GM <42%" and "if dynamics evolve" both pass), variant view contrarian-ness (could be rephrased consensus), or numeric accuracy against filings (P/E 22.7 vs 27.7 not cross-checked). Real investment-quality validation requires: (1) Bridge 8 backtest with n≥10 attributed trades, (2) Franky expert review (Entry 2 pending), (3) automated cross-check of thesis numerics vs ingested data sources (yfinance/AKShare), (4) wrongIf time-series tracking. See `docs/research/THESIS_QUALITY_AUDIT_RERUN_2026-05-05.md` §8 for the full NOT-evidence-of list. **External-citation framing:** "lifted protocol-compliance 72.5→88; investment-quality validation needs trade-attribution backtest on roadmap." Correction added 2026-05-05 post-shift-13 per Junyan oversell retrospective.
 
 **Shipped commits:**
 - `b8619c3` — A.1 Watcher robustness hardening: gtimeout/timeout wrapping (600s reviewer / 1800s codex), `set -m` job control, `kill 0` EXIT trap for process group cleanup, sweep_stale_tmps + sweep_stale_locks at startup. Fixes 2 real production bugs (PIDs 8582 + 52461 stuck claude -p 45+ min after verdict written, observed in shifts 11+12).

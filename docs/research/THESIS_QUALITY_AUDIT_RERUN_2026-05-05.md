@@ -189,8 +189,94 @@ flagged for biotech-specific prompt work.
 
 ---
 
+## 8. What this score IS NOT evidence of
+
+> **Why this section exists:** added 2026-05-05 post-shift-13, after
+> Junyan challenged "88.25 不会是为了 90 而 90 分?" The challenge stands.
+> `validateThesisQuality` (api/research.js) checks **structural compliance
+> with the protocol schema**, not **investment quality**. The 88.25 / 100
+> number must NOT be read as any of the following.
+
+### 8.1 What the validator actually checks (re-stated)
+
+- Required schema paths present (`step_8_phase_and_timing.phase_1...`,
+  `what_changes_our_mind`, `expected_pnl_asymmetry`, `reward_to_risk`)
+- Format parseable (regex on R/R ratio, JSON-loadable sub-objects)
+- A handful of structural heuristics: mechanism chain ≥ 3 steps,
+  `position_sizing_curve` monotonically non-decreasing,
+  `step_2_no_unfounded_leaps` shallow keyword check, R/R below
+  threshold flag
+
+### 8.2 What 88.25 is NOT evidence of
+
+- **NOT** evidence the catalyst is real. Validator does not check
+  whether `step_1_catalyst.event` (e.g., "March 26 earnings call") is a
+  real upcoming event vs a hallucinated date. A boilerplate-padded
+  hallucinated date scores the same as a researched one.
+- **NOT** evidence the mechanism causal chain is sound. `step_2` only
+  checks chain length and shallow heuristics. 4 steps that are each
+  individually wrong inferences can still score full points.
+- **NOT** evidence falsification conditions are observable. The regex
+  parser passes both `"Q3 2026 GM ≥ 44%"` (specific, dated, observable)
+  and `"if dynamics evolve unfavorably"` (vague, untestable). The
+  validator cannot tell them apart.
+- **NOT** evidence the variant view is truly contrarian. The validator
+  confirms the field exists and contains text; it does not detect
+  whether the "we believe Y" position is just rephrased consensus.
+- **NOT** evidence the numbers are correct. Thesis text claiming
+  "P/E 22.7" when actual is 27.7 will pass — the validator does not
+  cross-check thesis numerics against any data source.
+
+### 8.3 Goodhart caveat
+
+`step_2_no_unfounded_leaps` fired on 6160.HK only — partial bullshit
+detection works on biotech inferential gaps. But the heuristic is
+shallow; the core 13/15 PASS rate reflects **schema compliance**, not
+semantic correctness. As prompt enhancements continue (C-1.7 / C-1.8
+candidates), the score will trend upward — but if the validator is the
+only target, the model can be optimised to satisfy validator without
+satisfying truth. Goodhart's law: when a measure becomes a target,
+it ceases to be a good measure.
+
+### 8.4 What real investment-quality validation requires (deferred)
+
+1. **Bridge 8 backtest attribution** — n ≥ 10 thesis-driven trades with
+   tracked entry / exit / outcome, then hit-rate by thesis-quality
+   bucket. Not yet built (Bridge 8 in STATUS.md §2).
+2. **Franky expert manual review** — REVIEW_REQUEST.md Entry 2 awaiting;
+   human catches logic gaps a structural validator cannot.
+3. **Cross-fact-check thesis numerics vs filings** — automated diff of
+   thesis-claimed numbers (GM, revenue growth, margin, catalyst dates)
+   against the data sources we already ingest (yfinance / AKShare /
+   future Tushare). Doable today against connected sources; not yet
+   built. Closest existing analog is `prediction_log` in CLAUDE.md
+   §Track Record (4 manually-verified predictions to date).
+4. **wrongIf condition tracking** — for each shipped thesis, log the
+   exact wrongIf condition and check Q3-Q4 whether it actually triggered
+   in the direction the thesis predicted. Watchlist already carries
+   `wrongIf Status` per ticker but no time-series log.
+
+### 8.5 Reusable framing for external citation
+
+When citing this score externally (interviews, Franky onboarding,
+internal retros, future audit doc references), use the **bounded form**:
+
+> "I lifted the protocol-compliance score from 72.5 → 88.25 across
+> 4 tickers. **Schema compliance ≠ investment quality.** Real validation
+> requires trade-attribution backtest, which is on the roadmap (Bridge 8
+> in STATUS.md)."
+
+Avoid the unbounded form (e.g., "Bridge 1 thesis quality validated
+empirically") — it conflates structural compliance with investment
+correctness. This is the gap Junyan caught in the shift 13 retrospective
+and the reason this section was added.
+
+---
+
 **Audit version:** v2 (post-B.1+B.2+max_tokens fix)
+**§8 added:** 2026-05-05 post-shift-13 (oversell correction per Junyan retrospective)
 **Auditor:** T1 Claude (shift 13 Track C, 2026-05-05)
 **Method:** parallel curl direct API audit, no UI involvement
 **Next iteration:** when Track B C-1.7 + C-1.8 ship, re-run on same
-  4 tickers to measure incremental lift toward 92+/100.
+  4 tickers to measure incremental lift toward 92+/100. **Re-runs
+  measure schema compliance, not investment quality** (per §8).
