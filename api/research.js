@@ -1486,7 +1486,16 @@ export default async function handler(req, res) {
     const consensusBlock    = buildConsensusBlock(pass1.views, pass1.sourcesUsed);
 
     // ── Pass 2: Full research generation ──────────────────────────────────
+    // FC.6 (2026-05-05) — inject today's date so model anchors temporal claims
+    // correctly. The 1-line SYSTEM_PROMPT addition (FC.1, ed64ae8) was NOT
+    // sufficient: multi-ticker run 2026-05-05 14:38 BST showed 3/4 tickers
+    // still emit past catalyst dates because the model's training data ends
+    // ~early-2026 and it doesn't know "today" without being told. See
+    // docs/research/factcheck/multi_ticker_2026-05-05_post_fc1_redeploy.md §1.1.
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
     const userPrompt = `Generate a complete buy-side equity research report for: ${ticker}${company ? ` — ${company}` : ''}
+
+TEMPORAL CONTEXT (READ FIRST): Today is ${today}. Your training data may end earlier than this date, but you ARE in ${today}. Any catalyst date earlier than ${today} has ALREADY OCCURRED and is no longer "upcoming". For step_1_catalyst.catalyst_date_or_window, anchor on the NEXT scheduled occurrence — for example, if Q1 ${today.slice(0,4)} earnings already printed, anchor on Q2 ${today.slice(0,4)} earnings instead. Past dates fail validation (FC.1 step_1_catalyst_date_in_future check).
 
 IMPORTANT: "${company || ticker}" is the definitive identity for this ticker. Research the CURRENT company, not any prior holder of this code.
 
