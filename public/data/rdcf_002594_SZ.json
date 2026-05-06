@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "generated_at": "2026-05-05T10:35:55.873026+00:00",
+  "generated_at": "2026-05-06T09:39:50.740110+00:00",
   "model_type": "standard_fcf",
   "market": "A",
   "error": null,
@@ -14,11 +14,11 @@
   },
   "fcf_note": "FCF<=0; proxied as OCF×0.70",
   "fcf0": 37341420749.0,
-  "implied_fcf_growth": 0.1585,
+  "implied_fcf_growth": 0.153,
   "our_fcf_growth": 0.28,
-  "delta": 0.1215,
+  "delta": 0.127,
   "signal": "UNDERPRICED",
   "hyper_growth": false,
   "net_debt": 14809161728,
-  "market_cap": 938888986624
+  "market_cap": 918557622272
 }

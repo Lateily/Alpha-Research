@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-05T10:39:01.419713+00:00",
+    "generated_at": "2026-05-06T09:43:02.256959+00:00",
     "schema_version": 1,
     "method": "median_of_3_signals_aggregator",
     "tie_break_rule": "n2_consensus_only",
@@ -47,12 +47,12 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "OVERPRICED",
-          "delta": -0.825,
+          "delta": -0.8014,
           "skip_reason": null
         },
         "EV_EBITDA": {
           "signal": "OVERPRICED",
-          "delta_pct": -67.43,
+          "delta_pct": -67.37,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
@@ -79,17 +79,17 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "OVERPRICED",
-          "delta": -0.1238,
+          "delta": -0.1176,
           "skip_reason": null
         },
         "EV_EBITDA": {
           "signal": "OVERPRICED",
-          "delta_pct": -22.87,
+          "delta_pct": -21.2,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
           "signal": "OVERPRICED",
-          "delta_pp": -26.34,
+          "delta_pp": -25.36,
           "skip_reason": null
         }
       },
@@ -111,17 +111,17 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "UNDERPRICED",
-          "delta": 0.1074,
+          "delta": 0.1148,
           "skip_reason": null
         },
         "EV_EBITDA": {
           "signal": "FAIRLY_VALUED",
-          "delta_pct": 5.88,
+          "delta_pct": 6.11,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
           "signal": "OVERPRICED",
-          "delta_pp": -18.03,
+          "delta_pp": -17.08,
           "skip_reason": null
         }
       },
@@ -150,7 +150,7 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "OVERPRICED",
-          "delta": -0.7854,
+          "delta": -0.7987,
           "skip_reason": null
         },
         "EV_EBITDA": {
@@ -182,17 +182,17 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "UNDERPRICED",
-          "delta": 0.1215,
+          "delta": 0.127,
           "skip_reason": null
         },
         "EV_EBITDA": {
           "signal": "UNDERPRICED",
-          "delta_pct": 76.32,
+          "delta_pct": 80.22,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
           "signal": "OVERPRICED",
-          "delta_pp": -24.88,
+          "delta_pp": -24.1,
           "skip_reason": null
         }
       },

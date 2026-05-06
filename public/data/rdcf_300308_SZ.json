@@ -1,23 +1,23 @@
 {
   "ticker": "300308.SZ",
-  "generated_at": "2026-05-05T10:35:55.867284+00:00",
+  "generated_at": "2026-05-06T09:39:50.735107+00:00",
   "model_type": "standard_fcf",
   "market": "A",
   "error": null,
   "wacc_detail": {
     "rf": 0.023,
     "erp": 0.065,
-    "beta": 2.054,
+    "beta": 1.9781,
     "beta_source": "yfinance_60d",
-    "wacc": 0.1565,
+    "wacc": 0.1516,
     "market": "A"
   },
   "fcf0": 4162228480,
-  "implied_fcf_growth": 1.166,
+  "implied_fcf_growth": 1.1424,
   "our_fcf_growth": 0.341,
-  "delta": -0.825,
+  "delta": -0.8014,
   "signal": "OVERPRICED",
   "hyper_growth": true,
   "net_debt": -10500431744,
-  "market_cap": 954912407552
+  "market_cap": 953242025984
 }
