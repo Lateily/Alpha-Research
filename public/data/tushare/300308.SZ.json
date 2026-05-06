@@ -1,6 +1,6 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-05-06T09:40:05Z",
+  "fetched_at": "2026-05-06T16:08:18Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -733,7 +733,7 @@
           "close": 856.0,
           "turnover_rate": 2.7915,
           "turnover_rate_f": 3.6898,
-          "volume_ratio": null,
+          "volume_ratio": 1.06,
           "pe": 88.2856,
           "pe_ttm": 63.7668,
           "pb": 27.5796,

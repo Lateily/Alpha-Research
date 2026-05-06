@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-06T09:40:17Z",
+  "fetched_at": "2026-05-06T16:08:29Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -733,7 +733,7 @@
           "close": 100.75,
           "turnover_rate": 1.923,
           "turnover_rate_f": 2.7294,
-          "volume_ratio": null,
+          "volume_ratio": 1.13,
           "pe": 28.1602,
           "pe_ttm": 33.3432,
           "pb": 3.9608,

@@ -1,13 +1,13 @@
 {
   "ticker": "700.HK",
-  "generated_at": "2026-05-06T09:39:50.736844+00:00",
+  "generated_at": "2026-05-06T16:08:02.916728+00:00",
   "model_type": "standard_fcf",
   "market": "HK",
   "error": null,
   "wacc_detail": {
     "rf": 0.038,
     "erp": 0.0725,
-    "beta": 1.2022,
+    "beta": 1.2026,
     "beta_source": "yfinance_60d",
     "wacc": 0.1252,
     "market": "HK"

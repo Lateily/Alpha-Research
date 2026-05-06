@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-06T09:43:02.163902+00:00",
+    "generated_at": "2026-05-06T16:11:03.110396+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "ev_ebitda_target_multiple",
@@ -17,7 +17,7 @@
       "model_status": "multi_method",
       "signal": "OVERPRICED",
       "delta_pct": -67.37,
-      "current_ev_ebitda": 47.154,
+      "current_ev_ebitda": 47.071,
       "current_ebitda": 20036571136,
       "target_multiple": 15.0,
       "fair_ev": 300548567040.0,
@@ -25,8 +25,8 @@
       "market_cap": 953242025984,
       "net_debt": -10500431744,
       "market": "A",
-      "rationale_e": "EV/EBITDA 47.15x vs A-target 15x; fair_equity +311.0B vs market_cap 953.2B; delta -67.4% → OVERPRICED",
-      "rationale_z": "EV/EBITDA 47.15x，A市场目标15x；公允股权 +311.0B vs 市值 953.2B；delta -67.4% → OVERPRICED"
+      "rationale_e": "EV/EBITDA 47.07x vs A-target 15x; fair_equity +311.0B vs market_cap 953.2B; delta -67.4% → OVERPRICED",
+      "rationale_z": "EV/EBITDA 47.07x，A市场目标15x；公允股权 +311.0B vs 市值 953.2B；delta -67.4% → OVERPRICED"
     },
     "700.HK": {
       "ticker": "700.HK",
@@ -65,9 +65,9 @@
       "model_status": "biotech_fallback",
       "signal": null,
       "delta_pct": null,
-      "current_ev_ebitda": 434.57,
-      "reason": "Clinical-stage biotech: EV/EBITDA at 434.57x is a structural artifact of negative-or-near-zero EBITDA, not a valuation signal. Method 1 rdcf biotech_revenue remains the canonical valuation for this ticker.",
-      "reason_z": "临床期生物科技：EV/EBITDA = 434.57x 是负值或近零EBITDA的结构性产物，非估值信号。Method 1 rdcf biotech_revenue 仍是该股票的标准估值方法。"
+      "current_ev_ebitda": 447.527,
+      "reason": "Clinical-stage biotech: EV/EBITDA at 447.53x is a structural artifact of negative-or-near-zero EBITDA, not a valuation signal. Method 1 rdcf biotech_revenue remains the canonical valuation for this ticker.",
+      "reason_z": "临床期生物科技：EV/EBITDA = 447.53x 是负值或近零EBITDA的结构性产物，非估值信号。Method 1 rdcf biotech_revenue 仍是该股票的标准估值方法。"
     },
     "002594.SZ": {
       "ticker": "002594.SZ",

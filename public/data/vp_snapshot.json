@@ -39,12 +39,12 @@
         "score": 10,
         "source": "rdcf_delta",
         "signal": "OVERPRICED",
-        "delta": -0.801,
-        "implied_growth": 114.2,
+        "delta": -0.824,
+        "implied_growth": 116.5,
         "our_growth": 34.1,
         "hyper_growth": true
       },
-      "engine_run_at": "2026-05-06T09:43:01.756832+00:00"
+      "engine_run_at": "2026-05-06T16:11:02.794810+00:00"
     },
     {
       "ticker": "700.HK",
@@ -89,7 +89,7 @@
         "our_growth": 18.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-06T09:43:01.757477+00:00"
+      "engine_run_at": "2026-05-06T16:11:02.795509+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -129,12 +129,12 @@
         "score": 68,
         "source": "rdcf_delta",
         "signal": "UNDERPRICED",
-        "delta": 0.115,
-        "implied_growth": 3.5,
+        "delta": 0.108,
+        "implied_growth": 4.2,
         "our_growth": 15.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-06T09:43:01.758099+00:00"
+      "engine_run_at": "2026-05-06T16:11:02.796195+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -179,7 +179,7 @@
         "our_growth": 35.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-06T09:43:01.758675+00:00"
+      "engine_run_at": "2026-05-06T16:11:02.796801+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -224,7 +224,7 @@
         "our_growth": 28.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-06T09:43:01.759227+00:00"
+      "engine_run_at": "2026-05-06T16:11:02.797423+00:00"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-06T09:43:02.119631+00:00",
+    "generated_at": "2026-05-06T16:11:03.069584+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -90,7 +90,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 47.154,
+            "actual": 47.071,
             "threshold": 10.0,
             "comparator": "<",
             "passed": false,
@@ -114,7 +114,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.8014,
+            "actual": 0.8242,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,
@@ -122,7 +122,7 @@
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.1516,
+            "actual": 0.1565,
             "threshold": [
               0.08,
               0.15
@@ -380,7 +380,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.1148,
+            "actual": 0.1081,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,
@@ -388,7 +388,7 @@
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.1099,
+            "actual": 0.1123,
             "threshold": [
               0.08,
               0.15
@@ -489,7 +489,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 434.57,
+            "actual": 447.527,
             "threshold": 10.0,
             "comparator": "<",
             "passed": false,

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-06T09:39:50.742499",
+    "fetched_at": "2026-05-06T16:08:02.923373",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -43,8 +43,8 @@
         "market_cap": 953242025984,
         "pe_trailing": 63.59584,
         "pe_forward": 22.673393,
-        "ev_ebitda": 47.154,
-        "ev_revenue": 18.503,
+        "ev_ebitda": 47.071,
+        "ev_revenue": 18.471,
         "ps_ratio": 18.668268,
         "pb": 26.726614,
         "dividend_yield": 0.22,
@@ -65,7 +65,7 @@
         "ebitda": 20036571136,
         "earnings_growth": 2.594,
         "book_value": 32.028,
-        "enterprise_value": 944811343872
+        "enterprise_value": 943144697856
       },
       "analyst": {
         "target_mean": 873.325,
@@ -98,16 +98,16 @@
         "avg_volume_20d": 24064840,
         "volume_ratio": -0.0,
         "high_52w": 662.0,
-        "low_52w": 460.2
+        "low_52w": 463.2
       },
       "technical": {
-        "sma_20": 493.62,
-        "sma_50": 508.2,
+        "sma_20": 495.23,
+        "sma_50": 509.13,
         "sma_200": null,
-        "rsi_14": 34.6,
-        "macd": -12.3491,
-        "macd_signal": -9.8394,
-        "macd_histogram": -2.5097,
+        "rsi_14": 37.6,
+        "macd": -11.4663,
+        "macd_signal": -9.6629,
+        "macd_histogram": -1.8034,
         "above_sma_20": false,
         "above_sma_50": false,
         "above_sma_200": null
@@ -174,13 +174,13 @@
         "low_52w": 168.8
       },
       "technical": {
-        "sma_20": 178.19,
-        "sma_50": 179.18,
+        "sma_20": 178.02,
+        "sma_50": 179.13,
         "sma_200": null,
-        "rsi_14": 54.7,
-        "macd": -0.2481,
-        "macd_signal": -1.0844,
-        "macd_histogram": 0.8363,
+        "rsi_14": 54.3,
+        "macd": -0.5785,
+        "macd_signal": -1.1505,
+        "macd_histogram": 0.572,
         "above_sma_20": true,
         "above_sma_50": true,
         "above_sma_200": null
@@ -188,7 +188,7 @@
       "fundamentals": {
         "market_cap": 579101261824,
         "pe_trailing": 15.087282,
-        "pe_forward": 11.504871,
+        "pe_forward": 11.509551,
         "ev_ebitda": 11.179,
         "ev_revenue": 3.78,
         "ps_ratio": 5.141817,
@@ -247,13 +247,13 @@
         "low_52w": 159.2
       },
       "technical": {
-        "sma_20": 184.82,
-        "sma_50": 182.86,
+        "sma_20": 184.97,
+        "sma_50": 182.88,
         "sma_200": null,
-        "rsi_14": 38.8,
-        "macd": -1.3693,
-        "macd_signal": -0.5342,
-        "macd_histogram": -0.8352,
+        "rsi_14": 29.1,
+        "macd": -1.6118,
+        "macd_signal": -0.5827,
+        "macd_histogram": -1.0292,
         "above_sma_20": false,
         "above_sma_50": false,
         "above_sma_200": null
@@ -262,8 +262,8 @@
         "market_cap": 262930661376,
         "pe_trailing": 122.14765,
         "pe_forward": 29.44775,
-        "ev_ebitda": 434.57,
-        "ev_revenue": 47.078,
+        "ev_ebitda": 447.527,
+        "ev_revenue": 48.481,
         "ps_ratio": 49.210003,
         "pb": 7.675503,
         "dividend_yield": null,
@@ -284,13 +284,13 @@
         "ebitda": 578817984,
         "earnings_growth": null,
         "book_value": 23.711802,
-        "enterprise_value": 251536850944
+        "enterprise_value": 259036594176
       },
       "analyst": {
-        "target_mean": 252.34465,
-        "target_high": 298.4394,
-        "target_low": 212.39873,
-        "target_median": 244.35646,
+        "target_mean": 252.36075,
+        "target_high": 298.45844,
+        "target_low": 212.41228,
+        "target_median": 244.37204,
         "recommendation": "none",
         "num_analysts": 17
       },
@@ -616,14 +616,14 @@
       },
       "revenue_estimate": {
         "0q": {
-          "avg": 1436541740.0,
-          "low": 1340500000.0,
-          "high": 1495000000.0
-        },
-        "+1q": {
           "avg": 1561727720.0,
           "low": 1514000000.0,
           "high": 1601000000.0
+        },
+        "+1q": {
+          "avg": 1634804990.0,
+          "low": 1554000000.0,
+          "high": 1679000000.0
         },
         "0y": {
           "avg": 6382283710.0,
@@ -835,7 +835,7 @@
         "code": "002181",
         "name": "粤传媒",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -845,7 +845,7 @@
         "code": "002181",
         "name": "粤传媒",
         "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -1065,7 +1065,7 @@
         "code": "200553",
         "name": "安道麦B",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -1075,7 +1075,7 @@
         "code": "200553",
         "name": "安道麦B",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
