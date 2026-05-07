@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-05-06T16:11:02Z",
+  "fetched_at": "2026-05-07T10:19:19Z",
   "api_used": "margin_detail",
   "window_days": 30,
   "records": [
@@ -238,16 +238,29 @@
       "rqmcl": 5800,
       "rzrqye": 26168919636.0,
       "name": null
+    },
+    {
+      "trade_date": "20260506",
+      "ts_code": "300308.SZ",
+      "rzye": 25985447028.0,
+      "rqye": 111348480.0,
+      "rzmre": 3510806672.0,
+      "rqyl": 130080.0,
+      "rzche": 3585050930.0,
+      "rqchl": 9100,
+      "rqmcl": 11800,
+      "rzrqye": 26096795508.0,
+      "name": null
     }
   ],
   "summary": {
-    "total_count": 18,
-    "latest_date": "2026-04-30",
-    "latest_rzye": 26059691286.0,
-    "latest_rqye": 109228350.0,
-    "rzye_change_30d_pct": 24.7426933002167,
-    "rqye_change_30d_pct": 32.52285902192625,
-    "net_leverage_change_30d": -7.780165721709551,
+    "total_count": 19,
+    "latest_date": "2026-05-06",
+    "latest_rzye": 25985447028.0,
+    "latest_rqye": 111348480.0,
+    "rzye_change_30d_pct": 24.3873004214848,
+    "rqye_change_30d_pct": 35.09513708982855,
+    "net_leverage_change_30d": -10.707836668343749,
     "signal_level": "LEVERAGE_BEAR_MED"
   }
 }

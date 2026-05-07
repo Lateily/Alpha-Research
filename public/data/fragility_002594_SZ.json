@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-06T09:43:02.072712+00:00",
+  "generated_at": "2026-05-07T10:19:20.210720+00:00",
   "ticker": "002594.SZ",
   "composite": 22.1,
   "band": "ROBUST",
@@ -30,7 +30,7 @@
   "price_metrics": {
     "n_returns": 117,
     "annual_vol": 0.2926,
-    "skew": 1.297,
+    "skew": 1.296,
     "excess_kurtosis": 3.207,
     "max_drawdown": 0.1313
   },

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-06T16:11:03.110396+00:00",
+    "generated_at": "2026-05-07T10:19:20.302931+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "ev_ebitda_target_multiple",
@@ -16,74 +16,74 @@
       "ticker": "300308.SZ",
       "model_status": "multi_method",
       "signal": "OVERPRICED",
-      "delta_pct": -67.37,
+      "delta_pct": -68.17,
       "current_ev_ebitda": 47.071,
       "current_ebitda": 20036571136,
       "target_multiple": 15.0,
       "fair_ev": 300548567040.0,
       "fair_equity": 311048998784.0,
-      "market_cap": 953242025984,
+      "market_cap": 977151000576,
       "net_debt": -10500431744,
       "market": "A",
-      "rationale_e": "EV/EBITDA 47.07x vs A-target 15x; fair_equity +311.0B vs market_cap 953.2B; delta -67.4% → OVERPRICED",
-      "rationale_z": "EV/EBITDA 47.07x，A市场目标15x；公允股权 +311.0B vs 市值 953.2B；delta -67.4% → OVERPRICED"
+      "rationale_e": "EV/EBITDA 47.07x vs A-target 15x; fair_equity +311.0B vs market_cap 977.2B; delta -68.2% → OVERPRICED",
+      "rationale_z": "EV/EBITDA 47.07x，A市场目标15x；公允股权 +311.0B vs 市值 977.2B；delta -68.2% → OVERPRICED"
     },
     "700.HK": {
       "ticker": "700.HK",
       "model_status": "multi_method",
       "signal": "OVERPRICED",
-      "delta_pct": -21.2,
-      "current_ev_ebitda": 15.86,
+      "delta_pct": -23.58,
+      "current_ev_ebitda": 15.556,
       "current_ebitda": 273397006336,
       "target_multiple": 12.0,
       "fair_ev": 3280764076032.0,
       "fair_equity": 3296917094400.0,
-      "market_cap": 4184084316160,
+      "market_cap": 4314215743488,
       "net_debt": -16153018368,
       "market": "HK",
-      "rationale_e": "EV/EBITDA 15.86x vs HK-target 12x; fair_equity +3296.9B vs market_cap 4184.1B; delta -21.2% → OVERPRICED",
-      "rationale_z": "EV/EBITDA 15.86x，HK市场目标12x；公允股权 +3296.9B vs 市值 4184.1B；delta -21.2% → OVERPRICED"
+      "rationale_e": "EV/EBITDA 15.56x vs HK-target 12x; fair_equity +3296.9B vs market_cap 4314.2B; delta -23.6% → OVERPRICED",
+      "rationale_z": "EV/EBITDA 15.56x，HK市场目标12x；公允股权 +3296.9B vs 市值 4314.2B；delta -23.6% → OVERPRICED"
     },
     "9999.HK": {
       "ticker": "9999.HK",
       "model_status": "multi_method",
       "signal": "FAIRLY_VALUED",
-      "delta_pct": 6.11,
-      "current_ev_ebitda": 11.179,
+      "delta_pct": 3.77,
+      "current_ev_ebitda": 11.204,
       "current_ebitda": 38082293760,
       "target_multiple": 12.0,
       "fair_ev": 456987525120.0,
       "fair_equity": 614498093568.0,
-      "market_cap": 579101261824,
+      "market_cap": 592182902784,
       "net_debt": -157510568448,
       "market": "HK",
-      "rationale_e": "EV/EBITDA 11.18x vs HK-target 12x; fair_equity +614.5B vs market_cap 579.1B; delta +6.1% → FAIRLY_VALUED",
-      "rationale_z": "EV/EBITDA 11.18x，HK市场目标12x；公允股权 +614.5B vs 市值 579.1B；delta +6.1% → FAIRLY_VALUED"
+      "rationale_e": "EV/EBITDA 11.20x vs HK-target 12x; fair_equity +614.5B vs market_cap 592.2B; delta +3.8% → FAIRLY_VALUED",
+      "rationale_z": "EV/EBITDA 11.20x，HK市场目标12x；公允股权 +614.5B vs 市值 592.2B；delta +3.8% → FAIRLY_VALUED"
     },
     "6160.HK": {
       "ticker": "6160.HK",
       "model_status": "biotech_fallback",
       "signal": null,
       "delta_pct": null,
-      "current_ev_ebitda": 447.527,
-      "reason": "Clinical-stage biotech: EV/EBITDA at 447.53x is a structural artifact of negative-or-near-zero EBITDA, not a valuation signal. Method 1 rdcf biotech_revenue remains the canonical valuation for this ticker.",
-      "reason_z": "临床期生物科技：EV/EBITDA = 447.53x 是负值或近零EBITDA的结构性产物，非估值信号。Method 1 rdcf biotech_revenue 仍是该股票的标准估值方法。"
+      "current_ev_ebitda": 20.942,
+      "reason": "Clinical-stage biotech: EV/EBITDA at 20.94x is a structural artifact of negative-or-near-zero EBITDA, not a valuation signal. Method 1 rdcf biotech_revenue remains the canonical valuation for this ticker.",
+      "reason_z": "临床期生物科技：EV/EBITDA = 20.94x 是负值或近零EBITDA的结构性产物，非估值信号。Method 1 rdcf biotech_revenue 仍是该股票的标准估值方法。"
     },
     "002594.SZ": {
       "ticker": "002594.SZ",
       "model_status": "multi_method",
       "signal": "UNDERPRICED",
-      "delta_pct": 80.22,
-      "current_ev_ebitda": 8.645,
+      "delta_pct": 80.74,
+      "current_ev_ebitda": 8.463,
       "current_ebitda": 111350251520,
       "target_multiple": 15.0,
       "fair_ev": 1670253772800.0,
       "fair_equity": 1655444611072.0,
-      "market_cap": 918557622272,
+      "market_cap": 915913637888,
       "net_debt": 14809161728,
       "market": "A",
-      "rationale_e": "EV/EBITDA 8.64x vs A-target 15x; fair_equity +1655.4B vs market_cap 918.6B; delta +80.2% → UNDERPRICED",
-      "rationale_z": "EV/EBITDA 8.64x，A市场目标15x；公允股权 +1655.4B vs 市值 918.6B；delta +80.2% → UNDERPRICED"
+      "rationale_e": "EV/EBITDA 8.46x vs A-target 15x; fair_equity +1655.4B vs market_cap 915.9B; delta +80.7% → UNDERPRICED",
+      "rationale_z": "EV/EBITDA 8.46x，A市场目标15x；公允股权 +1655.4B vs 市值 915.9B；delta +80.7% → UNDERPRICED"
     }
   }
 }
