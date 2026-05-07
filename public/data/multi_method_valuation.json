@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-07T10:19:20.399252+00:00",
+    "generated_at": "2026-05-07T16:29:33.149860+00:00",
     "schema_version": 1,
     "method": "median_of_3_signals_aggregator",
     "tie_break_rule": "n2_consensus_only",
@@ -47,7 +47,7 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "OVERPRICED",
-          "delta": -0.8275,
+          "delta": -0.8126,
           "skip_reason": null
         },
         "EV_EBITDA": {
@@ -79,7 +79,7 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "OVERPRICED",
-          "delta": -0.1332,
+          "delta": -0.1263,
           "skip_reason": null
         },
         "EV_EBITDA": {
@@ -89,7 +89,7 @@
         },
         "Residual_Income_EBO": {
           "signal": "OVERPRICED",
-          "delta_pp": -27.52,
+          "delta_pp": -26.77,
           "skip_reason": null
         }
       },
@@ -111,7 +111,7 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "UNDERPRICED",
-          "delta": 0.1052,
+          "delta": 0.1075,
           "skip_reason": null
         },
         "EV_EBITDA": {
@@ -121,7 +121,7 @@
         },
         "Residual_Income_EBO": {
           "signal": "OVERPRICED",
-          "delta_pp": -18.27,
+          "delta_pp": -17.98,
           "skip_reason": null
         }
       },

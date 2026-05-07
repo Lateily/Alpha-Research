@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-07T10:15:59.974582",
+    "fetched_at": "2026-05-07T16:26:18.554129",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -28,13 +28,13 @@
         "low_52w": 436.44
       },
       "technical": {
-        "sma_20": 808.77,
-        "sma_50": 665.14,
+        "sma_20": 805.15,
+        "sma_50": 660.81,
         "sma_200": null,
-        "rsi_14": 70.7,
-        "macd": 61.547,
-        "macd_signal": 65.1754,
-        "macd_histogram": -3.6284,
+        "rsi_14": 68.0,
+        "macd": 62.714,
+        "macd_signal": 65.4088,
+        "macd_histogram": -2.6948,
         "above_sma_20": true,
         "above_sma_50": true,
         "above_sma_200": null
@@ -101,13 +101,13 @@
         "low_52w": 460.2
       },
       "technical": {
-        "sma_20": 492.09,
-        "sma_50": 507.31,
+        "sma_20": 492.86,
+        "sma_50": 507.92,
         "sma_200": null,
-        "rsi_14": 32.6,
-        "macd": -11.7504,
-        "macd_signal": -10.2204,
-        "macd_histogram": -1.53,
+        "rsi_14": 22.8,
+        "macd": -12.348,
+        "macd_signal": -10.3399,
+        "macd_histogram": -2.0081,
         "above_sma_20": false,
         "above_sma_50": false,
         "above_sma_200": null
@@ -141,10 +141,10 @@
         "enterprise_value": 4252956360704
       },
       "analyst": {
-        "target_mean": 726.5232,
-        "target_high": 889.46533,
-        "target_low": 484.61197,
-        "target_median": 728.5398,
+        "target_mean": 726.33386,
+        "target_high": 889.2335,
+        "target_low": 484.48563,
+        "target_median": 728.3499,
         "recommendation": "strong_buy",
         "num_analysts": 42
       },
@@ -174,13 +174,13 @@
         "low_52w": 168.8
       },
       "technical": {
-        "sma_20": 178.54,
-        "sma_50": 179.31,
+        "sma_20": 178.17,
+        "sma_50": 179.18,
         "sma_200": null,
-        "rsi_14": 48.6,
-        "macd": 0.3408,
-        "macd_signal": -0.7992,
-        "macd_histogram": 1.14,
+        "rsi_14": 42.0,
+        "macd": -0.248,
+        "macd_signal": -0.917,
+        "macd_histogram": 0.669,
         "above_sma_20": true,
         "above_sma_50": true,
         "above_sma_200": null
@@ -192,7 +192,7 @@
         "ev_ebitda": 11.204,
         "ev_revenue": 3.788,
         "ps_ratio": 5.2579684,
-        "pb": 3.22192,
+        "pb": 3.2217593,
         "dividend_yield": 2.56,
         "revenue": 112625803264,
         "revenue_growth": 0.03,
@@ -210,14 +210,14 @@
         "total_debt": 6729741824,
         "ebitda": 38082293760,
         "earnings_growth": -0.292,
-        "book_value": 57.605404,
+        "book_value": 57.608276,
         "enterprise_value": 426665508864
       },
       "analyst": {
-        "target_mean": 253.24797,
-        "target_high": 314.5047,
-        "target_low": 142.49467,
-        "target_median": 254.56577,
+        "target_mean": 253.18195,
+        "target_high": 314.42273,
+        "target_low": 142.45753,
+        "target_median": 254.4994,
         "recommendation": "strong_buy",
         "num_analysts": 22
       },
@@ -247,13 +247,13 @@
         "low_52w": 159.2
       },
       "technical": {
-        "sma_20": 184.89,
-        "sma_50": 182.35,
+        "sma_20": 184.68,
+        "sma_50": 182.22,
         "sma_200": null,
-        "rsi_14": 40.2,
-        "macd": -0.6135,
-        "macd_signal": -0.5503,
-        "macd_histogram": -0.0632,
+        "rsi_14": 27.3,
+        "macd": -1.3695,
+        "macd_signal": -0.7015,
+        "macd_histogram": -0.6681,
         "above_sma_20": false,
         "above_sma_50": false,
         "above_sma_200": null
@@ -261,7 +261,7 @@
       "fundamentals": {
         "market_cap": 254781849600,
         "pe_trailing": 71.01503,
-        "pe_forward": 30.55412,
+        "pe_forward": 30.350237,
         "ev_ebitda": 20.942,
         "ev_revenue": 3.014,
         "ps_ratio": 44.393333,
@@ -287,11 +287,11 @@
         "enterprise_value": 17297291264
       },
       "analyst": {
-        "target_mean": 252.25705,
-        "target_high": 298.3358,
-        "target_low": 212.32498,
-        "target_median": 244.27162,
-        "recommendation": "none",
+        "target_mean": 253.0503,
+        "target_high": 298.28625,
+        "target_low": 212.28973,
+        "target_median": 244.06662,
+        "recommendation": "strong_buy",
         "num_analysts": 17
       },
       "meta": {
@@ -320,13 +320,13 @@
         "low_52w": 85.88
       },
       "technical": {
-        "sma_20": 101.96,
+        "sma_20": 102.04,
         "sma_50": 100.35,
         "sma_200": null,
-        "rsi_14": 42.4,
-        "macd": 0.1855,
-        "macd_signal": 0.4737,
-        "macd_histogram": -0.2882,
+        "rsi_14": 43.0,
+        "macd": 0.3484,
+        "macd_signal": 0.5063,
+        "macd_histogram": -0.1578,
         "above_sma_20": false,
         "above_sma_50": true,
         "above_sma_200": null
@@ -602,36 +602,36 @@
           "num_analysts": null
         },
         "0y": {
-          "avg": 0.4749,
+          "avg": 0.5031,
           "low": 0.41,
-          "high": 0.539,
-          "num_analysts": 8.0
+          "high": 0.729,
+          "num_analysts": 9.0
         },
         "+1y": {
-          "avg": 0.789,
+          "avg": 0.7943,
           "low": 0.681,
           "high": 1.0134,
-          "num_analysts": 9.0
+          "num_analysts": 10.0
         }
       },
       "revenue_estimate": {
         "0q": {
-          "avg": 1561727720.0,
-          "low": 1514000000.0,
-          "high": 1601000000.0
+          "avg": 1593586680.0,
+          "low": 1539400000.0,
+          "high": 1668967000.0
         },
         "+1q": {
-          "avg": 1634804990.0,
-          "low": 1554000000.0,
-          "high": 1679000000.0
+          "avg": 1661962150.0,
+          "low": 1557500000.0,
+          "high": 1795226000.0
         },
         "0y": {
-          "avg": 6382283710.0,
-          "low": 6128482290.0,
-          "high": 6795994000.0
+          "avg": 6454170220.0,
+          "low": 6206100000.0,
+          "high": 6853363000.0
         },
         "+1y": {
-          "avg": 7345580840.0,
+          "avg": 7396238380.0,
           "low": 6834000000.0,
           "high": 7980000000.0
         }
@@ -650,16 +650,16 @@
           "90d_ago": null
         },
         "0y": {
-          "current": 0.4749,
+          "current": 0.5031,
           "7d_ago": 0.4749,
           "30d_ago": 0.4749,
-          "90d_ago": 0.5721
+          "90d_ago": 0.5687
         },
         "+1y": {
-          "current": 0.789,
+          "current": 0.7943,
           "7d_ago": 0.789,
           "30d_ago": 0.789,
-          "90d_ago": 0.9754
+          "90d_ago": 0.9666
         }
       },
       "source": "yfinance"
