@@ -553,6 +553,189 @@ function buildFundamentalsBlock(f) {
   return '\n\n' + lines.join('\n');
 }
 
+// ── Extras block (W4, 2026-05-08) — full T-RD data context ────────────────
+// Consumes enrichment_context.extras built by scripts/research_data_loader.py
+// (Stage 1 of multi-agent team v1, RESEARCH_AGENT_TEAM_v1.md §2). Renders
+// rich data the existing fundamentalsBlock doesn't cover: multi-year fin
+// trends, OHLC, VP snapshot, rDCF, fragility, watchlist wrongIf,
+// Tushare per-ticker signals. Closes the "research uses ~10% of deployed
+// data" gap diagnosed 2026-05-08. Defensive — handles missing layers
+// gracefully so model gets COMPACT prompt addition (~30-50 lines max).
+function buildExtrasBlock(extras) {
+  if (!extras || typeof extras !== 'object') return '';
+  const lines = ['━━━ FULL DATA CONTEXT (T-RD loader — prioritize over training data) ━━━'];
+
+  const fmtB = v => (v == null || !Number.isFinite(v)) ? '—' : `${(v / 1e9).toFixed(1)}B`;
+
+  // 1. Multi-year financial trends
+  const fin = extras.financials_annual;
+  if (fin && fin._status === 'loaded') {
+    const incomeYears = fin.income_statement ? Object.keys(fin.income_statement).sort().reverse() : [];
+    if (incomeYears.length > 0) {
+      const ni = incomeYears.map(y => fin.income_statement[y]['Net Income'] ?? fin.income_statement[y]['Net Income Common Stockholders']);
+      lines.push('MULTI-YEAR INCOME STATEMENT (annual):');
+      lines.push(`  Net Income: ${incomeYears.map((y, i) => `${y.slice(0, 4)}=${fmtB(ni[i])}`).join(', ')}`);
+      if (ni.length >= 2 && ni[0] != null && ni[1] != null && ni[1] !== 0) {
+        const yoy = (ni[0] / ni[1] - 1) * 100;
+        lines.push(`  Net Income YoY (latest): ${yoy >= 0 ? '+' : ''}${yoy.toFixed(1)}%`);
+      }
+      const eps = incomeYears.map(y => fin.income_statement[y]['Diluted EPS']);
+      if (eps.some(e => e != null)) {
+        lines.push(`  Diluted EPS: ${incomeYears.map((y, i) => `${y.slice(0, 4)}=${eps[i] != null ? eps[i].toFixed(2) : '—'}`).join(', ')}`);
+      }
+    }
+    const cfYears = fin.cash_flow ? Object.keys(fin.cash_flow).sort().reverse() : [];
+    if (cfYears.length > 0) {
+      const buybacks = cfYears.map(y => fin.cash_flow[y]['Repurchase Of Capital Stock']);
+      if (buybacks.some(b => b != null && b !== 0)) {
+        lines.push(`  Buyback (cash flow outflow): ${cfYears.map((y, i) => `${y.slice(0, 4)}=${fmtB(Math.abs(buybacks[i] || 0))}`).join(', ')}`);
+      }
+    }
+  }
+
+  // 2. OHLC trend
+  const ohlc = extras.ohlc_recent;
+  if (ohlc && ohlc._status === 'loaded' && Array.isArray(ohlc.data) && ohlc.data.length > 0) {
+    const data = ohlc.data;
+    const last = data[data.length - 1];
+    const first = data[0];
+    if (last && first && first.close && last.close) {
+      const ret = ((last.close - first.close) / first.close) * 100;
+      const highs = data.map(d => d.high).filter(Number.isFinite);
+      const lows = data.map(d => d.low).filter(Number.isFinite);
+      const high = highs.length ? Math.max(...highs) : null;
+      const low = lows.length ? Math.min(...lows) : null;
+      lines.push(`OHLC TREND (${data.length}d): close ${first.close.toFixed(2)} → ${last.close.toFixed(2)} (${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%)`);
+      if (high != null && low != null && high !== low) {
+        const pos = ((last.close - low) / (high - low)) * 100;
+        lines.push(`  Period range ${low.toFixed(2)}–${high.toFixed(2)}, last close at ${pos.toFixed(0)}% of range`);
+      }
+    }
+  }
+
+  // 3. VP snapshot
+  const vp = extras.vp_snapshot;
+  if (vp && vp._status === 'loaded') {
+    lines.push(`VP SNAPSHOT: composite=${vp.vp ?? '?'} (date ${vp.date || '?'})`);
+    const decomp = vp.decomp || {};
+    const dims = Object.entries(decomp).map(([k, v]) => {
+      const score = (v && typeof v === 'object') ? (v.s ?? v.score ?? '?') : v;
+      return `${k}=${score}`;
+    });
+    if (dims.length) lines.push(`  Dimensions: ${dims.join(', ')}`);
+  }
+
+  // 4. Reverse DCF
+  const rdcf = extras.rdcf;
+  if (rdcf && rdcf._status === 'loaded' && Number.isFinite(rdcf.delta)) {
+    const num3 = v => (v == null || !Number.isFinite(v)) ? '?' : v.toFixed(3);
+    lines.push(`REVERSE DCF: implied_fcf_growth=${num3(rdcf.implied_fcf_growth)}, our_fcf_growth=${num3(rdcf.our_fcf_growth)}, delta=${rdcf.delta >= 0 ? '+' : ''}${num3(rdcf.delta)}`);
+    if (rdcf.delta > 0.05) lines.push('  → Market under-pricing growth (potential UNDERVALUED signal).');
+    else if (rdcf.delta < -0.05) lines.push('  → Market over-pricing growth (potential OVERVALUED signal).');
+  } else if (rdcf && rdcf._status === 'rdcf_failed') {
+    lines.push(`REVERSE DCF: failed (${rdcf.error || 'unknown'})`);
+  }
+
+  // 5. Fragility F1-F6
+  const frag = extras.fragility;
+  if (frag && frag._status === 'loaded') {
+    const factors = [];
+    for (const key of ['F1', 'F2', 'F3', 'F4', 'F5', 'F6']) {
+      const direct = frag[key];
+      if (direct != null) {
+        const score = (typeof direct === 'object') ? (direct.score ?? direct.s) : direct;
+        if (score != null) factors.push(`${key}=${score}`);
+      }
+    }
+    if (factors.length) lines.push(`FRAGILITY: ${factors.join(', ')}`);
+  }
+
+  // 6. Watchlist wrongIf + concentration seed
+  const wl = extras.watchlist_meta;
+  if (wl && wl._status === 'loaded') {
+    const seed = wl.vp_seed || {};
+    if (seed.wrongIf_e) lines.push(`WATCHLIST wrongIf: ${seed.wrongIf_e.slice(0, 220)}`);
+    const conc = seed.concentration_seed;
+    if (conc && conc.score != null) {
+      lines.push(`WATCHLIST concentration_seed: score=${conc.score} — ${(conc.rationale_e || '').slice(0, 160)}`);
+    }
+  }
+
+  // 7. Tushare per-ticker signal highlights
+  const ts = extras.tushare_suite || {};
+  const tsLines = [];
+
+  const ht = ts.holdertrade;
+  if (ht && Array.isArray(ht.records) && ht.records.length > 0) {
+    const r = ht.records.slice(0, 3);
+    const inOutNet = r.reduce((s, x) => s + ((x.in_de === '1' || x.in_de === 1) ? 1 : -1) * (x.change_vol || 0), 0);
+    tsLines.push(`Holder trade (recent ${r.length}): net ${inOutNet >= 0 ? '+' : ''}${(inOutNet / 1e4).toFixed(0)}万股 buy/sell`);
+  }
+
+  const mg = ts.margin;
+  if (mg && Array.isArray(mg.records) && mg.records.length >= 2) {
+    const last = mg.records[mg.records.length - 1];
+    const first = mg.records[0];
+    if (last && first && Number.isFinite(last.rzye) && Number.isFinite(first.rzye) && first.rzye !== 0) {
+      const change = ((last.rzye - first.rzye) / first.rzye) * 100;
+      tsLines.push(`Margin: 融资余额 ${(last.rzye / 1e8).toFixed(1)}亿 (${change >= 0 ? '+' : ''}${change.toFixed(1)}% over period)`);
+    }
+  }
+
+  const pl = ts.pledge_stat;
+  if (pl && Number.isFinite(pl.pledge_ratio)) {
+    tsLines.push(`Pledge ratio: ${pl.pledge_ratio.toFixed(2)}%`);
+  }
+
+  const rp = ts.repurchase;
+  if (rp && Array.isArray(rp.records) && rp.records.length > 0) {
+    tsLines.push(`Buyback programs (active records): ${rp.records.length}`);
+  }
+
+  const br = ts.broker_recommend;
+  if (br && Array.isArray(br.records) && br.records.length > 0) {
+    tsLines.push(`Broker recommend records: ${br.records.length}`);
+  }
+
+  const cd = ts.chip_distribution;
+  if (cd && (cd._status === 'ok' || cd.cost_levels)) {
+    tsLines.push(`Chip distribution: data available`);
+  }
+
+  const cf = ts.consensus_forecast;
+  if (cf && Array.isArray(cf.forecasts) && cf.forecasts.length > 0) {
+    tsLines.push(`Consensus forecasts: ${cf.forecasts.length} broker estimates`);
+  }
+
+  if (tsLines.length > 0) {
+    lines.push('TUSHARE SIGNALS:');
+    tsLines.forEach(l => lines.push(`  ${l}`));
+  }
+
+  // 8. Coverage gaps explicit
+  if (extras._coverage_summary && typeof extras._coverage_summary === 'object') {
+    const missing = Object.entries(extras._coverage_summary)
+      .filter(([, v]) => v === 'not_available' || v === 'ticker_not_in_snapshot' || v === 'ticker_not_in_overlay')
+      .map(([k]) => k);
+    if (missing.length > 0) {
+      lines.push(`COVERAGE GAPS (data not loaded for these layers — do NOT fabricate substitutes): ${missing.join(', ')}`);
+    }
+  }
+
+  // 9. Grounding rule
+  lines.push('');
+  lines.push('GROUNDING RULE — non-negotiable:');
+  lines.push('  Every numeric claim in your thesis MUST be either');
+  lines.push('  (a) directly drawn from THIS data context above (with field name where possible), OR');
+  lines.push('  (b) explicitly labeled "[external estimate, not in our data context]"');
+  lines.push('  Do NOT fabricate prices, multiples, EPS, growth rates, or analyst targets.');
+  lines.push('  If the data context lacks a number you would normally cite, write');
+  lines.push('  "not available in our data" instead of guessing from training memory.');
+  lines.push('━━━ END FULL DATA CONTEXT ━━━');
+
+  return '\n\n' + lines.join('\n');
+}
+
 function buildConsensusBlock(views, sourcesUsed) {
   if (!views?.length) return '';
 
@@ -1489,6 +1672,11 @@ export default async function handler(req, res) {
       ? { ...enrichment_context.fundamentals, live_price: enrichment_context.live_price ? parseFloat(enrichment_context.live_price) : null }
       : null;
     const fundamentalsBlock = buildFundamentalsBlock(fundInput);
+    // W4 (2026-05-08) — full T-RD data context. Built by
+    // scripts/research_data_loader.py on the client (run_research.py) or by
+    // the multi-agent pipeline (future /api/research-multi). Server reads
+    // extras here and renders into prompt; if absent, prompt unchanged.
+    const extrasBlock       = buildExtrasBlock(enrichment_context?.extras);
     const consensusBlock    = buildConsensusBlock(pass1.views, pass1.sourcesUsed);
 
     // ── Pass 2: Full research generation ──────────────────────────────────
@@ -1507,7 +1695,7 @@ IMPORTANT: "${company || ticker}" is the definitive identity for this ticker. Re
 
 Initial direction bias: ${direction || 'NEUTRAL'}
 Research context: ${context || 'General screening — no specific catalyst prompted this research.'}
-${enrichmentBlock}${fundamentalsBlock}${consensusBlock}
+${enrichmentBlock}${fundamentalsBlock}${extrasBlock}${consensusBlock}
 
 VARIANT VIEW INSTRUCTION (most critical block — follow this 3-step process):
 ${pass1.views.length > 0
@@ -1597,6 +1785,7 @@ Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return 
       tavily_count:        pass1.tavilyCount,
       enrichment_used:     !!enrichment_context,
       fundamentals_used:   !!(enrichment_context?.fundamentals && fundInput),
+      extras_used:         !!(enrichment_context?.extras && extrasBlock),
       tavily_enabled:      !!process.env.TAVILY_API_KEY,
     });
 
