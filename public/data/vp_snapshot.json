@@ -44,142 +44,7 @@
         "our_growth": 34.1,
         "hyper_growth": true
       },
-      "engine_run_at": "2026-05-08T07:15:22.818845+00:00"
-    },
-    {
-      "ticker": "700.HK",
-      "date": "2026-05-08",
-      "vp_score": 53,
-      "expectation_gap": 35,
-      "fundamental_accel": 66,
-      "narrative_shift": 70,
-      "low_coverage": 35,
-      "catalyst_prox": 58,
-      "close": 477.4,
-      "volume": -96,
-      "source": "vp_engine",
-      "wrongIf_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
-      "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
-      "vp_prev": 53,
-      "fa_detail": {
-        "score": 66,
-        "year_latest": "2025-12-31",
-        "year_prior": "2024-12-31",
-        "note": "NI/Rev=1.14x  Rev+14%  NI+16% | GM=56.2% (Δ+3.3pp) | FCF/NI=0.85x  FCF=190.2B",
-        "components": {
-          "ni_rev_score": 65,
-          "gm_trend_score": 62,
-          "fcf_quality": 72
-        },
-        "raw": {
-          "rev_gr": 13.9,
-          "ni_gr": 15.9,
-          "ni_rev_ratio": 1.14,
-          "gm_pct": 56.2,
-          "gm_delta_pp": 3.3,
-          "fcf_ni_ratio": 0.85
-        }
-      },
-      "eg_detail": {
-        "score": 35,
-        "source": "rdcf_delta",
-        "signal": "OVERPRICED",
-        "delta": -0.131,
-        "implied_growth": 31.1,
-        "our_growth": 18.0,
-        "hyper_growth": false
-      },
-      "engine_run_at": "2026-05-08T07:15:22.819510+00:00"
-    },
-    {
-      "ticker": "9999.HK",
-      "date": "2026-05-08",
-      "vp_score": 61,
-      "expectation_gap": 68,
-      "fundamental_accel": 76,
-      "narrative_shift": 45,
-      "low_coverage": 48,
-      "catalyst_prox": 60,
-      "close": 185.6,
-      "volume": -102,
-      "source": "vp_engine",
-      "wrongIf_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-      "wrongIf_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
-      "vp_prev": 61,
-      "fa_detail": {
-        "score": 76,
-        "year_latest": "2025-12-31",
-        "year_prior": "2024-12-31",
-        "note": "NI/Rev=1.96x  Rev+7%  NI+14% | GM=64.3% (Δ+1.8pp) | FCF/NI=1.44x  FCF=48.7B",
-        "components": {
-          "ni_rev_score": 78,
-          "gm_trend_score": 62,
-          "fcf_quality": 88
-        },
-        "raw": {
-          "rev_gr": 7.0,
-          "ni_gr": 13.7,
-          "ni_rev_ratio": 1.96,
-          "gm_pct": 64.3,
-          "gm_delta_pp": 1.8,
-          "fcf_ni_ratio": 1.44
-        }
-      },
-      "eg_detail": {
-        "score": 68,
-        "source": "rdcf_delta",
-        "signal": "UNDERPRICED",
-        "delta": 0.108,
-        "implied_growth": 4.2,
-        "our_growth": 15.0,
-        "hyper_growth": false
-      },
-      "engine_run_at": "2026-05-08T07:15:22.820200+00:00"
-    },
-    {
-      "ticker": "6160.HK",
-      "date": "2026-05-08",
-      "vp_score": 51,
-      "expectation_gap": 10,
-      "fundamental_accel": 57,
-      "narrative_shift": 75,
-      "low_coverage": 55,
-      "catalyst_prox": 78,
-      "close": 188.9,
-      "volume": 84,
-      "source": "vp_engine",
-      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
-      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
-      "vp_prev": 51,
-      "fa_detail": {
-        "score": 57,
-        "year_latest": "2025-12-31",
-        "year_prior": "2024-12-31",
-        "note": "NI turnaround or persistent loss | GM=87.5% (Δ+3.1pp) | FCF/NI=3.00x  FCF=0.9B",
-        "components": {
-          "ni_rev_score": 30,
-          "gm_trend_score": 62,
-          "fcf_quality": 88
-        },
-        "raw": {
-          "rev_gr": 40.2,
-          "ni_gr": null,
-          "ni_rev_ratio": null,
-          "gm_pct": 87.5,
-          "gm_delta_pp": 3.1,
-          "fcf_ni_ratio": 3.0
-        }
-      },
-      "eg_detail": {
-        "score": 10,
-        "source": "rdcf_delta",
-        "signal": "OVERPRICED",
-        "delta": -0.757,
-        "implied_growth": 110.7,
-        "our_growth": 35.0,
-        "hyper_growth": false
-      },
-      "engine_run_at": "2026-05-08T07:15:22.820831+00:00"
+      "engine_run_at": "2026-05-08T12:17:38.984250+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -224,7 +89,89 @@
         "our_growth": 28.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-08T07:15:22.821426+00:00"
+      "engine_run_at": "2026-05-08T12:17:38.984910+00:00"
+    },
+    {
+      "ticker": "175.HK",
+      "date": "2026-05-08",
+      "vp_score": 51,
+      "expectation_gap": 50,
+      "fundamental_accel": 55,
+      "narrative_shift": 50,
+      "low_coverage": 50,
+      "catalyst_prox": 50,
+      "close": 22.7,
+      "volume": 17,
+      "source": "vp_engine",
+      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
+      "wrongIf_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
+      "vp_prev": 50,
+      "fa_detail": {
+        "score": 55,
+        "year_latest": "2025-12-31",
+        "year_prior": "2024-12-31",
+        "note": "NI/Rev=0.01x  Rev+25%  NI+0% | GM=16.6% (Δ+0.0pp) | FCF/NI=1.74x  FCF=29.4B",
+        "components": {
+          "ni_rev_score": 35,
+          "gm_trend_score": 50,
+          "fcf_quality": 88
+        },
+        "raw": {
+          "rev_gr": 25.1,
+          "ni_gr": 0.2,
+          "ni_rev_ratio": 0.01,
+          "gm_pct": 16.6,
+          "gm_delta_pp": 0.0,
+          "fcf_ni_ratio": 1.74
+        }
+      },
+      "eg_detail": {
+        "score": 50,
+        "source": "seed_fallback",
+        "reason": "no_delta_in_rdcf"
+      },
+      "engine_run_at": "2026-05-08T12:17:38.985487+00:00"
+    },
+    {
+      "ticker": "603233.SH",
+      "date": "2026-05-08",
+      "vp_score": 57,
+      "expectation_gap": 50,
+      "fundamental_accel": 79,
+      "narrative_shift": 50,
+      "low_coverage": 50,
+      "catalyst_prox": 50,
+      "close": 18.55,
+      "volume": 646762500,
+      "source": "vp_engine",
+      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
+      "wrongIf_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
+      "vp_prev": 50,
+      "fa_detail": {
+        "score": 79,
+        "year_latest": "2025-12-31",
+        "year_prior": "2024-12-31",
+        "note": "NI/Rev=9.23x  Rev+4%  NI+35% | GM=34.3% (Δ-0.0pp) | FCF/NI=3.94x  FCF=4.9B",
+        "components": {
+          "ni_rev_score": 95,
+          "gm_trend_score": 50,
+          "fcf_quality": 88
+        },
+        "raw": {
+          "rev_gr": 3.8,
+          "ni_gr": 35.0,
+          "ni_rev_ratio": 9.23,
+          "gm_pct": 34.3,
+          "gm_delta_pp": -0.0,
+          "fcf_ni_ratio": 3.94
+        }
+      },
+      "eg_detail": {
+        "score": 50,
+        "source": "seed_fallback",
+        "reason": "no_delta_in_rdcf"
+      },
+      "engine_run_at": "2026-05-08T12:17:38.986094+00:00"
     }
   ]
 }

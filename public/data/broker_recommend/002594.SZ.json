@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-08T07:15:12Z",
+  "fetched_at": "2026-05-08T12:17:22Z",
   "api_used": "report_rc",
   "_attempted_endpoints": [
     "broker_recommend",
@@ -9,6 +9,64 @@
   ],
   "window_days": 90,
   "recommendations": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "report_date": "20260508",
+      "report_title": "汽车：一季报复盘（整车、零部件）——一周一刻钟，大事快评（W154）",
+      "report_type": "非个股",
+      "classify": "一般报告",
+      "org_name": "申万宏源证券",
+      "author_name": "戴文杰,朱傅哲",
+      "quarter": "2027Q4",
+      "op_rt": null,
+      "op_pr": null,
+      "tp": null,
+      "np": 4647000.0,
+      "eps": 5.097,
+      "pe": null,
+      "rd": null,
+      "roe": null,
+      "ev_ebitda": null,
+      "rating": "无",
+      "max_price": null,
+      "min_price": null,
+      "rec_date": "20260508",
+      "broker": "申万宏源证券",
+      "analyst": null,
+      "recommendation": "无",
+      "target_price": null,
+      "report_id": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "report_date": "20260508",
+      "report_title": "汽车：一季报复盘（整车、零部件）——一周一刻钟，大事快评（W154）",
+      "report_type": "非个股",
+      "classify": "一般报告",
+      "org_name": "申万宏源证券",
+      "author_name": "戴文杰,朱傅哲",
+      "quarter": "2026Q4",
+      "op_rt": null,
+      "op_pr": null,
+      "tp": null,
+      "np": 3651000.0,
+      "eps": 4.005,
+      "pe": null,
+      "rd": null,
+      "roe": null,
+      "ev_ebitda": null,
+      "rating": "无",
+      "max_price": null,
+      "min_price": null,
+      "rec_date": "20260508",
+      "broker": "申万宏源证券",
+      "analyst": null,
+      "recommendation": "无",
+      "target_price": null,
+      "report_id": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -7058,11 +7116,11 @@
     }
   ],
   "summary": {
-    "total_90d": 243,
+    "total_90d": 245,
     "unique_brokers_90d": 34,
-    "latest_recommendation": "强推",
+    "latest_recommendation": "无",
     "avg_target_price": null,
     "target_price_count": 0,
-    "latest_date": "2026-05-07"
+    "latest_date": "2026-05-08"
   }
 }

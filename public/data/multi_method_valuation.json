@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-08T07:15:23.249409+00:00",
+    "generated_at": "2026-05-08T12:17:39.385273+00:00",
     "schema_version": 1,
     "method": "median_of_3_signals_aggregator",
     "tie_break_rule": "n2_consensus_only",
@@ -47,12 +47,12 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "OVERPRICED",
-          "delta": -0.8604,
+          "delta": -0.8597,
           "skip_reason": null
         },
         "EV_EBITDA": {
           "signal": "OVERPRICED",
-          "delta_pct": -68.47,
+          "delta_pct": -68.45,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
@@ -63,109 +63,6 @@
       },
       "rationale_e": "2 of 3 methods available (OVERPRICED (FCF DCF) and OVERPRICED (EV/EBITDA)); consensus among available → triangulated OVERPRICED.",
       "rationale_z": "3种方法中2种可用（OVERPRICED (FCF DCF) and OVERPRICED (EV/EBITDA)）；consensus among available → 三角信号 OVERPRICED。"
-    },
-    "700.HK": {
-      "ticker": "700.HK",
-      "triangulated_signal": "OVERPRICED",
-      "methods_count": 3,
-      "methods_used": [
-        "FCF_DCF",
-        "EV_EBITDA",
-        "Residual_Income_EBO"
-      ],
-      "methods_skipped": [],
-      "is_biotech_fallback": false,
-      "is_partial": false,
-      "method_signals": {
-        "FCF_DCF": {
-          "signal": "OVERPRICED",
-          "delta": -0.1306,
-          "skip_reason": null
-        },
-        "EV_EBITDA": {
-          "signal": "OVERPRICED",
-          "delta_pct": -22.9,
-          "skip_reason": null
-        },
-        "Residual_Income_EBO": {
-          "signal": "OVERPRICED",
-          "delta_pp": -27.1,
-          "skip_reason": null
-        }
-      },
-      "rationale_e": "3 of 3 methods agree OVERPRICED (cash-flow + multiples + book-value lenses converge). Strongest possible signal.",
-      "rationale_z": "3种方法一致 OVERPRICED（现金流+倍数+账面价值三个角度收敛）。最强信号。"
-    },
-    "9999.HK": {
-      "ticker": "9999.HK",
-      "triangulated_signal": "FAIRLY_VALUED",
-      "methods_count": 3,
-      "methods_used": [
-        "FCF_DCF",
-        "EV_EBITDA",
-        "Residual_Income_EBO"
-      ],
-      "methods_skipped": [],
-      "is_biotech_fallback": false,
-      "is_partial": false,
-      "method_signals": {
-        "FCF_DCF": {
-          "signal": "UNDERPRICED",
-          "delta": 0.1078,
-          "skip_reason": null
-        },
-        "EV_EBITDA": {
-          "signal": "FAIRLY_VALUED",
-          "delta_pct": 4.78,
-          "skip_reason": null
-        },
-        "Residual_Income_EBO": {
-          "signal": "OVERPRICED",
-          "delta_pp": -17.95,
-          "skip_reason": null
-        }
-      },
-      "rationale_e": "3 methods span full range (UNDER, FAIR, OVER); EV_EBITDA sits at median = FAIRLY_VALUED.",
-      "rationale_z": "3种方法覆盖全范围（低估、合理、高估）；EV_EBITDA 处于中位 = FAIRLY_VALUED。"
-    },
-    "6160.HK": {
-      "ticker": "6160.HK",
-      "triangulated_signal": "OVERPRICED",
-      "methods_count": 1,
-      "methods_used": [
-        "FCF_DCF"
-      ],
-      "methods_skipped": [
-        {
-          "method": "EV_EBITDA",
-          "reason": "ev_ebitda_biotech_fallback"
-        },
-        {
-          "method": "Residual_Income_EBO",
-          "reason": "ri_biotech_fallback"
-        }
-      ],
-      "is_biotech_fallback": true,
-      "is_partial": false,
-      "method_signals": {
-        "FCF_DCF": {
-          "signal": "OVERPRICED",
-          "delta": -0.7566,
-          "skip_reason": null
-        },
-        "EV_EBITDA": {
-          "signal": null,
-          "delta_pct": null,
-          "skip_reason": "ev_ebitda_biotech_fallback"
-        },
-        "Residual_Income_EBO": {
-          "signal": null,
-          "delta_pp": null,
-          "skip_reason": "ri_biotech_fallback"
-        }
-      },
-      "rationale_e": "Biotech_fallback path: M2 (EV/EBITDA) and M3 (EBO) inapplicable to clinical-stage biotech. Method 1 (FCF DCF biotech_revenue) signal = OVERPRICED, used as canonical.",
-      "rationale_z": "生物科技回退路径：M2 (EV/EBITDA) 与 M3 (EBO) 不适用于临床期生物科技。Method 1 (FCF DCF biotech_revenue) 信号 = OVERPRICED，作为标准。"
     },
     "002594.SZ": {
       "ticker": "002594.SZ",
@@ -198,6 +95,84 @@
       },
       "rationale_e": "2 of 3 methods agree UNDERPRICED; remaining method differs but median resolves to UNDERPRICED.",
       "rationale_z": "3种方法中2种一致 UNDERPRICED；剩余1种有分歧但中位数为 UNDERPRICED。"
+    },
+    "175.HK": {
+      "ticker": "175.HK",
+      "triangulated_signal": "OVERPRICED",
+      "methods_count": 1,
+      "methods_used": [
+        "EV_EBITDA"
+      ],
+      "methods_skipped": [
+        {
+          "method": "FCF_DCF",
+          "reason": "rdcf_missing"
+        },
+        {
+          "method": "Residual_Income_EBO",
+          "reason": "ri_wacc_missing"
+        }
+      ],
+      "is_biotech_fallback": false,
+      "is_partial": true,
+      "method_signals": {
+        "FCF_DCF": {
+          "signal": null,
+          "delta": null,
+          "skip_reason": "rdcf_missing"
+        },
+        "EV_EBITDA": {
+          "signal": "OVERPRICED",
+          "delta_pct": -16.79,
+          "skip_reason": null
+        },
+        "Residual_Income_EBO": {
+          "signal": null,
+          "delta_pp": null,
+          "skip_reason": "ri_wacc_missing"
+        }
+      },
+      "rationale_e": "Only Method EV_EBITDA available; methods_count=1. Triangulated signal = OVERPRICED.",
+      "rationale_z": "仅 EV_EBITDA 可用；methods_count=1。三角信号 = OVERPRICED。"
+    },
+    "603233.SH": {
+      "ticker": "603233.SH",
+      "triangulated_signal": "UNDERPRICED",
+      "methods_count": 1,
+      "methods_used": [
+        "EV_EBITDA"
+      ],
+      "methods_skipped": [
+        {
+          "method": "FCF_DCF",
+          "reason": "rdcf_missing"
+        },
+        {
+          "method": "Residual_Income_EBO",
+          "reason": "ri_wacc_missing"
+        }
+      ],
+      "is_biotech_fallback": false,
+      "is_partial": true,
+      "method_signals": {
+        "FCF_DCF": {
+          "signal": null,
+          "delta": null,
+          "skip_reason": "rdcf_missing"
+        },
+        "EV_EBITDA": {
+          "signal": "UNDERPRICED",
+          "delta_pct": 100.84,
+          "skip_reason": null
+        },
+        "Residual_Income_EBO": {
+          "signal": null,
+          "delta_pp": null,
+          "skip_reason": "ri_wacc_missing"
+        }
+      },
+      "rationale_e": "Only Method EV_EBITDA available; methods_count=1. Triangulated signal = UNDERPRICED.",
+      "rationale_z": "仅 EV_EBITDA 可用；methods_count=1。三角信号 = UNDERPRICED。"
     }
   }
 }

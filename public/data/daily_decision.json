@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-05-08T07:15:22.947349+00:00",
+  "generated_at": "2026-05-08T12:17:39.108909+00:00",
   "date": "2026-05-08",
-  "brief_e": "3 REVIEW_TRIM",
-  "brief_z": "REVIEW_TRIM3",
+  "brief_e": "1 REVIEW_TRIM",
+  "brief_z": "REVIEW_TRIM1",
   "decisions": {
     "held": [
       {
@@ -14,45 +14,11 @@
         "confidence": 11,
         "pnl_pct": 30.03,
         "holding_days": 59,
-        "weight_pct": 44.7,
+        "weight_pct": 49.9,
         "vp_score": 56,
         "confluence": -11,
         "reason_e": "Large unrealised gain +30.0% after 59d. Signal still NEUTRAL (score -11). Consider partial trim to protect profit.",
         "reason_z": "浮盈+30.0%（持有59天），信号-11仍属信号中性，等待，可考虑部分减仓保护利润。",
-        "entry_target": null,
-        "exit_trigger": "P&L > 25.0% → review trim opportunity"
-      },
-      {
-        "ticker": "700.HK",
-        "name": "腾讯控股",
-        "status": "HELD",
-        "action": "REVIEW_TRIM",
-        "priority": "MEDIUM",
-        "confidence": 0,
-        "pnl_pct": 25.79,
-        "holding_days": 52,
-        "weight_pct": 29.4,
-        "vp_score": 53,
-        "confluence": 0,
-        "reason_e": "Large unrealised gain +25.8% after 52d. Signal still NEUTRAL (score 0). Consider partial trim to protect profit.",
-        "reason_z": "浮盈+25.8%（持有52天），信号0仍属信号中性，等待，可考虑部分减仓保护利润。",
-        "entry_target": null,
-        "exit_trigger": "P&L > 25.0% → review trim opportunity"
-      },
-      {
-        "ticker": "9999.HK",
-        "name": "网易",
-        "status": "HELD",
-        "action": "REVIEW_TRIM",
-        "priority": "MEDIUM",
-        "confidence": 14,
-        "pnl_pct": 27.49,
-        "holding_days": 45,
-        "weight_pct": 17.2,
-        "vp_score": 61,
-        "confluence": 14,
-        "reason_e": "Large unrealised gain +27.5% after 45d. Signal still NEUTRAL (score 14). Consider partial trim to protect profit.",
-        "reason_z": "浮盈+27.5%（持有45天），信号14仍属信号中性，等待，可考虑部分减仓保护利润。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → review trim opportunity"
       },
@@ -63,13 +29,47 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 30,
-        "pnl_pct": 19.08,
+        "pnl_pct": 0.0,
         "holding_days": 59,
-        "weight_pct": 4.7,
-        "vp_score": 51,
+        "weight_pct": 4.4,
+        "vp_score": null,
         "confluence": 30,
-        "reason_e": "Signal neutral (score 30). P&L +19.1% after 59d. Hold — no new entry/exit trigger. Bullish: Ma20 Bounce, Macd Golden Cross | RSI 59 | Price vs MA20 +3.0% | VP 51.",
-        "reason_z": "信号中性（评分30），浮盈+19.1%，持有59天，无新触发条件。多头：MA20支撑反弹、MACD金叉 | RSI 59 | 距MA20 +3.0% | VP 51。",
+        "reason_e": "Signal neutral (score 30). P&L +0.0% after 59d. Hold — no new entry/exit trigger. Bullish: Ma20 Bounce, Macd Golden Cross | RSI 59 | Price vs MA20 +3.0%.",
+        "reason_z": "信号中性（评分30），浮盈+0.0%，持有59天，无新触发条件。多头：MA20支撑反弹、MACD金叉 | RSI 59 | 距MA20 +3.0%。",
+        "entry_target": null,
+        "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
+      },
+      {
+        "ticker": "700.HK",
+        "name": "腾讯控股",
+        "status": "HELD",
+        "action": "HOLD",
+        "priority": "LOW",
+        "confidence": 0,
+        "pnl_pct": 0.0,
+        "holding_days": 52,
+        "weight_pct": 26.1,
+        "vp_score": null,
+        "confluence": 0,
+        "reason_e": "Signal neutral (score 0). P&L +0.0% after 52d. Hold — no new entry/exit trigger. RSI 41 | Price vs MA20 -3.5%.",
+        "reason_z": "信号中性（评分0），浮盈+0.0%，持有52天，无新触发条件。RSI 41 | 距MA20 -3.5%。",
+        "entry_target": null,
+        "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
+      },
+      {
+        "ticker": "9999.HK",
+        "name": "网易",
+        "status": "HELD",
+        "action": "HOLD",
+        "priority": "LOW",
+        "confidence": 0,
+        "pnl_pct": 0.0,
+        "holding_days": 45,
+        "weight_pct": 15.0,
+        "vp_score": null,
+        "confluence": 0,
+        "reason_e": "Signal neutral (score 0). P&L +0.0% after 45d. Hold — no new entry/exit trigger. RSI 56 | Price vs MA20 +2.8%.",
+        "reason_z": "信号中性（评分0），浮盈+0.0%，持有45天，无新触发条件。RSI 56 | 距MA20 +2.8%。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       },
@@ -82,7 +82,7 @@
         "confidence": 0,
         "pnl_pct": 3.98,
         "holding_days": 37,
-        "weight_pct": 4.0,
+        "weight_pct": 4.5,
         "vp_score": 42,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +4.0% after 37d. Hold — no new entry/exit trigger. RSI 46 | Price vs MA20 -2.0% | Regime: PERMISSIVE | VP 42.",
@@ -91,28 +91,49 @@
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
     ],
-    "watchlist": []
+    "watchlist": [
+      {
+        "ticker": "603233.SH",
+        "name": "603233.SH",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 12,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 57,
+        "confluence": 12,
+        "reason_e": "No entry trigger. Score 12, VP 57. Bullish: Ma20 Bounce | RSI 55 | Price vs MA20 +3.0% | VP 57.",
+        "reason_z": "无进场信号。评分12，VP57。多头：MA20支撑反弹 | RSI 55 | 距MA20 +3.0% | VP 57。",
+        "entry_target": null,
+        "exit_trigger": null
+      },
+      {
+        "ticker": "175.HK",
+        "name": "175.HK",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 0,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 51,
+        "confluence": 0,
+        "reason_e": "No entry trigger. Score 0, VP 51. RSI 52 | Price vs MA20 -3.6% | VP 51.",
+        "reason_z": "无进场信号。评分0，VP51。RSI 52 | 距MA20 -3.6% | VP 51。",
+        "entry_target": null,
+        "exit_trigger": null
+      }
+    ]
   },
   "buy_watches": [],
   "portfolio_risk": [
-    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 45% of portfolio — above 40.0% limit",
-    "💰 PROFIT REVIEW: 300308.SZ +30.0% — consider partial trim to lock gains",
-    "💰 PROFIT REVIEW: 700.HK +25.8% — consider partial trim to lock gains",
-    "💰 PROFIT REVIEW: 9999.HK +27.5% — consider partial trim to lock gains"
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 50% of portfolio — above 40.0% limit",
+    "💰 PROFIT REVIEW: 300308.SZ +30.0% — consider partial trim to lock gains"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "6160.HK",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
-      "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或布鲁替尼美国BTK市占率跌破15%，或连续两季度营收增速<20%",
-      "note_e": "Binary event condition — manual monitoring required: CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
-      "note_z": "二元事件条件——需人工监控：CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor",
-      "indicator": "binary_event",
-      "actual": null,
-      "threshold": null
-    },
     {
       "ticker": "002594.SZ",
       "severity": "HIGH",
@@ -138,18 +159,6 @@
       "threshold": -40.0
     },
     {
-      "ticker": "9999.HK",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-      "wrongIf_z": "连续两季度盈利增速<-30%，或日本营收贡献未在2026年Q4前达到总收入15%",
-      "note_e": "✅ Clear: earnings_growth = -29.2 (threshold -30.0)",
-      "note_z": "✅ 正常：earnings_growth = -29.2（阈值-30.0）",
-      "indicator": "earnings_growth",
-      "actual": -29.2,
-      "threshold": -30.0
-    },
-    {
       "ticker": "300308.SZ",
       "severity": "NONE",
       "status": "CLEAR",
@@ -162,16 +171,28 @@
       "threshold": 25.0
     },
     {
-      "ticker": "700.HK",
+      "ticker": "603233.SH",
       "severity": "LOW",
       "status": "MANUAL",
-      "wrongIf_e": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters (consumption weakens proxy)",
-      "wrongIf_z": "游戏版号审批暂停>3个月，或连续两季度营收增速<-5%（消费下行代理指标）",
-      "note_e": "Binary component requires manual check: approval",
-      "note_z": "含二元事件条件，需人工核查：approval",
-      "indicator": "binary_event",
+      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
+      "wrongIf_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
+      "note_e": "Unstructured condition — monitor manually: [NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
+      "note_z": "非结构化条件——需人工监控：[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
+      "indicator": "unstructured",
       "actual": null,
       "threshold": null
+    },
+    {
+      "ticker": "175.HK",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
+      "wrongIf_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
+      "note_e": "✅ Clear: revenue_growth = 15.6 (threshold -10.0)",
+      "note_z": "✅ 正常：revenue_growth = 15.6（阈值-10.0）",
+      "indicator": "revenue_growth",
+      "actual": 15.6,
+      "threshold": -10.0
     }
   ],
   "regime_summary": [
@@ -223,10 +244,10 @@
   ],
   "stats": {
     "positions_held": 5,
-    "watchlist_count": 0,
+    "watchlist_count": 2,
     "buy_watch_count": 0,
     "wrongif_triggered": 2,
-    "wrongif_manual": 2,
+    "wrongif_manual": 1,
     "wrongif_clear": 2
   }
 }

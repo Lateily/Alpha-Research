@@ -1,13 +1,12 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-08T07:12:14.842364",
+    "fetched_at": "2026-05-08T12:13:39.489922",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
-      "700.HK",
-      "9999.HK",
-      "6160.HK",
-      "002594.SZ"
+      "002594.SZ",
+      "175.HK",
+      "603233.SH"
     ],
     "fx_rates": {
       "HKDCNY": 0.9165
@@ -22,50 +21,50 @@
         "high": 898.95,
         "low": 861.56,
         "volume": 1976407700,
-        "avg_volume_20d": 29396001,
-        "volume_ratio": 67.23,
+        "avg_volume_20d": 29405046,
+        "volume_ratio": 67.21,
         "high_52w": 918.9,
         "low_52w": 436.44
       },
       "technical": {
-        "sma_20": 822.12,
+        "sma_20": 822.13,
         "sma_50": 672.25,
         "sma_200": null,
         "rsi_14": 70.9,
-        "macd": 60.5943,
-        "macd_signal": 64.2592,
-        "macd_histogram": -3.6649,
+        "macd": 60.6119,
+        "macd_signal": 64.2627,
+        "macd_histogram": -3.6509,
         "above_sma_20": true,
         "above_sma_50": true,
         "above_sma_200": null
       },
       "fundamentals": {
-        "market_cap": 986405076992,
-        "pe_trailing": 65.95532,
-        "pe_forward": 23.462194,
-        "ev_ebitda": 48.262,
-        "ev_revenue": 18.938,
-        "ps_ratio": 19.317732,
-        "pb": 27.656427,
+        "market_cap": 986650050560,
+        "pe_trailing": 65.9717,
+        "pe_forward": 23.468021,
+        "ev_ebitda": 48.047,
+        "ev_revenue": 18.868,
+        "ps_ratio": 19.322529,
+        "pb": 27.663294,
         "dividend_yield": 0.22,
         "revenue": 51062157312,
         "revenue_growth": 1.921,
         "gross_margin": 0.44032001,
-        "operating_margin": 0.39813,
+        "operating_margin": 0.39851,
         "net_margin": 0.29275998,
         "roe": 0.53931,
-        "roa": 0.27226,
+        "roa": 0.27247,
         "debt_to_equity": 4.506,
         "current_ratio": 2.461,
         "quick_ratio": 1.361,
-        "free_cash_flow": 4162228480,
+        "free_cash_flow": 4169261824,
         "operating_cash_flow": 12099239936,
         "total_cash": 12217721856,
         "total_debt": 1717290112,
-        "ebitda": 20036571136,
+        "ebitda": 20051808256,
         "earnings_growth": 2.594,
         "book_value": 32.028,
-        "enterprise_value": 967000391680
+        "enterprise_value": 963427565568
       },
       "analyst": {
         "target_mean": 873.325,
@@ -87,225 +86,6 @@
       },
       "price_source": "direct_api"
     },
-    "700.HK": {
-      "price": {
-        "last": 477.4,
-        "prev_close": 475,
-        "change_pct": 0.505,
-        "high": 475.6,
-        "low": 468.4,
-        "volume": -96,
-        "avg_volume_20d": 24410086,
-        "volume_ratio": -0.0,
-        "high_52w": 662.0,
-        "low_52w": 460.2
-      },
-      "technical": {
-        "sma_20": 490.34,
-        "sma_50": 506.02,
-        "sma_200": null,
-        "rsi_14": 33.3,
-        "macd": -11.4688,
-        "macd_signal": -10.472,
-        "macd_histogram": -0.9968,
-        "above_sma_20": false,
-        "above_sma_50": false,
-        "above_sma_200": null
-      },
-      "fundamentals": {
-        "market_cap": 4276260962304,
-        "pe_trailing": 17.089203,
-        "pe_forward": 12.132143,
-        "ev_ebitda": 16.032,
-        "ev_revenue": 5.83,
-        "ps_ratio": 5.690691,
-        "pb": 3.2196853,
-        "dividend_yield": 1.11,
-        "revenue": 751766011904,
-        "revenue_growth": 0.127,
-        "gross_margin": 0.5625,
-        "operating_margin": 0.33134997,
-        "net_margin": 0.29909,
-        "roe": 0.20027,
-        "roa": 0.08038,
-        "debt_to_equity": 32.746,
-        "current_ratio": 1.443,
-        "quick_ratio": 1.242,
-        "free_cash_flow": 139386503168,
-        "operating_cash_flow": 303051997184,
-        "total_cash": 422552010752,
-        "total_debt": 406398992384,
-        "ebitda": 273397006336,
-        "earnings_growth": 0.141,
-        "book_value": 146.97089,
-        "enterprise_value": 4383028805632
-      },
-      "analyst": {
-        "target_mean": 726.14453,
-        "target_high": 889.0017,
-        "target_low": 484.35938,
-        "target_median": 728.1601,
-        "recommendation": "strong_buy",
-        "num_analysts": 42
-      },
-      "meta": {
-        "currency": "HKD",
-        "exchange": "HK",
-        "name_en": "Tencent",
-        "name_zh": "腾讯控股",
-        "sector": "Communication Services",
-        "industry": "Internet Content & Information",
-        "website": "https://www.tencent.com",
-        "description": "Tencent Holdings Limited, an investment holding company, provides value-added services, marketing services, fintech, and business services in Mainland China and internationally. The company's consumers business includes communications and social services, such as instant messaging and social networks; digital content, including online games, videos, live streaming, news, music, and literature; fintech services, which include mobile payment, wealth management, consumer loans, and securities tradi"
-      },
-      "price_source": "direct_api"
-    },
-    "9999.HK": {
-      "price": {
-        "last": 185.6,
-        "prev_close": 185.6,
-        "change_pct": 0,
-        "high": 185.6,
-        "low": 182.4,
-        "volume": -102,
-        "avg_volume_20d": 5194444,
-        "volume_ratio": -0.0,
-        "high_52w": 232.31,
-        "low_52w": 168.8
-      },
-      "technical": {
-        "sma_20": 178.88,
-        "sma_50": 179.34,
-        "sma_200": null,
-        "rsi_14": 52.3,
-        "macd": 0.6545,
-        "macd_signal": -0.5086,
-        "macd_histogram": 1.163,
-        "above_sma_20": true,
-        "above_sma_50": true,
-        "above_sma_200": null
-      },
-      "fundamentals": {
-        "market_cap": 586439786496,
-        "pe_trailing": 15.278471,
-        "pe_forward": 11.620928,
-        "ev_ebitda": 11.547,
-        "ev_revenue": 3.905,
-        "ps_ratio": 5.2069755,
-        "pb": 3.1820805,
-        "dividend_yield": 2.51,
-        "revenue": 112625803264,
-        "revenue_growth": 0.03,
-        "gross_margin": 0.64285004,
-        "operating_margin": 0.30200002,
-        "net_margin": 0.29975,
-        "roe": 0.22625,
-        "roa": 0.10731,
-        "debt_to_equity": 4.076,
-        "current_ratio": 3.449,
-        "quick_ratio": 3.272,
-        "free_cash_flow": 33487843328,
-        "operating_cash_flow": 50739798016,
-        "total_cash": 164240310272,
-        "total_debt": 6729741824,
-        "ebitda": 38082293760,
-        "earnings_growth": -0.292,
-        "book_value": 57.760952,
-        "enterprise_value": 439753179136
-      },
-      "analyst": {
-        "target_mean": 253.11597,
-        "target_high": 314.3408,
-        "target_low": 142.42041,
-        "target_median": 254.43307,
-        "recommendation": "strong_buy",
-        "num_analysts": 22
-      },
-      "meta": {
-        "currency": "HKD",
-        "exchange": "HK",
-        "name_en": "NetEase",
-        "name_zh": "网易",
-        "sector": "Communication Services",
-        "industry": "Electronic Gaming & Multimedia",
-        "website": "https://ir.netease.com",
-        "description": "NetEase, Inc. engages in online games, music streaming, online intelligent learning services, and internet content services businesses in China and internationally. The company operates through Games and Related Value-Added Services; Youdao; NetEase Cloud Music; and Innovative Businesses and Others segments. It develops and operates mobile and PC games; and offers games licensed from other developers. The company also provides live streaming service, and other related or ancillary value-added se"
-      },
-      "price_source": "direct_api"
-    },
-    "6160.HK": {
-      "price": {
-        "last": 188.9,
-        "prev_close": 189.9,
-        "change_pct": -0.527,
-        "high": 194.3,
-        "low": 189.6,
-        "volume": 84,
-        "avg_volume_20d": 3422340,
-        "volume_ratio": 0.0,
-        "high_52w": 229.4,
-        "low_52w": 159.2
-      },
-      "technical": {
-        "sma_20": 185.03,
-        "sma_50": 181.83,
-        "sma_200": null,
-        "rsi_14": 46.5,
-        "macd": 0.121,
-        "macd_signal": -0.4166,
-        "macd_histogram": 0.5376,
-        "above_sma_20": true,
-        "above_sma_50": true,
-        "above_sma_200": null
-      },
-      "fundamentals": {
-        "market_cap": 257074774016,
-        "pe_trailing": 71.65414,
-        "pe_forward": 30.623375,
-        "ev_ebitda": 21.903,
-        "ev_revenue": 3.152,
-        "ps_ratio": 44.792854,
-        "pb": 8.038192,
-        "dividend_yield": null,
-        "revenue": 5739191808,
-        "revenue_growth": 0.355,
-        "gross_margin": 0.88313,
-        "operating_margin": 0.16511999,
-        "net_margin": 0.08939,
-        "roe": 0.12422,
-        "roa": 0.059559997,
-        "debt_to_equity": 24.135,
-        "current_ratio": 3.644,
-        "quick_ratio": 3.163,
-        "free_cash_flow": 904293632,
-        "operating_cash_flow": 1284834048,
-        "total_cash": 4791675904,
-        "total_debt": 1148909056,
-        "ebitda": 825958016,
-        "earnings_growth": 169.708,
-        "book_value": 23.711802,
-        "enterprise_value": 18091171840
-      },
-      "analyst": {
-        "target_mean": 252.98534,
-        "target_high": 298.2097,
-        "target_low": 212.23524,
-        "target_median": 244.00398,
-        "recommendation": "strong_buy",
-        "num_analysts": 17
-      },
-      "meta": {
-        "currency": "HKD",
-        "exchange": "HK",
-        "name_en": "BeOne Medicines",
-        "name_zh": "百济神州",
-        "sector": "Healthcare",
-        "industry": "Biotechnology",
-        "website": "https://beonemedicines.com",
-        "description": "BeOne Medicines AG, an oncology company, engages in discovering and developing various treatments for cancer patients in the United States, China, Europe, and internationally. The company's commercial stage products include BRUKINSA, a small molecule inhibitor of Bruton's Tyrosine Kinase (BTK) for the treatment of various blood cancers; TEVIMBRA, an anti-PD-1 antibody immunotherapy for the treatment of various solid tumor and blood cancers; SYLVANT for the treatment of adult patients with multic"
-      },
-      "price_source": "direct_api"
-    },
     "002594.SZ": {
       "price": {
         "last": 100.02,
@@ -314,8 +94,8 @@
         "high": 101,
         "low": 99.8,
         "volume": 3821575000,
-        "avg_volume_20d": 51981103,
-        "volume_ratio": 73.52,
+        "avg_volume_20d": 52001687,
+        "volume_ratio": 73.49,
         "high_52w": 111.82,
         "low_52w": 85.88
       },
@@ -378,216 +158,156 @@
         "description": "BYD Company Limited, together with its subsidiaries, engages in automobiles and batteries business in the People's Republic of China, Hong Kong, Macau, Taiwan, and internationally. It operates in two segments, Mobile Handset Components, Assembly Service and Other Products; and Automobiles and Related Products and Other Products. The Mobile Handset Components, Assembly Service and Other Products segment manufactures and sells mobile handset components, such as housings and electronic components, "
       },
       "price_source": "direct_api"
+    },
+    "175.HK": {
+      "price": {
+        "last": 22.7,
+        "prev_close": 22.8,
+        "change_pct": -0.439,
+        "high": 23.04,
+        "low": 22.5,
+        "volume": 17,
+        "avg_volume_20d": 77809001,
+        "volume_ratio": 0.0,
+        "high_52w": 25.62,
+        "low_52w": 14.96
+      },
+      "technical": {
+        "sma_20": 23.59,
+        "sma_50": 20.64,
+        "sma_200": null,
+        "rsi_14": 34.6,
+        "macd": 0.3757,
+        "macd_signal": 0.6876,
+        "macd_histogram": -0.3119,
+        "above_sma_20": false,
+        "above_sma_50": true,
+        "above_sma_200": null
+      },
+      "fundamentals": {
+        "market_cap": 245425684480,
+        "pe_trailing": 12.160428,
+        "pe_forward": 8.578738,
+        "ev_ebitda": 12.368,
+        "ev_revenue": 0.591,
+        "ps_ratio": 0.68878615,
+        "pb": 2.266927,
+        "dividend_yield": 2.2,
+        "revenue": 356316217344,
+        "revenue_growth": 0.156,
+        "gross_margin": 0.16985,
+        "operating_margin": 0.04992,
+        "net_margin": 0.043070003,
+        "roe": 0.1602,
+        "roa": 0.030050002,
+        "debt_to_equity": 20.305,
+        "current_ratio": 0.904,
+        "quick_ratio": 0.633,
+        "free_cash_flow": null,
+        "operating_cash_flow": null,
+        "total_cash": 57756000256,
+        "total_debt": 19604000768,
+        "ebitda": 17019106304,
+        "earnings_growth": null,
+        "book_value": 10.0312,
+        "enterprise_value": 210491899904
+      },
+      "analyst": {
+        "target_mean": 29.355791,
+        "target_high": 36.099243,
+        "target_low": 21.111677,
+        "target_median": 28.846487,
+        "recommendation": "strong_buy",
+        "num_analysts": 25
+      },
+      "meta": {
+        "currency": "HKD",
+        "exchange": "HK",
+        "name_en": "Geely Auto",
+        "name_zh": "吉利汽车",
+        "sector": "Consumer Cyclical",
+        "industry": "Auto Manufacturers",
+        "website": "https://www.geelyauto.com.hk",
+        "description": "Geely Automobile Holdings Limited, an investment holding company, operates as an automobile manufacturer primarily in the People's Republic of China. The company engages in the research and development, production, marketing, and sale of passenger vehicles; automobile parts; and related automobile components, including electric powertrain and battery systems, as well as provides related after-sales and technical services. It also offers electric mobility related products under the ZEEKR brand; a"
+      },
+      "price_source": "direct_api"
+    },
+    "603233.SH": {
+      "price": {
+        "last": 18.55,
+        "prev_close": 18.49,
+        "change_pct": 0.324,
+        "high": 18.89,
+        "low": 18.32,
+        "volume": 646762500,
+        "avg_volume_20d": 6390635,
+        "volume_ratio": 101.2,
+        "high_52w": 21.78,
+        "low_52w": 16.78
+      },
+      "technical": {
+        "sma_20": 18.0,
+        "sma_50": 18.4,
+        "sma_200": null,
+        "rsi_14": 67.9,
+        "macd": 0.1634,
+        "macd_signal": 0.0429,
+        "macd_histogram": 0.1206,
+        "above_sma_20": true,
+        "above_sma_50": true,
+        "above_sma_200": null
+      },
+      "fundamentals": {
+        "market_cap": 21125632000,
+        "pe_trailing": 16.415928,
+        "pe_forward": 13.287965,
+        "ev_ebitda": 5.597,
+        "ev_revenue": 0.738,
+        "ps_ratio": 0.78727746,
+        "pb": 2.6767676,
+        "dividend_yield": 3.62,
+        "revenue": 26833782784,
+        "revenue_growth": 0.002,
+        "gross_margin": 0.3436,
+        "operating_margin": 0.105299994,
+        "net_margin": 0.0424,
+        "roe": 0.14751,
+        "roa": 0.044510003,
+        "debt_to_equity": 56.267,
+        "current_ratio": 0.963,
+        "quick_ratio": 0.621,
+        "free_cash_flow": 3830578944,
+        "operating_cash_flow": 4325863424,
+        "total_cash": 7110829056,
+        "total_debt": 5166798336,
+        "ebitda": 3535788544,
+        "earnings_growth": 0.125,
+        "book_value": 6.93,
+        "enterprise_value": 19790276608
+      },
+      "analyst": {
+        "target_mean": null,
+        "target_high": null,
+        "target_low": null,
+        "target_median": null,
+        "recommendation": "none",
+        "num_analysts": null
+      },
+      "meta": {
+        "currency": "CNY",
+        "exchange": "SH",
+        "name_en": "Da Shenlin",
+        "name_zh": "大参林",
+        "sector": "Healthcare",
+        "industry": "Pharmaceutical Retailers",
+        "website": "https://www.dslyy.com",
+        "description": "DaShenLin Pharmaceutical Group Co., Ltd. manufactures, distributes, and retails pharmaceutical products in China. It offers Chinese and Western patent medicines, ginseng and antler tonic medicinal materials, Chinese herbal medicine slices, health products, medical devices, and other commodities. The company was incorporated in 1999 and is based in Guangzhou, China."
+      },
+      "price_source": "direct_api"
     }
   },
   "consensus": {
-    "700.HK": {
-      "eps_estimate": {
-        "0q": {
-          "avg": 7.2247,
-          "low": 6.927,
-          "high": 7.585,
-          "num_analysts": 9.0
-        },
-        "+1q": {
-          "avg": 7.3006,
-          "low": 7.14,
-          "high": 7.51,
-          "num_analysts": 8.0
-        },
-        "0y": {
-          "avg": 30.3111,
-          "low": 27.2,
-          "high": 31.95,
-          "num_analysts": 34.0
-        },
-        "+1y": {
-          "avg": 33.9059,
-          "low": 29.34,
-          "high": 36.37,
-          "num_analysts": 32.0
-        }
-      },
-      "revenue_estimate": {
-        "0q": {
-          "avg": 198454466100.0,
-          "low": 188562100000.0,
-          "high": 203217000000.0
-        },
-        "+1q": {
-          "avg": 202763388240.0,
-          "low": 191826300000.0,
-          "high": 207022000000.0
-        },
-        "0y": {
-          "avg": 831363159290.0,
-          "low": 765567200000.0,
-          "high": 854708152080.0
-        },
-        "+1y": {
-          "avg": 910799848550.0,
-          "low": 795737400000.0,
-          "high": 958398000000.0
-        }
-      },
-      "eps_trend": {
-        "0q": {
-          "current": 7.2247,
-          "7d_ago": 7.2202,
-          "30d_ago": 7.2908,
-          "90d_ago": 7.5857
-        },
-        "+1q": {
-          "current": 7.3006,
-          "7d_ago": 7.2919,
-          "30d_ago": 7.3047,
-          "90d_ago": 7.6552
-        },
-        "0y": {
-          "current": 30.3111,
-          "7d_ago": 30.3111,
-          "30d_ago": 30.576,
-          "90d_ago": 31.2245
-        },
-        "+1y": {
-          "current": 33.9059,
-          "7d_ago": 33.9059,
-          "30d_ago": 34.2248,
-          "90d_ago": 35.1427
-        }
-      },
-      "beat_miss_history": [
-        {
-          "date": "",
-          "eps_estimate": 6.3387,
-          "eps_actual": 6.583,
-          "surprise_pct": 0.0385
-        },
-        {
-          "date": "",
-          "eps_estimate": 6.4931,
-          "eps_actual": 6.793,
-          "surprise_pct": 0.0462
-        },
-        {
-          "date": "",
-          "eps_estimate": 7.0325,
-          "eps_actual": 7.575,
-          "surprise_pct": 0.0771
-        },
-        {
-          "date": "",
-          "eps_estimate": 6.8646,
-          "eps_actual": 6.966,
-          "surprise_pct": 0.0148
-        }
-      ],
-      "source": "yfinance"
-    },
-    "9999.HK": {
-      "eps_estimate": {
-        "0q": {
-          "avg": 2.8226,
-          "low": 2.64,
-          "high": 3.0203,
-          "num_analysts": 4.0
-        },
-        "+1q": {
-          "avg": 2.9204,
-          "low": 2.55,
-          "high": 3.2011,
-          "num_analysts": 3.0
-        },
-        "0y": {
-          "avg": 12.3935,
-          "low": 10.43,
-          "high": 13.41,
-          "num_analysts": 13.0
-        },
-        "+1y": {
-          "avg": 13.7503,
-          "low": 10.54,
-          "high": 15.4613,
-          "num_analysts": 13.0
-        }
-      },
-      "revenue_estimate": {
-        "0q": {
-          "avg": 29625670600.0,
-          "low": 27852263000.0,
-          "high": 31306000000.0
-        },
-        "+1q": {
-          "avg": 29344912060.0,
-          "low": 27658904000.0,
-          "high": 30811000000.0
-        },
-        "0y": {
-          "avg": 120717889810.0,
-          "low": 114934688000.0,
-          "high": 124355000000.0
-        },
-        "+1y": {
-          "avg": 130840328340.0,
-          "low": 126378691280.0,
-          "high": 138949970090.0
-        }
-      },
-      "eps_trend": {
-        "0q": {
-          "current": 2.8226,
-          "7d_ago": 2.9126,
-          "30d_ago": 2.9126,
-          "90d_ago": 3.22
-        },
-        "+1q": {
-          "current": 2.9204,
-          "7d_ago": 2.967,
-          "30d_ago": 2.967,
-          "90d_ago": 3.0933
-        },
-        "0y": {
-          "current": 12.3935,
-          "7d_ago": 12.4727,
-          "30d_ago": 12.4727,
-          "90d_ago": 13.0057
-        },
-        "+1y": {
-          "current": 13.7503,
-          "7d_ago": 13.8088,
-          "30d_ago": 13.8088,
-          "90d_ago": 14.5874
-        }
-      },
-      "beat_miss_history": [
-        {
-          "date": "",
-          "eps_estimate": 2.7404,
-          "eps_actual": 3.5,
-          "surprise_pct": 0.2772
-        },
-        {
-          "date": "",
-          "eps_estimate": 2.9688,
-          "eps_actual": 2.96,
-          "surprise_pct": -0.003
-        },
-        {
-          "date": "",
-          "eps_estimate": 2.9108,
-          "eps_actual": 2.95,
-          "surprise_pct": 0.0135
-        },
-        {
-          "date": "",
-          "eps_estimate": 2.7658,
-          "eps_actual": 2.19,
-          "surprise_pct": -0.2082
-        }
-      ],
-      "source": "yfinance"
-    },
-    "6160.HK": {
+    "175.HK": {
       "eps_estimate": {
         "0q": {
           "avg": null,
@@ -602,38 +322,38 @@
           "num_analysts": null
         },
         "0y": {
-          "avg": 0.5031,
-          "low": 0.41,
-          "high": 0.729,
-          "num_analysts": 9.0
+          "avg": 1.9329,
+          "low": 1.55,
+          "high": 2.26,
+          "num_analysts": 18.0
         },
         "+1y": {
-          "avg": 0.7943,
-          "low": 0.681,
-          "high": 1.0134,
-          "num_analysts": 10.0
+          "avg": 2.3045,
+          "low": 1.7686,
+          "high": 2.7935,
+          "num_analysts": 17.0
         }
       },
       "revenue_estimate": {
         "0q": {
-          "avg": 1593586680.0,
-          "low": 1539400000.0,
-          "high": 1668967000.0
+          "avg": 0.0,
+          "low": 0.0,
+          "high": 0.0
         },
         "+1q": {
-          "avg": 1661962150.0,
-          "low": 1557500000.0,
-          "high": 1795226000.0
+          "avg": 0.0,
+          "low": 0.0,
+          "high": 0.0
         },
         "0y": {
-          "avg": 6454170220.0,
-          "low": 6206100000.0,
-          "high": 6853363000.0
+          "avg": 422747024670.0,
+          "low": 386018000000.0,
+          "high": 489337000000.0
         },
         "+1y": {
-          "avg": 7396238380.0,
-          "low": 6834000000.0,
-          "high": 7980000000.0
+          "avg": 485629148600.0,
+          "low": 427527000000.0,
+          "high": 582715000000.0
         }
       },
       "eps_trend": {
@@ -650,16 +370,16 @@
           "90d_ago": null
         },
         "0y": {
-          "current": 0.5031,
-          "7d_ago": 0.4749,
-          "30d_ago": 0.4749,
-          "90d_ago": 0.5687
+          "current": 1.9329,
+          "7d_ago": 1.9221,
+          "30d_ago": 1.8257,
+          "90d_ago": 1.8301
         },
         "+1y": {
-          "current": 0.7943,
-          "7d_ago": 0.789,
-          "30d_ago": 0.789,
-          "90d_ago": 0.9666
+          "current": 2.3045,
+          "7d_ago": 2.2942,
+          "30d_ago": 2.1867,
+          "90d_ago": 2.2231
         }
       },
       "source": "yfinance"
@@ -674,9 +394,9 @@
       "updated": "2026-05-08"
     },
     "southbound": {
-      "latest_net_flow": -47.9679,
-      "5d_cumulative": 94.0145,
-      "20d_cumulative": 558.7208,
+      "latest_net_flow": 131.684,
+      "5d_cumulative": 80.4707,
+      "20d_cumulative": 492.1281,
       "trend": "inflow",
       "updated": "2026-05-08"
     },
@@ -702,10 +422,10 @@
         "focus": false
       },
       {
-        "code": "000066",
-        "name": "中国长城",
+        "code": "000020",
+        "name": "深华发A",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -716,6 +436,16 @@
         "name": "中国长城",
         "date": "",
         "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000066",
+        "name": "中国长城",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -752,6 +482,26 @@
         "focus": false
       },
       {
+        "code": "000534",
+        "name": "万泽股份",
+        "date": "",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000547",
+        "name": "航天发展",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "000609",
         "name": "*ST中迪",
         "date": "",
@@ -782,6 +532,16 @@
         "focus": false
       },
       {
+        "code": "000668",
+        "name": "*ST荣控",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "000677",
         "name": "ST海龙",
         "date": "",
@@ -792,10 +552,30 @@
         "focus": false
       },
       {
+        "code": "000697",
+        "name": "炼石航空",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "000703",
         "name": "恒逸石化",
         "date": "",
         "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000720",
+        "name": "新能泰山",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -825,6 +605,16 @@
         "code": "000833",
         "name": "粤桂股份",
         "date": "",
+        "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000833",
+        "name": "粤桂股份",
+        "date": "",
         "reason": "日跌幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
@@ -836,6 +626,16 @@
         "name": "粤桂股份",
         "date": "",
         "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000889",
+        "name": "中嘉博创",
+        "date": "",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -922,6 +722,16 @@
         "focus": false
       },
       {
+        "code": "001267",
+        "name": "汇绿生态",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "001309",
         "name": "德明利",
         "date": "",
@@ -946,6 +756,16 @@
         "name": "大族激光",
         "date": "",
         "reason": "日涨幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002031",
+        "name": "巨轮智能",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -986,6 +806,16 @@
         "name": "ST兴化",
         "date": "",
         "reason": "连续三个交易日内，跌幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002140",
+        "name": "东华科技",
+        "date": "",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -1035,7 +865,7 @@
         "code": "002181",
         "name": "粤传媒",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -1045,7 +875,7 @@
         "code": "002181",
         "name": "粤传媒",
         "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -1066,116 +896,6 @@
         "name": "ST嘉应",
         "date": "",
         "reason": "连续三个交易日内，跌幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002207",
-        "name": "*ST准油",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002209",
-        "name": "达意隆",
-        "date": "",
-        "reason": "日跌幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002281",
-        "name": "光迅科技",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002289",
-        "name": "*ST宇顺",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002297",
-        "name": "博云新材",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002297",
-        "name": "博云新材",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002323",
-        "name": "*ST雅博",
-        "date": "",
-        "reason": "连续三个交易日内，跌幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002342",
-        "name": "巨力索具",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002342",
-        "name": "巨力索具",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002361",
-        "name": "神剑股份",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002384",
-        "name": "东山精密",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,

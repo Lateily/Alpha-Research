@@ -1,0 +1,20 @@
+{
+  "_status": "empty",
+  "ticker": "603233.SH",
+  "fetched_at": "2026-05-08T12:16:05Z",
+  "api_used": "stk_surv",
+  "_attempted_endpoints": [
+    "stk_surv",
+    "stk_holdertrade",
+    "surv_holdertrade",
+    "investor_research"
+  ],
+  "window_days": 90,
+  "surveys": [],
+  "summary": {
+    "total_30d": 0,
+    "total_90d": 0,
+    "unique_inst_30d": null,
+    "latest_date": null
+  }
+}

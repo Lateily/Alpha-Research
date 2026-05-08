@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-05-08T07:12:15.039953",
+  "as_of": "2026-05-08T12:13:39.643998",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -58,7 +58,7 @@
       },
       "vp_at_entry": 79,
       "wrongIf_at_entry": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter",
-      "weight_pct": 44.7
+      "weight_pct": 49.94
     },
     {
       "ticker": "6160.HK",
@@ -68,14 +68,14 @@
       "currency": "HKD",
       "quantity": 80,
       "avg_cost": 158.632,
-      "current_price": 188.9,
-      "market_value": 15112.0,
+      "current_price": 158.632,
+      "market_value": 12690.56,
       "cost_value": 12690.56,
-      "pnl_abs": 2421.44,
-      "pnl_pct": 19.08,
-      "market_value_cny": 13850.15,
+      "pnl_abs": 0.0,
+      "pnl_pct": 0.0,
+      "market_value_cny": 11630.9,
       "cost_value_cny": 11630.9,
-      "pnl_abs_cny": 2219.25,
+      "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
       "holding_days": 59,
       "as_of": "2026-05-08",
@@ -108,7 +108,7 @@
       },
       "vp_at_entry": 65,
       "wrongIf_at_entry": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
-      "weight_pct": 4.66
+      "weight_pct": 4.37
     },
     {
       "ticker": "700.HK",
@@ -118,14 +118,14 @@
       "currency": "HKD",
       "quantity": 200,
       "avg_cost": 379.512,
-      "current_price": 477.4,
-      "market_value": 95480.0,
+      "current_price": 379.512,
+      "market_value": 75902.4,
       "cost_value": 75902.4,
-      "pnl_abs": 19577.6,
-      "pnl_pct": 25.79,
-      "market_value_cny": 87507.42,
+      "pnl_abs": 0.0,
+      "pnl_pct": 0.0,
+      "market_value_cny": 69564.55,
       "cost_value_cny": 69564.55,
-      "pnl_abs_cny": 17942.87,
+      "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
       "holding_days": 52,
       "as_of": "2026-05-08",
@@ -163,7 +163,7 @@
       },
       "vp_at_entry": 64,
       "wrongIf_at_entry": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters",
-      "weight_pct": 29.43
+      "weight_pct": 26.14
     },
     {
       "ticker": "9999.HK",
@@ -173,14 +173,14 @@
       "currency": "HKD",
       "quantity": 300,
       "avg_cost": 145.58,
-      "current_price": 185.6,
-      "market_value": 55680.0,
+      "current_price": 145.58,
+      "market_value": 43674.0,
       "cost_value": 43674.0,
-      "pnl_abs": 12006.0,
-      "pnl_pct": 27.49,
-      "market_value_cny": 51030.72,
+      "pnl_abs": 0.0,
+      "pnl_pct": 0.0,
+      "market_value_cny": 40027.22,
       "cost_value_cny": 40027.22,
-      "pnl_abs_cny": 11003.5,
+      "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
       "holding_days": 45,
       "as_of": "2026-05-08",
@@ -213,7 +213,7 @@
       },
       "vp_at_entry": 58,
       "wrongIf_at_entry": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-      "weight_pct": 17.17
+      "weight_pct": 15.04
     },
     {
       "ticker": "002594.SZ",
@@ -258,16 +258,16 @@
       },
       "vp_at_entry": 52,
       "wrongIf_at_entry": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "weight_pct": 4.04
+      "weight_pct": 4.51
     }
   ],
   "summary": {
-    "total_value_cny": 297290.69,
+    "total_value_cny": 266125.07,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 62320.98,
-    "total_pnl_pct": 26.52,
-    "total_value": 297290.69,
+    "total_pnl_cny": 31155.36,
+    "total_pnl_pct": 13.26,
+    "total_value": 266125.07,
     "total_cost": 234969.71,
-    "total_pnl": 62320.98
+    "total_pnl": 31155.36
   }
 }

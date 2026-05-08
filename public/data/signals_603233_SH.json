@@ -1,0 +1,52 @@
+{
+  "ticker": "603233.SH",
+  "generated_at": "2026-05-08",
+  "price": 18.55,
+  "zone": "NEUTRAL",
+  "entry_zone": true,
+  "exit_zone": false,
+  "signals": [
+    {
+      "type": "MA20_BOUNCE",
+      "strength": "moderate",
+      "date": "2026-05-08",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA20 (18.0) — near-term support held",
+        "z": "股价从MA20(18.0)附近反弹，短期支撑有效"
+      }
+    }
+  ],
+  "signal_count": {
+    "bullish": 1,
+    "bearish": 0,
+    "total": 1
+  },
+  "indicators": {
+    "ma5": 18.76,
+    "ma20": 18.0,
+    "ma60": 18.58,
+    "rsi14": 54.9,
+    "vol_ma20": 6390635,
+    "vol_ratio": 1.01,
+    "price_vs_ma20": 3.03,
+    "price_vs_ma60": -0.17,
+    "change_1d": 0.32,
+    "change_5d": -1.07,
+    "change_20d": 5.04,
+    "macd_dif": 0.1634,
+    "macd_dea": 0.0427,
+    "macd_hist": 0.2412,
+    "bb_upper": 19.22,
+    "bb_mid": 18.0,
+    "bb_lower": 16.79,
+    "bb_bandwidth": 13.49,
+    "kdj_k": 64.2,
+    "kdj_d": 71.6,
+    "kdj_j": 49.4,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "ticker": "175.HK",
+  "generated_at": "2026-05-08",
+  "price": 22.74,
+  "zone": "NEUTRAL",
+  "entry_zone": false,
+  "exit_zone": false,
+  "signals": [],
+  "signal_count": {
+    "bullish": 0,
+    "bearish": 0,
+    "total": 0
+  },
+  "indicators": {
+    "ma5": 22.8,
+    "ma20": 23.59,
+    "ma60": 19.99,
+    "rsi14": 52.2,
+    "vol_ma20": 77809002,
+    "vol_ratio": 0.45,
+    "price_vs_ma20": -3.59,
+    "price_vs_ma60": 13.74,
+    "change_1d": 0.18,
+    "change_5d": -0.7,
+    "change_20d": -6.73,
+    "macd_dif": 0.3758,
+    "macd_dea": 0.6877,
+    "macd_hist": -0.6238,
+    "bb_upper": 25.64,
+    "bb_mid": 23.59,
+    "bb_lower": 21.54,
+    "bb_bandwidth": 17.39,
+    "kdj_k": 49.9,
+    "kdj_d": 39.4,
+    "kdj_j": 71.0,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
+  }
+}

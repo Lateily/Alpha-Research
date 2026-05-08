@@ -1,0 +1,44 @@
+{
+  "ticker": "603233.SH",
+  "fetched_at": "2026-05-08T12:14:31Z",
+  "tier": 15000,
+  "_status": "ok",
+  "api_used": "forecast",
+  "_attempted_endpoints": [
+    "forecast"
+  ],
+  "forecasts": [
+    {
+      "end_date": "20220930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 92571.5,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20220930",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 92571.5,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20201231",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 108912.5,
+      "op_income": null,
+      "broker_count": null
+    },
+    {
+      "end_date": "20170630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 24961.0,
+      "op_income": null,
+      "broker_count": null
+    }
+  ]
+}

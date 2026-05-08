@@ -1,6 +1,6 @@
 {
   "as_of": "2026-05-08",
-  "generated": "2026-05-08T07:12:15.091020",
+  "generated": "2026-05-08T12:13:39.695315",
   "status": "ok",
   "config": {
     "vp_threshold": 60,
@@ -11,46 +11,46 @@
   },
   "summary": {
     "periods": 5,
-    "annualised_return_pct": 24.12,
+    "annualised_return_pct": 98.27,
     "benchmark_return_pct": 0.0,
-    "alpha_annual_pct": 24.12,
+    "alpha_annual_pct": 98.27,
     "beta": 1.0,
-    "sharpe_ratio": 0.512,
+    "sharpe_ratio": 1.769,
     "benchmark_sharpe": 0.0,
-    "annualised_vol_pct": 43.23,
+    "annualised_vol_pct": 54.41,
     "benchmark_vol_pct": 0.0,
-    "max_drawdown_pct": -18.16,
+    "max_drawdown_pct": -15.46,
     "benchmark_max_dd_pct": -0.0,
-    "cumulative_return_pct": 6.01,
+    "cumulative_return_pct": 27.18,
     "benchmark_cumulative_pct": 0.0,
-    "hit_rate_pct": 60.0,
-    "bootstrap_ci_lo_pct": -8.84,
-    "bootstrap_ci_hi_pct": 10.74
+    "hit_rate_pct": 80.0,
+    "bootstrap_ci_lo_pct": -6.59,
+    "bootstrap_ci_hi_pct": 18.77
   },
   "nav_series": [
     {
       "date": "2025-11-28",
-      "portfolio": 1.0272,
+      "portfolio": 1.1248,
       "benchmark": 1.0
     },
     {
       "date": "2025-12-31",
-      "portfolio": 1.1157,
+      "portfolio": 1.1354,
       "benchmark": 1.0
     },
     {
       "date": "2026-01-30",
-      "portfolio": 0.9233,
+      "portfolio": 0.9599,
       "benchmark": 1.0
     },
     {
       "date": "2026-02-27",
-      "portfolio": 0.9132,
+      "portfolio": 0.9988,
       "benchmark": 1.0
     },
     {
       "date": "2026-03-31",
-      "portfolio": 1.0601,
+      "portfolio": 1.2718,
       "benchmark": 1.0
     }
   ],
@@ -63,18 +63,14 @@
           "vp": 79
         },
         {
-          "ticker": "6160.HK",
-          "vp": 65
-        },
-        {
-          "ticker": "700.HK",
+          "ticker": "9999.HK",
           "vp": 64
         }
       ],
-      "num_positions": 3,
-      "portfolio_return": 2.72,
+      "num_positions": 2,
+      "portfolio_return": 12.48,
       "benchmark_return": 0,
-      "excess_return": 2.72,
+      "excess_return": 12.48,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
@@ -83,15 +79,9 @@
           "tx_cost": 0.2
         },
         {
-          "ticker": "6160.HK",
-          "raw_return": -10.84,
-          "net_return": -11.24,
-          "tx_cost": 0.4
-        },
-        {
-          "ticker": "700.HK",
-          "raw_return": -1.88,
-          "net_return": -2.28,
+          "ticker": "9999.HK",
+          "raw_return": 3.7,
+          "net_return": 3.3,
           "tx_cost": 0.4
         }
       ]
@@ -104,18 +94,14 @@
           "vp": 79
         },
         {
-          "ticker": "6160.HK",
-          "vp": 65
-        },
-        {
-          "ticker": "700.HK",
+          "ticker": "9999.HK",
           "vp": 64
         }
       ],
-      "num_positions": 3,
-      "portfolio_return": 8.62,
+      "num_positions": 2,
+      "portfolio_return": 0.94,
       "benchmark_return": 0,
-      "excess_return": 8.62,
+      "excess_return": 0.94,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
@@ -124,15 +110,9 @@
           "tx_cost": 0.2
         },
         {
-          "ticker": "6160.HK",
-          "raw_return": 16.64,
-          "net_return": 16.24,
-          "tx_cost": 0.4
-        },
-        {
-          "ticker": "700.HK",
-          "raw_return": 3.84,
-          "net_return": 3.44,
+          "ticker": "9999.HK",
+          "raw_return": -3.91,
+          "net_return": -4.31,
           "tx_cost": 0.4
         }
       ]
@@ -145,18 +125,14 @@
           "vp": 79
         },
         {
-          "ticker": "6160.HK",
-          "vp": 65
-        },
-        {
-          "ticker": "700.HK",
+          "ticker": "9999.HK",
           "vp": 64
         }
       ],
-      "num_positions": 3,
-      "portfolio_return": -17.25,
+      "num_positions": 2,
+      "portfolio_return": -15.46,
       "benchmark_return": 0,
-      "excess_return": -17.25,
+      "excess_return": -15.46,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
@@ -165,15 +141,9 @@
           "tx_cost": 0.2
         },
         {
-          "ticker": "6160.HK",
-          "raw_return": -15.3,
-          "net_return": -15.7,
-          "tx_cost": 0.4
-        },
-        {
-          "ticker": "700.HK",
-          "raw_return": -16.5,
-          "net_return": -16.9,
+          "ticker": "9999.HK",
+          "raw_return": -11.37,
+          "net_return": -11.77,
           "tx_cost": 0.4
         }
       ]
@@ -186,18 +156,14 @@
           "vp": 79
         },
         {
-          "ticker": "6160.HK",
-          "vp": 65
-        },
-        {
-          "ticker": "700.HK",
+          "ticker": "9999.HK",
           "vp": 64
         }
       ],
-      "num_positions": 3,
-      "portfolio_return": -1.09,
+      "num_positions": 2,
+      "portfolio_return": 4.05,
       "benchmark_return": 0,
-      "excess_return": -1.09,
+      "excess_return": 4.05,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
@@ -206,15 +172,9 @@
           "tx_cost": 0.2
         },
         {
-          "ticker": "6160.HK",
-          "raw_return": -9.52,
-          "net_return": -9.92,
-          "tx_cost": 0.4
-        },
-        {
-          "ticker": "700.HK",
-          "raw_return": -4.75,
-          "net_return": -5.15,
+          "ticker": "9999.HK",
+          "raw_return": -3.28,
+          "net_return": -3.68,
           "tx_cost": 0.4
         }
       ]
@@ -227,18 +187,14 @@
           "vp": 79
         },
         {
-          "ticker": "6160.HK",
-          "vp": 65
-        },
-        {
-          "ticker": "700.HK",
+          "ticker": "9999.HK",
           "vp": 64
         }
       ],
-      "num_positions": 3,
-      "portfolio_return": 16.09,
+      "num_positions": 2,
+      "portfolio_return": 27.33,
       "benchmark_return": 0,
-      "excess_return": 16.09,
+      "excess_return": 27.33,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
@@ -247,15 +203,9 @@
           "tx_cost": 0.2
         },
         {
-          "ticker": "6160.HK",
-          "raw_return": 2.97,
-          "net_return": 2.57,
-          "tx_cost": 0.4
-        },
-        {
-          "ticker": "700.HK",
-          "raw_return": -2.27,
-          "net_return": -2.67,
+          "ticker": "9999.HK",
+          "raw_return": 6.69,
+          "net_return": 6.29,
           "tx_cost": 0.4
         }
       ]
