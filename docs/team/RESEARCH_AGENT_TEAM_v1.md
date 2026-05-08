@@ -1,11 +1,34 @@
-# Research Agent Team v1 — Architecture Proposal
+# Research Agent Team v2 — Architecture Proposal (Junyan §6 decisions integrated)
 
-> **Status:** PROPOSAL pending Junyan approval
-> **Date:** 2026-05-08
+> **Status:** v1 proposed → v2 approved (Junyan answered all 5 §6 open
+> questions on 2026-05-08). Stage 1 (T-RD data loader) shipped.
+> Stage 2 (multi-agent endpoint) builds against THIS spec.
+> **Date:** 2026-05-08 (v1) → 2026-05-08 (v2 update)
 > **Author:** T1 Claude
 > **Related:** AGENT_ORCHESTRATION.md (covers code-side T1/T2/T3); this
 > doc covers RESEARCH-side production. Junyan-direct ask 2026-05-08:
 > "在产出报告上也需要多 agent 合作 ... 我们要搭建一个体系成熟的 agent team".
+
+---
+
+## v2 changes (Junyan §6 decisions)
+
+1. **Bull/Bear see news + each other's output** — both. Junyan: "bull 跟 bear
+   才是更需要看信息面的 ... 经过讨论和质疑之后的决策质量才会高". Round 2
+   rebuttal pass added.
+2. **Agent failure handling** — debug each failure mode rather than swallow.
+   Junyan: "确保 agent fail 的原因 然后根据每次失败的原因去修复和优化".
+   No silent fallback to single-agent on failure; surface the cause.
+3. **Model assignments not absolute + GPT-5.5** — flexible, mix and match.
+   Update GPT-4o → GPT-5.5 (released 2025-Q4 per Junyan). Default
+   assignment stays as a starting point but room to swap based on what
+   each model is best at empirically.
+4. **NEW Technical agent (T-RT)** — Junyan: "round 2 review 那就是每一个 agent
+   都全面 scan 一下 ... 分析技术面". Adds technical analyst role
+   reading OHLC + chart pattern + momentum + support/resistance.
+5. **Round 2 review packet integration** — packets get sections per agent
+   perspective. Each section asks the agent (or a human) to do a full
+   scan based on all info. Goes beyond passive template.
 
 ---
 
@@ -36,7 +59,11 @@ No agent's output is "the" thesis until Synthesizer produces it. Bull's thesis �
 
 ---
 
-## 2. Role spec — 5 research-side agents (3 LLM + 2 deterministic)
+## 2. Role spec — 6 research-side agents (5 LLM + 1 deterministic) — v2
+
+**v2 changes vs v1:** Bull/Bear see each other in round 2; Bull/Bear
+both get full data context including news; ADDED Technical Analyst
+(T-RT). Now 5 LLM agents (was 3).
 
 ### T-RD — Research Data Loader (deterministic, not LLM)
 **Owner:** `scripts/research_data_loader.py` (NEW)
@@ -55,59 +82,99 @@ No agent's output is "the" thesis until Synthesizer produces it. Bull's thesis �
 
 **Output schema reference:** `docs/team/RESEARCH_DATA_CONTEXT_SCHEMA.md` (NEW, follows this proposal)
 
-### T-RB — Research Bull (LLM: Gemini 1.5 Pro)
+### T-RB — Research Bull (LLM: default Gemini 1.5 Pro, swappable)
 **Owner:** `/api/research-multi` `bullPrompt(data_context)`
-**Input:** T-RD output + 8-step protocol prompt
-**Job:** Produce strongest **LONG** thesis using ONLY the supplied data (no training-data hallucination — explicit "if a number is not in data context, do NOT use it; instead say 'not available in our data'").
-**Output:** Full 8-step JSON (matches existing `/api/research` schema). Direction = LONG.
-**Cost estimate:** ~$0.05 (Gemini Pro 1.5 cheaper than Opus)
+**Round 1 input:** T-RD output (FULL — including news) + 8-step protocol prompt
+**Round 1 job:** Produce strongest **LONG** thesis using ONLY the supplied data (no training-data hallucination — explicit "if a number is not in data context, do NOT use it; instead say 'not available in our data'").
+**Round 1 output:** Full 8-step JSON. Direction = LONG.
+**Round 2 input:** Round 1 own output + Bear's round 1 output + same data context
+**Round 2 job:** Rebuttal — defend or revise the LONG thesis after seeing Bear's strongest case. Allowed to drop to NEUTRAL if Bear's case proves decisive. Must explicitly address each of Bear's specific points.
+**Round 2 output:** Updated 8-step JSON + `_rebuttal` block listing which Bear arguments were addressed and how.
+**Cost estimate:** ~$0.05 round 1 + ~$0.05 round 2 = ~$0.10
+**Why news included:** Junyan §6.2 — "bull 跟 bear 才是更需要看信息面的". The
+information surface is exactly what bull/bear need to argue from. Forensic
+already sees data; without news bull/bear miss the catalyst landscape.
 
-### T-RBR — Research Bear (LLM: GPT-4o)
+### T-RBR — Research Bear (LLM: default GPT-5.5, swappable)
 **Owner:** Same endpoint, `bearPrompt(data_context)`
-**Input:** T-RD output + 8-step protocol prompt
-**Job:** Produce strongest **SHORT** thesis (or "consensus is right, no contrarian view" if data doesn't support short).
-**Output:** Full 8-step JSON. Direction = SHORT or NEUTRAL.
+**Model update:** GPT-4o → **GPT-5.5** (Junyan §6.4 directive 2026-05-08).
+**Round 1 input/job/output:** Same as Bull but argues SHORT (or NEUTRAL if data doesn't support short — explicit "consensus is right, no edge here").
+**Round 2 input:** Round 1 own output + Bull's round 1 output + same data context
+**Round 2 job:** Rebut Bull. Allowed to drop to NEUTRAL if Bull's case proves decisive.
+**Cost estimate:** ~$0.10 (1+1)
+
+Bull and Bear in round 1 run in PARALLEL (Promise.allSettled).
+Bull and Bear in round 2 also PARALLEL (each sees the other's round-1 output).
+Independence within each round preserves adversarial value; cross-pollination
+between rounds delivers Junyan's "经过讨论和质疑之后的决策质量才会高" requirement.
+
+### T-RT — Research Technical Analyst (NEW v2, LLM: Claude Sonnet)
+**Owner:** Same endpoint, `technicalPrompt(data_context)`
+**Input:** T-RD output (specifically: `ohlc_recent` 60-day OHLCV +
+`tushare_suite.chip_distribution` cost levels + `tushare_suite.margin`
+balance trend + `tushare_suite.holdertrade` net buy/sell)
+**Job:** Read pure technical signal — chart pattern, trend strength, momentum,
+volume profile, support/resistance levels, chip-cost concentration, margin
+trend. Position-agnostic (NOT bull/bear; just what the price/volume/chip
+data say structurally).
+**Output:** structured technical JSON:
+```json
+{
+  "trend": "UP | DOWN | RANGE",
+  "trend_strength": 0-100,
+  "momentum": {"rsi": ..., "macd_signal": ..., "interpretation": "..."},
+  "key_levels": {"support": [...], "resistance": [...]},
+  "volume_profile": "expanding | contracting | normal",
+  "chip_concentration": "concentrated | dispersed | uncertain",
+  "margin_trend": "expanding_long | unwinding | flat",
+  "technical_summary_e": "2-3 sentences summary",
+  "technical_summary_z": "2-3 sentences summary"
+}
+```
 **Cost estimate:** ~$0.05
+**Why Sonnet not Opus:** technical pattern-recognition is rule-based / template-able; doesn't need full Opus reasoning weight.
 
-Bull and Bear run in parallel (Promise.allSettled). Each is a contained role —
-Bull doesn't see Bear's output and vice versa. Independence preserves the
-adversarial value.
-
-### T-RF — Research Forensic (LLM: Claude Sonnet)
-**Owner:** Same endpoint, `forensicPrompt(data_context, bull_output, bear_output)`
-**Input:** T-RD output + Bull thesis + Bear thesis (sees BOTH)
-**Job:** Cross-check both theses' factual claims against the data context. Specifically:
-- For every numeric claim in Bull / Bear thesis, verify it exists in data context
+### T-RF — Research Forensic (LLM: Claude Sonnet, runs LAST before Synthesizer)
+**Owner:** Same endpoint, `forensicPrompt(data_context, bull_round2, bear_round2, technical)`
+**Input:** T-RD output + Bull round-2 thesis + Bear round-2 thesis + Technical analyst output
+**Job:** Cross-check all upstream theses' factual claims against the data context. Specifically:
+- For every numeric claim in Bull / Bear thesis, verify it exists in data context (programmatic FC.2 logic)
 - Flag price-anchoring discrepancies (live_price vs claimed price)
-- Run FC.2 multiplier-pattern logic on both (P/E forward / EV/EBITDA claims vs yahoo `fundamentals`)
-- Identify shared-assumption risks (both bull + bear depend on the same untested premise)
+- Run FC.2 multiplier-pattern logic on both (P/E forward / EV/EBITDA / P/S claims vs yahoo `fundamentals`)
+- Identify shared-assumption risks (both bull + bear depend on the same untested premise — high risk)
 - List logical contradictions WITHIN each thesis
+- Cross-check whether Technical signals AGREE or CONFLICT with Bull or Bear's thesis (e.g., bull says +30% upside but technical shows down-trend strength 80 — disagreement worth flagging)
 **Output:** structured findings JSON:
 ```json
 {
   "bull_findings": [{"claim": "...", "data_match": "MATCH|MISMATCH|UNVERIFIABLE", "evidence": "..."}],
   "bear_findings": [...],
   "shared_assumptions_at_risk": [...],
+  "technical_vs_bull": "AGREES | CONFLICTS | NEUTRAL — explanation",
+  "technical_vs_bear": "AGREES | CONFLICTS | NEUTRAL — explanation",
   "verdict_on_grounding": "BULL_BETTER_GROUNDED | BEAR_BETTER_GROUNDED | BOTH_HALLUCINATED | EVENLY_GROUNDED"
 }
 ```
 **Cost estimate:** ~$0.05
 
-### T-RS — Research Synthesizer (LLM: Claude Opus 4.7)
-**Owner:** Same endpoint, `synthPrompt(data_context, bull, bear, forensic_findings)`
+### T-RS — Research Synthesizer (LLM: Claude Opus 4.7, runs LAST)
+**Owner:** Same endpoint, `synthPrompt(data_context, bull_r2, bear_r2, technical, forensic_findings)`
 **Input:** All of above
 **Job:**
-1. Weight Bull vs Bear by Forensic's grounding verdict
+1. Weight Bull vs Bear by Forensic's grounding verdict + Technical alignment
 2. Decide final direction: LONG / SHORT / PASS (PASS = neither side has edge, don't trade)
 3. Produce final 8-step thesis (single canonical output, replaces what `/api/research` currently produces)
 4. Emit divergence_score (how much bull and bear disagree on key metrics — high disagreement = high uncertainty)
-5. Attach forensic_findings as `_forensic` metadata
+5. Attach forensic_findings + technical as `_forensic` and `_technical` metadata
+6. If Forensic says "BOTH_HALLUCINATED" or all 4 agents disagreed wildly, emit `_synthesizer_recommendation: "PASS — too much disagreement to commit a thesis"`
 **Output:** Full 8-step JSON with extra fields:
 - `_direction` = LONG / SHORT / PASS
 - `_divergence_score` = 0-100
 - `_forensic` = T-RF output
-- `_bull_thesis` = T-RB output (for downstream review)
-- `_bear_thesis` = T-RBR output (for downstream review)
+- `_technical` = T-RT output
+- `_bull_thesis` = T-RB round-2 output (for downstream review)
+- `_bear_thesis` = T-RBR round-2 output (for downstream review)
+- `_bull_r1` / `_bear_r1` = round-1 (pre-rebuttal) outputs (audit trail)
 - existing `_quality` (FC.1+FC.4 validator on synthesizer's output)
 **Cost estimate:** ~$0.50 (Opus, longer context including all upstream outputs)
 
@@ -119,45 +186,58 @@ adversarial value.
 
 ---
 
-## 3. Wire diagram
+## 3. Wire diagram (v2)
 
 ```
-                       ┌────────────────────────────────┐
-                       │ T-RD Data Loader (Python)       │
-                       │ Reads public/data/* for ticker  │
-                       │ Output: data_context JSON       │
-                       └───────────┬────────────────────┘
-                                   │
-            ┌──────────────────────┼──────────────────────┐
-            │ (parallel)           │                      │
-            ▼                      ▼                      ▼
-    ┌─────────────┐         ┌─────────────┐       ┌─────────────┐
-    │ T-RB Bull    │         │ T-RBR Bear  │       │  (T-RF waits) │
-    │ Gemini Pro   │         │ GPT-4o      │       │              │
-    │ → 8-step     │         │ → 8-step    │       └─────────────┘
-    │   LONG       │         │   SHORT     │
-    └──────┬──────┘         └──────┬──────┘
-           │                       │
-           └─────────────┬─────────┘
-                         ▼
-                 ┌─────────────┐
-                 │ T-RF Forensic│
-                 │ Claude Sonnet│
-                 │ Sees both    │
-                 │ Cross-checks │
-                 │ vs data ctx  │
-                 │ → findings   │
-                 └──────┬──────┘
+                          ┌────────────────────────────────┐
+                          │ T-RD Data Loader (Python, T-RD) │
+                          │ Reads public/data/* for ticker  │
+                          │ Output: data_context (incl. news)│
+                          └───────────┬────────────────────┘
+                                      │
+   ─── ROUND 1 (parallel; bull+bear independent, both see news+full data) ───
+                                      │
+            ┌─────────────────────────┼─────────────────────┐
+            ▼                         ▼                     ▼
+    ┌──────────────┐         ┌──────────────┐       ┌──────────────┐
+    │ T-RB Bull r1  │         │ T-RBR Bear r1 │       │ T-RT Technical│
+    │ (Gemini Pro)  │         │ (GPT-5.5)    │       │ (Sonnet)      │
+    │ → 8-step LONG │         │ → 8-step SHORT│       │ → tech signal │
+    └──────┬───────┘         └──────┬───────┘       └──────┬──────-─┘
+           │                         │                     │
+   ─── ROUND 2 (parallel; bull rebuts bear, bear rebuts bull) ─────────
+           │                         │                     │
+           ▼                         ▼                     │
+    ┌──────────────┐         ┌──────────────┐              │
+    │ T-RB Bull r2  │         │ T-RBR Bear r2 │              │
+    │ sees Bear r1  │         │ sees Bull r1  │              │
+    │ rebuts/revises│         │ rebuts/revises│              │
+    │ → updated     │         │ → updated     │              │
+    └──────┬───────┘         └──────┬───────┘              │
+           │                         │                     │
+           └─────────────┬───────────┘                     │
+                         │                                 │
+   ─── FORENSIC (sees Bull r2 + Bear r2 + Technical + data) ──────
+                         │                                 │
+                         ▼                                 │
+                 ┌──────────────┐                          │
+                 │ T-RF Forensic │  ◄────────── data context
+                 │ (Sonnet)      │  ◄────────── (also Tech ───┘
+                 │ Cross-checks  │                 vs bull/bear)
+                 │ + tech align  │
+                 └──────┬───────┘
+                        │
                         ▼
-                 ┌─────────────┐
-                 │T-RS Synthesizer│
-                 │ Claude Opus  │
-                 │ Final thesis │
-                 │ + direction  │
-                 │ + divergence │
-                 │ + forensic   │
-                 │   metadata   │
-                 └──────┬──────┘
+                 ┌──────────────┐
+                 │ T-RS Synth    │
+                 │ (Opus)        │  ◄── all upstream
+                 │ Final thesis  │
+                 │ + direction   │
+                 │ (LONG/SHORT/  │
+                 │  PASS)        │
+                 │ + divergence  │
+                 │ + all metadata│
+                 └──────┬───────┘
                         │
             ┌───────────┼──────────┐
             ▼           ▼          ▼
@@ -168,18 +248,35 @@ adversarial value.
     └─────────────┘ └─────────┘ └─────────────┘
 ```
 
+**Total LLM calls per thesis:** Bull r1 + Bear r1 + Technical (3 parallel)
++ Bull r2 + Bear r2 (2 parallel) + Forensic + Synth = 7 LLM calls.
+
 ---
 
-## 4. Cost / latency budget
+## 4. Cost / latency budget (v2)
 
 | Path | Cost | Wall-clock |
 |---|---|---|
-| Existing `/api/research` (single Opus) | ~$1.00 | ~2.5 min |
-| Proposed `/api/research-multi` (5 agents) | ~$0.65 | ~5 min |
+| Existing `/api/research` (single Opus, ungrounded) | ~$1.00 | ~2.5 min |
+| Existing `/api/research` + extras (W4 grounded — current) | ~$1.00 | ~2.5 min |
+| **Proposed `/api/research-multi` (v2 — 7 LLM calls)** | **~$0.85** | **~6 min** |
 
-Multi-agent is **cheaper** (smaller models for narrower roles) but **slower** (sequential synthesis after parallel bull/bear/forensic).
+Per-agent cost breakdown (multi v2):
+- T-RB Bull round 1: ~$0.05
+- T-RBR Bear round 1: ~$0.05
+- T-RT Technical: ~$0.05
+- T-RB Bull round 2 (rebuttal): ~$0.05
+- T-RBR Bear round 2 (rebuttal): ~$0.05
+- T-RF Forensic: ~$0.05
+- T-RS Synthesizer (Opus, sees everything): ~$0.55
+- **Total: ~$0.85 per thesis**
 
-**Trade-off:** trade 2 minutes of wait for 4-way independent verification + cheaper unit cost. Worth it if research quality matters more than latency for the user.
+Latency: round 1 parallel (~2 min) → round 2 parallel (~2 min) → Forensic
+sequential (~1 min) → Synth sequential (~1 min) ≈ 6 min total.
+
+**Trade-off:** ~3.5 extra minutes + ~$0.15 cheaper than ungrounded single-call,
+in exchange for: 2-round adversarial debate + technical analysis +
+factual cross-check + grounded data layer.
 
 ---
 
@@ -207,31 +304,56 @@ Compare:
 
 ---
 
-## 6. Open design decisions (need Junyan input)
+## 6. Open decisions — RESOLVED 2026-05-08 by Junyan
 
-1. **Should Bull see news / Bear see news, or only Forensic?**
-   - Pro for both seeing news: each can build a more current thesis.
-   - Pro for only Forensic: news is "ground truth check" rather than thesis input.
-   - **My recommendation:** All 3 see data context (incl. news). Forensic uses it for cross-check.
+### ✅ Q1 — Bull/Bear see news?
+**Junyan:** "bull 跟 bear 才是更需要看信息面的".
+**Decision:** Both Bull and Bear receive FULL data context including
+recent_news. Forensic also sees data (for cross-check). Technical agent
+gets OHLC + volume + chip data subset.
 
-2. **Should we let Bull and Bear see EACH OTHER's output (round 2)?**
-   - Pro: classic adversarial debate where each side rebuts.
-   - Con: doubles cost + latency, may converge to mush.
-   - **My recommendation:** v1 = no rebuttal. v2 (later) can add if value clear.
+### ✅ Q2 — Bull/Bear see each other (round 2 rebuttal)?
+**Junyan:** "经过讨论和质疑之后的决策质量才会高".
+**Decision:** YES — round 2 added. After parallel round-1 outputs, each
+side gets the other's output and rebuts/revises. Cost +$0.10 per thesis
+(extra Bull-r2 + Bear-r2 calls). v2 ships with rebuttal pass; not deferred.
 
-3. **What if Bull / Bear LLM call FAILS?**
-   - Existing `/api/debate` uses Promise.allSettled and returns partial results.
-   - **My recommendation:** if 1 of 3 (Bull/Bear/Forensic) fails, Synthesizer proceeds with available inputs + flags `_partial=true`. If 2 fail, return error.
+### ✅ Q3 — Failure handling?
+**Junyan:** "确保 agent fail 的原因 然后根据每次失败的原因去修复和优化".
+**Decision:** Don't silently swallow failures. Each agent failure is
+logged with full error + which input caused it. Pipeline does NOT
+fall back to single-agent on partial failure — instead returns
+`_status: "PARTIAL_FAILURE"` with detail for debugging. Eventually
+build a `failure_modes.md` doc cataloguing each observed failure type
++ fix.
 
-4. **Model assignments — which model to which role?**
-   - Current proposal: Bull=Gemini, Bear=GPT-4o, Forensic=Claude Sonnet, Synth=Claude Opus.
-   - Rationale: 3 different model families = real cognitive diversity. Synth=Opus because final thesis needs reasoning weight.
-   - Alternative: all Claude, just different prompts. Cheaper to debug but less model-diversity.
-   - **My recommendation:** Multi-vendor as proposed. Worth the API key management cost for genuine independence.
+### ✅ Q4 — Model assignments?
+**Junyan:** "不是绝对的 ... GPT 用 5.5".
+**Decision:** Default mapping below, but config-driven so we can swap
+per-role:
+- Bull: Gemini 1.5 Pro (default) — swappable
+- Bear: **GPT-5.5** (UPDATED from GPT-4o) — swappable
+- Technical: Claude Sonnet
+- Forensic: Claude Sonnet
+- Synthesizer: Claude Opus 4.7
+The config goes in `MODEL_ASSIGNMENTS` env var or a JSON file so swap
+doesn't need code change.
 
-5. **How does this connect to Junyan's hand-review packets?**
-   - Round 2 review packets currently render single thesis. With multi-agent, packets would render: Final + (collapsed) Bull + (collapsed) Bear + Forensic findings inline.
-   - **My recommendation:** packet generator script auto-detects multi vs single and renders appropriately.
+### ✅ Q5 — Round 2 review packet integration?
+**Junyan:** "round 2 review 那就是每一个 agent 都全面 scan 一下 并且
+基于所有信息面去审视和批判 分析技术面等".
+**Decision:** Review packets become MULTI-AGENT-CRITIQUE artifacts,
+not just human-template. Each packet has sections per agent perspective:
+- BULL SCAN — what argument does the bull build from this thesis?
+- BEAR SCAN — what argument does the bear build?
+- TECHNICAL SCAN — chart pattern / momentum / chip analysis
+- FORENSIC SCAN — facts / numbers / logical contradictions
+- SYNTHESIZER VERDICT — final weighting + LONG/SHORT/PASS
+Plus SECTIONS for human (Junyan) annotations on top of each agent's scan
+(reviewer can disagree / flag / override per agent's output).
+
+These all fall out of the `/api/research-multi` output naturally — the
+packet just renders the JSON in human-readable form.
 
 ---
 
@@ -252,16 +374,19 @@ Compare:
 
 ---
 
-## 9. Junyan decision needed
+## 9. Junyan decision status — v2
 
-- [ ] Approve overall architecture (Section 2 role spec)
-- [ ] Approve rollout sequence (Section 5 stages)
-- [ ] Resolve open decisions (Section 6 — 5 questions)
-- [ ] Confirm Vercel env vars for OpenAI + Google AI (Section 8 prereq 4)
+- [x] Approve overall architecture (Section 2 role spec) — v2 modified per §6 answers
+- [x] Approve rollout sequence (Section 5 stages) — Stage 1 ✓ shipped
+- [x] Resolve open decisions (Section 6 — 5 questions) — all RESOLVED 2026-05-08
+- [ ] Confirm Vercel env vars for OpenAI (GPT-5.5) + Google AI (Section 8 prereq 4) — TBD before Stage 2 ships
 
-After approval, Stage 1 (data loader) starts immediately. Stages 2+3 are next-shift work.
+Stage 1 (data loader T-RD) shipped 2026-05-08 (commit 3b84ac7).
+Stage 2 (multi-agent endpoint) starts next shift, gated on Vercel env confirmation.
 
 ---
 
-**Author:** T1 Claude (post-shift-13, watchlist v1.2 wave)
-**Awaiting:** Junyan review + decision on §6 open questions
+**Author:** T1 Claude (v1 + v2 update post Junyan §6 resolution)
+**v2 changes:** integrated Junyan's 5 §6 answers — round 2 rebuttal,
+news to bull/bear, GPT-5.5 model bump, T-RT Technical Analyst added,
+failure-debugging policy, multi-agent-critique review packet structure.
