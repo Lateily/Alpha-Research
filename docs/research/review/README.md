@@ -61,7 +61,11 @@ Each packet has 12 sections:
 
 | Packet | Ticker | Gen date | Status |
 |---|---|---|---|
-| [700HK_review_2026-05-05.md](700HK_review_2026-05-05.md) | 700.HK (Tencent) | 2026-05-05 15:30 BST | First packet — format trial. SHORT thesis. Awaiting Junyan annotations. |
+| [002594SZ_review_2026-05-08.md](002594SZ_review_2026-05-08.md) | 002594.SZ (BYD) | 2026-05-08 (grounded) | Single-agent. Multi-agent SCAN sections pending Stage 2. |
+| [300308SZ_review_2026-05-08.md](300308SZ_review_2026-05-08.md) | 300308.SZ (Innolight) | 2026-05-08 (grounded) | Single-agent. SHORT thesis. Multi-agent SCAN sections pending Stage 2. |
+| [175HK_review_2026-05-08.md](175HK_review_2026-05-08.md) | 175.HK (Geely Auto) | 2026-05-08 (grounded) | Single-agent. Multi-agent SCAN sections pending Stage 2. |
+| [603233SH_review_2026-05-08.md](603233SH_review_2026-05-08.md) | 603233.SH (Da Shenlin) | 2026-05-08 (grounded) | Single-agent. Multi-agent SCAN sections pending Stage 2. |
+| [700HK_review_2026-05-05.md](700HK_review_2026-05-05.md) | 700.HK (Tencent — REMOVED from watchlist v1.2) | 2026-05-05 (ungrounded) | Historical artifact (price hallucination case study). |
 
 ## Round structure
 
