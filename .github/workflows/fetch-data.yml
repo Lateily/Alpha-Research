@@ -375,7 +375,30 @@ jobs:
           # Only commit if something changed
           git diff --cached --quiet && echo "No data changes to commit." || \
             git commit -m "data: daily update $(date -u +'%Y-%m-%d %H:%M') UTC [fetcher:${{ steps.fetcher.outcome }}]"
-          git push || echo "Nothing to push."
+
+          # Push with rebase-on-conflict retry. Pipeline runs ~10-15 min; if
+          # another commit lands on main during that window (e.g., Junyan or
+          # T1 push), `git push` is rejected. Without retry the data commit
+          # is local-only and lost when runner shuts down (real loss observed
+          # 2026-05-08 run 25554339852: full new-ticker data committed but
+          # discarded). Retry up to 3x with `git pull --rebase` between.
+          push_attempts=0
+          push_max_attempts=3
+          push_succeeded=false
+          while [ $push_attempts -lt $push_max_attempts ]; do
+            push_attempts=$((push_attempts + 1))
+            if git push 2>&1; then
+              push_succeeded=true
+              echo "Push succeeded on attempt $push_attempts"
+              break
+            fi
+            echo "Push rejected on attempt $push_attempts — pulling rebase + retry"
+            git fetch origin main || { echo "Fetch failed — abandoning push retries"; break; }
+            git pull --rebase origin main || { echo "Pull-rebase failed — abandoning push (manual recovery needed)"; break; }
+          done
+          if [ "$push_succeeded" != "true" ]; then
+            echo "::warning::Push failed after $push_max_attempts attempts. Data commit is LOCAL ONLY and will be lost on runner shutdown."
+          fi
 
       # ── Step 5: Telegram alerts (runs only if secrets are set) ────────────
       - name: Send Telegram alerts
