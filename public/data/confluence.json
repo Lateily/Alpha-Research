@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-08T12:17:39.027001+00:00",
+  "generated_at": "2026-05-08T12:31:38.527728+00:00",
   "tickers_scored": 7,
   "summary": {
     "entry_candidates": [],
@@ -72,7 +72,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-05-08T12:17:39.026826+00:00"
+      "computed_at": "2026-05-08T12:31:38.527553+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -111,7 +111,7 @@
       "signal_types": [
         "MA20_BOUNCE"
       ],
-      "computed_at": "2026-05-08T12:17:39.026687+00:00"
+      "computed_at": "2026-05-08T12:31:38.527418+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -133,7 +133,7 @@
       "rationale_e": "RSI 46 | Price vs MA20 -2.0% | Regime: PERMISSIVE | VP 42",
       "rationale_z": "RSI 46 | 距MA20 -2.0% | 政策顺风 | VP 42",
       "signal_types": [],
-      "computed_at": "2026-05-08T12:17:39.026303+00:00"
+      "computed_at": "2026-05-08T12:31:38.527014+00:00"
     },
     {
       "ticker": "175.HK",
@@ -155,7 +155,7 @@
       "rationale_e": "RSI 52 | Price vs MA20 -3.6% | VP 51",
       "rationale_z": "RSI 52 | 距MA20 -3.6% | VP 51",
       "signal_types": [],
-      "computed_at": "2026-05-08T12:17:39.026404+00:00"
+      "computed_at": "2026-05-08T12:31:38.527118+00:00"
     },
     {
       "ticker": "700.HK",
@@ -177,7 +177,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-05-08T12:17:39.026910+00:00"
+      "computed_at": "2026-05-08T12:31:38.527639+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -199,7 +199,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-05-08T12:17:39.026986+00:00"
+      "computed_at": "2026-05-08T12:31:38.527713+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -266,7 +266,7 @@
         "BULLISH_ALIGNMENT",
         "AI_CAPEX_WEAKENING"
       ],
-      "computed_at": "2026-05-08T12:17:39.026542+00:00"
+      "computed_at": "2026-05-08T12:31:38.527292+00:00"
     }
   ]
 }
