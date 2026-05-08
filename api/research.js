@@ -1627,7 +1627,9 @@ Return ONLY the JSON object. No markdown, no explanation.`;
 // NAMED EXPORTS (test-only — Vercel ignores non-default exports for routing)
 // ════════════════════════════════════════════════════════════════════════════
 // Used by scripts/test_thesis_validator.mjs to validate FC.1 temporal check
-// without spending API tokens. These are pure functions with no side effects.
+// without spending API tokens, AND by api/research-multi.js (Stage 2
+// multi-agent endpoint, RESEARCH_AGENT_TEAM_v1.md v2) to share the same
+// data-context rendering + validation logic. Pure functions, no side effects.
 export {
   validateThesisQuality,
   parseCatalystDate,
@@ -1635,6 +1637,14 @@ export {
   CATALYST_DATE_BACKWARD_TOLERANCE_DAYS,
   QUALITY_CHECK_NAMES,
   QC_VALIDATOR_ONLY_CHECKS,
+  buildEnrichmentBlock,
+  buildFundamentalsBlock,
+  buildExtrasBlock,
+  buildConsensusBlock,
+  runPass1,
+  extractJsonPayload,
+  isPlainObject,
+  buildQcFindings,
 };
 
 // ════════════════════════════════════════════════════════════════════════════
