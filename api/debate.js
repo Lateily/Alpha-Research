@@ -79,7 +79,10 @@ Return ONLY valid JSON:
 
 // ── REST callers (no SDK for OpenAI / Gemini) ─────────────────────────────────
 async function callGemini(prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+  // 2026-05-08: gemini-1.5-pro deprecated by Google → switched to gemini-2.5-pro
+  // (current stable flagship). Override via env if needed for preview models.
+  const model = process.env.MODEL_DEBATE_BULL || 'gemini-2.5-pro';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
   const r = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -150,7 +153,7 @@ export default async function handler(req, res) {
   try {
     // All three analysts run in parallel
     const [bR, beR, fR] = await Promise.allSettled([
-      callGemini(bullPrompt(ticker, company, context)).then(d => ({ ...d, role:'BULL',     model:'gemini-1.5-pro' })),
+      callGemini(bullPrompt(ticker, company, context)).then(d => ({ ...d, role:'BULL',     model: process.env.MODEL_DEBATE_BULL || 'gemini-2.5-pro' })),
       callOpenAI(bearPrompt(ticker, company, context)).then(d => ({ ...d, role:'BEAR',     model:'gpt-4o' })),
       callClaude(forensicPrompt(ticker, company, context)).then(d => ({ ...d, role:'FORENSIC', model:'claude-sonnet' })),
     ]);

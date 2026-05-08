@@ -58,8 +58,16 @@ import {
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ─── Model config (Junyan §6.4 — not absolute, swappable via env) ──────────
+// Defaults verified 2026-05-08 against vendor API docs:
+//   Gemini: 1.5-pro DEPRECATED → use 2.5-pro (production-grade, stable).
+//           3.1-pro-preview is newer but Preview-status (subject to change).
+//           Override via MODEL_BULL env if you want preview.
+//   OpenAI: gpt-5.5 confirmed current (released 2026-04-23, $5/$30 per 1M
+//           tokens). Aliased to latest 2026-04-23 build. Override via
+//           MODEL_BEAR env to pin specific date or use gpt-5.5-pro.
+//   Claude: sonnet-4-20250514 + opus-4-7 active (per existing platform usage).
 const MODELS = {
-  bull:      process.env.MODEL_BULL      || 'gemini-1.5-pro',
+  bull:      process.env.MODEL_BULL      || 'gemini-2.5-pro',
   bear:      process.env.MODEL_BEAR      || 'gpt-5.5',
   technical: process.env.MODEL_TECHNICAL || 'claude-sonnet-4-20250514',
   forensic:  process.env.MODEL_FORENSIC  || 'claude-sonnet-4-20250514',
