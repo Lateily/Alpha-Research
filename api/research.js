@@ -34,11 +34,17 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ─── TICKER METADATA ─────────────────────────────────────────────────────────
 const TICKER_META = {
-  '700.HK':    { en: 'Tencent',   hints: 'WeChat gaming advertising cloud',        isHK: true  },
-  '9999.HK':   { en: 'NetEase',   hints: 'gaming mobile music education',          isHK: true  },
-  '6160.HK':   { en: 'BeiGene',   hints: 'zanubrutinib BRUKINSA BTK oncology BGNE',isHK: true  },
-  '002594.SZ': { en: 'BYD',       hints: 'electric vehicle EV battery China auto', isHK: false },
-  '300308.SZ': { en: 'Innolight', hints: 'optical transceiver AI datacenter 800G', isHK: false },
+  // Watchlist v1.2 (2026-05-08) — 4-ticker focus on names Junyan personally tracks.
+  // Removed: 700.HK, 9999.HK, 6160.HK (Tencent/NetEase/BeiGene). Their TICKER_META
+  // kept here as fallback for any saved-thesis re-runs against historical artifacts.
+  '002594.SZ': { en: 'BYD',         hints: 'electric vehicle EV battery China auto BYD Han Tang Song',                  isHK: false },
+  '300308.SZ': { en: 'Innolight',   hints: 'optical transceiver AI datacenter 800G 1.6T silicon photonics CPO Innolight', isHK: false },
+  '175.HK':    { en: 'Geely Auto',  hints: 'Geely China auto EV hybrid Volvo Polestar Lotus Geometry Zeekr',             isHK: true  },
+  '603233.SH': { en: 'Da Shenlin',  hints: 'pharmacy retail drugstore chain Lingnan Guangdong medical insurance OTC Rx',  isHK: false },
+  // Removed (kept for historical thesis backward-compat — not in watchlist):
+  '700.HK':    { en: 'Tencent',     hints: 'WeChat gaming advertising cloud',        isHK: true  },
+  '9999.HK':   { en: 'NetEase',     hints: 'gaming mobile music education',          isHK: true  },
+  '6160.HK':   { en: 'BeiGene',     hints: 'zanubrutinib BRUKINSA BTK oncology BGNE',isHK: true  },
 };
 
 // ─── SHARED FETCH HELPER ─────────────────────────────────────────────────────

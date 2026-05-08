@@ -10089,7 +10089,7 @@ export default function Dashboard() {
   /* Fetch EQR ratings on mount */
   useEffect(() => {
     const base = DATA_BASE;
-    const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
+    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
     Promise.all(
       ids.map(id =>
         fetch(base + `data/eqr_${id}.json`)
@@ -10113,7 +10113,7 @@ export default function Dashboard() {
   /* FC.5 — Fetch thesis fact-check reports on mount */
   useEffect(() => {
     const base = DATA_BASE;
-    const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
+    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
     Promise.all(
       ids.map(id =>
         fetch(base + `data/thesis_factcheck/${id}.json`)
@@ -10136,7 +10136,7 @@ export default function Dashboard() {
   /* Fetch Reverse DCF data on mount */
   useEffect(() => {
     const base = DATA_BASE;
-    const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
+    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
     Promise.all(
       ids.map(id =>
         fetch(base + `data/rdcf_${id}.json`)
@@ -10160,7 +10160,7 @@ export default function Dashboard() {
   const [signalsData, setSignalsData] = useState({});
   useEffect(() => {
     const base = DATA_BASE;
-    const ids = ['300308_SZ','700_HK','9999_HK','6160_HK','002594_SZ'];
+    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
     Promise.all(
       ids.map(id =>
         fetch(base + `data/signals_${id}.json`)
