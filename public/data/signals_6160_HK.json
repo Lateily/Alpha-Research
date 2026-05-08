@@ -1,38 +1,69 @@
 {
   "ticker": "6160.HK",
-  "generated_at": "2026-05-07",
-  "price": NaN,
+  "generated_at": "2026-05-08",
+  "price": 190.6,
   "zone": "NEUTRAL",
-  "entry_zone": false,
+  "entry_zone": true,
   "exit_zone": false,
-  "signals": [],
+  "signals": [
+    {
+      "type": "MA20_BOUNCE",
+      "strength": "moderate",
+      "date": "2026-05-08",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA20 (184.9) — near-term support held",
+        "z": "股价从MA20(184.9)附近反弹，短期支撑有效"
+      }
+    },
+    {
+      "type": "MA60_BOUNCE",
+      "strength": "strong",
+      "date": "2026-05-08",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA60 (187.0) — major support held",
+        "z": "股价从MA60(187.0)附近反弹，主要支撑有效"
+      }
+    },
+    {
+      "type": "MACD_GOLDEN_CROSS",
+      "strength": "strong",
+      "date": "2026-05-08",
+      "bullish": true,
+      "description": {
+        "e": "MACD DIF(0.117) crossed above DEA(-0.422) above zero — bullish momentum",
+        "z": "MACD DIF(0.117)上穿DEA(-0.422)零轴上方金叉看涨"
+      }
+    }
+  ],
   "signal_count": {
-    "bullish": 0,
+    "bullish": 3,
     "bearish": 0,
-    "total": 0
+    "total": 3
   },
   "indicators": {
-    "ma5": NaN,
-    "ma20": NaN,
-    "ma60": NaN,
-    "rsi14": NaN,
-    "vol_ma20": 3402345,
-    "vol_ratio": 1.56,
-    "price_vs_ma20": NaN,
-    "price_vs_ma60": NaN,
-    "change_1d": NaN,
-    "change_5d": NaN,
-    "change_20d": NaN,
-    "macd_dif": NaN,
-    "macd_dea": NaN,
-    "macd_hist": NaN,
-    "bb_upper": NaN,
-    "bb_mid": NaN,
-    "bb_lower": NaN,
-    "bb_bandwidth": NaN,
-    "kdj_k": NaN,
-    "kdj_d": NaN,
-    "kdj_j": NaN,
+    "ma5": 183.0,
+    "ma20": 185.03,
+    "ma60": 186.64,
+    "rsi14": 59.0,
+    "vol_ma20": 3422340,
+    "vol_ratio": 1.44,
+    "price_vs_ma20": 3.01,
+    "price_vs_ma60": 2.12,
+    "change_1d": 0.9,
+    "change_5d": 9.79,
+    "change_20d": 1.44,
+    "macd_dif": 0.1171,
+    "macd_dea": -0.4223,
+    "macd_hist": 1.0788,
+    "bb_upper": 197.2,
+    "bb_mid": 185.03,
+    "bb_lower": 172.86,
+    "bb_bandwidth": 13.15,
+    "kdj_k": 56.0,
+    "kdj_d": 37.9,
+    "kdj_j": 92.2,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
