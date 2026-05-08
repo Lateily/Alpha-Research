@@ -1864,10 +1864,14 @@ function NewsPanel({ macroArticles, portfolioArticles, loading, lastFetched, onO
       const context = article.ticker
         ? `${article.ticker}${article.tag ? ' · ' + article.tag : ''}`
         : article.tag || '';
-      const res = await fetch(`${API_BASE}/api/translate`, {
+      // 2026-05-08: /api/translate merged into /api/chat (12-function Hobby
+      // plan limit). action='translate' routes to translate handler.
+      // Vercel rewrite ALSO maps /api/translate → /api/chat for any caller
+      // still hitting the old URL.
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: article.title, context }),
+        body: JSON.stringify({ action: 'translate', text: article.title, context }),
       });
       const data = await res.json();
       setTranslations(p => ({ ...p, [id]: { zh: data.translated || article.title, loading: false } }));

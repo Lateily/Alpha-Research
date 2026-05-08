@@ -1,27 +1,81 @@
-// api/chat.js — Article Q&A powered by Claude
-// POST { article, question, history, regime_data }
-// Returns { response, role: 'assistant' }
+// api/chat.js — combined LLM utility endpoint
+//
+// Handles two actions via `action` body field (or backward-compat: no field
+// = chat). Both actions use Anthropic Claude SDK with different model
+// tiers + prompts.
+//
+// Action: "chat" (default — Article Q&A)
+//   POST { action?: 'chat', article, question?, history?, regime_data?, is_auto_analysis? }
+//   Response: { role: 'assistant', content, input_tokens, output_tokens }
+//   Model: claude-sonnet-4-6
+//
+// Action: "translate" (financial headline translator)
+//   POST { action: 'translate', text, context? }
+//   Response: { success: true, translated, tokens_used }
+//   Model: claude-haiku-4-5-20251001
+//
+// MERGE HISTORY (2026-05-08):
+//   Vercel Hobby plan limits a deployment to 12 serverless functions.
+//   Adding api/research-multi.js (Stage 2 multi-agent endpoint) pushed
+//   us to 13 → build failed. Merged api/translate.js into this file
+//   to fit the limit without losing functionality. Vercel rewrite
+//   from /api/translate → /api/chat preserves the legacy URL.
+//
+//   Long-term path: Vercel Pro plan (100 functions + Workflows for
+//   multi-agent durable execution per RESEARCH_AGENT_TEAM_v1.md v2).
 
 import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+// ─── /api/translate handler (merged 2026-05-08) ────────────────────────
+async function handleTranslate(req, res) {
+  const { text, context } = req.body || {};
+  if (!text?.trim()) return res.status(400).json({ error: 'text is required' });
+  if (!process.env.ANTHROPIC_API_KEY)
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
+  // Already Chinese (≥30% Chinese chars) — return as-is
+  if (/[一-鿿]/.test(text) && text.replace(/[^一-鿿]/g, '').length > text.length * 0.3) {
+    return res.status(200).json({ success: true, translated: text, tokens_used: 0 });
+  }
+
+  try {
+    const contextNote = context ? ` (Context: ${context})` : '';
+    const prompt = `You are a financial translator specialising in equity research. Translate this English financial news headline into concise, fluent Simplified Chinese. Preserve all ticker symbols, company names, and financial figures exactly. Return ONLY the Chinese translation, no explanation, no quotation marks.${contextNote}
+
+Headline: ${text.trim()}`;
+
+    const msg = await client.messages.create({
+      model:      'claude-haiku-4-5-20251001',
+      max_tokens: 200,
+      messages:   [{ role: 'user', content: prompt }],
+    });
+
+    const translated = msg.content[0]?.text?.trim() || text;
+    return res.status(200).json({
+      success:     true,
+      translated,
+      tokens_used: (msg.usage?.input_tokens || 0) + (msg.usage?.output_tokens || 0),
+    });
+  } catch (err) {
+    console.error('[chat:translate]', err);
+    if (err.status === 429) return res.status(429).json({ error: 'Rate limited. Retry shortly.' });
+    return res.status(500).json({ error: err.message || 'Translation failed' });
+  }
+}
+
+// ─── /api/chat handler (article Q&A) ───────────────────────────────────
+async function handleChat(req, res) {
   const { article, question, history = [], regime_data, is_auto_analysis } = req.body || {};
   if (!article) return res.status(400).json({ error: 'article required' });
 
+  // Watchlist v1.2 (2026-05-08) — 4-ticker focus
   const portfolioCtx = [
-    '300308.SZ (Innolight) — AI Infrastructure, PERMISSIVE regime',
-    '002594.SZ (BYD)       — EV/Auto, PERMISSIVE regime',
-    '700.HK   (Tencent)    — Internet/Platform, NEUTRAL regime',
-    '9999.HK  (NetEase)    — Internet/Platform, NEUTRAL regime',
-    '6160.HK  (BeOne Medicines) — Biotech, NEUTRAL regime',
+    '300308.SZ (Innolight)  — AI Infrastructure, optical transceiver',
+    '002594.SZ (BYD)        — EV/Auto, China + global expansion',
+    '175.HK   (Geely Auto)  — China auto, multi-brand (Volvo/Polestar/Lotus)',
+    '603233.SH (Da Shenlin) — Pharmacy retail, 2000+ stores',
   ].join('\n');
 
   const regimeCtx = regime_data
@@ -51,12 +105,10 @@ YOUR ROLE:
 - Respond in the same language as the user's question (Chinese question → Chinese answer)
 - Use financial shorthand where appropriate (e.g. "re-rates the multiple", "consensus needs to reset")`;
 
-  // Build conversation history for Claude
   const messages = [
     ...history.map(m => ({ role: m.role, content: m.content })),
   ];
 
-  // Auto-analysis on first open (no user question yet)
   if (is_auto_analysis) {
     messages.push({
       role: 'user',
@@ -83,7 +135,31 @@ YOUR ROLE:
       output_tokens: message.usage?.output_tokens,
     });
   } catch (err) {
-    console.error('chat.js error:', err);
+    console.error('[chat:chat]', err);
     return res.status(500).json({ error: err.message || 'Internal error' });
   }
+}
+
+// ─── Main handler — action discriminator ───────────────────────────────
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin',  '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST')    return res.status(405).json({ error: 'Method not allowed' });
+
+  // Action discriminator. Default = chat (backward compat with existing
+  // frontend callers). Vercel rewrite from /api/translate → /api/chat
+  // sets action via body discriminator (frontend code adds `action: 'translate'`
+  // when calling /api/translate URL after the merge).
+  const action = (req.body || {}).action || 'chat';
+
+  if (action === 'translate') {
+    return handleTranslate(req, res);
+  }
+  if (action === 'chat') {
+    return handleChat(req, res);
+  }
+
+  return res.status(400).json({ error: `Unknown action: ${action}. Use 'chat' or 'translate'.` });
 }
