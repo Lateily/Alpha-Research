@@ -94,21 +94,31 @@ async function callGemini(model, system, user, maxOutputTokens = 8192) {
 }
 
 async function callOpenAI(model, system, user, maxTokens = 8192) {
+  // GPT-5.x and newer require `max_completion_tokens` instead of `max_tokens`.
+  // GPT-4.x still accepts `max_tokens`. Detect by model name prefix and route.
+  // 2026-05-08: GPT-5.5 returned 400 "Unsupported parameter: 'max_tokens'"
+  // confirming the breaking change. Sending both for forward-compat is NOT
+  // allowed by OpenAI API ("only one of max_tokens or max_completion_tokens").
+  const isModernModel = /^(gpt-5|gpt-6|o[0-9])/i.test(model);
+  const tokenField = isModernModel ? 'max_completion_tokens' : 'max_tokens';
+
+  const body = {
+    model,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+    [tokenField]: maxTokens,
+    temperature: 0.6,
+  };
+
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-      max_tokens: maxTokens,
-      temperature: 0.6,
-    }),
+    body: JSON.stringify(body),
   });
   if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
   const d = await r.json();
