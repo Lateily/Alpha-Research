@@ -1,0 +1,75 @@
+{
+  "ticker": "175.HK",
+  "thesis_logged_at": "2026-05-08T13:38:36.744975+00:00",
+  "thesis_source": "docs/research/factcheck/175HK_thesis_2026-05-08_GROUNDED.json",
+  "thesis_source_commit": "ed45ada",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "Geely 1H 2026 interim results — key disclosure of Galaxy/Zeekr brand consolidation synergies, EV gross margin trajectory, and full-year volume guidance revision after Q1 2026 record monthly deliveries",
+    "date_or_window": "2026-08-20 (±5 days, historical interim release window)",
+    "type": "earnings_revision",
+    "source": "HKEX filing schedule; management Q4 2025 call indicated Zeekr privatization synergies to be quantified at interim"
+  },
+  "mechanism_chain_length": 5,
+  "rightIf_conditions": [
+    "1H 2026 interim NI ≥10.5B CNY (implying ≥24% YoY on clean comparable base)",
+    "Group consolidated operating margin in 1H 2026 ≥6.5% (vs 5.0% live TTM)",
+    "Management raises FY2026 volume guidance by ≥5% at interim or quarterly update",
+    "Consensus FY2026 EPS revised up by ≥10% within 30 days of interim release"
+  ],
+  "wrongIf_conditions": [
+    "1H 2026 group gross margin <17.0% (flat or down vs current TTM 17.0%)",
+    "1H 2026 operating margin <5.5% (less than 50bp expansion)",
+    "Monthly EV deliveries (Galaxy + Zeekr combined) decline QoQ for two consecutive months in 2H 2026",
+    "Geely loses ≥300bp NEV market share to BYD QoQ (per watchlist wrongIf signal)"
+  ],
+  "what_changes_our_mind": "1H 2026 interim results show consolidated gross margin <17.0% (i.e., flat or down vs current TTM) AND operating margin <5.5% — would signal price-war pressure overwhelmed Zeekr synergy benefits, invalidating the operating leverage thesis.",
+  "variant_view_one_sentence": "Market believes FY2025 NI flatness (+0.2%) means growth has peaked → We believe it's a one-off base effect masking accelerating operating earnings → Mechanism is Zeekr consolidation synergies + Galaxy mix lift surfacing in clean 1H 2026 comparables.",
+  "time_to_resolution": "~3.5 months until 1H 2026 interim (~2026-08-20)",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "+30% to +45% (target 29.5-33.0 HKD on 11-13x fwd P/E × upgraded EPS)",
+    "downside_if_wrong": "-15% to -20% (downside floor 18.0-19.5 HKD on 7x trough multiple if margin disappoints)",
+    "reward_to_risk": "2.3:1"
+  },
+  "quantification": {
+    "metric_target": "FY2026 Net Income (group, attributable)",
+    "current_value": "16.9B CNY (FY2025 actual, per data context)",
+    "predicted_value": "21-23B CNY",
+    "predicted_range": {
+      "low": "19.5B",
+      "mid": "21.5B",
+      "high": "24.0B"
+    },
+    "predicted_horizon": "FY2026 (reportable March 2027; interim signal August 2026)",
+    "confidence": "0.60"
+  },
+  "qc_quality_at_log_time": {
+    "score": 90,
+    "missingFields": [],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": true,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "PASS",
+    "qc_findings": [
+      "failed:step_8_position_sizing_curve_monotonic"
+    ],
+    "repairAttempted": false
+  },
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

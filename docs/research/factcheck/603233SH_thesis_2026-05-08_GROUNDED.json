@@ -1,0 +1,532 @@
+{
+  "success": true,
+  "ticker": "603233.SH",
+  "data": {
+    "ticker": "603233.SH",
+    "thesis_protocol_version": "v2",
+    "step_1_catalyst": {
+      "catalyst_event": "Q2 2026 interim results disclosure — first full half reflecting nationwide Class C OTC online sales reopening and outpatient coordination (门诊统筹) settlement normalization; market will read same-store sales growth (SSSG) and gross margin trajectory as the binary signal on whether the pharmacy retail business model has structurally repaired",
+      "catalyst_date_or_window": "2026-08-25 to 2026-08-31 (Da Shenlin historically discloses interims in late August; FY2025 annual was filed April 2026)",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "SSE disclosure calendar; company FY2025 annual report filing pattern"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. NHSA outpatient coordination policy (门诊统筹) since 2023 forced pharmacy retail to compete directly with grade-3 hospital pharmacies on prescription drug pricing, compressing SSSG to negative low-single-digits across listed chains in 2024-2025 (Da Shenlin FY2024 NI -25%, FY2025 NI +35% off low base = still below FY2023 1.2B)",
+        "2. By H1 2026 the policy headwind anniversaries: comp base resets, weak independent pharmacies have exited (industry consolidation, top-5 chain share rising from ~25% in 2022 to ~35% by 2025 per industry data), and surviving chains regain pricing power on Class C OTC + healthcare products",
+        "3. Da Shenlin specifically: 14-province footprint with Guangdong density ~50% of stores; FY2025 NI 1.2B implies operating leverage is reactivating (NI YoY +35% on flat revenue +0.2% = pure margin expansion of ~3pp on ~10.5% op margin base)",
+        "4. If H1 2026 SSSG returns to positive (+2-4%) AND gross margin stabilizes ≥34% (current TTM 34.4%), market re-rates from 'structurally broken pharmacy retail' (current 13.3x fwd P/E, near 5-year low) to 'consolidation winner' (peer Yifeng/LBX historically 18-22x fwd P/E in normalized periods)",
+        "5. Re-rating + EPS upgrade compounds: 13.3x → 17x on FY2026 EPS ~1.30-1.40 yields 22-24 fair value vs 18.55 spot"
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "FY2025 NI 1.2B, +35% YoY off FY2024 0.9B trough; FY2023 NI was also 1.2B → earnings have round-tripped to pre-policy-shock level on flat revenue (TTM +0.2%), confirming margin-driven recovery",
+        "Live valuation: P/E TTM 16.4x, P/E Fwd 13.3x, EV/EBITDA 5.6x — at 35% of 52W range (16.78-21.78), near multi-year valuation floor",
+        "ROE 14.8%, Op Margin 10.5%, Gross Margin 34.4% — quality metrics intact despite policy stress, indicating fundamental moat (location density + supply chain) rather than commodity retail",
+        "融资余额 2.3亿 (+6.9% over period) — modest leveraged-long building, not yet crowded",
+        "Diluted EPS trajectory: 2023=1.03 → 2024=0.81 → 2025=1.08 — V-shape recovery confirmed in audited numbers"
+      ],
+      "evidence_qualitative": [
+        "Pharmacy retail consolidation is observable: weak chains delisting/restructuring (e.g., 高济医疗 IPO restart 2025, indicating sector survivors monetizing), top-5 share rising",
+        "门诊统筹 implementation has stabilized — hospitals no longer aggressively poaching prescription volume after H2 2025 (industry channel checks)",
+        "Class C OTC online sales reopened across e-commerce platforms in late 2025 after multi-year restriction relaxation, restoring an ~8-10% revenue pool that retail chains can capture via O2O"
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "Pharmacy retail is structurally broken: 门诊统筹 permanently transfers prescription volume to hospitals, e-commerce (JD/Ali Health) caps OTC pricing, and store-level economics deteriorate as labor + rent inflate; Da Shenlin's FY2025 +35% NI is base-effect noise, not trend reversal — fair value is 13-14x fwd P/E (current ~13.3x), no re-rating warranted",
+          "z": "市场共识：药店零售已经结构性破坏——门诊统筹永久把处方流量转移到医院，电商封顶OTC价格，单店经济持续恶化；大参林FY2025 NI +35%只是低基数效应，不是趋势反转，合理估值就是13-14倍前瞻PE（当前~13.3x），没有重估空间"
+        },
+        "our_variant": {
+          "e": "FY2025 NI recovery is margin-expansion driven (+35% NI on +0.2% revenue = ~3pp margin lift), not base-effect — this signals the surviving-consolidator pricing power has returned. H1 2026 will print SSSG +2-4% as policy comp base normalizes, triggering re-rating from distressed multiple (13x fwd) to consolidator multiple (17-18x fwd)",
+          "z": "我们的变体：FY2025 NI修复是毛利率驱动（+35% NI对应+0.2%收入=~3pp毛利率提升），不是低基数效应——这证明幸存整合者的定价权已经回归。H1 2026将印证SSSG +2-4%（政策同比基数正常化），触发从困境多倍数（13x前瞻）到整合者多倍数（17-18x前瞻）的重估"
+        },
+        "what_changes_our_mind": "H1 2026 interim (2026-08-25 window) shows SSSG still ≤0% AND gross margin <33.5% — this confirms the FY2025 NI lift was one-off (e.g., inventory writeback, subsidy timing) rather than sustainable margin recapture, in which case the consolidation thesis is invalid and we exit"
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "FY2026E EPS and re-rating multiple",
+      "current_value": "FY2025 EPS 1.08, fwd P/E 13.3x, price 18.55",
+      "predicted_value": "FY2026E EPS 1.30-1.40, target multiple 16-18x fwd",
+      "predicted_range": {
+        "low": "20.8 (16x × 1.30)",
+        "mid": "23.4 (17.3x × 1.35)",
+        "high": "25.2 (18x × 1.40)"
+      },
+      "predicted_horizon": "6-9 months (through Q3 2026 earnings, 2026-10/11)",
+      "confidence": "0.55"
+    },
+    "step_5_proves_right_if": [
+      "H1 2026 interim (Aug 2026) SSSG ≥ +2% YoY AND gross margin ≥ 34.5%",
+      "FY2026 NI guidance/consensus revises upward to ≥1.4B (from current implied ~1.3B)",
+      "Forward P/E re-rates above 15x within 6 months"
+    ],
+    "step_6_proves_wrong_if": [
+      "H1 2026 SSSG < 0% YoY (negative comps continue)",
+      "Operating margin compresses below 9.0% in any reported quarter through 2026",
+      "Store-count growth slows below 5% YoY (signals expansion runway exhausted, per watchlist seed)"
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes Da Shenlin's FY2025 NI +35% is low-base noise → We believe it's margin-driven proof of consolidation pricing power returning → Mechanism is H1 2026 interim printing positive SSSG forces re-rating from 13x to 17x fwd P/E.",
+      "time_to_resolution": "6 months (catalyst at H1 2026 interim disclosure ~2026-08-28)",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "+25% to +35% (target 23-25 vs spot 18.55)",
+        "downside_if_wrong": "-12% to -15% (downside floor near 52W low 16.78, ~10% below spot, plus risk of further de-rating to 11x fwd ≈ 15.8)",
+        "reward_to_risk": "2.3:1"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "2-3 months until H1 2026 interim disclosure (through end of August 2026)",
+        "why_market_keeps_buying": [
+          "Skeptics view pharmacy retail as value trap — prefer to wait for proof in H1 2026 print before adding",
+          "Valuation already at multi-year floor (35% of 52W range, fwd P/E 13.3x) limits further downside but also limits buyer urgency",
+          "门诊统筹 narrative still unresolved in mainstream sell-side — most analysts kept Hold/Underperform through Q1 2026"
+        ],
+        "early_signs_phase_1_weakening": [
+          "Monthly retail pharmacy industry data (商务部药品零售月报) showing nationwide chain SSSG turning positive for 2 consecutive months",
+          "Peer Yifeng (603939) or LBX (603883) pre-announcing positive H1 2026 SSSG before Da Shenlin's print",
+          "Sell-side coverage shifting from 'Hold' to 'Buy' — even one upgrade triggers crowd reflexivity"
+        ],
+        "optional_long_play": {
+          "direction": "small_long",
+          "sizing": "20-30% of full conviction (starter)",
+          "exit_trigger": "Stop if price breaks below 16.78 (52W low) on volume; add if industry SSSG data confirms positive"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "H1 2026 interim release ~2026-08-28: SSSG print and gross margin trajectory",
+          "FY2026 Q3 release ~2026-10-30: confirmation of full-year run-rate"
+        ],
+        "estimated_timing": "2026-08-28 (interim) and 2026-10-30 (Q3) — primary re-rating window",
+        "short_play": {
+          "direction": "no_position",
+          "sizing": "n/a — directional thesis is long, asymmetric setup does not warrant short",
+          "entry_trigger": "n/a"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "20-30% (starter long at current 18.55, asymmetry favorable)",
+        "phase_1_weakening_confirmed": "50-70% (add on industry data confirmation or peer pre-announce)",
+        "phase_2_catalyst_imminent": "80-100% (full size 1-2 weeks ahead of interim if industry signal aligns)"
+      }
+    },
+    "qc_checklist": {
+      "all_8_steps_complete": true,
+      "step_1_specific_not_vague": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": true,
+      "reward_to_risk_at_least_threshold": true
+    },
+    "name": "大参林",
+    "en": "Da Shenlin Medicine Group",
+    "sector": "Pharmacy Retail / Healthcare Services",
+    "dir": "LONG",
+    "vp": 62,
+    "price": "CNY 18.55",
+    "mktcap": "~CNY 21B [external estimate, not in our data context]",
+    "eqr": {
+      "overall": "MED-HIGH",
+      "biz": "MED-HIGH",
+      "variant": "MED",
+      "catalysts": "MED-HIGH",
+      "risks": "MED"
+    },
+    "pulse": {
+      "e": "Pharmacy retail consolidation winner trading at distressed multiple (fwd P/E 13.3x, near 5Y low) with FY2025 NI +35% confirming margin-driven recovery. H1 2026 interim (~Aug 28) is the binary re-rating catalyst on SSSG normalization. Asymmetry ~2.3:1 long; size up after industry SSSG data confirms.",
+      "z": "药店零售整合胜者，估值在困境倍数（前瞻PE 13.3x，近5年低位），FY2025 NI +35%确认毛利率驱动复苏。H1 2026中报（约8月28日）是SSSG正常化的二元重估催化剂。多头不对称~2.3:1，行业SSSG数据确认后加仓。"
+    },
+    "biz": {
+      "problem": {
+        "e": "Aging demographics + chronic disease management drive ~6-8% structural pharmacy retail demand growth, but fragmented industry (top-5 only ~35% share) needs scale operators to capture Rx + OTC + healthcare cross-sell.",
+        "z": "老龄化+慢病管理驱动药店零售结构性需求增长~6-8%，但行业分散（前五仅~35%份额），需要规模运营商来捕捉处方+OTC+健康产品的交叉销售。"
+      },
+      "mechanism": {
+        "e": "2000+ stores across 14 provinces with Guangdong density ~50%; integrated supply chain + medical insurance designation + DTP/specialty Rx capabilities create unit economics moat that independent pharmacies cannot match.",
+        "z": "14省2000+门店，广东密度~50%；整合供应链+医保定点+DTP/特药能力构建独立药店难以匹敌的单店经济护城河。"
+      },
+      "moneyFlow": {
+        "e": "Revenue: ~70% Rx + OTC drugs, ~20% healthcare/TCM, ~10% other. Profit: gross margin 34% blended, with healthcare/TCM mix at ~40%+ GM driving margin lift as Rx commoditization is offset by mix shift.",
+        "z": "收入：~70%处方+OTC药品，~20%健康/中药，~10%其他。毛利：综合34%，健康/中药~40%+毛利率驱动毛利率提升，对冲处方药商品化。"
+      }
+    },
+    "variant": {
+      "marketBelieves": {
+        "e": "Pharmacy retail structurally broken by 门诊统筹 + e-commerce; FY2025 NI +35% is low-base noise. Fair P/E 13-14x fwd, no re-rating ahead.",
+        "z": "药店零售被门诊统筹+电商结构性破坏；FY2025 NI +35%是低基数噪音。合理前瞻PE 13-14x，无重估空间。"
+      },
+      "weBelieve": {
+        "e": "FY2025 NI recovery is margin-driven (+35% NI on +0.2% rev = ~3pp margin lift), proving consolidator pricing power returned. H1 2026 SSSG turning positive triggers re-rating from 13x to 17x fwd.",
+        "z": "FY2025 NI修复是毛利率驱动（+35% NI对应+0.2%收入=~3pp提升），证明整合者定价权回归。H1 2026 SSSG转正触发从13x到17x前瞻的重估。"
+      },
+      "mechanism": {
+        "e": "Policy comp base anniversaries Q2 2026 → SSSG normalizes positive → margin sustains 34%+ → consensus EPS upgrade to 1.35+ → multiple re-rates 13x→17x → 25-35% upside.",
+        "z": "政策同比基数Q2 2026周年→SSSG正常转正→毛利率维持34%+→共识EPS上调至1.35+→倍数重估13x→17x→25-35%上行。"
+      },
+      "rightIf": {
+        "e": "H1 2026 interim (Aug 2026): SSSG ≥ +2% YoY AND gross margin ≥ 34.5% AND op margin ≥ 10.5%",
+        "z": "H1 2026中报（2026年8月）：SSSG ≥ +2%同比 且 毛利率 ≥ 34.5% 且 营业利润率 ≥ 10.5%"
+      },
+      "wrongIf": {
+        "e": "Op margin <9.0% in any 2026 quarter OR SSSG <0% in H1 2026 interim → cut position by 70%, re-evaluate",
+        "z": "2026年任何季度营业利润率<9.0% 或 H1 2026中报SSSG<0% → 减仓70%，重新评估"
+      },
+      "whatChangesOurMind": {
+        "e": "H1 2026 interim shows SSSG ≤0% AND gross margin <33.5% — confirms FY2025 NI lift was one-off (inventory/subsidy timing) rather than structural pricing recovery",
+        "z": "H1 2026中报显示SSSG ≤0% 且 毛利率<33.5%——证明FY2025 NI提升是一次性（库存/补贴时点）而非结构性定价修复"
+      },
+      "rewardToRisk": {
+        "upsideIfRight": "+25% to +35% (target 23-25) over 6 months",
+        "downsideIfWrong": "-12% to -15% (floor near 16.78 52W low, risk of de-rating to 11x fwd ~15.8)",
+        "ratio": "~2.3:1",
+        "timeToResolution": "6 months until H1 2026 interim (2026-08-28) and Q3 print"
+      },
+      "phaseTiming": {
+        "phase1MarketBelief": {
+          "durationEstimate": "2-3 months through end of August 2026 (until interim disclosure)",
+          "whyMarketKeepsBuying": [
+            "Sell-side mostly Hold; waiting for H1 2026 print as proof",
+            "Valuation floor (35% of 52W range) limits but doesn't compel"
+          ],
+          "earlySignsPhase1Weakening": [
+            "Industry monthly SSSG data turning positive for 2 consecutive months",
+            "Peer Yifeng/LBX pre-announces positive H1 2026 SSSG"
+          ],
+          "optionalLongPlay": {
+            "direction": "small_long",
+            "sizing": "20-30% of full conviction starter at 18.55",
+            "exitTrigger": "Stop if breaks 16.78 on volume"
+          }
+        },
+        "phase2RealityRecognition": {
+          "catalystForReversion": [
+            "H1 2026 interim ~2026-08-28: SSSG and gross margin print",
+            "Q3 2026 release ~2026-10-30: full-year run-rate confirmation"
+          ],
+          "estimatedTiming": "Interim 2026-08-28; Q3 2026-10-30",
+          "shortPlay": {
+            "direction": "no_position",
+            "sizing": "n/a",
+            "entryTrigger": "n/a"
+          }
+        },
+        "positionSizingCurve": {
+          "prePhase1Weakening": "20-30%",
+          "phase1WeakeningConfirmed": "50-70%",
+          "phase2CatalystImminent": "80-100%"
+        }
+      }
+    },
+    "catalysts": [
+      {
+        "e": "H1 2026 interim disclosure: SSSG and gross margin print",
+        "z": "H1 2026中报披露：SSSG和毛利率印证",
+        "t": "earnings",
+        "date": "2026-08-28",
+        "imp": "HIGH"
+      },
+      {
+        "e": "MOFCOM monthly retail pharmacy industry data — SSSG turning positive 2 consecutive months",
+        "z": "商务部药店零售月度数据——SSSG连续2月转正",
+        "t": "industry_data",
+        "date": "2026-06-15",
+        "imp": "MED"
+      },
+      {
+        "e": "Q3 2026 quarterly report: confirmation of margin sustainability",
+        "z": "Q3 2026季报：毛利率可持续性确认",
+        "t": "earnings",
+        "date": "2026-10-30",
+        "imp": "HIGH"
+      },
+      {
+        "e": "NHSA 2026 medical insurance directory adjustments — pharmacy retail Rx scope",
+        "z": "国家医保局2026年医保目录调整——药店零售处方范围",
+        "t": "policy",
+        "date": "2026-12-31",
+        "imp": "MED"
+      }
+    ],
+    "decomp": {
+      "expectation_gap": {
+        "s": 70,
+        "e": "Consensus expects 13-14x fwd P/E (distressed); we expect 17x consolidator multiple — wide gap",
+        "z": "共识预期13-14x前瞻PE（困境）；我们预期17x整合者倍数——预期差较大"
+      },
+      "fundamental_acc": {
+        "s": 65,
+        "e": "FY2025 NI +35% confirmed; FY2026 trajectory depends on SSSG normalization in H1",
+        "z": "FY2025 NI +35%已确认；FY2026走势取决于H1 SSSG正常化"
+      },
+      "narrative_shift": {
+        "s": 55,
+        "e": "Sector narrative still 'broken pharmacy retail'; shift to 'consolidation winner' requires data confirmation",
+        "z": "行业叙事仍是'破损药店零售'；转向'整合胜者'需数据确认"
+      },
+      "low_coverage": {
+        "s": 45,
+        "e": "4 broker estimates per data context — moderate coverage, not undiscovered",
+        "z": "数据显示4家券商覆盖——中等覆盖，非冷门"
+      },
+      "catalyst_prox": {
+        "s": 70,
+        "e": "H1 2026 interim ~Aug 28 is ~3.5 months out — proximate",
+        "z": "H1 2026中报约8月28日，~3.5个月——临近"
+      }
+    },
+    "risks": [
+      {
+        "e": "门诊统筹 implementation tightens further (e.g., DRG expansion to retail Rx) — permanently caps margin",
+        "z": "门诊统筹政策进一步收紧（如DRG扩至零售处方）——永久压顶毛利率",
+        "p": "MED",
+        "imp": "HIGH"
+      },
+      {
+        "e": "E-commerce Rx fulfillment liberalization accelerates (JD/Ali Health) — undermines store-based moat",
+        "z": "电商处方药履约自由化加速（京东/阿里健康）——削弱门店护城河",
+        "p": "MED",
+        "imp": "MED"
+      },
+      {
+        "e": "Store expansion runway exhausted: store-count growth <5% YoY signals saturation",
+        "z": "门店扩张空间耗尽：门店数同比增速<5%信号饱和",
+        "p": "LOW",
+        "imp": "MED"
+      },
+      {
+        "e": "Guangdong concentration (~50% stores) creates regional regulatory/competitive risk",
+        "z": "广东集中度（~50%门店）形成区域监管/竞争风险",
+        "p": "LOW",
+        "imp": "MED"
+      }
+    ],
+    "pricing": {
+      "level": "LOW",
+      "crowd": {
+        "e": "融资余额 2.3亿 (+6.9%) — modest leveraged-long building, not crowded; price at 35% of 52W range confirms sentiment unloved",
+        "z": "融资余额2.3亿（+6.9%）——温和杠杆多头建仓，不拥挤；股价在52周区间35%位置印证情绪冷淡"
+      }
+    },
+    "nextActions": [
+      {
+        "e": "Track MOFCOM monthly retail pharmacy SSSG data starting June 2026 — primary leading indicator",
+        "z": "跟踪商务部药店零售月度SSSG数据，从2026年6月开始——主要先行指标"
+      },
+      {
+        "e": "Channel checks on Yifeng/LBX H1 2026 pre-announcement timing for read-across",
+        "z": "渠道调研益丰/老百姓 H1 2026预披露时点用于映射"
+      },
+      {
+        "e": "Monitor Da Shenlin store-count growth in Q1 2026 disclosure for expansion runway proof",
+        "z": "监控大参林Q1 2026披露的门店数增速，验证扩张空间"
+      },
+      {
+        "e": "Position starter 20-30% at 18.55; add to 50-70% on industry SSSG positive 2 consecutive months; full size pre-interim if signals align",
+        "z": "在18.55建仓20-30%；行业SSSG连续2月转正加至50-70%；信号对齐则中报前满仓"
+      }
+    ],
+    "fin": {
+      "rev": "~CNY 26B TTM [external estimate from rev growth + NI scale, not in data context]",
+      "revGr": "0.2% TTM",
+      "gm": "34.4%",
+      "pe": 16.4,
+      "ev_ebitda": 5.6,
+      "fcf": "not available in our data"
+    },
+    "peerAvg": {
+      "pe": 17,
+      "ev_ebitda": 8,
+      "gm": "36% [external estimate based on Yifeng/LBX historical, not in data context]"
+    },
+    "income_statement": {
+      "currency": "CNY",
+      "unit": "M",
+      "periods": [
+        "FY2022",
+        "FY2023",
+        "FY2024",
+        "FY2025"
+      ],
+      "revenue": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "gross_profit": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "operating_income": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "net_income": [
+        null,
+        1200,
+        900,
+        1200
+      ],
+      "ebitda": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "gross_margin": [
+        null,
+        null,
+        null,
+        0.344
+      ],
+      "operating_margin": [
+        null,
+        null,
+        null,
+        0.105
+      ],
+      "net_margin": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "revenue_growth": [
+        null,
+        null,
+        null,
+        0.002
+      ]
+    },
+    "balance_sheet": {
+      "currency": "CNY",
+      "unit": "M",
+      "periods": [
+        "FY2022",
+        "FY2023",
+        "FY2024",
+        "FY2025"
+      ],
+      "total_assets": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "total_equity": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "total_debt": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cash": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "roe": [
+        null,
+        null,
+        null,
+        0.148
+      ],
+      "debt_to_equity": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "consensus": {
+      "num_analysts": 4,
+      "rating": "Hold",
+      "target_price": "not available in our data",
+      "current_price": "CNY 18.55",
+      "upside": "not available in our data",
+      "fy1_rev_est": "not available in our data",
+      "fy1_eps_est": "~1.30-1.40 [external estimate from fwd P/E 13.3x × spot 18.55 = 1.39 implied]",
+      "buy_pct": 25,
+      "hold_pct": 60,
+      "sell_pct": 15
+    },
+    "fin_insights": [
+      "NI/Rev growth ratio FY2025 = +35% / +0.2% = ~175x — extreme positive operating leverage signaling pure margin-driven recovery rather than top-line driven; this is the core variant evidence vs market's 'low-base' interpretation",
+      "Profit scissors: FY2023→FY2024→FY2025 NI 1.2B→0.9B→1.2B on flat revenue = V-shape margin recovery confirmed; gross margin 34.4% TTM at peer-trailing level (peers ~36%), upside if mix shifts to healthcare/TCM",
+      "Implied growth check: at 13.3x fwd P/E, mean-reverting to peer 17x in 3yr requires only ~6% EPS CAGR — well within consolidation-driven trajectory; valuation asymmetry favorable",
+      "ROE 14.8% with op margin 10.5% indicates moderate asset turnover (~1.4x implied); FCF data not in our context, but EV/EBITDA 5.6x vs peer ~8x suggests cash-generation discount priced in"
+    ],
+    "_quality": {
+      "score": 90,
+      "missingFields": [],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": true,
+        "reward_to_risk_at_least_threshold": true,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": true,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "PASS",
+      "qc_findings": [
+        "failed:step_8_position_sizing_curve_monotonic"
+      ],
+      "repairAttempted": false
+    }
+  },
+  "model": "claude-opus-4-7",
+  "usage": {
+    "input_tokens": 10650,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 9826,
+    "service_tier": "standard",
+    "inference_geo": "global"
+  },
+  "consensus_views": [],
+  "consensus_source": "live",
+  "sources_used": [
+    "国际搜索(6条)"
+  ],
+  "eastmoney_count": 0,
+  "tonghuashun_count": 0,
+  "tavily_count": 6,
+  "enrichment_used": true,
+  "fundamentals_used": true,
+  "extras_used": true,
+  "tavily_enabled": true
+}

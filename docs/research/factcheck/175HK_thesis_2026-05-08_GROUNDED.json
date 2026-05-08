@@ -1,0 +1,538 @@
+{
+  "success": true,
+  "ticker": "175.HK",
+  "data": {
+    "ticker": "175.HK",
+    "thesis_protocol_version": "v2",
+    "step_1_catalyst": {
+      "catalyst_event": "Geely 1H 2026 interim results — key disclosure of Galaxy/Zeekr brand consolidation synergies, EV gross margin trajectory, and full-year volume guidance revision after Q1 2026 record monthly deliveries",
+      "catalyst_date_or_window": "2026-08-20 (±5 days, historical interim release window)",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "HKEX filing schedule; management Q4 2025 call indicated Zeekr privatization synergies to be quantified at interim"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. Zeekr privatization (completed late 2025) eliminates duplicate R&D/procurement/channel spend → consolidated EV opex ratio compresses",
+        "2. Galaxy series ramp (E5, E8, Starship 7) hitting 80k+ monthly run-rate at higher ASP than Geometry → blended EV gross margin lifts from low-single-digit to high-single-digit",
+        "3. Group-level operating margin expands beyond reported 5.0% (live data) toward 7-8% as EV losses narrow while ICE/HEV (Geely + Lynk) remain profitable",
+        "4. 1H 2026 print delivers OP margin +200bp YoY surprise → consensus FY2026 NI revised from flat (~16.9B, per our data) to +25-35% growth",
+        "5. Re-rating: stock currently 8.6x fwd P/E (live) — peer EV-exposed names trade 12-15x; gap closes on guidance raise → multiple expansion + earnings upgrade compound"
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "FY2025 NI 16.9B vs FY2023 5.3B (per data context) — 3.2x in two years, demonstrating completed scale inflection",
+        "FY2025 NI YoY only +0.2% (16.9B vs 16.8B, per data context) — masks underlying mix shift as one-time Zeekr deconsolidation gains in 2024 normalize out",
+        "Live Rev growth TTM 15.6%, ROE 16.0%, Op margin 5.0% (live fundamentals) — operating leverage room vs Toyota ~10% / BYD ~6%",
+        "Stock +40.8% over last 60d (16.15 → 22.74, per OHLC data) at 73% of 52W range — momentum confirms early phase of re-rating, not exhausted",
+        "Fwd P/E 8.6x vs TTM 12.2x (live) implies consensus already models ~42% earnings growth — but mean target 29.36 (29.1% upside, 25 analysts) suggests Street has not fully priced through"
+      ],
+      "evidence_qualitative": [
+        "Zeekr take-private removes US-listing overhang and minority leakage — structural change, not cyclical",
+        "Geely Galaxy brand has emerged as #2 Chinese new-energy brand by retail volume in Q1 2026 [external estimate, not in our data context — to verify via CAAM]",
+        "Management has executed the 'one Geely' streamlining ahead of original 2026 timeline — credibility for further guidance"
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "Bulls: Geely is a cheap EV-leveraged play with completed restructuring; 29% upside to consensus TP justified by volume growth. Bears: Auto price war in China is structural; 17% gross margin (live) is too thin; FY2025 NI flat (+0.2%) signals growth has peaked.",
+          "z": "多头：吉利是已完成重组的廉价EV杠杆标的，29%上涨空间合理。空头：中国汽车价格战是结构性的；17%毛利率太薄；2025年净利润仅+0.2%意味着增长见顶。"
+        },
+        "our_variant": {
+          "e": "Both camps miss that the +0.2% NI flatness in FY2025 is a base-effect artifact (FY2024 contained Zeekr deconsolidation one-offs). Underlying operating NI is accelerating, and 1H 2026 will reveal this when the comp normalizes — driving a consensus earnings reset upward.",
+          "z": "多空都忽略了2025年净利润+0.2%是基数效应假象（2024年含极氪剥离一次性收益）。潜在经营净利润正在加速，2026年中报基数正常化后将显现，驱动卖方盈利预测上修。"
+        },
+        "what_changes_our_mind": "1H 2026 interim results show consolidated gross margin <17.0% (i.e., flat or down vs current TTM) AND operating margin <5.5% — would signal price-war pressure overwhelmed Zeekr synergy benefits, invalidating the operating leverage thesis."
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "FY2026 Net Income (group, attributable)",
+      "current_value": "16.9B CNY (FY2025 actual, per data context)",
+      "predicted_value": "21-23B CNY",
+      "predicted_range": {
+        "low": "19.5B",
+        "mid": "21.5B",
+        "high": "24.0B"
+      },
+      "predicted_horizon": "FY2026 (reportable March 2027; interim signal August 2026)",
+      "confidence": "0.60"
+    },
+    "step_5_proves_right_if": [
+      "1H 2026 interim NI ≥10.5B CNY (implying ≥24% YoY on clean comparable base)",
+      "Group consolidated operating margin in 1H 2026 ≥6.5% (vs 5.0% live TTM)",
+      "Management raises FY2026 volume guidance by ≥5% at interim or quarterly update",
+      "Consensus FY2026 EPS revised up by ≥10% within 30 days of interim release"
+    ],
+    "step_6_proves_wrong_if": [
+      "1H 2026 group gross margin <17.0% (flat or down vs current TTM 17.0%)",
+      "1H 2026 operating margin <5.5% (less than 50bp expansion)",
+      "Monthly EV deliveries (Galaxy + Zeekr combined) decline QoQ for two consecutive months in 2H 2026",
+      "Geely loses ≥300bp NEV market share to BYD QoQ (per watchlist wrongIf signal)"
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes FY2025 NI flatness (+0.2%) means growth has peaked → We believe it's a one-off base effect masking accelerating operating earnings → Mechanism is Zeekr consolidation synergies + Galaxy mix lift surfacing in clean 1H 2026 comparables.",
+      "time_to_resolution": "~3.5 months until 1H 2026 interim (~2026-08-20)",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "+30% to +45% (target 29.5-33.0 HKD on 11-13x fwd P/E × upgraded EPS)",
+        "downside_if_wrong": "-15% to -20% (downside floor 18.0-19.5 HKD on 7x trough multiple if margin disappoints)",
+        "reward_to_risk": "2.3:1"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "~3 months — until 1H 2026 interim release ~2026-08-20",
+        "why_market_keeps_buying": [
+          "Stock has run +40.8% in 60 days (per OHLC) — momentum + China policy stimulus narrative supports continued inflows",
+          "Cheap 8.6x fwd P/E (live) keeps valuation-driven buyers anchored despite price-war fears",
+          "25 analyst coverage with 29% mean upside (live) provides sell-side air cover"
+        ],
+        "early_signs_phase_1_weakening": [
+          "Monthly wholesale data (CAAM, ~7th of month) shows Galaxy brand sequential decline >5% in May or June 2026",
+          "BYD or Xpeng announces aggressive price cut targeting Galaxy E5/E8 segment",
+          "Stock fails to hold 22.0 HKD support on broad market down days (relative weakness signal)"
+        ],
+        "optional_long_play": {
+          "direction": "small_long",
+          "sizing": "20-30% of full conviction (entry zone 21.5-23.0 HKD)",
+          "exit_trigger": "If 1H 2026 interim disappoints (GM <17% or OP margin <5.5%) OR if monthly volume rolls over for 2 consecutive months"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "1H 2026 interim results (~2026-08-20): operating margin reveal — bull case if ≥6.5%, bear case if <5.5%",
+          "FY2026 guidance update at interim: volume target raise ≥5% confirms thesis; cut signals price-war damage",
+          "Q3 2026 monthly delivery cadence (October data): confirms whether 2H ramp materializes"
+        ],
+        "estimated_timing": "1H 2026 interim ~2026-08-20; full confirmation by Q3 2026 monthly data (~2026-11-07)",
+        "short_play": {
+          "direction": "no_position",
+          "sizing": "N/A — our variant is constructive, not bearish",
+          "entry_trigger": "Only flip short if 1H 2026 GM <17% AND volume rolling over — would indicate price-war thesis dominant"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "20-30% (current — small-to-medium long, momentum + valuation entry)",
+        "phase_1_weakening_confirmed": "10-15% (trim if early weakening signs appear before interim)",
+        "phase_2_catalyst_imminent": "60-80% (scale up into August interim if monthly data confirms; or 0% if disconfirms)"
+      }
+    },
+    "qc_checklist": {
+      "all_8_steps_complete": true,
+      "step_1_specific_not_vague": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "reward_to_risk_at_least_threshold": true
+    },
+    "name": "吉利汽车",
+    "en": "Geely Auto",
+    "sector": "Consumer Discretionary / Autos",
+    "dir": "LONG",
+    "vp": 68,
+    "price": "22.74 HKD",
+    "mktcap": "~229B HKD [external estimate, not in our data context]",
+    "eqr": {
+      "overall": "MED-HIGH",
+      "biz": "HIGH",
+      "variant": "MED-HIGH",
+      "catalysts": "MED-HIGH",
+      "risks": "MED"
+    },
+    "pulse": {
+      "e": "FY2025 NI flatness (+0.2%) is a base-effect artifact from FY2024 Zeekr one-offs; clean 1H 2026 comparables should reveal +25%+ underlying earnings acceleration, driving consensus reset and re-rating from 8.6x fwd P/E. Reward-to-risk ~2.3:1 over 3.5 months.",
+      "z": "2025年净利润+0.2%是2024年极氪剥离一次性收益造成的基数假象；2026年中报干净基数应显现+25%以上潜在盈利加速，驱动卖方预测上修与从8.6倍前瞻PE的估值重估。3.5个月期限风险回报比~2.3:1。"
+    },
+    "biz": {
+      "problem": {
+        "e": "Chinese auto OEM straddling ICE legacy and EV transition; needed to consolidate fragmented brand portfolio (Geely / Lynk / Zeekr / Galaxy / Geometry / Volvo / Polestar / Lotus) to compete with vertically-integrated BYD.",
+        "z": "中国整车厂跨越燃油传承与电动转型；需整合碎片化品牌组合（吉利/领克/极氪/银河/几何/沃尔沃/极星/路特斯）以对抗垂直一体化的比亚迪。"
+      },
+      "mechanism": {
+        "e": "Zeekr privatization (late 2025) + Galaxy mainstreaming + shared SEA/Hi platform architecture → consolidated R&D scale, unified procurement, and EV gross margin lift from low-single to high-single digits.",
+        "z": "极氪私有化（2025年末）+银河主流化+共享SEA/浩瀚平台架构→研发规模整合、采购统一、EV毛利从低个位数升至高个位数。"
+      },
+      "moneyFlow": {
+        "e": "ICE/HEV (Geely + Lynk) generate cash; EV (Galaxy + Zeekr) consume narrowing losses; group-level OP margin 5.0% (live) with room to 7-8% as EV reaches scale breakeven.",
+        "z": "燃油/混动（吉利+领克）产生现金；EV（银河+极氪）亏损收窄；集团层经营利润率5.0%（实时数据），EV达规模盈亏平衡后有望升至7-8%。"
+      }
+    },
+    "variant": {
+      "marketBelieves": {
+        "e": "FY2025 NI flatness (+0.2%) confirms peak earnings; 17% gross margin too thin for sustained profit growth amid China auto price war.",
+        "z": "2025年净利润+0.2%确认盈利见顶；17%毛利率在中国汽车价格战中太薄难以维持利润增长。"
+      },
+      "weBelieve": {
+        "e": "FY2025 flatness is a one-off base effect from FY2024 Zeekr deconsolidation gains; underlying operating earnings are accelerating and will surface in clean 1H 2026 comparables.",
+        "z": "2025年增长持平是2024年极氪剥离一次性收益的基数效应；潜在经营盈利正在加速，将在2026年中报干净基数中显现。"
+      },
+      "mechanism": {
+        "e": "Zeekr privatization synergies (R&D/procurement/channel dedup) + Galaxy mix shift to higher-ASP E5/E8/Starship 7 → group OP margin expands ≥150bp YoY in 1H 2026 → consensus FY2026 EPS revised up ≥10%.",
+        "z": "极氪私有化协同（研发/采购/渠道去重）+银河向高均价E5/E8/星舰7的产品组合切换→2026年中报集团经营利润率同比扩张≥150基点→卖方2026年EPS预测上修≥10%。"
+      },
+      "rightIf": {
+        "e": "1H 2026 interim shows group OP margin ≥6.5% AND NI ≥10.5B CNY AND management raises FY volume guide ≥5%.",
+        "z": "2026年中报集团经营利润率≥6.5%且净利润≥105亿且管理层全年销量指引上调≥5%。"
+      },
+      "wrongIf": {
+        "e": "1H 2026 gross margin <17.0% OR operating margin <5.5% → reduce position to 0-10% and re-evaluate price-war thesis.",
+        "z": "2026年中报毛利率<17.0%或经营利润率<5.5%→减仓至0-10%并重新评估价格战逻辑。"
+      },
+      "whatChangesOurMind": {
+        "e": "1H 2026 interim shows consolidated gross margin <17.0% AND operating margin <5.5% — would signal price-war pressure overwhelmed Zeekr synergy benefits, invalidating operating leverage thesis.",
+        "z": "2026年中报合并毛利率<17.0%且经营利润率<5.5%——表明价格战压力压倒极氪协同效应，经营杠杆逻辑失效。"
+      },
+      "rewardToRisk": {
+        "upsideIfRight": "+30% to +45% (target 29.5-33.0 HKD on 11-13x fwd P/E × upgraded EPS) over 3-4 months",
+        "downsideIfWrong": "-15% to -20% (floor 18.0-19.5 HKD at 7x trough multiple)",
+        "ratio": "~2.3:1",
+        "timeToResolution": "~3.5 months until 1H 2026 interim (~2026-08-20)"
+      },
+      "phaseTiming": {
+        "phase1MarketBelief": {
+          "durationEstimate": "~3 months — until 1H 2026 interim release ~2026-08-20",
+          "whyMarketKeepsBuying": [
+            "Stock +40.8% in 60d (per OHLC data) — momentum + China stimulus narrative continues attracting flows",
+            "Cheap 8.6x fwd P/E (live) anchors valuation buyers despite price-war concerns",
+            "25 analysts with 29% mean upside provides sell-side support"
+          ],
+          "earlySignsPhase1Weakening": [
+            "CAAM monthly data (~7th of each month) shows Galaxy sequential decline >5% in May/June 2026",
+            "BYD/Xpeng announces aggressive price cut targeting Galaxy E5/E8 segment",
+            "Stock fails to hold 22.0 HKD on broad market down days (relative weakness)"
+          ],
+          "optionalLongPlay": {
+            "direction": "small_long",
+            "sizing": "20-30% of full conviction (entry zone 21.5-23.0 HKD)",
+            "exitTrigger": "1H 2026 interim disappoints (GM <17% or OP margin <5.5%) OR monthly volume rolls over 2 consecutive months"
+          }
+        },
+        "phase2RealityRecognition": {
+          "catalystForReversion": [
+            "1H 2026 interim ~2026-08-20: OP margin reveal — bull if ≥6.5%, bear if <5.5%",
+            "FY2026 guidance update at interim: volume raise ≥5% confirms; cut signals damage",
+            "Q3 2026 monthly delivery cadence (October data ~2026-11-07): confirms 2H ramp"
+          ],
+          "estimatedTiming": "1H 2026 interim ~2026-08-20; full confirmation by Q3 2026 monthly data ~2026-11-07",
+          "shortPlay": {
+            "direction": "no_position",
+            "sizing": "N/A — variant is constructive, not bearish",
+            "entryTrigger": "Only flip short if 1H 2026 GM <17% AND volume rolling over"
+          }
+        },
+        "positionSizingCurve": {
+          "prePhase1Weakening": "20-30%",
+          "phase1WeakeningConfirmed": "10-15% (trim on early weakening)",
+          "phase2CatalystImminent": "60-80% (scale up if data confirms; 0% if disconfirms)"
+        }
+      }
+    },
+    "catalysts": [
+      {
+        "e": "1H 2026 interim results — OP margin & guidance reveal",
+        "z": "2026年中报——经营利润率与指引揭示",
+        "t": "earnings",
+        "date": "2026-08-20",
+        "imp": "HIGH"
+      },
+      {
+        "e": "Monthly CAAM wholesale data (Galaxy + Zeekr volume tracking)",
+        "z": "中汽协月度批发数据（银河+极氪销量跟踪）",
+        "t": "industry_data",
+        "date": "2026-06-07",
+        "imp": "MED"
+      },
+      {
+        "e": "Potential FY2026 volume guidance raise at investor day",
+        "z": "投资者日潜在2026全年销量指引上调",
+        "t": "guidance",
+        "date": "2026-07-15",
+        "imp": "MED"
+      },
+      {
+        "e": "Q3 2026 monthly delivery confirmation of 2H ramp",
+        "z": "Q3 2026月度交付确认下半年爬坡",
+        "t": "industry_data",
+        "date": "2026-11-07",
+        "imp": "MED"
+      }
+    ],
+    "decomp": {
+      "expectation_gap": {
+        "s": 72,
+        "e": "FY2025 NI flatness anchors low expectations; clean 1H 2026 comparables likely reset consensus higher.",
+        "z": "2025净利润持平锚定低预期；2026中报干净基数可能重置共识上行。"
+      },
+      "fundamental_acc": {
+        "s": 68,
+        "e": "Underlying op earnings accelerating; ROE 16% (live) and 15.6% rev growth support thesis.",
+        "z": "潜在经营盈利加速；ROE 16%与15.6%收入增长支撑逻辑。"
+      },
+      "narrative_shift": {
+        "s": 65,
+        "e": "From 'fragmented also-ran' to 'consolidated #2 NEV brand' — narrative re-rating in early innings.",
+        "z": "从'碎片化跟随者'到'整合后的#2新能源品牌'——叙事重估处于初期。"
+      },
+      "low_coverage": {
+        "s": 35,
+        "e": "25 analysts (live) — well-covered, limits surprise factor.",
+        "z": "25位分析师覆盖——覆盖充分，限制意外因素。"
+      },
+      "catalyst_prox": {
+        "s": 78,
+        "e": "1H 2026 interim ~3.5 months away — high proximity.",
+        "z": "2026中报~3.5个月——临近度高。"
+      }
+    },
+    "risks": [
+      {
+        "e": "China NEV price war intensifies; BYD targets Galaxy E5/E8 directly with sub-100k RMB pricing",
+        "z": "中国新能源价格战加剧；比亚迪以10万以下定价直接针对银河E5/E8",
+        "p": "MED",
+        "imp": "HIGH"
+      },
+      {
+        "e": "EU tariff escalation on China-made EVs cuts Polestar/Volvo/Zeekr export profitability",
+        "z": "欧盟对中国产电动车关税升级削减极星/沃尔沃/极氪出口盈利",
+        "p": "MED",
+        "imp": "MED"
+      },
+      {
+        "e": "Zeekr integration costs higher than guided; one-off charges suppress 1H 2026 op margin",
+        "z": "极氪整合成本高于指引；一次性费用压制2026中报经营利润率",
+        "p": "MED",
+        "imp": "MED"
+      },
+      {
+        "e": "Battery raw material (lithium) price spike compresses already-thin 17% gross margin",
+        "z": "电池原材料（锂）价格上涨压缩本已偏薄的17%毛利",
+        "p": "LOW",
+        "imp": "MED"
+      }
+    ],
+    "pricing": {
+      "level": "MID",
+      "crowd": {
+        "e": "Stock at 73% of 52W range with +40.8% 60d run — momentum crowd partially in; valuation crowd still positioned given 8.6x fwd P/E.",
+        "z": "股价处于52周高点73%且60日+40.8%——动量资金部分进入；考虑8.6倍前瞻PE，价值资金仍有配置空间。"
+      }
+    },
+    "nextActions": [
+      {
+        "e": "Track CAAM monthly Galaxy + Zeekr wholesale volumes (~7th of each month) — flag if Galaxy sequential decline >5%",
+        "z": "跟踪中汽协月度银河+极氪批发销量（每月~7日）——银河环比下降>5%时警示"
+      },
+      {
+        "e": "Build channel checks on Galaxy E5/E8/Starship 7 dealer pricing in Tier 1-2 cities — detect early discount creep",
+        "z": "建立一二线城市银河E5/E8/星舰7经销商定价渠道调研——检测早期折扣蔓延"
+      },
+      {
+        "e": "Model 1H 2026 OP margin scenarios: bull 6.5-7%, base 5.8-6.2%, bear <5.5% — set position sizing triggers",
+        "z": "建模2026中报经营利润率情景：乐观6.5-7%，基准5.8-6.2%，悲观<5.5%——设置仓位触发器"
+      },
+      {
+        "e": "Monitor BYD price actions and Xpeng/Li Auto monthly deliveries for competitive intensity gauge",
+        "z": "监控比亚迪价格行动与小鹏/理想月度交付以判断竞争强度"
+      }
+    ],
+    "fin": {
+      "rev": "not available in our data (FY2025 NI 16.9B per data context)",
+      "revGr": "15.6% (TTM, live)",
+      "gm": "17.0% (live)",
+      "pe": 12.2,
+      "ev_ebitda": 12.4,
+      "fcf": "not available in our data"
+    },
+    "peerAvg": {
+      "pe": 13.5,
+      "ev_ebitda": 9,
+      "gm": "18.0%"
+    },
+    "income_statement": {
+      "currency": "CNY",
+      "unit": "M",
+      "periods": [
+        "FY2022",
+        "FY2023",
+        "FY2024",
+        "FY2025"
+      ],
+      "revenue": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "gross_profit": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "operating_income": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "net_income": [
+        null,
+        5300,
+        16800,
+        16900
+      ],
+      "ebitda": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "gross_margin": [
+        null,
+        null,
+        null,
+        0.17
+      ],
+      "operating_margin": [
+        null,
+        null,
+        null,
+        0.05
+      ],
+      "net_margin": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "revenue_growth": [
+        null,
+        null,
+        null,
+        0.156
+      ]
+    },
+    "balance_sheet": {
+      "currency": "CNY",
+      "unit": "M",
+      "periods": [
+        "FY2022",
+        "FY2023",
+        "FY2024",
+        "FY2025"
+      ],
+      "total_assets": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "total_equity": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "total_debt": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cash": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "roe": [
+        null,
+        null,
+        null,
+        0.16
+      ],
+      "debt_to_equity": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "consensus": {
+      "num_analysts": 25,
+      "rating": "Buy",
+      "target_price": "29.36 HKD (mean; range 21.11–36.10)",
+      "current_price": "22.74 HKD",
+      "upside": "+29.1%",
+      "fy1_rev_est": "not available in our data",
+      "fy1_eps_est": "not available in our data",
+      "buy_pct": 75,
+      "hold_pct": 20,
+      "sell_pct": 5
+    },
+    "fin_insights": [
+      "NI/Rev growth ratio FY2025: NI +0.2% / Rev +15.6% = 0.01x — appears as severe negative operating leverage, BUT this is base-effect distorted (FY2024 contained Zeekr deconsolidation one-offs). Clean 2-year stack (FY2023→FY2025: 5.3B→16.9B) shows 3.2x, true underlying NI/Rev ratio likely >1.5x.",
+      "Profit scissors: 17.0% gross margin and 5.0% operating margin (live) imply ~12pp opex ratio — compared to 25 analyst target implying mean ~6-7% op margin in FY2026, the operating leverage tightening expected by Street is +100-200bp expansion.",
+      "Implied growth check: At 8.6x fwd P/E (live) reverting to peer 13.5x in 3yr requires only ~16% EPS CAGR — well within Geely's demonstrated capability (NI 5.3B→16.9B in 2 years). Valuation has built-in upside cushion.",
+      "Stock at 73% of 52W range and +40.8% over 60d (per OHLC) with buyback only 0.3B in FY2025 (per data) — current rally is fundamental/sentiment driven, not buyback supported. Implies organic demand for shares, more durable but more volatile."
+    ],
+    "_quality": {
+      "score": 90,
+      "missingFields": [],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": true,
+        "reward_to_risk_at_least_threshold": true,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": true,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "PASS",
+      "qc_findings": [
+        "failed:step_8_position_sizing_curve_monotonic"
+      ],
+      "repairAttempted": false
+    }
+  },
+  "model": "claude-opus-4-7",
+  "usage": {
+    "input_tokens": 10668,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 9762,
+    "service_tier": "standard",
+    "inference_geo": "global"
+  },
+  "consensus_views": [],
+  "consensus_source": "live",
+  "sources_used": [
+    "国际搜索(6条)"
+  ],
+  "eastmoney_count": 0,
+  "tonghuashun_count": 0,
+  "tavily_count": 6,
+  "enrichment_used": true,
+  "fundamentals_used": true,
+  "extras_used": true,
+  "tavily_enabled": true
+}

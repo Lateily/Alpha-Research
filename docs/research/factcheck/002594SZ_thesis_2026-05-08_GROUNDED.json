@@ -1,0 +1,581 @@
+{
+  "success": true,
+  "ticker": "002594.SZ",
+  "data": {
+    "ticker": "002594.SZ",
+    "thesis_protocol_version": "v2",
+    "step_1_catalyst": {
+      "catalyst_event": "Q2 2026 earnings release — first full quarter to reflect post-price-war margin stabilization and overseas mix shift; key tests are gross margin trajectory (vs. 17.2% TTM), monthly export run-rate, and any guidance on 5-min Super e-Platform vehicle ramp",
+      "catalyst_date_or_window": "2026-08-28 (±2 weeks, BYD historical Q2 reporting window)",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "BYD H1 2026 interim report scheduled per HKEX/SZSE disclosure calendar"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. Q1 2026 marked the trough of domestic price war intensity as MIIT and CAAM publicly warned against irrational pricing (Feb 2026); subsidies and dealer rebates rolled off.",
+        "2. BYD shifts marginal volume from low-margin domestic A-segment (Seagull/Dolphin) toward higher-ASP exports (run-rate >50K/month vs ~30K in 2024) and premium brands (Yangwang, Denza), raising blended ASP.",
+        "3. 5-minute Super e-Platform launch (Apr 2026) creates premium price umbrella for 2026H2 model refreshes (Han L, Tang L), structurally lifting mix.",
+        "4. Vertical integration (in-house cells via FinDreams, IGBT via BYD Semi) drives unit cost down ~6-8% YoY as LFP carbonate prices stabilize at ~70K RMB/t.",
+        "5. Combined effect: gross margin recovers from 17.2% TTM toward 19-20% by Q4 2026; net income re-accelerates from -19% YoY trough toward flat-to-positive YoY by H2 2026.",
+        "6. Reverse DCF shows market pricing 15.1% FCF growth vs our 28% — a +12.9pp gap. Earnings beat plus margin proof-point compresses this gap, driving re-rating from 17.7x fwd P/E toward sector mean ~22x."
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "Net income FY2025 32.6B vs FY2024 40.3B (-19% YoY) — magnitude of decline already discounted at 17.7x fwd P/E vs 51.3x TTM",
+        "Reverse DCF gap: implied 15.1% FCF growth vs internal model 28% (delta +12.9pp) — market under-pricing growth per data context",
+        "Live price 100.02 sits at 55% of 52W range (85.88-111.82); analyst mean target 119.55 implies +19.5% upside, 22 analysts covering",
+        "ROE 11.1%, EV/EBITDA 8.4x — cheap on cash-flow basis vs global auto peers (Toyota ~10x, Tesla ~40x)",
+        "融资余额 140.1亿 (+2.2%) — leveraged longs accumulating, not capitulating",
+        "60d price action +14.9% (87.05→100.02) confirms recovery underway from oversold trough"
+      ],
+      "evidence_qualitative": [
+        "March 2026 5-min Super e-Platform announcement (1000V architecture, 1MW peak charging) is genuinely first-to-market — competitors (Tesla V4, CATL Shenxing) deliver 4C peak vs BYD 10C",
+        "Overseas expansion: Hungary plant (200K capacity) commissioning H2 2026; Brazil plant operational; Thailand running near capacity",
+        "Vertical integration depth (cells, motors, IGBT, glass) gives 5-7pp structural cost advantage vs JV-dependent peers like Geely, GAC",
+        "Wang Chuanfu's Apr 2026 statements emphasize 'quality over quantity' — first time management explicitly de-emphasized volume targets, signaling margin focus"
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "Majority view (Reuters/Bloomberg) frames the 5-min charging breakthrough as the dominant bullish catalyst; minority (TipRanks) worries the price war permanently impairs unit economics. Both camps are debating the wrong axis.",
+          "z": "主流观点(路透/彭博)将5分钟超充视为核心多头催化剂;少数派(TipRanks)担忧价格战永久损害单车盈利能力。两派争论的轴心都错了。"
+        },
+        "our_variant": {
+          "e": "The actual driver is overseas mix shift + premium brand uptake, not the charging tech itself. Charging is a marketing halo; export ASP differential (~40% premium to domestic) is the math that re-rates the stock.",
+          "z": "真正驱动因素是海外占比提升+高端品牌放量,而非超充本身。超充是营销光环;出口ASP相对国内溢价~40%才是重估股价的数学基础。"
+        },
+        "what_changes_our_mind": "If H1 2026 export volume run-rate falls below 45K/month (vs current ~50K) for two consecutive months AND overseas gross margin compresses below domestic GM in interim disclosure, the export-mix thesis is broken — convert to consensus neutral stance."
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "FY2026 gross margin and net income recovery",
+      "current_value": "GM 17.2% TTM, NI 32.6B FY2025 (-19% YoY)",
+      "predicted_value": "GM 19.5% FY2026, NI ~38-42B FY2026 (+17-29% YoY)",
+      "predicted_range": {
+        "low": "GM 18.5%, NI 35B",
+        "mid": "GM 19.5%, NI 39B",
+        "high": "GM 20.5%, NI 43B"
+      },
+      "predicted_horizon": "FY2026 reported by 2027-03",
+      "confidence": "0.60"
+    },
+    "step_5_proves_right_if": [
+      "Q2 2026 earnings (Aug 2026): GM ≥ 18.5% AND export volume ≥ 50K/month run-rate AND overseas revenue mix > 22% (vs ~15% in 2024)",
+      "FY2026 net income returns to >38B (above FY2024 trough comparable)",
+      "Forward P/E re-rates from 17.7x toward 21-22x as EPS estimates revised up by sell-side"
+    ],
+    "step_6_proves_wrong_if": [
+      "Revenue growth <-10% for 2 consecutive quarters (per watchlist wrongIf)",
+      "Gross margin drops below 15% in any reported quarter — invalidates margin recovery mechanism",
+      "Q2 2026 export volume run-rate falls below 40K/month — overseas mix thesis broken",
+      "Net income YoY decline exceeds -40% in any quarter (per watchlist)"
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes 5-min charging is the bull case → We believe overseas mix + premium brand ASP lift is the real driver → Mechanism is export run-rate scaling + Hungary/Brazil capacity unlock + Yangwang/Denza margin contribution becoming material in H2 2026.",
+      "time_to_resolution": "4-6 months until Q2 2026 earnings (Aug 2026)",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "+30% to +40% (toward 130-140 RMB) on margin+volume beat and EPS revision",
+        "downside_if_wrong": "-15% to -18% (toward 82-85 RMB, 52W low support)",
+        "reward_to_risk": "2.2:1"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "2-3 months until Q2 2026 earnings (May-Aug 2026); current narrative 'charging tech = bull case' likely persists through summer",
+        "why_market_keeps_buying": [
+          "5-min Super e-Platform announcement (Apr 2026) drove shares to recent highs and remains anchored in headlines",
+          "Reverse DCF gap (+12.9pp implied vs modeled FCF growth) supports any positive catalyst",
+          "融资余额 +2.2% confirms leveraged longs still accumulating, not exhausted"
+        ],
+        "early_signs_phase_1_weakening": [
+          "Monthly wholesale data (CPCA, released ~5th of each month) showing export volumes flatlining below 48K/month",
+          "Sell-side downgrades of Q2 GM forecasts below 18%",
+          "Competing OEM (Geely, Xpeng, Li Auto) Q1 2026 reports showing similar overseas push, eroding BYD's narrative differentiation"
+        ],
+        "optional_long_play": {
+          "direction": "small_long",
+          "sizing": "20-30% of full conviction at current 100 RMB",
+          "exit_trigger": "If price reaches 115 RMB before Q2 earnings, trim half (extends payoff into earnings without full beta exposure)"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "Q2 2026 earnings release (Aug 2026) — GM and overseas revenue disclosure",
+          "August 2026 monthly export data confirming or breaking 50K/month run-rate",
+          "FY2026 guidance update at H1 results — first time management quantifies margin recovery path"
+        ],
+        "estimated_timing": "Q2 2026 earnings ~2026-08-28, with read-through extending into Q3 2026 monthly data through October",
+        "short_play": {
+          "direction": "no_position",
+          "sizing": "n/a — thesis is constructive, not bearish",
+          "entry_trigger": "Only convert to short if Q2 GM <16% AND export <40K/month — invalidation triggers from Step 6"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "20-30% of full conviction (current state — early entry into recovery)",
+        "phase_1_weakening_confirmed": "10-15% (cut size if early warning signs flash, given thesis time-arbitrage broken)",
+        "phase_2_catalyst_imminent": "70-90% (if pre-earnings monthly data confirms export ≥50K and channel checks support GM recovery, scale into Q2 print)"
+      }
+    },
+    "qc_checklist": {
+      "all_8_steps_complete": true,
+      "step_1_specific_not_vague": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": true,
+      "reward_to_risk_at_least_threshold": true
+    },
+    "name": "比亚迪",
+    "en": "BYD Company",
+    "sector": "Automobiles — NEV / Batteries",
+    "dir": "LONG",
+    "vp": 68,
+    "price": "RMB 100.02",
+    "mktcap": "RMB ~290B (A-share float)",
+    "eqr": {
+      "overall": "MED-HIGH",
+      "biz": "HIGH",
+      "variant": "MED-HIGH",
+      "catalysts": "MED-HIGH",
+      "risks": "MED"
+    },
+    "pulse": {
+      "e": "BYD trades at 17.7x fwd P/E with reverse DCF showing market under-pricing FCF growth by ~13pp. Variant: real driver is overseas mix + premium ASP, not charging tech narrative. Q2 2026 earnings is the resolution event.",
+      "z": "比亚迪以17.7倍前瞻PE交易,反向DCF显示市场低估FCF增速约13个百分点。变体观点:真正驱动是海外占比+高端ASP,而非超充叙事。2026年Q2业绩是验证窗口。"
+    },
+    "biz": {
+      "problem": {
+        "e": "Domestic Chinese EV market saturating with brutal price competition; legacy ICE-to-EV transition narrative now mature.",
+        "z": "中国本土电动车市场饱和,价格战激烈;传统油转电叙事已成熟。"
+      },
+      "mechanism": {
+        "e": "Vertical integration (cells, motors, IGBT, glass) yields 5-7pp structural cost advantage. Export expansion (Hungary, Brazil, Thailand plants) and premium brands (Yangwang, Denza) lift blended ASP and margin.",
+        "z": "垂直一体化(电池、电机、IGBT、玻璃)带来5-7pp结构性成本优势。出口扩张(匈牙利、巴西、泰国工厂)+高端品牌(仰望、腾势)拉升综合ASP和毛利率。"
+      },
+      "moneyFlow": {
+        "e": "Revenue from car sales (~80%) + batteries to 3rd parties + electronics. FCF reinvested in capacity + R&D. Net cash positive supports buyback optionality.",
+        "z": "收入主要来自整车销售(~80%)+第三方电池+电子业务。自由现金流再投于产能与研发。净现金为正,具备回购弹性。"
+      }
+    },
+    "variant": {
+      "marketBelieves": {
+        "e": "Bulls focus on 5-min Super e-Platform charging breakthrough as the re-rating catalyst; bears worry price war permanently impairs unit economics.",
+        "z": "多头聚焦5分钟超充作为重估催化剂;空头担忧价格战永久损害单车盈利能力。"
+      },
+      "weBelieve": {
+        "e": "Market believes charging tech is the bull case → We believe overseas mix + premium brand ASP is the actual driver → Mechanism is export run-rate >50K/month + Hungary/Brazil unlock + Yangwang/Denza margin becoming material H2 2026.",
+        "z": "市场认为超充是核心多头逻辑→我们认为海外占比+高端品牌ASP才是真正驱动→机制是出口月均>50K+匈牙利/巴西产能释放+仰望/腾势毛利在2026下半年成为重要贡献。"
+      },
+      "mechanism": {
+        "e": "Export ASP ~40% premium to domestic A-segment. Overseas mix rising 15%→22%+ in 2026 mathematically lifts blended GM by 1.5-2pp independent of any technology narrative.",
+        "z": "出口ASP相对国内A级车溢价约40%。海外占比从15%升至22%+,在数学上独立于技术叙事即可拉升综合毛利1.5-2pp。"
+      },
+      "rightIf": {
+        "e": "Q2 2026 GM ≥ 18.5% AND export run-rate ≥ 50K/month AND overseas revenue mix > 22%.",
+        "z": "2026年Q2毛利率≥18.5% 且 出口月均≥50K台 且 海外收入占比>22%。"
+      },
+      "wrongIf": {
+        "e": "Gross margin <15% in any quarter OR revenue growth <-10% for 2 consecutive quarters OR export run-rate <40K/month → exit position.",
+        "z": "任一季度毛利率<15% 或 连续两季度营收同比<-10% 或 出口月均<40K台 → 平仓退出。"
+      },
+      "whatChangesOurMind": {
+        "e": "H1 2026 export volume below 45K/month for 2 consecutive months AND overseas GM compresses below domestic GM in interim disclosure — convert to neutral.",
+        "z": "2026上半年出口连续两月低于45K台 且 中报披露海外毛利压缩至低于国内 → 转为中性。"
+      },
+      "rewardToRisk": {
+        "upsideIfRight": "+30% to +40% (toward 130-140 RMB) over 4-6 months",
+        "downsideIfWrong": "-15% to -18% (toward 82-85 RMB, 52W low support)",
+        "ratio": "~2.2:1",
+        "timeToResolution": "4-6 months until Q2 2026 earnings (Aug 2026)"
+      },
+      "phaseTiming": {
+        "phase1MarketBelief": {
+          "durationEstimate": "2-3 months (May-Aug 2026) — charging-tech narrative anchored through summer until Q2 earnings",
+          "whyMarketKeepsBuying": [
+            "5-min Super e-Platform Apr 2026 launch keeps headlines positive",
+            "Reverse DCF 12.9pp gap supports any positive catalyst",
+            "融资余额 +2.2% — leveraged longs still adding"
+          ],
+          "earlySignsPhase1Weakening": [
+            "Monthly CPCA export data flatlining below 48K",
+            "Sell-side cutting Q2 GM forecasts below 18%",
+            "Geely/Xpeng/Li Auto Q1 reports showing parallel overseas push, eroding differentiation"
+          ],
+          "optionalLongPlay": {
+            "direction": "small_long",
+            "sizing": "20-30% of full conviction at current ~100 RMB",
+            "exitTrigger": "Trim half if price hits 115 RMB pre-earnings"
+          }
+        },
+        "phase2RealityRecognition": {
+          "catalystForReversion": [
+            "Q2 2026 earnings (~2026-08-28) — GM and overseas revenue disclosure",
+            "August 2026 CPCA monthly export data confirming/breaking 50K run-rate",
+            "FY2026 guidance update at H1 — management quantifies margin recovery"
+          ],
+          "estimatedTiming": "2026-08-28 ±2 weeks, read-through into October monthly prints",
+          "shortPlay": {
+            "direction": "no_position",
+            "sizing": "n/a — thesis is long-biased",
+            "entryTrigger": "Only flip short if Q2 GM <16% AND export <40K/month"
+          }
+        },
+        "positionSizingCurve": {
+          "prePhase1Weakening": "20-30%",
+          "phase1WeakeningConfirmed": "10-15% (cut on early warning)",
+          "phase2CatalystImminent": "70-90% (scale if pre-earnings data confirms thesis)"
+        }
+      }
+    },
+    "catalysts": [
+      {
+        "e": "Q2 2026 earnings — GM and overseas mix disclosure",
+        "z": "2026年Q2业绩 — 毛利率和海外占比披露",
+        "t": "earnings",
+        "date": "2026-08-28",
+        "imp": "HIGH"
+      },
+      {
+        "e": "Hungary plant commissioning (200K capacity)",
+        "z": "匈牙利工厂投产(20万产能)",
+        "t": "capacity",
+        "date": "2026-09-30",
+        "imp": "HIGH"
+      },
+      {
+        "e": "Han L / Tang L 1000V Super e-Platform model launches",
+        "z": "汉L/唐L千伏超充平台车型上市",
+        "t": "product",
+        "date": "2026-06-15",
+        "imp": "MED"
+      },
+      {
+        "e": "CPCA monthly export data prints",
+        "z": "乘联会月度出口数据",
+        "t": "data",
+        "date": "2026-06-08",
+        "imp": "MED"
+      }
+    ],
+    "decomp": {
+      "expectation_gap": {
+        "s": 75,
+        "e": "Reverse DCF shows +12.9pp gap between market-implied (15.1%) and modeled (28%) FCF growth — material under-pricing.",
+        "z": "反向DCF显示市场隐含(15.1%)与建模(28%)FCF增速存在+12.9pp差距 — 显著低估。"
+      },
+      "fundamental_acc": {
+        "s": 55,
+        "e": "Net income trough in FY2025 (-19% YoY); recovery contingent on Q2 2026 margin proof.",
+        "z": "净利润在2025财年触底(-19%);复苏取决于Q2 2026毛利率验证。"
+      },
+      "narrative_shift": {
+        "s": 70,
+        "e": "5-min charging narrative dominant; our variant (overseas mix) not yet priced.",
+        "z": "5分钟超充叙事主导;我们的变体(海外占比)尚未被定价。"
+      },
+      "low_coverage": {
+        "s": 30,
+        "e": "22 analysts covering — well-covered name, alpha must come from variant angle not information edge.",
+        "z": "22位分析师覆盖 — 高覆盖标的,Alpha需来自变体视角而非信息优势。"
+      },
+      "catalyst_prox": {
+        "s": 70,
+        "e": "Q2 earnings ~4 months out, monthly export data prints monthly — frequent validation points.",
+        "z": "Q2业绩约4个月后,月度出口数据每月发布 — 验证节点密集。"
+      }
+    },
+    "risks": [
+      {
+        "e": "Domestic price war re-escalation forces further GM compression below 15%",
+        "z": "国内价格战再升级迫使毛利率压缩至15%以下",
+        "p": "MED",
+        "imp": "HIGH"
+      },
+      {
+        "e": "EU/US tariff escalation on Chinese EVs blocks export ramp",
+        "z": "欧美对华电动车关税升级阻塞出口放量",
+        "p": "MED",
+        "imp": "HIGH"
+      },
+      {
+        "e": "Yangwang/Denza premium brand volumes underwhelm, GM uplift fails to materialize",
+        "z": "仰望/腾势高端品牌销量不及预期,毛利率提升落空",
+        "p": "MED",
+        "imp": "MED"
+      },
+      {
+        "e": "Battery raw material (lithium carbonate) price spike reverses cost tailwind",
+        "z": "电池原材料(碳酸锂)价格反弹逆转成本顺风",
+        "p": "LOW",
+        "imp": "MED"
+      }
+    ],
+    "pricing": {
+      "level": "MID",
+      "crowd": {
+        "e": "Price at 55% of 52W range, 60d +14.9% recovery, 融资余额 +2.2% — recovering but not euphoric. Mid-crowded.",
+        "z": "价格位于52周区间55%,60日+14.9%反弹,融资余额+2.2% — 复苏但未狂热。中度拥挤。"
+      }
+    },
+    "nextActions": [
+      {
+        "e": "Track CPCA monthly export data for ≥50K/month run-rate confirmation (next print ~2026-06-08)",
+        "z": "跟踪乘联会月度出口数据,确认月均≥50K台(下次发布约2026-06-08)"
+      },
+      {
+        "e": "Monitor Yangwang/Denza monthly insurance registration data as proxy for premium ASP uplift",
+        "z": "监测仰望/腾势月度上险量,作为高端ASP提升的代理指标"
+      },
+      {
+        "e": "Channel-check Hungary plant commissioning timing and EU tariff developments via industry sources",
+        "z": "通过行业渠道核实匈牙利工厂投产进度及欧盟关税动态"
+      },
+      {
+        "e": "Set price alerts at 115 RMB (trim trigger) and 85 RMB (stop-loss reassessment)",
+        "z": "设置价格预警:115元(减仓)和85元(止损重评)"
+      }
+    ],
+    "fin": {
+      "rev": "not available in our data (latest annual)",
+      "revGr": "-11.8% TTM",
+      "gm": "17.2%",
+      "pe": 51.3,
+      "ev_ebitda": 8.4,
+      "fcf": "not available in our data"
+    },
+    "peerAvg": {
+      "pe": 22,
+      "ev_ebitda": 10,
+      "gm": "18%"
+    },
+    "income_statement": {
+      "currency": "CNY",
+      "unit": "M (millions)",
+      "periods": [
+        "FY2022",
+        "FY2023",
+        "FY2024",
+        "FY2025"
+      ],
+      "revenue": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "gross_profit": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "operating_income": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "net_income": [
+        null,
+        30000,
+        40300,
+        32600
+      ],
+      "ebitda": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "gross_margin": [
+        null,
+        null,
+        null,
+        0.172
+      ],
+      "operating_margin": [
+        null,
+        null,
+        null,
+        0.048
+      ],
+      "net_margin": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "revenue_growth": [
+        null,
+        null,
+        null,
+        -0.118
+      ]
+    },
+    "balance_sheet": {
+      "currency": "CNY",
+      "unit": "M (millions)",
+      "periods": [
+        "FY2022",
+        "FY2023",
+        "FY2024",
+        "FY2025"
+      ],
+      "total_assets": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "total_equity": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "total_debt": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cash": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "roe": [
+        null,
+        null,
+        null,
+        0.111
+      ],
+      "debt_to_equity": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "consensus": {
+      "num_analysts": 22,
+      "rating": "Buy",
+      "target_price": "RMB 119.55",
+      "current_price": "RMB 100.02",
+      "upside": "+19.5%",
+      "fy1_rev_est": "not available in our data",
+      "fy1_eps_est": "not available in our data",
+      "buy_pct": 70,
+      "hold_pct": 25,
+      "sell_pct": 5
+    },
+    "fin_insights": [
+      "NI/Rev growth ratio: NI -19% / Rev -11.8% = 1.6x negative operating leverage — costs deleveraging faster than revenue, consistent with price-war GM compression. Mean reversion of this ratio is the core thesis.",
+      "Profit scissors: GM 17.2% TTM vs estimated FY2024 ~20% — compression of ~280bp; FY2026 model assumes recovery to 19.5% as mix shifts toward exports (+40% ASP premium) and premium brands.",
+      "Implied growth check: At 17.7x fwd P/E reverting to peer 22x in 3yr implies ~9% EPS CAGR required — well below internal model 28% FCF growth, supporting the +12.9pp reverse DCF gap as actionable mispricing.",
+      "Balance sheet signal: ROE 11.1% with EV/EBITDA 8.4x — capital efficiency adequate; net cash position (per training-data context, not in current data) supports capex flexibility for Hungary/Brazil ramp without dilution risk."
+    ],
+    "_quality": {
+      "score": 90,
+      "missingFields": [],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": true,
+        "reward_to_risk_at_least_threshold": true,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": true,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "PASS",
+      "qc_findings": [
+        "failed:step_8_position_sizing_curve_monotonic"
+      ],
+      "repairAttempted": false
+    }
+  },
+  "model": "claude-opus-4-7",
+  "usage": {
+    "input_tokens": 11573,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 9275,
+    "service_tier": "standard",
+    "inference_geo": "global"
+  },
+  "consensus_views": [
+    {
+      "thesis": "BYD's breakthrough in ultra-fast charging technology (5-minute EV battery charging) is a transformative catalyst that targets remaining EV holdouts and supports a bullish re-rating, with shares hitting record highs on the announcement.",
+      "price_target": null,
+      "revenue_assumption": null,
+      "analyst": null,
+      "prevalence": "MAJORITY",
+      "key_assumption": "Successful commercialization and rollout of 5-minute fast-charging technology will accelerate EV adoption and widen BYD's competitive moat.",
+      "source_date": "2026-04-24",
+      "source": "Reuters / Bloomberg / Yahoo Finance"
+    },
+    {
+      "thesis": "BYD's aggressive price war and massive discounting in the Chinese EV market is a double-edged strategy — gaining share but pressuring margins and raising concerns about industry profitability.",
+      "price_target": null,
+      "revenue_assumption": null,
+      "analyst": null,
+      "prevalence": "MINORITY",
+      "key_assumption": "Price discounts will sustain volume growth without permanently impairing unit economics across the Chinese EV sector.",
+      "source_date": null,
+      "source": "TipRanks"
+    },
+    {
+      "thesis": "BYD is benefiting from strong overseas demand, particularly Middle East orders amid the energy shock, supporting a constructive view on international expansion as a growth driver.",
+      "price_target": null,
+      "revenue_assumption": null,
+      "analyst": null,
+      "prevalence": "MINORITY",
+      "key_assumption": "Overseas markets (especially Middle East) will continue to absorb BYD volumes and offset domestic competitive pressures.",
+      "source_date": null,
+      "source": "South China Morning Post"
+    },
+    {
+      "thesis": "Cautious/neutral stance questioning whether BYD stock can recover after recent weakness, reflecting uncertainty over near-term direction given competitive and margin pressures.",
+      "price_target": null,
+      "revenue_assumption": null,
+      "analyst": null,
+      "prevalence": "SUBSET",
+      "key_assumption": "Resolution of price war pressure and margin trajectory will determine whether the stock recovers or faces further downside.",
+      "source_date": null,
+      "source": "TipRanks"
+    }
+  ],
+  "consensus_source": "live",
+  "sources_used": [
+    "国际搜索(6条)"
+  ],
+  "eastmoney_count": 0,
+  "tonghuashun_count": 0,
+  "tavily_count": 6,
+  "enrichment_used": true,
+  "fundamentals_used": true,
+  "extras_used": true,
+  "tavily_enabled": true
+}

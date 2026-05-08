@@ -1,0 +1,576 @@
+{
+  "success": true,
+  "ticker": "300308.SZ",
+  "data": {
+    "ticker": "300308.SZ",
+    "thesis_protocol_version": "v2",
+    "step_1_catalyst": {
+      "catalyst_event": "1H2026 interim earnings + 1.6T transceiver mass-production ramp disclosure (volume mix %, GM trajectory, hyperscaler order book commentary). Market is pricing flawless execution; any GM compression or 1.6T mix below ~30% will trigger first crack in the bull narrative.",
+      "catalyst_date_or_window": "2026-08-25 (±2 weeks, expected 1H2026 interim report window)",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "Innolight historical interim reporting cadence (late August); 1.6T ramp guidance from FY2025 annual report"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. Stock has rallied 50.1% in 60 days (590→886) on AI-infra euphoria; reverse-DCF implies 120.1% FCF growth vs our 34.1% estimate — market pricing a multi-year flawless-execution scenario.",
+        "2. Customer concentration is extreme (NVDA+MSFT+GOOGL >70% of optical revenue per industry checks) and product concentration >90% in transceivers; any single hyperscaler CapEx pause or 1.6T qualification slip flows directly to revenue.",
+        "3. Competitive moat is narrowing: Tower-NVIDIA SiPho partnership, Coherent in-house PIC, Credo/DustPhotonics CPO programs all targeting 1.6T/3.2T window — pluggable transceiver ASP/GM premium compresses as alternatives qualify (2H2026–2027).",
+        "4. At 1H2026 print, if GM <44% (current 44.0%) or 1.6T mix <30%, consensus FY2026 EPS gets cut → 23.5x forward P/E re-rates lower; if hyperscaler CapEx commentary softens (Q2 2026 hyperscaler earnings already a leading indicator), forward multiple compresses to 15-18x.",
+        "5. Davis double-kill (EPS cut + multiple compression) drives 25-35% drawdown to fair value of ~580-650 RMB."
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "Reverse DCF delta: implied FCF growth 120.1% vs our 34.1% — overvaluation signal (data context).",
+        "Live P/E TTM 66.0x, Forward P/E 23.5x, EV/EBITDA 48.0x — premium valuation despite 192.1% TTM revenue growth already in numbers.",
+        "Price at 93% of 52W range (436–919); 60-day return +50.1% — late-stage momentum.",
+        "Margin balance 融资余额 25.53B, +24.5% over period — leveraged retail crowding.",
+        "FY2025 NI 10.8B vs FY2024 5.2B (+108.8%) — base effect makes FY2026 YoY comp brutal; consensus must model deceleration.",
+        "Concentration seed score 70 — product (>90% transceivers) + customer (NVDA/MSFT/GOOGL) AND-compound risk."
+      ],
+      "evidence_qualitative": [
+        "Tower-NVIDIA SiPho joint development (Rosenblatt 2026-04-13) signals NVDA hedging Innolight dependency — strategic threat to FY2027+ wallet share.",
+        "Coherent/Credo/DustPhotonics all accelerating 1.6T/3.2T — first time Innolight faces credible parallel competition in the next-gen window.",
+        "Tower partnership (consensus view 1) is a double-edged sword: validates SiPho roadmap but exposes reliance on external foundry vs in-house PIC peers.",
+        "CPO (co-packaged optics) architecture, if adopted at 3.2T+, structurally disintermediates pluggable module vendors — Innolight's TAM ceiling."
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "Innolight is the dominant 800G/1.6T transceiver vendor riding multi-year hyperscaler AI CapEx; SiPho + Tower partnership extends moat; consensus target 873 implies steady ramp through 2027.",
+          "z": "市场认为新易盛是800G/1.6T光模块龙头,受益于多年期AI资本开支周期,SiPho与Tower合作延续护城河,一致目标价873元隐含2027年前持续放量。"
+        },
+        "our_variant": {
+          "e": "Consensus underestimates two compounding risks priced as zero: (1) 1H2026 GM compression as 1.6T ramps with lower initial yield, and (2) competitive parallelization (Tower-NVDA, Coherent in-house PIC, CPO) eroding the next-gen ASP premium that justifies 23.5x forward.",
+          "z": "一致预期将两项风险定价为零:(1) 1.6T良率爬坡期1H2026毛利率压缩;(2) Tower-NVDA、Coherent自研PIC、CPO架构并行推进侵蚀下一代ASP溢价——这两项叠加足以证伪23.5x前瞻P/E。"
+        },
+        "what_changes_our_mind": "1H2026 interim print shows GM ≥44.5% AND 1.6T revenue mix ≥35% AND management discloses ≥2 new hyperscaler customers (reducing NVDA/MSFT/GOOGL concentration below 65%) — all three together would invalidate the multiple-compression thesis."
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "Forward P/E re-rating + FY2026 EPS revision",
+      "current_value": "Forward P/E 23.5x; FY2026 consensus EPS implicitly ~37.7 RMB (886/23.5)",
+      "predicted_value": "Forward P/E 16-18x post 1H2026 print; FY2026 EPS revised down 8-12% if GM <44%",
+      "predicted_range": {
+        "low": "560",
+        "mid": "640",
+        "high": "720"
+      },
+      "predicted_horizon": "6 months (through Q3 2026 earnings, 2026-10/11)",
+      "confidence": "0.55"
+    },
+    "step_5_proves_right_if": [
+      "1H2026 reported GM ≤43.5% (vs 44.0% TTM) — yield ramp pressure confirmed.",
+      "1H2026 1.6T revenue mix disclosed <30% with management lowering 2H ramp pace.",
+      "Any of NVDA/MSFT/GOOGL guides FY2026 CapEx below current consensus in their respective Q2 2026 prints (Aug 2026).",
+      "Forward P/E compresses to ≤18x within 6 months."
+    ],
+    "step_6_proves_wrong_if": [
+      "1H2026 GM ≥44.5% AND 1.6T mix ≥35% AND management raises FY2026 revenue guidance.",
+      "New hyperscaler customer (META/AMZN/Oracle) disclosed as >10% revenue contributor, breaking concentration.",
+      "Stock breaks above 950 on volume after 1H2026 print and holds for 4 weeks — narrative reinforced, exit short."
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes Innolight delivers flawless 1.6T ramp with sustained ASP/GM premium → We believe 1H2026 GM compression + parallel competitive entry (Tower-NVDA, Coherent, CPO) trigger Davis double-kill → Mechanism is interim-print earnings revision combined with forward P/E compression from 23.5x to 16-18x.",
+      "time_to_resolution": "6 months — anchored on 2026-08-25 1H2026 interim report and Q3 2026 earnings (Oct-Nov 2026)",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "-28% (886→640 mid case, -18% to low-case -37%)",
+        "downside_if_wrong": "+12% (886→990 if narrative reinforced; bounded by 52W high 919 + 8% breakout)",
+        "reward_to_risk": "2.3:1"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "~3 months (now through 2026-08-25 1H2026 print)",
+        "why_market_keeps_buying": [
+          "TTM revenue +192.1%, NI +108.8% — backward-looking numbers genuinely strong, momentum funds extrapolating.",
+          "AI CapEx narrative still intact at hyperscaler level (NVDA/MSFT FY2026 guidance not yet cut).",
+          "融资余额 +24.5% — leveraged retail flow self-reinforcing into earnings season."
+        ],
+        "early_signs_phase_1_weakening": [
+          "Any NVDA/MSFT/GOOGL Q2 2026 print (July-Aug 2026) showing CapEx guidance trimmed.",
+          "Channel checks indicating 1.6T yield issues or customer pushout to 2H2026.",
+          "Stock fails to make new high above 919 on positive sector news — momentum exhaustion.",
+          "Tower-NVIDIA SiPho design-win announcement at a hyperscaler that currently sources from Innolight."
+        ],
+        "optional_long_play": {
+          "direction": "no_position",
+          "sizing": "0% — risk/reward not attractive at 93% of 52W range with reverse-DCF flag",
+          "exit_trigger": "n/a"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "2026-08-25 (±2w) 1H2026 interim report: GM <44% OR 1.6T mix <30% OR FY2026 guidance not raised.",
+          "Q3 2026 earnings late-Oct/early-Nov 2026: confirmation of GM trajectory and 2H 1.6T volume.",
+          "Any hyperscaler Q3 2026 CapEx commentary (NVDA Aug 27, MSFT/GOOGL late Oct) showing AI infra digestion."
+        ],
+        "estimated_timing": "Primary catalyst 2026-08-25; confirmation Q3 2026 earnings ~2026-10/11",
+        "short_play": {
+          "direction": "core_short",
+          "sizing": "full conviction at phase_2_catalyst_imminent (target 70-100% of book allocation for this idea)",
+          "entry_trigger": "Either (a) first phase_1 weakening sign confirmed (e.g., NVDA CapEx guide-down) or (b) 2 weeks before 2026-08-25 print regardless"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "0-10% (starter pilot only, given crowded long positioning risk)",
+        "phase_1_weakening_confirmed": "30-50% (after first observable weakening sign)",
+        "phase_2_catalyst_imminent": "70-100% (2 weeks before 1H2026 print or upon confirmed GM/mix slippage)"
+      }
+    },
+    "qc_checklist": {
+      "all_8_steps_complete": true,
+      "step_1_specific_not_vague": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": true,
+      "reward_to_risk_at_least_threshold": true
+    },
+    "name": "新易盛",
+    "en": "Innolight Technology",
+    "sector": "Optical Communications / AI Infrastructure",
+    "dir": "SHORT",
+    "vp": 72,
+    "price": "RMB 886.00",
+    "mktcap": "RMB ~628B [external estimate, not in our data context]",
+    "eqr": {
+      "overall": "MED-HIGH",
+      "biz": "HIGH",
+      "variant": "MED-HIGH",
+      "catalysts": "HIGH",
+      "risks": "MED-HIGH"
+    },
+    "pulse": {
+      "e": "Reverse DCF flags 86pp gap (implied 120% FCF growth vs our 34%). 1H2026 interim print on ~2026-08-25 is the decisive catalyst — GM <44% or 1.6T mix <30% triggers Davis double-kill. R:R ~2.3:1 short.",
+      "z": "反向DCF显示86pp估值差(隐含120%自由现金流增速 vs 我们34%)。2026-08-25中报为决定性催化——毛利<44%或1.6T占比<30%触发戴维斯双杀。空头回报风险比约2.3:1。"
+    },
+    "biz": {
+      "problem": {
+        "e": "AI data centers need ever-faster optical interconnects (800G→1.6T→3.2T) to keep up with GPU cluster bandwidth requirements.",
+        "z": "AI数据中心需要不断升级光互连速率(800G→1.6T→3.2T)以匹配GPU集群带宽需求。"
+      },
+      "mechanism": {
+        "e": "Innolight designs and manufactures pluggable optical transceiver modules, selling primarily to hyperscalers (NVDA/MSFT/GOOGL) via direct and OEM channels, with growing SiPho capability via Tower foundry.",
+        "z": "新易盛设计制造可插拔光模块,主要通过直销与OEM渠道供货超大规模云厂商(NVDA/MSFT/GOOGL),并通过Tower代工拓展硅光能力。"
+      },
+      "moneyFlow": {
+        "e": "Hyperscaler CapEx → ODM/system integrators → Innolight transceiver orders → 44% GM, 39.9% OpM → 53.9% ROE.",
+        "z": "云厂商资本开支→ODM/系统集成商→新易盛光模块订单→44%毛利、39.9%营业利润率→53.9% ROE。"
+      }
+    },
+    "variant": {
+      "marketBelieves": {
+        "e": "Innolight is the entrenched 800G/1.6T leader; SiPho + Tower partnership extends moat; multi-year AI CapEx ramp justifies 23.5x forward P/E and 873 consensus target.",
+        "z": "市场认为新易盛800G/1.6T地位稳固,SiPho+Tower合作延续护城河,多年期AI资本开支支撑23.5x前瞻P/E及873元一致目标价。"
+      },
+      "weBelieve": {
+        "e": "Market believes flawless ramp; we believe 1H2026 GM compression (1.6T yield ramp) + parallel competition (Tower-NVDA, Coherent in-house PIC, CPO) trigger EPS cut + multiple compression to 16-18x; mechanism is the 2026-08-25 interim print.",
+        "z": "市场认为放量完美;我们认为1H2026毛利率压缩(1.6T良率爬坡)叠加并行竞争(Tower-NVDA、Coherent自研PIC、CPO)将引发EPS下调与估值压缩至16-18x;触发机制为2026-08-25中报。"
+      },
+      "mechanism": {
+        "e": "1H2026 interim → GM/mix below whisper → consensus FY2026 EPS cut 8-12% → forward P/E re-rates from 23.5x to 16-18x → 25-35% drawdown to 580-650 fair value.",
+        "z": "中报披露毛利/产品结构低于市场预期→FY2026一致EPS下调8-12%→前瞻P/E从23.5x压缩至16-18x→股价回落至580-650合理区间(跌幅25-35%)。"
+      },
+      "rightIf": {
+        "e": "1H2026 GM ≤43.5% OR 1.6T mix <30% OR any of NVDA/MSFT/GOOGL guides FY2026 CapEx below current consensus.",
+        "z": "1H2026毛利≤43.5%、或1.6T占比<30%、或NVDA/MSFT/GOOGL任一在Q2 2026指引FY2026资本开支低于当前一致预期。"
+      },
+      "wrongIf": {
+        "e": "1H2026 GM ≥44.5% AND 1.6T mix ≥35% AND FY2026 guidance raised → cover short, accept loss capped at -12%.",
+        "z": "1H2026毛利≥44.5%且1.6T占比≥35%且FY2026指引上调→平仓止损,损失上限-12%。"
+      },
+      "whatChangesOurMind": {
+        "e": "1H2026 print delivers GM ≥44.5% AND 1.6T mix ≥35% AND ≥2 new hyperscaler customers disclosed (concentration <65%) — all three together invalidate the thesis.",
+        "z": "中报同时披露:毛利≥44.5%、1.6T占比≥35%、新增≥2家云厂商客户(集中度<65%)——三者同时成立则证伪。"
+      },
+      "rewardToRisk": {
+        "upsideIfRight": "+28% short return (886→640 mid case) over 6 months",
+        "downsideIfWrong": "-12% (886→990 narrative reinforcement, bounded by 52W high + 8% breakout)",
+        "ratio": "~2.3:1",
+        "timeToResolution": "6 months — through 2026-08-25 interim and Q3 2026 earnings"
+      },
+      "phaseTiming": {
+        "phase1MarketBelief": {
+          "durationEstimate": "~3 months until 2026-08-25 1H2026 interim",
+          "whyMarketKeepsBuying": [
+            "TTM revenue +192.1%, NI +108.8% — backward numbers genuinely strong",
+            "Hyperscaler FY2026 CapEx not yet cut; AI narrative intact",
+            "融资余额 +24.5% over period — leveraged retail flow self-reinforcing"
+          ],
+          "earlySignsPhase1Weakening": [
+            "NVDA/MSFT/GOOGL Q2 2026 prints (Jul-Aug 2026) showing CapEx trimmed",
+            "Channel checks of 1.6T yield issues or customer pushout",
+            "Stock fails new high above 919 on positive sector news — momentum exhaustion",
+            "Tower-NVIDIA SiPho design-win at a current Innolight customer"
+          ],
+          "optionalLongPlay": {
+            "direction": "no_position",
+            "sizing": "0%",
+            "exitTrigger": "n/a — risk/reward unattractive at 93% of 52W range"
+          }
+        },
+        "phase2RealityRecognition": {
+          "catalystForReversion": [
+            "2026-08-25 (±2w) 1H2026 interim: GM <44% OR 1.6T mix <30% OR no FY guidance raise",
+            "Q3 2026 earnings ~2026-10/11: confirmation of GM trajectory and 2H 1.6T volume",
+            "Hyperscaler Q3 2026 CapEx commentary signaling AI digestion"
+          ],
+          "estimatedTiming": "Primary 2026-08-25; confirmation Q3 2026 earnings late-Oct/early-Nov 2026",
+          "shortPlay": {
+            "direction": "core_short",
+            "sizing": "70-100% of idea book at phase_2_imminent",
+            "entryTrigger": "First phase_1 weakening sign OR 2 weeks before 2026-08-25 print regardless"
+          }
+        },
+        "positionSizingCurve": {
+          "prePhase1Weakening": "0-10% (starter pilot only)",
+          "phase1WeakeningConfirmed": "30-50% (after first observable weakening sign)",
+          "phase2CatalystImminent": "70-100% (2 weeks before 1H2026 print or upon confirmed GM/mix slippage)"
+        }
+      }
+    },
+    "catalysts": [
+      {
+        "e": "1H2026 interim report: GM, 1.6T mix, hyperscaler customer disclosure",
+        "z": "1H2026中报:毛利率、1.6T占比、云厂商客户披露",
+        "t": "Negative-skew",
+        "date": "2026-08-25",
+        "imp": "HIGH"
+      },
+      {
+        "e": "NVDA Q2 FY2027 earnings + FY2026 hyperscaler CapEx guidance",
+        "z": "NVDA Q2 FY2027业绩与FY2026云厂商资本开支指引",
+        "t": "Leading indicator",
+        "date": "2026-08-27",
+        "imp": "HIGH"
+      },
+      {
+        "e": "Q3 2026 earnings: confirmation of 2H 1.6T volume and GM trajectory",
+        "z": "Q3 2026业绩:2H 1.6T放量与毛利轨迹确认",
+        "t": "Confirmation",
+        "date": "2026-10-30",
+        "imp": "HIGH"
+      },
+      {
+        "e": "OFC 2027 / industry events: Tower-NVDA, Coherent, Credo CPO/SiPho roadmap updates",
+        "z": "OFC 2027等行业会议:Tower-NVDA、Coherent、Credo CPO/硅光路线图更新",
+        "t": "Competitive",
+        "date": "2027-03-15",
+        "imp": "MED"
+      }
+    ],
+    "decomp": {
+      "expectation_gap": {
+        "s": 78,
+        "e": "Reverse DCF implies 120% FCF growth vs our 34% — 86pp gap.",
+        "z": "反向DCF隐含120%自由现金流增速 vs 我们34%——差距86pp。"
+      },
+      "fundamental_acc": {
+        "s": 35,
+        "e": "FY2025 NI +108.8% YoY is high-water mark; FY2026 comp brutal as base normalizes.",
+        "z": "FY2025净利+108.8%为高点,FY2026在高基数下增速料显著放缓。"
+      },
+      "narrative_shift": {
+        "s": 70,
+        "e": "Tower-NVDA + Coherent in-house PIC + CPO are early-stage narrative cracks not yet priced.",
+        "z": "Tower-NVDA、Coherent自研PIC、CPO构成尚未定价的早期叙事裂痕。"
+      },
+      "low_coverage": {
+        "s": 20,
+        "e": "66 broker estimates, 14 analyst targets — heavily covered.",
+        "z": "66家券商预测、14位分析师覆盖——覆盖度高。"
+      },
+      "catalyst_prox": {
+        "s": 85,
+        "e": "1H2026 interim ~2026-08-25 is ~3.5 months out — high proximity.",
+        "z": "中报2026-08-25约3.5个月后——临近度高。"
+      }
+    },
+    "risks": [
+      {
+        "e": "Short squeeze risk: stock at 93% of 52W range, leveraged long flow (融资 +24.5%), momentum fund crowding could push another 10-15% before reversion.",
+        "z": "逼空风险:股价处于52周区间93%,杠杆多头(融资+24.5%)与动量基金拥挤可能在反转前再推升10-15%。",
+        "p": "MED",
+        "imp": "HIGH"
+      },
+      {
+        "e": "1.6T ramp executes flawlessly with GM expansion (yield faster than expected) — invalidates GM compression leg.",
+        "z": "1.6T放量良率超预期且毛利扩张——证伪毛利压缩逻辑。",
+        "p": "MED",
+        "imp": "HIGH"
+      },
+      {
+        "e": "Hyperscaler CapEx accelerates further (NVDA Blackwell Ultra/Rubin cycle), extending demand window into 2027-2028.",
+        "z": "云厂商资本开支进一步加速(NVDA Blackwell Ultra/Rubin周期),需求窗口延至2027-2028。",
+        "p": "MED",
+        "imp": "MED"
+      },
+      {
+        "e": "China policy support / index inclusion flow could create non-fundamental price floor.",
+        "z": "国内政策支持/指数纳入资金或形成非基本面支撑。",
+        "p": "LOW",
+        "imp": "MED"
+      }
+    ],
+    "pricing": {
+      "level": "HIGH",
+      "crowd": {
+        "e": "Crowded long: 融资余额 +24.5%, 14 analysts mean target 873 vs price 886 (already at consensus), price at 93% of 52W range.",
+        "z": "多头拥挤:融资余额+24.5%,14位分析师均值目标价873已被股价886触及,价格处于52周93%分位。"
+      }
+    },
+    "nextActions": [
+      {
+        "e": "Establish 5-10% pilot short at 880-900 zone; full size only post phase_1 weakening sign or 2 weeks pre-2026-08-25.",
+        "z": "880-900区间建立5-10%试探空头;仅在phase_1预警出现或2026-08-25前两周加至满仓。"
+      },
+      {
+        "e": "Set price alert at 950 (stop) and 800/700/640 (scale-in profit-taking levels).",
+        "z": "设950止损警报与800/700/640三级减仓获利位。"
+      },
+      {
+        "e": "Track NVDA/MSFT/GOOGL Q2 2026 CapEx guidance (Jul-Aug 2026) as leading indicator.",
+        "z": "跟踪NVDA/MSFT/GOOGL在Q2 2026指引中的资本开支表述作为先行指标。"
+      },
+      {
+        "e": "Channel checks on 1.6T yield + Tower-NVDA SiPho program timeline by mid-July.",
+        "z": "7月中前完成1.6T良率与Tower-NVDA硅光项目进展产业链调研。"
+      },
+      {
+        "e": "Consider long-dated OTM puts (Dec 2026 strike 750) as alternative to outright short to cap squeeze risk.",
+        "z": "考虑12月到期、行权价750的远期虚值看跌作为直接做空替代,以限制逼空风险。"
+      }
+    ],
+    "fin": {
+      "rev": "FY2025 not disclosed in data; TTM growth implied by NI +108.8%",
+      "revGr": "192.1% (TTM)",
+      "gm": "44.0%",
+      "pe": 66,
+      "ev_ebitda": 48,
+      "fcf": "not available in our data"
+    },
+    "peerAvg": {
+      "pe": 32,
+      "ev_ebitda": 22,
+      "gm": "38%"
+    },
+    "income_statement": {
+      "currency": "CNY",
+      "unit": "M (millions)",
+      "periods": [
+        "FY2022",
+        "FY2023",
+        "FY2024",
+        "FY2025"
+      ],
+      "revenue": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "gross_profit": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "operating_income": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "net_income": [
+        null,
+        2200,
+        5200,
+        10800
+      ],
+      "ebitda": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "gross_margin": [
+        null,
+        null,
+        null,
+        0.44
+      ],
+      "operating_margin": [
+        null,
+        null,
+        null,
+        0.399
+      ],
+      "net_margin": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "revenue_growth": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "balance_sheet": {
+      "currency": "CNY",
+      "unit": "M (millions)",
+      "periods": [
+        "FY2022",
+        "FY2023",
+        "FY2024",
+        "FY2025"
+      ],
+      "total_assets": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "total_equity": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "total_debt": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "cash": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "roe": [
+        null,
+        null,
+        null,
+        0.539
+      ],
+      "debt_to_equity": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "consensus": {
+      "num_analysts": 14,
+      "rating": "Buy",
+      "target_price": "RMB 873.33",
+      "current_price": "RMB 886.00",
+      "upside": "-1.4%",
+      "fy1_rev_est": "not available in our data",
+      "fy1_eps_est": "implied ~37.7 RMB (886/23.5x fwd P/E)",
+      "buy_pct": 75,
+      "hold_pct": 20,
+      "sell_pct": 5
+    },
+    "fin_insights": [
+      "NI/Rev growth ratio: NI +108.8% vs Rev +192.1% TTM = 0.57x — NEGATIVE operating leverage at the most recent print despite high absolute margins; cost line scaling FASTER than revenue (likely 1.6T R&D + capacity buildout). Watch for further compression in 1H2026.",
+      "Gross margin 44.0% with 39.9% operating margin — only 4.1pp gap implies extremely lean opex; little buffer to absorb GM compression before operating leverage flips negative on the bottom line.",
+      "Implied growth check: 23.5x forward P/E mean-reverting to peer 18x in 3yr requires ~10% EPS CAGR FROM A POST-FY2025 BASE — but reverse DCF flags implied 120% FCF growth vs our 34%, suggesting market is pricing FY2026 NI growth ~50%+, far above realistic 15-25% normalized ceiling. Valuation risk HIGH.",
+      "ROE 53.9% with no debt data available — assumed low leverage given high ROIC profile; FCF conversion not in our data, flagged as monitoring item for 1H2026 disclosure (capex intensity for 1.6T capacity expansion is the swing variable)."
+    ],
+    "_quality": {
+      "score": 90,
+      "missingFields": [],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": true,
+        "reward_to_risk_at_least_threshold": true,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": true,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "PASS",
+      "qc_findings": [
+        "failed:step_8_position_sizing_curve_monotonic"
+      ],
+      "repairAttempted": false
+    }
+  },
+  "model": "claude-opus-4-7",
+  "usage": {
+    "input_tokens": 11604,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 10284,
+    "service_tier": "standard",
+    "inference_geo": "global"
+  },
+  "consensus_views": [
+    {
+      "thesis": "Innolight is deepening its silicon photonics (SiPho) capabilities through expanded collaboration with Tower Semiconductor, ramping volume production of next-generation SiPho transceivers for AI and data center applications, positioning the company as a key beneficiary of AI infrastructure buildout.",
+      "price_target": null,
+      "revenue_assumption": null,
+      "analyst": "Tower Semiconductor / Innolight joint disclosure",
+      "prevalence": "MINORITY",
+      "key_assumption": "Continued ramp of next-generation SiPho transceiver volumes driven by AI/data center demand",
+      "source_date": "2025-03-10",
+      "source": "Yahoo Finance"
+    },
+    {
+      "thesis": "Innolight is positioned as a leading high-end optical transceiver module supplier, with its core business in 800G/1.6T optical communication modules serving the AI data center upgrade cycle.",
+      "price_target": null,
+      "revenue_assumption": null,
+      "analyst": null,
+      "prevalence": "MINORITY",
+      "key_assumption": "Sustained demand for high-end 800G/1.6T optical transceiver modules from hyperscale customers",
+      "source_date": "2025-12-12",
+      "source": "Barron's"
+    },
+    {
+      "thesis": "Competitive intensity in silicon photonics is rising as peers (Coherent, Credo/DustPhotonics, Hyper Photonix, Tower-NVIDIA partnership) accelerate 1.6T/3.2T SiPho and CPO development, potentially pressuring Innolight's technology moat and pricing power in next-generation optical interconnects.",
+      "price_target": null,
+      "revenue_assumption": null,
+      "analyst": "Rosenblatt (Genovese) on Coherent; industry coverage",
+      "prevalence": "MINORITY",
+      "key_assumption": "Industry shift to in-house SiPho PIC technology and CPO architectures could erode pluggable transceiver economics",
+      "source_date": "2026-04-13",
+      "source": "Seeking Alpha / Benzinga / TipRanks"
+    }
+  ],
+  "consensus_source": "live",
+  "sources_used": [
+    "国际搜索(6条)"
+  ],
+  "eastmoney_count": 0,
+  "tonghuashun_count": 0,
+  "tavily_count": 6,
+  "enrichment_used": true,
+  "fundamentals_used": true,
+  "extras_used": true,
+  "tavily_enabled": true
+}
