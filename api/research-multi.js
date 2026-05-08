@@ -99,6 +99,11 @@ async function callOpenAI(model, system, user, maxTokens = 8192) {
   // 2026-05-08: GPT-5.5 returned 400 "Unsupported parameter: 'max_tokens'"
   // confirming the breaking change. Sending both for forward-compat is NOT
   // allowed by OpenAI API ("only one of max_tokens or max_completion_tokens").
+  // GPT-5.x and o-series have additional API restrictions:
+  // - max_completion_tokens (not max_tokens)
+  // - temperature MUST be default (1); 0.6 → 400 "unsupported_value"
+  // - top_p / presence_penalty / frequency_penalty likely similar — omit for safety
+  // Older GPT-4.x and 3.5 still accept the legacy parameters.
   const isModernModel = /^(gpt-5|gpt-6|o[0-9])/i.test(model);
   const tokenField = isModernModel ? 'max_completion_tokens' : 'max_tokens';
 
@@ -109,8 +114,12 @@ async function callOpenAI(model, system, user, maxTokens = 8192) {
       { role: 'user', content: user },
     ],
     [tokenField]: maxTokens,
-    temperature: 0.6,
   };
+
+  // Only set temperature for legacy models (GPT-5+ rejects non-default values)
+  if (!isModernModel) {
+    body.temperature = 0.6;
+  }
 
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
