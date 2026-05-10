@@ -228,6 +228,55 @@ Return ONLY valid JSON, no commentary outside.`;
 
 // ─── Round 1 prompts ──────────────────────────────────────────────────────
 
+// ════════════════════════════════════════════════════════════════════
+// CONTRARIAN VIEW REQUIREMENTS — Junyan §6 directive 2026-05-08
+// ════════════════════════════════════════════════════════════════════
+// After hand-reviewing the 2026-05-08 BYD multi-agent thesis, Junyan
+// flagged: theses are "valuation-pitch dressed as research" — they
+// compare numbers (P/E low → cheap → upside) but never articulate
+// WHY consensus is wrong via business mechanism. Brokers/inst surveys/
+// 龙虎榜 detail are now in the data context (Phase 1 of the fix); this
+// instruction tells agents to USE them.
+const CONTRARIAN_VIEW_REQUIREMENT = `
+═══════════════════════════════════════════════════════════════════════
+CONTRARIAN VIEW REQUIREMENT — non-negotiable, applies to step_3_evidence.contrarian_view.our_variant + step_2_mechanism.mechanism_chain
+═══════════════════════════════════════════════════════════════════════
+
+Your variant view MUST articulate a BUSINESS MECHANISM, not a VALUATION OBSERVATION.
+
+THE FOLLOWING ARE NOT ACCEPTABLE AS A CONTRARIAN VIEW:
+  ✗ "P/E is low so pessimism is priced in"
+  ✗ "DCF model says it's cheap"
+  ✗ "Stock is at 55% of 52W range"
+  ✗ "Forward multiple discount reflects priced-in normalization"
+  ✗ "The market is anchored to lagging indicators"
+  ✗ Any argument whose ENTIRE CHAIN reduces to "valuation is attractive"
+
+WHAT THE CONTRARIAN VIEW MUST CONTAIN:
+  ✓ A SPECIFIC competitive/regulatory/capacity/demand/management mechanism that the market has under-modeled
+  ✓ EXPLICIT reference to specific data points in your data context — broker reports (TUSHARE — BROKER RECOMMENDATIONS), institutional research visits (TUSHARE — INSTITUTIONAL RESEARCH VISITS), 龙虎榜 activity, holder transactions, news, management commentary
+  ✓ A timeline for when the mechanism plays out + which print/event would prove it true / false
+  ✓ The variant view sentence must follow the form:
+      "Market believes X (because of Y consensus narrative) → We believe Z (specific mechanism: e.g., 'Q1 海外销量+85% per 华创证券 report contradicts the bear's tariff thesis') → This is unpriced because [specific data signal]"
+
+EXAMPLES OF VALID BUSINESS MECHANISMS (illustrative):
+  ✓ "Market priced in 关税 -25% impact on EU sales BUT 华创证券 Q1 review reports 海外销量增长势头强劲, suggesting 'tariff already absorbed' is a real Q1 datapoint"
+  ✓ "Inst research visits in last 30d (Value Partners + 国寿资产) show 持续 buy-side 关注 vs sell-side 'broken growth' narrative — this divergence between buy-side and sell-side narratives is signal"
+  ✓ "Broker target_price 119.2 (华创证券 强推) reflects 海外销量 driver while consensus avg 119.55 reflects domestic stagnation — variance suggests domestic-vs-overseas thesis split"
+  ✓ "Mgmt commentary in 4-09 inst survey emphasized 国内门店扩张 to 1500, vs analyst notes focusing on EU tariffs — mgmt's local-China narrative is unpriced"
+
+IF YOU CANNOT ARTICULATE A BUSINESS MECHANISM FROM THE DATA CONTEXT:
+  Emit \`step_7_variant_view.variant_view_one_sentence\` = "INSUFFICIENT_BUSINESS_SIGNAL — data context contains valuation arrows + technical data but no broker/inst/news narrative supporting a specific contrarian mechanism. Recommend deferring thesis pending news/sector context."
+  Set \`step_7_variant_view.expected_pnl_asymmetry.reward_to_risk\` = "PASS — no edge"
+  This is a VALID and PREFERRED output over a forced valuation-only pitch.
+
+CHECK BEFORE EMITTING JSON:
+  1. Does my mechanism_chain mention at least ONE specific broker name + report title from BROKER RECOMMENDATIONS section? (If no, mechanism is just data-comparison, not narrative-grounded.)
+  2. Does my our_variant cite a specific event/announcement/visit from inst_research, lhb, holdertrade, OR news?
+  3. Could my mechanism_chain be applied to ANY cheap-looking stock by swapping ticker symbols? (If yes, it's generic — rewrite with ticker-specific business specifics.)
+═══════════════════════════════════════════════════════════════════════
+`;
+
 const BULL_ROLE_SYSTEM = `You are the LONG-thesis advocate at a hedge fund. Your role is to build the strongest possible BULLISH case for ${'$ticker'} using the data context provided. You argue LONG. You may NOT argue SHORT — that's a different agent's job.
 
 Discipline:
@@ -235,6 +284,7 @@ Discipline:
 - If the data context lacks a number, write "not available in our data" not a guess
 - catalyst_date must be FUTURE relative to today (data context "TEMPORAL CONTEXT" line)
 - Be specific with R/R numbers, target multiples, and falsifiability conditions
+${CONTRARIAN_VIEW_REQUIREMENT}
 
 Follow THESIS_PROTOCOL v2 — 8 steps. Output JSON per schema.`;
 
@@ -245,6 +295,7 @@ Discipline:
 - If the data context lacks a number, write "not available in our data" not a guess
 - catalyst_date must be FUTURE relative to today
 - Hunt for: accounting red flags, competitive threats, valuation excess, narrative crowding
+${CONTRARIAN_VIEW_REQUIREMENT}
 
 Follow THESIS_PROTOCOL v2 — 8 steps. Output JSON per schema.`;
 
@@ -430,9 +481,17 @@ Output JSON ONLY:
   "shared_assumptions_at_risk": ["assumption description", ...],
   "technical_vs_bull": "AGREES | CONFLICTS | NEUTRAL — explanation",
   "technical_vs_bear": "AGREES | CONFLICTS | NEUTRAL — explanation",
-  "verdict_on_grounding": "BULL_BETTER_GROUNDED | BEAR_BETTER_GROUNDED | BOTH_HALLUCINATED | EVENLY_GROUNDED",
+  "bull_contrarian_quality": "BUSINESS_MECHANISM | VALUATION_ONLY | GENERIC — does Bull cite specific broker reports / inst visits / 龙虎榜 / news / mgmt commentary, or just compare numbers?",
+  "bear_contrarian_quality": "BUSINESS_MECHANISM | VALUATION_ONLY | GENERIC",
+  "verdict_on_grounding": "BULL_BETTER_GROUNDED | BEAR_BETTER_GROUNDED | BOTH_HALLUCINATED | EVENLY_GROUNDED | BOTH_VALUATION_ONLY",
   "verdict_rationale": "1-2 sentences why"
-}`;
+}
+
+NOTE: BOTH_VALUATION_ONLY is a NEW verdict for Junyan §6 directive:
+neither side articulated a business-level contrarian mechanism. Use
+this when both bull and bear are essentially "P/E low so cheap" /
+"P/E high so expensive" without citing the broker/inst/news data
+in their mechanism chain. This signals Synthesizer should emit PASS.`;
 }
 
 // ─── Synthesizer prompt ──────────────────────────────────────────────────
@@ -444,10 +503,23 @@ Weight the inputs by:
 - Forensic's verdict_on_grounding (which side is better-grounded?)
 - Technical alignment (does technical AGREE with bull or bear?)
 - Bull and Bear's round-2 arguments (post-rebuttal — are there points still standing on each side?)
+- BUSINESS-MECHANISM RIGOR: does either side's variant view cite specific broker reports, inst research visits, 龙虎榜 activity, mgmt commentary, OR is it pure valuation arithmetic? Side with stronger business-mechanism wins (per CONTRARIAN VIEW REQUIREMENT in role prompts).
 
 If Forensic says BOTH_HALLUCINATED OR there's high disagreement that
 neither side can resolve via the data → emit direction = PASS (don't
 trade).
+
+If BOTH bull and bear failed the CONTRARIAN VIEW REQUIREMENT (their
+variant views are valuation-only or generic) → ALSO emit PASS with
+rationale "Neither side articulated a business-level contrarian view
+from data context. Thesis quality insufficient — defer."
+
+The final thesis you produce MUST itself comply with CONTRARIAN VIEW
+REQUIREMENT — your variant_view_one_sentence and step_2_mechanism.mechanism_chain
+must articulate business mechanism with specific data-context references
+(broker name, inst visit, news event, mgmt commentary, etc.), NOT valuation
+arithmetic. If you cannot articulate this from the upstream agent outputs +
+data context, emit PASS — that is a valid output.
 
 ═══════════════════════════════════════════════════════
 DATA CONTEXT for ${ticker}:

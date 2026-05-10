@@ -661,55 +661,181 @@ function buildExtrasBlock(extras) {
     }
   }
 
-  // 7. Tushare per-ticker signal highlights
+  // 7. Tushare per-ticker signal highlights — DETAILED narrative
+  // 2026-05-08 (Phase 1 of contrarian-thesis fix): each Tushare layer now
+  // surfaces NARRATIVE CONTENT (broker report titles + analyst names + rating
+  // + targets, institutional visit details, chip cost levels), not just
+  // summary counts. This gives Bull/Bear agents real material to argue
+  // business-level contrarian views from. Per Junyan's directive to surface
+  // "all data sources, with clear instructions". Token budget: +2-3K tokens.
   const ts = extras.tushare_suite || {};
-  const tsLines = [];
 
-  const ht = ts.holdertrade;
-  if (ht && Array.isArray(ht.records) && ht.records.length > 0) {
-    const r = ht.records.slice(0, 3);
-    const inOutNet = r.reduce((s, x) => s + ((x.in_de === '1' || x.in_de === 1) ? 1 : -1) * (x.change_vol || 0), 0);
-    tsLines.push(`Holder trade (recent ${r.length}): net ${inOutNet >= 0 ? '+' : ''}${(inOutNet / 1e4).toFixed(0)}万股 buy/sell`);
+  // ── Broker recommendations: top reports w/ title + rating + targets ──
+  const br = ts.broker_recommend;
+  if (br && Array.isArray(br.recommendations) && br.recommendations.length > 0) {
+    lines.push('');
+    lines.push('TUSHARE — BROKER RECOMMENDATIONS (90d window, sell-side narrative):');
+    // Dedupe by (broker, report_title, rec_date) — same report often appears
+    // multiple times with different forecast quarters
+    const seen = new Set();
+    const unique = [];
+    for (const r of br.recommendations) {
+      const key = `${r.org_name || r.broker || ''}|${r.report_title || ''}|${r.rec_date || r.report_date || ''}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(r);
+      if (unique.length >= 8) break;
+    }
+    for (const r of unique) {
+      const date = r.rec_date || r.report_date || '?';
+      const broker = r.org_name || r.broker || '?';
+      const title = (r.report_title || '').slice(0, 100);
+      const rating = r.rating || r.recommendation || '无';
+      const tp = r.target_price ?? r.tp ?? r.min_price ?? r.max_price;
+      const eps = r.eps;
+      const np = r.np;
+      const reportType = r.report_type ? `[${r.report_type}]` : '';
+      const tpStr = tp != null ? ` target=${tp}` : '';
+      const epsStr = eps != null ? ` EPS=${eps}` : '';
+      const npStr = np != null ? ` NP=${(np/1e4).toFixed(1)}亿` : '';
+      lines.push(`  ${date} ${broker} ${reportType} "${title}" — ${rating}${tpStr}${epsStr}${npStr}`);
+    }
+    const summary = br.summary || {};
+    lines.push(`  (Total ${summary.total_90d || br.recommendations.length} reports / ${summary.unique_brokers_90d || '?'} unique brokers / latest ${summary.latest_date || '?'})`);
   }
 
+  // ── Institutional research: who visited recently ──
+  const ir = ts.inst_research;
+  if (ir && Array.isArray(ir.surveys) && ir.surveys.length > 0) {
+    lines.push('');
+    lines.push('TUSHARE — INSTITUTIONAL RESEARCH VISITS (which buy-side firms are studying this):');
+    for (const s of ir.surveys.slice(0, 6)) {
+      const date = s.surv_date || '?';
+      const org = s.rece_org || '?';
+      const orgType = s.org_type && s.org_type !== '--' ? `(${s.org_type})` : '';
+      const mode = s.surv_type || s.rece_mode || '';
+      const visitor = s.fund_visitors && s.fund_visitors !== '--' ? ` visitor: ${s.fund_visitors}` : '';
+      lines.push(`  ${date} ${org} ${orgType} — ${mode}${visitor}`);
+    }
+    const summary = ir.summary || {};
+    lines.push(`  (30d: ${summary.total_30d || 0} surveys / ${summary.unique_inst_30d || 0} unique inst | 90d: ${summary.total_90d || ir.surveys.length})`);
+  }
+
+  // ── 龙虎榜 LHB: recent appearance reasons + top buyer/seller seats ──
+  const lhb = ts.lhb;
+  if (lhb && Array.isArray(lhb.records) && lhb.records.length > 0) {
+    lines.push('');
+    lines.push('TUSHARE — 龙虎榜 LHB APPEARANCES (institutional/北向 net activity):');
+    for (const e of lhb.records.slice(0, 5)) {
+      const date = e.trade_date || '?';
+      const reason = e.reason || '?';
+      const netbuy = e.netbuy != null ? (e.netbuy >= 0 ? '+' : '') + (e.netbuy / 1e8).toFixed(2) + '亿' : '?';
+      lines.push(`  ${date} ${reason} | net ${netbuy}`);
+    }
+  } else if (lhb && lhb._status === 'endpoint_unavailable') {
+    // Skip silently, no permission
+  }
+
+  // ── Holder trade: insider/大股东 actual transactions ──
+  const ht = ts.holdertrade;
+  if (ht && Array.isArray(ht.events) && ht.events.length > 0) {
+    lines.push('');
+    lines.push('TUSHARE — INSIDER/大股东 ACTIVITY (recent share movements):');
+    for (const e of ht.events.slice(0, 5)) {
+      const date = e.ann_date || e.surv_date || '?';
+      const direction = (e.in_de === '1' || e.in_de === 'IN' || e.in_de === 1) ? '增持' : '减持';
+      const vol = e.change_vol || 0;
+      const holder = e.holder_name || e.holder_type || '?';
+      const ratio = e.change_ratio != null ? ` (${(e.change_ratio*100).toFixed(2)}%)` : '';
+      lines.push(`  ${date} ${holder} ${direction} ${(vol/1e4).toFixed(0)}万股${ratio}`);
+    }
+    const summary = ht.summary || {};
+    if (summary.signal_level) {
+      lines.push(`  Signal level (180d net): ${summary.signal_level}`);
+    }
+  }
+
+  // ── Top 游资 (top_inst) ──
+  const ti = ts.top_inst;
+  if (ti && Array.isArray(ti.appearances) && ti.appearances.length > 0) {
+    lines.push('');
+    lines.push('TUSHARE — 游资 (TOP_INST) APPEARANCES:');
+    const summary = ti.summary || {};
+    lines.push(`  Top buyer 30d: ${summary.top_buyer_30d || 'none'}`);
+    lines.push(`  Top seller 30d: ${summary.top_seller_30d || 'none'}`);
+  }
+
+  // ── Margin trade trend ──
   const mg = ts.margin;
   if (mg && Array.isArray(mg.records) && mg.records.length >= 2) {
     const last = mg.records[mg.records.length - 1];
     const first = mg.records[0];
     if (last && first && Number.isFinite(last.rzye) && Number.isFinite(first.rzye) && first.rzye !== 0) {
       const change = ((last.rzye - first.rzye) / first.rzye) * 100;
-      tsLines.push(`Margin: 融资余额 ${(last.rzye / 1e8).toFixed(1)}亿 (${change >= 0 ? '+' : ''}${change.toFixed(1)}% over period)`);
+      const rzrqRatio = last.rzye && last.rqye ? (last.rzye / (last.rzye + last.rqye)) * 100 : null;
+      lines.push('');
+      lines.push('TUSHARE — MARGIN TRADE:');
+      lines.push(`  融资余额: ${(last.rzye / 1e8).toFixed(1)}亿 (${change >= 0 ? '+' : ''}${change.toFixed(1)}% over period — leveraged longs ${change >= 0 ? 'expanding' : 'unwinding'})`);
+      if (last.rqye != null) lines.push(`  融券余额: ${(last.rqye / 1e8).toFixed(2)}亿 (long/short ratio: ${rzrqRatio?.toFixed(1)}% leveraged-long)`);
     }
   }
 
+  // ── Pledge / Repurchase / Restricted shares — single-line each ──
+  const otherLines = [];
   const pl = ts.pledge_stat;
-  if (pl && Number.isFinite(pl.pledge_ratio)) {
-    tsLines.push(`Pledge ratio: ${pl.pledge_ratio.toFixed(2)}%`);
+  if (pl && Array.isArray(pl.records) && pl.records.length > 0) {
+    const latest = pl.records[pl.records.length - 1];
+    if (latest && Number.isFinite(latest.pledge_ratio)) {
+      otherLines.push(`Pledge ratio: ${latest.pledge_ratio.toFixed(2)}% (controlling-shareholder share-pledge as of ${latest.end_date || '?'})`);
+    }
   }
-
   const rp = ts.repurchase;
-  if (rp && Array.isArray(rp.records) && rp.records.length > 0) {
-    tsLines.push(`Buyback programs (active records): ${rp.records.length}`);
+  if (rp && Array.isArray(rp.events) && rp.events.length > 0) {
+    otherLines.push(`Buyback programs: ${rp.events.length} active events (capital return signal)`);
+  } else if (rp && rp.summary && rp.summary.total_count === 0) {
+    otherLines.push(`Buyback programs: NONE (vs e.g. Tencent FY24 HKD 112B — capital return absence may signal mgmt growth-prioritization)`);
+  }
+  const rs = ts.restricted_shares;
+  if (rs && Array.isArray(rs.events) && rs.events.length > 0) {
+    otherLines.push(`Restricted shares unlocking: ${rs.events.length} upcoming events (potential supply-side overhang)`);
+  }
+  if (otherLines.length) {
+    lines.push('');
+    lines.push('TUSHARE — CAPITAL STRUCTURE SIGNALS:');
+    otherLines.forEach(l => lines.push(`  ${l}`));
   }
 
-  const br = ts.broker_recommend;
-  if (br && Array.isArray(br.records) && br.records.length > 0) {
-    tsLines.push(`Broker recommend records: ${br.records.length}`);
-  }
-
+  // ── Chip distribution: top 3 price levels by concentration ──
   const cd = ts.chip_distribution;
-  if (cd && (cd._status === 'ok' || cd.cost_levels)) {
-    tsLines.push(`Chip distribution: data available`);
+  if (cd && Array.isArray(cd.chips) && cd.chips.length > 0) {
+    const sorted = [...cd.chips].sort((a, b) => (b.percent || 0) - (a.percent || 0)).slice(0, 5);
+    lines.push('');
+    lines.push('TUSHARE — CHIP DISTRIBUTION (cost-basis concentration, top 5 levels):');
+    for (const c of sorted) {
+      lines.push(`  ¥${c.price?.toFixed(1)}: ${(c.percent || 0).toFixed(2)}% of float (cost-basis cluster)`);
+    }
   }
 
+  // ── Consensus forecast: filter valid + recent ──
   const cf = ts.consensus_forecast;
   if (cf && Array.isArray(cf.forecasts) && cf.forecasts.length > 0) {
-    tsLines.push(`Consensus forecasts: ${cf.forecasts.length} broker estimates`);
-  }
-
-  if (tsLines.length > 0) {
-    lines.push('TUSHARE SIGNALS:');
-    tsLines.forEach(l => lines.push(`  ${l}`));
+    const valid = cf.forecasts.filter(f =>
+      (f.eps != null || f.net_profit != null || f.revenue != null)
+    );
+    if (valid.length > 0) {
+      const recent = [...valid].sort((a, b) => (b.end_date || 0) - (a.end_date || 0)).slice(0, 4);
+      lines.push('');
+      lines.push('TUSHARE — CONSENSUS FORECAST TIME-SERIES (broker aggregated, recent 4 periods):');
+      for (const f of recent) {
+        const date = f.end_date || '?';
+        const np = f.net_profit != null ? `NP=${(f.net_profit/1e4).toFixed(0)}万` : '';
+        const eps = f.eps != null ? `EPS=${f.eps}` : '';
+        const rev = f.revenue != null ? `Rev=${(f.revenue/1e8).toFixed(1)}亿` : '';
+        const bc = f.broker_count != null ? `(${f.broker_count} brokers)` : '';
+        const fields = [eps, np, rev, bc].filter(Boolean).join(' ');
+        lines.push(`  ${date}: ${fields}`);
+      }
+    }
   }
 
   // 8. Coverage gaps explicit
