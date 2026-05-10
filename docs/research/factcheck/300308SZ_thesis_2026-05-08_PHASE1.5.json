@@ -1,0 +1,910 @@
+{
+  "success": true,
+  "ticker": "300308.SZ",
+  "data": {
+    "ticker": "300308.SZ",
+    "thesis_protocol_version": "v2",
+    "_direction": "PASS",
+    "_divergence_score": 65,
+    "_synthesizer_rationale": "Forensic verdict is EVENLY_GROUNDED with both sides citing specific broker reports (西部证券 800G/1.6T放量, 国联民生 积极备货布局产能) and inst visits (高盛资管/高毅资管 20260416). Technical AGREES with bull (trend=UP, strength=85) but RSI~75 near 918.90 resistance with chip cluster at 901.6 (12.25% float) creates asymmetric near-term risk. Critically: reverse DCF shows implied_fcf_growth 1.201 vs our 0.341 (delta -0.860 OVERVALUED), analyst mean 873.33 implies -1.4% downside vs live 886.00, NET_SELL_HIGH insider signal, and 99.6% leveraged-long crowding — these conditions argue against fresh LONG entry, while strong momentum + Q2 catalyst risk argue against SHORT. The bull/bear disagreement on whether '积极备货扩产' = demand visibility OR overbuild cannot be resolved pre-Q2 earnings; this is precisely the PASS condition.",
+    "step_1_catalyst": {
+      "catalyst_event": "Q2 2026 earnings release — decisive test of whether 800G/1.6T capacity expansion (per 国联民生 20260423 and 长江证券 20260422) converts to clean sequential revenue/margin growth or shows first signs of inventory absorption / 1.6T qualification slippage",
+      "catalyst_date_or_window": "2026-07-15 to 2026-08-31",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "Standard A-share Q2 reporting cycle; WATCHLIST wrongIf references Q3 2026 1.6T mass production milestone"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. Bull and Bear agree on the underlying business facts but disagree on interpretation: 西部证券 20260429 '800G/1.6T高速模块持续放量，产品结构优化', 国联民生 20260423 '积极备货和布局产能', 长江证券 20260422 '备料扩产交付优异' — same evidence reads as demand visibility (bull) or pre-overbuild stocking (bear).",
+        "2. Forensic verdict EVENLY_GROUNDED: both sides cleared the BUSINESS_MECHANISM bar with specific citations (broker reports, 30d=163 unique inst visits including 高盛资管(香港)/高毅资管/鹏扬/鹏华/阳光资管 on 20260416). Neither side has decisive informational edge.",
+        "3. Quantitative pre-conditions argue against fresh long: live 886.00 vs analyst mean 873.33 = -1.4% upside, price at 93% of 52W range (436.44–918.90), reverse DCF delta -0.860 (implied 120.1% vs our 34.1% FCF growth), and 180d insider signal NET_SELL_HIGH (山东中际投资控股 20260116 减持 550万股, 王晓东 20251125 减持 71万股).",
+        "4. Quantitative pre-conditions argue against fresh short: technical trend=UP/strength=85, MACD bullish, 60d +50.1%, 融资余额 255.3亿 (+24.5%) with 99.6% leveraged-long, broker target distribution skewed high (华泰 1167.55, 长江 implied via NP=723.4亿, 西部 NP=732.1亿). Shorting accelerating momentum into a confirmed-up tape is unfavorable.",
+        "5. The decisive variable — whether Q2 prints clean sequential growth + stable >40% GM + explicit 1.6T ramp guidance — is unobservable until July/August 2026. Pre-catalyst, neither LONG nor SHORT carries ≥2:1 reward/risk asymmetry given the chip cluster at ¥901.6/12.25% float acting as immediate resistance and the wrongIf 1.6T-delay tail risk. PASS until Q2 print or until price retraces below the ¥846–¥856 cost-basis support cluster (offering better long entry) or breaks decisively below it (confirming bear)."
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "Live price 886.00 (+0.97%); analyst mean target 873.33 implies -1.4% upside (LIVE FUNDAMENTALS, 14 analysts).",
+        "P/E TTM 66.0x, P/E Fwd 23.5x, EV/EBITDA 48.0x (LIVE FUNDAMENTALS).",
+        "Reverse DCF: implied_fcf_growth 1.201 vs our_fcf_growth 0.341, delta -0.860 — OVERVALUED signal (FULL DATA CONTEXT).",
+        "60d close 590.30 → 886.00 (+50.1%); price at 92–93% of both 60d and 52W ranges.",
+        "Net Income 2025=10.8B vs 2024=5.2B (+108.8% YoY); TTM Rev growth 192.1%; ROE 53.9%; GM 44.0%; OpM 39.9%.",
+        "融资余额 255.3亿 (+24.5%); 融券余额 1.07亿; long/short 99.6% leveraged-long (TUSHARE MARGIN TRADE).",
+        "Insider 180d signal NET_SELL_HIGH: 山东中际投资控股 20260116 减持 550万股; 王晓东 20251125 减持 71万股.",
+        "Chip distribution top-5 clusters = 50.94% of float at ¥846.4–¥901.6; ¥901.6 holds 12.25% (immediate overhead supply).",
+        "Inst surveys: 30d=163 unique / 90d=316; broker recs 130 reports / 27 unique brokers, latest 20260506.",
+        "WATCHLIST: optical transceivers >90% revenue + NVDA/MSFT/GOOGL customer concentration; wrongIf 1.6T mass production delayed beyond Q3 2026."
+      ],
+      "evidence_qualitative": [
+        "Sell-side narrative is uniform-bullish (西部证券, 中信建投, 国盛, 华泰, 国联民生, 长城, 长江) — leaves no positive surprise asymmetry; consensus already prices the bull thesis.",
+        "Consensus view [3] flags silicon photonics / CPO/NPO competitive risk (POET-Foxconn, Credo-DustPhotonics, Tower-NVIDIA) at 1.6T/3.2T transition — a structural overhang neither bull nor bear can resolve from current data.",
+        "Buyback programs: NONE — capital return absent despite 53.9% ROE and aggressive insider distribution; mgmt prioritizes reinvestment, raising stakes on capacity-build correctness.",
+        "Coverage gaps: persona_overlay and sector_regime not loaded; inventory days / receivables days not in our data — forensic accounting check on overbuild thesis is not feasible."
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "800G/1.6T super-cycle extends through 2026–2027 with sustained hyperscaler capex; Innolight is a Tier-1 winner.",
+          "z": "Per 西部证券 20260429, 中信建投 20260427, 华泰 20260426 (target 1167.55), 国联民生 20260423 — all 买入/推荐 with NP forecasts 261.6亿–767.0亿."
+        },
+        "our_variant": {
+          "e": "Both bull and bear theses are credibly business-grounded but the decisive evidence — Q2 sequential growth quality, GM trajectory, 1.6T ramp timing — is unobservable pre-July 2026. With reverse DCF delta -0.860, analyst mean already -1.4% below spot, NET_SELL_HIGH insider signal, and 99.6% leveraged-long crowding offset by 50% 60d rally + bullish technicals, neither LONG nor SHORT carries ≥2:1 asymmetry.",
+          "z": "PASS — wait for Q2 print or for price to retrace into ¥846–¥856 cost-basis cluster (long re-entry zone) OR break ¥846 decisively (short confirmation)."
+        },
+        "what_changes_our_mind": "Q2 2026 earnings: clean print with >20% sequential revenue growth + GM ≥44% + explicit 1.6T Q3 mass-production confirmation → re-evaluate LONG. Conversely, GM contraction >200bps OR 1.6T delay disclosed OR fresh post-Q1 insider sales → re-evaluate SHORT."
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "Direction-of-trade (PASS until decisive evidence)",
+      "current_value": "Live 886.00, P/E Fwd 23.5x, RevDCF delta -0.860",
+      "predicted_value": "PASS",
+      "predicted_range": {
+        "low": "N/A",
+        "mid": "N/A",
+        "high": "N/A"
+      },
+      "predicted_horizon": "Re-evaluate post Q2 2026 earnings (July–August 2026) or on retracement to ¥846–¥856 chip cluster",
+      "confidence": 0.6
+    },
+    "step_5_proves_right_if": [
+      "Stock chops between ¥846 (chip support) and ¥918.90 (52W high) into Q2 earnings, neither breaking out nor breaking down — vindicating PASS.",
+      "Q2 2026 results land mixed (in-line revenue but GM compression OR strong revenue but cautious 1.6T commentary), producing no decisive directional signal and validating wait-and-see.",
+      "Post-Q2, the dispersion of broker target revisions widens (some upgrades, some downgrades) — confirming the pre-catalyst PASS was the correct stance.",
+      "A clean Q2 beat triggers a re-entry LONG opportunity at higher prices with confirmed evidence; a Q2 miss triggers SHORT entry on confirmed mechanism."
+    ],
+    "step_6_proves_wrong_if": [
+      "Stock breaks decisively above ¥918.90 on volume with broad-based broker upward NP revisions pre-Q2 — we missed a clean LONG entry (cost: opportunity cost of foregone upside).",
+      "Stock breaks decisively below ¥846 chip cluster on rising volume with fresh insider sales disclosed — we missed a clean SHORT entry.",
+      "Major hyperscaler (NVDA/MSFT/GOOGL) pre-announces CY26 capex cut before Q2 — bear thesis confirms without us positioned.",
+      "POET/Credo/Tower-NVIDIA silicon-photonics design-win announcement vs Innolight at 1.6T — structural bear confirms; we missed."
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes Q2 earnings will decisively resolve the 800G/1.6T cycle-extension vs overbuild debate in favor of the bulls → We believe the same broker evidence (西部 放量 / 国联民生 积极备货 / 长江 备料扩产) is genuinely two-sided and the decisive print is not observable pre-July 2026 → Mechanism: with reverse DCF -0.860 overvalued, analyst mean already -1.4% below spot, NET_SELL_HIGH insider, and 99.6% leveraged-long crowding, the correct action is PASS and re-evaluate at the catalyst or at ¥846–¥856 cost-basis cluster.",
+      "time_to_resolution": "8–14 weeks (Q2 2026 earnings window)",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "0% (PASS preserves capital, avoids -10% to -15% drawdown if bear correct)",
+        "downside_if_wrong": "-5% to -10% opportunity cost if stock rallies +15–25% before re-entry",
+        "reward_to_risk": "N/A (PASS — capital preservation rationale, not asymmetric trade)"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "Through Q2 2026 earnings (8–14 weeks)",
+        "why_market_keeps_buying": [
+          "Uniform 买入/推荐 sell-side coverage with high targets (华泰 1167.55).",
+          "163 unique inst visits in 30d signals continued sophisticated capital diligence.",
+          "Strong technical momentum (trend=UP/85, MACD bullish) and 99.6% leveraged-long crowding.",
+          "Q1 results beat (国联民生 '业绩超预期') anchors expectations for Q2 continuation."
+        ],
+        "early_signs_phase_1_weakening": [
+          "Break of ¥846 chip cluster support on rising volume.",
+          "Fresh insider sale disclosure post-Q1.",
+          "Broker downgrade or NP estimate cut (currently 27 unique brokers all bullish).",
+          "Hyperscaler capex commentary pullback in NVDA/MSFT/GOOGL earnings."
+        ],
+        "optional_long_play": {
+          "direction": "DEFER",
+          "sizing": "0%",
+          "exit_trigger": "N/A — PASS"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "Q2 2026 GM compression >200bps OR sequential revenue deceleration.",
+          "1.6T mass production delayed beyond Q3 2026 (WATCHLIST wrongIf trigger).",
+          "Silicon photonics / CPO design-win announcement displacing Innolight at a key hyperscaler."
+        ],
+        "estimated_timing": "July–September 2026",
+        "short_play": {
+          "direction": "DEFER",
+          "sizing": "0%",
+          "entry_trigger": "Q2 confirms overbuild thesis OR price breaks ¥846 with negative news catalyst — re-evaluate then"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "0%",
+        "phase_1_weakening_confirmed": "0%",
+        "phase_2_catalyst_imminent": "0% (PASS — re-spawn thesis post-Q2 with fresh data)"
+      }
+    },
+    "qc_checklist": {
+      "catalyst_date_is_future": true,
+      "every_numeric_claim_grounded_or_labeled": true,
+      "variant_view_articulates_business_mechanism": true,
+      "variant_view_not_pure_valuation": true,
+      "forensic_verdict_respected": true,
+      "technical_alignment_considered": true,
+      "contrarian_quality_business_mechanism": true,
+      "pass_rationale_explicit": true,
+      "position_sizing_monotonic": true,
+      "wrongIf_conditions_specified": true
+    },
+    "_bull_thesis": {
+      "ticker": "300308.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Q2 2026 Earnings Release, confirming sustained margin and volume growth, validating aggressive capacity expansion.",
+        "catalyst_date_or_window": "July-August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard quarterly reporting cycle"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. The Bear case correctly identifies that the market is anxious about crowding, insider selling, and potential overcapacity. This anxiety is precisely what caps the forward multiple at a modest 23.5x despite explosive 192.1% TTM revenue growth.",
+          "2. However, the Bear misinterprets key data points. The aggressive capacity expansion, noted by 国联民生证券's 2026-04-23 report as '积极备货和布局产能' (actively stocking and arranging capacity), is not speculative risk. It's a signal of deep, non-cancellable order book visibility from hyperscaler clients, a prerequisite to maintain Tier-1 supplier status.",
+          "3. The 'crowding' signal (163 unique institutional surveys in 30 days) is better interpreted as intense, ongoing validation by sophisticated capital. Visits from firms like 高盛资管(香港) and 高毅资管 on 2026-04-16 are not tourist trips; they are deep diligence dives confirming the cycle's durability.",
+          "4. The market remains anchored to a 'cyclical peak' narrative. In contrast, the most recent operational data from sell-side channel checks, such as 西部证券's 2026-04-29 report highlighting '800G/1.6T高速模块持续放量' (continued volume ramp-up), indicates the cycle is still accelerating, not peaking.",
+          "5. The Q2 earnings catalyst will directly falsify the Bear's overcapacity thesis. By demonstrating another quarter of high-margin sequential growth, the report will prove the capacity build was justified, forcing the market to shift its narrative from 'peak cycle' to 'extended super-cycle' and re-rate the forward multiple higher."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Forward P/E of 23.5x is modest for a company with TTM Revenue Growth of 192.1% and Net Income YoY growth of +108.8%, indicating market skepticism about growth duration.",
+          "Analyst consensus forecasts Net Income to more than double from 5.2B in 2024 to 10.8B in 2025, providing a clear path for the 'E' to grow into the current valuation.",
+          "融资余额 (Margin financing balance) at 25.53B, up 24.5% over the period, demonstrates growing leveraged conviction that outweighs the stale insider selling from early 2026.",
+          "The analyst target price range is wide (430.00–1187.00), with the mean (873.33) lagging the current price (886.00). The high end of the range, like 华泰证券's 1167.55 target, better reflects the forward-looking potential.",
+          "Long/short ratio via margin trading is 99.6% leveraged-long, showing virtually no capital is positioned for a downturn."
+        ],
+        "evidence_qualitative": [
+          "The Bear's 'crowding' is our 'validation': 163 unique institutional surveys in 30 days, including top-tier global and local asset managers like 高盛资管(香港) and 高毅资管 (2026-04-16 visits), are performing deep diligence, confirming the thesis.",
+          "Recent broker reports post-Q1 results unanimously point to continued operational momentum, with titles like '业绩表现强劲' (Strong earnings performance - 中信建投) and '一季度业绩超预期' (Q1 results beat expectations - 国联民生证券).",
+          "Concentration in hyperscaler customers (NVDA/MSFT/GOOGL) is a feature, not a bug, providing direct leverage to the largest and most durable secular spending trend in technology.",
+          "Insider selling from the controlling shareholder (山东中际投资控股有限公司) occurred in January 2026, well before the most recent +50.1% rally, making it stale data. The lack of more recent selling at higher prices is more telling."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The current AI-driven optical transceiver cycle is at or near a peak, making the stock a crowded trade vulnerable to any disappointment.",
+            "z": "This is evidenced by the stock trading at 93% of its 52W range, stale insider selling, and concerns that aggressive capacity expansion could lead to an inventory glut if 1.6T adoption falters."
+          },
+          "our_variant": {
+            "e": "The market is under-modeling the cycle's duration, mistaking necessary, demand-driven capacity expansion for speculative risk.",
+            "z": "Per 国联民生证券's 2026-04-23 report, the company is in '积极备货和布局产能' (active stocking and capacity layout) phase. This action, combined with intense, recent diligence from buy-siders like 高盛资管 and 高毅资管 (2026-04-16 visits), signals deep customer order book visibility that contradicts the public market's 'peak cycle' fear."
+          },
+          "what_changes_our_mind": "Q2 2026 earnings show sequential revenue deceleration or a material contraction in gross margins, which would validate the 'peak cycle' and 'overcapacity' concerns."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "23.5x (fin.peFwd)",
+        "predicted_value": "30.0x",
+        "predicted_range": {
+          "low": "28.0x",
+          "mid": "30.0x",
+          "high": "35.0x"
+        },
+        "predicted_horizon": "6 months (post Q2 2026 earnings release)",
+        "confidence": 0.7
+      },
+      "step_5_proves_right_if": [
+        "Q2 2026 revenue grows >20% sequentially, demonstrating accelerating demand.",
+        "Q2 2026 gross margins remain above 40%, proving pricing power is intact.",
+        "Management guidance for Q3 2026 explicitly points to continued robust demand for 800G and a strong ramp for 1.6T.",
+        "Consensus FY2026 Net Income estimates are revised upwards by at least 10% following the Q2 report.",
+        "Stock breaks out and establishes a new support level above the prior 52-week high of 918.90."
+      ],
+      "step_6_proves_wrong_if": [
+        "Company misses Q2 2026 consensus revenue or EPS estimates.",
+        "The 'WATCHLIST wrongIf' condition is met: 1.6T mass production is delayed beyond Q3 2026.",
+        "Major hyperscaler customers (NVDA, MSFT, GOOGL) announce a material cut to their CY2026 or CY2027 capex plans.",
+        "Fresh, significant insider selling from the controlling shareholder or top executives is disclosed post-Q1 earnings.",
+        "Gross margins contract by more than 200bps sequentially in Q2."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes the stock is a crowded trade at a cyclical peak, misinterpreting capacity expansion as risk → We believe the market underestimates the cycle's duration, as the buildout ('积极备货和布局产能' - 国联民生证券) signals deep order book visibility, not speculation → This is unpriced because the combination of aggressive forward investment and intense diligence from top-tier buy-siders like 高盛资管 (per April 2026 visits) signals conviction from informed capital, contrary to the public's fear of a peak.",
+        "time_to_resolution": "3-6 months",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+30% to +50%",
+          "downside_if_wrong": "-30% to -40%",
+          "reward_to_risk": "1.2:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "3-4 months (until Q2 earnings)",
+          "why_market_keeps_buying": [
+            "Momentum driven by undisputed near-term earnings power (Fwd P/E 23.5x).",
+            "Direct proxy for the AI infrastructure buildout theme."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Analyst price targets begin to be revised significantly higher, catching up to the stock price.",
+            "Margin financing (融资余额) growth rate starts to decelerate."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "MODERATE",
+            "exit_trigger": "Price fails to hold above 50-day moving average or a confirmed delay in 1.6T ramp."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Q2 2026 earnings print showing sustained sequential growth and stable/expanding margins.",
+            "Upward revisions to FY2026/2027 consensus estimates post-earnings."
+          ],
+          "estimated_timing": "July-September 2026",
+          "short_play": {
+            "direction": "N/A - LONG THESIS",
+            "sizing": "N/A",
+            "entry_trigger": "N/A"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "50%",
+          "phase_2_catalyst_imminent": "100%"
+        }
+      },
+      "qc_checklist": {
+        "is_variant_view_a_business_mechanism": true,
+        "is_variant_view_non-consensual": true,
+        "is_each_claim_grounded_in_context": true,
+        "is_catalyst_date_future": true,
+        "is_contrarian_view_explicitly_stated": true,
+        "is_falsifiable": true,
+        "is_r_r_specified": true,
+        "is_ticker_specific": true
+      },
+      "_rebuttal": "Bear claimed crowding risk — addressed by reframing the 163 institutional visits as deep validation by sophisticated capital (e.g., 高盛资管). Bear claimed inventory/capacity risk — addressed by arguing the capacity build ('积极备货和布局产能' per 国联民生证券) is a necessity driven by strong order book visibility, not speculation. Bear claimed insider selling is a red flag — addressed by highlighting the selling is stale (Jan 2026) and not representative of the current outlook. Bear claimed negative valuation signals (stale analyst targets, high TTM P/E) — addressed by focusing on the low Forward P/E (23.5x) and the potential for upward earnings revisions to drive a re-rating."
+    },
+    "_bear_thesis": {
+      "ticker": "300308.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Q2/Q3 2026 earnings and management commentary verifying whether aggressive 800G/1.6T stocking and capacity expansion convert into clean shipments, stable margins, and sustained customer demand rather than inventory/capacity overbuild",
+        "catalyst_date_or_window": "2026-07-15 to 2026-09-30",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "FULL DATA CONTEXT — WATCHLIST wrongIf: 1.6T mass production delayed beyond Q3 2026; quarterly reporting exact date not available in our data"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. The bull case is not hidden: 西部证券 20260429 report '中际旭创26Q1业绩点评：800G/1.6T高速模块持续放量，产品结构优化' explicitly frames the story around continued 800G/1.6T high-speed module volume growth and product-structure optimization.",
+          "2. The key short mechanism is that the same actions bulls call demand confidence are also the earliest signs of cycle overbuild risk: 国联民生证券 20260423 report '中际旭创2026年一季报点评：一季度业绩超预期，积极备货和布局产能' and 长江证券 20260422 report '中际旭创：营收利润环比高增，备料扩产交付优异' both emphasize active stocking, capacity layout, and delivery execution. If hyperscaler order timing or 1.6T qualification slips, this stocked-and-expanded operating model can shift from margin leverage to inventory absorption and pricing pressure.",
+          "3. This is a ticker-specific business risk, not a generic valuation short: the data flags optical transceivers as more than 90% of revenue and hyperscaler customer concentration tied to NVDA/MSFT/GOOGL under FULL DATA CONTEXT — WATCHLIST concentration_seed. A single-product-cycle supplier with concentrated end customers has less room to absorb a 1.6T transition delay or design-share loss to silicon photonics/CPO/NPO alternatives.",
+          "4. The bull points to institutional attention as validation, but the same evidence is crowding: TUSHARE — INSTITUTIONAL RESEARCH VISITS shows 163 surveys and 163 unique institutions in 30d, including 20260416 phone conferences with 鹏扬基金, 鹏华基金, 高盛资管(香港), 高毅资管, and 阳光资管, plus a 20260424 online 2025 annual results briefing. That means the 800G/1.6T capacity-ramp narrative is widely diligenced rather than under-owned.",
+          "5. Holder and leverage signals make the overbuild mechanism more dangerous for the stock: TUSHARE — INSIDER/大股东 ACTIVITY shows 山东中际投资控股有限公司 reduced holdings by 550万股 on 20260116 and 王晓东 reduced holdings by 71万股 on 20251125, with 180d net signal NET_SELL_HIGH, while TUSHARE — MARGIN TRADE shows financing balance of 255.3亿, up 24.5% over the period, and a 99.6% leveraged-long long/short ratio. If Q2/Q3 commentary hints that 1.6T timing, customer mix, or margins are less clean than expected, the exit door is crowded."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Live price is 886.00 and the stock is up 0.97% today, per REAL-TIME ENRICHMENT CONTEXT.",
+          "The 60d OHLC trend shows close moving from 590.30 to 886.00, a +50.1% move, per FULL DATA CONTEXT — OHLC TREND.",
+          "The last close is at 92% of the 60d range of 505.40–918.90, per FULL DATA CONTEXT — OHLC TREND.",
+          "The live price is at 93% of the 52W range of 436.44–918.90, per LIVE FUNDAMENTALS — 52W RANGE.",
+          "P/E TTM is 66.0x, forward P/E is 23.5x, and EV/EBITDA is 48.0x, per LIVE FUNDAMENTALS — VALUATION.",
+          "Revenue growth TTM is 192.1%, ROE is 53.9%, gross margin is 44.0%, and operating margin is 39.9%, per LIVE FUNDAMENTALS — QUALITY/GROWTH.",
+          "Analyst mean target is 873.33 versus live price 886.00, implying -1.4% upside, with target range 430.00–1187.00 and 14 analysts, per LIVE FUNDAMENTALS — ANALYST TARGETS.",
+          "Reverse DCF shows implied_fcf_growth of 1.201 versus our_fcf_growth of 0.341, delta -0.860, per FULL DATA CONTEXT — REVERSE DCF.",
+          "Annual net income was 10.8B in 2025, 5.2B in 2024, and 2.2B in 2023, with latest net income YoY +108.8%, per MULTI-YEAR INCOME STATEMENT.",
+          "Optical transceivers are more than 90% of revenue and there is hyperscaler customer concentration in NVDA/MSFT/GOOGL, per FULL DATA CONTEXT — WATCHLIST concentration_seed.",
+          "TUSHARE — BROKER RECOMMENDATIONS shows 130 reports, 27 unique brokers, and latest report date 2026-05-06.",
+          "TUSHARE — INSTITUTIONAL RESEARCH VISITS shows 163 surveys and 163 unique institutions over 30d, and 316 surveys over 90d.",
+          "TUSHARE — MARGIN TRADE shows financing balance of 255.3亿, up 24.5% over the period, securities lending balance of 1.07亿, and 99.6% leveraged-long long/short ratio.",
+          "TUSHARE — CHIP DISTRIBUTION shows cost-basis clusters at ¥901.6 for 12.25% of float, ¥864.8 for 10.80% of float, ¥892.4 for 10.69% of float, ¥846.4 for 8.65% of float, and ¥855.6 for 8.55% of float.",
+          "TUSHARE — CAPITAL STRUCTURE SIGNALS shows pledge ratio of 1.49% as of 20260410 and buyback programs: NONE."
+        ],
+        "evidence_qualitative": [
+          "The sell-side narrative is heavily tilted toward the same drivers: 西部证券 emphasizes '800G/1.6T高速模块持续放量，产品结构优化'; 国联民生证券 emphasizes '积极备货和布局产能'; 长江证券 emphasizes '备料扩产交付优异'.",
+          "Consensus views already include sustained AI capex, Blackwell-related demand reacceleration, and leading optical transceiver exposure, per SELL-SIDE CONSENSUS VIEWS.",
+          "The supplied consensus views also explicitly flag competitive pressure from silicon photonics and CPO/NPO solutions against traditional pluggable transceiver vendors over the medium term, per SELL-SIDE CONSENSUS VIEWS [3].",
+          "Accounting red-flag evidence such as inventory days, receivables days, cash conversion, and customer concentration by named customer is not available in our data; therefore the accounting short must be framed around broker-described stocking/capacity behavior rather than reported balance-sheet deterioration.",
+          "Recent holder transactions skew negative rather than supportive: TUSHARE shows NET_SELL_HIGH over 180d and no buyback program, while the company is being valued on a growth reinvestment narrative."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Market believes the 800G/1.6T transceiver upcycle can extend through Q2/Q3 2026 because sell-side reports repeatedly describe volume ramp, product-mix optimization, stocking, and capacity expansion.",
+            "z": "This consensus is visible in TUSHARE — BROKER RECOMMENDATIONS with 130 reports from 27 unique brokers in the 90d window and in TUSHARE — INSTITUTIONAL RESEARCH VISITS with 163 surveys from 163 unique institutions over 30d."
+          },
+          "our_variant": {
+            "e": "Per 国联民生证券 20260423 '中际旭创2026年一季报点评：一季度业绩超预期，积极备货和布局产能', the business mechanism is that active stocking and capacity layout create downside operating leverage if 1.6T qualification or hyperscaler ordering slips into or beyond the Q3 2026 verification window.",
+            "z": "This contradicts the consensus narrative because bulls treat '积极备货和布局产能' as proof of durable demand, while our view is that the same behavior increases inventory/capacity absorption risk for a company where optical transceivers are more than 90% of revenue and the WATCHLIST flags hyperscaler customer concentration; the risk is amplified by TUSHARE insider/大股东 NET_SELL_HIGH and 99.6% leveraged-long margin positioning."
+          },
+          "what_changes_our_mind": "Q2/Q3 2026 results and management commentary show 1.6T mass production progressing on schedule through Q3 2026, stable or rising gross margin versus the 44.0% gross margin in LIVE FUNDAMENTALS, and no evidence of customer pushouts or inventory absorption."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Share price reversion if Q2/Q3 2026 evidence challenges the 800G/1.6T capacity-ramp narrative",
+        "current_value": "886.00 live price, per REAL-TIME ENRICHMENT CONTEXT",
+        "predicted_value": "590.30, the 60d starting close in FULL DATA CONTEXT — OHLC TREND",
+        "predicted_range": {
+          "low": "505.40, the 60d range low in FULL DATA CONTEXT — OHLC TREND",
+          "mid": "590.30, the 60d starting close in FULL DATA CONTEXT — OHLC TREND",
+          "high": "873.33, analyst mean target in LIVE FUNDAMENTALS — ANALYST TARGETS"
+        },
+        "predicted_horizon": "2026-07-15 to 2026-09-30",
+        "confidence": 0.6
+      },
+      "step_5_proves_right_if": [
+        "Q2/Q3 2026 management commentary indicates 1.6T mass production or customer qualification is delayed beyond Q3 2026, matching the FULL DATA CONTEXT — WATCHLIST wrongIf condition.",
+        "Gross margin falls below the 44.0% level in LIVE FUNDAMENTALS — QUALITY/GROWTH during Q2/Q3 2026 reporting, indicating mix deterioration, pricing pressure, or absorption costs.",
+        "The 30d institutional survey intensity of 163 surveys from 163 unique institutions in TUSHARE — INSTITUTIONAL RESEARCH VISITS reverses into downgrade pressure or lower sell-side assumptions after Q2/Q3 prints.",
+        "Margin financing balance of 255.3亿 and the 99.6% leveraged-long long/short ratio in TUSHARE — MARGIN TRADE begin to unwind during a price break below the ¥864.8 and ¥855.6 chip-distribution clusters.",
+        "New holder disclosures show continued reductions after 山东中际投资控股有限公司's 550万股 reduction and 王晓东's 71万股 reduction already listed in TUSHARE — INSIDER/大股东 ACTIVITY."
+      ],
+      "step_6_proves_wrong_if": [
+        "Q2/Q3 2026 results confirm 1.6T mass production is not delayed beyond Q3 2026, directly negating the FULL DATA CONTEXT — WATCHLIST wrongIf condition.",
+        "Gross margin stays at or above 44.0% and operating margin stays at or above 39.9%, using LIVE FUNDAMENTALS — QUALITY/GROWTH as the reference point.",
+        "Management discloses that stocking and capacity expansion described by 国联民生证券 and 长江证券 are backed by firm customer demand rather than speculative pre-build; exact order backlog data is not available in our data.",
+        "Hyperscaler CapEx proxy risk does not trigger: the WATCHLIST condition of NVDA+MSFT+GOOGL stock prices collectively dropping more than 25% from ATH within one quarter does not occur.",
+        "The stock breaks above the 52W high of 918.90 from LIVE FUNDAMENTALS — 52W RANGE and holds above that level through the Q2/Q3 2026 catalyst window."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes 300308.SZ is a durable AI optical-transceiver compounder because 西部证券 20260429 '中际旭创26Q1业绩点评：800G/1.6T高速模块持续放量，产品结构优化' and peers frame 800G/1.6T volume ramp plus product-mix upgrade as the dominant story → We believe the same '积极备货和布局产能' mechanism cited by 国联民生证券 20260423 can become an inventory/capacity absorption problem if Q3 2026 1.6T qualification or hyperscaler ordering slips for a company with more than 90% revenue in optical transceivers → This is unpriced because TUSHARE shows 163 unique institutions visiting in 30d, 130 broker reports in 90d, NET_SELL_HIGH insider/大股东 activity, and a 99.6% leveraged-long margin structure that can turn a small demand disappointment into forced de-risking.",
+        "time_to_resolution": "2026-07-15 to 2026-09-30, with the key proof point being Q2/Q3 2026 earnings and management commentary around 1.6T mass production, stocking, capacity utilization, and margins",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+33.4% to +43.0% gross short PnL if price moves from 886.00 live price to 590.30 60d starting close or 505.40 60d range low, derived from REAL-TIME ENRICHMENT CONTEXT and FULL DATA CONTEXT — OHLC TREND",
+          "downside_if_wrong": "-3.7% if stopped at 918.90 52W high; -34.0% if no stop and price reaches 1187.00 analyst high target, derived from LIVE FUNDAMENTALS — 52W RANGE and ANALYST TARGETS",
+          "reward_to_risk": "9.0:1 using a hard stop at 918.90; without a stop, PASS because upside to 1187.00 would make risk/reward unattractive"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "Until Q2 2026 earnings window, estimated 2026-07-15 to 2026-08-31; exact reporting date not available in our data",
+          "why_market_keeps_buying": [
+            "西部证券 20260429 report frames 800G/1.6T high-speed module ramp and product-structure optimization as ongoing positives.",
+            "国联民生证券 20260423 and 长江证券 20260422 describe active stocking, capacity layout, and delivery execution as evidence of demand strength.",
+            "TUSHARE — INSTITUTIONAL RESEARCH VISITS shows 163 surveys from 163 unique institutions in 30d, keeping the narrative liquid and well-followed.",
+            "TTM revenue growth of 192.1% and latest net income YoY growth of +108.8% in the data support momentum buying."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Price fails at or near the ¥901.6 chip-distribution cluster, which represents 12.25% of float per TUSHARE — CHIP DISTRIBUTION.",
+            "Price loses the ¥864.8 and ¥855.6 chip-distribution clusters, which represent 10.80% and 8.55% of float per TUSHARE — CHIP DISTRIBUTION.",
+            "Any company or broker commentary changes from '备料扩产交付优异' to inventory digestion, customer pushout, or margin pressure; exact inventory metrics are not available in our data.",
+            "Margin financing balance of 255.3亿 stops rising or begins to reverse; future margin balance data is not available in our current data."
+          ],
+          "optional_long_play": {
+            "direction": "No optional long recommended; neutral-to-short only because analyst mean target of 873.33 is below live price of 886.00 per LIVE FUNDAMENTALS — ANALYST TARGETS",
+            "sizing": "0% [portfolio sizing recommendation, not a company datapoint]",
+            "exit_trigger": "Not applicable"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Q2/Q3 2026 earnings or management commentary fails to validate 1.6T mass production by Q3 2026, the explicit FULL DATA CONTEXT — WATCHLIST condition.",
+            "Gross margin falls below the 44.0% level in LIVE FUNDAMENTALS — QUALITY/GROWTH.",
+            "Leveraged-long positioning starts unwinding from the TUSHARE — MARGIN TRADE setup of 255.3亿 financing balance and 99.6% leveraged-long long/short ratio.",
+            "Further insider/大股东 reductions appear after the already listed 山东中际投资控股有限公司 550万股 reduction and 王晓东 71万股 reduction."
+          ],
+          "estimated_timing": "2026-07-15 to 2026-09-30",
+          "short_play": {
+            "direction": "Short 300308.SZ against Q2/Q3 2026 execution risk in 1.6T, stocking, capacity utilization, and margins",
+            "sizing": "Phase in only after confirmation; initial risk 1.0% NAV and increase to 2.0% NAV near catalyst [internal portfolio risk budget, not in data context]",
+            "entry_trigger": "Initiate after price loses the ¥864.8 chip-distribution cluster or after management commentary suggests 1.6T timing, gross margin, or stocking/capacity utilization is less clean than the sell-side reports imply"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0% [portfolio sizing recommendation, not a company datapoint]",
+          "phase_1_weakening_confirmed": "1.0% NAV [internal portfolio risk budget, not in data context]",
+          "phase_2_catalyst_imminent": "2.0% NAV [internal portfolio risk budget, not in data context]"
+        }
+      },
+      "_rebuttal": {
+        "bull_argument_1_CPO_NPO_is_only_medium_term": "The short is not solely a 2027+ CPO/NPO disruption call. The nearer-term mechanism is Q2/Q3 2026 inventory and capacity absorption risk created by '积极备货和布局产能' from 国联民生证券 20260423 and '备料扩产交付优异' from 长江证券 20260422 if 1.6T mass production or customer qualification is delayed beyond Q3 2026, the explicit WATCHLIST condition.",
+        "bull_argument_2_aggressive_capacity_expansion_proves_demand": "Capacity expansion proves management is positioned for demand, not that demand is guaranteed. For a company where optical transceivers are more than 90% of revenue and hyperscaler customer concentration is flagged in the WATCHLIST, pre-build creates negative operating leverage if customer timing slips.",
+        "bull_argument_3_buy_side_visits_validate_the_long": "TUSHARE shows 163 surveys and 163 unique institutions over 30d, including 20260416 phone meetings with 高盛资管(香港) and 高毅资管. That can indicate diligence, but for a short seller it also shows the positive narrative is crowded and fragile rather than undiscovered.",
+        "bull_argument_4_margin_longs_signal_conviction": "TUSHARE — MARGIN TRADE shows financing balance of 255.3亿, up 24.5%, with a 99.6% leveraged-long long/short ratio. The bull reads this as conviction; we read it as reflexive downside if the Q2/Q3 catalyst disappoints.",
+        "bull_argument_5_absence_of_buyback_is_growth_reinvestment": "TUSHARE — CAPITAL STRUCTURE SIGNALS shows buyback programs: NONE. That could be growth reinvestment, but paired with TUSHARE — INSIDER/大股东 ACTIVITY showing NET_SELL_HIGH, 山东中际投资控股有限公司 reducing 550万股, and 王晓东 reducing 71万股, the signal is weaker than the bull suggests.",
+        "bull_argument_6_forward_PE_gap_supports_long": "The valuation compression from 66.0x TTM P/E to 23.5x forward P/E is acknowledged, but it is not a business mechanism. The relevant issue is whether the earnings implied by the forward setup survive Q2/Q3 2026 tests on 1.6T timing, margins, customer demand, and capacity utilization."
+      },
+      "qc_checklist": {
+        "mechanism_chain_cites_specific_broker_reports": true,
+        "mechanism_chain_cites_inst_or_holder_activity": true,
+        "contrarian_view_our_variant_cites_specific_report_title": true,
+        "variant_view_is_business_mechanism_not_valuation_only": true,
+        "catalyst_date_is_future_relative_to_2026_05_10": true,
+        "numeric_claims_grounded_in_data_or_labeled": true,
+        "uses_not_available_where_data_missing": true,
+        "addresses_bull_round_1_arguments": true,
+        "short_or_neutral_bias_followed": true
+      }
+    },
+    "_bull_r1": {
+      "ticker": "300308.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Q2 2026 Earnings Release & Management Guidance for 2H 2026",
+        "catalyst_date_or_window": "July-August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard quarterly reporting cycle"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. Consensus narrative, reflected in the 'MAJORITY VIEW', is fixated on the medium-term competitive risk from silicon photonics and CPO/NPO solutions, creating an overhang and capping valuation multiples.",
+          "2. However, near-term operational reality, as detailed in multiple post-Q1 broker reports, points to an accelerating, not peaking, demand cycle. 西部证券's 2026-04-29 report highlights '800G/1.6T高速模块持续放量' (continued volume ramp-up of 800G/1.6T modules).",
+          "3. This acceleration is forcing the company into aggressive expansion, a strong forward-looking signal. 国联民生证券 noted on 2026-04-23 the company is engaged in '积极备货和布局产能' (actively stocking up and arranging production capacity), indicating management confidence in demand durability well beyond the current quarter.",
+          "4. The massive gap between the TTM P/E of 66.0x and the Forward P/E of 23.5x shows that explosive earnings growth is expected, but the low forward multiple suggests the market lacks conviction in the *duration* of this growth.",
+          "5. We believe the upcoming Q2 and Q3 earnings will confirm the cycle's longevity, forcing a re-rating on the forward multiple as the market realizes the CPO/NPO disruption risk is a 2027+ issue, not a 2026 headwind. This will shift the narrative from 'peak cycle' to 'extended super-cycle'."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Forward P/E compression from 66.0x (TTM) to 23.5x (Fwd) implies massive near-term earnings growth is already consensus.",
+          "Revenue Growth (TTM) of 192.1% and latest Net Income YoY growth of +108.8% demonstrate the current powerful momentum.",
+          "融资余额 (Margin financing balance) stands at 25.53B, up 24.5% over the period, indicating leveraged retail and institutional conviction is building.",
+          "The long/short ratio via margin trading is 99.6% leveraged-long, showing minimal short interest against the name.",
+          "Analyst Net Income forecasts for 2024 (5.2B) and 2025 (10.8B) imply a continued doubling of profitability."
+        ],
+        "evidence_qualitative": [
+          "Intense and recent buy-side diligence: 163 unique institutional surveys in the last 30 days, including top-tier firms like 高盛资管(香港) and 高毅资管 on 2026-04-16, suggesting sophisticated capital is actively vetting the long thesis.",
+          "A flood of bullish sell-side reports following Q1 earnings, with titles like '业绩表现强劲' (Strong earnings performance - 中信建投) and '一季度业绩超预期' (Q1 results beat expectations - 国联民生证券), reinforces the positive operational momentum.",
+          "The company is operating in the core of the AI infrastructure buildout, with high concentration in optical transceivers for hyperscaler customers (NVDA/MSFT/GOOGL), providing direct exposure to the largest secular growth trend.",
+          "Absence of a buyback program, despite strong financials, signals management's priority is reinvesting capital for growth to meet overwhelming demand, a bullish indicator in a high-growth phase."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The current 800G/1.6T pluggable transceiver boom is a short-lived cycle.",
+            "z": "Valuations are unsustainable due to imminent competitive disruption from CPO/NPO and silicon photonics, as highlighted by the 'MAJORITY VIEW' from industry coverage."
+          },
+          "our_variant": {
+            "e": "The market is under-modeling the duration and intensity of the current 800G/1.6T cycle.",
+            "z": "Per 西部证券's 2026-04-29 report, '800G/1.6T高速模块持续放量' (volume is still ramping), and the company is '积极备货和布局产能' (aggressively expanding capacity) per 国联民生证券. This operational reality, combined with intense diligence from buy-siders like 高盛资管 and 高毅资管 (2026-04-16 visits), suggests the disruption threat is being prematurely priced in, while the tangible earnings power of the next 4-6 quarters is being underestimated."
+          },
+          "what_changes_our_mind": "A major hyperscaler customer (e.g., NVIDIA, Google) publicly announces a significant acceleration of its CPO/NPO roadmap for 2026 deployment, or Q2 2026 earnings show an unexpected sequential deceleration in revenue or gross margins."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "23.5x (fin.peFwd)",
+        "predicted_value": "30.0x",
+        "predicted_range": {
+          "low": "25.0x",
+          "mid": "30.0x",
+          "high": "35.0x"
+        },
+        "predicted_horizon": "6-9 months (post Q3 2026 earnings)",
+        "confidence": 0.75
+      },
+      "step_5_proves_right_if": [
+        "Q2 2026 revenue shows >20% sequential growth.",
+        "Q2 2026 gross margins remain stable or expand, defying 'peak cycle' concerns.",
+        "Management guidance for Q3 2026 points to continued strong demand from hyperscaler customers.",
+        "Analyst consensus for FY2026 Net Income is revised upwards following the Q2 report.",
+        "Stock price breaks and holds above the 52-week high of 918.90."
+      ],
+      "step_6_proves_wrong_if": [
+        "Company misses Q2 2026 revenue or EPS consensus estimates.",
+        "Gross margins contract sequentially in Q2, indicating pricing pressure or unfavorable mix shift.",
+        "The 'WATCHLIST wrongIf' condition is met: 1.6T mass production is delayed beyond Q3 2026.",
+        "Major hyperscaler customers (NVDA, MSFT, GOOGL) announce a material cut to their CY2026 or CY2027 capex plans.",
+        "New, significant insider selling by top executives or the controlling shareholder (山东中际投资控股有限公司) is disclosed."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes the current 800G/1.6T transceiver boom is a short-lived cycle threatened by CPO/NPO disruption (per 'MAJORITY VIEW') → We believe the market underestimates the cycle's duration, as evidenced by sell-side reports of accelerating demand ('800G/1.6T高速模块持续放量' - 西部证券) and aggressive capacity expansion ('积极备货和布局产能' - 国联民生证券) → This is unpriced because intense, recent diligence by top-tier buy-side firms like 高盛资管 and 高毅资管 (per April 2026 visit logs) suggests sophisticated capital is looking past the public disruption narrative to the tangible, multi-quarter earnings power.",
+        "time_to_resolution": "3-6 months",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+30% to +35%",
+          "downside_if_wrong": "-10% to -15%",
+          "reward_to_risk": "2.7:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "3-6 months (until Q2/Q3 earnings)",
+          "why_market_keeps_buying": [
+            "Unavoidable exposure to the AI theme.",
+            "Explosive, undeniable TTM revenue growth (192.1%).",
+            "Anticipation of massive forward earnings ramp (Fwd P/E 23.5x)."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Stock price decisively breaking the 52-week high of 918.90.",
+            "Sell-side analysts begin explicitly modeling strong growth into 2027, extending the cycle duration in their reports.",
+            "Increased call option volume and bullish commentary focusing on cycle longevity."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "starter_position",
+            "exit_trigger": "Price closes below the ¥846.4 cost-basis cluster."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Q2 2026 earnings beat and raise, with management commentary dismissing near-term CPO disruption.",
+            "A major sell-side house publishes a thematic piece arguing for an 'extended super-cycle' in pluggable optics."
+          ],
+          "estimated_timing": "Q3 2026",
+          "short_play": {
+            "direction": "N/A - LONG THESIS",
+            "sizing": "N/A",
+            "entry_trigger": "N/A"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "50% of full position",
+          "phase_2_catalyst_imminent": "100% of full position"
+        }
+      },
+      "qc_checklist": {
+        "is_long_only": true,
+        "is_numeric_grounded": true,
+        "is_catalyst_future_dated": true,
+        "is_rr_specific": true,
+        "is_variant_view_a_mechanism": true,
+        "is_mechanism_chain_specific": true,
+        "is_our_variant_specific": true,
+        "cites_broker_report": true,
+        "cites_inst_visit_or_event": true
+      }
+    },
+    "_bear_r1": {
+      "ticker": "300308.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Q3 2026 verification of whether 1.6T optical-module mass production and customer qualification convert into sustained shipments without inventory/capacity overbuild",
+        "catalyst_date_or_window": "2026-07-01 to 2026-09-30",
+        "catalyst_type": "industry_inflection",
+        "catalyst_source": "FULL DATA CONTEXT — WATCHLIST wrongIf: 1.6T mass production delayed beyond Q3 2026"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. Consensus is extrapolating the 800G/1.6T cycle: 西部证券 20260429 report '中际旭创26Q1业绩点评：800G/1.6T高速模块持续放量，产品结构优化' explicitly frames the bull case around 800G/1.6T high-speed module volume growth and product-mix optimization.",
+          "2. The company is also being rewarded for pre-building supply: 长江证券 20260422 report '中际旭创：营收利润环比高增，备料扩产交付优异' and 国联民生证券 20260423 report '中际旭创2026年一季报点评：一季度业绩超预期，积极备货和布局产能' both highlight stocking, capacity layout, and delivery execution as positives.",
+          "3. Our bearish mechanism is that aggressive stocking and capacity expansion into a concentrated AI optical-transceiver cycle can flip from operating leverage to inventory/capacity risk if hyperscaler qualification timing shifts, if 1.6T adoption is delayed beyond Q3 2026, or if silicon photonics/CPO/NPO alternatives take design-share; this is ticker-specific because the WATCHLIST concentration_seed flags optical transceivers as >90% of revenue plus hyperscaler customer concentration in NVDA/MSFT/GOOGL.",
+          "4. Crowding amplifies the downside path: TUSHARE institutional research shows 163 surveys and 163 unique institutions in the last 30d, including 20260416 phone meetings with 鹏扬基金, 鹏华基金, 高盛资管(香港), 高毅资管, and 阳光资管, while TUSHARE broker recommendations show 130 reports from 27 unique brokers in the last 90d; this indicates the positive 800G/1.6T narrative is widely studied rather than undiscovered.",
+          "5. Insider and financing signals weaken the risk/reward for longs: TUSHARE insider/大股东 activity shows 山东中际投资控股有限公司 reduced holdings by 550万股 on 20260116 and 王晓东 reduced holdings by 71万股 on 20251125, with 180d net signal NET_SELL_HIGH; meanwhile margin financing balance is 255.3亿, up 24.5% over the period, with a 99.6% leveraged-long long/short ratio, creating forced-selling risk if shipment or margin data disappoint."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Live price is 886.00, up 0.97% today, per REAL-TIME ENRICHMENT CONTEXT.",
+          "The stock rose from 590.30 to 886.00 over the 60d OHLC trend, a +50.1% move, per FULL DATA CONTEXT — OHLC TREND.",
+          "Last close is at 92% of the 60d period range of 505.40–918.90, per FULL DATA CONTEXT — OHLC TREND.",
+          "Live price is at 93% of the 52W range of 436.44–918.90, per LIVE FUNDAMENTALS — 52W RANGE.",
+          "P/E TTM is 66.0x, forward P/E is 23.5x, and EV/EBITDA is 48.0x, per LIVE FUNDAMENTALS — VALUATION.",
+          "Revenue growth TTM is 192.1%, ROE is 53.9%, gross margin is 44.0%, and operating margin is 39.9%, per LIVE FUNDAMENTALS — QUALITY/GROWTH.",
+          "Analyst mean target is 873.33 versus live price 886.00, implying -1.4% upside, with target range 430.00–1187.00 and 14 analysts, per LIVE FUNDAMENTALS — ANALYST TARGETS.",
+          "Reverse DCF implied_fcf_growth is 1.201 versus our_fcf_growth of 0.341, delta -0.860, per FULL DATA CONTEXT — REVERSE DCF.",
+          "Annual net income was 10.8B in 2025, 5.2B in 2024, and 2.2B in 2023, with latest net income YoY +108.8%, per MULTI-YEAR INCOME STATEMENT.",
+          "Optical transceivers are >90% of revenue and there is hyperscaler customer concentration in NVDA/MSFT/GOOGL, per WATCHLIST concentration_seed.",
+          "TUSHARE broker recommendations show 130 reports, 27 unique brokers, latest 2026-05-06, per TUSHARE — BROKER RECOMMENDATIONS.",
+          "TUSHARE institutional research visits show 163 surveys and 163 unique institutions over 30d, and 316 over 90d, per TUSHARE — INSTITUTIONAL RESEARCH VISITS.",
+          "Margin financing balance is 255.3亿 and increased 24.5% over the period; securities lending balance is 1.07亿 and long/short ratio is 99.6% leveraged-long, per TUSHARE — MARGIN TRADE.",
+          "Chip distribution shows cost-basis clusters at ¥901.6 for 12.25% of float, ¥864.8 for 10.80%, ¥892.4 for 10.69%, ¥846.4 for 8.65%, and ¥855.6 for 8.55%, per TUSHARE — CHIP DISTRIBUTION."
+        ],
+        "evidence_qualitative": [
+          "Sell-side titles are directionally one-sided around AI optical demand, 800G/1.6T ramp, product-mix optimization, and capacity expansion, including 西部证券 20260429 '中际旭创26Q1业绩点评：800G/1.6T高速模块持续放量，产品结构优化' and 长江证券 20260422 '中际旭创：营收利润环比高增，备料扩产交付优异'.",
+          "Consensus views already in the market include sustained AI capex and networking demand, Blackwell-driven transceiver demand reacceleration, and positive setup for leading optical transceiver suppliers, per SELL-SIDE CONSENSUS VIEWS.",
+          "There is an explicit competing technology risk in the supplied consensus views: silicon photonics and CPO/NPO solutions may pressure traditional pluggable transceiver vendors over the medium term, per SELL-SIDE CONSENSUS VIEWS [3].",
+          "Recent insider/大股东 activity is net selling rather than buyback support: TUSHARE shows NET_SELL_HIGH over 180d and buyback programs are NONE, per TUSHARE — INSIDER/大股东 ACTIVITY and TUSHARE — CAPITAL STRUCTURE SIGNALS.",
+          "The absence of a buyback program despite high profitability metrics may signal management is prioritizing growth/capacity rather than capital return, per TUSHARE — CAPITAL STRUCTURE SIGNALS."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Market believes 300308.SZ remains a structural AI optical-transceiver winner because the sell-side narrative emphasizes 800G/1.6T volume growth, product-mix improvement, and capacity execution.",
+            "z": "This is reflected in 130 broker reports from 27 unique brokers in the 90d TUSHARE broker window and institutional attention of 163 surveys from 163 unique institutions over 30d."
+          },
+          "our_variant": {
+            "e": "Per 西部证券 20260429 '中际旭创26Q1业绩点评：800G/1.6T高速模块持续放量，产品结构优化' and 国联民生证券 20260423 '中际旭创2026年一季报点评：一季度业绩超预期，积极备货和布局产能', the bull case depends on 800G/1.6T volume release, mix upgrade, active stocking, and capacity deployment.",
+            "z": "This contradicts the consensus narrative because the same business mechanism that creates upside in a tight AI optical cycle creates downside if 1.6T qualification is delayed beyond Q3 2026, if hyperscaler capex proxies weaken, or if silicon photonics/CPO/NPO alternatives reduce traditional pluggable demand; the risk is magnified by >90% optical-transceiver revenue exposure, hyperscaler concentration in NVDA/MSFT/GOOGL, 20260416 institutional crowding from 鹏扬基金/鹏华基金/高盛资管(香港)/高毅资管/阳光资管, and 180d NET_SELL_HIGH insider/大股东 activity."
+          },
+          "what_changes_our_mind": "We would abandon the short if the company demonstrates by the Q3 2026 window that 1.6T mass production is on schedule, shipments are scaling without gross-margin compression from the current 44.0% live gross margin, and the WATCHLIST hyperscaler proxy of NVDA/MSFT/GOOGL does not collectively drop >25% from ATH within one quarter."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Gross margin and operating margin resilience during the 1.6T ramp",
+        "current_value": "Gross margin 44.0% and operating margin 39.9%, per LIVE FUNDAMENTALS — QUALITY/GROWTH",
+        "predicted_value": "Gross margin declines to 39.0%–42.0% and operating margin declines to 34.0%–37.0% by the Q3 2026 verification window [internal short-thesis estimate, not in our data context]",
+        "predicted_range": {
+          "low": "Gross margin 37.0% and operating margin 32.0% [internal short-thesis estimate, not in our data context]",
+          "mid": "Gross margin 40.5% and operating margin 35.5% [internal short-thesis estimate, not in our data context]",
+          "high": "Gross margin remains near current 44.0% and operating margin remains near current 39.9%, per current LIVE FUNDAMENTALS baseline"
+        },
+        "predicted_horizon": "2026-07-01 to 2026-09-30",
+        "confidence": 0.58
+      },
+      "step_5_proves_right_if": [
+        "1.6T mass production is delayed beyond Q3 2026, matching the FULL DATA CONTEXT — WATCHLIST wrongIf condition.",
+        "NVDA/MSFT/GOOGL stock prices collectively drop >25% from ATH within one quarter, matching the hyperscaler capex pullback proxy in FULL DATA CONTEXT — WATCHLIST wrongIf.",
+        "Gross margin falls below the current 44.0% live gross-margin baseline in a future print, indicating mix or pricing pressure during the 1.6T ramp.",
+        "Operating margin falls below the current 39.9% live operating-margin baseline in a future print, indicating capacity ramp costs or pricing pressure.",
+        "Margin financing unwinds from the current 255.3亿 balance after having risen 24.5% over the period, suggesting crowded leveraged longs are de-risking."
+      ],
+      "step_6_proves_wrong_if": [
+        "1.6T mass production is not delayed beyond Q3 2026 and management disclosure confirms shipment conversion rather than merely stocking or capacity buildout.",
+        "Gross margin stays at or above the current 44.0% live gross-margin level through the Q3 2026 verification window.",
+        "Operating margin stays at or above the current 39.9% live operating-margin level through the Q3 2026 verification window.",
+        "The hyperscaler proxy specified in the data context — NVDA/MSFT/GOOGL — does not collectively fall >25% from ATH within one quarter during the thesis window.",
+        "Insider/大股东 activity flips from 180d NET_SELL_HIGH to material net buying or a buyback program is announced; no such buyback exists in the current TUSHARE — CAPITAL STRUCTURE SIGNALS data."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes 300308.SZ is a clean 800G/1.6T AI optical-compounder because sell-side reports such as 西部证券 20260429 '中际旭创26Q1业绩点评：800G/1.6T高速模块持续放量，产品结构优化' and 长江证券 20260422 '中际旭创：营收利润环比高增，备料扩产交付优异' emphasize volume ramp, mix improvement, and delivery execution → We believe the under-modeled mechanism is capacity/inventory and customer-concentration risk if 1.6T qualification slips, hyperscaler capex weakens, or silicon photonics/CPO/NPO alternatives pressure pluggable modules → This is unpriced because 30d institutional research crowding is 163 surveys/163 unique institutions, margin positioning is 99.6% leveraged-long, and 180d insider/大股东 activity is NET_SELL_HIGH.",
+        "time_to_resolution": "2026-07-01 to 2026-09-30, aligned with the data-context Q3 2026 1.6T mass-production watch item",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+20% to +35% short return [internal estimate, not in our data context]",
+          "downside_if_wrong": "-10% to -17% short loss [internal estimate, not in our data context]",
+          "reward_to_risk": "2:1 to 3:1 [internal estimate, not in our data context]"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "From 2026-05-10 through the next company update before the Q3 2026 verification window; exact reporting date not available in our data",
+          "why_market_keeps_buying": [
+            "Live revenue growth TTM is 192.1%, per LIVE FUNDAMENTALS — QUALITY/GROWTH.",
+            "Annual net income increased from 5.2B in 2024 to 10.8B in 2025, and latest net income YoY is +108.8%, per MULTI-YEAR INCOME STATEMENT.",
+            "Sell-side narrative is strongly supportive, with 130 reports and 27 unique brokers in the 90d TUSHARE broker window.",
+            "Specific broker titles focus on 800G/1.6T ramp and capacity execution, including 西部证券 20260429 '中际旭创26Q1业绩点评：800G/1.6T高速模块持续放量，产品结构优化' and 国联民生证券 20260423 '中际旭创2026年一季报点评：一季度业绩超预期，积极备货和布局产能'.",
+            "Institutional attention is high, with 163 surveys and 163 unique institutions in 30d, per TUSHARE — INSTITUTIONAL RESEARCH VISITS."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Price fails to hold the large cost-basis clusters near ¥901.6, ¥892.4, ¥864.8, ¥855.6, and ¥846.4, which together are listed in TUSHARE — CHIP DISTRIBUTION.",
+            "Broker language shifts from '持续放量' and '备料扩产交付优异' toward inventory, pricing, customer timing, or qualification uncertainty.",
+            "Margin financing stops expanding from the current 255.3亿 balance or begins to contract after the reported +24.5% increase.",
+            "Any company disclosure implies 1.6T mass production will be delayed beyond Q3 2026."
+          ],
+          "optional_long_play": {
+            "direction": "None; short advocate recommends no tactical long because live price 886.00 already exceeds analyst mean target 873.33 by the supplied -1.4% upside metric.",
+            "sizing": "0%",
+            "exit_trigger": "Not applicable"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Q3 2026 evidence that 1.6T mass production is delayed beyond the data-context watchlist window.",
+            "Gross margin declines from the current 44.0% live gross-margin baseline.",
+            "Operating margin declines from the current 39.9% live operating-margin baseline.",
+            "Hyperscaler proxy weakness: NVDA/MSFT/GOOGL collectively drop >25% from ATH within one quarter, per FULL DATA CONTEXT — WATCHLIST wrongIf.",
+            "Leveraged-long unwind from the current 99.6% long/short ratio and 255.3亿 financing balance, per TUSHARE — MARGIN TRADE."
+          ],
+          "estimated_timing": "2026-07-01 to 2026-09-30",
+          "short_play": {
+            "direction": "Short 300308.SZ or use defined-risk bearish exposure where available",
+            "sizing": "Start small before confirmation; scale only after phase-1 weakening signals",
+            "entry_trigger": "Enter when price loses the ¥864.8 or ¥855.6 chip-distribution clusters while broker/institutional language begins to question 1.6T timing, gross margin, or capacity utilization"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "1%",
+          "phase_2_catalyst_imminent": "2%"
+        }
+      },
+      "qc_checklist": {
+        "mechanism_chain_cites_specific_broker_name_and_report_title": true,
+        "mechanism_chain_cites_at_least_two_required_narrative_items": true,
+        "our_variant_references_specific_broker_report": true,
+        "our_variant_references_institutional_visit_or_holder_transaction_or_news": true,
+        "contrarian_view_is_business_mechanism_not_valuation_only": true,
+        "catalyst_date_is_future_relative_to_2026_05_10": true,
+        "numeric_claims_grounded_in_data_context_or_labeled_not_in_data_context": true,
+        "no_fabricated_lhb_or_news_used": true,
+        "uses_live_fundamentals_for_pe_revenue_growth_gross_margin_and_consensus": true,
+        "position_sizing_curve_monotonically_non_decreasing": true
+      }
+    },
+    "_technical": {
+      "trend": "UP",
+      "trend_strength": 85,
+      "momentum": {
+        "rsi_estimate": 75,
+        "macd_signal": "bullish",
+        "interpretation": "Strong bullish momentum with RSI approaching overbought territory as price gained 50% over 60 days from 590 to 886."
+      },
+      "key_levels": {
+        "support": [
+          864.8,
+          846.4,
+          855.6
+        ],
+        "resistance": [
+          901.6,
+          918.9
+        ]
+      },
+      "volume_profile": "expanding",
+      "chip_concentration": "concentrated",
+      "margin_trend": "expanding_long",
+      "technical_summary_e": "Price shows strong uptrend with 50% gain over 60 days, currently at 92% of 52-week range near resistance at 918.90. Chip distribution reveals heavy concentration with top 5 cost-basis clusters holding 50.94% of float between 846-901 levels. Margin financing expanded 24.5% with 99.6% leveraged-long positioning indicating strong bullish sentiment.",
+      "technical_summary_z": "技术面显示强劲上涨趋势，60天内涨幅50%，目前处于52周区间的92%高位。筹码分布高度集中，前5个成本区间持有50.94%的流通股。融资余额增长24.5%且99.6%为做多杠杆，反映强烈看涨情绪，但接近阻力位918.90需关注回调风险。"
+    },
+    "_forensic": {
+      "bull_findings": [
+        {
+          "claim": "Forward P/E of 23.5x",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS confirms P/E Fwd: 23.5x"
+        },
+        {
+          "claim": "TTM Revenue Growth of 192.1%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS confirms Rev Growth (TTM): 192.1%"
+        },
+        {
+          "claim": "Net Income YoY growth of +108.8%",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT confirms Net Income YoY (latest): +108.8%"
+        },
+        {
+          "claim": "融资余额 at 25.53B, up 24.5%",
+          "data_match": "MISMATCH",
+          "evidence": "TUSHARE — MARGIN TRADE shows 255.3亿 (+24.5%), not 25.53B"
+        },
+        {
+          "claim": "华泰证券's 1167.55 target",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE — BROKER RECOMMENDATIONS confirms 华泰证券 target=1167.55"
+        },
+        {
+          "claim": "163 unique institutional surveys in 30 days",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE — INSTITUTIONAL RESEARCH VISITS confirms 30d: 163 surveys / 163 unique inst"
+        },
+        {
+          "claim": "高盛资管(香港) and 高毅资管 2026-04-16 visits",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE data confirms both firms visited on 20260416"
+        },
+        {
+          "claim": "国联民生证券's 2026-04-23 report '积极备货和布局产能'",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE — BROKER RECOMMENDATIONS confirms exact quote from 20260423 report"
+        }
+      ],
+      "bear_findings": [
+        {
+          "claim": "Live price is 886.00 and up 0.97% today",
+          "data_match": "MATCH",
+          "evidence": "REAL-TIME ENRICHMENT CONTEXT confirms LIVE PRICE: 886.00 (+0.97% today)"
+        },
+        {
+          "claim": "60d move from 590.30 to 886.00 (+50.1%)",
+          "data_match": "MATCH",
+          "evidence": "OHLC TREND (60d): close 590.30 → 886.00 (+50.1%)"
+        },
+        {
+          "claim": "Stock at 93% of 52W range",
+          "data_match": "MATCH",
+          "evidence": "52W RANGE shows price at 93% of 52W range"
+        },
+        {
+          "claim": "P/E TTM 66.0x, forward P/E 23.5x",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS confirms P/E TTM: 66.0x | P/E Fwd: 23.5x"
+        },
+        {
+          "claim": "Optical transceivers >90% of revenue",
+          "data_match": "MATCH",
+          "evidence": "WATCHLIST concentration_seed confirms Optical transceivers >90% of revenue"
+        },
+        {
+          "claim": "山东中际投资控股 reduced 550万股 on 20260116",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE — INSIDER/大股东 ACTIVITY confirms exact transaction"
+        },
+        {
+          "claim": "163 surveys, 163 unique institutions over 30d",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE — INSTITUTIONAL RESEARCH VISITS matches exactly"
+        },
+        {
+          "claim": "西部证券 20260429 report quote",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE — BROKER RECOMMENDATIONS confirms exact report and quote"
+        }
+      ],
+      "shared_assumptions_at_risk": [
+        "1.6T mass production timing - both sides hinge on Q3 2026 delivery schedule per WATCHLIST wrongIf condition",
+        "Hyperscaler capex sustainability - both depend on NVDA/MSFT/GOOGL continued spending",
+        "Q2 2026 earnings as decisive catalyst - both sides use same earnings window to prove their thesis"
+      ],
+      "technical_vs_bull": "AGREES — Technical shows trend=UP with strength=85, strong bullish momentum (RSI 75, MACD bullish), and expanding volume profile. This aligns with Bull's +30-50% upside prediction and expectation of breaking above 918.90 resistance.",
+      "technical_vs_bear": "CONFLICTS — Technical shows strong uptrend with 85 strength and bullish momentum, directly contradicting Bear's prediction of reversion to 590.30-505.40 range. However, technical notes RSI approaching overbought and price near resistance at 918.90, creating some downside risk.",
+      "bull_contrarian_quality": "BUSINESS_MECHANISM",
+      "bear_contrarian_quality": "BUSINESS_MECHANISM",
+      "verdict_on_grounding": "EVENLY_GROUNDED",
+      "verdict_rationale": "Both sides demonstrate strong data grounding with extensive citations of specific broker reports, institutional visits, and exact numerical matches. Both articulate business-level mechanisms around capacity expansion interpretation rather than just valuation multiples."
+    },
+    "_agent_status": {
+      "bull_r1": {
+        "status": "success",
+        "ms": 41633
+      },
+      "bear_r1": {
+        "status": "success",
+        "ms": 79572
+      },
+      "technical": {
+        "status": "success",
+        "ms": 8060
+      },
+      "bull_r2": {
+        "status": "success",
+        "ms": 45516
+      },
+      "bear_r2": {
+        "status": "success",
+        "ms": 108055
+      },
+      "forensic": {
+        "status": "success",
+        "ms": 20629
+      },
+      "synth": {
+        "status": "success",
+        "ms": 88504
+      }
+    },
+    "_quality": {
+      "score": 84,
+      "missingFields": [
+        "qc_checklist.all_8_steps_complete",
+        "qc_checklist.step_1_specific_not_vague",
+        "qc_checklist.step_2_no_unfounded_leaps",
+        "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "qc_checklist.step_5_observable",
+        "qc_checklist.step_6_observable",
+        "qc_checklist.step_7_one_sentence_tagline",
+        "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "qc_checklist.step_8_early_signs_observable",
+        "qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "qc_checklist.step_8_position_sizing_curve_monotonic",
+        "qc_checklist.reward_to_risk_at_least_threshold"
+      ],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": true,
+        "reward_to_risk_at_least_threshold": false,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": true,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "PASS",
+      "qc_findings": [
+        "failed:step_8_position_sizing_curve_monotonic",
+        "failed:reward_to_risk_at_least_threshold",
+        "missing:qc_checklist.all_8_steps_complete",
+        "missing:qc_checklist.step_1_specific_not_vague",
+        "missing:qc_checklist.step_2_no_unfounded_leaps",
+        "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "missing:qc_checklist.step_5_observable",
+        "missing:qc_checklist.step_6_observable",
+        "missing:qc_checklist.step_7_one_sentence_tagline",
+        "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "missing:qc_checklist.step_8_early_signs_observable",
+        "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+        "missing:qc_checklist.reward_to_risk_at_least_threshold"
+      ]
+    }
+  },
+  "models_used": {
+    "bull": "gemini-2.5-pro",
+    "bear": "gpt-5.5",
+    "technical": "claude-sonnet-4-20250514",
+    "forensic": "claude-sonnet-4-20250514",
+    "synth": "claude-opus-4-7"
+  },
+  "_status": "OK",
+  "_partial_failures": [],
+  "pipeline_ms_total": 196282
+}
