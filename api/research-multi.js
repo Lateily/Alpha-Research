@@ -331,7 +331,9 @@ HARD CITATION RULES — your output WILL BE REJECTED if violated
        (e.g., "Value Partners 4-09 phone survey")
    (c) A 龙虎榜 event from "TUSHARE — 龙虎榜 LHB APPEARANCES"
    (d) A holder transaction from "TUSHARE — INSIDER/大股东 ACTIVITY"
-   (e) A specific news event from "RECENT NEWS"
+   (e) A specific news event from "RECENT NEWS" (last 5-7 days, source-tagged)
+   (f) A peer comparison from "PEER CROSS-SECTION COMPARISON" (e.g.,
+       "BYD GM 17.2% vs 175.HK Geely GM 13.5% = +370bps integration premium")
 
 2. step_3_evidence.contrarian_view.our_variant MUST reference at least
    ONE specific item from (a)-(e). Format:

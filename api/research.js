@@ -839,6 +839,47 @@ function buildExtrasBlock(extras) {
     }
   }
 
+  // 7.5. Peer comparison cross-section (Phase 2.D 2026-05-10)
+  // Surface peer financial + valuation side-by-side for cross-section
+  // reasoning. Empty if no peers loaded.
+  const peers = Array.isArray(extras.peer_comparison) ? extras.peer_comparison : [];
+  const loadedPeers = peers.filter(p => p && p._status === 'loaded');
+  if (loadedPeers.length > 0) {
+    lines.push('');
+    lines.push('━━━ PEER CROSS-SECTION COMPARISON — USE FOR RELATIVE-VALUE THESIS ━━━');
+    lines.push('PEER COMPARISON (financial + valuation, latest annual + live):');
+    lines.push('');
+    const fmtPct = v => v == null ? '—' : `${(v * 100).toFixed(1)}%`;
+    const fmtB = v => (v == null || !Number.isFinite(v)) ? '—' : `${(v / 1e9).toFixed(1)}B`;
+    const fmtMC = v => (v == null || !Number.isFinite(v)) ? '—' : `${(v / 1e12).toFixed(2)}T`;
+    const fmtX = v => v == null ? '—' : `${v.toFixed(1)}x`;
+    for (const p of loadedPeers) {
+      lines.push(`  ${p.ticker} (FY${p.latest_year || '?'}):`);
+      lines.push(`    Net Income ${fmtB(p.net_income)} ${p.ni_yoy_pct != null ? `(YoY ${p.ni_yoy_pct >= 0 ? '+' : ''}${p.ni_yoy_pct}%)` : ''}, Revenue ${fmtB(p.revenue)}, EPS ${p.diluted_eps ?? '—'}`);
+      const valParts = [
+        p.live_price != null ? `price ${p.live_price}` : null,
+        p.pe_trailing != null ? `P/E TTM ${fmtX(p.pe_trailing)}` : null,
+        p.pe_forward != null ? `P/E Fwd ${fmtX(p.pe_forward)}` : null,
+        p.gross_margin != null ? `GM ${fmtPct(p.gross_margin)}` : null,
+        p.operating_margin != null ? `OpM ${fmtPct(p.operating_margin)}` : null,
+        p.revenue_growth_ttm != null ? `Rev TTM ${fmtPct(p.revenue_growth_ttm)}` : null,
+        p.roe != null ? `ROE ${fmtPct(p.roe)}` : null,
+        p.market_cap != null ? `MCap ${fmtMC(p.market_cap)}` : null,
+      ].filter(Boolean);
+      lines.push(`    ${valParts.join(' | ')}`);
+    }
+    const notLoaded = peers.filter(p => p && p._status !== 'loaded').map(p => p.ticker);
+    if (notLoaded.length > 0) {
+      lines.push('');
+      lines.push(`  Peers with data not yet fetched: ${notLoaded.join(', ')} (pipeline TBD)`);
+    }
+    lines.push('');
+    lines.push('USE: when bull/bear argues "relative value", "competitive position",');
+    lines.push('"sector pricing", "margin advantage" — cite specific peer-vs-focus');
+    lines.push('numbers from above. E.g., "BYD GM 17.2% vs 175.HK Geely GM 13.5% =');
+    lines.push('+370bps margin advantage from vertical integration".');
+  }
+
   // 8. Coverage gaps explicit
   if (extras._coverage_summary && typeof extras._coverage_summary === 'object') {
     const missing = Object.entries(extras._coverage_summary)

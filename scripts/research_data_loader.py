@@ -36,6 +36,17 @@ from typing import Any, Optional
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PUBLIC_DATA = REPO_ROOT / 'public' / 'data'
 
+# Phase 2.D (2026-05-10): peer-ticker map for cross-section comparison.
+# Each focus ticker has 1-3 peers — load_peers() reads their fin / market_data
+# IF FILES EXIST (no extra pipeline coordination required for this MVP).
+# Pipeline can be extended later to fetch peers automatically.
+PEER_TICKERS = {
+    '002594.SZ': ['175.HK', '1211.HK'],          # BYD ← Geely Auto + BYD-H share
+    '300308.SZ': ['002281.SZ', '300620.SZ'],     # Innolight ← 光迅科技 + 光库科技
+    '175.HK':    ['002594.SZ', '1211.HK'],        # Geely ← BYD A + BYD-H
+    '603233.SH': ['603883.SH', '002411.SZ', '603939.SH'],  # Da Shenlin ← 老百姓 + 益丰 + 一心堂
+}
+
 # Tushare per-ticker directories (most use <TICKER>.json filename)
 TUSHARE_DIRS = [
     'chip_distribution', 'consensus_forecast', 'lhb', 'quant_factors',
@@ -212,6 +223,62 @@ def load_recent_news(ticker: str, days: int = 5) -> list:
     return out[:10]  # cap at 10 most recent
 
 
+def _peer_summary(peer_ticker: str) -> Optional[dict]:
+    """Best-effort load of a peer's fin / valuation summary. Returns None if
+    peer's fin file isn't fetched (peer not in pipeline). Phase 2.D: we
+    don't auto-fetch peers — pipeline must already have them or skip."""
+    fin = safe_load(PUBLIC_DATA / f'fin_{to_underscore(peer_ticker)}.json')
+    if not fin:
+        return {'ticker': peer_ticker, '_status': 'peer_data_not_loaded'}
+
+    out = {'ticker': peer_ticker, '_status': 'loaded'}
+
+    # Last 2 years revenue + NI from income_statement
+    income = fin.get('income_statement', {}) if isinstance(fin, dict) else {}
+    years = sorted(income.keys(), reverse=True)[:2] if income else []
+    if years:
+        latest = income[years[0]]
+        prior = income[years[1]] if len(years) > 1 else {}
+        out['latest_year'] = years[0][:4]
+        ni_latest = latest.get('Net Income') or latest.get('Net Income Common Stockholders')
+        ni_prior = prior.get('Net Income') or prior.get('Net Income Common Stockholders')
+        out['net_income'] = ni_latest
+        if ni_latest is not None and ni_prior is not None and ni_prior != 0:
+            out['ni_yoy_pct'] = round((ni_latest / ni_prior - 1) * 100, 1)
+        rev_latest = latest.get('Total Revenue') or latest.get('Operating Revenue')
+        out['revenue'] = rev_latest
+        eps = latest.get('Diluted EPS') or latest.get('Basic EPS')
+        out['diluted_eps'] = eps
+
+    # Live market data (price + key valuation)
+    md = safe_load(PUBLIC_DATA / 'market_data.json') or {}
+    yahoo_t = md.get('yahoo', {}).get(peer_ticker, {})
+    if yahoo_t:
+        fund = yahoo_t.get('fundamentals', {})
+        price = yahoo_t.get('price', {})
+        out['live_price'] = price.get('last')
+        out['pe_trailing'] = fund.get('pe_trailing')
+        out['pe_forward'] = fund.get('pe_forward')
+        out['gross_margin'] = fund.get('gross_margin')
+        out['operating_margin'] = fund.get('operating_margin')
+        out['revenue_growth_ttm'] = fund.get('revenue_growth')
+        out['roe'] = fund.get('roe')
+        out['market_cap'] = fund.get('market_cap')
+
+    return out
+
+
+def load_peers(ticker: str) -> list:
+    """Load peer comparison data (Phase 2.D 2026-05-10). Returns list of
+    {ticker, fin_summary, valuation, _status} dicts for each peer mapped
+    to this ticker. Peer must already have fin_*.json fetched (else
+    _status='peer_data_not_loaded')."""
+    peer_list = PEER_TICKERS.get(ticker, [])
+    if not peer_list:
+        return []
+    return [_peer_summary(p) for p in peer_list]
+
+
 def load_sector_regime(ticker: str) -> dict:
     """Sector regime (PERMISSIVE/NEUTRAL/RESTRICTIVE) if available."""
     regime = safe_load(PUBLIC_DATA / 'regime_data.json') or safe_load(PUBLIC_DATA / 'regime.json')
@@ -261,6 +328,7 @@ def load_context(ticker: str) -> dict:
         'persona_overlay': load_persona_overlay(ticker),
         'recent_news_5d': load_recent_news(ticker, days=5),
         'sector_regime': load_sector_regime(ticker),
+        'peer_comparison': load_peers(ticker),  # Phase 2.D 2026-05-10
     }
 
     # Coverage summary — quick visibility into what's available vs missing
