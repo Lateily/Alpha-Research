@@ -674,6 +674,7 @@ function buildExtrasBlock(extras) {
   const br = ts.broker_recommend;
   if (br && Array.isArray(br.recommendations) && br.recommendations.length > 0) {
     lines.push('');
+    lines.push('━━━ TUSHARE NARRATIVE DATA — YOU MUST CITE THESE IN MECHANISM_CHAIN ━━━');
     lines.push('TUSHARE — BROKER RECOMMENDATIONS (90d window, sell-side narrative):');
     // Dedupe by (broker, report_title, rec_date) — same report often appears
     // multiple times with different forecast quarters

@@ -314,6 +314,58 @@ Output JSON ONLY:
   "technical_summary_z": "2-3 sentences"
 }`;
 
+// Hard directive that forces the model to cite specific narrative data.
+// Inserted into every Bull/Bear/Synth task prompt. Without this, LLMs
+// (especially Gemini) tend to ignore the rich Tushare sections and
+// default to valuation-arithmetic. Junyan §6 directive 2026-05-08.
+const HARD_CITATION_DIRECTIVE = `
+═══════════════════════════════════════════════════════
+HARD CITATION RULES — your output WILL BE REJECTED if violated
+═══════════════════════════════════════════════════════
+
+1. step_2_mechanism.mechanism_chain MUST quote at least 2 of the
+   following from the DATA CONTEXT above:
+   (a) A specific report title from "TUSHARE — BROKER RECOMMENDATIONS"
+       (e.g., "华创证券 '比亚迪 26Q1 海外销量增长势头强劲'")
+   (b) An institutional visit from "TUSHARE — INSTITUTIONAL RESEARCH VISITS"
+       (e.g., "Value Partners 4-09 phone survey")
+   (c) A 龙虎榜 event from "TUSHARE — 龙虎榜 LHB APPEARANCES"
+   (d) A holder transaction from "TUSHARE — INSIDER/大股东 ACTIVITY"
+   (e) A specific news event from "RECENT NEWS"
+
+2. step_3_evidence.contrarian_view.our_variant MUST reference at least
+   ONE specific item from (a)-(e). Format:
+   "Per [broker name] [report date] '[exact title quote]', [business
+   mechanism]. This contradicts the consensus narrative because
+   [specific reason citing data context]."
+
+3. If TUSHARE — BROKER RECOMMENDATIONS / INSTITUTIONAL RESEARCH VISITS /
+   龙虎榜 / news sections are EMPTY for this ticker, emit:
+     variant_view_one_sentence = "INSUFFICIENT_NARRATIVE_DATA — data
+     context lacks broker reports, inst visits, 龙虎榜, and news.
+     Cannot articulate a business-mechanism contrarian view; only
+     valuation arithmetic available which is insufficient. PASS."
+   This is a VALID and PREFERRED output.
+
+4. Forbidden mechanism_chain content (these will fail review):
+   ✗ "Market is anchored to lagging indicators" (generic)
+   ✗ "DCF model says cheap" (valuation arithmetic)
+   ✗ "Forward P/E discount reflects priced-in normalization" (circular)
+   ✗ "55% of 52W range" (technical, not contrarian view)
+   ✗ Any chain that could apply to ANY cheap-looking stock
+
+5. Required mechanism_chain content (these pass review):
+   ✓ "Per 华创证券 2026-05-07 report '海外销量增长势头强劲', Q1 export
+     volume +85% suggests EU tariff already absorbed in Q4 2025
+     pricing — bear's tariff thesis is reading lagging data"
+   ✓ "Inst research visits in last 30d (Value Partners + 国寿资产)
+     concentrated questions on 国内门店 expansion to 1500 by FY2026,
+     vs sell-side focus on EU tariff — buy-side is forward-looking,
+     sell-side anchored on Q1 lagging concern"
+═══════════════════════════════════════════════════════
+
+`;
+
 function bullR1Prompt(ticker, dataContextBlock) {
   return `${BULL_ROLE_SYSTEM.replace('$ticker', ticker)}
 
@@ -322,9 +374,16 @@ DATA CONTEXT (use this — don't fabricate)
 ═══════════════════════════════════════════════════════
 ${dataContextBlock}
 
+${HARD_CITATION_DIRECTIVE}
+
 ═══════════════════════════════════════════════════════
 TASK: Produce the strongest LONG thesis for ${ticker}.
 ═══════════════════════════════════════════════════════
+
+Before emitting JSON, INTERNALLY CHECK:
+  - Does mechanism_chain[0] or [1] cite a specific broker name + report title?
+  - Does our_variant reference an institutional visit OR specific business event?
+  - If NO to either → revise OR emit INSUFFICIENT_NARRATIVE_DATA per rule 3.
 
 ${THESIS_SCHEMA_INSTRUCTION}`;
 }
@@ -337,9 +396,16 @@ DATA CONTEXT (use this — don't fabricate)
 ═══════════════════════════════════════════════════════
 ${dataContextBlock}
 
+${HARD_CITATION_DIRECTIVE}
+
 ═══════════════════════════════════════════════════════
 TASK: Produce the strongest SHORT thesis for ${ticker}.
 ═══════════════════════════════════════════════════════
+
+Before emitting JSON, INTERNALLY CHECK:
+  - Does mechanism_chain[0] or [1] cite a specific broker name + report title?
+  - Does our_variant reference an institutional visit OR specific business event?
+  - If NO to either → revise OR emit INSUFFICIENT_NARRATIVE_DATA per rule 3.
 
 ${THESIS_SCHEMA_INSTRUCTION}`;
 }
@@ -398,6 +464,12 @@ Output: full updated 8-step JSON per schema, PLUS a "_rebuttal" field:
 by B. ..."
 ═══════════════════════════════════════════════════════
 
+${HARD_CITATION_DIRECTIVE}
+
+CHECK BEFORE EMITTING: your round-2 mechanism_chain MUST cite specific
+broker reports / inst visits / 龙虎榜 / news from data context (rule 1).
+If round 1 didn't, this is your chance to fix it.
+
 ${THESIS_SCHEMA_INSTRUCTION}`;
 }
 
@@ -435,6 +507,12 @@ You may:
 
 Output: full updated 8-step JSON per schema, PLUS a "_rebuttal" field.
 ═══════════════════════════════════════════════════════
+
+${HARD_CITATION_DIRECTIVE}
+
+CHECK BEFORE EMITTING: your round-2 mechanism_chain MUST cite specific
+broker reports / inst visits / 龙虎榜 / news from data context (rule 1).
+If round 1 didn't, this is your chance to fix it.
 
 ${THESIS_SCHEMA_INSTRUCTION}`;
 }
