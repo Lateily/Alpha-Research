@@ -57,12 +57,60 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ENDPOINT = 'https://equity-research-ten.vercel.app/api/research'
 
 
-def build_enrichment_context(ctx: dict) -> Optional[dict]:
+def fetch_recent_news(ticker: str, endpoint_base: str, days: int = 7, timeout_sec: int = 20) -> list:
+    """Fetch ticker-specific news from /api/news?tab=portfolio.
+
+    Phase 2.B (2026-05-10): /api/news already aggregates Yahoo Finance
+    per-ticker RSS feeds. Frontend Dashboard.jsx uses it; run_research.py
+    didn't. → recent_news_5d enrichment field was always empty in CLI runs
+    → Bull/Bear had no news context to cite. This fetches + filters.
+
+    Returns list of {title, source, published_at, summary} dicts, last N days,
+    matching ticker.
+    """
+    news_url = f'{endpoint_base.rstrip("/")}/api/news?tab=portfolio'
+    try:
+        req = urllib.request.Request(news_url, headers={'Accept': 'application/json'})
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+    except Exception as e:
+        print(f'WARN: /api/news fetch failed: {e}', file=sys.stderr)
+        return []
+
+    articles = data.get('articles', []) or data.get('news', []) or []
+    cutoff_ms = (datetime.now(timezone.utc).timestamp() - days * 86400) * 1000
+    out = []
+    for a in articles:
+        # Match by ticker tag
+        if a.get('ticker') != ticker:
+            continue
+        # Time filter
+        pub = a.get('published_at')
+        if pub:
+            try:
+                pub_dt = datetime.fromisoformat(pub.replace('Z', '+00:00'))
+                if pub_dt.timestamp() * 1000 < cutoff_ms:
+                    continue
+            except (ValueError, AttributeError):
+                pass
+        out.append({
+            'title': a.get('title'),
+            'source': a.get('source'),
+            'published_at': pub,
+            'summary': (a.get('summary') or '')[:300],
+        })
+    return out[:10]  # cap at 10 most recent
+
+
+def build_enrichment_context(ctx: dict, news: Optional[list] = None) -> Optional[dict]:
     """Map T-RD output into the enrichment_context schema /api/research expects.
 
     Mirrors Dashboard.jsx lines 7005-7070 (frontend's enrichment build).
     Adds `extras` field with richer data (Tushare suite, multi-year fin,
     OHLC trend) which the SERVER currently ignores but W4 will consume.
+
+    `news` parameter (Phase 2.B): if provided, overrides ctx's empty
+    recent_news_5d. Caller fetches via fetch_recent_news() before calling.
     """
     yahoo = ctx.get('yahoo_live', {})
     if yahoo.get('_status') != 'loaded':
@@ -103,7 +151,7 @@ def build_enrichment_context(ctx: dict) -> Optional[dict]:
     enrichment = {
         'live_price': f'{live_price:.2f}' if live_price is not None else None,
         'live_change_pct': live_change_pct,
-        'recent_news': ctx.get('recent_news_5d', []),
+        'recent_news': news if news is not None else ctx.get('recent_news_5d', []),
         'sector_regime': sector_regime,
         'prior_predictions': [],  # populated later when prediction_log integration ready
         'fundamentals': fundamentals,
@@ -205,6 +253,18 @@ def main():
     # 1. Build context from public/data/*
     ctx = load_context(args.ticker)
 
+    # 1b. Fetch recent news from /api/news (Phase 2.B 2026-05-10).
+    # /api/news aggregates per-ticker Yahoo RSS — Dashboard frontend uses it
+    # but CLI script didn't. Without this, enrichment.recent_news = empty,
+    # so Bull/Bear can't cite news in mechanism chain.
+    news_endpoint_base = args.endpoint.replace('/api/research-multi', '').replace('/api/research', '')
+    if args.no_enrichment:
+        news = []
+    else:
+        print(f'Fetching news from {news_endpoint_base}/api/news?tab=portfolio...', file=sys.stderr)
+        news = fetch_recent_news(args.ticker, news_endpoint_base, days=7)
+        print(f'  → {len(news)} articles for {args.ticker} (last 7d)', file=sys.stderr)
+
     # 2. Coverage gating
     requires = {
         'yahoo': args.require_yahoo,
@@ -219,7 +279,7 @@ def main():
         sys.exit(2)
 
     # 3. Build enrichment payload
-    enrichment = None if args.no_enrichment else build_enrichment_context(ctx)
+    enrichment = None if args.no_enrichment else build_enrichment_context(ctx, news=news)
     if enrichment is None and not args.no_enrichment:
         print('WARN: enrichment_context could not be built (yahoo data missing). '
               'Call will proceed without enrichment (hallucination risk).', file=sys.stderr)
