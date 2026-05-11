@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-08T12:31:38.485653+00:00",
+  "generated_at": "2026-05-11T12:33:46.539704+00:00",
   "tickers": {
     "300308.SZ": {
       "ticker": "300308.SZ",
@@ -60,20 +60,6 @@
           "gm_delta_pp": null,
           "fcf_b": 1.66,
           "fcf_ni_ratio": 1.35
-        },
-        {
-          "year": "2021",
-          "rev_b": null,
-          "ni_b": null,
-          "gm_pct": null,
-          "op_margin_pct": null,
-          "ni_margin_pct": null,
-          "rev_gr_pct": null,
-          "ni_gr_pct": null,
-          "ni_rev_ratio": null,
-          "gm_delta_pp": null,
-          "fcf_b": null,
-          "fcf_ni_ratio": null
         }
       ],
       "summary": {

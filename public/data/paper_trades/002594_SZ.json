@@ -5,8 +5,8 @@
   "thesis_logged_at": "2026-05-11T10:48:33.297986+00:00",
   "direction": "LONG",
   "entry_date": "2026-05-11",
-  "entry_price": 100.02,
-  "current_price": 100.02,
+  "entry_price": 100.44,
+  "current_price": 100.44,
   "current_date": "2026-05-11",
   "days_held": 0,
   "return_since_entry_pct": 0.0,
@@ -42,7 +42,7 @@
   "daily_log": [
     {
       "date": "2026-05-11",
-      "price": 100.02,
+      "price": 100.44,
       "return_pct": 0.0,
       "status": "ACTIVE"
     }
