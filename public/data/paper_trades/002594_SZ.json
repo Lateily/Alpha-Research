@@ -5,11 +5,11 @@
   "thesis_logged_at": "2026-05-11T10:48:33.297986+00:00",
   "direction": "LONG",
   "entry_date": "2026-05-11",
-  "entry_price": 100.44,
+  "entry_price": NaN,
   "current_price": 100.44,
   "current_date": "2026-05-11",
   "days_held": 0,
-  "return_since_entry_pct": 0.0,
+  "return_since_entry_pct": null,
   "expected_pnl": {
     "upside_if_right": "+15% to +30% (toward mean target 119.55, high 137.00)",
     "downside_if_wrong": "-10% to -15% (toward 60d support 87.05/85.88)",
@@ -43,7 +43,7 @@
     {
       "date": "2026-05-11",
       "price": 100.44,
-      "return_pct": 0.0,
+      "return_pct": null,
       "status": "ACTIVE"
     }
   ],

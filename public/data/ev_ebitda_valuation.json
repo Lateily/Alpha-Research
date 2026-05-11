@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-11T12:33:46.881483+00:00",
+    "generated_at": "2026-05-11T17:34:18.568296+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "ev_ebitda_target_multiple",
@@ -33,7 +33,7 @@
       "model_status": "multi_method",
       "signal": "UNDERPRICED",
       "delta_pct": 80.78,
-      "current_ev_ebitda": 8.403,
+      "current_ev_ebitda": 8.437,
       "current_ebitda": 111350251520,
       "target_multiple": 15.0,
       "fair_ev": 1670253772800.0,
@@ -41,8 +41,8 @@
       "market_cap": 915731316736,
       "net_debt": 14809161728,
       "market": "A",
-      "rationale_e": "EV/EBITDA 8.40x vs A-target 15x; fair_equity +1655.4B vs market_cap 915.7B; delta +80.8% → UNDERPRICED",
-      "rationale_z": "EV/EBITDA 8.40x，A市场目标15x；公允股权 +1655.4B vs 市值 915.7B；delta +80.8% → UNDERPRICED"
+      "rationale_e": "EV/EBITDA 8.44x vs A-target 15x; fair_equity +1655.4B vs market_cap 915.7B; delta +80.8% → UNDERPRICED",
+      "rationale_z": "EV/EBITDA 8.44x，A市场目标15x；公允股权 +1655.4B vs 市值 915.7B；delta +80.8% → UNDERPRICED"
     },
     "175.HK": {
       "ticker": "175.HK",

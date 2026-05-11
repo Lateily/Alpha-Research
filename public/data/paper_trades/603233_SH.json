@@ -5,11 +5,11 @@
   "thesis_logged_at": "2026-05-11T10:48:33.479352+00:00",
   "direction": "SHORT",
   "entry_date": "2026-05-11",
-  "entry_price": 18.8,
+  "entry_price": NaN,
   "current_price": 18.8,
   "current_date": "2026-05-11",
   "days_held": 0,
-  "return_since_entry_pct": 0.0,
+  "return_since_entry_pct": null,
   "expected_pnl": {
     "upside_if_right": "+6% to +10% (¥18.55 → ¥17.00-17.50)",
     "downside_if_wrong": "-5% to -8% (stop above ¥19.50 chip cluster)",
@@ -42,7 +42,7 @@
     {
       "date": "2026-05-11",
       "price": 18.8,
-      "return_pct": 0.0,
+      "return_pct": null,
       "status": "ACTIVE"
     }
   ],
