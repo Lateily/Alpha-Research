@@ -5737,11 +5737,18 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
 }
 
 /* ── TRACKER TAB ────────────────────────────────────────────────────────── */
-function Tracker({ L, stocks: stocksMap, C, predictions }) {
+function Tracker({ L, stocks: stocksMap, C, predictions, paperTradeSummary, paperTrades, thesisOutcomes }) {
   const stocks = Object.entries(stocksMap || STOCKS).slice(0,3).map(([tk,s])=>({...s, ticker:tk}));
   return (
     <div>
-      <Card title={L('Key Metrics Tracker','关键指标追踪')} open={true} C={C}>
+      {/* Bridge-8 paper trade board — first, since it's the active loop */}
+      <Card title={L('Paper Trade Board (Bridge-8)','纸面交易追踪 (Bridge-8)')}
+            sub={L('Multi-agent thesis daily P&L + outcome verification scaffold','多 agent 论点每日盈亏 + 结果验证占位')}
+            open={true} C={C}>
+        <PaperTradeBoard summary={paperTradeSummary} trades={paperTrades} outcomes={thesisOutcomes} L={L} C={C}/>
+      </Card>
+
+      <Card title={L('Key Metrics Tracker','关键指标追踪')} open={false} C={C}>
         <div style={{overflowX:'auto'}}>
           <table style={{width:'100%', fontSize:11, borderCollapse:'collapse'}}>
             <thead><tr style={{borderBottom:`1px solid ${C.border}`}}>
@@ -5764,9 +5771,273 @@ function Tracker({ L, stocks: stocksMap, C, predictions }) {
         </div>
       </Card>
 
-      <Card title={L('Prediction Log','预测记录')} sub={L('Variant views with explicit verification & falsification conditions','带验证/证伪条件的变体观点追踪')} open={true} C={C}>
+      <Card title={L('Prediction Log','预测记录')} sub={L('Manually-curated high-conviction predictions (legacy)','手工高信念预测记录 (旧)')} open={false} C={C}>
         <PredictionLog predictions={predictions || []} L={L} C={C}/>
       </Card>
+    </div>
+  );
+}
+
+// Bridge-8 paper trade board (2026-05-11) — renders paper_trades + outcomes
+// produced by scripts/follow_thesis.py + verify_thesis.py. Shows active /
+// closed positions, condition verification states, daily P&L.
+function PaperTradeBoard({ summary, trades, outcomes, L, C }) {
+  const [expandedTicker, setExpandedTicker] = useState(null);
+
+  if (!summary && Object.keys(trades || {}).length === 0) {
+    return (
+      <div style={{padding:'12px 16px', fontSize:11, color:C.mid, fontStyle:'italic'}}>
+        {L('No paper-trade data loaded yet. Pipeline will populate after next daily run, OR run scripts/follow_thesis.py + scripts/verify_thesis.py locally.',
+           '尚无 paper-trade 数据. 下次 pipeline 跑后自动生成, 或本地跑 scripts/follow_thesis.py + scripts/verify_thesis.py')}
+      </div>
+    );
+  }
+
+  const fmt = v => v == null ? '—' : (typeof v === 'number' ? v.toFixed(2) : String(v));
+  const fmtPct = v => v == null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+  const fmtPctNoSign = v => v == null ? '—' : `${v.toFixed(1)}%`;
+
+  const statusColor = (status, direction) => {
+    if (status === 'TARGET_HIT')  return C.green;
+    if (status === 'STOPPED_OUT') return C.red;
+    if (status === 'EXPIRED')     return C.mid;
+    if (status === 'CATALYST_DUE')return C.gold;
+    return C.blue;  // ACTIVE
+  };
+  const statusLabel = (status) => ({
+    ACTIVE: L('Active','进行中'),
+    TARGET_HIT: L('Target hit ✓','达标 ✓'),
+    STOPPED_OUT: L('Stopped out ✗','止损 ✗'),
+    EXPIRED: L('Expired','到期'),
+    CATALYST_DUE: L('Catalyst due ⚠','催化临近 ⚠'),
+  }[status] || status);
+
+  // For a LONG thesis, positive return = good (color green); negative = bad (red).
+  // For SHORT thesis, negative return = good (short profits), positive = bad.
+  const returnColor = (returnPct, direction) => {
+    if (returnPct == null) return C.mid;
+    const profitable = direction === 'SHORT' ? returnPct < 0 : returnPct > 0;
+    if (Math.abs(returnPct) < 0.5) return C.mid;
+    return profitable ? C.green : C.red;
+  };
+
+  const active = (summary?.active_positions || []).filter(p => p.current_status !== 'EXPIRED');
+  const closed = (summary?.closed_positions || []);
+  const skipped = (summary?.skipped || []);
+
+  return (
+    <div style={{marginTop:8}}>
+      {/* HEADER METRICS */}
+      <div style={{display:'flex', flexWrap:'wrap', gap:14, marginBottom:16, padding:'10px 12px', background:C.soft, borderRadius:8, border:`1px solid ${C.border}`}}>
+        <div>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>{L('Active','进行中')}</div>
+          <div style={{fontSize:18, fontWeight:800, color:C.blue, fontFamily:MONO}}>{active.length}</div>
+        </div>
+        <div>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>{L('Closed','已结')}</div>
+          <div style={{fontSize:18, fontWeight:800, color:C.dark, fontFamily:MONO}}>{closed.length}</div>
+        </div>
+        <div>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>{L('Skipped PASS','跳过 PASS')}</div>
+          <div style={{fontSize:18, fontWeight:800, color:C.mid, fontFamily:MONO}}>{skipped.length}</div>
+        </div>
+        <div>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>{L('Hit rate','胜率')}</div>
+          <div style={{fontSize:18, fontWeight:800, color: summary?.hit_rate == null ? C.mid : (summary.hit_rate >= 50 ? C.green : C.red), fontFamily:MONO}}>
+            {summary?.hit_rate == null ? '—' : `${summary.hit_rate}%`}
+          </div>
+        </div>
+        <div>
+          <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>{L('Avg return','平均回报')}</div>
+          <div style={{fontSize:18, fontWeight:800, color: returnColor(summary?.avg_return_pct, 'LONG'), fontFamily:MONO}}>
+            {summary?.avg_return_pct == null ? '—' : fmtPct(summary.avg_return_pct)}
+          </div>
+        </div>
+        <div style={{marginLeft:'auto', fontSize:10, color:C.mid, fontStyle:'italic', alignSelf:'flex-end'}}>
+          {summary?.updated_at ? `${L('Updated','更新')}: ${new Date(summary.updated_at).toLocaleString()}` : ''}
+        </div>
+      </div>
+
+      {/* ACTIVE POSITIONS TABLE */}
+      {active.length > 0 && (
+        <div style={{marginBottom:18}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:6}}>{L('Active positions','进行中持仓')}</div>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%', fontSize:11, borderCollapse:'collapse'}}>
+              <thead><tr style={{borderBottom:`1px solid ${C.border}`, background:C.soft}}>
+                <th style={{textAlign:'left', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Ticker</th>
+                <th style={{textAlign:'left', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Dir</th>
+                <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Entry</th>
+                <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Live</th>
+                <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>P&L</th>
+                <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Target</th>
+                <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Stop</th>
+                <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Days</th>
+                <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>To Cat</th>
+                <th style={{textAlign:'left', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Status</th>
+              </tr></thead>
+              <tbody>
+                {active.map((p, i) => {
+                  const isOpen = expandedTicker === p.ticker;
+                  const outcome = outcomes?.[p.ticker];
+                  return (
+                    <React.Fragment key={i}>
+                      <tr style={{borderBottom:`1px solid ${C.border}`, cursor:'pointer'}} onClick={() => setExpandedTicker(isOpen ? null : p.ticker)}>
+                        <td style={{padding:'6px 8px', color:C.dark, fontWeight:700, fontFamily:MONO}}>{p.ticker} {isOpen ? '▾' : '▸'}</td>
+                        <td style={{padding:'6px 8px'}}>
+                          <span style={{padding:'2px 6px', borderRadius:4, fontSize:9, fontWeight:700, color:'#fff', background: p.direction === 'LONG' ? C.green : (p.direction === 'SHORT' ? C.red : C.mid)}}>{p.direction || '?'}</span>
+                        </td>
+                        <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, color:C.mid}}>{fmt(p.entry_price)}</td>
+                        <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, color:C.dark}}>{fmt(p.current_price)}</td>
+                        <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, fontWeight:700, color: returnColor(p.return_since_entry_pct, p.direction)}}>{fmtPct(p.return_since_entry_pct)}</td>
+                        <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, fontSize:10, color:C.green}}>{p.upside_target_pct != null ? `+${p.upside_target_pct}%` : '—'}</td>
+                        <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, fontSize:10, color:C.red}}>{p.downside_stop_pct != null ? `${p.downside_stop_pct < 0 ? '' : '-'}${Math.abs(p.downside_stop_pct)}%` : '—'}</td>
+                        <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, color:C.mid}}>{p.days_held ?? '—'}d</td>
+                        <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, color: p.days_to_catalyst != null && p.days_to_catalyst <= 14 ? C.gold : C.mid}}>{p.days_to_catalyst ?? '—'}d</td>
+                        <td style={{padding:'6px 8px'}}>
+                          <span style={{padding:'2px 6px', borderRadius:4, fontSize:9, fontWeight:700, color:'#fff', background: statusColor(p.current_status, p.direction)}}>{statusLabel(p.current_status)}</span>
+                        </td>
+                      </tr>
+                      {isOpen && outcome && (
+                        <tr><td colSpan={10} style={{padding:'10px 14px', background:C.soft, borderBottom:`1px solid ${C.border}`}}>
+                          <ConditionVerificationPanel outcome={outcome} trade={trades[p.ticker]} L={L} C={C}/>
+                        </td></tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* CLOSED POSITIONS — show only when any */}
+      {closed.length > 0 && (
+        <div style={{marginBottom:18}}>
+          <div style={{fontSize:11, fontWeight:700, color:C.dark, marginBottom:6}}>{L('Closed positions','已结持仓')}</div>
+          <table style={{width:'100%', fontSize:11, borderCollapse:'collapse'}}>
+            <thead><tr style={{borderBottom:`1px solid ${C.border}`, background:C.soft}}>
+              <th style={{textAlign:'left', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Ticker</th>
+              <th style={{textAlign:'left', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Dir</th>
+              <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Entry</th>
+              <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Exit</th>
+              <th style={{textAlign:'right', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Return</th>
+              <th style={{textAlign:'left', padding:'6px 8px', fontSize:10, fontWeight:700, color:C.mid, textTransform:'uppercase'}}>Outcome</th>
+            </tr></thead>
+            <tbody>
+              {closed.map((p, i) => (
+                <tr key={i} style={{borderBottom:`1px solid ${C.border}`}}>
+                  <td style={{padding:'6px 8px', color:C.dark, fontWeight:700, fontFamily:MONO}}>{p.ticker}</td>
+                  <td style={{padding:'6px 8px'}}>
+                    <span style={{padding:'2px 6px', borderRadius:4, fontSize:9, fontWeight:700, color:'#fff', background: p.direction === 'LONG' ? C.green : C.red}}>{p.direction}</span>
+                  </td>
+                  <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, color:C.mid}}>{fmt(p.entry_price)}</td>
+                  <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, color:C.dark}}>{fmt(p.current_price)}</td>
+                  <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, fontWeight:700, color: returnColor(p.return_since_entry_pct, p.direction)}}>{fmtPct(p.return_since_entry_pct)}</td>
+                  <td style={{padding:'6px 8px'}}>
+                    <span style={{padding:'2px 6px', borderRadius:4, fontSize:9, fontWeight:700, color:'#fff', background: statusColor(p.current_status)}}>{statusLabel(p.current_status)}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* SKIPPED PASS NOTE */}
+      {skipped.length > 0 && (
+        <div style={{padding:'8px 12px', background:`${C.mid}10`, borderRadius:6, fontSize:10, color:C.mid}}>
+          <strong style={{color:C.dark}}>{L('Skipped (multi-agent PASS direction)','跳过的 (multi-agent PASS 方向)')}:</strong>{' '}
+          {skipped.map(s => s.ticker).join(', ')} — {L('synthesizer judged "no actionable edge"; honest non-trade is preferred over forced direction.','synthesizer 判 "no edge"; 不下注比强行方向更诚实.')}
+        </div>
+      )}
+
+      {/* FOOTER NOTE */}
+      <div style={{marginTop:14, padding:'8px 12px', background:`${C.blue}06`, fontSize:9, color:C.mid, borderRadius:4, lineHeight:1.5}}>
+        {L(
+          'Click a row to expand condition verification status. Daily-refreshed by pipeline (Step 2e.1 follow_thesis + 2e.2 verify_thesis). Condition outcomes are PENDING_HUMAN_REVIEW until you fill thesis_outcomes/<TICKER>.json after the catalyst event (rule: set verification_status TRIGGERED / NOT_TRIGGERED / INCONCLUSIVE + evidence_observed citation).',
+          '点行展开条件验证状态. 每日 pipeline (Step 2e.1 follow_thesis + 2e.2 verify_thesis) 自动刷新. 条件结果在 catalyst 事件后由你手动 verify (thesis_outcomes/<TICKER>.json 里把 verification_status 设 TRIGGERED / NOT_TRIGGERED / INCONCLUSIVE + 填 evidence_observed).'
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Condition verification panel — expanded when user clicks a paper trade row.
+// Shows rightIf/wrongIf conditions with verification status badges.
+function ConditionVerificationPanel({ outcome, trade, L, C }) {
+  if (!outcome) return <div style={{fontSize:10, color:C.mid}}>{L('Outcome record not yet generated. Run verify_thesis.py.','结果记录尚未生成. 请运行 verify_thesis.py')}</div>;
+
+  const verifBadge = (status) => {
+    const m = {
+      TRIGGERED: { c: C.green, t: L('Triggered','已触发') },
+      NOT_TRIGGERED: { c: C.red, t: L('Not triggered','未触发') },
+      INCONCLUSIVE: { c: C.gold, t: L('Inconclusive','不明') },
+      PENDING_HUMAN_REVIEW: { c: C.mid, t: L('Pending','待审') },
+    };
+    return m[status] || m.PENDING_HUMAN_REVIEW;
+  };
+
+  const renderConditions = (conds, kind) => {
+    if (!conds || conds.length === 0) return null;
+    return (
+      <div style={{marginBottom:10}}>
+        <div style={{fontSize:10, fontWeight:700, color:C.dark, marginBottom:4, textTransform:'uppercase'}}>
+          {kind === 'rightIf' ? L('Proves right if','证实条件') : L('Proves wrong if','证伪条件')} ({conds.length})
+        </div>
+        {conds.map((c, i) => {
+          const b = verifBadge(c.verification_status);
+          return (
+            <div key={i} style={{display:'flex', gap:8, padding:'5px 8px', borderRadius:5, border:`1px solid ${C.border}`, marginBottom:4, background:C.card, alignItems:'flex-start'}}>
+              <span style={{padding:'2px 6px', borderRadius:4, fontSize:9, fontWeight:700, color:'#fff', background: b.c, whiteSpace:'nowrap', flexShrink:0, marginTop:2}}>{b.t}</span>
+              <div style={{flex:1, fontSize:10, color:C.dark, lineHeight:1.5}}>
+                {c.original_text}
+                {c.auto_signal && (
+                  <div style={{marginTop:3, fontSize:9, color:C.blue, fontStyle:'italic'}}>auto-signal: {c.auto_signal}</div>
+                )}
+                {c.evidence_observed && (
+                  <div style={{marginTop:3, fontSize:9, color:C.green}}>evidence: {c.evidence_observed}</div>
+                )}
+                {c.verified_at && (
+                  <div style={{marginTop:3, fontSize:9, color:C.mid}}>verified {new Date(c.verified_at).toLocaleDateString()} by {c.verified_by || '?'}</div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{fontSize:11, color:C.dark}}>
+      <div style={{marginBottom:8, padding:'6px 10px', background:C.card, border:`1px solid ${C.border}`, borderRadius:5}}>
+        <div style={{fontSize:9, fontWeight:700, color:C.mid, textTransform:'uppercase', marginBottom:2}}>{L('Outcome category','结果分类')}</div>
+        <div style={{fontSize:11, color:C.dark}}>{outcome.outcome_category}</div>
+      </div>
+      {trade?.catalyst_window && (
+        <div style={{marginBottom:8, fontSize:10, color:C.mid}}>
+          <strong>{L('Catalyst window','催化窗口')}:</strong> {trade.catalyst_window}
+        </div>
+      )}
+      {trade?.what_changes_our_mind && (
+        <div style={{marginBottom:10, padding:'6px 10px', background:`${C.gold}10`, border:`1px solid ${C.gold}30`, borderRadius:5, fontSize:10, color:C.dark}}>
+          <strong style={{color:C.gold}}>{L('What changes our mind','什么会改变看法')}:</strong> {trade.what_changes_our_mind}
+        </div>
+      )}
+      {renderConditions(outcome.rightIf_verification, 'rightIf')}
+      {renderConditions(outcome.wrongIf_verification, 'wrongIf')}
+      {outcome.verified_final_outcome && (
+        <div style={{marginTop:8, padding:'6px 10px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:5}}>
+          <strong>{L('Verified final outcome','最终结果')}:</strong> {outcome.verified_final_outcome}
+        </div>
+      )}
+      {outcome.reviewer_notes && (
+        <div style={{marginTop:8, padding:'6px 10px', background:C.card, border:`1px solid ${C.border}`, borderRadius:5, fontSize:10, fontStyle:'italic', color:C.mid}}>
+          <strong>{L('Reviewer notes','审查批注')}:</strong> {outcome.reviewer_notes}
+        </div>
+      )}
     </div>
   );
 }
@@ -10039,6 +10310,12 @@ export default function Dashboard() {
   // trail in <TICKER>_<DATE>.json). Generated by scripts/thesis_factcheck.py.
   // Surfaces multiplier claims diverging from yahoo fundamentals.
   const [factcheckData, setFactcheckData] = useState({});
+  // Bridge-8 paper trade tracking (2026-05-11): aggregate summary +
+  // per-ticker outcomes. Source: public/data/paper_trades/* (follow_thesis.py)
+  // and public/data/thesis_outcomes/* (verify_thesis.py).
+  const [paperTradeSummary, setPaperTradeSummary] = useState(null);
+  const [paperTrades, setPaperTrades] = useState({});            // {ticker: trade state}
+  const [thesisOutcomes, setThesisOutcomes] = useState({});      // {ticker: outcome record}
   const [stressData, setStressData] = useState(null);
   const [predictions, setPredictions] = useState([]);
   const [regimeData, setRegimeData] = useState(null);
@@ -10134,6 +10411,46 @@ export default function Dashboard() {
         }
       });
       setFactcheckData(map);
+    });
+  }, []);
+
+  /* Bridge-8 (2026-05-11) — Fetch paper-trade summary + per-ticker
+     paper_trades and thesis_outcomes on mount. Updated daily by pipeline
+     (Step 2e.1 follow_thesis + 2e.2 verify_thesis). */
+  useEffect(() => {
+    const base = DATA_BASE;
+    fetch(base + 'data/paper_trades/summary.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(s => { if (s) setPaperTradeSummary(s); })
+      .catch(() => {});
+
+    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
+    Promise.all(ids.map(id =>
+      fetch(base + `data/paper_trades/${id}.json`).then(r => r.ok ? r.json() : null).catch(() => null),
+    )).then(results => {
+      const map = {};
+      ids.forEach((id, i) => {
+        if (results[i]) {
+          const lastUnderscore = id.lastIndexOf('_');
+          const tk = id.slice(0, lastUnderscore) + '.' + id.slice(lastUnderscore + 1);
+          map[tk] = results[i];
+        }
+      });
+      setPaperTrades(map);
+    });
+
+    Promise.all(ids.map(id =>
+      fetch(base + `data/thesis_outcomes/${id}.json`).then(r => r.ok ? r.json() : null).catch(() => null),
+    )).then(results => {
+      const map = {};
+      ids.forEach((id, i) => {
+        if (results[i]) {
+          const lastUnderscore = id.lastIndexOf('_');
+          const tk = id.slice(0, lastUnderscore) + '.' + id.slice(lastUnderscore + 1);
+          map[tk] = results[i];
+        }
+      });
+      setThesisOutcomes(map);
     });
   }, []);
 
@@ -11037,7 +11354,7 @@ export default function Dashboard() {
             return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
           })()}
           {tab==='morning'  && <MorningReportPage L={L} lk={lk} C={C} reportData={morningReport} reportLoading={morningReportLoading} onGenerate={handleGenerateMorningReport} liveData={liveData} newsPortfolio={newsPortfolio} newsMacro={newsMacro} regimeData={regimeData} predictions={predictions} allStocks={allStocks}/>}
-          {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C} predictions={predictions}/>}
+          {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C} predictions={predictions} paperTradeSummary={paperTradeSummary} paperTrades={paperTrades} thesisOutcomes={thesisOutcomes}/>}
           {/* 'watchlist' tab DELETED 2026-05-02 — duplicate of 'desk'. Watchlist 5 持仓 is shown in TradingDesk. */}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
         </div>
