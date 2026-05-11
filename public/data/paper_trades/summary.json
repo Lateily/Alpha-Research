@@ -1,0 +1,47 @@
+{
+  "updated_at": "2026-05-11T10:51:20.523918+00:00",
+  "total_theses": 4,
+  "active_positions": [
+    {
+      "ticker": "002594.SZ",
+      "direction": "LONG",
+      "entry_date": "2026-05-11",
+      "entry_price": 100.02,
+      "current_price": 100.02,
+      "return_since_entry_pct": 0.0,
+      "upside_target_pct": 15.0,
+      "downside_stop_pct": -10.0,
+      "days_held": 0,
+      "days_to_catalyst": 65,
+      "current_status": "ACTIVE"
+    },
+    {
+      "ticker": "603233.SH",
+      "direction": "SHORT",
+      "entry_date": "2026-05-11",
+      "entry_price": 18.55,
+      "current_price": 18.55,
+      "return_since_entry_pct": 0.0,
+      "upside_target_pct": 6.0,
+      "downside_stop_pct": -5.0,
+      "days_held": 0,
+      "days_to_catalyst": 109,
+      "current_status": "ACTIVE"
+    }
+  ],
+  "closed_positions": [],
+  "skipped": [
+    {
+      "ticker": "175.HK",
+      "direction": "PASS",
+      "thesis_logged_at": "2026-05-11T10:48:33.413339+00:00"
+    },
+    {
+      "ticker": "300308.SZ",
+      "direction": "PASS",
+      "thesis_logged_at": "2026-05-11T10:48:33.347286+00:00"
+    }
+  ],
+  "hit_rate": null,
+  "avg_return_pct": null
+}

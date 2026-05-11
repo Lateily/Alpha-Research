@@ -295,6 +295,22 @@ jobs:
         continue-on-error: true          # non-critical; reads rdcf + ev_ebitda + ri JSON outputs
         run: python scripts/multi_method_valuation.py
 
+      # ── Step 2e: Bridge-8 paper trading + outcome verification (2026-05-11) ────
+      # Daily tracker for shipped theses. Reads thesis_attribution/<TICKER>.json
+      # (entry conditions + R/R + catalyst), pulls current price from refreshed
+      # market_data.json, appends today's snapshot to public/data/paper_trades/<TICKER>.json
+      # daily_log. Watchlist-filtered: only actively-tracked tickers.
+      - name: "Step 2e.1: Bridge-8 paper trading daily tracker"
+        continue-on-error: true
+        run: python3 scripts/follow_thesis.py --all
+
+      # Outcome verification scaffold — pairs paper_trades with thesis_attribution
+      # to produce thesis_outcomes/<TICKER>.json with conditions marked
+      # PENDING_HUMAN_REVIEW (until NLP/data-integration verification ships).
+      - name: "Step 2e.2: Bridge-8 outcome verification scaffold"
+        continue-on-error: true
+        run: python3 scripts/verify_thesis.py --all
+
       # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
       - name: Sync to Supabase
         if: env.SUPABASE_URL != ''
@@ -368,7 +384,9 @@ jobs:
                  public/data/margin/*.json \
                  public/data/repurchase/*.json \
                  public/data/thesis_factcheck/*.json \
-                 public/data/thesis_attribution/*.json)
+                 public/data/thesis_attribution/*.json \
+                 public/data/paper_trades/*.json \
+                 public/data/thesis_outcomes/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 

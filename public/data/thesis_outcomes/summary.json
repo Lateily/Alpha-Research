@@ -1,0 +1,30 @@
+{
+  "updated_at": "2026-05-11T10:51:20.556157+00:00",
+  "total_theses_tracked": 2,
+  "by_status": {
+    "ACTIVE": 2
+  },
+  "by_direction": {
+    "LONG": 1,
+    "SHORT": 1
+  },
+  "verified_outcomes": [],
+  "pending_outcomes": [
+    {
+      "ticker": "002594.SZ",
+      "direction": "LONG",
+      "status": "ACTIVE",
+      "days_to_catalyst": 65,
+      "thesis_logged_at": "2026-05-11T10:48:33.297986+00:00"
+    },
+    {
+      "ticker": "603233.SH",
+      "direction": "SHORT",
+      "status": "ACTIVE",
+      "days_to_catalyst": 109,
+      "thesis_logged_at": "2026-05-11T10:48:33.479352+00:00"
+    }
+  ],
+  "hit_rate": null,
+  "avg_return_pct": null
+}

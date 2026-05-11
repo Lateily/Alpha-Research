@@ -1,0 +1,124 @@
+{
+  "ticker": "603233.SH",
+  "verification_run_at": "2026-05-11T10:51:20.555909+00:00",
+  "thesis_source": "docs/research/factcheck/603233SH_thesis_2026-05-10_PHASE2.json",
+  "thesis_source_commit": "125e427",
+  "thesis_logged_at": "2026-05-11T10:48:33.479352+00:00",
+  "direction": "SHORT",
+  "entry_date": "2026-05-11",
+  "entry_price": 18.55,
+  "current_price_at_verification": 18.55,
+  "return_since_entry_pct": 0.0,
+  "current_status": "ACTIVE",
+  "outcome_category": "PENDING — position still active",
+  "catalyst_window": "August 2026 [external estimate, not in our data context; exact announcement date not available in our data]",
+  "days_to_catalyst": 109,
+  "rightIf_verification": [
+    {
+      "index": 0,
+      "kind": "rightIf",
+      "original_text": "1H26 revenue growth YoY < 5% AND operating margin compresses below 10.0%",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 1,
+      "kind": "rightIf",
+      "original_text": "Broker EPS revisions begin trending down from current 1.24-1.76 range, with 2+ brokers cutting targets within 2 weeks of 1H26 print",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 2,
+      "kind": "rightIf",
+      "original_text": "Margin financing balance declines >10% from 2.3亿 in the 30 days post-print (leveraged-long unwind)",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 3,
+      "kind": "rightIf",
+      "original_text": "Price breaks ¥18.0 chip cluster (16.28% of float) on volume, opening path to ¥17.5 then ¥16.78",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 4,
+      "kind": "rightIf",
+      "original_text": "Net store-count growth disclosed below 5% YoY (per watchlist wrongIf threshold)",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    }
+  ],
+  "wrongIf_verification": [
+    {
+      "index": 0,
+      "kind": "wrongIf",
+      "original_text": "1H26 revenue growth YoY ≥6% AND op margin held ≥10.5% — validating dual-drive thesis",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 1,
+      "kind": "wrongIf",
+      "original_text": "Price breaks above ¥19.5 chip cluster on volume, clearing 64% of overhead supply",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 2,
+      "kind": "wrongIf",
+      "original_text": "Management announces share buyback program, signaling cash-flow comfort despite expansion",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 3,
+      "kind": "wrongIf",
+      "original_text": "Same-store sales growth disclosed at >3% YoY — proves expansion is demand-led not cost-only",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 4,
+      "kind": "wrongIf",
+      "original_text": "Broker target upgrades continue with 2+ houses raising targets within 30 days of the print",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    }
+  ],
+  "what_changes_our_mind": "1H26 print showing BOTH revenue growth ≥6% YoY AND operating margin maintained ≥10.5% — proving expansion costs are absorbed without margin compression while top-line re-accelerates",
+  "reviewer_notes": "",
+  "verified_final_outcome": null,
+  "_methodology_note": "MVP scaffold: this record carries the wrongIf/rightIf as PENDING_HUMAN_REVIEW. When the catalyst event occurs (e.g., 2026-08-28 BYD Q2 print), a human (Junyan) or future automated NLP/data-integration pass should mark each condition as TRIGGERED | NOT_TRIGGERED | INCONCLUSIVE with evidence. Once all conditions resolved, set verified_final_outcome to compute hit rate into outcomes_summary."
+}

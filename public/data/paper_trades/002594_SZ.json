@@ -1,0 +1,52 @@
+{
+  "ticker": "002594.SZ",
+  "thesis_source": "docs/research/factcheck/002594SZ_thesis_2026-05-10_PHASE2.json",
+  "thesis_source_commit": "125e427",
+  "thesis_logged_at": "2026-05-11T10:48:33.297986+00:00",
+  "direction": "LONG",
+  "entry_date": "2026-05-11",
+  "entry_price": 100.02,
+  "current_price": 100.02,
+  "current_date": "2026-05-11",
+  "days_held": 0,
+  "return_since_entry_pct": 0.0,
+  "expected_pnl": {
+    "upside_if_right": "+15% to +30% (toward mean target 119.55, high 137.00)",
+    "downside_if_wrong": "-10% to -15% (toward 60d support 87.05/85.88)",
+    "reward_to_risk": "2:1"
+  },
+  "upside_target_pct": 15.0,
+  "downside_stop_pct": -10.0,
+  "catalyst_window": "2026-07-15 to 2026-08-31",
+  "catalyst_dates_parsed": [
+    "2026-07-15",
+    "2026-08-31"
+  ],
+  "days_to_catalyst": 65,
+  "current_status": "ACTIVE",
+  "wrongIf_conditions": [
+    "Q2 2026 gross margin drops below 15% (WATCHLIST wrongIf trigger)",
+    "Mgmt Q2 commentary explicitly cites European price competition / localization pressure as a margin driver",
+    "Consensus FY2026 NP revised DOWN post-Q2, or broker downgrades from the same houses (华创/华金/东方/国联民生) that just upgraded",
+    "Price fails at ¥104 cluster and breaks back below ¥95 on volume (loss of 60d momentum structure)",
+    "Margin financing 融资余额 reverses materially (>5% drawdown from 140.1亿) signaling leveraged-long capitulation"
+  ],
+  "rightIf_conditions": [
+    "Q2 2026 reported gross margin ≥ 17.2% (current TTM level) — confirms mix-shift thesis intact",
+    "Q2 2026 overseas sales volume shows continued sequential growth consistent with broker '海外销量增长势头强劲' language",
+    "Consensus FY2026 NP estimates revised upward ≥5% within 2 weeks of Q2 report",
+    "Price sustainably breaks and holds above the ¥103.2/¥104.0 chip-cluster resistance band (combined 18.64% of float)",
+    "May/June 2026 monthly export sales prints maintain the Q1 momentum that sell-side cited"
+  ],
+  "what_changes_our_mind": "Q2 2026 reported gross margin falls below 15% (WATCHLIST wrongIf threshold) AND mgmt commentary attributes it to European price competition — would validate the localization-erosion mechanism.",
+  "daily_log": [
+    {
+      "date": "2026-05-11",
+      "price": 100.02,
+      "return_pct": 0.0,
+      "status": "ACTIVE"
+    }
+  ],
+  "_verification_pending": true,
+  "_note": "wrongIf/rightIf conditions kept as text — semantic verification deferred to verify_thesis.py"
+}
