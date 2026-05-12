@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-12T10:18:19.861390",
+    "fetched_at": "2026-05-12T16:38:19.891476",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -23,17 +23,17 @@
         "volume": 3454213600,
         "avg_volume_20d": 29514185,
         "volume_ratio": 117.04,
-        "high_52w": 1022.9,
+        "high_52w": 946.79,
         "low_52w": 436.44
       },
       "technical": {
-        "sma_20": 851.06,
-        "sma_50": 689.04,
+        "sma_20": 842.27,
+        "sma_50": 682.33,
         "sma_200": null,
-        "rsi_14": 76.5,
-        "macd": 71.2613,
-        "macd_signal": 65.541,
-        "macd_histogram": 5.7203,
+        "rsi_14": 68.9,
+        "macd": 63.5061,
+        "macd_signal": 63.9899,
+        "macd_histogram": -0.4838,
         "above_sma_20": true,
         "above_sma_50": true,
         "above_sma_200": null
@@ -100,13 +100,13 @@
         "low_52w": 85.88
       },
       "technical": {
-        "sma_20": 102.03,
-        "sma_50": 100.89,
+        "sma_20": 102.18,
+        "sma_50": 100.93,
         "sma_200": null,
-        "rsi_14": 38.1,
-        "macd": -0.2461,
-        "macd_signal": 0.1839,
-        "macd_histogram": -0.4299,
+        "rsi_14": 40.7,
+        "macd": -0.0753,
+        "macd_signal": 0.218,
+        "macd_histogram": -0.2933,
         "above_sma_20": false,
         "above_sma_50": false,
         "above_sma_200": null
@@ -173,13 +173,13 @@
         "low_52w": 14.96
       },
       "technical": {
-        "sma_20": 23.34,
-        "sma_50": 20.87,
+        "sma_20": 23.38,
+        "sma_50": 20.84,
         "sma_200": null,
-        "rsi_14": 34.7,
-        "macd": 0.2641,
-        "macd_signal": 0.5425,
-        "macd_histogram": -0.2783,
+        "rsi_14": 33.3,
+        "macd": 0.3098,
+        "macd_signal": 0.5516,
+        "macd_histogram": -0.2418,
         "above_sma_20": false,
         "above_sma_50": true,
         "above_sma_200": null
@@ -213,10 +213,10 @@
         "enterprise_value": 207658450944
       },
       "analyst": {
-        "target_mean": 29.390823,
-        "target_high": 36.15258,
-        "target_low": 21.14287,
-        "target_median": 28.88911,
+        "target_mean": 29.388273,
+        "target_high": 36.14944,
+        "target_low": 21.141035,
+        "target_median": 28.886602,
         "recommendation": "strong_buy",
         "num_analysts": 25
       },
@@ -246,13 +246,13 @@
         "low_52w": 16.78
       },
       "technical": {
-        "sma_20": 18.12,
+        "sma_20": 18.09,
         "sma_50": 18.36,
         "sma_200": null,
-        "rsi_14": 71.6,
-        "macd": 0.193,
-        "macd_signal": 0.0952,
-        "macd_histogram": 0.0978,
+        "rsi_14": 72.5,
+        "macd": 0.1829,
+        "macd_signal": 0.0932,
+        "macd_histogram": 0.0897,
         "above_sma_20": true,
         "above_sma_50": true,
         "above_sma_200": null

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-12T10:21:55.959615+00:00",
+  "generated_at": "2026-05-12T16:42:07.418872+00:00",
   "date": "2026-05-12",
   "brief_e": "1 REVIEW_TRIM",
   "brief_z": "REVIEW_TRIM1",
@@ -11,14 +11,14 @@
         "status": "HELD",
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
-        "confidence": 13,
+        "confidence": 12,
         "pnl_pct": 49.41,
         "holding_days": 63,
         "weight_pct": 53.4,
         "vp_score": 56,
-        "confluence": -13,
-        "reason_e": "Large unrealised gain +49.4% after 63d. Signal still NEUTRAL (score -13). Consider partial trim to protect profit.",
-        "reason_z": "浮盈+49.4%（持有63天），信号-13仍属信号中性，等待，可考虑部分减仓保护利润。",
+        "confluence": -12,
+        "reason_e": "Large unrealised gain +49.4% after 63d. Signal still NEUTRAL (score -12). Consider partial trim to protect profit.",
+        "reason_z": "浮盈+49.4%（持有63天），信号-12仍属信号中性，等待，可考虑部分减仓保护利润。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → review trim opportunity"
       },
@@ -79,14 +79,14 @@
         "status": "HELD",
         "action": "HOLD",
         "priority": "LOW",
-        "confidence": 14,
+        "confidence": 0,
         "pnl_pct": 3.16,
         "holding_days": 41,
         "weight_pct": 4.2,
         "vp_score": 42,
-        "confluence": 14,
-        "reason_e": "Signal neutral (score 14). P&L +3.2% after 41d. Hold — no new entry/exit trigger. Bullish: Kdj Oversold | RSI 45 | Price vs MA20 -2.8% | Regime: PERMISSIVE | VP 42.",
-        "reason_z": "信号中性（评分14），浮盈+3.2%，持有41天，无新触发条件。多头：KDJ极度超卖(J<0) | RSI 45 | 距MA20 -2.8% | 政策顺风 | VP 42。",
+        "confluence": 0,
+        "reason_e": "Signal neutral (score 0). P&L +3.2% after 41d. Hold — no new entry/exit trigger. RSI nan | Price vs MA20 +nan% | Regime: PERMISSIVE | VP 42.",
+        "reason_z": "信号中性（评分0），浮盈+3.2%，持有41天，无新触发条件。RSI nan | 距MA20 +nan% | 政策顺风 | VP 42。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
@@ -104,8 +104,8 @@
         "weight_pct": 0,
         "vp_score": 51,
         "confluence": 0,
-        "reason_e": "No entry trigger. Score 0, VP 51. RSI 51 | Price vs MA20 -3.3% | VP 51.",
-        "reason_z": "无进场信号。评分0，VP51。RSI 51 | 距MA20 -3.3% | VP 51。",
+        "reason_e": "No entry trigger. Score 0, VP 51. RSI nan | Price vs MA20 +nan% | VP 51.",
+        "reason_z": "无进场信号。评分0，VP51。RSI nan | 距MA20 +nan% | VP 51。",
         "entry_target": null,
         "exit_trigger": null
       },
@@ -121,8 +121,8 @@
         "weight_pct": 0,
         "vp_score": 57,
         "confluence": 0,
-        "reason_e": "No entry trigger. Score 0, VP 57. RSI 57 | Price vs MA20 +3.5% | VP 57.",
-        "reason_z": "无进场信号。评分0，VP57。RSI 57 | 距MA20 +3.5% | VP 57。",
+        "reason_e": "No entry trigger. Score 0, VP 57. RSI nan | Price vs MA20 +nan% | VP 57.",
+        "reason_z": "无进场信号。评分0，VP57。RSI nan | 距MA20 +nan% | VP 57。",
         "entry_target": null,
         "exit_trigger": null
       }
@@ -134,6 +134,18 @@
     "💰 PROFIT REVIEW: 300308.SZ +49.4% — consider partial trim to lock gains"
   ],
   "wrongif_alerts": [
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 3.5 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 3.5（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 3.5,
+      "threshold": 25.0
+    },
     {
       "ticker": "002594.SZ",
       "severity": "HIGH",
@@ -157,18 +169,6 @@
       "indicator": "earnings_growth",
       "actual": -56.9,
       "threshold": -40.0
-    },
-    {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 2.6 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 2.6（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 2.6,
-      "threshold": 25.0
     },
     {
       "ticker": "175.HK",

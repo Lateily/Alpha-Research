@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-12T10:21:56.274530+00:00",
+    "generated_at": "2026-05-12T16:42:07.708139+00:00",
     "schema_version": 1,
     "method": "median_of_3_signals_aggregator",
     "tie_break_rule": "n2_consensus_only",
@@ -47,7 +47,7 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "OVERPRICED",
-          "delta": -0.8991,
+          "delta": -0.8898,
           "skip_reason": null
         },
         "EV_EBITDA": {
