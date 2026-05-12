@@ -1,10 +1,16 @@
 {
-  "fetched_at": "2026-05-11T17:31:30Z",
+  "fetched_at": "2026-05-12T10:18:59Z",
   "current_tier": 6000,
   "_status": "ok",
   "data": {
     "trade_cal": {
       "rows": [
+        {
+          "exchange": "SSE",
+          "cal_date": "20260512",
+          "is_open": 1,
+          "pretrade_date": "20260511"
+        },
         {
           "exchange": "SSE",
           "cal_date": "20260511",
@@ -792,11 +798,20 @@
           "pretrade_date": "20251231"
         }
       ],
-      "row_count": 131,
+      "row_count": 132,
       "_status": "ok"
     },
     "moneyflow_hsgt": {
       "rows": [
+        {
+          "trade_date": "20260512",
+          "ggt_ss": "30241.74",
+          "ggt_sz": "23566.14",
+          "hgt": "190836.94",
+          "sgt": "214706.54",
+          "north_money": "405543.48",
+          "south_money": "53807.88"
+        },
         {
           "trade_date": "20260511",
           "ggt_ss": "30207.67",
@@ -1120,15 +1135,6 @@
           "sgt": "156969.53",
           "north_money": "295244.72",
           "south_money": "53065.26"
-        },
-        {
-          "trade_date": "20260312",
-          "ggt_ss": "29192.47",
-          "ggt_sz": "23688.31",
-          "hgt": "136610.39",
-          "sgt": "159567.12",
-          "north_money": "296177.51",
-          "south_money": "52880.77"
         }
       ],
       "row_count": 37,

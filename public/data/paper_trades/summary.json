@@ -1,31 +1,31 @@
 {
-  "updated_at": "2026-05-11T17:34:18.716580+00:00",
+  "updated_at": "2026-05-12T10:21:56.352349+00:00",
   "total_theses": 4,
   "active_positions": [
     {
       "ticker": "002594.SZ",
       "direction": "LONG",
       "entry_date": "2026-05-11",
-      "entry_price": NaN,
-      "current_price": 100.44,
-      "return_since_entry_pct": null,
+      "entry_price": 100.44,
+      "current_price": 99.23,
+      "return_since_entry_pct": -1.2,
       "upside_target_pct": 15.0,
       "downside_stop_pct": -10.0,
-      "days_held": 0,
-      "days_to_catalyst": 65,
+      "days_held": 1,
+      "days_to_catalyst": 64,
       "current_status": "ACTIVE"
     },
     {
       "ticker": "603233.SH",
       "direction": "SHORT",
       "entry_date": "2026-05-11",
-      "entry_price": NaN,
-      "current_price": 18.8,
-      "return_since_entry_pct": null,
+      "entry_price": 18.8,
+      "current_price": 18.76,
+      "return_since_entry_pct": -0.21,
       "upside_target_pct": 6.0,
       "downside_stop_pct": -5.0,
-      "days_held": 0,
-      "days_to_catalyst": 109,
+      "days_held": 1,
+      "days_to_catalyst": 108,
       "current_status": "ACTIVE"
     }
   ],

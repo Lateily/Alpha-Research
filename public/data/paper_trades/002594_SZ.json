@@ -5,11 +5,11 @@
   "thesis_logged_at": "2026-05-11T10:48:33.297986+00:00",
   "direction": "LONG",
   "entry_date": "2026-05-11",
-  "entry_price": NaN,
-  "current_price": 100.44,
-  "current_date": "2026-05-11",
-  "days_held": 0,
-  "return_since_entry_pct": null,
+  "entry_price": 100.44,
+  "current_price": 99.23,
+  "current_date": "2026-05-12",
+  "days_held": 1,
+  "return_since_entry_pct": -1.2,
   "expected_pnl": {
     "upside_if_right": "+15% to +30% (toward mean target 119.55, high 137.00)",
     "downside_if_wrong": "-10% to -15% (toward 60d support 87.05/85.88)",
@@ -22,7 +22,7 @@
     "2026-07-15",
     "2026-08-31"
   ],
-  "days_to_catalyst": 65,
+  "days_to_catalyst": 64,
   "current_status": "ACTIVE",
   "wrongIf_conditions": [
     "Q2 2026 gross margin drops below 15% (WATCHLIST wrongIf trigger)",
@@ -44,6 +44,12 @@
       "date": "2026-05-11",
       "price": 100.44,
       "return_pct": null,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-12",
+      "price": 99.23,
+      "return_pct": -1.2,
       "status": "ACTIVE"
     }
   ],

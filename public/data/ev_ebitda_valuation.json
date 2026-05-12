@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-11T17:34:18.568296+00:00",
+    "generated_at": "2026-05-12T10:21:56.165901+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "ev_ebitda_target_multiple",
@@ -16,65 +16,65 @@
       "ticker": "300308.SZ",
       "model_status": "multi_method",
       "signal": "OVERPRICED",
-      "delta_pct": -70.29,
-      "current_ev_ebitda": 48.735,
+      "delta_pct": -72.56,
+      "current_ev_ebitda": 51.737,
       "current_ebitda": 20036571136,
       "target_multiple": 15.0,
       "fair_ev": 300548567040.0,
       "fair_equity": 311048998784.0,
-      "market_cap": 1046929276928,
+      "market_cap": 1133634125824,
       "net_debt": -10500431744,
       "market": "A",
-      "rationale_e": "EV/EBITDA 48.73x vs A-target 15x; fair_equity +311.0B vs market_cap 1046.9B; delta -70.3% → OVERPRICED",
-      "rationale_z": "EV/EBITDA 48.73x，A市场目标15x；公允股权 +311.0B vs 市值 1046.9B；delta -70.3% → OVERPRICED"
+      "rationale_e": "EV/EBITDA 51.74x vs A-target 15x; fair_equity +311.0B vs market_cap 1133.6B; delta -72.6% → OVERPRICED",
+      "rationale_z": "EV/EBITDA 51.74x，A市场目标15x；公允股权 +311.0B vs 市值 1133.6B；delta -72.6% → OVERPRICED"
     },
     "002594.SZ": {
       "ticker": "002594.SZ",
       "model_status": "multi_method",
       "signal": "UNDERPRICED",
-      "delta_pct": 80.78,
+      "delta_pct": 82.98,
       "current_ev_ebitda": 8.437,
       "current_ebitda": 111350251520,
       "target_multiple": 15.0,
       "fair_ev": 1670253772800.0,
       "fair_equity": 1655444611072.0,
-      "market_cap": 915731316736,
+      "market_cap": 904699510784,
       "net_debt": 14809161728,
       "market": "A",
-      "rationale_e": "EV/EBITDA 8.44x vs A-target 15x; fair_equity +1655.4B vs market_cap 915.7B; delta +80.8% → UNDERPRICED",
-      "rationale_z": "EV/EBITDA 8.44x，A市场目标15x；公允股权 +1655.4B vs 市值 915.7B；delta +80.8% → UNDERPRICED"
+      "rationale_e": "EV/EBITDA 8.44x vs A-target 15x; fair_equity +1655.4B vs market_cap 904.7B; delta +83.0% → UNDERPRICED",
+      "rationale_z": "EV/EBITDA 8.44x，A市场目标15x；公允股权 +1655.4B vs 市值 904.7B；delta +83.0% → UNDERPRICED"
     },
     "175.HK": {
       "ticker": "175.HK",
       "model_status": "multi_method",
       "signal": "OVERPRICED",
-      "delta_pct": -15.67,
-      "current_ev_ebitda": 12.394,
+      "delta_pct": -16.11,
+      "current_ev_ebitda": 12.201,
       "current_ebitda": 17019106304,
       "target_multiple": 12.0,
       "fair_ev": 204229275648.0,
       "fair_equity": 204229275648.0,
-      "market_cap": 242187894784,
+      "market_cap": 243457359872,
       "net_debt": 0,
       "market": "HK",
-      "rationale_e": "EV/EBITDA 12.39x vs HK-target 12x; fair_equity +204.2B vs market_cap 242.2B; delta -15.7% → OVERPRICED",
-      "rationale_z": "EV/EBITDA 12.39x，HK市场目标12x；公允股权 +204.2B vs 市值 242.2B；delta -15.7% → OVERPRICED"
+      "rationale_e": "EV/EBITDA 12.20x vs HK-target 12x; fair_equity +204.2B vs market_cap 243.5B; delta -16.1% → OVERPRICED",
+      "rationale_z": "EV/EBITDA 12.20x，HK市场目标12x；公允股权 +204.2B vs 市值 243.5B；delta -16.1% → OVERPRICED"
     },
     "603233.SH": {
       "ticker": "603233.SH",
       "model_status": "multi_method",
       "signal": "UNDERPRICED",
-      "delta_pct": 98.17,
+      "delta_pct": 98.6,
       "current_ev_ebitda": 5.597,
       "current_ebitda": 3535788544,
       "target_multiple": 12.0,
       "fair_ev": 42429462528.0,
       "fair_equity": 42429462528.0,
-      "market_cap": 21410344960,
+      "market_cap": 21364791296,
       "net_debt": 0,
       "market": "HK",
-      "rationale_e": "EV/EBITDA 5.60x vs HK-target 12x; fair_equity +42.4B vs market_cap 21.4B; delta +98.2% → UNDERPRICED",
-      "rationale_z": "EV/EBITDA 5.60x，HK市场目标12x；公允股权 +42.4B vs 市值 21.4B；delta +98.2% → UNDERPRICED"
+      "rationale_e": "EV/EBITDA 5.60x vs HK-target 12x; fair_equity +42.4B vs market_cap 21.4B; delta +98.6% → UNDERPRICED",
+      "rationale_z": "EV/EBITDA 5.60x，HK市场目标12x；公允股权 +42.4B vs 市值 21.4B；delta +98.6% → UNDERPRICED"
     }
   }
 }
