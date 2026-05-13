@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-12T16:42:07.708139+00:00",
+    "generated_at": "2026-05-13T10:15:30.494483+00:00",
     "schema_version": 1,
     "method": "median_of_3_signals_aggregator",
     "tie_break_rule": "n2_consensus_only",
@@ -47,12 +47,12 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "OVERPRICED",
-          "delta": -0.8898,
+          "delta": -0.9396,
           "skip_reason": null
         },
         "EV_EBITDA": {
           "signal": "OVERPRICED",
-          "delta_pct": -72.56,
+          "delta_pct": -73.38,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
@@ -79,17 +79,17 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "UNDERPRICED",
-          "delta": 0.1308,
+          "delta": 0.1324,
           "skip_reason": null
         },
         "EV_EBITDA": {
           "signal": "UNDERPRICED",
-          "delta_pct": 82.98,
+          "delta_pct": 84.15,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
           "signal": "OVERPRICED",
-          "delta_pp": -23.57,
+          "delta_pp": -23.35,
           "skip_reason": null
         }
       },
@@ -98,7 +98,7 @@
     },
     "175.HK": {
       "ticker": "175.HK",
-      "triangulated_signal": "OVERPRICED",
+      "triangulated_signal": "FAIRLY_VALUED",
       "methods_count": 1,
       "methods_used": [
         "EV_EBITDA"
@@ -122,8 +122,8 @@
           "skip_reason": "rdcf_missing"
         },
         "EV_EBITDA": {
-          "signal": "OVERPRICED",
-          "delta_pct": -16.11,
+          "signal": "FAIRLY_VALUED",
+          "delta_pct": -11.48,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
@@ -132,8 +132,8 @@
           "skip_reason": "ri_wacc_missing"
         }
       },
-      "rationale_e": "Only Method EV_EBITDA available; methods_count=1. Triangulated signal = OVERPRICED.",
-      "rationale_z": "仅 EV_EBITDA 可用；methods_count=1。三角信号 = OVERPRICED。"
+      "rationale_e": "Only Method EV_EBITDA available; methods_count=1. Triangulated signal = FAIRLY_VALUED.",
+      "rationale_z": "仅 EV_EBITDA 可用；methods_count=1。三角信号 = FAIRLY_VALUED。"
     },
     "603233.SH": {
       "ticker": "603233.SH",
@@ -162,7 +162,7 @@
         },
         "EV_EBITDA": {
           "signal": "UNDERPRICED",
-          "delta_pct": 98.6,
+          "delta_pct": 31.52,
           "skip_reason": null
         },
         "Residual_Income_EBO": {

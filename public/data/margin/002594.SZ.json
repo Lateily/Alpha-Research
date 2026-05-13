@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-12T16:42:06Z",
+  "fetched_at": "2026-05-13T10:15:28Z",
   "api_used": "margin_detail",
   "window_days": 30,
   "records": [
@@ -238,16 +238,29 @@
       "rqmcl": 32900,
       "rzrqye": 14208910270.0,
       "name": null
+    },
+    {
+      "trade_date": "20260512",
+      "ts_code": "002594.SZ",
+      "rzye": 14176283153.0,
+      "rqye": 51340412.0,
+      "rzmre": 316944986.0,
+      "rqyl": 517388.0,
+      "rzche": 298414898.0,
+      "rqchl": 43143,
+      "rqmcl": 51200,
+      "rzrqye": 14227623565.0,
+      "name": null
     }
   ],
   "summary": {
-    "total_count": 18,
-    "latest_date": "2026-05-11",
-    "latest_rzye": 14157753065.0,
-    "latest_rqye": 51157205.0,
-    "rzye_change_30d_pct": 4.392787281203513,
-    "rqye_change_30d_pct": -21.57706860558694,
-    "net_leverage_change_30d": 25.969855886790455,
+    "total_count": 19,
+    "latest_date": "2026-05-12",
+    "latest_rzye": 14176283153.0,
+    "latest_rqye": 51340412.0,
+    "rzye_change_30d_pct": 4.529419663899049,
+    "rqye_change_30d_pct": -21.29621608457888,
+    "net_leverage_change_30d": 25.82563574847793,
     "signal_level": "LEVERAGE_BULL_HIGH"
   }
 }
