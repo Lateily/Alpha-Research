@@ -39,12 +39,12 @@
         "score": 10,
         "source": "rdcf_delta",
         "signal": "OVERPRICED",
-        "delta": -0.94,
-        "implied_growth": 128.1,
+        "delta": -0.913,
+        "implied_growth": 125.4,
         "our_growth": 34.1,
         "hyper_growth": true
       },
-      "engine_run_at": "2026-05-13T10:15:30.089795+00:00"
+      "engine_run_at": "2026-05-13T16:46:10.679056+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -89,7 +89,7 @@
         "our_growth": 28.0,
         "hyper_growth": false
       },
-      "engine_run_at": "2026-05-13T10:15:30.090407+00:00"
+      "engine_run_at": "2026-05-13T16:46:10.679726+00:00"
     },
     {
       "ticker": "175.HK",
@@ -130,7 +130,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-05-13T10:15:30.090951+00:00"
+      "engine_run_at": "2026-05-13T16:46:10.680318+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -171,7 +171,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-05-13T10:15:30.091524+00:00"
+      "engine_run_at": "2026-05-13T16:46:10.680894+00:00"
     }
   ]
 }
