@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-13T16:46:11.182247+00:00",
+  "updated_at": "2026-05-14T04:55:03.174264+00:00",
   "total_theses": 4,
   "active_positions": [
     {
@@ -7,12 +7,12 @@
       "direction": "LONG",
       "entry_date": "2026-05-11",
       "entry_price": 100.44,
-      "current_price": 98.6,
-      "return_since_entry_pct": -1.83,
+      "current_price": 98.86,
+      "return_since_entry_pct": -1.57,
       "upside_target_pct": 15.0,
       "downside_stop_pct": -10.0,
-      "days_held": 2,
-      "days_to_catalyst": 63,
+      "days_held": 3,
+      "days_to_catalyst": 62,
       "current_status": "ACTIVE"
     },
     {
@@ -20,12 +20,12 @@
       "direction": "SHORT",
       "entry_date": "2026-05-11",
       "entry_price": 18.8,
-      "current_price": 18.75,
-      "return_since_entry_pct": -0.27,
+      "current_price": 18.67,
+      "return_since_entry_pct": -0.69,
       "upside_target_pct": 6.0,
       "downside_stop_pct": -5.0,
-      "days_held": 2,
-      "days_to_catalyst": 107,
+      "days_held": 3,
+      "days_to_catalyst": 106,
       "current_status": "ACTIVE"
     }
   ],

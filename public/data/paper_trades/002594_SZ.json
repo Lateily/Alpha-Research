@@ -6,10 +6,10 @@
   "direction": "LONG",
   "entry_date": "2026-05-11",
   "entry_price": 100.44,
-  "current_price": 98.6,
-  "current_date": "2026-05-13",
-  "days_held": 2,
-  "return_since_entry_pct": -1.83,
+  "current_price": 98.86,
+  "current_date": "2026-05-14",
+  "days_held": 3,
+  "return_since_entry_pct": -1.57,
   "expected_pnl": {
     "upside_if_right": "+15% to +30% (toward mean target 119.55, high 137.00)",
     "downside_if_wrong": "-10% to -15% (toward 60d support 87.05/85.88)",
@@ -22,7 +22,7 @@
     "2026-07-15",
     "2026-08-31"
   ],
-  "days_to_catalyst": 63,
+  "days_to_catalyst": 62,
   "current_status": "ACTIVE",
   "wrongIf_conditions": [
     "Q2 2026 gross margin drops below 15% (WATCHLIST wrongIf trigger)",
@@ -56,6 +56,12 @@
       "date": "2026-05-13",
       "price": 98.6,
       "return_pct": -1.83,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-14",
+      "price": 98.86,
+      "return_pct": -1.57,
       "status": "ACTIVE"
     }
   ],

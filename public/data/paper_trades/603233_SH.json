@@ -6,10 +6,10 @@
   "direction": "SHORT",
   "entry_date": "2026-05-11",
   "entry_price": 18.8,
-  "current_price": 18.75,
-  "current_date": "2026-05-13",
-  "days_held": 2,
-  "return_since_entry_pct": -0.27,
+  "current_price": 18.67,
+  "current_date": "2026-05-14",
+  "days_held": 3,
+  "return_since_entry_pct": -0.69,
   "expected_pnl": {
     "upside_if_right": "+6% to +10% (¥18.55 → ¥17.00-17.50)",
     "downside_if_wrong": "-5% to -8% (stop above ¥19.50 chip cluster)",
@@ -21,7 +21,7 @@
   "catalyst_dates_parsed": [
     "2026-08-28"
   ],
-  "days_to_catalyst": 107,
+  "days_to_catalyst": 106,
   "current_status": "ACTIVE",
   "wrongIf_conditions": [
     "1H26 revenue growth YoY ≥6% AND op margin held ≥10.5% — validating dual-drive thesis",
@@ -55,6 +55,12 @@
       "date": "2026-05-13",
       "price": 18.75,
       "return_pct": -0.27,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-14",
+      "price": 18.67,
+      "return_pct": -0.69,
       "status": "ACTIVE"
     }
   ],
