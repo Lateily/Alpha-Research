@@ -5973,6 +5973,7 @@ function ConditionVerificationPanel({ outcome, trade, L, C }) {
     const m = {
       TRIGGERED: { c: C.green, t: L('Triggered','已触发') },
       NOT_TRIGGERED: { c: C.red, t: L('Not triggered','未触发') },
+      INSUFFICIENT_DISCLOSURE: { c: C.blue, t: L('No disclosure','未披露') },
       INCONCLUSIVE: { c: C.gold, t: L('Inconclusive','不明') },
       PENDING_HUMAN_REVIEW: { c: C.mid, t: L('Pending','待审') },
     };

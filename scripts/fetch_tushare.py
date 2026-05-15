@@ -212,6 +212,31 @@ def _per_ticker_payload(pro, ticker):
             lambda: pro.dividend(ts_code=ts_code, start_date=start_1825, end_date=end_date),
             "dividend",
         ),
+        # ── Segment economics (KR1 2026-05-15, Junyan verdict follow-up) ──
+        # fina_mainbz = 主营业务构成. type='D' → 分地区 (境内/境外),
+        # type='P' → 分产品 (汽车/电池/手机部件/...). Carries bz_sales +
+        # bz_cost when disclosed → lets research_data_loader derive
+        # region-level & product-level GROSS MARGIN. This is the exact
+        # evidence layer Junyan's 2026-05-15 BYD critique flagged missing
+        # (vertical-integration→export-margin was only co-occurrence, no
+        # region GM). HONEST CAVEAT: many issuers disclose 境外 blended
+        # with non-auto businesses and/or omit bz_cost → derivation marks
+        # _limitation. fina_mainbz needs ~2000 Tushare points; current tier
+        # 6000 covers it, and it is NOT in the deferred-3 set
+        # (stk_factor_pro/top_list/moneyflow_cnt). If a future tier
+        # downgrade locks it, _api_result captures the error non-fatally.
+        "fina_mainbz_region": _api_result(
+            lambda: pro.fina_mainbz(
+                ts_code=ts_code, start_date=start_1825, end_date=end_date, type="D"
+            ),
+            "fina_mainbz_region",
+        ),
+        "fina_mainbz_product": _api_result(
+            lambda: pro.fina_mainbz(
+                ts_code=ts_code, start_date=start_1825, end_date=end_date, type="P"
+            ),
+            "fina_mainbz_product",
+        ),
         "forecast": dict(TIER_LOCKED_FORECAST),
     }
 

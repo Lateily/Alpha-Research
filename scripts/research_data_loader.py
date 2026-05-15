@@ -147,6 +147,186 @@ def load_tushare_suite(ticker: str) -> dict:
     return out
 
 
+def _classify_region(item: str) -> str:
+    """Bucket a fina_mainbz 分地区 bz_item label into domestic/overseas/other.
+    Heuristic — Chinese issuers label inconsistently. When ambiguous we
+    return 'other' rather than guessing (honest > clever)."""
+    if not item:
+        return 'other'
+    s = str(item)
+    overseas_kw = ('境外', '海外', '国外', '出口', '国际', 'Overseas', 'Oversea',
+                   'Export', 'Abroad', 'Foreign', 'International', '欧洲', '美洲',
+                   '亚洲（不含', '其他国家', '外销')
+    domestic_kw = ('境内', '国内', '中国大陆', '大陆', 'Domestic', 'PRC', 'China',
+                   'Mainland', '内销', '中国境内')
+    if any(k in s for k in overseas_kw):
+        return 'overseas'
+    if any(k in s for k in domestic_kw):
+        return 'domestic'
+    return 'other'
+
+
+def _seg_margin(row: dict) -> dict:
+    """Compute gross margin for one fina_mainbz row. Returns gm (true GM
+    from bz_sales-bz_cost) when bz_cost disclosed, else gp_margin proxy
+    from bz_profit. NEVER fabricates — missing inputs → None + reason."""
+    sales = row.get('bz_sales')
+    cost = row.get('bz_cost')
+    profit = row.get('bz_profit')
+    out = {'bz_sales': sales, 'bz_cost': cost, 'bz_profit': profit,
+           'gm': None, 'gm_basis': None}
+    try:
+        s = float(sales) if sales is not None else None
+    except (TypeError, ValueError):
+        s = None
+    if not s:
+        out['gm_basis'] = 'no_sales_disclosed'
+        return out
+    try:
+        c = float(cost) if cost is not None else None
+    except (TypeError, ValueError):
+        c = None
+    try:
+        p = float(profit) if profit is not None else None
+    except (TypeError, ValueError):
+        p = None
+    if c is not None:
+        out['gm'] = round((s - c) / s * 100, 2)
+        out['gm_basis'] = 'true_gm (bz_sales - bz_cost)'
+    elif p is not None:
+        out['gm'] = round(p / s * 100, 2)
+        out['gm_basis'] = 'PROXY gp_margin (bz_profit/bz_sales — NOT true GM, bz_cost not disclosed)'
+    else:
+        out['gm_basis'] = 'no_cost_no_profit_disclosed'
+    return out
+
+
+def derive_segment_economics(ticker: str) -> dict:
+    """KR1 (2026-05-15, Junyan verdict follow-up). Derive region-level &
+    product-level gross margin from Tushare fina_mainbz, to attack the
+    BYD critique: 'vertical-integration → export-margin' was only
+    company-level co-occurrence, no region GM proof.
+
+    Returns honest structure. The CALLER / prompt must treat a
+    proxy/blended result as PROXY evidence, not proof — _limitation
+    states exactly why."""
+    tj = safe_load(PUBLIC_DATA / 'tushare' / f'{ticker}.json')
+    if not tj or not isinstance(tj, dict):
+        return {'_status': 'not_available',
+                '_note': f'tushare/{ticker}.json missing (HK/US ticker or not fetched)'}
+    data = tj.get('data', {}) if isinstance(tj.get('data'), dict) else {}
+    region_blk = data.get('fina_mainbz_region', {})
+    product_blk = data.get('fina_mainbz_product', {})
+    region_rows = region_blk.get('rows') or []
+    product_rows = product_blk.get('rows') or []
+
+    if not region_rows and not product_rows:
+        status = region_blk.get('_status') or product_blk.get('_status') or 'not_available'
+        return {'_status': 'no_segment_disclosure',
+                '_note': f'fina_mainbz returned no rows (_status={status}). '
+                         f'Issuer may not break out segments, or tier-locked.'}
+
+    def _latest_period(rows: list):
+        periods = sorted({r.get('end_date') for r in rows if r.get('end_date')}, reverse=True)
+        return periods[0] if periods else None
+
+    out = {'_status': 'loaded', 'source': 'tushare fina_mainbz',
+           '_methodology': 'GM = (bz_sales - bz_cost)/bz_sales when bz_cost '
+                           'disclosed; else PROXY = bz_profit/bz_sales. '
+                           'Region buckets via label heuristic.'}
+    limitations = []
+
+    # ── By region (the critical one for the BYD export-margin question) ──
+    rperiod = _latest_period(region_rows)
+    if rperiod:
+        buckets = {'domestic': [], 'overseas': [], 'other': []}
+        for r in region_rows:
+            if r.get('end_date') != rperiod:
+                continue
+            buckets[_classify_region(r.get('bz_item'))].append(r)
+
+        def _agg(rows):
+            if not rows:
+                return None
+            tot_s = tot_c = tot_p = 0.0
+            have_c = have_p = False
+            items = []
+            for r in rows:
+                m = _seg_margin(r)
+                items.append({'bz_item': r.get('bz_item'), **m})
+                try:
+                    tot_s += float(r.get('bz_sales') or 0)
+                except (TypeError, ValueError):
+                    pass
+                if r.get('bz_cost') is not None:
+                    have_c = True
+                    try:
+                        tot_c += float(r.get('bz_cost'))
+                    except (TypeError, ValueError):
+                        pass
+                if r.get('bz_profit') is not None:
+                    have_p = True
+                    try:
+                        tot_p += float(r.get('bz_profit'))
+                    except (TypeError, ValueError):
+                        pass
+            agg_gm = None
+            basis = None
+            if have_c and tot_s:
+                agg_gm = round((tot_s - tot_c) / tot_s * 100, 2)
+                basis = 'true_gm'
+            elif have_p and tot_s:
+                agg_gm = round(tot_p / tot_s * 100, 2)
+                basis = 'PROXY gp_margin'
+            return {'agg_sales': tot_s, 'agg_gm_pct': agg_gm,
+                    'agg_gm_basis': basis, 'items': items}
+
+        dom = _agg(buckets['domestic'])
+        ovs = _agg(buckets['overseas'])
+        out['by_region'] = {'period': rperiod, 'domestic': dom,
+                            'overseas': ovs,
+                            'other': _agg(buckets['other'])}
+        if dom and ovs and dom.get('agg_gm_pct') is not None and ovs.get('agg_gm_pct') is not None:
+            gap = round(ovs['agg_gm_pct'] - dom['agg_gm_pct'], 2)
+            out['overseas_minus_domestic_gm_bps'] = int(gap * 100)
+            if 'PROXY' in (str(dom.get('agg_gm_basis')) + str(ovs.get('agg_gm_basis'))):
+                limitations.append(
+                    'overseas/domestic GM gap is PROXY (bz_profit-based, '
+                    'bz_cost not disclosed) — directional only, NOT audited true GM')
+        else:
+            limitations.append(
+                'cannot compute overseas-vs-domestic GM gap: one or both '
+                'region buckets lack disclosed cost/profit OR not split by 境内/境外')
+        # blended-business caveat (BYD-specific risk Junyan flagged)
+        if ovs:
+            for it in (ovs.get('items') or []):
+                lbl = str(it.get('bz_item') or '')
+                if any(k in lbl for k in ('电子', '手机', '部件', '代工', '组装')):
+                    limitations.append(
+                        f'overseas bucket contains non-auto line "{lbl}" — '
+                        f'export GM is BLENDED with handset/electronics; does '
+                        f'NOT isolate auto-export unit economics (this is '
+                        f'exactly the residual gap in Junyan 2026-05-15 verdict)')
+                    break
+    else:
+        limitations.append('no 分地区 (region) segment rows — cannot address export-margin question from this source')
+
+    # ── By product (汽车 vs 电池 vs 手机部件) — supporting context ──
+    pperiod = _latest_period(product_rows)
+    if pperiod:
+        prod = []
+        for r in product_rows:
+            if r.get('end_date') != pperiod:
+                continue
+            prod.append({'bz_item': r.get('bz_item'), **_seg_margin(r)})
+        out['by_product'] = {'period': pperiod, 'segments': prod}
+    else:
+        limitations.append('no 分产品 (product) segment rows')
+
+    out['_limitation'] = limitations or ['none — true GM by region disclosed and isolable']
+    return out
+
+
 def load_vp_snapshot(ticker: str) -> dict:
     """vp_snapshot structure: {date, snapshots: [{ticker, vp, decomp, ...}]}"""
     vp = safe_load(PUBLIC_DATA / 'vp_snapshot.json')
@@ -329,6 +509,7 @@ def load_context(ticker: str) -> dict:
         'recent_news_5d': load_recent_news(ticker, days=5),
         'sector_regime': load_sector_regime(ticker),
         'peer_comparison': load_peers(ticker),  # Phase 2.D 2026-05-10
+        'segment_economics': derive_segment_economics(ticker),  # KR1 2026-05-15
     }
 
     # Coverage summary — quick visibility into what's available vs missing

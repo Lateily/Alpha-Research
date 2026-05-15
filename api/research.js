@@ -880,6 +880,55 @@ function buildExtrasBlock(extras) {
     lines.push('+370bps margin advantage from vertical integration".');
   }
 
+  // 7.6. Segment economics — region/product GROSS MARGIN (KR1 2026-05-15)
+  // Junyan 2026-05-15 verdict: BYD's "vertical-integration → export-margin"
+  // was only company-level co-occurrence (GM up + exports up), NO region
+  // GM. This block surfaces fina_mainbz-derived 境内/境外 + 汽车/电池 GM.
+  // CRITICAL: _limitation is printed verbatim so agents CANNOT silently
+  // upgrade a PROXY/BLENDED number to a proven causal claim. Pairs with
+  // the EVIDENCE TIERING DIRECTIVE (a region-GM gap that is proxy/blended
+  // must be tagged [E2:proxy], not [E1:direct]).
+  const seg = extras.segment_economics;
+  if (seg && typeof seg === 'object' && seg._status === 'loaded') {
+    lines.push('');
+    lines.push('━━━ SEGMENT ECONOMICS — REGION / PRODUCT GROSS MARGIN (fina_mainbz) ━━━');
+    lines.push(`Methodology: ${seg._methodology || ''}`);
+    const br = seg.by_region;
+    if (br && typeof br === 'object') {
+      lines.push(`BY REGION (period ${br.period || '?'}):`);
+      for (const k of ['domestic', 'overseas', 'other']) {
+        const r = br[k];
+        if (r && r.agg_gm_pct != null) {
+          lines.push(`  ${k}: GM ${r.agg_gm_pct}% [${r.agg_gm_basis || '?'}] (sales ${r.agg_sales != null ? (r.agg_sales / 1e8).toFixed(1) + '亿' : '—'})`);
+        } else if (r) {
+          lines.push(`  ${k}: GM not derivable (cost/profit not disclosed); sales ${r.agg_sales != null ? (r.agg_sales / 1e8).toFixed(1) + '亿' : '—'}`);
+        }
+      }
+      if (seg.overseas_minus_domestic_gm_bps != null) {
+        lines.push(`  ⇒ overseas − domestic GM gap: ${seg.overseas_minus_domestic_gm_bps >= 0 ? '+' : ''}${seg.overseas_minus_domestic_gm_bps} bps`);
+      }
+    }
+    const bp = seg.by_product;
+    if (bp && Array.isArray(bp.segments) && bp.segments.length > 0) {
+      lines.push(`BY PRODUCT (period ${bp.period || '?'}):`);
+      for (const s of bp.segments.slice(0, 8)) {
+        lines.push(`  ${s.bz_item}: GM ${s.gm != null ? s.gm + '%' : '—'} [${s.gm_basis || '?'}]`);
+      }
+    }
+    const lims = Array.isArray(seg._limitation) ? seg._limitation : [seg._limitation].filter(Boolean);
+    lines.push('LIMITATION (you MUST respect this — do NOT state a limited number as proven):');
+    for (const l of lims) lines.push(`  ⚠ ${l}`);
+    lines.push('USE: this is the PRIMARY evidence for any export/overseas-margin');
+    lines.push('claim. If GM gap is true_gm and isolable → that claim may be');
+    lines.push('tagged [E1:direct]. If PROXY or BLENDED per LIMITATION → the');
+    lines.push('causal claim is at best [E2:proxy] and MUST NOT be asserted as fact.');
+  } else if (seg && typeof seg === 'object' && seg._status && seg._status !== 'loaded') {
+    lines.push('');
+    lines.push(`SEGMENT ECONOMICS: not available (${seg._status}${seg._note ? ' — ' + seg._note : ''}). `
+      + 'Any overseas/export-margin causal claim therefore CANNOT be [E1:direct] '
+      + '— it is at best [E2:proxy] from company-level aggregates. Do not assert as proven.');
+  }
+
   // 8. Coverage gaps explicit
   if (extras._coverage_summary && typeof extras._coverage_summary === 'object') {
     const missing = Object.entries(extras._coverage_summary)

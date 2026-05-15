@@ -92,6 +92,17 @@ def verify_one(ticker: str, dry_run: bool = False) -> Optional[dict]:
                 'kind': kind,
                 'original_text': c,
                 'verification_status': 'PENDING_HUMAN_REVIEW',
+                # KR3 (Junyan 2026-05-15): conditions are now MECHANIZED
+                # at generation (metric+op+threshold @ named disclosure
+                # event | source | if_not_disclosed). Reviewer resolves to
+                # one of these 4 — INSUFFICIENT_DISCLOSURE is distinct from
+                # INCONCLUSIVE: the former = company didn't disclose the
+                # metric at the catalyst (unjudgeable, itself a signal);
+                # the latter = disclosed but ambiguous.
+                'verification_vocab': [
+                    'TRIGGERED', 'NOT_TRIGGERED',
+                    'INSUFFICIENT_DISCLOSURE', 'INCONCLUSIVE',
+                ],
                 'verified_at': None,
                 'verified_by': None,
                 'evidence_observed': None,  # to be filled by reviewer
@@ -133,9 +144,14 @@ def verify_one(ticker: str, dry_run: bool = False) -> Optional[dict]:
         'verified_final_outcome': None,  # WIN | LOSS | PARTIAL | UNCLEAR — to be set by reviewer
         '_methodology_note': (
             'MVP scaffold: this record carries the wrongIf/rightIf as PENDING_HUMAN_REVIEW. '
-            'When the catalyst event occurs (e.g., 2026-08-28 BYD Q2 print), a human (Junyan) '
-            'or future automated NLP/data-integration pass should mark each condition as '
-            'TRIGGERED | NOT_TRIGGERED | INCONCLUSIVE with evidence. '
+            'KR3 (Junyan 2026-05-15): conditions are MECHANIZED at generation so they are '
+            'judgeable at the named disclosure event. When the catalyst occurs (e.g., '
+            '2026-08-28 BYD H1 print) a human (Junyan) or future NLP/data pass marks each '
+            'condition as one of: TRIGGERED | NOT_TRIGGERED | INSUFFICIENT_DISCLOSURE | '
+            'INCONCLUSIVE, with evidence. INSUFFICIENT_DISCLOSURE (issuer did not disclose '
+            'the metric) is tracked separately from INCONCLUSIVE (disclosed but ambiguous) '
+            'and from a clean TRIGGERED/NOT_TRIGGERED — the split is itself a calibration '
+            'signal on how falsifiable our conditions actually were. '
             'Once all conditions resolved, set verified_final_outcome to compute hit rate '
             'into outcomes_summary.'
         ),

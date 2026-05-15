@@ -189,10 +189,15 @@ const THESIS_SCHEMA_INSTRUCTION = `OUTPUT JSON SCHEMA (mandatory):
     "predicted_horizon": "FUTURE date or window",
     "confidence": 0.0-1.0
   },
-  "step_5_proves_right_if": ["specific observable conditions, 3-5 items"],
-  "step_6_proves_wrong_if": ["specific observable conditions, 3-5 items"],
+  "step_5_proves_right_if": ["MECHANIZED conditions 3-5 — each a single string in the EXACT template: '<metric> <op ≥/≤/>/</=> <numeric threshold + unit> @ <named catalyst/disclosure event> | source: <exact doc + line/field, e.g. 2026 H1 报告 合并利润表 营业成本> | if_not_disclosed: INSUFFICIENT_DISCLOSURE'"],
+  "step_6_proves_wrong_if": ["MECHANIZED conditions 3-5 — same template as step_5. Soft conditions are rejected (see FALSIFIABILITY DIRECTIVE)"],
   "step_7_variant_view": {
     "variant_view_one_sentence": "Market believes X → We believe Y → Mechanism is Z",
+    "core_causal_link": {
+      "link_sentence": "the ONE if-false-thesis-dies causal step",
+      "evidence_tier": "E1:direct | E2:proxy | E3:narrative | E4:crowding",
+      "tier_justification": "which exact DATA CONTEXT line supports this tier; if not E1, explicitly say what primary data would be needed to make it E1"
+    },
     "time_to_resolution": "...",
     "expected_pnl_asymmetry": {
       "upside_if_right": "+X% to +Y%",
@@ -223,6 +228,33 @@ const THESIS_SCHEMA_INSTRUCTION = `OUTPUT JSON SCHEMA (mandatory):
 
 GROUNDING RULE: every numeric claim must come from the data context above
 or be labeled "[external estimate, not in our data context]". Don't fabricate.
+
+═══════════════════════════════════════════════════════════════════════
+FALSIFIABILITY DIRECTIVE (KR3 — Junyan verdict 2026-05-15) — applies to step_5 & step_6
+═══════════════════════════════════════════════════════════════════════
+Junyan's BYD critique: conditions like "overseas sales continued
+sequential growth consistent with broker language" / "price sustainably
+breaks and holds" / "May/June export sales maintain Q1 momentum" are
+TOO SOFT — at the catalyst print nobody can objectively say if they
+triggered. EVERY step_5 / step_6 condition MUST be judgeable, at the
+named disclosure event, into EXACTLY one of:
+  TRIGGERED | NOT_TRIGGERED | INSUFFICIENT_DISCLOSURE
+(INSUFFICIENT_DISCLOSURE = the company did not disclose the metric at
+that event, so the condition is unjudgeable — distinct from a triggered
+or not-triggered verdict, and itself a learning signal.)
+
+Each condition string MUST contain, in order:
+  1. a SPECIFIC metric (e.g. "2026 H1 consolidated gross margin",
+     "2026 H1 汽车业务 segment revenue YoY", NOT "momentum"/"strength")
+  2. an explicit operator + NUMERIC threshold with unit
+     (≥17.2% / <15% / >+30% YoY / ≤ ¥95 — NEVER "sustainably"/"strong"/
+     "consistent with broker language"/"maintains")
+  3. "@ <named catalyst/disclosure event>" (e.g. "@ 2026 H1 报告 2026-08-28")
+  4. "| source: <exact statement + line/field>" naming WHERE the number
+     will be read (e.g. "合并利润表: 营业收入/营业成本"; "经营数据公告: 海外销量")
+  5. "| if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+A condition that cannot be written this way is NOT falsifiable — drop it
+or replace it. Vague conditions will be rejected in review.
 
 Return ONLY valid JSON, no commentary outside.`;
 
@@ -368,6 +400,60 @@ HARD CITATION RULES — your output WILL BE REJECTED if violated
 
 `;
 
+// ════════════════════════════════════════════════════════════════════
+// EVIDENCE TIERING DIRECTIVE — Junyan verdict 2026-05-15 (KR2)
+// ════════════════════════════════════════════════════════════════════
+// Junyan's BYD critique: the thesis IMPLIED "vertical integration →
+// export margin uplift" was proven, when the data only showed
+// co-occurrence (company-level GM up + exports up) — no region-level
+// export GM. And ~half the citations proved "everyone is watching this
+// story" (crowding), not "we understood earlier than the market" (edge).
+// This directive forces every claim to wear its evidence strength on
+// its sleeve so a PROXY/NARRATIVE/CROWDING claim can never masquerade
+// as a PROVEN one.
+const EVIDENCE_TIERING_DIRECTIVE = `
+═══════════════════════════════════════════════════════════════════════
+EVIDENCE TIERING — MANDATORY inline tag on EVERY claim. Output rejected if missing.
+═══════════════════════════════════════════════════════════════════════
+
+Tag EVERY item in step_2_mechanism.mechanism_chain, step_3_evidence
+(evidence_quantitative, evidence_qualitative), and
+step_3_evidence.contrarian_view.our_variant with ONE prefix:
+
+  [E1:direct]  — the DATA CONTEXT contains the EXACT primary metric that
+                 proves this specific claim. e.g. SEGMENT ECONOMICS shows
+                 true_gm overseas 22% vs domestic 16% → "exports are
+                 higher-margin" is [E1:direct].
+  [E2:proxy]   — only an INDIRECT / AGGREGATE / co-occurrence number
+                 exists; the causal step is INFERRED not measured. e.g.
+                 "company-level GM rose AND exports rose, therefore
+                 exports are margin-accretive" is [E2:proxy] — the link
+                 is not measured at segment level.
+  [E3:narrative] — a broker / analyst / news report ASSERTS it but we
+                 hold no primary data confirming it. e.g. "国联民生 says
+                 Q1 GM improved on export mix" with no segment print.
+  [E4:crowding]  — inst-visit / 龙虎榜 / momentum / target-price-cluster
+                 signal showing ATTENTION or CONSENSUS, not a fundamental
+                 mechanism. "Value Partners + 高盛 visited" is [E4:crowding]
+                 — it proves the story is watched, NOT that we are early.
+
+HARD RULES:
+1. The SINGLE most load-bearing link of your variant view — the one
+   sentence that, if false, kills the thesis — name it explicitly in
+   step_7_variant_view as "core_causal_link" and state its tier.
+2. If core_causal_link is [E2]/[E3]/[E4] you MUST NOT phrase it as
+   established fact. Use "inferred", "not yet measured", "asserted by
+   X but unconfirmed in our data". Stating a non-E1 link as proven is
+   the exact overselling failure this directive exists to kill.
+3. A pile of [E3]/[E4] does NOT sum to [E1]. Ten brokers repeating the
+   same story is still [E3] (consensus), not direct proof — and is
+   itself evidence the edge may already be priced.
+4. Citations: when you cite a broker/inst/news item, ask "does this
+   ESTABLISH the mechanism (→ E1/E2) or merely show the crowd is
+   watching it (→ E3/E4)?" Tag honestly. Junyan will check this.
+═══════════════════════════════════════════════════════════════════════
+`;
+
 function bullR1Prompt(ticker, dataContextBlock) {
   return `${BULL_ROLE_SYSTEM.replace('$ticker', ticker)}
 
@@ -377,6 +463,7 @@ DATA CONTEXT (use this — don't fabricate)
 ${dataContextBlock}
 
 ${HARD_CITATION_DIRECTIVE}
+${EVIDENCE_TIERING_DIRECTIVE}
 
 ═══════════════════════════════════════════════════════
 TASK: Produce the strongest LONG thesis for ${ticker}.
@@ -399,6 +486,7 @@ DATA CONTEXT (use this — don't fabricate)
 ${dataContextBlock}
 
 ${HARD_CITATION_DIRECTIVE}
+${EVIDENCE_TIERING_DIRECTIVE}
 
 ═══════════════════════════════════════════════════════
 TASK: Produce the strongest SHORT thesis for ${ticker}.
@@ -467,10 +555,13 @@ by B. ..."
 ═══════════════════════════════════════════════════════
 
 ${HARD_CITATION_DIRECTIVE}
+${EVIDENCE_TIERING_DIRECTIVE}
 
 CHECK BEFORE EMITTING: your round-2 mechanism_chain MUST cite specific
-broker reports / inst visits / 龙虎榜 / news from data context (rule 1).
-If round 1 didn't, this is your chance to fix it.
+broker reports / inst visits / 龙虎榜 / news from data context (rule 1),
+AND every claim must carry its [E1/E2/E3/E4] evidence tier. If round 1
+didn't, this is your chance to fix it — especially: is your
+core_causal_link really [E1:direct], or were you overselling an [E2]?
 
 ${THESIS_SCHEMA_INSTRUCTION}`;
 }
@@ -511,10 +602,13 @@ Output: full updated 8-step JSON per schema, PLUS a "_rebuttal" field.
 ═══════════════════════════════════════════════════════
 
 ${HARD_CITATION_DIRECTIVE}
+${EVIDENCE_TIERING_DIRECTIVE}
 
 CHECK BEFORE EMITTING: your round-2 mechanism_chain MUST cite specific
-broker reports / inst visits / 龙虎榜 / news from data context (rule 1).
-If round 1 didn't, this is your chance to fix it.
+broker reports / inst visits / 龙虎榜 / news from data context (rule 1),
+AND every claim must carry its [E1/E2/E3/E4] evidence tier. If round 1
+didn't, this is your chance to fix it — especially: is your
+core_causal_link really [E1:direct], or were you overselling an [E2]?
 
 ${THESIS_SCHEMA_INSTRUCTION}`;
 }
@@ -563,15 +657,24 @@ Output JSON ONLY:
   "technical_vs_bear": "AGREES | CONFLICTS | NEUTRAL — explanation",
   "bull_contrarian_quality": "BUSINESS_MECHANISM | VALUATION_ONLY | GENERIC — does Bull cite specific broker reports / inst visits / 龙虎榜 / news / mgmt commentary, or just compare numbers?",
   "bear_contrarian_quality": "BUSINESS_MECHANISM | VALUATION_ONLY | GENERIC",
-  "verdict_on_grounding": "BULL_BETTER_GROUNDED | BEAR_BETTER_GROUNDED | BOTH_HALLUCINATED | EVENLY_GROUNDED | BOTH_VALUATION_ONLY",
+  "bull_core_link_tier_audit": {
+    "agent_self_tier": "the evidence_tier Bull assigned its core_causal_link",
+    "your_independent_tier": "E1:direct | E2:proxy | E3:narrative | E4:crowding — YOUR call from the data context, ignoring Bull's self-rating",
+    "verdict": "AGREE | OVERSTATED (claimed stronger than data supports — the overselling failure) | UNDERSTATED",
+    "evidence": "which exact DATA CONTEXT line justifies your tier; if SEGMENT ECONOMICS shows the gap is PROXY/BLENDED, an export-margin core link claimed [E1] is OVERSTATED"
+  },
+  "bear_core_link_tier_audit": { "...same shape as bull..." },
+  "citations_edge_vs_crowding": "of the broker/inst/news items each side cites, estimate how many ESTABLISH the mechanism (edge) vs merely show the crowd is watching (crowding/consensus). Junyan: 'many citations prove everyone is watching this story, not that we understood earlier.'",
+  "verdict_on_grounding": "BULL_BETTER_GROUNDED | BEAR_BETTER_GROUNDED | BOTH_HALLUCINATED | EVENLY_GROUNDED | BOTH_VALUATION_ONLY | CORE_LINK_OVERSTATED_BOTH",
   "verdict_rationale": "1-2 sentences why"
 }
 
-NOTE: BOTH_VALUATION_ONLY is a NEW verdict for Junyan §6 directive:
-neither side articulated a business-level contrarian mechanism. Use
-this when both bull and bear are essentially "P/E low so cheap" /
-"P/E high so expensive" without citing the broker/inst/news data
-in their mechanism chain. This signals Synthesizer should emit PASS.`;
+NOTE: BOTH_VALUATION_ONLY — neither side articulated a business-level
+contrarian mechanism (both essentially "P/E low so cheap"). Signals PASS.
+NOTE: CORE_LINK_OVERSTATED_BOTH — both sides' load-bearing causal link
+is really E2/E3/E4 but was asserted as proven. This is the exact BYD
+failure mode (Junyan 2026-05-15). Signals Synthesizer should PASS or
+heavily down-confidence + restate the link as inferred-not-proven.`;
 }
 
 // ─── Synthesizer prompt ──────────────────────────────────────────────────
@@ -585,21 +688,43 @@ Weight the inputs by:
 - Bull and Bear's round-2 arguments (post-rebuttal — are there points still standing on each side?)
 - BUSINESS-MECHANISM RIGOR: does either side's variant view cite specific broker reports, inst research visits, 龙虎榜 activity, mgmt commentary, OR is it pure valuation arithmetic? Side with stronger business-mechanism wins (per CONTRARIAN VIEW REQUIREMENT in role prompts).
 
-If Forensic says BOTH_HALLUCINATED OR there's high disagreement that
-neither side can resolve via the data → emit direction = PASS (don't
-trade).
+CORE-LINK HONESTY GATE (KR2 — Junyan 2026-05-15): read Forensic's
+bull_core_link_tier_audit / bear_core_link_tier_audit. If the winning
+side's core_causal_link is OVERSTATED (claimed [E1] but data only
+supports [E2]/[E3]/[E4]), you have two honest choices and MUST pick one:
+  (a) keep the direction but RESTATE the core link as inferred-not-proven
+      (explicit "[E2:proxy] — not measured at segment level"), lower
+      confidence, and shrink position_sizing_curve; OR
+  (b) emit PASS.
+You may NOT silently keep the overstated [E1] phrasing. This is the
+exact BYD failure (company-GM-up + exports-up ≠ proof exports are
+margin-accretive).
 
-If BOTH bull and bear failed the CONTRARIAN VIEW REQUIREMENT (their
-variant views are valuation-only or generic) → ALSO emit PASS with
-rationale "Neither side articulated a business-level contrarian view
-from data context. Thesis quality insufficient — defer."
+PASS TAXONOMY (KR4 — Junyan 2026-05-15): if _direction = PASS you MUST
+also set "_pass_reason" to EXACTLY one of, and fill "_pass_reason_detail":
+  • NO_EDGE_DESPITE_DATA — data context is adequate, both sides argued
+    it, but no asymmetric edge exists (efficiently priced). Forensic
+    BOTH_VALUATION_ONLY with full data → this.
+  • INSUFFICIENT_DATA — our data packet lacks the business signal needed
+    to judge (missing broker/inst/news/segment). NOT "market has no
+    edge" — WE cannot see one. (Geely 175.HK is THIS, not no-edge —
+    Junyan's explicit correction. Upstream INSUFFICIENT_BUSINESS_SIGNAL
+    / INSUFFICIENT_NARRATIVE_DATA map here.)
+  • BALANCED_RISK_REWARD — a real mechanism exists but reward:risk is
+    inadequate (< 2:1) / symmetric. (大参林-type: thesis fine, R:R 1.5:1.)
+  • CATALYST_NOT_YET_OBSERVABLE — mechanism plausible but the deciding
+    observable has not printed yet; no edge UNTIL it does. (Innolight-type:
+    1.6T order timing / utilization unresolved until H1/Q2 print.)
+_pass_reason_detail must name the specific missing data / R:R number /
+unresolved observable. "INSUFFICIENT_DATA" with no named gap is rejected.
 
 The final thesis you produce MUST itself comply with CONTRARIAN VIEW
 REQUIREMENT — your variant_view_one_sentence and step_2_mechanism.mechanism_chain
 must articulate business mechanism with specific data-context references
 (broker name, inst visit, news event, mgmt commentary, etc.), NOT valuation
 arithmetic. If you cannot articulate this from the upstream agent outputs +
-data context, emit PASS — that is a valid output.
+data context, emit PASS with the correct _pass_reason — that is a valid,
+PREFERRED output over a forced or oversold thesis.
 
 ═══════════════════════════════════════════════════════
 DATA CONTEXT for ${ticker}:
@@ -611,15 +736,25 @@ TECHNICAL: ${JSON.stringify(technical).slice(0, 2000)}
 FORENSIC: ${JSON.stringify(forensic).slice(0, 4000)}
 ═══════════════════════════════════════════════════════
 
+${EVIDENCE_TIERING_DIRECTIVE}
+
 OUTPUT REQUIREMENTS:
 
-1. Produce ONE canonical 8-step thesis JSON per the schema below.
+1. Produce ONE canonical 8-step thesis JSON per the schema below. Your
+   step_7_variant_view.core_causal_link MUST carry an honest evidence_tier
+   reconciled with Forensic's tier audit (do NOT inherit an OVERSTATED
+   tier). Every mechanism_chain / evidence item carries its [E1-E4] tag.
 2. The thesis you produce should reflect the BEST-grounded view, with
-   appropriate confidence calibration based on Bull/Bear disagreement.
+   confidence calibrated to Bull/Bear disagreement AND core-link tier
+   (a non-E1 core link caps confidence — an E3/E4 core link with a LONG/
+   SHORT direction is almost always a PASS instead).
 3. Add these EXTRA fields to your output:
    "_direction": "LONG" | "SHORT" | "PASS",
    "_divergence_score": 0-100 (how much Bull and Bear disagreed on key metrics — high = high uncertainty),
-   "_synthesizer_rationale": "2-3 sentences explaining why this direction over the other"
+   "_synthesizer_rationale": "2-3 sentences explaining why this direction over the other",
+   "_evidence_profile": { "core_link_tier": "E1|E2|E3|E4", "counts": {"E1": n, "E2": n, "E3": n, "E4": n}, "overstatement_corrected": true|false (did you have to down-tier vs the winning agent's self-rating?) },
+   "_pass_reason": "NO_EDGE_DESPITE_DATA | INSUFFICIENT_DATA | BALANCED_RISK_REWARD | CATALYST_NOT_YET_OBSERVABLE | null (null ONLY when _direction is LONG or SHORT)",
+   "_pass_reason_detail": "specific named gap / R:R figure / unresolved observable — required when _direction = PASS, else null"
 
 ${THESIS_SCHEMA_INSTRUCTION}`;
 }

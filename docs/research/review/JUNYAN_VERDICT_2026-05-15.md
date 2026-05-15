@@ -102,10 +102,48 @@ citations on that axis.
 
 ---
 
-**Derived iteration KRs** (tracked separately in next commit):
-1. BYD causal gap → add `fina_mainbz` → derive 境内/境外 GM (limitation: may be handset-blended)
-2. Anti-oversell: thesis must tag causal chains PROVEN | INFERRED | ASSUMED
-3. Synth PASS taxonomy: MARKET_NO_EDGE vs DATA_CONTEXT_INSUFFICIENT
-4. Forensic citation grade: EDGE_ESTABLISHING | CONSENSUS_CONFIRMING | CROWDING_SIGNAL | DECORATIVE
-5. wrongIf mechanization gate (validateThesisQuality) — soft-language flag
-6. R/R < 2:1 → conviction tag WATCH/SMALL vs FULL
+**Derived iteration KRs** (initial draft — superseded by Junyan's
+authoritative renumbering + scope in the same-day reply, below).
+
+---
+
+## Implementation log — Junyan-authoritative bundle (option 3)
+
+Junyan chose "Full bundle KR1+2+3+4, single re-run", constraint
+KR1-first → KR2/3/4 → THEN one paid 4-ticker re-run (his $ gate).
+Implemented 2026-05-16, self-reviewed (ops + prompt only, no
+investment-logic compute touched — eligible per burn-conscious rule):
+
+- **KR1 (data)** ✓ `fetch_tushare.py` fetches `fina_mainbz` type=D
+  (region) + type=P (product). `research_data_loader.derive_segment_economics`
+  computes true GM = (bz_sales−bz_cost)/bz_sales, else PROXY
+  bz_profit/bz_sales; buckets 境内/境外 by label heuristic; emits
+  explicit `_limitation` (handset-blended / proxy-only / no-cost).
+  Threaded via `run_research` extras → rendered in `research.js`
+  buildExtrasBlock with LIMITATION printed verbatim.
+- **KR2 (anti-oversell)** ✓ `EVIDENCE_TIERING_DIRECTIVE` → every claim
+  tagged [E1:direct|E2:proxy|E3:narrative|E4:crowding]; mandatory
+  `step_7.core_causal_link{tier,justification}`; Forensic independently
+  audits self-tier (AGREE/OVERSTATED/UNDERSTATED) + edge-vs-crowding;
+  Synth core-link honesty gate + `_evidence_profile`.
+- **KR3 (falsifiability)** ✓ `FALSIFIABILITY DIRECTIVE`: step_5/6 must
+  be `<metric> <op> <numeric thresh> @ <event> | source: <doc/field> |
+  if_not_disclosed: INSUFFICIENT_DISCLOSURE`. `verify_thesis.py` +
+  Dashboard badge carry the 4-valued vocab.
+- **KR4 (PASS taxonomy)** ✓ Synth must emit `_pass_reason` ∈
+  {NO_EDGE_DESPITE_DATA, INSUFFICIENT_DATA, BALANCED_RISK_REWARD,
+  CATALYST_NOT_YET_OBSERVABLE} + named `_pass_reason_detail`. Geely
+  maps to INSUFFICIENT_DATA (Junyan's explicit correction, not no-edge).
+
+**Status:** code shipped, syntax/build green, KR1 degrades honestly
+pre-fetch (`no_segment_disclosure`). UNVALIDATED until the re-run —
+fina_mainbz may still return blended/empty for BYD/大参林; that is a
+data-reality outcome, not a bug, and KR2's limitation-printing means
+the thesis will say so rather than oversell.
+
+**Deferred (NOT in this wave, per Junyan):** old-KR5 wrongIf gate in
+`validateThesisQuality` (investment-logic, needs T2); old-KR6 R/R<2:1
+conviction tag.
+
+**GATE:** paid 4-ticker multi-agent re-run NOT triggered — Junyan's
+explicit $ trigger.

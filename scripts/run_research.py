@@ -169,6 +169,7 @@ def build_enrichment_context(ctx: dict, news: Optional[list] = None) -> Optional
             'fragility': ctx.get('fragility', {}),
             'persona_overlay': ctx.get('persona_overlay', {}),
             'peer_comparison': ctx.get('peer_comparison', []),  # Phase 2.D 2026-05-10
+            'segment_economics': ctx.get('segment_economics', {}),  # KR1 2026-05-15
             '_coverage_summary': ctx.get('_coverage_summary', {}),
             '_tushare_coverage': ctx.get('_tushare_coverage', {}),
         },
