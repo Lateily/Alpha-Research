@@ -1,38 +1,59 @@
 {
   "ticker": "603233.SH",
   "generated_at": "2026-05-15",
-  "price": 18.75,
+  "price": 18.81,
   "zone": "NEUTRAL",
-  "entry_zone": false,
+  "entry_zone": true,
   "exit_zone": false,
-  "signals": [],
+  "signals": [
+    {
+      "type": "MA20_BOUNCE",
+      "strength": "moderate",
+      "date": "2026-05-15",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA20 (18.2) — near-term support held",
+        "z": "股价从MA20(18.2)附近反弹，短期支撑有效"
+      }
+    },
+    {
+      "type": "MA60_BOUNCE",
+      "strength": "strong",
+      "date": "2026-05-15",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA60 (18.5) — major support held",
+        "z": "股价从MA60(18.5)附近反弹，主要支撑有效"
+      }
+    }
+  ],
   "signal_count": {
-    "bullish": 0,
+    "bullish": 2,
     "bearish": 0,
-    "total": 0
+    "total": 2
   },
   "indicators": {
-    "ma5": 18.77,
+    "ma5": 18.78,
     "ma20": 18.33,
     "ma60": 18.52,
-    "rsi14": 57.1,
-    "vol_ma20": 6310138,
-    "vol_ratio": 0.36,
-    "price_vs_ma20": 2.3,
-    "price_vs_ma60": 1.26,
-    "change_1d": -0.11,
-    "change_5d": 1.08,
-    "change_20d": 9.91,
-    "macd_dif": 0.1998,
-    "macd_dea": 0.1464,
-    "macd_hist": 0.1068,
-    "bb_upper": 19.45,
+    "rsi14": 58.2,
+    "vol_ma20": 6428125,
+    "vol_ratio": 0.72,
+    "price_vs_ma20": 2.61,
+    "price_vs_ma60": 1.58,
+    "change_1d": 0.21,
+    "change_5d": 1.4,
+    "change_20d": 10.26,
+    "macd_dif": 0.2046,
+    "macd_dea": 0.1474,
+    "macd_hist": 0.1144,
+    "bb_upper": 19.46,
     "bb_mid": 18.33,
     "bb_lower": 17.21,
-    "bb_bandwidth": 12.23,
-    "kdj_k": 47.4,
-    "kdj_d": 54.7,
-    "kdj_j": 33.0,
+    "bb_bandwidth": 12.28,
+    "kdj_k": 49.4,
+    "kdj_d": 55.3,
+    "kdj_j": 37.4,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-15T04:58:45.360169+00:00",
+  "generated_at": "2026-05-15T10:46:33.678165+00:00",
   "date": "2026-05-15",
   "brief_e": "1 REVIEW_TRIM",
   "brief_z": "REVIEW_TRIM1",
@@ -11,14 +11,14 @@
         "status": "HELD",
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
-        "confidence": 15,
-        "pnl_pct": 56.77,
+        "confidence": 11,
+        "pnl_pct": 54.08,
         "holding_days": 66,
-        "weight_pct": 54.7,
+        "weight_pct": 54.3,
         "vp_score": 56,
-        "confluence": -15,
-        "reason_e": "Large unrealised gain +56.8% after 66d. Signal still NEUTRAL (score -15). Consider partial trim to protect profit.",
-        "reason_z": "浮盈+56.8%（持有66天），信号-15仍属信号中性，等待，可考虑部分减仓保护利润。",
+        "confluence": -11,
+        "reason_e": "Large unrealised gain +54.1% after 66d. Signal still NEUTRAL (score -11). Consider partial trim to protect profit.",
+        "reason_z": "浮盈+54.1%（持有66天），信号-11仍属信号中性，等待，可考虑部分减仓保护利润。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → review trim opportunity"
       },
@@ -48,7 +48,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 59,
-        "weight_pct": 23.7,
+        "weight_pct": 24.0,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 59d. Hold — no new entry/exit trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 52,
-        "weight_pct": 13.7,
+        "weight_pct": 13.8,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 52d. Hold — no new entry/exit trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -79,39 +79,39 @@
         "status": "HELD",
         "action": "HOLD",
         "priority": "LOW",
-        "confidence": 0,
-        "pnl_pct": 0.98,
+        "confidence": 24,
+        "pnl_pct": 0.11,
         "holding_days": 44,
         "weight_pct": 4.0,
         "vp_score": 42,
-        "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L +1.0% after 44d. Hold — no new entry/exit trigger. RSI 40 | Price vs MA20 -4.1% | Regime: PERMISSIVE | VP 42.",
-        "reason_z": "信号中性（评分0），浮盈+1.0%，持有44天，无新触发条件。RSI 40 | 距MA20 -4.1% | 政策顺风 | VP 42。",
+        "confluence": 24,
+        "reason_e": "Signal neutral (score 24). P&L +0.1% after 44d. Hold — no new entry/exit trigger. Bullish: Kdj Oversold, Bb Lower Break | RSI 38 | Price vs MA20 -4.9% | Regime: PERMISSIVE | VP 42.",
+        "reason_z": "信号中性（评分24），浮盈+0.1%，持有44天，无新触发条件。多头：KDJ极度超卖(J<0)、布林下轨支撑 | RSI 38 | 距MA20 -4.9% | 政策顺风 | VP 42。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
     ],
     "watchlist": [
       {
-        "ticker": "175.HK",
-        "name": "175.HK",
+        "ticker": "603233.SH",
+        "name": "603233.SH",
         "status": "WATCHLIST",
         "action": "WATCH",
         "priority": "LOW",
-        "confidence": 10,
+        "confidence": 18,
         "pnl_pct": null,
         "holding_days": null,
         "weight_pct": 0,
-        "vp_score": 51,
-        "confluence": 10,
-        "reason_e": "No entry trigger. Score 10, VP 51. Bullish: Controlled Advance | RSI 45 | Price vs MA20 -5.2% | VP 51.",
-        "reason_z": "无进场信号。评分10，VP51。多头：缩量上涨(主力控盘) | RSI 45 | 距MA20 -5.2% | VP 51。",
+        "vp_score": 57,
+        "confluence": 18,
+        "reason_e": "No entry trigger. Score 18, VP 57. Bullish: Ma20 Bounce, Ma60 Bounce | RSI 58 | Price vs MA20 +2.6% | VP 57.",
+        "reason_z": "无进场信号。评分18，VP57。多头：MA20支撑反弹、MA60强支撑反弹 | RSI 58 | 距MA20 +2.6% | VP 57。",
         "entry_target": null,
         "exit_trigger": null
       },
       {
-        "ticker": "603233.SH",
-        "name": "603233.SH",
+        "ticker": "175.HK",
+        "name": "175.HK",
         "status": "WATCHLIST",
         "action": "WATCH",
         "priority": "LOW",
@@ -119,10 +119,10 @@
         "pnl_pct": null,
         "holding_days": null,
         "weight_pct": 0,
-        "vp_score": 57,
+        "vp_score": 51,
         "confluence": 0,
-        "reason_e": "No entry trigger. Score 0, VP 57. RSI 57 | Price vs MA20 +2.3% | VP 57.",
-        "reason_z": "无进场信号。评分0，VP57。RSI 57 | 距MA20 +2.3% | VP 57。",
+        "reason_e": "No entry trigger. Score 0, VP 51. RSI 44 | Price vs MA20 -5.5% | VP 51.",
+        "reason_z": "无进场信号。评分0，VP51。RSI 44 | 距MA20 -5.5% | VP 51。",
         "entry_target": null,
         "exit_trigger": null
       }
@@ -130,8 +130,8 @@
   },
   "buy_watches": [],
   "portfolio_risk": [
-    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 55% of portfolio — above 40.0% limit",
-    "💰 PROFIT REVIEW: 300308.SZ +56.8% — consider partial trim to lock gains"
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 54% of portfolio — above 40.0% limit",
+    "💰 PROFIT REVIEW: 300308.SZ +54.1% — consider partial trim to lock gains"
   ],
   "wrongif_alerts": [
     {
@@ -171,18 +171,6 @@
       "threshold": -40.0
     },
     {
-      "ticker": "175.HK",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
-      "wrongIf_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
-      "note_e": "✅ Clear: revenue_growth = 15.6 (threshold -10.0)",
-      "note_z": "✅ 正常：revenue_growth = 15.6（阈值-10.0）",
-      "indicator": "revenue_growth",
-      "actual": 15.6,
-      "threshold": -10.0
-    },
-    {
       "ticker": "603233.SH",
       "severity": "LOW",
       "status": "MANUAL",
@@ -193,6 +181,18 @@
       "indicator": "unstructured",
       "actual": null,
       "threshold": null
+    },
+    {
+      "ticker": "175.HK",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
+      "wrongIf_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
+      "note_e": "✅ Clear: revenue_growth = 15.6 (threshold -10.0)",
+      "note_z": "✅ 正常：revenue_growth = 15.6（阈值-10.0）",
+      "indicator": "revenue_growth",
+      "actual": 15.6,
+      "threshold": -10.0
     }
   ],
   "regime_summary": [

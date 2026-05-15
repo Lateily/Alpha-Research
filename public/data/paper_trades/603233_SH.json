@@ -6,10 +6,10 @@
   "direction": "SHORT",
   "entry_date": "2026-05-11",
   "entry_price": 18.8,
-  "current_price": 18.75,
+  "current_price": 18.81,
   "current_date": "2026-05-15",
   "days_held": 4,
-  "return_since_entry_pct": -0.27,
+  "return_since_entry_pct": 0.05,
   "expected_pnl": {
     "upside_if_right": "+6% to +10% (¥18.55 → ¥17.00-17.50)",
     "downside_if_wrong": "-5% to -8% (stop above ¥19.50 chip cluster)",
@@ -65,8 +65,8 @@
     },
     {
       "date": "2026-05-15",
-      "price": 18.75,
-      "return_pct": -0.27,
+      "price": 18.81,
+      "return_pct": 0.05,
       "status": "ACTIVE"
     }
   ],

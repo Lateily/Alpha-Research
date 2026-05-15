@@ -6,10 +6,10 @@
   "direction": "LONG",
   "entry_date": "2026-05-11",
   "entry_price": 100.44,
-  "current_price": 97.13,
+  "current_price": 96.3,
   "current_date": "2026-05-15",
   "days_held": 4,
-  "return_since_entry_pct": -3.3,
+  "return_since_entry_pct": -4.12,
   "expected_pnl": {
     "upside_if_right": "+15% to +30% (toward mean target 119.55, high 137.00)",
     "downside_if_wrong": "-10% to -15% (toward 60d support 87.05/85.88)",
@@ -66,8 +66,8 @@
     },
     {
       "date": "2026-05-15",
-      "price": 97.13,
-      "return_pct": -3.3,
+      "price": 96.3,
+      "return_pct": -4.12,
       "status": "ACTIVE"
     }
   ],
