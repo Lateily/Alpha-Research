@@ -1,7 +1,7 @@
 {
   "ticker": "300308.SZ",
-  "generated_at": "2026-05-14",
-  "price": 1078.0,
+  "generated_at": "2026-05-15",
+  "price": 1068.15,
   "zone": "OVERBOUGHT",
   "entry_zone": true,
   "exit_zone": true,
@@ -9,31 +9,31 @@
     {
       "type": "RSI_OVERBOUGHT",
       "strength": "strong",
-      "date": "2026-05-14",
+      "date": "2026-05-15",
       "bullish": false,
       "description": {
-        "e": "RSI(14) = 84.7 — overbought, watch for exhaustion",
-        "z": "RSI(14)=84.7，超买，注意回调风险"
+        "e": "RSI(14) = 82.3 — overbought, watch for exhaustion",
+        "z": "RSI(14)=82.3，超买，注意回调风险"
       }
     },
     {
       "type": "BULLISH_ALIGNMENT",
       "strength": "strong",
-      "date": "2026-05-14",
+      "date": "2026-05-15",
       "bullish": true,
       "description": {
-        "e": "MA5(994.3) > MA20(883.9) > MA60(682.4), price above all — full bullish alignment",
-        "z": "MA5(994.3)>MA20(883.9)>MA60(682.4)，均线多头排列，趋势强"
+        "e": "MA5(1030.7) > MA20(898.7) > MA60(691.2), price above all — full bullish alignment",
+        "z": "MA5(1030.7)>MA20(898.7)>MA60(691.2)，均线多头排列，趋势强"
       }
     },
     {
       "type": "KDJ_OVERBOUGHT",
       "strength": "strong",
-      "date": "2026-05-14",
+      "date": "2026-05-15",
       "bullish": false,
       "description": {
-        "e": "KDJ J=110.5 (extreme >100) — high pullback risk",
-        "z": "KDJ J=110.5极度超买，回调风险高"
+        "e": "KDJ J=102.6 (extreme >100) — high pullback risk",
+        "z": "KDJ J=102.6极度超买，回调风险高"
       }
     }
   ],
@@ -43,27 +43,27 @@
     "total": 3
   },
   "indicators": {
-    "ma5": 994.26,
-    "ma20": 883.87,
-    "ma60": 682.44,
-    "rsi14": 84.7,
-    "vol_ma20": 29518684,
-    "vol_ratio": 1.02,
-    "price_vs_ma20": 21.96,
-    "price_vs_ma60": 57.96,
-    "change_1d": 2.74,
-    "change_5d": 22.85,
-    "change_20d": 46.24,
-    "macd_dif": 86.4967,
-    "macd_dea": 71.9007,
-    "macd_hist": 29.192,
-    "bb_upper": 1042.37,
-    "bb_mid": 883.87,
-    "bb_lower": 725.37,
-    "bb_bandwidth": 35.87,
-    "kdj_k": 88.9,
-    "kdj_d": 78.2,
-    "kdj_j": 110.5,
+    "ma5": 1030.69,
+    "ma20": 898.67,
+    "ma60": 691.25,
+    "rsi14": 82.3,
+    "vol_ma20": 28981232,
+    "vol_ratio": 0.64,
+    "price_vs_ma20": 18.86,
+    "price_vs_ma60": 54.52,
+    "change_1d": -0.91,
+    "change_5d": 20.56,
+    "change_20d": 38.35,
+    "macd_dif": 90.5788,
+    "macd_dea": 75.6366,
+    "macd_hist": 29.8844,
+    "bb_upper": 1067.61,
+    "bb_mid": 898.67,
+    "bb_lower": 729.74,
+    "bb_bandwidth": 37.6,
+    "kdj_k": 88.6,
+    "kdj_d": 81.6,
+    "kdj_j": 102.6,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
