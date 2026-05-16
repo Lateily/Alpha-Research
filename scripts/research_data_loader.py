@@ -250,34 +250,48 @@ def derive_segment_economics(ticker: str) -> dict:
                 return None
             tot_s = tot_c = tot_p = 0.0
             have_c = have_p = False
+            cost_complete = True
+            profit_complete = True
             items = []
             for r in rows:
                 m = _seg_margin(r)
                 items.append({'bz_item': r.get('bz_item'), **m})
+                row_sales = None
                 try:
-                    tot_s += float(r.get('bz_sales') or 0)
+                    row_sales = float(r.get('bz_sales') or 0)
+                    tot_s += row_sales
                 except (TypeError, ValueError):
                     pass
-                if r.get('bz_cost') is not None:
+                if row_sales and r.get('bz_cost') is not None:
                     have_c = True
                     try:
                         tot_c += float(r.get('bz_cost'))
                     except (TypeError, ValueError):
+                        cost_complete = False
                         pass
-                if r.get('bz_profit') is not None:
+                elif row_sales:
+                    cost_complete = False
+                if row_sales and r.get('bz_profit') is not None:
                     have_p = True
                     try:
                         tot_p += float(r.get('bz_profit'))
                     except (TypeError, ValueError):
+                        profit_complete = False
                         pass
+                elif row_sales:
+                    profit_complete = False
             agg_gm = None
             basis = None
-            if have_c and tot_s:
+            if have_c and cost_complete and tot_s:
                 agg_gm = round((tot_s - tot_c) / tot_s * 100, 2)
                 basis = 'true_gm'
-            elif have_p and tot_s:
+            elif have_p and profit_complete and tot_s:
                 agg_gm = round(tot_p / tot_s * 100, 2)
                 basis = 'PROXY gp_margin'
+            elif have_c:
+                basis = 'partial_cost_disclosure'
+            elif have_p:
+                basis = 'partial_profit_disclosure'
             return {'agg_sales': tot_s, 'agg_gm_pct': agg_gm,
                     'agg_gm_basis': basis, 'items': items}
 
