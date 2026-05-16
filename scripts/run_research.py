@@ -240,6 +240,11 @@ def main():
     p.add_argument('--endpoint', default=DEFAULT_ENDPOINT,
                    help=f'API endpoint (default: {DEFAULT_ENDPOINT})')
     p.add_argument('--out', help='Save full response to this path')
+    p.add_argument('--timeout', type=int, default=360,
+                   help='Client HTTP timeout sec. Multi-agent (/api/research-multi) '
+                        'runs 7 LLM calls ~6-10min; use 780 (just under Vercel '
+                        'maxDuration 800) so the client does not abort while the '
+                        'server keeps billing LLM calls. Default 360 = single-agent.')
     p.add_argument('--dry-run', action='store_true',
                    help='Print payload without calling API')
     p.add_argument('--require-yahoo', action='store_true',
@@ -326,6 +331,7 @@ def main():
         direction=args.direction,
         context=args.context,
         enrichment_context=enrichment,
+        timeout_sec=args.timeout,
     )
 
     # 6. Quick quality summary

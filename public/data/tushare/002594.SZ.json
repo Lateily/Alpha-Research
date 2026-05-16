@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-15T10:43:24Z",
+  "fetched_at": "2026-05-16T13:04:47Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -5899,6 +5899,578 @@
       "row_count": 0,
       "_status": "empty"
     },
+    "fina_mainbz_region": {
+      "rows": [
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20251231",
+          "bz_item": "境内(含中国港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 493223970000.0,
+          "bz_profit": 82189754000.0,
+          "bz_cost": 411034216000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20251231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 310740988000.0,
+          "bz_profit": 60470043000.0,
+          "bz_cost": 250270945000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20250630",
+          "bz_item": "境内(含中国港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 235923281000.0,
+          "bz_profit": 40043233000.0,
+          "bz_cost": 195880048000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20250630",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 135357667000.0,
+          "bz_profit": 26822626000.0,
+          "bz_cost": 108535041000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20241231",
+          "bz_item": "境内(含中国港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 555217682000.0,
+          "bz_profit": 112040517000.0,
+          "bz_cost": 443177165000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20241231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 221884773000.0,
+          "bz_profit": 39015322000.0,
+          "bz_cost": 182869451000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20240630",
+          "bz_item": "境内(含港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 211180522000.0,
+          "bz_profit": 44604718000.0,
+          "bz_cost": 166575804000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20240630",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 89946191000.0,
+          "bz_profit": 15662013000.0,
+          "bz_cost": 74284178000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20231231",
+          "bz_item": "境内(含港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 442093854000.0,
+          "bz_profit": 110367228000.0,
+          "bz_cost": 331726626000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20231231",
+          "bz_item": "境内(含中国港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 442093854000.0,
+          "bz_profit": 110367228000.0,
+          "bz_cost": 331726626000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20231231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 160221500000.0,
+          "bz_profit": 11389776000.0,
+          "bz_cost": 148831724000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20230630",
+          "bz_item": "境内(含港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 195714569000.0,
+          "bz_profit": 42456782000.0,
+          "bz_cost": 153257787000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20230630",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 64409574000.0,
+          "bz_profit": 5215805000.0,
+          "bz_cost": 59193769000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20221231",
+          "bz_item": "境内(含港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 332607435000.0,
+          "bz_profit": 68571796000.0,
+          "bz_cost": 264035639000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20221231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 91453200000.0,
+          "bz_profit": 3673159000.0,
+          "bz_cost": 87780041000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "境内(含港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 117224189000.0,
+          "bz_profit": 19477155000.0,
+          "bz_cost": 97747034000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 33383063000.0,
+          "bz_profit": 864619000.0,
+          "bz_cost": 32518444000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "中国(包括港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 117224189000.0,
+          "bz_profit": 19477155000.0,
+          "bz_cost": 97747034000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "境内(含港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 152235378000.0,
+          "bz_profit": 23688691000.0,
+          "bz_cost": 128546687000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 63907017000.0,
+          "bz_profit": 4456015000.0,
+          "bz_cost": 59451002000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "中国(包括港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 152235378000.0,
+          "bz_profit": 23688691000.0,
+          "bz_cost": 128546687000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20210630",
+          "bz_item": "境内(含港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 61455046000.0,
+          "bz_profit": 9957158000.0,
+          "bz_cost": 51497888000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20210630",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 29430354000.0,
+          "bz_profit": 1643324000.0,
+          "bz_cost": 27787030000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20210630",
+          "bz_item": "中国(包括港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 61455046000.0,
+          "bz_profit": 9957158000.0,
+          "bz_cost": 51497888000.0,
+          "curr_type": "CNY"
+        }
+      ],
+      "row_count": 24,
+      "_status": "ok"
+    },
+    "fina_mainbz_product": {
+      "rows": [
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20251231",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 648645636000.0,
+          "bz_profit": 132882696000.0,
+          "bz_cost": 515762940000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20251231",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 155236528000.0,
+          "bz_profit": 9762539000.0,
+          "bz_cost": 145473989000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20251231",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 82794000.0,
+          "bz_profit": 14562000.0,
+          "bz_cost": 68232000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20250630",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 302506271000.0,
+          "bz_profit": 61564841000.0,
+          "bz_cost": 240941430000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20250630",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 68743903000.0,
+          "bz_profit": 5296189000.0,
+          "bz_cost": 63447714000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20250630",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 30774000.0,
+          "bz_profit": 4829000.0,
+          "bz_cost": 25945000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20241231",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 617381935000.0,
+          "bz_profit": 137721076000.0,
+          "bz_cost": 479660859000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20241231",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 159608576000.0,
+          "bz_profit": 13319187000.0,
+          "bz_cost": 146289389000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20241231",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 111944000.0,
+          "bz_profit": 15576000.0,
+          "bz_cost": 96368000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20240630",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 228316902000.0,
+          "bz_profit": 54650168000.0,
+          "bz_cost": 173666734000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20240630",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 72778443000.0,
+          "bz_profit": 5612535000.0,
+          "bz_cost": 67165908000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20240630",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 31368000.0,
+          "bz_profit": 4028000.0,
+          "bz_cost": 27340000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20231231",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 483453318000.0,
+          "bz_profit": 111296815000.0,
+          "bz_cost": 372156503000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20231231",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 118576910000.0,
+          "bz_profit": 10411276000.0,
+          "bz_cost": 108165634000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20231231",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 285126000.0,
+          "bz_profit": 48913000.0,
+          "bz_cost": 236213000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20230630",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 208823603000.0,
+          "bz_profit": 43160709000.0,
+          "bz_cost": 165662894000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20230630",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 51090165000.0,
+          "bz_profit": 4483020000.0,
+          "bz_cost": 46607145000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20230630",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 210375000.0,
+          "bz_profit": 28858000.0,
+          "bz_cost": 181517000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20221231",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 324691175000.0,
+          "bz_profit": 66192238000.0,
+          "bz_cost": 258498937000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20221231",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 98815054000.0,
+          "bz_profit": 5986423000.0,
+          "bz_cost": 92828631000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20221231",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 554406000.0,
+          "bz_profit": 66294000.0,
+          "bz_cost": 488112000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 109267418000.0,
+          "bz_profit": 17815861000.0,
+          "bz_cost": 91451557000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 41069650000.0,
+          "bz_profit": 2495797000.0,
+          "bz_cost": 38573853000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 270184000.0,
+          "bz_profit": 30116000.0,
+          "bz_cost": 240068000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 112489244000.0,
+          "bz_profit": 19562632000.0,
+          "bz_cost": 92926612000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 86454452000.0,
+          "bz_profit": 6547920000.0,
+          "bz_cost": 79906532000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 727493000.0,
+          "bz_profit": 67738000.0,
+          "bz_cost": 659755000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "二次充电电池",
+          "bz_code": "P",
+          "bz_sales": 16471206000.0,
+          "bz_profit": 1966416000.0,
+          "bz_cost": 14504790000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20210630",
+          "bz_item": "汽车",
+          "bz_code": "P",
+          "bz_sales": 39156624000.0,
+          "bz_profit": 7648351000.0,
+          "bz_cost": 31508273000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20210630",
+          "bz_item": "手机部件及组装等",
+          "bz_code": "P",
+          "bz_sales": 43132455000.0,
+          "bz_profit": 3017583000.0,
+          "bz_cost": 40114872000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20210630",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 309203000.0,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20210630",
+          "bz_item": "二次充电电池",
+          "bz_code": "P",
+          "bz_sales": 8287118000.0,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        }
+      ],
+      "row_count": 32,
+      "_status": "ok"
+    },
     "forecast": {
       "rows": null,
       "row_count": 0,
@@ -5907,5 +6479,5 @@
       "_unlock_action": "Upgrade Tushare to 10000-tier (~¥3000-5000/yr) to unlock forecast"
     }
   },
-  "completeness_pct": 75
+  "completeness_pct": 80
 }
