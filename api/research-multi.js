@@ -688,17 +688,44 @@ Weight the inputs by:
 - Bull and Bear's round-2 arguments (post-rebuttal — are there points still standing on each side?)
 - BUSINESS-MECHANISM RIGOR: does either side's variant view cite specific broker reports, inst research visits, 龙虎榜 activity, mgmt commentary, OR is it pure valuation arithmetic? Side with stronger business-mechanism wins (per CONTRARIAN VIEW REQUIREMENT in role prompts).
 
-CORE-LINK HONESTY GATE (KR2 — Junyan 2026-05-15): read Forensic's
-bull_core_link_tier_audit / bear_core_link_tier_audit. If the winning
-side's core_causal_link is OVERSTATED (claimed [E1] but data only
-supports [E2]/[E3]/[E4]), you have two honest choices and MUST pick one:
-  (a) keep the direction but RESTATE the core link as inferred-not-proven
-      (explicit "[E2:proxy] — not measured at segment level"), lower
-      confidence, and shrink position_sizing_curve; OR
-  (b) emit PASS.
-You may NOT silently keep the overstated [E1] phrasing. This is the
-exact BYD failure (company-GM-up + exports-up ≠ proof exports are
-margin-accretive).
+CORE-LINK DECISION GATE (KR2 + Path-B recalibration — Junyan 2026-05-16):
+read Forensic's bull/bear_core_link_tier_audit. First distinguish TWO
+situations that are NOT the same — do not conflate them:
+
+  ① OVERSTATEMENT (the BYD 5/15 failure — forbidden): the agent claimed
+    [E1] but the data only supports [E2]/[E3]/[E4] — it misrepresented
+    evidence strength. Dishonest. You MUST restate the link at its true
+    tier + lower confidence, OR (if nothing tradeable remains) PASS.
+    You may NEVER silently keep an overstated [E1] phrasing.
+
+  ② HONEST FORWARD INFERENCE (legitimate, tradeable): the agent
+    CORRECTLY labels the link [E2:proxy] because it is a FORWARD claim
+    not measurable until a future print — but it rests on an [E1:direct]
+    historical/structural base. This is NOT overstatement. Investment
+    research means taking positions BEFORE the catalyst; requiring the
+    forward leg to already be [E1] would make this a post-event
+    verification engine, not a pre-catalyst research engine.
+
+A correctly-labeled [E2:proxy] FORWARD core link does NOT force PASS.
+Emit a tradeable LONG/SHORT (TIER-SCALED) when ALL hold:
+  (a) the historical/structural BASE is [E1:direct] (e.g. BYD 2025
+      overseas GM 19.46% vs domestic 16.66% = +280bps, segment-disclosed);
+  (b) the forward uncertainty is EXPLICITLY labeled [E2:proxy] — the
+      unknown is named, not hidden (no overstatement);
+  (c) step_5/step_6 KR3 triggers are mechanized + source-bound (a
+      specific named future print resolves the forward leg);
+  (d) reward:risk is favorable (asymmetric payoff toward the thesis);
+  (e) sizing is TIER-SCALED: position_sizing_curve = starter/small size
+      NOW, scale up ONLY after the [E1] confirmation print.
+If ANY of (a)-(e) fails → PASS with the correct _pass_reason.
+
+HARD CONSTRAINT — for such a tradeable-but-capped thesis your
+_synthesizer_rationale AND step_7_variant_view MUST state, in substance:
+  "Tradeable, but not proven. Historical base is [E1:direct] (<what>);
+   forward persistence is [E2:proxy] (<what>); size is capped until the
+   <named H1/Q2 print> confirms."
+That is the target output: honest uncertainty + pre-catalyst position
+sizing — NEITHER a pretty-packaged false [E1] NOR a reflexive PASS.
 
 PASS TAXONOMY (KR4 — Junyan 2026-05-15): if _direction = PASS you MUST
 also set "_pass_reason" to EXACTLY one of, and fill "_pass_reason_detail":
@@ -712,9 +739,14 @@ also set "_pass_reason" to EXACTLY one of, and fill "_pass_reason_detail":
     / INSUFFICIENT_NARRATIVE_DATA map here.)
   • BALANCED_RISK_REWARD — a real mechanism exists but reward:risk is
     inadequate (< 2:1) / symmetric. (大参林-type: thesis fine, R:R 1.5:1.)
-  • CATALYST_NOT_YET_OBSERVABLE — mechanism plausible but the deciding
-    observable has not printed yet; no edge UNTIL it does. (Innolight-type:
-    1.6T order timing / utilization unresolved until H1/Q2 print.)
+  • CATALYST_NOT_YET_OBSERVABLE — mechanism plausible but there is NO
+    [E1:direct] structural/historical BASE to act on yet, AND the
+    deciding observable has not printed. (Innolight-type: 1.6T margin
+    claim is [E3:narrative] with no E1 base.) Path-B GUARD: do NOT use
+    this merely because the FORWARD leg is [E2] — if an [E1] base exists
+    + (a)-(e) of the CORE-LINK DECISION GATE hold, that is a tradeable-
+    but-capped LONG/SHORT, NOT a pass. Forward-leg-is-E2 is normal
+    pre-catalyst research, not a reason to pass.
 _pass_reason_detail must name the specific missing data / R:R number /
 unresolved observable. "INSUFFICIENT_DATA" with no named gap is rejected.
 
@@ -745,16 +777,20 @@ OUTPUT REQUIREMENTS:
    reconciled with Forensic's tier audit (do NOT inherit an OVERSTATED
    tier). Every mechanism_chain / evidence item carries its [E1-E4] tag.
 2. The thesis you produce should reflect the BEST-grounded view, with
-   confidence calibrated to Bull/Bear disagreement AND core-link tier
-   (a non-E1 core link caps confidence — an E3/E4 core link with a LONG/
-   SHORT direction is almost always a PASS instead).
+   core-link tier capping CONFIDENCE + SIZING, not killing direction:
+   an [E2:proxy] FORWARD link with an [E1:direct] base is a tradeable-
+   but-capped LONG/SHORT per the CORE-LINK DECISION GATE (starter size,
+   scale on the E1 print) — NOT an automatic PASS. Only an E3/E4 core
+   link with NO E1 structural base is usually a PASS.
 3. Add these EXTRA fields to your output:
    "_direction": "LONG" | "SHORT" | "PASS",
    "_divergence_score": 0-100 (how much Bull and Bear disagreed on key metrics — high = high uncertainty),
    "_synthesizer_rationale": "2-3 sentences explaining why this direction over the other",
    "_evidence_profile": { "core_link_tier": "E1|E2|E3|E4", "counts": {"E1": n, "E2": n, "E3": n, "E4": n}, "overstatement_corrected": true|false (did you have to down-tier vs the winning agent's self-rating?) },
    "_pass_reason": "NO_EDGE_DESPITE_DATA | INSUFFICIENT_DATA | BALANCED_RISK_REWARD | CATALYST_NOT_YET_OBSERVABLE | null (null ONLY when _direction is LONG or SHORT)",
-   "_pass_reason_detail": "specific named gap / R:R figure / unresolved observable — required when _direction = PASS, else null"
+   "_pass_reason_detail": "specific named gap / R:R figure / unresolved observable — required when _direction = PASS, else null",
+   "_conviction_state": "FULL | STARTER_CAPPED_UNTIL_E1 | null (STARTER_CAPPED_UNTIL_E1 when _direction is LONG/SHORT but core link is an honest [E2:proxy] forward on an [E1] base per the CORE-LINK DECISION GATE; FULL when core link is itself [E1:direct]; null when PASS)",
+   "_tradeable_not_proven_statement": "REQUIRED when _conviction_state = STARTER_CAPPED_UNTIL_E1 — the explicit sentence: 'Tradeable, but not proven. Historical base is [E1:direct] (<what>); forward persistence is [E2:proxy] (<what>); size capped until <named H1/Q2 print> confirms.' null otherwise"
 
 ${THESIS_SCHEMA_INSTRUCTION}`;
 }
