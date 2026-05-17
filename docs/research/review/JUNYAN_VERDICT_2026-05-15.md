@@ -147,3 +147,22 @@ conviction tag.
 
 **GATE:** paid 4-ticker multi-agent re-run NOT triggered — Junyan's
 explicit $ trigger.
+
+---
+
+## RATIFIED 2026-05-17 (Path-B + Rule-X arc complete)
+
+Arc: 5/15 verdict → KR1-4 → all-PASS (over-strict ratchet exposed) →
+Path-B recalibration → Rule-X boundary fix → Geely re-run confirmed.
+
+| Ticker | Ratified direction | Reason |
+|---|---|---|
+| 002594.SZ BYD | **LONG / STARTER_CAPPED_UNTIL_E1** | E1 base = 2025 overseas GM 19.46% vs domestic 16.66% (+280bps, segment-disclosed); E2 forward = persistence; R/R 2.4:1; scale-in gated on mechanized 2026 H1 overseas-segment-GM ≥18% trigger |
+| 603233.SH 大参林 | PASS / CATALYST_NOT_YET_OBSERVABLE | store unit-economics not disclosed; no E1 base for margin-accretion claim |
+| 300308.SZ Innolight | PASS / BALANCED_RISK_REWARD | price already below consensus target; 1.6T margin claim E3:narrative |
+| 175.HK Geely | PASS / INSUFFICIENT_DATA | Rule X — peer-relative base invalid; hybrid-mix causal claim unconfirmable (no segment disclosure) |
+
+Synth gate commits: Path-B `8fa6c38`, Rule-X `aaa1cc4`. Bridge-8
+regenerated from this ratified set `3d476de` (1 active BYD capped +
+3 skipped with distinct KR4 reasons). Raw arc artifacts:
+`docs/research/factcheck/rerun_2026-05-16/`.
