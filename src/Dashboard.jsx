@@ -5884,8 +5884,14 @@ function PaperTradeBoard({ summary, trades, outcomes, L, C }) {
                     <React.Fragment key={i}>
                       <tr style={{borderBottom:`1px solid ${C.border}`, cursor:'pointer'}} onClick={() => setExpandedTicker(isOpen ? null : p.ticker)}>
                         <td style={{padding:'6px 8px', color:C.dark, fontWeight:700, fontFamily:MONO}}>{p.ticker} {isOpen ? '▾' : '▸'}</td>
-                        <td style={{padding:'6px 8px'}}>
+                        <td style={{padding:'6px 8px', whiteSpace:'nowrap'}}>
                           <span style={{padding:'2px 6px', borderRadius:4, fontSize:9, fontWeight:700, color:'#fff', background: p.direction === 'LONG' ? C.green : (p.direction === 'SHORT' ? C.red : C.mid)}}>{p.direction || '?'}</span>
+                          {p.conviction_state === 'STARTER_CAPPED_UNTIL_E1' && (
+                            <span title={L('Tradeable but not proven — starter size, capped until the E1 confirmation print','可交易但未证实 — 起始小仓, E1 确认披露前封顶')}
+                                  style={{marginLeft:4, padding:'2px 5px', borderRadius:4, fontSize:8, fontWeight:700, color:C.dark, background:`${C.gold}30`, border:`1px solid ${C.gold}`}}>
+                              {L('STARTER · capped','起始 · 封顶')}
+                            </span>
+                          )}
                         </td>
                         <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, color:C.mid}}>{fmt(p.entry_price)}</td>
                         <td style={{padding:'6px 8px', textAlign:'right', fontFamily:MONO, color:C.dark}}>{fmt(p.current_price)}</td>
@@ -5898,9 +5904,25 @@ function PaperTradeBoard({ summary, trades, outcomes, L, C }) {
                           <span style={{padding:'2px 6px', borderRadius:4, fontSize:9, fontWeight:700, color:'#fff', background: statusColor(p.current_status, p.direction)}}>{statusLabel(p.current_status)}</span>
                         </td>
                       </tr>
-                      {isOpen && outcome && (
+                      {isOpen && (outcome || trades[p.ticker]?.tradeable_not_proven_statement) && (
                         <tr><td colSpan={10} style={{padding:'10px 14px', background:C.soft, borderBottom:`1px solid ${C.border}`}}>
-                          <ConditionVerificationPanel outcome={outcome} trade={trades[p.ticker]} L={L} C={C}/>
+                          {trades[p.ticker]?.tradeable_not_proven_statement && (
+                            <div style={{marginBottom:10, padding:'8px 10px', background:`${C.gold}12`, border:`1px solid ${C.gold}55`, borderRadius:6, fontSize:10, color:C.dark, lineHeight:1.55}}>
+                              <strong style={{color:C.gold}}>{L('Tradeable, not proven','可交易, 未证实')}:</strong>{' '}
+                              {trades[p.ticker].tradeable_not_proven_statement}
+                              {trades[p.ticker]?.core_causal_link?.evidence_tier && (
+                                <div style={{marginTop:4, fontSize:9, color:C.mid}}>
+                                  core link tier: <strong style={{color:C.dark}}>{trades[p.ticker].core_causal_link.evidence_tier}</strong>
+                                  {trades[p.ticker]?.evidence_profile?.counts && (
+                                    <> · evidence E1/E2/E3/E4 = {['E1','E2','E3','E4'].map(k => trades[p.ticker].evidence_profile.counts?.[k] ?? 0).join('/')}</>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {outcome
+                            ? <ConditionVerificationPanel outcome={outcome} trade={trades[p.ticker]} L={L} C={C}/>
+                            : <div style={{fontSize:10, color:C.mid, fontStyle:'italic'}}>{L('Condition verification record pending next verify_thesis run.','条件验证记录待下次 verify_thesis 生成.')}</div>}
                         </td></tr>
                       )}
                     </React.Fragment>
@@ -5945,13 +5967,32 @@ function PaperTradeBoard({ summary, trades, outcomes, L, C }) {
         </div>
       )}
 
-      {/* SKIPPED PASS NOTE */}
-      {skipped.length > 0 && (
-        <div style={{padding:'8px 12px', background:`${C.mid}10`, borderRadius:6, fontSize:10, color:C.mid}}>
-          <strong style={{color:C.dark}}>{L('Skipped (multi-agent PASS direction)','跳过的 (multi-agent PASS 方向)')}:</strong>{' '}
-          {skipped.map(s => s.ticker).join(', ')} — {L('synthesizer judged "no actionable edge"; honest non-trade is preferred over forced direction.','synthesizer 判 "no edge"; 不下注比强行方向更诚实.')}
-        </div>
-      )}
+      {/* SKIPPED — distinct KR4 PASS reason per ticker */}
+      {skipped.length > 0 && (() => {
+        const passLabel = {
+          INSUFFICIENT_DATA:           { t: L('Insufficient data','数据不足'),       c: C.blue },
+          BALANCED_RISK_REWARD:        { t: L('Balanced R/R','风险回报均衡'),        c: C.gold },
+          CATALYST_NOT_YET_OBSERVABLE: { t: L('Catalyst not observable','催化未到'),  c: C.mid  },
+          NO_EDGE_DESPITE_DATA:        { t: L('No edge','无 edge'),                  c: C.red  },
+        };
+        return (
+          <div style={{padding:'8px 12px', background:`${C.mid}10`, borderRadius:6, fontSize:10, color:C.mid}}>
+            <div style={{fontWeight:700, color:C.dark, marginBottom:6}}>{L('Skipped — synthesizer PASS (honest non-trade preferred over forced direction)','跳过 — synthesizer PASS (不下注优于强行方向)')}</div>
+            {skipped.map((s, i) => {
+              const b = passLabel[s.pass_reason] || { t: s.pass_reason || L('PASS','PASS'), c: C.mid };
+              return (
+                <div key={i} style={{display:'flex', gap:8, alignItems:'flex-start', marginBottom:4}}>
+                  <span style={{fontFamily:MONO, fontWeight:700, color:C.dark, minWidth:72}}>{s.ticker}</span>
+                  <span style={{padding:'1px 6px', borderRadius:4, fontSize:8, fontWeight:700, color:'#fff', background:b.c, whiteSpace:'nowrap', flexShrink:0}}>{b.t}</span>
+                  {s.pass_reason_detail && (
+                    <span style={{flex:1, color:C.mid, lineHeight:1.5}}>{String(s.pass_reason_detail).slice(0, 200)}{String(s.pass_reason_detail).length > 200 ? '…' : ''}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* FOOTER NOTE */}
       <div style={{marginTop:14, padding:'8px 12px', background:`${C.blue}06`, fontSize:9, color:C.mid, borderRadius:4, lineHeight:1.5}}>
