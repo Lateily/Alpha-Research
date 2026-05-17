@@ -1,75 +1,8 @@
 {
   "ticker": "603233.SH",
-  "thesis_source": "docs/research/factcheck/603233SH_thesis_2026-05-10_PHASE2.json",
-  "thesis_source_commit": "125e427",
-  "thesis_logged_at": "2026-05-11T10:48:33.479352+00:00",
-  "direction": "SHORT",
-  "entry_date": "2026-05-11",
-  "entry_price": 18.8,
-  "current_price": 18.81,
-  "current_date": "2026-05-15",
-  "days_held": 4,
-  "return_since_entry_pct": 0.05,
-  "expected_pnl": {
-    "upside_if_right": "+6% to +10% (¥18.55 → ¥17.00-17.50)",
-    "downside_if_wrong": "-5% to -8% (stop above ¥19.50 chip cluster)",
-    "reward_to_risk": "1.5:1 — BELOW 2:1 target, reflects modest conviction"
-  },
-  "upside_target_pct": 6.0,
-  "downside_stop_pct": -5.0,
-  "catalyst_window": "August 2026 [external estimate, not in our data context; exact announcement date not available in our data]",
-  "catalyst_dates_parsed": [
-    "2026-08-28"
-  ],
-  "days_to_catalyst": 105,
-  "current_status": "ACTIVE",
-  "wrongIf_conditions": [
-    "1H26 revenue growth YoY ≥6% AND op margin held ≥10.5% — validating dual-drive thesis",
-    "Price breaks above ¥19.5 chip cluster on volume, clearing 64% of overhead supply",
-    "Management announces share buyback program, signaling cash-flow comfort despite expansion",
-    "Same-store sales growth disclosed at >3% YoY — proves expansion is demand-led not cost-only",
-    "Broker target upgrades continue with 2+ houses raising targets within 30 days of the print"
-  ],
-  "rightIf_conditions": [
-    "1H26 revenue growth YoY < 5% AND operating margin compresses below 10.0%",
-    "Broker EPS revisions begin trending down from current 1.24-1.76 range, with 2+ brokers cutting targets within 2 weeks of 1H26 print",
-    "Margin financing balance declines >10% from 2.3亿 in the 30 days post-print (leveraged-long unwind)",
-    "Price breaks ¥18.0 chip cluster (16.28% of float) on volume, opening path to ¥17.5 then ¥16.78",
-    "Net store-count growth disclosed below 5% YoY (per watchlist wrongIf threshold)"
-  ],
-  "what_changes_our_mind": "1H26 print showing BOTH revenue growth ≥6% YoY AND operating margin maintained ≥10.5% — proving expansion costs are absorbed without margin compression while top-line re-accelerates",
-  "daily_log": [
-    {
-      "date": "2026-05-11",
-      "price": 18.8,
-      "return_pct": null,
-      "status": "ACTIVE"
-    },
-    {
-      "date": "2026-05-12",
-      "price": 18.76,
-      "return_pct": -0.21,
-      "status": "ACTIVE"
-    },
-    {
-      "date": "2026-05-13",
-      "price": 18.75,
-      "return_pct": -0.27,
-      "status": "ACTIVE"
-    },
-    {
-      "date": "2026-05-14",
-      "price": 18.77,
-      "return_pct": -0.16,
-      "status": "ACTIVE"
-    },
-    {
-      "date": "2026-05-15",
-      "price": 18.81,
-      "return_pct": 0.05,
-      "status": "ACTIVE"
-    }
-  ],
-  "_verification_pending": true,
-  "_note": "wrongIf/rightIf conditions kept as text — semantic verification deferred to verify_thesis.py"
+  "direction": "PASS",
+  "_status": "skipped_non_actionable",
+  "thesis_logged_at": "2026-05-17T19:47:04.595451+00:00",
+  "pass_reason": "CATALYST_NOT_YET_OBSERVABLE",
+  "pass_reason_detail": "No [E1:direct] structural base exists in our data for the bull's load-bearing claim that 'restarted store expansion will be margin-accretive': (i) store count YoY delta not in data, (ii) same-store-sales growth not in data, (iii) new-store maturity curve / store-level unit economics not in data, (iv) Q1 2026 expansion restart is asserted only by broker text (中泰 2026-05-03), not by primary operating disclosure. The deciding observable — 2026 H1 report on 2026-08-28 (est.) showing simultaneous store_count YoY ≥ 8% AND operating margin ≥ 10.5% AND SSSG ≥ 0% — has not printed. Bear's symmetric inference (expansion will dilute margin) is equally [E2:proxy]. Sell-side is uniformly bullish (38/38 positive, latest target 250000 / EPS 1.5 by 国信), so the consensus crowding ([E4]) means even a confirming H1 print may be largely priced. Pre-print, neither LONG nor SHORT carries ≥2:1 asymmetry."
 }

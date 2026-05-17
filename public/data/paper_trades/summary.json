@@ -1,32 +1,21 @@
 {
-  "updated_at": "2026-05-15T10:46:33.997294+00:00",
+  "updated_at": "2026-05-17T19:49:10.348861+00:00",
   "total_theses": 4,
   "active_positions": [
     {
       "ticker": "002594.SZ",
       "direction": "LONG",
-      "entry_date": "2026-05-11",
-      "entry_price": 100.44,
+      "entry_date": "2026-05-17",
+      "entry_price": 96.3,
       "current_price": 96.3,
-      "return_since_entry_pct": -4.12,
-      "upside_target_pct": 15.0,
-      "downside_stop_pct": -10.0,
-      "days_held": 4,
-      "days_to_catalyst": 61,
-      "current_status": "ACTIVE"
-    },
-    {
-      "ticker": "603233.SH",
-      "direction": "SHORT",
-      "entry_date": "2026-05-11",
-      "entry_price": 18.8,
-      "current_price": 18.81,
-      "return_since_entry_pct": 0.05,
-      "upside_target_pct": 6.0,
-      "downside_stop_pct": -5.0,
-      "days_held": 4,
-      "days_to_catalyst": 105,
-      "current_status": "ACTIVE"
+      "return_since_entry_pct": 0.0,
+      "upside_target_pct": 22.0,
+      "downside_stop_pct": -9.0,
+      "days_held": 0,
+      "days_to_catalyst": 90,
+      "current_status": "ACTIVE",
+      "conviction_state": "STARTER_CAPPED_UNTIL_E1",
+      "tradeable_not_proven_statement": "Tradeable, but not proven. Historical base is [E1:direct] (2025 Overseas GM 19.46% vs Domestic GM 16.66%, +280bps, SEGMENT ECONOMICS period 20251231); forward persistence is [E2:proxy] (H1 2026 mix-shift margin-accretion through European localization not yet measured); size capped until 2026 H1 报告 segment disclosure confirms overseas GM holds ≥18% and consolidated GM holds ≥17%."
     }
   ],
   "closed_positions": [],
@@ -34,12 +23,23 @@
     {
       "ticker": "175.HK",
       "direction": "PASS",
-      "thesis_logged_at": "2026-05-11T10:48:33.413339+00:00"
+      "thesis_logged_at": "2026-05-17T19:47:04.676828+00:00",
+      "pass_reason": "INSUFFICIENT_DATA",
+      "pass_reason_detail": "SEGMENT ECONOMICS = not_available (no_segment_disclosure). The Bull's variant mechanism (Lotus hybrid pivot + ZEEKR consolidation + global premium mix → margin accretion / operating leverage) is segment/mix-driven, but Geely does not disclose segment-level GM/OpM by brand (Lotus/Polestar/Volvo/ZEEKR/core Geely) or by geography (overseas vs domestic). At the H1 2026 catalyst, only consolidated GM/OpM will print — that is consistent with multiple incompatible causal stories (mix improvement, domestic price-war easing, FX, raw-material cost) and cannot uniquely confirm or refute the variant. Per RULE X, peer-relative revenue growth (+15.6% vs BYD -11.8%) is an [E1] fact but is NOT a valid [E1] structural base for this forward mix-margin claim because the causal mechanism is unmeasurable in issuer disclosure. Needed to re-classify as tradeable: segment GM disclosure by geography or by brand sub-portfolio in H1 2026 interim filing."
     },
     {
       "ticker": "300308.SZ",
       "direction": "PASS",
-      "thesis_logged_at": "2026-05-11T10:48:33.347286+00:00"
+      "thesis_logged_at": "2026-05-17T19:47:04.634714+00:00",
+      "pass_reason": "BALANCED_RISK_REWARD",
+      "pass_reason_detail": "Live price 1049.87 vs analyst mean target 873.33 = -16.8% downside to consensus already; bull predicted_value 1500 requires 2026 EPS ~50-60 CNY (a >5x jump from 2025's 9.71) which is [E3:narrative] from broker target-price fields (forensic MISMATCH on EPS=65.74 claim — that figure is a target price, not EPS), unverifiable without segment disclosure (fina_mainbz no rows). Reward:risk to upside ≈ +43% vs downside to mean target -17% ≈ 2.5:1 numerically but the upside leg is E3-only while downside leg is E1+E4 (crowded leveraged-long 99.6%, insider NET_SELL_HIGH, RSI 85, 92% of 52W range) — risk-adjusted R:R collapses below 1.5:1. SHORT side equally weak: no [E1:direct] evidence of 1.6T delay, hyperscaler CapEx cut, or margin contraction in our data — only valuation/positioning. Unresolved observable: 2026 H1 报告 (~2026-08-20) consolidated gross margin and Q2 single-quarter revenue, which neither side can pre-position on with [E1] base."
+    },
+    {
+      "ticker": "603233.SH",
+      "direction": "PASS",
+      "thesis_logged_at": "2026-05-17T19:47:04.595451+00:00",
+      "pass_reason": "CATALYST_NOT_YET_OBSERVABLE",
+      "pass_reason_detail": "No [E1:direct] structural base exists in our data for the bull's load-bearing claim that 'restarted store expansion will be margin-accretive': (i) store count YoY delta not in data, (ii) same-store-sales growth not in data, (iii) new-store maturity curve / store-level unit economics not in data, (iv) Q1 2026 expansion restart is asserted only by broker text (中泰 2026-05-03), not by primary operating disclosure. The deciding observable — 2026 H1 report on 2026-08-28 (est.) showing simultaneous store_count YoY ≥ 8% AND operating margin ≥ 10.5% AND SSSG ≥ 0% — has not printed. Bear's symmetric inference (expansion will dilute margin) is equally [E2:proxy]. Sell-side is uniformly bullish (38/38 positive, latest target 250000 / EPS 1.5 by 国信), so the consensus crowding ([E4]) means even a confirming H1 print may be largely priced. Pre-print, neither LONG nor SHORT carries ≥2:1 asymmetry."
     }
   ],
   "hit_rate": null,

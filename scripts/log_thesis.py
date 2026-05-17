@@ -135,6 +135,17 @@ def extract_attribution(thesis: dict) -> dict:
         'expected_pnl_asymmetry': get(thesis, 'step_7_variant_view', 'expected_pnl_asymmetry', default={}),
         'quantification': get(thesis, 'step_4_quantification', default={}),
         'qc_quality_at_log_time': get(thesis, '_quality', default={}),
+        # Path-B / Rule-X fields (2026-05-17) — preserve the exact ratified
+        # semantics of the calibration so the tracker cannot silently
+        # downgrade a STARTER_CAPPED LONG to a plain LONG, or lose WHY a
+        # PASS was a PASS (KR4 taxonomy is investment-meaningful).
+        'direction': get(thesis, '_direction'),
+        'conviction_state': get(thesis, '_conviction_state'),
+        'tradeable_not_proven_statement': get(thesis, '_tradeable_not_proven_statement'),
+        'core_causal_link': get(thesis, 'step_7_variant_view', 'core_causal_link', default={}),
+        'evidence_profile': get(thesis, '_evidence_profile', default={}),
+        'pass_reason': get(thesis, '_pass_reason'),
+        'pass_reason_detail': get(thesis, '_pass_reason_detail'),
     }
 
 

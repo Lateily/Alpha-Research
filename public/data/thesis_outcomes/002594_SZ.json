@@ -1,24 +1,30 @@
 {
   "ticker": "002594.SZ",
-  "verification_run_at": "2026-05-15T10:46:34.040605+00:00",
-  "thesis_source": "docs/research/factcheck/002594SZ_thesis_2026-05-10_PHASE2.json",
-  "thesis_source_commit": "125e427",
-  "thesis_logged_at": "2026-05-11T10:48:33.297986+00:00",
+  "verification_run_at": "2026-05-17T19:49:10.383784+00:00",
+  "thesis_source": "docs/research/factcheck/rerun_2026-05-16/002594SZ_recal.json",
+  "thesis_source_commit": "aaa1cc4",
+  "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00",
   "direction": "LONG",
-  "entry_date": "2026-05-11",
-  "entry_price": 100.44,
+  "entry_date": "2026-05-17",
+  "entry_price": 96.3,
   "current_price_at_verification": 96.3,
-  "return_since_entry_pct": -4.12,
+  "return_since_entry_pct": 0.0,
   "current_status": "ACTIVE",
   "outcome_category": "PENDING — position still active",
-  "catalyst_window": "2026-07-15 to 2026-08-31",
-  "days_to_catalyst": 61,
+  "catalyst_window": "2026-08-15 to 2026-08-31",
+  "days_to_catalyst": 90,
   "rightIf_verification": [
     {
       "index": 0,
       "kind": "rightIf",
-      "original_text": "Q2 2026 reported gross margin ≥ 17.2% (current TTM level) — confirms mix-shift thesis intact",
+      "original_text": "2026 H1 overseas segment gross margin ≥ 18.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
       "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
@@ -27,8 +33,14 @@
     {
       "index": 1,
       "kind": "rightIf",
-      "original_text": "Q2 2026 overseas sales volume shows continued sequential growth consistent with broker '海外销量增长势头强劲' language",
+      "original_text": "2026 H1 consolidated gross margin ≥ 17.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
       "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
@@ -37,8 +49,14 @@
     {
       "index": 2,
       "kind": "rightIf",
-      "original_text": "Consensus FY2026 NP estimates revised upward ≥5% within 2 weeks of Q2 report",
+      "original_text": "2026 H1 overseas revenue YoY ≥ +35% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 境外 营业收入 vs 2025 H1 同口径 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
       "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
@@ -47,18 +65,14 @@
     {
       "index": 3,
       "kind": "rightIf",
-      "original_text": "Price sustainably breaks and holds above the ¥103.2/¥104.0 chip-cluster resistance band (combined 18.64% of float)",
+      "original_text": "2026 H1 net profit YoY ≥ +5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
       "verification_status": "PENDING_HUMAN_REVIEW",
-      "verified_at": null,
-      "verified_by": null,
-      "evidence_observed": null,
-      "auto_signal": null
-    },
-    {
-      "index": 4,
-      "kind": "rightIf",
-      "original_text": "May/June 2026 monthly export sales prints maintain the Q1 momentum that sell-side cited",
-      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
@@ -69,8 +83,14 @@
     {
       "index": 0,
       "kind": "wrongIf",
-      "original_text": "Q2 2026 gross margin drops below 15% (WATCHLIST wrongIf trigger)",
+      "original_text": "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
       "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
@@ -79,8 +99,14 @@
     {
       "index": 1,
       "kind": "wrongIf",
-      "original_text": "Mgmt Q2 commentary explicitly cites European price competition / localization pressure as a margin driver",
+      "original_text": "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
       "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
@@ -89,8 +115,14 @@
     {
       "index": 2,
       "kind": "wrongIf",
-      "original_text": "Consensus FY2026 NP revised DOWN post-Q2, or broker downgrades from the same houses (华创/华金/东方/国联民生) that just upgraded",
+      "original_text": "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
       "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
@@ -99,26 +131,22 @@
     {
       "index": 3,
       "kind": "wrongIf",
-      "original_text": "Price fails at ¥104 cluster and breaks back below ¥95 on volume (loss of 60d momentum structure)",
+      "original_text": "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
       "verification_status": "PENDING_HUMAN_REVIEW",
-      "verified_at": null,
-      "verified_by": null,
-      "evidence_observed": null,
-      "auto_signal": null
-    },
-    {
-      "index": 4,
-      "kind": "wrongIf",
-      "original_text": "Margin financing 融资余额 reverses materially (>5% drawdown from 140.1亿) signaling leveraged-long capitulation",
-      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
       "auto_signal": null
     }
   ],
-  "what_changes_our_mind": "Q2 2026 reported gross margin falls below 15% (WATCHLIST wrongIf threshold) AND mgmt commentary attributes it to European price competition — would validate the localization-erosion mechanism.",
+  "what_changes_our_mind": "2026 H1 报告 discloses overseas segment GM < 17% (collapsing the +280bps premium toward zero) OR consolidated GM < 16% — either would invalidate the mix-shift accretion mechanism.",
   "reviewer_notes": "",
   "verified_final_outcome": null,
-  "_methodology_note": "MVP scaffold: this record carries the wrongIf/rightIf as PENDING_HUMAN_REVIEW. When the catalyst event occurs (e.g., 2026-08-28 BYD Q2 print), a human (Junyan) or future automated NLP/data-integration pass should mark each condition as TRIGGERED | NOT_TRIGGERED | INCONCLUSIVE with evidence. Once all conditions resolved, set verified_final_outcome to compute hit rate into outcomes_summary."
+  "_methodology_note": "MVP scaffold: this record carries the wrongIf/rightIf as PENDING_HUMAN_REVIEW. KR3 (Junyan 2026-05-15): conditions are MECHANIZED at generation so they are judgeable at the named disclosure event. When the catalyst occurs (e.g., 2026-08-28 BYD H1 print) a human (Junyan) or future NLP/data pass marks each condition as one of: TRIGGERED | NOT_TRIGGERED | INSUFFICIENT_DISCLOSURE | INCONCLUSIVE, with evidence. INSUFFICIENT_DISCLOSURE (issuer did not disclose the metric) is tracked separately from INCONCLUSIVE (disclosed but ambiguous) and from a clean TRIGGERED/NOT_TRIGGERED — the split is itself a calibration signal on how falsifiable our conditions actually were. Once all conditions resolved, set verified_final_outcome to compute hit rate into outcomes_summary."
 }

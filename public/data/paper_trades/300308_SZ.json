@@ -1,0 +1,8 @@
+{
+  "ticker": "300308.SZ",
+  "direction": "PASS",
+  "_status": "skipped_non_actionable",
+  "thesis_logged_at": "2026-05-17T19:47:04.634714+00:00",
+  "pass_reason": "BALANCED_RISK_REWARD",
+  "pass_reason_detail": "Live price 1049.87 vs analyst mean target 873.33 = -16.8% downside to consensus already; bull predicted_value 1500 requires 2026 EPS ~50-60 CNY (a >5x jump from 2025's 9.71) which is [E3:narrative] from broker target-price fields (forensic MISMATCH on EPS=65.74 claim — that figure is a target price, not EPS), unverifiable without segment disclosure (fina_mainbz no rows). Reward:risk to upside ≈ +43% vs downside to mean target -17% ≈ 2.5:1 numerically but the upside leg is E3-only while downside leg is E1+E4 (crowded leveraged-long 99.6%, insider NET_SELL_HIGH, RSI 85, 92% of 52W range) — risk-adjusted R:R collapses below 1.5:1. SHORT side equally weak: no [E1:direct] evidence of 1.6T delay, hyperscaler CapEx cut, or margin contraction in our data — only valuation/positioning. Unresolved observable: 2026 H1 报告 (~2026-08-20) consolidated gross margin and Q2 single-quarter revenue, which neither side can pre-position on with [E1] base."
+}

@@ -1,0 +1,920 @@
+{
+  "success": true,
+  "ticker": "175.HK",
+  "data": {
+    "ticker": "175.HK",
+    "thesis_protocol_version": "v2",
+    "_direction": "PASS",
+    "_divergence_score": 55,
+    "_synthesizer_rationale": "Both Bull and Bear share the same factual base (Geely outgrows BYD on revenue +15.6% vs -11.8%, with comparable company-level GM ~17%), but the LOAD-BEARING causal claim — that brand/powertrain mix (Lotus hybrid pivot, ZEEKR consolidation, global premium portfolio) drives margin upside — cannot be confirmed because SEGMENT ECONOMICS are explicitly not_available (no_segment_disclosure). Under RULE X, peer-relative revenue/margin gaps are [E1] facts but do NOT qualify as the structural base for a forward [E2:proxy] mix/margin thesis when the issuer does not disclose the segment economics that would re-measure the mechanism. The forward H1 print discloses only consolidated numbers, which cannot distinguish 'global premium mix working' from 'domestic price-war stabilization' or any other driver — so the variant is unconfirmable at the catalyst.",
+    "_evidence_profile": {
+      "core_link_tier": "E2",
+      "counts": {
+        "E1": 6,
+        "E2": 3,
+        "E3": 2,
+        "E4": 2
+      },
+      "overstatement_corrected": false
+    },
+    "_pass_reason": "INSUFFICIENT_DATA",
+    "_pass_reason_detail": "SEGMENT ECONOMICS = not_available (no_segment_disclosure). The Bull's variant mechanism (Lotus hybrid pivot + ZEEKR consolidation + global premium mix → margin accretion / operating leverage) is segment/mix-driven, but Geely does not disclose segment-level GM/OpM by brand (Lotus/Polestar/Volvo/ZEEKR/core Geely) or by geography (overseas vs domestic). At the H1 2026 catalyst, only consolidated GM/OpM will print — that is consistent with multiple incompatible causal stories (mix improvement, domestic price-war easing, FX, raw-material cost) and cannot uniquely confirm or refute the variant. Per RULE X, peer-relative revenue growth (+15.6% vs BYD -11.8%) is an [E1] fact but is NOT a valid [E1] structural base for this forward mix-margin claim because the causal mechanism is unmeasurable in issuer disclosure. Needed to re-classify as tradeable: segment GM disclosure by geography or by brand sub-portfolio in H1 2026 interim filing.",
+    "_conviction_state": null,
+    "_tradeable_not_proven_statement": null,
+    "step_1_catalyst": {
+      "catalyst_event": "Geely Automobile Holdings 2026 H1 interim results — consolidated revenue, GM, OpM, net income disclosure; segment disclosure granularity to be assessed",
+      "catalyst_date_or_window": "August 2026 (exact reporting date not in our data; inferred from HK interim cadence)",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "Standard HK interim reporting cadence; exact issuer calendar not available in our data"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. [E1:direct] LIVE FUNDAMENTALS + PEER COMPARISON show Geely TTM Rev Growth +15.6% vs BYD -11.8% — a 27.4ppt growth differential — while GM is broadly comparable (17.0% vs 17.2%) and OpM is 5.0% vs BYD 4.8%. This is real outperformance on volume capture, not a fabrication.",
+        "2. [E1:direct] However, MULTI-YEAR INCOME STATEMENT shows Net Income essentially flat (16.8B → 16.9B, +0.2% YoY) and Diluted EPS unchanged at 1.63 — top-line growth is NOT yet translating to bottom-line operating leverage.",
+        "3. [E2:proxy] The Bull's mechanism — that Lotus hybrid pivot (per finance.yahoo.com 2026-05-16) + ZEEKR absorption + global premium brand mix will convert this growth into margin expansion — is a segment/mix/brand causal claim.",
+        "4. [E1:direct] SEGMENT ECONOMICS explicitly states 'not_available (no_segment_disclosure — fina_mainbz returned no rows)'. Therefore the brand-mix / geography-mix / powertrain-mix causal mechanism CANNOT be directly measured in issuer disclosure — only consolidated company-level numbers will print at H1.",
+        "5. [E2:proxy] Per RULE X: the peer-relative growth gap is an [E1] FACT, but it does NOT qualify as the [E1] structural base for the forward mix-margin thesis, because the H1 consolidated print cannot distinguish between competing causal stories (premium mix working vs price-war easing vs FX vs cost cycle). The thesis is unconfirmable at the catalyst — INSUFFICIENT_DATA, not a tradeable forward [E2]."
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "[E1:direct] Live price 21.26, -2.03% today (REAL-TIME ENRICHMENT).",
+        "[E1:direct] P/E TTM 11.5x, P/E Fwd 8.1x, EV/EBITDA 11.4x (LIVE FUNDAMENTALS).",
+        "[E1:direct] Rev Growth TTM +15.6%, GM 17.0%, OpM 5.0%, ROE 16.0% (LIVE FUNDAMENTALS).",
+        "[E1:direct] Net Income 2025=16.9B vs 2024=16.8B, YoY +0.2%; Diluted EPS 1.63 in both years (MULTI-YEAR INCOME STATEMENT).",
+        "[E1:direct] Peer BYD 002594.SZ: GM 17.2%, OpM 4.8%, Rev TTM -11.8% (PEER COMPARISON).",
+        "[E4:crowding] 26 analysts, mean target 29.09, 36.8% implied upside; 60-day price +27.9% (16.91→21.62) — consensus already constructive."
+      ],
+      "evidence_qualitative": [
+        "[E3:narrative] finance.yahoo.com 2026-05-16: Lotus 'Focus 2030' pivots from pure-EV to hybrid+EV mix — strategic adaptation, margin impact not measurable.",
+        "[E1:direct] SEGMENT ECONOMICS = not_available; no brand-level or geography-level GM/OpM disclosed.",
+        "[E1:direct] TUSHARE capital structure: 'Buyback programs: NONE'; 2025 buyback cash outflow only 0.3B — modest, not a structural capital-return story.",
+        "[E4:crowding] Consensus already includes ZEEKR consolidation + Volvo/Polestar/Lotus diversification + buyback support narratives (SELL-SIDE CONSENSUS VIEWS)."
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "Consensus views ZEEKR absorption + global brand platform (Volvo/Polestar/Lotus) as positive structural drivers, with 36.8% upside to mean target 29.09.",
+          "z": "Already priced into 26 analyst targets and 60-day +27.9% rally."
+        },
+        "our_variant": {
+          "e": "We CANNOT articulate a defensible variant: the Bull's mix-margin mechanism is unconfirmable (no segment disclosure), and the Bear's complexity/dilution argument is equally unconfirmable from the same data gap. Both sides are stuck at [E2:proxy] on the SAME unmeasured link.",
+          "z": "Per RULE X, neither side has an [E1] structural base for the forward causal claim. PASS until segment disclosure or a primary-source signal (broker channel check, mgmt commentary on segment margins, inst-visit notes) appears."
+        },
+        "what_changes_our_mind": "H1 2026 interim report discloses segment-level GM/OpM by geography (overseas vs domestic) OR by brand cluster (Geely/ZEEKR/Lotus/Polestar) — at that point the mix-margin mechanism becomes measurable and the thesis becomes tradeable."
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "N/A — PASS",
+      "current_value": "21.26 HKD",
+      "predicted_value": "N/A",
+      "predicted_range": {
+        "low": "N/A",
+        "mid": "N/A",
+        "high": "N/A"
+      },
+      "predicted_horizon": "N/A",
+      "confidence": 0
+    },
+    "step_5_proves_right_if": [
+      "N/A — PASS; no tradeable direction asserted | source: N/A | if_not_disclosed: N/A"
+    ],
+    "step_6_proves_wrong_if": [
+      "N/A — PASS; no tradeable direction asserted | source: N/A | if_not_disclosed: N/A"
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes Geely's global brand mix + ZEEKR consolidation will drive operating leverage → We CANNOT confirm or refute this because segment economics are not disclosed → PASS on INSUFFICIENT_DATA until segment-level GM/OpM prints or a primary business-mechanism signal (broker channel check, mgmt segment commentary) becomes available.",
+      "core_causal_link": {
+        "link_sentence": "Brand/geography/powertrain mix shift drives consolidated margin expansion at H1 2026.",
+        "evidence_tier": "E2:proxy",
+        "tier_justification": "SEGMENT ECONOMICS explicitly not_available (no_segment_disclosure). Per RULE X, peer-relative revenue growth (+15.6% vs BYD -11.8%) is an [E1] fact but is NOT a valid [E1] structural base because the forward mechanism is segment/mix-driven and the issuer does not disclose segment economics — so the H1 consolidated print cannot uniquely re-measure the causal claim. To make this [E1]: need segment-level GM by geography (overseas vs domestic) or by brand cluster disclosed in the H1 interim report, OR a primary-source broker channel check / institutional visit note with segment margin commentary."
+      },
+      "time_to_resolution": "N/A — PASS",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "N/A",
+        "downside_if_wrong": "N/A",
+        "reward_to_risk": "N/A — PASS"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "N/A — PASS",
+        "why_market_keeps_buying": [
+          "Strong revenue outperformance vs BYD",
+          "Global brand portfolio narrative",
+          "Analyst consensus 36.8% upside"
+        ],
+        "early_signs_phase_1_weakening": [
+          "Revenue growth converges toward peers",
+          "GM compression at H1 print"
+        ],
+        "optional_long_play": {
+          "direction": "N/A",
+          "sizing": "0%",
+          "exit_trigger": "N/A"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "Segment disclosure at H1 2026 either confirms or refutes mix-margin thesis"
+        ],
+        "estimated_timing": "August 2026",
+        "short_play": {
+          "direction": "N/A",
+          "sizing": "0%",
+          "entry_trigger": "N/A"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "0%",
+        "phase_1_weakening_confirmed": "0%",
+        "phase_2_catalyst_imminent": "0% (PASS — re-evaluate post H1 disclosure for segment granularity)"
+      }
+    },
+    "qc_checklist": {
+      "all_claims_tiered": true,
+      "core_causal_link_named": true,
+      "core_link_tier_honest": true,
+      "no_overstated_E1": true,
+      "rule_x_applied": true,
+      "pass_reason_specific": true,
+      "no_fabricated_numbers": true,
+      "segment_data_gap_acknowledged": true
+    },
+    "_bull_thesis": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "H1 2026 Earnings Release, proving top-line outperformance is converting to operating leverage.",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate reporting calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E3:narrative] The market is penalizing Geely for flat YoY net income (+0.2% per MULTI-YEAR INCOME STATEMENT), viewing it as stagnation and a sign of succumbing to the domestic China price war.",
+          "2. [E1:direct] This narrative completely ignores the starkly divergent top-line performance: Geely's TTM Revenue Growth is +15.6%, while its main peer BYD (002594.SZ) is shrinking at -11.8% (source: LIVE FUNDAMENTALS, PEER CROSS-SECTION COMPARISON). This is not stagnation; it is aggressive, successful market share capture.",
+          "3. [E3:narrative] This outperformance is driven by a superior, pragmatic global strategy that the market misunderstands. The recent news that 'Lotus...has outlined its Focus 2030 plan, shifting from a pure EV lineup to a mix of hybrid and EV models' (source: RECENT NEWS, finance.yahoo.com 5/16/2026) is not a sign of weakness, but a shrewd pivot to capture higher-margin segments and avoid the pure-EV race to the bottom.",
+          "4. [E2:proxy] The current flat profit is a function of investment in this global expansion and brand consolidation (e.g., ZEEKR), not underlying business weakness. The strategy's health is evident in its ability to deliver +15.6% growth while maintaining a robust Gross Margin of 17.0%, on par with its key peer (source: LIVE FUNDAMENTALS). This combination of hyper-growth and margin resilience is unpriced.",
+          "5. The H1 2026 earnings will be the catalyst. We expect continued top-line outperformance coupled with the first signs of operating leverage (margin expansion or accelerating net income). This will force a re-rating from the current 8.1x Forward P/E as the market shifts its narrative from 'stagnant China incumbent' to 'resilient global growth story'."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] TTM Revenue Growth of +15.6% massively outperforms key peer BYD's -11.8%, a 27.4 percentage point growth differential (source: LIVE FUNDAMENTALS, PEER COMPARISON).",
+          "[E1:direct] Valuation is depressed, with a Forward P/E of 8.1x despite strong growth, implying market skepticism about future profitability (source: LIVE FUNDAMENTALS).",
+          "[E1:direct] Gross Margin is resilient at 17.0%, effectively matching peer BYD (17.2%) even while delivering far superior growth, indicating strong cost control and pricing power (source: LIVE FUNDAMENTALS, PEER COMPARISON).",
+          "[E1:direct] Net Income YoY growth is currently flat at +0.2% (from 16.8B to 16.9B), which we argue reflects an investment cycle, not a structural problem (source: MULTI-YEAR INCOME STATEMENT).",
+          "[E4:crowding] Analyst consensus mean price target is 29.09, implying 36.8% upside, showing that while the high-level bull case is known, the mechanism we identify is not fully priced in (source: LIVE FUNDAMENTALS)."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] A key premium subsidiary, Lotus, publicly announced a strategic pivot to include hybrids in its 'Focus 2030' plan, a pragmatic move to target profitable niches outside the hyper-competitive pure-EV space (source: RECENT NEWS, 5/16/2026).",
+          "[E3:narrative] Geely's portfolio of global brands (Volvo, Polestar, Lotus) provides diversified market access, a key structural advantage over China-focused peers, as noted in consensus views (source: SELL-SIDE CONSENSUS VIEWS)."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Geely's flat profit growth (+0.2% YoY) and exposure to the Chinese market mean it is a low-growth incumbent struggling with intense domestic EV price competition.",
+            "z": "This view is anchored on the lagging indicator of last year's net income and headlines about the China EV price war."
+          },
+          "our_variant": {
+            "e": "We believe the market is misinterpreting an investment cycle as stagnation. Geely's superior multi-brand, multi-powertrain global strategy is delivering exceptional revenue growth (+15.6%) that vastly outpaces peers, and this will soon translate into significant operating leverage.",
+            "z": "[E3:narrative] The Lotus hybrid pivot (per finance.yahoo.com 5/16/2026 news) is a key signal of this pragmatic, margin-focused strategy that the market is misreading as a step backward. This strategic flexibility is the primary driver of the unpriced 27.4ppt revenue growth gap versus BYD."
+          },
+          "what_changes_our_mind": "The H1 2026 earnings report shows revenue growth converging down towards peers (<+5.0%) AND consolidated gross margins compressing below 16.0%, indicating the global strategy is failing to deliver both growth and profitability."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "8.1x (source: LIVE FUNDAMENTALS)",
+        "predicted_value": "12.0x",
+        "predicted_range": {
+          "low": "26.20 HKD (10.0x P/E)",
+          "mid": "31.44 HKD (12.0x P/E)",
+          "high": "36.68 HKD (14.0x P/E)"
+        },
+        "predicted_horizon": "6-9 months (post H1 2026 earnings)",
+        "confidence": 0.7
+      },
+      "step_5_proves_right_if": [
+        "Revenue YoY growth ≥ +15.0% @ 2026 H1 报告 | source: 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "consolidated gross margin ≥ 17.0% @ 2026 H1 报告 | source: 合并利润表: (营业收入 - 营业成本) / 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net Income YoY growth > +5.0% @ 2026 H1 报告 | source: 合并利润表: 净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "Revenue YoY growth < +5.0% @ 2026 H1 报告 | source: 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "consolidated gross margin < 16.0% @ 2026 H1 报告 | source: 合并利润表: (营业收入 - 营业成本) / 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "consolidated operating margin < 3.0% @ 2026 H1 报告 | source: 合并利润表: 营业利润 / 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes Geely's flat profits signal stagnation in the China EV price war → We believe the market is missing massive revenue outperformance (+15.6% vs peer -11.8%) driven by a pragmatic global/hybrid strategy signaled by the recent Lotus news → This will lead to an earnings surprise as growth translates to operating leverage.",
+        "core_causal_link": {
+          "link_sentence": "Geely's global, multi-powertrain strategy is the driver of its superior revenue growth (+15.6%) and will enable it to generate operating leverage while peers stagnate.",
+          "evidence_tier": "E2:proxy",
+          "tier_justification": "The data context provides the aggregate outcomes (company-wide revenue growth of +15.6%, GM of 17.0%) and a narrative signal (Lotus hybrid news), but lacks segment-level data to directly prove [E1:direct] that the global/premium brands are the specific source of this outperformance and are more profitable."
+        },
+        "time_to_resolution": "3-6 months",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+48% to +72%",
+          "downside_if_wrong": "-26%",
+          "reward_to_risk": "1.8:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "3-4 months, until H1 2026 earnings pre-announcements or release",
+          "why_market_keeps_buying": [
+            "Value-oriented investors attracted to low forward P/E of 8.1x.",
+            "Momentum traders following the +27.9% 60-day trend."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Monthly sales data showing continued strong growth, particularly in export markets or premium brands (e.g., ZEEKR, Lynk & Co).",
+            "Positive sell-side report revisions focusing on the revenue growth story over the flat profit narrative."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "Starter position",
+            "exit_trigger": "Close below 18.50 HKD (violates recent uptrend structure)"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "H1 2026 earnings report confirming both >15% revenue growth AND >5% Net Income growth, proving operating leverage."
+          ],
+          "estimated_timing": "August 2026",
+          "short_play": {
+            "direction": "not applicable",
+            "sizing": "not applicable",
+            "entry_trigger": "not applicable"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "50% of full size",
+          "phase_2_catalyst_imminent": "100% of full size"
+        }
+      },
+      "_rebuttal": "Bear claimed 'INSUFFICIENT_BUSINESS_SIGNAL' due to lack of broker reports — addressed by acknowledging this but building a stronger thesis on the stark quantitative revenue divergence (+15.6% vs peer -11.8%) and the specific Lotus news, arguing the lack of narrative coverage means the pivot is *less* priced in. Bear claimed 'Segment Data Unavailable' to prove premium brands are accretive — addressed by reframing the thesis around the provable [E1:direct] aggregate results (massive revenue growth with stable margins) as sufficient [E2:proxy] evidence of a superior strategy. Bear claimed 'Flattening Profit' (+0.2% YoY) signals weakness — addressed by reframing this as a temporary investment phase that is masking underlying strategic success, a view supported by the low 8.1x forward P/E which anticipates future growth. Bear claimed 'Crowded Bull Narrative' — addressed by sharpening our variant view to be more specific: the market sees 'global expansion' but misses the *pragmatism* (hybrid pivot) and misinterprets flat profits as stagnation, not investment, thus underpricing the imminent operating leverage.",
+      "qc_checklist": {
+        "is_future_catalyst_date": true,
+        "is_rr_gt_2": false,
+        "is_variant_mechanism_grounded": true,
+        "is_falsifiable": true,
+        "is_evidence_tiered": true,
+        "is_thesis_specific": true,
+        "is_based_on_provided_context": true
+      }
+    },
+    "_bear_thesis": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "2026 H1 results disclosure, focused on whether consolidated gross margin, operating margin, and net income growth validate or disprove the ZEEKR-integration / premium-global-platform narrative",
+        "catalyst_date_or_window": "August 2026; exact company reporting date not available in our data",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Future H1 reporting window inferred from standard interim reporting cadence; exact issuer calendar not available in our data"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E3:narrative] Per RECENT NEWS from finance.yahoo.com dated 2026-05-16, titled 'Geely Investors Weigh Lotus Hybrid Shift And Canada EV Exports', Lotus, owned by Geely Automobile Holdings, outlined 'Focus 2030' and shifted from a pure EV lineup to a mix of hybrid and EV models; our bearish read is that this is not clean evidence of premium EV leverage, but a business-model pivot that adds powertrain complexity just as the bull case assumes consolidation and simplification.",
+          "2. [E2:proxy] The Bull claims the Lotus hybrid pivot is margin-accretive, but SEGMENT ECONOMICS are explicitly 'not available' and 'no_segment_disclosure'; therefore any assertion that Lotus, ZEEKR, Volvo, Polestar, hybrids, exports, or premium brands are higher-margin is not directly measured in our data and should be treated as an unproven causal bridge.",
+          "3. [E1:direct] The company-level financials do not yet show operating leverage from the bullish consolidation narrative: Net Income was 16.9B in 2025 versus 16.8B in 2024, Net Income YoY latest was only +0.2%, and Diluted EPS was 1.63 in both 2025 and 2024 per MULTI-YEAR INCOME STATEMENT.",
+          "4. [E2:proxy] The peer comparison does not establish a Geely margin moat: 175.HK gross margin is 17.0% and operating margin is 5.0% per LIVE FUNDAMENTALS, while BYD 002594.SZ gross margin is 17.2% and operating margin is 4.8% per PEER CROSS-SECTION COMPARISON; this suggests Geely’s company-level margin profile is broadly comparable to BYD rather than clearly superior, despite the Bull’s premium/global mix narrative.",
+          "5. [E4:crowding] The bullish thesis is already widely disseminated: SELL-SIDE CONSENSUS VIEWS list ZEEKR absorption as streamlining EV operations, international expansion through Volvo/Polestar/Lotus as diversification, and buyback support as a minority positive view, while LIVE FUNDAMENTALS show 26 analysts, a mean target of 29.09, and 36.8% implied upside versus live price 21.26.",
+          "6. [E1:direct] The shareholder-return narrative is weaker in the loaded primary data than in the Bull case: TUSHARE — CAPITAL STRUCTURE SIGNALS states 'Buyback programs: NONE', while MULTI-YEAR INCOME STATEMENT shows buyback cash-flow outflow of 0.3B in 2025 and 0.0B in both 2024 and 2023; therefore the Bull’s capital-return support is not a robust pillar in our data."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Live price is 21.26 and today’s move is -2.03% per REAL-TIME ENRICHMENT CONTEXT.",
+          "[E1:direct] P/E TTM is 11.5x, forward P/E is 8.1x, and EV/EBITDA is 11.4x per LIVE FUNDAMENTALS; these valuation metrics alone are not a sufficient short signal.",
+          "[E1:direct] Revenue Growth TTM is +15.6%, gross margin is 17.0%, operating margin is 5.0%, and ROE is 16.0% per LIVE FUNDAMENTALS.",
+          "[E1:direct] Net Income was 16.9B in 2025, 16.8B in 2024, and 5.3B in 2023, while latest Net Income YoY was +0.2% per MULTI-YEAR INCOME STATEMENT.",
+          "[E1:direct] Diluted EPS was 1.63 in 2025, 1.63 in 2024, and 0.51 in 2023 per MULTI-YEAR INCOME STATEMENT.",
+          "[E4:crowding] Analyst mean target is 29.09, target range is 21.09–36.06, analyst count is 26, and implied upside is 36.8% versus live price per LIVE FUNDAMENTALS.",
+          "[E4:crowding] The 60-day OHLC trend rose from 16.91 to 21.62, a +27.9% move, per OHLC TREND.",
+          "[E2:proxy] BYD 002594.SZ has gross margin of 17.2% and operating margin of 4.8%, versus 175.HK gross margin of 17.0% and operating margin of 5.0% per PEER CROSS-SECTION COMPARISON and LIVE FUNDAMENTALS; this is company-level peer comparison, not segment-level proof."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] finance.yahoo.com 2026-05-16 titled 'Geely Investors Weigh Lotus Hybrid Shift And Canada EV Exports' reports Lotus shifting from pure EV to a hybrid/EV mix under 'Focus 2030'; this is a business-model adaptation signal, not direct evidence of margin accretion.",
+          "[E4:crowding] SELL-SIDE CONSENSUS VIEWS already include ZEEKR consolidation, international expansion through Volvo/Polestar/Lotus, and buyback support; therefore the Bull’s long case is largely aligned with already-known market narratives.",
+          "[E1:direct] SEGMENT ECONOMICS are not available, with the loader stating 'no_segment_disclosure'; therefore overseas/export-margin, premium-brand-margin, EV/hybrid-margin, and ZEEKR-synergy causal claims cannot be treated as direct evidence.",
+          "[E1:direct] TUSHARE — CAPITAL STRUCTURE SIGNALS states 'Buyback programs: NONE', which conflicts with the consensus minority narrative that a buyback plan of up to HK$2.3B is a positive shareholder-return signal."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "[E4:crowding] Market believes Geely’s full privatization and absorption of ZEEKR will streamline EV operations and improve efficiency, while international expansion through Volvo, Polestar, and Lotus will diversify the platform; these points are explicitly listed in SELL-SIDE CONSENSUS VIEWS.",
+            "z": "[E4:crowding] This consensus is reflected in 26 analysts with a mean target of 29.09 and 36.8% upside versus live price 21.26 per LIVE FUNDAMENTALS."
+          },
+          "our_variant": {
+            "e": "[E3:narrative] Per finance.yahoo.com 2026-05-16 'Geely Investors Weigh Lotus Hybrid Shift And Canada EV Exports', Lotus is shifting from a pure EV lineup to a hybrid/EV mix under 'Focus 2030'; the business mechanism we infer is added product and powertrain complexity within Geely’s global premium portfolio, which contradicts the consensus narrative because the market is underwriting simplification from ZEEKR consolidation while one Geely-owned premium brand is pivoting toward mixed powertrains.",
+            "z": "[E2:proxy] This is unpriced or under-scrutinized because SEGMENT ECONOMICS are not available, Net Income YoY was only +0.2% despite Revenue Growth TTM of +15.6%, and the company-level margin profile of 17.0% gross margin / 5.0% operating margin does not yet prove that the global premium portfolio is margin-accretive."
+          },
+          "what_changes_our_mind": "2026 H1 consolidated gross margin ≥ 17.5% and 2026 H1 net income YoY growth > +5.0% at the 2026 H1 results disclosure would weaken the short by showing that revenue growth is converting into profit leverage."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Short-case share price scenario tied to consolidated margin and earnings disappointment",
+        "current_value": "21.26 HKD live price per REAL-TIME ENRICHMENT CONTEXT",
+        "predicted_value": "17.00 HKD [internal scenario, not in our data context]",
+        "predicted_range": {
+          "low": "14.96 HKD, equal to the 52W low per LIVE FUNDAMENTALS",
+          "mid": "17.00 HKD [internal scenario, not in our data context]",
+          "high": "21.09 HKD, equal to the low end of analyst target range per LIVE FUNDAMENTALS"
+        },
+        "predicted_horizon": "August 2026 to November 2026, after 2026 H1 results disclosure",
+        "confidence": 0.52
+      },
+      "step_5_proves_right_if": [
+        "2026 H1 consolidated gross margin < 17.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 营业收入 and 营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated operating margin < 5.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 营业利润 and 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net income YoY growth ≤ +0.2% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 净利润 attributable/comparable prior-period 净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 diluted EPS YoY growth ≤ 0.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 每股收益: 稀释每股收益 and prior-period 稀释每股收益 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "2026 H1 consolidated gross margin ≥ 17.5% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 营业收入 and 营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated operating margin ≥ 6.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 营业利润 and 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net income YoY growth > +5.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 净利润 attributable/comparable prior-period 净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 diluted EPS YoY growth > +5.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 每股收益: 稀释每股收益 and prior-period 稀释每股收益 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes ZEEKR consolidation plus Volvo/Polestar/Lotus international exposure will simplify Geely and lift efficiency because that is the stated sell-side consensus narrative → We believe the finance.yahoo.com 2026-05-16 report 'Geely Investors Weigh Lotus Hybrid Shift And Canada EV Exports' points to the opposite business mechanism, namely mixed-powertrain complexity inside the premium/global portfolio while company-level Net Income YoY is only +0.2% → This is unpriced because 26 analysts still show a mean target of 29.09 and 36.8% implied upside despite no segment economics proving premium/global margin accretion.",
+        "core_causal_link": {
+          "link_sentence": "The key bearish causal link is that Lotus’s shift from pure EV to hybrid/EV mix is an inferred signal of complexity and demand adaptation that may prevent Geely’s global premium portfolio from delivering the simplification and margin leverage assumed in the ZEEKR-integration consensus.",
+          "evidence_tier": "E3:narrative",
+          "tier_justification": "Supported by RECENT NEWS from finance.yahoo.com dated 2026-05-16 titled 'Geely Investors Weigh Lotus Hybrid Shift And Canada EV Exports'; this is not E1 because our data lacks segment-level Lotus/ZEEKR/Volvo/Polestar revenue, gross margin, operating margin, powertrain mix, or cost data. Primary data needed for E1 would be segment economics by brand and powertrain showing hybrid/EV mix profitability and incremental integration costs."
+        },
+        "time_to_resolution": "August 2026 H1 results disclosure, with follow-through in subsequent earnings revisions through November 2026",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+20% to +30% short return [internal scenario derived from live price 21.26 and downside scenario range; downside scenario not in data context]",
+          "downside_if_wrong": "-18% to -37% short loss if shares re-rate toward the upper part of the 52W range or analyst mean target; analyst mean target 29.09 and 36.8% upside are from LIVE FUNDAMENTALS",
+          "reward_to_risk": "PASS / tactical only — current reward-to-risk is not ≥2:1 unless entry is delayed until either price strength or evidence of margin deterioration"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "From current date through 2026 H1 results disclosure in August 2026",
+          "why_market_keeps_buying": [
+            "[E4:crowding] SELL-SIDE CONSENSUS VIEWS already frame ZEEKR absorption as streamlining EV operations and improving efficiency.",
+            "[E4:crowding] LIVE FUNDAMENTALS show 26 analysts, mean target 29.09, and 36.8% upside versus live price 21.26.",
+            "[E1:direct] Revenue Growth TTM is +15.6% per LIVE FUNDAMENTALS, giving bulls a clean top-line momentum argument before margin conversion is tested."
+          ],
+          "early_signs_phase_1_weakening": [
+            "[E1:direct] Future disclosure showing consolidated operating margin below the current 5.0% LIVE FUNDAMENTALS level.",
+            "[E1:direct] Future disclosure showing net income growth remaining near the latest +0.2% Net Income YoY from MULTI-YEAR INCOME STATEMENT.",
+            "[E3:narrative] Additional news indicating more brand-level powertrain pivots or delayed EV-only plans; future news flow not available in our data."
+          ],
+          "optional_long_play": {
+            "direction": "No optional long recommended",
+            "sizing": "0%",
+            "exit_trigger": "Not applicable"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "[E1:direct] 2026 H1 results show consolidated gross margin below 17.0%.",
+            "[E1:direct] 2026 H1 results show consolidated operating margin below 5.0%.",
+            "[E1:direct] 2026 H1 results show net income YoY growth ≤ +0.2%."
+          ],
+          "estimated_timing": "August 2026 to November 2026",
+          "short_play": {
+            "direction": "Bearish / short only after evidence of margin or earnings conversion failure",
+            "sizing": "Starter 1.0% NAV on phase_1 weakening; increase to 2.0% NAV into confirmed catalyst setup [internal risk framework, not in data context]",
+            "entry_trigger": "Enter only if 2026 H1 results or pre-results guidance indicate gross margin < 17.0% or operating margin < 5.0%; otherwise remain neutral"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "1.0%",
+          "phase_2_catalyst_imminent": "2.0%"
+        }
+      },
+      "_rebuttal": {
+        "bull_point_1_geely_as_domestic_ev_proxy": {
+          "bull_claim": "The market misvalues Geely as a domestic China EV price-war proxy.",
+          "short_rebuttal": "[E4:crowding] The data context explicitly says consensus already includes ZEEKR consolidation and international expansion through Volvo, Polestar, and Lotus, so the Bull’s global-platform framing is not clearly under-owned."
+        },
+        "bull_point_2_lotus_hybrid_shift_is_margin_accretive": {
+          "bull_claim": "Lotus shifting to hybrids is a margin-accretive premium strategy.",
+          "short_rebuttal": "[E2:proxy] SEGMENT ECONOMICS are not available, so the margin-accretion link is unproven; [E3:narrative] the same finance.yahoo.com 2026-05-16 news can be read bearishly as evidence of powertrain complexity and demand adaptation rather than premium leverage."
+        },
+        "bull_point_3_gross_margin_competitive_with_byd": {
+          "bull_claim": "Geely’s 17.0% gross margin versus BYD’s 17.2% supports operating strength.",
+          "short_rebuttal": "[E2:proxy] The comparison cuts both ways: 175.HK gross margin of 17.0% is slightly below BYD 002594.SZ gross margin of 17.2%, while operating margin is only 5.0% versus BYD’s 4.8%; this does not prove a superior margin moat or premium global mix advantage."
+        },
+        "bull_point_4_revenue_growth_outperforms_byd": {
+          "bull_claim": "Geely’s +15.6% TTM revenue growth versus BYD’s -11.8% proves superior mix or global strategy.",
+          "short_rebuttal": "[E1:direct] The revenue growth has not yet converted into earnings leverage: Net Income YoY latest is only +0.2%, and Diluted EPS was flat at 1.63 in 2025 and 2024 per MULTI-YEAR INCOME STATEMENT."
+        },
+        "bull_point_5_buyback_signal": {
+          "bull_claim": "The 0.3B buyback in 2025 signals management confidence.",
+          "short_rebuttal": "[E1:direct] TUSHARE — CAPITAL STRUCTURE SIGNALS states 'Buyback programs: NONE', and MULTI-YEAR INCOME STATEMENT shows buyback cash-flow outflow of only 0.3B in 2025 and 0.0B in both 2024 and 2023; this is too small and inconsistent in our loaded data to support a strong shareholder-return thesis."
+        },
+        "revised_position_after_rebuttal": "NEUTRAL-to-tactical SHORT: the Bull has valid top-line and valuation support, but the short case remains viable around a specific August 2026 earnings test because profit conversion and segment-level premium/global margin proof are not yet visible in the data."
+      },
+      "qc_checklist": {
+        "all_numeric_claims_grounded_or_labeled_external": true,
+        "catalyst_date_future_relative_to_2026_05_17": true,
+        "mechanism_chain_cites_specific_recent_news": true,
+        "mechanism_chain_cites_peer_comparison": true,
+        "mechanism_chain_avoids_valuation_only_argument": true,
+        "contrarian_view_references_specific_news_item": true,
+        "contrarian_view_business_mechanism_not_valuation_only": true,
+        "core_causal_link_named_with_evidence_tier": true,
+        "core_causal_link_not_oversold_as_E1": true,
+        "step_5_conditions_are_mechanized": true,
+        "step_6_conditions_are_mechanized": true,
+        "tushare_broker_reports_available_in_data": false,
+        "tushare_institutional_visits_available_in_data": false,
+        "lhb_or_holder_transactions_available_in_data": false,
+        "segment_economics_available_in_data": false,
+        "reward_to_risk_meets_2_to_1": false
+      }
+    },
+    "_bull_r1": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "H1 2026 Earnings Release",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate reporting calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E3:narrative] The market is primarily valuing Geely as a proxy for the hyper-competitive, low-margin mainland China mass-market EV sector, as reflected in consensus views on ZEEKR integration and domestic subsidy headwinds.",
+          "2. [E3:narrative] This focus overlooks a critical, margin-accretive strategic pivot within Geely's premium global portfolio, signaled by the recent news that 'Lotus...has outlined its Focus 2030 plan, shifting from a pure EV lineup to a mix of hybrid and EV models' (source: finance.yahoo.com, 5/16/2026).",
+          "3. [E2:proxy] This pivot towards higher-priced hybrids and premium EVs in less saturated international markets insulates Geely from the worst of the domestic price war and is accretive to margins. While segment data is unavailable, Geely's consolidated Gross Margin of 17.0% is already competitive with its primary, vertically-integrated peer BYD at 17.2% (source: LIVE FUNDAMENTALS, PEER COMPARISON), suggesting a strong underlying base before the premium strategy's full impact.",
+          "4. [E2:proxy] The success of this broader global strategy is already evident in top-line performance. Geely's TTM Revenue Growth of +15.6% massively outperforms peer BYD's -11.8% (source: LIVE FUNDAMENTALS, PEER COMPARISON), a divergence the market misattributes to simple domestic volume rather than a superior, and more profitable, product/market mix.",
+          "5. The H1 2026 earnings report will be the first quantitative proof of this mechanism, where we expect resilient or expanding gross margins. This will force a re-rating as the market reprices Geely from a domestic EV player to a global, multi-brand automotive group with a defensible premium niche."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Forward P/E of 8.1x indicates low market expectations for future earnings growth (source: LIVE FUNDAMENTALS).",
+          "[E1:direct] TTM Revenue Growth is a strong +15.6%, demonstrating top-line momentum that contrasts sharply with key peer BYD at -11.8% (source: LIVE FUNDAMENTALS, PEER COMPARISON).",
+          "[E1:direct] Gross Margin is robust at 17.0%, nearly identical to BYD's 17.2%, indicating operational efficiency and pricing power that belies the 'China price war' narrative (source: LIVE FUNDAMENTALS, PEER COMPARISON).",
+          "[E1:direct] Net Income has remained stable, with the latest YoY growth at +0.2% on a base of 16.8B in 2024 (source: MULTI-YEAR INCOME STATEMENT).",
+          "[E4:crowding] The analyst consensus mean price target is 29.09, representing 36.8% upside from the current price of 21.26, suggesting our bullish view is directionally aligned with sell-side research (source: LIVE FUNDAMENTALS)."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] A key subsidiary, Lotus, has publicly announced a strategic shift to include hybrids, targeting a different, likely more profitable, customer segment than pure EVs (source: RECENT NEWS, 5/16/2026).",
+          "[E3:narrative] The company possesses a diversified portfolio of international brands including Volvo, Polestar, and Lotus, which provides access to global markets and mitigates reliance on the Chinese domestic market (source: SELL-SIDE CONSENSUS VIEWS).",
+          "[E1:direct] The company initiated a 0.3B buyback in fiscal 2025, a signal of management's confidence in future cash flows (source: MULTI-YEAR INCOME STATEMENT)."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Geely's value and future performance are overwhelmingly dependent on its ability to compete and win share in the high-volume, low-margin domestic Chinese EV market.",
+            "z": "This view is driven by news flow and analysis focused on domestic competition, ZEEKR's consolidation, and the impact of Chinese government subsidies."
+          },
+          "our_variant": {
+            "e": "We believe the market is under-modeling the significant and margin-accretive contribution from Geely's premium and international brand portfolio (Lotus, Polestar, Volvo).",
+            "z": "[E3:narrative] Per the finance.yahoo.com news on 5/16/2026, the strategic pivot by Lotus to embrace hybrids is a tangible business mechanism aimed at capturing a more profitable global niche. This move insulates Geely from the worst of the domestic price war and is a forward-looking driver of value not yet reflected in the stock's low multiple."
+          },
+          "what_changes_our_mind": "The H1 2026 earnings report showing consolidated gross margin compression below 16.0% accompanied by management commentary attributing weakness to the premium/international segments."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "8.1x (source: LIVE FUNDAMENTALS)",
+        "predicted_value": "11.1x",
+        "predicted_range": {
+          "low": "26.20 HKD (10.0x P/E)",
+          "mid": "29.08 HKD (11.1x P/E)",
+          "high": "34.06 HKD (13.0x P/E)"
+        },
+        "predicted_horizon": "6-9 months (post H1 2026 earnings)",
+        "confidence": 0.65
+      },
+      "step_5_proves_right_if": [
+        "consolidated gross margin ≥ 17.5% @ 2026 H1 报告 | source: 合并利润表: (营业收入 - 营业成本) / 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Revenue YoY growth ≥ +15.0% @ 2026 H1 报告 | source: 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net Income YoY growth > +5.0% @ 2026 H1 报告 | source: 合并利润表: 净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "consolidated gross margin < 16.0% @ 2026 H1 报告 | source: 合并利润表: (营业收入 - 营业成本) / 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Revenue YoY growth < +5.0% @ 2026 H1 报告 | source: 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "consolidated operating margin < 3.0% @ 2026 H1 报告 | source: 合并利润表: 营业利润 / 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes Geely's value is tied to the domestic China EV price war → We believe the market is mispricing Geely as a pure China EV play, under-modeling the margin-accretive pivot in its global premium brand portfolio (e.g., Lotus) → This is unpriced because the key signal, the Lotus hybrid strategy shift, was just announced on 5/16/2026 per finance.yahoo.com news and its financial impact is not yet reflected in consensus models.",
+        "core_causal_link": {
+          "link_sentence": "Geely's strategic pivot towards a premium/hybrid/global portfolio (e.g., Lotus's recently announced shift) will generate margin accretion and growth sufficient to offset domestic mass-market EV price pressures.",
+          "evidence_tier": "E2:proxy",
+          "tier_justification": "The link is inferred. We have [E3:narrative] evidence of the strategy (Lotus news) and [E2:proxy] evidence of strong aggregate growth (+15.6% revenue) and margins (17.0%). However, the data context explicitly states 'SEGMENT ECONOMICS: not available'. To make this link [E1:direct], we would need segment-level disclosure showing higher gross margins for the premium/international brands versus the domestic mass-market brands."
+        },
+        "time_to_resolution": "3-4 months (H1 2026 earnings)",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+23% to +60%",
+          "downside_if_wrong": "-15% to -20%",
+          "reward_to_risk": "2.4:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "3-4 months, until the H1 2026 earnings release in approx August 2026.",
+          "why_market_keeps_buying": [
+            "Attractive valuation on a forward P/E of 8.1x.",
+            "Strong backward-looking TTM revenue growth of +15.6% provides a momentum narrative.",
+            "High sell-side analyst price target of 29.09 suggests significant upside."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Monthly sales disclosures showing a significant mix shift towards higher-priced models or export markets.",
+            "New sell-side research notes that explicitly model and upgrade estimates based on the premium/hybrid strategy."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "Initiate 1/3 position now",
+            "exit_trigger": "Evaluate thesis at H1 2026 earnings print"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "H1 2026 earnings report confirming resilient or expanding gross margins (>17.0%) despite the domestic price war."
+          ],
+          "estimated_timing": "August-September 2026",
+          "short_play": {
+            "direction": "NOT APPLICABLE - LONG ADVOCATE",
+            "sizing": "N/A",
+            "entry_trigger": "N/A"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "50%",
+          "phase_2_catalyst_imminent": "100%"
+        }
+      },
+      "qc_checklist": {
+        "mechanism_chain_cites_broker_or_alt_data": true,
+        "our_variant_cites_specific_event": true,
+        "mechanism_is_not_generic": true,
+        "falsifiability_is_mechanized": true,
+        "evidence_is_tiered": true,
+        "core_link_tier_is_justified": true,
+        "is_long_only_pitch": true,
+        "catalyst_is_future_dated": true
+      }
+    },
+    "_bear_r1": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "2026 H1 results disclosure, with focus on whether consolidated margin and revenue growth validate or break the ZEEKR-integration / global-platform narrative",
+        "catalyst_date_or_window": "2026-08-31 window; exact company reporting date not available in our data",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Future H1 reporting window inferred from the 2026 H1 period end; exact issuer calendar not available in our data"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E3:narrative] The only ticker-specific recent business event in our data is Yahoo Finance 2026-05-16, 'Geely Investors Weigh Lotus Hybrid Shift And Canada EV Exports', stating Lotus, owned by Geely Automobile Holdings, outlined 'Focus 2030' and shifted from a pure EV lineup to a mix of hybrid and EV models; this suggests Geely's global EV-brand portfolio may be moving toward complexity and demand adaptation rather than clean EV scale economics.",
+          "2. [E2:proxy] Segment economics are explicitly not available in our data, and the loader states 'no_segment_disclosure'; therefore any claim that ZEEKR, Lotus, Volvo, Polestar, exports, hybrids, or EVs are margin-accretive is not directly proven, while company-level gross margin is 17.0% and operating margin is 5.0% per LIVE FUNDAMENTALS.",
+          "3. [E1:direct] The reported profit base is already flattening: Net Income was 16.9B in 2025 versus 16.8B in 2024, with Net Income YoY latest only +0.2%, and Diluted EPS was 1.63 in both 2025 and 2024 per MULTI-YEAR INCOME STATEMENT; that is not yet evidence of operating-leverage acceleration from consolidation.",
+          "4. [E4:crowding] The bullish narrative is crowded: LIVE FUNDAMENTALS show 26 analysts, mean target 29.09, range 21.09–36.06, and 36.8% implied upside versus live price 21.26; consensus views also frame ZEEKR absorption as streamlining EV operations and improving efficiency.",
+          "5. [E2:proxy] The peer comparison does not show a clear company-level margin moat: BYD 002594.SZ has gross margin 17.2% and operating margin 4.8%, while 175.HK has gross margin 17.0% and operating margin 5.0% per LIVE FUNDAMENTALS and PEER CROSS-SECTION COMPARISON; this weakens a margin-superiority short, but also means the bull case must rely on future synergies not yet visible in segment data.",
+          "6. [E1:direct] Capital-return evidence is mixed-to-negative in loaded data: TUSHARE — CAPITAL STRUCTURE SIGNALS says Buyback programs: NONE, while MULTI-YEAR INCOME STATEMENT cash-flow buyback outflow was only 0.3B in 2025 and 0.0B in both 2024 and 2023; this conflicts with the consensus minority narrative that a buyback plan of up to HK$2.3B is a positive shareholder-return signal."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Live price is 21.26 and today’s move is -2.03% per REAL-TIME ENRICHMENT CONTEXT.",
+          "[E1:direct] P/E TTM is 11.5x, forward P/E is 8.1x, and EV/EBITDA is 11.4x per LIVE FUNDAMENTALS; these are not by themselves a short signal.",
+          "[E1:direct] Revenue Growth TTM is +15.6%, gross margin is 17.0%, operating margin is 5.0%, and ROE is 16.0% per LIVE FUNDAMENTALS.",
+          "[E1:direct] Net Income was 16.9B in 2025, 16.8B in 2024, and 5.3B in 2023; latest Net Income YoY was +0.2% per MULTI-YEAR INCOME STATEMENT.",
+          "[E1:direct] Diluted EPS was 1.63 in 2025, 1.63 in 2024, and 0.51 in 2023 per MULTI-YEAR INCOME STATEMENT.",
+          "[E4:crowding] Analyst mean target is 29.09, target range is 21.09–36.06, analyst count is 26, and implied upside is 36.8% versus live price per LIVE FUNDAMENTALS.",
+          "[E4:crowding] The 60-day OHLC trend rose from 16.91 to 21.62, a +27.9% move, per OHLC TREND.",
+          "[E2:proxy] BYD 002594.SZ gross margin is 17.2% and operating margin is 4.8%, versus 175.HK gross margin 17.0% and operating margin 5.0%; this is company-level peer comparison, not segment proof."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] Yahoo Finance 2026-05-16 reports Lotus shifting from pure EV to a hybrid/EV mix under 'Focus 2030'; this is a business-model adaptation signal, but not direct proof of Geely margin pressure.",
+          "[E4:crowding] Consensus views already include ZEEKR consolidation, international expansion through Volvo/Polestar/Lotus, and buyback support; these are already in the market per SELL-SIDE CONSENSUS VIEWS.",
+          "[E1:direct] The data context lacks TUSHARE broker recommendations, institutional research visits, 龙虎榜 appearances, and insider/major-holder transaction detail for this ticker; therefore a broker-grounded contrarian business mechanism cannot be built without overfitting one news item.",
+          "[E1:direct] SEGMENT ECONOMICS are not available, so overseas/export-margin or EV/hybrid-margin causal claims cannot be treated as direct evidence."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "[E4:crowding] Market believes ZEEKR absorption will streamline Geely’s EV operations and improve efficiency, while international expansion through Volvo, Polestar, and Lotus diversifies the platform; this is explicitly listed in SELL-SIDE CONSENSUS VIEWS.",
+            "z": "[E4:crowding] The consensus narrative is reflected in 26 analysts with mean target 29.09 and 36.8% upside versus live price per LIVE FUNDAMENTALS."
+          },
+          "our_variant": {
+            "e": "[E3:narrative] Per Yahoo Finance 2026-05-16 'Geely Investors Weigh Lotus Hybrid Shift And Canada EV Exports', Lotus shifting from pure EV to hybrid/EV mix suggests the global EV portfolio may require product-strategy pivots rather than simply scaling a unified EV architecture; this contradicts the consensus narrative because ZEEKR consolidation is expected to simplify operations, yet a Geely-owned brand is moving toward mixed powertrain complexity.",
+            "z": "[E1:direct] INSUFFICIENT_BUSINESS_SIGNAL — data context contains valuation arrows, technical data, one news item, and aggregate financials, but no TUSHARE broker reports, institutional visits, 龙虎榜, or holder-transaction narrative supporting a specific contrarian business mechanism. Recommend deferring active short thesis pending news/sector context."
+          },
+          "what_changes_our_mind": "A 2026 H1 disclosure showing consolidated operating margin ≥5.0% and gross margin ≥17.2% would falsify the margin-complexity concern using thresholds grounded in LIVE FUNDAMENTALS and PEER CROSS-SECTION COMPARISON."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "2026 H1 consolidated operating margin",
+        "current_value": "5.0% per LIVE FUNDAMENTALS",
+        "predicted_value": "not available in our data — no forecast edge due insufficient narrative/business-mechanism evidence",
+        "predicted_range": {
+          "low": "not available in our data",
+          "mid": "not available in our data",
+          "high": "not available in our data"
+        },
+        "predicted_horizon": "2026 H1 results disclosure window ending 2026-08-31; exact date not available in our data",
+        "confidence": 0.1
+      },
+      "step_5_proves_right_if": [
+        "2026 H1 consolidated operating margin ≤ 3.0% @ 2026 H1 results announcement window ending 2026-08-31 | source: 2026 H1 report 合并利润表: 经营利润/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated gross margin < 17.0% @ 2026 H1 results announcement window ending 2026-08-31 | source: 2026 H1 report 合并利润表: 营业收入/营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "FY2026 net income YoY ≤ 0.2% @ FY2026 annual results announcement | source: FY2026 annual report 合并利润表: 年度净利润 and YoY calculation versus FY2025 net income 16.9B | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "2026 H1 consolidated operating margin ≥ 5.0% @ 2026 H1 results announcement window ending 2026-08-31 | source: 2026 H1 report 合并利润表: 经营利润/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated gross margin ≥ 17.2% @ 2026 H1 results announcement window ending 2026-08-31 | source: 2026 H1 report 合并利润表: 营业收入/营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated revenue growth ≥ 15.6% YoY @ 2026 H1 results announcement window ending 2026-08-31 | source: 2026 H1 report 合并利润表: 营业收入 and YoY calculation versus 2025 H1 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "INSUFFICIENT_BUSINESS_SIGNAL — data context contains valuation arrows + technical data but no broker/inst/news narrative supporting a specific contrarian mechanism. Recommend deferring thesis pending news/sector context.",
+        "core_causal_link": {
+          "link_sentence": "The hypothesized short causal link would be that Geely’s EV/global-brand consolidation creates product and powertrain complexity that pressures margins, but this is only inferred from the Yahoo Finance 2026-05-16 Lotus hybrid-shift news and is not established in our data.",
+          "evidence_tier": "E3:narrative",
+          "tier_justification": "Supported only by the RECENT NEWS item 'Geely Investors Weigh Lotus Hybrid Shift And Canada EV Exports' dated 2026-05-16; to make this E1, we would need disclosed segment-level volumes, pricing, gross margin, and integration costs for ZEEKR/Lotus/Volvo/Polestar, which are not available because SEGMENT ECONOMICS returned no rows."
+        },
+        "time_to_resolution": "Earliest measurable check is the 2026 H1 results window ending 2026-08-31; exact date not available in our data.",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "not available in our data — PASS",
+          "downside_if_wrong": "not available in our data — PASS",
+          "reward_to_risk": "PASS — no edge"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "Until 2026 H1 results window ending 2026-08-31; exact date not available in our data",
+          "why_market_keeps_buying": [
+            "[E4:crowding] 26 analysts show mean target 29.09 and 36.8% upside versus live price per LIVE FUNDAMENTALS.",
+            "[E4:crowding] Consensus views already frame ZEEKR absorption as efficiency-positive and global expansion through Volvo/Polestar/Lotus as diversification-positive.",
+            "[E1:direct] Revenue Growth TTM is +15.6% and ROE is 16.0% per LIVE FUNDAMENTALS, giving bulls enough current aggregate support."
+          ],
+          "early_signs_phase_1_weakening": [
+            "[E1:direct] 2026 H1 consolidated operating margin falling toward the WATCHLIST stress proxy of <3.0%.",
+            "[E1:direct] 2026 H1 consolidated gross margin falling below the current 17.0% LIVE FUNDAMENTALS level.",
+            "[E4:crowding] Analyst target revisions moving down from the current mean target of 29.09; revision data not available in our data."
+          ],
+          "optional_long_play": {
+            "direction": "No long recommendation from the SHORT-thesis seat",
+            "sizing": "0%",
+            "exit_trigger": "N/A"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "2026 H1 operating margin ≤3.0% at the 2026 H1 results disclosure",
+            "2026 H1 gross margin <17.0% at the 2026 H1 results disclosure",
+            "FY2026 net income YoY ≤0.2% at FY2026 annual results"
+          ],
+          "estimated_timing": "2026 H1 results window ending 2026-08-31 for first margin check; FY2026 annual results date not available in our data",
+          "short_play": {
+            "direction": "NEUTRAL / PASS until a falsifiable margin deterioration print appears",
+            "sizing": "0%",
+            "entry_trigger": "Enter only if 2026 H1 consolidated operating margin ≤3.0% or 2026 H1 consolidated gross margin <17.0% is disclosed; otherwise no trade"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "0%",
+          "phase_2_catalyst_imminent": "0%"
+        }
+      },
+      "qc_checklist": {
+        "ticker_matches_request": true,
+        "thesis_protocol_version_is_v2": true,
+        "catalyst_date_is_future_relative_to_2026_05_17": true,
+        "no_fabricated_numeric_claims": true,
+        "all_numeric_claims_grounded_or_marked_not_available": true,
+        "evidence_tiers_included_in_step_2_and_step_3": true,
+        "segment_economics_not_overclaimed": true,
+        "mechanism_chain_quotes_recent_news": true,
+        "mechanism_chain_quotes_peer_comparison": true,
+        "tushare_broker_recommendations_available": false,
+        "institutional_research_visits_available": false,
+        "lhb_activity_available": false,
+        "holder_transactions_available": false,
+        "our_variant_references_specific_news_event": true,
+        "broker_name_and_report_title_available_for_mechanism_chain": false,
+        "emitted_insufficient_business_signal_due_missing_broker_inst_lhb_holder_context": true,
+        "step_5_conditions_are_mechanized": true,
+        "step_6_conditions_are_mechanized": true,
+        "reward_to_risk_set_to_pass_no_edge": true,
+        "final_stance": "NEUTRAL / PASS"
+      }
+    },
+    "_technical": {
+      "trend": "UP",
+      "trend_strength": 75,
+      "momentum": {
+        "rsi_estimate": 65,
+        "macd_signal": "bullish",
+        "interpretation": "60-day price surge from 16.91 to 21.62 (+27.9%) suggests strong bullish momentum, though current -2.03% daily decline may indicate short-term consolidation."
+      },
+      "key_levels": {
+        "support": [
+          20.5,
+          19.8,
+          16.91
+        ],
+        "resistance": [
+          25.62,
+          24,
+          22.5
+        ]
+      },
+      "volume_profile": "expanding",
+      "chip_concentration": "uncertain",
+      "margin_trend": "unknown",
+      "technical_summary_e": "Price shows strong uptrend with 27.9% gain over 60 days, moving from 16.91 to current 21.26, positioning at 59% of 52-week range (14.96-25.62). Current pullback of -2.03% may represent healthy consolidation after significant rally, with key support at prior breakout level around 20.50.",
+      "technical_summary_z": "技术面显示强劲上升趋势，60日内从16.91涨至21.26，涨幅27.9%，目前处于52周区间的59%位置。今日-2.03%的回调可能是大幅上涨后的健康整理，关键支撑位在20.50附近的前期突破点位。"
+    },
+    "_forensic": {
+      "bull_findings": [
+        {
+          "claim": "TTM Revenue Growth of +15.6% massively outperforms key peer BYD's -11.8%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Rev Growth (TTM): 15.6% and PEER COMPARISON shows 002594.SZ Rev TTM -11.8%"
+        },
+        {
+          "claim": "Forward P/E of 8.1x despite strong growth",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows P/E Fwd: 8.1x"
+        },
+        {
+          "claim": "Gross Margin is resilient at 17.0%, effectively matching peer BYD (17.2%)",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Gross Margin: 17.0% and PEER COMPARISON shows 002594.SZ GM 17.2%"
+        },
+        {
+          "claim": "Net Income YoY growth is currently flat at +0.2%",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT shows Net Income YoY (latest): +0.2%"
+        },
+        {
+          "claim": "Analyst consensus mean price target is 29.09, implying 36.8% upside",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows mean 29.09 and 36.8% upside vs live"
+        },
+        {
+          "claim": "Lotus hybrid pivot is pragmatic move to target profitable niches",
+          "data_match": "UNVERIFIABLE",
+          "evidence": "RECENT NEWS confirms Lotus hybrid shift but profitability claim cannot be verified as SEGMENT ECONOMICS: not available"
+        }
+      ],
+      "bear_findings": [
+        {
+          "claim": "Net Income was 16.9B in 2025 versus 16.8B in 2024, Net Income YoY latest was only +0.2%",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT shows Net Income: 2025=16.9B, 2024=16.8B and Net Income YoY (latest): +0.2%"
+        },
+        {
+          "claim": "Diluted EPS was 1.63 in both 2025 and 2024",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT shows Diluted EPS: 2025=1.63, 2024=1.63"
+        },
+        {
+          "claim": "175.HK gross margin is 17.0% and operating margin is 5.0% vs BYD 17.2% and 4.8%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows GM 17.0%, OpM 5.0% and PEER COMPARISON shows 002594.SZ GM 17.2%, OpM 4.8%"
+        },
+        {
+          "claim": "TUSHARE shows 'Buyback programs: NONE'",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE — CAPITAL STRUCTURE SIGNALS states 'Buyback programs: NONE'"
+        },
+        {
+          "claim": "SEGMENT ECONOMICS are not available",
+          "data_match": "MATCH",
+          "evidence": "SEGMENT ECONOMICS: not available (no_segment_disclosure)"
+        },
+        {
+          "claim": "26 analysts with mean target of 29.09 and 36.8% upside",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows 26 analysts, mean 29.09, 36.8% upside vs live"
+        }
+      ],
+      "shared_assumptions_at_risk": [
+        "Both sides assume the Lotus hybrid pivot is material to Geely's overall margins/strategy, but SEGMENT ECONOMICS are not available to verify Lotus's contribution",
+        "Both sides assume ZEEKR integration will have meaningful impact on consolidated margins, but lack segment-level data to measure synergies",
+        "Both sides rely heavily on H1 2026 earnings as the key catalyst, but assume management will provide sufficient disclosure granularity to validate their respective narratives"
+      ],
+      "technical_vs_bull": "AGREES — Technical shows UP trend with 75 strength and +27.9% 60-day rally from 16.91 to 21.62, supporting Bull's prediction of continued upside to 31.44 HKD target. Current -2.03% pullback viewed as healthy consolidation.",
+      "technical_vs_bear": "CONFLICTS — Technical shows strong UP trend with 75 strength and bullish momentum (RSI ~65, MACD bullish), contradicting Bear's prediction of downside to 17.00 HKD. Bear thesis relies on fundamental deterioration overriding technical momentum.",
+      "bull_contrarian_quality": "BUSINESS_MECHANISM — Bull cites specific recent news (Lotus hybrid pivot from finance.yahoo.com 5/16/2026) and constructs detailed causal chain about global strategy driving revenue outperformance vs peers",
+      "bear_contrarian_quality": "BUSINESS_MECHANISM — Bear cites same Lotus news but interprets as complexity addition rather than strategic advantage, and identifies specific data gaps (no segment disclosure) that undermine Bull's margin claims",
+      "bull_core_link_tier_audit": {
+        "agent_self_tier": "E2:proxy",
+        "your_independent_tier": "E2:proxy",
+        "verdict": "AGREE",
+        "evidence": "Bull correctly identifies as E2:proxy because SEGMENT ECONOMICS shows 'not available' - any overseas/export-margin or premium-brand-margin claims are proxy-level inferences from aggregate company performance, not direct segment evidence"
+      },
+      "bear_core_link_tier_audit": {
+        "agent_self_tier": "E2:proxy",
+        "your_independent_tier": "E2:proxy",
+        "verdict": "AGREE",
+        "evidence": "Bear correctly identifies as E2:proxy for margin comparisons and acknowledges 'SEGMENT ECONOMICS are not available' - thesis relies on company-level aggregates rather than direct segment profitability evidence"
+      },
+      "citations_edge_vs_crowding": "Both sides cite the same Lotus hybrid news (edge insight on strategic pivot) but Bull also heavily references consensus analyst views and targets (crowding). Bear more focused on identifying data gaps that crowd may be overlooking. Roughly 60% crowding, 40% edge across both theses.",
+      "verdict_on_grounding": "EVENLY_GROUNDED",
+      "verdict_rationale": "Both sides accurately cite quantitative data from context and correctly self-assess their core causal links as E2:proxy given lack of segment disclosure. Bull constructs stronger business mechanism around revenue outperformance, while Bear identifies key analytical blind spots."
+    },
+    "_agent_status": {
+      "bull_r1": {
+        "status": "success",
+        "ms": 55879
+      },
+      "bear_r1": {
+        "status": "success",
+        "ms": 83283
+      },
+      "technical": {
+        "status": "success",
+        "ms": 7296
+      },
+      "bull_r2": {
+        "status": "success",
+        "ms": 46714
+      },
+      "bear_r2": {
+        "status": "success",
+        "ms": 68839
+      },
+      "forensic": {
+        "status": "success",
+        "ms": 28097
+      },
+      "synth": {
+        "status": "success",
+        "ms": 57053
+      }
+    },
+    "_quality": {
+      "score": 50,
+      "missingFields": [
+        "qc_checklist.all_8_steps_complete",
+        "qc_checklist.step_1_specific_not_vague",
+        "qc_checklist.step_2_no_unfounded_leaps",
+        "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "qc_checklist.step_5_observable",
+        "qc_checklist.step_6_observable",
+        "qc_checklist.step_7_one_sentence_tagline",
+        "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "qc_checklist.step_8_early_signs_observable",
+        "qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "qc_checklist.step_8_position_sizing_curve_monotonic",
+        "qc_checklist.reward_to_risk_at_least_threshold"
+      ],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": false,
+        "step_5_observable": false,
+        "step_6_observable": false,
+        "step_7_one_sentence_tagline": false,
+        "reward_to_risk_at_least_threshold": false,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": false,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "FAIL",
+      "qc_findings": [
+        "failed:step_4_has_specific_numbers_and_horizon",
+        "failed:step_5_observable",
+        "failed:step_6_observable",
+        "failed:step_7_one_sentence_tagline",
+        "failed:step_8_phase_timing_concrete_not_boilerplate",
+        "failed:step_8_position_sizing_curve_monotonic",
+        "failed:reward_to_risk_at_least_threshold",
+        "missing:qc_checklist.all_8_steps_complete",
+        "missing:qc_checklist.step_1_specific_not_vague",
+        "missing:qc_checklist.step_2_no_unfounded_leaps",
+        "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "missing:qc_checklist.step_5_observable",
+        "missing:qc_checklist.step_6_observable",
+        "missing:qc_checklist.step_7_one_sentence_tagline",
+        "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "missing:qc_checklist.step_8_early_signs_observable",
+        "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+        "missing:qc_checklist.reward_to_risk_at_least_threshold"
+      ]
+    }
+  },
+  "models_used": {
+    "bull": "gemini-2.5-pro",
+    "bear": "gpt-5.5",
+    "technical": "claude-sonnet-4-20250514",
+    "forensic": "claude-sonnet-4-20250514",
+    "synth": "claude-opus-4-7"
+  },
+  "_status": "OK",
+  "_partial_failures": [],
+  "pipeline_ms_total": 187743
+}

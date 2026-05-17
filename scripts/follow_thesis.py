@@ -224,12 +224,26 @@ def track_one(ticker: str, dry_run: bool = False) -> Optional[dict]:
     # Skip non-actionable directions
     if direction in ('PASS', 'NEUTRAL'):
         print(f'  {ticker} direction={direction} — non-actionable, skipping paper trade', file=sys.stderr)
-        return {
+        skip_rec = {
             'ticker': ticker,
             'direction': direction,
             '_status': 'skipped_non_actionable',
             'thesis_logged_at': attr.get('thesis_logged_at'),
+            # KR4 taxonomy — WHY this is a PASS is investment-meaningful
+            # and distinct per ticker (CATALYST_NOT_YET_OBSERVABLE vs
+            # BALANCED_RISK_REWARD vs INSUFFICIENT_DATA). Surface it so
+            # the board explains each skip rather than a generic "PASS".
+            'pass_reason': attr.get('pass_reason'),
+            'pass_reason_detail': attr.get('pass_reason_detail'),
         }
+        # CRITICAL: overwrite the per-ticker file so a prior actionable
+        # state (e.g. 大参林 was SHORT pre-recalibration) does not linger
+        # as stale ACTIVE data that verify_thesis would still count.
+        if not dry_run:
+            out_path = PUBLIC_DATA / 'paper_trades' / f'{to_underscore(ticker)}.json'
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(json.dumps(skip_rec, indent=2, ensure_ascii=False, default=str))
+        return skip_rec
 
     entry_date = (attr.get('thesis_logged_at') or '')[:10]
     entry_price = lookup_entry_price(ticker, entry_date)
@@ -297,6 +311,14 @@ def track_one(ticker: str, dry_run: bool = False) -> Optional[dict]:
         'wrongIf_conditions': attr.get('wrongIf_conditions', []),
         'rightIf_conditions': attr.get('rightIf_conditions', []),
         'what_changes_our_mind': attr.get('what_changes_our_mind'),
+        # Path-B ratified semantics — a STARTER_CAPPED_UNTIL_E1 LONG is
+        # NOT a full-size LONG; the board must show the capped size +
+        # the "tradeable but not proven" statement + the E2→E1 scale-in
+        # gate, else we misrepresent the ratified thesis.
+        'conviction_state': attr.get('conviction_state'),
+        'tradeable_not_proven_statement': attr.get('tradeable_not_proven_statement'),
+        'core_causal_link': attr.get('core_causal_link', {}),
+        'evidence_profile': attr.get('evidence_profile', {}),
         'daily_log': daily_log[-90:],  # cap at 90 days history
         '_verification_pending': True,
         '_note': 'wrongIf/rightIf conditions kept as text — semantic verification deferred to verify_thesis.py',
@@ -327,7 +349,14 @@ def build_summary(states: list, dry_run: bool = False) -> dict:
         if not s:
             continue
         if s.get('_status') == 'skipped_non_actionable':
-            skipped.append({'ticker': s['ticker'], 'direction': s.get('direction'), 'thesis_logged_at': s.get('thesis_logged_at')})
+            skipped.append({
+                'ticker': s['ticker'],
+                'direction': s.get('direction'),
+                'thesis_logged_at': s.get('thesis_logged_at'),
+                # KR4 taxonomy — distinct, investment-meaningful skip reason
+                'pass_reason': s.get('pass_reason'),
+                'pass_reason_detail': s.get('pass_reason_detail'),
+            })
             continue
         info = {
             'ticker': s['ticker'],
@@ -341,6 +370,10 @@ def build_summary(states: list, dry_run: bool = False) -> dict:
             'days_held': s.get('days_held'),
             'days_to_catalyst': s.get('days_to_catalyst'),
             'current_status': s.get('current_status'),
+            # Path-B ratified semantics — board must show this is a
+            # capped starter, not a full-size LONG.
+            'conviction_state': s.get('conviction_state'),
+            'tradeable_not_proven_statement': s.get('tradeable_not_proven_statement'),
         }
         if s.get('current_status') in ('TARGET_HIT', 'STOPPED_OUT', 'EXPIRED'):
             closed.append(info)
