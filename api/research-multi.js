@@ -708,8 +708,12 @@ situations that are NOT the same — do not conflate them:
 
 A correctly-labeled [E2:proxy] FORWARD core link does NOT force PASS.
 Emit a tradeable LONG/SHORT (TIER-SCALED) when ALL hold:
-  (a) the historical/structural BASE is [E1:direct] (e.g. BYD 2025
-      overseas GM 19.46% vs domestic 16.66% = +280bps, segment-disclosed);
+  (a) the historical/structural BASE is [E1:direct] AND it measures the
+      SAME causal mechanism the forward leg claims (e.g. BYD 2025
+      overseas GM 19.46% vs domestic 16.66% = +280bps, segment-disclosed
+      — the base IS overseas-margin, the forward leg IS overseas-margin
+      persistence: same mechanism, future H1 segment disclosure directly
+      re-measures it);
   (b) the forward uncertainty is EXPLICITLY labeled [E2:proxy] — the
       unknown is named, not hidden (no overstatement);
   (c) step_5/step_6 KR3 triggers are mechanized + source-bound (a
@@ -718,6 +722,21 @@ Emit a tradeable LONG/SHORT (TIER-SCALED) when ALL hold:
   (e) sizing is TIER-SCALED: position_sizing_curve = starter/small size
       NOW, scale up ONLY after the [E1] confirmation print.
 If ANY of (a)-(e) fails → PASS with the correct _pass_reason.
+
+RULE X (Junyan 2026-05-17 ruling — boundary condition exposed by Geely):
+Peer-relative valuation, peer-relative revenue growth, peer-relative
+ROE, or peer-relative margin MAY be [E1:direct] FACTS, but they do NOT
+qualify as the [E1:direct] STRUCTURAL BASE for E2-forward tradeability
+UNLESS the SAME forward causal mechanism can be DIRECTLY CONFIRMED by
+future issuer disclosure. If the proposed mechanism is
+segment/mix/brand/powertrain-driven and the issuer does NOT disclose
+that segment/mix economics (so the forward causal claim can never be
+re-measured — only company-level co-movement can), this is a
+valuation/peer-relative thesis smuggled in as a business-mechanism
+thesis → emit PASS / INSUFFICIENT_DATA. (Geely: Rev/ROE/P/E vs BYD are
+E1 facts, but the hybrid-mix causal claim is unconfirmable because
+segment economics are not_available → PASS, NOT tradeable. BYD passes
+Rule X because overseas-segment GM IS disclosed and re-measured at H1.)
 
 HARD CONSTRAINT — for such a tradeable-but-capped thesis your
 _synthesizer_rationale AND step_7_variant_view MUST state, in substance:
