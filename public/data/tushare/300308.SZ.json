@@ -1,6 +1,6 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-05-15T10:43:13Z",
+  "fetched_at": "2026-05-18T05:10:56Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -1835,6 +1835,11 @@
       "rows": [
         {
           "ts_code": "300308.SZ",
+          "trade_date": "20260518",
+          "adj_factor": 6.6039
+        },
+        {
+          "ts_code": "300308.SZ",
           "trade_date": "20260515",
           "adj_factor": 6.6039
         },
@@ -2109,7 +2114,7 @@
           "adj_factor": 6.5961
         }
       ],
-      "row_count": 55,
+      "row_count": 56,
       "_status": "ok"
     },
     "income": {
@@ -5239,6 +5244,528 @@
       "row_count": 0,
       "_status": "empty"
     },
+    "fina_mainbz_region": {
+      "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20251231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 34636523292.07,
+          "bz_profit": 15460358542.88,
+          "bz_cost": 19176164749.19,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20251231",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 3603412348.6,
+          "bz_profit": 614039971.02,
+          "bz_cost": 2989372377.58,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20250630",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 12781447441.16,
+          "bz_profit": 5537387939.85,
+          "bz_cost": 7244059501.31,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20250630",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 2007627396.64,
+          "bz_profit": 278720058.19,
+          "bz_cost": 1728907338.45,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20241231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 20715714496.46,
+          "bz_profit": 7611780655.31,
+          "bz_cost": 13103933841.15,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20241231",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 3146445241.91,
+          "bz_profit": 454812478.59,
+          "bz_cost": 2691632763.32,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20240630",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 9472202175.33,
+          "bz_profit": 3468100195.64,
+          "bz_cost": 6004101979.69,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20240630",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 1326392010.42,
+          "bz_profit": 109720106.45,
+          "bz_cost": 1216671903.97,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20231231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 9073272085.78,
+          "bz_profit": 3418535620.69,
+          "bz_cost": 5654736465.09,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20231231",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 1644712385.25,
+          "bz_profit": 117571492.89,
+          "bz_cost": 1527140892.36,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20230630",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 3482122187.94,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20230630",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 521859056.37,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20221231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 8377000019.93,
+          "bz_profit": 2662791638.24,
+          "bz_cost": 5714208381.69,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20221231",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 1264794746.15,
+          "bz_profit": 163411451.24,
+          "bz_cost": 1101383294.91,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20220630",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 3622867608.75,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20220630",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 608176221.75,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20211231",
+          "bz_item": "国外",
+          "bz_code": "D",
+          "bz_sales": 5777708176.65,
+          "bz_profit": 1770009603.87,
+          "bz_cost": 4007698572.78,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20211231",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 1917696629.04,
+          "bz_profit": 197995337.29,
+          "bz_cost": 1719701291.75,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20210630",
+          "bz_item": "美国",
+          "bz_code": "D",
+          "bz_sales": 1926822388.59,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20210630",
+          "bz_item": "欧洲",
+          "bz_code": "D",
+          "bz_sales": 88820968.07,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20210630",
+          "bz_item": "其他国家地区",
+          "bz_code": "D",
+          "bz_sales": 421218675.24,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20210630",
+          "bz_item": "中国大陆",
+          "bz_code": "D",
+          "bz_sales": 860990359.7,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        }
+      ],
+      "row_count": 22,
+      "_status": "ok"
+    },
+    "fina_mainbz_product": {
+      "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20251231",
+          "bz_item": "高端光通讯收发模块",
+          "bz_code": "P",
+          "bz_sales": 37456518745.9,
+          "bz_profit": 15958896400.79,
+          "bz_cost": 21497622345.11,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20251231",
+          "bz_item": "其他主营业务",
+          "bz_code": "P",
+          "bz_sales": 783416894.77,
+          "bz_profit": 115502113.11,
+          "bz_cost": 667914781.66,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20250630",
+          "bz_item": "高端光通讯收发模块",
+          "bz_code": "P",
+          "bz_sales": 14431741404.73,
+          "bz_profit": 5766695271.39,
+          "bz_cost": 8665046133.34,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20250630",
+          "bz_item": "汽车光电子",
+          "bz_code": "P",
+          "bz_sales": 257839199.05,
+          "bz_profit": 51409115.52,
+          "bz_cost": 206430083.53,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20250630",
+          "bz_item": "光组件",
+          "bz_code": "P",
+          "bz_sales": 99494234.02,
+          "bz_profit": -1996388.87,
+          "bz_cost": 101490622.89,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20241231",
+          "bz_item": "高端光通讯收发模块",
+          "bz_code": "P",
+          "bz_sales": 22885756727.93,
+          "bz_profit": 7929414906.46,
+          "bz_cost": 14956341821.47,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20241231",
+          "bz_item": "汽车光电子",
+          "bz_code": "P",
+          "bz_sales": 761914863.22,
+          "bz_profit": 128869215.39,
+          "bz_cost": 633045647.83,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20241231",
+          "bz_item": "光组件",
+          "bz_code": "P",
+          "bz_sales": 214488147.22,
+          "bz_profit": 8309012.05,
+          "bz_cost": 206179135.17,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20240630",
+          "bz_item": "高端光通讯收发模块",
+          "bz_code": "P",
+          "bz_sales": 10519530532.94,
+          "bz_profit": 3525139339.84,
+          "bz_cost": 6994391193.1,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20240630",
+          "bz_item": "汽车光电子",
+          "bz_code": "P",
+          "bz_sales": 279063652.81,
+          "bz_profit": 52680962.25,
+          "bz_cost": 226382690.56,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20231231",
+          "bz_item": "汽车光电子",
+          "bz_code": "P",
+          "bz_sales": 334008305.74,
+          "bz_profit": 57907095.35,
+          "bz_cost": 276101210.39,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20231231",
+          "bz_item": "光组件",
+          "bz_code": "P",
+          "bz_sales": 202002736.39,
+          "bz_profit": 2579905.45,
+          "bz_cost": 199422830.94,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20231231",
+          "bz_item": "25G/100G/400G光模块",
+          "bz_code": "P",
+          "bz_sales": 9798520290.63,
+          "bz_profit": 3435342720.15,
+          "bz_cost": 6363177570.48,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20231231",
+          "bz_item": "10G/40G光模块",
+          "bz_code": "P",
+          "bz_sales": 383453138.27,
+          "bz_profit": 40277392.63,
+          "bz_cost": 343175745.64,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20230630",
+          "bz_item": "高端光通讯收发模块",
+          "bz_code": "P",
+          "bz_sales": 4003981244.31,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20221231",
+          "bz_item": "光组件",
+          "bz_code": "P",
+          "bz_sales": 229091149.12,
+          "bz_profit": 21288156.04,
+          "bz_cost": 207802993.08,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20221231",
+          "bz_item": "25G/100G/400G光模块",
+          "bz_code": "P",
+          "bz_sales": 8746316940.16,
+          "bz_profit": 2689631743.54,
+          "bz_cost": 6056685196.62,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20221231",
+          "bz_item": "10G/40G光模块",
+          "bz_code": "P",
+          "bz_sales": 666386676.8,
+          "bz_profit": 115283189.9,
+          "bz_cost": 551103486.9,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20220630",
+          "bz_item": "高端光通讯收发模块",
+          "bz_code": "P",
+          "bz_sales": 4091150890.05,
+          "bz_profit": 1123774476.74,
+          "bz_cost": 2967376413.31,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20220630",
+          "bz_item": "光组件",
+          "bz_code": "P",
+          "bz_sales": 139892940.45,
+          "bz_profit": 9512367.86,
+          "bz_cost": 130380572.59,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20211231",
+          "bz_item": "电机绕组装备",
+          "bz_code": "P",
+          "bz_sales": 107356114.51,
+          "bz_profit": 20393138.89,
+          "bz_cost": 86962975.62,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20211231",
+          "bz_item": "光组件",
+          "bz_code": "P",
+          "bz_sales": 327025887.56,
+          "bz_profit": 40507410.75,
+          "bz_cost": 286518476.81,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20211231",
+          "bz_item": "25G/100G/400G光模块",
+          "bz_code": "P",
+          "bz_sales": 6363964462.18,
+          "bz_profit": 1780264063.97,
+          "bz_cost": 4583700398.21,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20211231",
+          "bz_item": "10G/40G光模块",
+          "bz_code": "P",
+          "bz_sales": 897058341.44,
+          "bz_profit": 126840327.55,
+          "bz_cost": 770218013.89,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20210630",
+          "bz_item": "高端光通讯收发模块",
+          "bz_code": "P",
+          "bz_sales": 2930877015.76,
+          "bz_profit": 741327710.72,
+          "bz_cost": 2189549305.04,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20210630",
+          "bz_item": "电机绕组设备",
+          "bz_code": "P",
+          "bz_sales": 29159288.76,
+          "bz_profit": 5671780.64,
+          "bz_cost": 23487508.12,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20210630",
+          "bz_item": "电机绕组装备",
+          "bz_code": "P",
+          "bz_sales": 29159288.76,
+          "bz_profit": 5671780.64,
+          "bz_cost": 23487508.12,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20210630",
+          "bz_item": "接入网光模块和光组件",
+          "bz_code": "P",
+          "bz_sales": 337816087.08,
+          "bz_profit": 69655744.7,
+          "bz_cost": 268160342.38,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "300308.SZ",
+          "end_date": "20210630",
+          "bz_item": "其他业务",
+          "bz_code": "P",
+          "bz_sales": null,
+          "bz_profit": null,
+          "bz_cost": 11942763.88,
+          "curr_type": "CNY"
+        }
+      ],
+      "row_count": 29,
+      "_status": "ok"
+    },
     "forecast": {
       "rows": null,
       "row_count": 0,
@@ -5247,5 +5774,5 @@
       "_unlock_action": "Upgrade Tushare to 10000-tier (~¥3000-5000/yr) to unlock forecast"
     }
   },
-  "completeness_pct": 75
+  "completeness_pct": 80
 }

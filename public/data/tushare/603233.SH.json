@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-05-16T13:05:07Z",
+  "fetched_at": "2026-05-18T05:11:23Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -1835,6 +1835,11 @@
       "rows": [
         {
           "ts_code": "603233.SH",
+          "trade_date": "20260518",
+          "adj_factor": 3.1365
+        },
+        {
+          "ts_code": "603233.SH",
           "trade_date": "20260515",
           "adj_factor": 3.1365
         },
@@ -2109,7 +2114,7 @@
           "adj_factor": 3.1365
         }
       ],
-      "row_count": 55,
+      "row_count": 56,
       "_status": "ok"
     },
     "income": {
