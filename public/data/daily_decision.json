@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-18T05:14:33.806896+00:00",
+  "generated_at": "2026-05-18T12:01:52.547220+00:00",
   "date": "2026-05-18",
   "brief_e": "1 TRIM",
   "brief_z": "TRIM1",
@@ -12,13 +12,13 @@
         "action": "TRIM",
         "priority": "MEDIUM",
         "confidence": 23,
-        "pnl_pct": 53.66,
+        "pnl_pct": 53.37,
         "holding_days": 69,
         "weight_pct": 54.2,
         "vp_score": 56,
         "confluence": -23,
-        "reason_e": "Bearish drift (score -23) with unrealised gain +53.7%. Consider locking partial profit. Bearish: Ai Capex Weakening, Rsi Overbought | RSI 75 | Price vs MA20 +13.8% | Regime: PERMISSIVE | VP 56.",
-        "reason_z": "信号走弱（评分-23），浮盈+53.7%，建议部分减仓锁定利润。空头：AI资本开支减速(超大规模厂商CapEx放缓)、RSI超买 | RSI 75 | 距MA20 +13.8% | 政策顺风 | VP 56。",
+        "reason_e": "Bearish drift (score -23) with unrealised gain +53.4%. Consider locking partial profit. Bearish: Ai Capex Weakening, Rsi Overbought | RSI 77 | Price vs MA20 +14.7% | Regime: PERMISSIVE | VP 56.",
+        "reason_z": "信号走弱（评分-23），浮盈+53.4%，建议部分减仓锁定利润。空头：AI资本开支减速(超大规模厂商CapEx放缓)、RSI超买 | RSI 77 | 距MA20 +14.7% | 政策顺风 | VP 56。",
         "entry_target": null,
         "exit_trigger": "Score -23 ≤ -20 + profit > 15% → TRIM suggested"
       },
@@ -80,13 +80,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 14,
-        "pnl_pct": -1.34,
+        "pnl_pct": -1.75,
         "holding_days": 47,
         "weight_pct": 3.9,
         "vp_score": 42,
         "confluence": 14,
-        "reason_e": "Signal neutral (score 14). P&L -1.3% after 47d. Hold — no new entry/exit trigger. Bullish: Kdj Oversold | RSI 35 | Price vs MA20 -6.1% | Regime: PERMISSIVE | VP 42.",
-        "reason_z": "信号中性（评分14），浮盈-1.3%，持有47天，无新触发条件。多头：KDJ极度超卖(J<0) | RSI 35 | 距MA20 -6.1% | 政策顺风 | VP 42。",
+        "reason_e": "Signal neutral (score 14). P&L -1.8% after 47d. Hold — no new entry/exit trigger. Bullish: Kdj Oversold | RSI 35 | Price vs MA20 -6.2% | Regime: PERMISSIVE | VP 42.",
+        "reason_z": "信号中性（评分14），浮盈-1.8%，持有47天，无新触发条件。多头：KDJ极度超卖(J<0) | RSI 35 | 距MA20 -6.2% | 政策顺风 | VP 42。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
@@ -104,8 +104,8 @@
         "weight_pct": 0,
         "vp_score": 51,
         "confluence": 8,
-        "reason_e": "No entry trigger. Score 8, VP 51. Bullish: Bb Lower Break | RSI 37 | Price vs MA20 -9.5% | VP 51.",
-        "reason_z": "无进场信号。评分8，VP51。多头：布林下轨支撑 | RSI 37 | 距MA20 -9.5% | VP 51。",
+        "reason_e": "No entry trigger. Score 8, VP 51. Bullish: Bb Lower Break | RSI 37 | Price vs MA20 -9.2% | VP 51.",
+        "reason_z": "无进场信号。评分8，VP51。多头：布林下轨支撑 | RSI 37 | 距MA20 -9.2% | VP 51。",
         "entry_target": null,
         "exit_trigger": null
       },
@@ -115,14 +115,14 @@
         "status": "WATCHLIST",
         "action": "WATCH",
         "priority": "LOW",
-        "confidence": 12,
+        "confidence": 30,
         "pnl_pct": null,
         "holding_days": null,
         "weight_pct": 0,
         "vp_score": 57,
-        "confluence": -12,
-        "reason_e": "No entry trigger. Score -12, VP 57. Bearish: Macd Death Cross | RSI 36 | Price vs MA20 -5.4% | VP 57.",
-        "reason_z": "无进场信号。评分-12，VP57。空头：MACD死叉 | RSI 36 | 距MA20 -5.4% | VP 57。",
+        "confluence": -30,
+        "reason_e": "No entry trigger. Score -30, VP 57. Bearish: Volume Selloff, Macd Death Cross | RSI 41 | Price vs MA20 -3.0% | VP 57.",
+        "reason_z": "无进场信号。评分-30，VP57。空头：放量下跌、MACD死叉 | RSI 41 | 距MA20 -3.0% | VP 57。",
         "entry_target": null,
         "exit_trigger": null
       }
@@ -131,7 +131,7 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 54% of portfolio — above 40.0% limit",
-    "💰 PROFIT REVIEW: 300308.SZ +53.7% — consider partial trim to lock gains"
+    "💰 PROFIT REVIEW: 300308.SZ +53.4% — consider partial trim to lock gains"
   ],
   "wrongif_alerts": [
     {
