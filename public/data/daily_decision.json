@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-19T05:11:21.433317+00:00",
+  "generated_at": "2026-05-19T11:40:56.184909+00:00",
   "date": "2026-05-19",
   "brief_e": "1 TRIM",
   "brief_z": "TRIM1",
@@ -11,16 +11,16 @@
         "status": "HELD",
         "action": "TRIM",
         "priority": "MEDIUM",
-        "confidence": 20,
-        "pnl_pct": 46.48,
+        "confidence": 26,
+        "pnl_pct": 51.17,
         "holding_days": 70,
-        "weight_pct": 53.0,
+        "weight_pct": 53.8,
         "vp_score": 56,
-        "confluence": -20,
-        "reason_e": "Bearish drift (score -20) with unrealised gain +46.5%. Consider locking partial profit. Bearish: Ai Capex Weakening, Kdj Death Cross | RSI 69 | Price vs MA20 +9.4% | Regime: PERMISSIVE | VP 56.",
-        "reason_z": "信号走弱（评分-20），浮盈+46.5%，建议部分减仓锁定利润。空头：AI资本开支减速(超大规模厂商CapEx放缓)、KDJ死叉 | RSI 69 | 距MA20 +9.4% | 政策顺风 | VP 56。",
+        "confluence": -26,
+        "reason_e": "Bearish drift (score -26) with unrealised gain +51.2%. Consider locking partial profit. Bearish: Ai Capex Weakening, Rsi Overbought | RSI 74 | Price vs MA20 +11.7% | Regime: PERMISSIVE | VP 56.",
+        "reason_z": "信号走弱（评分-26），浮盈+51.2%，建议部分减仓锁定利润。空头：AI资本开支减速(超大规模厂商CapEx放缓)、RSI超买 | RSI 74 | 距MA20 +11.7% | 政策顺风 | VP 56。",
         "entry_target": null,
-        "exit_trigger": "Score -20 ≤ -20 + profit > 15% → TRIM suggested"
+        "exit_trigger": "Score -26 ≤ -20 + profit > 15% → TRIM suggested"
       },
       {
         "ticker": "6160.HK",
@@ -31,7 +31,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 70,
-        "weight_pct": 4.1,
+        "weight_pct": 4.0,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 70d. Hold — no new entry/exit trigger. RSI 59 | Price vs MA20 +3.0%.",
@@ -48,7 +48,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 63,
-        "weight_pct": 24.6,
+        "weight_pct": 24.2,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 63d. Hold — no new entry/exit trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 56,
-        "weight_pct": 14.2,
+        "weight_pct": 13.9,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 56d. Hold — no new entry/exit trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -80,13 +80,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 8,
-        "pnl_pct": -0.93,
+        "pnl_pct": -0.2,
         "holding_days": 48,
         "weight_pct": 4.0,
         "vp_score": 42,
         "confluence": 8,
-        "reason_e": "Signal neutral (score 8). P&L -0.9% after 48d. Hold — no new entry/exit trigger. Bullish: Rsi Recovering | RSI 37 | Price vs MA20 -5.0% | Regime: PERMISSIVE | VP 42.",
-        "reason_z": "信号中性（评分8），浮盈-0.9%，持有48天，无新触发条件。多头：RSI回升 | RSI 37 | 距MA20 -5.0% | 政策顺风 | VP 42。",
+        "reason_e": "Signal neutral (score 8). P&L -0.2% after 48d. Hold — no new entry/exit trigger. Bullish: Rsi Recovering | RSI 40 | Price vs MA20 -4.3% | Regime: PERMISSIVE | VP 42.",
+        "reason_z": "信号中性（评分8），浮盈-0.2%，持有48天，无新触发条件。多头：RSI回升 | RSI 40 | 距MA20 -4.3% | 政策顺风 | VP 42。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
@@ -121,8 +121,8 @@
         "weight_pct": 0,
         "vp_score": 57,
         "confluence": 0,
-        "reason_e": "No entry trigger. Score 0, VP 57. RSI 39 | Price vs MA20 -4.0% | VP 57.",
-        "reason_z": "无进场信号。评分0，VP57。RSI 39 | 距MA20 -4.0% | VP 57。",
+        "reason_e": "No entry trigger. Score 0, VP 57. RSI 41 | Price vs MA20 -3.1% | VP 57.",
+        "reason_z": "无进场信号。评分0，VP57。RSI 41 | 距MA20 -3.1% | VP 57。",
         "entry_target": null,
         "exit_trigger": null
       }
@@ -130,22 +130,10 @@
   },
   "buy_watches": [],
   "portfolio_risk": [
-    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 53% of portfolio — above 40.0% limit",
-    "💰 PROFIT REVIEW: 300308.SZ +46.5% — consider partial trim to lock gains"
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 54% of portfolio — above 40.0% limit",
+    "💰 PROFIT REVIEW: 300308.SZ +51.2% — consider partial trim to lock gains"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 3.1 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 3.1（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 3.1,
-      "threshold": 25.0
-    },
     {
       "ticker": "002594.SZ",
       "severity": "HIGH",
@@ -169,6 +157,18 @@
       "indicator": "earnings_growth",
       "actual": -56.9,
       "threshold": -40.0
+    },
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 3.1 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 3.1（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 3.1,
+      "threshold": 25.0
     },
     {
       "ticker": "175.HK",
