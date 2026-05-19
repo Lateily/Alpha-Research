@@ -1,13 +1,27 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-05-18T12:00:21Z",
+  "fetched_at": "2026-05-19T05:09:45Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "300308.SZ",
+      "name": "中际旭创",
+      "surv_date": "20260515",
+      "fund_visitors": "--",
+      "rece_place": "全景网“投资者关系互动平台”(https://ir.p5w.net)",
+      "rece_mode": "投资者网上集体接待日",
+      "rece_org": "参与2026年山东辖区上市公司投资者网上集体接待日活动的投资者",
+      "org_type": "--",
+      "comp_rece": "董事、副总裁、财务总监 王晓丽,副总裁、董事会秘书 王军,证券事务代表 王少华",
+      "inst_count": 1,
+      "surv_type": "投资者网上集体接待日",
+      "description": null
+    },
     {
       "ts_code": "300308.SZ",
       "name": "中际旭创",
@@ -4434,9 +4448,9 @@
     }
   ],
   "summary": {
-    "total_30d": 1,
-    "total_90d": 316,
-    "unique_inst_30d": 1,
-    "latest_date": "2026-04-24"
+    "total_30d": 2,
+    "total_90d": 317,
+    "unique_inst_30d": 2,
+    "latest_date": "2026-05-15"
   }
 }

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-18T12:01:52.751885+00:00",
+    "generated_at": "2026-05-19T05:11:21.637126+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "ev_ebitda_target_multiple",
@@ -16,65 +16,65 @@
       "ticker": "300308.SZ",
       "model_status": "multi_method",
       "signal": "OVERPRICED",
-      "delta_pct": -73.27,
-      "current_ev_ebitda": 57.822,
+      "delta_pct": -72.27,
+      "current_ev_ebitda": 57.552,
       "current_ebitda": 20036571136,
       "target_multiple": 15.0,
       "fair_ev": 300548567040.0,
       "fair_equity": 311048998784.0,
-      "market_cap": 1163712528384,
+      "market_cap": 1121774338048,
       "net_debt": -10500431744,
       "market": "A",
-      "rationale_e": "EV/EBITDA 57.82x vs A-target 15x; fair_equity +311.0B vs market_cap 1163.7B; delta -73.3% → OVERPRICED",
-      "rationale_z": "EV/EBITDA 57.82x，A市场目标15x；公允股权 +311.0B vs 市值 1163.7B；delta -73.3% → OVERPRICED"
+      "rationale_e": "EV/EBITDA 57.55x vs A-target 15x; fair_equity +311.0B vs market_cap 1121.8B; delta -72.3% → OVERPRICED",
+      "rationale_z": "EV/EBITDA 57.55x，A市场目标15x；公允股权 +311.0B vs 市值 1121.8B；delta -72.3% → OVERPRICED"
     },
     "002594.SZ": {
       "ticker": "002594.SZ",
       "model_status": "multi_method",
       "signal": "UNDERPRICED",
-      "delta_pct": 92.12,
-      "current_ev_ebitda": 8.1,
+      "delta_pct": 90.69,
+      "current_ev_ebitda": 7.954,
       "current_ebitda": 111350251520,
       "target_multiple": 15.0,
       "fair_ev": 1670253772800.0,
       "fair_equity": 1655444611072.0,
-      "market_cap": 861666344960,
+      "market_cap": 868139532288,
       "net_debt": 14809161728,
       "market": "A",
-      "rationale_e": "EV/EBITDA 8.10x vs A-target 15x; fair_equity +1655.4B vs market_cap 861.7B; delta +92.1% → UNDERPRICED",
-      "rationale_z": "EV/EBITDA 8.10x，A市场目标15x；公允股权 +1655.4B vs 市值 861.7B；delta +92.1% → UNDERPRICED"
+      "rationale_e": "EV/EBITDA 7.95x vs A-target 15x; fair_equity +1655.4B vs market_cap 868.1B; delta +90.7% → UNDERPRICED",
+      "rationale_z": "EV/EBITDA 7.95x，A市场目标15x；公允股权 +1655.4B vs 市值 868.1B；delta +90.7% → UNDERPRICED"
     },
     "175.HK": {
       "ticker": "175.HK",
       "model_status": "multi_method",
       "signal": "FAIRLY_VALUED",
-      "delta_pct": -7.97,
-      "current_ev_ebitda": 11.676,
+      "delta_pct": -6.34,
+      "current_ev_ebitda": 11.01,
       "current_ebitda": 17019106304,
       "target_multiple": 12.0,
       "fair_ev": 204229275648.0,
       "fair_equity": 204229275648.0,
-      "market_cap": 221928013824,
+      "market_cap": 218049052672,
       "net_debt": 0,
       "market": "HK",
-      "rationale_e": "EV/EBITDA 11.68x vs HK-target 12x; fair_equity +204.2B vs market_cap 221.9B; delta -8.0% → FAIRLY_VALUED",
-      "rationale_z": "EV/EBITDA 11.68x，HK市场目标12x；公允股权 +204.2B vs 市值 221.9B；delta -8.0% → FAIRLY_VALUED"
+      "rationale_e": "EV/EBITDA 11.01x vs HK-target 12x; fair_equity +204.2B vs market_cap 218.0B; delta -6.3% → FAIRLY_VALUED",
+      "rationale_z": "EV/EBITDA 11.01x，HK市场目标12x；公允股权 +204.2B vs 市值 218.0B；delta -6.3% → FAIRLY_VALUED"
     },
     "603233.SH": {
       "ticker": "603233.SH",
       "model_status": "multi_method",
       "signal": "UNDERPRICED",
-      "delta_pct": 38.62,
-      "current_ev_ebitda": 8.883,
+      "delta_pct": 39.96,
+      "current_ev_ebitda": 8.386,
       "current_ebitda": 2340385024,
       "target_multiple": 12.0,
       "fair_ev": 28084620288.0,
       "fair_equity": 28084620288.0,
-      "market_cap": 20260108288,
+      "market_cap": 20066504704,
       "net_debt": 0,
       "market": "HK",
-      "rationale_e": "EV/EBITDA 8.88x vs HK-target 12x; fair_equity +28.1B vs market_cap 20.3B; delta +38.6% → UNDERPRICED",
-      "rationale_z": "EV/EBITDA 8.88x，HK市场目标12x；公允股权 +28.1B vs 市值 20.3B；delta +38.6% → UNDERPRICED"
+      "rationale_e": "EV/EBITDA 8.39x vs HK-target 12x; fair_equity +28.1B vs market_cap 20.1B; delta +40.0% → UNDERPRICED",
+      "rationale_z": "EV/EBITDA 8.39x，HK市场目标12x；公允股权 +28.1B vs 市值 20.1B；delta +40.0% → UNDERPRICED"
     }
   }
 }

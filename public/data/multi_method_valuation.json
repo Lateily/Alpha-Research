@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-18T12:01:52.847488+00:00",
+    "generated_at": "2026-05-19T05:11:21.732001+00:00",
     "schema_version": 1,
     "method": "median_of_3_signals_aggregator",
     "tie_break_rule": "n2_consensus_only",
@@ -47,12 +47,12 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "OVERPRICED",
-          "delta": -0.8898,
+          "delta": -0.883,
           "skip_reason": null
         },
         "EV_EBITDA": {
           "signal": "OVERPRICED",
-          "delta_pct": -73.27,
+          "delta_pct": -72.27,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
@@ -79,17 +79,17 @@
       "method_signals": {
         "FCF_DCF": {
           "signal": "UNDERPRICED",
-          "delta": 0.1428,
+          "delta": 0.141,
           "skip_reason": null
         },
         "EV_EBITDA": {
           "signal": "UNDERPRICED",
-          "delta_pct": 92.12,
+          "delta_pct": 90.69,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
           "signal": "OVERPRICED",
-          "delta_pp": -21.92,
+          "delta_pp": -22.17,
           "skip_reason": null
         }
       },
@@ -123,7 +123,7 @@
         },
         "EV_EBITDA": {
           "signal": "FAIRLY_VALUED",
-          "delta_pct": -7.97,
+          "delta_pct": -6.34,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
@@ -162,7 +162,7 @@
         },
         "EV_EBITDA": {
           "signal": "UNDERPRICED",
-          "delta_pct": 38.62,
+          "delta_pct": 39.96,
           "skip_reason": null
         },
         "Residual_Income_EBO": {
