@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-20T05:14:07.720949+00:00",
+  "generated_at": "2026-05-20T11:28:28.394351+00:00",
   "tickers_scored": 7,
   "summary": {
     "entry_candidates": [],
@@ -39,12 +39,12 @@
           "contribution": 12.0
         }
       ],
-      "rationale_e": "Bullish: Kdj Oversold | RSI 33 | Price vs MA20 -10.6% | VP 51",
-      "rationale_z": "多头：KDJ极度超卖(J<0) | RSI 33 | 距MA20 -10.6% | VP 51",
+      "rationale_e": "Bullish: Kdj Oversold | RSI 34 | Price vs MA20 -10.2% | VP 51",
+      "rationale_z": "多头：KDJ极度超卖(J<0) | RSI 34 | 距MA20 -10.2% | VP 51",
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-05-20T05:14:07.720493+00:00"
+      "computed_at": "2026-05-20T11:28:28.394009+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -78,12 +78,12 @@
           "contribution": 9.6
         }
       ],
-      "rationale_e": "Bullish: Bb Lower Break | RSI 36 | Price vs MA20 -5.9% | Regime: PERMISSIVE | VP 42",
-      "rationale_z": "多头：布林下轨支撑 | RSI 36 | 距MA20 -5.9% | 政策顺风 | VP 42",
+      "rationale_e": "Bullish: Bb Lower Break | RSI 35 | Price vs MA20 -6.5% | Regime: PERMISSIVE | VP 42",
+      "rationale_z": "多头：布林下轨支撑 | RSI 35 | 距MA20 -6.5% | 政策顺风 | VP 42",
       "signal_types": [
         "BB_LOWER_BREAK"
       ],
-      "computed_at": "2026-05-20T05:14:07.720373+00:00"
+      "computed_at": "2026-05-20T11:28:28.393916+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -102,10 +102,10 @@
       },
       "contributing": [],
       "contributing_signals": [],
-      "rationale_e": "RSI 41 | Price vs MA20 -3.2% | VP 57",
-      "rationale_z": "RSI 41 | 距MA20 -3.2% | VP 57",
+      "rationale_e": "RSI 44 | Price vs MA20 -2.5% | VP 57",
+      "rationale_z": "RSI 44 | 距MA20 -2.5% | VP 57",
       "signal_types": [],
-      "computed_at": "2026-05-20T05:14:07.720675+00:00"
+      "computed_at": "2026-05-20T11:28:28.394143+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -172,7 +172,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-05-20T05:14:07.720801+00:00"
+      "computed_at": "2026-05-20T11:28:28.394239+00:00"
     },
     {
       "ticker": "700.HK",
@@ -194,7 +194,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-05-20T05:14:07.720875+00:00"
+      "computed_at": "2026-05-20T11:28:28.394294+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -216,7 +216,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-05-20T05:14:07.720936+00:00"
+      "computed_at": "2026-05-20T11:28:28.394342+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -250,12 +250,12 @@
           "contribution": -11.2
         }
       ],
-      "rationale_e": "Bearish: Rsi Overbought | RSI 74 | Price vs MA20 +10.6% | Regime: PERMISSIVE | VP 56",
-      "rationale_z": "空头：RSI超买 | RSI 74 | 距MA20 +10.6% | 政策顺风 | VP 56",
+      "rationale_e": "Bearish: Rsi Overbought | RSI 74 | Price vs MA20 +11.3% | Regime: PERMISSIVE | VP 56",
+      "rationale_z": "空头：RSI超买 | RSI 74 | 距MA20 +11.3% | 政策顺风 | VP 56",
       "signal_types": [
         "RSI_OVERBOUGHT"
       ],
-      "computed_at": "2026-05-20T05:14:07.720600+00:00"
+      "computed_at": "2026-05-20T11:28:28.394086+00:00"
     }
   ]
 }

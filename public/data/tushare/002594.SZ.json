@@ -1,11 +1,24 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-20T05:10:34Z",
+  "fetched_at": "2026-05-20T11:25:19Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260520",
+          "open": 95.3,
+          "high": 95.49,
+          "low": 93.3,
+          "close": 93.36,
+          "pre_close": 96.0,
+          "change": -2.64,
+          "pct_chg": -2.75,
+          "vol": 415009.93,
+          "amount": 3900216.299
+        },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260519",
@@ -748,11 +761,31 @@
           "amount": 1879888.761
         }
       ],
-      "row_count": 57,
+      "row_count": 58,
       "_status": "ok"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260520",
+          "close": 93.36,
+          "turnover_rate": 1.1903,
+          "turnover_rate_f": 1.6894,
+          "volume_ratio": 1.09,
+          "pe": 26.0946,
+          "pe_ttm": 30.8975,
+          "pb": 3.6703,
+          "ps": 1.0587,
+          "ps_ttm": 1.0859,
+          "dv_ratio": 1.4189,
+          "dv_ttm": 1.4189,
+          "total_share": 911719.7565,
+          "float_share": 348661.35,
+          "free_share": 245652.5341,
+          "total_mv": 85118156.4668,
+          "circ_mv": 32551023.636
+        },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260519",
@@ -1894,7 +1927,7 @@
           "circ_mv": 31688566.4456
         }
       ],
-      "row_count": 57,
+      "row_count": 58,
       "_status": "ok"
     },
     "adj_factor": {
