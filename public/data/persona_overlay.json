@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-20T11:28:28.653334+00:00",
+    "generated_at": "2026-05-21T05:17:07.361552+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -42,7 +42,7 @@
           },
           {
             "name": "FCF yield > 4%",
-            "actual": 0.0036042736058094858,
+            "actual": 0.0036332132802600605,
             "threshold": 0.04,
             "comparator": ">",
             "passed": false,
@@ -50,7 +50,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 77.445854,
+            "actual": 76.8864,
             "threshold": 20.0,
             "comparator": "<",
             "passed": false,
@@ -74,7 +74,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 32.37792,
+            "actual": 32.120018,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -82,7 +82,7 @@
           },
           {
             "name": "FCF yield > 8%",
-            "actual": 0.0036042736058094858,
+            "actual": 0.0036332132802600605,
             "threshold": 0.08,
             "comparator": ">",
             "passed": false,
@@ -90,7 +90,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 56.72,
+            "actual": 57.108,
             "threshold": 10.0,
             "comparator": "<",
             "passed": false,
@@ -98,7 +98,7 @@
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.008076338302065248,
+            "actual": 0.00814118537717013,
             "threshold": 0.2,
             "comparator": ">",
             "passed": false,
@@ -114,7 +114,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.8756,
+            "actual": 0.8652,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,
@@ -122,7 +122,7 @@
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.1488,
+            "actual": 0.1474,
             "threshold": [
               0.08,
               0.15
@@ -175,7 +175,7 @@
           },
           {
             "name": "FCF yield > 4%",
-            "actual": -0.13756679242377579,
+            "actual": -0.13554866401246668,
             "threshold": 0.04,
             "comparator": ">",
             "passed": false,
@@ -183,7 +183,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 47.876923,
+            "actual": 48.58974,
             "threshold": 20.0,
             "comparator": "<",
             "passed": false,
@@ -207,7 +207,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.657304,
+            "actual": 3.7117562,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -215,7 +215,7 @@
           },
           {
             "name": "FCF yield > 8%",
-            "actual": -0.13756679242377579,
+            "actual": -0.13554866401246668,
             "threshold": 0.08,
             "comparator": ">",
             "passed": false,
@@ -223,7 +223,7 @@
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 8.075,
+            "actual": 7.86,
             "threshold": 10.0,
             "comparator": "<",
             "passed": true,
@@ -231,7 +231,7 @@
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.012731300121386088,
+            "actual": 0.012544529767616962,
             "threshold": 0.2,
             "comparator": ">",
             "passed": false,
@@ -247,7 +247,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.1458,
+            "actual": 0.1422,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,

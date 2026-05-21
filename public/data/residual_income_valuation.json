@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-20T11:28:28.728897+00:00",
+    "generated_at": "2026-05-21T05:17:07.434915+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "residual_income_no_growth_ebo",
@@ -18,26 +18,26 @@
       "model_status": "hyper_growth_ebo_unstable",
       "signal": null,
       "delta_pp": null,
-      "p_b_observed": 38.8,
+      "p_b_observed": 38.49,
       "book_equity": 29765156276.0,
-      "market_cap": 1154803695616,
-      "reason": "P/B 38.80 > sanity ceiling 10; no-growth EBO produces implied future ROE >100% which is mathematical artifact, not valuation signal. Method 1 rdcf FCF DCF + Method 2 EV/EBITDA remain canonical.",
-      "reason_z": "P/B 38.80 > 合理上限 10；无增长EBO产生隐含未来ROE>100%，属数学伪影非估值信号。Method 1 rdcf FCF DCF + Method 2 EV/EBITDA 仍是标准估值。"
+      "market_cap": 1145605324800,
+      "reason": "P/B 38.49 > sanity ceiling 10; no-growth EBO produces implied future ROE >100% which is mathematical artifact, not valuation signal. Method 1 rdcf FCF DCF + Method 2 EV/EBITDA remain canonical.",
+      "reason_z": "P/B 38.49 > 合理上限 10；无增长EBO产生隐含未来ROE>100%，属数学伪影非估值信号。Method 1 rdcf FCF DCF + Method 2 EV/EBITDA 仍是标准估值。"
     },
     "002594.SZ": {
       "ticker": "002594.SZ",
       "model_status": "multi_method",
       "signal": "OVERPRICED",
-      "delta_pp": -21.51,
+      "delta_pp": -22.0,
       "current_roe_pct": 11.15,
-      "implied_future_roe_pct": 32.66,
-      "p_b_observed": 3.46,
+      "implied_future_roe_pct": 33.15,
+      "p_b_observed": 3.51,
       "annuity_factor": 10.582,
       "wacc_used_as_re": 0.0945,
       "book_equity": 246274606000.0,
-      "market_cap": 851181568000,
-      "rationale_e": "P/B 3.46 → market implies forward ROE 32.7% over 5y; current ROE 11.1%; delta -21.5pp → OVERPRICED",
-      "rationale_z": "P/B 3.46 → 市场隐含未来5年ROE 32.7%；当前ROE 11.1%；delta -21.5pp → OVERPRICED"
+      "market_cap": 863854460928,
+      "rationale_e": "P/B 3.51 → market implies forward ROE 33.1% over 5y; current ROE 11.1%; delta -22.0pp → OVERPRICED",
+      "rationale_z": "P/B 3.51 → 市场隐含未来5年ROE 33.1%；当前ROE 11.1%；delta -22.0pp → OVERPRICED"
     },
     "175.HK": {
       "ticker": "175.HK",
