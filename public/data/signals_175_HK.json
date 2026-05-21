@@ -1,7 +1,7 @@
 {
   "ticker": "175.HK",
   "generated_at": "2026-05-21",
-  "price": 19.56,
+  "price": 19.47,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
@@ -12,8 +12,8 @@
       "date": "2026-05-21",
       "bullish": true,
       "description": {
-        "e": "Price (19.6) touched Bollinger lower (19.7) — oversold, mean reversion watch",
-        "z": "股价(19.6)触及布林下轨(19.7)，超卖，关注均值回归"
+        "e": "Price (19.5) touched Bollinger lower (19.7) — oversold, mean reversion watch",
+        "z": "股价(19.5)触及布林下轨(19.7)，超卖，关注均值回归"
       }
     },
     {
@@ -22,8 +22,8 @@
       "date": "2026-05-21",
       "bullish": true,
       "description": {
-        "e": "KDJ J=-5.5 (extreme <0) — high-probability reversal zone",
-        "z": "KDJ J=-5.5极度超卖，高概率反转区间"
+        "e": "KDJ J=-5.0 (extreme <0) — high-probability reversal zone",
+        "z": "KDJ J=-5.0极度超卖，高概率反转区间"
       }
     }
   ],
@@ -33,27 +33,27 @@
     "total": 2
   },
   "indicators": {
-    "ma5": 20.39,
+    "ma5": 20.37,
     "ma20": 21.98,
     "ma60": 20.65,
-    "rsi14": 31.3,
-    "vol_ma20": 70656458,
-    "vol_ratio": 0.43,
-    "price_vs_ma20": -11.03,
-    "price_vs_ma60": -5.28,
-    "change_1d": -2.05,
-    "change_5d": -8.0,
-    "change_20d": -21.45,
-    "macd_dif": -0.5433,
-    "macd_dea": -0.1155,
-    "macd_hist": -0.8555,
-    "bb_upper": 24.23,
+    "rsi14": 30.9,
+    "vol_ma20": 71918559,
+    "vol_ratio": 0.78,
+    "price_vs_ma20": -11.42,
+    "price_vs_ma60": -5.71,
+    "change_1d": -2.5,
+    "change_5d": -8.42,
+    "change_20d": -21.81,
+    "macd_dif": -0.5505,
+    "macd_dea": -0.117,
+    "macd_hist": -0.867,
+    "bb_upper": 24.24,
     "bb_mid": 21.98,
-    "bb_lower": 19.74,
-    "bb_bandwidth": 20.4,
-    "kdj_k": 9.7,
-    "kdj_d": 17.3,
-    "kdj_j": -5.5,
+    "bb_lower": 19.72,
+    "bb_bandwidth": 20.58,
+    "kdj_k": 9.9,
+    "kdj_d": 17.4,
+    "kdj_j": -5.0,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,

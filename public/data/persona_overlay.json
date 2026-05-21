@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-21T05:17:07.361552+00:00",
+    "generated_at": "2026-05-21T11:47:42.589753+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -42,7 +42,7 @@
           },
           {
             "name": "FCF yield > 4%",
-            "actual": 0.0036332132802600605,
+            "actual": 0.0037626909799693443,
             "threshold": 0.04,
             "comparator": ">",
             "passed": false,
@@ -50,7 +50,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 76.8864,
+            "actual": 74.24066,
             "threshold": 20.0,
             "comparator": "<",
             "passed": false,
@@ -74,7 +74,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 32.120018,
+            "actual": 31.014738,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -82,7 +82,7 @@
           },
           {
             "name": "FCF yield > 8%",
-            "actual": 0.0036332132802600605,
+            "actual": 0.0037626909799693443,
             "threshold": 0.08,
             "comparator": ">",
             "passed": false,
@@ -98,7 +98,7 @@
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.00814118537717013,
+            "actual": 0.0084313147679411,
             "threshold": 0.2,
             "comparator": ">",
             "passed": false,
@@ -109,12 +109,12 @@
         "verdict_z": "成长定价——非深度价值候选。"
       },
       "damodaran": {
-        "score": 1,
+        "score": 0,
         "max": 3,
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.8652,
+            "actual": 0.8733,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,
@@ -122,13 +122,13 @@
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.1474,
+            "actual": 0.1524,
             "threshold": [
               0.08,
               0.15
             ],
             "comparator": "in",
-            "passed": true,
+            "passed": false,
             "format": "percent"
           },
           {
@@ -140,8 +140,8 @@
             "format": "percent"
           }
         ],
-        "verdict_e": "Single sanity check — large gap or unusual assumption.",
-        "verdict_z": "仅一项达标——存在显著差距或非常规假设。"
+        "verdict_e": "Aggressive thesis: our_growth diverges from market price meaningfully.",
+        "verdict_z": "激进假设：我们的增长预期与市场价格意义性背离。"
       }
     },
     "002594.SZ": {
@@ -175,7 +175,7 @@
           },
           {
             "name": "FCF yield > 4%",
-            "actual": -0.13554866401246668,
+            "actual": -0.13734612706856023,
             "threshold": 0.04,
             "comparator": ">",
             "passed": false,
@@ -183,7 +183,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 48.58974,
+            "actual": 47.953846,
             "threshold": 20.0,
             "comparator": "<",
             "passed": false,
@@ -207,7 +207,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.7117562,
+            "actual": 3.66318,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -215,7 +215,7 @@
           },
           {
             "name": "FCF yield > 8%",
-            "actual": -0.13554866401246668,
+            "actual": -0.13734612706856023,
             "threshold": 0.08,
             "comparator": ">",
             "passed": false,
@@ -231,7 +231,7 @@
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.012544529767616962,
+            "actual": 0.012710878355245118,
             "threshold": 0.2,
             "comparator": ">",
             "passed": false,
@@ -247,7 +247,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.1422,
+            "actual": 0.1454,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,
