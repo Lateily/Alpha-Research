@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-21T11:43:24Z",
+  "fetched_at": "2026-05-22T05:07:52Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -1967,6 +1967,11 @@
       "rows": [
         {
           "ts_code": "002594.SZ",
+          "trade_date": "20260522",
+          "adj_factor": 3.1499
+        },
+        {
+          "ts_code": "002594.SZ",
           "trade_date": "20260521",
           "adj_factor": 3.1499
         },
@@ -2261,7 +2266,7 @@
           "adj_factor": 3.1499
         }
       ],
-      "row_count": 59,
+      "row_count": 60,
       "_status": "ok"
     },
     "income": {
