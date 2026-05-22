@@ -1,7 +1,7 @@
 {
   "ticker": "002594.SZ",
   "generated_at": "2026-05-22",
-  "price": 93.9,
+  "price": 93.75,
   "zone": "BEARISH",
   "entry_zone": true,
   "exit_zone": true,
@@ -12,8 +12,8 @@
       "date": "2026-05-22",
       "bullish": false,
       "description": {
-        "e": "MA20 (99.0) crossed below MA60 (99.9) — bearish trend shift",
-        "z": "MA20(99.0)下穿MA60(99.9)死叉看跌"
+        "e": "MA20 (98.9) crossed below MA60 (99.9) — bearish trend shift",
+        "z": "MA20(98.9)下穿MA60(99.9)死叉看跌"
       }
     },
     {
@@ -22,8 +22,8 @@
       "date": "2026-05-22",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 35.3→36.6 — momentum rebuilding",
-        "z": "RSI从35.3回升至36.6，动能修复"
+        "e": "RSI recovering 35.3→36.1 — momentum rebuilding",
+        "z": "RSI从35.3回升至36.1，动能修复"
       }
     }
   ],
@@ -33,27 +33,27 @@
     "total": 2
   },
   "indicators": {
-    "ma5": 94.26,
+    "ma5": 94.23,
     "ma20": 98.95,
-    "ma60": 99.87,
-    "rsi14": 36.6,
-    "vol_ma20": 45082214,
-    "vol_ratio": 0.36,
-    "price_vs_ma20": -5.11,
-    "price_vs_ma60": -5.97,
-    "change_1d": 0.42,
-    "change_5d": -2.49,
-    "change_20d": -7.52,
-    "macd_dif": -1.9849,
-    "macd_dea": -1.2154,
-    "macd_hist": -1.539,
-    "bb_upper": 105.51,
+    "ma60": 99.86,
+    "rsi14": 36.1,
+    "vol_ma20": 45610370,
+    "vol_ratio": 0.59,
+    "price_vs_ma20": -5.25,
+    "price_vs_ma60": -6.12,
+    "change_1d": 0.26,
+    "change_5d": -2.65,
+    "change_20d": -7.66,
+    "macd_dif": -1.9969,
+    "macd_dea": -1.2178,
+    "macd_hist": -1.5581,
+    "bb_upper": 105.53,
     "bb_mid": 98.95,
-    "bb_lower": 92.39,
-    "bb_bandwidth": 13.26,
-    "kdj_k": 11.0,
-    "kdj_d": 11.5,
-    "kdj_j": 9.9,
+    "bb_lower": 92.36,
+    "bb_bandwidth": 13.31,
+    "kdj_k": 10.3,
+    "kdj_d": 11.3,
+    "kdj_j": 8.3,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,

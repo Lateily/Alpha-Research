@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-22T05:11:36.771469+00:00",
+    "generated_at": "2026-05-22T11:27:42.348238+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -42,7 +42,7 @@
           },
           {
             "name": "FCF yield > 4%",
-            "actual": 0.003621630642260329,
+            "actual": 0.0036008707331394744,
             "threshold": 0.04,
             "comparator": ">",
             "passed": false,
@@ -50,7 +50,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 76.95973,
+            "actual": 77.40343,
             "threshold": 20.0,
             "comparator": "<",
             "passed": false,
@@ -74,7 +74,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 32.222744,
+            "actual": 32.408516,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -82,7 +82,7 @@
           },
           {
             "name": "FCF yield > 8%",
-            "actual": 0.003621630642260329,
+            "actual": 0.0036008707331394744,
             "threshold": 0.08,
             "comparator": ">",
             "passed": false,
@@ -98,7 +98,7 @@
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.008115231381123491,
+            "actual": 0.008068713256386816,
             "threshold": 0.2,
             "comparator": ">",
             "passed": false,
@@ -114,7 +114,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.9079,
+            "actual": 0.911,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,
@@ -122,7 +122,7 @@
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.1559,
+            "actual": 0.156,
             "threshold": [
               0.08,
               0.15
@@ -175,7 +175,7 @@
           },
           {
             "name": "FCF yield > 4%",
-            "actual": -0.1367756776078737,
+            "actual": -0.13699452280299687,
             "threshold": 0.04,
             "comparator": ">",
             "passed": false,
@@ -183,7 +183,7 @@
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 48.153847,
+            "actual": 48.076923,
             "threshold": 20.0,
             "comparator": "<",
             "passed": false,
@@ -207,7 +207,7 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.6784582,
+            "actual": 3.672582,
             "threshold": 1.5,
             "comparator": "<",
             "passed": false,
@@ -215,7 +215,7 @@
           },
           {
             "name": "FCF yield > 8%",
-            "actual": -0.1367756776078737,
+            "actual": -0.13699452280299687,
             "threshold": 0.08,
             "comparator": ">",
             "passed": false,
@@ -231,7 +231,7 @@
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.012658085358039,
+            "actual": 0.0126783386750652,
             "threshold": 0.2,
             "comparator": ">",
             "passed": false,
@@ -247,7 +247,7 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.1444,
+            "actual": 0.1448,
             "threshold": 0.05,
             "comparator": "<",
             "passed": false,
