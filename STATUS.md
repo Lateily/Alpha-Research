@@ -45,6 +45,13 @@ base unless mechanism re-confirmable by issuer disclosure; PASS taxonomy keeps
 (investment-logic + data-integrity review) · T3 Codex (codegen from
 `.agent_tasks/pending/` specs). Race-bundle: same tree may show 2 change
 sources — do NOT revert the other agent's work; split commits.
+**Codex landing protocol (anti-recurrence, T2 2026-05-24):** Codex
+`status=COMPLETE` is NOT trusted. Every task spec test_gate must include
+`git diff --stat <files_written>` proving the change landed; T1 verifies the
+worktree diff before accepting/queuing review; no diff → auto-fail. (B1/B2
+shift-13 outputs were reported COMPLETE but never landed → CLOSED as superseded
+by the Path-B arc; see their T1_DISPOSITION.txt.) Before rerunning any "lost"
+task, AUDIT current HEAD first — capability may already be re-implemented.
 
 ---
 
