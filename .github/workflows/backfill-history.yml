@@ -1,0 +1,99 @@
+name: Backfill History (20yr PIT, survivorship-safe)
+
+# P1 data foundation for the systematic-strategy backtest. Runs the deep
+# Tushare backfill in GitHub Actions because (a) TUSHARE_TOKEN lives only in
+# GHA secrets and (b) the local Codex sandbox cannot reach api.waditu.com.
+# The 20yr data is large + gitignored (data_history/), so it is NOT committed —
+# it is uploaded as a build ARTIFACT for inspection / download. A later step
+# (when the rebuilt backtest exists) will fetch -> backtest -> commit only the
+# small results JSON.
+#
+# Manual trigger only (Junyan, Actions tab). Defaults to the 4-ticker
+# validation set; set tickers='ALL' (future) once the bulk-store design lands.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Comma-separated ts_codes (validation set default)'
+        required: false
+        default: '600519.SH,000001.SZ,002594.SZ,300104.SZ'
+      years:
+        description: 'Lookback years label'
+        required: false
+        default: '20'
+      start:
+        description: 'Start date YYYYMMDD'
+        required: false
+        default: '20050101'
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install tushare pandas --quiet
+
+      # ── Survivorship-safe universe (incl. delisted/suspended) ──────────────
+      - name: Build PIT universe (stock_basic L+D+P)
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/build_pit_universe.py --sleep 0.4
+
+      # ── Deep per-ticker history (daily + adj + daily_basic + PIT financials) ─
+      - name: Fetch deep history
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python scripts/fetch_history_tushare.py \
+            --tickers "${{ github.event.inputs.tickers }}" \
+            --years "${{ github.event.inputs.years }}" \
+            --start "${{ github.event.inputs.start }}" \
+            --sleep 0.4
+
+      # ── Depth report to the job log (so we can SEE it worked w/o committing) ─
+      - name: Report data depth
+        run: |
+          echo "===== PIT universe ====="
+          python - <<'PY'
+          import json, glob, os
+          p = "data_history/universe_pit.json"
+          if os.path.exists(p):
+              u = json.load(open(p))
+              print("universe _status:", u.get("_status"), "counts:", u.get("counts"))
+          else:
+              print("universe_pit.json MISSING")
+          print("===== per-ticker depth =====")
+          for f in sorted(glob.glob("data_history/*.json")):
+              if f.endswith("universe_pit.json"):
+                  continue
+              d = json.load(open(f))
+              dep = d.get("_depth", {})
+              print(f"{os.path.basename(f):16} status={d.get('_status')} "
+                    f"daily_rows={dep.get('daily_rows')} "
+                    f"first={dep.get('daily_first_date')} last={dep.get('daily_last_date')} "
+                    f"fin_first_ann={dep.get('fin_first_ann_date')} "
+                    f"errors={len(d.get('_errors', []))}")
+          PY
+
+      # ── Upload data as artifact (gitignored + large → not committed) ────────
+      - name: Upload data_history artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: data_history-${{ github.run_id }}
+          path: data_history/
+          retention-days: 14
+          if-no-files-found: warn
