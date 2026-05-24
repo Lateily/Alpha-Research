@@ -1,16 +1,40 @@
-# Systematic Investment Strategy — v0 DRAFT (for Junyan revision)
+# Systematic Investment Strategy — v1 (Junyan 7-decisions resolved)
 
-> **Status:** v0 elaboration by T1 Claude (2026-05-24). Junyan locked the
-> direction; he asked me to elaborate concrete rules, then he edits.
-> **Everything here is a STARTING POINT to be calibrated/validated by the
-> 20yr backtest — NOT claimed-optimal. Numbers in `[brackets]` are tunable.**
+> **Status:** v1 by T1 Claude (2026-05-25), incorporating Junyan's answers to
+> the 7 open decisions + his overnight full-authority mandate. Still a
+> STARTING POINT to be calibrated/validated by the 20yr backtest — NOT
+> claimed-optimal. Numbers in `[brackets]` are tunable. Junyan reviews in the
+> morning; flagged interpretations marked ⚑ for his correction.
 >
-> **Locked direction (Junyan 2026-05-24):**
+> **Locked direction (Junyan 2026-05-24/25):**
 > 1. Architecture = **quant-primary + LLM-thesis overlay**; backtest runs OUR
 >    own systematic strategy.
 > 2. Universe = **A-share only** (cleanest, survivorship-fixable).
-> 3. Data spend = **assess cost first** (separate cost sheet pending).
+> 3. Data spend = **¥0** — existing 15000-pt Tushare account covers it; fetch
+>    runs in GitHub Actions (token is GHA-secret-only; Tushare unreachable from
+>    Codex sandbox). 20yr data lands via the GHA backfill workflow.
 > 4. 做T / intraday = **deferred to v2** (no minute/tick infra).
+>
+> **Junyan's 7 decisions (2026-05-25) — RESOLVED:**
+> 1. Cadence = **dual**: weekly AND monthly, chosen per stock attribute; some
+>    names traded at **T+1**. → drives the dual-track structure (§0.6).
+> 2. Micro-cap = **exclude** bottom decile (accepted).
+> 3. **Long-only** (THS/同花顺 cannot short).
+> 4. Factor weights = **run my Q30/V20/M25/E15/LR10 first, he critiques** after
+>    seeing backtest output.
+> 5. Winner-holding = **quant exits + hold winners**; book = **~7 long-term
+>    core + ~13 short-term trades** (§0.6 dual-track).
+> 6. Concurrent positions ~20 = OK.
+> 7. Risk control = **a systematic, scientific risk-control STRATEGY with active
+>    监听 (monitoring)** — NOT a lone stop-loss. → §6 is now an active
+>    risk-monitor engine.
+>
+> **⚑ HONESTY RED LINE (Junyan, load-bearing):** "宁愿犯错也不愿意找不出来错误在哪"
+> — we would rather make mistakes than be unable to LOCATE them. Therefore every
+> decision (screen in/out, entry, size, exit, risk action) MUST be logged with
+> its WHY + the exact data that drove it. Observability/attribution is a v1
+> requirement, not a nice-to-have. NEVER curve-fit to hit 20%; report the real
+> number. A finding we can debug > a pretty number we can't.
 
 ---
 
@@ -30,6 +54,36 @@ NOT replace that — it operationalizes it:
 Honest caveat: USP moats 1–2 (policy decoder, narrative-gap) are still
 *待建*. So today the overlay = the calibrated multi-agent thesis engine
 (framework rigor) only. The overlay gets stronger as those moats are built.
+
+---
+
+## 0.6 Portfolio structure — DUAL-TRACK core-satellite (Junyan #1/#5/#6)
+
+The book is split into two tracks with DIFFERENT holding horizons, cadences,
+signal sources, and exit logic. ~20 positions total:
+
+| | **CORE (long-term)** | **SATELLITE (short-term)** |
+|---|---|---|
+| Count | **~7** | **~13** |
+| Horizon | quarters–years | days–weeks |
+| Driver | LLM thesis (USP depth) + quality/value factors | systematic quant (momentum/technical/event) |
+| Cadence | **monthly** re-evaluate; hold winners | **weekly**, some **T+1** rotation |
+| Entry | thesis LONG/STARTER_CAPPED + factor rank | confluence/technical entry on screened candidates |
+| Exit | thesis invalidation (wrongIf) / factor decay / regime; **let winners run** | quant: target/stop/time-stop/signal decay — **fast** |
+| Sizing | conviction-scaled, scale-in on E1 (Path-B) | risk-based, smaller, faster turnover |
+| ⚑ assignment | which names are core vs satellite is decided by **stock attribute** (liquidity, volatility, thesis presence, horizon of edge) — see classifier below | |
+
+**Track classifier (⚑ v1 heuristic — Junyan to refine):** a screened candidate
+is routed CORE if it has (a) a live LLM thesis with an E1 base (Path-B
+tradeable), AND (b) durable quality/value factor rank; else SATELLITE if its
+edge is momentum/technical/event-driven (mean-reverting or fast). A name can
+be promoted satellite→core if a thesis later forms.
+
+**Why two tracks:** matches Junyan's pair-trade insight (STEP_8: profit twice —
+long-horizon conviction + short-horizon tactical) and his "7 长期 + 13 短期"
+split. The backtest must report **per-track** performance separately (core vs
+satellite have different return/turnover/risk profiles; blending hides which
+track actually works).
 
 ---
 
@@ -86,18 +140,34 @@ Tranches, not all-at-once (generalizes the ratified `STARTER_CAPPED`):
 - LLM-thesis names tagged `STARTER_CAPPED_UNTIL_E1` → capped at initial
   tranche until the E1 print, then scale (ties directly to Path-B).
 
-## 6. Risk control (风控)
+## 6. Active risk-monitor ENGINE (风控 — Junyan #7: a system, not a stop)
 
-- **Per-position:** hard stop = entry − [2.5]×ATR (for thesis names, tighter
-  of ATR-stop vs wrongIf). Time stop: exit if flat/un-triggered after **[60]** d.
-- **Portfolio:** max gross **[100%]** (no leverage v1); per-name **[10%]**;
-  per-sector **[30%]**; top-5 concentration **[50%]**.
-- **Drawdown circuit-breaker:** cut gross by half at NAV **[−12%]** from peak;
-  to cash at **[−20%]**.
-- **Regime filter:** if CSI300 < its MA200 (index downtrend) or breadth <
-  **[thresh]** → cap gross to **[40%]** + tighten entries. (Reuse
-  `leading_indicators` / stress regime.) A-share cycles are violent — this
-  is essential, not optional.
+Junyan was explicit: risk control must be a **systematic, scientific monitoring
+strategy with active 监听**, NOT a lone stop-loss. So this is a continuous
+engine of independent MONITORS, each with a trigger, an ACTION, and a logged
+reason. Runs every pipeline tick (daily v1; intraday in v2). Monitors:
+
+| Monitor | Watches | Trigger (⚑ tunable) | Action | Logged |
+|---|---|---|---|---|
+| Position stop | per-name price vs ATR/thesis stop | price ≤ entry−[2.5]×ATR (thesis: tighter of ATR vs wrongIf) | exit | px, stop, ATR, reason |
+| Time stop | days held vs thesis-untriggered | flat/un-triggered after [60]d (satellite: [10]d) | exit/trim | days, P&L |
+| Per-name cap | weight | > [10%] NAV | trim to cap | weight |
+| Sector cap | sector exposure | > [30%] | block adds / trim | sector wts |
+| Concentration | top-5 weight | > [50%] | block adds | top-5 |
+| Correlation | pairwise/cluster ρ | cluster gross > [cap] | block correlated adds | ρ matrix |
+| Vol target | realized portfolio vol | > [target] band | scale gross down | vol est |
+| Drawdown breaker | NAV vs peak | −[12%] → half gross; −[20%] → cash | de-risk | NAV, peak, dd |
+| Regime monitor | CSI300 vs MA200 + breadth | index downtrend / breadth < [thresh] | cap gross [40%] + tighten entries | regime state |
+| Liquidity | ADV vs position | position > [N]× ADV | flag/trim (exit risk) | ADV, days-to-exit |
+| Data-staleness | feed freshness | stale/missing inputs | freeze actions + alert | source, age |
+
+**Design rules:** (1) monitors are INDEPENDENT + composable (each a pure
+function over portfolio+market state → list of actions). (2) Every action emits
+a structured record `{monitor, ticker, trigger_value, threshold, action, why,
+ts}` to a risk-audit log — this IS the honesty red line for risk. (3) Conflicts
+resolved by severity (cash-out breaker > trims). (4) A `--dry-run` mode lists
+actions without applying (for backtest + morning inspection). A-share cycles are
+violent → the regime + drawdown monitors are load-bearing, not optional.
 
 ## 7. Position management (仓位管理)
 
@@ -168,21 +238,44 @@ look-ahead) — **discard it**.
 
 ---
 
-## 11. OPEN DECISIONS — your call (I made defaults; revise freely)
+## 11. DECISIONS — RESOLVED (Junyan 2026-05-25)
 
-1. **Rebalance cadence:** monthly [default] vs weekly (turnover/cost ↔ responsiveness).
-2. **Micro-cap:** exclude bottom decile [default] vs include (小盘 premium ↔ manipulation risk).
-3. **Long-only v1** [default; A-share shorting is hard/restricted] vs long-short.
-4. **Factor weights:** my Q30/V20/M25/E15/LR10 blend — your priors?
-5. **Winner-holding:** pure systematic exits [default] vs let LLM thesis hold winners longer.
-6. **Concurrent positions:** ~[10–20] names (concentration ↔ diversification).
-7. **Regime filter aggressiveness:** how hard to de-risk in downtrends.
+1. **Cadence:** ✅ DUAL — monthly (core) + weekly/T+1 (satellite), by stock attribute. See §0.6.
+2. **Micro-cap:** ✅ EXCLUDE bottom decile.
+3. **Long-only:** ✅ confirmed (THS can't short).
+4. **Factor weights:** ✅ run Q30/V20/M25/E15/LR10 first → Junyan critiques on backtest output.
+5. **Winner-holding:** ✅ quant exits + hold winners; ~7 core + ~13 satellite (§0.6).
+6. **Concurrent positions:** ✅ ~20 (7+13).
+7. **Risk control:** ✅ active risk-monitor ENGINE, not a single stop (§6).
 
-## 12. Build phasing (after you revise §1–11)
+⚑ Still needs Junyan eyeballs (built on my best read): the §0.6 track classifier
+(core vs satellite assignment rule) + all `[bracket]` params (calibration starting
+points only).
 
-- **Phase 1 — Data foundation** (gated on your cost decision): 20yr daily+adj,
-  quarterly财报+ann_date (PIT), delisted universe, index constituents.
-- **Phase 2 — Strategy engine:** screener → signals → entry/sizing/risk/mgmt,
-  fully rule-based & reproducible.
-- **Phase 3 — Credible backtest:** rebuild per §9; regime replay; walk-forward.
-- **Phase 4 — 1-month paper-sim** → **Phase 5 — real capital** (gated on §9 honest pass).
+## 12. Build phasing
+
+- **P1 — Data foundation:** 20yr daily+adj, quarterly财报+ann_date (PIT),
+  delisted universe, index constituents. Fetchers built (Codex,
+  `fetch_history_tushare.py` + `build_pit_universe.py`); real fetch runs in
+  **GHA** (token there). ◀ in progress.
+- **P2 — Strategy engine:** screener → signals → entry → sizing → scale-in →
+  risk-monitor → position-mgmt → dual-track allocator → overlay. Built + unit-
+  tested on real-shallow data / fixtures locally; real run when P1 data lands.
+- **P3 — Credible backtest:** rebuild per §9; PIT, survivorship, regime replay,
+  walk-forward. Code + fixture-test now; **real numbers only after P1 data** (no
+  fake numbers — honesty red line).
+- **P4 — 1-month paper-sim** → **P5 — real capital** (gated on §9 honest pass).
+
+---
+
+## Build observability contract (honesty red line, applies to ALL of P2–P3)
+
+Every module emits a structured, inspectable decision log so a wrong result is
+LOCATABLE (Junyan's red line):
+- Screener → per-stock `{ticker, included:bool, factor_scores{}, composite,
+  rank, excluded_reason?}`.
+- Entry → `{ticker, signals_fired[], confluence, entry_px, track, why}`.
+- Sizing → `{ticker, risk_budget, atr, stop, shares, caps_applied[]}`.
+- Risk-monitor → `{monitor, ticker, trigger_value, threshold, action, why, ts}`.
+- Backtest → per-rebalance holdings + per-trade attribution + per-regime split,
+  not just summary stats. Deterministic + seeded; same inputs → same outputs.
