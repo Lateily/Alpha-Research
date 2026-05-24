@@ -8,23 +8,53 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-05 (shift 13 complete + post-shift fact-check stack FC.1–FC.6 + Bridge-8 attribution scaffold + 2nd Vercel redeploy verification — FC.6 v1 confirmed 4/4 catalyst dates future-anchored, FC.4 score rebalance differentiates 6160 to 84 vs 90 others. Single remaining systemic prompt gap: step_8_position_sizing_curve_monotonic 0/4 universal fail (C-1.7 KR candidate, +10pp per ticker). Multiplier claim density dropped (9→2 across runs); needs n=3-5 per ticker to characterize variance. Investment quality still NOT validated; outcome tracker still load-bearing missing piece.)
-**Last shift:** auto-work-mode shift 13 `2026-05-05-0935` (A.1 watcher hardening + B.1 Step 8 enforcement + B.2 contrarian/reward-risk fields + watcher watchdog Junyan-direct + max_tokens 8192→16384 fix + Track C audit re-run validating +15.75pp lift)
-**HEAD:** `8ef84d3` on auto/2026-04-30 (= main, +1 shift 13 doc commit pending)
-**Context handoff status:** All work in git. Tier-C 5/5 deployed; 1 pending pipeline run to populate `public/data/repurchase/*.json` (next weekday cron OR Junyan `gh workflow run fetch-data.yml`). Browser audit driven by T1 (Chrome MCP) flagged + fixed.
+**Last updated:** 2026-05-25 (T1 — new big-picture direction set by Junyan)
 
-**Junyan ops still pending (carry-over from shift 10):**
-- Vercel redeploy `api/research.js` for C-3 quality gating to take effect on Variant Thesis cards
-- Tushare 3-API permissions (`stk_factor_pro` / `top_list` / `moneyflow_cnt`) — apply via 个人中心 → API Token → 申请权限
-- Visual verify C-3 quality badge after Vercel redeploy
-- Franky Entry 2 monitoring (REVIEW_REQUEST.md)
+## ▶ CURRENT DIRECTION (2026-05-25) — READ THIS FIRST
 
-**Watcher robustness debt (real bug observed, separate KR queued):**
-Reviewer watcher's `claude -p` subprocess hangs 45+ min after producing
-verdict file (orphaned PID survives parent bash kill). 2 incidents this
-shift cycle (KR5 review at 12:17, KR6 belated review). Mitigation: `setsid`
-process group + `gtimeout 600 claude -p` + 0-byte 15-min stale .tmp cleanup.
-Bundle with launchd 126 fix into single ops KR.
+**Pivot:** from "LLM stock-thesis generation only" → **a complete systematic
+investment operation aimed at real capital** (target ~20% annualized, honestly
+tested — NOT curve-fit). Spec: `docs/strategy/SYSTEMATIC_STRATEGY_v0.md`.
+
+Junyan-locked forks (2026-05-24):
+1. Architecture = **quant-primary + LLM-thesis overlay**. Backtest runs OUR own
+   systematic strategy; the multi-agent thesis engine becomes a conviction
+   overlay (forward-validated, NOT backtested).
+2. Universe = **A-share only** (cleanest, survivorship-fixable).
+3. Data spend = **¥0** — the existing **15000-pt** Tushare account already
+   covers 20yr daily + PIT quarterly financials (ann_date) + delisted universe
+   (stock_basic D/P) + index_weight. Blocker was code lookback caps, not money.
+4. 做T / intraday = **deferred to v2** (no minute/tick infra).
+
+**Phase plan:** P1 data foundation (20yr PIT + survivorship-safe) → P2 strategy
+engine (screener→entry→sizing→risk→mgmt) → P3 credible backtest (PIT,
+survivorship, regime replay, walk-forward) → P4 1-month paper-sim → P5 real
+capital. We are at **P1**. Do NOT build any backtest on the current ~6mo /
+survivor-biased / look-ahead data — every number from `backtest.py` today is an
+artifact (n=5, flat-proxy benchmark). Discard the "98% annualized" result.
+
+**Ratified research set (Path-B + Rule-X arc, 2026-05-17):**
+`002594.SZ` LONG/STARTER_CAPPED_UNTIL_E1 · `603233.SH` PASS/CATALYST_NOT_YET_OBSERVABLE
+· `300308.SZ` PASS/BALANCED_RISK_REWARD · `175.HK` PASS/INSUFFICIENT_DATA.
+Methodology rules (keep intact): E1>E2>E3>E4 evidence tiers; Path-B
+tradeable-but-capped when E1 base + E2 forward; Rule-X disallows peer-relative
+base unless mechanism re-confirmable by issuer disclosure; PASS taxonomy keeps
+*why* each non-trade is honest. Source: `docs/research/review/JUNYAN_VERDICT_2026-05-15.md`.
+
+**Team:** T1 Claude (architecture/specs/integration/this file) · T2 reviewer
+(investment-logic + data-integrity review) · T3 Codex (codegen from
+`.agent_tasks/pending/` specs). Race-bundle: same tree may show 2 change
+sources — do NOT revert the other agent's work; split commits.
+
+---
+
+### Prior snapshot (2026-05-05, shift 13 — superseded by the pivot above, kept for history)
+Bridge-8 attribution scaffold + FC.1–FC.6 fact-check stack shipped. Step_8
+sizing-curve monotonic gap. Investment quality NOT validated; outcome tracker
+load-bearing. Carry-over ops (may be stale): Tushare 3-API permissions
+(`stk_factor_pro`/`top_list`/`moneyflow_cnt`) — note: 2026-05-24 audit found
+these now appear points-gated (covered by 15000), recheck 权限中心. Reviewer
+watcher `claude -p` orphaned-PID hang debt.
 
 ---
 
