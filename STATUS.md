@@ -29,9 +29,18 @@ Junyan-locked forks (2026-05-24):
 **Phase plan:** P1 data foundation (20yr PIT + survivorship-safe) → P2 strategy
 engine (screener→entry→sizing→risk→mgmt) → P3 credible backtest (PIT,
 survivorship, regime replay, walk-forward) → P4 1-month paper-sim → P5 real
-capital. We are at **P1**. Do NOT build any backtest on the current ~6mo /
+capital. We are at **P1→P2**. Do NOT build any backtest on the current ~6mo /
 survivor-biased / look-ahead data — every number from `backtest.py` today is an
 artifact (n=5, flat-proxy benchmark). Discard the "98% annualized" result.
+
+**Night of 2026-05-25 progress** (see `docs/strategy/MORNING_REPORT_2026-05-25.md`):
+DONE+committed — spec v1 (dual-track 7 core+13 satellite + active risk-monitor),
+Codex P1 fetchers (verified), GHA `backfill-history.yml`, `backtest_v2.py` core
+(PIT+survivorship fixture-tested, `--selftest` passes). IN-FLIGHT (Codex):
+screener / risk-monitor / allocator — verify each via its `--selftest` + landing
+diff before trusting. BLOCKER: real 20yr fetch needs GHA (token GHA-secret-only;
+Tushare unreachable from local/Codex sandbox) → Junyan triggers "Backfill
+History" workflow. NO real backtest numbers exist yet (honesty red line).
 
 **Ratified research set (Path-B + Rule-X arc, 2026-05-17):**
 `002594.SZ` LONG/STARTER_CAPPED_UNTIL_E1 · `603233.SH` PASS/CATALYST_NOT_YET_OBSERVABLE
