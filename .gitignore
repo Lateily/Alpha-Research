@@ -13,3 +13,4 @@ __pycache__/
 # multi-agent task queue (per-agent state, never commit)
 .agent_tasks/
 .agent_tasks/design/
+data_history/
