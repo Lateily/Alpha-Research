@@ -33,14 +33,26 @@ capital. We are at **P1→P2**. Do NOT build any backtest on the current ~6mo /
 survivor-biased / look-ahead data — every number from `backtest.py` today is an
 artifact (n=5, flat-proxy benchmark). Discard the "98% annualized" result.
 
-**Night of 2026-05-25 progress** (see `docs/strategy/MORNING_REPORT_2026-05-25.md`):
-DONE+committed — spec v1 (dual-track 7 core+13 satellite + active risk-monitor),
-Codex P1 fetchers (verified), GHA `backfill-history.yml`, `backtest_v2.py` core
-(PIT+survivorship fixture-tested, `--selftest` passes). IN-FLIGHT (Codex):
-screener / risk-monitor / allocator — verify each via its `--selftest` + landing
-diff before trusting. BLOCKER: real 20yr fetch needs GHA (token GHA-secret-only;
-Tushare unreachable from local/Codex sandbox) → Junyan triggers "Backfill
-History" workflow. NO real backtest numbers exist yet (honesty red line).
+**2026-05-25 progress** (see `docs/strategy/MORNING_REPORT_2026-05-25.md`):
+ALL committed + verified. Decisions LOCKED: dual-track = quant track (SATELLITE
+15) + hedge-fund-logic track (CORE ~5-7, thesis-curated); factor weights frozen
+→ OLS-fit after backtest; risk = active monitor engine.
+- spec v1 final (`docs/strategy/SYSTEMATIC_STRATEGY_v0.md`).
+- P2 modules (Codex, T1-verified, --selftest pass): `screen_universe.py`
+  (⚠ quality factor inert — roe/margin 0% in universe snapshot),
+  `risk_monitor.py` (11 monitors), `portfolio_allocator.py` (cap 15).
+- `backtest_v2.py` — PIT+survivorship CORE **and** rebalance LOOP, fixture-
+  tested (DEAD stock never leaks; cost drag verified). NO real numbers yet.
+- `strategy_driver.py` — end-to-end screener→allocator→book runs on real data
+  (0 core + 15 satellite — honest: screener doesn't surface the 4 thesis names).
+- **✅ DATA LAYER PROVEN:** GHA `backfill-history` SUCCEEDED — 茅台 5124 daily
+  rows + financials to 2005 (PIT ann_date); delisted 300104 fetchable
+  (survivorship). 20yr PIT survivorship-safe A-share data confirmed.
+- **NEXT linchpin (queued for Codex):** `pit_factors.py` — compute factors
+  as-of T from data_history (revives quality factor + enables historical
+  screening). Then: scale backfill to universe → GHA full backtest.
+Still NO real backtest numbers (red line). Real run = GHA: fetch→pit_factors→
+screen→backtest→commit results.
 
 **Ratified research set (Path-B + Rule-X arc, 2026-05-17):**
 `002594.SZ` LONG/STARTER_CAPPED_UNTIL_E1 · `603233.SH` PASS/CATALYST_NOT_YET_OBSERVABLE
