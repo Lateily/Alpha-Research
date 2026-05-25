@@ -31,8 +31,8 @@ VETO_DIRECTIONS = {"SHORT"}
 # All thresholds and caps are [unvalidated intuition]. The classifier is a
 # direct v1 implementation of the strategy spec and is intentionally tunable.
 CONFIG: dict[str, Any] = {
-    "core_cap": 7,
-    "satellite_cap": 13,
+    "core_cap": 7,          # CORE = curated hedge-fund-logic thesis names (~5-7)
+    "satellite_cap": 15,    # SATELLITE = pure-quant systematic (Junyan 2026-05-25)
     "gross_cap_pct": 100.0,
     "core_quality_min": 70.0,
     "core_value_min": 60.0,

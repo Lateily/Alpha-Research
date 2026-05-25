@@ -57,33 +57,38 @@ Honest caveat: USP moats 1–2 (policy decoder, narrative-gap) are still
 
 ---
 
-## 0.6 Portfolio structure — DUAL-TRACK core-satellite (Junyan #1/#5/#6)
+## 0.6 Portfolio structure — DUAL-TRACK (Junyan-confirmed 2026-05-25)
 
-The book is split into two tracks with DIFFERENT holding horizons, cadences,
-signal sources, and exit logic. ~20 positions total:
+**This IS the original two-track vision** (Junyan): one line is a **pure quant
+systematic strategy** (SATELLITE), the other is **our hedge-fund investment
+logic — deep thesis research** (CORE). Different edge types → different
+horizons, cadences, exits. Decision = **Direction A** (CORE is human/thesis-
+driven & curated; SATELLITE is screener systematic output). ~20 positions:
 
-| | **CORE (long-term)** | **SATELLITE (short-term)** |
+| | **CORE = hedge-fund-logic track** | **SATELLITE = pure-quant track** |
 |---|---|---|
-| Count | **~7** | **~13** |
+| Count | thesis-driven, the deeply-researched names (**~5–7**) | **15** (Junyan-set) |
 | Horizon | quarters–years | days–weeks |
-| Driver | LLM thesis (USP depth) + quality/value factors | systematic quant (momentum/technical/event) |
-| Cadence | **monthly** re-evaluate; hold winners | **weekly**, some **T+1** rotation |
-| Entry | thesis LONG/STARTER_CAPPED + factor rank | confluence/technical entry on screened candidates |
-| Exit | thesis invalidation (wrongIf) / factor decay / regime; **let winners run** | quant: target/stop/time-stop/signal decay — **fast** |
+| Edge | fundamental conviction (USP 双层认知 depth) | statistical/technical (decays fast) |
+| Driver | LLM multi-agent thesis + quality/value | screener composite (momentum/technical) |
+| Cadence | **monthly**; **hold winners** | **weekly**, some **T+1** |
+| Entry | thesis LONG/STARTER_CAPPED + factor rank | screener rank + confluence/technical |
+| Exit | thesis wrongIf / factor decay / regime; **let winners run** | target/stop/time-stop/signal decay — **fast** |
 | Sizing | conviction-scaled, scale-in on E1 (Path-B) | risk-based, smaller, faster turnover |
-| ⚑ assignment | which names are core vs satellite is decided by **stock attribute** (liquidity, volatility, thesis presence, horizon of edge) — see classifier below | |
 
-**Track classifier (⚑ v1 heuristic — Junyan to refine):** a screened candidate
-is routed CORE if it has (a) a live LLM thesis with an E1 base (Path-B
-tradeable), AND (b) durable quality/value factor rank; else SATELLITE if its
-edge is momentum/technical/event-driven (mean-reverting or fast). A name can
-be promoted satellite→core if a thesis later forms.
+**Routing (Direction A, confirmed):** CORE = the names worth the expensive LLM
+deep-research (you curate; ~5–7); SATELLITE = the top **15** from the
+systematic screener. A SATELLITE name can be **promoted to CORE** if a deep
+thesis with an E1 base later forms (Path-B). This avoids the v0 flaw where CORE
+was gated by how many theses we'd run — CORE is now intentionally the curated
+research book, SATELLITE the systematic book.
 
-**Why two tracks:** matches Junyan's pair-trade insight (STEP_8: profit twice —
-long-horizon conviction + short-horizon tactical) and his "7 长期 + 13 短期"
-split. The backtest must report **per-track** performance separately (core vs
-satellite have different return/turnover/risk profiles; blending hides which
-track actually works).
+**Why two tracks:** matches the STEP_8 pair-trade insight (profit twice —
+long-horizon conviction + short-horizon tactical). Mismatching horizon to edge
+type is the #1 way to lose money on a correct view. The backtest reports
+**per-track** performance separately (different return/turnover/risk profiles;
+blending hides which track works). NOTE: only the SATELLITE (pure-quant) track
+is 20yr-backtestable; CORE is forward-validated (Bridge-8), per §9.
 
 ---
 
@@ -111,8 +116,22 @@ Sector-neutralized z-score blend, recomputed each rebalance. Starting weights:
 | Earnings trend | [15%] | YoY rev & earnings acceleration; analyst revisions if available |
 | Low-risk | [10%] | low realized vol / beta (low-vol anomaly) |
 
-→ rank, take **top [30–50]** candidate pool. Reuses the `alpha_score`
-factors already in `universe_*.json`; needs the **ranking pipeline** (new).
+→ rank, take **top [30–50]** candidate pool (SATELLITE draws its 15 from here).
+Reuses `alpha_score` / `factors` already in `universe_*.json`. Built:
+`scripts/screen_universe.py`.
+
+**Weight calibration (Junyan 2026-05-25):** these weights stay FROZEN as
+priors now; after the backtest has real data we **fit them via OLS** (regress
+forward factor returns on factor exposures — return-based / Fama-MacBeth style —
+to get data-driven weights). Until then they are [unvalidated intuition].
+
+**⚑ LIVE DATA FINDING (honesty red line):** in the current `universe_a.json`
+the `quality` factor is a **constant 50.0** for all stocks (raw roe/margin/
+growth are 0% populated → quality defaults to neutral). So the 30% quality
+weight is presently **INERT** — real ranking is driven by value/momentum/size/
+low_vol only. The candidate list is a plumbing demo, NOT trustworthy, until the
+**financial backfill** (GHA) populates roe/margin and revives the quality
+factor. This is P2's first priority.
 
 ## 3. Entry timing (何时买)
 
@@ -243,14 +262,16 @@ look-ahead) — **discard it**.
 1. **Cadence:** ✅ DUAL — monthly (core) + weekly/T+1 (satellite), by stock attribute. See §0.6.
 2. **Micro-cap:** ✅ EXCLUDE bottom decile.
 3. **Long-only:** ✅ confirmed (THS can't short).
-4. **Factor weights:** ✅ run Q30/V20/M25/E15/LR10 first → Junyan critiques on backtest output.
-5. **Winner-holding:** ✅ quant exits + hold winners; ~7 core + ~13 satellite (§0.6).
-6. **Concurrent positions:** ✅ ~20 (7+13).
+4. **Factor weights:** ✅ keep Q30/V20/M25/E15/LR10 as priors now; **fit via OLS**
+   after the backtest has real data (Junyan 2026-05-25). See §2.
+5. **Winner-holding:** ✅ quant exits + hold winners. Direction A: CORE = curated
+   hedge-fund-logic thesis names (~5–7); SATELLITE = **15** systematic (§0.6).
+6. **Concurrent positions:** ✅ ~20 (CORE ~5–7 + SATELLITE 15).
 7. **Risk control:** ✅ active risk-monitor ENGINE, not a single stop (§6).
 
-⚑ Still needs Junyan eyeballs (built on my best read): the §0.6 track classifier
-(core vs satellite assignment rule) + all `[bracket]` params (calibration starting
-points only).
+✅ Resolved 2026-05-25: dual-track = quant track (satellite) + hedge-fund-logic
+track (core), Direction A. Remaining ⚑ for Junyan: all `[bracket]` params
+(calibration starting points) + confirm CORE target count (~5–7).
 
 ## 12. Build phasing
 
