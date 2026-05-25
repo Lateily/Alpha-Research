@@ -392,7 +392,22 @@ def run_backtest(
             ps = {"nav": equity, "peak_nav": peak,
                   "positions": [{"ticker": k, "weight": v} for k, v in target.items()],
                   "weights": target}
-            ms = {"csi300_last": mkt_index, "csi300_ma200": mkt_ma, "breadth_pct": breadth}
+            # feed_age_days=0: data is fresh as-of each rebalance (no staleness in
+            # a backtest). WITHOUT this, monitor_data_staleness returns FREEZE,
+            # which resolve_conflicts makes override every other action → the
+            # gross monitors (drawdown/regime) never fire → overlay inert.
+            # (T2 caught this; the stub selftest had bypassed the real engine.)
+            mkt_rets = [mkt_hist[k] / mkt_hist[k - 1] - 1.0
+                        for k in range(max(1, len(mkt_hist) - 12), len(mkt_hist))
+                        if mkt_hist[k - 1] > 0]
+            if len(mkt_rets) >= 2:
+                _mu = sum(mkt_rets) / len(mkt_rets)
+                _var = sum((r - _mu) ** 2 for r in mkt_rets) / len(mkt_rets)
+                realized_vol = math.sqrt(_var) * math.sqrt(12)
+            else:
+                realized_vol = 0.0
+            ms = {"csi300_last": mkt_index, "csi300_ma200": mkt_ma, "breadth_pct": breadth,
+                  "feed_age_days": 0, "realized_vol": realized_vol}
             try:
                 actions = risk_monitor_fn(ps, ms) or []
             except Exception:

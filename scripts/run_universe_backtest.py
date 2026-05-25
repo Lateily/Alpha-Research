@@ -28,7 +28,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import pit_factors  # noqa: E402
 import risk_monitor  # noqa: E402
-from backtest_v2 import PitDataStore, PitUniverse, run_backtest, REGIMES  # noqa: E402
+from backtest_v2 import PitDataStore, PitUniverse, run_backtest, REGIMES, cagr  # noqa: E402
 from satellite_strategy import make_satellite_strategy  # noqa: E402
 
 
@@ -94,6 +94,16 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
     store, universe = load_panel(prices_path, financials_path, universe_path)
     strat = make_satellite_strategy()
     res = run_backtest(store, universe, start, end, strat, risk_monitor_fn=_risk_overlay)
+
+    # In-sample (<=2018, weights were fit here) vs OUT-OF-SAMPLE (2019+). T2:
+    # ~65% of the full-period CAGR is in-sample → the HONEST headline is the OOS
+    # slice. Re-normalize each slice's equity to start at 1.0.
+    split = date(2019, 1, 1)
+    is_eq = [e for d, e in zip(res.rebalance_dates, res.equity) if d < split]
+    oos_eq = [e for d, e in zip(res.rebalance_dates, res.equity) if d >= split]
+    is_cagr = cagr(is_eq, 12.0) if len(is_eq) >= 2 else None
+    oos_cagr = (cagr([e / oos_eq[0] for e in oos_eq], 12.0)
+                if len(oos_eq) >= 2 and oos_eq[0] > 0 else None)
     results = {
         "_meta": {
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -102,9 +112,13 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
             "rebalances": len(res.rebalance_dates),
             "risk_overlay": "ON (drawdown breaker + regime gross-cap from risk_monitor)",
             "risk_actions_fired": len(res.risk_actions_log),
+            "weights_source": getattr(__import__("satellite_strategy"), "_WEIGHTS_SOURCE", "?"),
+            "headline_metric": "oos_cagr (2019+) — weights fit in-sample 2006-2018, so full-period CAGR is in-sample-optimistic",
             "honesty": "real number from real data; NOT curve-fit. Whatever it is, it is.",
         },
-        "cagr": res.cagr,
+        "oos_cagr_2019plus": oos_cagr,
+        "in_sample_cagr_pre2019": is_cagr,
+        "cagr_full_period_in_sample_optimistic": res.cagr,
         "sharpe": res.sharpe,
         "max_drawdown": res.max_drawdown,
         "final_equity": res.equity[-1] if res.equity else None,
@@ -160,8 +174,26 @@ def _selftest() -> int:
     res = run(pp, fp, None, tmp / "out.json", date(2023, 1, 1), date(2023, 9, 1))
     if not res.get("equity_curve"):
         failures.append("no equity curve from end-to-end run")
-    if res.get("cagr") is None:
+    if res.get("cagr_full_period_in_sample_optimistic") is None:
         failures.append("CAGR None (engine didn't run on panel)")
+
+    # REAL-ENGINE risk test (T2 BLOCKER fix): drive the ACTUAL _risk_overlay
+    # (risk_monitor.run_monitors) through a crash — NOT the stub. Proves the
+    # feed_age_days=0 fix stops data_staleness FREEZE from suppressing the
+    # drawdown breaker, so risk actions actually fire.
+    from backtest_v2 import PitDataStore as _PS, PitUniverse as _PU, run_backtest as _rbt
+    cs = _PS()
+    cs.load_ticker("Z.SZ", [
+        {"trade_date": "20200101", "close": 10.0}, {"trade_date": "20200201", "close": 12.0},
+        {"trade_date": "20200301", "close": 13.0}, {"trade_date": "20200401", "close": 4.0},   # -69% crash
+        {"trade_date": "20200501", "close": 4.0}, {"trade_date": "20200601", "close": 4.0},
+    ], [])
+    cu = _PU([{"ts_code": "Z.SZ", "list_date": "20100101", "delist_date": None}])
+    rr = _rbt(cs, cu, date(2020, 1, 1), date(2020, 6, 1),
+              lambda t, m, s: ({"Z.SZ": 0.95} if "Z.SZ" in m else {}),
+              risk_monitor_fn=_risk_overlay)
+    if not rr.risk_actions_log:
+        failures.append("REAL risk_monitor overlay never fired on a -69% crash (FREEZE bug not fixed?)")
 
     if failures:
         print("SELFTEST FAILED run_universe_backtest:")
