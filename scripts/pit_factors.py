@@ -410,7 +410,9 @@ def _low_vol_raw(store: PitDataStore, ticker: str, as_of: date, config: dict) ->
     returns = []
     for d in dates[-window:]:
         r = store.daily_return(ticker, d)
-        if r is not None:
+        # Drop non-finite returns: a NaN/inf (from a blank/suspended bar)
+        # crashes statistics.stdev with "'float' has no attribute 'numerator'".
+        if r is not None and math.isfinite(r):
             returns.append(r)
     if len(returns) < max(2, min_obs):
         return None, {"low_vol_basis": "insufficient_returns", "return_obs": len(returns)}

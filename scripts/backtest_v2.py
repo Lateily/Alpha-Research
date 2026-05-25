@@ -91,8 +91,18 @@ class PitDataStore:
         for r in daily_rows:
             d = _to_date(r.get("trade_date"))
             c = r.get("close")
-            if d is not None and c is not None:
-                pts.append((d, float(c)))
+            if d is None or c is None:
+                continue
+            try:
+                cf = float(c)
+            except (TypeError, ValueError):
+                continue
+            # Skip NaN/inf/non-positive closes — real data has suspended/blank
+            # bars; a NaN close would propagate to NaN returns and crash
+            # statistics.stdev ('float' has no attribute 'numerator').
+            if not math.isfinite(cf) or cf <= 0:
+                continue
+            pts.append((d, cf))
         pts.sort(key=lambda x: x[0])
         self._px_dates[ticker] = [d for d, _ in pts]
         self._px_close[ticker] = [c for _, c in pts]

@@ -58,7 +58,7 @@ jobs:
         env:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: |
-          ARGS="--start ${{ github.event.inputs.start }} --sleep 0.12"
+          ARGS="--start ${{ github.event.inputs.start }} --sleep 0.12 --month-end-only"
           if [ -n "${{ github.event.inputs.end }}" ]; then ARGS="$ARGS --end ${{ github.event.inputs.end }}"; fi
           if [ -n "${{ github.event.inputs.universe }}" ]; then ARGS="$ARGS --universe ${{ github.event.inputs.universe }}"; fi
           echo "fetch args: $ARGS"
@@ -95,6 +95,7 @@ jobs:
           git push origin main || echo "push skipped"
 
       - name: Upload parquet panel artifact
+        if: always()   # preserve the fetched panel even if the backtest step crashed
         uses: actions/upload-artifact@v4
         with:
           name: panel-${{ github.run_id }}

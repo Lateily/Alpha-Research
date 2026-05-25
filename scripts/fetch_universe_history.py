@@ -616,6 +616,7 @@ def fetch_universe_history(
     sleep_seconds: float,
     requested_universe: Optional[list[str]] = None,
     allow_selftest_stub: bool = False,
+    month_end_only: bool = False,
 ) -> dict:
     started = time.monotonic()
     out_dir = Path(out_dir)
@@ -630,6 +631,18 @@ def fetch_universe_history(
     trade_dates, calls, trade_cal_errors = fetch_trade_dates(pro, start, end, sleep_seconds)
     call_counts["trade_cal"] = calls
     errors.extend(trade_cal_errors)
+
+    # MONTH-END-ONLY (2026-05-25): a monthly-rebalance backtest doesn't need
+    # daily bars. Keep only the last trading day of each month (~240 over 20yr
+    # vs ~4950) → ~20x fewer price calls → fetch in minutes not ~5h. The price
+    # series becomes month-end bars; satellite_strategy uses monthly factor
+    # windows to match.
+    if month_end_only and trade_dates:
+        by_month: dict[str, str] = {}
+        for d in trade_dates:  # 'YYYYMMDD' sorted asc
+            by_month[d[:6]] = d  # last seen per YYYYMM = month-end
+        trade_dates = sorted(by_month.values())
+    call_counts["trade_dates_used"] = len(trade_dates)
 
     prices_new, calls, price_errors, price_counts = fetch_price_panel(
         pro, trade_dates, universe_set, sleep_seconds
@@ -931,6 +944,9 @@ def main(argv=None) -> int:
         default=None,
         help="Optional comma/space-separated ts_code allowlist, or path to a text allowlist. Default: stock_basic L+D+P.",
     )
+    parser.add_argument("--month-end-only", action="store_true", dest="month_end_only",
+                        help="Fetch only the last trading day of each month (~240 vs ~4950 dates) "
+                             "→ minutes not hours. Use for monthly-rebalance backtests.")
     parser.add_argument("--selftest", action="store_true", help="Run offline fixture tests and exit.")
     args = parser.parse_args(argv)
 
@@ -971,6 +987,7 @@ def main(argv=None) -> int:
         sleep_seconds=args.sleep,
         requested_universe=requested_universe,
         allow_selftest_stub=False,
+        month_end_only=args.month_end_only,
     )
     print(
         f"status={manifest['_status']} stocks={manifest['n_stocks']} "

@@ -38,6 +38,18 @@ TOP_N = 15
 GROSS = 0.95
 MIN_FACTORS = 3   # need >= this many non-None factors to be rankable
 
+# Factor windows in PRICE-SERIES POSITIONS. The backtest uses MONTH-END bars
+# (monthly-rebalance strategy doesn't need daily resolution — daily 20yr×5000
+# was ~5h to fetch; month-end is ~240 points → minutes). pit_factors' windows
+# are position-counts, so with monthly bars: lookback 12 = 12 months, skip 1,
+# vol over 12 months. (Defaults in pit_factors are daily 252/21/120.)
+MONTHLY_FACTOR_CONFIG = {
+    "momentum_lookback_td": 12,
+    "momentum_skip_td": 1,
+    "vol_window_td": 12,
+    "min_vol_obs": 6,
+}
+
 
 def _composite(scores: dict) -> float | None:
     """Weighted avg over AVAILABLE (non-None) factors, weights renormalized.
@@ -56,10 +68,12 @@ def _composite(scores: dict) -> float | None:
     return num / den
 
 
-def make_satellite_strategy(top_n: int = TOP_N, gross: float = GROSS):
-    """Return a backtest_v2.Strategy closure."""
+def make_satellite_strategy(top_n: int = TOP_N, gross: float = GROSS, factor_config: dict | None = None):
+    """Return a backtest_v2.Strategy closure. factor_config sets the pit_factors
+    window units (default MONTHLY since the backtest runs on month-end bars)."""
+    fc = factor_config or MONTHLY_FACTOR_CONFIG
     def strategy(as_of, members, store):
-        factors = pit_factors.compute_factors(members, as_of, store)
+        factors = pit_factors.compute_factors(members, as_of, store, fc)
         ranked = []
         for tk, sc in factors.items():
             comp = _composite(sc)
