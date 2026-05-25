@@ -21,6 +21,7 @@ assert any performance number — real numbers require real data via GHA.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -34,6 +35,21 @@ from backtest_v2 import PitDataStore, PitUniverse, run_backtest  # noqa: E402
 # Intended §2 blend (now that pit_factors provides growth). Calibration starting
 # points — to be OLS-fit on the 20yr backtest (Junyan 2026-05-25).
 WEIGHTS = {"quality": 0.30, "value": 0.20, "momentum": 0.25, "growth": 0.15, "low_vol": 0.10}
+
+# Prefer OLS-CALIBRATED weights if calibrate_weights.py has produced them
+# (Junyan: fit via OLS after the backtest has real data). Falls back to the
+# hand-set priors above. _WEIGHTS_SOURCE records which is in use (observability).
+_WEIGHTS_SOURCE = "hand-set priors [unvalidated intuition]"
+try:
+    _cw = json.loads((REPO_ROOT / "public" / "data" / "calib_weights.json").read_text())
+    if _cw.get("_status") == "ok" and isinstance(_cw.get("weights"), dict):
+        _w = {k: float(v) for k, v in _cw["weights"].items() if k in WEIGHTS}
+        if _w and abs(sum(_w.values()) - 1.0) < 0.05:
+            WEIGHTS = _w
+            _WEIGHTS_SOURCE = f"OLS-calibrated (in-sample {(_cw.get('_meta') or {}).get('in_sample_window')})"
+except Exception:
+    pass
+
 TOP_N = 15
 GROSS = 0.95
 MIN_FACTORS = 3   # need >= this many non-None factors to be rankable

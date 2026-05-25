@@ -175,7 +175,10 @@ class PitUniverse:
         for r in self._rows:
             ld = r["list_date"]
             dd = r["delist_date"]
-            if ld is None or ld > as_of:
+            # list_date None = no IPO-date constraint (include); only exclude if
+            # a KNOWN list_date is after as_of. (Treating None as 'not listed'
+            # excluded the entire panel-derived universe → 0 members → 0 trades.)
+            if ld is not None and ld > as_of:
                 continue          # not yet listed at as_of
             if dd is not None and dd <= as_of:
                 continue          # already delisted at as_of

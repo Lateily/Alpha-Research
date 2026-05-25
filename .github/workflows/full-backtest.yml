@@ -64,7 +64,11 @@ jobs:
           echo "fetch args: $ARGS"
           python scripts/fetch_universe_history.py $ARGS
 
-      - name: Run the real backtest
+      - name: Calibrate factor weights (OLS, in-sample 2006..2018)
+        run: |
+          python scripts/calibrate_weights.py --start "${{ github.event.inputs.start }}" --in-sample-end 20181231 || echo "calibration skipped (insufficient obs); strategy uses hand-set priors"
+
+      - name: Run the real backtest (calibrated weights + risk overlay)
         run: |
           ARGS="--start ${{ github.event.inputs.start }}"
           if [ -n "${{ github.event.inputs.end }}" ]; then ARGS="$ARGS --end ${{ github.event.inputs.end }}"; fi
