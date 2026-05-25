@@ -328,10 +328,22 @@ def fetch_trade_dates(pro, start: str, end: str, sleep_seconds: float) -> tuple[
         start_date=start,
         end_date=end,
     )
-    rows = _frame_or_empty(df, ["trade_date", "is_open"])
+    # BUGFIX 2026-05-25: Tushare trade_cal returns the date in `cal_date`,
+    # NOT `trade_date` (only daily/daily_basic/adj_factor use trade_date).
+    # The old code read `trade_date` here → empty set → 0 trade-dates → 0
+    # prices → degenerate (flat) backtest. Read cal_date (fallback trade_date).
+    rows = _frame_or_empty(df, ["cal_date", "trade_date", "is_open"])
     if rows.empty:
         return [], 1, errors
-    trade_dates = sorted({str(row["trade_date"]) for row in rows.to_dict(orient="records") if row.get("trade_date")})
+    out = set()
+    for row in rows.to_dict(orient="records"):
+        # honor is_open==1 if present (API param should already filter)
+        if "is_open" in row and row.get("is_open") not in (1, "1", None):
+            continue
+        d = row.get("cal_date") or row.get("trade_date")
+        if d:
+            out.add(str(d))
+    trade_dates = sorted(out)
     return trade_dates, 1, errors
 
 
