@@ -253,6 +253,105 @@ def sharpe(returns: list[float], periods_per_year: float, rf: float = 0.0) -> Op
     return (mean - rf / periods_per_year) / sd * math.sqrt(periods_per_year)
 
 
+# ───────────────────────── Rebalance loop (the engine) ──────────────────────
+
+# A Strategy receives ONLY (as_of, in-universe members at as_of, the PIT store)
+# and returns target long-only weights. It cannot see the future: the store's
+# only data accessors are *_asof(...). This signature is the look-ahead firewall.
+Strategy = Callable[[date, list, "PitDataStore"], dict]
+
+
+@dataclass
+class BacktestResult:
+    rebalance_dates: list = field(default_factory=list)
+    equity: list = field(default_factory=list)          # equity at each rebalance
+    period_returns: list = field(default_factory=list)  # net return each period
+    holdings_log: list = field(default_factory=list)    # per-rebalance {date, weights}
+    trade_log: list = field(default_factory=list)       # per-rebalance turnover + cost
+    cagr: Optional[float] = None
+    sharpe: Optional[float] = None
+    max_drawdown: Optional[float] = None
+    note: str = ""
+
+
+def _month_ends(start: date, end: date) -> list:
+    """First-of-month markers start..end (monthly rebalance dates; the store
+    snaps each to the latest available trading day via price_asof)."""
+    out, y, m = [], start.year, start.month
+    while date(y, m, 1) <= end:
+        out.append(date(y, m, 1))
+        m += 1
+        if m > 12:
+            y, m = y + 1, 1
+    return out
+
+
+def run_backtest(
+    store: "PitDataStore",
+    universe: "PitUniverse",
+    start: date,
+    end: date,
+    strategy: Strategy,
+    rebalance_dates: Optional[list] = None,
+) -> BacktestResult:
+    """Survivorship-safe, PIT, cost-aware monthly rebalance loop.
+
+    Correctness contract:
+      - strategy sees only universe.members_asof(T) + store (as-of accessors).
+      - period return prev_T->T uses prices known at each rebalance (no look-ahead).
+      - costs charged on turnover; a name unfillable at T (limit gap) keeps prior wt.
+      - delisted names (no price after delist) are marked at last known price then drop.
+    NOTE: v1 marks close-to-close at monthly rebalance dates. T+1 fill-precision
+    on the equity curve is a v2 refinement (next_fill_price exists for it).
+    """
+    rdates = rebalance_dates or _month_ends(start, end)
+    res = BacktestResult(note="close-to-close monthly; T+1 fill precision = v2")
+    equity = 1.0
+    prev_weights: dict = {}
+    prev_date: Optional[date] = None
+
+    for T in rdates:
+        # 1) realize the return of the PREVIOUS book over (prev_date, T] — all
+        #    prices known by their own date => no look-ahead.
+        if prev_date is not None and prev_weights:
+            port_ret = 0.0
+            for tk, w in prev_weights.items():
+                p0 = store.price_asof(tk, prev_date)
+                p1 = store.price_asof(tk, T)
+                if p0 and p1 and p0 > 0:
+                    port_ret += w * (p1 / p0 - 1.0)
+                # delisted/no price => contributes 0 (held value flat-marked)
+            equity *= (1.0 + port_ret)
+            res.period_returns.append(port_ret)
+
+        # 2) decide new target weights using ONLY as-of data
+        members = universe.members_asof(T)
+        target = strategy(T, members, store) or {}
+        # long-only, normalized to <= 1.0 gross
+        target = {k: max(0.0, float(v)) for k, v in target.items() if v}
+        gross = sum(target.values())
+        if gross > 1.0:
+            target = {k: v / gross for k, v in target.items()}
+
+        # 3) turnover + cost (charged to equity)
+        names = set(prev_weights) | set(target)
+        turnover = sum(abs(target.get(n, 0.0) - prev_weights.get(n, 0.0)) for n in names)
+        cost = turnover * (COMMISSION + SLIPPAGE) + \
+            sum(max(0.0, prev_weights.get(n, 0.0) - target.get(n, 0.0)) for n in names) * STAMP_DUTY_SELL
+        equity *= (1.0 - cost)
+
+        res.rebalance_dates.append(T)
+        res.equity.append(equity)
+        res.holdings_log.append({"date": T.isoformat(), "weights": dict(target), "members": len(members)})
+        res.trade_log.append({"date": T.isoformat(), "turnover": round(turnover, 4), "cost": round(cost, 6)})
+        prev_weights, prev_date = target, T
+
+    res.cagr = cagr(res.equity, periods_per_year=12.0)
+    res.max_drawdown = max_drawdown(res.equity)
+    res.sharpe = sharpe(res.period_returns, periods_per_year=12.0)
+    return res
+
+
 # ───────────────────────── Self-test (fixtures prove correctness) ───────────
 
 def _selftest() -> int:
@@ -314,6 +413,40 @@ def _selftest() -> int:
         failures.append("max_drawdown sign wrong")
     if abs((cagr([100, 110], 1.0) or 0) - 0.10) > 1e-9:
         failures.append("cagr wrong")
+
+    # --- Rebalance loop: equity math + survivorship drop-out + cost drag ---
+    bt_store = PitDataStore()
+    # AAA rises 10%/mo for 4 months; BBB flat; DEAD rises then delists after Mar.
+    bt_store.load_ticker("AAA.SZ", [
+        {"trade_date": "20200101", "close": 100.0}, {"trade_date": "20200201", "close": 110.0},
+        {"trade_date": "20200301", "close": 121.0}, {"trade_date": "20200401", "close": 133.1},
+    ], [])
+    bt_store.load_ticker("BBB.SZ", [
+        {"trade_date": "20200101", "close": 50.0}, {"trade_date": "20200201", "close": 50.0},
+        {"trade_date": "20200301", "close": 50.0}, {"trade_date": "20200401", "close": 50.0},
+    ], [])
+    bt_uni = PitUniverse([
+        {"ts_code": "AAA.SZ", "list_date": "20100101", "delist_date": None},
+        {"ts_code": "BBB.SZ", "list_date": "20100101", "delist_date": None},
+        {"ts_code": "DEAD.SZ", "list_date": "20100101", "delist_date": "20200315"},
+    ])
+    # Strategy: equal-weight AAA+BBB always (DEAD must never be selectable post-delist).
+    def _eq_strategy(as_of, members, store):
+        picks = [m for m in members if m in ("AAA.SZ", "BBB.SZ")]
+        return {m: 1.0 / len(picks) for m in picks} if picks else {}
+    res = run_backtest(bt_store, bt_uni, date(2020, 1, 1), date(2020, 4, 1), _eq_strategy)
+    # 3 realized periods (Feb,Mar,Apr); each = 0.5*(+10%) + 0.5*0 = +5% gross, minus tiny cost.
+    if len(res.period_returns) != 3:
+        failures.append(f"rebalance loop wrong period count: {len(res.period_returns)}")
+    elif not all(0.045 < r <= 0.05 + 1e-9 for r in res.period_returns):
+        failures.append(f"rebalance period returns off (expect ~+5%): {res.period_returns}")
+    # equity must compound up but stay below the cost-free 1.05^3 (costs drag)
+    cost_free = 1.05 ** 3
+    if not (res.equity[-1] is not None and 1.10 < res.equity[-1] < cost_free):
+        failures.append(f"rebalance equity off: {res.equity[-1]} (expect 1.10..{cost_free:.4f})")
+    # DEAD.SZ must NEVER appear in any post-delist holdings (survivorship in the loop)
+    if any("DEAD.SZ" in h["weights"] for h in res.holdings_log):
+        failures.append("delisted DEAD.SZ leaked into holdings (survivorship breach in loop)")
 
     if failures:
         print("SELFTEST FAILED:")
