@@ -281,6 +281,7 @@ class BacktestResult:
     cagr: Optional[float] = None
     sharpe: Optional[float] = None
     max_drawdown: Optional[float] = None
+    risk_actions_log: list = field(default_factory=list)
     note: str = ""
 
 
@@ -303,6 +304,9 @@ def run_backtest(
     end: date,
     strategy: Strategy,
     rebalance_dates: Optional[list] = None,
+    risk_monitor_fn: Optional[Callable] = None,
+    regime_ma_win: int = 10,        # ~MA200 in months
+    regime_gross_cap: float = 0.40,
 ) -> BacktestResult:
     """Survivorship-safe, PIT, cost-aware monthly rebalance loop.
 
@@ -311,16 +315,27 @@ def run_backtest(
       - period return prev_T->T uses prices known at each rebalance (no look-ahead).
       - costs charged on turnover; a name unfillable at T (limit gap) keeps prior wt.
       - delisted names (no price after delist) are marked at last known price then drop.
-    NOTE: v1 marks close-to-close at monthly rebalance dates. T+1 fill-precision
-    on the equity curve is a v2 refinement (next_fill_price exists for it).
+
+    RISK OVERLAY (2026-05-25): if risk_monitor_fn is given, after the strategy
+    proposes weights we build portfolio_state {nav, peak_nav} + a market_state
+    derived from an equal-weight universe proxy (csi300_last/ma200 + breadth) —
+    no extra index fetch, all <= T (no look-ahead) — call the monitors, and
+    apply their PORTFOLIO gross actions: TO_CASH -> 0 gross; SCALE_DOWN_GROSS
+    -> cap gross at regime_gross_cap. This is what the raw run (-74% DD) lacked.
     """
     rdates = rebalance_dates or _month_ends(start, end)
-    res = BacktestResult(note="close-to-close monthly; T+1 fill precision = v2")
+    res = BacktestResult(note="close-to-close monthly; risk overlay=" + ("on" if risk_monitor_fn else "off"))
     equity = 1.0
+    peak = 1.0
     prev_weights: dict = {}
     prev_date: Optional[date] = None
+    mkt_index = 1.0
+    mkt_hist: list = []
+    res.risk_actions_log = []
 
     for T in rdates:
+        members = universe.members_asof(T)
+
         # 1) realize the return of the PREVIOUS book over (prev_date, T] — all
         #    prices known by their own date => no look-ahead.
         if prev_date is not None and prev_weights:
@@ -330,18 +345,65 @@ def run_backtest(
                 p1 = store.price_asof(tk, T)
                 if p0 and p1 and p0 > 0:
                     port_ret += w * (p1 / p0 - 1.0)
-                # delisted/no price => contributes 0 (held value flat-marked)
             equity *= (1.0 + port_ret)
             res.period_returns.append(port_ret)
+        equity = max(equity, 1e-9)
+        peak = max(peak, equity)
+
+        # 1b) equal-weight market proxy (for the regime monitor) over (prev_date, T]
+        if prev_date is not None and members:
+            rets = []
+            for tk in members:
+                p0 = store.price_asof(tk, prev_date)
+                p1 = store.price_asof(tk, T)
+                if p0 and p1 and p0 > 0:
+                    rets.append(p1 / p0 - 1.0)
+            if rets:
+                mkt_index *= (1.0 + sum(rets) / len(rets))
+        mkt_hist.append(mkt_index)
+        mkt_ma = sum(mkt_hist[-regime_ma_win:]) / len(mkt_hist[-regime_ma_win:])
+        # breadth = fraction of members in a 6-month uptrend (price now > ~6mo ago)
+        breadth = None
+        if members:
+            ref = date.fromordinal(T.toordinal() - 182)
+            up = tot = 0
+            for tk in members:
+                a = store.price_asof(tk, T)
+                b = store.price_asof(tk, ref)
+                if a is not None and b is not None and b > 0:
+                    tot += 1
+                    if a > b:
+                        up += 1
+            breadth = (up / tot) if tot else None
 
         # 2) decide new target weights using ONLY as-of data
-        members = universe.members_asof(T)
         target = strategy(T, members, store) or {}
-        # long-only, normalized to <= 1.0 gross
         target = {k: max(0.0, float(v)) for k, v in target.items() if v}
         gross = sum(target.values())
         if gross > 1.0:
             target = {k: v / gross for k, v in target.items()}
+            gross = 1.0
+
+        # 2b) RISK OVERLAY — gross de-risking from the monitor engine
+        if risk_monitor_fn is not None:
+            ps = {"nav": equity, "peak_nav": peak,
+                  "positions": [{"ticker": k, "weight": v} for k, v in target.items()],
+                  "weights": target}
+            ms = {"csi300_last": mkt_index, "csi300_ma200": mkt_ma, "breadth_pct": breadth}
+            try:
+                actions = risk_monitor_fn(ps, ms) or []
+            except Exception:
+                actions = []
+            acts = [getattr(a, "action", a.get("action") if isinstance(a, dict) else None) for a in actions]
+            gross_cap = None
+            if "TO_CASH" in acts:
+                gross_cap = 0.0
+            elif "SCALE_DOWN_GROSS" in acts:
+                gross_cap = regime_gross_cap
+            if gross_cap is not None and gross > gross_cap:
+                scale = (gross_cap / gross) if gross > 0 else 0.0
+                target = {k: v * scale for k, v in target.items()}
+                res.risk_actions_log.append({"date": T.isoformat(), "gross_cap": gross_cap, "actions": acts})
 
         # 3) turnover + cost (charged to equity)
         names = set(prev_weights) | set(target)
@@ -457,6 +519,31 @@ def _selftest() -> int:
     # DEAD.SZ must NEVER appear in any post-delist holdings (survivorship in the loop)
     if any("DEAD.SZ" in h["weights"] for h in res.holdings_log):
         failures.append("delisted DEAD.SZ leaked into holdings (survivorship breach in loop)")
+
+    # --- Risk overlay: a portfolio drawdown must trigger gross de-risking ---
+    dd_store = PitDataStore()
+    dd_store.load_ticker("X.SZ", [
+        {"trade_date": "20200101", "close": 10.0}, {"trade_date": "20200201", "close": 12.0},
+        {"trade_date": "20200301", "close": 13.0}, {"trade_date": "20200401", "close": 6.0},   # crash
+        {"trade_date": "20200501", "close": 6.0}, {"trade_date": "20200601", "close": 6.0},
+    ], [])
+    dd_uni = PitUniverse([{"ts_code": "X.SZ", "list_date": "20100101", "delist_date": None}])
+    def _always_long(as_of, members, store):
+        return {"X.SZ": 0.95} if "X.SZ" in members else {}
+    def _stub_risk(ps, ms):  # SCALE_DOWN_GROSS once portfolio draws down > 12%
+        nav, peak = ps.get("nav"), ps.get("peak_nav")
+        if nav and peak and (nav / peak - 1.0) <= -0.12:
+            return [{"action": "SCALE_DOWN_GROSS"}]
+        return []
+    rr = run_backtest(dd_store, dd_uni, date(2020, 1, 1), date(2020, 6, 1),
+                      _always_long, risk_monitor_fn=_stub_risk)
+    if not rr.risk_actions_log:
+        failures.append("risk overlay never fired despite a -54% crash drawdown")
+    else:
+        # after the crash, a de-risk action capped gross below the strategy's 0.95
+        capped = [h for h in rr.holdings_log if sum(h["weights"].values()) < 0.5]
+        if not capped:
+            failures.append("risk overlay fired but never actually cut gross")
 
     if failures:
         print("SELFTEST FAILED:")

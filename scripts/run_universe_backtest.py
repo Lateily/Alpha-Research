@@ -27,8 +27,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import pit_factors  # noqa: E402
+import risk_monitor  # noqa: E402
 from backtest_v2 import PitDataStore, PitUniverse, run_backtest, REGIMES  # noqa: E402
 from satellite_strategy import make_satellite_strategy  # noqa: E402
+
+
+def _risk_overlay(ps, ms):
+    """Backtest risk hook → the real 11-monitor engine (dry_run: would-be actions)."""
+    return risk_monitor.run_monitors(ps, ms, dry_run=True)
 
 PANEL_DIR = REPO_ROOT / "data_history" / "panel"
 
@@ -87,13 +93,15 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
         out_path: Path, start: date, end: date) -> dict:
     store, universe = load_panel(prices_path, financials_path, universe_path)
     strat = make_satellite_strategy()
-    res = run_backtest(store, universe, start, end, strat)
+    res = run_backtest(store, universe, start, end, strat, risk_monitor_fn=_risk_overlay)
     results = {
         "_meta": {
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "engine": "backtest_v2 + satellite_strategy + pit_factors",
+            "engine": "backtest_v2 + satellite_strategy + pit_factors + risk_monitor overlay",
             "window": [start.isoformat(), end.isoformat()],
             "rebalances": len(res.rebalance_dates),
+            "risk_overlay": "ON (drawdown breaker + regime gross-cap from risk_monitor)",
+            "risk_actions_fired": len(res.risk_actions_log),
             "honesty": "real number from real data; NOT curve-fit. Whatever it is, it is.",
         },
         "cagr": res.cagr,
@@ -103,6 +111,7 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
         "per_regime_return": _regime_breakdown(res),
         "equity_curve": [{"date": d.isoformat(), "equity": round(e, 5)}
                          for d, e in zip(res.rebalance_dates, res.equity)],
+        "risk_actions_sample": res.risk_actions_log[:20],
         "turnover_sample": res.trade_log[-12:],
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)
