@@ -1,0 +1,103 @@
+name: Full-Universe Backtest (the real number)
+
+# Capstone: runs the entire systematic pipeline on REAL full-universe A-share
+# data in GitHub Actions (token + Tushare reachability live here), producing
+# the FIRST real, PIT, survivorship-safe, per-regime backtest number.
+#   build_pit_universe (survivorship-safe universe incl. delisted)
+#   -> fetch_universe_history (by-date bulk -> prices/financials parquet panel)
+#   -> run_universe_backtest (load -> pit_factors -> satellite_strategy
+#                             -> backtest_v2 -> results JSON)
+#   -> commit backtest_results_v2.json (small) + upload panel artifact
+#
+# Honesty: whatever CAGR comes out is committed as-is. No curve-fit, no fake.
+# Manual trigger (Junyan, Actions tab). The fetch is the long pole; if a single
+# job nears the 6h GHA cap, shorten --start or we batch the fetch later.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: 'Backtest/fetch start YYYYMMDD (20yr=20060101; shorten if a run times out)'
+        required: false
+        default: '20060101'
+      end:
+        description: 'End YYYYMMDD (default today)'
+        required: false
+        default: ''
+      universe:
+        description: 'Optional ts_code allowlist (comma-sep) for a faster first run; blank = full ~5000'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350   # fetch is the long pole; under the 6h GHA hard cap
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install tushare pandas pyarrow --quiet
+
+      - name: Build survivorship-safe universe
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/build_pit_universe.py --sleep 0.2
+
+      - name: Bulk-fetch full-universe history (by-date -> parquet panel)
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          ARGS="--start ${{ github.event.inputs.start }} --sleep 0.12"
+          if [ -n "${{ github.event.inputs.end }}" ]; then ARGS="$ARGS --end ${{ github.event.inputs.end }}"; fi
+          if [ -n "${{ github.event.inputs.universe }}" ]; then ARGS="$ARGS --universe ${{ github.event.inputs.universe }}"; fi
+          echo "fetch args: $ARGS"
+          python scripts/fetch_universe_history.py $ARGS
+
+      - name: Run the real backtest
+        run: |
+          ARGS="--start ${{ github.event.inputs.start }}"
+          if [ -n "${{ github.event.inputs.end }}" ]; then ARGS="$ARGS --end ${{ github.event.inputs.end }}"; fi
+          python scripts/run_universe_backtest.py $ARGS
+
+      - name: Show the number (job log)
+        run: |
+          python - <<'PY'
+          import json, os
+          p = "public/data/backtest_results_v2.json"
+          if os.path.exists(p):
+              r = json.load(open(p))
+              print("===== REAL BACKTEST RESULT =====")
+              print("CAGR:", r.get("cagr"), "Sharpe:", r.get("sharpe"),
+                    "MaxDD:", r.get("max_drawdown"), "rebalances:", r["_meta"].get("rebalances"))
+              print("per-regime:", json.dumps(r.get("per_regime_return"), ensure_ascii=False))
+          else:
+              print("backtest_results_v2.json MISSING — run failed upstream")
+          PY
+
+      - name: Commit results (small JSON only; panel stays gitignored)
+        run: |
+          git config user.name "backtest-bot"
+          git config user.email "noreply@github.com"
+          git add public/data/backtest_results_v2.json || true
+          git commit -m "data(backtest): full-universe backtest result [auto]" || echo "no change"
+          git pull --rebase origin main || true
+          git push origin main || echo "push skipped"
+
+      - name: Upload parquet panel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: panel-${{ github.run_id }}
+          path: data_history/panel/
+          retention-days: 14
+          if-no-files-found: warn
