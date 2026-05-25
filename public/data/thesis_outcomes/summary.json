@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-22T11:27:42.577021+00:00",
+  "updated_at": "2026-05-25T05:28:08.020819+00:00",
   "total_theses_tracked": 1,
   "by_status": {
     "ACTIVE": 1
@@ -13,7 +13,7 @@
       "ticker": "002594.SZ",
       "direction": "LONG",
       "status": "ACTIVE",
-      "days_to_catalyst": 85,
+      "days_to_catalyst": 82,
       "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00"
     }
   ],

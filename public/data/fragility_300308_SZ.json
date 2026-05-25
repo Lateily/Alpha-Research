@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-05-22T11:27:42.301329+00:00",
+  "generated_at": "2026-05-25T05:28:07.733007+00:00",
   "ticker": "300308.SZ",
-  "composite": 22.1,
-  "band": "ROBUST",
+  "composite": 36.9,
+  "band": "MODERATE",
   "components": {
-    "F1_leverage": 0.0,
-    "F2_liquidity_survival": 0.0,
+    "F1_leverage": null,
+    "F2_liquidity_survival": null,
     "F3_tail_risk": 1.8,
     "F4_vol_regime": 100.0,
     "F5_max_drawdown": 8.8
@@ -17,16 +17,8 @@
   },
   "biotech_mode": false,
   "f2_method": "fcf_consistency",
-  "valid_components": 5,
-  "fundamentals": {
-    "years_available": 4,
-    "fcf_positive_pct": 100.0,
-    "latest_cash": 10986893131.96,
-    "latest_fcf_annual": 8136131464.12,
-    "de_ratio": 0.05611675393905993,
-    "op_margin_mean": 0.24277864674623323,
-    "op_margin_cv": 0.3446338592369629
-  },
+  "valid_components": 3,
+  "fundamentals": null,
   "price_metrics": {
     "n_returns": 117,
     "annual_vol": 0.6112,

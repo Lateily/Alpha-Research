@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-05-22T11:27:42.348238+00:00",
+    "generated_at": "2026-05-25T05:28:07.780862+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -13,60 +13,60 @@
   "personas": {
     "300308.SZ": {
       "buffett": {
-        "score": 4,
+        "score": 0,
         "max": 6,
         "criteria": [
           {
             "name": "ROE > 15%",
-            "actual": 0.53931,
+            "actual": null,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": true,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "Operating margin > 15%",
-            "actual": 0.39813,
+            "actual": null,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": true,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "D/E < 50%",
-            "actual": 0.04506,
+            "actual": null,
             "threshold": 0.5,
             "comparator": "<",
-            "passed": true,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "FCF yield > 4%",
-            "actual": 0.0036008707331394744,
+            "actual": null,
             "threshold": 0.04,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 77.40343,
+            "actual": null,
             "threshold": 20.0,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "ratio"
           },
           {
             "name": "Current ratio > 1.5",
-            "actual": 2.461,
+            "actual": null,
             "threshold": 1.5,
             "comparator": ">",
-            "passed": true,
+            "passed": null,
             "format": "ratio"
           }
         ],
-        "verdict_e": "Mixed quality — passes most ratios, fails a value test.",
-        "verdict_z": "质量参差——多数指标达标，估值类未通过。"
+        "verdict_e": "Not a Buffett name on these criteria.",
+        "verdict_z": "按此清单非巴菲特类标的。"
       },
       "burry": {
         "score": 0,
@@ -74,34 +74,34 @@
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 32.408516,
+            "actual": null,
             "threshold": 1.5,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "ratio"
           },
           {
             "name": "FCF yield > 8%",
-            "actual": 0.0036008707331394744,
+            "actual": null,
             "threshold": 0.08,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 54.687,
+            "actual": null,
             "threshold": 10.0,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "ratio"
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.008068713256386816,
+            "actual": null,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           }
         ],
@@ -114,29 +114,29 @@
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.911,
+            "actual": null,
             "threshold": 0.05,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.156,
+            "actual": null,
             "threshold": [
               0.08,
               0.15
             ],
             "comparator": "in",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "Our growth < 25% (terminal sanity)",
-            "actual": 0.341,
+            "actual": null,
             "threshold": 0.25,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           }
         ],
@@ -151,50 +151,50 @@
         "criteria": [
           {
             "name": "ROE > 15%",
-            "actual": 0.11147001,
+            "actual": null,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "Operating margin > 15%",
-            "actual": 0.04777,
+            "actual": null,
             "threshold": 0.15,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "D/E < 50%",
-            "actual": 0.5507,
+            "actual": null,
             "threshold": 0.5,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "FCF yield > 4%",
-            "actual": -0.13699452280299687,
+            "actual": null,
             "threshold": 0.04,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "Trailing P/E < 20",
-            "actual": 48.076923,
+            "actual": null,
             "threshold": 20.0,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "ratio"
           },
           {
             "name": "Current ratio > 1.5",
-            "actual": 0.815,
+            "actual": null,
             "threshold": 1.5,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "ratio"
           }
         ],
@@ -202,79 +202,79 @@
         "verdict_z": "按此清单非巴菲特类标的。"
       },
       "burry": {
-        "score": 1,
+        "score": 0,
         "max": 4,
         "criteria": [
           {
             "name": "P/B < 1.5",
-            "actual": 3.672582,
+            "actual": null,
             "threshold": 1.5,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "ratio"
           },
           {
             "name": "FCF yield > 8%",
-            "actual": -0.13699452280299687,
+            "actual": null,
             "threshold": 0.08,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "EV/EBITDA < 10",
-            "actual": 7.872,
+            "actual": null,
             "threshold": 10.0,
             "comparator": "<",
-            "passed": true,
+            "passed": null,
             "format": "ratio"
           },
           {
             "name": "Net cash > 20% of mkt cap",
-            "actual": 0.0126783386750652,
+            "actual": null,
             "threshold": 0.2,
             "comparator": ">",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           }
         ],
-        "verdict_e": "Mostly growth-priced; one value indicator only.",
-        "verdict_z": "整体成长定价；仅一项价值指标通过。"
+        "verdict_e": "Growth-priced; not a deep-value candidate.",
+        "verdict_z": "成长定价——非深度价值候选。"
       },
       "damodaran": {
-        "score": 1,
+        "score": 0,
         "max": 3,
         "criteria": [
           {
             "name": "|implied vs our growth gap| < ±5%",
-            "actual": 0.1448,
+            "actual": null,
             "threshold": 0.05,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "WACC in [8%, 15%]",
-            "actual": 0.0945,
+            "actual": null,
             "threshold": [
               0.08,
               0.15
             ],
             "comparator": "in",
-            "passed": true,
+            "passed": null,
             "format": "percent"
           },
           {
             "name": "Our growth < 25% (terminal sanity)",
-            "actual": 0.28,
+            "actual": null,
             "threshold": 0.25,
             "comparator": "<",
-            "passed": false,
+            "passed": null,
             "format": "percent"
           }
         ],
-        "verdict_e": "Single sanity check — large gap or unusual assumption.",
-        "verdict_z": "仅一项达标——存在显著差距或非常规假设。"
+        "verdict_e": "Aggressive thesis: our_growth diverges from market price meaningfully.",
+        "verdict_z": "激进假设：我们的增长预期与市场价格意义性背离。"
       }
     },
     "175.HK": {
