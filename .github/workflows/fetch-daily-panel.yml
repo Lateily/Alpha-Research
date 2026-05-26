@@ -24,7 +24,7 @@ permissions:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 350    # 20yr × ~5000 dates × 2 endpoints × ~1s/call ≈ 3-4 hours
 
     steps:
       - name: Checkout repo
@@ -78,7 +78,8 @@ jobs:
         env:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: |
-          python scripts/fetch_daily_panel.py \
+          # -u: unbuffered stdout so progress lines appear in real time
+          python -u scripts/fetch_daily_panel.py \
             --start "${{ github.event.inputs.start }}" \
             --end "${{ github.event.inputs.end }}"
           echo "===== panel files ====="
@@ -104,7 +105,9 @@ jobs:
           PY
 
       # ── Upload panel as artifact (gitignored + LARGE → not committed) ──────
+      # if: always() — preserve partial data even if fetch hits timeout or fails
       - name: Upload panel artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: daily-panel-${{ github.run_id }}
