@@ -77,6 +77,24 @@ likewise statistically indistinguishable from zero.
 - Growth has predictive power (triple-rejected)
 - iter-1..7 backtests "prove" anything beyond "infra works"
 
+**Iter-9 (CORE thesis IC pilot, evening 2026-05-26):**
+- New tool: `scripts/thesis_eval.py` parses 25 thesis JSONs, scores quality,
+  computes forward returns. n=2 actionable (BYD LONG, 大参林 SHORT) → too
+  few for inference. Framework READY for quarterly re-run as sample grows.
+- Early 25-day direction tracking: BYD LONG ✗ (-6.8%), 大参林 SHORT ✓ (+9.5%).
+  Provocative early signal: higher quality score did NOT correlate with
+  better forward return (BYD 90 lost, 大参林 84 won) — but n=4 ≈ noise.
+
+**Iter-10 (Quarterly rebalance test, evening 2026-05-26):**
+- `--rebal-months {1,3,6}` flag added. Tested quarterly + semi-annual.
+- Quarterly: OOS 2.87% (vs monthly 10.50%, -7.6pp). Bootstrap alpha
+  annualized -31.8% CI [-56.2%, -1.9%] **EXCLUDES 0 (p=0.022)** —
+  statistically significant negative.
+- Semi-annual: final equity 0.87 (20-year LOSS!). 2015 bubble entirely
+  missed.
+- **REJECTED** per "不能负优化". Lesson: signal horizon ≠ rebalance
+  frequency. Iter-11 idea: monthly rebal + 3-month factor smoothing.
+
 **This VALIDATES the USP_VISION dual-track architecture:** CORE
 (thesis-driven hedge-fund-logic) = the alpha source; SATELLITE (pure
 systematic) = breadth only. Stage 3 confirms satellite alone has no edge;

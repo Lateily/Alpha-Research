@@ -135,21 +135,14 @@ def _semi_annual_ends(start: date, end: date) -> list:
 def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
         out_path: Path, start: date, end: date, risk_off: bool = False,
         iter8: bool = False, iter8_barra: bool = False,
-        rebal_months: int = 1, smooth_factors_n: int = 1) -> dict:
+        rebal_months: int = 1, smooth_factors_n: int = 1,
+        top_n: int | None = None) -> dict:
     store, universe = load_panel(prices_path, financials_path, universe_path)
+    from satellite_strategy import TOP_N as _DEFAULT_TOP_N
+    _top_n = top_n if top_n is not None else _DEFAULT_TOP_N
     if iter8:
-        # Iter-8 Stage 1 (post-bisect 2026-05-26): LSY/Li-Rao 5% mcap filter
-        # + E/P-heavy value (set by default in pit_factors.CONFIG via Stage 1b).
-        # Barra USE4 construction is INTENTIONALLY NOT enabled here because
-        # the bisect found it dominates OOS in a NEGATIVE direction (OOS CAGR
-        # 10.70% → 2.05% in isolation) due to scale mismatch with the iter-1..7
-        # OLS-calibrated weights (fit on 0-100 percentile inputs, applied to
-        # ~N(0,1) z-scores). Re-enable Barra only when weights are re-fit on
-        # Barra scale (Stage 3). Use --iter8-barra to explicitly test Barra-on
-        # for diagnostic purposes.
-        # iter-11: smooth_factors_n > 1 enables N-month rolling factor average
-        # (e.g., =3 to harvest Stage 2 IC's strong h=3m signal at monthly rebal).
         strat = make_satellite_strategy(
+            top_n=_top_n,
             apply_universe_filter=True,
             universe_filter_config={"mcap_pctl_floor": 0.05},
             use_barra_construction=iter8_barra,
@@ -157,7 +150,7 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
             smooth_factors_n=smooth_factors_n,
         )
     else:
-        strat = make_satellite_strategy(smooth_factors_n=smooth_factors_n)
+        strat = make_satellite_strategy(top_n=_top_n, smooth_factors_n=smooth_factors_n)
 
     # iter-10 quarterly / semi-annual schedule
     rebal_dates = None
@@ -334,6 +327,9 @@ def main(argv=None):
                    help="iter-11: rolling N-month average of factor scores "
                         "(default 1 = no smoothing). =3 harvests h=3m signal "
                         "at monthly rebal frequency.")
+    p.add_argument("--top-n", type=int, default=None,
+                   help="Concentration override (default = satellite_strategy.TOP_N=15). "
+                        "iter-7 tested 30 (worse); iter-12 tests 10.")
     p.add_argument("--selftest", action="store_true")
     args = p.parse_args(argv)
     if args.selftest:
@@ -349,7 +345,8 @@ def main(argv=None):
               risk_off=args.risk_off, iter8=args.iter8,
               iter8_barra=getattr(args, "iter8_barra", False),
               rebal_months=args.rebal_months,
-              smooth_factors_n=args.smooth_factors_n)
+              smooth_factors_n=args.smooth_factors_n,
+              top_n=args.top_n)
     print(f"REAL BACKTEST: OOS_CAGR(2019+)={res.get('oos_cagr_2019plus')} IS_CAGR={res.get('in_sample_cagr_pre2019')} Sharpe={res.get('sharpe')} MaxDD={res.get('max_drawdown')} "
           f"final_equity={res['final_equity']} rebalances={res['_meta']['rebalances']}")
     print(f"per-regime: {res['per_regime_return']}")
