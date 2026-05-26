@@ -1,0 +1,570 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-26T19:39:15.885998+00:00",
+    "engine": "backtest_v2 + satellite_strategy + pit_factors + risk_monitor overlay",
+    "window": [
+      "2006-01-01",
+      "2026-05-26"
+    ],
+    "rebalances": 41,
+    "risk_overlay": "ON (drawdown breaker + regime gross-cap from risk_monitor)",
+    "risk_actions_fired": 36,
+    "weights_source": "OLS-calibrated (in-sample ['2006-01-01', '2018-12-31'])",
+    "headline_metric": "oos_cagr (2019+) — weights fit in-sample 2006-2018, so full-period CAGR is in-sample-optimistic",
+    "honesty": "real number from real data; NOT curve-fit. Whatever it is, it is."
+  },
+  "oos_cagr_2019plus": 0.03971186236370561,
+  "oos_benchmark_cagr_ew_universe": 0.10251295969562557,
+  "oos_alpha_vs_benchmark": -0.06280109733191996,
+  "in_sample_cagr_pre2019": -0.03246045942907161,
+  "in_sample_benchmark_cagr_ew_universe": 0.08169104584350295,
+  "in_sample_alpha": -0.11415150527257456,
+  "cagr_full_period_in_sample_optimistic": -0.041096272218388075,
+  "sharpe": 0.14435654226777023,
+  "max_drawdown": -0.5456864160371973,
+  "final_equity": 0.8694608336362093,
+  "per_regime_return": {
+    "2008_crash": -0.5197,
+    "2015_bubble_crash": 0.0,
+    "2018_bear": 0.0,
+    "2020_covid": -0.0534,
+    "2022_drawdown": 0.0213,
+    "2024_recovery": -0.0346
+  },
+  "equity_curve": [
+    {
+      "date": "2006-01-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2006-07-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2007-01-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2007-07-01",
+      "equity": 0.99881
+    },
+    {
+      "date": "2008-01-01",
+      "equity": 1.37836
+    },
+    {
+      "date": "2008-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2009-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2009-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2010-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2010-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2011-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2011-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2012-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2012-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2013-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2013-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2014-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2014-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2015-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2015-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2016-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2016-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2017-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2017-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2018-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2018-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2019-01-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2019-07-01",
+      "equity": 0.662
+    },
+    {
+      "date": "2020-01-01",
+      "equity": 0.66151
+    },
+    {
+      "date": "2020-07-01",
+      "equity": 0.62621
+    },
+    {
+      "date": "2021-01-01",
+      "equity": 0.68831
+    },
+    {
+      "date": "2021-07-01",
+      "equity": 0.70408
+    },
+    {
+      "date": "2022-01-01",
+      "equity": 0.72214
+    },
+    {
+      "date": "2022-07-01",
+      "equity": 0.73752
+    },
+    {
+      "date": "2023-01-01",
+      "equity": 0.70796
+    },
+    {
+      "date": "2023-07-01",
+      "equity": 0.72145
+    },
+    {
+      "date": "2024-01-01",
+      "equity": 0.72275
+    },
+    {
+      "date": "2024-07-01",
+      "equity": 0.69772
+    },
+    {
+      "date": "2025-01-01",
+      "equity": 0.77531
+    },
+    {
+      "date": "2025-07-01",
+      "equity": 0.79079
+    },
+    {
+      "date": "2026-01-01",
+      "equity": 0.86946
+    }
+  ],
+  "market_proxy_curve": [
+    {
+      "date": "2006-01-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2006-07-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2007-01-01",
+      "equity": 1.08626
+    },
+    {
+      "date": "2007-07-01",
+      "equity": 2.17386
+    },
+    {
+      "date": "2008-01-01",
+      "equity": 3.05293
+    },
+    {
+      "date": "2008-07-01",
+      "equity": 1.73646
+    },
+    {
+      "date": "2009-01-01",
+      "equity": 1.24215
+    },
+    {
+      "date": "2009-07-01",
+      "equity": 2.22437
+    },
+    {
+      "date": "2010-01-01",
+      "equity": 2.87991
+    },
+    {
+      "date": "2010-07-01",
+      "equity": 2.26526
+    },
+    {
+      "date": "2011-01-01",
+      "equity": 3.01029
+    },
+    {
+      "date": "2011-07-01",
+      "equity": 2.62483
+    },
+    {
+      "date": "2012-01-01",
+      "equity": 1.95904
+    },
+    {
+      "date": "2012-07-01",
+      "equity": 1.91003
+    },
+    {
+      "date": "2013-01-01",
+      "equity": 1.81486
+    },
+    {
+      "date": "2013-07-01",
+      "equity": 1.7211
+    },
+    {
+      "date": "2014-01-01",
+      "equity": 2.1116
+    },
+    {
+      "date": "2014-07-01",
+      "equity": 2.15702
+    },
+    {
+      "date": "2015-01-01",
+      "equity": 2.86387
+    },
+    {
+      "date": "2015-07-01",
+      "equity": 4.67044
+    },
+    {
+      "date": "2016-01-01",
+      "equity": 4.50742
+    },
+    {
+      "date": "2016-07-01",
+      "equity": 3.58827
+    },
+    {
+      "date": "2017-01-01",
+      "equity": 4.14289
+    },
+    {
+      "date": "2017-07-01",
+      "equity": 3.60843
+    },
+    {
+      "date": "2018-01-01",
+      "equity": 3.37438
+    },
+    {
+      "date": "2018-07-01",
+      "equity": 2.66864
+    },
+    {
+      "date": "2019-01-01",
+      "equity": 2.20986
+    },
+    {
+      "date": "2019-07-01",
+      "equity": 2.55036
+    },
+    {
+      "date": "2020-01-01",
+      "equity": 2.63263
+    },
+    {
+      "date": "2020-07-01",
+      "equity": 2.82063
+    },
+    {
+      "date": "2021-01-01",
+      "equity": 3.04429
+    },
+    {
+      "date": "2021-07-01",
+      "equity": 3.21419
+    },
+    {
+      "date": "2022-01-01",
+      "equity": 3.72413
+    },
+    {
+      "date": "2022-07-01",
+      "equity": 3.26317
+    },
+    {
+      "date": "2023-01-01",
+      "equity": 3.12709
+    },
+    {
+      "date": "2023-07-01",
+      "equity": 3.32602
+    },
+    {
+      "date": "2024-01-01",
+      "equity": 3.32307
+    },
+    {
+      "date": "2024-07-01",
+      "equity": 2.60108
+    },
+    {
+      "date": "2025-01-01",
+      "equity": 3.30733
+    },
+    {
+      "date": "2025-07-01",
+      "equity": 3.75199
+    },
+    {
+      "date": "2026-01-01",
+      "equity": 4.37573
+    }
+  ],
+  "risk_actions_sample": [
+    {
+      "date": "2008-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2009-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2009-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2010-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2010-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2011-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2011-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2012-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2012-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2013-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2013-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2014-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2014-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2015-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2015-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2016-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2016-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2017-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2017-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2018-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    }
+  ],
+  "turnover_sample": [
+    {
+      "date": "2020-07-01",
+      "turnover": 0.96,
+      "cost": 0.00144
+    },
+    {
+      "date": "2021-01-01",
+      "turnover": 1.04,
+      "cost": 0.00156
+    },
+    {
+      "date": "2021-07-01",
+      "turnover": 1.12,
+      "cost": 0.00168
+    },
+    {
+      "date": "2022-01-01",
+      "turnover": 0.8,
+      "cost": 0.0012
+    },
+    {
+      "date": "2022-07-01",
+      "turnover": 0.88,
+      "cost": 0.00132
+    },
+    {
+      "date": "2023-01-01",
+      "turnover": 0.88,
+      "cost": 0.00132
+    },
+    {
+      "date": "2023-07-01",
+      "turnover": 1.2,
+      "cost": 0.0018
+    },
+    {
+      "date": "2024-01-01",
+      "turnover": 0.88,
+      "cost": 0.00132
+    },
+    {
+      "date": "2024-07-01",
+      "turnover": 1.04,
+      "cost": 0.00156
+    },
+    {
+      "date": "2025-01-01",
+      "turnover": 0.88,
+      "cost": 0.00132
+    },
+    {
+      "date": "2025-07-01",
+      "turnover": 0.8,
+      "cost": 0.0012
+    },
+    {
+      "date": "2026-01-01",
+      "turnover": 0.8,
+      "cost": 0.0012
+    }
+  ]
+}

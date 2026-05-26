@@ -106,9 +106,36 @@ def _regime_breakdown(res) -> dict:
     return out
 
 
+def _quarter_ends(start: date, end: date) -> list:
+    """First-of-month markers but only Jan/Apr/Jul/Oct (quarterly rebalance).
+    Used by iter-10 to test if 3-month horizon harvests more signal per
+    Stage 2 IC analysis (which showed h=3m mean IC ~3× stronger than h=1m)."""
+    out, y, m = [], start.year, start.month
+    while date(y, m, 1) <= end:
+        if m in (1, 4, 7, 10):
+            out.append(date(y, m, 1))
+        m += 1
+        if m > 12:
+            y, m = y + 1, 1
+    return out
+
+
+def _semi_annual_ends(start: date, end: date) -> list:
+    """Jan and July only (semi-annual rebal)."""
+    out, y, m = [], start.year, start.month
+    while date(y, m, 1) <= end:
+        if m in (1, 7):
+            out.append(date(y, m, 1))
+        m += 1
+        if m > 12:
+            y, m = y + 1, 1
+    return out
+
+
 def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
         out_path: Path, start: date, end: date, risk_off: bool = False,
-        iter8: bool = False, iter8_barra: bool = False) -> dict:
+        iter8: bool = False, iter8_barra: bool = False,
+        rebal_months: int = 1) -> dict:
     store, universe = load_panel(prices_path, financials_path, universe_path)
     if iter8:
         # Iter-8 Stage 1 (post-bisect 2026-05-26): LSY/Li-Rao 5% mcap filter
@@ -128,7 +155,21 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
         )
     else:
         strat = make_satellite_strategy()
+
+    # iter-10 quarterly / semi-annual schedule
+    rebal_dates = None
+    rebal_periods_per_year = 12  # monthly default
+    if rebal_months == 3:
+        rebal_dates = _quarter_ends(start, end)
+        rebal_periods_per_year = 4
+    elif rebal_months == 6:
+        rebal_dates = _semi_annual_ends(start, end)
+        rebal_periods_per_year = 2
+    elif rebal_months not in (1,):
+        raise ValueError(f"--rebal-months must be 1, 3, or 6, got {rebal_months}")
+
     res = run_backtest(store, universe, start, end, strat,
+                       rebalance_dates=rebal_dates,
                        risk_monitor_fn=(None if risk_off else _risk_overlay),
                        regime_gross_cap=_RISK_CONFIG_OVERRIDE["regime_gross_cap"])
 
@@ -138,15 +179,15 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
     split = date(2019, 1, 1)
     is_eq = [e for d, e in zip(res.rebalance_dates, res.equity) if d < split]
     oos_eq = [e for d, e in zip(res.rebalance_dates, res.equity) if d >= split]
-    is_cagr = cagr(is_eq, 12.0) if len(is_eq) >= 2 else None
-    oos_cagr = (cagr([e / oos_eq[0] for e in oos_eq], 12.0)
+    is_cagr = cagr(is_eq, float(rebal_periods_per_year)) if len(is_eq) >= 2 else None
+    oos_cagr = (cagr([e / oos_eq[0] for e in oos_eq], float(rebal_periods_per_year))
                 if len(oos_eq) >= 2 and oos_eq[0] > 0 else None)
     # Equal-weight universe BENCHMARK (the alpha test: are we beating buy-and-hold?)
     mkt = res.market_proxy_curve
     is_mkt = [m for d, m in zip(res.rebalance_dates, mkt) if d < split]
     oos_mkt = [m for d, m in zip(res.rebalance_dates, mkt) if d >= split]
-    is_mkt_cagr = cagr(is_mkt, 12.0) if len(is_mkt) >= 2 else None
-    oos_mkt_cagr = (cagr([m / oos_mkt[0] for m in oos_mkt], 12.0)
+    is_mkt_cagr = cagr(is_mkt, float(rebal_periods_per_year)) if len(is_mkt) >= 2 else None
+    oos_mkt_cagr = (cagr([m / oos_mkt[0] for m in oos_mkt], float(rebal_periods_per_year))
                     if len(oos_mkt) >= 2 and oos_mkt[0] > 0 else None)
     oos_alpha = (oos_cagr - oos_mkt_cagr) if oos_cagr is not None and oos_mkt_cagr is not None else None
     is_alpha = (is_cagr - is_mkt_cagr) if is_cagr is not None and is_mkt_cagr is not None else None
@@ -282,6 +323,10 @@ def main(argv=None):
                    help="Force-enable Barra construction with iter-8 (requires "
                         "--iter8). Use only for diagnostic or after OLS weight "
                         "re-fit on Barra scale (Stage 3).")
+    p.add_argument("--rebal-months", type=int, default=1, choices=[1, 3, 6],
+                   help="Rebalance frequency in months: 1=monthly (default), "
+                        "3=quarterly (iter-10), 6=semi-annual. Stage 2 IC showed "
+                        "h=3m/6m signals 3x stronger than h=1m — iter-10 tests this.")
     p.add_argument("--selftest", action="store_true")
     args = p.parse_args(argv)
     if args.selftest:
@@ -295,7 +340,8 @@ def main(argv=None):
               Path(args.universe) if Path(args.universe).exists() else None,
               Path(args.out), _d(args.start), _d(args.end),
               risk_off=args.risk_off, iter8=args.iter8,
-              iter8_barra=getattr(args, "iter8_barra", False))
+              iter8_barra=getattr(args, "iter8_barra", False),
+              rebal_months=args.rebal_months)
     print(f"REAL BACKTEST: OOS_CAGR(2019+)={res.get('oos_cagr_2019plus')} IS_CAGR={res.get('in_sample_cagr_pre2019')} Sharpe={res.get('sharpe')} MaxDD={res.get('max_drawdown')} "
           f"final_equity={res['final_equity']} rebalances={res['_meta']['rebalances']}")
     print(f"per-regime: {res['per_regime_return']}")

@@ -1,0 +1,968 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-26T19:40:04.499276+00:00",
+    "engine": "backtest_v2 + satellite_strategy + pit_factors + risk_monitor overlay",
+    "window": [
+      "2006-01-01",
+      "2026-05-26"
+    ],
+    "rebalances": 82,
+    "risk_overlay": "ON (drawdown breaker + regime gross-cap from risk_monitor)",
+    "risk_actions_fired": 76,
+    "weights_source": "OLS-calibrated (in-sample ['2006-01-01', '2018-12-31'])",
+    "headline_metric": "oos_cagr (2019+) — weights fit in-sample 2006-2018, so full-period CAGR is in-sample-optimistic",
+    "honesty": "real number from real data; NOT curve-fit. Whatever it is, it is."
+  },
+  "oos_cagr_2019plus": 0.028677015623243207,
+  "oos_benchmark_cagr_ew_universe": 0.10120145437873096,
+  "oos_alpha_vs_benchmark": -0.07252443875548775,
+  "in_sample_cagr_pre2019": 0.01766141296891477,
+  "in_sample_benchmark_cagr_ew_universe": 0.11333293961470647,
+  "in_sample_alpha": -0.0956715266457917,
+  "cagr_full_period_in_sample_optimistic": 0.05556346748684926,
+  "sharpe": 0.3690978444172987,
+  "max_drawdown": -0.3693783056120832,
+  "final_equity": 1.4405202572613185,
+  "per_regime_return": {
+    "2008_crash": -0.3565,
+    "2015_bubble_crash": 0.7597,
+    "2018_bear": -0.1476,
+    "2020_covid": 0.0,
+    "2022_drawdown": -0.0265,
+    "2024_recovery": 0.0705
+  },
+  "equity_curve": [
+    {
+      "date": "2006-01-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2006-04-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2006-07-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2006-10-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2007-01-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2007-04-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2007-07-01",
+      "equity": 0.99925
+    },
+    {
+      "date": "2007-10-01",
+      "equity": 1.34941
+    },
+    {
+      "date": "2008-01-01",
+      "equity": 1.27915
+    },
+    {
+      "date": "2008-04-01",
+      "equity": 1.08148
+    },
+    {
+      "date": "2008-07-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2008-10-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2009-01-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2009-04-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2009-07-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2009-10-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2010-01-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2010-04-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2010-07-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2010-10-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2011-01-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2011-04-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2011-07-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2011-10-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2012-01-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2012-04-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2012-07-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2012-10-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2013-01-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2013-04-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2013-07-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2013-10-01",
+      "equity": 0.86831
+    },
+    {
+      "date": "2014-01-01",
+      "equity": 0.86766
+    },
+    {
+      "date": "2014-04-01",
+      "equity": 0.85097
+    },
+    {
+      "date": "2014-07-01",
+      "equity": 0.85467
+    },
+    {
+      "date": "2014-10-01",
+      "equity": 1.01775
+    },
+    {
+      "date": "2015-01-01",
+      "equity": 1.33548
+    },
+    {
+      "date": "2015-04-01",
+      "equity": 1.5233
+    },
+    {
+      "date": "2015-07-01",
+      "equity": 1.61719
+    },
+    {
+      "date": "2015-10-01",
+      "equity": 1.33761
+    },
+    {
+      "date": "2016-01-01",
+      "equity": 1.50394
+    },
+    {
+      "date": "2016-04-01",
+      "equity": 1.35654
+    },
+    {
+      "date": "2016-07-01",
+      "equity": 1.31385
+    },
+    {
+      "date": "2016-10-01",
+      "equity": 1.39515
+    },
+    {
+      "date": "2017-01-01",
+      "equity": 1.44437
+    },
+    {
+      "date": "2017-04-01",
+      "equity": 1.51791
+    },
+    {
+      "date": "2017-07-01",
+      "equity": 1.48417
+    },
+    {
+      "date": "2017-10-01",
+      "equity": 1.53826
+    },
+    {
+      "date": "2018-01-01",
+      "equity": 1.46652
+    },
+    {
+      "date": "2018-04-01",
+      "equity": 1.41048
+    },
+    {
+      "date": "2018-07-01",
+      "equity": 1.28528
+    },
+    {
+      "date": "2018-10-01",
+      "equity": 1.25009
+    },
+    {
+      "date": "2019-01-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2019-04-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2019-07-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2019-10-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2020-01-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2020-04-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2020-07-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2020-10-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2021-01-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2021-04-01",
+      "equity": 1.17354
+    },
+    {
+      "date": "2021-07-01",
+      "equity": 1.17266
+    },
+    {
+      "date": "2021-10-01",
+      "equity": 1.18667
+    },
+    {
+      "date": "2022-01-01",
+      "equity": 1.1872
+    },
+    {
+      "date": "2022-04-01",
+      "equity": 1.25444
+    },
+    {
+      "date": "2022-07-01",
+      "equity": 1.22811
+    },
+    {
+      "date": "2022-10-01",
+      "equity": 1.15578
+    },
+    {
+      "date": "2023-01-01",
+      "equity": 1.15871
+    },
+    {
+      "date": "2023-04-01",
+      "equity": 1.21333
+    },
+    {
+      "date": "2023-07-01",
+      "equity": 1.18362
+    },
+    {
+      "date": "2023-10-01",
+      "equity": 1.21459
+    },
+    {
+      "date": "2024-01-01",
+      "equity": 1.19505
+    },
+    {
+      "date": "2024-04-01",
+      "equity": 1.19563
+    },
+    {
+      "date": "2024-07-01",
+      "equity": 1.16612
+    },
+    {
+      "date": "2024-10-01",
+      "equity": 1.27927
+    },
+    {
+      "date": "2025-01-01",
+      "equity": 1.26236
+    },
+    {
+      "date": "2025-04-01",
+      "equity": 1.26443
+    },
+    {
+      "date": "2025-07-01",
+      "equity": 1.30169
+    },
+    {
+      "date": "2025-10-01",
+      "equity": 1.37664
+    },
+    {
+      "date": "2026-01-01",
+      "equity": 1.36871
+    },
+    {
+      "date": "2026-04-01",
+      "equity": 1.44052
+    }
+  ],
+  "market_proxy_curve": [
+    {
+      "date": "2006-01-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2006-04-01",
+      "equity": 1.0
+    },
+    {
+      "date": "2006-07-01",
+      "equity": 1.27919
+    },
+    {
+      "date": "2006-10-01",
+      "equity": 1.2863
+    },
+    {
+      "date": "2007-01-01",
+      "equity": 1.39195
+    },
+    {
+      "date": "2007-04-01",
+      "equity": 2.35821
+    },
+    {
+      "date": "2007-07-01",
+      "equity": 2.80385
+    },
+    {
+      "date": "2007-10-01",
+      "equity": 3.94677
+    },
+    {
+      "date": "2008-01-01",
+      "equity": 3.98594
+    },
+    {
+      "date": "2008-04-01",
+      "equity": 3.32151
+    },
+    {
+      "date": "2008-07-01",
+      "equity": 2.25468
+    },
+    {
+      "date": "2008-10-01",
+      "equity": 1.72368
+    },
+    {
+      "date": "2009-01-01",
+      "equity": 1.62652
+    },
+    {
+      "date": "2009-04-01",
+      "equity": 2.46899
+    },
+    {
+      "date": "2009-07-01",
+      "equity": 2.92269
+    },
+    {
+      "date": "2009-10-01",
+      "equity": 2.90864
+    },
+    {
+      "date": "2010-01-01",
+      "equity": 3.7965
+    },
+    {
+      "date": "2010-04-01",
+      "equity": 4.03778
+    },
+    {
+      "date": "2010-07-01",
+      "equity": 2.9937
+    },
+    {
+      "date": "2010-10-01",
+      "equity": 3.70224
+    },
+    {
+      "date": "2011-01-01",
+      "equity": 3.99606
+    },
+    {
+      "date": "2011-04-01",
+      "equity": 4.0533
+    },
+    {
+      "date": "2011-07-01",
+      "equity": 3.4405
+    },
+    {
+      "date": "2011-10-01",
+      "equity": 3.0033
+    },
+    {
+      "date": "2012-01-01",
+      "equity": 2.56565
+    },
+    {
+      "date": "2012-04-01",
+      "equity": 2.64417
+    },
+    {
+      "date": "2012-07-01",
+      "equity": 2.50985
+    },
+    {
+      "date": "2012-10-01",
+      "equity": 2.30761
+    },
+    {
+      "date": "2013-01-01",
+      "equity": 2.39366
+    },
+    {
+      "date": "2013-04-01",
+      "equity": 2.55849
+    },
+    {
+      "date": "2013-07-01",
+      "equity": 2.27244
+    },
+    {
+      "date": "2013-10-01",
+      "equity": 2.73587
+    },
+    {
+      "date": "2014-01-01",
+      "equity": 2.80342
+    },
+    {
+      "date": "2014-04-01",
+      "equity": 2.8703
+    },
+    {
+      "date": "2014-07-01",
+      "equity": 2.87042
+    },
+    {
+      "date": "2014-10-01",
+      "equity": 3.63547
+    },
+    {
+      "date": "2015-01-01",
+      "equity": 3.83593
+    },
+    {
+      "date": "2015-04-01",
+      "equity": 5.31085
+    },
+    {
+      "date": "2015-07-01",
+      "equity": 6.43631
+    },
+    {
+      "date": "2015-10-01",
+      "equity": 4.58663
+    },
+    {
+      "date": "2016-01-01",
+      "equity": 6.33892
+    },
+    {
+      "date": "2016-04-01",
+      "equity": 5.31111
+    },
+    {
+      "date": "2016-07-01",
+      "equity": 5.12558
+    },
+    {
+      "date": "2016-10-01",
+      "equity": 6.60065
+    },
+    {
+      "date": "2017-01-01",
+      "equity": 6.73261
+    },
+    {
+      "date": "2017-04-01",
+      "equity": 6.72855
+    },
+    {
+      "date": "2017-07-01",
+      "equity": 5.85926
+    },
+    {
+      "date": "2017-10-01",
+      "equity": 6.02343
+    },
+    {
+      "date": "2018-01-01",
+      "equity": 5.48961
+    },
+    {
+      "date": "2018-04-01",
+      "equity": 5.3152
+    },
+    {
+      "date": "2018-07-01",
+      "equity": 4.35316
+    },
+    {
+      "date": "2018-10-01",
+      "equity": 3.9307
+    },
+    {
+      "date": "2019-01-01",
+      "equity": 3.60448
+    },
+    {
+      "date": "2019-04-01",
+      "equity": 4.69653
+    },
+    {
+      "date": "2019-07-01",
+      "equity": 4.17434
+    },
+    {
+      "date": "2019-10-01",
+      "equity": 4.08561
+    },
+    {
+      "date": "2020-01-01",
+      "equity": 4.30018
+    },
+    {
+      "date": "2020-04-01",
+      "equity": 4.17389
+    },
+    {
+      "date": "2020-07-01",
+      "equity": 4.59687
+    },
+    {
+      "date": "2020-10-01",
+      "equity": 4.94589
+    },
+    {
+      "date": "2021-01-01",
+      "equity": 4.94634
+    },
+    {
+      "date": "2021-04-01",
+      "equity": 4.843
+    },
+    {
+      "date": "2021-07-01",
+      "equity": 5.23812
+    },
+    {
+      "date": "2021-10-01",
+      "equity": 5.49076
+    },
+    {
+      "date": "2022-01-01",
+      "equity": 6.11434
+    },
+    {
+      "date": "2022-04-01",
+      "equity": 5.55165
+    },
+    {
+      "date": "2022-07-01",
+      "equity": 5.40505
+    },
+    {
+      "date": "2022-10-01",
+      "equity": 4.90781
+    },
+    {
+      "date": "2023-01-01",
+      "equity": 5.20179
+    },
+    {
+      "date": "2023-04-01",
+      "equity": 5.70434
+    },
+    {
+      "date": "2023-07-01",
+      "equity": 5.49293
+    },
+    {
+      "date": "2023-10-01",
+      "equity": 5.28374
+    },
+    {
+      "date": "2024-01-01",
+      "equity": 5.49167
+    },
+    {
+      "date": "2024-04-01",
+      "equity": 4.90768
+    },
+    {
+      "date": "2024-07-01",
+      "equity": 4.28368
+    },
+    {
+      "date": "2024-10-01",
+      "equity": 5.05788
+    },
+    {
+      "date": "2025-01-01",
+      "equity": 5.42125
+    },
+    {
+      "date": "2025-04-01",
+      "equity": 5.76771
+    },
+    {
+      "date": "2025-07-01",
+      "equity": 6.16171
+    },
+    {
+      "date": "2025-10-01",
+      "equity": 7.01818
+    },
+    {
+      "date": "2026-01-01",
+      "equity": 7.18814
+    },
+    {
+      "date": "2026-04-01",
+      "equity": 7.25064
+    }
+  ],
+  "risk_actions_sample": [
+    {
+      "date": "2007-07-01",
+      "gross_cap": 0.6,
+      "actions": [
+        "SCALE_DOWN_GROSS",
+        "BLOCK_ADD",
+        "TRIM",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG"
+      ]
+    },
+    {
+      "date": "2007-10-01",
+      "gross_cap": 0.6,
+      "actions": [
+        "SCALE_DOWN_GROSS",
+        "BLOCK_ADD",
+        "TRIM",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG"
+      ]
+    },
+    {
+      "date": "2008-01-01",
+      "gross_cap": 0.6,
+      "actions": [
+        "SCALE_DOWN_GROSS",
+        "BLOCK_ADD",
+        "TRIM",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG"
+      ]
+    },
+    {
+      "date": "2008-04-01",
+      "gross_cap": 0.6,
+      "actions": [
+        "SCALE_DOWN_GROSS",
+        "SCALE_DOWN_GROSS",
+        "SCALE_DOWN_GROSS",
+        "BLOCK_ADD",
+        "TRIM",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG",
+        "FLAG"
+      ]
+    },
+    {
+      "date": "2008-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2008-10-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2009-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2009-04-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2009-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2009-10-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2010-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2010-04-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2010-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2010-10-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2011-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2011-04-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2011-07-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2011-10-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2012-01-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    },
+    {
+      "date": "2012-04-01",
+      "gross_cap": 0.0,
+      "actions": [
+        "TO_CASH"
+      ]
+    }
+  ],
+  "turnover_sample": [
+    {
+      "date": "2023-07-01",
+      "turnover": 1.2,
+      "cost": 0.0018
+    },
+    {
+      "date": "2023-10-01",
+      "turnover": 0.56,
+      "cost": 0.00084
+    },
+    {
+      "date": "2024-01-01",
+      "turnover": 0.72,
+      "cost": 0.00108
+    },
+    {
+      "date": "2024-04-01",
+      "turnover": 0.24,
+      "cost": 0.00036
+    },
+    {
+      "date": "2024-07-01",
+      "turnover": 1.04,
+      "cost": 0.00156
+    },
+    {
+      "date": "2024-10-01",
+      "turnover": 0.72,
+      "cost": 0.00108
+    },
+    {
+      "date": "2025-01-01",
+      "turnover": 0.56,
+      "cost": 0.00084
+    },
+    {
+      "date": "2025-04-01",
+      "turnover": 0.4,
+      "cost": 0.0006
+    },
+    {
+      "date": "2025-07-01",
+      "turnover": 0.8,
+      "cost": 0.0012
+    },
+    {
+      "date": "2025-10-01",
+      "turnover": 0.8,
+      "cost": 0.0012
+    },
+    {
+      "date": "2026-01-01",
+      "turnover": 0.64,
+      "cost": 0.00096
+    },
+    {
+      "date": "2026-04-01",
+      "turnover": 0.64,
+      "cost": 0.00096
+    }
+  ]
+}
