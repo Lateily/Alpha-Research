@@ -1,0 +1,62 @@
+{
+  "task_id": "2026-05-26-swing-signal-scanner",
+  "from": "claude_t1_orchestrator",
+  "to": "codex",
+  "spec_doc": "docs/strategy/SWING_STRATEGY_v1.md",
+  "spec_sections": ["§3 Signal layer (per-stock composite)", "§11 Data requirements"],
+  "deliverable": "scripts/swing_signal_scan.py",
+  "loc_budget": 250,
+  "depends_on": [
+    "data_history/panel/daily_prices.parquet (from fetch_daily_panel.py, fetched by Data Engineer agent)",
+    "data_history/panel/daily_adj_factor.parquet",
+    "data_history/sector_mapping.json (from fetch_sector_mapping.py, fetched by Sector Mapping agent)"
+  ],
+  "what_to_implement": {
+    "module_signature": "compute_swing_signals(daily_panel: pd.DataFrame, as_of: date, members: list[str], config: dict | None = None) -> dict[ts_code, dict]",
+    "returns": "Per-ticker dict with {composite: float [0-100], signal_layers: {breakout: 0/1, momentum_5d: float, rsi_14: float, macd_cross: 0/1, volume_spike: 0/1, atr_pos: float, limit_up_followup: 0/1}, vetoes: [list of any triggered veto names]}",
+    "technical_factors": {
+      "20d_breakout": "(close / max(close[-20:-1])) > 1.02; binary 0/1",
+      "momentum_5d": "5-day total return, cross-sectional rank in [0,1]",
+      "rsi_14": "Wilder RSI(14); gate to keep only stocks in [40, 70] band",
+      "macd_cross": "MACD(12,26,9): bullish iff MACD > signal AND signal increasing 3d; binary",
+      "volume_spike": "volume / mean(volume[-20:]) > 1.5; binary",
+      "atr_pos": "(close - low_band) / (high_band - low_band) where bands = close ± 2*ATR(14)",
+      "limit_up_followup": "T-1 was 涨停 (close ≥ pre_close * 1.099) AND T-1 close == T-1 high; binary"
+    },
+    "composite_weights_starting_point": {
+      "breakout_20d": 0.20,
+      "momentum_5d": 0.15,
+      "rsi_14": 0.10,
+      "macd_cross": 0.10,
+      "volume_spike": 0.15,
+      "atr_pos": 0.05,
+      "limit_up_followup": 0.10,
+      "_reserved_for_microstructure_when_available": 0.15
+    },
+    "vetoes": [
+      "ma50_trend_down (close < MA50 AND MA50 slope < 0)",
+      "atr_too_high (ATR(14)/close > 0.08)",
+      "recent_stop_loss (placeholder; needs position_state input — leave as TODO)",
+      "suspended_recent_3d (NaN close in last 3 trade dates)"
+    ],
+    "missing_data_policy": "Any factor with NaN inputs returns None; composite uses available factors only with renormalized weights. If <4 factors available, composite returns None (skip stock).",
+    "PIT_discipline": "All factor windows look back ONLY. as_of slices the daily panel to trade_date <= as_of. No forward-fill, no centering."
+  },
+  "selftest_requirements": [
+    "Synthetic fixture: 5 tickers × 60 days. Construct 1 ticker with clean breakout pattern → should score high. 1 ticker flat → should score low. 1 ticker with NaN block → should return None composite.",
+    "PIT test: factor at as_of=T must be identical regardless of whether store has data at T+1 (mimics tests/test_pit_no_look_ahead.py pattern).",
+    "Determinism: same inputs → same outputs (no random)."
+  ],
+  "out_of_scope": [
+    "Sector pre-filter (separate module, sector_scorer.py)",
+    "Position sizing (separate module, risk_manager.py)",
+    "Actual backtest run (separate orchestrator, run_swing_backtest.py)",
+    "Microstructure factors (主力净流入/龙虎榜) — gated on Tushare 3-API per memory; STUB ONLY if data unavailable"
+  ],
+  "test_gate_commands": [
+    "python3 -m py_compile scripts/swing_signal_scan.py",
+    "python3 scripts/swing_signal_scan.py --selftest"
+  ],
+  "return_signature": "Update this file with: status, files_written, tests_run output, test_gate_results, brief notes. Then T1 will integrate.",
+  "owner_after_handoff": "codex (writes), then claude_t1 (reviews + integrates)"
+}

@@ -1,0 +1,55 @@
+{
+  "task_id": "2026-05-26-swing-risk-manager",
+  "from": "claude_t1_orchestrator",
+  "to": "codex",
+  "spec_doc": "docs/strategy/SWING_STRATEGY_v1.md",
+  "spec_sections": ["§4 Position sizing + risk"],
+  "deliverable": "scripts/swing_risk_manager.py",
+  "loc_budget": 250,
+  "depends_on": ["scripts/swing_signal_scan.py outputs (composite scores)"],
+  "what_to_implement": {
+    "module_signature_1": "compute_target_weights(signal_scores: dict, daily_panel: pd.DataFrame, as_of: date, sector_mapping: dict, config: dict) -> dict[ts_code, float]",
+    "returns_1": "Per-ticker target_weight; sums to ≤ 0.95 gross",
+    "sizing_logic": {
+      "raw_target_per_position": "min(0.10, 0.02 * target_vol / stock_atr_vol) where target_vol=0.20 portfolio annualized vol, stock_atr_vol = ATR(14)/close * sqrt(252)",
+      "max_positions": "12 active",
+      "selection": "Top-N by composite_score, default N=8",
+      "constraints": "Single-name ≤ 12%, single-sector ≤ 30%, total gross ≤ 95%",
+      "renormalize": "If sum > 0.95, scale down proportionally. If single-sector > 30%, trim within sector to top scorers."
+    },
+    "module_signature_2": "evaluate_exits(positions: dict, daily_panel: pd.DataFrame, as_of: date, signal_scores: dict) -> dict[ts_code, str]",
+    "returns_2": "Per held position: 'hold' | 'sell_hard_stop' | 'sell_trailing' | 'take_profit_half' | 'sell_time_stop' | 'sell_sector_drop' | 'sell_composite_decay'",
+    "exit_rules": {
+      "hard_stop": "position.mtm_pct ≤ -0.08 from entry",
+      "trailing_stop": "position.mtm_pct ≤ position.peak_mtm - 0.05",
+      "take_profit_half": "position.mtm_pct ≥ +0.10 from entry; sell half AND raise trailing to entry price",
+      "time_stop": "position.days_held ≥ 7",
+      "sector_drop": "position.sector NOT in current_top_5_sectors",
+      "composite_decay": "current composite_score ≤ position.entry_composite - 30"
+    },
+    "module_signature_3": "check_portfolio_breakers(portfolio_state: dict, market_state: dict) -> dict",
+    "returns_3": "{actions: ['block_new', 'scale_gross_to_X', 'flat_all'], reason: str}",
+    "circuit_breakers": {
+      "drawdown_15pct": "If portfolio_dd ≤ -0.15: block_new_positions + reduce gross to 0.60",
+      "drawdown_25pct": "If portfolio_dd ≤ -0.25: flat_all + wait 5 trading days",
+      "high_vol_regime": "If realized_vol_60d > 0.30 annualized: reduce gross to 0.50"
+    },
+    "PIT_discipline": "All exit evaluations use only data with trade_date ≤ as_of."
+  },
+  "selftest_requirements": [
+    "Sizing: 8 stocks with various ATR — high-ATR get smaller weights, low-ATR get larger; sum ≤ 0.95",
+    "Sector cap: feed 5 stocks all in same sector → should cap sector total at 30%",
+    "Exit: position with mtm -10% triggers hard_stop; position with peak +12% and current +6% triggers trailing",
+    "Circuit breaker: DD -16% triggers block_new + scale_to_60"
+  ],
+  "out_of_scope": [
+    "Order generation (separate, position_manager.py)",
+    "Execution / fills (separate, execution_sim.py)",
+    "Backtest loop (separate)"
+  ],
+  "test_gate_commands": [
+    "python3 -m py_compile scripts/swing_risk_manager.py",
+    "python3 scripts/swing_risk_manager.py --selftest"
+  ],
+  "owner_after_handoff": "codex"
+}
