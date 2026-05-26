@@ -73,13 +73,24 @@ def load_panel(prices_path: Path, financials_path: Path,
                    for r in g.itertuples(index=False)]
         pit_factors.attach_daily_basic(store, tk, db_rows)
 
-    # universe (survivorship-safe): prefer universe_pit.json; else derive from panel
+    # universe (survivorship-safe): prefer universe_pit.json (with industry +
+    # list/delist dates); fall back to panel-derived if missing OR empty
+    # (an empty stocks=[] gave 0 picks → flat backtest — caught 2026-05-26 iter-8
+    # verification by the canonical PIT test failing to detect a CONFIG bug,
+    # not a code bug).
+    uni_raw = []
     if universe_path and Path(universe_path).exists():
-        uni_raw = json.load(open(universe_path)).get("stocks", [])
-    else:
+        uni_raw = json.load(open(universe_path)).get("stocks", []) or []
+    if not uni_raw:
+        print(f"WARN: universe_path={universe_path} has no stocks; falling back to "
+              f"panel-derived universe ({len(prices['ts_code'].unique())} tickers)",
+              file=sys.stderr)
         uni_raw = [{"ts_code": tk, "list_date": None, "delist_date": None}
                    for tk in prices["ts_code"].unique()]
     universe = PitUniverse(uni_raw)
+    if not universe._rows:
+        raise ValueError("PitUniverse loaded with 0 stocks — every backtest will "
+                         "return flat equity. Check universe_pit.json or panel data.")
     return store, universe
 
 
