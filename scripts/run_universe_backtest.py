@@ -135,7 +135,7 @@ def _semi_annual_ends(start: date, end: date) -> list:
 def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
         out_path: Path, start: date, end: date, risk_off: bool = False,
         iter8: bool = False, iter8_barra: bool = False,
-        rebal_months: int = 1) -> dict:
+        rebal_months: int = 1, smooth_factors_n: int = 1) -> dict:
     store, universe = load_panel(prices_path, financials_path, universe_path)
     if iter8:
         # Iter-8 Stage 1 (post-bisect 2026-05-26): LSY/Li-Rao 5% mcap filter
@@ -147,14 +147,17 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
         # ~N(0,1) z-scores). Re-enable Barra only when weights are re-fit on
         # Barra scale (Stage 3). Use --iter8-barra to explicitly test Barra-on
         # for diagnostic purposes.
+        # iter-11: smooth_factors_n > 1 enables N-month rolling factor average
+        # (e.g., =3 to harvest Stage 2 IC's strong h=3m signal at monthly rebal).
         strat = make_satellite_strategy(
             apply_universe_filter=True,
             universe_filter_config={"mcap_pctl_floor": 0.05},
             use_barra_construction=iter8_barra,
             universe=universe,
+            smooth_factors_n=smooth_factors_n,
         )
     else:
-        strat = make_satellite_strategy()
+        strat = make_satellite_strategy(smooth_factors_n=smooth_factors_n)
 
     # iter-10 quarterly / semi-annual schedule
     rebal_dates = None
@@ -327,6 +330,10 @@ def main(argv=None):
                    help="Rebalance frequency in months: 1=monthly (default), "
                         "3=quarterly (iter-10), 6=semi-annual. Stage 2 IC showed "
                         "h=3m/6m signals 3x stronger than h=1m — iter-10 tests this.")
+    p.add_argument("--smooth-n", dest="smooth_factors_n", type=int, default=1,
+                   help="iter-11: rolling N-month average of factor scores "
+                        "(default 1 = no smoothing). =3 harvests h=3m signal "
+                        "at monthly rebal frequency.")
     p.add_argument("--selftest", action="store_true")
     args = p.parse_args(argv)
     if args.selftest:
@@ -341,7 +348,8 @@ def main(argv=None):
               Path(args.out), _d(args.start), _d(args.end),
               risk_off=args.risk_off, iter8=args.iter8,
               iter8_barra=getattr(args, "iter8_barra", False),
-              rebal_months=args.rebal_months)
+              rebal_months=args.rebal_months,
+              smooth_factors_n=args.smooth_factors_n)
     print(f"REAL BACKTEST: OOS_CAGR(2019+)={res.get('oos_cagr_2019plus')} IS_CAGR={res.get('in_sample_cagr_pre2019')} Sharpe={res.get('sharpe')} MaxDD={res.get('max_drawdown')} "
           f"final_equity={res['final_equity']} rebalances={res['_meta']['rebalances']}")
     print(f"per-regime: {res['per_regime_return']}")

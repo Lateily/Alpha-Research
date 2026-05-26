@@ -135,6 +135,64 @@ def _barra_composite(factors: dict, members: list, store, as_of, universe,
     return composite
 
 
+def _smoothed_factors(members, as_of, store, fc, smooth_n=3):
+    """Iter-11: compute factor scores at as_of, as_of-1mo, as_of-2mo and average.
+
+    Per Stage 2 IC finding that h=3m signal is ~3× stronger than h=1m: smoothing
+    each factor over a 3-month rolling window approximates a 3-month effective
+    holding period WITHOUT sacrificing the monthly entry-point opportunity that
+    quarterly rebal (iter-10) gave up.
+
+    Returns the same dict structure as pit_factors.compute_factors but with
+    smoothed RAW factor values + smoothed percentile-rank scores per factor.
+    PIT-clean: each lookback date uses only data with trade_date <= that date.
+    """
+    from datetime import date as _date
+    # Build n lookback as_of dates (today, T-30d, T-60d, ...)
+    lookbacks = []
+    for k in range(smooth_n):
+        target = _date.fromordinal(as_of.toordinal() - 30 * k)
+        lookbacks.append(target)
+
+    # Compute factors at each lookback date
+    factors_per_date = []
+    for lb in lookbacks:
+        f = pit_factors.compute_factors(members, lb, store, fc)
+        factors_per_date.append(f)
+
+    # Use today's factor table as the structural template; replace raw factor
+    # values with smoothed averages across lookbacks (per ticker, per factor).
+    base = factors_per_date[0]  # as_of
+    smoothed = {}
+    for tk in members:
+        smoothed[tk] = dict(base.get(tk, {}))   # copy
+        if "_raw" not in smoothed[tk]:
+            continue
+        smoothed[tk]["_raw"] = dict(smoothed[tk]["_raw"])
+        smoothed[tk]["_raw"]["factors"] = dict(smoothed[tk]["_raw"].get("factors") or {})
+        for fname in ("momentum", "low_vol", "value", "quality", "growth"):
+            vals = []
+            for f_table in factors_per_date:
+                v = (f_table.get(tk, {}).get("_raw", {}).get("factors", {}) or {}).get(fname)
+                if v is not None:
+                    vals.append(float(v))
+            if vals:
+                smoothed[tk]["_raw"]["factors"][fname] = sum(vals) / len(vals)
+            else:
+                smoothed[tk]["_raw"]["factors"][fname] = None
+
+    # Re-score percentile-rank on the smoothed RAW values
+    for fname in ("momentum", "low_vol", "value", "quality", "growth"):
+        raw_by_tk = {tk: smoothed[tk].get("_raw", {}).get("factors", {}).get(fname)
+                     for tk in members}
+        scores, _ = pit_factors._score_factor(raw_by_tk)
+        for tk in members:
+            if tk in smoothed:
+                smoothed[tk][fname] = (None if scores.get(tk) is None
+                                       else round(scores[tk], 4))
+    return smoothed
+
+
 def make_satellite_strategy(top_n: int = TOP_N, gross: float = GROSS,
                             factor_config: dict | None = None,
                             *,
@@ -143,7 +201,8 @@ def make_satellite_strategy(top_n: int = TOP_N, gross: float = GROSS,
                             use_barra_construction: bool = False,
                             universe=None,
                             barra_n_sigma: float = 3.0,
-                            barra_industry_neutralize: bool = True):
+                            barra_industry_neutralize: bool = True,
+                            smooth_factors_n: int = 1):
     """Return a backtest_v2.Strategy closure.
 
     Args:
@@ -174,7 +233,11 @@ def make_satellite_strategy(top_n: int = TOP_N, gross: float = GROSS,
         if not members:
             return {}
 
-        factors = pit_factors.compute_factors(members, as_of, store, fc)
+        # iter-11: optional 3-month factor smoothing (signal horizon ≠ rebal freq)
+        if smooth_factors_n > 1:
+            factors = _smoothed_factors(members, as_of, store, fc, smooth_n=smooth_factors_n)
+        else:
+            factors = pit_factors.compute_factors(members, as_of, store, fc)
 
         # Composite — Barra (iter-8) or percentile rank (iter-7 legacy)
         if use_barra_construction:
