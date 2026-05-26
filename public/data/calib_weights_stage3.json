@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-26T16:10:27.364243+00:00",
+    "method": "pooled OLS forward_return ~ centered factor scores; coef floored >=0; normalized",
+    "in_sample_window": [
+      "2006-01-01",
+      "2018-12-31"
+    ],
+    "out_of_sample": "after 2018-12-31 (the honest test)",
+    "honesty": "in-sample fit only; long-only floor; written as-is, not massaged."
+  },
+  "_status": "ok",
+  "n_obs": 265255,
+  "r2_in_sample": 0.00077,
+  "raw_coef": {
+    "value": 0.0001288,
+    "low_vol": 2.746e-05
+  },
+  "intercept": -0.00062622,
+  "weights": {
+    "value": 0.8243,
+    "low_vol": 0.1757
+  },
+  "zeroed_factors": [],
+  "factors_used": [
+    "value",
+    "low_vol"
+  ]
+}

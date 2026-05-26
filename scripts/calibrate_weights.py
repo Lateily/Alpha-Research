@@ -33,32 +33,42 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import pit_factors  # noqa: E402
+import universe_filter  # noqa: E402
 from backtest_v2 import _month_ends  # noqa: E402
 from satellite_strategy import MONTHLY_FACTOR_CONFIG  # noqa: E402
 from run_universe_backtest import load_panel  # noqa: E402
 
-FACTORS = ["quality", "value", "momentum", "growth", "low_vol"]
+DEFAULT_FACTORS = ["quality", "value", "momentum", "growth", "low_vol"]
 OUT_DEFAULT = REPO_ROOT / "public" / "data" / "calib_weights.json"
 
 
-def collect_rows(store, universe, start: date, end: date):
-    """Pool (factor_scores, forward_return) over month-end rebalances in [start,end]."""
+def collect_rows(store, universe, start: date, end: date, factors: list[str] | None = None,
+                 *, apply_universe_filter: bool = False,
+                 universe_filter_config: dict | None = None):
+    """Pool (factor_scores, forward_return) over month-end rebalances in [start,end].
+
+    Stage-3 enhancement: optionally apply the LSY/Li-Rao universe filter to the
+    in-sample fit (so calibration and backtest see the same universe). Optionally
+    restrict to a sub-list of factors (per Stage 2 IC analysis verdict).
+    """
+    if factors is None:
+        factors = DEFAULT_FACTORS
     rdates = _month_ends(start, end)
     X, y = [], []
+    min_real = min(3, len(factors))   # for a 2-factor fit, "3 real" is impossible
     for i in range(len(rdates) - 1):
         T, nxt = rdates[i], rdates[i + 1]
         members = universe.members_asof(T)
+        if apply_universe_filter:
+            members = universe_filter.filter_universe(members, store, T, universe_filter_config)
         if not members:
             continue
-        factors = pit_factors.compute_factors(members, T, store, MONTHLY_FACTOR_CONFIG)
-        for tk, sc in factors.items():
-            # Require >=3 REAL factor scores; impute the rest to neutral 50
-            # (a sparse factor shouldn't drop the whole stock — that gave n_obs=0;
-            # neutral = no signal, the standard OLS handling for missing factors).
-            real = sum(1 for f in FACTORS if sc.get(f) is not None)
-            if real < 3:
+        factors_table = pit_factors.compute_factors(members, T, store, MONTHLY_FACTOR_CONFIG)
+        for tk, sc in factors_table.items():
+            real = sum(1 for f in factors if sc.get(f) is not None)
+            if real < min_real:
                 continue
-            vec = [float(sc.get(f)) if sc.get(f) is not None else 50.0 for f in FACTORS]
+            vec = [float(sc.get(f)) if sc.get(f) is not None else 50.0 for f in factors]
             p0 = store.price_asof(tk, T)
             p1 = store.price_asof(tk, nxt)
             if not (p0 and p1 and p0 > 0):
@@ -71,7 +81,9 @@ def collect_rows(store, universe, start: date, end: date):
     return np.array(X, dtype=float), np.array(y, dtype=float)
 
 
-def fit(X: np.ndarray, y: np.ndarray) -> dict:
+def fit(X: np.ndarray, y: np.ndarray, factors: list[str] | None = None) -> dict:
+    if factors is None:
+        factors = DEFAULT_FACTORS
     if len(y) < 50:
         return {"_status": "insufficient_obs", "n_obs": int(len(y))}
     Xc = X - X.mean(axis=0)                      # center factor scores
@@ -83,23 +95,31 @@ def fit(X: np.ndarray, y: np.ndarray) -> dict:
     ss_tot = float(np.sum((y - y.mean()) ** 2))
     r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
     pos = np.clip(betas, 0.0, None)              # long-only: floor negatives at 0
-    weights = (pos / pos.sum()) if pos.sum() > 0 else np.full(len(FACTORS), 1.0 / len(FACTORS))
+    weights = (pos / pos.sum()) if pos.sum() > 0 else np.full(len(factors), 1.0 / len(factors))
     return {
         "_status": "ok",
         "n_obs": int(len(y)),
         "r2_in_sample": round(r2, 5),
-        "raw_coef": {f: round(float(b), 8) for f, b in zip(FACTORS, betas)},
+        "raw_coef": {f: round(float(b), 8) for f, b in zip(factors, betas)},
         "intercept": round(float(intercept), 8),
-        "weights": {f: round(float(w), 4) for f, w in zip(FACTORS, weights)},
-        "zeroed_factors": [f for f, b in zip(FACTORS, betas) if b <= 0],
+        "weights": {f: round(float(w), 4) for f, w in zip(factors, weights)},
+        "zeroed_factors": [f for f, b in zip(factors, betas) if b <= 0],
+        "factors_used": list(factors),
     }
 
 
-def calibrate(prices, financials, universe_path, start, in_sample_end, out_path):
+def calibrate(prices, financials, universe_path, start, in_sample_end, out_path,
+              factors: list[str] | None = None,
+              *, apply_universe_filter: bool = False,
+              universe_filter_config: dict | None = None):
+    if factors is None:
+        factors = DEFAULT_FACTORS
     store, universe = load_panel(Path(prices), Path(financials),
                                  Path(universe_path) if universe_path and Path(universe_path).exists() else None)
-    X, y = collect_rows(store, universe, start, in_sample_end)
-    res = fit(X, y)
+    X, y = collect_rows(store, universe, start, in_sample_end, factors,
+                         apply_universe_filter=apply_universe_filter,
+                         universe_filter_config=universe_filter_config)
+    res = fit(X, y, factors=factors)
     out = {
         "_meta": {
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -170,6 +190,12 @@ def main(argv=None):
     p.add_argument("--out", default=str(OUT_DEFAULT))
     p.add_argument("--start", default="20060101")
     p.add_argument("--in-sample-end", dest="in_sample_end", default="20181231")
+    p.add_argument("--factors", default=",".join(DEFAULT_FACTORS),
+                   help="Comma-separated factor names; default 5-factor full set. "
+                        "Stage 3: 'value,low_vol' (per Stage 2 IC verdict).")
+    p.add_argument("--apply-universe-filter", action="store_true",
+                   help="Apply LSY/Li-Rao 5%% mcap filter during calibration "
+                        "(Stage 3 default for consistency with the backtest)")
     p.add_argument("--selftest", action="store_true")
     args = p.parse_args(argv)
     if args.selftest:
@@ -179,7 +205,13 @@ def main(argv=None):
     if not Path(args.prices).exists():
         print(f"ERROR: {args.prices} missing — run fetch_universe_history.py (GHA) first.", file=sys.stderr)
         return 1
-    out = calibrate(args.prices, args.financials, args.universe, _d(args.start), _d(args.in_sample_end), args.out)
+    factors = [f.strip() for f in args.factors.split(",") if f.strip()]
+    uf_config = {"mcap_pctl_floor": 0.05} if args.apply_universe_filter else None
+    out = calibrate(args.prices, args.financials, args.universe,
+                    _d(args.start), _d(args.in_sample_end), args.out,
+                    factors=factors,
+                    apply_universe_filter=args.apply_universe_filter,
+                    universe_filter_config=uf_config)
     print(f"calibration {out.get('_status')}: weights={out.get('weights')} "
           f"R2={out.get('r2_in_sample')} n_obs={out.get('n_obs')} zeroed={out.get('zeroed_factors')}")
     print(f"wrote {args.out}")

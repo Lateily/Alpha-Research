@@ -73,13 +73,24 @@ def load_panel(prices_path: Path, financials_path: Path,
                    for r in g.itertuples(index=False)]
         pit_factors.attach_daily_basic(store, tk, db_rows)
 
-    # universe (survivorship-safe): prefer universe_pit.json; else derive from panel
+    # universe (survivorship-safe): prefer universe_pit.json (with industry +
+    # list/delist dates); fall back to panel-derived if missing OR empty
+    # (an empty stocks=[] gave 0 picks → flat backtest — caught 2026-05-26 iter-8
+    # verification by the canonical PIT test failing to detect a CONFIG bug,
+    # not a code bug).
+    uni_raw = []
     if universe_path and Path(universe_path).exists():
-        uni_raw = json.load(open(universe_path)).get("stocks", [])
-    else:
+        uni_raw = json.load(open(universe_path)).get("stocks", []) or []
+    if not uni_raw:
+        print(f"WARN: universe_path={universe_path} has no stocks; falling back to "
+              f"panel-derived universe ({len(prices['ts_code'].unique())} tickers)",
+              file=sys.stderr)
         uni_raw = [{"ts_code": tk, "list_date": None, "delist_date": None}
                    for tk in prices["ts_code"].unique()]
     universe = PitUniverse(uni_raw)
+    if not universe._rows:
+        raise ValueError("PitUniverse loaded with 0 stocks — every backtest will "
+                         "return flat equity. Check universe_pit.json or panel data.")
     return store, universe
 
 
@@ -96,9 +107,27 @@ def _regime_breakdown(res) -> dict:
 
 
 def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
-        out_path: Path, start: date, end: date, risk_off: bool = False) -> dict:
+        out_path: Path, start: date, end: date, risk_off: bool = False,
+        iter8: bool = False, iter8_barra: bool = False) -> dict:
     store, universe = load_panel(prices_path, financials_path, universe_path)
-    strat = make_satellite_strategy()
+    if iter8:
+        # Iter-8 Stage 1 (post-bisect 2026-05-26): LSY/Li-Rao 5% mcap filter
+        # + E/P-heavy value (set by default in pit_factors.CONFIG via Stage 1b).
+        # Barra USE4 construction is INTENTIONALLY NOT enabled here because
+        # the bisect found it dominates OOS in a NEGATIVE direction (OOS CAGR
+        # 10.70% → 2.05% in isolation) due to scale mismatch with the iter-1..7
+        # OLS-calibrated weights (fit on 0-100 percentile inputs, applied to
+        # ~N(0,1) z-scores). Re-enable Barra only when weights are re-fit on
+        # Barra scale (Stage 3). Use --iter8-barra to explicitly test Barra-on
+        # for diagnostic purposes.
+        strat = make_satellite_strategy(
+            apply_universe_filter=True,
+            universe_filter_config={"mcap_pctl_floor": 0.05},
+            use_barra_construction=iter8_barra,
+            universe=universe,
+        )
+    else:
+        strat = make_satellite_strategy()
     res = run_backtest(store, universe, start, end, strat,
                        risk_monitor_fn=(None if risk_off else _risk_overlay),
                        regime_gross_cap=_RISK_CONFIG_OVERRIDE["regime_gross_cap"])
@@ -146,6 +175,9 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
         "per_regime_return": _regime_breakdown(res),
         "equity_curve": [{"date": d.isoformat(), "equity": round(e, 5)}
                          for d, e in zip(res.rebalance_dates, res.equity)],
+        # EW-universe benchmark curve (needed for bootstrap CI on alpha)
+        "market_proxy_curve": [{"date": d.isoformat(), "equity": round(m, 5)}
+                                for d, m in zip(res.rebalance_dates, res.market_proxy_curve)],
         "risk_actions_sample": res.risk_actions_log[:20],
         "turnover_sample": res.trade_log[-12:],
     }
@@ -239,6 +271,17 @@ def main(argv=None):
     p.add_argument("--end", default=date.today().strftime("%Y%m%d"))
     p.add_argument("--no-risk", action="store_true", dest="risk_off",
                    help="Disable risk overlay (isolate factor alpha)")
+    p.add_argument("--iter8", action="store_true",
+                   help="Enable iter-8 Stage 1 foundation rebuild: LSY/Li-Rao "
+                        "5%% mcap filter + E/P-heavy value (default in "
+                        "pit_factors). Barra construction is INTENTIONALLY OFF "
+                        "because bisect proved scale-mismatch with iter-7 OLS "
+                        "weights kills OOS by ~8.7pp. Add --iter8-barra to "
+                        "force-enable Barra for diagnostic.")
+    p.add_argument("--iter8-barra", action="store_true",
+                   help="Force-enable Barra construction with iter-8 (requires "
+                        "--iter8). Use only for diagnostic or after OLS weight "
+                        "re-fit on Barra scale (Stage 3).")
     p.add_argument("--selftest", action="store_true")
     args = p.parse_args(argv)
     if args.selftest:
@@ -250,7 +293,9 @@ def main(argv=None):
         return 1
     res = run(Path(args.prices), Path(args.financials),
               Path(args.universe) if Path(args.universe).exists() else None,
-              Path(args.out), _d(args.start), _d(args.end), risk_off=args.risk_off)
+              Path(args.out), _d(args.start), _d(args.end),
+              risk_off=args.risk_off, iter8=args.iter8,
+              iter8_barra=getattr(args, "iter8_barra", False))
     print(f"REAL BACKTEST: OOS_CAGR(2019+)={res.get('oos_cagr_2019plus')} IS_CAGR={res.get('in_sample_cagr_pre2019')} Sharpe={res.get('sharpe')} MaxDD={res.get('max_drawdown')} "
           f"final_equity={res['final_equity']} rebalances={res['_meta']['rebalances']}")
     print(f"per-regime: {res['per_regime_return']}")

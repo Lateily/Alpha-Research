@@ -1,0 +1,216 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-26T15:57:46.498366+00:00",
+    "n_trials": 8,
+    "hlz_threshold": 3.0,
+    "bhy_alpha": 0.05,
+    "honesty": "BH-Y on raw t-stats from time-series IC; HLZ reference; no curve-fit"
+  },
+  "counts": {
+    "PASS": 16,
+    "MAYBE": 1,
+    "NOISE": 3
+  },
+  "verdicts": {
+    "growth@12d": {
+      "t_stat": -15.7621,
+      "n_months": 218,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": -0.086689,
+      "icir": -1.0675
+    },
+    "growth@1d": {
+      "t_stat": 1.6325,
+      "n_months": 229,
+      "raw_p": 0.102574,
+      "bhy_adjusted_p": 0.41004,
+      "hlz_pass": false,
+      "verdict": "NOISE",
+      "mean_ic": 0.008825,
+      "icir": 0.1079
+    },
+    "growth@3d": {
+      "t_stat": -1.1388,
+      "n_months": 227,
+      "raw_p": 0.254771,
+      "bhy_adjusted_p": 0.916598,
+      "hlz_pass": false,
+      "verdict": "NOISE",
+      "mean_ic": -0.006747,
+      "icir": -0.0756
+    },
+    "growth@6d": {
+      "t_stat": -6.581,
+      "n_months": 224,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": -0.039049,
+      "icir": -0.4397
+    },
+    "low_vol@12d": {
+      "t_stat": 16.6205,
+      "n_months": 227,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": 0.122852,
+      "icir": 1.1031
+    },
+    "low_vol@1d": {
+      "t_stat": 4.769,
+      "n_months": 238,
+      "raw_p": 2e-06,
+      "bhy_adjusted_p": 1e-05,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": 0.046019,
+      "icir": 0.3091
+    },
+    "low_vol@3d": {
+      "t_stat": 9.817,
+      "n_months": 236,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": 0.077204,
+      "icir": 0.639
+    },
+    "low_vol@6d": {
+      "t_stat": 14.0169,
+      "n_months": 233,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": 0.099139,
+      "icir": 0.9183
+    },
+    "momentum@12d": {
+      "t_stat": -10.9371,
+      "n_months": 221,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": -0.076257,
+      "icir": -0.7357
+    },
+    "momentum@1d": {
+      "t_stat": -2.6625,
+      "n_months": 232,
+      "raw_p": 0.007755,
+      "bhy_adjusted_p": 0.032825,
+      "hlz_pass": false,
+      "verdict": "MAYBE",
+      "mean_ic": -0.021899,
+      "icir": -0.1748
+    },
+    "momentum@3d": {
+      "t_stat": -4.6408,
+      "n_months": 230,
+      "raw_p": 3e-06,
+      "bhy_adjusted_p": 1.6e-05,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": -0.034648,
+      "icir": -0.306
+    },
+    "momentum@6d": {
+      "t_stat": -7.1426,
+      "n_months": 227,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": -0.050508,
+      "icir": -0.4741
+    },
+    "quality@12d": {
+      "t_stat": -14.0039,
+      "n_months": 209,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": -0.100152,
+      "icir": -0.9687
+    },
+    "quality@1d": {
+      "t_stat": -1.4126,
+      "n_months": 220,
+      "raw_p": 0.15776,
+      "bhy_adjusted_p": 0.597453,
+      "hlz_pass": false,
+      "verdict": "NOISE",
+      "mean_ic": -0.010841,
+      "icir": -0.0952
+    },
+    "quality@3d": {
+      "t_stat": -4.693,
+      "n_months": 218,
+      "raw_p": 3e-06,
+      "bhy_adjusted_p": 1.3e-05,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": -0.037051,
+      "icir": -0.3179
+    },
+    "quality@6d": {
+      "t_stat": -8.1762,
+      "n_months": 215,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": -0.063792,
+      "icir": -0.5576
+    },
+    "value@12d": {
+      "t_stat": 13.5471,
+      "n_months": 209,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": 0.1248,
+      "icir": 0.9371
+    },
+    "value@1d": {
+      "t_stat": 5.4034,
+      "n_months": 220,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": 0.055274,
+      "icir": 0.3643
+    },
+    "value@3d": {
+      "t_stat": 8.8769,
+      "n_months": 218,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": 0.081525,
+      "icir": 0.6012
+    },
+    "value@6d": {
+      "t_stat": 11.2346,
+      "n_months": 215,
+      "raw_p": 0.0,
+      "bhy_adjusted_p": 0.0,
+      "hlz_pass": true,
+      "verdict": "PASS",
+      "mean_ic": 0.097712,
+      "icir": 0.7662
+    }
+  }
+}

@@ -33,6 +33,15 @@
 | 5 | Loosen risk caps to standard (regime 0.60, DD -15/-25) — preserve DD protection with less alpha drag | risk_monitor config override | OOS 10.70% / bench 11.90% / **ALPHA -1.20%** / MaxDD -44% / Sharpe 0.58 | partial | Better than iter-2 (alpha -2.55%) but still negative. **Risk overlay consistently NET-NEGATIVE on alpha across all settings.** |
 | 6 | Test if OLS overfit-zeroed a real factor: revert to HAND-SET Q30/V20/M25/G15/LV10 (momentum included) | calib renamed → fallback to hand-set | OOS strat 1.41% / bench 11.90% / **ALPHA -10.49%** / MaxDD -54% | reverted | **OLS was RIGHT to zero momentum** — hand-set with momentum 0.25 was massively worse. Confirms A-share monthly mean-reversion. Restored OLS for next iters. |
 | 7 | Concentration sensitivity: top-30 vs top-15 (less concentrated = closer to EW with factor tilt) | TOP_N=30 in satellite_strategy.py | OOS 10.09% / bench 11.90% / **ALPHA -1.80%** / MaxDD -42% / Sharpe 0.53 | reverted | More diversification did NOT close the gap; in fact slightly WORSE than top-15 (iter-5 -1.20%). Diversification dilutes the factor tilt without removing the deeper problem — **the factor signal itself is weak**, not the concentration. Restored TOP_N=15. |
+| 8a | **Foundation rebuild attempt #1 (full Stage 1):** LSY/Li-Rao 5% mcap filter + E/P-heavy value (0.7/0.3) + Barra USE4 construction. | New: `universe_filter.py`, `factor_construction.py`, `tests/test_pit_no_look_ahead.py` (6/6 PASS — Huatai bug class blocked). Wired via 6 opt-in kwargs on `make_satellite_strategy`. Bug fix: `universe_pit.json` empty stocks=[] → silent flat-equity; now ValueError-guards. | OOS 2.37% / bench 11.90% / **ALPHA -9.53%** / MaxDD -52% / Sharpe 0.28 / final eq 1.69 | **REVERTED in 8b** | Negative shift -8.7pp OOS. **Junyan: "不能达成负优化"** → bisect: |
+| 8a-bisect | Decompose iter-8 into 5 isolated variants on full 2006-2026 to pin the killer | Inline scripted bisect | A baseline 10.70%・B +LSY 11.12% (+0.42pp)・C +Barra **2.05%** (-8.65pp)・D +E/P 10.78% (+0.08pp)・E all 2.37% | diagnostic | **Barra alone caused -8.7pp OOS**. Cause: iter-1..7 OLS weights fit on 0-100 percentile inputs; Barra produces ~N(0,1) z-scores → **scale mismatch**. Filter (B) and E/P (D) are neutral-to-mildly-positive. Conclusion: enable filter+E/P in Stage 1; defer Barra to Stage 3 (with weight re-fit). |
+| 8b | **Foundation rebuild attempt #2 (Stage 1 final):** LSY/Li-Rao 5% mcap filter + E/P-heavy value. **Barra OFF until Stage 3 weight re-fit.** | `--iter8` no longer turns on Barra by default; `--iter8-barra` for diagnostic. | OOS 10.50% / bench 11.90% / **ALPHA -1.40%** / IS 2.91% / MaxDD -47.14% / Sharpe 0.46 / final eq 2.94 / per-regime 2020 +14% (was +10.5%), 2022 +9.6% (was +8.0%), **2024 +12.0% (was -0.7%)**, 2015 +129% (was +185%) | ACCEPTED (Junyan) | **Mixed result, accepted as net-positive risk-profile shift.** OOS +0.41pp (noise level). Recent regimes (2020/22/24) clearly improved by +3.6/+1.7/+12.7pp. 2015 bubble dependency cut -55pp (good for live deployment). MaxDD -4.84pp worse (acceptance cost). IS down -1.91pp because LSY filter cuts the very small-cap shell-stock-driven 2015 bubble. The methodology improvement is real even when the headline number is noise-level — the cost is the strategy is less bubble-dependent. **Proceeds to Stage 2 IC analysis.** |
+| 8c | **Stage 2 IC analysis** — cross-sectional Spearman(factor, fwd_return) per month-end × 4 horizons (1/3/6/12 month), time-series mean + t-stat + ICIR, then BH-Yekutieli FDR + Harvey-Liu-Zhu t>3.0 reference (multiple-testing correction). | New: `ic_analysis.py` (~280 LOC), `multiple_testing.py` (~250 LOC). Bug caught during exec: panel is MONTH-END bars (245 over 20yr), so my initial run with horizons=[21,63,126,252] treated each as MONTH not day → IC at 21-MONTH-forward, hugely inflated t-stats. Re-ran with horizons=[1,3,6,12] for true monthly horizons. | **1-month IC verdict per factor:** **value** mean=+0.055 t=+5.40 ICIR=0.36 → **PASS**; **low_vol** mean=+0.046 t=+4.77 ICIR=0.31 → **PASS**; **momentum** mean=-0.022 t=-2.66 → MAYBE (BH-Y pass, HLZ fail); **quality** mean=-0.011 t=-1.41 → **NOISE**; **growth** mean=+0.009 t=+1.63 → **NOISE**. | DECISIVE | **Honest stage-2 verdict (the heart of iter-8):** at the monthly rebalance horizon, only **value and low_vol** have predictive power that survives both BH-Y FDR adjustment AND the conservative HLZ t>3.0 reference. Quality and growth are statistically indistinguishable from noise. Momentum weakly mean-reverts but fails HLZ. **This confirms our OLS calibration was structurally correct (M=Q=0) but gave growth too much weight (0.17 — should be 0).** Refit recommendation: V≈0.70 / LV≈0.30, drop everything else. 3-month and longer horizons show all factors strengthening — suggests QUARTERLY rebalance would harvest more signal than monthly. |
+| 8d | **Stage 3a OLS refit V+LV-only** with LSY filter applied to in-sample window | `calibrate_weights.py --factors value,low_vol --apply-universe-filter` | V=0.8243, LV=0.1757, R²=0.00077 (in-sample 2006-2018, n_obs=265k) | informational | OLS picks Stage 2's surviving factors at ratio close to IC ratio. |
+| 8d-bonus | **Stage 3a OLS refit V+LV+G** (3-factor) with LSY filter | `calibrate_weights.py --factors value,low_vol,growth --apply-universe-filter` | V=0.8297, LV=0.1703, **G=0 (zeroed by OLS)** | DECISIVE | **Triple convergence**: IC + multi-test + OLS-with-filter all zero growth. iter-7 G=0.17 came from SHELL-STOCK NOISE in unfiltered calibration. |
+| 8e | **Stage 3b 2-factor backtest** (V/LV refit OLS + LSY filter + E/P-heavy) | `--iter8` with calib_weights_stage3.json active | OOS 5.11% / bench 11.90% / **ALPHA -6.8%** / IS 7.89% / MaxDD -39.1% / Sharpe 0.52 / final 3.79 / 2008 -25.5% / 2024 +6.9% | informational (-5.4pp OOS vs Stage 1b) | The 5pp OOS loss vs Stage 1b is OOS LUCK lost — keeping G=0.17 captured shell-noise that happened to deliver in 2019-2026 but was zero in IS-OLS-with-filter. The HONEST signal-only strategy underperforms by an extra 5pp vs the contaminated one. |
+| 8f | **Stage 3c Stationary bootstrap** (Politis-Romano 1994, B=10000, block=6mo) on Stage 1b (best candidate, with iter-7 OLS weights + LSY filter) | `stationary_bootstrap.py --strat …stage1b…` | **Full period (2006-2026) ALPHA annualized: point = -9.4% / 95% CI = [-21.3%, +2.2%] / p=0.115 — straddles 0.** **OOS-only (2019+) ALPHA annualized: point = -2.0% / 95% CI = [-11.1%, +8.7%] / p=0.69 — straddles 0.** | DECISIVE | **THE GATE TRIPS — synthesis-doc Verdict A:** at α=0.05, we CANNOT distinguish the strategy from zero-alpha vs EW universe. Both full-period (-9.4% point) and OOS-only (-2.0% point) cross zero. **No statistical evidence of edge.** |
+| 8g | **Stage 3d FF attribution** (4-factor OLS regression of strategy returns on MKT/SMB/HML/WML factors built from PIT panel) | `ff_attribution.py --strat …stage1b…` (fixed 2 bugs along the way: SMB percentile-group call, factor-strat date misalignment) | n=225 months. **residual α monthly +0.44%, t=+1.81, p≈0.07 — NOT significant.** **residual α annualized +5.45%**. β_MKT=+0.40 t=+14.6, β_SMB=-0.15 t=-2.4, **β_HML=+0.20 t=+3.65 (significant value tilt)**, **β_WML=-0.23 t=-3.10 (significant anti-momentum tilt)**. R²=0.52. | DIAGNOSTIC | **Refines the bootstrap finding**: the -9.4%/yr "alpha vs EW" is largely β_MKT=0.4 (i.e. only 40% market exposure → miss 60% of market rally). The TRUE residual α after stripping factor exposures is +5.45%/yr but t=1.81 still does NOT clear 1.96. The strategy IS distinct from EW (significant HML + WML exposures = factor product, not alpha). **Institutional reading: this satellite is paid factor exposure, not residual alpha.** Verdict A unchanged: no statistically demonstrable edge BEYOND factor exposures. |
 
 _(appended each iteration)_
 
@@ -48,7 +57,86 @@ _(appended each iteration)_
 9. Concurrent-positions / concentration robustness (report a range, no cherry-pick)
 10. Transaction-cost / T+1 fill-precision realism check
 
-## Morning summary — honest verdict (iters 1-7 complete)
+## Iter-8 final verdict (Stage 1+2+3 complete)
+
+### The honest verdict (per `RESEARCH_SYNTHESIS_2026-05-26.md` Decision Gate)
+
+**Verdict A triggers: the satellite has NO statistically demonstrable
+edge over EW A-share buy-and-hold over 2006-2026.**
+
+Triple statistical convergence drove the verdict:
+
+1. **IC analysis (Stage 2a)**: at monthly rebalance horizon, only `value`
+   (t=+5.40) and `low_vol` (t=+4.77) clear BH-Yekutieli FDR + HLZ t>3.0.
+   Momentum / quality / growth all NOISE.
+
+2. **Multiple-testing (Stage 2b)**: 16 / 20 factor-horizon pairs PASS;
+   3 NOISE; 1 MAYBE. At the 1-month horizon (the rebalance horizon) only
+   V and LV pass — same as Stage 2a.
+
+3. **OLS refit with LSY filter (Stage 3a)**: applying the LSY/Li-Rao
+   shell-stock filter during IS calibration → OLS zeroes growth (G=0).
+   Compares to iter-7 which had G=0.17 fit on UNFILTERED data. **Triple
+   convergence: IC + multi-test + OLS-with-filter all agree the iter-7
+   G weight was shell-stock noise**.
+
+4. **Stationary bootstrap on alpha (Stage 3c, Politis-Romano B=10000
+   block=6mo)**:
+   - Full period 2006-2026 alpha annualized = -9.4% [-21.3%, +2.2%] — straddles 0
+   - OOS-only 2019+ alpha annualized = -2.0% [-11.1%, +8.7%] — straddles 0
+   - p-value H0:α=0 = 0.69 → cannot reject
+
+5. **FF attribution (Stage 3d)**: residual α (after stripping
+   MKT/SMB/HML/WML exposures) = +5.45%/yr, t=+1.81, p≈0.07 — still NOT
+   significant at α=0.05. The strategy IS distinct from EW (β_HML=+0.20
+   t=+3.7, β_WML=-0.23 t=-3.1) — but that's **factor exposure, not
+   alpha**.
+
+### What this VALIDATES
+
+**The USP_VISION dual-track architecture (2026-05-25 lock):**
+- **SATELLITE = systematic breadth** (this is what we just measured —
+  it provides factor exposure, not alpha; per institutional finding
+  factor-tilted indexes ARE paid factor risk-premia, NOT alpha).
+- **CORE = thesis-driven, hedge-fund-logic, LLM-curated** (the alpha source).
+- Stage 3 confirms: the moat must be in CORE, not SATELLITE.
+
+### What we ship from iter-8 (substantive permanent improvements)
+
+| Artifact | Purpose |
+|----------|---------|
+| `tests/test_pit_no_look_ahead.py` (6/6 PASS) | Huatai-NSGA2 bug class structurally impossible. P0 regression guard. |
+| `scripts/universe_filter.py` | LSY/Li-Rao 5% mcap shell-stock filter |
+| `scripts/factor_construction.py` | Barra USE4 (disabled in prod; preserved for Stage 3 re-fit if revisited) |
+| `scripts/ic_analysis.py` | Cross-sectional IC + time-series t-stat + multi-horizon decay |
+| `scripts/multiple_testing.py` | BH-Y FDR + HLZ + Deflated Sharpe |
+| `scripts/stationary_bootstrap.py` | Politis-Romano 1994 CI; primary inference tool going forward |
+| `scripts/ff_attribution.py` | 4-factor decomposition; separates exotic-beta from residual α |
+| E/P-heavy value blend (`pit_factors.CONFIG`) | LSY 2019 finding incorporated |
+| `docs/strategy/RESEARCH_SYNTHESIS_2026-05-26.md` | The plan we executed against |
+| `docs/strategy/research_2026-05-26/{textbook,institutional,xhs}_synthesis.md` | The three pillars of background reading |
+
+### What we do NOT claim
+
+- The satellite has any specific OOS CAGR — the CI straddles benchmark
+- iter-7 OOS 10.09% is "real" — it's a POINT inside a CI that crosses zero
+- Growth has predictive power — triple-rejected
+- iter-1..7 backtests "prove" anything beyond "infrastructure works"
+
+### What's next
+
+Stop tuning satellite parameters. **Redirect dev to the CORE thesis
+engine** (per USP_VISION.md). The honest-statistics toolkit from iter-8
+(IC + multi-test + bootstrap + FF) is reusable for evaluating CORE
+thesis quality — already a positive externality.
+
+The "宁愿犯错也不愿意找不出来错误在哪" discipline produced an
+auditable, defensible NO-ALPHA verdict in 8 iterations + 4 stages of
+formal statistics. That is the deliverable.
+
+---
+
+## Old morning summary — pre-Stage 2/3 (iters 1-7 only)
 
 ### The headline finding (honest)
 **The current systematic factor strategy does NOT have reliable alpha vs equal-weight A-share buy-and-hold.**
