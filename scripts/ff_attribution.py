@@ -100,6 +100,13 @@ def compute_factor_returns(store: PitDataStore, universe: PitUniverse,
 
     for i in range(len(rdates) - 1):
         T = rdates[i]
+        # Convention: forward 1-month return computed at T is the return EARNED
+        # over [T, T+1m] = realized AT T+1m (T_next). Label it with the
+        # CONTEMPORANEOUS date (T_next), matching the strategy's
+        # equity_curve→returns convention (return at curve[i] is earned
+        # over [curve[i-1], curve[i]]). Mislabeling here gave β_MKT ≈ 0 in
+        # the previous run because strat and factor series were offset 1mo.
+        T_next = rdates[i + 1]
         members = universe.members_asof(T)
         if apply_universe_filter:
             members = universe_filter.filter_universe(members, store, T,
@@ -118,7 +125,7 @@ def compute_factor_returns(store: PitDataStore, universe: PitUniverse,
 
         # MKT = equal-weighted mean
         mkt_ret = sum(fwd.values()) / len(fwd)
-        out["MKT"].append((T, mkt_ret))
+        out["MKT"].append((T_next, mkt_ret))
 
         # Sort buckets by mcap, E/P, 12-1 momentum
         factor_data = pit_factors.compute_factors(
@@ -134,26 +141,28 @@ def compute_factor_returns(store: PitDataStore, universe: PitUniverse,
         mom = {tk: factor_data.get(tk, {}).get("_raw", {}).get("factors", {}).get("momentum")
                for tk in fwd}
 
-        # SMB = small mcap minus large mcap
-        small, large = _percentile_group(mcap, 0.0, 1 - quantile)
+        # SMB = small mcap minus large mcap.
+        # _percentile_group(low, high) returns (pctl<low, pctl>=high).
+        # For bottom 30% small + top 30% large: call (quantile, 1-quantile).
+        small, large = _percentile_group(mcap, quantile, 1 - quantile)
         if small and large:
             sm = sum(fwd[tk] for tk in small) / len(small)
             lg = sum(fwd[tk] for tk in large) / len(large)
-            out["SMB"].append((T, sm - lg))
+            out["SMB"].append((T_next, sm - lg))
 
         # HML = high E/P minus low E/P
         low_ep, high_ep = _percentile_group(ep, quantile, 1 - quantile)
         if low_ep and high_ep:
             hi = sum(fwd[tk] for tk in high_ep) / len(high_ep)
             lo = sum(fwd[tk] for tk in low_ep) / len(low_ep)
-            out["HML"].append((T, hi - lo))
+            out["HML"].append((T_next, hi - lo))
 
         # WML = winners minus losers (12-1 momentum)
         losers, winners = _percentile_group(mom, quantile, 1 - quantile)
         if losers and winners:
             w = sum(fwd[tk] for tk in winners) / len(winners)
             l = sum(fwd[tk] for tk in losers) / len(losers)
-            out["WML"].append((T, w - l))
+            out["WML"].append((T_next, w - l))
 
     return out
 

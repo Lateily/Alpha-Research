@@ -33,19 +33,60 @@ capital. We are at **P1→P2**. Do NOT build any backtest on the current ~6mo /
 survivor-biased / look-ahead data — every number from `backtest.py` today is an
 artifact (n=5, flat-proxy benchmark). Discard the "98% annualized" result.
 
-**2026-05-26 — autonomous backtest iteration loop (7 iters complete, honest
-verdict in `docs/strategy/BACKTEST_ITERATIONS.md`):** the systematic factor
-strategy as currently built does NOT have reliable alpha vs EW A-share
-buy-and-hold. Best OOS alpha = +0.97% (iter-4, no-risk, OLS) — small-sample
-borderline noise. All other variants negative alpha (-1.20% to -10.49%).
-Risk overlay cuts MaxDD (-74%→-31%) but is a NET DRAG on alpha (~3% drag).
-OLS correctly zeroed momentum + quality (monthly mean-reversion). iter-7
-top-30 confirms concentration is not the issue (top-30 alpha -1.80% vs
-top-15 -1.20%). **Next session: IC analysis (per-factor Spearman + t-stat)
-to definitively diagnose factor predictive power before any further parameter
-tuning — better stats won't create alpha that isn't there. If no factor has
-real IC, the honest move is acknowledging the satellite has no edge as
-currently built and redirecting effort to the CORE thesis engine.**
+**2026-05-26 — iter-8 COMPLETE (Stage 1 foundation + Stage 2 IC + Stage 3
+bootstrap, all honest):**
+
+**Triple statistical convergence — only Value + Low-Vol have edge:**
+- IC analysis (Stage 2a, monthly horizon):
+  - **value** mean IC +0.055, t=+5.40, ICIR 0.36 → **PASS**
+  - **low_vol** mean IC +0.046, t=+4.77, ICIR 0.31 → **PASS**
+  - momentum t=-2.66 → MAYBE (BH-Y pass, HLZ fail)
+  - quality t=-1.41 → NOISE
+  - growth t=+1.63 → NOISE
+- Multi-testing (Stage 2b, BH-Yekutieli FDR + HLZ t>3.0): same verdict
+- OLS refit with LSY filter (Stage 3a): V=0.83, LV=0.17, **G=0 (zeroed)**.
+  Triple-confirms growth is shell-stock noise (iter-7 G=0.17 came from
+  unfiltered calibration).
+
+**Bootstrap CI on alpha vs EW A-share benchmark (Stage 3c):**
+- Full period 2006-2026: point **-9.4%**, 95% CI [-21.3%, +2.2%] — straddles 0
+- OOS-only 2019+:       point **-2.0%**, 95% CI [-11.1%, +8.7%] — straddles 0
+- p-value H0:α=0 = 0.69 (cannot reject)
+
+**THE HONEST VERDICT (per `RESEARCH_SYNTHESIS_2026-05-26.md` Decision Gate
+Verdict A): satellite has NO statistically demonstrable edge over EW
+A-share buy-and-hold.** The iter-7 OOS 10.09% headline is a POINT
+ESTIMATE inside a CI that crosses zero; the iter-4 +0.97% alpha is
+likewise statistically indistinguishable from zero.
+
+**What we KEEP from iter-8 (substantive infrastructure):**
+- `tests/test_pit_no_look_ahead.py` (6/6 PASS) — Huatai NSGA-II bug class
+  structurally impossible in our pipeline. Highest-confidence ROI of all
+  2026-05 infrastructure.
+- `scripts/universe_filter.py` (LSY/Li-Rao shell-stock exclusion)
+- `scripts/factor_construction.py` (Barra USE4 — disabled in production
+  pending OLS-on-Barra-scale re-fit; preserved for future use)
+- `scripts/ic_analysis.py` + `scripts/multiple_testing.py` (the
+  auditable-statistics toolkit; reusable for CORE too)
+- `scripts/stationary_bootstrap.py` + `scripts/ff_attribution.py`
+  (Politis-Romano CI; Fama-French decomposition)
+- E/P-heavy value blend (mild improvement, LSY 2019 finding)
+
+**What we do NOT claim:**
+- Any specific OOS CAGR for the satellite (CI straddles benchmark)
+- Growth has predictive power (triple-rejected)
+- iter-1..7 backtests "prove" anything beyond "infra works"
+
+**This VALIDATES the USP_VISION dual-track architecture:** CORE
+(thesis-driven hedge-fund-logic) = the alpha source; SATELLITE (pure
+systematic) = breadth only. Stage 3 confirms satellite alone has no edge;
+the moat must be in CORE.
+
+**Next session:** redirect dev resources to CORE thesis engine
+(LLM-driven research arc per `USP_VISION.md`). The honest-statistics
+toolkit built in iter-8 (IC + multi-test + bootstrap + FF) is reusable
+for evaluating CORE thesis quality too — already a positive
+externality.
 
 **2026-05-25 progress** (see `docs/strategy/MORNING_REPORT_2026-05-25.md`):
 ALL committed + verified. Decisions LOCKED: dual-track = quant track (SATELLITE

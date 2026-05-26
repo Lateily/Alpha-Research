@@ -1,0 +1,33 @@
+{
+  "_status": "ok",
+  "n_months": 225,
+  "intercept_alpha_monthly": 0.004435314316181665,
+  "alpha_annualized": 0.054541512926726377,
+  "alpha_t_stat": 1.8144778222689333,
+  "beta_MKT": 0.4010210127039631,
+  "beta_MKT_t": 14.632414808054724,
+  "beta_SMB": -0.1466398174041009,
+  "beta_SMB_t": -2.416275522783274,
+  "beta_HML": 0.1946102135640668,
+  "beta_HML_t": 3.6491492914822032,
+  "beta_WML": -0.23363002225790883,
+  "beta_WML_t": -3.0966340904123215,
+  "r2": 0.5196302428542441,
+  "residual_std_monthly": 0.03362417814442455,
+  "_meta": {
+    "strat_input": "public/data/backtest_results_stage1b_with_bench.json",
+    "window_aligned": [
+      "2007-09-01",
+      "2026-05-01"
+    ],
+    "n_factors": 4,
+    "factors_used": [
+      "MKT",
+      "SMB",
+      "HML",
+      "WML"
+    ],
+    "universe_filter": "LSY/Li-Rao 5% mcap floor",
+    "method": "OLS with homoskedastic SEs; use stationary_bootstrap.py for robust CIs"
+  }
+}
