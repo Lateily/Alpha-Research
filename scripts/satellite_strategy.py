@@ -54,7 +54,11 @@ except Exception:
 
 TOP_N = 15  # reverted from 30 (iter-7 showed top-30 has WORSE alpha than top-15; concentration is not the source of alpha gap — signal weakness is)
 GROSS = 0.95
-MIN_FACTORS = 3   # need >= this many non-None factors to be rankable
+# Dynamic min-factors threshold: with the original 5-factor set we required ≥3
+# (60% available); with a Stage-3 2-factor refit we'd need ≥2 (100%) since
+# requiring 3-of-2 is impossible. Rule: ceil(0.6 × len(WEIGHTS)), min 1.
+# Preserves the "≥60% data availability" intent across factor-set sizes.
+MIN_FACTORS = max(1, (len(WEIGHTS) * 6 + 9) // 10)
 
 # Factor windows in PRICE-SERIES POSITIONS. The backtest uses MONTH-END bars
 # (monthly-rebalance strategy doesn't need daily resolution — daily 20yr×5000

@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "strat_input": "public/data/backtest_results_iter8_stage1.json",
+    "bench_input": "public/data/backtest_results_iter8_stage1.json",
+    "B": 10000,
+    "block_length_months": 6,
+    "p_stationary": 0.16666666666666666,
+    "seed": 42,
+    "alpha": 0.05,
+    "honesty": "Politis-Romano stationary bootstrap; CI straddling 0 = no edge evidence"
+  },
+  "strat_n_months": 244,
+  "strat_mean_monthly": {
+    "_status": "ok",
+    "n": 244,
+    "B": 10000,
+    "n_boot_valid": 10000,
+    "p_stationary": 0.16666666666666666,
+    "expected_block_length": 6.0,
+    "point_estimate": 0.005506439044562971,
+    "ci_lo": -0.0007599682823553461,
+    "ci_hi": 0.012783323576350846,
+    "alpha": 0.05,
+    "straddles_zero": true,
+    "p_value_h0_zero": 0.1092,
+    "median_boot": 0.005289321674571504
+  },
+  "strat_cagr": {
+    "_status": "ok",
+    "n": 244,
+    "B": 10000,
+    "n_boot_valid": 10000,
+    "p_stationary": 0.16666666666666666,
+    "expected_block_length": 6.0,
+    "point_estimate": 0.054417523435935644,
+    "ci_lo": -0.020140717466815006,
+    "ci_hi": 0.14682261169252153,
+    "alpha": 0.05,
+    "straddles_zero": true,
+    "p_value_h0_zero": 0.1935,
+    "median_boot": 0.051950430158468786
+  },
+  "strat_sharpe": {
+    "_status": "ok",
+    "n": 244,
+    "B": 10000,
+    "n_boot_valid": 10000,
+    "p_stationary": 0.16666666666666666,
+    "expected_block_length": 6.0,
+    "point_estimate": 0.4040523919977574,
+    "ci_lo": -0.06208125481107035,
+    "ci_hi": 0.858470205740341,
+    "alpha": 0.05,
+    "straddles_zero": true,
+    "p_value_h0_zero": 0.087,
+    "median_boot": 0.392695051267329
+  }
+}

@@ -175,6 +175,9 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
         "per_regime_return": _regime_breakdown(res),
         "equity_curve": [{"date": d.isoformat(), "equity": round(e, 5)}
                          for d, e in zip(res.rebalance_dates, res.equity)],
+        # EW-universe benchmark curve (needed for bootstrap CI on alpha)
+        "market_proxy_curve": [{"date": d.isoformat(), "equity": round(m, 5)}
+                                for d, m in zip(res.rebalance_dates, res.market_proxy_curve)],
         "risk_actions_sample": res.risk_actions_log[:20],
         "turnover_sample": res.trade_log[-12:],
     }
