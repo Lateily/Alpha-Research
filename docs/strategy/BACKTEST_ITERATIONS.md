@@ -26,7 +26,10 @@
 
 | # | Hypothesis (a-priori rationale) | Change | Result (OOS CAGR / MaxDD / Sharpe) | Kept? | Honest note |
 |---|---|---|---|---|---|
-| 1 | Risk overlay (drawdown breaker + regime cap) + OLS-calibrated weights should cut the -74% DD and improve risk-adjusted return | risk_monitor wired into loop (FREEZE bug fixed) + calibrate_weights OLS | _pending run 26422660747_ | — | — |
+| 1 | Risk overlay (drawdown breaker + regime cap) + OLS-calibrated weights should cut the -74% DD and improve risk-adjusted return | risk_monitor wired into loop (FREEZE bug fixed) + calibrate_weights OLS (weights: value 0.57 / low_vol 0.26 / growth 0.17, **momentum & quality zeroed** — OLS confirms A-share monthly mean-reversion) | OOS CAGR 0.0% / IS CAGR -0.9% / **MaxDD -22.5% (was -74%)** / Sharpe -0.09 | partial | DD cut DRAMATICALLY but per-regime: 2008 -22%, all else 0.0 → **strategy went to cash in 2008 and never came back (TO_CASH is one-way, no re-entry).** Structural flaw, not tuning. Kept risk overlay; iter-2 must add re-entry. |
+| 2 | Re-entry rule for risk overlay: binary breakers without re-entry = permanent cash trap (standard quant pitfall). Use rolling 24-month peak instead of all-time peak so drawdown resets naturally as market normalizes. | Replaced `peak = max(peak, equity)` with rolling 24mo max in backtest_v2 | **OOS +9.35%** / IS +6.53% / MaxDD -31% / Sharpe +0.67 / final eq 4.28 | ✅ KEPT | **HUGE win.** Principled fix (rolling peak = standard trend-following), unlocked real OOS alpha. Per-regime now sensible (2008 -22% then re-engages, 2015 +181%, 2024 +5%). |
+| 3 | Need benchmark to judge if +9.35% is real alpha or just market beta. | EW-universe benchmark + alpha now in results | OOS strat 9.35% / bench 11.90% / **ALPHA -2.55%**. IS strat 6.53% / bench 13.39% / **ALPHA -6.87%** | ✅ KEPT (the reporting) | **CRITICAL honest finding:** we UNDERPERFORM equal-weight buy-and-hold by 2.55%/yr OOS. Without the benchmark we'd have called +9.35% a win. We didn't. |
+| 4 | Isolate the source of negative alpha: risk overlay or factors? Run with risk_overlay=OFF + OLS weights ON → factor alpha alone. If factor-only also underperforms EW → factors aren't adding value. | Add --no-risk CLI flag to run_universe_backtest | _running_ | — | — |
 
 _(appended each iteration)_
 

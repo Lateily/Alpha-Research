@@ -285,6 +285,7 @@ class BacktestResult:
     sharpe: Optional[float] = None
     max_drawdown: Optional[float] = None
     risk_actions_log: list = field(default_factory=list)
+    market_proxy_curve: list = field(default_factory=list)   # EW universe benchmark (cumulative)
     note: str = ""
 
 
@@ -329,7 +330,12 @@ def run_backtest(
     rdates = rebalance_dates or _month_ends(start, end)
     res = BacktestResult(note="close-to-close monthly; risk overlay=" + ("on" if risk_monitor_fn else "off"))
     equity = 1.0
-    peak = 1.0
+    # ROLLING peak (24 months), not all-time. All-time peak permanently traps
+    # the strategy in cash after any big crash (drawdown stays below the
+    # breaker forever, no re-entry). Rolling peak lets drawdown naturally
+    # reset as the market normalizes. Standard trend-following practice.
+    PEAK_WIN = 24
+    equity_hist: list = []
     prev_weights: dict = {}
     prev_date: Optional[date] = None
     mkt_index = 1.0
@@ -351,7 +357,8 @@ def run_backtest(
             equity *= (1.0 + port_ret)
             res.period_returns.append(port_ret)
         equity = max(equity, 1e-9)
-        peak = max(peak, equity)
+        equity_hist.append(equity)
+        peak = max(equity_hist[-PEAK_WIN:])
 
         # 1b) equal-weight market proxy (for the regime monitor) over (prev_date, T]
         if prev_date is not None and members:
@@ -436,6 +443,7 @@ def run_backtest(
         res.trade_log.append({"date": T.isoformat(), "turnover": round(turnover, 4), "cost": round(cost, 6)})
         prev_weights, prev_date = target, T
 
+    res.market_proxy_curve = list(mkt_hist)
     res.cagr = cagr(res.equity, periods_per_year=12.0)
     res.max_drawdown = max_drawdown(res.equity)
     res.sharpe = sharpe(res.period_returns, periods_per_year=12.0)

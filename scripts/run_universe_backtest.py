@@ -90,10 +90,11 @@ def _regime_breakdown(res) -> dict:
 
 
 def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
-        out_path: Path, start: date, end: date) -> dict:
+        out_path: Path, start: date, end: date, risk_off: bool = False) -> dict:
     store, universe = load_panel(prices_path, financials_path, universe_path)
     strat = make_satellite_strategy()
-    res = run_backtest(store, universe, start, end, strat, risk_monitor_fn=_risk_overlay)
+    res = run_backtest(store, universe, start, end, strat,
+                       risk_monitor_fn=(None if risk_off else _risk_overlay))
 
     # In-sample (<=2018, weights were fit here) vs OUT-OF-SAMPLE (2019+). T2:
     # ~65% of the full-period CAGR is in-sample → the HONEST headline is the OOS
@@ -104,6 +105,15 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
     is_cagr = cagr(is_eq, 12.0) if len(is_eq) >= 2 else None
     oos_cagr = (cagr([e / oos_eq[0] for e in oos_eq], 12.0)
                 if len(oos_eq) >= 2 and oos_eq[0] > 0 else None)
+    # Equal-weight universe BENCHMARK (the alpha test: are we beating buy-and-hold?)
+    mkt = res.market_proxy_curve
+    is_mkt = [m for d, m in zip(res.rebalance_dates, mkt) if d < split]
+    oos_mkt = [m for d, m in zip(res.rebalance_dates, mkt) if d >= split]
+    is_mkt_cagr = cagr(is_mkt, 12.0) if len(is_mkt) >= 2 else None
+    oos_mkt_cagr = (cagr([m / oos_mkt[0] for m in oos_mkt], 12.0)
+                    if len(oos_mkt) >= 2 and oos_mkt[0] > 0 else None)
+    oos_alpha = (oos_cagr - oos_mkt_cagr) if oos_cagr is not None and oos_mkt_cagr is not None else None
+    is_alpha = (is_cagr - is_mkt_cagr) if is_cagr is not None and is_mkt_cagr is not None else None
     results = {
         "_meta": {
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -117,7 +127,11 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
             "honesty": "real number from real data; NOT curve-fit. Whatever it is, it is.",
         },
         "oos_cagr_2019plus": oos_cagr,
+        "oos_benchmark_cagr_ew_universe": oos_mkt_cagr,
+        "oos_alpha_vs_benchmark": oos_alpha,
         "in_sample_cagr_pre2019": is_cagr,
+        "in_sample_benchmark_cagr_ew_universe": is_mkt_cagr,
+        "in_sample_alpha": is_alpha,
         "cagr_full_period_in_sample_optimistic": res.cagr,
         "sharpe": res.sharpe,
         "max_drawdown": res.max_drawdown,
@@ -216,6 +230,8 @@ def main(argv=None):
     p.add_argument("--out", default=str(REPO_ROOT / "public" / "data" / "backtest_results_v2.json"))
     p.add_argument("--start", default="20060101")
     p.add_argument("--end", default=date.today().strftime("%Y%m%d"))
+    p.add_argument("--no-risk", action="store_true", dest="risk_off",
+                   help="Disable risk overlay (isolate factor alpha)")
     p.add_argument("--selftest", action="store_true")
     args = p.parse_args(argv)
     if args.selftest:
@@ -227,8 +243,8 @@ def main(argv=None):
         return 1
     res = run(Path(args.prices), Path(args.financials),
               Path(args.universe) if Path(args.universe).exists() else None,
-              Path(args.out), _d(args.start), _d(args.end))
-    print(f"REAL BACKTEST: CAGR={res['cagr']} Sharpe={res['sharpe']} MaxDD={res['max_drawdown']} "
+              Path(args.out), _d(args.start), _d(args.end), risk_off=args.risk_off)
+    print(f"REAL BACKTEST: OOS_CAGR(2019+)={res.get('oos_cagr_2019plus')} IS_CAGR={res.get('in_sample_cagr_pre2019')} Sharpe={res.get('sharpe')} MaxDD={res.get('max_drawdown')} "
           f"final_equity={res['final_equity']} rebalances={res['_meta']['rebalances']}")
     print(f"per-regime: {res['per_regime_return']}")
     print(f"wrote {args.out}")
