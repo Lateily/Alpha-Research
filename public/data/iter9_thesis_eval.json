@@ -1,0 +1,918 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-26T20:34:29.671880Z",
+    "n_theses_total": 25,
+    "n_with_quality": 25,
+    "horizons_days": [
+      21,
+      63,
+      126,
+      252
+    ],
+    "honesty": "n_actionable is small (LONG/SHORT theses only). Spearman IC requires n>=4 minimum for any inference. With horizon=21d we get ~1-month forward; fundamental theses are 3-12 month horizons. Treat all numbers as PRELIMINARY."
+  },
+  "summary": {
+    "per_ticker": {
+      "002594.SZ": [
+        {
+          "thesis_date": "2026-05-05",
+          "pipeline": "1438BST",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-05",
+          "pipeline": "1530BST",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "GROUNDED",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "PHASE1.5",
+          "direction": "LONG",
+          "score": 100,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "MULTIAGENT",
+          "direction": "LONG",
+          "score": 94,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-10",
+          "pipeline": "PHASE2",
+          "direction": "LONG",
+          "score": 90,
+          "severity": "PASS"
+        }
+      ],
+      "175.HK": [
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "GROUNDED",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "PHASE1.5",
+          "direction": "PASS",
+          "score": 74,
+          "severity": "WARN"
+        },
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "MULTIAGENT",
+          "direction": "PASS",
+          "score": 58,
+          "severity": "FAIL"
+        },
+        {
+          "thesis_date": "2026-05-10",
+          "pipeline": "PHASE2",
+          "direction": "PASS",
+          "score": 74,
+          "severity": "WARN"
+        }
+      ],
+      "300308.SZ": [
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "GROUNDED",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "PHASE1.5",
+          "direction": "PASS",
+          "score": 84,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "MULTIAGENT",
+          "direction": "PASS",
+          "score": 84,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-10",
+          "pipeline": "PHASE2",
+          "direction": "PASS",
+          "score": 84,
+          "severity": "PASS"
+        }
+      ],
+      "603233.SH": [
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "GROUNDED",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "PHASE1.5",
+          "direction": "PASS",
+          "score": 78,
+          "severity": "WARN"
+        },
+        {
+          "thesis_date": "2026-05-08",
+          "pipeline": "MULTIAGENT",
+          "direction": "PASS",
+          "score": 74,
+          "severity": "WARN"
+        },
+        {
+          "thesis_date": "2026-05-10",
+          "pipeline": "PHASE2",
+          "direction": "SHORT",
+          "score": 84,
+          "severity": "PASS"
+        }
+      ],
+      "6160.HK": [
+        {
+          "thesis_date": "2026-05-05",
+          "pipeline": "1438BST",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-05",
+          "pipeline": "1530BST",
+          "direction": "PASS",
+          "score": 84,
+          "severity": "PASS"
+        }
+      ],
+      "700.HK": [
+        {
+          "thesis_date": "2026-05-05",
+          "pipeline": "1255BST",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-05",
+          "pipeline": "1438BST",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-05",
+          "pipeline": "1530BST",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        }
+      ],
+      "9999.HK": [
+        {
+          "thesis_date": "2026-05-05",
+          "pipeline": "1438BST",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        },
+        {
+          "thesis_date": "2026-05-05",
+          "pipeline": "1530BST",
+          "direction": "PASS",
+          "score": 90,
+          "severity": "PASS"
+        }
+      ]
+    },
+    "per_pipeline": {
+      "1438BST": {
+        "n": 4,
+        "mean": 90,
+        "std": 0.0,
+        "min": 90,
+        "max": 90
+      },
+      "1530BST": {
+        "n": 4,
+        "mean": 88.5,
+        "std": 3.0,
+        "min": 84,
+        "max": 90
+      },
+      "GROUNDED": {
+        "n": 4,
+        "mean": 90,
+        "std": 0.0,
+        "min": 90,
+        "max": 90
+      },
+      "MULTIAGENT": {
+        "n": 4,
+        "mean": 77.5,
+        "std": 15.35,
+        "min": 58,
+        "max": 94
+      },
+      "PHASE1.5": {
+        "n": 4,
+        "mean": 84,
+        "std": 11.43,
+        "min": 74,
+        "max": 100
+      },
+      "PHASE2": {
+        "n": 4,
+        "mean": 83,
+        "std": 6.63,
+        "min": 74,
+        "max": 90
+      },
+      "1255BST": {
+        "n": 1,
+        "mean": 90,
+        "std": 0.0,
+        "min": 90,
+        "max": 90
+      }
+    }
+  },
+  "direction_tracking": {
+    "h_21d": {
+      "n_actionable": 0,
+      "n_correct": 0,
+      "success_rate": null,
+      "rows": []
+    },
+    "h_63d": {
+      "n_actionable": 0,
+      "n_correct": 0,
+      "success_rate": null,
+      "rows": []
+    },
+    "h_126d": {
+      "n_actionable": 0,
+      "n_correct": 0,
+      "success_rate": null,
+      "rows": []
+    },
+    "h_252d": {
+      "n_actionable": 0,
+      "n_correct": 0,
+      "success_rate": null,
+      "rows": []
+    },
+    "h_latest": {
+      "n_actionable": 4,
+      "n_correct": 1,
+      "success_rate": 0.25,
+      "rows": [
+        {
+          "ticker": "002594.SZ",
+          "pipeline": "MULTIAGENT",
+          "thesis_date": "2026-05-08",
+          "direction": "LONG",
+          "forward_return": -0.0682,
+          "directional_return": -0.0682,
+          "correct": false,
+          "from_date": "2026-04-30",
+          "to_date": "2026-05-25",
+          "days_elapsed": 25,
+          "quality_score": 94,
+          "r2r": 2.2,
+          "confidence": 0.62
+        },
+        {
+          "ticker": "002594.SZ",
+          "pipeline": "PHASE1.5",
+          "thesis_date": "2026-05-08",
+          "direction": "LONG",
+          "forward_return": -0.0682,
+          "directional_return": -0.0682,
+          "correct": false,
+          "from_date": "2026-04-30",
+          "to_date": "2026-05-25",
+          "days_elapsed": 25,
+          "quality_score": 100,
+          "r2r": 2.2,
+          "confidence": 0.62
+        },
+        {
+          "ticker": "002594.SZ",
+          "pipeline": "PHASE2",
+          "thesis_date": "2026-05-10",
+          "direction": "LONG",
+          "forward_return": -0.0682,
+          "directional_return": -0.0682,
+          "correct": false,
+          "from_date": "2026-04-30",
+          "to_date": "2026-05-25",
+          "days_elapsed": 25,
+          "quality_score": 90,
+          "r2r": 2.0,
+          "confidence": 0.62
+        },
+        {
+          "ticker": "603233.SH",
+          "pipeline": "PHASE2",
+          "thesis_date": "2026-05-10",
+          "direction": "SHORT",
+          "forward_return": -0.0946,
+          "directional_return": 0.0946,
+          "correct": true,
+          "from_date": "2026-04-30",
+          "to_date": "2026-05-25",
+          "days_elapsed": 25,
+          "quality_score": 84,
+          "r2r": null,
+          "confidence": 0.6
+        }
+      ]
+    }
+  },
+  "thesis_ic": {
+    "h_21d": {
+      "_status": "insufficient_n_for_inference",
+      "n": 0,
+      "note": "Spearman IC requires at least 4 observations for any inferential claim; honest answer is 'we do not have enough actionable theses yet'."
+    },
+    "h_63d": {
+      "_status": "insufficient_n_for_inference",
+      "n": 0,
+      "note": "Spearman IC requires at least 4 observations for any inferential claim; honest answer is 'we do not have enough actionable theses yet'."
+    },
+    "h_126d": {
+      "_status": "insufficient_n_for_inference",
+      "n": 0,
+      "note": "Spearman IC requires at least 4 observations for any inferential claim; honest answer is 'we do not have enough actionable theses yet'."
+    },
+    "h_252d": {
+      "_status": "insufficient_n_for_inference",
+      "n": 0,
+      "note": "Spearman IC requires at least 4 observations for any inferential claim; honest answer is 'we do not have enough actionable theses yet'."
+    },
+    "h_latest": {
+      "_status": "ok",
+      "n": 4,
+      "spearman_ic": -0.7745966692414834,
+      "scores": [
+        94,
+        100,
+        90,
+        84
+      ],
+      "directional_returns": [
+        -0.06816857642260643,
+        -0.06816857642260643,
+        -0.06816857642260643,
+        0.09455128205128205
+      ]
+    }
+  },
+  "records": [
+    {
+      "ticker_raw": "002594SZ",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1438BST",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 1,
+      "qc_pass_count": 12,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.2,
+      "confidence": null,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 102.98,
+          "to_date": "2026-05-25",
+          "to_close": 95.96,
+          "fwd_return": -0.06816857642260643,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "002594SZ",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1530BST",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.3,
+      "confidence": null,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 102.98,
+          "to_date": "2026-05-25",
+          "to_close": 95.96,
+          "fwd_return": -0.06816857642260643,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "002594SZ",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-08",
+      "pipeline": "GROUNDED",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.2,
+      "confidence": null,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 102.98,
+          "to_date": "2026-05-25",
+          "to_close": 95.96,
+          "fwd_return": -0.06816857642260643,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "002594SZ",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-08",
+      "pipeline": "MULTIAGENT",
+      "_direction": "LONG",
+      "quality_score": 94,
+      "quality_severity": "PASS",
+      "missing_fields_count": 14,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict is EVENLY_GROUNDED with both sides factually accurate, but Technical clearly AGREES with Bull (UP trend",
+      "reward_to_risk": 2.2,
+      "confidence": 0.62,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 102.98,
+          "to_date": "2026-05-25",
+          "to_close": 95.96,
+          "fwd_return": -0.06816857642260643,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "002594SZ",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-08",
+      "pipeline": "PHASE1.5",
+      "_direction": "LONG",
+      "quality_score": 100,
+      "quality_severity": "PASS",
+      "missing_fields_count": 14,
+      "qc_pass_count": 15,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict is EVENLY_GROUNDED with both sides citing matched data, but technical AGREES with Bull (trend UP, stren",
+      "reward_to_risk": 2.2,
+      "confidence": 0.62,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 102.98,
+          "to_date": "2026-05-25",
+          "to_close": 95.96,
+          "fwd_return": -0.06816857642260643,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "002594SZ",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-10",
+      "pipeline": "PHASE2",
+      "_direction": "LONG",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 14,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict is EVENLY_GROUNDED with both sides citing specific broker reports and inst visits, but Technical AGREES",
+      "reward_to_risk": 2.0,
+      "confidence": 0.62,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 102.98,
+          "to_date": "2026-05-25",
+          "to_close": 95.96,
+          "fwd_return": -0.06816857642260643,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "175HK",
+      "ts_code": "175.HK",
+      "thesis_date": "2026-05-08",
+      "pipeline": "GROUNDED",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.3,
+      "confidence": null,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "175HK",
+      "ts_code": "175.HK",
+      "thesis_date": "2026-05-08",
+      "pipeline": "MULTIAGENT",
+      "_direction": "PASS",
+      "quality_score": 58,
+      "quality_severity": "FAIL",
+      "missing_fields_count": 14,
+      "qc_pass_count": 10,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict says BEAR_BETTER_GROUNDED because Bull misframes the 2023→2024 earnings inflection as a forward catalys",
+      "reward_to_risk": null,
+      "confidence": 0.35,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "175HK",
+      "ts_code": "175.HK",
+      "thesis_date": "2026-05-08",
+      "pipeline": "PHASE1.5",
+      "_direction": "PASS",
+      "quality_score": 74,
+      "quality_severity": "WARN",
+      "missing_fields_count": 14,
+      "qc_pass_count": 12,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict is BOTH_VALUATION_ONLY — both Bull and Bear explicitly self-flagged INSUFFICIENT_NARRATIVE_DATA and cou",
+      "reward_to_risk": null,
+      "confidence": 0.0,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "175HK",
+      "ts_code": "175.HK",
+      "thesis_date": "2026-05-10",
+      "pipeline": "PHASE2",
+      "_direction": "PASS",
+      "quality_score": 74,
+      "quality_severity": "WARN",
+      "missing_fields_count": 14,
+      "qc_pass_count": 12,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic explicitly rules BOTH_VALUATION_ONLY — neither Bull nor Bear satisfied the CONTRARIAN VIEW REQUIREMENT. Both si",
+      "reward_to_risk": null,
+      "confidence": 0.0,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "300308SZ",
+      "ts_code": "300308.SZ",
+      "thesis_date": "2026-05-08",
+      "pipeline": "GROUNDED",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.3,
+      "confidence": null,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 857.5,
+          "to_date": "2026-05-25",
+          "to_close": 1093.0,
+          "fwd_return": 0.27463556851311943,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "300308SZ",
+      "ts_code": "300308.SZ",
+      "thesis_date": "2026-05-08",
+      "pipeline": "MULTIAGENT",
+      "_direction": "PASS",
+      "quality_score": 84,
+      "quality_severity": "PASS",
+      "missing_fields_count": 14,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict is EVENLY_GROUNDED — both Bull and Bear cite identical data with zero fabrication, but interpret the sa",
+      "reward_to_risk": null,
+      "confidence": 0.4,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 857.5,
+          "to_date": "2026-05-25",
+          "to_close": 1093.0,
+          "fwd_return": 0.27463556851311943,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "300308SZ",
+      "ts_code": "300308.SZ",
+      "thesis_date": "2026-05-08",
+      "pipeline": "PHASE1.5",
+      "_direction": "PASS",
+      "quality_score": 84,
+      "quality_severity": "PASS",
+      "missing_fields_count": 14,
+      "qc_pass_count": 13,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict is EVENLY_GROUNDED with both sides citing specific broker reports (西部证券 800G/1.6T放量, 国联民生 积极备货布局产能) and",
+      "reward_to_risk": null,
+      "confidence": 0.6,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 857.5,
+          "to_date": "2026-05-25",
+          "to_close": 1093.0,
+          "fwd_return": 0.27463556851311943,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "300308SZ",
+      "ts_code": "300308.SZ",
+      "thesis_date": "2026-05-10",
+      "pipeline": "PHASE2",
+      "_direction": "PASS",
+      "quality_score": 84,
+      "quality_severity": "PASS",
+      "missing_fields_count": 14,
+      "qc_pass_count": 13,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict is EVENLY_GROUNDED — both Bull and Bear cite identical TUSHARE evidence (broker reports, 高盛/高毅 institut",
+      "reward_to_risk": null,
+      "confidence": 0.5,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 857.5,
+          "to_date": "2026-05-25",
+          "to_close": 1093.0,
+          "fwd_return": 0.27463556851311943,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "603233SH",
+      "ts_code": "603233.SH",
+      "thesis_date": "2026-05-08",
+      "pipeline": "GROUNDED",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.3,
+      "confidence": null,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 18.72,
+          "to_date": "2026-05-25",
+          "to_close": 16.95,
+          "fwd_return": -0.09455128205128205,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "603233SH",
+      "ts_code": "603233.SH",
+      "thesis_date": "2026-05-08",
+      "pipeline": "MULTIAGENT",
+      "_direction": "PASS",
+      "quality_score": 74,
+      "quality_severity": "WARN",
+      "missing_fields_count": 14,
+      "qc_pass_count": 12,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict is EVENLY_GROUNDED — both sides cite identical data but interpret the +35% net income YoY differently (",
+      "reward_to_risk": null,
+      "confidence": 0.4,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 18.72,
+          "to_date": "2026-05-25",
+          "to_close": 16.95,
+          "fwd_return": -0.09455128205128205,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "603233SH",
+      "ts_code": "603233.SH",
+      "thesis_date": "2026-05-08",
+      "pipeline": "PHASE1.5",
+      "_direction": "PASS",
+      "quality_score": 78,
+      "quality_severity": "WARN",
+      "missing_fields_count": 14,
+      "qc_pass_count": 12,
+      "qc_total": 16,
+      "synthesizer_rationale": "Bull and Bear are evenly grounded per Forensic, both citing the same broker reports (中泰, 中金, 信达, 东吴) but drawing opposit",
+      "reward_to_risk": null,
+      "confidence": 0.6,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 18.72,
+          "to_date": "2026-05-25",
+          "to_close": 16.95,
+          "fwd_return": -0.09455128205128205,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "603233SH",
+      "ts_code": "603233.SH",
+      "thesis_date": "2026-05-10",
+      "pipeline": "PHASE2",
+      "_direction": "SHORT",
+      "quality_score": 84,
+      "quality_severity": "PASS",
+      "missing_fields_count": 14,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "Forensic verdict is BEAR_BETTER_GROUNDED and technical AGREES with bear (DOWN trend, price at 35% of 52W range, bearish ",
+      "reward_to_risk": null,
+      "confidence": 0.6,
+      "forward": {
+        "h_latest": {
+          "from_date": "2026-04-30",
+          "from_close": 18.72,
+          "to_date": "2026-05-25",
+          "to_close": 16.95,
+          "fwd_return": -0.09455128205128205,
+          "days_elapsed": 25
+        }
+      }
+    },
+    {
+      "ticker_raw": "6160HK",
+      "ts_code": "6160.HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1438BST",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 13,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.3,
+      "confidence": null,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "6160HK",
+      "ts_code": "6160.HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1530BST",
+      "_direction": "PASS",
+      "quality_score": 84,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 1.6,
+      "confidence": null,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "700HK",
+      "ts_code": "700.HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1255BST",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 13,
+      "qc_total": 15,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.5,
+      "confidence": 0.62,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "700HK",
+      "ts_code": "700.HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1438BST",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 13,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.5,
+      "confidence": null,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "700HK",
+      "ts_code": "700.HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1530BST",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.0,
+      "confidence": null,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "9999HK",
+      "ts_code": "9999.HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1438BST",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 13,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 2.5,
+      "confidence": null,
+      "forward": {}
+    },
+    {
+      "ticker_raw": "9999HK",
+      "ts_code": "9999.HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1530BST",
+      "_direction": "PASS",
+      "quality_score": 90,
+      "quality_severity": "PASS",
+      "missing_fields_count": 0,
+      "qc_pass_count": 14,
+      "qc_total": 16,
+      "synthesizer_rationale": "",
+      "reward_to_risk": 1.9,
+      "confidence": null,
+      "forward": {}
+    }
+  ]
+}
