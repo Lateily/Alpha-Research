@@ -33,6 +33,20 @@ capital. We are at **P1→P2**. Do NOT build any backtest on the current ~6mo /
 survivor-biased / look-ahead data — every number from `backtest.py` today is an
 artifact (n=5, flat-proxy benchmark). Discard the "98% annualized" result.
 
+**2026-05-26 — autonomous backtest iteration loop (7 iters complete, honest
+verdict in `docs/strategy/BACKTEST_ITERATIONS.md`):** the systematic factor
+strategy as currently built does NOT have reliable alpha vs EW A-share
+buy-and-hold. Best OOS alpha = +0.97% (iter-4, no-risk, OLS) — small-sample
+borderline noise. All other variants negative alpha (-1.20% to -10.49%).
+Risk overlay cuts MaxDD (-74%→-31%) but is a NET DRAG on alpha (~3% drag).
+OLS correctly zeroed momentum + quality (monthly mean-reversion). iter-7
+top-30 confirms concentration is not the issue (top-30 alpha -1.80% vs
+top-15 -1.20%). **Next session: IC analysis (per-factor Spearman + t-stat)
+to definitively diagnose factor predictive power before any further parameter
+tuning — better stats won't create alpha that isn't there. If no factor has
+real IC, the honest move is acknowledging the satellite has no edge as
+currently built and redirecting effort to the CORE thesis engine.**
+
 **2026-05-25 progress** (see `docs/strategy/MORNING_REPORT_2026-05-25.md`):
 ALL committed + verified. Decisions LOCKED: dual-track = quant track (SATELLITE
 15) + hedge-fund-logic track (CORE ~5-7, thesis-curated); factor weights frozen

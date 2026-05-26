@@ -32,9 +32,15 @@ from backtest_v2 import PitDataStore, PitUniverse, run_backtest, REGIMES, cagr  
 from satellite_strategy import make_satellite_strategy  # noqa: E402
 
 
+_RISK_CONFIG_OVERRIDE = {
+    "regime_gross_cap": 0.60,        # was 0.40 — too tight; 0.60 is standard "trim 40%"
+    "drawdown_scale_down": -0.15,    # was -0.12 — slightly later trigger
+    "drawdown_to_cash": -0.25,       # was -0.20 — slightly later cash breaker
+}
+
 def _risk_overlay(ps, ms):
-    """Backtest risk hook → the real 11-monitor engine (dry_run: would-be actions)."""
-    return risk_monitor.run_monitors(ps, ms, dry_run=True)
+    """Backtest risk hook → real engine, with looser standard thresholds (iter-5)."""
+    return risk_monitor.run_monitors(ps, ms, config=_RISK_CONFIG_OVERRIDE, dry_run=True)
 
 PANEL_DIR = REPO_ROOT / "data_history" / "panel"
 
@@ -94,7 +100,8 @@ def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
     store, universe = load_panel(prices_path, financials_path, universe_path)
     strat = make_satellite_strategy()
     res = run_backtest(store, universe, start, end, strat,
-                       risk_monitor_fn=(None if risk_off else _risk_overlay))
+                       risk_monitor_fn=(None if risk_off else _risk_overlay),
+                       regime_gross_cap=_RISK_CONFIG_OVERRIDE["regime_gross_cap"])
 
     # In-sample (<=2018, weights were fit here) vs OUT-OF-SAMPLE (2019+). T2:
     # ~65% of the full-period CAGR is in-sample → the HONEST headline is the OOS

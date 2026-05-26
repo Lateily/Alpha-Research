@@ -50,7 +50,7 @@ try:
 except Exception:
     pass
 
-TOP_N = 15
+TOP_N = 15  # reverted from 30 (iter-7 showed top-30 has WORSE alpha than top-15; concentration is not the source of alpha gap — signal weakness is)
 GROSS = 0.95
 MIN_FACTORS = 3   # need >= this many non-None factors to be rankable
 
