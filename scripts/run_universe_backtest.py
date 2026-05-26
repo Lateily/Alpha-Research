@@ -96,9 +96,22 @@ def _regime_breakdown(res) -> dict:
 
 
 def run(prices_path: Path, financials_path: Path, universe_path: Path | None,
-        out_path: Path, start: date, end: date, risk_off: bool = False) -> dict:
+        out_path: Path, start: date, end: date, risk_off: bool = False,
+        iter8: bool = False) -> dict:
     store, universe = load_panel(prices_path, financials_path, universe_path)
-    strat = make_satellite_strategy()
+    if iter8:
+        # Iter-8 foundation rebuild: LSY/Li-Rao shell-stock filter (bottom 5%
+        # mcap) + Barra USE4 factor construction (winsorize ±3σ + cap-weighted
+        # standardize + industry residualize). E/P-heavy value blend is on by
+        # default in pit_factors.CONFIG.
+        strat = make_satellite_strategy(
+            apply_universe_filter=True,
+            universe_filter_config={"mcap_pctl_floor": 0.05},
+            use_barra_construction=True,
+            universe=universe,
+        )
+    else:
+        strat = make_satellite_strategy()
     res = run_backtest(store, universe, start, end, strat,
                        risk_monitor_fn=(None if risk_off else _risk_overlay),
                        regime_gross_cap=_RISK_CONFIG_OVERRIDE["regime_gross_cap"])
@@ -239,6 +252,10 @@ def main(argv=None):
     p.add_argument("--end", default=date.today().strftime("%Y%m%d"))
     p.add_argument("--no-risk", action="store_true", dest="risk_off",
                    help="Disable risk overlay (isolate factor alpha)")
+    p.add_argument("--iter8", action="store_true",
+                   help="Enable iter-8 foundation rebuild: LSY/Li-Rao universe "
+                        "filter + Barra USE4 factor construction + E/P-heavy "
+                        "value (E/P-heavy is the new default in pit_factors)")
     p.add_argument("--selftest", action="store_true")
     args = p.parse_args(argv)
     if args.selftest:
@@ -250,7 +267,8 @@ def main(argv=None):
         return 1
     res = run(Path(args.prices), Path(args.financials),
               Path(args.universe) if Path(args.universe).exists() else None,
-              Path(args.out), _d(args.start), _d(args.end), risk_off=args.risk_off)
+              Path(args.out), _d(args.start), _d(args.end),
+              risk_off=args.risk_off, iter8=args.iter8)
     print(f"REAL BACKTEST: OOS_CAGR(2019+)={res.get('oos_cagr_2019plus')} IS_CAGR={res.get('in_sample_cagr_pre2019')} Sharpe={res.get('sharpe')} MaxDD={res.get('max_drawdown')} "
           f"final_equity={res['final_equity']} rebalances={res['_meta']['rebalances']}")
     print(f"per-regime: {res['per_regime_return']}")

@@ -54,6 +54,11 @@ CONFIG = {
     # Tushare daily_basic.total_mv is reported in 10k CNY; financial statements
     # are CNY. Override this if a non-Tushare source is used in fixtures.
     "market_cap_multiplier": 10000.0,
+    # Value descriptor weights (Liu-Stambaugh-Yuan 2019 finding: in A-share, E/P
+    # dominates B/M — change from equal-weight to E/P-heavy. iter-8 default.
+    # Set value_ep_weight=0.5 to recover the pre-iter-8 equal-weight blend.)
+    "value_ep_weight": 0.7,    # earnings_yield weight
+    "value_bp_weight": 0.3,    # book_yield weight (sum should be 1.0)
 }
 
 FLOW_FIELDS = ("revenue", "oper_cost", "n_income", "n_income_attr_p")
@@ -474,7 +479,21 @@ def _value_quality_raw(
     raw["book_yield"] = _safe_div(equity, market_cap)
 
     quality = _avg([raw["roe"], raw["gross_margin"], raw["net_margin"], raw["low_leverage"]])
-    value = _avg([raw["earnings_yield"], raw["book_yield"]])
+    # E/P-heavy value blend per Liu-Stambaugh-Yuan 2019. If either component is
+    # None the blend gracefully degrades to whichever is available (matches the
+    # previous _avg semantics).
+    ep_w = _to_float(config.get("value_ep_weight")) or 0.5
+    bp_w = _to_float(config.get("value_bp_weight")) or 0.5
+    ep = raw["earnings_yield"]
+    bp = raw["book_yield"]
+    if ep is not None and bp is not None:
+        value = ep_w * ep + bp_w * bp
+    elif ep is not None:
+        value = ep
+    elif bp is not None:
+        value = bp
+    else:
+        value = None
     return value, quality, raw, basis
 
 

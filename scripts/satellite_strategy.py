@@ -30,6 +30,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import pit_factors          # noqa: E402
+import factor_construction   # noqa: E402  (iter-8: Barra-style construction)
+import universe_filter       # noqa: E402  (iter-8: LSY/Li-Rao shell-stock filter)
 from backtest_v2 import PitDataStore, PitUniverse, run_backtest  # noqa: E402
 
 # Intended §2 blend (now that pit_factors provides growth). Calibration starting
@@ -84,17 +86,107 @@ def _composite(scores: dict) -> float | None:
     return num / den
 
 
-def make_satellite_strategy(top_n: int = TOP_N, gross: float = GROSS, factor_config: dict | None = None):
-    """Return a backtest_v2.Strategy closure. factor_config sets the pit_factors
-    window units (default MONTHLY since the backtest runs on month-end bars)."""
+def _barra_composite(factors: dict, members: list, store, as_of, universe,
+                     weights: dict, n_sigma: float = 3.0,
+                     do_industry_neutralize: bool = True) -> dict:
+    """Iter-8 composite: Barra-style winsorize + cap-weighted standardize +
+    industry residualize per factor, then weighted sum into composite.
+
+    Returns ticker → composite_score (or None if all factors missing).
+    """
+    # Pull mcap + industry for each member at T.
+    mcap = {}
+    for tk in members:
+        mv, _ = pit_factors._market_cap_asof(store, tk, as_of, pit_factors.CONFIG)
+        mcap[tk] = mv
+    industry = {}
+    if universe is not None:
+        # universe._rows is list of {ts_code, list_date, delist_date, name, industry}
+        ind_by_code = {r["ts_code"]: r.get("industry") for r in universe._rows}
+        industry = {tk: ind_by_code.get(tk) for tk in members}
+
+    # For each factor, take the RAW value (not the percentile), then Barra-construct.
+    standardized = {}
+    for fname in WEIGHTS.keys():
+        raw_by_tk = {tk: (factors.get(tk, {}).get("_raw", {}).get("factors", {}).get(fname))
+                     for tk in members}
+        z = factor_construction.barra_construct(
+            raw_by_tk, mcap, industry,
+            n_sigma=n_sigma, do_industry_neutralize=do_industry_neutralize,
+        )
+        standardized[fname] = z
+
+    # Weighted sum into composite — preserves None if all factors missing
+    composite = {}
+    for tk in members:
+        num = den = 0.0
+        have = 0
+        for fname, w in weights.items():
+            z = standardized[fname].get(tk)
+            if z is not None:
+                num += w * z
+                den += w
+                have += 1
+        composite[tk] = (num / den) if have >= MIN_FACTORS and den > 0 else None
+    return composite
+
+
+def make_satellite_strategy(top_n: int = TOP_N, gross: float = GROSS,
+                            factor_config: dict | None = None,
+                            *,
+                            apply_universe_filter: bool = False,
+                            universe_filter_config: dict | None = None,
+                            use_barra_construction: bool = False,
+                            universe=None,
+                            barra_n_sigma: float = 3.0,
+                            barra_industry_neutralize: bool = True):
+    """Return a backtest_v2.Strategy closure.
+
+    Args:
+        top_n, gross, factor_config: as before (backwards compatible).
+
+        ITER-8 OPT-IN UPGRADES (default OFF — iter-7 results still reproducible):
+
+        apply_universe_filter: bool. If True, apply LSY/Li-Rao shell-stock
+            filter to members BEFORE compute_factors. Requires
+            universe_filter_config (default DEFAULT_CONFIG = 5% mcap floor).
+        universe_filter_config: dict for universe_filter.filter_universe.
+        use_barra_construction: bool. If True, switch from
+            percentile-rank-then-weighted-avg to Barra USE4 pipeline (winsorize
+            ±N σ + cap-weighted standardize + industry residualize) per factor,
+            then weighted sum. Requires universe (PitUniverse) for industry lookup
+            when industry_neutralize=True.
+        universe: PitUniverse object (needed for industry lookup if Barra is on).
+        barra_n_sigma: winsorize bound (default 3.0 per USE4).
+        barra_industry_neutralize: whether to residualize vs industry (default True).
+    """
     fc = factor_config or MONTHLY_FACTOR_CONFIG
+    uf_cfg = universe_filter_config
+
     def strategy(as_of, members, store):
+        # Stage 1a: optional shell-stock filter (LSY/Li-Rao)
+        if apply_universe_filter:
+            members = universe_filter.filter_universe(members, store, as_of, uf_cfg)
+        if not members:
+            return {}
+
         factors = pit_factors.compute_factors(members, as_of, store, fc)
-        ranked = []
-        for tk, sc in factors.items():
-            comp = _composite(sc)
-            if comp is not None:
-                ranked.append((comp, tk))
+
+        # Composite — Barra (iter-8) or percentile rank (iter-7 legacy)
+        if use_barra_construction:
+            composites = _barra_composite(
+                factors, members, store, as_of, universe,
+                weights=WEIGHTS, n_sigma=barra_n_sigma,
+                do_industry_neutralize=barra_industry_neutralize,
+            )
+            ranked = [(c, tk) for tk, c in composites.items() if c is not None]
+        else:
+            ranked = []
+            for tk, sc in factors.items():
+                comp = _composite(sc)
+                if comp is not None:
+                    ranked.append((comp, tk))
+
         ranked.sort(reverse=True)
         picks = [tk for _, tk in ranked[:top_n]]
         if not picks:
