@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-05-25T05:28:06Z",
+  "fetched_at": "2026-05-26T05:10:57Z",
   "api_used": "margin_detail",
   "window_days": 30,
   "records": [
@@ -225,16 +225,29 @@
       "rqmcl": 13100,
       "rzrqye": 13718566982.0,
       "name": null
+    },
+    {
+      "trade_date": "20260525",
+      "ts_code": "002594.SZ",
+      "rzye": 13682770946.0,
+      "rqye": 53726853.0,
+      "rzmre": 479514601.0,
+      "rqyl": 559888.0,
+      "rzche": 464752387.0,
+      "rqchl": 6400,
+      "rqmcl": 27000,
+      "rzrqye": 13736497799.0,
+      "name": null
     }
   ],
   "summary": {
-    "total_count": 17,
-    "latest_date": "2026-05-22",
-    "latest_rzye": 13668008732.0,
-    "latest_rqye": 50558250.0,
-    "rzye_change_30d_pct": 2.130673253166517,
-    "rqye_change_30d_pct": -16.83559062501352,
-    "net_leverage_change_30d": 18.966263878180037,
+    "total_count": 18,
+    "latest_date": "2026-05-25",
+    "latest_rzye": 13682770946.0,
+    "latest_rqye": 53726853.0,
+    "rzye_change_30d_pct": 2.2409800933280613,
+    "rqye_change_30d_pct": -11.623483856309889,
+    "net_leverage_change_30d": 13.864463949637951,
     "signal_level": "LEVERAGE_BULL_MED"
   }
 }

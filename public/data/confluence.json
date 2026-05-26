@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-25T05:28:07.513012+00:00",
+  "generated_at": "2026-05-26T05:10:57.852022+00:00",
   "tickers_scored": 7,
   "summary": {
     "entry_candidates": [],
@@ -9,7 +9,7 @@
   "scores": [
     {
       "ticker": "300308.SZ",
-      "score": 8,
+      "score": 7,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "BULLISH",
@@ -26,17 +26,17 @@
         {
           "type": "BULLISH_ALIGNMENT",
           "base_weight": 10,
-          "decay": 0.7,
+          "decay": 0.6,
           "independence_factor": 1.0,
           "regime_mult": 1.2,
           "staleness": 1.0,
-          "final_contribution": 8.4
+          "final_contribution": 7.2
         }
       ],
       "contributing_signals": [
         {
           "type": "BULLISH_ALIGNMENT",
-          "contribution": 8.4
+          "contribution": 7.2
         }
       ],
       "rationale_e": "Bullish: Bullish Alignment | RSI 69 | Price vs MA20 +9.6% | Regime: PERMISSIVE | VP 48",
@@ -44,46 +44,7 @@
       "signal_types": [
         "BULLISH_ALIGNMENT"
       ],
-      "computed_at": "2026-05-25T05:28:07.512610+00:00"
-    },
-    {
-      "ticker": "603233.SH",
-      "score": 2,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "BEARISH",
-      "regime": "NEUTRAL",
-      "vp_score": 50.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 1,
-        "bearish": 0
-      },
-      "contributing": [
-        {
-          "type": "BB_LOWER_BREAK",
-          "base_weight": 8,
-          "decay": 0.25,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "final_contribution": 2.0
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "BB_LOWER_BREAK",
-          "contribution": 2.0
-        }
-      ],
-      "rationale_e": "Bullish: Bb Lower Break | RSI 36 | Price vs MA20 -5.9% | VP 50",
-      "rationale_z": "多头：布林下轨支撑 | RSI 36 | 距MA20 -5.9% | VP 50",
-      "signal_types": [
-        "BB_LOWER_BREAK"
-      ],
-      "computed_at": "2026-05-25T05:28:07.512725+00:00"
+      "computed_at": "2026-05-26T05:10:57.851656+00:00"
     },
     {
       "ticker": "175.HK",
@@ -122,7 +83,46 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-05-25T05:28:07.512504+00:00"
+      "computed_at": "2026-05-26T05:10:57.851562+00:00"
+    },
+    {
+      "ticker": "603233.SH",
+      "score": 0,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "BEARISH",
+      "regime": "NEUTRAL",
+      "vp_score": 50.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 0,
+        "bearish": 0
+      },
+      "contributing": [
+        {
+          "type": "BB_LOWER_BREAK",
+          "base_weight": 8,
+          "decay": 0.0,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "final_contribution": 0.0
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "BB_LOWER_BREAK",
+          "contribution": 0.0
+        }
+      ],
+      "rationale_e": "RSI 36 | Price vs MA20 -5.9% | VP 50",
+      "rationale_z": "RSI 36 | 距MA20 -5.9% | VP 50",
+      "signal_types": [
+        "BB_LOWER_BREAK"
+      ],
+      "computed_at": "2026-05-26T05:10:57.851773+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -189,7 +189,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-05-25T05:28:07.512843+00:00"
+      "computed_at": "2026-05-26T05:10:57.851884+00:00"
     },
     {
       "ticker": "700.HK",
@@ -211,7 +211,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-05-25T05:28:07.512925+00:00"
+      "computed_at": "2026-05-26T05:10:57.851951+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -233,11 +233,11 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-05-25T05:28:07.512998+00:00"
+      "computed_at": "2026-05-26T05:10:57.852010+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "score": -9,
+      "score": -11,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "BEARISH",
@@ -247,46 +247,46 @@
       "vp_adjustment": null,
       "staleness_factor": 1.0,
       "signal_count": {
-        "bullish": 1,
+        "bullish": 0,
         "bearish": 1
       },
       "contributing": [
         {
           "type": "DEATH_CROSS",
           "base_weight": -18,
-          "decay": 0.8,
+          "decay": 0.73,
           "independence_factor": 1.0,
           "regime_mult": 0.8,
           "staleness": 1.0,
-          "final_contribution": -11.5
+          "final_contribution": -10.6
         },
         {
           "type": "RSI_RECOVERING",
           "base_weight": 7,
-          "decay": 0.25,
+          "decay": 0.0,
           "independence_factor": 1.0,
           "regime_mult": 1.2,
           "staleness": 1.0,
-          "final_contribution": 2.1
+          "final_contribution": 0.0
         }
       ],
       "contributing_signals": [
         {
           "type": "DEATH_CROSS",
-          "contribution": -11.5
+          "contribution": -10.6
         },
         {
           "type": "RSI_RECOVERING",
-          "contribution": 2.1
+          "contribution": 0.0
         }
       ],
-      "rationale_e": "Bullish: Rsi Recovering | Bearish: Death Cross | RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "多头：RSI回升 | 空头：死亡交叉 | RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48",
+      "rationale_e": "Bearish: Death Cross | RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "空头：死亡交叉 | RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48",
       "signal_types": [
         "DEATH_CROSS",
         "RSI_RECOVERING"
       ],
-      "computed_at": "2026-05-25T05:28:07.512382+00:00"
+      "computed_at": "2026-05-26T05:10:57.851451+00:00"
     }
   ]
 }
