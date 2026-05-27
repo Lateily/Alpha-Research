@@ -1,0 +1,44 @@
+{
+  "strat_daily": {
+    "_status": "ok",
+    "n": 2424,
+    "B": 10000,
+    "n_boot_valid": 10000,
+    "p_stationary": 0.1,
+    "expected_block_length": 10.0,
+    "point_estimate": -0.00010905662916750172,
+    "ci_lo": -0.00022243000712922025,
+    "ci_hi": -1.3064228170786095e-05,
+    "alpha": 0.05,
+    "straddles_zero": false,
+    "p_value_h0_zero": 0.0417,
+    "median_boot": -0.000106764394711021
+  },
+  "alpha_daily": {
+    "_status": "ok",
+    "n": 2423,
+    "B": 10000,
+    "n_boot_valid": 10000,
+    "p_stationary": 0.1,
+    "expected_block_length": 10.0,
+    "point_estimate": 0.00029297109740925053,
+    "ci_lo": -0.00037237710083062745,
+    "ci_hi": 0.0009464152703065743,
+    "alpha": 0.05,
+    "straddles_zero": true,
+    "p_value_h0_zero": 0.3865,
+    "median_boot": 0.0002981931034174884
+  },
+  "alpha_annualized": {
+    "point": 0.07661074094102838,
+    "lo": -0.08958660781799133,
+    "hi": 0.26919629408390766
+  },
+  "backtest_summary": {
+    "cagr": -0.028264575334072894,
+    "sharpe_annualized": -0.5618127970605847,
+    "max_drawdown": -0.2612,
+    "final_nav": 7584419.75,
+    "n_total_trades": 2029
+  }
+}

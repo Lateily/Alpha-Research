@@ -31,6 +31,7 @@ from sector_scorer import score_sectors, load_sector_map, select_universe
 from swing_signal_scan import compute_swing_signals
 from swing_risk_manager import (compute_target_weights, evaluate_exits,
                                   check_portfolio_breakers, DEFAULT_CONFIG)
+from liquid_universe import compute_liquid_universe, reduced_panel_union
 
 # Trade costs (carry from backtest_v2.py)
 COMMISSION = 0.00025
@@ -86,11 +87,35 @@ def run_swing_backtest(daily_panel: pd.DataFrame, adj_panel: Optional[pd.DataFra
                         sector_mapping: dict, start: str, end: str,
                         capital: float = 1_000_000.0,
                         config: Optional[dict] = None,
-                        verbose: bool = False) -> dict:
-    """Run daily swing backtest from start to end (inclusive YYYYMMDD strings)."""
+                        verbose: bool = False,
+                        liquid_top_n: int = 500,
+                        liquid_lookback: int = 20) -> dict:
+    """Run daily swing backtest from start to end (inclusive YYYYMMDD strings).
+
+    iter-13 PERF FIX: pre-filter the panel to ~top-500-by-ADV PER DAY (PIT-clean).
+    This cuts daily compute by ~12× since previously we iterated all 5800 tickers.
+    """
     cfg = dict(DEFAULT_CONFIG); cfg.update(config or {})
     start_yyyymmdd = _to_yyyymmdd(start)
     end_yyyymmdd = _to_yyyymmdd(end)
+
+    # ── PERF: compute liquid universe ONCE for whole window ─────────────────
+    if verbose:
+        print(f"[perf] computing liquid universe (top-{liquid_top_n} by {liquid_lookback}d ADV)...", flush=True)
+    liquid_uni = compute_liquid_universe(daily_panel, top_n=liquid_top_n,
+                                          lookback_days=liquid_lookback)
+    if verbose:
+        n_dates = len(liquid_uni)
+        avg_size = sum(len(v) for v in liquid_uni.values()) / max(1, n_dates)
+        print(f"[perf] liquid universe: {n_dates} dates, avg {avg_size:.0f} tickers/day",
+              flush=True)
+
+    # Reduce panel to union of liquid tickers (preserves history for 60d
+    # lookbacks; cuts panel size by ~10×)
+    daily_panel = reduced_panel_union(daily_panel, liquid_uni)
+    if verbose:
+        print(f"[perf] reduced panel: {len(daily_panel):,} rows × "
+              f"{daily_panel['ts_code'].nunique()} tickers", flush=True)
 
     # All trade dates from panel in [start, end]
     all_dates = sorted(daily_panel["trade_date"].unique())
@@ -151,12 +176,22 @@ def run_swing_backtest(daily_panel: pd.DataFrame, adj_panel: Optional[pd.DataFra
         if breaker["actions"]:
             risk_log.append({"date": T, **breaker, "dd": round(dd, 4), "vol60": round(realized_vol, 4)})
 
-        # ── 4. Sector ranking (PIT: panel up to T inclusive)
-        sector_ranks = score_sectors(daily_panel, sector_mapping, T, lookback_days=60, top_k=5)
+        # ── 4. Liquid universe at T (pre-computed, PIT-clean top-500 by ADV)
+        # iter-13: this CUTS the sector_scorer workload from 5800 → 500 names
+        liquid_today = liquid_uni.get(T, [])
+        # Sector ranking only over liquid universe (much faster)
+        # Create a per-date sliced sector_mapping for just the liquid names
+        liquid_sector_map = {tk: sector_mapping.get(tk) for tk in liquid_today
+                              if tk in sector_mapping}
+        # Slice panel ONCE for sector_scorer (avoids full-panel re-scan)
+        # Only need rows in the last 60d window for these tickers
+        sector_ranks = score_sectors(daily_panel, liquid_sector_map, T,
+                                       lookback_days=60, top_k=5)
         top_sectors = [s for s, info in sector_ranks.items() if info.get("is_top_k")]
         universe = select_universe(sector_ranks, top_k=5)
         if not universe:
-            universe = list(set(daily_panel[daily_panel["trade_date"] == T]["ts_code"]))[:200]
+            # fallback: just use the liquid universe directly
+            universe = liquid_today[:200]
 
         # ── 5. Signal scan on universe + currently held
         scan_set = set(universe) | set(positions.keys())
