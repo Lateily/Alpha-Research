@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-26T05:10:57.852022+00:00",
+  "generated_at": "2026-05-27T05:26:12.237936+00:00",
   "tickers_scored": 7,
   "summary": {
     "entry_candidates": [],
@@ -9,7 +9,7 @@
   "scores": [
     {
       "ticker": "300308.SZ",
-      "score": 7,
+      "score": 6,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "BULLISH",
@@ -26,17 +26,17 @@
         {
           "type": "BULLISH_ALIGNMENT",
           "base_weight": 10,
-          "decay": 0.6,
+          "decay": 0.5,
           "independence_factor": 1.0,
           "regime_mult": 1.2,
           "staleness": 1.0,
-          "final_contribution": 7.2
+          "final_contribution": 6.0
         }
       ],
       "contributing_signals": [
         {
           "type": "BULLISH_ALIGNMENT",
-          "contribution": 7.2
+          "contribution": 6.0
         }
       ],
       "rationale_e": "Bullish: Bullish Alignment | RSI 69 | Price vs MA20 +9.6% | Regime: PERMISSIVE | VP 48",
@@ -44,7 +44,7 @@
       "signal_types": [
         "BULLISH_ALIGNMENT"
       ],
-      "computed_at": "2026-05-26T05:10:57.851656+00:00"
+      "computed_at": "2026-05-27T05:26:12.237561+00:00"
     },
     {
       "ticker": "175.HK",
@@ -83,7 +83,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-05-26T05:10:57.851562+00:00"
+      "computed_at": "2026-05-27T05:26:12.237462+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -122,7 +122,7 @@
       "signal_types": [
         "BB_LOWER_BREAK"
       ],
-      "computed_at": "2026-05-26T05:10:57.851773+00:00"
+      "computed_at": "2026-05-27T05:26:12.237661+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -189,7 +189,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-05-26T05:10:57.851884+00:00"
+      "computed_at": "2026-05-27T05:26:12.237770+00:00"
     },
     {
       "ticker": "700.HK",
@@ -211,7 +211,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-05-26T05:10:57.851951+00:00"
+      "computed_at": "2026-05-27T05:26:12.237840+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -233,11 +233,11 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-05-26T05:10:57.852010+00:00"
+      "computed_at": "2026-05-27T05:26:12.237922+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "score": -11,
+      "score": -10,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "BEARISH",
@@ -254,11 +254,11 @@
         {
           "type": "DEATH_CROSS",
           "base_weight": -18,
-          "decay": 0.73,
+          "decay": 0.67,
           "independence_factor": 1.0,
           "regime_mult": 0.8,
           "staleness": 1.0,
-          "final_contribution": -10.6
+          "final_contribution": -9.6
         },
         {
           "type": "RSI_RECOVERING",
@@ -273,7 +273,7 @@
       "contributing_signals": [
         {
           "type": "DEATH_CROSS",
-          "contribution": -10.6
+          "contribution": -9.6
         },
         {
           "type": "RSI_RECOVERING",
@@ -286,7 +286,7 @@
         "DEATH_CROSS",
         "RSI_RECOVERING"
       ],
-      "computed_at": "2026-05-26T05:10:57.851451+00:00"
+      "computed_at": "2026-05-27T05:26:12.237344+00:00"
     }
   ]
 }
