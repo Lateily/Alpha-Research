@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-05-27T05:26:12.372888+00:00",
-  "date": "2026-05-27",
+  "generated_at": "2026-05-28T05:18:08.030594+00:00",
+  "date": "2026-05-28",
   "portfolio_summary": {
     "total_attributed_trades": 5,
     "open_positions": 5,
     "closed_unknown": 0,
     "overall_win_rate": 20.0,
-    "avg_pnl": 12.94,
-    "best_position": 65.87,
-    "worst_position": -1.15
+    "avg_pnl": 12.91,
+    "best_position": 66.32,
+    "worst_position": -1.78
   },
   "by_signal": [
     {
@@ -16,8 +16,8 @@
       "count": 2,
       "win_count": 1,
       "win_rate": 50.0,
-      "avg_pnl": 32.94,
-      "best_pnl": 65.87,
+      "avg_pnl": 33.16,
+      "best_pnl": 66.32,
       "worst_pnl": 0.0,
       "avg_weight": 20.0,
       "tickers": [
@@ -30,8 +30,8 @@
       "count": 2,
       "win_count": 1,
       "win_rate": 50.0,
-      "avg_pnl": 32.94,
-      "best_pnl": 65.87,
+      "avg_pnl": 33.16,
+      "best_pnl": 66.32,
       "worst_pnl": 0.0,
       "avg_weight": 15.0,
       "tickers": [
@@ -44,9 +44,9 @@
       "count": 3,
       "win_count": 1,
       "win_rate": 33.3,
-      "avg_pnl": 21.57,
-      "best_pnl": 65.87,
-      "worst_pnl": -1.15,
+      "avg_pnl": 21.51,
+      "best_pnl": 66.32,
+      "worst_pnl": -1.78,
       "avg_weight": 18.0,
       "tickers": [
         "300308.SZ",
@@ -59,8 +59,8 @@
       "count": 3,
       "win_count": 1,
       "win_rate": 33.3,
-      "avg_pnl": 21.96,
-      "best_pnl": 65.87,
+      "avg_pnl": 22.11,
+      "best_pnl": 66.32,
       "worst_pnl": 0.0,
       "avg_weight": 12.0,
       "tickers": [
@@ -74,8 +74,8 @@
       "count": 3,
       "win_count": 1,
       "win_rate": 33.3,
-      "avg_pnl": 21.96,
-      "best_pnl": 65.87,
+      "avg_pnl": 22.11,
+      "best_pnl": 66.32,
       "worst_pnl": 0.0,
       "avg_weight": 12.0,
       "tickers": [
@@ -103,9 +103,9 @@
       "count": 3,
       "win_count": 0,
       "win_rate": 0.0,
-      "avg_pnl": -0.38,
+      "avg_pnl": -0.59,
       "best_pnl": 0.0,
-      "worst_pnl": -1.15,
+      "worst_pnl": -1.78,
       "avg_weight": 12.0,
       "tickers": [
         "700.HK",
@@ -118,9 +118,9 @@
       "count": 3,
       "win_count": 0,
       "win_rate": 0.0,
-      "avg_pnl": -0.38,
+      "avg_pnl": -0.59,
       "best_pnl": 0.0,
-      "worst_pnl": -1.15,
+      "worst_pnl": -1.78,
       "avg_weight": 10.0,
       "tickers": [
         "700.HK",
@@ -134,13 +134,13 @@
       "action": "BUY_WATCH",
       "count": 4,
       "win_rate": 25.0,
-      "avg_pnl": 16.47
+      "avg_pnl": 16.58
     },
     {
       "action": "WATCH",
       "count": 1,
       "win_rate": 0.0,
-      "avg_pnl": -1.15
+      "avg_pnl": -1.78
     }
   ],
   "vp_buckets": [
@@ -148,7 +148,7 @@
       "bucket": "VP 70+",
       "count": 1,
       "win_rate": 100.0,
-      "avg_pnl": 65.87
+      "avg_pnl": 66.32
     },
     {
       "bucket": "VP 60-70",
@@ -160,13 +160,13 @@
       "bucket": "VP 50-60",
       "count": 2,
       "win_rate": 0.0,
-      "avg_pnl": -0.57
+      "avg_pnl": -0.89
     }
   ],
   "by_ticker": [
     {
       "ticker": "300308.SZ",
-      "pnl_pct": 65.87,
+      "pnl_pct": 66.32,
       "vp_at_entry": 79,
       "conf_at_entry": 82,
       "signal_count": 5,
@@ -214,7 +214,7 @@
     },
     {
       "ticker": "002594.SZ",
-      "pnl_pct": -1.15,
+      "pnl_pct": -1.78,
       "vp_at_entry": 52,
       "conf_at_entry": 55,
       "signal_count": 3,
@@ -226,9 +226,9 @@
     }
   ],
   "insights": [
-    "CVD_FLOOR_FORMED best win rate 50% (1/2 trades, avg P&L +32.9%)",
+    "CVD_FLOOR_FORMED best win rate 50% (1/2 trades, avg P&L +33.2%)",
     "VOLUME_BREAKOUT underperforming: 0% win rate — consider reducing weight in signal_confluence.py",
     "Portfolio: 20% win rate · avg P&L +12.9% across 5 open positions",
-    "300308.SZ leads portfolio P&L at +65.9% (VP=79, conf=+82)"
+    "300308.SZ leads portfolio P&L at +66.3% (VP=79, conf=+82)"
   ]
 }
