@@ -1,0 +1,103 @@
+{
+  "schema": "v3_variant_manifest",
+  "schema_version": 2,
+  "created_for": "SWING_STRATEGY_v3 pre-registration",
+  "purpose": "Pre-register every Path B / swing R&D variant before running backtests, so race-bundle results cannot be cherry-picked after the fact.",
+  "_doc_hypothesis_lock_hash": "SHA256 hex digest of canonical JSON of {hypothesis, design, test_plan}. Per Junyan ratify #5 (v3 Phase A 2026-05-28 PM2): canonical JSON uses sort_keys=True, ensure_ascii=False, separators=(',', ':'). The hash field hypothesis_lock_hash is itself EXCLUDED from the canonical JSON used to compute the hash. Compute via scripts/v3_manifest_hash.py.",
+  "variant": {
+    "variant_id": "v3c_YYYYMMDD_short_name",
+    "registered_at": "YYYY-MM-DDTHH:MM:SSZ",
+    "registered_by": "Claude|Codex|Junyan",
+    "status": "pre_registered",
+    "hypothesis": "One sentence stating why this variant should improve post-cost same-gross alpha.",
+    "causal_logic_label": "Causal logic is unestablished/questionable/valid because ...",
+    "expected_failure_modes": [
+      "Example: signal remains only long-short and fails long-only after cost",
+      "Example: recent OOS 2022-2026 remains significantly negative",
+      "Example: avg_gross remains below 30% or median positions remain 0/1"
+    ],
+    "hypothesis_lock_hash": ""
+  },
+  "design": {
+    "factor_inputs": [
+      {
+        "name": "momentum_5d",
+        "direction": "inverse|direct|neutral",
+        "weight": 0.0,
+        "normalization": "pre-declared formula"
+      }
+    ],
+    "universe": {
+      "source": "PIT liquid top-N",
+      "liquid_top_n": 500,
+      "sector_neutral": false,
+      "size_neutral": false,
+      "exclusions": []
+    },
+    "portfolio": {
+      "max_positions": 8,
+      "target_positions": 8,
+      "max_gross": 0.5,
+      "max_single_name_weight": 0.08,
+      "max_sector_weight": 0.3,
+      "rebalance_cadence_days": 5,
+      "holding_period_days": 5
+    },
+    "risk_rules": {
+      "hard_stop_pct": -0.08,
+      "time_stop_days": 5,
+      "atr_veto": true,
+      "limit_up_down_fill_policy": "pre-declared rule"
+    },
+    "cost_model": {
+      "commission_buy": 0.00025,
+      "commission_sell": 0.00025,
+      "stamp_duty_sell": 0.0005,
+      "slippage_each_side": 0.001,
+      "cost_model_label": "current_v2_cost|audited_v3_cost|stress_cost"
+    }
+  },
+  "test_plan": {
+    "windows": [
+      {"name": "mini1yr", "start": "2025-05-26", "end": "2026-05-25"},
+      {"name": "10yr", "start": "2016-05-26", "end": "2026-05-25"},
+      {"name": "20yr", "start": "2006-01-04", "end": "2026-05-25"},
+      {"name": "wf_2006_2010", "start": "2006-01-04", "end": "2010-01-03"},
+      {"name": "wf_2010_2014", "start": "2010-01-04", "end": "2014-01-03"},
+      {"name": "wf_2014_2018", "start": "2014-01-04", "end": "2018-01-03"},
+      {"name": "wf_2018_2022", "start": "2018-01-04", "end": "2022-01-03"},
+      {"name": "wf_2022_2026", "start": "2022-01-04", "end": "2026-05-25"}
+    ],
+    "benchmarks": [
+      "EW-500",
+      "EW-500 same-gross",
+      "CSI300 same-gross",
+      "ZZ500 same-gross",
+      "cash_2pct"
+    ],
+    "multi_test_family": "All v3 variants registered before this run batch",
+    "multi_test_method": "Benjamini-Yekutieli FDR"
+  },
+  "hard_gates": {
+    "walk_forward_positive_point_estimate_min_windows": ">=3/5",
+    "oos_recent_ci_exclude_negative": false,
+    "by_corrected_p_lt_0_05": true,
+    "avg_gross_min": 0.3,
+    "median_positions_not_0_or_1": true,
+    "turnover_max_annual": 2.0,
+    "max_drawdown_floor": -0.25,
+    "post_cost_alpha_positive": true,
+    "multi_benchmark_report_required": true,
+    "max_positions_enforced": true,
+    "full_trade_log_required": true
+  },
+  "outputs": {
+    "result_json": "experiments/agent_tasks/<variant_id>_results.json",
+    "gate_report_json": "experiments/agent_tasks/<variant_id>_gate_report.json",
+    "gate_report_md": "experiments/agent_tasks/<variant_id>_gate_report.md"
+  },
+  "validation_labels": {
+    "causal_logic": "Must be filled before backtest run.",
+    "specific_numbers": "Specific thresholds are pre-registered research gates unless explicitly calibrated from prior data."
+  }
+}
