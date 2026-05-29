@@ -1,0 +1,151 @@
+{
+  "schema": "v3_variant_manifest",
+  "schema_version": 2,
+  "created_for": "SWING_STRATEGY_v3 pre-registration",
+  "purpose": "Pre-register V3C-α1 (10d horizon + 4-factor inverse + drop rsi_in_band) before backtests so the result cannot be cherry-picked.",
+  "variant": {
+    "variant_id": "v3c_alpha1_20260528_horizon10_4factor_no_rsi",
+    "registered_at": "2026-05-28T15:06:18Z",
+    "registered_by": "Codex",
+    "status": "pre_registered",
+    "hypothesis": "Per V3A_OOS_DIAGNOSTIC §6 + Codex R3 study, 10d horizon is the only stable mean-reversion timescale for A-share (momentum_5d faded 47% over 20yr, momentum_5d.10d faded 0%; R3 momentum_20d.h10 Q=0.1 net +3.26%/yr after 0.30% cost). V3C-α1 tests whether 10d horizon + 4-factor inverse (momentum_20d/breakout_20d/macd_cross/volume_spike) + drop rsi_in_band (OOS sign-flip per V3A §2.2) survives v3 §2 hard gates including walk-forward 3/5 POS, OOS not significantly NEG, multi-bench, and 0.40% RT cost.",
+    "causal_logic_label": "Causal logic is questionable/unestablished because evidence is statistical pattern (20yr IC + R3 decile spread) not economic mechanism; horizon choice motivated by fade analysis post-hoc.",
+    "expected_failure_modes": [
+      "10d horizon still underperforms same-gross EW-500 in 2025-2026 bull regime (mini1yr equivalent)",
+      "Multi-test BY correction over v3 variants pushes p above 0.05 even if any single window passes",
+      "Cost pessimistic 0.60% RT exceeds 10d IC magnitude → α drops to NEG",
+      "Universe 35.8% ChiNext/STAR with retail flow noise overwhelms factor signal",
+      "Sample size in OOS (≤1000 trade dates) insufficient for CI to exclude 0 POS"
+    ],
+    "hypothesis_lock_hash": "20ed0af12683848cdb4cc1735ebd147e76ff6cac53dd99961da6dbe3c818c283"
+  },
+  "design": {
+    "factor_inputs": [
+      {
+        "name": "momentum_20d",
+        "direction": "inverse",
+        "weight": 0.4,
+        "normalization": "(close[-1]/close[-21]-1) clamp [-0.4,+0.4] linear to [0,1]"
+      },
+      {
+        "name": "breakout_20d",
+        "direction": "inverse",
+        "weight": 0.2,
+        "normalization": "binary 1.0/0.0 from close>1.02*max(close[-21:-1])"
+      },
+      {
+        "name": "macd_cross",
+        "direction": "inverse",
+        "weight": 0.2,
+        "normalization": "binary 1.0/0.0 from MACD>signal AND signal rising 3 days"
+      },
+      {
+        "name": "volume_spike",
+        "direction": "inverse",
+        "weight": 0.2,
+        "normalization": "binary 1.0/0.0 from vol[-1]/mean(vol[-21:-1])>1.5"
+      },
+      {
+        "name": "rsi_in_band",
+        "direction": "neutral",
+        "weight": 0.0,
+        "normalization": "DROPPED per Junyan #8: OOS sign-flip & collapse"
+      },
+      {
+        "name": "limit_up_followup",
+        "direction": "neutral",
+        "weight": 0.0,
+        "normalization": "DROPPED per V3A sector-confound + low sector-neutral IC"
+      },
+      {
+        "name": "momentum_5d",
+        "direction": "neutral",
+        "weight": 0.0,
+        "normalization": "DROPPED — superseded by momentum_20d (10d horizon)"
+      }
+    ],
+    "universe": {
+      "source": "PIT liquid top-500 by 20d ADV",
+      "liquid_top_n": 500,
+      "sector_neutral": false,
+      "size_neutral": false,
+      "exclusions": []
+    },
+    "portfolio": {
+      "max_positions": 8,
+      "target_positions": 8,
+      "max_gross": 0.5,
+      "max_single_name_weight": 0.08,
+      "max_sector_weight": 0.3,
+      "rebalance_cadence_days": 10,
+      "holding_period_days": 10
+    },
+    "risk_rules": {
+      "hard_stop_pct": -0.08,
+      "time_stop_days": 10,
+      "atr_veto": true,
+      "limit_up_down_fill_policy": "limit-up at T+1 open → BUY unfillable carry; limit-down → SELL unfillable carry"
+    },
+    "cost_model_label": "v3b_audited_3_scenarios"
+  },
+  "test_plan": {
+    "windows": [
+      {
+        "name": "full_20yr",
+        "start": "2006-01-04",
+        "end": "2026-05-25"
+      },
+      {
+        "name": "wf_2006_2010",
+        "start": "2006-01-04",
+        "end": "2010-01-03"
+      },
+      {
+        "name": "wf_2010_2014",
+        "start": "2010-01-04",
+        "end": "2014-01-03"
+      },
+      {
+        "name": "wf_2014_2018",
+        "start": "2014-01-04",
+        "end": "2018-01-03"
+      },
+      {
+        "name": "wf_2018_2022",
+        "start": "2018-01-04",
+        "end": "2022-01-03"
+      },
+      {
+        "name": "wf_2022_2026",
+        "start": "2022-01-04",
+        "end": "2026-05-25"
+      }
+    ],
+    "benchmarks": [
+      "EW-500_same_gross",
+      "CSI300",
+      "CSI500",
+      "CSI1000",
+      "cash_2pct"
+    ],
+    "cost_scenarios": [
+      "optimistic_0.20_RT",
+      "baseline_0.40_RT",
+      "pessimistic_0.60_RT"
+    ],
+    "multi_test_family": "v3_pre_registered_variants_only",
+    "multi_test_method": "Benjamini-Yekutieli FDR"
+  },
+  "hard_gates": {
+    "stage": "R&D",
+    "walk_forward_positive_point_estimate_min_windows": "3/5",
+    "oos_not_significantly_neg": true,
+    "multi_test_corrected_p_lt_0.05": true,
+    "avg_gross_min": 0.3,
+    "median_n_positions_min": 2,
+    "turnover_annual_ratio_max": 2.0,
+    "max_dd_min_per_window": -0.25,
+    "sample_size_min_trade_dates_per_window": 250,
+    "post_cost_alpha_positive_baseline": true
+  }
+}

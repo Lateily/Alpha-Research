@@ -1,0 +1,176 @@
+{
+  "schema": "v3_variant_manifest",
+  "schema_version": 2,
+  "created_for": "SWING_STRATEGY_v3 pre-registration",
+  "purpose": "Pre-register V3C-α1.3A (anti-drift: max_hold_days = 60) before backtests so the result cannot be cherry-picked. α1.3A is a SINGLE-VARIABLE anti-drift test on top of α1.2: it changes ONLY design.portfolio.turnover_mechanics.max_hold_days (null → 60) and keeps every other α1.2 knob frozen (4-factor inverse signal, drop rsi_in_band, PIT-liquid top-500, rebal=20, rank-buffer top-20, turnover_budget_per_rebal=1, hold_continuation, same_day_rebuy=false, max_gross=0.50). Per Junyan 2026-05-29 directive, α1.2 (rebal=20) did NOT compress turnover cleanly — instead the strategy DRIFTED into quasi-buy-and-hold: full_20yr avg holding period 124 days / 31.5 trades-yr vs sub-windows' ~50 days / 65-104 trades-yr (a clear structural break). The +0.4703 full_20yr same-gross α and the 67.9% full_20yr turnover were both flattered by this drift. α1.3A caps holding at 60 trading days (= 3 rebal cycles at rebal=20) to break the squatting-in-the-rank-buffer behavior and FORCE the strategy to behave like a genuine swing strategy again. This is NOT turnover compression — empirically (wf_2014_2018 pre-check 2026-05-29) the cap RAISES turnover (145.4% → 249.6%) and cuts avg-hold (72.7d → 41.4d). The PRIMARY question α1.3A answers: does α1.2's same-gross α SURVIVE genuine ≤60d swing-frequency rotation, or was it passive long-hold drift?",
+  "variant": {
+    "variant_id": "v3c_alpha1_3a_20260529_anti_drift_maxhold60",
+    "short_name": "v3c_alpha1_3a",
+    "registered_at": "2026-05-29T10:31:26Z",
+    "registered_by": "Claude T1",
+    "status": "pre_registered",
+    "parent_variant": "v3c_alpha1_2_20260529_turnover_compression",
+    "single_variable_change": "design.portfolio.turnover_mechanics.max_hold_days: null → 60 (all other knobs frozen from α1.2, incl. rebalance_cadence_days=20)",
+    "engine_support_verified": "max_hold_days wired into run_swing_backtest_fast hold_continuation branch + run_v3c_alpha1_1._config_from_manifest on 2026-05-29. Verified NON-no-op: wf_2014_2018 cap=None→145.4% turnover/72.7d hold/0 max_hold-sells reproduces α1.2 exactly (backward-compatible); cap=60→249.6% turnover/41.4d hold/44 max_hold-sells.",
+    "hypothesis": "Under V3C-α1.2's frozen configuration (10d-horizon 4-factor inverse on PIT-liquid top-500, rebal=20, rank-buffer top-20 + turnover_budget_per_rebal=1 + hold_continuation + same_day_rebuy=false, max_gross=0.50), force-exiting any position held ≥ 60 trading days (= 3 rebal cycles) will break α1.2's quasi-buy-and-hold drift (full_20yr 124d avg hold) and restore genuine swing-frequency rotation (≤60d holds). The hypothesis is OPERATIONAL not ECONOMIC — α1.3A does not change the factor causal story, universe, cost model, or sizing; it adds a structural holding-period constraint. The PRIMARY test is whether α1.2's same-gross α (full_20yr +0.4703, raw p=0.0153) SURVIVES the forced rotation: if the same-gross α point collapses toward 0 (or negative) once long holds are capped, then α1.2's apparent improvement was passive low-momentum-tilt long-hold compounding (drift), NOT a tradeable swing edge — a decisive negative result that re-frames the entire α-line. If the same-gross α survives within ±50% relative of α1.2's full_20yr baseline (≥ +0.235), there is a genuine swing edge robust to honest ≤60d rotation. Turnover (IMPL4) is EXPECTED to RISE (the cap reintroduces rotation) and is explicitly NOT this variant's target; gross (IMPL2) and MaxDD (IMPL5) remain out of scope.",
+    "causal_logic_label": "Causal logic is VALID for 'α1.2 drift exists' — full_20yr holding period (124d) and trade count (31.5/yr) show a clear structural break from the 4-year sub-windows (~50d / 65-104 trades-yr); the drift is empirically established, not assumed. Causal logic is QUESTIONABLE/UNESTABLISHED for max_hold_days=60 itself — it is a structural-constraint assumption that has NOT been backtest-validated; 60d is unvalidated intuition but a reasonable first cut (3 rebal cycles at rebal=20, blocks multi-year squatting without reverting to α1's 10d full-refresh). Per Junyan 2026-05-29: do NOT optimize p-value — let the structural constraint reveal whether the edge is real; tuning toward p<0.05 would be curve-fit. The inherited inverse-momentum thesis (α1→α1.1→α1.2) is itself an IC pattern, not an established economic mechanism.",
+    "expected_failure_modes": [
+      "Alpha collapse (the KEY informative outcome): if α1.2's +0.47 was drift / passive low-momentum-tilt long-hold compounding, capping holds at 60d kills it → same-gross α point drops toward 0 or negative across windows. This FALSIFIES the 'swing edge' reading of α1.2 — a valid, decisive negative result, NOT a bug",
+      "Turnover rises over gate: the cap reintroduces rotation → IMPL4 turnover EXPECTED to worsen (wf_2014_2018 pre-check 145%→250%). IMPL4 is not α1.3A's target and will likely FAIL — that is accepted, not a failure of the test",
+      "MaxDD worsens via forced-sell path dependence: positions hitting the 60d cap near drawdown troughs lock in losses → IMPL5 MaxDD could degrade further. Out of scope (→ α1.4) but watch per-window",
+      "IMPL2 gross utilization (~14-17%) UNCHANGED — out of scope (→ later)",
+      "MT BY-corrected family p: family is now m=4 (α1, α1.1, α1.2, α1.3A); c(m)=2.0833 makes correction even more conservative → α1.3A will almost certainly still FAIL MT regardless of raw p. Correct, not a bug; chasing p<0.05 is banned",
+      "Partial drift-break: 60d cap may be too loose to fully restore swing behavior if many positions naturally exit before 60d anyway — in that case avg-hold drops only modestly and the alpha-survival signal is muddy"
+    ],
+    "hypothesis_lock_hash": "2de57039d35625b8cb7897e9ca1c4630974c567444bef1108cb7baacd95cc441"
+  },
+  "design": {
+    "factor_inputs": [
+      {
+        "name": "momentum_20d",
+        "direction": "inverse",
+        "weight": 0.4,
+        "normalization": "(close[-1]/close[-21]-1) clamp [-0.4,+0.4] linear to [0,1]"
+      },
+      {
+        "name": "breakout_20d",
+        "direction": "inverse",
+        "weight": 0.2,
+        "normalization": "binary 1.0/0.0 from close>1.02*max(close[-21:-1])"
+      },
+      {
+        "name": "macd_cross",
+        "direction": "inverse",
+        "weight": 0.2,
+        "normalization": "binary 1.0/0.0 from MACD>signal AND signal rising 3 days"
+      },
+      {
+        "name": "volume_spike",
+        "direction": "inverse",
+        "weight": 0.2,
+        "normalization": "binary 1.0/0.0 from vol[-1]/mean(vol[-21:-1])>1.5"
+      },
+      {
+        "name": "rsi_in_band",
+        "direction": "neutral",
+        "weight": 0.0,
+        "normalization": "DROPPED per Junyan #8 (α1 inheritance): OOS sign-flip & collapse"
+      },
+      {
+        "name": "limit_up_followup",
+        "direction": "neutral",
+        "weight": 0.0,
+        "normalization": "DROPPED per V3A sector-confound + low sector-neutral IC (α1 inheritance)"
+      },
+      {
+        "name": "momentum_5d",
+        "direction": "neutral",
+        "weight": 0.0,
+        "normalization": "DROPPED — superseded by momentum_20d 10d horizon (α1 inheritance)"
+      }
+    ],
+    "universe": {
+      "source": "PIT liquid top-500 by 20d ADV",
+      "liquid_top_n": 500,
+      "sector_neutral": false,
+      "size_neutral": false,
+      "exclusions": []
+    },
+    "portfolio": {
+      "max_positions": 8,
+      "target_positions": 8,
+      "max_gross": 0.5,
+      "max_single_name_weight": 0.08,
+      "max_sector_weight": 0.3,
+      "rebalance_cadence_days": 20,
+      "holding_period_days": 10,
+      "turnover_mechanics": {
+        "turnover_budget_per_rebal": 1,
+        "replacement_rule": "replace at most 1 existing holding per scheduled rebalance; hard_stop AND max_hold exits do not count against budget, but re-entry waits until next rebalance",
+        "same_day_rebuy": false,
+        "rank_buffer_top_n": 20,
+        "hold_continuation_enabled": true,
+        "hold_continuation_rule": "keep existing holdings unless they fall outside top-20 inverse-score candidate buffer OR have been held >= max_hold_days",
+        "max_hold_days": 60
+      }
+    },
+    "risk_rules": {
+      "hard_stop_pct": -0.08,
+      "time_stop_days": 9999,
+      "time_stop_status": "disabled — superseded by rank_buffer continuation + max_hold_days cap; engine emits sentinel 9999 days for compatibility",
+      "atr_veto": true,
+      "limit_up_down_fill_policy": "limit-up at T+1 open → BUY unfillable carry; limit-down → SELL unfillable carry",
+      "disable_drawdown_breaker": true,
+      "drawdown_breaker_note": "v3 research toggle (Junyan PM3 Bug 1): permanent drawdown_to_cash breaker disabled because re-entry-after-N-days logic is not implemented; once triggered the strategy is stuck flat. Production paper trading should leave this False until re-entry logic lands."
+    },
+    "cost_model_label": "v3b_audited_3_scenarios"
+  },
+  "test_plan": {
+    "windows": [
+      {
+        "name": "full_20yr",
+        "start": "2006-01-04",
+        "end": "2026-05-25"
+      },
+      {
+        "name": "wf_2006_2010",
+        "start": "2006-01-04",
+        "end": "2010-01-03"
+      },
+      {
+        "name": "wf_2010_2014",
+        "start": "2010-01-04",
+        "end": "2014-01-03"
+      },
+      {
+        "name": "wf_2014_2018",
+        "start": "2014-01-04",
+        "end": "2018-01-03"
+      },
+      {
+        "name": "wf_2018_2022",
+        "start": "2018-01-04",
+        "end": "2022-01-03"
+      },
+      {
+        "name": "wf_2022_2026",
+        "start": "2022-01-04",
+        "end": "2026-05-25"
+      }
+    ],
+    "benchmarks": [
+      "EW-500_same_gross",
+      "CSI300",
+      "CSI500",
+      "CSI1000",
+      "cash_2pct"
+    ],
+    "cost_scenarios": [
+      "optimistic_0.20_RT",
+      "baseline_0.40_RT",
+      "pessimistic_0.60_RT"
+    ],
+    "multi_test_family": "v3_pre_registered_variants_only",
+    "multi_test_method": "Benjamini-Yekutieli FDR"
+  },
+  "hard_gates": {
+    "stage": "R&D",
+    "walk_forward_positive_point_estimate_min_windows": "3/5",
+    "oos_not_significantly_neg": true,
+    "multi_test_corrected_p_lt_0.05": true,
+    "avg_gross_min": 0.3,
+    "median_n_positions_min": 2,
+    "turnover_annual_ratio_max": 2.0,
+    "max_dd_min_per_window": -0.25,
+    "sample_size_min_trade_dates_per_window": 250,
+    "post_cost_alpha_positive_baseline": true,
+    "primary_target": "α1.3A's target is ALPHA SURVIVAL under genuine ≤60d swing rotation (drift correction), NOT a gate. The decision metric is: does same-gross α survive vs α1.2 (+0.4703 full_20yr) once the quasi-buy-and-hold drift is removed? Turnover (IMPL4) is EXPECTED to RISE and is NOT targeted; IMPL2 gross and IMPL5 MaxDD remain out of scope. A FAIL verdict here is expected; the informative signal is the alpha delta vs α1.2.",
+    "mechanics_gates": {
+      "_purpose": "Inherited α1.1/α1.2 mechanics sanity checks. For α1.3A the turnover ceiling (3.0) may now be APPROACHED or exceeded because the cap reintroduces rotation — that is expected, not a regression. These remain diagnostic, NOT strategy-pass criteria.",
+      "mechanics_turnover_max": 3.0,
+      "mechanics_same_day_rebuy_max": 0,
+      "mechanics_untouched_carry_over_min": 2.0,
+      "mechanics_full_refresh_rate_max": 0.3
+    }
+  }
+}

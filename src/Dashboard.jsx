@@ -8188,6 +8188,7 @@ function PaperTrading({ L, lk, C }) {
   const [positions, setPositions] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
+  const [alignment, setAlignment] = useState(null);
   const [showAddTrade, setShowAddTrade] = useState(false);
   const [newTrade, setNewTrade] = useState({ ticker:'', name:'', market:'SZ', side:'BUY', quantity:'', price:'', sector_sw:'', notes:'' });
 
@@ -8196,6 +8197,9 @@ function PaperTrading({ L, lk, C }) {
     fetch(base + 'data/positions.json').then(r=>r.ok?r.json():null).then(d=>setPositions(d)).catch(()=>{});
     fetch(base + 'data/analytics.json').then(r=>r.ok?r.json():null).then(d=>setAnalytics(d)).catch(()=>{});
     fetch(base + 'data/snapshots.json').then(r=>r.ok?r.json():null).then(d=>setSnapshots(d?.snapshots||[])).catch(()=>{});
+    // Thesis↔portfolio alignment guardrail (read-only marker; see
+    // PORTFOLIO_THESIS_ALIGNMENT_RULES.md). Never triggers trades.
+    fetch(base + 'data/portfolio_thesis_alignment.json').then(r=>r.ok?r.json():null).then(d=>setAlignment(d)).catch(()=>{});
   }, []);
 
   const pos = positions?.positions || [];
@@ -8342,6 +8346,51 @@ function PaperTrading({ L, lk, C }) {
           <button onClick={()=>setShowAddTrade(true)} style={{padding:'8px 20px', background:C.blue, color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:12, fontWeight:700}}>
             + {L('Add First Trade','录入第一笔交易')}
           </button>
+        </div>
+      )}
+
+      {/* Thesis Alignment Guardrail — read-only marker; WATCH conflicts never auto-trade */}
+      {alignment?.positions?.length > 0 && (
+        <div style={{marginBottom:16}}>
+          <div style={{...S.row, justifyContent:'space-between', marginBottom:8}}>
+            <div style={{fontSize:12, fontWeight:700, color:C.dark}}>{L('Thesis Alignment Guardrail','研究 / 持仓一致性守卫')}</div>
+            {alignment.n_requires_human_review > 0 && (
+              <span style={{fontSize:10, fontWeight:700, color:'#fff', background:C.red, padding:'3px 9px', borderRadius:4}}>
+                {alignment.n_requires_human_review} {L('require review','需人工复核')}
+              </span>
+            )}
+          </div>
+          <div style={{fontSize:10, color:C.mid, marginBottom:8, lineHeight:1.5}}>
+            {L('Marker only — WATCH conflicts never auto-trade; existing positions are not auto-closed (human review).',
+               '仅标记 — WATCH 冲突不自动交易,已有仓位不自动平仓(进人工复核)。')}
+          </div>
+          <div style={{overflowX:'auto', borderRadius:6, border:`1px solid ${C.border}`}}>
+            <table style={{width:'100%', fontSize:10, borderCollapse:'collapse'}}>
+              <thead><tr style={{background:C.soft}}>
+                {[L('Name','名称'), L('Ticker','代码'), L('Position','持仓方向'), L('Thesis','研究方向'), 'P&L%', L('Alignment','一致性')].map((h,i) => (
+                  <th key={i} style={{padding:'7px 8px', textAlign: i > 1 ? 'right' : 'left', color:C.mid, fontWeight:600, borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {alignment.positions.map((a, i) => {
+                  const aClr = {ALIGNED:C.green, WATCH_CONFLICT:'#f59e0b', HARD_CONFLICT:C.red, NO_CAPITAL_THESIS:C.mid, NO_THESIS:C.mid}[a.alignment] || C.mid;
+                  const pcl = (a.pnl_pct ?? 0) >= 0 ? C.green : C.red;
+                  return (
+                    <tr key={i} style={{borderBottom:`1px solid ${C.border}`, background: a.requires_human_review ? `${C.red}0d` : 'transparent'}}>
+                      <td style={{padding:'7px 8px', color:C.dark}}>{a.name}</td>
+                      <td style={{padding:'7px 8px', fontFamily:'monospace', fontWeight:700, color:C.dark}}>{a.ts_code}</td>
+                      <td style={{padding:'7px 8px', textAlign:'right', fontFamily:'monospace', color:C.mid}}>{a.position_side}</td>
+                      <td style={{padding:'7px 8px', textAlign:'right', fontFamily:'monospace', color:C.mid}}>{a.latest_thesis_direction || '—'}</td>
+                      <td style={{padding:'7px 8px', textAlign:'right', fontFamily:'monospace', fontWeight:700, color:pcl}}>{a.pnl_pct != null ? (a.pnl_pct >= 0 ? '+' : '') + a.pnl_pct.toFixed(1) + '%' : '—'}</td>
+                      <td style={{padding:'7px 8px', textAlign:'right'}}>
+                        <span style={{fontSize:9, fontWeight:700, color:aClr, background:`${aClr}1a`, padding:'2px 7px', borderRadius:3, whiteSpace:'nowrap'}}>{a.alignment}{a.requires_human_review ? ' ⚠' : ''}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

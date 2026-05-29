@@ -14,3 +14,11 @@ __pycache__/
 .agent_tasks/
 .agent_tasks/design/
 data_history/
+
+# v3 research raw per-window backtest outputs — bulky intermediate data.
+# Mainline keeps only canonical *_bundle.json + verdicts/reports (Junyan
+# 2026-05-29 Bundle G). Per-window wf_*/full_* and iter raw JSONs stay local.
+public/data/v3c_alpha1*_wf_*.json
+public/data/v3c_alpha1*_full_*.json
+public/data/iter1*_backtest_*.json
+public/data/iter1*_bootstrap_*.json

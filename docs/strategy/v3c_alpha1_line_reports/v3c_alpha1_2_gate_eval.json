@@ -1,0 +1,329 @@
+{
+  "variant_id": "v3c_alpha1_2_20260529_turnover_compression",
+  "verdict": "FAIL",
+  "stage": "R&D",
+  "n_gates_total": 19,
+  "n_gates_failed": 4,
+  "n_gates_na": 0,
+  "n_gates_trace": 1,
+  "failed_gate_ids": [
+    "MT",
+    "IMPL2",
+    "IMPL4",
+    "IMPL5"
+  ],
+  "na_gate_ids": [],
+  "trace_gate_ids": [
+    "AUD2"
+  ],
+  "gate_outcomes": [
+    {
+      "gate_id": "PRE1",
+      "name": "manifest_present",
+      "category": "PRE",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "manifest schema OK; variant_id=v3c_alpha1_2_20260529_turnover_compression",
+      "metric": null,
+      "threshold": "schema+fields",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "PRE2",
+      "name": "registered_before_run",
+      "category": "PRE",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "registered_at=2026-05-29T02:58:28Z vs earliest_run=2026-05-29T03:18:50.810099Z",
+      "metric": null,
+      "threshold": "registered_at < created_at",
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "PRE3",
+      "name": "hypothesis_immutable",
+      "category": "PRE",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "hypothesis_lock_hash declared (immutability enforced via git/branch)",
+      "metric": null,
+      "threshold": "declared",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "WF1",
+      "name": "walk_forward_3_of_5_pos",
+      "category": "STAT",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "3/5 windows have same_gross \u03b1 \u2265 0 point estimate; threshold 3/5",
+      "metric": 3,
+      "threshold": ">=3/5",
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "WF2",
+      "name": "oos_not_neg_significant",
+      "category": "STAT",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "OOS window wf_2022_2026 same_gross \u03b1 point=0.08201242673716247, CI=[-0.1768,0.4075], p=0.5543; NEG-sig=False",
+      "metric": 0.08201242673716247,
+      "threshold": "CI hi \u2265 0 AND not (p<0.05 with neg point)",
+      "windows_evaluated": [
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "MT",
+      "name": "by_corrected_p_lt_alpha",
+      "category": "STAT",
+      "pass": false,
+      "verdict": "FAIL",
+      "reason": "BY-corrected family p = 0.0842, threshold < 0.05",
+      "metric": 0.08415,
+      "threshold": "<0.05",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "BENCH",
+      "name": "multi_benchmark_reported",
+      "category": "STAT",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "all required benchmarks present as non-empty curves: ['cash2pct', 'csi1000', 'csi300', 'ew500', 'zz500']",
+      "metric": 5,
+      "threshold": "csi300, zz500, csi1000, ew500, cash2pct ALL required as non-empty curves (SSE50 optional, HSI absent per Junyan #13)",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "NOSW",
+      "name": "not_single_window_only",
+      "category": "STAT",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "full-sample window='full_20yr' same_gross \u03b1 point=0.4703 CI=[+0.0847,+1.0032] POS-sig=True; walk-forward 3/5 POS; bad_pattern=False",
+      "metric": 0.4703472870050456,
+      "threshold": "not (full POS-sig AND wf present AND wf < 3/5 pos)",
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL1",
+      "name": "max_positions_enforced",
+      "category": "IMPL",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "max_positions_enforced=True in all windows",
+      "metric": 6,
+      "threshold": "all windows == True",
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL2",
+      "name": "avg_gross_min_30pct",
+      "category": "IMPL",
+      "pass": false,
+      "verdict": "FAIL",
+      "reason": "failed: [('full_20yr', 0.1535844381818182), ('wf_2006_2010', 0.16706208427543678), ('wf_2010_2014', 0.1474021682146543), ('wf_2014_2018', 0.15912133572159673), ('wf_2018_2022', 0.13793612770339855), ('wf_2022_2026', 0.17052155094339622)]",
+      "metric": 0.15593795084005013,
+      "threshold": 0.3,
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL3",
+      "name": "median_pos_ge_2",
+      "category": "IMPL",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "median_n_positions \u2265 2.0 in all windows",
+      "metric": 7.0,
+      "threshold": 2.0,
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL4",
+      "name": "turnover_le_200pct",
+      "category": "IMPL",
+      "pass": false,
+      "verdict": "FAIL",
+      "reason": "turnover > 200% threshold; failed windows (window, observed turnover): [('wf_2010_2014', '205.1%'), ('wf_2018_2022', '208.8%')]",
+      "metric": 2.087684277312401,
+      "threshold": "2.0 (= 200% annual)",
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL5",
+      "name": "max_dd_floor_25pct",
+      "category": "IMPL",
+      "pass": false,
+      "verdict": "FAIL",
+      "reason": "failed: [('full_20yr', -0.5069), ('wf_2006_2010', -0.3292), ('wf_2014_2018', -0.264)]",
+      "metric": -0.5069,
+      "threshold": -0.25,
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL6",
+      "name": "sample_size_250",
+      "category": "IMPL",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "all windows \u2265 250 trade dates",
+      "metric": 969,
+      "threshold": 250,
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL7",
+      "name": "post_cost_alpha_positive",
+      "category": "IMPL",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "window=full_20yr; same_gross \u03b1 (already net of cost) by scenario: optimistic 0.20% RT=+0.4790; baseline 0.40% RT=+0.4703; pessimistic 0.60% RT=+0.4631; stage=R&D",
+      "metric": 0.4703472870050456,
+      "threshold": 0.0,
+      "windows_evaluated": [
+        "full_20yr"
+      ]
+    },
+    {
+      "gate_id": "AUD1",
+      "name": "audit_fields_present",
+      "category": "AUDIT",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "all required audit fields present",
+      "metric": 6,
+      "threshold": [
+        "config_hash",
+        "data_hash",
+        "git_commit",
+        "engine_version"
+      ],
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "AUD3",
+      "name": "trade_log_full",
+      "category": "AUDIT",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "trade-log accounting consistent",
+      "metric": 6,
+      "threshold": "n_total_trades_actual == n_total_trades",
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "BUNDLE",
+      "name": "bundle_completeness",
+      "category": "AUDIT",
+      "pass": true,
+      "verdict": "PASS",
+      "reason": "bundle complete: 6 declared windows all present (['full_20yr', 'wf_2006_2010', 'wf_2010_2014', 'wf_2014_2018', 'wf_2018_2022', 'wf_2022_2026'])",
+      "metric": "6/6",
+      "threshold": "all manifest.test_plan.windows present",
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "AUD2",
+      "name": "max_positions_enforced_audit_mirror",
+      "category": "AUDIT",
+      "pass": true,
+      "verdict": "TRACE",
+      "reason": "max_positions_enforced=True in all windows",
+      "metric": 6,
+      "threshold": "all windows == True",
+      "windows_evaluated": [
+        "full_20yr",
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    }
+  ]
+}

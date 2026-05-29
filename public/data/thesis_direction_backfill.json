@@ -1,0 +1,549 @@
+{
+  "_meta": {
+    "read_only": true,
+    "originals_mutated": false,
+    "method": "schema parse of existing falsifiable structure; PASS→WATCH_* only on a NET directional lean (numeric R:R + one-sided directional language); symmetric/zero/ambiguous → UNRESOLVED/PASS; never flipped to LONG/SHORT",
+    "discipline": "WATCH_* is forward-tracking-eligible ONLY, NOT capital-eligible; tagged [unvalidated forward candidate]"
+  },
+  "all_25_stage_snapshots": {
+    "counts": {
+      "WATCH_SHORT": 7,
+      "WATCH_LONG": 1,
+      "UNRESOLVED": 8,
+      "LONG": 3,
+      "PASS": 5,
+      "SHORT": 1
+    },
+    "directional_for_capital": 4,
+    "directional_for_validation": 12
+  },
+  "latest_stage_per_ticker": {
+    "n_tickers": 7,
+    "counts": {
+      "LONG": 1,
+      "PASS": 2,
+      "SHORT": 1,
+      "WATCH_SHORT": 3
+    },
+    "directional_for_capital": 2,
+    "directional_for_validation": 5
+  },
+  "rows": [
+    {
+      "file": "002594SZ_thesis_2026-05-05_1438BST",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-05",
+      "stage": "1438BST",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "cover ",
+          "compression"
+        ],
+        "rr": "2.2:1",
+        "asym_up": "+25% to +35% (short p&l on price decline from curr"
+      },
+      "note": "[unvalidated forward candidate]"
+    },
+    {
+      "file": "002594SZ_thesis_2026-05-05_1530BST",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-05",
+      "stage": "1530BST",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_LONG",
+      "tier": "validation",
+      "basis": "net LONG lean: long-language + numeric R:R, filed PASS",
+      "evidence": {
+        "long_kw": [
+          "re-rating"
+        ],
+        "rr": "2.3:1",
+        "asym_up": "+35% to +50% over 6 months (re-rating to 22-24x fw"
+      },
+      "note": "[unvalidated forward candidate]"
+    },
+    {
+      "file": "002594SZ_thesis_2026-05-08_GROUNDED",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-08",
+      "stage": "GROUNDED",
+      "original_direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "tier": "none",
+      "basis": "numeric R:R but no clear one-sided directional language",
+      "evidence": {
+        "short_kw": [],
+        "long_kw": [],
+        "rr": "2.2:1"
+      },
+      "note": null
+    },
+    {
+      "file": "002594SZ_thesis_2026-05-08_MULTIAGENT",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-08",
+      "stage": "MULTIAGENT",
+      "original_direction": "LONG",
+      "reclassified": "LONG",
+      "tier": "capital",
+      "basis": "_direction (synthesizer)",
+      "evidence": [],
+      "note": null
+    },
+    {
+      "file": "002594SZ_thesis_2026-05-08_PHASE1.5",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-08",
+      "stage": "PHASE1.5",
+      "original_direction": "LONG",
+      "reclassified": "LONG",
+      "tier": "capital",
+      "basis": "_direction (synthesizer)",
+      "evidence": [],
+      "note": null
+    },
+    {
+      "file": "002594SZ_thesis_2026-05-10_PHASE2",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-10",
+      "stage": "PHASE2",
+      "original_direction": "LONG",
+      "reclassified": "LONG",
+      "tier": "capital",
+      "basis": "_direction (synthesizer)",
+      "evidence": [],
+      "note": null
+    },
+    {
+      "file": "175HK_thesis_2026-05-08_GROUNDED",
+      "ts_code": "175.HK",
+      "thesis_date": "2026-05-08",
+      "stage": "GROUNDED",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "downside"
+        ],
+        "rr": "2.3:1",
+        "asym_up": "+30% to +45% (target 29.5-33.0 hkd on 11-13x fwd p"
+      },
+      "note": "[unvalidated forward candidate]"
+    },
+    {
+      "file": "175HK_thesis_2026-05-08_MULTIAGENT",
+      "ts_code": "175.HK",
+      "thesis_date": "2026-05-08",
+      "stage": "MULTIAGENT",
+      "original_direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "tier": "none",
+      "basis": "symmetric both-ways conditional in what_changes_our_mind (no net lean)",
+      "evidence": [
+        "wcm has both LONG and SHORT triggers"
+      ],
+      "note": null
+    },
+    {
+      "file": "175HK_thesis_2026-05-08_PHASE1.5",
+      "ts_code": "175.HK",
+      "thesis_date": "2026-05-08",
+      "stage": "PHASE1.5",
+      "original_direction": "PASS",
+      "reclassified": "PASS",
+      "tier": "none",
+      "basis": "explicit no-position / capital-preservation asymmetry",
+      "evidence": [
+        "asym_up='0% (no position)'",
+        "asym_dn='0% (no position)'"
+      ],
+      "note": null
+    },
+    {
+      "file": "175HK_thesis_2026-05-10_PHASE2",
+      "ts_code": "175.HK",
+      "thesis_date": "2026-05-10",
+      "stage": "PHASE2",
+      "original_direction": "PASS",
+      "reclassified": "PASS",
+      "tier": "none",
+      "basis": "explicit no-position / capital-preservation asymmetry",
+      "evidence": [
+        "asym_up='0% (pass — no position)'",
+        "asym_dn='0% (pass — no position)'"
+      ],
+      "note": null
+    },
+    {
+      "file": "300308SZ_thesis_2026-05-08_GROUNDED",
+      "ts_code": "300308.SZ",
+      "thesis_date": "2026-05-08",
+      "stage": "GROUNDED",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "compression"
+        ],
+        "rr": "2.3:1",
+        "asym_up": "-28% (886→640 mid case, -18% to low-case -37%)"
+      },
+      "note": "[unvalidated forward candidate]"
+    },
+    {
+      "file": "300308SZ_thesis_2026-05-08_MULTIAGENT",
+      "ts_code": "300308.SZ",
+      "thesis_date": "2026-05-08",
+      "stage": "MULTIAGENT",
+      "original_direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "tier": "none",
+      "basis": "symmetric both-ways conditional in what_changes_our_mind (no net lean)",
+      "evidence": [
+        "wcm has both LONG and SHORT triggers"
+      ],
+      "note": null
+    },
+    {
+      "file": "300308SZ_thesis_2026-05-08_PHASE1.5",
+      "ts_code": "300308.SZ",
+      "thesis_date": "2026-05-08",
+      "stage": "PHASE1.5",
+      "original_direction": "PASS",
+      "reclassified": "PASS",
+      "tier": "none",
+      "basis": "explicit no-position / capital-preservation asymmetry",
+      "evidence": [
+        "asym_up='0% (pass preserves capital, avoids -10% '",
+        "asym_dn='-5% to -10% opportunity cost if stock ra'"
+      ],
+      "note": null
+    },
+    {
+      "file": "300308SZ_thesis_2026-05-10_PHASE2",
+      "ts_code": "300308.SZ",
+      "thesis_date": "2026-05-10",
+      "stage": "PHASE2",
+      "original_direction": "PASS",
+      "reclassified": "PASS",
+      "tier": "none",
+      "basis": "explicit no-position / capital-preservation asymmetry",
+      "evidence": [
+        "asym_up='0% (pass preserves capital)'",
+        "asym_dn='0% to -10% (opportunity cost if stock br'"
+      ],
+      "note": null
+    },
+    {
+      "file": "603233SH_thesis_2026-05-08_GROUNDED",
+      "ts_code": "603233.SH",
+      "thesis_date": "2026-05-08",
+      "stage": "GROUNDED",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "downside"
+        ],
+        "rr": "2.3:1",
+        "asym_up": "+25% to +35% (target 23-25 vs spot 18.55)"
+      },
+      "note": "[unvalidated forward candidate]"
+    },
+    {
+      "file": "603233SH_thesis_2026-05-08_MULTIAGENT",
+      "ts_code": "603233.SH",
+      "thesis_date": "2026-05-08",
+      "stage": "MULTIAGENT",
+      "original_direction": "PASS",
+      "reclassified": "PASS",
+      "tier": "none",
+      "basis": "explicit no-position / capital-preservation asymmetry",
+      "evidence": [
+        "asym_up='0% (pass, no position)'",
+        "asym_dn='0% (pass, no position)'"
+      ],
+      "note": null
+    },
+    {
+      "file": "603233SH_thesis_2026-05-08_PHASE1.5",
+      "ts_code": "603233.SH",
+      "thesis_date": "2026-05-08",
+      "stage": "PHASE1.5",
+      "original_direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "tier": "none",
+      "basis": "symmetric both-ways conditional in what_changes_our_mind (no net lean)",
+      "evidence": [
+        "wcm has both LONG and SHORT triggers"
+      ],
+      "note": null
+    },
+    {
+      "file": "603233SH_thesis_2026-05-10_PHASE2",
+      "ts_code": "603233.SH",
+      "thesis_date": "2026-05-10",
+      "stage": "PHASE2",
+      "original_direction": "SHORT",
+      "reclassified": "SHORT",
+      "tier": "capital",
+      "basis": "_direction (synthesizer)",
+      "evidence": [],
+      "note": null
+    },
+    {
+      "file": "6160HK_thesis_2026-05-05_1438BST",
+      "ts_code": "6160.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1438BST",
+      "original_direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "tier": "none",
+      "basis": "numeric R:R but no clear one-sided directional language",
+      "evidence": {
+        "short_kw": [],
+        "long_kw": [],
+        "rr": "2.3:1"
+      },
+      "note": null
+    },
+    {
+      "file": "6160HK_thesis_2026-05-05_1530BST",
+      "ts_code": "6160.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1530BST",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "saturation",
+          "compression"
+        ],
+        "rr": "1.6:1",
+        "asym_up": "-30% to -38% (multiple compression to 4x ev/s + ep"
+      },
+      "note": "[unvalidated forward candidate]"
+    },
+    {
+      "file": "700HK_thesis_2026-05-05_1255BST",
+      "ts_code": "700.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1255BST",
+      "original_direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "tier": "none",
+      "basis": "numeric R:R but no clear one-sided directional language",
+      "evidence": {
+        "short_kw": [
+          "de-rate"
+        ],
+        "long_kw": [
+          "re-rating"
+        ],
+        "rr": "2.5:1"
+      },
+      "note": null
+    },
+    {
+      "file": "700HK_thesis_2026-05-05_1438BST",
+      "ts_code": "700.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1438BST",
+      "original_direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "tier": "none",
+      "basis": "numeric R:R but no clear one-sided directional language",
+      "evidence": {
+        "short_kw": [],
+        "long_kw": [],
+        "rr": "2.5:1"
+      },
+      "note": null
+    },
+    {
+      "file": "700HK_thesis_2026-05-05_1530BST",
+      "ts_code": "700.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1530BST",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "short return",
+          "cover at",
+          "cover "
+        ],
+        "rr": "2:1",
+        "asym_up": "+18% to +22% (short return as stock moves from hk$"
+      },
+      "note": "[unvalidated forward candidate]"
+    },
+    {
+      "file": "9999HK_thesis_2026-05-05_1438BST",
+      "ts_code": "9999.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1438BST",
+      "original_direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "tier": "none",
+      "basis": "numeric R:R but no clear one-sided directional language",
+      "evidence": {
+        "short_kw": [
+          "decay"
+        ],
+        "long_kw": [
+          "re-rate"
+        ],
+        "rr": "2.5:1"
+      },
+      "note": null
+    },
+    {
+      "file": "9999HK_thesis_2026-05-05_1530BST",
+      "ts_code": "9999.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1530BST",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "short return",
+          "decay"
+        ],
+        "rr": "1.9:1",
+        "asym_up": "+15% short return (hk shares -12 to -18% from ~hkd"
+      },
+      "note": "[unvalidated forward candidate]"
+    }
+  ],
+  "latest_rows": [
+    {
+      "file": "002594SZ_thesis_2026-05-10_PHASE2",
+      "ts_code": "002594.SZ",
+      "thesis_date": "2026-05-10",
+      "stage": "PHASE2",
+      "original_direction": "LONG",
+      "reclassified": "LONG",
+      "tier": "capital",
+      "basis": "_direction (synthesizer)",
+      "evidence": [],
+      "note": null
+    },
+    {
+      "file": "175HK_thesis_2026-05-10_PHASE2",
+      "ts_code": "175.HK",
+      "thesis_date": "2026-05-10",
+      "stage": "PHASE2",
+      "original_direction": "PASS",
+      "reclassified": "PASS",
+      "tier": "none",
+      "basis": "explicit no-position / capital-preservation asymmetry",
+      "evidence": [
+        "asym_up='0% (pass — no position)'",
+        "asym_dn='0% (pass — no position)'"
+      ],
+      "note": null
+    },
+    {
+      "file": "300308SZ_thesis_2026-05-10_PHASE2",
+      "ts_code": "300308.SZ",
+      "thesis_date": "2026-05-10",
+      "stage": "PHASE2",
+      "original_direction": "PASS",
+      "reclassified": "PASS",
+      "tier": "none",
+      "basis": "explicit no-position / capital-preservation asymmetry",
+      "evidence": [
+        "asym_up='0% (pass preserves capital)'",
+        "asym_dn='0% to -10% (opportunity cost if stock br'"
+      ],
+      "note": null
+    },
+    {
+      "file": "603233SH_thesis_2026-05-10_PHASE2",
+      "ts_code": "603233.SH",
+      "thesis_date": "2026-05-10",
+      "stage": "PHASE2",
+      "original_direction": "SHORT",
+      "reclassified": "SHORT",
+      "tier": "capital",
+      "basis": "_direction (synthesizer)",
+      "evidence": [],
+      "note": null
+    },
+    {
+      "file": "6160HK_thesis_2026-05-05_1530BST",
+      "ts_code": "6160.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1530BST",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "saturation",
+          "compression"
+        ],
+        "rr": "1.6:1",
+        "asym_up": "-30% to -38% (multiple compression to 4x ev/s + ep"
+      },
+      "note": "[unvalidated forward candidate]"
+    },
+    {
+      "file": "700HK_thesis_2026-05-05_1530BST",
+      "ts_code": "700.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1530BST",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "short return",
+          "cover at",
+          "cover "
+        ],
+        "rr": "2:1",
+        "asym_up": "+18% to +22% (short return as stock moves from hk$"
+      },
+      "note": "[unvalidated forward candidate]"
+    },
+    {
+      "file": "9999HK_thesis_2026-05-05_1530BST",
+      "ts_code": "9999.HK",
+      "thesis_date": "2026-05-05",
+      "stage": "1530BST",
+      "original_direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "tier": "validation",
+      "basis": "net SHORT lean: short-language + numeric R:R, filed PASS",
+      "evidence": {
+        "short_kw": [
+          "short return",
+          "decay"
+        ],
+        "rr": "1.9:1",
+        "asym_up": "+15% short return (hk shares -12 to -18% from ~hkd"
+      },
+      "note": "[unvalidated forward candidate]"
+    }
+  ]
+}

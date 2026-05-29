@@ -1,0 +1,385 @@
+{
+  "_meta": {
+    "diagnostic": "v3c_regime_diagnostic",
+    "read_only": true,
+    "config_source": "v3c_alpha1_3a (locked)",
+    "no_tuning": true,
+    "crisis_window_rule": "standard A-share bear episodes, index peak→recovery, NOT outcome-tuned"
+  },
+  "crisis": [
+    {
+      "window": "crisis_2008",
+      "period": [
+        "2008-01-01",
+        "2009-08-31"
+      ],
+      "same_gross_alpha": {
+        "point": 1.3405896017353256,
+        "lo": -0.2366625925364484,
+        "hi": 7.066360221856733,
+        "p_value": 0.1511,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 406,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": 0.38286617008065704,
+        "lo": -0.35962342459071794,
+        "hi": 2.0589891684326322,
+        "p_value": 0.4116,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 2.6494097531308447,
+      "avg_holding_days": 34.490196078431374,
+      "n_total_trades": 211,
+      "cagr": -0.02174399159052509,
+      "max_drawdown": -0.1478,
+      "avg_gross_pct": 0.13590426960784313,
+      "kind": "crisis"
+    },
+    {
+      "window": "crisis_2011",
+      "period": [
+        "2011-04-01",
+        "2012-12-31"
+      ],
+      "same_gross_alpha": {
+        "point": 0.4822560265581548,
+        "lo": -0.4815302890718387,
+        "hi": 3.4536405488192505,
+        "p_value": 0.4657,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 427,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": 0.3016698853981885,
+        "lo": -0.08014746936926043,
+        "hi": 0.8326018864709017,
+        "p_value": 0.1384,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 3.183992909254823,
+      "avg_holding_days": 28.3781512605042,
+      "n_total_trades": 246,
+      "cagr": -0.09356862848931491,
+      "max_drawdown": -0.1913,
+      "avg_gross_pct": 0.13254808857808859,
+      "kind": "crisis"
+    },
+    {
+      "window": "crisis_2015",
+      "period": [
+        "2015-06-01",
+        "2016-12-31"
+      ],
+      "same_gross_alpha": {
+        "point": -0.2709980497213127,
+        "lo": -0.8690100189918014,
+        "hi": 2.279901390691781,
+        "p_value": 0.7001,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 388,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": 0.5021409430321859,
+        "lo": -0.27201887318259177,
+        "hi": 2.276108535098331,
+        "p_value": 0.2975,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 2.493586623727858,
+      "avg_holding_days": 34.59782608695652,
+      "n_total_trades": 191,
+      "cagr": -0.08054345672974295,
+      "max_drawdown": -0.185,
+      "avg_gross_pct": 0.11699058717948718,
+      "kind": "crisis"
+    },
+    {
+      "window": "crisis_2018",
+      "period": [
+        "2018-01-01",
+        "2019-04-30"
+      ],
+      "same_gross_alpha": {
+        "point": 0.007549500172333801,
+        "lo": -0.5227959838643368,
+        "hi": 1.3982586748260446,
+        "p_value": 0.9849,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 320,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": 0.260068621614735,
+        "lo": -0.23072500974346066,
+        "hi": 0.9892552401178498,
+        "p_value": 0.3335,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 3.117465173627201,
+      "avg_holding_days": 27.456521739130434,
+      "n_total_trades": 192,
+      "cagr": -0.10399422880187525,
+      "max_drawdown": -0.1426,
+      "avg_gross_pct": 0.11782833850931677,
+      "kind": "crisis"
+    },
+    {
+      "window": "crisis_2022",
+      "period": [
+        "2022-01-01",
+        "2022-12-31"
+      ],
+      "same_gross_alpha": {
+        "point": -0.0735941692674752,
+        "lo": -0.4849158462869013,
+        "hi": 0.6842638677817201,
+        "p_value": 0.7926,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 240,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": 0.420344755983977,
+        "lo": -0.09283882843798474,
+        "hi": 1.2230126446053156,
+        "p_value": 0.126,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 2.5526353040337493,
+      "avg_holding_days": 34.86206896551724,
+      "n_total_trades": 124,
+      "cagr": -0.07796498524156603,
+      "max_drawdown": -0.0977,
+      "avg_gross_pct": 0.1314798305785124,
+      "kind": "crisis"
+    },
+    {
+      "window": "crisis_2024",
+      "period": [
+        "2024-01-01",
+        "2024-09-30"
+      ],
+      "same_gross_alpha": {
+        "point": -0.223630903500317,
+        "lo": -0.6719053716844076,
+        "hi": 0.5791171132513604,
+        "p_value": 0.5327,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 179,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": 0.07818161579855376,
+        "lo": -0.4906143799828212,
+        "hi": 1.0213181407547975,
+        "p_value": 0.8329,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 2.8977535932894356,
+      "avg_holding_days": 27.80851063829787,
+      "n_total_trades": 100,
+      "cagr": -0.051885652134651794,
+      "max_drawdown": -0.0771,
+      "avg_gross_pct": 0.13587222651933703,
+      "kind": "crisis"
+    }
+  ],
+  "calm": [
+    {
+      "window": "calm_2009_2010",
+      "period": [
+        "2009-09-01",
+        "2010-12-31"
+      ],
+      "same_gross_alpha": {
+        "point": 0.8128924079494853,
+        "lo": -0.27601617551154745,
+        "hi": 3.6844527009873627,
+        "p_value": 0.2052,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 322,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": -0.18374886558688908,
+        "lo": -0.49019816212350664,
+        "hi": 0.3253776719366155,
+        "p_value": 0.4102,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 2.4275681560845923,
+      "avg_holding_days": 49.125,
+      "n_total_trades": 136,
+      "cagr": -0.0028390049806106266,
+      "max_drawdown": -0.0765,
+      "avg_gross_pct": 0.16314669444444446,
+      "kind": "calm"
+    },
+    {
+      "window": "calm_2013_2014",
+      "period": [
+        "2013-01-01",
+        "2014-12-31"
+      ],
+      "same_gross_alpha": {
+        "point": 0.03840810653428406,
+        "lo": -0.34492667816761347,
+        "hi": 0.6510772650862924,
+        "p_value": 0.8713,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 481,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": -0.15393074021437225,
+        "lo": -0.347353477933131,
+        "hi": 0.10660939519694201,
+        "p_value": 0.2111,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 2.496966940940801,
+      "avg_holding_days": 46.78431372549019,
+      "n_total_trades": 212,
+      "cagr": 0.016933178342200428,
+      "max_drawdown": -0.081,
+      "avg_gross_pct": 0.16378086128364389,
+      "kind": "calm"
+    },
+    {
+      "window": "calm_2017",
+      "period": [
+        "2017-01-01",
+        "2017-12-31"
+      ],
+      "same_gross_alpha": {
+        "point": -0.4695466867088922,
+        "lo": -0.9254850153000183,
+        "hi": 2.395463747452576,
+        "p_value": 0.4985,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 242,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": 0.20708590487911138,
+        "lo": -0.16032643227102183,
+        "hi": 0.7581727596548642,
+        "p_value": 0.3126,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 2.8951815911915277,
+      "avg_holding_days": 33.03225806451613,
+      "n_total_trades": 132,
+      "cagr": -0.10366578821739414,
+      "max_drawdown": -0.1153,
+      "avg_gross_pct": 0.12060420491803278,
+      "kind": "calm"
+    },
+    {
+      "window": "calm_2019_2021",
+      "period": [
+        "2019-05-01",
+        "2021-12-31"
+      ],
+      "same_gross_alpha": {
+        "point": -0.13143788582711657,
+        "lo": -0.3473807188687761,
+        "hi": 0.153788714032987,
+        "p_value": 0.3306,
+        "direction": "STRADDLES",
+        "excludes_zero": false,
+        "n_dates": 649,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": -0.08773707178153145,
+        "lo": -0.28103732768441525,
+        "hi": 0.14919301306150778,
+        "p_value": 0.4477,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 2.3679886607804383,
+      "avg_holding_days": 39.59602649006622,
+      "n_total_trades": 309,
+      "cagr": -0.021870067429148543,
+      "max_drawdown": -0.0885,
+      "avg_gross_pct": 0.1400221950844854,
+      "kind": "calm"
+    },
+    {
+      "window": "calm_2023",
+      "period": [
+        "2023-01-01",
+        "2023-12-31"
+      ],
+      "same_gross_alpha": {
+        "point": 0.5579038114587171,
+        "lo": 0.027092334527364148,
+        "hi": 1.427936378485052,
+        "p_value": 0.0434,
+        "direction": "POSITIVE",
+        "excludes_zero": true,
+        "n_dates": 240,
+        "gross_floor": 0.05
+      },
+      "raw_alpha": {
+        "point": 0.3213229816666623,
+        "lo": -0.021005537796121576,
+        "hi": 0.7661163909115449,
+        "p_value": 0.0642,
+        "direction": "STRADDLES",
+        "excludes_zero": false
+      },
+      "turnover_annual_ratio": 2.7635861163548605,
+      "avg_holding_days": 34.377049180327866,
+      "n_total_trades": 130,
+      "cagr": 0.009715447999740778,
+      "max_drawdown": -0.0286,
+      "avg_gross_pct": 0.14139352479338846,
+      "kind": "calm"
+    }
+  ],
+  "summary": {
+    "crisis": {
+      "label": "crisis",
+      "n": 6,
+      "n_pos_point": 3,
+      "n_pos_sig_excl0": 0,
+      "mean_point": 0.2103620009961182
+    },
+    "calm": {
+      "label": "calm",
+      "n": 5,
+      "n_pos_point": 3,
+      "n_pos_sig_excl0": 1,
+      "mean_point": 0.16164395068129553
+    },
+    "non2008_positive": [
+      2,
+      5
+    ]
+  }
+}
