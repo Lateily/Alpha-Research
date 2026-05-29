@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-05-28T11:55:25.686826",
+  "fetched_at": "2026-05-29T05:17:30.168401",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-05-28"
+    "updated": "2026-05-29"
   },
   "southbound": {
     "latest_net_flow": 76.0876,
     "5d_cumulative": -136.7498,
     "20d_cumulative": 132.3302,
     "trend": "outflow",
-    "updated": "2026-05-28"
+    "updated": "2026-05-29"
   },
   "dragon_tiger": [
     {
@@ -179,7 +179,7 @@
       "code": "000518",
       "name": "四环生物",
       "date": "",
-      "reason": "日换手率达到20%的前5只证券",
+      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -189,7 +189,7 @@
       "code": "000518",
       "name": "四环生物",
       "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
+      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,

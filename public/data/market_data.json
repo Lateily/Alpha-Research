@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-05-28T11:55:25.685915",
+    "fetched_at": "2026-05-29T05:17:30.167498",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -15,16 +15,16 @@
   "yahoo": {
     "300308.SZ": {
       "price": {
-        "last": 1197.99,
-        "prev_close": 1111.37,
-        "change_pct": 7.794,
-        "high": 1199.79,
-        "low": 1085.56,
-        "volume": 2874651300,
+        "last": 1188.52,
+        "prev_close": 1197.99,
+        "change_pct": -0.79,
+        "high": 1209.99,
+        "low": 1157.91,
+        "volume": 2058874900,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 1199.79,
-        "low_52w": 1085.56
+        "high_52w": 1209.99,
+        "low_52w": 1157.91
       },
       "technical": {
         "sma_20": null,
@@ -88,16 +88,16 @@
     },
     "002594.SZ": {
       "price": {
-        "last": 95.88,
-        "prev_close": 95.22,
-        "change_pct": 0.693,
-        "high": 95.99,
-        "low": 94.03,
-        "volume": 3145897600,
+        "last": 97.31,
+        "prev_close": 95.88,
+        "change_pct": 1.491,
+        "high": 99.5,
+        "low": 96.15,
+        "volume": 4450958800,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 95.99,
-        "low_52w": 94.03
+        "high_52w": 99.5,
+        "low_52w": 96.15
       },
       "technical": {
         "sma_20": null,
@@ -161,16 +161,16 @@
     },
     "175.HK": {
       "price": {
-        "last": 19.22,
-        "prev_close": 19.53,
-        "change_pct": -1.587,
-        "high": 19.53,
-        "low": 18.62,
-        "volume": -182,
+        "last": 18.87,
+        "prev_close": 18.64,
+        "change_pct": 1.234,
+        "high": 18.76,
+        "low": 18.26,
+        "volume": -79,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 19.53,
-        "low_52w": 18.62
+        "high_52w": 18.76,
+        "low_52w": 18.26
       },
       "technical": {
         "sma_20": null,
@@ -234,16 +234,16 @@
     },
     "603233.SH": {
       "price": {
-        "last": 16.25,
-        "prev_close": 16.56,
-        "change_pct": -1.872,
-        "high": 16.63,
-        "low": 16.08,
-        "volume": 391622200,
+        "last": 16.54,
+        "prev_close": 16.25,
+        "change_pct": 1.785,
+        "high": 16.68,
+        "low": 16.23,
+        "volume": 320932500,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 16.63,
-        "low_52w": 16.08
+        "high_52w": 16.68,
+        "low_52w": 16.23
       },
       "technical": {
         "sma_20": null,
@@ -313,14 +313,14 @@
       "5d_cumulative": 0.0,
       "20d_cumulative": 0.0,
       "trend": "outflow",
-      "updated": "2026-05-28"
+      "updated": "2026-05-29"
     },
     "southbound": {
       "latest_net_flow": 76.0876,
       "5d_cumulative": -136.7498,
       "20d_cumulative": 132.3302,
       "trend": "outflow",
-      "updated": "2026-05-28"
+      "updated": "2026-05-29"
     },
     "dragon_tiger": [
       {
@@ -487,7 +487,7 @@
         "code": "000518",
         "name": "四环生物",
         "date": "",
-        "reason": "日换手率达到20%的前5只证券",
+        "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -497,7 +497,7 @@
         "code": "000518",
         "name": "四环生物",
         "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
+        "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
