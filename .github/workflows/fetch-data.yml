@@ -323,6 +323,17 @@ jobs:
       # Uses 'git add -f --ignore-errors' so missing glob expansions (e.g. no
       # ohlc_*.json yet) don't abort the step. git diff --cached guard means
       # we only commit when there are actual changes.
+      # Regenerate the thesis↔portfolio alignment marker AFTER positions.json is
+      # final this run, so the Dashboard (which reads the COMMITTED JSON) stays
+      # fresh daily — not just the morning-report transient copy. Read-only marker:
+      # no trades, no position changes (see PORTFOLIO_THESIS_ALIGNMENT_RULES.md).
+      # stdlib-only (no pandas); best-effort so a hiccup never blocks the data commit.
+      - name: Regenerate thesis alignment marker
+        continue-on-error: true
+        run: |
+          python3 scripts/backfill_thesis_direction.py  || echo "backfill skipped (non-fatal)"
+          python3 scripts/portfolio_thesis_alignment.py || echo "alignment skipped (non-fatal)"
+
       - name: Commit and push data
         run: |
           git config user.name "github-actions[bot]"
@@ -339,6 +350,8 @@ jobs:
             public/data/positions.json \
             public/data/analytics.json \
             public/data/snapshots.json \
+            public/data/portfolio_thesis_alignment.json \
+            public/data/thesis_direction_backfill.json \
             public/data/backtest_results.json \
             public/data/stress_test.json \
             public/data/confluence.json \

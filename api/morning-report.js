@@ -202,8 +202,49 @@ Return ONLY this JSON object:
 No markdown. Return only the JSON object.`;
 }
 
+// ─── THESIS↔POSITION HUMAN-REVIEW QUEUE (deterministic, NOT LLM-generated) ────
+// Reads the alignment marker (public/data/portfolio_thesis_alignment.json), passed
+// in via body.thesis_alignment. Lists ONLY positions whose live side conflicts with
+// the latest research direction. MARKER ONLY: no auto-trade, no auto-close — humans
+// decide. See docs/strategy/PORTFOLIO_THESIS_ALIGNMENT_RULES.md.
+function buildAlignmentQueueHtml(alignment) {
+  if (!alignment || !Array.isArray(alignment.positions)) return '';
+  const review = alignment.positions.filter(p => p.requires_human_review);
+  if (!review.length) return '';
+  const ac = { WATCH_CONFLICT: '#f59e0b', HARD_CONFLICT: '#ef4444' };
+  const rows = review.map(p => {
+    const c = ac[p.alignment] || '#6b7280';
+    const pnl = p.pnl_pct != null ? `${p.pnl_pct >= 0 ? '+' : ''}${Number(p.pnl_pct).toFixed(1)}%` : '—';
+    return `<tr>
+      <td style="padding:8px 12px; border-bottom:1px solid #f0f0f0; font-family:monospace; font-size:12px; color:#1a1a1a; white-space:nowrap">${p.ts_code}</td>
+      <td style="padding:8px 12px; border-bottom:1px solid #f0f0f0; font-size:11px; color:#444">${p.name || ''}</td>
+      <td style="padding:8px 12px; border-bottom:1px solid #f0f0f0; font-size:11px; font-family:monospace; color:#444">${p.position_side} vs ${p.latest_thesis_direction || '—'}</td>
+      <td style="padding:8px 12px; border-bottom:1px solid #f0f0f0; font-size:11px; font-family:monospace; color:#444; text-align:right">${pnl}</td>
+      <td style="padding:8px 12px; border-bottom:1px solid #f0f0f0">
+        <span style="display:inline-block; padding:2px 8px; border-radius:3px; font-size:9px; font-weight:700; background:${c}20; color:${c}">${p.alignment} ⚠</span>
+      </td>
+    </tr>`;
+  }).join('');
+  return `
+  <!-- Human Review Queue -->
+  <div style="background:#ffffff; border:1px solid #e5e7eb; padding:16px 24px; margin-bottom:2px">
+    <div style="font-size:10px; font-weight:700; color:#b45309; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px">⚠ Human Review Queue — Thesis / Position Conflicts</div>
+    <div style="font-size:10px; color:#888; margin-bottom:10px; line-height:1.5">These positions are held AGAINST the latest research direction. Marker only — no auto-trade, no auto-close; the human decides to hold, trim, or exit.</div>
+    <table style="width:100%; border-collapse:collapse">
+      <thead><tr style="background:#fffbeb">
+        <th style="padding:6px 12px; text-align:left; font-size:9px; color:#9ca3af; font-weight:600; text-transform:uppercase">Ticker</th>
+        <th style="padding:6px 12px; text-align:left; font-size:9px; color:#9ca3af; font-weight:600; text-transform:uppercase">Name</th>
+        <th style="padding:6px 12px; text-align:left; font-size:9px; color:#9ca3af; font-weight:600; text-transform:uppercase">Pos vs Thesis</th>
+        <th style="padding:6px 12px; text-align:right; font-size:9px; color:#9ca3af; font-weight:600; text-transform:uppercase">P&amp;L</th>
+        <th style="padding:6px 12px; text-align:left; font-size:9px; color:#9ca3af; font-weight:600; text-transform:uppercase">Alignment</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
 // ─── HTML EMAIL BUILDER ───────────────────────────────────────────────────────
-function buildEmailHtml(report, date) {
+function buildEmailHtml(report, date, alignment) {
   const moodColor   = { 'RISK-ON': '#22c55e', 'NEUTRAL': '#6b7280', 'RISK-OFF': '#ef4444' }[report.market_mood] || '#6b7280';
   const statusColor = { CLEAR:'#22c55e', WATCH:'#eab308', ACTION:'#f97316', ALERT:'#ef4444' };
   const urgColor    = { HIGH:'#ef4444',  MED:'#eab308',   LOW:'#22c55e' };
@@ -305,6 +346,8 @@ function buildEmailHtml(report, date) {
     </table>
   </div>
 
+  ${buildAlignmentQueueHtml(alignment)}
+
   ${tradeRows ? `
   <!-- Trade Ideas -->
   <div style="background:#ffffff; border:1px solid #e5e7eb; padding:16px 24px; margin-bottom:2px">
@@ -382,8 +425,10 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'Claude returned invalid JSON', raw: text.slice(0, 300) });
     }
 
-    // Build HTML email
-    const htmlEmail = buildEmailHtml(report, date);
+    // Build HTML email. body.thesis_alignment (contents of
+    // public/data/portfolio_thesis_alignment.json) is rendered as a deterministic
+    // human-review queue — NOT passed through the LLM, never triggers trades.
+    const htmlEmail = buildEmailHtml(report, date, body.thesis_alignment);
 
     const result = {
       date,
