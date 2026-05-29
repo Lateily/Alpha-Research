@@ -36,11 +36,34 @@ DEFAULT_CONFIG = {
     "trailing_stop_pct": -0.05,            # -5% from peak
     "take_profit_pct": 0.10,               # +10% from entry
     "time_stop_days": 7,                   # sell after 7 days
-    "composite_decay": 30,                 # sell if composite drops 30 pts from entry
+    "composite_decay": 60,                 # legacy iter-13 path (slow engine)
+    "min_hold_days": 0,                    # iter-15: disabled — per Junyan, structure decides not forced rule
+    "enable_take_profit_half": False,      # iter-13: disabled
+    "enable_sector_drop_exit": False,      # iter-13: disabled
+    "entry_composite_threshold": 70.0,     # iter-14: 入场最低 composite 分
+    "structure_break_threshold": 50.0,     # iter-15: exit when composite drops below this (entry was ≥70)
+    "take_profit_full": 0.20,              # iter-15: full take profit at +20% (was 10% half)
     "drawdown_scale_down": -0.15,          # at -15% portfolio DD: reduce gross to 60%
     "drawdown_to_cash": -0.25,             # at -25% DD: flat all + wait 5 days
     "high_vol_regime_threshold": 0.30,     # realized 60d vol > 30% → reduce gross 50%
+    # v3 Phase B-fix (Junyan PM3 2026-05-28 Bug 1): disable the permanent
+    # drawdown_to_cash breaker for research backtests. The breaker's spec
+    # comment claims "wait 5 days re-entry" but that re-entry path was never
+    # implemented; once triggered, full_20yr is stuck flat for the remainder
+    # of the window (14 years in the V3C-α1 case). Walk-forward sub-windows
+    # avoided this because each window starts fresh.
+    # Production (paper/capital): leave False until re-entry logic lands.
+    # TODO: implement re-entry after N days post drawdown_to_cash trigger
+    #       (v4 platform improvement).
+    "disable_drawdown_breaker": False,
     "top_n_picks": 8,                      # default 8 active positions
+    # iter-16: quality pre-filter knobs (上涨势能 + 故事代理)
+    "use_quality_filter": True,            # apply quality_universe filter after liquid top-N
+    "min_quality_universe": 20,            # if quality_today < this many, fall back to liquid_today
+    "quality_require_limitup": True,       # G4: require ≥1 limit-up day in last 30d (热度代理)
+    "quality_min_60d_ret": 0.0,            # G1: 60d return > this
+    "quality_dd_floor": 0.80,              # G2: close > 60d_max × this
+    "quality_up_day_min": 10,              # G3: 20d up-day count ≥ this
 }
 
 
