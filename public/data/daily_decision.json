@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-29T05:21:13.526134+00:00",
+  "generated_at": "2026-05-29T11:47:58.861302+00:00",
   "date": "2026-05-29",
   "brief_e": "1 REVIEW_TRIM",
   "brief_z": "REVIEW_TRIM1",
@@ -12,13 +12,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 4,
-        "pnl_pct": 74.43,
+        "pnl_pct": 70.42,
         "holding_days": 80,
-        "weight_pct": 57.3,
+        "weight_pct": 56.8,
         "vp_score": 48,
         "confluence": 4,
-        "reason_e": "Large unrealised gain +74.4% after 80d. Signal still NEUTRAL (score 4). Consider partial trim to protect profit.",
-        "reason_z": "浮盈+74.4%（持有80天），信号4仍属信号中性，等待，可考虑部分减仓保护利润。",
+        "reason_e": "Large unrealised gain +70.4% after 80d. Signal still NEUTRAL (score 4). Consider partial trim to protect profit.",
+        "reason_z": "浮盈+70.4%（持有80天），信号4仍属信号中性，等待，可考虑部分减仓保护利润。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → review trim opportunity"
       },
@@ -31,7 +31,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 80,
-        "weight_pct": 3.7,
+        "weight_pct": 3.8,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 80d. Hold — no new entry/exit trigger. RSI 59 | Price vs MA20 +3.0%.",
@@ -48,7 +48,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 73,
-        "weight_pct": 22.4,
+        "weight_pct": 22.7,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 73d. Hold — no new entry/exit trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 66,
-        "weight_pct": 12.9,
+        "weight_pct": 13.0,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 66d. Hold — no new entry/exit trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -80,13 +80,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 8,
-        "pnl_pct": 1.16,
+        "pnl_pct": -0.01,
         "holding_days": 58,
         "weight_pct": 3.8,
         "vp_score": 48,
         "confluence": -8,
-        "reason_e": "Signal neutral (score -8). P&L +1.2% after 58d. Hold — no new entry/exit trigger. Bearish: Death Cross | RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分-8），浮盈+1.2%，持有58天，无新触发条件。空头：死亡交叉 | RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score -8). P&L -0.0% after 58d. Hold — no new entry/exit trigger. Bearish: Death Cross | RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分-8），浮盈-0.0%，持有58天，无新触发条件。空头：死亡交叉 | RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
@@ -131,21 +131,9 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 57% of portfolio — above 40.0% limit",
-    "💰 PROFIT REVIEW: 300308.SZ +74.4% — consider partial trim to lock gains"
+    "💰 PROFIT REVIEW: 300308.SZ +70.4% — consider partial trim to lock gains"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "002594.SZ",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
-      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
-      "indicator": "revenue_growth",
-      "actual": null,
-      "threshold": null
-    },
     {
       "ticker": "300308.SZ",
       "severity": "NONE",
@@ -157,6 +145,18 @@
       "indicator": "hyperscaler_basket_drawdown_pct",
       "actual": 4.5,
       "threshold": 25.0
+    },
+    {
+      "ticker": "002594.SZ",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
+      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
+      "indicator": "revenue_growth",
+      "actual": null,
+      "threshold": null
     },
     {
       "ticker": "175.HK",
