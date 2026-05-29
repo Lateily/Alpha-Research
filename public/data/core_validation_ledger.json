@@ -1,0 +1,2103 @@
+{
+  "_meta": {
+    "generated_for": "2026-05-29",
+    "read_only": true,
+    "source": {
+      "thesis_eval": "/Users/years/Desktop/Stock/ar-platform/public/data/iter9_thesis_eval.json",
+      "positions": "/Users/years/Desktop/Stock/ar-platform/public/data/positions.json",
+      "hk_panel": "/Users/years/Desktop/Stock/ar-platform/data_history/panel/hk_prices.parquet"
+    },
+    "hk_benchmark_status": {
+      "HSI": {
+        "status": "index_ok",
+        "used_symbol": "^HSI",
+        "is_proxy": false,
+        "rows": 833,
+        "first": "20230103",
+        "last": "20260529",
+        "last_close": 25182.391
+      },
+      "HSTECH": {
+        "status": "proxy_or_missing",
+        "used_symbol": "3033.HK",
+        "is_proxy": true,
+        "rows": 832,
+        "first": "20230103",
+        "last": "20260529",
+        "last_close": 4.784
+      }
+    },
+    "honesty": "PRELIMINARY. n_actionable=4 directional of 25 (21 PASS, synth-gate ratchet); theses all dated 2026-05-05→10 so only 5d horizon has elapsed — 20d/60d/120d PENDING (not enough time). HK names NOW UNBLOCKED via yfinance (HSI benchmark; HSTECH = proxy 3033.HK). No CORE validation verdict is drawn from this — it is descriptive + the live-position beta attribution. The position 'residual' is an UPPER BOUND on thesis-α (single-factor benchmark leaves sector/theme beta in residual). See CORE_VALIDATION_PLAN_2026-05-29.md.",
+    "horizons_td": {
+      "5d": 5,
+      "20d": 20,
+      "60d": 60,
+      "120d": 120
+    },
+    "n_theses": 25,
+    "n_actionable_original": 4,
+    "n_directional_for_capital": 4,
+    "n_directional_for_validation": 12,
+    "n_data_available": 25
+  },
+  "ledger": [
+    {
+      "ts_code": "002594.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1438BST",
+      "direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "directional_for_capital": false,
+      "directional_for_validation": true,
+      "watch_unvalidated": true,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.2,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 报告 disclosure of regional segment gross margins, overseas revenue YoY, and consolidated GM — first official test of whether overseas mix-shift is offsetting domestic price-war pressure",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share H1 reporting window; WATCHLIST thresholds (revenue_growth, gross_margin) explicitly named in FULL DATA CONTEXT; broker reports (中信证券 2026-05-11, 华创证券 2026-05-07) all flag H1 as the validation event"
+      },
+      "wrongIf": [
+        "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.021339950372208483,
+          "entry_date": "2026-05-06",
+          "entry_close": 100.75,
+          "exit_date": "2026-05-13",
+          "exit_close": 98.6
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-06",
+          "entry_close": 100.75,
+          "elapsed_td": 14
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-06",
+          "entry_close": 100.75,
+          "elapsed_td": 14
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-06",
+          "entry_close": 100.75,
+          "elapsed_td": 14
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": -0.0462
+        },
+        "CSI500": {
+          "5d": -0.0597
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0462
+      },
+      "entry_price": 100.75
+    },
+    {
+      "ts_code": "002594.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1530BST",
+      "direction": "PASS",
+      "reclassified": "WATCH_LONG",
+      "directional_for_capital": false,
+      "directional_for_validation": true,
+      "watch_unvalidated": true,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.3,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 报告 disclosure of regional segment gross margins, overseas revenue YoY, and consolidated GM — first official test of whether overseas mix-shift is offsetting domestic price-war pressure",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share H1 reporting window; WATCHLIST thresholds (revenue_growth, gross_margin) explicitly named in FULL DATA CONTEXT; broker reports (中信证券 2026-05-11, 华创证券 2026-05-07) all flag H1 as the validation event"
+      },
+      "wrongIf": [
+        "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.021339950372208483,
+          "entry_date": "2026-05-06",
+          "entry_close": 100.75,
+          "exit_date": "2026-05-13",
+          "exit_close": 98.6
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-06",
+          "entry_close": 100.75,
+          "elapsed_td": 14
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-06",
+          "entry_close": 100.75,
+          "elapsed_td": 14
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-06",
+          "entry_close": 100.75,
+          "elapsed_td": 14
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": -0.0462
+        },
+        "CSI500": {
+          "5d": -0.0597
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0462
+      },
+      "entry_price": 100.75
+    },
+    {
+      "ts_code": "002594.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-08",
+      "pipeline": "GROUNDED",
+      "direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.2,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 报告 disclosure of regional segment gross margins, overseas revenue YoY, and consolidated GM — first official test of whether overseas mix-shift is offsetting domestic price-war pressure",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share H1 reporting window; WATCHLIST thresholds (revenue_growth, gross_margin) explicitly named in FULL DATA CONTEXT; broker reports (中信证券 2026-05-11, 华创证券 2026-05-07) all flag H1 as the validation event"
+      },
+      "wrongIf": [
+        "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.03719256148770245,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "exit_date": "2026-05-15",
+          "exit_close": 96.3
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "elapsed_td": 12
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "elapsed_td": 12
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "elapsed_td": 12
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": -0.0347
+        },
+        "CSI500": {
+          "5d": -0.019
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0347
+      },
+      "entry_price": 100.02
+    },
+    {
+      "ts_code": "002594.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-08",
+      "pipeline": "MULTIAGENT",
+      "direction": "LONG",
+      "reclassified": "LONG",
+      "directional_for_capital": true,
+      "directional_for_validation": true,
+      "watch_unvalidated": false,
+      "actionable": true,
+      "quality_score": 94,
+      "reward_to_risk": 2.2,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 报告 disclosure of regional segment gross margins, overseas revenue YoY, and consolidated GM — first official test of whether overseas mix-shift is offsetting domestic price-war pressure",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share H1 reporting window; WATCHLIST thresholds (revenue_growth, gross_margin) explicitly named in FULL DATA CONTEXT; broker reports (中信证券 2026-05-11, 华创证券 2026-05-07) all flag H1 as the validation event"
+      },
+      "wrongIf": [
+        "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.03719256148770245,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "exit_date": "2026-05-15",
+          "exit_close": 96.3
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "elapsed_td": 12
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "elapsed_td": 12
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "elapsed_td": 12
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": -0.0347
+        },
+        "CSI500": {
+          "5d": -0.019
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0347
+      },
+      "entry_price": 100.02
+    },
+    {
+      "ts_code": "002594.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-08",
+      "pipeline": "PHASE1.5",
+      "direction": "LONG",
+      "reclassified": "LONG",
+      "directional_for_capital": true,
+      "directional_for_validation": true,
+      "watch_unvalidated": false,
+      "actionable": true,
+      "quality_score": 100,
+      "reward_to_risk": 2.2,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 报告 disclosure of regional segment gross margins, overseas revenue YoY, and consolidated GM — first official test of whether overseas mix-shift is offsetting domestic price-war pressure",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share H1 reporting window; WATCHLIST thresholds (revenue_growth, gross_margin) explicitly named in FULL DATA CONTEXT; broker reports (中信证券 2026-05-11, 华创证券 2026-05-07) all flag H1 as the validation event"
+      },
+      "wrongIf": [
+        "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.03719256148770245,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "exit_date": "2026-05-15",
+          "exit_close": 96.3
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "elapsed_td": 12
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "elapsed_td": 12
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 100.02,
+          "elapsed_td": 12
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": -0.0347
+        },
+        "CSI500": {
+          "5d": -0.019
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0347
+      },
+      "entry_price": 100.02
+    },
+    {
+      "ts_code": "002594.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-10",
+      "pipeline": "PHASE2",
+      "direction": "LONG",
+      "reclassified": "LONG",
+      "directional_for_capital": true,
+      "directional_for_validation": true,
+      "watch_unvalidated": false,
+      "actionable": true,
+      "quality_score": 90,
+      "reward_to_risk": 2.0,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 报告 disclosure of regional segment gross margins, overseas revenue YoY, and consolidated GM — first official test of whether overseas mix-shift is offsetting domestic price-war pressure",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share H1 reporting window; WATCHLIST thresholds (revenue_growth, gross_margin) explicitly named in FULL DATA CONTEXT; broker reports (中信证券 2026-05-11, 华创证券 2026-05-07) all flag H1 as the validation event"
+      },
+      "wrongIf": [
+        "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.059040223018717586,
+          "entry_date": "2026-05-11",
+          "entry_close": 100.44,
+          "exit_date": "2026-05-18",
+          "exit_close": 94.51
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 100.44,
+          "elapsed_td": 11
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 100.44,
+          "elapsed_td": 11
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 100.44,
+          "elapsed_td": 11
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": -0.0351
+        },
+        "CSI500": {
+          "5d": -0.0267
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0351
+      },
+      "entry_price": 100.44
+    },
+    {
+      "ts_code": "175.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-08",
+      "pipeline": "GROUNDED",
+      "direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "directional_for_capital": false,
+      "directional_for_validation": true,
+      "watch_unvalidated": true,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.3,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "Geely Automobile Holdings 2026 H1 interim results — consolidated revenue, GM, OpM, net income disclosure; segment disclosure granularity to be assessed",
+        "date_or_window": "August 2026 (exact reporting date not in our data; inferred from HK interim cadence)",
+        "type": "earnings_revision",
+        "source": "Standard HK interim reporting cadence; exact issuer calendar not available in our data"
+      },
+      "wrongIf": [
+        "N/A — PASS; no tradeable direction asserted | source: N/A | if_not_disclosed: N/A"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.04925237217052503,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "exit_date": "2026-05-15",
+          "exit_close": 21.6200008392334
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "elapsed_td": 14
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "elapsed_td": 14
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "elapsed_td": 14
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": -0.0329
+        },
+        "HSTECH": {
+          "5d": -0.0156
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0329
+      },
+      "entry_price": 22.739999771118164
+    },
+    {
+      "ts_code": "175.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-08",
+      "pipeline": "MULTIAGENT",
+      "direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 58,
+      "reward_to_risk": null,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "Geely Automobile Holdings 2026 H1 interim results — consolidated revenue, GM, OpM, net income disclosure; segment disclosure granularity to be assessed",
+        "date_or_window": "August 2026 (exact reporting date not in our data; inferred from HK interim cadence)",
+        "type": "earnings_revision",
+        "source": "Standard HK interim reporting cadence; exact issuer calendar not available in our data"
+      },
+      "wrongIf": [
+        "N/A — PASS; no tradeable direction asserted | source: N/A | if_not_disclosed: N/A"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.04925237217052503,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "exit_date": "2026-05-15",
+          "exit_close": 21.6200008392334
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "elapsed_td": 14
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "elapsed_td": 14
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "elapsed_td": 14
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": -0.0329
+        },
+        "HSTECH": {
+          "5d": -0.0156
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0329
+      },
+      "entry_price": 22.739999771118164
+    },
+    {
+      "ts_code": "175.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-08",
+      "pipeline": "PHASE1.5",
+      "direction": "PASS",
+      "reclassified": "PASS",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 74,
+      "reward_to_risk": null,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "Geely Automobile Holdings 2026 H1 interim results — consolidated revenue, GM, OpM, net income disclosure; segment disclosure granularity to be assessed",
+        "date_or_window": "August 2026 (exact reporting date not in our data; inferred from HK interim cadence)",
+        "type": "earnings_revision",
+        "source": "Standard HK interim reporting cadence; exact issuer calendar not available in our data"
+      },
+      "wrongIf": [
+        "N/A — PASS; no tradeable direction asserted | source: N/A | if_not_disclosed: N/A"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.04925237217052503,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "exit_date": "2026-05-15",
+          "exit_close": 21.6200008392334
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "elapsed_td": 14
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "elapsed_td": 14
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 22.739999771118164,
+          "elapsed_td": 14
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": -0.0329
+        },
+        "HSTECH": {
+          "5d": -0.0156
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0329
+      },
+      "entry_price": 22.739999771118164
+    },
+    {
+      "ts_code": "175.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-10",
+      "pipeline": "PHASE2",
+      "direction": "PASS",
+      "reclassified": "PASS",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 74,
+      "reward_to_risk": null,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "Geely Automobile Holdings 2026 H1 interim results — consolidated revenue, GM, OpM, net income disclosure; segment disclosure granularity to be assessed",
+        "date_or_window": "August 2026 (exact reporting date not in our data; inferred from HK interim cadence)",
+        "type": "earnings_revision",
+        "source": "Standard HK interim reporting cadence; exact issuer calendar not available in our data"
+      },
+      "wrongIf": [
+        "N/A — PASS; no tradeable direction asserted | source: N/A | if_not_disclosed: N/A"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.08288772576135206,
+          "entry_date": "2026-05-11",
+          "entry_close": 22.440000534057617,
+          "exit_date": "2026-05-18",
+          "exit_close": 20.579999923706055
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 22.440000534057617,
+          "elapsed_td": 13
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 22.440000534057617,
+          "elapsed_td": 13
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 22.440000534057617,
+          "elapsed_td": 13
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": -0.0552
+        },
+        "HSTECH": {
+          "5d": -0.0305
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0552
+      },
+      "entry_price": 22.440000534057617
+    },
+    {
+      "ts_code": "300308.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-08",
+      "pipeline": "GROUNDED",
+      "direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "directional_for_capital": false,
+      "directional_for_validation": true,
+      "watch_unvalidated": true,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.3,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 earnings report — first hard print on 1.6T ramp magnitude, gross margin trajectory, and Q2 sequential revenue",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share semi-annual reporting window; exact date not in our data"
+      },
+      "wrongIf": [
+        "PASS proves wrong (should have been LONG) if: 2026 H1 consolidated gross margin ≥47% @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表: (营业收入-营业成本)/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS proves wrong (should have been LONG) if: Q2 2026 single-quarter net income ≥5.5B CNY @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表 Q2单季: 净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS proves wrong (should have been SHORT) if: stock price ≤750 CNY @ 2026-08-31 close | source: 交易所收盘价 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.18495485327313754,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "exit_date": "2026-05-15",
+          "exit_close": 1049.87
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "elapsed_td": 12
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "elapsed_td": 12
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "elapsed_td": 12
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": 0.1875
+        },
+        "CSI500": {
+          "5d": 0.2031
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.1875
+      },
+      "entry_price": 886.0
+    },
+    {
+      "ts_code": "300308.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-08",
+      "pipeline": "MULTIAGENT",
+      "direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 84,
+      "reward_to_risk": null,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 earnings report — first hard print on 1.6T ramp magnitude, gross margin trajectory, and Q2 sequential revenue",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share semi-annual reporting window; exact date not in our data"
+      },
+      "wrongIf": [
+        "PASS proves wrong (should have been LONG) if: 2026 H1 consolidated gross margin ≥47% @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表: (营业收入-营业成本)/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS proves wrong (should have been LONG) if: Q2 2026 single-quarter net income ≥5.5B CNY @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表 Q2单季: 净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS proves wrong (should have been SHORT) if: stock price ≤750 CNY @ 2026-08-31 close | source: 交易所收盘价 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.18495485327313754,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "exit_date": "2026-05-15",
+          "exit_close": 1049.87
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "elapsed_td": 12
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "elapsed_td": 12
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "elapsed_td": 12
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": 0.1875
+        },
+        "CSI500": {
+          "5d": 0.2031
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.1875
+      },
+      "entry_price": 886.0
+    },
+    {
+      "ts_code": "300308.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-08",
+      "pipeline": "PHASE1.5",
+      "direction": "PASS",
+      "reclassified": "PASS",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 84,
+      "reward_to_risk": null,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 earnings report — first hard print on 1.6T ramp magnitude, gross margin trajectory, and Q2 sequential revenue",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share semi-annual reporting window; exact date not in our data"
+      },
+      "wrongIf": [
+        "PASS proves wrong (should have been LONG) if: 2026 H1 consolidated gross margin ≥47% @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表: (营业收入-营业成本)/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS proves wrong (should have been LONG) if: Q2 2026 single-quarter net income ≥5.5B CNY @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表 Q2单季: 净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS proves wrong (should have been SHORT) if: stock price ≤750 CNY @ 2026-08-31 close | source: 交易所收盘价 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.18495485327313754,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "exit_date": "2026-05-15",
+          "exit_close": 1049.87
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "elapsed_td": 12
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "elapsed_td": 12
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 886.0,
+          "elapsed_td": 12
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": 0.1875
+        },
+        "CSI500": {
+          "5d": 0.2031
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.1875
+      },
+      "entry_price": 886.0
+    },
+    {
+      "ts_code": "300308.SZ",
+      "market": "A",
+      "thesis_date": "2026-05-10",
+      "pipeline": "PHASE2",
+      "direction": "PASS",
+      "reclassified": "PASS",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 84,
+      "reward_to_risk": null,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 earnings report — first hard print on 1.6T ramp magnitude, gross margin trajectory, and Q2 sequential revenue",
+        "date_or_window": "2026-08-15 to 2026-08-31",
+        "type": "earnings_revision",
+        "source": "Standard A-share semi-annual reporting window; exact date not in our data"
+      },
+      "wrongIf": [
+        "PASS proves wrong (should have been LONG) if: 2026 H1 consolidated gross margin ≥47% @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表: (营业收入-营业成本)/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS proves wrong (should have been LONG) if: Q2 2026 single-quarter net income ≥5.5B CNY @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表 Q2单季: 净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS proves wrong (should have been SHORT) if: stock price ≤750 CNY @ 2026-08-31 close | source: 交易所收盘价 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.11154840288045276,
+          "entry_date": "2026-05-11",
+          "entry_close": 940.13,
+          "exit_date": "2026-05-18",
+          "exit_close": 1045.0
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 940.13,
+          "elapsed_td": 11
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 940.13,
+          "elapsed_td": 11
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 940.13,
+          "elapsed_td": 11
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": 0.1354
+        },
+        "CSI500": {
+          "5d": 0.1438
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.1354
+      },
+      "entry_price": 940.13
+    },
+    {
+      "ts_code": "603233.SH",
+      "market": "A",
+      "thesis_date": "2026-05-08",
+      "pipeline": "GROUNDED",
+      "direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "directional_for_capital": false,
+      "directional_for_validation": true,
+      "watch_unvalidated": true,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.3,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 results disclosure — first primary disclosure that quantifies whether Q1 2026 store-expansion restart is preserving (or eroding) the +35% NI YoY margin gain; resolves both bull and bear core link",
+        "date_or_window": "2026-08-15 to 2026-08-31 [external estimate, not in our data context]",
+        "type": "earnings_revision",
+        "source": "Historical H1 reporting window for A-share retailers; exact date not in our data context"
+      },
+      "wrongIf": [
+        "PASS thesis invalidated (forces re-engage either direction) if 2026 H1 report discloses all three of: store count YoY delta, SSSG, and segment-level new-store margins @ 2026 H1 报告 (≈2026-08-28) | source: 2026 H1 报告 经营数据章节 + 分部数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS thesis invalidated if pre-print primary disclosure (e.g. monthly operating bulletin or interim store-count filing) prints store count YoY ≥ 10% before 2026-07-31 @ interim 公告 | source: 临时公告 经营数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS thesis invalidated if 融资余额 falls below 1.8亿 with price < 17.0 before 2026-07-31 (forced-unwind shorting opportunity) @ Tushare margin daily | source: Tushare margin_detail 融资余额 + daily close | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.014016172506738478,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "exit_date": "2026-05-15",
+          "exit_close": 18.81
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "elapsed_td": 12
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "elapsed_td": 12
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "elapsed_td": 12
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": 0.0165
+        },
+        "CSI500": {
+          "5d": 0.0322
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.0165
+      },
+      "entry_price": 18.55
+    },
+    {
+      "ts_code": "603233.SH",
+      "market": "A",
+      "thesis_date": "2026-05-08",
+      "pipeline": "MULTIAGENT",
+      "direction": "PASS",
+      "reclassified": "PASS",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 74,
+      "reward_to_risk": null,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 results disclosure — first primary disclosure that quantifies whether Q1 2026 store-expansion restart is preserving (or eroding) the +35% NI YoY margin gain; resolves both bull and bear core link",
+        "date_or_window": "2026-08-15 to 2026-08-31 [external estimate, not in our data context]",
+        "type": "earnings_revision",
+        "source": "Historical H1 reporting window for A-share retailers; exact date not in our data context"
+      },
+      "wrongIf": [
+        "PASS thesis invalidated (forces re-engage either direction) if 2026 H1 report discloses all three of: store count YoY delta, SSSG, and segment-level new-store margins @ 2026 H1 报告 (≈2026-08-28) | source: 2026 H1 报告 经营数据章节 + 分部数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS thesis invalidated if pre-print primary disclosure (e.g. monthly operating bulletin or interim store-count filing) prints store count YoY ≥ 10% before 2026-07-31 @ interim 公告 | source: 临时公告 经营数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS thesis invalidated if 融资余额 falls below 1.8亿 with price < 17.0 before 2026-07-31 (forced-unwind shorting opportunity) @ Tushare margin daily | source: Tushare margin_detail 融资余额 + daily close | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.014016172506738478,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "exit_date": "2026-05-15",
+          "exit_close": 18.81
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "elapsed_td": 12
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "elapsed_td": 12
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "elapsed_td": 12
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": 0.0165
+        },
+        "CSI500": {
+          "5d": 0.0322
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.0165
+      },
+      "entry_price": 18.55
+    },
+    {
+      "ts_code": "603233.SH",
+      "market": "A",
+      "thesis_date": "2026-05-08",
+      "pipeline": "PHASE1.5",
+      "direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 78,
+      "reward_to_risk": null,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 results disclosure — first primary disclosure that quantifies whether Q1 2026 store-expansion restart is preserving (or eroding) the +35% NI YoY margin gain; resolves both bull and bear core link",
+        "date_or_window": "2026-08-15 to 2026-08-31 [external estimate, not in our data context]",
+        "type": "earnings_revision",
+        "source": "Historical H1 reporting window for A-share retailers; exact date not in our data context"
+      },
+      "wrongIf": [
+        "PASS thesis invalidated (forces re-engage either direction) if 2026 H1 report discloses all three of: store count YoY delta, SSSG, and segment-level new-store margins @ 2026 H1 报告 (≈2026-08-28) | source: 2026 H1 报告 经营数据章节 + 分部数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS thesis invalidated if pre-print primary disclosure (e.g. monthly operating bulletin or interim store-count filing) prints store count YoY ≥ 10% before 2026-07-31 @ interim 公告 | source: 临时公告 经营数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS thesis invalidated if 融资余额 falls below 1.8亿 with price < 17.0 before 2026-07-31 (forced-unwind shorting opportunity) @ Tushare margin daily | source: Tushare margin_detail 融资余额 + daily close | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.014016172506738478,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "exit_date": "2026-05-15",
+          "exit_close": 18.81
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "elapsed_td": 12
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "elapsed_td": 12
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-08",
+          "entry_close": 18.55,
+          "elapsed_td": 12
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": 0.0165
+        },
+        "CSI500": {
+          "5d": 0.0322
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.0165
+      },
+      "entry_price": 18.55
+    },
+    {
+      "ts_code": "603233.SH",
+      "market": "A",
+      "thesis_date": "2026-05-10",
+      "pipeline": "PHASE2",
+      "direction": "SHORT",
+      "reclassified": "SHORT",
+      "directional_for_capital": true,
+      "directional_for_validation": true,
+      "watch_unvalidated": false,
+      "actionable": true,
+      "quality_score": 84,
+      "reward_to_risk": null,
+      "data_available": true,
+      "primary_bench": "CSI300",
+      "catalyst": {
+        "event": "2026 H1 results disclosure — first primary disclosure that quantifies whether Q1 2026 store-expansion restart is preserving (or eroding) the +35% NI YoY margin gain; resolves both bull and bear core link",
+        "date_or_window": "2026-08-15 to 2026-08-31 [external estimate, not in our data context]",
+        "type": "earnings_revision",
+        "source": "Historical H1 reporting window for A-share retailers; exact date not in our data context"
+      },
+      "wrongIf": [
+        "PASS thesis invalidated (forces re-engage either direction) if 2026 H1 report discloses all three of: store count YoY delta, SSSG, and segment-level new-store margins @ 2026 H1 报告 (≈2026-08-28) | source: 2026 H1 报告 经营数据章节 + 分部数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS thesis invalidated if pre-print primary disclosure (e.g. monthly operating bulletin or interim store-count filing) prints store count YoY ≥ 10% before 2026-07-31 @ interim 公告 | source: 临时公告 经营数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "PASS thesis invalidated if 融资余额 falls below 1.8亿 with price < 17.0 before 2026-07-31 (forced-unwind shorting opportunity) @ Tushare margin daily | source: Tushare margin_detail 融资余额 + daily close | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.053723404255319185,
+          "entry_date": "2026-05-11",
+          "entry_close": 18.8,
+          "exit_date": "2026-05-18",
+          "exit_close": 17.79
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 18.8,
+          "elapsed_td": 11
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 18.8,
+          "elapsed_td": 11
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-11",
+          "entry_close": 18.8,
+          "elapsed_td": 11
+        }
+      },
+      "alpha_by_bench": {
+        "CSI300": {
+          "5d": -0.0298
+        },
+        "CSI500": {
+          "5d": -0.0214
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0298
+      },
+      "entry_price": 18.8
+    },
+    {
+      "ts_code": "6160.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1438BST",
+      "direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.3,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "Q2 2026 earnings release — first full quarter test of whether BRUKINSA (zanubrutinib) ex-US growth + sonrotoclax (BCL-2) Phase 3 CELESTIAL-TN readout timeline can offset accelerating US BTK market saturation and Pfizer/AbbVie pricing pressure",
+        "date_or_window": "2026-08-06 (±5 days, Q2 2026 earnings; CELESTIAL-TN Phase 3 interim 4Q2026)",
+        "type": "earnings_revision",
+        "source": "BeOne Medicines IR calendar; ClinicalTrials.gov NCT04830137 (CELESTIAL-TN); company 10-Q/20-F"
+      },
+      "wrongIf": [
+        "Q2 26 BRUKINSA total revenue ≥$1.05B AND US QoQ ≥+8% — saturation thesis invalidated",
+        "Non-GAAP operating margin reaches ≥8% in Q2 26 with sustained trajectory toward 12% by Q4 26",
+        "CELESTIAL-TN interim shows HR ≤0.60 with clean safety — pipeline optionality confirmed, multi-asset franchise validated"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.07409496956225481,
+          "entry_date": "2026-05-05",
+          "entry_close": 176.8000030517578,
+          "exit_date": "2026-05-12",
+          "exit_close": 189.89999389648438
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 176.8000030517578,
+          "elapsed_td": 17
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 176.8000030517578,
+          "elapsed_td": 17
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 176.8000030517578,
+          "elapsed_td": 17
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": 0.0567
+        },
+        "HSTECH": {
+          "5d": 0.043
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.0567
+      },
+      "entry_price": 176.8000030517578
+    },
+    {
+      "ts_code": "6160.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1530BST",
+      "direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "directional_for_capital": false,
+      "directional_for_validation": true,
+      "watch_unvalidated": true,
+      "actionable": false,
+      "quality_score": 84,
+      "reward_to_risk": 1.6,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "Q2 2026 earnings release — first full quarter test of whether BRUKINSA (zanubrutinib) ex-US growth + sonrotoclax (BCL-2) Phase 3 CELESTIAL-TN readout timeline can offset accelerating US BTK market saturation and Pfizer/AbbVie pricing pressure",
+        "date_or_window": "2026-08-06 (±5 days, Q2 2026 earnings; CELESTIAL-TN Phase 3 interim 4Q2026)",
+        "type": "earnings_revision",
+        "source": "BeOne Medicines IR calendar; ClinicalTrials.gov NCT04830137 (CELESTIAL-TN); company 10-Q/20-F"
+      },
+      "wrongIf": [
+        "Q2 26 BRUKINSA total revenue ≥$1.05B AND US QoQ ≥+8% — saturation thesis invalidated",
+        "Non-GAAP operating margin reaches ≥8% in Q2 26 with sustained trajectory toward 12% by Q4 26",
+        "CELESTIAL-TN interim shows HR ≤0.60 with clean safety — pipeline optionality confirmed, multi-asset franchise validated"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.07409496956225481,
+          "entry_date": "2026-05-05",
+          "entry_close": 176.8000030517578,
+          "exit_date": "2026-05-12",
+          "exit_close": 189.89999389648438
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 176.8000030517578,
+          "elapsed_td": 17
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 176.8000030517578,
+          "elapsed_td": 17
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 176.8000030517578,
+          "elapsed_td": 17
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": 0.0567
+        },
+        "HSTECH": {
+          "5d": 0.043
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.0567
+      },
+      "entry_price": 176.8000030517578
+    },
+    {
+      "ts_code": "700.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1255BST",
+      "direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.5,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "Tencent Q2 2026 earnings release — first full quarter showing AI capex run-rate impact on operating margin AND Yuanbao/Hunyuan monetization KPIs (DAU, advertising CPM uplift from AI-targeted inventory)",
+        "date_or_window": "2026-08-13 (±1 week, based on historical Q2 reporting cadence)",
+        "type": "earnings_revision",
+        "source": "Tencent IR historical reporting calendar; FY2025 capex guidance of low-teens % of revenue ramping into 2026"
+      },
+      "wrongIf": [
+        "Q2 2026 non-IFRS operating margin ≥36% — D&A absorbed by revenue mix improvement",
+        "Management quantifies AI revenue contribution ≥RMB 5bn annualized run-rate by Q2 2026",
+        "Two consecutive quarters (Q1 + Q2 2026) of advertising growth ≥22% YoY, validating AI ad monetization thesis",
+        "Stock breaks above HK$760 on Q2 print → close short, thesis invalidated"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.031766246039271695,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "exit_date": "2026-05-12",
+          "exit_close": 451.9345397949219
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "elapsed_td": 17
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "elapsed_td": 17
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "elapsed_td": 17
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": -0.0491
+        },
+        "HSTECH": {
+          "5d": -0.0629
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0491
+      },
+      "entry_price": 466.7618103027344
+    },
+    {
+      "ts_code": "700.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1438BST",
+      "direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.5,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "Tencent Q2 2026 earnings release — first full quarter showing AI capex run-rate impact on operating margin AND Yuanbao/Hunyuan monetization KPIs (DAU, advertising CPM uplift from AI-targeted inventory)",
+        "date_or_window": "2026-08-13 (±1 week, based on historical Q2 reporting cadence)",
+        "type": "earnings_revision",
+        "source": "Tencent IR historical reporting calendar; FY2025 capex guidance of low-teens % of revenue ramping into 2026"
+      },
+      "wrongIf": [
+        "Q2 2026 non-IFRS operating margin ≥36% — D&A absorbed by revenue mix improvement",
+        "Management quantifies AI revenue contribution ≥RMB 5bn annualized run-rate by Q2 2026",
+        "Two consecutive quarters (Q1 + Q2 2026) of advertising growth ≥22% YoY, validating AI ad monetization thesis",
+        "Stock breaks above HK$760 on Q2 print → close short, thesis invalidated"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.031766246039271695,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "exit_date": "2026-05-12",
+          "exit_close": 451.9345397949219
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "elapsed_td": 17
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "elapsed_td": 17
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "elapsed_td": 17
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": -0.0491
+        },
+        "HSTECH": {
+          "5d": -0.0629
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0491
+      },
+      "entry_price": 466.7618103027344
+    },
+    {
+      "ts_code": "700.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1530BST",
+      "direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "directional_for_capital": false,
+      "directional_for_validation": true,
+      "watch_unvalidated": true,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.0,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "Tencent Q2 2026 earnings release — first full quarter showing AI capex run-rate impact on operating margin AND Yuanbao/Hunyuan monetization KPIs (DAU, advertising CPM uplift from AI-targeted inventory)",
+        "date_or_window": "2026-08-13 (±1 week, based on historical Q2 reporting cadence)",
+        "type": "earnings_revision",
+        "source": "Tencent IR historical reporting calendar; FY2025 capex guidance of low-teens % of revenue ramping into 2026"
+      },
+      "wrongIf": [
+        "Q2 2026 non-IFRS operating margin ≥36% — D&A absorbed by revenue mix improvement",
+        "Management quantifies AI revenue contribution ≥RMB 5bn annualized run-rate by Q2 2026",
+        "Two consecutive quarters (Q1 + Q2 2026) of advertising growth ≥22% YoY, validating AI ad monetization thesis",
+        "Stock breaks above HK$760 on Q2 print → close short, thesis invalidated"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": -0.031766246039271695,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "exit_date": "2026-05-12",
+          "exit_close": 451.9345397949219
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "elapsed_td": 17
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "elapsed_td": 17
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 466.7618103027344,
+          "elapsed_td": 17
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": -0.0491
+        },
+        "HSTECH": {
+          "5d": -0.0629
+        }
+      },
+      "primary_alpha": {
+        "5d": -0.0491
+      },
+      "entry_price": 466.7618103027344
+    },
+    {
+      "ts_code": "9999.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1438BST",
+      "direction": "PASS",
+      "reclassified": "UNRESOLVED",
+      "directional_for_capital": false,
+      "directional_for_validation": false,
+      "watch_unvalidated": false,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 2.5,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "NetEase Q1 2026 earnings release — key read on Marvel Rivals monetization sustainability (post-launch quarter 5), Where Winds Meet PC->mobile transition revenue recognition, and Naraka/Identity V grossing trajectory; management commentary on 2026 pipeline (Destiny: Rising, Ananta) and operating margin guidance after FY2025 GM compression",
+        "date_or_window": "2026-05-21 (expected Q1 2026 earnings; NetEase historically reports late May for Q1)",
+        "type": "earnings_revision",
+        "source": "NetEase IR calendar; historical Q1 release pattern (Q1 2025 released 2025-05-22)"
+      },
+      "wrongIf": [
+        "Q1 2026 online game revenue YoY ≥ +13% AND GM ≥ 62%",
+        "Marvel Rivals Q1 2026 grossing flat or up YoY per third-party trackers",
+        "Management announces Destiny: Rising hard launch date in 2026 with Apple/Google co-marketing",
+        "USD 5B buyback executed at >USD 1B/quarter pace, providing structural bid"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.025938173440392953,
+          "entry_date": "2026-05-05",
+          "entry_close": 181.1999969482422,
+          "exit_date": "2026-05-12",
+          "exit_close": 185.89999389648438
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 181.1999969482422,
+          "elapsed_td": 17
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 181.1999969482422,
+          "elapsed_td": 17
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 181.1999969482422,
+          "elapsed_td": 17
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": 0.0086
+        },
+        "HSTECH": {
+          "5d": -0.0052
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.0086
+      },
+      "entry_price": 181.1999969482422
+    },
+    {
+      "ts_code": "9999.HK",
+      "market": "HK",
+      "thesis_date": "2026-05-05",
+      "pipeline": "1530BST",
+      "direction": "PASS",
+      "reclassified": "WATCH_SHORT",
+      "directional_for_capital": false,
+      "directional_for_validation": true,
+      "watch_unvalidated": true,
+      "actionable": false,
+      "quality_score": 90,
+      "reward_to_risk": 1.9,
+      "data_available": true,
+      "primary_bench": "HSI",
+      "catalyst": {
+        "event": "NetEase Q1 2026 earnings release — key read on Marvel Rivals monetization sustainability (post-launch quarter 5), Where Winds Meet PC->mobile transition revenue recognition, and Naraka/Identity V grossing trajectory; management commentary on 2026 pipeline (Destiny: Rising, Ananta) and operating margin guidance after FY2025 GM compression",
+        "date_or_window": "2026-05-21 (expected Q1 2026 earnings; NetEase historically reports late May for Q1)",
+        "type": "earnings_revision",
+        "source": "NetEase IR calendar; historical Q1 release pattern (Q1 2025 released 2025-05-22)"
+      },
+      "wrongIf": [
+        "Q1 2026 online game revenue YoY ≥ +13% AND GM ≥ 62%",
+        "Marvel Rivals Q1 2026 grossing flat or up YoY per third-party trackers",
+        "Management announces Destiny: Rising hard launch date in 2026 with Apple/Google co-marketing",
+        "USD 5B buyback executed at >USD 1B/quarter pace, providing structural bid"
+      ],
+      "forward": {
+        "5d": {
+          "status": "available",
+          "ret": 0.025938173440392953,
+          "entry_date": "2026-05-05",
+          "entry_close": 181.1999969482422,
+          "exit_date": "2026-05-12",
+          "exit_close": 185.89999389648438
+        },
+        "20d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 181.1999969482422,
+          "elapsed_td": 17
+        },
+        "60d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 181.1999969482422,
+          "elapsed_td": 17
+        },
+        "120d": {
+          "status": "pending_not_enough_time",
+          "ret": null,
+          "entry_date": "2026-05-05",
+          "entry_close": 181.1999969482422,
+          "elapsed_td": 17
+        }
+      },
+      "alpha_by_bench": {
+        "HSI": {
+          "5d": 0.0086
+        },
+        "HSTECH": {
+          "5d": -0.0052
+        }
+      },
+      "primary_alpha": {
+        "5d": 0.0086
+      },
+      "entry_price": 181.1999969482422
+    }
+  ],
+  "eval_metrics_by_horizon": {
+    "5d": {
+      "n": 4,
+      "n_alpha": 4,
+      "benchmark": "primary (A:CSI300 / HK:HSI)",
+      "hit_rate": 0.0,
+      "mean_alpha": -0.0336,
+      "inferential": false,
+      "WARNING": "n=4 < 8 — NOT statistically inferential (descriptive only)"
+    },
+    "20d": {
+      "n": 0,
+      "status": "no_actionable_with_data_at_horizon"
+    },
+    "60d": {
+      "n": 0,
+      "status": "no_actionable_with_data_at_horizon"
+    },
+    "120d": {
+      "n": 0,
+      "status": "no_actionable_with_data_at_horizon"
+    }
+  },
+  "rank_ic_quality_vs_alpha": {
+    "5d": {
+      "n": 25,
+      "spearman_ic": -0.2911,
+      "inferential": true,
+      "note": "OK"
+    },
+    "20d": {
+      "n": 0,
+      "spearman_ic": null,
+      "note": "n<4 — not computable"
+    },
+    "60d": {
+      "n": 0,
+      "spearman_ic": null,
+      "note": "n<4 — not computable"
+    },
+    "120d": {
+      "n": 0,
+      "spearman_ic": null,
+      "note": "n<4 — not computable"
+    }
+  },
+  "directional_validation": {
+    "capital_tier": {
+      "5d": {
+        "tier": "capital",
+        "horizon": "5d",
+        "n": 2,
+        "hit_rate": 0.5,
+        "mean_directional_return": -0.0026,
+        "inferential": false,
+        "note": "n=2 < 8 — descriptive only, NOT inferential",
+        "rows": [
+          {
+            "ts_code": "002594.SZ",
+            "label": "LONG",
+            "alpha_vs_bench": -0.0351,
+            "directional_return": -0.0351,
+            "correct": false
+          },
+          {
+            "ts_code": "603233.SH",
+            "label": "SHORT",
+            "alpha_vs_bench": -0.0298,
+            "directional_return": 0.0298,
+            "correct": true
+          }
+        ]
+      },
+      "20d": {
+        "tier": "capital",
+        "horizon": "20d",
+        "n": 0,
+        "hit_rate": null,
+        "mean_directional_return": null,
+        "inferential": false,
+        "note": "n=0 < 8 — descriptive only, NOT inferential",
+        "rows": []
+      },
+      "60d": {
+        "tier": "capital",
+        "horizon": "60d",
+        "n": 0,
+        "hit_rate": null,
+        "mean_directional_return": null,
+        "inferential": false,
+        "note": "n=0 < 8 — descriptive only, NOT inferential",
+        "rows": []
+      },
+      "120d": {
+        "tier": "capital",
+        "horizon": "120d",
+        "n": 0,
+        "hit_rate": null,
+        "mean_directional_return": null,
+        "inferential": false,
+        "note": "n=0 < 8 — descriptive only, NOT inferential",
+        "rows": []
+      }
+    },
+    "validation_tier_incl_WATCH": {
+      "5d": {
+        "tier": "validation",
+        "horizon": "5d",
+        "n": 5,
+        "hit_rate": 0.4,
+        "mean_directional_return": -0.0043,
+        "inferential": false,
+        "note": "n=5 < 8 — descriptive only, NOT inferential",
+        "rows": [
+          {
+            "ts_code": "002594.SZ",
+            "label": "LONG",
+            "alpha_vs_bench": -0.0351,
+            "directional_return": -0.0351,
+            "correct": false
+          },
+          {
+            "ts_code": "603233.SH",
+            "label": "SHORT",
+            "alpha_vs_bench": -0.0298,
+            "directional_return": 0.0298,
+            "correct": true
+          },
+          {
+            "ts_code": "6160.HK",
+            "label": "WATCH_SHORT",
+            "alpha_vs_bench": 0.0567,
+            "directional_return": -0.0567,
+            "correct": false
+          },
+          {
+            "ts_code": "700.HK",
+            "label": "WATCH_SHORT",
+            "alpha_vs_bench": -0.0491,
+            "directional_return": 0.0491,
+            "correct": true
+          },
+          {
+            "ts_code": "9999.HK",
+            "label": "WATCH_SHORT",
+            "alpha_vs_bench": 0.0086,
+            "directional_return": -0.0086,
+            "correct": false
+          }
+        ]
+      },
+      "20d": {
+        "tier": "validation",
+        "horizon": "20d",
+        "n": 0,
+        "hit_rate": null,
+        "mean_directional_return": null,
+        "inferential": false,
+        "note": "n=0 < 8 — descriptive only, NOT inferential",
+        "rows": []
+      },
+      "60d": {
+        "tier": "validation",
+        "horizon": "60d",
+        "n": 0,
+        "hit_rate": null,
+        "mean_directional_return": null,
+        "inferential": false,
+        "note": "n=0 < 8 — descriptive only, NOT inferential",
+        "rows": []
+      },
+      "120d": {
+        "tier": "validation",
+        "horizon": "120d",
+        "n": 0,
+        "hit_rate": null,
+        "mean_directional_return": null,
+        "inferential": false,
+        "note": "n=0 < 8 — descriptive only, NOT inferential",
+        "rows": []
+      }
+    }
+  },
+  "position_attribution": [
+    {
+      "ticker": "300308.SZ",
+      "name": "中际旭创",
+      "weight_pct": 57.52,
+      "vp_at_entry": 79,
+      "pnl_pct_reported": 75.82,
+      "holding_days": 79,
+      "entry_date_used": "2026-03-10",
+      "benchmark": "CSI300",
+      "position_side": "LONG",
+      "latest_thesis_direction": "PASS",
+      "alignment": "NO_CAPITAL_THESIS",
+      "requires_human_review": false,
+      "attribution": {
+        "status": "ok",
+        "n_days": 51,
+        "beta": 1.928,
+        "total_return": 1.0165,
+        "bench_total_return": 0.0584,
+        "beta_contribution": 0.1126,
+        "residual_thesis_alpha": 0.9038,
+        "caveat": "residual is UPPER BOUND on thesis-α: single-factor CSI300 only removes broad-market beta, NOT sector/theme beta. An AI-optical name's theme rally (not in CSI300) leaks into residual and is indistinguishable from thesis skill without a sector/peer benchmark."
+      }
+    },
+    {
+      "ticker": "6160.HK",
+      "name": "百济神州",
+      "weight_pct": 3.72,
+      "vp_at_entry": 65,
+      "pnl_pct_reported": 0.0,
+      "holding_days": 79,
+      "entry_date_used": "2026-03-10",
+      "benchmark": "HSI",
+      "position_side": "LONG",
+      "latest_thesis_direction": "WATCH_SHORT",
+      "alignment": "WATCH_CONFLICT",
+      "requires_human_review": true,
+      "attribution": {
+        "status": "ok",
+        "n_days": 53,
+        "beta": 1.261,
+        "total_return": -0.0365,
+        "bench_total_return": -0.03,
+        "beta_contribution": -0.0378,
+        "residual_thesis_alpha": 0.0013,
+        "caveat": "residual is UPPER BOUND on thesis-α: single-factor CSI300 only removes broad-market beta, NOT sector/theme beta. An AI-optical name's theme rally (not in CSI300) leaks into residual and is indistinguishable from thesis skill without a sector/peer benchmark."
+      }
+    },
+    {
+      "ticker": "700.HK",
+      "name": "腾讯控股",
+      "weight_pct": 22.27,
+      "vp_at_entry": 64,
+      "pnl_pct_reported": 0.0,
+      "holding_days": 72,
+      "entry_date_used": "2026-03-17",
+      "benchmark": "HSI",
+      "position_side": "LONG",
+      "latest_thesis_direction": "WATCH_SHORT",
+      "alignment": "WATCH_CONFLICT",
+      "requires_human_review": true,
+      "attribution": {
+        "status": "ok",
+        "n_days": 48,
+        "beta": 1.224,
+        "total_return": -0.2142,
+        "bench_total_return": -0.0265,
+        "beta_contribution": -0.0325,
+        "residual_thesis_alpha": -0.1818,
+        "caveat": "residual is UPPER BOUND on thesis-α: single-factor CSI300 only removes broad-market beta, NOT sector/theme beta. An AI-optical name's theme rally (not in CSI300) leaks into residual and is indistinguishable from thesis skill without a sector/peer benchmark."
+      }
+    },
+    {
+      "ticker": "9999.HK",
+      "name": "网易",
+      "weight_pct": 12.81,
+      "vp_at_entry": 58,
+      "pnl_pct_reported": 0.0,
+      "holding_days": 65,
+      "entry_date_used": "2026-03-24",
+      "benchmark": "HSI",
+      "position_side": "LONG",
+      "latest_thesis_direction": "WATCH_SHORT",
+      "alignment": "WATCH_CONFLICT",
+      "requires_human_review": true,
+      "attribution": {
+        "status": "ok",
+        "n_days": 43,
+        "beta": 1.199,
+        "total_return": 0.096,
+        "bench_total_return": 0.0047,
+        "beta_contribution": 0.0057,
+        "residual_thesis_alpha": 0.0903,
+        "caveat": "residual is UPPER BOUND on thesis-α: single-factor CSI300 only removes broad-market beta, NOT sector/theme beta. An AI-optical name's theme rally (not in CSI300) leaks into residual and is indistinguishable from thesis skill without a sector/peer benchmark."
+      }
+    },
+    {
+      "ticker": "002594.SZ",
+      "name": "比亚迪",
+      "weight_pct": 3.68,
+      "vp_at_entry": 52,
+      "pnl_pct_reported": -0.32,
+      "holding_days": 57,
+      "entry_date_used": "2026-04-01",
+      "benchmark": "CSI300",
+      "position_side": "LONG",
+      "latest_thesis_direction": "LONG",
+      "alignment": "ALIGNED",
+      "requires_human_review": false,
+      "attribution": {
+        "status": "ok",
+        "n_days": 35,
+        "beta": 0.98,
+        "total_return": -0.0594,
+        "bench_total_return": 0.0932,
+        "beta_contribution": 0.0913,
+        "residual_thesis_alpha": -0.1507,
+        "caveat": "residual is UPPER BOUND on thesis-α: single-factor CSI300 only removes broad-market beta, NOT sector/theme beta. An AI-optical name's theme rally (not in CSI300) leaks into residual and is indistinguishable from thesis skill without a sector/peer benchmark."
+      }
+    }
+  ]
+}
