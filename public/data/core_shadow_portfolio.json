@@ -1,0 +1,228 @@
+{
+  "_meta": {
+    "read_only": true,
+    "no_trades": true,
+    "no_position_mutation": true,
+    "no_llm": true,
+    "spec": "CORE_ALPHA_FACTORY_v0_SPEC §9.5; Junyan 2026-05-30",
+    "scope": "COMPOSITION divergence only — NOT performance",
+    "honest_note": "performance/returns NOT computed: forward data not matured (§3.1, first window ~Aug-Nov 2026); computing alpha now would be look-ahead/oversell. Composition divergence is the v0 deliverable. [unvalidated intuition] on weighting.",
+    "sources": {
+      "paper": "/Users/years/Desktop/Stock/ar-platform/public/data/positions.json (read-only)",
+      "registered": "/Users/years/Desktop/Stock/ar-platform/public/data/thesis_queue.json"
+    },
+    "as_of_paper": "2026-05-28T14:49:26"
+  },
+  "books": {
+    "A_current_paper": {
+      "positions": [
+        {
+          "ticker": "300308.SZ",
+          "name": "中际旭创",
+          "side": "LONG",
+          "weight_pct": 57.52,
+          "pnl_pct": 75.82
+        },
+        {
+          "ticker": "6160.HK",
+          "name": "百济神州",
+          "side": "LONG",
+          "weight_pct": 3.72,
+          "pnl_pct": 0.0
+        },
+        {
+          "ticker": "700.HK",
+          "name": "腾讯控股",
+          "side": "LONG",
+          "weight_pct": 22.27,
+          "pnl_pct": 0.0
+        },
+        {
+          "ticker": "9999.HK",
+          "name": "网易",
+          "side": "LONG",
+          "weight_pct": 12.81,
+          "pnl_pct": 0.0
+        },
+        {
+          "ticker": "002594.SZ",
+          "name": "比亚迪",
+          "side": "LONG",
+          "weight_pct": 3.68,
+          "pnl_pct": -0.32
+        }
+      ],
+      "gross_pct": 100.0,
+      "no_trade_flag": true
+    },
+    "B_thesis_aligned": {
+      "positions": [
+        {
+          "ticker": "002594.SZ",
+          "name": "比亚迪",
+          "side": "LONG",
+          "paper_weight_pct": 3.68,
+          "renorm_weight_pct": 100.0
+        }
+      ],
+      "note": "paper subset whose side agrees with a directional registered thesis; re-normalized",
+      "no_trade_flag": true
+    },
+    "C_equal_weight_candidates": {
+      "legs": [
+        {
+          "ticker": "002594.SZ",
+          "side": "LONG",
+          "weight_pct": 20.0
+        },
+        {
+          "ticker": "603233.SH",
+          "side": "SHORT",
+          "weight_pct": 20.0
+        },
+        {
+          "ticker": "6160.HK",
+          "side": "SHORT",
+          "weight_pct": 20.0
+        },
+        {
+          "ticker": "700.HK",
+          "side": "SHORT",
+          "weight_pct": 20.0
+        },
+        {
+          "ticker": "9999.HK",
+          "side": "SHORT",
+          "weight_pct": 20.0
+        }
+      ],
+      "n_long": 1,
+      "n_short": 4,
+      "gross_pct": 100.0,
+      "net_pct": -60.0,
+      "weight_scheme": "equal-weight [unvalidated intuition]",
+      "no_trade_flag": true
+    },
+    "D_benchmarks": {
+      "references": [
+        "CSI300 (A-share names)",
+        "HSI (HK names)"
+      ],
+      "note": "labels only; benchmark/theme-residual performance computed at maturity via theme_peer_residual.py",
+      "no_trade_flag": true
+    }
+  },
+  "comparison": [
+    {
+      "ticker": "002594.SZ",
+      "name": "比亚迪",
+      "in_paper": true,
+      "paper_side": "LONG",
+      "paper_weight_pct": 3.68,
+      "in_registered": true,
+      "registered_direction": "LONG",
+      "registered_role": "directional",
+      "evidence_tier": "E1",
+      "alignment": "ALIGNED"
+    },
+    {
+      "ticker": "175.HK",
+      "name": "Geely",
+      "in_paper": false,
+      "paper_side": null,
+      "paper_weight_pct": null,
+      "in_registered": true,
+      "registered_direction": "PASS",
+      "registered_role": "observer_control",
+      "evidence_tier": "E3",
+      "alignment": "NOT_HELD"
+    },
+    {
+      "ticker": "300308.SZ",
+      "name": "中际旭创",
+      "in_paper": true,
+      "paper_side": "LONG",
+      "paper_weight_pct": 57.52,
+      "in_registered": true,
+      "registered_direction": "PASS",
+      "registered_role": "observer_control",
+      "evidence_tier": "E3",
+      "alignment": "NO_CAPITAL_THESIS"
+    },
+    {
+      "ticker": "603233.SH",
+      "name": "大参林",
+      "in_paper": false,
+      "paper_side": null,
+      "paper_weight_pct": null,
+      "in_registered": true,
+      "registered_direction": "SHORT",
+      "registered_role": "directional",
+      "evidence_tier": "E1",
+      "alignment": "REGISTERED_NOT_HELD"
+    },
+    {
+      "ticker": "6160.HK",
+      "name": "百济神州",
+      "in_paper": true,
+      "paper_side": "LONG",
+      "paper_weight_pct": 3.72,
+      "in_registered": true,
+      "registered_direction": "WATCH_SHORT",
+      "registered_role": "directional",
+      "evidence_tier": "E2",
+      "alignment": "WATCH_CONFLICT"
+    },
+    {
+      "ticker": "700.HK",
+      "name": "腾讯控股",
+      "in_paper": true,
+      "paper_side": "LONG",
+      "paper_weight_pct": 22.27,
+      "in_registered": true,
+      "registered_direction": "WATCH_SHORT",
+      "registered_role": "directional",
+      "evidence_tier": "E2",
+      "alignment": "WATCH_CONFLICT"
+    },
+    {
+      "ticker": "9999.HK",
+      "name": "网易",
+      "in_paper": true,
+      "paper_side": "LONG",
+      "paper_weight_pct": 12.81,
+      "in_registered": true,
+      "registered_direction": "WATCH_SHORT",
+      "registered_role": "directional",
+      "evidence_tier": "E2",
+      "alignment": "WATCH_CONFLICT"
+    }
+  ],
+  "divergence": {
+    "aligned": [
+      "002594.SZ"
+    ],
+    "hard_conflict": [],
+    "watch_conflict": [
+      "6160.HK",
+      "700.HK",
+      "9999.HK"
+    ],
+    "held_no_directional_thesis": [
+      "300308.SZ"
+    ],
+    "registered_not_held": [
+      "603233.SH"
+    ],
+    "paper_gross_pct": 100.0,
+    "paper_weight_aligned_pct": 3.68,
+    "paper_weight_aligned_share": 0.0368
+  },
+  "performance": {
+    "status": "PENDING",
+    "reason": "forward data not matured (§3.1); returns/alpha withheld to avoid look-ahead",
+    "review_window": "~2026-08 to 2026-11 (60-120d horizons of first registered batch)",
+    "future_method": "theme/peer-adjusted residual per book (theme_peer_residual.py) + BY-family"
+  },
+  "no_trade_flag": true
+}

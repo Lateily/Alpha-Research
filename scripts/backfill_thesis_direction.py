@@ -85,7 +85,37 @@ def required_fields_present(data) -> dict:
     }
 
 
+VALID_VALIDATION_LABELS = {"LONG", "SHORT", "WATCH_LONG", "WATCH_SHORT", "PASS", "UNRESOLVED"}
+
+
 def classify(data) -> dict:
+    # Alpha Factory v0 (CORE_ALPHA_FACTORY_v0_SPEC §5): if the synthesizer emitted
+    # a NATIVE `_validation_direction` (research-multi.js), trust it directly so
+    # native + backfilled records share ONE taxonomy. Legacy theses (the 25 that
+    # predate the field) have no `_validation_direction` → fall through to the
+    # parse below → byte-identical to before (backward-compatible).
+    native = data.get("_validation_direction")
+    if isinstance(native, str) and native in VALID_VALIDATION_LABELS:
+        d = data.get("_direction") or "PASS"
+        # Consistency guard (spec §5 rule 1): _validation_direction is derived
+        # AFTER _direction. A native label that contradicts the capital direction
+        # is LLM schema drift and must NEVER be silently trusted into the
+        # validation ledger. Conflict -> explicit UNRESOLVED (never promoted/flipped):
+        #   _direction LONG/SHORT  -> native MUST equal it (else UNRESOLVED)
+        #   _direction PASS        -> native must NOT be a capital LONG/SHORT
+        conflict = ((d in ("LONG", "SHORT") and native != d) or
+                    (d == "PASS" and native in ("LONG", "SHORT")))
+        if conflict:
+            return {"label": "UNRESOLVED", "tier": "none",
+                    "basis": f"native _validation_direction={native} conflicts with _direction={d} -> rejected (schema-drift guard)",
+                    "evidence": [], "watch": False, "note": None}
+        tier = ("capital" if native in ("LONG", "SHORT")
+                else "validation" if native.startswith("WATCH_") else "none")
+        return {"label": native, "tier": tier,
+                "basis": "_validation_direction (native synthesizer emission)",
+                "evidence": [], "watch": native.startswith("WATCH_"),
+                "note": "[unvalidated forward candidate]" if native.startswith("WATCH_") else None}
+
     direction = data.get("_direction") or "PASS"
     if direction in ("LONG", "SHORT"):
         return {"label": direction, "tier": "capital", "basis": "_direction (synthesizer)",
@@ -229,5 +259,35 @@ def main() -> int:
     return 0
 
 
+def _selftest() -> int:
+    """Guard the native `_validation_direction` consistency rules (spec §5)."""
+    cases = [
+        # (data, expected_label, expected_tier)
+        ({"_direction": "LONG",  "_validation_direction": "LONG"},        "LONG",       "capital"),
+        ({"_direction": "PASS",  "_validation_direction": "WATCH_SHORT"}, "WATCH_SHORT", "validation"),
+        ({"_direction": "PASS",  "_validation_direction": "UNRESOLVED"},  "UNRESOLVED", "none"),
+        # conflict cases — native must NOT be trusted (schema-drift guard):
+        ({"_direction": "LONG",  "_validation_direction": "WATCH_SHORT"}, "UNRESOLVED", "none"),
+        ({"_direction": "SHORT", "_validation_direction": "PASS"},        "UNRESOLVED", "none"),
+        ({"_direction": "PASS",  "_validation_direction": "LONG"},        "UNRESOLVED", "none"),
+        ({"_direction": "LONG",  "_validation_direction": "WATCH_LONG"},  "UNRESOLVED", "none"),  # strict: must equal
+    ]
+    errs = []
+    for data, exp_label, exp_tier in cases:
+        c = classify(data)
+        if c["label"] != exp_label or c["tier"] != exp_tier:
+            errs.append(f"{data} -> ({c['label']},{c['tier']}), expected ({exp_label},{exp_tier})")
+    if errs:
+        print("backfill_thesis_direction selftest FAILED:")
+        for e in errs:
+            print(f"  - {e}")
+        return 1
+    print(f"backfill_thesis_direction selftest PASSED ({len(cases)} native-consistency cases)")
+    return 0
+
+
 if __name__ == "__main__":
+    import sys
+    if "--selftest" in sys.argv:
+        raise SystemExit(_selftest())
     raise SystemExit(main())

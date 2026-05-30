@@ -68,6 +68,14 @@ def discover_hk_tickers() -> set[str]:
             t = p.get("ticker", "")
             if isinstance(t, str) and t.endswith(".HK"):
                 tics.add(t)
+    # CORE Alpha Factory v0 #3: also fetch HK theme-basket peers so peer/residual
+    # attribution has prices (Junyan Q3: one HK source, extend this fetcher — no
+    # separate HK peer fetcher). Single source of truth = theme_peer_residual.BASKETS.
+    try:
+        from theme_peer_residual import all_hk_basket_tickers
+        tics.update(all_hk_basket_tickers())
+    except Exception as e:
+        print(f"[hk-fetch] note: could not load basket HK peers ({e}); fetching watchlist HK only")
     return tics
 
 
