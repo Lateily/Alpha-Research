@@ -1,0 +1,98 @@
+{
+  "_meta": {
+    "read_only_inputs": true,
+    "no_llm": true,
+    "no_trades": true,
+    "no_capital_promotion": true,
+    "spec": "CORE_ALPHA_FACTORY_v0_SPEC §3.1/§4.2; Junyan ratify 2026-05-30",
+    "m_total_families": 7,
+    "m_directional_families": 5,
+    "by_correction_note": "BY-family FDR runs at forward maturity (~Aug-Nov 2026) over the m_directional_families ONLY (PASS/UNRESOLVED are observer/control, not tests). v0 promotes nothing to capital; all families PENDING. [unvalidated intuition] — evidence tiers + grouping are operating rules."
+  },
+  "families": [
+    {
+      "hypothesis_family_id": "core_factory_v0_002594_SZ_AUTO_EV_20260530",
+      "ticker": "002594.SZ",
+      "theme_bucket": "AUTO_EV",
+      "horizon_days": 60,
+      "registered_at": "2026-05-30T00:00:00Z",
+      "member_hashes": [
+        "sha256-42fa63637fae5ddc56a3b6eeb441429ac3e3e44c7703f5d3c11576c35347fe59"
+      ],
+      "counts_toward_validation": true,
+      "validation_status": "PENDING"
+    },
+    {
+      "hypothesis_family_id": "core_factory_v0_175_HK_AUTO_EV_20260530",
+      "ticker": "175.HK",
+      "theme_bucket": "AUTO_EV",
+      "horizon_days": 60,
+      "registered_at": "2026-05-30T00:00:00Z",
+      "member_hashes": [
+        "sha256-36e96eceb6c4ac24fa3ea563cfdf4379793a440dda83f656b2f11693f39e6e2b"
+      ],
+      "counts_toward_validation": false,
+      "validation_status": "PENDING"
+    },
+    {
+      "hypothesis_family_id": "core_factory_v0_300308_SZ_CPO_OPTICAL_20260530",
+      "ticker": "300308.SZ",
+      "theme_bucket": "CPO_OPTICAL",
+      "horizon_days": 60,
+      "registered_at": "2026-05-30T00:00:00Z",
+      "member_hashes": [
+        "sha256-5e2781fcfcbb2e20333f0aa36595588c0fd469cf75893ac2c861e63adb4a8e89"
+      ],
+      "counts_toward_validation": false,
+      "validation_status": "PENDING"
+    },
+    {
+      "hypothesis_family_id": "core_factory_v0_603233_SH_PHARMACY_RETAIL_20260530",
+      "ticker": "603233.SH",
+      "theme_bucket": "PHARMACY_RETAIL",
+      "horizon_days": 60,
+      "registered_at": "2026-05-30T00:00:00Z",
+      "member_hashes": [
+        "sha256-d11967970be6d9b65f378745986ec318306a260b22d8836f2420171a9d3f8122"
+      ],
+      "counts_toward_validation": true,
+      "validation_status": "PENDING"
+    },
+    {
+      "hypothesis_family_id": "core_factory_v0_6160_HK_HK_BIOTECH_20260530",
+      "ticker": "6160.HK",
+      "theme_bucket": "HK_BIOTECH",
+      "horizon_days": 60,
+      "registered_at": "2026-05-30T00:00:00Z",
+      "member_hashes": [
+        "sha256-532d87d80d7d50b430ac84343aacfaedc01097e91fc0e22c9a781710fd11c71b"
+      ],
+      "counts_toward_validation": true,
+      "validation_status": "PENDING"
+    },
+    {
+      "hypothesis_family_id": "core_factory_v0_700_HK_HK_INTERNET_GAMING_20260530",
+      "ticker": "700.HK",
+      "theme_bucket": "HK_INTERNET_GAMING",
+      "horizon_days": 60,
+      "registered_at": "2026-05-30T00:00:00Z",
+      "member_hashes": [
+        "sha256-aa4619f9a95c8c8e8e77cdcb8efdf79a60cf80bd6792bba8541619f48d57f024"
+      ],
+      "counts_toward_validation": true,
+      "validation_status": "PENDING"
+    },
+    {
+      "hypothesis_family_id": "core_factory_v0_9999_HK_HK_INTERNET_GAMING_20260530",
+      "ticker": "9999.HK",
+      "theme_bucket": "HK_INTERNET_GAMING",
+      "horizon_days": 60,
+      "registered_at": "2026-05-30T00:00:00Z",
+      "member_hashes": [
+        "sha256-cc76a82fa12e5be726fec85fc50ce8d1cb1be5e04be997f421674362cc37f081"
+      ],
+      "counts_toward_validation": true,
+      "validation_status": "PENDING"
+    }
+  ]
+}
