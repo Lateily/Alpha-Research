@@ -29,10 +29,10 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -83,7 +83,7 @@ jobs:
       # Upload artifact (gitignored — caller downloads via `gh run download`)
       - name: Upload panel artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: index-panel-${{ github.run_id }}
           path: data_history/panel/index_prices.parquet
