@@ -33,8 +33,7 @@
 
 ## Codex — where you can add value (complementary, in-remit)
 
-Claude is running an adversarial multi-agent audit of the factory v0 code, so do NOT
-re-audit the same files. Instead, independent VALIDATION (your remit per AGENTS.md):
+Claude RAN an adversarial multi-agent audit of the factory v0 code (6 pieces, each finding verified -> 0 confirmed issues), so do NOT re-audit the same files. Instead, independent VALIDATION (your remit per AGENTS.md):
 
 1. **Independent output cross-check** — run `core_candidate_funnel.py`, `core_thesis_queue.py`,
    `core_shadow_portfolio.py`, `theme_peer_residual.py` yourself; confirm the `--selftest`s
