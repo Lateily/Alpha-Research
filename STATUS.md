@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-25 (T1 — new big-picture direction set by Junyan)
+**Last updated:** 2026-05-30 (CORE Alpha Factory v0 shipped + deployed — see milestone directly below)
 
 ## ▶ CURRENT DIRECTION (2026-05-25) — READ THIS FIRST
 
@@ -32,6 +32,36 @@ survivorship, regime replay, walk-forward) → P4 1-month paper-sim → P5 real
 capital. We are at **P1→P2**. Do NOT build any backtest on the current ~6mo /
 survivor-biased / look-ahead data — every number from `backtest.py` today is an
 artifact (n=5, flat-proxy benchmark). Discard the "98% annualized" result.
+
+**2026-05-30 — CORE Alpha Factory v0 SHIPPED + DEPLOYED (newest; read first):**
+
+The produce→pre-register→validate→shadow→cull candidate pipeline is live on `main`
+(merged PR #2 `ab259a4`, PR #3 morning-report fix, PR #4 CI Node24 bump). Spec
+`docs/strategy/CORE_ALPHA_FACTORY_v0_SPEC.md`; judgement gate
+`docs/strategy/CORE_CULL_PROMOTE_CRITERIA_v0.md`. ALL read-only / no trades / no
+positions / nothing promoted to capital / every output `no_trade_flag:true` /
+protected paper-state untouched. Pieces (all Junyan-reviewed PASS):
+- #2A `scripts/core_candidate_funnel.py` → `core_screen_queue.json` — full-market
+  A-share attention screen, **NOT alpha** (expectation_revision+coverage_gap
+  unavailable full-market; renormalize-over-available; PIT gate ann_date≤as_of−1d).
+- #2B `scripts/core_thesis_queue.py` → `thesis_queue.json` — pre-registration,
+  sha256 lock over content+BY-membership+tier, append-only/content-addressable,
+  ticker-specific family_id, tamper-evident.
+- #3 `scripts/theme_peer_residual.py` — theme/peer-adjusted residual attribution.
+- #4 `scripts/core_shadow_portfolio.py` → `core_shadow_portfolio.json` — read-only
+  paper-vs-registered composition divergence; performance PENDING (no look-ahead).
+- gate: cull/promote v0 ratified thresholds [unvalidated intuition] — sample ≥8
+  INDEPENDENT directional families @60d, raw-60d residual ±8%, BY p<0.10
+  promote-candidate-only, layered wrong_if; PROMOTE_CANDIDATE ≠ capital.
+
+Honest read: shadow shows the live paper book is only ~3.7% backed by an aligned
+directional thesis (BYD only); HK names paper-LONG vs registered WATCH_SHORT.
+**Deferred** (Junyan-directed): #2C screen→generate→register (needs LLM);
+`forward_evidence_tier` v0.1 (the structural-vs-forward tier split — data source
+does NOT exist yet; needs upstream PROVEN|INFERRED|ASSUMED causal tags in the
+synthesizer FIRST; must land before the first formal validation verdict). First
+meaningful validation window ≈ **2026-08 → 2026-11** (60–120d horizons of the first
+registered batch). Factory is paused-by-design while forward data accrues.
 
 **2026-05-26 — iter-8 COMPLETE (Stage 1 foundation + Stage 2 IC + Stage 3
 bootstrap, all honest):**
