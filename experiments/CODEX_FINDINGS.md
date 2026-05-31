@@ -227,6 +227,85 @@ High.
 
 Open.
 
+---
+
+## 2026-05-31 — CORE Alpha Factory v0 independent validation
+
+**Scope**
+
+Ran the four Codex handoff tasks from `SESSION_HANDOFF.md` on a clean
+`origin/main` worktree:
+
+- output/selftest cross-check for `core_candidate_funnel.py`,
+  `core_thesis_queue.py`, `theme_peer_residual.py`, `core_shadow_portfolio.py`
+- PIT stress for `core_candidate_funnel.pit_filter`
+- lock/identity stress for `core_thesis_queue`
+- synthetic cull/promote sanity check against the ratified doc rules
+
+Selftests passed. PIT and lock stress passed. Cull/promote rules are logically
+reachable but not trivially loose under the documented thresholds.
+
+**Finding 2026-05-31-A — `theme_peer_residual.json` and `core_shadow_portfolio.json` can go stale after daily paper-state updates**
+
+Evidence:
+
+- Re-running the factory outputs on latest `origin/main` reproduced these files
+  byte-identically:
+  - `public/data/core_screen_queue.json`
+  - `public/data/thesis_queue.json`
+  - `public/data/thesis_family_registry.json`
+- Re-running these outputs produced diffs:
+  - `public/data/theme_peer_residual.json`
+  - `public/data/core_shadow_portfolio.json`
+- The diffs were driven by current `public/data/positions.json`, not by strategy
+  logic:
+  - committed `core_shadow_portfolio.json` had `_meta.as_of_paper =
+    2026-05-28T14:49:26`
+  - current `positions.json` has `as_of = 2026-05-29T11:44:25.567554`
+  - example: `300308.SZ` paper weight changed 57.52% → 56.75%, P&L 75.82% → 70.42%
+- Grep found no workflow step invoking `scripts/theme_peer_residual.py` or
+  `scripts/core_shadow_portfolio.py`; they are committed outputs but not part of
+  the daily regeneration pipeline.
+
+**Why it matters**
+
+The factory is read-only, but these two outputs are position-dependent. If they
+are displayed by Dashboard or used in review packets, they can silently represent
+the prior day's paper book after `paper_trading.py` updates `positions.json`.
+
+**Causal status**
+
+Causal logic is valid because both scripts read `public/data/positions.json` and
+their regenerated JSON changes when that source changes. The missing workflow
+hook means stale committed outputs are expected after any daily paper-state
+update.
+
+**Numeric status**
+
+Specific changed weights/P&L are validated against the local `origin/main`
+worktree and current local `positions.json`. They are not investment signals and
+not calibrated thresholds.
+
+**Proposed next step**
+
+Add a guarded regeneration step after `paper_trading.py` in `fetch-data.yml` for:
+
+- `python3 scripts/theme_peer_residual.py`
+- `python3 scripts/core_shadow_portfolio.py`
+
+Then include both output JSONs in the data commit allowlist. Keep the step
+read-only with a protected-file hash check, matching the existing guardrail
+pattern.
+
+**Production impact**
+
+Medium. This is a freshness/observability issue, not a trade or capital-risk
+issue. It does not invalidate the factory logic, but it can mislead daily review.
+
+**Status**
+
+Open.
+
 ## 2026-05-30 — Alpha Factory v0 Screen Queue Review
 
 **Finding 2026-05-30-A — `core_candidate_funnel.py` does not enforce the PIT ann_date buffer gate**
