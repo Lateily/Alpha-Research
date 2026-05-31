@@ -323,16 +323,27 @@ jobs:
       # Uses 'git add -f --ignore-errors' so missing glob expansions (e.g. no
       # ohlc_*.json yet) don't abort the step. git diff --cached guard means
       # we only commit when there are actual changes.
-      # Regenerate the thesis↔portfolio alignment marker AFTER positions.json is
+      # Regenerate the position-dependent read-only markers AFTER positions.json is
       # final this run, so the Dashboard (which reads the COMMITTED JSON) stays
-      # fresh daily — not just the morning-report transient copy. Read-only marker:
+      # fresh daily — not just the morning-report transient copy. Read-only markers:
       # no trades, no position changes (see PORTFOLIO_THESIS_ALIGNMENT_RULES.md).
-      # stdlib-only (no pandas); best-effort so a hiccup never blocks the data commit.
-      - name: Regenerate thesis alignment marker
+      # Adds the CORE Alpha Factory shadow portfolio (core_shadow_portfolio.py): it
+      # reads positions.json + thesis_queue.json and otherwise goes stale after the
+      # daily paper-state update (CODEX_FINDINGS 2026-05-31-A). best-effort.
+      # NB: theme_peer_residual.py is intentionally NOT regenerated here — it needs the
+      # data_history/panel/*.parquet price panels (gitignored, built by the panel-fetch
+      # workflows, absent in this runner); running it here would silently degrade its
+      # output to all proxy_or_missing. Its freshness is coupled to the panel refresh.
+      - name: Regenerate position-dependent markers (alignment + shadow)
         continue-on-error: true
         run: |
+          # protected paper-state must stay READ-ONLY to these markers; tripwire if not.
+          before=$(git hash-object public/data/positions.json public/data/analytics.json public/data/snapshots.json 2>/dev/null)
           python3 scripts/backfill_thesis_direction.py  || echo "backfill skipped (non-fatal)"
           python3 scripts/portfolio_thesis_alignment.py || echo "alignment skipped (non-fatal)"
+          python3 scripts/core_shadow_portfolio.py      || echo "shadow skipped (non-fatal)"
+          after=$(git hash-object public/data/positions.json public/data/analytics.json public/data/snapshots.json 2>/dev/null)
+          [ "$before" = "$after" ] || echo "::warning::marker regen modified protected paper-state (positions/analytics/snapshots) — these must be read-only"
 
       - name: Commit and push data
         run: |
@@ -352,6 +363,7 @@ jobs:
             public/data/snapshots.json \
             public/data/portfolio_thesis_alignment.json \
             public/data/thesis_direction_backfill.json \
+            public/data/core_shadow_portfolio.json \
             public/data/backtest_results.json \
             public/data/stress_test.json \
             public/data/confluence.json \
