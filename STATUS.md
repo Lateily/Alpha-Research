@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-30 (CORE Alpha Factory v0 shipped + deployed — see milestone directly below)
+**Last updated:** 2026-05-31 (Trade Decision Stack v0 Steps 1–3 shipped — read-only cockpit live; newest milestone below. CORE Alpha Factory v0 milestone follows it.)
 
 ## ▶ CURRENT DIRECTION (2026-05-25) — READ THIS FIRST
 
@@ -62,6 +62,31 @@ does NOT exist yet; needs upstream PROVEN|INFERRED|ASSUMED causal tags in the
 synthesizer FIRST; must land before the first formal validation verdict). First
 meaningful validation window ≈ **2026-08 → 2026-11** (60–120d horizons of the first
 registered batch). Factory is paused-by-design while forward data accrues.
+
+**2026-05-31 — TRADE DECISION STACK v0, Steps 1–3 SHIPPED (newest; read first):**
+
+A read-only **decision-support layer** (NOT auto-recommendation, NOT auto-trade) built by
+composing the factory outputs. Design frozen `docs/strategy/TRADE_DECISION_STACK_v0_DESIGN.md`
+(PR #11). Hard boundary: read-only / status-only / no BUY-SELL / **no recommended position
+size** / no positions mutation / every number `[unvalidated intuition]` UNLESS it is observed
+paper-book exposure (which is a fact). Pieces (all Junyan-reviewed PASS, multiple FAIL-fix cycles):
+- Step 1 `scripts/portfolio_risk_packet.py` → `portfolio_risk_packet.json` (PR #12) — read-only
+  composition of positions + shadow + alignment + thesis_queue + theme residual → book
+  gross/net/theme-exposure, thesis conflicts, risk blockers, per-candidate incremental exposure
+  (NO size field). Default-to-stale theme-residual guard; protected-state sha256 tripwire.
+- Step 2 `scripts/trade_candidate_board.py` → `trade_candidate_board.json` (PR #13) — screen_queue
+  + thesis_queue + watchlist + risk packet → candidate board, frozen status precedence
+  (RISK_BLOCKED > HUMAN_REVIEW_REQUIRED > RESEARCH_REQUIRED > WATCH > NO_ACTION), deterministic
+  ordering (byte-identical on rerun).
+- Step 3 cockpit in `src/Dashboard.jsx` (PR #14) — read-only Cockpit tab (Browse · Desk · Cockpit
+  · Research · …) rendering the two JSONs; RISK_BLOCKED/HUMAN_REVIEW prominent, RESEARCH/WATCH
+  collapsible; observed exposure marked fact, caps/strategy `[unvalidated]`. Passed a 3-lens
+  adversarial honesty audit (observed-mislabel / uncalibrated-as-fact / boundary-leakage), 0 blockers.
+
+**TDS v0 PENDING:** Step 4 = `strategy_checklist` + `human_review_queue` SCAFFOLD only (no numeric
+advice); wire the cockpit into the internal-Beta acceptance harness (`/private/tmp/ar-internal-beta`,
+design §6) for visual QA. `forward_evidence_tier` (design-frozen, build pending) feeds
+`trade_candidate.evidence_tier` once built.
 
 **2026-05-26 — iter-8 COMPLETE (Stage 1 foundation + Stage 2 IC + Stage 3
 bootstrap, all honest):**
