@@ -1,0 +1,257 @@
+{
+  "variant_id": "b1_b3_4factor_no_atr",
+  "verdict": "FAIL",
+  "n_gates_total": 18,
+  "n_gates_failed": 11,
+  "gate_outcomes": [
+    {
+      "gate_id": "PRE1",
+      "name": "manifest_present",
+      "category": "PRE",
+      "pass": false,
+      "reason": "no manifest provided / file not found",
+      "metric": null,
+      "threshold": "schema=v3_variant_manifest",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "PRE2",
+      "name": "registered_before_run",
+      "category": "PRE",
+      "pass": false,
+      "reason": "no manifest",
+      "metric": null,
+      "threshold": "manifest.registered_at < audit.created_at",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "PRE3",
+      "name": "hypothesis_immutable",
+      "category": "PRE",
+      "pass": false,
+      "reason": "no manifest",
+      "metric": null,
+      "threshold": "hypothesis_lock_hash declared",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "WF1",
+      "name": "walk_forward_3_of_5_pos",
+      "category": "STAT",
+      "pass": false,
+      "reason": "2/5 windows have same_gross \u03b1 \u2265 0 point estimate; threshold 3/5",
+      "metric": 2,
+      "threshold": ">=3/5",
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "WF2",
+      "name": "oos_not_neg_significant",
+      "category": "STAT",
+      "pass": false,
+      "reason": "OOS window wf_2022_2026 same_gross \u03b1 point=-0.2843578469382616, CI=[-0.4603,-0.0594], p=0.0161; NEG-sig=True",
+      "metric": -0.2843578469382616,
+      "threshold": "CI hi \u2265 0 AND not (p<0.05 with neg point)",
+      "windows_evaluated": [
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "MT",
+      "name": "by_corrected_p_lt_alpha",
+      "category": "STAT",
+      "pass": false,
+      "reason": "BY-corrected family p = 0.3500, threshold < 0.05",
+      "metric": 0.35,
+      "threshold": "<0.05",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "BENCH",
+      "name": "multi_benchmark_reported",
+      "category": "STAT",
+      "pass": false,
+      "reason": "benchmarks_found=['ew500'], missing=['cash2pct', 'csi300', 'zz500']",
+      "metric": 1,
+      "threshold": "csi300, zz500, ew500, cash2pct ALL required",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "NOSW",
+      "name": "not_single_window_only",
+      "category": "STAT",
+      "pass": true,
+      "reason": "no full-sample window present, no cherry-pick risk to evaluate",
+      "metric": null,
+      "threshold": "full POS sig REQUIRES wf 3/5 pos",
+      "windows_evaluated": null
+    },
+    {
+      "gate_id": "IMPL1",
+      "name": "max_positions_enforced",
+      "category": "IMPL",
+      "pass": true,
+      "reason": "max_positions_enforced=True in all windows",
+      "metric": 5,
+      "threshold": "all windows == True",
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL2",
+      "name": "avg_gross_min_30pct",
+      "category": "IMPL",
+      "pass": false,
+      "reason": "failed: [('wf_2006_2010', 0.13712485714285713), ('wf_2010_2014', 0.16750132507739937), ('wf_2014_2018', 0.12436907881269191), ('wf_2018_2022', 0.14042037075180228), ('wf_2022_2026', 0.12625135)]",
+      "metric": 0.13913339635695013,
+      "threshold": 0.3,
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL3",
+      "name": "median_pos_ge_2",
+      "category": "IMPL",
+      "pass": true,
+      "reason": "median_n_positions \u2265 2.0 in all windows",
+      "metric": 8.0,
+      "threshold": 2.0,
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL4",
+      "name": "turnover_le_200pct",
+      "category": "IMPL",
+      "pass": false,
+      "reason": "failed: [('wf_2006_2010', 14.061415197482088), ('wf_2010_2014', 17.048429882927053), ('wf_2014_2018', 12.881564375603823), ('wf_2018_2022', 14.163517142094744), ('wf_2022_2026', 12.65110756590856)]",
+      "metric": 17.048429882927053,
+      "threshold": 2.0,
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL5",
+      "name": "max_dd_floor_25pct",
+      "category": "IMPL",
+      "pass": false,
+      "reason": "failed: [('wf_2014_2018', -0.2647)]",
+      "metric": -0.2647,
+      "threshold": -0.25,
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL6",
+      "name": "sample_size_250",
+      "category": "IMPL",
+      "pass": true,
+      "reason": "all windows \u2265 250 trade dates",
+      "metric": 969,
+      "threshold": 250,
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "IMPL7",
+      "name": "post_cost_alpha_positive",
+      "category": "IMPL",
+      "pass": false,
+      "reason": "same_gross \u03b1=-0.2844, cost_drag=0.2129 (RT=0.004, turnover=12.65110756590856, n_years=4.2063492063492065); net=-0.4972",
+      "metric": -0.49721775201545326,
+      "threshold": 0.0,
+      "windows_evaluated": [
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "AUD1",
+      "name": "audit_fields_present",
+      "category": "AUDIT",
+      "pass": true,
+      "reason": "all required audit fields present",
+      "metric": 5,
+      "threshold": [
+        "config_hash",
+        "data_hash",
+        "git_commit",
+        "engine_version"
+      ],
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "AUD3",
+      "name": "trade_log_full",
+      "category": "AUDIT",
+      "pass": true,
+      "reason": "trade-log accounting consistent",
+      "metric": 5,
+      "threshold": "n_total_trades_actual == n_total_trades",
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    },
+    {
+      "gate_id": "AUD2",
+      "name": "max_positions_enforced_audit_mirror",
+      "category": "AUDIT",
+      "pass": true,
+      "reason": "max_positions_enforced=True in all windows",
+      "metric": 5,
+      "threshold": "all windows == True",
+      "windows_evaluated": [
+        "wf_2006_2010",
+        "wf_2010_2014",
+        "wf_2014_2018",
+        "wf_2018_2022",
+        "wf_2022_2026"
+      ]
+    }
+  ]
+}

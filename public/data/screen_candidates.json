@@ -1,0 +1,1648 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-08T12:23:55.359808",
+    "generated_at_policy": "deterministic: copied from source_fetched_at for byte-identical reruns",
+    "source_fetched_at": "2026-05-08T12:23:55.359808",
+    "universe_count": 5850,
+    "after_filter_count": 3292,
+    "weights_used": {
+      "quality": 0.3,
+      "value": 0.2,
+      "momentum": 0.25,
+      "low_vol": 0.1,
+      "size": 0.15
+    },
+    "factor_substitution_note": "quality/value/momentum/low_vol use barra_lite_v1 factors. size is a temporary stand-in for the not-yet-available earnings-trend factor; no earnings trend is fabricated. Weights and thresholds are [unvalidated intuition], not backtest-calibrated.",
+    "sector_neutral_note": "universe_a.json has no industry/sector field, so v1 ranks raw 0-100 cross-sectional factor scores. TODO: join data_history/universe_pit.json industry once the backfill is available, then sector-neutralize.",
+    "top_n": 50,
+    "thresholds_used": {
+      "pe_cap": 300.0,
+      "micro_cap_decile": 0.1,
+      "micro_cap_float_cap_cutoff": 2049840005.0,
+      "liquidity_turnover_amount_median": 2353515.21,
+      "liquidity_turnover_amount_floor": 470703.04,
+      "liquidity_float_cap_floor": 2000000000.0
+    },
+    "causal_validation": "Causal logic is valid for mechanical funnel-top ranking because distress/trading/liquidity filters reduce non-actionable names and the composite ranks precomputed cross-sectional factors.",
+    "numbers_validation": "Specific numbers are [unvalidated intuition]; they are not calibrated against trade history."
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "ticker": "600742.SH",
+      "name": "富维股份",
+      "composite": 75.86,
+      "alpha_score": 77.9,
+      "factors": {
+        "value": 91.2,
+        "quality": 50.0,
+        "momentum": 86.6,
+        "size": 82.8,
+        "low_vol": 85.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 18.24,
+        "momentum": 21.65,
+        "low_vol": 8.55,
+        "size": 12.42
+      },
+      "price": 9.72,
+      "pe": 22.02,
+      "pb": 0.85,
+      "float_cap": 7222522594.0,
+      "turnover_amount": 1719594.36,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=75.86 from weighted factor contributions (quality=15.00, value=18.24, momentum=21.65, low_vol=8.55, size=12.42); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 2,
+      "ticker": "600664.SH",
+      "name": "哈药股份",
+      "composite": 75.405,
+      "alpha_score": 76.5,
+      "factors": {
+        "value": 88.3,
+        "quality": 50.0,
+        "momentum": 84.0,
+        "size": 99.7,
+        "low_vol": 67.9
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 17.66,
+        "momentum": 21.0,
+        "low_vol": 6.79,
+        "size": 14.955
+      },
+      "price": 3.76,
+      "pe": 14.69,
+      "pb": 1.62,
+      "float_cap": 9469597134.0,
+      "turnover_amount": 4690987.28,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=75.41 from weighted factor contributions (quality=15.00, value=17.66, momentum=21.00, low_vol=6.79, size=14.96); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 3,
+      "ticker": "603045.SH",
+      "name": "福达合金",
+      "composite": 75.24,
+      "alpha_score": 75.8,
+      "factors": {
+        "value": 59.5,
+        "quality": 50.0,
+        "momentum": 98.4,
+        "size": 91.8,
+        "low_vol": 99.7
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 11.9,
+        "momentum": 24.6,
+        "low_vol": 9.97,
+        "size": 13.77
+      },
+      "price": 62.14,
+      "pe": 11.62,
+      "pb": 6.72,
+      "float_cap": 8416561932.0,
+      "turnover_amount": 1036184.5,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=75.24 from weighted factor contributions (quality=15.00, value=11.90, momentum=24.60, low_vol=9.97, size=13.77); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 4,
+      "ticker": "300482.SZ",
+      "name": "万孚生物",
+      "composite": 74.115,
+      "alpha_score": 74.6,
+      "factors": {
+        "value": 82.2,
+        "quality": 50.0,
+        "momentum": 86.9,
+        "size": 96.2,
+        "low_vol": 65.2
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.44,
+        "momentum": 21.725,
+        "low_vol": 6.52,
+        "size": 14.43
+      },
+      "price": 19.13,
+      "pe": 26.52,
+      "pb": 1.66,
+      "float_cap": 8227256221.0,
+      "turnover_amount": 1600874.92,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=74.11 from weighted factor contributions (quality=15.00, value=16.44, momentum=21.73, low_vol=6.52, size=14.43); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 5,
+      "ticker": "000828.SZ",
+      "name": "东莞控股",
+      "composite": 72.27,
+      "alpha_score": 76.0,
+      "factors": {
+        "value": 96.1,
+        "quality": 50.0,
+        "momentum": 61.1,
+        "size": 91.5,
+        "low_vol": 90.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 19.22,
+        "momentum": 15.275,
+        "low_vol": 9.05,
+        "size": 13.725
+      },
+      "price": 10.43,
+      "pe": 9.53,
+      "pb": 1.04,
+      "float_cap": 10842162227.0,
+      "turnover_amount": 520905.49,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=72.27 from weighted factor contributions (quality=15.00, value=19.22, momentum=15.28, low_vol=9.05, size=13.72); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 6,
+      "ticker": "600587.SH",
+      "name": "新华医疗",
+      "composite": 72.2,
+      "alpha_score": 75.7,
+      "factors": {
+        "value": 92.5,
+        "quality": 50.0,
+        "momentum": 63.4,
+        "size": 91.4,
+        "low_vol": 91.4
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 18.5,
+        "momentum": 15.85,
+        "low_vol": 9.14,
+        "size": 13.71
+      },
+      "price": 13.73,
+      "pe": 16.79,
+      "pb": 1.06,
+      "float_cap": 8329229658.0,
+      "turnover_amount": 824362.93,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=72.20 from weighted factor contributions (quality=15.00, value=18.50, momentum=15.85, low_vol=9.14, size=13.71); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 7,
+      "ticker": "600790.SH",
+      "name": "轻纺城",
+      "composite": 71.6,
+      "alpha_score": 69.9,
+      "factors": {
+        "value": 95.7,
+        "quality": 50.0,
+        "momentum": 94.2,
+        "size": 83.0,
+        "low_vol": 14.6
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 19.14,
+        "momentum": 23.55,
+        "low_vol": 1.46,
+        "size": 12.45
+      },
+      "price": 4.94,
+      "pe": 5.18,
+      "pb": 1.22,
+      "float_cap": 7241007184.0,
+      "turnover_amount": 4348365.84,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=71.60 from weighted factor contributions (quality=15.00, value=19.14, momentum=23.55, low_vol=1.46, size=12.45); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 8,
+      "ticker": "600033.SH",
+      "name": "福建高速",
+      "composite": 71.59,
+      "alpha_score": 75.5,
+      "factors": {
+        "value": 97.4,
+        "quality": 50.0,
+        "momentum": 55.7,
+        "size": 96.9,
+        "low_vol": 86.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 19.48,
+        "momentum": 13.925,
+        "low_vol": 8.65,
+        "size": 14.535
+      },
+      "price": 3.66,
+      "pe": 9.82,
+      "pb": 0.8,
+      "float_cap": 10044504000.0,
+      "turnover_amount": 1113364.68,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=71.59 from weighted factor contributions (quality=15.00, value=19.48, momentum=13.93, low_vol=8.65, size=14.54); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 9,
+      "ticker": "300815.SZ",
+      "name": "玉禾田",
+      "composite": 71.475,
+      "alpha_score": 72.4,
+      "factors": {
+        "value": 86.3,
+        "quality": 50.0,
+        "momentum": 76.1,
+        "size": 95.6,
+        "low_vol": 58.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 17.26,
+        "momentum": 19.025,
+        "low_vol": 5.85,
+        "size": 14.34
+      },
+      "price": 22.25,
+      "pe": 13.5,
+      "pb": 1.89,
+      "float_cap": 8685962120.0,
+      "turnover_amount": 1786786.25,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=71.47 from weighted factor contributions (quality=15.00, value=17.26, momentum=19.02, low_vol=5.85, size=14.34); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 10,
+      "ticker": "600368.SH",
+      "name": "五洲交通",
+      "composite": 71.475,
+      "alpha_score": 69.9,
+      "factors": {
+        "value": 97.5,
+        "quality": 50.0,
+        "momentum": 94.8,
+        "size": 77.3,
+        "low_vol": 16.8
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 19.5,
+        "momentum": 23.7,
+        "low_vol": 1.68,
+        "size": 11.595
+      },
+      "price": 4.11,
+      "pe": 8.39,
+      "pb": 0.89,
+      "float_cap": 6615677356.0,
+      "turnover_amount": 2919830.31,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=71.47 from weighted factor contributions (quality=15.00, value=19.50, momentum=23.70, low_vol=1.68, size=11.60); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 11,
+      "ticker": "600269.SH",
+      "name": "赣粤高速",
+      "composite": 71.295,
+      "alpha_score": 75.9,
+      "factors": {
+        "value": 98.4,
+        "quality": 50.0,
+        "momentum": 52.0,
+        "size": 93.9,
+        "low_vol": 95.3
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 19.68,
+        "momentum": 13.0,
+        "low_vol": 9.53,
+        "size": 14.085
+      },
+      "price": 4.47,
+      "pe": 9.49,
+      "pb": 0.53,
+      "float_cap": 10439269353.0,
+      "turnover_amount": 743808.0,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=71.30 from weighted factor contributions (quality=15.00, value=19.68, momentum=13.00, low_vol=9.53, size=14.09); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 12,
+      "ticker": "600429.SH",
+      "name": "三元股份",
+      "composite": 71.2,
+      "alpha_score": 71.2,
+      "factors": {
+        "value": 82.7,
+        "quality": 50.0,
+        "momentum": 81.8,
+        "size": 94.8,
+        "low_vol": 49.9
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.54,
+        "momentum": 20.45,
+        "low_vol": 4.99,
+        "size": 14.22
+      },
+      "price": 5.85,
+      "pe": 21.89,
+      "pb": 1.82,
+      "float_cap": 8760710942.0,
+      "turnover_amount": 1285245.0,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=71.20 from weighted factor contributions (quality=15.00, value=16.54, momentum=20.45, low_vol=4.99, size=14.22); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 13,
+      "ticker": "002004.SZ",
+      "name": "华邦健康",
+      "composite": 71.165,
+      "alpha_score": 75.7,
+      "factors": {
+        "value": 93.9,
+        "quality": 50.0,
+        "momentum": 50.7,
+        "size": 99.2,
+        "low_vol": 98.3
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 18.78,
+        "momentum": 12.675,
+        "low_vol": 9.83,
+        "size": 14.88
+      },
+      "price": 4.87,
+      "pe": 15.57,
+      "pb": 0.93,
+      "float_cap": 9171780229.0,
+      "turnover_amount": 1072037.97,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=71.17 from weighted factor contributions (quality=15.00, value=18.78, momentum=12.68, low_vol=9.83, size=14.88); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 14,
+      "ticker": "603071.SH",
+      "name": "物产环能",
+      "composite": 71.16,
+      "alpha_score": 72.5,
+      "factors": {
+        "value": 92.5,
+        "quality": 50.0,
+        "momentum": 73.9,
+        "size": 88.9,
+        "low_vol": 58.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 18.5,
+        "momentum": 18.475,
+        "low_vol": 5.85,
+        "size": 13.335
+      },
+      "price": 14.42,
+      "pe": 11.65,
+      "pb": 1.35,
+      "float_cap": 8045703054.0,
+      "turnover_amount": 612619.28,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=71.16 from weighted factor contributions (quality=15.00, value=18.50, momentum=18.48, low_vol=5.85, size=13.34); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 15,
+      "ticker": "301260.SZ",
+      "name": "格力博",
+      "composite": 71.11,
+      "alpha_score": 69.6,
+      "factors": {
+        "value": 84.2,
+        "quality": 50.0,
+        "momentum": 90.8,
+        "size": 92.8,
+        "low_vol": 26.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.84,
+        "momentum": 22.7,
+        "low_vol": 2.65,
+        "size": 13.92
+      },
+      "price": 17.69,
+      "pe": 15.77,
+      "pb": 1.98,
+      "float_cap": 3632361467.0,
+      "turnover_amount": 2045353.18,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=71.11 from weighted factor contributions (quality=15.00, value=16.84, momentum=22.70, low_vol=2.65, size=13.92); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 16,
+      "ticker": "002489.SZ",
+      "name": "浙江永强",
+      "composite": 70.945,
+      "alpha_score": 68.6,
+      "factors": {
+        "value": 87.7,
+        "quality": 50.0,
+        "momentum": 95.3,
+        "size": 89.6,
+        "low_vol": 11.4
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 17.54,
+        "momentum": 23.825,
+        "low_vol": 1.14,
+        "size": 13.44
+      },
+      "price": 3.75,
+      "pe": 13.12,
+      "pb": 1.77,
+      "float_cap": 7173830400.0,
+      "turnover_amount": 4037591.25,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=70.94 from weighted factor contributions (quality=15.00, value=17.54, momentum=23.82, low_vol=1.14, size=13.44); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 17,
+      "ticker": "603919.SH",
+      "name": "金徽酒",
+      "composite": 70.935,
+      "alpha_score": 69.0,
+      "factors": {
+        "value": 79.9,
+        "quality": 50.0,
+        "momentum": 91.6,
+        "size": 98.9,
+        "low_vol": 22.2
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 15.98,
+        "momentum": 22.9,
+        "low_vol": 2.22,
+        "size": 14.835
+      },
+      "price": 18.42,
+      "pe": 11.42,
+      "pb": 2.64,
+      "float_cap": 9343729145.0,
+      "turnover_amount": 2010321.96,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=70.94 from weighted factor contributions (quality=15.00, value=15.98, momentum=22.90, low_vol=2.22, size=14.84); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 18,
+      "ticker": "600557.SH",
+      "name": "康缘药业",
+      "composite": 70.785,
+      "alpha_score": 73.1,
+      "factors": {
+        "value": 83.9,
+        "quality": 50.0,
+        "momentum": 70.6,
+        "size": 86.7,
+        "low_vol": 83.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.78,
+        "momentum": 17.65,
+        "low_vol": 8.35,
+        "size": 13.005
+      },
+      "price": 13.65,
+      "pe": 24.37,
+      "pb": 1.58,
+      "float_cap": 7728067702.0,
+      "turnover_amount": 864399.9,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=70.78 from weighted factor contributions (quality=15.00, value=16.78, momentum=17.65, low_vol=8.35, size=13.01); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 19,
+      "ticker": "000950.SZ",
+      "name": "重药控股",
+      "composite": 70.48,
+      "alpha_score": 74.0,
+      "factors": {
+        "value": 94.7,
+        "quality": 50.0,
+        "momentum": 56.1,
+        "size": 95.5,
+        "low_vol": 81.9
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 18.94,
+        "momentum": 14.025,
+        "low_vol": 8.19,
+        "size": 14.325
+      },
+      "price": 5.92,
+      "pe": 14.98,
+      "pb": 0.87,
+      "float_cap": 10230853400.0,
+      "turnover_amount": 1997686.24,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=70.48 from weighted factor contributions (quality=15.00, value=18.94, momentum=14.03, low_vol=8.19, size=14.32); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 20,
+      "ticker": "301175.SZ",
+      "name": "中科环保",
+      "composite": 70.365,
+      "alpha_score": 71.5,
+      "factors": {
+        "value": 73.4,
+        "quality": 50.0,
+        "momentum": 73.6,
+        "size": 99.5,
+        "low_vol": 73.6
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 14.68,
+        "momentum": 18.4,
+        "low_vol": 7.36,
+        "size": 14.925
+      },
+      "price": 6.41,
+      "pe": 27.43,
+      "pb": 2.48,
+      "float_cap": 3986250800.0,
+      "turnover_amount": 3601304.66,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=70.36 from weighted factor contributions (quality=15.00, value=14.68, momentum=18.40, low_vol=7.36, size=14.93); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 21,
+      "ticker": "000498.SZ",
+      "name": "山东路桥",
+      "composite": 70.065,
+      "alpha_score": 74.6,
+      "factors": {
+        "value": 97.0,
+        "quality": 50.0,
+        "momentum": 49.1,
+        "size": 93.6,
+        "low_vol": 93.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 19.4,
+        "momentum": 12.275,
+        "low_vol": 9.35,
+        "size": 14.04
+      },
+      "price": 5.57,
+      "pe": 12.89,
+      "pb": 0.52,
+      "float_cap": 8072863993.0,
+      "turnover_amount": 941786.74,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=70.06 from weighted factor contributions (quality=15.00, value=19.40, momentum=12.28, low_vol=9.35, size=14.04); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 22,
+      "ticker": "002772.SZ",
+      "name": "众兴菌业",
+      "composite": 70.06,
+      "alpha_score": 69.3,
+      "factors": {
+        "value": 89.2,
+        "quality": 50.0,
+        "momentum": 89.9,
+        "size": 74.9,
+        "low_vol": 35.1
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 17.84,
+        "momentum": 22.475,
+        "low_vol": 3.51,
+        "size": 11.235
+      },
+      "price": 17.04,
+      "pe": 9.81,
+      "pb": 1.76,
+      "float_cap": 6332688124.0,
+      "turnover_amount": 2192792.4,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=70.06 from weighted factor contributions (quality=15.00, value=17.84, momentum=22.48, low_vol=3.51, size=11.23); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 23,
+      "ticker": "002752.SZ",
+      "name": "昇兴股份",
+      "composite": 70.055,
+      "alpha_score": 69.8,
+      "factors": {
+        "value": 85.5,
+        "quality": 50.0,
+        "momentum": 83.5,
+        "size": 85.0,
+        "low_vol": 43.3
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 17.1,
+        "momentum": 20.875,
+        "low_vol": 4.33,
+        "size": 12.75
+      },
+      "price": 7.65,
+      "pe": 12.33,
+      "pb": 2.03,
+      "float_cap": 7462780165.0,
+      "turnover_amount": 2920724.1,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=70.06 from weighted factor contributions (quality=15.00, value=17.10, momentum=20.88, low_vol=4.33, size=12.75); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 24,
+      "ticker": "688289.SH",
+      "name": "圣湘生物",
+      "composite": 69.815,
+      "alpha_score": 68.3,
+      "factors": {
+        "value": 75.8,
+        "quality": 50.0,
+        "momentum": 89.6,
+        "size": 93.5,
+        "low_vol": 32.3
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 15.16,
+        "momentum": 22.4,
+        "low_vol": 3.23,
+        "size": 14.025
+      },
+      "price": 18.12,
+      "pe": 52.77,
+      "pb": 1.47,
+      "float_cap": 10498510669.0,
+      "turnover_amount": 2075102.4,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.81 from weighted factor contributions (quality=15.00, value=15.16, momentum=22.40, low_vol=3.23, size=14.03); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 25,
+      "ticker": "600713.SH",
+      "name": "南京医药",
+      "composite": 69.79,
+      "alpha_score": 73.7,
+      "factors": {
+        "value": 96.4,
+        "quality": 50.0,
+        "momentum": 57.9,
+        "size": 80.7,
+        "low_vol": 89.3
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 19.28,
+        "momentum": 14.475,
+        "low_vol": 8.93,
+        "size": 12.105
+      },
+      "price": 5.35,
+      "pe": 10.03,
+      "pb": 0.95,
+      "float_cap": 6900445900.0,
+      "turnover_amount": 1002493.7,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.79 from weighted factor contributions (quality=15.00, value=19.28, momentum=14.47, low_vol=8.93, size=12.11); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 26,
+      "ticker": "002434.SZ",
+      "name": "万里扬",
+      "composite": 69.705,
+      "alpha_score": 67.6,
+      "factors": {
+        "value": 78.3,
+        "quality": 50.0,
+        "momentum": 90.5,
+        "size": 95.8,
+        "low_vol": 20.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 15.66,
+        "momentum": 22.625,
+        "low_vol": 2.05,
+        "size": 14.37
+      },
+      "price": 7.76,
+      "pe": 35.41,
+      "pb": 1.72,
+      "float_cap": 10175845528.0,
+      "turnover_amount": 2821039.36,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.70 from weighted factor contributions (quality=15.00, value=15.66, momentum=22.62, low_vol=2.05, size=14.37); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 27,
+      "ticker": "002284.SZ",
+      "name": "亚太股份",
+      "composite": 69.42,
+      "alpha_score": 67.8,
+      "factors": {
+        "value": 74.9,
+        "quality": 50.0,
+        "momentum": 87.0,
+        "size": 97.6,
+        "low_vol": 30.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 14.98,
+        "momentum": 21.75,
+        "low_vol": 3.05,
+        "size": 14.64
+      },
+      "price": 13.42,
+      "pe": 17.45,
+      "pb": 2.83,
+      "float_cap": 9825967630.0,
+      "turnover_amount": 3467204.62,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.42 from weighted factor contributions (quality=15.00, value=14.98, momentum=21.75, low_vol=3.05, size=14.64); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 28,
+      "ticker": "600458.SH",
+      "name": "时代新材",
+      "composite": 69.41,
+      "alpha_score": 70.9,
+      "factors": {
+        "value": 88.3,
+        "quality": 50.0,
+        "momentum": 70.2,
+        "size": 87.2,
+        "low_vol": 61.2
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 17.66,
+        "momentum": 17.55,
+        "low_vol": 6.12,
+        "size": 13.08
+      },
+      "price": 12.49,
+      "pe": 18.37,
+      "pb": 1.44,
+      "float_cap": 10768714069.0,
+      "turnover_amount": 1472958.19,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.41 from weighted factor contributions (quality=15.00, value=17.66, momentum=17.55, low_vol=6.12, size=13.08); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 29,
+      "ticker": "600662.SH",
+      "name": "外服控股",
+      "composite": 69.405,
+      "alpha_score": 71.4,
+      "factors": {
+        "value": 84.5,
+        "quality": 50.0,
+        "momentum": 68.0,
+        "size": 87.5,
+        "low_vol": 73.8
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.9,
+        "momentum": 17.0,
+        "low_vol": 7.38,
+        "size": 13.125
+      },
+      "price": 5.05,
+      "pe": 12.19,
+      "pb": 2.13,
+      "float_cap": 11496179116.0,
+      "turnover_amount": 737754.5,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.41 from weighted factor contributions (quality=15.00, value=16.90, momentum=17.00, low_vol=7.38, size=13.12); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 30,
+      "ticker": "002075.SZ",
+      "name": "沙钢股份",
+      "composite": 69.31,
+      "alpha_score": 66.5,
+      "factors": {
+        "value": 75.3,
+        "quality": 50.0,
+        "momentum": 95.1,
+        "size": 94.5,
+        "low_vol": 13.0
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 15.06,
+        "momentum": 23.775,
+        "low_vol": 1.3,
+        "size": 14.175
+      },
+      "price": 4.73,
+      "pe": 50.51,
+      "pb": 1.57,
+      "float_cap": 10376777682.0,
+      "turnover_amount": 3809816.34,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.31 from weighted factor contributions (quality=15.00, value=15.06, momentum=23.77, low_vol=1.30, size=14.18); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 31,
+      "ticker": "603223.SH",
+      "name": "恒通股份",
+      "composite": 69.185,
+      "alpha_score": 67.0,
+      "factors": {
+        "value": 86.4,
+        "quality": 50.0,
+        "momentum": 94.7,
+        "size": 78.6,
+        "low_vol": 14.4
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 17.28,
+        "momentum": 23.675,
+        "low_vol": 1.44,
+        "size": 11.79
+      },
+      "price": 9.56,
+      "pe": 18.11,
+      "pb": 1.65,
+      "float_cap": 6747660165.0,
+      "turnover_amount": 2049463.24,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.19 from weighted factor contributions (quality=15.00, value=17.28, momentum=23.68, low_vol=1.44, size=11.79); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 32,
+      "ticker": "300596.SZ",
+      "name": "利安隆",
+      "composite": 69.075,
+      "alpha_score": 67.1,
+      "factors": {
+        "value": 81.5,
+        "quality": 50.0,
+        "momentum": 87.2,
+        "size": 95.5,
+        "low_vol": 16.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.3,
+        "momentum": 21.8,
+        "low_vol": 1.65,
+        "size": 14.325
+      },
+      "price": 44.56,
+      "pe": 19.38,
+      "pb": 2.06,
+      "float_cap": 10012086586.0,
+      "turnover_amount": 4289211.92,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.08 from weighted factor contributions (quality=15.00, value=16.30, momentum=21.80, low_vol=1.65, size=14.32); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 33,
+      "ticker": "000848.SZ",
+      "name": "承德露露",
+      "composite": 69.04,
+      "alpha_score": 72.1,
+      "factors": {
+        "value": 81.9,
+        "quality": 50.0,
+        "momentum": 56.9,
+        "size": 98.7,
+        "low_vol": 86.3
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.38,
+        "momentum": 14.225,
+        "low_vol": 8.63,
+        "size": 14.805
+      },
+      "price": 9.11,
+      "pe": 9.35,
+      "pb": 2.5,
+      "float_cap": 9211522514.0,
+      "turnover_amount": 1527072.86,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.04 from weighted factor contributions (quality=15.00, value=16.38, momentum=14.22, low_vol=8.63, size=14.80); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 34,
+      "ticker": "002091.SZ",
+      "name": "江苏国泰",
+      "composite": 69.04,
+      "alpha_score": 66.7,
+      "factors": {
+        "value": 91.9,
+        "quality": 50.0,
+        "momentum": 98.4,
+        "size": 67.6,
+        "low_vol": 9.2
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 18.38,
+        "momentum": 24.6,
+        "low_vol": 0.92,
+        "size": 10.14
+      },
+      "price": 9.79,
+      "pe": 18.81,
+      "pb": 1.0,
+      "float_cap": 15646287599.0,
+      "turnover_amount": 7977283.6,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=69.04 from weighted factor contributions (quality=15.00, value=18.38, momentum=24.60, low_vol=0.92, size=10.14); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 35,
+      "ticker": "002327.SZ",
+      "name": "富安娜",
+      "composite": 68.97,
+      "alpha_score": 69.9,
+      "factors": {
+        "value": 83.4,
+        "quality": 50.0,
+        "momentum": 79.5,
+        "size": 73.1,
+        "low_vol": 64.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.68,
+        "momentum": 19.875,
+        "low_vol": 6.45,
+        "size": 10.965
+      },
+      "price": 7.4,
+      "pe": 24.0,
+      "pb": 1.65,
+      "float_cap": 3633276923.0,
+      "turnover_amount": 683930.2,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.97 from weighted factor contributions (quality=15.00, value=16.68, momentum=19.88, low_vol=6.45, size=10.96); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 36,
+      "ticker": "002626.SZ",
+      "name": "金达威",
+      "composite": 68.93,
+      "alpha_score": 68.6,
+      "factors": {
+        "value": 72.3,
+        "quality": 50.0,
+        "momentum": 79.2,
+        "size": 98.2,
+        "low_vol": 49.4
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 14.46,
+        "momentum": 19.8,
+        "low_vol": 4.94,
+        "size": 14.73
+      },
+      "price": 16.1,
+      "pe": 37.42,
+      "pb": 2.23,
+      "float_cap": 9818758300.0,
+      "turnover_amount": 1485176.7,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.93 from weighted factor contributions (quality=15.00, value=14.46, momentum=19.80, low_vol=4.94, size=14.73); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 37,
+      "ticker": "002242.SZ",
+      "name": "九阳股份",
+      "composite": 68.88,
+      "alpha_score": 68.3,
+      "factors": {
+        "value": 74.0,
+        "quality": 50.0,
+        "momentum": 81.8,
+        "size": 93.2,
+        "low_vol": 46.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 14.8,
+        "momentum": 20.45,
+        "low_vol": 4.65,
+        "size": 13.98
+      },
+      "price": 11.27,
+      "pe": 25.95,
+      "pb": 2.47,
+      "float_cap": 8584198121.0,
+      "turnover_amount": 2938291.86,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.88 from weighted factor contributions (quality=15.00, value=14.80, momentum=20.45, low_vol=4.65, size=13.98); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 38,
+      "ticker": "600789.SH",
+      "name": "鲁抗医药",
+      "composite": 68.84,
+      "alpha_score": 71.2,
+      "factors": {
+        "value": 76.4,
+        "quality": 50.0,
+        "momentum": 63.6,
+        "size": 95.4,
+        "low_vol": 83.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 15.28,
+        "momentum": 15.9,
+        "low_vol": 8.35,
+        "size": 14.31
+      },
+      "price": 8.47,
+      "pe": 41.56,
+      "pb": 1.71,
+      "float_cap": 7611731783.0,
+      "turnover_amount": 1964125.24,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.84 from weighted factor contributions (quality=15.00, value=15.28, momentum=15.90, low_vol=8.35, size=14.31); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 39,
+      "ticker": "603809.SH",
+      "name": "豪能股份",
+      "composite": 68.835,
+      "alpha_score": 68.2,
+      "factors": {
+        "value": 70.5,
+        "quality": 50.0,
+        "momentum": 83.2,
+        "size": 92.1,
+        "low_vol": 51.2
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 14.1,
+        "momentum": 20.8,
+        "low_vol": 5.12,
+        "size": 13.815
+      },
+      "price": 11.65,
+      "pe": 25.87,
+      "pb": 2.84,
+      "float_cap": 10721364602.0,
+      "turnover_amount": 2464790.5,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.83 from weighted factor contributions (quality=15.00, value=14.10, momentum=20.80, low_vol=5.12, size=13.81); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 40,
+      "ticker": "603299.SH",
+      "name": "苏盐井神",
+      "composite": 68.83,
+      "alpha_score": 72.9,
+      "factors": {
+        "value": 87.8,
+        "quality": 50.0,
+        "momentum": 49.6,
+        "size": 96.6,
+        "low_vol": 93.8
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 17.56,
+        "momentum": 12.4,
+        "low_vol": 9.38,
+        "size": 14.49
+      },
+      "price": 10.56,
+      "pe": 23.07,
+      "pb": 1.23,
+      "float_cap": 8242145303.0,
+      "turnover_amount": 740636.16,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.83 from weighted factor contributions (quality=15.00, value=17.56, momentum=12.40, low_vol=9.38, size=14.49); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 41,
+      "ticker": "000036.SZ",
+      "name": "华联控股",
+      "composite": 68.75,
+      "alpha_score": 65.6,
+      "factors": {
+        "value": 69.0,
+        "quality": 50.0,
+        "momentum": 97.8,
+        "size": 92.6,
+        "low_vol": 16.1
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 13.8,
+        "momentum": 24.45,
+        "low_vol": 1.61,
+        "size": 13.89
+      },
+      "price": 6.07,
+      "pe": 81.81,
+      "pb": 1.66,
+      "float_cap": 8516096072.0,
+      "turnover_amount": 5990452.65,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.75 from weighted factor contributions (quality=15.00, value=13.80, momentum=24.45, low_vol=1.61, size=13.89); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 42,
+      "ticker": "000030.SZ",
+      "name": "富奥股份",
+      "composite": 68.64,
+      "alpha_score": 73.4,
+      "factors": {
+        "value": 92.3,
+        "quality": 50.0,
+        "momentum": 45.0,
+        "size": 94.8,
+        "low_vol": 97.1
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 18.46,
+        "momentum": 11.25,
+        "low_vol": 9.71,
+        "size": 14.22
+      },
+      "price": 5.11,
+      "pe": 17.62,
+      "pb": 1.03,
+      "float_cap": 8538330018.0,
+      "turnover_amount": 686860.65,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.64 from weighted factor contributions (quality=15.00, value=18.46, momentum=11.25, low_vol=9.71, size=14.22); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 43,
+      "ticker": "300196.SZ",
+      "name": "长海股份",
+      "composite": 68.61,
+      "alpha_score": 66.9,
+      "factors": {
+        "value": 79.9,
+        "quality": 50.0,
+        "momentum": 84.4,
+        "size": 96.0,
+        "low_vol": 21.3
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 15.98,
+        "momentum": 21.1,
+        "low_vol": 2.13,
+        "size": 14.4
+      },
+      "price": 21.82,
+      "pe": 27.51,
+      "pb": 1.85,
+      "float_cap": 5387927175.0,
+      "turnover_amount": 7167848.18,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.61 from weighted factor contributions (quality=15.00, value=15.98, momentum=21.10, low_vol=2.13, size=14.40); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 44,
+      "ticker": "603323.SH",
+      "name": "苏农银行",
+      "composite": 68.55,
+      "alpha_score": 74.1,
+      "factors": {
+        "value": 99.5,
+        "quality": 50.0,
+        "momentum": 36.7,
+        "size": 97.5,
+        "low_vol": 98.5
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 19.9,
+        "momentum": 9.175,
+        "low_vol": 9.85,
+        "size": 14.625
+      },
+      "price": 4.92,
+      "pe": 5.37,
+      "pb": 0.51,
+      "float_cap": 9931223870.0,
+      "turnover_amount": 1005146.16,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.55 from weighted factor contributions (quality=15.00, value=19.90, momentum=9.18, low_vol=9.85, size=14.62); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 45,
+      "ticker": "600480.SH",
+      "name": "凌云股份",
+      "composite": 68.53,
+      "alpha_score": 65.7,
+      "factors": {
+        "value": 83.2,
+        "quality": 50.0,
+        "momentum": 99.1,
+        "size": 74.9,
+        "low_vol": 8.8
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.64,
+        "momentum": 24.775,
+        "low_vol": 0.88,
+        "size": 11.235
+      },
+      "price": 11.61,
+      "pe": 23.13,
+      "pb": 1.72,
+      "float_cap": 14081713458.0,
+      "turnover_amount": 7362377.01,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.53 from weighted factor contributions (quality=15.00, value=16.64, momentum=24.77, low_vol=0.88, size=11.23); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 46,
+      "ticker": "600278.SH",
+      "name": "东方创业",
+      "composite": 68.51,
+      "alpha_score": 70.4,
+      "factors": {
+        "value": 83.1,
+        "quality": 50.0,
+        "momentum": 72.6,
+        "size": 74.0,
+        "low_vol": 76.4
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.62,
+        "momentum": 18.15,
+        "low_vol": 7.64,
+        "size": 11.1
+      },
+      "price": 7.24,
+      "pe": 44.3,
+      "pb": 0.83,
+      "float_cap": 6312668633.0,
+      "turnover_amount": 662192.12,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.51 from weighted factor contributions (quality=15.00, value=16.62, momentum=18.15, low_vol=7.64, size=11.10); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 47,
+      "ticker": "600755.SH",
+      "name": "厦门国贸",
+      "composite": 68.505,
+      "alpha_score": 72.4,
+      "factors": {
+        "value": 96.3,
+        "quality": 50.0,
+        "momentum": 54.8,
+        "size": 78.7,
+        "low_vol": 87.4
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 19.26,
+        "momentum": 13.7,
+        "low_vol": 8.74,
+        "size": 11.805
+      },
+      "price": 6.28,
+      "pe": 13.19,
+      "pb": 0.7,
+      "float_cap": 13389955298.0,
+      "turnover_amount": 1158452.76,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.50 from weighted factor contributions (quality=15.00, value=19.26, momentum=13.70, low_vol=8.74, size=11.80); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 48,
+      "ticker": "601022.SH",
+      "name": "宁波远洋",
+      "composite": 68.44,
+      "alpha_score": 69.3,
+      "factors": {
+        "value": 82.6,
+        "quality": 50.0,
+        "momentum": 72.8,
+        "size": 86.6,
+        "low_vol": 57.3
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.52,
+        "momentum": 18.2,
+        "low_vol": 5.73,
+        "size": 12.99
+      },
+      "price": 8.98,
+      "pe": 21.05,
+      "pb": 1.87,
+      "float_cap": 11751527339.0,
+      "turnover_amount": 1159434.74,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.44 from weighted factor contributions (quality=15.00, value=16.52, momentum=18.20, low_vol=5.73, size=12.99); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 49,
+      "ticker": "605007.SH",
+      "name": "五洲特纸",
+      "composite": 68.36,
+      "alpha_score": 70.0,
+      "factors": {
+        "value": 80.7,
+        "quality": 50.0,
+        "momentum": 68.7,
+        "size": 86.3,
+        "low_vol": 71.0
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 16.14,
+        "momentum": 17.175,
+        "low_vol": 7.1,
+        "size": 12.945
+      },
+      "price": 16.13,
+      "pe": 19.29,
+      "pb": 2.14,
+      "float_cap": 6477050697.0,
+      "turnover_amount": 796628.44,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.36 from weighted factor contributions (quality=15.00, value=16.14, momentum=17.18, low_vol=7.10, size=12.95); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    },
+    {
+      "rank": 50,
+      "ticker": "601116.SH",
+      "name": "三江购物",
+      "composite": 68.33,
+      "alpha_score": 69.2,
+      "factors": {
+        "value": 74.0,
+        "quality": 50.0,
+        "momentum": 75.1,
+        "size": 85.7,
+        "low_vol": 69.0
+      },
+      "factor_contributions": {
+        "quality": 15.0,
+        "value": 14.8,
+        "momentum": 18.775,
+        "low_vol": 6.9,
+        "size": 12.855
+      },
+      "price": 13.86,
+      "pe": 31.55,
+      "pb": 2.27,
+      "float_cap": 7590822624.0,
+      "turnover_amount": 1708106.4,
+      "why_included": "Included after distress/suspended/valuation/microcap/liquidity filters; composite=68.33 from weighted factor contributions (quality=15.00, value=14.80, momentum=18.77, low_vol=6.90, size=12.86); valuation passed. Causal logic is valid as a funnel-top quality/value/momentum/liquidity screen; specific weights and thresholds are [unvalidated intuition]."
+    }
+  ],
+  "excluded_sample": [
+    {
+      "ticker": "300716.SZ",
+      "name": "*ST泉为",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "920344.SZ",
+      "name": "三元基因",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "920270.SZ",
+      "name": "天铭科技",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "688121.SH",
+      "name": "卓然股份",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive volume"
+    },
+    {
+      "ticker": "688260.SH",
+      "name": "昀冢科技",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    },
+    {
+      "ticker": "301030.SZ",
+      "name": "*ST仕净",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "001323.SZ",
+      "name": "慕思股份",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "920036.SZ",
+      "name": "觅睿科技",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "688193.SH",
+      "name": "仁度生物",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive volume"
+    },
+    {
+      "ticker": "300736.SZ",
+      "name": "百邦科技",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    },
+    {
+      "ticker": "688033.SH",
+      "name": "*ST天宜",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "603192.SH",
+      "name": "汇得科技",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "920028.SZ",
+      "name": "新恒泰",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "920178.SZ",
+      "name": "锐翔智能",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive price"
+    },
+    {
+      "ticker": "688655.SH",
+      "name": "迅捷兴",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    },
+    {
+      "ticker": "300594.SZ",
+      "name": "ST朗进",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "920026.SZ",
+      "name": "卓兆点胶",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "920078.SZ",
+      "name": "族兴新材",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "920096.SZ",
+      "name": "嘉晨智能",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive price"
+    },
+    {
+      "ticker": "301387.SZ",
+      "name": "光大同创",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    },
+    {
+      "ticker": "300561.SZ",
+      "name": "*ST汇科",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "920751.SZ",
+      "name": "惠同新材",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "603400.SH",
+      "name": "华之杰",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "833994.BJ",
+      "name": "翰博高新",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive price"
+    },
+    {
+      "ticker": "688096.SH",
+      "name": "京源环保",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    },
+    {
+      "ticker": "688076.SH",
+      "name": "ST诺泰",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "002098.SZ",
+      "name": "浔兴股份",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "603373.SH",
+      "name": "安邦护卫",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "833874.BJ",
+      "name": "泰祥股份",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive price"
+    },
+    {
+      "ticker": "688693.SH",
+      "name": "锴威特",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    },
+    {
+      "ticker": "688184.SH",
+      "name": "ST帕瓦",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "920019.SZ",
+      "name": "铜冠矿建",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "001333.SZ",
+      "name": "光华股份",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "832317.BJ",
+      "name": "观典防务",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive price"
+    },
+    {
+      "ticker": "688783.SH",
+      "name": "西安奕材-U",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    },
+    {
+      "ticker": "300301.SZ",
+      "name": "ST长方",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "001222.SZ",
+      "name": "源飞宠物",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "920156.SZ",
+      "name": "海昌智能",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "810014.BJ",
+      "name": "莱特定转",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive price"
+    },
+    {
+      "ticker": "301111.SZ",
+      "name": "粤万年青",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    },
+    {
+      "ticker": "300159.SZ",
+      "name": "*ST新研",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "002968.SZ",
+      "name": "新大正",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "920533.SZ",
+      "name": "骏创科技",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "810013.BJ",
+      "name": "万通定转",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive price"
+    },
+    {
+      "ticker": "000839.SZ",
+      "name": "国安股份",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    },
+    {
+      "ticker": "688066.SH",
+      "name": "*ST航图",
+      "excluded_reason": "distress_name: name contains ST/*ST/退"
+    },
+    {
+      "ticker": "002462.SZ",
+      "name": "嘉事堂",
+      "excluded_reason": "illiquid: turnover_amount<470703"
+    },
+    {
+      "ticker": "920100.SZ",
+      "name": "三协电机",
+      "excluded_reason": "microcap: float_cap<=2049840005 bottom_decile_cut"
+    },
+    {
+      "ticker": "810011.BJ",
+      "name": "优机定转",
+      "excluded_reason": "suspended_or_no_trade: missing/non-positive price"
+    },
+    {
+      "ticker": "300983.SZ",
+      "name": "尤安设计",
+      "excluded_reason": "valuation_non_meaningful: pe<=0 loss-maker/non-positive earnings"
+    }
+  ],
+  "excluded_reason_counts": {
+    "distress_name": 524,
+    "illiquid": 271,
+    "microcap": 396,
+    "suspended_or_no_trade": 84,
+    "valuation_non_meaningful": 1283
+  },
+  "filter_funnel": {
+    "total": 5850,
+    "after_distress": 5326,
+    "after_suspended": 5242,
+    "after_valuation": 3959,
+    "after_microcap": 3563,
+    "after_liquidity": 3292
+  }
+}

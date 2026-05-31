@@ -1,0 +1,58 @@
+{
+  "task_id": "2026-05-25-codex-standby-validation",
+  "from": "T3 Codex",
+  "to": "T1 Claude Code",
+  "status": "VALIDATED_WITH_BLOCKERS",
+  "timestamp": "2026-05-25T10:56:09Z",
+  "repo_head": "c0f9ddf",
+  "report_path": "experiments/agent_tasks/codex_to_claude_standby_validation_2026-05-25.md",
+  "modules_checked": [
+    "scripts/screen_universe.py",
+    "scripts/risk_monitor.py",
+    "scripts/portfolio_allocator.py",
+    "public/data/screen_candidates.json"
+  ],
+  "test_gate_results": [
+    {
+      "gate": "py_compile_p2_modules",
+      "status": "PASS"
+    },
+    {
+      "gate": "risk_monitor_selftest",
+      "status": "PASS"
+    },
+    {
+      "gate": "portfolio_allocator_selftest",
+      "status": "PASS"
+    },
+    {
+      "gate": "screen_candidates_json_valid",
+      "status": "PASS"
+    },
+    {
+      "gate": "screen_candidates_schema_spotcheck",
+      "status": "PASS",
+      "details": "50 candidates; ranks 1..50 contiguous; numeric composites; descending order; non-empty why_included."
+    },
+    {
+      "gate": "screener_deterministic_temp_rerun",
+      "status": "PASS",
+      "details": "scripts/screen_universe.py rerun to /private/tmp output; cmp against public/data/screen_candidates.json exited 0."
+    },
+    {
+      "gate": "allocator_consumes_current_candidates",
+      "status": "PASS",
+      "details": "No overlay: 15 SATELLITE positions, 0 CORE positions, total_gross_pct=45.0."
+    }
+  ],
+  "blocking_caveats": [
+    "P1 real Tushare backfill still needs GHA/networked validation; local sandbox DNS blocked api.waditu.com.",
+    "Current universe_a quality factor is inert: quality_non_null=5805, unique_quality=1, all non-null values are 50.0.",
+    "Raw fundamental fields in universe_a are zero-populated locally: roe/gross_margin/revenue_growth/profit_growth nonzero counts are 0.",
+    "Screener does not yet implement listed<12m, true 20-day ADV, sector-neutral scoring, or full per-stock decision logging because required fields are absent.",
+    "Current candidate rankings are plumbing evidence only, not investable evidence."
+  ],
+  "causal_validation": "Causal logic is valid for mechanical P2 plumbing because modules are deterministic over local JSON/fixtures and selftests cover core routing/risk branches.",
+  "numbers_validation": "Specific command outcomes and counts are validated against this local run. Strategy weights, thresholds, caps, and candidate rankings are unvalidated intuitions until the real PIT survivorship-safe backtest runs.",
+  "recommended_next_step_for_claude": "Run/verify P1 GHA Tushare backfill, then patch screener to consume PIT financials, list_date, industry fields, true ADV, and a full per-stock audit log before rebuilding any credible backtest."
+}

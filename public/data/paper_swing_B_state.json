@@ -1,0 +1,450 @@
+{
+  "track": "B",
+  "track_description": "iter-16 (quality pre-filter + iter-15 structure exit)",
+  "capital": 10000000.0,
+  "cash": 7140268.530700997,
+  "positions": {
+    "000725.SZ": {
+      "entry_date": "20260525",
+      "entry_price": 5.2068683333333325,
+      "size_units": 75465.13851416127,
+      "peak_price": 5.77,
+      "days_held": 2,
+      "entry_composite": 95.0,
+      "entry_sector": "电子"
+    },
+    "600584.SH": {
+      "entry_date": "20260525",
+      "entry_price": 75.63222333333333,
+      "size_units": 3142.4166780411542,
+      "peak_price": 88.19,
+      "days_held": 2,
+      "entry_composite": 75.0,
+      "entry_sector": "电子"
+    },
+    "300672.SZ": {
+      "entry_date": "20260525",
+      "entry_price": 312.68070166666666,
+      "size_units": 592.2188002424476,
+      "peak_price": 333.2,
+      "days_held": 2,
+      "entry_composite": 75.0,
+      "entry_sector": "电子"
+    },
+    "603005.SH": {
+      "entry_date": "20260525",
+      "entry_price": 41.091049999999996,
+      "size_units": 6452.313094944034,
+      "peak_price": 45.1,
+      "days_held": 2,
+      "entry_composite": 74.26,
+      "entry_sector": "电子"
+    },
+    "605376.SH": {
+      "entry_date": "20260526",
+      "entry_price": 161.8233283333333,
+      "size_units": 1322.5375612047367,
+      "peak_price": 161.8233283333333,
+      "days_held": 1,
+      "entry_composite": 95.0,
+      "entry_sector": "有色金属"
+    },
+    "603228.SH": {
+      "entry_date": "20260526",
+      "entry_price": 86.23281333333333,
+      "size_units": 2579.997699251685,
+      "peak_price": 87.5,
+      "days_held": 1,
+      "entry_composite": 93.87,
+      "entry_sector": "电子"
+    },
+    "603186.SH": {
+      "entry_date": "20260526",
+      "entry_price": 128.62683166666665,
+      "size_units": 1563.239390993318,
+      "peak_price": 132.6,
+      "days_held": 1,
+      "entry_composite": 80.0,
+      "entry_sector": "电子"
+    },
+    "002938.SZ": {
+      "entry_date": "20260526",
+      "entry_price": 116.59814833333331,
+      "size_units": 1903.1031210344124,
+      "peak_price": 116.59814833333331,
+      "days_held": 1,
+      "entry_composite": 80.0,
+      "entry_sector": "电子"
+    },
+    "002980.SZ": {
+      "entry_date": "20260526",
+      "entry_price": 127.61415333333333,
+      "size_units": 1300.9640048807544,
+      "peak_price": 127.61415333333333,
+      "days_held": 1,
+      "entry_composite": 80.0,
+      "entry_sector": "电力设备"
+    },
+    "000636.SZ": {
+      "entry_date": "20260526",
+      "entry_price": 41.99862333333333,
+      "size_units": 6279.991320350422,
+      "peak_price": 41.99862333333333,
+      "days_held": 1,
+      "entry_composite": 80.0,
+      "entry_sector": "电子"
+    },
+    "002916.SZ": {
+      "entry_date": "20260526",
+      "entry_price": 411.2475033333333,
+      "size_units": 579.7351669433843,
+      "peak_price": 419.5,
+      "days_held": 1,
+      "entry_composite": 79.42,
+      "entry_sector": "电子"
+    },
+    "600183.SH": {
+      "entry_date": "20260526",
+      "entry_price": 119.94982999999998,
+      "size_units": 1993.2718537408518,
+      "peak_price": 128.17,
+      "days_held": 1,
+      "entry_composite": 78.6,
+      "entry_sector": "电子"
+    }
+  },
+  "pending_orders": [
+    {
+      "side": "sell",
+      "ticker": "300672.SZ",
+      "action": "sell_structure_break",
+      "target_value": 0.0,
+      "generated_on": "20260526",
+      "decision_meta": {
+        "action": "sell_structure_break",
+        "composite": 30.0
+      }
+    },
+    {
+      "side": "sell",
+      "ticker": "605376.SH",
+      "action": "sell_structure_break",
+      "target_value": 0.0,
+      "generated_on": "20260526",
+      "decision_meta": {
+        "action": "sell_structure_break",
+        "composite": 35.0
+      }
+    },
+    {
+      "side": "sell",
+      "ticker": "603228.SH",
+      "action": "sell_structure_break",
+      "target_value": 0.0,
+      "generated_on": "20260526",
+      "decision_meta": {
+        "action": "sell_structure_break",
+        "composite": 30.0
+      }
+    },
+    {
+      "side": "sell",
+      "ticker": "603186.SH",
+      "action": "sell_structure_break",
+      "target_value": 0.0,
+      "generated_on": "20260526",
+      "decision_meta": {
+        "action": "sell_structure_break",
+        "composite": 30.0
+      }
+    },
+    {
+      "side": "sell",
+      "ticker": "002980.SZ",
+      "action": "sell_hard_stop",
+      "target_value": 0.0,
+      "generated_on": "20260526",
+      "decision_meta": {
+        "action": "sell_hard_stop",
+        "mtm": -0.09492797637963146
+      }
+    },
+    {
+      "side": "buy",
+      "ticker": "002156.SZ",
+      "target_value": 238090.58,
+      "entry_composite": 95.0,
+      "generated_on": "20260526"
+    },
+    {
+      "side": "buy",
+      "ticker": "300975.SZ",
+      "target_value": 201715.84,
+      "entry_composite": 95.0,
+      "generated_on": "20260526"
+    },
+    {
+      "side": "buy",
+      "ticker": "688362.SH",
+      "target_value": 193517.82,
+      "entry_composite": 95.0,
+      "generated_on": "20260526"
+    },
+    {
+      "side": "buy",
+      "ticker": "600172.SH",
+      "target_value": 211257.18,
+      "entry_composite": 95.0,
+      "generated_on": "20260526"
+    },
+    {
+      "side": "buy",
+      "ticker": "688347.SH",
+      "target_value": 192182.66,
+      "entry_composite": 95.0,
+      "generated_on": "20260526"
+    },
+    {
+      "side": "buy",
+      "ticker": "002185.SZ",
+      "target_value": 273946.0,
+      "entry_composite": 95.0,
+      "generated_on": "20260526"
+    },
+    {
+      "side": "buy",
+      "ticker": "300373.SZ",
+      "target_value": 234229.39,
+      "entry_composite": 80.0,
+      "generated_on": "20260526"
+    },
+    {
+      "side": "buy",
+      "ticker": "688082.SH",
+      "target_value": 228081.99,
+      "entry_composite": 75.0,
+      "generated_on": "20260526"
+    }
+  ],
+  "nav_history": [
+    {
+      "date": "20260521",
+      "nav": 10000000.0,
+      "cash": 10000000.0,
+      "n_positions": 0,
+      "drawdown": 0.0
+    },
+    {
+      "date": "20260522",
+      "nav": 10000000.0,
+      "cash": 10000000.0,
+      "n_positions": 0,
+      "drawdown": 0.0
+    },
+    {
+      "date": "20260525",
+      "nav": 10035608.86,
+      "cash": 8683382.85,
+      "n_positions": 5,
+      "drawdown": 0.0
+    },
+    {
+      "date": "20260526",
+      "nav": 10115954.27,
+      "cash": 7140268.53,
+      "n_positions": 12,
+      "drawdown": 0.0
+    }
+  ],
+  "trade_log": [
+    {
+      "date": "20260525",
+      "ts_code": "000725.SZ",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 75465.14,
+      "price": 5.2069,
+      "notional": 392937.04,
+      "cost": 98.2343,
+      "sector": "电子"
+    },
+    {
+      "date": "20260525",
+      "ts_code": "600584.SH",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 3142.42,
+      "price": 75.6322,
+      "notional": 237667.96,
+      "cost": 59.417,
+      "sector": "电子"
+    },
+    {
+      "date": "20260525",
+      "ts_code": "300672.SZ",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 592.22,
+      "price": 312.6807,
+      "notional": 185175.39,
+      "cost": 46.2938,
+      "sector": "电子"
+    },
+    {
+      "date": "20260525",
+      "ts_code": "300408.SZ",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 1972.24,
+      "price": 119.3442,
+      "notional": 235375.37,
+      "cost": 58.8438,
+      "sector": "电子"
+    },
+    {
+      "date": "20260525",
+      "ts_code": "603005.SH",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 6452.31,
+      "price": 41.091,
+      "notional": 265132.32,
+      "cost": 66.2831,
+      "sector": "电子"
+    },
+    {
+      "date": "20260526",
+      "ts_code": "300408.SZ",
+      "side": "sell",
+      "action": "sell_structure_break",
+      "units": 1972.24,
+      "price": 113.7012,
+      "notional": 224245.94,
+      "cost": 168.1845,
+      "entry_price": 119.34422499999998,
+      "pnl": -11297.61,
+      "days_held": 1
+    },
+    {
+      "date": "20260526",
+      "ts_code": "605376.SH",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 1322.54,
+      "price": 161.8233,
+      "notional": 214017.43,
+      "cost": 53.5044,
+      "sector": "有色金属"
+    },
+    {
+      "date": "20260526",
+      "ts_code": "603228.SH",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 2580.0,
+      "price": 86.2328,
+      "notional": 222480.46,
+      "cost": 55.6201,
+      "sector": "电子"
+    },
+    {
+      "date": "20260526",
+      "ts_code": "603186.SH",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 1563.24,
+      "price": 128.6268,
+      "notional": 201074.53,
+      "cost": 50.2686,
+      "sector": "电子"
+    },
+    {
+      "date": "20260526",
+      "ts_code": "002938.SZ",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 1903.1,
+      "price": 116.5981,
+      "notional": 221898.3,
+      "cost": 55.4746,
+      "sector": "电子"
+    },
+    {
+      "date": "20260526",
+      "ts_code": "002980.SZ",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 1300.96,
+      "price": 127.6142,
+      "notional": 166021.42,
+      "cost": 41.5054,
+      "sector": "电力设备"
+    },
+    {
+      "date": "20260526",
+      "ts_code": "000636.SZ",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 6279.99,
+      "price": 41.9986,
+      "notional": 263750.99,
+      "cost": 65.9377,
+      "sector": "电子"
+    },
+    {
+      "date": "20260526",
+      "ts_code": "002916.SZ",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 579.74,
+      "price": 411.2475,
+      "notional": 238414.64,
+      "cost": 59.6037,
+      "sector": "电子"
+    },
+    {
+      "date": "20260526",
+      "ts_code": "600183.SH",
+      "side": "buy",
+      "action": "open_or_add",
+      "units": 1993.27,
+      "price": 119.9498,
+      "notional": 239092.62,
+      "cost": 59.7732,
+      "sector": "电子"
+    }
+  ],
+  "peak_equity": 10115954.273154045,
+  "last_as_of": "20260526",
+  "config_keys": {
+    "max_single_name_weight": 0.1,
+    "safety_max_single_name": 0.12,
+    "max_sector_weight": 0.3,
+    "max_gross": 0.95,
+    "max_positions": 12,
+    "target_portfolio_vol_ann": 0.2,
+    "vol_per_position": 0.02,
+    "hard_stop_pct": -0.08,
+    "trailing_stop_pct": -0.05,
+    "take_profit_pct": 0.1,
+    "time_stop_days": 7,
+    "composite_decay": 60,
+    "min_hold_days": 0,
+    "enable_take_profit_half": false,
+    "enable_sector_drop_exit": false,
+    "entry_composite_threshold": 70.0,
+    "structure_break_threshold": 50.0,
+    "take_profit_full": 0.2,
+    "drawdown_scale_down": -0.15,
+    "drawdown_to_cash": -0.25,
+    "high_vol_regime_threshold": 0.3,
+    "top_n_picks": 8,
+    "use_quality_filter": true,
+    "min_quality_universe": 20,
+    "quality_require_limitup": true,
+    "quality_min_60d_ret": 0.0,
+    "quality_dd_floor": 0.8,
+    "quality_up_day_min": 10
+  },
+  "created_at": "2026-05-27T20:27:17.239145Z"
+}

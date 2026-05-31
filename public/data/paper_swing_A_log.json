@@ -1,0 +1,155 @@
+[
+  {
+    "as_of": "20260521",
+    "track": "A",
+    "event": "INIT",
+    "capital": 10000000.0
+  },
+  {
+    "as_of": "20260522",
+    "track": "A",
+    "nav": 10000000.0,
+    "n_positions": 0,
+    "scan_pool_size": 500,
+    "quality_filter_active": false,
+    "top_sectors": [
+      "电子",
+      "公用事业",
+      "机械设备",
+      "通信",
+      "基础化工"
+    ],
+    "signals_scanned": 205,
+    "executed_sells": 0,
+    "executed_buys": 0,
+    "skipped_pending": 0,
+    "next_pending_sells": 0,
+    "next_pending_buys": 8,
+    "entry_candidates_top5": [
+      {
+        "ticker": "000725.SZ",
+        "weight": 0.0393,
+        "composite": 95.0
+      },
+      {
+        "ticker": "300285.SZ",
+        "weight": 0.0217,
+        "composite": 75.0
+      },
+      {
+        "ticker": "600584.SH",
+        "weight": 0.0238,
+        "composite": 75.0
+      },
+      {
+        "ticker": "300672.SZ",
+        "weight": 0.0185,
+        "composite": 75.0
+      },
+      {
+        "ticker": "300408.SZ",
+        "weight": 0.0235,
+        "composite": 75.0
+      }
+    ],
+    "exit_decisions_active": []
+  },
+  {
+    "as_of": "20260525",
+    "track": "A",
+    "nav": 10030149.89,
+    "n_positions": 8,
+    "scan_pool_size": 500,
+    "quality_filter_active": false,
+    "top_sectors": [
+      "公用事业",
+      "电子",
+      "机械设备",
+      "通信",
+      "基础化工"
+    ],
+    "signals_scanned": 209,
+    "executed_sells": 0,
+    "executed_buys": 8,
+    "skipped_pending": 0,
+    "next_pending_sells": 0,
+    "next_pending_buys": 8,
+    "entry_candidates_top5": [
+      {
+        "ticker": "603228.SH",
+        "weight": 0.0222,
+        "composite": 93.87
+      },
+      {
+        "ticker": "300179.SZ",
+        "weight": 0.0172,
+        "composite": 90.0
+      },
+      {
+        "ticker": "000636.SZ",
+        "weight": 0.0264,
+        "composite": 80.0
+      },
+      {
+        "ticker": "002938.SZ",
+        "weight": 0.0222,
+        "composite": 80.0
+      },
+      {
+        "ticker": "603186.SH",
+        "weight": 0.0201,
+        "composite": 80.0
+      }
+    ],
+    "exit_decisions_active": []
+  },
+  {
+    "as_of": "20260526",
+    "track": "A",
+    "nav": 10136439.3,
+    "n_positions": 16,
+    "scan_pool_size": 500,
+    "quality_filter_active": false,
+    "top_sectors": [
+      "公用事业",
+      "电子",
+      "机械设备",
+      "通信",
+      "基础化工"
+    ],
+    "signals_scanned": 198,
+    "executed_sells": 0,
+    "executed_buys": 8,
+    "skipped_pending": 0,
+    "next_pending_sells": 0,
+    "next_pending_buys": 8,
+    "entry_candidates_top5": [
+      {
+        "ticker": "600172.SH",
+        "weight": 0.0211,
+        "composite": 95.0
+      },
+      {
+        "ticker": "688362.SH",
+        "weight": 0.0193,
+        "composite": 95.0
+      },
+      {
+        "ticker": "688347.SH",
+        "weight": 0.0192,
+        "composite": 95.0
+      },
+      {
+        "ticker": "002156.SZ",
+        "weight": 0.0237,
+        "composite": 95.0
+      },
+      {
+        "ticker": "002185.SZ",
+        "weight": 0.0273,
+        "composite": 95.0
+      }
+    ],
+    "exit_decisions_active": []
+  }
+]

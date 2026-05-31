@@ -1,0 +1,70 @@
+{
+  "_meta": {
+    "variants": [
+      "b1_4factor"
+    ],
+    "windows": [
+      "mini1yr"
+    ],
+    "liquid_top_n": 500,
+    "causal_validation": "Causal logic is unestablished: these ablations test whether mechanical signal/veto/gross changes improve backtest behavior; they do not prove an economic mechanism.",
+    "numbers_validation": "Specific numbers are validated only against this local ablation run and current local panel; they are not production-calibrated thresholds."
+  },
+  "results": [
+    {
+      "variant": "b1_4factor",
+      "window": "mini1yr",
+      "description": "4-factor inverse composite: momentum/macd/breakout reverse + RSI direct",
+      "config_overrides": {},
+      "cagr": 0.0326068219526261,
+      "sharpe_annualized": 0.5610608241105891,
+      "max_drawdown": -0.0385,
+      "avg_gross": 0.15901228099173553,
+      "median_gross": 0.154291,
+      "avg_n_positions": 7.950413223140496,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 768,
+      "annualized_trades": 799.7355371900826,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 7.950413223140496,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.15901228099173553,
+        "max_gross_pct": 0.253481,
+        "turnover_annual_pct": 16.04461339025162,
+        "avg_holding_days": 7.594736842105263,
+        "n_holding_periods_observed": 380,
+        "n_total_trades_actual": 768,
+        "n_trade_days": 242,
+        "n_years": 0.9603174603174603
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.3505704705265582,
+          "lo": -0.5512670734961245,
+          "hi": -0.03650802289742505,
+          "p_value": 0.0286,
+          "direction": "NEGATIVE",
+          "excludes_zero": true
+        },
+        "same_gross": {
+          "point": -0.20614597994308193,
+          "lo": -0.5222474506503312,
+          "hi": 0.37308779473612286,
+          "p_value": 0.3882,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 240,
+          "gross_floor": 0.05
+        }
+      }
+    }
+  ]
+}

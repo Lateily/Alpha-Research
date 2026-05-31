@@ -1,0 +1,60 @@
+{
+  "task_id": "2026-05-25-pit-factor-calculator",
+  "agent": "codex",
+  "status": "COMPLETE",
+  "files_written": [
+    "scripts/pit_factors.py"
+  ],
+  "tests_run": [
+    "python3 -m py_compile scripts/pit_factors.py",
+    "python3 scripts/pit_factors.py --selftest",
+    "python3 -c \"import sys; sys.path.insert(0, '.'); import scripts.pit_factors as p; from scripts.backtest_v2 import PitDataStore; assert p.PitDataStore is PitDataStore; print('import_ok')\"",
+    "bin/git-safe.sh diff --name-only --no-index /dev/null scripts/pit_factors.py",
+    "bin/git-safe.sh diff --stat --no-index /dev/null scripts/pit_factors.py"
+  ],
+  "test_gate_results": [
+    {
+      "command": "python3 -m py_compile scripts/pit_factors.py",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "python3 scripts/pit_factors.py --selftest",
+      "exit_code": 0,
+      "stdout": "SELFTEST PASSED pit_factors\n- momentum uses 12-1 skip\n- financials announced after T are not used\n- quality scores differ when ROE/margins/leverage differ\n- missing financials return None, not 50\n",
+      "stderr": ""
+    },
+    {
+      "command": "python3 -c \"import sys; sys.path.insert(0, '.'); import scripts.pit_factors as p; from scripts.backtest_v2 import PitDataStore; assert p.PitDataStore is PitDataStore; print('import_ok')\"",
+      "exit_code": 0,
+      "stdout": "import_ok\n",
+      "stderr": ""
+    },
+    {
+      "command": "bin/git-safe.sh diff --name-only --no-index /dev/null scripts/pit_factors.py",
+      "exit_code": 1,
+      "stdout": "scripts/pit_factors.py\n",
+      "stderr": "",
+      "note": "no-index diff exits 1 for different files; used because scripts/pit_factors.py is a new untracked file."
+    },
+    {
+      "command": "bin/git-safe.sh diff --stat --no-index /dev/null scripts/pit_factors.py",
+      "exit_code": 1,
+      "stdout": " /dev/null => scripts/pit_factors.py | 766 ++++++++++++++++++++++++++++++++++++\n 1 file changed, 766 insertions(+)\n",
+      "stderr": "",
+      "note": "landing proof for new file."
+    }
+  ],
+  "landing_proof": {
+    "git_diff_stat_scripts_pit_factors_py": " /dev/null => scripts/pit_factors.py | 766 ++++++++++++++++++++++++++++++++++++\n 1 file changed, 766 insertions(+)",
+    "selftest_output": "SELFTEST PASSED pit_factors\n- momentum uses 12-1 skip\n- financials announced after T are not used\n- quality scores differ when ROE/margins/leverage differ\n- missing financials return None, not 50"
+  },
+  "needs_claude_review": true,
+  "needs_t2_review": true,
+  "review_note": "Correctness-critical: T2 should review the PIT firewall, especially financial row merging and the daily_basic as-of attachment because look-ahead via financials would invalidate backtests.",
+  "notes": "Causal logic is valid because compute_factors uses PitDataStore.price_asof/daily_return/financials_asof and an attached daily_basic as-of lookup, all bounded by as_of. Specific numbers are unvalidated intuitions: equal blends, trading-day windows, market-cap multiplier, and percentile scoring are starting assumptions, not calibrated.",
+  "spec_archival": "Watcher-owned per stdin wrapper; this process did not move the in_progress task file.",
+  "written_by": "Codex",
+  "timestamp": "2026-05-25T11:07:44Z"
+}

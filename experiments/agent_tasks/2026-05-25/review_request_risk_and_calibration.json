@@ -1,0 +1,37 @@
+{
+  "message_id": "2026-05-25-review-request-risk-calibration",
+  "from": "T1 Claude Code",
+  "to": "T2 reviewer",
+  "status": "REVIEW_REQUEST",
+  "gate": "Block the next full-backtest re-run until this PASSES. A look-ahead or overfit bug here makes the backtest number falsely good — the exact failure the honesty red line forbids.",
+  "context": "First real full-universe backtest (run 26418580192) gave CAGR -0.43%, MaxDD -74% — a FAILING raw-factor strategy with zero risk management. Junyan: 先接风控再校准 接着再T2过一遍 然后继续跑. Steps 1+2 are done + self-tested; this is the T2 gate before re-running.",
+  "review_scope": [
+    {
+      "area": "Risk overlay in scripts/backtest_v2.py run_backtest()",
+      "check": [
+        "Market-proxy/state derivation (equal-weight universe index + 10mo MA + 6mo breadth) uses ONLY data <= T (no look-ahead). Verify the proxy is computed from prices known at each rebalance.",
+        "Gross de-risking application: TO_CASH -> 0 gross; SCALE_DOWN_GROSS -> cap at 0.40. Verify scaling math + that it can't increase gross.",
+        "Selftest: a -54% crash fixture triggers SCALE_DOWN_GROSS and actually cuts gross (added to _selftest)."
+      ]
+    },
+    {
+      "area": "OLS calibration scripts/calibrate_weights.py",
+      "check": [
+        "IN-SAMPLE/OOS honesty: fit on 2006-2018 only; 2019+ is the OOS test. Confirm NO full-sample fitting that would overfit the reported number.",
+        "No look-ahead in collect_rows: forward_return uses next month-end price (after T); factor scores use compute_factors as-of T (PIT firewall). Verify the (X,y) pairing has no leakage.",
+        "Long-only coef floor (negatives -> 0) + normalization; impute-neutral-50 for sparse factors (require >=3 real). Reasonable?",
+        "Selftest recovers a constructed momentum signal (momentum weight=1.0, n_obs=2370)."
+      ]
+    },
+    {
+      "area": "PitUniverse.members_asof None-list_date fix (backtest_v2.py)",
+      "check": [
+        "list_date None now = no IPO constraint (included). Confirm this doesn't accidentally include genuinely-not-yet-listed names when a real list_date IS present (explicit-date survivorship selftest still passes)."
+      ]
+    }
+  ],
+  "commits": ["fe7c7ea (risk overlay)", "ae70ded (calibration + PitUniverse fix)"],
+  "self_tests_passing": ["backtest_v2 --selftest", "calibrate_weights --selftest", "satellite_strategy --selftest", "run_universe_backtest --selftest"],
+  "requested_verdict": "PASS / BLOCKED with specifics. On PASS, T1 triggers full-backtest.yml (fetch -> calibrate -> risk-overlay backtest -> commit results). On BLOCKED, T1 fixes first.",
+  "honesty_note": "Whatever the re-run CAGR is after risk+calibration, it is reported as-is. T2 is also welcome (post-run) to sanity-check output plausibility (Sharpe/DD/turnover) + look-ahead traces."
+}

@@ -1,0 +1,181 @@
+[
+  {
+    "as_of": "20260521",
+    "track": "B",
+    "event": "INIT",
+    "capital": 10000000.0
+  },
+  {
+    "as_of": "20260522",
+    "track": "B",
+    "nav": 10000000.0,
+    "n_positions": 0,
+    "scan_pool_size": 197,
+    "quality_filter_active": true,
+    "top_sectors": [
+      "电力设备",
+      "有色金属",
+      "电子"
+    ],
+    "signals_scanned": 106,
+    "executed_sells": 0,
+    "executed_buys": 0,
+    "skipped_pending": 0,
+    "next_pending_sells": 0,
+    "next_pending_buys": 5,
+    "entry_candidates_top5": [
+      {
+        "ticker": "000725.SZ",
+        "weight": 0.0393,
+        "composite": 95.0
+      },
+      {
+        "ticker": "600584.SH",
+        "weight": 0.0238,
+        "composite": 75.0
+      },
+      {
+        "ticker": "300672.SZ",
+        "weight": 0.0185,
+        "composite": 75.0
+      },
+      {
+        "ticker": "300408.SZ",
+        "weight": 0.0235,
+        "composite": 75.0
+      },
+      {
+        "ticker": "603005.SH",
+        "weight": 0.0265,
+        "composite": 74.26
+      }
+    ],
+    "exit_decisions_active": []
+  },
+  {
+    "as_of": "20260525",
+    "track": "B",
+    "nav": 10035608.86,
+    "n_positions": 5,
+    "scan_pool_size": 196,
+    "quality_filter_active": true,
+    "top_sectors": [
+      "电子",
+      "电力设备",
+      "有色金属"
+    ],
+    "signals_scanned": 108,
+    "executed_sells": 0,
+    "executed_buys": 5,
+    "skipped_pending": 0,
+    "next_pending_sells": 1,
+    "next_pending_buys": 8,
+    "entry_candidates_top5": [
+      {
+        "ticker": "605376.SH",
+        "weight": 0.0214,
+        "composite": 95.0
+      },
+      {
+        "ticker": "603228.SH",
+        "weight": 0.0222,
+        "composite": 93.87
+      },
+      {
+        "ticker": "603186.SH",
+        "weight": 0.0201,
+        "composite": 80.0
+      },
+      {
+        "ticker": "002938.SZ",
+        "weight": 0.0222,
+        "composite": 80.0
+      },
+      {
+        "ticker": "002980.SZ",
+        "weight": 0.0166,
+        "composite": 80.0
+      }
+    ],
+    "exit_decisions_active": [
+      {
+        "ticker": "300408.SZ",
+        "action": "sell_structure_break",
+        "composite": 45.0
+      }
+    ]
+  },
+  {
+    "as_of": "20260526",
+    "track": "B",
+    "nav": 10115954.27,
+    "n_positions": 12,
+    "scan_pool_size": 187,
+    "quality_filter_active": true,
+    "top_sectors": [
+      "电子",
+      "电力设备",
+      "机械设备"
+    ],
+    "signals_scanned": 106,
+    "executed_sells": 1,
+    "executed_buys": 8,
+    "skipped_pending": 0,
+    "next_pending_sells": 5,
+    "next_pending_buys": 8,
+    "entry_candidates_top5": [
+      {
+        "ticker": "002156.SZ",
+        "weight": 0.0237,
+        "composite": 95.0
+      },
+      {
+        "ticker": "300975.SZ",
+        "weight": 0.0201,
+        "composite": 95.0
+      },
+      {
+        "ticker": "688362.SH",
+        "weight": 0.0193,
+        "composite": 95.0
+      },
+      {
+        "ticker": "600172.SH",
+        "weight": 0.0211,
+        "composite": 95.0
+      },
+      {
+        "ticker": "688347.SH",
+        "weight": 0.0192,
+        "composite": 95.0
+      }
+    ],
+    "exit_decisions_active": [
+      {
+        "ticker": "300672.SZ",
+        "action": "sell_structure_break",
+        "composite": 30.0
+      },
+      {
+        "ticker": "605376.SH",
+        "action": "sell_structure_break",
+        "composite": 35.0
+      },
+      {
+        "ticker": "603228.SH",
+        "action": "sell_structure_break",
+        "composite": 30.0
+      },
+      {
+        "ticker": "603186.SH",
+        "action": "sell_structure_break",
+        "composite": 30.0
+      },
+      {
+        "ticker": "002980.SZ",
+        "action": "sell_hard_stop",
+        "mtm": -0.09492797637963146
+      }
+    ]
+  }
+]

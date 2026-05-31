@@ -1,0 +1,50 @@
+{
+  "task_id": "2026-05-28-v3b-index-fetch-validation",
+  "status": "COMPLETE",
+  "written_by": "Codex",
+  "timestamp": "2026-05-28",
+  "github_actions": {
+    "run_id": "26578764703",
+    "workflow": "Fetch Index Panel (multi-benchmark, 20yr daily)",
+    "conclusion": "success",
+    "head_sha": "259923c0ee38891f705fbdd0e07fa356a9112cae",
+    "url": "https://github.com/Lateily/Alpha-Research/actions/runs/26578764703"
+  },
+  "artifact": {
+    "downloaded_to": "/tmp/index-panel-26578764703/index_prices.parquet",
+    "installed_to": "data_history/panel/index_prices.parquet",
+    "rows": 34664,
+    "columns": [
+      "ts_code",
+      "trade_date",
+      "open",
+      "high",
+      "low",
+      "close",
+      "vol",
+      "amount",
+      "pre_close",
+      "change",
+      "pct_chg"
+    ]
+  },
+  "coverage": {
+    "000016.SH": {"name": "SSE50", "min": "20060104", "max": "20260527", "count": 4952},
+    "000300.SH": {"name": "CSI300", "min": "20060104", "max": "20260527", "count": 4952},
+    "000852.SH": {"name": "ZZ1000", "min": "20060104", "max": "20260527", "count": 4952},
+    "000905.SH": {"name": "ZZ500", "min": "20060104", "max": "20260527", "count": 4952},
+    "399300.SZ": {"name": "CSI300 mirror", "min": "20060104", "max": "20260527", "count": 4952},
+    "399852.SZ": {"name": "ZZ1000 mirror", "min": "20060104", "max": "20260527", "count": 4952},
+    "399905.SZ": {"name": "ZZ500 mirror", "min": "20060104", "max": "20260527", "count": 4952},
+    "HSI.HK": {"name": "Hang Seng", "status": "empty_from_tushare_index_daily"}
+  },
+  "blocker_resolution": {
+    "root_cause": "The workflow and script had to be committed/pushed before GitHub Actions could see them.",
+    "resolution": "Minimal infra commit/push succeeded; manual GHA run completed and artifact was downloaded.",
+    "remaining_gap": "HSI is not available from this Tushare index_daily path; use yfinance/AKShare/another source later if HSI benchmark is required."
+  },
+  "validation_labels": {
+    "causal_logic": "valid: benchmark panel availability is an infrastructure prerequisite for multi-benchmark evaluation, not an alpha claim.",
+    "specific_numbers": "validated against GitHub Actions run 26578764703 artifact and local pandas parquet inspection."
+  }
+}

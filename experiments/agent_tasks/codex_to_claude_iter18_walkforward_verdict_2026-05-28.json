@@ -1,0 +1,95 @@
+{
+  "task_id": "2026-05-28-iter18-b1b3-walkforward-verdict",
+  "status": "COMPLETE",
+  "written_by": "Codex",
+  "timestamp": "2026-05-28",
+  "summary": "B1+B3 combo's full-sample 20yr exclude-0-positive result does not survive walk-forward validation.",
+  "input_signal": {
+    "variant": "b1_b3_4factor_no_atr",
+    "full_20yr_same_gross_alpha": 0.37851502102489554,
+    "full_20yr_ci": [0.06628930021507129, 0.7867513575837566],
+    "full_20yr_p_value": 0.016,
+    "why_it_needed_validation": [
+      "only 1 of 3 headline windows passed",
+      "multi-testing risk across 22+ tests",
+      "wide CI",
+      "low exposure and median positions near 1"
+    ]
+  },
+  "walk_forward_windows": [
+    {
+      "window": "wf_2006_2010",
+      "start": "2006-01-04",
+      "end": "2010-01-03",
+      "cagr": 0.0573,
+      "avg_gross": 0.1371,
+      "median_positions": 8.0,
+      "same_gross_alpha": 1.2753202209849652,
+      "ci": [-0.034351395184668454, 4.471021853402135],
+      "p_value": 0.0631,
+      "direction": "STRADDLES"
+    },
+    {
+      "window": "wf_2010_2014",
+      "start": "2010-01-04",
+      "end": "2014-01-03",
+      "cagr": -0.0482,
+      "avg_gross": 0.1675,
+      "median_positions": 8.0,
+      "same_gross_alpha": 0.25932451426436587,
+      "ci": [-0.1669996359614513, 0.9151514265312477],
+      "p_value": 0.267,
+      "direction": "STRADDLES"
+    },
+    {
+      "window": "wf_2014_2018",
+      "start": "2014-01-04",
+      "end": "2018-01-03",
+      "cagr": -0.045,
+      "avg_gross": 0.1244,
+      "median_positions": 8.0,
+      "same_gross_alpha": -0.11700570534206012,
+      "ci": [-0.46673511052668226, 0.48259497974749954],
+      "p_value": 0.6382,
+      "direction": "STRADDLES"
+    },
+    {
+      "window": "wf_2018_2022",
+      "start": "2018-01-04",
+      "end": "2022-01-03",
+      "cagr": -0.0467,
+      "avg_gross": 0.1404,
+      "median_positions": 8.0,
+      "same_gross_alpha": -0.14503347741203465,
+      "ci": [-0.35192480050780206, 0.12677236329438246],
+      "p_value": 0.2685,
+      "direction": "STRADDLES"
+    },
+    {
+      "window": "wf_2022_2026",
+      "start": "2022-01-04",
+      "end": "2026-05-25",
+      "cagr": -0.0499,
+      "avg_gross": 0.1263,
+      "median_positions": 8.0,
+      "same_gross_alpha": -0.2843578469382616,
+      "ci": [-0.4602646472331495, -0.05944738442585085],
+      "p_value": 0.0161,
+      "direction": "NEGATIVE"
+    }
+  ],
+  "verdict": {
+    "hard_gate": "FAIL",
+    "reason": "The selected OOS/recent window 2022-2026 is significantly negative, and no walk-forward window excludes zero on the positive side.",
+    "recommended_action": "Do not paper trade B1+B3. Keep swing only as lower-level factor R&D or retire Path B as strategy candidate."
+  },
+  "validation_labels": {
+    "causal_logic": "questionable: the full-sample positive result does not survive subperiod validation and is significantly negative in the most recent OOS-style window.",
+    "specific_numbers": "validated against local iter-18 walk-forward outputs in experiments/agent_tasks/iter18_b1_b3_walkforward.json; not production-calibrated thresholds."
+  },
+  "artifacts": [
+    "experiments/agent_tasks/iter18_b1_b3_walkforward.json",
+    "experiments/agent_tasks/iter18_b1_b3_walkforward.md",
+    "experiments/agent_tasks/codex_to_claude_iter18_ablation_verdict_2026-05-28.md"
+  ]
+}

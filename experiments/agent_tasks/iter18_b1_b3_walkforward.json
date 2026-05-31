@@ -1,0 +1,294 @@
+{
+  "_meta": {
+    "variants": [
+      "b1_b3_4factor_no_atr"
+    ],
+    "windows": [
+      "wf_2006_2010",
+      "wf_2010_2014",
+      "wf_2014_2018",
+      "wf_2018_2022",
+      "wf_2022_2026"
+    ],
+    "liquid_top_n": 500,
+    "causal_validation": "Causal logic is unestablished: these ablations test whether mechanical signal/veto/gross changes improve backtest behavior; they do not prove an economic mechanism.",
+    "numbers_validation": "Specific numbers are validated only against this local ablation run and current local panel; they are not production-calibrated thresholds."
+  },
+  "results": [
+    {
+      "variant": "b1_b3_4factor_no_atr",
+      "window": "wf_2006_2010",
+      "description": "4-factor inverse composite plus no ATR veto",
+      "config_overrides": {},
+      "cagr": 0.05729061383362688,
+      "sharpe_annualized": 0.40767576695683505,
+      "max_drawdown": -0.174,
+      "avg_gross": 0.13712485714285713,
+      "median_gross": 0.139645,
+      "avg_n_positions": 7.295991778006167,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 2760,
+      "annualized_trades": 714.8201438848921,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 7.295991778006167,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.13712485714285713,
+        "max_gross_pct": 0.321776,
+        "turnover_annual_pct": 14.061415197482088,
+        "avg_holding_days": 7.671511627906977,
+        "n_holding_periods_observed": 1376,
+        "n_total_trades_actual": 2760,
+        "n_trade_days": 973,
+        "n_years": 3.861111111111111
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.25934330156553176,
+          "lo": -0.5382641846624581,
+          "hi": 0.19509346138900918,
+          "p_value": 0.2147,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": 1.2753202209849652,
+          "lo": -0.034351395184668454,
+          "hi": 4.471021853402135,
+          "p_value": 0.0631,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 961,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b1_b3_4factor_no_atr",
+      "window": "wf_2010_2014",
+      "description": "4-factor inverse composite plus no ATR veto",
+      "config_overrides": {},
+      "cagr": -0.048173774215348075,
+      "sharpe_annualized": -0.2980604992945673,
+      "max_drawdown": -0.2166,
+      "avg_gross": 0.16750132507739937,
+      "median_gross": 0.16314,
+      "avg_n_positions": 7.858617131062951,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 2914,
+      "annualized_trades": 757.8204334365325,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 7.858617131062951,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.16750132507739937,
+        "max_gross_pct": 0.361023,
+        "turnover_annual_pct": 17.048429882927053,
+        "avg_holding_days": 7.876806607019959,
+        "n_holding_periods_observed": 1453,
+        "n_total_trades_actual": 2914,
+        "n_trade_days": 969,
+        "n_years": 3.8452380952380953
+      },
+      "alpha": {
+        "raw": {
+          "point": 0.0902942704050933,
+          "lo": -0.13356407143939675,
+          "hi": 0.3771071187631516,
+          "p_value": 0.464,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": 0.25932451426436587,
+          "lo": -0.1669996359614513,
+          "hi": 0.9151514265312477,
+          "p_value": 0.267,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 967,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b1_b3_4factor_no_atr",
+      "window": "wf_2014_2018",
+      "description": "4-factor inverse composite plus no ATR veto",
+      "config_overrides": {},
+      "cagr": -0.045026382564616885,
+      "sharpe_annualized": -0.4484679183371646,
+      "max_drawdown": -0.2647,
+      "avg_gross": 0.12436907881269191,
+      "median_gross": 0.137225,
+      "avg_n_positions": 6.649948822927328,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 2502,
+      "annualized_trades": 645.3469805527124,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 6.649948822927328,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.12436907881269191,
+        "max_gross_pct": 0.30995,
+        "turnover_annual_pct": 12.881564375603823,
+        "avg_holding_days": 7.7913669064748206,
+        "n_holding_periods_observed": 1251,
+        "n_total_trades_actual": 2502,
+        "n_trade_days": 977,
+        "n_years": 3.876984126984127
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.03967982266488623,
+          "lo": -0.32005053924690663,
+          "hi": 0.3673887095201154,
+          "p_value": 0.8239,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": -0.11700570534206012,
+          "lo": -0.46673511052668226,
+          "hi": 0.48259497974749954,
+          "p_value": 0.6382,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 975,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b1_b3_4factor_no_atr",
+      "window": "wf_2018_2022",
+      "description": "4-factor inverse composite plus no ATR veto",
+      "config_overrides": {},
+      "cagr": -0.046653997842884154,
+      "sharpe_annualized": -0.6602216083115592,
+      "max_drawdown": -0.1721,
+      "avg_gross": 0.14042037075180228,
+      "median_gross": 0.135155,
+      "avg_n_positions": 7.9567456230690015,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 3051,
+      "annualized_trades": 791.8146240988672,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 7.9567456230690015,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.14042037075180228,
+        "max_gross_pct": 0.362128,
+        "turnover_annual_pct": 14.163517142094744,
+        "avg_holding_days": 7.591984231274639,
+        "n_holding_periods_observed": 1522,
+        "n_total_trades_actual": 3051,
+        "n_trade_days": 971,
+        "n_years": 3.8531746031746033
+      },
+      "alpha": {
+        "raw": {
+          "point": 0.038333643107186344,
+          "lo": -0.17053363771850438,
+          "hi": 0.29908955172272944,
+          "p_value": 0.736,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": -0.14503347741203465,
+          "lo": -0.35192480050780206,
+          "hi": 0.12677236329438246,
+          "p_value": 0.2685,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 969,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b1_b3_4factor_no_atr",
+      "window": "wf_2022_2026",
+      "description": "4-factor inverse composite plus no ATR veto",
+      "config_overrides": {},
+      "cagr": -0.04986634217859354,
+      "sharpe_annualized": -0.9641916192494565,
+      "max_drawdown": -0.2299,
+      "avg_gross": 0.12625135,
+      "median_gross": 0.120306,
+      "avg_n_positions": 7.969811320754717,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 3368,
+      "annualized_trades": 800.6943396226415,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 7.969811320754717,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.12625135,
+        "max_gross_pct": 0.326021,
+        "turnover_annual_pct": 12.65110756590856,
+        "avg_holding_days": 7.569642857142857,
+        "n_holding_periods_observed": 1680,
+        "n_total_trades_actual": 3368,
+        "n_trade_days": 1060,
+        "n_years": 4.2063492063492065
+      },
+      "alpha": {
+        "raw": {
+          "point": 0.03442052490779868,
+          "lo": -0.1901242235238445,
+          "hi": 0.30764313067144866,
+          "p_value": 0.7783,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": -0.2843578469382616,
+          "lo": -0.4602646472331495,
+          "hi": -0.05944738442585085,
+          "p_value": 0.0161,
+          "direction": "NEGATIVE",
+          "excludes_zero": true,
+          "n_dates": 1058,
+          "gross_floor": 0.05
+        }
+      }
+    }
+  ]
+}

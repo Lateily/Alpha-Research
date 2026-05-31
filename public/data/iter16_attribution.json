@@ -1,0 +1,115 @@
+{
+  "window": [
+    "2025-05-26",
+    "2026-05-25"
+  ],
+  "capital": 10000000,
+  "ablations": [
+    {
+      "name": "A0_baseline",
+      "cagr": -0.10549457243389004,
+      "sharpe": -1.3471938577450866,
+      "max_dd": -0.1177,
+      "trades": 1469,
+      "final_nav": 8985377.73,
+      "alpha": {
+        "point": -0.43744915636412374,
+        "lo": -0.6122743994779289,
+        "hi": -0.15651371603525854,
+        "p_value": 0.0038,
+        "direction": "NEGATIVE",
+        "excludes_zero": true
+      },
+      "cfg_overrides": null,
+      "zero_cost": false
+    },
+    {
+      "name": "A1_zero_cost",
+      "cagr": -0.054974026081163974,
+      "sharpe": -0.6638847243823287,
+      "max_dd": -0.0933,
+      "trades": 1469,
+      "final_nav": 9472727.0,
+      "alpha": {
+        "point": -0.40534661931704397,
+        "lo": -0.5900208783541654,
+        "hi": -0.10909430446877832,
+        "p_value": 0.0083,
+        "direction": "NEGATIVE",
+        "excludes_zero": true
+      },
+      "cfg_overrides": null,
+      "zero_cost": true
+    },
+    {
+      "name": "A2_invert",
+      "cagr": -0.040827024602712036,
+      "sharpe": -0.6035393750189982,
+      "max_dd": -0.079,
+      "trades": 3832,
+      "final_nav": 9608420.07,
+      "alpha": {
+        "point": -0.39701220494791023,
+        "lo": -0.5707849459540273,
+        "hi": -0.13581368282229922,
+        "p_value": 0.0055,
+        "direction": "NEGATIVE",
+        "excludes_zero": true
+      },
+      "cfg_overrides": {
+        "_invert_signal": true,
+        "entry_composite_threshold": 0.0
+      },
+      "zero_cost": false
+    },
+    {
+      "name": "A3_ew_500",
+      "cagr": -0.1798272408537015,
+      "sharpe": -0.7703523114990964,
+      "max_dd": -0.2551,
+      "trades": 19931,
+      "final_nav": 8227238.17,
+      "alpha": {
+        "point": -0.4730589567196847,
+        "lo": -0.6166103029883945,
+        "hi": -0.28668242503379027,
+        "p_value": 0.0,
+        "direction": "NEGATIVE",
+        "excludes_zero": true
+      },
+      "cfg_overrides": {
+        "_ew_500": true,
+        "_ew_n": 50,
+        "use_quality_filter": false,
+        "entry_composite_threshold": 0.0,
+        "top_n_picks": 50
+      },
+      "zero_cost": false
+    },
+    {
+      "name": "A4_hold_only_7d",
+      "cagr": 0.021474863265958932,
+      "sharpe": 0.2064078269200556,
+      "max_dd": -0.1856,
+      "trades": 1248,
+      "final_nav": 10206892.82,
+      "alpha": {
+        "point": -0.34479803818644505,
+        "lo": -0.4972052266554555,
+        "hi": -0.15182148402668394,
+        "p_value": 0.0017,
+        "direction": "NEGATIVE",
+        "excludes_zero": true
+      },
+      "cfg_overrides": {
+        "_only_time_stop": true,
+        "time_stop_days": 7,
+        "hard_stop_pct": -99.0,
+        "trailing_stop_pct": -99.0,
+        "take_profit_full": 999.0,
+        "structure_break_threshold": -1.0
+      },
+      "zero_cost": false
+    }
+  ]
+}

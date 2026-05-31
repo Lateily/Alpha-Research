@@ -1,0 +1,49 @@
+{
+  "task_id": "2026-05-25-screener-pipeline",
+  "from": "T3 Codex",
+  "to": "T1 Claude Code",
+  "status": "COMPLETE",
+  "report_path": "experiments/agent_tasks/screener_report.md",
+  "files_written": [
+    "scripts/screen_universe.py"
+  ],
+  "runtime_outputs": [
+    "public/data/screen_candidates.json"
+  ],
+  "test_gate_results": [
+    {
+      "gate": "py_compile",
+      "command": "python3 -m py_compile scripts/screen_universe.py",
+      "status": "PASS"
+    },
+    {
+      "gate": "A",
+      "status": "PASS",
+      "details": "Ran on public/data/universe_a.json; after_filter_count=3292, within 1500..5000."
+    },
+    {
+      "gate": "B",
+      "status": "PASS",
+      "details": "50 candidates have numeric composite, contiguous ranks 1..50, non-empty why_included, sorted descending by composite."
+    },
+    {
+      "gate": "C",
+      "status": "PASS",
+      "details": "filter_funnel is monotonic: total=5850, after_distress=5326, after_suspended=5242, after_valuation=3959, after_microcap=3563, after_liquidity=3292; distress removed 524 names."
+    },
+    {
+      "gate": "D",
+      "status": "PASS",
+      "details": "Re-running scripts/screen_universe.py produced byte-identical public/data/screen_candidates.json; sha256=7ee4c77877af3fc0197ee92810eed717406add65dcab88e89ce81e7a054b29a4."
+    },
+    {
+      "gate": "E",
+      "status": "PASS",
+      "details": "Source diff is scoped to scripts/screen_universe.py. New-file proof used no-index diff because the sandbox could not write .git/index.lock for intent-to-add."
+    }
+  ],
+  "summary_line": "screen_universe total=5850 after_distress=5326 after_suspended=5242 after_valuation=3959 after_microcap=3563 after_liquidity=3292 top5=[600742.SH=75.86, 600664.SH=75.41, 603045.SH=75.24, 300482.SZ=74.11, 000828.SZ=72.27]",
+  "diff_stat": "/dev/null => scripts/screen_universe.py | 421 ++++++++++++++++++++++++++++++++\n 1 file changed, 421 insertions(+)",
+  "notes": "Causal logic is valid for a mechanical funnel-top screen; specific weights and thresholds are [unvalidated intuition]. The watcher owns stdin spec archival per the task wrapper.",
+  "completed_at": "2026-05-24T23:44:26Z"
+}

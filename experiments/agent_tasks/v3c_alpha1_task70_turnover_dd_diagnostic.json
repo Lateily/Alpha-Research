@@ -1,0 +1,2596 @@
+{
+  "task_id": "70",
+  "created_at": "2026-05-28",
+  "source_artifacts": [
+    "public/data/v3c_alpha1_full_20yr_baseline_0.40_RT.json",
+    "public/data/v3c_alpha1_bundle.json",
+    "/tmp/v3c_gate/v3c_alpha1_phaseBfix_gate_eval.json",
+    "/tmp/v3_phaseB_fix_report.md"
+  ],
+  "artifact_limits": {
+    "no_new_strategy_variants_run": true,
+    "trade_log_full_has_no_sector_field": true,
+    "sector_proxy_used": "public/data/concept_membership.json concepts, not PIT sector map",
+    "position_reconstruction_method": "holdings inferred by replaying trade_log_full units in date order; round trips via FIFO lots",
+    "same_gross_alpha_note": "reported alpha fields are used where present; subperiod same-gross excess is approximated as strategy period return minus ew_500_same_gross period return from curves"
+  },
+  "headline": {
+    "cagr": -0.02808013644215035,
+    "final_nav": 5715139.76,
+    "max_drawdown": -0.5923,
+    "avg_gross": 0.1688886092929293,
+    "annualized_trades": 379.7309090909091,
+    "turnover_annual_ratio": 8.51982200950255,
+    "avg_holding_days": 15.509393451422437,
+    "same_gross_alpha_reported": {
+      "point": 0.09394969023283362,
+      "lo": -0.14156987572254598,
+      "hi": 0.39953357541895573,
+      "p_value": 0.4758,
+      "direction": "STRADDLES",
+      "excludes_zero": false,
+      "n_dates": 4938,
+      "gross_floor": 0.05
+    }
+  },
+  "window_summary": [
+    {
+      "window": "full_20yr",
+      "period": [
+        "2006-01-04",
+        "2026-05-25"
+      ],
+      "cagr": -0.02808013644215035,
+      "max_drawdown": -0.5923,
+      "avg_gross": 0.1688886092929293,
+      "annualized_trades": 379.7309090909091,
+      "turnover_annual_ratio": 8.51982200950255,
+      "avg_holding_days": 15.509393451422437,
+      "same_gross_alpha_point": 0.09394969023283362,
+      "same_gross_alpha_ci": [
+        -0.14156987572254598,
+        0.39953357541895573
+      ],
+      "same_gross_alpha_p": 0.4758
+    },
+    {
+      "window": "wf_2006_2010",
+      "period": [
+        "2006-01-04",
+        "2010-01-03"
+      ],
+      "cagr": 0.03246047073334468,
+      "max_drawdown": -0.2297,
+      "avg_gross": 0.15620560020554983,
+      "annualized_trades": 362.0719424460432,
+      "turnover_annual_ratio": 8.05801714015248,
+      "avg_holding_days": 15.201438848920864,
+      "same_gross_alpha_point": 0.8779268871176591,
+      "same_gross_alpha_ci": [
+        -0.1143641198131019,
+        3.164463670866952
+      ],
+      "same_gross_alpha_p": 0.1075
+    },
+    {
+      "window": "wf_2010_2014",
+      "period": [
+        "2010-01-04",
+        "2014-01-03"
+      ],
+      "cagr": -0.062277721796839436,
+      "max_drawdown": -0.2286,
+      "avg_gross": 0.18731813828689373,
+      "annualized_trades": 389.312693498452,
+      "turnover_annual_ratio": 9.585666452440567,
+      "avg_holding_days": 15.22013422818792,
+      "same_gross_alpha_point": 0.36823696430867914,
+      "same_gross_alpha_ci": [
+        -0.09902382218267525,
+        1.1154758561238625
+      ],
+      "same_gross_alpha_p": 0.1543
+    },
+    {
+      "window": "wf_2014_2018",
+      "period": [
+        "2014-01-04",
+        "2018-01-03"
+      ],
+      "cagr": -0.03245556080566825,
+      "max_drawdown": -0.2586,
+      "avg_gross": 0.16482867758444217,
+      "annualized_trades": 362.6530194472876,
+      "turnover_annual_ratio": 8.329319932751671,
+      "avg_holding_days": 15.759656652360515,
+      "same_gross_alpha_point": -0.09934223219318739,
+      "same_gross_alpha_ci": [
+        -0.4470946311775167,
+        0.4693490882687015
+      ],
+      "same_gross_alpha_p": 0.6681
+    },
+    {
+      "window": "wf_2018_2022",
+      "period": [
+        "2018-01-04",
+        "2022-01-03"
+      ],
+      "cagr": -0.023962046235792567,
+      "max_drawdown": -0.1337,
+      "avg_gross": 0.1670822780638517,
+      "annualized_trades": 387.99176107106075,
+      "turnover_annual_ratio": 8.349111533970152,
+      "avg_holding_days": 15.285906040268456,
+      "same_gross_alpha_point": -0.0245104689839567,
+      "same_gross_alpha_ci": [
+        -0.26551862811041393,
+        0.2846335928019208
+      ],
+      "same_gross_alpha_p": 0.8589
+    },
+    {
+      "window": "wf_2022_2026",
+      "period": [
+        "2022-01-04",
+        "2026-05-25"
+      ],
+      "cagr": -0.034969353316337326,
+      "max_drawdown": -0.2005,
+      "avg_gross": 0.1767601575471698,
+      "annualized_trades": 401.29811320754715,
+      "turnover_annual_ratio": 8.833910851429678,
+      "avg_holding_days": 15.133333333333333,
+      "same_gross_alpha_point": -0.08727438187711556,
+      "same_gross_alpha_ci": [
+        -0.26217721337087785,
+        0.11670032979042566
+      ],
+      "same_gross_alpha_p": 0.3788
+    }
+  ],
+  "turnover_anatomy": {
+    "summary": {
+      "trade_dates": 530,
+      "first_trade_date": "2006-04-10",
+      "last_trade_date": "2026-05-13",
+      "avg_calendar_gap_between_trade_dates": 13.871455576559546,
+      "median_calendar_gap_between_trade_dates": 14,
+      "total_buys": 3734,
+      "total_sells": 3725,
+      "buy_notional_total": 700017598.1,
+      "sell_notional_total": 695364678.37,
+      "total_notional": 1395382276.47,
+      "avg_buys_per_trade_date": 7.0452830188679245,
+      "avg_sells_per_trade_date": 7.028301886792453,
+      "avg_total_notional_per_trade_date": 2632796.7480566036,
+      "avg_notional_to_nav_per_trade_date": 0.31657228324731496,
+      "median_notional_to_nav_per_trade_date": 0.3270339791484759,
+      "full_refresh_like_trade_dates": 476,
+      "full_refresh_like_share": 0.8981132075471698,
+      "avg_carry_final_count": 1.4377358490566037,
+      "avg_kept_untouched_count": 0.8056603773584906,
+      "avg_same_day_rebuy_count": 0.630188679245283,
+      "same_day_rebuy_events": 334,
+      "same_day_rebuy_share_of_sells": 0.08966442953020134,
+      "pure_size_trade_dates_proxy": 0,
+      "canonical_turnover_annual_ratio_from_audit": 8.51982200950255,
+      "annualized_trades": 379.7309090909091,
+      "audit_avg_holding_days": 15.509393451422437
+    },
+    "holding_periods": {
+      "fifo_round_trips_observed": 3726,
+      "avg_calendar_holding_days_fifo": 15.509393451422437,
+      "median_calendar_holding_days_fifo": 14.0,
+      "avg_trading_holding_days_fifo": 10.311325818572195,
+      "median_trading_holding_days_fifo": 10.0,
+      "share_closed_within_20_calendar_days": 0.9079441760601181,
+      "share_closed_within_15_trading_days": 0.9943639291465378,
+      "reentry_events_after_exit": 1884,
+      "share_reentered_same_day": 0.17728237791932058,
+      "share_reentered_within_30_calendar_days": 0.18630573248407642,
+      "top_rebuy_loop_tickers": [
+        {
+          "ticker": "600383.SH",
+          "same_day_rebuys": 4,
+          "buys": 12,
+          "sells": 12
+        },
+        {
+          "ticker": "000895.SZ",
+          "same_day_rebuys": 4,
+          "buys": 11,
+          "sells": 11
+        },
+        {
+          "ticker": "600703.SH",
+          "same_day_rebuys": 3,
+          "buys": 9,
+          "sells": 9
+        },
+        {
+          "ticker": "000584.SZ",
+          "same_day_rebuys": 2,
+          "buys": 5,
+          "sells": 5
+        },
+        {
+          "ticker": "600620.SH",
+          "same_day_rebuys": 2,
+          "buys": 6,
+          "sells": 6
+        },
+        {
+          "ticker": "000839.SZ",
+          "same_day_rebuys": 2,
+          "buys": 4,
+          "sells": 4
+        },
+        {
+          "ticker": "000652.SZ",
+          "same_day_rebuys": 2,
+          "buys": 5,
+          "sells": 5
+        },
+        {
+          "ticker": "600369.SH",
+          "same_day_rebuys": 2,
+          "buys": 5,
+          "sells": 5
+        },
+        {
+          "ticker": "600466.SH",
+          "same_day_rebuys": 2,
+          "buys": 4,
+          "sells": 4
+        },
+        {
+          "ticker": "000937.SZ",
+          "same_day_rebuys": 2,
+          "buys": 5,
+          "sells": 5
+        },
+        {
+          "ticker": "600295.SH",
+          "same_day_rebuys": 2,
+          "buys": 4,
+          "sells": 4
+        },
+        {
+          "ticker": "002223.SZ",
+          "same_day_rebuys": 2,
+          "buys": 4,
+          "sells": 4
+        },
+        {
+          "ticker": "600650.SH",
+          "same_day_rebuys": 2,
+          "buys": 3,
+          "sells": 3
+        },
+        {
+          "ticker": "002271.SZ",
+          "same_day_rebuys": 2,
+          "buys": 3,
+          "sells": 3
+        },
+        {
+          "ticker": "000078.SZ",
+          "same_day_rebuys": 2,
+          "buys": 6,
+          "sells": 6
+        }
+      ],
+      "top_churn_tickers_by_trade_count": [
+        {
+          "ticker": "600383.SH",
+          "trades": 24,
+          "buys": 12,
+          "sells": 12,
+          "notional": 4873721.75
+        },
+        {
+          "ticker": "000895.SZ",
+          "trades": 22,
+          "buys": 11,
+          "sells": 11,
+          "notional": 6126679.98
+        },
+        {
+          "ticker": "000061.SZ",
+          "trades": 18,
+          "buys": 9,
+          "sells": 9,
+          "notional": 4165225.85
+        },
+        {
+          "ticker": "600703.SH",
+          "trades": 18,
+          "buys": 9,
+          "sells": 9,
+          "notional": 3454788.56
+        },
+        {
+          "ticker": "000831.SZ",
+          "trades": 18,
+          "buys": 9,
+          "sells": 9,
+          "notional": 3485404.93
+        },
+        {
+          "ticker": "600011.SH",
+          "trades": 18,
+          "buys": 9,
+          "sells": 9,
+          "notional": 4234848.61
+        },
+        {
+          "ticker": "600036.SH",
+          "trades": 18,
+          "buys": 9,
+          "sells": 9,
+          "notional": 6215033.92
+        },
+        {
+          "ticker": "600795.SH",
+          "trades": 16,
+          "buys": 8,
+          "sells": 8,
+          "notional": 4360196.76
+        },
+        {
+          "ticker": "000006.SZ",
+          "trades": 16,
+          "buys": 8,
+          "sells": 8,
+          "notional": 3772783.28
+        },
+        {
+          "ticker": "600149.SH",
+          "trades": 16,
+          "buys": 8,
+          "sells": 8,
+          "notional": 3555649.79
+        },
+        {
+          "ticker": "000625.SZ",
+          "trades": 16,
+          "buys": 8,
+          "sells": 8,
+          "notional": 3134668.53
+        },
+        {
+          "ticker": "600048.SH",
+          "trades": 16,
+          "buys": 8,
+          "sells": 8,
+          "notional": 3765843.47
+        },
+        {
+          "ticker": "002146.SZ",
+          "trades": 16,
+          "buys": 8,
+          "sells": 8,
+          "notional": 3271211.42
+        },
+        {
+          "ticker": "600188.SH",
+          "trades": 16,
+          "buys": 8,
+          "sells": 8,
+          "notional": 2937142.45
+        },
+        {
+          "ticker": "600392.SH",
+          "trades": 16,
+          "buys": 8,
+          "sells": 8,
+          "notional": 2701307.36
+        }
+      ]
+    },
+    "per_rebalance_top_notional": [
+      {
+        "date": "2012-03-09",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 4328908.24,
+        "sell_notional": 3819169.53,
+        "total_notional": 8148077.77,
+        "notional_to_nav": 0.8666256027468187,
+        "carry_final_count": 2,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 2,
+        "new_entry_count": 6,
+        "final_exit_count": 6,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "600015.SH",
+          "600028.SH"
+        ]
+      },
+      {
+        "date": "2012-02-24",
+        "n_before": 7,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 7,
+        "buy_notional": 3838767.26,
+        "sell_notional": 2787778.2,
+        "total_notional": 6626545.46,
+        "notional_to_nav": 0.7021543796540033,
+        "carry_final_count": 2,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 2,
+        "new_entry_count": 6,
+        "final_exit_count": 5,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "600011.SH",
+          "600795.SH"
+        ]
+      },
+      {
+        "date": "2012-03-23",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 1806543.13,
+        "sell_notional": 4185394.41,
+        "total_notional": 5991937.54,
+        "notional_to_nav": 0.6497609756898635,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2008-12-08",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 7,
+        "sells_count": 7,
+        "buy_notional": 3296242.66,
+        "sell_notional": 2447478.11,
+        "total_notional": 5743720.77,
+        "notional_to_nav": 0.5487628937352717,
+        "carry_final_count": 4,
+        "kept_untouched_count": 1,
+        "same_day_rebuy_count": 3,
+        "new_entry_count": 4,
+        "final_exit_count": 4,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "000515.SZ",
+          "000569.SZ",
+          "000629.SZ"
+        ]
+      },
+      {
+        "date": "2009-11-18",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 3228180.51,
+        "sell_notional": 2451785.75,
+        "total_notional": 5679966.26,
+        "notional_to_nav": 0.48817696942433897,
+        "carry_final_count": 1,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 7,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "000883.SZ"
+        ]
+      },
+      {
+        "date": "2009-07-21",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2493020.96,
+        "sell_notional": 2951228.99,
+        "total_notional": 5444249.95,
+        "notional_to_nav": 0.473643797152815,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2009-12-02",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2264270.52,
+        "sell_notional": 3159710.38,
+        "total_notional": 5423980.9,
+        "notional_to_nav": 0.46979846658366525,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2009-02-11",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2664109.68,
+        "sell_notional": 2534031.28,
+        "total_notional": 5198140.96,
+        "notional_to_nav": 0.46879172574559097,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2008-01-14",
+        "n_before": 7,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 7,
+        "buy_notional": 2855820.64,
+        "sell_notional": 2266607.94,
+        "total_notional": 5122428.58,
+        "notional_to_nav": 0.39237114971086634,
+        "carry_final_count": 2,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 2,
+        "new_entry_count": 6,
+        "final_exit_count": 5,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "000036.SZ",
+          "600029.SH"
+        ]
+      },
+      {
+        "date": "2010-03-18",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2556943.56,
+        "sell_notional": 2530335.1,
+        "total_notional": 5087278.66,
+        "notional_to_nav": 0.4587791060764031,
+        "carry_final_count": 1,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 7,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "000729.SZ"
+        ]
+      },
+      {
+        "date": "2006-10-09",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2256828.67,
+        "sell_notional": 2670551.17,
+        "total_notional": 4927379.84,
+        "notional_to_nav": 0.46261730569829596,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2008-12-22",
+        "n_before": 7,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 7,
+        "buy_notional": 1669727.21,
+        "sell_notional": 3256705.64,
+        "total_notional": 4926432.85,
+        "notional_to_nav": 0.46471664521185346,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2007-05-24",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2336148.82,
+        "sell_notional": 2548542.66,
+        "total_notional": 4884691.48,
+        "notional_to_nav": 0.3922276230715501,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2011-03-16",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2687237.56,
+        "sell_notional": 2188423.94,
+        "total_notional": 4875661.5,
+        "notional_to_nav": 0.4671183237790914,
+        "carry_final_count": 1,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 7,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "601299.SH"
+        ]
+      },
+      {
+        "date": "2011-03-30",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2206503.57,
+        "sell_notional": 2667697.15,
+        "total_notional": 4874200.72,
+        "notional_to_nav": 0.469246746157168,
+        "carry_final_count": 1,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 7,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "600068.SH"
+        ]
+      },
+      {
+        "date": "2006-04-24",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 7,
+        "sells_count": 7,
+        "buy_notional": 2204689.36,
+        "sell_notional": 2669028.69,
+        "total_notional": 4873718.05,
+        "notional_to_nav": 0.5185865373328813,
+        "carry_final_count": 4,
+        "kept_untouched_count": 1,
+        "same_day_rebuy_count": 3,
+        "new_entry_count": 4,
+        "final_exit_count": 4,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "600608.SH",
+          "600653.SH",
+          "600812.SH"
+        ]
+      },
+      {
+        "date": "2009-12-16",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2709966.02,
+        "sell_notional": 2149443.3,
+        "total_notional": 4859409.32,
+        "notional_to_nav": 0.4257430198473245,
+        "carry_final_count": 3,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 3,
+        "new_entry_count": 5,
+        "final_exit_count": 5,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "000011.SZ",
+          "600161.SH",
+          "600836.SH"
+        ]
+      },
+      {
+        "date": "2007-04-05",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2269252.78,
+        "sell_notional": 2509325.44,
+        "total_notional": 4778578.22,
+        "notional_to_nav": 0.4075384859025275,
+        "carry_final_count": 1,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 7,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "000061.SZ"
+        ]
+      },
+      {
+        "date": "2009-12-30",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2133954.44,
+        "sell_notional": 2554979.85,
+        "total_notional": 4688934.29,
+        "notional_to_nav": 0.414584085790637,
+        "carry_final_count": 1,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 7,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "000078.SZ"
+        ]
+      },
+      {
+        "date": "2009-07-07",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2589440.22,
+        "sell_notional": 2090098.2,
+        "total_notional": 4679538.42,
+        "notional_to_nav": 0.41870199949138087,
+        "carry_final_count": 1,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 7,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "600592.SH"
+        ]
+      },
+      {
+        "date": "2009-02-25",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 1920306.27,
+        "sell_notional": 2743563.69,
+        "total_notional": 4663869.96,
+        "notional_to_nav": 0.41962828833255583,
+        "carry_final_count": 3,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 3,
+        "new_entry_count": 5,
+        "final_exit_count": 5,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "002270.SZ",
+          "002271.SZ",
+          "600599.SH"
+        ]
+      },
+      {
+        "date": "2011-04-15",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2404037.04,
+        "sell_notional": 2249278.18,
+        "total_notional": 4653315.22,
+        "notional_to_nav": 0.445534606550641,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2007-08-16",
+        "n_before": 7,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 7,
+        "buy_notional": 2106781.18,
+        "sell_notional": 2526563.64,
+        "total_notional": 4633344.82,
+        "notional_to_nav": 0.36215873450829666,
+        "carry_final_count": 1,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 7,
+        "final_exit_count": 6,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "600366.SH"
+        ]
+      },
+      {
+        "date": "2010-03-04",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2601111.93,
+        "sell_notional": 2013668.07,
+        "total_notional": 4614780.0,
+        "notional_to_nav": 0.41520018064471137,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2015-03-31",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 2124942.61,
+        "sell_notional": 2406693.38,
+        "total_notional": 4531635.99,
+        "notional_to_nav": 0.48457583447910646,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      }
+    ],
+    "per_rebalance_sample_first_15": [
+      {
+        "date": "2006-04-10",
+        "n_before": 0,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 0,
+        "buy_notional": 3210214.87,
+        "sell_notional": 0,
+        "total_notional": 3210214.87,
+        "notional_to_nav": 0.3190807659880881,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 0,
+        "full_refresh_like": false,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-04-24",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 7,
+        "sells_count": 7,
+        "buy_notional": 2204689.36,
+        "sell_notional": 2669028.69,
+        "total_notional": 4873718.05,
+        "notional_to_nav": 0.5185865373328813,
+        "carry_final_count": 4,
+        "kept_untouched_count": 1,
+        "same_day_rebuy_count": 3,
+        "new_entry_count": 4,
+        "final_exit_count": 4,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "600608.SH",
+          "600653.SH",
+          "600812.SH"
+        ]
+      },
+      {
+        "date": "2006-05-11",
+        "n_before": 8,
+        "n_after": 7,
+        "buys_count": 0,
+        "sells_count": 1,
+        "buy_notional": 0,
+        "sell_notional": 515070.84,
+        "total_notional": 515070.84,
+        "notional_to_nav": 0.05246961152943097,
+        "carry_final_count": 7,
+        "kept_untouched_count": 7,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 0,
+        "final_exit_count": 1,
+        "full_refresh_like": false,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-05-15",
+        "n_before": 7,
+        "n_after": 8,
+        "buys_count": 7,
+        "sells_count": 6,
+        "buy_notional": 1509245.07,
+        "sell_notional": 2209813.85,
+        "total_notional": 3719058.92,
+        "notional_to_nav": 0.37115105759819267,
+        "carry_final_count": 1,
+        "kept_untouched_count": 1,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 7,
+        "final_exit_count": 6,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-05-19",
+        "n_before": 8,
+        "n_after": 7,
+        "buys_count": 0,
+        "sells_count": 1,
+        "buy_notional": 0,
+        "sell_notional": 188600.54,
+        "total_notional": 188600.54,
+        "notional_to_nav": 0.019202482206337062,
+        "carry_final_count": 7,
+        "kept_untouched_count": 7,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 0,
+        "final_exit_count": 1,
+        "full_refresh_like": false,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-05-29",
+        "n_before": 7,
+        "n_after": 7,
+        "buys_count": 7,
+        "sells_count": 7,
+        "buy_notional": 1490337.84,
+        "sell_notional": 1620402.35,
+        "total_notional": 3110740.19,
+        "notional_to_nav": 0.30252122161090983,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 7,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-06-12",
+        "n_before": 7,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 7,
+        "buy_notional": 1430316.32,
+        "sell_notional": 1398098.84,
+        "total_notional": 2828415.16,
+        "notional_to_nav": 0.2774196564726412,
+        "carry_final_count": 1,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 7,
+        "final_exit_count": 6,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "000002.SZ"
+        ]
+      },
+      {
+        "date": "2006-06-26",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 1521916.8,
+        "sell_notional": 1559426.29,
+        "total_notional": 3081343.09,
+        "notional_to_nav": 0.2988470592609475,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-07-10",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 8,
+        "buy_notional": 1615357.61,
+        "sell_notional": 1686943.52,
+        "total_notional": 3302301.13,
+        "notional_to_nav": 0.3151162544794218,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 8,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-07-24",
+        "n_before": 8,
+        "n_after": 8,
+        "buys_count": 6,
+        "sells_count": 6,
+        "buy_notional": 1042939.0,
+        "sell_notional": 1115573.26,
+        "total_notional": 2158512.26,
+        "notional_to_nav": 0.2161754593568218,
+        "carry_final_count": 2,
+        "kept_untouched_count": 2,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 6,
+        "final_exit_count": 6,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-07-27",
+        "n_before": 8,
+        "n_after": 7,
+        "buys_count": 0,
+        "sells_count": 1,
+        "buy_notional": 0,
+        "sell_notional": 264383.55,
+        "total_notional": 264383.55,
+        "notional_to_nav": 0.025823738657506336,
+        "carry_final_count": 7,
+        "kept_untouched_count": 7,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 0,
+        "final_exit_count": 1,
+        "full_refresh_like": false,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-08-07",
+        "n_before": 7,
+        "n_after": 8,
+        "buys_count": 7,
+        "sells_count": 6,
+        "buy_notional": 1261868.0,
+        "sell_notional": 904946.65,
+        "total_notional": 2166814.65,
+        "notional_to_nav": 0.21485365042302418,
+        "carry_final_count": 2,
+        "kept_untouched_count": 1,
+        "same_day_rebuy_count": 1,
+        "new_entry_count": 6,
+        "final_exit_count": 5,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": [
+          "600326.SH"
+        ]
+      },
+      {
+        "date": "2006-08-14",
+        "n_before": 8,
+        "n_after": 7,
+        "buys_count": 0,
+        "sells_count": 1,
+        "buy_notional": 0,
+        "sell_notional": 144897.72,
+        "total_notional": 144897.72,
+        "notional_to_nav": 0.014115970857611574,
+        "carry_final_count": 7,
+        "kept_untouched_count": 7,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 0,
+        "final_exit_count": 1,
+        "full_refresh_like": false,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-08-21",
+        "n_before": 7,
+        "n_after": 7,
+        "buys_count": 7,
+        "sells_count": 7,
+        "buy_notional": 1414601.86,
+        "sell_notional": 1274947.96,
+        "total_notional": 2689549.82,
+        "notional_to_nav": 0.2612768956108771,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 7,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      },
+      {
+        "date": "2006-09-04",
+        "n_before": 7,
+        "n_after": 8,
+        "buys_count": 8,
+        "sells_count": 7,
+        "buy_notional": 1847759.81,
+        "sell_notional": 1611793.69,
+        "total_notional": 3459553.5,
+        "notional_to_nav": 0.3305939449746962,
+        "carry_final_count": 0,
+        "kept_untouched_count": 0,
+        "same_day_rebuy_count": 0,
+        "new_entry_count": 8,
+        "final_exit_count": 7,
+        "full_refresh_like": true,
+        "same_day_rebuy_tickers": []
+      }
+    ]
+  },
+  "underwater_anatomy": {
+    "full_20yr_peak_date_before_max_dd": "2008-01-15",
+    "peak_nav": 13082380.19,
+    "trough_date": "2024-09-18",
+    "trough_nav": 5333415.42,
+    "max_drawdown": -0.5923,
+    "final_date": "2026-05-25",
+    "final_nav": 5715139.76,
+    "final_drawdown": -0.5631,
+    "time_below_hwm_trading_days": 4810,
+    "time_below_hwm_share": 0.9717171717171718,
+    "hwm_days": 140,
+    "underwater_episodes_count": 38,
+    "longest_underwater_episode": {
+      "start": "2008-01-16",
+      "end": "2026-05-25",
+      "recovered": false,
+      "trading_days": 4456,
+      "start_peak_nav": 13082380.19
+    },
+    "worst_rolling_252d_drawdown": {
+      "date": "2008-11-07",
+      "rolling_252d_max_dd": -0.22970236274718747
+    },
+    "yearly": [
+      {
+        "year": "2006",
+        "start_nav": 10000000.0,
+        "end_nav": 10032711.41,
+        "return": 0.003271140999999922,
+        "year_local_max_dd": -0.0890654855315578,
+        "full_curve_min_dd_in_year": -0.0891,
+        "avg_gross": 0.13218840833333334,
+        "avg_positions": 5.833333333333333,
+        "trade_count": 262,
+        "turnover_notional_to_avg_nav": 6.3290457015234525
+      },
+      {
+        "year": "2007",
+        "start_nav": 10612656.04,
+        "end_nav": 12828767.95,
+        "return": 0.20881783991182656,
+        "year_local_max_dd": -0.08199633258503936,
+        "full_curve_min_dd_in_year": -0.082,
+        "avg_gross": 0.1562558181818182,
+        "avg_positions": 7.785123966942149,
+        "trade_count": 379,
+        "turnover_notional_to_avg_nav": 7.952065387243282
+      },
+      {
+        "year": "2008",
+        "start_nav": 12553679.86,
+        "end_nav": 10211165.24,
+        "return": -0.18659983734840913,
+        "year_local_max_dd": -0.22970236274718747,
+        "full_curve_min_dd_in_year": -0.2297,
+        "avg_gross": 0.1548582195121951,
+        "avg_positions": 7.695121951219512,
+        "trade_count": 369,
+        "turnover_notional_to_avg_nav": 7.552923257017015
+      },
+      {
+        "year": "2009",
+        "start_nav": 10467633.83,
+        "end_nav": 11312715.53,
+        "return": 0.08073282976120288,
+        "year_local_max_dd": -0.06445335288892429,
+        "full_curve_min_dd_in_year": -0.2063,
+        "avg_gross": 0.18098980327868852,
+        "avg_positions": 7.80327868852459,
+        "trade_count": 388,
+        "turnover_notional_to_avg_nav": 9.156605891549408
+      },
+      {
+        "year": "2010",
+        "start_nav": 11270836.43,
+        "end_nav": 10488885.77,
+        "return": -0.06937822803626648,
+        "year_local_max_dd": -0.14955698988881516,
+        "full_curve_min_dd_in_year": -0.2673,
+        "avg_gross": 0.17877693388429752,
+        "avg_positions": 7.958677685950414,
+        "trade_count": 350,
+        "turnover_notional_to_avg_nav": 8.691344014867074
+      },
+      {
+        "year": "2011",
+        "start_nav": 10755636.03,
+        "end_nav": 9281695.73,
+        "return": -0.13703887858317565,
+        "year_local_max_dd": -0.15882945603915144,
+        "full_curve_min_dd_in_year": -0.3084,
+        "avg_gross": 0.1751823442622951,
+        "avg_positions": 7.80327868852459,
+        "trade_count": 372,
+        "turnover_notional_to_avg_nav": 8.48516549209575
+      },
+      {
+        "year": "2012",
+        "start_nav": 9237685.89,
+        "end_nav": 8808635.72,
+        "return": -0.04644563314979744,
+        "year_local_max_dd": -0.12223032276826984,
+        "full_curve_min_dd_in_year": -0.3636,
+        "avg_gross": 0.19717156790123458,
+        "avg_positions": 7.658436213991769,
+        "trade_count": 382,
+        "turnover_notional_to_avg_nav": 10.0298437055471
+      },
+      {
+        "year": "2013",
+        "start_nav": 8813989.41,
+        "end_nav": 8665619.54,
+        "return": -0.016833452265289428,
+        "year_local_max_dd": -0.06970241318421666,
+        "full_curve_min_dd_in_year": -0.3507,
+        "avg_gross": 0.18147891176470587,
+        "avg_positions": 7.949579831932773,
+        "trade_count": 356,
+        "turnover_notional_to_avg_nav": 8.334466493430835
+      },
+      {
+        "year": "2014",
+        "start_nav": 8671759.9,
+        "end_nav": 8470600.07,
+        "return": -0.023197117115754118,
+        "year_local_max_dd": -0.0798057068063015,
+        "full_curve_min_dd_in_year": -0.3734,
+        "avg_gross": 0.1874509469387755,
+        "avg_positions": 7.963265306122449,
+        "trade_count": 386,
+        "turnover_notional_to_avg_nav": 9.420203137982277
+      },
+      {
+        "year": "2015",
+        "start_nav": 8474498.66,
+        "end_nav": 8944816.68,
+        "return": 0.055498034617660785,
+        "year_local_max_dd": -0.13420858787558432,
+        "full_curve_min_dd_in_year": -0.3652,
+        "avg_gross": 0.15179548770491802,
+        "avg_positions": 7.577868852459017,
+        "trade_count": 342,
+        "turnover_notional_to_avg_nav": 7.353521128890424
+      },
+      {
+        "year": "2016",
+        "start_nav": 8812197.93,
+        "end_nav": 7854259.29,
+        "return": -0.10870598318483293,
+        "year_local_max_dd": -0.1133127011035524,
+        "full_curve_min_dd_in_year": -0.4026,
+        "avg_gross": 0.1659855819672131,
+        "avg_positions": 7.922131147540983,
+        "trade_count": 376,
+        "turnover_notional_to_avg_nav": 8.268753109462311
+      },
+      {
+        "year": "2017",
+        "start_nav": 7870091.95,
+        "end_nav": 7430391.63,
+        "return": -0.05586978180096103,
+        "year_local_max_dd": -0.09133655794689477,
+        "full_curve_min_dd_in_year": -0.4381,
+        "avg_gross": 0.13044932786885247,
+        "avg_positions": 7.860655737704918,
+        "trade_count": 294,
+        "turnover_notional_to_avg_nav": 6.320483648651011
+      },
+      {
+        "year": "2018",
+        "start_nav": 7438113.4,
+        "end_nav": 6611211.28,
+        "return": -0.11117094826760776,
+        "year_local_max_dd": -0.11785564535799142,
+        "full_curve_min_dd_in_year": -0.4954,
+        "avg_gross": 0.15896069547325103,
+        "avg_positions": 7.897119341563786,
+        "trade_count": 352,
+        "turnover_notional_to_avg_nav": 7.67317408898141
+      },
+      {
+        "year": "2019",
+        "start_nav": 6634706.37,
+        "end_nav": 7050032.59,
+        "return": 0.06259903556214197,
+        "year_local_max_dd": -0.026735797789294025,
+        "full_curve_min_dd_in_year": -0.4943,
+        "avg_gross": 0.18385459016393443,
+        "avg_positions": 8,
+        "trade_count": 400,
+        "turnover_notional_to_avg_nav": 9.105772470647954
+      },
+      {
+        "year": "2020",
+        "start_nav": 7093466.91,
+        "end_nav": 6902808.39,
+        "return": -0.026878044603439233,
+        "year_local_max_dd": -0.08727601891301306,
+        "full_curve_min_dd_in_year": -0.4981,
+        "avg_gross": 0.1710284609053498,
+        "avg_positions": 7.7407407407407405,
+        "trade_count": 371,
+        "turnover_notional_to_avg_nav": 8.062240159115817
+      },
+      {
+        "year": "2021",
+        "start_nav": 6919111.82,
+        "end_nav": 6710031.51,
+        "return": -0.03021779607545072,
+        "year_local_max_dd": -0.04833290387902367,
+        "full_curve_min_dd_in_year": -0.4933,
+        "avg_gross": 0.1612775390946502,
+        "avg_positions": 8,
+        "trade_count": 384,
+        "turnover_notional_to_avg_nav": 7.704022098076354
+      },
+      {
+        "year": "2022",
+        "start_nav": 6692336.26,
+        "end_nav": 6121869.41,
+        "return": -0.08524180911375778,
+        "year_local_max_dd": -0.08797245941135645,
+        "full_curve_min_dd_in_year": -0.5334,
+        "avg_gross": 0.16410641322314048,
+        "avg_positions": 8,
+        "trade_count": 400,
+        "turnover_notional_to_avg_nav": 8.222379470108464
+      },
+      {
+        "year": "2023",
+        "start_nav": 6141807.88,
+        "end_nav": 5794115.22,
+        "return": -0.056610800401656336,
+        "year_local_max_dd": -0.07023522238222468,
+        "full_curve_min_dd_in_year": -0.5598,
+        "avg_gross": 0.17675552066115702,
+        "avg_positions": 8,
+        "trade_count": 384,
+        "turnover_notional_to_avg_nav": 8.497380057066232
+      },
+      {
+        "year": "2024",
+        "start_nav": 5779511.57,
+        "end_nav": 5552007.31,
+        "return": -0.03936392500378727,
+        "year_local_max_dd": -0.07718578717197733,
+        "full_curve_min_dd_in_year": -0.5923,
+        "avg_gross": 0.19217560743801654,
+        "avg_positions": 8,
+        "trade_count": 384,
+        "turnover_notional_to_avg_nav": 9.1843462130461
+      },
+      {
+        "year": "2025",
+        "start_nav": 5544652.09,
+        "end_nav": 5650203.73,
+        "return": 0.019036656996093138,
+        "year_local_max_dd": -0.04962428609998781,
+        "full_curve_min_dd_in_year": -0.5896,
+        "avg_gross": 0.17372447736625515,
+        "avg_positions": 8,
+        "trade_count": 384,
+        "turnover_notional_to_avg_nav": 8.307194411359543
+      },
+      {
+        "year": "2026",
+        "start_nav": 5690409.84,
+        "end_nav": 5715139.76,
+        "return": 0.00434589435477295,
+        "year_local_max_dd": -0.024449666124412572,
+        "full_curve_min_dd_in_year": -0.569,
+        "avg_gross": 0.1776903804347826,
+        "avg_positions": 8,
+        "trade_count": 144,
+        "turnover_notional_to_avg_nav": 3.2029835334648045
+      }
+    ]
+  },
+  "benchmark_comparison": [
+    {
+      "name": "strategy",
+      "start_date": "2006-01-04",
+      "end_date": "2026-05-25",
+      "start_equity": 10000000.0,
+      "end_equity": 5715139.76,
+      "total_return": -0.428486024,
+      "cagr": -0.027070450404103608,
+      "max_drawdown": -0.5923207136208446,
+      "peak_date": "2008-01-15",
+      "trough_date": "2024-09-18"
+    },
+    {
+      "name": "ew_500",
+      "start_date": "2006-01-19",
+      "end_date": "2026-05-25",
+      "start_equity": 10098957.21,
+      "end_equity": 4435168.2,
+      "total_return": -0.5608290927692722,
+      "cagr": -0.03963869450636015,
+      "max_drawdown": -0.9530362166425528,
+      "peak_date": "2008-01-15",
+      "trough_date": "2024-09-18"
+    },
+    {
+      "name": "ew_500_same_gross",
+      "start_date": "2006-01-19",
+      "end_date": "2026-05-25",
+      "start_equity": 10000785.85,
+      "end_equity": 17767061.17,
+      "total_return": 0.7765665055211639,
+      "cagr": 0.028649639888815637,
+      "max_drawdown": -0.18336681420911938,
+      "peak_date": "2015-06-12",
+      "trough_date": "2024-09-18"
+    },
+    {
+      "name": "cash_2pct",
+      "start_date": "2006-01-04",
+      "end_date": "2026-05-25",
+      "start_equity": 10000785.85,
+      "end_equity": 14754753.06,
+      "total_return": 0.47535936488431063,
+      "cagr": 0.019259987142695945,
+      "max_drawdown": 0.0,
+      "peak_date": "2006-01-04",
+      "trough_date": "2006-01-04"
+    },
+    {
+      "name": "csi300",
+      "start_date": "2006-01-04",
+      "end_date": "2026-05-25",
+      "start_equity": 10000000.0,
+      "end_equity": 52278001.08,
+      "total_return": 4.227800107999999,
+      "cagr": 0.08451567136038252,
+      "max_drawdown": -0.723038445803073,
+      "peak_date": "2007-10-16",
+      "trough_date": "2008-11-04"
+    },
+    {
+      "name": "zz500",
+      "start_date": "2006-01-04",
+      "end_date": "2026-05-25",
+      "start_equity": 10000000.0,
+      "end_equity": 99846169.11,
+      "total_return": 8.984616911,
+      "cagr": 0.11949043239634594,
+      "max_drawdown": -0.7241715459223298,
+      "peak_date": "2008-01-15",
+      "trough_date": "2008-11-04"
+    },
+    {
+      "name": "csi1000",
+      "start_date": "2006-01-04",
+      "end_date": "2026-05-25",
+      "start_equity": 10000000.0,
+      "end_equity": 103213978.14,
+      "total_return": 9.321397814000001,
+      "cagr": 0.121313629262217,
+      "max_drawdown": -0.7251254920892618,
+      "peak_date": "2008-01-15",
+      "trough_date": "2008-11-04"
+    }
+  ],
+  "regime_subperiod_attribution": [
+    {
+      "regime": "2008_crash",
+      "start": "2007-10-16",
+      "end": "2008-11-04",
+      "definition_note": "CSI300 2007 high to 2008 panic low proxy",
+      "strategy_return": -0.1861504911329288,
+      "strategy_max_dd": -0.2277733253982126,
+      "avg_gross": 0.14109601544401545,
+      "avg_positions": 7.671814671814672,
+      "trade_count": 394,
+      "turnover_notional_to_avg_nav": 7.57001061482969,
+      "ew_500_return": -0.7617062362483803,
+      "ew_500_max_dd": -0.7711668627793972,
+      "ew_500_same_gross_return": -0.14524017620986074,
+      "ew_500_same_gross_max_dd": -0.1675953153234805,
+      "csi300_return": -0.723038445803073,
+      "csi300_max_dd": -0.723038445803073,
+      "zz500_return": -0.6938450617647747,
+      "zz500_max_dd": -0.7241715459223298,
+      "csi1000_return": -0.6879326306385692,
+      "csi1000_max_dd": -0.7251254920892618,
+      "approx_same_gross_excess_return": -0.04091031492306807
+    },
+    {
+      "regime": "2015_bubble_crash",
+      "start": "2014-11-21",
+      "end": "2016-01-28",
+      "definition_note": "A-share leverage bubble run-up through crash/devaluation low proxy",
+      "strategy_return": -0.029473826857563723,
+      "strategy_max_dd": -0.1662908844860812,
+      "avg_gross": 0.15277944863013698,
+      "avg_positions": 7.647260273972603,
+      "trade_count": 420,
+      "turnover_notional_to_avg_nav": 8.989458218912509,
+      "ew_500_return": -0.13029775851552294,
+      "ew_500_max_dd": -0.6141467143806856,
+      "ew_500_same_gross_return": 0.08005530396209348,
+      "ew_500_same_gross_max_dd": -0.09946498643691304,
+      "csi300_return": 0.1046277950958987,
+      "csi300_max_dd": -0.4669613509930489,
+      "zz500_return": 0.048006043171632706,
+      "zz500_max_dd": -0.5434537981606801,
+      "csi1000_return": 0.13782383402107223,
+      "csi1000_max_dd": -0.531204786610859,
+      "approx_same_gross_excess_return": -0.1095291308196572
+    },
+    {
+      "regime": "2018_trade_war",
+      "start": "2018-01-24",
+      "end": "2019-01-04",
+      "definition_note": "2018 A-share trade-war/deleveraging drawdown proxy",
+      "strategy_return": -0.10991500919763475,
+      "strategy_max_dd": -0.11785564535799142,
+      "avg_gross": 0.15835777826086955,
+      "avg_positions": 7.891304347826087,
+      "trade_count": 340,
+      "turnover_notional_to_avg_nav": 7.3017578978929985,
+      "ew_500_return": -0.4827102638802556,
+      "ew_500_max_dd": -0.49654933388021383,
+      "ew_500_same_gross_return": -0.07564651874579476,
+      "ew_500_same_gross_max_dd": -0.08026222089726476,
+      "csi300_return": -0.30843885599593024,
+      "csi300_max_dd": -0.32461968886242765,
+      "zz500_return": -0.3414636995855188,
+      "zz500_max_dd": -0.3715556882329827,
+      "csi1000_return": -0.36402220503594174,
+      "csi1000_max_dd": -0.41329102395558914,
+      "approx_same_gross_excess_return": -0.034268490451839995
+    },
+    {
+      "regime": "2020_covid",
+      "start": "2020-01-02",
+      "end": "2020-04-30",
+      "definition_note": "COVID shock and first recovery window",
+      "strategy_return": -0.06613480346805478,
+      "strategy_max_dd": -0.08727601891301306,
+      "avg_gross": 0.15804373417721518,
+      "avg_positions": 7.2025316455696204,
+      "trade_count": 115,
+      "turnover_notional_to_avg_nav": 2.4274823260598857,
+      "ew_500_return": -0.05893472322202353,
+      "ew_500_max_dd": -0.20759273688445523,
+      "ew_500_same_gross_return": -0.013719542279260089,
+      "ew_500_same_gross_max_dd": -0.03512159681468974,
+      "csi300_return": -0.05771909954197618,
+      "csi300_max_dd": -0.1607947474015451,
+      "zz500_return": -0.002288051808452818,
+      "zz500_max_dd": -0.1523999292425755,
+      "csi1000_return": 0.000283252619413199,
+      "csi1000_max_dd": -0.1566751885857791,
+      "approx_same_gross_excess_return": -0.05241526118879469
+    },
+    {
+      "regime": "2022_selloff",
+      "start": "2021-12-13",
+      "end": "2022-10-31",
+      "definition_note": "2022 growth/COVID/property selloff proxy",
+      "strategy_return": -0.08612315203034737,
+      "strategy_max_dd": -0.092656998222999,
+      "avg_gross": 0.16479907042253522,
+      "avg_positions": 8,
+      "trade_count": 336,
+      "turnover_notional_to_avg_nav": 6.905522543970538,
+      "ew_500_return": -0.39536618869105833,
+      "ew_500_max_dd": -0.3962725496967352,
+      "ew_500_same_gross_return": -0.05535437896706763,
+      "ew_500_same_gross_max_dd": -0.0586333361101774,
+      "csi300_return": -0.3098267208135751,
+      "csi300_max_dd": -0.3098267208135751,
+      "zz500_return": -0.21024314795649934,
+      "zz500_max_dd": -0.2908809452132721,
+      "csi1000_return": -0.2119350709463561,
+      "csi1000_max_dd": -0.3425294871459498,
+      "approx_same_gross_excess_return": -0.030768773063279742
+    },
+    {
+      "regime": "2024_trough",
+      "start": "2023-05-08",
+      "end": "2024-02-05",
+      "definition_note": "2024 A-share trough window proxy",
+      "strategy_return": -0.06677252876283257,
+      "strategy_max_dd": -0.08147221189877618,
+      "avg_gross": 0.16318708021390374,
+      "avg_positions": 8,
+      "trade_count": 288,
+      "turnover_notional_to_avg_nav": 5.903593427334166,
+      "ew_500_return": -0.4342682255883603,
+      "ew_500_max_dd": -0.44805212083428525,
+      "ew_500_same_gross_return": -0.06969934457659066,
+      "ew_500_same_gross_max_dd": -0.07705376628820615,
+      "csi300_return": -0.21223535578665276,
+      "csi300_max_dd": -0.21735372360105376,
+      "zz500_return": -0.2861959834838035,
+      "zz500_max_dd": -0.2861959834838035,
+      "csi1000_return": -0.359482347717606,
+      "csi1000_max_dd": -0.359482347717606,
+      "approx_same_gross_excess_return": 0.002926815813758088
+    }
+  ],
+  "position_level_attribution": {
+    "worst_realized_round_trips": [
+      {
+        "ticker": "600166.SH",
+        "entry_date": "2011-04-29",
+        "exit_date": "2011-05-16",
+        "units": 16362.6,
+        "entry_price": 20.0634,
+        "exit_price": 10.0249,
+        "buy_notional": 328289.1,
+        "sell_notional": 164034.08,
+        "total_cost": 205.09789999999998,
+        "pnl": -164460.11789999998,
+        "return_on_buy_notional": -0.500961250007996,
+        "calendar_holding_days": 17,
+        "trading_holding_days": 10,
+        "name": "福田汽车",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "002019.SZ",
+        "entry_date": "2016-05-06",
+        "exit_date": "2016-05-20",
+        "units": 4528.46,
+        "entry_price": 45.1209,
+        "exit_price": 16.2206,
+        "buy_notional": 204328.46,
+        "sell_notional": 73454.56,
+        "total_cost": 106.173,
+        "pnl": -130980.07299999999,
+        "return_on_buy_notional": -0.6410270649521853,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "亿帆医药",
+        "concepts_proxy": [
+          "银屑病"
+        ]
+      },
+      {
+        "ticker": "600109.SH",
+        "entry_date": "2009-05-22",
+        "exit_date": "2009-06-09",
+        "units": 7894.69,
+        "entry_price": 35.5332,
+        "exit_price": 19.4691,
+        "buy_notional": 280523.59,
+        "sell_notional": 153702.31,
+        "total_cost": 185.4076,
+        "pnl": -127006.68760000003,
+        "return_on_buy_notional": -0.45274868897834947,
+        "calendar_holding_days": 18,
+        "trading_holding_days": 10,
+        "name": "国金证券",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600783.SH",
+        "entry_date": "2011-06-28",
+        "exit_date": "2011-07-12",
+        "units": 4642.48,
+        "entry_price": 49.3222,
+        "exit_price": 27.8532,
+        "buy_notional": 228977.24,
+        "sell_notional": 129307.66,
+        "total_cost": 154.225,
+        "pnl": -99823.805,
+        "return_on_buy_notional": -0.4359551412184023,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "鲁信创投",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600022.SH",
+        "entry_date": "2009-04-09",
+        "exit_date": "2009-04-23",
+        "units": 36036.82,
+        "entry_price": 7.2308,
+        "exit_price": 4.4883,
+        "buy_notional": 260576.11,
+        "sell_notional": 161742.52,
+        "total_cost": 186.4509,
+        "pnl": -99020.04089999999,
+        "return_on_buy_notional": -0.3800042947145078,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "山东钢铁",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000979.SZ",
+        "entry_date": "2011-02-16",
+        "exit_date": "2011-03-02",
+        "units": 11806.29,
+        "entry_price": 17.3877,
+        "exit_price": 9.316,
+        "buy_notional": 205284.33,
+        "sell_notional": 109987.45,
+        "total_cost": 133.8117,
+        "pnl": -95430.6917,
+        "return_on_buy_notional": -0.4648708048003469,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "中弘退",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000776.SZ",
+        "entry_date": "2010-04-30",
+        "exit_date": "2010-05-17",
+        "units": 6484.69,
+        "entry_price": 46.306,
+        "exit_price": 32.4895,
+        "buy_notional": 300280.32,
+        "sell_notional": 210684.59,
+        "total_cost": 233.0835,
+        "pnl": -89828.8135,
+        "return_on_buy_notional": -0.29914985271096023,
+        "calendar_holding_days": 17,
+        "trading_holding_days": 10,
+        "name": "广发证券",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "002024.SZ",
+        "entry_date": "2008-08-22",
+        "exit_date": "2008-09-05",
+        "units": 7980.07,
+        "entry_price": 43.3282,
+        "exit_price": 32.4879,
+        "buy_notional": 345762.28,
+        "sell_notional": 259255.4,
+        "total_cost": 280.8822,
+        "pnl": -86787.76220000004,
+        "return_on_buy_notional": -0.2510041355581067,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "ST易购",
+        "concepts_proxy": [
+          "阿里巴巴概念"
+        ]
+      },
+      {
+        "ticker": "000836.SZ",
+        "entry_date": "2009-05-22",
+        "exit_date": "2009-06-09",
+        "units": 13443.19,
+        "entry_price": 16.8753,
+        "exit_price": 10.7372,
+        "buy_notional": 226857.61,
+        "sell_notional": 144342.32,
+        "total_cost": 164.97109999999998,
+        "pnl": -82680.26109999997,
+        "return_on_buy_notional": -0.3644588387403005,
+        "calendar_holding_days": 18,
+        "trading_holding_days": 10,
+        "name": "ST富通",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600591.SH",
+        "entry_date": "2008-01-14",
+        "exit_date": "2008-01-28",
+        "units": 17850.72,
+        "entry_price": 17.1123,
+        "exit_price": 12.5462,
+        "buy_notional": 305466.86,
+        "sell_notional": 223957.89,
+        "total_cost": 244.3351,
+        "pnl": -81753.30509999997,
+        "return_on_buy_notional": -0.26763395904878184,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "*ST上航",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000831.SZ",
+        "entry_date": "2015-06-26",
+        "exit_date": "2015-07-14",
+        "units": 5803.58,
+        "entry_price": 28.5695,
+        "exit_price": 14.9376,
+        "buy_notional": 165805.14,
+        "sell_notional": 86691.33,
+        "total_cost": 106.4698,
+        "pnl": -79220.27980000002,
+        "return_on_buy_notional": -0.477791459299754,
+        "calendar_holding_days": 18,
+        "trading_holding_days": 12,
+        "name": "中国稀土",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "300381.SZ",
+        "entry_date": "2016-09-29",
+        "exit_date": "2016-10-20",
+        "units": 1973.5,
+        "entry_price": 70.8945,
+        "exit_price": 31.4328,
+        "buy_notional": 139910.02,
+        "sell_notional": 62032.46,
+        "total_cost": 81.5018,
+        "pnl": -77959.0618,
+        "return_on_buy_notional": -0.55720856733492,
+        "calendar_holding_days": 21,
+        "trading_holding_days": 10,
+        "name": "溢多利",
+        "concepts_proxy": [
+          "饲料"
+        ]
+      },
+      {
+        "ticker": "000563.SZ",
+        "entry_date": "2013-07-09",
+        "exit_date": "2013-07-23",
+        "units": 9545.95,
+        "entry_price": 16.3295,
+        "exit_price": 8.181,
+        "buy_notional": 155880.12,
+        "sell_notional": 78095.8,
+        "total_cost": 97.5418,
+        "pnl": -77881.8618,
+        "return_on_buy_notional": -0.4996266477085083,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "陕国投Ａ",
+        "concepts_proxy": [
+          "陕西自贸区"
+        ]
+      },
+      {
+        "ticker": "000036.SZ",
+        "entry_date": "2008-01-14",
+        "exit_date": "2008-01-28",
+        "units": 54922.45,
+        "entry_price": 8.3725,
+        "exit_price": 6.9895,
+        "buy_notional": 459840.42,
+        "sell_notional": 383880.47,
+        "total_cost": 402.8705,
+        "pnl": -76362.8205,
+        "return_on_buy_notional": -0.1660637411996101,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "华联控股",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000897.SZ",
+        "entry_date": "2008-05-15",
+        "exit_date": "2008-05-29",
+        "units": 16210.26,
+        "entry_price": 12.0914,
+        "exit_price": 7.5903,
+        "buy_notional": 196005.45,
+        "sell_notional": 123040.16,
+        "total_cost": 141.2815,
+        "pnl": -73106.5715,
+        "return_on_buy_notional": -0.3729823405420615,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "津滨发展",
+        "concepts_proxy": [
+          "雄安地产"
+        ]
+      },
+      {
+        "ticker": "600429.SH",
+        "entry_date": "2007-06-21",
+        "exit_date": "2007-07-05",
+        "units": 30585.25,
+        "entry_price": 7.3226,
+        "exit_price": 5.0008,
+        "buy_notional": 223964.59,
+        "sell_notional": 152951.35,
+        "total_cost": 170.7046,
+        "pnl": -71183.94459999999,
+        "return_on_buy_notional": -0.31783571054692167,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "三元股份",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "002252.SZ",
+        "entry_date": "2015-09-08",
+        "exit_date": "2015-09-22",
+        "units": 2282.55,
+        "entry_price": 74.9022,
+        "exit_price": 43.9174,
+        "buy_notional": 170968.22,
+        "sell_notional": 100243.71,
+        "total_cost": 117.92490000000001,
+        "pnl": -70842.4349,
+        "return_on_buy_notional": -0.41436025303416035,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "上海莱士",
+        "concepts_proxy": [
+          "阿尔茨海默概念"
+        ]
+      },
+      {
+        "ticker": "000722.SZ",
+        "entry_date": "2008-09-22",
+        "exit_date": "2008-10-13",
+        "units": 44975.31,
+        "entry_price": 4.8222,
+        "exit_price": 3.2734,
+        "buy_notional": 216880.94,
+        "sell_notional": 147222.88,
+        "total_cost": 164.63739999999999,
+        "pnl": -69822.69739999999,
+        "return_on_buy_notional": -0.3219402193664413,
+        "calendar_holding_days": 21,
+        "trading_holding_days": 10,
+        "name": "湖南发展",
+        "concepts_proxy": [
+          "页岩气",
+          "长江经济带"
+        ]
+      },
+      {
+        "ticker": "002038.SZ",
+        "entry_date": "2014-02-21",
+        "exit_date": "2014-03-07",
+        "units": 6026.05,
+        "entry_price": 52.1965,
+        "exit_price": 40.6955,
+        "buy_notional": 314538.53,
+        "sell_notional": 245233.11,
+        "total_cost": 262.5594,
+        "pnl": -69567.97940000004,
+        "return_on_buy_notional": -0.22117474574577567,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "双鹭药业",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000895.SZ",
+        "entry_date": "2008-08-22",
+        "exit_date": "2008-09-05",
+        "units": 9690.02,
+        "entry_price": 38.4008,
+        "exit_price": 31.273,
+        "buy_notional": 372105.04,
+        "sell_notional": 303036.23,
+        "total_cost": 320.3035,
+        "pnl": -69389.11349999999,
+        "return_on_buy_notional": -0.18647722024942204,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "双汇发展",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000951.SZ",
+        "entry_date": "2011-04-15",
+        "exit_date": "2011-04-29",
+        "units": 16733.07,
+        "entry_price": 24.0644,
+        "exit_price": 19.9584,
+        "buy_notional": 402670.81,
+        "sell_notional": 333964.42,
+        "total_cost": 351.14099999999996,
+        "pnl": -69057.53100000002,
+        "return_on_buy_notional": -0.1714987262175771,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "中国重汽",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600868.SH",
+        "entry_date": "2007-06-21",
+        "exit_date": "2007-07-05",
+        "units": 35258.32,
+        "entry_price": 6.2227,
+        "exit_price": 4.3085,
+        "buy_notional": 219400.33,
+        "sell_notional": 151911.46,
+        "total_cost": 168.7837,
+        "pnl": -67657.6537,
+        "return_on_buy_notional": -0.30837535066606325,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "梅雁吉祥",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600811.SH",
+        "entry_date": "2006-07-10",
+        "exit_date": "2006-08-14",
+        "units": 29120.15,
+        "entry_price": 7.2258,
+        "exit_price": 4.9759,
+        "buy_notional": 210417.01,
+        "sell_notional": 144897.72,
+        "total_cost": 161.2776,
+        "pnl": -65680.56760000001,
+        "return_on_buy_notional": -0.3121447624410213,
+        "calendar_holding_days": 35,
+        "trading_holding_days": 25,
+        "name": "*ST东方",
+        "concepts_proxy": [
+          "黑龙江自贸区"
+        ]
+      },
+      {
+        "ticker": "600004.SH",
+        "entry_date": "2008-10-13",
+        "exit_date": "2008-10-27",
+        "units": 19523.72,
+        "entry_price": 11.4872,
+        "exit_price": 8.1744,
+        "buy_notional": 224272.93,
+        "sell_notional": 159594.41,
+        "total_cost": 175.764,
+        "pnl": -64854.28399999999,
+        "return_on_buy_notional": -0.28917571104100703,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "白云机场",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000920.SZ",
+        "entry_date": "2007-06-21",
+        "exit_date": "2007-07-05",
+        "units": 29193.79,
+        "entry_price": 8.2741,
+        "exit_price": 6.0809,
+        "buy_notional": 241551.17,
+        "sell_notional": 177523.51,
+        "total_cost": 193.5304,
+        "pnl": -64221.1904,
+        "return_on_buy_notional": -0.26586992064662734,
+        "calendar_holding_days": 14,
+        "trading_holding_days": 10,
+        "name": "沃顿科技",
+        "concepts_proxy": [
+          "高性能膜"
+        ]
+      }
+    ],
+    "worst_tickers": [
+      {
+        "ticker": "600166.SH",
+        "pnl": -164613.2,
+        "trades": 3,
+        "gross_loss": -167880.19,
+        "gross_profit": 3266.98,
+        "buy_notional": 658550.21,
+        "return_on_buy_notional": -0.2499630240798192,
+        "name": "福田汽车",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600703.SH",
+        "pnl": -160309.34,
+        "trades": 9,
+        "gross_loss": -174891.15,
+        "gross_profit": 14581.81,
+        "buy_notional": 1806705.08,
+        "return_on_buy_notional": -0.08873021982093499,
+        "name": "三安光电",
+        "concepts_proxy": [
+          "集成电路概念"
+        ]
+      },
+      {
+        "ticker": "000776.SZ",
+        "pnl": -126257.5,
+        "trades": 2,
+        "gross_loss": -126257.5,
+        "gross_profit": 0,
+        "buy_notional": 627622.68,
+        "return_on_buy_notional": -0.201167841002814,
+        "name": "广发证券",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600783.SH",
+        "pnl": -126006.92,
+        "trades": 4,
+        "gross_loss": -142685.59,
+        "gross_profit": 16678.67,
+        "buy_notional": 765634.09,
+        "return_on_buy_notional": -0.1645785164816786,
+        "name": "鲁信创投",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600868.SH",
+        "pnl": -119821.0,
+        "trades": 4,
+        "gross_loss": -128947.95,
+        "gross_profit": 9126.94,
+        "buy_notional": 1101691.21,
+        "return_on_buy_notional": -0.10876097023593394,
+        "name": "梅雁吉祥",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600022.SH",
+        "pnl": -117383.68,
+        "trades": 2,
+        "gross_loss": -117383.68,
+        "gross_profit": 0,
+        "buy_notional": 454603.73,
+        "return_on_buy_notional": -0.25821099422127486,
+        "name": "山东钢铁",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "002019.SZ",
+        "pnl": -114925.89,
+        "trades": 2,
+        "gross_loss": -130980.07,
+        "gross_profit": 16054.18,
+        "buy_notional": 408753.12,
+        "return_on_buy_notional": -0.2811621127197757,
+        "name": "亿帆医药",
+        "concepts_proxy": [
+          "银屑病"
+        ]
+      },
+      {
+        "ticker": "002500.SZ",
+        "pnl": -113776.67,
+        "trades": 4,
+        "gross_loss": -113776.67,
+        "gross_profit": 0,
+        "buy_notional": 790907.19,
+        "return_on_buy_notional": -0.14385591095713768,
+        "name": "山西证券",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000979.SZ",
+        "pnl": -105914.1,
+        "trades": 2,
+        "gross_loss": -105914.1,
+        "gross_profit": 0,
+        "buy_notional": 401438.36,
+        "return_on_buy_notional": -0.2638365314664996,
+        "name": "中弘退",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000920.SZ",
+        "pnl": -100545.64,
+        "trades": 2,
+        "gross_loss": -100545.64,
+        "gross_profit": 0,
+        "buy_notional": 418885.99,
+        "return_on_buy_notional": -0.24003105116979442,
+        "name": "沃顿科技",
+        "concepts_proxy": [
+          "高性能膜"
+        ]
+      },
+      {
+        "ticker": "002252.SZ",
+        "pnl": -99824.31,
+        "trades": 4,
+        "gross_loss": -100969.79,
+        "gross_profit": 1145.48,
+        "buy_notional": 728502.28,
+        "return_on_buy_notional": -0.13702677018389017,
+        "name": "上海莱士",
+        "concepts_proxy": [
+          "阿尔茨海默概念"
+        ]
+      },
+      {
+        "ticker": "600515.SH",
+        "pnl": -96042.21,
+        "trades": 4,
+        "gross_loss": -96042.21,
+        "gross_profit": 0,
+        "buy_notional": 825827.62,
+        "return_on_buy_notional": -0.11629813483351403,
+        "name": "海南机场",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000783.SZ",
+        "pnl": -94887.07,
+        "trades": 6,
+        "gross_loss": -132826.61,
+        "gross_profit": 37939.55,
+        "buy_notional": 1585566.79,
+        "return_on_buy_notional": -0.05984425821633157,
+        "name": "长江证券",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600692.SH",
+        "pnl": -93810.83,
+        "trades": 3,
+        "gross_loss": -93810.83,
+        "gross_profit": 0,
+        "buy_notional": 818113.75,
+        "return_on_buy_notional": -0.1146672169976363,
+        "name": "亚通股份",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000722.SZ",
+        "pnl": -91889.89,
+        "trades": 7,
+        "gross_loss": -132026.1,
+        "gross_profit": 40136.21,
+        "buy_notional": 1424020.24,
+        "return_on_buy_notional": -0.06452850003030854,
+        "name": "湖南发展",
+        "concepts_proxy": [
+          "页岩气",
+          "长江经济带"
+        ]
+      },
+      {
+        "ticker": "600602.SH",
+        "pnl": -91139.26,
+        "trades": 3,
+        "gross_loss": -91139.26,
+        "gross_profit": 0,
+        "buy_notional": 543174.05,
+        "return_on_buy_notional": -0.16779015124157717,
+        "name": "云赛智联",
+        "concepts_proxy": [
+          "食品安全"
+        ]
+      },
+      {
+        "ticker": "600739.SH",
+        "pnl": -90524.6,
+        "trades": 2,
+        "gross_loss": -90524.6,
+        "gross_profit": 0,
+        "buy_notional": 419227.61,
+        "return_on_buy_notional": -0.2159318604993598,
+        "name": "辽宁成大",
+        "concepts_proxy": [
+          "页岩气",
+          "雄安金融"
+        ]
+      },
+      {
+        "ticker": "600369.SH",
+        "pnl": -90509.85,
+        "trades": 5,
+        "gross_loss": -91848.73,
+        "gross_profit": 1338.88,
+        "buy_notional": 1258378.29,
+        "return_on_buy_notional": -0.07192578743550952,
+        "name": "西南证券",
+        "concepts_proxy": [
+          "重庆国资改革"
+        ]
+      },
+      {
+        "ticker": "002129.SZ",
+        "pnl": -89270.17,
+        "trades": 8,
+        "gross_loss": -109991.94,
+        "gross_profit": 20721.77,
+        "buy_notional": 1360159.25,
+        "return_on_buy_notional": -0.06563214358906873,
+        "name": "TCL中环",
+        "concepts_proxy": [
+          "集成电路概念"
+        ]
+      },
+      {
+        "ticker": "000563.SZ",
+        "pnl": -86813.56,
+        "trades": 2,
+        "gross_loss": -86813.56,
+        "gross_profit": 0,
+        "buy_notional": 324721.32,
+        "return_on_buy_notional": -0.26734787817442973,
+        "name": "陕国投Ａ",
+        "concepts_proxy": [
+          "陕西自贸区"
+        ]
+      },
+      {
+        "ticker": "600060.SH",
+        "pnl": -85428.47,
+        "trades": 3,
+        "gross_loss": -85428.47,
+        "gross_profit": 0,
+        "buy_notional": 710179.5,
+        "return_on_buy_notional": -0.12029138140427878,
+        "name": "海信视像",
+        "concepts_proxy": [
+          "青岛自贸区"
+        ]
+      },
+      {
+        "ticker": "000036.SZ",
+        "pnl": -84673.63,
+        "trades": 4,
+        "gross_loss": -101921.78,
+        "gross_profit": 17248.15,
+        "buy_notional": 1303105.16,
+        "return_on_buy_notional": -0.06497835554576427,
+        "name": "华联控股",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "600588.SH",
+        "pnl": -83545.05,
+        "trades": 7,
+        "gross_loss": -107963.92,
+        "gross_profit": 24418.87,
+        "buy_notional": 1203043.52,
+        "return_on_buy_notional": -0.06944474519093045,
+        "name": "用友网络",
+        "concepts_proxy": [
+          "阿里巴巴概念"
+        ]
+      },
+      {
+        "ticker": "000831.SZ",
+        "pnl": -82727.86,
+        "trades": 9,
+        "gross_loss": -148924.97,
+        "gross_profit": 66197.11,
+        "buy_notional": 1783205.17,
+        "return_on_buy_notional": -0.04639278894643399,
+        "name": "中国稀土",
+        "concepts_proxy": []
+      },
+      {
+        "ticker": "000836.SZ",
+        "pnl": -82680.26,
+        "trades": 1,
+        "gross_loss": -82680.26,
+        "gross_profit": 0,
+        "buy_notional": 226857.61,
+        "return_on_buy_notional": -0.3644588387403005,
+        "name": "ST富通",
+        "concepts_proxy": []
+      }
+    ],
+    "loss_concentration": [
+      {
+        "top_n": 1,
+        "cum_gross_loss": -174891.15,
+        "share_of_total_gross_loss": 0.006046864009074192
+      },
+      {
+        "top_n": 2,
+        "cum_gross_loss": -342771.33,
+        "share_of_total_gross_loss": 0.011851323994397893
+      },
+      {
+        "top_n": 3,
+        "cum_gross_loss": -491696.31,
+        "share_of_total_gross_loss": 0.01700040725564881
+      },
+      {
+        "top_n": 4,
+        "cum_gross_loss": -634381.9,
+        "share_of_total_gross_loss": 0.021933763824532198
+      },
+      {
+        "top_n": 5,
+        "cum_gross_loss": -767208.51,
+        "share_of_total_gross_loss": 0.026526245997091927
+      },
+      {
+        "top_n": 6,
+        "cum_gross_loss": -899234.61,
+        "share_of_total_gross_loss": 0.03109105031339637
+      },
+      {
+        "top_n": 7,
+        "cum_gross_loss": -1031177.63,
+        "share_of_total_gross_loss": 0.03565298223771282
+      },
+      {
+        "top_n": 8,
+        "cum_gross_loss": -1162157.71,
+        "share_of_total_gross_loss": 0.04018162024112174
+      },
+      {
+        "top_n": 9,
+        "cum_gross_loss": -1291105.65,
+        "share_of_total_gross_loss": 0.04463999742971019
+      },
+      {
+        "top_n": 10,
+        "cum_gross_loss": -1418112.34,
+        "share_of_total_gross_loss": 0.049031255572866396
+      },
+      {
+        "top_n": 11,
+        "cum_gross_loss": -1544369.84,
+        "share_of_total_gross_loss": 0.053396610526143015
+      },
+      {
+        "top_n": 12,
+        "cum_gross_loss": -1661753.52,
+        "share_of_total_gross_loss": 0.05745515307413421
+      },
+      {
+        "top_n": 13,
+        "cum_gross_loss": -1775530.19,
+        "share_of_total_gross_loss": 0.061388983307504585
+      },
+      {
+        "top_n": 14,
+        "cum_gross_loss": -1888161.1,
+        "share_of_total_gross_loss": 0.06528319866410959
+      },
+      {
+        "top_n": 15,
+        "cum_gross_loss": -1998153.04,
+        "share_of_total_gross_loss": 0.06908617148244317
+      },
+      {
+        "top_n": 16,
+        "cum_gross_loss": -2106116.96,
+        "share_of_total_gross_loss": 0.07281902575522846
+      },
+      {
+        "top_n": 17,
+        "cum_gross_loss": -2212031.07,
+        "share_of_total_gross_loss": 0.0764810075189409
+      },
+      {
+        "top_n": 18,
+        "cum_gross_loss": -2313952.85,
+        "share_of_total_gross_loss": 0.0800049545889019
+      },
+      {
+        "top_n": 19,
+        "cum_gross_loss": -2414922.64,
+        "share_of_total_gross_loss": 0.08349598668703602
+      },
+      {
+        "top_n": 20,
+        "cum_gross_loss": -2515468.28,
+        "share_of_total_gross_loss": 0.0869723538651177
+      }
+    ]
+  },
+  "hypotheses": [
+    {
+      "hypothesis": "Turnover is caused primarily by fixed time-stop full close/reopen cadence rather than small sizing adjustments.",
+      "causal_logic": "valid",
+      "because": "every sell in trade_log_full has action=sell_time_stop; trade dates average roughly one rebalance every two to three weeks; same-day sell+buy loops are common; pure sizing-only dates are near absent by holdings reconstruction.",
+      "numbers_validation": "validated against data",
+      "evidence_fields": [
+        "trade_log_full.action",
+        "per-date reconstructed before/after holdings",
+        "FIFO holding periods"
+      ]
+    },
+    {
+      "hypothesis": "Turnover is full-refresh-like basket replacement with partial carry-over/rebuy, not a stable basket with occasional bottom swaps.",
+      "causal_logic": "valid",
+      "because": "most trade dates liquidate a large share of the pre-date book and open a large share of the post-date book; carry-over often occurs through same-day sell/rebuy rather than untouched holding continuity.",
+      "numbers_validation": "validated against data",
+      "evidence_fields": [
+        "full_refresh_like_share",
+        "avg_kept_untouched_count",
+        "same_day_rebuy_share_of_sells"
+      ]
+    },
+    {
+      "hypothesis": "The -59% drawdown is not one isolated crash; it is a permanent underwater path after a pre-2010/early-cycle high with repeated failed recoveries.",
+      "causal_logic": "valid",
+      "because": "drawdown trough occurs years after the prior high, time below high-water mark dominates the sample, and the longest underwater episode is unrecovered at the sample end.",
+      "numbers_validation": "validated against data",
+      "evidence_fields": [
+        "equity_curve.drawdown",
+        "underwater episodes",
+        "yearly NAV/DD"
+      ]
+    },
+    {
+      "hypothesis": "Drawdown is not pure absolute market beta.",
+      "causal_logic": "valid",
+      "because": "full-period strategy loses capital while CSI300/CSI500/CSI1000 curves compound strongly in the same artifact set; same-gross EW comparison also does better in terminal NAV.",
+      "numbers_validation": "validated against data",
+      "evidence_fields": [
+        "benchmarks.*",
+        "equity_curve"
+      ]
+    },
+    {
+      "hypothesis": "Stored same-gross alpha proves α1 is economically ready.",
+      "causal_logic": "unestablished",
+      "because": "bundle same_gross alpha point is positive but CI straddles zero and BY/raw p is high; terminal same-gross benchmark curve still materially exceeds strategy NAV.",
+      "numbers_validation": "validated against data for reported point/CI/p; interpretation remains unestablished",
+      "evidence_fields": [
+        "bundle.results.alpha.same_gross",
+        "benchmarks.ew_500_same_gross"
+      ]
+    },
+    {
+      "hypothesis": "Sector losses explain the failure.",
+      "causal_logic": "questionable",
+      "because": "no true sector map is available in required artifacts; concept_membership is a thematic proxy only and current universe_a is a point-in-time snapshot, not PIT sector classification.",
+      "numbers_validation": "unvalidated intuition for sector; ticker P&L is validated against trade_log_full",
+      "evidence_fields": [
+        "concept_membership proxy",
+        "FIFO ticker P&L"
+      ]
+    }
+  ],
+  "implications_for_alpha1_1": [
+    "Add explicit hold-continuation/rank-buffer or replacement-band mechanics before adding factors; current cadence closes and reopens the book on a time-stop rhythm.",
+    "Separate exit rule from rebalance rule: a 10-day alpha horizon does not require full liquidation/rebuy of surviving names every cycle.",
+    "Risk control must address persistent underwater exposure, likely via volatility scaling/regime gating/hedging; a tighter stop alone is unlikely to fix repeated re-entry drawdowns.",
+    "Keep max_gross unchanged until turnover and DD mechanics are fixed; raising gross would scale the same failure.",
+    "Treat alpha1 as a statistical lead only: same-gross point estimate is not statistically validated and walk-forward consistency is insufficient."
+  ]
+}

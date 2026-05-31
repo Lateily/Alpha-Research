@@ -1,0 +1,692 @@
+{
+  "_meta": {
+    "variants": [
+      "b1_4factor",
+      "b2_gross80",
+      "b3_no_atr_veto",
+      "b1_b3_4factor_no_atr"
+    ],
+    "windows": [
+      "mini1yr",
+      "10yr",
+      "20yr"
+    ],
+    "liquid_top_n": 500,
+    "causal_validation": "Causal logic is unestablished: these ablations test whether mechanical signal/veto/gross changes improve backtest behavior; they do not prove an economic mechanism.",
+    "numbers_validation": "Specific numbers are validated only against this local ablation run and current local panel; they are not production-calibrated thresholds."
+  },
+  "results": [
+    {
+      "variant": "b1_4factor",
+      "window": "mini1yr",
+      "description": "4-factor inverse composite: momentum/macd/breakout reverse + RSI direct",
+      "config_overrides": {},
+      "cagr": 0.0326068219526261,
+      "sharpe_annualized": 0.5610608241105891,
+      "max_drawdown": -0.0385,
+      "avg_gross": 0.15901228099173553,
+      "median_gross": 0.154291,
+      "avg_n_positions": 7.950413223140496,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 768,
+      "annualized_trades": 799.7355371900826,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 7.950413223140496,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.15901228099173553,
+        "max_gross_pct": 0.253481,
+        "turnover_annual_pct": 16.04461339025162,
+        "avg_holding_days": 7.594736842105263,
+        "n_holding_periods_observed": 380,
+        "n_total_trades_actual": 768,
+        "n_trade_days": 242,
+        "n_years": 0.9603174603174603
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.3505704705265582,
+          "lo": -0.5512670734961245,
+          "hi": -0.03650802289742505,
+          "p_value": 0.0286,
+          "direction": "NEGATIVE",
+          "excludes_zero": true
+        },
+        "same_gross": {
+          "point": -0.20614597994308193,
+          "lo": -0.5222474506503312,
+          "hi": 0.37308779473612286,
+          "p_value": 0.3882,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 240,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b1_4factor",
+      "window": "10yr",
+      "description": "4-factor inverse composite: momentum/macd/breakout reverse + RSI direct",
+      "config_overrides": {},
+      "cagr": -0.02962486607984538,
+      "sharpe_annualized": -0.6693466867692915,
+      "max_drawdown": -0.2573,
+      "avg_gross": 0.04151140412371134,
+      "median_gross": 0.0,
+      "avg_n_positions": 1.9014432989690722,
+      "median_n_positions": 0.0,
+      "max_n_positions": 8,
+      "n_total_trades": 1804,
+      "annualized_trades": 187.46721649484536,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 1.9014432989690722,
+        "median_n_positions": 0.0,
+        "avg_gross_pct": 0.04151140412371134,
+        "max_gross_pct": 0.326534,
+        "turnover_annual_pct": 4.785937449607747,
+        "avg_holding_days": 7.688470066518847,
+        "n_holding_periods_observed": 902,
+        "n_total_trades_actual": 1804,
+        "n_trade_days": 2425,
+        "n_years": 9.623015873015873
+      },
+      "alpha": {
+        "raw": {
+          "point": 0.07483285099403525,
+          "lo": -0.08659301660018237,
+          "hi": 0.26307121799640143,
+          "p_value": 0.3843,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": -0.03277776379447794,
+          "lo": -0.19457892880100847,
+          "hi": 0.16604925910271162,
+          "p_value": 0.7223,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 2423,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b1_4factor",
+      "window": "20yr",
+      "description": "4-factor inverse composite: momentum/macd/breakout reverse + RSI direct",
+      "config_overrides": {},
+      "cagr": -0.0035200082819707434,
+      "sharpe_annualized": 0.015324468967577264,
+      "max_drawdown": -0.2888,
+      "avg_gross": 0.04971913353535354,
+      "median_gross": 0.0,
+      "avg_n_positions": 2.311111111111111,
+      "median_n_positions": 0.0,
+      "max_n_positions": 8,
+      "n_total_trades": 4478,
+      "annualized_trades": 227.9709090909091,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 2.311111111111111,
+        "median_n_positions": 0.0,
+        "avg_gross_pct": 0.04971913353535354,
+        "max_gross_pct": 0.344283,
+        "turnover_annual_pct": 5.542638890218201,
+        "avg_holding_days": 7.662795891022778,
+        "n_holding_periods_observed": 2239,
+        "n_total_trades_actual": 4478,
+        "n_trade_days": 4950,
+        "n_years": 19.642857142857142
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.009766891447799741,
+          "lo": -0.15292766010462178,
+          "hi": 0.15306019228945322,
+          "p_value": 0.8957,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": 0.1973385043693745,
+          "lo": -0.026251398883678556,
+          "hi": 0.473149271213511,
+          "p_value": 0.0877,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 4938,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b2_gross80",
+      "window": "mini1yr",
+      "description": "capacity test: raise feasible gross cap to 80%",
+      "config_overrides": {
+        "max_gross": 0.8,
+        "max_single_name_weight": 0.1,
+        "safety_max_single_name": 0.1
+      },
+      "cagr": 0.021434283583897207,
+      "sharpe_annualized": 0.45454098345883276,
+      "max_drawdown": -0.0351,
+      "avg_gross": 0.19247573966942153,
+      "median_gross": 0.17862450000000002,
+      "avg_n_positions": 7.966942148760331,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 772,
+      "annualized_trades": 803.9008264462809,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "784d4127e649d01fc44efc6e69f09ad6",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 7.966942148760331,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.19247573966942153,
+        "max_gross_pct": 0.384261,
+        "turnover_annual_pct": 19.426547232622863,
+        "avg_holding_days": 7.570680628272251,
+        "n_holding_periods_observed": 382,
+        "n_total_trades_actual": 772,
+        "n_trade_days": 242,
+        "n_years": 0.9603174603174603
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.35806225659979174,
+          "lo": -0.5553463398734984,
+          "hi": -0.05025267105596931,
+          "p_value": 0.024,
+          "direction": "NEGATIVE",
+          "excludes_zero": true
+        },
+        "same_gross": {
+          "point": -0.3137588485841766,
+          "lo": -0.5109640453147504,
+          "hi": -0.03620793712257986,
+          "p_value": 0.0308,
+          "direction": "NEGATIVE",
+          "excludes_zero": true,
+          "n_dates": 240,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b2_gross80",
+      "window": "10yr",
+      "description": "capacity test: raise feasible gross cap to 80%",
+      "config_overrides": {
+        "max_gross": 0.8,
+        "max_single_name_weight": 0.1,
+        "safety_max_single_name": 0.1
+      },
+      "cagr": -0.028735857764242922,
+      "sharpe_annualized": -0.7688709894073189,
+      "max_drawdown": -0.2533,
+      "avg_gross": 0.04462892701030928,
+      "median_gross": 0.0,
+      "avg_n_positions": 1.864742268041237,
+      "median_n_positions": 0.0,
+      "max_n_positions": 8,
+      "n_total_trades": 1726,
+      "annualized_trades": 179.3616494845361,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "784d4127e649d01fc44efc6e69f09ad6",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 1.864742268041237,
+        "median_n_positions": 0.0,
+        "avg_gross_pct": 0.04462892701030928,
+        "max_gross_pct": 0.40128,
+        "turnover_annual_pct": 4.989173658414961,
+        "avg_holding_days": 7.849362688296639,
+        "n_holding_periods_observed": 863,
+        "n_total_trades_actual": 1726,
+        "n_trade_days": 2425,
+        "n_years": 9.623015873015873
+      },
+      "alpha": {
+        "raw": {
+          "point": 0.07553544338404206,
+          "lo": -0.08681299536021747,
+          "hi": 0.263626531101101,
+          "p_value": 0.3831,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": -0.014032557248760624,
+          "lo": -0.19611416756930167,
+          "hi": 0.21729160319501006,
+          "p_value": 0.8934,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 2423,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b2_gross80",
+      "window": "20yr",
+      "description": "capacity test: raise feasible gross cap to 80%",
+      "config_overrides": {
+        "max_gross": 0.8,
+        "max_single_name_weight": 0.1,
+        "safety_max_single_name": 0.1
+      },
+      "cagr": -0.0021535008029403002,
+      "sharpe_annualized": 0.025130492418030163,
+      "max_drawdown": -0.2603,
+      "avg_gross": 0.04713644121212122,
+      "median_gross": 0.0,
+      "avg_n_positions": 2.157979797979798,
+      "median_n_positions": 0.0,
+      "max_n_positions": 8,
+      "n_total_trades": 4172,
+      "annualized_trades": 212.39272727272729,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "784d4127e649d01fc44efc6e69f09ad6",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 2.157979797979798,
+        "median_n_positions": 0.0,
+        "avg_gross_pct": 0.04713644121212122,
+        "max_gross_pct": 0.352352,
+        "turnover_annual_pct": 5.233342327451352,
+        "avg_holding_days": 7.676893576222435,
+        "n_holding_periods_observed": 2086,
+        "n_total_trades_actual": 4172,
+        "n_trade_days": 4950,
+        "n_years": 19.642857142857142
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.00891498388989631,
+          "lo": -0.15162951098371402,
+          "hi": 0.1538289855398869,
+          "p_value": 0.9021,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": 0.1625198236492884,
+          "lo": -0.04672433744073057,
+          "hi": 0.422291703240921,
+          "p_value": 0.1376,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 4938,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b3_no_atr_veto",
+      "window": "mini1yr",
+      "description": "remove ATR/close > 8% entry veto, keep default inverse composite",
+      "config_overrides": {},
+      "cagr": -0.02749459576459501,
+      "sharpe_annualized": -0.59881480947443,
+      "max_drawdown": -0.0372,
+      "avg_gross": 0.1529518305785124,
+      "median_gross": 0.1396445,
+      "avg_n_positions": 7.983471074380165,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 774,
+      "annualized_trades": 805.9834710743802,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 7.983471074380165,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.1529518305785124,
+        "max_gross_pct": 0.358291,
+        "turnover_annual_pct": 15.430545106912001,
+        "avg_holding_days": 7.566579634464752,
+        "n_holding_periods_observed": 383,
+        "n_total_trades_actual": 774,
+        "n_trade_days": 242,
+        "n_years": 0.9603174603174603
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.3892481510866349,
+          "lo": -0.5877760044134637,
+          "hi": -0.07051230310956513,
+          "p_value": 0.0185,
+          "direction": "NEGATIVE",
+          "excludes_zero": true
+        },
+        "same_gross": {
+          "point": -0.45806886519464085,
+          "lo": -0.6611791052274569,
+          "hi": -0.140110199151271,
+          "p_value": 0.0113,
+          "direction": "NEGATIVE",
+          "excludes_zero": true,
+          "n_dates": 240,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b3_no_atr_veto",
+      "window": "10yr",
+      "description": "remove ATR/close > 8% entry veto, keep default inverse composite",
+      "config_overrides": {},
+      "cagr": -0.028634249892271257,
+      "sharpe_annualized": -0.8414593528827179,
+      "max_drawdown": -0.2509,
+      "avg_gross": 0.0415230630927835,
+      "median_gross": 0.0,
+      "avg_n_positions": 1.9010309278350515,
+      "median_n_positions": 0.0,
+      "max_n_positions": 8,
+      "n_total_trades": 1764,
+      "annualized_trades": 183.3105154639175,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 1.9010309278350515,
+        "median_n_positions": 0.0,
+        "avg_gross_pct": 0.0415230630927835,
+        "max_gross_pct": 0.401307,
+        "turnover_annual_pct": 4.655773205445143,
+        "avg_holding_days": 7.863945578231292,
+        "n_holding_periods_observed": 882,
+        "n_total_trades_actual": 1764,
+        "n_trade_days": 2425,
+        "n_years": 9.623015873015873
+      },
+      "alpha": {
+        "raw": {
+          "point": 0.07552617991124788,
+          "lo": -0.08724761976575068,
+          "hi": 0.2627900307996307,
+          "p_value": 0.3838,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": -0.051034802239301014,
+          "lo": -0.21897503103743954,
+          "hi": 0.1545920888278085,
+          "p_value": 0.6068,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 2423,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b3_no_atr_veto",
+      "window": "20yr",
+      "description": "remove ATR/close > 8% entry veto, keep default inverse composite",
+      "config_overrides": {},
+      "cagr": -0.001511111152161848,
+      "sharpe_annualized": 0.03139360439284896,
+      "max_drawdown": -0.2562,
+      "avg_gross": 0.048906267070707075,
+      "median_gross": 0.0,
+      "avg_n_positions": 2.4157575757575755,
+      "median_n_positions": 0.0,
+      "max_n_positions": 8,
+      "n_total_trades": 4704,
+      "annualized_trades": 239.47636363636363,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 2.4157575757575755,
+        "median_n_positions": 0.0,
+        "avg_gross_pct": 0.048906267070707075,
+        "max_gross_pct": 0.358538,
+        "turnover_annual_pct": 5.510852936166079,
+        "avg_holding_days": 7.634778911564626,
+        "n_holding_periods_observed": 2352,
+        "n_total_trades_actual": 4704,
+        "n_trade_days": 4950,
+        "n_years": 19.642857142857142
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.008341035698292032,
+          "lo": -0.1514923993767361,
+          "hi": 0.15554182093645386,
+          "p_value": 0.9114,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": 0.20573191556474923,
+          "lo": -0.028510500793398563,
+          "hi": 0.5084731534880989,
+          "p_value": 0.093,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 4938,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b1_b3_4factor_no_atr",
+      "window": "mini1yr",
+      "description": "4-factor inverse composite plus no ATR veto",
+      "config_overrides": {},
+      "cagr": -0.004263879311912189,
+      "sharpe_annualized": -0.06745827082056881,
+      "max_drawdown": -0.042,
+      "avg_gross": 0.13073742148760328,
+      "median_gross": 0.127056,
+      "avg_n_positions": 7.983471074380165,
+      "median_n_positions": 8.0,
+      "max_n_positions": 8,
+      "n_total_trades": 774,
+      "annualized_trades": 805.9834710743802,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 7.983471074380165,
+        "median_n_positions": 8.0,
+        "avg_gross_pct": 0.13073742148760328,
+        "max_gross_pct": 0.253495,
+        "turnover_annual_pct": 13.205695812541686,
+        "avg_holding_days": 7.566579634464752,
+        "n_holding_periods_observed": 383,
+        "n_total_trades_actual": 774,
+        "n_trade_days": 242,
+        "n_years": 0.9603174603174603
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.3744474219932932,
+          "lo": -0.573075186737993,
+          "hi": -0.0623506224637399,
+          "p_value": 0.0202,
+          "direction": "NEGATIVE",
+          "excludes_zero": true
+        },
+        "same_gross": {
+          "point": -0.36078528340430294,
+          "lo": -0.5967357166335789,
+          "hi": 0.03435257587793372,
+          "p_value": 0.0627,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 240,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b1_b3_4factor_no_atr",
+      "window": "10yr",
+      "description": "4-factor inverse composite plus no ATR veto",
+      "config_overrides": {},
+      "cagr": -0.0289715201251457,
+      "sharpe_annualized": -0.6611139375300382,
+      "max_drawdown": -0.2523,
+      "avg_gross": 0.04295105979381443,
+      "median_gross": 0.0,
+      "avg_n_positions": 2.082474226804124,
+      "median_n_positions": 0.0,
+      "max_n_positions": 8,
+      "n_total_trades": 1982,
+      "annualized_trades": 205.9645360824742,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 2.082474226804124,
+        "median_n_positions": 0.0,
+        "avg_gross_pct": 0.04295105979381443,
+        "max_gross_pct": 0.340479,
+        "turnover_annual_pct": 4.898071871275076,
+        "avg_holding_days": 7.636730575176589,
+        "n_holding_periods_observed": 991,
+        "n_total_trades_actual": 1982,
+        "n_trade_days": 2425,
+        "n_years": 9.623015873015873
+      },
+      "alpha": {
+        "raw": {
+          "point": 0.07553592485243876,
+          "lo": -0.08641942553215487,
+          "hi": 0.26427923650276997,
+          "p_value": 0.3795,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": -0.03442117998795857,
+          "lo": -0.19897855437891276,
+          "hi": 0.1678452448162937,
+          "p_value": 0.7146,
+          "direction": "STRADDLES",
+          "excludes_zero": false,
+          "n_dates": 2423,
+          "gross_floor": 0.05
+        }
+      }
+    },
+    {
+      "variant": "b1_b3_4factor_no_atr",
+      "window": "20yr",
+      "description": "4-factor inverse composite plus no ATR veto",
+      "config_overrides": {},
+      "cagr": -0.0010460127972551359,
+      "sharpe_annualized": 0.04577774943965828,
+      "max_drawdown": -0.2658,
+      "avg_gross": 0.07693352282828284,
+      "median_gross": 0.0,
+      "avg_n_positions": 3.886060606060606,
+      "median_n_positions": 1.0,
+      "max_n_positions": 8,
+      "n_total_trades": 7416,
+      "annualized_trades": 377.5418181818182,
+      "audit": {
+        "engine_version": "fast-v2-audit",
+        "config_hash": "4dcbc806d43a5a675bb19f26904454e5",
+        "data_hash": "ef57b7b1f35cd51c16f363768e975564",
+        "git_commit": "6fcaad4e5e5c61812027b9e5e112baf243bc1d69",
+        "max_positions_cfg": 8,
+        "max_positions_reached": 8,
+        "max_positions_enforced": true,
+        "avg_n_positions": 3.886060606060606,
+        "median_n_positions": 1.0,
+        "avg_gross_pct": 0.07693352282828284,
+        "max_gross_pct": 0.38708,
+        "turnover_annual_pct": 8.38714267950223,
+        "avg_holding_days": 7.777508090614886,
+        "n_holding_periods_observed": 3708,
+        "n_total_trades_actual": 7416,
+        "n_trade_days": 4950,
+        "n_years": 19.642857142857142
+      },
+      "alpha": {
+        "raw": {
+          "point": -0.006262622790255135,
+          "lo": -0.14906217221697127,
+          "hi": 0.1555484290257816,
+          "p_value": 0.9334,
+          "direction": "STRADDLES",
+          "excludes_zero": false
+        },
+        "same_gross": {
+          "point": 0.37851502102489554,
+          "lo": 0.06628930021507129,
+          "hi": 0.7867513575837566,
+          "p_value": 0.016,
+          "direction": "POSITIVE",
+          "excludes_zero": true,
+          "n_dates": 4938,
+          "gross_floor": 0.05
+        }
+      }
+    }
+  ]
+}
