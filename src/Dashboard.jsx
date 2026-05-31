@@ -10437,8 +10437,8 @@ function TradeDecisionCockpit({ L, lk, C }) {
       </div>
       <div style={{ border: `1px solid ${C.orange}`, background: C.orange + '14', borderRadius: 8,
         padding: '8px 12px', fontSize: 10.5, color: C.dark, marginBottom: 14, lineHeight: 1.5 }}>
-        {L('Decision support only — NOT trade advice. No BUY/SELL, no position sizing, no auto-trade. Every number is [unvalidated intuition]; nothing here is calibrated. The human makes all decisions.',
-           '仅决策支持，非交易建议。无买卖信号、无仓位大小、无自动交易。所有数字均为【未校准直觉】，未经校准。所有决策由人做出。')}
+        {L('Decision support only — NOT trade advice. No BUY/SELL, no position sizing, no auto-trade. Observed exposure / P&L are facts from the paper book; caps, thresholds, and strategy logic are [unvalidated]. The human makes all decisions.',
+           '仅决策支持，非交易建议。无买卖信号、无仓位大小、无自动交易。已观测的敞口 / 盈亏是来自模拟盘的事实；风险上限、阈值与策略逻辑均为【未校准】。所有决策由人做出。')}
       </div>
 
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
@@ -10449,14 +10449,14 @@ function TradeDecisionCockpit({ L, lk, C }) {
         {!risk ? <div style={{ fontSize: 11, color: C.mid }}>{L('Loading…', '加载中…')}</div> : (
           <div style={{ fontSize: 11, color: C.mid, lineHeight: 1.7 }}>
             <div>{L('Gross', '总敞口')} <b style={{ color: C.dark }}>{risk.book?.gross_pct}%</b> · {L('Net', '净敞口')} <b style={{ color: C.dark }}>{risk.book?.net_pct}%</b>
-              <span style={{ fontSize: 9, marginLeft: 6 }}>[unvalidated intuition]</span></div>
+              <span style={{ fontSize: 9, marginLeft: 6, color: C.mid }}>{L('observed', '已观测')}</span></div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '6px 0' }}>
               {Object.entries(themes).map(([t, v]) => (
                 <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: C.soft, color: C.dark }}>{t} <b>{v}%</b></span>
               ))}
             </div>
             {conflicts.length > 0 ? <div style={{ color: C.gold }}>{L('Thesis conflicts', '论点冲突')}: {conflicts.map(c => c.ticker).join(', ')}</div> : null}
-            {blockers.length > 0 ? <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.join(' · ')}</div> : null}
+            {blockers.length > 0 ? <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.join(' · ')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div> : null}
           </div>
         )}
       </div>
@@ -11200,6 +11200,7 @@ export default function Dashboard() {
   const TABS = [
     { id:'browse',   label:L('Browse','浏览'),    icon:<Filter size={14}/> },
     { id:'desk',     label:L('Desk','交易台'),     icon:<Crosshair size={14}/> },
+    { id:'cockpit',  label:L('Cockpit','决策台'),  icon:<Target size={14}/> },
     { id:'research', label:L('Research','研究'),  icon:<BookOpen size={14}/> },
     { id:'scanner',  label:L('Scanner','扫描'),   icon:<Radio size={14}/> },
     { id:'flow',     label:L('Flows','资金流'),   icon:<Globe size={14}/> },
@@ -11209,7 +11210,6 @@ export default function Dashboard() {
     { id:'morning',  label:L('Morning','早报'),    icon:<Zap size={14}/> },
     { id:'tracker',  label:L('Tracker','追踪'),   icon:<Target size={14}/> },
     { id:'system',   label:L('System','系统'),    icon:<Layers size={14}/> },
-    { id:'cockpit',  label:L('Cockpit','决策台'),  icon:<Target size={14}/> },
   ];
 
   return (
