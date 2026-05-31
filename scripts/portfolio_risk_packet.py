@@ -83,6 +83,32 @@ def _days_between(a: str, b: str) -> int | None:
         return None
 
 
+def _residual_freshness(positions, resid_pos, resid_as_of, as_of_paper):
+    """Frozen-design stale guard: WITHOUT an explicit current as_of AND WITHOUT
+    comparable pnl_pct for every held position, DEFAULT to theme_residual_stale —
+    never treat unverifiable attribution as today's risk. `fresh` requires proof."""
+    if not resid_pos:
+        return "theme_residual_stale", "theme_peer_residual.json missing/empty"
+    if resid_as_of:                                   # future-proof: #3 may add as_of later
+        if as_of_paper and str(resid_as_of)[:10] >= str(as_of_paper)[:10]:
+            return "fresh", f"explicit residual as_of {str(resid_as_of)[:10]} >= book {str(as_of_paper)[:10]}"
+        return "theme_residual_stale", f"residual as_of {resid_as_of} older than book {as_of_paper}"
+    held = [p for p in positions if p.get("ticker")]
+    if not held:
+        return "theme_residual_stale", "no held positions to compare"
+    diffs = []
+    for p in held:                                    # require comparable pnl for EVERY held name
+        r = resid_pos.get(p.get("ticker"))
+        rp, pp = (r or {}).get("pnl_pct"), p.get("pnl_pct")
+        if r is None or rp is None or pp is None:
+            return ("theme_residual_stale",
+                    "no comparable pnl/as_of in theme_peer_residual — cannot verify freshness; conservative stale")
+        diffs.append(abs(float(rp) - float(pp)))
+    if all(d <= PNL_STALE_EPS for d in diffs):
+        return "fresh", "residual pnl_pct matches current book for all held positions"
+    return "theme_residual_stale", "residual pnl_pct diverges from current book (older snapshot)"
+
+
 def build(as_of_ref: str | None = None) -> dict:
     pos_doc = _load(POSITIONS, {}) or {}
     positions = pos_doc.get("positions", [])
@@ -106,22 +132,9 @@ def build(as_of_ref: str | None = None) -> dict:
         t = theme_of(p.get("ticker"), tq_themes)
         theme_exposure[t] = round(theme_exposure.get(t, 0.0) + (p.get("weight_pct") or 0.0), 3)
 
-    # ── theme_residual STALE GUARD (no explicit as_of in #3 output; derive from pnl) ──
-    # If the residual's per-ticker pnl diverges from the current book pnl, it is an
-    # older snapshot -> stale. Never present stale attribution as today's risk.
-    resid_status, resid_reason = "fresh", "residual pnl matches current paper book"
-    if not resid_pos:
-        resid_status, resid_reason = "theme_residual_stale", "theme_peer_residual.json missing/empty"
-    else:
-        held = {p.get("ticker"): p for p in positions}
-        for tic, p in held.items():
-            r = resid_pos.get(tic)
-            if r is None:
-                resid_status, resid_reason = "theme_residual_stale", f"{tic} held but not in residual snapshot"; break
-            rp, pp = r.get("pnl_pct"), p.get("pnl_pct")
-            if rp is not None and pp is not None and abs(float(rp) - float(pp)) > PNL_STALE_EPS:
-                resid_status = "theme_residual_stale"
-                resid_reason = f"{tic} residual pnl {rp} != current {pp} (older snapshot)"; break
+    # ── theme_residual STALE GUARD — frozen design: DEFAULT STALE unless provably fresh ──
+    resid_as_of = (residual.get("_meta") or {}).get("as_of")   # #3 currently emits none -> None
+    resid_status, resid_reason = _residual_freshness(positions, resid_pos, resid_as_of, as_of_paper)
     resid_note = ("theme_peer_residual.json has NO explicit as_of; freshness derived from "
                   "per-ticker pnl vs current book. v0.1: add as_of to #3 output. Panel-coupled "
                   "(CODEX_FINDINGS 2026-05-31-A) — frequently stale vs the daily book; that is honest.")
@@ -181,7 +194,7 @@ def build(as_of_ref: str | None = None) -> dict:
             "current_theme_exposure_pct": theme_exposure.get(th, 0.0),
             "currently_held": tic in held_tickers,
             "existing_position_conflict": align_by.get(tic, "none" if tic in held_tickers else "not_held"),
-            "size": "NOT SHOWN — v0 emits no recommended position size (design §2)",
+            # NO size field — v0 emits no recommended position size (design §2); see top-level _omitted.
         })
 
     # ── aggregate risk blockers ──
@@ -200,6 +213,7 @@ def build(as_of_ref: str | None = None) -> dict:
         },
         "as_of_paper": as_of_paper,
         "theme_residual_status": resid_status,
+        "theme_residual_as_of": resid_as_of,        # null when #3 emits no as_of (current state)
         "theme_residual_reason": resid_reason,
         "theme_residual_note": resid_note,
         "book": {"gross_pct": gross, "net_pct": net, "theme_exposure": theme_exposure},
@@ -275,9 +289,10 @@ def _selftest() -> int:
     out = build()
     if out["no_trade_flag"] is not True:
         errs.append("no_trade_flag missing")
-    # no ACTUAL size VALUE anywhere (explanatory 'no size' notes are fine):
-    if any(isinstance(c.get("size"), (int, float)) for c in out.get("per_candidate_incremental", [])):
-        errs.append("a per_candidate carries a numeric size value")
+    # Blocker-2: NO `size` field at all in per_candidate (not even a string — the field
+    # name alone invites UI mis-render as a sizing surface).
+    if any("size" in c for c in out.get("per_candidate_incremental", [])):
+        errs.append("a per_candidate carries a 'size' field (must be absent entirely)")
     if "recommended_position_size" in out.get("book", {}):
         errs.append("book carries a recommended_position_size field")
     if any(k for k in out if "recommended" in k and "size" in k):
@@ -293,13 +308,31 @@ def _selftest() -> int:
     # stale guard must be one of the allowed states
     if out["theme_residual_status"] not in ("fresh", "theme_residual_stale"):
         errs.append(f"bad theme_residual_status: {out['theme_residual_status']}")
+    # ── stale-guard cases (frozen design: DEFAULT stale unless provably fresh) ──
+    pos2 = [{"ticker": "AAA.SZ", "pnl_pct": 10.0}, {"ticker": "BBB.HK", "pnl_pct": -2.0}]
+    no_pnl = {"AAA.SZ": {"total_return": 1.1}, "BBB.HK": {"total_return": 0.98}}   # the REAL #3 shape (no pnl_pct)
+    if _residual_freshness(pos2, no_pnl, None, "2026-05-28")[0] != "theme_residual_stale":
+        errs.append("stale guard: residual WITHOUT pnl_pct/as_of must default STALE (this was the blocker)")
+    mismatch = {"AAA.SZ": {"pnl_pct": 10.0}, "BBB.HK": {"pnl_pct": 5.0}}
+    if _residual_freshness(pos2, mismatch, None, "2026-05-28")[0] != "theme_residual_stale":
+        errs.append("stale guard: pnl mismatch must be stale")
+    match = {"AAA.SZ": {"pnl_pct": 10.0}, "BBB.HK": {"pnl_pct": -2.0}}
+    if _residual_freshness(pos2, match, None, "2026-05-28")[0] != "fresh":
+        errs.append("stale guard: pnl match (all held) must be fresh")
+    if _residual_freshness(pos2, no_pnl, "2026-05-29", "2026-05-28")[0] != "fresh":
+        errs.append("stale guard: explicit current as_of must be fresh")
+    if _residual_freshness(pos2, no_pnl, "2026-05-20", "2026-05-28")[0] != "theme_residual_stale":
+        errs.append("stale guard: older as_of must be stale")
+    if _residual_freshness(pos2, {}, None, "2026-05-28")[0] != "theme_residual_stale":
+        errs.append("stale guard: empty residual must be stale")
     if errs:
         print("portfolio_risk_packet selftest FAILED:")
         for e in errs:
             print(f"  - {e}")
         return 1
     print("portfolio_risk_packet selftest PASSED (theme_of dynamic+UNMAPPED; date proximity; "
-          "no-size discipline; theme coverage total; stale-guard state valid)")
+          "NO size field in per_candidate; theme coverage total; stale-guard: missing-pnl/as_of->STALE, "
+          "mismatch->STALE, match->fresh, as_of paths, empty->STALE)")
     return 0
 
 

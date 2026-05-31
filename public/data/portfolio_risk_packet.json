@@ -8,20 +8,21 @@
     "spec": "TRADE_DECISION_STACK_v0_DESIGN §3.2; frozen 2026-05-31",
     "layer": "Trade Decision Stack v0 Step 1 — portfolio risk packet (exposure + blockers, NOT sizing)",
     "all_numbers": "[unvalidated intuition] unless directly observed paper-book exposure/P&L",
-    "ref_date": "2026-05-28"
+    "ref_date": "2026-05-29"
   },
-  "as_of_paper": "2026-05-28T14:49:26",
-  "theme_residual_status": "fresh",
-  "theme_residual_reason": "residual pnl matches current paper book",
+  "as_of_paper": "2026-05-29T11:44:25",
+  "theme_residual_status": "theme_residual_stale",
+  "theme_residual_as_of": null,
+  "theme_residual_reason": "residual pnl_pct diverges from current book (older snapshot)",
   "theme_residual_note": "theme_peer_residual.json has NO explicit as_of; freshness derived from per-ticker pnl vs current book. v0.1: add as_of to #3 output. Panel-coupled (CODEX_FINDINGS 2026-05-31-A) — frequently stale vs the daily book; that is honest.",
   "book": {
     "gross_pct": 100.0,
     "net_pct": 100.0,
     "theme_exposure": {
-      "CPO_OPTICAL": 57.52,
-      "HK_BIOTECH": 3.72,
-      "HK_INTERNET_GAMING": 35.08,
-      "AUTO_EV": 3.68
+      "CPO_OPTICAL": 56.75,
+      "HK_BIOTECH": 3.79,
+      "HK_INTERNET_GAMING": 35.7,
+      "AUTO_EV": 3.76
     }
   },
   "per_candidate_incremental": [
@@ -29,10 +30,9 @@
       "ticker": "002594.SZ",
       "direction": "LONG",
       "theme_it_would_load": "AUTO_EV",
-      "current_theme_exposure_pct": 3.68,
+      "current_theme_exposure_pct": 3.76,
       "currently_held": true,
-      "existing_position_conflict": "ALIGNED",
-      "size": "NOT SHOWN — v0 emits no recommended position size (design §2)"
+      "existing_position_conflict": "ALIGNED"
     },
     {
       "ticker": "603233.SH",
@@ -40,35 +40,31 @@
       "theme_it_would_load": "PHARMACY_RETAIL",
       "current_theme_exposure_pct": 0.0,
       "currently_held": false,
-      "existing_position_conflict": "not_held",
-      "size": "NOT SHOWN — v0 emits no recommended position size (design §2)"
+      "existing_position_conflict": "not_held"
     },
     {
       "ticker": "6160.HK",
       "direction": "WATCH_SHORT",
       "theme_it_would_load": "HK_BIOTECH",
-      "current_theme_exposure_pct": 3.72,
+      "current_theme_exposure_pct": 3.79,
       "currently_held": true,
-      "existing_position_conflict": "WATCH_CONFLICT",
-      "size": "NOT SHOWN — v0 emits no recommended position size (design §2)"
+      "existing_position_conflict": "WATCH_CONFLICT"
     },
     {
       "ticker": "700.HK",
       "direction": "WATCH_SHORT",
       "theme_it_would_load": "HK_INTERNET_GAMING",
-      "current_theme_exposure_pct": 35.08,
+      "current_theme_exposure_pct": 35.7,
       "currently_held": true,
-      "existing_position_conflict": "WATCH_CONFLICT",
-      "size": "NOT SHOWN — v0 emits no recommended position size (design §2)"
+      "existing_position_conflict": "WATCH_CONFLICT"
     },
     {
       "ticker": "9999.HK",
       "direction": "WATCH_SHORT",
       "theme_it_would_load": "HK_INTERNET_GAMING",
-      "current_theme_exposure_pct": 35.08,
+      "current_theme_exposure_pct": 35.7,
       "currently_held": true,
-      "existing_position_conflict": "WATCH_CONFLICT",
-      "size": "NOT SHOWN — v0 emits no recommended position size (design §2)"
+      "existing_position_conflict": "WATCH_CONFLICT"
     }
   ],
   "thesis_conflicts": [
@@ -89,26 +85,32 @@
     }
   ],
   "wrong_if_near_trigger": [],
-  "stale_data_blockers": [],
+  "stale_data_blockers": [
+    {
+      "source": "theme_peer_residual.json",
+      "note": "residual pnl_pct diverges from current book (older snapshot)"
+    }
+  ],
   "over_concentration_flags": [
     {
       "kind": "single_name",
       "ticker": "300308.SZ",
-      "weight_pct": 57.52,
+      "weight_pct": 56.75,
       "cap_pct": 30.0,
       "cap_status": "[unvalidated intuition]"
     },
     {
       "kind": "theme",
       "theme": "CPO_OPTICAL",
-      "exposure_pct": 57.52,
+      "exposure_pct": 56.75,
       "cap_pct": 40.0,
       "cap_status": "[unvalidated intuition]"
     }
   ],
   "risk_blockers": [
     "over_concentration:300308.SZ",
-    "over_concentration:CPO_OPTICAL"
+    "over_concentration:CPO_OPTICAL",
+    "stale:theme_peer_residual.json"
   ],
   "_omitted": "recommended_position_size — intentionally NOT emitted in v0 (ratified)",
   "no_trade_flag": true
