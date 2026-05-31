@@ -10437,8 +10437,8 @@ function TradeDecisionCockpit({ L, lk, C }) {
       </div>
       <div style={{ border: `1px solid ${C.orange}`, background: C.orange + '14', borderRadius: 8,
         padding: '8px 12px', fontSize: 10.5, color: C.dark, marginBottom: 14, lineHeight: 1.5 }}>
-        {L('Decision support only — NOT trade advice. No BUY/SELL, no position sizing, no auto-trade. Observed exposure / P&L are facts from the paper book; caps, thresholds, and strategy logic are [unvalidated]. The human makes all decisions.',
-           '仅决策支持，非交易建议。无买卖信号、无仓位大小、无自动交易。已观测的敞口 / 盈亏是来自模拟盘的事实；风险上限、阈值与策略逻辑均为【未校准】。所有决策由人做出。')}
+        {L('Decision support only — NOT trade advice. No BUY/SELL, no position sizing, no auto-trade. Observed exposure is a fact from the paper book; caps, thresholds, and strategy logic are [unvalidated]. The human makes all decisions.',
+           '仅决策支持，非交易建议。无买卖信号、无仓位大小、无自动交易。已观测的敞口是来自模拟盘的事实；风险上限、阈值与策略逻辑均为【未校准】。所有决策由人做出。')}
       </div>
 
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
