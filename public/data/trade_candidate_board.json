@@ -60,61 +60,6 @@
       "no_trade_flag": true
     },
     {
-      "ticker": "6160.HK",
-      "name": "BeiGene",
-      "market": "HK",
-      "status": "HUMAN_REVIEW_REQUIRED",
-      "direction": "WATCH_SHORT",
-      "thesis_summary": "WATCH_SHORT — Q2 2026 earnings release — first full quarter test of whether BRUKINSA (zanubrut",
-      "catalyst": "Q2 2026 earnings release — first full quarter test of whether BRUKINSA (zanubrutinib) ex-US growth + sonrotoclax (BCL-2) Phase 3 CELESTIAL-TN readout timeline can offset accelerating US BTK market saturation and Pfizer/AbbVie pricing pressure",
-      "wrong_if": [
-        "Q2 26 BRUKINSA total revenue ≥$1.05B AND US QoQ ≥+8% — saturation thesis invalidated",
-        "Non-GAAP operating margin reaches ≥8% in Q2 26 with sustained trajectory toward 12% by Q4 26",
-        "CELESTIAL-TN interim shows HR ≤0.60 with clean safety — pipeline optionality confirmed, multi-asset franchise validated"
-      ],
-      "horizon_days": 60,
-      "evidence_tier": "E2",
-      "screen_score": null,
-      "data_freshness": {
-        "screen_as_of": "20260526",
-        "thesis_registered_at": "2026-05-30T00:00:00Z",
-        "theme_residual": "theme_residual_stale"
-      },
-      "current_blocker": null,
-      "source": [
-        "thesis_queue"
-      ],
-      "no_trade_flag": true
-    },
-    {
-      "ticker": "700.HK",
-      "name": "Tencent",
-      "market": "HK",
-      "status": "HUMAN_REVIEW_REQUIRED",
-      "direction": "WATCH_SHORT",
-      "thesis_summary": "WATCH_SHORT — Tencent Q2 2026 earnings release — first full quarter showing AI capex run-rate ",
-      "catalyst": "Tencent Q2 2026 earnings release — first full quarter showing AI capex run-rate impact on operating margin AND Yuanbao/Hunyuan monetization KPIs (DAU, advertising CPM uplift from AI-targeted inventory)",
-      "wrong_if": [
-        "Q2 2026 non-IFRS operating margin ≥36% — D&A absorbed by revenue mix improvement",
-        "Management quantifies AI revenue contribution ≥RMB 5bn annualized run-rate by Q2 2026",
-        "Two consecutive quarters (Q1 + Q2 2026) of advertising growth ≥22% YoY, validating AI ad monetization thesis",
-        "Stock breaks above HK$760 on Q2 print → close short, thesis invalidated"
-      ],
-      "horizon_days": 60,
-      "evidence_tier": "E2",
-      "screen_score": null,
-      "data_freshness": {
-        "screen_as_of": "20260526",
-        "thesis_registered_at": "2026-05-30T00:00:00Z",
-        "theme_residual": "theme_residual_stale"
-      },
-      "current_blocker": null,
-      "source": [
-        "thesis_queue"
-      ],
-      "no_trade_flag": true
-    },
-    {
       "ticker": "002594.SZ",
       "name": "比亚迪",
       "market": "A",
@@ -167,6 +112,61 @@
       "current_blocker": null,
       "source": [
         "watchlist",
+        "thesis_queue"
+      ],
+      "no_trade_flag": true
+    },
+    {
+      "ticker": "6160.HK",
+      "name": "BeiGene",
+      "market": "HK",
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "direction": "WATCH_SHORT",
+      "thesis_summary": "WATCH_SHORT — Q2 2026 earnings release — first full quarter test of whether BRUKINSA (zanubrut",
+      "catalyst": "Q2 2026 earnings release — first full quarter test of whether BRUKINSA (zanubrutinib) ex-US growth + sonrotoclax (BCL-2) Phase 3 CELESTIAL-TN readout timeline can offset accelerating US BTK market saturation and Pfizer/AbbVie pricing pressure",
+      "wrong_if": [
+        "Q2 26 BRUKINSA total revenue ≥$1.05B AND US QoQ ≥+8% — saturation thesis invalidated",
+        "Non-GAAP operating margin reaches ≥8% in Q2 26 with sustained trajectory toward 12% by Q4 26",
+        "CELESTIAL-TN interim shows HR ≤0.60 with clean safety — pipeline optionality confirmed, multi-asset franchise validated"
+      ],
+      "horizon_days": 60,
+      "evidence_tier": "E2",
+      "screen_score": null,
+      "data_freshness": {
+        "screen_as_of": "20260526",
+        "thesis_registered_at": "2026-05-30T00:00:00Z",
+        "theme_residual": "theme_residual_stale"
+      },
+      "current_blocker": null,
+      "source": [
+        "thesis_queue"
+      ],
+      "no_trade_flag": true
+    },
+    {
+      "ticker": "700.HK",
+      "name": "Tencent",
+      "market": "HK",
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "direction": "WATCH_SHORT",
+      "thesis_summary": "WATCH_SHORT — Tencent Q2 2026 earnings release — first full quarter showing AI capex run-rate ",
+      "catalyst": "Tencent Q2 2026 earnings release — first full quarter showing AI capex run-rate impact on operating margin AND Yuanbao/Hunyuan monetization KPIs (DAU, advertising CPM uplift from AI-targeted inventory)",
+      "wrong_if": [
+        "Q2 2026 non-IFRS operating margin ≥36% — D&A absorbed by revenue mix improvement",
+        "Management quantifies AI revenue contribution ≥RMB 5bn annualized run-rate by Q2 2026",
+        "Two consecutive quarters (Q1 + Q2 2026) of advertising growth ≥22% YoY, validating AI ad monetization thesis",
+        "Stock breaks above HK$760 on Q2 print → close short, thesis invalidated"
+      ],
+      "horizon_days": 60,
+      "evidence_tier": "E2",
+      "screen_score": null,
+      "data_freshness": {
+        "screen_as_of": "20260526",
+        "thesis_registered_at": "2026-05-30T00:00:00Z",
+        "theme_residual": "theme_residual_stale"
+      },
+      "current_blocker": null,
+      "source": [
         "thesis_queue"
       ],
       "no_trade_flag": true

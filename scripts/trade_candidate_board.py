@@ -112,7 +112,7 @@ def build() -> dict:
 
     universe = set(screen_by) | set(reg_by) | wl_tickers
     rows = []
-    for tic in universe:
+    for tic in sorted(universe):                     # deterministic iteration (no hash-order churn)
         reg = reg_by.get(tic)
         sc = screen_by.get(tic)
         screen_action = (sc or {}).get("recommended_research_action")
@@ -143,7 +143,8 @@ def build() -> dict:
         })
 
     prec_idx = {s: i for i, s in enumerate(PRECEDENCE)}
-    rows.sort(key=lambda r: (prec_idx[r["status"]], -(r["screen_score"] or 0)))
+    # ticker is the final tiebreaker => fully deterministic order (stable committed product)
+    rows.sort(key=lambda r: (prec_idx[r["status"]], -(r["screen_score"] or 0), r["ticker"]))
     from collections import Counter
     counts = dict(Counter(r["status"] for r in rows))
 
@@ -237,6 +238,10 @@ def _selftest() -> int:
     idx = [PRECEDENCE.index(r["status"]) for r in out["trade_candidate_board"]]
     if idx != sorted(idx):
         errs.append("board not sorted by status precedence")
+    # idempotence: building twice must produce identical row order (no hash-order churn)
+    out2 = build()
+    if [r["ticker"] for r in out["trade_candidate_board"]] != [r["ticker"] for r in out2["trade_candidate_board"]]:
+        errs.append("non-deterministic ordering: build twice produced different row order")
     if errs:
         print("trade_candidate_board selftest FAILED:")
         for e in errs:
@@ -244,7 +249,7 @@ def _selftest() -> int:
         return 1
     print("trade_candidate_board selftest PASSED (risk-blocked extraction; precedence "
           "RISK_BLOCKED>HUMAN_REVIEW>RESEARCH>WATCH>NO_ACTION; no size field; no_trade_flag; "
-          "enum-valid statuses; sorted by precedence)")
+          "enum-valid statuses; sorted by precedence; deterministic order incl. ticker tiebreaker)")
     return 0
 
 
