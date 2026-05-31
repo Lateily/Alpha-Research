@@ -10380,6 +10380,109 @@ const GlobalStyles = () => (
   `}</style>
 );
 
+// ── Trade Decision Cockpit (Trade Decision Stack v0, Step 3) ──────────────────
+// Read-only decision-support surface: renders trade_candidate_board.json (Step 2)
+// + portfolio_risk_packet.json (Step 1). NO BUY/SELL, NO position sizing, NO
+// auto-trade. Status-only. Every number [unvalidated intuition]. Human decides.
+function TradeDecisionCockpit({ L, lk, C }) {
+  const [board, setBoard] = useState(null);
+  const [risk, setRisk] = useState(null);
+  const [showLower, setShowLower] = useState(false);
+  useEffect(() => {
+    const base = DATA_BASE;
+    fetch(base + 'data/trade_candidate_board.json').then(r => r.ok ? r.json() : null).then(setBoard).catch(() => {});
+    fetch(base + 'data/portfolio_risk_packet.json').then(r => r.ok ? r.json() : null).then(setRisk).catch(() => {});
+  }, []);
+
+  const ST = {
+    RISK_BLOCKED:          { c: C.red,    en: 'Risk-blocked',    zh: '风险阻断' },
+    HUMAN_REVIEW_REQUIRED: { c: C.orange, en: 'Human review',    zh: '需人工审核' },
+    RESEARCH_REQUIRED:     { c: C.blue,   en: 'Research needed',  zh: '需研究' },
+    WATCH:                 { c: C.gold,   en: 'Watch',            zh: '观察' },
+    NO_ACTION:             { c: C.mid,    en: 'No action',        zh: '无动作' },
+  };
+  const rows = (board && board.trade_candidate_board) || [];
+  const prominent = rows.filter(r => r.status === 'RISK_BLOCKED' || r.status === 'HUMAN_REVIEW_REQUIRED');
+  const lower = rows.filter(r => r.status === 'RESEARCH_REQUIRED' || r.status === 'WATCH' || r.status === 'NO_ACTION');
+
+  const Badge = ({ status }) => {
+    const s = ST[status] || ST.NO_ACTION;
+    return (<span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4,
+      background: s.c + '22', color: s.c, whiteSpace: 'nowrap' }}>{lk === 'z' ? s.zh : s.en}</span>);
+  };
+
+  const CandRow = ({ r }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+      borderBottom: `1px solid ${C.border}`, fontSize: 11 }}>
+      <Badge status={r.status} />
+      <span style={{ fontFamily: MONO, fontWeight: 700, color: C.dark, minWidth: 80 }}>{r.ticker}</span>
+      <span style={{ color: C.mid, minWidth: 56 }}>{(r.name || '').slice(0, 5)}</span>
+      <span style={{ color: C.dark, minWidth: 86 }}>{r.direction}</span>
+      <span style={{ color: C.mid, fontSize: 10 }}>{r.evidence_tier}</span>
+      <span style={{ color: C.mid, fontSize: 10, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {r.current_blocker || (r.catalyst ? String(r.catalyst).slice(0, 70) : (r.source || []).join('/'))}
+      </span>
+    </div>
+  );
+
+  const themes = (risk && risk.book && risk.book.theme_exposure) || {};
+  const blockers = (risk && risk.risk_blockers) || [];
+  const conflicts = (risk && risk.thesis_conflicts) || [];
+  const stale = risk && risk.theme_residual_status === 'theme_residual_stale';
+
+  return (
+    <div style={{ padding: '14px 18px', maxWidth: 920, margin: '0 auto', overflowY: 'auto' }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: C.dark, marginBottom: 4 }}>
+        {L('Trade Decision Cockpit', '交易决策台')}
+      </div>
+      <div style={{ border: `1px solid ${C.orange}`, background: C.orange + '14', borderRadius: 8,
+        padding: '8px 12px', fontSize: 10.5, color: C.dark, marginBottom: 14, lineHeight: 1.5 }}>
+        {L('Decision support only — NOT trade advice. No BUY/SELL, no position sizing, no auto-trade. Every number is [unvalidated intuition]; nothing here is calibrated. The human makes all decisions.',
+           '仅决策支持，非交易建议。无买卖信号、无仓位大小、无自动交易。所有数字均为【未校准直觉】，未经校准。所有决策由人做出。')}
+      </div>
+
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 8 }}>
+          {L('Portfolio Risk (read-only)', '组合风险（只读）')}
+          {stale ? <span style={{ fontSize: 9, color: C.red, marginLeft: 8 }}>{L('· theme-residual STALE', '· 主题残差已过期')}</span> : null}
+        </div>
+        {!risk ? <div style={{ fontSize: 11, color: C.mid }}>{L('Loading…', '加载中…')}</div> : (
+          <div style={{ fontSize: 11, color: C.mid, lineHeight: 1.7 }}>
+            <div>{L('Gross', '总敞口')} <b style={{ color: C.dark }}>{risk.book?.gross_pct}%</b> · {L('Net', '净敞口')} <b style={{ color: C.dark }}>{risk.book?.net_pct}%</b>
+              <span style={{ fontSize: 9, marginLeft: 6 }}>[unvalidated intuition]</span></div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '6px 0' }}>
+              {Object.entries(themes).map(([t, v]) => (
+                <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: C.soft, color: C.dark }}>{t} <b>{v}%</b></span>
+              ))}
+            </div>
+            {conflicts.length > 0 ? <div style={{ color: C.gold }}>{L('Thesis conflicts', '论点冲突')}: {conflicts.map(c => c.ticker).join(', ')}</div> : null}
+            {blockers.length > 0 ? <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.join(' · ')}</div> : null}
+          </div>
+        )}
+      </div>
+
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 12 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, padding: '10px 12px', borderBottom: `1px solid ${C.border}` }}>
+          {L('Needs attention', '需关注')} <span style={{ color: C.mid, fontWeight: 500 }}>({prominent.length})</span>
+        </div>
+        {!board ? <div style={{ fontSize: 11, color: C.mid, padding: 12 }}>{L('Loading…', '加载中…')}</div> : null}
+        {board && prominent.length === 0 ? <div style={{ fontSize: 11, color: C.mid, padding: 12 }}>{L('Nothing requires review.', '暂无需审核项。')}</div> : null}
+        {prominent.map(r => <CandRow key={r.ticker} r={r} />)}
+      </div>
+
+      {board && lower.length > 0 ? (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden' }}>
+          <button onClick={() => setShowLower(v => !v)} style={{ width: '100%', textAlign: 'left', fontSize: 12,
+            fontWeight: 700, color: C.dark, padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+            {showLower ? '▾' : '▸'} {L('Research / Watch', '研究 / 观察')} <span style={{ color: C.mid, fontWeight: 500 }}>({lower.length})</span>
+          </button>
+          {showLower ? lower.map(r => <CandRow key={r.ticker} r={r} />) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
   const [dark, setDark] = useState(true); // Jason: Bloomberg default — dark mode
@@ -11106,6 +11209,7 @@ export default function Dashboard() {
     { id:'morning',  label:L('Morning','早报'),    icon:<Zap size={14}/> },
     { id:'tracker',  label:L('Tracker','追踪'),   icon:<Target size={14}/> },
     { id:'system',   label:L('System','系统'),    icon:<Layers size={14}/> },
+    { id:'cockpit',  label:L('Cockpit','决策台'),  icon:<Target size={14}/> },
   ];
 
   return (
@@ -11448,6 +11552,7 @@ export default function Dashboard() {
           {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C} predictions={predictions} paperTradeSummary={paperTradeSummary} paperTrades={paperTrades} thesisOutcomes={thesisOutcomes}/>}
           {/* 'watchlist' tab DELETED 2026-05-02 — duplicate of 'desk'. Watchlist 5 持仓 is shown in TradingDesk. */}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
+          {tab==='cockpit'  && <TradeDecisionCockpit L={L} lk={lk} C={C}/>}
         </div>
       </div>
 
