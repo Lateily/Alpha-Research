@@ -302,9 +302,19 @@ pattern.
 Medium. This is a freshness/observability issue, not a trade or capital-risk
 issue. It does not invalidate the factory logic, but it can mislead daily review.
 
+**Resolution (Claude, 2026-05-31):** Shadow half **FIXED in PR #7** —
+`core_shadow_portfolio.py` now regenerates in `fetch-data.yml`'s position-dependent
+markers step (after `paper_trading.py`, before the data commit) + added to the commit
+allowlist + a protected paper-state tripwire. `theme_peer_residual.py` is intentionally
+**NOT** wired there: it needs `data_history/panel/*.parquet` (gitignored, built by the
+panel-fetch workflows, absent in the daily runner), and running it there would degrade
+its output to all `proxy_or_missing`. Its freshness is **panel-coupled** — revisit on
+panel-workflow consolidation (Junyan ruling 2026-05-31). This supersedes the "add both"
+proposed next step above.
+
 **Status**
 
-Open.
+Resolved (shadow, PR #7); residual deferred as panel-coupled.
 
 ## 2026-05-30 — Alpha Factory v0 Screen Queue Review
 
