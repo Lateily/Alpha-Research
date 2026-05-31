@@ -4,8 +4,8 @@
 > reads it to resume. Keep it short + current. Authoritative state lives in
 > `STATUS.md` (read that first); this is the delta + the Codex coordination ask.
 
-**Session date:** 2026-05-30
-**Headline:** CORE Alpha Factory v0 shipped + deployed; two production CI issues fixed.
+**Session date:** 2026-05-31
+**Headline:** Trade Decision Stack v0 Steps 1–3 shipped (risk packet + candidate board + read-only cockpit, PRs #11–#14); factory v0 milestone unchanged below.
 
 ## What shipped (all on `main`, deployed)
 
@@ -20,6 +20,14 @@
   fallback report (success, human-review queue preserved) instead of 502/red-CI.
 - **CI Node 24 bump** (PR #4): all `actions/*` off the deprecated node20 runtime;
   build node 20→22. Deploy verified green at runtime.
+- **Trade Decision Stack v0, Steps 1–3** (PRs #11–#14, 2026-05-31): a read-only decision-support
+  layer over the factory outputs — `portfolio_risk_packet.py` (#12, exposure + risk blockers, no
+  size), `trade_candidate_board.py` (#13, status precedence, deterministic ordering), and a
+  read-only **Cockpit** tab in `Dashboard.jsx` (#14, Browse · Desk · Cockpit · Research · …).
+  Status-only, no BUY/SELL, no size, no mutation; observed exposure = fact, caps/strategy
+  `[unvalidated]`. Design frozen `docs/strategy/TRADE_DECISION_STACK_v0_DESIGN.md` (#11). Cockpit
+  passed a 3-lens adversarial honesty audit (0 blockers). PENDING: Step 4 scaffold
+  (`strategy_checklist` + `human_review_queue`) + Beta-page wiring for visual QA.
 
 ## Deferred — do NOT build these without Junyan's ratification
 
