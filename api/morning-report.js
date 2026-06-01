@@ -350,9 +350,9 @@ function buildEmailHtml(report, date, alignment) {
   ${buildAlignmentQueueHtml(alignment)}
 
   ${tradeRows ? `
-  <!-- Trade Ideas -->
+  <!-- Review Notes -->
   <div style="background:#ffffff; border:1px solid #e5e7eb; padding:16px 24px; margin-bottom:2px">
-    <div style="font-size:10px; font-weight:700; color:#6b7280; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px">💡 Today's Trade Ideas</div>
+    <div style="font-size:10px; font-weight:700; color:#6b7280; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px">Review Notes (decision-support, not recommendations)</div>
     ${tradeRows}
   </div>` : ''}
 

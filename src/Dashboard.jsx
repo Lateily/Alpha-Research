@@ -6321,14 +6321,21 @@ function TradingDesk({ L, lk, C }) {
     REVIEW_STOP: '#ef4444', ADD: '#10b981', HOLD: '#22c55e',
     BUY_WATCH: '#3b82f6', WATCH: '#6b7280', NEUTRAL: '#6b7280',
   };
+  // Display labels only (no-advice hardening, Junyan PR #18) — internal action codes (d.action) are UNCHANGED.
   const ACTION_LABEL_ZH = {
-    EXIT: '离场', TRIM: '减仓', REVIEW_TRIM: '考虑减仓',
-    REVIEW_STOP: '复核止损', ADD: '可加仓', HOLD: '持有',
-    BUY_WATCH: '关注建仓', WATCH: '观望', NEUTRAL: '中性',
+    EXIT: '风险复核', TRIM: '敞口复核', REVIEW_TRIM: '敞口复核',
+    REVIEW_STOP: '风险复核', ADD: '证据观察', HOLD: '模拟持有',
+    BUY_WATCH: '研究观察', WATCH: '观望', NEUTRAL: '中性',
   };
+  const ACTION_LABEL_EN = {
+    EXIT: 'Risk Review', TRIM: 'Exposure Review', REVIEW_TRIM: 'Exposure Review',
+    REVIEW_STOP: 'Risk Review', ADD: 'Evidence Watch', HOLD: 'Paper Hold',
+    BUY_WATCH: 'Research Watch', WATCH: 'Watch', NEUTRAL: 'Neutral',
+  };
+  // Neutral marker only — no buy/sell/exit-signalling glyphs.
   const ACTION_ICON = {
-    EXIT: '🚨', TRIM: '⬇️', REVIEW_TRIM: '💰', REVIEW_STOP: '🔴',
-    ADD: '📈', HOLD: '✅', BUY_WATCH: '🎯', WATCH: '👁️',
+    EXIT: '•', TRIM: '•', REVIEW_TRIM: '•', REVIEW_STOP: '•',
+    ADD: '•', HOLD: '•', BUY_WATCH: '•', WATCH: '•',
   };
 
   const held        = decision.decisions?.held       || [];
@@ -6729,7 +6736,7 @@ function TradingDesk({ L, lk, C }) {
 
   const ActionBadge = ({ action }) => {
     const col = ACTION_COLOR[action] || '#6b7280';
-    const label = lk === 'z' ? (ACTION_LABEL_ZH[action] || action) : action;
+    const label = lk === 'z' ? (ACTION_LABEL_ZH[action] || action) : (ACTION_LABEL_EN[action] || action);
     return (
       <span style={{
         fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:4,
