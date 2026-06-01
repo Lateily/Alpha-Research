@@ -12,9 +12,9 @@ inspect today?" — split into four buckets:
                      near, stale-data blocker)
   need_more_research screen says interesting but no registered directional thesis
                      (RESEARCH_REQUIRED — the screen->thesis gap #2C exposes)
-  candidate_review   cleared enough to discuss, not trade (WATCH + a registered
-                     thesis); HUMAN reference + capital decision only, NOT
-                     auto-promoted; v0 implies NO starting position
+  candidate_review   WATCH + a registered thesis — discussion / reference only,
+                     NOT auto-promoted; v0 implies NO starting position (the thesis
+                     is non-directional/watch; a directional one would be HUMAN_REVIEW)
   can_ignore         visible (watchlist/screen) but no action signal today
 
 Each board name lands in EXACTLY ONE bucket (priority mirrors the shipped status
@@ -120,8 +120,8 @@ def build() -> dict:
         elif st == "WATCH" and has_thesis:
             candidate_review.append({
                 "ticker": tic,
-                "note": "cleared screens + has a registered thesis; HUMAN reference + capital decision only, "
-                        "NOT auto-promoted; v0 implies NO starting position"})
+                "note": f"WATCH + registered thesis (source: {'/'.join(row.get('source') or ['-'])}); "
+                        "discussion / reference only, NOT auto-promoted; v0 implies NO starting position"})
         else:
             can_ignore.append({
                 "ticker": tic,

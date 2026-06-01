@@ -137,7 +137,7 @@
   "candidate_review": [
     {
       "ticker": "175.HK",
-      "note": "cleared screens + has a registered thesis; HUMAN reference + capital decision only, NOT auto-promoted; v0 implies NO starting position"
+      "note": "WATCH + registered thesis (source: watchlist/thesis_queue); discussion / reference only, NOT auto-promoted; v0 implies NO starting position"
     }
   ],
   "can_ignore": [
