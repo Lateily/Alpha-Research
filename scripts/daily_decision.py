@@ -462,7 +462,7 @@ def decide_held_position(pos, conf, vp_score):
         action     = "HOLD"
         priority   = "LOW"
         reason_e   = (f"Signal neutral (score {score}). "
-                      f"P&L {pnl_pct:+.1f}% after {days}d. Hold — no new entry/exit trigger. "
+                      f"P&L {pnl_pct:+.1f}% after {days}d. Paper-hold — no new review trigger. "
                       f"{rat_e}.")
         reason_z   = (f"信号中性（评分{score}），浮盈{pnl_pct:+.1f}%，持有{days}天，"
                       f"无新触发条件。{rat_z}。")
@@ -522,20 +522,20 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
     elif vp_ok and not sig_ok:
         action   = "WATCH"
         priority = "LOW"
-        reason_e = (f"VP {int(vp_score)} is strong but no technical entry yet (score {score}). "
-                    f"Wait for signal confirmation: MA bounce, oversold, or volume breakout.")
+        reason_e = (f"VP {int(vp_score)} is strong but no technical confirmation yet (score {score}). "
+                    f"Evidence-watch condition: awaiting signal confirmation (MA bounce, oversold, or volume breakout).")
         reason_z = (f"VP{int(vp_score)}较强但技术面未就位（{score}分），"
-                    f"等待均线支撑/超卖/放量突破等技术确认。")
+                    f"证据观察条件：等待技术确认（均线支撑/超卖/放量突破）。")
     elif not regime_ok:
         action   = "PASS"
         priority = "LOW"
-        reason_e = f"Regime RESTRICTIVE — not entering despite VP {vp_score} / score {score}."
-        reason_z = f"政策逆风（RESTRICTIVE），暂不考虑建仓（VP{vp_score}，信号{score}）。"
+        reason_e = f"Regime RESTRICTIVE — research-watch on hold despite VP {vp_score} / score {score}."
+        reason_z = f"政策逆风（RESTRICTIVE），研究观察暂缓（VP{vp_score}，信号{score}）。"
     else:
         action   = "WATCH"
         priority = "LOW"
-        reason_e = f"No entry trigger. Score {score}, VP {vp_score}. {rat_e}."
-        reason_z = f"无进场信号。评分{score}，VP{vp_score}。{rat_z}。"
+        reason_e = f"No evidence-review condition. Score {score}, VP {vp_score}. {rat_e}."
+        reason_z = f"暂无证据复核条件。评分{score}，VP{vp_score}。{rat_z}。"
 
     result = {
         "ticker":       ticker,
@@ -551,7 +551,7 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
         "confluence":   score,
         "reason_e":     reason_e,
         "reason_z":     reason_z,
-        "entry_target": "Await BUY_WATCH confirmation" if action == "BUY_WATCH" else None,
+        "entry_target": "Awaiting human research review" if action == "BUY_WATCH" else None,
         "exit_trigger": None,
     }
 

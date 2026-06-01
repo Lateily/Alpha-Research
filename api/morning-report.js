@@ -88,13 +88,13 @@ function buildReportPrompt(body) {
     const risks = (daily_decision.portfolio_risk || []);
     const lines = [];
     held.forEach(d => {
-      const icon = { EXIT:'🚨', TRIM:'⬇️', REVIEW_TRIM:'💰', REVIEW_STOP:'🔴', ADD:'📈', HOLD:'✅' }[d.action] || '─';
-      lines.push(`${icon} ${d.ticker} → ${d.action} (confluence ${d.confluence > 0 ? '+' : ''}${d.confluence}, VP${d.vp_score || '?'}, P&L ${d.pnl_pct != null ? (d.pnl_pct > 0 ? '+' : '') + d.pnl_pct + '%' : 'N/A'}): ${d.reason_e}`);
+      const dispLabel = { EXIT:'Risk Review', TRIM:'Exposure Review', REVIEW_TRIM:'Exposure Review', REVIEW_STOP:'Risk Review', ADD:'Evidence Watch', HOLD:'Paper Hold', BUY_WATCH:'Research Watch', WATCH:'Watch' }[d.action] || 'Watch';
+      lines.push(`• ${d.ticker} → ${dispLabel} (confluence ${d.confluence > 0 ? '+' : ''}${d.confluence}, VP${d.vp_score || '?'}, P&L ${d.pnl_pct != null ? (d.pnl_pct > 0 ? '+' : '') + d.pnl_pct + '%' : 'N/A'}): ${d.reason_e}`);
     });
     if (watch.length > 0) {
       lines.push('');
-      lines.push('BUY WATCH signals (quant + fundamental aligned):');
-      watch.forEach(d => lines.push(`  🎯 ${d.ticker}: ${d.reason_e}`));
+      lines.push('Research Watch signals (quant + fundamental aligned):');
+      watch.forEach(d => lines.push(`  • ${d.ticker}: ${d.reason_e}`));
     }
     if (risks.length > 0) {
       lines.push('');
