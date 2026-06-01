@@ -3444,7 +3444,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     <div>
       {/* ── SLIM LIVE PULSE BAR ───────────────────────────────────────────── */}
       <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10,
-                   padding:'6px 16px', marginBottom:8, height:32, display:'flex',
+                   padding:'6px 16px', marginBottom:8, minHeight:32, display:'flex',
                    alignItems:'center', gap:14, flexWrap:'wrap', fontSize:11}}>
         <div style={{fontSize:11, color: liveActive ? C.green : (polling ? C.gold : C.mid),
                      display:'flex', alignItems:'center', gap:5, whiteSpace:'nowrap'}}>
