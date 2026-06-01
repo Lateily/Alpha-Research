@@ -3412,6 +3412,8 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   );
 
   const liveCount = Object.keys(liveQuotes).length;
+  const liveActive = polling && liveCount > 0;   // green "Live" only when actually receiving quotes
+  const breadthAsOf = (universeA?._meta?.fetched_at || universeHK?._meta?.fetched_at || '').slice(0, 10);  // universe snapshot date (breadth/movers source)
   const hasAlphaScores = masterList.some(s => s.alpha_score != null && s.alpha_score > 0);
   const COLS = hasAlphaScores
     ? '32px 1fr 80px 80px 80px 80px 46px 10px'   // with α column
@@ -3444,16 +3446,24 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
       <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10,
                    padding:'6px 16px', marginBottom:8, height:32, display:'flex',
                    alignItems:'center', gap:14, flexWrap:'wrap', fontSize:11}}>
-        <div style={{fontSize:11, color: polling ? C.green : C.mid,
+        <div style={{fontSize:11, color: liveActive ? C.green : (polling ? C.gold : C.mid),
                      display:'flex', alignItems:'center', gap:5, whiteSpace:'nowrap'}}>
-          {polling
+          {liveActive
             ? <span style={{width:6,height:6,borderRadius:'50%',background:C.green,display:'inline-block'}}/>
-            : <WifiOff size={11}/>
+            : polling
+              ? <span style={{width:6,height:6,borderRadius:'50%',background:C.gold,display:'inline-block'}}/>
+              : <WifiOff size={11}/>
           }
           <span>
-            {polling ? L('Live','实时') : L('Paused','暂停中')} · {liveCount} {L('refreshed','只已刷新')} · {stats.total.toLocaleString()} {L('stocks','只')}
+            {liveActive ? L('Live','实时') : polling ? L('Connecting…','连接中…') : L('Paused','暂停中')} · {liveCount} {L('live quotes','只实时')} · {stats.total.toLocaleString()} {L('stocks','只')}
           </span>
         </div>
+        {breadthAsOf && (
+          <div style={{fontSize:9, color:C.gold, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4}}
+               title={L('Breadth counts and movers are from the universe snapshot, not live','涨跌家数与涨幅榜来自universe快照，非实时')}>
+            {L('breadth/movers = snapshot','行情/涨跌=快照')} {breadthAsOf}
+          </div>
+        )}
         <div style={{display:'flex', gap:10, flexWrap:'wrap', alignItems:'center'}}>
           {[
             { val:'lu', label:L('Limit↑','涨停'), count:stats.lu,  clr:'#EF4444' },
@@ -3482,7 +3492,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
       {/* ── HERO STANDOUTS ────────────────────────────────────────────────── */}
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10}}>
         <HeroCard
-          title={L('Today Top 5 Movers','今日涨幅 Top 5')}
+          title={L('Top 5 Movers (snapshot)','涨幅 Top 5（快照）')}
           icon={<Flame size={14}/>}
           accent={C.red}
           rows={topMovers.map(({s,eff}) => ({
