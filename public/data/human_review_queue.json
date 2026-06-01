@@ -1,0 +1,266 @@
+{
+  "_meta": {
+    "read_only": true,
+    "no_trades": true,
+    "no_size": true,
+    "no_buy_sell": true,
+    "no_position_mutation": true,
+    "spec": "TRADE_DECISION_STACK_v0_DESIGN §3.4; frozen 2026-05-31",
+    "layer": "Trade Decision Stack v0 Step 4A — human_review_queue (daily review workflow; status only, no size)",
+    "all_numbers": "[unvalidated intuition]; ordering is the shipped status precedence, NOT a calibrated priority",
+    "sources": [
+      "trade_candidate_board",
+      "portfolio_risk_packet"
+    ],
+    "buckets": {
+      "review_required": 6,
+      "need_more_research": 20,
+      "candidate_review": 1,
+      "can_ignore": 30
+    },
+    "note": "The four buckets PARTITION the candidate board — every name lands in exactly one, nothing dropped. candidate_review is a discussion/reference list, NOT a buy and NOT a position."
+  },
+  "review_required": [
+    {
+      "ticker": "300308.SZ",
+      "reason": "in portfolio_risk_packet.risk_blockers (e.g. over-concentration / hard conflict)",
+      "what_to_check": "confirm the risk block (e.g. an [unvalidated] concentration cap) and decide"
+    },
+    {
+      "ticker": "002594.SZ",
+      "reason": "registered directional thesis — human capital decision",
+      "what_to_check": "review thesis + catalyst + wrong_if; decide whether to act (system will not size or trade)"
+    },
+    {
+      "ticker": "603233.SH",
+      "reason": "registered directional thesis — human capital decision",
+      "what_to_check": "review thesis + catalyst + wrong_if; decide whether to act (system will not size or trade)"
+    },
+    {
+      "ticker": "6160.HK",
+      "reason": "thesis conflict (paper position vs registered thesis direction); registered directional thesis — human capital decision",
+      "what_to_check": "reconcile the paper direction against the registered thesis; review thesis + catalyst + wrong_if; decide whether to act (system will not size or trade)"
+    },
+    {
+      "ticker": "700.HK",
+      "reason": "thesis conflict (paper position vs registered thesis direction); registered directional thesis — human capital decision",
+      "what_to_check": "reconcile the paper direction against the registered thesis; review thesis + catalyst + wrong_if; decide whether to act (system will not size or trade)"
+    },
+    {
+      "ticker": "9999.HK",
+      "reason": "thesis conflict (paper position vs registered thesis direction); registered directional thesis — human capital decision",
+      "what_to_check": "reconcile the paper direction against the registered thesis; review thesis + catalyst + wrong_if; decide whether to act (system will not size or trade)"
+    }
+  ],
+  "need_more_research": [
+    {
+      "ticker": "000686.SZ",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "000776.SZ",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "002120.SZ",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "002797.SZ",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "300073.SZ",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "300457.SZ",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600008.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600015.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600030.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600068.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600150.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600546.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600570.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600872.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600906.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "600999.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "601066.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "601108.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "601169.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    },
+    {
+      "ticker": "601688.SH",
+      "gap": "passed the attention screen but has no registered directional thesis (screen->thesis gap)"
+    }
+  ],
+  "candidate_review": [
+    {
+      "ticker": "175.HK",
+      "note": "WATCH + registered thesis (source: watchlist/thesis_queue); discussion / reference only, NOT auto-promoted; v0 implies NO starting position"
+    }
+  ],
+  "can_ignore": [
+    {
+      "ticker": "000001.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "000049.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "000589.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "000651.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "000685.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "000883.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "000933.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "000983.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "002154.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "002266.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "002557.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "002582.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "300861.SZ",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "600026.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "600102.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "600157.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "600170.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "600267.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "600827.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "601006.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "601618.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "601677.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "601699.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "601788.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "601878.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "601995.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "601997.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "603345.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "688036.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    },
+    {
+      "ticker": "688472.SH",
+      "why": "visible (screen_queue) but no action signal today (status WATCH)"
+    }
+  ],
+  "no_trade_flag": true
+}
