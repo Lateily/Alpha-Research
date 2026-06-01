@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-01T06:13:13.789410+00:00",
+  "generated_at": "2026-06-01T13:29:53.237478+00:00",
   "date": "2026-06-01",
-  "brief_e": "1 REVIEW_TRIM",
-  "brief_z": "REVIEW_TRIM1",
+  "brief_e": "1 Exposure Review",
+  "brief_z": "1 敞口复核",
   "decisions": {
     "held": [
       {
@@ -17,10 +17,10 @@
         "weight_pct": 56.3,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +67.2% after 83d. Signal still NEUTRAL (score 0). Consider partial trim to protect profit.",
-        "reason_z": "浮盈+67.2%（持有83天），信号0仍属信号中性，等待，可考虑部分减仓保护利润。",
+        "reason_e": "Large unrealised gain +67.2% after 83d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+67.2%（持有83天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
-        "exit_trigger": "P&L > 25.0% → review trim opportunity"
+        "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
       {
         "ticker": "6160.HK",
@@ -131,7 +131,7 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 56% of portfolio — above 40.0% limit",
-    "💰 PROFIT REVIEW: 300308.SZ +67.2% — consider partial trim to lock gains"
+    "PROFIT REVIEW: 300308.SZ +67.2% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {
