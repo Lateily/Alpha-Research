@@ -6746,8 +6746,8 @@ function TradingDesk({ L, lk, C }) {
       {/* ── No-advice banner (paper simulation + evidence context only) ───── */}
       <div style={{border:`1px solid ${C.orange}`, background:C.orange+'14', borderRadius:8,
         padding:'8px 12px', fontSize:10.5, color:C.dark, marginBottom:12, lineHeight:1.5}}>
-        {L('Paper simulation & evidence context only — NOT trade advice. Sizes, tiers and triggers below are [unvalidated] reference, not recommended actions. The Trade Decision Cockpit is the canonical decision surface; the human sizes and decides.',
-           '仅模拟盘与证据上下文，非交易建议。下方的仓位、等级、触发条件均为【未校准】参考，不是推荐动作。交易决策台（Cockpit）是唯一的决策入口；由人来定仓位与决策。')}
+        {L('Paper simulation & evidence context only — NOT trade advice. Legacy model tiers/triggers are unvalidated references, not recommended actions. The Trade Decision Cockpit is canonical.',
+           '仅模拟盘与证据上下文，非交易建议。旧模型的等级/触发条件均为【未校准】参考，不是推荐动作。交易决策台（Cockpit）是唯一的决策入口。')}
       </div>
 
       {/* ── Header brief ─────────────────────────────────────────────────── */}
@@ -6992,43 +6992,11 @@ function TradingDesk({ L, lk, C }) {
                     {lk==='z' ? d.reason_z : d.reason_e}
                   </div>
                 </div>
-                {/* Position sizing card — only for BUY_WATCH */}
+                {/* Legacy candidate sizing card removed before beta (Junyan PR#18 ruling) — Cockpit is the decision surface */}
                 {isBuyWatch && sz && (
-                  <div style={{
-                    display:'flex', gap:12, flexWrap:'wrap', alignItems:'center',
-                    padding:'8px 10px', background:C.soft, borderRadius:6,
-                    border:`1px solid ${C.blue}25`,
-                  }}>
-                    <div style={{display:'flex', flexDirection:'column', gap:1}}>
-                      <div style={{fontSize:9, color:C.mid, fontWeight:600, textTransform:'uppercase'}}>
-                        {lk==='z' ? '参考仓位 · 未校准' : 'Reference size · [unvalidated]'}
-                      </div>
-                      <div style={{fontSize:16, fontWeight:800, color:C.blue, fontFamily:MONO}}>
-                        {sz.recommended_pct}%
-                      </div>
-                    </div>
-                    <div style={{display:'flex', flexDirection:'column', gap:1}}>
-                      <div style={{fontSize:9, color:C.mid, fontWeight:600, textTransform:'uppercase'}}>
-                        {lk==='z' ? '参考金额 · 未校准' : 'Reference value · [unvalidated]'}
-                      </div>
-                      <div style={{fontSize:12, fontWeight:700, color:C.dark, fontFamily:MONO}}>
-                        ¥{(sz.recommended_value||0).toLocaleString(undefined,{maximumFractionDigits:0})}
-                      </div>
-                    </div>
-                    <div style={{display:'flex', flexDirection:'column', gap:1}}>
-                      <div style={{fontSize:9, color:C.mid, fontWeight:600, textTransform:'uppercase'}}>
-                        {lk==='z' ? 'ATR波动' : 'ATR (vol)'}
-                      </div>
-                      <div style={{fontSize:12, fontWeight:700, color:C.gold, fontFamily:MONO}}>
-                        {sz.stop_distance_pct}%
-                      </div>
-                    </div>
-                    <div style={{
-                      marginLeft:'auto', fontSize:9, fontWeight:700, padding:'3px 8px',
-                      borderRadius:4, background:`${C.mid}18`, color:C.mid,
-                    }} title={sz.conviction_tier || ''}>
-                      {lk==='z' ? '旧标签 · 未校准' : 'legacy tag · uncalibrated'}
-                    </div>
+                  <div style={{fontSize:10, color:C.mid, fontStyle:'italic', padding:'2px 0'}}>
+                    {L('Legacy sizing model hidden before beta — use the Cockpit for the review workflow. No recommended size.',
+                       '旧仓位模型在内测前已隐藏 — 请用 Cockpit 进行复核流程。不提供推荐仓位。')}
                   </div>
                 )}
               </div>
