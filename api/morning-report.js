@@ -24,7 +24,7 @@
 //   market_mood: "RISK-ON | NEUTRAL | RISK-OFF",
 //   portfolio_flags: [{ ticker, company, status, note_e, note_z, action_required }],
 //   top_story: { title, source, impact_e, impact_z, tickers_affected },
-//   trade_ideas: [{ ticker, idea_e, idea_z, entry, urgency }],
+//   trade_ideas: [{ ticker, idea_e, idea_z, entry, urgency }],  // REVIEW NOTES, not trade calls — entry=observed ref only, urgency=review priority
 //   event_radar: [{ event, date, ticker, impact }],
 //   prediction_updates: [{ id, ticker, action, reason }],
 //   regime_notes: "string",
@@ -138,8 +138,9 @@ Write a morning brief that answers: What happened overnight? What do I need to a
 Use the SIGNAL CONFLUENCE section to anchor trade_ideas and portfolio_flags — the quant signal layer has already processed all technical indicators; your role is to synthesise with macro news and fundamental context.
 
 RULES:
+- CRITICAL — DECISION-SUPPORT ONLY, NOT TRADE ADVICE: you produce review notes for a human, never recommendations. NEVER use the words buy, sell, add, trim, accumulate, enter/entry trigger, target price, position size, overweight/underweight, or "urgent trade". No action imperatives — the human makes all trade decisions.
 - Cite specific news items by their reference [M1], [P1] etc. where relevant
-- For trade_ideas: only include if there is a specific, actionable entry condition today
+- For trade_ideas (these are REVIEW NOTES, not trade calls): include a name only if it genuinely warrants human review today; describe WHAT TO REVIEW and the risk/watch condition — never an action to take. "entry" is an OBSERVED reference price level only, explicitly NOT an entry trigger. "urgency" is the HUMAN-REVIEW priority, not trade urgency.
 - For portfolio_flags: every stock gets a status — CLEAR (no new information), WATCH (monitor closely), ACTION (requires decision today), ALERT (thesis event occurred)
 - prediction_updates: only include OPEN predictions that are directly addressed by today's news
 - Be bilingual: all narrative fields need both English (e) and Chinese (z)
@@ -174,10 +175,10 @@ Return ONLY this JSON object:
   "trade_ideas": [
     {
       "ticker": "string",
-      "idea_e": "string (specific entry thesis)",
+      "idea_e": "string (what to REVIEW + the risk/watch condition — an observation, NOT an action; no buy/sell/entry/size words)",
       "idea_z": "string",
-      "entry": "string (e.g. HK$385-395 on weakness, good for 2-3 weeks)",
-      "urgency": "HIGH | MED | LOW"
+      "entry": "string (OBSERVED reference price level only, NOT an entry trigger, e.g. 'trading around HK$385-395')",
+      "urgency": "HIGH | MED | LOW (human-review priority, NOT trade urgency)"
     }
   ],
   "event_radar": [
@@ -272,7 +273,7 @@ function buildEmailHtml(report, date, alignment) {
         </div>
         <div style="font-size:11px; color:#333; line-height:1.5; margin-bottom:4px">${t.idea_e}</div>
         <div style="font-size:10px; color:#888; margin-bottom:4px">${t.idea_z || ''}</div>
-        ${t.entry ? `<div style="font-size:10px; color:#2563eb; font-weight:600">📍 ${t.entry}</div>` : ''}
+        ${t.entry ? `<div style="font-size:10px; color:#888; font-weight:600">observed ref (not an entry): ${t.entry}</div>` : ''}
       </div>`;
   }).join('');
 
