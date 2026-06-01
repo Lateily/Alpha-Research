@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-29T11:47:58.778778+00:00",
+  "generated_at": "2026-06-01T06:13:13.703345+00:00",
   "tickers_scored": 7,
   "summary": {
     "entry_candidates": [],
@@ -7,45 +7,6 @@
     "caution": []
   },
   "scores": [
-    {
-      "ticker": "300308.SZ",
-      "score": 4,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "BULLISH",
-      "regime": "PERMISSIVE",
-      "vp_score": 48.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 1,
-        "bearish": 0
-      },
-      "contributing": [
-        {
-          "type": "BULLISH_ALIGNMENT",
-          "base_weight": 10,
-          "decay": 0.3,
-          "independence_factor": 1.0,
-          "regime_mult": 1.2,
-          "staleness": 1.0,
-          "final_contribution": 3.6
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "BULLISH_ALIGNMENT",
-          "contribution": 3.6
-        }
-      ],
-      "rationale_e": "Bullish: Bullish Alignment | RSI 69 | Price vs MA20 +9.6% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "多头：均线多头排列 | RSI 69 | 距MA20 +9.6% | 政策顺风 | VP 48",
-      "signal_types": [
-        "BULLISH_ALIGNMENT"
-      ],
-      "computed_at": "2026-05-29T11:47:58.778379+00:00"
-    },
     {
       "ticker": "175.HK",
       "score": 0,
@@ -83,7 +44,46 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-05-29T11:47:58.778270+00:00"
+      "computed_at": "2026-06-01T06:13:13.702816+00:00"
+    },
+    {
+      "ticker": "300308.SZ",
+      "score": 0,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "BULLISH",
+      "regime": "PERMISSIVE",
+      "vp_score": 48.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 0,
+        "bearish": 0
+      },
+      "contributing": [
+        {
+          "type": "BULLISH_ALIGNMENT",
+          "base_weight": 10,
+          "decay": 0.0,
+          "independence_factor": 1.0,
+          "regime_mult": 1.2,
+          "staleness": 1.0,
+          "final_contribution": 0.0
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "BULLISH_ALIGNMENT",
+          "contribution": 0.0
+        }
+      ],
+      "rationale_e": "RSI 69 | Price vs MA20 +9.6% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "RSI 69 | 距MA20 +9.6% | 政策顺风 | VP 48",
+      "signal_types": [
+        "BULLISH_ALIGNMENT"
+      ],
+      "computed_at": "2026-06-01T06:13:13.702926+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -122,7 +122,7 @@
       "signal_types": [
         "BB_LOWER_BREAK"
       ],
-      "computed_at": "2026-05-29T11:47:58.778488+00:00"
+      "computed_at": "2026-06-01T06:13:13.703040+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -189,7 +189,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-05-29T11:47:58.778609+00:00"
+      "computed_at": "2026-06-01T06:13:13.703166+00:00"
     },
     {
       "ticker": "700.HK",
@@ -211,7 +211,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-05-29T11:47:58.778690+00:00"
+      "computed_at": "2026-06-01T06:13:13.703250+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -233,11 +233,11 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-05-29T11:47:58.778764+00:00"
+      "computed_at": "2026-06-01T06:13:13.703330+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "score": -8,
+      "score": -5,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "BEARISH",
@@ -254,11 +254,11 @@
         {
           "type": "DEATH_CROSS",
           "base_weight": -18,
-          "decay": 0.53,
+          "decay": 0.33,
           "independence_factor": 1.0,
           "regime_mult": 0.8,
           "staleness": 1.0,
-          "final_contribution": -7.7
+          "final_contribution": -4.8
         },
         {
           "type": "RSI_RECOVERING",
@@ -273,7 +273,7 @@
       "contributing_signals": [
         {
           "type": "DEATH_CROSS",
-          "contribution": -7.7
+          "contribution": -4.8
         },
         {
           "type": "RSI_RECOVERING",
@@ -286,7 +286,7 @@
         "DEATH_CROSS",
         "RSI_RECOVERING"
       ],
-      "computed_at": "2026-05-29T11:47:58.778151+00:00"
+      "computed_at": "2026-06-01T06:13:13.702690+00:00"
     }
   ]
 }

@@ -8,10 +8,10 @@
     "scope": "COMPOSITION divergence only — NOT performance",
     "honest_note": "performance/returns NOT computed: forward data not matured (§3.1, first window ~Aug-Nov 2026); computing alpha now would be look-ahead/oversell. Composition divergence is the v0 deliverable. [unvalidated intuition] on weighting.",
     "sources": {
-      "paper": "/Users/years/Desktop/Stock/ar-platform/public/data/positions.json (read-only)",
-      "registered": "/Users/years/Desktop/Stock/ar-platform/public/data/thesis_queue.json"
+      "paper": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/positions.json (read-only)",
+      "registered": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/thesis_queue.json"
     },
-    "as_of_paper": "2026-05-28T14:49:26"
+    "as_of_paper": "2026-06-01T06:09:04"
   },
   "books": {
     "A_current_paper": {
@@ -20,39 +20,39 @@
           "ticker": "300308.SZ",
           "name": "中际旭创",
           "side": "LONG",
-          "weight_pct": 57.52,
-          "pnl_pct": 75.82
+          "weight_pct": 56.33,
+          "pnl_pct": 67.22
         },
         {
           "ticker": "6160.HK",
           "name": "百济神州",
           "side": "LONG",
-          "weight_pct": 3.72,
+          "weight_pct": 3.83,
           "pnl_pct": 0.0
         },
         {
           "ticker": "700.HK",
           "name": "腾讯控股",
           "side": "LONG",
-          "weight_pct": 22.27,
+          "weight_pct": 22.93,
           "pnl_pct": 0.0
         },
         {
           "ticker": "9999.HK",
           "name": "网易",
           "side": "LONG",
-          "weight_pct": 12.81,
+          "weight_pct": 13.19,
           "pnl_pct": 0.0
         },
         {
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "weight_pct": 3.68,
-          "pnl_pct": -0.32
+          "weight_pct": 3.71,
+          "pnl_pct": -2.52
         }
       ],
-      "gross_pct": 100.0,
+      "gross_pct": 99.99,
       "no_trade_flag": true
     },
     "B_thesis_aligned": {
@@ -61,7 +61,7 @@
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "paper_weight_pct": 3.68,
+          "paper_weight_pct": 3.71,
           "renorm_weight_pct": 100.0
         }
       ],
@@ -118,7 +118,7 @@
       "name": "比亚迪",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 3.68,
+      "paper_weight_pct": 3.71,
       "in_registered": true,
       "registered_direction": "LONG",
       "registered_role": "directional",
@@ -142,7 +142,7 @@
       "name": "中际旭创",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 57.52,
+      "paper_weight_pct": 56.33,
       "in_registered": true,
       "registered_direction": "PASS",
       "registered_role": "observer_control",
@@ -166,7 +166,7 @@
       "name": "百济神州",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 3.72,
+      "paper_weight_pct": 3.83,
       "in_registered": true,
       "registered_direction": "WATCH_SHORT",
       "registered_role": "directional",
@@ -178,7 +178,7 @@
       "name": "腾讯控股",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 22.27,
+      "paper_weight_pct": 22.93,
       "in_registered": true,
       "registered_direction": "WATCH_SHORT",
       "registered_role": "directional",
@@ -190,7 +190,7 @@
       "name": "网易",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 12.81,
+      "paper_weight_pct": 13.19,
       "in_registered": true,
       "registered_direction": "WATCH_SHORT",
       "registered_role": "directional",
@@ -214,9 +214,9 @@
     "registered_not_held": [
       "603233.SH"
     ],
-    "paper_gross_pct": 100.0,
-    "paper_weight_aligned_pct": 3.68,
-    "paper_weight_aligned_share": 0.0368
+    "paper_gross_pct": 99.99,
+    "paper_weight_aligned_pct": 3.71,
+    "paper_weight_aligned_share": 0.0371
   },
   "performance": {
     "status": "PENDING",
