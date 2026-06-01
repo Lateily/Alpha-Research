@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-01T06:13:13.789410+00:00",
+  "generated_at": "2026-06-01T13:37:32.517891+00:00",
   "date": "2026-06-01",
-  "brief_e": "1 REVIEW_TRIM",
-  "brief_z": "REVIEW_TRIM1",
+  "brief_e": "1 Exposure Review",
+  "brief_z": "1 敞口复核",
   "decisions": {
     "held": [
       {
@@ -17,10 +17,10 @@
         "weight_pct": 56.3,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +67.2% after 83d. Signal still NEUTRAL (score 0). Consider partial trim to protect profit.",
-        "reason_z": "浮盈+67.2%（持有83天），信号0仍属信号中性，等待，可考虑部分减仓保护利润。",
+        "reason_e": "Large unrealised gain +67.2% after 83d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+67.2%（持有83天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
-        "exit_trigger": "P&L > 25.0% → review trim opportunity"
+        "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
       {
         "ticker": "6160.HK",
@@ -34,7 +34,7 @@
         "weight_pct": 3.8,
         "vp_score": null,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L +0.0% after 83d. Hold — no new entry/exit trigger. RSI 59 | Price vs MA20 +3.0%.",
+        "reason_e": "Signal neutral (score 0). P&L +0.0% after 83d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +3.0%.",
         "reason_z": "信号中性（评分0），浮盈+0.0%，持有83天，无新触发条件。RSI 59 | 距MA20 +3.0%。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
@@ -51,7 +51,7 @@
         "weight_pct": 22.9,
         "vp_score": null,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L +0.0% after 76d. Hold — no new entry/exit trigger. RSI 41 | Price vs MA20 -3.5%.",
+        "reason_e": "Signal neutral (score 0). P&L +0.0% after 76d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
         "reason_z": "信号中性（评分0），浮盈+0.0%，持有76天，无新触发条件。RSI 41 | 距MA20 -3.5%。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
@@ -68,7 +68,7 @@
         "weight_pct": 13.2,
         "vp_score": null,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L +0.0% after 69d. Hold — no new entry/exit trigger. RSI 56 | Price vs MA20 +2.8%.",
+        "reason_e": "Signal neutral (score 0). P&L +0.0% after 69d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
         "reason_z": "信号中性（评分0），浮盈+0.0%，持有69天，无新触发条件。RSI 56 | 距MA20 +2.8%。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
@@ -85,7 +85,7 @@
         "weight_pct": 3.7,
         "vp_score": 48,
         "confluence": -5,
-        "reason_e": "Signal neutral (score -5). P&L -2.5% after 61d. Hold — no new entry/exit trigger. Bearish: Death Cross | RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48.",
+        "reason_e": "Signal neutral (score -5). P&L -2.5% after 61d. Paper-hold — no new review trigger. Bearish: Death Cross | RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48.",
         "reason_z": "信号中性（评分-5），浮盈-2.5%，持有61天，无新触发条件。空头：死亡交叉 | RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
@@ -104,8 +104,8 @@
         "weight_pct": 0,
         "vp_score": 50,
         "confluence": 0,
-        "reason_e": "No entry trigger. Score 0, VP 50. RSI 31 | Price vs MA20 -10.7% | VP 50.",
-        "reason_z": "无进场信号。评分0，VP50。RSI 31 | 距MA20 -10.7% | VP 50。",
+        "reason_e": "No evidence-review condition. Score 0, VP 50. RSI 31 | Price vs MA20 -10.7% | VP 50.",
+        "reason_z": "暂无证据复核条件。评分0，VP50。RSI 31 | 距MA20 -10.7% | VP 50。",
         "entry_target": null,
         "exit_trigger": null
       },
@@ -121,8 +121,8 @@
         "weight_pct": 0,
         "vp_score": 50,
         "confluence": 0,
-        "reason_e": "No entry trigger. Score 0, VP 50. RSI 36 | Price vs MA20 -5.9% | VP 50.",
-        "reason_z": "无进场信号。评分0，VP50。RSI 36 | 距MA20 -5.9% | VP 50。",
+        "reason_e": "No evidence-review condition. Score 0, VP 50. RSI 36 | Price vs MA20 -5.9% | VP 50.",
+        "reason_z": "暂无证据复核条件。评分0，VP50。RSI 36 | 距MA20 -5.9% | VP 50。",
         "entry_target": null,
         "exit_trigger": null
       }
@@ -131,7 +131,7 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 56% of portfolio — above 40.0% limit",
-    "💰 PROFIT REVIEW: 300308.SZ +67.2% — consider partial trim to lock gains"
+    "PROFIT REVIEW: 300308.SZ +67.2% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {

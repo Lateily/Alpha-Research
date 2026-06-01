@@ -6321,14 +6321,21 @@ function TradingDesk({ L, lk, C }) {
     REVIEW_STOP: '#ef4444', ADD: '#10b981', HOLD: '#22c55e',
     BUY_WATCH: '#3b82f6', WATCH: '#6b7280', NEUTRAL: '#6b7280',
   };
+  // Display labels only (no-advice hardening, Junyan PR #18) — internal action codes (d.action) are UNCHANGED.
   const ACTION_LABEL_ZH = {
-    EXIT: '离场', TRIM: '减仓', REVIEW_TRIM: '考虑减仓',
-    REVIEW_STOP: '复核止损', ADD: '可加仓', HOLD: '持有',
-    BUY_WATCH: '关注建仓', WATCH: '观望', NEUTRAL: '中性',
+    EXIT: '风险复核', TRIM: '敞口复核', REVIEW_TRIM: '敞口复核',
+    REVIEW_STOP: '风险复核', ADD: '证据观察', HOLD: '模拟持有',
+    BUY_WATCH: '研究观察', WATCH: '观望', NEUTRAL: '中性',
   };
+  const ACTION_LABEL_EN = {
+    EXIT: 'Risk Review', TRIM: 'Exposure Review', REVIEW_TRIM: 'Exposure Review',
+    REVIEW_STOP: 'Risk Review', ADD: 'Evidence Watch', HOLD: 'Paper Hold',
+    BUY_WATCH: 'Research Watch', WATCH: 'Watch', NEUTRAL: 'Neutral',
+  };
+  // Neutral marker only — no buy/sell/exit-signalling glyphs.
   const ACTION_ICON = {
-    EXIT: '🚨', TRIM: '⬇️', REVIEW_TRIM: '💰', REVIEW_STOP: '🔴',
-    ADD: '📈', HOLD: '✅', BUY_WATCH: '🎯', WATCH: '👁️',
+    EXIT: '•', TRIM: '•', REVIEW_TRIM: '•', REVIEW_STOP: '•',
+    ADD: '•', HOLD: '•', BUY_WATCH: '•', WATCH: '•',
   };
 
   const held        = decision.decisions?.held       || [];
@@ -6729,7 +6736,7 @@ function TradingDesk({ L, lk, C }) {
 
   const ActionBadge = ({ action }) => {
     const col = ACTION_COLOR[action] || '#6b7280';
-    const label = lk === 'z' ? (ACTION_LABEL_ZH[action] || action) : action;
+    const label = lk === 'z' ? (ACTION_LABEL_ZH[action] || action) : (ACTION_LABEL_EN[action] || action);
     return (
       <span style={{
         fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:4,
@@ -6742,6 +6749,13 @@ function TradingDesk({ L, lk, C }) {
 
   return (
     <div style={{maxWidth:960, margin:'0 auto'}}>
+
+      {/* ── No-advice banner (paper simulation + evidence context only) ───── */}
+      <div style={{border:`1px solid ${C.orange}`, background:C.orange+'14', borderRadius:8,
+        padding:'8px 12px', fontSize:10.5, color:C.dark, marginBottom:12, lineHeight:1.5}}>
+        {L('Paper simulation & evidence context only — NOT trade advice. Legacy model tiers/triggers are unvalidated references, not recommended actions. The Trade Decision Cockpit is canonical.',
+           '仅模拟盘与证据上下文，非交易建议。旧模型的等级/触发条件均为【未校准】参考，不是推荐动作。交易决策台（Cockpit）是唯一的决策入口。')}
+      </div>
 
       {/* ── Header brief ─────────────────────────────────────────────────── */}
       <div style={{
@@ -6944,7 +6958,7 @@ function TradingDesk({ L, lk, C }) {
                   background:'#fef3c7', padding:'4px 8px', borderRadius:4,
                   fontFamily:MONO,
                 }}>
-                  ⚡ {lk==='z' ? '离场条件：' : 'Exit trigger: '}{d.exit_trigger}
+                  {lk==='z' ? '风险观察条件【未校准】：' : 'Risk watch-condition [unvalidated]: '}{d.exit_trigger}
                 </div>
               )}
             </div>
@@ -6985,49 +6999,11 @@ function TradingDesk({ L, lk, C }) {
                     {lk==='z' ? d.reason_z : d.reason_e}
                   </div>
                 </div>
-                {/* Position sizing card — only for BUY_WATCH */}
+                {/* Legacy candidate sizing card removed before beta (Junyan PR#18 ruling) — Cockpit is the decision surface */}
                 {isBuyWatch && sz && (
-                  <div style={{
-                    display:'flex', gap:12, flexWrap:'wrap', alignItems:'center',
-                    padding:'8px 10px', background:C.soft, borderRadius:6,
-                    border:`1px solid ${C.blue}25`,
-                  }}>
-                    <div style={{display:'flex', flexDirection:'column', gap:1}}>
-                      <div style={{fontSize:9, color:C.mid, fontWeight:600, textTransform:'uppercase'}}>
-                        {lk==='z' ? '建议仓位' : 'Suggested Size'}
-                      </div>
-                      <div style={{fontSize:16, fontWeight:800, color:C.blue, fontFamily:MONO}}>
-                        {sz.recommended_pct}%
-                      </div>
-                    </div>
-                    <div style={{display:'flex', flexDirection:'column', gap:1}}>
-                      <div style={{fontSize:9, color:C.mid, fontWeight:600, textTransform:'uppercase'}}>
-                        {lk==='z' ? '金额' : 'Value'}
-                      </div>
-                      <div style={{fontSize:12, fontWeight:700, color:C.dark, fontFamily:MONO}}>
-                        ¥{(sz.recommended_value||0).toLocaleString(undefined,{maximumFractionDigits:0})}
-                      </div>
-                    </div>
-                    <div style={{display:'flex', flexDirection:'column', gap:1}}>
-                      <div style={{fontSize:9, color:C.mid, fontWeight:600, textTransform:'uppercase'}}>
-                        {lk==='z' ? 'ATR止损' : 'ATR Stop'}
-                      </div>
-                      <div style={{fontSize:12, fontWeight:700, color:C.gold, fontFamily:MONO}}>
-                        {sz.stop_distance_pct}%
-                      </div>
-                    </div>
-                    <div style={{
-                      marginLeft:'auto', fontSize:9, fontWeight:700, padding:'3px 8px',
-                      borderRadius:4,
-                      background: sz.conviction_tier === 'HIGH CONVICTION' ? `${C.green}18`
-                                : sz.conviction_tier === 'MEDIUM CONVICTION' ? `${C.blue}18`
-                                : `${C.mid}18`,
-                      color: sz.conviction_tier === 'HIGH CONVICTION' ? C.green
-                           : sz.conviction_tier === 'MEDIUM CONVICTION' ? C.blue
-                           : C.mid,
-                    }}>
-                      {lk==='z' ? (sz.conviction_tier_zh || sz.conviction_tier) : sz.conviction_tier}
-                    </div>
+                  <div style={{fontSize:10, color:C.mid, fontStyle:'italic', padding:'2px 0'}}>
+                    {L('Legacy sizing model hidden before beta — use the Cockpit for the review workflow. No recommended size.',
+                       '旧仓位模型在内测前已隐藏 — 请用 Cockpit 进行复核流程。不提供推荐仓位。')}
                   </div>
                 )}
               </div>
@@ -7153,8 +7129,8 @@ function TradingDesk({ L, lk, C }) {
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <div style={{fontSize:10, color:C.mid, textAlign:'center', marginTop:8}}>
         {lk==='z'
-          ? '数据由 signal_confluence.py + daily_decision.py + signal_quality.py 生成 · 仅证据，不构成投资建议'
-          : 'Generated by signal_confluence.py + daily_decision.py + signal_quality.py · Evidence only, no investment conclusions'}
+          ? '数据由 signal_confluence.py + daily_decision.py + signal_quality.py 生成 · 仅证据与模拟盘，不含买卖与仓位指令 · 决策入口见 Cockpit'
+          : 'Generated by signal_confluence.py + daily_decision.py + signal_quality.py · Evidence & paper-sim only — no buy/sell or sizing instruction · see the Cockpit for decisions'}
       </div>
     </div>
   );
@@ -9093,7 +9069,7 @@ function MorningReportPage({ L, lk, C, reportData, reportLoading, onGenerate, li
                   <div style={{flex:1}}>
                     <div style={{fontSize:11, color:C.dark, lineHeight:1.6}}>{lk==='z' ? f.note_z : f.note_e}</div>
                     {f.action_required && (
-                      <div style={{fontSize:9, color:C.red, fontWeight:700, marginTop:4}}>⚡ {L('Action required today','今日需要操作')}</div>
+                      <div style={{fontSize:9, color:C.gold, fontWeight:700, marginTop:4}}>{L('Human review required','需人工复核')}</div>
                     )}
                   </div>
                 </div>
@@ -9107,7 +9083,7 @@ function MorningReportPage({ L, lk, C, reportData, reportLoading, onGenerate, li
       {r.trade_ideas?.length > 0 && (
         <div style={{background:C.card, border:`1px solid ${C.border}`, padding:'16px 24px', marginBottom:3}}>
           <div style={{fontSize:9, fontWeight:700, color:C.mid, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:12}}>
-            💡 {L("Today's Trade Ideas","今日交易思路")}
+            {L("Review Notes (decision-support, not recommendations)","复核要点（决策支持，非交易建议）")}
           </div>
           <div style={{display:'flex', flexDirection:'column', gap:10}}>
             {r.trade_ideas.map((t, i) => {
@@ -9116,10 +9092,10 @@ function MorningReportPage({ L, lk, C, reportData, reportLoading, onGenerate, li
                 <div key={i} style={{padding:'12px 14px', background:C.bg, border:`1px solid ${C.border}`, borderLeft:`3px solid ${uc}`, borderRadius:'0 6px 6px 0'}}>
                   <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:6}}>
                     <span style={{fontFamily:'monospace', fontSize:12, fontWeight:700, color:C.dark}}>{t.ticker}</span>
-                    <span style={{fontSize:9, padding:'1px 6px', borderRadius:3, fontWeight:700, background:`${uc}18`, color:uc}}>{t.urgency}</span>
+                    <span style={{fontSize:9, padding:'1px 6px', borderRadius:3, fontWeight:700, background:`${uc}18`, color:uc}}>{L('review','复核')}: {t.urgency}</span>
                   </div>
                   <div style={{fontSize:12, color:C.dark, lineHeight:1.6, marginBottom:4}}>{lk==='z' ? t.idea_z : t.idea_e}</div>
-                  {t.entry && <div style={{fontSize:10, color:C.blue, fontWeight:600}}>📍 {t.entry}</div>}
+                  {t.entry && <div style={{fontSize:10, color:C.mid, fontWeight:600}}>{L('observed ref (not an entry)','观察参考价（非入场）')}: {t.entry}</div>}
                 </div>
               );
             })}
@@ -9171,7 +9147,9 @@ function MorningReportPage({ L, lk, C, reportData, reportLoading, onGenerate, li
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────── */}
-      <div style={{fontSize:9, color:C.mid, textAlign:'center', paddingTop:12}}>
+      <div style={{fontSize:9, color:C.mid, textAlign:'center', paddingTop:12, lineHeight:1.6}}>
+        <div style={{color:C.orange}}>{L('Decision-support review notes only — not trade advice. No buy/sell, no entry/exit triggers, no position sizing. The human decides; see the Cockpit.',
+                                          '仅决策支持复核要点，非交易建议。无买卖、无入场/离场触发、无仓位大小。由人决策；决策入口见 Cockpit。')}</div>
         {r.generated_at && L(`Generated ${new Date(r.generated_at).toLocaleString('en-HK',{timeZone:'Asia/Hong_Kong',hour12:false})} HKT · ${r.tokens_used||'—'} tokens`,
                                `生成于 ${new Date(r.generated_at).toLocaleString('zh-CN',{timeZone:'Asia/Hong_Kong'})} HKT · ${r.tokens_used||'—'} tokens`)}
       </div>

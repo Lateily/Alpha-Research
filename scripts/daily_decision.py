@@ -413,29 +413,29 @@ def decide_held_position(pos, conf, vp_score):
         reason_z   = (f"强烈空头信号（评分{score}）。{rat_z}。"
                       f"当前盈亏：{pnl_pct:+.1f}%。")
         entry_target = None
-        exit_trigger = f"Confluence score {score} ≤ {SCORE_EXIT_MAX} → EXIT recommended"
+        exit_trigger = f"Confluence score {score} ≤ {SCORE_EXIT_MAX} → risk-review condition (bearish exit signal)"
 
     elif score <= SCORE_CAUTION_MAX and pnl_pct >= 15.0:
         action     = "TRIM"
         priority   = "MEDIUM"
         reason_e   = (f"Bearish drift (score {score}) with unrealised gain {pnl_pct:+.1f}%. "
-                      f"Consider locking partial profit. {rat_e}.")
+                      f"Exposure-review condition. {rat_e}.")
         reason_z   = (f"信号走弱（评分{score}），浮盈{pnl_pct:+.1f}%，"
-                      f"建议部分减仓锁定利润。{rat_z}。")
+                      f"敞口复核条件。{rat_z}。")
         entry_target = None
-        exit_trigger = f"Score {score} ≤ {SCORE_CAUTION_MAX} + profit > 15% → TRIM suggested"
+        exit_trigger = f"Score {score} ≤ {SCORE_CAUTION_MAX} + profit > 15% → exposure-review condition"
 
     elif pnl_pct >= PROFIT_TAKE_PCT:
         action     = "REVIEW_TRIM"
         priority   = "MEDIUM"
         reason_e   = (f"Large unrealised gain {pnl_pct:+.1f}% after {days}d. "
                       f"Signal still {action_q} (score {score}). "
-                      f"Consider partial trim to protect profit.")
+                      f"Exposure-review condition (sizable unrealised gain).")
         reason_z   = (f"浮盈{pnl_pct:+.1f}%（持有{days}天），"
                       f"信号{score}仍属{conf['action_zh'] if conf else '中性'}，"
-                      f"可考虑部分减仓保护利润。")
+                      f"敞口复核条件（浮盈较大）。")
         entry_target = None
-        exit_trigger = f"P&L > {PROFIT_TAKE_PCT}% → review trim opportunity"
+        exit_trigger = f"P&L > {PROFIT_TAKE_PCT}% → exposure-review condition"
 
     elif pnl_pct <= STOP_REVIEW_PCT:
         action     = "REVIEW_STOP"
@@ -444,7 +444,7 @@ def decide_held_position(pos, conf, vp_score):
                       f"Signal: {action_q} (score {score}). "
                       f"Review thesis — is the wrongIf condition still intact?")
         reason_z   = (f"亏损{pnl_pct:+.1f}%，信号评分{score}。"
-                      f"建议复核投资逻辑，检查wrongIf条件是否触发。")
+                      f"复核投资逻辑，检查wrongIf条件是否触发。")
         entry_target = None
         exit_trigger = f"P&L {pnl_pct:.1f}% ≤ {STOP_REVIEW_PCT}% → thesis review required"
 
@@ -452,17 +452,17 @@ def decide_held_position(pos, conf, vp_score):
         action     = "ADD"
         priority   = "LOW"
         reason_e   = (f"Strong bullish confluence (score {score}) confirms thesis. "
-                      f"P&L {pnl_pct:+.1f}% — consider adding on next technical pullback.")
+                      f"P&L {pnl_pct:+.1f}%. Evidence-watch condition.")
         reason_z   = (f"多头信号强烈（评分{score}），thesis得到验证，"
-                      f"浮盈{pnl_pct:+.1f}%，可考虑回踩时加仓。")
-        entry_target = "Next MA20 or support test"
-        exit_trigger = f"Score drops below {SCORE_CAUTION_MAX} OR P&L breaches stop"
+                      f"浮盈{pnl_pct:+.1f}%，证据观察条件。")
+        entry_target = None
+        exit_trigger = f"Score drops below {SCORE_CAUTION_MAX} OR P&L breaches risk level"
 
     else:
         action     = "HOLD"
         priority   = "LOW"
         reason_e   = (f"Signal neutral (score {score}). "
-                      f"P&L {pnl_pct:+.1f}% after {days}d. Hold — no new entry/exit trigger. "
+                      f"P&L {pnl_pct:+.1f}% after {days}d. Paper-hold — no new review trigger. "
                       f"{rat_e}.")
         reason_z   = (f"信号中性（评分{score}），浮盈{pnl_pct:+.1f}%，持有{days}天，"
                       f"无新触发条件。{rat_z}。")
@@ -505,44 +505,37 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
     if sig_ok and vp_ok and regime_ok:
         action   = "BUY_WATCH"
         priority = "MEDIUM"
-        size_note_e = (
-            f" Suggested size: {sizing['recommended_pct']:.1f}% "
-            f"(¥{sizing['recommended_value']:,.0f}) [{sizing['conviction_tier']}]."
-        ) if sizing else ""
-        size_note_z = (
-            f" 建议仓位：{sizing['recommended_pct']:.1f}%"
-            f"（¥{sizing['recommended_value']:,.0f}）[{sizing['conviction_tier_zh']}]。"
-        ) if sizing else ""
+        # No-advice (Junyan PR #18): sizing notes intentionally NOT embedded in reason text.
         reason_e = (f"PM + Quant aligned: VP {int(vp_score)} ≥ {VP_MIN_FOR_ENTRY} + "
                     f"signal score {score} ≥ {SCORE_ENTRY_MIN}. "
-                    f"{rat_e}. Regime: {regime}.{size_note_e} Await human confirmation.")
+                    f"{rat_e}. Regime: {regime}. Research-watch condition — await human review.")
         reason_z = (f"基本面+技术面共振：VP{int(vp_score)}≥{VP_MIN_FOR_ENTRY}，"
-                    f"信号评分{score}≥{SCORE_ENTRY_MIN}。{rat_z}。{size_note_z}"
-                    f"等待人工确认后建仓。")
+                    f"信号评分{score}≥{SCORE_ENTRY_MIN}。{rat_z}。"
+                    f"研究观察条件 — 等待人工复核。")
     elif sig_ok and not vp_ok:
         action   = "WATCH"
         priority = "LOW"
-        reason_e = (f"Technical entry signal (score {score}) but VP {vp_score} below threshold. "
-                    f"Run DeepResearch to update VP before entering.")
+        reason_e = (f"Technical signal (score {score}) but VP {vp_score} below threshold. "
+                    f"Refresh DeepResearch (VP) before review.")
         reason_z = (f"技术信号达标（{score}分）但VP{vp_score}低于门槛，"
-                    f"建议先更新DeepResearch再考虑建仓。")
+                    f"复核前先更新DeepResearch。")
     elif vp_ok and not sig_ok:
         action   = "WATCH"
         priority = "LOW"
-        reason_e = (f"VP {int(vp_score)} is strong but no technical entry yet (score {score}). "
-                    f"Wait for signal confirmation: MA bounce, oversold, or volume breakout.")
+        reason_e = (f"VP {int(vp_score)} is strong but no technical confirmation yet (score {score}). "
+                    f"Evidence-watch condition: awaiting signal confirmation (MA bounce, oversold, or volume breakout).")
         reason_z = (f"VP{int(vp_score)}较强但技术面未就位（{score}分），"
-                    f"等待均线支撑/超卖/放量突破等技术确认。")
+                    f"证据观察条件：等待技术确认（均线支撑/超卖/放量突破）。")
     elif not regime_ok:
         action   = "PASS"
         priority = "LOW"
-        reason_e = f"Regime RESTRICTIVE — not entering despite VP {vp_score} / score {score}."
-        reason_z = f"政策逆风（RESTRICTIVE），暂不考虑建仓（VP{vp_score}，信号{score}）。"
+        reason_e = f"Regime RESTRICTIVE — research-watch on hold despite VP {vp_score} / score {score}."
+        reason_z = f"政策逆风（RESTRICTIVE），研究观察暂缓（VP{vp_score}，信号{score}）。"
     else:
         action   = "WATCH"
         priority = "LOW"
-        reason_e = f"No entry trigger. Score {score}, VP {vp_score}. {rat_e}."
-        reason_z = f"无进场信号。评分{score}，VP{vp_score}。{rat_z}。"
+        reason_e = f"No evidence-review condition. Score {score}, VP {vp_score}. {rat_e}."
+        reason_z = f"暂无证据复核条件。评分{score}，VP{vp_score}。{rat_z}。"
 
     result = {
         "ticker":       ticker,
@@ -558,7 +551,7 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
         "confluence":   score,
         "reason_e":     reason_e,
         "reason_z":     reason_z,
-        "entry_target": "Await BUY_WATCH confirmation" if action == "BUY_WATCH" else None,
+        "entry_target": "Awaiting human research review" if action == "BUY_WATCH" else None,
         "exit_trigger": None,
     }
 
@@ -622,8 +615,8 @@ def compute_portfolio_risk(positions, regime_data):
         pnl = p.get("pnl_pct", 0)
         if pnl >= PROFIT_TAKE_PCT:
             flags.append(
-                f"💰 PROFIT REVIEW: {p['ticker']} +{pnl:.1f}% — "
-                f"consider partial trim to lock gains"
+                f"PROFIT REVIEW: {p['ticker']} +{pnl:.1f}% — "
+                f"exposure-review condition (sizable unrealised gain)"
             )
         if pnl <= STOP_REVIEW_PCT:
             flags.append(
@@ -885,24 +878,27 @@ def main():
     action_counts = {}
     for d in held_decisions:
         action_counts[d["action"]] = action_counts.get(d["action"], 0) + 1
-    brief_parts = []
+    # Display labels only (no-advice, Junyan PR #18) — internal action codes unchanged upstream.
+    BRIEF_LABEL_E = {
+        "BUY WATCH": "Research Watch", "EXIT": "Risk Review", "TRIM": "Exposure Review",
+        "REVIEW_TRIM": "Exposure Review", "REVIEW_STOP": "Risk Review",
+        "ADD": "Evidence Watch", "HOLD": "Paper Hold",
+    }
+    BRIEF_LABEL_Z = {
+        "BUY WATCH": "研究观察", "EXIT": "风险复核", "TRIM": "敞口复核",
+        "REVIEW_TRIM": "敞口复核", "REVIEW_STOP": "风险复核",
+        "ADD": "证据观察", "HOLD": "模拟持有",
+    }
+    brief_pairs = []
     if buy_watches:
-        brief_parts.append(f"{len(buy_watches)} BUY WATCH")
+        brief_pairs.append((len(buy_watches), "BUY WATCH"))
     for act in ["EXIT", "TRIM", "REVIEW_TRIM", "REVIEW_STOP", "ADD"]:
         if action_counts.get(act, 0) > 0:
-            brief_parts.append(f"{action_counts[act]} {act}")
-    if not brief_parts:
-        brief_parts.append(f"{len(held_decisions)} HOLD")
-    brief_e = " | ".join(brief_parts)
-    brief_z_map = {
-        "BUY WATCH": "关注建仓", "EXIT": "建议离场",
-        "TRIM": "建议减仓", "REVIEW_TRIM": "考虑减仓",
-        "REVIEW_STOP": "复核止损", "ADD": "考虑加仓", "HOLD": "持有"
-    }
-    brief_z = " | ".join(
-        f"{v}{brief_z_map.get(k.replace(f'{v} ','').strip(), k)}"
-        for k, v in [p.split(" ", 1) if " " in p else (p, "") for p in brief_parts]
-    ) or "全部持有"
+            brief_pairs.append((action_counts[act], act))
+    if not brief_pairs:
+        brief_pairs.append((len(held_decisions), "HOLD"))
+    brief_e = " | ".join(f"{n} {BRIEF_LABEL_E.get(code, code)}" for n, code in brief_pairs)
+    brief_z = " | ".join(f"{n} {BRIEF_LABEL_Z.get(code, code)}" for n, code in brief_pairs) or "全部模拟持有"
 
     output = {
         "generated_at":    datetime.now(timezone.utc).isoformat(),

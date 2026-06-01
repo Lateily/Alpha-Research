@@ -24,7 +24,7 @@
 //   market_mood: "RISK-ON | NEUTRAL | RISK-OFF",
 //   portfolio_flags: [{ ticker, company, status, note_e, note_z, action_required }],
 //   top_story: { title, source, impact_e, impact_z, tickers_affected },
-//   trade_ideas: [{ ticker, idea_e, idea_z, entry, urgency }],
+//   trade_ideas: [{ ticker, idea_e, idea_z, entry, urgency }],  // REVIEW NOTES, not trade calls — entry=observed ref only, urgency=review priority
 //   event_radar: [{ event, date, ticker, impact }],
 //   prediction_updates: [{ id, ticker, action, reason }],
 //   regime_notes: "string",
@@ -88,13 +88,13 @@ function buildReportPrompt(body) {
     const risks = (daily_decision.portfolio_risk || []);
     const lines = [];
     held.forEach(d => {
-      const icon = { EXIT:'🚨', TRIM:'⬇️', REVIEW_TRIM:'💰', REVIEW_STOP:'🔴', ADD:'📈', HOLD:'✅' }[d.action] || '─';
-      lines.push(`${icon} ${d.ticker} → ${d.action} (confluence ${d.confluence > 0 ? '+' : ''}${d.confluence}, VP${d.vp_score || '?'}, P&L ${d.pnl_pct != null ? (d.pnl_pct > 0 ? '+' : '') + d.pnl_pct + '%' : 'N/A'}): ${d.reason_e}`);
+      const dispLabel = { EXIT:'Risk Review', TRIM:'Exposure Review', REVIEW_TRIM:'Exposure Review', REVIEW_STOP:'Risk Review', ADD:'Evidence Watch', HOLD:'Paper Hold', BUY_WATCH:'Research Watch', WATCH:'Watch' }[d.action] || 'Watch';
+      lines.push(`• ${d.ticker} → ${dispLabel} (confluence ${d.confluence > 0 ? '+' : ''}${d.confluence}, VP${d.vp_score || '?'}, P&L ${d.pnl_pct != null ? (d.pnl_pct > 0 ? '+' : '') + d.pnl_pct + '%' : 'N/A'}): ${d.reason_e}`);
     });
     if (watch.length > 0) {
       lines.push('');
-      lines.push('BUY WATCH signals (quant + fundamental aligned):');
-      watch.forEach(d => lines.push(`  🎯 ${d.ticker}: ${d.reason_e}`));
+      lines.push('Research Watch signals (quant + fundamental aligned):');
+      watch.forEach(d => lines.push(`  • ${d.ticker}: ${d.reason_e}`));
     }
     if (risks.length > 0) {
       lines.push('');
@@ -138,8 +138,9 @@ Write a morning brief that answers: What happened overnight? What do I need to a
 Use the SIGNAL CONFLUENCE section to anchor trade_ideas and portfolio_flags — the quant signal layer has already processed all technical indicators; your role is to synthesise with macro news and fundamental context.
 
 RULES:
+- CRITICAL — DECISION-SUPPORT ONLY, NOT TRADE ADVICE: you produce review notes for a human, never recommendations. NEVER use the words buy, sell, add, trim, accumulate, enter/entry trigger, target price, position size, overweight/underweight, or "urgent trade". No action imperatives — the human makes all trade decisions.
 - Cite specific news items by their reference [M1], [P1] etc. where relevant
-- For trade_ideas: only include if there is a specific, actionable entry condition today
+- For trade_ideas (these are REVIEW NOTES, not trade calls): include a name only if it genuinely warrants human review today; describe WHAT TO REVIEW and the risk/watch condition — never an action to take. "entry" is an OBSERVED reference price level only, explicitly NOT an entry trigger. "urgency" is the HUMAN-REVIEW priority, not trade urgency.
 - For portfolio_flags: every stock gets a status — CLEAR (no new information), WATCH (monitor closely), ACTION (requires decision today), ALERT (thesis event occurred)
 - prediction_updates: only include OPEN predictions that are directly addressed by today's news
 - Be bilingual: all narrative fields need both English (e) and Chinese (z)
@@ -174,10 +175,10 @@ Return ONLY this JSON object:
   "trade_ideas": [
     {
       "ticker": "string",
-      "idea_e": "string (specific entry thesis)",
+      "idea_e": "string (what to REVIEW + the risk/watch condition — an observation, NOT an action; no buy/sell/entry/size words)",
       "idea_z": "string",
-      "entry": "string (e.g. HK$385-395 on weakness, good for 2-3 weeks)",
-      "urgency": "HIGH | MED | LOW"
+      "entry": "string (OBSERVED reference price level only, NOT an entry trigger, e.g. 'trading around HK$385-395')",
+      "urgency": "HIGH | MED | LOW (human-review priority, NOT trade urgency)"
     }
   ],
   "event_radar": [
@@ -272,7 +273,7 @@ function buildEmailHtml(report, date, alignment) {
         </div>
         <div style="font-size:11px; color:#333; line-height:1.5; margin-bottom:4px">${t.idea_e}</div>
         <div style="font-size:10px; color:#888; margin-bottom:4px">${t.idea_z || ''}</div>
-        ${t.entry ? `<div style="font-size:10px; color:#2563eb; font-weight:600">📍 ${t.entry}</div>` : ''}
+        ${t.entry ? `<div style="font-size:10px; color:#888; font-weight:600">observed ref (not an entry): ${t.entry}</div>` : ''}
       </div>`;
   }).join('');
 
@@ -349,9 +350,9 @@ function buildEmailHtml(report, date, alignment) {
   ${buildAlignmentQueueHtml(alignment)}
 
   ${tradeRows ? `
-  <!-- Trade Ideas -->
+  <!-- Review Notes -->
   <div style="background:#ffffff; border:1px solid #e5e7eb; padding:16px 24px; margin-bottom:2px">
-    <div style="font-size:10px; font-weight:700; color:#6b7280; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px">💡 Today's Trade Ideas</div>
+    <div style="font-size:10px; font-weight:700; color:#6b7280; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px">Review Notes (decision-support, not recommendations)</div>
     ${tradeRows}
   </div>` : ''}
 
