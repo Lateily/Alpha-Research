@@ -10375,11 +10375,14 @@ const GlobalStyles = () => (
 function TradeDecisionCockpit({ L, lk, C }) {
   const [board, setBoard] = useState(null);
   const [risk, setRisk] = useState(null);
+  const [queue, setQueue] = useState(null);   // Milestone 1: human_review_queue (daily review workflow)
   const [showLower, setShowLower] = useState(false);
+  const [showResearch, setShowResearch] = useState(false);
   useEffect(() => {
     const base = DATA_BASE;
     fetch(base + 'data/trade_candidate_board.json').then(r => r.ok ? r.json() : null).then(setBoard).catch(() => {});
     fetch(base + 'data/portfolio_risk_packet.json').then(r => r.ok ? r.json() : null).then(setRisk).catch(() => {});
+    fetch(base + 'data/human_review_queue.json').then(r => r.ok ? r.json() : null).then(setQueue).catch(() => {});
   }, []);
 
   const ST = {
@@ -10417,6 +10420,8 @@ function TradeDecisionCockpit({ L, lk, C }) {
   const blockers = (risk && risk.risk_blockers) || [];
   const conflicts = (risk && risk.thesis_conflicts) || [];
   const stale = risk && risk.theme_residual_status === 'theme_residual_stale';
+  const reviewToday = (queue && queue.review_required) || [];
+  const needResearch = (queue && queue.need_more_research) || [];
 
   return (
     <div style={{ padding: '14px 18px', maxWidth: 920, margin: '0 auto', overflowY: 'auto' }}>
@@ -10428,6 +10433,44 @@ function TradeDecisionCockpit({ L, lk, C }) {
         {L('Decision support only — NOT trade advice. No BUY/SELL, no position sizing, no auto-trade. Observed exposure is a fact from the paper book; caps, thresholds, and strategy logic are [unvalidated]. The human makes all decisions.',
            '仅决策支持，非交易建议。无买卖信号、无仓位大小、无自动交易。已观测的敞口是来自模拟盘的事实；风险上限、阈值与策略逻辑均为【未校准】。所有决策由人做出。')}
       </div>
+
+      {/* ── Human Review Queue — Milestone 1: the daily "what to look at today" surface ── */}
+      {queue ? (
+        <div style={{ background: C.card, border: `1px solid ${C.orange}55`, borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, marginBottom: 8 }}>
+            {L('Human Review Queue — what to look at today', '人工复核队列 — 今日需关注')}
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.orange, margin: '4px 0' }}>
+            {L('Review today', '今日复核')} ({reviewToday.length})
+          </div>
+          {reviewToday.length === 0 ? <div style={{ fontSize: 11, color: C.mid }}>{L('Nothing flagged for review.', '暂无需复核项。')}</div> : null}
+          {reviewToday.map(it => (
+            <div key={it.ticker} style={{ display: 'flex', gap: 8, alignItems: 'baseline', padding: '4px 0', borderBottom: `1px solid ${C.border}`, fontSize: 11 }}>
+              <span style={{ fontFamily: MONO, fontWeight: 700, color: C.dark, minWidth: 80 }}>{it.ticker}</span>
+              <span style={{ color: C.mid, flex: 1 }}>{it.reason}<span style={{ color: C.mid, fontSize: 10 }}> · {it.what_to_check}</span></span>
+            </div>
+          ))}
+          <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.7 }}>
+            <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.length ? blockers.join(' · ') : L('none', '无')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div>
+            <div style={{ color: C.gold }}>{L('Thesis conflicts', '论点冲突')}: {conflicts.length ? conflicts.map(c => c.ticker).join(', ') : L('none', '无')}</div>
+          </div>
+          {needResearch.length > 0 ? (
+            <div style={{ marginTop: 8 }}>
+              <button onClick={() => setShowResearch(v => !v)} style={{ textAlign: 'left', fontSize: 11, fontWeight: 700, color: C.blue, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                {showResearch ? '▾' : '▸'} {L('Need more research', '需更多研究')} ({needResearch.length}) <span style={{ color: C.mid, fontWeight: 400, fontSize: 10 }}>{L('screen-interesting, no thesis', '筛选有趣、无论点')}</span>
+              </button>
+              {showResearch ? (
+                <div style={{ fontSize: 10.5, color: C.mid, marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {needResearch.map(it => <span key={it.ticker} style={{ fontFamily: MONO, padding: '1px 6px', borderRadius: 4, background: C.soft, color: C.dark }}>{it.ticker}</span>)}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          <div style={{ fontSize: 9, color: C.mid, marginTop: 8 }}>
+            {L('Status-only review priorities — no buy/sell, no sizing. The human decides.', '仅状态复核优先级 — 无买卖、无仓位。由人决策。')}
+          </div>
+        </div>
+      ) : null}
 
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 8 }}>
