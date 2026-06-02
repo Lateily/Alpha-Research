@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-05-31 (Trade Decision Stack v0 Steps 1–3 shipped — read-only cockpit live; newest milestone below. CORE Alpha Factory v0 milestone follows it.)
+**Last updated:** 2026-06-02 (MD-demo readiness shipped + live: no-advice hardening + Browse honesty + Cockpit M1 review-queue — newest milestone below. Visual QA partially blocked; same-device eyeball pending.)
 
 ## ▶ CURRENT DIRECTION (2026-05-25) — READ THIS FIRST
 
@@ -63,7 +63,33 @@ synthesizer FIRST; must land before the first formal validation verdict). First
 meaningful validation window ≈ **2026-08 → 2026-11** (60–120d horizons of the first
 registered batch). Factory is paused-by-design while forward data accrues.
 
-**2026-05-31 — TRADE DECISION STACK v0, Steps 1–3 SHIPPED (newest; read first):**
+**2026-06-02 — MD-DEMO READINESS + Cockpit M1 SHIPPED + LIVE (newest; read first):**
+
+Ahead of the 6/10 UBS MD demo (plan: `docs/strategy/MD_DEMO_MILESTONE_PLAN.md`, PR #17),
+hardened every user-facing surface to read as **auditable decision-support, not 荐股**, and
+made the Cockpit the daily decision entry. All merged + deployed live:
+- **No-advice hardening** (PR #18): Desk sizing card removed + action badges relabeled
+  (Research Watch / Risk Review / Exposure Review / Evidence Watch / Paper Hold); Morning
+  "Trade Ideas" → "Review Notes" + the morning-report prompt forbids buy/sell/add/trim/entry/
+  size; the SOURCE strings in `scripts/daily_decision.py` (reason/exit/brief/flags/entry
+  language) reworded to risk/exposure/evidence-review; `daily_decision.json` +
+  `trade_attribution_capsules.json` regenerated (0 decision drift).
+- **Browse honesty** (PR #19): "Live" dot gated on real quotes (green only when polling &&
+  liveCount>0; else Connecting/Paused); breadth/movers snapshot-date stamp from universe
+  `_meta.fetched_at`; "Today Top 5 Movers" → "Top 5 Movers (snapshot)".
+- **Pulse-bar P1** (PR #20): `height:32` → `minHeight:32` (mobile wrap no longer clipped).
+- **Cockpit Milestone-1** (PR #21): `human_review_queue.json` wired into the Cockpit top —
+  Review today · Risk blockers · Thesis conflicts · Need-more-research (collapsible). The
+  Cockpit is now the canonical daily "what to look at today" surface.
+
+A 7-probe readiness audit drove this; all 4 audit blockers closed. **Visual QA is PARTIALLY
+BLOCKED**: live-bundle integrity PASS + source-level checks done, but browser screenshots
+could not be captured (gstack headless render fails in the build env) — a same-device eyeball
+of the live Cockpit + Browse pulse bar is **pending**. Remaining demo phases (plan): Beta
+harness (wire Cockpit as the §6 acceptance entry) → MD Demo Pack (deck + 5 scenarios). Do NOT
+restart Strategy Checklist 4B (paused — it risks re-introducing trade-advice language).
+
+**2026-05-31 — TRADE DECISION STACK v0, Steps 1–3 SHIPPED (read first):**
 
 A read-only **decision-support layer** (NOT auto-recommendation, NOT auto-trade) built by
 composing the factory outputs. Design frozen `docs/strategy/TRADE_DECISION_STACK_v0_DESIGN.md`
