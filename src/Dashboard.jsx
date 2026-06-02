@@ -10451,7 +10451,7 @@ function TradeDecisionCockpit({ L, lk, C }) {
             </div>
           ))}
           <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.7 }}>
-            <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.length ? blockers.join(' · ') : L('none', '无')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div>
+            <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.length ? blockers.join(' · ') : L('none', '无')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps / data freshness]', '【未校准上限 / 数据时效】')}</span></div>
             <div style={{ color: C.gold }}>{L('Thesis conflicts', '论点冲突')}: {conflicts.length ? conflicts.map(c => c.ticker).join(', ') : L('none', '无')}</div>
           </div>
           {needResearch.length > 0 ? (
@@ -10487,7 +10487,7 @@ function TradeDecisionCockpit({ L, lk, C }) {
               ))}
             </div>
             {conflicts.length > 0 ? <div style={{ color: C.gold }}>{L('Thesis conflicts', '论点冲突')}: {conflicts.map(c => c.ticker).join(', ')}</div> : null}
-            {blockers.length > 0 ? <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.join(' · ')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div> : null}
+            {blockers.length > 0 ? <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.join(' · ')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps / data freshness]', '【未校准上限 / 数据时效】')}</span></div> : null}
           </div>
         )}
       </div>

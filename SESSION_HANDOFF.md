@@ -4,8 +4,8 @@
 > reads it to resume. Keep it short + current. Authoritative state lives in
 > `STATUS.md` (read that first); this is the delta + the Codex coordination ask.
 
-**Session date:** 2026-05-31
-**Headline:** Trade Decision Stack v0 Steps 1–3 shipped (risk packet + candidate board + read-only cockpit, PRs #11–#14); factory v0 milestone unchanged below.
+**Session date:** 2026-06-02
+**Headline:** MD-demo readiness shipped + live (PRs #18–#21): no-advice hardening (Desk/Morning/daily_decision/prompt), Browse honesty (as-of stamp + Live-dot gating), pulse-bar mobile P1, and Cockpit Milestone-1 (human_review_queue wired into the Cockpit top). Visual QA PARTIALLY BLOCKED — gstack headless render fails in the build env; same-device eyeball of the live Cockpit + Browse pulse bar pending. Next: Beta harness → MD Demo Pack. Strategy Checklist 4B stays paused.
 
 ## What shipped (all on `main`, deployed)
 
