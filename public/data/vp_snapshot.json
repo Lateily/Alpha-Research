@@ -1,17 +1,17 @@
 {
-  "date": "2026-06-01",
+  "date": "2026-06-02",
   "snapshots": [
     {
       "ticker": "300308.SZ",
-      "date": "2026-06-01",
+      "date": "2026-06-02",
       "vp_score": 48,
       "expectation_gap": 10,
       "fundamental_accel": 50,
       "narrative_shift": 72,
       "low_coverage": 50,
       "catalyst_prox": 80,
-      "close": 1130,
-      "volume": 2697818900,
+      "close": 1194.89,
+      "volume": 2470898000,
       "source": "vp_engine",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
@@ -28,19 +28,19 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-06-01T14:34:01.101425+00:00"
+      "engine_run_at": "2026-06-02T05:58:47.170605+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "date": "2026-06-01",
+      "date": "2026-06-02",
       "vp_score": 48,
       "expectation_gap": 68,
       "fundamental_accel": 50,
       "narrative_shift": 38,
       "low_coverage": 32,
       "catalyst_prox": 45,
-      "close": 93.65,
-      "volume": 4459807600,
+      "close": 96.58,
+      "volume": 4422830900,
       "source": "vp_engine",
       "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
       "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
@@ -57,19 +57,19 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-06-01T14:34:01.101573+00:00"
+      "engine_run_at": "2026-06-02T05:58:47.170728+00:00"
     },
     {
       "ticker": "175.HK",
-      "date": "2026-06-01",
+      "date": "2026-06-02",
       "vp_score": 50,
       "expectation_gap": 50,
       "fundamental_accel": 50,
       "narrative_shift": 50,
       "low_coverage": 50,
       "catalyst_prox": 50,
-      "close": 18.82,
-      "volume": 47,
+      "close": 18.91,
+      "volume": -137,
       "source": "vp_engine",
       "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
       "wrongIf_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
@@ -84,19 +84,19 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-01T14:34:01.101688+00:00"
+      "engine_run_at": "2026-06-02T05:58:47.170829+00:00"
     },
     {
       "ticker": "603233.SH",
-      "date": "2026-06-01",
+      "date": "2026-06-02",
       "vp_score": 50,
       "expectation_gap": 50,
       "fundamental_accel": 50,
       "narrative_shift": 50,
       "low_coverage": 50,
       "catalyst_prox": 50,
-      "close": 16.63,
-      "volume": 1057262600,
+      "close": 16.7,
+      "volume": 719306000,
       "source": "vp_engine",
       "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
       "wrongIf_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
@@ -111,7 +111,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-01T14:34:01.101799+00:00"
+      "engine_run_at": "2026-06-02T05:58:47.170924+00:00"
     }
   ]
 }
