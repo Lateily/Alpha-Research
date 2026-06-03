@@ -10521,7 +10521,12 @@ export default function Dashboard() {
   const [ticker, setTicker] = useState(null);
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);  // P1 mobile shell: default to the 56px icon rail on phones (else main content squeezes to ~190px on a 390px screen)
+  useEffect(() => {
+    const onResize = () => { if (typeof window !== 'undefined' && window.innerWidth < 768) setCollapsed(true); };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true, rdcf:true, debate:false, regime:true, exclusiveInsight:true, newsPanel:true});
   const [dynamicStocks, setDynamicStocks] = useState({});
   const [showDeepResearch, setShowDeepResearch] = useState(false);
