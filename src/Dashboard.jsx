@@ -11354,7 +11354,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── MAIN ────────────────────────────────────────────────────────── */}
-      <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden'}}>
+      <div style={{flex:1, minWidth:0, display:'flex', flexDirection:'column', overflow:'hidden'}}>
 
         {/* Jason: Bloomberg-style thin terminal status strip */}
         {dark && (
@@ -11540,7 +11540,7 @@ export default function Dashboard() {
         </div>
 
         {/* Content area */}
-        <div style={{flex:1, overflowY:'auto', padding:`14px 20px ${dark?'36px':'14px'} 20px`, background:C.bg}}>
+        <div style={{flex:1, minWidth:0, overflowY:'auto', padding:`14px 20px ${dark?'36px':'14px'} 20px`, background:C.bg}}>
           {tab==='desk'     && <TradingDesk L={L} lk={lk} C={C}/>}
           {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK} signalsData={signalsData} vpScores={vpScores}/>}
           {(tab==='browse' || tab==='screener') && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
