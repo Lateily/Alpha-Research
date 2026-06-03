@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-06-03T06:08:46.406568",
+  "as_of": "2026-06-03T12:53:29.445487",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -13,14 +13,14 @@
       "currency": "CNY",
       "quantity": 150,
       "avg_cost": 681.36,
-      "current_price": 1277.01,
-      "market_value": 191551.5,
+      "current_price": 1275,
+      "market_value": 191250,
       "cost_value": 102204.0,
-      "pnl_abs": 89347.5,
-      "pnl_pct": 87.42,
-      "market_value_cny": 191551.5,
+      "pnl_abs": 89046.0,
+      "pnl_pct": 87.13,
+      "market_value_cny": 191250,
       "cost_value_cny": 102204.0,
-      "pnl_abs_cny": 89347.5,
+      "pnl_abs_cny": 89046.0,
       "fx_rate_used": 1.0,
       "holding_days": 85,
       "as_of": "2026-06-03",
@@ -58,7 +58,7 @@
       },
       "vp_at_entry": 79,
       "wrongIf_at_entry": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter",
-      "weight_pct": 59.09
+      "weight_pct": 59.05
     },
     {
       "ticker": "6160.HK",
@@ -163,7 +163,7 @@
       },
       "vp_at_entry": 64,
       "wrongIf_at_entry": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters",
-      "weight_pct": 21.46
+      "weight_pct": 21.48
     },
     {
       "ticker": "9999.HK",
@@ -213,7 +213,7 @@
       },
       "vp_at_entry": 58,
       "wrongIf_at_entry": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
-      "weight_pct": 12.35
+      "weight_pct": 12.36
     },
     {
       "ticker": "002594.SZ",
@@ -223,14 +223,14 @@
       "currency": "CNY",
       "quantity": 120,
       "avg_cost": 96.192,
-      "current_price": 94.78,
-      "market_value": 11373.6,
+      "current_price": 94.82,
+      "market_value": 11378.4,
       "cost_value": 11543.04,
-      "pnl_abs": -169.44,
-      "pnl_pct": -1.47,
-      "market_value_cny": 11373.6,
+      "pnl_abs": -164.64,
+      "pnl_pct": -1.43,
+      "market_value_cny": 11378.4,
       "cost_value_cny": 11543.04,
-      "pnl_abs_cny": -169.44,
+      "pnl_abs_cny": -164.64,
       "fx_rate_used": 1.0,
       "holding_days": 63,
       "as_of": "2026-06-03",
@@ -262,12 +262,12 @@
     }
   ],
   "summary": {
-    "total_value_cny": 324147.77,
+    "total_value_cny": 323851.07,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 89178.06,
-    "total_pnl_pct": 37.95,
-    "total_value": 324147.77,
+    "total_pnl_cny": 88881.36,
+    "total_pnl_pct": 37.83,
+    "total_value": 323851.07,
     "total_cost": 234969.71,
-    "total_pnl": 89178.06
+    "total_pnl": 88881.36
   }
 }

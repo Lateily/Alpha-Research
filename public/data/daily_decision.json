@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-03T06:11:42.585385+00:00",
+  "generated_at": "2026-06-03T12:56:10.440928+00:00",
   "date": "2026-06-03",
   "brief_e": "1 Exposure Review",
   "brief_z": "1 敞口复核",
@@ -12,13 +12,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 0,
-        "pnl_pct": 87.42,
+        "pnl_pct": 87.13,
         "holding_days": 85,
-        "weight_pct": 59.1,
+        "weight_pct": 59.0,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +87.4% after 85d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+87.4%（持有85天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +87.1% after 85d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+87.1%（持有85天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 71,
-        "weight_pct": 12.3,
+        "weight_pct": 12.4,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 71d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -80,13 +80,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 3,
-        "pnl_pct": -1.47,
+        "pnl_pct": -1.43,
         "holding_days": 63,
         "weight_pct": 3.5,
         "vp_score": 48,
         "confluence": -3,
-        "reason_e": "Signal neutral (score -3). P&L -1.5% after 63d. Paper-hold — no new review trigger. Bearish: Death Cross | RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分-3），浮盈-1.5%，持有63天，无新触发条件。空头：死亡交叉 | RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score -3). P&L -1.4% after 63d. Paper-hold — no new review trigger. Bearish: Death Cross | RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分-3），浮盈-1.4%，持有63天，无新触发条件。空头：死亡交叉 | RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
@@ -131,7 +131,7 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 59% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +87.4% — exposure-review condition (sizable unrealised gain)"
+    "PROFIT REVIEW: 300308.SZ +87.1% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {
