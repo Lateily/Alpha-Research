@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-06-02T12:26:48.101652+00:00",
+    "generated_at": "2026-06-03T06:11:42.880457+00:00",
     "schema_version": 1,
     "method": "median_of_3_signals_aggregator",
     "tie_break_rule": "n2_consensus_only",
