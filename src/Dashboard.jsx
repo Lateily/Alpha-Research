@@ -3117,6 +3117,16 @@ function FilterPill({ text, onRemove, C }) {
   );
 }
 
+function useIsMobile(bp = 768) {
+  const [m, setM] = useState(() => typeof window !== 'undefined' && window.innerWidth < bp);
+  useEffect(() => {
+    const on = () => setM(typeof window !== 'undefined' && window.innerWidth < bp);
+    window.addEventListener('resize', on);
+    return () => window.removeEventListener('resize', on);
+  }, [bp]);
+  return m;
+}
+
 function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, universeHK }) {
   const PAGE_SIZE = 100;
   const POLL_MS   = 3000;
@@ -3414,6 +3424,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
   const liveCount = Object.keys(liveQuotes).length;
   const liveActive = polling && liveCount > 0;   // green "Live" only when actually receiving quotes
   const breadthAsOf = (universeA?._meta?.fetched_at || universeHK?._meta?.fetched_at || '').slice(0, 10);  // universe snapshot date (breadth/movers source)
+  const isMobile = useIsMobile();  // P3 mobile: collapse multi-column grids to single column on phones
   const hasAlphaScores = masterList.some(s => s.alpha_score != null && s.alpha_score > 0);
   const COLS = hasAlphaScores
     ? '32px 1fr 80px 80px 80px 80px 46px 10px'   // with α column
@@ -3490,7 +3501,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
       </div>
 
       {/* ── HERO STANDOUTS ────────────────────────────────────────────────── */}
-      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10}}>
+      <div style={{display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap:10, marginBottom:10}}>
         <HeroCard
           title={L('Top 5 Movers (snapshot)','涨幅 Top 5（快照）')}
           icon={<Flame size={14}/>}
@@ -3537,7 +3548,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
       </div>
 
       {capitalFlow && capitalFlow._status !== 'fetch_failed' && capitalFlow._status !== 'endpoint_unavailable' && (
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10}}>
+        <div style={{display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10, marginBottom:10}}>
           {!hasHotConcepts && !hasHotIndustries ? (
             <div style={{gridColumn:'1 / -1', padding:'8px 12px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:8, fontSize:10, color:C.mid}}>
               资金流热度 · 当日数据未生成 ({capitalFlow.trade_date || '—'})
