@@ -10533,6 +10533,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);  // P1 mobile shell: default to the 56px icon rail on phones (else main content squeezes to ~190px on a 390px screen)
+  const isMobile = useIsMobile();  // P4 mobile topbar: two-row layout on phones
   useEffect(() => {
     const onResize = () => { if (typeof window !== 'undefined' && window.innerWidth < 768) setCollapsed(true); };
     window.addEventListener('resize', onResize);
@@ -11429,11 +11430,11 @@ export default function Dashboard() {
           borderBottom:`1px solid ${C.border}`,
           padding:'10px 20px',
           display:'flex', justifyContent:'space-between',
-          alignItems:'center', gap:12,
+          alignItems:'center', gap:12, flexWrap: isMobile ? 'wrap' : 'nowrap',
           boxShadow: dark ? 'none' : '0 1px 6px rgba(50,90,160,0.07)',
           zIndex:9, flexShrink:0,
         }}>
-          <div style={{position:'relative', display:'flex', gap:6, alignItems:'center', flex:1, maxWidth:480}}>
+          <div style={{position:'relative', display:'flex', gap:6, alignItems:'center', flex:1, maxWidth: isMobile ? '100%' : 480, flexBasis: isMobile ? '100%' : 'auto', order: isMobile ? 2 : 0}}>
             <input value={search}
               onChange={e=>{setSearch(e.target.value); setShowSuggestions(true)}}
               onKeyDown={e=>{if(e.key==='Enter')handleSearch(); if(e.key==='Escape'){setShowSuggestions(false);}}}
@@ -11444,9 +11445,11 @@ export default function Dashboard() {
             <button onClick={handleSearch} style={{padding:'7px 14px', background:C.blue, color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:12, fontWeight:500}}>
               <Search size={14}/>
             </button>
+            {!isMobile && (
             <button onClick={()=>{setShowDeepResearch(true); setTab('research');}} title={L('Deep Research','深度研究')} style={{padding:'7px 14px', background:`${C.green}15`, color:C.green, border:`1.5px solid ${C.green}40`, borderRadius:8, cursor:'pointer', fontSize:11, fontWeight:600, whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:5}}>
               <Zap size={13}/>{L('Deep Research','深度研究')}
             </button>
+            )}
             {showSuggestions && search.trim() && (
               <div style={{position:'absolute', top:'100%', left:0, right:60, marginTop:6, background:C.card, border:`1px solid ${C.border}`, borderRadius:12, maxHeight:420, overflowY:'auto', zIndex:20, boxShadow:'0 8px 40px rgba(50,90,160,0.18)'}}>
                 {/* Header */}
@@ -11514,7 +11517,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          <div style={{display:'flex', gap:8, alignItems:'center'}}>
+          <div style={{display:'flex', gap:8, alignItems:'center', order: isMobile ? 1 : 0}}>
             <DataBadge liveData={liveData} C={C} L={L}/>
             {/* Jason: Live clock in topbar — visible in light mode (dark mode has status strip) */}
             {!dark && (
