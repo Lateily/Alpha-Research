@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-06-02 (MD-demo readiness shipped + live: no-advice hardening + Browse honesty + Cockpit M1 review-queue — newest milestone below. Visual QA partially blocked; same-device eyeball pending.)
+**Last updated:** 2026-06-03 (MD-demo readiness + mobile shell hardening live: no-advice + Browse honesty + Cockpit M1 + mobile P1–P4 (#23–#26). Mobile NOT yet full PASS — remaining P3b Browse table→cards, then P2 Cockpit cards. See milestone below.)
 
 ## ▶ CURRENT DIRECTION (2026-05-25) — READ THIS FIRST
 
@@ -88,6 +88,28 @@ could not be captured (gstack headless render fails in the build env) — a same
 of the live Cockpit + Browse pulse bar is **pending**. Remaining demo phases (plan): Beta
 harness (wire Cockpit as the §6 acceptance entry) → MD Demo Pack (deck + 5 scenarios). Do NOT
 restart Strategy Checklist 4B (paused — it risks re-introducing trade-advice language).
+
+**Mobile hardening (2026-06-03, #23–#26, all merged + live)** — triage in
+`experiments/MOBILE_QA_TRIAGE_2026-06-02.md`. The dashboard shell was desktop-only; on a 390px
+phone the 200px sidebar + desktop grids clipped content. Fixed in scoped PRs, each verified on
+a real phone (gstack headless render is env-blocked, so the human eyeball is the gate):
+**P1** sidebar → 56px collapsed icon rail on `<768px` (#23) · **P1.5** `minWidth:0` on the main
+flex child + content scroll area so desktop grids stop stretching the layout past the viewport
+(#24) · **P3a** Browse hero + capital-flow grids → single column via a shared `useIsMobile()`
+hook (#25) · **P4** topbar two-row on mobile (controls row 1, search full-width row 2, Deep
+Research hidden; reachable via Research tab) (#26). **Remaining (next session): P3b** Browse
+7/8-col stock table → mobile stock cards (the big one — touches every row cell; reuse
+`useIsMobile()`), then **P2** Cockpit review rows stack (no ellipsis hiding the reason). Mobile
+is NOT full PASS until P3b lands. `useIsMobile()` is now shared infra in Screener scope.
+
+**Dual-track vision (confirmed 2026-06-03, parked post-demo):** platform = buy-side research
+engine (falsifiable theses, decision-support not 荐股) + a ~30% systematic **Path-B quant
+sleeve**, A-share long-only, all human-allocated with detailed reasoning. Same end-shape as the
+"同行" 1d/3d target-price 荐股 tools, but deeper (thesis + reasoning + risk + validation) and
+honestly framed. Candidate Path-B factors (state/regime 吸筹→放量突破→派发 + transition probs,
+capital flow, sentiment / info-面) are **plausible-but-unestablished** — route through the CORE
+factory pre-register → forward-validate before any edge claim; capture later in
+`PATH_B_FACTOR_FRAMEWORK.md`. Do NOT revive the falsified inverse-momentum Path-B.
 
 **2026-05-31 — TRADE DECISION STACK v0, Steps 1–3 SHIPPED (read first):**
 
