@@ -4,8 +4,8 @@
 > reads it to resume. Keep it short + current. Authoritative state lives in
 > `STATUS.md` (read that first); this is the delta + the Codex coordination ask.
 
-**Session date:** 2026-06-02
-**Headline:** MD-demo readiness shipped + live (PRs #18–#21): no-advice hardening (Desk/Morning/daily_decision/prompt), Browse honesty (as-of stamp + Live-dot gating), pulse-bar mobile P1, and Cockpit Milestone-1 (human_review_queue wired into the Cockpit top). Visual QA PARTIALLY BLOCKED — gstack headless render fails in the build env; same-device eyeball of the live Cockpit + Browse pulse bar pending. Next: Beta harness → MD Demo Pack. Strategy Checklist 4B stays paused.
+**Session date:** 2026-06-03
+**Headline:** MD-demo readiness + mobile shell hardening shipped + live (PRs #18–#26). (1) No-advice hardening (Desk/Morning/daily_decision/prompt → decision-support, no 荐股); Browse honesty (as-of stamp + Live-dot gating); Cockpit Milestone-1 (human_review_queue wired into the Cockpit top as the daily decision surface). (2) Mobile P1–P4: sidebar→56px rail (#23), minWidth:0 shell overflow fix (#24), Browse hero/flow grids→1-col (#25), topbar two-row (#26) — each verified on a real phone (gstack render env-blocked, human eyeball is the gate). **Mobile NOT full PASS yet** — remaining **P3b** Browse 7/8-col table → mobile stock cards (the big one; reuse `useIsMobile()`), then **P2** Cockpit review rows stack. Read `experiments/MOBILE_QA_TRIAGE_2026-06-02.md` first. After mobile: Beta harness → MD Demo Pack. Strategy Checklist 4B + the dual-track Path-B factor framework stay parked post-demo.
 
 ## What shipped (all on `main`, deployed)
 
