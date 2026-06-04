@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-06-04T06:03:18Z",
+  "fetched_at": "2026-06-04T11:31:15Z",
   "trade_date": "20260604",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": 99431710720000.0,
+      "pct_chg": 1.35
+    },
+    {
+      "name": "MiniLED",
+      "ts_code": "BK0902.DC",
+      "net_inflow_yuan": 80414236160000.0,
+      "pct_chg": 0.95
+    },
+    {
+      "name": "OLED",
+      "ts_code": "BK0840.DC",
+      "net_inflow_yuan": 74858035200000.0,
+      "pct_chg": 1.88
+    },
+    {
+      "name": "半导体概念",
+      "ts_code": "BK0917.DC",
+      "net_inflow_yuan": 69224325120000.0,
+      "pct_chg": 1.32
+    },
+    {
+      "name": "元件",
+      "ts_code": "BK0459.DC",
+      "net_inflow_yuan": 68233786880000.0,
+      "pct_chg": 2.76
+    },
+    {
+      "name": "存储芯片",
+      "ts_code": "BK1137.DC",
+      "net_inflow_yuan": 67748659200000.0,
+      "pct_chg": 2.69
+    },
+    {
+      "name": "光学光电子",
+      "ts_code": "BK1038.DC",
+      "net_inflow_yuan": 54084812800000.0,
+      "pct_chg": 0.97
+    },
+    {
+      "name": "印制电路板",
+      "ts_code": "BK1340.DC",
+      "net_inflow_yuan": 52559431680000.0,
+      "pct_chg": 2.29
+    },
+    {
+      "name": "荣耀概念",
+      "ts_code": "BK1177.DC",
+      "net_inflow_yuan": 51734842880000.0,
+      "pct_chg": 1.31
+    },
+    {
+      "name": "屏下摄像",
+      "ts_code": "BK0947.DC",
+      "net_inflow_yuan": 48265971200000.0,
+      "pct_chg": 2.87
+    },
+    {
+      "name": "柔性屏(折叠屏)",
+      "ts_code": "BK1160.DC",
+      "net_inflow_yuan": 45084904960000.0,
+      "pct_chg": 1.61
+    },
+    {
+      "name": "PCB",
+      "ts_code": "BK0877.DC",
+      "net_inflow_yuan": 44668697600000.0,
+      "pct_chg": 1.67
+    },
+    {
+      "name": "显示技术",
+      "ts_code": "BK1651.DC",
+      "net_inflow_yuan": 43689164800000.0,
+      "pct_chg": 1.41
+    },
+    {
+      "name": "小米概念",
+      "ts_code": "BK0833.DC",
+      "net_inflow_yuan": 43461117440000.0,
+      "pct_chg": 0.26
+    },
+    {
+      "name": "面板",
+      "ts_code": "BK1335.DC",
+      "net_inflow_yuan": 40627079680000.0,
+      "pct_chg": 0.75
+    },
+    {
+      "name": "超清视频",
+      "ts_code": "BK0859.DC",
+      "net_inflow_yuan": 39769597440000.0,
+      "pct_chg": -0.4
+    },
+    {
+      "name": "汽车芯片",
+      "ts_code": "BK0969.DC",
+      "net_inflow_yuan": 37247790080000.0,
+      "pct_chg": 0.45
+    },
+    {
+      "name": "钙钛矿电池",
+      "ts_code": "BK1094.DC",
+      "net_inflow_yuan": 35587822080000.0,
+      "pct_chg": 1.05
+    },
+    {
+      "name": "电子纸概念",
+      "ts_code": "BK1057.DC",
+      "net_inflow_yuan": 35065530880000.0,
+      "pct_chg": 0.07
+    },
+    {
+      "name": "LED概念",
+      "ts_code": "BK0580.DC",
+      "net_inflow_yuan": 34909870080000.0,
+      "pct_chg": 1.0
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": -525122068480000.0,
+      "pct_chg": -0.88
+    },
+    {
+      "name": "富时罗素",
+      "ts_code": "BK0867.DC",
+      "net_inflow_yuan": -412894781440000.0,
+      "pct_chg": -1.11
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": -392063918080000.0,
+      "pct_chg": -0.71
+    },
+    {
+      "name": "大盘股",
+      "ts_code": "BK1663.DC",
+      "net_inflow_yuan": -291425116160000.0,
+      "pct_chg": -0.69
+    },
+    {
+      "name": "沪股通",
+      "ts_code": "BK0707.DC",
+      "net_inflow_yuan": -285470474240000.0,
+      "pct_chg": -0.8
+    },
+    {
+      "name": "HS300_",
+      "ts_code": "BK0500.DC",
+      "net_inflow_yuan": -274737233920000.0,
+      "pct_chg": -1.0
+    },
+    {
+      "name": "标准普尔",
+      "ts_code": "BK0879.DC",
+      "net_inflow_yuan": -266161725440000.0,
+      "pct_chg": -1.16
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": -246435594240000.0,
+      "pct_chg": -0.82
+    },
+    {
+      "name": "央国企改革",
+      "ts_code": "BK0683.DC",
+      "net_inflow_yuan": -197081538560000.0,
+      "pct_chg": -1.32
+    },
+    {
+      "name": "机构重仓",
+      "ts_code": "BK0552.DC",
+      "net_inflow_yuan": -178238136320000.0,
+      "pct_chg": -1.37
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1013,
     "_status": "ok"
   }
 }
