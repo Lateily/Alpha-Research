@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "generated_at": "2026-06-04T11:30:22.963045+00:00",
+  "generated_at": "2026-06-05T05:24:02.735432+00:00",
   "overall": "MED",
   "sections": {
     "business_model": {
@@ -49,9 +49,9 @@
     "⚠️ Consensus estimates are 999 days old — expectation gap may be stale"
   ],
   "data_freshness": {
-    "financials": "2026-03-06",
-    "price": "2026-06-04",
+    "financials": "2026-03-07",
+    "price": "2026-06-05",
     "consensus": null,
-    "news": "2026-06-04"
+    "news": "2026-06-05"
   }
 }
