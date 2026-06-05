@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-06-05T05:24:05.922671+00:00",
+  "generated_at": "2026-06-05T11:40:20.903688+00:00",
   "industry": "ai_infrastructure",
   "composite_score": 56.0,
   "composite_signal": "MODERATE",
   "hyperscaler_basket": {
     "NVDA": {
-      "price": NaN,
-      "ath_3mo": 235.74,
-      "drawdown_3mo_pct": NaN
+      "price": 218.66,
+      "ath_3mo": 235.47,
+      "drawdown_3mo_pct": -7.1
     },
     "MSFT": {
-      "price": NaN,
+      "price": 428.05,
       "ath_3mo": 460.52,
-      "drawdown_3mo_pct": NaN
+      "drawdown_3mo_pct": -7.1
     },
     "GOOGL": {
-      "price": NaN,
+      "price": 372.19,
       "ath_3mo": 402.62,
-      "drawdown_3mo_pct": NaN
+      "drawdown_3mo_pct": -7.6
     },
-    "_avg_drawdown_pct": NaN,
+    "_avg_drawdown_pct": 7.3,
     "_window": "3 months (~63 trading days)",
     "_constituents": [
       "NVDA",
@@ -62,10 +62,10 @@
         }
       ],
       "price": {
-        "price": NaN,
-        "return_3m_pct": NaN,
-        "ath_3mo": 235.74,
-        "drawdown_3mo_pct": NaN
+        "price": 218.66,
+        "return_3m_pct": 27.4,
+        "ath_3mo": 235.47,
+        "drawdown_3mo_pct": -7.1
       },
       "latest_qoq": 19.8,
       "score": 68,
@@ -101,10 +101,10 @@
             }
           ],
           "price": {
-            "price": NaN,
-            "return_3m_pct": NaN,
+            "price": 428.05,
+            "return_3m_pct": 9.2,
             "ath_3mo": 460.52,
-            "drawdown_3mo_pct": NaN
+            "drawdown_3mo_pct": -7.1
           },
           "latest_qoq": 3.3,
           "score": 50,
@@ -135,10 +135,10 @@
             }
           ],
           "price": {
-            "price": NaN,
-            "return_3m_pct": NaN,
+            "price": 372.19,
+            "return_3m_pct": 12.4,
             "ath_3mo": 402.62,
-            "drawdown_3mo_pct": NaN
+            "drawdown_3mo_pct": -7.6
           },
           "latest_qoq": 28.1,
           "score": 78,
@@ -203,10 +203,10 @@
             }
           ],
           "price": {
-            "price": NaN,
-            "return_3m_pct": NaN,
+            "price": 253.79,
+            "return_3m_pct": 14.0,
             "ath_3mo": 274.99,
-            "drawdown_3mo_pct": NaN
+            "drawdown_3mo_pct": -7.7
           },
           "latest_qoq": 11.8,
           "score": 65,
@@ -242,10 +242,10 @@
         }
       ],
       "price": {
-        "price": NaN,
-        "return_3m_pct": NaN,
+        "price": 444.92,
+        "return_3m_pct": 34.9,
         "ath_3mo": 446.69,
-        "drawdown_3mo_pct": NaN
+        "drawdown_3mo_pct": -0.4
       },
       "latest_qoq": 8.4,
       "score": 55,

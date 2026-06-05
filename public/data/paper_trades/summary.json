@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-05T05:26:36.867926+00:00",
+  "updated_at": "2026-06-05T11:42:59.433212+00:00",
   "total_theses": 4,
   "active_positions": [
     {
@@ -7,8 +7,8 @@
       "direction": "LONG",
       "entry_date": "2026-05-17",
       "entry_price": 96.3,
-      "current_price": 93.72,
-      "return_since_entry_pct": -2.68,
+      "current_price": 93.01,
+      "return_since_entry_pct": -3.42,
       "upside_target_pct": 22.0,
       "downside_stop_pct": -9.0,
       "days_held": 19,
