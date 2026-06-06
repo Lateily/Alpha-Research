@@ -10760,7 +10760,7 @@ function BetaHarness({ L, lk, C, setTab }) {
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
   const [dark, setDark] = useState(true); // Jason: Bloomberg default — dark mode
-  const [tab, setTab] = useState('browse');  // 2026-05-02: 'browse' is the new entry point per Junyan's "first interface clean" brief
+  const [tab, setTab] = useState('beta');  // 2026-06-06: internal-beta entry — land on the guided Beta harness first (Junyan PR #30 review). Prior default was 'browse' (2026-05-02 "first interface clean" brief).
   const [ticker, setTicker] = useState(null);
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
