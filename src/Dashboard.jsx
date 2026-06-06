@@ -10593,6 +10593,170 @@ function TradeDecisionCockpit({ L, lk, C }) {
   );
 }
 
+/* ── INTERNAL BETA HARNESS ──────────────────────────────────────────────────
+   Internal-only guided test workbench: an entry page pointing reviewers at 5
+   test tasks across existing surfaces, plus lightweight client-side feedback
+   capture (localStorage + copy/download JSON — no backend, no paper-state
+   write). Decision-support framing only; no buy/sell/sizing/recommendation. */
+function BetaHarness({ L, lk, C, setTab }) {
+  const isMobile = useIsMobile();
+  const ISSUE_TYPES = [
+    { id:'confusing',  en:'Confusing',       zh:'看不懂' },
+    { id:'untrusted',  en:"Don't trust it",  zh:'不可信' },
+    { id:'slow',       en:'Too slow',        zh:'太慢' },
+    { id:'thin',       en:'Not enough info', zh:'信息不够' },
+    { id:'misleading', en:'Misleading',      zh:'有误导' },
+  ];
+  const TASKS = [
+    { n:1, q:L('How does the market look today?','今日市场怎么看？'),
+      where:L('Browse — breadth, movers, capital flows (snapshot-stamped).','行情 — 涨跌家数、涨幅榜、资金流（带快照日期）。'),
+      go:'browse',  goLabel:L('Open Browse','去行情') },
+    { n:2, q:L('Which names need human review?','哪些标的需要人工复核？'),
+      where:L('Cockpit — the Human Review Queue (status-only, no buy/sell).','决策台 — 人工复核队列（仅状态，无买卖）。'),
+      go:'cockpit', goLabel:L('Open Cockpit','去决策台') },
+    { n:3, q:L('How is the portfolio doing — return & risk?','当前组合收益 / 风险如何？'),
+      where:L('Portfolio for paper P&L; Cockpit for read-only risk (gross/net/themes).','组合看模拟盈亏；决策台看只读风险（总/净敞口、主题）。'),
+      go:'paper',   goLabel:L('Open Portfolio','去组合') },
+    { n:4, q:L('Which theses / indicators need watching?','哪些 thesis / indicator 需继续观察？'),
+      where:L('Tracker — predictions & thesis outcomes; Cockpit "need more research".','追踪 — 预测与论点结果；决策台「需更多研究」。'),
+      go:'tracker', goLabel:L('Open Tracker','去追踪') },
+    { n:5, q:L('Anything confusing / misleading / to change?','哪里看不懂 / 误导 / 想改？'),
+      where:L('Tell us below — it shapes the next iteration.','在下面告诉我们 — 决定下一轮迭代。'),
+      go:'__feedback', goLabel:L('Give feedback ↓','去反馈 ↓') },
+  ];
+
+  const FB_KEY = 'ar_beta_feedback';
+  const [page, setPage]       = useState('');
+  const [tickerF, setTickerF] = useState('');
+  const [types, setTypes]     = useState([]);
+  const [note, setNote]       = useState('');
+  const [saved, setSaved]     = useState([]);
+  const [copied, setCopied]   = useState(false);
+  const fbRef = useRef(null);
+
+  useEffect(() => {
+    try { setSaved(JSON.parse(localStorage.getItem(FB_KEY) || '[]')); } catch { setSaved([]); }
+  }, []);
+
+  const toggleType = id => setTypes(t => t.includes(id) ? t.filter(x => x !== id) : [...t, id]);
+  const goTask = go => { if (go === '__feedback') fbRef.current?.scrollIntoView({ behavior:'smooth' }); else setTab(go); };
+  const empty = !note.trim() && types.length === 0;
+  const submit = () => {
+    if (empty) return;
+    const entry = { ts:new Date().toISOString(), page:page || null, ticker:tickerF.trim() || null, types, note:note.trim() };
+    const next = [entry, ...saved];
+    setSaved(next);
+    try { localStorage.setItem(FB_KEY, JSON.stringify(next)); } catch {}
+    setPage(''); setTickerF(''); setTypes([]); setNote('');
+  };
+  const copyAll = () => { try { navigator.clipboard.writeText(JSON.stringify(saved, null, 2)); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {} };
+  const downloadAll = () => {
+    const blob = new Blob([JSON.stringify(saved, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'ar_beta_feedback.json'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const card   = { background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:'14px 16px' };
+  const labelS = { fontSize:11, fontWeight:700, color:C.dark, marginBottom:5, display:'block' };
+  const inputS = { width:'100%', boxSizing:'border-box', padding:'7px 10px', fontSize:12, borderRadius:6, border:`1px solid ${C.border}`, background:C.soft, color:C.dark, outline:'none' };
+  const warn   = C.orange || C.gold;
+
+  return (
+    <div style={{ padding:'14px 18px', maxWidth:920, margin:'0 auto', overflowY:'auto' }}>
+      <div style={{ fontSize:18, fontWeight:800, color:C.dark, marginBottom:4 }}>
+        {L('Internal Beta — test workbench','内测工作台')}
+      </div>
+      <div style={{ border:`1px solid ${warn}`, background:warn + '14', borderRadius:8, padding:'8px 12px', fontSize:10.5, color:C.dark, marginBottom:14, lineHeight:1.5 }}>
+        {L('Decision support, not stock tips. AI surfaces evidence and signals; you make every decision. Run the 5 tasks below, then tell us what was confusing, untrustworthy, slow, thin, or misleading — that is exactly what shapes the next iteration.',
+           '决策支持，不是荐股。AI 给证据和信号，决策由你做。请走一遍下面 5 个测试任务，然后告诉我们：哪里看不懂、不可信、太慢、信息不够、有误导 —— 这正是决定下一轮迭代的依据。')}
+      </div>
+
+      <div style={{ fontSize:13, fontWeight:800, color:C.dark, margin:'4px 0 8px' }}>{L('5 test tasks','5 个测试任务')}</div>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10, marginBottom:18 }}>
+        {TASKS.map(t => (
+          <div key={t.n} style={{ ...card, display:'flex', flexDirection:'column', gap:6 }}>
+            <div style={{ display:'flex', alignItems:'baseline', gap:8 }}>
+              <span style={{ fontFamily:MONO, fontWeight:800, color:C.blue, fontSize:13 }}>{t.n}</span>
+              <span style={{ fontSize:12.5, fontWeight:700, color:C.dark }}>{t.q}</span>
+            </div>
+            <div style={{ fontSize:10.5, color:C.mid, lineHeight:1.5, flex:1 }}>{t.where}</div>
+            <button onClick={() => goTask(t.go)} style={{ alignSelf:'flex-start', padding:'5px 12px', fontSize:11, fontWeight:600, borderRadius:6, border:`1px solid ${C.blue}`, background:`${C.blue}10`, color:C.blue, cursor:'pointer' }}>
+              {t.goLabel}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div ref={fbRef} style={{ ...card, marginBottom:14 }}>
+        <div style={{ fontSize:13, fontWeight:800, color:C.dark, marginBottom:2 }}>{L('Leave feedback','留下反馈')}</div>
+        <div style={{ fontSize:10, color:C.mid, marginBottom:12 }}>
+          {L('Saved in your browser only — click Copy / Download and send it to Junyan.','只存在你本地浏览器 — 点「复制 / 下载」发给 Junyan。')}
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10, marginBottom:10 }}>
+          <div>
+            <label style={labelS}>{L('Page / module','页面 / 模块')}</label>
+            <select value={page} onChange={e => setPage(e.target.value)} style={inputS}>
+              <option value="">{L('(select)','（选择）')}</option>
+              {['Browse/行情','Cockpit/决策台','Research/研究','Portfolio/组合','Tracker/追踪','Morning/早报','Scanner/扫描','Flows/资金流','Earnings/财报','Backtest/回测','Other/其他'].map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={labelS}>{L('Ticker / item (optional)','标的 / 模块（可选）')}</label>
+            <input value={tickerF} onChange={e => setTickerF(e.target.value)} placeholder={L('e.g. 300308.SZ','如 300308.SZ')} style={inputS}/>
+          </div>
+        </div>
+        <label style={labelS}>{L('Issue type','问题类型')}</label>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:12 }}>
+          {ISSUE_TYPES.map(it => {
+            const on = types.includes(it.id);
+            return (
+              <button key={it.id} onClick={() => toggleType(it.id)} style={{ padding:'4px 10px', fontSize:11, fontWeight:600, borderRadius:14, cursor:'pointer', border:`1px solid ${on ? C.blue : C.border}`, background:on ? `${C.blue}18` : C.soft, color:on ? C.blue : C.mid }}>
+                {lk === 'z' ? it.zh : it.en}
+              </button>
+            );
+          })}
+        </div>
+        <label style={labelS}>{L('Details / suggestion','说明 / 建议')}</label>
+        <textarea value={note} onChange={e => setNote(e.target.value)} rows={3} placeholder={L('What was confusing / what would you change?','哪里看不懂 / 你会怎么改？')} style={{ ...inputS, resize:'vertical', fontFamily:'inherit' }}/>
+        <div style={{ display:'flex', gap:8, marginTop:10, flexWrap:'wrap' }}>
+          <button onClick={submit} disabled={empty} style={{ padding:'7px 16px', fontSize:12, fontWeight:700, borderRadius:6, border:'none', cursor:empty ? 'default' : 'pointer', background:empty ? C.border : C.blue, color:'#fff' }}>
+            {L('Add feedback','添加反馈')}
+          </button>
+          {saved.length > 0 && (
+            <>
+              <button onClick={copyAll} style={{ padding:'7px 14px', fontSize:12, fontWeight:600, borderRadius:6, border:`1px solid ${C.border}`, background:'transparent', color:C.dark, cursor:'pointer' }}>
+                {copied ? L('Copied ✓','已复制 ✓') : L('Copy all','复制全部') + ` (${saved.length})`}
+              </button>
+              <button onClick={downloadAll} style={{ padding:'7px 14px', fontSize:12, fontWeight:600, borderRadius:6, border:`1px solid ${C.border}`, background:'transparent', color:C.dark, cursor:'pointer' }}>
+                {L('Download JSON','下载 JSON')}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {saved.length > 0 && (
+        <div style={card}>
+          <div style={{ fontSize:12, fontWeight:700, color:C.dark, marginBottom:8 }}>{L('Your feedback this session','本次反馈')} ({saved.length})</div>
+          {saved.map((f, i) => (
+            <div key={i} style={{ borderBottom:`1px solid ${C.border}`, padding:'6px 0', fontSize:11 }}>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'baseline' }}>
+                {f.page   && <span style={{ fontWeight:700, color:C.dark }}>{f.page}</span>}
+                {f.ticker && <span style={{ fontFamily:MONO, color:C.blue }}>{f.ticker}</span>}
+                {(f.types || []).map(ty => <span key={ty} style={{ fontSize:9, padding:'1px 6px', borderRadius:10, background:C.soft, color:C.mid }}>{(ISSUE_TYPES.find(x => x.id === ty) || {})[lk === 'z' ? 'zh' : 'en'] || ty}</span>)}
+              </div>
+              {f.note && <div style={{ color:C.mid, marginTop:2 }}>{f.note}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
   const [dark, setDark] = useState(true); // Jason: Bloomberg default — dark mode
@@ -11314,6 +11478,7 @@ export default function Dashboard() {
   // - Tab visual ordering: Browse first (most-used entry point), Desk second (持仓中心)
   // - DEFERRED visual sidebar consolidation of scanner/flow/earnings/morning to Jason UI work
   const TABS = [
+    { id:'beta',     label:L('Beta','内测'),      icon:<Sparkles size={14}/> },
     { id:'browse',   label:L('Browse','浏览'),    icon:<Filter size={14}/> },
     { id:'desk',     label:L('Desk','交易台'),     icon:<Crosshair size={14}/> },
     { id:'cockpit',  label:L('Cockpit','决策台'),  icon:<Target size={14}/> },
@@ -11671,6 +11836,7 @@ export default function Dashboard() {
           {/* 'watchlist' tab DELETED 2026-05-02 — duplicate of 'desk'. Watchlist 5 持仓 is shown in TradingDesk. */}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
           {tab==='cockpit'  && <TradeDecisionCockpit L={L} lk={lk} C={C}/>}
+          {tab==='beta'     && <BetaHarness L={L} lk={lk} C={C} setTab={setTab}/>}
         </div>
       </div>
 
