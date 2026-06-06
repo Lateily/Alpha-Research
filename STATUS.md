@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-06-03 (MD-demo readiness + mobile shell hardening live: no-advice + Browse honesty + Cockpit M1 + mobile P1–P4 (#23–#26). Mobile NOT yet full PASS — remaining P3b Browse table→cards, then P2 Cockpit cards. See milestone below.)
+**Last updated:** 2026-06-06 (Internal Beta Decision-Support v0 DELIVERED + MD demo pack ready — sprint complete: mobile full PASS (P3b #28 + P2 #29), internal Beta harness + feedback (#30), MD Demo Pack doc (#31). See newest milestone below.)
 
 ## ▶ CURRENT DIRECTION (2026-05-25) — READ THIS FIRST
 
@@ -63,7 +63,33 @@ synthesizer FIRST; must land before the first formal validation verdict). First
 meaningful validation window ≈ **2026-08 → 2026-11** (60–120d horizons of the first
 registered batch). Factory is paused-by-design while forward data accrues.
 
-**2026-06-02 — MD-DEMO READINESS + Cockpit M1 SHIPPED + LIVE (newest; read first):**
+**2026-06-06 — INTERNAL BETA DECISION-SUPPORT v0 DELIVERED + MD DEMO PACK (newest; read first):**
+
+The "回归模型开发 → 内部 Beta 可用化" sprint is complete. Mobile is **full PASS** and the internal-beta
+workbench + the 6/10 UBS-MD demo narrative are shipped — all on `main`, deployed, each Junyan-reviewed
+(incl. one FAIL-fix on the MD pack's own oversell wording, caught + fixed):
+- **Mobile finish** — **P3b** Browse 7/8-col stock table → mobile stock cards (`<768px`: column header
+  hidden, each stock a 2-row card, nothing clipped) (#28) · **P2** Cockpit `CandRow` → mobile card so
+  the reason wraps in full instead of ellipsis-clipped (#29). With P1–P4, mobile = full PASS; desktop
+  paths unchanged; `useIsMobile()` is shared infra in Screener + Cockpit scope.
+- **Internal Beta harness + feedback** (#30) — new **"内测/Beta" tab (now the DEFAULT landing)** = a
+  guided entry: 5 test-task cards routing to the right surface (今日市场→Browse · 需人工复核→Cockpit ·
+  组合收益/风险→Portfolio · 需继续观察→Tracker · 反馈) + lightweight client-side feedback
+  (page/ticker/issue-type chips/suggestion → localStorage + copy/download JSON; no backend, no
+  paper-state write). Decision-support framing only.
+- **MD Demo Pack** (#31) — `docs/strategy/MD_DEMO_PACK.md`: positioning (IS / is-NOT) · auditable-
+  workflow architecture · 5-scenario live click-path + talking points · honest validation status
+  (satellite CI straddles zero · CORE forward-validation Aug–Nov 2026 · 2/3 predictions · ~3.7%
+  thesis-aligned book) · readiness checklist · parked dual-track roadmap · an explicit "what NOT to
+  claim" anti-oversell guardrail. Fulfils Milestone 4 of `MD_DEMO_MILESTONE_PLAN.md`.
+
+**Sprint discipline:** every change via isolated `/private/tmp` worktree off origin/main + scoped PR +
+Junyan review; no new buy/sell/sizing/recommendation logic anywhere; this STATUS/handoff refresh is
+doc-only (self-merged). **Next:** internal trial → 15–20 actionable feedback items (Milestone 3 bar) →
+6/10 MD demo; post-demo, the dual-track Path-B factor framework + the AI-industry-chain research
+deep-dive resume (both parked).
+
+**2026-06-02 — MD-DEMO READINESS + Cockpit M1 SHIPPED + LIVE (superseded by the 2026-06-06 block above):**
 
 Ahead of the 6/10 UBS MD demo (plan: `docs/strategy/MD_DEMO_MILESTONE_PLAN.md`, PR #17),
 hardened every user-facing surface to read as **auditable decision-support, not 荐股**, and
@@ -85,8 +111,7 @@ made the Cockpit the daily decision entry. All merged + deployed live:
 A 7-probe readiness audit drove this; all 4 audit blockers closed. **Visual QA is PARTIALLY
 BLOCKED**: live-bundle integrity PASS + source-level checks done, but browser screenshots
 could not be captured (gstack headless render fails in the build env) — a same-device eyeball
-of the live Cockpit + Browse pulse bar is **pending**. Remaining demo phases (plan): Beta
-harness (wire Cockpit as the §6 acceptance entry) → MD Demo Pack (deck + 5 scenarios). Do NOT
+of the live Cockpit + Browse pulse bar is **pending**. Demo phases since shipped: Beta harness (#30) + MD Demo Pack (#31) — see the 2026-06-06 top block. Do NOT
 restart Strategy Checklist 4B (paused — it risks re-introducing trade-advice language).
 
 **Mobile hardening (2026-06-03, #23–#26, all merged + live)** — triage in
@@ -97,10 +122,9 @@ a real phone (gstack headless render is env-blocked, so the human eyeball is the
 flex child + content scroll area so desktop grids stop stretching the layout past the viewport
 (#24) · **P3a** Browse hero + capital-flow grids → single column via a shared `useIsMobile()`
 hook (#25) · **P4** topbar two-row on mobile (controls row 1, search full-width row 2, Deep
-Research hidden; reachable via Research tab) (#26). **Remaining (next session): P3b** Browse
-7/8-col stock table → mobile stock cards (the big one — touches every row cell; reuse
-`useIsMobile()`), then **P2** Cockpit review rows stack (no ellipsis hiding the reason). Mobile
-is NOT full PASS until P3b lands. `useIsMobile()` is now shared infra in Screener scope.
+Research hidden; reachable via Research tab) (#26). **P3b** Browse 7/8-col stock table → mobile stock cards (#28) + **P2** Cockpit review rows →
+cards (reason wraps in full, no ellipsis) (#29) **shipped 2026-06-06 → mobile is now full PASS**
+(see the 2026-06-06 top block). `useIsMobile()` is now shared infra in Screener scope.
 
 **Dual-track vision (confirmed 2026-06-03, parked post-demo):** platform = buy-side research
 engine (falsifiable theses, decision-support not 荐股) + a ~30% systematic **Path-B quant
