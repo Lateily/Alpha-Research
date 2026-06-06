@@ -10446,6 +10446,7 @@ function TradeDecisionCockpit({ L, lk, C }) {
     fetch(base + 'data/portfolio_risk_packet.json').then(r => r.ok ? r.json() : null).then(setRisk).catch(() => {});
     fetch(base + 'data/human_review_queue.json').then(r => r.ok ? r.json() : null).then(setQueue).catch(() => {});
   }, []);
+  const isMobile = useIsMobile();  // P2 mobile: stack Cockpit candidate rows into cards (reason no longer ellipsis-clipped)
 
   const ST = {
     RISK_BLOCKED:          { c: C.red,    en: 'Risk-blocked',    zh: '风险阻断' },
@@ -10464,7 +10465,23 @@ function TradeDecisionCockpit({ L, lk, C }) {
       background: s.c + '22', color: s.c, whiteSpace: 'nowrap' }}>{lk === 'z' ? s.zh : s.en}</span>);
   };
 
-  const CandRow = ({ r }) => (
+  const reasonText = r => r.current_blocker || (r.catalyst ? String(r.catalyst).slice(0, 70) : (r.source || []).join('/'));
+  const CandRow = ({ r }) => isMobile ? (
+    /* ── P2 mobile card: identity + classification + FULL reason (wraps, no ellipsis) ── */
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '8px 12px',
+      borderBottom: `1px solid ${C.border}`, fontSize: 11 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <Badge status={r.status} />
+        <span style={{ fontFamily: MONO, fontWeight: 700, color: C.dark }}>{r.ticker}</span>
+        <span style={{ color: C.mid }}>{r.name || ''}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 10 }}>
+        <span style={{ color: C.dark }}>{r.direction}</span>
+        {r.evidence_tier ? <span style={{ color: C.mid }}>{r.evidence_tier}</span> : null}
+      </div>
+      <div style={{ color: C.mid, fontSize: 10, lineHeight: 1.5 }}>{reasonText(r)}</div>
+    </div>
+  ) : (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
       borderBottom: `1px solid ${C.border}`, fontSize: 11 }}>
       <Badge status={r.status} />
@@ -10473,7 +10490,7 @@ function TradeDecisionCockpit({ L, lk, C }) {
       <span style={{ color: C.dark, minWidth: 86 }}>{r.direction}</span>
       <span style={{ color: C.mid, fontSize: 10 }}>{r.evidence_tier}</span>
       <span style={{ color: C.mid, fontSize: 10, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {r.current_blocker || (r.catalyst ? String(r.catalyst).slice(0, 70) : (r.source || []).join('/'))}
+        {reasonText(r)}
       </span>
     </div>
   );
