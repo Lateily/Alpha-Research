@@ -4,11 +4,17 @@
 > reads it to resume. Keep it short + current. Authoritative state lives in
 > `STATUS.md` (read that first); this is the delta + the Codex coordination ask.
 
-**Session date:** 2026-06-03
-**Headline:** MD-demo readiness + mobile shell hardening shipped + live (PRs #18–#26). (1) No-advice hardening (Desk/Morning/daily_decision/prompt → decision-support, no 荐股); Browse honesty (as-of stamp + Live-dot gating); Cockpit Milestone-1 (human_review_queue wired into the Cockpit top as the daily decision surface). (2) Mobile P1–P4: sidebar→56px rail (#23), minWidth:0 shell overflow fix (#24), Browse hero/flow grids→1-col (#25), topbar two-row (#26) — each verified on a real phone (gstack render env-blocked, human eyeball is the gate). **Mobile NOT full PASS yet** — remaining **P3b** Browse 7/8-col table → mobile stock cards (the big one; reuse `useIsMobile()`), then **P2** Cockpit review rows stack. Read `experiments/MOBILE_QA_TRIAGE_2026-06-02.md` first. After mobile: Beta harness → MD Demo Pack. Strategy Checklist 4B + the dual-track Path-B factor framework stay parked post-demo.
+**Session date:** 2026-06-06
+**Headline:** Internal Beta Decision-Support v0 DELIVERED + MD demo pack ready (PRs #28–#31) — the "回归模型开发 → 内部 Beta 可用化" sprint is complete. (1) **Mobile full PASS**: P3b Browse 7/8-col table → mobile stock cards (#28) + P2 Cockpit `CandRow` → card (reason wraps, no ellipsis) (#29) finish P1–P4. (2) **Internal Beta harness + feedback** (#30): a new "内测/Beta" tab (now the default landing) = guided 5-task entry routing to existing surfaces (今日市场→Browse · 需人工复核→Cockpit · 组合收益/风险→Portfolio · 需继续观察→Tracker · 反馈) + lightweight localStorage feedback (issue-type chips + copy/download JSON; no backend, no paper-state write). (3) **MD Demo Pack** (#31) `docs/strategy/MD_DEMO_PACK.md`: positioning · 5-scenario route · talking points · honest validation status · readiness checklist · "what NOT to claim" guardrail (Milestone 4; one oversell-wording FAIL-fix caught + fixed). All UI/doc-only; no new buy/sell/sizing/recommendation logic; no paper-state writes; mobile QA gate = Junyan's real-phone eyeball (gstack render still env-blocked). **Next:** internal trial → 15–20 actionable feedback items (Milestone 3 bar) → 6/10 demo. Parked post-demo: dual-track Path-B factor framework + AI-industry-chain research deep-dive.
 
 ## What shipped (all on `main`, deployed)
 
+- **Internal Beta v0 + MD pack** (PRs #28–#31, 2026-06-06): mobile finish — P3b Browse table → stock
+  cards (#28) + P2 Cockpit rows → cards (#29) = **mobile full PASS**; Beta harness + feedback capture
+  (#30, new default "内测/Beta" tab — 5 guided tasks routing to existing surfaces + localStorage
+  feedback, no backend); MD Demo Pack doc (#31, `docs/strategy/MD_DEMO_PACK.md`, Milestone 4 — 5-
+  scenario demo route + honest validation status + anti-oversell guardrail). UI/doc-only,
+  decision-support framing, no advice logic, no paper-state writes.
 - **CORE Alpha Factory v0** (PR #2 `ab259a4`): screen → pre-register → validate-method
   → shadow → cull. Read-only, no trades, no positions, nothing promoted to capital,
   every output `no_trade_flag:true`, protected paper-state untouched. Pieces:
