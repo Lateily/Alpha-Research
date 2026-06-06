@@ -3711,7 +3711,8 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
 
       {/* ── TABLE ──────────────────────────────────────────────────────────── */}
       <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:10, overflow:'hidden', marginBottom:10}}>
-        {/* header row */}
+        {/* header row (desktop only — mobile cards self-label each field) */}
+        {!isMobile && (
         <div style={{display:'grid', gridTemplateColumns:COLS, gap:'0 6px',
                      padding:'7px 12px', background:C.soft, borderBottom:`1px solid ${C.border}`,
                      fontSize:10, color:C.mid}}>
@@ -3724,6 +3725,7 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
           {hasAlphaScores && <ColHd field='alpha' label='α'/>}
           <div></div>
         </div>
+        )}
 
         {visible.length === 0
           ? <div style={{textAlign:'center', padding:'40px 20px', color:C.mid}}>
@@ -3749,7 +3751,56 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
                 : (typeof s.alpha_score === 'number' && s.alpha_score >= 65) ? C.gold
                 : 'transparent';
 
-              return (
+              return isMobile ? (
+                /* ── P3b mobile stock card (nothing clipped; self-labeled) ── */
+                <div key={s.ticker}
+                  onClick={() => onSelect(s.ticker)}
+                  style={{padding:'10px 12px', borderBottom:`1px solid ${C.border}`,
+                          borderLeft:`4px solid ${accent}`, cursor:'pointer', background:oddBg}}>
+                  {/* row 1: rank · name · industry (left)  |  chg% · price (right) */}
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8}}>
+                    <div style={{minWidth:0, flex:1}}>
+                      <div style={{display:'flex', alignItems:'baseline', gap:6, minWidth:0}}>
+                        <span style={{fontSize:10, color:C.mid, fontFamily:MONO, flexShrink:0}}>{rank}</span>
+                        <span style={{fontSize:14, fontWeight:600, color:C.dark, overflow:'hidden',
+                                      textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0}}>{s.name}</span>
+                        {s.industry && (
+                          <span onClick={e=>{e.stopPropagation(); setIndustry(s.industry);}}
+                            style={{...S.tag(C.blue), cursor:'pointer', flexShrink:0, whiteSpace:'nowrap'}}>
+                            {s.industry}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{fontSize:10, color:C.mid, fontFamily:MONO, marginTop:2,
+                                   display:'flex', gap:6, alignItems:'center'}}>
+                        <span>{s.code}</span>
+                        <span style={{opacity:0.6}}>{s.market==='HK'?'港':s.exchange}</span>
+                        {eff.live && <span style={{width:5, height:5, borderRadius:'50%',
+                                                   background:C.green, display:'inline-block'}}/>}
+                      </div>
+                    </div>
+                    <div style={{textAlign:'right', flexShrink:0}}>
+                      <div style={{fontFamily:MONO, fontSize:15, fontWeight:700, color:clr}}>
+                        {pct != null ? `${pct>0?'+':''}${pct.toFixed(2)}%` : '—'}
+                      </div>
+                      <div style={{fontFamily:MONO, fontSize:12, fontWeight:600, color:clr, marginTop:1}}>
+                        {eff.price != null ? eff.price.toFixed(eff.price < 10 ? 3 : 2) : '—'}
+                      </div>
+                    </div>
+                  </div>
+                  {/* row 2: volume · turnover · α (labeled — no column header needed) */}
+                  <div style={{display:'flex', gap:14, marginTop:6, fontSize:10, color:C.mid, fontFamily:MONO}}>
+                    <span>{L('Vol','量')} <b style={{color:C.dark, fontWeight:600}}>{fmtVol(eff.vol)}</b></span>
+                    <span>{L('Turn','额')} <b style={{color:C.dark, fontWeight:600}}>{fmtVol(eff.turn)}</b></span>
+                    {hasAlphaScores && (() => {
+                      const sc = s.alpha_score;
+                      const scClr = sc == null || sc === 0 ? C.mid
+                        : sc >= 65 ? C.green : sc >= 50 ? C.blue : sc >= 35 ? C.mid : C.red;
+                      return <span>α <b style={{color:scClr, fontWeight:700}}>{sc != null && sc > 0 ? sc.toFixed(0) : '—'}</b></span>;
+                    })()}
+                  </div>
+                </div>
+              ) : (
                 <div key={s.ticker}
                   onClick={() => onSelect(s.ticker)}
                   style={{display:'grid', gridTemplateColumns:COLS, gap:'0 6px',
