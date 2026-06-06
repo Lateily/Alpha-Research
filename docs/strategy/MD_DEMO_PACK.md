@@ -27,11 +27,11 @@ The #1 institutional risk is *looking like 荐股* (auto recommendations). Foreg
 |---|---|
 | A **decision-support cockpit** — evidence, signals, structured scores, risk flags | A **stock-picker / 荐股 tool** — no auto buy/sell, no position sizes, no auto-trade |
 | **Falsifiable research** — every thesis has catalyst + proves-right-if + **proves-wrong-if** + evidence tier | A **black box** — no unexplained recommendations; the model can't mark its own homework |
-| **Auditable** — numbers labeled `[validated]` / `[unvalidated]`; sources cited; thesis↔holdings inconsistency **surfaced** | A **validated-returns product** — paper-only, no live capital, edge not yet proven |
+| **Auditable** — numbers separated as observed facts vs `[unvalidated]` assumptions; sources / as-of stamps visible; thesis↔holdings inconsistency **surfaced** | A **validated-returns product** — paper-only, no live capital, edge not yet proven |
 | **Human-in-the-loop** — a daily Human Review Queue is the decision surface | A **backtest hero** — curve-fit numbers are discarded; honest CIs shown |
 | **China-context edge** — A-share/HK narrative + information-structuring (the USP) | A **robo-advisor** — it routes judgement to the human, it doesn't replace it |
 
-**Inspiration (credible anchor):** UBS Finance Challenge — 中际旭创 long + Pop Mart short, both validated.
+**Inspiration / audience context:** prior human research examples such as 中际旭创 and Pop Mart show the type of thesis depth the platform is meant to support; they are **not** presented as platform-validated alpha.
 
 ---
 
