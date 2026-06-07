@@ -5,7 +5,7 @@ import { Search, SearchX, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart
          AlertCircle, CheckCircle, ArrowUpRight, ArrowDownRight,
          Database, RefreshCw, Layers, BookOpen, Info, Calendar,
          Sun, Moon, ChevronLeft, ChevronRight, Circle,
-         Wifi, WifiOff } from "lucide-react";
+         Wifi, WifiOff, Briefcase } from "lucide-react";
 import { PieChart as RechartsPie, Pie, Cell, BarChart, Bar, ComposedChart, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 
 /* ── DATA BASE URL ──────────────────────────────────────────────────────────── */
@@ -10787,10 +10787,162 @@ function BetaHarness({ L, lk, C, setTab }) {
   );
 }
 
+/* ── DAILY MODEL PORTFOLIO (pilot) — product landing ─────────────────────────
+   Turns the core-thesis candidate board + quant confluence into today's
+   executable model ideas (direction · target range · strategy · invalidation),
+   split into a mid/long-term (core-thesis) sleeve + a short-term (quant) sleeve,
+   plus research/watch pools. INTERNAL model-recommendation PILOT: unvalidated
+   model output, not validated alpha, not external advice. Per-ticker
+   Follow/Modify/Reject/Watch is captured locally to seed the
+   recommendation → execution → attribution → improvement loop. (PR #39) */
+function DailyModelPortfolio({ L, lk, C, onSelect }) {
+  const isMobile = useIsMobile();
+  const [board, setBoard] = useState(null);
+  const [conf, setConf]   = useState(null);
+  const [status, setStatus] = useState({});
+  const SK = 'ar_model_status';
+
+  // PR#39 fix-forward (Junyan): the pilot book is a FRESH start and does NOT inherit
+  // the legacy paper_trades positions — their old entry/target/stop would pollute
+  // today's recommendation. The old paper book stays as historical validation only.
+  useEffect(() => {
+    const base = DATA_BASE;
+    fetch(base + 'data/trade_candidate_board.json').then(r => r.ok ? r.json() : null).then(setBoard).catch(() => {});
+    fetch(base + 'data/confluence.json').then(r => r.ok ? r.json() : null).then(setConf).catch(() => {});
+    try { setStatus(JSON.parse(localStorage.getItem(SK) || '{}')); } catch {}
+  }, []);
+
+  const rows = (board && board.trade_candidate_board) || [];
+  const asOf = ((board && board._meta && (board._meta.generated_at || board._meta.as_of)) || '').slice(0, 10);
+  const confMap = {}; ((conf && conf.scores) || []).forEach(s => { confMap[s.ticker] = s; });
+
+  const setSt = (tk, k) => {
+    const next = { ...status, [tk]: status[tk] === k ? null : k };
+    setStatus(next);
+    try { localStorage.setItem(SK, JSON.stringify(next)); } catch {}
+  };
+
+  const isDir = d => d === 'LONG' || d === 'SHORT' || d === 'WATCH_SHORT';
+  const coreSleeve   = rows.filter(r => isDir(r.direction));
+  const swingSleeve  = ((conf && conf.scores) || []).filter(s => s.action && !/NEUTRAL|WAIT/i.test(s.action) && !/中性|等待/.test(s.action_zh || ''));
+  const researchPool = rows.filter(r => r.status === 'RESEARCH_REQUIRED');
+  const watchPool    = rows.filter(r => r.status === 'WATCH' && !isDir(r.direction));
+
+  const dirColor = d => d === 'LONG' ? C.green : /SHORT/.test(d || '') ? C.red : C.gold;
+  const warn = C.orange || C.gold;
+  const fmtPct = v => v == null ? null : `${v > 0 ? '+' : ''}${(+v).toFixed(1)}%`;
+  const cardBox = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px' };
+  const STATUS_OPTS = [
+    { k: 'follow', en: 'Follow', zh: '跟随' },
+    { k: 'modify', en: 'Modify', zh: '修改' },
+    { k: 'reject', en: 'Reject', zh: '拒绝' },
+    { k: 'watch',  en: 'Watch',  zh: '观望' },
+  ];
+
+  const ModelCard = ({ r }) => {
+    const c = confMap[r.ticker];
+    const st = status[r.ticker];
+    const dc = dirColor(r.direction);
+    const wrongIf = Array.isArray(r.wrong_if) && r.wrong_if.length ? String(r.wrong_if[0]).split('|')[0].trim() : null;
+    return (
+      <div style={{ ...cardBox, borderLeft: `4px solid ${dc}` }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+          <span onClick={() => onSelect && onSelect(r.ticker)} style={{ fontSize: 14, fontWeight: 700, color: C.dark, cursor: 'pointer' }}>{r.name || r.ticker}</span>
+          <span style={{ fontFamily: MONO, fontSize: 10, color: C.mid }}>{r.ticker}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: dc, background: `${dc}1A`, border: `1px solid ${dc}40`, borderRadius: 4, padding: '1px 7px' }}>{r.direction}</span>
+          {r.evidence_tier ? <span style={{ fontSize: 9, color: C.mid }}>{r.evidence_tier}</span> : null}
+          {r.horizon_days ? <span style={{ fontSize: 9, color: C.mid }}>{r.horizon_days}d</span> : null}
+        </div>
+        {r.catalyst ? <div style={{ fontSize: 10.5, color: C.mid, lineHeight: 1.5, marginBottom: 6 }}><b style={{ color: C.dark }}>{L('Why', '推荐理由')}: </b>{String(r.catalyst).slice(0, 170)}</div> : null}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
+          <div style={{ fontSize: 10, color: C.mid }}>
+            <div style={{ fontWeight: 700, color: C.dark, marginBottom: 1 }}>{L('Target range', '目标区间')}</div>
+            <span>{L('Thesis-derived band — not yet calibrated. Entry reference: pending next market sync.', '论点推导区间 — 尚未校准。入场参考：待下一次行情同步。')}</span>
+          </div>
+          <div style={{ fontSize: 10, color: C.mid }}>
+            <div style={{ fontWeight: 700, color: C.dark, marginBottom: 1 }}>{L('Quant signal', '量化信号')}</div>
+            {c ? <span>{c.action} · {(lk === 'z' ? c.rationale_z : c.rationale_e) || ''}</span> : <span>—</span>}
+          </div>
+          <div style={{ fontSize: 10, color: C.mid }}>
+            <div style={{ fontWeight: 700, color: C.dark, marginBottom: 1 }}>{L('Invalidation', '失效条件')}</div>
+            {wrongIf ? <span>{wrongIf.slice(0, 95)}</span> : <span>—</span>}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: 9, color: C.mid, marginRight: 2 }}>{L('Your call', '你的决定')}:</span>
+          {STATUS_OPTS.map(o => {
+            const on = st === o.k;
+            return <button key={o.k} onClick={() => setSt(r.ticker, o.k)} style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 12, cursor: 'pointer', border: `1px solid ${on ? C.blue : C.border}`, background: on ? `${C.blue}18` : 'transparent', color: on ? C.blue : C.mid }}>{lk === 'z' ? o.zh : o.en}</button>;
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const Pool = ({ title, items }) => items.length ? (
+    <div style={{ ...cardBox, marginTop: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: C.dark, marginBottom: 6 }}>{title} <span style={{ color: C.mid, fontWeight: 500 }}>({items.length})</span></div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {items.map(r => <span key={r.ticker} onClick={() => onSelect && onSelect(r.ticker)} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: C.soft, color: C.dark, cursor: 'pointer', fontFamily: MONO }}>{r.ticker} <span style={{ color: C.mid }}>{(r.name || '').slice(0, 4)}</span></span>)}
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <div style={{ padding: '14px 18px', maxWidth: 960, margin: '0 auto', overflowY: 'auto' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: C.dark }}>{L("Today's Model Portfolio", '今日模型组合')}</div>
+        {asOf ? <span style={{ fontSize: 10, color: C.mid }}>{L('as of', '截至')} {asOf}</span> : null}
+      </div>
+      <div style={{ border: `1px solid ${warn}`, background: warn + '14', borderRadius: 8, padding: '8px 12px', fontSize: 10.5, color: C.dark, margin: '8px 0 14px', lineHeight: 1.5 }}>
+        {L('Internal model-recommendation pilot. The system turns quant signals + AI thesis into executable ideas with target ranges, construction logic and invalidation rules. These are UNVALIDATED model outputs — not validated alpha, and not external investment advice. The product edge is the closed loop: recommendation → your execution → performance attribution → model improvement.',
+           '内部模型组合试运行。系统把量化信号 + AI 论点变成可执行的标的（含目标区间、构仓逻辑、失效条件）。这些是【待验证】的模型输出 —— 不是已验证 alpha，也不是对外投资建议。产品价值在闭环：推荐 → 你的执行 → 收益归因 → 模型改进。')}
+      </div>
+
+      <div style={{ fontSize: 9.5, color: C.mid, margin: '-4px 0 14px', lineHeight: 1.5 }}>
+        {L('Fresh pilot book — starts from the next market session; no legacy paper positions are inherited. Live execution-return tracking begins from the next trading-day pilot run.',
+           '全新 pilot 账本 —— 从下一个交易时段开始，不继承任何旧模拟仓位。实操收益追踪从下一个交易日的 pilot run 起算。')}
+      </div>
+      <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, margin: '4px 0 8px' }}>{L('Mid / long-term sleeve — core thesis', '中长期 sleeve — 核心论点')} <span style={{ fontSize: 10, color: C.mid, fontWeight: 500 }}>({coreSleeve.length})</span></div>
+      {coreSleeve.length === 0 ? <div style={{ fontSize: 11, color: C.mid, marginBottom: 10 }}>{L('No directional model idea today.', '今日无方向性模型建议。')}</div> : null}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 16 }}>
+        {coreSleeve.map(r => <ModelCard key={r.ticker} r={r} />)}
+      </div>
+
+      <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, margin: '4px 0 8px' }}>{L('Short-term sleeve — quant swing (做T)', '短期 sleeve — 量化做T')} <span style={{ fontSize: 10, color: C.mid, fontWeight: 500 }}>({swingSleeve.length})</span></div>
+      {swingSleeve.length === 0
+        ? <div style={{ ...cardBox, fontSize: 11, color: C.mid, marginBottom: 16 }}>{L('No short-term quant signal today. The daily swing-strategy feed is not yet wired into this view — to be added as the quant model is iterated.', '今日无短期量化信号。日级 swing 策略 feed 尚未接入本视图 —— 随量化模型迭代后接入。')}</div>
+        : <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 16 }}>
+            {swingSleeve.map(s => {
+              const r0 = rows.find(x => x.ticker === s.ticker);
+              return (
+                <div key={s.ticker} style={{ ...cardBox, borderLeft: `4px solid ${C.blue}` }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                    <span onClick={() => onSelect && onSelect(s.ticker)} style={{ fontSize: 13, fontWeight: 700, color: C.dark, cursor: 'pointer' }}>{(r0 && r0.name) || s.ticker}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 10, color: C.mid }}>{s.ticker}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: C.blue }}>{s.action}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: C.mid }}>{(lk === 'z' ? s.rationale_z : s.rationale_e) || ''}</div>
+                </div>
+              );
+            })}
+          </div>}
+
+      <Pool title={L('Research pool — screened, awaiting thesis', '研究池 — 已筛选、待论点')} items={researchPool} />
+      <Pool title={L('Watch pool', '观察池')} items={watchPool} />
+
+      <div style={{ fontSize: 9, color: C.mid, marginTop: 12, lineHeight: 1.6 }}>
+        {L('Click a name to open its full decision sheet. Your Follow / Modify / Reject / Watch choices are saved in this browser to seed the model-validation loop — the system never auto-trades or sizes for you.',
+           '点击名称打开完整决策书。你的 跟随/修改/拒绝/观望 选择保存在本浏览器，用于构建模型验证闭环 —— 系统从不自动交易、不替你定仓位。')}
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [lang, setLang] = useState('en');
   const [dark, setDark] = useState(true); // Jason: Bloomberg default — dark mode
-  const [tab, setTab] = useState('beta');  // 2026-06-06: internal-beta entry — land on the guided Beta harness first (Junyan PR #30 review). Prior default was 'browse' (2026-05-02 "first interface clean" brief).
+  const [tab, setTab] = useState('model');  // 2026-06-07: Daily Model Portfolio Pilot is the product landing (Junyan pivot). Prior default 'beta' (#30); '内测' tab still reachable.
   const [ticker, setTicker] = useState(null);
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -11508,6 +11660,7 @@ export default function Dashboard() {
   // - Tab visual ordering: Browse first (most-used entry point), Desk second (持仓中心)
   // - DEFERRED visual sidebar consolidation of scanner/flow/earnings/morning to Jason UI work
   const TABS = [
+    { id:'model',    label:L('Model','模型组合'),  icon:<Briefcase size={14}/> },
     { id:'beta',     label:L('Beta','内测'),      icon:<Sparkles size={14}/> },
     { id:'browse',   label:L('Browse','浏览'),    icon:<Filter size={14}/> },
     { id:'desk',     label:L('Desk','交易台'),     icon:<Crosshair size={14}/> },
@@ -11867,6 +12020,7 @@ export default function Dashboard() {
           {tab==='system'   && <SystemTab L={L} C={C}/>}
           {tab==='cockpit'  && <TradeDecisionCockpit L={L} lk={lk} C={C}/>}
           {tab==='beta'     && <BetaHarness L={L} lk={lk} C={C} setTab={setTab}/>}
+          {tab==='model'    && <DailyModelPortfolio L={L} lk={lk} C={C} onSelect={goStock}/>}
         </div>
       </div>
 
