@@ -8339,7 +8339,7 @@ function PaperTrading({ L, lk, C }) {
       {/* Paper-simulation + as-of banner (product-trust) */}
       <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:10}}>
         <span style={{fontSize:10, fontWeight:700, color:C.blue, background:`${C.blue}18`, border:`1px solid ${C.blue}30`, borderRadius:4, padding:'2px 8px'}}>{L('PAPER SIMULATION','模拟盘')}</span>
-        <span style={{fontSize:10, color:C.mid}}>{L('Simulated book · no real capital · no orders placed','模拟持仓 · 无真实资金 · 不下真实委托')}{paperAsOf ? ` · ${L('as of','截至')} ${paperAsOf}` : ''}</span>
+        <span style={{fontSize:10, color:C.mid}}>{L('Manual paper-trade ledger · no real capital · no orders placed','手工模拟交易账本 · 无真实资金 · 不下真实委托')}{paperAsOf ? ` · ${L('as of','截至')} ${paperAsOf}` : ''}{pos.length === 0 ? L(' · currently no manually entered trades in this ledger',' · 当前该账本暂无手工录入交易') : ''}</span>
       </div>
       {/* Portfolio Header */}
       <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:12, marginBottom:16}}>
@@ -10584,6 +10584,7 @@ function TradeDecisionCockpit({ L, lk, C }) {
           <div style={{ fontSize: 11, color: C.mid, lineHeight: 1.7 }}>
             <div>{L('Gross', '总敞口')} <b style={{ color: C.dark }}>{risk.book?.gross_pct}%</b> · {L('Net', '净敞口')} <b style={{ color: C.dark }}>{risk.book?.net_pct}%</b>
               <span style={{ fontSize: 9, marginLeft: 6, color: C.mid }}>{L('observed', '已观测')}</span></div>
+            <div style={{ fontSize: 9, color: C.mid, marginTop: 2 }}>{L('Exposure is from the registered/shadow review book, not the manual Portfolio ledger.', '敞口来自登记/影子复核账本，不等同于 Portfolio 的手工模拟交易账本。')}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '6px 0' }}>
               {Object.entries(themes).map(([t, v]) => (
                 <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: C.soft, color: C.dark }}>{t} <b>{v}%</b></span>
