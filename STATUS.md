@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-06-06 (Internal Beta Decision-Support v0 DELIVERED + MD demo pack ready — sprint complete: mobile full PASS (P3b #28 + P2 #29), internal Beta harness + feedback (#30), MD Demo Pack doc (#31). See newest milestone below.)
+**Last updated:** 2026-06-07 (⚠ PRODUCT PIVOT — Daily Model Portfolio Pilot. Positioning REVERSED from "decision-support, NOT 荐股" → "internal model-recommendation PILOT" (unvalidated; validation-loop edge). Trust pass #33–37 + pivot #39–42; pilot v1 closed loop shipped. READ the 2026-06-07 block below — the old "Internal Beta v0 / NOT 荐股" framing is superseded.)
 
 ## ▶ CURRENT DIRECTION (2026-05-25) — READ THIS FIRST
 
@@ -63,7 +63,21 @@ synthesizer FIRST; must land before the first formal validation verdict). First
 meaningful validation window ≈ **2026-08 → 2026-11** (60–120d horizons of the first
 registered batch). Factory is paused-by-design while forward data accrues.
 
-**2026-06-06 — INTERNAL BETA DECISION-SUPPORT v0 DELIVERED + MD DEMO PACK (newest; read first):**
+**2026-06-07 — ⚠ PRODUCT PIVOT: DAILY MODEL PORTFOLIO PILOT (newest; READ FIRST — supersedes the positioning below):**
+
+Junyan pivoted the product. The platform is **NO LONGER** "an auditable decision-support cockpit that does NOT 荐股" — the CLAUDE.md "AI never outputs buy/sell" philosophy is being deliberately changed. The product now **recommends tickers** (direction + AI-augmented strategy + target ranges), organised as a **Daily Model Portfolio**, framed honestly as an **internal model-recommendation PILOT**. LOCKED positioning (replaces all "decision-support / NOT 荐股" banners):
+> Internal model-recommendation pilot. Executable model ideas (direction · target range · construction · invalidation); **UNVALIDATED** model output, NOT validated alpha, NOT external advice; the user decides whether to follow; every execution + return is tracked to VALIDATE the model. Edge = the loop: recommendation → user execution → attribution → improvement. **NEVER say "validated alpha / 应该买 / 稳定赚钱".**
+
+**Pilot v1 closed loop SHIPPED end-to-end** (all on `main`, deployed, each Junyan-reviewed):
+- **Generator** `scripts/model_portfolio.py` → `public/data/model_portfolio.json` (#40), wired into `fetch-data.yml` so each pipeline run commits a dated daily run (= the model's track record in git). FRESH PILOT: no legacy paper positions; `target_range` thesis-derived/`calibrated:false`; `--selftest` asserts no legacy fields. Schema: run_date · pilot_start_date(2026-06-08) · candidates[sleeve·model_action·why·target_range·construction_plan·risk_rules·source_signals·validation_status] · research_pool · watch_pool · user_decisions.
+- **Product landing** = new DEFAULT tab "模型组合/Model" — `DailyModelPortfolio` reads model_portfolio.json (#39 + fresh-pilot fix-forward, #41 wire-to-official-run): core_thesis sleeve (today 002594 LONG, 603233 SHORT, 6160/700/9999 WATCH_SHORT) + quant_swing sleeve (EMPTY — no daily swing feed yet) + research(20)/watch(31) pools.
+- **User execution capture** (#42): per-card Follow/Modify/Reject/Watch + reason + actual-trade, keyed (run_date,ticker) bound to the run's candidate; "execution log" Copy/Download JSON = the per-user strategy-variant input for the "meaningful backtest" (N users → avg return). localStorage only; no backend, no auto-trade/size.
+
+**Trust pass before the pivot (#33–37):** #33 trust blockers (anomaly net-flow ¥1T display-guard, 0fc, empty Hot-Concepts hide, STALE→neutral); #34 product polish (de-jargon Cockpit, un-truncate names, Portfolio "PAPER SIMULATION · as-of" banner, beta-safe copy, E-tier legend); #35 two-ledger clarity (Portfolio manual vs Cockpit registered/shadow); #36/#37 beta-safe empty-state copy (Earnings/OHLC/Financials + Tracker); #38 closed-deferred (broader off-path copy, post-demo). A full 5-task smoke test PASSED before the pivot.
+
+**Honest reality + NEXT:** the model's current output is SPARSE (1 conviction LONG/BYD + watch/short + research pool) — richer daily picks need (a) Junyan's quant-strategy iteration + a daily-swing feed (fills the empty 做T sleeve + thickens core), then (b) a per-user performance view (aggregate exported trade logs → default/variant/avg return), (c) optional single-stock decision sheet (merge Tracker/thesis/technical/fundamental). **⚠ `docs/strategy/MD_DEMO_PACK.md`'s "decision-support, NOT 荐股" narrative is now MISALIGNED with the pilot — re-frame for 6/10 as "research → executable model + honest validation loop", picks as illustration not alpha claim.** Open follow-up chip: harden the (run_date,ticker) decision key → +sleeve/candidate-id. Discipline that SURVIVES the pivot: unvalidated-labeling, no auto-trade/size, read-only protected paper-state, isolated-worktree scoped PRs.
+
+**2026-06-06 — INTERNAL BETA DECISION-SUPPORT v0 DELIVERED + MD DEMO PACK (superseded by the 2026-06-07 PIVOT block above):**
 
 The "回归模型开发 → 内部 Beta 可用化" sprint is complete. Mobile is **full PASS** and the internal-beta
 workbench + the 6/10 UBS-MD demo narrative are shipped — all on `main`, deployed, each Junyan-reviewed
