@@ -10849,7 +10849,12 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
   };
 
   const coreSleeve   = cands.filter(c => c.sleeve === 'core_thesis');
-  const swingSleeve  = cands.filter(c => c.sleeve === 'quant_swing');
+  // PR-B: quant_swing moved from a flat list in `candidates` to a top-level object
+  // {active, setup_watch} (honest-first ruling). active = confluence-gated swing trades
+  // (empty when all tracked names are NEUTRAL); setup_watch = technical radar (not trades).
+  const qs           = (mp && mp.quant_swing) || {};
+  const swingActive  = qs.active || [];
+  const setupWatch   = qs.setup_watch || [];
   const researchPool = (mp && mp.research_pool) || [];
   const watchPool    = (mp && mp.watch_pool) || [];
 
@@ -10866,6 +10871,17 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
   // Short, descriptive sleeve tag (NOT advice) so two decisions on the same ticker
   // across sleeves read distinctly in the execution log.
   const sleeveLabel = s => s === 'quant_swing' ? L('quant swing', '量化做T') : s === 'core_thesis' ? L('core thesis', '核心论点') : (s || '');
+  // Setup-radar helpers: bias color, the core-sleeve direction for a ticker, and the
+  // thesis-vs-short-term tension (e.g. BYD core-LONG vs bearish radar; BeiGene WATCH_SHORT vs bullish).
+  const biasColor = b => b === 'bullish' ? C.green : b === 'bearish' ? C.red : b === 'mixed' ? warn : C.mid;
+  const coreDir = tk => { const c = coreSleeve.find(x => x.ticker === tk); return c ? c.model_action : null; };
+  const tension = (coreD, bias) => {
+    if (!coreD) return null;
+    const coreBull = coreD === 'LONG', coreBear = /SHORT/.test(coreD);
+    if ((coreBull && bias === 'bearish') || (coreBear && bias === 'bullish')) return 'opposed';
+    if ((coreBull && bias === 'bullish') || (coreBear && bias === 'bearish')) return 'aligned';
+    return 'mixed';
+  };
 
   const ModelCard = ({ r }) => {
     const q = (r.source_signals && r.source_signals.quant_confluence) || null;
@@ -10952,24 +10968,59 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
         {coreSleeve.map(r => <ModelCard key={r.ticker} r={r} />)}
       </div>
 
-      <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, margin: '4px 0 8px' }}>{L('Short-term sleeve — quant swing (做T)', '短期 sleeve — 量化做T')} <span style={{ fontSize: 10, color: C.mid, fontWeight: 500 }}>({swingSleeve.length})</span></div>
-      {swingSleeve.length === 0
-        ? <div style={{ ...cardBox, fontSize: 11, color: C.mid, marginBottom: 16 }}>{L('No short-term quant signal today. The daily swing-strategy feed is not yet wired into this view — to be added as the quant model is iterated.', '今日无短期量化信号。日级 swing 策略 feed 尚未接入本视图 —— 随量化模型迭代后接入。')}</div>
-        : <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 16 }}>
-            {swingSleeve.map(s => {
-              const q = (s.source_signals && s.source_signals.quant_confluence) || {};
+      <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, margin: '4px 0 8px' }}>{L('Short-term sleeve — active swing (做T)', '短期 sleeve — 主动做T')} <span style={{ fontSize: 10, color: C.mid, fontWeight: 500 }}>({swingActive.length})</span></div>
+      {swingActive.length === 0
+        ? <div style={{ ...cardBox, marginBottom: 14, lineHeight: 1.55 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: C.dark, marginBottom: 3 }}>{L('No active swing trade today.', '今日无主动做T交易。')}</div>
+            <div style={{ fontSize: 10.5, color: C.mid }}>{L('Confluence is NEUTRAL across the tracked names. Technical setups below are radar items, not executable model trades.', '当前跟踪标的 confluence 全部为中性。下方技术形态仅为观察池，不是可执行模型交易。')}</div>
+          </div>
+        : <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 14 }}>
+            {swingActive.map(s => <ModelCard key={`a-${s.ticker}`} r={s} />)}
+          </div>}
+
+      {setupWatch.length ? (
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, margin: '4px 0 2px' }}>{L('Setup radar — what the model is watching', '技术观察池 — 模型在看什么')} <span style={{ fontSize: 10, color: C.mid, fontWeight: 500 }}>({setupWatch.length})</span></div>
+          <div style={{ fontSize: 9.5, color: C.mid, marginBottom: 8, lineHeight: 1.5 }}>{L('Radar items, not executable trades — no LONG/SHORT call, no size. They show each tracked name\'s technical setup today, and flag where it diverges from the thesis.', '仅为观察项，不是可执行交易 —— 无多空建议、无仓位。展示每个跟踪标的当日技术形态，并标注与论点背离之处。')}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 16 }}>
+            {setupWatch.map(s => {
+              const bc = biasColor(s.bias);
+              const cd = coreDir(s.ticker);
+              const tn = tension(cd, s.bias);
+              const t = s.technical || {};
+              const ki = t.key_indicators || {};
+              const fired = (t.signals || []).filter(x => x && x.type);
               return (
-                <div key={s.ticker} style={{ ...cardBox, borderLeft: `4px solid ${C.blue}` }}>
+                <div key={`sw-${s.ticker}`} style={{ ...cardBox, borderLeft: `4px dashed ${bc}` }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                     <span onClick={() => onSelect && onSelect(s.ticker)} style={{ fontSize: 13, fontWeight: 700, color: C.dark, cursor: 'pointer' }}>{s.name || s.ticker}</span>
                     <span style={{ fontFamily: MONO, fontSize: 10, color: C.mid }}>{s.ticker}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: C.blue }}>{s.model_action}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: bc, background: `${bc}1A`, border: `1px solid ${bc}40`, borderRadius: 4, padding: '1px 7px' }}>{s.bias}</span>
+                    <span style={{ fontSize: 9, color: C.mid, border: `1px solid ${C.border}`, borderRadius: 4, padding: '1px 6px' }}>{L('SETUP · radar', '观察 · 非交易')}</span>
                   </div>
-                  <div style={{ fontSize: 10, color: C.mid }}>{q.rationale || ''}</div>
+                  {cd ? (
+                    <div style={{ fontSize: 10, marginBottom: 5, color: tn === 'opposed' ? warn : C.mid, fontWeight: tn === 'opposed' ? 700 : 500 }}>
+                      {tn === 'opposed' ? '⚠ ' : ''}{L('Thesis', '论点')}: <b style={{ color: dirColor(cd) }}>{cd}</b> · {L('short-term', '短期')}: <b style={{ color: bc }}>{s.bias}</b>{tn === 'opposed' ? L(' — diverge', ' — 背离') : tn === 'aligned' ? L(' — aligned', ' — 一致') : ''}
+                    </div>
+                  ) : null}
+                  <div style={{ fontSize: 10.5, color: C.mid, marginBottom: 4 }}><b style={{ color: C.dark }}>{L('Setup', '形态')}: </b>{s.setup_type}</div>
+                  {fired.length ? (
+                    <div style={{ fontSize: 9.5, color: C.mid, marginBottom: 4, lineHeight: 1.45 }}>
+                      {fired.slice(0, 3).map((f, i) => <div key={i}>· {f.desc || f.type} <span style={{ color: f.bullish ? C.green : C.red }}>({f.bullish ? L('bull', '多') : L('bear', '空')}, {f.strength})</span></div>)}
+                    </div>
+                  ) : null}
+                  <div style={{ fontSize: 9.5, color: C.mid, marginBottom: 3 }}><b style={{ color: C.dark }}>{L('Why not active', '为何未进主动')}: </b>{s.why_not_active}</div>
+                  <div style={{ fontSize: 9.5, color: C.mid, marginBottom: 3 }}><b style={{ color: C.dark }}>{L('Trigger', '触发')}: </b>{s.trigger_to_activate}</div>
+                  <div style={{ fontSize: 9.5, color: C.mid, marginBottom: 5 }}><b style={{ color: C.dark }}>{L('Risk', '风险')}: </b>{s.risk_rule}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: C.mid, borderTop: `1px solid ${C.border}`, paddingTop: 4 }}>
+                    RSI {ki.rsi14 ?? '—'} · MACDh {ki.macd_hist ?? '—'} · vMA20 {ki.price_vs_ma20 ?? '—'}% · vMA60 {ki.price_vs_ma60 ?? '—'}% · 5d {ki.change_5d ?? '—'}% · vol×{ki.vol_ratio ?? '—'}
+                  </div>
                 </div>
               );
             })}
-          </div>}
+          </div>
+        </div>
+      ) : null}
 
       <Pool title={L('Research pool — screened, awaiting thesis', '研究池 — 已筛选、待论点')} items={researchPool} />
       <Pool title={L('Watch pool', '观察池')} items={watchPool} />
