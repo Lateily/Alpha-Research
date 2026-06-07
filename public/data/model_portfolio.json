@@ -8,18 +8,22 @@
     "no_position_mutation": true,
     "run_date": "2026-06-07",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-06-07T10:51:37.581052+00:00",
+    "generated_at": "2026-06-07T15:41:16.571650+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
       "trade_candidate_board",
       "thesis_queue",
-      "confluence"
+      "confluence",
+      "signals_{ticker}",
+      "watchlist"
     ],
+    "swing_policy": "Short-term sleeve is honest-first: active swing trades are STRICTLY gated on a non-neutral confluence verdict (today: none — all tracked names NEUTRAL). The setup_watch radar surfaces the real per-ticker technical setups so users see what the model is watching; radar items are NOT executable trades (no LONG/SHORT, no size).",
     "disclaimer": "Internal model-recommendation pilot. UNVALIDATED model output — not validated alpha, and not external investment advice. Target ranges are thesis-derived and NOT calibrated; entry references pend the next market sync. Live execution-return tracking begins from the next trading-day pilot run. The product edge is the loop: recommendation -> user execution -> performance attribution -> model improvement.",
     "counts": {
       "core_thesis": 5,
-      "quant_swing": 0,
+      "quant_swing_active": 0,
+      "quant_swing_setup_watch": 7,
       "research_pool": 20,
       "watch_pool": 31
     }
@@ -236,6 +240,309 @@
       "no_trade_flag": true
     }
   ],
+  "quant_swing": {
+    "active": [],
+    "setup_watch": [
+      {
+        "ticker": "002594.SZ",
+        "name": "比亚迪",
+        "market": "A",
+        "sleeve": "quant_swing",
+        "state": "SETUP_WATCH",
+        "signal_class": "no_trade_signal",
+        "setup_type": "death_cross / rsi_recovering",
+        "bias": "bearish",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.59).",
+        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (98.95).",
+        "technical": {
+          "zone": "BEARISH",
+          "entry_zone": true,
+          "exit_zone": true,
+          "signal_count": {
+            "bullish": 1,
+            "bearish": 1,
+            "total": 2
+          },
+          "key_indicators": {
+            "rsi14": 36.1,
+            "macd_hist": -1.5581,
+            "price_vs_ma20": -5.25,
+            "price_vs_ma60": -6.12,
+            "change_5d": -2.65,
+            "vol_ratio": 0.59
+          },
+          "signals": [
+            {
+              "type": "DEATH_CROSS",
+              "strength": "strong",
+              "bullish": false,
+              "desc": "MA20 (98.9) crossed below MA60 (99.9) — bearish trend shift"
+            },
+            {
+              "type": "RSI_RECOVERING",
+              "strength": "moderate",
+              "bullish": true,
+              "desc": "RSI recovering 35.3→36.1 — momentum rebuilding"
+            }
+          ]
+        },
+        "as_of": "2026-06-05",
+        "validation_status": "unvalidated_pilot",
+        "no_trade_flag": true
+      },
+      {
+        "ticker": "175.HK",
+        "name": "Geely",
+        "market": "HK",
+        "sleeve": "quant_swing",
+        "state": "SETUP_WATCH",
+        "signal_class": "no_trade_signal",
+        "setup_type": "kdj_oversold",
+        "bias": "bullish",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.57).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (21.77); loss of MA60 (20.69) ends it.",
+        "technical": {
+          "zone": "NEUTRAL",
+          "entry_zone": true,
+          "exit_zone": false,
+          "signal_count": {
+            "bullish": 1,
+            "bearish": 0,
+            "total": 1
+          },
+          "key_indicators": {
+            "rsi14": 30.8,
+            "macd_hist": -0.8457,
+            "price_vs_ma20": -10.65,
+            "price_vs_ma60": -5.97,
+            "change_5d": -10.04,
+            "vol_ratio": 0.57
+          },
+          "signals": [
+            {
+              "type": "KDJ_OVERSOLD",
+              "strength": "strong",
+              "bullish": true,
+              "desc": "KDJ J=-4.6 (extreme <0) — high-probability reversal zone"
+            }
+          ]
+        },
+        "as_of": "2026-06-05",
+        "validation_status": "unvalidated_pilot",
+        "no_trade_flag": true
+      },
+      {
+        "ticker": "300308.SZ",
+        "name": "中际旭创",
+        "market": "A",
+        "sleeve": "quant_swing",
+        "state": "SETUP_WATCH",
+        "signal_class": "no_trade_signal",
+        "setup_type": "bullish_alignment",
+        "bias": "bullish",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.76).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (947.4); loss of MA60 (731.52) ends it.",
+        "technical": {
+          "zone": "BULLISH",
+          "entry_zone": true,
+          "exit_zone": false,
+          "signal_count": {
+            "bullish": 1,
+            "bearish": 0,
+            "total": 1
+          },
+          "key_indicators": {
+            "rsi14": 69.0,
+            "macd_hist": -4.3978,
+            "price_vs_ma20": 9.56,
+            "price_vs_ma60": 41.89,
+            "change_5d": -1.13,
+            "vol_ratio": 0.76
+          },
+          "signals": [
+            {
+              "type": "BULLISH_ALIGNMENT",
+              "strength": "strong",
+              "bullish": true,
+              "desc": "MA5(1028.7) > MA20(947.4) > MA60(731.5), price above all — full bullish alignment"
+            }
+          ]
+        },
+        "as_of": "2026-06-05",
+        "validation_status": "unvalidated_pilot",
+        "no_trade_flag": true
+      },
+      {
+        "ticker": "603233.SH",
+        "name": "大参林",
+        "market": "A",
+        "sleeve": "quant_swing",
+        "state": "SETUP_WATCH",
+        "signal_class": "no_trade_signal",
+        "setup_type": "bb_lower_break",
+        "bias": "mixed",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
+        "trigger_to_activate": "confluence upgrade to non-neutral; the setup is unresolved (signals and zone disagree).",
+        "risk_rule": "Unresolved between MA20 (18.36) and MA60 (18.37) — wait for a decisive close before any read.",
+        "technical": {
+          "zone": "BEARISH",
+          "entry_zone": true,
+          "exit_zone": false,
+          "signal_count": {
+            "bullish": 1,
+            "bearish": 0,
+            "total": 1
+          },
+          "key_indicators": {
+            "rsi14": 35.7,
+            "macd_hist": -0.3118,
+            "price_vs_ma20": -5.87,
+            "price_vs_ma60": -5.91,
+            "change_5d": -8.13,
+            "vol_ratio": 0.65
+          },
+          "signals": [
+            {
+              "type": "BB_LOWER_BREAK",
+              "strength": "moderate",
+              "bullish": true,
+              "desc": "Price (17.3) touched Bollinger lower (17.3) — oversold, mean reversion watch"
+            }
+          ]
+        },
+        "as_of": "2026-06-05",
+        "validation_status": "unvalidated_pilot",
+        "no_trade_flag": true
+      },
+      {
+        "ticker": "6160.HK",
+        "name": "BeiGene",
+        "market": "HK",
+        "sleeve": "quant_swing",
+        "state": "SETUP_WATCH",
+        "signal_class": "no_trade_signal",
+        "setup_type": "ma20_bounce / ma60_bounce / macd_golden_cross",
+        "bias": "bullish",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.44).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (185.03); loss of MA60 (186.64) ends it.",
+        "technical": {
+          "zone": "NEUTRAL",
+          "entry_zone": true,
+          "exit_zone": false,
+          "signal_count": {
+            "bullish": 3,
+            "bearish": 0,
+            "total": 3
+          },
+          "key_indicators": {
+            "rsi14": 59.0,
+            "macd_hist": 1.0788,
+            "price_vs_ma20": 3.01,
+            "price_vs_ma60": 2.12,
+            "change_5d": 9.79,
+            "vol_ratio": 1.44
+          },
+          "signals": [
+            {
+              "type": "MA20_BOUNCE",
+              "strength": "moderate",
+              "bullish": true,
+              "desc": "Price bounced off MA20 (184.9) — near-term support held"
+            },
+            {
+              "type": "MA60_BOUNCE",
+              "strength": "strong",
+              "bullish": true,
+              "desc": "Price bounced off MA60 (187.0) — major support held"
+            },
+            {
+              "type": "MACD_GOLDEN_CROSS",
+              "strength": "strong",
+              "bullish": true,
+              "desc": "MACD DIF(0.117) crossed above DEA(-0.422) above zero — bullish momentum"
+            }
+          ]
+        },
+        "as_of": "2026-06-05",
+        "validation_status": "unvalidated_pilot",
+        "no_trade_flag": true
+      },
+      {
+        "ticker": "700.HK",
+        "name": "Tencent",
+        "market": "HK",
+        "sleeve": "quant_swing",
+        "state": "SETUP_WATCH",
+        "signal_class": "no_trade_signal",
+        "setup_type": "no_signal",
+        "bias": "bearish",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.8).",
+        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (490.33).",
+        "technical": {
+          "zone": "BEARISH",
+          "entry_zone": false,
+          "exit_zone": false,
+          "signal_count": {
+            "bullish": 0,
+            "bearish": 0,
+            "total": 0
+          },
+          "key_indicators": {
+            "rsi14": 41.4,
+            "macd_hist": -1.9919,
+            "price_vs_ma20": -3.45,
+            "price_vs_ma60": -7.56,
+            "change_5d": 1.2,
+            "vol_ratio": 0.8
+          },
+          "signals": []
+        },
+        "as_of": "2026-06-05",
+        "validation_status": "unvalidated_pilot",
+        "no_trade_flag": true
+      },
+      {
+        "ticker": "9999.HK",
+        "name": "NetEase",
+        "market": "HK",
+        "sleeve": "quant_swing",
+        "state": "SETUP_WATCH",
+        "signal_class": "no_trade_signal",
+        "setup_type": "no_signal",
+        "bias": "neutral",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
+        "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
+        "risk_rule": "No setup yet — watch MA20 (178.89) / MA60 (180.78) for the first directional signal.",
+        "technical": {
+          "zone": "NEUTRAL",
+          "entry_zone": false,
+          "exit_zone": false,
+          "signal_count": {
+            "bullish": 0,
+            "bearish": 0,
+            "total": 0
+          },
+          "key_indicators": {
+            "rsi14": 56.3,
+            "macd_hist": 2.3262,
+            "price_vs_ma20": 2.75,
+            "price_vs_ma60": 1.67,
+            "change_5d": 2.68,
+            "vol_ratio": 0.67
+          },
+          "signals": []
+        },
+        "as_of": "2026-06-05",
+        "validation_status": "unvalidated_pilot",
+        "no_trade_flag": true
+      }
+    ]
+  },
   "research_pool": [
     {
       "ticker": "000686.SZ",
