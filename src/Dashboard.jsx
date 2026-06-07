@@ -11103,7 +11103,14 @@ function PilotAttribution({ L, lk, C }) {
     const decisions = Array.isArray(obj) ? obj : (obj && Array.isArray(obj.decisions) ? obj.decisions : null);
     if (!decisions || !decisions.length) { setErr(L('No decisions[] found in the pasted JSON.', '粘贴的 JSON 里没有 decisions[]。')); return; }
     if (participants.some(p => p.participant_id === id)) { setErr(L('That participant id is already added — use a different id.', '该参与者 id 已存在 —— 换一个。')); return; }
-    persist([...participants, { participant_id: id, run_date: obj.run_date || (decisions[0] && decisions[0].run_date) || '', pilot_start_date: obj.pilot_start_date || '', decisions }]);
+    const nrd = obj.run_date || (decisions[0] && decisions[0].run_date) || '';
+    // PER-RUN attribution: every pasted export MUST be from the same run, else the
+    // follow/modify/reject percentages would mix decisions across different runs and
+    // corrupt exactly the attribution this view is meant to protect.
+    if (!nrd) { setErr(L('This export has no run_date — cannot attribute it to a run.', '该导出没有 run_date —— 无法归入某个 run。')); return; }
+    const erd = participants.length ? participants[0].run_date : nrd;
+    if (erd && nrd !== erd) { setErr(L(`All pasted exports must be from the same run. This view is per-run attribution — established run is ${erd}, but this paste is ${nrd}. Clear all to start a new run.`, `所有粘贴的导出必须来自同一 run。本视图为单 run 归因 —— 已建立 run 为 ${erd}，本次粘贴为 ${nrd}。如需切换 run 请先清空。`)); return; }
+    persist([...participants, { participant_id: id, run_date: nrd, pilot_start_date: obj.pilot_start_date || '', decisions }]);
     setPaste(''); setPid('');
   };
   const removeParticipant = id => persist(participants.filter(p => p.participant_id !== id));
@@ -11121,6 +11128,7 @@ function PilotAttribution({ L, lk, C }) {
   });
   const cands = Object.values(candMap).sort((a, b) => a.sleeve === b.sleeve ? a.ticker.localeCompare(b.ticker) : a.sleeve.localeCompare(b.sleeve));
   const nUsers = participants.length;
+  const runDate = participants.length ? participants[0].run_date : '';
   const whoBy = (users, k) => users.filter(u => u.status === k).map(u => u.participant_id);
 
   const mergedExport = { _meta: { kind: 'pilot_attribution_merge', participants: nUsers, returns_status: 'pending_price_sync_and_structured_trades', not_a_backtest: true, note: 'Execution divergence only. No P&L from free-text actual_trade; returns pending mark-to-market + structured trade fields (side/price/quantity/execution_time).' }, participants };
@@ -11129,7 +11137,7 @@ function PilotAttribution({ L, lk, C }) {
 
   return (
     <div style={{ marginTop: 18 }}>
-      <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, margin: '4px 0 2px' }}>{L('Pilot Attribution', '内测执行归因')} <span style={{ fontSize: 10, color: C.mid, fontWeight: 500 }}>({nUsers} {L('participant(s)', '位参与者')})</span></div>
+      <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, margin: '4px 0 2px' }}>{L('Pilot Attribution', '内测执行归因')} <span style={{ fontSize: 10, color: C.mid, fontWeight: 500 }}>({nUsers} {L('participant(s)', '位参与者')})</span>{runDate ? <span style={{ fontSize: 9, color: C.blue, marginLeft: 6, fontWeight: 700 }}>· {L('run', '运行日')} {runDate}</span> : null}</div>
       <div style={{ fontSize: 9.5, color: C.mid, marginBottom: 8, lineHeight: 1.5 }}>{L('Paste one or more participants\' execution logs (the #42 export) to compare model recommendation → user execution. This collects execution divergence only — returns are PENDING (no P&L is computed from free-text trades; needs price sync + structured trade fields). Not a backtest, no average-return claim.', '粘贴一个或多个参与者的执行记录（#42 导出）以对比 模型建议 → 用户执行。此处仅汇总执行分歧 —— 收益为【待定】（不从自由文本成交里算 P&L；需价格同步 + 结构化成交字段）。非回测，不声称平均收益。')}</div>
 
       <div style={{ ...cardBox, marginBottom: 10 }}>
