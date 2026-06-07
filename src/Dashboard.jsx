@@ -935,7 +935,7 @@ function MacroStressTest({ stressData, L, C }) {
 
   if (!stressData?.scenarios) return (
     <div style={{padding:'14px 16px', background:`${C.gold}08`, border:`1px solid ${C.gold}25`, borderRadius:8, fontSize:11, color:C.mid}}>
-      {L('Stress test data not yet generated — run fetch_data.py','压力测试数据未生成，请运行 fetch_data.py')}
+      {L('Stress test data not yet available — it populates on the daily data sync.','暂无压力测试数据，将在每日数据同步后更新。')}
     </div>
   );
 
@@ -2664,7 +2664,7 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
       </div>
 
       {/* ── Live Portfolio Snapshot ─────────────────────────────────────── */}
-      <Card title={L('Live Portfolio Snapshot','持仓实时行情')} sub={L('Focus stocks · prices from last GitHub Actions sync','持仓股票 · 来自 GitHub Actions 定时抓取')} open={open.liveSnapshot !== false} onToggle={()=>toggle('liveSnapshot')} C={C}>
+      <Card title={L('Live Portfolio Snapshot','持仓实时行情')} sub={L('Focus stocks · prices from latest data sync','重点标的 · 价格来自最近一次数据同步')} open={open.liveSnapshot !== false} onToggle={()=>toggle('liveSnapshot')} C={C}>
         {/* Freshness bar */}
         <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12}}>
           <div style={{display:'flex', alignItems:'center', gap:6}}>
@@ -2674,7 +2674,7 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
             <span style={{fontSize:10, color: dataFresh ? C.green : C.gold, fontFamily:'inherit'}}>
               {dataAgeH !== null
                 ? `${L('Synced','已同步')} ${dataAgeH}h ${L('ago','前')} · ${new Date(fetchedAt).toLocaleDateString()}`
-                : L('No live data — awaiting next GitHub Actions run','暂无实时数据，等待下一次同步')}
+                : L('No live data yet — awaiting the next data sync','暂无实时数据 — 等待下一次数据同步')}
             </span>
           </div>
           <span style={{fontSize:9, color:C.mid}}>{L('Auto-sync: 08:30 & 16:30 HKT weekdays','自动同步: 工作日 08:30 & 16:30 港时')}</span>
@@ -2829,7 +2829,7 @@ function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight,
         })}
         {!signalsData || Object.keys(signalsData).length === 0 ? (
           <div style={{fontSize:10, color:C.mid, padding:'8px 0', textAlign:'center'}}>
-            {L('Signal data not yet available — will appear after next GitHub Actions run','信号数据暂不可用，下次工作流运行后显示')}
+            {L('Signal data not yet available — it populates on the daily data sync.','暂无信号数据，将在每日数据同步后更新。')}
           </div>
         ) : null}
       </Card>
@@ -5480,7 +5480,7 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
         <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
           <EQR lvl={eqr ? eqr.overall : '…'} C={C}/>
           {eqr && <span style={{fontSize:9, color:C.mid}}>{L('Research quality auto-rated · updated ','研究质量自动评级 · 更新于 ')}{eqr.generated_at?.slice(0,10)}</span>}
-          {!eqr && <span style={{fontSize:9, color:C.mid}}>{L('Run fetch_data.py to generate EQR ratings','运行 fetch_data.py 以生成EQR评级')}</span>}
+          {!eqr && <span style={{fontSize:9, color:C.mid}}>{L('EQR ratings populate on the daily data sync.','EQR评级将在每日数据同步后更新。')}</span>}
         </div>
       </Card>
 
@@ -6388,9 +6388,9 @@ function TradingDesk({ L, lk, C }) {
   if (!decision) return (
     <div style={{display:'flex', alignItems:'center', justifyContent:'center',
                  height:300, flexDirection:'column', gap:8}}>
-      <div style={{fontSize:13, color:C.mid}}>No decision data yet</div>
+      <div style={{fontSize:13, color:C.mid}}>{L('No decision data yet','暂无决策数据')}</div>
       <div style={{fontSize:11, color:C.mid, opacity:0.7}}>
-        Run GitHub Actions to generate daily_decision.json
+        {L('It populates on the daily data sync.','将在每日数据同步后更新。')}
       </div>
     </div>
   );
@@ -8015,7 +8015,11 @@ const FlowPanel = ({ liveData, L, lk, C }) => {
   const dt     = staticData?.dragon_tiger || liveData?.akshare?.dragon_tiger || [];
   const margin = staticData?.margin || liveData?.akshare?.margin || {};
   const hist   = apiData?.history || [];
-  const dataSource = apiData?.source || (staticData ? 'flow_data.json' : null);
+  const dataSource = apiData?.source
+    ? L('Live flow data','实时资金流数据')
+    : staticData
+      ? L('Latest synced flow data','最近一次同步的资金流数据')
+      : null;
 
   const FlowCard = ({ title, data, icon }) => {
     if (!data || Object.keys(data).length === 0) return null;
@@ -8147,13 +8151,13 @@ const FlowPanel = ({ liveData, L, lk, C }) => {
             <span style={{fontWeight:700, color:C.gold}}>{L('Flow data unavailable','资金流向数据暂不可用')}</span>
           </div>
           <div>{L(
-            'Capital flow API attempted but Eastmoney HSGT endpoints may be geo-restricted from Vercel. No local flow_data.json found either.',
-            '已尝试调用东方财富 HSGT API，但该接口可能对 Vercel 节点也有地域限制。本地 flow_data.json 也未找到。'
+            'Capital-flow data is not available for this session.',
+            '本次暂无资金流数据。'
           )}</div>
           <div style={{marginTop:6, color:C.blue, fontSize:10}}>
             {L(
-              'Fix: run  python scripts/fetch_data.py  locally and push the generated flow_data.json.',
-              '解决方案：本地运行 python scripts/fetch_data.py，将生成的 flow_data.json 推送至 GitHub。'
+              'It will update on the next data sync when the upstream source is reachable.',
+              '上游数据源可用后，将在下一次数据同步中更新。'
             )}
           </div>
         </div>
@@ -10206,8 +10210,8 @@ function BacktestPanel({ L, C }) {
         </div>
         <div style={{fontSize:11, color:C.mid, maxWidth:420, margin:'0 auto', lineHeight:1.7}}>
           {reason === 'no_ohlcv_data'
-            ? L('No OHLCV files found in public/data/. Run fetch_data.py first.',
-                '未找到 OHLCV 数据文件。请先运行 fetch_data.py。')
+            ? L('No price history available yet — it populates on the daily data sync.',
+                '暂无价格历史数据，将在每日数据同步后更新。')
             : L(`${daysAvail} days of price history available — need ${daysReq}+ to begin backtesting. Keep running daily fetches.`,
                 `当前价格历史 ${daysAvail} 天，需要 ${daysReq}+ 天才能开始回测。请继续每日抓取数据。`)}
         </div>
