@@ -1,8 +1,10 @@
 # AR Equity Research Platform — Project Context
 
 > This file is auto-loaded at the start of every Claude session. Read it fully before writing any code.
-> **Last updated: 2026-05-01** (post repo reorganization: docs/ structure +
-> auto-work-mode skill rename + STATUS.md mandatory pre-flight)
+> **Last updated: 2026-06-07** (pivot pointer added — see PIVOT NOTICE below; prior 2026-05-01: repo reorganization — docs/ structure + auto-work-mode skill rename + STATUS.md mandatory pre-flight)
+
+> **⚠ 2026-06-07 PIVOT NOTICE — read before applying any "no buy/sell" rule below.**
+> The product pivoted to an **internal model-recommendation pilot** (Daily Model Portfolio). As of 2026-06-07, the pilot **may output explicitly-labeled UNVALIDATED model recommendations / target ranges / construction logic** — **not** validated alpha, **not** external advice, and **no auto-trade or sizing without human execution**. The **human still makes the final decision** (executes the trade). This *supplements*, does not delete, the "human makes all investment decisions" philosophy and Analysis Output Standard #3 below. Full reconciliation deferred post-demo. See **`STATUS.md` top block (2026-06-07)** for the full pilot positioning + the recommendation→execution→attribution→improvement loop.
 
 ## ⚡ MANDATORY PRE-FLIGHT (before any work)
 
@@ -22,7 +24,7 @@ What systemic gap does it close?" If you can't answer → wrong KR.
 
 ## What This Project Is
 
-A personal AI-augmented equity research platform built by Junyan (j.liu199@lse.ac.uk). Not SaaS — personal investment tool for systematic buy-side research on A-shares and HK equities. Core philosophy: **AI produces evidence and signals, human makes all investment decisions.**
+A personal AI-augmented equity research platform built by Junyan (j.liu199@lse.ac.uk). Not SaaS — personal investment tool for systematic buy-side research on A-shares and HK equities. Core philosophy: **AI produces evidence and signals, human makes all investment decisions.** *(2026-06-07: supplemented for the internal model-recommendation pilot — the AI now also outputs explicitly-labeled UNVALIDATED recommendations / target ranges; the human still makes the final decision. See the PIVOT NOTICE at top.)*
 
 Inspired by UBS Finance Challenge (中际旭创 long + Pop Mart short both validated). Goal: systematise the hedge fund research process.
 
@@ -296,7 +298,7 @@ git push
 
 1. Business model = first-principles (physical mechanism → money flow), not marketing description
 2. Variant view = ONE precise thesis: "Market believes X → We believe Y → Proves right if A → Proves wrong if B"
-3. AI never outputs buy/sell conclusions — only evidence, signals, structured scores
+3. AI never outputs buy/sell conclusions — only evidence, signals, structured scores *(supplemented 2026-06-07: the internal model-recommendation pilot MAY output explicitly-labeled UNVALIDATED model recommendations / target ranges / construction logic — not validated alpha, not external advice, no auto-trade or sizing without human execution. See PIVOT NOTICE at top.)*
 4. Every section needs evidence quality rating + AI limitations disclosure
 5. **After every feature: explicitly state what's causally validated vs numerically unvalidated**
 6. Never present invented weights as if they were calibrated
