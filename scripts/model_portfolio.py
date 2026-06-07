@@ -42,7 +42,7 @@ OUT = D / "model_portfolio.json"
 
 # Pilot anchor: live execution-return tracking starts from the first trading-day
 # run on/after this date. Today 2026-06-07 (Sun) is a non-trading day (A/H closed).
-PILOT_START_DATE = "2026-06-09"                   # next A-share trading session (Mon)
+PILOT_START_DATE = "2026-06-08"                   # next trading session: Mon 2026-06-08 (no A/H holiday until Dragon Boat 6/19–6/21)
 
 DIRECTIONAL = ("LONG", "SHORT", "WATCH_SHORT")
 # Fields that would mean a LEGACY paper position leaked into a fresh-pilot card.
