@@ -3060,14 +3060,15 @@ function LimitBoardPanel({ data, L, C }) {
   const drillToResearch = typeof data._onSelect === 'function' ? data._onSelect : () => {};
 
   const formatFc = row => {
-    const fcRatio = Number(row?.fc_ratio || 0);
-    return `${Number.isFinite(fcRatio) ? fcRatio.toFixed(0) : '0'}fc`;
+    if (row?.fc_ratio == null) return null;
+    const fcRatio = Number(row.fc_ratio);
+    return Number.isFinite(fcRatio) ? `${fcRatio.toFixed(0)}fc` : null;
   };
 
   const rowsFor = rows => rows.slice(0, 5).map(row => ({
     name: row.name || row.ts_code || '—',
     ticker: row.ts_code,
-    value: row.theme || formatFc(row),
+    value: row.theme || row.industry || formatFc(row) || '—',
   }));
 
   const handleRowClick = s => { if (s?.ticker) drillToResearch(s.ticker); };
@@ -3374,10 +3375,14 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
     return String(Math.round(vol));
   };
 
+  const DAILY_FLOW_ANOMALY_YUAN = 1e12; // display guard only: daily concept/industry net flow above ¥1T is not credible.
   const formatFlowYuan = (yuan) => {
     if (yuan == null || isNaN(yuan)) return '—';
-    const sign = yuan >= 0 ? '+' : '−';
-    const abs = Math.abs(yuan);
+    const value = Number(yuan);
+    if (!Number.isFinite(value)) return '—';
+    if (Math.abs(value) >= DAILY_FLOW_ANOMALY_YUAN) return L('data anomaly', '异常待核验');
+    const sign = value >= 0 ? '+' : '−';
+    const abs = Math.abs(value);
     if (abs >= 1e8) return `${sign}${(abs/1e8).toFixed(1)}亿`;
     if (abs >= 1e4) return `${sign}${Math.round(abs/1e4)}万`;
     return `${sign}${Math.round(abs)}`;
@@ -3548,23 +3553,25 @@ function Screener({ L, lk, stocks: stocksMap, onSelect, C, liveData, universeA, 
       </div>
 
       {capitalFlow && capitalFlow._status !== 'fetch_failed' && capitalFlow._status !== 'endpoint_unavailable' && (
-        <div style={{display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10, marginBottom:10}}>
+        <div style={{display:'grid', gridTemplateColumns: (isMobile || !(hasHotConcepts && hasHotIndustries)) ? '1fr' : '1fr 1fr', gap:10, marginBottom:10}}>
           {!hasHotConcepts && !hasHotIndustries ? (
             <div style={{gridColumn:'1 / -1', padding:'8px 12px', background:C.soft, border:`1px solid ${C.border}`, borderRadius:8, fontSize:10, color:C.mid}}>
               资金流热度 · 当日数据未生成 ({capitalFlow.trade_date || '—'})
             </div>
           ) : (
             <>
-              <HeroCard
-                title={hasHotConcepts ? L('Hot Concepts (Net Flow)','今日热门概念 Top 5') : L('Hot Concepts (Net Flow)','今日热门概念 暂无')}
-                icon={<Flame size={14}/>}
-                accent={hasHotConcepts ? C.red : C.mid}
-                rows={hotConceptRows}
-                onSeeAll={() => {}}
-                onRowClick={(s) => { if (s?.name) setConceptFilter(s.name); }}
-                L={L}
-                C={C}
-              />
+              {hasHotConcepts ? (
+                <HeroCard
+                  title={L('Hot Concepts (Net Flow)','今日热门概念 Top 5')}
+                  icon={<Flame size={14}/>}
+                  accent={C.red}
+                  rows={hotConceptRows}
+                  onSeeAll={() => {}}
+                  onRowClick={(s) => { if (s?.name) setConceptFilter(s.name); }}
+                  L={L}
+                  C={C}
+                />
+              ) : null}
               <HeroCard
                 title={hasHotIndustries ? L('Hot Industries (Net Flow)','今日行业资金流向 Top 5') : L('Hot Industries (Net Flow)','今日行业资金流向 暂无')}
                 icon={<BarChart3 size={14}/>}
@@ -10499,6 +10506,7 @@ function TradeDecisionCockpit({ L, lk, C }) {
   const blockers = (risk && risk.risk_blockers) || [];
   const conflicts = (risk && risk.thesis_conflicts) || [];
   const stale = risk && risk.theme_residual_status === 'theme_residual_stale';
+  const visibleBlockers = blockers.filter(b => b !== 'stale:theme_peer_residual.json');
   const reviewToday = (queue && queue.review_required) || [];
   const needResearch = (queue && queue.need_more_research) || [];
 
@@ -10530,8 +10538,9 @@ function TradeDecisionCockpit({ L, lk, C }) {
             </div>
           ))}
           <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.7 }}>
-            <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.length ? blockers.join(' · ') : L('none', '无')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps / data freshness]', '【未校准上限 / 数据时效】')}</span></div>
+            <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {visibleBlockers.length ? visibleBlockers.join(' · ') : L('none', '无')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div>
             <div style={{ color: C.gold }}>{L('Thesis conflicts', '论点冲突')}: {conflicts.length ? conflicts.map(c => c.ticker).join(', ') : L('none', '无')}</div>
+            {stale ? <div style={{ color: C.mid }}>{L('Attribution snapshot: theme residual is panel-coupled, not today-live risk.', '归因快照：主题残差随面板刷新，不是今日实时风险。')}</div> : null}
           </div>
           {needResearch.length > 0 ? (
             <div style={{ marginTop: 8 }}>
@@ -10554,7 +10563,7 @@ function TradeDecisionCockpit({ L, lk, C }) {
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, marginBottom: 8 }}>
           {L('Portfolio Risk (read-only)', '组合风险（只读）')}
-          {stale ? <span style={{ fontSize: 9, color: C.red, marginLeft: 8 }}>{L('· theme-residual STALE', '· 主题残差已过期')}</span> : null}
+          {stale ? <span style={{ fontSize: 9, color: C.mid, marginLeft: 8 }}>{L('· attribution snapshot', '· 归因快照')}</span> : null}
         </div>
         {!risk ? <div style={{ fontSize: 11, color: C.mid }}>{L('Loading…', '加载中…')}</div> : (
           <div style={{ fontSize: 11, color: C.mid, lineHeight: 1.7 }}>
@@ -10566,7 +10575,8 @@ function TradeDecisionCockpit({ L, lk, C }) {
               ))}
             </div>
             {conflicts.length > 0 ? <div style={{ color: C.gold }}>{L('Thesis conflicts', '论点冲突')}: {conflicts.map(c => c.ticker).join(', ')}</div> : null}
-            {blockers.length > 0 ? <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {blockers.join(' · ')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps / data freshness]', '【未校准上限 / 数据时效】')}</span></div> : null}
+            {visibleBlockers.length > 0 ? <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {visibleBlockers.join(' · ')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div> : null}
+            {stale ? <div style={{ color: C.mid }}>{L('Attribution snapshot: theme residual refreshes with panel data, so it is not treated as today-live risk.', '归因快照：主题残差随面板数据刷新，不作为今日实时风险呈现。')}</div> : null}
           </div>
         )}
       </div>
