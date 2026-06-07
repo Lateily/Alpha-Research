@@ -8262,6 +8262,7 @@ function PaperTrading({ L, lk, C }) {
   const pnl = summary.total_pnl || 0;
   const pnlPct = summary.total_pnl_pct || 0;
   const pnlColor = pnl >= 0 ? C.green : C.red;
+  const paperAsOf = ((positions?._meta?.generated_at || positions?.as_of || summary?.as_of || summary?.updated_at || (snapshots.length ? snapshots[snapshots.length-1]?.date : '') || '').toString().slice(0,10)) || null;
 
   const handleAddTrade = async () => {
     // Fetch latest confluence data for signal attribution
@@ -8328,13 +8329,18 @@ function PaperTrading({ L, lk, C }) {
       ? `\n\n📊 Signal Attribution captured:\n  Score: ${signalAttribution.confluence_score}\n  Signals: ${(signalAttribution.contributing_signals || []).map(s=>s.name||s).join(', ')}`
       : '';
     alert(L(
-      `Trade saved locally.${attrNote}\n\nTo persist: copy trades from localStorage to public/data/trades.json and re-run python3 scripts/paper_trading.py`,
-      `交易已保存到本地存储。${attrNote ? '\n\n信号归因已记录' : ''}\n\n要持久化：将交易复制到 public/data/trades.json 并重新运行 python3 scripts/paper_trading.py`
+      `Trade saved to your browser (beta).${attrNote}\n\nIt will be reflected after the next maintainer data sync.`,
+      `交易已保存到本地浏览器（内测）。${attrNote ? '\n\n信号归因已记录。' : ''}\n\n下次维护者数据同步后生效。`
     ));
   };
 
   return (
     <div>
+      {/* Paper-simulation + as-of banner (product-trust) */}
+      <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:10}}>
+        <span style={{fontSize:10, fontWeight:700, color:C.blue, background:`${C.blue}18`, border:`1px solid ${C.blue}30`, borderRadius:4, padding:'2px 8px'}}>{L('PAPER SIMULATION','模拟盘')}</span>
+        <span style={{fontSize:10, color:C.mid}}>{L('Simulated book · no real capital · no orders placed','模拟持仓 · 无真实资金 · 不下真实委托')}{paperAsOf ? ` · ${L('as of','截至')} ${paperAsOf}` : ''}</span>
+      </div>
       {/* Portfolio Header */}
       <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:12, marginBottom:16}}>
         <div style={{padding:14, background:C.card, border:`1px solid ${C.border}`, borderRadius:8}}>
@@ -8518,11 +8524,10 @@ function PaperTrading({ L, lk, C }) {
 
       {/* Instructions box */}
       <div style={{padding:12, background:`${C.gold}08`, border:`1px solid ${C.gold}25`, borderRadius:6, fontSize:10, color:C.mid, lineHeight:1.7}}>
-        <div style={{fontWeight:700, color:C.dark, marginBottom:4}}>{L('How paper trading works:','虚拟盘说明：')}</div>
-        <div>1. {L('Add trades via the form above (saved to localStorage).','通过上方表单录入交易（保存至本地存储）。')}</div>
-        <div>2. {L('Copy localStorage trades to public/data/trades.json in your repo.','将本地存储交易复制到仓库中的 public/data/trades.json。')}</div>
-        <div>3. {L('GitHub Actions computes P&L daily and updates positions.json.','GitHub Actions 每日计算浮盈亏并更新 positions.json。')}</div>
-        <div>4. {L('Run python3 scripts/paper_trading.py locally for instant updates.','本地运行 python3 scripts/paper_trading.py 即时更新。')}</div>
+        <div style={{fontWeight:700, color:C.dark, marginBottom:4}}>{L('How paper trading works:','模拟盘说明：')}</div>
+        <div>1. {L('This is a simulated (paper) book — no real capital, and no orders are ever placed.','这是模拟盘 — 无真实资金，不下任何真实委托。')}</div>
+        <div>2. {L('Trades you add are recorded for tracking; P&L updates on the daily data sync.','你录入的交易仅用于跟踪记录；盈亏在每日数据同步时更新。')}</div>
+        <div>3. {L('All values are observed paper-book facts; thresholds are [unvalidated].','所有数值为已观测的模拟盘事实；阈值为【未校准】。')}</div>
       </div>
     </div>
   );
@@ -10472,7 +10477,17 @@ function TradeDecisionCockpit({ L, lk, C }) {
       background: s.c + '22', color: s.c, whiteSpace: 'nowrap' }}>{lk === 'z' ? s.zh : s.en}</span>);
   };
 
-  const reasonText = r => r.current_blocker || (r.catalyst ? String(r.catalyst).slice(0, 70) : (r.source || []).join('/'));
+  const humanizeReason = (s) => String(s || '')
+    .replace(/portfolio_risk_packet\.risk_blockers/g, L('the portfolio risk packet', '组合风险包'))
+    .replace(/theme_peer_residual\.json/g, L('theme-residual attribution', '主题残差归因'))
+    .replace(/wrong_if/g, 'wrong-if');
+  const humanizeBlocker = (b) => {
+    const s = String(b || '');
+    const m = s.match(/^over_concentration:(.+)$/);
+    if (m) return `${L('over-concentration', '持仓过度集中')} · ${m[1]}`;
+    return s.replace(/_/g, ' ').replace(/:/g, ' · ');
+  };
+  const reasonText = r => humanizeReason(r.current_blocker || (r.catalyst ? String(r.catalyst).slice(0, 70) : (r.source || []).join('/')));
   const CandRow = ({ r }) => isMobile ? (
     /* ── P2 mobile card: identity + classification + FULL reason (wraps, no ellipsis) ── */
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '8px 12px',
@@ -10493,7 +10508,7 @@ function TradeDecisionCockpit({ L, lk, C }) {
       borderBottom: `1px solid ${C.border}`, fontSize: 11 }}>
       <Badge status={r.status} />
       <span style={{ fontFamily: MONO, fontWeight: 700, color: C.dark, minWidth: 80 }}>{r.ticker}</span>
-      <span style={{ color: C.mid, minWidth: 56 }}>{(r.name || '').slice(0, 5)}</span>
+      <span style={{ color: C.mid, minWidth: 56, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name || ''}</span>
       <span style={{ color: C.dark, minWidth: 86 }}>{r.direction}</span>
       <span style={{ color: C.mid, fontSize: 10 }}>{r.evidence_tier}</span>
       <span style={{ color: C.mid, fontSize: 10, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -10534,11 +10549,11 @@ function TradeDecisionCockpit({ L, lk, C }) {
           {reviewToday.map(it => (
             <div key={it.ticker} style={{ display: 'flex', gap: 8, alignItems: 'baseline', padding: '4px 0', borderBottom: `1px solid ${C.border}`, fontSize: 11 }}>
               <span style={{ fontFamily: MONO, fontWeight: 700, color: C.dark, minWidth: 80 }}>{it.ticker}</span>
-              <span style={{ color: C.mid, flex: 1 }}>{it.reason}<span style={{ color: C.mid, fontSize: 10 }}> · {it.what_to_check}</span></span>
+              <span style={{ color: C.mid, flex: 1 }}>{humanizeReason(it.reason)}<span style={{ color: C.mid, fontSize: 10 }}> · {humanizeReason(it.what_to_check)}</span></span>
             </div>
           ))}
           <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.7 }}>
-            <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {visibleBlockers.length ? visibleBlockers.join(' · ') : L('none', '无')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div>
+            <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {visibleBlockers.length ? visibleBlockers.map(humanizeBlocker).join(' · ') : L('none', '无')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div>
             <div style={{ color: C.gold }}>{L('Thesis conflicts', '论点冲突')}: {conflicts.length ? conflicts.map(c => c.ticker).join(', ') : L('none', '无')}</div>
             {stale ? <div style={{ color: C.mid }}>{L('Attribution snapshot: theme residual is panel-coupled, not today-live risk.', '归因快照：主题残差随面板刷新，不是今日实时风险。')}</div> : null}
           </div>
@@ -10575,7 +10590,7 @@ function TradeDecisionCockpit({ L, lk, C }) {
               ))}
             </div>
             {conflicts.length > 0 ? <div style={{ color: C.gold }}>{L('Thesis conflicts', '论点冲突')}: {conflicts.map(c => c.ticker).join(', ')}</div> : null}
-            {visibleBlockers.length > 0 ? <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {visibleBlockers.join(' · ')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div> : null}
+            {visibleBlockers.length > 0 ? <div style={{ color: C.red }}>{L('Risk blockers', '风险阻断')}: {visibleBlockers.map(humanizeBlocker).join(' · ')} <span style={{ fontSize: 9, color: C.mid }}>{L('[unvalidated caps]', '【未校准上限】')}</span></div> : null}
             {stale ? <div style={{ color: C.mid }}>{L('Attribution snapshot: theme residual refreshes with panel data, so it is not treated as today-live risk.', '归因快照：主题残差随面板数据刷新，不作为今日实时风险呈现。')}</div> : null}
           </div>
         )}
@@ -10584,6 +10599,10 @@ function TradeDecisionCockpit({ L, lk, C }) {
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 12 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: C.dark, padding: '10px 12px', borderBottom: `1px solid ${C.border}` }}>
           {L('Needs attention', '需关注')} <span style={{ color: C.mid, fontWeight: 500 }}>({prominent.length})</span>
+        </div>
+        <div style={{ fontSize: 9, color: C.mid, padding: '6px 12px', borderBottom: `1px solid ${C.border}`, lineHeight: 1.6 }}>
+          {L('Legend — Evidence: E1 confirmed/disclosed · E2 proxy or forward (labeled) · E3 structural/historical. Status: LONG/SHORT = registered thesis direction · WATCH(_SHORT) = below action threshold · PASS = reviewed, no action · Risk-blocked / Human review = needs your judgement. The system never sizes or trades.',
+             '图例 — 证据层级：E1 已证实/已披露 · E2 代理或前瞻（已标注） · E3 结构/历史。状态：LONG/SHORT = 已登记论点方向 · WATCH(_SHORT) = 未达行动门槛 · PASS = 已复核、不行动 · Risk-blocked 风险阻断 / Human review 待人工判断。系统从不做仓位、不交易。')}
         </div>
         {!board ? <div style={{ fontSize: 11, color: C.mid, padding: 12 }}>{L('Loading…', '加载中…')}</div> : null}
         {board && prominent.length === 0 ? <div style={{ fontSize: 11, color: C.mid, padding: 12 }}>{L('Nothing requires review.', '暂无需审核项。')}</div> : null}
