@@ -243,6 +243,13 @@ jobs:
         continue-on-error: true          # non-critical; reads confluence.json
         run: python scripts/daily_decision.py
 
+      # ── Step 2h2: Daily Model Portfolio pilot run (read-only) ─────────────
+      # Composes candidate board + thesis_queue + fresh confluence into today's
+      # model_portfolio.json (fresh pilot; no legacy positions; idea-only, no size).
+      - name: Generate Daily Model Portfolio (pilot)
+        continue-on-error: true          # non-critical; read-only composition
+        run: python scripts/model_portfolio.py
+
       # ── Step 2i: Signal quality analytics (feedback loop) ────────────────
       - name: Compute signal quality analytics
         continue-on-error: true          # non-critical; reads trades + positions
@@ -368,6 +375,7 @@ jobs:
             public/data/stress_test.json \
             public/data/confluence.json \
             public/data/daily_decision.json \
+            public/data/model_portfolio.json \
             public/data/position_sizing.json \
             public/data/signal_quality.json \
             public/data/trades.json \

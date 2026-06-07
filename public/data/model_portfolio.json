@@ -1,0 +1,469 @@
+{
+  "_meta": {
+    "layer": "Daily Model Portfolio Pilot — generator v0 (read-only; idea/status only; no size, no BUY/SELL, no auto-trade)",
+    "read_only": true,
+    "no_trades": true,
+    "no_size": true,
+    "no_buy_sell": true,
+    "no_position_mutation": true,
+    "run_date": "2026-06-07",
+    "pilot_start_date": "2026-06-08",
+    "generated_at": "2026-06-07T10:51:37.581052+00:00",
+    "fresh_pilot": true,
+    "legacy_paper_positions_inherited": false,
+    "sources": [
+      "trade_candidate_board",
+      "thesis_queue",
+      "confluence"
+    ],
+    "disclaimer": "Internal model-recommendation pilot. UNVALIDATED model output — not validated alpha, and not external investment advice. Target ranges are thesis-derived and NOT calibrated; entry references pend the next market sync. Live execution-return tracking begins from the next trading-day pilot run. The product edge is the loop: recommendation -> user execution -> performance attribution -> model improvement.",
+    "counts": {
+      "core_thesis": 5,
+      "quant_swing": 0,
+      "research_pool": 20,
+      "watch_pool": 31
+    }
+  },
+  "candidates": [
+    {
+      "ticker": "002594.SZ",
+      "name": "比亚迪",
+      "market": "A",
+      "sleeve": "core_thesis",
+      "model_action": "LONG",
+      "horizon_days": 60,
+      "evidence_tier": "E1",
+      "why": "2026 H1 报告 disclosure of regional segment gross margins, overseas revenue YoY, and consolidated GM — first official test of whether overseas mix-shift is offsetting domestic price-war pressure",
+      "target_range": {
+        "basis": "thesis_derived",
+        "calibrated": false,
+        "entry_reference": "pending_next_market_sync",
+        "reward_to_risk": 2.0,
+        "note": "Thesis-derived band — not yet calibrated to a live entry."
+      },
+      "construction_plan": "Starter entry, staged; add only on thesis confirmation. Pending calibration.",
+      "risk_rules": {
+        "invalidation": [
+          "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+          "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+          "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+        ],
+        "current_blocker": null
+      },
+      "source_signals": {
+        "core_thesis": {
+          "family_id": "core_factory_v0_002594_SZ_AUTO_EV_20260530",
+          "validation_status": "PENDING",
+          "evidence_tier": "E1",
+          "screen_score": null
+        },
+        "quant_confluence": {
+          "action": "NEUTRAL",
+          "score": -1,
+          "rationale": "Bearish: Death Cross | RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48"
+        }
+      },
+      "validation_status": "PENDING",
+      "counts_toward_validation": true,
+      "no_trade_flag": true
+    },
+    {
+      "ticker": "603233.SH",
+      "name": "大参林",
+      "market": "A",
+      "sleeve": "core_thesis",
+      "model_action": "SHORT",
+      "horizon_days": 60,
+      "evidence_tier": "E1",
+      "why": "2026 H1 results disclosure — first primary disclosure that quantifies whether Q1 2026 store-expansion restart is preserving (or eroding) the +35% NI YoY margin gain; resolves both bull and bear core link",
+      "target_range": {
+        "basis": "thesis_derived",
+        "calibrated": false,
+        "entry_reference": "pending_next_market_sync",
+        "reward_to_risk": null,
+        "note": "Thesis-derived band — not yet calibrated to a live entry."
+      },
+      "construction_plan": "Directional bearish view — watch only (no retail-executable short); no entry.",
+      "risk_rules": {
+        "invalidation": [
+          "PASS thesis invalidated (forces re-engage either direction) if 2026 H1 report discloses all three of: store count YoY delta, SSSG, and segment-level new-store margins @ 2026 H1 报告 (≈2026-08-28) | source: 2026 H1 报告 经营数据章节 + 分部数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+          "PASS thesis invalidated if pre-print primary disclosure (e.g. monthly operating bulletin or interim store-count filing) prints store count YoY ≥ 10% before 2026-07-31 @ interim 公告 | source: 临时公告 经营数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+          "PASS thesis invalidated if 融资余额 falls below 1.8亿 with price < 17.0 before 2026-07-31 (forced-unwind shorting opportunity) @ Tushare margin daily | source: Tushare margin_detail 融资余额 + daily close | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+        ],
+        "current_blocker": null
+      },
+      "source_signals": {
+        "core_thesis": {
+          "family_id": "core_factory_v0_603233_SH_PHARMACY_RETAIL_20260530",
+          "validation_status": "PENDING",
+          "evidence_tier": "E1",
+          "screen_score": null
+        },
+        "quant_confluence": {
+          "action": "NEUTRAL",
+          "score": 0,
+          "rationale": "RSI 36 | Price vs MA20 -5.9% | VP 50"
+        }
+      },
+      "validation_status": "PENDING",
+      "counts_toward_validation": true,
+      "no_trade_flag": true
+    },
+    {
+      "ticker": "6160.HK",
+      "name": "BeiGene",
+      "market": "HK",
+      "sleeve": "core_thesis",
+      "model_action": "WATCH_SHORT",
+      "horizon_days": 60,
+      "evidence_tier": "E2",
+      "why": "Q2 2026 earnings release — first full quarter test of whether BRUKINSA (zanubrutinib) ex-US growth + sonrotoclax (BCL-2) Phase 3 CELESTIAL-TN readout timeline can offset accelerating US BTK market saturation and Pfizer/AbbVie pricing pressure",
+      "target_range": {
+        "basis": "thesis_derived",
+        "calibrated": false,
+        "entry_reference": "pending_next_market_sync",
+        "reward_to_risk": 1.6,
+        "note": "Thesis-derived band — not yet calibrated to a live entry."
+      },
+      "construction_plan": "Directional bearish view — watch only (no retail-executable short); no entry.",
+      "risk_rules": {
+        "invalidation": [
+          "Q2 26 BRUKINSA total revenue ≥$1.05B AND US QoQ ≥+8% — saturation thesis invalidated",
+          "Non-GAAP operating margin reaches ≥8% in Q2 26 with sustained trajectory toward 12% by Q4 26",
+          "CELESTIAL-TN interim shows HR ≤0.60 with clean safety — pipeline optionality confirmed, multi-asset franchise validated"
+        ],
+        "current_blocker": null
+      },
+      "source_signals": {
+        "core_thesis": {
+          "family_id": "core_factory_v0_6160_HK_HK_BIOTECH_20260530",
+          "validation_status": "PENDING",
+          "evidence_tier": "E2",
+          "screen_score": null
+        },
+        "quant_confluence": {
+          "action": "NEUTRAL",
+          "score": 0,
+          "rationale": "RSI 59 | Price vs MA20 +3.0%"
+        }
+      },
+      "validation_status": "PENDING",
+      "counts_toward_validation": true,
+      "no_trade_flag": true
+    },
+    {
+      "ticker": "700.HK",
+      "name": "Tencent",
+      "market": "HK",
+      "sleeve": "core_thesis",
+      "model_action": "WATCH_SHORT",
+      "horizon_days": 60,
+      "evidence_tier": "E2",
+      "why": "Tencent Q2 2026 earnings release — first full quarter showing AI capex run-rate impact on operating margin AND Yuanbao/Hunyuan monetization KPIs (DAU, advertising CPM uplift from AI-targeted inventory)",
+      "target_range": {
+        "basis": "thesis_derived",
+        "calibrated": false,
+        "entry_reference": "pending_next_market_sync",
+        "reward_to_risk": 2.0,
+        "note": "Thesis-derived band — not yet calibrated to a live entry."
+      },
+      "construction_plan": "Directional bearish view — watch only (no retail-executable short); no entry.",
+      "risk_rules": {
+        "invalidation": [
+          "Q2 2026 non-IFRS operating margin ≥36% — D&A absorbed by revenue mix improvement",
+          "Management quantifies AI revenue contribution ≥RMB 5bn annualized run-rate by Q2 2026",
+          "Two consecutive quarters (Q1 + Q2 2026) of advertising growth ≥22% YoY, validating AI ad monetization thesis"
+        ],
+        "current_blocker": null
+      },
+      "source_signals": {
+        "core_thesis": {
+          "family_id": "core_factory_v0_700_HK_HK_INTERNET_GAMING_20260530",
+          "validation_status": "PENDING",
+          "evidence_tier": "E2",
+          "screen_score": null
+        },
+        "quant_confluence": {
+          "action": "NEUTRAL",
+          "score": 0,
+          "rationale": "RSI 41 | Price vs MA20 -3.5%"
+        }
+      },
+      "validation_status": "PENDING",
+      "counts_toward_validation": true,
+      "no_trade_flag": true
+    },
+    {
+      "ticker": "9999.HK",
+      "name": "NetEase",
+      "market": "HK",
+      "sleeve": "core_thesis",
+      "model_action": "WATCH_SHORT",
+      "horizon_days": 60,
+      "evidence_tier": "E2",
+      "why": "NetEase Q1 2026 earnings release — key read on Marvel Rivals monetization sustainability (post-launch quarter 5), Where Winds Meet PC->mobile transition revenue recognition, and Naraka/Identity V grossing trajectory; management commentary on 2026 pipeline (Destiny: Rising, Ananta) and operating margin guidance after FY2025 GM compression",
+      "target_range": {
+        "basis": "thesis_derived",
+        "calibrated": false,
+        "entry_reference": "pending_next_market_sync",
+        "reward_to_risk": 1.9,
+        "note": "Thesis-derived band — not yet calibrated to a live entry."
+      },
+      "construction_plan": "Directional bearish view — watch only (no retail-executable short); no entry.",
+      "risk_rules": {
+        "invalidation": [
+          "Q1 2026 online game revenue YoY ≥ +13% AND GM ≥ 62%",
+          "Marvel Rivals Q1 2026 grossing flat or up YoY per third-party trackers",
+          "Management announces Destiny: Rising hard launch date in 2026 with Apple/Google co-marketing"
+        ],
+        "current_blocker": null
+      },
+      "source_signals": {
+        "core_thesis": {
+          "family_id": "core_factory_v0_9999_HK_HK_INTERNET_GAMING_20260530",
+          "validation_status": "PENDING",
+          "evidence_tier": "E2",
+          "screen_score": null
+        },
+        "quant_confluence": {
+          "action": "NEUTRAL",
+          "score": 0,
+          "rationale": "RSI 56 | Price vs MA20 +2.8%"
+        }
+      },
+      "validation_status": "PENDING",
+      "counts_toward_validation": true,
+      "no_trade_flag": true
+    }
+  ],
+  "research_pool": [
+    {
+      "ticker": "000686.SZ",
+      "name": "东北证券",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "000776.SZ",
+      "name": "广发证券",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "002120.SZ",
+      "name": "韵达股份",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "002797.SZ",
+      "name": "第一创业",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "300073.SZ",
+      "name": "当升科技",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "300457.SZ",
+      "name": "赢合科技",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600008.SH",
+      "name": "首创环保",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600015.SH",
+      "name": "华夏银行",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600030.SH",
+      "name": "中信证券",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600068.SH",
+      "name": "葛洲坝",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600150.SH",
+      "name": "中国船舶",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600546.SH",
+      "name": "山煤国际",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600570.SH",
+      "name": "恒生电子",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600872.SH",
+      "name": "中炬高新",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600906.SH",
+      "name": "财达证券",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "600999.SH",
+      "name": "招商证券",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "601066.SH",
+      "name": "中信建投",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "601108.SH",
+      "name": "财通证券",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "601169.SH",
+      "name": "北京银行",
+      "gap": "screened, no registered directional thesis yet"
+    },
+    {
+      "ticker": "601688.SH",
+      "name": "华泰证券",
+      "gap": "screened, no registered directional thesis yet"
+    }
+  ],
+  "watch_pool": [
+    {
+      "ticker": "000001.SZ",
+      "name": "平安银行"
+    },
+    {
+      "ticker": "000049.SZ",
+      "name": "德赛电池"
+    },
+    {
+      "ticker": "000589.SZ",
+      "name": "贵州轮胎"
+    },
+    {
+      "ticker": "000651.SZ",
+      "name": "格力电器"
+    },
+    {
+      "ticker": "000685.SZ",
+      "name": "中山公用"
+    },
+    {
+      "ticker": "000883.SZ",
+      "name": "湖北能源"
+    },
+    {
+      "ticker": "000933.SZ",
+      "name": "神火股份"
+    },
+    {
+      "ticker": "000983.SZ",
+      "name": "山西焦煤"
+    },
+    {
+      "ticker": "002154.SZ",
+      "name": "报 喜 鸟"
+    },
+    {
+      "ticker": "002266.SZ",
+      "name": "浙富控股"
+    },
+    {
+      "ticker": "002557.SZ",
+      "name": "洽洽食品"
+    },
+    {
+      "ticker": "002582.SZ",
+      "name": "好想你"
+    },
+    {
+      "ticker": "175.HK",
+      "name": "Geely"
+    },
+    {
+      "ticker": "300861.SZ",
+      "name": "美畅股份"
+    },
+    {
+      "ticker": "600026.SH",
+      "name": "中远海能"
+    },
+    {
+      "ticker": "600102.SH",
+      "name": "莱钢股份"
+    },
+    {
+      "ticker": "600157.SH",
+      "name": "永泰能源"
+    },
+    {
+      "ticker": "600170.SH",
+      "name": "上海建工"
+    },
+    {
+      "ticker": "600267.SH",
+      "name": "海正药业"
+    },
+    {
+      "ticker": "600827.SH",
+      "name": "百联股份"
+    },
+    {
+      "ticker": "601006.SH",
+      "name": "大秦铁路"
+    },
+    {
+      "ticker": "601618.SH",
+      "name": "中国中冶"
+    },
+    {
+      "ticker": "601677.SH",
+      "name": "明泰铝业"
+    },
+    {
+      "ticker": "601699.SH",
+      "name": "潞安环能"
+    },
+    {
+      "ticker": "601788.SH",
+      "name": "光大证券"
+    },
+    {
+      "ticker": "601878.SH",
+      "name": "浙商证券"
+    },
+    {
+      "ticker": "601995.SH",
+      "name": "中金公司"
+    },
+    {
+      "ticker": "601997.SH",
+      "name": "贵阳银行"
+    },
+    {
+      "ticker": "603345.SH",
+      "name": "安井食品"
+    },
+    {
+      "ticker": "688036.SH",
+      "name": "传音控股"
+    },
+    {
+      "ticker": "688472.SH",
+      "name": "阿特斯"
+    }
+  ],
+  "user_decisions": [],
+  "no_trade_flag": true
+}
