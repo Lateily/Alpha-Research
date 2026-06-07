@@ -10799,22 +10799,22 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
   const isMobile = useIsMobile();
   const [board, setBoard] = useState(null);
   const [conf, setConf]   = useState(null);
-  const [paper, setPaper] = useState(null);
   const [status, setStatus] = useState({});
   const SK = 'ar_model_status';
 
+  // PR#39 fix-forward (Junyan): the pilot book is a FRESH start and does NOT inherit
+  // the legacy paper_trades positions — their old entry/target/stop would pollute
+  // today's recommendation. The old paper book stays as historical validation only.
   useEffect(() => {
     const base = DATA_BASE;
     fetch(base + 'data/trade_candidate_board.json').then(r => r.ok ? r.json() : null).then(setBoard).catch(() => {});
     fetch(base + 'data/confluence.json').then(r => r.ok ? r.json() : null).then(setConf).catch(() => {});
-    fetch(base + 'data/paper_trades/summary.json').then(r => r.ok ? r.json() : null).then(setPaper).catch(() => {});
     try { setStatus(JSON.parse(localStorage.getItem(SK) || '{}')); } catch {}
   }, []);
 
   const rows = (board && board.trade_candidate_board) || [];
   const asOf = ((board && board._meta && (board._meta.generated_at || board._meta.as_of)) || '').slice(0, 10);
   const confMap = {}; ((conf && conf.scores) || []).forEach(s => { confMap[s.ticker] = s; });
-  const paperMap = {}; ((paper && paper.active_positions) || []).forEach(p => { paperMap[p.ticker] = p; });
 
   const setSt = (tk, k) => {
     const next = { ...status, [tk]: status[tk] === k ? null : k };
@@ -10841,7 +10841,6 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
 
   const ModelCard = ({ r }) => {
     const c = confMap[r.ticker];
-    const p = paperMap[r.ticker];
     const st = status[r.ticker];
     const dc = dirColor(r.direction);
     const wrongIf = Array.isArray(r.wrong_if) && r.wrong_if.length ? String(r.wrong_if[0]).split('|')[0].trim() : null;
@@ -10853,13 +10852,12 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
           <span style={{ fontSize: 10, fontWeight: 700, color: dc, background: `${dc}1A`, border: `1px solid ${dc}40`, borderRadius: 4, padding: '1px 7px' }}>{r.direction}</span>
           {r.evidence_tier ? <span style={{ fontSize: 9, color: C.mid }}>{r.evidence_tier}</span> : null}
           {r.horizon_days ? <span style={{ fontSize: 9, color: C.mid }}>{r.horizon_days}d</span> : null}
-          {p && p.conviction_state ? <span style={{ fontSize: 9, color: warn }}>{p.conviction_state}</span> : null}
         </div>
         {r.catalyst ? <div style={{ fontSize: 10.5, color: C.mid, lineHeight: 1.5, marginBottom: 6 }}><b style={{ color: C.dark }}>{L('Why', '推荐理由')}: </b>{String(r.catalyst).slice(0, 170)}</div> : null}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
           <div style={{ fontSize: 10, color: C.mid }}>
             <div style={{ fontWeight: 700, color: C.dark, marginBottom: 1 }}>{L('Target range', '目标区间')}</div>
-            {p ? <span>{L('entry', '入场')} {p.entry_price} · {L('tgt', '目标')} <b style={{ color: C.green }}>{fmtPct(p.upside_target_pct)}</b> · {L('stop', '止损')} <b style={{ color: C.red }}>{fmtPct(p.downside_stop_pct)}</b></span> : <span>{L('— model target pending', '— 模型目标待标注')}</span>}
+            <span>{L('Thesis-derived band — not yet calibrated. Entry reference: pending next market sync.', '论点推导区间 — 尚未校准。入场参考：待下一次行情同步。')}</span>
           </div>
           <div style={{ fontSize: 10, color: C.mid }}>
             <div style={{ fontWeight: 700, color: C.dark, marginBottom: 1 }}>{L('Quant signal', '量化信号')}</div>
@@ -10901,6 +10899,10 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
            '内部模型组合试运行。系统把量化信号 + AI 论点变成可执行的标的（含目标区间、构仓逻辑、失效条件）。这些是【待验证】的模型输出 —— 不是已验证 alpha，也不是对外投资建议。产品价值在闭环：推荐 → 你的执行 → 收益归因 → 模型改进。')}
       </div>
 
+      <div style={{ fontSize: 9.5, color: C.mid, margin: '-4px 0 14px', lineHeight: 1.5 }}>
+        {L('Fresh pilot book — starts from the next market session; no legacy paper positions are inherited. Live execution-return tracking begins from the next trading-day pilot run.',
+           '全新 pilot 账本 —— 从下一个交易时段开始，不继承任何旧模拟仓位。实操收益追踪从下一个交易日的 pilot run 起算。')}
+      </div>
       <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, margin: '4px 0 8px' }}>{L('Mid / long-term sleeve — core thesis', '中长期 sleeve — 核心论点')} <span style={{ fontSize: 10, color: C.mid, fontWeight: 500 }}>({coreSleeve.length})</span></div>
       {coreSleeve.length === 0 ? <div style={{ fontSize: 11, color: C.mid, marginBottom: 10 }}>{L('No directional model idea today.', '今日无方向性模型建议。')}</div> : null}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 16 }}>
