@@ -11060,10 +11060,140 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
           </div>
         );
       })()}
+      <PilotAttribution L={L} lk={lk} C={C} />
       <div style={{ fontSize: 9, color: C.mid, marginTop: 12, lineHeight: 1.6 }}>
         {L('Click a name to open its full decision sheet. Your decisions bind to this run\'s candidate ids and are saved in this browser — the system never auto-trades or sizes for you.',
            '点击名称打开完整决策书。你的决定绑定到本次 run 的 candidate id 并保存在本浏览器 —— 系统从不自动交易、不替你定仓位。')}
       </div>
+    </div>
+  );
+}
+
+// Pilot Attribution (内测执行归因) — embedded at the bottom of the Model tab (Junyan 2026-06-08).
+// Paste 1..N participants' #42 execution-log exports → compare model recommendation vs each
+// user's decision (follow/modify/reject/watch) + raw reason/actual_trade. HONEST-FIRST: this
+// collects EXECUTION DIVERGENCE only. It computes NO P&L from free-text trades, makes NO backtest
+// or average-return claim; return columns are explicitly PENDING (need price sync + structured
+// trade fields side/price/quantity/execution_time). Export the merged JSON as the input for later
+// real-return computation. Client-side only (localStorage); no backend.
+function PilotAttribution({ L, lk, C }) {
+  const isMobile = useIsMobile();
+  const PK = 'ar_pilot_attribution';
+  const [participants, setParticipants] = useState([]);
+  const [pid, setPid] = useState('');
+  const [paste, setPaste] = useState('');
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    try { const raw = JSON.parse(localStorage.getItem(PK) || '[]'); if (Array.isArray(raw)) setParticipants(raw); } catch {}
+  }, []);
+  const persist = next => { setParticipants(next); try { localStorage.setItem(PK, JSON.stringify(next)); } catch {} };
+  const SOPTS = [{ k: 'follow', en: 'Follow', zh: '跟随' }, { k: 'modify', en: 'Modify', zh: '修改' }, { k: 'reject', en: 'Reject', zh: '拒绝' }, { k: 'watch', en: 'Watch', zh: '观望' }];
+  const statusLabel = k => (SOPTS.find(o => o.k === k) || {})[lk === 'z' ? 'zh' : 'en'] || k || '';
+  const sleeveLabel = s => s === 'quant_swing' ? L('quant swing', '量化做T') : s === 'core_thesis' ? L('core thesis', '核心论点') : (s || '');
+  const cardBox = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px' };
+  const warn = C.orange || C.gold;
+  const inputStyle = { fontSize: 10, padding: '6px 8px', borderRadius: 6, border: `1px solid ${C.border}`, background: C.soft, color: C.dark, outline: 'none', boxSizing: 'border-box' };
+  const btn = { fontSize: 10, fontWeight: 600, padding: '6px 12px', borderRadius: 6, border: `1px solid ${C.border}`, background: 'transparent', color: C.dark, cursor: 'pointer' };
+
+  const addParticipant = () => {
+    setErr('');
+    const id = (pid || '').trim() || `user_${participants.length + 1}`;
+    let obj;
+    try { obj = JSON.parse(paste); } catch { setErr(L('Invalid JSON — paste a #42 execution-log export.', '无效 JSON —— 请粘贴 #42 导出的执行记录。')); return; }
+    const decisions = Array.isArray(obj) ? obj : (obj && Array.isArray(obj.decisions) ? obj.decisions : null);
+    if (!decisions || !decisions.length) { setErr(L('No decisions[] found in the pasted JSON.', '粘贴的 JSON 里没有 decisions[]。')); return; }
+    if (participants.some(p => p.participant_id === id)) { setErr(L('That participant id is already added — use a different id.', '该参与者 id 已存在 —— 换一个。')); return; }
+    persist([...participants, { participant_id: id, run_date: obj.run_date || (decisions[0] && decisions[0].run_date) || '', pilot_start_date: obj.pilot_start_date || '', decisions }]);
+    setPaste(''); setPid('');
+  };
+  const removeParticipant = id => persist(participants.filter(p => p.participant_id !== id));
+
+  const candMap = {};
+  participants.forEach(p => {
+    (p.decisions || []).forEach(d => {
+      if (!d || !d.ticker) return;
+      const key = `${d.sleeve || 'core_thesis'}|${d.ticker}`;
+      const c = candMap[key] || (candMap[key] = { sleeve: d.sleeve || 'core_thesis', ticker: d.ticker, model_action: d.model_action || '', byStatus: {}, users: [] });
+      if (d.model_action && !c.model_action) c.model_action = d.model_action;
+      if (d.status) c.byStatus[d.status] = (c.byStatus[d.status] || 0) + 1;
+      c.users.push({ participant_id: p.participant_id, status: d.status || '', reason: d.reason || '', actual_trade: d.actual_trade || '' });
+    });
+  });
+  const cands = Object.values(candMap).sort((a, b) => a.sleeve === b.sleeve ? a.ticker.localeCompare(b.ticker) : a.sleeve.localeCompare(b.sleeve));
+  const nUsers = participants.length;
+  const whoBy = (users, k) => users.filter(u => u.status === k).map(u => u.participant_id);
+
+  const mergedExport = { _meta: { kind: 'pilot_attribution_merge', participants: nUsers, returns_status: 'pending_price_sync_and_structured_trades', not_a_backtest: true, note: 'Execution divergence only. No P&L from free-text actual_trade; returns pending mark-to-market + structured trade fields (side/price/quantity/execution_time).' }, participants };
+  const copyMerged = () => { try { navigator.clipboard.writeText(JSON.stringify(mergedExport, null, 2)); } catch {} };
+  const downloadMerged = () => { const blob = new Blob([JSON.stringify(mergedExport, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'pilot_attribution_merged.json'; a.click(); URL.revokeObjectURL(url); };
+
+  return (
+    <div style={{ marginTop: 18 }}>
+      <div style={{ fontSize: 13, fontWeight: 800, color: C.dark, margin: '4px 0 2px' }}>{L('Pilot Attribution', '内测执行归因')} <span style={{ fontSize: 10, color: C.mid, fontWeight: 500 }}>({nUsers} {L('participant(s)', '位参与者')})</span></div>
+      <div style={{ fontSize: 9.5, color: C.mid, marginBottom: 8, lineHeight: 1.5 }}>{L('Paste one or more participants\' execution logs (the #42 export) to compare model recommendation → user execution. This collects execution divergence only — returns are PENDING (no P&L is computed from free-text trades; needs price sync + structured trade fields). Not a backtest, no average-return claim.', '粘贴一个或多个参与者的执行记录（#42 导出）以对比 模型建议 → 用户执行。此处仅汇总执行分歧 —— 收益为【待定】（不从自由文本成交里算 P&L；需价格同步 + 结构化成交字段）。非回测，不声称平均收益。')}</div>
+
+      <div style={{ ...cardBox, marginBottom: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '170px 1fr', gap: 8, alignItems: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <input value={pid} onChange={e => setPid(e.target.value)} placeholder={L('participant_id (e.g. user_1)', '参与者 id（如 user_1）')} style={{ ...inputStyle, width: '100%' }} />
+            <button onClick={addParticipant} style={{ ...btn, background: `${C.blue}14`, borderColor: `${C.blue}55`, color: C.blue }}>{L('Add participant', '添加参与者')}</button>
+          </div>
+          <textarea value={paste} onChange={e => setPaste(e.target.value)} placeholder={L('Paste #42 execution-log JSON here…', '在此粘贴 #42 执行记录 JSON…')} rows={isMobile ? 4 : 3} style={{ ...inputStyle, width: '100%', fontFamily: MONO, resize: 'vertical' }} />
+        </div>
+        {err ? <div style={{ fontSize: 10, color: C.red, marginTop: 6 }}>{err}</div> : null}
+      </div>
+
+      {nUsers === 0
+        ? <div style={{ ...cardBox, fontSize: 10.5, color: C.mid, marginBottom: 8 }}>{L('No participants yet. Add at least one #42 export above to see the model-vs-user attribution.', '暂无参与者。请在上方添加至少一个 #42 导出，以查看 模型 vs 用户 的执行归因。')}</div>
+        : <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.dark, margin: '6px 0 6px' }}>{L('Per candidate — model call vs user decisions', '每个标的 — 模型建议 vs 用户决定')}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+              {cands.map(c => (
+                <div key={`${c.sleeve}|${c.ticker}`} style={cardBox}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 5 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: C.dark }}>{c.ticker}</span>
+                    <span style={{ fontSize: 9, color: C.mid }}>{sleeveLabel(c.sleeve)}</span>
+                    {c.model_action ? <span style={{ fontSize: 9, fontWeight: 700, color: C.blue }}>{L('model', '模型')}: {c.model_action}</span> : null}
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 5 }}>
+                    {SOPTS.map(o => { const n = c.byStatus[o.k] || 0; return <span key={o.k} style={{ fontSize: 10, color: n ? C.dark : C.mid }}>{lk === 'z' ? o.zh : o.en}: <b style={{ color: n ? C.blue : C.mid }}>{n}</b>{nUsers ? ` (${Math.round(100 * n / nUsers)}%)` : ''}</span>; })}
+                  </div>
+                  <div style={{ fontSize: 9, color: C.mid, marginBottom: 4, lineHeight: 1.5 }}>
+                    {SOPTS.map(o => { const who = whoBy(c.users, o.k); return who.length ? <span key={o.k} style={{ marginRight: 10 }}>{lk === 'z' ? o.zh : o.en}: {who.join(', ')}</span> : null; })}
+                  </div>
+                  <div style={{ fontSize: 9, color: warn, borderTop: `1px solid ${C.border}`, paddingTop: 4 }}>{L('Return: pending price sync + structured trade', '收益：待价格同步 + 结构化成交')}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.dark, margin: '12px 0 6px' }}>{L('Per participant — raw decisions', '每位参与者 — 原始决定')}</div>
+            {participants.map(p => (
+              <div key={p.participant_id} style={{ ...cardBox, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 5 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.dark }}>{p.participant_id}</span>
+                  <span style={{ fontSize: 9, color: C.mid }}>{(p.decisions || []).length} {L('decisions', '条决定')}{p.run_date ? ` · run ${p.run_date}` : ''}</span>
+                  <button onClick={() => removeParticipant(p.participant_id)} style={{ ...btn, padding: '2px 8px', fontSize: 9, marginLeft: 'auto' }}>{L('remove', '移除')}</button>
+                </div>
+                {(p.decisions || []).map((d, i) => (
+                  <div key={i} style={{ borderTop: `1px solid ${C.border}`, padding: '4px 0', fontSize: 9.5, color: C.mid }}>
+                    <span style={{ fontFamily: MONO, color: C.dark, fontWeight: 600 }}>{d.ticker}</span>
+                    {d.sleeve ? <span style={{ marginLeft: 6, fontSize: 8.5 }}>{sleeveLabel(d.sleeve)}</span> : null}
+                    {d.model_action ? <span style={{ marginLeft: 6 }}>{d.model_action}</span> : null}
+                    {d.status ? <span style={{ marginLeft: 6, color: C.blue, fontWeight: 600 }}>{statusLabel(d.status)}</span> : null}
+                    {d.reason ? <span style={{ marginLeft: 6 }}>· {d.reason}</span> : null}
+                    {d.actual_trade ? <span style={{ marginLeft: 6, color: C.dark }}>· {L('trade', '成交')}: {d.actual_trade}</span> : null}
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            <div style={{ ...cardBox, marginTop: 4, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 10, color: C.mid }}>{L('Export the merged multi-user attribution — the input for later real-return computation (returns still pending).', '导出合并后的多用户归因 —— 作为后续真实收益计算的输入（收益仍待定）。')}</div>
+              <button onClick={copyMerged} style={{ ...btn, marginLeft: 'auto' }}>{L('Copy merged JSON', '复制合并 JSON')}</button>
+              <button onClick={downloadMerged} style={btn}>{L('Download merged JSON', '下载合并 JSON')}</button>
+              <button onClick={() => persist([])} style={{ ...btn, color: C.red, borderColor: `${C.red}55` }}>{L('Clear all', '清空')}</button>
+            </div>
+          </div>}
     </div>
   );
 }
