@@ -5866,8 +5866,8 @@ function PaperTradeBoard({ summary, trades, outcomes, L, C }) {
   if (!summary && Object.keys(trades || {}).length === 0) {
     return (
       <div style={{padding:'12px 16px', fontSize:11, color:C.mid, fontStyle:'italic'}}>
-        {L('No paper-trade data loaded yet. Pipeline will populate after next daily run, OR run scripts/follow_thesis.py + scripts/verify_thesis.py locally.',
-           '尚无 paper-trade 数据. 下次 pipeline 跑后自动生成, 或本地跑 scripts/follow_thesis.py + scripts/verify_thesis.py')}
+        {L('No paper-trade tracking data yet — it populates on the daily data sync.',
+           '暂无纸面交易追踪数据，将在每日数据同步后更新。')}
       </div>
     );
   }
@@ -6076,8 +6076,8 @@ function PaperTradeBoard({ summary, trades, outcomes, L, C }) {
       {/* FOOTER NOTE */}
       <div style={{marginTop:14, padding:'8px 12px', background:`${C.blue}06`, fontSize:9, color:C.mid, borderRadius:4, lineHeight:1.5}}>
         {L(
-          'Click a row to expand condition verification status. Daily-refreshed by pipeline (Step 2e.1 follow_thesis + 2e.2 verify_thesis). Condition outcomes are PENDING_HUMAN_REVIEW until you fill thesis_outcomes/<TICKER>.json after the catalyst event (rule: set verification_status TRIGGERED / NOT_TRIGGERED / INCONCLUSIVE + evidence_observed citation).',
-          '点行展开条件验证状态. 每日 pipeline (Step 2e.1 follow_thesis + 2e.2 verify_thesis) 自动刷新. 条件结果在 catalyst 事件后由你手动 verify (thesis_outcomes/<TICKER>.json 里把 verification_status 设 TRIGGERED / NOT_TRIGGERED / INCONCLUSIVE + 填 evidence_observed).'
+          'Click a row to expand condition-verification status. Refreshed daily. Condition outcomes stay PENDING_HUMAN_REVIEW until a reviewer records the result after the catalyst event (TRIGGERED / NOT_TRIGGERED / INCONCLUSIVE, with an evidence citation).',
+          '点击行展开条件验证状态。每日刷新。条件结果在 catalyst 事件后、由复核人记录结果前保持 PENDING_HUMAN_REVIEW（TRIGGERED / NOT_TRIGGERED / INCONCLUSIVE，并附证据引用）。'
         )}
       </div>
     </div>
@@ -6087,7 +6087,7 @@ function PaperTradeBoard({ summary, trades, outcomes, L, C }) {
 // Condition verification panel — expanded when user clicks a paper trade row.
 // Shows rightIf/wrongIf conditions with verification status badges.
 function ConditionVerificationPanel({ outcome, trade, L, C }) {
-  if (!outcome) return <div style={{fontSize:10, color:C.mid}}>{L('Outcome record not yet generated. Run verify_thesis.py.','结果记录尚未生成. 请运行 verify_thesis.py')}</div>;
+  if (!outcome) return <div style={{fontSize:10, color:C.mid}}>{L('Outcome record not generated yet.','结果记录尚未生成。')}</div>;
 
   const verifBadge = (status) => {
     const m = {
@@ -6274,7 +6274,7 @@ function PredictionLog({ predictions, L, C }) {
 
       {predictions.length === 0 && (
         <div style={{padding:20, textAlign:'center', color:C.mid, fontSize:11}}>
-          {L('No predictions yet. Edit public/data/prediction_log.json to add entries.','暂无预测记录。编辑 public/data/prediction_log.json 添加记录。')}
+          {L('No predictions recorded yet.','暂无预测记录。')}
         </div>
       )}
     </div>
