@@ -10798,7 +10798,7 @@ function BetaHarness({ L, lk, C, setTab }) {
 function DailyModelPortfolio({ L, lk, C, onSelect }) {
   const isMobile = useIsMobile();
   const [mp, setMp] = useState(null);
-  const [decisions, setDecisions] = useState({});   // `${run_date}|${ticker}` -> {run_date,ticker,model_action,status,reason,actual_trade,updated_at}
+  const [decisions, setDecisions] = useState({});   // `${run_date}|${sleeve}|${ticker}` -> {run_date,sleeve,ticker,model_action,status,reason,actual_trade,updated_at}
   const DK = 'ar_model_decisions';
 
   // PR#40+: read the OFFICIAL daily pilot run — public/data/model_portfolio.json
@@ -10808,7 +10808,23 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
   // attach to the formal run/candidate ids (run_date + ticker + model_action).
   useEffect(() => {
     fetch(DATA_BASE + 'data/model_portfolio.json').then(r => r.ok ? r.json() : null).then(setMp).catch(() => {});
-    try { setDecisions(JSON.parse(localStorage.getItem(DK) || '{}')); } catch {}
+    // Load saved decisions, one-time migrating legacy PR#42 entries keyed `${run_date}|${ticker}`
+    // (no `sleeve` field) into the hardened `${run_date}|${sleeve}|${ticker}` namespace. PR#42
+    // only ever captured decisions on core_thesis cards, so legacy entries fold into that sleeve.
+    try {
+      const raw = JSON.parse(localStorage.getItem(DK) || '{}');
+      let changed = false;
+      const out = {};
+      for (const [k, v] of Object.entries(raw)) {
+        if (v && typeof v === 'object' && v.ticker && !v.sleeve) {
+          const nk = `${v.run_date || 'run'}|core_thesis|${v.ticker}`;
+          out[nk] = { ...(out[nk] || {}), ...v, sleeve: 'core_thesis' };
+          changed = true;
+        } else { out[k] = v; }
+      }
+      setDecisions(out);
+      if (changed) { try { localStorage.setItem(DK, JSON.stringify(out)); } catch {} }
+    } catch {}
   }, []);
 
   const meta = (mp && mp._meta) || {};
@@ -10816,13 +10832,16 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
   const asOf = meta.run_date || '';
   const pilotStart = meta.pilot_start_date || '';
 
-  // A user decision is keyed by (run_date, ticker) so it binds to the official run's
-  // candidate — NOT a free-floating ticker note. Cleared if status+reason+trade all empty.
-  const decKey = tk => `${asOf || 'run'}|${tk}`;
-  const getDec = tk => decisions[decKey(tk)] || {};
-  const updateDec = (tk, model_action, patch) => {
-    const key = decKey(tk);
-    const merged = { ...(decisions[key] || {}), run_date: asOf, ticker: tk, model_action, ...patch, updated_at: new Date().toISOString() };
+  // A user decision binds to ONE candidate of the official run, keyed by
+  // (run_date, sleeve, ticker) — so the same ticker appearing in both the
+  // core_thesis and quant_swing sleeves keeps two distinct decisions instead of
+  // colliding/overwriting. Keyed off the candidate object (not a bare ticker).
+  // Cleared if status+reason+trade all empty.
+  const decKey = c => `${asOf || 'run'}|${c.sleeve || 'core_thesis'}|${c.ticker}`;
+  const getDec = c => decisions[decKey(c)] || {};
+  const updateDec = (c, patch) => {
+    const key = decKey(c);
+    const merged = { ...(decisions[key] || {}), run_date: asOf, sleeve: c.sleeve || 'core_thesis', ticker: c.ticker, model_action: c.model_action, ...patch, updated_at: new Date().toISOString() };
     const next = { ...decisions };
     if (!merged.status && !merged.reason && !merged.actual_trade) delete next[key]; else next[key] = merged;
     setDecisions(next);
@@ -10844,10 +10863,13 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
     { k: 'reject', en: 'Reject', zh: '拒绝' },
     { k: 'watch',  en: 'Watch',  zh: '观望' },
   ];
+  // Short, descriptive sleeve tag (NOT advice) so two decisions on the same ticker
+  // across sleeves read distinctly in the execution log.
+  const sleeveLabel = s => s === 'quant_swing' ? L('quant swing', '量化做T') : s === 'core_thesis' ? L('core thesis', '核心论点') : (s || '');
 
   const ModelCard = ({ r }) => {
     const q = (r.source_signals && r.source_signals.quant_confluence) || null;
-    const d = getDec(r.ticker);
+    const d = getDec(r);
     const st = d.status;
     const dc = dirColor(r.model_action);
     const tr = r.target_range || {};
@@ -10883,15 +10905,15 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
           <span style={{ fontSize: 9, color: C.mid, marginRight: 2 }}>{L('Your call', '你的决定')}:</span>
           {STATUS_OPTS.map(o => {
             const on = st === o.k;
-            return <button key={o.k} onClick={() => updateDec(r.ticker, r.model_action, { status: st === o.k ? null : o.k })} style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 12, cursor: 'pointer', border: `1px solid ${on ? C.blue : C.border}`, background: on ? `${C.blue}18` : 'transparent', color: on ? C.blue : C.mid }}>{lk === 'z' ? o.zh : o.en}</button>;
+            return <button key={o.k} onClick={() => updateDec(r, { status: st === o.k ? null : o.k })} style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 12, cursor: 'pointer', border: `1px solid ${on ? C.blue : C.border}`, background: on ? `${C.blue}18` : 'transparent', color: on ? C.blue : C.mid }}>{lk === 'z' ? o.zh : o.en}</button>;
           })}
         </div>
         {st ? (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 6, marginTop: 6 }}>
-            <input value={d.reason || ''} onChange={e => updateDec(r.ticker, r.model_action, { reason: e.target.value })}
+            <input value={d.reason || ''} onChange={e => updateDec(r, { reason: e.target.value })}
               placeholder={L('Reason (why follow / modify / reject?)', '理由（为何 跟随/修改/拒绝？）')}
               style={{ fontSize: 10, padding: '5px 8px', borderRadius: 6, border: `1px solid ${C.border}`, background: C.soft, color: C.dark, outline: 'none', boxSizing: 'border-box', width: '100%' }} />
-            <input value={d.actual_trade || ''} onChange={e => updateDec(r.ticker, r.model_action, { actual_trade: e.target.value })}
+            <input value={d.actual_trade || ''} onChange={e => updateDec(r, { actual_trade: e.target.value })}
               placeholder={L('Actual trade (optional, e.g. bought 1000 @ 96)', '实际交易（可选，如 96 买入 1000 股）')}
               style={{ fontSize: 10, padding: '5px 8px', borderRadius: 6, border: `1px solid ${C.border}`, background: C.soft, color: C.dark, outline: 'none', boxSizing: 'border-box', width: '100%' }} />
           </div>
@@ -10975,8 +10997,9 @@ function DailyModelPortfolio({ L, lk, C, onSelect }) {
               ) : null}
             </div>
             {myDec.map(x => (
-              <div key={x.ticker} style={{ borderTop: `1px solid ${C.border}`, padding: '6px 0', fontSize: 10, color: C.mid }}>
+              <div key={`${x.sleeve || 'core_thesis'}|${x.ticker}`} style={{ borderTop: `1px solid ${C.border}`, padding: '6px 0', fontSize: 10, color: C.mid }}>
                 <span style={{ fontFamily: MONO, color: C.dark, fontWeight: 600 }}>{x.ticker}</span>
+                {x.sleeve ? <span style={{ marginLeft: 6, fontSize: 9, color: C.mid }}>{sleeveLabel(x.sleeve)}</span> : null}
                 <span style={{ marginLeft: 6 }}>{x.model_action}</span>
                 <span style={{ marginLeft: 6, color: C.blue, fontWeight: 600 }}>{(STATUS_OPTS.find(o => o.k === x.status) || {})[lk === 'z' ? 'zh' : 'en'] || x.status || ''}</span>
                 {x.reason ? <span style={{ marginLeft: 6 }}>· {x.reason}</span> : null}
