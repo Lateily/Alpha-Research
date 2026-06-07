@@ -5704,8 +5704,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
                    'AI生成的财务数据已显示在上方财务卡片中。')}
           </div>
           <div style={{lineHeight:1.7}}>
-            {L('Live technical analysis, K-line charts, financial statements and company profile are only available for the 5 Focus Stocks (300308.SZ, 002594.SZ, 700.HK, 9999.HK, 6160.HK). To get live data for this stock, add it to FOCUS_TICKERS in fetch_data.py.',
-               '实时技术分析、K线图、财务报表和公司概况仅支持5只Focus股票。如需此股票的实时数据，请将其加入 fetch_data.py 的 FOCUS_TICKERS。')}
+            {L('Live technical analysis, K-line charts, financial statements and company profile are currently available for the 5 Focus Stocks only (300308.SZ, 002594.SZ, 700.HK, 9999.HK, 6160.HK). Coverage for additional tickers is expanded over time.',
+               '实时技术分析、K线图、财务报表和公司概况目前仅支持5只Focus股票。其他股票的覆盖范围将逐步扩展。')}
           </div>
           {/* Still show AI technical posture */}
           {s.pricing && (
@@ -8176,8 +8176,8 @@ const EarningsCalendar = ({ L, lk, C }) => {
   if (!calData) return (
     <div style={{padding:16, textAlign:'center', color:C.mid, fontSize:11}}>
       <Calendar size={14} style={{marginBottom:4}}/><br/>
-      {L('No earnings calendar data. Run python3 scripts/fetch_data.py.',
-         '暂无财报日历。运行 python3 scripts/fetch_data.py。')}
+      {L('No earnings calendar data yet — it populates on the daily data sync.',
+         '暂无财报日历数据，将在每日数据同步后更新。')}
     </div>
   );
 
@@ -8231,8 +8231,8 @@ const EarningsCalendar = ({ L, lk, C }) => {
         </div>
       )}
       <div style={{fontSize:8, color:C.mid, marginTop:6}}>
-        {L('Source: AKShare / EastMoney 业绩预告 (stock_yjyg_em). Updates daily via GitHub Actions.',
-           '数据来源：AKShare / 东方财富业绩预告。每日通过GitHub Actions自动更新。')}
+        {L('Source: AKShare / EastMoney earnings pre-announcements. Updated daily.',
+           '数据来源：AKShare / 东方财富业绩预告。每日更新。')}
       </div>
     </div>
   );
@@ -8553,8 +8553,8 @@ const CandlestickChart = ({ ticker, L, lk, C }) => {
   if (!ohlc || ohlc.length === 0) return (
     <div style={{padding:16, textAlign:'center', color:C.mid, fontSize:11}}>
       <WifiOff size={14} style={{marginBottom:4}}/><br/>
-      {L('No OHLC data. Run python3 scripts/fetch_data.py to generate candlestick data.',
-         '暂无K线数据。运行 python3 scripts/fetch_data.py 以生成K线数据。')}
+      {L('No price-chart data for this ticker yet — it populates on the daily data sync.',
+         '暂无该股票的K线数据，将在每日数据同步后更新。')}
     </div>
   );
 
@@ -8703,8 +8703,8 @@ const FinancialStatements = ({ ticker, L, lk, C }) => {
   if (!fin) return (
     <div style={{padding:16, textAlign:'center', color:C.mid, fontSize:11}}>
       <Database size={14} style={{marginBottom:4}}/><br/>
-      {L('No financial statement data. Run python3 scripts/fetch_data.py to generate.',
-         '暂无财报数据。运行 python3 scripts/fetch_data.py 以生成。')}
+      {L('No financial statement data for this ticker yet — it populates on the daily data sync.',
+         '暂无该股票的财报数据，将在每日数据同步后更新。')}
     </div>
   );
 
