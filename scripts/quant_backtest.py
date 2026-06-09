@@ -107,6 +107,7 @@ def sharpe(returns, ppy, rf=0.0):
 CSI300 = "000300.SH"
 CAPITAL = 1_000_000.0
 MAX_POSITIONS = 10            # [unvalidated]
+STALE_EXIT_DAYS = 5           # [unvalidated] force mark-out a held name after N consecutive no-bar (halt/delist) days
 DAILY_RF = 0.0
 TOP_N_ADV = THRESH["top_n_adv"]
 LOOKBACK = THRESH["adv_n"]
@@ -151,8 +152,15 @@ def _row_at(idx: PanelIndex, tk: str, date_str: str):
     return {k: _last(k) for k in ("open", "high", "low", "close", "pre_close")}
 
 
+def _norm_date(s):
+    """Accept YYYY-MM-DD or YYYYMMDD."""
+    return s.replace("-", "") if isinstance(s, str) else s
+
+
 def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPITAL):
-    """Long-only, T+1, cost-charged. DECIDE at T using bars <= T; FILL at T+1. No same-day fill."""
+    """Long-only, T+1, cost-charged. DECIDE at T using bars <= T; FILL at T+1. No same-day fill.
+    Held names with no bar (halt/delist) are marked at last close and force-exited after
+    STALE_EXIT_DAYS; a name exited this round is barred from same-day re-entry."""
     signal_fn = ARMS[arm_name]
     have = set(zip(panel["trade_date"].astype(str), panel["ts_code"]))
     win = [d for d in trade_dates if start <= d <= end]
@@ -166,7 +174,10 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
         mv = 0.0
         for tk, p in positions.items():
             r = _row_at(idx, tk, T)
-            px = (r or {}).get("close") or p["entry_px"]
+            c = (r or {}).get("close")
+            if c:
+                p["last_px"] = c          # mark at the latest REAL close (never frozen at entry)
+            px = p.get("last_px", p["entry_px"])
             mv += p["shares"] * px
         nav = cash + mv
         gross = (mv / nav) if nav > 0 else 0.0
@@ -176,13 +187,27 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
             break
         T_next = win[i + 1]
 
-        # ---- EXIT decisions at T (close-based), fill at T+1 ----
+        # ---- EXIT decisions at T (close-based), fill at T+1. Track exits to bar same-day re-entry. ----
+        exited = set()
         for tk in list(positions.keys()):
             p = positions[tk]
             r_t = _row_at(idx, tk, T)
-            if r_t is None:                      # delisted/halted -> mark out at last known entry px (no fill)
+            if r_t is None:                       # halt/delist: no bar at T
+                p["missing"] = p.get("missing", 0) + 1
+                if p["missing"] >= STALE_EXIT_DAYS:   # delist policy: force mark-out at last known close
+                    px = p["last_px"]
+                    proceeds = p["shares"] * px
+                    cash += proceeds - trade_cost(proceeds, "sell")
+                    closed_returns.append(px / p["entry_px"] - 1.0)
+                    trades.append({"ticker": tk, "entry": p["entry_px"], "entry_date": p["entry_date"],
+                                   "exit": round(px, 4), "ret": round(px / p["entry_px"] - 1.0, 4),
+                                   "reason": "delist_stale_markout", "exit_date": T})
+                    exited.add(tk)
+                    del positions[tk]
                 continue
+            p["missing"] = 0
             close_t = r_t["close"]
+            p["last_px"] = close_t
             hist = idx.history(tk, T, n_days_back=THRESH["ma_mid_n"] + 2)
             hc = hist.get("close")
             hc = list(hc) if hc is not None else []
@@ -207,14 +232,17 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
                 cash += proceeds - trade_cost(proceeds, "sell")
                 ret = px / p["entry_px"] - 1.0
                 closed_returns.append(ret)
-                trades.append({"ticker": tk, "entry": p["entry_px"], "exit": round(px, 4),
-                               "ret": round(ret, 4), "reason": exit_reason, "exit_date": T_next})
+                trades.append({"ticker": tk, "entry": p["entry_px"], "entry_date": p["entry_date"],
+                               "exit": round(px, 4), "ret": round(ret, 4), "reason": exit_reason,
+                               "exit_date": T_next})
+                exited.add(tk)
                 del positions[tk]
 
         # ---- ENTRY decisions at T (signal on bars <= T), fill at T+1 ----
         slots = MAX_POSITIONS - len(positions)
         if slots > 0:
-            members = [tk for tk in liquid.get(T, []) if (T, tk) in have and tk not in positions]
+            members = [tk for tk in liquid.get(T, [])
+                       if (T, tk) in have and tk not in positions and tk not in exited]  # no same-day re-entry
             enters = []
             for tk in members:
                 h = idx.history(tk, T, n_days_back=MIN_BARS + 30)
@@ -245,8 +273,9 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
                 if notional + cost > cash:
                     continue
                 cash -= notional + cost
-                positions[tk] = {"entry_px": px, "shares": shares,
-                                 "stop": s.get("stop") or px * (1.0 - THRESH["stop_pct"]), "entry_i": i}
+                positions[tk] = {"entry_px": px, "shares": shares, "entry_date": T,
+                                 "stop": s.get("stop") or px * (1.0 - THRESH["stop_pct"]), "entry_i": i,
+                                 "last_px": px, "missing": 0}
 
     return {"equity_curve": equity_curve, "trades": trades, "closed_returns": closed_returns}
 
@@ -288,6 +317,22 @@ def _alpha_series(strat_curve, bench_curve):
     return [sr[i] - br[i] for i in range(n)]
 
 
+def _same_gross_curve(bench_curve, strat_curve, capital, daily_rf=0.0):
+    """Scale the benchmark by the strategy's daily GROSS exposure (cash portion earns rf) so the
+    comparison is like-for-like when the strategy is partly in cash — the rigorous same-gross alpha
+    (mirrors run_swing_backtest_fast._same_gross_benchmark_curve)."""
+    gross_by = {p["date"]: float(p.get("gross", 0.0) or 0.0) for p in strat_curve}
+    out, prev, eq = [], None, capital
+    for row in bench_curve:
+        b = row["equity"]
+        bret = (b / prev - 1.0) if (prev and prev > 0) else 0.0
+        prev = b
+        g = max(0.0, min(1.0, gross_by.get(row["date"], 0.0)))
+        eq *= 1.0 + g * bret + (1.0 - g) * daily_rf
+        out.append({"date": row["date"], "equity": eq})
+    return out
+
+
 def _metrics(curve, closed_returns):
     eqs = [pt["nav"] for pt in curve]
     rets = _daily_returns(curve, "nav")
@@ -322,8 +367,8 @@ def build(start=None, end=None) -> dict:
     panel = panel[panel["ts_code"].map(lambda t: isinstance(t, str) and t.endswith((".SZ", ".SH")))]
     panel["trade_date"] = panel["trade_date"].astype(str)
     trade_dates = sorted(panel["trade_date"].unique())
-    start = start or trade_dates[0]
-    end = end or trade_dates[-1]
+    start = _norm_date(start) or trade_dates[0]    # accept YYYY-MM-DD or YYYYMMDD
+    end = _norm_date(end) or trade_dates[-1]
     # bound work to the window + enough prior history (MA200 + ADV lookback) for fast windowed runs
     sidx = trade_dates.index(start) if start in trade_dates else 0
     buf_start = trade_dates[max(0, sidx - 300)]
@@ -332,6 +377,9 @@ def build(start=None, end=None) -> dict:
     liquid = compute_liquid_universe(panel, top_n=TOP_N_ADV, lookback_days=LOOKBACK, min_dollar_vol=MIN_DVOL)
 
     win = [d for d in trade_dates if start <= d <= end]
+    if not win:                                    # fail-fast: never write an empty 0-day report
+        raise SystemExit(f"empty backtest window: no trading days in [{start}, {end}] "
+                         f"(panel covers {trade_dates[0]}..{trade_dates[-1]}; use YYYYMMDD or YYYY-MM-DD).")
     csi = _csi300_curve(win, CAPITAL)
 
     arms_out = {}
@@ -340,7 +388,8 @@ def build(start=None, end=None) -> dict:
         m = _metrics(res["equity_curve"], res["closed_returns"])
         ab = {}
         if csi:
-            ab["vs_csi300"] = _bootstrap_alpha(_alpha_series(res["equity_curve"], csi))
+            sg = _same_gross_curve(csi, res["equity_curve"], CAPITAL)   # scale CSI300 by strategy gross
+            ab["vs_csi300_same_gross"] = _bootstrap_alpha(_alpha_series(res["equity_curve"], sg))
         arms_out[arm] = {"metrics": m, "alpha": ab, "n_equity_pts": len(res["equity_curve"])}
 
     manifest = {"strategy": "quant_v0", "arms": list(ARMS), "max_positions": MAX_POSITIONS,
@@ -388,11 +437,11 @@ def main(argv=None) -> int:
     print("=" * 78)
     print(f"window {w['start']}..{w['end']} ({w['trading_days']}d)  gate={out['_meta']['survivorship_gate']['passed']}")
     for arm, a in out["arms"].items():
-        m, al = a["metrics"], a["alpha"].get("vs_csi300", {})
+        m, al = a["metrics"], a["alpha"].get("vs_csi300_same_gross", {})
         print(f"  [{arm:<16}] CAGR={m['cagr']} Sharpe={m['sharpe']} MaxDD={m['max_drawdown']} "
               f"trades={m['n_trades']} hit={m['hit_rate']}")
         if al:
-            print(f"       vs CSI300: ann_alpha={al.get('annualized_alpha_pct')}% "
+            print(f"       vs CSI300 (same-gross): ann_alpha={al.get('annualized_alpha_pct')}% "
                   f"CI_clears_zero={al.get('ci_clears_zero')} p={al.get('p_value')}")
     print(f"[quant-backtest] wrote {OUT}")
     return 0
@@ -403,6 +452,13 @@ def _selftest() -> int:
     errs = []
     import pandas as pd
     dates = [f"D{i:03d}" for i in range(260)]
+    # WIN.SZ: engineered uptrend -> pullback -> bounce (fires an H1 ENTER) then drift-down (trend-break exit)
+    win_c = [50.0 + 0.20 * k for k in range(231)]
+    win_c += [win_c[-1] - 3.0 * (k + 1) for k in range(6)]      # 6-bar dip -> RSI < 40
+    win_c += [win_c[-1] + 2.0, win_c[-1] + 5.0]                 # 2-bar bounce -> reclaim MA5, up day -> ENTER
+    win_c += [win_c[-1] - 1.0 * (k + 1) for k in range(13)]     # drift down -> trend-break exit
+    while len(win_c) < len(dates):
+        win_c.append(win_c[-1] - 0.5)
     rows = []
     for i, dt in enumerate(dates):
         for j in range(12):
@@ -410,6 +466,10 @@ def _selftest() -> int:
             rows.append({"ts_code": f"S{j:02d}.SZ", "trade_date": dt, "open": px, "high": px * 1.01,
                          "low": px * 0.99, "close": px, "vol": (20 - j) * 1000.0,
                          "amount": px * (20 - j) * 1000.0 / 100.0, "pre_close": px})
+        wc = win_c[i]
+        rows.append({"ts_code": "WIN.SZ", "trade_date": dt, "open": wc, "high": wc * 1.01, "low": wc * 0.99,
+                     "close": wc, "vol": 90000.0, "amount": wc * 90000.0 / 100.0,
+                     "pre_close": win_c[i - 1] if i else wc})
     panel = pd.DataFrame(rows)
     idx = PanelIndex(panel)
     liquid = compute_liquid_universe(panel, top_n=5, lookback_days=10, min_dollar_vol=0)
@@ -430,13 +490,21 @@ def _selftest() -> int:
     # arms registered + alpha helper sane
     if set(ARMS) != {"h1", "oversold_control"}:
         errs.append("arms registry changed unexpectedly")
+    # a real ENTER->EXIT round-trip must execute (proves T+1 fills + exits, not just an empty loop)
+    if len(res["trades"]) < 1:
+        errs.append("no trade executed on the engineered WIN.SZ case — T+1 fill/exit path broken")
+    # no same-day round-trip (entry strictly before exit) — guards the no-same-day-re-entry rule
+    if any(t.get("entry_date") and t.get("exit_date") and t["entry_date"] >= t["exit_date"]
+           for t in res["trades"]):
+        errs.append("a trade has entry_date >= exit_date (same-day round-trip / re-entry leak)")
     if errs:
         print("quant_backtest selftest FAILED:")
         for e in errs:
             print(f"  - {e}")
         return 1
-    print("quant_backtest selftest PASSED (equity curve built; NO look-ahead — a future bar leaves the past "
-          "equity curve unchanged; T+1 fills; arms = h1 + oversold_control)")
+    print(f"quant_backtest selftest PASSED ({len(res['trades'])} real trade(s) executed; NO look-ahead — a "
+          "future bar leaves the past equity curve unchanged; T+1 fills; entry<exit (no same-day round-trip); "
+          "arms = h1 + oversold_control)")
     return 0
 
 
