@@ -250,6 +250,15 @@ jobs:
         continue-on-error: true          # non-critical; read-only composition
         run: python scripts/model_portfolio.py
 
+      # ── Step 2h3: Quant Strategy Factory v0 run (read-only; INDEPENDENT) ──
+      # Independent A-share long-only swing factory (Core Thesis = overlay/veto only,
+      # never the signal). The broad universe is gitignored + unfetchable from CI US
+      # IPs, so in CI this emits an honest NO_TRADE; the H1 signal is proven/killed by
+      # the PR3 backtest, NOT claimed here. validation_status stays "unvalidated".
+      - name: Generate Quant Strategy v0 run
+        continue-on-error: true          # non-critical; read-only; honest NO_TRADE in CI
+        run: python scripts/quant_strategy.py
+
       # ── Step 2i: Signal quality analytics (feedback loop) ────────────────
       - name: Compute signal quality analytics
         continue-on-error: true          # non-critical; reads trades + positions
@@ -376,6 +385,7 @@ jobs:
             public/data/confluence.json \
             public/data/daily_decision.json \
             public/data/model_portfolio.json \
+            public/data/quant_strategy_run.json \
             public/data/position_sizing.json \
             public/data/signal_quality.json \
             public/data/trades.json \
