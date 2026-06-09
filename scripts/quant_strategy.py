@@ -35,7 +35,7 @@ import argparse
 import hashlib
 import json
 import math
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -76,6 +76,9 @@ THRESH = {
     "max_position_pct": 10.0,
     "max_sector_pct": 30.0,
     "min_eligible_for_trade": 1,
+    "stale_max_calendar_days": 5,   # LIVE freshness guard: broad data older than this vs run date -> NO_TRADE
+    "min_listing_cal_days": 365,    # ~252 trading days minimum listing age (hard filter)
+    "float_cap_min_wan": 300000.0,  # circ_mv >= ¥3B (Tushare 万元 units) (hard filter)
 }
 MANIFEST = {"strategy_id": STRATEGY_ID, "strategy_version": STRATEGY_VERSION,
             "signal": "H1_pullback_in_uptrend_quality_filtered", "thresholds": THRESH}
@@ -99,6 +102,11 @@ def _r(x, nd=4):
         return round(float(x), nd)
     except Exception:
         return None
+
+
+def _is_a_share(tk: str) -> bool:
+    """v0 universe boundary: Shanghai/Shenzhen only. No HK, no BJ, no short."""
+    return bool(tk) and (tk.endswith(".SZ") or tk.endswith(".SH"))
 
 
 # ---- pure-python indicators (no pandas dep; so the H1 core + selftest run anywhere) ----
@@ -170,7 +178,7 @@ def h1_signal(closes, vols=None):
     return {
         "action": action, "n_bars": n,
         "uptrend": bool(uptrend), "pulled_back": bool(pulled_back), "rsi_turning": bool(rsi_turning),
-        "up_day": bool(up_day), "vol_ok": bool(vol_ok), "reclaim_ma5": bool(reclaim),
+        "up_day": bool(up_day), "vol_ok": bool(vol_ok), "reclaim_ma5": bool(reclaim), "confirm": bool(confirm),
         "price": _r(price), "ma200": _r(ma200[-1]), "ma20": _r(ma20[-1]), "ma5": _r(ma5[-1]), "rsi": _r(rsi[-1]),
         "stop": _r(price * (1.0 - THRESH["stop_pct"])) if action == "ENTER" else None,
     }
@@ -178,21 +186,29 @@ def h1_signal(closes, vols=None):
 
 # ---- Core Thesis overlay (veto / conviction) — read-only, never the signal -------------
 def _thesis_overlay():
+    """A-share-only overlay (veto / conviction). Non-A-share thesis names (e.g. HK shorts)
+    are recorded separately as out-of-v0-universe, never folded into the quant universe."""
     rows = (_load(BOARD, {}) or {}).get("trade_candidate_board", [])
-    long_u, vetoed = [], []
+    long_u, vetoed, excluded = [], [], []
     for r in rows:
         tk = r.get("ticker")
         if not tk:
             continue
         d = (r.get("direction") or "").upper()
         st = (r.get("status") or "").upper()
+        if not _is_a_share(tk):
+            if d == "LONG" or "SHORT" in d:
+                excluded.append({"ticker": tk, "name": r.get("name"), "direction": d,
+                                 "note": "non_a_share_out_of_v0_universe"})
+            continue
         if d == "LONG":
             long_u.append({"ticker": tk, "name": r.get("name"), "evidence_tier": r.get("evidence_tier")})
         if "SHORT" in d or st == "RISK_BLOCKED":
             vetoed.append({"ticker": tk, "name": r.get("name"),
                            "reason": ("thesis_" + d.lower()) if "SHORT" in d else "risk_blocked"})
     return {"long_universe": sorted(long_u, key=lambda x: x["ticker"]),
-            "vetoed": sorted(vetoed, key=lambda x: x["ticker"])}
+            "vetoed": sorted(vetoed, key=lambda x: x["ticker"]),
+            "excluded_non_a_share": sorted(excluded, key=lambda x: x["ticker"])}
 
 
 def _active_trade(sig, long_set):
@@ -209,15 +225,19 @@ def _active_trade(sig, long_set):
         "exit_rules": ["stop_hit", "close<MA20_trend_break", f"{THRESH['time_stop_days']}d_time_stop"],
         "signal": {k: sig.get(k) for k in ("uptrend", "pulled_back", "rsi_turning", "confirm",
                                            "ma200", "ma20", "rsi", "price")},
-        "validation_status": "unvalidated", "no_trade_flag": True,
+        # ENTER is a model recommendation, NOT an auto-trade: the human executes, no size is
+        # placed by the system. (Top-level no_trade_flag marks the whole run read-only.)
+        "validation_status": "unvalidated",
+        "human_execution_required": True, "no_auto_trade": True,
     }
 
 
 # ---- BROAD tier (local / PR3 backtest): top-500 ADV + quality gate + H1 ----------------
 def _try_broad_universe(as_of: date, veto_set):
-    """Read the local PIT parquet, build a top-500-ADV survivorship-safe quality-gated
-    universe, run H1 per name. Returns a dict, or None if the parquet is unavailable
-    (the CI case). Exercised on the local parquet + by the PR3 backtest harness."""
+    """BROAD tier (local / PR3 backtest): freshness-guarded, A-share-only, hard-filtered,
+    top-500-ADV, quality-gated universe -> H1 per name. Returns a dict (with a `stale`
+    marker if the latest bar is too old for a LIVE run), or None if the parquet is absent
+    (the CI case). Honestly reports which spec hard-filters were applied vs unavailable."""
     if not DAILY_PRICES.exists():
         return None
     try:
@@ -227,30 +247,63 @@ def _try_broad_universe(as_of: date, veto_set):
     try:
         as_of_str = as_of.strftime("%Y%m%d")
         dp = pd.read_parquet(DAILY_PRICES, columns=["ts_code", "trade_date", "close", "vol", "amount"])
-        dp = dp[dp["trade_date"] <= as_of_str]
+        dp = dp[(dp["trade_date"] <= as_of_str) & dp["ts_code"].map(_is_a_share)]   # A-share only
         if dp.empty:
             return None
+        # --- P0 freshness guard: never emit LIVE signals on stale data ---
+        data_as_of = str(dp["trade_date"].max())
+        try:
+            stale_days = (as_of - datetime.strptime(data_as_of, "%Y%m%d").date()).days
+        except Exception:
+            stale_days = None
+        if stale_days is not None and stale_days > THRESH["stale_max_calendar_days"]:
+            return {"stale": True, "data_as_of": data_as_of, "stale_days": stale_days,
+                    "filters_applied": ["broad_data_stale"]}
         dp = dp.sort_values(["ts_code", "trade_date"])
 
-        # survivorship: members listed-by and not-delisted-by as_of
+        # --- survivorship + listing-age + ST exclusion (from universe_pit) ---
         uni_raw = _load(UNIVERSE_PIT, {})
         uni = uni_raw.get("stocks", []) if isinstance(uni_raw, dict) else (uni_raw or [])
-        def _alive(row):
-            ld = (row.get("list_date") or "00000000")
-            dd = row.get("delist_date")
-            return ld <= as_of_str and (not dd or dd > as_of_str)
-        members = {r.get("ts_code") for r in uni
-                   if isinstance(r, dict) and r.get("ts_code") and _alive(r)} or None
+        min_list = (as_of - timedelta(days=THRESH["min_listing_cal_days"])).strftime("%Y%m%d")
+        meta = {}
+        for r in uni:
+            if isinstance(r, dict) and _is_a_share(r.get("ts_code")):
+                meta[r["ts_code"]] = {"list_date": r.get("list_date") or "00000000",
+                                      "delist_date": r.get("delist_date"), "name": (r.get("name") or "")}
+        have_uni = bool(meta)
 
-        # 20d ADV rank -> top-500 liquid
+        def _ok_uni(tk):
+            m = meta.get(tk)
+            if not m:
+                return not have_uni   # no universe file -> don't gate on it (reported as unavailable)
+            alive = m["list_date"] <= as_of_str and (not m["delist_date"] or m["delist_date"] > as_of_str)
+            return alive and (m["list_date"] <= min_list) and ("ST" not in m["name"].upper())
+
+        # --- 20d ADV liquidity rank -> top-500 ---
         tail = dp.groupby("ts_code").tail(THRESH["adv_n"])
         adv = tail.groupby("ts_code")["amount"].mean()
-        if members:
-            adv = adv[adv.index.isin(members)]
+        adv = adv[[_ok_uni(tk) for tk in adv.index]]
         liquid = list(adv.sort_values(ascending=False).head(THRESH["top_n_adv"]).index)
 
-        # quality gate: value (E/P) + low_vol (−realized vol), z-blended, above median
-        # low_vol from parquet closes; value from prices.parquet pe (optional).
+        # --- PE>0 + float-cap hard filters (from prices.parquet; honest if unavailable) ---
+        pe_ok, fcap_ok, val = set(), set(), {}
+        have_pe = have_fcap = False
+        if PRICES.exists():
+            pr = pd.read_parquet(PRICES, columns=["ts_code", "trade_date", "pe", "circ_mv"])
+            pr = pr[(pr["trade_date"] <= as_of_str) & (pr["ts_code"].isin(liquid))]
+            pr = pr.sort_values(["ts_code", "trade_date"]).groupby("ts_code").tail(1)
+            have_pe = "pe" in pr.columns
+            have_fcap = "circ_mv" in pr.columns
+            for _, row in pr.iterrows():
+                tk, pe, cm = row["ts_code"], row.get("pe"), row.get("circ_mv")
+                if pe is not None and pe == pe and pe > 0:
+                    pe_ok.add(tk); val[tk] = 1.0 / float(pe)   # E/P
+                if cm is not None and cm == cm and cm >= THRESH["float_cap_min_wan"]:
+                    fcap_ok.add(tk)
+            liquid = [tk for tk in liquid
+                      if (not have_pe or tk in pe_ok) and (not have_fcap or tk in fcap_ok)]
+
+        # --- value (E/P) + low_vol (−realized vol) quality gate, above median ---
         closes_by = {tk: g["close"].tolist() for tk, g in dp[dp["ts_code"].isin(liquid)].groupby("ts_code")}
         vols_by = {tk: g["vol"].tolist() for tk, g in dp[dp["ts_code"].isin(liquid)].groupby("ts_code")}
         lv = {}
@@ -259,16 +312,7 @@ def _try_broad_universe(as_of: date, veto_set):
             rets = [(seg[i] / seg[i - 1] - 1.0) for i in range(1, len(seg)) if seg[i - 1]]
             if len(rets) >= 20:
                 m = sum(rets) / len(rets)
-                lv[tk] = -math.sqrt(sum((x - m) ** 2 for x in rets) / len(rets))  # −vol
-        val = {}
-        if PRICES.exists():
-            pr = pd.read_parquet(PRICES, columns=["ts_code", "trade_date", "pe"])
-            pr = pr[(pr["trade_date"] <= as_of_str) & (pr["ts_code"].isin(liquid))]
-            pr = pr.sort_values(["ts_code", "trade_date"]).groupby("ts_code").tail(1)
-            for _, row in pr.iterrows():
-                pe = row.get("pe")
-                if pe is not None and pe == pe and pe > 0:
-                    val[row["ts_code"]] = 1.0 / float(pe)   # E/P
+                lv[tk] = -math.sqrt(sum((x - m) ** 2 for x in rets) / len(rets))
 
         def _z(d):
             if not d:
@@ -297,30 +341,44 @@ def _try_broad_universe(as_of: date, veto_set):
             s = h1_signal(closes_by.get(tk, []), vols_by.get(tk))
             if s["action"] in ("ENTER", "WAIT"):
                 signals.append({"ticker": tk, "basis": "broad_liquid_a_share", **s})
-        return {"signals": signals, "n_eligible": len(eligible),
-                "filters_applied": ["survivorship_asof", f"top{THRESH['top_n_adv']}_adv",
-                                    "quality_value_lowvol_above_median", "core_thesis_veto"]}
+
+        applied, notes = ["a_share_only"], []
+        if have_uni:
+            applied += ["survivorship_asof", f"listing_age>={THRESH['min_listing_cal_days']}cal_days", "st_excluded"]
+        else:
+            notes.append("universe_pit_empty: survivorship + listing_age + ST NOT applied "
+                         "(PR3 backtest must populate universe_pit for survivorship integrity)")
+        applied.append(f"top{THRESH['top_n_adv']}_adv")
+        applied.append("pe_positive" if have_pe else "pe_filter_unavailable")
+        applied.append(f"float_cap>={int(THRESH['float_cap_min_wan'])}wan" if have_fcap else "float_cap_filter_unavailable")
+        applied += ["quality_value_lowvol_above_median", "core_thesis_veto"]
+        return {"signals": signals, "n_eligible": len(eligible), "data_as_of": data_as_of,
+                "stale_days": stale_days, "filters_applied": applied, "filter_notes": notes}
     except Exception as e:
         return {"signals": [], "n_eligible": 0,
                 "filters_applied": ["broad_tier_error"], "error": str(e)[:200]}
 
 
 def _focus_diagnostic():
-    """Run H1 on the ~7 fresh focus ohlc_*.json files (CI-available). They carry ~120 bars
-    (< the 200 the uptrend filter needs) -> expected INSUFFICIENT_DATA, surfaced honestly."""
-    sigs = []
+    """Run H1 on the fresh focus ohlc_*.json files (CI-available). A-SHARE ONLY (v0 boundary);
+    HK focus names are recorded as excluded. The A-share focus files carry ~120 bars (< the 200+
+    the uptrend filter needs) -> expected INSUFFICIENT_DATA, surfaced honestly. Returns (sigs, excluded)."""
+    sigs, excluded = [], []
     for p in sorted(D.glob("ohlc_*.json")):
         d = _load(p)
         if not d:
             continue
         tk = d.get("ticker") or p.stem.replace("ohlc_", "").replace("_", ".")
+        if not _is_a_share(tk):
+            excluded.append(tk)
+            continue
         bars = d.get("data") or d.get("bars") or []
         closes = [b.get("close") for b in bars if isinstance(b, dict) and b.get("close") is not None]
         vols = [b.get("volume", b.get("vol")) for b in bars if isinstance(b, dict)]
         vols = [v for v in vols if v is not None] or None
         s = h1_signal(closes, vols)
         sigs.append({"ticker": tk, "basis": "focus_ohlc_diagnostic", **s})
-    return sorted(sigs, key=lambda x: x["ticker"])
+    return sorted(sigs, key=lambda x: x["ticker"]), sorted(excluded)
 
 
 def build(now: datetime | None = None) -> dict:
@@ -331,32 +389,49 @@ def build(now: datetime | None = None) -> dict:
     long_set = {x["ticker"] for x in overlay["long_universe"]}
 
     broad = _try_broad_universe(now.date(), veto_set)
-    if broad is not None:
+    data_as_of, excluded_focus, filter_notes = None, [], []
+    if broad is not None and broad.get("stale"):
+        data_tier = "broad_data_stale"
+        signals, n_eligible = [], 0
+        filters_applied = broad["filters_applied"]
+        data_as_of = broad.get("data_as_of")
+        stale_note = (f"broad data stale: latest bar {data_as_of} is {broad.get('stale_days')} calendar days "
+                      f"behind run {run_date} (> {THRESH['stale_max_calendar_days']}) — refusing to emit "
+                      f"signals on stale data.")
+    elif broad is not None:
         data_tier = "broad_liquid_a_share"
         signals = broad["signals"]
         n_eligible = broad["n_eligible"]
         filters_applied = broad["filters_applied"]
+        filter_notes = broad.get("filter_notes", [])
+        data_as_of = broad.get("data_as_of")
+        stale_note = None
     else:
         data_tier = "degraded_ci_focus_only"
-        signals = _focus_diagnostic()
+        signals, excluded_focus = _focus_diagnostic()
         n_eligible = 0
         filters_applied = ["ci_broad_universe_unavailable"]
+        stale_note = None
 
+    # A-share-only + Core-Thesis veto on every trade output (the overlay is never the signal)
+    signals = [s for s in signals if _is_a_share(s.get("ticker"))]
     enters = [s for s in signals if s.get("action") == "ENTER" and s["ticker"] not in veto_set]
     waits = [s for s in signals if s.get("action") == "WAIT" and s["ticker"] not in veto_set]
     active_trades = [_active_trade(s, long_set) for s in enters]
     candidates = [{"ticker": s["ticker"], "action": "WAIT", "basis": s.get("basis"),
                    "signal": {k: s.get(k) for k in ("uptrend", "pulled_back", "rsi_turning", "confirm")},
-                   "no_trade_flag": True} for s in waits]
+                   "human_execution_required": True, "no_auto_trade": True} for s in waits]
 
     no_trade_reason = None
     if not active_trades:
-        no_trade_reason = (
-            "broad liquid universe unavailable in this environment (data_history parquet is "
-            "gitignored/absent; AKShare universe_a.json is stale from GitHub US IPs); focus-only "
-            "ohlc has <200 bars for the MA200 uptrend filter — honest NO_TRADE."
-            if data_tier.startswith("degraded")
-            else "no name passed eligible -> setup -> confirm -> risk today")
+        if data_tier == "broad_data_stale":
+            no_trade_reason = stale_note
+        elif data_tier.startswith("degraded"):
+            no_trade_reason = ("broad liquid universe unavailable in this environment (data_history parquet "
+                               "gitignored/absent; AKShare universe_a.json stale from GitHub US IPs); A-share "
+                               "focus ohlc has <200 bars for the MA200 uptrend filter — honest NO_TRADE.")
+        else:
+            no_trade_reason = "no A-share name passed eligible -> setup -> confirm -> risk today"
 
     return {
         "_meta": {
@@ -364,7 +439,7 @@ def build(now: datetime | None = None) -> dict:
             "spec": "docs/strategy/QUANT_STRATEGY_FACTORY_v0_SPEC.md",
             "read_only": True, "no_trades": True, "no_size": True, "no_buy_sell": True, "no_position_mutation": True,
             "run_date": run_date, "generated_at": now.isoformat(),
-            "data_tier": data_tier,
+            "data_tier": data_tier, "data_as_of": data_as_of,
             "horizon": "20d primary / 5d secondary diagnostic",
             "objective": "beat CSI300 + equal-weight A-share after costs (relative, drawdown-aware)",
             "sources": ["trade_candidate_board(overlay)", "daily_prices.parquet(broad)", "prices.parquet(broad)",
@@ -372,7 +447,8 @@ def build(now: datetime | None = None) -> dict:
             "disclaimer": DISCLAIMER,
             "counts": {"signals": len(signals), "candidates_wait": len(candidates),
                        "active_trades_enter": len(active_trades),
-                       "core_long_universe": len(long_set), "vetoed": len(veto_set)},
+                       "core_long_universe": len(long_set), "vetoed": len(veto_set),
+                       "excluded_non_a_share": len(overlay.get("excluded_non_a_share", []))},
         },
         "run_date": run_date,
         "strategy_id": STRATEGY_ID,
@@ -380,12 +456,14 @@ def build(now: datetime | None = None) -> dict:
         "manifest_hash": hashlib.sha256(
             json.dumps(MANIFEST, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest(),
         "universe": {"base": f"liquid_a_share_top{THRESH['top_n_adv']}_adv", "data_tier": data_tier,
-                     "n_eligible": n_eligible, "filters_applied": filters_applied},
+                     "data_as_of": data_as_of, "n_eligible": n_eligible,
+                     "filters_applied": filters_applied, "filter_notes": filter_notes,
+                     "excluded_non_a_share_focus": excluded_focus},
         "signals": signals,
         "candidates": candidates,        # WAIT — setup present, confirmation/sizing pending
-        "active_trades": active_trades,  # ENTER — SUGGESTED only (no_size_executed:true)
+        "active_trades": active_trades,  # ENTER — model recommendation; human executes, no size placed
         "no_trade_reason": no_trade_reason,
-        "core_thesis_overlay": overlay,  # veto / conviction / provenance ONLY — never the signal
+        "core_thesis_overlay": overlay,  # A-share veto / conviction + excluded_non_a_share — never the signal
         "validation_status": "unvalidated",
         "no_trade_flag": True,
     }
@@ -477,6 +555,21 @@ def _selftest() -> int:
             errs.append(f"{c.get('ticker')} active_trade must carry no_size_executed:true")
         if any(k in c for k in ("shares", "quantity", "executed_size")):
             errs.append(f"{c.get('ticker')} must not carry an executed-size field")
+    # v0 universe boundary: no non-A-share name may appear in signals / candidates / active
+    if any(not _is_a_share(x.get("ticker")) for x in out["signals"] + out["candidates"] + out["active_trades"]):
+        errs.append("a non-A-share name leaked into signals/candidates/active_trades (v0 is A-share only)")
+    # ENTER-card semantics (renamed away from no_trade_flag): direct _active_trade check
+    at = _active_trade({"ticker": "000001.SZ", "price": 10.0, "stop": 9.2}, {"000001.SZ"})
+    if not (at.get("human_execution_required") is True and at.get("no_auto_trade") is True
+            and at.get("no_size_executed") is True):
+        errs.append("_active_trade must carry human_execution_required + no_auto_trade + no_size_executed")
+    if "no_trade_flag" in at:
+        errs.append("_active_trade (ENTER) must NOT carry no_trade_flag (conflicts with action:ENTER)")
+    if at.get("provenance") != "core+quant_confirmed":
+        errs.append("_active_trade on a core-long name must be provenance core+quant_confirmed")
+    # confirm must be surfaced on the H1 signal (P2 fix: was null downstream)
+    if "confirm" not in s_enter:
+        errs.append("h1_signal must surface 'confirm' in its return")
     # Core Thesis is overlay only: no vetoed name may appear as an active trade
     veto = {v["ticker"] for v in out["core_thesis_overlay"]["vetoed"]}
     if any(t["ticker"] in veto for t in out["active_trades"]):
@@ -494,8 +587,9 @@ def _selftest() -> int:
             print(f"  - {e}")
         return 1
     print("quant_strategy selftest PASSED (H1: ENTER on uptrend+pullback+confirm, NO_SETUP on "
-          "downtrend / no-pullback, INSUFFICIENT_DATA on short history; build invariants: no_trade_flag, "
-          "unvalidated, no executed size, thesis-overlay veto holds, honest NO_TRADE, deterministic manifest)")
+          "downtrend / no-pullback, INSUFFICIENT_DATA on short history, confirm surfaced; build invariants: "
+          "A-share-only, no_trade_flag, unvalidated, ENTER=human_execution_required/no_auto_trade (not "
+          "no_trade_flag), no executed size, thesis-overlay veto holds, honest NO_TRADE, deterministic manifest)")
     return 0
 
 
