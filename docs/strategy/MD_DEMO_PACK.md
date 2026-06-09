@@ -1,10 +1,13 @@
 # MD Demo Pack — UBS MD demo (6/10)
+## Daily Model Portfolio Pilot
 
-> **Status:** Fulfils **Milestone 4** of `MD_DEMO_MILESTONE_PLAN.md` (ratified 2026-06-01).
-> **Doc-only.** The **live Beta + Cockpit** is the demo surface — no demo-mode code
-> (Junyan 2026-06-06: add code only if the doc reveals a real demo blocker).
-> **Companion docs:** `MD_DEMO_MILESTONE_PLAN.md` (plan) · `USP_VISION.md` (dual-track) ·
-> `CORE_ALPHA_FACTORY_v0_SPEC.md` (validation engine) · `TRADE_DECISION_STACK_v0_DESIGN.md` (Cockpit).
+> **Status:** Demo narrative for the **Daily Model Portfolio Pilot** (product pivot 2026-06-07).
+> **This supersedes the prior "auditable decision-support, NOT 荐股" framing of this pack** — the
+> product now *recommends* names; the discipline moved from "we never recommend" to "we recommend,
+> but stay ruthlessly honest that it's unvalidated and the human decides."
+> **Doc-only.** The **live Model tab** (今日模型组合) is the demo surface — no demo-mode code.
+> **Companion docs:** `MD_DEMO_MILESTONE_PLAN.md` · `USP_VISION.md` (dual-track) ·
+> `CORE_ALPHA_FACTORY_v0_SPEC.md` (validation engine) · `STATUS.md` (2026-06-07 pivot block).
 > **How to use:** §3 is the live click-path; §4 is the spoken script + guardrails;
 > rehearse once against §6 before 6/10.
 
@@ -12,103 +15,115 @@
 
 ## 0. The one-sentence pitch
 
-> An **auditable, AI-augmented equity-research & decision-support cockpit** for A-share + HK.
-> It threads *information → thesis → candidates → portfolio risk → paper P&L → human review*
-> into one workflow that surfaces **evidence, structured scores, and risk flags** — and
-> **never** emits buy/sell or position sizes. **The human makes every decision.**
+> A **Daily Model Portfolio Pilot** for A-share + HK: an internal, AI-augmented model that
+> **recommends names with a direction, a thesis-derived target range, a construction plan and an
+> invalidation rule** — split into a mid/long-term **core-thesis** sleeve and a short-term
+> **quant-swing** sleeve — then **captures the human's execution and attributes it back to improve
+> the model.**
+> These are **internal, UNVALIDATED model recommendations** — **not validated alpha, and not
+> external or personalized investment advice. The human executes every trade.** The edge is the
+> **closed loop** (recommendation → execution → attribution → improvement), **not** today's backtest.
 
 ---
 
 ## 1. Positioning — what it IS / what it is NOT
 
-The #1 institutional risk is *looking like 荐股* (auto recommendations). Foreground the restraint.
+The product **pivoted**: it now **recommends** names (the prior version deliberately refused to).
+The institutional discipline moved from *"we never recommend"* to **"we recommend, but we are
+ruthlessly honest that it's unvalidated and the human decides."** Foreground that honesty.
 
 | It **IS** | It is **NOT** |
 |---|---|
-| A **decision-support cockpit** — evidence, signals, structured scores, risk flags | A **stock-picker / 荐股 tool** — no auto buy/sell, no position sizes, no auto-trade |
-| **Falsifiable research** — every thesis has catalyst + proves-right-if + **proves-wrong-if** + evidence tier | A **black box** — no unexplained recommendations; the model can't mark its own homework |
-| **Auditable** — numbers separated as observed facts vs `[unvalidated]` assumptions; sources / as-of stamps visible; thesis↔holdings inconsistency **surfaced** | A **validated-returns product** — paper-only, no live capital, edge not yet proven |
-| **Human-in-the-loop** — a daily Human Review Queue is the decision surface | A **backtest hero** — curve-fit numbers are discarded; honest CIs shown |
-| **China-context edge** — A-share/HK narrative + information-structuring (the USP) | A **robo-advisor** — it routes judgement to the human, it doesn't replace it |
+| An **internal model-recommendation pilot** — executable ideas: direction · **thesis-derived** target range · construction plan · invalidation rule | **Validated alpha / a proven strategy** — unvalidated model output; **no average-return claim**; edge not yet demonstrated |
+| **Dual-sleeve** — a mid/long **core-thesis** sleeve + a short-term **quant-swing** sleeve | **External or personalized investment advice** — an *internal* pilot; not a recommendation to any client |
+| **Honest-first** — swing *active* trades are gated on a real signal (today **0**); a **setup radar** shows what the model is watching without faking a trade | An **auto-trader** — no auto-execution, **no position sizing without the human**; **the human executes** |
+| **A closed loop** — every recommendation captures the user's **execution** and attributes it back (Pilot Attribution) | A **backtest hero** — **no P&L until real executions + price sync**; no curve-fit numbers, no average return |
+| **Falsifiable** — each thesis carries catalyst · **proves-wrong-if** · evidence tier; targets labeled **uncalibrated** | A **black box** — the model can't grade its own homework; claims are evidence-rated + fact-checked |
 
-**Inspiration / audience context:** prior human research examples such as 中际旭创 and Pop Mart show the type of thesis depth the platform is meant to support; they are **not** presented as platform-validated alpha.
-
----
-
-## 2. The auditable workflow (architecture)
-
-```
- INFORMATION            THESIS ENGINE             DECISION STACK              HUMAN
- news · capital flows   7-step, evidence-tiered,  candidate board (status     ┌──────────────┐
- filings · universe  →  falsifiable thesis     →  precedence, NO size)      → │   HUMAN      │
- attention screen       (catalyst · wrong-if ·    portfolio risk packet       │   REVIEW     │
-                        evidence tier · fact-      (observed exposure = fact;  │   QUEUE      │
-                        check vs ingested data)    caps = [unvalidated])       │ → DECIDES    │
-                                                   paper P&L / attribution     └──────────────┘
-                                       ▲
-                        CORE Alpha Factory v0 — pre-register (tamper-evident hash)
-                        → forward-validate (multi-testing correction) → cull/promote
-                        — ALL read-only · nothing promoted to capital
-```
-
-Every arrow is inspectable; the only thing that closes the loop to action is **the human**.
+**Inspiration / audience context:** prior human research examples (中际旭创, Pop Mart) show the
+*thesis depth* the platform supports; they are **not** presented as platform-validated alpha.
 
 ---
 
-## 3. Demo route — 5 scenarios (live click-path + the point)
+## 2. The pilot loop (architecture)
 
-Open on the **Beta tab** (default landing): *"This is the analyst's daily entry — AI surfaces evidence, the human decides. Five flows."*
+```
+ INFORMATION          MODEL                        DAILY MODEL PORTFOLIO          HUMAN + LOOP
+ news · flows ·  →   thesis engine (7-step,   →    core-thesis sleeve         →  human executes
+ filings · universe   falsifiable, evidence-        (direction · target ·         (or modifies /
+ attention screen     tiered) + quant signals       construction · wrong-if)      rejects) → logs it
+                      / confluence                  quant-swing sleeve:               │
+                                                     active (signal-gated; 0 today)   ▼
+                                                     + setup radar (what's watched)  Pilot Attribution
+                                                                                     (model rec vs
+                        CORE Alpha Factory v0 — pre-register → forward-validate       execution per run;
+                        → cull/promote — read-only · nothing promoted to capital      returns PENDING)
+```
 
-### Scenario 1 — Daily Market Tracking · *Browse*
-- **Click:** Beta → Task 1 → **Browse**. Show breadth (涨/跌/涨停/跌停 counts), Top movers, capital flows.
-- **Say:** *"Note the honesty from screen one — breadth and movers carry a **snapshot-date stamp**, and the **'Live' dot only lights when we're actually receiving quotes**. We never imply data is fresher than it is."*
-- **The point:** data honesty is structural, not a footnote.
+Targets are **thesis-derived / uncalibrated**; the only thing that closes the loop to action is
+**the human**; returns are **pending real executions + price sync**.
 
-### Scenario 2 — Core Thesis Path · *Research (300308 中际旭创 Innolight)*
-- **Click:** **Research** → 300308. Walk the 7-step thesis: catalyst (1.6T mass-production timing) → mechanism → evidence + contrarian → quantification → **proves-right-if** → **proves-wrong-if** → variant view. Open the **fact-check panel** + evidence tier.
-- **Say:** *"Every thesis is falsifiable. Here's the catalyst, here's exactly what would **prove us wrong**, and here's the evidence-quality rating. The fact-check panel cross-checks the model's numeric claims against ingested filings/market data and flags mismatches — **the model doesn't grade its own homework.**"*
-- **The point:** falsifiable, auditable research — not a tip.
+---
 
-### Scenario 3 — Trade Decision Cockpit · *Cockpit*
-- **Click:** **Cockpit**. Human Review Queue (Review today · Risk blockers · Thesis conflicts · Need more research) → Candidate Board (status precedence `RISK_BLOCKED > HUMAN_REVIEW_REQUIRED > RESEARCH_REQUIRED > WATCH > NO_ACTION`) → Portfolio Risk packet.
-- **Say:** *"This is the daily decision surface. Critically — **it never says buy or sell.** It tells the human **where judgement is needed**: what to review, what's risk-blocked, where theses conflict. Status-only. Caps and thresholds are labeled `[unvalidated]`."*
-- **The point:** decision-support, structurally not 荐股.
+## 3. Demo route — 5 steps (live click-path + the point)
 
-### Scenario 4 — Portfolio Risk / P&L Attribution · *Portfolio + Cockpit risk* (the honesty showpiece)
-- **Click:** **Portfolio** (paper P&L / attribution) → **Cockpit** risk: theme exposure (Innolight / CPO concentration); the **alignment guardrail** — HK names **paper-LONG vs registered WATCH_SHORT**; shadow book shows only **~3.7%** of the paper book is backed by an *aligned* directional thesis.
-- **Say:** *"Here's the institutional kicker: the platform surfaces **its own inconsistencies** — it flags that some holdings are paper-LONG while our registered research says WATCH_SHORT, and that only a small fraction of the book is thesis-backed. A 荐股 tool hides this; **an auditable research system shows it.**"*
-- **The point:** auditability = surfacing your own research-vs-holdings gaps.
+Open on the **Model tab** (default landing, 今日模型组合): *"This is the product — a daily model
+portfolio. The model recommends; the human decides and executes; every execution feeds back to
+validate the model."*
 
-### Scenario 5 — Validation Discipline · *Tracker + talk-through*
-- **Click:** **Tracker** — prediction log (2/3 decidable correct: 700.HK ✅, BYD ✅, BeiGene ❌, NetEase ~inconclusive); thesis outcomes / wrongIf monitoring.
-- **Say:** *"And we're honest about edge. The pure-systematic 'satellite' has **no statistically demonstrable edge** — the alpha confidence interval **straddles zero**, and we say so. The intended alpha is the **thesis-driven CORE** track; its forward-validation window is **Aug–Nov 2026** — not yet proven. Every uncalibrated weight is `[unvalidated]`. The CORE Alpha Factory **pre-registers** theses with a tamper-evident hash, then **forward-validates** with multiple-testing correction before any edge claim. **Nothing is promoted to capital.**"*
-- **The point:** *we tell you what we don't know* — that restraint is the moat.
+### 1 — 今日模型组合 (Daily Model Portfolio)
+- **Click:** land on **Model**. Show the pilot banner + the fresh-pilot note (no legacy positions; live tracking from 2026-06-08).
+- **Say:** *"This is an **internal model-recommendation pilot**. Everything here is **unvalidated model output — not validated alpha, not advice**. The edge we're building is the **closed loop**, not a backtest."*
+- **Point:** the honest framing is the first thing they see.
 
-> **Close:** return to Beta → the **feedback loop** (issue-type capture). *"The system is built to be corrected by its users — human-in-the-loop, all the way down."*
+### 2 — Core thesis sleeve
+- **Click:** the **mid/long-term core-thesis** cards (today: 002594 LONG · 603233 SHORT · 6160/700/9999 WATCH_SHORT).
+- **Say:** *"Each pick is a **falsifiable thesis** — direction, a **thesis-derived (uncalibrated) target range**, a construction plan, and **exactly what would prove it wrong**. R/R and evidence tier are shown."*
+- **Point:** recommendations — but disciplined and falsifiable.
+
+### 3 — Quant setup radar
+- **Click:** the **short-term quant-swing** section — **active = 0 today** (empty-state), **setup radar populated** (7 names).
+- **Say:** *"Honest-first: **no active swing trade today** because confluence is neutral across the names — we **don't fake a trade** from a chart pattern. The **radar** shows what the model is watching — bullish/bearish/mixed bias, **never a buy/sell call** — and it flags **divergence from the thesis** (e.g. BYD core-LONG but short-term bearish; BeiGene WATCH_SHORT but short-term bullish)."*
+- **Point:** the model says "no trade" when there's no trade — and surfaces the dual-horizon tension.
+
+### 4 — User execution capture
+- **Click:** a card's **Follow / Modify / Reject / Watch** + reason + actual-trade; show **Copy / Download JSON**.
+- **Say:** *"The human decides and **logs what they actually did**. The system **never auto-trades or sizes**. This log is the raw material of the validation loop."*
+- **Point:** human-in-the-loop, captured.
+
+### 5 — Pilot Attribution
+- **Click:** scroll to **Pilot Attribution**; paste 1–2 participant logs (same run); show per-candidate **follow/modify/reject** rates + **divergence**; the **returns column = PENDING**.
+- **Say:** *"This is the engine of the whole thing: **model recommendation vs what users actually did**, per run. **Returns are explicitly pending** — no P&L until real executions + price sync, and **no average-return claim**. This divergence data is what later becomes real performance attribution."*
+- **Point:** the **closed loop is the product** — and we measure it honestly before we claim anything.
+
+> **Close:** *"The model recommends, the human executes, and we attribute every execution back to
+> improve the model. We're honest that it's unvalidated today — that restraint is the institutional moat."*
 
 ---
 
 ## 4. Talking points, Q&A, and what NOT to claim
 
 **Three key messages (repeat them):**
-1. **AI produces evidence; humans decide.** (compliance, accountability, no black-box 荐股)
-2. **Falsifiable + auditable + `[unvalidated]`-labeled** = institutional credibility.
-3. **The honesty *is* the differentiator** vs the 1d/3d 荐股 terminals.
+1. **The model recommends; the human executes.** (no auto-trade, no sizing without the human)
+2. **Unvalidated, honestly labeled** — thesis-derived/uncalibrated targets, **returns pending, no average-return claim.**
+3. **The edge is the closed loop** (recommendation → execution → attribution → improvement), **not** today's backtest.
 
 **Anticipated Q&A (bounded, honest answers):**
-- *"Does it make money / what's the track record?"* → Paper-only, no live capital. Satellite has **no demonstrable edge** (CI straddles zero). The edge thesis is **CORE thesis-driven research**, forward-validation **pending (Aug–Nov 2026)**. Prediction log **2/3 decidable**. **We do not claim validated returns.**
-- *"Is this 荐股 / a robo-advisor?"* → No. **Structurally** no buy/sell, no sizing, no auto-trade. Decision-support.
-- *"Moat vs Bloomberg / Wind / AI-quant terminals?"* → China-context narrative + information-structuring edge; falsifiable-thesis discipline; auditability (surfaces own inconsistencies); the **dual-track** (research + forward-validated quant).
-- *"Why trust the AI?"* → You don't have to — **the human decides**; every claim is evidence-rated, fact-checked, and falsifiable.
+- *"Does it make money / what's the track record?"* → **No validated returns.** Fresh pilot; **live tracking from 2026-06-08**; **no P&L until real executions + price sync**; **no average-return number**. CORE forward-validation window is **Aug–Nov 2026**.
+- *"So it's 荐股 now?"* → It **is** model recommendations — but **internal and unvalidated**, **not external or personalized advice**, and **the human executes**. The value is the **validation loop**, not a claim of proven alpha.
+- *"How many picks today?"* → **Honestly sparse** — a handful of core-thesis names; **swing active is 0** (radar populated). The model says "no trade" when there's no signal.
+- *"Moat vs Wind / Bloomberg / AI-quant 1d/3d terminals?"* → They emit a target and move on. We attach a **falsifiable thesis + uncalibrated target + invalidation**, surface **honest divergence**, and **close the loop** with execution attribution. The discipline is the moat.
 
 **❌ WHAT NOT TO CLAIM (anti-oversell guardrail — bounded claims only):**
-- ❌ "validated / proven alpha or returns" — satellite CI straddles zero; CORE unproven.
-- ❌ "the AI picks winners" — it surfaces evidence; **humans decide**.
-- ❌ "calibrated weights / thresholds" — they are `[unvalidated intuition]`.
-- ❌ "it never gets stuck / it's always right" — **structural compliance ≠ investment quality**; bounded claims only.
-- ✅ Use: *decision-support · evidence and signals · honest about what's unvalidated · forward-validation in progress.*
+- ❌ "validated / proven alpha or returns" — unvalidated pilot; CORE forward-validation pending.
+- ❌ "average return / it makes X%" — **no average-return number**; returns pending real executions + price sync.
+- ❌ "calibrated targets / entries" — target ranges are **thesis-derived / `[unvalidated]`**.
+- ❌ "it auto-trades / sizes for you" — **no**; the human executes; no sizing without the human.
+- ❌ "lots of high-conviction picks today" — output is **sparse**; swing active **0**, radar populated.
+- ✅ Use: *internal model-recommendation pilot · unvalidated · human executes · edge is the closed loop · honest about what's not yet proven.*
 
-> This guardrail **is** the anti-oversell discipline the platform enforces internally. Embody it live — the credibility comes from the restraint, not the claims.
+> This guardrail **is** the anti-oversell discipline the platform enforces internally. Embody it live —
+> the credibility comes from the restraint, not the claims.
 
 ---
 
@@ -116,38 +131,44 @@ Open on the **Beta tab** (default landing): *"This is the analyst's daily entry 
 
 | Component | Status | Honest read |
 |---|---|---|
-| Satellite (pure systematic) | Bootstrap alpha **CI straddles zero** (OOS point −2.0%, 95% CI [−11.1%, +8.7%]; p≈0.69) | **No demonstrable edge** — say so |
-| CORE (thesis-driven) | Forward-validation window **~2026-08 → 11** | Intended alpha source; **not yet proven** |
-| CORE Alpha Factory v0 | Live, **read-only**; produce→pre-register→validate→shadow→cull | Nothing promoted to capital |
-| Prediction log | **2/3** decidable correct | Small n; honest track |
+| Daily Model Portfolio (pilot) | Live; **fresh pilot**, no legacy positions; tracking from **2026-06-08** | Unvalidated model output; **not alpha** |
+| Core-thesis sleeve | A few directional theses (today **5**); targets **thesis-derived / uncalibrated** | Falsifiable; **not proven** |
+| Quant-swing sleeve | **active = 0** today (confluence neutral); **setup radar = 7** | Honest-first; **radar ≠ a trade** |
+| Pilot Attribution | Captures model-vs-execution per run; **returns PENDING** | **No P&L** until executions + price sync; **no avg-return** |
+| CORE (thesis-driven) forward-validation | Window **~2026-08 → 11** | Intended alpha source; **not yet proven** |
+| Satellite (pure systematic) | Bootstrap alpha **CI straddles zero** (OOS −2.0%, 95% CI [−11.1%, +8.7%]) | **No demonstrable edge** — say so |
 | VP weights (25/25/20/15/15) | `[unvalidated intuition]` | Causal logic real; weights uncalibrated |
-| Paper book ↔ registered thesis | ~**3.7%** aligned (alignment guardrail) | Inconsistency **surfaced, not hidden** |
 
 ---
 
 ## 6. Pre-demo readiness checklist (6/8 → 6/10)
 
-- [ ] **Deploy green** — gh-pages live; latest `fetch-data.yml` data committed; morning-report not red.
-- [ ] **Data freshness** — universe snapshot date recent; "Live" dot behaves; no stale prices on demo tickers.
-- [ ] **No-advice banners present** — Cockpit, **Beta**, Morning, Desk all show the "decision support, not advice" line.
-- [ ] **`[unvalidated]` labels visible** — caps/weights/thresholds.
-- [ ] **Beta is the default landing** (shipped #30) — opens on the guided entry.
-- [ ] **Mobile works** (P3b #28 + P2 #29) — can demo on a phone if asked.
-- [ ] **Demo tickers populated:** 300308.SZ (中际旭创) · 700.HK · 9999.HK · 6160.HK · 002594.SZ.
+- [ ] **Deploy green** — gh-pages live; latest `fetch-data.yml` data committed (incl. `model_portfolio.json`); morning-report not red.
+- [ ] **Model tab is the default landing** — opens on 今日模型组合.
+- [ ] **Pilot banner + fresh-pilot note visible** — "internal model-recommendation pilot · unvalidated · not advice."
+- [ ] **Swing sleeve reads honestly** — active-0 empty-state copy + radar populated; **dual-horizon tension labels** (BYD / BeiGene) visible.
+- [ ] **`[unvalidated]` / uncalibrated labels visible** — target ranges, weights, thresholds.
+- [ ] **Execution capture works** — Follow/Modify/Reject + reason/actual-trade + Copy/Download JSON.
+- [ ] **Pilot Attribution works** — paste a sample log; **same-run guard** holds; **returns show PENDING**.
+- [ ] **Demo tickers populated:** 300308.SZ · 002594.SZ · 603233.SH · 175.HK · 700.HK · 9999.HK · 6160.HK.
+- [ ] **Mobile works** — can demo on a phone if asked.
 - [ ] **Know which tabs to skip** — don't open half-built/experimental surfaces live.
-- [ ] **Feedback flow ready** — can show capture + Copy/Download JSON.
-- [ ] **Rehearse the 5-scenario path once** end-to-end (~8–10 min).
+- [ ] **Rehearse the 5-step path once** end-to-end (~8–10 min).
 
 ---
 
-## 7. Roadmap teaser (parked post-demo — present as direction, NOT as shipped)
+## 7. Roadmap teaser (present as direction, NOT as shipped)
 
-- **Dual-track** (`USP_VISION.md`): buy-side **falsifiable theses** + a **~30% systematic Path-B quant sleeve** (A-share long-only), human-allocated with explicit reasoning — same end-shape as the 荐股 terminals but deeper and **honestly framed**.
-- Candidate **state / flow / sentiment** factors (the China information-structuring edge) route through the **CORE factory: pre-register → forward-validate** before any edge claim. **Plausible-but-unestablished — do NOT present as validated.** (The falsified inverse-momentum Path-B stays dead.)
-- Near-term: more forward samples accrue (first CORE validation verdict ~Aug–Nov 2026); deepen the human-review workflow.
+- **Real returns:** upgrade execution capture's `actual_trade` to structured **side / price / quantity / execution_time**, then mark-to-market → the Pilot Attribution returns columns go from **PENDING** to real per-user / per-variant performance (*the meaningful comparison*). **Not claimed today.**
+- **Single-stock decision sheet:** merge thesis / technical / fundamental / risk / target into one per-name 决策书 (enhancement, not the core engine).
+- **Thicker model output:** more core theses + a daily swing feed to populate the *active* sleeve — **honest that today's executable output is sparse.**
+- **Validation maturing:** CORE Alpha Factory **pre-register → forward-validate** (first verdict ~Aug–Nov 2026) before any edge claim. The falsified inverse-momentum Path-B stays dead.
 
 ---
 
 ## 8. One-line close
 
-> *"This is not an AI stock-picker. It's an **auditable decision-support cockpit** that makes a human analyst faster and more disciplined — and it's honest about exactly what it has and hasn't proven. That restraint is the institutional moat."*
+> *"This is a **Daily Model Portfolio Pilot** — the model recommends, the human executes, and every
+> execution is attributed back to improve the model. It is **honest that it's unvalidated today**:
+> thesis-derived targets, returns pending, no average-return claim. **That restraint — recommending
+> *and* staying disciplined — is the institutional moat."*
