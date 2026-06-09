@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-06-07 (⚠ PRODUCT PIVOT — Daily Model Portfolio Pilot. Positioning REVERSED from "decision-support, NOT 荐股" → "internal model-recommendation PILOT" (unvalidated; validation-loop edge). Trust pass #33–37 + pivot #39–42; pilot v1 closed loop shipped. PM: 4-step plan steps 1–2 landed — CLAUDE.md pivot pointer #45 + quant_swing honest-first {active,setup_watch} #46/#47 (+key-hardening #44). READ the 2026-06-07 block below — the old "Internal Beta v0 / NOT 荐股" framing is superseded.)
+**Last updated:** 2026-06-08 (⚠ PRODUCT PIVOT 2026-06-07 — Daily Model Portfolio Pilot. Positioning REVERSED from "decision-support, NOT 荐股" → "internal model-recommendation PILOT" (unvalidated; validation-loop edge). Trust pass #33–37 + pivot #39–42; pilot v1 closed loop shipped. 4-step plan steps 1–3 LANDED — CLAUDE.md pivot pointer #45 + quant_swing honest-first {active,setup_watch} #46/#47 (+key-hardening #44) + Pilot Attribution #49; MD_DEMO_PACK reframed to the pilot narrative #50. READ the 2026-06-07 block below — the old "Internal Beta v0 / NOT 荐股" framing is superseded.)
 
 ## ▶ CURRENT DIRECTION (2026-05-25) — READ THIS FIRST
 
