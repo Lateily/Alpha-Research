@@ -52,7 +52,7 @@ Before designing v0, the honest record (`[observed]`, see verdict docs):
 | Field | v0 lock |
 |---|---|
 | **Type** | Rules-based, **long-only**, **A-share only** swing / position-timing. No HK, **no short** in v0. |
-| **Horizon** | 5–20 trading days per position. |
+| **Horizon** | **20-day primary, 5-day secondary diagnostic** (Junyan 2026-06-08 — 5d alone is too easily eaten by cost; turnover is the proven killer). |
 | **Objective** | Beat **CSI300** AND **equal-weight liquid A-share**, **after costs**, measured **same-gross**. |
 | **Secondary metrics** | Hit-rate, information ratio (IR), max drawdown, turnover, avg holding period. |
 | **Capital** | NONE. Paper / forward-test only. No auto-trade, no sizing executed without a human. |
@@ -72,7 +72,7 @@ be forward-tested, not a calibrated value.
   (`PitDataStore`, the 5,809-ticker / 2006–2026 panel incl. delisted names) and the existing hard
   filters from `core_candidate_funnel.py`:
   - exclude ST / *ST; listing age ≥ 252 trading days; float-cap ≥ ¥3B; 20d ADV ≥ ¥30M; PE > 0 (loss-makers excluded in v0).
-  - liquidity rank: top-N by ADV (N `[unvalidated]`, start ~500).
+  - liquidity rank: **top-500 by ADV** (Junyan-locked 2026-06-08).
 - **Point-in-time + survivorship-safe** — mandatory. No name enters a backtest date with data it
   could not have had (enforced by `PitDataStore`; the 6/6 look-ahead unit test must pass).
 - **Core-Thesis overlay (optional, not required for the signal to run):**
@@ -92,6 +92,11 @@ liquidity hygiene, not fitted).
 The signal is a **slot**. The factory runs *any* candidate signal through the same rules + harness.
 v0 ships with one transparent starting hypothesis, chosen to be long-only, low-turnover, and
 **not** a revival of a falsified family.
+
+**RATIFIED v0 default (Junyan 2026-06-08): H1 below.** PR3 must ablate **≥3 variants through the same
+slot** — **(1) H1 default · (2) pure quality+low_vol tilt baseline · (3) H1 + Core-Thesis veto/cap
+overlay** — and run **oversold-reversion as a NEGATIVE CONTROL only** (it sits too close to the dead
+inverse-momentum family to ever be a default).
 
 ### 3.1 The decision pipeline (per name, per day)
 
@@ -132,7 +137,9 @@ the quant strategy may still output `active_trades = []` and an honest `NO_TRADE
   1. **Stop hit** — price ≤ entry-stop (ATR- or %-based, `[unvalidated]`).
   2. **Trend break** — close < MA20 (or the structure that defined the setup fails).
   3. **Time stop** — holding period ≥ 20 trading days (`[unvalidated]`).
-  4. **Target reached** — optional take-profit band (`[unvalidated]`; may be disabled in v0 to test pure trend-following exits).
+  4. **Take-profit — DISABLED in v0** (Junyan-ratified 2026-06-08). Exits are **stop / trend-break /
+     time-stop only**. Thesis target / valuation bands belong to the **Core Thesis Factory**, not quant
+     v0 — keeping them out prevents polluting the quant validation.
   5. **Core-Thesis veto fired** — overlay name's wrong_if triggers, or thesis flips to SHORT.
 - **No same-day re-entry** of a just-exited name (anti-churn, learned from the turnover failure).
 
@@ -264,18 +271,15 @@ quant-signal execution distinctly from thesis execution.
 
 ---
 
-## 12. Open decisions for Junyan (before PR2)
+## 12. Ratified decisions (Junyan 2026-06-08)
 
-1. **The v0-H1 signal itself** — this is the highest-stakes choice and the one I most want your call
-   on. H1 above = *"quality-filtered pullback-in-uptrend, long-only, low-turnover."* Alternatives to
-   test through the same slot: (a) pure low-vol+quality tilt (uses the validated IC directly, lower
-   turnover, more "beta-tilt" than "swing"); (b) oversold-reversion (closer to the live regime, but
-   that's where inverse-momentum lived — higher falsification risk); (c) a strictly
-   Core-Thesis-conditioned timing layer (only times entries on names with a LONG thesis — narrower,
-   but most aligned with your "turn research into execution" edge). Pick one as the v0 default, or
-   approve H1.
-2. **Universe size N** (top-500 ADV?) and **horizon emphasis** (lean 5-day or 20-day?).
-3. **Take-profit** — disabled (pure trend/stop exits) or a thesis/valuation-anchored target band?
+1. **v0 signal = H1** (quality-filtered pullback-in-uptrend). PR3 ablates **≥3 variants** through the
+   same slot: **(1) H1 default · (2) pure quality+low_vol tilt baseline · (3) H1 + Core-Thesis veto/cap
+   overlay**; **oversold-reversion = NEGATIVE CONTROL only** (too close to the dead inverse-momentum family).
+2. **Universe = A-share top-500 ADV liquid.** **Horizon = 20-day primary, 5-day secondary diagnostic**
+   (5d alone is too easily eaten by cost).
+3. **Take-profit = OFF in v0.** Exits = stop / trend-break / time-stop only. Thesis / valuation targets
+   stay in the Core Thesis Factory (don't pollute quant validation).
 
 > One line: this spec builds the **trading factory's rules + validation skeleton**. It deliberately
 > ships **no edge claim** — it ships a falsifiable system that the existing harness can prove or kill.
