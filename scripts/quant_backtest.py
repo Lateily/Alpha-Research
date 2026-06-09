@@ -353,10 +353,19 @@ def _bootstrap_alpha(alpha):
     if r.get("_status") != "ok":
         return r
     daily = r.get("point_estimate")
-    return {"daily_alpha_mean": daily, "ci_lo_daily": r.get("ci_lo"), "ci_hi_daily": r.get("ci_hi"),
+    # Compute from the float CI bounds — do NOT use `straddles_zero is False` (it's numpy.bool_, so
+    # identity always fails and the gate is silently stuck False even when the CI is fully below zero).
+    lo = float(r["ci_lo"]) if r.get("ci_lo") is not None else None
+    hi = float(r["ci_hi"]) if r.get("ci_hi") is not None else None
+    ci_positive = (lo is not None and lo > 0.0)        # the ALPHA-CLAIM gate: CI fully ABOVE zero
+    ci_negative = (hi is not None and hi < 0.0)        # significantly NEGATIVE (useful for the neg control)
+    return {"daily_alpha_mean": float(daily) if daily is not None else None,
+            "ci_lo_daily": lo, "ci_hi_daily": hi,
             "p_value": r.get("p_value_h0_zero"), "n_boot_valid": r.get("n_boot_valid"),
             "annualized_alpha_pct": round(daily * 252 * 100, 2) if daily is not None else None,
-            "ci_clears_zero": (r.get("straddles_zero") is False)}
+            "ci_excludes_zero": bool(ci_positive or ci_negative),
+            "ci_positive_after_cost": bool(ci_positive),   # TRUE => a positive alpha claim is permitted
+            "ci_negative_after_cost": bool(ci_negative)}   # TRUE => significantly negative
 
 
 def build(start=None, end=None) -> dict:
@@ -404,10 +413,11 @@ def build(start=None, end=None) -> dict:
                   "survivorship_gate": {"passed": gate.get("passed"), "checks":
                                         [c["check"] for c in gate.get("checks", [])]},
                   "read_only": True,
-                  "disclaimer": ("UNVALIDATED. No edge claimed unless OOS bootstrap CI clears zero after "
-                                 "costs. H1+overlay arm is forward-only (no historical theses) and NOT "
-                                 "backtested here; quality+low_vol baseline + walk-forward + 19-gate are the "
-                                 "immediate follow-up."),
+                  "disclaimer": ("UNVALIDATED. A positive edge is claimed ONLY when ci_positive_after_cost "
+                                 "(OOS bootstrap CI lower bound > 0 after costs); ci_negative_after_cost means "
+                                 "significantly negative. H1+overlay arm is forward-only (no historical theses) "
+                                 "and NOT backtested here; quality+low_vol baseline + walk-forward + 19-gate "
+                                 "are the immediate follow-up."),
                   "arms_note": "h1 = quality-filtered pullback-in-uptrend; oversold_control = NEGATIVE CONTROL "
                                "(oversold, no uptrend filter) — H1 should not be beaten by it."},
         "manifest_hash": hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest(),
@@ -442,7 +452,8 @@ def main(argv=None) -> int:
               f"trades={m['n_trades']} hit={m['hit_rate']}")
         if al:
             print(f"       vs CSI300 (same-gross): ann_alpha={al.get('annualized_alpha_pct')}% "
-                  f"CI_clears_zero={al.get('ci_clears_zero')} p={al.get('p_value')}")
+                  f"alpha_claim(ci>0)={al.get('ci_positive_after_cost')} "
+                  f"sig_neg(ci<0)={al.get('ci_negative_after_cost')} p={al.get('p_value')}")
     print(f"[quant-backtest] wrote {OUT}")
     return 0
 
