@@ -8,7 +8,7 @@
 > as the single source of "what's the state of the world." If you skip
 > reading this, you're working from a stale mental model.
 
-**Last updated:** 2026-06-08 (⚠ PRODUCT PIVOT 2026-06-07 — Daily Model Portfolio Pilot. Positioning REVERSED from "decision-support, NOT 荐股" → "internal model-recommendation PILOT" (unvalidated; validation-loop edge). Trust pass #33–37 + pivot #39–42; pilot v1 closed loop shipped. 4-step plan steps 1–3 LANDED — CLAUDE.md pivot pointer #45 + quant_swing honest-first {active,setup_watch} #46/#47 (+key-hardening #44) + Pilot Attribution #49; MD_DEMO_PACK reframed to the pilot narrative #50. READ the 2026-06-07 block below — the old "Internal Beta v0 / NOT 荐股" framing is superseded.)
+**Last updated:** 2026-06-09 (⚠ TWO-FACTORY PIVOT 2026-06-09: Core Thesis = research factory · Quant Strategy = INDEPENDENT trading factory v0 — spec #51 / generator #52 / survivorship gate #53 / backtest harness core #54, all merged; see the 2026-06-09 block below. Prior — ⚠ PRODUCT PIVOT 2026-06-07 — Daily Model Portfolio Pilot. Positioning REVERSED from "decision-support, NOT 荐股" → "internal model-recommendation PILOT" (unvalidated; validation-loop edge). Trust pass #33–37 + pivot #39–42; pilot v1 closed loop shipped. 4-step plan steps 1–3 LANDED — CLAUDE.md pivot pointer #45 + quant_swing honest-first {active,setup_watch} #46/#47 (+key-hardening #44) + Pilot Attribution #49; MD_DEMO_PACK reframed to the pilot narrative #50. READ the 2026-06-07 block below — the old "Internal Beta v0 / NOT 荐股" framing is superseded.)
 
 ## ▶ CURRENT DIRECTION (2026-05-25) — READ THIS FIRST
 
@@ -63,7 +63,24 @@ synthesizer FIRST; must land before the first formal validation verdict). First
 meaningful validation window ≈ **2026-08 → 2026-11** (60–120d horizons of the first
 registered batch). Factory is paused-by-design while forward data accrues.
 
-**2026-06-07 — ⚠ PRODUCT PIVOT: DAILY MODEL PORTFOLIO PILOT (newest; READ FIRST — supersedes the positioning below):**
+**2026-06-09 — ⚠ TWO-FACTORY PIVOT + QUANT STRATEGY FACTORY v0 (newest; READ FIRST):**
+
+Junyan separated two systems that were being conflated (different success criteria — do NOT mix; mixing pollutes validation):
+- **Factory A — Core Thesis Factory** (research): stock-pitch · variant perception · target range · wrong-if · catalyst; success = thesis confirmed by filings/re-rating; horizon 30–180d. It is **NOT** a quant strategy and **NOT** "策略1". (The Daily Model Portfolio Pilot below is this track's product surface.)
+- **Factory B — Quant Strategy Factory** (trading): an **independent** rules-based system; success = post-cost return / drawdown / hit-rate / IR via backtest + forward-test. **Core Thesis may only be an OVERLAY** (universe filter / veto / conviction cap / catalyst calendar), **never the signal body**.
+- **Factory C — Attribution** (the #42 capture + #49 Pilot Attribution loop, already built).
+
+**Quant Strategy Factory v0 — PR1–PR3 MERGED (#51–#54):**
+- **#51 spec** `docs/strategy/QUANT_STRATEGY_FACTORY_v0_SPEC.md` — A-share **long-only** (no HK/no short); horizon **20d primary / 5d secondary**; objective **beat CSI300 + EW after costs**; output ENTER/HOLD/WAIT/EXIT/NO_TRADE; v0 signal = **H1 (quality-filtered pullback-in-uptrend)**; every threshold `[unvalidated]`; explicitly does **NOT** revive the falsified inverse-momentum / factor-satellite (both dead — see the SWING/Path-B verdict docs).
+- **#52 generator** `scripts/quant_strategy.py` → `public/data/quant_strategy_run.json` (wired into fetch-data.yml). Data-tier-aware: BROAD (local parquet) computes H1 over the universe; **DEGRADED (CI) → honest NO_TRADE** (broad A-share data is gitignored + unfetchable from GitHub US IPs). No fabrication from stale data.
+- **#53 survivorship_integrity gate** `scripts/survivorship_gate.py` — HARD PRECONDITION: **no backtest number accepted unless it passes**. Universe is **panel-derived** (`compute_liquid_universe` over `data_history/panel/daily_prices.parquet`), **NOT** the empty `universe_pit.json`. 4 checks incl. a negative live-only-panel test (it has teeth). `require_pass()` is the harness pre-flight.
+- **#54 backtest harness core** `scripts/quant_backtest.py` — gate-gated, PIT, T+1, cost-charged, long-only; **same-gross** alpha vs CSI300 + stationary-bootstrap CI; alpha-claim gate = **`ci_positive_after_cost`** (CI lower bound > 0). Arms: **H1 + oversold negative-control**. **2023-H1 SMOKE only (NOT a verdict):** H1 −17% (CI straddles 0, no edge, p=0.69), oversold-control −27% (`ci_negative_after_cost`=True, significantly negative). selftest proves a real trade executes + NO look-ahead + no same-day re-entry + delist mark-out.
+
+**NEXT = PR3b (the formal verdict), tasks #94–#96:** (1) **vectorize** per-ticker rolling indicators (per-day pure-python recompute makes a full 20yr×multi-arm run ~1h → precompute once = minutes) + run the full multi-year in the **background**; (2) add the **quality+low_vol baseline** arm; (3) **walk-forward** windows (WalkForward 5/2); (4) wire the existing **19-gate** (`v3_gate_eval`); (5) the **full multi-year formal kill/keep verdict** on H1. NO edge claim until `ci_positive_after_cost` AND gates pass AND OOS not significantly negative. H1+overlay arm is **forward-only** (no historical theses). The gate + harness are **local/backtest-only** (parquet gitignored), NOT in daily CI.
+
+**Discipline carried over:** `[unvalidated]`-labeling, pre-registered sha256 manifests, the existing PIT firewall + 19-gate + bootstrap + multiple-testing (the machinery that already falsified the prior strategies), isolated-worktree scoped PRs, honest NO_TRADE.
+
+**2026-06-07 — ⚠ PRODUCT PIVOT: DAILY MODEL PORTFOLIO PILOT (product/pilot track — still current; the 2026-06-09 quant-factory block above is newest):**
 
 Junyan pivoted the product. The platform is **NO LONGER** "an auditable decision-support cockpit that does NOT 荐股" — the CLAUDE.md "AI never outputs buy/sell" philosophy is being deliberately changed. The product now **recommends tickers** (direction + AI-augmented strategy + target ranges), organised as a **Daily Model Portfolio**, framed honestly as an **internal model-recommendation PILOT**. LOCKED positioning (replaces all "decision-support / NOT 荐股" banners):
 > Internal model-recommendation pilot. Executable model ideas (direction · target range · construction · invalidation); **UNVALIDATED** model output, NOT validated alpha, NOT external advice; the user decides whether to follow; every execution + return is tracked to VALIDATE the model. Edge = the loop: recommendation → user execution → attribution → improvement. **NEVER say "validated alpha / 应该买 / 稳定赚钱".**
