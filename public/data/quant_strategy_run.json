@@ -1,0 +1,122 @@
+{
+  "_meta": {
+    "layer": "Quant Strategy Factory v0 — independent A-share long-only swing (read-only; no size, no auto-trade)",
+    "spec": "docs/strategy/QUANT_STRATEGY_FACTORY_v0_SPEC.md",
+    "read_only": true,
+    "no_trades": true,
+    "no_size": true,
+    "no_buy_sell": true,
+    "no_position_mutation": true,
+    "run_date": "2026-06-09",
+    "generated_at": "2026-06-09T14:32:13.378182+00:00",
+    "data_tier": "degraded_ci_focus_only",
+    "data_as_of": null,
+    "horizon": "20d primary / 5d secondary diagnostic",
+    "objective": "beat CSI300 + equal-weight A-share after costs (relative, drawdown-aware)",
+    "sources": [
+      "trade_candidate_board(overlay)",
+      "daily_prices.parquet(broad)",
+      "prices.parquet(broad)",
+      "universe_pit.json(broad)",
+      "ohlc_*.json(focus diagnostic)"
+    ],
+    "disclaimer": "Quant Strategy Factory v0 — INTERNAL, UNVALIDATED model output — not validated alpha, not external/personalized investment advice. Long-only A-share, human executes. The signal (H1) is an unvalidated prior; no edge is claimed until the PR3 backtest clears the gate suite (PIT, survivorship-safe, costs, walk-forward, bootstrap CI, multiple-testing). Core Thesis is an overlay/veto/conviction-cap only, never the signal.",
+    "counts": {
+      "signals": 3,
+      "candidates_wait": 0,
+      "active_trades_enter": 0,
+      "core_long_universe": 1,
+      "vetoed": 2,
+      "excluded_non_a_share": 3
+    }
+  },
+  "run_date": "2026-06-09",
+  "strategy_id": "quant_v0",
+  "strategy_version": "v0-H1",
+  "manifest_hash": "09a943126e43c179f3de7979fb1d54f0f446155698b3a38a4235ccb26bef6161",
+  "universe": {
+    "base": "liquid_a_share_top500_adv",
+    "data_tier": "degraded_ci_focus_only",
+    "data_as_of": null,
+    "n_eligible": 0,
+    "filters_applied": [
+      "ci_broad_universe_unavailable"
+    ],
+    "filter_notes": [],
+    "excluded_non_a_share_focus": [
+      "175.HK",
+      "6160.HK",
+      "700.HK",
+      "9999.HK"
+    ]
+  },
+  "signals": [
+    {
+      "ticker": "002594.SZ",
+      "basis": "focus_ohlc_diagnostic",
+      "action": "INSUFFICIENT_DATA",
+      "n_bars": 118,
+      "need_bars": 212
+    },
+    {
+      "ticker": "300308.SZ",
+      "basis": "focus_ohlc_diagnostic",
+      "action": "INSUFFICIENT_DATA",
+      "n_bars": 118,
+      "need_bars": 212
+    },
+    {
+      "ticker": "603233.SH",
+      "basis": "focus_ohlc_diagnostic",
+      "action": "INSUFFICIENT_DATA",
+      "n_bars": 118,
+      "need_bars": 212
+    }
+  ],
+  "candidates": [],
+  "active_trades": [],
+  "no_trade_reason": "broad liquid universe unavailable in this environment (data_history parquet gitignored/absent; AKShare universe_a.json stale from GitHub US IPs); A-share focus ohlc has <200 bars for the MA200 uptrend filter — honest NO_TRADE.",
+  "core_thesis_overlay": {
+    "long_universe": [
+      {
+        "ticker": "002594.SZ",
+        "name": "比亚迪",
+        "evidence_tier": "E1"
+      }
+    ],
+    "vetoed": [
+      {
+        "ticker": "300308.SZ",
+        "name": "中际旭创",
+        "reason": "risk_blocked"
+      },
+      {
+        "ticker": "603233.SH",
+        "name": "大参林",
+        "reason": "thesis_short"
+      }
+    ],
+    "excluded_non_a_share": [
+      {
+        "ticker": "6160.HK",
+        "name": "BeiGene",
+        "direction": "WATCH_SHORT",
+        "note": "non_a_share_out_of_v0_universe"
+      },
+      {
+        "ticker": "700.HK",
+        "name": "Tencent",
+        "direction": "WATCH_SHORT",
+        "note": "non_a_share_out_of_v0_universe"
+      },
+      {
+        "ticker": "9999.HK",
+        "name": "NetEase",
+        "direction": "WATCH_SHORT",
+        "note": "non_a_share_out_of_v0_universe"
+      }
+    ]
+  },
+  "validation_status": "unvalidated",
+  "no_trade_flag": true
+}
