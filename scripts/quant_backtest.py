@@ -212,19 +212,27 @@ def _oversold_fast(C, i):
 _FAST = {"h1": _h1_fast, "oversold_control": _oversold_fast}
 
 
-def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPITAL, fast=True):
+def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPITAL, fast=True,
+            veto_from=None, cost=None):
     """Long-only, T+1, cost-charged. DECIDE at T using bars <= T; FILL at T+1. No same-day fill.
     Held names with no bar (halt/delist) are marked at last close and force-exited after
     STALE_EXIT_DAYS; a name exited this round is barred from same-day re-entry.
     fast=True uses the precomputed indicator cache (O(1)/day); fast=False is the per-day recompute
-    reference (#54). Identical decision logic; verified equal on 2023-H1."""
+    reference (#54). Identical decision logic; verified equal on 2023-H1.
+    veto_from: optional {ticker: from_date_str} — Core-Thesis overlay veto; blocks NEW long entry
+    for that name on dates >= from_date (never the signal body; PR3b-2 overlay arm).
+    cost: optional {"slippage","commission","stamp"} cost-scenario override (IMPL7 grid)."""
     signal_fn = ARMS[arm_name]
+    c_slip = (cost or {}).get("slippage", SLIPPAGE)
+    c_comm = (cost or {}).get("commission", COMMISSION)
+    c_stamp = (cost or {}).get("stamp", STAMP_DUTY_SELL)
     have = set(zip(panel["trade_date"].astype(str), panel["ts_code"]))
     win = [d for d in trade_dates if start <= d <= end]
     cash = capital
     positions = {}            # tk -> {entry_px, shares, stop, entry_i}
     equity_curve, trades = [], []
     closed_returns = []
+    total_buy_notional = 0.0  # for the turnover audit (annual book turnover ratio)
 
     for i, T in enumerate(win):
         # mark-to-market on T close (<= T, no look-ahead)
@@ -254,7 +262,7 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
                 if p["missing"] >= STALE_EXIT_DAYS:   # delist policy: force mark-out at last known close
                     px = p["last_px"]
                     proceeds = p["shares"] * px
-                    cash += proceeds - trade_cost(proceeds, "sell")
+                    cash += proceeds - trade_cost(proceeds, "sell", commission=c_comm, stamp_duty_sell=c_stamp)
                     closed_returns.append(px / p["entry_px"] - 1.0)
                     trades.append({"ticker": tk, "entry": p["entry_px"], "entry_date": p["entry_date"],
                                    "exit": round(px, 4), "ret": round(px / p["entry_px"] - 1.0, 4),
@@ -265,11 +273,16 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
             p["missing"] = 0
             close_t = r_t["close"]
             p["last_px"] = close_t
-            hist = idx.history(tk, T, n_days_back=THRESH["ma_mid_n"] + 2)
-            hc = hist.get("close")
-            hc = list(hc) if hc is not None else []
-            ma20 = (sum(hc[-THRESH["ma_mid_n"]:]) / THRESH["ma_mid_n"]
-                    if len(hc) >= THRESH["ma_mid_n"] else None)
+            if fast:
+                C = _indicators(idx, tk, trade_dates[-1])
+                i_ = C["date_to_i"].get(T)
+                ma20 = C["ma20"][i_] if i_ is not None else None
+            else:
+                hist = idx.history(tk, T, n_days_back=THRESH["ma_mid_n"] + 2)
+                hc = hist.get("close")
+                hc = list(hc) if hc is not None else []
+                ma20 = (sum(hc[-THRESH["ma_mid_n"]:]) / THRESH["ma_mid_n"]
+                        if len(hc) >= THRESH["ma_mid_n"] else None)
             held = i - p["entry_i"]
             exit_reason = None
             if close_t <= p["stop"]:
@@ -282,11 +295,11 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
                 r_next = _row_at(idx, tk, T_next)
                 if r_next is None or is_limit_down(r_next):
                     continue                      # can't sell into a locked-down/absent bar; retry next day
-                px = fill_price(r_next, "sell")
+                px = fill_price(r_next, "sell", slippage=c_slip)
                 if px is None:
                     continue
                 proceeds = p["shares"] * px
-                cash += proceeds - trade_cost(proceeds, "sell")
+                cash += proceeds - trade_cost(proceeds, "sell", commission=c_comm, stamp_duty_sell=c_stamp)
                 ret = px / p["entry_px"] - 1.0
                 closed_returns.append(ret)
                 trades.append({"ticker": tk, "entry": p["entry_px"], "entry_date": p["entry_date"],
@@ -299,7 +312,8 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
         slots = MAX_POSITIONS - len(positions)
         if slots > 0:
             members = [tk for tk in liquid.get(T, [])
-                       if (T, tk) in have and tk not in positions and tk not in exited]  # no same-day re-entry
+                       if (T, tk) in have and tk not in positions and tk not in exited  # no same-day re-entry
+                       and not (veto_from and tk in veto_from and T >= veto_from[tk])]  # thesis-overlay veto
             enters = []
             for tk in members:
                 if fast:
@@ -325,7 +339,7 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
                 r_next = _row_at(idx, tk, T_next)
                 if r_next is None or is_limit_up(r_next):
                     continue                      # can't buy into a locked-up/absent bar
-                px = fill_price(r_next, "buy")
+                px = fill_price(r_next, "buy", slippage=c_slip)
                 if px is None or px <= 0:
                     continue
                 budget = min(budget_each, cash)
@@ -333,15 +347,198 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
                 if shares <= 0:
                     continue
                 notional = shares * px
-                cost = trade_cost(notional, "buy")
-                if notional + cost > cash:
+                fee = trade_cost(notional, "buy", commission=c_comm, stamp_duty_sell=c_stamp)
+                if notional + fee > cash:
                     continue
-                cash -= notional + cost
+                cash -= notional + fee
+                total_buy_notional += notional
                 positions[tk] = {"entry_px": px, "shares": shares, "entry_date": T,
                                  "stop": s.get("stop") or px * (1.0 - THRESH["stop_pct"]), "entry_i": i,
                                  "last_px": px, "missing": 0}
 
-    return {"equity_curve": equity_curve, "trades": trades, "closed_returns": closed_returns}
+    return {"equity_curve": equity_curve, "trades": trades, "closed_returns": closed_returns,
+            "total_buy_notional": round(total_buy_notional, 2)}
+
+
+# ───────────────── PR3b-2: quality+low_vol periodic-tilt BASELINE arm ─────────────────
+# A different MODE from the event arms: every REBAL_DAYS, hold the top-K liquid names by the
+# value(E/P) + low_vol composite (the one factor pair with validated IC — used here as the
+# honest "dumb tilt" baseline H1 must beat to justify its timing complexity). Same T+1 fills,
+# costs, lots, stale/delist mark-out. No stops/TP (pure tilt). All thresholds [unvalidated].
+REBAL_DAYS = 20               # [unvalidated]
+LOWVOL_N = 60                 # [unvalidated] realized-vol window
+VALUE_W, LOWVOL_W = 0.687, 0.313   # renormalized calib_weights (value .5719 / low_vol .26)
+PRICES_PQ = REPO / "data_history" / "panel" / "prices.parquet"
+_PE_CACHE = {"loaded": False, "by_tk": {}}
+
+
+def _pe_asof(tk, T):
+    """Latest pe <= T from prices.parquet (monthly, PIT-published market data). None if absent/<=0."""
+    if not _PE_CACHE["loaded"]:
+        _PE_CACHE["loaded"] = True
+        try:
+            import pandas as pd
+            pr = pd.read_parquet(PRICES_PQ, columns=["ts_code", "trade_date", "pe"])
+            pr = pr.sort_values(["ts_code", "trade_date"])
+            for k, g in pr.groupby("ts_code"):
+                _PE_CACHE["by_tk"][k] = ([str(d) for d in g["trade_date"]], list(g["pe"]))
+        except Exception:
+            pass
+    ent = _PE_CACHE["by_tk"].get(tk)
+    if not ent:
+        return None
+    import bisect
+    j = bisect.bisect_right(ent[0], T) - 1
+    if j < 0:
+        return None
+    pe = ent[1][j]
+    return float(pe) if (pe is not None and pe == pe and pe > 0) else None
+
+
+def _lv60_at(C, i):
+    """-realized vol of daily returns over the last LOWVOL_N bars ending at i (None if <30 rets)."""
+    closes = C["close"]
+    lo = max(1, i - LOWVOL_N + 1)
+    rets = [closes[k] / closes[k - 1] - 1.0 for k in range(lo, i + 1) if closes[k - 1]]
+    if len(rets) < 30:
+        return None
+    m = sum(rets) / len(rets)
+    return -((sum((x - m) ** 2 for x in rets) / len(rets)) ** 0.5)
+
+
+def _quality_composite(idx, members, T, trade_dates):
+    """Cross-sectional z-blend of value (E/P) + low_vol at T. Returns {tk: score}."""
+    raw_v, raw_l = {}, {}
+    for tk in members:
+        C = _indicators(idx, tk, trade_dates[-1])
+        i_ = C["date_to_i"].get(T)
+        if i_ is None or i_ + 1 < LOWVOL_N + 1:
+            continue
+        lv = _lv60_at(C, i_)
+        if lv is not None:
+            raw_l[tk] = lv
+        pe = _pe_asof(tk, T)
+        if pe:
+            raw_v[tk] = 1.0 / pe
+    def _z(d):
+        if len(d) < 2:
+            return {}
+        xs = list(d.values()); m = sum(xs) / len(xs)
+        sd = (sum((x - m) ** 2 for x in xs) / len(xs)) ** 0.5 or 1.0
+        return {k: (v - m) / sd for k, v in d.items()}
+    zv, zl = _z(raw_v), _z(raw_l)
+    comp = {}
+    for tk in set(zv) | set(zl):
+        parts, wsum = 0.0, 0.0
+        if tk in zv:
+            parts += VALUE_W * zv[tk]; wsum += VALUE_W
+        if tk in zl:
+            parts += LOWVOL_W * zl[tk]; wsum += LOWVOL_W
+        if wsum:
+            comp[tk] = parts / wsum
+    return comp
+
+
+def run_tilt_arm(panel, idx, liquid, trade_dates, start, end, capital=CAPITAL, cost=None,
+                 rebal_days=REBAL_DAYS, top_k=MAX_POSITIONS):
+    """quality_lowvol BASELINE: rebalance every rebal_days to the top-K composite names.
+    Same T+1 / cost / lot / stale-markout discipline as run_arm. No stops (pure tilt)."""
+    c_slip = (cost or {}).get("slippage", SLIPPAGE)
+    c_comm = (cost or {}).get("commission", COMMISSION)
+    c_stamp = (cost or {}).get("stamp", STAMP_DUTY_SELL)
+    have = set(zip(panel["trade_date"].astype(str), panel["ts_code"]))
+    win = [d for d in trade_dates if start <= d <= end]
+    cash = capital
+    positions = {}
+    equity_curve, trades, closed_returns = [], [], []
+    total_buy_notional = 0.0
+    pending_sells, pending_buys = set(), []
+
+    for i, T in enumerate(win):
+        mv = 0.0
+        for tk, p in positions.items():
+            r = _row_at(idx, tk, T)
+            c = (r or {}).get("close")
+            if c:
+                p["last_px"] = c
+                p["missing"] = 0
+            else:
+                p["missing"] = p.get("missing", 0) + 1
+            mv += p["shares"] * p.get("last_px", p["entry_px"])
+        nav = cash + mv
+        equity_curve.append({"date": T, "nav": round(nav, 2), "cash": round(cash, 2),
+                             "gross": round((mv / nav) if nav > 0 else 0.0, 6),
+                             "n_positions": len(positions)})
+        # stale/delist mark-out (same policy as run_arm)
+        for tk in list(positions.keys()):
+            p = positions[tk]
+            if p.get("missing", 0) >= STALE_EXIT_DAYS:
+                px = p["last_px"]
+                proceeds = p["shares"] * px
+                cash += proceeds - trade_cost(proceeds, "sell", commission=c_comm, stamp_duty_sell=c_stamp)
+                closed_returns.append(px / p["entry_px"] - 1.0)
+                trades.append({"ticker": tk, "entry": p["entry_px"], "entry_date": p["entry_date"],
+                               "exit": round(px, 4), "ret": round(px / p["entry_px"] - 1.0, 4),
+                               "reason": "delist_stale_markout", "exit_date": T})
+                del positions[tk]
+        if i + 1 >= len(win):
+            break
+        T_next = win[i + 1]
+
+        # fill PENDING rebalance orders at T+1... decided at the rebalance date T (below sets them)
+        if i % rebal_days == 0:                       # rebalance decision at T, fills at T+1
+            members = [tk for tk in liquid.get(T, []) if (T, tk) in have]
+            comp = _quality_composite(idx, members, T, trade_dates)
+            target = [tk for tk, _ in sorted(comp.items(), key=lambda kv: (-kv[1], kv[0]))[:top_k]]
+            pending_sells = {tk for tk in positions if tk not in target}
+            pending_buys = [tk for tk in target if tk not in positions]
+        # sells first (free cash), then buys — all at T_next fills
+        for tk in list(pending_sells):
+            p = positions.get(tk)
+            if p is None:
+                pending_sells.discard(tk); continue
+            r_next = _row_at(idx, tk, T_next)
+            if r_next is None or is_limit_down(r_next):
+                continue                               # retry next day
+            px = fill_price(r_next, "sell", slippage=c_slip)
+            if px is None:
+                continue
+            proceeds = p["shares"] * px
+            cash += proceeds - trade_cost(proceeds, "sell", commission=c_comm, stamp_duty_sell=c_stamp)
+            closed_returns.append(px / p["entry_px"] - 1.0)
+            trades.append({"ticker": tk, "entry": p["entry_px"], "entry_date": p["entry_date"],
+                           "exit": round(px, 4), "ret": round(px / p["entry_px"] - 1.0, 4),
+                           "reason": "rebalance_exit", "exit_date": T_next})
+            del positions[tk]
+            pending_sells.discard(tk)
+        if pending_buys:
+            slots = max(0, top_k - len(positions))
+            todo = [tk for tk in pending_buys if tk not in positions][:slots]
+            budget_each = (cash / len(todo)) if todo else 0.0
+            done = []
+            for tk in todo:
+                r_next = _row_at(idx, tk, T_next)
+                if r_next is None or is_limit_up(r_next):
+                    continue
+                px = fill_price(r_next, "buy", slippage=c_slip)
+                if px is None or px <= 0:
+                    continue
+                shares = int(min(budget_each, cash) / px / 100) * 100
+                if shares <= 0:
+                    done.append(tk); continue
+                notional = shares * px
+                fee = trade_cost(notional, "buy", commission=c_comm, stamp_duty_sell=c_stamp)
+                if notional + fee > cash:
+                    continue
+                cash -= notional + fee
+                total_buy_notional += notional
+                positions[tk] = {"entry_px": px, "shares": shares, "entry_date": T,
+                                 "entry_i": i, "last_px": px, "missing": 0}
+                done.append(tk)
+            pending_buys = [tk for tk in pending_buys if tk not in done]
+
+    return {"equity_curve": equity_curve, "trades": trades, "closed_returns": closed_returns,
+            "total_buy_notional": round(total_buy_notional, 2)}
 
 
 # ───────────────────────── benchmarks + alpha ───────────────────────────────
