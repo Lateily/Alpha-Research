@@ -8,7 +8,7 @@
     "no_buy_sell": true,
     "no_position_mutation": true,
     "run_date": "2026-06-10",
-    "generated_at": "2026-06-10T05:26:14.192730+00:00",
+    "generated_at": "2026-06-10T07:16:30.466029+00:00",
     "data_tier": "degraded_ci_focus_only",
     "data_as_of": null,
     "horizon": "20d primary / 5d secondary diagnostic",
@@ -20,11 +20,20 @@
       "universe_pit.json(broad)",
       "ohlc_*.json(focus diagnostic)"
     ],
-    "disclaimer": "Quant Strategy Factory v0 — INTERNAL, UNVALIDATED model output — not validated alpha, not external/personalized investment advice. Long-only A-share, human executes. The signal (H1) is an unvalidated prior; no edge is claimed until the PR3 backtest clears the gate suite (PIT, survivorship-safe, costs, walk-forward, bootstrap CI, multiple-testing). Core Thesis is an overlay/veto/conviction-cap only, never the signal.",
+    "disclaimer": "Quant Strategy Factory v0 — INTERNAL output. STRATEGY VERDICT: the H1 v0-H1 signal family was KILLED by the formal backtest (2026-06-09, Junyan-ratified) — it has NO edge (significantly negative alpha) and emits NO actionable trades; remaining signal fields are telemetry for the retired family only — not validated alpha, not external/personalized investment advice; human executes; no size placed. Core Thesis is an overlay/veto/conviction-cap only, never the signal. New candidates require a new pre-registered manifest through the same harness + 19-gate.",
+    "backtest_verdict": {
+      "verdict": "KILLED",
+      "verdict_id": "KILLED_2026-06-09",
+      "ratified_by": "Junyan 2026-06-09 (PR #57)",
+      "evidence": "docs/strategy/QUANT_V0_VERDICT_2026-06-09.md + public/data/quant_v0_verdict.json",
+      "summary": "full-sample same-gross alpha vs CSI300 -23.0%/yr (p~0), vs EW -22.6%/yr (p~0); walk-forward 0/5 positive; 19-gate FAIL; worse than the oversold negative control",
+      "disposition": "H1 family RETIRED — no live/active/actionable signals; factory KEPT for new candidates"
+    },
     "counts": {
       "signals": 3,
       "candidates_wait": 0,
       "active_trades_enter": 0,
+      "killed_signal_observations": 0,
       "core_long_universe": 1,
       "vetoed": 2,
       "excluded_non_a_share": 3
@@ -75,7 +84,16 @@
   ],
   "candidates": [],
   "active_trades": [],
-  "no_trade_reason": "broad liquid universe unavailable in this environment (data_history parquet gitignored/absent; AKShare universe_a.json stale from GitHub US IPs); A-share focus ohlc has <200 bars for the MA200 uptrend filter — honest NO_TRADE.",
+  "killed_signal_observations": [],
+  "backtest_verdict": {
+    "verdict": "KILLED",
+    "verdict_id": "KILLED_2026-06-09",
+    "ratified_by": "Junyan 2026-06-09 (PR #57)",
+    "evidence": "docs/strategy/QUANT_V0_VERDICT_2026-06-09.md + public/data/quant_v0_verdict.json",
+    "summary": "full-sample same-gross alpha vs CSI300 -23.0%/yr (p~0), vs EW -22.6%/yr (p~0); walk-forward 0/5 positive; 19-gate FAIL; worse than the oversold negative control",
+    "disposition": "H1 family RETIRED — no live/active/actionable signals; factory KEPT for new candidates"
+  },
+  "no_trade_reason": "strategy family H1 v0-H1 is KILLED by the formal backtest verdict (2026-06-09); additionally the broad liquid universe is unavailable in this environment (data_history parquet gitignored/absent; AKShare universe_a.json stale from GitHub US IPs) — honest NO_TRADE.",
   "core_thesis_overlay": {
     "long_universe": [
       {
@@ -117,6 +135,6 @@
       }
     ]
   },
-  "validation_status": "unvalidated",
+  "validation_status": "falsified_2026-06-09",
   "no_trade_flag": true
 }

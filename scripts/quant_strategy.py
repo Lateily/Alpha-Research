@@ -83,11 +83,30 @@ THRESH = {
 MANIFEST = {"strategy_id": STRATEGY_ID, "strategy_version": STRATEGY_VERSION,
             "signal": "H1_pullback_in_uptrend_quality_filtered", "thresholds": THRESH}
 
-DISCLAIMER = ("Quant Strategy Factory v0 — INTERNAL, UNVALIDATED model output — not validated alpha, "
-              "not external/personalized investment advice. Long-only A-share, human executes. The signal "
-              "(H1) is an unvalidated prior; no edge is claimed until the PR3 backtest clears the gate "
-              "suite (PIT, survivorship-safe, costs, walk-forward, bootstrap CI, multiple-testing). "
-              "Core Thesis is an overlay/veto/conviction-cap only, never the signal.")
+# ── FORMAL BACKTEST VERDICT (Junyan-ratified 2026-06-09, PR #57) ─────────────────────────
+# The H1 v0-H1 family was KILLED by the formal multi-year verdict: full-sample same-gross alpha
+# vs CSI300 -23.0%/yr (CI [-31.2,-15.2], p~0; vs EW also sig-neg), walk-forward 0/5 positive,
+# 19-gate FAIL, worse than the oversold negative control. While this verdict stands, the
+# generator emits NO active trades — would-be ENTERs are surfaced as KILLED-strategy telemetry
+# observations only, so the product layer can NEVER present an H1 ENTER as a live actionable
+# signal. New candidates enter via a NEW manifest through the same harness/gates.
+H1_BACKTEST_VERDICT = {
+    "verdict": "KILLED",
+    "verdict_id": "KILLED_2026-06-09",
+    "ratified_by": "Junyan 2026-06-09 (PR #57)",
+    "evidence": "docs/strategy/QUANT_V0_VERDICT_2026-06-09.md + public/data/quant_v0_verdict.json",
+    "summary": ("full-sample same-gross alpha vs CSI300 -23.0%/yr (p~0), vs EW -22.6%/yr (p~0); "
+                "walk-forward 0/5 positive; 19-gate FAIL; worse than the oversold negative control"),
+    "disposition": "H1 family RETIRED — no live/active/actionable signals; factory KEPT for new candidates",
+}
+
+DISCLAIMER = ("Quant Strategy Factory v0 — INTERNAL output. STRATEGY VERDICT: the H1 v0-H1 signal "
+              "family was KILLED by the formal backtest (2026-06-09, Junyan-ratified) — it has NO edge "
+              "(significantly negative alpha) and emits NO actionable trades; remaining signal fields are "
+              "telemetry for the retired family only — not validated alpha, not external/personalized "
+              "investment advice; human executes; no size placed. Core Thesis is an overlay/veto/"
+              "conviction-cap only, never the signal. New candidates require a new pre-registered "
+              "manifest through the same harness + 19-gate.")
 
 
 def _load(p: Path, default=None):
@@ -417,21 +436,29 @@ def build(now: datetime | None = None) -> dict:
     signals = [s for s in signals if _is_a_share(s.get("ticker"))]
     enters = [s for s in signals if s.get("action") == "ENTER" and s["ticker"] not in veto_set]
     waits = [s for s in signals if s.get("action") == "WAIT" and s["ticker"] not in veto_set]
-    active_trades = [_active_trade(s, long_set) for s in enters]
     candidates = [{"ticker": s["ticker"], "action": "WAIT", "basis": s.get("basis"),
                    "signal": {k: s.get(k) for k in ("uptrend", "pulled_back", "rsi_turning", "confirm")},
                    "human_execution_required": True, "no_auto_trade": True} for s in waits]
 
-    no_trade_reason = None
-    if not active_trades:
-        if data_tier == "broad_data_stale":
-            no_trade_reason = stale_note
-        elif data_tier.startswith("degraded"):
-            no_trade_reason = ("broad liquid universe unavailable in this environment (data_history parquet "
-                               "gitignored/absent; AKShare universe_a.json stale from GitHub US IPs); A-share "
-                               "focus ohlc has <200 bars for the MA200 uptrend filter — honest NO_TRADE.")
-        else:
-            no_trade_reason = "no A-share name passed eligible -> setup -> confirm -> risk today"
+    # H1 family is KILLED (2026-06-09): active_trades is FORCED EMPTY while the verdict stands.
+    # Would-be ENTERs become non-actionable telemetry observations of the retired family.
+    active_trades = []
+    killed_signal_observations = [
+        {**_active_trade(s, long_set), "actionable": False, "live_signal": False,
+         "backtest_verdict": H1_BACKTEST_VERDICT["verdict_id"],
+         "note": "KILLED-strategy telemetry — NOT a trade, NOT a recommendation"} for s in enters]
+
+    if data_tier == "broad_data_stale":
+        no_trade_reason = stale_note
+    elif data_tier.startswith("degraded"):
+        no_trade_reason = ("strategy family H1 v0-H1 is KILLED by the formal backtest verdict "
+                           "(2026-06-09); additionally the broad liquid universe is unavailable in this "
+                           "environment (data_history parquet gitignored/absent; AKShare universe_a.json "
+                           "stale from GitHub US IPs) — honest NO_TRADE.")
+    else:
+        no_trade_reason = ("strategy family H1 v0-H1 is KILLED by the formal backtest verdict (2026-06-09, "
+                           "Junyan-ratified; see docs/strategy/QUANT_V0_VERDICT_2026-06-09.md) — no active "
+                           "trades are emitted; signal fields are telemetry for the retired family only.")
 
     return {
         "_meta": {
@@ -445,8 +472,10 @@ def build(now: datetime | None = None) -> dict:
             "sources": ["trade_candidate_board(overlay)", "daily_prices.parquet(broad)", "prices.parquet(broad)",
                         "universe_pit.json(broad)", "ohlc_*.json(focus diagnostic)"],
             "disclaimer": DISCLAIMER,
+            "backtest_verdict": H1_BACKTEST_VERDICT,
             "counts": {"signals": len(signals), "candidates_wait": len(candidates),
                        "active_trades_enter": len(active_trades),
+                       "killed_signal_observations": len(killed_signal_observations),
                        "core_long_universe": len(long_set), "vetoed": len(veto_set),
                        "excluded_non_a_share": len(overlay.get("excluded_non_a_share", []))},
         },
@@ -460,11 +489,13 @@ def build(now: datetime | None = None) -> dict:
                      "filters_applied": filters_applied, "filter_notes": filter_notes,
                      "excluded_non_a_share_focus": excluded_focus},
         "signals": signals,
-        "candidates": candidates,        # WAIT — setup present, confirmation/sizing pending
-        "active_trades": active_trades,  # ENTER — model recommendation; human executes, no size placed
+        "candidates": candidates,        # WAIT — setup telemetry only (family KILLED; nothing actionable)
+        "active_trades": active_trades,  # FORCED EMPTY while H1_BACKTEST_VERDICT stands (KILLED 2026-06-09)
+        "killed_signal_observations": killed_signal_observations,   # retired-family telemetry, actionable:false
+        "backtest_verdict": H1_BACKTEST_VERDICT,
         "no_trade_reason": no_trade_reason,
         "core_thesis_overlay": overlay,  # A-share veto / conviction + excluded_non_a_share — never the signal
-        "validation_status": "unvalidated",
+        "validation_status": "falsified_2026-06-09",
         "no_trade_flag": True,
     }
 
@@ -546,10 +577,25 @@ def _selftest() -> int:
     out = build(now=fixed)
     if out.get("no_trade_flag") is not True:
         errs.append("top-level no_trade_flag must be True")
-    if out.get("validation_status") != "unvalidated":
-        errs.append("validation_status must be 'unvalidated' (no edge claim)")
-    if "UNVALIDATED" not in out["_meta"]["disclaimer"] or "not validated alpha" not in out["_meta"]["disclaimer"]:
-        errs.append("disclaimer must state UNVALIDATED / not validated alpha")
+    if out.get("validation_status") != "falsified_2026-06-09":
+        errs.append("validation_status must be 'falsified_2026-06-09' (the formal verdict)")
+    if "KILLED" not in out["_meta"]["disclaimer"] or "not validated alpha" not in out["_meta"]["disclaimer"]:
+        errs.append("disclaimer must state the KILLED verdict / not validated alpha")
+    # KILL containment: while the H1 verdict stands, active_trades is FORCED EMPTY and
+    # would-be entries appear only as non-actionable killed-family telemetry.
+    if out["active_trades"] != []:
+        errs.append("active_trades must be EMPTY while H1_BACKTEST_VERDICT stands (KILLED 2026-06-09)")
+    if out.get("backtest_verdict", {}).get("verdict_id") != "KILLED_2026-06-09":
+        errs.append("top-level backtest_verdict.verdict_id must be KILLED_2026-06-09")
+    if out["_meta"].get("backtest_verdict", {}).get("verdict") != "KILLED":
+        errs.append("_meta.backtest_verdict must be present (KILLED)")
+    for o in out.get("killed_signal_observations", []):
+        if o.get("actionable") is not False or o.get("live_signal") is not False:
+            errs.append(f"{o.get('ticker')} killed observation must be actionable:false / live_signal:false")
+        if o.get("backtest_verdict") != "KILLED_2026-06-09":
+            errs.append(f"{o.get('ticker')} killed observation must carry the verdict id")
+    if "KILLED" not in (out.get("no_trade_reason") or ""):
+        errs.append("no_trade_reason must state the KILLED verdict")
     for c in out["active_trades"]:
         if c.get("no_size_executed") is not True:
             errs.append(f"{c.get('ticker')} active_trade must carry no_size_executed:true")
