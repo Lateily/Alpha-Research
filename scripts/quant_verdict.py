@@ -133,6 +133,22 @@ def _ann(x):
     return None if x is None else round(float(x) * 252, 6)
 
 
+OOS_WINDOW_NAME = "wf_2022_2026"
+
+
+def _select_oos_window(wf_entries, formal_name=OOS_WINDOW_NAME):
+    """EXACT-name OOS selection (Junyan #57 review fix). The old substring test
+    ('2022' in name) matched wf_2018_2022 BEFORE wf_2022_2026 and silently flipped the
+    oos_2022_2026_not_sig_neg criterion to True while the real OOS window was significantly
+    negative. Exact match on the formal name; fallback = the chronologically LAST wf window
+    (sorted by name — names are wf_<start>_<end>), used only in quick/plumbing mode."""
+    for w in wf_entries:
+        if w.get("window") == formal_name:
+            return w
+    ordered = sorted(wf_entries, key=lambda w: str(w.get("window")))
+    return ordered[-1] if ordered else None
+
+
 def _index_curve(code: str, win, capital):
     import pandas as pd
     ix = pd.read_parquet(qb.INDEX, columns=["ts_code", "trade_date", "close"])
@@ -429,7 +445,7 @@ def run_verdict(quick=False) -> dict:
     h1_full = arms_results["h1"][0]["alpha"]
     wf_entries = [w for w in arms_results["h1"] if w["window"].startswith("wf_")]
     wf_pos = sum(1 for w in wf_entries if (w["alpha"]["same_gross"].get("point") or 0) >= 0)
-    oos = next((w for w in wf_entries if "2022" in w["window"]), None)
+    oos = _select_oos_window(wf_entries)
     oos_not_sig_neg = bool(oos and not (oos["alpha"]["same_gross"].get("ci_negative_after_cost")))
     crit = {
         "ci_positive_after_cost_vs_csi300": bool(h1_full["same_gross"].get("ci_positive_after_cost")),
@@ -531,13 +547,32 @@ def _selftest() -> int:
     nosw = check_nosw_not_single_window(fake)
     if not nosw.get("pass"):
         errs.append(f"NOSW on (full-sig-pos + wf-4/5) fake should PASS: {nosw.get('reason')}")
+    # OOS window selection MUST be exact-name (Junyan #57 review): the substring trap is
+    # wf_2018_2022 listed BEFORE wf_2022_2026 — '2022' in name matched the wrong window and
+    # flipped the criterion. Assert exact selection + the criterion computed on the right window.
+    trap = [
+        {"window": "wf_2018_2022", "alpha": {"same_gross": {"point": -0.05, "lo": -0.27, "hi": 0.16,
+                                                            "ci_negative_after_cost": False}}},
+        {"window": "wf_2022_2026", "alpha": {"same_gross": {"point": -0.45, "lo": -0.64, "hi": -0.25,
+                                                            "ci_negative_after_cost": True}}},
+    ]
+    sel = _select_oos_window(trap)
+    if not sel or sel["window"] != "wf_2022_2026":
+        errs.append(f"OOS selector picked {sel and sel['window']} — must be exact wf_2022_2026")
+    if not sel["alpha"]["same_gross"]["ci_negative_after_cost"]:
+        errs.append("OOS criterion must read the sig-neg wf_2022_2026, not the straddling wf_2018_2022")
+    # fallback (quick mode): no formal window present -> chronologically last wf
+    sel2 = _select_oos_window([{"window": "wf_2023_2023"}, {"window": "wf_2022_2022"}])
+    if not sel2 or sel2["window"] != "wf_2023_2023":
+        errs.append(f"OOS fallback must pick the chronologically last wf window, got {sel2 and sel2['window']}")
     if errs:
         print("quant_verdict selftest FAILED:")
         for e in errs:
             print(f"  - {e}")
         return 1
     print("quant_verdict selftest PASSED (BY math exact; cost-scenario + window-name gate contracts; "
-          "fake windows accepted by the real WF1/NOSW helpers)")
+          "fake windows accepted by the real WF1/NOSW helpers; OOS selector is exact-name — the "
+          "wf_2018_2022-before-wf_2022_2026 substring trap is caught)")
     return 0
 
 

@@ -2,7 +2,7 @@
   "schema": "v3_variant_manifest",
   "variant": {
     "variant_id": "quant_v0_h1",
-    "registered_at": "2026-06-10T05:06:57.807612+00:00",
+    "registered_at": "2026-06-10T06:31:38.211918+00:00",
     "hypothesis": "H1: in a liquid quality-filtered A-share universe, buying confirmed pullbacks inside established uptrends (close>=MA200 rising; RSI dip<=40 turning up; volume-confirmed reclaim of MA5) with stop/trend-break/time-stop exits produces post-cost same-gross alpha vs CSI300 and EW at the 20d horizon.",
     "causal_logic_label": "unestablished (structured falsifiable prior; NOT a known edge)",
     "expected_failure_modes": [

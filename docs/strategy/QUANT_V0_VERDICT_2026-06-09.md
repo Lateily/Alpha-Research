@@ -4,8 +4,13 @@
 > windows × 3 arms + cost grid, survivorship-gate-passed, manifest pre-registered
 > (lock `29a96eed…`), stationary bootstrap B=10,000, BY-corrected, full 19-gate suite.
 > Artifacts: `public/data/quant_v0_verdict.json` + `public/data/quant_v0_manifest.json`.
-> Engine: #52/#53/#54/#56 + PR3b-2/3 (this branch). Elapsed: **209 s** (the vectorization paid).
+> Engine: #52/#53/#54/#56 + PR3b-2/3 (this branch). Elapsed: **222 s** (the vectorization paid).
 > **Mechanical verdict — the human (Junyan) ratifies. No claim of any kind is made below.**
+> **Errata (Junyan #57 review, fixed before merge):** the first run's `oos_2022_2026_not_sig_neg`
+> criterion read TRUE because a substring match (`"2022" in name`) selected `wf_2018_2022` instead
+> of `wf_2022_2026`. Selection is now exact-name (+ a regression selftest); the criterion correctly
+> reads **FALSE** (the OOS window is significantly negative). All five criteria now false; the
+> KILL recommendation is unchanged — every number above is from the re-run.
 
 ---
 
@@ -18,7 +23,7 @@
 | Full-sample same-gross α vs CSI300 | **−23.0%/yr**, 95% CI **[−31.2%, −15.2%]**, p≈0.0000 | ❌ significantly NEGATIVE |
 | Full-sample same-gross α vs EW-liquid | **−22.6%/yr**, CI [−29.8%, −15.6%], p≈0.0000 | ❌ significantly NEGATIVE |
 | Walk-forward | **0/5 windows positive**; 4/5 *significantly* negative | ❌ WF1 collapse |
-| OOS 2022–2026 | −45.2%/yr, CI [−64.1%, −25.2%] | ❌ sig-neg (criteria line passed only because the WF2 helper keys differently — the window itself is dead) |
+| OOS 2022–2026 (`wf_2022_2026`, exact-name selected) | −45.2%/yr, CI [−64.1%, −25.2%], p≈0 | ❌ significantly NEGATIVE — criterion `oos_2022_2026_not_sig_neg=false` |
 | Cost grid | optimistic −21.6% / baseline −23.0% / pessimistic −24.8% | ❌ the signal is bad, **not** the costs |
 | 19-gate | **FAIL** — WF1, WF2, IMPL4 (turnover 27.2 vs ≤2.0), IMPL5 (MaxDD −99.2% vs ≥−25%), IMPL7 | ❌ |
 | vs negative control | H1 −23.0% is **WORSE than naive oversold** (−15.6%) | ❌ the uptrend filter did NOT earn its keep |
