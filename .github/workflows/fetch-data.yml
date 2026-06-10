@@ -259,6 +259,14 @@ jobs:
         continue-on-error: true          # non-critical; read-only; honest NO_TRADE in CI
         run: python scripts/quant_strategy.py
 
+      # ── Step 2h4: CTF v1 decision-sheet forward checkpoints (read-only) ───
+      # Evaluates any DUE 30/60/90d checkpoint on registered decision sheets
+      # (price/directional/band reads from committed data; disclosure-bound
+      # wrong_if items are flagged for the human, never guessed).
+      - name: Evaluate decision-sheet checkpoints
+        continue-on-error: true          # non-critical; no-op until a checkpoint is due
+        run: python scripts/sheet_checkpoints.py --check
+
       # ── Step 2i: Signal quality analytics (feedback loop) ────────────────
       - name: Compute signal quality analytics
         continue-on-error: true          # non-critical; reads trades + positions
@@ -386,6 +394,7 @@ jobs:
             public/data/daily_decision.json \
             public/data/model_portfolio.json \
             public/data/quant_strategy_run.json \
+            public/data/decision_sheet_checkpoints.json \
             public/data/position_sizing.json \
             public/data/signal_quality.json \
             public/data/trades.json \

@@ -1,0 +1,25 @@
+{
+  "ticker": "002594.SZ",
+  "content_lock": "ea3402301dff717e",
+  "sheet": "docs/research/decision_sheets/002594_SZ_2026-06-10.md",
+  "scored_at": "2026-06-11",
+  "scorer_roles": {"first_red_team_qa": "advisor (Junyan's research QA)", "final_adjudicator": "Junyan"},
+  "scores": {
+    "specificity": {"score": 82, "comment": "明确 E1 事件、日期、毛利率阈值、R/R、目标区间;不是空泛叙事"},
+    "falsifiability": {"score": 86, "comment": "8/31 半年报、海外 GM≤16.5%、合并 GM≤15%、净利 YoY≤−40%、海外销量连续两月负增长,均可验证"},
+    "valuation_discipline": {"score": 56, "comment": "最弱轴:bear/base/bull 有区间,但盈利路径与 PE 仍是 analyst-constructed;自动估值栈坏,缺模型化锚"},
+    "information_increment": {"score": 63, "comment": "+280bps 海外毛利率差是有价值的 variant,但中信 5/27 后 bull case 开始拥挤;增量还在,不够强"},
+    "risk_identification": {"score": 72, "comment": "价格战、EU、估值、crowding 都有;政策补贴退坡、对手份额挤压、EU 本地化 GM 拖累可再量化"}
+  },
+  "average": 71.8,
+  "min_axis": {"axis": "valuation_discipline", "score": 56},
+  "bar": {"average_min": 70, "axis_min": 50, "label": "[unvalidated intuition]"},
+  "verdict": "PASS-LOW",
+  "conditions": [
+    "may register 30/60/90 checkpoints — first qualified CTF v1 sample",
+    "may NOT upgrade to conviction buy",
+    "execution stance stays WATCH_NOT_CONVICTION / starter-capped only",
+    "next revision priority = valuation discipline (model-anchored band: fix the broken rDCF/EV-EBITDA/RI generators for this name + sensitivity grid), NOT thesis narrative"
+  ],
+  "note": "first quality data point of Core Thesis Factory v1; human score = measure of record per spec #62"
+}
