@@ -632,10 +632,10 @@ def _selftest() -> int:
         for e in errs:
             print(f"  - {e}")
         return 1
-    print("quant_strategy selftest PASSED (H1: ENTER on uptrend+pullback+confirm, NO_SETUP on "
-          "downtrend / no-pullback, INSUFFICIENT_DATA on short history, confirm surfaced; build invariants: "
-          "A-share-only, no_trade_flag, unvalidated, ENTER=human_execution_required/no_auto_trade (not "
-          "no_trade_flag), no executed size, thesis-overlay veto holds, honest NO_TRADE, deterministic manifest)")
+    print("quant_strategy selftest PASSED (H1 signal logic intact for telemetry; KILL containment: "
+          "active_trades FORCED EMPTY, killed observations actionable:false + verdict id, "
+          "validation_status=falsified_2026-06-09, KILLED in disclaimer + no_trade_reason; A-share-only, "
+          "no executed size, thesis-overlay veto holds, honest NO_TRADE, deterministic manifest)")
     return 0
 
 
