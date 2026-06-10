@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-06-09T11:37:51Z",
+  "fetched_at": "2026-06-10T05:24:38Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -785,22 +785,9 @@
           "pct_chg": -0.6725,
           "vol": 35397.65,
           "amount": 68321.146
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260311",
-          "open": 19.29,
-          "high": 19.4,
-          "low": 19.02,
-          "close": 19.33,
-          "pre_close": 19.29,
-          "change": 0.04,
-          "pct_chg": 0.2074,
-          "vol": 43187.09,
-          "amount": 82935.852
         }
       ],
-      "row_count": 61,
+      "row_count": 60,
       "_status": "ok"
     },
     "daily_basic": {
@@ -2004,33 +1991,18 @@
           "free_share": 44991.6141,
           "total_mv": 2186588.2886,
           "circ_mv": 2186588.2886
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260311",
-          "close": 19.33,
-          "turnover_rate": 0.3792,
-          "turnover_rate_f": 0.9599,
-          "volume_ratio": 0.93,
-          "pe": 24.0654,
-          "pe_ttm": 19.3507,
-          "pb": 3.308,
-          "ps": 0.8308,
-          "ps_ttm": 0.8204,
-          "dv_ratio": 3.3428,
-          "dv_ttm": 3.3428,
-          "total_share": 113884.8067,
-          "float_share": 113884.8067,
-          "free_share": 44991.6141,
-          "total_mv": 2201393.3135,
-          "circ_mv": 2201393.3135
         }
       ],
-      "row_count": 61,
+      "row_count": 60,
       "_status": "ok"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20260610",
+          "adj_factor": 3.1365
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20260609",
@@ -2329,11 +2301,6 @@
         {
           "ts_code": "603233.SH",
           "trade_date": "20260312",
-          "adj_factor": 3.1365
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260311",
           "adj_factor": 3.1365
         }
       ],
