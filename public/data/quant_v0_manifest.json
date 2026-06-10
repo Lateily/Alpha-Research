@@ -1,0 +1,68 @@
+{
+  "schema": "v3_variant_manifest",
+  "variant": {
+    "variant_id": "quant_v0_h1",
+    "registered_at": "2026-06-10T06:31:38.211918+00:00",
+    "hypothesis": "H1: in a liquid quality-filtered A-share universe, buying confirmed pullbacks inside established uptrends (close>=MA200 rising; RSI dip<=40 turning up; volume-confirmed reclaim of MA5) with stop/trend-break/time-stop exits produces post-cost same-gross alpha vs CSI300 and EW at the 20d horizon.",
+    "causal_logic_label": "unestablished (structured falsifiable prior; NOT a known edge)",
+    "expected_failure_modes": [
+      "turnover x 0.40% RT cost dominates the signal (the proven killer)",
+      "pullback-in-uptrend is just momentum beta in disguise -> dies post-2015 like momentum",
+      "uptrend filter lags regime turns -> whipsaw entries at tops",
+      "alpha confined to one regime window (2006-2010), like the dead inverse-momentum"
+    ],
+    "hypothesis_lock_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88"
+  },
+  "test_plan": {
+    "windows": [
+      {
+        "name": "full_2006_2026",
+        "start": "20060104",
+        "end": "20260526"
+      },
+      {
+        "name": "wf_2006_2010",
+        "start": "20060104",
+        "end": "20091231"
+      },
+      {
+        "name": "wf_2010_2014",
+        "start": "20100101",
+        "end": "20131231"
+      },
+      {
+        "name": "wf_2014_2018",
+        "start": "20140101",
+        "end": "20171231"
+      },
+      {
+        "name": "wf_2018_2022",
+        "start": "20180101",
+        "end": "20211231"
+      },
+      {
+        "name": "wf_2022_2026",
+        "start": "20220101",
+        "end": "20260526"
+      }
+    ],
+    "cost_scenarios": [
+      "optimistic_0.20_RT",
+      "baseline_0.40_RT",
+      "pessimistic_0.60_RT"
+    ],
+    "benchmarks": [
+      "csi300",
+      "zz500",
+      "csi1000",
+      "ew500",
+      "cash2pct"
+    ],
+    "family_for_multiple_testing": [
+      "h1",
+      "quality_lowvol",
+      "oversold_control"
+    ],
+    "claim_gate": "ci_positive_after_cost vs CSI300 AND EW + WF1 + OOS-not-sig-neg + 19-gate"
+  }
+}
