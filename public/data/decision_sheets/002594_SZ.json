@@ -2,7 +2,7 @@
   "_meta": {
     "layer": "Core Thesis Factory v1 — Single-Name Decision Sheet (单票决策书)",
     "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md",
-    "generated_at": "2026-06-10T15:23:57.082525+00:00",
+    "generated_at": "2026-06-10T15:30:34.729411+00:00",
     "sheet_version": "v1",
     "disclaimer": "INTERNAL, UNVALIDATED research output of the model-recommendation pilot — not validated alpha, not external/personalized investment advice; sizing fields are SUGGESTIONS only; the human executes. Quality gate = human red-team (auto checks are the floor only)."
   },
@@ -270,5 +270,5 @@
     "human_red_team": "PENDING — the measure of record",
     "forward_checkpoints": "PENDING registration (30/60/90d, PR-D)"
   },
-  "content_lock_sha256": "ead5581068e2d3a9f0527aaf2d486ac24f2939d7fd3b58951d64046d79fac61c"
+  "content_lock_sha256": "ea3402301dff717e8bae387242cc6025078f13cbd213208a4e2309d4f40a6bef"
 }

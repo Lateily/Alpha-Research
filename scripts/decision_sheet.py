@@ -157,6 +157,17 @@ def _auto_context(ticker: str) -> dict:
     }
 
 
+def _content_lock(sheet: dict) -> str:
+    """sha256 over the CANONICAL CONTENT payload only — excludes volatile/process fields
+    (_meta carries generated_at; quality is process state; the lock itself). A pure rerun
+    with unchanged research content + unchanged committed inputs MUST produce the same lock
+    (Junyan #64 review: a generated_at-sensitive lock would make a rerun look like a new
+    thesis and corrupt the 30/60/90 forward-validation ledger)."""
+    payload = {k: v for k, v in sheet.items()
+               if k not in ("_meta", "quality", "content_lock_sha256")}
+    return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+
+
 def _rr(band: dict, px) -> dict:
     """R/R from last price to bull-mid vs bear-mid + the conviction bar."""
     try:
@@ -205,8 +216,7 @@ def compose(ticker: str) -> dict:
                     "human_red_team": "PENDING — the measure of record",
                     "forward_checkpoints": "PENDING registration (30/60/90d, PR-D)"},
     }
-    body = json.dumps(sheet, ensure_ascii=False, sort_keys=True)
-    sheet["content_lock_sha256"] = hashlib.sha256(body.encode()).hexdigest()
+    sheet["content_lock_sha256"] = _content_lock(sheet)
     SHEETS_OUT.mkdir(parents=True, exist_ok=True)
     out = SHEETS_OUT / f"{safe}.json"
     out.write_text(json.dumps(sheet, ensure_ascii=False, indent=2))
@@ -343,6 +353,22 @@ def _selftest() -> int:
     # entry_where_bar_met: (152.5 + 2*55)/3 = 87.5 — at that price R/R == 2.0
     if abs(rr["entry_where_bar_met"] - 87.5) > 0.1:
         errs.append(f"entry_where_bar_met wrong: {rr['entry_where_bar_met']} (expect 87.5)")
+    # content lock: invariant to volatile fields, sensitive to content (Junyan #64 fix)
+    def _fake_sheet(gen_at, band_low=50):
+        s = {"_meta": {"generated_at": gen_at, "disclaimer": "x"}, **_valid_core(),
+             "auto_context": {"last_price": {"close": 93.75, "date": "20260522"}},
+             "reward_to_risk": {"reward_to_risk": 1.52},
+             "quality": {"human_red_team": "PENDING"}}
+        s["valuation_target_range"] = json.loads(json.dumps(s["valuation_target_range"]))
+        s["valuation_target_range"]["bear"]["low"] = band_low
+        return s
+    l1 = _content_lock(_fake_sheet("2026-06-10T01:00:00Z"))
+    l2 = _content_lock(_fake_sheet("2026-06-10T02:00:00Z"))
+    if l1 != l2:
+        errs.append("content lock must be INVARIANT to _meta.generated_at (pure rerun = same lock)")
+    l3 = _content_lock(_fake_sheet("2026-06-10T01:00:00Z", band_low=51))
+    if l3 == l1:
+        errs.append("content lock must CHANGE when research content changes (no teeth otherwise)")
     if errs:
         print("decision_sheet selftest FAILED:")
         for e in errs:
@@ -351,7 +377,8 @@ def _selftest() -> int:
     print("decision_sheet selftest PASSED (valid core qualifies; all 8 mutilations refused — missing "
           "group / untagged link / un-mechanized trigger / single-point target / no assumptions / "
           "monolingual / calibrated:true / <2 triggers; R/R math exact; 2:1 bar forces WATCH + computes "
-          "the entry where the bar is met)")
+          "the entry where the bar is met; content lock invariant to generated_at AND sensitive to "
+          "content changes)")
     return 0
 
 
