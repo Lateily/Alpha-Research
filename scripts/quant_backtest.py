@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from liquid_universe import compute_liquid_universe          # noqa: E402
 from panel_index import PanelIndex                           # noqa: E402
 from stationary_bootstrap import bootstrap_ci, mean as bs_mean  # noqa: E402
-from quant_strategy import h1_signal, THRESH                 # noqa: E402
+from quant_strategy import h1_signal, THRESH, _sma as _qsma, _rsi as _qrsi  # noqa: E402
 import survivorship_gate                                     # noqa: E402
 
 # Execution primitives + metrics inlined VERBATIM from the proven engine
@@ -157,10 +157,67 @@ def _norm_date(s):
     return s.replace("-", "") if isinstance(s, str) else s
 
 
-def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPITAL):
+# ── Vectorized indicator cache (PR3b-1): compute each ticker's rolling indicators ONCE over its
+# full series with the EXACT live-signal _sma/_rsi, then per-day signals are O(1) lookups instead of
+# an O(bars) recompute per (ticker, day). _sma is seed-independent => MA200/MA20/MA5/volMA match the
+# per-window path EXACTLY. _rsi (Wilder) seeded from bar 0 differs from the per-day 242-window reseed
+# by ~1e-7 after ~228 convergence steps — immaterial to RSI<40 / RSI-turning decisions (verified by
+# running fast vs slow; selftest asserts bit-identical when the window covers bar 0).
+_IND_CACHE = {}
+
+
+def _indicators(idx, tk, full_to):
+    C = _IND_CACHE.get(tk)
+    if C is not None:
+        return C
+    h = idx.history(tk, full_to, n_days_back=None)
+    dates = [str(d) for d in (h.get("dates") if h.get("dates") is not None else [])]
+    closes = [float(x) for x in (h.get("close") if h.get("close") is not None else [])]
+    vlist = [float(x) for x in (h.get("vol") if h.get("vol") is not None else [])]
+    vols = vlist or None
+    C = {"close": closes, "vol": vols,
+         "ma200": _qsma(closes, THRESH["ma_long_n"]), "ma20": _qsma(closes, THRESH["ma_mid_n"]),
+         "ma5": _qsma(closes, THRESH["ma_short_n"]), "rsi": _qrsi(closes, THRESH["rsi_n"]),
+         "volma": _qsma(vols, THRESH["vol_ma_n"]) if vols else None,
+         "date_to_i": {d: i for i, d in enumerate(dates)}}
+    _IND_CACHE[tk] = C
+    return C
+
+
+def _h1_fast(C, i):
+    closes, ma200, ma20, ma5, rsi = C["close"], C["ma200"], C["ma20"], C["ma5"], C["rsi"]
+    vols, volma = C["vol"], C["volma"]
+    price, rb = closes[i], THRESH["ma_long_rise_lookback"]
+    uptrend = (ma200[i] is not None and price >= ma200[i]
+               and i - rb >= 0 and ma200[i - rb] is not None and ma200[i] >= ma200[i - rb])
+    win = THRESH["rsi_pullback_window"]
+    recent = [r for r in rsi[max(0, i - win + 1):i + 1] if r is not None]
+    pulled = bool(recent) and min(recent) <= THRESH["rsi_pullback_max"]
+    turning = rsi[i] is not None and rsi[i - 1] is not None and rsi[i] > rsi[i - 1]
+    setup = uptrend and pulled and turning
+    up_day = closes[i] > closes[i - 1]
+    vol_ok = (volma is None) or (volma[i] is None) or (vols[i] >= THRESH["vol_confirm_mult"] * volma[i])
+    reclaim = ma5[i] is not None and price >= ma5[i]
+    confirm = up_day and vol_ok and reclaim
+    action = "ENTER" if (setup and confirm) else ("WAIT" if setup else "NO_SETUP")
+    return {"action": action, "stop": price * (1.0 - THRESH["stop_pct"]) if action == "ENTER" else None}
+
+
+def _oversold_fast(C, i):
+    r, closes = C["rsi"][i], C["close"]
+    action = "ENTER" if (r is not None and r < 30.0 and closes[i] > closes[i - 1]) else "NO_SETUP"
+    return {"action": action, "stop": closes[i] * (1.0 - THRESH["stop_pct"]) if action == "ENTER" else None}
+
+
+_FAST = {"h1": _h1_fast, "oversold_control": _oversold_fast}
+
+
+def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPITAL, fast=True):
     """Long-only, T+1, cost-charged. DECIDE at T using bars <= T; FILL at T+1. No same-day fill.
     Held names with no bar (halt/delist) are marked at last close and force-exited after
-    STALE_EXIT_DAYS; a name exited this round is barred from same-day re-entry."""
+    STALE_EXIT_DAYS; a name exited this round is barred from same-day re-entry.
+    fast=True uses the precomputed indicator cache (O(1)/day); fast=False is the per-day recompute
+    reference (#54). Identical decision logic; verified equal on 2023-H1."""
     signal_fn = ARMS[arm_name]
     have = set(zip(panel["trade_date"].astype(str), panel["ts_code"]))
     win = [d for d in trade_dates if start <= d <= end]
@@ -245,14 +302,21 @@ def run_arm(arm_name, panel, idx, liquid, trade_dates, start, end, capital=CAPIT
                        if (T, tk) in have and tk not in positions and tk not in exited]  # no same-day re-entry
             enters = []
             for tk in members:
-                h = idx.history(tk, T, n_days_back=MIN_BARS + 30)
-                hc = h.get("close")
-                closes = list(hc) if hc is not None else []
-                hv = h.get("vol")
-                vols = list(hv) if (hv is not None and len(hv)) else None
-                if len(closes) < MIN_BARS:
-                    continue
-                s = signal_fn(closes, vols)
+                if fast:
+                    C = _indicators(idx, tk, trade_dates[-1])
+                    i_ = C["date_to_i"].get(T)
+                    if i_ is None or (i_ + 1) < MIN_BARS:
+                        continue
+                    s = _FAST[arm_name](C, i_)
+                else:
+                    h = idx.history(tk, T, n_days_back=MIN_BARS + 30)
+                    hc = h.get("close")
+                    closes = list(hc) if hc is not None else []
+                    hv = h.get("vol")
+                    vols = list(hv) if (hv is not None and len(hv)) else None
+                    if len(closes) < MIN_BARS:
+                        continue
+                    s = signal_fn(closes, vols)
                 if s.get("action") == "ENTER":
                     enters.append((tk, s))
             enters.sort(key=lambda kv: kv[0])     # deterministic; equal-weight (no signal-strength ranking in v0)
@@ -370,6 +434,7 @@ def _bootstrap_alpha(alpha):
 
 def build(start=None, end=None) -> dict:
     import pandas as pd
+    _IND_CACHE.clear()                             # fresh indicator cache per run (no cross-window staleness)
     gate = survivorship_gate.require_pass()        # HARD PRECONDITION — raises unless passed
     panel = pd.read_parquet(PANEL, columns=["ts_code", "trade_date", "open", "high", "low",
                                             "close", "vol", "amount", "pre_close"])
@@ -484,15 +549,24 @@ def _selftest() -> int:
     panel = pd.DataFrame(rows)
     idx = PanelIndex(panel)
     liquid = compute_liquid_universe(panel, top_n=5, lookback_days=10, min_dollar_vol=0)
-    res = run_arm("h1", panel, idx, liquid, dates, dates[0], dates[-1])
+    _IND_CACHE.clear()
+    res = run_arm("h1", panel, idx, liquid, dates, dates[0], dates[-1])           # fast (cached)
     if not res["equity_curve"]:
         errs.append("backtest produced no equity curve")
+    # PR3b-1: fast (cached) vs slow (per-day recompute) must be IDENTICAL on this synthetic
+    # (the 242-window covers bar 0 here, so even the Wilder-RSI seed matches exactly).
+    res_slow = run_arm("h1", panel, idx, liquid, dates, dates[0], dates[-1], fast=False)
+    if [round(p["nav"], 2) for p in res["equity_curve"]] != [round(p["nav"], 2) for p in res_slow["equity_curve"]]:
+        errs.append("fast vs slow equity curves differ on the synthetic (vectorization changed the logic)")
+    if len(res["trades"]) != len(res_slow["trades"]):
+        errs.append(f"fast vs slow trade counts differ ({len(res['trades'])} vs {len(res_slow['trades'])})")
     # no look-ahead: appending a FUTURE huge bar must not change the equity curve over the past window
     fut = pd.concat([panel, pd.DataFrame([{"ts_code": "S00.SZ", "trade_date": "D999", "open": 1e6,
                      "high": 1e6, "low": 1e6, "close": 1e6, "vol": 1e9, "amount": 1e12, "pre_close": 1e6}])],
                     ignore_index=True)
     idx2 = PanelIndex(fut)
     liquid2 = compute_liquid_universe(fut, top_n=5, lookback_days=10, min_dollar_vol=0)
+    _IND_CACHE.clear()                                                            # rebuild cache from fut
     res2 = run_arm("h1", fut, idx2, liquid2, dates, dates[0], dates[-1])   # same past window
     nav1 = [round(p["nav"], 2) for p in res["equity_curve"]]
     nav2 = [round(p["nav"], 2) for p in res2["equity_curve"]]
