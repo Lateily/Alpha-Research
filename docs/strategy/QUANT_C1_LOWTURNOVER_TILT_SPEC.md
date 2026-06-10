@@ -1,8 +1,8 @@
 # QUANT CANDIDATE C1 — LOW-TURNOVER QUALITY+LOW_VOL TILT (SPEC, pre-registration draft)
 
-> **Status:** next-gen candidate spec for Junyan review (the #51 pattern: ratify the hypothesis +
-> variant family BEFORE any run). **No backtest number exists for C1 yet and none may be produced
-> until this spec is ratified and the manifest is locked.**
+> **Status: RATIFIED (Junyan 2026-06-10)** — K=20 · claim gate = CSI300 AND EW dual-pass (strict;
+> a miss is no-claim, not failure) · family = C1a/C1b/C1c only + random-K control (NO lowvol_only —
+> C2 material). **No backtest number exists for C1 yet; the manifest locks at implementation.**
 > **Date:** 2026-06-10 · **Pipeline:** the validated Factory B machinery — survivorship gate →
 > pre-registered manifest → harness (#54/#56/#57) → 5 benchmarks → bootstrap + BY → 19-gate →
 > mechanical verdict (~3.5 min per family).
@@ -45,13 +45,13 @@ low-cost tilt converts it into net alpha (rather than premia) is the unproven st
 
 ## 3. Variant family (the BY family; all pre-registered, run together once)
 
-| arm | construction | turnover intent |
+| arm | construction (K = 20, ratified) | turnover intent |
 |---|---|---|
-| **C1a** | rebal 40td, top-K, full re-rank | ~2.0× |
-| **C1b** | rebal 20td + **rank-exit buffer** (sell only when rank > 2×K) | ~1.5–2× (buffer does the work) |
+| **C1a** | rebal 40td, top-20, full re-rank | ~2.0× |
+| **C1b** | rebal 20td + **rank-exit buffer** (sell only when rank > 2×K = 40) | ~1.5–2× (buffer does the work) |
 | **C1c** | rebal 60td | ~1.3× |
-| control | **random-K rotation**, same cadence as C1a, seeded — does ANY K-name EW rotation look like this? | ~2.0× |
-| reference | the measured #57 baseline (20td, 3.95×) — already run, re-reported not re-run | — |
+| control | **random-20 rotation**, same cadence as C1a, seeded — does ANY 20-name EW rotation look like this? | ~2.0× |
+| reference | the measured #57 baseline (20td, K=10, 3.95×) — already run, re-reported not re-run | — |
 
 BY multiple-testing across {C1a, C1b, C1c} (m=3; the random control is a control, not a candidate).
 **No post-hoc variants:** if all three fail, the family is killed — no threshold nudging (the α1.2
@@ -68,19 +68,22 @@ capital/paper, `validation_status: unvalidated` until a verdict, human ratifies.
 Engine delta required (small, after ratification): parameterize `run_tilt_arm` (rebal_days, rank
 buffer, top_k) + a seeded random-rotation arm + a C1 manifest/variant pass in `quant_verdict.py`.
 
-## 5. Open decisions for Junyan (before the manifest locks)
+## 5. RATIFIED decisions (Junyan 2026-06-10 — locked into the manifest)
 
-1. **K (portfolio size): top-10 or top-20?** 10 = current baseline (more concentration noise,
-   failure mode #2); 20 = dilutes the weak IC but halves idiosyncratic noise and fits the
-   max-position discipline less tightly. Recommendation: **run K as part of the family is NOT
-   allowed** (doubles m); pick ONE. My lean: **K=20** (noise reduction matters more than IC
-   dilution for a premia-shaped signal). `[unvalidated intuition]`
-2. **Claim bar: CSI300 AND EW both, or EW primary?** Spec objective says both ("if it can't beat
-   an index fund it isn't worth capital"). My lean: **keep both** — a tilt that only beats EW is a
-   small-cap/equal-weight artifact, not deployable edge.
-3. **A 4th arm `lowvol_only`** (drop value, isolate the stronger crowding-prone factor)? Adds m=4
-   to the BY family (more correction burden). My lean: **no for C1** — keep the family tight;
-   factor isolation is C2 material if C1 survives.
+1. **K = 20.** quality/low_vol is a weak premia, not a high-conviction signal — it needs
+   diversification to suppress single-name noise / halts / sector drift. The alpha dilution is
+   accepted: **dilution is preferable to a false positive.**
+2. **Claim gate stays CSI300 AND EW dual-pass — not relaxed.** Beating only CSI300 may be
+   small-cap/equal-weight exposure; beating only EW may be beta/style mismatch. The goal is
+   deployable edge; **a miss is no-claim, not failure.**
+3. **No lowvol_only arm in C1.** Family = C1a (rebal-40) / C1b (rebal-20 + rank-buffer) /
+   C1c (rebal-60) + seeded random-K rotation control, exactly. A bigger family = heavier BY +
+   muddier interpretation. C1's question is "does the low-turnover quality+lowvol tilt deserve
+   promotion?", not factor attribution — `lowvol_only` is C2 material.
+
+**Junyan's posture, recorded:** the real asset is the validation factory, not any single strategy.
+C1 most likely does not become alpha directly — its job is to tell us whether the low-turnover
+premia line is worth continuing.
 
 > One line: C1 is the cheapest honest test of the only direction the v0 verdict left alive —
 > structurally low-turnover by design, one locked family, kill-or-keep in 3.5 minutes, and the
