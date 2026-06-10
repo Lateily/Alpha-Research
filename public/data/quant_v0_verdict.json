@@ -1,0 +1,1238 @@
+{
+  "_meta": {
+    "layer": "Quant Strategy Factory v0 — FORMAL verdict run",
+    "generated_at": "2026-06-10T05:10:23.648174+00:00",
+    "elapsed_sec": 209.1,
+    "universe_source": "panel_derived_compute_liquid_universe",
+    "universe_pit_used": false,
+    "survivorship_gate": {
+      "passed": true
+    },
+    "benchmarks_reported": [
+      "csi300",
+      "zz500",
+      "csi1000",
+      "ew500",
+      "cash2pct"
+    ],
+    "quick_mode": false,
+    "disclaimer": "UNVALIDATED unless claim_permitted=true AND Junyan ratifies. A positive edge claim requires ci_positive_after_cost vs CSI300 AND EW + WF1 + OOS not significantly negative + 19-gate PASS."
+  },
+  "manifest_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+  "arms": {
+    "h1": [
+      {
+        "window": "full_2006_2026",
+        "alpha": {
+          "same_gross": {
+            "point": -0.230424,
+            "lo": -0.311934,
+            "hi": -0.151729,
+            "p_value": 0.0,
+            "n_dates": 4950,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.225519,
+            "lo": -0.298051,
+            "hi": -0.156004,
+            "p_value": 0.0,
+            "n_dates": 4950,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          }
+        },
+        "metrics": {
+          "cagr": -0.19585390943989212,
+          "sharpe": -0.8889964302008454,
+          "max_drawdown": -0.991576481462093,
+          "n_trades": 6172,
+          "hit_rate": 0.3338,
+          "avg_trade_ret": -0.0058,
+          "final_nav": 13820.0,
+          "days": 4951
+        },
+        "max_drawdown": -0.991576481462093,
+        "n_total_trades": 6172,
+        "audit": {
+          "created_at": "2026-06-10T05:07:47.569661+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.500258,
+          "max_gross_pct": 0.999991,
+          "median_n_positions": 5,
+          "turnover_annual_ratio": 27.2188,
+          "n_trade_days": 4951,
+          "n_total_trades_actual": 6172
+        }
+      },
+      {
+        "window": "wf_2006_2010",
+        "alpha": {
+          "same_gross": {
+            "point": -0.318674,
+            "lo": -0.489154,
+            "hi": -0.159997,
+            "p_value": 0.0002,
+            "n_dates": 972,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.357168,
+            "n_dates": 972
+          }
+        },
+        "metrics": {
+          "cagr": -0.21939222697428273,
+          "sharpe": -0.9997232809565603,
+          "max_drawdown": -0.747001667657428,
+          "n_trades": 966,
+          "hit_rate": 0.3458,
+          "avg_trade_ret": -0.0083,
+          "final_nav": 384678.77,
+          "days": 973
+        },
+        "max_drawdown": -0.747001667657428,
+        "n_total_trades": 966,
+        "audit": {
+          "created_at": "2026-06-10T05:07:53.515239+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.380356,
+          "max_gross_pct": 0.999931,
+          "median_n_positions": 2,
+          "turnover_annual_ratio": 23.6698,
+          "n_trade_days": 973,
+          "n_total_trades_actual": 966
+        }
+      },
+      {
+        "window": "wf_2010_2014",
+        "alpha": {
+          "same_gross": {
+            "point": -0.289242,
+            "lo": -0.45073,
+            "hi": -0.127877,
+            "p_value": 0.0007,
+            "n_dates": 966,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.318723,
+            "n_dates": 966
+          }
+        },
+        "metrics": {
+          "cagr": -0.32542477753719223,
+          "sharpe": -1.6223501062857584,
+          "max_drawdown": -0.7870075361594765,
+          "n_trades": 1485,
+          "hit_rate": 0.3232,
+          "avg_trade_ret": -0.0092,
+          "final_nav": 221114.12,
+          "days": 967
+        },
+        "max_drawdown": -0.7870075361594765,
+        "n_total_trades": 1485,
+        "audit": {
+          "created_at": "2026-06-10T05:07:59.229084+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.605041,
+          "max_gross_pct": 0.999929,
+          "median_n_positions": 6,
+          "turnover_annual_ratio": 39.897,
+          "n_trade_days": 967,
+          "n_total_trades_actual": 1485
+        }
+      },
+      {
+        "window": "wf_2014_2018",
+        "alpha": {
+          "same_gross": {
+            "point": -0.478029,
+            "lo": -0.75056,
+            "hi": -0.218346,
+            "p_value": 0.0011,
+            "n_dates": 976,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.379849,
+            "n_dates": 976
+          }
+        },
+        "metrics": {
+          "cagr": -0.34575943614113247,
+          "sharpe": -1.2461238725607586,
+          "max_drawdown": -0.8689526669994219,
+          "n_trades": 1654,
+          "hit_rate": 0.3368,
+          "avg_trade_ret": -0.0083,
+          "final_nav": 193351.83,
+          "days": 977
+        },
+        "max_drawdown": -0.8689526669994219,
+        "n_total_trades": 1654,
+        "audit": {
+          "created_at": "2026-06-10T05:08:04.991751+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.716661,
+          "max_gross_pct": 0.999999,
+          "median_n_positions": 8,
+          "turnover_annual_ratio": 41.5316,
+          "n_trade_days": 977,
+          "n_total_trades_actual": 1654
+        }
+      },
+      {
+        "window": "wf_2018_2022",
+        "alpha": {
+          "same_gross": {
+            "point": -0.057571,
+            "lo": -0.271156,
+            "hi": 0.164343,
+            "p_value": 0.6192,
+            "n_dates": 972,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": false
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.005152,
+            "n_dates": 972
+          }
+        },
+        "metrics": {
+          "cagr": -0.03661426342829743,
+          "sharpe": -0.023603568087834467,
+          "max_drawdown": -0.3597197124889677,
+          "n_trades": 1690,
+          "hit_rate": 0.3479,
+          "avg_trade_ret": 0.0006,
+          "final_nav": 865994.44,
+          "days": 973
+        },
+        "max_drawdown": -0.3597197124889677,
+        "n_total_trades": 1690,
+        "audit": {
+          "created_at": "2026-06-10T05:08:10.852487+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.781254,
+          "max_gross_pct": 0.999985,
+          "median_n_positions": 10,
+          "turnover_annual_ratio": 42.6898,
+          "n_trade_days": 973,
+          "n_total_trades_actual": 1690
+        }
+      },
+      {
+        "window": "wf_2022_2026",
+        "alpha": {
+          "same_gross": {
+            "point": -0.451806,
+            "lo": -0.641203,
+            "hi": -0.252064,
+            "p_value": 0.0,
+            "n_dates": 1060,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.405678,
+            "n_dates": 1060
+          }
+        },
+        "metrics": {
+          "cagr": -0.35636211230958026,
+          "sharpe": -1.6698388725569406,
+          "max_drawdown": -0.86166,
+          "n_trades": 2011,
+          "hit_rate": 0.3018,
+          "avg_trade_ret": -0.0083,
+          "final_nav": 156703.88,
+          "days": 1061
+        },
+        "max_drawdown": -0.86166,
+        "n_total_trades": 2011,
+        "audit": {
+          "created_at": "2026-06-10T05:08:17.196908+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.739791,
+          "max_gross_pct": 0.999947,
+          "median_n_positions": 9,
+          "turnover_annual_ratio": 48.4588,
+          "n_trade_days": 1061,
+          "n_total_trades_actual": 2011
+        }
+      }
+    ],
+    "quality_lowvol": [
+      {
+        "window": "full_2006_2026",
+        "alpha": {
+          "same_gross": {
+            "point": -0.028066,
+            "lo": -0.107046,
+            "hi": 0.049791,
+            "p_value": 0.4741,
+            "n_dates": 4950,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": false
+          },
+          "same_gross_vs_ew500": {
+            "point": 0.075201,
+            "lo": -0.041998,
+            "hi": 0.190682,
+            "p_value": 0.2084,
+            "n_dates": 4950,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": false
+          }
+        },
+        "metrics": {
+          "cagr": 0.04287052813644521,
+          "sharpe": 0.290634421381595,
+          "max_drawdown": -0.821556259198002,
+          "n_trades": 761,
+          "hit_rate": 0.502,
+          "avg_trade_ret": 0.0289,
+          "final_nav": 2280851.61,
+          "days": 4951
+        },
+        "max_drawdown": -0.821556259198002,
+        "n_total_trades": 761,
+        "audit": {
+          "created_at": "2026-06-10T05:08:36.439108+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.984368,
+          "max_gross_pct": 1.0,
+          "median_n_positions": 10,
+          "turnover_annual_ratio": 3.9501,
+          "n_trade_days": 4951,
+          "n_total_trades_actual": 761
+        }
+      },
+      {
+        "window": "wf_2006_2010",
+        "alpha": {
+          "same_gross": {
+            "point": 0.082878,
+            "lo": -0.142674,
+            "hi": 0.310622,
+            "p_value": 0.482,
+            "n_dates": 972,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": false
+          },
+          "same_gross_vs_ew500": {
+            "point": 0.112198,
+            "n_dates": 972
+          }
+        },
+        "metrics": {
+          "cagr": 0.4290406739894932,
+          "sharpe": 1.0365000662150359,
+          "max_drawdown": -0.821556259198002,
+          "n_trades": 186,
+          "hit_rate": 0.5914,
+          "avg_trade_ret": 0.1249,
+          "final_nav": 3963046.18,
+          "days": 973
+        },
+        "max_drawdown": -0.821556259198002,
+        "n_total_trades": 186,
+        "audit": {
+          "created_at": "2026-06-10T05:08:41.763501+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.935175,
+          "max_gross_pct": 0.999942,
+          "median_n_positions": 10,
+          "turnover_annual_ratio": 5.6168,
+          "n_trade_days": 973,
+          "n_total_trades_actual": 186
+        }
+      },
+      {
+        "window": "wf_2010_2014",
+        "alpha": {
+          "same_gross": {
+            "point": -0.023141,
+            "lo": -0.133332,
+            "hi": 0.089441,
+            "p_value": 0.6822,
+            "n_dates": 966,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": false
+          },
+          "same_gross_vs_ew500": {
+            "point": 0.016855,
+            "n_dates": 966
+          }
+        },
+        "metrics": {
+          "cagr": -0.11844955722335404,
+          "sharpe": -0.4753290814058162,
+          "max_drawdown": -0.4445142395342493,
+          "n_trades": 129,
+          "hit_rate": 0.4109,
+          "avg_trade_ret": -0.0259,
+          "final_nav": 616757.08,
+          "days": 967
+        },
+        "max_drawdown": -0.4445142395342493,
+        "n_total_trades": 129,
+        "audit": {
+          "created_at": "2026-06-10T05:08:46.777550+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.991634,
+          "max_gross_pct": 0.999925,
+          "median_n_positions": 10,
+          "turnover_annual_ratio": 3.7556,
+          "n_trade_days": 967,
+          "n_total_trades_actual": 129
+        }
+      },
+      {
+        "window": "wf_2014_2018",
+        "alpha": {
+          "same_gross": {
+            "point": 0.038751,
+            "lo": -0.121656,
+            "hi": 0.21273,
+            "p_value": 0.6439,
+            "n_dates": 976,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": false
+          },
+          "same_gross_vs_ew500": {
+            "point": 0.229305,
+            "n_dates": 976
+          }
+        },
+        "metrics": {
+          "cagr": 0.1938267205795372,
+          "sharpe": 0.8201546825857083,
+          "max_drawdown": -0.3726356252051557,
+          "n_trades": 88,
+          "hit_rate": 0.6023,
+          "avg_trade_ret": 0.0926,
+          "final_nav": 1986071.4,
+          "days": 977
+        },
+        "max_drawdown": -0.3726356252051557,
+        "n_total_trades": 88,
+        "audit": {
+          "created_at": "2026-06-10T05:08:51.846484+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.993628,
+          "max_gross_pct": 0.999978,
+          "median_n_positions": 10,
+          "turnover_annual_ratio": 2.4897,
+          "n_trade_days": 977,
+          "n_total_trades_actual": 88
+        }
+      },
+      {
+        "window": "wf_2018_2022",
+        "alpha": {
+          "same_gross": {
+            "point": -0.165874,
+            "lo": -0.327947,
+            "hi": 0.007132,
+            "p_value": 0.0533,
+            "n_dates": 972,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": false
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.015058,
+            "n_dates": 972
+          }
+        },
+        "metrics": {
+          "cagr": -0.10880620513946326,
+          "sharpe": -0.4768679856391963,
+          "max_drawdown": -0.45988376243801143,
+          "n_trades": 150,
+          "hit_rate": 0.38,
+          "avg_trade_ret": -0.0266,
+          "final_nav": 641261.92,
+          "days": 973
+        },
+        "max_drawdown": -0.45988376243801143,
+        "n_total_trades": 150,
+        "audit": {
+          "created_at": "2026-06-10T05:08:56.946086+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.997097,
+          "max_gross_pct": 0.999888,
+          "median_n_positions": 10,
+          "turnover_annual_ratio": 4.1445,
+          "n_trade_days": 973,
+          "n_total_trades_actual": 150
+        }
+      },
+      {
+        "window": "wf_2022_2026",
+        "alpha": {
+          "same_gross": {
+            "point": -0.041216,
+            "lo": -0.22094,
+            "hi": 0.129655,
+            "p_value": 0.6478,
+            "n_dates": 1060,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": false
+          },
+          "same_gross_vs_ew500": {
+            "point": 0.067033,
+            "n_dates": 1060
+          }
+        },
+        "metrics": {
+          "cagr": -0.04072225130504015,
+          "sharpe": -0.12690239742749235,
+          "max_drawdown": -0.3384802747662684,
+          "n_trades": 168,
+          "hit_rate": 0.4881,
+          "avg_trade_ret": -0.0032,
+          "final_nav": 839559.96,
+          "days": 1061
+        },
+        "max_drawdown": -0.3384802747662684,
+        "n_total_trades": 168,
+        "audit": {
+          "created_at": "2026-06-10T05:09:02.332967+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.996821,
+          "max_gross_pct": 0.999955,
+          "median_n_positions": 10,
+          "turnover_annual_ratio": 4.2994,
+          "n_trade_days": 1061,
+          "n_total_trades_actual": 168
+        }
+      }
+    ],
+    "oversold_control": [
+      {
+        "window": "full_2006_2026",
+        "alpha": {
+          "same_gross": {
+            "point": -0.156194,
+            "lo": -0.209513,
+            "hi": -0.103143,
+            "p_value": 0.0,
+            "n_dates": 4950,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.142252,
+            "lo": -0.187993,
+            "hi": -0.097204,
+            "p_value": 0.0,
+            "n_dates": 4950,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          }
+        },
+        "metrics": {
+          "cagr": -0.14989948303946332,
+          "sharpe": -0.9499993675594032,
+          "max_drawdown": -0.968619572119574,
+          "n_trades": 10866,
+          "hit_rate": 0.4455,
+          "avg_trade_ret": -0.0018,
+          "final_nav": 41171.32,
+          "days": 4951
+        },
+        "max_drawdown": -0.968619572119574,
+        "n_total_trades": 10866,
+        "audit": {
+          "created_at": "2026-06-10T05:09:21.744068+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.230917,
+          "max_gross_pct": 0.997426,
+          "median_n_positions": 1,
+          "turnover_annual_ratio": 45.3818,
+          "n_trade_days": 4951,
+          "n_total_trades_actual": 10866
+        }
+      },
+      {
+        "window": "wf_2006_2010",
+        "alpha": {
+          "same_gross": {
+            "point": -0.110215,
+            "lo": -0.239352,
+            "hi": 0.000108,
+            "p_value": 0.0713,
+            "n_dates": 972,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": false
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.091363,
+            "n_dates": 972
+          }
+        },
+        "metrics": {
+          "cagr": -0.1788600829772965,
+          "sharpe": -0.8515556017053246,
+          "max_drawdown": -0.6877687358757404,
+          "n_trades": 1256,
+          "hit_rate": 0.4411,
+          "avg_trade_ret": -0.0045,
+          "final_nav": 467621.83,
+          "days": 973
+        },
+        "max_drawdown": -0.6877687358757404,
+        "n_total_trades": 1256,
+        "audit": {
+          "created_at": "2026-06-10T05:09:26.876531+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.140437,
+          "max_gross_pct": 0.997426,
+          "median_n_positions": 0,
+          "turnover_annual_ratio": 29.3979,
+          "n_trade_days": 973,
+          "n_total_trades_actual": 1256
+        }
+      },
+      {
+        "window": "wf_2010_2014",
+        "alpha": {
+          "same_gross": {
+            "point": -0.20497,
+            "lo": -0.31701,
+            "hi": -0.094917,
+            "p_value": 0.0004,
+            "n_dates": 966,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.216925,
+            "n_dates": 966
+          }
+        },
+        "metrics": {
+          "cagr": -0.2154355128513229,
+          "sharpe": -1.3276577777354865,
+          "max_drawdown": -0.6453726118726585,
+          "n_trades": 3084,
+          "hit_rate": 0.4491,
+          "avg_trade_ret": -0.0018,
+          "final_nav": 394526.77,
+          "days": 967
+        },
+        "max_drawdown": -0.6453726118726585,
+        "n_total_trades": 3084,
+        "audit": {
+          "created_at": "2026-06-10T05:09:32.102716+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.35087,
+          "max_gross_pct": 0.996885,
+          "median_n_positions": 2,
+          "turnover_annual_ratio": 77.4186,
+          "n_trade_days": 967,
+          "n_total_trades_actual": 3084
+        }
+      },
+      {
+        "window": "wf_2014_2018",
+        "alpha": {
+          "same_gross": {
+            "point": -0.228216,
+            "lo": -0.391169,
+            "hi": -0.04368,
+            "p_value": 0.0109,
+            "n_dates": 976,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.209134,
+            "n_dates": 976
+          }
+        },
+        "metrics": {
+          "cagr": -0.15627942342446122,
+          "sharpe": -0.814486794897716,
+          "max_drawdown": -0.6718154098407008,
+          "n_trades": 2868,
+          "hit_rate": 0.446,
+          "avg_trade_ret": -0.0011,
+          "final_nav": 517804.91,
+          "days": 977
+        },
+        "max_drawdown": -0.6718154098407008,
+        "n_total_trades": 2868,
+        "audit": {
+          "created_at": "2026-06-10T05:09:37.357231+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.342149,
+          "max_gross_pct": 0.999052,
+          "median_n_positions": 2,
+          "turnover_annual_ratio": 69.9621,
+          "n_trade_days": 977,
+          "n_total_trades_actual": 2868
+        }
+      },
+      {
+        "window": "wf_2018_2022",
+        "alpha": {
+          "same_gross": {
+            "point": -0.227504,
+            "lo": -0.342529,
+            "hi": -0.119085,
+            "p_value": 0.0001,
+            "n_dates": 972,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.191705,
+            "n_dates": 972
+          }
+        },
+        "metrics": {
+          "cagr": -0.18179293437966582,
+          "sharpe": -1.3320439342106274,
+          "max_drawdown": -0.5530285684865528,
+          "n_trades": 2416,
+          "hit_rate": 0.4536,
+          "avg_trade_ret": -0.0021,
+          "final_nav": 461212.44,
+          "days": 973
+        },
+        "max_drawdown": -0.5530285684865528,
+        "n_total_trades": 2416,
+        "audit": {
+          "created_at": "2026-06-10T05:09:42.562880+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.268378,
+          "max_gross_pct": 0.996935,
+          "median_n_positions": 1,
+          "turnover_annual_ratio": 66.1481,
+          "n_trade_days": 973,
+          "n_total_trades_actual": 2416
+        }
+      },
+      {
+        "window": "wf_2022_2026",
+        "alpha": {
+          "same_gross": {
+            "point": -0.116985,
+            "lo": -0.220864,
+            "hi": -0.015984,
+            "p_value": 0.0272,
+            "n_dates": 1060,
+            "ci_positive_after_cost": false,
+            "ci_negative_after_cost": true
+          },
+          "same_gross_vs_ew500": {
+            "point": -0.098062,
+            "n_dates": 1060
+          }
+        },
+        "metrics": {
+          "cagr": -0.09700277553063918,
+          "sharpe": -0.7685433295299631,
+          "max_drawdown": -0.41398889000000005,
+          "n_trades": 2263,
+          "hit_rate": 0.4291,
+          "avg_trade_ret": -0.0008,
+          "final_nav": 651030.88,
+          "days": 1061
+        },
+        "max_drawdown": -0.41398889000000005,
+        "n_total_trades": 2263,
+        "audit": {
+          "created_at": "2026-06-10T05:09:48.211676+00:00",
+          "config_hash": "29a96eedff4a8ffdc4e5e790ffb2ca995a8fc875d7d33b1f6067520b46a1fd88",
+          "data_hash": "7a9df9f076128d9b5722760872b91f72",
+          "git_commit": "d1bee83",
+          "engine_version": "a923afe9226c",
+          "max_positions_enforced": true,
+          "avg_gross_pct": 0.221067,
+          "max_gross_pct": 0.993881,
+          "median_n_positions": 1,
+          "turnover_annual_ratio": 53.2857,
+          "n_trade_days": 1061,
+          "n_total_trades_actual": 2263
+        }
+      }
+    ]
+  },
+  "h1_thesis_overlay": {
+    "identical_to_h1": true,
+    "note": "no historical theses exist (registered 2026-05-30 > panel end 2026-05-26); overlay arm verified IDENTICAL to h1 over the panel — it is a forward-only variant",
+    "veto_set": [
+      "300308.SZ",
+      "603233.SH",
+      "6160.HK",
+      "700.HK",
+      "9999.HK"
+    ]
+  },
+  "cost_scenario_runs": [
+    {
+      "window": "full_2006_2026",
+      "cost_scenario": "optimistic_0.20_RT",
+      "alpha": {
+        "same_gross": {
+          "point": -0.215656
+        }
+      }
+    },
+    {
+      "window": "full_2006_2026",
+      "cost_scenario": "baseline_0.40_RT",
+      "alpha": {
+        "same_gross": {
+          "point": -0.230424
+        }
+      }
+    },
+    {
+      "window": "full_2006_2026",
+      "cost_scenario": "pessimistic_0.60_RT",
+      "alpha": {
+        "same_gross": {
+          "point": -0.248439
+        }
+      }
+    }
+  ],
+  "by_multiple_testing": {
+    "family": [
+      "h1",
+      "quality_lowvol",
+      "oversold_control"
+    ],
+    "raw_p": {
+      "h1": 0.0,
+      "quality_lowvol": 0.4741,
+      "oversold_control": 0.0
+    },
+    "adjusted_p": {
+      "h1": 0.0,
+      "oversold_control": 0.0,
+      "quality_lowvol": 0.8691833333333334
+    }
+  },
+  "gates": {
+    "variant_id": "quant_v0_h1",
+    "verdict": "FAIL",
+    "stage": "R&D",
+    "n_gates_total": 19,
+    "n_gates_failed": 5,
+    "n_gates_na": 0,
+    "n_gates_trace": 1,
+    "failed_gate_ids": [
+      "WF1",
+      "WF2",
+      "IMPL4",
+      "IMPL5",
+      "IMPL7"
+    ],
+    "na_gate_ids": [],
+    "trace_gate_ids": [
+      "AUD2"
+    ],
+    "gate_outcomes": [
+      {
+        "gate_id": "PRE1",
+        "name": "manifest_present",
+        "category": "PRE",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "manifest schema OK; variant_id=quant_v0_h1",
+        "metric": null,
+        "threshold": "schema+fields",
+        "windows_evaluated": null
+      },
+      {
+        "gate_id": "PRE2",
+        "name": "registered_before_run",
+        "category": "PRE",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "registered_at=2026-06-10T05:06:57.807612+00:00 vs earliest_run=2026-06-10T05:07:47.569661+00:00",
+        "metric": null,
+        "threshold": "registered_at < created_at",
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "PRE3",
+        "name": "hypothesis_immutable",
+        "category": "PRE",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "hypothesis_lock_hash declared (immutability enforced via git/branch)",
+        "metric": null,
+        "threshold": "declared",
+        "windows_evaluated": null
+      },
+      {
+        "gate_id": "WF1",
+        "name": "walk_forward_3_of_5_pos",
+        "category": "STAT",
+        "pass": false,
+        "verdict": "FAIL",
+        "reason": "0/5 windows have same_gross α ≥ 0 point estimate; threshold 3/5",
+        "metric": 0,
+        "threshold": ">=3/5",
+        "windows_evaluated": [
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "WF2",
+        "name": "oos_not_neg_significant",
+        "category": "STAT",
+        "pass": false,
+        "verdict": "FAIL",
+        "reason": "OOS window wf_2022_2026 same_gross α point=-0.451806, CI=[-0.6412,-0.2521], p=0.0; NEG-sig=True",
+        "metric": -0.451806,
+        "threshold": "CI hi ≥ 0 AND not (p<0.05 with neg point)",
+        "windows_evaluated": [
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "MT",
+        "name": "by_corrected_p_lt_alpha",
+        "category": "STAT",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "BY-corrected family p = 0.0000, threshold < 0.05",
+        "metric": 0.0,
+        "threshold": "<0.05",
+        "windows_evaluated": null
+      },
+      {
+        "gate_id": "BENCH",
+        "name": "multi_benchmark_reported",
+        "category": "STAT",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "all required benchmarks present as non-empty curves: ['cash2pct', 'csi1000', 'csi300', 'ew500', 'zz500']",
+        "metric": 5,
+        "threshold": "csi300, zz500, csi1000, ew500, cash2pct ALL required as non-empty curves (SSE50 optional, HSI absent per Junyan #13)",
+        "windows_evaluated": null
+      },
+      {
+        "gate_id": "NOSW",
+        "name": "not_single_window_only",
+        "category": "STAT",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "full-sample window='full_2006_2026' same_gross α point=-0.2304 CI=[-0.3119,-0.1517] POS-sig=False; walk-forward 0/5 POS; bad_pattern=False",
+        "metric": -0.230424,
+        "threshold": "not (full POS-sig AND wf present AND wf < 3/5 pos)",
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "IMPL1",
+        "name": "max_positions_enforced",
+        "category": "IMPL",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "max_positions_enforced=True in all windows",
+        "metric": 6,
+        "threshold": "all windows == True",
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "IMPL2",
+        "name": "avg_gross_min_30pct",
+        "category": "IMPL",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "avg_gross OK in all windows (mean of window avgs=0.6206)",
+        "metric": 0.6205601666666666,
+        "threshold": 0.3,
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "IMPL3",
+        "name": "median_pos_ge_2",
+        "category": "IMPL",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "median_n_positions ≥ 2.0 in all windows",
+        "metric": 2.0,
+        "threshold": 2.0,
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "IMPL4",
+        "name": "turnover_le_200pct",
+        "category": "IMPL",
+        "pass": false,
+        "verdict": "FAIL",
+        "reason": "turnover > 200% threshold; failed windows (window, observed turnover): [('full_2006_2026', '2721.9%'), ('wf_2006_2010', '2367.0%'), ('wf_2010_2014', '3989.7%'), ('wf_2014_2018', '4153.2%'), ('wf_2018_2022', '4269.0%'), ('wf_2022_2026', '4845.9%')]",
+        "metric": 48.4588,
+        "threshold": "2.0 (= 200% annual)",
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "IMPL5",
+        "name": "max_dd_floor_25pct",
+        "category": "IMPL",
+        "pass": false,
+        "verdict": "FAIL",
+        "reason": "failed: [('full_2006_2026', -0.991576481462093), ('wf_2006_2010', -0.747001667657428), ('wf_2010_2014', -0.7870075361594765), ('wf_2014_2018', -0.8689526669994219), ('wf_2018_2022', -0.3597197124889677), ('wf_2022_2026', -0.86166)]",
+        "metric": -0.991576481462093,
+        "threshold": -0.25,
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "IMPL6",
+        "name": "sample_size_250",
+        "category": "IMPL",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "all windows ≥ 250 trade dates",
+        "metric": 967,
+        "threshold": 250,
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "IMPL7",
+        "name": "post_cost_alpha_positive",
+        "category": "IMPL",
+        "pass": false,
+        "verdict": "FAIL",
+        "reason": "window=full_2006_2026; same_gross α (already net of cost) by scenario: optimistic 0.20% RT=-0.2157; baseline 0.40% RT=-0.2304; pessimistic 0.60% RT=-0.2484; stage=R&D",
+        "metric": -0.230424,
+        "threshold": 0.0,
+        "windows_evaluated": [
+          "full_2006_2026"
+        ]
+      },
+      {
+        "gate_id": "AUD1",
+        "name": "audit_fields_present",
+        "category": "AUDIT",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "all required audit fields present",
+        "metric": 6,
+        "threshold": [
+          "config_hash",
+          "data_hash",
+          "git_commit",
+          "engine_version"
+        ],
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "AUD3",
+        "name": "trade_log_full",
+        "category": "AUDIT",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "trade-log accounting consistent",
+        "metric": 6,
+        "threshold": "n_total_trades_actual == n_total_trades",
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "BUNDLE",
+        "name": "bundle_completeness",
+        "category": "AUDIT",
+        "pass": true,
+        "verdict": "PASS",
+        "reason": "bundle complete: 6 declared windows all present (['full_2006_2026', 'wf_2006_2010', 'wf_2010_2014', 'wf_2014_2018', 'wf_2018_2022', 'wf_2022_2026'])",
+        "metric": "6/6",
+        "threshold": "all manifest.test_plan.windows present",
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      },
+      {
+        "gate_id": "AUD2",
+        "name": "max_positions_enforced_audit_mirror",
+        "category": "AUDIT",
+        "pass": true,
+        "verdict": "TRACE",
+        "reason": "max_positions_enforced=True in all windows",
+        "metric": 6,
+        "threshold": "all windows == True",
+        "windows_evaluated": [
+          "full_2006_2026",
+          "wf_2006_2010",
+          "wf_2010_2014",
+          "wf_2014_2018",
+          "wf_2018_2022",
+          "wf_2022_2026"
+        ]
+      }
+    ]
+  },
+  "verdict": {
+    "criteria": {
+      "ci_positive_after_cost_vs_csi300": false,
+      "ci_positive_after_cost_vs_ew500": false,
+      "wf1_3of5_positive": false,
+      "oos_2022_2026_not_sig_neg": true,
+      "gates_overall_pass": false,
+      "by_family_adjusted_p_h1": 0.0
+    },
+    "claim_permitted": false,
+    "recommendation": "KILL — significantly negative or walk-forward collapse",
+    "wf_positive_windows": "0/5"
+  },
+  "validation_status": "unvalidated"
+}
