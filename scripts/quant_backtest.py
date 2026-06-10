@@ -440,9 +440,18 @@ def _quality_composite(idx, members, T, trade_dates):
 
 
 def run_tilt_arm(panel, idx, liquid, trade_dates, start, end, capital=CAPITAL, cost=None,
-                 rebal_days=REBAL_DAYS, top_k=MAX_POSITIONS):
-    """quality_lowvol BASELINE: rebalance every rebal_days to the top-K composite names.
-    Same T+1 / cost / lot / stale-markout discipline as run_arm. No stops (pure tilt)."""
+                 rebal_days=REBAL_DAYS, top_k=MAX_POSITIONS,
+                 rank_buffer_mult=None, random_seed=None):
+    """quality_lowvol tilt: rebalance every rebal_days to the top-K composite names.
+    Same T+1 / cost / lot / stale-markout discipline as run_arm. No stops (pure tilt).
+    C1 params (spec QUANT_C1_LOWTURNOVER_TILT_SPEC.md, Junyan-ratified):
+      rank_buffer_mult — rank-exit buffer: a HELD name sells only when its composite rank
+        falls beyond rank_buffer_mult*top_k (C1b uses 2.0); buys still fill from the top-K.
+        Cuts turnover structurally (sell-side churn is the cost driver).
+      random_seed — NEGATIVE CONTROL: identical eligible pool + cadence + mechanics, but the
+        RANKING is seeded-random per rebalance (seed + i//rebal_days, deterministic). Isolates
+        whether the composite's ordering adds anything over 'any K-name EW rotation'."""
+    import random as _random
     c_slip = (cost or {}).get("slippage", SLIPPAGE)
     c_comm = (cost or {}).get("commission", COMMISSION)
     c_stamp = (cost or {}).get("stamp", STAMP_DUTY_SELL)
@@ -489,8 +498,17 @@ def run_tilt_arm(panel, idx, liquid, trade_dates, start, end, capital=CAPITAL, c
         if i % rebal_days == 0:                       # rebalance decision at T, fills at T+1
             members = [tk for tk in liquid.get(T, []) if (T, tk) in have]
             comp = _quality_composite(idx, members, T, trade_dates)
-            target = [tk for tk, _ in sorted(comp.items(), key=lambda kv: (-kv[1], kv[0]))[:top_k]]
-            pending_sells = {tk for tk in positions if tk not in target}
+            if random_seed is not None:               # control: same pool, random ordering
+                rng = _random.Random(random_seed + (i // rebal_days))
+                comp = {tk: rng.random() for tk in comp}
+            ranked = sorted(comp.items(), key=lambda kv: (-kv[1], kv[0]))
+            target = [tk for tk, _ in ranked[:top_k]]
+            if rank_buffer_mult:
+                rank_of = {tk: r for r, (tk, _) in enumerate(ranked, start=1)}
+                keep_limit = int(rank_buffer_mult * top_k)
+                pending_sells = {tk for tk in positions if rank_of.get(tk, 10 ** 9) > keep_limit}
+            else:
+                pending_sells = {tk for tk in positions if tk not in target}
             pending_buys = [tk for tk in target if tk not in positions]
         # sells first (free cash), then buys — all at T_next fills
         for tk in list(pending_sells):
