@@ -43,6 +43,12 @@ REQUIRED_GROUPS = ("identity", "thesis", "evidence", "catalyst_calendar", "wrong
                    "valuation_target_range", "execution_plan", "risk", "disclaimers")
 BILINGUAL_FIELDS = (("thesis", "variant_perception"), ("thesis", "mechanism"))
 RR_CONVICTION_BAR = 2.0          # [unvalidated intuition] — the 2026-05-15 大参林 rule
+# Serenity block (#67 ratified 2026-06-11): REQUIRED for NEW names; optional for the
+# registered refresh sample(s). 10 fields per SERENITY_INTEGRATION_SPEC.md §2.
+SERENITY_FIELDS = ("theme_system_change", "value_chain_map", "scarce_layer", "company_role",
+                   "bottleneck_evidence", "market_may_be_missing", "substitution_route",
+                   "expansion_difficulty", "customer_validation", "what_weakens_the_view")
+SERENITY_OPTIONAL_REFRESH = {"002594.SZ"}  # ticker #1 = the v0→v1 refresh sample (pre-dates #67)
 
 
 def _load(p: Path, default=None):
@@ -123,6 +129,28 @@ def qualify(core: dict) -> list[str]:
             errs.append(f"{'.'.join(path)} must be bilingual {{zh,en}}")
     if not _bilingual_ok(core["execution_plan"].get("summary", {})):
         errs.append("execution_plan.summary must be bilingual {zh,en}")
+    # serenity block (#67): REQUIRED for new names; the discovery layer must answer
+    # 卡在哪一层/为什么绕不开/证据多强/什么事实让我们降级 — never a trade signal
+    tkr = (core.get("identity") or {}).get("ticker", "")
+    ser = core.get("serenity")
+    if not ser and tkr not in SERENITY_OPTIONAL_REFRESH:
+        errs.append("serenity block missing (REQUIRED for new names per the #67 ratification)")
+    if ser:
+        for f in SERENITY_FIELDS:
+            if not ser.get(f):
+                errs.append(f"serenity.{f} missing")
+        if len(ser.get("value_chain_map") or []) < 3:
+            errs.append("serenity.value_chain_map needs >=3 ranked layers")
+        for i, b in enumerate(ser.get("bottleneck_evidence") or []):
+            if b.get("tier") not in ("E1", "E2"):
+                errs.append(f"serenity.bottleneck_evidence[{i}] missing E1/E2 tier")
+            if b.get("citation_grade") not in CITE_GRADES:
+                errs.append(f"serenity.bottleneck_evidence[{i}] citation_grade missing/invalid")
+        mech = [w for w in (ser.get("what_weakens_the_view") or [])
+                if all(w.get(k) for k in ("metric", "threshold", "source", "check_date"))]
+        if len(mech) < 2:
+            errs.append("serenity.what_weakens_the_view needs >=2 MECHANIZED items "
+                        "(metric+threshold+source+check_date)")
     return errs
 
 
@@ -140,9 +168,17 @@ def _auto_context(ticker: str) -> dict:
     breaks = []
     if last.get("date") and last["date"] < datetime.now(timezone.utc).date().isoformat().replace("-", "")[:8]:
         pass
+    # price fallback: when no per-ticker ohlc is committed yet (new watchlist names),
+    # fall back to the universe_a snapshot price with its date carried — staleness and
+    # source are explicit, never papered over
+    px_close, px_date, px_src = last.get("close"), last.get("date"), "ohlc_committed"
+    if px_close is None and row.get("price"):
+        px_close = row.get("price")
+        px_date = ((uni.get("_meta") or {}).get("fetched_at") or "")[:10]
+        px_src = "universe_a_snapshot_fallback"
     return {
-        "last_price": {"close": last.get("close"), "date": last.get("date"),
-                       "note": "latest COMMITTED bar — staleness is flagged, never papered over"},
+        "last_price": {"close": px_close, "date": px_date, "source": px_src,
+                       "note": "latest COMMITTED price — staleness is flagged, never papered over"},
         "technical": {"zone": sig.get("zone"), "generated_at": sig.get("generated_at"),
                       "rsi14": (sig.get("indicators") or {}).get("rsi14"),
                       "signals": [s.get("type") for s in (sig.get("signals") or [])]},
@@ -155,6 +191,31 @@ def _auto_context(ticker: str) -> dict:
                                    "methods_used": mrow.get("methods_used"),
                                    "note": "automated valuation generators' status — breaks logged honestly"},
     }
+
+
+def _apply_corporate_actions(auto: dict, core: dict) -> dict:
+    """Adjust a committed reference price for corporate actions DECLARED in the core
+    (E1-sourced, e.g. 10转4派4). Applies only when the committed price pre-dates the
+    ex-date and the ex-date has passed — so a stale snapshot is never compared against
+    a post-split band on the wrong share basis. Dies naturally once fresh bars land."""
+    lp = dict(auto.get("last_price") or {})
+    px, pdate = lp.get("close"), str(lp.get("date") or "")
+    if px is None or not pdate:
+        return auto
+    norm = lambda d: str(d).replace("-", "")[:8]
+    today = norm(datetime.now(timezone.utc).date().isoformat())
+    for ca in ((core.get("identity") or {}).get("corporate_actions") or []):
+        ex = norm(ca.get("ex_date", ""))
+        if ca.get("type") == "split_dividend" and ex and norm(pdate) < ex <= today:
+            factor = float(ca.get("split_factor", 1)) or 1.0
+            div = float(ca.get("dividend_per_share", 0))
+            adj = round((float(px) - div) / factor, 2)
+            lp.update({"close": adj, "raw_close_before_adjustment": px,
+                       "adjustment": (f"split_dividend ex {ca.get('ex_date')}: "
+                                      f"({px} - {div}) / {factor} = {adj}"),
+                       "adjustment_source": ca.get("source", "declared in core")})
+            auto = {**auto, "last_price": lp}
+    return auto
 
 
 def _content_lock(sheet: dict) -> str:
@@ -197,7 +258,7 @@ def compose(ticker: str) -> dict:
         for e in errs:
             print(f"  - {e}")
         raise SystemExit(2)
-    auto = _auto_context(ticker)
+    auto = _apply_corporate_actions(_auto_context(ticker), core)
     px = auto["last_price"].get("close")
     rr = _rr(core["valuation_target_range"], px) if px else {"reward_to_risk": None, "error": "no price"}
     sheet = {
@@ -258,6 +319,23 @@ def _render_md(s: dict) -> str:
         L.append(f"| {i} | {it['claim'][:120]}… | {it['tier']} | {it['causal_tag']} | {it['citation_grade']} |")
     L.append(f"\n**Rule-X:** {'PASS' if ev['rule_x_check'].get('pass') else 'FAIL'} — {ev['rule_x_check'].get('why','')}")
     L.append(f"\n**Contrarian view:** {ev['contrarian_view']}\n")
+    if s.get("serenity"):
+        ser = s["serenity"]
+        L.append("## 2b. Serenity 发现层 / Discovery layer (#67 — never a trade signal)")
+        L.append(f"- **主题/系统变化:** {ser['theme_system_change']}")
+        L.append(f"- **链上位置(层排序):** {' → '.join(ser['value_chain_map'])}")
+        L.append(f"- **稀缺层:** {ser['scarce_layer']} · **角色:** {ser['company_role']}")
+        L.append("- **瓶颈证据:**")
+        for b in ser["bottleneck_evidence"]:
+            L.append(f"  - [{b.get('tier')}/{b.get('citation_grade')}] {b.get('claim')}")
+        L.append(f"- **市场可能忽略什么:** {ser['market_may_be_missing']}")
+        L.append(f"- **替代路径:** {ser['substitution_route']}")
+        L.append(f"- **扩产/替代难度:** {ser['expansion_difficulty']}")
+        L.append(f"- **客户验证:** {ser['customer_validation']}")
+        L.append("- **降级条件(what weakens the view,机械化):**")
+        for w in ser["what_weakens_the_view"]:
+            L.append(f"  - {w.get('metric')} {w.get('threshold')}(source: {w.get('source')}; check: {w.get('check_date')})")
+        L.append("")
     L.append("## 3. 催化剂日历 / Catalyst calendar")
     for c in s["catalyst_calendar"]:
         evt = c["event"]["zh"] if isinstance(c.get("event"), dict) else c.get("event")
@@ -296,8 +374,28 @@ def _render_md(s: dict) -> str:
 
 
 # ───────────────────────── selftest ─────────────────────────
+def _valid_serenity():
+    return {
+        "theme_system_change": "测试主题/系统变化",
+        "value_chain_map": ["L1 上游(最紧)", "L2 中游", "L3 下游"],
+        "scarce_layer": "L1",
+        "company_role": "CONTROLS",
+        "bottleneck_evidence": [{"claim": "b", "tier": "E1",
+                                 "citation_grade": "EDGE_ESTABLISHING", "source": "s"}],
+        "market_may_be_missing": "m",
+        "substitution_route": "r",
+        "expansion_difficulty": "d",
+        "customer_validation": "v",
+        "what_weakens_the_view": [
+            {"metric": "m1", "threshold": "<= 1", "source": "s1", "check_date": "2026-08-31"},
+            {"metric": "m2", "threshold": ">= 2", "source": "s2", "check_date": "2026-08-31"},
+        ],
+    }
+
+
 def _valid_core():
     return {
+        "serenity": _valid_serenity(),
         "identity": {"ticker": "TEST.SZ", "name": {"zh": "测试", "en": "Test"}, "market": "A",
                      "as_of": "2026-06-10", "provenance": {"v0": "x"}},
         "thesis": {"variant_perception": {"zh": "市场信X我们信Y", "en": "mkt X we Y"},
@@ -338,12 +436,33 @@ def _selftest() -> int:
         "monolingual thesis": lambda c: c["thesis"]["variant_perception"].pop("zh"),
         "calibrated true": lambda c: c["valuation_target_range"].update({"calibrated": True}),
         "one trigger only": lambda c: c["wrong_if"].update({"triggers": c["wrong_if"]["triggers"][:1]}),
+        "missing serenity on new name": lambda c: c.pop("serenity"),
+        "serenity <3 layers": lambda c: c["serenity"].update(
+            {"value_chain_map": c["serenity"]["value_chain_map"][:2]}),
+        "serenity <2 mechanized weakens": lambda c: c["serenity"].update(
+            {"what_weakens_the_view": c["serenity"]["what_weakens_the_view"][:1]}),
+        "serenity untiered bottleneck evidence": lambda c: c["serenity"]["bottleneck_evidence"][0].pop("tier"),
     }
     for name, fn in muts.items():
         c = json.loads(json.dumps(_valid_core()))
         fn(c)
         if not qualify(c):
             errs.append(f"mutilation '{name}' must fail qualification but passed")
+    # serenity exemption (#67): the ratified refresh sample stays exempt; new names are not
+    c = json.loads(json.dumps(_valid_core())); c.pop("serenity"); c["identity"]["ticker"] = "002594.SZ"
+    if qualify(c):
+        errs.append("ratified refresh name (002594.SZ) must stay exempt from the serenity requirement")
+    # corporate-action adjustment: a pre-split committed snapshot must be re-based before R/R
+    fake_auto = {"last_price": {"close": 195.94, "date": "2026-05-08", "source": "universe_a_snapshot_fallback"}}
+    fake_core = {"identity": {"corporate_actions": [
+        {"type": "split_dividend", "ex_date": "2026-06-10", "split_factor": 1.4,
+         "dividend_per_share": 0.4, "source": "权益分派实施公告"}]}}
+    adj = _apply_corporate_actions(fake_auto, fake_core)["last_price"]
+    if abs(adj["close"] - 139.67) > 0.01 or adj.get("raw_close_before_adjustment") != 195.94:
+        errs.append(f"corporate-action adjustment wrong: {adj.get('close')} (expect 139.67)")
+    post = {"last_price": {"close": 186.74, "date": "2026-06-11", "source": "ohlc_committed"}}
+    if _apply_corporate_actions(post, fake_core)["last_price"]["close"] != 186.74:
+        errs.append("corporate-action adjustment must NOT touch a post-ex-date price")
     # R/R math + conviction bar: bull_mid 152.5, bear_mid 55; px 93.75 -> rr=(152.5-93.75)/(93.75-55)=1.52
     rr = _rr(_valid_core()["valuation_target_range"], 93.75)
     if abs(rr["reward_to_risk"] - 1.52) > 0.02:
@@ -374,11 +493,13 @@ def _selftest() -> int:
         for e in errs:
             print(f"  - {e}")
         return 1
-    print("decision_sheet selftest PASSED (valid core qualifies; all 8 mutilations refused — missing "
+    print("decision_sheet selftest PASSED (valid core qualifies; all 12 mutilations refused — missing "
           "group / untagged link / un-mechanized trigger / single-point target / no assumptions / "
-          "monolingual / calibrated:true / <2 triggers; R/R math exact; 2:1 bar forces WATCH + computes "
-          "the entry where the bar is met; content lock invariant to generated_at AND sensitive to "
-          "content changes)")
+          "monolingual / calibrated:true / <2 triggers / missing-serenity-on-new-name / <3 layers / "
+          "<2 mechanized weakens / untiered bottleneck evidence; refresh-sample serenity exemption holds; "
+          "corporate-action adjustment re-bases pre-split snapshots and leaves post-ex prices alone; "
+          "R/R math exact; 2:1 bar forces WATCH + computes the entry where the bar is met; content lock "
+          "invariant to generated_at AND sensitive to content changes)")
     return 0
 
 
