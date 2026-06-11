@@ -141,16 +141,18 @@ intuition]`, every strong claim source-bound. Output: `docs/research/serenity/SC
 + a scores JSON. **No product surface from the scan itself** — candidates surface only after the
 full sheet → red-team → registration path.
 
-## 6. Open decisions for Junyan
+## 6. RATIFIED decisions (Junyan 2026-06-11)
 
-1. **Ratify the three locks** (§1) — the constitution of the integration.
-2. **Serenity block in the qualification rule:** REQUIRED for all new sheets (strict, slows
-   batch-1) vs optional-until-batch-1-proves-it (lean: required for NEW names, optional for
-   refreshes like BYD — recommended).
-3. **Approve Scan #1 theme = A股 AI 半导体** (alternatives: CPO/光模块 — closest to 300308
-   domain knowledge; 机器人; 电力设备).
-4. **S1 timing:** stays closed until CTF batch-1 + checkpoints mature (recommended — quant line
-   is PAUSED), or open early as a forward-only shadow manifest.
+1. **Three locks: RATIFIED** — discovery + scoring only · block feeds the five-axis red-team ·
+   quant entry = new S1 manifest, no H1/C1 reuse, no historical score backfill.
+2. **Serenity block: REQUIRED for NEW names, optional for refreshes** (e.g. BYD).
+3. **Scan #1 theme: A股 AI 半导体.**
+4. **S1: CLOSED** until CTF batch-1 + forward checkpoints mature.
+
+**Execution boundary (written in stone):** no funds/ETF · Day-0 scan = an hours-level one-time
+research job · the DAILY loop watches POOL-member announcements/financials/prices/trigger deltas
+ONLY — **never a daily full-market re-scan** (that would be noise and a labor black hole). Pool
+membership changes on events and weekly refreshes, with reasons.
 
 > One line: Serenity 给我们的不是 alpha,是**系统化的发现力 + 每个论点必须回答"卡在哪一层、
 > 为什么绕不开、证据多强、什么事实让我们降级"** —— 它接到 Factory A 的上游,经 Factory A 的
