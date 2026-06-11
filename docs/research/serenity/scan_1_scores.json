@@ -3,7 +3,8 @@
     "generated_at": "2026-06-11",
     "doc": "docs/research/serenity/SCAN_1_AI_SEMIS.md",
     "method": "docs/strategy/SERENITY_INTEGRATION_SPEC.md (#67 ratified)",
-    "status": "AWAITING_REVIEW"
+    "status": "AWAITING_REVIEW",
+    "revision": "fix-forward 2026-06-11: P1 per-name sources (top-5) + P2 reproducible lock spec (Junyan review findings 1+2)"
   },
   "scan_id": "SCAN_1_AI_SEMIS",
   "theme": "A股 AI 半导体供应链",
@@ -329,6 +330,38 @@
         "D2: 2026全年减薄机累计出机≤35台 → HBM杠杆叙事降级",
         "D3: 毛利率连续两季<42% → 降档",
         "D4: 定增摊薄>8%股本且订单未同步上修 → 降档"
+      ],
+      "sources": [
+        {
+          "claim": "2025营收46.48亿 +36.5%",
+          "source_title": "证券市场周刊(转年报数据)",
+          "url_or_id": "https://static.weeklyonstock.com/26/0422/AB2621395322843.html",
+          "evidence_tier": "E2(底层年报)"
+        },
+        {
+          "claim": "CMP累计出机超1000台; 12寸减薄机累计破20台(截至2026-04)",
+          "source_title": "爱集微",
+          "url_or_id": "https://jiweipreview.laoyaoba.com/html/news/newsdetail?news_id=850449",
+          "evidence_tier": "E2(底层公司口径)"
+        },
+        {
+          "claim": "26Q1营收12.01亿 +31.7%; 股东会: 2026订单预期向好, 存储+逻辑占比超六成",
+          "source_title": "腾讯财经(股东会/一季报转述)",
+          "url_or_id": "https://news.qq.com/rain/a/20260424A0923300",
+          "evidence_tier": "E2(底层披露)"
+        },
+        {
+          "claim": "26Q1净利同比仅+6%(vs 营收+31.7%, 剪刀差=惩罚项依据)",
+          "source_title": "天脉财经",
+          "url_or_id": "https://m.dtm.com.cn/news/202601/183094.html",
+          "evidence_tier": "E2"
+        },
+        {
+          "claim": "10.05亿收购芯嵛82%股权补离子注入",
+          "source_title": "财联社(公告报道)",
+          "url_or_id": "https://www.cls.cn/detail/1899485",
+          "evidence_tier": "E2(底层公告)"
+        }
       ]
     },
     {
@@ -363,6 +396,44 @@
         "D2: 国内份额口径跌破60% → 锁定逻辑弱化",
         "D3: 再次非主线跨界并购(现金对价>5亿) → 治理降档",
         "D4: 存储扩产推迟的公告级连锁信号 → 需求降档"
+      ],
+      "sources": [
+        {
+          "claim": "2025抛光垫收入10.91亿 +52.3%; 半导体板块20.86亿占总营收57%",
+          "source_title": "上海证券报(年报摘要)",
+          "url_or_id": "https://paper.cnstock.com/html/2026-03/27/content_2192555.htm",
+          "evidence_tier": "E2(底层年报)"
+        },
+        {
+          "claim": "抛光垫单月销量破4万片",
+          "source_title": "PjTime",
+          "url_or_id": "https://www.pjtime.com/2026/3/363116236972.shtml",
+          "evidence_tier": "E2"
+        },
+        {
+          "claim": "26Q1硬垫月产能达5万片(年60万片)",
+          "source_title": "调研纪要(新浪转载)",
+          "url_or_id": "https://finance.sina.cn/2026-05-09/detail-inhxhcxm1647986.d.html",
+          "evidence_tier": "E2(底层IR)"
+        },
+        {
+          "claim": "国内抛光垫份额~70%、替代率近80%",
+          "source_title": "至顶网",
+          "url_or_id": "https://m.zhiding.cn/article/3183801.htm",
+          "evidence_tier": "E2(媒体/公司口径, 未经第三方审计)"
+        },
+        {
+          "claim": "6.3亿跨界收购锂电辅材(惩罚项依据)",
+          "source_title": "新浪财经",
+          "url_or_id": "https://finance.sina.com.cn/wm/2026-04-04/doc-inhtipvz7985084.shtml",
+          "evidence_tier": "E2"
+        },
+        {
+          "claim": "全球CMP垫2026继续紧缺(仅线索, 评分未采用)",
+          "source_title": "东财财富号",
+          "url_or_id": "https://caifuhao.eastmoney.com/news/20260524125139239168160",
+          "evidence_tier": "lead(未采用)"
+        }
       ]
     },
     {
@@ -398,6 +469,44 @@
         "D2: 互连毛利率<65% → 寡头定价权受损",
         "D3: 下代标准出现对手独供信号 → 结构降档",
         "D4: 全球服务器DRAM出货转负 → 周期降档"
+      ],
+      "sources": [
+        {
+          "claim": "2025年报: 营收54.56亿 +49.9%, 归母22.36亿 +58.4%; 全球仅两家PCIe 5.0 Retimer供应商之一",
+          "source_title": "2025年报公告(新浪公告页转载)",
+          "url_or_id": "http://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=688008&id=12041708",
+          "evidence_tier": "E1(公告转载)"
+        },
+        {
+          "claim": "26Q1互连类收入14.17亿 +24.4%; 新品(MRCD/MDB/Retimer/CKD/MXC)2.69亿 +93.8% 占19%; 互连毛利率71.5% +7.0pp",
+          "source_title": "证券时报(一季报)",
+          "url_or_id": "https://www.stcn.com/article/detail/3828072.html",
+          "evidence_tier": "E2(底层一季报)"
+        },
+        {
+          "claim": "Q1营收增速低于券商预测下限(惩罚项依据)",
+          "source_title": "新浪财经",
+          "url_or_id": "https://finance.sina.com.cn/stock/zqgd/2026-04-27/doc-inhvyefa7750751.shtml",
+          "evidence_tier": "E2"
+        },
+        {
+          "claim": "一代MRCD/MDB获三星/SK海力士规模采购; 二代支持12800MT/s",
+          "source_title": "国海证券年报点评",
+          "url_or_id": "http://ftp.microbell.com/data/d92d09066a3e596614b0d5a894aa162c.html",
+          "evidence_tier": "E2(卖方)"
+        },
+        {
+          "claim": "A股5月盘中历史新高(拥挤度依据)",
+          "source_title": "证券时报",
+          "url_or_id": "https://www.stcn.com/article/detail/3894977.html",
+          "evidence_tier": "E2"
+        },
+        {
+          "claim": "港股上市后市值破6000亿港元'港股半导体新王'(拥挤度依据)",
+          "source_title": "财联社星矿",
+          "url_or_id": "https://www.chinastarmarket.cn/detail/2370342",
+          "evidence_tier": "E2"
+        }
       ]
     },
     {
@@ -436,6 +545,38 @@
         "D2: 2026内W2W混合键合无量产订单公告 → HBM叙事降级",
         "D3: 毛利率<30%或扣非净利率<8% → 质量降档",
         "D4: 实体清单致关键零部件断供/交付延期公告 → 供应链降档"
+      ],
+      "sources": [
+        {
+          "claim": "2025业绩快报: 营收65.19亿 +58.87%",
+          "source_title": "业绩快报PDF(cninfo)",
+          "url_or_id": "https://dataclouds.cninfo.com.cn/shgonggao/hsomarket/2026/20260227/6da9feb8f3744f44b7f612922490837b.PDF",
+          "evidence_tier": "E1"
+        },
+        {
+          "claim": "在手订单约110亿 = 2025收入~1.7x(紧度量化的核心证据)",
+          "source_title": "PjTime(转业绩披露)",
+          "url_or_id": "https://www.pjtime.com/2026/4/381822238254.shtml",
+          "evidence_tier": "E2(底层披露)"
+        },
+        {
+          "claim": "PECVD 51.42亿 +75% / ALD 3.01亿 +192% / 混合键合1.36亿 +42%; 新一代W2W键合通过客户验证",
+          "source_title": "招商电子年报点评(新浪)",
+          "url_or_id": "https://finance.sina.com.cn/stock/relnews/cn/2026-05-06/doc-inhwyqhc5689223.shtml",
+          "evidence_tier": "E2(底层年报)"
+        },
+        {
+          "claim": "2026一季报原文",
+          "source_title": "一季报PDF(雪球stockmc镜像)",
+          "url_or_id": "https://stockmc.xueqiu.com/202604/688072_20260428_NA7R.pdf",
+          "evidence_tier": "E1"
+        },
+        {
+          "claim": "2024-12列入美实体清单(需求制度性锁定 + 零部件惩罚项双重依据)",
+          "source_title": "证券时报",
+          "url_or_id": "https://www.stcn.com/article/detail/1437788.html",
+          "evidence_tier": "E1(政策事件)"
+        }
       ]
     },
     {
@@ -470,6 +611,32 @@
         "D2: 存储封测收入半年报同比<10% → 需求降档",
         "D3: 合肥扩产推迟公告 → 降档",
         "D4: 毛利率<18% → 降档"
+      ],
+      "sources": [
+        {
+          "claim": "沛顿拟投14.7亿扩产高端存储封测(合肥8.3亿, +2880万颗晶粒/月, 2027-12完工)",
+          "source_title": "证券时报(公告报道)",
+          "url_or_id": "https://www.stcn.com/article/detail/3928256.html",
+          "evidence_tier": "E2(底层公告)"
+        },
+        {
+          "claim": "2025存储半导体收入40.91亿 +16.2%, 毛利率20.4%",
+          "source_title": "新浪财经(年报数据)",
+          "url_or_id": "https://finance.sina.com.cn/roll/2026-05-28/doc-inhzmayt1136737.shtml",
+          "evidence_tier": "E2(底层年报)"
+        },
+        {
+          "claim": "业绩说明会: 合肥基地满产; 对HBM客户/量产未直接确认, 仅称具备多层堆叠工艺与测试能力(拒绝提名 + 惩罚项的核心依据)",
+          "source_title": "新浪调研速递(IR记录)",
+          "url_or_id": "https://finance.sina.cn/2026-05-22/detail-inhyumqm7622528.d.html",
+          "evidence_tier": "E2(底层IR)"
+        },
+        {
+          "claim": "自媒体'HBM良率98%/英伟达验证'类说法(主动排除, 未采用)",
+          "source_title": "(多个自媒体, 不列出以免赋予可信度)",
+          "url_or_id": "n/a",
+          "evidence_tier": "lead(已排除)"
+        }
       ]
     }
   ],
@@ -571,5 +738,19 @@
       "材料设备指数拥挤度消化情况 → 验证拥挤降档是否过严(对偶风险: 扫描版reflexive-PASS)"
     ]
   },
-  "content_lock_sha256": "1b723af672e1960c"
+  "content_lock_sha256": "16154d973d812fbf",
+  "sources_policy": "top-5 carry per-name sources [{claim, source_title, url_or_id, evidence_tier}]; pool names outside top-5 are doc-level only (SCAN_1_AI_SEMIS.md §Sources master list). Per-source evidence_tier grades the VEHICLE (E1 = filing/公告/IR-record original text or PDF; E2(底层披露/年报/公告/IR) = media transcription of disclosure-level data; E2 = media/sell-side; lead = weak source, never load-bearing). The parent evidence_grade grades the UNDERLYING data quality.",
+  "content_lock": {
+    "algorithm": "sha256",
+    "canonicalization": "json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(',',':')) over the top-level object after removing excluded_top_level_fields",
+    "excluded_top_level_fields": [
+      "_meta",
+      "content_lock_sha256",
+      "content_lock"
+    ],
+    "full_sha256": "16154d973d812fbf76e8089935391975e607aab4eb9e725d734b8d6bbdb773b5",
+    "short_display": "16154d973d812fbf",
+    "verify": "python3 -c \"import json,hashlib; d=json.load(open('docs/research/serenity/scan_1_scores.json')); p={k:v for k,v in d.items() if k not in ('_meta','content_lock_sha256','content_lock')}; print(hashlib.sha256(json.dumps(p,sort_keys=True,ensure_ascii=True,separators=(',',':')).encode()).hexdigest())\"",
+    "note": "lock changes whenever locked content changes (by design); _meta and the lock fields themselves are volatile/excluded"
+  }
 }
