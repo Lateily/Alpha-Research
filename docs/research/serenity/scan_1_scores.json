@@ -1,0 +1,575 @@
+{
+  "_meta": {
+    "generated_at": "2026-06-11",
+    "doc": "docs/research/serenity/SCAN_1_AI_SEMIS.md",
+    "method": "docs/strategy/SERENITY_INTEGRATION_SPEC.md (#67 ratified)",
+    "status": "AWAITING_REVIEW"
+  },
+  "scan_id": "SCAN_1_AI_SEMIS",
+  "theme": "A股 AI 半导体供应链",
+  "scan_date": "2026-06-11",
+  "label": "[unvalidated intuition] discovery-layer output — NOT a trade signal, NOT validated alpha; any execution requires a CTF decision sheet + five-axis red team",
+  "locks": {
+    "not_a_signal": true,
+    "score_unvalidated": true,
+    "crowding_downgrade_enforced": true,
+    "look_ahead": "scores assigned 2026-06-11, no backfill"
+  },
+  "scoring": {
+    "factors_weights": {
+      "demand_inflection": 15,
+      "chokepoint_severity": 15,
+      "evidence_quality": 15,
+      "supplier_concentration": 12,
+      "expansion_difficulty": 12,
+      "valuation_disconnect": 11,
+      "architecture_coupling": 10,
+      "catalyst_timing": 10
+    },
+    "penalty_unit": 2.0,
+    "tiers": {
+      "T1": ">=85",
+      "T2": "70-84",
+      "T3": "55-69"
+    },
+    "note": "no T1 found this scan — sector-wide crowding (materials/equipment index YTD +74.66%, electronics = #1 mutual-fund sector) suppresses valuation_disconnect and triggers crowding penalties; structural tightness is real, entry pricing mostly is not disconnected"
+  },
+  "layers_ranked": [
+    {
+      "rank": 1,
+      "layer": "L1 薄膜沉积+混合键合(设备)",
+      "tightness": "最紧",
+      "key_evidence": "拓荆在手订单110亿=2025收入1.7x; HBM设备国产化率<5%; 实体清单制度性锁定国产需求"
+    },
+    {
+      "rank": 2,
+      "layer": "L2 HBM后段三件套+存储封测闸门",
+      "tightness": "最紧但收入兑现最早期",
+      "key_evidence": "华海减薄机累计仅20+台; 深科技沛顿14.7亿扩产公告; 长电Q1稼动率>80%"
+    },
+    {
+      "rank": 3,
+      "layer": "L3 CMP全链(设备+垫+液)",
+      "tightness": "垄断结构最清晰",
+      "key_evidence": "华海=国内唯一12寸CMP量产商; 鼎龙垫份额~70%; 安集全球液份额13%; 耗材认证1-2年"
+    },
+    {
+      "rank": 4,
+      "layer": "L4 内存接口芯片",
+      "tightness": "紧在认证资格非产能",
+      "key_evidence": "全球仅3家; 澜起新品26Q1占19% +93.8%; 2026服务器存储产能售罄"
+    },
+    {
+      "rank": 5,
+      "layer": "L5 国产2.5D/Chiplet封装闸门",
+      "tightness": "紧, 标的分散",
+      "key_evidence": "全球先进封装2026产能+80%仍极紧; 通富大基金减持为反向信号"
+    },
+    {
+      "rank": 6,
+      "layer": "L6 载板(BT/FCBGA)",
+      "tightness": "解瓶颈方, 放量前夜",
+      "key_evidence": "深南存储BT订单显著增长; 兴森良率达标未盈亏平衡"
+    },
+    {
+      "rank": 7,
+      "layer": "L7 前驱体/靶材/零部件",
+      "tightness": "认证为王, 产能有余",
+      "key_evidence": "雅克稼动率59%"
+    },
+    {
+      "rank": 8,
+      "layer": "L8 测试设备",
+      "tightness": "交付排队非断供",
+      "key_evidence": "长川交付1-2季度"
+    },
+    {
+      "rank": 9,
+      "layer": "L9 算力芯片设计",
+      "tightness": "非瓶颈(高beta受益层)",
+      "key_evidence": "受制程+先进封装+HBM三重配给"
+    },
+    {
+      "rank": 10,
+      "layer": "L10 EDA",
+      "tightness": "战略期权, 当前未绷紧",
+      "key_evidence": "断供解除近一年; 华大九天营收+8.4%/净利-44%"
+    }
+  ],
+  "pool": [
+    {
+      "ticker": "688120.SH",
+      "name": "华海清科",
+      "layer": "L2/L3",
+      "role": "CONTROLS",
+      "constraint": "国内唯一12寸CMP量产商 + HBM ≤50μm减薄",
+      "evidence_tier": "E1",
+      "crowding": "中高"
+    },
+    {
+      "ticker": "300054.SZ",
+      "name": "鼎龙股份",
+      "layer": "L3",
+      "role": "CONTROLS",
+      "constraint": "国产CMP抛光垫近垄断(~70%), 按片消耗+认证锁定",
+      "evidence_tier": "E1/E2",
+      "crowding": "中高升温"
+    },
+    {
+      "ticker": "688008.SH",
+      "name": "澜起科技",
+      "layer": "L4",
+      "role": "CONTROLS",
+      "constraint": "全球DDR5 RCD/MRCD三寡头之首",
+      "evidence_tier": "E1",
+      "crowding": "高"
+    },
+    {
+      "ticker": "688072.SH",
+      "name": "拓荆科技",
+      "layer": "L1",
+      "role": "CONTROLS",
+      "constraint": "国产PECVD近独家量产 + W2W混合键合国产唯一量产级",
+      "evidence_tier": "E1",
+      "crowding": "高"
+    },
+    {
+      "ticker": "000021.SZ",
+      "name": "深科技",
+      "layer": "L2",
+      "role": "CONTROLS",
+      "constraint": "国产存储封测外包闸门(沛顿; HBM角色公司未确认)",
+      "evidence_tier": "E1(扩产)/E2(HBM)",
+      "crowding": "快速拥挤化"
+    },
+    {
+      "ticker": "688012.SH",
+      "name": "中微公司",
+      "layer": "L1/L2",
+      "role": "CONTROLS",
+      "constraint": "高深宽比刻蚀国产主力",
+      "evidence_tier": "E1",
+      "crowding": "很高"
+    },
+    {
+      "ticker": "600584.SH",
+      "name": "长电科技",
+      "layer": "L5",
+      "role": "CONTROLS(部分)",
+      "constraint": "国内已量产2.5D OSAT闸门之一(XDFOI)",
+      "evidence_tier": "E1",
+      "crowding": "升温(YTD+65%)"
+    },
+    {
+      "ticker": "002916.SZ",
+      "name": "深南电路",
+      "layer": "L6",
+      "role": "CONTROLS/SUPPLIES",
+      "constraint": "国产存储链BT载板主力; FCBGA 22层及以下量产",
+      "evidence_tier": "E1",
+      "crowding": "中"
+    },
+    {
+      "ticker": "688019.SH",
+      "name": "安集科技",
+      "layer": "L3",
+      "role": "SUPPLIES",
+      "constraint": "国产抛光液龙头(全球13%), 外资仍占大头",
+      "evidence_tier": "E1",
+      "crowding": "高"
+    },
+    {
+      "ticker": "688082.SH",
+      "name": "盛美上海",
+      "layer": "L1/L2",
+      "role": "SUPPLIES",
+      "constraint": "清洗 + ECP电镀(HBM TSV无空洞铜填充)",
+      "evidence_tier": "E1",
+      "crowding": "相对低(Q1利润-58%)"
+    },
+    {
+      "ticker": "688123.SH",
+      "name": "聚辰股份",
+      "layer": "L4",
+      "role": "SUPPLIES",
+      "constraint": "DDR5 SPD双寡头; 放量推迟至26Q3/Q4(管理层口径)",
+      "evidence_tier": "E1/E2",
+      "crowding": "中偏热"
+    },
+    {
+      "ticker": "002156.SZ",
+      "name": "通富微电",
+      "layer": "L5",
+      "role": "SUPPLIES",
+      "constraint": "AMD链FCBGA/Chiplet后段主力外包",
+      "evidence_tier": "E1",
+      "crowding": "高(大基金减持)"
+    },
+    {
+      "ticker": "300604.SZ",
+      "name": "长川科技",
+      "layer": "L8",
+      "role": "SUPPLIES",
+      "constraint": "后道测试机交付节奏",
+      "evidence_tier": "E1",
+      "crowding": "高"
+    },
+    {
+      "ticker": "002409.SZ",
+      "name": "雅克科技",
+      "layer": "L7",
+      "role": "SUPPLIES",
+      "constraint": "前驱体全球第三; 稼动率59% = 紧在认证不在产能",
+      "evidence_tier": "E1/E2",
+      "crowding": "很高"
+    },
+    {
+      "ticker": "300666.SZ",
+      "name": "江丰电子",
+      "layer": "L7",
+      "role": "SUPPLIES",
+      "constraint": "靶材国产第一 + 设备零部件(二阶约束)",
+      "evidence_tier": "E1",
+      "crowding": "中"
+    },
+    {
+      "ticker": "002436.SZ",
+      "name": "兴森科技",
+      "layer": "L6",
+      "role": "SUPPLIES",
+      "constraint": "国产FCBGA载板先行者, 放量前夜未盈亏平衡",
+      "evidence_tier": "E1",
+      "crowding": "中低"
+    },
+    {
+      "ticker": "688521.SH",
+      "name": "芯原股份",
+      "layer": "L9边缘",
+      "role": "SUPPLIES",
+      "constraint": "AI ASIC定制工程承接(在手订单51亿)but增收不增利",
+      "evidence_tier": "E1",
+      "crowding": "很热(投机性)"
+    },
+    {
+      "ticker": "301269.SZ",
+      "name": "华大九天",
+      "layer": "L10",
+      "role": "SUPPLIES",
+      "constraint": "EDA国产备胎 — 断供才绷紧, 当前P&L证伪替代速度",
+      "evidence_tier": "E1",
+      "crowding": "最冷"
+    },
+    {
+      "ticker": "688041.SH",
+      "name": "海光信息",
+      "layer": "L9",
+      "role": "MERELY_BENEFITS",
+      "constraint": "不卡位; 生态换装摩擦最低",
+      "evidence_tier": "E1",
+      "crowding": "高(~200xPE)"
+    },
+    {
+      "ticker": "688256.SH",
+      "name": "寒武纪",
+      "layer": "L9",
+      "role": "MERELY_BENEFITS",
+      "constraint": "不卡位; 受制程+先进封装+HBM三重配给",
+      "evidence_tier": "E1",
+      "crowding": "极端(股王叙事)"
+    },
+    {
+      "ticker": "603986.SH",
+      "name": "兆易创新",
+      "layer": "L4边缘",
+      "role": "MERELY_BENEFITS",
+      "constraint": "产能在长鑫手里; 纯价格周期搭车",
+      "evidence_tier": "E1",
+      "crowding": "极热(周期顶部情绪)"
+    },
+    {
+      "ticker": "688362.SH",
+      "name": "甬矽电子",
+      "layer": "L5",
+      "role": "MERELY_BENEFITS",
+      "constraint": "2.5D送样验证中未量产",
+      "evidence_tier": "E1",
+      "crowding": "中"
+    }
+  ],
+  "top5": [
+    {
+      "rank": 1,
+      "ticker": "688120.SH",
+      "name": "华海清科",
+      "serenity_score": 74,
+      "tier": "T2",
+      "factors": {
+        "demand_inflection": 12,
+        "chokepoint_severity": 13,
+        "evidence_quality": 12,
+        "supplier_concentration": 11,
+        "expansion_difficulty": 9,
+        "valuation_disconnect": 5,
+        "architecture_coupling": 8,
+        "catalyst_timing": 8
+      },
+      "penalties": [
+        {
+          "reason": "26Q1净利+6% vs 营收+31.7%剪刀差",
+          "points": 2.0
+        },
+        {
+          "reason": "定增摊薄",
+          "points": 2.0
+        }
+      ],
+      "evidence_grade": "E1 (2025年报46.48亿+36.5%; 26Q1 12.01亿+31.7%; 股东会2026订单向好/存储+逻辑>60%; 芯嵛收购公告)",
+      "downgrade_conditions": [
+        "D1: 26H1报CMP+减薄新签订单同比<15% → 降档",
+        "D2: 2026全年减薄机累计出机≤35台 → HBM杠杆叙事降级",
+        "D3: 毛利率连续两季<42% → 降档",
+        "D4: 定增摊薄>8%股本且订单未同步上修 → 降档"
+      ]
+    },
+    {
+      "rank": 2,
+      "ticker": "300054.SZ",
+      "name": "鼎龙股份",
+      "serenity_score": 73,
+      "tier": "T2",
+      "factors": {
+        "demand_inflection": 12,
+        "chokepoint_severity": 12,
+        "evidence_quality": 12,
+        "supplier_concentration": 10,
+        "expansion_difficulty": 10,
+        "valuation_disconnect": 6,
+        "architecture_coupling": 8,
+        "catalyst_timing": 7
+      },
+      "penalties": [
+        {
+          "reason": "锂电跨界收购稀释主线",
+          "points": 2.0
+        },
+        {
+          "reason": "垫需求依赖存储扩产兑现",
+          "points": 2.0
+        }
+      ],
+      "evidence_grade": "E1 (2025垫收入10.91亿+52.3%, 半导体板块占营收57%) / E2 (国内份额~70%为媒体/公司口径); '2026全球垫紧缺'仅lead级未采用",
+      "downgrade_conditions": [
+        "D1: 垫季度收入环比连续两季负增长 → 降档",
+        "D2: 国内份额口径跌破60% → 锁定逻辑弱化",
+        "D3: 再次非主线跨界并购(现金对价>5亿) → 治理降档",
+        "D4: 存储扩产推迟的公告级连锁信号 → 需求降档"
+      ]
+    },
+    {
+      "rank": 3,
+      "ticker": "688008.SH",
+      "name": "澜起科技",
+      "serenity_score": 73,
+      "tier": "T2",
+      "factors": {
+        "demand_inflection": 12,
+        "chokepoint_severity": 12,
+        "evidence_quality": 14,
+        "supplier_concentration": 11,
+        "expansion_difficulty": 10,
+        "valuation_disconnect": 3,
+        "architecture_coupling": 8,
+        "catalyst_timing": 7
+      },
+      "penalties": [
+        {
+          "reason": "拥挤(16个月~3x, 港股'半导体新王')",
+          "points": 2.0
+        },
+        {
+          "reason": "服务器DRAM周期依赖 + Q1营收增速低于卖方下限",
+          "points": 2.0
+        }
+      ],
+      "evidence_grade": "E1 全场最佳 (26Q1互连类14.17亿+24.4%, 新品占19%+93.8%, 互连毛利率71.5%+7.0pp — 季度分产品线披露)",
+      "demo_crosscheck": "demo旧评分92(T1) → 本轮73(T2); 差异=拥挤惩罚+3x行情后valuation_disconnect坍缩 — 拥挤降级锁在起作用",
+      "downgrade_conditions": [
+        "D1: 互连类收入环比负增长或新品占比<12% → 降档",
+        "D2: 互连毛利率<65% → 寡头定价权受损",
+        "D3: 下代标准出现对手独供信号 → 结构降档",
+        "D4: 全球服务器DRAM出货转负 → 周期降档"
+      ]
+    },
+    {
+      "rank": 4,
+      "ticker": "688072.SH",
+      "name": "拓荆科技",
+      "serenity_score": 72,
+      "tier": "T2",
+      "factors": {
+        "demand_inflection": 13,
+        "chokepoint_severity": 13,
+        "evidence_quality": 13,
+        "supplier_concentration": 10,
+        "expansion_difficulty": 9,
+        "valuation_disconnect": 4,
+        "architecture_coupling": 8,
+        "catalyst_timing": 8
+      },
+      "penalties": [
+        {
+          "reason": "拥挤(Q1历史新高广泛报道, ETF权重)",
+          "points": 2.0
+        },
+        {
+          "reason": "毛利率34%偏低/扣非薄",
+          "points": 2.0
+        },
+        {
+          "reason": "实体清单零部件供应链风险",
+          "points": 2.0
+        }
+      ],
+      "evidence_grade": "E1 (业绩快报/年报65.19亿+58.9%; 在手订单110亿=1.7x收入; PECVD 51.42亿+75%, ALD+192%, 混合键合+42%)",
+      "downgrade_conditions": [
+        "D1: 在手订单/TTM收入<1.2x → 紧度降档",
+        "D2: 2026内W2W混合键合无量产订单公告 → HBM叙事降级",
+        "D3: 毛利率<30%或扣非净利率<8% → 质量降档",
+        "D4: 实体清单致关键零部件断供/交付延期公告 → 供应链降档"
+      ]
+    },
+    {
+      "rank": 5,
+      "ticker": "000021.SZ",
+      "name": "深科技",
+      "serenity_score": 71,
+      "tier": "T2",
+      "factors": {
+        "demand_inflection": 13,
+        "chokepoint_severity": 12,
+        "evidence_quality": 10,
+        "supplier_concentration": 10,
+        "expansion_difficulty": 9,
+        "valuation_disconnect": 5,
+        "architecture_coupling": 7,
+        "catalyst_timing": 9
+      },
+      "penalties": [
+        {
+          "reason": "HBM叙事跑在公司确认之前(自媒体'良率98%/英伟达验证'已剔除)",
+          "points": 2.0
+        },
+        {
+          "reason": "5月底涨停+成交新高=快速拥挤化",
+          "points": 2.0
+        }
+      ],
+      "evidence_grade": "E1 (沛顿14.7亿扩产公告; 2025存储封测收入40.91亿+16.2%) / E2 (HBM角色 — 业绩说明会仅称具备多层堆叠工艺与测试能力, 未确认客户/量产)",
+      "downgrade_conditions": [
+        "D1: 2026内公司层面仍未确认HBM客户/量产 → 维持折扣再降档",
+        "D2: 存储封测收入半年报同比<10% → 需求降档",
+        "D3: 合肥扩产推迟公告 → 降档",
+        "D4: 毛利率<18% → 降档"
+      ]
+    }
+  ],
+  "downgraded_directions": [
+    {
+      "direction": "光模块/CPO",
+      "examples": [
+        "300308.SZ"
+      ],
+      "reason": "极端拥挤(公募第一大重仓蝉联, 1163只基金, 占流通股11.74%) + 模块层非瓶颈(EML/InP上游才是) — 拥挤锁教科书案例"
+    },
+    {
+      "direction": "算力芯片设计",
+      "examples": [
+        "688256.SH",
+        "688041.SH"
+      ],
+      "reason": "非瓶颈(受上游三重配给); ~200xPE; 股王叙事=极端情绪。勿把'卖断货'误读为'持有瓶颈'"
+    },
+    {
+      "direction": "利基存储设计",
+      "examples": [
+        "603986.SH"
+      ],
+      "reason": "纯价格周期搭车; '一年5倍'热榜=周期顶部情绪; 三星已恢复DDR4扩产"
+    },
+    {
+      "direction": "AI ASIC定制",
+      "examples": [
+        "688521.SH"
+      ],
+      "reason": "订单真实但增收不增利(Q1亏损扩大54.7%); 融资盘43亿+小作文=投机性拥挤"
+    },
+    {
+      "direction": "HBM前驱体叙事",
+      "examples": [
+        "002409.SZ"
+      ],
+      "reason": "稼动率59%自证产能不紧; HBM概念2025已多股翻倍, 叙事透支"
+    },
+    {
+      "direction": "EDA",
+      "examples": [
+        "301269.SZ"
+      ],
+      "reason": "反向不拥挤但约束是期权非现实; 断供解除近一年, P&L证伪替代速度 — 列触发器监控不入top5"
+    }
+  ],
+  "crosscheck_300308": {
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "status": "NOT_A_CANDIDATE",
+    "crowding": "极端 — 公募第一大重仓蝉联; 26Q1 1163只基金重仓占流通股11.74%; 多基金单票>9%净值; 三年50x",
+    "bottleneck_location": "不在模块层 — 200G+ EML仍需进口, InP衬底2026缺口70%+, 高端EML交期排至2027; 旭创Q1预付款1.34→14.88亿(~10x)抢料 = 付租金方非收租金方",
+    "verdict": "Serenity拥挤降档适用 — 强基本面(Q1营收+192%/归母+262%) x 零边际信息; 约束租金向上游光芯片/衬底转移, 但上游(源杰19.19%流通盘被公募持有)同样拥挤, 不构成低拥挤替代"
+  },
+  "demo_leads_reverified": {
+    "688008.SH": "重验后独立进入top5, 但T1(92)→T2(73)降档",
+    "688120.SH": "重验后独立进入top5",
+    "688012.SH": "入池; '很高'拥挤度挡在top5外",
+    "688019.SH": "入池; SUPPLIES非CONTROLS",
+    "002156.SZ": "入池; 大基金1-5月减持6.67%→5.97%为反向信号",
+    "note": "无一沿用旧结论, 全部以2026披露重新查证"
+  },
+  "nominations": {
+    "ticker_2": {
+      "ticker": "688120.SH",
+      "name": "华海清科",
+      "rationale": "垄断结构最清晰(国内唯一12寸CMP) + HBM减薄第二引擎刚起步逐季可验证; E1锚丰富(半年报订单/出机台数/存储占比/毛利率 — 四条wrong_if全部披露绑定); 拥挤度低于设备双雄; 6-12个月内有26H1报+全年出机数两个检查点"
+    },
+    "ticker_3": {
+      "ticker": "300054.SZ",
+      "name": "鼎龙股份",
+      "rationale": "耗材复购+认证锁定 = 与BYD(整车)/华海(设备)不同的商业模式样本, 测模板泛化性; 月销量/产能/份额可跟踪; 锂电跨界风险可机械化为wrong_if; 估值热度低于设备层"
+    },
+    "alternate": {
+      "ticker": "688008.SH",
+      "name": "澜起科技",
+      "rationale": "E1披露质量全场最佳 = 最容易写可证伪决策书; 但拥挤度最高, 信息增量轴预计低分。若'可证伪性>信息增量'可替换#3"
+    },
+    "rejected": {
+      "ticker": "000021.SZ",
+      "name": "深科技",
+      "rationale": "HBM角色未经公司确认 → 决策书资格规则(story>evidence)大概率拒绝; 挂触发器D1, 公司确认日重新评估"
+    }
+  },
+  "forward_checkpoints": {
+    "review_dates": [
+      "2026-07-11",
+      "2026-08-10",
+      "2026-09-09"
+    ],
+    "tests_discovery_power_not_price": true,
+    "watch_items": [
+      "拓荆/华海26H1订单与出机数 → 验证L1/L2紧度排序",
+      "长鑫上海HBM装机进展(媒体口径→公告级供应商订单) → 验证L2收入兑现时点",
+      "深科技HBM是否获公司确认 → 验证'叙事先行'折扣",
+      "光模块上游(EML/InP)紧缺是否向A股传导新标的 → 验证'租金上移'判断",
+      "材料设备指数拥挤度消化情况 → 验证拥挤降档是否过严(对偶风险: 扫描版reflexive-PASS)"
+    ]
+  },
+  "content_lock_sha256": "1b723af672e1960c"
+}
