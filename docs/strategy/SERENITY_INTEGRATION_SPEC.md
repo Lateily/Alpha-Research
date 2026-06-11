@@ -35,6 +35,22 @@ is `[unvalidated intuition]` and the tiers are RESEARCH-PRIORITY tiers, not buy 
 It directly operationalizes the parked AI-industry-chain learning (周期→政策→产业链→估值;
 政策定调=叙事 vs 有利润=新兴; everything routed through 订单/产能/核心材料 + evidence tiers).
 
+**§0.1 First-hand read map (2026-06-11; every load-bearing file read directly, not relayed):**
+
+| file | what it contributes to us |
+|---|---|
+| `SKILL.md` | 9-step workflow; ALWAYS rules we adopt as Scan acceptance criteria: **dual ranking (scarce-layer priority SEPARATE from company priority)** · **≥2 evidence points per top candidate** · **state exactly what each company constrains** · classify every evidence item's strength · NEVER buy/sell commands or invented filings |
+| `references/deep-research-workflow.md` | 8-layer value-chain checklist (end-customers→OEM→modules→chips→process→equipment→materials→infrastructure); coverage bar ≥3 layers / 20+ pool / 25+ sources (10+ filings, 5+ IR/transcripts); rank by constraint tightness NOT sector popularity |
+| `references/evidence-ladder.md` | strong/medium/weak tiers + **minimum per top candidate**: 1 strong/medium business-position fact + 1 source-backed demand/capacity/financial fact + named missing proof + stated weakening condition; red flags (single-unnamed-customer, social-driven moves, financing dependency) force downgrades |
+| `references/risk-and-compliance.md` | 7 high-risk categories (micro-cap/social-spread/evidence-gap/capital-events/cash-vs-capex/perfect-execution-valuation/policy-export-controls) → downgrade-to-lead mechanics; prohibition list mirrors our pilot rules |
+| `assets/thesis-template.md` | 11-section thesis — **maps ≈1:1 onto our decision-sheet contract** (their "what could weaken the view" = our wrong_if; their reprice-events table = our catalyst calendar; their evidence table's "what still needs checking" = our factcheck). The genuinely NEW fields vs our sheet: **value-chain map + layer position + plain-language role + "current market category vs possible NEW category" (misclassification = an information-increment machine) + a 7-item financial-quality checklist** — these five are what the §2 block must add; the rest we already have |
+| `assets/bottleneck-scorecard.json` | the fill-in template: 0–5 ratings, evidence array with strength enum (primary/media/analysis/social/rumor → maps to E1/E2/lead), `what_could_weaken_view` ≥3 |
+| `scripts/serenity_scorecard.py` | weights/penalties/formula/tiers as tabled above |
+| `examples/a-share-ai-semiconductor-demo.md` | **the worked example for Scan #1** — see §5 warning |
+
+(Not yet read, non-load-bearing: market-source-playbook, public-profile-and-evaluation,
+research-prompt-pack, demo-conversation, infrastructure-chokepoint demo, evals — read before Scan #1 execution.)
+
 ## 1. THE THREE LOCKS (Junyan's, to be ratified — the constitution of this integration)
 
 1. **Serenity = candidate discovery + bottleneck scoring ONLY. Not an alpha claim.** A score is a
@@ -102,6 +118,21 @@ and the quant line is PAUSED pending a Junyan call.
 
 Theme choice: layer-clear, bottleneck-heavy, certification-strong — the methodology's home turf
 (the repo's own canonical use case), and it cashes in the parked AI-industry-chain learning.
+
+**⚠ The repo's own A-share AI-semis demo is LEADS, not conclusions.** It prioritizes five segments
+(memory-interconnect / CMP-thinning equipment / deep-aspect etch / CMP-plating materials / advanced
+packaging) and **downgrades pure AI compute chips AND optical/photonics for crowding**. Two
+consequences: (1) our scan must REBUILD the map with current evidence under the evidence-ladder —
+the demo's five named companies enter as weak-tier leads only, never pre-ranked; (2) **by the
+methodology's own crowding logic, our 300308 中际旭创 (optical modules) would be flagged
+CROWDING_SIGNAL** — an honest cross-check the scan must run, not dodge.
+
+**Scan #1 acceptance criteria (from SKILL.md's ALWAYS rules + the coverage bar):** dual ranking
+(layers before companies, separately stated) · ≥3 layers / 20+ pool / 25+ sources (10+ filings,
+5+ IR-transcripts) · per top candidate: ≥2 evidence points incl. 1 strong/medium business-position
+fact + 1 source-backed demand/capacity fact + named missing proof + mechanized weakening condition ·
+every company labeled **controls / supplies / merely-benefits** re the scarce layer · ranked by
+constraint tightness, NOT sector popularity.
 **Deliverables:** ① chain-layer ranking (≥3 layers: 设备/材料/制造/封测/IP·EDA/算力整机 …) ·
 ② 20+ name pool · ③ top-5 research priorities with per-name serenity_score + evidence grades ·
 ④ **ticker #2/#3 nominated into CTF batch-1** (fresh api-generated sheets — the discovery-power
