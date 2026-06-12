@@ -72,8 +72,12 @@ def register(ticker: str, redteam_path: str | None) -> dict:
     if redteam is None:
         raise SystemExit("registration REQUIRES the human red-team record (--redteam path) — "
                          "the human score is the measure of record; no red-team, no registration")
-    if redteam.get("content_lock") and not lock.startswith(redteam["content_lock"].rstrip("…")[:16]):
-        raise SystemExit(f"red-team record lock {redteam.get('content_lock')[:16]} does not match "
+    rt_lock = (redteam.get("content_lock") or "").rstrip("…")
+    if not rt_lock:
+        raise SystemExit("red-team record carries NO content_lock — the score must be bound to the "
+                         "exact sheet it scored; an unbound record registers nothing (Junyan #66 P1)")
+    if not lock.startswith(rt_lock[:16]):
+        raise SystemExit(f"red-team record lock {rt_lock[:16]} does not match "
                          f"the sheet lock {lock[:16]} — score a sheet, register THAT sheet")
     verdict = (redteam.get("verdict") or "").upper()
     if not verdict.startswith("PASS"):
@@ -169,6 +173,12 @@ def check(as_of: date | None = None) -> int:
             if cp["status"] != "PENDING" or cp["due_date"] > as_of.isoformat():
                 continue
             px, px_date = _last_close(r["ticker"])
+            if px is None:
+                # DATA_MISSING: do NOT consume the checkpoint — a transient fetch failure must
+                # not permanently lose a 30/60/90 read; stays PENDING, retried next run
+                print(f"[checkpoints] {r['ticker']} +{cp['offset_days']}d due but NO committed "
+                      f"price — DATA_MISSING, stays PENDING (will retry)")
+                continue
             ref = r.get("reference_price")
             chg = round((px / ref - 1) * 100, 2) if (px and ref) else None
             direction = (r.get("direction") or "").upper()
@@ -195,9 +205,12 @@ def check(as_of: date | None = None) -> int:
             n_eval += 1
             print(f"[checkpoints] {r['ticker']} +{cp['offset_days']}d: px={px}({px_date}) "
                   f"chg={chg}% {directional} band={cp['result']['band_position']}")
-    ledger["_meta"]["updated_at"] = _now()
-    LEDGER.write_text(json.dumps(ledger, ensure_ascii=False, indent=2))
-    print(f"[checkpoints] evaluated {n_eval} due checkpoint(s)")
+    if n_eval > 0:
+        ledger["_meta"]["updated_at"] = _now()
+        LEDGER.write_text(json.dumps(ledger, ensure_ascii=False, indent=2))
+        print(f"[checkpoints] evaluated {n_eval} due checkpoint(s)")
+    else:
+        print("[checkpoints] no due checkpoints — ledger untouched (no-op)")
     return 0
 
 
@@ -218,9 +231,10 @@ def _selftest() -> int:
                  "auto_context": {"last_price": {"date": "20260522"}},
                  "valuation_target_range": {"bear": {"low": 50, "high": 60}, "base": {"low": 95, "high": 105},
                                             "bull": {"low": 145, "high": 160}},
-                 "wrong_if": {"triggers": [{"metric": "GM", "threshold": "x", "source": "s", "check_date": "2026-08-31"},
+                 "wrong_if": {"triggers": [{"metric": "GM", "threshold": "x", "source": "s",
+                                            "check_date": _add_days(_today(), 75)},
                                            {"metric": "vol", "threshold": "y", "source": "s", "check_date": "monthly ~10th"}]},
-                 "catalyst_calendar": [{"date": "2026-08-31", "event": {"zh": "半年报"}}]}
+                 "catalyst_calendar": [{"date": _add_days(_today(), 75), "event": {"zh": "半年报"}}]}
         (SHEETS / "TEST_SZ.json").write_text(json.dumps(sheet))
         rt = tmp / "rt.json"
         # 1) registration REQUIRES a red-team record
@@ -234,6 +248,13 @@ def _selftest() -> int:
         try:
             register("TEST.SZ", str(rt.relative_to(tmp)) if False else str(rt))
             errs.append("FAIL verdict must be refused")
+        except SystemExit:
+            pass
+        # 2b) red-team record WITHOUT a lock must be refused (Junyan #66 P1: unbound scores)
+        rt.write_text(json.dumps({"verdict": "PASS", "scores": {}}))
+        try:
+            register("TEST.SZ", str(rt))
+            errs.append("red-team record without content_lock must be refused")
         except SystemExit:
             pass
         # 3) lock mismatch refused
@@ -262,13 +283,22 @@ def _selftest() -> int:
             got = _band_position(px, band)
             if got != want:
                 errs.append(f"band_position({px}) = {got}, want {want}")
-        # 7) check(): not-due stays PENDING; due evaluates with a directional read
-        (tmp / "ohlc_TEST_SZ.json").write_text(json.dumps({"data": [{"date": "20260710", "close": 99.0}]}))
-        check(as_of=date(2026, 6, 15))
+        # 7) check(): dates DERIVED from the actual registration (date-robust selftest);
+        #    covers: 0-due no-op (P1) → DATA_MISSING stays PENDING (P2) → evaluate on retry
+        from datetime import timedelta
+        due30 = date.fromisoformat(e["checkpoints"][0]["due_date"])
+        bytes_before = LEDGER.read_bytes()
+        check(as_of=due30 - timedelta(days=25))          # +5d: nothing due
+        if LEDGER.read_bytes() != bytes_before:
+            errs.append("0-due check must NOT touch the ledger (no churn; Junyan #66 P1)")
         led = json.loads(LEDGER.read_text())
         if any(c["status"] != "PENDING" for c in led["registrations"][0]["checkpoints"]):
             errs.append("no checkpoint is due at +5d — all must stay PENDING")
-        check(as_of=date(2026, 7, 12))
+        check(as_of=due30)                               # due, but NO committed price yet
+        if LEDGER.read_bytes() != bytes_before:
+            errs.append("DATA_MISSING checkpoint must stay PENDING and leave the ledger unwritten")
+        (tmp / "ohlc_TEST_SZ.json").write_text(json.dumps({"data": [{"date": "20260710", "close": 99.0}]}))
+        check(as_of=due30)                               # retry with a price → evaluates
         led = json.loads(LEDGER.read_text())
         c30 = led["registrations"][0]["checkpoints"][0]
         if c30["status"] != "EVALUATED":
@@ -289,9 +319,11 @@ def _selftest() -> int:
         for e in errs:
             print(f"  - {e}")
         return 1
-    print("sheet_checkpoints selftest PASSED (registration requires a PASS* red-team record bound to "
-          "the sheet lock; duplicate lock refused; 30/60/90 scheduled; not-due stays PENDING; due "
-          "checkpoint evaluates price/directional/band reads; disclosure-bound wrong_if not faked early)")
+    print("sheet_checkpoints selftest PASSED (registration requires a PASS* red-team record CARRYING "
+          "a content_lock bound to the sheet lock — unbound/FAIL/mismatched/duplicate all refused; "
+          "30/60/90 scheduled; 0-due check is a strict no-op (no ledger churn); DATA_MISSING due "
+          "checkpoint stays PENDING and retries; due checkpoint evaluates price/directional/band "
+          "reads; disclosure-bound wrong_if not faked early; dates derived, not hardcoded)")
     return 0
 
 
