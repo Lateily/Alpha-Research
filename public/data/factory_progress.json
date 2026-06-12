@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-06-12T09:08:45.916876+00:00",
+    "generated_at": "2026-06-12T15:45:32.331613+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
@@ -173,7 +173,7 @@
   },
   "factory_b": {
     "title_zh": "交易工厂(Quant Strategy)",
-    "line_status_zh": "V2-PEAD spec 等 ratify(#72)— 批准前零回测;H1 已 KILL、C1 NO-CLAIM 已入册",
+    "line_status_zh": "V2-PEAD 已裁决(NO-CLAIM/KILL-grade,等 Junyan 终裁)— 5 个家族 0 幸存;下一步 = V3 假设(需新 manifest + ratify)",
     "families": [
       {
         "id": "H1",
@@ -194,10 +194,10 @@
       {
         "id": "V2-PEAD",
         "name_zh": "V2 盈余公告后漂移(自历史 SUE,事件驱动)",
-        "verdict": "SPEC_AWAITING_RATIFICATION",
+        "verdict": "NO-CLAIM/KILL-grade (pending Junyan)",
         "date": "2026-06-12",
-        "key_number": "预注册 3 臂 + 随机事件阴性对照;ratify 前零回测",
-        "doc": "docs/strategy/QUANT_STRATEGY_v2_SPEC.md"
+        "key_number": "v2a/v2b 双基准显著负(−11.6%/−10.8% vs CSI300)· v2c 跨零 · 0/5 WF · 信号与随机对照无差 → 事件雷达资格不满足",
+        "doc": "docs/strategy/QUANT_V2_VERDICT_2026-06-12.md"
       }
     ]
   },
@@ -213,6 +213,12 @@
     ]
   },
   "milestones": [
+    {
+      "date": "2026-06-12",
+      "pr": null,
+      "label_zh": "V2-PEAD 正式裁决:NO-CLAIM/KILL-grade — 信号与随机对照无差;第 5 个家族阵亡,工厂保留",
+      "label_en": "V2-PEAD formal verdict: NO-CLAIM/KILL-grade — signal indistinguishable from random control"
+    },
     {
       "date": "2026-06-12",
       "pr": 72,

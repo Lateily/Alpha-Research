@@ -1,0 +1,94 @@
+{
+  "schema": "v3_variant_manifest",
+  "variant": {
+    "variant_id": "quant_v2_pead",
+    "registered_at": "2026-06-12T15:35:45.000021+00:00",
+    "hypothesis": "V2-PEAD: on the liquid top-500 A-share universe, entering at the T+1 open after earnings announcements with self-history SUE >= 1.0 (PIT ann_date), holding 50 trading days with a -15% hard stop and a next-quarter SUE <= -1.0 reversal exit, K<=20 equal slots, delivers post-cost same-gross alpha whose bootstrap CI clears zero vs BOTH CSI300 and EW-liquid, full-sample and walk-forward.",
+    "causal_logic_label": "unestablished — PEAD is literature-robust elsewhere; whether the A-share self-history variant survives T+1 + limit-up + cost is exactly the unproven step",
+    "expected_failure_modes": [
+      "drift consumed by execution friction: T+1 entry lag + limit-up abandonment + 0.40% RT cost leave the CI straddling/below zero (the A-share PEAD attenuation result)",
+      "size masquerade: v2c orthogonalized signal loses efficacy => PEAD was a small-cap exposure",
+      "regime gate = hindsight fit: v2b no better (or worse WF) than v2a"
+    ],
+    "locked_params": {
+      "SUE_MIN": 1.0,
+      "HOLD_DAYS": 50,
+      "STOP_PCT": 0.15,
+      "ENTRY_WINDOW_TD": 5,
+      "TOP_K": 20,
+      "REVERSAL_SUE": -1.0,
+      "RISKOFF_ENTRY_SCALE": 0.3
+    },
+    "mechanical_interpretations": {
+      "single_quarter_E": "YTD diff within fiscal year (Q1 = YTD)",
+      "regime_gate": "new entries sized x0.3 only; holdings untouched",
+      "size_proxy_v2c": "ln(ADV60) — panel has no shares outstanding",
+      "limit_up": "open >= pre_close*1.097 abandons the event (no chase)"
+    },
+    "hypothesis_lock_hash": "ac5d9d9ce8d5e5cc36dde1e5d180529e5d79b8915cbc46d6c8ddc8ddb9de6522"
+  },
+  "test_plan": {
+    "windows": [
+      {
+        "name": "full_2006_2026",
+        "start": "20060104",
+        "end": "20260526"
+      },
+      {
+        "name": "wf_2006_2010",
+        "start": "20060104",
+        "end": "20091231"
+      },
+      {
+        "name": "wf_2010_2014",
+        "start": "20100101",
+        "end": "20131231"
+      },
+      {
+        "name": "wf_2014_2018",
+        "start": "20140101",
+        "end": "20171231"
+      },
+      {
+        "name": "wf_2018_2022",
+        "start": "20180101",
+        "end": "20211231"
+      },
+      {
+        "name": "wf_2022_2026",
+        "start": "20220101",
+        "end": "20260526"
+      }
+    ],
+    "cost_scenarios": [
+      "optimistic_0.20_RT",
+      "baseline_0.40_RT",
+      "pessimistic_0.60_RT"
+    ],
+    "benchmarks": [
+      "csi300",
+      "zz500",
+      "csi1000",
+      "ew500",
+      "cash2pct"
+    ],
+    "arms": {
+      "v2a_pead_core": {},
+      "v2b_pead_regime": {
+        "regime": true
+      },
+      "v2c_pead_sizeortho": {
+        "size_ortho": true
+      },
+      "random_event_control": {
+        "random_seed": 42
+      }
+    },
+    "family_for_multiple_testing": [
+      "v2a_pead_core",
+      "v2b_pead_regime",
+      "v2c_pead_sizeortho"
+    ],
+    "claim_gate": "ci_positive_after_cost vs CSI300 AND EW + WF1 + exact-name OOS not sig-neg + 19-gate PASS (unchanged, strict)"
+  }
+}
