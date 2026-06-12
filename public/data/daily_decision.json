@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-12T06:02:33.739337+00:00",
+  "generated_at": "2026-06-12T12:02:03.466762+00:00",
   "date": "2026-06-12",
   "brief_e": "1 Exposure Review",
   "brief_z": "1 敞口复核",
@@ -11,14 +11,14 @@
         "status": "HELD",
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
-        "confidence": 0,
-        "pnl_pct": 68.56,
+        "confidence": 10,
+        "pnl_pct": 68.63,
         "holding_days": 94,
         "weight_pct": 56.6,
         "vp_score": 48,
-        "confluence": 0,
-        "reason_e": "Large unrealised gain +68.6% after 94d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+68.6%（持有94天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "confluence": 10,
+        "reason_e": "Large unrealised gain +68.6% after 94d. Signal still NEUTRAL (score 10). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+68.6%（持有94天），信号10仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -48,7 +48,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 87,
-        "weight_pct": 22.9,
+        "weight_pct": 22.8,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 87d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 80,
-        "weight_pct": 13.2,
+        "weight_pct": 13.1,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 80d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -80,18 +80,52 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 0,
-        "pnl_pct": -5.49,
+        "pnl_pct": -4.77,
         "holding_days": 72,
         "weight_pct": 3.6,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L -5.5% after 72d. Paper-hold — no new review trigger. RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分0），浮盈-5.5%，持有72天，无新触发条件。RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 0). P&L -4.8% after 72d. Paper-hold — no new review trigger. RSI 34 | Price vs MA20 -4.6% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分0），浮盈-4.8%，持有72天，无新触发条件。RSI 34 | 距MA20 -4.6% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
     ],
     "watchlist": [
+      {
+        "ticker": "300054.SZ",
+        "name": "300054.SZ",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 10,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 47,
+        "confluence": 10,
+        "reason_e": "No evidence-review condition. Score 10, VP 47. Bullish: Ma20 Bounce | RSI 58 | Price vs MA20 +4.8% | VP 47.",
+        "reason_z": "暂无证据复核条件。评分10，VP47。多头：MA20支撑反弹 | RSI 58 | 距MA20 +4.8% | VP 47。",
+        "entry_target": null,
+        "exit_trigger": null
+      },
+      {
+        "ticker": "688120.SH",
+        "name": "688120.SH",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 5,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 45,
+        "confluence": 5,
+        "reason_e": "No evidence-review condition. Score 5, VP 45. Bullish: Rsi Recovering | RSI 34 | Price vs MA20 -28.0% | VP 45.",
+        "reason_z": "暂无证据复核条件。评分5，VP45。多头：RSI回升 | RSI 34 | 距MA20 -28.0% | VP 45。",
+        "entry_target": null,
+        "exit_trigger": null
+      },
       {
         "ticker": "175.HK",
         "name": "175.HK",
@@ -121,8 +155,8 @@
         "weight_pct": 0,
         "vp_score": 50,
         "confluence": 0,
-        "reason_e": "No evidence-review condition. Score 0, VP 50. RSI 36 | Price vs MA20 -5.9% | VP 50.",
-        "reason_z": "暂无证据复核条件。评分0，VP50。RSI 36 | 距MA20 -5.9% | VP 50。",
+        "reason_e": "No evidence-review condition. Score 0, VP 50. RSI 41 | Price vs MA20 -2.2% | VP 50.",
+        "reason_z": "暂无证据复核条件。评分0，VP50。RSI 41 | 距MA20 -2.2% | VP 50。",
         "entry_target": null,
         "exit_trigger": null
       }
@@ -134,6 +168,18 @@
     "PROFIT REVIEW: 300308.SZ +68.6% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
+    {
+      "ticker": "002594.SZ",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
+      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
+      "indicator": "revenue_growth",
+      "actual": null,
+      "threshold": null
+    },
     {
       "ticker": "300308.SZ",
       "severity": "NONE",
@@ -147,14 +193,26 @@
       "threshold": 25.0
     },
     {
-      "ticker": "002594.SZ",
+      "ticker": "300054.SZ",
       "severity": "LOW",
       "status": "MANUAL",
-      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
-      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
-      "indicator": "revenue_growth",
+      "wrongIf_e": "2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net profit YoY < +25% (per decision sheet wrong_if)",
+      "wrongIf_z": "2026半年报抛光垫收入同比<+30%(如披露),或毛利率<48%,或归母净利同比<+25%(决策书 wrong_if)",
+      "note_e": "Unstructured condition — monitor manually: 2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net pr",
+      "note_z": "非结构化条件——需人工监控：2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net pr",
+      "indicator": "unstructured",
+      "actual": null,
+      "threshold": null
+    },
+    {
+      "ticker": "688120.SH",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (per decision sheet wrong_if, source-bound to the H1 report)",
+      "wrongIf_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
+      "note_e": "Unstructured condition — monitor manually: 2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
+      "note_z": "非结构化条件——需人工监控：2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
+      "indicator": "unstructured",
       "actual": null,
       "threshold": null
     },
@@ -232,10 +290,10 @@
   ],
   "stats": {
     "positions_held": 5,
-    "watchlist_count": 2,
+    "watchlist_count": 4,
     "buy_watch_count": 0,
     "wrongif_triggered": 0,
-    "wrongif_manual": 3,
+    "wrongif_manual": 5,
     "wrongif_clear": 1
   }
 }

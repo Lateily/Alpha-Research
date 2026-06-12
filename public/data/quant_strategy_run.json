@@ -8,7 +8,7 @@
     "no_buy_sell": true,
     "no_position_mutation": true,
     "run_date": "2026-06-12",
-    "generated_at": "2026-06-12T06:02:33.824030+00:00",
+    "generated_at": "2026-06-12T12:02:03.570960+00:00",
     "data_tier": "degraded_ci_focus_only",
     "data_as_of": null,
     "horizon": "20d primary / 5d secondary diagnostic",
@@ -30,7 +30,7 @@
       "disposition": "H1 family RETIRED — no live/active/actionable signals; factory KEPT for new candidates"
     },
     "counts": {
-      "signals": 3,
+      "signals": 5,
       "candidates_wait": 0,
       "active_trades_enter": 0,
       "killed_signal_observations": 0,
@@ -64,21 +64,35 @@
       "ticker": "002594.SZ",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 118,
+      "n_bars": 60,
+      "need_bars": 212
+    },
+    {
+      "ticker": "300054.SZ",
+      "basis": "focus_ohlc_diagnostic",
+      "action": "INSUFFICIENT_DATA",
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "300308.SZ",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 118,
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "603233.SH",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 118,
+      "n_bars": 60,
+      "need_bars": 212
+    },
+    {
+      "ticker": "688120.SH",
+      "basis": "focus_ohlc_diagnostic",
+      "action": "INSUFFICIENT_DATA",
+      "n_bars": 60,
       "need_bars": 212
     }
   ],

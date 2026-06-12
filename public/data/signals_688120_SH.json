@@ -1,0 +1,52 @@
+{
+  "ticker": "688120.SH",
+  "generated_at": "2026-06-12",
+  "price": 186.74,
+  "zone": "NEUTRAL",
+  "entry_zone": true,
+  "exit_zone": false,
+  "signals": [
+    {
+      "type": "RSI_RECOVERING",
+      "strength": "moderate",
+      "date": "20260611",
+      "bullish": true,
+      "description": {
+        "e": "RSI recovering 32.8→34.5 — momentum rebuilding",
+        "z": "RSI从32.8回升至34.5，动能修复"
+      }
+    }
+  ],
+  "signal_count": {
+    "bullish": 1,
+    "bearish": 0,
+    "total": 1
+  },
+  "indicators": {
+    "ma5": 222.49,
+    "ma20": 259.24,
+    "ma60": 210.58,
+    "rsi14": 34.5,
+    "vol_ma20": 120526,
+    "vol_ratio": 1.18,
+    "price_vs_ma20": -27.97,
+    "price_vs_ma60": -11.32,
+    "change_1d": 2.48,
+    "change_5d": -26.79,
+    "change_20d": -25.45,
+    "macd_dif": -2.756,
+    "macd_dea": 8.9474,
+    "macd_hist": -23.4068,
+    "bb_upper": 319.86,
+    "bb_mid": 259.24,
+    "bb_lower": 198.62,
+    "bb_bandwidth": 46.77,
+    "kdj_k": 15.3,
+    "kdj_d": 19.4,
+    "kdj_j": 7.2,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
+  }
+}

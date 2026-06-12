@@ -1,0 +1,52 @@
+{
+  "ticker": "300054.SZ",
+  "generated_at": "2026-06-12",
+  "price": 75.48,
+  "zone": "BULLISH",
+  "entry_zone": true,
+  "exit_zone": false,
+  "signals": [
+    {
+      "type": "MA20_BOUNCE",
+      "strength": "moderate",
+      "date": "20260611",
+      "bullish": true,
+      "description": {
+        "e": "Price bounced off MA20 (71.8) — near-term support held",
+        "z": "股价从MA20(71.8)附近反弹，短期支撑有效"
+      }
+    }
+  ],
+  "signal_count": {
+    "bullish": 1,
+    "bearish": 0,
+    "total": 1
+  },
+  "indicators": {
+    "ma5": 70.06,
+    "ma20": 72.06,
+    "ma60": 60.0,
+    "rsi14": 58.4,
+    "vol_ma20": 440976,
+    "vol_ratio": 1.14,
+    "price_vs_ma20": 4.75,
+    "price_vs_ma60": 25.8,
+    "change_1d": 6.25,
+    "change_5d": 2.85,
+    "change_20d": 8.64,
+    "macd_dif": 2.0183,
+    "macd_dea": 2.6448,
+    "macd_hist": -1.2531,
+    "bb_upper": 79.94,
+    "bb_mid": 72.06,
+    "bb_lower": 64.18,
+    "bb_bandwidth": 21.88,
+    "kdj_k": 58.5,
+    "kdj_d": 42.3,
+    "kdj_j": 91.1,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
+  }
+}
