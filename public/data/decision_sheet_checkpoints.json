@@ -1,0 +1,158 @@
+{
+  "_meta": {
+    "layer": "CTF v1 decision-sheet forward checkpoints (PR-D)",
+    "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md §3",
+    "updated_at": "2026-06-10T16:28:48.802451+00:00",
+    "n_active": 1
+  },
+  "registrations": [
+    {
+      "ticker": "002594.SZ",
+      "name": {
+        "zh": "比亚迪",
+        "en": "BYD Company"
+      },
+      "content_lock": "ea3402301dff717e8bae387242cc6025078f13cbd213208a4e2309d4f40a6bef",
+      "sheet_as_of": "2026-06-10",
+      "registered_at": "2026-06-10T16:27:38.191007+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "LONG",
+      "conviction_at_registration": "STARTER_CAPPED_UNTIL_E1 — and WATCH_NOT_CONVICTION at the current reference price (R/R < 2:1; see reward_to_risk)",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 93.75,
+      "reference_price_date": "2026-05-22",
+      "band": {
+        "bear": {
+          "low": 50,
+          "high": 60
+        },
+        "base": {
+          "low": 95,
+          "high": 105
+        },
+        "bull": {
+          "low": 145,
+          "high": 160
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "2026 H1 海外分部毛利率 (overseas segment GM)",
+          "threshold": "≤ 16.5%",
+          "source": "2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 (if_not_disclosed: INSUFFICIENT_DISCLOSURE)",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 H1 合并毛利率 (consolidated GM)",
+          "threshold": "≤ 15.0%",
+          "source": "2026 H1 报告 合并利润表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 H1 归母净利润 YoY",
+          "threshold": "≤ −40%",
+          "source": "2026 H1 报告 合并利润表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "海外月度销量 YoY (overseas monthly units YoY)",
+          "threshold": "< 0 for any 2 consecutive months in 2026 H2",
+          "source": "公司月度产销快报 (巨潮/公司公告)",
+          "check_date": "monthly ~10th, 2026-07 → 2026-12"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "2026-08-31",
+          "event": "2026 半年报(分部披露 = E1 证明事件)"
+        },
+        {
+          "date": "monthly ~10th (next ≈ 2026-07-10)",
+          "event": "月度产销快报(海外销量)"
+        },
+        {
+          "date": "H2-2026 launches",
+          "event": "新车周期/闪充平台节奏(中信 5/27 所述)"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "002594.SZ",
+        "content_lock": "ea3402301dff717e",
+        "sheet": "docs/research/decision_sheets/002594_SZ_2026-06-10.md",
+        "scored_at": "2026-06-11",
+        "scorer_roles": {
+          "first_red_team_qa": "advisor (Junyan's research QA)",
+          "final_adjudicator": "Junyan"
+        },
+        "scores": {
+          "specificity": {
+            "score": 82,
+            "comment": "明确 E1 事件、日期、毛利率阈值、R/R、目标区间;不是空泛叙事"
+          },
+          "falsifiability": {
+            "score": 86,
+            "comment": "8/31 半年报、海外 GM≤16.5%、合并 GM≤15%、净利 YoY≤−40%、海外销量连续两月负增长,均可验证"
+          },
+          "valuation_discipline": {
+            "score": 56,
+            "comment": "最弱轴:bear/base/bull 有区间,但盈利路径与 PE 仍是 analyst-constructed;自动估值栈坏,缺模型化锚"
+          },
+          "information_increment": {
+            "score": 63,
+            "comment": "+280bps 海外毛利率差是有价值的 variant,但中信 5/27 后 bull case 开始拥挤;增量还在,不够强"
+          },
+          "risk_identification": {
+            "score": 72,
+            "comment": "价格战、EU、估值、crowding 都有;政策补贴退坡、对手份额挤压、EU 本地化 GM 拖累可再量化"
+          }
+        },
+        "average": 71.8,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 56
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS-LOW",
+        "conditions": [
+          "may register 30/60/90 checkpoints — first qualified CTF v1 sample",
+          "may NOT upgrade to conviction buy",
+          "execution stance stays WATCH_NOT_CONVICTION / starter-capped only",
+          "next revision priority = valuation discipline (model-anchored band: fix the broken rDCF/EV-EBITDA/RI generators for this name + sensitivity grid), NOT thesis narrative"
+        ],
+        "note": "first quality data point of Core Thesis Factory v1; human score = measure of record per spec #62"
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-10",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-09",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-08",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "may register 30/60/90 checkpoints — first qualified CTF v1 sample",
+        "may NOT upgrade to conviction buy",
+        "execution stance stays WATCH_NOT_CONVICTION / starter-capped only",
+        "next revision priority = valuation discipline (model-anchored band: fix the broken rDCF/EV-EBITDA/RI generators for this name + sensitivity grid), NOT thesis narrative"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    }
+  ]
+}
