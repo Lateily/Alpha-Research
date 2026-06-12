@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-12T04:42:10.403376+00:00",
+  "generated_at": "2026-06-12T06:02:33.739337+00:00",
   "date": "2026-06-12",
   "brief_e": "1 Exposure Review",
   "brief_z": "1 敞口复核",
@@ -12,13 +12,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 0,
-        "pnl_pct": 65.7,
+        "pnl_pct": 68.56,
         "holding_days": 94,
-        "weight_pct": 56.2,
+        "weight_pct": 56.6,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +65.7% after 94d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+65.7%（持有94天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +68.6% after 94d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+68.6%（持有94天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -31,7 +31,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 94,
-        "weight_pct": 3.9,
+        "weight_pct": 3.8,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 94d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +3.0%.",
@@ -48,7 +48,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 87,
-        "weight_pct": 23.1,
+        "weight_pct": 22.9,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 87d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 80,
-        "weight_pct": 13.3,
+        "weight_pct": 13.2,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 80d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -80,7 +80,7 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 0,
-        "pnl_pct": -5.52,
+        "pnl_pct": -5.49,
         "holding_days": 72,
         "weight_pct": 3.6,
         "vp_score": 48,
@@ -130,8 +130,8 @@
   },
   "buy_watches": [],
   "portfolio_risk": [
-    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 56% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +65.7% — exposure-review condition (sizable unrealised gain)"
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 57% of portfolio — above 40.0% limit",
+    "PROFIT REVIEW: 300308.SZ +68.6% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {

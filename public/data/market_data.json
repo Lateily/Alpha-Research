@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-06-12T04:37:57.818674",
+    "fetched_at": "2026-06-12T05:58:45.188743",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -17,16 +17,16 @@
   "yahoo": {
     "300308.SZ": {
       "price": {
-        "last": 1129,
+        "last": 1148.51,
         "prev_close": 1124,
-        "change_pct": 0.445,
+        "change_pct": 2.181,
         "high": 1188.5,
-        "low": 1128.22,
-        "volume": 1973831500,
+        "low": 1128.18,
+        "volume": 2760764200,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 1188.5,
-        "low_52w": 1128.22
+        "low_52w": 1128.18
       },
       "technical": {
         "sma_20": null,
@@ -90,15 +90,15 @@
     },
     "002594.SZ": {
       "price": {
-        "last": 90.88,
+        "last": 90.91,
         "prev_close": 89.8,
-        "change_pct": 1.203,
-        "high": 91.01,
+        "change_pct": 1.236,
+        "high": 91.36,
         "low": 89.25,
-        "volume": 2083054500,
+        "volume": 2717944300,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 91.01,
+        "high_52w": 91.36,
         "low_52w": 89.25
       },
       "technical": {
@@ -166,12 +166,12 @@
         "last": 18.89,
         "prev_close": 18.89,
         "change_pct": 0,
-        "high": 19.29,
+        "high": 19.31,
         "low": 18.73,
-        "volume": 169,
+        "volume": 132,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 19.29,
+        "high_52w": 19.31,
         "low_52w": 18.73
       },
       "technical": {
@@ -236,12 +236,12 @@
     },
     "603233.SH": {
       "price": {
-        "last": 17.08,
+        "last": 17.07,
         "prev_close": 16.45,
-        "change_pct": 3.83,
+        "change_pct": 3.769,
         "high": 17.15,
         "low": 16.32,
-        "volume": 429268400,
+        "volume": 585888400,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 17.15,
@@ -309,16 +309,16 @@
     },
     "688120.SH": {
       "price": {
-        "last": 185.1,
+        "last": 186.07,
         "prev_close": 186.74,
-        "change_pct": -0.878,
+        "change_pct": -0.359,
         "high": 198.89,
-        "low": 183.84,
-        "volume": 1319444200,
+        "low": 183.2,
+        "volume": 1584155200,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 198.89,
-        "low_52w": 183.84
+        "low_52w": 183.2
       },
       "technical": {
         "sma_20": null,
@@ -382,16 +382,16 @@
     },
     "300054.SZ": {
       "price": {
-        "last": 80.9,
+        "last": 79.9,
         "prev_close": 75.48,
-        "change_pct": 7.181,
+        "change_pct": 5.856,
         "high": 88.55,
-        "low": 80.8,
-        "volume": 6632058100,
+        "low": 79.9,
+        "volume": 7493700800,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 88.55,
-        "low_52w": 80.8
+        "low_52w": 79.9
       },
       "technical": {
         "sma_20": null,
