@@ -267,6 +267,13 @@ jobs:
         continue-on-error: true          # non-critical; no-op until a checkpoint is due
         run: python scripts/sheet_checkpoints.py --check
 
+      # ── Step 2h5: Factory progress aggregator (read-only over artifacts) ──
+      # Refreshes public/data/factory_progress.json for the Factory tab —
+      # ledger/scan/family-history state for real-time progress tracking.
+      - name: Generate factory progress snapshot
+        continue-on-error: true          # non-critical; display-only aggregation
+        run: python scripts/factory_progress.py
+
       # ── Step 2i: Signal quality analytics (feedback loop) ────────────────
       - name: Compute signal quality analytics
         continue-on-error: true          # non-critical; reads trades + positions
@@ -395,6 +402,7 @@ jobs:
             public/data/model_portfolio.json \
             public/data/quant_strategy_run.json \
             public/data/decision_sheet_checkpoints.json \
+            public/data/factory_progress.json \
             public/data/position_sizing.json \
             public/data/signal_quality.json \
             public/data/trades.json \

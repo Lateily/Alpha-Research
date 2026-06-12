@@ -1,0 +1,289 @@
+{
+  "_meta": {
+    "generated_at": "2026-06-12T09:08:45.916876+00:00",
+    "layer": "Factory Progress aggregator (read-only over committed artifacts)",
+    "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
+  },
+  "factory_a": {
+    "title_zh": "研究工厂(Core Thesis + 前向验证)",
+    "n_active": 3,
+    "registrations": [
+      {
+        "ticker": "002594.SZ",
+        "name": {
+          "zh": "比亚迪",
+          "en": "BYD Company"
+        },
+        "status": "ACTIVE",
+        "lock8": "ea340230",
+        "redteam_avg": 71.8,
+        "redteam_verdict": "PASS-LOW",
+        "stance": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+        "conviction": "STARTER_CAPPED_UNTIL_E1 — and WATCH_NOT_CONVICTION at the current reference price (R/R < 2:1; see reward_to_risk)",
+        "direction": "LONG",
+        "reference_price": 93.75,
+        "checkpoints": [
+          {
+            "offset_days": 30,
+            "due_date": "2026-07-10",
+            "status": "PENDING",
+            "days_to_due": 28
+          },
+          {
+            "offset_days": 60,
+            "due_date": "2026-08-09",
+            "status": "PENDING",
+            "days_to_due": 58
+          },
+          {
+            "offset_days": 90,
+            "due_date": "2026-09-08",
+            "status": "PENDING",
+            "days_to_due": 88
+          }
+        ]
+      },
+      {
+        "ticker": "688120.SH",
+        "name": {
+          "zh": "华海清科",
+          "en": "Huahai Qingke"
+        },
+        "status": "ACTIVE",
+        "lock8": "9c318ab0",
+        "redteam_avg": 84.4,
+        "redteam_verdict": "PASS",
+        "stance": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+        "conviction": "WATCH_ONLY — R/R at the 2026-06-11 live price (≈0.43) is FAR below the 2:1 bar and even the committed split-adjusted reference (≈1.98) misses it; STARTER eligibility begins only at the add zone (≤~139, where the bar is met) or on a post-E1 re-band. No position at current price.",
+        "direction": "LONG",
+        "reference_price": 139.67,
+        "checkpoints": [
+          {
+            "offset_days": 30,
+            "due_date": "2026-07-12",
+            "status": "PENDING",
+            "days_to_due": 30
+          },
+          {
+            "offset_days": 60,
+            "due_date": "2026-08-11",
+            "status": "PENDING",
+            "days_to_due": 60
+          },
+          {
+            "offset_days": 90,
+            "due_date": "2026-09-10",
+            "status": "PENDING",
+            "days_to_due": 90
+          }
+        ]
+      },
+      {
+        "ticker": "300054.SZ",
+        "name": {
+          "zh": "鼎龙股份",
+          "en": "Dinglong"
+        },
+        "status": "ACTIVE",
+        "lock8": "5e653f50",
+        "redteam_avg": 82.6,
+        "redteam_verdict": "PASS",
+        "stance": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+        "conviction": "WATCH_ONLY — R/R at the 2026-06-11 live price (≈0.29) is FAR below the 2:1 bar; even the committed 5/08 reference gives ≈0.87. STARTER eligibility begins only at the add zone (≤~54.7) or on a post-E1 re-band. No position at current price.",
+        "direction": "LONG",
+        "reference_price": 64.19,
+        "checkpoints": [
+          {
+            "offset_days": 30,
+            "due_date": "2026-07-12",
+            "status": "PENDING",
+            "days_to_due": 30
+          },
+          {
+            "offset_days": 60,
+            "due_date": "2026-08-11",
+            "status": "PENDING",
+            "days_to_due": 60
+          },
+          {
+            "offset_days": 90,
+            "due_date": "2026-09-10",
+            "status": "PENDING",
+            "days_to_due": 90
+          }
+        ]
+      }
+    ],
+    "next_read": {
+      "date": "2026-07-10",
+      "ticker": "002594.SZ",
+      "days_to_due": 28
+    },
+    "note_zh": "人工红队为 measure of record;检查点是 case-level 读数,不是统计"
+  },
+  "discovery": {
+    "scan_id": "SCAN_1_AI_SEMIS",
+    "theme": "A股 AI 半导体供应链",
+    "scan_date": "2026-06-11",
+    "status": "MERGED (#68) — nominations ratified",
+    "pool_n": 22,
+    "layers_n": 10,
+    "top5": [
+      {
+        "ticker": "688120.SH",
+        "name": "华海清科",
+        "score": 74,
+        "tier": "T2"
+      },
+      {
+        "ticker": "300054.SZ",
+        "name": "鼎龙股份",
+        "score": 73,
+        "tier": "T2"
+      },
+      {
+        "ticker": "688008.SH",
+        "name": "澜起科技",
+        "score": 73,
+        "tier": "T2"
+      },
+      {
+        "ticker": "688072.SH",
+        "name": "拓荆科技",
+        "score": 72,
+        "tier": "T2"
+      },
+      {
+        "ticker": "000021.SZ",
+        "name": "深科技",
+        "score": 71,
+        "tier": "T2"
+      }
+    ],
+    "nominated": [
+      "688120.SH",
+      "300054.SZ"
+    ],
+    "forward_review_dates": [
+      "2026-07-11",
+      "2026-08-10",
+      "2026-09-09"
+    ],
+    "label": "[unvalidated intuition] discovery-layer output — NOT a trade signal, NOT validated alpha; any execution requires a CTF decision sheet + five-axis red team"
+  },
+  "factory_b": {
+    "title_zh": "交易工厂(Quant Strategy)",
+    "line_status_zh": "V2-PEAD spec 等 ratify(#72)— 批准前零回测;H1 已 KILL、C1 NO-CLAIM 已入册",
+    "families": [
+      {
+        "id": "H1",
+        "name_zh": "H1 技术择时(MA200+RSI 回调)",
+        "verdict": "KILL",
+        "date": "2026-06-09",
+        "key_number": "α −23.0%/yr (CI [−31.2,−15.2]) · 0/5 WF · 差于超卖对照",
+        "doc": "docs/strategy/QUANT_V0_VERDICT_2026-06-09.md"
+      },
+      {
+        "id": "C1",
+        "name_zh": "C1 低换手 quality+low_vol tilt (K=20)",
+        "verdict": "NO-CLAIM",
+        "date": "2026-06-10",
+        "key_number": "vs EW +6~+8% 点估计但 CI 跨零 · 决定性胜随机对照 · 换手 1.57-1.80×",
+        "doc": "docs/strategy/QUANT_C1_VERDICT_2026-06-10.md"
+      },
+      {
+        "id": "V2-PEAD",
+        "name_zh": "V2 盈余公告后漂移(自历史 SUE,事件驱动)",
+        "verdict": "SPEC_AWAITING_RATIFICATION",
+        "date": "2026-06-12",
+        "key_number": "预注册 3 臂 + 随机事件阴性对照;ratify 前零回测",
+        "doc": "docs/strategy/QUANT_STRATEGY_v2_SPEC.md"
+      }
+    ]
+  },
+  "watch_universe": {
+    "n_tickers": 6,
+    "tickers": [
+      "300308.SZ",
+      "002594.SZ",
+      "175.HK",
+      "603233.SH",
+      "688120.SH",
+      "300054.SZ"
+    ]
+  },
+  "milestones": [
+    {
+      "date": "2026-06-12",
+      "pr": 72,
+      "label_zh": "Quant v2 SPEC(V2-PEAD 预注册)+ 60图知识库整合裁决 — 等 ratify",
+      "label_en": "Quant v2 spec (V2-PEAD pre-registration) + KB integration verdict — awaiting ratification"
+    },
+    {
+      "date": "2026-06-12",
+      "pr": 71,
+      "label_zh": "华海+鼎龙注册进 checkpoint ledger — 3 票 ACTIVE,前向验证 LIVE",
+      "label_en": "Huahai + Dinglong registered — 3 ACTIVE, forward validation LIVE"
+    },
+    {
+      "date": "2026-06-12",
+      "pr": 70,
+      "label_zh": "ohlc tushare 日线回退(新票价格盲区修复)",
+      "label_en": "ohlc tushare daily-bars fallback"
+    },
+    {
+      "date": "2026-06-12",
+      "pr": 66,
+      "label_zh": "checkpoint 注册机械上线(红队绑定 + 30/60/90)+ 3 个审计修复",
+      "label_en": "Checkpoint machinery live (red-team-gated, 30/60/90) + 3 audit fixes"
+    },
+    {
+      "date": "2026-06-12",
+      "pr": 69,
+      "label_zh": "batch-1 决策书双 PASS(华海 84.4 / 鼎龙 82.6)— 双 WATCH_ONLY",
+      "label_en": "Batch-1 sheets double PASS (84.4 / 82.6) — both WATCH_ONLY"
+    },
+    {
+      "date": "2026-06-11",
+      "pr": 68,
+      "label_zh": "Serenity Scan #1 A股AI半导体:22名池/top-5/提名 #2#3",
+      "label_en": "Serenity Scan #1: 22-name pool / top-5 / ticker #2#3 nominations"
+    },
+    {
+      "date": "2026-06-11",
+      "pr": 67,
+      "label_zh": "Serenity 方法论并入 Factory A 发现层(三把锁 ratified)",
+      "label_en": "Serenity methodology integrated as the discovery layer (three locks ratified)"
+    },
+    {
+      "date": "2026-06-11",
+      "pr": 64,
+      "label_zh": "CTF v1 样本 #1 BYD 决策书(红队 71.8 PASS-LOW)",
+      "label_en": "CTF v1 sample #1 BYD sheet (red team 71.8 PASS-LOW)"
+    },
+    {
+      "date": "2026-06-10",
+      "pr": 61,
+      "label_zh": "C1 低换手 tilt 家族 = NO-CLAIM(胜随机对照,CI 跨零)→ quant 线暂停",
+      "label_en": "C1 low-turnover tilt = NO-CLAIM → quant line paused"
+    },
+    {
+      "date": "2026-06-09",
+      "pr": 57,
+      "label_zh": "H1 技术择时正式 KILL(α −23%/yr,0/5 WF)— 工厂保留",
+      "label_en": "H1 technical timing formally KILLED — factory kept"
+    },
+    {
+      "date": "2026-06-09",
+      "pr": 51,
+      "label_zh": "两工厂分立:研究工厂 vs 交易工厂(验证机械共用)",
+      "label_en": "Two-factory split: research vs trading"
+    },
+    {
+      "date": "2026-06-07",
+      "pr": null,
+      "label_zh": "产品转向:每日模型组合 Pilot(unvalidated,验证闭环为卖点)",
+      "label_en": "Product pivot: Daily Model Portfolio Pilot"
+    }
+  ]
+}
