@@ -1,0 +1,48 @@
+{
+  "ticker": "688120.SH",
+  "content_lock": "9c318ab0198ec444",
+  "sheet": "docs/research/decision_sheets/688120_SH_2026-06-11.md",
+  "scored_at": "2026-06-12",
+  "scorer_roles": {
+    "five_axis_red_team": "Junyan (direct scoring + final adjudication, #69 review)"
+  },
+  "scores": {
+    "specificity": {
+      "score": 88,
+      "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+    },
+    "falsifiability": {
+      "score": 92,
+      "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+    },
+    "valuation_discipline": {
+      "score": 76,
+      "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+    },
+    "information_increment": {
+      "score": 80,
+      "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+    },
+    "risk_identification": {
+      "score": 86,
+      "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+    }
+  },
+  "average": 84.4,
+  "min_axis": {
+    "axis": "valuation_discipline",
+    "score": 76
+  },
+  "bar": {
+    "average_min": 70,
+    "axis_min": 50,
+    "label": "[unvalidated intuition]"
+  },
+  "verdict": "PASS",
+  "conditions": [
+    "register 30/60/90 forward checkpoints (after #66 merges)",
+    "execution stays WATCH_ONLY — NOT a buy list; no position at reference",
+    "re-entry only at the add zone (≤139.33) or post-E1 re-band per the sheet's execution plan"
+  ],
+  "note": "Junyan one-line verdict: 两份研究质量都过关，适合进入 30/60/90 检查点；但执行层都是 WATCH_ONLY，不是买入名单。 Verification basis he stated: selftest ✓ / py_compile ✓ / npm build ✓ / git diff --check ✓ / external spot-check of load-bearing facts (华海 FY25 + 10转4派4; 鼎龙 FY25 + 皓飞). CTF v1 sample #2/#3 quality data points; human score = measure of record per spec #62."
+}
