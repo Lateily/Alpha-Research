@@ -1376,6 +1376,23 @@ def _to_twelvedata_symbol(yf_ticker):
     # Plain ticker (US-listed ADR etc.)
     return yf_ticker
 
+def _ohlc_from_tushare_pack(pid):
+    """Daily bars from the committed tushare pack (public/data/tushare/<pid>.json),
+    mapped to the ohlc_*.json shape. Dates kept compact YYYYMMDD (matches the
+    direct-API path + sheet_checkpoints' staleness comparison). Ascending order."""
+    try:
+        with open(OUTPUT_DIR / "tushare" / f"{pid}.json") as f:
+            rows = (json.load(f).get("data", {}).get("daily", {}) or {}).get("rows") or []
+        bars = [{"date": r["trade_date"], "open": r.get("open"), "high": r.get("high"),
+                 "low": r.get("low"), "close": r.get("close"),
+                 "volume": int(r.get("vol") or 0)} for r in rows if r.get("trade_date") and r.get("close") is not None]
+        bars.sort(key=lambda b: b["date"])
+        return bars
+    except Exception as e:
+        print(f"    OHLC tushare fallback error: {e}")
+        return []
+
+
 def _fetch_ohlcv_twelvedata(yf_ticker, days=90):
     """
     Fetch daily OHLCV history via Twelve Data REST API.
@@ -2079,7 +2096,12 @@ def fetch_focus_stocks():
                 ohlc_data = direct["ohlcv"]
                 print(f"    OHLC: using 5d direct-API data (yfinance unavailable)")
             else:
-                ohlc_data = []
+                # Fallback 2: tushare daily bars already fetched into public/data/tushare/
+                # (yfinance rate-limits on runners left NEW watchlist names with no ohlc
+                # file at all while paid daily bars sat one directory over, 2026-06-12)
+                ohlc_data = _ohlc_from_tushare_pack(pid)
+                if ohlc_data:
+                    print(f"    OHLC: using tushare daily bars fallback ({len(ohlc_data)} bars)")
 
             if ohlc_data:
                 with open(OUTPUT_DIR / f"ohlc_{safe_id}.json", "w") as f:
