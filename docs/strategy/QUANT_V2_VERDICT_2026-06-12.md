@@ -40,10 +40,22 @@
 - **工厂:KEEP** — 第 4 个家族在锁定 manifest 下 120 秒完成全样本裁决;事件驱动引擎(T+1/涨停放弃/PIT 严格后入/无前视 selftest)已并入机械资产,V3 任何事件类家族可直接复用
 - 候选阵亡簿:技术择时 3 个(H1 系)+ tilt 1 个(C1 NO-CLAIM)+ 事件 1 个(V2-PEAD)= **5 个家族经同一台机器裁决,0 个幸存** — 机器是资产,死亡名单是它工作的证据
 
-## 6. 工程附注(运行中修复的三个集成 bug,全部在数字产生之前)
+## 5b. 审计字段(n_positions 修复后,真实值)
+
+| 臂 | avg_gross | max_gross | median_n_positions | 含义 |
+|---|---|---|---|---|
+| v2a | 45.5% | 99.99% | 9 | book 长期半空:SUE≥1 事件流撑不满 K=20 槽位 |
+| v2b | 42.8% | 99.99% | 9 | 同上(regime 缩仓再降一点) |
+| v2c | 33.9% | 99.97% | 4 | 正交化后事件更稀,book 更空 |
+| control | 55.7% | 100% | 14 | 随机不挑剔,反而更满 |
+
+**结构性发现**:策略连"持续部署资本"都做不到——平均仓位 45%、中位持仓 9 个。same-gross 方法论已对此公平折算(基准按 gross 缩放),所以负 alpha 不是空仓背锅;但 IMPL2/IMPL3 的 FAIL 从"审计字段缺失的假象"变成了**真实的部署不足判定**。事件密度不足以支撑一个 20 槽位组合,这是 V3 任何事件类假设都必须面对的容量事实。
+
+## 6. 工程附注(运行中修复的四个集成 bug,全部在最终数字定稿之前)
 
 1. `merge_asof` 不接受字符串日期键 → int 键
 2. 策略曲线键约定 `equity` → `nav`(harness 契约)
 3. **曲线缺 `gross` 字段 → same-gross 基准被缩成平线 → 首轮"alpha"实为绝对收益**(两基准数字相同暴露了它)→ 补 gross 后两基准正确分离。教训入册:**任何"两个不同基准给出相同 alpha"的输出都是装配 bug 的指纹,先查 gross/曲线契约再看结果**
+4. **曲线缺 `n_positions` 字段(Junyan #73 复审抓出)→ IMPL3 的 median_n_positions 恒为 0,审计是假的** → 补字段后审计为真(§5b);alpha 数字与修复前完全一致(审计字段不参与 alpha 计算——一致性本身是无回归验证)。selftest 新增硬断言:持仓日 gross>0 且 n_positions>0,空仓日严格 0/0
 
 *Spec: docs/strategy/QUANT_STRATEGY_v2_SPEC.md · Manifest: public/data/quant_v2_manifest.json(lock `ac5d9d9ce8d5…`)· 完整数字: public/data/quant_v2_verdict.json · UNVALIDATED;本文档不构成任何交易建议。*

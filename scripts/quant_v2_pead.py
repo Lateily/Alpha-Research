@@ -327,7 +327,8 @@ def run_pead_arm(panel, idx, liquid, trade_dates, start, end, events, capital=No
         mv = sum(p["shares"] * p["last_px"] for p in positions.values())
         nav = cash + mv
         equity_curve.append({"date": T, "nav": round(nav, 2), "cash": round(cash, 2),
-                             "gross": round(mv / nav, 6) if nav > 0 else 0.0})
+                             "gross": round(mv / nav, 6) if nav > 0 else 0.0,
+                             "n_positions": len(positions)})
 
     # force-close at window end (mark at last_px; cost-free mark, flagged)
     for tk in list(positions.keys()):
@@ -558,6 +559,16 @@ def _selftest() -> int:
         errs.append("entry must be STRICTLY after ann_date (PIT)")
     if res["event_audit"]["n_skipped_limit_up"] != 1:
         errs.append("LIMIT.SZ limit-up open must be abandoned (no chase)")
+    # audit-field invariant (Junyan #73 P1: missing gross/n_positions polluted IMPL2/IMPL3):
+    # every held day carries gross > 0 AND n_positions > 0; pre-entry days carry exactly 0/0
+    sell_dates = [t["date"] for t in res["trades"] if t["side"] == "SELL" and t["ticker"] == "WIN.SZ"]
+    if buys and sell_dates:
+        held_pts = [p for p in res["equity_curve"] if buys[0]["date"] <= p["date"] < sell_dates[0]]
+        if not held_pts or not all(p.get("gross", 0) > 0 and p.get("n_positions", 0) > 0 for p in held_pts):
+            errs.append("every held day must carry gross > 0 AND n_positions > 0 (audit-field invariant)")
+        flat_pts = [p for p in res["equity_curve"] if p["date"] < buys[0]["date"]]
+        if flat_pts and any(p.get("gross") != 0.0 or p.get("n_positions") != 0 for p in flat_pts):
+            errs.append("pre-entry days must carry gross == 0 AND n_positions == 0")
     sells = [t for t in res["trades"] if t["side"] == "SELL" and t["ticker"] == "WIN.SZ"]
     if not sells or sells[0]["reason"] != "time_exit_50td":
         errs.append(f"WIN.SZ must time-exit at 50td (got {sells[0]['reason'] if sells else 'none'})")
@@ -598,6 +609,7 @@ def _selftest() -> int:
             print(f"  - {e}")
         return 1
     print("quant_v2_pead selftest PASSED (single qualifying event enters STRICTLY after ann_date; "
+          "held days carry gross>0 AND n_positions>0, flat days exactly 0/0; "
           "below-threshold ignored; limit-up open abandoned; 50td time exit; NO look-ahead — a "
           "future event leaves the past curve unchanged; reversal SUE<=-1 forces the exit; "
           "cumulative-YTD differencing + exact YoY matching produce the engineered surprise)")
