@@ -10644,7 +10644,7 @@ function FactoryProgress({ L, lk, C }) {
   if (!fp) return <div style={{ color: C.mid, padding: 24 }}>{L('Loading…', '加载中…')}</div>;
   const fa = fp.factory_a || {}, fb = fp.factory_b || {}, dis = fp.discovery || {};
   const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, marginBottom: 14 };
-  const h = { fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 8 };
+  const h = { fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 8 };
   const small = { fontSize: 11, color: C.mid };
   const pill = (txt, color) => <span style={{ fontSize: 10, fontWeight: 700, color, border: `1px solid ${color}55`, borderRadius: 4, padding: '1px 6px', marginLeft: 6 }}>{txt}</span>;
   const vColor = v => v === 'KILL' ? C.red : v === 'NO-CLAIM' ? C.orange : String(v || '').startsWith('PASS') ? C.green : C.blue;
@@ -10664,7 +10664,7 @@ function FactoryProgress({ L, lk, C }) {
         {(fa.registrations || []).map(r => (
           <div key={r.ticker} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, padding: '8px 0', borderTop: `1px solid ${C.border}` }}>
             <div style={{ minWidth: 170 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.text }}>{r.name?.zh || r.ticker} <span style={small}>{r.ticker}</span></div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.dark }}>{r.name?.zh || r.ticker} <span style={small}>{r.ticker}</span></div>
               <div style={small}>{L('red team', '红队')} {r.redteam_avg ?? '—'} · {r.redteam_verdict || '—'} · lock {r.lock8}…</div>
             </div>
             <div style={{ ...small, minWidth: 150 }}>{r.direction} · {r.stance || r.conviction}</div>
@@ -10688,7 +10688,7 @@ function FactoryProgress({ L, lk, C }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
           {(dis.top5 || []).map(t => (
             <span key={t.ticker} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 5,
-              border: `1px solid ${ (dis.nominated || []).includes(t.ticker) ? C.green : C.border}`, color: C.text }}>
+              border: `1px solid ${ (dis.nominated || []).includes(t.ticker) ? C.green : C.border}`, color: C.dark }}>
               {t.name} {t.score}<span style={small}>/{t.tier}</span>{(dis.nominated || []).includes(t.ticker) ? ' ★' : ''}
             </span>
           ))}
@@ -10701,7 +10701,7 @@ function FactoryProgress({ L, lk, C }) {
         <div style={{ ...small, marginBottom: 8 }}>{fb.line_status_zh}</div>
         {(fb.families || []).map(f => (
           <div key={f.id} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'baseline', padding: '7px 0', borderTop: `1px solid ${C.border}` }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: C.text, minWidth: 90 }}>{f.id}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.dark, minWidth: 90 }}>{f.id}</span>
             <span style={{ fontSize: 11, color: C.mid, flex: 1, minWidth: 200 }}>{f.name_zh}</span>
             <span style={{ fontSize: 11, fontWeight: 700, color: vColor(f.verdict) }}>{f.verdict}</span>
             <span style={{ ...small, width: '100%' }}>{f.key_number} · {f.date}</span>
@@ -10714,7 +10714,7 @@ function FactoryProgress({ L, lk, C }) {
         {(fp.milestones || []).map((m, i) => (
           <div key={i} style={{ display: 'flex', gap: 10, padding: '5px 0', borderTop: i ? `1px solid ${C.border}` : 'none' }}>
             <span style={{ ...small, minWidth: 78 }}>{m.date}</span>
-            <span style={{ fontSize: 11, color: C.text, flex: 1 }}>{lk === 'zh' ? m.label_zh : m.label_en}</span>
+            <span style={{ fontSize: 11, color: C.dark, flex: 1 }}>{lk === 'zh' ? m.label_zh : m.label_en}</span>
             {m.pr ? <a href={`https://github.com/Lateily/Alpha-Research/pull/${m.pr}`} target="_blank" rel="noreferrer"
                        style={{ fontSize: 10, color: C.blue }}>#{m.pr}</a> : null}
           </div>
