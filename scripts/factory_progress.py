@@ -27,7 +27,7 @@ DISCLAIMER = ("internal progress dashboard — UNVALIDATED research pipeline sta
 
 # maintained PR-by-PR (newest first) — keep ≤14 entries, prune the tail
 MILESTONES = [
-    {"date": "2026-06-12", "pr": None, "label_zh": "V2-PEAD 正式裁决:NO-CLAIM/KILL-grade — 信号与随机对照无差;第 5 个家族阵亡,工厂保留", "label_en": "V2-PEAD formal verdict: NO-CLAIM/KILL-grade — signal indistinguishable from random control"},
+    {"date": "2026-06-13", "pr": 73, "label_zh": "V2-PEAD 终裁 RATIFIED:v2a/v2b KILL · v2c NO-CLAIM;信号≈随机对照;book 半空(事件密度=容量上限)", "label_en": "V2-PEAD RATIFIED: KILL/NO-CLAIM — signal ≈ random control; event density caps capacity"},
     {"date": "2026-06-12", "pr": 72, "label_zh": "Quant v2 SPEC(V2-PEAD 预注册)+ 60图知识库整合裁决 — 等 ratify", "label_en": "Quant v2 spec (V2-PEAD pre-registration) + KB integration verdict — awaiting ratification"},
     {"date": "2026-06-12", "pr": 71, "label_zh": "华海+鼎龙注册进 checkpoint ledger — 3 票 ACTIVE,前向验证 LIVE", "label_en": "Huahai + Dinglong registered — 3 ACTIVE, forward validation LIVE"},
     {"date": "2026-06-12", "pr": 70, "label_zh": "ohlc tushare 日线回退(新票价格盲区修复)", "label_en": "ohlc tushare daily-bars fallback"},
@@ -49,7 +49,7 @@ QUANT_FAMILIES = [
     {"id": "C1", "name_zh": "C1 低换手 quality+low_vol tilt (K=20)", "verdict": "NO-CLAIM",
      "date": "2026-06-10", "key_number": "vs EW +6~+8% 点估计但 CI 跨零 · 决定性胜随机对照 · 换手 1.57-1.80×",
      "doc": "docs/strategy/QUANT_C1_VERDICT_2026-06-10.md"},
-    {"id": "V2-PEAD", "name_zh": "V2 盈余公告后漂移(自历史 SUE,事件驱动)", "verdict": "NO-CLAIM/KILL-grade (pending Junyan)",
+    {"id": "V2-PEAD", "name_zh": "V2 盈余公告后漂移(自历史 SUE,事件驱动)", "verdict": "KILL (v2a/v2b) · NO-CLAIM (v2c) — RATIFIED 2026-06-13",
      "date": "2026-06-12", "key_number": "v2a/v2b 双基准显著负(−11.6%/−10.8% vs CSI300)· v2c 跨零 · 0/5 WF · 信号与随机对照无差 → 事件雷达资格不满足",
      "doc": "docs/strategy/QUANT_V2_VERDICT_2026-06-12.md"},
 ]
@@ -113,7 +113,7 @@ def build(today: date | None = None) -> dict:
                       "note_zh": "人工红队为 measure of record;检查点是 case-level 读数,不是统计"},
         "discovery": discovery,
         "factory_b": {"title_zh": "交易工厂(Quant Strategy)",
-                      "line_status_zh": "V2-PEAD 已裁决(NO-CLAIM/KILL-grade,等 Junyan 终裁)— 5 个家族 0 幸存;下一步 = V3 假设(需新 manifest + ratify)",
+                      "line_status_zh": "V2-PEAD 终裁:v2a/v2b KILL · v2c NO-CLAIM(无 paper 无雷达)— 5 家族 0 幸存,工厂 KEEP;quant 线暂停,V3(倾向业绩预告事件)需新 manifest + Junyan call",
                       "families": QUANT_FAMILIES},
         "watch_universe": {"n_tickers": len(wl.get("tickers", {})), "tickers": list(wl.get("tickers", {}).keys())},
         "milestones": MILESTONES,

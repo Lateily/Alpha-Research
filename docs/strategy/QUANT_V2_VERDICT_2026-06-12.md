@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | 家族 | V2-PEAD(盈余公告后漂移,自历史 SUE;spec #72 RATIFIED 后锁定,manifest `ac5d9d9ce8d5…` 先于运行注册) |
-| 机械建议 | **NO-CLAIM(v2c)/ KILL-grade(v2a, v2b 双基准显著为负)** — 无任何臂过 claim gate;等 Junyan 终裁 |
+| 终裁 | **RATIFIED(Junyan 2026-06-13):v2a/v2b = KILL · v2c = NO-CLAIM(不进 paper、不进 event radar)· Quant Factory = KEEP · V2 不得重调(修改 = 新 manifest)· V3 方向倾向先停或转『业绩预告事件』,不再追正式财报 PEAD** |
 | 运行 | 2026-06-12,全样本 2006-2026 + 5 WF 窗 × 4 臂 + cost grid + 19-gate + BY,**120 秒** |
 | 数据 | panel 14,973,979 行(.SZ/.SH)/ survivorship gate PASS / 208,848 个 SUE 事件(≥1.0 合格 39,074) |
 

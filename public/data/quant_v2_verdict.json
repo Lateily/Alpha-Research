@@ -1406,5 +1406,15 @@
     "any_claim_permitted": false,
     "recommendation": "NO-CLAIM — no arm clears the dual-benchmark gate; per ratified §9.2, if decisively better than the random-event control the family may serve as a Factory A event radar ONLY (never a trade recommendation)"
   },
-  "validation_status": "unvalidated"
+  "validation_status": "falsified_2026-06-13",
+  "ratified_disposition": {
+    "ratified_by": "Junyan",
+    "ratified_at": "2026-06-13",
+    "v2a_pead_core": "KILL",
+    "v2b_pead_regime": "KILL",
+    "v2c_pead_sizeortho": "NO-CLAIM — no paper, no event radar",
+    "family": "CLOSED (revisions require a NEW manifest)",
+    "factory": "KEEP",
+    "v3_direction_note": "lean pause-first or 业绩预告 events; do NOT continue formal-report PEAD"
+  }
 }
