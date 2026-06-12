@@ -183,7 +183,20 @@
       "narrative_shift_rationale": "storage-capex super-cycle theme repriced the name +33% in a month (5/08-6/11) with no new fundamentals — narrative already shifted, late not early",
       "low_coverage_rationale": "155 institutions at the FY25 results call incl. UBS/BlackRock/GS Asia — heavily covered",
       "catalyst_prox_rationale": "2026 H1 report (~Aug) = E1 proof event for order->revenue conversion",
-      "macro_sensitivity": "domestic storage/logic capex cycle; US entity-list parts supply; A-share semis sentiment beta",
+      "macro_sensitivity": {
+        "storage_capex_acceleration": {
+          "direction": "positive",
+          "magnitude": "HIGH"
+        },
+        "us_parts_export_tightening": {
+          "direction": "negative",
+          "magnitude": "MED"
+        },
+        "semis_theme_unwind": {
+          "direction": "negative",
+          "magnitude": "HIGH"
+        }
+      },
       "_added": "2026-06-11 CTF batch-1 ticker #2 (Serenity Scan #1 #68, serenity_score 74 T2; nominations ratified by Junyan)"
     },
     "300054.SZ": {
@@ -211,7 +224,20 @@
       "narrative_shift_rationale": "CMP-materials localization theme hot (storage duo IPO chain lists); name +17.6% since 5/08, all-time high 5/26 — narrative mid-shift",
       "low_coverage_rationale": "开源 3/31 + 东海首次覆盖 5/12; dense May institutional visits — coverage building, denser than a year ago",
       "catalyst_prox_rationale": "ChiNext H1 forecast (~mid-July) then H1 report (~Aug) = staged E1 proof events for pad/slurry momentum",
-      "macro_sensitivity": "YMTC/CXMT storage-capex cycle; consumables pricing vs DuPont/Cabot; goodwill impairment cycle",
+      "macro_sensitivity": {
+        "storage_capex_acceleration": {
+          "direction": "positive",
+          "magnitude": "HIGH"
+        },
+        "foreign_consumables_price_war": {
+          "direction": "negative",
+          "magnitude": "MED"
+        },
+        "semis_theme_unwind": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
+      },
       "_added": "2026-06-11 CTF batch-1 ticker #3 (Serenity Scan #1 #68, serenity_score 73 T2; nominations ratified by Junyan)"
     }
   }
