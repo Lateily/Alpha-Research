@@ -2,7 +2,7 @@
   "_meta": {
     "version": "1.2",
     "description": "Watchlist — the single source of truth for the full monitoring pipeline. Add a ticker here and EVERYTHING auto-follows on the next GitHub Actions run: financial data fetch, rDCF, VP scoring, technical signals, confluence, position sizing, Telegram alerts.",
-    "last_updated": "2026-05-08",
+    "last_updated": "2026-06-11",
     "how_to_add": "Copy any existing entry, change ticker/yahoo/akshare/exchange/names, set vp_seed to neutral defaults (vp:50, all dimensions:50), set last_updated to today. Push. Done.",
     "vp_dimension_guide": {
       "expectation_gap": "AUTO — computed from rdcf delta (our_growth vs implied_growth). Do not edit manually.",
@@ -40,8 +40,14 @@
       "low_coverage_rationale": "Mid-tier A-share components company. Moderate sell-side coverage from electronics analysts but niche enough to retain some edge. Held at 50.",
       "catalyst_prox_rationale": "1.6T volume ramp is near-term. 192% revenue growth validates. Slightly reduced 85→80 as primary catalyst (certification) is now delivered; next catalyst is volume scale.",
       "macro_sensitivity": {
-        "usd_cny_above_73": { "direction": "positive", "magnitude": "MED" },
-        "northbound_reversal": { "direction": "negative", "magnitude": "MED" }
+        "usd_cny_above_73": {
+          "direction": "positive",
+          "magnitude": "MED"
+        },
+        "northbound_reversal": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
       }
     },
     "002594.SZ": {
@@ -70,9 +76,18 @@
       "low_coverage_rationale": "Extremely well-covered A-share stock. Zero coverage edge. Reduced 35→32.",
       "catalyst_prox_rationale": "Monthly sales data (potential positive surprise) but no major structural catalyst near-term given tariff headwinds. Reduced 50→45.",
       "macro_sensitivity": {
-        "pboc_rate_cut": { "direction": "positive", "magnitude": "HIGH" },
-        "usd_cny_above_73": { "direction": "negative", "magnitude": "HIGH" },
-        "northbound_reversal": { "direction": "negative", "magnitude": "MED" }
+        "pboc_rate_cut": {
+          "direction": "positive",
+          "magnitude": "HIGH"
+        },
+        "usd_cny_above_73": {
+          "direction": "negative",
+          "magnitude": "HIGH"
+        },
+        "northbound_reversal": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
       }
     },
     "175.HK": {
@@ -101,8 +116,14 @@
       "low_coverage_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder 50] HK auto coverage moderate; not as crowded as Tencent but well-known. Junyan to adjust.",
       "catalyst_prox_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder 50] Quarterly sales numbers + new model launches. Junyan to adjust based on calendar.",
       "macro_sensitivity": {
-        "usd_cny_above_73": { "direction": "negative", "magnitude": "MED" },
-        "pboc_rate_cut": { "direction": "positive", "magnitude": "MED" }
+        "usd_cny_above_73": {
+          "direction": "negative",
+          "magnitude": "MED"
+        },
+        "pboc_rate_cut": {
+          "direction": "positive",
+          "magnitude": "MED"
+        }
       }
     },
     "603233.SH": {
@@ -131,8 +152,67 @@
       "low_coverage_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder 50] Mid-cap A-share retail; coverage moderate not crowded. Junyan to adjust.",
       "catalyst_prox_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder 50] Quarterly same-store sales + medical insurance policy changes. Junyan to adjust based on calendar.",
       "macro_sensitivity": {
-        "pboc_rate_cut": { "direction": "positive", "magnitude": "LOW" }
+        "pboc_rate_cut": {
+          "direction": "positive",
+          "magnitude": "LOW"
+        }
       }
+    },
+    "688120.SH": {
+      "yahoo": "688120.SS",
+      "akshare": "688120",
+      "exchange": "SH",
+      "name_en": "Huahai Qingke",
+      "name_zh": "华海清科",
+      "vp_seed": {
+        "vp": 55,
+        "expectation_gap": 50,
+        "fundamental_accel": 60,
+        "narrative_shift": 40,
+        "low_coverage": 25,
+        "catalyst_prox": 60,
+        "last_updated": "2026-06-11",
+        "wrongIf_e": "2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (per decision sheet wrong_if, source-bound to the H1 report)",
+        "wrongIf_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
+        "concentration_seed": {
+          "score": 40,
+          "rationale_e": "CMP tools ~87% of revenue; single-product-family concentration mitigated by thinning/ion-implant/wafer-regen second engines (early)",
+          "rationale_z": "CMP 装备占营收 ~87%;减薄/离子注入/晶圆再生第二引擎尚早期"
+        }
+      },
+      "narrative_shift_rationale": "storage-capex super-cycle theme repriced the name +33% in a month (5/08-6/11) with no new fundamentals — narrative already shifted, late not early",
+      "low_coverage_rationale": "155 institutions at the FY25 results call incl. UBS/BlackRock/GS Asia — heavily covered",
+      "catalyst_prox_rationale": "2026 H1 report (~Aug) = E1 proof event for order->revenue conversion",
+      "macro_sensitivity": "domestic storage/logic capex cycle; US entity-list parts supply; A-share semis sentiment beta",
+      "_added": "2026-06-11 CTF batch-1 ticker #2 (Serenity Scan #1 #68, serenity_score 74 T2; nominations ratified by Junyan)"
+    },
+    "300054.SZ": {
+      "yahoo": "300054.SZ",
+      "akshare": "300054",
+      "exchange": "SZ",
+      "name_en": "Dinglong",
+      "name_zh": "鼎龙股份",
+      "vp_seed": {
+        "vp": 55,
+        "expectation_gap": 50,
+        "fundamental_accel": 70,
+        "narrative_shift": 45,
+        "low_coverage": 30,
+        "catalyst_prox": 60,
+        "last_updated": "2026-06-11",
+        "wrongIf_e": "2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net profit YoY < +25% (per decision sheet wrong_if)",
+        "wrongIf_z": "2026半年报抛光垫收入同比<+30%(如披露),或毛利率<48%,或归母净利同比<+25%(决策书 wrong_if)",
+        "concentration_seed": {
+          "score": 55,
+          "rationale_e": "semis 57% of FY25 revenue and rising; legacy printing consumables -13% YoY; goodwill 9.17亿 after Haofei consolidation",
+          "rationale_z": "半导体占 57% 且上升;打印耗材传统盘 -13%;皓飞并表后商誉 9.17 亿"
+        }
+      },
+      "narrative_shift_rationale": "CMP-materials localization theme hot (storage duo IPO chain lists); name +17.6% since 5/08, all-time high 5/26 — narrative mid-shift",
+      "low_coverage_rationale": "开源 3/31 + 东海首次覆盖 5/12; dense May institutional visits — coverage building, denser than a year ago",
+      "catalyst_prox_rationale": "ChiNext H1 forecast (~mid-July) then H1 report (~Aug) = staged E1 proof events for pad/slurry momentum",
+      "macro_sensitivity": "YMTC/CXMT storage-capex cycle; consumables pricing vs DuPont/Cabot; goodwill impairment cycle",
+      "_added": "2026-06-11 CTF batch-1 ticker #3 (Serenity Scan #1 #68, serenity_score 73 T2; nominations ratified by Junyan)"
     }
   }
 }
