@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-06-11T12:29:21.240913+00:00",
+    "generated_at": "2026-06-12T04:42:10.890889+00:00",
     "schema_version": 1,
     "method": "median_of_3_signals_aggregator",
     "tie_break_rule": "n2_consensus_only",
@@ -153,6 +153,88 @@
     },
     "603233.SH": {
       "ticker": "603233.SH",
+      "triangulated_signal": "INSUFFICIENT_DATA",
+      "methods_count": 0,
+      "methods_used": [],
+      "methods_skipped": [
+        {
+          "method": "FCF_DCF",
+          "reason": "rdcf_missing"
+        },
+        {
+          "method": "EV_EBITDA",
+          "reason": "ev_ebitda_ebitda_missing"
+        },
+        {
+          "method": "Residual_Income_EBO",
+          "reason": "ri_roe_missing"
+        }
+      ],
+      "is_biotech_fallback": false,
+      "is_partial": true,
+      "method_signals": {
+        "FCF_DCF": {
+          "signal": null,
+          "delta": null,
+          "skip_reason": "rdcf_missing"
+        },
+        "EV_EBITDA": {
+          "signal": null,
+          "delta_pct": null,
+          "skip_reason": "ev_ebitda_ebitda_missing"
+        },
+        "Residual_Income_EBO": {
+          "signal": null,
+          "delta_pp": null,
+          "skip_reason": "ri_roe_missing"
+        }
+      },
+      "rationale_e": "All three methods unavailable; cannot triangulate.",
+      "rationale_z": "三种方法均不可用；无法三角验证。"
+    },
+    "688120.SH": {
+      "ticker": "688120.SH",
+      "triangulated_signal": "INSUFFICIENT_DATA",
+      "methods_count": 0,
+      "methods_used": [],
+      "methods_skipped": [
+        {
+          "method": "FCF_DCF",
+          "reason": "rdcf_missing"
+        },
+        {
+          "method": "EV_EBITDA",
+          "reason": "ev_ebitda_ebitda_missing"
+        },
+        {
+          "method": "Residual_Income_EBO",
+          "reason": "ri_roe_missing"
+        }
+      ],
+      "is_biotech_fallback": false,
+      "is_partial": true,
+      "method_signals": {
+        "FCF_DCF": {
+          "signal": null,
+          "delta": null,
+          "skip_reason": "rdcf_missing"
+        },
+        "EV_EBITDA": {
+          "signal": null,
+          "delta_pct": null,
+          "skip_reason": "ev_ebitda_ebitda_missing"
+        },
+        "Residual_Income_EBO": {
+          "signal": null,
+          "delta_pp": null,
+          "skip_reason": "ri_roe_missing"
+        }
+      },
+      "rationale_e": "All three methods unavailable; cannot triangulate.",
+      "rationale_z": "三种方法均不可用；无法三角验证。"
+    },
+    "300054.SZ": {
+      "ticker": "300054.SZ",
       "triangulated_signal": "INSUFFICIENT_DATA",
       "methods_count": 0,
       "methods_used": [],

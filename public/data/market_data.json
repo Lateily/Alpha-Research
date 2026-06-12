@@ -1,12 +1,14 @@
 {
   "_meta": {
-    "fetched_at": "2026-06-11T12:26:47.460603",
+    "fetched_at": "2026-06-12T04:37:57.818674",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
       "002594.SZ",
       "175.HK",
-      "603233.SH"
+      "603233.SH",
+      "688120.SH",
+      "300054.SZ"
     ],
     "fx_rates": {
       "HKDCNY": 0.9165
@@ -15,16 +17,16 @@
   "yahoo": {
     "300308.SZ": {
       "price": {
-        "last": 1124,
-        "prev_close": 1147,
-        "change_pct": -2.005,
-        "high": 1174.9,
-        "low": 1093,
-        "volume": 3059235900,
+        "last": 1129,
+        "prev_close": 1124,
+        "change_pct": 0.445,
+        "high": 1188.5,
+        "low": 1128.22,
+        "volume": 1973831500,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 1174.9,
-        "low_52w": 1093
+        "high_52w": 1188.5,
+        "low_52w": 1128.22
       },
       "technical": {
         "sma_20": null,
@@ -88,16 +90,16 @@
     },
     "002594.SZ": {
       "price": {
-        "last": 89.8,
-        "prev_close": 90.31,
-        "change_pct": -0.565,
-        "high": 90.8,
-        "low": 88.88,
-        "volume": 3150873400,
+        "last": 90.88,
+        "prev_close": 89.8,
+        "change_pct": 1.203,
+        "high": 91.01,
+        "low": 89.25,
+        "volume": 2083054500,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 90.8,
-        "low_52w": 88.88
+        "high_52w": 91.01,
+        "low_52w": 89.25
       },
       "technical": {
         "sma_20": null,
@@ -161,16 +163,16 @@
     },
     "175.HK": {
       "price": {
-        "last": 19.32,
-        "prev_close": 19.5,
-        "change_pct": -0.923,
-        "high": 19.92,
-        "low": 19.21,
-        "volume": 36,
+        "last": 18.89,
+        "prev_close": 18.89,
+        "change_pct": 0,
+        "high": 19.29,
+        "low": 18.73,
+        "volume": 169,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 19.92,
-        "low_52w": 19.21
+        "high_52w": 19.29,
+        "low_52w": 18.73
       },
       "technical": {
         "sma_20": null,
@@ -234,16 +236,16 @@
     },
     "603233.SH": {
       "price": {
-        "last": 16.45,
+        "last": 17.08,
         "prev_close": 16.45,
-        "change_pct": 0,
-        "high": 16.54,
-        "low": 16.1,
-        "volume": 518257300,
+        "change_pct": 3.83,
+        "high": 17.15,
+        "low": 16.32,
+        "volume": 429268400,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 16.54,
-        "low_52w": 16.1
+        "high_52w": 17.15,
+        "low_52w": 16.32
       },
       "technical": {
         "sma_20": null,
@@ -304,6 +306,152 @@
         "description": ""
       },
       "price_source": "direct_api"
+    },
+    "688120.SH": {
+      "price": {
+        "last": 185.1,
+        "prev_close": 186.74,
+        "change_pct": -0.878,
+        "high": 198.89,
+        "low": 183.84,
+        "volume": 1319444200,
+        "avg_volume_20d": null,
+        "volume_ratio": null,
+        "high_52w": 198.89,
+        "low_52w": 183.84
+      },
+      "technical": {
+        "sma_20": null,
+        "sma_50": null,
+        "sma_200": null,
+        "rsi_14": null,
+        "macd": null,
+        "macd_signal": null,
+        "macd_histogram": null,
+        "above_sma_20": null,
+        "above_sma_50": null,
+        "above_sma_200": null
+      },
+      "fundamentals": {
+        "market_cap": null,
+        "pe_trailing": null,
+        "pe_forward": null,
+        "ev_ebitda": null,
+        "ev_revenue": null,
+        "ps_ratio": null,
+        "pb": null,
+        "dividend_yield": null,
+        "revenue": null,
+        "revenue_growth": null,
+        "gross_margin": null,
+        "operating_margin": null,
+        "net_margin": null,
+        "roe": null,
+        "roa": null,
+        "debt_to_equity": null,
+        "current_ratio": null,
+        "quick_ratio": null,
+        "free_cash_flow": null,
+        "operating_cash_flow": null,
+        "total_cash": null,
+        "total_debt": null,
+        "ebitda": null,
+        "earnings_growth": null,
+        "book_value": null,
+        "enterprise_value": null
+      },
+      "analyst": {
+        "target_mean": null,
+        "target_high": null,
+        "target_low": null,
+        "target_median": null,
+        "recommendation": null,
+        "num_analysts": null
+      },
+      "meta": {
+        "currency": "",
+        "exchange": "SH",
+        "name_en": "Huahai Qingke",
+        "name_zh": "华海清科",
+        "sector": "",
+        "industry": "",
+        "website": "",
+        "description": ""
+      },
+      "price_source": "direct_api"
+    },
+    "300054.SZ": {
+      "price": {
+        "last": 80.9,
+        "prev_close": 75.48,
+        "change_pct": 7.181,
+        "high": 88.55,
+        "low": 80.8,
+        "volume": 6632058100,
+        "avg_volume_20d": null,
+        "volume_ratio": null,
+        "high_52w": 88.55,
+        "low_52w": 80.8
+      },
+      "technical": {
+        "sma_20": null,
+        "sma_50": null,
+        "sma_200": null,
+        "rsi_14": null,
+        "macd": null,
+        "macd_signal": null,
+        "macd_histogram": null,
+        "above_sma_20": null,
+        "above_sma_50": null,
+        "above_sma_200": null
+      },
+      "fundamentals": {
+        "market_cap": null,
+        "pe_trailing": null,
+        "pe_forward": null,
+        "ev_ebitda": null,
+        "ev_revenue": null,
+        "ps_ratio": null,
+        "pb": null,
+        "dividend_yield": null,
+        "revenue": null,
+        "revenue_growth": null,
+        "gross_margin": null,
+        "operating_margin": null,
+        "net_margin": null,
+        "roe": null,
+        "roa": null,
+        "debt_to_equity": null,
+        "current_ratio": null,
+        "quick_ratio": null,
+        "free_cash_flow": null,
+        "operating_cash_flow": null,
+        "total_cash": null,
+        "total_debt": null,
+        "ebitda": null,
+        "earnings_growth": null,
+        "book_value": null,
+        "enterprise_value": null
+      },
+      "analyst": {
+        "target_mean": null,
+        "target_high": null,
+        "target_low": null,
+        "target_median": null,
+        "recommendation": null,
+        "num_analysts": null
+      },
+      "meta": {
+        "currency": "",
+        "exchange": "SZ",
+        "name_en": "Dinglong",
+        "name_zh": "鼎龙股份",
+        "sector": "",
+        "industry": "",
+        "website": "",
+        "description": ""
+      },
+      "price_source": "direct_api"
     }
   },
   "consensus": {},
@@ -313,14 +461,14 @@
       "5d_cumulative": 0.0,
       "20d_cumulative": 0.0,
       "trend": "outflow",
-      "updated": "2026-06-11"
+      "updated": "2026-06-12"
     },
     "southbound": {
       "latest_net_flow": -27.5431,
       "5d_cumulative": 57.6667,
       "20d_cumulative": 335.6385,
       "trend": "inflow",
-      "updated": "2026-06-11"
+      "updated": "2026-06-12"
     },
     "dragon_tiger": [
       {

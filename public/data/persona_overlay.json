@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-06-11T12:29:21.122379+00:00",
+    "generated_at": "2026-06-12T04:42:10.760348+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "personas_included": [
@@ -282,6 +282,14 @@
       "scores": null
     },
     "603233.SH": {
+      "error": "rdcf_missing",
+      "scores": null
+    },
+    "688120.SH": {
+      "error": "rdcf_missing",
+      "scores": null
+    },
+    "300054.SZ": {
       "error": "rdcf_missing",
       "scores": null
     }

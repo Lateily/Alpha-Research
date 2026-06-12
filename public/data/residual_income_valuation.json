@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-06-11T12:29:21.202968+00:00",
+    "generated_at": "2026-06-12T04:42:10.847147+00:00",
     "schema_version": 1,
     "thresholds_status": "[unvalidated intuition]",
     "method": "residual_income_no_growth_ebo",
@@ -36,6 +36,20 @@
     },
     "603233.SH": {
       "ticker": "603233.SH",
+      "model_status": "roe_missing",
+      "signal": null,
+      "delta_pp": null,
+      "reason": "fund.roe missing or null"
+    },
+    "688120.SH": {
+      "ticker": "688120.SH",
+      "model_status": "roe_missing",
+      "signal": null,
+      "delta_pp": null,
+      "reason": "fund.roe missing or null"
+    },
+    "300054.SZ": {
+      "ticker": "300054.SZ",
       "model_status": "roe_missing",
       "signal": null,
       "delta_pp": null,

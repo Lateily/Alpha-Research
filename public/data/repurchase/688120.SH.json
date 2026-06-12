@@ -1,0 +1,38 @@
+{
+  "_status": "ok",
+  "ticker": "688120.SH",
+  "fetched_at": "2026-06-12T04:42:01Z",
+  "api_used": "repurchase",
+  "window_days": 180,
+  "events": [
+    {
+      "ts_code": "688120.SH",
+      "ann_date": "20260604",
+      "end_date": null,
+      "proc": "预案",
+      "exp_date": null,
+      "vol": null,
+      "amount": 100000000.0,
+      "high_limit": 123.38,
+      "low_limit": null
+    },
+    {
+      "ts_code": "688120.SH",
+      "ann_date": "20260101",
+      "end_date": "20251231",
+      "proc": "实施",
+      "exp_date": null,
+      "vol": 441120,
+      "amount": 60224451.49,
+      "high_limit": 156.96,
+      "low_limit": 127.3
+    }
+  ],
+  "summary": {
+    "total_count": 2,
+    "total_amount_180d": 160224451.49,
+    "active_program": false,
+    "last_announce_date": "2026-06-04",
+    "signal_level": "MED"
+  }
+}

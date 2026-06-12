@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-11T12:29:20.777373+00:00",
+  "generated_at": "2026-06-12T04:42:10.275514+00:00",
   "tickers": {
     "300308.SZ": {
       "error": "no_financial_data"
@@ -11,6 +11,12 @@
       "error": "no_financial_data"
     },
     "603233.SH": {
+      "error": "no_financial_data"
+    },
+    "688120.SH": {
+      "error": "no_financial_data"
+    },
+    "300054.SZ": {
       "error": "no_financial_data"
     }
   }

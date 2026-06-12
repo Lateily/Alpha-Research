@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-11T12:29:20.889980+00:00",
-  "date": "2026-06-11",
+  "generated_at": "2026-06-12T04:42:10.403376+00:00",
+  "date": "2026-06-12",
   "brief_e": "1 Exposure Review",
   "brief_z": "1 敞口复核",
   "decisions": {
@@ -12,13 +12,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 0,
-        "pnl_pct": 64.96,
-        "holding_days": 93,
-        "weight_pct": 56.1,
+        "pnl_pct": 65.7,
+        "holding_days": 94,
+        "weight_pct": 56.2,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +65.0% after 93d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+65.0%（持有93天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +65.7% after 94d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+65.7%（持有94天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -30,12 +30,12 @@
         "priority": "LOW",
         "confidence": 0,
         "pnl_pct": 0.0,
-        "holding_days": 93,
+        "holding_days": 94,
         "weight_pct": 3.9,
         "vp_score": null,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L +0.0% after 93d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +3.0%.",
-        "reason_z": "信号中性（评分0），浮盈+0.0%，持有93天，无新触发条件。RSI 59 | 距MA20 +3.0%。",
+        "reason_e": "Signal neutral (score 0). P&L +0.0% after 94d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +3.0%.",
+        "reason_z": "信号中性（评分0），浮盈+0.0%，持有94天，无新触发条件。RSI 59 | 距MA20 +3.0%。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       },
@@ -47,12 +47,12 @@
         "priority": "LOW",
         "confidence": 0,
         "pnl_pct": 0.0,
-        "holding_days": 86,
+        "holding_days": 87,
         "weight_pct": 23.1,
         "vp_score": null,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L +0.0% after 86d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
-        "reason_z": "信号中性（评分0），浮盈+0.0%，持有86天，无新触发条件。RSI 41 | 距MA20 -3.5%。",
+        "reason_e": "Signal neutral (score 0). P&L +0.0% after 87d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
+        "reason_z": "信号中性（评分0），浮盈+0.0%，持有87天，无新触发条件。RSI 41 | 距MA20 -3.5%。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       },
@@ -64,12 +64,12 @@
         "priority": "LOW",
         "confidence": 0,
         "pnl_pct": 0.0,
-        "holding_days": 79,
+        "holding_days": 80,
         "weight_pct": 13.3,
         "vp_score": null,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L +0.0% after 79d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
-        "reason_z": "信号中性（评分0），浮盈+0.0%，持有79天，无新触发条件。RSI 56 | 距MA20 +2.8%。",
+        "reason_e": "Signal neutral (score 0). P&L +0.0% after 80d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
+        "reason_z": "信号中性（评分0），浮盈+0.0%，持有80天，无新触发条件。RSI 56 | 距MA20 +2.8%。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       },
@@ -80,13 +80,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 0,
-        "pnl_pct": -6.65,
-        "holding_days": 71,
+        "pnl_pct": -5.52,
+        "holding_days": 72,
         "weight_pct": 3.6,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L -6.7% after 71d. Paper-hold — no new review trigger. RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分0），浮盈-6.7%，持有71天，无新触发条件。RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 0). P&L -5.5% after 72d. Paper-hold — no new review trigger. RSI 36 | Price vs MA20 -5.2% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分0），浮盈-5.5%，持有72天，无新触发条件。RSI 36 | 距MA20 -5.2% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
@@ -131,7 +131,7 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 56% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +65.0% — exposure-review condition (sizable unrealised gain)"
+    "PROFIT REVIEW: 300308.SZ +65.7% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {
@@ -140,10 +140,10 @@
       "status": "CLEAR",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 13.3 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 13.3（阈值25.0）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 13.1 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 13.1（阈值25.0）",
       "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 13.3,
+      "actual": 13.1,
       "threshold": 25.0
     },
     {
