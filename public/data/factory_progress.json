@@ -1,12 +1,12 @@
 {
   "_meta": {
-    "generated_at": "2026-06-12T15:49:14.067613+00:00",
+    "generated_at": "2026-06-13T07:05:58.238990+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
   "factory_a": {
     "title_zh": "研究工厂(Core Thesis + 前向验证)",
-    "n_active": 3,
+    "n_active": 2,
     "registrations": [
       {
         "ticker": "002594.SZ",
@@ -14,7 +14,7 @@
           "zh": "比亚迪",
           "en": "BYD Company"
         },
-        "status": "ACTIVE",
+        "status": "ARCHIVED",
         "lock8": "ea340230",
         "redteam_avg": 71.8,
         "redteam_verdict": "PASS-LOW",
@@ -26,20 +26,20 @@
           {
             "offset_days": 30,
             "due_date": "2026-07-10",
-            "status": "PENDING",
-            "days_to_due": 28
+            "status": "ARCHIVED",
+            "days_to_due": 27
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-09",
-            "status": "PENDING",
-            "days_to_due": 58
+            "status": "ARCHIVED",
+            "days_to_due": 57
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-08",
-            "status": "PENDING",
-            "days_to_due": 88
+            "status": "ARCHIVED",
+            "days_to_due": 87
           }
         ]
       },
@@ -62,19 +62,19 @@
             "offset_days": 30,
             "due_date": "2026-07-12",
             "status": "PENDING",
-            "days_to_due": 30
+            "days_to_due": 29
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-11",
             "status": "PENDING",
-            "days_to_due": 60
+            "days_to_due": 59
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-10",
             "status": "PENDING",
-            "days_to_due": 90
+            "days_to_due": 89
           }
         ]
       },
@@ -97,27 +97,27 @@
             "offset_days": 30,
             "due_date": "2026-07-12",
             "status": "PENDING",
-            "days_to_due": 30
+            "days_to_due": 29
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-11",
             "status": "PENDING",
-            "days_to_due": 60
+            "days_to_due": 59
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-10",
             "status": "PENDING",
-            "days_to_due": 90
+            "days_to_due": 89
           }
         ]
       }
     ],
     "next_read": {
-      "date": "2026-07-10",
-      "ticker": "002594.SZ",
-      "days_to_due": 28
+      "date": "2026-07-12",
+      "ticker": "688120.SH",
+      "days_to_due": 29
     },
     "note_zh": "人工红队为 measure of record;检查点是 case-level 读数,不是统计"
   },
@@ -213,6 +213,12 @@
     ]
   },
   "milestones": [
+    {
+      "date": "2026-06-13",
+      "pr": null,
+      "label_zh": "BYD 从 ACTIVE checkpoint 样本移除;Core full-market screen 重跑(加 stale-price hard filter)",
+      "label_en": "BYD archived from ACTIVE checkpoints; Core full-market screen rerun with stale-price hard filter"
+    },
     {
       "date": "2026-06-13",
       "pr": 73,

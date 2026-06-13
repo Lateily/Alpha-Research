@@ -63,6 +63,7 @@ MIN_FLOAT_CAP_CNY = 3e9
 MIN_TURNOVER_CNY = 3e7
 CIRC_MV_TO_CNY = 1e4
 AMOUNT_TO_CNY = 1e3
+MAX_STALE_CALENDAR_DAYS = 5
 # PIT guard: only financial rows ANNOUNCED on/before (as_of - PIT_BUFFER_DAYS) are
 # usable. The buffer rejects same-day-announced reports that were not yet actionable.
 PIT_BUFFER_DAYS = 1
@@ -118,9 +119,12 @@ def daily_features() -> tuple[pd.DataFrame, pd.Timestamp]:
         peak = np.maximum.accumulate(w60)
         maxdd = float(np.min(w60 / peak - 1.0)) if len(w60) else np.nan
         att = (float(np.median(amt[-5:]) / (np.median(amt[-60:]) + 1e-9))) if n >= 60 else np.nan
+        last_trade_date = pd.to_datetime(str(g["trade_date"].iloc[-1]), format="%Y%m%d")
         rows[tic] = {"n_days": n, "turnover20_cny": float(np.median(last20)) * AMOUNT_TO_CNY,
                      "vol60": vol60, "ret60": ret60, "ret120": ret120, "maxdd60": maxdd,
-                     "attention_inflection": att}
+                     "attention_inflection": att,
+                     "last_trade_date": last_trade_date.strftime("%Y%m%d"),
+                     "stale_calendar_days": int((as_of - last_trade_date).days)}
     return pd.DataFrame.from_dict(rows, orient="index"), as_of
 
 
@@ -218,12 +222,15 @@ def screen(top: int = 50) -> dict:
     f_float = df["circ_mv"] * CIRC_MV_TO_CNY >= MIN_FLOAT_CAP_CNY
     f_turn = df["turnover20_cny"] >= MIN_TURNOVER_CNY
     f_pe = df["pe"] > 0
-    passed = df[(~is_st) & f_listing & f_float & f_turn & f_pe].copy()
+    f_fresh = df["stale_calendar_days"] <= MAX_STALE_CALENDAR_DAYS
+    passed = df[(~is_st) & f_listing & f_float & f_turn & f_pe & f_fresh].copy()
     filter_stats = {"n_total": int(n_total), "excluded_ST": int(is_st.sum()),
                     "fail_listing_age": int((~f_listing).sum()),
                     "fail_float_cap": int((~f_float).sum()),
                     "fail_turnover": int((~f_turn).sum()),
                     "fail_pe_le_0": int((~f_pe).sum()),
+                    "fail_stale_price": int((~f_fresh).sum()),
+                    "max_stale_calendar_days": MAX_STALE_CALENDAR_DAYS,
                     "n_passed_hard_filters": int(len(passed))}
 
     # ── cross-sectional component ranks (0-1), among hard-filter survivors ──
@@ -287,6 +294,8 @@ def screen(top: int = 50) -> dict:
             "attention_inflection_diagnostic": (round(float(r["attention_inflection"]), 3) if not pd.isna(r["attention_inflection"]) else None),
             "hard_filter_passed": True,
             "data_quality": {"price_history_days": int(r["n_days"]),
+                             "last_trade_date": str(r["last_trade_date"]),
+                             "stale_calendar_days": int(r["stale_calendar_days"]),
                              "financial_reports": int(r["n_reports"]) if not pd.isna(r["n_reports"]) else 0,
                              "revision": "unavailable_full_market", "coverage": "unavailable_full_market",
                              "sidecar_coverage": "watchlist_only"},
@@ -349,7 +358,7 @@ def main(argv=None) -> int:
     fs = out["_meta"]["filter_stats"]
     print(f"[funnel] universe {fs['n_total']} -> hard-filter pass {fs['n_passed_hard_filters']} "
           f"(ST {fs['excluded_ST']}, listing {fs['fail_listing_age']}, float {fs['fail_float_cap']}, "
-          f"turnover {fs['fail_turnover']}, pe<=0 {fs['fail_pe_le_0']})")
+          f"turnover {fs['fail_turnover']}, pe<=0 {fs['fail_pe_le_0']}, stale {fs['fail_stale_price']})")
     q = out["screen_queue"]
     print(f"\n=== screen_queue v0 top {min(15, len(q))} (of {len(q)}) — as_of {out['_meta']['as_of_date']} — [unvalidated intuition], NOT alpha ===")
     print(f"{'rk':>3} {'ticker':<11} {'name':<9} {'score':>6} {'awt':>4} {'fund':>5} {'catl':>5} {'val':>5} {'liq':>5}  action")

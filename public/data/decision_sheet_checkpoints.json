@@ -2,8 +2,8 @@
   "_meta": {
     "layer": "CTF v1 decision-sheet forward checkpoints (PR-D)",
     "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md §3",
-    "updated_at": "2026-06-12T08:07:01.805562+00:00",
-    "n_active": 3
+    "updated_at": "2026-06-13T07:02:17.994276+00:00",
+    "n_active": 2
   },
   "registrations": [
     {
@@ -15,7 +15,7 @@
       "content_lock": "ea3402301dff717e8bae387242cc6025078f13cbd213208a4e2309d4f40a6bef",
       "sheet_as_of": "2026-06-10",
       "registered_at": "2026-06-10T16:27:38.191007+00:00",
-      "status": "ACTIVE",
+      "status": "ARCHIVED",
       "supersedes": null,
       "direction": "LONG",
       "conviction_at_registration": "STARTER_CAPPED_UNTIL_E1 — and WATCH_NOT_CONVICTION at the current reference price (R/R < 2:1; see reward_to_risk)",
@@ -130,20 +130,29 @@
         {
           "offset_days": 30,
           "due_date": "2026-07-10",
-          "status": "PENDING",
-          "result": null
+          "status": "ARCHIVED",
+          "result": {
+            "archived_at": "2026-06-13T07:02:17.994214+00:00",
+            "reason": "Junyan 2026-06-13: remove BYD from active Core Thesis checkpoint sample; keep historical sheet/red-team as archived reference"
+          }
         },
         {
           "offset_days": 60,
           "due_date": "2026-08-09",
-          "status": "PENDING",
-          "result": null
+          "status": "ARCHIVED",
+          "result": {
+            "archived_at": "2026-06-13T07:02:17.994214+00:00",
+            "reason": "Junyan 2026-06-13: remove BYD from active Core Thesis checkpoint sample; keep historical sheet/red-team as archived reference"
+          }
         },
         {
           "offset_days": 90,
           "due_date": "2026-09-08",
-          "status": "PENDING",
-          "result": null
+          "status": "ARCHIVED",
+          "result": {
+            "archived_at": "2026-06-13T07:02:17.994214+00:00",
+            "reason": "Junyan 2026-06-13: remove BYD from active Core Thesis checkpoint sample; keep historical sheet/red-team as archived reference"
+          }
         }
       ],
       "constraints_from_redteam": [
@@ -152,7 +161,9 @@
         "execution stance stays WATCH_NOT_CONVICTION / starter-capped only",
         "next revision priority = valuation discipline (model-anchored band: fix the broken rDCF/EV-EBITDA/RI generators for this name + sensitivity grid), NOT thesis narrative"
       ],
-      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job",
+      "archived_at": "2026-06-13T07:02:17.994214+00:00",
+      "archive_reason": "Junyan 2026-06-13: remove BYD from active Core Thesis checkpoint sample; keep historical sheet/red-team as archived reference"
     },
     {
       "ticker": "688120.SH",

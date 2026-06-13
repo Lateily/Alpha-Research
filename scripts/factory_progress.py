@@ -27,6 +27,7 @@ DISCLAIMER = ("internal progress dashboard — UNVALIDATED research pipeline sta
 
 # maintained PR-by-PR (newest first) — keep ≤14 entries, prune the tail
 MILESTONES = [
+    {"date": "2026-06-13", "pr": None, "label_zh": "BYD 从 ACTIVE checkpoint 样本移除;Core full-market screen 重跑(加 stale-price hard filter)", "label_en": "BYD archived from ACTIVE checkpoints; Core full-market screen rerun with stale-price hard filter"},
     {"date": "2026-06-13", "pr": 73, "label_zh": "V2-PEAD 终裁 RATIFIED:v2a/v2b KILL · v2c NO-CLAIM;信号≈随机对照;book 半空(事件密度=容量上限)", "label_en": "V2-PEAD RATIFIED: KILL/NO-CLAIM — signal ≈ random control; event density caps capacity"},
     {"date": "2026-06-12", "pr": 72, "label_zh": "Quant v2 SPEC(V2-PEAD 预注册)+ 60图知识库整合裁决 — 等 ratify", "label_en": "Quant v2 spec (V2-PEAD pre-registration) + KB integration verdict — awaiting ratification"},
     {"date": "2026-06-12", "pr": 71, "label_zh": "华海+鼎龙注册进 checkpoint ledger — 3 票 ACTIVE,前向验证 LIVE", "label_en": "Huahai + Dinglong registered — 3 ACTIVE, forward validation LIVE"},

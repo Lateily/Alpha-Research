@@ -20,83 +20,30 @@
       "coverage_gap": 15
     },
     "max_available_weight_note": "usually 60 (40 scored + 20 catalyst-proxy if a FUTURE mandatory disclosure deadline exists); renormalized to 0-100. expectation_revision(25) + coverage_gap(15) are unavailable full-market and renormalized OUT — screen_score is NOT full-fidelity alpha. attention_inflection is an UNSCORED diagnostic.",
-    "renormalization_caveat": "2/50 queue names have available_weight<60 (per-name missing catalyst). Per Junyan decision-2 these are renormalized over their available weight, which can FLOAT a data-incomplete name above fuller-data names when the missing component is near-average. available_weight is on every row so this is auditable. OPEN: median-impute vs availability-tiered ranking is a v0.1 decision for Junyan.",
+    "renormalization_caveat": "0/50 queue names have available_weight<60 (per-name missing catalyst). Per Junyan decision-2 these are renormalized over their available weight, which can FLOAT a data-incomplete name above fuller-data names when the missing component is near-average. available_weight is on every row so this is auditable. OPEN: median-impute vs availability-tiered ranking is a v0.1 decision for Junyan.",
     "weights_status": "[unvalidated intuition]",
     "action_note": "RUN_THESIS (top tier) = worth producing a forward-validatable thesis to TEST, NOT an endorsement; WATCH_DATA = in queue but lower priority; SKIP = below queue.",
     "filter_stats": {
       "n_total": 5803,
-      "excluded_ST": 350,
+      "excluded_ST": 319,
       "fail_listing_age": 151,
       "fail_float_cap": 1552,
       "fail_turnover": 503,
       "fail_pe_le_0": 1720,
-      "n_passed_hard_filters": 3122
+      "fail_stale_price": 300,
+      "max_stale_calendar_days": 5,
+      "n_passed_hard_filters": 3114
     },
     "n_in_queue": 50,
     "n_run_thesis": 20
   },
   "screen_queue": [
     {
-      "ticker": "600068.SH",
-      "name": "葛洲坝",
-      "market": "A",
-      "screen_score": 86.61,
-      "score_raw_available": 34.6458,
-      "available_weight": 40,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap",
-        "catalyst_proximity"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.7937,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "status": "unavailable",
-          "weight": 20,
-          "note": "report cadence not inferable"
-        },
-        "value_lowvol": {
-          "score": 0.9083,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.9689,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 2.808,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 3700,
-        "financial_reports": 75,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 1,
-      "recommended_research_action": "RUN_THESIS"
-    },
-    {
       "ticker": "601108.SH",
       "name": "财通证券",
       "market": "A",
-      "screen_score": 79.23,
-      "score_raw_available": 47.5362,
+      "screen_score": 79.22,
+      "score_raw_available": 47.5302,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -104,7 +51,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9526,
+          "score": 0.9522,
           "weight": 20,
           "status": "ok"
         },
@@ -117,12 +64,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.9497,
+          "score": 0.9496,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8985,
+          "score": 0.8988,
           "weight": 10,
           "status": "ok"
         },
@@ -139,21 +86,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 2077,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 62,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 2,
+      "screen_rank": 1,
       "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "601688.SH",
       "name": "华泰证券",
       "market": "A",
-      "screen_score": 78.37,
-      "score_raw_available": 47.0234,
+      "screen_score": 78.35,
+      "score_raw_available": 47.0101,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -161,7 +110,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8866,
+          "score": 0.886,
           "weight": 20,
           "status": "ok"
         },
@@ -174,12 +123,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.9683,
+          "score": 0.9682,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9606,
+          "score": 0.9605,
           "weight": 10,
           "status": "ok"
         },
@@ -196,78 +145,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 3933,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 73,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 3,
-      "recommended_research_action": "RUN_THESIS"
-    },
-    {
-      "ticker": "000776.SZ",
-      "name": "广发证券",
-      "market": "A",
-      "screen_score": 77.89,
-      "score_raw_available": 46.735,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.8747,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.9574,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.9664,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 1.084,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4033,
-        "financial_reports": 81,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 4,
+      "screen_rank": 2,
       "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "600999.SH",
       "name": "招商证券",
       "market": "A",
-      "screen_score": 77.57,
-      "score_raw_available": 46.5395,
+      "screen_score": 77.53,
+      "score_raw_available": 46.5187,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -275,7 +169,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8552,
+          "score": 0.8542,
           "weight": 20,
           "status": "ok"
         },
@@ -288,12 +182,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.9641,
+          "score": 0.964,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9792,
+          "score": 0.9791,
           "weight": 10,
           "status": "ok"
         },
@@ -310,13 +204,15 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 3991,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 75,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 5,
+      "screen_rank": 3,
       "recommended_research_action": "RUN_THESIS"
     },
     {
@@ -324,7 +220,7 @@
       "name": "中信建投",
       "market": "A",
       "screen_score": 76.96,
-      "score_raw_available": 46.1775,
+      "score_raw_available": 46.1778,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -332,7 +228,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9362,
+          "score": 0.9358,
           "weight": 20,
           "status": "ok"
         },
@@ -345,12 +241,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.8753,
+          "score": 0.876,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8696,
+          "score": 0.8699,
           "weight": 10,
           "status": "ok"
         },
@@ -367,21 +263,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 1923,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 58,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 6,
+      "screen_rank": 4,
       "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "601169.SH",
       "name": "北京银行",
       "market": "A",
-      "screen_score": 76.92,
-      "score_raw_available": 46.1537,
+      "screen_score": 76.89,
+      "score_raw_available": 46.1336,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -389,7 +287,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8388,
+          "score": 0.8378,
           "weight": 20,
           "status": "ok"
         },
@@ -424,21 +322,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4480,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 79,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 7,
+      "screen_rank": 5,
       "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "600015.SH",
       "name": "华夏银行",
       "market": "A",
-      "screen_score": 76.21,
-      "score_raw_available": 45.7276,
+      "screen_score": 76.19,
+      "score_raw_available": 45.7129,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -446,7 +346,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8273,
+          "score": 0.8263,
           "weight": 20,
           "status": "ok"
         },
@@ -464,7 +364,7 @@
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.921,
+          "score": 0.9216,
           "weight": 10,
           "status": "ok"
         },
@@ -481,13 +381,15 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4861,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 8,
+      "screen_rank": 6,
       "recommended_research_action": "RUN_THESIS"
     },
     {
@@ -495,7 +397,7 @@
       "name": "山煤国际",
       "market": "A",
       "screen_score": 76.01,
-      "score_raw_available": 45.6037,
+      "score_raw_available": 45.6041,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -503,7 +405,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9311,
+          "score": 0.9306,
           "weight": 20,
           "status": "ok"
         },
@@ -516,12 +418,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.8048,
+          "score": 0.8056,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.893,
+          "score": 0.8932,
           "weight": 10,
           "status": "ok"
         },
@@ -538,21 +440,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4818,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 9,
+      "screen_rank": 7,
       "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "600150.SH",
       "name": "中国船舶",
       "market": "A",
-      "screen_score": 75.94,
-      "score_raw_available": 45.5616,
+      "screen_score": 75.98,
+      "score_raw_available": 45.5857,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -560,7 +464,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9673,
+          "score": 0.9672,
           "weight": 20,
           "status": "ok"
         },
@@ -573,12 +477,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.6955,
+          "score": 0.697,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9257,
+          "score": 0.9268,
           "weight": 10,
           "status": "ok"
         },
@@ -595,13 +499,15 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4778,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 10,
+      "screen_rank": 8,
       "recommended_research_action": "RUN_THESIS"
     },
     {
@@ -609,7 +515,7 @@
       "name": "第一创业",
       "market": "A",
       "screen_score": 75.9,
-      "score_raw_available": 45.5391,
+      "score_raw_available": 45.5409,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -617,7 +523,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9253,
+          "score": 0.9249,
           "weight": 20,
           "status": "ok"
         },
@@ -630,12 +536,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.724,
+          "score": 0.7253,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9789,
+          "score": 0.9788,
           "weight": 10,
           "status": "ok"
         },
@@ -652,21 +558,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 2420,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 60,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 11,
+      "screen_rank": 9,
       "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "300073.SZ",
       "name": "当升科技",
       "market": "A",
-      "screen_score": 75.45,
-      "score_raw_available": 45.2696,
+      "screen_score": 75.46,
+      "score_raw_available": 45.2738,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -674,7 +582,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9539,
+          "score": 0.9534,
           "weight": 20,
           "status": "ok"
         },
@@ -687,12 +595,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.6353,
+          "score": 0.6366,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9837,
+          "score": 0.9836,
           "weight": 10,
           "status": "ok"
         },
@@ -709,13 +617,15 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 3782,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 71,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 12,
+      "screen_rank": 10,
       "recommended_research_action": "RUN_THESIS"
     },
     {
@@ -723,7 +633,7 @@
       "name": "中信证券",
       "market": "A",
       "screen_score": 75.13,
-      "score_raw_available": 45.0752,
+      "score_raw_available": 45.0767,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -731,7 +641,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.7815,
+          "score": 0.7813,
           "weight": 20,
           "status": "ok"
         },
@@ -744,7 +654,7 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.9478,
+          "score": 0.9483,
           "weight": 10,
           "status": "ok"
         },
@@ -766,13 +676,15 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4884,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 13,
+      "screen_rank": 11,
       "recommended_research_action": "RUN_THESIS"
     },
     {
@@ -780,7 +692,7 @@
       "name": "财达证券",
       "market": "A",
       "screen_score": 74.98,
-      "score_raw_available": 44.9859,
+      "score_raw_available": 44.9861,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -788,7 +700,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9535,
+          "score": 0.9531,
           "weight": 20,
           "status": "ok"
         },
@@ -801,7 +713,7 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.8391,
+          "score": 0.84,
           "weight": 10,
           "status": "ok"
         },
@@ -823,21 +735,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 1224,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 46,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 14,
+      "screen_rank": 12,
       "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "300457.SZ",
       "name": "赢合科技",
       "market": "A",
-      "screen_score": 74.72,
-      "score_raw_available": 44.834,
+      "screen_score": 74.77,
+      "score_raw_available": 44.8611,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -845,7 +759,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9728,
+          "score": 0.973,
           "weight": 20,
           "status": "ok"
         },
@@ -858,12 +772,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.6179,
+          "score": 0.6195,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9196,
+          "score": 0.9202,
           "weight": 10,
           "status": "ok"
         },
@@ -880,13 +794,15 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 2619,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 51,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 15,
+      "screen_rank": 13,
       "recommended_research_action": "RUN_THESIS"
     },
     {
@@ -894,7 +810,7 @@
       "name": "中炬高新",
       "market": "A",
       "screen_score": 74.55,
-      "score_raw_available": 44.7289,
+      "score_raw_available": 44.7319,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -902,7 +818,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9199,
+          "score": 0.9191,
           "weight": 20,
           "status": "ok"
         },
@@ -915,12 +831,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.7519,
+          "score": 0.7532,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8808,
+          "score": 0.8815,
           "weight": 10,
           "status": "ok"
         },
@@ -937,135 +853,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4824,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 16,
-      "recommended_research_action": "RUN_THESIS"
-    },
-    {
-      "ticker": "000686.SZ",
-      "name": "东北证券",
-      "market": "A",
-      "screen_score": 74.31,
-      "score_raw_available": 44.5856,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.8478,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.9667,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.796,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 1.308,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4706,
-        "financial_reports": 81,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 17,
-      "recommended_research_action": "RUN_THESIS"
-    },
-    {
-      "ticker": "002120.SZ",
-      "name": "韵达股份",
-      "market": "A",
-      "screen_score": 74.31,
-      "score_raw_available": 44.5854,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.8744,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.9029,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.8065,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 0.913,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4543,
-        "financial_reports": 81,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 18,
+      "screen_rank": 14,
       "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "600570.SH",
       "name": "恒生电子",
       "market": "A",
-      "screen_score": 74.3,
-      "score_raw_available": 44.5808,
+      "screen_score": 74.32,
+      "score_raw_available": 44.5927,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1073,7 +877,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9715,
+          "score": 0.9714,
           "weight": 20,
           "status": "ok"
         },
@@ -1086,12 +890,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.5849,
+          "score": 0.5861,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9299,
+          "score": 0.93,
           "weight": 10,
           "status": "ok"
         },
@@ -1108,21 +912,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4874,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 19,
+      "screen_rank": 15,
       "recommended_research_action": "RUN_THESIS"
     },
     {
-      "ticker": "600008.SH",
-      "name": "首创环保",
+      "ticker": "002120.SZ",
+      "name": "韵达股份",
       "market": "A",
-      "screen_score": 74.27,
-      "score_raw_available": 44.5599,
+      "screen_score": 74.29,
+      "score_raw_available": 44.5739,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1130,7 +936,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8311,
+          "score": 0.8735,
           "weight": 20,
           "status": "ok"
         },
@@ -1143,12 +949,130 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.9699,
+          "score": 0.9033,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8235,
+          "score": 0.8068,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 0.913,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4543,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 81,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 16,
+      "recommended_research_action": "RUN_THESIS"
+    },
+    {
+      "ticker": "000686.SZ",
+      "name": "东北证券",
+      "market": "A",
+      "screen_score": 74.27,
+      "score_raw_available": 44.5598,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.8468,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.9666,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.7954,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 1.308,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4706,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 81,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 17,
+      "recommended_research_action": "RUN_THESIS"
+    },
+    {
+      "ticker": "600008.SH",
+      "name": "首创环保",
+      "market": "A",
+      "screen_score": 74.22,
+      "score_raw_available": 44.531,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.8301,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.9698,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.8227,
           "weight": 10,
           "status": "ok"
         },
@@ -1165,21 +1089,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4868,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 20,
+      "screen_rank": 18,
       "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "000001.SZ",
       "name": "平安银行",
       "market": "A",
-      "screen_score": 74.11,
-      "score_raw_available": 44.4634,
+      "screen_score": 74.1,
+      "score_raw_available": 44.4573,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1187,7 +1113,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.7331,
+          "score": 0.7328,
           "weight": 20,
           "status": "ok"
         },
@@ -1205,7 +1131,7 @@
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9821,
+          "score": 0.982,
           "weight": 10,
           "status": "ok"
         },
@@ -1222,21 +1148,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4818,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 21,
-      "recommended_research_action": "WATCH_DATA"
+      "screen_rank": 19,
+      "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "000933.SZ",
       "name": "神火股份",
       "market": "A",
-      "screen_score": 73.93,
-      "score_raw_available": 44.3571,
+      "screen_score": 73.95,
+      "score_raw_available": 44.3685,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1244,7 +1172,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9622,
+          "score": 0.9621,
           "weight": 20,
           "status": "ok"
         },
@@ -1257,12 +1185,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.6788,
+          "score": 0.6796,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8322,
+          "score": 0.8327,
           "weight": 10,
           "status": "ok"
         },
@@ -1279,21 +1207,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4891,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 22,
-      "recommended_research_action": "WATCH_DATA"
+      "screen_rank": 20,
+      "recommended_research_action": "RUN_THESIS"
     },
     {
       "ticker": "600170.SH",
       "name": "上海建工",
       "market": "A",
-      "screen_score": 73.9,
-      "score_raw_available": 44.3405,
+      "screen_score": 73.86,
+      "score_raw_available": 44.3173,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1301,7 +1231,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8539,
+          "score": 0.8529,
           "weight": 20,
           "status": "ok"
         },
@@ -1314,12 +1244,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.9471,
+          "score": 0.947,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.7788,
+          "score": 0.7786,
           "weight": 10,
           "status": "ok"
         },
@@ -1336,13 +1266,15 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4865,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 23,
+      "screen_rank": 21,
       "recommended_research_action": "WATCH_DATA"
     },
     {
@@ -1350,7 +1282,7 @@
       "name": "山西焦煤",
       "market": "A",
       "screen_score": 73.84,
-      "score_raw_available": 44.3062,
+      "score_raw_available": 44.3051,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1358,7 +1290,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8824,
+          "score": 0.8818,
           "weight": 20,
           "status": "ok"
         },
@@ -1371,12 +1303,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.8074,
+          "score": 0.8078,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8581,
+          "score": 0.8587,
           "weight": 10,
           "status": "ok"
         },
@@ -1393,13 +1325,15 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4924,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 24,
+      "screen_rank": 22,
       "recommended_research_action": "WATCH_DATA"
     },
     {
@@ -1407,7 +1341,7 @@
       "name": "百联股份",
       "market": "A",
       "screen_score": 73.69,
-      "score_raw_available": 44.2115,
+      "score_raw_available": 44.216,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1415,7 +1349,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.976,
+          "score": 0.9762,
           "weight": 20,
           "status": "ok"
         },
@@ -1428,7 +1362,7 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.9365,
+          "score": 0.9364,
           "weight": 10,
           "status": "ok"
         },
@@ -1450,13 +1384,15 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4791,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 25,
+      "screen_rank": 23,
       "recommended_research_action": "WATCH_DATA"
     },
     {
@@ -1464,7 +1400,7 @@
       "name": "洽洽食品",
       "market": "A",
       "screen_score": 73.6,
-      "score_raw_available": 44.1592,
+      "score_raw_available": 44.1605,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1472,7 +1408,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9558,
+          "score": 0.9557,
           "weight": 20,
           "status": "ok"
         },
@@ -1485,12 +1421,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.7923,
+          "score": 0.7934,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.7117,
+          "score": 0.711,
           "weight": 10,
           "status": "ok"
         },
@@ -1507,21 +1443,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 3655,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 68,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 26,
+      "screen_rank": 24,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "600267.SH",
       "name": "海正药业",
       "market": "A",
-      "screen_score": 73.58,
-      "score_raw_available": 44.1461,
+      "screen_score": 73.56,
+      "score_raw_available": 44.1383,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1529,7 +1467,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8734,
+          "score": 0.8725,
           "weight": 20,
           "status": "ok"
         },
@@ -1542,12 +1480,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.825,
+          "score": 0.8258,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8424,
+          "score": 0.8426,
           "weight": 10,
           "status": "ok"
         },
@@ -1564,21 +1502,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4856,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 27,
+      "screen_rank": 25,
       "recommended_research_action": "WATCH_DATA"
     },
     {
-      "ticker": "002582.SZ",
-      "name": "好想你",
+      "ticker": "601788.SH",
+      "name": "光大证券",
       "market": "A",
-      "screen_score": 73.52,
-      "score_raw_available": 44.1146,
+      "screen_score": 73.51,
+      "score_raw_available": 44.1069,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1586,7 +1526,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.852,
+          "score": 0.782,
           "weight": 20,
           "status": "ok"
         },
@@ -1599,7 +1539,66 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.9317,
+          "score": 0.9444,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.9021,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 2.302,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4048,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 74,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 26,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "002582.SZ",
+      "name": "好想你",
+      "market": "A",
+      "screen_score": 73.5,
+      "score_raw_available": 44.0972,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.851,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.9319,
           "weight": 10,
           "status": "ok"
         },
@@ -1621,78 +1620,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 3510,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 67,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 28,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "601788.SH",
-      "name": "光大证券",
-      "market": "A",
-      "screen_score": 73.51,
-      "score_raw_available": 44.1062,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.7821,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.9446,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.9015,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 2.302,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4048,
-        "financial_reports": 74,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 29,
+      "screen_rank": 27,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "603345.SH",
       "name": "安井食品",
       "market": "A",
-      "screen_score": 73.3,
-      "score_raw_available": 43.9792,
+      "screen_score": 73.29,
+      "score_raw_available": 43.9726,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1700,7 +1644,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8597,
+          "score": 0.8587,
           "weight": 20,
           "status": "ok"
         },
@@ -1713,12 +1657,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.7859,
+          "score": 0.7863,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8924,
+          "score": 0.8932,
           "weight": 10,
           "status": "ok"
         },
@@ -1735,78 +1679,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 2208,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 47,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 30,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "000589.SZ",
-      "name": "贵州轮胎",
-      "market": "A",
-      "screen_score": 73.27,
-      "score_raw_available": 43.9648,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.9394,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.9603,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.557,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 0.939,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4898,
-        "financial_reports": 81,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 31,
+      "screen_rank": 28,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "601006.SH",
       "name": "大秦铁路",
       "market": "A",
-      "screen_score": 73.25,
-      "score_raw_available": 43.9507,
+      "screen_score": 73.24,
+      "score_raw_available": 43.9465,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1814,7 +1703,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.7344,
+          "score": 0.7341,
           "weight": 20,
           "status": "ok"
         },
@@ -1827,12 +1716,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.9635,
+          "score": 0.9634,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9625,
+          "score": 0.9627,
           "weight": 10,
           "status": "ok"
         },
@@ -1849,21 +1738,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4791,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 32,
+      "screen_rank": 29,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "601677.SH",
-      "name": "明泰铝业",
+      "name": "XD明泰铝",
       "market": "A",
-      "screen_score": 73.01,
-      "score_raw_available": 43.8081,
+      "screen_score": 72.98,
+      "score_raw_available": 43.7884,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1871,7 +1762,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.8276,
+          "score": 0.8266,
           "weight": 20,
           "status": "ok"
         },
@@ -1884,12 +1775,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.8609,
+          "score": 0.8605,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8643,
+          "score": 0.8648,
           "weight": 10,
           "status": "ok"
         },
@@ -1906,78 +1797,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 3558,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 65,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 33,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "000685.SZ",
-      "name": "中山公用",
-      "market": "A",
-      "screen_score": 73.0,
-      "score_raw_available": 43.799,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.8267,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.9465,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.7798,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 3.045,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4852,
-        "financial_reports": 81,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 34,
+      "screen_rank": 30,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "000049.SZ",
       "name": "德赛电池",
       "market": "A",
-      "screen_score": 72.96,
-      "score_raw_available": 43.774,
+      "screen_score": 72.97,
+      "score_raw_available": 43.7796,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -1985,7 +1821,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.892,
+          "score": 0.8915,
           "weight": 20,
           "status": "ok"
         },
@@ -1998,12 +1834,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.7343,
+          "score": 0.7355,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8587,
+          "score": 0.8592,
           "weight": 10,
           "status": "ok"
         },
@@ -2020,192 +1856,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4898,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 35,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "601699.SH",
-      "name": "潞安环能",
-      "market": "A",
-      "screen_score": 72.89,
-      "score_raw_available": 43.7339,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.8818,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.7215,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.8881,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 0.903,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4743,
-        "financial_reports": 80,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 36,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "601995.SH",
-      "name": "中金公司",
-      "market": "A",
-      "screen_score": 72.87,
-      "score_raw_available": 43.7199,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.7456,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.926,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.9545,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 1.23,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 1328,
-        "financial_reports": 56,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 37,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "601878.SH",
-      "name": "浙商证券",
-      "market": "A",
-      "screen_score": 72.84,
-      "score_raw_available": 43.7011,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.7927,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.9404,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.844,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 1.416,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 2164,
-        "financial_reports": 62,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 38,
+      "screen_rank": 31,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "688472.SH",
       "name": "阿特斯",
       "market": "A",
-      "screen_score": 72.84,
-      "score_raw_available": 43.7062,
+      "screen_score": 72.89,
+      "score_raw_available": 43.7319,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -2226,12 +1893,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.5484,
+          "score": 0.5504,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8405,
+          "score": 0.841,
           "weight": 10,
           "status": "ok"
         },
@@ -2248,21 +1915,200 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 715,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 15,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 39,
+      "screen_rank": 32,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "601699.SH",
+      "name": "潞安环能",
+      "market": "A",
+      "screen_score": 72.88,
+      "score_raw_available": 43.7298,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.8812,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.7224,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.8879,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 0.903,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4743,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 80,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 33,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "601995.SH",
+      "name": "中金公司",
+      "market": "A",
+      "screen_score": 72.86,
+      "score_raw_available": 43.7182,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.7453,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.9261,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.9547,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 1.23,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 1328,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 56,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 34,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "601878.SH",
+      "name": "浙商证券",
+      "market": "A",
+      "screen_score": 72.83,
+      "score_raw_available": 43.6958,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.7925,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.9402,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.8439,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 1.416,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 2164,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 62,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 35,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "300861.SZ",
       "name": "美畅股份",
       "market": "A",
-      "screen_score": 72.75,
-      "score_raw_available": 43.6506,
+      "screen_score": 72.78,
+      "score_raw_available": 43.6697,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -2283,12 +2129,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.6192,
+          "score": 0.6205,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.7737,
+          "score": 0.7744,
           "weight": 10,
           "status": "ok"
         },
@@ -2305,21 +2151,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 1392,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 34,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 40,
+      "screen_rank": 36,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "601997.SH",
       "name": "贵阳银行",
       "market": "A",
-      "screen_score": 72.62,
-      "score_raw_available": 43.5731,
+      "screen_score": 72.61,
+      "score_raw_available": 43.5645,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -2327,7 +2175,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.7651,
+          "score": 0.7649,
           "weight": 20,
           "status": "ok"
         },
@@ -2345,7 +2193,7 @@
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.8341,
+          "score": 0.8337,
           "weight": 10,
           "status": "ok"
         },
@@ -2362,21 +2210,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 2370,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 56,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 41,
+      "screen_rank": 37,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "688036.SH",
       "name": "传音控股",
       "market": "A",
-      "screen_score": 72.57,
-      "score_raw_available": 43.5393,
+      "screen_score": 72.56,
+      "score_raw_available": 43.536,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -2384,7 +2234,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.917,
+          "score": 0.9162,
           "weight": 20,
           "status": "ok"
         },
@@ -2397,12 +2247,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.5606,
+          "score": 0.562,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.959,
+          "score": 0.9589,
           "weight": 10,
           "status": "ok"
         },
@@ -2419,247 +2269,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 1609,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 33,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 42,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "600102.SH",
-      "name": "莱钢股份",
-      "market": "A",
-      "screen_score": 72.4,
-      "score_raw_available": 28.9607,
-      "available_weight": 40,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap",
-        "catalyst_proximity"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.9837,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "status": "unavailable",
-          "weight": 20,
-          "note": "report cadence not inferable"
-        },
-        "value_lowvol": {
-          "score": 0.7785,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.1502,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 1.361,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 1183,
-        "financial_reports": 23,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 43,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "000651.SZ",
-      "name": "格力电器",
-      "market": "A",
-      "screen_score": 72.34,
-      "score_raw_available": 43.4059,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.6898,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.967,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.9936,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 1.056,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4756,
-        "financial_reports": 81,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 44,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "002154.SZ",
-      "name": "报 喜 鸟",
-      "market": "A",
-      "screen_score": 72.22,
-      "score_raw_available": 43.3343,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.8625,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.8679,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.7401,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 1.784,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4530,
-        "financial_reports": 80,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 45,
-      "recommended_research_action": "WATCH_DATA"
-    },
-    {
-      "ticker": "000883.SZ",
-      "name": "湖北能源",
-      "market": "A",
-      "screen_score": 72.2,
-      "score_raw_available": 43.3215,
-      "available_weight": 60,
-      "missing_components": [
-        "expectation_revision",
-        "coverage_gap"
-      ],
-      "score_components": {
-        "fundamental_acceleration": {
-          "score": 0.8202,
-          "weight": 20,
-          "status": "ok"
-        },
-        "catalyst_proximity": {
-          "score": 0.5002,
-          "weight": 20,
-          "status": "proxy_unvalidated",
-          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
-          "days_to_next_report": 97,
-          "next_report_deadline": "20260831"
-        },
-        "value_lowvol": {
-          "score": 0.9125,
-          "weight": 10,
-          "status": "ok"
-        },
-        "liquidity_risk": {
-          "score": 0.7788,
-          "weight": 10,
-          "status": "ok"
-        },
-        "expectation_revision": {
-          "status": "unavailable_full_market",
-          "weight": 25
-        },
-        "coverage_gap": {
-          "status": "unavailable_full_market",
-          "weight": 15
-        }
-      },
-      "attention_inflection_diagnostic": 1.3,
-      "hard_filter_passed": true,
-      "data_quality": {
-        "price_history_days": 4676,
-        "financial_reports": 81,
-        "revision": "unavailable_full_market",
-        "coverage": "unavailable_full_market",
-        "sidecar_coverage": "watchlist_only"
-      },
-      "no_trade_flag": true,
-      "screen_rank": 46,
+      "screen_rank": 38,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "600026.SH",
       "name": "中远海能",
       "market": "A",
-      "screen_score": 72.2,
-      "score_raw_available": 43.3197,
+      "screen_score": 72.24,
+      "score_raw_available": 43.3461,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -2667,7 +2293,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.959,
+          "score": 0.9589,
           "weight": 20,
           "status": "ok"
         },
@@ -2680,12 +2306,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.4926,
+          "score": 0.4939,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.921,
+          "score": 0.9226,
           "weight": 10,
           "status": "ok"
         },
@@ -2702,21 +2328,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4831,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 47,
+      "screen_rank": 39,
       "recommended_research_action": "WATCH_DATA"
     },
     {
-      "ticker": "600157.SH",
-      "name": "永泰能源",
+      "ticker": "002154.SZ",
+      "name": "报 喜 鸟",
       "market": "A",
-      "screen_score": 72.19,
-      "score_raw_available": 43.315,
+      "screen_score": 72.2,
+      "score_raw_available": 43.3229,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -2724,7 +2352,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9096,
+          "score": 0.8616,
           "weight": 20,
           "status": "ok"
         },
@@ -2737,12 +2365,71 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.5615,
+          "score": 0.8683,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.9504,
+          "score": 0.7405,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 1.784,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4530,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 80,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 40,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "600157.SH",
+      "name": "永泰能源",
+      "market": "A",
+      "screen_score": 72.18,
+      "score_raw_available": 43.308,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.9088,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.5623,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.9505,
           "weight": 10,
           "status": "ok"
         },
@@ -2759,21 +2446,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4409,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 81,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 48,
+      "screen_rank": 41,
       "recommended_research_action": "WATCH_DATA"
     },
     {
-      "ticker": "601618.SH",
-      "name": "中国中冶",
+      "ticker": "000883.SZ",
+      "name": "湖北能源",
       "market": "A",
-      "screen_score": 72.19,
-      "score_raw_available": 43.3166,
+      "screen_score": 72.17,
+      "score_raw_available": 43.3039,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -2781,7 +2470,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.85,
+          "score": 0.8195,
           "weight": 20,
           "status": "ok"
         },
@@ -2794,12 +2483,71 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.8657,
+          "score": 0.9129,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.7655,
+          "score": 0.7781,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 1.3,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4676,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 81,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 42,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "601618.SH",
+      "name": "中国中冶",
+      "market": "A",
+      "screen_score": 72.16,
+      "score_raw_available": 43.2971,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.8491,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.866,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.7653,
           "weight": 10,
           "status": "ok"
         },
@@ -2816,21 +2564,23 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 3967,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 72,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
       },
       "no_trade_flag": true,
-      "screen_rank": 49,
+      "screen_rank": 43,
       "recommended_research_action": "WATCH_DATA"
     },
     {
       "ticker": "002266.SZ",
       "name": "浙富控股",
       "market": "A",
-      "screen_score": 72.14,
-      "score_raw_available": 43.2841,
+      "screen_score": 72.13,
+      "score_raw_available": 43.2754,
       "available_weight": 60,
       "missing_components": [
         "expectation_revision",
@@ -2838,7 +2588,7 @@
       ],
       "score_components": {
         "fundamental_acceleration": {
-          "score": 0.9164,
+          "score": 0.9155,
           "weight": 20,
           "status": "ok"
         },
@@ -2851,12 +2601,12 @@
           "next_report_deadline": "20260831"
         },
         "value_lowvol": {
-          "score": 0.7314,
+          "score": 0.7323,
           "weight": 10,
           "status": "ok"
         },
         "liquidity_risk": {
-          "score": 0.7639,
+          "score": 0.7638,
           "weight": 10,
           "status": "ok"
         },
@@ -2873,7 +2623,363 @@
       "hard_filter_passed": true,
       "data_quality": {
         "price_history_days": 4158,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
         "financial_reports": 77,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 44,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "002967.SZ",
+      "name": "广电计量",
+      "market": "A",
+      "screen_score": 72.07,
+      "score_raw_available": 43.2415,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.955,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.6979,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.7158,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 1.702,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 1585,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 46,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 45,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "601918.SH",
+      "name": "新集能源",
+      "market": "A",
+      "screen_score": 72.07,
+      "score_raw_available": 43.2396,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.7498,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.9046,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.9194,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 0.776,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4323,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 78,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 46,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "601872.SH",
+      "name": "招商轮船",
+      "market": "A",
+      "screen_score": 71.86,
+      "score_raw_available": 43.1179,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.9618,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.4647,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.9232,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 0.864,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4603,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 79,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 47,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "600985.SH",
+      "name": "淮北矿业",
+      "market": "A",
+      "screen_score": 71.7,
+      "score_raw_available": 43.0175,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.8475,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.8307,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.7759,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 0.62,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4686,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 81,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 48,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "601975.SH",
+      "name": "招商南油",
+      "market": "A",
+      "screen_score": 71.66,
+      "score_raw_available": 42.9933,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.8988,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.5492,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.9522,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 1.665,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 1786,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 81,
+        "revision": "unavailable_full_market",
+        "coverage": "unavailable_full_market",
+        "sidecar_coverage": "watchlist_only"
+      },
+      "no_trade_flag": true,
+      "screen_rank": 49,
+      "recommended_research_action": "WATCH_DATA"
+    },
+    {
+      "ticker": "600816.SH",
+      "name": "建元信托",
+      "market": "A",
+      "screen_score": 71.65,
+      "score_raw_available": 42.9926,
+      "available_weight": 60,
+      "missing_components": [
+        "expectation_revision",
+        "coverage_gap"
+      ],
+      "score_components": {
+        "fundamental_acceleration": {
+          "score": 0.999,
+          "weight": 20,
+          "status": "ok"
+        },
+        "catalyst_proximity": {
+          "score": 0.5002,
+          "weight": 20,
+          "status": "proxy_unvalidated",
+          "proxy_method": "days_to_next_mandatory_a_share_disclosure_deadline_from_latest_fiscal_period",
+          "days_to_next_report": 97,
+          "next_report_deadline": "20260831"
+        },
+        "value_lowvol": {
+          "score": 0.4441,
+          "weight": 10,
+          "status": "ok"
+        },
+        "liquidity_risk": {
+          "score": 0.8568,
+          "weight": 10,
+          "status": "ok"
+        },
+        "expectation_revision": {
+          "status": "unavailable_full_market",
+          "weight": 25
+        },
+        "coverage_gap": {
+          "status": "unavailable_full_market",
+          "weight": 15
+        }
+      },
+      "attention_inflection_diagnostic": 2.294,
+      "hard_filter_passed": true,
+      "data_quality": {
+        "price_history_days": 4398,
+        "last_trade_date": "20260526",
+        "stale_calendar_days": 0,
+        "financial_reports": 80,
         "revision": "unavailable_full_market",
         "coverage": "unavailable_full_market",
         "sidecar_coverage": "watchlist_only"
