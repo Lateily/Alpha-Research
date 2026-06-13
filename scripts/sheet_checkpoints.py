@@ -23,6 +23,7 @@ Output: public/data/decision_sheet_checkpoints.json (read-only elsewhere; protec
 Usage:
   python3 scripts/sheet_checkpoints.py --register 002594.SZ \
       --redteam docs/research/decision_sheets/redteam/002594_SZ_ea340230_redteam.json
+  python3 scripts/sheet_checkpoints.py --archive 002594.SZ --reason "removed from active CTF sample"
   python3 scripts/sheet_checkpoints.py --check            # evaluate all due checkpoints
   python3 scripts/sheet_checkpoints.py --selftest
 """
@@ -130,6 +131,37 @@ def register(ticker: str, redteam_path: str | None) -> dict:
     print(f"[checkpoints] REGISTERED {ticker} lock={lock[:16]}… verdict={verdict}")
     print(f"  checkpoints due: {[c['due_date'] for c in entry['checkpoints']]}")
     return entry
+
+
+def archive(ticker: str, reason: str) -> int:
+    """Remove an ACTIVE registration from the live forward-checkpoint set without
+    deleting history. This is the explicit, reproducible path for Junyan-directed
+    sample changes (e.g. "remove BYD from the active CTF sample")."""
+    reason = (reason or "").strip()
+    if not reason:
+        raise SystemExit("--archive requires a non-empty --reason")
+    ledger = _load(LEDGER)
+    if not ledger:
+        raise SystemExit("no ledger — nothing to archive")
+    hits = [r for r in ledger.get("registrations", [])
+            if r.get("ticker") == ticker and r.get("status") == "ACTIVE"]
+    if not hits:
+        raise SystemExit(f"no ACTIVE registration found for {ticker}")
+    for r in hits:
+        r["status"] = "ARCHIVED"
+        r["archived_at"] = _now()
+        r["archive_reason"] = reason
+        for cp in r.get("checkpoints", []):
+            if cp.get("status") == "PENDING":
+                cp["status"] = "ARCHIVED"
+                cp["result"] = {"archived_at": r["archived_at"], "reason": reason}
+    ledger["_meta"] = {**(ledger.get("_meta") or {}),
+                       "updated_at": _now(),
+                       "n_active": sum(1 for r in ledger.get("registrations", [])
+                                       if r.get("status") == "ACTIVE")}
+    LEDGER.write_text(json.dumps(ledger, ensure_ascii=False, indent=2))
+    print(f"[checkpoints] ARCHIVED {ticker} ({len(hits)} active registration(s)) — {reason}")
+    return len(hits)
 
 
 # ───────────────────────── checkpoint evaluation ─────────────────────────
@@ -276,6 +308,20 @@ def _selftest() -> int:
             errs.append("duplicate lock must be refused")
         except SystemExit:
             pass
+        # 5b) archive keeps history but removes the live ACTIVE sample
+        archive("TEST.SZ", "selftest archive")
+        led = json.loads(LEDGER.read_text())
+        if led["_meta"]["n_active"] != 0 or led["registrations"][0]["status"] != "ARCHIVED":
+            errs.append("archive must mark the registration ARCHIVED and reduce n_active")
+        for c in led["registrations"][0]["checkpoints"]:
+            if c["status"] != "ARCHIVED":
+                errs.append("archive must close pending checkpoints as ARCHIVED")
+        # restore a fresh active record for the checkpoint-evaluation tests
+        sheet["content_lock_sha256"] = "cd" * 32
+        (SHEETS / "TEST_SZ.json").write_text(json.dumps(sheet))
+        rt.write_text(json.dumps({"content_lock": ("cd" * 32)[:16], "verdict": "PASS-LOW",
+                                  "scores": {"valuation": 56}, "conditions": ["no conviction upgrade"]}))
+        e = register("TEST.SZ", str(rt))
         # 6) band position math
         band = {k: sheet["valuation_target_range"][k] for k in ("bear", "base", "bull")}
         for px, want in ((45, "BELOW_BEAR_LOW"), (55, "IN_BEAR_BAND"), (80, "BETWEEN_BEAR_AND_BASE"),
@@ -292,7 +338,8 @@ def _selftest() -> int:
         if LEDGER.read_bytes() != bytes_before:
             errs.append("0-due check must NOT touch the ledger (no churn; Junyan #66 P1)")
         led = json.loads(LEDGER.read_text())
-        if any(c["status"] != "PENDING" for c in led["registrations"][0]["checkpoints"]):
+        active = next(r for r in led["registrations"] if r["status"] == "ACTIVE")
+        if any(c["status"] != "PENDING" for c in active["checkpoints"]):
             errs.append("no checkpoint is due at +5d — all must stay PENDING")
         check(as_of=due30)                               # due, but NO committed price yet
         if LEDGER.read_bytes() != bytes_before:
@@ -300,7 +347,8 @@ def _selftest() -> int:
         (tmp / "ohlc_TEST_SZ.json").write_text(json.dumps({"data": [{"date": "20260710", "close": 99.0}]}))
         check(as_of=due30)                               # retry with a price → evaluates
         led = json.loads(LEDGER.read_text())
-        c30 = led["registrations"][0]["checkpoints"][0]
+        active = next(r for r in led["registrations"] if r["status"] == "ACTIVE")
+        c30 = active["checkpoints"][0]
         if c30["status"] != "EVALUATED":
             errs.append("30d checkpoint must evaluate when due")
         else:
@@ -331,17 +379,22 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--register", metavar="TICKER")
     ap.add_argument("--redteam", metavar="PATH")
+    ap.add_argument("--archive", metavar="TICKER")
+    ap.add_argument("--reason", default="")
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args(argv)
     if a.selftest:
         return _selftest()
+    if a.archive:
+        archive(a.archive, a.reason)
+        return 0
     if a.register:
         register(a.register, a.redteam)
         return 0
     if a.check:
         return check()
-    ap.error("one of --register/--check/--selftest required")
+    ap.error("one of --register/--archive/--check/--selftest required")
 
 
 if __name__ == "__main__":
