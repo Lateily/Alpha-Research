@@ -1,0 +1,26 @@
+{
+  "ticker": "688008.SH",
+  "content_lock": "f7e3b135ecc0a012",
+  "sheet": "docs/research/decision_sheets/688008_SH_DEEP_2026-06-14.md",
+  "scored_at": "2026-06-14",
+  "scorer_roles": {"first_red_team_qa": "T1 (composer auto-floor = structural PASS only)", "final_adjudicator": "Junyan"},
+  "comment_provenance": "the five NUMERIC scores (91/93/84/91/89, avg 89.6) are Junyan's VERBATIM five-axis red-team of the 澜起 deep thesis (#77 chat verdict, conditional PASS, 2026-06-14); the two P1 fixes he required (earnings-bridge bull-row column order; in-file source appendix) were applied before #77 merged. The per-axis COMMENTS here are a faithful T1 summary of each axis's basis in this sheet (the #77 verdict recorded scores without verbatim per-axis prose) — NOT presented as Junyan's words. Scores bind to the composer sheet content_lock f7e3b135ecc0a012 (public/data/decision_sheets/688008_SH.json), which encodes the same red-teamed deep thesis; committed reference price 229.28 (universe_a 2026-06-12) vs the deep thesis's web ¥228 (inside its flagged 225-231 conflict band) — both yield the same WATCH conclusion.",
+  "scores": {
+    "specificity": {"score": 91, "comment": "[T1 summary] 拆到 Q1 一次性公允价值收益 2.39亿、扣非 +20.1% vs 表观 +61.3%、新品占互连 11.9%→19% 斜率、互连毛利 62.66%→65.57%→71.5% — 不是空泛叙事。"},
+    "falsifiability": {"score": 93, "comment": "[T1 summary] 4 条 wrong_if 绑季报强制披露(新品占比、互连毛利率、单季营收、扣非同比),H1 报告可直接打脸。"},
+    "valuation_discipline": {"score": 84, "comment": "[T1 summary] 三场景 earnings bridge(营收→毛利→opex→归母→EPS×forward PE)+ 显式假设 + R/R 自然推出;倍数仍是 [unvalidated intuition] 判断锚,但已足够做研究决策。最弱轴。"},
+    "information_increment": {"score": 91, "comment": "[T1 summary] '表观+61% vs 真实+20%(一次性)''卖方营收偏高 58 vs 70-77''第二曲线真实但仅占 19% 托不住 81% base' 是实质增量,不是普通摘要能稳定产出的。"},
+    "risk_identification": {"score": 89, "comment": "[T1 summary] base 减速、政策/周期、估值双杀、8/9 港股基石解禁供给、拥挤反身都覆盖,且没有 over-bear(承认第二曲线是真的)。"}
+  },
+  "average": 89.6,
+  "min_axis": {"axis": "valuation_discipline", "score": 84},
+  "bar": {"average_min": 70, "axis_min": 50, "label": "[unvalidated intuition]"},
+  "verdict": "PASS",
+  "conditions": [
+    "may register 30/60/90 forward checkpoints — the first CTF deep-thesis sample (the 88+ template)",
+    "verdict认可: WATCH_ONLY / 加仓区 ≤150 / R/R 0.10 (committed 0.11) — NOT a buy",
+    "may NOT upgrade to conviction at current price; STARTER eligibility only inside the add zone or on a fundamentals-driven re-band",
+    "the two #77 P1s (bull-row column order; in-file source appendix) were fixed before merge"
+  ],
+  "note": "CTF deep-thesis upgrade #1; human score = measure of record per spec #62. The template that proved 'deep + honest' reaches investment grade (88+) without manufacturing a buy — depth corrected the quick screen's wrong valuation (PE 108→116-119) and still landed WATCH_ONLY."
+}

@@ -1,0 +1,336 @@
+{
+  "_meta": {
+    "layer": "Core Thesis Factory v1 — Single-Name Decision Sheet (单票决策书)",
+    "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md",
+    "generated_at": "2026-06-14T07:13:42.872054+00:00",
+    "sheet_version": "v1",
+    "disclaimer": "INTERNAL, UNVALIDATED research output of the model-recommendation pilot — not validated alpha, not external/personalized investment advice; sizing fields are research posture only; human executes. Quality gate = human red-team (auto checks are the floor only)."
+  },
+  "identity": {
+    "ticker": "688008.SH",
+    "name": {
+      "zh": "澜起科技",
+      "en": "Montage Technology"
+    },
+    "market": "A",
+    "sector_theme": {
+      "zh": "半导体 · 全球内存接口寡头 · AI 服务器第二曲线(Retimer/MRDIMM)",
+      "en": "Semiconductor · global memory-interface oligopoly · AI-server second curve (Retimer/MRDIMM)"
+    },
+    "as_of": "2026-06-14",
+    "ticker_one_context": {
+      "objective_horizon": "6-12 months (CTF deep-thesis upgrade #1)",
+      "real_money_consideration": "WATCH_ONLY — no position at current price; pending the human red-team of record"
+    },
+    "provenance": {
+      "research_core_lineage": "CTF deep-thesis UPGRADE #1 — discovered via Serenity Scan #1 (docs/research/serenity/SCAN_1_AI_SEMIS.md, #68 merged), surfaced in AI-semi batch screen (docs/research/decision_sheets/AI_SEMI_BATCH_2026-06-13.md, #76, blind 79.4), then upgraded to a full earnings-bridge deep thesis (docs/research/decision_sheets/688008_SH_DEEP_2026-06-14.md, #77 merged; Junyan five-axis red-team 89.6 PASS). This core encodes that red-teamed deep thesis into the composer contract for forward-checkpoint registration (PR-E).",
+      "generation_note": "deep path per the CTF upgrade pipeline: 3 parallel deep agents pulled PRIMARY E1 disclosure (EY-audited FY24/FY25 + 2026Q1 income statement line-by-line) + product-line/demand split + sell-side consensus/valuation anchors; T1 built the 3-scenario earnings bridge. The quick screen's valuation numbers were WRONG (static PE stated 108, actual 116-119; shares 11.46 vs 12.22亿) — the deep pass corrected them. Reference price = the committed universe_a 2026-06-12 snapshot 229.28 (the deep thesis used a web-fetched ¥228 inside its flagged live-quote conflict band 225-231; the committed snapshot is the auditable input and yields the same WATCH conclusion).",
+      "factcheck_basis": "E1-pinned: FY25/Q1 absolutes from 安永审计年报 + 一季报 PDF (cninfo/SSE); product/demand from IR记录 2025-004/2025-014 原文; consensus from 13家研报聚合 + 里昂/大摩/高盛 5月上调 (E2 卖方); valuation/price from exchange feed + eniu 历史分位 (E1/E2)"
+    }
+  },
+  "thesis": {
+    "variant_perception": {
+      "zh": "市场信:AI 算力 → 服务器内存升级 → 澜起作为全球内存接口寡头(2024 份额 36.8%)+ DDR5 迭代 + 四款新品第二曲线,线性外推 45-54% 复合增速,给到静态 PE 116-119×(TTM 133×)、P/S ~50×(瑞萨的 16 倍、Rambus 的 4-5 倍);A 股 6 月股价已击穿所有国内券商目标价上沿,只有 5 月上调后的外资行(大摩 274/里昂 278/高盛 387)还在上方。我们信(earnings bridge 给出的非共识):(1) Q1 归母 +61.3% 是一次性撑起来的——其中 2.39亿 = 出售股权的公允价值收益(非经常,季报原文),扣非仅 +20.1%,与营收 +19.5% 吻合,真实经营增速已从 +50% 换挡到 +20%;(2) 卖方 26E 营收 70-77亿大概率偏高——Q1 营收 14.61亿简单年化仅 58亿,bridge 锚定 run-rate 得 FY26 归母 24-34亿,低于卖方 32-41亿;(3) 但第二曲线是真的——新品占互连 11.9%(1Q25)→19%(1Q26),互连毛利 62.66%→65.57%→71.5%,是 mix 改善的财务指纹。一句话:市场为 +61% 的表观增速付了 116× 的价,真实经营是 +20%、卖方营收偏高、第二曲线真实但占盘仅 19% 还托不住 81% 的 base 减速——好公司,但价格已经把最好的情形和更多都买完了。",
+      "en": "Market believes: AI compute → server memory upgrade → Montage as the global memory-interface oligopolist (36.8% 2024 share) + DDR5 iteration + a four-product second curve, linearly extrapolated to a 45-54% CAGR, hence a 116-119x static PE (133x TTM) and ~50x P/S (16x Renesas, 4-5x Rambus); the A-share has broken through ALL domestic broker targets, with only the May-upgraded foreign houses (MS 274 / CLSA 278 / GS 387) still above. We believe (the bridge's non-consensus): (1) Q1 归母 +61.3% is one-off-lifted — ¥239M of it is a fair-value gain on an equity disposal (non-recurring, per the filing); 扣非 grew only +20.1%, consistent with revenue +19.5% — real operating growth has shifted from ~+50% to ~+20%, not the +61% the market sees; (2) sell-side FY26E revenue of ¥7.0-7.7B is likely too high — Q1 revenue ¥1.461B annualizes to just ¥5.8B; the bridge, anchored to the Q1 run-rate, yields FY26 归母 ¥2.4-3.4B, below the sell-side ¥3.2-4.1B; (3) but the second curve is REAL — new products went from 11.9% of interconnect (1Q25) to 19% (1Q26), and interconnect GM 62.66%→65.57%→71.5% is the financial fingerprint of mix improvement, not a story. In one line: the market paid 116x for a +61% headline; real operations are +20%, sell-side revenue is high, and a real second curve at only 19% of the book cannot yet carry the 81% base deceleration — a good company whose price has already bought the best case and then some."
+    },
+    "mechanism": {
+      "zh": "第一性链条:存储/AI 服务器扩产 → 每条内存通道必配 RCD(澜起/瑞萨几乎平分 DDR5,各 ~36%)→ AI 服务器对 PCIe Retimer 的含量提升是最硬传导(一台 8-GPU 主流 AI 服务器需 8-16 颗、扩展场景 24 颗,普通服务器≈0,管理层亲口)→ 叠加 MRDIMM 升级(MRCD/MDB 替代 RCD,单模组价值量更高,二代 4Q25 起放量)→ 新品占比抬升 + 毛利率上台阶 → 若占比斜率维持/加速(2Q26→25%+),第二曲线兑现;反之占比横在 19%、新品 YoY 跌破 base,则只是补了 base 的减速、无独立 alpha。诚实锚:公开披露不拆 base RCD vs 新品、不拆四款新品内部,所以唯一可追踪代理 = 逐季'新品占互连比重'。",
+      "en": "First-principles chain: storage/AI-server capex → every memory channel needs an RCD (Montage/Renesas roughly split DDR5 at ~36% each) → the AI server's rising PCIe-Retimer content is the hardest transmission (an 8-GPU mainstream AI server needs 8-16 Retimers, 24 in expanded configs, vs ≈0 for a normal server — per management) → plus the MRDIMM upgrade (MRCD/MDB replacing RCD at higher per-module value, gen-2 ramping from 4Q25) → new-product share rises and GM steps up → if the share slope holds/accelerates (2Q26 → 25%+) the second curve converts; if it flatlines at 19% and new-product YoY drops below base, it merely fills the base deceleration with no independent alpha. Honesty anchor: disclosure does NOT split base RCD vs new products, nor the four products internally, so the only trackable proxy is the quarterly 'new-product share of interconnect'."
+    },
+    "direction": "LONG",
+    "horizon": "6-12 months (E1 proof = the new-product-share + interconnect-GM print at the 2026 H1 report ~2026-08-31; quarterly thereafter)",
+    "conviction": "WATCH_ONLY — franchise is real (global memory-interface oligopoly + a genuine mix-driven second curve), but at the committed reference price the R/R is ≈0.11, catastrophically below the 2:1 bar (price has run to the bull scenario). No position. STARTER eligibility begins only at the add zone (≤~150, where the bar is met) or on a fundamentals-driven re-band; near-term supply overhang = 8/9 HK cornerstone unlock."
+  },
+  "evidence": {
+    "items": [
+      {
+        "claim": "FY2025 (EY-audited, line-by-line): 营收 54.56亿 (互连 51.39 / 津逮 3.08), 归母 22.36亿, 扣非 20.22亿, 综合毛利 62.23%, 互连毛利 65.57%, 经营现金流 20.22亿 — clean, high-quality base year",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "FY2025 安永审计年报逐行 (cninfo static.cninfo.com.cn/finalpage/2026-03-31/1225057736.PDF); FY2024 年报 (SSE 688008_20250411_2KIN.pdf)"
+      },
+      {
+        "claim": "26Q1 归母 8.47亿 (+61.3%) CONTAINS a one-off fair-value gain of 2.39亿 (equity disposal, non-recurring); 扣非 only 6.04亿 (+20.1%); 营收 14.61亿 (+19.5%) — the headline +61% is NOT the operating rate; real operations run ~+20%",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "2026Q1 季报 p3 (stockmc.xueqiu.com/202604/688008_20260428_JP30.pdf; 转载 paper.cnstock.com 2026-04/28)"
+      },
+      {
+        "claim": "New products (MRCD/MDB · Retimer · CKD · MXC) Q1 = 2.69亿 (+93.8%), now 19% of interconnect (vs ~11.9% in 1Q25); interconnect GM 71.5% (+7.0pp) — the second curve is a real mix-improvement financial fingerprint, not a narrative",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "2026Q1 季报 p2 (新品口径/互连毛利); FY25 业绩快报 互连毛利 65.6% (stockmc.xueqiu.com/202602/688008_20260228_NF8F.pdf)"
+      },
+      {
+        "claim": "AI-server PCIe Retimer content 8-16-24 units/server vs ≈0 for a normal server (the hardest transmission, per IR); BUT Retimer is NOT an oligopoly — Astera 86% / Montage 10.9% (a challenger: large but asymmetric elasticity)",
+        "tier": "E1",
+        "causal_tag": "INFERRED",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "IR记录 2025-004 / 2025-014 原文 (notice.10jqka.com.cn); 份额 donews.com/article/detail/5458/93952.html (E2)"
+      },
+      {
+        "claim": "Static PE 116-119×, TTM 133×, P/S ~50× (Renesas forward 13× / Rambus 38×); the A-share has broken through ALL domestic broker targets — only the foreign houses (MS 274 / CLSA 278 / GS 387) remain above; market pricing is more aggressive than the domestic sell-side consensus",
+        "tier": "E2",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CROWDING_SIGNAL",
+        "source": "exchange feed + eniu.com/gu/sh688008 历史 PE 带 (TTM 133×, 高168/低48.65/均85); 里昂/大摩/高盛 5月研报 (sina finance)"
+      },
+      {
+        "claim": "Sell-side FY26E revenue 70-77亿 vs Q1-annualized 58亿 — a 'sell-side revenue too high' red flag; FY26E 归母 consensus 32-41亿; our bridge (anchored to the run-rate) yields 24-34亿, deliberately below consensus",
+        "tier": "E2",
+        "causal_tag": "INFERRED",
+        "citation_grade": "CROWDING_SIGNAL",
+        "source": "13家盈利预测聚合 (basic.10jqka.com.cn/688008/worth.html); 里昂 27E 68亿 / 大摩 35.5-67.1-78.3亿 / 高盛 (sina finance 5月)"
+      },
+      {
+        "claim": "Cash is very thick (Q1 cash + trading financial assets 167.6亿, incl. ¥7.1B HK raise); BUT near-term supply risk = the 8/9 HK cornerstone unlock (~$450M, 6-month lock) + MS trimmed H-shares to 5.74% on 5/8 at a high",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CROWDING_SIGNAL",
+        "source": "2026Q1 季报 (现金/交易性金融资产); 港交所披露 大摩 5/8 减持 @320.33 HK$ → 5.74% (sina 2026-05-13); 基石 6个月锁定 → 2026-08-09 到期 (sina 2026-02-04 / wallstreetcn 3763291)"
+      }
+    ],
+    "rule_x_check": {
+      "pass": true,
+      "why": "The load-bearing legs (real operating growth vs headline, new-product-share slope, interconnect GM) are ALL re-confirmable by mandatory quarterly/annual disclosure — 扣非, 互连毛利率, and the new-product-share line item all print at the H1 report. The variant depends on NO undisclosed base-vs-new split (that is unavailable and has been DOWNGRADED to 'the only proxy is the share ratio'). Satisfies the 2026-05-17 Rule-X boundary: same forward mechanism, issuer-disclosure-confirmable."
+    },
+    "contrarian_view": "Bulls/bears tension: BULLS say AI compute is a multi-year capex super-cycle, Retimer content per server is exploding (8→24), MRDIMM gen-2 lifts per-module value, and a 36.8% interface oligopolist with 71.5% incremental GM deserves a scarcity multiple — so 116x is 'cheap on 2027'. BEARS (our lean at price): (1) base RCD growth decelerates once DDR5 penetration tops (~65%), and a 19%-of-book second curve cannot carry the 81% base; (2) new products' own YoY already slowed from +155% to +94% (base effect); (3) the +61% headline is one-off-lifted while real operations run +20%; (4) sell-side revenue (70-77亿) sits above the Q1 run-rate annualization (58亿); (5) at 116x static / 50x P/S — 4-16x global peers — any growth miss double-kills via E and multiple; (6) 8/9 cornerstone unlock + MS H-share trimming = near-term supply, into a +73% 16-month A-share run that is consensus-crowded."
+  },
+  "catalyst_calendar": [
+    {
+      "event": {
+        "zh": "2026 半年报(新品占互连比重 / 互连毛利率 / 扣非 / 单季营收 = E1 证明事件)",
+        "en": "2026 H1 report (new-product share / interconnect GM / non-GAAP / quarterly revenue = the E1 proof event)"
+      },
+      "date": "2026-08-31 (statutory deadline)",
+      "watch": "新品占互连比重(连续两季是否破 19%)、互连毛利率(守 65%+?)、扣非归母同比、单季营收同比",
+      "expected": "share >19% & interconnect GM ≥65% & 扣非 ≥+10% supports the second-curve narrative; the inverse fires wrong_if"
+    },
+    {
+      "event": {
+        "zh": "港股基石解禁(~4.5亿美元,6个月锁定到期)",
+        "en": "HK cornerstone unlock (~$450M, 6-month lock expiry)"
+      },
+      "date": "2026-08-09",
+      "watch": "解禁后 H 股减持/A-H 折溢价",
+      "expected": "near-term supply overhang — CROWDING-flagged, not a thesis break but an execution-timing risk"
+    },
+    {
+      "event": {
+        "zh": "DDR5 渗透率 / MRDIMM 二代放量节奏(主题 beta)",
+        "en": "DDR5 penetration / MRDIMM gen-2 ramp cadence (theme beta)"
+      },
+      "date": "rolling 2026",
+      "watch": "TrendForce 渗透读数、二代 MRDIMM 出货",
+      "expected": "supportive headlines sustain the multiple; penetration topping de-rates regardless of the print"
+    }
+  ],
+  "wrong_if": {
+    "triggers": [
+      {
+        "metric": "新品占互连比重 (new-product share of interconnect)",
+        "threshold": "连续两季 ≤ 19% (横住 = 第二曲线无独立 alpha)",
+        "source": "季报 p2 互连/新品拆分",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "互连类毛利率 (interconnect gross margin)",
+        "threshold": "< 65% (回到 FY25 全年水平 = mix 改善证伪)",
+        "source": "季报",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "单季营收同比 (quarterly revenue YoY)",
+        "threshold": "连续两季 < +15% (base 熄火坐实 / 卖方营收偏高证伪)",
+        "source": "季报合并利润表",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "扣非归母净利同比 (non-GAAP net profit YoY, ex one-offs)",
+        "threshold": "< +10% (剔一次性后真实经营熄火)",
+        "source": "季报 扣非口径",
+        "check_date": "2026-08-31"
+      }
+    ],
+    "note": {
+      "zh": "四条全部绑季报强制披露科目(扣非/互连毛利/新品占比/单季营收),公司无法不披露;任一触发即复核论点,触发后未更新决策书记为诚实性失败。",
+      "en": "All four bind to MANDATORY quarterly line items (扣非 / interconnect GM / new-product share / quarterly revenue) — the company cannot withhold them; any trigger forces a thesis review; an un-updated sheet after a trigger is an honesty failure."
+    }
+  },
+  "valuation_target_range": {
+    "calibrated": false,
+    "basis": "3-scenario earnings bridge (营收 → 毛利率 → 毛利 → −opex → +财务/其他 → 营业利润 → 归母 → EPS × forward PE) anchored to the Q1 run-rate; shares = 12.22亿 (E1; price 229.28 × 12.22亿 ≈ 2802亿 = universe_a mcap). Automated valuation stack NOT run for this name — band is analyst-constructed; every multiple is [unvalidated intuition] with stated anchors (历史 PE 带 48.65-168×, 均值 85×, 当前 TTM 133×; 可比 瑞萨 forward 13× / Rambus 38×).",
+    "bear": {
+      "low": 95,
+      "high": 115,
+      "assumptions": [
+        "DDR5 渗透见顶(65%),base RCD 增速回落,新品占比横在 ~19% 托不住",
+        "营收卡 Q1 年化 60亿(+10%),毛利 67%;归母 ≈持平 23.4亿(+5%),EPS 1.92",
+        "市场去线性外推,PE 压到 50-55× [unvalidated intuition]",
+        "math: EPS 1.92 × 50-55 ≈ ¥95-115"
+      ]
+    },
+    "base": {
+      "low": 145,
+      "high": 170,
+      "assumptions": [
+        "新品占比续升到 ~23-25%、Retimer AI 含量兑现部分,H2 适度加速",
+        "营收 66亿(+21%),毛利 69%;归母 28.9亿(+29%,低于卖方 32-41亿,因营收更保守),EPS 2.36",
+        "PE 62-68× [unvalidated intuition; 增速确认但无加速]",
+        "math: EPS 2.36 × 62-68 ≈ ¥145-170"
+      ]
+    },
+    "bull": {
+      "low": 225,
+      "high": 260,
+      "assumptions": [
+        "新品 S 曲线 + Retimer 含量 + MRDIMM 二代放量 + DDR5 涨价",
+        "营收 72亿(+32%),毛利 71%;归母 34.5亿(+54%,达国内卖方上沿),EPS 2.82",
+        "市场用 2027 放量(里昂 27E 68亿)贴现回来,持 80-90× forward [unvalidated intuition]",
+        "math: EPS 2.82 × 80-90 ≈ ¥225-260"
+      ]
+    },
+    "sensitivity_note": "熊/基/牛 mid ≈ 105 / 157 / 242; the thesis-loaded variable is REVENUE (base deceleration vs sell-side 70-77亿) — the bridge deliberately anchors the Q1 run-rate (58亿 annualized) and lands FY26 归母 below consensus; ±5x of forward PE moves each band ~7-9%; resolves at the H1 print"
+  },
+  "execution_plan": {
+    "summary": {
+      "zh": "WATCH_ONLY,当前价不入场。按committed快照 229.28(universe_a 2026-06-12),R/R ≈ 0.11(牛 mid 242.5 / 熊 mid 105),远低于 2:1——价格已在牛市情形,无任何仓位理由。这与快速筛(79.4 / WATCH)同向,但现在用 earnings bridge 证明了为什么,而不是'108× 太贵'一句话(且快速筛的 108 还是错的,真实 116-119)。两条重新进入路径:(a) 价格回到 ≤~150(2:1 满足价,需 ~34% 回调);(b) 基本面再加速抬高 bridge(新品占比破 25% + 毛利守 71% + 营收回到 run-rate 之上)使 base/牛 整体上移,那时更高价也能满足 2:1——需用打印数字重算。近端盯 8/9 港股基石解禁的供给冲击。任何执行前取实时两地报价重算市值/PE/R/R;human_executes——系统只建议、不下单。",
+      "en": "WATCH_ONLY, no entry at current price. At the committed snapshot 229.28 (universe_a 2026-06-12), R/R ≈ 0.11 (bull mid 242.5 / bear mid 105), far below 2:1 — price is already at the bull case, no position rationale. Same direction as the quick screen (79.4 / WATCH) but now the bridge PROVES why, rather than a one-line '108x too expensive' (and the screen's 108 was itself wrong — actual 116-119). Two re-entry paths: (a) pullback to ≤~150 (the 2:1 price, ~34% down); (b) a fundamentals-driven re-band (new-product share >25% + GM holding 71% + revenue back above the run-rate) lifts base/bull so the bar is met at a higher price — re-run on printed numbers. Near-term watch = the 8/9 HK cornerstone unlock supply shock. Pull live A/H quotes before ANY execution and re-compute mcap/PE/R/R; human_executes — the system suggests, never trades."
+    },
+    "entry": "committed reference 229.28 (universe_a 2026-06-12 snapshot; deep thesis used a web-fetched ¥228 inside the flagged 225-231 conflict band); NO entry at current — add zone = ≤~150 (2:1 bar met) OR a post-H1 fundamentals-driven re-band",
+    "staging": "WATCH now (no position) → STARTER only inside the add zone or after a re-band → conviction requires R/R ≥2:1 on the re-based band; never average into a fired wrong_if",
+    "invalidation": "price: n/a while flat (no position to invalidate); thesis: any mechanized wrong_if trigger kills the thesis and the name reverts to pool-watch; near-term supply watch = 8/9 cornerstone unlock",
+    "sizing_suggestion": "tier: NONE at reference (WATCH_ONLY); STARTER_CAPPED inside the add zone [suggestion only — human_executes; the system never auto-trades or sizes]",
+    "holding_horizon": "6-12 months from first entry (if ever); the thesis resolves at the 2026-08 H1 print (new-product share + interconnect GM + 扣非) and quarterly thereafter",
+    "review_dates": [
+      "2026-07-14 (30d: 港股基石解禁前定位 + 池内增量)",
+      "2026-08-13 (60d: pre-H1 positioning check)",
+      "2026-09-12 (90d: post-H1 E1 verdict — decisive)"
+    ]
+  },
+  "serenity": {
+    "theme_system_change": "A股 AI 半导体(Scan #1 #68):AI 算力 capex 政策性放大 × 服务器内存升级(DDR5 迭代 + MRDIMM)使内存接口/Retimer 含量量价齐升;澜起处认证型寡头层(L4),其 AI-server 第二曲线(Retimer/MRDIMM)是把'内存接口'从周期件升级为 AI 含量件的系统变化",
+    "value_chain_map": [
+      "L1 薄膜沉积+混合键合(最紧,设备瓶颈)",
+      "L2 HBM后段+存储封测",
+      "L3 CMP全链(垄断结构)",
+      "L4 内存接口(认证型寡头 — 本票:RCD ~36% + Retimer 挑战者 10.9%)",
+      "L9 算力芯片设计(非瓶颈)"
+    ],
+    "scarce_layer": "L4 内存接口 — RCD 是 DDR5 每通道必配、认证壁垒高(澜起/瑞萨 ~平分),Retimer 在 AI 服务器含量爆发(8-24 颗/台 vs 普通≈0)但澜起仅 10.9% 份额(挑战者,弹性大但非寡头)",
+    "company_role": "CONTROLS (RCD 内存接口) + CHALLENGES (PCIe Retimer, 10.9% vs Astera 86%)",
+    "bottleneck_evidence": [
+      {
+        "claim": "全球内存接口寡头,2024 RCD 份额 36.8%(与瑞萨几乎平分 DDR5);互连毛利 65.57%(FY25)→71.5%(Q1)= 认证壁垒+mix 改善",
+        "tier": "E1",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "FY25 安永审计年报 + 2026Q1 季报 p2"
+      },
+      {
+        "claim": "AI 服务器 PCIe Retimer 含量 8-16-24 颗/台 vs 普通服务器≈0(管理层亲口)——AI 含量传导最硬的一条",
+        "tier": "E1",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "IR记录 2025-004 / 2025-014 原文 (notice.10jqka.com.cn)"
+      },
+      {
+        "claim": "新品占互连比重 11.9%(1Q25)→19%(1Q26),+7pp/年 = 第二曲线放量的可追踪代理(公开披露不拆 base vs 新品,占比是唯一可证伪读数)",
+        "tier": "E1",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "2026Q1 季报 p2"
+      }
+    ],
+    "market_may_be_missing": "诚实结论:市场没漏'第二曲线真假'(那是真的,占比斜率是证据)。真正被高估的是 base 总量增速——表观 +61% 含 2.39亿一次性,真实 +20%,卖方 26E 营收 70-77亿高于 Q1 年化 58亿;19% 的第二曲线托不住 81% 的 base 减速,而价格(116×)是按线性外推 45-54% 复合定的",
+    "substitution_route": "RCD 认证壁垒高(三星/海力士/美光绑定),海外二供(瑞萨)是既有寡头非新进入,国产新进入技术代差大(弱);Retimer 侧 Astera 主导,澜起替代空间在 AI 服务器放量(机会非威胁)——替代路径短期(6-12mo)不构成对澜起 base 的威胁",
+    "expansion_difficulty": "内存接口认证周期长 + 与三大存储厂深度绑定(护城河);但 base 增速受 DDR5 渗透周期约束(见顶后回落),新品放量受 AI 服务器出货与 Retimer 份额提升约束(非澜起单方可控)",
+    "customer_validation": "三星/海力士/美光三大存储厂(RCD 认证型绑定,E1 行业结构);AI 服务器 Retimer 进入主流平台(管理层口径);Q1 现金+交易性金融资产 167.6亿(含港股募资 71亿)= 强资产负债表",
+    "what_weakens_the_view": [
+      {
+        "metric": "新品占互连比重",
+        "threshold": "连续两季 ≤ 19%(横住=无独立 alpha)",
+        "source": "季报 p2 互连/新品拆分",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "互连类毛利率",
+        "threshold": "< 65%(回到 FY25 全年 = mix 改善证伪)",
+        "source": "季报",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "扣非归母同比(剔一次性看真实经营)",
+        "threshold": "< +10%",
+        "source": "季报 扣非口径",
+        "check_date": "2026-08-31"
+      }
+    ]
+  },
+  "risk": {
+    "fundamental": "base RCD 在 DDR5 渗透见顶后增速回落,新品占盘仅 19% 托不住 81%;新品自身 YoY 已从 +155% 放缓到 +94%(基数效应);Q1 表观 +61% 含 2.39亿一次性公允价值收益,若该类收益不延续则同比基数高悬",
+    "policy": "存储强周期,2026 涨价是顺风、下行周期会反噬;客户绑定三星/海力士/美光三家,地缘/管制波及内存接口出货节奏",
+    "valuation": "静态 116× / TTM 133× / P/S 50× 是全球同业 4-16 倍;A 股稀缺性+情绪溢价不在海外卖方框架内;增速一旦兑现不及,PE 弹性极大(E 与 multiple 双杀)——bear 95-115 即该情形的诚实下界",
+    "liquidity": "科创板 + A/H 两地;H 股近端供给(8/9 基石解禁 ~4.5亿美元 + 大摩 5/8 高位减持至 5.74%);A-H 折溢价随市剧烈波动",
+    "crowding_reflexivity": "5 月外资集体上调(大摩/里昂/高盛)+ 港股超购 280 倍 + 16 个月 A 股 +73%,共识已极度拥挤、变体边际被部分定价;A 股已击穿全部国内目标价,只剩外资目标在上方 = 拥挤顶部特征;sentiment feeds 仍 stubbed [data break]"
+  },
+  "disclaimers": {
+    "unvalidated": true,
+    "human_executes": true,
+    "pilot": "internal model-recommendation pilot output — NOT validated alpha, NOT external/personalized advice; the CTF deep-thesis upgrade #1 sample (quick screen 79.4 → deep thesis, Junyan red-team 89.6 PASS); WATCH_ONLY is the evidence-determined verdict, never a buy signal",
+    "data_breaks_logged": [
+      "no committed per-ticker ohlc/signals/eqr/fin yet — committed reference price falls back to the universe_a 2026-06-12 snapshot 229.28; the deep thesis used a web-fetched ¥228 inside its flagged live-quote conflict band (225-231) — both yield the same WATCH conclusion; pull live A/H quotes before any execution",
+      "the quick screen (#76) had WRONG valuation numbers (static PE stated 108, actual 116-119; shares 11.46 vs 12.22亿) — corrected by the deep E1 pass; lesson: one-pass E2 facts are unreliable, depth corrects accuracy not just persuasiveness",
+      "automated valuation stack (rDCF/EV-EBITDA/RI) not run for this name — band is analyst-constructed, every multiple [unvalidated intuition] with stated anchors",
+      "public disclosure does NOT split base RCD vs new products, nor the four new products internally — variant falsifiability is constrained to the single proxy 'new-product share of interconnect'",
+      "three broker deep PDFs (东吴/太平洋/中泰) not parsed in full — TAM/ASP sub-splits pending manual deep-read",
+      "sentiment feeds stubbed (crowding monitoring partially blind; proxied by 行情/外资评级/港股超购)"
+    ]
+  },
+  "auto_context": {
+    "last_price": {
+      "close": 229.28,
+      "date": "2026-06-12",
+      "source": "universe_a_snapshot_fallback",
+      "note": "latest COMMITTED price — staleness is flagged, never papered over"
+    },
+    "technical": {
+      "zone": null,
+      "generated_at": null,
+      "rsi14": null,
+      "signals": []
+    },
+    "eqr": {
+      "overall": null,
+      "sections": {}
+    },
+    "market_anchors": {
+      "as_of": "2026-06-12T05:55:22.055762",
+      "price": 229.28,
+      "market_cap": 280226020815.0,
+      "pe_dynamic": 82.67,
+      "pb": 13.44
+    },
+    "valuation_stack_status": {
+      "triangulated_signal": null,
+      "methods_used": null,
+      "note": "automated valuation generators' status — breaks logged honestly"
+    }
+  },
+  "reward_to_risk": {
+    "reference_price": 229.28,
+    "bull_mid": 242.5,
+    "bear_mid": 105.0,
+    "reward_to_risk": 0.11,
+    "conviction_bar": 2.0,
+    "meets_conviction_bar": false,
+    "entry_where_bar_met": 150.83,
+    "stance_at_reference": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)"
+  },
+  "quality": {
+    "auto_floor": "PASS (structurally qualified)",
+    "human_red_team": "PASS for registration — Junyan five-axis 89.6 (具体性91/可证伪93/估值纪律84/信息增量91/风险89), bound to content_lock f7e3b135ecc0a012 via redteam JSON, registered 2026-06-14; forward outcome PENDING (30/60/90 checkpoints)",
+    "forward_checkpoints": "PENDING registration (30/60/90d, PR-D)"
+  },
+  "content_lock_sha256": "f7e3b135ecc0a0120785631601f801d4538e39075d7124c56c88e8e1f397f6aa"
+}
