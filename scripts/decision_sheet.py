@@ -268,7 +268,7 @@ def compose(ticker: str) -> dict:
                   "sheet_version": "v1",
                   "disclaimer": ("INTERNAL, UNVALIDATED research output of the model-recommendation "
                                  "pilot — not validated alpha, not external/personalized investment "
-                                 "advice; sizing fields are SUGGESTIONS only; the human executes. "
+                                 "advice; sizing fields are research posture only; human executes. "
                                  "Quality gate = human red-team (auto checks are the floor only).")},
         **core,
         "auto_context": auto,
@@ -301,8 +301,15 @@ def _render_md(s: dict) -> str:
     L.append(f"# 单票决策书 · Decision Sheet — {idn['name']['zh']} {idn['ticker']} ({idn['as_of']})")
     L.append(f"\n> **{s['_meta']['disclaimer']}**")
     L.append(f"> Provenance: {idn['provenance']['research_core_lineage']}")
+    # red-team status is NOT hardcoded — it reflects the sheet's quality.human_red_team so the
+    # render can never go stale once a sheet is red-teamed + registered (Junyan #79 P1: a PENDING
+    # line on an already-bound/registered sheet misleads the reader). PR-F codifies this as the
+    # "red-team status must not be stale" institutional rule.
+    _hrt = str((s.get("quality") or {}).get("human_red_team", "") or "")
+    _rt_line = (f"**Human red-team: {_hrt}**" if _hrt.upper().startswith("PASS")
+                else "**human red-team PENDING (the measure of record)**")
     L.append(f"> Content lock: `{s['content_lock_sha256'][:16]}…` · Quality: auto floor PASS · "
-             f"**human red-team PENDING (the measure of record)**\n")
+             f"{_rt_line}\n")
     L.append(f"## 0. 一句话 / One line")
     L.append(f"- **Direction:** {th['direction']} · **Horizon:** {th['horizon']} · **Conviction:** {th['conviction']}")
     L.append(f"- **R/R @ {rr.get('reference_price')}:** {rr.get('reward_to_risk')} → **{rr.get('stance_at_reference')}** "

@@ -4,7 +4,7 @@
     "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md",
     "generated_at": "2026-06-14T07:16:54.367769+00:00",
     "sheet_version": "v1",
-    "disclaimer": "INTERNAL, UNVALIDATED research output of the model-recommendation pilot — not validated alpha, not external/personalized investment advice; sizing fields are SUGGESTIONS only; the human executes. Quality gate = human red-team (auto checks are the floor only)."
+    "disclaimer": "INTERNAL, UNVALIDATED research output of the model-recommendation pilot — not validated alpha, not external/personalized investment advice; sizing fields are research posture only; human executes. Quality gate = human red-team (auto checks are the floor only)."
   },
   "identity": {
     "ticker": "688072.SH",
@@ -335,7 +335,7 @@
   },
   "quality": {
     "auto_floor": "PASS (structurally qualified)",
-    "human_red_team": "PENDING — the measure of record",
+    "human_red_team": "PASS for registration — Junyan five-axis 91.8 (具体性92/可证伪94/估值纪律88/信息增量93/风险92), bound to content_lock 297c7f5804b4abdd via redteam JSON, registered 2026-06-14; forward outcome PENDING (30/60/90 checkpoints)",
     "forward_checkpoints": "PENDING registration (30/60/90d, PR-D)"
   },
   "content_lock_sha256": "297c7f5804b4abdd1dbcff4cbc3d8670d0f62ec568857ab463eb855c2e517f0a"
