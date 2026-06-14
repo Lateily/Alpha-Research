@@ -1,0 +1,1120 @@
+{
+  "_meta": {
+    "generated_at": "2026-06-14T13:23:55.529098+00:00",
+    "layer": "AI beta forward-validation candidate screen",
+    "data_as_of": "2026-06-12T05:55:22.055762",
+    "input_universe": "public/data/universe_a.json current committed snapshot",
+    "screen_method": "current committed A-share universe snapshot intersected with an explicit AI/AI-infrastructure value-chain seed list; concept_membership.json has 0 current concepts in this checkout, so the industry taxonomy is explicit and auditable rather than silently inferred",
+    "disclaimer": "research candidate pack only; not a buy list, not validated alpha, not personalized advice; human executes",
+    "freshness_gate_max_age_days": 4
+  },
+  "candidates": [
+    {
+      "ticker": "600845.SH",
+      "name": "宝信软件",
+      "layer": "AI industrial software / IDC ops",
+      "role": "industrial software and data infrastructure",
+      "price_snapshot": {
+        "price": 17.83,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 33.56,
+        "pb": 4.76,
+        "market_cap": 51185986040.0,
+        "change_pct": -0.45,
+        "turnover_rate": 0.67,
+        "alpha_score": 46.2,
+        "factors": {
+          "value": 51.7,
+          "quality": 50.0,
+          "momentum": 24.1,
+          "size": 15.0,
+          "low_vol": 91.7
+        }
+      },
+      "thesis_points": [
+        "宝信 is a lower-valuation AI-adjacent infrastructure candidate: software/data-center operations rather than headline chips.",
+        "Its role is less explosive but potentially more valuation-disciplined, which is exactly what the current AI-semi pool lacks.",
+        "This is one of the better candidates for deeper work if the goal is good thesis plus good price, not theme purity."
+      ],
+      "catalysts": [
+        "IDC/software revenue mix",
+        "Baowu digitalization demand",
+        "cash-flow and margin trend"
+      ],
+      "risks": [
+        "AI linkage too indirect",
+        "steel-cycle parent exposure",
+        "low growth multiple trap"
+      ],
+      "valuation": {
+        "bear": [
+          13.91,
+          16.05
+        ],
+        "research_target": [
+          20.5,
+          25.85
+        ],
+        "reward_to_risk_at_snapshot": 1.88,
+        "starter_review_price_2to1": 17.71,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 17.71,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "low",
+      "evidence_status": "committed market snapshot; needs deep thesis",
+      "quant_research_score": 65.6,
+      "stance": "WATCH_ONLY_PENDING_DEEP_THESIS"
+    },
+    {
+      "ticker": "688019.SH",
+      "name": "安集科技",
+      "layer": "AI semiconductor materials",
+      "role": "CMP slurry / materials localization",
+      "price_snapshot": {
+        "price": 228.5,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 62.58,
+        "pb": 11.55,
+        "market_cap": 51982085378.0,
+        "change_pct": -0.85,
+        "turnover_rate": 5.19,
+        "alpha_score": 30.3,
+        "factors": {
+          "value": 35.6,
+          "quality": 50.0,
+          "momentum": 20.8,
+          "size": 14.8,
+          "low_vol": 16.4
+        }
+      },
+      "thesis_points": [
+        "安集 sits in a materials layer where localization and process qualification can create sticky revenue.",
+        "Valuation is less extreme than many AI-semiconductor names, but the quick screen flagged margin pressure in polishing liquid.",
+        "It is a candidate for deeper work because it may offer a better thesis/price balance than headline equipment names."
+      ],
+      "catalysts": [
+        "polishing liquid margin trend",
+        "customer qualification progress",
+        "new material revenue mix"
+      ],
+      "risks": [
+        "margin pressure persists",
+        "localization already priced",
+        "customer concentration"
+      ],
+      "valuation": {
+        "bear": [
+          159.95,
+          187.37
+        ],
+        "research_target": [
+          251.35,
+          308.48
+        ],
+        "reward_to_risk_at_snapshot": 0.94,
+        "starter_review_price_2to1": 209.08,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 209.08,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "medium",
+      "evidence_status": "committed market snapshot; needs deep thesis",
+      "quant_research_score": 56.2,
+      "stance": "WATCH_ONLY_PENDING_DEEP_THESIS"
+    },
+    {
+      "ticker": "000988.SZ",
+      "name": "华工科技",
+      "layer": "AI optical / industrial laser",
+      "role": "optical-device and laser equipment supplier",
+      "price_snapshot": {
+        "price": 152.35,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 59.98,
+        "pb": 13.39,
+        "market_cap": 153188337411.0,
+        "change_pct": 1.4,
+        "turnover_rate": 4.68,
+        "alpha_score": 45.8,
+        "factors": {
+          "value": 35.4,
+          "quality": 50.0,
+          "momentum": 54.7,
+          "size": 7.8,
+          "low_vol": 82.1
+        }
+      },
+      "thesis_points": [
+        "华工 is a less extreme optical-chain exposure than pure optical-module winners, with a broader laser/equipment base.",
+        "Current valuation is materially less demanding than the most crowded optical names while still linked to AI interconnect spend.",
+        "The key variant is whether optical-device exposure can offset cyclicality in legacy laser/equipment businesses."
+      ],
+      "catalysts": [
+        "AI optical component demand",
+        "laser/equipment margin trend",
+        "semiannual segment disclosure"
+      ],
+      "risks": [
+        "legacy business drag",
+        "AI exposure overstated vs optical-module peers",
+        "margin dilution from mix"
+      ],
+      "valuation": {
+        "bear": [
+          106.64,
+          124.93
+        ],
+        "research_target": [
+          167.59,
+          205.67
+        ],
+        "reward_to_risk_at_snapshot": 0.94,
+        "starter_review_price_2to1": 139.4,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 139.4,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "medium",
+      "evidence_status": "committed market snapshot; needs E1 segment check",
+      "quant_research_score": 55.4,
+      "stance": "WATCH_ONLY_PENDING_DEEP_THESIS"
+    },
+    {
+      "ticker": "002335.SZ",
+      "name": "科华数据",
+      "layer": "AI data-center power",
+      "role": "UPS / power infrastructure for data centers",
+      "price_snapshot": {
+        "price": 36.13,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 86.53,
+        "pb": 4.33,
+        "market_cap": 27001768471.0,
+        "change_pct": 2.15,
+        "turnover_rate": 3.34,
+        "alpha_score": 52.0,
+        "factors": {
+          "value": 43.0,
+          "quality": 50.0,
+          "momentum": 70.6,
+          "size": 32.4,
+          "low_vol": 64.9
+        }
+      },
+      "thesis_points": [
+        "科华 is an AI-adjacent power-infrastructure candidate, a different bottleneck from chips and optical modules.",
+        "If data-center capex shifts attention to power reliability and backup systems, this layer can benefit with less semiconductor crowding.",
+        "The thesis needs proof of AI/data-center revenue mix; otherwise it is just a generic power-equipment story."
+      ],
+      "catalysts": [
+        "data-center power order disclosure",
+        "margin by power segment",
+        "new IDC/customer wins"
+      ],
+      "risks": [
+        "AI link unproven",
+        "competition in UPS/power systems",
+        "working-capital stress"
+      ],
+      "valuation": {
+        "bear": [
+          25.29,
+          30.71
+        ],
+        "research_target": [
+          40.47,
+          49.86
+        ],
+        "reward_to_risk_at_snapshot": 1.11,
+        "starter_review_price_2to1": 33.72,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 33.72,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "medium",
+      "evidence_status": "committed market snapshot; needs E1 mix proof",
+      "quant_research_score": 52.1,
+      "stance": "WATCH_ONLY_PENDING_DEEP_THESIS"
+    },
+    {
+      "ticker": "688012.SH",
+      "name": "中微公司",
+      "layer": "AI semiconductor equipment",
+      "role": "etch/MOCVD equipment platform",
+      "price_snapshot": {
+        "price": 310.3,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 78.12,
+        "pb": 12.0,
+        "market_cap": 290742717866.0,
+        "change_pct": 2.37,
+        "turnover_rate": 3.47,
+        "alpha_score": 40.4,
+        "factors": {
+          "value": 33.3,
+          "quality": 50.0,
+          "momentum": 74.5,
+          "size": 6.6,
+          "low_vol": 24.5
+        }
+      },
+      "thesis_points": [
+        "中微 is one of the highest-quality semiconductor equipment platforms, but quality is widely recognized.",
+        "The thesis requires an information edge: either an underappreciated product line or a segment margin surprise.",
+        "Without that edge it is a benchmark-quality WATCH, useful for comparing equipment names rather than a standalone starter."
+      ],
+      "catalysts": [
+        "new tool acceptance",
+        "etch/MOCVD order growth",
+        "institutional crowding change"
+      ],
+      "risks": [
+        "no defensible variant",
+        "already crowded by institutions",
+        "multiple compression"
+      ],
+      "valuation": {
+        "bear": [
+          186.18,
+          232.73
+        ],
+        "research_target": [
+          316.51,
+          378.57
+        ],
+        "reward_to_risk_at_snapshot": 0.37,
+        "starter_review_price_2to1": 255.48,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 255.48,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "high",
+      "evidence_status": "committed market snapshot; quick-screen evidence only",
+      "quant_research_score": 50.4,
+      "stance": "WATCH_ONLY_PENDING_DEEP_THESIS"
+    },
+    {
+      "ticker": "002916.SZ",
+      "name": "深南电路",
+      "layer": "AI PCB / substrate",
+      "role": "high-speed PCB for servers/networking",
+      "price_snapshot": {
+        "price": 383.99,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 76.91,
+        "pb": 15.89,
+        "market_cap": 261561160814.0,
+        "change_pct": 2.08,
+        "turnover_rate": 1.34,
+        "alpha_score": 41.9,
+        "factors": {
+          "value": 32.1,
+          "quality": 50.0,
+          "momentum": 69.4,
+          "size": 6.7,
+          "low_vol": 43.0
+        }
+      },
+      "thesis_points": [
+        "深南 is a high-quality PCB name exposed to AI servers and high-speed networking, with less narrative heat than optical pure plays.",
+        "The investable question is whether AI PCB mix can offset cyclic telecom/consumer pockets at a reasonable multiple.",
+        "It is a useful beta-pack candidate because it broadens the AI stack beyond semicap and optical."
+      ],
+      "catalysts": [
+        "AI server PCB mix",
+        "gross margin by segment",
+        "networking/customer capex trend"
+      ],
+      "risks": [
+        "AI mix not separately disclosed",
+        "valuation already anticipates recovery",
+        "telecom/consumer cyclic drag"
+      ],
+      "valuation": {
+        "bear": [
+          261.11,
+          314.87
+        ],
+        "research_target": [
+          414.71,
+          506.87
+        ],
+        "reward_to_risk_at_snapshot": 0.8,
+        "starter_review_price_2to1": 345.59,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 345.59,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "medium",
+      "evidence_status": "committed market snapshot; needs E1 mix proof",
+      "quant_research_score": 49.6,
+      "stance": "WATCH_ONLY_PENDING_DEEP_THESIS"
+    },
+    {
+      "ticker": "300054.SZ",
+      "name": "鼎龙股份",
+      "layer": "AI advanced materials",
+      "role": "CMP pad / HBM-related materials",
+      "price_snapshot": {
+        "price": 75.48,
+        "date": "20260611",
+        "source": "public/data/ohlc_300054_SZ.json",
+        "age_days": 3,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 76.52,
+        "pb": 14.31,
+        "market_cap": 76809831387.0,
+        "change_pct": 6.8,
+        "turnover_rate": 9.98,
+        "alpha_score": 42.8,
+        "factors": {
+          "value": 32.6,
+          "quality": 50.0,
+          "momentum": 96.2,
+          "size": 10.7,
+          "low_vol": 9.1
+        }
+      },
+      "thesis_points": [
+        "鼎龙 has one of the strongest registered evidence packs: CMP pad revenue and gross margin already print in E1 data.",
+        "The issue is price: after the run-up, current R/R is weak despite strong fundamentals.",
+        "It remains an important forward-validation name because upcoming forecasts can test whether E1 growth is durable."
+      ],
+      "catalysts": [
+        "创业板半年度预告",
+        "CMP pad gross margin",
+        "new-material revenue mix"
+      ],
+      "risks": [
+        "current price paid for FY26 consensus",
+        "margin mean reversion",
+        "theme crowding"
+      ],
+      "valuation": {
+        "bear": [
+          41.51,
+          52.84
+        ],
+        "research_target": [
+          71.71,
+          86.8
+        ],
+        "reward_to_risk_at_snapshot": 0.13,
+        "starter_review_price_2to1": 57.87,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 57.87,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "high",
+      "evidence_status": "registered deep thesis + committed data",
+      "quant_research_score": 49.3,
+      "stance": "WATCH_ONLY_REGISTERED"
+    },
+    {
+      "ticker": "688008.SH",
+      "name": "澜起科技",
+      "layer": "AI memory/interconnect",
+      "role": "DDR5/MRCD/Retimer interface chip",
+      "price_snapshot": {
+        "price": 229.28,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 82.67,
+        "pb": 13.44,
+        "market_cap": 280226020815.0,
+        "change_pct": 0.25,
+        "turnover_rate": 4.22,
+        "alpha_score": 31.3,
+        "factors": {
+          "value": 32.1,
+          "quality": 50.0,
+          "momentum": 31.7,
+          "size": 6.7,
+          "low_vol": 22.7
+        }
+      },
+      "thesis_points": [
+        "澜起 has one of the cleanest AI-server second-curve disclosures: new products increased from 11.9% to 19% of interconnect revenue.",
+        "The Retimer/MRCD mechanism is real, but FY26 upside is already near bull-case pricing at the committed snapshot.",
+        "The thesis is high quality but presently price-gated: it remains a WATCH until the entry math improves or H1 print raises the band."
+      ],
+      "catalysts": [
+        "2026 H1 product-mix print",
+        "Retimer/MRCD revenue share",
+        "gross margin resilience"
+      ],
+      "risks": [
+        "Q1 profit boosted by non-operating gain",
+        "sell-side FY26 revenue too aggressive",
+        "price remains above base/bull risk-adjusted band"
+      ],
+      "valuation": {
+        "bear": [
+          96.3,
+          114.64
+        ],
+        "research_target": [
+          224.69,
+          259.09
+        ],
+        "reward_to_risk_at_snapshot": 0.1,
+        "starter_review_price_2to1": 150.94,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 150.94,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "high",
+      "evidence_status": "full deep thesis registered; committed price snapshot",
+      "quant_research_score": 48.7,
+      "stance": "WATCH_ONLY_REGISTERED"
+    },
+    {
+      "ticker": "600584.SH",
+      "name": "长电科技",
+      "layer": "AI advanced packaging",
+      "role": "OSAT / 2.5D packaging exposure",
+      "price_snapshot": {
+        "price": 69.35,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 106.88,
+        "pb": 4.31,
+        "market_cap": 124095900430.0,
+        "change_pct": -3.61,
+        "turnover_rate": 8.25,
+        "alpha_score": 28.2,
+        "factors": {
+          "value": 41.3,
+          "quality": 50.0,
+          "momentum": 10.4,
+          "size": 8.4,
+          "low_vol": 13.8
+        }
+      },
+      "thesis_points": [
+        "长电 is the listed OSAT proxy for advanced packaging, but key bottleneck economics may sit in subsidiaries or unlisted entities.",
+        "The thesis is not 'AI packaging good'; it is whether public shareholders capture the 2.5D/CoWoS-style value chain.",
+        "It deserves watch status because the role is relevant but attribution is muddy."
+      ],
+      "catalysts": [
+        "advanced packaging capex/revenue disclosure",
+        "subsidiary economics",
+        "H1 gross margin"
+      ],
+      "risks": [
+        "value captured outside listed parent",
+        "cycle downturn in legacy packaging",
+        "sell-side target disagreement"
+      ],
+      "valuation": {
+        "bear": [
+          41.61,
+          54.09
+        ],
+        "research_target": [
+          69.35,
+          86.69
+        ],
+        "reward_to_risk_at_snapshot": 0.4,
+        "starter_review_price_2to1": 57.91,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 57.91,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "medium",
+      "evidence_status": "committed market snapshot; source appendix needed",
+      "quant_research_score": 46.4,
+      "stance": "WATCH_ONLY_PENDING_DEEP_THESIS"
+    },
+    {
+      "ticker": "688120.SH",
+      "name": "华海清科",
+      "layer": "AI semiconductor equipment",
+      "role": "CMP equipment / advanced packaging supply chain",
+      "price_snapshot": {
+        "price": 186.74,
+        "date": "20260611",
+        "source": "public/data/ohlc_688120_SH.json",
+        "age_days": 3,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 93.82,
+        "pb": 12.24,
+        "market_cap": 92811559425.0,
+        "change_pct": 0.46,
+        "turnover_rate": 3.16,
+        "alpha_score": 31.4,
+        "factors": {
+          "value": 31.4,
+          "quality": 50.0,
+          "momentum": 35.2,
+          "size": 9.7,
+          "low_vol": 17.2
+        }
+      },
+      "thesis_points": [
+        "华海 has direct equipment scarcity exposure and a registered thesis, but the post-scan price rally damaged R/R.",
+        "The variant is whether process equipment demand can beat conservative H1 assumptions without requiring heroic multiples.",
+        "It stays on the forward list because the evidence quality is strong; entry requires price discipline or a higher E1 band."
+      ],
+      "catalysts": [
+        "H1 order/revenue conversion",
+        "CMP equipment gross margin",
+        "advanced packaging customer validation"
+      ],
+      "risks": [
+        "rally already paid for thesis",
+        "order digestion lag",
+        "domestic equipment basket de-rating"
+      ],
+      "valuation": {
+        "bear": [
+          102.71,
+          126.98
+        ],
+        "research_target": [
+          183.01,
+          220.35
+        ],
+        "reward_to_risk_at_snapshot": 0.21,
+        "starter_review_price_2to1": 143.79,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 143.79,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "high",
+      "evidence_status": "registered deep thesis + committed data",
+      "quant_research_score": 45.9,
+      "stance": "WATCH_ONLY_REGISTERED"
+    },
+    {
+      "ticker": "688072.SH",
+      "name": "拓荆科技",
+      "layer": "AI semiconductor equipment",
+      "role": "thin-film deposition / hybrid bonding option",
+      "price_snapshot": {
+        "price": 664.42,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 82.29,
+        "pb": 26.17,
+        "market_cap": 187826891033.0,
+        "change_pct": 1.4,
+        "turnover_rate": 4.2,
+        "alpha_score": 33.5,
+        "factors": {
+          "value": 30.3,
+          "quality": 50.0,
+          "momentum": 54.7,
+          "size": 7.3,
+          "low_vol": 9.0
+        }
+      },
+      "thesis_points": [
+        "拓荆 has genuine semi-equipment bottleneck exposure, but the deep thesis showed Q1 reported profit was dominated by investment gains.",
+        "The second curve in hybrid bonding is strategically important but still an option, not current earnings.",
+        "At the committed price the stock is above the bull-case band; it is a high-quality WATCH, not a starter."
+      ],
+      "catalysts": [
+        "2026 H1 clean profit/cash flow",
+        "contract liabilities conversion",
+        "hybrid bonding shipment validation"
+      ],
+      "risks": [
+        "reported profit quality",
+        "order-to-revenue delay",
+        "valuation above bull case"
+      ],
+      "valuation": {
+        "bear": [
+          232.55,
+          279.06
+        ],
+        "research_target": [
+          597.98,
+          684.35
+        ],
+        "reward_to_risk_at_snapshot": -0.06,
+        "starter_review_price_2to1": 384.26,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 384.26,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "high",
+      "evidence_status": "full deep thesis registered; committed price snapshot",
+      "quant_research_score": 43.8,
+      "stance": "WATCH_ONLY_REGISTERED"
+    },
+    {
+      "ticker": "300308.SZ",
+      "name": "中际旭创",
+      "layer": "AI optical interconnect",
+      "role": "800G/1.6T optical module leader",
+      "price_snapshot": {
+        "price": 1124.0,
+        "date": "20260611",
+        "source": "public/data/ohlc_300308_SZ.json",
+        "age_days": 3,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 56.02,
+        "pb": 37.09,
+        "market_cap": 1285040267439.0,
+        "change_pct": 2.51,
+        "turnover_rate": 2.45,
+        "alpha_score": 42.7,
+        "factors": {
+          "value": 33.6,
+          "quality": 50.0,
+          "momentum": 76.5,
+          "size": 5.9,
+          "low_vol": 37.5
+        }
+      },
+      "thesis_points": [
+        "AI cluster bottleneck shifts from compute-only to high-speed interconnect; optical modules remain one of the most direct data-center capex pass-through layers.",
+        "中际 has scale, customer qualification, and cycle leverage, but the stock is already treated as a consensus AI winner.",
+        "The investable question is no longer 'is it a good AI asset' but whether 1.6T ramp and margin can exceed crowded expectations."
+      ],
+      "catalysts": [
+        "NVDA/ASIC rack shipment mix",
+        "1.6T order/ramp disclosures",
+        "quarterly GM and overseas customer concentration"
+      ],
+      "risks": [
+        "hyperscaler capex pause",
+        "single-product/single-customer crowding",
+        "valuation compression if 1.6T becomes consensus not surprise"
+      ],
+      "valuation": {
+        "bear": [
+          618.2,
+          786.8
+        ],
+        "research_target": [
+          1067.8,
+          1292.6
+        ],
+        "reward_to_risk_at_snapshot": 0.13,
+        "starter_review_price_2to1": 861.73,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 861.73,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "extreme",
+      "evidence_status": "existing watchlist + committed market snapshot",
+      "quant_research_score": 41.8,
+      "stance": "NOT_ADVANCED_PRICE_OR_CROWDING"
+    },
+    {
+      "ticker": "603083.SH",
+      "name": "剑桥科技",
+      "layer": "AI optical interconnect",
+      "role": "optical transceiver/high-speed module beta",
+      "price_snapshot": {
+        "price": 185.76,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 144.53,
+        "pb": 9.16,
+        "market_cap": 68406189288.0,
+        "change_pct": 8.58,
+        "turnover_rate": 12.07,
+        "alpha_score": 45.1,
+        "factors": {
+          "value": 29.8,
+          "quality": 50.0,
+          "momentum": 97.5,
+          "size": 11.5,
+          "low_vol": 26.3
+        }
+      },
+      "thesis_points": [
+        "剑桥 is a high-beta optical-chain candidate with strong price momentum, useful as a sentiment and execution stress test.",
+        "The investable edge is weak unless fresh evidence proves real 800G/1.6T share gain rather than theme beta.",
+        "Its main value for the beta list is to show the model can separate momentum from evidence quality."
+      ],
+      "catalysts": [
+        "customer/order evidence",
+        "gross margin after ramp",
+        "AI optical news flow"
+      ],
+      "risks": [
+        "momentum reversal",
+        "theme-beta without issuer confirmation",
+        "PE multiple compression"
+      ],
+      "valuation": {
+        "bear": [
+          83.59,
+          115.17
+        ],
+        "research_target": [
+          157.9,
+          204.34
+        ],
+        "reward_to_risk_at_snapshot": -0.05,
+        "starter_review_price_2to1": 126.63,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 126.63,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "extreme",
+      "evidence_status": "committed market snapshot; high-risk theme beta",
+      "quant_research_score": 33.8,
+      "stance": "NOT_ADVANCED_PRICE_OR_CROWDING"
+    },
+    {
+      "ticker": "002281.SZ",
+      "name": "光迅科技",
+      "layer": "AI optical components",
+      "role": "optical-device supplier",
+      "price_snapshot": {
+        "price": 204.74,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 172.09,
+        "pb": 11.95,
+        "market_cap": 165158793464.0,
+        "change_pct": -0.32,
+        "turnover_rate": 4.41,
+        "alpha_score": 33.9,
+        "factors": {
+          "value": 27.2,
+          "quality": 50.0,
+          "momentum": 25.2,
+          "size": 7.7,
+          "low_vol": 56.4
+        }
+      },
+      "thesis_points": [
+        "光迅 offers upstream optical-device exposure, which could benefit if bottleneck rents move from module assembly to devices.",
+        "The role is strategically relevant, but current PE is high and the market already recognizes optical upside.",
+        "The thesis needs proof that device-level scarcity, not just module beta, is accruing to the company."
+      ],
+      "catalysts": [
+        "device ASP/margin disclosure",
+        "AI optical device capacity announcements",
+        "semiannual order commentary"
+      ],
+      "risks": [
+        "valuation already prices scarcity",
+        "margin fails to expand",
+        "lower bargaining power than module primes"
+      ],
+      "valuation": {
+        "bear": [
+          112.61,
+          143.32
+        ],
+        "research_target": [
+          194.5,
+          245.69
+        ],
+        "reward_to_risk_at_snapshot": 0.2,
+        "starter_review_price_2to1": 158.67,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 158.67,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "high",
+      "evidence_status": "committed market snapshot; source appendix pending",
+      "quant_research_score": 25.7,
+      "stance": "WATCH_ONLY_PENDING_DEEP_THESIS"
+    },
+    {
+      "ticker": "688041.SH",
+      "name": "海光信息",
+      "layer": "AI compute silicon",
+      "role": "domestic CPU/GPU/data-center processor exposure",
+      "price_snapshot": {
+        "price": 289.53,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 244.86,
+        "pb": 28.64,
+        "market_cap": 672965607487.0,
+        "change_pct": -0.11,
+        "turnover_rate": 1.63,
+        "alpha_score": 30.3,
+        "factors": {
+          "value": 21.4,
+          "quality": 50.0,
+          "momentum": 27.4,
+          "size": 6.1,
+          "low_vol": 40.6
+        }
+      },
+      "thesis_points": [
+        "海光 is a core domestic compute-sovereignty exposure, relevant to AI infrastructure even if its bottleneck status is less direct than interconnect/equipment.",
+        "The market prices strategic scarcity heavily; PE and market cap imply a large future-profit bridge already.",
+        "It belongs in the forward pack as a high-quality strategic watch, not as an entry candidate without a valuation reset."
+      ],
+      "catalysts": [
+        "server CPU/DCU shipment evidence",
+        "国产算力政策 orders",
+        "gross margin and inventory trend"
+      ],
+      "risks": [
+        "policy beta already capitalized",
+        "sanction/supply-chain limits",
+        "valuation de-rating"
+      ],
+      "valuation": {
+        "bear": [
+          144.76,
+          191.09
+        ],
+        "research_target": [
+          275.05,
+          347.44
+        ],
+        "reward_to_risk_at_snapshot": 0.18,
+        "starter_review_price_2to1": 215.7,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 215.7,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "high",
+      "evidence_status": "committed market snapshot; needs E1 financial bridge",
+      "quant_research_score": 19.0,
+      "stance": "WATCH_ONLY_PENDING_DEEP_THESIS"
+    }
+  ],
+  "excluded_after_screen": [
+    {
+      "ticker": "688498.SH",
+      "name": "源杰科技",
+      "layer": "AI optical upstream",
+      "role": "laser/optical chip exposure",
+      "price_snapshot": {
+        "price": 1461.58,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 253.52,
+        "pb": 73.83,
+        "market_cap": 181967261016.0,
+        "change_pct": 0.66,
+        "turnover_rate": 5.44,
+        "alpha_score": 29.8,
+        "factors": {
+          "value": 21.0,
+          "quality": 50.0,
+          "momentum": 38.7,
+          "size": 7.5,
+          "low_vol": 21.4
+        }
+      },
+      "thesis_points": [
+        "源杰 is closer to the upstream optical scarcity story, but its valuation embeds a large scarcity premium.",
+        "If AI optical bottlenecks migrate upstream to lasers/devices, this layer has theoretical operating leverage.",
+        "The hurdle is proving revenue/margin capture with primary disclosures rather than riding the optical basket."
+      ],
+      "catalysts": [
+        "laser/device capacity proof",
+        "customer qualification disclosure",
+        "quarterly margin acceleration"
+      ],
+      "risks": [
+        "very high PE/PB",
+        "small-cap liquidity/capacity risk",
+        "scarcity premium reverses"
+      ],
+      "valuation": {
+        "bear": [
+          657.71,
+          906.18
+        ],
+        "research_target": [
+          1315.42,
+          1753.9
+        ],
+        "reward_to_risk_at_snapshot": 0.11,
+        "starter_review_price_2to1": 1032.85,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 1032.85,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "extreme",
+      "evidence_status": "committed market snapshot; needs deep E1 proof",
+      "quant_research_score": 8.5,
+      "stance": "NOT_ADVANCED_PRICE_OR_CROWDING"
+    },
+    {
+      "ticker": "688256.SH",
+      "name": "寒武纪",
+      "layer": "AI accelerator",
+      "role": "domestic AI chip pure play",
+      "price_snapshot": {
+        "price": 1231.47,
+        "date": "2026-06-12",
+        "source": "public/data/universe_a.json",
+        "age_days": 2,
+        "freshness_gate": "PASS"
+      },
+      "market": {
+        "pe": 190.91,
+        "pb": 63.22,
+        "market_cap": 773723942534.0,
+        "change_pct": 0.98,
+        "turnover_rate": 1.82,
+        "alpha_score": 35.2,
+        "factors": {
+          "value": 23.5,
+          "quality": 50.0,
+          "momentum": 45.4,
+          "size": 6.0,
+          "low_vol": 45.6
+        }
+      },
+      "thesis_points": [
+        "寒武纪 is the purest AI-chip beta in A shares, but purity is not the same as investability.",
+        "For the model, it is a crowding/discipline test: if the stock is non-bottleneck or too expensive, it should not advance just because the theme is hot.",
+        "It can remain in the pack as a NOT_ADVANCED reference unless primary evidence shows revenue quality catching up to valuation."
+      ],
+      "catalysts": [
+        "AI chip order conversion",
+        "customer concentration disclosure",
+        "profit quality and cash burn"
+      ],
+      "risks": [
+        "extreme crowding",
+        "valuation disconnected from realized earnings",
+        "policy/competition risk"
+      ],
+      "valuation": {
+        "bear": [
+          431.01,
+          677.31
+        ],
+        "research_target": [
+          1046.75,
+          1354.62
+        ],
+        "reward_to_risk_at_snapshot": -0.05,
+        "starter_review_price_2to1": 769.67,
+        "valuation_basis": "heuristic beta-pack band from current committed price; NOT calibrated, must be replaced by a deep earnings bridge before registration"
+      },
+      "suggested_entry_framework": {
+        "not_an_order": true,
+        "starter_review_trigger": 769.67,
+        "condition": "only after full deep thesis + fresh price reconciliation + no wrong_if; human executes"
+      },
+      "crowding": "extreme",
+      "evidence_status": "committed market snapshot; downgrade control",
+      "quant_research_score": 1.3,
+      "stance": "NOT_ADVANCED_PRICE_OR_CROWDING"
+    }
+  ]
+}

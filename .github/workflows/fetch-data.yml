@@ -267,6 +267,15 @@ jobs:
         continue-on-error: true          # non-critical; no-op until a checkpoint is due
         run: python scripts/sheet_checkpoints.py --check
 
+      # ── Step 2h4b: AI beta forward-validation candidate pack ─────────────
+      # PR-G: re-screens the current committed A-share universe snapshot for
+      # AI/AI-infrastructure forward-validation candidates. It carries a hard
+      # freshness gate and emits research states only (WATCH/NOT_ADVANCED);
+      # never a buy list, never auto-trade, never auto-size.
+      - name: Generate AI forward-validation candidate pack
+        continue-on-error: true          # non-critical; refuses stale prices internally
+        run: python scripts/deep_thesis_prepare.py --screen-ai --limit 15
+
       # ── Step 2h5: Factory progress aggregator (read-only over artifacts) ──
       # Refreshes public/data/factory_progress.json for the Factory tab —
       # ledger/scan/family-history state for real-time progress tracking.
@@ -401,6 +410,7 @@ jobs:
             public/data/daily_decision.json \
             public/data/model_portfolio.json \
             public/data/quant_strategy_run.json \
+            public/data/ai_forward_validation_candidates.json \
             public/data/decision_sheet_checkpoints.json \
             public/data/factory_progress.json \
             public/data/position_sizing.json \
