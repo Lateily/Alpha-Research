@@ -1,0 +1,342 @@
+{
+  "_meta": {
+    "layer": "Core Thesis Factory v1 — Single-Name Decision Sheet (单票决策书)",
+    "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md",
+    "generated_at": "2026-06-14T07:16:54.367769+00:00",
+    "sheet_version": "v1",
+    "disclaimer": "INTERNAL, UNVALIDATED research output of the model-recommendation pilot — not validated alpha, not external/personalized investment advice; sizing fields are SUGGESTIONS only; the human executes. Quality gate = human red-team (auto checks are the floor only)."
+  },
+  "identity": {
+    "ticker": "688072.SH",
+    "name": {
+      "zh": "拓荆科技",
+      "en": "Piotech"
+    },
+    "market": "A",
+    "sector_theme": {
+      "zh": "半导体设备 · 国产唯一 PECVD 量产 · 混合键合第二曲线(期权)",
+      "en": "Semiconductor equipment · sole domestic production-grade PECVD · hybrid-bonding second curve (an option)"
+    },
+    "as_of": "2026-06-14",
+    "ticker_one_context": {
+      "objective_horizon": "6-12 months (CTF deep-thesis upgrade #2 — the profit-quality test)",
+      "real_money_consideration": "WATCH_ONLY — no position at current price; pending the human red-team of record"
+    },
+    "provenance": {
+      "research_core_lineage": "CTF deep-thesis UPGRADE #2 — discovered via Serenity Scan #1 (docs/research/serenity/SCAN_1_AI_SEMIS.md, #68 merged), surfaced in the AI-semi batch screen (docs/research/decision_sheets/AI_SEMI_BATCH_2026-06-13.md, #76, blind 77.8), then upgraded to a full dual-view earnings-bridge deep thesis (docs/research/decision_sheets/688072_SH_DEEP_2026-06-14.md, #78 merged; Junyan five-axis red-team 91.8 PASS). Chosen as the profit-quality test: the headline +488% Q1 must be DISTINGUISHED from real operations. This core encodes that red-teamed deep thesis into the composer contract for forward-checkpoint registration (PR-E).",
+      "generation_note": "deep path per the CTF upgrade pipeline: 3 parallel deep agents pulled PRIMARY E1 disclosure (FY25 annual + 2026Q1 income statement / cash flow line-by-line) + order-conversion quality (合同负债 sequence, 发出商品, demo-tool acceptance cycle) + sell-side consensus/valuation anchors. The quick screen's valuation numbers were WRONG by ~40% (price stated 331-388, actual 645; mcap 1098亿 vs actual 1823亿) — the deep pass corrected them. Reference price = the committed universe_a 2026-06-12 snapshot 664.42 (the deep thesis used a web-fetched ¥645; the committed snapshot is the auditable input and yields the same — slightly more negative — WATCH conclusion).",
+      "factcheck_basis": "E1-pinned: FY25/Q1 absolutes (归母 / 扣非 / 公允价值变动 / 经营现金流 / 合同负债 / 发出商品) from 年报 + 季报 PDF (dfcfw/SSE); 产品营收拆分 (PECVD 51.42 / ALD 3.01 / 混合键合 1.36亿) from filing + media transcription; consensus 26E 16.67亿 / 27E 23.99亿 from 13家聚合; valuation/price from exchange feed + lixinger 历史分位 (E1/E2)"
+    }
+  },
+  "thesis": {
+    "variant_perception": {
+      "zh": "市场信:国产薄膜沉积设备龙头(PECVD 国产化率仅 ~18%,拓荆是唯一稳定量产)+ 在手订单 110亿(1.7× 收入)+ Q1 表观归母 +488%/扭亏 + 先进制程/混合键合双轮,给到动态 26E 109×、静态 197×(板块最高一档,与中微并列,远高于北方华创 56×/盛美 47×)。我们信(原始披露拆出的非共识):(1) Q1 表观 +488% 是金融资产浮盈撑的、不能年化——Q1 归母 5.71亿里 4.73亿是金融资产公允价值变动+处置(占净利 82%),扣非主业仅 1.02亿(扣非 EPS 0.36 vs 基本 2.03),经营现金流 -5.20亿;(2) 但必须诚实——FY25 全年利润质量是好的:扣非 7.23亿(78%)、经营现金流 +36.33亿(净利的 3.9 倍)、应收在营收 +59% 下绝对值反降,失真集中在 Q1 单季不是全年趋势更不是造假;(3) 订单确定性被高估——110亿是无构成披露的'约数'(口径可能含税→约 97亿),合同负债 25Q3 见顶 48.94亿后横盘 3 季(动能见顶),收入验收制 demo 机 15-24 月、发出商品 43.6亿压客户产线;(4) 第二曲线是期权不是兑现——混合键合 FY25 仅 1.36亿(2.1%),只有 W2W 真量产,HBM 相关 C2W/D2W 仍验证中。一句话:好公司、真需求,但价格已经把最乐观的情形和更多都买完了,而且 Q1 的'高增长'含金量极低。",
+      "en": "Market believes: the sole domestic production-grade thin-film-deposition (PECVD) leader (~18% domestic PECVD localization, Piotech the only stable producer) + 110亿 backlog (1.7x revenue) + a headline Q1 归母 +488%/turnaround + an advanced-node / hybrid-bonding dual engine, hence dynamic 26E 109x / static 197x (the sector's most expensive tier, tied with AMEC, far above NAURA 56x / ACM 47x). We believe (the non-consensus from primary disclosure): (1) the +488% headline is propped by financial-asset fair-value gains and is NOT annualizable — of Q1's 归母 5.71亿, 4.73亿 is fair-value change + disposal (82% of net profit), 扣非 operating profit is just 1.02亿 (扣非 EPS 0.36 vs basic 2.03), and OCF is −5.20亿; (2) but honestly — FY25's full-year profit quality is GOOD: 扣非 7.23亿 (78%), OCF +36.33亿 (3.9x net profit), receivables fell in absolute terms despite +59% revenue — the distortion is the single Q1 quarter, not the year, and certainly not fraud; (3) order certainty is overstated — the 110亿 is an undisclosed-composition 'round number' (possibly tax-inclusive → ~97亿), 合同负债 peaked at 48.94亿 in 25Q3 and has been FLAT for three quarters (momentum topped), revenue is acceptance-based with 15-24-month demo-tool cycles and 43.6亿 of goods-shipped sitting on customer lines; (4) the second curve is an OPTION not a delivery — hybrid bonding was only 1.36亿 (2.1%) in FY25, with only W2W in real volume while HBM-related C2W/D2W is still 'in qualification'. In one line: a good company with real demand, but the price has already bought the most optimistic case and more, and Q1's 'high growth' is extremely low-quality."
+    },
+    "mechanism": {
+      "zh": "需求侧极扎实:存储扩产(长存三期 2026H2 大规模量产、国产设备占比破 50%)+ 实体清单制度性锁定国产替代 + 拓荆 PECVD 稀缺(国产唯一量产)→ 在手订单/合同负债充足。但供给侧(拓荆自身兑现)的不确定性远高于需求侧:订单→收入是验收制长周期、毛利率受新品爬坡拖累(FY25 -6.9pp)、Q1 利润被投资浮盈污染。诚实锚:本论点不依赖'110亿订单'这个软数字,只依赖季报强制披露的扣非、毛利率、合同负债、经营现金流——这些能逐季证伪'高增长是不是真主业、订单是不是在兑现'。",
+      "en": "Demand side is rock-solid: storage expansion (YMTC phase-3 mass production in 2026H2, domestic-equipment share breaking 50%) + entity-list-locked domestic substitution + Piotech's PECVD scarcity (sole domestic producer) → ample backlog / contract liabilities. But the SUPPLY side (Piotech's own delivery) is far more uncertain than demand: order→revenue is a long acceptance-based cycle, GM is dragged by new-product ramp (FY25 −6.9pp), and Q1 profit is polluted by investment fair-value gains. Honesty anchor: this thesis depends on NO '110亿 backlog' soft number — only on the mandatory quarterly prints of 扣非, GM, 合同负债 and OCF, which falsify quarter-by-quarter whether the high growth is real operations and whether orders are converting."
+    },
+    "direction": "LONG",
+    "horizon": "6-12 months (E1 proof = the 扣非 / GM / 合同负债 / OCF prints at the 2026 H1 report ~2026-08-31; product-mix at the FY annual)",
+    "conviction": "WATCH_ONLY — franchise is real (sole domestic PECVD + entity-list-locked demand + a genuinely strong FY25 扣非/OCF), so it earns a full deep sheet + checkpoints (NOT NOT_ADVANCED). But at the committed reference price the R/R is NEGATIVE (≈−0.06) — price is at/above the bull scenario and above the only sell-side target (538). No position rationale. Add zone = ≤~383 (2:1 met) OR a fundamentals-driven re-band."
+  },
+  "evidence": {
+    "items": [
+      {
+        "claim": "26Q1 归母 5.71亿, 扣非 only 1.02亿 (18%); 非经常 4.68亿, of which financial-asset fair-value change + disposal = 4.73亿 (82% of net profit); OCF −5.20亿 (YoY −4858%); 扣非 EPS 0.36 vs basic 2.03 — the headline +488% is overwhelmingly a one-off, NOT operations",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "2026Q1 季报 p1-3 (stockmc.xueqiu.com/202604/688072_20260428_NA7R.pdf; 上交所 688072_20260428_NA7R.pdf)"
+      },
+      {
+        "claim": "FY25 full-year profit quality is GOOD (anti-over-bear): 归母 9.27亿, 扣非 7.23亿 (78%), 非经常 only 2.04亿, OCF +36.33亿 (3.9x net profit), receivables fell in absolute terms despite +59% revenue — the distortion is the single Q1 quarter, not the year",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "FY2025 年报 p11-14, p159 (pdf.dfcfw.com/pdf/H2_AN202604271821643869_1.pdf); caifuhao.eastmoney.com 2026-05-04 (扣非 > 归母增速 = full-year quality)"
+      },
+      {
+        "claim": "FY25 consolidated GM 34.95% (−6.9pp YoY: new-product qualification-phase component iteration cost + higher new-product mix); Q1 rebounded to 41.69% — but only one quarter, sustainability unproven",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "FY2025 年报 / 季报; 归因 caifuhao.eastmoney.com/news/20260428134840724713140"
+      },
+      {
+        "claim": "合同负债 peaked at 48.94亿 in 25Q3, then FLAT for three quarters (FY25末 48.52 / Q1末 48.77) = pre-receipt momentum has TOPPED; '110亿 backlog' has no disclosed composition (soft, possibly tax-inclusive → ~97亿, 1.49x); revenue is acceptance-based, demo tools 15-24 months, 发出商品 43.6亿 (56% of inventory) sitting on customer lines",
+        "tier": "E1",
+        "causal_tag": "INFERRED",
+        "citation_grade": "CROWDING_SIGNAL",
+        "source": "合同负债序列 (年报/季报资产负债表 + 爱建证券深度 pdf.dfcfw.com H3_AP202512171802431043); 订单口径 finance.sina 2026-04-28; 业绩说明会 2025-12-04 (在手订单'饱满'定性,无 110亿数, cls.cn/detail/2219648)"
+      },
+      {
+        "claim": "Hybrid bonding (the second curve) was only 1.36亿 in FY25 (2.1% of revenue); only W2W is in real volume with repeat orders, while HBM-related C2W/D2W is still 'in qualification' — the second curve is an OPTION, not a delivery",
+        "tier": "E1",
+        "causal_tag": "INFERRED",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "FY2025 年报 分产品 (PECVD 51.42 / ALD 3.01 / 混合键合 1.36亿, finance.sina 2026-04-28); 量产 vs 验证拆分 爱建证券深度"
+      },
+      {
+        "claim": "Price 645 (snapshot 664.42), mcap ~1823-1878亿, static PE 197×, dynamic 26E 109× (sector's most expensive tier vs NAURA 56× / ACM 47×); PE-TTM 111× ≈ 85th historical percentile; the ONLY sell-side target (中信建投 538) is BELOW the current price",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CROWDING_SIGNAL",
+        "source": "exchange feed + lixinger.com/equity/company/detail/sh/688072 (PE-TTM 111×, 分位 85%); 13家盈利预测 26E 16.67亿/27E 23.99亿 + 中信建投 538 (basic.10jqka.com.cn/688072/worth.html)"
+      },
+      {
+        "claim": "Industrial-capital persistent selling: 大基金 trimmed 2.99% in January, AMEC also trimmed; offset by a strong cash buffer (货币资金 50.91亿)",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CROWDING_SIGNAL",
+        "source": "大基金减持 2.99% (cls.cn/detail/2266796); 权益分派 10派3.30 无转增 (cnstock 2026-05-29)"
+      }
+    ],
+    "rule_x_check": {
+      "pass": true,
+      "why": "The load-bearing legs (real operations vs headline, order conversion, GM repair sustainability) are ALL re-confirmable by mandatory quarterly disclosure — 扣非, GM, 合同负债 and OCF all print at the H1 report. The thesis deliberately does NOT rely on the soft '110亿 backlog' number (downgraded to a CROWDING_SIGNAL). Satisfies the 2026-05-17 Rule-X boundary: same forward mechanism, issuer-disclosure-confirmable."
+    },
+    "contrarian_view": "BULLS say: PECVD localization is only ~18% and Piotech is the sole production-grade domestic maker, storage capex (YMTC phase-3, domestic-equipment share breaking 50%) plus entity-list lock-in make demand structurally certain, the 110亿 backlog is 1.7x revenue, hybrid bonding opens an HBM/advanced-packaging second curve, and FY25 OCF +36亿 proves the cash quality — so 197x 'discounts 2027'. BEARS (our lean at price): (1) Q1's +488% is 82% one-off fair-value gain, 扣非 only 1.02亿, OCF −5.2亿 — the headline is not operations; (2) 合同负债 topped in 25Q3 and is flat for three quarters while demo tools take 15-24 months and 43.6亿 of goods-shipped sit unaccepted — conversion cadence is NOT company-controlled; (3) GM fell 6.9pp in FY25 and the Q1 41.69% is a single quarter; (4) the second curve is 2.1% of revenue; (5) 197x static / 109x dynamic is the sector's most expensive tier and ABOVE the only sell-side target — any growth miss or quality reveal has the largest downside in the peer group. Honest counter-weight (not under-stated): demand certainty is strong and the FY25 cash quality is real — the problem is PRICE and Q1 quality, not the company."
+  },
+  "catalyst_calendar": [
+    {
+      "event": {
+        "zh": "2026 半年报(扣非 / 毛利率 / 合同负债 / 经营现金流 = E1 证明事件)",
+        "en": "2026 H1 report (non-GAAP / GM / contract liabilities / OCF = the E1 proof event)"
+      },
+      "date": "2026-08-31 (statutory deadline)",
+      "watch": "扣非归母同比(剔投资浮盈)、综合毛利率(连续两季守 38%+?)、合同负债(是否跌破 48亿/重回增长)、经营现金流(半年累计是否转正)",
+      "expected": "扣非 ≥+40% & GM ≥38% & 合同负债 ≥48亿 & OCF positive supports the conversion narrative; the inverse fires wrong_if"
+    },
+    {
+      "event": {
+        "zh": "FY2026 年报(分产品:混合键合 C2W/D2W 是否量产)",
+        "en": "FY2026 annual report (by-product: hybrid-bonding C2W/D2W volume)"
+      },
+      "date": "2027-04 (statutory by 2027-04-30)",
+      "watch": "混合键合占营收是否突破 5%、C2W/D2W 是否脱离'验证中'",
+      "expected": "second-curve option resolves: >5% and out of qualification = delivery; still <5% = the option lapses (wrong_if)"
+    },
+    {
+      "event": {
+        "zh": "产业资本减持新闻流(大基金/中微,供给侧)",
+        "en": "Industrial-capital sell-down newsflow (大基金/AMEC, supply side)"
+      },
+      "date": "rolling 2026",
+      "watch": "进一步减持公告 / 解禁日历",
+      "expected": "continued trimming = supply overhang — CROWDING-flagged, an execution-timing risk not a thesis break"
+    }
+  ],
+  "wrong_if": {
+    "triggers": [
+      {
+        "metric": "合同负债 (contract liabilities — the order-conversion leading signal)",
+        "threshold": "跌破 48亿 (已横盘 3 季: 25Q3 48.94 → FY25末 48.52 → Q1末 48.77)",
+        "source": "季报资产负债表",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "综合毛利率 (consolidated gross margin)",
+        "threshold": "连续两季 < 38% (Q1 41.69% 是否可持续;FY25 -6.9pp 未真修复)",
+        "source": "季报",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "扣非归母同比 (non-GAAP net profit YoY, ex investment gains — the real-operations read)",
+        "threshold": "< +40%",
+        "source": "季报 扣非口径",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "经营现金流 (operating cash flow, H1 cumulative)",
+        "threshold": "仍为负 (Q1 -5.2亿 是季节性还是回款恶化)",
+        "source": "季报现金流量表",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "混合键合 (hybrid bonding — the second-curve option)",
+        "threshold": "C2W/D2W 长期停'验证'、占营收不破 5%",
+        "source": "年报分产品 + 量产订单公告",
+        "check_date": "2027-04-30"
+      }
+    ],
+    "note": {
+      "zh": "前四条全部绑季报强制披露科目(扣非/毛利/合同负债/经营现金流),公司无法不披露,2026 半年报一次性可读;第五条绑年报分产品。任一触发即复核论点;触发后未更新决策书记为诚实性失败。合同负债是订单兑现的领先信号,横盘 3 季已是黄灯。",
+      "en": "The first four bind to MANDATORY quarterly line items (非-GAAP / GM / contract liabilities / OCF) — all readable at the 2026 H1 report; the fifth binds to the annual by-product disclosure. Any trigger forces a thesis review; an un-updated sheet after a trigger is an honesty failure. Contract liabilities are the leading order-conversion signal — three flat quarters is already a yellow light."
+    }
+  },
+  "valuation_target_range": {
+    "calibrated": false,
+    "basis": "3-scenario DUAL-VIEW earnings bridge (表观 reported vs 清洁扣非 clean operating). The market prices the 表观归母 multiple; the bridge shows both to expose the quality gap. 营收 → GM → 毛利 → −opex → +非经营(补助/投资) → 表观归母 → EPS × forward PE → target ‖ 清洁扣非. Shares = 2.827亿 (E1; price 664.42 × 2.827亿 ≈ 1878亿 = universe_a mcap). Every multiple [unvalidated intuition] with anchors (PE-TTM 历史带 43-141×, 当前 111× ≈ 85 分位; 可比 北方华创 56× / 盛美 47× / 中微 93×).",
+    "bear": {
+      "low": 230,
+      "high": 280,
+      "assumptions": [
+        "订单兑现慢(demo 机 lag + 合同负债横盘),毛利修复停在 36%,新品成本失控",
+        "营收 78(+20%),表观归母 12.0(+29%),EPS 4.23 ‖ 清洁扣非 ~10.5亿",
+        "市场去线性外推 + 利润质量被审视,PE 压向北方华创式 50-55× [unvalidated intuition]",
+        "math: EPS 4.23 × 50-55 ≈ ¥230-280"
+      ]
+    },
+    "base": {
+      "low": 380,
+      "high": 440,
+      "assumptions": [
+        "共识营收 85(+30%),毛利修复到 38%(PF-200T 良率 + 规模),投资浮盈正常化",
+        "表观归母 16.9(共识),EPS 5.98 ‖ 清洁扣非 ~15.0亿",
+        "PE 65-72× [unvalidated intuition; 增速确认但无加速]",
+        "math: EPS 5.98 × 65-72 ≈ ¥380-440"
+      ]
+    },
+    "bull": {
+      "low": 600,
+      "high": 680,
+      "assumptions": [
+        "订单快速兑现 + 混合键合 C2W 放量 + 毛利 40% + 投资浮盈延续",
+        "营收 92(+41%),表观归母 22.6(+144%),EPS 8.00 ‖ 清洁扣非 ~19.8亿",
+        "市场用 27E(共识 24亿)贴现回来持 85-92× [unvalidated intuition]",
+        "math: EPS 8.00 × 85-92 ≈ ¥600-680"
+      ]
+    },
+    "sensitivity_note": "熊/基/牛 mid ≈ 255 / 410 / 640; the dual-view is the point — the market pays 109x on 表观 but 表观 carries volatile investment gains + government grants; the 清洁扣非 column is the real-operations anchor. The thesis-loaded variables are GM repair sustainability and 合同负债 conversion; ±5x of forward PE moves each band ~7-9%; resolves at the H1 print"
+  },
+  "execution_plan": {
+    "summary": {
+      "zh": "WATCH_ONLY,当前价不入场。按committed快照 664.42(universe_a 2026-06-12),R/R ≈ -0.06(牛 mid 640 / 熊 mid 255)——价格已在牛市上沿之上,R/R 为负,无任何仓位理由。这比澜起(0.11)更极端。franchise 真实(国产唯一 PECVD + 实体清单锁定需求 + FY25 扣非/现金流扎实)值得升满版+挂检查点,故非 NOT_ADVANCED;但 ¥645/664 = 197× 静态/109× 动态、高于唯一卖方目标价(538),价格已把牛市情形和更多买完。两条重新进入路径:(a) 价格回到 ≤~383(2:1 满足价,需 ~42% 回调);(b) 基本面证明高增长是真主业——扣非增速回升、合同负债重回增长、毛利守 40%+——使 base/牛 整体上移,那时更高价也能满足 2:1,需用打印数字重算。注:≤383 是内部研究触发价,非自动买入指令,仍需实时价 + 红队/人工确认。盯产业资本(大基金/中微)继续减持的供给压力。human_executes——系统只建议、不下单。",
+      "en": "WATCH_ONLY, no entry at current price. At the committed snapshot 664.42 (universe_a 2026-06-12), R/R ≈ −0.06 (bull mid 640 / bear mid 255) — price is ABOVE the bull-scenario upper edge, R/R is negative, no position rationale (more extreme than 澜起's 0.11). The franchise is real (sole domestic PECVD + entity-list-locked demand + solid FY25 扣非/OCF), earning a full sheet + checkpoints (NOT NOT_ADVANCED); but ¥645/664 = 197x static / 109x dynamic and ABOVE the only sell-side target (538) — the price has bought the bull case and more. Two re-entry paths: (a) pullback to ≤~383 (the 2:1 price, ~42% down); (b) a fundamentals-driven re-band (扣非 growth reaccelerates + 合同负债 back to growth + GM holding 40%+) lifts base/bull so the bar is met at a higher price — re-run on printed numbers. Note: ≤383 is an internal RESEARCH trigger, not an auto-buy order — pull a live quote + human/red-team confirm. Watch industrial-capital (大基金/AMEC) sell-down supply pressure. human_executes — the system suggests, never trades."
+    },
+    "entry": "committed reference 664.42 (universe_a 2026-06-12 snapshot; deep thesis used a web-fetched ¥645); NO entry at current — add zone = ≤~383 (2:1 bar met) OR a post-H1 fundamentals-driven re-band",
+    "staging": "WATCH now (no position) → STARTER only inside the add zone or after a re-band → conviction requires R/R ≥2:1 on the re-based band; never average into a fired wrong_if",
+    "invalidation": "price: n/a while flat (no position to invalidate); thesis: any mechanized wrong_if trigger kills the thesis and the name reverts to pool-watch; supply watch = 大基金/中微 continued trimming",
+    "sizing_suggestion": "tier: NONE at reference (WATCH_ONLY); STARTER_CAPPED inside the add zone [suggestion only — human_executes; the system never auto-trades or sizes]",
+    "holding_horizon": "6-12 months from first entry (if ever); the thesis resolves at the 2026-08 H1 print (扣非 / GM / 合同负债 / OCF) and the FY annual (hybrid-bonding mix)",
+    "review_dates": [
+      "2026-07-14 (30d: 产业资本减持 + 合同负债前瞻 + 池内增量)",
+      "2026-08-13 (60d: pre-H1 positioning check)",
+      "2026-09-12 (90d: post-H1 E1 verdict — decisive)"
+    ]
+  },
+  "serenity": {
+    "theme_system_change": "A股 AI 半导体(Scan #1 #68):存储扩产(长存三期 2026H2 量产、国产设备占比破 50%)× 实体清单制度性锁定国产替代 × 薄膜沉积(PECVD)是 12 寸线必经工序且国产化率仅 ~18% — 拓荆作为国产唯一量产商承接被制度性锁定的需求,是把'薄膜设备'从进口件升级为国产稀缺件的系统变化",
+    "value_chain_map": [
+      "L1 薄膜沉积设备 PECVD/ALD(最紧,国产唯一量产 — 本票)",
+      "L1b 混合键合设备(第二曲线,期权)",
+      "L2 存储/逻辑晶圆厂扩产(需求侧)",
+      "L3 HBM/先进封装(下游拉动)",
+      "L9 算力芯片设计(非瓶颈)"
+    ],
+    "scarce_layer": "L1 薄膜沉积 — PECVD 国产化率仅 ~18%,拓荆是国产唯一稳定量产商;每条 12 寸线必配薄膜设备,实体清单使同业(进口)被制度性替代",
+    "company_role": "CONTROLS (国产唯一稳定量产 PECVD)",
+    "bottleneck_evidence": [
+      {
+        "claim": "PECVD 国产化率仅 ~18%,拓荆是国产唯一稳定量产商;FY25 产品营收 PECVD 51.42 / ALD 3.01亿 = 薄膜设备主业扎实",
+        "tier": "E1",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "FY2025 年报 分产品 (finance.sina 2026-04-28)"
+      },
+      {
+        "claim": "需求侧制度性锁定:长存三期 2026H2 大规模量产、国产设备占比破 50%;实体清单(2024-12,拓荆/北方华创/盛美在列)导向国产采购",
+        "tier": "E1",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "长存三期 finance.sina 2026-04-25; 实体清单 finance.sina 2024-12-03"
+      },
+      {
+        "claim": "FY25 经营现金流 +36.33亿(净利 3.9 倍)、应收在 +59% 营收下绝对值反降、货币资金 50.91亿 = 真需求的现金指纹(防 over-bear)",
+        "tier": "E1",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "FY2025 年报 现金流量表 p159"
+      }
+    ],
+    "market_may_be_missing": "诚实结论:市场没漏'需求真假/franchise 真假'(那是真的)。真正被高估的是(a)Q1 +488% 的含金量(82% 是金融浮盈,扣非仅 1.02亿)、(b)订单兑现的确定性(合同负债 25Q3 见顶横盘 3 季、demo 机 15-24 月、发出商品 43.6亿压验收)、(c)第二曲线的兑现度(混合键合仅 2.1%、C2W/D2W 仍验证中) — 而价格(197× 静态/109× 动态)是按最乐观兑现定的",
+    "substitution_route": "海外(AMAT/Lam/TEL)在管制放松情形下回流是长期风险;国产二供技术代差仍大(弱);客户自建不可行 — 替代路径短期(6-12mo)不构成威胁,真正变量是拓荆自身的订单兑现节奏与毛利修复",
+    "expansion_difficulty": "设备验证周期长(demo 机 15-24 个月验收)+ 产线绑定 = 高替换成本护城河;但同一机制使订单→收入转化慢、且不由公司单方可控(发出商品 43.6亿压在客户产线)",
+    "customer_validation": "头部存储/逻辑厂(PECVD 量产装机);在手订单'饱满'定性(业绩说明会 2025-12-04,无 110亿数);混合键合 W2W 真量产复购(HBM 相关 C2W/D2W 验证中)= 需求验证强、第二曲线验证中",
+    "what_weakens_the_view": [
+      {
+        "metric": "合同负债(订单兑现领先信号)",
+        "threshold": "跌破 48亿(已横盘 3 季)",
+        "source": "季报资产负债表",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "扣非归母同比(剔投资浮盈看真主业)",
+        "threshold": "< +40%",
+        "source": "季报 扣非口径",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "综合毛利率",
+        "threshold": "连续两季 < 38%(FY25 -6.9pp 未真修复)",
+        "source": "季报",
+        "check_date": "2026-08-31"
+      }
+    ]
+  },
+  "risk": {
+    "fundamental": "利润质量(本票核心):Q1 表观 82% 是投资浮盈,若 Q2 持仓标的回落转浮亏直接冲减归母;扣非里还含 ~1.95亿经常性政府补助(退坡风险);毛利率 FY25 -6.9pp 是真伤,Q1 41.69% 仅一季,新品占比 67% 拖累成本结构",
+    "policy": "美对设备/零部件管制是双刃(锁定国产需求,但抬高 BOM/交付风险);国产化补贴/大基金节奏变化影响下游扩产时点;2027 扩产潮后的订单空窗是设备股结构性周期风险",
+    "valuation": "197× 静态/109× 动态是板块最贵档,高于唯一卖方目标价(538);任何增速 miss 或利润质量证伪的下杀空间在同业里最大(到 base/熊 re-rate -35%~-64%);bull 600-680 即'最乐观兑现'的诚实上界,现价已在其上",
+    "liquidity": "科创板,产业资本(大基金 1月减持 2.99%、中微减持)持续套现 = 供给侧压力;近一年 +197%、5月创新高 721 后回落;板块第一大 ETF 权重 = 高拥挤双向波动",
+    "crowding_reflexivity": "市场为表观 +488% + 110亿订单叙事付了 197× 静态的价;一旦 Q1 含金量被审视或主题降温,估值去主题化先于基本面证伪;合同负债横盘 3 季已是兑现动能见顶的领先黄灯;sentiment feeds 仍 stubbed [data break]"
+  },
+  "disclaimers": {
+    "unvalidated": true,
+    "human_executes": true,
+    "pilot": "internal model-recommendation pilot output — NOT validated alpha, NOT external/personalized advice; the CTF deep-thesis upgrade #2 sample / profit-quality test (quick screen 77.8 → deep thesis, Junyan red-team 91.8 PASS); WATCH_ONLY is the evidence-determined verdict, never a buy signal",
+    "data_breaks_logged": [
+      "no committed per-ticker ohlc/signals/eqr/fin yet — committed reference price falls back to the universe_a 2026-06-12 snapshot 664.42; the deep thesis used a web-fetched ¥645 — both yield the same (NEGATIVE) WATCH conclusion; pull a live quote before any execution",
+      "the quick screen (#76) had WRONG numbers off by ~40% (price stated 331-388, actual 645; mcap 1098亿 vs actual 1823亿) — corrected by the deep E1 pass; lesson: one-pass E2 facts are unreliable, depth corrects accuracy not just persuasiveness",
+      "'110亿 backlog' annual-report verbatim register not obtained (tax-inclusive? cutoff? demo share?) — treated as a management-stated unaudited operating metric, NOT an audited number; thesis does not rely on it",
+      "Q1's 4.73亿 fair-value change — the underlying holdings are undisclosed; recurring line item but the gain is not extrapolable",
+      "automated valuation stack (rDCF/EV-EBITDA/RI) not run for this name — band is analyst-constructed, every multiple [unvalidated intuition] with anchors",
+      "6月解禁本轮未检索到(未发现≠确认无) — pull a 限售日历 (Wind) before execution; sentiment feeds stubbed (crowding partially blind, proxied by 行情/产业资本减持/ETF权重)"
+    ]
+  },
+  "auto_context": {
+    "last_price": {
+      "close": 664.42,
+      "date": "2026-06-12",
+      "source": "universe_a_snapshot_fallback",
+      "note": "latest COMMITTED price — staleness is flagged, never papered over"
+    },
+    "technical": {
+      "zone": null,
+      "generated_at": null,
+      "rsi14": null,
+      "signals": []
+    },
+    "eqr": {
+      "overall": null,
+      "sections": {}
+    },
+    "market_anchors": {
+      "as_of": "2026-06-12T05:55:22.055762",
+      "price": 664.42,
+      "market_cap": 187826891033.0,
+      "pe_dynamic": 82.29,
+      "pb": 26.17
+    },
+    "valuation_stack_status": {
+      "triangulated_signal": null,
+      "methods_used": null,
+      "note": "automated valuation generators' status — breaks logged honestly"
+    }
+  },
+  "reward_to_risk": {
+    "reference_price": 664.42,
+    "bull_mid": 640.0,
+    "bear_mid": 255.0,
+    "reward_to_risk": -0.06,
+    "conviction_bar": 2.0,
+    "meets_conviction_bar": false,
+    "entry_where_bar_met": 383.33,
+    "stance_at_reference": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)"
+  },
+  "quality": {
+    "auto_floor": "PASS (structurally qualified)",
+    "human_red_team": "PENDING — the measure of record",
+    "forward_checkpoints": "PENDING registration (30/60/90d, PR-D)"
+  },
+  "content_lock_sha256": "297c7f5804b4abdd1dbcff4cbc3d8670d0f62ec568857ab463eb855c2e517f0a"
+}
