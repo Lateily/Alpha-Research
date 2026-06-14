@@ -10642,17 +10642,85 @@ function FactoryProgress({ L, lk, C }) {
   }, []);
   if (err) return <div style={{ color: C.mid, padding: 24 }}>{L('Progress feed unavailable', '进度数据未生成')} — {err}</div>;
   if (!fp) return <div style={{ color: C.mid, padding: 24 }}>{L('Loading…', '加载中…')}</div>;
-  const fa = fp.factory_a || {}, fb = fp.factory_b || {}, dis = fp.discovery || {};
+  const fa = fp.factory_a || {}, fb = fp.factory_b || {}, dis = fp.discovery || {}, cockpit = fp.checkpoint_cockpit || {};
   const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, marginBottom: 14 };
   const h = { fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 8 };
   const small = { fontSize: 11, color: C.mid };
   const pill = (txt, color) => <span style={{ fontSize: 10, fontWeight: 700, color, border: `1px solid ${color}55`, borderRadius: 4, padding: '1px 6px', marginLeft: 6 }}>{txt}</span>;
   const vColor = v => v === 'KILL' ? C.red : v === 'NO-CLAIM' ? C.orange : String(v || '').startsWith('PASS') ? C.green : C.blue;
+  const one = (x, n=100) => {
+    const s = typeof x === 'string' ? x : (x?.zh || x?.en || '');
+    return s && s.length > n ? `${s.slice(0, n - 1)}…` : s;
+  };
+  const rowName = r => r.name?.zh || r.name?.en || r.name || r.ticker;
+  const cpChip = c => c ? (
+    <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, border: `1px solid ${c.status === 'EVALUATED' ? C.green : C.border}`, color: c.status === 'EVALUATED' ? C.green : C.mid }}>
+      +{c.offset_days}d {c.due_date}{c.status === 'PENDING' && c.days_to_due != null ? ` (${c.days_to_due}d)` : ' ✓'}
+    </span>
+  ) : null;
+  const statusColor = r => r.source === 'AI_BETA' ? C.gold : r.status === 'RETIRED_BY_OWNER' ? C.mid : C.green;
+  const metric = (k, v) => v !== undefined && v !== null && v !== '' ? <span style={{ fontSize: 10, color: C.mid }}>{k}: <b style={{ color: C.dark }}>{v}</b></span> : null;
+  const renderCockpitRow = r => {
+    const tech = r.technical || {}, sig = tech.signals || {}, val = r.valuation || {}, dq = r.data_quality || {};
+    const band = val.band;
+    const valLine = band
+      ? `bear ${band.bear?.low}-${band.bear?.high} · base ${band.base?.low}-${band.base?.high} · bull ${band.bull?.low}-${band.bull?.high}`
+      : one(val.anchor || val.research_entry_zone, 118);
+    const cats = (r.catalysts || []).map(c => c?.event || c).filter(Boolean);
+    const wrongs = (r.wrong_if || []).slice(0, 2).map(w => `${w.metric || 'metric'} ${w.threshold || ''} @ ${w.check_date || '—'}`);
+    const flags = dq.reconciliation_flags;
+    return (
+      <div key={`${r.source}-${r.ticker}`} style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: 12, background: r.status === 'RETIRED_BY_OWNER' ? C.soft : C.card }}>
+        <div style={{ display:'flex', justifyContent:'space-between', gap:8, alignItems:'flex-start' }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: C.dark }}>{rowName(r)} <span style={small}>{r.ticker}</span></div>
+            <div style={small}>{r.source === 'AI_BETA' ? 'AI beta forward · 红队 PENDING' : `CTF official · 红队 ${r.redteam?.avg ?? '—'} ${r.redteam?.verdict || ''}`}</div>
+          </div>
+          <span style={{ fontSize:10, fontWeight:800, color:statusColor(r), border:`1px solid ${statusColor(r)}55`, borderRadius:4, padding:'2px 6px', whiteSpace:'nowrap' }}>
+            {r.bucket || r.status}
+          </span>
+        </div>
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:8 }}>
+          {cpChip(r.next_checkpoint)}
+          {metric('ref', r.reference_price)}
+          {metric('PE', val.pe)}
+          {metric('PB', val.pb)}
+          {metric('chg', tech.price_change_pct != null ? `${tech.price_change_pct}%` : null)}
+          {metric('turn', tech.turnover_rate != null ? `${tech.turnover_rate}%` : null)}
+          {metric('mom', tech.momentum_factor)}
+          {sig?.zone ? metric('zone', sig.zone) : null}
+          {sig?.rsi14 ? metric('RSI', sig.rsi14) : null}
+        </div>
+        <div style={{ ...small, marginTop:8 }}><b style={{ color:C.dark }}>{L('Catalyst', '催化')}:</b> {one(cats[0] || '—', 150)}</div>
+        <div style={{ ...small, marginTop:5 }}><b style={{ color:C.dark }}>wrong-if:</b> {wrongs.length ? one(wrongs.join('；'), 160) : '—'}</div>
+        <div style={{ ...small, marginTop:5 }}><b style={{ color:C.dark }}>{L('Valuation', '估值')}:</b> {valLine || '—'}</div>
+        {val.research_entry_zone ? <div style={{ ...small, marginTop:5 }}><b style={{ color:C.dark }}>{L('Research entry', '研究触发价')}:</b> {one(val.research_entry_zone, 150)}</div> : null}
+        {flags ? <div style={{ ...small, marginTop:5, color:C.red }}>⚠ {Array.isArray(flags) ? flags.join('；') : String(flags)}</div> : null}
+      </div>
+    );
+  };
   return (
     <div style={{ maxWidth: 980, margin: '0 auto' }}>
       <div style={{ ...small, marginBottom: 10, padding: '8px 12px', border: `1px dashed ${C.border}`, borderRadius: 8 }}>
         ⚠ {L('Internal progress board — UNVALIDATED pipeline state. Nothing here is a recommendation or a buy list.',
              '内部进度看板 — 未经验证的流水线状态。这里没有任何买入名单或推荐。')}
+      </div>
+
+      <div style={card}>
+        <div style={h}>{L('Forward Court — Checkpoint Ledger Cockpit', '前向验证法庭 — Checkpoint Ledger 看板')}
+          {pill(`${cockpit.summary?.official_active ?? 0} CTF ACTIVE`, C.green)}
+          {pill(`${cockpit.summary?.beta_active ?? 0} BETA`, C.gold)}
+          {cockpit.summary?.next_checkpoint && pill(L(`next ${cockpit.summary.next_checkpoint.due_date} (${cockpit.summary.next_checkpoint.days_to_due}d)`, `下一读数 ${cockpit.summary.next_checkpoint.due_date}(${cockpit.summary.next_checkpoint.days_to_due}天)`), C.blue)}
+        </div>
+        <div style={{ ...small, marginBottom: 10 }}>{cockpit.disclaimer}</div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:10 }}>
+          {[...(cockpit.official || []), ...(cockpit.beta || [])].map(renderCockpitRow)}
+        </div>
+        {(cockpit.excluded || []).length ? (
+          <div style={{ ...small, marginTop:10, borderTop:`1px solid ${C.border}`, paddingTop:8 }}>
+            {L('Excluded from beta pool', '已剔除 beta 池')}: {(cockpit.excluded || []).map(x => `${x.name || x.ticker}(${x.stance})`).join(' · ')}
+          </div>
+        ) : null}
       </div>
 
       <div style={card}>
