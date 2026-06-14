@@ -1,0 +1,180 @@
+{
+  "_meta": {
+    "layer": "PR-G 一手对账门 — primary financial reconciliation gate",
+    "spec": "docs/strategy/DEEP_THESIS_FACTORY_v0_SPEC.md §5.1",
+    "purpose": "reconcile every load-bearing bridge input against the filed E1 disclosure; a deep thesis may NOT be red-teamed or registered until grade == RED_TEAM_GRADE.",
+    "tolerance_pct": 5.0,
+    "generated_at": "2026-06-14T15:17:20.254638+00:00",
+    "honest_scope": "v0 = reconciliation engine + research-pulled E1 facts (every fact carries its source filing URL). v1 = auto-PDF extraction. The gate catches bridge errors against primary truth TODAY; auto-extraction is efficiency, not a correctness gate."
+  },
+  "reconciliations": {
+    "601138.SH": {
+      "name": "工业富联",
+      "filings": {
+        "2026Q1": "cninfo static 1225231598.PDF (filed 2026-04-29, unaudited) http://static.cninfo.com.cn/finalpage/2026-04-29/1225231598.PDF",
+        "FY2025": "cninfo static 1225004420.PDF (filed 2026-03-11, audited) http://static.cninfo.com.cn/finalpage/2026-03-11/1225004420.PDF"
+      },
+      "committed": {
+        "committed_price": 70.57,
+        "committed_pe": 33.04,
+        "committed_pb": 7.95,
+        "committed_mcap_yi": 14004.0
+      },
+      "grade": "NEEDS_CORRECTION_BEFORE_REDTEAM",
+      "n_conflicts": 1,
+      "reconciliation": [
+        {
+          "claim": "2026Q1 归母 = 105.95亿",
+          "field": "2026Q1_归母_yi",
+          "claimed": 105.95,
+          "filed": 105.95,
+          "filed_tier": "E1",
+          "rel_diff_pct": 0.0,
+          "status": "MATCH",
+          "load_bearing": true
+        },
+        {
+          "claim": "FY2025 归母 ≈ 302亿 (YoY base)",
+          "field": "FY2025_归母_yi",
+          "claimed": 302,
+          "filed": 352.86,
+          "filed_tier": "E1",
+          "rel_diff_pct": 14.4,
+          "status": "CONFLICT",
+          "load_bearing": true
+        },
+        {
+          "claim": "总股本 ≈ 198.44亿股 (EPS basis)",
+          "field": "总股本_亿股",
+          "claimed": 198.44,
+          "filed": 198.44,
+          "filed_tier": "E1",
+          "rel_diff_pct": 0.0,
+          "status": "MATCH",
+          "load_bearing": true
+        },
+        {
+          "claim": "FY26E 归母 500-606亿 (forward PE)",
+          "field": "FY26E_consensus_归母_yi_low",
+          "claimed": 500,
+          "filed": 500,
+          "filed_tier": "E2",
+          "rel_diff_pct": 0.0,
+          "status": "MATCH",
+          "load_bearing": true
+        }
+      ],
+      "conflicts": [
+        {
+          "claim": "FY2025 归母 ≈ 302亿 (YoY base)",
+          "field": "FY2025_归母_yi",
+          "claimed": 302,
+          "filed": 352.86,
+          "filed_tier": "E1",
+          "rel_diff_pct": 14.4,
+          "status": "CONFLICT",
+          "load_bearing": true
+        }
+      ],
+      "corrections": [
+        "FY2025 归母 ≈ 302亿 (YoY base) → FILED FY2025_归母_yi = 352.86 (E1, FY2025), bridge used 302 (14% off) — correct the bridge."
+      ],
+      "evidence_downgrades": [],
+      "resolved_conflicts": [
+        {
+          "input": "2026Q1_归母",
+          "candidates": [
+            "105.95亿 (+102.55%)",
+            "41.8亿 (+33.77%)"
+          ],
+          "resolved": "105.95亿 (+102.55%)",
+          "tier": "E1",
+          "cause_of_wrong": "¥41.8亿 is a STALE prior-year (~2023-24 era) Q1 figure mislabeled 2026 — it matches no line in the filed 2026Q1 report (filed 归母 105.95 / 扣非 102.50 / Q1'25 base 52.31亿). Discard 41.8亿."
+        }
+      ],
+      "mgmt_quarterly_GM_note": null
+    },
+    "300476.SZ": {
+      "name": "胜宏科技",
+      "filings": {
+        "FY2025": "cninfo static 1225007454.PDF (annual, audited 立信, filed 2026-03-13) http://static.cninfo.com.cn/finalpage/2026-03-13/1225007454.PDF",
+        "FY2024": "cninfo static 1225007455.PDF (annual full-text)",
+        "H1_2025": "cninfo 公告 2025-096 中报全文 (p.18)",
+        "2026Q1": "filed 2026-04-28"
+      },
+      "committed": {
+        "committed_price": 330.0,
+        "committed_pe": 62.93,
+        "committed_pb": 20.7,
+        "committed_mcap_yi": 3243.0
+      },
+      "grade": "NEEDS_CORRECTION_BEFORE_REDTEAM",
+      "n_conflicts": 1,
+      "reconciliation": [
+        {
+          "claim": "GM path 22.7→33.4→36.2% (financial fingerprint)",
+          "field": "H1_2025_GM_pct",
+          "claimed": 36.2,
+          "filed": 36.22,
+          "filed_tier": "E1",
+          "rel_diff_pct": 0.1,
+          "status": "MATCH",
+          "load_bearing": true
+        },
+        {
+          "claim": "FY24 GM 22.7%",
+          "field": "FY2024_GM_pct",
+          "claimed": 22.7,
+          "filed": 22.72,
+          "filed_tier": "E1",
+          "rel_diff_pct": 0.1,
+          "status": "MATCH",
+          "load_bearing": false
+        },
+        {
+          "claim": "FY26E 归母 89.08亿 (bridge base)",
+          "field": "FY26E_consensus_归母_yi",
+          "claimed": 89.08,
+          "filed": 89.08,
+          "filed_tier": "E2",
+          "rel_diff_pct": 0.0,
+          "status": "MATCH",
+          "load_bearing": true
+        },
+        {
+          "claim": "FY27E 归母 149.58亿 (bull)",
+          "field": "FY27E_consensus_归母_yi",
+          "claimed": 149.58,
+          "filed": 149.58,
+          "filed_tier": "E2",
+          "rel_diff_pct": 0.0,
+          "status": "MATCH",
+          "load_bearing": true
+        }
+      ],
+      "conflicts": [],
+      "corrections": [],
+      "evidence_downgrades": [
+        {
+          "claim": "AI/Nvidia > 50-60% of revenue",
+          "asserted_tier": "treated as E1 fact",
+          "actual_tier": "E2 (sell-side inference only)",
+          "finding": "NO AI/数据中心/服务器 revenue line is disclosed in any filing; mgmt explicitly REFUSED to quantify AI share or name customers (业绩说明会 2026-03-18, Q8/Q16/Q36). Annual report top-5 customer = 41.98%, #1 = 14.97% (annual caliber) — does NOT support a single-customer >60%. The AI-mix claim is the bridge's softest load-bearing input; track via proxy, not as fact."
+        }
+      ],
+      "resolved_conflicts": [
+        {
+          "input": "consolidated_GM",
+          "candidates": [
+            "65-72% (media)",
+            "22-37% (filed)"
+          ],
+          "resolved": "22-37% path (FY24 22.72 → H1'25 36.22 → FY25 35.22)",
+          "tier": "E1",
+          "cause_of_wrong": "the '65-72% GM' was FABRICATED media; conclusively refuted by the filed consolidated 营业收入−营业成本 (FY25 GM = 35.22%)."
+        }
+      ],
+      "mgmt_quarterly_GM_note": "业绩说明会 2026-03-18 (E1 transcript): 25Q2 38.8% → 25Q3 35.2% → 25Q4 33.5% — GM PEAKED Q2'25 and has been DECLINING (mgmt: new-line ramp fixed-cost + labor). The 'rising GM' framing is incomplete; the honest read is 'GM peaked mid-25, stabilizing ~33-36%, direction is the open question'."
+    }
+  }
+}
