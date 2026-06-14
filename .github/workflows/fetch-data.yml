@@ -267,6 +267,14 @@ jobs:
         continue-on-error: true          # non-critical; no-op until a checkpoint is due
         run: python scripts/sheet_checkpoints.py --check
 
+      # ── Step 2h4b: AI beta forward checkpoints (owner-authorized) ─────────
+      # Separate from the official red-team-PASS CTF ledger. This evaluates the
+      # AI value-chain beta forward pool against the latest committed universe_a
+      # price, and is a strict no-op before due dates.
+      - name: Evaluate AI beta forward checkpoints
+        continue-on-error: true          # non-critical; no-op until a checkpoint is due
+        run: python scripts/ai_forward_beta_registry.py --check
+
       # ── Step 2h5: Factory progress aggregator (read-only over artifacts) ──
       # Refreshes public/data/factory_progress.json for the Factory tab —
       # ledger/scan/family-history state for real-time progress tracking.
@@ -402,6 +410,7 @@ jobs:
             public/data/model_portfolio.json \
             public/data/quant_strategy_run.json \
             public/data/decision_sheet_checkpoints.json \
+            public/data/ai_forward_beta_checkpoint_ledger.json \
             public/data/factory_progress.json \
             public/data/position_sizing.json \
             public/data/signal_quality.json \
