@@ -2,8 +2,11 @@
   "_meta": {
     "layer": "CTF v1 decision-sheet forward checkpoints (PR-D)",
     "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md §3",
-    "updated_at": "2026-06-14T07:18:44.142178+00:00",
-    "n_active": 5
+    "updated_at": "2026-06-14T14:19:35.901574+00:00",
+    "n_active": 4,
+    "retired_by_owner": [
+      "002594.SZ"
+    ]
   },
   "registrations": [
     {
@@ -15,7 +18,7 @@
       "content_lock": "ea3402301dff717e8bae387242cc6025078f13cbd213208a4e2309d4f40a6bef",
       "sheet_as_of": "2026-06-10",
       "registered_at": "2026-06-10T16:27:38.191007+00:00",
-      "status": "ACTIVE",
+      "status": "RETIRED_BY_OWNER",
       "supersedes": null,
       "direction": "LONG",
       "conviction_at_registration": "STARTER_CAPPED_UNTIL_E1 — and WATCH_NOT_CONVICTION at the current reference price (R/R < 2:1; see reward_to_risk)",
@@ -152,7 +155,17 @@
         "execution stance stays WATCH_NOT_CONVICTION / starter-capped only",
         "next revision priority = valuation discipline (model-anchored band: fix the broken rDCF/EV-EBITDA/RI generators for this name + sensitivity grid), NOT thesis narrative"
       ],
-      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job",
+      "retired_at": "2026-06-14T14:19:35.901574+00:00",
+      "retirement_reason": "Removed from active forward pool by owner instruction; no longer part of current AI/core forward validation focus.",
+      "do_not_evaluate_after": "2026-06-14",
+      "audit_trail": [
+        {
+          "at": "2026-06-14T14:19:35.901574+00:00",
+          "action": "retire",
+          "reason": "Removed from active forward pool by owner instruction; no longer part of current AI/core forward validation focus."
+        }
+      ]
     },
     {
       "ticker": "688120.SH",
