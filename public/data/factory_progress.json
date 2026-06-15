@@ -1,12 +1,12 @@
 {
   "_meta": {
-    "generated_at": "2026-06-15T06:36:08.677457+00:00",
+    "generated_at": "2026-06-15T14:45:28.683079+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
   "factory_a": {
     "title_zh": "研究工厂(Core Thesis + 前向验证)",
-    "n_active": 5,
+    "n_active": 6,
     "registrations": [
       {
         "ticker": "002594.SZ",
@@ -180,6 +180,41 @@
             "due_date": "2026-09-12",
             "status": "PENDING",
             "days_to_due": 89
+          }
+        ]
+      },
+      {
+        "ticker": "601138.SH",
+        "name": {
+          "zh": "工业富联",
+          "en": "Foxconn Industrial Internet"
+        },
+        "status": "ACTIVE",
+        "lock8": "73eb81e2",
+        "redteam_avg": 87.2,
+        "redteam_verdict": "PASS",
+        "stance": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+        "conviction": "WATCH_CONSTRUCTIVE — thesis and price are both discussable (the rare such name in the AI chain), but at the committed reference price the R/R is ~1.72, BELOW the 2:1 bar. No position. STARTER eligibility begins only at the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band. NOT a buy.",
+        "direction": "LONG",
+        "reference_price": 70.57,
+        "checkpoints": [
+          {
+            "offset_days": 30,
+            "due_date": "2026-07-15",
+            "status": "PENDING",
+            "days_to_due": 30
+          },
+          {
+            "offset_days": 60,
+            "due_date": "2026-08-14",
+            "status": "PENDING",
+            "days_to_due": 60
+          },
+          {
+            "offset_days": 90,
+            "due_date": "2026-09-13",
+            "status": "PENDING",
+            "days_to_due": 90
           }
         ]
       }

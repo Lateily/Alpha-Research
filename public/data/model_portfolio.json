@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-06-15",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-06-15T06:36:08.511103+00:00",
+    "generated_at": "2026-06-15T14:45:28.578506+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -265,7 +265,7 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 40.3,
+            "rsi14": 40.4,
             "macd_hist": -0.4108,
             "price_vs_ma20": -2.42,
             "price_vs_ma60": -7.84,
@@ -277,7 +277,7 @@
               "type": "RSI_RECOVERING",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI recovering 34.1→40.3 — momentum rebuilding"
+              "desc": "RSI recovering 34.2→40.4 — momentum rebuilding"
             },
             {
               "type": "KDJ_GOLDEN_CROSS",
@@ -355,8 +355,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 61.7,
-            "macd_hist": -0.1993,
+            "rsi14": 61.8,
+            "macd_hist": -0.2051,
             "price_vs_ma20": 8.92,
             "price_vs_ma60": 30.48,
             "change_5d": 13.25,
@@ -390,8 +390,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 57.3,
-            "macd_hist": -34.5484,
+            "rsi14": 57.4,
+            "macd_hist": -34.8291,
             "price_vs_ma20": 1.58,
             "price_vs_ma60": 29.74,
             "change_5d": -2.63,
@@ -433,7 +433,7 @@
           },
           "key_indicators": {
             "rsi14": 52.6,
-            "macd_hist": 0.1318,
+            "macd_hist": 0.1288,
             "price_vs_ma20": 2.66,
             "price_vs_ma60": -2.43,
             "change_5d": 7.85,
@@ -450,7 +450,7 @@
               "type": "MACD_GOLDEN_CROSS",
               "strength": "moderate",
               "bullish": true,
-              "desc": "MACD DIF(-0.404) crossed above DEA(-0.470) below zero — bullish momentum"
+              "desc": "MACD DIF(-0.401) crossed above DEA(-0.465) below zero — bullish momentum"
             }
           ]
         },
@@ -535,7 +535,7 @@
           },
           "key_indicators": {
             "rsi14": 34.0,
-            "macd_hist": -24.8929,
+            "macd_hist": -24.9217,
             "price_vs_ma20": -27.86,
             "price_vs_ma60": -12.7,
             "change_5d": -25.81,

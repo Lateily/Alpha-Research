@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-15T06:36:08.459883+00:00",
+  "generated_at": "2026-06-15T14:45:28.545780+00:00",
   "date": "2026-06-15",
   "brief_e": "1 Exposure Review",
   "brief_z": "1 敞口复核",
@@ -12,13 +12,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 6,
-        "pnl_pct": 79.27,
+        "pnl_pct": 82.72,
         "holding_days": 97,
-        "weight_pct": 58.1,
+        "weight_pct": 58.6,
         "vp_score": 48,
         "confluence": 6,
-        "reason_e": "Large unrealised gain +79.3% after 97d. Signal still NEUTRAL (score 6). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+79.3%（持有97天），信号6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +82.7% after 97d. Signal still NEUTRAL (score 6). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+82.7%（持有97天），信号6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -31,7 +31,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 97,
-        "weight_pct": 3.7,
+        "weight_pct": 3.6,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 97d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +3.0%.",
@@ -48,7 +48,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 90,
-        "weight_pct": 22.1,
+        "weight_pct": 21.8,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 90d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 83,
-        "weight_pct": 12.7,
+        "weight_pct": 12.6,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 83d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -80,9 +80,9 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 3,
-        "pnl_pct": -5.63,
+        "pnl_pct": -5.58,
         "holding_days": 75,
-        "weight_pct": 3.5,
+        "weight_pct": 3.4,
         "vp_score": 48,
         "confluence": 3,
         "reason_e": "Signal neutral (score 3). P&L -5.6% after 75d. Paper-hold — no new review trigger. Bullish: Rsi Recovering, Kdj Golden Cross | RSI 40 | Price vs MA20 -2.4% | Regime: PERMISSIVE | VP 48.",
@@ -164,8 +164,8 @@
   },
   "buy_watches": [],
   "portfolio_risk": [
-    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 58% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +79.3% — exposure-review condition (sizable unrealised gain)"
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 59% of portfolio — above 40.0% limit",
+    "PROFIT REVIEW: 300308.SZ +82.7% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {
@@ -174,10 +174,10 @@
       "status": "CLEAR",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 12.9 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 12.9（阈值25.0）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 10.8 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 10.8（阈值25.0）",
       "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 12.9,
+      "actual": 10.8,
       "threshold": 25.0
     },
     {
