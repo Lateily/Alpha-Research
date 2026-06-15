@@ -4,7 +4,7 @@
     "spec": "docs/strategy/DEEP_THESIS_FACTORY_v0_SPEC.md §5.1",
     "purpose": "reconcile every load-bearing bridge input against the filed E1 disclosure; a deep thesis may NOT be red-teamed or registered until grade == RED_TEAM_GRADE.",
     "tolerance_pct": 5.0,
-    "generated_at": "2026-06-14T15:17:20.254638+00:00",
+    "generated_at": "2026-06-15T02:30:06.651098+00:00",
     "honest_scope": "v0 = reconciliation engine + research-pulled E1 facts (every fact carries its source filing URL). v1 = auto-PDF extraction. The gate catches bridge errors against primary truth TODAY; auto-extraction is efficiency, not a correctness gate."
   },
   "reconciliations": {
@@ -20,8 +20,8 @@
         "committed_pb": 7.95,
         "committed_mcap_yi": 14004.0
       },
-      "grade": "NEEDS_CORRECTION_BEFORE_REDTEAM",
-      "n_conflicts": 1,
+      "grade": "RED_TEAM_GRADE",
+      "n_conflicts": 0,
       "reconciliation": [
         {
           "claim": "2026Q1 归母 = 105.95亿",
@@ -31,16 +31,6 @@
           "filed_tier": "E1",
           "rel_diff_pct": 0.0,
           "status": "MATCH",
-          "load_bearing": true
-        },
-        {
-          "claim": "FY2025 归母 ≈ 302亿 (YoY base)",
-          "field": "FY2025_归母_yi",
-          "claimed": 302,
-          "filed": 352.86,
-          "filed_tier": "E1",
-          "rel_diff_pct": 14.4,
-          "status": "CONFLICT",
           "load_bearing": true
         },
         {
@@ -54,7 +44,7 @@
           "load_bearing": true
         },
         {
-          "claim": "FY26E 归母 500-606亿 (forward PE)",
+          "claim": "FY26E 归母 500亿 (forward-PE low; E2 consensus by design)",
           "field": "FY26E_consensus_归母_yi_low",
           "claimed": 500,
           "filed": 500,
@@ -64,21 +54,8 @@
           "load_bearing": true
         }
       ],
-      "conflicts": [
-        {
-          "claim": "FY2025 归母 ≈ 302亿 (YoY base)",
-          "field": "FY2025_归母_yi",
-          "claimed": 302,
-          "filed": 352.86,
-          "filed_tier": "E1",
-          "rel_diff_pct": 14.4,
-          "status": "CONFLICT",
-          "load_bearing": true
-        }
-      ],
-      "corrections": [
-        "FY2025 归母 ≈ 302亿 (YoY base) → FILED FY2025_归母_yi = 352.86 (E1, FY2025), bridge used 302 (14% off) — correct the bridge."
-      ],
+      "conflicts": [],
+      "corrections": [],
       "evidence_downgrades": [],
       "resolved_conflicts": [
         {
@@ -90,6 +67,16 @@
           "resolved": "105.95亿 (+102.55%)",
           "tier": "E1",
           "cause_of_wrong": "¥41.8亿 is a STALE prior-year (~2023-24 era) Q1 figure mislabeled 2026 — it matches no line in the filed 2026Q1 report (filed 归母 105.95 / 扣非 102.50 / Q1'25 base 52.31亿). Discard 41.8亿."
+        },
+        {
+          "input": "FY2025_归母 (#86 self-correction)",
+          "candidates": [
+            "302亿 (upstream agent research)",
+            "352.86亿 (filed)"
+          ],
+          "resolved": "352.86亿 (+51.99%) [E1, FY2025 年报]",
+          "tier": "E1",
+          "cause_of_wrong": "SELF-CORRECTION: #86 v1 flagged a '工业富联 FY25 ≈ 302亿' conflict, but the #85 deep thesis NEVER states 302 — it anchors Q1'26 + FY26 consensus. The 302 was in the upstream slice-A agent research, not the thesis. Verified FY25 = 352.86亿 is CONFIRMING CONTEXT (FY26 500-606 = +42-72% growth, sound), not a thesis error. 工业富联's stated numbers are all E1/E2-correct → RED_TEAM_GRADE."
         }
       ],
       "mgmt_quarterly_GM_note": null

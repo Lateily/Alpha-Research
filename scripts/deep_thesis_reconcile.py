@@ -62,6 +62,13 @@ PRIMARY_E1: dict[str, dict] = {
              "cause_of_wrong": "¥41.8亿 is a STALE prior-year (~2023-24 era) Q1 figure mislabeled 2026 — "
                                "it matches no line in the filed 2026Q1 report (filed 归母 105.95 / 扣非 102.50 / "
                                "Q1'25 base 52.31亿). Discard 41.8亿."},
+            {"input": "FY2025_归母 (#86 self-correction)", "candidates": ["302亿 (upstream agent research)", "352.86亿 (filed)"],
+             "resolved": "352.86亿 (+51.99%) [E1, FY2025 年报]", "tier": "E1",
+             "cause_of_wrong": "SELF-CORRECTION: #86 v1 flagged a '工业富联 FY25 ≈ 302亿' conflict, but the #85 "
+                               "deep thesis NEVER states 302 — it anchors Q1'26 + FY26 consensus. The 302 was in "
+                               "the upstream slice-A agent research, not the thesis. Verified FY25 = 352.86亿 is "
+                               "CONFIRMING CONTEXT (FY26 500-606 = +42-72% growth, sound), not a thesis error. "
+                               "工业富联's stated numbers are all E1/E2-correct → RED_TEAM_GRADE."},
         ],
     },
     "300476.SZ": {
@@ -104,10 +111,14 @@ PRIMARY_E1: dict[str, dict] = {
 # field → the E1 fact key it should reconcile against; claimed = the bridge's number.
 BRIDGE_ASSUMPTIONS: dict[str, list[dict]] = {
     "601138.SH": [
+        # SELF-CORRECTION (#86 v2): the #85 工业富联 thesis anchors on the Q1'26 run-rate + FY26 consensus +
+        # committed PE — it does NOT state a FY2025 base. #86 v1 wrongly listed a "FY25 ≈ 302亿" assumption
+        # (that figure was in the upstream slice-A AGENT research, never in the thesis) and over-flagged a
+        # conflict. Removed. FY25 = 352.86亿 is now recorded as VERIFIED CONTEXT (resolved_conflicts), which
+        # CONFIRMS the thesis's FY26 500-606亿 = +42-72% growth framing. Net: 工业富联 has no real conflict.
         {"claim": "2026Q1 归母 = 105.95亿", "field": "2026Q1_归母_yi", "claimed": 105.95, "load_bearing": True},
-        {"claim": "FY2025 归母 ≈ 302亿 (YoY base)", "field": "FY2025_归母_yi", "claimed": 302, "load_bearing": True},
         {"claim": "总股本 ≈ 198.44亿股 (EPS basis)", "field": "总股本_亿股", "claimed": 198.44, "load_bearing": True},
-        {"claim": "FY26E 归母 500-606亿 (forward PE)", "field": "FY26E_consensus_归母_yi_low", "claimed": 500, "load_bearing": True},
+        {"claim": "FY26E 归母 500亿 (forward-PE low; E2 consensus by design)", "field": "FY26E_consensus_归母_yi_low", "claimed": 500, "load_bearing": True},
     ],
     "300476.SZ": [
         {"claim": "GM path 22.7→33.4→36.2% (financial fingerprint)", "field": "H1_2025_GM_pct", "claimed": 36.2, "load_bearing": True},
@@ -249,17 +260,20 @@ def _selftest() -> int:
     errs = []
     data = build()
     recs = data["reconciliations"]
-    # 工业富联: Q1 归母 must MATCH (105.95), FY25 base must CONFLICT (302 vs 352.86)
+    # 工业富联 (self-corrected): Q1 归母 MATCH (105.95); the thesis states NO FY25 base, so there is NO
+    # FY25 conflict — 工业富联 is RED_TEAM_GRADE. The 302-was-never-in-the-thesis self-correction is recorded.
     fii = recs.get("601138.SH", {})
     by_field = {row["field"]: row for row in fii.get("reconciliation", [])}
     if by_field.get("2026Q1_归母_yi", {}).get("status") != "MATCH":
         errs.append("工业富联 2026Q1 归母 (105.95) must reconcile MATCH vs filed E1")
-    if by_field.get("FY2025_归母_yi", {}).get("status") != "CONFLICT":
-        errs.append("工业富联 FY25 base (302 vs filed 352.86) must be caught as CONFLICT")
+    if "FY2025_归母_yi" in by_field:
+        errs.append("工业富联 must NOT carry a FY25 bridge assumption — the #85 thesis never states 302 (self-correction)")
     if not any("105.95" in c["resolved"] for c in fii.get("resolved_conflicts", [])):
         errs.append("工业富联 Q1 105.95-vs-41.8 conflict must be recorded as resolved to 105.95")
-    if fii.get("grade") != "NEEDS_CORRECTION_BEFORE_REDTEAM":
-        errs.append("工业富联 must be NEEDS_CORRECTION (FY25 base conflict)")
+    if not any("352.86" in c["resolved"] for c in fii.get("resolved_conflicts", [])):
+        errs.append("工业富联 FY25=352.86 self-correction (302 was upstream agent research, not the thesis) must be recorded")
+    if fii.get("grade") != "RED_TEAM_GRADE":
+        errs.append("工业富联 must be RED_TEAM_GRADE (no real conflict; stated numbers all verified)")
     # 胜宏: GM path must MATCH, AI-mix must be evidence-downgraded
     shh = recs.get("300476.SZ", {})
     shh_field = {row["field"]: row for row in shh.get("reconciliation", [])}
@@ -278,8 +292,10 @@ def _selftest() -> int:
         for e in errs:
             print(f"  - {e}")
         return 1
-    print("deep_thesis_reconcile selftest PASSED (工业富联 Q1 105.95 MATCH + FY25 302→352.86 CONFLICT caught + "
-          "41.8 resolved; 胜宏 GM path MATCH + AI-mix>60% evidence-downgraded; grades honest — both NEEDS_CORRECTION)")
+    print("deep_thesis_reconcile selftest PASSED — 工业富联: Q1 105.95 MATCH, 41.8 discarded, FY25=352.86 "
+          "self-correction recorded (302 was upstream agent research, NOT the thesis) → RED_TEAM_GRADE. "
+          "胜宏: GM path MATCH but AI-mix>60% evidence-downgraded (E2/undisclosed) + GM-declining nuance → "
+          "NEEDS_CORRECTION. Grades honest; only the genuinely-unverified name is held back.")
     return 0
 
 

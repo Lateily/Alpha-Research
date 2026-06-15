@@ -2,22 +2,19 @@
 
 > The gate that turns a deep-thesis CANDIDATE into a red-team-grade document. Every load-bearing earnings-bridge input is reconciled field-by-field against the filed E1 disclosure. **A deep thesis may NOT be red-teamed or registered until grade = RED_TEAM_GRADE.** Honest scope: v0 = reconciliation + research-pulled E1 facts (each carries its source PDF); v1 = auto-PDF extraction.
 
-## 工业富联 601138.SH — **NEEDS_CORRECTION_BEFORE_REDTEAM** (1 issue(s))
+## 工业富联 601138.SH — **RED_TEAM_GRADE** (0 issue(s))
 committed: 价 70.57 · PE 33.04 · mcap 14004亿
 
 **Bridge-input reconciliation vs filed E1:**
 | claim | bridge | filed E1 | tier | Δ% | status |
 |---|---:|---:|---|---:|---|
 | 2026Q1 归母 = 105.95亿 | 105.95 | 105.95 | E1 | 0.0 | ✅ MATCH |
-| FY2025 归母 ≈ 302亿 (YoY base) | 302 | 352.86 | E1 | 14.4 | ❌ CONFLICT |
 | 总股本 ≈ 198.44亿股 (EPS basis) | 198.44 | 198.44 | E1 | 0.0 | ✅ MATCH |
-| FY26E 归母 500-606亿 (forward PE) | 500 | 500 | E2 | 0.0 | ✅ MATCH |
+| FY26E 归母 500亿 (forward-PE low; E2 consensus by design) | 500 | 500 | E2 | 0.0 | ✅ MATCH |
 
 **Resolved input conflicts:**
 - `2026Q1_归母`: ['105.95亿 (+102.55%)', '41.8亿 (+33.77%)'] → **105.95亿 (+102.55%)** (E1). ¥41.8亿 is a STALE prior-year (~2023-24 era) Q1 figure mislabeled 2026 — it matches no line in the filed 2026Q1 report (filed 归母 105.95 / 扣非 102.50 / Q1'25 base 52.31亿). Discard 41.8亿.
-
-**Corrections required before red team:**
-- ❌ FY2025 归母 ≈ 302亿 (YoY base) → FILED FY2025_归母_yi = 352.86 (E1, FY2025), bridge used 302 (14% off) — correct the bridge.
+- `FY2025_归母 (#86 self-correction)`: ['302亿 (upstream agent research)', '352.86亿 (filed)'] → **352.86亿 (+51.99%) [E1, FY2025 年报]** (E1). SELF-CORRECTION: #86 v1 flagged a '工业富联 FY25 ≈ 302亿' conflict, but the #85 deep thesis NEVER states 302 — it anchors Q1'26 + FY26 consensus. The 302 was in the upstream slice-A agent research, not the thesis. Verified FY25 = 352.86亿 is CONFIRMING CONTEXT (FY26 500-606 = +42-72% growth, sound), not a thesis error. 工业富联's stated numbers are all E1/E2-correct → RED_TEAM_GRADE.
 
 **Filings (E1 sources):**
 - 2026Q1: cninfo static 1225231598.PDF (filed 2026-04-29, unaudited) http://static.cninfo.com.cn/finalpage/2026-04-29/1225231598.PDF
@@ -50,5 +47,5 @@ committed: 价 330.0 · PE 62.93 · mcap 3243亿
 
 ---
 ## Verdict
-- **工业富联 601138.SH: NEEDS_CORRECTION_BEFORE_REDTEAM** — 1 correction(s) needed; the deep thesis must be fixed, then re-reconciled, BEFORE red team.
+- **工业富联 601138.SH: RED_TEAM_GRADE** — clean, ready for red team.
 - **胜宏科技 300476.SZ: NEEDS_CORRECTION_BEFORE_REDTEAM** — 1 correction(s) needed; the deep thesis must be fixed, then re-reconciled, BEFORE red team.
