@@ -1,12 +1,12 @@
 {
   "_meta": {
-    "generated_at": "2026-06-12T15:49:14.067613+00:00",
+    "generated_at": "2026-06-15T06:36:08.677457+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
   "factory_a": {
     "title_zh": "研究工厂(Core Thesis + 前向验证)",
-    "n_active": 3,
+    "n_active": 5,
     "registrations": [
       {
         "ticker": "002594.SZ",
@@ -27,19 +27,19 @@
             "offset_days": 30,
             "due_date": "2026-07-10",
             "status": "PENDING",
-            "days_to_due": 28
+            "days_to_due": 25
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-09",
             "status": "PENDING",
-            "days_to_due": 58
+            "days_to_due": 55
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-08",
             "status": "PENDING",
-            "days_to_due": 88
+            "days_to_due": 85
           }
         ]
       },
@@ -62,19 +62,19 @@
             "offset_days": 30,
             "due_date": "2026-07-12",
             "status": "PENDING",
-            "days_to_due": 30
+            "days_to_due": 27
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-11",
             "status": "PENDING",
-            "days_to_due": 60
+            "days_to_due": 57
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-10",
             "status": "PENDING",
-            "days_to_due": 90
+            "days_to_due": 87
           }
         ]
       },
@@ -97,19 +97,89 @@
             "offset_days": 30,
             "due_date": "2026-07-12",
             "status": "PENDING",
-            "days_to_due": 30
+            "days_to_due": 27
           },
           {
             "offset_days": 60,
             "due_date": "2026-08-11",
             "status": "PENDING",
-            "days_to_due": 60
+            "days_to_due": 57
           },
           {
             "offset_days": 90,
             "due_date": "2026-09-10",
             "status": "PENDING",
-            "days_to_due": 90
+            "days_to_due": 87
+          }
+        ]
+      },
+      {
+        "ticker": "688008.SH",
+        "name": {
+          "zh": "澜起科技",
+          "en": "Montage Technology"
+        },
+        "status": "ACTIVE",
+        "lock8": "f7e3b135",
+        "redteam_avg": 89.6,
+        "redteam_verdict": "PASS",
+        "stance": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+        "conviction": "WATCH_ONLY — franchise is real (global memory-interface oligopoly + a genuine mix-driven second curve), but at the committed reference price the R/R is ≈0.11, catastrophically below the 2:1 bar (price has run to the bull scenario). No position. STARTER eligibility begins only at the add zone (≤~150, where the bar is met) or on a fundamentals-driven re-band; near-term supply overhang = 8/9 HK cornerstone unlock.",
+        "direction": "LONG",
+        "reference_price": 229.28,
+        "checkpoints": [
+          {
+            "offset_days": 30,
+            "due_date": "2026-07-14",
+            "status": "PENDING",
+            "days_to_due": 29
+          },
+          {
+            "offset_days": 60,
+            "due_date": "2026-08-13",
+            "status": "PENDING",
+            "days_to_due": 59
+          },
+          {
+            "offset_days": 90,
+            "due_date": "2026-09-12",
+            "status": "PENDING",
+            "days_to_due": 89
+          }
+        ]
+      },
+      {
+        "ticker": "688072.SH",
+        "name": {
+          "zh": "拓荆科技",
+          "en": "Piotech"
+        },
+        "status": "ACTIVE",
+        "lock8": "297c7f58",
+        "redteam_avg": 91.8,
+        "redteam_verdict": "PASS",
+        "stance": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+        "conviction": "WATCH_ONLY — franchise is real (sole domestic PECVD + entity-list-locked demand + a genuinely strong FY25 扣非/OCF), so it earns a full deep sheet + checkpoints (NOT NOT_ADVANCED). But at the committed reference price the R/R is NEGATIVE (≈−0.06) — price is at/above the bull scenario and above the only sell-side target (538). No position rationale. Add zone = ≤~383 (2:1 met) OR a fundamentals-driven re-band.",
+        "direction": "LONG",
+        "reference_price": 664.42,
+        "checkpoints": [
+          {
+            "offset_days": 30,
+            "due_date": "2026-07-14",
+            "status": "PENDING",
+            "days_to_due": 29
+          },
+          {
+            "offset_days": 60,
+            "due_date": "2026-08-13",
+            "status": "PENDING",
+            "days_to_due": 59
+          },
+          {
+            "offset_days": 90,
+            "due_date": "2026-09-12",
+            "status": "PENDING",
+            "days_to_due": 89
           }
         ]
       }
@@ -117,7 +187,7 @@
     "next_read": {
       "date": "2026-07-10",
       "ticker": "002594.SZ",
-      "days_to_due": 28
+      "days_to_due": 25
     },
     "note_zh": "人工红队为 measure of record;检查点是 case-level 读数,不是统计"
   },

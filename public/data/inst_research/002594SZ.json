@@ -1,13 +1,27 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-06-12T11:59:29Z",
+  "fetched_at": "2026-06-15T06:33:28Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260609",
+      "fund_visitors": "--",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "2025年度股东会&高管面对面交流会",
+      "rece_org": "受邀投资人逾千人",
+      "org_type": "--",
+      "comp_rece": "集团董事长、总裁 王传福,董事、副董事长 吕向阳,董事 夏佐全,独立董事 蔡洪平,独立董事 张敏,独立董事 喻玲,高级副总裁、财务总监 周亚琳,高级副总裁、汽车新技术研究院院长 杨冬生,董事会秘书、公司秘书 李黔",
+      "inst_count": 1,
+      "surv_type": "2025年度股东会&高管面对面交流会",
+      "description": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -220,9 +234,9 @@
     }
   ],
   "summary": {
-    "total_30d": 0,
-    "total_90d": 15,
-    "unique_inst_30d": null,
-    "latest_date": "2026-05-12"
+    "total_30d": 1,
+    "total_90d": 16,
+    "unique_inst_30d": 1,
+    "latest_date": "2026-06-09"
   }
 }
