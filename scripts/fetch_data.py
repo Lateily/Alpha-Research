@@ -956,15 +956,146 @@ def score_universe(stocks):
 # ══════════════════════════════════════════════════════════════════════════════
 # 1. Full A-Share Universe
 # ══════════════════════════════════════════════════════════════════════════════
+def _latest_tushare_trade_date(pro):
+    """Return the latest open A-share trade date in YYYYMMDD format."""
+    end = datetime.now().strftime("%Y%m%d")
+    start = (datetime.now() - timedelta(days=14)).strftime("%Y%m%d")
+    cal = pro.trade_cal(exchange="SSE", start_date=start, end_date=end, is_open=1)
+    if cal is None or cal.empty:
+        return end
+    return str(cal["cal_date"].max())
+
+
+def _fetch_a_share_universe_tushare():
+    """
+    Tushare fallback for the full A-share universe.
+
+    GitHub-hosted runners frequently get disconnected by the EastMoney/AKShare
+    full-market endpoint. Tushare by trade date is already available in CI and
+    gives us a fresh, PIT market snapshot for the universe freshness gate. The
+    output is shaped to match the AKShare universe contract used downstream.
+    """
+    if not TUSHARE_TOKEN:
+        print("  Tushare fallback unavailable: TUSHARE_TOKEN not set")
+        return []
+    try:
+        import tushare as ts
+    except ImportError:
+        print("  Tushare fallback unavailable: tushare not installed")
+        return []
+
+    try:
+        ts.set_token(TUSHARE_TOKEN)
+        pro = ts.pro_api()
+        trade_date = _latest_tushare_trade_date(pro)
+        print(f"  Calling Tushare daily/daily_basic fallback for {trade_date}...")
+
+        daily = pro.daily(
+            trade_date=trade_date,
+            fields=(
+                "ts_code,trade_date,open,high,low,close,pre_close,change,"
+                "pct_chg,vol,amount"
+            ),
+        )
+        basic = pro.daily_basic(
+            trade_date=trade_date,
+            fields=(
+                "ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,"
+                "total_mv,circ_mv"
+            ),
+        )
+        stock = pro.stock_basic(
+            exchange="",
+            list_status="L",
+            fields="ts_code,symbol,name,area,industry,market,exchange,list_date",
+        )
+
+        if daily is None or daily.empty:
+            print("  Tushare fallback returned no daily rows")
+            return []
+        if basic is None or basic.empty:
+            basic = daily[["ts_code"]].copy()
+        if stock is None or stock.empty:
+            stock = daily[["ts_code"]].copy()
+
+        df = daily.merge(basic, on="ts_code", how="left", suffixes=("", "_basic"))
+        df = df.merge(stock, on="ts_code", how="left")
+
+        stocks = []
+        for _, row in df.iterrows():
+            ts_code = str(row.get("ts_code", "")).strip()
+            if "." not in ts_code:
+                continue
+            code, ex = ts_code.split(".", 1)
+            name = str(row.get("name", "")).strip() or code
+            pre_close = _safe_float(row.get("pre_close"))
+            high = _safe_float(row.get("high"))
+            low = _safe_float(row.get("low"))
+            amplitude = None
+            if pre_close and high is not None and low is not None:
+                amplitude = round((high - low) / pre_close * 100.0, 4)
+
+            amount = _safe_float(row.get("amount"))
+            total_mv = _safe_float(row.get("total_mv"))
+            circ_mv = _safe_float(row.get("circ_mv"))
+
+            stocks.append({
+                "ticker": f"{code}.{ex}",
+                "code": code,
+                "name": name,
+                "exchange": ex,
+                "price": _safe_float(row.get("close")),
+                "change_pct": _safe_float(row.get("pct_chg")),
+                "change_amt": _safe_float(row.get("change")),
+                # Tushare daily.vol is in hands; amount is in thousand RMB.
+                "volume": _safe_float(row.get("vol")),
+                "turnover": round(amount * 1000.0, 4) if amount is not None else None,
+                "amplitude": amplitude,
+                "high": high,
+                "low": low,
+                "open": _safe_float(row.get("open")),
+                "prev_close": pre_close,
+                "volume_ratio": _safe_float(row.get("volume_ratio")),
+                "turnover_rate": _safe_float(row.get("turnover_rate")),
+                "pe": _safe_float(row.get("pe")),
+                "pe_ttm": _safe_float(row.get("pe_ttm")),
+                "pb": _safe_float(row.get("pb")),
+                # Tushare daily_basic total_mv/circ_mv are in ten-thousand RMB.
+                "market_cap": round(total_mv * 10000.0, 4) if total_mv is not None else None,
+                "float_cap": round(circ_mv * 10000.0, 4) if circ_mv is not None else None,
+                "high_52w": None,
+                "low_52w": None,
+                "roe": None,
+                "gross_margin": None,
+                "net_margin": None,
+                "revenue_growth": None,
+                "profit_growth": None,
+                "industry": str(row.get("industry", "") or ""),
+                "market": str(row.get("market", "") or ""),
+                "list_date": str(row.get("list_date", "") or ""),
+                "data_source": "tushare_daily_basic_fallback",
+                "trade_date": trade_date,
+            })
+
+        print(f"  OK: {len(stocks)} A-shares via Tushare fallback")
+        return stocks
+    except Exception as e:
+        print(f"  Tushare fallback error: {type(e).__name__}: {e}")
+        return []
+
+
 def fetch_a_share_universe():
     try:
         import akshare as ak
     except ImportError:
-        print("  ERROR: akshare not installed"); return []
+        print("  ERROR: akshare not installed; trying Tushare fallback")
+        return _fetch_a_share_universe_tushare()
     print("  Calling ak.stock_zh_a_spot_em()...")
     try:
         df = ak.stock_zh_a_spot_em()
-        if df is None or df.empty: return []
+        if df is None or df.empty:
+            print("  AKShare returned empty A-share universe; trying Tushare fallback")
+            return _fetch_a_share_universe_tushare()
         stocks = []
         for _, row in df.iterrows():
             code = str(row.get("代码", "")).strip()
@@ -1000,7 +1131,9 @@ def fetch_a_share_universe():
         print(f"  OK: {len(stocks)} A-shares")
         return stocks
     except Exception as e:
-        print(f"  ERROR: {e}"); return []
+        print(f"  AKShare A-share universe error: {type(e).__name__}: {e}")
+        print("  Trying Tushare fallback for A-share universe...")
+        return _fetch_a_share_universe_tushare()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
