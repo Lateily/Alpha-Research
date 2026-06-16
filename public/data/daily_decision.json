@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-16T14:03:01.548620+00:00",
+  "generated_at": "2026-06-16T14:23:08.476165+00:00",
   "date": "2026-06-16",
   "brief_e": "1 Exposure Review",
   "brief_z": "1 敞口复核",
@@ -186,10 +186,10 @@
       "status": "CLEAR",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 11.3 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 11.3（阈值25.0）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 11.2 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 11.2（阈值25.0）",
       "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 11.3,
+      "actual": 11.2,
       "threshold": 25.0
     },
     {

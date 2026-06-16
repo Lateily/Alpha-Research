@@ -28,7 +28,7 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-06-16T14:03:01.411188+00:00"
+      "engine_run_at": "2026-06-16T14:23:08.334497+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -57,7 +57,7 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-06-16T14:03:01.411336+00:00"
+      "engine_run_at": "2026-06-16T14:23:08.334630+00:00"
     },
     {
       "ticker": "175.HK",
@@ -84,7 +84,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-16T14:03:01.411451+00:00"
+      "engine_run_at": "2026-06-16T14:23:08.334732+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -111,7 +111,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-16T14:03:01.411560+00:00"
+      "engine_run_at": "2026-06-16T14:23:08.334819+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -138,7 +138,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-16T14:03:01.411659+00:00"
+      "engine_run_at": "2026-06-16T14:23:08.334892+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -165,7 +165,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-16T14:03:01.411757+00:00"
+      "engine_run_at": "2026-06-16T14:23:08.334963+00:00"
     }
   ]
 }

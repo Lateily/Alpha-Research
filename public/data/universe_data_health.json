@@ -1,68 +1,53 @@
 {
-  "verdict": "BLOCKED",
-  "as_of": "2026-06-16T13:58:58.189973+00:00",
+  "verdict": "WARN",
+  "as_of": "2026-06-16T14:18:45.134384+00:00",
   "max_age_days": 2,
   "meta": {
-    "fetched_at": "2026-06-12T05:55:22.055762",
-    "count": 5862,
-    "version": "4.1",
+    "fetched_at": "2026-06-16T14:17:47.728604",
+    "count": 5513,
+    "version": "4.2",
     "scorer": "barra_lite_v1"
   },
   "coverage": {
-    "price": 0.9403,
-    "pe": 0.9432,
-    "pb": 0.9432,
+    "price": 1.0,
+    "pe": 0.7359,
+    "pb": 0.9924,
     "roe": 0.0
   },
   "factor_summaries": {
     "value": {
-      "coverage": 0.9887410440122825,
-      "unique": 899,
-      "stdev": 22.206652,
-      "median": 57.5
+      "coverage": 0.9883910756393978,
+      "unique": 960,
+      "stdev": 24.787746,
+      "median": 55.3
     },
     "quality": {
-      "coverage": 0.9887410440122825,
+      "coverage": 0.9883910756393978,
       "unique": 1,
       "stdev": 0.0,
       "median": 50.0
     },
     "momentum": {
-      "coverage": 0.9887410440122825,
-      "unique": 678,
-      "stdev": 28.868327,
-      "median": 50.0
+      "coverage": 0.9883910756393978,
+      "unique": 985,
+      "stdev": 28.872949,
+      "median": 49.4
     },
     "size": {
-      "coverage": 0.9887410440122825,
-      "unique": 945,
-      "stdev": 28.865688,
+      "coverage": 0.9883910756393978,
+      "unique": 1001,
+      "stdev": 28.872815,
       "median": 50.0
     },
     "low_vol": {
-      "coverage": 0.9887410440122825,
-      "unique": 665,
-      "stdev": 28.868328,
+      "coverage": 0.9883910756393978,
+      "unique": 1000,
+      "stdev": 28.872909,
       "median": 50.0
     }
   },
-  "errors": [
-    {
-      "code": "stale_universe_snapshot",
-      "message": "Universe snapshot is 4 calendar days old (max 2). Do not use for execution or entry zones.",
-      "fetched_at": "2026-06-12T05:55:22.055762+00:00",
-      "as_of": "2026-06-16"
-    }
-  ],
+  "errors": [],
   "warnings": [
-    {
-      "code": "missing_field_definitions",
-      "message": "Universe metadata does not state PE/price field basis."
-    },
-    {
-      "code": "missing_factor_definitions",
-      "message": "Universe metadata does not state factor definitions."
-    },
     {
       "code": "pe_basis_not_registration_grade",
       "message": "PE is a provider multiple, not a verified TTM/forward valuation anchor."
@@ -76,7 +61,7 @@
       "message": "Quality factor lacks broad ROE coverage and should not be used as quality evidence.",
       "roe_coverage": 0.0,
       "quality_summary": {
-        "coverage": 0.9887410440122825,
+        "coverage": 0.9883910756393978,
         "unique": 1,
         "stdev": 0.0,
         "median": 50.0
