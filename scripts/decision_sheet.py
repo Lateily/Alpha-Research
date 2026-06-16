@@ -31,6 +31,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from universe_data_health import audit_universe
+
 REPO = Path(__file__).resolve().parent.parent
 D = REPO / "public" / "data"
 CORES = REPO / "docs" / "research" / "decision_sheets" / "cores"
@@ -43,6 +45,7 @@ REQUIRED_GROUPS = ("identity", "thesis", "evidence", "catalyst_calendar", "wrong
                    "valuation_target_range", "execution_plan", "risk", "disclaimers")
 BILINGUAL_FIELDS = (("thesis", "variant_perception"), ("thesis", "mechanism"))
 RR_CONVICTION_BAR = 2.0          # [unvalidated intuition] — the 2026-05-15 大参林 rule
+UNIVERSE_PRICE_MAX_AGE_DAYS = 2  # calendar days; conservative until trade-calendar wiring
 # Serenity block (#67 ratified 2026-06-11): REQUIRED for NEW names; optional for the
 # registered refresh sample(s). 10 fields per SERENITY_INTEGRATION_SPEC.md §2.
 SERENITY_FIELDS = ("theme_system_change", "value_chain_map", "scarce_layer", "company_role",
@@ -154,6 +157,51 @@ def qualify(core: dict) -> list[str]:
     return errs
 
 
+def _apply_universe_price_gate(auto: dict, universe_payload: dict) -> dict:
+    """Block registration-grade R/R when price came only from a stale universe snapshot.
+
+    Committed per-ticker OHLC bars are trusted independently; this gate only
+    applies to the universe fallback path for new names that lack committed OHLC.
+    """
+    lp = dict(auto.get("last_price") or {})
+    if lp.get("source") != "universe_a_snapshot_fallback":
+        return auto
+    report = audit_universe(
+        universe_payload or {},
+        as_of=datetime.now(timezone.utc),
+        max_age_days=UNIVERSE_PRICE_MAX_AGE_DAYS,
+        tickers=[],
+    )
+    def _stable_items(items):
+        stable = []
+        for item in items or []:
+            stable.append({k: v for k, v in item.items() if k != "as_of"})
+        return stable
+
+    compact = {
+        "verdict": report.get("verdict"),
+        "errors": _stable_items(report.get("errors") or []),
+        "warnings": _stable_items(report.get("warnings") or []),
+        "max_age_days": report.get("max_age_days"),
+        "universe_fetched_at": (report.get("meta") or {}).get("fetched_at"),
+    }
+    auto = {**auto, "data_integrity": {"universe_price_gate": compact}}
+    if report.get("verdict") == "BLOCKED":
+        reason = "stale_universe_reference_price"
+        lp.update({
+            "data_blocked": True,
+            "blocked_reason": reason,
+            "universe_health_verdict": "BLOCKED",
+            "universe_health_errors": compact["errors"],
+            "note": (
+                "UNTRUSTED universe fallback price — stale/blocked universe "
+                "snapshot; refresh committed price before R/R or registration"
+            ),
+        })
+        auto["last_price"] = lp
+    return auto
+
+
 def _auto_context(ticker: str) -> dict:
     safe = ticker.replace(".", "_")
     ohlc = _load(D / f"ohlc_{safe}.json", {}) or {}
@@ -176,7 +224,7 @@ def _auto_context(ticker: str) -> dict:
         px_close = row.get("price")
         px_date = ((uni.get("_meta") or {}).get("fetched_at") or "")[:10]
         px_src = "universe_a_snapshot_fallback"
-    return {
+    auto = {
         "last_price": {"close": px_close, "date": px_date, "source": px_src,
                        "note": "latest COMMITTED price — staleness is flagged, never papered over"},
         "technical": {"zone": sig.get("zone"), "generated_at": sig.get("generated_at"),
@@ -191,6 +239,7 @@ def _auto_context(ticker: str) -> dict:
                                    "methods_used": mrow.get("methods_used"),
                                    "note": "automated valuation generators' status — breaks logged honestly"},
     }
+    return _apply_universe_price_gate(auto, uni)
 
 
 def _apply_corporate_actions(auto: dict, core: dict) -> dict:
@@ -259,8 +308,19 @@ def compose(ticker: str) -> dict:
             print(f"  - {e}")
         raise SystemExit(2)
     auto = _apply_corporate_actions(_auto_context(ticker), core)
-    px = auto["last_price"].get("close")
-    rr = _rr(core["valuation_target_range"], px) if px else {"reward_to_risk": None, "error": "no price"}
+    last_price = auto.get("last_price") or {}
+    px = last_price.get("close")
+    if last_price.get("data_blocked"):
+        rr = {
+            "reference_price": px,
+            "reward_to_risk": None,
+            "error": "DATA_BLOCKED",
+            "data_blocked": True,
+            "blocked_reason": last_price.get("blocked_reason"),
+            "stance_at_reference": "DATA_BLOCKED (reference price is not registration-grade)",
+        }
+    else:
+        rr = _rr(core["valuation_target_range"], px) if px else {"reward_to_risk": None, "error": "no price"}
     sheet = {
         "_meta": {"layer": "Core Thesis Factory v1 — Single-Name Decision Sheet (单票决策书)",
                   "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md",
@@ -470,6 +530,22 @@ def _selftest() -> int:
     post = {"last_price": {"close": 186.74, "date": "2026-06-11", "source": "ohlc_committed"}}
     if _apply_corporate_actions(post, fake_core)["last_price"]["close"] != 186.74:
         errs.append("corporate-action adjustment must NOT touch a post-ex-date price")
+    # Universe fallback health gate: stale universe blocks only fallback prices, never committed OHLC
+    stale_uni = {"_meta": {"fetched_at": "2000-01-01T00:00:00", "count": 1}, "stocks": []}
+    fresh_uni = {"_meta": {"fetched_at": datetime.now(timezone.utc).isoformat(), "count": 1,
+                           "field_definitions": {"pe": {"basis": "provider valuation multiple"}},
+                           "factor_definitions": {"momentum": {"basis": "12-1 month momentum"}}},
+                 "stocks": [{"ticker": "A.SZ", "roe": 10, "factors": {"quality": 70}}]}
+    committed = {"last_price": {"close": 10, "date": "20260616", "source": "ohlc_committed"}}
+    if _apply_universe_price_gate(committed, stale_uni)["last_price"].get("data_blocked"):
+        errs.append("stale universe must NOT block committed-OHLC prices")
+    fallback = {"last_price": {"close": 10, "date": "2000-01-01", "source": "universe_a_snapshot_fallback"}}
+    blocked = _apply_universe_price_gate(fallback, stale_uni)
+    if not blocked["last_price"].get("data_blocked") or blocked["data_integrity"]["universe_price_gate"]["verdict"] != "BLOCKED":
+        errs.append("stale universe fallback price must be DATA_BLOCKED")
+    clear = _apply_universe_price_gate(fallback, fresh_uni)
+    if clear["last_price"].get("data_blocked") or clear["data_integrity"]["universe_price_gate"]["verdict"] == "BLOCKED":
+        errs.append("fresh universe fallback price must not be DATA_BLOCKED")
     # R/R math + conviction bar: bull_mid 152.5, bear_mid 55; px 93.75 -> rr=(152.5-93.75)/(93.75-55)=1.52
     rr = _rr(_valid_core()["valuation_target_range"], 93.75)
     if abs(rr["reward_to_risk"] - 1.52) > 0.02:
@@ -505,6 +581,7 @@ def _selftest() -> int:
           "monolingual / calibrated:true / <2 triggers / missing-serenity-on-new-name / <3 layers / "
           "<2 mechanized weakens / untiered bottleneck evidence; refresh-sample serenity exemption holds; "
           "corporate-action adjustment re-bases pre-split snapshots and leaves post-ex prices alone; "
+          "universe fallback price gate blocks stale snapshots without false-blocking committed OHLC; "
           "R/R math exact; 2:1 bar forces WATCH + computes the entry where the bar is met; content lock "
           "invariant to generated_at AND sensitive to content changes)")
     return 0
