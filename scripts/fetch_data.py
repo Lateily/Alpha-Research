@@ -695,6 +695,69 @@ def _df_to_dict(df):
 # ══════════════════════════════════════════════════════════════════════════════
 # 0. Universe Scorer — Barra CNE5-lite cross-sectional factor model
 # ══════════════════════════════════════════════════════════════════════════════
+UNIVERSE_FIELD_DEFINITIONS = {
+    "price": {
+        "source": "quote/universe provider",
+        "basis": "latest fetched market price",
+        "consumer_warning": "Must be treated as stale unless fetched_at is current for the intended decision date.",
+    },
+    "pe": {
+        "source": "quote/universe provider",
+        "basis": "provider valuation multiple; NOT guaranteed to be TTM, forecast, or annual-report PE",
+        "consumer_warning": "Do not label this as TTM PE or use it as a registration-grade valuation anchor without primary/financial reconciliation.",
+    },
+    "pb": {
+        "source": "quote/universe provider",
+        "basis": "provider price/book multiple",
+    },
+    "change_pct": {
+        "source": "quote/universe provider",
+        "basis": "same-day percentage change in the fetched quote snapshot",
+    },
+}
+
+UNIVERSE_FACTOR_DEFINITIONS = {
+    "value": {
+        "basis": "cross-sectional rank of lower PE and lower PB",
+        "status": "screening_only",
+        "consumer_warning": "Depends on provider PE/PB basis; not registration-grade valuation.",
+    },
+    "quality": {
+        "basis": "cross-sectional ROE rank when raw roe exists; otherwise neutral median fill",
+        "status": "often_inert_in_universe_a",
+        "consumer_warning": "If raw roe coverage is low, this factor collapses toward 50 and should not be interpreted as quality evidence.",
+    },
+    "momentum": {
+        "basis": "cross-sectional rank of 1-day change_pct",
+        "status": "short_tape_only",
+        "consumer_warning": "This is NOT 12-1 month momentum and must not be used as medium-term trend evidence.",
+    },
+    "size": {
+        "basis": "distance from 60th percentile log market-cap sweet spot",
+        "status": "screening_only",
+    },
+    "low_vol": {
+        "basis": "cross-sectional rank of lower same-day amplitude",
+        "status": "short_tape_only",
+    },
+}
+
+def _universe_meta(count):
+    return {
+        "fetched_at": datetime.now().isoformat(),
+        "count": count,
+        "version": "4.2",
+        "scored": True,
+        "scorer": "barra_lite_v1",
+        "field_definitions": UNIVERSE_FIELD_DEFINITIONS,
+        "factor_definitions": UNIVERSE_FACTOR_DEFINITIONS,
+        "research_use_warning": (
+            "universe_* factors are screening hints only. Registration-grade "
+            "thesis work must reconcile price, valuation, and financials against "
+            "primary/committed evidence."
+        ),
+    }
+
 def score_universe(stocks):
     """
     Cross-sectional factor scoring for a universe of stocks.
@@ -703,7 +766,8 @@ def score_universe(stocks):
     Factors (Barra CNE5 lite — all cross-sectional percentile ranks 0-100):
       value_rank:   lower PE + lower PB → higher rank (cheap is better)
       quality_rank: higher ROE → higher rank
-      momentum_rank: higher 1-day change_pct → higher rank
+      momentum_rank: higher 1-day change_pct → higher rank (short tape only,
+                    NOT 12-1 month momentum)
       size_rank:    mid-size preference — very large AND very small penalised
                     (log cap closest to 60th-pct gets highest rank; avoids
                     micro-cap liquidity traps AND mega-cap priced-in effect)
@@ -2169,9 +2233,7 @@ def main():
         print("  Scoring A-share universe (Barra-lite)...")
         score_universe(a_stocks)
         with open(OUTPUT_DIR / "universe_a.json", "w", encoding="utf-8") as f:
-            json.dump({"_meta": {"fetched_at": datetime.now().isoformat(),
-                                 "count": len(a_stocks), "version": "4.1",
-                                 "scored": True, "scorer": "barra_lite_v1"},
+            json.dump({"_meta": _universe_meta(len(a_stocks)),
                        "stocks": a_stocks}, f, ensure_ascii=False, default=str)
     print()
 
@@ -2182,9 +2244,7 @@ def main():
         print("  Scoring HK universe (Barra-lite)...")
         score_universe(hk_stocks)
         with open(OUTPUT_DIR / "universe_hk.json", "w", encoding="utf-8") as f:
-            json.dump({"_meta": {"fetched_at": datetime.now().isoformat(),
-                                 "count": len(hk_stocks), "version": "4.1",
-                                 "scored": True, "scorer": "barra_lite_v1"},
+            json.dump({"_meta": _universe_meta(len(hk_stocks)),
                        "stocks": hk_stocks}, f, ensure_ascii=False, default=str)
     print()
 
