@@ -44,6 +44,11 @@ jobs:
       - name: Run data fetcher v4.0
         id: fetcher
         continue-on-error: true
+        env:
+          # Lets fetch_data.py fall back to Tushare daily/daily_basic to rebuild the
+          # A-share universe when the AKShare full-market endpoint disconnects (PR #91).
+          # Same secret the dedicated Tushare steps (2d.5-2d.8) already use.
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_data.py
 
       # ── Step 1b: Universe data-health guard artifact ─────────────────────
