@@ -11,7 +11,7 @@
       "paper": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/positions.json (read-only)",
       "registered": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/thesis_queue.json"
     },
-    "as_of_paper": "2026-06-15T14:41:34"
+    "as_of_paper": "2026-06-16T06:37:32"
   },
   "books": {
     "A_current_paper": {
@@ -20,8 +20,8 @@
           "ticker": "300308.SZ",
           "name": "中际旭创",
           "side": "LONG",
-          "weight_pct": 58.57,
-          "pnl_pct": 82.72
+          "weight_pct": 58.61,
+          "pnl_pct": 82.85
         },
         {
           "ticker": "6160.HK",
@@ -48,11 +48,11 @@
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "weight_pct": 3.42,
-          "pnl_pct": -5.58
+          "weight_pct": 3.37,
+          "pnl_pct": -6.85
         }
       ],
-      "gross_pct": 100.01,
+      "gross_pct": 100.0,
       "no_trade_flag": true
     },
     "B_thesis_aligned": {
@@ -61,7 +61,7 @@
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "paper_weight_pct": 3.42,
+          "paper_weight_pct": 3.37,
           "renorm_weight_pct": 100.0
         }
       ],
@@ -118,7 +118,7 @@
       "name": "比亚迪",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 3.42,
+      "paper_weight_pct": 3.37,
       "in_registered": true,
       "registered_direction": "LONG",
       "registered_role": "directional",
@@ -142,7 +142,7 @@
       "name": "中际旭创",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 58.57,
+      "paper_weight_pct": 58.61,
       "in_registered": true,
       "registered_direction": "PASS",
       "registered_role": "observer_control",
@@ -214,9 +214,9 @@
     "registered_not_held": [
       "603233.SH"
     ],
-    "paper_gross_pct": 100.01,
-    "paper_weight_aligned_pct": 3.42,
-    "paper_weight_aligned_share": 0.0342
+    "paper_gross_pct": 100.0,
+    "paper_weight_aligned_pct": 3.37,
+    "paper_weight_aligned_share": 0.0337
   },
   "performance": {
     "status": "PENDING",
