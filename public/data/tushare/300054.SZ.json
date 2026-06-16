@@ -1,11 +1,24 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-06-16T06:38:45Z",
+  "fetched_at": "2026-06-16T13:11:21Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260616",
+          "open": 84.99,
+          "high": 86.08,
+          "low": 82.88,
+          "close": 84.5,
+          "pre_close": 85.57,
+          "change": -1.07,
+          "pct_chg": -1.2504,
+          "vol": 492985.61,
+          "amount": 4155856.12199
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260615",
@@ -787,18 +800,38 @@
           "amount": 1085204.601
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "daily_basic": {
       "rows": [
         {
           "ts_code": "300054.SZ",
+          "trade_date": "20260616",
+          "close": 84.5,
+          "turnover_rate": 6.6356,
+          "turnover_rate_f": 7.3185,
+          "volume_ratio": 0.88,
+          "pe": 111.7966,
+          "pe_ttm": 96.9883,
+          "pb": 14.742,
+          "ps": 21.9996,
+          "ps_ttm": 20.8801,
+          "dv_ratio": 0.1173,
+          "dv_ttm": 0.1173,
+          "total_share": 95285.7355,
+          "float_share": 74293.9652,
+          "free_share": 67361.9419,
+          "total_mv": 8051645.03,
+          "circ_mv": 6277840.465
+        },
+        {
+          "ts_code": "300054.SZ",
           "trade_date": "20260615",
           "close": 85.57,
           "turnover_rate": 9.2379,
           "turnover_rate_f": 10.1885,
-          "volume_ratio": 1.3807,
+          "volume_ratio": 1.38,
           "pe": 113.2123,
           "pe_ttm": 98.2164,
           "pb": 14.9287,
@@ -818,7 +851,7 @@
           "close": 78.99,
           "turnover_rate": 12.0392,
           "turnover_rate_f": 13.2781,
-          "volume_ratio": 2.2808,
+          "volume_ratio": 2.28,
           "pe": 104.5067,
           "pe_ttm": 90.664,
           "pb": 13.7807,
@@ -1993,7 +2026,7 @@
           "circ_mv": 3497240.7253
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "adj_factor": {

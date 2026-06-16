@@ -1,6 +1,6 @@
 {
   "as_of": "2026-06-16",
-  "generated": "2026-06-16T06:37:32.402418",
+  "generated": "2026-06-16T13:10:08.350844",
   "status": "ok",
   "config": {
     "vp_threshold": 60,
@@ -11,46 +11,46 @@
   },
   "summary": {
     "periods": 5,
-    "annualised_return_pct": 856.49,
+    "annualised_return_pct": 680.56,
     "benchmark_return_pct": 0.0,
-    "alpha_annual_pct": 856.49,
+    "alpha_annual_pct": 680.56,
     "beta": 1.0,
-    "sharpe_ratio": 69.728,
+    "sharpe_ratio": 55.371,
     "benchmark_sharpe": 0.0,
     "annualised_vol_pct": 12.25,
     "benchmark_vol_pct": 0.0,
     "max_drawdown_pct": -0.0,
     "benchmark_max_dd_pct": -0.0,
-    "cumulative_return_pct": 155.78,
+    "cumulative_return_pct": 135.0,
     "benchmark_cumulative_pct": 0.0,
     "hit_rate_pct": 100.0,
-    "bootstrap_ci_lo_pct": 18.08,
-    "bootstrap_ci_hi_pct": 23.57
+    "bootstrap_ci_lo_pct": 16.05,
+    "bootstrap_ci_hi_pct": 21.54
   },
   "nav_series": [
     {
       "date": "2025-11-28",
-      "portfolio": 1.2337,
+      "portfolio": 1.2134,
       "benchmark": 1.0
     },
     {
       "date": "2025-12-31",
-      "portfolio": 1.4751,
+      "portfolio": 1.4263,
       "benchmark": 1.0
     },
     {
       "date": "2026-01-30",
-      "portfolio": 1.7087,
+      "portfolio": 1.6233,
       "benchmark": 1.0
     },
     {
       "date": "2026-02-27",
-      "portfolio": 2.0485,
+      "portfolio": 1.9131,
       "benchmark": 1.0
     },
     {
       "date": "2026-03-31",
-      "portfolio": 2.5578,
+      "portfolio": 2.35,
       "benchmark": 1.0
     }
   ],
@@ -68,14 +68,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": 23.37,
+      "portfolio_return": 21.34,
       "benchmark_return": 0,
-      "excess_return": 23.37,
+      "excess_return": 21.34,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": 43.64,
-          "net_return": 43.44,
+          "raw_return": 39.59,
+          "net_return": 39.39,
           "tx_cost": 0.2
         },
         {
@@ -99,14 +99,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": 19.57,
+      "portfolio_return": 17.54,
       "benchmark_return": 0,
-      "excess_return": 19.57,
+      "excess_return": 17.54,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": 43.64,
-          "net_return": 43.44,
+          "raw_return": 39.59,
+          "net_return": 39.39,
           "tx_cost": 0.2
         },
         {
@@ -130,14 +130,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": 15.84,
+      "portfolio_return": 13.81,
       "benchmark_return": 0,
-      "excess_return": 15.84,
+      "excess_return": 13.81,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": 43.64,
-          "net_return": 43.44,
+          "raw_return": 39.59,
+          "net_return": 39.39,
           "tx_cost": 0.2
         },
         {
@@ -161,14 +161,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": 19.88,
+      "portfolio_return": 17.85,
       "benchmark_return": 0,
-      "excess_return": 19.88,
+      "excess_return": 17.85,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": 43.64,
-          "net_return": 43.44,
+          "raw_return": 39.59,
+          "net_return": 39.39,
           "tx_cost": 0.2
         },
         {
@@ -192,14 +192,14 @@
         }
       ],
       "num_positions": 2,
-      "portfolio_return": 24.86,
+      "portfolio_return": 22.84,
       "benchmark_return": 0,
-      "excess_return": 24.86,
+      "excess_return": 22.84,
       "stock_detail": [
         {
           "ticker": "300308.SZ",
-          "raw_return": 43.64,
-          "net_return": 43.44,
+          "raw_return": 39.59,
+          "net_return": 39.39,
           "tx_cost": 0.2
         },
         {

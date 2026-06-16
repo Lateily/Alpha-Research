@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-16T06:41:45.474305+00:00",
+  "generated_at": "2026-06-16T13:14:23.611894+00:00",
   "tickers_scored": 9,
   "summary": {
     "entry_candidates": [],
@@ -72,7 +72,7 @@
         "BULLISH_ALIGNMENT",
         "KDJ_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-06-16T06:41:45.473836+00:00"
+      "computed_at": "2026-06-16T13:14:23.611435+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -139,7 +139,7 @@
         "MACD_GOLDEN_CROSS",
         "BB_UPPER_BREAK"
       ],
-      "computed_at": "2026-06-16T06:41:45.473706+00:00"
+      "computed_at": "2026-06-16T13:14:23.611295+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -178,7 +178,7 @@
       "signal_types": [
         "RSI_RECOVERING"
       ],
-      "computed_at": "2026-06-16T06:41:45.474160+00:00"
+      "computed_at": "2026-06-16T13:14:23.611729+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -200,7 +200,7 @@
       "rationale_e": "RSI 39 | Price vs MA20 -3.1% | Regime: PERMISSIVE | VP 48",
       "rationale_z": "RSI 39 | 距MA20 -3.1% | 政策顺风 | VP 48",
       "signal_types": [],
-      "computed_at": "2026-06-16T06:41:45.473444+00:00"
+      "computed_at": "2026-06-16T13:14:23.611005+00:00"
     },
     {
       "ticker": "175.HK",
@@ -239,7 +239,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-06-16T06:41:45.473576+00:00"
+      "computed_at": "2026-06-16T13:14:23.611121+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -261,7 +261,7 @@
       "rationale_e": "RSI 46 | Price vs MA20 +0.0% | VP 50",
       "rationale_z": "RSI 46 | 距MA20 +0.0% | VP 50",
       "signal_types": [],
-      "computed_at": "2026-06-16T06:41:45.473915+00:00"
+      "computed_at": "2026-06-16T13:14:23.611523+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -328,7 +328,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-06-16T06:41:45.474056+00:00"
+      "computed_at": "2026-06-16T13:14:23.611629+00:00"
     },
     {
       "ticker": "700.HK",
@@ -350,7 +350,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-06-16T06:41:45.474234+00:00"
+      "computed_at": "2026-06-16T13:14:23.611811+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -372,7 +372,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-06-16T06:41:45.474294+00:00"
+      "computed_at": "2026-06-16T13:14:23.611882+00:00"
     }
   ]
 }

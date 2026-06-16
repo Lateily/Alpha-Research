@@ -1,11 +1,24 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-06-16T06:37:50Z",
+  "fetched_at": "2026-06-16T13:10:26Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260616",
+          "open": 1240.0,
+          "high": 1273.68,
+          "low": 1232.46,
+          "close": 1248.09,
+          "pre_close": 1245.0,
+          "change": 3.09,
+          "pct_chg": 0.2482,
+          "vol": 232821.86,
+          "amount": 29091725.5555
+        },
         {
           "ts_code": "300308.SZ",
           "trade_date": "20260615",
@@ -787,18 +800,38 @@
           "amount": 21435555.273
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "daily_basic": {
       "rows": [
         {
           "ts_code": "300308.SZ",
+          "trade_date": "20260616",
+          "close": 1248.09,
+          "turnover_rate": 2.0976,
+          "turnover_rate_f": 2.7713,
+          "volume_ratio": 0.72,
+          "pe": 128.9136,
+          "pe_ttm": 93.1115,
+          "pb": 39.1129,
+          "ps": 36.3995,
+          "ps_ttm": 27.2592,
+          "dv_ratio": 0.0718,
+          "dv_ttm": 0.1119,
+          "total_share": 111523.4641,
+          "float_share": 110993.9778,
+          "free_share": 84012.6316,
+          "total_mv": 139191327.6723,
+          "circ_mv": 138530476.4982
+        },
+        {
+          "ts_code": "300308.SZ",
           "trade_date": "20260615",
           "close": 1245.0,
           "turnover_rate": 3.0834,
           "turnover_rate_f": 4.0736,
-          "volume_ratio": 1.0584,
+          "volume_ratio": 1.06,
           "pe": 128.5945,
           "pe_ttm": 92.881,
           "pb": 39.016,
@@ -818,7 +851,7 @@
           "close": 1149.0,
           "turnover_rate": 3.125,
           "turnover_rate_f": 4.1286,
-          "volume_ratio": 0.994,
+          "volume_ratio": 0.99,
           "pe": 118.6788,
           "pe_ttm": 85.7191,
           "pb": 36.0076,
@@ -1993,7 +2026,7 @@
           "circ_mv": 64119027.956
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "adj_factor": {

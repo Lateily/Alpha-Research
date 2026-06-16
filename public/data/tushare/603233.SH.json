@@ -1,11 +1,24 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-06-16T06:38:17Z",
+  "fetched_at": "2026-06-16T13:10:54Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20260616",
+          "open": 16.83,
+          "high": 16.83,
+          "low": 16.36,
+          "close": 16.59,
+          "pre_close": 16.68,
+          "change": -0.09,
+          "pct_chg": -0.5396,
+          "vol": 47772.9,
+          "amount": 79147.259
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20260615",
@@ -787,18 +800,38 @@
           "amount": 77803.349
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "daily_basic": {
       "rows": [
         {
           "ts_code": "603233.SH",
+          "trade_date": "20260616",
+          "close": 16.59,
+          "turnover_rate": 0.4195,
+          "turnover_rate_f": 1.0618,
+          "volume_ratio": 0.71,
+          "pe": 15.2953,
+          "pe_ttm": 14.6872,
+          "pb": 2.4596,
+          "ps": 0.687,
+          "ps_ttm": 0.6866,
+          "dv_ratio": 3.8949,
+          "dv_ttm": 3.8949,
+          "total_share": 113884.8067,
+          "float_share": 113884.8067,
+          "free_share": 44991.6141,
+          "total_mv": 1889348.9979,
+          "circ_mv": 1889348.9979
+        },
+        {
+          "ts_code": "603233.SH",
           "trade_date": "20260615",
           "close": 16.68,
           "turnover_rate": 0.6902,
           "turnover_rate_f": 1.7471,
-          "volume_ratio": 1.2279,
+          "volume_ratio": 1.23,
           "pe": 15.3783,
           "pe_ttm": 14.7669,
           "pb": 2.473,
@@ -818,7 +851,7 @@
           "close": 17.18,
           "turnover_rate": 0.7456,
           "turnover_rate_f": 1.8873,
-          "volume_ratio": 1.4245,
+          "volume_ratio": 1.42,
           "pe": 15.8393,
           "pe_ttm": 15.2095,
           "pb": 2.5471,
@@ -1993,7 +2026,7 @@
           "circ_mv": 2135340.1256
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "adj_factor": {
