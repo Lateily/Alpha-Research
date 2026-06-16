@@ -173,9 +173,12 @@ def _apply_universe_price_gate(auto: dict, universe_payload: dict) -> dict:
         tickers=[],
     )
     def _stable_items(items):
+        # Keep only wall-clock-invariant fields. The raw audit message embeds
+        # a growing day-count ("N calendar days old"), and auto_context is part
+        # of the content_lock payload.
         stable = []
         for item in items or []:
-            stable.append({k: v for k, v in item.items() if k != "as_of"})
+            stable.append({k: v for k, v in item.items() if k not in ("as_of", "message")})
         return stable
 
     compact = {
@@ -543,6 +546,9 @@ def _selftest() -> int:
     blocked = _apply_universe_price_gate(fallback, stale_uni)
     if not blocked["last_price"].get("data_blocked") or blocked["data_integrity"]["universe_price_gate"]["verdict"] != "BLOCKED":
         errs.append("stale universe fallback price must be DATA_BLOCKED")
+    gate_errs = blocked["data_integrity"]["universe_price_gate"]["errors"]
+    if any(("message" in e) or ("as_of" in e) for e in gate_errs):
+        errs.append("blocked-gate stored errors must be wall-clock-invariant (strip message/as_of)")
     clear = _apply_universe_price_gate(fallback, fresh_uni)
     if clear["last_price"].get("data_blocked") or clear["data_integrity"]["universe_price_gate"]["verdict"] == "BLOCKED":
         errs.append("fresh universe fallback price must not be DATA_BLOCKED")
