@@ -1,7 +1,7 @@
 {
   "ticker": "688120.SH",
   "generated_at": "2026-06-16",
-  "price": 199.33,
+  "price": 201.18,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
@@ -9,41 +9,51 @@
     {
       "type": "RSI_RECOVERING",
       "strength": "moderate",
-      "date": "20260615",
+      "date": "20260616",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 33.9→39.9 — momentum rebuilding",
-        "z": "RSI从33.9回升至39.9，动能修复"
+        "e": "RSI recovering 39.9→40.6 — momentum rebuilding",
+        "z": "RSI从39.9回升至40.6，动能修复"
+      }
+    },
+    {
+      "type": "KDJ_GOLDEN_CROSS",
+      "strength": "strong",
+      "date": "20260616",
+      "bullish": true,
+      "description": {
+        "e": "KDJ K(20.7) crossed above D(18.3) in oversold — reversal signal",
+        "z": "KDJ K(20.7)上穿D(18.3)，超卖区金叉看涨"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 2,
     "bearish": 0,
-    "total": 1
+    "total": 2
   },
   "indicators": {
-    "ma5": 201.5,
-    "ma20": 251.38,
-    "ma60": 211.23,
-    "rsi14": 39.9,
-    "vol_ma20": 123245,
-    "vol_ratio": 1.42,
-    "price_vs_ma20": -20.71,
-    "price_vs_ma60": -5.63,
-    "change_1d": 8.33,
-    "change_5d": -17.05,
-    "change_20d": -26.99,
-    "macd_dif": -8.2988,
-    "macd_dea": 3.0507,
-    "macd_hist": -22.699,
-    "bb_upper": 323.68,
-    "bb_mid": 251.38,
-    "bb_lower": 179.09,
-    "bb_bandwidth": 57.52,
-    "kdj_k": 17.0,
-    "kdj_d": 17.0,
-    "kdj_j": 16.8,
+    "ma5": 190.69,
+    "ma20": 247.56,
+    "ma60": 211.66,
+    "rsi14": 40.6,
+    "vol_ma20": 124852,
+    "vol_ratio": 1.2,
+    "price_vs_ma20": -18.74,
+    "price_vs_ma60": -4.95,
+    "change_1d": 0.93,
+    "change_5d": -21.17,
+    "change_20d": -27.53,
+    "macd_dif": -9.4077,
+    "macd_dea": 0.559,
+    "macd_hist": -19.9335,
+    "bb_upper": 321.96,
+    "bb_mid": 247.56,
+    "bb_lower": 173.17,
+    "bb_bandwidth": 60.1,
+    "kdj_k": 20.7,
+    "kdj_d": 18.3,
+    "kdj_j": 25.7,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,

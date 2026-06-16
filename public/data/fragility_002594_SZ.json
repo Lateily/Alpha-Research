@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-06-16T06:41:45.891615+00:00",
+  "generated_at": "2026-06-16T14:03:01.829377+00:00",
   "ticker": "002594.SZ",
-  "composite": 8.7,
+  "composite": 8.8,
   "band": "ANTIFRAGILE",
   "components": {
     "F1_leverage": null,
     "F2_liquidity_survival": null,
     "F3_tail_risk": 0.0,
     "F4_vol_regime": 22.5,
-    "F5_max_drawdown": 3.5
+    "F5_max_drawdown": 3.8
   },
   "f6_concentration": {
     "score": 35,
@@ -21,10 +21,10 @@
   "fundamentals": null,
   "price_metrics": {
     "n_returns": 60,
-    "annual_vol": 0.2899,
-    "skew": 0.647,
-    "excess_kurtosis": -0.357,
-    "max_drawdown": 0.1657
+    "annual_vol": 0.2901,
+    "skew": 0.648,
+    "excess_kurtosis": -0.36,
+    "max_drawdown": 0.1671
   },
   "label": "[unvalidated intuition] — composite measures FINANCIAL fragility (leverage, liquidity, return-distribution tails, vol, drawdown). Does NOT measure business-model fragility — that lives in the SEPARATE f6_concentration field below (MANUAL seed from watchlist.json, NOT folded into composite). For clinical-stage biotech with single-asset exposure, read composite + f6 together: a 'ROBUST' composite + high f6 score still implies elevated overall tail risk. Pair with wrongIf monitor for binary-event coverage. Thresholds are Taleb-literature priors, not validated against A-share/HK trade history.",
   "weighting": "equal-weight (F1..F5 each 20%) — fundamentals-tilted variant deferred per AHF_COMPARISON_CALIBRATION.md open question Q1",

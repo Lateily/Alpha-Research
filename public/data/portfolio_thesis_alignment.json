@@ -2,7 +2,7 @@
   "_meta": {
     "read_only": true,
     "marks_only_no_trades": true,
-    "as_of": "2026-06-16T13:10:08",
+    "as_of": "2026-06-16T13:58:58",
     "source_positions": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/positions.json",
     "source_backfill": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/thesis_direction_backfill.json",
     "rule_doc": "docs/strategy/PORTFOLIO_THESIS_ALIGNMENT_RULES.md",
