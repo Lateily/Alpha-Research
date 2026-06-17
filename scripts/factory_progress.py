@@ -62,9 +62,148 @@ def _load(p: Path, default=None):
         return default
 
 
+def _safe(ticker: str | None) -> str:
+    return (ticker or "").replace(".", "_")
+
+
+def _days_to(due: str | None, today: date):
+    try:
+        return (date.fromisoformat(due) - today).days
+    except Exception:
+        return None
+
+
+def _next_pending(checkpoints: list[dict], today: date):
+    pending = []
+    for c in checkpoints or []:
+        if c.get("status") != "PENDING":
+            continue
+        dd = _days_to(c.get("due_date"), today)
+        pending.append({**c, "days_to_due": dd})
+    return sorted(pending, key=lambda x: x.get("due_date") or "9999")[0] if pending else None
+
+
+def _universe_map() -> dict:
+    uni = _load(D / "universe_a.json", {}) or {}
+    return {r.get("ticker"): r for r in uni.get("stocks", []) if r.get("ticker")}
+
+
+def _signal_summary(ticker: str | None) -> dict:
+    sig = _load(D / f"signals_{_safe(ticker)}.json", {}) or {}
+    indicators = sig.get("indicators") or {}
+    return {
+        "zone": sig.get("zone"),
+        "generated_at": sig.get("generated_at"),
+        "rsi14": indicators.get("rsi14"),
+        "ma20": indicators.get("ma20"),
+        "ma60": indicators.get("ma60"),
+        "signals": [s.get("type") for s in (sig.get("signals") or [])],
+        "source": "signals_file" if sig else "missing",
+    }
+
+
+def _technical_from_universe(ticker: str | None, row: dict | None = None) -> dict:
+    row = row or _universe_map().get(ticker) or {}
+    factors = row.get("factors") or {}
+    return {
+        "price_change_pct": row.get("change_pct"),
+        "turnover_rate": row.get("turnover_rate"),
+        "volume_ratio": row.get("volume_ratio"),
+        "momentum_factor": factors.get("momentum"),
+        "low_vol_factor": factors.get("low_vol"),
+        "alpha_score": row.get("alpha_score"),
+        "source": "universe_a",
+    }
+
+
+def _official_cockpit_rows(led: dict, today: date) -> list[dict]:
+    rows = []
+    uni = _universe_map()
+    for r in led.get("registrations", []):
+        cps = []
+        for c in r.get("checkpoints", []):
+            cps.append({**c, "days_to_due": _days_to(c.get("due_date"), today)})
+        nxt = _next_pending(cps, today)
+        rows.append({
+            "ticker": r.get("ticker"),
+            "name": r.get("name"),
+            "source": "OFFICIAL_CTF",
+            "status": r.get("status"),
+            "redteam": {
+                "avg": ((r.get("human_red_team") or {}).get("average")),
+                "verdict": ((r.get("human_red_team") or {}).get("verdict")),
+            },
+            "stance": r.get("stance_at_registration"),
+            "direction": r.get("direction"),
+            "reference_price": r.get("reference_price"),
+            "reference_price_date": r.get("reference_price_date"),
+            "valuation": {"band": r.get("band")},
+            "catalysts": r.get("catalysts") or [],
+            "wrong_if": r.get("wrong_if") or [],
+            "checkpoints": cps,
+            "next_checkpoint": nxt,
+            "technical": {**_technical_from_universe(r.get("ticker"), uni.get(r.get("ticker"))),
+                          "signals": _signal_summary(r.get("ticker"))},
+            "data_quality": {
+                "registered": True,
+                "official_redteam_pass": bool(((r.get("human_red_team") or {}).get("verdict") or "").startswith("PASS")),
+            },
+        })
+    return rows
+
+
+def _beta_cockpit_rows(today: date) -> tuple[list[dict], list[dict]]:
+    beta = _load(D / "ai_forward_beta_checkpoint_ledger.json", {}) or {}
+    rows = []
+    for r in beta.get("registrations", []):
+        cps = []
+        for c in r.get("checkpoints", []):
+            cps.append({**c, "days_to_due": _days_to(c.get("due_date"), today)})
+        nxt = _next_pending(cps, today)
+        committed = r.get("committed_snapshot") or {}
+        rows.append({
+            "ticker": r.get("ticker"),
+            "name": {"zh": r.get("name"), "en": r.get("name")},
+            "source": "AI_BETA",
+            "status": r.get("status"),
+            "bucket": r.get("bucket"),
+            "stance": r.get("stance"),
+            "reference_price": r.get("reference_price"),
+            "reference_price_date": r.get("reference_price_date"),
+            "valuation": {
+                "anchor": r.get("valuation_anchor"),
+                "research_entry_zone": r.get("research_entry_zone"),
+                "pe": committed.get("committed_pe"),
+                "pb": committed.get("committed_pb"),
+                "mcap_yi": committed.get("committed_mcap_yi"),
+            },
+            "catalysts": [{"date": None, "event": r.get("catalyst")}],
+            "wrong_if": r.get("wrong_if") or [],
+            "checkpoints": cps,
+            "next_checkpoint": nxt,
+            "technical": {
+                **_technical_from_universe(r.get("ticker")),
+                "turnover_rate": committed.get("committed_turnover_rate"),
+                "momentum_factor": committed.get("factor_momentum"),
+                "value_factor": committed.get("factor_value"),
+                "signals": {"source": "not_generated_for_beta_universe"},
+            },
+            "data_quality": {
+                "registered": False,
+                "official_redteam_pass": False,
+                "human_redteam": (r.get("quality_gate") or {}).get("human_red_team"),
+                "reconciliation_flags": r.get("reconciliation_flags"),
+                "is_buy_recommendation": False,
+            },
+        })
+    return rows, beta.get("excluded", [])
+
+
 def build(today: date | None = None) -> dict:
     today = today or datetime.now(timezone.utc).date()
     led = _load(D / "decision_sheet_checkpoints.json", {}) or {}
+    official_rows = _official_cockpit_rows(led, today)
+    beta_rows, beta_excluded = _beta_cockpit_rows(today)
     regs = []
     next_read = None
     for r in led.get("registrations", []):
@@ -103,6 +242,12 @@ def build(today: date | None = None) -> dict:
     }
 
     wl = _load(D / "watchlist.json", {}) or {}
+    all_rows = official_rows + beta_rows
+    due = [r.get("next_checkpoint") for r in all_rows
+           if r.get("status") in ("ACTIVE", "BETA_FORWARD_ACTIVE") and r.get("next_checkpoint")]
+    due = [d for d in due if d]
+    cockpit_next = sorted(due, key=lambda x: x.get("due_date") or "9999")[0] if due else None
+
     return {
         "_meta": {"generated_at": datetime.now(timezone.utc).isoformat(),
                   "layer": "Factory Progress aggregator (read-only over committed artifacts)",
@@ -111,6 +256,21 @@ def build(today: date | None = None) -> dict:
                       "n_active": led.get("_meta", {}).get("n_active"),
                       "registrations": regs, "next_read": next_read,
                       "note_zh": "人工红队为 measure of record;检查点是 case-level 读数,不是统计"},
+        "checkpoint_cockpit": {
+            "title_zh": "Forward Court — Checkpoint Ledger Cockpit",
+            "summary": {
+                "official_active": sum(1 for r in official_rows if r.get("status") == "ACTIVE"),
+                "official_retired": sum(1 for r in official_rows if r.get("status") != "ACTIVE"),
+                "beta_active": sum(1 for r in beta_rows if r.get("status") == "BETA_FORWARD_ACTIVE"),
+                "beta_excluded": len(beta_excluded),
+                "next_checkpoint": cockpit_next,
+            },
+            "official": official_rows,
+            "beta": beta_rows,
+            "excluded": beta_excluded,
+            "disclaimer": ("Official rows are human-red-team-PASS CTF records. Beta rows are owner-authorized "
+                           "forward-validation cases with red-team PENDING; neither is a validated buy list."),
+        },
         "discovery": discovery,
         "factory_b": {"title_zh": "交易工厂(Quant Strategy)",
                       "line_status_zh": "V2-PEAD 终裁:v2a/v2b KILL · v2c NO-CLAIM(无 paper 无雷达)— 5 家族 0 幸存,工厂 KEEP;quant 线暂停,V3(倾向业绩预告事件)需新 manifest + Junyan call",
@@ -137,6 +297,21 @@ def _selftest() -> int:
         errs.append("family history must keep the KILL record visible (honesty: dead families stay on the board)")
     if "UNVALIDATED" not in snap["_meta"]["disclaimer"].upper():
         errs.append("disclaimer must carry UNVALIDATED")
+    cockpit = snap.get("checkpoint_cockpit") or {}
+    if not cockpit.get("summary"):
+        errs.append("checkpoint_cockpit summary missing")
+    if cockpit.get("beta"):
+        if any((r.get("data_quality") or {}).get("is_buy_recommendation") for r in cockpit["beta"]):
+            errs.append("beta cockpit rows must never be marked as buy recommendations")
+        if not all((r.get("data_quality") or {}).get("human_redteam") == "PENDING" for r in cockpit["beta"]):
+            errs.append("beta cockpit rows must show human red-team PENDING")
+    if cockpit.get("official"):
+        # Owner reversed the earlier #74 retire-BYD plan: BYD is KEPT ACTIVE in the
+        # official CTF ledger with its 7/10 checkpoint (first read 2026-07-10), and only
+        # EXCLUDED from the AI beta pool. Guard against accidentally re-retiring it.
+        byd = next((r for r in cockpit["official"] if r.get("ticker") == "002594.SZ"), None)
+        if byd is not None and byd.get("status") != "ACTIVE":
+            errs.append("BYD must stay ACTIVE in the official ledger (owner kept it; do not retire)")
     if errs:
         print("factory_progress selftest FAILED:")
         for e in errs:
