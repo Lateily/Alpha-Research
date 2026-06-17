@@ -1,0 +1,54 @@
+{
+  "ticker": "601138.SH",
+  "content_lock": "73eb81e27755cce8",
+  "sheet": "docs/research/decision_sheets/601138_SH_DEEP_2026-06-14.md (corrected per PR-G #86) + cores/601138_SH_core.json",
+  "scored_at": "2026-06-15",
+  "scorer_roles": {
+    "red_team": "Junyan (owner)",
+    "final_adjudicator": "Junyan",
+    "record_type": "owner-authorized red-team floor"
+  },
+  "basis": "owner-authorized floor / post-#86 verified",
+  "comment_provenance": "Owner-authorized red-team record. The five-axis scores and 87.2 average are Junyan's owner-authorized floor judgment, recorded after PR-G #86 verified the load-bearing numbers against filed cninfo PDFs (Q1'26 归母 105.95亿; FY2025 352.86亿; 股本 198.44亿). The per-axis comments below are faithful summaries of each axis basis in this sheet, not verbatim quotes.",
+  "scores": {
+    "specificity": {
+      "score": 88,
+      "comment": "[owner floor; summary] 拆到 Q1'26 105.95亿/扣非 102.50亿/OCF 250.24亿、FY25 352.86亿、forward PE 23-28x、ODM 净利率 ~3-4% 的承重变量,不是空泛叙事"
+    },
+    "falsifiability": {
+      "score": 92,
+      "comment": "[owner floor; summary] wrong-if 绑半年报强制披露:H1 归母年化 <450亿 / 分部毛利率 <6% / 营收增而净利率不改善,H1 报告可直接打脸"
+    },
+    "valuation_discipline": {
+      "score": 84,
+      "comment": "[owner floor; summary] 三档 earnings bridge(归母×forward PE÷198.44亿股)+ 显式假设;R/R 1.72<2:1 的结论自然推出;倍数仍 [unvalidated intuition],但已足够做研究决策。最弱轴"
+    },
+    "information_increment": {
+      "score": 86,
+      "comment": "[owner floor; summary] 'forward-PE 被盈利压便宜'+'margin 能否随 GB300 上台阶' 是有价值的增量;但工业富联是 1.4万亿共识大票,edge 偏估值时点判断而非深度非共识变体——五轴里最'宽'的一档"
+    },
+    "risk_identification": {
+      "score": 86,
+      "comment": "[owner floor; summary] ODM 薄 margin、capex 周期、1.4万亿估值双杀、共识拥挤(+200% YoY)都覆盖;承重变量(margin)明确标出且绑 H1 披露"
+    }
+  },
+  "average": 87.2,
+  "min_axis": {
+    "axis": "valuation_discipline",
+    "score": 84
+  },
+  "bar": {
+    "average_min": 70,
+    "axis_min": 50,
+    "label": "[unvalidated intuition]"
+  },
+  "verdict": "PASS",
+  "conditions": [
+    "may register 30/60/90 forward checkpoints — owner-authorized WATCH_CONSTRUCTIVE",
+    "may NOT upgrade to conviction at current price; R/R 1.72 < 2:1 — NOT a buy list",
+    "STARTER eligibility only inside the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band",
+    "the load-bearing variable is ODM net MARGIN, resolving at the 2026-08-30 H1 segment-GM print; revenue growth alone does not confirm the thesis",
+    "post-#86 verified: Q1'26 归母 105.95亿 + FY2025 352.86亿 E1-confirmed (the upstream '302亿' was wrong and never entered this thesis)"
+  ],
+  "note": "Owner-authorized red-team floor for the AI value-chain's most price-discussable mega-cap. PASS (87.2) registers it as a forward-checkpoint WATCH_CONSTRUCTIVE case — a thesis whose forward path the band will grade, NOT a recommendation to buy. Registration to the official ledger is human-authorized (Junyan), not AI self-approval."
+}

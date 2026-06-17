@@ -2,11 +2,8 @@
   "_meta": {
     "layer": "CTF v1 decision-sheet forward checkpoints (PR-D)",
     "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md §3",
-    "updated_at": "2026-06-14T14:19:35.901574+00:00",
-    "n_active": 4,
-    "retired_by_owner": [
-      "002594.SZ"
-    ]
+    "updated_at": "2026-06-15T14:13:32.355829+00:00",
+    "n_active": 6
   },
   "registrations": [
     {
@@ -18,7 +15,7 @@
       "content_lock": "ea3402301dff717e8bae387242cc6025078f13cbd213208a4e2309d4f40a6bef",
       "sheet_as_of": "2026-06-10",
       "registered_at": "2026-06-10T16:27:38.191007+00:00",
-      "status": "RETIRED_BY_OWNER",
+      "status": "ACTIVE",
       "supersedes": null,
       "direction": "LONG",
       "conviction_at_registration": "STARTER_CAPPED_UNTIL_E1 — and WATCH_NOT_CONVICTION at the current reference price (R/R < 2:1; see reward_to_risk)",
@@ -155,17 +152,7 @@
         "execution stance stays WATCH_NOT_CONVICTION / starter-capped only",
         "next revision priority = valuation discipline (model-anchored band: fix the broken rDCF/EV-EBITDA/RI generators for this name + sensitivity grid), NOT thesis narrative"
       ],
-      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job",
-      "retired_at": "2026-06-14T14:19:35.901574+00:00",
-      "retirement_reason": "Removed from active forward pool by owner instruction; no longer part of current AI/core forward validation focus.",
-      "do_not_evaluate_after": "2026-06-14",
-      "audit_trail": [
-        {
-          "at": "2026-06-14T14:19:35.901574+00:00",
-          "action": "retire",
-          "reason": "Removed from active forward pool by owner instruction; no longer part of current AI/core forward validation focus."
-        }
-      ]
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
     },
     {
       "ticker": "688120.SH",
@@ -766,6 +753,153 @@
         "verdict认可: WATCH_ONLY / 加仓区 ≤383 / R/R -0.01 (committed -0.06) — NOT a buy",
         "may NOT upgrade to conviction at current price; STARTER eligibility only inside the add zone or on a post-H1 fundamentals re-band",
         "this sheet证明 the factory keeps discipline in a high-heat sector: it held BOTH 'Q1 quality is bad' AND 'FY25 full-year quality is good' without over-bearing — not a no-for-the-sake-of-no"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    },
+    {
+      "ticker": "601138.SH",
+      "name": {
+        "zh": "工业富联",
+        "en": "Foxconn Industrial Internet"
+      },
+      "content_lock": "73eb81e27755cce8ded6664ebbd6191b10935d4ffbf8355455cb7192af40c43c",
+      "sheet_as_of": "2026-06-15",
+      "registered_at": "2026-06-15T14:13:32.355814+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "LONG",
+      "conviction_at_registration": "WATCH_CONSTRUCTIVE — thesis and price are both discussable (the rare such name in the AI chain), but at the committed reference price the R/R is ~1.72, BELOW the 2:1 bar. No position. STARTER eligibility begins only at the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band. NOT a buy.",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 70.57,
+      "reference_price_date": "2026-06-12",
+      "band": {
+        "bear": {
+          "low": 47,
+          "high": 53
+        },
+        "base": {
+          "low": 65,
+          "high": 79
+        },
+        "bull": {
+          "low": 100,
+          "high": 112
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "2026 H1 归母净利(年化)",
+          "threshold": "< ~450亿 (即 H1 < ~210亿)",
+          "source": "2026 半年报 合并利润表",
+          "check_date": "2026-08-30"
+        },
+        {
+          "metric": "云计算/AI 服务器分部毛利率",
+          "threshold": "< ~6% 或无结构性改善证据",
+          "source": "2026 半年报 分部信息",
+          "check_date": "2026-08-30"
+        },
+        {
+          "metric": "营收增但净利率不改善 (revenue beats, net margin flat/down)",
+          "threshold": "net margin YoY 不升",
+          "source": "2026 半年报 + FY26 年报",
+          "check_date": "2026-08-30"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "2026-08-30 (statutory by 2026-08-31)",
+          "event": "2026 半年报(Q1 run-rate 是否延续 + 云/AI 服务器分部毛利率 = E1 证明事件)"
+        },
+        {
+          "date": "H2-2026",
+          "event": "GB300 机柜量产节奏(2026H2)"
+        },
+        {
+          "date": "rolling 2026",
+          "event": "北美云资本开支指引(季度)"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "601138.SH",
+        "content_lock": "73eb81e27755cce8",
+        "sheet": "docs/research/decision_sheets/601138_SH_DEEP_2026-06-14.md (corrected per PR-G #86) + cores/601138_SH_core.json",
+        "scored_at": "2026-06-15",
+        "scorer_roles": {
+          "red_team": "Junyan (owner)",
+          "final_adjudicator": "Junyan",
+          "record_type": "owner-authorized red-team floor"
+        },
+        "basis": "owner-authorized floor / post-#86 verified",
+        "comment_provenance": "Owner-authorized red-team record. The five axis scores and the 87.2 average are Junyan's owner-authorized FLOOR judgment, recorded after the PR-G #86 一手财务对账门 verified the load-bearing numbers against the filed cninfo PDFs (Q1'26 归母 105.95亿; FY2025 352.86亿; 股本 198.44亿). The per-axis comments below are a faithful summary of each axis's basis in this sheet (NOT presented as verbatim quotes). This is NOT an agent or self score — it is Junyan's owner-authorized red-team floor; the prior 87.2 figure is used only as supporting audit context.",
+        "scores": {
+          "specificity": {
+            "score": 88,
+            "comment": "[owner floor; summary] 拆到 Q1'26 105.95亿/扣非 102.50亿/OCF 250.24亿、FY25 352.86亿、forward PE 23-28x、ODM 净利率 ~3-4% 的承重变量,不是空泛叙事"
+          },
+          "falsifiability": {
+            "score": 92,
+            "comment": "[owner floor; summary] wrong-if 绑半年报强制披露:H1 归母年化 <450亿 / 分部毛利率 <6% / 营收增而净利率不改善,H1 报告可直接打脸"
+          },
+          "valuation_discipline": {
+            "score": 84,
+            "comment": "[owner floor; summary] 三档 earnings bridge(归母×forward PE÷198.44亿股)+ 显式假设;R/R 1.72<2:1 的结论自然推出;倍数仍 [unvalidated intuition],但已足够做研究决策。最弱轴"
+          },
+          "information_increment": {
+            "score": 86,
+            "comment": "[owner floor; summary] 'forward-PE 被盈利压便宜'+'margin 能否随 GB300 上台阶' 是有价值的增量;但工业富联是 1.4万亿共识大票,edge 偏估值时点判断而非深度非共识变体——五轴里最'宽'的一档"
+          },
+          "risk_identification": {
+            "score": 86,
+            "comment": "[owner floor; summary] ODM 薄 margin、capex 周期、1.4万亿估值双杀、共识拥挤(+200% YoY)都覆盖;承重变量(margin)明确标出且绑 H1 披露"
+          }
+        },
+        "average": 87.2,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 84
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS",
+        "conditions": [
+          "may register 30/60/90 forward checkpoints — owner-authorized WATCH_CONSTRUCTIVE",
+          "may NOT upgrade to conviction at current price; R/R 1.72 < 2:1 — NOT a buy list",
+          "STARTER eligibility only inside the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band",
+          "the load-bearing variable is ODM net MARGIN, resolving at the 2026-08-30 H1 segment-GM print; revenue growth alone does not confirm the thesis",
+          "post-#86 verified: Q1'26 归母 105.95亿 + FY2025 352.86亿 E1-confirmed (the upstream '302亿' was wrong and never entered this thesis)"
+        ],
+        "note": "Owner-authorized red-team floor for the AI value-chain's most price-discussable mega-cap. PASS (87.2) registers it as a forward-checkpoint WATCH_CONSTRUCTIVE case — a thesis whose forward path the band will grade, NOT a recommendation to buy. Registration to the official ledger is human-authorized (Junyan), not AI self-approval."
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-15",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-13",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "may register 30/60/90 forward checkpoints — owner-authorized WATCH_CONSTRUCTIVE",
+        "may NOT upgrade to conviction at current price; R/R 1.72 < 2:1 — NOT a buy list",
+        "STARTER eligibility only inside the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band",
+        "the load-bearing variable is ODM net MARGIN, resolving at the 2026-08-30 H1 segment-GM print; revenue growth alone does not confirm the thesis",
+        "post-#86 verified: Q1'26 归母 105.95亿 + FY2025 352.86亿 E1-confirmed (the upstream '302亿' was wrong and never entered this thesis)"
       ],
       "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
     }

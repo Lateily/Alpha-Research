@@ -11,7 +11,8 @@ HOW THIS DIFFERS FROM the earlier hand-seed AI pack (PR #81, cross-checked + ret
   - EVERY price / PE / market cap is RECONCILED against the committed universe_a snapshot
     (the 一手对账门): a research price that disagrees with committed data by >5% is FLAGGED,
     and a research PE that disagrees materially from the committed PE is FLAGGED
-    (this caught 中科曙光: agent PE 57 vs committed 132.6 — a 2.3x gap);
+    (this previously caught 中科曙光 on the stale 6/12 snapshot; the 6/16
+    fresh universe resolved the conflict in the research source's favour);
   - the suggested entry zone is the analyst's FORWARD-PE-anchored research trigger, explicitly
     labeled heuristic / pending-deep-thesis — NOT `price x arbitrary multiplier`, NOT a target;
   - the triage rank is a TRANSPARENT, documented heuristic (value factor − crowding − valuation
@@ -38,7 +39,6 @@ UNIVERSE = D / "universe_a.json"
 OUT_JSON = D / "ai_value_chain_screen.json"
 OUT_MD = REPO / "docs" / "research" / "screens" / "AI_VALUE_CHAIN_SCREEN_2026-06-14.md"
 SCREEN_DATE = "2026-06-14"
-SNAPSHOT_AS_OF = "2026-06-12T05:55Z"  # universe_a _meta.fetched_at (last trading day before the weekend)
 
 # ── research-grounded candidates (4-agent value-chain sweep, 2026-06-14) ───────────────
 # Each carries: layer/role, ai_linkage directness, 3-point thesis, dated catalyst, >=1
@@ -51,10 +51,10 @@ CANDIDATES: list[dict] = [
         "ai_linkage": "DIRECT", "stance": "WATCH_CONSTRUCTIVE",
         "thesis": [
             "市场信:英伟达 PCB 亲儿子,GB200/300 已在价里(2025 已 4x)。",
-            "变体:AI 已占营收 >50-60%,GM 22.7%→33.4%(Q1'24→'25)→36.2%(25H1)mix 仍在上行;股价 2026 YTD 仅 +6%(同业翻倍),2026E ~36x 低于旭创 43-51x。",
+            "变体:AI mix 是 E2 推断,不是公司披露;GM 22.7%→33.4%(Q1'24→'25)→36.2%(25H1)是真,但 Q2'25 38.8% 后有回落迹象。股价 2026 YTD 仅 +6%(同业翻倍),2026E ~36x 低于旭创 43-51x。",
             "关键问:GB300 OAM HDI 份额能否在放量中守住(对 沪电/鹏鼎),还是单客户(英伟达 >60%)在 2027 压毛利。",
         ],
-        "catalyst": "2026 H1 报 ~2026-08-31:GM 是否守 ≥35% + AI 营收占比是否再升;Rubin/M9-CCL 2026H2 含量提升。",
+        "catalyst": "2026 H1 报 ~2026-08-31:GM 是否守 ≥35% + AI 客户/高端板 mix 是否有可披露证据;Rubin/M9-CCL 2026H2 含量提升。",
         "wrong_if": [
             {"metric": "2026 H1 综合毛利率", "threshold": "< 32%", "check_date": "2026-08-31"},
             {"metric": "英伟达营收占比 + GB300 OAM 二供获认证", "threshold": ">65% 且二供出现", "check_date": "2026-H2"},
@@ -62,7 +62,7 @@ CANDIDATES: list[dict] = [
         "valuation_anchor": "2026E ~36x / 2027E ~21.5x(cap÷同花顺一致净利 89.08/149.58亿);板块最低 AI-瓶颈名 forward 倍数",
         "research_entry": "≤ ¥250-270(≈28-30x 2026E / ~18x 2027E,再回调 ~20%);研究触发价,非目标价,须满版 deep thesis 确认",
         "crowding": "机构覆盖充分(6/6 buy 目标 ~439)但价不拥挤——2026 YTD +6%,距 2025-09 高约 -19%。被价格挤出的名。",
-        "evidence": "AI 营收 >50-60% [E2 多家卖方]; GM 36.22% 25H1 [E1 中报]; GB300 OAM 30-40% 份额 [E2 国盛]; A+H 双上市 [E1]",
+        "evidence": "AI 营收 >50-60% [E2 proxy, company does not disclose,#86 corrected]; GM 36.22% 25H1 [E1 中报,#86 reconciled]; GB300 OAM 30-40% 份额 [E2 国盛]; A+H 双上市 [E1]",
         "agent_price": 327.21,
         "sources": ["https://wallstreetcn.com/articles/3770620", "eniu.com/gu/sz300476", "国盛/山证 GB300 PCB 含量深度"],
     },
@@ -71,7 +71,7 @@ CANDIDATES: list[dict] = [
         "ai_linkage": "DIRECT", "stance": "WATCH_CONSTRUCTIVE",
         "thesis": [
             "市场信:AI 服务器王、万亿市值、故事人尽皆知=已充分定价。",
-            "变体是 forward 倍数被盈利压缩,不是扩张:Q1'26 已印归母 105.95亿(+102.55%)、营收 2510亿(+56.5%);FY26 一致净利 500-606亿 vs FY25 302亿 → forward PE ~23-28x(委内提示:committed PE 仅 33,比 agent TTM 45 更低)。",
+            "变体是 forward 倍数被盈利压缩,不是扩张:Q1'26 已印归母 105.95亿(+102.55%)、营收 2510亿(+56.5%);FY26 一致净利 500-606亿 vs FY25 352.86亿 → forward PE ~24-29x。",
             "关键问:GB200→GB300 机柜 ASP/毛利台阶是结构性的,还是 ODM 薄利(净利率 ~3-4%)随放量封顶上行。",
         ],
         "catalyst": "2026 H1 报 ~2026-08-30:Q1 +100% 净利 run-rate 是否延续;GB300 机柜 2026H2 量产;北美云资本开支指引。",
@@ -79,10 +79,10 @@ CANDIDATES: list[dict] = [
             {"metric": "2026 H1 归母净利(年化)", "threshold": "< ~450亿(H1 < ~210亿)", "check_date": "2026-08-30"},
             {"metric": "云计算分部毛利率", "threshold": "< ~6%", "check_date": "2026-08-30"},
         ],
-        "valuation_anchor": "forward PE ~23-28x(FY26 500-606亿净利);全板块最低 forward 倍数的万亿名;GS 目标 ¥92.9-93.9",
+        "valuation_anchor": "forward PE ~24-29x(FY26 500-606亿净利);committed PE 41 / PE-TTM 35.6;全板块最低 forward 倍数的万亿名;GS 目标 ¥92.9-93.9",
         "research_entry": "≤ ¥60(≈20x FY26 500亿净利)R/R 才趋近 2:1 对 GS ¥93 上行;研究触发价,非目标价",
         "crowding": "机构拥挤、动量延展——~+200%(¥18→~¥53),Apr-May'26 多次涨停。唯一不 AVOID 的理由 = forward 倍数最便宜(盈利在涨进价里)。",
-        "evidence": "Q1'26 归母 105.95亿 [E1 一季报,⚠ 须核对——曾见 41.8亿 旧/错值]; FY26 一致 500-606亿 [E2 卖方]; >40% 全球 AI 服务器份额 [E2]",
+        "evidence": "Q1'26 归母 105.95亿 [E1 一季报,#86 reconciled]; FY25 352.86亿 [E1 年报,#86 reconciled]; FY26 一致 500-606亿 [E2 卖方]; >40% 全球 AI 服务器份额 [E2]",
         "agent_price": 70.13,
         "sources": ["https://finance.sina.com.cn/wm/2026-04-22/doc-inhvkiya9336135.shtml", "eniu.com/gu/sh601138"],
     },
@@ -128,22 +128,23 @@ CANDIDATES: list[dict] = [
     },
     {
         "ticker": "603019.SH", "name": "中科曙光", "layer": "AI 服务器/HPC + 海光持股", "role": "BENEFITS",
-        "ai_linkage": "INDIRECT(look-through 海光 27.96%)", "stance": "WATCH_RECONCILE_FLAG",
+        "ai_linkage": "INDIRECT(look-through 海光 27.96%)", "stance": "WATCH_LOOKTHROUGH",
         "thesis": [
             "市场信:服务器/HPC 整合商 + 海光 27.96% 嵌入期权;Dec-2025 合并终止后'合并重估'交易已死。",
             "变体:看穿价值——海光 FY25 净 25.45亿 ×27.96% ≈7.1亿投资收益,占曙光 归母(FY25 21.76亿)~1/3 且增速更快。",
-            "⚠ 重大对账冲突:agent 称 PE 57x,但 committed universe PE = 132.6x(2.3x 差)。若 committed 准,则'比海光便宜'论点的估值底座成立度大降——deep thesis 必先解决 EPS 口径冲突。",
+            "6/16 fresh universe 纠正了旧对账冲突:agent PE ~57 与 committed PE 56.79/PE-TTM 55.73 基本一致。它不是'PE 口径错误',而是一个间接持股/look-through 价值能否覆盖自身经营弱项的问题。",
         ],
         "catalyst": "海光 H1'26 报 ~2026-08-30(投资收益流入);任何整合重启(低概率尾部);曙光数创 液冷/超节点订单。",
         "wrong_if": [
             {"metric": "海光 H1'26 净利同比", "threshold": "< ~+40%", "check_date": "2026-08-30"},
             {"metric": "曙光自身(除海光)经营利润同比", "threshold": "< 0(FY25 经营现金流已 -51.75%)", "check_date": "2026-08-30"},
         ],
-        "valuation_anchor": "⚠ 估值口径未决:agent PE 57 vs committed 132.6;PB 5.5;mcap 1208亿。先核 EPS 口径再谈。",
-        "research_entry": "暂不给——对账冲突未解前任何 entry 都不可靠(正是 #81 hand-seed 教训的反面)。",
+        "valuation_anchor": "committed PE 56.79 / PE-TTM 55.73 / PB 5.41 / mcap ~1236亿;agent PE ~57 已被 fresh universe 交叉确认。",
+        "research_entry": "不是因 PE 冲突冻结,而是因间接 look-through + 自身经营现金流弱(FY25 OCF -51.75亿)需要满版 deep thesis 后再给触发价。",
         "crowding": "中度;合并终止取走了动量人群,这才有 look-through 角度。",
-        "evidence": "FY25 [E1 年报]; 海光持股 27.96% [E2 derived]; PE 口径冲突 [对账门 catch]",
+        "evidence": "FY25 [E1 年报]; 海光持股 27.96% [E2 derived]; 旧 PE conflict 已由 6/16 committed universe 解除 [对账门 catch-and-release]",
         "agent_price": 82.15,
+        "agent_pe": 57.0,
         "sources": ["eniu.com/gu/sh603019", "https://www.jjckb.cn/20251210/2f5441ad5bac493db6371a73ff4b6c98/c.html"],
     },
     {
@@ -331,8 +332,12 @@ CANDIDATES: list[dict] = [
 REGISTERED_CONTEXT = ["688008.SH", "688120.SH", "688072.SH", "300054.SZ"]
 
 
+def _universe_payload() -> dict:
+    return json.loads(UNIVERSE.read_text())
+
+
 def _universe() -> dict:
-    rows = json.loads(UNIVERSE.read_text()).get("stocks", [])
+    rows = _universe_payload().get("stocks", [])
     return {r["ticker"]: r for r in rows}
 
 
@@ -340,21 +345,32 @@ def _reconcile(c: dict, row: dict) -> dict:
     """The 一手对账门: overlay committed data, flag price/PE disagreement with the research."""
     cp = row.get("price")
     ap = c.get("agent_price")
+    committed_pe = row.get("pe")
+    committed_pe_ttm = row.get("pe_ttm")
+    research_pe = c.get("agent_pe")
     flags = []
     price_delta = None
     if cp and ap:
         price_delta = round((ap - cp) / cp * 100, 1)
         if abs(price_delta) > 5.0:
             flags.append(f"STALE_RESEARCH_PRICE: research {ap} vs committed {cp} ({price_delta:+.1f}%) — use committed")
-    if "PE 57" in (c.get("valuation_anchor", "") + " ".join(c.get("thesis", []))) and row.get("pe") and row["pe"] > 90:
-        flags.append(f"PE_CONFLICT: research cites a low PE but committed PE = {row.get('pe')} — resolve EPS basis before any band")
+    pe_delta = None
+    if research_pe and committed_pe:
+        pe_delta = round((research_pe - committed_pe) / committed_pe * 100, 1)
+        if abs(pe_delta) > 25.0:
+            flags.append(
+                f"PE_CONFLICT: research PE {research_pe} vs committed PE {committed_pe} "
+                f"({pe_delta:+.1f}%) — resolve EPS basis before any band"
+            )
     return {
-        "committed_price": cp, "committed_pe": row.get("pe"), "committed_pb": row.get("pb"),
+        "committed_price": cp, "committed_pe": committed_pe, "committed_pe_ttm": committed_pe_ttm,
+        "committed_pb": row.get("pb"),
         "committed_mcap_yi": round((row.get("market_cap") or 0) / 1e8, 0),
         "committed_turnover_rate": row.get("turnover_rate"),
         "factor_value": (row.get("factors") or {}).get("value"),
         "factor_momentum": (row.get("factors") or {}).get("momentum"),
         "research_price": ap, "research_vs_committed_pct": price_delta,
+        "research_pe": research_pe, "research_vs_committed_pe_pct": pe_delta,
         "reconciliation_flags": flags or None,
     }
 
@@ -371,12 +387,13 @@ def _triage_score(rec: dict, stance: str) -> float:
     if rec.get("reconciliation_flags"):
         score -= 25                           # unresolved data conflict = down-rank hard
     stance_penalty = {"WATCH_CONSTRUCTIVE": 0, "WATCH_DEEP_VALUE": 5, "WATCH": 12,
-                      "WATCH_TURNAROUND": 15, "WATCH_RECONCILE_FLAG": 30, "WATCH_ONLY_PRICE": 35,
+                      "WATCH_TURNAROUND": 15, "WATCH_LOOKTHROUGH": 20, "WATCH_ONLY_PRICE": 35,
                       "CYCLE_WATCH": 40, "AVOID_AT_SPOT": 55, "AVOID_BLOWUP": 70}.get(stance, 30)
     return round(score - stance_penalty, 1)
 
 
 def build() -> dict:
+    payload = _universe_payload()
     uni = _universe()
     out = []
     for c in CANDIDATES:
@@ -391,7 +408,8 @@ def build() -> dict:
     return {
         "_meta": {
             "layer": "Deep Thesis Factory — AI value-chain DISCOVERY screen (research candidates, NOT a buy list)",
-            "screen_date": SCREEN_DATE, "committed_snapshot_as_of": SNAPSHOT_AS_OF,
+            "screen_date": SCREEN_DATE,
+            "committed_snapshot_as_of": payload.get("_meta", {}).get("fetched_at", "unknown"),
             "method": "4-agent value-chain research sweep -> committed universe_a overlay + 一手对账门 reconciliation "
                       "+ transparent triage rank; every entry zone is a heuristic research trigger, NOT a target; "
                       "supersedes the PR #81 hand-seed pack (which used arbitrary band multipliers).",
@@ -407,6 +425,7 @@ def build() -> dict:
 
 
 def render_md(data: dict) -> str:
+    snapshot_as_of = data["_meta"].get("committed_snapshot_as_of", "unknown")
     L = [f"# AI 价值链发现筛选 · AI Value-Chain Discovery Screen ({SCREEN_DATE})", ""]
     L.append("> **内部、未验证研究输出 — 不是已验证买入名单,不是个性化投资建议。** 每个 entry zone 是"
              "**启发式研究触发价,不是目标价**;任何注册/建仓前必须先做一份人工五轴红队通过的满版 deep thesis。"
@@ -414,7 +433,7 @@ def render_md(data: dict) -> str:
              "本筛取代 PR #81 的 hand-seed pack(后者用任意带倍数)。")
     L.append(f">")
     L.append(f"> **诚实状态:** {data['_meta']['honest_state']}")
-    L.append(f"> committed 快照 as-of {SNAPSHOT_AS_OF};研究价为各 agent web 读数,>5% 偏离已 flag,以 committed 为准。\n")
+    L.append(f"> committed 快照 as-of {snapshot_as_of};研究价为各 agent web 读数,>5% 偏离已 flag,以 committed 为准。\n")
     L.append("## 排序(triage 研究优先级 — 非买入排名)\n")
     L.append("| # | 标的 | 层/角色 | stance | committed 价/PE/PB | mcap亿 | 研究触发价 | 对账 flag |")
     L.append("|--:|---|---|---|---|--:|---|---|")
@@ -441,7 +460,8 @@ def render_md(data: dict) -> str:
         for w in c["wrong_if"]:
             L.append(f"- `{w['metric']}` **{w['threshold']}** @ {w['check_date']}")
         L.append(f"**估值锚:** {c['valuation_anchor']}")
-        L.append(f"**committed(对账):** 价 {cm['committed_price']} · PE {cm['committed_pe']} · PB {cm['committed_pb']} · "
+        L.append(f"**committed(对账):** 价 {cm['committed_price']} · PE {cm['committed_pe']} · "
+                 f"PE-TTM {cm.get('committed_pe_ttm')} · PB {cm['committed_pb']} · "
                  f"mcap {cm['committed_mcap_yi']:.0f}亿 · 换手 {cm['committed_turnover_rate']}% · "
                  f"value因子 {cm['factor_value']} / momentum {cm['factor_momentum']} · "
                  f"研究价 {cm['research_price']}({cm['research_vs_committed_pct']:+}% vs committed)")
@@ -456,8 +476,8 @@ def render_md(data: dict) -> str:
     L.append("## 方法与边界")
     L.append("- **这是发现层,不是 alpha。** triage 分是透明启发式(value 便宜度 − 动量拉伸 − 估值拉伸 − 对账罚 − stance 罚),"
              "不是验证过的买入排名。")
-    L.append("- **一手对账门**抓到的实例:中科曙光 研究 PE 57 vs committed 132.6(2.3x 差)→ 估值口径未决前不给 entry;"
-             "工业富联 committed PE 33 < 研究 45;多名研究价 >5% 偏离 committed 已 flag。")
+    L.append("- **一手对账门**已从 6/12 的中科曙光 false-flag 中自我修正: fresh 6/16 committed PE "
+             "56.79/PE-TTM 55.73 与研究 PE~57 一致,所以不再把它标成 PE conflict;多名研究价 >5% 偏离 committed 仍已 flag。")
     L.append("- **下一步**:对 triage 顶部的 1-2 名(胜宏/工业富联)做满版 earnings-bridge deep thesis → 人工五轴红队 → "
              "PASS 才进 checkpoint ledger;**只有 STARTER_CANDIDATE/ADD_CANDIDATE 才可能进买入候选,WATCH 不是买入。**")
     L.append("- **数据边界**:concept_membership API 空(tier-locked),故 AI universe 是研究构建的(非概念标签机筛);"
@@ -475,10 +495,14 @@ def _selftest() -> int:
     for c in cands:
         if "committed" not in c or c["committed"].get("committed_price") is None:
             errs.append(f"{c['ticker']} missing committed overlay")
-    # the 中科曙光 PE conflict MUST be flagged (the canonical 对账门 catch)
+    # 中科曙光's stale 6/12 PE conflict must now be released by the fresh 6/16 universe.
     sg = next((c for c in cands if c["ticker"] == "603019.SH"), None)
-    if not sg or not (sg["committed"].get("reconciliation_flags")):
-        errs.append("中科曙光 PE conflict must be flagged by the reconciliation gate")
+    if not sg:
+        errs.append("中科曙光 must be present")
+    elif sg["committed"].get("reconciliation_flags"):
+        errs.append("中科曙光 PE conflict should be resolved by fresh committed data, not re-flagged")
+    elif not sg["committed"].get("committed_pe") or sg["committed"]["committed_pe"] > 70:
+        errs.append("中科曙光 committed PE should reflect the fresh 6/16 universe (~57), not stale 132")
     # constructive names must out-rank avoid names (triage sanity)
     sc = {c["ticker"]: c["triage_score"] for c in cands}
     if sc.get("300476.SZ", -99) <= sc.get("002837.SZ", 99):
@@ -493,7 +517,7 @@ def _selftest() -> int:
             print(f"  - {e}")
         return 1
     print(f"ai_value_chain_screen selftest PASSED ({len(cands)} candidates; committed overlay on all; "
-          "中科曙光 PE conflict flagged; constructive out-ranks blowup; no fabricated R/R/target)")
+          "中科曙光 stale PE conflict released; constructive out-ranks blowup; no fabricated R/R/target)")
     return 0
 
 
