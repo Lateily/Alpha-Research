@@ -6,10 +6,10 @@
   "direction": "LONG",
   "entry_date": "2026-05-17",
   "entry_price": 96.3,
-  "current_price": 87.08,
+  "current_price": 87.47,
   "current_date": "2026-06-17",
   "days_held": 31,
-  "return_since_entry_pct": -9.57,
+  "return_since_entry_pct": -9.17,
   "expected_pnl": {
     "upside_if_right": "+22% to +35% (toward analyst target 119.32 mid, range 117-130)",
     "downside_if_wrong": "-9% to -15% (toward 52W low 85.88, support 87.72)",
@@ -225,8 +225,8 @@
     },
     {
       "date": "2026-06-17",
-      "price": 87.08,
-      "return_pct": -9.57,
+      "price": 87.47,
+      "return_pct": -9.17,
       "status": "STOPPED_OUT"
     }
   ],

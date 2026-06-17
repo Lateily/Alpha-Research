@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-06-17T06:20:56.847503",
+    "fetched_at": "2026-06-17T12:33:52.195876",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -17,15 +17,15 @@
   "yahoo": {
     "300308.SZ": {
       "price": {
-        "last": 1249.15,
+        "last": 1276.11,
         "prev_close": 1248.09,
-        "change_pct": 0.085,
-        "high": 1272.53,
+        "change_pct": 2.245,
+        "high": 1276.13,
         "low": 1220.05,
-        "volume": 1750390000,
+        "volume": 2175624200,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 1272.53,
+        "high_52w": 1276.13,
         "low_52w": 1220.05
       },
       "technical": {
@@ -90,12 +90,12 @@
     },
     "002594.SZ": {
       "price": {
-        "last": 87.08,
+        "last": 87.47,
         "prev_close": 89.64,
-        "change_pct": -2.856,
+        "change_pct": -2.421,
         "high": 89.3,
         "low": 87,
-        "volume": 4299950200,
+        "volume": 4952671100,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 89.3,
@@ -168,7 +168,7 @@
         "change_pct": 0.513,
         "high": 19.56,
         "low": 18.68,
-        "volume": -245,
+        "volume": -275,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 19.56,
@@ -236,12 +236,12 @@
     },
     "603233.SH": {
       "price": {
-        "last": 16.02,
+        "last": 16.07,
         "prev_close": 16.59,
-        "change_pct": -3.436,
+        "change_pct": -3.134,
         "high": 16.61,
         "low": 15.97,
-        "volume": 400615600,
+        "volume": 529437400,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 16.61,
@@ -309,15 +309,15 @@
     },
     "688120.SH": {
       "price": {
-        "last": 219.76,
+        "last": 222.31,
         "prev_close": 201.18,
-        "change_pct": 9.236,
-        "high": 222.84,
+        "change_pct": 10.503,
+        "high": 222.88,
         "low": 196,
-        "volume": 1753381700,
+        "volume": 1989867800,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 222.84,
+        "high_52w": 222.88,
         "low_52w": 196
       },
       "technical": {
@@ -382,12 +382,12 @@
     },
     "300054.SZ": {
       "price": {
-        "last": 91.1,
+        "last": 91.13,
         "prev_close": 84.4,
-        "change_pct": 7.938,
+        "change_pct": 7.974,
         "high": 93,
         "low": 84.5,
-        "volume": 6015279900,
+        "volume": 6693786500,
         "avg_volume_20d": null,
         "volume_ratio": null,
         "high_52w": 93,
@@ -464,13 +464,23 @@
       "updated": "2026-06-17"
     },
     "southbound": {
-      "latest_net_flow": 34.6302,
-      "5d_cumulative": 71.1969,
-      "20d_cumulative": 278.2771,
-      "trend": "inflow",
+      "latest_net_flow": -32.2163,
+      "5d_cumulative": -43.4526,
+      "20d_cumulative": 233.4045,
+      "trend": "outflow",
       "updated": "2026-06-17"
     },
     "dragon_tiger": [
+      {
+        "code": "000010",
+        "name": "*ST美丽",
+        "date": "",
+        "reason": "连续三个交易日内，跌幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
       {
         "code": "000032",
         "name": "深桑达A",
@@ -495,7 +505,7 @@
         "code": "000048",
         "name": "京基智农",
         "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -505,7 +515,17 @@
         "code": "000048",
         "name": "京基智农",
         "date": "",
-        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "reason": "日振幅值达到15%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000100",
+        "name": "TCL科技",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -542,6 +562,46 @@
         "focus": false
       },
       {
+        "code": "000632",
+        "name": "ST三木",
+        "date": "",
+        "reason": "连续三个交易日内，跌幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000636",
+        "name": "风华高科",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000725",
+        "name": "京东方A",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000777",
+        "name": "中核科技",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "000833",
         "name": "粤桂股份",
         "date": "",
@@ -562,8 +622,48 @@
         "focus": false
       },
       {
+        "code": "000911",
+        "name": "*ST广糖",
+        "date": "",
+        "reason": "连续三个交易日内，跌幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "001203",
         "name": "大中矿业",
+        "date": "",
+        "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "001203",
+        "name": "大中矿业",
+        "date": "",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "001203",
+        "name": "大中矿业",
+        "date": "",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "001211",
+        "name": "双枪科技",
         "date": "",
         "reason": "日跌幅偏离值达到7%的前5只证券",
         "buy_amt": null,
@@ -585,7 +685,37 @@
         "code": "001257",
         "name": "盛龙股份",
         "date": "",
+        "reason": "日振幅值达到15%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "001257",
+        "name": "盛龙股份",
+        "date": "",
+        "reason": "日换手率达到20%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "001257",
+        "name": "盛龙股份",
+        "date": "",
         "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "001259",
+        "name": "利仁科技",
+        "date": "",
+        "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -642,6 +772,46 @@
         "focus": false
       },
       {
+        "code": "002051",
+        "name": "中工国际",
+        "date": "",
+        "reason": "日振幅值达到15%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002072",
+        "name": "凯瑞德",
+        "date": "",
+        "reason": "日振幅值达到15%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002080",
+        "name": "中材科技",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002080",
+        "name": "中材科技",
+        "date": "",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
         "code": "002080",
         "name": "中材科技",
         "date": "",
@@ -656,6 +826,16 @@
         "name": "康强电子",
         "date": "",
         "reason": "日换手率达到20%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "002141",
+        "name": "贤丰控股",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -752,10 +932,10 @@
         "focus": false
       },
       {
-        "code": "002421",
-        "name": "达实智能",
+        "code": "002378",
+        "name": "章源钨业",
         "date": "",
-        "reason": "日换手率达到20%的前5只证券",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -784,186 +964,6 @@
       {
         "code": "002421",
         "name": "达实智能",
-        "date": "",
-        "reason": "日跌幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002421",
-        "name": "达实智能",
-        "date": "",
-        "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002421",
-        "name": "达实智能",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002428",
-        "name": "云南锗业",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002436",
-        "name": "兴森科技",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002484",
-        "name": "江海股份",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002490",
-        "name": "山东墨龙",
-        "date": "",
-        "reason": "日跌幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002514",
-        "name": "*ST宝馨",
-        "date": "",
-        "reason": "连续三个交易日内，跌幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002552",
-        "name": "宝鼎科技",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002613",
-        "name": "北玻股份",
-        "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002636",
-        "name": "金安国纪",
-        "date": "",
-        "reason": "严重异常期间日收盘价格涨幅偏离值累计达到100%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002636",
-        "name": "金安国纪",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002667",
-        "name": "*ST威领",
-        "date": "",
-        "reason": "连续三个交易日内，跌幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002669",
-        "name": "康达新材",
-        "date": "",
-        "reason": "日跌幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002717",
-        "name": "*ST岭南",
-        "date": "",
-        "reason": "连续三个交易日内，跌幅偏离值累计达到12%的ST证券、*ST证券和未完成股改证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002741",
-        "name": "光华科技",
-        "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002806",
-        "name": "华锋股份",
-        "date": "",
-        "reason": "日换手率达到20%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002812",
-        "name": "恩捷股份",
-        "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "002842",
-        "name": "翔鹭钨业",
         "date": "",
         "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
