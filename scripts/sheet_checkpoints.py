@@ -82,6 +82,13 @@ def register(ticker: str, redteam_path: str | None) -> dict:
     verdict = (redteam.get("verdict") or "").upper()
     if not verdict.startswith("PASS"):
         raise SystemExit(f"red-team verdict is {verdict!r} — only PASS* sheets register")
+    last_price = ((sheet.get("auto_context") or {}).get("last_price") or {})
+    rr_block = sheet.get("reward_to_risk") or {}
+    if last_price.get("data_blocked") or rr_block.get("data_blocked"):
+        reason = last_price.get("blocked_reason") or rr_block.get("blocked_reason") or "data_blocked"
+        raise SystemExit(
+            f"sheet carries DATA_BLOCKED ({reason}) — refresh/reconcile the reference price before registration"
+        )
 
     ledger = _load(LEDGER, {"_meta": {}, "registrations": []}) or {"_meta": {}, "registrations": []}
     for r in ledger["registrations"]:
@@ -264,6 +271,19 @@ def _selftest() -> int:
             errs.append("lock mismatch must be refused")
         except SystemExit:
             pass
+        # 3b) DATA_BLOCKED sheet refused even with matching PASS red-team
+        blocked_sheet = json.loads(json.dumps(sheet))
+        blocked_sheet["auto_context"]["last_price"]["data_blocked"] = True
+        blocked_sheet["auto_context"]["last_price"]["blocked_reason"] = "stale_universe_reference_price"
+        blocked_sheet["reward_to_risk"]["data_blocked"] = True
+        (SHEETS / "TEST_SZ.json").write_text(json.dumps(blocked_sheet))
+        rt.write_text(json.dumps({"content_lock": ("ab" * 32)[:16], "verdict": "PASS-LOW"}))
+        try:
+            register("TEST.SZ", str(rt))
+            errs.append("DATA_BLOCKED sheet must be refused")
+        except SystemExit:
+            pass
+        (SHEETS / "TEST_SZ.json").write_text(json.dumps(sheet))
         # 4) happy path registers with 30/60/90
         rt.write_text(json.dumps({"content_lock": ("ab" * 32)[:16], "verdict": "PASS-LOW",
                                   "scores": {"valuation": 56}, "conditions": ["no conviction upgrade"]}))
@@ -321,6 +341,7 @@ def _selftest() -> int:
         return 1
     print("sheet_checkpoints selftest PASSED (registration requires a PASS* red-team record CARRYING "
           "a content_lock bound to the sheet lock — unbound/FAIL/mismatched/duplicate all refused; "
+          "DATA_BLOCKED sheets refused even with a matching PASS red-team; "
           "30/60/90 scheduled; 0-due check is a strict no-op (no ledger churn); DATA_MISSING due "
           "checkpoint stays PENDING and retries; due checkpoint evaluates price/directional/band "
           "reads; disclosure-bound wrong_if not faked early; dates derived, not hardcoded)")

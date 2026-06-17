@@ -44,7 +44,21 @@ jobs:
       - name: Run data fetcher v4.0
         id: fetcher
         continue-on-error: true
+        env:
+          # Lets fetch_data.py fall back to Tushare daily/daily_basic to rebuild the
+          # A-share universe when the AKShare full-market endpoint disconnects (PR #91).
+          # Same secret the dedicated Tushare steps (2d.5-2d.8) already use.
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_data.py
+
+      # ── Step 1b: Universe data-health guard artifact ─────────────────────
+      # Detects stale / ambiguous full-universe snapshots (price age, PE basis,
+      # inert quality factor, one-day momentum semantics). This is advisory here;
+      # decision_sheet.py and sheet_checkpoints.py enforce DATA_BLOCKED at
+      # compose/register time.
+      - name: Audit A-share universe data health
+        continue-on-error: true
+        run: python scripts/universe_data_health.py --output public/data/universe_data_health.json
 
       # ── Step 2: Paper trading P&L update ──────────────────────────────────
       - name: Run paper trading engine
@@ -402,6 +416,7 @@ jobs:
             public/data/model_portfolio.json \
             public/data/quant_strategy_run.json \
             public/data/decision_sheet_checkpoints.json \
+            public/data/universe_data_health.json \
             public/data/factory_progress.json \
             public/data/position_sizing.json \
             public/data/signal_quality.json \
