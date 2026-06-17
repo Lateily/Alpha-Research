@@ -1,0 +1,631 @@
+{
+  "_meta": {
+    "layer": "AI value-chain beta forward checkpoint ledger",
+    "created_at": "2026-06-15T12:36:21.599816+00:00",
+    "registered_at": "2026-06-14",
+    "source_screen": "public/data/ai_value_chain_screen.json",
+    "source_screen_lock": "3f647b58c1495327443314d6ffd7d390af1c79b3da0bd4d78a6a0a3d9cc02070",
+    "owner_authorization": "Junyan owner instruction 2026-06-14, reviewer decision 2026-06-15: keep first-tier/candidate/WATCH names only if committed-data reconciliation is clean; kick AVOID/NOT_ADVANCED names; keep BYD's official 7/10 CTF checkpoint alive while excluding it from the AI beta pool.",
+    "n_active": 6,
+    "n_excluded": 8,
+    "red_team_status": "PENDING for every beta name",
+    "disclaimer": "Research forward-validation list only; not a buy list, not alpha, not automated advice."
+  },
+  "registrations": [
+    {
+      "ticker": "601138.SH",
+      "name": "工业富联",
+      "content_lock": "99893e03b4d807f7ef723704e55258e9890053b4fdf1d60da9ed642a489aaef1",
+      "registered_at": "2026-06-14T00:00:00+00:00",
+      "status": "BETA_FORWARD_ACTIVE",
+      "registration_basis": "OWNER_AUTHORIZED_BETA_FORWARD_VALIDATION",
+      "owner_authorization": "Junyan owner instruction 2026-06-14, reviewer decision 2026-06-15: keep first-tier/candidate/WATCH names only if committed-data reconciliation is clean; kick AVOID/NOT_ADVANCED names; keep BYD's official 7/10 CTF checkpoint alive while excluding it from the AI beta pool.",
+      "quality_gate": {
+        "human_red_team": "PENDING",
+        "official_ctf_registration": "NOT_YET_ELIGIBLE",
+        "note": "This beta record is for internal forward validation only. It is not a red-team PASS decision sheet."
+      },
+      "investment_boundary": {
+        "is_buy_recommendation": false,
+        "is_validated_alpha": false,
+        "human_executes": true,
+        "position_policy": "Junyan-only; any real-money action is outside the automated recommendation system."
+      },
+      "bucket": "FIRST_TIER",
+      "stance": "WATCH_CONSTRUCTIVE",
+      "layer": "AI 服务器/整机 ODM",
+      "role": "SUPPLIES",
+      "ai_linkage": "DIRECT",
+      "reference_price": 70.57,
+      "reference_price_date": "2026-06-12",
+      "reference_data_source": "public/data/universe_a.json committed snapshot via ai_value_chain_screen",
+      "committed_snapshot": {
+        "committed_price": 70.57,
+        "committed_pe": 33.04,
+        "committed_pb": 7.95,
+        "committed_mcap_yi": 14004.0,
+        "committed_turnover_rate": 0.6,
+        "factor_value": 45.6,
+        "factor_momentum": 57.3,
+        "research_price": 70.13,
+        "research_vs_committed_pct": -0.6,
+        "reconciliation_flags": null
+      },
+      "three_point_thesis": [
+        "市场信:AI 服务器王、万亿市值、故事人尽皆知=已充分定价。",
+        "变体是 forward 倍数被盈利压缩,不是扩张:Q1'26 已印归母 105.95亿(+102.55%)、营收 2510亿(+56.5%);FY25 归母 352.86亿(E1)确认, FY26 一致净利 500-606亿 → forward PE ~23-28x(委内提示:committed PE 仅 33,比 agent TTM 45 更低)。",
+        "关键问:GB200→GB300 机柜 ASP/毛利台阶是结构性的,还是 ODM 薄利(净利率 ~3-4%)随放量封顶上行。"
+      ],
+      "catalyst": "2026 H1 报 ~2026-08-30:Q1 +100% 净利 run-rate 是否延续;GB300 机柜 2026H2 量产;北美云资本开支指引。",
+      "wrong_if": [
+        {
+          "metric": "2026 H1 归母净利(年化)",
+          "threshold": "< ~450亿(H1 < ~210亿)",
+          "check_date": "2026-08-30"
+        },
+        {
+          "metric": "云计算分部毛利率",
+          "threshold": "< ~6%",
+          "check_date": "2026-08-30"
+        }
+      ],
+      "valuation_anchor": "forward PE ~23-28x(FY26 500-606亿净利);全板块最低 forward 倍数的万亿名;GS 目标 ¥92.9-93.9",
+      "research_entry_zone": "≤ ¥60(≈20x FY26 500亿净利)R/R 才趋近 2:1 对 GS ¥93 上行;研究触发价,非目标价",
+      "crowding": "机构拥挤、动量延展——~+200%(¥18→~¥53),Apr-May'26 多次涨停。唯一不 AVOID 的理由 = forward 倍数最便宜(盈利在涨进价里)。",
+      "evidence": "Q1'26 归母 105.95亿 [E1 一季报, PR-G #86 reconciled; 41.8亿为旧错值已剔除]; FY25 归母 352.86亿 [E1 年报]; FY26 一致 500-606亿 [E2 卖方]; >40% 全球 AI 服务器份额 [E2]",
+      "sources": [
+        "https://finance.sina.com.cn/wm/2026-04-22/doc-inhvkiya9336135.shtml",
+        "eniu.com/gu/sh601138"
+      ],
+      "triage_score": 37.8,
+      "reconciliation_flags": null,
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-13",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-12",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "payload_hash_scope": "ticker/name/layer/role/stance/thesis/catalyst/wrong_if/valuation/entry/committed overlay/triage",
+      "disclaimer": "Internal beta forward-validation case. Not statistics, not alpha, not personalized investment advice."
+    },
+    {
+      "ticker": "002130.SZ",
+      "name": "沃尔核材",
+      "content_lock": "0b332972757d4e07c73c20106a38c20c82b921b6033921818a3d3b4bc842cff6",
+      "registered_at": "2026-06-14T00:00:00+00:00",
+      "status": "BETA_FORWARD_ACTIVE",
+      "registration_basis": "OWNER_AUTHORIZED_BETA_FORWARD_VALIDATION",
+      "owner_authorization": "Junyan owner instruction 2026-06-14, reviewer decision 2026-06-15: keep first-tier/candidate/WATCH names only if committed-data reconciliation is clean; kick AVOID/NOT_ADVANCED names; keep BYD's official 7/10 CTF checkpoint alive while excluding it from the AI beta pool.",
+      "quality_gate": {
+        "human_red_team": "PENDING",
+        "official_ctf_registration": "NOT_YET_ELIGIBLE",
+        "note": "This beta record is for internal forward validation only. It is not a red-team PASS decision sheet."
+      },
+      "investment_boundary": {
+        "is_buy_recommendation": false,
+        "is_validated_alpha": false,
+        "human_executes": true,
+        "position_policy": "Junyan-only; any real-money action is outside the automated recommendation system."
+      },
+      "bucket": "DEEPEN_CANDIDATE",
+      "stance": "WATCH_DEEP_VALUE",
+      "layer": "224G 高速铜缆 + 热缩材料",
+      "role": "SUPPLIES",
+      "ai_linkage": "INDIRECT(AI ~12% 营收)",
+      "reference_price": 19.27,
+      "reference_price_date": "2026-06-12",
+      "reference_data_source": "public/data/universe_a.json committed snapshot via ai_value_chain_screen",
+      "committed_snapshot": {
+        "committed_price": 19.27,
+        "committed_pe": 29.16,
+        "committed_pb": 2.95,
+        "committed_mcap_yi": 270.0,
+        "committed_turnover_rate": 3.43,
+        "factor_value": 63.7,
+        "factor_momentum": 84.8,
+        "research_price": 19.19,
+        "research_vs_committed_pct": -0.4,
+        "reconciliation_flags": null
+      },
+      "three_point_thesis": [
+        "市场信:母凭子贵——热缩/核辐照公司穿英伟达铜缆马甲,AI 占比小、股价已泄气。",
+        "变体:高速通信线真在放量+认证——25H1 +398% 至 4.66亿,224G 量产、乐庭扩产;因 AI 仅 ~12% 营收(盈利底座),全公司 ~14x 2026E / PB 2.9,几乎白送 AI 期权。",
+        "关键问:224G 铜在 GB 机柜规模下是否被光替代(光进铜退),乐庭营收能否真正撬动 270亿市值。"
+      ],
+      "catalyst": "2026 H1 报 ~2026-08:高速线营收占比;H 股 IPO 进行中(招股书已出)= 近端事件/扰动。",
+      "wrong_if": [
+        {
+          "metric": "高速通信线 FY2026 营收",
+          "threshold": "未 > ~12-13亿(未翻倍)",
+          "check_date": "2027-03(年报)"
+        },
+        {
+          "metric": "2027E 一致净利(CPO 替代担忧)",
+          "threshold": "下修 < ~20亿",
+          "check_date": "Rubin 规格后"
+        }
+      ],
+      "valuation_anchor": "committed PE 29.2、PB 3.0、mcap 270亿;forward 2026E ~14x(板块最便宜);⚠ F10 forward 26.6x 与 270亿市值不符,以 cap÷净利 14x 为准",
+      "research_entry_zone": "≈ ¥17-18 + H-IPO 扰动出清(事件解决型,非更低倍数);研究触发价。已 -29% YTD 是板块唯一下跌名。",
+      "crowding": "动量已 OUT——-29% YTD,唯一下跌名。逆向/价值姿态。公司质地(传统重、AI 美元敞口小)低于 胜宏。",
+      "evidence": "224G 量产+英伟达 GB200 系统认证 [E2 强]; ~24.9% 全球份额#2 [E2]; 高速线 +398% [E1 中报]; CPO 替代风险 [lead 结构]",
+      "sources": [
+        "沃尔核材 调研纪要/中报",
+        "兆龙互连同业对比"
+      ],
+      "triage_score": 37.7,
+      "reconciliation_flags": null,
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-13",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-12",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "payload_hash_scope": "ticker/name/layer/role/stance/thesis/catalyst/wrong_if/valuation/entry/committed overlay/triage",
+      "disclaimer": "Internal beta forward-validation case. Not statistics, not alpha, not personalized investment advice."
+    },
+    {
+      "ticker": "002179.SZ",
+      "name": "中航光电",
+      "content_lock": "5e4973664e9f036df9ce5eeae3ab273239b367e77933680048340c9803ccb3a5",
+      "registered_at": "2026-06-14T00:00:00+00:00",
+      "status": "BETA_FORWARD_ACTIVE",
+      "registration_basis": "OWNER_AUTHORIZED_BETA_FORWARD_VALIDATION",
+      "owner_authorization": "Junyan owner instruction 2026-06-14, reviewer decision 2026-06-15: keep first-tier/candidate/WATCH names only if committed-data reconciliation is clean; kick AVOID/NOT_ADVANCED names; keep BYD's official 7/10 CTF checkpoint alive while excluding it from the AI beta pool.",
+      "quality_gate": {
+        "human_red_team": "PENDING",
+        "official_ctf_registration": "NOT_YET_ELIGIBLE",
+        "note": "This beta record is for internal forward validation only. It is not a red-team PASS decision sheet."
+      },
+      "investment_boundary": {
+        "is_buy_recommendation": false,
+        "is_validated_alpha": false,
+        "human_executes": true,
+        "position_policy": "Junyan-only; any real-money action is outside the automated recommendation system."
+      },
+      "bucket": "DEEPEN_CANDIDATE",
+      "stance": "WATCH_TURNAROUND",
+      "layer": "连接器(军工+民品)",
+      "role": "BENEFITS",
+      "ai_linkage": "INDIRECT(112G 量产,224G 研制中)",
+      "reference_price": 36.81,
+      "reference_price_date": "2026-06-12",
+      "reference_data_source": "public/data/universe_a.json committed snapshot via ai_value_chain_screen",
+      "committed_snapshot": {
+        "committed_price": 36.81,
+        "committed_pe": 48.92,
+        "committed_pb": 3.32,
+        "committed_mcap_yi": 779.0,
+        "committed_turnover_rate": 1.69,
+        "factor_value": 54.6,
+        "factor_momentum": 42.3,
+        "research_price": 36.01,
+        "research_vs_committed_pct": -2.2,
+        "reconciliation_flags": null
+      },
+      "three_point_thesis": [
+        "市场信:蓝筹连接器龙头,军工修复+数据中心/液冷期权,'安全'的 AI 邻近名。",
+        "变体:2025 是下行年——营收 213.86亿(+3.4%)但归母 21.62亿(-35.6%);47.9x 在被压基数上,牛市是毛利均值回归(民品 数据中心/液冷/EV 对冲军工软)。板块唯一 PB 3.24 的真工业franchise。",
+        "关键问:民品(数据中心液冷+224G)能否在 2026 足够快地修复毛利。"
+      ],
+      "catalyst": "2026 半年报 ~2026-08-31:-35% 利润是否见底+民品/数据中心是否加速;224G 量产时点(当前研制)。",
+      "wrong_if": [
+        {
+          "metric": "2026 H1 归母同比",
+          "threshold": "仍为负",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "数据中心/民品营收同比",
+          "threshold": "< ~20%",
+          "check_date": "2026-08-31"
+        }
+      ],
+      "valuation_anchor": "committed PE 48.9、PB 3.24(板块最低)、mcap 779亿;forward 2026E ~30x(修复基数上)",
+      "research_entry_zone": "≈ ¥31-33 且 H1 利润拐点确认(证据门,非纯价格门);研究触发价。",
+      "crowding": "不延展(+2% YTD)。风险是反面——'被证明前是价值陷阱'直到毛利转向显现。",
+      "evidence": "2025 营收/归母 [E1 年报]; 112G 量产/224G 研制/CPO 团队 [E1+E2]; 2026-28 一致 [E2]",
+      "sources": [
+        "eniu.com/gu/sz002179",
+        "中航光电 2025 年报"
+      ],
+      "triage_score": 33.5,
+      "reconciliation_flags": null,
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-13",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-12",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "payload_hash_scope": "ticker/name/layer/role/stance/thesis/catalyst/wrong_if/valuation/entry/committed overlay/triage",
+      "disclaimer": "Internal beta forward-validation case. Not statistics, not alpha, not personalized investment advice."
+    },
+    {
+      "ticker": "002463.SZ",
+      "name": "沪电股份",
+      "content_lock": "0cfde9d525f3569c4f740ea8091a1ba912b5ddce1043fa087f6887cf0c78935f",
+      "registered_at": "2026-06-14T00:00:00+00:00",
+      "status": "BETA_FORWARD_ACTIVE",
+      "registration_basis": "OWNER_AUTHORIZED_BETA_FORWARD_VALIDATION",
+      "owner_authorization": "Junyan owner instruction 2026-06-14, reviewer decision 2026-06-15: keep first-tier/candidate/WATCH names only if committed-data reconciliation is clean; kick AVOID/NOT_ADVANCED names; keep BYD's official 7/10 CTF checkpoint alive while excluding it from the AI beta pool.",
+      "quality_gate": {
+        "human_red_team": "PENDING",
+        "official_ctf_registration": "NOT_YET_ELIGIBLE",
+        "note": "This beta record is for internal forward validation only. It is not a red-team PASS decision sheet."
+      },
+      "investment_boundary": {
+        "is_buy_recommendation": false,
+        "is_validated_alpha": false,
+        "human_executes": true,
+        "position_policy": "Junyan-only; any real-money action is outside the automated recommendation system."
+      },
+      "bucket": "WATCH",
+      "stance": "WATCH",
+      "layer": "AI PCB",
+      "role": "SUPPLIES",
+      "ai_linkage": "DIRECT",
+      "reference_price": 127.71,
+      "reference_price_date": "2026-06-12",
+      "reference_data_source": "public/data/universe_a.json committed snapshot via ai_value_chain_screen",
+      "committed_snapshot": {
+        "committed_price": 127.71,
+        "committed_pe": 49.47,
+        "committed_pb": 15.53,
+        "committed_mcap_yi": 2458.0,
+        "committed_turnover_rate": 3.23,
+        "factor_value": 36.9,
+        "factor_momentum": 38.0,
+        "research_price": 125.2,
+        "research_vs_committed_pct": -2.0,
+        "reconciliation_flags": null
+      },
+      "three_point_thesis": [
+        "市场信:AI 服务器/交换机 PCB 核心受益,已随板块上行。",
+        "变体:同业里相对便宜——committed PE 49.5 vs PCB 同业 ~108x、PEG ~1.11;Q1'26 归母 12.42亿(+62.9%)。",
+        "关键问:AI 板占比与毛利能否在 800G/1.6T 交换+GB 机柜放量中继续抬升。"
+      ],
+      "catalyst": "2026 H1 报 ~2026-08-31:AI 板营收占比与毛利;Rubin 平台 2026H2 含量。",
+      "wrong_if": [
+        {
+          "metric": "2026 H1 综合毛利率",
+          "threshold": "环比走弱 + AI 占比未升",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "归母同比",
+          "threshold": "< +30%",
+          "check_date": "2026-08-31"
+        }
+      ],
+      "valuation_anchor": "committed PE 49.5、PB 15.5、mcap 2458亿;同业相对折价(PCB 板块均 ~108x)",
+      "research_entry_zone": "需 deep thesis 建桥;+66% YTD 已部分定价,触发价待满版后定。",
+      "crowding": "中度延展(+66% YTD)。比胜宏更贵的同类暴露——胜宏在更低 2026E 倍数+更平的图提供同样敞口。",
+      "evidence": "Q1'26 归母 12.42亿 [E1]; PE vs PCB 同业 [E2]",
+      "sources": [
+        "eniu.com/gu/sz002463"
+      ],
+      "triage_score": 18.7,
+      "reconciliation_flags": null,
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-13",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-12",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "payload_hash_scope": "ticker/name/layer/role/stance/thesis/catalyst/wrong_if/valuation/entry/committed overlay/triage",
+      "disclaimer": "Internal beta forward-validation case. Not statistics, not alpha, not personalized investment advice."
+    },
+    {
+      "ticker": "301308.SZ",
+      "name": "江波龙",
+      "content_lock": "0a81b4d70657ca2f8ad5d6bca89cac3f7bdefc76d3016d37ddf11f497f39da00",
+      "registered_at": "2026-06-14T00:00:00+00:00",
+      "status": "BETA_FORWARD_ACTIVE",
+      "registration_basis": "OWNER_AUTHORIZED_BETA_FORWARD_VALIDATION",
+      "owner_authorization": "Junyan owner instruction 2026-06-14, reviewer decision 2026-06-15: keep first-tier/candidate/WATCH names only if committed-data reconciliation is clean; kick AVOID/NOT_ADVANCED names; keep BYD's official 7/10 CTF checkpoint alive while excluding it from the AI beta pool.",
+      "quality_gate": {
+        "human_red_team": "PENDING",
+        "official_ctf_registration": "NOT_YET_ELIGIBLE",
+        "note": "This beta record is for internal forward validation only. It is not a red-team PASS decision sheet."
+      },
+      "investment_boundary": {
+        "is_buy_recommendation": false,
+        "is_validated_alpha": false,
+        "human_executes": true,
+        "position_policy": "Junyan-only; any real-money action is outside the automated recommendation system."
+      },
+      "bucket": "WATCH",
+      "stance": "CYCLE_WATCH",
+      "layer": "企业级存储模组/eSSD/RDIMM",
+      "role": "SUPPLIES",
+      "ai_linkage": "DIRECT",
+      "reference_price": 536.69,
+      "reference_price_date": "2026-06-12",
+      "reference_data_source": "public/data/universe_a.json committed snapshot via ai_value_chain_screen",
+      "committed_snapshot": {
+        "committed_price": 536.69,
+        "committed_pe": 14.7,
+        "committed_pb": 19.07,
+        "committed_mcap_yi": 2271.0,
+        "committed_turnover_rate": 5.97,
+        "factor_value": 50.2,
+        "factor_momentum": 90.3,
+        "research_price": 514.89,
+        "research_vs_committed_pct": -4.1,
+        "reconciliation_flags": null
+      },
+      "three_point_thesis": [
+        "市场信:AI 内存超级周期+企业存储国产替代的纯标的。",
+        "变体:Q1'26 利润爆发(营收 99亿、净 38.62亿,自 -1.52亿)由 NAND/DRAM 涨价+企业 mix 上移驱动;但 forward PE 14x 是周期顶单季年化的幻觉。",
+        "关键问:38.6亿单季利润里多少是耐用企业 mix 毛利 vs 短暂 NAND/DRAM 涨价窗口。"
+      ],
+      "catalyst": "Q2'26 报 ~2026-08:企业营收能否续增+毛利在内存涨价见顶时是否守住;H2'26 NAND 价格轨迹。",
+      "wrong_if": [
+        {
+          "metric": "NAND 合约价环比",
+          "threshold": "转负(现 +70-75%)",
+          "check_date": "TrendForce Q4'26"
+        },
+        {
+          "metric": "企业存储营收占比 FY2026",
+          "threshold": "未 > 22%",
+          "check_date": "2027 年报"
+        }
+      ],
+      "valuation_anchor": "committed PE-TTM 14.7(周期顶,误导)、PB 19.1、mcap 2271亿;静态 PE ~152x",
+      "research_entry_zone": "≈ ¥330-380(任何 30%+ 周期回撤后,正常化非顶峰年化净利支撑 2:1);明确非目标价、周期择时依赖。",
+      "crowding": "极度拥挤/抛物线(12 个月 +7x)。对内存价格头条高 beta。",
+      "evidence": "Q1'26 财务 [E1]; 企业存储占比模型 [E2]; 14x forward 是顶峰年化 [flag]",
+      "sources": [
+        "江波龙 2026 一季报",
+        "TrendForce NAND 合约价"
+      ],
+      "triage_score": -11.8,
+      "reconciliation_flags": null,
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-13",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-12",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "payload_hash_scope": "ticker/name/layer/role/stance/thesis/catalyst/wrong_if/valuation/entry/committed overlay/triage",
+      "disclaimer": "Internal beta forward-validation case. Not statistics, not alpha, not personalized investment advice."
+    },
+    {
+      "ticker": "688041.SH",
+      "name": "海光信息",
+      "content_lock": "70865e3c5ce2686dda295cca8864d070b5cfdda2f953cd423fba5173e0b77398",
+      "registered_at": "2026-06-14T00:00:00+00:00",
+      "status": "BETA_FORWARD_ACTIVE",
+      "registration_basis": "OWNER_AUTHORIZED_BETA_FORWARD_VALIDATION",
+      "owner_authorization": "Junyan owner instruction 2026-06-14, reviewer decision 2026-06-15: keep first-tier/candidate/WATCH names only if committed-data reconciliation is clean; kick AVOID/NOT_ADVANCED names; keep BYD's official 7/10 CTF checkpoint alive while excluding it from the AI beta pool.",
+      "quality_gate": {
+        "human_red_team": "PENDING",
+        "official_ctf_registration": "NOT_YET_ELIGIBLE",
+        "note": "This beta record is for internal forward validation only. It is not a red-team PASS decision sheet."
+      },
+      "investment_boundary": {
+        "is_buy_recommendation": false,
+        "is_validated_alpha": false,
+        "human_executes": true,
+        "position_policy": "Junyan-only; any real-money action is outside the automated recommendation system."
+      },
+      "bucket": "WATCH",
+      "stance": "WATCH_ONLY_PRICE",
+      "layer": "国产 CPU/DCU 算力芯片",
+      "role": "CONTROLS",
+      "ai_linkage": "DIRECT",
+      "reference_price": 289.53,
+      "reference_price_date": "2026-06-12",
+      "reference_data_source": "public/data/universe_a.json committed snapshot via ai_value_chain_screen",
+      "committed_snapshot": {
+        "committed_price": 289.53,
+        "committed_pe": 244.86,
+        "committed_pb": 28.64,
+        "committed_mcap_yi": 6730.0,
+        "committed_turnover_rate": 1.63,
+        "factor_value": 21.4,
+        "factor_momentum": 27.4,
+        "research_price": 280.0,
+        "research_vs_committed_pct": -3.3,
+        "reconciliation_flags": null
+      },
+      "three_point_thesis": [
+        "市场信:A 股首选国产替代算力芯片,DCU 深算3 是最可信英伟达替代。",
+        "变体(偏负面):franchise 真且加速(Q1'26 营收 40.34亿 +68%、净 6.87亿 +36%),但无价格变体——committed PE 244.9 / 99 分位;净利增速(FY25 +31.79%)远慢于营收(+56.9%)= DCU 爬坡毛利/opex 吃掉模型。",
+        "关键问:DCU 能否在不重演 FY25 净利率侵蚀下放量。"
+      ],
+      "catalyst": "FY26 一致净 44.3亿(+74%);H1 报 ~2026-08-30 是关键印证;~30亿员工持股套现悬顶 = 情绪风险。",
+      "wrong_if": [
+        {
+          "metric": "H1'26 净利增速 vs 营收增速",
+          "threshold": "净利再次 < 营收增速",
+          "check_date": "2026-08-30"
+        },
+        {
+          "metric": "DCU 深算 出口/IP(chiplet/代工)",
+          "threshold": "受限",
+          "check_date": "rolling"
+        }
+      ],
+      "valuation_anchor": "committed PE 244.9 / 99 分位、PB 28.6、mcap 6730亿;⚠ 纠错:FY25 净 25.45亿(+31.79%),非流传的'19亿'",
+      "research_entry_zone": "PE 压向 ~80-100x 前无可辩护入场(需价格腰斩或 ~2 年盈利增长)。WATCH_ONLY。",
+      "crowding": "极度拥挤,99 分位估值,市值破 8000亿。拥有瓶颈不使价格合理。",
+      "evidence": "FY25/Q1 [E1 年报/季报]; PE 分位 [E2 eniu]; 19亿净利是错值 [对账纠正]",
+      "sources": [
+        "eniu.com/gu/sh688041",
+        "https://www.stcn.com/article/detail/3730253.html"
+      ],
+      "triage_score": -44.2,
+      "reconciliation_flags": null,
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-13",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-12",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "payload_hash_scope": "ticker/name/layer/role/stance/thesis/catalyst/wrong_if/valuation/entry/committed overlay/triage",
+      "disclaimer": "Internal beta forward-validation case. Not statistics, not alpha, not personalized investment advice."
+    }
+  ],
+  "excluded": [
+    {
+      "ticker": "300476.SZ",
+      "name": "胜宏科技",
+      "stance": "WATCH_CONSTRUCTIVE",
+      "reason": "PR-G #86 downgraded the load-bearing AI/Nvidia revenue-share claim to E2/undisclosed and added GM-peaked-Q2'25 nuance. Hold out of beta-active until the corrected deep thesis is accepted/reconciled.",
+      "reference_price": 330.0,
+      "reconciliation_flags": [
+        "PRG_PENDING"
+      ]
+    },
+    {
+      "ticker": "002156.SZ",
+      "name": "通富微电",
+      "stance": "WATCH",
+      "reason": "Pending reconciliation: committed-data overlay has unresolved flags; hold out of beta-active until PR-G/deep-thesis reconciliation clears it.",
+      "reference_price": 58.16,
+      "reconciliation_flags": [
+        "STALE_RESEARCH_PRICE: research 61.22 vs committed 58.16 (+5.3%) — use committed"
+      ]
+    },
+    {
+      "ticker": "300604.SZ",
+      "name": "长川科技",
+      "stance": "WATCH",
+      "reason": "Pending reconciliation: committed-data overlay has unresolved flags; hold out of beta-active until PR-G/deep-thesis reconciliation clears it.",
+      "reference_price": 233.3,
+      "reconciliation_flags": [
+        "STALE_RESEARCH_PRICE: research 218.41 vs committed 233.3 (-6.4%) — use committed"
+      ]
+    },
+    {
+      "ticker": "688019.SH",
+      "name": "安集科技",
+      "stance": "WATCH_ONLY_PRICE",
+      "reason": "Pending reconciliation: committed-data overlay has unresolved flags; hold out of beta-active until PR-G/deep-thesis reconciliation clears it.",
+      "reference_price": 228.5,
+      "reconciliation_flags": [
+        "STALE_RESEARCH_PRICE: research 209.08 vs committed 228.5 (-8.5%) — use committed"
+      ]
+    },
+    {
+      "ticker": "688525.SH",
+      "name": "佰维存储",
+      "stance": "CYCLE_WATCH",
+      "reason": "Pending reconciliation: committed-data overlay has unresolved flags; hold out of beta-active until PR-G/deep-thesis reconciliation clears it.",
+      "reference_price": 342.0,
+      "reconciliation_flags": [
+        "STALE_RESEARCH_PRICE: research 312.25 vs committed 342.0 (-8.7%) — use committed"
+      ]
+    },
+    {
+      "ticker": "603019.SH",
+      "name": "中科曙光",
+      "stance": "WATCH_RECONCILE_FLAG",
+      "reason": "Pending reconciliation: committed-data overlay has unresolved flags; hold out of beta-active until PR-G/deep-thesis reconciliation clears it.",
+      "reference_price": 82.58,
+      "reconciliation_flags": [
+        "PE_CONFLICT: research cites a low PE but committed PE = 132.57 — resolve EPS basis before any band"
+      ]
+    },
+    {
+      "ticker": "688082.SH",
+      "name": "盛美上海",
+      "stance": "AVOID_AT_SPOT",
+      "reason": "Excluded by owner instruction: only first-tier/candidate/WATCH names remain in beta forward pool.",
+      "reference_price": 307.12
+    },
+    {
+      "ticker": "002837.SZ",
+      "name": "英维克",
+      "stance": "AVOID_BLOWUP",
+      "reason": "Excluded by owner instruction: only first-tier/candidate/WATCH names remain in beta forward pool.",
+      "reference_price": 68.5
+    }
+  ]
+}
