@@ -41,9 +41,11 @@ CONFIG = {
 }
 
 FACTOR_SUBSTITUTION_NOTE = (
-    "quality/value/momentum/low_vol use barra_lite_v1 factors. size is a "
-    "temporary stand-in for the not-yet-available earnings-trend factor; no "
-    "earnings trend is fabricated. Weights and thresholds are [unvalidated "
+    "quality/value/momentum/low_vol use barra_lite_v1 factors. In the current "
+    "universe snapshot, quality may be inert if roe coverage is missing, and "
+    "momentum is a 1-day change_pct rank rather than 12-1 month momentum. size "
+    "is a temporary stand-in for the not-yet-available earnings-trend factor; "
+    "no earnings trend is fabricated. Weights and thresholds are [unvalidated "
     "intuition], not backtest-calibrated."
 )
 

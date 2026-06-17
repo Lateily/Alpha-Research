@@ -1,0 +1,72 @@
+{
+  "verdict": "WARN",
+  "as_of": "2026-06-16T14:18:45.134384+00:00",
+  "max_age_days": 2,
+  "meta": {
+    "fetched_at": "2026-06-16T14:17:47.728604",
+    "count": 5513,
+    "version": "4.2",
+    "scorer": "barra_lite_v1"
+  },
+  "coverage": {
+    "price": 1.0,
+    "pe": 0.7359,
+    "pb": 0.9924,
+    "roe": 0.0
+  },
+  "factor_summaries": {
+    "value": {
+      "coverage": 0.9883910756393978,
+      "unique": 960,
+      "stdev": 24.787746,
+      "median": 55.3
+    },
+    "quality": {
+      "coverage": 0.9883910756393978,
+      "unique": 1,
+      "stdev": 0.0,
+      "median": 50.0
+    },
+    "momentum": {
+      "coverage": 0.9883910756393978,
+      "unique": 985,
+      "stdev": 28.872949,
+      "median": 49.4
+    },
+    "size": {
+      "coverage": 0.9883910756393978,
+      "unique": 1001,
+      "stdev": 28.872815,
+      "median": 50.0
+    },
+    "low_vol": {
+      "coverage": 0.9883910756393978,
+      "unique": 1000,
+      "stdev": 28.872909,
+      "median": 50.0
+    }
+  },
+  "errors": [],
+  "warnings": [
+    {
+      "code": "pe_basis_not_registration_grade",
+      "message": "PE is a provider multiple, not a verified TTM/forward valuation anchor."
+    },
+    {
+      "code": "momentum_is_short_tape",
+      "message": "factors.momentum is 1-day tape rank, not 12-1 month momentum."
+    },
+    {
+      "code": "quality_factor_inert_or_unbacked",
+      "message": "Quality factor lacks broad ROE coverage and should not be used as quality evidence.",
+      "roe_coverage": 0.0,
+      "quality_summary": {
+        "coverage": 0.9883910756393978,
+        "unique": 1,
+        "stdev": 0.0,
+        "median": 50.0
+      }
+    }
+  ],
+  "ticker_checks": []
+}
