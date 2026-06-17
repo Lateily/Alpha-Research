@@ -306,8 +306,12 @@ def _selftest() -> int:
         if not all((r.get("data_quality") or {}).get("human_redteam") == "PENDING" for r in cockpit["beta"]):
             errs.append("beta cockpit rows must show human red-team PENDING")
     if cockpit.get("official"):
-        if not any(r.get("status") == "RETIRED_BY_OWNER" for r in cockpit["official"]) and any(r.get("ticker") == "002594.SZ" for r in cockpit["official"]):
-            errs.append("BYD must be retired when present after owner instruction")
+        # Owner reversed the earlier #74 retire-BYD plan: BYD is KEPT ACTIVE in the
+        # official CTF ledger with its 7/10 checkpoint (first read 2026-07-10), and only
+        # EXCLUDED from the AI beta pool. Guard against accidentally re-retiring it.
+        byd = next((r for r in cockpit["official"] if r.get("ticker") == "002594.SZ"), None)
+        if byd is not None and byd.get("status") != "ACTIVE":
+            errs.append("BYD must stay ACTIVE in the official ledger (owner kept it; do not retire)")
     if errs:
         print("factory_progress selftest FAILED:")
         for e in errs:

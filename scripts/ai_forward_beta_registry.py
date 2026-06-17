@@ -9,7 +9,6 @@ Input:
 Outputs:
   public/data/ai_forward_beta_checkpoint_ledger.json
   docs/research/screens/AI_FORWARD_BETA_LEDGER_2026-06-14.md
-  public/data/decision_sheet_checkpoints.json (retires BYD by owner instruction)
 
 The official CTF checkpoint ledger remains strict: red-team PASS sheets live there.
 This beta ledger is deliberately labeled owner-authorized / not human-red-teamed,
@@ -33,10 +32,35 @@ OFFICIAL_LEDGER = D / "decision_sheet_checkpoints.json"
 BETA_LEDGER = D / "ai_forward_beta_checkpoint_ledger.json"
 REPORT = REPO / "docs" / "research" / "screens" / "AI_FORWARD_BETA_LEDGER_2026-06-14.md"
 
-OWNER_AUTH = "Junyan owner instruction 2026-06-14: keep first-tier/candidate/WATCH names; kick AVOID names; retire BYD"
-RETIRED_TICKERS = {"002594.SZ": "Removed from active forward pool by owner instruction; no longer part of current AI/core forward validation focus."}
+OWNER_AUTH = (
+    "Junyan owner instruction 2026-06-14, reviewer decision 2026-06-15: keep "
+    "first-tier/candidate/WATCH names only if committed-data reconciliation is clean; "
+    "kick AVOID/NOT_ADVANCED names; keep BYD's official 7/10 CTF checkpoint alive "
+    "while excluding it from the AI beta pool."
+)
+RETIRED_TICKERS = {}
 EXCLUDED_STANCE_PREFIXES = ("AVOID", "NOT_ADVANCED")
 CHECK_OFFSETS = (30, 60, 90)
+PRG_PENDING_TICKERS = {
+    "300476.SZ": (
+        "PR-G #86 downgraded the load-bearing AI/Nvidia revenue-share claim to E2/undisclosed "
+        "and added GM-peaked-Q2'25 nuance. Hold out of beta-active until the corrected deep "
+        "thesis is accepted/reconciled."
+    )
+}
+TEXT_OVERRIDES = {
+    "601138.SH": {
+        "thesis": [
+            "市场信:AI 服务器王、万亿市值、故事人尽皆知=已充分定价。",
+            "变体是 forward 倍数被盈利压缩,不是扩张:Q1'26 已印归母 105.95亿(+102.55%)、营收 2510亿(+56.5%);FY25 归母 352.86亿(E1)确认, FY26 一致净利 500-606亿 → forward PE ~23-28x(委内提示:committed PE 仅 33,比 agent TTM 45 更低)。",
+            "关键问:GB200→GB300 机柜 ASP/毛利台阶是结构性的,还是 ODM 薄利(净利率 ~3-4%)随放量封顶上行。",
+        ],
+        "evidence": (
+            "Q1'26 归母 105.95亿 [E1 一季报, PR-G #86 reconciled; 41.8亿为旧错值已剔除]; "
+            "FY25 归母 352.86亿 [E1 年报]; FY26 一致 500-606亿 [E2 卖方]; >40% 全球 AI 服务器份额 [E2]"
+        ),
+    }
+}
 
 
 def _load(path: Path, default=None):
@@ -78,6 +102,9 @@ def _bucket(c: dict) -> str:
 
 def _entry(c: dict, reg_date: date, snapshot_as_of: str) -> dict:
     committed = c.get("committed") or {}
+    override = TEXT_OVERRIDES.get(c.get("ticker"), {})
+    thesis = override.get("thesis", c.get("thesis"))
+    evidence = override.get("evidence", c.get("evidence"))
     payload = {
         "ticker": c.get("ticker"),
         "name": c.get("name"),
@@ -86,7 +113,7 @@ def _entry(c: dict, reg_date: date, snapshot_as_of: str) -> dict:
         "ai_linkage": c.get("ai_linkage"),
         "stance": c.get("stance"),
         "bucket": _bucket(c),
-        "thesis": c.get("thesis"),
+        "thesis": thesis,
         "catalyst": c.get("catalyst"),
         "wrong_if": c.get("wrong_if"),
         "valuation_anchor": c.get("valuation_anchor"),
@@ -123,13 +150,13 @@ def _entry(c: dict, reg_date: date, snapshot_as_of: str) -> dict:
         "reference_price_date": snapshot_as_of[:10] if snapshot_as_of else None,
         "reference_data_source": "public/data/universe_a.json committed snapshot via ai_value_chain_screen",
         "committed_snapshot": committed,
-        "three_point_thesis": c.get("thesis") or [],
+        "three_point_thesis": thesis or [],
         "catalyst": c.get("catalyst"),
         "wrong_if": c.get("wrong_if") or [],
         "valuation_anchor": c.get("valuation_anchor"),
         "research_entry_zone": c.get("research_entry"),
         "crowding": c.get("crowding"),
-        "evidence": c.get("evidence"),
+        "evidence": evidence,
         "sources": c.get("sources") or [],
         "triage_score": c.get("triage_score"),
         "reconciliation_flags": committed.get("reconciliation_flags"),
@@ -146,6 +173,8 @@ def build_beta(screen: dict, as_of: str | None = None) -> dict:
     active, excluded = [], []
     for c in screen.get("candidates", []):
         stance = c.get("stance", "")
+        ticker = c.get("ticker")
+        flags = (c.get("committed") or {}).get("reconciliation_flags") or []
         if stance.startswith(EXCLUDED_STANCE_PREFIXES):
             excluded.append({
                 "ticker": c.get("ticker"),
@@ -153,6 +182,26 @@ def build_beta(screen: dict, as_of: str | None = None) -> dict:
                 "stance": stance,
                 "reason": "Excluded by owner instruction: only first-tier/candidate/WATCH names remain in beta forward pool.",
                 "reference_price": (c.get("committed") or {}).get("committed_price"),
+            })
+            continue
+        if ticker in PRG_PENDING_TICKERS:
+            excluded.append({
+                "ticker": ticker,
+                "name": c.get("name"),
+                "stance": stance,
+                "reason": PRG_PENDING_TICKERS[ticker],
+                "reference_price": (c.get("committed") or {}).get("committed_price"),
+                "reconciliation_flags": ["PRG_PENDING"],
+            })
+            continue
+        if flags:
+            excluded.append({
+                "ticker": c.get("ticker"),
+                "name": c.get("name"),
+                "stance": stance,
+                "reason": "Pending reconciliation: committed-data overlay has unresolved flags; hold out of beta-active until PR-G/deep-thesis reconciliation clears it.",
+                "reference_price": (c.get("committed") or {}).get("committed_price"),
+                "reconciliation_flags": flags,
             })
             continue
         active.append(_entry(c, reg_date, snapshot_as_of))
@@ -176,6 +225,8 @@ def build_beta(screen: dict, as_of: str | None = None) -> dict:
 
 def retire_official(ledger: dict, as_of: str | None = None) -> dict:
     d = copy.deepcopy(ledger)
+    if not RETIRED_TICKERS:
+        return d
     now = datetime.now(timezone.utc).isoformat()
     for r in d.get("registrations", []):
         if r.get("ticker") in RETIRED_TICKERS and r.get("status") == "ACTIVE":
@@ -285,7 +336,8 @@ def render_report(beta: dict, official: dict) -> str:
         "",
         "- Kept only FIRST_TIER / DEEPEN_CANDIDATE / WATCH-like names from the AI value-chain screen.",
         "- Excluded AVOID / NOT_ADVANCED names from the beta forward pool.",
-        "- Retired BYD from the official CTF checkpoint ledger by owner instruction; history remains append-only.",
+        "- Excluded names with unresolved committed-data reconciliation flags from beta-active until reconciled.",
+        "- Kept BYD's official 7/10 CTF checkpoint alive; it is simply not part of this AI beta pool.",
         "- Every active beta name has a content hash, committed reference price, 30/60/90 checkpoints, thesis/catalyst/wrong-if/valuation/entry fields.",
         "- Every active beta name is **human red-team PENDING** and **not official CTF registration**.",
         "",
@@ -299,7 +351,7 @@ def render_report(beta: dict, official: dict) -> str:
         "",
         excluded or "- None",
         "",
-        "## Official Ledger Retirement",
+        "## Official Ledger Changes",
         "",
         retired or "- None",
         "",
@@ -349,21 +401,27 @@ def _selftest() -> int:
             {"ticker": "A.SZ", "name": "A", "stance": "WATCH", "thesis": ["x"], "committed": {"committed_price": 1}},
             {"ticker": "B.SZ", "name": "B", "stance": "AVOID_AT_SPOT", "thesis": ["y"], "committed": {"committed_price": 2}},
             {"ticker": "C.SZ", "name": "C", "stance": "WATCH_CONSTRUCTIVE", "thesis": ["z"], "committed": {"committed_price": 3}},
+            {"ticker": "D.SZ", "name": "D", "stance": "WATCH", "thesis": ["bad"],
+             "committed": {"committed_price": 4, "reconciliation_flags": ["PE_CONFLICT"]}},
+            {"ticker": "300476.SZ", "name": "胜宏", "stance": "WATCH_CONSTRUCTIVE", "thesis": ["soft"],
+             "committed": {"committed_price": 5}},
         ],
     }
     beta = build_beta(screen, "2026-06-14")
     assert len(beta["registrations"]) == 2
-    assert len(beta["excluded"]) == 1
+    assert len(beta["excluded"]) == 3
     assert all(not r["stance"].startswith(EXCLUDED_STANCE_PREFIXES) for r in beta["registrations"])
+    assert all(not r.get("reconciliation_flags") for r in beta["registrations"])
+    assert any((x.get("reconciliation_flags") or []) for x in beta["excluded"])
+    assert not any(r["ticker"] == "300476.SZ" for r in beta["registrations"])
     assert all(r["quality_gate"]["human_red_team"] == "PENDING" for r in beta["registrations"])
     assert all(r["investment_boundary"]["is_buy_recommendation"] is False for r in beta["registrations"])
     ledger = {"_meta": {}, "registrations": [{"ticker": "002594.SZ", "name": {"zh": "比亚迪"}, "status": "ACTIVE"},
                                              {"ticker": "X.SZ", "name": {"zh": "X"}, "status": "ACTIVE"}]}
     retired = retire_official(ledger, "2026-06-14")
     statuses = {r["ticker"]: r["status"] for r in retired["registrations"]}
-    assert statuses["002594.SZ"] == "RETIRED_BY_OWNER"
+    assert statuses["002594.SZ"] == "ACTIVE"
     assert statuses["X.SZ"] == "ACTIVE"
-    assert retired["_meta"]["n_active"] == 1
     # beta check no-op before due; evaluates when due and price exists
     import tempfile
     global BETA_LEDGER, D
@@ -412,11 +470,14 @@ def main() -> int:
     print(f"active_beta={len(beta['registrations'])} excluded={len(beta['excluded'])} official_active={retired['_meta']['n_active']}")
     if args.write:
         _dump(BETA_LEDGER, beta)
-        _dump(OFFICIAL_LEDGER, retired)
         REPORT.write_text(render_report(beta, retired))
         print(f"wrote {BETA_LEDGER}")
         print(f"wrote {REPORT}")
-        print(f"updated {OFFICIAL_LEDGER}")
+        if retired != official:
+            _dump(OFFICIAL_LEDGER, retired)
+            print(f"updated {OFFICIAL_LEDGER}")
+        else:
+            print(f"unchanged {OFFICIAL_LEDGER}")
     return 0
 
 
