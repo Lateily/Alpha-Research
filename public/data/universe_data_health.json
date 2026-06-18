@@ -1,48 +1,48 @@
 {
   "verdict": "WARN",
-  "as_of": "2026-06-18T05:59:50.195207+00:00",
+  "as_of": "2026-06-18T12:01:13.149684+00:00",
   "max_age_days": 2,
   "meta": {
-    "fetched_at": "2026-06-17T12:32:58.985470",
-    "count": 5509,
+    "fetched_at": "2026-06-18T12:00:07.740849",
+    "count": 5507,
     "version": "4.2",
     "scorer": "barra_lite_v1"
   },
   "coverage": {
     "price": 1.0,
-    "pe": 0.7361,
-    "pb": 0.9924,
+    "pe": 0.7363,
+    "pb": 0.9922,
     "roe": 0.0
   },
   "factor_summaries": {
     "value": {
-      "coverage": 0.9880196042838991,
-      "unique": 953,
-      "stdev": 24.801048,
-      "median": 55.4
+      "coverage": 0.9871073179589613,
+      "unique": 954,
+      "stdev": 24.801136,
+      "median": 55.2
     },
     "quality": {
-      "coverage": 0.9880196042838991,
+      "coverage": 0.9871073179589613,
       "unique": 1,
       "stdev": 0.0,
       "median": 50.0
     },
     "momentum": {
-      "coverage": 0.9880196042838991,
-      "unique": 994,
-      "stdev": 28.872609,
+      "coverage": 0.9871073179589613,
+      "unique": 988,
+      "stdev": 28.872458,
       "median": 50.0
     },
     "size": {
-      "coverage": 0.9880196042838991,
+      "coverage": 0.9871073179589613,
       "unique": 1001,
-      "stdev": 28.872875,
+      "stdev": 28.872845,
       "median": 50.0
     },
     "low_vol": {
-      "coverage": 0.9880196042838991,
+      "coverage": 0.9871073179589613,
       "unique": 1000,
-      "stdev": 28.873006,
+      "stdev": 28.872823,
       "median": 50.0
     }
   },
@@ -61,7 +61,7 @@
       "message": "Quality factor lacks broad ROE coverage and should not be used as quality evidence.",
       "roe_coverage": 0.0,
       "quality_summary": {
-        "coverage": 0.9880196042838991,
+        "coverage": 0.9871073179589613,
         "unique": 1,
         "stdev": 0.0,
         "median": 50.0

@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-06-18T06:03:12Z",
+  "fetched_at": "2026-06-18T12:04:56Z",
   "api_used": "report_rc",
   "_attempted_endpoints": [
     "broker_recommend",
@@ -9,6 +9,64 @@
   ],
   "window_days": 90,
   "recommendations": [
+    {
+      "ts_code": "300308.SZ",
+      "name": "中际旭创",
+      "report_date": "20260617",
+      "report_title": "核心关注AI算力供给瓶颈变化和新技术演进：2026年通信行业中期投资策略报告",
+      "report_type": "非个股",
+      "classify": "一般报告",
+      "org_name": "西部证券",
+      "author_name": "陈彤",
+      "quarter": "2026Q4",
+      "op_rt": null,
+      "op_pr": null,
+      "tp": null,
+      "np": 2964000.0,
+      "eps": 26.577,
+      "pe": null,
+      "rd": null,
+      "roe": null,
+      "ev_ebitda": null,
+      "rating": "无",
+      "max_price": null,
+      "min_price": null,
+      "rec_date": "20260617",
+      "broker": "西部证券",
+      "analyst": null,
+      "recommendation": "无",
+      "target_price": null,
+      "report_id": null
+    },
+    {
+      "ts_code": "300308.SZ",
+      "name": "中际旭创",
+      "report_date": "20260617",
+      "report_title": "核心关注AI算力供给瓶颈变化和新技术演进：2026年通信行业中期投资策略报告",
+      "report_type": "非个股",
+      "classify": "一般报告",
+      "org_name": "西部证券",
+      "author_name": "陈彤",
+      "quarter": "2027Q4",
+      "op_rt": null,
+      "op_pr": null,
+      "tp": null,
+      "np": 5236000.0,
+      "eps": 46.95,
+      "pe": null,
+      "rd": null,
+      "roe": null,
+      "ev_ebitda": null,
+      "rating": "无",
+      "max_price": null,
+      "min_price": null,
+      "rec_date": "20260617",
+      "broker": "西部证券",
+      "analyst": null,
+      "recommendation": "无",
+      "target_price": null,
+      "report_id": null
+    },
     {
       "ts_code": "300308.SZ",
       "name": "中际旭创",
@@ -3462,11 +3520,11 @@
     }
   ],
   "summary": {
-    "total_90d": 119,
+    "total_90d": 121,
     "unique_brokers_90d": 27,
-    "latest_recommendation": "Buy",
+    "latest_recommendation": "无",
     "avg_target_price": null,
     "target_price_count": 0,
-    "latest_date": "2026-06-10"
+    "latest_date": "2026-06-17"
   }
 }
