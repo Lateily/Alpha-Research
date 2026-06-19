@@ -34,6 +34,8 @@ import json
 from datetime import datetime, timezone, date
 from pathlib import Path
 
+from deep_thesis_reconcile import redteam_readiness  # P0.2 unified readiness verdict
+
 REPO = Path(__file__).resolve().parent.parent
 D = REPO / "public" / "data"
 SHEETS = D / "decision_sheets"
@@ -62,6 +64,31 @@ def _add_days(d0: date, n: int) -> str:
 
 
 # ───────────────────────── registration ─────────────────────────
+def _autostamp(safe, sheet, lock, verdict, redteam, reg_date, checkpoints):
+    """P0.3 — after a successful registration, stamp the sheet's quality + re-render its MD so the
+    artifact can NEVER keep stale 'RED-TEAM PENDING / not registered' prose (Junyan #79/#88 recurring P1).
+    `quality` is EXCLUDED from the content lock (decision_sheet._content_lock), so this provably never
+    moves the lock binding."""
+    import decision_sheet as _ds
+    avg = redteam.get("average") or redteam.get("score")
+    lock_before = _ds._content_lock(sheet)
+    q = sheet.setdefault("quality", {})
+    q["human_red_team"] = (f"PASS {avg} — Junyan five-axis red-team (the measure of record); "
+                           f"registered {reg_date}, lock {lock[:16]}")
+    q["registration"] = {"status": "REGISTERED", "verdict": verdict, "registered_at": _now(),
+                         "content_lock": lock, "checkpoints": [c["due_date"] for c in checkpoints]}
+    if _ds._content_lock(sheet) != lock_before:
+        raise SystemExit("auto-stamp moved the content lock — quality must stay lock-excluded (aborting)")
+    (SHEETS / f"{safe}.json").write_text(json.dumps(sheet, ensure_ascii=False, indent=2))
+    try:
+        md_path = _ds.MD_OUT / f"{safe}_{sheet['identity']['as_of']}.md"
+        md_path.parent.mkdir(parents=True, exist_ok=True)
+        md_path.write_text(_ds._render_md(sheet))
+        print(f"  [autostamp] quality→PASS {avg}; MD re-rendered → {md_path.name} (lock unchanged)")
+    except Exception as e:
+        print(f"  [autostamp] quality→PASS {avg} (MD re-render skipped: {type(e).__name__})")
+
+
 def register(ticker: str, redteam_path: str | None) -> dict:
     safe = ticker.replace(".", "_")
     sheet = _load(SHEETS / f"{safe}.json")
@@ -89,6 +116,19 @@ def register(ticker: str, redteam_path: str | None) -> dict:
         raise SystemExit(
             f"sheet carries DATA_BLOCKED ({reason}) — refresh/reconcile the reference price before registration"
         )
+
+    # ── P0.2: red-team readiness gate ────────────────────────────────────────
+    # A thesis may register only when (a) primary reconciliation grades it RED_TEAM_GRADE AND
+    # (b) every filing-evidence checklist item is supplied. reconcile auto-fills the items it can
+    # substantiate from its (hand-authored v0) fact packs; the rest come from the red-team record's
+    # `checklist`. This turns the contract into a hard block — no readiness, no registration.
+    readiness = redteam_readiness(ticker, redteam.get("checklist"))
+    if readiness["redteam_readiness_verdict"] != "REDTEAM_READY":
+        raise SystemExit(
+            f"NOT_REDTEAM_READY — registration refused. reconcile_grade={readiness['reconcile_grade']}; "
+            f"blockers={readiness['blockers']}. Reconcile to RED_TEAM_GRADE and supply every checklist "
+            f"evidence item (E1/E2 disclosure, filing line-item citation, non-recurring/OCF, conflict source line) "
+            f"before registering.")
 
     ledger = _load(LEDGER, {"_meta": {}, "registrations": []}) or {"_meta": {}, "registrations": []}
     for r in ledger["registrations"]:
@@ -136,6 +176,7 @@ def register(ticker: str, redteam_path: str | None) -> dict:
     LEDGER.write_text(json.dumps(ledger, ensure_ascii=False, indent=2))
     print(f"[checkpoints] REGISTERED {ticker} lock={lock[:16]}… verdict={verdict}")
     print(f"  checkpoints due: {[c['due_date'] for c in entry['checkpoints']]}")
+    _autostamp(safe, sheet, lock, verdict, redteam, reg_date, entry["checkpoints"])
     return entry
 
 
@@ -226,11 +267,16 @@ def _selftest() -> int:
     import tempfile, shutil
     errs = []
     global D, SHEETS, LEDGER
+    import deep_thesis_reconcile as _rec, decision_sheet as _ds
     tmp = Path(tempfile.mkdtemp())
     oldD, oldS, oldL = D, SHEETS, LEDGER
+    old_e1, old_md = dict(_rec.PRIMARY_E1), _ds.MD_OUT
     try:
         D, SHEETS, LEDGER = tmp, tmp / "sheets", tmp / "ledger.json"
         SHEETS.mkdir()
+        # fixtures: a clean reconcile fact pack so TEST.SZ grades RED_TEAM_GRADE; isolate the MD dir
+        _rec.PRIMARY_E1["TEST.SZ"] = {"name": "Test fixture", "facts": {}}
+        _ds.MD_OUT = tmp / "md"; (tmp / "md").mkdir()
         sheet = {"content_lock_sha256": "ab" * 32,
                  "identity": {"as_of": "2026-06-10", "name": {"zh": "测", "en": "T"}},
                  "thesis": {"direction": "LONG", "conviction": "STARTER"},
@@ -284,18 +330,58 @@ def _selftest() -> int:
         except SystemExit:
             pass
         (SHEETS / "TEST_SZ.json").write_text(json.dumps(sheet))
-        # 4) happy path registers with 30/60/90
-        rt.write_text(json.dumps({"content_lock": ("ab" * 32)[:16], "verdict": "PASS-LOW",
-                                  "scores": {"valuation": 56}, "conditions": ["no conviction upgrade"]}))
+        # ── P0.2 readiness gate: reconcile RED_TEAM_GRADE + every checklist item supplied ──
+        CLAIMS = ("e1_e2_disclosure", "filing_line_item_citation",
+                  "non_recurring_ocf_decomposition", "conflict_source_line_quote")
+        def _ck(over=None):
+            items = [{"claim": c, "status": "supplied", "source_title": "x",
+                      "evidence_tier": "E1", "line_item_or_quote": "y"} for c in CLAIMS]
+            for i, st in (over or {}).items():
+                items[i]["status"] = st
+            return items
+        def _rt(checklist):
+            rt.write_text(json.dumps({"content_lock": ("ab" * 32)[:16], "verdict": "PASS-LOW",
+                                      "average": 84.0, "checklist": checklist}))
+        # 3c) a MISSING checklist item → registration refused
+        _rt(_ck({2: "missing"}))
+        try:
+            register("TEST.SZ", str(rt)); errs.append("missing checklist item must refuse registration")
+        except SystemExit: pass
+        # 3d) a REJECTED checklist item → refused
+        _rt(_ck({3: "rejected"}))
+        try:
+            register("TEST.SZ", str(rt)); errs.append("rejected checklist item must refuse registration")
+        except SystemExit: pass
+        # 3e) NO checklist → refused
+        _rt([])
+        try:
+            register("TEST.SZ", str(rt)); errs.append("no checklist must refuse registration")
+        except SystemExit: pass
+        # 3f) un-reconciled ticker (no fact pack → NO_RECONCILIATION) refused even with a full checklist
+        (SHEETS / "NOREC_SZ.json").write_text(json.dumps({**sheet, "content_lock_sha256": "ba" * 32}))
+        rnr = tmp / "rnr.json"
+        rnr.write_text(json.dumps({"content_lock": ("ba" * 32)[:16], "verdict": "PASS", "checklist": _ck()}))
+        try:
+            register("NOREC.SZ", str(rnr)); errs.append("NO_RECONCILIATION grade must refuse registration")
+        except SystemExit: pass
+        # 4) happy path: RED_TEAM_GRADE + full checklist → registers with 30/60/90
+        _rt(_ck())
         e = register("TEST.SZ", str(rt))
         if [c["offset_days"] for c in e["checkpoints"]] != [30, 60, 90]:
             errs.append("checkpoints must be 30/60/90")
+        # 4g) P0.3 auto-stamp: registered sheet no longer carries stale PENDING prose; lock unchanged
+        stamped = json.loads((SHEETS / "TEST_SZ.json").read_text())
+        hrt = str((stamped.get("quality") or {}).get("human_red_team", ""))
+        if "PASS" not in hrt or "PENDING" in hrt:
+            errs.append("registered sheet quality.human_red_team must read PASS, not PENDING")
+        if (stamped.get("quality") or {}).get("registration", {}).get("status") != "REGISTERED":
+            errs.append("registered sheet must carry quality.registration = REGISTERED")
+        if stamped["content_lock_sha256"] != "ab" * 32:
+            errs.append("auto-stamp must not change the stored content lock (quality is lock-excluded)")
         # 5) duplicate lock refused (append-only)
         try:
-            register("TEST.SZ", str(rt))
-            errs.append("duplicate lock must be refused")
-        except SystemExit:
-            pass
+            register("TEST.SZ", str(rt)); errs.append("duplicate lock must be refused")
+        except SystemExit: pass
         # 6) band position math
         band = {k: sheet["valuation_target_range"][k] for k in ("bear", "base", "bull")}
         for px, want in ((45, "BELOW_BEAR_LOW"), (55, "IN_BEAR_BAND"), (80, "BETWEEN_BEAR_AND_BASE"),
@@ -331,8 +417,23 @@ def _selftest() -> int:
                 errs.append(f"band position wrong: {res['band_position']}")
             if "GM" in (res["wrong_if_due_for_human_check"] or []):
                 errs.append("GM trigger (due 2026-08-31) must NOT be due at the 30d checkpoint")
+        # 8) a new registration never corrupts an existing ACTIVE entry (gate/autostamp touch only the new name)
+        LEDGER.write_text(json.dumps({"_meta": {}, "registrations": [
+            {"ticker": "EXIST.SZ", "content_lock": "00" * 32, "status": "ACTIVE", "name": {"zh": "存量", "en": "X"},
+             "checkpoints": [{"offset_days": 30, "due_date": "2099-01-01", "status": "PENDING", "result": None}]}]}))
+        exist_before = json.loads(LEDGER.read_text())["registrations"][0]
+        sheet2 = json.loads(json.dumps(sheet)); sheet2["content_lock_sha256"] = "1a" * 32
+        (SHEETS / "TEST_SZ.json").write_text(json.dumps(sheet2))
+        rt.write_text(json.dumps({"content_lock": ("1a" * 32)[:16], "verdict": "PASS",
+                                  "average": 84.0, "checklist": _ck()}))
+        register("TEST.SZ", str(rt))
+        ex8 = next((r for r in json.loads(LEDGER.read_text())["registrations"] if r["ticker"] == "EXIST.SZ"), None)
+        if ex8 != exist_before:
+            errs.append("existing ACTIVE entry must be byte-identical after a new registration")
     finally:
         D, SHEETS, LEDGER = oldD, oldS, oldL
+        _rec.PRIMARY_E1.clear(); _rec.PRIMARY_E1.update(old_e1)
+        _ds.MD_OUT = old_md
         shutil.rmtree(tmp, ignore_errors=True)
     if errs:
         print("sheet_checkpoints selftest FAILED:")
@@ -342,6 +443,9 @@ def _selftest() -> int:
     print("sheet_checkpoints selftest PASSED (registration requires a PASS* red-team record CARRYING "
           "a content_lock bound to the sheet lock — unbound/FAIL/mismatched/duplicate all refused; "
           "DATA_BLOCKED sheets refused even with a matching PASS red-team; "
+          "P0.2 NOT_REDTEAM_READY refused (missing / rejected / no-checklist / un-reconciled grade); "
+          "P0.3 auto-stamp writes quality.human_red_team=PASS (no stale PENDING) + registration record, "
+          "lock unchanged; an existing ACTIVE entry is untouched by a new registration; "
           "30/60/90 scheduled; 0-due check is a strict no-op (no ledger churn); DATA_MISSING due "
           "checkpoint stays PENDING and retries; due checkpoint evaluates price/directional/band "
           "reads; disclosure-bound wrong_if not faked early; dates derived, not hardcoded)")
