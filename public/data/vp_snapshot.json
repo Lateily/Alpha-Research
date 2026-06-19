@@ -1,9 +1,9 @@
 {
-  "date": "2026-06-18",
+  "date": "2026-06-19",
   "snapshots": [
     {
       "ticker": "300308.SZ",
-      "date": "2026-06-18",
+      "date": "2026-06-19",
       "vp_score": 48,
       "expectation_gap": 10,
       "fundamental_accel": 50,
@@ -28,11 +28,11 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-06-18T12:05:30.433454+00:00"
+      "engine_run_at": "2026-06-19T06:28:39.187734+00:00"
     },
     {
       "ticker": "002594.SZ",
-      "date": "2026-06-18",
+      "date": "2026-06-19",
       "vp_score": 48,
       "expectation_gap": 68,
       "fundamental_accel": 50,
@@ -57,11 +57,11 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-06-18T12:05:30.433609+00:00"
+      "engine_run_at": "2026-06-19T06:28:39.187886+00:00"
     },
     {
       "ticker": "175.HK",
-      "date": "2026-06-18",
+      "date": "2026-06-19",
       "vp_score": 50,
       "expectation_gap": 50,
       "fundamental_accel": 50,
@@ -69,7 +69,7 @@
       "low_coverage": 50,
       "catalyst_prox": 50,
       "close": 19.04,
-      "volume": -309,
+      "volume": -236,
       "source": "vp_engine",
       "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
       "wrongIf_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
@@ -84,11 +84,11 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-18T12:05:30.433732+00:00"
+      "engine_run_at": "2026-06-19T06:28:39.188003+00:00"
     },
     {
       "ticker": "603233.SH",
-      "date": "2026-06-18",
+      "date": "2026-06-19",
       "vp_score": 50,
       "expectation_gap": 50,
       "fundamental_accel": 50,
@@ -111,11 +111,11 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-18T12:05:30.433842+00:00"
+      "engine_run_at": "2026-06-19T06:28:39.188138+00:00"
     },
     {
       "ticker": "688120.SH",
-      "date": "2026-06-18",
+      "date": "2026-06-19",
       "vp_score": 45,
       "expectation_gap": 50,
       "fundamental_accel": 50,
@@ -138,11 +138,11 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-18T12:05:30.433940+00:00"
+      "engine_run_at": "2026-06-19T06:28:39.188251+00:00"
     },
     {
       "ticker": "300054.SZ",
-      "date": "2026-06-18",
+      "date": "2026-06-19",
       "vp_score": 47,
       "expectation_gap": 50,
       "fundamental_accel": 50,
@@ -165,7 +165,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-06-18T12:05:30.434039+00:00"
+      "engine_run_at": "2026-06-19T06:28:39.188353+00:00"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "ticker": "300054.SZ",
-  "generated_at": "2026-06-18",
-  "price": 91.13,
+  "generated_at": "2026-06-19",
+  "price": 92.18,
   "zone": "OVERBOUGHT",
   "entry_zone": true,
   "exit_zone": true,
@@ -9,71 +9,61 @@
     {
       "type": "RSI_OVERBOUGHT",
       "strength": "moderate",
-      "date": "20260617",
+      "date": "20260618",
       "bullish": false,
       "description": {
-        "e": "RSI(14) = 70.2 — overbought, watch for exhaustion",
-        "z": "RSI(14)=70.2，超买，注意回调风险"
+        "e": "RSI(14) = 70.9 — overbought, watch for exhaustion",
+        "z": "RSI(14)=70.9，超买，注意回调风险"
       }
     },
     {
       "type": "BULLISH_ALIGNMENT",
       "strength": "strong",
-      "date": "20260617",
+      "date": "20260618",
       "bullish": true,
       "description": {
-        "e": "MA5(83.1) > MA20(74.3) > MA60(62.6), price above all — full bullish alignment",
-        "z": "MA5(83.1)>MA20(74.3)>MA60(62.6)，均线多头排列，趋势强"
-      }
-    },
-    {
-      "type": "BB_UPPER_BREAK",
-      "strength": "moderate",
-      "date": "20260617",
-      "bullish": true,
-      "description": {
-        "e": "Price (91.1) broke above Bollinger upper (87.7) — momentum breakout",
-        "z": "股价(91.1)突破布林上轨(87.7)，动能突破"
+        "e": "MA5(86.5) > MA20(75.2) > MA60(63.3), price above all — full bullish alignment",
+        "z": "MA5(86.5)>MA20(75.2)>MA60(63.3)，均线多头排列，趋势强"
       }
     },
     {
       "type": "KDJ_OVERBOUGHT",
       "strength": "strong",
-      "date": "20260617",
+      "date": "20260618",
       "bullish": false,
       "description": {
-        "e": "KDJ J=105.8 (extreme >100) — high pullback risk",
-        "z": "KDJ J=105.8极度超买，回调风险高"
+        "e": "KDJ J=110.4 (extreme >100) — high pullback risk",
+        "z": "KDJ J=110.4极度超买，回调风险高"
       }
     }
   ],
   "signal_count": {
-    "bullish": 2,
+    "bullish": 1,
     "bearish": 2,
-    "total": 4
+    "total": 3
   },
   "indicators": {
-    "ma5": 83.13,
-    "ma20": 74.26,
-    "ma60": 62.57,
-    "rsi14": 70.2,
-    "vol_ma20": 483371,
-    "vol_ratio": 1.38,
-    "price_vs_ma20": 22.72,
-    "price_vs_ma60": 45.64,
-    "change_1d": 7.85,
-    "change_5d": 28.28,
-    "change_20d": 18.6,
-    "macd_dif": 4.9387,
-    "macd_dea": 3.433,
-    "macd_hist": 3.0115,
-    "bb_upper": 87.75,
-    "bb_mid": 74.26,
-    "bb_lower": 60.77,
-    "bb_bandwidth": 36.33,
-    "kdj_k": 80.3,
-    "kdj_d": 67.6,
-    "kdj_j": 105.8,
+    "ma5": 86.47,
+    "ma20": 75.22,
+    "ma60": 63.35,
+    "rsi14": 70.9,
+    "vol_ma20": 481910,
+    "vol_ratio": 1.02,
+    "price_vs_ma20": 22.55,
+    "price_vs_ma60": 45.52,
+    "change_1d": 1.15,
+    "change_5d": 22.13,
+    "change_20d": 26.31,
+    "macd_dif": 5.695,
+    "macd_dea": 3.8854,
+    "macd_hist": 3.6193,
+    "bb_upper": 90.78,
+    "bb_mid": 75.22,
+    "bb_lower": 59.66,
+    "bb_bandwidth": 41.38,
+    "kdj_k": 85.9,
+    "kdj_d": 73.7,
+    "kdj_j": 110.4,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
