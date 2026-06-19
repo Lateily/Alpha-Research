@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-19T06:28:39.230980+00:00",
+  "generated_at": "2026-06-19T12:34:00.738591+00:00",
   "tickers_scored": 9,
   "summary": {
     "entry_candidates": [],
@@ -52,13 +52,13 @@
           "contribution": 3.6
         }
       ],
-      "rationale_e": "Bullish: Rsi Recovering, Kdj Golden Cross | RSI 35 | Price vs MA20 -5.0% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "多头：RSI回升、KDJ金叉 | RSI 35 | 距MA20 -5.0% | 政策顺风 | VP 48",
+      "rationale_e": "Bullish: Rsi Recovering, Kdj Golden Cross | RSI 34 | Price vs MA20 -5.0% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "多头：RSI回升、KDJ金叉 | RSI 34 | 距MA20 -5.0% | 政策顺风 | VP 48",
       "signal_types": [
         "RSI_RECOVERING",
         "KDJ_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-06-19T06:28:39.230066+00:00"
+      "computed_at": "2026-06-19T12:34:00.737820+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -92,12 +92,12 @@
           "contribution": 5.2
         }
       ],
-      "rationale_e": "Bullish: Rsi Recovering | RSI 40 | Price vs MA20 -1.9% | VP 50",
-      "rationale_z": "多头：RSI回升 | RSI 40 | 距MA20 -1.9% | VP 50",
+      "rationale_e": "Bullish: Rsi Recovering | RSI 41 | Price vs MA20 -1.9% | VP 50",
+      "rationale_z": "多头：RSI回升 | RSI 41 | 距MA20 -1.9% | VP 50",
       "signal_types": [
         "RSI_RECOVERING"
       ],
-      "computed_at": "2026-06-19T06:28:39.230617+00:00"
+      "computed_at": "2026-06-19T12:34:00.738295+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -192,7 +192,7 @@
         "BB_UPPER_BREAK",
         "KDJ_OVERBOUGHT"
       ],
-      "computed_at": "2026-06-19T06:28:39.230508+00:00"
+      "computed_at": "2026-06-19T12:34:00.738201+00:00"
     },
     {
       "ticker": "175.HK",
@@ -231,7 +231,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-06-19T06:28:39.230207+00:00"
+      "computed_at": "2026-06-19T12:34:00.737936+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -298,7 +298,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-06-19T06:28:39.230725+00:00"
+      "computed_at": "2026-06-19T12:34:00.738384+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -320,7 +320,7 @@
       "rationale_e": "RSI 50 | Price vs MA20 -5.9% | VP 45",
       "rationale_z": "RSI 50 | 距MA20 -5.9% | VP 45",
       "signal_types": [],
-      "computed_at": "2026-06-19T06:28:39.230812+00:00"
+      "computed_at": "2026-06-19T12:34:00.738455+00:00"
     },
     {
       "ticker": "700.HK",
@@ -342,7 +342,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-06-19T06:28:39.230895+00:00"
+      "computed_at": "2026-06-19T12:34:00.738524+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -364,7 +364,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-06-19T06:28:39.230968+00:00"
+      "computed_at": "2026-06-19T12:34:00.738581+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -431,7 +431,7 @@
         "BULLISH_ALIGNMENT",
         "KDJ_OVERBOUGHT"
       ],
-      "computed_at": "2026-06-19T06:28:39.230362+00:00"
+      "computed_at": "2026-06-19T12:34:00.738071+00:00"
     }
   ]
 }

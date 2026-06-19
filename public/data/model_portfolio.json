@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-06-19",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-06-19T06:28:39.366427+00:00",
+    "generated_at": "2026-06-19T12:34:00.895155+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -64,7 +64,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 10,
-          "rationale": "Bullish: Rsi Recovering, Kdj Golden Cross | RSI 35 | Price vs MA20 -5.0% | Regime: PERMISSIVE | VP 48"
+          "rationale": "Bullish: Rsi Recovering, Kdj Golden Cross | RSI 34 | Price vs MA20 -5.0% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -106,7 +106,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 5,
-          "rationale": "Bullish: Rsi Recovering | RSI 40 | Price vs MA20 -1.9% | VP 50"
+          "rationale": "Bullish: Rsi Recovering | RSI 41 | Price vs MA20 -1.9% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -265,8 +265,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 34.6,
-            "macd_hist": -0.5725,
+            "rsi14": 34.0,
+            "macd_hist": -0.5701,
             "price_vs_ma20": -5.04,
             "price_vs_ma60": -10.53,
             "change_5d": -1.86,
@@ -277,7 +277,7 @@
               "type": "RSI_RECOVERING",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI recovering 32.2→34.6 — momentum rebuilding"
+              "desc": "RSI recovering 31.6→34.0 — momentum rebuilding"
             },
             {
               "type": "KDJ_GOLDEN_CROSS",
@@ -355,8 +355,8 @@
             "total": 3
           },
           "key_indicators": {
-            "rsi14": 70.9,
-            "macd_hist": 3.6193,
+            "rsi14": 71.0,
+            "macd_hist": 3.6125,
             "price_vs_ma20": 22.55,
             "price_vs_ma60": 45.52,
             "change_5d": 22.13,
@@ -367,7 +367,7 @@
               "type": "RSI_OVERBOUGHT",
               "strength": "moderate",
               "bullish": false,
-              "desc": "RSI(14) = 70.9 — overbought, watch for exhaustion"
+              "desc": "RSI(14) = 71.0 — overbought, watch for exhaustion"
             },
             {
               "type": "BULLISH_ALIGNMENT",
@@ -409,8 +409,8 @@
             "total": 5
           },
           "key_indicators": {
-            "rsi14": 72.3,
-            "macd_hist": 5.865,
+            "rsi14": 72.4,
+            "macd_hist": 5.882,
             "price_vs_ma20": 15.66,
             "price_vs_ma60": 46.65,
             "change_5d": 21.7,
@@ -421,7 +421,7 @@
               "type": "RSI_OVERBOUGHT",
               "strength": "moderate",
               "bullish": false,
-              "desc": "RSI(14) = 72.3 — overbought, watch for exhaustion"
+              "desc": "RSI(14) = 72.4 — overbought, watch for exhaustion"
             },
             {
               "type": "BULLISH_ALIGNMENT",
@@ -433,7 +433,7 @@
               "type": "MACD_GOLDEN_CROSS",
               "strength": "strong",
               "bullish": true,
-              "desc": "MACD DIF(81.340) crossed above DEA(78.408) above zero — bullish momentum"
+              "desc": "MACD DIF(81.347) crossed above DEA(78.406) above zero — bullish momentum"
             },
             {
               "type": "BB_UPPER_BREAK",
@@ -475,8 +475,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 40.4,
-            "macd_hist": 0.0829,
+            "rsi14": 40.9,
+            "macd_hist": 0.0792,
             "price_vs_ma20": -1.91,
             "price_vs_ma60": -7.54,
             "change_5d": -1.82,
@@ -487,7 +487,7 @@
               "type": "RSI_RECOVERING",
               "strength": "moderate",
               "bullish": true,
-              "desc": "RSI recovering 39.1→40.4 — momentum rebuilding"
+              "desc": "RSI recovering 39.6→40.9 — momentum rebuilding"
             }
           ]
         },
@@ -571,8 +571,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 49.5,
-            "macd_hist": -9.7045,
+            "rsi14": 49.6,
+            "macd_hist": -9.7176,
             "price_vs_ma20": -5.91,
             "price_vs_ma60": 6.26,
             "change_5d": 21.48,
