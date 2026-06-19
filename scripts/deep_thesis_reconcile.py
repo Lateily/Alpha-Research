@@ -212,6 +212,59 @@ def build() -> dict:
     }
 
 
+# ── P0.2: unified red-team readiness ────────────────────────────────────────
+# The two prep-checklist items reconcile can substantiate from its primary fact packs.
+_RECONCILE_FILLS = ("e1_e2_disclosure", "filing_line_item_citation")
+
+
+def grade_for(ticker: str) -> str:
+    """RED_TEAM_GRADE / NEEDS_CORRECTION_BEFORE_REDTEAM / NO_RECONCILIATION (no fact pack yet)."""
+    if ticker not in PRIMARY_E1:
+        return "NO_RECONCILIATION"
+    rec = _reconcile_one(ticker)
+    return "RED_TEAM_GRADE" if not rec["conflicts"] and not rec["evidence_downgrades"] \
+        else "NEEDS_CORRECTION_BEFORE_REDTEAM"
+
+
+def redteam_readiness(ticker: str, checklist=None) -> dict:
+    """Unified red-team readiness verdict (pure; no file IO).
+
+    Combines the prep-checklist (deep_thesis_prepare.py's filing-evidence items) with the
+    primary-reconciliation grade. reconcile AUTO-FILLS the two items it can substantiate from
+    its fact packs (only when the ticker grades RED_TEAM_GRADE); the rest must be author-supplied.
+
+    REDTEAM_READY iff  grade == RED_TEAM_GRADE  AND  every checklist item status == "supplied".
+    Otherwise NOT_REDTEAM_READY with the blockers listed. Honest v0: the fact packs are
+    HAND-AUTHORED (see _meta.honest_scope) — this enforces that the evidence EXISTS and is graded,
+    it does not auto-read PDFs.
+    """
+    items = [dict(it) for it in (checklist or [])]
+    grade = grade_for(ticker)
+    if grade == "RED_TEAM_GRADE":
+        for it in items:
+            if it.get("claim") in _RECONCILE_FILLS and it.get("status") != "rejected":
+                it["status"] = "supplied"
+                it.setdefault("source_title", "PRIMARY reconciliation gate (#86 deep_thesis_reconcile)")
+                it.setdefault("evidence_tier", "E1")
+                it.setdefault("line_item_or_quote",
+                              "reconciled vs filed cninfo PDF — see deep_thesis_reconciliation.json")
+    blockers = [it.get("claim") for it in items if it.get("status") != "supplied"]
+    if not items:
+        blockers = ["no_checklist_supplied"] + blockers
+    if grade != "RED_TEAM_GRADE":
+        blockers = [f"reconcile_grade={grade}"] + blockers
+    ready = grade == "RED_TEAM_GRADE" and bool(items) and not blockers
+    return {
+        "ticker": ticker,
+        "reconcile_grade": grade,
+        "redteam_readiness_verdict": "REDTEAM_READY" if ready else "NOT_REDTEAM_READY",
+        "checklist": items,
+        "blockers": blockers,
+        "honest_scope": "v0: reconcile fills e1_e2_disclosure + filing_line_item_citation from "
+                        "HAND-AUTHORED primary fact packs (not auto-PDF); other items are author-supplied.",
+    }
+
+
 def render_md(data: dict) -> str:
     L = [f"# PR-G 一手对账门 · Primary Financial Reconciliation (2026-06-14)", ""]
     L.append("> The gate that turns a deep-thesis CANDIDATE into a red-team-grade document. Every load-bearing "
@@ -287,6 +340,18 @@ def _selftest() -> int:
     for t, r in recs.items():
         if r["grade"] == "RED_TEAM_GRADE" and (r["conflicts"] or r["evidence_downgrades"]):
             errs.append(f"{t} graded RED_TEAM_GRADE but has open issues")
+    # P0.2 readiness: RED_TEAM_GRADE + all supplied → READY; missing/rejected/bad-grade → NOT
+    _full = [{"claim": c, "status": "supplied"} for c in
+             ("e1_e2_disclosure", "filing_line_item_citation", "non_recurring_ocf_decomposition", "conflict_source_line_quote")]
+    if redteam_readiness("601138.SH", _full)["redteam_readiness_verdict"] != "REDTEAM_READY":
+        errs.append("601138 RED_TEAM_GRADE + full checklist must be REDTEAM_READY")
+    _miss = [dict(x) for x in _full]; _miss[2]["status"] = "missing"
+    if redteam_readiness("601138.SH", _miss)["redteam_readiness_verdict"] != "NOT_REDTEAM_READY":
+        errs.append("a missing checklist item must be NOT_REDTEAM_READY")
+    if redteam_readiness("601138.SH", None)["redteam_readiness_verdict"] != "NOT_REDTEAM_READY":
+        errs.append("no checklist must be NOT_REDTEAM_READY")
+    if redteam_readiness("300476.SZ", _full)["redteam_readiness_verdict"] != "NOT_REDTEAM_READY":
+        errs.append("NEEDS_CORRECTION grade must block readiness even with a full checklist")
     if errs:
         print("deep_thesis_reconcile selftest FAILED:")
         for e in errs:
