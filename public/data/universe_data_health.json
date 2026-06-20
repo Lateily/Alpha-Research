@@ -1,9 +1,9 @@
 {
   "verdict": "WARN",
-  "as_of": "2026-06-19T12:29:52.561934+00:00",
+  "as_of": "2026-06-20T08:19:42.732544+00:00",
   "max_age_days": 2,
   "meta": {
-    "fetched_at": "2026-06-19T12:28:45.053667",
+    "fetched_at": "2026-06-20T08:18:57.220462",
     "count": 5507,
     "version": "4.2",
     "scorer": "barra_lite_v1"
@@ -29,8 +29,8 @@
     },
     "momentum": {
       "coverage": 0.9871073179589613,
-      "unique": 988,
-      "stdev": 28.872458,
+      "unique": 1001,
+      "stdev": 28.466307,
       "median": 50.0
     },
     "size": {
@@ -51,10 +51,6 @@
     {
       "code": "pe_basis_not_registration_grade",
       "message": "PE is a provider multiple, not a verified TTM/forward valuation anchor."
-    },
-    {
-      "code": "momentum_is_short_tape",
-      "message": "factors.momentum is 1-day tape rank, not 12-1 month momentum."
     },
     {
       "code": "quality_factor_inert_or_unbacked",

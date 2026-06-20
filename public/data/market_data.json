@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-06-19T12:29:52.289318",
+    "fetched_at": "2026-06-20T08:19:42.504705",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -461,14 +461,14 @@
       "5d_cumulative": 0.0,
       "20d_cumulative": 0.0,
       "trend": "outflow",
-      "updated": "2026-06-19"
+      "updated": "2026-06-20"
     },
     "southbound": {
       "latest_net_flow": -67.9212,
       "5d_cumulative": -83.8307,
       "20d_cumulative": 108.4023,
       "trend": "outflow",
-      "updated": "2026-06-19"
+      "updated": "2026-06-20"
     },
     "dragon_tiger": [
       {

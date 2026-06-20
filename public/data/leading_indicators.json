@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-06-19T12:29:56.392393+00:00",
+  "generated_at": "2026-06-20T08:19:45.619348+00:00",
   "industry": "ai_infrastructure",
-  "composite_score": 56.0,
+  "composite_score": 59.0,
   "composite_signal": "MODERATE",
   "hyperscaler_basket": {
     "NVDA": {
-      "price": NaN,
+      "price": 210.69,
       "ath_3mo": 235.47,
-      "drawdown_3mo_pct": NaN
+      "drawdown_3mo_pct": -10.5
     },
     "MSFT": {
-      "price": NaN,
+      "price": 379.4,
       "ath_3mo": 460.52,
-      "drawdown_3mo_pct": NaN
+      "drawdown_3mo_pct": -17.6
     },
     "GOOGL": {
       "price": 368.03,
       "ath_3mo": 402.38,
       "drawdown_3mo_pct": -8.5
     },
-    "_avg_drawdown_pct": NaN,
+    "_avg_drawdown_pct": 12.2,
     "_window": "3 months (~63 trading days)",
     "_constituents": [
       "NVDA",
@@ -32,7 +32,7 @@
     "nvda_revenue": 68,
     "hyperscaler_capex": 55,
     "tsmc_revenue": 55,
-    "price_momentum": 20
+    "price_momentum": 50
   },
   "indicators": {
     "nvda_revenue": {
@@ -62,10 +62,10 @@
         }
       ],
       "price": {
-        "price": NaN,
-        "return_3m_pct": NaN,
+        "price": 210.69,
+        "return_3m_pct": 12.3,
         "ath_3mo": 235.47,
-        "drawdown_3mo_pct": NaN
+        "drawdown_3mo_pct": -10.5
       },
       "latest_qoq": 19.8,
       "score": 68,
@@ -101,10 +101,10 @@
             }
           ],
           "price": {
-            "price": NaN,
-            "return_3m_pct": NaN,
+            "price": 379.4,
+            "return_3m_pct": -4.6,
             "ath_3mo": 460.52,
-            "drawdown_3mo_pct": NaN
+            "drawdown_3mo_pct": -17.6
           },
           "latest_qoq": 3.3,
           "score": 50,
@@ -252,9 +252,9 @@
       "signal": "MODERATE"
     },
     "price_momentum": {
-      "basket_return_3m_pct": NaN,
-      "score": 20,
-      "signal": "BEARISH"
+      "basket_return_3m_pct": 6.8,
+      "score": 50,
+      "signal": "NEUTRAL"
     }
   },
   "stock_implications": {

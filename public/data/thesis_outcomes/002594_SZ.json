@@ -1,6 +1,6 @@
 {
   "ticker": "002594.SZ",
-  "verification_run_at": "2026-06-19T12:34:01.982251+00:00",
+  "verification_run_at": "2026-06-20T08:23:32.699609+00:00",
   "thesis_source": "docs/research/factcheck/rerun_2026-05-16/002594SZ_recal.json",
   "thesis_source_commit": "aaa1cc4",
   "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00",
@@ -12,7 +12,7 @@
   "current_status": "ACTIVE",
   "outcome_category": "PENDING — position still active",
   "catalyst_window": "2026-08-15 to 2026-08-31",
-  "days_to_catalyst": 57,
+  "days_to_catalyst": 56,
   "rightIf_verification": [
     {
       "index": 0,
