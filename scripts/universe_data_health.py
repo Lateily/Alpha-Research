@@ -269,6 +269,25 @@ def selftest():
     assert report["verdict"] == "WARN"
     assert not report["errors"]
     assert any(w["code"] == "momentum_is_short_tape" for w in report["warnings"])
+
+    # Real 12-1 month momentum basis must CLEAR the short-tape warning (proves the
+    # universe_momentum.py fix is recognised as registration-grade by this gate).
+    clean = {
+        "_meta": {
+            "fetched_at": "2026-06-16T00:00:00",
+            "count": 2,
+            "field_definitions": {"pe": {"basis": "provider valuation multiple; NOT guaranteed"}},
+            "factor_definitions": {"momentum": {
+                "basis": "12-1 month HFQ-adjusted return (T-252→T-21 trading days), "
+                         "cross-sectional rank",
+                "status": "medium_term_trend",
+            }},
+        },
+        "stocks": stocks,
+    }
+    report = audit_universe(clean, as_of=now, max_age_days=2, tickers=[])
+    assert not any(w["code"] == "momentum_is_short_tape" for w in report["warnings"]), \
+        "real 12-1 momentum basis should not trip the short-tape warning"
     print("universe_data_health selftest PASSED")
 
 

@@ -742,7 +742,33 @@ UNIVERSE_FACTOR_DEFINITIONS = {
     },
 }
 
-def _universe_meta(count):
+def _universe_meta(count, momentum_meta=None):
+    factor_defs = UNIVERSE_FACTOR_DEFINITIONS
+    # Only stamp the clean momentum basis when real 12-1 was actually used;
+    # otherwise leave the tape definition so the data-health gate honestly warns.
+    if momentum_meta and str(momentum_meta.get("basis", "")).startswith("12_minus_1"):
+        import copy
+        factor_defs = copy.deepcopy(UNIVERSE_FACTOR_DEFINITIONS)
+        adjusted = momentum_meta.get("adjusted")
+        factor_defs["momentum"] = {
+            "basis": ("12-1 month %s return (T-252→T-21 trading days), "
+                      "cross-sectional rank"
+                      % ("HFQ-adjusted" if adjusted else "unadjusted")),
+            "status": "medium_term_trend",
+            "window": {
+                "lookback_td": momentum_meta.get("lookback_td"),
+                "skip_td": momentum_meta.get("skip_td"),
+                "start_date": momentum_meta.get("start_date"),
+                "end_date": momentum_meta.get("end_date"),
+            },
+            "coverage": momentum_meta.get("coverage"),
+            "adjusted": adjusted,
+            "source": "scripts/universe_momentum.py",
+            "consumer_warning": (
+                "Real 12-1 month momentum. Names without a full 12-month price "
+                "window are neutral-filled, not penalised."
+            ),
+        }
     return {
         "fetched_at": datetime.now().isoformat(),
         "count": count,
@@ -750,7 +776,7 @@ def _universe_meta(count):
         "scored": True,
         "scorer": "barra_lite_v1",
         "field_definitions": UNIVERSE_FIELD_DEFINITIONS,
-        "factor_definitions": UNIVERSE_FACTOR_DEFINITIONS,
+        "factor_definitions": factor_defs,
         "research_use_warning": (
             "universe_* factors are screening hints only. Registration-grade "
             "thesis work must reconcile price, valuation, and financials against "
@@ -758,16 +784,23 @@ def _universe_meta(count):
         ),
     }
 
-def score_universe(stocks):
+def score_universe(stocks, use_real_momentum=None):
     """
     Cross-sectional factor scoring for a universe of stocks.
+
+    use_real_momentum: tri-state. None (default) auto-detects from 'momentum_12_1'
+    coverage; True/False lets the caller pass the SAME decision it stamps into
+    _meta so the ranked factor and the basis label can never disagree.
     Adds 'alpha_score' (0-100) and 'factors' sub-scores in-place.
 
     Factors (Barra CNE5 lite — all cross-sectional percentile ranks 0-100):
       value_rank:   lower PE + lower PB → higher rank (cheap is better)
       quality_rank: higher ROE → higher rank
-      momentum_rank: higher 1-day change_pct → higher rank (short tape only,
-                    NOT 12-1 month momentum)
+      momentum_rank: real 12-1 month return (HFQ-adjusted, T-252→T-21) ranked
+                    cross-sectionally when stocks carry 'momentum_12_1' (attached
+                    by scripts/universe_momentum.py before scoring); falls back
+                    to the 1-day change_pct tape — labelled in _meta — if the
+                    whole universe lacks it (e.g. HK, or Tushare unavailable)
       size_rank:    mid-size preference — very large AND very small penalised
                     (log cap closest to 60th-pct gets highest rank; avoids
                     micro-cap liquidity traps AND mega-cap priced-in effect)
@@ -843,6 +876,7 @@ def score_universe(stocks):
     pb_raw  = _get('pb')
     roe_raw = _get('roe')
     chg_raw = _get('change_pct')
+    mom_raw = _get('momentum_12_1')   # real 12-1 month return; None when absent
     cap_raw = _get('market_cap')
     amp_raw = _get('amplitude')
 
@@ -876,8 +910,28 @@ def score_universe(stocks):
     roe_w    = _winsor(roe_raw, -50.0, 80.0)
     quality_rank = _pct_rank(roe_w)
 
-    # ── Momentum: 1-day change_pct ────────────────────────────────────────────
-    momentum_rank = _pct_rank(chg_raw)
+    # ── Momentum: real 12-1 month return when present, else 1-day tape ─────────
+    def _pct_rank_present(values):
+        """Percentile-rank only the non-None entries; missing stay None so the
+        downstream _fill() neutral-fills them (NOT a penalising bottom rank)."""
+        present = [i for i, v in enumerate(values) if v is not None]
+        if not present:
+            return [None] * len(values)
+        sub = _pct_rank([values[i] for i in present])
+        out = [None] * len(values)
+        for k, i in enumerate(present):
+            out[i] = sub[k]
+        return out
+
+    mom_coverage = sum(1 for v in mom_raw if v is not None)
+    if use_real_momentum is None:                       # auto-detect (e.g. HK path)
+        use_real_momentum = mom_coverage >= max(10, int(0.30 * n))
+    if use_real_momentum and mom_coverage > 0:
+        # Rank the real 12-1 signal; names missing it → neutral-filled (not bottom).
+        momentum_rank = _pct_rank_present(mom_raw)
+    else:
+        # 12-1 unavailable for the universe → honest 1-day tape fallback.
+        momentum_rank = _pct_rank(chg_raw)
 
     # ── Size: mid-size preference using log(cap) ──────────────────────────────
     log_cap  = [math.log(v) if v and v > 0 else None for v in cap_raw]
@@ -2363,10 +2417,29 @@ def main():
     print("[1/8] A-Share Universe...")
     a_stocks = fetch_a_share_universe()
     if a_stocks:
+        # Attach real 12-1 month momentum before scoring. Lean Tushare by-date
+        # fetch (whole market per call); on any failure it attaches nothing and
+        # score_universe falls back to the 1-day tape, labelled honestly in _meta.
+        try:
+            from universe_momentum import enrich_stocks_with_momentum
+            mom_meta = enrich_stocks_with_momentum(a_stocks, token=TUSHARE_TOKEN)
+            print(f"  Momentum 12-1: basis={mom_meta.get('basis')} "
+                  f"coverage={mom_meta.get('coverage')}/{len(a_stocks)}")
+        except Exception as e:
+            mom_meta = {"basis": "unavailable", "coverage": 0,
+                        "error": f"{type(e).__name__}: {e}"}
+            print(f"  Momentum 12-1 enrichment skipped: {mom_meta['error']}")
+        # Decide ONCE whether the universe carries enough real 12-1 to use it, then
+        # pass the SAME decision to both the scorer and the _meta label (they can
+        # never disagree → the ranked factor and the basis string stay in lockstep).
+        used_12_1 = (str(mom_meta.get("basis", "")).startswith("12_minus_1")
+                     and mom_meta.get("coverage", 0) >= max(10, int(0.30 * len(a_stocks))))
         print("  Scoring A-share universe (Barra-lite)...")
-        score_universe(a_stocks)
+        score_universe(a_stocks, use_real_momentum=used_12_1)
         with open(OUTPUT_DIR / "universe_a.json", "w", encoding="utf-8") as f:
-            json.dump({"_meta": _universe_meta(len(a_stocks)),
+            json.dump({"_meta": _universe_meta(
+                           len(a_stocks),
+                           momentum_meta=mom_meta if used_12_1 else None),
                        "stocks": a_stocks}, f, ensure_ascii=False, default=str)
     print()
 
