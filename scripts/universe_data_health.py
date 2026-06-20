@@ -142,11 +142,13 @@ def audit_universe(payload, *, as_of: datetime, max_age_days: int, tickers: list
         )
 
     pe_basis = ((field_defs.get("pe") or {}).get("basis") or "").lower()
-    if not pe_basis or ("not guaranteed" in pe_basis):
+    clean_pe_cov = _coverage(stocks, "pe_ttm_clean")
+    if clean_pe_cov < 0.30 and (not pe_basis or ("not guaranteed" in pe_basis)):
         warnings.append(
             {
                 "code": "pe_basis_not_registration_grade",
                 "message": "PE is a provider multiple, not a verified TTM/forward valuation anchor.",
+                "clean_pe_ttm_coverage": round(clean_pe_cov, 4),
             }
         )
 
@@ -159,7 +161,7 @@ def audit_universe(payload, *, as_of: datetime, max_age_days: int, tickers: list
             }
         )
 
-    roe_cov = _coverage(stocks, "roe")
+    roe_cov = max(_coverage(stocks, "roe"), _coverage(stocks, "roe_ttm"))
     quality = _factor_summary(stocks, "quality")
     if roe_cov < 0.10 or (quality["unique"] <= 3 and quality["median"] == 50.0):
         warnings.append(
@@ -288,6 +290,34 @@ def selftest():
     report = audit_universe(clean, as_of=now, max_age_days=2, tickers=[])
     assert not any(w["code"] == "momentum_is_short_tape" for w in report["warnings"]), \
         "real 12-1 momentum basis should not trip the short-tape warning"
+
+    # Clean TTM financials must CLEAR both the provider-PE and quality-inert warnings
+    # (proves universe_financials.py is recognised as registration-grade by the gate).
+    stocks_clean = [
+        {"ticker": "A.SZ", "price": 10, "pe": 20, "pb": 2, "pe_ttm_clean": 18.0,
+         "roe": 15.0, "roe_ttm": 15.0, "change_pct": 3, "factors": {"quality": 80, "momentum": 90}},
+        {"ticker": "B.SZ", "price": 12, "pe": 30, "pb": 3, "pe_ttm_clean": 28.0,
+         "roe": 6.0, "roe_ttm": 6.0, "change_pct": -1, "factors": {"quality": 30, "momentum": 10}},
+    ]
+    clean_fin = {
+        "_meta": {
+            "fetched_at": "2026-06-16T00:00:00", "count": 2,
+            "field_definitions": {
+                "pe": {"basis": "provider valuation multiple; NOT guaranteed"},
+                "pe_ttm_clean": {"basis": "computed TTM PE = market_cap / TTM net income", "coverage": 2},
+            },
+            "factor_definitions": {
+                "momentum": {"basis": "12-1 month HFQ-adjusted return, cross-sectional rank"},
+                "quality": {"basis": "cross-sectional rank of ROE-TTM", "status": "roe_ttm_backed"},
+            },
+        },
+        "stocks": stocks_clean,
+    }
+    report = audit_universe(clean_fin, as_of=now, max_age_days=2, tickers=[])
+    assert not any(w["code"] == "pe_basis_not_registration_grade" for w in report["warnings"]), \
+        "clean pe_ttm coverage should clear the provider-PE warning"
+    assert not any(w["code"] == "quality_factor_inert_or_unbacked" for w in report["warnings"]), \
+        "clean ROE-TTM coverage + non-inert quality should clear the quality warning"
     print("universe_data_health selftest PASSED")
 
 
