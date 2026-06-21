@@ -742,7 +742,7 @@ UNIVERSE_FACTOR_DEFINITIONS = {
     },
 }
 
-def _universe_meta(count, momentum_meta=None, financials_meta=None):
+def _universe_meta(count, momentum_meta=None, financials_meta=None, cyclical_meta=None):
     import copy
     factor_defs = UNIVERSE_FACTOR_DEFINITIONS
     field_defs = UNIVERSE_FIELD_DEFINITIONS
@@ -805,7 +805,7 @@ def _universe_meta(count, momentum_meta=None, financials_meta=None):
             field_defs[fld] = {"basis": desc, "coverage": cov.get(fld),
                                "source": "scripts/universe_financials.py", "periods": periods}
 
-    return {
+    meta = {
         "fetched_at": datetime.now().isoformat(),
         "count": count,
         "version": "4.2",
@@ -819,6 +819,23 @@ def _universe_meta(count, momentum_meta=None, financials_meta=None):
             "primary/committed evidence."
         ),
     }
+    # screen v1.1: document the cyclical-normalization flag (per-stock under
+    # stocks[].cyclical_flag) when it was computed this run.
+    if cyclical_meta and str(cyclical_meta.get("basis", "")) == "filings_5y_median":
+        meta["cyclical_normalization"] = {
+            "basis": cyclical_meta.get("basis"),
+            "fy_ends": cyclical_meta.get("fy_ends"),
+            "n_cyclical": cyclical_meta.get("n_cyclical"),
+            "n_peak_earnings_risk": cyclical_meta.get("n_peak"),
+            "source": "scripts/cyclical_flag.py",
+            "consumer_warning": (
+                "stocks[].cyclical_flag marks commodity/cyclical names whose TTM "
+                "profitability is above their own 5y median (peak-cycle value-trap "
+                "shape); a deep thesis on a flagged name must build a NORMALIZED "
+                "earnings bridge, not extrapolate peak TTM."
+            ),
+        }
+    return meta
 
 def score_universe(stocks, use_real_momentum=None):
     """
@@ -2491,6 +2508,17 @@ def main():
             fin_meta = {"basis": "unavailable", "coverage": {},
                         "error": f"{type(e).__name__}: {e}"}
             print(f"  Clean financials enrichment skipped: {fin_meta['error']}")
+        # Cyclical-normalization flag (screen v1.1): label commodity/cyclical names
+        # whose clean TTM profitability sits above their OWN 5y median (peak-cycle
+        # value-trap shape). Runs AFTER financials enrich — it reads its TTM reads.
+        try:
+            from cyclical_flag import enrich_stocks_with_cyclical_flag
+            cyc_meta = enrich_stocks_with_cyclical_flag(a_stocks, token=TUSHARE_TOKEN)
+            print(f"  Cyclical flag: basis={cyc_meta.get('basis')} "
+                  f"cyclical={cyc_meta.get('n_cyclical')} peak_risk={cyc_meta.get('n_peak')}")
+        except Exception as e:
+            cyc_meta = {"basis": "unavailable", "error": f"{type(e).__name__}: {e}"}
+            print(f"  Cyclical flag enrichment skipped: {cyc_meta['error']}")
         # Decide ONCE per factor whether the universe carries enough real signal,
         # then pass the SAME decision to both the scorer and the _meta label so the
         # ranked factor and the basis string stay in lockstep.
@@ -2505,7 +2533,8 @@ def main():
             json.dump({"_meta": _universe_meta(
                            len(a_stocks),
                            momentum_meta=mom_meta if used_12_1 else None,
-                           financials_meta=fin_meta if used_clean_fin else None),
+                           financials_meta=fin_meta if used_clean_fin else None,
+                           cyclical_meta=cyc_meta if str(cyc_meta.get("basis", "")) == "filings_5y_median" else None),
                        "stocks": a_stocks}, f, ensure_ascii=False, default=str)
     print()
 
