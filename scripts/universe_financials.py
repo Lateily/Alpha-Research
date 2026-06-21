@@ -392,7 +392,9 @@ def _selftest():
         def income_vip(self, period, fields):
             # AAA.SH: Q1 ni 30 / FY 100 / same 25 → TTM 105 ; rev/cost likewise
             data = {
-                "20260331": [("AAA.SH", "20260420", 30.0, 60.0, 300.0)],
+                "20260331": [("AAA.SH", "20260420", 30.0, 60.0, 300.0),
+                             # FUT.SH's Q1 is announced 2026-07-20, AFTER as_of → must be PIT-excluded
+                             ("FUT.SH", "20260720", 99.0, 10.0, 200.0)],
                 "20251231": [("AAA.SH", "20260301", 100.0, 200.0, 1000.0)],
                 "20250331": [("AAA.SH", "20250420", 25.0, 50.0, 250.0)],
             }[period]
@@ -413,7 +415,7 @@ def _selftest():
     try:
         import pandas  # noqa: F401
         facts, meta = compute_universe_financials(
-            ts_codes=["AAA.SH"], market_caps={"AAA.SH": 3150.0},
+            ts_codes=["AAA.SH", "FUT.SH"], market_caps={"AAA.SH": 3150.0, "FUT.SH": 1000.0},
             pro=_MockPro(), as_of=datetime(2026, 6, 20))
         a = facts.get("AAA.SH", {})
         # TTM NI = 30+100-25 = 105 ; PE = 3150/105 = 30
@@ -426,6 +428,10 @@ def _selftest():
         check(abs(a.get("roe_ttm") - 6.5625) < 1e-6, f"mock ROE-TTM = 6.5625% (got {a.get('roe_ttm')})")
         check(meta["basis"] == "clean_ttm_filings" and meta["coverage"]["pe_ttm_clean"] == 1,
               "mock meta basis=clean_ttm_filings + coverage counted")
+        # PIT safety: FUT.SH's Q1 was announced 2026-07-20 (> as_of 2026-06-20) so it
+        # must NEVER appear — proves we never use a row published after the as_of date.
+        check("FUT.SH" not in facts,
+              "PIT: a row announced AFTER as_of is excluded, never used (no look-ahead)")
     except ImportError:
         print("  (skipped mock E2E: pandas unavailable)")
 
