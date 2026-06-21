@@ -1,0 +1,346 @@
+{
+  "_meta": {
+    "layer": "Core Thesis Factory v1 — Single-Name Decision Sheet (单票决策书)",
+    "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md",
+    "generated_at": "2026-06-21T09:12:25.796547+00:00",
+    "sheet_version": "v1",
+    "disclaimer": "INTERNAL, UNVALIDATED research output of the model-recommendation pilot — not validated alpha, not external/personalized investment advice; sizing fields are research posture only; human executes. Quality gate = human red-team (auto checks are the floor only)."
+  },
+  "identity": {
+    "ticker": "600066.SH",
+    "name": {
+      "zh": "宇通客车",
+      "en": "Yutong Bus"
+    },
+    "market": "A",
+    "sector_theme": {
+      "zh": "汽车整车 / 客车 · 出口周期处于盈利顶部",
+      "en": "Auto OEM / bus · export-cyclical at a profitability peak"
+    },
+    "as_of": "2026-06-21",
+    "reference_price": 26.04,
+    "market_cap_yi": 577,
+    "shares": 2213939223,
+    "shares_note": "22.139亿股",
+    "real_money": true,
+    "horizon": "6-12mo forward WATCH",
+    "ticker_one_context": {
+      "objective_horizon": "6-12mo forward WATCH",
+      "real_money_consideration": "WATCH_NOT_CONVICTION — research posture only, no position; ¥26.04 is PE 10.5 on PEAK earnings, normalized R/R ≈0.67 unfavorable"
+    },
+    "provenance": {
+      "research_core_lineage": "Cyclical-screen flag (universe cyclical_flag: peak_earnings_risk=true, roe_ttm_vs_median 2.75×, needs_normalized_bridge=true) → peak-earnings NORMALIZATION thesis. Filing-verified + human-red-teamed; numbers used VERBATIM from the FY2025 年报 / 2026Q1 报告.",
+      "generation_note": "All load-bearing numbers are filing-verified (FY2025 年报 §分地区/§DuPont base, FY2021-2025 年报, 2026Q1 报告) and human-red-teamed. Reference price = universe_a 2026-06-21 snapshot 26.04 (trade_date 20260618; PE_ttm 10.56, mcap ¥577亿). No committed per-ticker OHLC bar yet — universe fallback price, staleness flagged.",
+      "red_team_record": "human-red-teamed; numbers verbatim from filings, not invented."
+    }
+  },
+  "thesis": {
+    "variant_perception": {
+      "zh": "市场把宇通读成一只便宜的高质量出口成长股(PE-TTM 10.5、ROE 36%)。我们读成一只处在盈利顶部的出口周期股:当前 ROE 35.6% 是其自身 5 年中位数(13.05%)的 2.75 倍,净利率 13.4% vs 历史 ~2.6%。PE 10.5 是顶部 EPS 上的便宜。这是一个顶部盈利正常化(normalization)论点,不是价值论点。(关键表述纪律:绝不在同一句里说'PE 10 / 9.6% 股息率'而不带'基于顶部盈利 / on peak earnings'。)",
+      "en": "Market reads 宇通 as a cheap high-quality export grower (PE-TTM 10.5, ROE 36%). We read it as an EXPORT-CYCLICAL AT A PROFITABILITY PEAK: current ROE 35.6% is 2.75× its own 5-year median (13.05%); net margin 13.4% vs ~2.6% history. PE 10.5 is cheap on PEAK EPS. This is a peak-earnings NORMALIZATION thesis, NOT a value thesis. (CRITICAL framing rule — never state 'PE 10 / 9.6% dividend yield' without '基于顶部盈利 / on peak earnings' in the same sentence.)"
+    },
+    "mechanism": {
+      "zh": "中国客车出口竞争力 + 海外新能源需求驱动 FY2025 海外收入 +38.9%(首次海外>国内),海外GM 29.62% > 国内GM 19.09%。ROE 上升是真经营(DuPont:净利率 5.7× × 资产周转 1.9×,权益乘数 FLAT-to-down → 不是杠杆),但建立在 ~100% 分红派息造成的结构性偏薄的权益基础上。前瞻摆动问题:13.4% 净利率 / 出口量是新的结构常态,还是周期顶部?",
+      "en": "China bus-export competitiveness + overseas NEV demand drove FY2025 海外收入 +38.9% (first year overseas > domestic), 海外GM 29.62% > 国内GM 19.09%. ROE rise is REAL operating (DuPont: net-margin 5.7× × asset-turnover 1.9×, equity-multiplier FLAT-to-down → not leverage), but on a structurally thin equity base from ~100% dividend payout. Forward swing question: is the 13.4% net margin / export volume the new structural normal or a cycle peak?"
+    },
+    "direction": "WATCH",
+    "horizon": "6-12mo forward WATCH (E1 proof = 2026 半年报 ~Aug 2026: 出口量 + 海外GM + decel)",
+    "conviction": "WATCH_NOT_CONVICTION — the export step-up and operating-driven (not leverage-driven) ROE are real, but ¥26.04 is PE 10.5 on PEAK earnings and the normalized R/R ≈0.67 is unfavorable. Research posture only, no position. STARTER-research trigger ≈¥20.0 (NOT a buy instruction), or a post-H1/annual re-band confirming overseas volume+margin hold through domestic normalization."
+  },
+  "evidence": {
+    "items": [
+      {
+        "claim": "FY2025 归母 ¥55.54亿 (+34.94%), 营收 ¥414.26亿 (+11.31%), EPS 2.51",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "FY2025 年报"
+      },
+      {
+        "claim": "海外销量 17,149辆 (+22.49%), 海外收入 ¥211.08亿 (+38.87%, 首超国内), 海外GM 29.62% vs 国内GM 19.09%",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "FY2025 年报 §分地区"
+      },
+      {
+        "claim": "DuPont ROE 35.6%(期末)=净利率13.4%×周转1.26×权益乘数2.11; 5yr median ROE 13.05%; 权益乘数 flat-to-down 2.40→2.11 (not leverage)",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "FY2021-2025 年报"
+      },
+      {
+        "claim": "FY2025 OCF ¥31.97亿, OCF/NI 0.576 (−55.67% YoY); the pipeline TTM 0.966 = a 2026Q1 working-capital window artifact (Q1'26 OCF 34.94亿 vs Q1'25 14.17亿)",
+        "tier": "E1",
+        "causal_tag": "INFERRED",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "FY2025 年报+2026Q1"
+      },
+      {
+        "claim": "分红 10派25元 ¥55.35亿 99.65% payout; 3yr cumulative payout 317.99% (thins equity base)",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CROWDING_SIGNAL",
+        "source": "FY2025 年报"
+      },
+      {
+        "claim": "2026Q1 营收 −7.92% YoY, 归母 −12.69% YoY, GM 23.56% (+4.7pp) — decelerating off high base",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "2026Q1 报告"
+      },
+      {
+        "claim": "国内收入 −12.38%; 在手订单 3,662辆/¥52.89亿 (≈7% of FY25 volume, NOT a multi-year book); 公司自述海外\"恢复性增长\"",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "FY2025 年报"
+      }
+    ],
+    "rule_x_check": {
+      "pass": true,
+      "why": "PASS — the export-margin mechanism IS issuer-disclosed (分地区 revenue + GM in the annual report) and re-confirmable by future filings (unlike an unconfirmable segment claim)."
+    },
+    "contrarian_view": "Bull = exports are a structural multi-year global share-gain (China electric buses displacing incumbents), so 13.4% net margin is the NEW normal not a peak; at PE 10.5 + ~9.6% (peak) yield that is cheap. Plausible, but Q1'26 deceleration + \"恢复性增长\" language + modest 7%-of-volume backlog + domestic −12.4% tilt us to caution."
+  },
+  "catalyst_calendar": [
+    {
+      "event": {
+        "zh": "2026 半年报(出口量 + 海外GM + 减速)",
+        "en": "2026 H1 report (export units + overseas GM + deceleration)"
+      },
+      "date": "~Aug 2026",
+      "watch": "出口量、海外GM、decel",
+      "expected": "PRIMARY checkpoint — does the overseas volume+margin hold through domestic normalization"
+    },
+    {
+      "event": {
+        "zh": "月度产销快报(高频出口量)",
+        "en": "Monthly production/sales flash (high-frequency export units)"
+      },
+      "date": "rolling 2026",
+      "watch": "high-freq export units",
+      "expected": "high-frequency read on export-unit trajectory"
+    },
+    {
+      "event": {
+        "zh": "FY2026 年报(正常化全年)",
+        "en": "FY2026 annual report (normalized full-year)"
+      },
+      "date": "~Mar 2027",
+      "watch": "normalized full-year",
+      "expected": "normalized full-year净利率 / OCF / region split"
+    }
+  ],
+  "wrong_if": {
+    "triggers": [
+      {
+        "metric": "2026H1 出口销量 YoY",
+        "threshold": "< 0 (转负)",
+        "source": "2026 半年报 §产销量 + 月度产销快报",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "2026 中报/年报 海外毛利率",
+        "threshold": "< 26%",
+        "source": "2026 半年报/年报 §主营业务分地区",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "FY2026 净利率",
+        "threshold": "< 10%",
+        "source": "FY2026 年报 合并利润表",
+        "check_date": "2027-03-31"
+      },
+      {
+        "metric": "FY2026 OCF/归母净利",
+        "threshold": "< 0.5",
+        "source": "FY2026 年报 合并现金流量表",
+        "check_date": "2027-03-31"
+      },
+      {
+        "metric": "2026 国内收入 YoY",
+        "threshold": "< -15%",
+        "source": "2026 半年报/年报 §分地区",
+        "check_date": "2026-08-31"
+      }
+    ],
+    "note": {
+      "zh": "五条全部绑强制披露(出口量/海外GM/净利率/OCF/国内收入),任一触发即弃;承重判断是 13.4% 净利率/出口量是结构常态还是周期顶部。",
+      "en": "All five bind to MANDATORY disclosure (export units / overseas GM / net margin / OCF / domestic revenue); any trigger kills the thesis. The load-bearing question is whether the 13.4% net margin / export volume is the structural normal or a cycle peak."
+    }
+  },
+  "valuation_target_range": {
+    "calibrated": false,
+    "basis": "Driver-based bridge (units × ASP × region-GM − opex − tax, with FY2025 ¥55.5亿 base reconciliation), then EPS × PE. EPS×PE is [unvalidated intuition]; shares 2,213,939,223 (22.139亿股). De-rate reflects export-cyclical + ~100% payout (no reinvestment growth).",
+    "bear": {
+      "low": 11.5,
+      "high": 13.5,
+      "assumptions": [
+        "海外销量 −20%, 国内 −15%, 海外GM→25%/国内→17%, 费用率 deleverage ~11% → 归母 ~¥32.6亿, EPS ~1.47, PE 8-9 (de-rate: export-cyclical + ~100% payout, no reinvestment growth)"
+      ]
+    },
+    "base": {
+      "low": 22.0,
+      "high": 26.0,
+      "assumptions": [
+        "海外 +3%, 国内 −10%, 海外GM 28.5%/国内 18.5%, 费用率 ~10.2% → 归母 ~¥49.6亿, EPS ~2.24, PE 10-11"
+      ]
+    },
+    "bull": {
+      "low": 32.0,
+      "high": 37.0,
+      "assumptions": [
+        "海外 +20% (structural share-gain + NEV mix), 国内 flat, 海外GM 29.5%/国内 19%, 费用率 ~9.7%, re-rate as structural export grower → 归母 ~¥62.3亿, EPS ~2.81, PE 12-13"
+      ]
+    },
+    "sensitivity_note": "EPS×PE intuition, unvalidated; revenue/归母 bridged from units×ASP×region-GM−opex−tax with FY2025 base reconciliation. 熊/基/牛 mid ≈ 12.5 / 24.0 / 34.5;R/R @ ¥26.04 = (34.5-26.04)/(26.04-12.5) ≈ 0.62(< 2:1),正常化 R/R 不利;STARTER-research 触发 ≈¥20。"
+  },
+  "execution_plan": {
+    "summary": {
+      "zh": "WATCH_NOT_CONVICTION。出口结构性向上是真的、ROE 上升是真经营(非杠杆),但 ¥26.04 是顶部盈利的 PE 10.5,正常化 R/R≈0.67 不利。触发 ≤¥20 转 starter-research,或 H1/年报证实海外量+毛利在国内正常化下仍守住。human_executes。",
+      "en": "WATCH_NOT_CONVICTION. The export step-up and the operating-driven (not leverage-driven) ROE are real, but ¥26.04 is PE 10.5 on PEAK earnings and the normalized R/R ≈0.67 is unfavorable. Trigger ≤¥20 for starter-research, or H1/annual confirmation that overseas volume+margin hold through domestic normalization. human_executes."
+    },
+    "entry": "research posture only — no position; a 2:1 R/R starter-research trigger sits ≈¥20.0 (NOT a buy instruction)",
+    "staging": "WATCH — re-band after 2026 半年报; do not initiate at ¥26.04 (peak-EPS price, normalized R/R ≈0.67 unfavorable)",
+    "invalidation": "thesis: any of the 5 mechanized wrong_if triggers (2026H1 出口销量 YoY < 0 / 海外GM < 26% / FY2026 净利率 < 10% / FY2026 OCF/归母 < 0.5 / 2026 国内收入 YoY < -15%) kills the thesis; price: n/a while flat (no position)",
+    "sizing_suggestion": "0 — WATCH_NOT_CONVICTION, research posture only; human_executes (suggestion-only, AI never executes)",
+    "holding_horizon": "6-12 month forward monitoring",
+    "review_dates": [
+      "2026-07-21",
+      "2026-08-20",
+      "2026-09-19",
+      "2026 半年报"
+    ]
+  },
+  "serenity": {
+    "theme_system_change": "中国客车从'廉价出口'向'电动客车全球出口领导'的结构性跃迁 + 海外公交电动化。",
+    "value_chain_map": [
+      "整车品牌+海外销售/售后服务网络(60+国)[scarcity: high]",
+      "三电/电池供应链 [scarcity: medium]",
+      "KD本地化组装(十余国)[scarcity: medium-准入]",
+      "海外政府采购/客户关系 [scarcity: medium-准入]"
+    ],
+    "scarce_layer": "整车品牌 + 海外销售/售后服务网络 + 60+国渠道(多年构建,难复制)",
+    "company_role": "全球客车出口龙头:累计出口>13万辆、新能源>1.1万辆、60+国、KD在十余国本地化组装。",
+    "bottleneck_evidence": [
+      {
+        "claim": "海外GM 29.62% > 国内 19.09% → 海外定价权",
+        "tier": "E1",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "FY2025 年报 分地区"
+      },
+      {
+        "claim": "累计出口客车>13万辆/60+国",
+        "tier": "E1",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "FY2025 年报"
+      }
+    ],
+    "market_may_be_missing": "市场可能没意识到当前 13.4% 净利率/35.6% ROE 是相对自身历史的顶,且 ~100% 分红封死了出口扩张的再投资能力。",
+    "substitution_route": "海外本土客车厂 + 比亚迪/金龙/中通 出口竞争压缩海外毛利;CPO 不适用(实物制造)。",
+    "expansion_difficulty": "high — 品牌+海外售后网络+各国认证/homologation+KD建厂 = 数年壁垒。",
+    "customer_validation": "产品进入英国/挪威/荷兰/意大利/墨西哥/智利/菲律宾/澳大利亚/沙特/巴基斯坦;KD厂哈萨克斯坦/巴基斯坦/埃塞俄比亚/马来西亚。",
+    "what_weakens_the_view": [
+      {
+        "metric": "2026H1 出口销量 YoY",
+        "threshold": "< 0",
+        "source": "2026 半年报 §产销量",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "2026 海外毛利率",
+        "threshold": "< 26%",
+        "source": "2026 中报/年报 §分地区",
+        "check_date": "2026-08-31"
+      }
+    ]
+  },
+  "risk": {
+    "fundamental": "peak-earnings normalization — net margin 13.4% vs ~2.6% history, ROE 2.75× its own 5y median; export restock-vs-structural unresolved; domestic revenue −12.4%.",
+    "policy": "overseas trade/tariff exposure (EU/US/EM bus tariffs), foreign NEV-subsidy changes, RMB FX (海外收入 >50%).",
+    "valuation": "PE 10.5 is on PEAK EPS — normalized R/R ≈0.67 unfavorable at ¥26.04; the 'cheap PE / 9.6% yield' is peak-earnings cheap, not value.",
+    "liquidity": "mcap ¥577亿, fully liquid — not a constraint.",
+    "crowding_reflexivity": "9.6% (peak) dividend yield + export narrative = crowded long; momentum rank ~70; reflexive downside if the export story breaks."
+  },
+  "disclaimers": {
+    "unvalidated": true,
+    "human_executes": true,
+    "pilot": "internal UNVALIDATED research of the model-recommendation pilot; not validated alpha; not external/personalized advice; sizing is research posture only; human_executes; WATCH not buy; peak-earnings NORMALIZATION thesis NOT a value thesis.",
+    "data_breaks_logged": [
+      "reference price = universe_a 2026-06-21 snapshot 26.04 (trade_date 20260618); no committed per-ticker OHLC bar yet — universe fallback price, pull a live quote before any execution",
+      "valuation band is driver-constructed (units×ASP×region-GM−opex−tax with FY2025 base reconciliation); EPS×PE multiples are [unvalidated intuition]",
+      "OCF/NI pipeline TTM 0.966 is a 2026Q1 working-capital window artifact; the FY2025 print is 0.576 — the wrong_if uses the FY2026 annual OCF/归母",
+      "automated valuation stack (rDCF/EV-EBITDA/RI) not run for this name — band is analyst-constructed",
+      "sentiment feeds stubbed (crowding monitoring partially blind)"
+    ]
+  },
+  "auto_context": {
+    "last_price": {
+      "close": 26.04,
+      "date": "2026-06-21",
+      "source": "universe_a_snapshot_fallback",
+      "note": "latest COMMITTED price — staleness is flagged, never papered over"
+    },
+    "technical": {
+      "zone": null,
+      "generated_at": null,
+      "rsi14": null,
+      "signals": []
+    },
+    "eqr": {
+      "overall": null,
+      "sections": {}
+    },
+    "market_anchors": {
+      "as_of": "2026-06-21T03:31:25.734833",
+      "price": 26.04,
+      "market_cap": 57650976768.0,
+      "pe_dynamic": 10.3792,
+      "pb": 3.5532
+    },
+    "valuation_stack_status": {
+      "triangulated_signal": null,
+      "methods_used": null,
+      "note": "automated valuation generators' status — breaks logged honestly"
+    },
+    "data_integrity": {
+      "universe_price_gate": {
+        "verdict": "PASS",
+        "errors": [],
+        "warnings": [],
+        "max_age_days": 2,
+        "universe_fetched_at": "2026-06-21T03:31:25.734833"
+      }
+    }
+  },
+  "reward_to_risk": {
+    "reference_price": 26.04,
+    "bull_mid": 34.5,
+    "bear_mid": 12.5,
+    "reward_to_risk": 0.62,
+    "conviction_bar": 2.0,
+    "meets_conviction_bar": false,
+    "entry_where_bar_met": 19.83,
+    "stance_at_reference": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)"
+  },
+  "quality": {
+    "auto_floor": "PASS (structurally qualified)",
+    "human_red_team": "PASS 86.6 — Junyan five-axis red-team (the measure of record); registered 2026-06-21, lock a9687692ab6a2f76",
+    "forward_checkpoints": "PENDING registration (30/60/90d, PR-D)",
+    "registration": {
+      "status": "REGISTERED",
+      "verdict": "PASS",
+      "registered_at": "2026-06-21T09:18:19.174622+00:00",
+      "content_lock": "a9687692ab6a2f76ad04d0bdfe4b43d647c1ac59ae105df0e3c67241cb417421",
+      "checkpoints": [
+        "2026-07-21",
+        "2026-08-20",
+        "2026-09-19"
+      ]
+    }
+  },
+  "content_lock_sha256": "a9687692ab6a2f76ad04d0bdfe4b43d647c1ac59ae105df0e3c67241cb417421"
+}

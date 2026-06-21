@@ -2,8 +2,8 @@
   "_meta": {
     "layer": "CTF v1 decision-sheet forward checkpoints (PR-D)",
     "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md §3",
-    "updated_at": "2026-06-15T14:13:32.355829+00:00",
-    "n_active": 6
+    "updated_at": "2026-06-21T09:18:19.163565+00:00",
+    "n_active": 7
   },
   "registrations": [
     {
@@ -900,6 +900,186 @@
         "STARTER eligibility only inside the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band",
         "the load-bearing variable is ODM net MARGIN, resolving at the 2026-08-30 H1 segment-GM print; revenue growth alone does not confirm the thesis",
         "post-#86 verified: Q1'26 归母 105.95亿 + FY2025 352.86亿 E1-confirmed (the upstream '302亿' was wrong and never entered this thesis)"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    },
+    {
+      "ticker": "600066.SH",
+      "name": {
+        "zh": "宇通客车",
+        "en": "Yutong Bus"
+      },
+      "content_lock": "a9687692ab6a2f76ad04d0bdfe4b43d647c1ac59ae105df0e3c67241cb417421",
+      "sheet_as_of": "2026-06-21",
+      "registered_at": "2026-06-21T09:18:19.163549+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "WATCH",
+      "conviction_at_registration": "WATCH_NOT_CONVICTION — the export step-up and operating-driven (not leverage-driven) ROE are real, but ¥26.04 is PE 10.5 on PEAK earnings and the normalized R/R ≈0.67 is unfavorable. Research posture only, no position. STARTER-research trigger ≈¥20.0 (NOT a buy instruction), or a post-H1/annual re-band confirming overseas volume+margin hold through domestic normalization.",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 26.04,
+      "reference_price_date": "2026-06-21",
+      "band": {
+        "bear": {
+          "low": 11.5,
+          "high": 13.5
+        },
+        "base": {
+          "low": 22.0,
+          "high": 26.0
+        },
+        "bull": {
+          "low": 32.0,
+          "high": 37.0
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "2026H1 出口销量 YoY",
+          "threshold": "< 0 (转负)",
+          "source": "2026 半年报 §产销量 + 月度产销快报",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 中报/年报 海外毛利率",
+          "threshold": "< 26%",
+          "source": "2026 半年报/年报 §主营业务分地区",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "FY2026 净利率",
+          "threshold": "< 10%",
+          "source": "FY2026 年报 合并利润表",
+          "check_date": "2027-03-31"
+        },
+        {
+          "metric": "FY2026 OCF/归母净利",
+          "threshold": "< 0.5",
+          "source": "FY2026 年报 合并现金流量表",
+          "check_date": "2027-03-31"
+        },
+        {
+          "metric": "2026 国内收入 YoY",
+          "threshold": "< -15%",
+          "source": "2026 半年报/年报 §分地区",
+          "check_date": "2026-08-31"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "~Aug 2026",
+          "event": "2026 半年报(出口量 + 海外GM + 减速)"
+        },
+        {
+          "date": "rolling 2026",
+          "event": "月度产销快报(高频出口量)"
+        },
+        {
+          "date": "~Mar 2027",
+          "event": "FY2026 年报(正常化全年)"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "600066.SH",
+        "content_lock": "a9687692ab6a2f76",
+        "sheet": "docs/research/decision_sheets/600066_SH_2026-06-21.md",
+        "scored_at": "2026-06-21",
+        "scorer_roles": {
+          "first_red_team_qa": "Claude (factory) + 2-pass primary-filing factpack",
+          "final_adjudicator": "Junyan"
+        },
+        "scores": {
+          "specificity": {
+            "score": 88,
+            "comment": "units × ASP × 地区毛利 × 费用率,正常化桥非泛泛净利率拍脑袋"
+          },
+          "falsifiability": {
+            "score": 89,
+            "comment": "H1/年报 wrong-if 清楚:出口量、海外毛利、净利率、OCF、国内收入均可查"
+          },
+          "valuation_discipline": {
+            "score": 81,
+            "comment": "正常化桥(units×ASP×地区GM−费用−税)足够注册 WATCH,但情景 PE/GM/销量仍是未校准假设(最弱轴)"
+          },
+          "information_increment": {
+            "score": 90,
+            "comment": "'PE 10 是顶部 EPS 便宜,不是真便宜'是强增量;cyclical_flag 把 ROE 35.9% 拆成相对自身历史的盈利顶(2.751×)"
+          },
+          "risk_identification": {
+            "score": 85,
+            "comment": "OCF(0.576 vs TTM 0.966)、99.65% 分红压薄净资产、ROE 放大机制均处理诚实"
+          }
+        },
+        "average": 86.6,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 81
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS",
+        "conditions": [
+          "register as forward-court WATCH only — NOT starter / NOT buy",
+          "stance stays WATCH_NOT_CONVICTION; 2:1 research trigger ≈¥20.0 (composer-computed ¥19.83)",
+          "FRAMING LOCK: peak-earnings NORMALIZATION thesis, NOT value — never state 'PE 10 / 9.6% 股息率' without 'on peak earnings / 基于顶部盈利' in the same sentence",
+          "core checkpoint = 2026 半年报 (出口销量 / 海外毛利 / 净利率 / 现金质量)",
+          "platform follow-up (NON-blocking): label universe ocf_to_ni as FY-anchor + TTM-aside (#100 no bug — this case proved TTM OCF/NI is single-quarter working-capital sensitive)"
+        ],
+        "checklist": [
+          {
+            "claim": "e1_e2_disclosure",
+            "status": "missing"
+          },
+          {
+            "claim": "filing_line_item_citation",
+            "status": "missing"
+          },
+          {
+            "claim": "non_recurring_ocf_decomposition",
+            "status": "supplied",
+            "evidence_tier": "E1",
+            "source_title": "FY2025 年报 + 2026Q1 报告",
+            "line_item_or_quote": "FY2025 OCF ¥31.97亿 / 归母 ¥55.54亿 = OCF/NI 0.576 (−55.67% YoY); 扣非归母 ¥45.80亿 = 82.5% of 归母 (非经常性 ~17.5%); pipeline TTM 0.966 = Q1'26 营运资金窗口效应 (Q1'26 OCF 34.94亿 vs Q1'25 14.17亿), NOT operating leverage"
+          },
+          {
+            "claim": "conflict_source_line_quote",
+            "status": "supplied",
+            "evidence_tier": "E1",
+            "source_title": "FY2025 年报 §利润分配预案 + §资产负债表日后事项",
+            "line_item_or_quote": "'每10股派息25元(含税)…现金分红5,534,848,057.50元…占归母99.65%'(利润分配预案表) = 中期10派5(¥11.07亿) + 末次10派20(¥44.28亿);日后事项的'10派20'是末次部分,非竞争全年口径"
+          }
+        ],
+        "note": "Core Thesis Factory v1 — FIRST clean-screen (post #99 momentum / #100 clean financials / #101 cyclical-flag) deep thesis. cyclical_flag peak_earnings_risk=True (ROE 2.751× its own 5y median) drove the normalization frame; a 2-pass fix-forward closed the OCF / dividend / normalized-bridge 口径 before PASS. Human score = measure of record per spec #62. Registered as forward-court WATCH, NOT a buy."
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-21",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-20",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-19",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "register as forward-court WATCH only — NOT starter / NOT buy",
+        "stance stays WATCH_NOT_CONVICTION; 2:1 research trigger ≈¥20.0 (composer-computed ¥19.83)",
+        "FRAMING LOCK: peak-earnings NORMALIZATION thesis, NOT value — never state 'PE 10 / 9.6% 股息率' without 'on peak earnings / 基于顶部盈利' in the same sentence",
+        "core checkpoint = 2026 半年报 (出口销量 / 海外毛利 / 净利率 / 现金质量)",
+        "platform follow-up (NON-blocking): label universe ocf_to_ni as FY-anchor + TTM-aside (#100 no bug — this case proved TTM OCF/NI is single-quarter working-capital sensitive)"
       ],
       "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
     }

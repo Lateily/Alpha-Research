@@ -105,6 +105,38 @@ PRIMARY_E1: dict[str, dict] = {
                                   "The 'rising GM' framing is incomplete; the honest read is 'GM peaked mid-25, "
                                   "stabilizing ~33-36%, direction is the open question'.",
     },
+    "600066.SH": {
+        "name": "宇通客车",
+        "filings": {
+            "FY2025": "cninfo/SSE 2025年年度报告 (filed 2026-03-31, audited 大华) "
+                      "https://stockmc.xueqiu.com/202603/600066_20260331_FY0Y.pdf",
+            "2026Q1": "2026年第一季度报告 (临2026-021, filed 2026-04-28, unaudited)",
+        },
+        "facts": {
+            "FY2025_归母_yi": {"v": 55.54, "yoy": 34.94, "tier": "E1", "src": "FY2025"},
+            "FY2025_revenue_yi": {"v": 414.26, "yoy": 11.31, "tier": "E1", "src": "FY2025"},
+            "FY2025_扣非归母_yi": {"v": 45.80, "yoy": 32.05, "tier": "E1", "src": "FY2025"},
+            "FY2025_海外收入_yi": {"v": 211.08, "yoy": 38.87, "tier": "E1", "src": "FY2025 §分地区"},
+            "FY2025_海外GM_pct": {"v": 29.62, "tier": "E1", "src": "FY2025 §分地区"},
+            "FY2025_国内GM_pct": {"v": 19.09, "tier": "E1", "src": "FY2025 §分地区"},
+            "FY2025_OCF_yi": {"v": 31.97, "yoy": -55.67, "tier": "E1", "src": "FY2025"},
+            "FY2025_OCF_to_NI": {"v": 0.576, "tier": "E1", "src": "FY2025 (annual, structural — NOT the TTM 0.966)"},
+            "总股本_亿股": {"v": 22.139, "tier": "E1", "src": "FY2025 (2,213,939,223股)"},
+            "FY2025_EPS": {"v": 2.51, "tier": "E1", "src": "FY2025"},
+            "海外销量_辆": {"v": 17149, "yoy": 22.49, "tier": "E1", "src": "FY2025 §产销量"},
+            "2026Q1_归母_yi": {"v": 6.59, "yoy": -12.69, "tier": "E1", "src": "2026Q1"},
+            "分红率_pct": {"v": 99.65, "tier": "E1", "src": "FY2025 §利润分配预案 (10派25)"},
+            "5yr_median_ROE_pct": {"v": 13.05, "tier": "E1", "src": "FY2021-2025 年报 (期末净资产口径)"},
+        },
+        "resolved_conflicts": [
+            {"input": "OCF/NI 口径", "candidates": ["universe TTM 0.966", "FY2025 annual 0.576"],
+             "resolved": "0.576 (FY2025 annual) = structural cash-quality anchor [E1]", "tier": "E1",
+             "cause_of_wrong": "the TTM 0.966 reproduces EXACTLY from FY25 OCF 31.97 + Q1'26 OCF 34.94 − Q1'25 OCF 14.17 = 52.73亿 / TTM 归母 54.59 → a 2026Q1 working-capital window artifact (Q1'26 购买商品付现 62.6亿→44.6亿), NOT a #100 计算 bug. The thesis anchors the annual 0.576 (OCF −55.67% YoY)."},
+            {"input": "FY2025 分红口径", "candidates": ["10派25 / ¥55.35亿 / 99.65%", "10派20 / ¥44.28亿"],
+             "resolved": "10派25 / ¥55.35亿 / 99.65% (full-year) [E1]", "tier": "E1",
+             "cause_of_wrong": "no contradiction — full-year (中期10派5 ¥11.07亿 paid 2025-09 + 期末末次10派20 ¥44.28亿 implemented 2026-05). The '10派20' in the 资产负债表日后事项 note is the final tranche only, not a competing full-year figure. Ties to the cent."},
+        ],
+    },
 }
 
 # ── BRIDGE ASSUMPTIONS (what the deep-thesis candidate's earnings bridge actually used) ─────────
@@ -125,6 +157,12 @@ BRIDGE_ASSUMPTIONS: dict[str, list[dict]] = {
         {"claim": "FY24 GM 22.7%", "field": "FY2024_GM_pct", "claimed": 22.7, "load_bearing": False},
         {"claim": "FY26E 归母 89.08亿 (bridge base)", "field": "FY26E_consensus_归母_yi", "claimed": 89.08, "load_bearing": True},
         {"claim": "FY27E 归母 149.58亿 (bull)", "field": "FY27E_consensus_归母_yi", "claimed": 149.58, "load_bearing": True},
+    ],
+    "600066.SH": [
+        {"claim": "正常化桥 FY2025 base 归母 ¥55.54亿", "field": "FY2025_归母_yi", "claimed": 55.54, "load_bearing": True},
+        {"claim": "总股本 22.139亿股 (EPS basis)", "field": "总股本_亿股", "claimed": 22.139, "load_bearing": True},
+        {"claim": "海外毛利率 29.62% (margin lever)", "field": "FY2025_海外GM_pct", "claimed": 29.62, "load_bearing": True},
+        {"claim": "FY2025 OCF/NI 0.576 (cash-quality anchor, NOT TTM 0.966)", "field": "FY2025_OCF_to_NI", "claimed": 0.576, "load_bearing": True},
     ],
 }
 
