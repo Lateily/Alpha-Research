@@ -742,13 +742,15 @@ UNIVERSE_FACTOR_DEFINITIONS = {
     },
 }
 
-def _universe_meta(count, momentum_meta=None):
+def _universe_meta(count, momentum_meta=None, financials_meta=None):
+    import copy
     factor_defs = UNIVERSE_FACTOR_DEFINITIONS
-    # Only stamp the clean momentum basis when real 12-1 was actually used;
+    field_defs = UNIVERSE_FIELD_DEFINITIONS
+
+    # Momentum: stamp the clean basis only when real 12-1 was actually used;
     # otherwise leave the tape definition so the data-health gate honestly warns.
     if momentum_meta and str(momentum_meta.get("basis", "")).startswith("12_minus_1"):
-        import copy
-        factor_defs = copy.deepcopy(UNIVERSE_FACTOR_DEFINITIONS)
+        factor_defs = copy.deepcopy(factor_defs)
         adjusted = momentum_meta.get("adjusted")
         factor_defs["momentum"] = {
             "basis": ("12-1 month %s return (T-252→T-21 trading days), "
@@ -769,13 +771,47 @@ def _universe_meta(count, momentum_meta=None):
                 "window are neutral-filled, not penalised."
             ),
         }
+
+    # Financials: stamp clean value + quality definitions and add the clean field
+    # definitions only when clean TTM data was actually used in scoring.
+    if financials_meta and str(financials_meta.get("basis", "")) == "clean_ttm_filings":
+        if factor_defs is UNIVERSE_FACTOR_DEFINITIONS:
+            factor_defs = copy.deepcopy(factor_defs)
+        field_defs = copy.deepcopy(field_defs)
+        cov = financials_meta.get("coverage", {})
+        periods = financials_meta.get("periods", {})
+        factor_defs["value"] = {
+            "basis": ("cross-sectional rank of low PE (computed TTM PE preferred per "
+                      "name, else provider) and low PB"),
+            "status": "screening_only",
+            "pe_ttm_coverage": cov.get("pe_ttm_clean"),
+            "source": "scripts/universe_financials.py",
+            "consumer_warning": "PE now prefers computed TTM PE where available; PB still provider.",
+        }
+        factor_defs["quality"] = {
+            "basis": "cross-sectional rank of ROE-TTM (trailing-12m net income / average equity)",
+            "status": "roe_ttm_backed",
+            "coverage": cov.get("roe_ttm"),
+            "source": "scripts/universe_financials.py",
+            "consumer_warning": ("Real ROE-TTM; loss-makers rank low, names without a "
+                                 "full TTM window are neutral-filled."),
+        }
+        for fld, desc in (
+            ("pe_ttm_clean", "computed TTM PE = market_cap / trailing-12m net income attr. parent"),
+            ("roe_ttm", "computed ROE-TTM = trailing-12m net income / average equity (percent)"),
+            ("ocf_to_ni", "trailing-12m operating cash flow / trailing-12m net income (earnings quality)"),
+            ("gross_margin_ttm", "trailing-12m (revenue - operating cost) / revenue (percent)"),
+        ):
+            field_defs[fld] = {"basis": desc, "coverage": cov.get(fld),
+                               "source": "scripts/universe_financials.py", "periods": periods}
+
     return {
         "fetched_at": datetime.now().isoformat(),
         "count": count,
         "version": "4.2",
         "scored": True,
         "scorer": "barra_lite_v1",
-        "field_definitions": UNIVERSE_FIELD_DEFINITIONS,
+        "field_definitions": field_defs,
         "factor_definitions": factor_defs,
         "research_use_warning": (
             "universe_* factors are screening hints only. Registration-grade "
@@ -873,20 +909,41 @@ def score_universe(stocks, use_real_momentum=None):
         return [stocks[i].get(field) for i in eligible]
 
     pe_raw  = _get('pe')
+    pe_clean_raw = _get('pe_ttm_clean')   # clean TTM PE (universe_financials.py); None when absent
     pb_raw  = _get('pb')
-    roe_raw = _get('roe')
+    roe_raw = _get('roe')                 # provider ROE (often absent in universe_a)
+    roe_ttm_raw = _get('roe_ttm')         # clean ROE-TTM (universe_financials.py); preferred
     chg_raw = _get('change_pct')
     mom_raw = _get('momentum_12_1')   # real 12-1 month return; None when absent
     cap_raw = _get('market_cap')
     amp_raw = _get('amplitude')
 
-    # ── Value: winsorize PE (1–200) and PB (0.1–30) before ranking ───────────
+    # ── Helpers ──────────────────────────────────────────────────────────────
     def _winsor(vals, lo, hi):
+        # PE/PB style: non-positive is invalid → None.
         return [max(lo, min(hi, v)) if v is not None and v > 0 else None
                 for v in vals]
 
-    pe_w  = _winsor(pe_raw,  1.0,  200.0)
-    pb_w  = _winsor(pb_raw,  0.1,  30.0)
+    def _winsor_signed(vals, lo, hi):
+        # ROE style: negatives are valid AND meaningful (loss-makers rank low).
+        return [max(lo, min(hi, v)) if v is not None else None for v in vals]
+
+    def _pct_rank_present(values):
+        """Percentile-rank only the non-None entries; missing stay None so the
+        downstream _fill() neutral-fills them (NOT a penalising bottom rank)."""
+        present = [i for i, v in enumerate(values) if v is not None]
+        if not present:
+            return [None] * len(values)
+        sub = _pct_rank([values[i] for i in present])
+        out = [None] * len(values)
+        for k, i in enumerate(present):
+            out[i] = sub[k]
+        return out
+
+    # ── Value: prefer clean TTM PE per name, else provider PE; winsorize PE/PB ──
+    pe_src = [c if c is not None else p for c, p in zip(pe_clean_raw, pe_raw)]
+    pe_w  = _winsor(pe_src, 1.0,  200.0)
+    pb_w  = _winsor(pb_raw, 0.1,  30.0)
 
     # Invert: low PE/PB → high rank; replace None with median before rank
     pe_inv  = [None if v is None else -v for v in pe_w]
@@ -906,23 +963,13 @@ def score_universe(stocks, use_real_momentum=None):
         else:
             value_rank.append((pr + pbr) / 2.0)
 
-    # ── Quality: ROE (cap at -50%..+80%) ─────────────────────────────────────
-    roe_w    = _winsor(roe_raw, -50.0, 80.0)
-    quality_rank = _pct_rank(roe_w)
+    # ── Quality: clean ROE-TTM preferred per name, else provider ROE; cap
+    #    -50%..+80%; loss-makers rank low, missing → neutral-filled (not bottom) ──
+    roe_src  = [rt if rt is not None else r for rt, r in zip(roe_ttm_raw, roe_raw)]
+    roe_w    = _winsor_signed(roe_src, -50.0, 80.0)
+    quality_rank = _pct_rank_present(roe_w)
 
     # ── Momentum: real 12-1 month return when present, else 1-day tape ─────────
-    def _pct_rank_present(values):
-        """Percentile-rank only the non-None entries; missing stay None so the
-        downstream _fill() neutral-fills them (NOT a penalising bottom rank)."""
-        present = [i for i, v in enumerate(values) if v is not None]
-        if not present:
-            return [None] * len(values)
-        sub = _pct_rank([values[i] for i in present])
-        out = [None] * len(values)
-        for k, i in enumerate(present):
-            out[i] = sub[k]
-        return out
-
     mom_coverage = sum(1 for v in mom_raw if v is not None)
     if use_real_momentum is None:                       # auto-detect (e.g. HK path)
         use_real_momentum = mom_coverage >= max(10, int(0.30 * n))
@@ -2429,17 +2476,36 @@ def main():
             mom_meta = {"basis": "unavailable", "coverage": 0,
                         "error": f"{type(e).__name__}: {e}"}
             print(f"  Momentum 12-1 enrichment skipped: {mom_meta['error']}")
-        # Decide ONCE whether the universe carries enough real 12-1 to use it, then
-        # pass the SAME decision to both the scorer and the _meta label (they can
-        # never disagree → the ranked factor and the basis string stay in lockstep).
+        # Attach clean TTM financials (PE-TTM / ROE-TTM / OCF-NI / gross margin)
+        # before scoring. Lean ~8 by-period VIP calls (whole market per call); on
+        # any failure attaches nothing and score_universe keeps the provider pe +
+        # inert quality (the data-health gate keeps warning honestly).
+        try:
+            from universe_financials import enrich_stocks_with_financials
+            fin_meta = enrich_stocks_with_financials(a_stocks, token=TUSHARE_TOKEN)
+            _cov = fin_meta.get("coverage", {})
+            print(f"  Clean financials: basis={fin_meta.get('basis')} "
+                  f"pe_ttm={_cov.get('pe_ttm_clean')}/{len(a_stocks)} "
+                  f"roe_ttm={_cov.get('roe_ttm')}/{len(a_stocks)}")
+        except Exception as e:
+            fin_meta = {"basis": "unavailable", "coverage": {},
+                        "error": f"{type(e).__name__}: {e}"}
+            print(f"  Clean financials enrichment skipped: {fin_meta['error']}")
+        # Decide ONCE per factor whether the universe carries enough real signal,
+        # then pass the SAME decision to both the scorer and the _meta label so the
+        # ranked factor and the basis string stay in lockstep.
         used_12_1 = (str(mom_meta.get("basis", "")).startswith("12_minus_1")
                      and mom_meta.get("coverage", 0) >= max(10, int(0.30 * len(a_stocks))))
+        used_clean_fin = (str(fin_meta.get("basis", "")) == "clean_ttm_filings"
+                          and fin_meta.get("coverage", {}).get("pe_ttm_clean", 0)
+                              >= max(10, int(0.30 * len(a_stocks))))
         print("  Scoring A-share universe (Barra-lite)...")
         score_universe(a_stocks, use_real_momentum=used_12_1)
         with open(OUTPUT_DIR / "universe_a.json", "w", encoding="utf-8") as f:
             json.dump({"_meta": _universe_meta(
                            len(a_stocks),
-                           momentum_meta=mom_meta if used_12_1 else None),
+                           momentum_meta=mom_meta if used_12_1 else None,
+                           financials_meta=fin_meta if used_clean_fin else None),
                        "stocks": a_stocks}, f, ensure_ascii=False, default=str)
     print()
 
