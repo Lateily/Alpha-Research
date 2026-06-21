@@ -329,7 +329,7 @@
   "quality": {
     "auto_floor": "PASS (structurally qualified)",
     "human_red_team": "PASS 86.6 — Junyan five-axis red-team (the measure of record); registered 2026-06-21, lock a9687692ab6a2f76",
-    "forward_checkpoints": "PENDING registration (30/60/90d, PR-D)",
+    "forward_checkpoints": "REGISTERED — 30/60/90d checkpoints due 2026-07-21 / 2026-08-20 / 2026-09-19",
     "registration": {
       "status": "REGISTERED",
       "verdict": "PASS",
