@@ -1,0 +1,36 @@
+{
+  "ticker": "600066.SH",
+  "content_lock": "a9687692ab6a2f76",
+  "sheet": "docs/research/decision_sheets/600066_SH_2026-06-21.md",
+  "scored_at": "2026-06-21",
+  "scorer_roles": {"first_red_team_qa": "Claude (factory) + 2-pass primary-filing factpack", "final_adjudicator": "Junyan"},
+  "scores": {
+    "specificity": {"score": 88, "comment": "units × ASP × 地区毛利 × 费用率,正常化桥非泛泛净利率拍脑袋"},
+    "falsifiability": {"score": 89, "comment": "H1/年报 wrong-if 清楚:出口量、海外毛利、净利率、OCF、国内收入均可查"},
+    "valuation_discipline": {"score": 81, "comment": "正常化桥(units×ASP×地区GM−费用−税)足够注册 WATCH,但情景 PE/GM/销量仍是未校准假设(最弱轴)"},
+    "information_increment": {"score": 90, "comment": "'PE 10 是顶部 EPS 便宜,不是真便宜'是强增量;cyclical_flag 把 ROE 35.9% 拆成相对自身历史的盈利顶(2.751×)"},
+    "risk_identification": {"score": 85, "comment": "OCF(0.576 vs TTM 0.966)、99.65% 分红压薄净资产、ROE 放大机制均处理诚实"}
+  },
+  "average": 86.6,
+  "min_axis": {"axis": "valuation_discipline", "score": 81},
+  "bar": {"average_min": 70, "axis_min": 50, "label": "[unvalidated intuition]"},
+  "verdict": "PASS",
+  "conditions": [
+    "register as forward-court WATCH only — NOT starter / NOT buy",
+    "stance stays WATCH_NOT_CONVICTION; 2:1 research trigger ≈¥20.0 (composer-computed ¥19.83)",
+    "FRAMING LOCK: peak-earnings NORMALIZATION thesis, NOT value — never state 'PE 10 / 9.6% 股息率' without 'on peak earnings / 基于顶部盈利' in the same sentence",
+    "core checkpoint = 2026 半年报 (出口销量 / 海外毛利 / 净利率 / 现金质量)",
+    "platform follow-up (NON-blocking): label universe ocf_to_ni as FY-anchor + TTM-aside (#100 no bug — this case proved TTM OCF/NI is single-quarter working-capital sensitive)"
+  ],
+  "checklist": [
+    {"claim": "e1_e2_disclosure", "status": "missing"},
+    {"claim": "filing_line_item_citation", "status": "missing"},
+    {"claim": "non_recurring_ocf_decomposition", "status": "supplied", "evidence_tier": "E1",
+     "source_title": "FY2025 年报 + 2026Q1 报告",
+     "line_item_or_quote": "FY2025 OCF ¥31.97亿 / 归母 ¥55.54亿 = OCF/NI 0.576 (−55.67% YoY); 扣非归母 ¥45.80亿 = 82.5% of 归母 (非经常性 ~17.5%); pipeline TTM 0.966 = Q1'26 营运资金窗口效应 (Q1'26 OCF 34.94亿 vs Q1'25 14.17亿), NOT operating leverage"},
+    {"claim": "conflict_source_line_quote", "status": "supplied", "evidence_tier": "E1",
+     "source_title": "FY2025 年报 §利润分配预案 + §资产负债表日后事项",
+     "line_item_or_quote": "'每10股派息25元(含税)…现金分红5,534,848,057.50元…占归母99.65%'(利润分配预案表) = 中期10派5(¥11.07亿) + 末次10派20(¥44.28亿);日后事项的'10派20'是末次部分,非竞争全年口径"}
+  ],
+  "note": "Core Thesis Factory v1 — FIRST clean-screen (post #99 momentum / #100 clean financials / #101 cyclical-flag) deep thesis. cyclical_flag peak_earnings_risk=True (ROE 2.751× its own 5y median) drove the normalization frame; a 2-pass fix-forward closed the OCF / dividend / normalized-bridge 口径 before PASS. Human score = measure of record per spec #62. Registered as forward-court WATCH, NOT a buy."
+}

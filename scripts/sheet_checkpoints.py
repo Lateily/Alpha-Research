@@ -77,6 +77,10 @@ def _autostamp(safe, sheet, lock, verdict, redteam, reg_date, checkpoints):
                            f"registered {reg_date}, lock {lock[:16]}")
     q["registration"] = {"status": "REGISTERED", "verdict": verdict, "registered_at": _now(),
                          "content_lock": lock, "checkpoints": [c["due_date"] for c in checkpoints]}
+    # Kill the composer's "PENDING registration" placeholder too — leaving it is the exact
+    # stale-registration prose class #97/_autostamp exists to eliminate (Junyan PR #102 review).
+    q["forward_checkpoints"] = ("REGISTERED — 30/60/90d checkpoints due "
+                                + " / ".join(c["due_date"] for c in checkpoints))
     if _ds._content_lock(sheet) != lock_before:
         raise SystemExit("auto-stamp moved the content lock — quality must stay lock-excluded (aborting)")
     (SHEETS / f"{safe}.json").write_text(json.dumps(sheet, ensure_ascii=False, indent=2))
@@ -376,6 +380,10 @@ def _selftest() -> int:
             errs.append("registered sheet quality.human_red_team must read PASS, not PENDING")
         if (stamped.get("quality") or {}).get("registration", {}).get("status") != "REGISTERED":
             errs.append("registered sheet must carry quality.registration = REGISTERED")
+        fwd = str((stamped.get("quality") or {}).get("forward_checkpoints", ""))
+        if "REGISTERED" not in fwd or "PENDING" in fwd:
+            errs.append("registered sheet quality.forward_checkpoints must read REGISTERED + due dates, "
+                        "not the composer's 'PENDING registration' placeholder (Junyan PR #102 review)")
         if stamped["content_lock_sha256"] != "ab" * 32:
             errs.append("auto-stamp must not change the stored content lock (quality is lock-excluded)")
         # 5) duplicate lock refused (append-only)
