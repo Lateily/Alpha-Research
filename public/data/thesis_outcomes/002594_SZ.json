@@ -1,18 +1,18 @@
 {
   "ticker": "002594.SZ",
-  "verification_run_at": "2026-06-21T03:36:31.195554+00:00",
+  "verification_run_at": "2026-06-22T06:38:45.561178+00:00",
   "thesis_source": "docs/research/factcheck/rerun_2026-05-16/002594SZ_recal.json",
   "thesis_source_commit": "aaa1cc4",
   "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00",
   "direction": "LONG",
   "entry_date": "2026-05-17",
   "entry_price": 96.3,
-  "current_price_at_verification": 88.13,
-  "return_since_entry_pct": -8.48,
-  "current_status": "ACTIVE",
-  "outcome_category": "PENDING — position still active",
+  "current_price_at_verification": 87.59,
+  "return_since_entry_pct": -9.04,
+  "current_status": "STOPPED_OUT",
+  "outcome_category": "LOSS — price hit downside stop",
   "catalyst_window": "2026-08-15 to 2026-08-31",
-  "days_to_catalyst": 55,
+  "days_to_catalyst": 54,
   "rightIf_verification": [
     {
       "index": 0,
@@ -94,7 +94,7 @@
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
-      "auto_signal": null
+      "auto_signal": "price reached downside stop — partial confirmation that thesis is wrong"
     },
     {
       "index": 1,
@@ -110,7 +110,7 @@
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
-      "auto_signal": null
+      "auto_signal": "price reached downside stop — partial confirmation that thesis is wrong"
     },
     {
       "index": 2,
@@ -126,7 +126,7 @@
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
-      "auto_signal": null
+      "auto_signal": "price reached downside stop — partial confirmation that thesis is wrong"
     },
     {
       "index": 3,
@@ -142,7 +142,7 @@
       "verified_at": null,
       "verified_by": null,
       "evidence_observed": null,
-      "auto_signal": null
+      "auto_signal": "price reached downside stop — partial confirmation that thesis is wrong"
     }
   ],
   "what_changes_our_mind": "2026 H1 报告 discloses overseas segment GM < 17% (collapsing the +280bps premium toward zero) OR consolidated GM < 16% — either would invalidate the mix-shift accretion mechanism.",
