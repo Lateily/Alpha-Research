@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-22T06:38:44.227848+00:00",
+  "generated_at": "2026-06-22T13:53:00.696392+00:00",
   "date": "2026-06-22",
   "brief_e": "1 Exposure Review",
   "brief_z": "1 敞口复核",
@@ -11,14 +11,14 @@
         "status": "HELD",
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
-        "confidence": 8,
-        "pnl_pct": 103.54,
+        "confidence": 6,
+        "pnl_pct": 102.88,
         "holding_days": 104,
-        "weight_pct": 61.2,
+        "weight_pct": 61.1,
         "vp_score": 48,
-        "confluence": 8,
-        "reason_e": "Large unrealised gain +103.5% after 104d. Signal still NEUTRAL (score 8). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+103.5%（持有104天），信号8仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "confluence": 6,
+        "reason_e": "Large unrealised gain +102.9% after 104d. Signal still NEUTRAL (score 6). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+102.9%（持有104天），信号6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -93,23 +93,6 @@
     ],
     "watchlist": [
       {
-        "ticker": "300054.SZ",
-        "name": "300054.SZ",
-        "status": "WATCHLIST",
-        "action": "WATCH",
-        "priority": "LOW",
-        "confidence": 3,
-        "pnl_pct": null,
-        "holding_days": null,
-        "weight_pct": 0,
-        "vp_score": 47,
-        "confluence": 3,
-        "reason_e": "No evidence-review condition. Score 3, VP 47. Bullish: Bullish Alignment | Bearish: Rsi Overbought | RSI 71 | Price vs MA20 +22.6% | VP 47.",
-        "reason_z": "暂无证据复核条件。评分3，VP47。多头：均线多头排列 | 空头：RSI超买 | RSI 71 | 距MA20 +22.6% | VP 47。",
-        "entry_target": null,
-        "exit_trigger": null
-      },
-      {
         "ticker": "175.HK",
         "name": "175.HK",
         "status": "WATCHLIST",
@@ -159,6 +142,23 @@
         "reason_z": "暂无证据复核条件。评分0，VP45。RSI 50 | 距MA20 -5.9% | VP 45。",
         "entry_target": null,
         "exit_trigger": null
+      },
+      {
+        "ticker": "300054.SZ",
+        "name": "300054.SZ",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 3,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 47,
+        "confluence": -3,
+        "reason_e": "No evidence-review condition. Score -3, VP 47. Bearish: Rsi Overbought | RSI 71 | Price vs MA20 +22.6% | VP 47.",
+        "reason_z": "暂无证据复核条件。评分-3，VP47。空头：RSI超买 | RSI 71 | 距MA20 +22.6% | VP 47。",
+        "entry_target": null,
+        "exit_trigger": null
       }
     ]
   },
@@ -166,21 +166,9 @@
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 61% of portfolio — above 40.0% limit",
     "⚠️ SECTOR RISK: 电子 = 61% of portfolio — above 60.0% limit",
-    "PROFIT REVIEW: 300308.SZ +103.5% — exposure-review condition (sizable unrealised gain)"
+    "PROFIT REVIEW: 300308.SZ +102.9% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 12.2 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 12.2（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 12.2,
-      "threshold": 25.0
-    },
     {
       "ticker": "002594.SZ",
       "severity": "LOW",
@@ -194,16 +182,16 @@
       "threshold": null
     },
     {
-      "ticker": "300054.SZ",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net profit YoY < +25% (per decision sheet wrong_if)",
-      "wrongIf_z": "2026半年报抛光垫收入同比<+30%(如披露),或毛利率<48%,或归母净利同比<+25%(决策书 wrong_if)",
-      "note_e": "Unstructured condition — monitor manually: 2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net pr",
-      "note_z": "非结构化条件——需人工监控：2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net pr",
-      "indicator": "unstructured",
-      "actual": null,
-      "threshold": null
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 13.1 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 13.1（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 13.1,
+      "threshold": 25.0
     },
     {
       "ticker": "175.HK",
@@ -237,6 +225,18 @@
       "wrongIf_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
       "note_e": "Unstructured condition — monitor manually: 2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
       "note_z": "非结构化条件——需人工监控：2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
+      "indicator": "unstructured",
+      "actual": null,
+      "threshold": null
+    },
+    {
+      "ticker": "300054.SZ",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net profit YoY < +25% (per decision sheet wrong_if)",
+      "wrongIf_z": "2026半年报抛光垫收入同比<+30%(如披露),或毛利率<48%,或归母净利同比<+25%(决策书 wrong_if)",
+      "note_e": "Unstructured condition — monitor manually: 2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net pr",
+      "note_z": "非结构化条件——需人工监控：2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net pr",
       "indicator": "unstructured",
       "actual": null,
       "threshold": null

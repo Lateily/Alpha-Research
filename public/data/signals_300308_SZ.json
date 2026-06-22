@@ -17,23 +17,13 @@
       }
     },
     {
-      "type": "BULLISH_ALIGNMENT",
-      "strength": "strong",
-      "date": "20260618",
-      "bullish": true,
-      "description": {
-        "e": "MA5(1257.2) > MA20(1182.7) > MA60(932.7), price above all — full bullish alignment",
-        "z": "MA5(1257.2)>MA20(1182.7)>MA60(932.7)，均线多头排列，趋势强"
-      }
-    },
-    {
       "type": "MACD_GOLDEN_CROSS",
       "strength": "strong",
       "date": "20260618",
       "bullish": true,
       "description": {
-        "e": "MACD DIF(81.347) crossed above DEA(78.406) above zero — bullish momentum",
-        "z": "MACD DIF(81.347)上穿DEA(78.406)零轴上方金叉看涨"
+        "e": "MACD DIF(81.327) crossed above DEA(78.364) above zero — bullish momentum",
+        "z": "MACD DIF(81.327)上穿DEA(78.364)零轴上方金叉看涨"
       }
     },
     {
@@ -58,25 +48,25 @@
     }
   ],
   "signal_count": {
-    "bullish": 3,
+    "bullish": 2,
     "bearish": 2,
-    "total": 5
+    "total": 4
   },
   "indicators": {
     "ma5": 1257.22,
     "ma20": 1182.67,
-    "ma60": 932.73,
+    "ma60": null,
     "rsi14": 72.4,
     "vol_ma20": 290590,
     "vol_ratio": 0.98,
     "price_vs_ma20": 15.66,
-    "price_vs_ma60": 46.65,
+    "price_vs_ma60": null,
     "change_1d": 7.19,
     "change_5d": 21.7,
     "change_20d": 37.71,
-    "macd_dif": 81.3465,
-    "macd_dea": 78.4055,
-    "macd_hist": 5.882,
+    "macd_dif": 81.3272,
+    "macd_dea": 78.3645,
+    "macd_hist": 5.9255,
     "bb_upper": 1337.45,
     "bb_mid": 1182.67,
     "bb_lower": 1027.89,
