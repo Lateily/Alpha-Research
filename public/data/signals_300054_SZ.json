@@ -2,41 +2,30 @@
   "ticker": "300054.SZ",
   "generated_at": "2026-06-24",
   "price": 91.3,
-  "zone": "BULLISH",
-  "entry_zone": true,
+  "zone": "NEUTRAL",
+  "entry_zone": false,
   "exit_zone": false,
-  "signals": [
-    {
-      "type": "BULLISH_ALIGNMENT",
-      "strength": "strong",
-      "date": "20260623",
-      "bullish": true,
-      "description": {
-        "e": "MA5(90.1) > MA20(76.9) > MA60(65.0), price above all — full bullish alignment",
-        "z": "MA5(90.1)>MA20(76.9)>MA60(65.0)，均线多头排列，趋势强"
-      }
-    }
-  ],
+  "signals": [],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 0,
-    "total": 1
+    "total": 0
   },
   "indicators": {
     "ma5": 90.1,
     "ma20": 76.85,
-    "ma60": 64.97,
+    "ma60": null,
     "rsi14": 69.5,
     "vol_ma20": 489064,
     "vol_ratio": 1.11,
     "price_vs_ma20": 18.8,
-    "price_vs_ma60": 40.54,
+    "price_vs_ma60": null,
     "change_1d": -0.11,
     "change_5d": 6.7,
     "change_20d": 18.57,
-    "macd_dif": 6.4518,
-    "macd_dea": 4.7693,
-    "macd_hist": 3.3651,
+    "macd_dif": 6.4675,
+    "macd_dea": 4.7925,
+    "macd_hist": 3.3499,
     "bb_upper": 95.13,
     "bb_mid": 76.85,
     "bb_lower": 58.58,

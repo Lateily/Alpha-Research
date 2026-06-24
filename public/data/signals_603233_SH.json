@@ -2,7 +2,7 @@
   "ticker": "603233.SH",
   "generated_at": "2026-06-24",
   "price": 15.99,
-  "zone": "BEARISH",
+  "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
   "signals": [
@@ -12,8 +12,8 @@
       "date": "20260623",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 37.5→39.6 — momentum rebuilding",
-        "z": "RSI从37.5回升至39.6，动能修复"
+        "e": "RSI recovering 37.6→39.7 — momentum rebuilding",
+        "z": "RSI从37.6回升至39.7，动能修复"
       }
     }
   ],
@@ -25,18 +25,18 @@
   "indicators": {
     "ma5": 16.13,
     "ma20": 16.35,
-    "ma60": 17.43,
-    "rsi14": 39.6,
+    "ma60": null,
+    "rsi14": 39.7,
     "vol_ma20": 60882,
     "vol_ratio": 0.82,
     "price_vs_ma20": -2.17,
-    "price_vs_ma60": -8.24,
+    "price_vs_ma60": null,
     "change_1d": 0.76,
     "change_5d": -4.14,
     "change_20d": -5.66,
-    "macd_dif": -0.3548,
-    "macd_dea": -0.3632,
-    "macd_hist": 0.0168,
+    "macd_dif": -0.3533,
+    "macd_dea": -0.361,
+    "macd_hist": 0.0153,
     "bb_upper": 17.11,
     "bb_mid": 16.35,
     "bb_lower": 15.58,
