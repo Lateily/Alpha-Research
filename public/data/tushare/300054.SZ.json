@@ -1,6 +1,6 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-06-23T11:38:29Z",
+  "fetched_at": "2026-06-24T05:07:01Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -772,22 +772,9 @@
           "pct_chg": -2.9399,
           "vol": 204689.5,
           "amount": 935674.923
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260325",
-          "open": 44.0,
-          "high": 48.28,
-          "low": 44.0,
-          "close": 46.6,
-          "pre_close": 43.46,
-          "change": 3.14,
-          "pct_chg": 7.225,
-          "vol": 304412.37,
-          "amount": 1419324.319
         }
       ],
-      "row_count": 60,
+      "row_count": 59,
       "_status": "ok"
     },
     "daily_basic": {
@@ -1971,33 +1958,18 @@
           "free_share": 66849.4266,
           "total_mv": 4288108.7462,
           "circ_mv": 3337134.979
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260325",
-          "close": 46.6,
-          "turnover_rate": 4.1259,
-          "turnover_rate_f": 4.5537,
-          "volume_ratio": 1.13,
-          "pe": 84.8478,
-          "pe_ttm": 66.557,
-          "pb": 8.9186,
-          "ps": 13.2369,
-          "ps_ttm": 12.2383,
-          "dv_ratio": 0.2138,
-          "dv_ttm": 0.2138,
-          "total_share": 94806.7377,
-          "float_share": 73781.4499,
-          "free_share": 66849.4266,
-          "total_mv": 4417993.9768,
-          "circ_mv": 3438215.5653
         }
       ],
-      "row_count": 60,
+      "row_count": 59,
       "_status": "ok"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260624",
+          "adj_factor": 12.967
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260623",
@@ -2291,11 +2263,6 @@
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260326",
-          "adj_factor": 12.9517
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260325",
           "adj_factor": 12.9517
         }
       ],

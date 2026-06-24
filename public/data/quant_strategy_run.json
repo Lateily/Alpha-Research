@@ -7,8 +7,8 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-06-23",
-    "generated_at": "2026-06-23T11:41:42.308664+00:00",
+    "run_date": "2026-06-24",
+    "generated_at": "2026-06-24T05:09:43.389099+00:00",
     "data_tier": "degraded_ci_focus_only",
     "data_as_of": null,
     "horizon": "20d primary / 5d secondary diagnostic",
@@ -39,7 +39,7 @@
       "excluded_non_a_share": 3
     }
   },
-  "run_date": "2026-06-23",
+  "run_date": "2026-06-24",
   "strategy_id": "quant_v0",
   "strategy_version": "v0-H1",
   "manifest_hash": "09a943126e43c179f3de7979fb1d54f0f446155698b3a38a4235ccb26bef6161",
@@ -64,35 +64,35 @@
       "ticker": "002594.SZ",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 59,
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "300054.SZ",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 59,
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "300308.SZ",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 59,
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "603233.SH",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 59,
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "688120.SH",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 59,
+      "n_bars": 60,
       "need_bars": 212
     }
   ],
