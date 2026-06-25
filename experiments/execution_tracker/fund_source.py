@@ -39,7 +39,7 @@ EM_DAYKLINE = ("https://push2.eastmoney.com/api/qt/stock/fflow/daykline/get"
                "&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=101&lmt=2")
 # kline csv order (fields2): date, 主力净额, 小单净额, 中单净额, 大单净额,
 #                            超大单净额, 主力%, 小%, 中%, 大%, 超大%
-TUSHARE_URL = "http://api.tushare.pro"
+TUSHARE_URL = "https://api.tushare.pro"   # MUST be https — http returns HTTP 400 (AWS ALB)
 
 
 def _secid(ticker):
@@ -82,9 +82,37 @@ def eastmoney_stock_fund(ticker, retries=3):
     raise RuntimeError(f"eastmoney fetch failed for {ticker}: {last_err}")
 
 
+def _tushare_call(api, token, params, fields):
+    body = json.dumps({"api_name": api, "token": token, "params": params,
+                       "fields": fields}).encode()
+    r = _http_json(url=TUSHARE_URL, data=body, headers={"Content-Type": "application/json"})
+    if r.get("code") != 0:
+        raise RuntimeError(f"tushare {api} error: {r.get('msg')}")
+    return r.get("data") or {}
+
+
+def tushare_daily(ticker, token=None, n=130):
+    """Daily 定盘 OHLC via Tushare `daily` (newest n bars), oldest->newest.
+    Each bar = {high, low, close} for compute_technicals (MA20/60/120, ATR14)."""
+    token = token if token is not None else os.environ.get("TUSHARE_TOKEN", "")
+    if not token:
+        raise RuntimeError("no TUSHARE_TOKEN")
+    d = _tushare_call("daily", token, {"ts_code": ticker},
+                      "trade_date,open,high,low,close,pct_chg")
+    items, fields = d.get("items") or [], d.get("fields") or []
+    rows = [dict(zip(fields, it)) for it in items]            # newest-first from tushare
+    rows.sort(key=lambda r: r["trade_date"])                  # -> oldest-first
+    bars = [{"high": r["high"], "low": r["low"], "close": r["close"]} for r in rows[-n:]]
+    latest = rows[-1] if rows else {}
+    return {"ticker": ticker, "date": latest.get("trade_date"),
+            "close": latest.get("close"), "pct_chg": latest.get("pct_chg"),
+            "ohlc_bars": bars, "source": "tushare_daily"}
+
+
 def tushare_stock_fund(ticker, token, trade_date=""):
     """东财口径 via Tushare moneyflow_dc. Prod path; needs a working token.
-    moneyflow_dc amounts are 万元 -> /1e4 = 亿. [confirm units vs live prod]"""
+    moneyflow_dc amounts are 万元 -> /1e4 = 亿. [CONFIRMED 2026-06-25: 利通
+    net_amount -117479.36万 = -11.75亿; net_amount == buy_elg + buy_lg]"""
     body = json.dumps({"api_name": "moneyflow_dc", "token": token,
                        "params": {"ts_code": ticker, "trade_date": trade_date},
                        "fields": ("ts_code,trade_date,close,pct_change,net_amount,"
@@ -168,6 +196,7 @@ def selftest():
     # auto with no token -> falls to eastmoney in the order list (logic only, no net)
     order = {"auto": ["tushare", "eastmoney"]}["auto"]
     ck("auto order tushare-first", order == ["tushare", "eastmoney"])
+    ck("TUSHARE_URL is https", TUSHARE_URL.startswith("https://"))   # http -> HTTP 400
 
     passed = sum(1 for _, ok in checks if ok)
     for n, ok in checks:
@@ -181,9 +210,25 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--tickers", help="comma list, e.g. 603629.SH,300475.SZ")
     ap.add_argument("--source", default="auto", choices=["auto", "tushare", "eastmoney", "manual"])
+    ap.add_argument("--smoke", metavar="TICKER", help="live smoke: moneyflow_dc + daily via https (needs TUSHARE_TOKEN)")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(0 if selftest() else 1)
+    if args.smoke:
+        tok = os.environ.get("TUSHARE_TOKEN", "").strip()
+        print(f"TUSHARE_TOKEN: {'SET len='+str(len(tok)) if tok else 'NOT SET'} | url={TUSHARE_URL}")
+        ok = True
+        try:
+            f = tushare_stock_fund(args.smoke, tok)
+            print(f"  moneyflow_dc OK: date={f['date']} 主力={f['main']}亿 超大={f['super_large']} 大={f['large']} 小={f['small']} src={f['source']}")
+        except Exception as e:                              # noqa: BLE001
+            print(f"  moneyflow_dc FAIL: {e}"); ok = False
+        try:
+            b = tushare_daily(args.smoke, tok)
+            print(f"  daily OK: date={b['date']} close={b['close']} pct={b['pct_chg']} bars={len(b['ohlc_bars'])}")
+        except Exception as e:                              # noqa: BLE001
+            print(f"  daily FAIL: {e}"); ok = False
+        sys.exit(0 if ok else 1)
     if args.tickers:
         rows = get_many([t.strip() for t in args.tickers.split(",")], source=args.source)
         print(json.dumps(rows, ensure_ascii=False, indent=2))
