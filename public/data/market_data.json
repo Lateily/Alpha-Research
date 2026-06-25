@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-06-24T11:23:11.783179",
+    "fetched_at": "2026-06-25T05:10:05.317526",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -17,16 +17,16 @@
   "yahoo": {
     "300308.SZ": {
       "price": {
-        "last": 1312.18,
-        "prev_close": 1310.01,
-        "change_pct": 0.166,
-        "high": 1344.88,
-        "low": 1282.15,
-        "volume": 2622574300,
+        "last": 1315.07,
+        "prev_close": 1312.18,
+        "change_pct": 0.22,
+        "high": 1345.09,
+        "low": 1280.02,
+        "volume": 2454764300,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 1344.88,
-        "low_52w": 1282.15
+        "high_52w": 1345.09,
+        "low_52w": 1280.02
       },
       "technical": {
         "sma_20": null,
@@ -90,16 +90,16 @@
     },
     "002594.SZ": {
       "price": {
-        "last": 83.3,
-        "prev_close": 85,
-        "change_pct": -2,
-        "high": 84.7,
-        "low": 82.78,
-        "volume": 4557353000,
+        "last": 82.91,
+        "prev_close": 83.3,
+        "change_pct": -0.468,
+        "high": 83.81,
+        "low": 81.34,
+        "volume": 4015319900,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 84.7,
-        "low_52w": 82.78
+        "high_52w": 83.81,
+        "low_52w": 81.34
       },
       "technical": {
         "sma_20": null,
@@ -163,16 +163,16 @@
     },
     "175.HK": {
       "price": {
-        "last": 17.82,
-        "prev_close": 18.02,
-        "change_pct": -1.11,
-        "high": 18.12,
-        "low": 17.25,
-        "volume": -145,
+        "last": 17.56,
+        "prev_close": 17.62,
+        "change_pct": -0.341,
+        "high": 17.62,
+        "low": 17.12,
+        "volume": -119,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 18.12,
-        "low_52w": 17.25
+        "high_52w": 17.62,
+        "low_52w": 17.12
       },
       "technical": {
         "sma_20": null,
@@ -236,16 +236,16 @@
     },
     "603233.SH": {
       "price": {
-        "last": 15.91,
-        "prev_close": 15.99,
-        "change_pct": -0.5,
-        "high": 16.22,
-        "low": 15.8,
-        "volume": 428649200,
+        "last": 15.92,
+        "prev_close": 15.91,
+        "change_pct": 0.063,
+        "high": 15.95,
+        "low": 15.54,
+        "volume": 314110400,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 16.22,
-        "low_52w": 15.8
+        "high_52w": 15.95,
+        "low_52w": 15.54
       },
       "technical": {
         "sma_20": null,
@@ -309,16 +309,16 @@
     },
     "688120.SH": {
       "price": {
-        "last": 242.49,
-        "prev_close": 231.01,
-        "change_pct": 4.969,
-        "high": 246,
-        "low": 228,
-        "volume": 1330689700,
+        "last": 249.4,
+        "prev_close": 242.49,
+        "change_pct": 2.85,
+        "high": 257.96,
+        "low": 244.26,
+        "volume": 972634300,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 246,
-        "low_52w": 228
+        "high_52w": 257.96,
+        "low_52w": 244.26
       },
       "technical": {
         "sma_20": null,
@@ -382,16 +382,16 @@
     },
     "300054.SZ": {
       "price": {
-        "last": 96.7,
-        "prev_close": 91.3,
-        "change_pct": 5.915,
-        "high": 97.65,
-        "low": 88.08,
-        "volume": 6222868400,
+        "last": 94.3,
+        "prev_close": 96.7,
+        "change_pct": -2.482,
+        "high": 97.58,
+        "low": 92.42,
+        "volume": 3752583400,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 97.65,
-        "low_52w": 88.08
+        "high_52w": 97.58,
+        "low_52w": 92.42
       },
       "technical": {
         "sma_20": null,
@@ -461,14 +461,14 @@
       "5d_cumulative": 0.0,
       "20d_cumulative": 0.0,
       "trend": "outflow",
-      "updated": "2026-06-24"
+      "updated": "2026-06-25"
     },
     "southbound": {
       "latest_net_flow": 157.5073,
       "5d_cumulative": 102.882,
       "20d_cumulative": 447.0848,
       "trend": "inflow",
-      "updated": "2026-06-24"
+      "updated": "2026-06-25"
     },
     "dragon_tiger": [
       {
