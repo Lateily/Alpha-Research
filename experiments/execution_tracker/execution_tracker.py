@@ -90,25 +90,31 @@ def compute_technicals(ohlc_bars):
 def classify_market(index_data):
     sh, sz, cyb = index_data.get("sh", {}), index_data.get("sz", {}), index_data.get("cyb", {})
     chgs = [d.get("chg") for d in (sh, sz, cyb) if d.get("chg") is not None]
-    flows = [d.get("main_flow") for d in (sh, sz, cyb) if d.get("main_flow") is not None]
+    # 全市场主力净流(亿): prefer explicit `main_flow_total` (moneyflow_mkt_dc);
+    # else sum the per-index main_flow.
+    total = index_data.get("main_flow_total")
+    if total is None:
+        flows = [d.get("main_flow") for d in (sh, sz, cyb) if d.get("main_flow") is not None]
+        total = sum(flows) if flows else None
     up = chgs and all(c > 0 for c in chgs)
     down = chgs and all(c < 0 for c in chgs)
-    inflow = flows and sum(flows) > 0
-    outflow = flows and sum(flows) < 0
-    # growth vs main-board divergence => style rotation
+    mixed_up = chgs and max(chgs) > 0 >= min(chgs)
+    inflow = total is not None and total > 0
+    outflow = total is not None and total < 0
     growth_weak = (cyb.get("chg") is not None and sh.get("chg") is not None
                    and cyb["chg"] < sh["chg"] - 1.5)
+    tot = ("%+.0f亿" % total) if total is not None else "未知"
     if up and inflow:
-        state, note = "RISK_ON", "趋势恢复:指数上行+主力回流"
-    elif outflow and (up or (chgs and max(chgs) > 0 >= min(chgs))):
-        state, note = "WEAK_REPAIR", "弱修复:指数修复但主力仍净流出"
+        state, note = "RISK_ON", "趋势恢复:指数上行+主力净流入 " + tot
+    elif (up or mixed_up) and outflow:
+        state, note = "WEAK_REPAIR", "WEAK_REPAIR: 指数上涨但主力净流出 " + tot + "(价格修复非主力确认)"
     elif down and outflow:
-        state, note = "RISK_OFF", "继续派发:指数下跌+主力流出"
+        state, note = "RISK_OFF", "继续派发:指数下跌+主力净流出 " + tot
     elif growth_weak:
         state, note = "STYLE_ROTATION", "风格切换:成长/AI流出,价值/资源占优"
     else:
-        state, note = "WEAK_REPAIR", "弱修复(默认):资金未确认"
-    return {"state": state, "one_line": note,
+        state, note = "WEAK_REPAIR", "弱修复(资金未确认): 主力 " + tot
+    return {"state": state, "one_line": note, "main_flow_total": total,
             "index": {"sh": sh, "sz": sz, "cyb": cyb}}
 
 
@@ -135,7 +141,7 @@ def execution_posture(price, change_pct, tech, fund_structure, portfolio_single_
         return "EXIT_REVIEW"
     if price is not None and support is not None and price < support and not main_confirmed:
         return "DE_RISK_REVIEW"
-    if change_pct is not None and change_pct > 0 and fund_structure == "涨着派发":
+    if fund_structure in ("涨着派发", "大单卖小单接"):   # 主力派发(拉高出货 / 机构卖散户接) = WARNING
         return "WARNING"
     if price is not None and reclaim is not None and price >= reclaim and main_confirmed:
         return "RECLAIM_REVIEW"
@@ -319,8 +325,13 @@ def selftest():
     snap = build_snapshot(idx, tickers, portfolio, timestamp="2026-06-24T12:56:00+08:00")
     pg = {g["ticker"]: g for g in snap["ticker_gates"]}
     ck("利通 posture=WARNING", pg["603629.SH"]["posture"] == "WARNING")
-    ck("香农 posture=HOLD_OBSERVE", pg["300475.SZ"]["posture"] == "HOLD_OBSERVE")
+    ck("香农 posture=WARNING (大单卖小单接)", pg["300475.SZ"]["posture"] == "WARNING")
     ck("中际 posture=HOLD_OBSERVE", pg["300308.SZ"]["posture"] == "HOLD_OBSERVE")
+    # market gate: up indices + total main_flow out -> WEAK_REPAIR citing the total
+    mk2 = classify_market({"sh": {"chg": 0.23}, "sz": {"chg": 1.82}, "cyb": {"chg": 2.84},
+                           "main_flow_total": -214.4})
+    ck("market up+outflow=WEAK_REPAIR", mk2["state"] == "WEAK_REPAIR")
+    ck("market one_line cites -214", "-214" in mk2["one_line"])
     ck("新易盛 relative_strength", pg["300502.SZ"]["relative_strength"] is True)
     ck("组合=单一 beta DE_RISK", snap["portfolio_gate"]["portfolio_posture"] == "DE_RISK_REVIEW")
     ck("技术门 MA20 present(利通)", pg["603629.SH"]["technical"]["ma20"] is not None)
