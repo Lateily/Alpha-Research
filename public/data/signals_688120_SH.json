@@ -2,7 +2,7 @@
   "ticker": "688120.SH",
   "generated_at": "2026-06-25",
   "price": 242.49,
-  "zone": "BULLISH",
+  "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": true,
   "signals": [
@@ -22,8 +22,8 @@
       "date": "20260624",
       "bullish": true,
       "description": {
-        "e": "MACD DIF(-2.790) crossed above DEA(-3.264) below zero — bullish momentum",
-        "z": "MACD DIF(-2.790)上穿DEA(-3.264)零轴下方金叉看涨"
+        "e": "MACD DIF(-2.797) crossed above DEA(-3.276) below zero — bullish momentum",
+        "z": "MACD DIF(-2.797)上穿DEA(-3.276)零轴下方金叉看涨"
       }
     },
     {
@@ -45,18 +45,18 @@
   "indicators": {
     "ma5": 231.55,
     "ma20": 233.25,
-    "ma60": 217.06,
+    "ma60": null,
     "rsi14": 54.5,
     "vol_ma20": 129512,
     "vol_ratio": 1.03,
     "price_vs_ma20": 3.96,
-    "price_vs_ma60": 11.71,
+    "price_vs_ma60": null,
     "change_1d": 4.97,
     "change_5d": 20.53,
     "change_20d": -17.75,
-    "macd_dif": -2.7903,
-    "macd_dea": -3.2641,
-    "macd_hist": 0.9477,
+    "macd_dif": -2.7975,
+    "macd_dea": -3.2762,
+    "macd_hist": 0.9575,
     "bb_upper": 290.15,
     "bb_mid": 233.25,
     "bb_lower": 176.34,

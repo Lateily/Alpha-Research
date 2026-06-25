@@ -1,9 +1,438 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-06-25T05:11:27Z",
+  "fetched_at": "2026-06-25T11:14:22Z",
   "trade_date": "20260625",
   "tier": 15000,
   "_status": "ok",
   "api_used": "cyq_chips",
-  "chips": []
+  "chips": [
+    {
+      "price": 1.8,
+      "percent": 0.01
+    },
+    {
+      "price": 2.7,
+      "percent": 0.01
+    },
+    {
+      "price": 3.6,
+      "percent": 0.01
+    },
+    {
+      "price": 4.5,
+      "percent": 0.01
+    },
+    {
+      "price": 5.4,
+      "percent": 0.01
+    },
+    {
+      "price": 6.3,
+      "percent": 0.01
+    },
+    {
+      "price": 7.2,
+      "percent": 0.01
+    },
+    {
+      "price": 8.1,
+      "percent": 0.01
+    },
+    {
+      "price": 9.0,
+      "percent": 0.01
+    },
+    {
+      "price": 9.9,
+      "percent": 0.01
+    },
+    {
+      "price": 10.8,
+      "percent": 0.01
+    },
+    {
+      "price": 11.7,
+      "percent": 0.01
+    },
+    {
+      "price": 12.6,
+      "percent": 0.01
+    },
+    {
+      "price": 13.5,
+      "percent": 0.01
+    },
+    {
+      "price": 14.4,
+      "percent": 0.01
+    },
+    {
+      "price": 15.3,
+      "percent": 0.01
+    },
+    {
+      "price": 16.2,
+      "percent": 0.01
+    },
+    {
+      "price": 17.1,
+      "percent": 0.01
+    },
+    {
+      "price": 18.0,
+      "percent": 0.01
+    },
+    {
+      "price": 18.9,
+      "percent": 0.01
+    },
+    {
+      "price": 19.8,
+      "percent": 0.01
+    },
+    {
+      "price": 20.7,
+      "percent": 0.01
+    },
+    {
+      "price": 21.6,
+      "percent": 0.01
+    },
+    {
+      "price": 22.5,
+      "percent": 0.01
+    },
+    {
+      "price": 23.4,
+      "percent": 0.01
+    },
+    {
+      "price": 24.3,
+      "percent": 0.01
+    },
+    {
+      "price": 25.2,
+      "percent": 0.01
+    },
+    {
+      "price": 26.1,
+      "percent": 0.01
+    },
+    {
+      "price": 27.0,
+      "percent": 0.01
+    },
+    {
+      "price": 27.9,
+      "percent": 0.01
+    },
+    {
+      "price": 28.8,
+      "percent": 0.01
+    },
+    {
+      "price": 29.7,
+      "percent": 0.01
+    },
+    {
+      "price": 30.6,
+      "percent": 0.01
+    },
+    {
+      "price": 31.5,
+      "percent": 0.01
+    },
+    {
+      "price": 32.4,
+      "percent": 0.01
+    },
+    {
+      "price": 33.3,
+      "percent": 0.01
+    },
+    {
+      "price": 34.2,
+      "percent": 0.01
+    },
+    {
+      "price": 35.1,
+      "percent": 0.01
+    },
+    {
+      "price": 36.0,
+      "percent": 0.01
+    },
+    {
+      "price": 36.9,
+      "percent": 0.01
+    },
+    {
+      "price": 37.8,
+      "percent": 0.01
+    },
+    {
+      "price": 38.7,
+      "percent": 0.01
+    },
+    {
+      "price": 39.6,
+      "percent": 0.01
+    },
+    {
+      "price": 40.5,
+      "percent": 0.01
+    },
+    {
+      "price": 41.4,
+      "percent": 0.01
+    },
+    {
+      "price": 42.3,
+      "percent": 0.01
+    },
+    {
+      "price": 43.2,
+      "percent": 0.01
+    },
+    {
+      "price": 44.1,
+      "percent": 0.01
+    },
+    {
+      "price": 45.0,
+      "percent": 0.01
+    },
+    {
+      "price": 45.9,
+      "percent": 0.01
+    },
+    {
+      "price": 46.8,
+      "percent": 0.01
+    },
+    {
+      "price": 47.7,
+      "percent": 0.01
+    },
+    {
+      "price": 48.6,
+      "percent": 0.01
+    },
+    {
+      "price": 49.5,
+      "percent": 0.01
+    },
+    {
+      "price": 50.4,
+      "percent": 0.01
+    },
+    {
+      "price": 51.3,
+      "percent": 0.01
+    },
+    {
+      "price": 52.2,
+      "percent": 0.01
+    },
+    {
+      "price": 53.1,
+      "percent": 0.01
+    },
+    {
+      "price": 54.0,
+      "percent": 0.01
+    },
+    {
+      "price": 54.9,
+      "percent": 0.01
+    },
+    {
+      "price": 55.8,
+      "percent": 0.01
+    },
+    {
+      "price": 56.7,
+      "percent": 0.01
+    },
+    {
+      "price": 57.6,
+      "percent": 0.01
+    },
+    {
+      "price": 58.5,
+      "percent": 0.01
+    },
+    {
+      "price": 59.4,
+      "percent": 0.01
+    },
+    {
+      "price": 60.3,
+      "percent": 0.01
+    },
+    {
+      "price": 61.2,
+      "percent": 0.01
+    },
+    {
+      "price": 62.1,
+      "percent": 0.01
+    },
+    {
+      "price": 63.0,
+      "percent": 0.02
+    },
+    {
+      "price": 63.9,
+      "percent": 0.07
+    },
+    {
+      "price": 64.8,
+      "percent": 0.38
+    },
+    {
+      "price": 65.7,
+      "percent": 0.37
+    },
+    {
+      "price": 66.6,
+      "percent": 0.55
+    },
+    {
+      "price": 67.5,
+      "percent": 0.54
+    },
+    {
+      "price": 68.4,
+      "percent": 0.54
+    },
+    {
+      "price": 69.3,
+      "percent": 0.65
+    },
+    {
+      "price": 70.2,
+      "percent": 0.69
+    },
+    {
+      "price": 71.1,
+      "percent": 0.52
+    },
+    {
+      "price": 72.0,
+      "percent": 0.53
+    },
+    {
+      "price": 72.9,
+      "percent": 0.6
+    },
+    {
+      "price": 73.8,
+      "percent": 0.6
+    },
+    {
+      "price": 74.7,
+      "percent": 0.37
+    },
+    {
+      "price": 75.6,
+      "percent": 0.27
+    },
+    {
+      "price": 76.5,
+      "percent": 0.22
+    },
+    {
+      "price": 77.4,
+      "percent": 0.28
+    },
+    {
+      "price": 78.3,
+      "percent": 0.49
+    },
+    {
+      "price": 79.2,
+      "percent": 0.58
+    },
+    {
+      "price": 80.1,
+      "percent": 0.69
+    },
+    {
+      "price": 81.0,
+      "percent": 0.89
+    },
+    {
+      "price": 81.9,
+      "percent": 2.24
+    },
+    {
+      "price": 82.8,
+      "percent": 3.02
+    },
+    {
+      "price": 83.7,
+      "percent": 3.2
+    },
+    {
+      "price": 84.6,
+      "percent": 2.31
+    },
+    {
+      "price": 85.5,
+      "percent": 1.36
+    },
+    {
+      "price": 86.4,
+      "percent": 1.11
+    },
+    {
+      "price": 87.3,
+      "percent": 1.02
+    },
+    {
+      "price": 88.2,
+      "percent": 1.38
+    },
+    {
+      "price": 89.1,
+      "percent": 7.41
+    },
+    {
+      "price": 90.0,
+      "percent": 9.64
+    },
+    {
+      "price": 90.9,
+      "percent": 11.07
+    },
+    {
+      "price": 91.8,
+      "percent": 8.43
+    },
+    {
+      "price": 92.7,
+      "percent": 7.35
+    },
+    {
+      "price": 93.6,
+      "percent": 11.78
+    },
+    {
+      "price": 94.5,
+      "percent": 7.37
+    },
+    {
+      "price": 95.4,
+      "percent": 4.86
+    },
+    {
+      "price": 96.3,
+      "percent": 5.28
+    },
+    {
+      "price": 97.2,
+      "percent": 0.66
+    }
+  ]
 }

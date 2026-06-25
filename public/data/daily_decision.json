@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-25T05:14:09.108478+00:00",
+  "generated_at": "2026-06-25T11:17:21.921246+00:00",
   "date": "2026-06-25",
   "brief_e": "1 Exposure Review | 1 Risk Review",
   "brief_z": "1 敞口复核 | 1 风险复核",
@@ -12,15 +12,15 @@
         "action": "REVIEW_STOP",
         "priority": "HIGH",
         "confidence": 13,
-        "pnl_pct": -13.81,
+        "pnl_pct": -14.55,
         "holding_days": 85,
         "weight_pct": 3.0,
         "vp_score": 48,
         "confluence": 13,
-        "reason_e": "Position in drawdown -13.8%. Signal: NEUTRAL (score 13). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-13.8%，信号评分13。复核投资逻辑，检查wrongIf条件是否触发。",
+        "reason_e": "Position in drawdown -14.6%. Signal: NEUTRAL (score 13). Review thesis — is the wrongIf condition still intact?",
+        "reason_z": "亏损-14.6%，信号评分13。复核投资逻辑，检查wrongIf条件是否触发。",
         "entry_target": null,
-        "exit_trigger": "P&L -13.8% ≤ -10.0% → thesis review required"
+        "exit_trigger": "P&L -14.6% ≤ -10.0% → thesis review required"
       },
       {
         "ticker": "300308.SZ",
@@ -29,13 +29,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 0,
-        "pnl_pct": 93.01,
+        "pnl_pct": 94.23,
         "holding_days": 107,
-        "weight_pct": 60.1,
+        "weight_pct": 60.2,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +93.0% after 107d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+93.0%（持有107天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +94.2% after 107d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+94.2%（持有107天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 100,
-        "weight_pct": 21.2,
+        "weight_pct": 21.1,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 100d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -82,7 +82,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 93,
-        "weight_pct": 12.2,
+        "weight_pct": 12.1,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 93d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -149,14 +149,14 @@
         "status": "WATCHLIST",
         "action": "WATCH",
         "priority": "LOW",
-        "confidence": 5,
+        "confidence": 14,
         "pnl_pct": null,
         "holding_days": null,
         "weight_pct": 0,
         "vp_score": 47,
-        "confluence": -5,
-        "reason_e": "No evidence-review condition. Score -5, VP 47. Bullish: Bullish Alignment | Bearish: Rsi Overbought, Kdj Overbought | RSI 73 | Price vs MA20 +24.4% | VP 47.",
-        "reason_z": "暂无证据复核条件。评分-5，VP47。多头：均线多头排列 | 空头：RSI超买、KDJ极度超买(J>100) | RSI 73 | 距MA20 +24.4% | VP 47。",
+        "confluence": -14,
+        "reason_e": "No evidence-review condition. Score -14, VP 47. Bearish: Rsi Overbought, Kdj Overbought | RSI 73 | Price vs MA20 +24.4% | VP 47.",
+        "reason_z": "暂无证据复核条件。评分-14，VP47。空头：RSI超买、KDJ极度超买(J>100) | RSI 73 | 距MA20 +24.4% | VP 47。",
         "entry_target": null,
         "exit_trigger": null
       }
@@ -166,8 +166,8 @@
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 60% of portfolio — above 40.0% limit",
     "⚠️ SECTOR RISK: 电子 = 60% of portfolio — above 60.0% limit",
-    "PROFIT REVIEW: 300308.SZ +93.0% — exposure-review condition (sizable unrealised gain)",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -13.8% — review thesis and wrongIf conditions"
+    "PROFIT REVIEW: 300308.SZ +94.2% — exposure-review condition (sizable unrealised gain)",
+    "🔴 DRAWDOWN REVIEW: 002594.SZ -14.6% — review thesis and wrongIf conditions"
   ],
   "wrongif_alerts": [
     {
