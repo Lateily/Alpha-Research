@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-06-26T05:13:58.068607",
+  "as_of": "2026-06-26T11:24:28.572008",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -13,14 +13,14 @@
       "currency": "CNY",
       "quantity": 150,
       "avg_cost": 681.36,
-      "current_price": 1253.83,
-      "market_value": 188074.5,
+      "current_price": 1253.89,
+      "market_value": 188083.5,
       "cost_value": 102204.0,
-      "pnl_abs": 85870.5,
-      "pnl_pct": 84.02,
-      "market_value_cny": 188074.5,
+      "pnl_abs": 85879.5,
+      "pnl_pct": 84.03,
+      "market_value_cny": 188083.5,
       "cost_value_cny": 102204.0,
-      "pnl_abs_cny": 85870.5,
+      "pnl_abs_cny": 85879.5,
       "fx_rate_used": 1.0,
       "holding_days": 108,
       "as_of": "2026-06-26",
@@ -58,7 +58,7 @@
       },
       "vp_at_entry": 79,
       "wrongIf_at_entry": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter",
-      "weight_pct": 59.0
+      "weight_pct": 59.02
     },
     {
       "ticker": "6160.HK",
@@ -163,7 +163,7 @@
       },
       "vp_at_entry": 64,
       "wrongIf_at_entry": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters",
-      "weight_pct": 21.82
+      "weight_pct": 21.83
     },
     {
       "ticker": "9999.HK",
@@ -223,14 +223,14 @@
       "currency": "CNY",
       "quantity": 120,
       "avg_cost": 96.192,
-      "current_price": 78.99,
-      "market_value": 9478.8,
+      "current_price": 78.2,
+      "market_value": 9384.0,
       "cost_value": 11543.04,
-      "pnl_abs": -2064.24,
-      "pnl_pct": -17.88,
-      "market_value_cny": 9478.8,
+      "pnl_abs": -2159.04,
+      "pnl_pct": -18.7,
+      "market_value_cny": 9384.0,
       "cost_value_cny": 11543.04,
-      "pnl_abs_cny": -2064.24,
+      "pnl_abs_cny": -2159.04,
       "fx_rate_used": 1.0,
       "holding_days": 86,
       "as_of": "2026-06-26",
@@ -258,16 +258,16 @@
       },
       "vp_at_entry": 52,
       "wrongIf_at_entry": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "weight_pct": 2.97
+      "weight_pct": 2.94
     }
   ],
   "summary": {
-    "total_value_cny": 318775.97,
+    "total_value_cny": 318690.17,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 83806.26,
-    "total_pnl_pct": 35.67,
-    "total_value": 318775.97,
+    "total_pnl_cny": 83720.46,
+    "total_pnl_pct": 35.63,
+    "total_value": 318690.17,
     "total_cost": 234969.71,
-    "total_pnl": 83806.26
+    "total_pnl": 83720.46
   }
 }

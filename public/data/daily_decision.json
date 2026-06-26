@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T05:17:50.100123+00:00",
+  "generated_at": "2026-06-26T11:34:30.409711+00:00",
   "date": "2026-06-26",
   "brief_e": "1 Exposure Review | 1 Risk Review",
   "brief_z": "1 敞口复核 | 1 风险复核",
@@ -12,15 +12,15 @@
         "action": "REVIEW_STOP",
         "priority": "HIGH",
         "confidence": 13,
-        "pnl_pct": -17.88,
+        "pnl_pct": -18.7,
         "holding_days": 86,
-        "weight_pct": 3.0,
+        "weight_pct": 2.9,
         "vp_score": 48,
         "confluence": 13,
-        "reason_e": "Position in drawdown -17.9%. Signal: NEUTRAL (score 13). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-17.9%，信号评分13。复核投资逻辑，检查wrongIf条件是否触发。",
+        "reason_e": "Position in drawdown -18.7%. Signal: NEUTRAL (score 13). Review thesis — is the wrongIf condition still intact?",
+        "reason_z": "亏损-18.7%，信号评分13。复核投资逻辑，检查wrongIf条件是否触发。",
         "entry_target": null,
-        "exit_trigger": "P&L -17.9% ≤ -10.0% → thesis review required"
+        "exit_trigger": "P&L -18.7% ≤ -10.0% → thesis review required"
       },
       {
         "ticker": "300308.SZ",
@@ -29,7 +29,7 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 0,
-        "pnl_pct": 84.02,
+        "pnl_pct": 84.03,
         "holding_days": 108,
         "weight_pct": 59.0,
         "vp_score": 48,
@@ -110,23 +110,6 @@
         "exit_trigger": null
       },
       {
-        "ticker": "688120.SH",
-        "name": "688120.SH",
-        "status": "WATCHLIST",
-        "action": "WATCH",
-        "priority": "LOW",
-        "confidence": 1,
-        "pnl_pct": null,
-        "holding_days": null,
-        "weight_pct": 0,
-        "vp_score": 45,
-        "confluence": 1,
-        "reason_e": "No evidence-review condition. Score 1, VP 45. Bullish: Bullish Alignment | Bearish: Kdj Overbought | RSI 58 | Price vs MA20 +8.9% | VP 45.",
-        "reason_z": "暂无证据复核条件。评分1，VP45。多头：均线多头排列 | 空头：KDJ极度超买(J>100) | RSI 58 | 距MA20 +8.9% | VP 45。",
-        "entry_target": null,
-        "exit_trigger": null
-      },
-      {
         "ticker": "175.HK",
         "name": "175.HK",
         "status": "WATCHLIST",
@@ -144,19 +127,36 @@
         "exit_trigger": null
       },
       {
+        "ticker": "688120.SH",
+        "name": "688120.SH",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 8,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 45,
+        "confluence": -8,
+        "reason_e": "No evidence-review condition. Score -8, VP 45. Bearish: Kdj Overbought | RSI 57 | Price vs MA20 +8.9% | VP 45.",
+        "reason_z": "暂无证据复核条件。评分-8，VP45。空头：KDJ极度超买(J>100) | RSI 57 | 距MA20 +8.9% | VP 45。",
+        "entry_target": null,
+        "exit_trigger": null
+      },
+      {
         "ticker": "300054.SZ",
         "name": "300054.SZ",
         "status": "WATCHLIST",
         "action": "WATCH",
         "priority": "LOW",
-        "confidence": 2,
+        "confidence": 11,
         "pnl_pct": null,
         "holding_days": null,
         "weight_pct": 0,
         "vp_score": 47,
-        "confluence": -2,
-        "reason_e": "No evidence-review condition. Score -2, VP 47. Bullish: Bullish Alignment | Bearish: Rsi Overbought | RSI 71 | Price vs MA20 +21.1% | VP 47.",
-        "reason_z": "暂无证据复核条件。评分-2，VP47。多头：均线多头排列 | 空头：RSI超买 | RSI 71 | 距MA20 +21.1% | VP 47。",
+        "confluence": -11,
+        "reason_e": "No evidence-review condition. Score -11, VP 47. Bearish: Rsi Overbought | RSI 71 | Price vs MA20 +21.1% | VP 47.",
+        "reason_z": "暂无证据复核条件。评分-11，VP47。空头：RSI超买 | RSI 71 | 距MA20 +21.1% | VP 47。",
         "entry_target": null,
         "exit_trigger": null
       }
@@ -166,21 +166,9 @@
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 59% of portfolio — above 40.0% limit",
     "PROFIT REVIEW: 300308.SZ +84.0% — exposure-review condition (sizable unrealised gain)",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -17.9% — review thesis and wrongIf conditions"
+    "🔴 DRAWDOWN REVIEW: 002594.SZ -18.7% — review thesis and wrongIf conditions"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 18.3 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 18.3（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 18.3,
-      "threshold": 25.0
-    },
     {
       "ticker": "002594.SZ",
       "severity": "LOW",
@@ -192,6 +180,18 @@
       "indicator": "revenue_growth",
       "actual": null,
       "threshold": null
+    },
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 18.3 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 18.3（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 18.3,
+      "threshold": 25.0
     },
     {
       "ticker": "603233.SH",
@@ -206,18 +206,6 @@
       "threshold": null
     },
     {
-      "ticker": "688120.SH",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (per decision sheet wrong_if, source-bound to the H1 report)",
-      "wrongIf_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
-      "note_e": "Unstructured condition — monitor manually: 2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
-      "note_z": "非结构化条件——需人工监控：2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
-      "indicator": "unstructured",
-      "actual": null,
-      "threshold": null
-    },
-    {
       "ticker": "175.HK",
       "severity": "LOW",
       "status": "MANUAL",
@@ -226,6 +214,18 @@
       "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
       "note_z": "无法自动核验「revenue_growth」——需人工检查。",
       "indicator": "revenue_growth",
+      "actual": null,
+      "threshold": null
+    },
+    {
+      "ticker": "688120.SH",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (per decision sheet wrong_if, source-bound to the H1 report)",
+      "wrongIf_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
+      "note_e": "Unstructured condition — monitor manually: 2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
+      "note_z": "非结构化条件——需人工监控：2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
+      "indicator": "unstructured",
       "actual": null,
       "threshold": null
     },
