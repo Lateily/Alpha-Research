@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-06-25T11:12:41.870444",
+    "fetched_at": "2026-06-26T05:13:57.652327",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -17,16 +17,16 @@
   "yahoo": {
     "300308.SZ": {
       "price": {
-        "last": 1323.4,
-        "prev_close": 1312.18,
-        "change_pct": 0.855,
-        "high": 1345.09,
-        "low": 1280.02,
-        "volume": 3760904800,
+        "last": 1253.83,
+        "prev_close": 1323.4,
+        "change_pct": -5.257,
+        "high": 1296.94,
+        "low": 1235.13,
+        "volume": 2612052600,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 1345.09,
-        "low_52w": 1280.02
+        "high_52w": 1296.94,
+        "low_52w": 1235.13
       },
       "technical": {
         "sma_20": null,
@@ -90,16 +90,16 @@
     },
     "002594.SZ": {
       "price": {
-        "last": 82.2,
-        "prev_close": 83.3,
-        "change_pct": -1.321,
-        "high": 83.81,
-        "low": 81.34,
-        "volume": 5564320800,
+        "last": 78.99,
+        "prev_close": 82.2,
+        "change_pct": -3.905,
+        "high": 81.8,
+        "low": 78.7,
+        "volume": 4630524700,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 83.81,
-        "low_52w": 81.34
+        "high_52w": 81.8,
+        "low_52w": 78.7
       },
       "technical": {
         "sma_20": null,
@@ -163,16 +163,16 @@
     },
     "175.HK": {
       "price": {
-        "last": 17.56,
-        "prev_close": 17.62,
-        "change_pct": -0.341,
-        "high": 17.62,
-        "low": 17.03,
-        "volume": -193,
+        "last": 17.22,
+        "prev_close": 17.04,
+        "change_pct": 1.056,
+        "high": 17.24,
+        "low": 16.85,
+        "volume": -28,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 17.62,
-        "low_52w": 17.03
+        "high_52w": 17.24,
+        "low_52w": 16.85
       },
       "technical": {
         "sma_20": null,
@@ -236,16 +236,16 @@
     },
     "603233.SH": {
       "price": {
-        "last": 15.92,
-        "prev_close": 15.91,
-        "change_pct": 0.063,
-        "high": 16.1,
-        "low": 15.54,
-        "volume": 542034500,
+        "last": 15,
+        "prev_close": 15.43,
+        "change_pct": -2.787,
+        "high": 15.55,
+        "low": 14.91,
+        "volume": 357455000,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 16.1,
-        "low_52w": 15.54
+        "high_52w": 15.55,
+        "low_52w": 14.91
       },
       "technical": {
         "sma_20": null,
@@ -309,16 +309,16 @@
     },
     "688120.SH": {
       "price": {
-        "last": 252.5,
-        "prev_close": 242.49,
-        "change_pct": 4.128,
-        "high": 257.96,
-        "low": 244.26,
-        "volume": 1330274500,
+        "last": 259.95,
+        "prev_close": 252.5,
+        "change_pct": 2.95,
+        "high": 261.37,
+        "low": 246.2,
+        "volume": 983164800,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 257.96,
-        "low_52w": 244.26
+        "high_52w": 261.37,
+        "low_52w": 246.2
       },
       "technical": {
         "sma_20": null,
@@ -382,16 +382,16 @@
     },
     "300054.SZ": {
       "price": {
-        "last": 95.45,
-        "prev_close": 96.7,
-        "change_pct": -1.293,
-        "high": 97.58,
-        "low": 92.42,
-        "volume": 5154309800,
+        "last": 96.44,
+        "prev_close": 95.45,
+        "change_pct": 1.037,
+        "high": 98.98,
+        "low": 93.1,
+        "volume": 4005644500,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 97.58,
-        "low_52w": 92.42
+        "high_52w": 98.98,
+        "low_52w": 93.1
       },
       "technical": {
         "sma_20": null,
@@ -461,14 +461,14 @@
       "5d_cumulative": 0.0,
       "20d_cumulative": 0.0,
       "trend": "outflow",
-      "updated": "2026-06-25"
+      "updated": "2026-06-26"
     },
     "southbound": {
       "latest_net_flow": -88.7437,
       "5d_cumulative": 46.3546,
       "20d_cumulative": 435.5155,
       "trend": "inflow",
-      "updated": "2026-06-25"
+      "updated": "2026-06-26"
     },
     "dragon_tiger": [
       {
@@ -555,7 +555,7 @@
         "code": "000070",
         "name": "特发信息",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -565,7 +565,7 @@
         "code": "000070",
         "name": "特发信息",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -595,7 +595,7 @@
         "code": "000403",
         "name": "派林生物",
         "date": "",
-        "reason": "日跌幅偏离值达到7%的前5只证券",
+        "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -605,7 +605,7 @@
         "code": "000403",
         "name": "派林生物",
         "date": "",
-        "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
+        "reason": "日跌幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -725,7 +725,7 @@
         "code": "000783",
         "name": "长江证券",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -735,7 +735,7 @@
         "code": "000783",
         "name": "长江证券",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -925,7 +925,7 @@
         "code": "001309",
         "name": "德明利",
         "date": "",
-        "reason": "日涨幅偏离值达到7%的前5只证券",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -935,7 +935,7 @@
         "code": "001309",
         "name": "德明利",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "reason": "日涨幅偏离值达到7%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,

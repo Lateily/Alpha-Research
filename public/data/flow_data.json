@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-06-25T11:12:41.871464",
+  "fetched_at": "2026-06-26T05:13:57.653329",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-06-25"
+    "updated": "2026-06-26"
   },
   "southbound": {
     "latest_net_flow": -88.7437,
     "5d_cumulative": 46.3546,
     "20d_cumulative": 435.5155,
     "trend": "inflow",
-    "updated": "2026-06-25"
+    "updated": "2026-06-26"
   },
   "dragon_tiger": [
     {
@@ -99,7 +99,7 @@
       "code": "000070",
       "name": "特发信息",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -109,7 +109,7 @@
       "code": "000070",
       "name": "特发信息",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -139,7 +139,7 @@
       "code": "000403",
       "name": "派林生物",
       "date": "",
-      "reason": "日跌幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -149,7 +149,7 @@
       "code": "000403",
       "name": "派林生物",
       "date": "",
-      "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
+      "reason": "日跌幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -269,7 +269,7 @@
       "code": "000783",
       "name": "长江证券",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -279,7 +279,7 @@
       "code": "000783",
       "name": "长江证券",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -469,7 +469,7 @@
       "code": "001309",
       "name": "德明利",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -479,7 +479,7 @@
       "code": "001309",
       "name": "德明利",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
