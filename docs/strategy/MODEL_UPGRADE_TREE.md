@@ -60,7 +60,7 @@ verifies.
 
 | # | Item | What | Done = | Owner |
 |---|------|------|--------|-------|
-| P0.1 | **DataSources 规范** (Gate 0 *data layer* — NOT the sentiment gate, see §5 naming) | Tushare定盘/财务/资金/全球/北向 · Tushare SDK `realtime_quote(src='sina')` 盘中 · Tencent/Sina 末级 fallback · **盘中永不进样本**. This is a *contamination rule*, not a feature. | PR merged + `fund_source`/`execution_tracker` selftests green; patch verified in `/private/tmp/ar-gate0-data-sources` (17/17) | **Codex** (worktree ready, PR pending Junyan "开 PR") |
+| P0.1 | **DataSources 规范** (Gate 0 *data layer* — NOT the sentiment gate, see §5 naming) | Tushare定盘/财务/资金/全球/北向 · Tushare SDK `realtime_quote(src='sina')` 盘中 · Tencent/Sina 末级 fallback · **盘中永不进样本**. This is a *contamination rule*, not a feature. | PR merged + `fund_source`/`execution_tracker` selftests green; patch verified in `/private/tmp/ar-gate0-data-sources` (17/17) | **Codex** — **PR #110 open / MERGEABLE, pending merge** |
 | P0.5 | **纪律层落库** *(Claude-proposed, pending Junyan ratify)* | Move the discipline/prompt/LLM-summary logic out of local `SKILL.md` into the repo (e.g. `experiments/execution_tracker/prompts/` + a summary generator). Today terminal quality = "repo code + local SKILL discipline"; cloud has only repo code → product summaries would be "soulless" (no posture/E1-E4 constraint). | A repo prompt/discipline module the cloud can read | **Claude** |
 
 ### P1 — 每日样本与报告主线 (the win-rate engine)
@@ -131,7 +131,7 @@ them later.
 
 ## 7. Build Order (ratified)
 
-1. **Gate 0 DataSources PR** (Codex) ← *do this first; it is the data 地基.*
+1. **Gate 0 DataSources PR** (Codex, **#110** — open/MERGEABLE) ← *do this first; it is the data 地基.*
 2. `run_post_close_report.py` (official report + paper PnL).
 3. `paper_portfolio.json` / `paper_trade_log.json` (paper entry/stop/take-profit).
 4. `run_premarket_monitor.py` (集合竞价 / 开盘30min observation).
