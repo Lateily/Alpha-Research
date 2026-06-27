@@ -185,22 +185,34 @@ def _tencent_symbol(ticker):
     raise ValueError(f"unknown market for {ticker}")
 
 
+def _coerce_float(v):
+    try:
+        return float(v) if v not in (None, "") else None
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+def _pick(row, *keys):
+    for k in keys:
+        if k in row:
+            return row[k]
+    return None
+
+
 def _normalize_realtime_row(row, source):
     code = str(row.get("TS_CODE") or row.get("code") or row.get("CODE") or "").strip()
-    price = row.get("PRICE") if "PRICE" in row else row.get("price")
-    name = row.get("NAME") if "NAME" in row else row.get("name")
-    time_val = row.get("TIME") if "TIME" in row else row.get("time")
-    pct = row.get("PCT_CHANGE") if "PCT_CHANGE" in row else row.get("pct_change")
-    try:
-        price = float(price)
-    except Exception:                                      # noqa: BLE001
-        price = None
-    try:
-        pct = float(pct) if pct not in (None, "") else None
-    except Exception:                                      # noqa: BLE001
-        pct = None
-    return {"ticker": code, "name": name, "price": price, "pct_chg": pct,
-            "time": time_val, "source": source, "sample_eligible": False}
+    # carry the full intraday bar (open/high/low/pre_close) so premarket/opening
+    # observers (P1.2) can read gap + 高开低走 + range; absent fields -> None.
+    return {"ticker": code,
+            "name": _pick(row, "NAME", "name"),
+            "price": _coerce_float(_pick(row, "PRICE", "price")),
+            "pct_chg": _coerce_float(_pick(row, "PCT_CHANGE", "pct_change")),
+            "open": _coerce_float(_pick(row, "OPEN", "open")),
+            "high": _coerce_float(_pick(row, "HIGH", "high")),
+            "low": _coerce_float(_pick(row, "LOW", "low")),
+            "pre_close": _coerce_float(_pick(row, "PRE_CLOSE", "pre_close", "PREV_CLOSE")),
+            "time": _pick(row, "TIME", "time"),
+            "source": source, "sample_eligible": False}
 
 
 def _parse_tencent_quote_line(line):
@@ -324,8 +336,11 @@ def selftest():
     ck("TUSHARE_URL is https", TUSHARE_URL.startswith("https://"))   # http -> HTTP 400
     ck("realtime symbol strips market", _ts_code_for_realtime("300502.SZ") == "300502")
     norm = _normalize_realtime_row({"TS_CODE": "300502", "NAME": "新易盛", "PRICE": "558.35",
-                                    "PCT_CHANGE": "-8.5", "TIME": "11:30:00"}, "mock")
+                                    "PCT_CHANGE": "-8.5", "OPEN": "600.0", "HIGH": "605.0",
+                                    "LOW": "555.0", "PRE_CLOSE": "610.0", "TIME": "11:30:00"}, "mock")
     ck("realtime normalizes price", norm["price"] == 558.35)
+    ck("realtime carries intraday bar (open/high/low/pre_close)",
+       norm["open"] == 600.0 and norm["high"] == 605.0 and norm["low"] == 555.0 and norm["pre_close"] == 610.0)
     ck("realtime never sample eligible", norm["sample_eligible"] is False)
     tq = _parse_tencent_quote_line('v_sz300502="51~新易盛~300502~558.35~560.00~555.00~~~~~~~~~~~~~~~~~~~~~~~~~11:30:00";')
     ck("tencent fallback parses ticker", tq["ticker"] == "300502.SZ")
