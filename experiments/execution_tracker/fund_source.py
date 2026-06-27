@@ -295,14 +295,15 @@ def selftest():
     def ck(n, c):
         checks.append((n, bool(c)))
 
-    # parse the VERIFIED 利通 2026-06-24 定盘 kline (yuan)
+    # Parse an Eastmoney kline fixture (yuan). This is parser coverage only;
+    # official paper samples still require Tushare close/settlement data.
     kl = "2026-06-24,371586352.0,-41988224.0,-329598160.0,-75477120.0,447063472.0,4.64,-0.52,-4.12,-0.94,5.59"
     r = _parse_em_kline(kl)
-    ck("main +3.72亿", abs(r["main"] - 3.7159) < 0.01)
-    ck("super_large +4.47亿", abs(r["super_large"] - 4.4706) < 0.01)
-    ck("large -0.75亿", abs(r["large"] + 0.7548) < 0.01)
-    ck("small -0.42亿", abs(r["small"] + 0.4199) < 0.01)
-    ck("main == super_large + large", abs(r["main"] - (r["super_large"] + r["large"])) < 0.01)
+    ck("eastmoney fixture parses main +3.72亿 (non-official)", abs(r["main"] - 3.7159) < 0.01)
+    ck("eastmoney fixture parses super_large +4.47亿", abs(r["super_large"] - 4.4706) < 0.01)
+    ck("eastmoney fixture parses large -0.75亿", abs(r["large"] + 0.7548) < 0.01)
+    ck("eastmoney fixture parses small -0.42亿", abs(r["small"] + 0.4199) < 0.01)
+    ck("eastmoney fixture main == super_large + large", abs(r["main"] - (r["super_large"] + r["large"])) < 0.01)
     ck("source=eastmoney", r["source"] == "eastmoney")
     ck("date parsed", r["date"] == "2026-06-24")
 
