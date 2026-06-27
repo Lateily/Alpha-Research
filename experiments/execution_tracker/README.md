@@ -7,16 +7,31 @@ paper-signal logger. It does **not** trade, does **not** touch production script
 > All thresholds are `[unvalidated intuition]` until ≥ 30 independent paper signals
 > accumulate. No win-rate / expectancy claim before then.
 
-## Why it takes input instead of fetching
+## Gate 0 data-source discipline
 
-The two data sources can't both be reached by a standalone script:
-- **TradingView** (price + MA/ATR/levels) is **MCP-only** → the agent pulls it
-  (`tv_launch` → per-symbol `chart_set_symbol` → `quote_get` + `data_get_ohlcv`; the
-  delayed `_DLY` daily bars are fine for levels).
-- **主力净流 / 超大单 / 小单** are **东财-only** → Junyan feeds them.
+See `docs/strategy/EXECUTION_GATE_DATA_SOURCES.md`.
 
-So the agent/human assembles an input JSON and passes it in; the script is the
-deterministic **gate logic + schema + evaluator**.
+Official paper samples use **Tushare close/settlement data only**:
+
+- price/OHLC: `daily`
+- stock fund flow: `moneyflow_dc`
+- index returns: `index_daily`
+- market-wide fund flow: `moneyflow_mkt_dc`
+
+Intraday quote observation uses **Tushare SDK** `realtime_quote(src="sina")`
+first. Tencent/Sina direct calls are same-feed fallbacks only. Realtime quotes
+can support risk monitoring, but they must never create or settle official
+paper-signal samples.
+
+The deterministic official runner is:
+
+```bash
+source ~/.zprofile
+python3 experiments/execution_tracker/run_official_sample.py
+```
+
+Manual input mode still exists for experiments and failure recovery, but any
+manual number must be close/settlement data and source-tagged.
 
 ## Input shape (`--input snapshot_input.json`)
 
@@ -76,6 +91,7 @@ market → WEAK_REPAIR. Matches Junyan's 12:56 manual read.
 
 ## Boundaries (P1)
 
-No daemon, no auto-fetch, no public/data write, no front-end, no real orders.
-Next (P2): wire a polling loop + forward-price backfill; only after paper signals
-prove positive expectancy does anything graduate to `public/data` + a panel.
+No daemon, no public/data write, no front-end, no real orders. Official samples
+are append-only paper signals with `no_trade_flag: true`. Next (P2): forward
+return backfill and periodic close-sample runner; only after paper signals prove
+positive expectancy does anything graduate to `public/data` + a panel.
