@@ -11,6 +11,11 @@ Read-only on markets; every signal carries no_trade_flag=true + official_sample=
 RUN AFTER CLOSE ONLY — the daily-horizon sample needs 定盘 (settle) fund口径, never an
 intraday bar (利通 2026-06-25: intraday eastmoney daykline +3.72亿 LIED; true close
 moneyflow_dc = -11.75亿). Needs TUSHARE_TOKEN (`source ~/.zprofile` first).
+
+Gate 0 data-source rule:
+  - official paper samples: Tushare close/settlement only
+  - intraday Tushare SDK realtime quotes: observation only, never sample-eligible
+  - Tencent/Sina direct calls: same-feed fallback only
 """
 import os
 import sys

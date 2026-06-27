@@ -5,11 +5,11 @@ experiments/execution_tracker/fund_source.py  —  P1.1 fund-flow source adapter
 Supplies the 资金门 inputs (主力/超大/大/中/小单 净额, in 亿) for the execution
 tracker, so the official paper sample does NOT need manual entry. Read-only.
 
-Source priority (--source auto, the default):
+Official fund-flow source priority (--source auto, the default):
   1. tushare   — moneyflow_dc / moneyflow (东财口径). Needs a working TUSHARE_TOKEN
-                 (production / GitHub secret). [unverified locally — token unset here]
-  2. eastmoney — push2 stock/fflow/daykline/get. VERIFIED 2026-06-24 (利通 定盘
-                 主力 +3.72亿 = 超大 +4.47 + 大 -0.75). The reliable local path.
+                 (confirmed 2026-06-25; https only).
+  2. eastmoney — push2 stock/fflow/daykline/get. Manual fallback only; intraday probes
+                 can be unstable and must not settle official samples.
   3. manual    — only if both above fail; caller supplies the numbers.
 
 Every record carries `source` so the口径 is transparent in the paper log.
@@ -17,9 +17,15 @@ Every record carries `source` so the口径 is transparent in the paper log.
 Units: all amounts returned in 亿元 (CNY 100M). All thresholds/mappings that touch
 Tushare units are [unvalidated intuition] until confirmed against a live prod token.
 
+Intraday quote discipline:
+  - use Tushare SDK realtime_quote(src='sina') first for live observation;
+  - fallback to legacy get_realtime_quotes, then Tencent same-feed quotes only if needed;
+  - intraday quotes are never official-sample eligible.
+
 CLI:
   python3 fund_source.py --selftest
   python3 fund_source.py --tickers 603629.SH,300475.SZ,300308.SZ,300502.SZ --source auto
+  python3 fund_source.py --realtime 300502.SZ,300475.SZ
 """
 import argparse
 import json
@@ -40,6 +46,7 @@ EM_DAYKLINE = ("https://push2.eastmoney.com/api/qt/stock/fflow/daykline/get"
 # kline csv order (fields2): date, 主力净额, 小单净额, 中单净额, 大单净额,
 #                            超大单净额, 主力%, 小%, 中%, 大%, 超大%
 TUSHARE_URL = "https://api.tushare.pro"   # MUST be https — http returns HTTP 400 (AWS ALB)
+TENCENT_REALTIME = "https://qt.gtimg.cn/q={symbols}"
 
 
 def _secid(ticker):
@@ -164,6 +171,123 @@ def get_many(tickers, source="auto", token=None, pace=1.2):
     return out
 
 
+def _ts_code_for_realtime(ticker):
+    """Tushare SDK realtime endpoints expect plain 6-digit symbols."""
+    return ticker.split(".")[0]
+
+
+def _tencent_symbol(ticker):
+    code, _, mkt = ticker.partition(".")
+    if mkt.upper() == "SH":
+        return f"sh{code}"
+    if mkt.upper() == "SZ":
+        return f"sz{code}"
+    raise ValueError(f"unknown market for {ticker}")
+
+
+def _normalize_realtime_row(row, source):
+    code = str(row.get("TS_CODE") or row.get("code") or row.get("CODE") or "").strip()
+    price = row.get("PRICE") if "PRICE" in row else row.get("price")
+    name = row.get("NAME") if "NAME" in row else row.get("name")
+    time_val = row.get("TIME") if "TIME" in row else row.get("time")
+    pct = row.get("PCT_CHANGE") if "PCT_CHANGE" in row else row.get("pct_change")
+    try:
+        price = float(price)
+    except Exception:                                      # noqa: BLE001
+        price = None
+    try:
+        pct = float(pct) if pct not in (None, "") else None
+    except Exception:                                      # noqa: BLE001
+        pct = None
+    return {"ticker": code, "name": name, "price": price, "pct_chg": pct,
+            "time": time_val, "source": source, "sample_eligible": False}
+
+
+def _parse_tencent_quote_line(line):
+    """Parse minimal Tencent quote fields. This is a same-feed last fallback only."""
+    left, _, quoted = line.partition('="')
+    fields = quoted.rstrip('";\n').split("~")
+    symbol = left.rsplit("_", 1)[-1]
+    market = symbol[:2].upper()
+    code = symbol[2:]
+    ticker = f"{code}.{'SH' if market == 'SH' else 'SZ'}"
+    row = {
+        "TS_CODE": ticker,
+        "NAME": fields[1] if len(fields) > 1 else None,
+        "PRICE": fields[3] if len(fields) > 3 else None,
+        "TIME": fields[30] if len(fields) > 30 else None,
+    }
+    return _normalize_realtime_row(row, "tencent:qt_gtimg:same_feed_fallback")
+
+
+def tencent_realtime_quotes(tickers):
+    symbols = ",".join(_tencent_symbol(t) for t in tickers)
+    data = urllib.request.urlopen(TENCENT_REALTIME.format(symbols=symbols), timeout=8).read()
+    text = data.decode("gbk", errors="ignore")
+    rows = [_parse_tencent_quote_line(line) for line in text.splitlines() if line.strip()]
+    if not rows:
+        raise RuntimeError("empty tencent realtime quotes")
+    return rows
+
+
+def tushare_realtime_quotes(tickers, src="sina"):
+    """Intraday realtime quotes via Tushare SDK. Observation only; never samples.
+
+    This intentionally uses the Tushare package wrapper rather than direct Tencent/Sina
+    calls so Line-B has one normal default path. The SDK itself is a realtime feed
+    wrapper, not the Pro HTTP settlement API.
+    """
+    try:
+        import tushare as ts                                # type: ignore
+        from tushare.stock import rtq                       # type: ignore
+    except Exception as e:                                  # noqa: BLE001
+        raise RuntimeError(f"tushare package unavailable: {e}") from e
+
+    ts_codes = ",".join(tickers)
+    symbols = [_ts_code_for_realtime(t) for t in tickers]
+    first_err = None
+    try:
+        df = ts.realtime_quote(ts_code=ts_codes, src=src)
+        rows = df.to_dict("records")
+        if not rows:
+            raise RuntimeError("empty realtime_quote")
+        return [_normalize_realtime_row(r, f"tushare_sdk:realtime_quote:{src}") for r in rows]
+    except Exception as e:                                  # noqa: BLE001
+        first_err = e
+    if src == "sina":
+        try:
+            df = rtq.get_realtime_quotes_sina(rtq.symbol_verify(ts_codes))
+            rows = df.to_dict("records")
+            if not rows:
+                raise RuntimeError("empty realtime_quote_sina")
+            return [_normalize_realtime_row(r, "tushare_sdk:realtime_quote:sina_internal") for r in rows]
+        except Exception as internal_err:                   # noqa: BLE001
+            first_err = RuntimeError(f"{first_err}; internal sina failed: {internal_err}")
+    try:
+        df = ts.get_realtime_quotes(symbols)
+        rows = df.to_dict("records")
+        if not rows:
+            raise RuntimeError("empty get_realtime_quotes")
+        return [_normalize_realtime_row(r, "tushare_sdk:get_realtime_quotes") for r in rows]
+    except Exception as second_err:                         # noqa: BLE001
+        try:
+            return tencent_realtime_quotes(tickers)
+        except Exception as third_err:                      # noqa: BLE001
+            fallback_err = (
+                f"legacy get_realtime_quotes failed: {second_err}; "
+                f"tencent fallback failed: {third_err}"
+            )
+        if src != "sina":
+            raise RuntimeError(
+                f"tushare realtime_quote failed: {first_err}; "
+                f"{fallback_err}"
+            ) from second_err
+        raise RuntimeError(
+            f"tushare realtime_quote failed: {first_err}; "
+            f"{fallback_err}"
+        ) from second_err
+
+
 # ---------------------------------------------------------------- selftest ----
 def selftest():
     checks = []
@@ -197,6 +321,14 @@ def selftest():
     order = {"auto": ["tushare", "eastmoney"]}["auto"]
     ck("auto order tushare-first", order == ["tushare", "eastmoney"])
     ck("TUSHARE_URL is https", TUSHARE_URL.startswith("https://"))   # http -> HTTP 400
+    ck("realtime symbol strips market", _ts_code_for_realtime("300502.SZ") == "300502")
+    norm = _normalize_realtime_row({"TS_CODE": "300502", "NAME": "新易盛", "PRICE": "558.35",
+                                    "PCT_CHANGE": "-8.5", "TIME": "11:30:00"}, "mock")
+    ck("realtime normalizes price", norm["price"] == 558.35)
+    ck("realtime never sample eligible", norm["sample_eligible"] is False)
+    tq = _parse_tencent_quote_line('v_sz300502="51~新易盛~300502~558.35~560.00~555.00~~~~~~~~~~~~~~~~~~~~~~~~~11:30:00";')
+    ck("tencent fallback parses ticker", tq["ticker"] == "300502.SZ")
+    ck("tencent fallback never sample eligible", tq["sample_eligible"] is False)
 
     passed = sum(1 for _, ok in checks if ok)
     for n, ok in checks:
@@ -211,6 +343,7 @@ def main():
     ap.add_argument("--tickers", help="comma list, e.g. 603629.SH,300475.SZ")
     ap.add_argument("--source", default="auto", choices=["auto", "tushare", "eastmoney", "manual"])
     ap.add_argument("--smoke", metavar="TICKER", help="live smoke: moneyflow_dc + daily via https (needs TUSHARE_TOKEN)")
+    ap.add_argument("--realtime", help="comma list for Tushare SDK realtime observation (not sample eligible)")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(0 if selftest() else 1)
@@ -231,6 +364,10 @@ def main():
         sys.exit(0 if ok else 1)
     if args.tickers:
         rows = get_many([t.strip() for t in args.tickers.split(",")], source=args.source)
+        print(json.dumps(rows, ensure_ascii=False, indent=2))
+        return
+    if args.realtime:
+        rows = tushare_realtime_quotes([t.strip() for t in args.realtime.split(",")])
         print(json.dumps(rows, ensure_ascii=False, indent=2))
         return
     ap.print_help()
