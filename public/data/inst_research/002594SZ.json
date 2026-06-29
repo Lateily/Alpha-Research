@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-06-26T11:28:10Z",
+  "fetched_at": "2026-06-29T06:02:23Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -217,25 +217,11 @@
       "inst_count": 2,
       "surv_type": "业绩说明会",
       "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260330",
-      "fund_visitors": "--",
-      "rece_place": "香港四季酒店",
-      "rece_mode": "特定对象调研",
-      "rece_org": "受邀投资人159人",
-      "org_type": "--",
-      "comp_rece": "比亚迪集团董事长、总裁、比亚迪电子主席 王传福,比亚迪电子行政总裁、执行董事 王念强,比亚迪集团高级副总裁、财务总监、比亚迪电子财务总监 周亚琳,比亚迪集团董事会秘书、比亚迪、比亚迪电子公司秘书 李黔",
-      "inst_count": 1,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 1,
-    "total_90d": 16,
+    "total_90d": 15,
     "unique_inst_30d": 1,
     "latest_date": "2026-06-09"
   }
