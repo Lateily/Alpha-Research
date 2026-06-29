@@ -2,20 +2,10 @@
   "ticker": "688120.SH",
   "generated_at": "2026-06-29",
   "price": 263.6,
-  "zone": "BULLISH",
-  "entry_zone": true,
+  "zone": "NEUTRAL",
+  "entry_zone": false,
   "exit_zone": true,
   "signals": [
-    {
-      "type": "BULLISH_ALIGNMENT",
-      "strength": "strong",
-      "date": "20260626",
-      "bullish": true,
-      "description": {
-        "e": "MA5(244.9) > MA20(231.2) > MA60(220.1), price above all — full bullish alignment",
-        "z": "MA5(244.9)>MA20(231.2)>MA60(220.1)，均线多头排列，趋势强"
-      }
-    },
     {
       "type": "KDJ_OVERBOUGHT",
       "strength": "strong",
@@ -28,25 +18,25 @@
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 1,
-    "total": 2
+    "total": 1
   },
   "indicators": {
     "ma5": 244.94,
     "ma20": 231.23,
-    "ma60": 220.08,
-    "rsi14": 60.5,
+    "ma60": null,
+    "rsi14": 60.6,
     "vol_ma20": 130727,
     "vol_ratio": 1.04,
     "price_vs_ma20": 14.0,
-    "price_vs_ma60": 19.77,
+    "price_vs_ma60": null,
     "change_1d": 4.4,
     "change_5d": 16.2,
     "change_20d": -3.97,
-    "macd_dif": 2.0636,
-    "macd_dea": -1.7858,
-    "macd_hist": 7.6989,
+    "macd_dif": 2.1134,
+    "macd_dea": -1.7135,
+    "macd_hist": 7.6538,
     "bb_upper": 282.85,
     "bb_mid": 231.23,
     "bb_lower": 179.6,
