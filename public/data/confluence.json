@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-29T12:53:44.780893+00:00",
+  "generated_at": "2026-06-30T05:14:03.623308+00:00",
   "tickers_scored": 9,
   "summary": {
     "entry_candidates": [],
@@ -9,7 +9,7 @@
   "scores": [
     {
       "ticker": "002594.SZ",
-      "score": 7,
+      "score": 13,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "OVERSOLD",
@@ -26,39 +26,64 @@
         {
           "type": "RSI_OVERSOLD",
           "base_weight": 14,
-          "decay": 0.4,
+          "decay": 0.8,
           "independence_factor": 1.0,
           "regime_mult": 1.2,
           "staleness": 1.0,
-          "final_contribution": 6.7
-        },
-        {
-          "type": "KDJ_OVERSOLD",
-          "base_weight": 12,
-          "decay": 0.0,
-          "independence_factor": 0.4,
-          "regime_mult": 1.2,
-          "staleness": 1.0,
-          "final_contribution": 0.0
+          "final_contribution": 13.4
         }
       ],
       "contributing_signals": [
         {
           "type": "RSI_OVERSOLD",
-          "contribution": 6.7
-        },
-        {
-          "type": "KDJ_OVERSOLD",
-          "contribution": 0.0
+          "contribution": 13.4
         }
       ],
-      "rationale_e": "Bullish: Rsi Oversold | RSI 20 | Price vs MA20 -12.9% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "多头：RSI超卖 | RSI 20 | 距MA20 -12.9% | 政策顺风 | VP 48",
+      "rationale_e": "Bullish: Rsi Oversold | RSI 26 | Price vs MA20 -10.4% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "多头：RSI超卖 | RSI 26 | 距MA20 -10.4% | 政策顺风 | VP 48",
       "signal_types": [
-        "RSI_OVERSOLD",
-        "KDJ_OVERSOLD"
+        "RSI_OVERSOLD"
       ],
-      "computed_at": "2026-06-29T12:53:44.779971+00:00"
+      "computed_at": "2026-06-30T05:14:03.622381+00:00"
+    },
+    {
+      "ticker": "603233.SH",
+      "score": 5,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "BEARISH",
+      "regime": "NEUTRAL",
+      "vp_score": 50.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 1,
+        "bearish": 0
+      },
+      "contributing": [
+        {
+          "type": "RSI_RECOVERING",
+          "base_weight": 7,
+          "decay": 0.75,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "final_contribution": 5.2
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "RSI_RECOVERING",
+          "contribution": 5.2
+        }
+      ],
+      "rationale_e": "Bullish: Rsi Recovering | RSI 39 | Price vs MA20 -4.0% | VP 50",
+      "rationale_z": "多头：RSI回升 | RSI 39 | 距MA20 -4.0% | VP 50",
+      "signal_types": [
+        "RSI_RECOVERING"
+      ],
+      "computed_at": "2026-06-30T05:14:03.622841+00:00"
     },
     {
       "ticker": "175.HK",
@@ -97,7 +122,29 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-06-29T12:53:44.780090+00:00"
+      "computed_at": "2026-06-30T05:14:03.622503+00:00"
+    },
+    {
+      "ticker": "300308.SZ",
+      "score": 0,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "NEUTRAL",
+      "regime": "PERMISSIVE",
+      "vp_score": 48.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 0,
+        "bearish": 0
+      },
+      "contributing": [],
+      "contributing_signals": [],
+      "rationale_e": "RSI 53 | Price vs MA20 -1.4% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "RSI 53 | 距MA20 -1.4% | 政策顺风 | VP 48",
+      "signal_types": [],
+      "computed_at": "2026-06-30T05:14:03.622729+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -164,46 +211,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-06-29T12:53:44.780604+00:00"
-    },
-    {
-      "ticker": "688120.SH",
-      "score": 0,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "NEUTRAL",
-      "vp_score": 45.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 0,
-        "bearish": 0
-      },
-      "contributing": [
-        {
-          "type": "KDJ_OVERBOUGHT",
-          "base_weight": -12,
-          "decay": 0.0,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "final_contribution": -0.0
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "KDJ_OVERBOUGHT",
-          "contribution": -0.0
-        }
-      ],
-      "rationale_e": "RSI 61 | Price vs MA20 +14.0% | VP 45",
-      "rationale_z": "RSI 61 | 距MA20 +14.0% | VP 45",
-      "signal_types": [
-        "KDJ_OVERBOUGHT"
-      ],
-      "computed_at": "2026-06-29T12:53:44.780698+00:00"
+      "computed_at": "2026-06-30T05:14:03.622953+00:00"
     },
     {
       "ticker": "700.HK",
@@ -225,7 +233,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-06-29T12:53:44.780785+00:00"
+      "computed_at": "2026-06-30T05:14:03.623217+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -247,92 +255,11 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-06-29T12:53:44.780881+00:00"
-    },
-    {
-      "ticker": "603233.SH",
-      "score": -1,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "OVERSOLD",
-      "regime": "NEUTRAL",
-      "vp_score": 50.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 2,
-        "bearish": 1
-      },
-      "contributing": [
-        {
-          "type": "RSI_OVERSOLD",
-          "base_weight": 14,
-          "decay": 0.4,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "final_contribution": 5.6
-        },
-        {
-          "type": "MACD_DEATH_CROSS",
-          "base_weight": -12,
-          "decay": 0.7,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "final_contribution": -8.4
-        },
-        {
-          "type": "BB_LOWER_BREAK",
-          "base_weight": 8,
-          "decay": 0.25,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "final_contribution": 2.0
-        },
-        {
-          "type": "KDJ_OVERSOLD",
-          "base_weight": 12,
-          "decay": 0.0,
-          "independence_factor": 0.4,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "final_contribution": 0.0
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "MACD_DEATH_CROSS",
-          "contribution": -8.4
-        },
-        {
-          "type": "RSI_OVERSOLD",
-          "contribution": 5.6
-        },
-        {
-          "type": "BB_LOWER_BREAK",
-          "contribution": 2.0
-        },
-        {
-          "type": "KDJ_OVERSOLD",
-          "contribution": 0.0
-        }
-      ],
-      "rationale_e": "Bullish: Rsi Oversold, Bb Lower Break | Bearish: Macd Death Cross | RSI 28 | Price vs MA20 -8.6% | VP 50",
-      "rationale_z": "多头：RSI超卖、布林下轨支撑 | 空头：MACD死叉 | RSI 28 | 距MA20 -8.6% | VP 50",
-      "signal_types": [
-        "RSI_OVERSOLD",
-        "MACD_DEATH_CROSS",
-        "BB_LOWER_BREAK",
-        "KDJ_OVERSOLD"
-      ],
-      "computed_at": "2026-06-29T12:53:44.780493+00:00"
+      "computed_at": "2026-06-30T05:14:03.623295+00:00"
     },
     {
       "ticker": "300054.SZ",
-      "score": -6,
+      "score": -2,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "OVERBOUGHT",
@@ -342,85 +269,127 @@
       "vp_adjustment": null,
       "staleness_factor": 1.0,
       "signal_count": {
-        "bullish": 0,
+        "bullish": 1,
         "bearish": 1
       },
       "contributing": [
         {
           "type": "RSI_OVERBOUGHT",
           "base_weight": -14,
-          "decay": 0.4,
+          "decay": 0.8,
           "independence_factor": 1.0,
           "regime_mult": 1.0,
           "staleness": 1.0,
-          "final_contribution": -5.6
+          "final_contribution": -11.2
+        },
+        {
+          "type": "BULLISH_ALIGNMENT",
+          "base_weight": 10,
+          "decay": 0.9,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "final_contribution": 9.0
         }
       ],
       "contributing_signals": [
         {
           "type": "RSI_OVERBOUGHT",
-          "contribution": -5.6
+          "contribution": -11.2
+        },
+        {
+          "type": "BULLISH_ALIGNMENT",
+          "contribution": 9.0
         }
       ],
-      "rationale_e": "Bearish: Rsi Overbought | RSI 70 | Price vs MA20 +19.1% | VP 47",
-      "rationale_z": "空头：RSI超买 | RSI 70 | 距MA20 +19.1% | VP 47",
+      "rationale_e": "Bullish: Bullish Alignment | Bearish: Rsi Overbought | RSI 76 | Price vs MA20 +27.3% | VP 47",
+      "rationale_z": "多头：均线多头排列 | 空头：RSI超买 | RSI 76 | 距MA20 +27.3% | VP 47",
       "signal_types": [
-        "RSI_OVERBOUGHT"
+        "RSI_OVERBOUGHT",
+        "BULLISH_ALIGNMENT"
       ],
-      "computed_at": "2026-06-29T12:53:44.780204+00:00"
+      "computed_at": "2026-06-30T05:14:03.622631+00:00"
     },
     {
-      "ticker": "300308.SZ",
+      "ticker": "688120.SH",
       "score": -9,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "PERMISSIVE",
-      "vp_score": 48.0,
+      "zone": "OVERBOUGHT",
+      "regime": "NEUTRAL",
+      "vp_score": 45.0,
       "vp_signal_type": null,
       "vp_adjustment": null,
       "staleness_factor": 1.0,
       "signal_count": {
-        "bullish": 0,
-        "bearish": 2
+        "bullish": 1,
+        "bearish": 3
       },
       "contributing": [
         {
-          "type": "MACD_DEATH_CROSS",
-          "base_weight": -12,
-          "decay": 0.7,
+          "type": "RSI_OVERBOUGHT",
+          "base_weight": -14,
+          "decay": 0.8,
           "independence_factor": 1.0,
-          "regime_mult": 0.8,
+          "regime_mult": 1.0,
           "staleness": 1.0,
-          "final_contribution": -6.7
+          "final_contribution": -11.2
         },
         {
-          "type": "KDJ_DEATH_CROSS",
-          "base_weight": -10,
-          "decay": 0.25,
+          "type": "BULLISH_ALIGNMENT",
+          "base_weight": 10,
+          "decay": 0.9,
           "independence_factor": 1.0,
-          "regime_mult": 0.8,
+          "regime_mult": 1.0,
           "staleness": 1.0,
-          "final_contribution": -2.0
+          "final_contribution": 9.0
+        },
+        {
+          "type": "BB_UPPER_BREAK",
+          "base_weight": -5,
+          "decay": 0.67,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "final_contribution": -3.3
+        },
+        {
+          "type": "KDJ_OVERBOUGHT",
+          "base_weight": -12,
+          "decay": 0.67,
+          "independence_factor": 0.4,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "final_contribution": -3.2
         }
       ],
       "contributing_signals": [
         {
-          "type": "MACD_DEATH_CROSS",
-          "contribution": -6.7
+          "type": "RSI_OVERBOUGHT",
+          "contribution": -11.2
         },
         {
-          "type": "KDJ_DEATH_CROSS",
-          "contribution": -2.0
+          "type": "BULLISH_ALIGNMENT",
+          "contribution": 9.0
+        },
+        {
+          "type": "BB_UPPER_BREAK",
+          "contribution": -3.3
+        },
+        {
+          "type": "KDJ_OVERBOUGHT",
+          "contribution": -3.2
         }
       ],
-      "rationale_e": "Bearish: Macd Death Cross, Kdj Death Cross | RSI 57 | Price vs MA20 +1.6% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "空头：MACD死叉、KDJ死叉 | RSI 57 | 距MA20 +1.6% | 政策顺风 | VP 48",
+      "rationale_e": "Bullish: Bullish Alignment | Bearish: Rsi Overbought, Bb Upper Break | RSI 71 | Price vs MA20 +35.2% | VP 45",
+      "rationale_z": "多头：均线多头排列 | 空头：RSI超买、布林上轨压力 | RSI 71 | 距MA20 +35.2% | VP 45",
       "signal_types": [
-        "MACD_DEATH_CROSS",
-        "KDJ_DEATH_CROSS"
+        "RSI_OVERBOUGHT",
+        "BULLISH_ALIGNMENT",
+        "BB_UPPER_BREAK",
+        "KDJ_OVERBOUGHT"
       ],
-      "computed_at": "2026-06-29T12:53:44.780330+00:00"
+      "computed_at": "2026-06-30T05:14:03.623083+00:00"
     }
   ]
 }

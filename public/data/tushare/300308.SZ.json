@@ -1,6 +1,6 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-06-29T12:49:56Z",
+  "fetched_at": "2026-06-30T05:10:30Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -772,22 +772,9 @@
           "pct_chg": 5.7006,
           "vol": 255404.72,
           "amount": 15121134.057
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260331",
-          "open": 571.0,
-          "high": 585.9,
-          "low": 555.0,
-          "close": 569.41,
-          "pre_close": 589.08,
-          "change": -19.67,
-          "pct_chg": -3.3391,
-          "vol": 261202.31,
-          "amount": 14942137.037
         }
       ],
-      "row_count": 60,
+      "row_count": 59,
       "_status": "ok"
     },
     "daily_basic": {
@@ -1971,33 +1958,18 @@
           "free_share": 84384.2064,
           "total_mv": 66874879.1685,
           "circ_mv": 66536673.2483
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260331",
-          "close": 569.41,
-          "turnover_rate": 2.3628,
-          "turnover_rate_f": 3.0954,
-          "volume_ratio": 0.99,
-          "pe": 58.5966,
-          "pe_ttm": 58.5966,
-          "pb": 21.2558,
-          "ps": 16.5451,
-          "ps_ttm": 16.5451,
-          "dv_ratio": 0.1581,
-          "dv_ttm": 0.1581,
-          "total_share": 111111.8334,
-          "float_share": 110549.9082,
-          "free_share": 84384.2064,
-          "total_mv": 63268189.0563,
-          "circ_mv": 62948223.2282
         }
       ],
-      "row_count": 60,
+      "row_count": 59,
       "_status": "ok"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260630",
+          "adj_factor": 6.6039
+        },
         {
           "ts_code": "300308.SZ",
           "trade_date": "20260629",
@@ -2291,11 +2263,6 @@
         {
           "ts_code": "300308.SZ",
           "trade_date": "20260401",
-          "adj_factor": 6.5961
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260331",
           "adj_factor": 6.5961
         }
       ],
@@ -5610,49 +5577,9 @@
           "bz_profit": 197995337.29,
           "bz_cost": 1719701291.75,
           "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20210630",
-          "bz_item": "美国",
-          "bz_code": "D",
-          "bz_sales": 1926822388.59,
-          "bz_profit": null,
-          "bz_cost": null,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20210630",
-          "bz_item": "欧洲",
-          "bz_code": "D",
-          "bz_sales": 88820968.07,
-          "bz_profit": null,
-          "bz_cost": null,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20210630",
-          "bz_item": "其他国家地区",
-          "bz_code": "D",
-          "bz_sales": 421218675.24,
-          "bz_profit": null,
-          "bz_cost": null,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20210630",
-          "bz_item": "中国大陆",
-          "bz_code": "D",
-          "bz_sales": 860990359.7,
-          "bz_profit": null,
-          "bz_cost": null,
-          "curr_type": "CNY"
         }
       ],
-      "row_count": 22,
+      "row_count": 18,
       "_status": "ok"
     },
     "fina_mainbz_product": {
@@ -5896,59 +5823,9 @@
           "bz_profit": 126840327.55,
           "bz_cost": 770218013.89,
           "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20210630",
-          "bz_item": "高端光通讯收发模块",
-          "bz_code": "P",
-          "bz_sales": 2930877015.76,
-          "bz_profit": 741327710.72,
-          "bz_cost": 2189549305.04,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20210630",
-          "bz_item": "电机绕组设备",
-          "bz_code": "P",
-          "bz_sales": 29159288.76,
-          "bz_profit": 5671780.64,
-          "bz_cost": 23487508.12,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20210630",
-          "bz_item": "电机绕组装备",
-          "bz_code": "P",
-          "bz_sales": 29159288.76,
-          "bz_profit": 5671780.64,
-          "bz_cost": 23487508.12,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20210630",
-          "bz_item": "接入网光模块和光组件",
-          "bz_code": "P",
-          "bz_sales": 337816087.08,
-          "bz_profit": 69655744.7,
-          "bz_cost": 268160342.38,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "end_date": "20210630",
-          "bz_item": "其他业务",
-          "bz_code": "P",
-          "bz_sales": null,
-          "bz_profit": null,
-          "bz_cost": 11942763.88,
-          "curr_type": "CNY"
         }
       ],
-      "row_count": 29,
+      "row_count": 24,
       "_status": "ok"
     },
     "forecast": {

@@ -1,30 +1,41 @@
 {
-  "generated_at": "2026-06-29T12:53:44.869538+00:00",
-  "date": "2026-06-29",
+  "generated_at": "2026-06-30T05:14:03.709665+00:00",
+  "date": "2026-06-30",
   "note": "Per-ticker attribution snapshot for new-trade entry. Schema matches trades.json signal_attribution shape. Pin to today's decision; do not regenerate after entering a trade.",
   "capsules": {
     "002594.SZ": {
-      "confluence_score": 7,
+      "confluence_score": 13,
       "action": "NEUTRAL",
       "zone": "OVERSOLD",
       "contributing_signals": [
         {
           "name": "RSI_OVERSOLD",
-          "weight": 6.7,
+          "weight": 13.4,
           "base_weight": 14,
-          "direction": "bullish"
-        },
-        {
-          "name": "KDJ_OVERSOLD",
-          "weight": 0.0,
-          "base_weight": 12,
           "direction": "bullish"
         }
       ],
       "vp_at_capture": 48,
       "wrongIf_at_capture_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
       "wrongIf_at_capture_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "captured_at": "2026-06-29T12:53:44.869538+00:00"
+      "captured_at": "2026-06-30T05:14:03.709665+00:00"
+    },
+    "603233.SH": {
+      "confluence_score": 5,
+      "action": "NEUTRAL",
+      "zone": "BEARISH",
+      "contributing_signals": [
+        {
+          "name": "RSI_RECOVERING",
+          "weight": 5.2,
+          "base_weight": 7,
+          "direction": "bullish"
+        }
+      ],
+      "vp_at_capture": 50,
+      "wrongIf_at_capture_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
+      "wrongIf_at_capture_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
+      "captured_at": "2026-06-30T05:14:03.709665+00:00"
     },
     "175.HK": {
       "confluence_score": 0,
@@ -41,7 +52,17 @@
       "vp_at_capture": 50,
       "wrongIf_at_capture_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
       "wrongIf_at_capture_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
-      "captured_at": "2026-06-29T12:53:44.869538+00:00"
+      "captured_at": "2026-06-30T05:14:03.709665+00:00"
+    },
+    "300308.SZ": {
+      "confluence_score": 0,
+      "action": "NEUTRAL",
+      "zone": "NEUTRAL",
+      "contributing_signals": [],
+      "vp_at_capture": 48,
+      "wrongIf_at_capture_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_at_capture_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "captured_at": "2026-06-30T05:14:03.709665+00:00"
     },
     "6160.HK": {
       "confluence_score": 0,
@@ -70,24 +91,7 @@
       "vp_at_capture": null,
       "wrongIf_at_capture_e": "",
       "wrongIf_at_capture_z": "",
-      "captured_at": "2026-06-29T12:53:44.869538+00:00"
-    },
-    "688120.SH": {
-      "confluence_score": 0,
-      "action": "NEUTRAL",
-      "zone": "NEUTRAL",
-      "contributing_signals": [
-        {
-          "name": "KDJ_OVERBOUGHT",
-          "weight": -0.0,
-          "base_weight": -12,
-          "direction": "bearish"
-        }
-      ],
-      "vp_at_capture": 45,
-      "wrongIf_at_capture_e": "2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (per decision sheet wrong_if, source-bound to the H1 report)",
-      "wrongIf_at_capture_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
-      "captured_at": "2026-06-29T12:53:44.869538+00:00"
+      "captured_at": "2026-06-30T05:14:03.709665+00:00"
     },
     "700.HK": {
       "confluence_score": 0,
@@ -97,7 +101,7 @@
       "vp_at_capture": null,
       "wrongIf_at_capture_e": "",
       "wrongIf_at_capture_z": "",
-      "captured_at": "2026-06-29T12:53:44.869538+00:00"
+      "captured_at": "2026-06-30T05:14:03.709665+00:00"
     },
     "9999.HK": {
       "confluence_score": 0,
@@ -107,82 +111,65 @@
       "vp_at_capture": null,
       "wrongIf_at_capture_e": "",
       "wrongIf_at_capture_z": "",
-      "captured_at": "2026-06-29T12:53:44.869538+00:00"
-    },
-    "603233.SH": {
-      "confluence_score": -1,
-      "action": "NEUTRAL",
-      "zone": "OVERSOLD",
-      "contributing_signals": [
-        {
-          "name": "RSI_OVERSOLD",
-          "weight": 5.6,
-          "base_weight": 14,
-          "direction": "bullish"
-        },
-        {
-          "name": "MACD_DEATH_CROSS",
-          "weight": -8.4,
-          "base_weight": -12,
-          "direction": "bearish"
-        },
-        {
-          "name": "BB_LOWER_BREAK",
-          "weight": 2.0,
-          "base_weight": 8,
-          "direction": "bullish"
-        },
-        {
-          "name": "KDJ_OVERSOLD",
-          "weight": 0.0,
-          "base_weight": 12,
-          "direction": "bullish"
-        }
-      ],
-      "vp_at_capture": 50,
-      "wrongIf_at_capture_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
-      "wrongIf_at_capture_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
-      "captured_at": "2026-06-29T12:53:44.869538+00:00"
+      "captured_at": "2026-06-30T05:14:03.709665+00:00"
     },
     "300054.SZ": {
-      "confluence_score": -6,
+      "confluence_score": -2,
       "action": "NEUTRAL",
       "zone": "OVERBOUGHT",
       "contributing_signals": [
         {
           "name": "RSI_OVERBOUGHT",
-          "weight": -5.6,
+          "weight": -11.2,
           "base_weight": -14,
           "direction": "bearish"
+        },
+        {
+          "name": "BULLISH_ALIGNMENT",
+          "weight": 9.0,
+          "base_weight": 10,
+          "direction": "bullish"
         }
       ],
       "vp_at_capture": 47,
       "wrongIf_at_capture_e": "2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net profit YoY < +25% (per decision sheet wrong_if)",
       "wrongIf_at_capture_z": "2026半年报抛光垫收入同比<+30%(如披露),或毛利率<48%,或归母净利同比<+25%(决策书 wrong_if)",
-      "captured_at": "2026-06-29T12:53:44.869538+00:00"
+      "captured_at": "2026-06-30T05:14:03.709665+00:00"
     },
-    "300308.SZ": {
+    "688120.SH": {
       "confluence_score": -9,
       "action": "NEUTRAL",
-      "zone": "NEUTRAL",
+      "zone": "OVERBOUGHT",
       "contributing_signals": [
         {
-          "name": "MACD_DEATH_CROSS",
-          "weight": -6.7,
-          "base_weight": -12,
+          "name": "RSI_OVERBOUGHT",
+          "weight": -11.2,
+          "base_weight": -14,
           "direction": "bearish"
         },
         {
-          "name": "KDJ_DEATH_CROSS",
-          "weight": -2.0,
-          "base_weight": -10,
+          "name": "BULLISH_ALIGNMENT",
+          "weight": 9.0,
+          "base_weight": 10,
+          "direction": "bullish"
+        },
+        {
+          "name": "BB_UPPER_BREAK",
+          "weight": -3.3,
+          "base_weight": -5,
+          "direction": "bullish"
+        },
+        {
+          "name": "KDJ_OVERBOUGHT",
+          "weight": -3.2,
+          "base_weight": -12,
           "direction": "bearish"
         }
       ],
-      "vp_at_capture": 48,
-      "wrongIf_at_capture_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_at_capture_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "captured_at": "2026-06-29T12:53:44.869538+00:00"
+      "vp_at_capture": 45,
+      "wrongIf_at_capture_e": "2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (per decision sheet wrong_if, source-bound to the H1 report)",
+      "wrongIf_at_capture_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
+      "captured_at": "2026-06-30T05:14:03.709665+00:00"
     }
   }
 }

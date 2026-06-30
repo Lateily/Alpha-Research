@@ -1,6 +1,6 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-06-29T12:50:50Z",
+  "fetched_at": "2026-06-30T05:11:22Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -772,22 +772,9 @@
           "pct_chg": -1.217,
           "vol": 546418.01,
           "amount": 2663934.668
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260331",
-          "open": 52.02,
-          "high": 52.44,
-          "low": 49.29,
-          "close": 49.3,
-          "pre_close": 52.0,
-          "change": -2.7,
-          "pct_chg": -5.1923,
-          "vol": 518679.06,
-          "amount": 2599235.604
         }
       ],
-      "row_count": 60,
+      "row_count": 59,
       "_status": "ok"
     },
     "daily_basic": {
@@ -1971,33 +1958,18 @@
           "free_share": 66849.4266,
           "total_mv": 4617088.126,
           "circ_mv": 3593156.6101
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260331",
-          "close": 49.3,
-          "turnover_rate": 7.0299,
-          "turnover_rate_f": 7.7589,
-          "volume_ratio": 1.01,
-          "pe": 64.8978,
-          "pe_ttm": 64.8978,
-          "pb": 9.0062,
-          "ps": 12.7707,
-          "ps_ttm": 12.7707,
-          "dv_ratio": 0.2021,
-          "dv_ttm": 0.2021,
-          "total_share": 94806.7377,
-          "float_share": 73781.4499,
-          "free_share": 66849.4266,
-          "total_mv": 4673972.1686,
-          "circ_mv": 3637425.4801
         }
       ],
-      "row_count": 60,
+      "row_count": 59,
       "_status": "ok"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260630",
+          "adj_factor": 12.967
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260629",
@@ -2291,11 +2263,6 @@
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260401",
-          "adj_factor": 12.9517
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260331",
           "adj_factor": 12.9517
         }
       ],
@@ -6543,49 +6510,9 @@
           "bz_profit": 194527519.16,
           "bz_cost": 112810207.35,
           "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300054.SZ",
-          "end_date": "20210630",
-          "bz_item": "打印复印耗材",
-          "bz_code": "P",
-          "bz_sales": 978561391.26,
-          "bz_profit": 299045358.97,
-          "bz_cost": 679516032.29,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300054.SZ",
-          "end_date": "20210630",
-          "bz_item": "半导体业务",
-          "bz_code": "P",
-          "bz_sales": 103216348.55,
-          "bz_profit": 61223956.43,
-          "bz_cost": 41992392.12,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300054.SZ",
-          "end_date": "20210630",
-          "bz_item": "其他业务",
-          "bz_code": "P",
-          "bz_sales": 14549760.78,
-          "bz_profit": 3221601.57,
-          "bz_cost": 11328159.21,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "300054.SZ",
-          "end_date": "20210630",
-          "bz_item": "光电半导体",
-          "bz_code": "P",
-          "bz_sales": 103216348.55,
-          "bz_profit": 61223956.43,
-          "bz_cost": 41992392.12,
-          "curr_type": "CNY"
         }
       ],
-      "row_count": 41,
+      "row_count": 37,
       "_status": "ok"
     },
     "forecast": {
