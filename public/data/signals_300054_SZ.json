@@ -3,7 +3,7 @@
   "generated_at": "2026-06-30",
   "price": 104.0,
   "zone": "OVERBOUGHT",
-  "entry_zone": true,
+  "entry_zone": false,
   "exit_zone": true,
   "signals": [
     {
@@ -15,38 +15,28 @@
         "e": "RSI(14) = 76.4 — overbought, watch for exhaustion",
         "z": "RSI(14)=76.4，超买，注意回调风险"
       }
-    },
-    {
-      "type": "BULLISH_ALIGNMENT",
-      "strength": "strong",
-      "date": "20260629",
-      "bullish": true,
-      "description": {
-        "e": "MA5(96.5) > MA20(81.7) > MA60(68.2), price above all — full bullish alignment",
-        "z": "MA5(96.5)>MA20(81.7)>MA60(68.2)，均线多头排列，趋势强"
-      }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 1,
-    "total": 2
+    "total": 1
   },
   "indicators": {
     "ma5": 96.5,
     "ma20": 81.68,
-    "ma60": 68.2,
+    "ma60": null,
     "rsi14": 76.4,
     "vol_ma20": 514053,
     "vol_ratio": 1.46,
     "price_vs_ma20": 27.32,
-    "price_vs_ma60": 52.48,
+    "price_vs_ma60": null,
     "change_1d": 9.39,
     "change_5d": 13.79,
     "change_20d": 54.9,
-    "macd_dif": 8.1938,
-    "macd_dea": 6.5284,
-    "macd_hist": 3.3308,
+    "macd_dif": 8.2027,
+    "macd_dea": 6.5416,
+    "macd_hist": 3.3223,
     "bb_upper": 105.74,
     "bb_mid": 81.68,
     "bb_lower": 57.63,

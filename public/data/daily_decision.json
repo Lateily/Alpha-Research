@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-30T05:14:03.709161+00:00",
+  "generated_at": "2026-06-30T11:33:42.528634+00:00",
   "date": "2026-06-30",
   "brief_e": "1 Exposure Review | 1 Risk Review",
   "brief_z": "1 敞口复核 | 1 风险复核",
@@ -12,15 +12,15 @@
         "action": "REVIEW_STOP",
         "priority": "HIGH",
         "confidence": 13,
-        "pnl_pct": -17.54,
+        "pnl_pct": -17.14,
         "holding_days": 90,
         "weight_pct": 3.0,
         "vp_score": 48,
         "confluence": 13,
-        "reason_e": "Position in drawdown -17.5%. Signal: NEUTRAL (score 13). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-17.5%，信号评分13。复核投资逻辑，检查wrongIf条件是否触发。",
+        "reason_e": "Position in drawdown -17.1%. Signal: NEUTRAL (score 13). Review thesis — is the wrongIf condition still intact?",
+        "reason_z": "亏损-17.1%，信号评分13。复核投资逻辑，检查wrongIf条件是否触发。",
         "entry_target": null,
-        "exit_trigger": "P&L -17.5% ≤ -10.0% → thesis review required"
+        "exit_trigger": "P&L -17.1% ≤ -10.0% → thesis review required"
       },
       {
         "ticker": "300308.SZ",
@@ -29,13 +29,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 0,
-        "pnl_pct": 86.69,
+        "pnl_pct": 86.39,
         "holding_days": 112,
         "weight_pct": 59.3,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +86.7% after 112d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+86.7%（持有112天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +86.4% after 112d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+86.4%（持有112天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -82,7 +82,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 98,
-        "weight_pct": 12.4,
+        "weight_pct": 12.5,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 98d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -132,14 +132,14 @@
         "status": "WATCHLIST",
         "action": "WATCH",
         "priority": "LOW",
-        "confidence": 2,
+        "confidence": 11,
         "pnl_pct": null,
         "holding_days": null,
         "weight_pct": 0,
         "vp_score": 47,
-        "confluence": -2,
-        "reason_e": "No evidence-review condition. Score -2, VP 47. Bullish: Bullish Alignment | Bearish: Rsi Overbought | RSI 76 | Price vs MA20 +27.3% | VP 47.",
-        "reason_z": "暂无证据复核条件。评分-2，VP47。多头：均线多头排列 | 空头：RSI超买 | RSI 76 | 距MA20 +27.3% | VP 47。",
+        "confluence": -11,
+        "reason_e": "No evidence-review condition. Score -11, VP 47. Bearish: Rsi Overbought | RSI 76 | Price vs MA20 +27.3% | VP 47.",
+        "reason_z": "暂无证据复核条件。评分-11，VP47。空头：RSI超买 | RSI 76 | 距MA20 +27.3% | VP 47。",
         "entry_target": null,
         "exit_trigger": null
       },
@@ -149,14 +149,14 @@
         "status": "WATCHLIST",
         "action": "WATCH",
         "priority": "LOW",
-        "confidence": 9,
+        "confidence": 18,
         "pnl_pct": null,
         "holding_days": null,
         "weight_pct": 0,
         "vp_score": 45,
-        "confluence": -9,
-        "reason_e": "No evidence-review condition. Score -9, VP 45. Bullish: Bullish Alignment | Bearish: Rsi Overbought, Bb Upper Break | RSI 71 | Price vs MA20 +35.2% | VP 45.",
-        "reason_z": "暂无证据复核条件。评分-9，VP45。多头：均线多头排列 | 空头：RSI超买、布林上轨压力 | RSI 71 | 距MA20 +35.2% | VP 45。",
+        "confluence": -18,
+        "reason_e": "No evidence-review condition. Score -18, VP 45. Bearish: Rsi Overbought, Bb Upper Break | RSI 71 | Price vs MA20 +35.2% | VP 45.",
+        "reason_z": "暂无证据复核条件。评分-18，VP45。空头：RSI超买、布林上轨压力 | RSI 71 | 距MA20 +35.2% | VP 45。",
         "entry_target": null,
         "exit_trigger": null
       }
@@ -165,22 +165,10 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 59% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +86.7% — exposure-review condition (sizable unrealised gain)",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -17.5% — review thesis and wrongIf conditions"
+    "PROFIT REVIEW: 300308.SZ +86.4% — exposure-review condition (sizable unrealised gain)",
+    "🔴 DRAWDOWN REVIEW: 002594.SZ -17.1% — review thesis and wrongIf conditions"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 16.4 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 16.4（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 16.4,
-      "threshold": 25.0
-    },
     {
       "ticker": "002594.SZ",
       "severity": "LOW",
@@ -192,6 +180,18 @@
       "indicator": "revenue_growth",
       "actual": null,
       "threshold": null
+    },
+    {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 16.4 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 16.4（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 16.4,
+      "threshold": 25.0
     },
     {
       "ticker": "603233.SH",
