@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-06-30T11:29:36Z",
+  "fetched_at": "2026-07-01T05:29:03Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -203,25 +203,11 @@
       "inst_count": 1,
       "surv_type": "特定对象调研",
       "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260401",
-      "fund_visitors": "--",
-      "rece_place": "直播观看地址:路演中:https://www.roadshowchina.cn/w/meet/p5aN7p",
-      "rece_mode": "业绩说明会",
-      "rece_org": "网络直播,面向所有投资人",
-      "org_type": "--",
-      "comp_rece": "公司董事长、总裁 王传福,独立董事 张敏,高级副总裁、财务总监 周亚琳,董事会秘书、公司秘书 李黔,证券事务代表 吴越",
-      "inst_count": 2,
-      "surv_type": "业绩说明会",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 1,
-    "total_90d": 15,
+    "total_90d": 14,
     "unique_inst_30d": 1,
     "latest_date": "2026-06-09"
   }

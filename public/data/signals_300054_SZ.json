@@ -1,49 +1,59 @@
 {
   "ticker": "300054.SZ",
-  "generated_at": "2026-06-30",
-  "price": 104.0,
+  "generated_at": "2026-07-01",
+  "price": 105.97,
   "zone": "OVERBOUGHT",
-  "entry_zone": false,
+  "entry_zone": true,
   "exit_zone": true,
   "signals": [
     {
       "type": "RSI_OVERBOUGHT",
       "strength": "moderate",
-      "date": "20260629",
+      "date": "20260630",
       "bullish": false,
       "description": {
-        "e": "RSI(14) = 76.4 — overbought, watch for exhaustion",
-        "z": "RSI(14)=76.4，超买，注意回调风险"
+        "e": "RSI(14) = 77.5 — overbought, watch for exhaustion",
+        "z": "RSI(14)=77.5，超买，注意回调风险"
+      }
+    },
+    {
+      "type": "BULLISH_ALIGNMENT",
+      "strength": "strong",
+      "date": "20260630",
+      "bullish": true,
+      "description": {
+        "e": "MA5(99.4) > MA20(83.7) > MA60(69.1), price above all — full bullish alignment",
+        "z": "MA5(99.4)>MA20(83.7)>MA60(69.1)，均线多头排列，趋势强"
       }
     }
   ],
   "signal_count": {
-    "bullish": 0,
+    "bullish": 1,
     "bearish": 1,
-    "total": 1
+    "total": 2
   },
   "indicators": {
-    "ma5": 96.5,
-    "ma20": 81.68,
-    "ma60": null,
-    "rsi14": 76.4,
-    "vol_ma20": 514053,
-    "vol_ratio": 1.46,
-    "price_vs_ma20": 27.32,
-    "price_vs_ma60": null,
-    "change_1d": 9.39,
-    "change_5d": 13.79,
-    "change_20d": 54.9,
-    "macd_dif": 8.2027,
-    "macd_dea": 6.5416,
-    "macd_hist": 3.3223,
-    "bb_upper": 105.74,
-    "bb_mid": 81.68,
-    "bb_lower": 57.63,
-    "bb_bandwidth": 58.9,
-    "kdj_k": 90.2,
-    "kdj_d": 87.2,
-    "kdj_j": 96.2,
+    "ma5": 99.44,
+    "ma20": 83.69,
+    "ma60": 69.15,
+    "rsi14": 77.5,
+    "vol_ma20": 529460,
+    "vol_ratio": 1.28,
+    "price_vs_ma20": 26.62,
+    "price_vs_ma60": 53.25,
+    "change_1d": 1.89,
+    "change_5d": 16.07,
+    "change_20d": 61.0,
+    "macd_dif": 8.8159,
+    "macd_dea": 6.9965,
+    "macd_hist": 3.639,
+    "bb_upper": 108.79,
+    "bb_mid": 83.69,
+    "bb_lower": 58.58,
+    "bb_bandwidth": 59.99,
+    "kdj_k": 92.6,
+    "kdj_d": 89.0,
+    "kdj_j": 99.8,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
