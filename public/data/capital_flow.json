@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-07-01T05:28:40Z",
+  "fetched_at": "2026-07-01T11:43:04Z",
   "trade_date": "20260701",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "互联网金融",
+      "ts_code": "BK0637.DC",
+      "net_inflow_yuan": 125769328640000.0,
+      "pct_chg": 3.31
+    },
+    {
+      "name": "金融地产风格",
+      "ts_code": "BK1714.DC",
+      "net_inflow_yuan": 115319500800000.0,
+      "pct_chg": 3.28
+    },
+    {
+      "name": "非银金融",
+      "ts_code": "BK1203.DC",
+      "net_inflow_yuan": 109444966400000.0,
+      "pct_chg": 4.7
+    },
+    {
+      "name": "券商概念",
+      "ts_code": "BK0711.DC",
+      "net_inflow_yuan": 106343864320000.0,
+      "pct_chg": 4.93
+    },
+    {
+      "name": "证券Ⅲ",
+      "ts_code": "BK1366.DC",
+      "net_inflow_yuan": 90552852480000.0,
+      "pct_chg": 4.84
+    },
+    {
+      "name": "证券Ⅱ",
+      "ts_code": "BK0473.DC",
+      "net_inflow_yuan": 90552852480000.0,
+      "pct_chg": 4.84
+    },
+    {
+      "name": "证金持股",
+      "ts_code": "BK0718.DC",
+      "net_inflow_yuan": 60450862080000.0,
+      "pct_chg": 2.12
+    },
+    {
+      "name": "国产软件",
+      "ts_code": "BK0696.DC",
+      "net_inflow_yuan": 60053255680000.0,
+      "pct_chg": 2.82
+    },
+    {
+      "name": "数据要素",
+      "ts_code": "BK1135.DC",
+      "net_inflow_yuan": 51535462400000.0,
+      "pct_chg": 2.88
+    },
+    {
+      "name": "破增发价股",
+      "ts_code": "BK1673.DC",
+      "net_inflow_yuan": 51461844480000.0,
+      "pct_chg": 2.85
+    },
+    {
+      "name": "AI应用",
+      "ts_code": "BK1629.DC",
+      "net_inflow_yuan": 51307358720000.0,
+      "pct_chg": 2.64
+    },
+    {
+      "name": "互联网服务",
+      "ts_code": "BK0447.DC",
+      "net_inflow_yuan": 50425361920000.0,
+      "pct_chg": 2.73
+    },
+    {
+      "name": "鸿蒙概念",
+      "ts_code": "BK0953.DC",
+      "net_inflow_yuan": 50143828480000.0,
+      "pct_chg": 1.84
+    },
+    {
+      "name": "参股期货",
+      "ts_code": "BK0524.DC",
+      "net_inflow_yuan": 50054131200000.0,
+      "pct_chg": 3.48
+    },
+    {
+      "name": "破净股",
+      "ts_code": "BK1112.DC",
+      "net_inflow_yuan": 41583792640000.0,
+      "pct_chg": 2.68
+    },
+    {
+      "name": "反内卷概念",
+      "ts_code": "BK1197.DC",
+      "net_inflow_yuan": 41510620160000.0,
+      "pct_chg": 2.66
+    },
+    {
+      "name": "虚拟机器人",
+      "ts_code": "BK1190.DC",
+      "net_inflow_yuan": 40255098880000.0,
+      "pct_chg": 4.95
+    },
+    {
+      "name": "AIGC概念",
+      "ts_code": "BK1111.DC",
+      "net_inflow_yuan": 35928811520000.0,
+      "pct_chg": 2.3
+    },
+    {
+      "name": "软件开发",
+      "ts_code": "BK0737.DC",
+      "net_inflow_yuan": 33883758080000.0,
+      "pct_chg": 2.98
+    },
+    {
+      "name": "科创板做市商",
+      "ts_code": "BK1107.DC",
+      "net_inflow_yuan": 33777968640000.0,
+      "pct_chg": 4.57
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": -591067095040000.0,
+      "pct_chg": 1.97
+    },
+    {
+      "name": "百元股",
+      "ts_code": "BK1059.DC",
+      "net_inflow_yuan": -585704898560000.0,
+      "pct_chg": -1.14
+    },
+    {
+      "name": "科技风格",
+      "ts_code": "BK1713.DC",
+      "net_inflow_yuan": -584648908800000.0,
+      "pct_chg": -2.0
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": -550398566400000.0,
+      "pct_chg": 0.95
+    },
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": -544786595840000.0,
+      "pct_chg": -0.29
+    },
+    {
+      "name": "通信技术",
+      "ts_code": "BK1650.DC",
+      "net_inflow_yuan": -505920593920000.0,
+      "pct_chg": -0.12
+    },
+    {
+      "name": "半导体概念",
+      "ts_code": "BK0917.DC",
+      "net_inflow_yuan": -483961282560000.0,
+      "pct_chg": 0.14
+    },
+    {
+      "name": "5G概念",
+      "ts_code": "BK0714.DC",
+      "net_inflow_yuan": -463537274880000.0,
+      "pct_chg": 0.02
+    },
+    {
+      "name": "昨日高振幅",
+      "ts_code": "BK1633.DC",
+      "net_inflow_yuan": -461185515520000.0,
+      "pct_chg": 1.02
+    },
+    {
+      "name": "东方财富热股",
+      "ts_code": "BK1637.DC",
+      "net_inflow_yuan": -451809280000000.0,
+      "pct_chg": 0.39
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1022,
     "_status": "ok"
   }
 }

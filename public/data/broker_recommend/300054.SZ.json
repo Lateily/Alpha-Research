@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-07-01T05:31:38Z",
+  "fetched_at": "2026-07-01T11:45:45Z",
   "api_used": "report_rc",
   "_attempted_endpoints": [
     "broker_recommend",
@@ -9,6 +9,64 @@
   ],
   "window_days": 90,
   "recommendations": [
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "report_date": "20260630",
+      "report_title": "中原证券研究所月度金股组合（2026年7月）——2026年7月1日－7月31日",
+      "report_type": "非个股",
+      "classify": "一般报告",
+      "org_name": "中原证券",
+      "author_name": "无",
+      "quarter": "2027Q4",
+      "op_rt": null,
+      "op_pr": null,
+      "tp": null,
+      "np": 137211.459,
+      "eps": 1.44,
+      "pe": null,
+      "rd": null,
+      "roe": null,
+      "ev_ebitda": null,
+      "rating": "无",
+      "max_price": null,
+      "min_price": null,
+      "rec_date": "20260630",
+      "broker": "中原证券",
+      "analyst": null,
+      "recommendation": "无",
+      "target_price": null,
+      "report_id": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "report_date": "20260630",
+      "report_title": "中原证券研究所月度金股组合（2026年7月）——2026年7月1日－7月31日",
+      "report_type": "非个股",
+      "classify": "一般报告",
+      "org_name": "中原证券",
+      "author_name": "无",
+      "quarter": "2026Q4",
+      "op_rt": null,
+      "op_pr": null,
+      "tp": null,
+      "np": 105767.166,
+      "eps": 1.11,
+      "pe": null,
+      "rd": null,
+      "roe": null,
+      "ev_ebitda": null,
+      "rating": "无",
+      "max_price": null,
+      "min_price": null,
+      "rec_date": "20260630",
+      "broker": "中原证券",
+      "analyst": null,
+      "recommendation": "无",
+      "target_price": null,
+      "report_id": null
+    },
     {
       "ts_code": "300054.SZ",
       "name": "鼎龙股份",
@@ -997,11 +1055,11 @@
     }
   ],
   "summary": {
-    "total_90d": 34,
+    "total_90d": 36,
     "unique_brokers_90d": 11,
-    "latest_recommendation": "买入",
+    "latest_recommendation": "无",
     "avg_target_price": null,
     "target_price_count": 0,
-    "latest_date": "2026-05-31"
+    "latest_date": "2026-06-30"
   }
 }
