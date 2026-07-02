@@ -104,6 +104,16 @@ def classify_market(index_data):
     growth_weak = (cyb.get("chg") is not None and sh.get("chg") is not None
                    and cyb["chg"] < sh["chg"] - 1.5)
     tot = ("%+.0f亿" % total) if total is not None else "未知"
+    if not chgs:
+        # 2026-07-02 incident: all three index chg were None (index_daily not yet
+        # settled when fetched) and the classifier silently fell through to the
+        # WEAK_REPAIR default on what was a -1218亿 RISK_OFF day. Never classify
+        # direction without index data — say so explicitly instead.
+        return {"state": "INDEX_DATA_MISSING",
+                "one_line": ("指数涨跌数据缺失,仅主力净流 " + tot
+                             + " — 不判方向(检查 index_daily 是否已结算)"),
+                "main_flow_total": total,
+                "index": {"sh": sh, "sz": sz, "cyb": cyb}}
     if up and inflow:
         state, note = "RISK_ON", "趋势恢复:指数上行+主力净流入 " + tot
     elif (up or mixed_up) and outflow:
@@ -335,6 +345,13 @@ def selftest():
                            "main_flow_total": -214.4})
     ck("market up+outflow=WEAK_REPAIR", mk2["state"] == "WEAK_REPAIR")
     ck("market one_line cites -214", "-214" in mk2["one_line"])
+    # 2026-07-02 regression: all index chg None + big outflow must NOT silently
+    # default to WEAK_REPAIR — it must say INDEX_DATA_MISSING.
+    mk3 = classify_market({"sh": {"chg": None}, "sz": {}, "cyb": {},
+                           "main_flow_total": -1218.0})
+    ck("no-index-data -> INDEX_DATA_MISSING (not fake WEAK_REPAIR)",
+       mk3["state"] == "INDEX_DATA_MISSING")
+    ck("INDEX_DATA_MISSING still cites the flow", "-1218" in mk3["one_line"])
     ck("新易盛 relative_strength", pg["300502.SZ"]["relative_strength"] is True)
     ck("组合=单一 beta DE_RISK", snap["portfolio_gate"]["portfolio_posture"] == "DE_RISK_REVIEW")
     ck("技术门 MA20 present(利通)", pg["603629.SH"]["technical"]["ma20"] is not None)
