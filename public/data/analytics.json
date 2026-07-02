@@ -1,17 +1,17 @@
 {
   "as_of": "2026-07-02",
-  "total_value": 305645.87,
+  "total_value": 302701.07,
   "total_cost": 234969.71,
-  "total_pnl": 70676.16,
-  "total_pnl_pct": 30.08,
+  "total_pnl": 67731.36,
+  "total_pnl_pct": 28.83,
   "daily_return_pct": -3.56,
-  "inception_return_pct": 1.47,
+  "inception_return_pct": 0.49,
   "hit_rate_pct": 20.0,
   "num_positions": 5,
   "sector_weights": {
-    "电子": 57.03,
-    "医药生物": 3.81,
-    "传媒互联网": 35.86,
+    "电子": 56.64,
+    "医药生物": 3.84,
+    "传媒互联网": 36.2,
     "汽车": 3.31
   },
   "note": "Beta/alpha calculations require 60+ days of NAV history. Brinson attribution requires benchmark sector weights."

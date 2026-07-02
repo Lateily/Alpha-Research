@@ -2,20 +2,10 @@
   "ticker": "300054.SZ",
   "generated_at": "2026-07-02",
   "price": 100.3,
-  "zone": "BULLISH",
-  "entry_zone": true,
+  "zone": "NEUTRAL",
+  "entry_zone": false,
   "exit_zone": true,
   "signals": [
-    {
-      "type": "BULLISH_ALIGNMENT",
-      "strength": "strong",
-      "date": "20260701",
-      "bullish": true,
-      "description": {
-        "e": "MA5(100.2) > MA20(85.3) > MA60(70.0), price above all — full bullish alignment",
-        "z": "MA5(100.2)>MA20(85.3)>MA60(70.0)，均线多头排列，趋势强"
-      }
-    },
     {
       "type": "KDJ_DEATH_CROSS",
       "strength": "strong",
@@ -28,25 +18,25 @@
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 1,
-    "total": 2
+    "total": 1
   },
   "indicators": {
     "ma5": 100.16,
     "ma20": 85.33,
-    "ma60": 70.01,
-    "rsi14": 68.0,
+    "ma60": null,
+    "rsi14": 67.9,
     "vol_ma20": 549262,
     "vol_ratio": 1.25,
     "price_vs_ma20": 17.54,
-    "price_vs_ma60": 43.27,
+    "price_vs_ma60": null,
     "change_1d": -5.35,
     "change_5d": 3.72,
     "change_20d": 48.72,
-    "macd_dif": 8.7691,
-    "macd_dea": 7.3835,
-    "macd_hist": 2.7711,
+    "macd_dif": 8.7765,
+    "macd_dea": 7.3947,
+    "macd_hist": 2.7637,
     "bb_upper": 110.27,
     "bb_mid": 85.33,
     "bb_lower": 60.4,
