@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-07-01T11:43:31Z",
+  "fetched_at": "2026-07-02T05:05:12Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -553,25 +553,11 @@
       "inst_count": 4,
       "surv_type": "特定对象调研",
       "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260402",
-      "fund_visitors": "--",
-      "rece_place": "微信小程序“投关易”",
-      "rece_mode": "业绩说明会",
-      "rece_org": "社会公众投资者",
-      "org_type": "--",
-      "comp_rece": "公司董事长 朱双全,董事、总经理 朱顺全,董事、董事会秘书、副总经理 杨平彩,独立董事 王雄元,董事、财务负责人 姚红",
-      "inst_count": 1,
-      "surv_type": "业绩说明会",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 26,
-    "total_90d": 40,
+    "total_90d": 39,
     "unique_inst_30d": 74,
     "latest_date": "2026-06-25"
   }

@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-07-01T11:43:26Z",
+  "fetched_at": "2026-07-02T05:05:07Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -175,39 +175,11 @@
       "inst_count": 2,
       "surv_type": "电话会议",
       "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260402",
-      "fund_visitors": "分析师 Tina Hou",
-      "rece_place": "比亚迪六角大楼",
-      "rece_mode": "电话会议",
-      "rece_org": "高盛",
-      "org_type": "其它",
-      "comp_rece": "吴越,常恩铭",
-      "inst_count": 2,
-      "surv_type": "电话会议",
-      "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260402",
-      "fund_visitors": "--",
-      "rece_place": "比亚迪六角大楼",
-      "rece_mode": "特定对象调研",
-      "rece_org": "受邀投资人60人",
-      "org_type": "--",
-      "comp_rece": "比亚迪集团董事会秘书、投资处总经理 李黔,比亚迪王朝总经理 路天",
-      "inst_count": 1,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 1,
-    "total_90d": 14,
+    "total_90d": 12,
     "unique_inst_30d": 1,
     "latest_date": "2026-06-09"
   }

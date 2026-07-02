@@ -1,10 +1,16 @@
 {
-  "fetched_at": "2026-07-01T11:42:59Z",
+  "fetched_at": "2026-07-02T05:04:40Z",
   "current_tier": 6000,
   "_status": "ok",
   "data": {
     "trade_cal": {
       "rows": [
+        {
+          "exchange": "SSE",
+          "cal_date": "20260702",
+          "is_open": 1,
+          "pretrade_date": "20260701"
+        },
         {
           "exchange": "SSE",
           "cal_date": "20260701",
@@ -1098,7 +1104,7 @@
           "pretrade_date": "20251231"
         }
       ],
-      "row_count": 182,
+      "row_count": 183,
       "_status": "ok"
     },
     "moneyflow_hsgt": {
