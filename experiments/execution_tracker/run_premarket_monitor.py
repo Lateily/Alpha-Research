@@ -98,8 +98,44 @@ def classify(reads):
             "high_reflexivity": state == "HIGH_REFLEXIVITY" or big_range or amplified}
 
 
-def monitor(token, portfolio=PORTFOLIO, indices=INDICES, quote_fn=None):
+def is_market_open_now(token=None, now=None):
+    """Trading-session guard. Incident (2026-06 weekend run): the monitor pulled
+    STALE last-session quotes while the market was closed and classified them as
+    HIGH_REFLEXIVITY. Never classify stale data — check session time + trade_cal.
+    Returns (open: bool, reason: str)."""
+    import datetime
+    now = now or datetime.datetime.now()
+    hm = now.strftime("%H%M")
+    if not ("0910" <= hm <= "1505"):                     # auction 09:15 .. close 15:00, small slack
+        return False, f"当前 {now.strftime('%H:%M')} 不在交易时段(09:10-15:05)"
+    date = now.strftime("%Y%m%d")
+    try:
+        d = fs._tushare_call("trade_cal", token or os.environ.get("TUSHARE_TOKEN", ""),
+                             {"exchange": "SSE", "start_date": date, "end_date": date},
+                             "cal_date,is_open")
+        items = d.get("items") or []
+        if items and not items[0][1]:
+            return False, f"{date} 非交易日(trade_cal)"
+        return True, "open"
+    except Exception:                                     # noqa: BLE001 — trade_cal unreachable
+        if now.weekday() >= 5:
+            return False, f"{date} 周末(trade_cal 不可达,按 weekday 判)"
+        return True, "open(trade_cal 不可达,按 weekday 判)"
+
+
+def monitor(token, portfolio=PORTFOLIO, indices=INDICES, quote_fn=None, market_open=None):
     """Pull realtime, read, classify. Returns an OBSERVATION dict (never sample-eligible)."""
+    if market_open is None:
+        market_open, why = is_market_open_now(token)
+    else:
+        why = "injected"
+    if not market_open:
+        return {"layer": "P1.2_premarket_monitor",
+                "sample_eligible": False, "no_trade_flag": True, "observation_only": True,
+                "market_state": "MARKET_CLOSED", "reason": why,
+                "avg_portfolio_gap": None, "single_beta_amplified": False,
+                "high_reflexivity": False, "holdings": [], "indices": [],
+                "note": "闭市/非交易时段 — 拒绝对 stale 行情分类(--force 可覆盖)"}
     quote_fn = quote_fn or (lambda tickers: fs.tushare_realtime_quotes(tickers, src="sina"))
     name_map = dict(portfolio)
     quotes = quote_fn([t for t, _ in portfolio])
@@ -174,11 +210,26 @@ def selftest():
 
     # OBSERVATION ONLY: monitor output never sample-eligible, never an order
     out = monitor(token=None, portfolio=[("A.SZ", "a"), ("B.SZ", "b")], indices=[],
-                  quote_fn=lambda ts: [_q(t, t, 96, 100, 96, 97, 95) for t in ts])
+                  quote_fn=lambda ts: [_q(t, t, 96, 100, 96, 97, 95) for t in ts],
+                  market_open=True)                       # injected: keep selftest offline/deterministic
     ck("monitor sample_eligible False", out["sample_eligible"] is False)
     ck("monitor no_trade_flag True", out["no_trade_flag"] is True)
     ck("every holding read sample_eligible False", all(h["sample_eligible"] is False for h in out["holdings"]))
     ck("monitor classifies PREMARKET_RISK", out["market_state"] == "PREMARKET_RISK")
+
+    # MARKET_CLOSED guard (2026-06 weekend incident: stale quotes classified as
+    # HIGH_REFLEXIVITY). Closed -> refuse to classify; no quote_fn ever called.
+    closed = monitor(token=None, portfolio=[("A.SZ", "a")], indices=[],
+                     quote_fn=lambda ts: (_ for _ in ()).throw(AssertionError("quote_fn must not be called when closed")),
+                     market_open=False)
+    ck("closed -> MARKET_CLOSED", closed["market_state"] == "MARKET_CLOSED")
+    ck("closed -> no holdings classified", closed["holdings"] == [])
+    ck("closed -> still sample_eligible False", closed["sample_eligible"] is False)
+    import datetime as _dt
+    ok_evening, why_evening = is_market_open_now(token="", now=_dt.datetime(2026, 7, 2, 20, 0))
+    ck("20:00 -> closed (time window, offline)", ok_evening is False and "不在交易时段" in why_evening)
+    ok_early, _ = is_market_open_now(token="", now=_dt.datetime(2026, 7, 2, 8, 0))
+    ck("08:00 -> closed (time window, offline)", ok_early is False)
 
     passed = sum(1 for _, ok in checks if ok)
     for n, ok in checks:
@@ -192,6 +243,7 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--run", action="store_true", help="live intraday observation (needs TUSHARE_TOKEN)")
     ap.add_argument("--save", action="store_true", help="also write observations/<date>_<time>.json")
+    ap.add_argument("--force", action="store_true", help="override the MARKET_CLOSED guard (testing only)")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(0 if selftest() else 1)
@@ -199,9 +251,11 @@ def main():
         token = os.environ.get("TUSHARE_TOKEN", "").strip()
         if not token:
             print("NO TUSHARE_TOKEN — run `source ~/.zprofile` first"); sys.exit(1)
-        obs = monitor(token)
+        obs = monitor(token, market_open=True if args.force else None)
         print(f"\n=== PREMARKET / OPENING OBSERVATION (sample_eligible=false) ===")
         print(f"state : {obs['market_state']} | {obs['reason']}")
+        if obs["market_state"] == "MARKET_CLOSED":
+            print(obs["note"]); print("不是买卖指令；研究信号，human executes。"); return
         print(f"avg portfolio gap : {obs['avg_portfolio_gap']:+.2%} | single-beta amplified: {obs['single_beta_amplified']}")
         for h in obs["holdings"]:
             print(f"  {h['name']} 价{h['price']} gap{h['gap']:+.2%} "

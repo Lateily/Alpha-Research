@@ -51,27 +51,48 @@ def _market_main_flow(token):
         return None
 
 
+def assert_date_consistent(fund_dates, daily_dates, index_dates):
+    """2026-07-02 incident guard. At 15:17 moneyflow_dc had settled for the day
+    while `daily` still returned the PRIOR bar -> each source's "latest" was a
+    different day and the snapshot mixed 0701 prices with 0702 fund flow
+    (overwriting a clean sample). The official sample is ALL-OR-NOTHING: every
+    source must agree on ONE trade_date, else DATA_BLOCKED — rerun later.
+    Returns the single agreed trade_date."""
+    all_dates = set(fund_dates) | set(daily_dates) | set(index_dates)
+    if len(all_dates) != 1 or None in all_dates:
+        raise SystemExit(
+            "DATA_BLOCKED: settlement-date mismatch across sources "
+            f"fund={sorted(map(str, set(fund_dates)))} daily={sorted(map(str, set(daily_dates)))} "
+            f"index={sorted(map(str, set(index_dates)))} — 部分源已结算、部分未结算,稍后重跑")
+    return all_dates.pop()
+
+
 def build(token):
-    idx = {}
+    idx, index_dates = {}, []
     for code, key in INDICES:
-        idx[key] = {"chg": _index_chg(token, code).get("pct_chg")}
+        row = _index_chg(token, code)
+        idx[key] = {"chg": row.get("pct_chg")}
+        index_dates.append(row.get("trade_date"))
         time.sleep(0.4)
     idx["main_flow_total"] = _market_main_flow(token)     # 亿, into the market gate
-    td, trade_date = [], None
+    td, fund_dates, daily_dates = [], set(), set()
     for code, name in PORTFOLIO:
         f = fs.get_stock_fund(code, source="tushare", token=token)
         time.sleep(0.4)
         b = fs.tushare_daily(code, token=token)
         time.sleep(0.4)
-        trade_date = b["date"]
+        fund_dates.add(f.get("date"))
+        daily_dates.add(b.get("date"))
         td.append({"ticker": code, "name": name, "sector": SECTOR,
                    "price": b["close"], "change_pct": b["pct_chg"],
                    "main_flow": f["main"], "super_large": f["super_large"], "small": f["small"],
                    "ohlc_bars": b["ohlc_bars"]})
+    trade_date = assert_date_consistent(fund_dates, daily_dates, index_dates)
     snap = et.build_snapshot(idx, td, [c for c, _ in PORTFOLIO],
                              timestamp=f"{trade_date} close (official)")
     sigs = et.make_paper_signals(snap)
     snap["official_sample"] = True
+    snap["date_consistency_check"] = "passed"
     snap["data_source"] = "tushare:moneyflow_dc+daily+index_daily+moneyflow_mkt_dc"
     for s in sigs:
         s["official_sample"] = True
@@ -89,7 +110,35 @@ def append_log(path, sigs):
     return len(added), len(log)
 
 
+def selftest():
+    """Offline regression for the 2026-07-02 mixed-date incident."""
+    checks = []
+
+    def ck(n, c):
+        checks.append((n, bool(c)))
+
+    ck("consistent dates pass",
+       assert_date_consistent({"20260702"}, {"20260702"}, ["20260702"] * 3) == "20260702")
+    try:  # the exact 07-02 shape: fund settled, daily still on the prior bar
+        assert_date_consistent({"20260702"}, {"20260701"}, ["20260702"])
+        ck("mixed-date refused (DATA_BLOCKED)", False)
+    except SystemExit as e:
+        ck("mixed-date refused (DATA_BLOCKED)", "DATA_BLOCKED" in str(e))
+    try:  # a missing (None) index date must also refuse
+        assert_date_consistent({"20260702"}, {"20260702"}, [None, "20260702"])
+        ck("None date refused", False)
+    except SystemExit as e:
+        ck("None date refused", "DATA_BLOCKED" in str(e))
+    passed = sum(1 for _, ok in checks if ok)
+    for n, ok in checks:
+        print(f"  [{'PASS' if ok else 'FAIL'}] {n}")
+    print(f"\nselftest: {passed}/{len(checks)} passed")
+    return passed == len(checks)
+
+
 def main():
+    if "--selftest" in sys.argv:
+        sys.exit(0 if selftest() else 1)
     token = os.environ.get("TUSHARE_TOKEN", "").strip()
     if not token:
         print("NO TUSHARE_TOKEN — run `source ~/.zprofile` first")
