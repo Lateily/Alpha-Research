@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-03T04:51:31.943531+00:00",
+  "generated_at": "2026-07-03T11:11:57.699443+00:00",
   "tickers_scored": 9,
   "summary": {
     "entry_candidates": [],
@@ -72,7 +72,7 @@
         "MACD_GOLDEN_CROSS",
         "KDJ_OVERBOUGHT"
       ],
-      "computed_at": "2026-07-03T04:51:31.943230+00:00"
+      "computed_at": "2026-07-03T11:11:57.699119+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -111,14 +111,14 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-07-03T04:51:31.943119+00:00"
+      "computed_at": "2026-07-03T11:11:57.698987+00:00"
     },
     {
       "ticker": "002594.SZ",
       "score": 6,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "BEARISH",
+      "zone": "NEUTRAL",
       "regime": "PERMISSIVE",
       "vp_score": 48.0,
       "vp_signal_type": null,
@@ -150,7 +150,7 @@
       "signal_types": [
         "RSI_RECOVERING"
       ],
-      "computed_at": "2026-07-03T04:51:31.942873+00:00"
+      "computed_at": "2026-07-03T11:11:57.698691+00:00"
     },
     {
       "ticker": "175.HK",
@@ -189,14 +189,14 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-07-03T04:51:31.942970+00:00"
+      "computed_at": "2026-07-03T11:11:57.698808+00:00"
     },
     {
       "ticker": "300054.SZ",
       "score": 0,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "BULLISH",
+      "zone": "NEUTRAL",
       "regime": "NEUTRAL",
       "vp_score": 47.0,
       "vp_signal_type": null,
@@ -211,7 +211,7 @@
       "rationale_e": "RSI 58 | Price vs MA20 +8.0% | VP 47",
       "rationale_z": "RSI 58 | 距MA20 +8.0% | VP 47",
       "signal_types": [],
-      "computed_at": "2026-07-03T04:51:31.943041+00:00"
+      "computed_at": "2026-07-03T11:11:57.698892+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -278,7 +278,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-07-03T04:51:31.943332+00:00"
+      "computed_at": "2026-07-03T11:11:57.699216+00:00"
     },
     {
       "ticker": "700.HK",
@@ -300,7 +300,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-07-03T04:51:31.943468+00:00"
+      "computed_at": "2026-07-03T11:11:57.699373+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -322,14 +322,14 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-07-03T04:51:31.943521+00:00"
+      "computed_at": "2026-07-03T11:11:57.699433+00:00"
     },
     {
       "ticker": "688120.SH",
       "score": -8,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
-      "zone": "BULLISH",
+      "zone": "NEUTRAL",
       "regime": "NEUTRAL",
       "vp_score": 45.0,
       "vp_signal_type": null,
@@ -361,7 +361,7 @@
       "signal_types": [
         "KDJ_DEATH_CROSS"
       ],
-      "computed_at": "2026-07-03T04:51:31.943405+00:00"
+      "computed_at": "2026-07-03T11:11:57.699297+00:00"
     }
   ]
 }

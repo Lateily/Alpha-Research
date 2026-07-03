@@ -1,27 +1,10 @@
 {
-  "generated_at": "2026-07-03T04:51:32.027004+00:00",
+  "generated_at": "2026-07-03T11:11:57.793815+00:00",
   "date": "2026-07-03",
-  "brief_e": "1 Exposure Review | 1 Risk Review",
-  "brief_z": "1 敞口复核 | 1 风险复核",
+  "brief_e": "1 Exposure Review",
+  "brief_z": "1 敞口复核",
   "decisions": {
     "held": [
-      {
-        "ticker": "002594.SZ",
-        "name": "比亚迪",
-        "status": "HELD",
-        "action": "REVIEW_STOP",
-        "priority": "HIGH",
-        "confidence": 6,
-        "pnl_pct": -10.01,
-        "holding_days": 93,
-        "weight_pct": 3.4,
-        "vp_score": 48,
-        "confluence": 6,
-        "reason_e": "Position in drawdown -10.0%. Signal: NEUTRAL (score 6). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-10.0%，信号评分6。复核投资逻辑，检查wrongIf条件是否触发。",
-        "entry_target": null,
-        "exit_trigger": "P&L -10.0% ≤ -10.0% → thesis review required"
-      },
       {
         "ticker": "300308.SZ",
         "name": "中际旭创",
@@ -29,13 +12,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 10,
-        "pnl_pct": 69.95,
+        "pnl_pct": 63.79,
         "holding_days": 115,
-        "weight_pct": 56.9,
+        "weight_pct": 55.9,
         "vp_score": 48,
         "confluence": 10,
-        "reason_e": "Large unrealised gain +70.0% after 115d. Signal still NEUTRAL (score 10). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+70.0%（持有115天），信号10仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +63.8% after 115d. Signal still NEUTRAL (score 10). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+63.8%（持有115天），信号10仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -48,7 +31,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 115,
-        "weight_pct": 3.8,
+        "weight_pct": 3.9,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 115d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +3.0%.",
@@ -65,7 +48,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 108,
-        "weight_pct": 22.8,
+        "weight_pct": 23.2,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 108d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -82,11 +65,28 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 101,
-        "weight_pct": 13.1,
+        "weight_pct": 13.4,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 101d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
         "reason_z": "信号中性（评分0），浮盈+0.0%，持有101天，无新触发条件。RSI 56 | 距MA20 +2.8%。",
+        "entry_target": null,
+        "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
+      },
+      {
+        "ticker": "002594.SZ",
+        "name": "比亚迪",
+        "status": "HELD",
+        "action": "HOLD",
+        "priority": "LOW",
+        "confidence": 6,
+        "pnl_pct": -8.03,
+        "holding_days": 93,
+        "weight_pct": 3.5,
+        "vp_score": 48,
+        "confluence": 6,
+        "reason_e": "Signal neutral (score 6). P&L -8.0% after 93d. Paper-hold — no new review trigger. Bullish: Rsi Recovering | RSI 40 | Price vs MA20 -3.8% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分6），浮盈-8.0%，持有93天，无新触发条件。多头：RSI回升 | RSI 40 | 距MA20 -3.8% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%"
       }
@@ -164,23 +164,10 @@
   },
   "buy_watches": [],
   "portfolio_risk": [
-    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 57% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +70.0% — exposure-review condition (sizable unrealised gain)",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -10.0% — review thesis and wrongIf conditions"
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 56% of portfolio — above 40.0% limit",
+    "PROFIT REVIEW: 300308.SZ +63.8% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "002594.SZ",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
-      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
-      "indicator": "revenue_growth",
-      "actual": null,
-      "threshold": null
-    },
     {
       "ticker": "300308.SZ",
       "severity": "NONE",
@@ -192,6 +179,18 @@
       "indicator": "hyperscaler_basket_drawdown_pct",
       "actual": 14.4,
       "threshold": 25.0
+    },
+    {
+      "ticker": "002594.SZ",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
+      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
+      "indicator": "revenue_growth",
+      "actual": null,
+      "threshold": null
     },
     {
       "ticker": "603233.SH",

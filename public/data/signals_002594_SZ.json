@@ -2,7 +2,7 @@
   "ticker": "002594.SZ",
   "generated_at": "2026-07-03",
   "price": 83.57,
-  "zone": "BEARISH",
+  "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": false,
   "signals": [
@@ -12,8 +12,8 @@
       "date": "20260702",
       "bullish": true,
       "description": {
-        "e": "RSI recovering 29.8→39.5 — momentum rebuilding",
-        "z": "RSI从29.8回升至39.5，动能修复"
+        "e": "RSI recovering 30.0→39.6 — momentum rebuilding",
+        "z": "RSI从30.0回升至39.6，动能修复"
       }
     }
   ],
@@ -25,18 +25,18 @@
   "indicators": {
     "ma5": 80.35,
     "ma20": 86.86,
-    "ma60": 95.08,
-    "rsi14": 39.5,
+    "ma60": null,
+    "rsi14": 39.6,
     "vol_ma20": 439602,
     "vol_ratio": 1.88,
     "price_vs_ma20": -3.79,
-    "price_vs_ma60": -12.11,
+    "price_vs_ma60": null,
     "change_1d": 3.61,
     "change_5d": 1.67,
     "change_20d": -11.86,
-    "macd_dif": -3.9015,
-    "macd_dea": -3.6078,
-    "macd_hist": -0.5874,
+    "macd_dif": -3.9227,
+    "macd_dea": -3.639,
+    "macd_hist": -0.5674,
     "bb_upper": 96.45,
     "bb_mid": 86.86,
     "bb_lower": 77.27,
