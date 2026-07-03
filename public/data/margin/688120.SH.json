@@ -1,23 +1,10 @@
 {
   "_status": "ok",
   "ticker": "688120.SH",
-  "fetched_at": "2026-07-02T11:09:40Z",
+  "fetched_at": "2026-07-03T04:51:31Z",
   "api_used": "margin_detail",
   "window_days": 30,
   "records": [
-    {
-      "trade_date": "20260602",
-      "ts_code": "688120.SH",
-      "rzye": 1287046299.0,
-      "rqye": 10518316.24,
-      "rzmre": 120864998.0,
-      "rqyl": 42974.0,
-      "rzche": 160217137.0,
-      "rqchl": 4483,
-      "rqmcl": 2021,
-      "rzrqye": 1297564615.24,
-      "name": null
-    },
     {
       "trade_date": "20260603",
       "ts_code": "688120.SH",
@@ -277,16 +264,29 @@
       "rqmcl": 35284,
       "rzrqye": 1631683985.0,
       "name": null
+    },
+    {
+      "trade_date": "20260702",
+      "ts_code": "688120.SH",
+      "rzye": 1686264852.0,
+      "rqye": 40077344.0,
+      "rzmre": 516187657.0,
+      "rqyl": 142624.0,
+      "rzche": 417796319.0,
+      "rqchl": 28339,
+      "rqmcl": 38204,
+      "rzrqye": 1726342196.0,
+      "name": null
     }
   ],
   "summary": {
     "total_count": 21,
-    "latest_date": "2026-07-01",
-    "latest_rzye": 1587873515.0,
-    "latest_rqye": 43810470.0,
-    "rzye_change_30d_pct": 23.373457212357827,
-    "rqye_change_30d_pct": 316.515999332608,
-    "net_leverage_change_30d": -293.14254212025014,
+    "latest_date": "2026-07-02",
+    "latest_rzye": 1686264852.0,
+    "latest_rqye": 40077344.0,
+    "rzye_change_30d_pct": 23.690422053940114,
+    "rqye_change_30d_pct": 301.0652647121709,
+    "net_leverage_change_30d": -277.3748426582308,
     "signal_level": "LEVERAGE_BEAR_HIGH"
   }
 }
