@@ -55,6 +55,7 @@ def read_quote(q):
         "ticker": q.get("ticker"), "name": q.get("name"), "price": price,
         "gap": round(gap, 4),
         "open": op, "from_open": round(price / op - 1, 4) if (has_open and price) else None,
+        "from_high": round(price / hi - 1, 4) if (hi and price) else None,
         "gapped_up": gapped_up, "faded": faded, "recovered": recovered,
         "intraday_range": round(rng, 4) if rng is not None else None,
         "sample_eligible": False,
@@ -96,6 +97,70 @@ def classify(reads):
             "single_beta_same_direction": single_beta,
             "single_beta_amplified": amplified,
             "high_reflexivity": state == "HIGH_REFLEXIVITY" or big_range or amplified}
+
+
+# ---------------------------------------------------------------- nowcast ----
+# Intraday main-force NOWCAST (P3 of the output-contract initiative). A nowcast is
+# a PREDICTION of the settle main-flow direction, never a statement of fact; every
+# record is append-only, sample_eligible:false, and scored post-close by
+# nowcast_evaluator.py against Tushare moneyflow_dc (P4). All thresholds
+# [unvalidated intuition]. Calibration reminder: flow accuracy != return edge.
+NOWCAST_LOG = os.path.join(HERE, "nowcast_log.json")
+NOWCAST_PREDICTS = {          # state -> predicted settle main-flow direction
+    "ACCUMULATION_PROBABLE": 1, "RECLAIM_ATTEMPT": 1,
+    "DISTRIBUTION_PROBABLE": -1, "OPENING_FADE": -1, "FAKE_STRENGTH": -1,
+}
+
+
+def nowcast_from_read(r):
+    """Map one intraday read -> (state, confidence) or None when no pattern fires.
+    Priority order matters: data guard -> fake strength -> fades -> reclaim -> accum."""
+    if r.get("price") is None or not r.get("open") or r.get("from_open") is None:
+        return ("DATA_INSUFFICIENT", 0.0)
+    gap, fo = r.get("gap") or 0.0, r["from_open"]
+    fh = r.get("from_high")
+    if gap >= 0.02 and fh is not None and fh <= -0.04:
+        return ("FAKE_STRENGTH", min(0.9, 0.5 + abs(fh) * 5))      # up big but sold off the high
+    if r.get("gapped_up") and r.get("faded") and fo <= -0.01:
+        return ("OPENING_FADE", min(0.9, 0.5 + abs(fo) * 10))
+    if gap <= -0.005 and fo <= -0.015:
+        return ("DISTRIBUTION_PROBABLE", min(0.9, 0.5 + abs(fo) * 8))   # gap-down, still sinking
+    if gap <= -0.01 and fo >= 0.015:
+        return ("RECLAIM_ATTEMPT", min(0.9, 0.5 + fo * 8))         # gap-down being bought back
+    if gap >= 0.005 and fo >= 0 and fh is not None and fh >= -0.015:
+        return ("ACCUMULATION_PROBABLE", min(0.9, 0.5 + gap * 8))  # steady bid, near day high
+    return None                                                     # quiet tape -> no nowcast
+
+
+def log_nowcasts(reads, date, checkpoint, log_path=NOWCAST_LOG):
+    """Append nowcasts for the given reads. Append-only + dedup on
+    (ticker,date,checkpoint) — a record is NEVER retro-edited (no-lookahead DNA).
+    Returns the list of newly appended records."""
+    import hashlib
+    log = json.load(open(log_path)) if os.path.exists(log_path) else []
+    seen = {(x["ticker"], x["date"], x["checkpoint"]) for x in log}
+    added = []
+    for r in reads:
+        nc = nowcast_from_read(r)
+        if nc is None:
+            continue
+        state, conf = nc
+        key = (r.get("ticker"), date, checkpoint)
+        if key[0] is None or key in seen:
+            continue
+        rec = {
+            "nowcast_id": hashlib.md5(f"{key[0]}|{date}|{checkpoint}|{state}".encode()).hexdigest()[:12],
+            "ticker": r.get("ticker"), "name": r.get("name"),
+            "date": date, "checkpoint": checkpoint,
+            "state": state, "confidence": round(conf, 2),
+            "predicted_flow_dir": NOWCAST_PREDICTS.get(state),   # None for DATA_INSUFFICIENT
+            "features": {k: r.get(k) for k in ("gap", "from_open", "from_high", "intraday_range")},
+            "sample_eligible": False, "no_trade_flag": True, "scored": False,
+        }
+        log.append(rec); seen.add(key); added.append(rec)
+    with open(log_path, "w") as fh:
+        json.dump(log, fh, ensure_ascii=False, indent=2)
+    return added
 
 
 def is_market_open_now(token=None, now=None):
@@ -231,6 +296,41 @@ def selftest():
     ok_early, _ = is_market_open_now(token="", now=_dt.datetime(2026, 7, 2, 8, 0))
     ck("08:00 -> closed (time window, offline)", ok_early is False)
 
+    # ---- nowcast layer (P3): state mapping + append-only log ----
+    def _r(gap, fo, fh, gapped_up=False, faded=False):
+        return {"ticker": "T.SZ", "name": "t", "price": 100.0, "open": 100.0,
+                "gap": gap, "from_open": fo, "from_high": fh,
+                "gapped_up": gapped_up, "faded": faded, "intraday_range": 0.03}
+    ck("FAKE_STRENGTH (up big, sold off high)",
+       nowcast_from_read(_r(0.03, -0.02, -0.05))[0] == "FAKE_STRENGTH")
+    ck("OPENING_FADE", nowcast_from_read(_r(0.02, -0.02, -0.02, True, True))[0] == "OPENING_FADE")
+    ck("DISTRIBUTION_PROBABLE (gap-down sinking)",
+       nowcast_from_read(_r(-0.02, -0.02, -0.03))[0] == "DISTRIBUTION_PROBABLE")
+    ck("RECLAIM_ATTEMPT (gap-down bought back)",
+       nowcast_from_read(_r(-0.02, 0.02, -0.005))[0] == "RECLAIM_ATTEMPT")
+    ck("ACCUMULATION_PROBABLE (steady bid near high)",
+       nowcast_from_read(_r(0.015, 0.005, -0.01))[0] == "ACCUMULATION_PROBABLE")
+    ck("quiet tape -> no nowcast", nowcast_from_read(_r(0.001, 0.0, -0.02)) is None)
+    ck("missing open -> DATA_INSUFFICIENT",
+       nowcast_from_read({"price": 1.0, "open": None, "from_open": None})[0] == "DATA_INSUFFICIENT")
+    ck("direction map: fade predicts outflow", NOWCAST_PREDICTS["OPENING_FADE"] == -1)
+    ck("direction map: reclaim predicts inflow", NOWCAST_PREDICTS["RECLAIM_ATTEMPT"] == 1)
+
+    import tempfile
+    tmp = tempfile.mktemp(suffix=".json")
+    try:
+        reads = [_r(-0.02, -0.02, -0.03), _r(0.001, 0.0, -0.02)]   # 1 signal + 1 quiet
+        added = log_nowcasts(reads, "20260703", "1030", log_path=tmp)
+        ck("log appends only pattern-firing reads", len(added) == 1)
+        ck("logged record sample_eligible false", added[0]["sample_eligible"] is False)
+        ck("logged record carries predicted dir", added[0]["predicted_flow_dir"] == -1)
+        ck("logged record starts unscored", added[0]["scored"] is False)
+        again = log_nowcasts(reads, "20260703", "1030", log_path=tmp)
+        ck("dedup on (ticker,date,checkpoint)", len(again) == 0)
+        ck("log persisted", len(json.load(open(tmp))) == 1)
+    finally:
+        os.path.exists(tmp) and os.remove(tmp)
+
     passed = sum(1 for _, ok in checks if ok)
     for n, ok in checks:
         print(f"  [{'PASS' if ok else 'FAIL'}] {n}")
@@ -244,6 +344,9 @@ def main():
     ap.add_argument("--run", action="store_true", help="live intraday observation (needs TUSHARE_TOKEN)")
     ap.add_argument("--save", action="store_true", help="also write observations/<date>_<time>.json")
     ap.add_argument("--force", action="store_true", help="override the MARKET_CLOSED guard (testing only)")
+    ap.add_argument("--nowcast", action="store_true",
+                    help="also log per-ticker main-force nowcasts (append-only, scored post-close)")
+    ap.add_argument("--checkpoint", default=None, help="checkpoint label for the nowcast log, e.g. 1030")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(0 if selftest() else 1)
@@ -256,6 +359,14 @@ def main():
         print(f"state : {obs['market_state']} | {obs['reason']}")
         if obs["market_state"] == "MARKET_CLOSED":
             print(obs["note"]); print("不是买卖指令；研究信号，human executes。"); return
+        if args.nowcast:
+            import datetime
+            now = datetime.datetime.now()
+            cp = args.checkpoint or now.strftime("%H%M")
+            added = log_nowcasts(obs["holdings"], now.strftime("%Y%m%d"), cp)
+            print(f"nowcast: +{len(added)} logged @checkpoint {cp} (prediction-not-truth, scored post-close)")
+            for a in added:
+                print(f"  {a['name']}: {a['state']} conf{a['confidence']} predict_flow={'+' if a['predicted_flow_dir']==1 else '-' if a['predicted_flow_dir']==-1 else '?'}")
         print(f"avg portfolio gap : {obs['avg_portfolio_gap']:+.2%} | single-beta amplified: {obs['single_beta_amplified']}")
         for h in obs["holdings"]:
             print(f"  {h['name']} 价{h['price']} gap{h['gap']:+.2%} "
