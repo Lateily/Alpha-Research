@@ -28,8 +28,22 @@ REQUIRED_SECTIONS = ("variant_view", "clean_valuation", "catalyst_map",
 MIN_SELF_AUDIT_ANSWERS = 4
 
 
+VALUATION_ANCHORS = ("pe_ttm", "pe", "pb", "ps", "ev_ebitda", "dividend_yield",
+                     "股息", "normalized_bridge", "dcf", "rdcf")
+
+# Codex adversarial review of PR #118 (blocking): presence-only checks let a WRONG
+# TYPE bypass every quality rule (`execution_gate="BUY_NOW"` passed because the
+# posture check only ran `if isinstance(dict)`). Fix: every section has a REQUIRED
+# TYPE; wrong type is itself a violation, and typed rules then always apply.
+SECTION_TYPES = {
+    "variant_view": dict, "clean_valuation": dict, "catalyst_map": list,
+    "risk_mitigation": list, "execution_gate": dict, "portfolio_impact": dict,
+    "paper_plan": dict, "self_audit": (list, dict),
+}
+
+
 def _present(v):
-    """A section is present if it is a non-empty dict/list/str."""
+    """A value is present if it is a non-empty dict/list/str."""
     if v is None:
         return False
     if isinstance(v, (dict, list, str)):
@@ -38,36 +52,63 @@ def _present(v):
 
 
 def validate_pack(pack):
-    """Return (ok, problems). Checks presence of all 8 sections plus the quality
-    rules that make each section mean something (not just exist)."""
+    """Return (ok, problems). Strict schema: every section must exist, BE THE RIGHT
+    TYPE, and satisfy the quality rules that make it mean something."""
     problems = []
     if not isinstance(pack, dict):
         return False, ["pack must be a dict"]
 
     for sec in REQUIRED_SECTIONS:
-        if not _present(pack.get(sec)):
+        v = pack.get(sec)
+        if not _present(v):
             problems.append(f"missing section: {sec}")
+        elif not isinstance(v, SECTION_TYPES[sec]):
+            tname = getattr(SECTION_TYPES[sec], "__name__", "list/dict")
+            problems.append(f"{sec} must be a {tname}, got {type(v).__name__}")
 
-    # variant view must state both sides of the disagreement
+    # variant view: both sides of the disagreement + how it is measured
     vv = pack.get("variant_view")
     if isinstance(vv, dict):
-        for k in ("market_believes", "we_believe"):
+        for k in ("market_believes", "we_believe", "measured_by"):
             if not _present(vv.get(k)):
                 problems.append(f"variant_view.{k} missing")
 
+    # clean valuation: sector caliber + 盈利位置 + at least one valuation anchor
+    cv = pack.get("clean_valuation")
+    if isinstance(cv, dict):
+        if not _present(cv.get("caliber")):
+            problems.append("clean_valuation.caliber missing (分行业口径)")
+        if not _present(cv.get("盈利位置")) and not _present(cv.get("earnings_position")):
+            problems.append("clean_valuation.盈利位置 missing")
+        if not any(_present(cv.get(a)) or isinstance(cv.get(a), (int, float)) for a in VALUATION_ANCHORS):
+            problems.append(f"clean_valuation has no valuation anchor ({'/'.join(VALUATION_ANCHORS[:4])}/...)")
+
+    # catalyst map: structured items, each with window/event/verifies
+    cm = pack.get("catalyst_map")
+    if isinstance(cm, list):
+        for i, item in enumerate(cm):
+            if not isinstance(item, dict):
+                problems.append(f"catalyst_map[{i}] must be a dict")
+                continue
+            for k in ("window", "event", "verifies"):
+                if not _present(item.get(k)):
+                    problems.append(f"catalyst_map[{i}].{k} missing")
+
     # every risk must carry a mitigation or a wrong-if — a bare risk list is banned
     rm = pack.get("risk_mitigation")
-    if isinstance(rm, list) and rm:
+    if isinstance(rm, list):
         for i, item in enumerate(rm):
             if not isinstance(item, dict) or not _present(item.get("risk")):
                 problems.append(f"risk_mitigation[{i}] has no risk")
             elif not (_present(item.get("mitigation")) or _present(item.get("wrong_if"))):
                 problems.append(f"risk_mitigation[{i}] '{str(item.get('risk'))[:20]}' has no mitigation/wrong_if")
 
-    # execution gate posture must come from the enum
+    # execution gate: posture MANDATORY and from the enum
     eg = pack.get("execution_gate")
-    if isinstance(eg, dict) and _present(eg.get("posture")):
-        if eg["posture"] not in EXECUTION_POSTURES:
+    if isinstance(eg, dict):
+        if not _present(eg.get("posture")):
+            problems.append("execution_gate.posture missing")
+        elif eg["posture"] not in EXECUTION_POSTURES:
             problems.append(f"execution_gate.posture '{eg['posture']}' not in enum")
 
     # portfolio impact must address single-beta + paper risk budget
@@ -78,15 +119,18 @@ def validate_pack(pack):
         if not _present(pi.get("paper_risk_budget")):
             problems.append("portfolio_impact.paper_risk_budget missing")
 
-    # paper plan: no_trade_flag mandatory; a long setup must be stop < entry < target
+    # paper plan: numeric entry/stop/target MANDATORY + no_trade_flag + stop<entry<target
     pp = pack.get("paper_plan")
-    if isinstance(pp, dict) and _present(pp):
+    if isinstance(pp, dict):
         if pp.get("no_trade_flag") is not True:
             problems.append("paper_plan.no_trade_flag must be true")
         e, s, t = pp.get("entry_review"), pp.get("stop_reference"), pp.get("take_profit_reference")
-        if all(isinstance(x, (int, float)) for x in (e, s, t)):
-            if not (s < e < t):
-                problems.append(f"paper_plan mutilated: need stop<entry<target, got {s}/{e}/{t}")
+        missing = [k for k, x in (("entry_review", e), ("stop_reference", s),
+                                  ("take_profit_reference", t)) if not isinstance(x, (int, float))]
+        if missing:
+            problems.append(f"paper_plan missing numeric {'/'.join(missing)}")
+        elif not (s < e < t):
+            problems.append(f"paper_plan mutilated: need stop<entry<target, got {s}/{e}/{t}")
 
     # self-audit must actually be answered, not a placeholder
     sa = pack.get("self_audit")
@@ -161,6 +205,44 @@ def selftest():
     # placeholder self-audit refused
     p = _complete_pack(); p["self_audit"] = ["ok"]
     ck("placeholder self-audit refused", not validate_pack(p)[0])
+
+    # ---- Codex adversarial probes (PR #118 review, blocking finding) ----
+    # wrong TYPES must not bypass the gate: non-empty strings previously passed
+    # every isinstance-gated quality rule.
+    p = _complete_pack()
+    p["risk_mitigation"] = "bare risk string"
+    p["execution_gate"] = "BUY_NOW"
+    p["portfolio_impact"] = "none"
+    p["paper_plan"] = "entry 10 stop 11 target 9"
+    p["self_audit"] = "ok"
+    ok, problems = validate_pack(p)
+    ck("adversarial string-typed pack refused", not ok)
+    ck("adversarial finds >=5 type violations", len([x for x in problems if "must be a" in x]) >= 5)
+    ck("BUY_NOW cannot slip through as a string", any("execution_gate must be a dict" in x for x in problems))
+
+    p = _complete_pack(); p["paper_plan"] = {"no_trade_flag": True}   # no numbers
+    ok, problems = validate_pack(p)
+    ck("paper_plan without entry/stop/target refused", not ok and any("missing numeric" in x for x in problems))
+
+    p = _complete_pack(); p["catalyst_map"] = "later"
+    ck("catalyst_map as prose refused", not validate_pack(p)[0])
+    p = _complete_pack(); p["catalyst_map"] = [{"event": "半年报"}]   # missing window/verifies
+    ok, problems = validate_pack(p)
+    ck("catalyst item missing window/verifies refused",
+       not ok and any("window" in x for x in problems) and any("verifies" in x for x in problems))
+
+    p = _complete_pack(); p["clean_valuation"] = {"note": "x"}        # no caliber/盈利位置/anchor
+    ok, problems = validate_pack(p)
+    ck("valuation without caliber refused", not ok and any("caliber" in x for x in problems))
+    ck("valuation without anchor refused", any("anchor" in x for x in problems))
+
+    p = _complete_pack(); p["variant_view"] = {"market_believes": "X", "we_believe": "Y"}
+    ok, problems = validate_pack(p)
+    ck("variant_view without measured_by refused", not ok and any("measured_by" in x for x in problems))
+
+    p = _complete_pack(); p["execution_gate"] = {"levels": {"承接": 1}}  # dict but no posture
+    ok, problems = validate_pack(p)
+    ck("execution_gate without posture refused", not ok and any("posture missing" in x for x in problems))
 
     # verdict message carries the reasons
     p = _complete_pack(); p.pop("catalyst_map")
