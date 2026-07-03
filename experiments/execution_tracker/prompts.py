@@ -38,6 +38,12 @@ REQUIRED_MARKERS = [
     "factpack", "red-team",
     # the no-claim-before-30 rule
     "30",
+    # intraday nowcast is prediction-not-truth (scored vs settle)
+    "ACCUMULATION_PROBABLE", "FAKE_STRENGTH", "DATA_INSUFFICIENT", "nowcast",
+    # the output-completeness contract (Research Decision Pack)
+    "Research Decision Pack", "REPORT_INCOMPLETE", "Portfolio Impact",
+    # TradingView demoted to charting/SMC aid
+    "never an official data source",
 ]
 
 # Phrases a *generated summary* must never contain as guidance. Exposed for the
