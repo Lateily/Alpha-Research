@@ -131,8 +131,10 @@ def _advance(entry, bars):
                       else entry["stop_reference"])                # gap-down exits worse
                 reason = "stop_and_target_same_bar->stop" if tgt_hit else "stop"
             elif tgt_hit:
-                px = (b["open"] if b["open"] > entry["take_profit_reference"]
-                      else entry["take_profit_reference"])         # capped at target
+                # CAPPED AT TARGET even when price gaps above it — taking the open on a
+                # gap-up would be an optimistic fill, violating the module's own iron
+                # law (line caught by Codex review of #120: code deviated from doc).
+                px = entry["take_profit_reference"]
                 reason = "target"
             else:
                 continue
@@ -246,6 +248,19 @@ def selftest():
     ck("gap-up fill at open 113 (worse than 110)", pf3[0]["fill_price"] == 113)
     ck("target exit at 130 (capped)", pf3[0]["exit_price"] == 130)
     ck("target reason", pf3[0]["exit_reason"] == "target")
+
+    # gap ABOVE target must still exit AT the target (no optimistic fills) —
+    # regression for the code-vs-doc deviation caught in the #120 review
+    bars_gap_above_target = [
+        {"date": "20260101", "open": 100, "high": 104, "low": 99, "close": 103},
+        {"date": "20260102", "open": 109, "high": 112, "low": 108, "close": 111},  # fill @110
+        {"date": "20260103", "open": 135, "high": 140, "low": 133, "close": 138},  # open>130 target
+    ]
+    pf4 = []
+    register_entry(pf4, ticker="T.SZ", name="测试", setup="RECLAIM", registered_at="20260101",
+                   entry_review_price=110, stop_reference=105, take_profit_reference=130)
+    update_portfolio(pf4, token=None, series_fn=lambda *_: bars_gap_above_target)
+    ck("gap ABOVE target still exits at 130 (no optimistic fill)", pf4[0]["exit_price"] == 130)
 
     # idempotent: re-running update does nothing to closed entries
     ck("idempotent on closed", update_portfolio(pf3, token=None, series_fn=lambda *_: bars_gap_then_target) == 0)
