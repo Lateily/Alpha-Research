@@ -119,12 +119,28 @@ def register_order(fund, orders, decision_log, *, ticker, name, theme, setup,
     shares, notional, risk_cny = size_order(nav, entry, stop, risk_pct)
     if shares <= 0:
         return refuse("sized to 0 shares (risk budget too small vs stop distance)")
-    theme_notional = sum(o["shares"] * o["entry_review_price"] for o in _open_orders(orders)
-                         if o.get("theme") == theme) + notional
-    if theme_notional > nav * MAX_THEME_PCT:
-        return refuse(f"theme {theme} would be {theme_notional/nav:.0%} > {MAX_THEME_PCT:.0%}")
-    if fund["cash"] - notional < nav * MIN_CASH_PCT:
-        return refuse(f"cash floor: fill would leave {(fund['cash']-notional)/nav:.0%} < {MIN_CASH_PCT:.0%}")
+
+    # Codex adversarial review of #120 (blocking 2): theme exposure must use CURRENT
+    # marks for filled positions — entry-price sums under-count winners and let a
+    # theme already past 40% keep adding.
+    theme_exposure = notional
+    for o in _open_orders(orders):
+        if o.get("theme") != theme:
+            continue
+        if o["status"] == "filled":
+            theme_exposure += o["shares"] * (marks or {}).get(o["ticker"], o["fill_price"])
+        else:
+            theme_exposure += o["notional"]
+    if theme_exposure > nav * MAX_THEME_PCT:
+        return refuse(f"theme {theme} mark-aware exposure would be {theme_exposure/nav:.0%} > {MAX_THEME_PCT:.0%}")
+
+    # Codex adversarial review of #120 (blocking 1): pending orders RESERVE cash —
+    # several pendings can each pass a per-order check yet jointly breach the floor
+    # if they all fill.
+    reserved_pending = sum(o["notional"] for o in orders if o["status"] == "pending")
+    if fund["cash"] - reserved_pending - notional < nav * MIN_CASH_PCT:
+        return refuse(f"cash floor: cash {fund['cash']:,.0f} − pending reserve {reserved_pending:,.0f} "
+                      f"− new {notional:,.0f} would leave < {MIN_CASH_PCT:.0%} NAV")
 
     order = {
         "entry_id": f"{ticker}_{registered_at}_{setup}",
@@ -341,6 +357,47 @@ def selftest():
     ck("tighten stop allowed", okt and orders3[0]["stop_reference"] == 97)
     okl, _ = tighten_stop(orders3, dlog3, "S.SZ", 94, "20260706", "loosen attempt")
     ck("loosen stop REFUSED", okl is False and orders3[0]["stop_reference"] == 97)
+
+    # ---- Codex adversarial probes (#120 review, blocking findings) ----
+    # B1: pending orders must RESERVE cash — jointly, not per-order.
+    fund4 = init_fund(fund_dir=tempfile.mkdtemp(), date="20260703")
+    fund4["cash"] = 400_000.0
+    orders4, dlog4 = [], []
+    for i in range(3):   # 3 filled positions marked 200k each -> NAV 1M
+        orders4.append({"entry_id": f"F{i}", "ticker": f"F{i}.SZ", "name": f"f{i}", "theme": f"th{i}",
+                        "status": "filled", "shares": 1000, "fill_price": 200.0,
+                        "entry_review_price": 200.0, "notional": 200_000.0})
+    marks4 = {f"F{i}.SZ": 200.0 for i in range(3)}
+    ck("probe NAV = 1M (400k cash + 600k marks)", current_nav(fund4, orders4, marks4) == 1_000_000.0)
+    p1, m1 = register_order(fund4, orders4, dlog4, ticker="P1.SZ", name="p1", theme="新1",
+                            setup="S", registered_at="20260703", entry=100.0, stop=95.0,
+                            target=115.0, risk_pct=0.01, reason="t", marks=marks4)
+    ck("B1: first 150k pending ok (400-0-150=250k >= 200k floor)", p1 is not None)
+    p2, m2 = register_order(fund4, orders4, dlog4, ticker="P2.SZ", name="p2", theme="新2",
+                            setup="S", registered_at="20260703", entry=100.0, stop=95.0,
+                            target=115.0, risk_pct=0.01, reason="t", marks=marks4)
+    ck("B1: second pending REFUSED (400-150-150=100k < 200k floor)",
+       p2 is None and "pending reserve" in m2)
+
+    # B2: theme cap must use CURRENT marks for filled positions.
+    fund5 = init_fund(fund_dir=tempfile.mkdtemp(), date="20260703")
+    fund5["cash"] = 1_000_000.0
+    orders5, dlog5 = [], []
+    for i in range(2):   # 2 AI positions entered @100, now marked 250 -> real AI exposure 500k
+        orders5.append({"entry_id": f"A{i}", "ticker": f"A{i}.SZ", "name": f"a{i}", "theme": "AI",
+                        "status": "filled", "shares": 1000, "fill_price": 100.0,
+                        "entry_review_price": 100.0, "notional": 100_000.0})
+    marks5 = {"A0.SZ": 250.0, "A1.SZ": 250.0}
+    # NAV = 1M + 500k = 1.5M; cap 40% = 600k; entry-price sum would say only 200k (the old hole)
+    p3, m3 = register_order(fund5, orders5, dlog5, ticker="A9.SZ", name="a9", theme="AI",
+                            setup="S", registered_at="20260703", entry=100.0, stop=95.0,
+                            target=115.0, risk_pct=0.01, reason="t", marks=marks5)
+    ck("B2: AI order REFUSED on mark-aware exposure (500k+220k > 600k cap)",
+       p3 is None and "mark-aware" in m3)
+    p4, m4 = register_order(fund5, orders5, dlog5, ticker="B9.SZ", name="b9", theme="电力",
+                            setup="S", registered_at="20260703", entry=100.0, stop=95.0,
+                            target=115.0, risk_pct=0.01, reason="t", marks=marks5)
+    ck("B2: non-AI theme still accepted (cap is per-theme)", p4 is not None)
 
     # human shadow comparison (baseline = human's FIRST logged nav)
     cmp_ = compare_human_shadow(

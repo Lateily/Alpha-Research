@@ -42,8 +42,11 @@ a refused order is itself a decision-log entry.
    of entry/stop/target, ever.
 2. **No fill on registration day**; earliest fill T+1, only when the settled bar
    actually crosses the entry.
-3. **Gaps fill worse**: gap-up through entry fills at open; gap-down through stop
-   exits at open; target exits capped at target.
+3. **Gaps fill worse / no optimistic fills**: gap-up through entry fills at open
+   (worse); gap-down through stop exits at open (worse); **target exits are capped
+   at the target even when price gaps above it** (conservative — the ledger
+   understates profit rather than overstates; engine-enforced since the #120
+   review fix).
 4. Same-bar stop+target → **stop wins** (conservative).
 5. Marks/fills/exits use **settled Tushare bars only** (定盘). Intraday is
    observation/nowcast, never a fill source.
