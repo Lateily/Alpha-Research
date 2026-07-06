@@ -1,13 +1,55 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-07-03T11:09:00Z",
+  "fetched_at": "2026-07-06T05:20:14Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260702",
+      "fund_visitors": "分析师 Tina Hou",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "高盛",
+      "org_type": "其它",
+      "comp_rece": "吴越,常恩铭",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260701",
+      "fund_visitors": "分析师 武平乐",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "特定对象调研",
+      "rece_org": "中信证券",
+      "org_type": "证券公司",
+      "comp_rece": "吴越,常恩铭",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260629",
+      "fund_visitors": "分析师 贾玉潇",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "特定对象调研",
+      "rece_org": "中信证券",
+      "org_type": "证券公司",
+      "comp_rece": "吴越,吕莹",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -178,9 +220,9 @@
     }
   ],
   "summary": {
-    "total_30d": 1,
-    "total_90d": 12,
-    "unique_inst_30d": 1,
-    "latest_date": "2026-06-09"
+    "total_30d": 4,
+    "total_90d": 15,
+    "unique_inst_30d": 6,
+    "latest_date": "2026-07-02"
   }
 }

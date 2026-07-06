@@ -1,13 +1,83 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-07-03T11:09:05Z",
+  "fetched_at": "2026-07-06T05:20:19Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260702",
+      "fund_visitors": "汪洋",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "蠡源晟投资",
+      "org_type": "投资公司",
+      "comp_rece": "董事长助理、投关总监 熊亚威",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260702",
+      "fund_visitors": "黄峰,吴昊,王振遨,白晓兰,王经纬,彭志远,聂宇霄,李子豪",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "海富通",
+      "org_type": "基金管理公司",
+      "comp_rece": "董事长助理、投关总监 熊亚威",
+      "inst_count": 9,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260702",
+      "fund_visitors": "陈海亮",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "彬元资本",
+      "org_type": "其它",
+      "comp_rece": "董事长助理、投关总监 熊亚威",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260702",
+      "fund_visitors": "齐炜中,王晶晶,张家旺,黄涛,杨挺,王磊,陈铭,朱倩,魏庆国,侯春燕,李煜,童若琰,柴子钰,吴天齐",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "大成基金",
+      "org_type": "基金管理公司",
+      "comp_rece": "董事长助理、投关总监 熊亚威",
+      "inst_count": 15,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "name": "鼎龙股份",
+      "surv_date": "20260702",
+      "fund_visitors": "孙国萌",
+      "rece_place": "公司9楼会议室",
+      "rece_mode": "特定对象调研",
+      "rece_org": "中信保诚",
+      "org_type": "基金管理公司",
+      "comp_rece": "董事长助理、投关总监 熊亚威",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
     {
       "ts_code": "300054.SZ",
       "name": "鼎龙股份",
@@ -556,9 +626,9 @@
     }
   ],
   "summary": {
-    "total_30d": 26,
-    "total_90d": 39,
-    "unique_inst_30d": 74,
-    "latest_date": "2026-06-25"
+    "total_30d": 31,
+    "total_90d": 44,
+    "unique_inst_30d": 104,
+    "latest_date": "2026-07-02"
   }
 }

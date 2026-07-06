@@ -1,7 +1,7 @@
 {
   "ticker": "603233.SH",
-  "generated_at": "2026-07-03",
-  "price": 16.29,
+  "generated_at": "2026-07-06",
+  "price": 17.05,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": true,
@@ -9,7 +9,7 @@
     {
       "type": "MA20_BOUNCE",
       "strength": "moderate",
-      "date": "20260702",
+      "date": "20260703",
       "bullish": true,
       "description": {
         "e": "Price bounced off MA20 (16.0) — near-term support held",
@@ -17,53 +17,43 @@
       }
     },
     {
-      "type": "MACD_GOLDEN_CROSS",
-      "strength": "moderate",
-      "date": "20260702",
-      "bullish": true,
-      "description": {
-        "e": "MACD DIF(-0.342) crossed above DEA(-0.388) below zero — bullish momentum",
-        "z": "MACD DIF(-0.342)上穿DEA(-0.388)零轴下方金叉看涨"
-      }
-    },
-    {
       "type": "KDJ_OVERBOUGHT",
       "strength": "strong",
-      "date": "20260702",
+      "date": "20260703",
       "bullish": false,
       "description": {
-        "e": "KDJ J=102.6 (extreme >100) — high pullback risk",
-        "z": "KDJ J=102.6极度超买，回调风险高"
+        "e": "KDJ J=113.8 (extreme >100) — high pullback risk",
+        "z": "KDJ J=113.8极度超买，回调风险高"
       }
     }
   ],
   "signal_count": {
-    "bullish": 2,
+    "bullish": 1,
     "bearish": 1,
-    "total": 3
+    "total": 2
   },
   "indicators": {
-    "ma5": 15.55,
-    "ma20": 16.03,
-    "ma60": null,
-    "rsi14": 50.1,
-    "vol_ma20": 64095,
-    "vol_ratio": 1.36,
-    "price_vs_ma20": 1.61,
-    "price_vs_ma60": null,
-    "change_1d": 0.87,
-    "change_5d": 2.32,
-    "change_20d": 0.62,
-    "macd_dif": -0.3421,
-    "macd_dea": -0.3877,
-    "macd_hist": 0.0911,
-    "bb_upper": 17.08,
-    "bb_mid": 16.03,
-    "bb_lower": 14.99,
-    "bb_bandwidth": 13.07,
-    "kdj_k": 63.5,
-    "kdj_d": 43.9,
-    "kdj_j": 102.6,
+    "ma5": 16.0,
+    "ma20": 16.08,
+    "ma60": 17.17,
+    "rsi14": 57.0,
+    "vol_ma20": 66948,
+    "vol_ratio": 1.47,
+    "price_vs_ma20": 6.03,
+    "price_vs_ma60": -0.71,
+    "change_1d": 4.67,
+    "change_5d": 15.2,
+    "change_20d": 6.03,
+    "macd_dif": -0.2247,
+    "macd_dea": -0.3551,
+    "macd_hist": 0.2607,
+    "bb_upper": 17.22,
+    "bb_mid": 16.08,
+    "bb_lower": 14.94,
+    "bb_bandwidth": 14.15,
+    "kdj_k": 73.9,
+    "kdj_d": 53.9,
+    "kdj_j": 113.8,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,

@@ -1,6 +1,6 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-07-03T11:08:19Z",
+  "fetched_at": "2026-07-06T05:19:33Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -2000,6 +2000,11 @@
       "rows": [
         {
           "ts_code": "688120.SH",
+          "trade_date": "20260706",
+          "adj_factor": 4.6652
+        },
+        {
+          "ts_code": "688120.SH",
           "trade_date": "20260703",
           "adj_factor": 4.6652
         },
@@ -2299,7 +2304,7 @@
           "adj_factor": 3.3296
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "income": {
