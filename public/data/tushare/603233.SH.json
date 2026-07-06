@@ -1,11 +1,24 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-07-06T05:19:19Z",
+  "fetched_at": "2026-07-06T12:19:34Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20260706",
+          "open": 17.03,
+          "high": 17.28,
+          "low": 16.64,
+          "close": 17.2,
+          "pre_close": 17.05,
+          "change": 0.15,
+          "pct_chg": 0.8798,
+          "vol": 82231.88,
+          "amount": 140490.888
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20260703",
@@ -787,11 +800,31 @@
           "amount": 58516.073
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20260706",
+          "close": 17.2,
+          "turnover_rate": 0.7221,
+          "turnover_rate_f": 1.8277,
+          "volume_ratio": 0.9,
+          "pe": 15.8578,
+          "pe_ttm": 15.2273,
+          "pb": 2.5501,
+          "ps": 0.7122,
+          "ps_ttm": 0.7118,
+          "dv_ratio": 3.7567,
+          "dv_ttm": 4.7971,
+          "total_share": 113885.452,
+          "float_share": 113885.452,
+          "free_share": 44992.2594,
+          "total_mv": 1958829.74,
+          "circ_mv": 1958829.74
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20260703",
@@ -1993,7 +2026,7 @@
           "circ_mv": 2011205.6863
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "adj_factor": {

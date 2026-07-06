@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-06T05:22:47.141641+00:00",
+  "generated_at": "2026-07-06T12:22:49.776346+00:00",
   "date": "2026-07-06",
   "brief_e": "1 Exposure Review",
   "brief_z": "1 敞口复核",
@@ -12,13 +12,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 0,
-        "pnl_pct": 62.91,
+        "pnl_pct": 61.28,
         "holding_days": 118,
-        "weight_pct": 55.8,
+        "weight_pct": 55.6,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +62.9% after 118d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+62.9%（持有118天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +61.3% after 118d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+61.3%（持有118天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -48,7 +48,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 111,
-        "weight_pct": 23.3,
+        "weight_pct": 23.5,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 111d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 104,
-        "weight_pct": 13.4,
+        "weight_pct": 13.5,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 104d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -80,7 +80,7 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 12,
-        "pnl_pct": -9.02,
+        "pnl_pct": -8.99,
         "holding_days": 96,
         "weight_pct": 3.5,
         "vp_score": 48,
@@ -165,21 +165,9 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 56% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +62.9% — exposure-review condition (sizable unrealised gain)"
+    "PROFIT REVIEW: 300308.SZ +61.3% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "002594.SZ",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
-      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
-      "indicator": "revenue_growth",
-      "actual": null,
-      "threshold": null
-    },
     {
       "ticker": "300308.SZ",
       "severity": "NONE",
@@ -191,6 +179,18 @@
       "indicator": "hyperscaler_basket_drawdown_pct",
       "actual": 14.4,
       "threshold": 25.0
+    },
+    {
+      "ticker": "002594.SZ",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
+      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
+      "indicator": "revenue_growth",
+      "actual": null,
+      "threshold": null
     },
     {
       "ticker": "603233.SH",

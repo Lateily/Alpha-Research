@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-06T05:22:47.051659+00:00",
+  "generated_at": "2026-07-06T12:22:49.685009+00:00",
   "tickers_scored": 9,
   "summary": {
     "entry_candidates": [],
@@ -58,7 +58,7 @@
         "RSI_RECOVERING",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-07-06T05:22:47.050797+00:00"
+      "computed_at": "2026-07-06T12:22:49.684255+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -111,7 +111,7 @@
         "MA20_BOUNCE",
         "KDJ_OVERBOUGHT"
       ],
-      "computed_at": "2026-07-06T05:22:47.051295+00:00"
+      "computed_at": "2026-07-06T12:22:49.684688+00:00"
     },
     {
       "ticker": "175.HK",
@@ -150,7 +150,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-07-06T05:22:47.050927+00:00"
+      "computed_at": "2026-07-06T12:22:49.684370+00:00"
     },
     {
       "ticker": "300308.SZ",
@@ -189,7 +189,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-07-06T05:22:47.051172+00:00"
+      "computed_at": "2026-07-06T12:22:49.684584+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -256,7 +256,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-07-06T05:22:47.051404+00:00"
+      "computed_at": "2026-07-06T12:22:49.684781+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -278,7 +278,7 @@
       "rationale_e": "RSI 53 | Price vs MA20 +9.5% | VP 45",
       "rationale_z": "RSI 53 | 距MA20 +9.5% | VP 45",
       "signal_types": [],
-      "computed_at": "2026-07-06T05:22:47.051487+00:00"
+      "computed_at": "2026-07-06T12:22:49.684849+00:00"
     },
     {
       "ticker": "700.HK",
@@ -300,7 +300,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-07-06T05:22:47.051572+00:00"
+      "computed_at": "2026-07-06T12:22:49.684917+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -322,7 +322,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-07-06T05:22:47.051646+00:00"
+      "computed_at": "2026-07-06T12:22:49.684997+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -375,7 +375,7 @@
         "MACD_DEATH_CROSS",
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-07-06T05:22:47.051065+00:00"
+      "computed_at": "2026-07-06T12:22:49.684493+00:00"
     }
   ]
 }
