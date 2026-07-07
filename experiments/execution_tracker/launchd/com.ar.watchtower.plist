@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AR Watchtower launchd job — starts the intraday event daemon every trading
+  weekday at 09:14; the daemon exits itself at 15:05 (session end).
+
+  INSTALL (one-time):
+    1. Keep a STABLE checkout (do NOT point at /private/tmp clones):
+         git clone https://github.com/Lateily/Alpha-Research.git ~/ar-live
+    2. Ensure TUSHARE_TOKEN is in the EnvironmentVariables block below
+       (launchd does NOT read ~/.zprofile). Optional: TELEGRAM_BOT_TOKEN/CHAT_ID.
+    3. cp ~/ar-live/experiments/execution_tracker/launchd/com.ar.watchtower.plist \
+          ~/Library/LaunchAgents/
+       (edit the two __HOME__ paths + token first)
+    4. launchctl load ~/Library/LaunchAgents/com.ar.watchtower.plist
+    5. Verify next trading morning 09:14: a "盯盘守护进程已启动" mac notification.
+  UNINSTALL: launchctl unload ~/Library/LaunchAgents/com.ar.watchtower.plist
+
+  Machine must be AWAKE + ONLINE — the daemon is local by design (v0).
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.ar.watchtower</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>__HOME__/ar-live/experiments/execution_tracker/watchtower.py</string>
+    <string>--daemon</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>TUSHARE_TOKEN</key><string>__FILL_ME__</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>14</integer></dict>
+    <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>14</integer></dict>
+    <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>14</integer></dict>
+    <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>14</integer></dict>
+    <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>14</integer></dict>
+  </array>
+  <key>StandardOutPath</key><string>/tmp/ar-watchtower.log</string>
+  <key>StandardErrorPath</key><string>/tmp/ar-watchtower.err</string>
+</dict>
+</plist>
