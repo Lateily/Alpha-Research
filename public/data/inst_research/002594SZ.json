@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-07-06T12:20:28Z",
+  "fetched_at": "2026-07-07T04:59:40Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -189,39 +189,11 @@
       "inst_count": 2,
       "surv_type": "电话会议",
       "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260407",
-      "fund_visitors": "研究员 王思聪",
-      "rece_place": "比亚迪六角大楼",
-      "rece_mode": "电话会议",
-      "rece_org": "国寿资产",
-      "org_type": "保险资产管理公司",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 2,
-      "surv_type": "电话会议",
-      "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260407",
-      "fund_visitors": "汽车分析师 张睿希",
-      "rece_place": "比亚迪六角大楼",
-      "rece_mode": "电话会议",
-      "rece_org": "华创证券",
-      "org_type": "证券公司",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 2,
-      "surv_type": "电话会议",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 4,
-    "total_90d": 15,
+    "total_90d": 13,
     "unique_inst_30d": 6,
     "latest_date": "2026-07-02"
   }
