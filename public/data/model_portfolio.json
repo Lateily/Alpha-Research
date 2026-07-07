@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-07-07",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-07-07T05:02:07.805126+00:00",
+    "generated_at": "2026-07-07T11:30:57.259827+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -64,7 +64,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": -6,
-          "rationale": "Bearish: Kdj Overbought | RSI 50 | Price vs MA20 +1.4% | Regime: PERMISSIVE | VP 48"
+          "rationale": "Bearish: Kdj Overbought | RSI 49 | Price vs MA20 +1.4% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -105,8 +105,8 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 6,
-          "rationale": "Bullish: Ma60 Bounce | Bearish: Kdj Overbought | RSI 58 | Price vs MA20 +6.5% | VP 50"
+          "score": -8,
+          "rationale": "Bearish: Kdj Overbought | RSI 58 | Price vs MA20 +6.5% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -265,8 +265,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 49.6,
-            "macd_hist": 1.2758,
+            "rsi14": 49.4,
+            "macd_hist": 1.3005,
             "price_vs_ma20": 1.39,
             "price_vs_ma60": -7.59,
             "change_5d": 9.92,
@@ -350,7 +350,7 @@
           },
           "key_indicators": {
             "rsi14": 55.0,
-            "macd_hist": -1.7157,
+            "macd_hist": -1.7273,
             "price_vs_ma20": 2.51,
             "price_vs_ma60": 25.56,
             "change_5d": -12.92,
@@ -397,8 +397,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 42.1,
-            "macd_hist": -65.786,
+            "rsi14": 41.9,
+            "macd_hist": -65.6325,
             "price_vs_ma20": -10.46,
             "price_vs_ma60": 4.65,
             "change_5d": -9.92,
@@ -424,35 +424,29 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "ma60_bounce / kdj_overbought",
-        "bias": "neutral",
+        "setup_type": "kdj_overbought",
+        "bias": "bearish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
-        "risk_rule": "No setup yet — watch MA20 (16.14) / MA60 (17.16) for the first directional signal.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 1.21).",
+        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (16.14).",
         "technical": {
           "zone": "NEUTRAL",
-          "entry_zone": true,
+          "entry_zone": false,
           "exit_zone": true,
           "signal_count": {
-            "bullish": 1,
+            "bullish": 0,
             "bearish": 1,
-            "total": 2
+            "total": 1
           },
           "key_indicators": {
-            "rsi14": 58.2,
-            "macd_hist": 0.379,
+            "rsi14": 58.1,
+            "macd_hist": 0.3812,
             "price_vs_ma20": 6.54,
             "price_vs_ma60": 0.21,
             "change_5d": 11.11,
             "vol_ratio": 1.21
           },
           "signals": [
-            {
-              "type": "MA60_BOUNCE",
-              "strength": "strong",
-              "bullish": true,
-              "desc": "Price bounced off MA60 (17.2) — major support held"
-            },
             {
               "type": "KDJ_OVERBOUGHT",
               "strength": "strong",
@@ -541,8 +535,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 53.7,
-            "macd_hist": 7.2532,
+            "rsi14": 53.6,
+            "macd_hist": 7.1451,
             "price_vs_ma20": 9.6,
             "price_vs_ma60": 15.7,
             "change_5d": -14.96,

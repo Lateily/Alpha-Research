@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-07T05:02:07.752819+00:00",
+  "generated_at": "2026-07-07T11:30:57.209312+00:00",
   "date": "2026-07-07",
   "brief_e": "1 Exposure Review | 1 Risk Review",
   "brief_z": "1 敞口复核 | 1 风险复核",
@@ -12,15 +12,15 @@
         "action": "REVIEW_STOP",
         "priority": "HIGH",
         "confidence": 6,
-        "pnl_pct": -10.24,
+        "pnl_pct": -10.33,
         "holding_days": 97,
         "weight_pct": 3.5,
         "vp_score": 48,
         "confluence": -6,
-        "reason_e": "Position in drawdown -10.2%. Signal: NEUTRAL (score -6). Review thesis — is the wrongIf condition still intact?",
-        "reason_z": "亏损-10.2%，信号评分-6。复核投资逻辑，检查wrongIf条件是否触发。",
+        "reason_e": "Position in drawdown -10.3%. Signal: NEUTRAL (score -6). Review thesis — is the wrongIf condition still intact?",
+        "reason_z": "亏损-10.3%，信号评分-6。复核投资逻辑，检查wrongIf条件是否触发。",
         "entry_target": null,
-        "exit_trigger": "P&L -10.2% ≤ -10.0% → thesis review required"
+        "exit_trigger": "P&L -10.3% ≤ -10.0% → thesis review required"
       },
       {
         "ticker": "300308.SZ",
@@ -29,13 +29,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 10,
-        "pnl_pct": 63.79,
+        "pnl_pct": 64.66,
         "holding_days": 119,
-        "weight_pct": 56.0,
+        "weight_pct": 56.1,
         "vp_score": 48,
         "confluence": 10,
-        "reason_e": "Large unrealised gain +63.8% after 119d. Signal still NEUTRAL (score 10). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+63.8%（持有119天），信号10仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +64.7% after 119d. Signal still NEUTRAL (score 10). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+64.7%（持有119天），信号10仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition"
       },
@@ -65,7 +65,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 112,
-        "weight_pct": 23.3,
+        "weight_pct": 23.2,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 112d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -82,7 +82,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 105,
-        "weight_pct": 13.4,
+        "weight_pct": 13.3,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 105d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -106,23 +106,6 @@
         "confluence": 18,
         "reason_e": "No evidence-review condition. Score 18, VP 47. Bullish: Ma20 Bounce, Kdj Oversold | RSI 55 | Price vs MA20 +2.5% | VP 47.",
         "reason_z": "暂无证据复核条件。评分18，VP47。多头：MA20支撑反弹、KDJ极度超卖(J<0) | RSI 55 | 距MA20 +2.5% | VP 47。",
-        "entry_target": null,
-        "exit_trigger": null
-      },
-      {
-        "ticker": "603233.SH",
-        "name": "603233.SH",
-        "status": "WATCHLIST",
-        "action": "WATCH",
-        "priority": "LOW",
-        "confidence": 6,
-        "pnl_pct": null,
-        "holding_days": null,
-        "weight_pct": 0,
-        "vp_score": 50,
-        "confluence": 6,
-        "reason_e": "No evidence-review condition. Score 6, VP 50. Bullish: Ma60 Bounce | Bearish: Kdj Overbought | RSI 58 | Price vs MA20 +6.5% | VP 50.",
-        "reason_z": "暂无证据复核条件。评分6，VP50。多头：MA60强支撑反弹 | 空头：KDJ极度超买(J>100) | RSI 58 | 距MA20 +6.5% | VP 50。",
         "entry_target": null,
         "exit_trigger": null
       },
@@ -159,28 +142,33 @@
         "reason_z": "暂无证据复核条件。评分0，VP45。RSI 54 | 距MA20 +9.6% | VP 45。",
         "entry_target": null,
         "exit_trigger": null
+      },
+      {
+        "ticker": "603233.SH",
+        "name": "603233.SH",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 8,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 50,
+        "confluence": -8,
+        "reason_e": "No evidence-review condition. Score -8, VP 50. Bearish: Kdj Overbought | RSI 58 | Price vs MA20 +6.5% | VP 50.",
+        "reason_z": "暂无证据复核条件。评分-8，VP50。空头：KDJ极度超买(J>100) | RSI 58 | 距MA20 +6.5% | VP 50。",
+        "entry_target": null,
+        "exit_trigger": null
       }
     ]
   },
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 56% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +63.8% — exposure-review condition (sizable unrealised gain)",
-    "🔴 DRAWDOWN REVIEW: 002594.SZ -10.2% — review thesis and wrongIf conditions"
+    "PROFIT REVIEW: 300308.SZ +64.7% — exposure-review condition (sizable unrealised gain)",
+    "🔴 DRAWDOWN REVIEW: 002594.SZ -10.3% — review thesis and wrongIf conditions"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "300308.SZ",
-      "severity": "NONE",
-      "status": "CLEAR",
-      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
-      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 14.0 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 14.0（阈值25.0）",
-      "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 14.0,
-      "threshold": 25.0
-    },
     {
       "ticker": "002594.SZ",
       "severity": "LOW",
@@ -194,6 +182,18 @@
       "threshold": null
     },
     {
+      "ticker": "300308.SZ",
+      "severity": "NONE",
+      "status": "CLEAR",
+      "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+      "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 14.0 (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 14.0（阈值25.0）",
+      "indicator": "hyperscaler_basket_drawdown_pct",
+      "actual": 14.0,
+      "threshold": 25.0
+    },
+    {
       "ticker": "300054.SZ",
       "severity": "LOW",
       "status": "MANUAL",
@@ -201,18 +201,6 @@
       "wrongIf_z": "2026半年报抛光垫收入同比<+30%(如披露),或毛利率<48%,或归母净利同比<+25%(决策书 wrong_if)",
       "note_e": "Unstructured condition — monitor manually: 2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net pr",
       "note_z": "非结构化条件——需人工监控：2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net pr",
-      "indicator": "unstructured",
-      "actual": null,
-      "threshold": null
-    },
-    {
-      "ticker": "603233.SH",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
-      "wrongIf_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
-      "note_e": "Unstructured condition — monitor manually: [NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
-      "note_z": "非结构化条件——需人工监控：[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
       "indicator": "unstructured",
       "actual": null,
       "threshold": null
@@ -237,6 +225,18 @@
       "wrongIf_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
       "note_e": "Unstructured condition — monitor manually: 2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
       "note_z": "非结构化条件——需人工监控：2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (",
+      "indicator": "unstructured",
+      "actual": null,
+      "threshold": null
+    },
+    {
+      "ticker": "603233.SH",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
+      "wrongIf_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
+      "note_e": "Unstructured condition — monitor manually: [NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
+      "note_z": "非结构化条件——需人工监控：[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
       "indicator": "unstructured",
       "actual": null,
       "threshold": null
