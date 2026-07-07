@@ -20,6 +20,7 @@ EXECUTION_POSTURES = {"NO_CHASE", "HOLD_OBSERVE", "WARNING", "RECLAIM_REVIEW",
                       "DE_RISK_REVIEW", "EXIT_REVIEW"}
 NOWCAST_STATES = {"ACCUMULATION_PROBABLE", "DISTRIBUTION_PROBABLE", "RECLAIM_ATTEMPT",
                   "OPENING_FADE", "FAKE_STRENGTH", "DATA_INSUFFICIENT"}
+VARIANT_STANCES = {"VARIANT", "CONSENSUS_RIDE", "NO_EDGE"}
 
 REQUIRED_SECTIONS = ("variant_view", "clean_valuation", "catalyst_map",
                      "risk_mitigation", "execution_gate", "portfolio_impact",
@@ -66,12 +67,30 @@ def validate_pack(pack):
             tname = getattr(SECTION_TYPES[sec], "__name__", "list/dict")
             problems.append(f"{sec} must be a {tname}, got {type(v).__name__}")
 
-    # variant view: both sides of the disagreement + how it is measured
+    # View vs Consensus — THREE honest stances (Junyan 2026-07-07: 不能为了 variant
+    # 而 variant). A mandatory variant box breeds performative contrarianism, so a
+    # VARIANT claim now costs MORE (edge_source required), and agreeing with the
+    # market (CONSENSUS_RIDE) or having no view (NO_EDGE) are first-class outputs.
     vv = pack.get("variant_view")
     if isinstance(vv, dict):
-        for k in ("market_believes", "we_believe", "measured_by"):
-            if not _present(vv.get(k)):
-                problems.append(f"variant_view.{k} missing")
+        stance = vv.get("stance")
+        if stance not in VARIANT_STANCES:
+            problems.append("variant_view.stance missing — declare VARIANT / CONSENSUS_RIDE / NO_EDGE")
+        elif stance == "VARIANT":
+            for k in ("market_believes", "we_believe", "measured_by", "edge_source"):
+                if not _present(vv.get(k)):
+                    problems.append(f"variant_view.{k} missing (a VARIANT claim must state "
+                                    f"the disagreement, how it is measured, and WHY we know "
+                                    f"something the market doesn't)")
+        elif stance == "CONSENSUS_RIDE":
+            if not _present(vv.get("consensus")):
+                problems.append("variant_view.consensus missing (state what we agree with)")
+            if not _present(vv.get("edge_source")):
+                problems.append("variant_view.edge_source missing (riding consensus still needs "
+                                "an edge: execution / timing / risk-management — say which)")
+        elif stance == "NO_EDGE":
+            if not _present(vv.get("reason")):
+                problems.append("variant_view.reason missing (why no differentiated view)")
 
     # clean valuation: sector caliber + 盈利位置 + at least one valuation anchor
     cv = pack.get("clean_valuation")
@@ -148,7 +167,8 @@ def verdict(pack):
 def _complete_pack():
     """A minimal pack that satisfies the contract — also serves as the template."""
     return {
-        "variant_view": {"market_believes": "X", "we_believe": "Y", "measured_by": "Z"},
+        "variant_view": {"stance": "VARIANT", "market_believes": "X", "we_believe": "Y",
+                         "measured_by": "Z", "edge_source": "informational: settle-flow forensics"},
         "clean_valuation": {"caliber": "科技=PE/ROE-TTM/GM/OCF", "pe_ttm": 20.0,
                             "盈利位置": "normal"},
         "catalyst_map": [{"window": "1m", "event": "半年报", "verifies": "毛利率"}],
@@ -238,7 +258,29 @@ def selftest():
 
     p = _complete_pack(); p["variant_view"] = {"market_believes": "X", "we_believe": "Y"}
     ok, problems = validate_pack(p)
-    ck("variant_view without measured_by refused", not ok and any("measured_by" in x for x in problems))
+    ck("variant_view without stance refused (old style dies)",
+       not ok and any("stance missing" in x for x in problems))
+
+    # ---- 不能为了 variant 而 variant (Junyan 2026-07-07) ----
+    p = _complete_pack()
+    p["variant_view"] = {"stance": "VARIANT", "market_believes": "X", "we_believe": "Y",
+                         "measured_by": "Z"}                      # no edge_source
+    ok, problems = validate_pack(p)
+    ck("VARIANT without edge_source refused (fake variant blocked)",
+       not ok and any("edge_source" in x for x in problems))
+    p = _complete_pack()
+    p["variant_view"] = {"stance": "CONSENSUS_RIDE", "consensus": "trend intact",
+                         "edge_source": "execution: breakout-gated entry + 1% risk stops"}
+    ck("CONSENSUS_RIDE is a first-class pass", validate_pack(p)[0])
+    p = _complete_pack()
+    p["variant_view"] = {"stance": "CONSENSUS_RIDE", "consensus": "trend intact"}
+    ck("CONSENSUS_RIDE still needs an edge_source", not validate_pack(p)[0])
+    p = _complete_pack()
+    p["variant_view"] = {"stance": "NO_EDGE", "reason": "no informational or analytical edge on this name"}
+    ck("NO_EDGE with reason is a first-class pass", validate_pack(p)[0])
+    p = _complete_pack()
+    p["variant_view"] = {"stance": "NO_EDGE"}
+    ck("NO_EDGE without reason refused", not validate_pack(p)[0])
 
     p = _complete_pack(); p["execution_gate"] = {"levels": {"承接": 1}}  # dict but no posture
     ok, problems = validate_pack(p)

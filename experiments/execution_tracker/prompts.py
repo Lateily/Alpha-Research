@@ -42,6 +42,8 @@ REQUIRED_MARKERS = [
     "ACCUMULATION_PROBABLE", "FAKE_STRENGTH", "DATA_INSUFFICIENT", "nowcast",
     # the output-completeness contract (Research Decision Pack)
     "Research Decision Pack", "REPORT_INCOMPLETE", "Portfolio Impact",
+    # honest-stance rule: fake variants blocked, consensus/no-edge first-class
+    "CONSENSUS_RIDE", "NO_EDGE", "edge_source",
     # TradingView demoted to charting/SMC aid
     "never an official data source",
 ]
