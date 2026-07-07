@@ -172,7 +172,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.1156
+      "1d": -0.1156,
+      "3d": -0.1193
     },
     "entry_close": 575.56,
     "directional_call": "neutral"
@@ -206,7 +207,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.1338
+      "1d": -0.1338,
+      "3d": -0.124
     },
     "entry_close": 302.51,
     "directional_call": "cautious"
@@ -240,7 +242,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.1
+      "1d": -0.1,
+      "3d": -0.106
     },
     "entry_close": 193.4,
     "directional_call": "constructive"
@@ -274,7 +277,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0655
+      "1d": -0.0655,
+      "3d": -0.1016
     },
     "entry_close": 1223.17,
     "directional_call": "neutral"
@@ -308,7 +312,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0403
+      "1d": -0.0403,
+      "3d": 0.0093
     },
     "entry_close": 18.35,
     "directional_call": "cautious"
@@ -342,9 +347,10 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0223
+      "1d": -0.0223,
+      "3d": -0.0567
     },
-    "entry_close": 221.6,
+    "entry_close": 220.3193,
     "directional_call": "constructive"
   },
   {
@@ -376,7 +382,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0163
+      "1d": -0.0163,
+      "3d": 0.0105
     },
     "entry_close": 10.43,
     "directional_call": "constructive"
@@ -410,7 +417,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0123
+      "1d": -0.0123,
+      "3d": 0.0115
     },
     "entry_close": 49.53,
     "directional_call": "constructive"
@@ -444,7 +452,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0312
+      "1d": -0.0312,
+      "3d": -0.0178
     },
     "entry_close": 125.2,
     "directional_call": "cautious"
@@ -478,7 +487,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.1001
+      "1d": -0.1001,
+      "3d": -0.1439
     },
     "entry_close": 62.26,
     "directional_call": "cautious"
@@ -511,7 +521,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.0334
+    },
     "entry_close": 509.0,
     "directional_call": "cautious"
   },
@@ -543,7 +555,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.0084
+    },
     "entry_close": 262.04,
     "directional_call": "cautious"
   },
@@ -575,7 +589,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.0428
+    },
     "entry_close": 174.06,
     "directional_call": "cautious"
   },
@@ -607,7 +623,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.0236
+    },
     "entry_close": 1143.0,
     "directional_call": "cautious"
   },
@@ -639,7 +657,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.038
+    },
     "entry_close": 17.61,
     "directional_call": "cautious"
   },
@@ -671,8 +691,10 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
-    "entry_close": 216.66,
+    "returns": {
+      "1d": -0.0188
+    },
+    "entry_close": 215.4079,
     "directional_call": "constructive"
   },
   {
@@ -703,7 +725,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.0088
+    },
     "entry_close": 10.26,
     "directional_call": "neutral"
   },
@@ -735,7 +759,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.0035
+    },
     "entry_close": 48.92,
     "directional_call": "constructive"
   },
@@ -767,7 +793,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.0232
+    },
     "entry_close": 121.3,
     "directional_call": "cautious"
   },
@@ -799,8 +827,670 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.0021
+    },
     "entry_close": 56.03,
     "directional_call": "cautious"
+  },
+  {
+    "signal_id": "5f6539df6f6e",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 13.6229,
+    "trigger_price": 526.0,
+    "support": 505.88,
+    "reclaim": 551.77,
+    "invalidation": 505.88,
+    "atr14": 45.8179,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": -0.0363
+    },
+    "entry_close": 526.0,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "f7bcef57fe39",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -7.3718,
+    "trigger_price": 264.25,
+    "support": 260.0,
+    "reclaim": 284.45,
+    "invalidation": 242.7,
+    "atr14": 25.8157,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": 0.0028
+    },
+    "entry_close": 264.25,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "e302372830f0",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -1.5732,
+    "trigger_price": 166.61,
+    "support": 174.06,
+    "reclaim": 185.99,
+    "invalidation": 174.06,
+    "atr14": 18.5436,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": 0.0378
+    },
+    "entry_close": 166.61,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "bc2c1a325f8a",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -19.6713,
+    "trigger_price": 1116.0,
+    "support": 1127.4,
+    "reclaim": 1198.0,
+    "invalidation": 1127.4,
+    "atr14": 82.3643,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": -0.0153
+    },
+    "entry_close": 1116.0,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "620c0974be5c",
+    "ticker": "002130.SZ",
+    "name": "沃尔核材",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 0.9806,
+    "trigger_price": 18.28,
+    "support": 17.65,
+    "reclaim": 18.65,
+    "invalidation": 17.65,
+    "atr14": 0.9721,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": 0.0131
+    },
+    "entry_close": 18.28,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "32f6a56bb4b9",
+    "ticker": "688111.SH",
+    "name": "金山办公",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -0.9455,
+    "trigger_price": 211.35,
+    "support": 216.22,
+    "reclaim": 227.0,
+    "invalidation": 216.22,
+    "atr14": 9.46,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": -0.0167
+    },
+    "entry_close": 211.35,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "1e744ca4cf22",
+    "ticker": "002736.SZ",
+    "name": "国信证券",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 0.1408,
+    "trigger_price": 10.35,
+    "support": 10.22,
+    "reclaim": 10.45,
+    "invalidation": 10.2035,
+    "atr14": 0.3571,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": 0.0184
+    },
+    "entry_close": 10.35,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "edb53b60b0ec",
+    "ticker": "601318.SH",
+    "name": "中国平安",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -1.1937,
+    "trigger_price": 49.09,
+    "support": 48.8,
+    "reclaim": 50.2,
+    "invalidation": 48.8,
+    "atr14": 2.085,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": 0.0206
+    },
+    "entry_close": 49.09,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "d9d7c0f78e78",
+    "ticker": "603259.SH",
+    "name": "药明康德",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 3.8135,
+    "trigger_price": 124.12,
+    "support": 121.0,
+    "reclaim": 129.15,
+    "invalidation": 108.1775,
+    "atr14": 5.7336,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": -0.0093
+    },
+    "entry_close": 124.12,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "9118c3dabd13",
+    "ticker": "000021.SZ",
+    "name": "深科技",
+    "timestamp": "20260703 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -175.91,
+    "setup_type": "DE_RISK_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -0.5164,
+    "trigger_price": 55.91,
+    "support": 56.03,
+    "reclaim": 58.0,
+    "invalidation": 46.9825,
+    "atr14": 4.7614,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {
+      "1d": -0.0467
+    },
+    "entry_close": 55.91,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "b028e26f95e3",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -14.9976,
+    "trigger_price": 506.89,
+    "support": 505.88,
+    "reclaim": 551.77,
+    "invalidation": 505.88,
+    "atr14": 44.1929,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 506.89,
+    "directional_call": "neutral"
+  },
+  {
+    "signal_id": "94c6046a4454",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 2.6221,
+    "trigger_price": 265.0,
+    "support": 259.8,
+    "reclaim": 283.45,
+    "invalidation": 247.355,
+    "atr14": 26.0264,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 265.0,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "7d21f7cda342",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 1.0361,
+    "trigger_price": 172.9,
+    "support": 165.0,
+    "reclaim": 175.28,
+    "invalidation": 165.0,
+    "atr14": 18.03,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 172.9,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "1d3daf9fdfdb",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -26.6744,
+    "trigger_price": 1098.92,
+    "support": 1115.0,
+    "reclaim": 1188.01,
+    "invalidation": 1115.0,
+    "atr14": 79.34,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 1098.92,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "0c55d2c1ded3",
+    "ticker": "002130.SZ",
+    "name": "沃尔核材",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 1.4666,
+    "trigger_price": 18.52,
+    "support": 18.18,
+    "reclaim": 19.36,
+    "invalidation": 18.18,
+    "atr14": 0.9586,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 18.52,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "ba620f0d93b9",
+    "ticker": "688111.SH",
+    "name": "金山办公",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -0.8872,
+    "trigger_price": 207.82,
+    "support": 209.9,
+    "reclaim": 216.95,
+    "invalidation": 209.9,
+    "atr14": 9.4607,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 207.82,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "3081c0447027",
+    "ticker": "601899.SH",
+    "name": "紫金矿业",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 2.7267,
+    "trigger_price": 28.28,
+    "support": 27.62,
+    "reclaim": 29.19,
+    "invalidation": 27.62,
+    "atr14": 1.4736,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 28.28,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "b32541e40eff",
+    "ticker": "603259.SH",
+    "name": "药明康德",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -0.8122,
+    "trigger_price": 122.97,
+    "support": 122.0,
+    "reclaim": 128.05,
+    "invalidation": 109.498,
+    "atr14": 6.0286,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 122.97,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "8ac77054d584",
+    "ticker": "600900.SH",
+    "name": "长江电力",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -0.5249,
+    "trigger_price": 27.19,
+    "support": 26.81,
+    "reclaim": 27.23,
+    "invalidation": 26.81,
+    "atr14": 0.4543,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 27.19,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "68310647005b",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "timestamp": "20260706 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -872.93,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 7.2319,
+    "trigger_price": 56.77,
+    "support": 53.77,
+    "reclaim": 57.77,
+    "invalidation": 49.81,
+    "atr14": 2.4536,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 56.77,
+    "directional_call": "constructive"
   }
 ]
