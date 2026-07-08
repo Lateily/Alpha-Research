@@ -103,6 +103,29 @@ def load_json(path, default=None):
         return default if default is not None else {}
 
 
+def is_positive_flow_only(conf):
+    """CHURN_MODE flow-policy helper: True when EVERY positive contribution is a
+    fact_positive flow signal — the bullish case rests on flow facts alone, which
+    may observe but must not drive BUY_WATCH in churn (scored nowcast hit-rate on
+    positive-flow continuation = coin-flip, n=14 hit 0.50). Uses raw pre-policy
+    contributions so quarantined signals still count as flow-only evidence.
+    Old confluence.json without flow_role fields → False (gate inert, safe)."""
+    if not conf:
+        return False
+    positives = [c for c in (conf.get("contributing") or [])
+                 if c.get("raw_contribution_before_policy",
+                          c.get("final_contribution", 0)) > 0]
+    if not positives:
+        return False
+    return all(c.get("flow_role") == "fact_positive" for c in positives)
+
+
+def has_negative_flow_risk(conf):
+    """True when any risk_negative flow signal contributed (never quarantined)."""
+    return any(c.get("flow_role") == "risk_negative"
+               for c in ((conf or {}).get("contributing") or []))
+
+
 def get_confluence(ticker, confluence_data):
     """Return the confluence result for a ticker, or None."""
     for score in confluence_data.get("scores", []):
@@ -469,6 +492,12 @@ def decide_held_position(pos, conf, vp_score):
         entry_target = None
         exit_trigger = f"Score ≤ {SCORE_EXIT_MAX} OR P&L ≤ {STOP_REVIEW_PCT}%"
 
+    # CHURN flow-policy: negative-flow risk signals are never quarantined — on a
+    # held name they set an execution posture (risk gate, never an entry gate).
+    execution_posture = None
+    if has_negative_flow_risk(conf):
+        execution_posture = "DE_RISK_REVIEW" if score <= SCORE_CAUTION_MAX else "WARNING"
+
     return {
         "ticker":       ticker,
         "name":         name,
@@ -485,14 +514,17 @@ def decide_held_position(pos, conf, vp_score):
         "reason_z":     reason_z,
         "entry_target": entry_target,
         "exit_trigger": exit_trigger,
+        "execution_posture": execution_posture,
     }
 
 
-def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
+def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None,
+                            model_state="NORMAL_OBSERVATION_MODE"):
     """
     Generate a decision for a ticker in the universe but not currently held.
     Only recommend BUY_WATCH if both fundamental (VP) and technical (confluence) align.
     sizing: dict from position_sizing.json or None
+    model_state: CHURN_MODE bans flow-only positive cases from BUY_WATCH.
     """
     score    = conf["score"]    if conf else 0
     rat_e    = conf["rationale_e"] if conf else "No signal data"
@@ -501,8 +533,21 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
     vp_ok    = vp_score is not None and vp_score >= VP_MIN_FOR_ENTRY
     sig_ok   = score >= SCORE_ENTRY_MIN
     regime_ok = regime != "RESTRICTIVE"
+    execution_posture = None
 
-    if sig_ok and vp_ok and regime_ok:
+    if sig_ok and vp_ok and regime_ok and model_state == "CHURN_MODE" \
+            and is_positive_flow_only(conf):
+        # CHURN_MODE flow-only ban: positive flow facts observe, never drive entry.
+        action   = "WATCH"
+        priority = "LOW"
+        execution_posture = "OBSERVE_ONLY"
+        reason_e = (f"CHURN_MODE flow-only ban: bullish case rests on positive-flow "
+                    f"facts alone (score {score}, VP {int(vp_score)}); positive flow "
+                    f"is OBSERVE_ONLY in churn (scored nowcast hit-rate = coin-flip). "
+                    f"No BUY_WATCH.")
+        reason_z = (f"快轮动模式：多头证据仅为正向资金事实（评分{score}，VP{int(vp_score)}），"
+                    f"churn 下正向资金只观察、不推动候选，不给BUY_WATCH。")
+    elif sig_ok and vp_ok and regime_ok:
         action   = "BUY_WATCH"
         priority = "MEDIUM"
         # No-advice (Junyan PR #18): sizing notes intentionally NOT embedded in reason text.
@@ -553,6 +598,7 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
         "reason_z":     reason_z,
         "entry_target": "Awaiting human research review" if action == "BUY_WATCH" else None,
         "exit_trigger": None,
+        "execution_posture": execution_posture,
     }
 
     # Attach sizing recommendation for BUY_WATCH candidates
@@ -716,6 +762,12 @@ def main():
     positions = positions_data.get("positions", [])
     held_tickers = {p["ticker"] for p in positions}
 
+    # CHURN_MODE flow-policy: read the model state stamped by signal_confluence.py
+    # (single source of truth); old confluence.json without the field → NORMAL.
+    model_state = confluence_data.get("model_state", "NORMAL_OBSERVATION_MODE")
+    print(f"[daily_decision] Model state: {model_state}"
+          + (" — flow-only positive cases cannot become BUY_WATCH" if model_state == "CHURN_MODE" else ""))
+
     decisions   = []
     buy_watches = []
 
@@ -747,7 +799,8 @@ def main():
         sizing    = get_sizing(ticker, sizing_data)
         # Try to get a name from positions or signals data
         name    = ticker  # default; could enrich later
-        dec     = decide_watchlist_ticker(ticker, name, entry, vp, regime, sizing)
+        dec     = decide_watchlist_ticker(ticker, name, entry, vp, regime, sizing,
+                                          model_state=model_state)
         decisions.append(dec)
         if dec["action"] == "BUY_WATCH":
             buy_watches.append(dec)
@@ -903,6 +956,7 @@ def main():
     output = {
         "generated_at":    datetime.now(timezone.utc).isoformat(),
         "date":            date.today().isoformat(),
+        "model_state":     model_state,
         "brief_e":         brief_e,
         "brief_z":         brief_z,
         "decisions": {

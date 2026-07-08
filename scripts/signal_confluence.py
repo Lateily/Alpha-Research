@@ -118,6 +118,36 @@ REGIME_BEARISH_MULTIPLIER = {
 }
 
 # ── Score thresholds ──────────────────────────────────────────────────────────
+# ── CHURN_MODE flow-policy (migrated from experiments/flow_regime_policy 2026-07-08) ──
+# In a fast-rotation (churn) regime the scored nowcast hit-rate on POSITIVE flow
+# continuation is coin-flip (n=14, hit 0.50 [validated against ledger]), while
+# distribution/exit signatures showed persistence. Policy: positive-flow facts may
+# OBSERVE but must not push entry candidates on their own; negative-flow signals
+# keep their risk-gate role. Thresholds otherwise [unvalidated intuition].
+POSITIVE_FLOW_ENTRY_SIGNALS = {"CVD_FLOOR_FORMED", "CONTROLLED_ADVANCE", "VOLUME_BREAKOUT"}
+NEGATIVE_FLOW_RISK_SIGNALS  = {"CVD_BEARISH_DIVERGENCE", "VOLUME_SELLOFF"}
+CHURN_MARKET_STATES         = {"STYLE_ROTATION", "CHURN", "RISK_OFF"}
+
+
+def detect_model_state(regime_data=None):
+    """CHURN_MODE | NORMAL_OBSERVATION_MODE.
+
+    Priority: optional public/data/execution_model_state.json (key `model_state`);
+    else regime_config's `_meta.market_state` / `market_state` mapped through
+    CHURN_MARKET_STATES; default NORMAL_OBSERVATION_MODE. Never writes anything."""
+    override = load_json(DATA_DIR / "execution_model_state.json", None)
+    if isinstance(override, dict):
+        ms = override.get("model_state")
+        if ms in ("CHURN_MODE", "NORMAL_OBSERVATION_MODE"):
+            return ms
+    rd = regime_data or {}
+    market_state = ((rd.get("_meta") or {}).get("market_state")
+                    or rd.get("market_state") or "")
+    if str(market_state).upper() in CHURN_MARKET_STATES:
+        return "CHURN_MODE"
+    return "NORMAL_OBSERVATION_MODE"
+
+
 def score_to_action(score):
     if score >= 60:  return "ENTRY_CANDIDATE"
     if score >= 20:  return "HOLD"
@@ -235,7 +265,8 @@ def get_leading_indicator_signal(ticker: str, li_data: dict) -> str | None:
 
 # ── Core scoring function ─────────────────────────────────────────────────────
 
-def compute_confluence(ticker, signals_data, regime, vp_score, li_data=None):
+def compute_confluence(ticker, signals_data, regime, vp_score, li_data=None,
+                       model_state="NORMAL_OBSERVATION_MODE"):
     """
     Compute the confluence score for a single ticker.
 
@@ -339,6 +370,19 @@ def compute_confluence(ticker, signals_data, regime, vp_score, li_data=None):
         # Final contribution
         contribution = (base_weight * decay * independence_factor
                         * regime_mult * staleness_factor)
+
+        # CHURN_MODE flow-policy gate: positive-flow FACTS are quarantined from
+        # pushing entries (kept visible for display/scoring); negative-flow risk
+        # signals are never quarantined.
+        flow_role = ("fact_positive" if sig_type in POSITIVE_FLOW_ENTRY_SIGNALS
+                     else "risk_negative" if sig_type in NEGATIVE_FLOW_RISK_SIGNALS
+                     else "other")
+        raw_before_policy = contribution
+        policy_gate = None
+        if model_state == "CHURN_MODE" and flow_role == "fact_positive":
+            contribution = 0.0
+            policy_gate = "POSITIVE_FLOW_QUARANTINED"
+
         raw_score += contribution
 
         contributions.append({
@@ -348,6 +392,9 @@ def compute_confluence(ticker, signals_data, regime, vp_score, li_data=None):
             "independence_factor": round(independence_factor, 2),
             "regime_mult":         round(regime_mult, 2),
             "staleness":           round(staleness_factor, 2),
+            "flow_role":           flow_role,
+            "policy_gate":         policy_gate,
+            "raw_contribution_before_policy": round(raw_before_policy, 1),
             "final_contribution":  round(contribution, 1),
         })
 
@@ -446,6 +493,7 @@ def compute_confluence(ticker, signals_data, regime, vp_score, li_data=None):
         "action_zh":            score_to_label_zh(score),
         "zone":                 zone,
         "regime":               regime,
+        "model_state":          model_state,
         "vp_score":             vp_score,
         "vp_signal_type":       vp_synthetic_type,   # which VP signal was injected
         "vp_adjustment":        None,                 # deprecated — VP now in signal pool
@@ -469,6 +517,10 @@ def main():
     regime_data = load_json(DATA_DIR / "regime_config.json",      {"sectors": []})
     vp_data     = load_json(DATA_DIR / "vp_snapshot.json",        {})
     li_data     = load_json(DATA_DIR / "leading_indicators.json", {})
+
+    model_state = detect_model_state(regime_data)
+    print(f"[confluence] Model state: {model_state}"
+          + (" — positive-flow entry signals QUARANTINED" if model_state == "CHURN_MODE" else ""))
 
     if li_data.get("composite_signal"):
         print(f"[confluence] Leading indicator: {li_data['composite_signal']} "
@@ -497,7 +549,8 @@ def main():
         regime   = get_ticker_regime(ticker, regime_data)
         vp_score = get_vp_score(ticker, vp_data)
 
-        result = compute_confluence(ticker, signals_data, regime, vp_score, li_data)
+        result = compute_confluence(ticker, signals_data, regime, vp_score, li_data,
+                                    model_state=model_state)
         results.append(result)
 
         direction = "▲" if result["score"] > 0 else ("▼" if result["score"] < 0 else "─")
@@ -514,6 +567,7 @@ def main():
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model_state": model_state,
         "tickers_scored": len(results),
         "summary": {
             "entry_candidates": [r["ticker"] for r in entry_candidates],
