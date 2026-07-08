@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-07T11:30:58.629911+00:00",
+  "updated_at": "2026-07-08T04:23:29.643839+00:00",
   "total_theses_tracked": 1,
   "by_status": {
     "STOPPED_OUT": 1
@@ -13,7 +13,7 @@
       "ticker": "002594.SZ",
       "direction": "LONG",
       "status": "STOPPED_OUT",
-      "days_to_catalyst": 39,
+      "days_to_catalyst": 38,
       "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00"
     }
   ],

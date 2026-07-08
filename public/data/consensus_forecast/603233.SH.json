@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-07-07T11:27:32Z",
+  "fetched_at": "2026-07-08T04:20:32Z",
   "tier": 15000,
   "_status": "ok",
   "api_used": "forecast",
@@ -8,14 +8,6 @@
     "forecast"
   ],
   "forecasts": [
-    {
-      "end_date": "20220930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 92571.5,
-      "op_income": null,
-      "broker_count": null
-    },
     {
       "end_date": "20220930",
       "eps": null,
