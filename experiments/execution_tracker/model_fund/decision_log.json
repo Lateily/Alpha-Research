@@ -57,5 +57,47 @@
     "scope": "AI硬件(新易盛/中际/利通/香农/深科技)",
     "reason": "中际/利通 0703定盘EXIT_REVIEW,香农/深科技 大单卖小单接WARNING;板块5日主力-2000亿机构撤退未止;posture禁开新单",
     "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "CANCEL_ORDER",
+    "ticker": "600900.SH",
+    "reason": "行业技术垫底(公用事业mom20 -10.3%)+0706定盘WARNING+价在entry下 — v3三因子否决",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "RISK_REVIEW",
+    "ticker": "603259.SH",
+    "reason": "0706主力-0.81亿WARNING第1天;连续2天负才撤;今日保留,收盘复核",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "REGISTER_ORDER",
+    "ticker": "002714.SZ",
+    "shares": 3800,
+    "notional": 148580.0,
+    "entry": 39.1,
+    "stop": 36.9,
+    "target": 43.5,
+    "risk_budget_cny": 10000.0,
+    "reason": "v3三门共振首位:行业技术(农林牧渔贴20日高-0.2%)+消息(猪价反转+中报改善)+资金(0706主力+3.62亿,板块5日+55亿);breakout 39.1=破20日高确认。wrong-if:猪价回落/主力转出2日",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "PAPER_FILL",
+    "ticker": "600276.SH",
+    "price": 56.4,
+    "shares": 2700,
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "CANCEL_ORDER",
+    "ticker": "603259.SH",
+    "reason": "WARNING连续第2天主力为负(0706 -0.81亿, 0707 -7.18亿) — 规则触发撤单",
+    "no_trade_flag": true
   }
 ]

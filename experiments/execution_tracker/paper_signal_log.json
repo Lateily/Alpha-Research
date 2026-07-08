@@ -104,7 +104,7 @@
       "3d": -0.1398,
       "5d": -0.1627
     },
-    "entry_close": 207.88,
+    "entry_close": 148.3756,
     "directional_call": "cautious"
   },
   {
@@ -173,7 +173,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.1156,
-      "3d": -0.1193
+      "3d": -0.1193,
+      "5d": -0.1124
     },
     "entry_close": 575.56,
     "directional_call": "neutral"
@@ -208,7 +209,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.1338,
-      "3d": -0.124
+      "3d": -0.124,
+      "5d": -0.1931
     },
     "entry_close": 302.51,
     "directional_call": "cautious"
@@ -243,9 +245,10 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.1,
-      "3d": -0.106
+      "3d": -0.106,
+      "5d": -0.1642
     },
-    "entry_close": 193.4,
+    "entry_close": 138.0405,
     "directional_call": "constructive"
   },
   {
@@ -278,7 +281,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.0655,
-      "3d": -0.1016
+      "3d": -0.1016,
+      "5d": -0.0775
     },
     "entry_close": 1223.17,
     "directional_call": "neutral"
@@ -313,7 +317,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.0403,
-      "3d": 0.0093
+      "3d": 0.0093,
+      "5d": -0.048
     },
     "entry_close": 18.35,
     "directional_call": "cautious"
@@ -348,7 +353,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.0223,
-      "3d": -0.0567
+      "3d": -0.0567,
+      "5d": -0.0111
     },
     "entry_close": 220.3193,
     "directional_call": "constructive"
@@ -383,7 +389,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.0163,
-      "3d": 0.0105
+      "3d": 0.0105,
+      "5d": -0.0211
     },
     "entry_close": 10.43,
     "directional_call": "constructive"
@@ -418,7 +425,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.0123,
-      "3d": 0.0115
+      "3d": 0.0115,
+      "5d": 0.0002
     },
     "entry_close": 49.53,
     "directional_call": "constructive"
@@ -453,7 +461,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.0312,
-      "3d": -0.0178
+      "3d": -0.0178,
+      "5d": -0.0783
     },
     "entry_close": 125.2,
     "directional_call": "cautious"
@@ -488,7 +497,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.1001,
-      "3d": -0.1439
+      "3d": -0.1439,
+      "5d": -0.1788
     },
     "entry_close": 62.26,
     "directional_call": "cautious"
@@ -522,7 +532,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0334
+      "1d": 0.0334,
+      "3d": 0.0022
     },
     "entry_close": 509.0,
     "directional_call": "cautious"
@@ -556,7 +567,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0084
+      "1d": 0.0084,
+      "3d": -0.0676
     },
     "entry_close": 262.04,
     "directional_call": "cautious"
@@ -590,9 +602,10 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0428
+      "1d": -0.0428,
+      "3d": -0.106
     },
-    "entry_close": 174.06,
+    "entry_close": 124.2364,
     "directional_call": "cautious"
   },
   {
@@ -624,7 +637,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0236
+      "1d": -0.0236,
+      "3d": -0.0185
     },
     "entry_close": 1143.0,
     "directional_call": "cautious"
@@ -658,7 +672,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.038
+      "1d": 0.038,
+      "3d": 0.0017
     },
     "entry_close": 17.61,
     "directional_call": "cautious"
@@ -692,7 +707,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0188
+      "1d": -0.0188,
+      "3d": -0.0439
     },
     "entry_close": 215.4079,
     "directional_call": "constructive"
@@ -726,7 +742,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0088
+      "1d": 0.0088,
+      "3d": 0.0097
     },
     "entry_close": 10.26,
     "directional_call": "neutral"
@@ -760,7 +777,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0035
+      "1d": 0.0035,
+      "3d": 0.0076
     },
     "entry_close": 48.92,
     "directional_call": "constructive"
@@ -794,7 +812,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0232
+      "1d": 0.0232,
+      "3d": -0.0247
     },
     "entry_close": 121.3,
     "directional_call": "cautious"
@@ -828,7 +847,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0021
+      "1d": -0.0021,
+      "3d": -0.035
     },
     "entry_close": 56.03,
     "directional_call": "cautious"
@@ -862,7 +882,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0363
+      "1d": -0.0363,
+      "3d": -0.0288
     },
     "entry_close": 526.0,
     "directional_call": "constructive"
@@ -896,7 +917,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0028
+      "1d": 0.0028,
+      "3d": -0.0763
     },
     "entry_close": 264.25,
     "directional_call": "cautious"
@@ -930,9 +952,10 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0378
+      "1d": 0.0378,
+      "3d": -0.0298
     },
-    "entry_close": 166.61,
+    "entry_close": 118.9189,
     "directional_call": "cautious"
   },
   {
@@ -964,7 +987,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0153
+      "1d": -0.0153,
+      "3d": 0.0111
     },
     "entry_close": 1116.0,
     "directional_call": "cautious"
@@ -998,7 +1022,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0131
+      "1d": 0.0131,
+      "3d": -0.0443
     },
     "entry_close": 18.28,
     "directional_call": "constructive"
@@ -1032,7 +1057,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0167
+      "1d": -0.0167,
+      "3d": 0.0309
     },
     "entry_close": 211.35,
     "directional_call": "cautious"
@@ -1066,7 +1092,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0184
+      "1d": 0.0184,
+      "3d": -0.0135
     },
     "entry_close": 10.35,
     "directional_call": "constructive"
@@ -1100,7 +1127,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": 0.0206
+      "1d": 0.0206,
+      "3d": 0.0092
     },
     "entry_close": 49.09,
     "directional_call": "cautious"
@@ -1134,7 +1162,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0093
+      "1d": -0.0093,
+      "3d": -0.0703
     },
     "entry_close": 124.12,
     "directional_call": "constructive"
@@ -1168,7 +1197,8 @@
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
-      "1d": -0.0467
+      "1d": -0.0467,
+      "3d": -0.0855
     },
     "entry_close": 55.91,
     "directional_call": "cautious"
@@ -1201,7 +1231,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.0063
+    },
     "entry_close": 506.89,
     "directional_call": "neutral"
   },
@@ -1233,7 +1265,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.078
+    },
     "entry_close": 265.0,
     "directional_call": "constructive"
   },
@@ -1265,8 +1299,10 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
-    "entry_close": 172.9,
+    "returns": {
+      "1d": -0.1
+    },
+    "entry_close": 123.4084,
     "directional_call": "constructive"
   },
   {
@@ -1297,7 +1333,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.0209
+    },
     "entry_close": 1098.92,
     "directional_call": "cautious"
   },
@@ -1329,7 +1367,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.0475
+    },
     "entry_close": 18.52,
     "directional_call": "constructive"
   },
@@ -1361,7 +1401,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.009
+    },
     "entry_close": 207.82,
     "directional_call": "cautious"
   },
@@ -1393,7 +1435,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.0233
+    },
     "entry_close": 28.28,
     "directional_call": "constructive"
   },
@@ -1425,7 +1469,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.038
+    },
     "entry_close": 122.97,
     "directional_call": "cautious"
   },
@@ -1457,7 +1503,9 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.0081
+    },
     "entry_close": 27.19,
     "directional_call": "cautious"
   },
@@ -1489,8 +1537,330 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.0248
+    },
     "entry_close": 56.77,
     "directional_call": "constructive"
+  },
+  {
+    "signal_id": "fa81b92dc7c9",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 7.0353,
+    "trigger_price": 510.84,
+    "support": 498.13,
+    "reclaim": 533.38,
+    "invalidation": 498.13,
+    "atr14": 45.2793,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 510.84,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "d3d3fea3c80d",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": 3.9021,
+    "trigger_price": 244.09,
+    "support": 243.24,
+    "reclaim": 263.0,
+    "invalidation": 243.24,
+    "atr14": 25.2743,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 244.09,
+    "directional_call": "neutral"
+  },
+  {
+    "signal_id": "26cd61fa8a68",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 0.905,
+    "trigger_price": 115.37,
+    "support": 111.07,
+    "reclaim": 123.7,
+    "invalidation": 111.07,
+    "atr14": 21.5243,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 115.37,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "ac64e1ed6239",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 10.1797,
+    "trigger_price": 1128.35,
+    "support": 1114.56,
+    "reclaim": 1179.3,
+    "invalidation": 1114.56,
+    "atr14": 80.5286,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 1128.35,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "39542ed3869b",
+    "ticker": "002130.SZ",
+    "name": "沃尔核材",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": 0.2292,
+    "trigger_price": 17.47,
+    "support": 17.61,
+    "reclaim": 18.5,
+    "invalidation": 17.61,
+    "atr14": 0.9407,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 17.47,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "d05fca00ee5d",
+    "ticker": "688111.SH",
+    "name": "金山办公",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 2.1461,
+    "trigger_price": 217.88,
+    "support": 206.05,
+    "reclaim": 219.9,
+    "invalidation": 206.05,
+    "atr14": 10.1071,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 217.88,
+    "directional_call": "constructive"
+  },
+  {
+    "signal_id": "f85223d2e01f",
+    "ticker": "601899.SH",
+    "name": "紫金矿业",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": 1.4396,
+    "trigger_price": 27.36,
+    "support": 27.43,
+    "reclaim": 28.11,
+    "invalidation": 27.43,
+    "atr14": 1.4836,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 27.36,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "d627445f2a48",
+    "ticker": "603259.SH",
+    "name": "药明康德",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "DE_RISK_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -4.9365,
+    "trigger_price": 115.4,
+    "support": 118.01,
+    "reclaim": 122.95,
+    "invalidation": 111.709,
+    "atr14": 6.4293,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 115.4,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "f537e685470a",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "DE_RISK_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -1.4794,
+    "trigger_price": 54.01,
+    "support": 54.88,
+    "reclaim": 56.76,
+    "invalidation": 50.6625,
+    "atr14": 2.6557,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 54.01,
+    "directional_call": "cautious"
+  },
+  {
+    "signal_id": "54cfd385648d",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "timestamp": "20260708 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -698.23,
+    "setup_type": "DE_RISK_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -2.8942,
+    "trigger_price": 36.8,
+    "support": 37.74,
+    "reclaim": 38.94,
+    "invalidation": 35.1835,
+    "atr14": 1.7821,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "returns": {},
+    "entry_close": 36.8,
+    "directional_call": "cautious"
   }
 ]
