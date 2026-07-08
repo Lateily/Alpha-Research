@@ -1,24 +1,24 @@
 {
-  "updated_at": "2026-07-08T04:23:29.596014+00:00",
+  "updated_at": "2026-07-08T10:38:35.745767+00:00",
   "total_theses": 4,
-  "active_positions": [],
-  "closed_positions": [
+  "active_positions": [
     {
       "ticker": "002594.SZ",
       "direction": "LONG",
       "entry_date": "2026-05-17",
       "entry_price": 96.3,
-      "current_price": 87.25,
-      "return_since_entry_pct": -9.4,
+      "current_price": 87.8,
+      "return_since_entry_pct": -8.83,
       "upside_target_pct": 22.0,
       "downside_stop_pct": -9.0,
       "days_held": 52,
       "days_to_catalyst": 38,
-      "current_status": "STOPPED_OUT",
+      "current_status": "ACTIVE",
       "conviction_state": "STARTER_CAPPED_UNTIL_E1",
       "tradeable_not_proven_statement": "Tradeable, but not proven. Historical base is [E1:direct] (2025 Overseas GM 19.46% vs Domestic GM 16.66%, +280bps, SEGMENT ECONOMICS period 20251231); forward persistence is [E2:proxy] (H1 2026 mix-shift margin-accretion through European localization not yet measured); size capped until 2026 H1 报告 segment disclosure confirms overseas GM holds ≥18% and consolidated GM holds ≥17%."
     }
   ],
+  "closed_positions": [],
   "skipped": [
     {
       "ticker": "175.HK",
@@ -42,6 +42,6 @@
       "pass_reason_detail": "No [E1:direct] structural base exists in our data for the bull's load-bearing claim that 'restarted store expansion will be margin-accretive': (i) store count YoY delta not in data, (ii) same-store-sales growth not in data, (iii) new-store maturity curve / store-level unit economics not in data, (iv) Q1 2026 expansion restart is asserted only by broker text (中泰 2026-05-03), not by primary operating disclosure. The deciding observable — 2026 H1 report on 2026-08-28 (est.) showing simultaneous store_count YoY ≥ 8% AND operating margin ≥ 10.5% AND SSSG ≥ 0% — has not printed. Bear's symmetric inference (expansion will dilute margin) is equally [E2:proxy]. Sell-side is uniformly bullish (38/38 positive, latest target 250000 / EPS 1.5 by 国信), so the consensus crowding ([E4]) means even a confirming H1 print may be largely priced. Pre-print, neither LONG nor SHORT carries ≥2:1 asymmetry."
     }
   ],
-  "hit_rate": 0.0,
-  "avg_return_pct": -9.4
+  "hit_rate": null,
+  "avg_return_pct": null
 }

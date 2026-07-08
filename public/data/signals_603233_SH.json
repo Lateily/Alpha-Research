@@ -3,19 +3,9 @@
   "generated_at": "2026-07-08",
   "price": 17.48,
   "zone": "NEUTRAL",
-  "entry_zone": true,
+  "entry_zone": false,
   "exit_zone": true,
   "signals": [
-    {
-      "type": "MA60_BOUNCE",
-      "strength": "strong",
-      "date": "20260707",
-      "bullish": true,
-      "description": {
-        "e": "Price bounced off MA60 (17.2) — major support held",
-        "z": "股价从MA60(17.2)附近反弹，主要支撑有效"
-      }
-    },
     {
       "type": "KDJ_OVERBOUGHT",
       "strength": "strong",
@@ -28,15 +18,15 @@
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 1,
-    "total": 2
+    "total": 1
   },
   "indicators": {
     "ma5": 16.83,
     "ma20": 16.23,
     "ma60": 17.16,
-    "rsi14": 60.4,
+    "rsi14": 60.6,
     "vol_ma20": 69414,
     "vol_ratio": 1.31,
     "price_vs_ma20": 7.71,
@@ -44,9 +34,9 @@
     "change_1d": 1.63,
     "change_5d": 16.3,
     "change_20d": 10.7,
-    "macd_dif": -0.0132,
-    "macd_dea": -0.2515,
-    "macd_hist": 0.4766,
+    "macd_dif": -0.015,
+    "macd_dea": -0.2542,
+    "macd_hist": 0.4784,
     "bb_upper": 17.58,
     "bb_mid": 16.23,
     "bb_lower": 14.88,
