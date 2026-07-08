@@ -18,7 +18,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -14.9976,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": 0.0063
   },
   {
     "nowcast_id": "b665fed7ce30",
@@ -39,7 +40,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": 2.6221,
-    "flow_hit": false
+    "flow_hit": false,
+    "next_day_return": -0.078
   },
   {
     "nowcast_id": "3fd1bec6f206",
@@ -60,7 +62,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": 1.0361,
-    "flow_hit": false
+    "flow_hit": false,
+    "next_day_return": -0.1
   },
   {
     "nowcast_id": "97476a8b7b2d",
@@ -81,7 +84,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -26.6744,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": 0.0209
   },
   {
     "nowcast_id": "9f38d12d29cf",
@@ -102,7 +106,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -14.9976,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": 0.0063
   },
   {
     "nowcast_id": "908347e1d943",
@@ -123,7 +128,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": 2.6221,
-    "flow_hit": false
+    "flow_hit": false,
+    "next_day_return": -0.078
   },
   {
     "nowcast_id": "b7bf89680e32",
@@ -144,7 +150,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": 1.0361,
-    "flow_hit": false
+    "flow_hit": false,
+    "next_day_return": -0.1
   },
   {
     "nowcast_id": "c8a512941559",
@@ -165,7 +172,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -26.6744,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": 0.0209
   },
   {
     "nowcast_id": "ab2964fb320a",
@@ -186,7 +194,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": 2.6221,
-    "flow_hit": false
+    "flow_hit": false,
+    "next_day_return": -0.078
   },
   {
     "nowcast_id": "962513028bf6",
@@ -207,7 +216,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -26.6744,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": 0.0209
   },
   {
     "nowcast_id": "3b8c9610550e",
@@ -228,7 +238,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -14.9976,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": 0.0063
   },
   {
     "nowcast_id": "cb8b9a1fd8a9",
@@ -249,7 +260,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": 2.6221,
-    "flow_hit": false
+    "flow_hit": false,
+    "next_day_return": -0.078
   },
   {
     "nowcast_id": "e5fec98a8c25",
@@ -270,7 +282,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": 1.0361,
-    "flow_hit": false
+    "flow_hit": false,
+    "next_day_return": -0.1
   },
   {
     "nowcast_id": "e5b60f74274e",
@@ -291,6 +304,7 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -26.6744,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": 0.0209
   }
 ]
