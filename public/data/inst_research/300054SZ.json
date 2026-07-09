@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-07-08T10:36:07Z",
+  "fetched_at": "2026-07-09T11:27:16Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -595,39 +595,11 @@
       "inst_count": 6,
       "surv_type": "特定对象调研",
       "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260409",
-      "fund_visitors": "张磊,冯飞,刘倩,宁双,汤冠豪,黎思思,孔晓欣",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "南方基金",
-      "org_type": "基金管理公司",
-      "comp_rece": "总经理 朱顺全,投资者关系总监 熊亚威",
-      "inst_count": 8,
-      "surv_type": "特定对象调研",
-      "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260409",
-      "fund_visitors": "黄金滔,雷中校,覃秘等",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "上证报",
-      "org_type": "其它",
-      "comp_rece": "总经理 朱顺全,投资者关系总监 熊亚威",
-      "inst_count": 4,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 31,
-    "total_90d": 44,
+    "total_90d": 42,
     "unique_inst_30d": 104,
     "latest_date": "2026-07-02"
   }

@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-07-08T10:36:02Z",
+  "fetched_at": "2026-07-09T11:27:02Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -161,39 +161,11 @@
       "inst_count": 1,
       "surv_type": "路演活动",
       "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260409",
-      "fund_visitors": "--",
-      "rece_place": "比亚迪六角大楼",
-      "rece_mode": "电话会议",
-      "rece_org": "投资经理、Guo Xiaolin",
-      "org_type": "--",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 2,
-      "surv_type": "电话会议",
-      "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260409",
-      "fund_visitors": "研究员 Alex Su",
-      "rece_place": "比亚迪六角大楼",
-      "rece_mode": "电话会议",
-      "rece_org": "Value Partners",
-      "org_type": "基金管理公司",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 2,
-      "surv_type": "电话会议",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 4,
-    "total_90d": 13,
+    "total_90d": 11,
     "unique_inst_30d": 6,
     "latest_date": "2026-07-02"
   }

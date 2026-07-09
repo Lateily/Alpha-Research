@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-08T04:23:29.372683+00:00",
+  "generated_at": "2026-07-09T11:30:49.003058+00:00",
   "ticker": "300308.SZ",
   "composite": 36.9,
   "band": "MODERATE",
@@ -22,7 +22,7 @@
   "price_metrics": {
     "n_returns": 60,
     "annual_vol": 0.594,
-    "skew": 0.018,
+    "skew": 0.02,
     "excess_kurtosis": -0.507,
     "max_drawdown": 0.205
   },
