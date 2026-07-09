@@ -95,9 +95,12 @@ def load_json(path, default):
     return json.load(open(path)) if os.path.exists(path) else default
 
 
-def evaluate_events(quotes, orders, state, today):
+def evaluate_events(quotes, orders, state, today, nowcast_sink=None):
     """Pure rule engine: (quotes, fund orders, dedup state) -> new alert dicts.
-    quotes: {ticker: normalized realtime row}. Offline-testable."""
+    quotes: {ticker: normalized realtime row}. Offline-testable.
+    nowcast_sink: optional callable(read_dict) — receives each CONFIDENT
+    nowcast flip so callers can log it into the scoring pool; None keeps
+    this function pure/offline."""
     alerts = []
     fired = state.setdefault("fired", {})
 
@@ -142,6 +145,14 @@ def evaluate_events(quotes, orders, state, today):
                 fire("NOWCAST_FLIP", f"{ticker}|{nc[0]}", f"🔮 {q.get('name') or ticker} nowcast → {nc[0]}",
                      f"conf {nc[1]:.2f} gap{(r.get('gap') or 0)*100:+.1f}% 距开{(r.get('from_open') or 0)*100:+.1f}% "
                      f"(推断,收盘判分)")
+                if nowcast_sink:
+                    # PR-M2 wiring: flips also enter the nowcast_log scoring
+                    # pool (sample_eligible=false) so the evaluator can grade
+                    # them post-close — previously they died in the alert log.
+                    read = dict(r)
+                    read["ticker"] = ticker
+                    read["name"] = q.get("name") or ticker
+                    nowcast_sink(read)
 
     for code, name in INDICES:
         q = quotes.get(code)
@@ -170,7 +181,21 @@ def poll_once(token, dry=False):
         r["name"] = r.get("name") or name_map.get(full)
         quotes[full] = r
     state = load_json(STATE_PATH, {})
-    alerts = evaluate_events(quotes, orders, state, today)
+
+    def nowcast_sink(read):
+        """Flip → nowcast_log scoring pool via the ONE existing writer
+        (run_premarket_monitor.log_nowcasts: dedup + no retro-edit).
+        Non-fatal by design — the daemon never dies from logging."""
+        try:
+            from run_premarket_monitor import log_nowcasts
+            hhmm = datetime.datetime.now().strftime("%H%M")
+            added = log_nowcasts([read], today, f"wt{hhmm}")
+            if added:
+                print(f"  [nowcast→pool] {read.get('name')} logged (wt{hhmm})")
+        except Exception as e:                     # noqa: BLE001
+            print("nowcast sink error:", str(e)[:80])
+
+    alerts = evaluate_events(quotes, orders, state, today, nowcast_sink=nowcast_sink)
     log = load_json(ALERT_LOG, [])
     for a in alerts:
         a["sent"] = notify(a["title"], a["body"], dry=dry)
@@ -248,6 +273,18 @@ def selftest():
     ck("NOWCAST_FLIP fires on state change", any(x["rule"] == "NOWCAST_FLIP" for x in a5))
     a6 = evaluate_events(quotes, orders, state, "20260707")
     ck("NOWCAST same state does not re-fire", not any(x["rule"] == "NOWCAST_FLIP" for x in a6))
+
+    # PR-M2 wiring: confident flips reach the nowcast sink (offline capture)
+    captured = []
+    quotes["D.SZ"] = _q("D.SZ", "丁", 91.0, 95.0, 93.0, 93.5, 90.8)   # deep fade
+    evaluate_events(quotes, orders, state, "20260707", nowcast_sink=captured.append)
+    ck("sink receives the flip read with ticker+name",
+       len(captured) == 1 and captured[0]["ticker"] == "D.SZ"
+       and captured[0]["name"] == "丁")
+    evaluate_events(quotes, orders, state, "20260707", nowcast_sink=captured.append)
+    ck("sink NOT called when state unchanged", len(captured) == 1)
+    ck("sink=None keeps evaluate_events pure (no crash path)",
+       isinstance(evaluate_events(quotes, orders, state, "20260707"), list))
 
     # new day resets dedup
     a7 = evaluate_events(quotes, orders, state, "20260708")
