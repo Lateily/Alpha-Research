@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-07-10T04:58:30Z",
+  "fetched_at": "2026-07-10T11:26:32Z",
   "current_tier": 6000,
   "_status": "ok",
   "data": {
@@ -1158,6 +1158,15 @@
     "moneyflow_hsgt": {
       "rows": [
         {
+          "trade_date": "20260710",
+          "ggt_ss": "31506.74",
+          "ggt_sz": "22946.22",
+          "hgt": "197704.64",
+          "sgt": "251575.7",
+          "north_money": "449280.34",
+          "south_money": "54452.96"
+        },
+        {
           "trade_date": "20260709",
           "ggt_ss": "31540.18",
           "ggt_sz": "22972.73",
@@ -1527,7 +1536,7 @@
           "south_money": "53799.97"
         }
       ],
-      "row_count": 41,
+      "row_count": 42,
       "_status": "ok"
     }
   }

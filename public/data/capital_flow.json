@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-07-10T04:58:34Z",
+  "fetched_at": "2026-07-10T11:26:38Z",
   "trade_date": "20260710",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "商业航天",
+      "ts_code": "BK0963.DC",
+      "net_inflow_yuan": 110858158080000.0,
+      "pct_chg": 2.7
+    },
+    {
+      "name": "军工",
+      "ts_code": "BK0490.DC",
+      "net_inflow_yuan": 95957230080000.0,
+      "pct_chg": 2.37
+    },
+    {
+      "name": "国防军工",
+      "ts_code": "BK1204.DC",
+      "net_inflow_yuan": 77531929600000.0,
+      "pct_chg": 3.43
+    },
+    {
+      "name": "军民融合",
+      "ts_code": "BK0808.DC",
+      "net_inflow_yuan": 76213391360000.0,
+      "pct_chg": 2.73
+    },
+    {
+      "name": "卫星互联网",
+      "ts_code": "BK0921.DC",
+      "net_inflow_yuan": 62925616640000.0,
+      "pct_chg": 3.39
+    },
+    {
+      "name": "低空经济",
+      "ts_code": "BK1166.DC",
+      "net_inflow_yuan": 47841492480000.0,
+      "pct_chg": 1.82
+    },
+    {
+      "name": "破增发价股",
+      "ts_code": "BK1673.DC",
+      "net_inflow_yuan": 47809205760000.0,
+      "pct_chg": 1.92
+    },
+    {
+      "name": "西部大开发",
+      "ts_code": "BK0590.DC",
+      "net_inflow_yuan": 47499824640000.0,
+      "pct_chg": 1.68
+    },
+    {
+      "name": "北斗导航",
+      "ts_code": "BK0629.DC",
+      "net_inflow_yuan": 45568171520000.0,
+      "pct_chg": 3.7
+    },
+    {
+      "name": "DeepSeek概念",
+      "ts_code": "BK1188.DC",
+      "net_inflow_yuan": 41664814080000.0,
+      "pct_chg": 1.79
+    },
+    {
+      "name": "医药生物",
+      "ts_code": "BK1216.DC",
+      "net_inflow_yuan": 40795074560000.0,
+      "pct_chg": 2.82
+    },
+    {
+      "name": "无人机",
+      "ts_code": "BK0704.DC",
+      "net_inflow_yuan": 40103864320000.0,
+      "pct_chg": 1.49
+    },
+    {
+      "name": "中特估",
+      "ts_code": "BK1139.DC",
+      "net_inflow_yuan": 37397957120000.0,
+      "pct_chg": 1.05
+    },
+    {
+      "name": "医药医疗风格",
+      "ts_code": "BK1712.DC",
+      "net_inflow_yuan": 35582341120000.0,
+      "pct_chg": 2.38
+    },
+    {
+      "name": "一带一路",
+      "ts_code": "BK0712.DC",
+      "net_inflow_yuan": 32207283200000.0,
+      "pct_chg": 1.4
+    },
+    {
+      "name": "中字头",
+      "ts_code": "BK0505.DC",
+      "net_inflow_yuan": 32052651520000.0,
+      "pct_chg": 1.65
+    },
+    {
+      "name": "消费风格",
+      "ts_code": "BK1711.DC",
+      "net_inflow_yuan": 31858913280000.0,
+      "pct_chg": 1.39
+    },
+    {
+      "name": "汽车",
+      "ts_code": "BK1211.DC",
+      "net_inflow_yuan": 30400609280000.0,
+      "pct_chg": 1.13
+    },
+    {
+      "name": "航天装备Ⅲ",
+      "ts_code": "BK1385.DC",
+      "net_inflow_yuan": 29805046880000.0,
+      "pct_chg": 10.36
+    },
+    {
+      "name": "航天装备Ⅱ",
+      "ts_code": "BK1232.DC",
+      "net_inflow_yuan": 29805046880000.0,
+      "pct_chg": 10.36
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "科技风格",
+      "ts_code": "BK1713.DC",
+      "net_inflow_yuan": -459505336320000.0,
+      "pct_chg": -4.29
+    },
+    {
+      "name": "东方财富热股",
+      "ts_code": "BK1637.DC",
+      "net_inflow_yuan": -437001379840000.0,
+      "pct_chg": -2.03
+    },
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": -435133480960000.0,
+      "pct_chg": -3.13
+    },
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": -427172904960000.0,
+      "pct_chg": 0.73
+    },
+    {
+      "name": "大盘股",
+      "ts_code": "BK1663.DC",
+      "net_inflow_yuan": -410807009280000.0,
+      "pct_chg": -0.5
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": -380201082880000.0,
+      "pct_chg": -0.1
+    },
+    {
+      "name": "百元股",
+      "ts_code": "BK1059.DC",
+      "net_inflow_yuan": -378022666240000.0,
+      "pct_chg": -3.6
+    },
+    {
+      "name": "HS300_",
+      "ts_code": "BK0500.DC",
+      "net_inflow_yuan": -356405248000000.0,
+      "pct_chg": -0.03
+    },
+    {
+      "name": "富时罗素",
+      "ts_code": "BK0867.DC",
+      "net_inflow_yuan": -341856993280000.0,
+      "pct_chg": 0.83
+    },
+    {
+      "name": "昨日高振幅",
+      "ts_code": "BK1633.DC",
+      "net_inflow_yuan": -318332313600000.0,
+      "pct_chg": -0.72
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1025,
     "_status": "ok"
   }
 }
