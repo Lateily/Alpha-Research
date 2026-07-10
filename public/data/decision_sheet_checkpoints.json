@@ -2,7 +2,7 @@
   "_meta": {
     "layer": "CTF v1 decision-sheet forward checkpoints (PR-D)",
     "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md §3",
-    "updated_at": "2026-06-21T09:18:19.163565+00:00",
+    "updated_at": "2026-07-10T05:01:19.916156+00:00",
     "n_active": 7
   },
   "registrations": [
@@ -130,8 +130,26 @@
         {
           "offset_days": 30,
           "due_date": "2026-07-10",
-          "status": "PENDING",
-          "result": null
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-07-10T05:01:19.916121+00:00",
+            "price": 86.87,
+            "price_date": "20260709",
+            "price_staleness_note": "committed bar may lag — confirm with a live quote",
+            "chg_vs_reference_pct": -7.34,
+            "directional_read": "AGAINST_THESIS",
+            "band_position": "BETWEEN_BEAR_AND_BASE",
+            "wrong_if_due_for_human_check": [
+              "海外月度销量 YoY (overseas monthly units YoY)"
+            ],
+            "wrong_if_not_yet_due": [
+              "2026 H1 海外分部毛利率 (overseas segment GM)",
+              "2026 H1 合并毛利率 (consolidated GM)",
+              "2026 H1 归母净利润 YoY"
+            ],
+            "catalysts_due": null,
+            "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
+          }
         },
         {
           "offset_days": 60,

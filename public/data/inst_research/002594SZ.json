@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-07-09T11:27:02Z",
+  "fetched_at": "2026-07-10T04:58:54Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -164,9 +164,9 @@
     }
   ],
   "summary": {
-    "total_30d": 4,
+    "total_30d": 3,
     "total_90d": 11,
-    "unique_inst_30d": 6,
+    "unique_inst_30d": 5,
     "latest_date": "2026-07-02"
   }
 }

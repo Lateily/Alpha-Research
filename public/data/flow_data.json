@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-07-09T11:24:26.235681",
+  "fetched_at": "2026-07-10T04:57:16.020265",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-07-09"
+    "updated": "2026-07-10"
   },
   "southbound": {
     "latest_net_flow": 98.3047,
     "5d_cumulative": 495.8764,
     "20d_cumulative": 491.9965,
     "trend": "inflow",
-    "updated": "2026-07-09"
+    "updated": "2026-07-10"
   },
   "dragon_tiger": [
     {
@@ -139,26 +139,6 @@
       "code": "000566",
       "name": "海南海药",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "000566",
-      "name": "海南海药",
-      "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "000566",
-      "name": "海南海药",
-      "date": "",
       "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
@@ -166,10 +146,20 @@
       "focus": false
     },
     {
-      "code": "000593",
-      "name": "德龙汇能",
+      "code": "000566",
+      "name": "海南海药",
       "date": "",
       "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000566",
+      "name": "海南海药",
+      "date": "",
+      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -180,6 +170,16 @@
       "name": "德龙汇能",
       "date": "",
       "reason": "日振幅值达到15%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000593",
+      "name": "德龙汇能",
+      "date": "",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,

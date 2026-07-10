@@ -1,6 +1,6 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-07-09T11:26:46Z",
+  "fetched_at": "2026-07-10T04:58:42Z",
   "tier": 15000,
   "_status": "ok",
   "api_used": "forecast",
@@ -8,6 +8,14 @@
     "forecast"
   ],
   "forecasts": [
+    {
+      "end_date": "20260630",
+      "eps": null,
+      "revenue": null,
+      "net_profit": 52500.0,
+      "op_income": null,
+      "broker_count": null
+    },
     {
       "end_date": "20260331",
       "eps": null,

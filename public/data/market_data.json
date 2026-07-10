@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "fetched_at": "2026-07-09T11:24:26.234682",
+    "fetched_at": "2026-07-10T04:57:16.019127",
     "version": "4.1",
     "tickers": [
       "300308.SZ",
@@ -17,16 +17,16 @@
   "yahoo": {
     "300308.SZ": {
       "price": {
-        "last": 1194.9,
-        "prev_close": 1128.35,
-        "change_pct": 5.898,
-        "high": 1199.99,
-        "low": 1117.01,
-        "volume": 3588842300,
+        "last": 1151.1,
+        "prev_close": 1194.9,
+        "change_pct": -3.666,
+        "high": 1218,
+        "low": 1146.32,
+        "volume": 2545176300,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 1199.99,
-        "low_52w": 1117.01
+        "high_52w": 1218,
+        "low_52w": 1146.32
       },
       "technical": {
         "sma_20": null,
@@ -90,16 +90,16 @@
     },
     "002594.SZ": {
       "price": {
-        "last": 86.87,
-        "prev_close": 87.8,
-        "change_pct": -1.059,
-        "high": 87.77,
-        "low": 85.8,
-        "volume": 3773928000,
+        "last": 90.35,
+        "prev_close": 86.87,
+        "change_pct": 4.006,
+        "high": 90.83,
+        "low": 84.88,
+        "volume": 4491529800,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 87.77,
-        "low_52w": 85.8
+        "high_52w": 90.83,
+        "low_52w": 84.88
       },
       "technical": {
         "sma_20": null,
@@ -163,16 +163,16 @@
     },
     "175.HK": {
       "price": {
-        "last": 18.99,
-        "prev_close": 18.6,
-        "change_pct": 2.097,
-        "high": 18.94,
-        "low": 17.84,
-        "volume": -468,
+        "last": 18.13,
+        "prev_close": 18.42,
+        "change_pct": -1.574,
+        "high": 19,
+        "low": 18.11,
+        "volume": 463,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 18.94,
-        "low_52w": 17.84
+        "high_52w": 19,
+        "low_52w": 18.11
       },
       "technical": {
         "sma_20": null,
@@ -236,16 +236,16 @@
     },
     "603233.SH": {
       "price": {
-        "last": 17.65,
-        "prev_close": 17.81,
-        "change_pct": -0.898,
-        "high": 17.96,
-        "low": 17.36,
-        "volume": 783671800,
+        "last": 17.89,
+        "prev_close": 17.65,
+        "change_pct": 1.36,
+        "high": 17.95,
+        "low": 17.4,
+        "volume": 583823000,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 17.96,
-        "low_52w": 17.36
+        "high_52w": 17.95,
+        "low_52w": 17.4
       },
       "technical": {
         "sma_20": null,
@@ -309,16 +309,16 @@
     },
     "688120.SH": {
       "price": {
-        "last": 344,
-        "prev_close": 295,
-        "change_pct": 16.61,
-        "high": 348,
-        "low": 292.51,
-        "volume": 1916507700,
+        "last": 348.5,
+        "prev_close": 344,
+        "change_pct": 1.308,
+        "high": 374.85,
+        "low": 340.01,
+        "volume": 1411957100,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 348,
-        "low_52w": 292.51
+        "high_52w": 374.85,
+        "low_52w": 340.01
       },
       "technical": {
         "sma_20": null,
@@ -382,16 +382,16 @@
     },
     "300054.SZ": {
       "price": {
-        "last": 95.99,
-        "prev_close": 89.36,
-        "change_pct": 7.419,
-        "high": 96.18,
-        "low": 90.01,
-        "volume": 5664719200,
+        "last": 88.93,
+        "prev_close": 95.99,
+        "change_pct": -7.355,
+        "high": 98,
+        "low": 88.44,
+        "volume": 6497340000,
         "avg_volume_20d": null,
         "volume_ratio": null,
-        "high_52w": 96.18,
-        "low_52w": 90.01
+        "high_52w": 98,
+        "low_52w": 88.44
       },
       "technical": {
         "sma_20": null,
@@ -461,14 +461,14 @@
       "5d_cumulative": 0.0,
       "20d_cumulative": 0.0,
       "trend": "outflow",
-      "updated": "2026-07-09"
+      "updated": "2026-07-10"
     },
     "southbound": {
       "latest_net_flow": 98.3047,
       "5d_cumulative": 495.8764,
       "20d_cumulative": 491.9965,
       "trend": "inflow",
-      "updated": "2026-07-09"
+      "updated": "2026-07-10"
     },
     "dragon_tiger": [
       {
@@ -595,26 +595,6 @@
         "code": "000566",
         "name": "海南海药",
         "date": "",
-        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "000566",
-        "name": "海南海药",
-        "date": "",
-        "reason": "日振幅值达到15%的前5只证券",
-        "buy_amt": null,
-        "sell_amt": null,
-        "net_amt": null,
-        "focus": false
-      },
-      {
-        "code": "000566",
-        "name": "海南海药",
-        "date": "",
         "reason": "日换手率达到20%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
@@ -622,10 +602,20 @@
         "focus": false
       },
       {
-        "code": "000593",
-        "name": "德龙汇能",
+        "code": "000566",
+        "name": "海南海药",
         "date": "",
         "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000566",
+        "name": "海南海药",
+        "date": "",
+        "reason": "日振幅值达到15%的前5只证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,
@@ -636,6 +626,16 @@
         "name": "德龙汇能",
         "date": "",
         "reason": "日振幅值达到15%的前5只证券",
+        "buy_amt": null,
+        "sell_amt": null,
+        "net_amt": null,
+        "focus": false
+      },
+      {
+        "code": "000593",
+        "name": "德龙汇能",
+        "date": "",
+        "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
         "buy_amt": null,
         "sell_amt": null,
         "net_amt": null,

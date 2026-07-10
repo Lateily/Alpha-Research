@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-09T11:30:47.792865+00:00",
+  "generated_at": "2026-07-10T05:01:19.644605+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -8,6 +8,92 @@
     "caution": []
   },
   "scores": [
+    {
+      "ticker": "300054.SZ",
+      "score": 10,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "BULLISH",
+      "regime": "NEUTRAL",
+      "model_state": "NORMAL_OBSERVATION_MODE",
+      "vp_score": 47.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 1,
+        "bearish": 0
+      },
+      "contributing": [
+        {
+          "type": "MA20_BOUNCE",
+          "base_weight": 12,
+          "decay": 0.8,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "flow_role": "other",
+          "policy_gate": null,
+          "raw_contribution_before_policy": 9.6,
+          "final_contribution": 9.6
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "MA20_BOUNCE",
+          "contribution": 9.6
+        }
+      ],
+      "rationale_e": "Bullish: Ma20 Bounce | RSI 60 | Price vs MA20 +4.4% | VP 47",
+      "rationale_z": "多头：MA20支撑反弹 | RSI 60 | 距MA20 +4.4% | VP 47",
+      "signal_types": [
+        "MA20_BOUNCE"
+      ],
+      "computed_at": "2026-07-10T05:01:19.643965+00:00"
+    },
+    {
+      "ticker": "300308.SZ",
+      "score": 9,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "NEUTRAL",
+      "regime": "PERMISSIVE",
+      "model_state": "NORMAL_OBSERVATION_MODE",
+      "vp_score": 48.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 1,
+        "bearish": 0
+      },
+      "contributing": [
+        {
+          "type": "KDJ_GOLDEN_CROSS",
+          "base_weight": 10,
+          "decay": 0.75,
+          "independence_factor": 1.0,
+          "regime_mult": 1.2,
+          "staleness": 1.0,
+          "flow_role": "other",
+          "policy_gate": null,
+          "raw_contribution_before_policy": 9.0,
+          "final_contribution": 9.0
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "KDJ_GOLDEN_CROSS",
+          "contribution": 9.0
+        }
+      ],
+      "rationale_e": "Bullish: Kdj Golden Cross | RSI 52 | Price vs MA20 -2.5% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "多头：KDJ金叉 | RSI 52 | 距MA20 -2.5% | 政策顺风 | VP 48",
+      "signal_types": [
+        "KDJ_GOLDEN_CROSS"
+      ],
+      "computed_at": "2026-07-10T05:01:19.644084+00:00"
+    },
     {
       "ticker": "688120.SH",
       "score": 9,
@@ -44,132 +130,12 @@
           "contribution": 9.0
         }
       ],
-      "rationale_e": "Bullish: Bullish Alignment | RSI 60 | Price vs MA20 +18.4% | VP 45",
-      "rationale_z": "多头：均线多头排列 | RSI 60 | 距MA20 +18.4% | VP 45",
+      "rationale_e": "Bullish: Bullish Alignment | RSI 68 | Price vs MA20 +33.7% | VP 45",
+      "rationale_z": "多头：均线多头排列 | RSI 68 | 距MA20 +33.7% | VP 45",
       "signal_types": [
         "BULLISH_ALIGNMENT"
       ],
-      "computed_at": "2026-07-09T11:30:47.792689+00:00"
-    },
-    {
-      "ticker": "603233.SH",
-      "score": 6,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "NEUTRAL",
-      "model_state": "NORMAL_OBSERVATION_MODE",
-      "vp_score": 50.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 1,
-        "bearish": 1
-      },
-      "contributing": [
-        {
-          "type": "MA60_BOUNCE",
-          "base_weight": 16,
-          "decay": 0.86,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": 13.7,
-          "final_contribution": 13.7
-        },
-        {
-          "type": "KDJ_OVERBOUGHT",
-          "base_weight": -12,
-          "decay": 0.67,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": -8.0,
-          "final_contribution": -8.0
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "MA60_BOUNCE",
-          "contribution": 13.7
-        },
-        {
-          "type": "KDJ_OVERBOUGHT",
-          "contribution": -8.0
-        }
-      ],
-      "rationale_e": "Bullish: Ma60 Bounce | Bearish: Kdj Overbought | RSI 63 | Price vs MA20 +9.1% | VP 50",
-      "rationale_z": "多头：MA60强支撑反弹 | 空头：KDJ极度超买(J>100) | RSI 63 | 距MA20 +9.1% | VP 50",
-      "signal_types": [
-        "MA60_BOUNCE",
-        "KDJ_OVERBOUGHT"
-      ],
-      "computed_at": "2026-07-09T11:30:47.792445+00:00"
-    },
-    {
-      "ticker": "002594.SZ",
-      "score": 5,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "PERMISSIVE",
-      "model_state": "NORMAL_OBSERVATION_MODE",
-      "vp_score": 48.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 1,
-        "bearish": 1
-      },
-      "contributing": [
-        {
-          "type": "MA20_BOUNCE",
-          "base_weight": 12,
-          "decay": 0.8,
-          "independence_factor": 1.0,
-          "regime_mult": 1.2,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": 11.5,
-          "final_contribution": 11.5
-        },
-        {
-          "type": "KDJ_OVERBOUGHT",
-          "base_weight": -12,
-          "decay": 0.67,
-          "independence_factor": 1.0,
-          "regime_mult": 0.8,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": -6.4,
-          "final_contribution": -6.4
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "MA20_BOUNCE",
-          "contribution": 11.5
-        },
-        {
-          "type": "KDJ_OVERBOUGHT",
-          "contribution": -6.4
-        }
-      ],
-      "rationale_e": "Bullish: Ma20 Bounce | Bearish: Kdj Overbought | RSI 50 | Price vs MA20 +2.2% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "多头：MA20支撑反弹 | 空头：KDJ极度超买(J>100) | RSI 50 | 距MA20 +2.2% | 政策顺风 | VP 48",
-      "signal_types": [
-        "MA20_BOUNCE",
-        "KDJ_OVERBOUGHT"
-      ],
-      "computed_at": "2026-07-09T11:30:47.792017+00:00"
+      "computed_at": "2026-07-10T05:01:19.644424+00:00"
     },
     {
       "ticker": "175.HK",
@@ -212,17 +178,17 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-07-09T11:30:47.792138+00:00"
+      "computed_at": "2026-07-10T05:01:19.643849+00:00"
     },
     {
-      "ticker": "300054.SZ",
+      "ticker": "603233.SH",
       "score": 0,
       "action": "NEUTRAL",
       "action_zh": "信号中性，等待",
       "zone": "NEUTRAL",
       "regime": "NEUTRAL",
       "model_state": "NORMAL_OBSERVATION_MODE",
-      "vp_score": 47.0,
+      "vp_score": 50.0,
       "vp_signal_type": null,
       "vp_adjustment": null,
       "staleness_factor": 1.0,
@@ -232,33 +198,10 @@
       },
       "contributing": [],
       "contributing_signals": [],
-      "rationale_e": "RSI 53 | Price vs MA20 -1.4% | VP 47",
-      "rationale_z": "RSI 53 | 距MA20 -1.4% | VP 47",
+      "rationale_e": "RSI 61 | Price vs MA20 +7.7% | VP 50",
+      "rationale_z": "RSI 61 | 距MA20 +7.7% | VP 50",
       "signal_types": [],
-      "computed_at": "2026-07-09T11:30:47.792230+00:00"
-    },
-    {
-      "ticker": "300308.SZ",
-      "score": 0,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "PERMISSIVE",
-      "model_state": "NORMAL_OBSERVATION_MODE",
-      "vp_score": 48.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 0,
-        "bearish": 0
-      },
-      "contributing": [],
-      "contributing_signals": [],
-      "rationale_e": "RSI 45 | Price vs MA20 -7.7% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "RSI 45 | 距MA20 -7.7% | 政策顺风 | VP 48",
-      "signal_types": [],
-      "computed_at": "2026-07-09T11:30:47.792317+00:00"
+      "computed_at": "2026-07-10T05:01:19.644177+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -335,7 +278,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-07-09T11:30:47.792564+00:00"
+      "computed_at": "2026-07-10T05:01:19.644293+00:00"
     },
     {
       "ticker": "700.HK",
@@ -358,7 +301,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-07-09T11:30:47.792780+00:00"
+      "computed_at": "2026-07-10T05:01:19.644517+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -381,7 +324,50 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-07-09T11:30:47.792853+00:00"
+      "computed_at": "2026-07-10T05:01:19.644592+00:00"
+    },
+    {
+      "ticker": "002594.SZ",
+      "score": -6,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "NEUTRAL",
+      "regime": "PERMISSIVE",
+      "model_state": "NORMAL_OBSERVATION_MODE",
+      "vp_score": 48.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 0,
+        "bearish": 1
+      },
+      "contributing": [
+        {
+          "type": "KDJ_OVERBOUGHT",
+          "base_weight": -12,
+          "decay": 0.67,
+          "independence_factor": 1.0,
+          "regime_mult": 0.8,
+          "staleness": 1.0,
+          "flow_role": "other",
+          "policy_gate": null,
+          "raw_contribution_before_policy": -6.4,
+          "final_contribution": -6.4
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "KDJ_OVERBOUGHT",
+          "contribution": -6.4
+        }
+      ],
+      "rationale_e": "Bearish: Kdj Overbought | RSI 48 | Price vs MA20 +1.4% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "空头：KDJ极度超买(J>100) | RSI 48 | 距MA20 +1.4% | 政策顺风 | VP 48",
+      "signal_types": [
+        "KDJ_OVERBOUGHT"
+      ],
+      "computed_at": "2026-07-10T05:01:19.643723+00:00"
     }
   ]
 }
