@@ -2094,5 +2094,141 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "17ae46ccc3d6",
+    "ticker": "MARKET.A",
+    "name": "A股大盘",
+    "timestamp": "20260711 15:20",
+    "line": "rotation",
+    "market_state": "RISK_OFF",
+    "setup_type": "rotation_hypothesis",
+    "horizon": [
+      "5d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": null,
+    "created_by": "Claude",
+    "sector": "全市场",
+    "sector_state": "churn",
+    "hypothesis": "快轮动持续:至20260717定盘,不出现连续两日『指数上行+主力净流入』的RISK_ON确认(定盘口径)",
+    "variant_view": "CONSENSUS_RIDE:与『市场仍在打摆』一致,edge在执行纪律不在方向",
+    "catalyst": "无特定事件——regime持续性检验;参考0714-0715宏观数据窗口",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "0709主力+225亿→0710主力-398亿单日翻转",
+        "tier": "E3",
+        "source": "tushare:moneyflow_mkt_dc",
+        "status": "verified"
+      },
+      {
+        "claim": "轮动半衰期≈1天,本周第3次观察",
+        "tier": "E3",
+        "source": "samples/2026070*",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "RISK_ON存活恰好一日",
+    "forecast_claim": "churn延续≥5日",
+    "trigger_condition": "",
+    "invalidation": "出现连续两日RISK_ON确认(0713-0717任意相邻两日)",
+    "human_status": "not_executed",
+    "outcome_status": "pending"
+  },
+  {
+    "signal_id": "80a62f3bc67b",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260711 15:20",
+    "line": "rotation",
+    "market_state": "RISK_OFF",
+    "setup_type": "rotation_hypothesis",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": 1093.98,
+    "created_by": "Claude",
+    "sector": "AI光模块",
+    "sector_state": "DISTRIBUTING",
+    "hypothesis": "负向派发签名持续:0710 EXIT_REVIEW(主力-51.7亿)后,至0715收盘,旭创与新易盛(qfq)均不收复0709收盘价(1194.9/545.5)",
+    "variant_view": "NO_EDGE方向观察:检验『大流出后修复需时』签名,不构成做空观点",
+    "catalyst": "无——负向持续性检验(我们判分池里最强的方向签名)",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "旭创0710收-8.45%,主力-51.744亿",
+        "tier": "E3",
+        "source": "samples/20260710.json",
+        "status": "verified"
+      },
+      {
+        "claim": "判分池大流出方向历史7/7(n<30仅计数)",
+        "tier": "E3",
+        "source": "nowcast_log.json",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "0710光模块链主力大幅流出",
+    "forecast_claim": "3日内不收复0709收盘",
+    "trigger_condition": "",
+    "invalidation": "任一标的在0713-0715任意收盘价≥其0709收盘",
+    "human_status": "not_executed",
+    "outcome_status": "pending"
+  },
+  {
+    "signal_id": "ccfe9b99ba79",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260711 15:20",
+    "line": "value_chain",
+    "market_state": "RISK_OFF",
+    "setup_type": "value_chain_thesis",
+    "horizon": [
+      "20d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": 1093.98,
+    "created_by": "Claude",
+    "sector": "AI光模块",
+    "sector_state": "DISTRIBUTING",
+    "hypothesis": "价值链瓶颈现金流翻译未变:1.6T量产+在手订单支撑下,本周-8.45%属β/regime冲击而非α恶化;Q2预告窗口将维持现金流翻译证据",
+    "variant_view": "VARIANT:市场按流动性β定价本周回调;我们按节点双支柱(能力壁垒E1+订单现金流E1)判断α未损;edge_source=analytical(链条级研究)",
+    "catalyst": "A股业绩预告季(~0715前后旭创若发Q2预告)+ 既有0712 batch-1 checkpoint复核",
+    "mechanism_chain": [
+      "云厂capex→1.6T订单",
+      "合格供应商地位→份额稳定",
+      "量产爬坡→收入/毛利兑现"
+    ],
+    "evidence": [
+      {
+        "claim": "双支柱证据基础(份额/技术代际+订单现金流)",
+        "tier": "E1",
+        "source": "docs/research/decision_sheets/300308相关+15家AI链研究",
+        "status": "verified"
+      },
+      {
+        "claim": "0710主力-51.7亿流出",
+        "tier": "E3",
+        "source": "samples/20260710.json",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "周内板块级流出",
+    "forecast_claim": "预告窗口维持现金流翻译证据",
+    "trigger_condition": "",
+    "invalidation": "Q2预告归母净利低于一致预期区间下沿,或任一美系云厂公告下修2026资本开支",
+    "human_status": "not_executed",
+    "outcome_status": "pending"
   }
 ]

@@ -1,0 +1,26 @@
+[
+  {
+    "signal_id": "17ae46ccc3d6",
+    "at": "20260711 15:20",
+    "author": "Claude",
+    "thought": "首批pre-registration;周末注册,先于周一开盘,无盘中数据参与",
+    "changed_action": false,
+    "why": "no-lookahead:注册先于结果"
+  },
+  {
+    "signal_id": "80a62f3bc67b",
+    "at": "20260711 15:20",
+    "author": "Claude",
+    "thought": "首批pre-registration;周末注册,先于周一开盘,无盘中数据参与",
+    "changed_action": false,
+    "why": "no-lookahead:注册先于结果"
+  },
+  {
+    "signal_id": "ccfe9b99ba79",
+    "at": "20260711 15:20",
+    "author": "Claude",
+    "thought": "首批pre-registration;周末注册,先于周一开盘,无盘中数据参与",
+    "changed_action": false,
+    "why": "no-lookahead:注册先于结果"
+  }
+]
