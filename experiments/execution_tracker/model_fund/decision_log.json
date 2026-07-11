@@ -99,5 +99,13 @@
     "ticker": "603259.SH",
     "reason": "WARNING连续第2天主力为负(0706 -0.81亿, 0707 -7.18亿) — 规则触发撤单",
     "no_trade_flag": true
+  },
+  {
+    "date": "20260710",
+    "action": "PAPER_FILL",
+    "ticker": "601899.SH",
+    "price": 28.2,
+    "shares": 5000,
+    "no_trade_flag": true
   }
 ]
