@@ -1,0 +1,78 @@
+{
+  "_status": "ok",
+  "ticker": "300054.SZ",
+  "fetched_at": "2026-07-10T11:31:45Z",
+  "api_used": "stk_holdertrade",
+  "window_days": 180,
+  "events": [
+    {
+      "ts_code": "300054.SZ",
+      "ann_date": "20260317",
+      "holder_name": "杨平彩",
+      "holder_type": "G",
+      "in_de": "DE",
+      "change_vol": 112900,
+      "change_ratio": 0.0153,
+      "after_share": 84675.0,
+      "after_ratio": 0.0115,
+      "avg_price": 37.8,
+      "total_share": 338700,
+      "begin_date": null,
+      "close_date": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "ann_date": "20260317",
+      "holder_name": "杨平彩",
+      "holder_type": "G",
+      "in_de": "DE",
+      "change_vol": 46200,
+      "change_ratio": 0.0063,
+      "after_share": 38475.0,
+      "after_ratio": 0.0052,
+      "avg_price": 46.59,
+      "total_share": 292500,
+      "begin_date": null,
+      "close_date": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "ann_date": "20260317",
+      "holder_name": "姚红",
+      "holder_type": "G",
+      "in_de": "DE",
+      "change_vol": 80000,
+      "change_ratio": 0.0109,
+      "after_share": 60313.0,
+      "after_ratio": 0.0082,
+      "avg_price": 38.44,
+      "total_share": 241250,
+      "begin_date": null,
+      "close_date": null
+    },
+    {
+      "ts_code": "300054.SZ",
+      "ann_date": "20260317",
+      "holder_name": "姚红",
+      "holder_type": "G",
+      "in_de": "DE",
+      "change_vol": 10000,
+      "change_ratio": 0.0014,
+      "after_share": 50313.0,
+      "after_ratio": 0.0068,
+      "avg_price": 47.34,
+      "total_share": 231250,
+      "begin_date": null,
+      "close_date": null
+    }
+  ],
+  "summary": {
+    "total_count": 4,
+    "in_count": 0,
+    "de_count": 4,
+    "net_change_vol_180d": -249100,
+    "net_change_ratio_180d": -0.0339,
+    "last_announce_date": "2026-03-17",
+    "signal_level": "NEUTRAL"
+  }
+}

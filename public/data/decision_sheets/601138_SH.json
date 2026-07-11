@@ -1,0 +1,309 @@
+{
+  "_meta": {
+    "layer": "Core Thesis Factory v1 — Single-Name Decision Sheet (单票决策书)",
+    "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md",
+    "generated_at": "2026-06-15T14:11:42.685236+00:00",
+    "sheet_version": "v1",
+    "disclaimer": "INTERNAL, UNVALIDATED research output of the model-recommendation pilot — not validated alpha, not external/personalized investment advice; sizing fields are research posture only; human executes. Quality gate = human red-team (auto checks are the floor only)."
+  },
+  "identity": {
+    "ticker": "601138.SH",
+    "name": {
+      "zh": "工业富联",
+      "en": "Foxconn Industrial Internet"
+    },
+    "market": "A",
+    "sector_theme": {
+      "zh": "AI 服务器 / rack-scale ODM · forward-PE 被盈利压缩",
+      "en": "AI server / rack-scale ODM · forward multiple compressed by earnings"
+    },
+    "as_of": "2026-06-15",
+    "ticker_one_context": {
+      "objective_horizon": "6-12 months (AI value-chain screen #82 → deep thesis #85, corrected per PR-G #86)",
+      "real_money_consideration": "WATCH_CONSTRUCTIVE — no position at current price; R/R ~1.7 below the 2:1 bar"
+    },
+    "provenance": {
+      "research_core_lineage": "Discovered in the AI value-chain discovery screen (#82, constructive WATCH) → deep thesis #85, CORRECTED per PR-G #86 一手财务对账门 (#86 merged to main 4a1fd60). This core encodes the post-#86 primary-verified thesis for forward-checkpoint registration.",
+      "generation_note": "Load-bearing numbers reconciled against the FILED cninfo PDFs by PR-G #86 (not second-hand): Q1'26 归母 105.95亿 E1-confirmed (cninfo 1225231598.PDF; the circulating 41.8亿 was a stale prior-year figure, discarded); FY2025 归母 352.86亿 E1 (cninfo 1225004420.PDF) — confirms the FY26 500-606亿 = +42-72% growth framing; 总股本 198.44亿 E1. Committed reference price = universe_a 2026-06-12 snapshot 70.57 (committed PE 33.04, mcap 14004亿).",
+      "red_team_record": "owner-authorized red-team floor, scorer = Junyan, basis = owner-authorized floor / post-#86 verified, average 87.2 PASS (具体性88/可证伪92/估值纪律84/信息增量86/风险86)."
+    }
+  },
+  "thesis": {
+    "variant_perception": {
+      "zh": "市场信:工业富联是 AI 服务器王(全球 #1 AI 服务器 ODM,>40% 份额),北美云 capex + GB200/GB300 rack-scale 让出货爆发,故事已是全市场共识,市值已超 1.4 万亿——默认充分定价。我们信:变体不在'AI 服务器有没有需求'(那是真的、已在 tape:Q1 营收 2510.78亿 +56.5%、归母 105.95亿 +102.55%),而在 **forward multiple 被盈利压缩** —— committed PE 仅 33×,若 FY26 归母落在 500-606亿(对 FY25 已核实的 352.86亿 = +42~72% 增长),forward PE 降到约 23-28×,是当前 AI 硬件链里少数'故事很热但倍数仍可讨论'的超大市值名。但 ODM 净利率天生薄(~3-4%),所以真正的承重变量是:GB200→GB300 rack-scale 的价值量/复杂度能不能让分部毛利率/净利率结构性上一个台阶 —— 如果只是放量不改 margin,它只是高 beta 低 margin 供应商;若 margin 上行,才有持续 re-rating。一句话:好公司、价格也还能讨论,但当前 R/R 约 1.72 不到 2:1,不是买入。",
+      "en": "Market believes: Foxconn Industrial Internet is the AI-server king (global #1 AI-server ODM, >40% share); NA-cloud capex + GB200/GB300 rack-scale make shipments explode; the story is full consensus at a >¥1.4T cap — assumed fully priced. We believe: the variant is NOT 'is there AI-server demand' (there is, and it is already in the tape: Q1 revenue ¥2,510.78亿 +56.5%, 归母 ¥105.95亿 +102.55%), it is **the forward multiple being compressed by earnings** — committed PE is only 33x, and if FY26 归母 lands at ¥500-606亿 (= +42~72% off the E1-verified FY25 ¥352.86亿) forward PE falls to ~23-28x, one of the few mega-caps in the AI-hardware chain where 'hot story but a still-discussable multiple' holds. BUT ODM net margin is structurally thin (~3-4%), so the load-bearing variable is whether GB200→GB300 rack-scale value/complexity lifts segment gross/net margin STRUCTURALLY — if it is volume-only with no margin step-up, it is just a high-beta low-margin supplier; only a margin step-up earns sustained re-rating. In one line: a good company at a still-discussable price, but at R/R ~1.72 (below 2:1) it is NOT a buy."
+    },
+    "mechanism": {
+      "zh": "第一性链条:AI 算力 capex(北美云 capex 上行 + GB200/GB300 量产)→ rack-scale AI 服务器整机/机柜需求 → 工业富联作为全球 #1 AI 服务器 ODM 承接(规模 + 客户认证 + 供应链复杂度护城河)→ 收入放量(已兑现)→ 若机柜 ASP/价值量/复杂度抬升分部毛利率,则归母增速 + 倍数双升;反之 margin 不动则只是放量。诚实锚:本论点不依赖任何未披露的订单数字,只依赖 2026 半年报强制披露的 归母 run-rate(年化是否 ≥450亿)与 云计算/AI 服务器分部毛利率(是否 ≥6% 且有结构改善)—— 这两个数可逐期证伪'高增长是不是有利润质量'。",
+      "en": "First-principles chain: AI compute capex (NA-cloud capex up + GB200/GB300 ramp) → rack-scale AI-server / rack demand → Foxconn Industrial Internet absorbs it as the global #1 AI-server ODM (scale + customer qualification + supply-chain-complexity moat) → revenue ramp (already realized) → IF rack ASP/value/complexity lifts segment GM, then both 归母 growth AND multiple re-rate; otherwise it is volume-only. Honesty anchor: this thesis relies on NO undisclosed order number — only on the H1-mandatory prints of the 归母 run-rate (does it annualize ≥¥450亿) and the cloud/AI-server segment gross margin (≥6% with structural improvement) — both falsify, quarter by quarter, whether the high growth carries profit quality."
+    },
+    "direction": "LONG",
+    "horizon": "6-12 months (E1 proof = the Q1-run-rate continuation + segment-GM print at the 2026 H1 report ~2026-08-30)",
+    "conviction": "WATCH_CONSTRUCTIVE — thesis and price are both discussable (the rare such name in the AI chain), but at the committed reference price the R/R is ~1.72, BELOW the 2:1 bar. No position. STARTER eligibility begins only at the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band. NOT a buy."
+  },
+  "evidence": {
+    "items": [
+      {
+        "claim": "Q1'26 (filed): 营收 2510.78亿 (+56.52%), 归母 105.95亿 (+102.55%), 扣非 102.50亿 (+109.05%), 经营现金流 250.24亿, EPS 0.53, 总股本 198.44亿 — the AI-server revenue+profit inflection is already in the tape, NOT hoped-for",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "PR-G #86 reconciled vs filed cninfo 1225231598.PDF (2026-04-29 一季报); the circulating ¥41.8亿 was a stale prior-year figure, discarded"
+      },
+      {
+        "claim": "FY2025 (filed): 归母 352.86亿 (+51.99%), 营收 9028.87亿 — the verified base; it CONFIRMS FY26 consensus 500-606亿 = +42~72% growth (sound, not heroic). The '302亿' that circulated upstream was wrong and never used in this thesis",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "PR-G #86 reconciled vs filed cninfo 1225004420.PDF (2026-03-11 年报)"
+      },
+      {
+        "claim": "Forward multiple compressed by earnings, not by expansion: committed PE 33.04 (mcap 14004亿 ÷ TTM ~406-424亿); FY26 consensus 归母 500亿 (天风) – 606亿 (高盛) ⇒ forward PE ~23-28x — the lowest mega-cap forward multiple in the AI-hardware chain; GS target ¥92.9-93.9",
+        "tier": "E2",
+        "causal_tag": "INFERRED",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "exchange feed (committed price/PE, E1) + 天风/高盛 FY26 consensus (E2 sell-side, finance.sina 2026-04-22)"
+      },
+      {
+        "claim": "Global #1 AI-server ODM, >40% global AI-server share, deep-bound to NVIDIA GB200/GB300 racks + NA hyperscalers (MSFT/GOOG/AMZN) — the closest 'picks-and-shovels toll' in the AI-server layer",
+        "tier": "E2",
+        "causal_tag": "INFERRED",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "sell-side / media (E2); not a filing-disclosed split"
+      },
+      {
+        "claim": "The decisive UNCERTAINTY is margin, not revenue: ODM net margin is structurally thin (~3-4%). The bull case requires the GB200→GB300 rack-scale value/complexity to lift segment GM structurally; if revenue scales without margin, the 1.4万亿 cap is a high-beta low-margin supplier",
+        "tier": "E1",
+        "causal_tag": "INFERRED",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "ODM economics (structural) + the H1 segment-GM print is the resolving disclosure"
+      }
+    ],
+    "rule_x_check": {
+      "pass": true,
+      "why": "The load-bearing leg (whether the high growth carries profit quality = 归母 run-rate + segment GM) is re-confirmable by MANDATORY 2026 H1 disclosure (合并利润表 + 分部毛利率). The thesis relies on NO undisclosed order number. Satisfies the 2026-05-17 Rule-X boundary: same forward mechanism, issuer-disclosure-confirmable."
+    },
+    "contrarian_view": "BULLS: AI capex is a multi-year super-cycle, GB200→GB300 rack content/ASP keeps rising, a global #1 ODM with NVIDIA+cloud binding deserves a scarcity multiple, so forward 23-28x is 'cheap on FY26'. BEARS (the discipline at price): (1) ODM net margin is structurally thin (~3-4%) and historically does NOT scale with volume — revenue can explode while margin caps the multiple; (2) at a ¥1.4万亿 consensus mega-cap that ran ~+200% YoY, the 'cheap forward PE' is real ONLY if FY26 归母 actually lands at 500-606亿 — a miss double-kills via E and multiple; (3) the variant ('forward PE cheap because earnings compound in') is a valuation-timing observation on a widely-covered name, not a deep non-consensus structural edge; (4) R/R at 70.57 is ~1.72, below 2:1 — the entry math is broken until a pullback (≤~60) or an H1 margin proof re-bands."
+  },
+  "catalyst_calendar": [
+    {
+      "event": {
+        "zh": "2026 半年报(Q1 run-rate 是否延续 + 云/AI 服务器分部毛利率 = E1 证明事件)",
+        "en": "2026 H1 report (does the Q1 run-rate continue + cloud/AI-server segment GM = the E1 proof event)"
+      },
+      "date": "2026-08-30 (statutory by 2026-08-31)",
+      "watch": "H1 归母(年化是否 ≥450亿)、分部毛利率(是否 ≥6% 且结构改善)、扣非",
+      "expected": "H1 归母 annualized ≥450亿 & segment GM ≥6% with improvement supports the margin-step-up thesis; the inverse fires wrong_if"
+    },
+    {
+      "event": {
+        "zh": "GB300 机柜量产节奏(2026H2)",
+        "en": "GB300 rack mass-production cadence (2026H2)"
+      },
+      "date": "H2-2026",
+      "watch": "GB300 rack 出货/ASP/价值量",
+      "expected": "rack-scale value-content step-up is the bull-case driver; CROWDING-flagged headline, not load-bearing on its own"
+    },
+    {
+      "event": {
+        "zh": "北美云资本开支指引(季度)",
+        "en": "NA-cloud capex guidance (quarterly)"
+      },
+      "date": "rolling 2026",
+      "watch": "MSFT/GOOG/AMZN capex 指引",
+      "expected": "supportive capex sustains demand; a capex pause is the macro risk"
+    }
+  ],
+  "wrong_if": {
+    "triggers": [
+      {
+        "metric": "2026 H1 归母净利(年化)",
+        "threshold": "< ~450亿 (即 H1 < ~210亿)",
+        "source": "2026 半年报 合并利润表",
+        "check_date": "2026-08-30"
+      },
+      {
+        "metric": "云计算/AI 服务器分部毛利率",
+        "threshold": "< ~6% 或无结构性改善证据",
+        "source": "2026 半年报 分部信息",
+        "check_date": "2026-08-30"
+      },
+      {
+        "metric": "营收增但净利率不改善 (revenue beats, net margin flat/down)",
+        "threshold": "net margin YoY 不升",
+        "source": "2026 半年报 + FY26 年报",
+        "check_date": "2026-08-30"
+      }
+    ],
+    "note": {
+      "zh": "三条全部绑半年报强制披露(归母/分部毛利/净利率),公司无法不披露;任一触发即弃,触发后未更新决策书记为诚实性失败。承重变量是 MARGIN 不是营收。",
+      "en": "All three bind to MANDATORY H1 line items (归母 / segment GM / net margin) — the company cannot withhold them; any trigger kills the thesis; an un-updated sheet after a trigger is an honesty failure. The load-bearing variable is MARGIN, not revenue."
+    }
+  },
+  "valuation_target_range": {
+    "calibrated": false,
+    "basis": "FY2026 earnings bridge (FY26 归母 × forward PE ÷ 198.44亿 股本, E1). FY25 base 352.86亿 E1-verified per PR-G #86. Forward PE is [unvalidated intuition] with anchors (committed PE 33; GS target ¥92.9-93.9). The thesis-loaded variable is ODM net MARGIN, which resolves at the H1 segment-GM print.",
+    "bear": {
+      "low": 47,
+      "high": 53,
+      "assumptions": [
+        "FY26 归母 420亿(ODM margin 维持薄、H1 run-rate 年化 < 450亿)",
+        "EPS 2.12(÷198.44亿股)",
+        "市场去线性外推,forward PE 22-25× [unvalidated intuition]",
+        "math: 2.12 × 22-25 ≈ ¥47-53"
+      ]
+    },
+    "base": {
+      "low": 65,
+      "high": 79,
+      "assumptions": [
+        "FY26 归母 520亿(Q1 run-rate 部分延续、AI rack mix 改善但不剧烈)",
+        "EPS 2.62",
+        "forward PE 25-30× [unvalidated intuition;增速确认无加速]",
+        "math: 2.62 × 25-30 ≈ ¥65-79"
+      ]
+    },
+    "bull": {
+      "low": 100,
+      "high": 112,
+      "assumptions": [
+        "FY26 归母 620亿(GB300 rack-scale 复杂度抬 margin + 市场给稀缺溢价)",
+        "EPS 3.12",
+        "forward PE 32-36× [unvalidated intuition]",
+        "math: 3.12 × 32-36 ≈ ¥100-112"
+      ]
+    },
+    "sensitivity_note": "熊/基/牛 mid ≈ 50 / 72 / 106;R/R @ committed 70.57 = (106-70.57)/(70.57-50) ≈ 1.72(< 2:1);2:1 满足价 ≈ ¥68.67(composer bar),owner 研究触发价更保守 ≤¥60。承重变量是 ODM 净利率,H1 分部披露解析。"
+  },
+  "execution_plan": {
+    "summary": {
+      "zh": "WATCH_CONSTRUCTIVE,当前价不入场。按 committed 70.57,R/R ≈ 1.72(牛 mid 106 / 熊 mid 50),低于 2:1——它是当前 AI 链里少数 thesis 和价格都还能讨论的票,但不是买入名单。两条重新进入路径:(a) 价格回到 ≤~60(owner 研究触发价,更保守;composer 2:1 满足价 ≈68.67);(b) 2026 半年报证明利润率/利润 run-rate(H1 归母年化 ≥450亿 + 分部毛利率结构改善)后用打印数字重算估值带,使更高价也能满足 2:1。承重变量是 MARGIN 不是营收。任何执行前取实时价重算;human_executes——系统只建议、不下单。",
+      "en": "WATCH_CONSTRUCTIVE, no entry at current price. At committed 70.57, R/R ≈ 1.72 (bull mid 106 / bear mid 50), below 2:1 — it is one of the few AI-chain names where thesis and price are both discussable, but it is NOT a buy list. Two re-entry paths: (a) pullback to ≤~60 (owner research trigger, more conservative; composer 2:1 price ≈68.67); (b) a post-H1 margin/run-rate proof (H1 归母 annualized ≥450亿 + segment-GM structural improvement) re-bands the bridge so the bar is met at a higher price. The load-bearing variable is MARGIN, not revenue. Pull a live quote before any execution; human_executes — the system suggests, never trades."
+    },
+    "entry": "committed reference 70.57 (universe_a 2026-06-12 snapshot); NO entry at current — add zone = ≤~60 (owner research trigger) / composer 2:1 bar ≤~68.67, OR a post-H1 margin re-band",
+    "staging": "WATCH now (no position) → STARTER only inside the add zone or after the H1 margin re-band → conviction requires R/R ≥2:1 on the re-based band; never average into a fired wrong_if",
+    "invalidation": "price: n/a while flat (no position); thesis: any mechanized wrong_if trigger (H1 run-rate < 450亿 / segment GM < 6% / margin-not-improving) kills the thesis",
+    "sizing_suggestion": "tier: NONE at reference (WATCH_CONSTRUCTIVE); STARTER_CAPPED inside the add zone [research posture only — human_executes; the system never auto-trades or sizes]",
+    "holding_horizon": "6-12 months from first entry (if ever); the thesis resolves at the 2026-08 H1 print (run-rate + segment GM) and quarterly thereafter",
+    "review_dates": [
+      "2026-07-15 (30d: pre-H1 positioning + 北美云 capex 信号)",
+      "2026-08-14 (60d: pre-H1 check)",
+      "2026-09-13 (90d: post-H1 margin verdict — decisive)"
+    ]
+  },
+  "serenity": {
+    "theme_system_change": "A股 AI 半导体/算力(Scan #1 #68 邻接):AI 算力 capex 政策性+周期性放大 × 北美云 capex 上行 × GB200/GB300 rack-scale 把 AI 服务器从普通服务器升级为高价值量机柜 —— 工业富联是把这一需求变现的全球 #1 ODM toll-taker",
+    "value_chain_map": [
+      "L9 算力芯片(NVIDIA/ASIC,真瓶颈但非本票)",
+      "L-server AI 服务器/rack ODM(本票:工业富联,全球#1,toll-taker)",
+      "L-comp 连接/散热/高速PCB(GB 机柜含量件)",
+      "L-cloud 北美超大规模云(需求侧)"
+    ],
+    "scarce_layer": "本票不在稀缺层:ODM/整机组装的护城河是规模+客户认证+供应链复杂度,不是瓶颈级 IP;真正稀缺的是上游算力芯片(L9),工业富联是 SUPPLIES 不是 CONTROLS",
+    "company_role": "SUPPLIES (AI-server/rack ODM toll-taker — does NOT control the silicon bottleneck)",
+    "bottleneck_evidence": [
+      {
+        "claim": "全球 #1 AI 服务器 ODM,>40% 全球 AI 服务器份额,deep-bound NVIDIA GB200/GB300 + 北美云",
+        "tier": "E2",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "卖方/媒体(非披露拆分)"
+      },
+      {
+        "claim": "Q1'26 营收 2510.78亿 +56.5% 由 AI 服务器驱动(收入放量已兑现 = 需求侧真实)",
+        "tier": "E1",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "cninfo 1225231598.PDF 一季报(PR-G #86 核实)"
+      },
+      {
+        "claim": "Q1 经营现金流 250.24亿 = 真现金、非纸面利润",
+        "tier": "E1",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "cninfo 1225231598.PDF"
+      }
+    ],
+    "market_may_be_missing": "诚实结论:市场没漏多少——1.4万亿、共识 AI 服务器王、覆盖极充分。真正的边际只是'committed PE 33、forward 23-28x 在 AI 硬件链里相对便宜'这个估值时点观察 + 'margin 能否随 GB300 rack-scale 上台阶'这个尚未证明的变量。信息增量是中等的(这是 owner 红队五轴里最'宽'的一档),不是深度非共识变体",
+    "substitution_route": "浪潮/纬创/广达等 ODM 同业可替代,ODM 是可竞争层(margin 易被压);工业富联护城河=规模+NVIDIA/云绑定,非不可逾越——这也是 margin 不一定能上台阶的根因",
+    "expansion_difficulty": "ODM 产能可扩(非硬瓶颈);约束在 margin 不在产能——放量容易,提毛利难",
+    "customer_validation": "NVIDIA GB200/GB300 rack + 北美超大规模云(MSFT/GOOG/AMZN)= 顶级客户验证(E2);Q1 营收 +56.5% 是该验证的财务印证(E1)",
+    "what_weakens_the_view": [
+      {
+        "metric": "2026 H1 归母(年化)",
+        "threshold": "< ~450亿",
+        "source": "2026 半年报 合并利润表",
+        "check_date": "2026-08-30"
+      },
+      {
+        "metric": "云/AI 服务器分部毛利率",
+        "threshold": "< ~6% 或无结构改善",
+        "source": "2026 半年报 分部信息",
+        "check_date": "2026-08-30"
+      }
+    ]
+  },
+  "risk": {
+    "fundamental": "ODM 净利率结构性薄(~3-4%),放量不一定带来 margin;若 GB300 rack-scale 不抬毛利,只是高 beta 低 margin 供应商;Q1 +102% 高增的可持续性押在 margin 上",
+    "policy": "AI 算力 capex 强周期,北美云 capex 上行是顺风、放缓会反噬;地缘/出口管制波及 AI 服务器供应链与客户节奏",
+    "valuation": "1.4万亿共识大票;forward PE 23-28x '便宜'仅当 FY26 归母 500-606亿 兑现;任何 margin/run-rate miss → E 下修 + 倍数去主题化双杀;bear 47-53 即该情形的诚实下界",
+    "liquidity": "超大市值、流动性充裕;但主题资金 + 共识多头主导边际定价,情绪降温时双向波动",
+    "crowding_reflexivity": "近一年 ~+200%(¥18→~¥53,Apr-May'26 多次涨停),共识极拥挤、动量延展;唯一不 AVOID 的理由 = forward 倍数在板块里最便宜(盈利在涨进价里);sentiment feeds 仍 stubbed [data break]"
+  },
+  "disclaimers": {
+    "unvalidated": true,
+    "human_executes": true,
+    "pilot": "internal model-recommendation pilot output — NOT validated alpha, NOT external/personalized advice; registered as an owner-authorized (scorer: Junyan) red-team-floor WATCH_CONSTRUCTIVE forward-checkpoint case, never a buy signal",
+    "data_breaks_logged": [
+      "committed reference price = universe_a 2026-06-12 snapshot 70.57; pull a live quote before any execution",
+      "FY26 归母 500-606亿 is E2 sell-side consensus (a forecast by design), not E1; the forward-PE valuation rests on it",
+      "AI-server >40% share is E2 (not a filing-disclosed segment split)",
+      "automated valuation stack (rDCF/EV-EBITDA/RI) not run for this name — band is analyst-constructed, every multiple [unvalidated intuition] with stated anchors",
+      "segment-level cloud/AI-server gross margin is the load-bearing unknown and is not separately disclosed pre-H1 — tracked via the H1 分部信息 print",
+      "sentiment feeds stubbed (crowding monitoring partially blind; proxied by 行情/外资评级)"
+    ]
+  },
+  "auto_context": {
+    "last_price": {
+      "close": 70.57,
+      "date": "2026-06-12",
+      "source": "universe_a_snapshot_fallback",
+      "note": "latest COMMITTED price — staleness is flagged, never papered over"
+    },
+    "technical": {
+      "zone": null,
+      "generated_at": null,
+      "rsi14": null,
+      "signals": []
+    },
+    "eqr": {
+      "overall": null,
+      "sections": {}
+    },
+    "market_anchors": {
+      "as_of": "2026-06-12T05:55:22.055762",
+      "price": 70.57,
+      "market_cap": 1400397592482.0,
+      "pe_dynamic": 33.04,
+      "pb": 7.95
+    },
+    "valuation_stack_status": {
+      "triangulated_signal": null,
+      "methods_used": null,
+      "note": "automated valuation generators' status — breaks logged honestly"
+    }
+  },
+  "reward_to_risk": {
+    "reference_price": 70.57,
+    "bull_mid": 106.0,
+    "bear_mid": 50.0,
+    "reward_to_risk": 1.72,
+    "conviction_bar": 2.0,
+    "meets_conviction_bar": false,
+    "entry_where_bar_met": 68.67,
+    "stance_at_reference": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)"
+  },
+  "quality": {
+    "auto_floor": "PASS (structurally qualified)",
+    "human_red_team": "PASS for registration — Junyan owner-authorized red-team floor 87.2 (specificity 88 / falsifiability 92 / valuation 84 / info-increment 86 / risk 86), bound to content_lock 73eb81e2; forward outcome PENDING.",
+    "forward_checkpoints": "REGISTERED — official checkpoint ledger ACTIVE (30/60/90 from 2026-06-15); forward outcome PENDING."
+  },
+  "content_lock_sha256": "73eb81e27755cce8ded6664ebbd6191b10935d4ffbf8355455cb7192af40c43c"
+}

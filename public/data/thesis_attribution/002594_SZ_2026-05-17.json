@@ -1,0 +1,122 @@
+{
+  "ticker": "002594.SZ",
+  "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00",
+  "thesis_source": "docs/research/factcheck/rerun_2026-05-16/002594SZ_recal.json",
+  "thesis_source_commit": "aaa1cc4",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "2026 H1 报告 disclosure of regional segment gross margins, overseas revenue YoY, and consolidated GM — first official test of whether overseas mix-shift is offsetting domestic price-war pressure",
+    "date_or_window": "2026-08-15 to 2026-08-31",
+    "type": "earnings_revision",
+    "source": "Standard A-share H1 reporting window; WATCHLIST thresholds (revenue_growth, gross_margin) explicitly named in FULL DATA CONTEXT; broker reports (中信证券 2026-05-11, 华创证券 2026-05-07) all flag H1 as the validation event"
+  },
+  "mechanism_chain_length": 5,
+  "rightIf_conditions": [
+    "2026 H1 overseas segment gross margin ≥ 18.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 consolidated gross margin ≥ 17.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 overseas revenue YoY ≥ +35% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 境外 营业收入 vs 2025 H1 同口径 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 net profit YoY ≥ +5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+  ],
+  "wrongIf_conditions": [
+    "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+  ],
+  "what_changes_our_mind": "2026 H1 报告 discloses overseas segment GM < 17% (collapsing the +280bps premium toward zero) OR consolidated GM < 16% — either would invalidate the mix-shift accretion mechanism.",
+  "variant_view_one_sentence": "Market believes overseas-growth narrative is crowded and tariff-exposed at trough multiples → We believe segment-disclosed +280bps overseas GM premium will continue lifting consolidated GM in H1 2026 as mix shifts past 40% overseas → Mechanism is structurally measured FY2025 regional GM differential persisting through the localization transition (Euronews 2026-05-15 plant talks read as tariff hedge, not margin dilution).",
+  "time_to_resolution": "~3.5 months (now to 2026-08-31 H1 report)",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "+22% to +35% (toward analyst target 119.32 mid, range 117-130)",
+    "downside_if_wrong": "-9% to -15% (toward 52W low 85.88, support 87.72)",
+    "reward_to_risk": "2.4:1"
+  },
+  "quantification": {
+    "metric_target": "Forward P/E re-rating + consolidated GM",
+    "current_value": "Fwd P/E 17.2x; consolidated GM 17.2% (LIVE FUNDAMENTALS)",
+    "predicted_value": "Fwd P/E 20-22x as H1 confirms GM stability; consolidated GM 17.5-18.0%",
+    "predicted_range": {
+      "low": "Fwd P/E 18x, price ~105",
+      "mid": "Fwd P/E 20x, price ~118",
+      "high": "Fwd P/E 22x, price ~130"
+    },
+    "predicted_horizon": "2026-12-31",
+    "confidence": 0.55
+  },
+  "qc_quality_at_log_time": {
+    "score": 100,
+    "missingFields": [
+      "qc_checklist.all_8_steps_complete",
+      "qc_checklist.step_1_specific_not_vague",
+      "qc_checklist.step_2_no_unfounded_leaps",
+      "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "qc_checklist.step_5_observable",
+      "qc_checklist.step_6_observable",
+      "qc_checklist.step_7_one_sentence_tagline",
+      "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "qc_checklist.step_8_early_signs_observable",
+      "qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "qc_checklist.step_8_position_sizing_curve_monotonic",
+      "qc_checklist.reward_to_risk_at_least_threshold"
+    ],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": true,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": true,
+      "all_8_steps_complete": true
+    },
+    "severity": "PASS",
+    "qc_findings": [
+      "missing:qc_checklist.all_8_steps_complete",
+      "missing:qc_checklist.step_1_specific_not_vague",
+      "missing:qc_checklist.step_2_no_unfounded_leaps",
+      "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "missing:qc_checklist.step_5_observable",
+      "missing:qc_checklist.step_6_observable",
+      "missing:qc_checklist.step_7_one_sentence_tagline",
+      "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "missing:qc_checklist.step_8_early_signs_observable",
+      "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+      "missing:qc_checklist.reward_to_risk_at_least_threshold"
+    ]
+  },
+  "direction": "LONG",
+  "conviction_state": "STARTER_CAPPED_UNTIL_E1",
+  "tradeable_not_proven_statement": "Tradeable, but not proven. Historical base is [E1:direct] (2025 Overseas GM 19.46% vs Domestic GM 16.66%, +280bps, SEGMENT ECONOMICS period 20251231); forward persistence is [E2:proxy] (H1 2026 mix-shift margin-accretion through European localization not yet measured); size capped until 2026 H1 报告 segment disclosure confirms overseas GM holds ≥18% and consolidated GM holds ≥17%.",
+  "core_causal_link": {
+    "link_sentence": "The FY2025 segment-disclosed +280bps overseas-vs-domestic GM premium persists into H1 2026 despite ramping European localization capex.",
+    "evidence_tier": "E2:proxy",
+    "tier_justification": "The HISTORICAL BASE is [E1:direct] — SEGMENT ECONOMICS period 20251231 shows true_gm overseas 19.46% vs domestic 16.66%, isolable not proxy. The FORWARD claim that this persists into H1 2026 is honestly [E2:proxy] — it has not yet printed. To become [E1] requires the 2026 H1 报告 分部信息披露 to disclose overseas segment GM ≥ 18% with disclosed bz_sales and bz_cost (not blended PROXY)."
+  },
+  "evidence_profile": {
+    "core_link_tier": "E2",
+    "counts": {
+      "E1": 7,
+      "E2": 3,
+      "E3": 2,
+      "E4": 2
+    },
+    "overstatement_corrected": true
+  },
+  "pass_reason": null,
+  "pass_reason_detail": null,
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

@@ -1,0 +1,14 @@
+{
+  "ticker": "175.HK",
+  "fetched_at": "2026-07-10T11:26:54Z",
+  "trade_date": "20260710",
+  "tier": 15000,
+  "_status": "skipped",
+  "api_used": null,
+  "_attempted_endpoints": [],
+  "days_window": 30,
+  "factors": {},
+  "history": [],
+  "_factor_count": 0,
+  "_reason": "not_available_tushare_hk_us"
+}

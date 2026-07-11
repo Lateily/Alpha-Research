@@ -1,0 +1,123 @@
+{
+  "ticker": "175.HK",
+  "thesis_logged_at": "2026-05-17T19:47:04.676828+00:00",
+  "thesis_source": "docs/research/factcheck/rerun_2026-05-16/175HK_rulex.json",
+  "thesis_source_commit": "aaa1cc4",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "Geely Automobile Holdings 2026 H1 interim results — consolidated revenue, GM, OpM, net income disclosure; segment disclosure granularity to be assessed",
+    "date_or_window": "August 2026 (exact reporting date not in our data; inferred from HK interim cadence)",
+    "type": "earnings_revision",
+    "source": "Standard HK interim reporting cadence; exact issuer calendar not available in our data"
+  },
+  "mechanism_chain_length": 5,
+  "rightIf_conditions": [
+    "N/A — PASS; no tradeable direction asserted | source: N/A | if_not_disclosed: N/A"
+  ],
+  "wrongIf_conditions": [
+    "N/A — PASS; no tradeable direction asserted | source: N/A | if_not_disclosed: N/A"
+  ],
+  "what_changes_our_mind": "H1 2026 interim report discloses segment-level GM/OpM by geography (overseas vs domestic) OR by brand cluster (Geely/ZEEKR/Lotus/Polestar) — at that point the mix-margin mechanism becomes measurable and the thesis becomes tradeable.",
+  "variant_view_one_sentence": "Market believes Geely's global brand mix + ZEEKR consolidation will drive operating leverage → We CANNOT confirm or refute this because segment economics are not disclosed → PASS on INSUFFICIENT_DATA until segment-level GM/OpM prints or a primary business-mechanism signal (broker channel check, mgmt segment commentary) becomes available.",
+  "time_to_resolution": "N/A — PASS",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "N/A",
+    "downside_if_wrong": "N/A",
+    "reward_to_risk": "N/A — PASS"
+  },
+  "quantification": {
+    "metric_target": "N/A — PASS",
+    "current_value": "21.26 HKD",
+    "predicted_value": "N/A",
+    "predicted_range": {
+      "low": "N/A",
+      "mid": "N/A",
+      "high": "N/A"
+    },
+    "predicted_horizon": "N/A",
+    "confidence": 0
+  },
+  "qc_quality_at_log_time": {
+    "score": 50,
+    "missingFields": [
+      "qc_checklist.all_8_steps_complete",
+      "qc_checklist.step_1_specific_not_vague",
+      "qc_checklist.step_2_no_unfounded_leaps",
+      "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "qc_checklist.step_5_observable",
+      "qc_checklist.step_6_observable",
+      "qc_checklist.step_7_one_sentence_tagline",
+      "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "qc_checklist.step_8_early_signs_observable",
+      "qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "qc_checklist.step_8_position_sizing_curve_monotonic",
+      "qc_checklist.reward_to_risk_at_least_threshold"
+    ],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": false,
+      "step_5_observable": false,
+      "step_6_observable": false,
+      "step_7_one_sentence_tagline": false,
+      "reward_to_risk_at_least_threshold": false,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": false,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "FAIL",
+    "qc_findings": [
+      "failed:step_4_has_specific_numbers_and_horizon",
+      "failed:step_5_observable",
+      "failed:step_6_observable",
+      "failed:step_7_one_sentence_tagline",
+      "failed:step_8_phase_timing_concrete_not_boilerplate",
+      "failed:step_8_position_sizing_curve_monotonic",
+      "failed:reward_to_risk_at_least_threshold",
+      "missing:qc_checklist.all_8_steps_complete",
+      "missing:qc_checklist.step_1_specific_not_vague",
+      "missing:qc_checklist.step_2_no_unfounded_leaps",
+      "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "missing:qc_checklist.step_5_observable",
+      "missing:qc_checklist.step_6_observable",
+      "missing:qc_checklist.step_7_one_sentence_tagline",
+      "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "missing:qc_checklist.step_8_early_signs_observable",
+      "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+      "missing:qc_checklist.reward_to_risk_at_least_threshold"
+    ]
+  },
+  "direction": "PASS",
+  "conviction_state": null,
+  "tradeable_not_proven_statement": null,
+  "core_causal_link": {
+    "link_sentence": "Brand/geography/powertrain mix shift drives consolidated margin expansion at H1 2026.",
+    "evidence_tier": "E2:proxy",
+    "tier_justification": "SEGMENT ECONOMICS explicitly not_available (no_segment_disclosure). Per RULE X, peer-relative revenue growth (+15.6% vs BYD -11.8%) is an [E1] fact but is NOT a valid [E1] structural base because the forward mechanism is segment/mix-driven and the issuer does not disclose segment economics — so the H1 consolidated print cannot uniquely re-measure the causal claim. To make this [E1]: need segment-level GM by geography (overseas vs domestic) or by brand cluster disclosed in the H1 interim report, OR a primary-source broker channel check / institutional visit note with segment margin commentary."
+  },
+  "evidence_profile": {
+    "core_link_tier": "E2",
+    "counts": {
+      "E1": 6,
+      "E2": 3,
+      "E3": 2,
+      "E4": 2
+    },
+    "overstatement_corrected": false
+  },
+  "pass_reason": "INSUFFICIENT_DATA",
+  "pass_reason_detail": "SEGMENT ECONOMICS = not_available (no_segment_disclosure). The Bull's variant mechanism (Lotus hybrid pivot + ZEEKR consolidation + global premium mix → margin accretion / operating leverage) is segment/mix-driven, but Geely does not disclose segment-level GM/OpM by brand (Lotus/Polestar/Volvo/ZEEKR/core Geely) or by geography (overseas vs domestic). At the H1 2026 catalyst, only consolidated GM/OpM will print — that is consistent with multiple incompatible causal stories (mix improvement, domestic price-war easing, FX, raw-material cost) and cannot uniquely confirm or refute the variant. Per RULE X, peer-relative revenue growth (+15.6% vs BYD -11.8%) is an [E1] fact but is NOT a valid [E1] structural base for this forward mix-margin claim because the causal mechanism is unmeasurable in issuer disclosure. Needed to re-classify as tradeable: segment GM disclosure by geography or by brand sub-portfolio in H1 2026 interim filing.",
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

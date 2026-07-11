@@ -1,9 +1,17 @@
 {
   "_meta": {
-    "version": "1.0",
+    "version": "1.2",
     "description": "Watchlist — the single source of truth for the full monitoring pipeline. Add a ticker here and EVERYTHING auto-follows on the next GitHub Actions run: financial data fetch, rDCF, VP scoring, technical signals, confluence, position sizing, Telegram alerts.",
-    "last_updated": "2026-04-22",
-    "how_to_add": "Copy any existing entry, change ticker/yahoo/akshare/exchange/names, set vp_seed to neutral defaults (vp:50, all dimensions:50), set last_updated to today. Push. Done."
+    "last_updated": "2026-06-11",
+    "how_to_add": "Copy any existing entry, change ticker/yahoo/akshare/exchange/names, set vp_seed to neutral defaults (vp:50, all dimensions:50), set last_updated to today. Push. Done.",
+    "vp_dimension_guide": {
+      "expectation_gap": "AUTO — computed from rdcf delta (our_growth vs implied_growth). Do not edit manually.",
+      "fundamental_accel": "AUTO — computed from fin_*.json (NI/Rev ratio, GM trend, FCF quality). Do not edit manually.",
+      "narrative_shift": "MANUAL — how much has the market narrative around this stock changed in our favour? 0=no change, 100=complete re-rating",
+      "low_coverage": "MANUAL — inverse of sell-side coverage density. High score = few analysts = more edge. 0=everyone covers it, 100=nobody covers it",
+      "catalyst_prox": "MANUAL — proximity to a near-term binary catalyst that could force thesis resolution. 0=no catalyst, 100=imminent"
+    },
+    "v1_to_v1.2_history": "2026-05-08 (Junyan-direct): switched to 4-ticker focus on names Junyan personally tracks (BYD + Innolight retained; Tencent/NetEase/BeiGene removed; Geely + Da Shenlin added). Reason: Junyan's bullshit-detection on thesis quality requires familiar-domain coverage. Manual VP dimensions for the 2 new tickers seeded at neutral 50 — Junyan to adjust based on his knowledge after first thesis run."
   },
   "tickers": {
     "300308.SZ": {
@@ -16,81 +24,30 @@
         "vp": 79,
         "expectation_gap": 72,
         "fundamental_accel": 80,
-        "narrative_shift": 65,
-        "low_coverage": 55,
-        "catalyst_prox": 85,
-        "last_updated": "2026-04-13",
-        "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
-        "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%"
+        "narrative_shift": 72,
+        "low_coverage": 50,
+        "catalyst_prox": 80,
+        "last_updated": "2026-04-24",
+        "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
+        "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
+        "concentration_seed": {
+          "score": 70,
+          "rationale_e": "Optical transceivers >90% of revenue + hyperscaler customer concentration (NVDA/MSFT/GOOGL) — product AND customer concentration AND-compound.",
+          "rationale_z": "光模块业务占营收 >90% 且超大规模客户集中（英伟达/微软/谷歌）—— 产品与客户双重集中度叠加。"
+        }
       },
+      "narrative_shift_rationale": "1.6T SiPh transceiver narrative fully mainstream — NVIDIA Blackwell, Google TPU v5, Azure all adopted. Shifted from 'will they qualify' to 'market leader in next-gen optics'. Raised from 65→72.",
+      "low_coverage_rationale": "Mid-tier A-share components company. Moderate sell-side coverage from electronics analysts but niche enough to retain some edge. Held at 50.",
+      "catalyst_prox_rationale": "1.6T volume ramp is near-term. 192% revenue growth validates. Slightly reduced 85→80 as primary catalyst (certification) is now delivered; next catalyst is volume scale.",
       "macro_sensitivity": {
-        "usd_cny_above_73":      {"direction": "positive", "magnitude": "MED"},
-        "northbound_reversal":   {"direction": "negative", "magnitude": "MED"}
-      }
-    },
-    "700.HK": {
-      "yahoo": "0700.HK",
-      "akshare": null,
-      "exchange": "HK",
-      "name_en": "Tencent",
-      "name_zh": "腾讯控股",
-      "vp_seed": {
-        "vp": 64,
-        "expectation_gap": 68,
-        "fundamental_accel": 70,
-        "narrative_shift": 75,
-        "low_coverage": 40,
-        "catalyst_prox": 60,
-        "last_updated": "2026-04-13",
-        "wrongIf_e": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
-        "wrongIf_z": "游戏监管扩大或宏观消费急剧恶化"
-      },
-      "macro_sensitivity": {
-        "pboc_rate_cut":   {"direction": "positive", "magnitude": "HIGH"},
-        "cpi_above_2pct":  {"direction": "negative", "magnitude": "MED"},
-        "vix_spike_20":    {"direction": "negative", "magnitude": "MED"}
-      }
-    },
-    "9999.HK": {
-      "yahoo": "9999.HK",
-      "akshare": null,
-      "exchange": "HK",
-      "name_en": "NetEase",
-      "name_zh": "网易",
-      "vp_seed": {
-        "vp": 58,
-        "expectation_gap": 62,
-        "fundamental_accel": 55,
-        "narrative_shift": 50,
-        "low_coverage": 45,
-        "catalyst_prox": 65,
-        "last_updated": "2026-04-13",
-        "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
-        "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万"
-      },
-      "macro_sensitivity": {
-        "cpi_above_2pct": {"direction": "negative", "magnitude": "MED"}
-      }
-    },
-    "6160.HK": {
-      "yahoo": "6160.HK",
-      "akshare": null,
-      "exchange": "HK",
-      "name_en": "BeOne Medicines",
-      "name_zh": "百济神州",
-      "vp_seed": {
-        "vp": 65,
-        "expectation_gap": 72,
-        "fundamental_accel": 65,
-        "narrative_shift": 68,
-        "low_coverage": 45,
-        "catalyst_prox": 70,
-        "last_updated": "2026-04-13",
-        "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
-        "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优"
-      },
-      "macro_sensitivity": {
-        "vix_spike_20": {"direction": "negative", "magnitude": "MED"}
+        "usd_cny_above_73": {
+          "direction": "positive",
+          "magnitude": "MED"
+        },
+        "northbound_reversal": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
       }
     },
     "002594.SZ": {
@@ -103,18 +60,185 @@
         "vp": 52,
         "expectation_gap": 55,
         "fundamental_accel": 60,
-        "narrative_shift": 45,
-        "low_coverage": 35,
-        "catalyst_prox": 50,
-        "last_updated": "2026-04-13",
-        "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
-        "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发"
+        "narrative_shift": 38,
+        "low_coverage": 32,
+        "catalyst_prox": 45,
+        "last_updated": "2026-04-24",
+        "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+        "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+        "concentration_seed": {
+          "score": 35,
+          "rationale_e": "Auto/NEV dominates (~80% revenue) but multiple segments (cars, batteries, electronics, semiconductors). Geographic spread broad (China + global expansion). Customer base diversified across consumers + B2B fleet + battery customers. [unvalidated intuition]",
+          "rationale_z": "汽车/新能源车占主导（约80%营收）但有多个业务板块（车、电池、电子、半导体）。地理分布广（中国+全球扩张）。客户基础多元化（消费者+B端车队+电池客户）。[未验证直觉]"
+        }
       },
+      "narrative_shift_rationale": "Global EV champion narrative under severe pressure: EU tariffs, revenue -13.5%, earnings -40.5%, margin compression. The story is breaking down. Reduced 45→38.",
+      "low_coverage_rationale": "Extremely well-covered A-share stock. Zero coverage edge. Reduced 35→32.",
+      "catalyst_prox_rationale": "Monthly sales data (potential positive surprise) but no major structural catalyst near-term given tariff headwinds. Reduced 50→45.",
       "macro_sensitivity": {
-        "pboc_rate_cut":       {"direction": "positive", "magnitude": "HIGH"},
-        "usd_cny_above_73":    {"direction": "negative", "magnitude": "HIGH"},
-        "northbound_reversal": {"direction": "negative", "magnitude": "MED"}
+        "pboc_rate_cut": {
+          "direction": "positive",
+          "magnitude": "HIGH"
+        },
+        "usd_cny_above_73": {
+          "direction": "negative",
+          "magnitude": "HIGH"
+        },
+        "northbound_reversal": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
       }
+    },
+    "175.HK": {
+      "yahoo": "0175.HK",
+      "akshare": null,
+      "exchange": "HK",
+      "name_en": "Geely Auto",
+      "name_zh": "吉利汽车",
+      "vp_seed": {
+        "vp": 50,
+        "expectation_gap": 50,
+        "fundamental_accel": 50,
+        "narrative_shift": 50,
+        "low_coverage": 50,
+        "catalyst_prox": 50,
+        "last_updated": "2026-05-08",
+        "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
+        "wrongIf_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
+        "concentration_seed": {
+          "score": 40,
+          "rationale_e": "[NEEDS_JUNYAN_REVIEW] Auto-only business but diversified across ICE / EV / hybrid + Volvo/Polestar/Lotus subsidiaries + China + global. Customer base millions of consumers. Moderate concentration. [unvalidated intuition]",
+          "rationale_z": "[等 Junyan 审核] 业务集中于汽车但跨内燃/纯电/混动 + 沃尔沃/极星/路特斯子公司 + 中国/海外。客户基础数百万消费者。中等集中度。[未验证直觉]"
+        }
+      },
+      "narrative_shift_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder neutral 50] Geely's 'global multi-brand auto group' story is mid-development; EV transition partially priced. Junyan to adjust based on his domain knowledge.",
+      "low_coverage_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder 50] HK auto coverage moderate; not as crowded as Tencent but well-known. Junyan to adjust.",
+      "catalyst_prox_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder 50] Quarterly sales numbers + new model launches. Junyan to adjust based on calendar.",
+      "macro_sensitivity": {
+        "usd_cny_above_73": {
+          "direction": "negative",
+          "magnitude": "MED"
+        },
+        "pboc_rate_cut": {
+          "direction": "positive",
+          "magnitude": "MED"
+        }
+      }
+    },
+    "603233.SH": {
+      "yahoo": "603233.SS",
+      "akshare": "603233",
+      "exchange": "SH",
+      "name_en": "Da Shenlin",
+      "name_zh": "大参林",
+      "vp_seed": {
+        "vp": 50,
+        "expectation_gap": 50,
+        "fundamental_accel": 50,
+        "narrative_shift": 50,
+        "low_coverage": 50,
+        "catalyst_prox": 50,
+        "last_updated": "2026-05-08",
+        "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
+        "wrongIf_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
+        "concentration_seed": {
+          "score": 35,
+          "rationale_e": "[NEEDS_JUNYAN_REVIEW] Pharmacy retail chain — single business model (drugstore) but diversified across 2000+ stores in 14 provinces, mixed Rx + OTC + healthcare goods. Customer base millions of retail consumers. Low product-category concentration; moderate geographic concentration in southern China. [unvalidated intuition]",
+          "rationale_z": "[等 Junyan 审核] 药店连锁——单一业务模式（零售药房）但分布于 14 省 2000+ 门店，处方药+OTC+大健康商品组合。客户基础数百万零售消费者。产品类别集中度低；地理分布在华南有一定集中。[未验证直觉]"
+        }
+      },
+      "narrative_shift_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder neutral 50] Pharmacy retail consolidation theme + medical insurance reform implications. Junyan to set based on his read on the policy backdrop.",
+      "low_coverage_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder 50] Mid-cap A-share retail; coverage moderate not crowded. Junyan to adjust.",
+      "catalyst_prox_rationale": "[NEEDS_JUNYAN_REVIEW — placeholder 50] Quarterly same-store sales + medical insurance policy changes. Junyan to adjust based on calendar.",
+      "macro_sensitivity": {
+        "pboc_rate_cut": {
+          "direction": "positive",
+          "magnitude": "LOW"
+        }
+      }
+    },
+    "688120.SH": {
+      "yahoo": "688120.SS",
+      "akshare": "688120",
+      "exchange": "SH",
+      "name_en": "Huahai Qingke",
+      "name_zh": "华海清科",
+      "vp_seed": {
+        "vp": 55,
+        "expectation_gap": 50,
+        "fundamental_accel": 60,
+        "narrative_shift": 40,
+        "low_coverage": 25,
+        "catalyst_prox": 60,
+        "last_updated": "2026-06-11",
+        "wrongIf_e": "2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (per decision sheet wrong_if, source-bound to the H1 report)",
+        "wrongIf_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
+        "concentration_seed": {
+          "score": 40,
+          "rationale_e": "CMP tools ~87% of revenue; single-product-family concentration mitigated by thinning/ion-implant/wafer-regen second engines (early)",
+          "rationale_z": "CMP 装备占营收 ~87%;减薄/离子注入/晶圆再生第二引擎尚早期"
+        }
+      },
+      "narrative_shift_rationale": "storage-capex super-cycle theme repriced the name +33% in a month (5/08-6/11) with no new fundamentals — narrative already shifted, late not early",
+      "low_coverage_rationale": "155 institutions at the FY25 results call incl. UBS/BlackRock/GS Asia — heavily covered",
+      "catalyst_prox_rationale": "2026 H1 report (~Aug) = E1 proof event for order->revenue conversion",
+      "macro_sensitivity": {
+        "storage_capex_acceleration": {
+          "direction": "positive",
+          "magnitude": "HIGH"
+        },
+        "us_parts_export_tightening": {
+          "direction": "negative",
+          "magnitude": "MED"
+        },
+        "semis_theme_unwind": {
+          "direction": "negative",
+          "magnitude": "HIGH"
+        }
+      },
+      "_added": "2026-06-11 CTF batch-1 ticker #2 (Serenity Scan #1 #68, serenity_score 74 T2; nominations ratified by Junyan)"
+    },
+    "300054.SZ": {
+      "yahoo": "300054.SZ",
+      "akshare": "300054",
+      "exchange": "SZ",
+      "name_en": "Dinglong",
+      "name_zh": "鼎龙股份",
+      "vp_seed": {
+        "vp": 55,
+        "expectation_gap": 50,
+        "fundamental_accel": 70,
+        "narrative_shift": 45,
+        "low_coverage": 30,
+        "catalyst_prox": 60,
+        "last_updated": "2026-06-11",
+        "wrongIf_e": "2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net profit YoY < +25% (per decision sheet wrong_if)",
+        "wrongIf_z": "2026半年报抛光垫收入同比<+30%(如披露),或毛利率<48%,或归母净利同比<+25%(决策书 wrong_if)",
+        "concentration_seed": {
+          "score": 55,
+          "rationale_e": "semis 57% of FY25 revenue and rising; legacy printing consumables -13% YoY; goodwill 9.17亿 after Haofei consolidation",
+          "rationale_z": "半导体占 57% 且上升;打印耗材传统盘 -13%;皓飞并表后商誉 9.17 亿"
+        }
+      },
+      "narrative_shift_rationale": "CMP-materials localization theme hot (storage duo IPO chain lists); name +17.6% since 5/08, all-time high 5/26 — narrative mid-shift",
+      "low_coverage_rationale": "开源 3/31 + 东海首次覆盖 5/12; dense May institutional visits — coverage building, denser than a year ago",
+      "catalyst_prox_rationale": "ChiNext H1 forecast (~mid-July) then H1 report (~Aug) = staged E1 proof events for pad/slurry momentum",
+      "macro_sensitivity": {
+        "storage_capex_acceleration": {
+          "direction": "positive",
+          "magnitude": "HIGH"
+        },
+        "foreign_consumables_price_war": {
+          "direction": "negative",
+          "magnitude": "MED"
+        },
+        "semis_theme_unwind": {
+          "direction": "negative",
+          "magnitude": "MED"
+        }
+      },
+      "_added": "2026-06-11 CTF batch-1 ticker #3 (Serenity Scan #1 #68, serenity_score 73 T2; nominations ratified by Junyan)"
     }
   }
 }

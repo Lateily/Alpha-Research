@@ -3,7 +3,22 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
+    { "source": "/api/translate", "destination": "/api/chat" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  ],
+  "functions": {
+    "api/research-multi.js": {
+      "maxDuration": 800
+    },
+    "api/research.js": {
+      "maxDuration": 300
+    },
+    "api/debate.js": {
+      "maxDuration": 300
+    },
+    "api/morning-report.js": {
+      "maxDuration": 300
+    }
+  }
 }

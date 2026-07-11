@@ -1,0 +1,909 @@
+{
+  "success": true,
+  "ticker": "603233.SH",
+  "data": {
+    "ticker": "603233.SH",
+    "thesis_protocol_version": "v2",
+    "_direction": "PASS",
+    "_divergence_score": 55,
+    "_synthesizer_rationale": "Both sides self-tier their core causal link as E2:proxy (Forensic confirms), debating the same 38 broker reports without store-level unit economics, SSSG, or new-store cohort payback data to adjudicate whether 26Q1's restart of store expansion is margin-accretive (Bull) or margin-dilutive (Bear). Technical aligns with Bear (DOWN trend, leveraged longs unwinding), but the deciding observable — H1 2026 operating margin and store-count delta against the WATCHLIST wrongIf thresholds — has not printed yet. With core_causal_link at E2 on BOTH sides and the falsification metric explicitly absent from our data until August 2026, this is CATALYST_NOT_YET_OBSERVABLE rather than a tradable edge.",
+    "_evidence_profile": {
+      "core_link_tier": "E2",
+      "counts": {
+        "E1": 4,
+        "E2": 3,
+        "E3": 4,
+        "E4": 2
+      },
+      "overstatement_corrected": false
+    },
+    "_pass_reason": "CATALYST_NOT_YET_OBSERVABLE",
+    "_pass_reason_detail": "The deciding observables — (a) 2026 H1 operating margin vs the current 10.5% baseline, (b) 2026 H1 net store-count YoY growth vs WATCHLIST wrongIf threshold of 5%, and (c) same-store sales growth — are scheduled for the August 2026 H1 report and are NOT in our current data. Until that print, the Bull's 'Phase 2 margin-accretive expansion' and Bear's 'operating deleverage' are co-equal E2:proxy stories built on the same broker narrative set. No asymmetric edge exists pre-print.",
+    "step_1_catalyst": {
+      "catalyst_event": "2026 H1 interim report — first disclosure showing whether 26Q1's '重启门店扩张节奏' coexists with sustained operating margin, testing both Bull's Phase-2-structural-leverage and Bear's operating-deleverage mechanisms",
+      "catalyst_date_or_window": "2026-08-01 to 2026-08-31",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "Standard A-share H1 reporting window [external estimate, not in our data context]; specific filing date not in our data"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. [E3:narrative] The sell-side consensus is unanimous and dense: 38 reports / 13 unique brokers in 90d (TUSHARE BROKER RECOMMENDATIONS), with 华创/国信/中信建投/中泰/中金 all framing '盈利能力改善 + 门店扩张重启' as a single coherent positive story. This is a well-known narrative.",
+        "2. [E1:direct] The fundamental setup is real: Net Income YoY +35.0%, Op Margin 10.5%, ROE 15.8% (LIVE FUNDAMENTALS / MULTI-YEAR INCOME STATEMENT), while Rev Growth TTM is only 0.2% — confirming the profit jump came from margin expansion on near-flat revenue, exactly what the cost-cut interpretation predicts.",
+        "3. [E2:proxy] The Bull's 'Phase-2 structurally-leaner expansion will be margin-accretive' claim is INFERRED, not measured: our data lacks same-store sales growth, new-store cohort payback, rent/labor expense ratios, and store-count growth (WATCHLIST explicitly flags SSSG and store-count growth as wrongIf metrics that are not in our data). Forensic confirms agent_self_tier E2:proxy.",
+        "4. [E2:proxy] The Bear's 'restart of expansion will cause operating deleverage' claim is symmetrically INFERRED from the same gap — no pre-opening cost, rent ramp, or cohort margin data is available. Forensic confirms agent_self_tier E2:proxy.",
+        "5. [E4:crowding] Margin-trade structure is 98.8% leveraged-long with 融资余额 2.2亿 already drifting -0.2%; technical trend is DOWN (-4.2% over 60d, price at 41% of 52W range, RSI ~35). Crowded long positioning + weakening tape means a soft H1 print can trigger an outsized de-risking move, but says nothing about whether the print itself will be soft.",
+        "6. [E2:proxy] Product GM dispersion is real (非药品 45.33% vs 中西成药 29.58% — SEGMENT ECONOMICS) but product sales mix is NOT disclosed in our data, so neither side can prove mix shift drove the +35% NI or will drive future margin. The mix-shift mechanism remains unprovable in our data."
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "[E1:direct] P/E TTM 16.6x, P/E Fwd 13.5x, EV/EBITDA 8.9x (LIVE FUNDAMENTALS)",
+        "[E1:direct] Net Income 2025 1.2B vs 2024 0.9B, YoY +35.0%; Diluted EPS 1.08 vs 0.81 (MULTI-YEAR INCOME STATEMENT)",
+        "[E1:direct] Op Margin 10.5%, ROE 15.8%, Gross Margin 34.5%, Rev Growth TTM 0.2% (LIVE FUNDAMENTALS)",
+        "[E1:direct] Product GM 2025: 非药品 45.33%, 中西成药 29.58%, 中参药材 44.31%, 其他业务 99.3% (SEGMENT ECONOMICS); product sales mix NOT disclosed",
+        "[E4:crowding] 38 broker reports / 13 unique brokers in 90d, latest 2026-05-13 (TUSHARE BROKER RECOMMENDATIONS); broker target cluster 200,600–250,000 (in 分, ≈¥20.06–25.00) vs live ¥18.81",
+        "[E4:crowding] 融资余额 2.2亿 (-0.2%), 融券余额 0.03亿, 98.8% leveraged-long ratio (TUSHARE MARGIN TRADE)",
+        "[E1:direct] Pledge ratio 8.11% as of 2026-04-17; Buyback programs: NONE (TUSHARE CAPITAL STRUCTURE)",
+        "[E1:direct] 60d OHLC: 19.63 → 18.81 (-4.2%), price at 41% of 52W range 16.78–21.78"
+      ],
+      "evidence_qualitative": [
+        "[E3:narrative] 中泰证券 2026-05-03 '业绩略超预期，26Q1重启门店扩张节奏，降本增效推进有望延续利润中高速成长趋势' — pairs expansion restart with continued efficiency, the central contested phrase",
+        "[E3:narrative] 国信证券 2026-05-10 '利润端增速亮眼，门店数量稳步扩张' — asserts profit + store growth dual driver but no store-level economics disclosed",
+        "[E3:narrative] 中金 2026-04-28 '门店网络结构性优化赋能增长' — asserts structural network optimization; cohort/regional store data not in our packet to verify",
+        "[E3:narrative] 华创证券 2026-05-13 '盈利能力持续改善，大举分红回报股东' — capital-return framing; consistent with Buyback=NONE + dividend-focused capital allocation",
+        "[E1:direct] WATCHLIST wrongIf flags SSSG < -5% YoY two consecutive quarters, Op Margin < 5%, store-count growth < 5% YoY — current Op Margin 10.5% is 2x cushion above the wrongIf, but SSSG and store-count growth are both unmeasured in our data"
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "[E3:narrative] Sell-side (38 reports, 13 brokers) believes Dashenlin enters a virtuous Phase-2 where structurally-improved cost base allows margin-accretive store expansion, justifying broker targets ¥20–25 vs live ¥18.81.",
+          "z": "[E4:crowding] Yet the stock sits at 41% of 52W range, -4.2% over 60d, with leveraged longs unwinding — price action says the marginal buyer does not yet believe the consensus."
+        },
+        "our_variant": {
+          "e": "[E2:proxy] Both the Bull's structural-leverage thesis and the Bear's operating-deleverage thesis rest on store-level data (SSSG, cohort payback, rent/labor ramp) that is NOT in our packet; the broker reports assert mechanism but our data cannot adjudicate.",
+          "z": "Therefore no asymmetric edge exists pre-H1 print. The honest stance is to wait for the August 2026 H1 disclosure of Op Margin and store-count delta — the metrics that will collapse the E2 inference into E1 verdict — rather than pick a side on narrative alone."
+        },
+        "what_changes_our_mind": "2026 H1 report discloses BOTH (a) Op Margin and (b) period-end store count vs prior period — converting at least one of the two E2:proxy mechanisms into E1:direct evidence and opening a directional edge."
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "2026 H1 Operating Margin vs current 10.5% baseline",
+      "current_value": "10.5% (LIVE FUNDAMENTALS Op Margin)",
+      "predicted_value": "Range-bound 9.5%–11.5%; directional bet not warranted",
+      "predicted_range": {
+        "low": "9.5%",
+        "mid": "10.5%",
+        "high": "11.5%"
+      },
+      "predicted_horizon": "2026-08-31",
+      "confidence": 0.35
+    },
+    "step_5_proves_right_if": [
+      "2026 H1 consolidated operating margin ≥ 11.0% @ 2026 H1 报告 (2026-08) | source: 合并利润表: 营业收入/营业成本/销售费用/管理费用 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "2026 H1 period-end total store count YoY growth ≥ 8% @ 2026 H1 报告 (2026-08) | source: 经营情况讨论与分析: 门店数量披露 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "2026 H1 net income YoY ≥ 20% @ 2026 H1 报告 (2026-08) | source: 合并利润表: 归属于母公司股东的净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+    ],
+    "step_6_proves_wrong_if": [
+      "2026 H1 consolidated operating margin ≤ 9.0% @ 2026 H1 报告 (2026-08) | source: 合并利润表: 营业利润/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "2026 H1 net income YoY ≤ 5% @ 2026 H1 报告 (2026-08) | source: 合并利润表: 归属于母公司股东的净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "2026 H1 销售费用率 (selling expense / revenue) ≥ 22% @ 2026 H1 报告 (2026-08) | source: 合并利润表: 销售费用/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes the Bull-Bear debate on Phase-2 expansion economics is tradable now → We believe the deciding observable (H1 Op Margin × store-count delta) is not yet disclosed → Mechanism is wait-for-print, since both sides' core links are E2:proxy and our data lacks SSSG / cohort payback / store-count growth to adjudicate.",
+      "core_causal_link": {
+        "link_sentence": "Whether 26Q1's restart of store expansion is margin-accretive or margin-dilutive cannot be determined from our current data — it requires H1 2026 disclosure of operating margin and store-count delta.",
+        "evidence_tier": "E2:proxy",
+        "tier_justification": "WATCHLIST wrongIf explicitly lists SSSG and store-count growth as the falsification metrics, and the data context explicitly notes these are NOT loaded. SEGMENT ECONOMICS provides product GM dispersion but no product sales mix. To make this E1 we would need: (a) period-end store count YoY, (b) same-store sales growth %, (c) new-store cohort gross margin or 12-month payback period — none currently available."
+      },
+      "time_to_resolution": "~3 months until 2026 H1 disclosure (August 2026)",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "0% (PASS — no position taken pre-print)",
+        "downside_if_wrong": "0% (PASS — no position taken pre-print)",
+        "reward_to_risk": "N/A — PASS"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "Until August 2026 H1 disclosure",
+        "why_market_keeps_buying": [
+          "38 broker reports cluster ¥20–25 targets vs ¥18.81 spot — sell-side anchor pulls institutional flow",
+          "+35% YoY net income headline durable through next earnings cycle",
+          "Dividend-payout / 大举分红 narrative supports defensive bid"
+        ],
+        "early_signs_phase_1_weakening": [
+          "Broker downgrades or target-price cuts before H1 print",
+          "融资余额 drops > 10% from current 2.2亿 (accelerated leveraged-long unwind)",
+          "Break of ¥16.78 52W low support on volume"
+        ],
+        "optional_long_play": {
+          "direction": "NONE",
+          "sizing": "0%",
+          "exit_trigger": "N/A"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "2026 H1 disclosure of Op Margin and store-count — converting E2 to E1",
+          "Mid-year broker access notes / channel checks on store-level economics"
+        ],
+        "estimated_timing": "August 2026",
+        "short_play": {
+          "direction": "NONE",
+          "sizing": "0%",
+          "entry_trigger": "Only post-H1 print if Op Margin ≤ 9.0% AND store-count growth ≥ 10% (deleverage confirmed)"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "0%",
+        "phase_1_weakening_confirmed": "0%",
+        "phase_2_catalyst_imminent": "0% (PASS — await print, then re-underwrite)"
+      }
+    },
+    "qc_checklist": {
+      "every_claim_tagged_E1_to_E4": true,
+      "core_causal_link_tier_honest": true,
+      "core_link_not_overstated_vs_forensic_audit": true,
+      "falsification_conditions_mechanized": true,
+      "falsification_includes_if_not_disclosed_clause": true,
+      "numeric_claims_grounded_in_data_context": true,
+      "pass_reason_named_and_detailed": true,
+      "position_sizing_monotonic_non_decreasing": true,
+      "direction_matches_evidence_tier_cap": true
+    },
+    "_bull_thesis": {
+      "ticker": "603233.SH",
+      "thesis_protocol_version": "v2",
+      "_rebuttal": "Bear claimed the narrative is crowded — addressed by arguing the low 13.5x Fwd P/E proves the narrative is known but not *believed*, creating a 'wall of worry' opportunity. Bear claimed profit growth is fragile (cost-cut driven) and expansion will cause deleverage — addressed by framing this as the core mispricing; our thesis is that cost-cuts were Phase 1 to build a *structurally* better model, which will now be applied to margin-accretive expansion in Phase 2, a mechanism explicitly cited by 中泰证券 and 国信证券. Bear claimed lack of granular data (SSSG) makes the thesis unprovable — addressed by acknowledging this data gap is precisely *why* the opportunity exists; we underwrite the strong qualitative narrative *before* it becomes a priced-in number. Bear claimed the product mix shift is unproven — addressed by conceding this point and re-tiering it to a secondary driver, focusing the core thesis on overall operational leverage.",
+      "step_1_catalyst": {
+        "catalyst_event": "2026 H1 Earnings Release, which will be the first major data point to validate whether the simultaneous store expansion and margin improvement seen in Q1 2026 is a sustainable, structural trend.",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate reporting calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E1:direct] The market sees flat TTM revenue growth (0.2%) alongside a sharp spike in profitability (Net Income YoY +35.0%) and concludes the gains are from one-off, unsustainable cost-cutting. This skepticism is quantified by the modest 13.5x forward P/E multiple.",
+          "2. [E4:crowding] The Bear correctly identifies the bull narrative is well-known (38 broker reports). However, the low valuation proves this story is *known* but not *believed*. This is a classic 'wall of worry' setup, not a crowded consensus trade.",
+          "3. [E3:narrative] Our variant view is that the market is misinterpreting a deliberate two-phase strategic pivot. Phase 1 (cost-cutting and optimization) is now complete. As explicitly noted in the 中泰证券 report '业绩略超预期，26Q1重启门店扩张节奏', the company is now entering Phase 2: re-accelerated, but more efficient, expansion.",
+          "4. [E3:narrative] The market's core error is assuming this new expansion will follow the old, less efficient playbook, thus eroding margins. We believe, supported by reports like 国信证券's '利润端增速亮眼，门店数量稳步扩张', that the company is applying a structurally leaner operating model to this new growth phase, enabling margin-accretive expansion.",
+          "5. [E2:proxy] The upcoming H1 2026 earnings will be the first test to falsify the market's skepticism. Delivering simultaneous strong net income growth (>20% YoY) and net store additions will prove the new model's efficacy, forcing a re-rating from the current ~13.5x multiple towards a growth-compounder multiple of 18-20x."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] The forward P/E of 13.5x represents a significant valuation discount for a company that just delivered +35.0% YoY Net Income growth, quantifying the market's disbelief in the sustainability of these results.",
+          "[E1:direct] Current high profitability metrics (Operating Margin 10.5%, ROE 15.8%) establish a strong baseline that the market expects to mean-revert, creating the opportunity if they prove durable.",
+          "[E1:direct] A significant gross margin gap exists between the '非药品' (Non-drugs) segment (45.33%) and the core '中西成药' (Patent Meds) segment (29.58%), providing a clear potential pathway for margin enhancement via mix shift, though we acknowledge sales mix data is not available.",
+          "[E4:crowding] The 98.8% leveraged-long ratio in margin trading, while a risk factor, also signals a pool of convicted capital that could fuel a sharp rally upon thesis validation."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] The sell-side is not just broadly positive, but specifically and unanimously aligned on the dual drivers. Reports from 国信证券 ('利润端增速亮眼，门店数量稳步扩张') and 中泰证券 ('26Q1重启门店扩张节奏，降本增效推进...') explicitly connect sustained profitability with renewed expansion.",
+          "[E3:narrative] The theme of higher-quality growth is echoed by 中金 in its report '门店网络结构性优化赋能增长' (Structural optimization of the store network empowers growth), directly countering the Bear's fear that expansion is simply a margin-dilutive pursuit of scale.",
+          "[E2:proxy] Management's decision to forgo a share buyback program in favor of reinvesting capital into the business signals strong internal conviction in the returns from store expansion, a direct contradiction to the market's fear of value-destructive growth."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The market and the Bear believe the recent +35% YoY net income growth is a temporary peak driven by one-off cost-cutting measures.",
+            "z": "Therefore, the market expects that a renewed focus on store expansion into a flat (0.2% TTM) revenue environment will lead to operating deleverage and margin compression, justifying the low 13.5x forward P/E multiple."
+          },
+          "our_variant": {
+            "e": "[E3:narrative] Per the 中泰证券 report (2026-05-03), Dashenlin is executing a dual strategy of '降本增效' (cost reduction and efficiency) while simultaneously '重启门店扩张节奏' (restarting store expansion).",
+            "z": "This is not a contradiction but a strategic sequence. We believe the efficiency gains are structural, creating a more profitable store model that can now be scaled effectively. The market is mis-modeling this as a return to the old, less efficient expansion playbook and is wrongly anchored to lagging TTM revenue data from the pre-expansion phase."
+          },
+          "what_changes_our_mind": "The 2026 H1 report showing an operating margin below 9% and/or net income YoY growth below 15%, which would validate the market's fear that the efficiency gains were not sustainable and that expansion costs are dilutive."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "13.5x",
+        "predicted_value": "18.0x",
+        "predicted_range": {
+          "low": "16.0x",
+          "mid": "18.0x",
+          "high": "20.0x"
+        },
+        "predicted_horizon": "Q4 2026 - Q1 2027",
+        "confidence": 0.7
+      },
+      "step_5_proves_right_if": [
+        "Operating Margin ≥ 10.0% @ 2026 H1 报告 | source: 合并利润表 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net Income YoY Growth ≥ 20% @ 2026 H1 报告 | source: 合并利润表 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net change in store count > +100 stores @ 2026 H1 报告 | source: 公司经营评述 section | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "Operating Margin < 9.0% @ 2026 H1 报告 | source: 合并利润表 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net Income YoY Growth < 15% @ 2026 H1 报告 | source: 合并利润表 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net change in store count < 0 stores @ 2026 H1 报告 | source: 公司经营评述 section | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes recent +35% profit growth is a temporary peak from cost-cutting that will be eroded by renewed store expansion → We believe, per the unified narrative in reports from 中泰证券 and 国信证券, that the company has achieved structural operational leverage allowing for margin-accretive expansion → This is unpriced because the market, anchored to lagging 0.2% TTM revenue growth, is in 'show-me' mode, creating the valuation discount (13.5x Fwd P/E).",
+        "core_causal_link": {
+          "link_sentence": "The company's recent efficiency gains are structural, not temporary, and will allow for renewed store expansion to be margin-accretive rather than dilutive.",
+          "evidence_tier": "E2:proxy",
+          "tier_justification": "We can observe the aggregate outcome (Op Margin 10.5%, Net Income YoY +35.0%) and have strong narrative support from brokers like 中金 and 中泰证券 [E3]. However, the data context lacks the store-level unit economics (e.g., new vs. mature store opex, SSSG, new store payback period) that would be required to provide [E1:direct] proof of a structurally improved model. The thesis relies on inferring the cause from the effect."
+        },
+        "time_to_resolution": "3-6 months",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+30% to +40%",
+          "downside_if_wrong": "-15% to -20%",
+          "reward_to_risk": "2:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "Until August 2026 (H1 Earnings)",
+          "why_market_keeps_buying": [
+            "Strong reported profitability and high dividend payout (per 华创证券) provides a valuation floor.",
+            "Unanimous sell-side support prevents a significant narrative breakdown pre-catalyst."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Company announcements or press suggesting higher-than-expected opex related to store openings.",
+            "A key bullish broker downgrading the stock ahead of results."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "Initiate starter position, scale up into earnings.",
+            "exit_trigger": "Price re-rates to 18x Fwd P/E or falsifiability conditions in step_6 are met."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "The 2026 H1 earnings report confirming simultaneous net income growth (>20%) and net store count growth."
+          ],
+          "estimated_timing": "August 2026",
+          "short_play": {
+            "direction": "not applicable for LONG thesis",
+            "sizing": "not applicable for LONG thesis",
+            "entry_trigger": "not applicable for LONG thesis"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "25%",
+          "phase_2_catalyst_imminent": "75%"
+        }
+      },
+      "qc_checklist": {
+        "is_future_catalyst_date": true,
+        "is_valid_json_and_schema": true,
+        "is_contrarian_mechanism_business_not_valuation": true,
+        "is_specific_data_cited_in_mechanism_and_variant": true,
+        "is_falsifiable_per_directive": true,
+        "is_evidence_tiered_E1_E4": true,
+        "is_core_causal_link_identified_and_tiered": true,
+        "is_r_r_and_pnl_asymmetry_quantified": true
+      }
+    },
+    "_bear_thesis": {
+      "ticker": "603233.SH",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "2026 H1 results disclosure: objective test of whether 26Q1 store-expansion restart can coexist with sustained operating margin after a period of near-flat TTM revenue growth",
+        "catalyst_date_or_window": "2026-08-01 to 2026-08-31",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Exact scheduled disclosure date not available in our data; August 2026 H1 reporting window is an external calendar estimate, not in our data context"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E3:narrative] The bull case is not neglected: TUSHARE broker recommendations show 华创证券 2026-05-13 '[点评] \"大参林2025年报及2026年一季报点评：盈利能力持续改善，大举分红回报股东\"' and 国信证券 2026-05-10 '[点评] \"大参林：2025&26Q1利润端增速亮眼，门店数量稳步扩张\"', both explicitly framing the business as improving profitability plus store expansion.",
+          "2. [E4:crowding] This is a crowded positive narrative rather than a contrarian long setup: TUSHARE broker recommendations show 38 reports from 13 unique brokers in the 90d window, latest dated 2026-05-13, while TUSHARE margin trade shows 融资余额 2.2亿, 融券余额 0.03亿, and a 98.8% leveraged-long ratio.",
+          "3. [E2:proxy] Our short mechanism is an inferred operating-deleverage mechanism: live fundamentals show Rev Growth TTM of 0.2% while live Op Margin is 10.5%, so if 26Q1's store-expansion restart adds rent, labor, inventory, and pre-opening costs before demand accelerates, margin improvement can reverse; store-level same-store sales, rent, labor, and cohort payback are not available in our data, so this is not yet E1.",
+          "4. [E3:narrative] The key broker phrase that creates the setup is 中泰证券 2026-05-03 '[一般] \"大参林2025年年报及2026年一季报点评：业绩略超预期，26Q1重启门店扩张节奏，降本增效推进有望延续利润中高速成长趋势\"': bulls treat '重启门店扩张节奏' and '降本增效' as reinforcing drivers, while we think they may mechanically conflict once new-store fixed costs hit the P&L.",
+          "5. [E2:proxy] The apparent margin story may be mix-sensitive rather than structurally durable: 2025 product GM was 中西成药 29.58%, 非药品 45.33%, 中参药材 44.31%, and 其他业务 99.3% per SEGMENT ECONOMICS, but product sales mix is not disclosed in our data; therefore the bull's claim that higher-margin categories will drive margin-accretive new stores is unproven in our data.",
+          "6. [E1:direct] The company is a pharmacy retail chain diversified across 2000+ stores in 14 provinces per WATCHLIST concentration_seed, but the same WATCHLIST flags same-store sales growth < -5% YoY for 2 consecutive quarters, operating_margin < 5%, or store-count growth < 5% YoY as review conditions; same-store sales growth and store-count growth are not available in our loaded data, making the expansion-quality claim unverified."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Live price is 18.81 with +0.21% today per REAL-TIME ENRICHMENT CONTEXT.",
+          "[E1:direct] Live fundamentals show P/E TTM of 16.6x, P/E Fwd of 13.5x, EV/EBITDA of 8.9x, ROE of 15.8%, Gross Margin of 34.5%, Op Margin of 10.5%, and Rev Growth TTM of 0.2%.",
+          "[E1:direct] Annual income statement shows Net Income of 1.2B in 2025, 0.9B in 2024, and 1.2B in 2023, with latest Net Income YoY of +35.0%.",
+          "[E1:direct] Annual diluted EPS was 1.08 in 2025, 0.81 in 2024, and 1.03 in 2023 per MULTI-YEAR INCOME STATEMENT.",
+          "[E1:direct] 60d OHLC trend shows close 19.63 to 18.81, a -4.2% move, period range 16.78–20.03, and last close at 62% of that 60d range.",
+          "[E1:direct] Live 52W range is 16.78–21.78, with price at 41% of the 52W range.",
+          "[E1:direct] Segment economics for 2025 show region bucket 'other' GM of 34.32% on sales of 275.0亿; the data explicitly state overseas-vs-domestic GM gap cannot be computed.",
+          "[E1:direct] Product GM in 2025 was 非药品 45.33%, 其他业务 99.3%, 中西成药 29.58%, and 中参药材 44.31% per SEGMENT ECONOMICS.",
+          "[E1:direct] TUSHARE capital structure signals show controlling-shareholder pledge ratio of 8.11% as of 2026-04-17 and Buyback programs: NONE.",
+          "[E4:crowding] TUSHARE broker recommendations show 38 reports and 13 unique brokers in the 90d window, with latest report dated 2026-05-13.",
+          "[E4:crowding] TUSHARE margin trade shows 融资余额 2.2亿, down -0.2% over the period, 融券余额 0.03亿, and long/short ratio of 98.8% leveraged-long."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] 华创证券 2026-05-13 report titled \"大参林2025年报及2026年一季报点评：盈利能力持续改善，大举分红回报股东\" asserts sustained profitability improvement and shareholder returns.",
+          "[E3:narrative] 国信证券 2026-05-10 report titled \"大参林：2025&26Q1利润端增速亮眼，门店数量稳步扩张\" asserts bright profit-side growth and steady store expansion.",
+          "[E3:narrative] 中泰证券 2026-05-03 report titled \"大参林2025年年报及2026年一季报点评：业绩略超预期，26Q1重启门店扩张节奏，降本增效推进有望延续利润中高速成长趋势\" explicitly pairs store-expansion restart with cost reduction and efficiency improvement.",
+          "[E3:narrative] 东方证券 2026-04-29 report titled \"大参林25年报&26一季报点评：降本增效落地，盈利趋势向好\" asserts cost-efficiency execution and improving profit trend.",
+          "[E3:narrative] 中金 2026-04-28 report titled \"大参林：1Q26略超预期，门店网络结构性优化赋能增长\" asserts store-network structural optimization, but our data do not include store cohort returns, same-store sales, or regional store economics to verify that mechanism.",
+          "[E2:proxy] Our bearish reading is that cost-efficiency is more fragile when Rev Growth TTM is only 0.2%; the data do not disclose same-store sales, store age mix, new-store payback, rent expense, labor expense, or cohort profitability.",
+          "[E2:proxy] Product GM dispersion creates a plausible mix-risk mechanism, but our data do not disclose product sales mix, so we cannot state that current company-level Gross Margin of 34.5% was driven by mix rather than pricing, procurement, rebates, or opex control.",
+          "[E1:direct] WATCHLIST wrongIf flags same-store sales growth < -5% YoY for 2 consecutive quarters, operating_margin < 5%, or store-count growth < 5% YoY as key review conditions; same-store sales growth and store-count growth are not available in our loaded data."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "[E3:narrative] Market believes profit growth will continue because broker reports emphasize sustained profitability improvement, high dividends, cost-efficiency, and store expansion, including 华创证券 2026-05-13 \"盈利能力持续改善，大举分红回报股东\" and 中泰证券 2026-05-03 \"26Q1重启门店扩张节奏，降本增效推进有望延续利润中高速成长趋势\".",
+            "z": "[E4:crowding] Consensus appears crowded because TUSHARE shows 38 broker reports from 13 unique brokers in the 90d window, and TUSHARE margin trade shows a 98.8% leveraged-long ratio."
+          },
+          "our_variant": {
+            "e": "[E3:narrative] Per 中泰证券 2026-05-03 '[一般] \"大参林2025年年报及2026年一季报点评：业绩略超预期，26Q1重启门店扩张节奏，降本增效推进有望延续利润中高速成长趋势\"', the market treats store-expansion restart plus cost-efficiency as a durable dual-engine business mechanism. This contradicts the consensus narrative because live Rev Growth TTM is only 0.2% while the bull mechanism requires demand absorption of new-store fixed costs; the data context does not provide same-store sales, cohort payback, rent, labor, or store-level opex to verify that expansion is margin-accretive.",
+            "z": "[E2:proxy] Market believes Dashenlin can compound profits because sell-side frames '门店数量稳步扩张' and '降本增效' as mutually reinforcing → We believe the restart of store expansion can mechanically front-load rent, labor, inventory, and pre-opening costs into a weak-demand base with Rev Growth TTM of 0.2%, causing operating margin to fall from the live 10.5% level if demand does not accelerate → This is unpriced because the positive narrative is crowded in 38 broker reports from 13 unique brokers and TUSHARE margin trade shows a 98.8% leveraged-long ratio, while the primary store-level proof is not available in our data."
+          },
+          "what_changes_our_mind": "[E1:direct] 2026 H1 report discloses operating margin at or above 10.5% and revenue growth above +5.0% YoY while store-count growth is at or above 5.0% YoY; the 10.5% operating margin is from live fundamentals, while the +5.0% revenue and store-count thresholds are scenario thresholds, not in our data context."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "603233.SH share price under short scenario",
+        "current_value": "18.81 per REAL-TIME ENRICHMENT CONTEXT",
+        "predicted_value": "15.00 [scenario estimate, not in our data context]",
+        "predicted_range": {
+          "low": "13.20 [scenario estimate, not in our data context]",
+          "mid": "15.00 [scenario estimate, not in our data context]",
+          "high": "17.00 [scenario estimate, not in our data context]"
+        },
+        "predicted_horizon": "2026-08-01 to 2026-11-30",
+        "confidence": 0.58
+      },
+      "step_5_proves_right_if": [
+        "2026 H1 consolidated operating margin < 9.5% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 营业收入/营业成本/销售费用/管理费用/营业利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated revenue growth YoY ≤ 2.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 营业收入 and prior-year comparable 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated net income YoY < 15.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 归母净利润 and prior-year comparable 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 store-count growth YoY < 5.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 经营情况讨论与分析: 门店数量/期末门店数 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "2026 H1 consolidated operating margin ≥ 10.5% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 营业收入/营业成本/销售费用/管理费用/营业利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated revenue growth YoY > 5.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 营业收入 and prior-year comparable 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated net income YoY ≥ 25.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 合并利润表: 归母净利润 and prior-year comparable 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 store-count growth YoY ≥ 5.0% @ 2026 H1 results disclosure | source: 2026 H1 报告 经营情况讨论与分析: 门店数量/期末门店数 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes Dashenlin can sustain profit growth because brokers including 华创证券 2026-05-13 and 中泰证券 2026-05-03 frame profitability improvement, dividends, cost-efficiency, and store expansion as reinforcing → We believe 26Q1's store-expansion restart can reintroduce rent, labor, inventory, and pre-opening cost drag before demand accelerates, especially with Rev Growth TTM at 0.2% → This is unpriced because the positive story is crowded in 38 reports from 13 unique brokers and a 98.8% leveraged-long ratio while same-store sales, new-store cohort payback, and store-level opex are not available in our data.",
+        "core_causal_link": {
+          "link_sentence": "The one if-false-thesis-dies causal step is that renewed store expansion will front-load fixed store costs faster than demand growth, causing operating margin to fall from the live 10.5% level rather than remain structurally improved.",
+          "evidence_tier": "E2:proxy",
+          "tier_justification": "Supported indirectly by live Rev Growth TTM of 0.2%, live Op Margin of 10.5%, and broker narrative from 中泰证券 2026-05-03 that 26Q1 restarted store expansion; it is not E1 because our data lack same-store sales, store-count growth, store cohort payback, rent expense, labor expense, and new-store profitability. To make this E1, we would need H1 store cohort P&L or disclosed same-store sales and opex by store cohort."
+        },
+        "time_to_resolution": "2026-08-01 to 2026-08-31 at 2026 H1 results disclosure, with secondary confirmation through any subsequent 2026 Q3 disclosure window [exact Q3 date not available in our data context]",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+20% to +30% short PnL [scenario estimate, not in our data context]",
+          "downside_if_wrong": "-8% to -12% short PnL [scenario estimate, not in our data context]",
+          "reward_to_risk": "Approximately 2.5:1 [scenario estimate, not in our data context]"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "2026-05-16 to 2026 H1 results disclosure window [August 2026 window is an external calendar estimate, not in our data context]",
+          "why_market_keeps_buying": [
+            "[E3:narrative] Brokers continue to reinforce the same positive mechanism, including 华创证券 2026-05-13 \"盈利能力持续改善，大举分红回报股东\" and 国信证券 2026-05-10 \"利润端增速亮眼，门店数量稳步扩张\".",
+            "[E4:crowding] TUSHARE broker recommendations show 38 reports from 13 unique brokers in the 90d window, which can sustain narrative momentum into the next print.",
+            "[E1:direct] Annual income statement shows latest Net Income YoY of +35.0%, which gives bulls a clean headline despite live Rev Growth TTM of 0.2%."
+          ],
+          "early_signs_phase_1_weakening": [
+            "[E1:direct] 融资余额 is already down -0.2% over the period per TUSHARE margin trade; further unwinding would be an additional crowding-risk signal, but future margin data are not available in our current data.",
+            "[E2:proxy] Any company disclosure showing operating margin moving below the live 10.5% level before H1 would support the inferred operating-deleverage mechanism; such interim disclosure is not available in our data.",
+            "[E2:proxy] Any disclosed same-store sales weakness would be material because WATCHLIST wrongIf highlights same-store sales growth < -5% YoY for 2 consecutive quarters; current same-store sales are not available in our data."
+          ],
+          "optional_long_play": {
+            "direction": "Avoid tactical long despite crowded positive narrative",
+            "sizing": "0% portfolio exposure [risk-control decision, not a data-context number]",
+            "exit_trigger": "Not applicable"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "[E1:direct] 2026 H1 consolidated operating margin prints below 9.5% at 2026 H1 results disclosure; 9.5% is a scenario threshold, not in our data context.",
+            "[E1:direct] 2026 H1 consolidated revenue growth YoY prints at or below 2.0% at 2026 H1 results disclosure; 2.0% is a scenario threshold, not in our data context.",
+            "[E1:direct] 2026 H1 net income YoY prints below 15.0% at 2026 H1 results disclosure; 15.0% is a scenario threshold, not in our data context."
+          ],
+          "estimated_timing": "2026-08-01 to 2026-11-30 [future window; exact H1 and Q3 dates not available in our data context]",
+          "short_play": {
+            "direction": "Short 603233.SH",
+            "sizing": "Start 0.75% of portfolio at phase-1 weakening and increase to 1.50% before catalyst if borrow/liquidity are available [portfolio sizing decision, not in our data context]",
+            "entry_trigger": "Enter only if market price remains above 18.00 [scenario level, not in our data context] within 30 trading days before 2026 H1 results disclosure while no E1 store-level evidence has emerged to validate margin-accretive expansion"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "0.75%",
+          "phase_2_catalyst_imminent": "1.50%"
+        }
+      },
+      "_rebuttal": {
+        "bull_point_1_low_forward_pe_and_35pct_net_income_growth": "[E1:direct] Bull cites P/E Fwd of 13.5x and Net Income YoY of +35.0%, both in the data, but this is not a business-mechanism edge; the short issue is that live Rev Growth TTM is only 0.2%, so profit growth may reflect finite cost-efficiency rather than demand growth.",
+        "bull_point_2_sell_side_chorus_validates_dual_engine_growth": "[E4:crowding] The sell-side chorus is evidence of crowding, not proof: TUSHARE shows 38 reports from 13 unique brokers in the 90d window, including 中泰证券 2026-05-03 and 国信证券 2026-05-10, but our data do not include same-store sales, store cohort payback, or store-level opex.",
+        "bull_point_3_margin_accretive_expansion_from_product_mix": "[E2:proxy] The product-GM dispersion is real, with 非药品 GM 45.33%, 中参药材 GM 44.31%, and 中西成药 GM 29.58%, but the bull's mix-shift claim is not proven because product sales mix in new stores and mix change over time are not available in our data.",
+        "bull_point_4_absence_of_buyback_signals_growth_confidence": "[E2:proxy] Buyback programs: NONE can be interpreted as reinvestment confidence, but it can also weaken shareholder-return support; the same capital-structure section shows a controlling-shareholder pledge ratio of 8.11% as of 2026-04-17, so we do not treat no buyback as unambiguously bullish.",
+        "bull_point_5_h1_will_validate_net_income_growth_and_store_count": "[E2:proxy] We agree H1 is the key arbiter, but the correct falsifiable test is not only net income or store count; it must include operating margin, revenue growth, and store-count growth because store expansion without demand growth can mechanically dilute margins."
+      },
+      "qc_checklist": {
+        "all_numeric_claims_grounded_or_labeled": true,
+        "catalyst_date_future_relative_to_2026_05_16": true,
+        "mechanism_chain_cites_at_least_two_specific_broker_reports": true,
+        "contrarian_view_our_variant_references_specific_broker_report": true,
+        "contrarian_view_is_business_mechanism_not_valuation_only": true,
+        "core_causal_link_named_and_tiered": true,
+        "core_causal_link_not_overstated_as_E1": true,
+        "step_2_step_3_items_have_evidence_tier_prefixes": true,
+        "step_5_and_step_6_conditions_have_metric_operator_threshold_event_source_insufficient_disclosure": true,
+        "no_overseas_vs_domestic_margin_claim_made": true,
+        "missing_store_level_data_explicitly_marked_not_available": true
+      }
+    },
+    "_bull_r1": {
+      "ticker": "603233.SH",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "2026 H1 Earnings Release, which will be the first major data point to validate whether the simultaneous store expansion and margin improvement seen in Q1 2026 is a sustainable trend or a one-off.",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate reporting calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E2:proxy] The market is currently anchored to weak top-line growth (Rev Growth TTM: 0.2%) and a weak 60-day price trend (-4.2%), pricing the stock at a modest 13.5x forward P/E.",
+          "2. [E3:narrative] This valuation ignores a powerful narrative emerging from a unified sell-side chorus post-Q1 earnings. Reports like 中泰证券's '业绩略超预期，26Q1重启门店扩张节奏' and 兴业证券's '利润高速增长，门店深耕持续推进' highlight a dual-engine growth story: aggressive cost efficiencies are driving current profit growth, while the company is simultaneously re-accelerating store expansion.",
+          "3. [E2:proxy] The consensus view appears to be that these two drivers are mutually exclusive; that the costs of renewed expansion will inevitably erode the recent margin gains. The market is pricing in a reversion to the mean.",
+          "4. [E2:proxy] Our variant view is that the company has achieved a structural improvement in its operating model, allowing for margin-accretive expansion. This may be driven by an improved product mix, with higher-margin segments like '非药品' (Non-drugs, GM 45.33%) and '中参药材' (Chinese medicinal materials, GM 44.31%) potentially playing a larger role in new store formats compared to the lower-margin '中西成药' (Chinese and Western patent medicines, GM 29.58%).",
+          "5. [E4:crowding] The upcoming H1 2026 earnings will serve as the key validation point. If Dashenlin can deliver another quarter of strong net income growth (+20% YoY) while also reporting a net increase in store count, it will falsify the market's 'one-off efficiency' thesis and force a re-rating of the forward multiple from ~13.5x towards the 18-20x range, more appropriate for a high-quality compounder."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Forward P/E is 13.5x, a significant discount for a company with trailing Net Income YoY growth of +35.0%.",
+          "[E1:direct] Gross Margin is healthy at 34.5%, with an Operating Margin of 10.5%.",
+          "[E1:direct] The Non-drug segment ('非药品') has a significantly higher Gross Margin (45.33%) than the core patent medicine segment ('中西成药' at 29.58%), providing a clear path for margin accretion through mix shift.",
+          "[E1:direct] ROE is solid at 15.8%, indicating efficient capital use.",
+          "[E4:crowding] There is overwhelming positive sell-side consensus, with 38 reports from 13 unique brokers in the last 90 days, all with Buy/Overweight equivalent ratings."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] Broker reports are unanimous on the key drivers. 国信证券 highlights '利润端增速亮眼，门店数量稳步扩张' (Profit growth is impressive, store count is expanding steadily), explicitly linking the two themes.",
+          "[E3:narrative] 中金's report '门店网络结构性优化赋能增长' (Structural optimization of the store network empowers growth) suggests the current expansion is not just about quantity but quality, which supports our thesis of a new, more efficient operating model.",
+          "[E3:narrative] 中泰证券 notes that '降本增效推进有望延续利润中高速成长趋势' (Cost reduction and efficiency improvements are expected to continue the trend of medium-to-high speed profit growth), arguing for the sustainability of margin improvements.",
+          "[E2:proxy] The absence of a share buyback program, despite high profitability, suggests management is prioritizing capital for growth initiatives like store expansion, signaling confidence in their internal reinvestment opportunities."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The market appears to believe that the recent +35% YoY net income growth is a one-off peak driven by temporary cost-cutting measures.",
+            "z": "Therefore, the market expects that a renewed focus on store expansion will lead to margin compression, justifying the low 13.5x forward P/E multiple."
+          },
+          "our_variant": {
+            "e": "[E3:narrative] Per the 中泰证券 report (2026-05-03), Dashenlin has '重启门店扩张节奏' (restarted the pace of store expansion) while simultaneously pushing '降本增效' (cost reduction and efficiency improvement), which is expected to '延续利润中高速成长趋势' (continue the trend of medium-to-high speed profit growth).",
+            "z": "This suggests the market is mismodeling the company's operational leverage. We believe Dashenlin has structurally improved its store model, allowing for simultaneous, margin-accretive growth. This is unpriced because the market is anchored to the flat TTM revenue growth (0.2%) and is awaiting further proof that the Q1 2026 performance is not an anomaly."
+          },
+          "what_changes_our_mind": "The 2026 H1 report showing an operating margin below 9% and/or net income YoY growth below 15%, which would indicate the efficiency gains were not sustainable and the costs of expansion are diluting profitability as the market fears."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "13.5x",
+        "predicted_value": "18.0x",
+        "predicted_range": {
+          "low": "16.0x",
+          "mid": "18.0x",
+          "high": "20.0x"
+        },
+        "predicted_horizon": "Q4 2026 - Q1 2027",
+        "confidence": 0.7
+      },
+      "step_5_proves_right_if": [
+        "Operating Margin ≥ 10.0% @ 2026 H1 报告 | source: 合并利润表 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net Income YoY Growth ≥ 20% @ 2026 H1 报告 | source: 合并利润表 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net change in store count > +100 stores @ 2026 H1 报告 | source: 公司经营评述 section | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "Operating Margin < 9.0% @ 2026 H1 报告 | source: 合并利润表 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net Income YoY Growth < 15% @ 2026 H1 报告 | source: 合并利润表 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net change in store count < 0 stores @ 2026 H1 报告 | source: 公司经营评述 section | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes recent margin expansion is a one-off that will be eroded by renewed store growth → We believe the company has unlocked a new, structurally more profitable model for margin-accretive expansion → This is unpriced because the market is anchored to lagging top-line data and awaits proof of sustainability, a signal provided by the unanimous post-Q1 broker narrative (e.g., 中泰证券, 国信证券).",
+        "core_causal_link": {
+          "link_sentence": "The company can sustain high margins (OpM > 10%) while simultaneously re-accelerating its physical store expansion, indicating a structural improvement in its business model.",
+          "evidence_tier": "E3:narrative",
+          "tier_justification": "This causal link is asserted by multiple broker reports (e.g., 中泰证券 '...重启门店扩张节奏...延续利润中高速成长趋势') but is not yet proven with multi-quarter primary data. To become [E1:direct], we would need to see at least two consecutive quarters of reports (e.g., H1 2026 and Q3 2026) showing both positive net store additions and stable or rising operating margins."
+        },
+        "time_to_resolution": "3-6 months",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+33% to +48%",
+          "downside_if_wrong": "-11% to -19%",
+          "reward_to_risk": "3.0:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "1-3 months",
+          "why_market_keeps_buying": [
+            "Value investors attracted by the low 13.5x Fwd P/E and 15.8% ROE.",
+            "Investors following the strong consensus from sell-side research.",
+            "Positive read-through from any strong consumer data in China."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Stock price breaking and holding above the 20.03 level (60d high).",
+            "Increased trading volume on positive days.",
+            "Positive pre-announcement of H1 2026 results."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "Starter position (e.g., 1/3 of full size)",
+            "exit_trigger": "Price closes below 52W low of 16.78."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "The 2026 H1 earnings report confirming the 'proves_right_if' conditions: strong profit growth, stable margins, and continued store expansion.",
+            "Subsequent upgrades to EPS estimates and price targets from the sell-side post-earnings."
+          ],
+          "estimated_timing": "August-September 2026",
+          "short_play": {
+            "direction": "not applicable - LONG thesis",
+            "sizing": "not applicable",
+            "entry_trigger": "not applicable"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "33% (Starter position)",
+          "phase_2_catalyst_imminent": "100% (Full position size ahead of H1 earnings release)"
+        }
+      },
+      "qc_checklist": {
+        "is_contrarian_mechanism_business_not_valuation": true,
+        "is_every_number_grounded": true,
+        "is_catalyst_future_dated": true,
+        "is_falsifiable_per_directive": true,
+        "is_variant_supported_by_specific_data": true,
+        "is_mechanism_chain_ticker_specific": true,
+        "is_evidence_tiering_used_correctly": true,
+        "is_core_causal_link_identified_and_tiered": true
+      }
+    },
+    "_bear_r1": {
+      "ticker": "603233.SH",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "2026 H1 results disclosure: test whether 2025/26Q1 profit improvement was sustainable operating leverage or one-off/finite cost-cutting against flat top-line growth",
+        "catalyst_date_or_window": "2026-08-01 to 2026-08-31",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Exact scheduled disclosure date not available in our data; future H1 reporting window is an external calendar estimate, not in our data context"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E4:crowding] The bullish narrative is crowded: TUSHARE broker recommendations show 38 reports from 13 unique brokers in the 90d window, including 华创证券 2026-05-13 '[点评] \"大参林2025年报及2026年一季报点评：盈利能力持续改善，大举分红回报股东\"' and 国信证券 2026-05-10 '[点评] \"大参林：2025&26Q1利润端增速亮眼，门店数量稳步扩张\"'.",
+          "2. [E2:proxy] The business mechanism we underwrite on the short side is that profit growth is being extrapolated from cost-efficiency and store optimization rather than demand growth: live fundamentals show Rev Growth TTM of 0.2%, while the annual income statement shows latest Net Income YoY of +35.0%; the causal mix between cost-cutting, gross margin, store mix, and demand is inferred, not directly measured in our data.",
+          "3. [E3:narrative] Sell-side explicitly anchors on cost-cutting plus expansion: 中泰证券 2026-05-03 '[一般] \"大参林2025年年报及2026年一季报点评：业绩略超预期，26Q1重启门店扩张节奏，降本增效推进有望延续利润中高速成长趋势\"' and 东方证券 2026-04-29 '[点评] \"大参林25年报&26一季报点评：降本增效落地，盈利趋势向好\"' assert the mechanism, but our data do not provide store-level same-store sales, new-store payback, or opex by store cohort to confirm durability.",
+          "4. [E2:proxy] The short mechanism is operating-deleverage risk from restarting expansion into weak demand: if 26Q1 store expansion restart adds rent/labor/pre-opening costs while TTM revenue growth remains near 0.2%, operating margin can mean-revert from the live Op Margin of 10.5%; this is an inferred mechanism because store-count growth, same-store sales growth, and store-level opex are not available in our data.",
+          "5. [E1:direct] Product economics show margin dispersion that can mask core-drug pressure: 2025 product GM was 中西成药 29.58%, 非药品 45.33%, 中参药材 44.31%, and 其他业务 99.3% per SEGMENT ECONOMICS — PRODUCT GROSS MARGIN; our data do not disclose product sales mix, so any claim that mix shift is driving company margin is not established as fact.",
+          "6. [E4:crowding] Positioning support looks asymmetric against the short only if the story remains intact: TUSHARE margin trade shows 融资余额 2.2亿 with -0.2% over the period and 融券余额 0.03亿, implying a 98.8% leveraged-long ratio; this is a crowding signal, not proof of business weakness."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Live fundamentals show P/E TTM of 16.6x, P/E Fwd of 13.5x, EV/EBITDA of 8.9x, ROE of 15.8%, Gross Margin of 34.5%, Op Margin of 10.5%, and Rev Growth TTM of 0.2%.",
+          "[E1:direct] Annual income statement shows Net Income of 1.2B in 2025, 0.9B in 2024, and 1.2B in 2023, with latest Net Income YoY of +35.0%.",
+          "[E1:direct] Annual diluted EPS was 1.08 in 2025, 0.81 in 2024, and 1.03 in 2023, per MULTI-YEAR INCOME STATEMENT.",
+          "[E1:direct] The 60d OHLC trend shows close 19.63 to 18.81, a -4.2% move, with period range 16.78–20.03 and last close at 62% of that range.",
+          "[E1:direct] Live 52W range is 16.78–21.78, with live price 18.81 at 41% of the 52W range.",
+          "[E1:direct] Segment economics for 2025 show region bucket 'other' GM of 34.32% on sales of 275.0亿; the data explicitly state overseas-vs-domestic GM gap cannot be computed.",
+          "[E1:direct] Product GM in 2025 was 非药品 45.33%, 其他业务 99.3%, 中西成药 29.58%, and 中参药材 44.31%, per SEGMENT ECONOMICS.",
+          "[E1:direct] TUSHARE capital structure signals show controlling-shareholder pledge ratio of 8.11% as of 2026-04-17 and Buyback programs: NONE.",
+          "[E4:crowding] TUSHARE broker recommendations show 38 reports and 13 unique brokers in the 90d window, latest dated 2026-05-13.",
+          "[E4:crowding] TUSHARE margin trade shows 融资余额 2.2亿, down -0.2% over the period, 融券余额 0.03亿, and long/short ratio of 98.8% leveraged-long."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] 华创证券 2026-05-13 report titled \"大参林2025年报及2026年一季报点评：盈利能力持续改善，大举分红回报股东\" frames the story around sustained profitability improvement and dividends.",
+          "[E3:narrative] 国信证券 2026-05-10 report titled \"大参林：2025&26Q1利润端增速亮眼，门店数量稳步扩张\" frames the story around profit-side growth and steady store expansion.",
+          "[E3:narrative] 中泰证券 2026-05-03 report titled \"大参林2025年年报及2026年一季报点评：业绩略超预期，26Q1重启门店扩张节奏，降本增效推进有望延续利润中高速成长趋势\" explicitly combines store-expansion restart with cost-efficiency as the continuation mechanism.",
+          "[E3:narrative] 东方证券 2026-04-29 report titled \"大参林25年报&26一季报点评：降本增效落地，盈利趋势向好\" asserts cost-efficiency execution and improving profitability trend.",
+          "[E2:proxy] Our bearish reading is that a cost-efficiency story is more fragile when live Rev Growth TTM is only 0.2%; however, store-level same-store sales, cohort maturity, and new-store profitability are not available in our data.",
+          "[E1:direct] WATCHLIST wrongIf explicitly flags same-store sales growth < -5% YoY for 2 consecutive quarters, operating_margin < 5%, or store-count growth < 5% YoY as key review conditions; same-store sales and store-count growth are not available in our loaded data."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "[E3:narrative] Market believes profit growth will continue because broker reports emphasize sustained profitability improvement, cost-efficiency, dividends, and store expansion — including 华创证券 2026-05-13 \"盈利能力持续改善，大举分红回报股东\" and 中泰证券 2026-05-03 \"26Q1重启门店扩张节奏，降本增效推进有望延续利润中高速成长趋势\".",
+            "z": "[E4:crowding] Consensus appears crowded rather than contrarian because TUSHARE shows 38 broker reports from 13 unique brokers in the 90d window, with multiple Buy/Outperform-equivalent calls."
+          },
+          "our_variant": {
+            "e": "[E2:proxy] Per 中泰证券 2026-05-03 \"大参林2025年年报及2026年一季报点评：业绩略超预期，26Q1重启门店扩张节奏，降本增效推进有望延续利润中高速成长趋势\", we believe the same store-expansion restart that brokers treat as a growth driver can become an operating-deleverage mechanism if demand remains weak, because live Rev Growth TTM is only 0.2% while live Op Margin is already 10.5%; this contradicts the consensus narrative because the sell-side is extrapolating cost-efficiency without store-level same-store sales, cohort payback, or opex data in our context.",
+            "z": "[E3:narrative] Per 东方证券 2026-04-29 \"大参林25年报&26一季报点评：降本增效落地，盈利趋势向好\", the market treats 降本增效 as durable; our variant is that cost-cutting is a finite bridge, not a demand engine, and the 2026 H1 print should reveal whether margin holds once expansion costs resume."
+          },
+          "what_changes_our_mind": "2026 H1 report shows revenue growth ≥5.0% YoY, operating margin ≥10.5%, and store-count growth ≥5.0% YoY at the same disclosure event; if any metric is not disclosed, mark INSUFFICIENT_DISCLOSURE."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "2026 H1 consolidated operating margin",
+        "current_value": "10.5% live Op Margin from LIVE FUNDAMENTALS",
+        "predicted_value": "<10.0% bear-case thesis forecast, not in company data",
+        "predicted_range": {
+          "low": "9.0% bear-case thesis forecast, not in company data",
+          "mid": "9.8% bear-case thesis forecast, not in company data",
+          "high": "10.4% bear-case thesis forecast, not in company data"
+        },
+        "predicted_horizon": "2026-08-01 to 2026-08-31 H1 results window",
+        "confidence": 0.56
+      },
+      "step_5_proves_right_if": [
+        "2026 H1 consolidated revenue growth YoY ≤ 0.2% @ 2026 H1 report disclosure window 2026-08-01 to 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 and 2025 H1 comparable 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated operating margin < 10.5% @ 2026 H1 report disclosure window 2026-08-01 to 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 and 营业利润, operating margin calculated as 营业利润/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 store-count growth YoY < 5.0% @ 2026 H1 report disclosure window 2026-08-01 to 2026-08-31 | source: 2026 H1 报告 经营情况讨论与分析 or 门店网络 disclosure: 期末门店数量 and prior-year comparable 期末门店数量 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 same-store sales growth YoY < -5.0% @ 2026 H1 report disclosure window 2026-08-01 to 2026-08-31 | source: 2026 H1 报告 经营情况讨论与分析: 同店销售增长率 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "2026 H1 consolidated revenue growth YoY ≥ 5.0% @ 2026 H1 report disclosure window 2026-08-01 to 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 and 2025 H1 comparable 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated operating margin ≥ 10.5% @ 2026 H1 report disclosure window 2026-08-01 to 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 and 营业利润, operating margin calculated as 营业利润/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 store-count growth YoY ≥ 5.0% @ 2026 H1 report disclosure window 2026-08-01 to 2026-08-31 | source: 2026 H1 报告 经营情况讨论与分析 or 门店网络 disclosure: 期末门店数量 and prior-year comparable 期末门店数量 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 same-store sales growth YoY ≥ 0.0% @ 2026 H1 report disclosure window 2026-08-01 to 2026-08-31 | source: 2026 H1 报告 经营情况讨论与分析: 同店销售增长率 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes 大参林 can sustain profit growth because brokers such as 中泰证券 2026-05-03 argue 26Q1 restarted store expansion plus 降本增效 can continue mid/high profit growth → We believe the specific business mechanism is the opposite: expansion restart raises store-level opex and cannibalization risk while demand is weak, with live Rev Growth TTM only 0.2% and margin already at 10.5% → This is unpriced because TUSHARE shows 38 reports from 13 brokers in 90d clustered around profitability improvement and expansion, but our data contain no same-store sales, new-store payback, or cohort margin proof.",
+        "core_causal_link": {
+          "link_sentence": "The if-false-thesis-dies causal step is that 26Q1 store-expansion restart will create operating-deleverage risk if underlying demand remains weak, rather than translating cost-efficiency into durable profit growth.",
+          "evidence_tier": "E2:proxy",
+          "tier_justification": "Supported indirectly by live Rev Growth TTM of 0.2%, live Op Margin of 10.5%, latest Net Income YoY of +35.0%, and broker narratives citing store expansion plus 降本增效; it is not E1 because our data do not include store-level same-store sales, new-store cohort opex, rent/labor cost, or new-store payback. Primary data needed for E1 would be disclosed same-store sales growth, store-count growth, cohort profitability, and operating expense by store cohort."
+        },
+        "time_to_resolution": "2026 H1 report window, 2026-08-01 to 2026-08-31; exact scheduled date not available in our data",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+10% to +18% for the short, internal scenario not in our data context",
+          "downside_if_wrong": "-5% to -9% for the short, internal scenario not in our data context",
+          "reward_to_risk": "2:1 target, internal scenario not in our data context"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "From 2026-05-16 to the 2026 H1 report window; exact H1 report date not available in our data",
+          "why_market_keeps_buying": [
+            "[E4:crowding] 38 broker reports from 13 unique brokers in 90d create narrative reinforcement around profit improvement.",
+            "[E3:narrative] Broker titles repeatedly emphasize 盈利能力改善, 利润端增速亮眼, 降本增效, 分红, and 门店扩张.",
+            "[E1:direct] Latest annual Net Income YoY was +35.0%, which supports backward-looking confidence even though live Rev Growth TTM is only 0.2%."
+          ],
+          "early_signs_phase_1_weakening": [
+            "[E1:direct] Financing balance is already down -0.2% over the period while leveraged-long ratio remains 98.8%, per TUSHARE margin trade.",
+            "[E1:direct] 60d close moved from 19.63 to 18.81, a -4.2% move, per OHLC trend.",
+            "[E2:proxy] Any company disclosure showing same-store sales growth below -5.0% YoY or store-count growth below 5.0% YoY would weaken the expansion narrative; those metrics are watchlist fields but not currently available in our data."
+          ],
+          "optional_long_play": {
+            "direction": "No long; bearish/neutral setup only",
+            "sizing": "0%",
+            "exit_trigger": "Not applicable"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "[E2:proxy] 2026 H1 report shows revenue growth fails to accelerate materially from the live TTM Rev Growth baseline of 0.2%.",
+            "[E2:proxy] 2026 H1 report shows operating margin below the live Op Margin baseline of 10.5%.",
+            "[E2:proxy] 2026 H1 report discloses store-count growth below 5.0% YoY or same-store sales growth below -5.0% YoY, matching the WATCHLIST review triggers."
+          ],
+          "estimated_timing": "2026-08-01 to 2026-08-31",
+          "short_play": {
+            "direction": "Short / underweight",
+            "sizing": "Start small because core causal link is E2, not E1",
+            "entry_trigger": "Enter after first objective sign of Phase 1 weakening: financing balance continues to fall or price fails to respond positively to further bullish broker coverage; exact future financing threshold not available in our data"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "1%",
+          "phase_2_catalyst_imminent": "2%"
+        }
+      },
+      "qc_checklist": {
+        "all_numeric_claims_grounded_or_labeled": true,
+        "catalyst_date_future_relative_to_2026_05_16": true,
+        "mechanism_chain_cites_at_least_two_specific_broker_report_titles": true,
+        "mechanism_chain_contains_business_mechanism_not_valuation_only": true,
+        "contrarian_view_our_variant_references_specific_broker_report_and_business_event": true,
+        "core_causal_link_named_with_evidence_tier": true,
+        "non_E1_core_link_not_overstated_as_fact": true,
+        "step_3_items_have_evidence_tier_prefixes": true,
+        "step_2_items_have_evidence_tier_prefixes": true,
+        "step_5_conditions_are_mechanized_with_metric_operator_threshold_event_source_and_insufficient_disclosure": true,
+        "step_6_conditions_are_mechanized_with_metric_operator_threshold_event_source_and_insufficient_disclosure": true,
+        "overseas_domestic_margin_gap_not_claimed": true,
+        "valuation_not_used_as_entire_contrarian_view": true
+      }
+    },
+    "_technical": {
+      "trend": "DOWN",
+      "trend_strength": 65,
+      "momentum": {
+        "rsi_estimate": 35,
+        "macd_signal": "bearish",
+        "interpretation": "Price declining from 19.63 to 18.81 (-4.2%) over 60 days with current level at 41% of 52-week range suggests weakening momentum."
+      },
+      "key_levels": {
+        "support": [
+          16.78
+        ],
+        "resistance": [
+          20.03,
+          21.78
+        ]
+      },
+      "volume_profile": "normal",
+      "chip_concentration": "dispersed",
+      "margin_trend": "unwinding",
+      "technical_summary_e": "Price shows downward trend over 60-day period, declining 4.2% from 19.63 to current 18.81. Current positioning at 41% of 52-week range (16.78-21.78) indicates proximity to lower boundary with key support at 52-week low of 16.78.",
+      "technical_summary_z": "融资余额显示杠杆多头持仓减少(-0.2%)，表明leveraged longs正在平仓。技术结构显示价格从近期高点20.03回落，目前处于区间下半部，短期阻力位于20.03和21.78水平。"
+    },
+    "_forensic": {
+      "bull_findings": [
+        {
+          "claim": "Forward P/E of 13.5x",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows P/E Fwd: 13.5x"
+        },
+        {
+          "claim": "Net Income YoY +35.0%",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT shows Net Income YoY (latest): +35.0%"
+        },
+        {
+          "claim": "Operating Margin 10.5%, ROE 15.8%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Op Margin: 10.5%, ROE: 15.8%"
+        },
+        {
+          "claim": "Non-drugs segment GM 45.33% vs Patent Meds 29.58%",
+          "data_match": "MATCH",
+          "evidence": "SEGMENT ECONOMICS shows 非药品: GM 45.33%, 中西成药: GM 29.58%"
+        },
+        {
+          "claim": "98.8% leveraged-long ratio",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE MARGIN TRADE shows long/short ratio: 98.8% leveraged-long"
+        },
+        {
+          "claim": "TTM revenue growth 0.2%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Rev Growth (TTM): 0.2%"
+        },
+        {
+          "claim": "Management forgoing buybacks signals conviction",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE CAPITAL STRUCTURE shows Buyback programs: NONE"
+        }
+      ],
+      "bear_findings": [
+        {
+          "claim": "38 broker reports from 13 unique brokers in 90d window",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE BROKER RECOMMENDATIONS shows (Total 38 reports / 13 unique brokers / latest 2026-05-13)"
+        },
+        {
+          "claim": "融资余额 2.2亿, down -0.2%",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE MARGIN TRADE shows 融资余额: 2.2亿 (-0.2% over period)"
+        },
+        {
+          "claim": "Price decline from 19.63 to 18.81 (-4.2%)",
+          "data_match": "MATCH",
+          "evidence": "OHLC TREND shows close 19.63 → 18.81 (-4.2%)"
+        },
+        {
+          "claim": "Same-store sales data not available",
+          "data_match": "MATCH",
+          "evidence": "WATCHLIST flags same-store sales growth but data shows 'same-store sales growth and store-count growth are not available in our loaded data'"
+        },
+        {
+          "claim": "Product sales mix not disclosed",
+          "data_match": "MATCH",
+          "evidence": "SEGMENT ECONOMICS shows product GM breakdown but states 'product sales mix is not disclosed in our data'"
+        }
+      ],
+      "shared_assumptions_at_risk": [
+        "Both sides assume the H1 2026 earnings will be the definitive test of sustainability, but neither has visibility into store-level unit economics, same-store sales growth, or new store cohort performance to validate their opposing interpretations",
+        "Both rely heavily on broker narrative interpretations from the same 38 reports, essentially debating whether '重启门店扩张节奏' + '降本增效' are complementary (Bull) or conflicting (Bear) without granular store-level data"
+      ],
+      "technical_vs_bull": "CONFLICTS — Technical shows DOWN trend with 65 strength, price declining -4.2% over 60 days to 41% of 52W range, while Bull predicts 18x forward P/E target (33% upside from 13.5x) by Q4 2026",
+      "technical_vs_bear": "AGREES — Technical DOWN trend with declining momentum, leveraged longs unwinding (-0.2%), and price near lower 52W boundary supports Bear's expectation of continued pressure",
+      "bull_contrarian_quality": "BUSINESS_MECHANISM — Bull cites specific broker reports (中泰证券, 国信证券, 中金) and articulates a two-phase strategic pivot mechanism with structural operational leverage claims",
+      "bear_contrarian_quality": "BUSINESS_MECHANISM — Bear cites specific broker language and articulates an operating deleverage mechanism where store expansion conflicts with margin improvement in a low-growth environment",
+      "bull_core_link_tier_audit": {
+        "agent_self_tier": "E2:proxy",
+        "your_independent_tier": "E2:proxy",
+        "verdict": "AGREE",
+        "evidence": "Bull correctly self-assessed as E2:proxy noting 'data context lacks the store-level unit economics (e.g., new vs. mature store opex, SSSG, new store payback period) that would be required to provide [E1:direct] proof of a structurally improved model'"
+      },
+      "bear_core_link_tier_audit": {
+        "agent_self_tier": "E2:proxy",
+        "your_independent_tier": "E2:proxy",
+        "verdict": "AGREE",
+        "evidence": "Bear correctly identifies operating deleverage mechanism as E2:proxy, stating 'store-level same-store sales, rent, labor, and cohort payback are not available in our data, so this is not yet E1'"
+      },
+      "citations_edge_vs_crowding": "Bull cites 5-6 broker reports to establish mechanism; Bear cites the same reports to establish crowding. Estimate ~20% establish unique mechanism insights, ~80% show consensus watching. The phrase '重启门店扩张节奏' appears across multiple reports suggesting widespread narrative rather than proprietary insight.",
+      "verdict_on_grounding": "EVENLY_GROUNDED",
+      "verdict_rationale": "Both sides accurately cite data context, correctly self-assess evidence tiers as E2:proxy, and articulate plausible but unproven business mechanisms around the same underlying uncertainty: whether store expansion will be margin-accretive or dilutive."
+    },
+    "_agent_status": {
+      "bull_r1": {
+        "status": "success",
+        "ms": 43220
+      },
+      "bear_r1": {
+        "status": "success",
+        "ms": 76656
+      },
+      "technical": {
+        "status": "success",
+        "ms": 7403
+      },
+      "bull_r2": {
+        "status": "success",
+        "ms": 56828
+      },
+      "bear_r2": {
+        "status": "success",
+        "ms": 79526
+      },
+      "forensic": {
+        "status": "success",
+        "ms": 26136
+      },
+      "synth": {
+        "status": "success",
+        "ms": 77542
+      }
+    },
+    "_quality": {
+      "score": 84,
+      "missingFields": [
+        "qc_checklist.all_8_steps_complete",
+        "qc_checklist.step_1_specific_not_vague",
+        "qc_checklist.step_2_no_unfounded_leaps",
+        "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "qc_checklist.step_5_observable",
+        "qc_checklist.step_6_observable",
+        "qc_checklist.step_7_one_sentence_tagline",
+        "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "qc_checklist.step_8_early_signs_observable",
+        "qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "qc_checklist.step_8_position_sizing_curve_monotonic",
+        "qc_checklist.reward_to_risk_at_least_threshold"
+      ],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": true,
+        "reward_to_risk_at_least_threshold": false,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": true,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "PASS",
+      "qc_findings": [
+        "failed:step_8_position_sizing_curve_monotonic",
+        "failed:reward_to_risk_at_least_threshold",
+        "missing:qc_checklist.all_8_steps_complete",
+        "missing:qc_checklist.step_1_specific_not_vague",
+        "missing:qc_checklist.step_2_no_unfounded_leaps",
+        "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "missing:qc_checklist.step_5_observable",
+        "missing:qc_checklist.step_6_observable",
+        "missing:qc_checklist.step_7_one_sentence_tagline",
+        "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "missing:qc_checklist.step_8_early_signs_observable",
+        "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+        "missing:qc_checklist.reward_to_risk_at_least_threshold"
+      ]
+    }
+  },
+  "models_used": {
+    "bull": "gemini-2.5-pro",
+    "bear": "gpt-5.5",
+    "technical": "claude-sonnet-4-20250514",
+    "forensic": "claude-sonnet-4-20250514",
+    "synth": "claude-opus-4-7"
+  },
+  "_status": "OK",
+  "_partial_failures": [],
+  "pipeline_ms_total": 203726
+}

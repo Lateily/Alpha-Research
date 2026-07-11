@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -34,6 +34,7 @@ jobs:
             pandas \
             requests \
             supabase \
+            tushare \
             --quiet
 
       # ── Step 1: Fetch all market data ──────────────────────────────────────
@@ -43,7 +44,21 @@ jobs:
       - name: Run data fetcher v4.0
         id: fetcher
         continue-on-error: true
+        env:
+          # Lets fetch_data.py fall back to Tushare daily/daily_basic to rebuild the
+          # A-share universe when the AKShare full-market endpoint disconnects (PR #91).
+          # Same secret the dedicated Tushare steps (2d.5-2d.8) already use.
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_data.py
+
+      # ── Step 1b: Universe data-health guard artifact ─────────────────────
+      # Detects stale / ambiguous full-universe snapshots (price age, PE basis,
+      # inert quality factor, one-day momentum semantics). This is advisory here;
+      # decision_sheet.py and sheet_checkpoints.py enforce DATA_BLOCKED at
+      # compose/register time.
+      - name: Audit A-share universe data health
+        continue-on-error: true
+        run: python scripts/universe_data_health.py --output public/data/universe_data_health.json
 
       # ── Step 2: Paper trading P&L update ──────────────────────────────────
       - name: Run paper trading engine
@@ -60,7 +75,166 @@ jobs:
         continue-on-error: true          # non-critical; pure Python, no network
         run: python scripts/swing_signals.py
 
-      # ── Step 2h: VP Score live engine ────────────────────────────────────
+      # ── Step 2d: AI Infrastructure Leading Indicators ───────────────────
+      # Fetches hyperscaler CapEx + NVDA + TSMC quarterly data.
+      # Runs early (after fetch) so composite signal is available for confluence.
+      - name: Fetch leading indicators
+        continue-on-error: true          # non-critical; US market data
+        run: python scripts/leading_indicators.py
+
+      # ── Step 2d.5: Tushare A-share data ──────────────────────────────────
+      # Tushare 6000-tier active. Per-ticker A-share data + market-wide hsgt
+      # money flow. Forward-compatible per DATA_SOURCE_REGISTRY.md —
+      # tier-locked APIs (forecast) marked _status: tier_locked in output,
+      # populate when tier upgraded.
+      - name: "Step 2d.5: Fetch Tushare A-share data (6000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_tushare.py
+
+      # ── Step 2d.6: Tushare capital flow ──────────────────────────────────
+      # Tushare 15000-tier concept-board + industry-board daily net inflow.
+      # Forward-compatible: unavailable endpoint names/tiers preserve schema
+      # with _status: endpoint_unavailable.
+      - name: "Step 2d.6: Fetch Tushare capital flow (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_capital_flow.py
+
+      # ── Step 2d.7: Tushare chip distribution ────────────────────────────
+      # Tushare 15000-tier per-watchlist 筹码分布 (cyq_chips).
+      # Forward-compatible: unavailable endpoint names/tiers preserve schema
+      # with _status: endpoint_unavailable or tier_locked per ticker.
+      - name: "Step 2d.7: Fetch Tushare chip distribution (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_chip_distribution.py
+
+      # ── Step 2d.8: Tushare consensus forecast ──────────────────────────
+      # Tushare 15000-tier per-watchlist 盈利预测 / consensus forecast.
+      # Forward-compatible: unavailable endpoint names/tiers preserve schema
+      # with _status: endpoint_unavailable or tier_locked per ticker.
+      - name: "Step 2d.8: Fetch Tushare consensus forecast (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_consensus_forecast.py
+
+      # ── Step 2d.9: Tushare 龙虎榜 ───────────────────────────────────────
+      # Tushare 15000-tier per-watchlist 30-day 龙虎榜 appearances.
+      # Forward-compatible: unavailable endpoint names/tiers preserve schema
+      # with _status: endpoint_unavailable or tier_locked per ticker.
+      - name: "Step 2d.9: Fetch Tushare LHB top list (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_lhb.py
+
+      # ── Step 2d.10: Tushare 量化因子 ────────────────────────────────────
+      # Tushare 15000-tier per-watchlist daily quant factors (PE/PB/PS/turnover/
+      # momentum/volatility/etc). STRATEGIC: data layer for future quant strategy
+      # KR. Forward-compatible: unavailable endpoint names/tiers preserve schema.
+      - name: "Step 2d.10: Fetch Tushare quant factors (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_quant_factors.py
+
+      # ── Step 2d.11: Tushare 涨停板单 ───────────────────────────────────
+      # Tushare 15000-tier market-wide daily limit-up / limit-down board list.
+      # Forward-compatible: unavailable endpoint names/tiers preserve schema.
+      - name: "Step 2d.11: Fetch Tushare limit list (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_limit_list.py
+
+      # ── Step 2d.12: Tushare concept membership ─────────────────────────
+      # Tushare 15000-tier market-wide concept-to-stock constituent mapping.
+      # Forward-compatible: bulk endpoint preferred, concept-list fallback capped.
+      - name: "Step 2d.12: Fetch Tushare concept membership (15000-tier)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_concept_detail.py
+
+      # ── Step 2d.13: Tushare 机构调研 ──────────────────────────────────
+      # Tushare 15000-tier per-watchlist institutional research / survey records.
+      # Forward-compatible: endpoint candidates preserve schema with all_failed
+      # and _attempted_endpoints for empirical verification.
+      - name: "Step 2d.13: Fetch institutional research (Tushare 15000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_inst_research.py
+
+      # ── Step 2d.14: Tushare 游资数据 / 龙虎榜机构成交明细 ────────────────
+      # Tushare 15000-tier per-watchlist seat-level LHB trading activity.
+      # Complements Step 2d.9 stock-level LHB summary with 营业部-level WHO data.
+      - name: "Step 2d.14: Fetch top inst seats / 游资数据 (Tushare 15000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_top_inst.py
+
+      # ── Step 2d.15: Tushare 券商金股 / analyst recommendations ─────────────
+      # Tushare 15000-tier per-watchlist broker recommendations and target
+      # prices. Complements consensus_forecast with rating-level analyst signal.
+      - name: "Step 2d.15: Fetch broker recommendations / 券商金股 (Tushare 15000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_broker_recommend.py
+
+      # ── Step 2d.16: Tushare 股权质押 / pledge_stat ───────────────────────
+      # Tushare 5000-tier per-watchlist pledge ratio and history. China-specific
+      # risk reference data for forced-selling / control-risk checks.
+      - name: "Step 2d.16: Fetch pledge stat / 股权质押 (Tushare 5000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_pledge_stat.py
+
+      # ── Step 2d.17: Tushare 限售股解禁 / share_float ─────────────────────
+      # Tushare 2000-tier per-watchlist upcoming restricted-share unlocks.
+      # China-specific risk reference data for short-term supply pressure.
+      - name: "Step 2d.17: Fetch restricted shares / 限售股解禁 (Tushare 2000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_restricted_shares.py
+
+      # ── Step 2d.18: Tushare 回购 / repurchase ────────────────────────────
+      # Tushare 5000-tier per-watchlist 180-day buyback events.
+      # Buybacks are positive insider-confidence signals.
+      - name: "Step 2d.18: Fetch repurchase / 回购 (Tushare 5000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_repurchase.py
+
+      # ── Step 2d.19: Tushare 股东增减持 / stk_holdertrade ──────────────────
+      # Tushare 2000-tier per-watchlist 180-day insider trade events.
+      # Bidirectional signal: net buying = positive, net selling = negative.
+      - name: "Step 2d.19: Fetch holder trades / 股东增减持 (Tushare 2000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_holdertrade.py
+
+      # ── Step 2d.20: Tushare 融资融券 / margin_detail ──────────────────
+      # Tushare 5000-tier per-watchlist 30-day margin trading details.
+      # Bidirectional signal: rising 融资 = bullish leverage / rising 融券 = bearish short.
+      - name: "Step 2d.20: Fetch margin trading / 融资融券 (Tushare 5000)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_margin.py
+
+      # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
       # writes profit_scissors.json.
@@ -68,25 +242,127 @@ jobs:
         continue-on-error: true          # non-critical; pure Python, no network
         run: python scripts/vp_engine.py
 
-      # ── Step 2d: Signal confluence scoring (Layer 2) ──────────────────────
+      # ── Step 2f: Signal confluence scoring (Layer 2) ──────────────────────
       - name: Compute signal confluence scores
         continue-on-error: true          # non-critical; reads signals_*.json
         run: python scripts/signal_confluence.py
 
-      # ── Step 2e: Position sizing (Layer 2) ───────────────────────────────
+      # ── Step 2g: Position sizing (Layer 2) ───────────────────────────────
       - name: Compute position sizing
         continue-on-error: true          # non-critical; reads confluence + vp_snapshot
         run: python scripts/position_sizing.py
 
-      # ── Step 2f: Daily trading decisions (Layer 2 → Layer 1) ──────────────
+      # ── Step 2h: Daily trading decisions (Layer 2 → Layer 1) ──────────────
       - name: Generate daily trading decisions
         continue-on-error: true          # non-critical; reads confluence.json
         run: python scripts/daily_decision.py
 
-      # ── Step 2g: Signal quality analytics (feedback loop) ────────────────
+      # ── Step 2h2: Daily Model Portfolio pilot run (read-only) ─────────────
+      # Composes candidate board + thesis_queue + fresh confluence into today's
+      # model_portfolio.json (fresh pilot; no legacy positions; idea-only, no size).
+      - name: Generate Daily Model Portfolio (pilot)
+        continue-on-error: true          # non-critical; read-only composition
+        run: python scripts/model_portfolio.py
+
+      # ── Step 2h3: Quant Strategy Factory v0 run (read-only; INDEPENDENT) ──
+      # Independent A-share long-only swing factory (Core Thesis = overlay/veto only,
+      # never the signal). The broad universe is gitignored + unfetchable from CI US
+      # IPs, so in CI this emits an honest NO_TRADE; the H1 signal is proven/killed by
+      # the PR3 backtest, NOT claimed here. validation_status stays "unvalidated".
+      - name: Generate Quant Strategy v0 run
+        continue-on-error: true          # non-critical; read-only; honest NO_TRADE in CI
+        run: python scripts/quant_strategy.py
+
+      # ── Step 2h4: CTF v1 decision-sheet forward checkpoints (read-only) ───
+      # Evaluates any DUE 30/60/90d checkpoint on registered decision sheets
+      # (price/directional/band reads from committed data; disclosure-bound
+      # wrong_if items are flagged for the human, never guessed).
+      - name: Evaluate decision-sheet checkpoints
+        continue-on-error: true          # non-critical; no-op until a checkpoint is due
+        run: python scripts/sheet_checkpoints.py --check
+
+      # ── Step 2h4b: AI beta forward checkpoints (owner-authorized) ─────────
+      # Separate from the official red-team-PASS CTF ledger. This evaluates the
+      # AI value-chain beta forward pool against the latest committed universe_a
+      # price, and is a strict no-op before due dates.
+      - name: Evaluate AI beta forward checkpoints
+        continue-on-error: true          # non-critical; no-op until a checkpoint is due
+        run: python scripts/ai_forward_beta_registry.py --check
+
+      # ── Step 2h5: Factory progress aggregator (read-only over artifacts) ──
+      # Refreshes public/data/factory_progress.json for the Factory tab —
+      # ledger/scan/family-history state for real-time progress tracking.
+      - name: Generate factory progress snapshot
+        continue-on-error: true          # non-critical; display-only aggregation
+        run: python scripts/factory_progress.py
+
+      # ── Step 2i: Signal quality analytics (feedback loop) ────────────────
       - name: Compute signal quality analytics
         continue-on-error: true          # non-critical; reads trades + positions
         run: python scripts/signal_quality.py
+
+      # ── Step 2j: Taleb-style fragility scoring (AHF-1) ───────────────────
+      # Per AHF_COMPARISON.md: fills the "no downside-fragility dimension"
+      # gap. Reads fin_*.json + ohlc_*.json (already populated by step 2 +
+      # step 2c). Output: public/data/fragility_*.json per ticker. NOT folded
+      # into VP composite (INVARIANT 3 requires Junyan approval).
+      - name: Compute fragility scores
+        continue-on-error: true          # non-critical; reads fin + ohlc
+        run: python scripts/fragility_score.py
+
+      # ── Step 2k: Investor-persona overlay (AHF-3 v1) ─────────────────────
+      # Per AHF_COMPARISON.md A3: deterministic Buffett/Burry/Damodaran
+      # checklists. Reads market_data.json + rdcf_*.json + fin_*.json (all
+      # populated upstream). Output: public/data/persona_overlay.json
+      # (single file, keyed by ticker). NOT folded into VP composite
+      # (INVARIANT 3). Read alongside VP for richer perspective.
+      - name: Compute persona overlay
+        continue-on-error: true          # non-critical; reads market + rdcf + fin
+        run: python scripts/persona_overlay.py
+
+      # ── Step 2l: AHF-2 Method 2 — EV/EBITDA target-multiple valuation ────
+      # Per AHF-2 strategic handoff (.shifts/AHF-2_HANDOFF.md from prior
+      # shift 2026-04-30-1532 KR9 DEFER_C consensus): three orthogonal
+      # estimators, biotech Option 1 fallback for 6160.HK, NOT folded into
+      # VP composite. KR2 (Residual Income) + KR3 (Aggregator) pending.
+      - name: Compute EV/EBITDA valuation (AHF-2 Method 2)
+        continue-on-error: true          # non-critical; reads market_data + rdcf
+        run: python scripts/ev_ebitda_valuation.py
+
+      # ── Step 2m: AHF-2 Method 3 — Residual Income (EBO) valuation ─────────
+      # Per AHF-2 strategic handoff: Edwards-Bell-Ohlson book-value-regime
+      # valuation. Third orthogonal estimator. WACC used as r_e proxy.
+      # Biotech + hyper-growth-EBO graceful-degradation paths. NOT folded
+      # into VP composite. KR3 (Aggregator) pending.
+      - name: Compute Residual Income valuation (AHF-2 Method 3)
+        continue-on-error: true          # non-critical; reads market_data + rdcf + fin
+        run: python scripts/residual_income_valuation.py
+
+      # ── Step 2n: AHF-2 Aggregator — median-of-3 triangulation ─────────────
+      # Synthesis step: combines Method 1 (rdcf signal) + Method 2
+      # (ev_ebitda) + Method 3 (residual_income) into ONE per-ticker
+      # triangulated signal. Median-of-SIGNALS (NOT deltas; units
+      # incompatible). Closes the AHF-2 v1 methodology backbone. NOT
+      # folded into VP composite (INVARIANT 3).
+      - name: Compute multi-method triangulated valuation (AHF-2 Aggregator)
+        continue-on-error: true          # non-critical; reads rdcf + ev_ebitda + ri JSON outputs
+        run: python scripts/multi_method_valuation.py
+
+      # ── Step 2e: Bridge-8 paper trading + outcome verification (2026-05-11) ────
+      # Daily tracker for shipped theses. Reads thesis_attribution/<TICKER>.json
+      # (entry conditions + R/R + catalyst), pulls current price from refreshed
+      # market_data.json, appends today's snapshot to public/data/paper_trades/<TICKER>.json
+      # daily_log. Watchlist-filtered: only actively-tracked tickers.
+      - name: "Step 2e.1: Bridge-8 paper trading daily tracker"
+        continue-on-error: true
+        run: python3 scripts/follow_thesis.py --all
+
+      # Outcome verification scaffold — pairs paper_trades with thesis_attribution
+      # to produce thesis_outcomes/<TICKER>.json with conditions marked
+      # PENDING_HUMAN_REVIEW (until NLP/data-integration verification ships).
+      - name: "Step 2e.2: Bridge-8 outcome verification scaffold"
+        continue-on-error: true
+        run: python3 scripts/verify_thesis.py --all
 
       # ── Step 3: Sync to Supabase (runs only if secrets are set) ───────────
       - name: Sync to Supabase
@@ -100,6 +376,28 @@ jobs:
       # Uses 'git add -f --ignore-errors' so missing glob expansions (e.g. no
       # ohlc_*.json yet) don't abort the step. git diff --cached guard means
       # we only commit when there are actual changes.
+      # Regenerate the position-dependent read-only markers AFTER positions.json is
+      # final this run, so the Dashboard (which reads the COMMITTED JSON) stays
+      # fresh daily — not just the morning-report transient copy. Read-only markers:
+      # no trades, no position changes (see PORTFOLIO_THESIS_ALIGNMENT_RULES.md).
+      # Adds the CORE Alpha Factory shadow portfolio (core_shadow_portfolio.py): it
+      # reads positions.json + thesis_queue.json and otherwise goes stale after the
+      # daily paper-state update (CODEX_FINDINGS 2026-05-31-A). best-effort.
+      # NB: theme_peer_residual.py is intentionally NOT regenerated here — it needs the
+      # data_history/panel/*.parquet price panels (gitignored, built by the panel-fetch
+      # workflows, absent in this runner); running it here would silently degrade its
+      # output to all proxy_or_missing. Its freshness is coupled to the panel refresh.
+      - name: Regenerate position-dependent markers (alignment + shadow)
+        continue-on-error: true
+        run: |
+          # protected paper-state must stay READ-ONLY to these markers; tripwire if not.
+          before=$(git hash-object public/data/positions.json public/data/analytics.json public/data/snapshots.json 2>/dev/null)
+          python3 scripts/backfill_thesis_direction.py  || echo "backfill skipped (non-fatal)"
+          python3 scripts/portfolio_thesis_alignment.py || echo "alignment skipped (non-fatal)"
+          python3 scripts/core_shadow_portfolio.py      || echo "shadow skipped (non-fatal)"
+          after=$(git hash-object public/data/positions.json public/data/analytics.json public/data/snapshots.json 2>/dev/null)
+          [ "$before" = "$after" ] || echo "::warning::marker regen modified protected paper-state (positions/analytics/snapshots) — these must be read-only"
+
       - name: Commit and push data
         run: |
           git config user.name "github-actions[bot]"
@@ -116,14 +414,38 @@ jobs:
             public/data/positions.json \
             public/data/analytics.json \
             public/data/snapshots.json \
+            public/data/portfolio_thesis_alignment.json \
+            public/data/thesis_direction_backfill.json \
+            public/data/core_shadow_portfolio.json \
             public/data/backtest_results.json \
             public/data/stress_test.json \
             public/data/confluence.json \
             public/data/daily_decision.json \
+            public/data/model_portfolio.json \
+            public/data/quant_strategy_run.json \
+            public/data/decision_sheet_checkpoints.json \
+            public/data/universe_data_health.json \
+            public/data/ai_forward_beta_checkpoint_ledger.json \
+            public/data/factory_progress.json \
             public/data/position_sizing.json \
             public/data/signal_quality.json \
             public/data/trades.json \
-            public/data/profit_scissors.json; do
+            public/data/trade_attribution_capsules.json \
+            public/data/tushare_market.json \
+            public/data/profit_scissors.json \
+            public/data/leading_indicators.json \
+            public/data/capital_flow.json \
+            public/data/limit_list.json \
+            public/data/concept_membership.json \
+            public/data/fragility_300308_SZ.json \
+            public/data/fragility_700_HK.json \
+            public/data/fragility_9999_HK.json \
+            public/data/fragility_6160_HK.json \
+            public/data/fragility_002594_SZ.json \
+            public/data/persona_overlay.json \
+            public/data/ev_ebitda_valuation.json \
+            public/data/residual_income_valuation.json \
+            public/data/multi_method_valuation.json; do
             [ -f "$f" ] && git add "$f"
           done
 
@@ -131,14 +453,54 @@ jobs:
           shopt -s nullglob
           files=(public/data/ohlc_*.json public/data/fin_*.json \
                  public/data/rdcf_*.json public/data/eqr_*.json \
-                 public/data/signals_*.json public/data/cflow_*.json)
+                 public/data/signals_*.json public/data/cflow_*.json \
+                 public/data/tushare/*.json \
+                 public/data/chip_distribution/*.json \
+                 public/data/consensus_forecast/*.json \
+                 public/data/lhb/*.json \
+                 public/data/quant_factors/*.json \
+                 public/data/inst_research/*.json \
+                 public/data/top_inst/*.json \
+                 public/data/broker_recommend/*.json \
+                 public/data/pledge_stat/*.json \
+                 public/data/restricted_shares/*.json \
+                 public/data/holdertrade/*.json \
+                 public/data/margin/*.json \
+                 public/data/repurchase/*.json \
+                 public/data/thesis_factcheck/*.json \
+                 public/data/thesis_attribution/*.json \
+                 public/data/paper_trades/*.json \
+                 public/data/thesis_outcomes/*.json)
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 
           # Only commit if something changed
           git diff --cached --quiet && echo "No data changes to commit." || \
             git commit -m "data: daily update $(date -u +'%Y-%m-%d %H:%M') UTC [fetcher:${{ steps.fetcher.outcome }}]"
-          git push || echo "Nothing to push."
+
+          # Push with rebase-on-conflict retry. Pipeline runs ~10-15 min; if
+          # another commit lands on main during that window (e.g., Junyan or
+          # T1 push), `git push` is rejected. Without retry the data commit
+          # is local-only and lost when runner shuts down (real loss observed
+          # 2026-05-08 run 25554339852: full new-ticker data committed but
+          # discarded). Retry up to 3x with `git pull --rebase` between.
+          push_attempts=0
+          push_max_attempts=3
+          push_succeeded=false
+          while [ $push_attempts -lt $push_max_attempts ]; do
+            push_attempts=$((push_attempts + 1))
+            if git push 2>&1; then
+              push_succeeded=true
+              echo "Push succeeded on attempt $push_attempts"
+              break
+            fi
+            echo "Push rejected on attempt $push_attempts — pulling rebase + retry"
+            git fetch origin main || { echo "Fetch failed — abandoning push retries"; break; }
+            git pull --rebase origin main || { echo "Pull-rebase failed — abandoning push (manual recovery needed)"; break; }
+          done
+          if [ "$push_succeeded" != "true" ]; then
+            echo "::warning::Push failed after $push_max_attempts attempts. Data commit is LOCAL ONLY and will be lost on runner shutdown."
+          fi
 
       # ── Step 5: Telegram alerts (runs only if secrets are set) ────────────
       - name: Send Telegram alerts

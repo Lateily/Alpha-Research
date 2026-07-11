@@ -1,0 +1,17 @@
+{
+  "fetched_at": "2026-07-10T11:27:00Z",
+  "tier": 15000,
+  "_status": "endpoint_unavailable",
+  "api_used": null,
+  "_attempted_endpoints": [
+    "concept_detail",
+    "concept_membership",
+    "ths_concept_detail",
+    "concept",
+    "concept_detail(id)"
+  ],
+  "concepts": [],
+  "total_concepts": 0,
+  "total_memberships": 0,
+  "_error": "concept_detail: Exception: 请指定正确的接口名 | concept_membership: Exception: 请指定正确的接口名 | ths_concept_detail: Exception: 请指定正确的接口名 | concept: Exception: 请指定正确的接口名"
+}

@@ -1,0 +1,52 @@
+{
+  "ticker": "175.HK",
+  "generated_at": "2026-07-10",
+  "price": 19.45,
+  "zone": "NEUTRAL",
+  "entry_zone": true,
+  "exit_zone": false,
+  "signals": [
+    {
+      "type": "KDJ_OVERSOLD",
+      "strength": "strong",
+      "date": "2026-05-22",
+      "bullish": true,
+      "description": {
+        "e": "KDJ J=-4.6 (extreme <0) — high-probability reversal zone",
+        "z": "KDJ J=-4.6极度超卖，高概率反转区间"
+      }
+    }
+  ],
+  "signal_count": {
+    "bullish": 1,
+    "bearish": 0,
+    "total": 1
+  },
+  "indicators": {
+    "ma5": 19.94,
+    "ma20": 21.77,
+    "ma60": 20.69,
+    "rsi14": 30.8,
+    "vol_ma20": 68991257,
+    "vol_ratio": 0.57,
+    "price_vs_ma20": -10.65,
+    "price_vs_ma60": -5.97,
+    "change_1d": -0.1,
+    "change_5d": -10.04,
+    "change_20d": -17.79,
+    "macd_dif": -0.6455,
+    "macd_dea": -0.2227,
+    "macd_hist": -0.8457,
+    "bb_upper": 24.15,
+    "bb_mid": 21.77,
+    "bb_lower": 19.39,
+    "bb_bandwidth": 21.85,
+    "kdj_k": 7.9,
+    "kdj_d": 14.2,
+    "kdj_j": -4.6,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
+  }
+}

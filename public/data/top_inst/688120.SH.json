@@ -1,0 +1,155 @@
+{
+  "_status": "ok",
+  "ticker": "688120.SH",
+  "fetched_at": "2026-07-10T11:30:41Z",
+  "api_used": "top_inst",
+  "_attempted_endpoints": [
+    "top_inst"
+  ],
+  "window_days": 30,
+  "appearances": [
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "中信证券股份有限公司上海分公司",
+      "buy": null,
+      "buy_rate": null,
+      "sell": 118122317.5,
+      "sell_rate": 2.25,
+      "net_buy": -118122317.5,
+      "side": "sell",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": -118122317.5
+    },
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "华宝证券股份有限公司上海东大名路证券营业部",
+      "buy": 139422240.17,
+      "buy_rate": 2.65,
+      "sell": null,
+      "sell_rate": null,
+      "net_buy": 139422240.17,
+      "side": "buy",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": 139422240.17
+    },
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "国泰海通证券股份有限公司总部",
+      "buy": null,
+      "buy_rate": null,
+      "sell": 114558002.32,
+      "sell_rate": 2.18,
+      "net_buy": -114558002.32,
+      "side": "sell",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": -114558002.32
+    },
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "机构专用",
+      "buy": 127767464.45,
+      "buy_rate": 2.43,
+      "sell": null,
+      "sell_rate": null,
+      "net_buy": 127767464.45,
+      "side": "buy",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": 127767464.45
+    },
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "机构专用",
+      "buy": 156861934.85,
+      "buy_rate": 2.98,
+      "sell": null,
+      "sell_rate": null,
+      "net_buy": 156861934.85,
+      "side": "buy",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": 156861934.85
+    },
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "机构专用",
+      "buy": 161750694.15,
+      "buy_rate": 3.07,
+      "sell": null,
+      "sell_rate": null,
+      "net_buy": 161750694.15,
+      "side": "buy",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": 161750694.15
+    },
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "机构专用",
+      "buy": null,
+      "buy_rate": null,
+      "sell": 348550723.54,
+      "sell_rate": 6.63,
+      "net_buy": -348550723.54,
+      "side": "sell",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": -348550723.54
+    },
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "沪股通专用",
+      "buy": 523382251.32,
+      "buy_rate": 9.95,
+      "sell": null,
+      "sell_rate": null,
+      "net_buy": 523382251.32,
+      "side": "buy",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": 523382251.32
+    },
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "沪股通专用",
+      "buy": null,
+      "buy_rate": null,
+      "sell": 230105142.77,
+      "sell_rate": 4.37,
+      "net_buy": -230105142.77,
+      "side": "sell",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": -230105142.77
+    },
+    {
+      "trade_date": "20260629",
+      "ts_code": "688120.SH",
+      "exalter": "瑞银证券有限责任公司上海花园石桥路证券营业部",
+      "buy": null,
+      "buy_rate": null,
+      "sell": 138100594.98,
+      "sell_rate": 2.63,
+      "net_buy": -138100594.98,
+      "side": "sell",
+      "reason": "有价格涨跌幅限制的日收盘价格涨幅达到15%的前五只证券",
+      "net_buy_amount": -138100594.98
+    }
+  ],
+  "summary": {
+    "total_appearances_30d": 10,
+    "unique_seats_30d": 6,
+    "top_buyer_30d": {
+      "exalter": "沪股通专用",
+      "net_buy_amount": 293277108.54999995
+    },
+    "top_seller_30d": {
+      "exalter": "瑞银证券有限责任公司上海花园石桥路证券营业部",
+      "net_buy_amount": -138100594.98
+    },
+    "latest_date": "2026-06-29"
+  }
+}

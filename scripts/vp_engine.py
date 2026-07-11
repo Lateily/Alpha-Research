@@ -10,7 +10,7 @@ Replaces two of the five hardcoded VP dimensions with live-computed values:
 The other three dimensions stay as manual inputs (human judgment required):
   narrative_shift    ← DeepResearch / analyst review
   low_coverage       ← sell-side coverage count (manual)
-  catalyst_proximity ← upcoming events calendar (manual)
+  catalyst_prox      ← upcoming events calendar (manual)
 
 VP recomputation:
   vp_score = Σ(weight_i × score_i)  where weights sum to 1.0
@@ -34,7 +34,7 @@ VP_WEIGHTS = {
     "fundamental_accel":  0.25,   # fin_*.json-computed
     "narrative_shift":    0.20,   # manual
     "low_coverage":       0.15,   # manual
-    "catalyst_proximity": 0.15,   # manual
+    "catalyst_prox":      0.15,   # manual
 }
 
 
@@ -44,6 +44,62 @@ def load_json(path, default=None):
             return json.load(f)
     except Exception:
         return default if default is not None else {}
+
+
+# ── Watchlist loader ──────────────────────────────────────────────────────────
+def _load_watchlist_tickers() -> dict:
+    """
+    Return dict of {ticker: full_cfg_dict} from watchlist.json.
+    Each value includes all vp_seed fields PLUS name_en/name_zh for upsert.
+    Used to:
+      1. Auto-upsert new tickers into vp_snapshot (seed → snapshot)
+      2. Sync manual VP dimensions (narrative_shift, low_coverage, catalyst_prox)
+    Returns empty dict on failure (graceful degradation).
+    """
+    wl_path = DATA_DIR / "watchlist.json"
+    try:
+        wl = json.loads(wl_path.read_text(encoding="utf-8"))
+        result = {}
+        for tk, v in wl.get("tickers", {}).items():
+            seed = v.get("vp_seed", {})
+            result[tk] = {
+                "ticker":            tk,
+                "name_en":           v.get("name_en", tk),
+                "name_zh":           v.get("name_zh", tk),
+                "vp_score":          seed.get("vp", 50),
+                "expectation_gap":   seed.get("expectation_gap", 50),
+                "fundamental_accel": seed.get("fundamental_accel", 50),
+                "narrative_shift":   seed.get("narrative_shift", 50),
+                "low_coverage":      seed.get("low_coverage", 50),
+                "catalyst_prox":     seed.get("catalyst_prox", 50),
+                "wrongIf_e":         seed.get("wrongIf_e", ""),
+                "wrongIf_z":         seed.get("wrongIf_z", ""),
+                "source":            "seed",
+                "last_updated":      seed.get("last_updated", ""),
+            }
+        print(f"[vp_engine] watchlist.json loaded: {len(result)} tickers")
+        return result
+    except Exception as e:
+        print(f"[vp_engine] watchlist.json unavailable ({e}), relying on vp_snapshot.json only")
+        return {}
+
+
+def _load_watchlist_manual_dims() -> dict:
+    """Return {ticker: {narrative_shift, low_coverage, catalyst_prox}} from watchlist."""
+    wl_path = DATA_DIR / "watchlist.json"
+    result = {}
+    try:
+        wl = json.loads(wl_path.read_text(encoding="utf-8"))
+        for tk, v in wl.get("tickers", {}).items():
+            seed = v.get("vp_seed", {})
+            result[tk] = {
+                "narrative_shift":    seed.get("narrative_shift", 50),
+                "low_coverage":       seed.get("low_coverage", 50),
+                "catalyst_prox":      seed.get("catalyst_prox", 50),
+            }
+    except Exception:
+        pass
+    return result
 
 
 # ── Fundamental Accel Scoring ─────────────────────────────────────────────────
@@ -192,8 +248,25 @@ def compute_fundamental_accel(ticker: str) -> dict:
 
 def get_expectation_gap_from_rdcf(ticker: str, current_seed: int) -> dict:
     """
-    Read expectation_gap_score directly from rdcf_*.json (already computed).
-    Falls back to seed value if rDCF errored or file missing.
+    Compute expectation_gap score (0-100) from rdcf_*.json.
+
+    Core logic — expectation_gap measures OUR EDGE vs THE MARKET:
+      delta = our_growth - implied_growth   (already in rdcf JSON)
+      positive delta → we're more bullish than market → edge exists → HIGH gap
+      negative delta → market already priced in more than we think → LOW gap
+
+    This replaces the old binary OVERPRICED→0 / UNDERPRICED→100 mapping,
+    which incorrectly punished stocks where the market agrees with our thesis.
+
+    Mapping (delta = our_growth − implied_growth):
+      ≤ -0.50  →  10  (market wildly more bullish; bar we set is very high)
+      -0.50–-0.25 → 22
+      -0.25–-0.10 → 35
+      -0.10– 0.00 → 48  (near-neutral; market slightly ahead of us)
+       0.00–+0.10 → 55  (slight edge)
+      +0.10–+0.25 → 68
+      +0.25–+0.50 → 78
+        > +0.50  →  88  (we're massively more bullish; strong long edge)
     """
     safe_id = ticker.replace(".", "_")
     rdcf = load_json(DATA_DIR / f"rdcf_{safe_id}.json", {})
@@ -204,23 +277,36 @@ def get_expectation_gap_from_rdcf(ticker: str, current_seed: int) -> dict:
             "source": "seed_fallback",
             "reason": rdcf["error"],
             "signal": None,
-            "implied_growth": None,
+            "delta":  None,
         }
 
-    eg_score    = rdcf.get("expectation_gap_score")
-    signal      = rdcf.get("signal")
-    implied_g   = rdcf.get("implied_fcf_growth") or rdcf.get("implied_rev_growth")
+    delta        = rdcf.get("delta")          # our_growth − implied_growth
+    signal       = rdcf.get("signal")
+    implied_g    = rdcf.get("implied_fcf_growth") or rdcf.get("implied_rev_growth")
+    our_g        = rdcf.get("our_fcf_growth")  or rdcf.get("our_rev_growth")
     hyper_growth = rdcf.get("hyper_growth", False)
 
-    if eg_score is None:
-        return {"score": current_seed, "source": "seed_fallback", "reason": "no_score_in_rdcf"}
+    if delta is None:
+        return {"score": current_seed, "source": "seed_fallback", "reason": "no_delta_in_rdcf"}
+
+    # ── Delta → gap score ──────────────────────────────────────────────────────
+    if   delta <= -0.50:  gap = 10
+    elif delta <= -0.25:  gap = 22
+    elif delta <= -0.10:  gap = 35
+    elif delta <=  0.00:  gap = 48
+    elif delta <= +0.10:  gap = 55
+    elif delta <= +0.25:  gap = 68
+    elif delta <= +0.50:  gap = 78
+    else:                 gap = 88
 
     return {
-        "score":         int(eg_score),
-        "source":        "rdcf_live",
-        "signal":        signal,
+        "score":          gap,
+        "source":         "rdcf_delta",
+        "signal":         signal,
+        "delta":          round(delta, 3),
         "implied_growth": round(implied_g * 100, 1) if implied_g is not None else None,
-        "hyper_growth":  hyper_growth,
+        "our_growth":     round(our_g    * 100, 1) if our_g    is not None else None,
+        "hyper_growth":   hyper_growth,
     }
 
 
@@ -339,6 +425,19 @@ def main():
     vp_snap_raw = load_json(DATA_DIR / "vp_snapshot.json", {"snapshots": []})
     snapshots   = vp_snap_raw.get("snapshots", [])
 
+    # ── Load manual dimensions from watchlist.json ────────────────────────────
+    # narrative_shift / low_coverage / catalyst_prox are human-edited in watchlist.json.
+    # vp_engine syncs them on every run so edits propagate automatically.
+    wl_manual = _load_watchlist_manual_dims()
+
+    # ── Auto-upsert new watchlist tickers into snapshot pool ──────────────────
+    wl_all = _load_watchlist_tickers()
+    existing_tickers = {s.get("ticker") for s in snapshots if s.get("ticker")}
+    for tk, seed_snap in wl_all.items():
+        if tk not in existing_tickers:
+            print(f"  [watchlist] Auto-seeding new ticker: {tk}")
+            snapshots.append(seed_snap)
+
     updated    = []
     scissors_out = {}
 
@@ -361,13 +460,22 @@ def main():
         new_eg = eg["score"]
         print(f"    expectation_gap:   {old_eg} → {new_eg}  (source={eg['source']}, signal={eg.get('signal')})")
 
-        # ── 3. Recompute VP score ─────────────────────────────────────────────
+        # ── 3. Manual dimensions from watchlist.json (refreshed every run) ───
+        manual = wl_manual.get(ticker, {})
+        ns  = manual.get("narrative_shift",    snap.get("narrative_shift",    50))
+        lc  = manual.get("low_coverage",       snap.get("low_coverage",       50))
+        cp  = manual.get("catalyst_prox", snap.get("catalyst_prox", snap.get("catalyst_proximity", 50)))
+        old_ns = snap.get("narrative_shift", 50)
+        if ns != old_ns:
+            print(f"    narrative_shift:   {old_ns} → {ns}  (from watchlist.json)")
+
+        # ── 4. Recompute VP score ─────────────────────────────────────────────
         scores = {
             "expectation_gap":    new_eg,
             "fundamental_accel":  new_fa,
-            "narrative_shift":    snap.get("narrative_shift",    50),
-            "low_coverage":       snap.get("low_coverage",       50),
-            "catalyst_proximity": snap.get("catalyst_proximity", 50),
+            "narrative_shift":    ns,
+            "low_coverage":       lc,
+            "catalyst_prox":      cp,
         }
         new_vp = int(sum(VP_WEIGHTS[k] * scores[k] for k in VP_WEIGHTS))
         new_vp = max(0, min(100, new_vp))
@@ -375,23 +483,29 @@ def main():
         delta  = new_vp - old_vp
         print(f"    VP: {old_vp} → {new_vp}  (Δ{delta:+d})")
 
-        # ── 4. Profit scissors ────────────────────────────────────────────────
+        # ── 5. Profit scissors ────────────────────────────────────────────────
         ps = compute_profit_scissors(ticker)
         scissors_out[ticker] = ps
         if ps.get("verdict"):
             print(f"    Scissors verdict: {ps['verdict']}")
 
         # Build updated snapshot entry
+        wl_seed = wl_all.get(ticker, {})
         updated.append({
             **snap,
             "vp_score":           new_vp,
             "vp_prev":            old_vp,
             "expectation_gap":    new_eg,
             "fundamental_accel":  new_fa,
-            # keep manual dimensions unchanged
-            "narrative_shift":    snap.get("narrative_shift",    50),
-            "low_coverage":       snap.get("low_coverage",       50),
-            "catalyst_proximity": snap.get("catalyst_proximity", 50),
+            # manual dimensions: refreshed from watchlist.json each run
+            "narrative_shift":    ns,
+            "low_coverage":       lc,
+            "catalyst_prox":      cp,
+            # wrongIf strings: refreshed from watchlist.json each run (resolves
+            # CODEX_FINDINGS Finding 2 — stale wrongIf text persisting in snapshot
+            # because **snap spread preserved the legacy value).
+            "wrongIf_e":          wl_seed.get("wrongIf_e") or snap.get("wrongIf_e", ""),
+            "wrongIf_z":          wl_seed.get("wrongIf_z") or snap.get("wrongIf_z", ""),
             # engine metadata
             "fa_detail":          fa,
             "eg_detail":          eg,

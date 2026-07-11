@@ -1,0 +1,152 @@
+{
+  "ticker": "002594.SZ",
+  "verification_run_at": "2026-07-10T11:31:50.783908+00:00",
+  "thesis_source": "docs/research/factcheck/rerun_2026-05-16/002594SZ_recal.json",
+  "thesis_source_commit": "aaa1cc4",
+  "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00",
+  "direction": "LONG",
+  "entry_date": "2026-05-17",
+  "entry_price": 96.3,
+  "current_price_at_verification": 90,
+  "return_since_entry_pct": -6.54,
+  "current_status": "ACTIVE",
+  "outcome_category": "PENDING — position still active",
+  "catalyst_window": "2026-08-15 to 2026-08-31",
+  "days_to_catalyst": 36,
+  "rightIf_verification": [
+    {
+      "index": 0,
+      "kind": "rightIf",
+      "original_text": "2026 H1 overseas segment gross margin ≥ 18.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 1,
+      "kind": "rightIf",
+      "original_text": "2026 H1 consolidated gross margin ≥ 17.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 2,
+      "kind": "rightIf",
+      "original_text": "2026 H1 overseas revenue YoY ≥ +35% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 境外 营业收入 vs 2025 H1 同口径 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 3,
+      "kind": "rightIf",
+      "original_text": "2026 H1 net profit YoY ≥ +5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    }
+  ],
+  "wrongIf_verification": [
+    {
+      "index": 0,
+      "kind": "wrongIf",
+      "original_text": "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 1,
+      "kind": "wrongIf",
+      "original_text": "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 2,
+      "kind": "wrongIf",
+      "original_text": "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    },
+    {
+      "index": 3,
+      "kind": "wrongIf",
+      "original_text": "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "verification_status": "PENDING_HUMAN_REVIEW",
+      "verification_vocab": [
+        "TRIGGERED",
+        "NOT_TRIGGERED",
+        "INSUFFICIENT_DISCLOSURE",
+        "INCONCLUSIVE"
+      ],
+      "verified_at": null,
+      "verified_by": null,
+      "evidence_observed": null,
+      "auto_signal": null
+    }
+  ],
+  "what_changes_our_mind": "2026 H1 报告 discloses overseas segment GM < 17% (collapsing the +280bps premium toward zero) OR consolidated GM < 16% — either would invalidate the mix-shift accretion mechanism.",
+  "reviewer_notes": "",
+  "verified_final_outcome": null,
+  "_methodology_note": "MVP scaffold: this record carries the wrongIf/rightIf as PENDING_HUMAN_REVIEW. KR3 (Junyan 2026-05-15): conditions are MECHANIZED at generation so they are judgeable at the named disclosure event. When the catalyst occurs (e.g., 2026-08-28 BYD H1 print) a human (Junyan) or future NLP/data pass marks each condition as one of: TRIGGERED | NOT_TRIGGERED | INSUFFICIENT_DISCLOSURE | INCONCLUSIVE, with evidence. INSUFFICIENT_DISCLOSURE (issuer did not disclose the metric) is tracked separately from INCONCLUSIVE (disclosed but ambiguous) and from a clean TRIGGERED/NOT_TRIGGERED — the split is itself a calibration signal on how falsifiable our conditions actually were. Once all conditions resolved, set verified_final_outcome to compute hit rate into outcomes_summary."
+}

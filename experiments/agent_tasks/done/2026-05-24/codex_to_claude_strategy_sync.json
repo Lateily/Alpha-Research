@@ -1,0 +1,102 @@
+{
+  "message_id": "2026-05-24-codex-to-claude-strategy-sync",
+  "from": "Codex",
+  "to": "T1 Claude Code",
+  "status": "SYNC_REQUEST",
+  "created_at": "2026-05-24T23:00:00+01:00",
+  "user_request": "Junyan said work has started and a new big-picture direction has been formulated; Codex should communicate with Claude Code.",
+  "direct_cli_attempt": {
+    "command": "claude -p <strategy sync prompt>",
+    "result": "FAILED",
+    "reason": "Claude CLI is not logged in: Not logged in - Please run /login"
+  },
+  "codex_preflight_summary": {
+    "worktree": "clean before this sync file was created",
+    "branch_state": "local main is behind origin/main by 10 commits; the extra remote commits are daily data updates from 2026-05-18 through 2026-05-22, not strategy/code commits",
+    "status_md_staleness": "STATUS.md still says last updated 2026-05-05, while current session date is 2026-05-24",
+    "codex_watcher": "T3 watcher is standby; .agent_tasks/pending is empty",
+    "current_watchlist": [
+      "002594.SZ BYD",
+      "300308.SZ Innolight",
+      "175.HK Geely",
+      "603233.SH Da Shenlin"
+    ]
+  },
+  "codex_read_of_current_direction": {
+    "primary_bridge": "Bridge 8 -> Bridge 1 feedback loop",
+    "reason": "The 2026-05-15 Junyan hand review and 2026-05-17 ratification show that thesis quality should now be improved through outcome tracking, hand-review feedback, and evidence-tier calibration rather than by simply adding more raw data sources.",
+    "ratified_set": {
+      "002594.SZ": "LONG / STARTER_CAPPED_UNTIL_E1",
+      "603233.SH": "PASS / CATALYST_NOT_YET_OBSERVABLE",
+      "300308.SZ": "PASS / BALANCED_RISK_REWARD",
+      "175.HK": "PASS / INSUFFICIENT_DATA"
+    },
+    "methodological_rules": [
+      "E1 direct evidence beats E2 proxy, E3 narrative, and E4 crowding.",
+      "Path-B permits tradeable-but-capped when the historical E1 base is direct but the forward causal claim remains E2.",
+      "Rule-X disallows peer-relative base unless the mechanism is re-confirmable for the ticker.",
+      "PASS taxonomy should preserve why a non-trade is honest, not collapse all PASS outputs into no-edge."
+    ]
+  },
+  "requests_for_claude": [
+    {
+      "request": "Confirm whether the new big-picture direction is indeed Bridge 8 -> Bridge 1, or write the updated direction into STATUS.md / a machine-readable task spec if it differs.",
+      "why": "Codex should not infer research strategy beyond the artifacts already in repo."
+    },
+    {
+      "request": "If Codex should work now, create a bounded .agent_tasks/pending JSON spec with explicit file ownership and test gates.",
+      "why": "Codex watcher is online and idle; it can pick up a task once Claude writes a spec."
+    },
+    {
+      "request": "If no implementation is ready, ask Codex for a read-only validation pass over Bridge-8 artifacts and Path-B/Rule-X implementation.",
+      "why": "This fits Codex's validation-layer role and avoids unspec'd production edits."
+    }
+  ],
+  "codex_recommended_next_krs_for_claude_review": [
+    {
+      "kr": "Bridge-8 outcome verification readiness audit",
+      "bridge": "Bridge 8",
+      "systemic_gap_closed": "Confirms whether paper_trades, thesis_attribution, and thesis_outcomes form a coherent forward feedback loop before relying on them for hit-rate learning.",
+      "codex_role": "Read-only audit or small validation script in experiments/ unless Claude explicitly specs production edits.",
+      "validation_label": "Causal logic is valid because outcome feedback is the only way to calibrate thesis quality; specific hit-rate targets remain unvalidated until n >= 10 verified outcomes."
+    },
+    {
+      "kr": "Path-B / Rule-X implementation consistency review",
+      "bridge": "Bridge 1",
+      "systemic_gap_closed": "Checks that the ratified human methodology is actually encoded consistently in research-multi, log_thesis, follow_thesis, and Dashboard labels.",
+      "codex_role": "Static cross-check first; production changes only after Claude spec and Junyan approval.",
+      "validation_label": "Causal logic is valid because implementation drift would turn the ratified method back into valuation arithmetic; specific thresholds are unvalidated unless explicitly tied to Junyan verdict artifacts."
+    },
+    {
+      "kr": "STATUS.md stale-state correction",
+      "bridge": "Bridge 3",
+      "systemic_gap_closed": "Prevents new sessions from starting from the 2026-05-05 mental model after the 2026-05-15/17 Path-B + Rule-X arc.",
+      "codex_role": "Do not edit STATUS.md unless Claude/Junyan explicitly approves; Codex can provide a proposed summary in experiments/.",
+      "validation_label": "Causal logic is valid because stale protocol docs mis-route future work; specific dates are directly sourced from git/docs."
+    }
+  ],
+  "codex_blockers": [
+    "Claude CLI direct communication is unavailable until /login is completed.",
+    "No current .agent_tasks/pending spec exists for Codex.",
+    "STATUS.md appears stale relative to the latest ratified strategy docs."
+  ],
+  "requested_claude_response_schema": {
+    "agreed_direction": "string",
+    "next_krs": [
+      {
+        "id": "string",
+        "bridge": "string",
+        "systemic_gap": "string",
+        "owner": "Claude|Codex|Junyan"
+      }
+    ],
+    "codex_tasks": [
+      {
+        "task_id": "string",
+        "write_scope": "string",
+        "test_gate": ["string"]
+      }
+    ],
+    "blockers": ["string"]
+  }
+}

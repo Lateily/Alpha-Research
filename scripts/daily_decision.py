@@ -51,6 +51,43 @@ SCORE_CAUTION_MAX   = -20   # Below this → caution
 SCORE_EXIT_MAX      = -60   # Below this → exit signal
 
 PROFIT_TAKE_PCT     = 25.0  # Suggest trim when P&L > this
+
+# ── Signal direction map (for trade_attribution_capsules.json) ────────────────
+# Source of truth: bullish flag in scripts/swing_signals.py and scripts/signal_confluence.py.
+# If a new signal type is added to either producer, add it here.
+SIGNAL_DIRECTION = {
+    # Swing signals (swing_signals.py)
+    "BB_LOWER_BREAK":         "bullish",
+    "BB_SQUEEZE":             "bullish",
+    "BB_UPPER_BREAK":         "bullish",
+    "BULLISH_ALIGNMENT":      "bullish",
+    "CONTROLLED_ADVANCE":     "bullish",
+    "CVD_BEARISH_DIVERGENCE": "bearish",
+    "CVD_FLOOR_FORMED":       "bullish",
+    "DEATH_CROSS":            "bearish",
+    "GOLDEN_CROSS":           "bullish",
+    "KDJ_DEATH_CROSS":        "bearish",
+    "KDJ_GOLDEN_CROSS":       "bullish",
+    "KDJ_OVERBOUGHT":         "bearish",
+    "KDJ_OVERSOLD":           "bullish",
+    "MA20_BOUNCE":            "bullish",
+    "MA60_BOUNCE":            "bullish",
+    "MACD_DEATH_CROSS":       "bearish",
+    "MACD_GOLDEN_CROSS":      "bullish",
+    "RSI_OVERBOUGHT":         "bearish",
+    "RSI_OVERSOLD":           "bullish",
+    "RSI_RECOVERING":         "bullish",
+    "VOLUME_BREAKOUT":        "bullish",
+    "VOLUME_SELLOFF":         "bearish",
+    # VP-quality synthetic signals (signal_confluence.py)
+    "VP_STRONG_CONVICTION":   "bullish",
+    "VP_GOOD_CONVICTION":     "bullish",
+    "VP_WEAK_CONVICTION":     "bearish",
+    "VP_POOR_CONVICTION":     "bearish",
+    # AI CapEx leading-indicator synthetic signals (signal_confluence.py)
+    "AI_CAPEX_STRONG_CYCLE":  "bullish",
+    "AI_CAPEX_WEAKENING":     "bearish",
+}
 STOP_REVIEW_PCT     = -10.0 # Suggest review when P&L < this (not hard stop — human decides)
 CONCENTRATION_MAX   = 40.0  # Single position weight % warning threshold
 SECTOR_MAX_PCT      = 60.0  # Single sector weight % warning threshold
@@ -64,6 +101,29 @@ def load_json(path, default=None):
             return json.load(f)
     except Exception:
         return default if default is not None else {}
+
+
+def is_positive_flow_only(conf):
+    """CHURN_MODE flow-policy helper: True when EVERY positive contribution is a
+    fact_positive flow signal — the bullish case rests on flow facts alone, which
+    may observe but must not drive BUY_WATCH in churn (scored nowcast hit-rate on
+    positive-flow continuation = coin-flip, n=14 hit 0.50). Uses raw pre-policy
+    contributions so quarantined signals still count as flow-only evidence.
+    Old confluence.json without flow_role fields → False (gate inert, safe)."""
+    if not conf:
+        return False
+    positives = [c for c in (conf.get("contributing") or [])
+                 if c.get("raw_contribution_before_policy",
+                          c.get("final_contribution", 0)) > 0]
+    if not positives:
+        return False
+    return all(c.get("flow_role") == "fact_positive" for c in positives)
+
+
+def has_negative_flow_risk(conf):
+    """True when any risk_negative flow signal contributed (never quarantined)."""
+    return any(c.get("flow_role") == "risk_negative"
+               for c in ((conf or {}).get("contributing") or []))
 
 
 def get_confluence(ticker, confluence_data):
@@ -106,15 +166,44 @@ _NUMERIC_PATTERNS = [
     # (regex, group_idx_for_threshold, indicator_key, direction)
     # direction: 'above' = alert if indicator > threshold
     #            'below' = alert if indicator < threshold
-    (r"rsi\s+(?:above|over|>)\s*(\d+(?:\.\d+)?)",        1, "rsi_14",     "above"),
-    (r"rsi\s+(?:below|under|<)\s*(\d+(?:\.\d+)?)",        1, "rsi_14",     "below"),
+    (r"rsi\s+(?:above|over|>)\s*(\d+(?:\.\d+)?)",         1, "rsi_14",          "above"),
+    (r"rsi\s+(?:below|under|<)\s*(\d+(?:\.\d+)?)",         1, "rsi_14",          "below"),
     (r"dau\s+(?:drops?\s+below|falls?\s+below|<)\s*(\d+(?:\.\d+)?[MmBb]?)",
-                                                           1, "dau_proxy",  "below"),
-    (r"(?:capex|capital expenditure)\s+cut\s*>?\s*(\d+)%", 1, "capex_cut",  "above"),
-    (r"tariff[s]?\s+(?:above|over|>|exceed[s]?)\s*(\d+)%", 1, "tariff_pct", "above"),
-    (r"pe\s+(?:above|over|>)\s*(\d+)",                    1, "pe_forward",  "above"),
-    (r"(?:price\s+)?(?:drops?\s+below|falls?\s+below)\s*(\d+(?:\.\d+)?)",
-                                                           1, "price",      "below"),
+                                                            1, "dau_proxy",       "below"),
+    (r"mau\s+miss(?:es)?\s+(\d+(?:\.\d+)?[MmBb]?)",       1, "mau_proxy",       "below"),
+    (r"(?:capex|capital expenditure)\s+cut\s*>?\s*(\d+)%", 1, "capex_cut",       "above"),
+    (r"tariff[s]?\s+(?:above|over|>|exceed[s]?)\s*(\d+)%", 1, "tariff_pct",      "above"),
+    (r"pe\s+(?:above|over|>)\s*(\d+)",                     1, "pe_forward",       "above"),
+    # NOTE: requires explicit "price" keyword — without it, the regex matched
+    # any "drops below X" text, including "gross_margin drops below 15%",
+    # producing a misleading price=N CLEAR alert. Tightened in KR6.
+    (r"\bprice\b\s+(?:drops?\s+below|falls?\s+below)\s*(\d+(?:\.\d+)?)",
+                                                            1, "price",           "below"),
+    # Revenue / earnings decline proxies (observable from yfinance fundamentals)
+    (r"revenue.{0,30}(?:miss|declin|contract|shrink|negativ|weaken)",
+                                                            0, "revenue_growth",  "below_zero"),
+    (r"(?:sales|revenue).{0,30}cut\s*>?\s*(\d+)%",        1, "revenue_growth",  "below"),
+    (r"(?:earnings?|ni|net income|profit).{0,30}(?:miss|declin|fall|negativ)",
+                                                            0, "earnings_growth", "below_zero"),
+    (r"(?:macro\s+)?consumption\s+weakens",                0, "revenue_growth",  "below_zero"),
+    # Tariff / trade impact proxy → revenue growth as downstream signal
+    (r"tariff|local content|import duty|trade restriction", 0, "revenue_growth",  "below_zero"),
+    # DAU/MAU miss proxy → earnings growth as downstream signal (gaming cos)
+    (r"dau|mau|daily active|monthly active",               0, "earnings_growth", "below_zero"),
+    # Hyperscaler basket collective drawdown (v15.2) — 300308.SZ wrongIf:
+    # "NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter"
+    # Indicator value comes from leading_indicators.json hyperscaler_basket._avg_drawdown_pct,
+    # stored as positive magnitude (28.5 means 28.5% drop).
+    (r"(?:nvda|msft|googl|hyperscaler).{0,100}?collectively.{0,40}?drop.{0,40}?(\d+)%",
+                                                            1, "hyperscaler_basket_drawdown_pct", "above"),
+    # Negative-threshold growth patterns (v15.2 follow-up — 9999.HK monitor) —
+    # matches strings like "earnings_growth < -30%" / "revenue_growth < -10%".
+    # Captures threshold magnitude as positive int; "below_neg" direction
+    # triggers when actual < -threshold (i.e. actual is more negative than the
+    # negated threshold). Live values come from yfinance fundamentals already
+    # in the live dict.
+    (r"earnings_growth\s*<\s*-\s*(\d+(?:\.\d+)?)%",         1, "earnings_growth", "below_neg"),
+    (r"revenue_growth\s*<\s*-\s*(\d+(?:\.\d+)?)%",          1, "revenue_growth",  "below_neg"),
 ]
 
 _BINARY_KEYWORDS = [
@@ -144,11 +233,14 @@ def _parse_threshold(val_str):
         return None
 
 
-def check_wrongif(ticker, wrongif_text, market_data):
+def check_wrongif(ticker, wrongif_text, market_data, leading_indicators=None):
     """
     Lightweight check of wrongIf string against live data.
     Returns list of alert dicts:
       { status: 'TRIGGERED'|'CLEAR'|'MANUAL', indicator, threshold, actual, text }
+
+    leading_indicators (optional): leading_indicators.json dict. When provided,
+    enables global indicators like the hyperscaler basket drawdown (v15.2).
     """
     if not wrongif_text:
         return []
@@ -157,13 +249,34 @@ def check_wrongif(ticker, wrongif_text, market_data):
     text_lower = wrongif_text.lower()
 
     # Extract observable numeric indicators from market_data
-    yd = market_data.get("yahoo", {}).get(ticker, {})
+    yd   = market_data.get("yahoo", {}).get(ticker, {})
+    fund = yd.get("fundamentals", {})
+    tech = yd.get("technical", {})
+    px   = yd.get("price", {})
+
+    # revenue_growth / earnings_growth: yfinance returns as decimal (0.14 = 14%)
+    rev_g = fund.get("revenue_growth")
+    ear_g = fund.get("earnings_growth")
+
+    # Hyperscaler basket drawdown — global, ticker-agnostic (v15.2).
+    # Stored as positive magnitude in leading_indicators.json (28.5 = 28.5% drop).
+    basket_dd = None
+    if leading_indicators:
+        basket = leading_indicators.get("hyperscaler_basket", {}) or {}
+        avg_dd = basket.get("_avg_drawdown_pct")
+        if avg_dd is not None:
+            basket_dd = float(avg_dd)
+
     live = {
-        "rsi_14":      yd.get("technical", {}).get("rsi_14"),
-        "price":       yd.get("price", {}).get("last"),
-        "pe_forward":  yd.get("fundamentals", {}).get("pe_forward"),
-        # proxy checks — not real-time, flag as manual
+        "rsi_14":          tech.get("rsi_14"),
+        "price":           px.get("last"),
+        "pe_forward":      fund.get("pe_forward"),
+        "revenue_growth":  rev_g * 100 if rev_g is not None else None,   # convert to %
+        "earnings_growth": ear_g * 100 if ear_g is not None else None,
+        "hyperscaler_basket_drawdown_pct": basket_dd,
+        # proxy indicators — require external data not in yfinance
         "dau_proxy":   None,
+        "mau_proxy":   None,
         "capex_cut":   None,
         "tariff_pct":  None,
     }
@@ -173,15 +286,44 @@ def check_wrongif(ticker, wrongif_text, market_data):
         m = re.search(pattern, text_lower)
         if not m:
             continue
-        threshold = _parse_threshold(m.group(grp))
-        actual    = live.get(indicator)
-        if threshold is None:
-            continue
 
+        # below_zero patterns use group 0 (whole match) — no numeric threshold needed
+        if direction == "below_zero":
+            threshold = 0
+        else:
+            threshold = _parse_threshold(m.group(grp))
+            if threshold is None:
+                continue
+
+        actual = live.get(indicator)
         matched_any_numeric = True
 
+        # below_zero: triggered if actual < 0 (no threshold needed)
+        if direction == "below_zero":
+            if actual is None:
+                alerts.append({
+                    "status": "MANUAL", "indicator": indicator,
+                    "threshold": 0, "actual": None, "text": wrongif_text,
+                    "note_e": f"Cannot auto-verify '{indicator}' — manual check required.",
+                    "note_z": f"无法自动核验「{indicator}」——需人工检查。",
+                })
+            else:
+                triggered = actual < 0
+                sign = "▼" if triggered else "▲"
+                alerts.append({
+                    "status":    "TRIGGERED" if triggered else "CLEAR",
+                    "indicator": indicator,
+                    "threshold": 0,
+                    "actual":    round(actual, 1),
+                    "text":      wrongif_text,
+                    "note_e":    f"{'⚠️ PROXY TRIGGERED' if triggered else '✅ Clear'}: "
+                                 f"{indicator} = {actual:+.1f}% {sign}",
+                    "note_z":    f"{'⚠️ 代理指标触发' if triggered else '✅ 正常'}: "
+                                 f"{indicator} = {actual:+.1f}% {sign}",
+                })
+            continue
+
         if actual is None:
-            # Can't check automatically
             alerts.append({
                 "status":    "MANUAL",
                 "indicator": indicator,
@@ -192,25 +334,31 @@ def check_wrongif(ticker, wrongif_text, market_data):
                 "note_z":    f"无法自动核验「{indicator}」——需人工检查。",
             })
         else:
-            triggered = (direction == "above" and actual > threshold) or \
-                        (direction == "below" and actual < threshold)
+            # `below_neg` negates threshold: pattern captures positive magnitude,
+            # comparator uses negative target (e.g. captured 30 → target -30,
+            # triggered iff actual < -30).
+            target = -threshold if direction == "below_neg" else threshold
+            triggered = (direction == "above"     and actual > target) or \
+                        (direction == "below"     and actual < target) or \
+                        (direction == "below_neg" and actual < target)
+            cmp_sym = ">" if direction == "above" else "<"
             alerts.append({
                 "status":    "TRIGGERED" if triggered else "CLEAR",
                 "indicator": indicator,
-                "threshold": threshold,
-                "actual":    actual,
+                "threshold": target,
+                "actual":    round(actual, 1),
                 "text":      wrongif_text,
                 "note_e":    (
                     f"⚠️ WRONGIF TRIGGERED: {indicator} = {actual:.1f} "
-                    f"{'>' if direction=='above' else '<'} {threshold:.1f}"
+                    f"{cmp_sym} {target:.1f}"
                 ) if triggered else (
-                    f"✅ Clear: {indicator} = {actual:.1f} (threshold {threshold:.1f})"
+                    f"✅ Clear: {indicator} = {actual:.1f} (threshold {target:.1f})"
                 ),
                 "note_z":    (
                     f"⚠️ wrongIf触发：{indicator} = {actual:.1f} "
-                    f"{'>' if direction=='above' else '<'} {threshold:.1f}"
+                    f"{cmp_sym} {target:.1f}"
                 ) if triggered else (
-                    f"✅ 正常：{indicator} = {actual:.1f}（阈值{threshold:.1f}）"
+                    f"✅ 正常：{indicator} = {actual:.1f}（阈值{target:.1f}）"
                 ),
             })
 
@@ -288,29 +436,29 @@ def decide_held_position(pos, conf, vp_score):
         reason_z   = (f"强烈空头信号（评分{score}）。{rat_z}。"
                       f"当前盈亏：{pnl_pct:+.1f}%。")
         entry_target = None
-        exit_trigger = f"Confluence score {score} ≤ {SCORE_EXIT_MAX} → EXIT recommended"
+        exit_trigger = f"Confluence score {score} ≤ {SCORE_EXIT_MAX} → risk-review condition (bearish exit signal)"
 
     elif score <= SCORE_CAUTION_MAX and pnl_pct >= 15.0:
         action     = "TRIM"
         priority   = "MEDIUM"
         reason_e   = (f"Bearish drift (score {score}) with unrealised gain {pnl_pct:+.1f}%. "
-                      f"Consider locking partial profit. {rat_e}.")
+                      f"Exposure-review condition. {rat_e}.")
         reason_z   = (f"信号走弱（评分{score}），浮盈{pnl_pct:+.1f}%，"
-                      f"建议部分减仓锁定利润。{rat_z}。")
+                      f"敞口复核条件。{rat_z}。")
         entry_target = None
-        exit_trigger = f"Score {score} ≤ {SCORE_CAUTION_MAX} + profit > 15% → TRIM suggested"
+        exit_trigger = f"Score {score} ≤ {SCORE_CAUTION_MAX} + profit > 15% → exposure-review condition"
 
     elif pnl_pct >= PROFIT_TAKE_PCT:
         action     = "REVIEW_TRIM"
         priority   = "MEDIUM"
         reason_e   = (f"Large unrealised gain {pnl_pct:+.1f}% after {days}d. "
                       f"Signal still {action_q} (score {score}). "
-                      f"Consider partial trim to protect profit.")
+                      f"Exposure-review condition (sizable unrealised gain).")
         reason_z   = (f"浮盈{pnl_pct:+.1f}%（持有{days}天），"
                       f"信号{score}仍属{conf['action_zh'] if conf else '中性'}，"
-                      f"可考虑部分减仓保护利润。")
+                      f"敞口复核条件（浮盈较大）。")
         entry_target = None
-        exit_trigger = f"P&L > {PROFIT_TAKE_PCT}% → review trim opportunity"
+        exit_trigger = f"P&L > {PROFIT_TAKE_PCT}% → exposure-review condition"
 
     elif pnl_pct <= STOP_REVIEW_PCT:
         action     = "REVIEW_STOP"
@@ -319,7 +467,7 @@ def decide_held_position(pos, conf, vp_score):
                       f"Signal: {action_q} (score {score}). "
                       f"Review thesis — is the wrongIf condition still intact?")
         reason_z   = (f"亏损{pnl_pct:+.1f}%，信号评分{score}。"
-                      f"建议复核投资逻辑，检查wrongIf条件是否触发。")
+                      f"复核投资逻辑，检查wrongIf条件是否触发。")
         entry_target = None
         exit_trigger = f"P&L {pnl_pct:.1f}% ≤ {STOP_REVIEW_PCT}% → thesis review required"
 
@@ -327,22 +475,28 @@ def decide_held_position(pos, conf, vp_score):
         action     = "ADD"
         priority   = "LOW"
         reason_e   = (f"Strong bullish confluence (score {score}) confirms thesis. "
-                      f"P&L {pnl_pct:+.1f}% — consider adding on next technical pullback.")
+                      f"P&L {pnl_pct:+.1f}%. Evidence-watch condition.")
         reason_z   = (f"多头信号强烈（评分{score}），thesis得到验证，"
-                      f"浮盈{pnl_pct:+.1f}%，可考虑回踩时加仓。")
-        entry_target = "Next MA20 or support test"
-        exit_trigger = f"Score drops below {SCORE_CAUTION_MAX} OR P&L breaches stop"
+                      f"浮盈{pnl_pct:+.1f}%，证据观察条件。")
+        entry_target = None
+        exit_trigger = f"Score drops below {SCORE_CAUTION_MAX} OR P&L breaches risk level"
 
     else:
         action     = "HOLD"
         priority   = "LOW"
         reason_e   = (f"Signal neutral (score {score}). "
-                      f"P&L {pnl_pct:+.1f}% after {days}d. Hold — no new entry/exit trigger. "
+                      f"P&L {pnl_pct:+.1f}% after {days}d. Paper-hold — no new review trigger. "
                       f"{rat_e}.")
         reason_z   = (f"信号中性（评分{score}），浮盈{pnl_pct:+.1f}%，持有{days}天，"
                       f"无新触发条件。{rat_z}。")
         entry_target = None
         exit_trigger = f"Score ≤ {SCORE_EXIT_MAX} OR P&L ≤ {STOP_REVIEW_PCT}%"
+
+    # CHURN flow-policy: negative-flow risk signals are never quarantined — on a
+    # held name they set an execution posture (risk gate, never an entry gate).
+    execution_posture = None
+    if has_negative_flow_risk(conf):
+        execution_posture = "DE_RISK_REVIEW" if score <= SCORE_CAUTION_MAX else "WARNING"
 
     return {
         "ticker":       ticker,
@@ -360,14 +514,17 @@ def decide_held_position(pos, conf, vp_score):
         "reason_z":     reason_z,
         "entry_target": entry_target,
         "exit_trigger": exit_trigger,
+        "execution_posture": execution_posture,
     }
 
 
-def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
+def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None,
+                            model_state="NORMAL_OBSERVATION_MODE"):
     """
     Generate a decision for a ticker in the universe but not currently held.
     Only recommend BUY_WATCH if both fundamental (VP) and technical (confluence) align.
     sizing: dict from position_sizing.json or None
+    model_state: CHURN_MODE bans flow-only positive cases from BUY_WATCH.
     """
     score    = conf["score"]    if conf else 0
     rat_e    = conf["rationale_e"] if conf else "No signal data"
@@ -376,48 +533,54 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
     vp_ok    = vp_score is not None and vp_score >= VP_MIN_FOR_ENTRY
     sig_ok   = score >= SCORE_ENTRY_MIN
     regime_ok = regime != "RESTRICTIVE"
+    execution_posture = None
 
-    if sig_ok and vp_ok and regime_ok:
+    if sig_ok and vp_ok and regime_ok and model_state == "CHURN_MODE" \
+            and is_positive_flow_only(conf):
+        # CHURN_MODE flow-only ban: positive flow facts observe, never drive entry.
+        action   = "WATCH"
+        priority = "LOW"
+        execution_posture = "OBSERVE_ONLY"
+        reason_e = (f"CHURN_MODE flow-only ban: bullish case rests on positive-flow "
+                    f"facts alone (score {score}, VP {int(vp_score)}); positive flow "
+                    f"is OBSERVE_ONLY in churn (scored nowcast hit-rate = coin-flip). "
+                    f"No BUY_WATCH.")
+        reason_z = (f"快轮动模式：多头证据仅为正向资金事实（评分{score}，VP{int(vp_score)}），"
+                    f"churn 下正向资金只观察、不推动候选，不给BUY_WATCH。")
+    elif sig_ok and vp_ok and regime_ok:
         action   = "BUY_WATCH"
         priority = "MEDIUM"
-        size_note_e = (
-            f" Suggested size: {sizing['recommended_pct']:.1f}% "
-            f"(¥{sizing['recommended_value']:,.0f}) [{sizing['conviction_tier']}]."
-        ) if sizing else ""
-        size_note_z = (
-            f" 建议仓位：{sizing['recommended_pct']:.1f}%"
-            f"（¥{sizing['recommended_value']:,.0f}）[{sizing['conviction_tier_zh']}]。"
-        ) if sizing else ""
+        # No-advice (Junyan PR #18): sizing notes intentionally NOT embedded in reason text.
         reason_e = (f"PM + Quant aligned: VP {int(vp_score)} ≥ {VP_MIN_FOR_ENTRY} + "
                     f"signal score {score} ≥ {SCORE_ENTRY_MIN}. "
-                    f"{rat_e}. Regime: {regime}.{size_note_e} Await human confirmation.")
+                    f"{rat_e}. Regime: {regime}. Research-watch condition — await human review.")
         reason_z = (f"基本面+技术面共振：VP{int(vp_score)}≥{VP_MIN_FOR_ENTRY}，"
-                    f"信号评分{score}≥{SCORE_ENTRY_MIN}。{rat_z}。{size_note_z}"
-                    f"等待人工确认后建仓。")
+                    f"信号评分{score}≥{SCORE_ENTRY_MIN}。{rat_z}。"
+                    f"研究观察条件 — 等待人工复核。")
     elif sig_ok and not vp_ok:
         action   = "WATCH"
         priority = "LOW"
-        reason_e = (f"Technical entry signal (score {score}) but VP {vp_score} below threshold. "
-                    f"Run DeepResearch to update VP before entering.")
+        reason_e = (f"Technical signal (score {score}) but VP {vp_score} below threshold. "
+                    f"Refresh DeepResearch (VP) before review.")
         reason_z = (f"技术信号达标（{score}分）但VP{vp_score}低于门槛，"
-                    f"建议先更新DeepResearch再考虑建仓。")
+                    f"复核前先更新DeepResearch。")
     elif vp_ok and not sig_ok:
         action   = "WATCH"
         priority = "LOW"
-        reason_e = (f"VP {int(vp_score)} is strong but no technical entry yet (score {score}). "
-                    f"Wait for signal confirmation: MA bounce, oversold, or volume breakout.")
+        reason_e = (f"VP {int(vp_score)} is strong but no technical confirmation yet (score {score}). "
+                    f"Evidence-watch condition: awaiting signal confirmation (MA bounce, oversold, or volume breakout).")
         reason_z = (f"VP{int(vp_score)}较强但技术面未就位（{score}分），"
-                    f"等待均线支撑/超卖/放量突破等技术确认。")
+                    f"证据观察条件：等待技术确认（均线支撑/超卖/放量突破）。")
     elif not regime_ok:
         action   = "PASS"
         priority = "LOW"
-        reason_e = f"Regime RESTRICTIVE — not entering despite VP {vp_score} / score {score}."
-        reason_z = f"政策逆风（RESTRICTIVE），暂不考虑建仓（VP{vp_score}，信号{score}）。"
+        reason_e = f"Regime RESTRICTIVE — research-watch on hold despite VP {vp_score} / score {score}."
+        reason_z = f"政策逆风（RESTRICTIVE），研究观察暂缓（VP{vp_score}，信号{score}）。"
     else:
         action   = "WATCH"
         priority = "LOW"
-        reason_e = f"No entry trigger. Score {score}, VP {vp_score}. {rat_e}."
-        reason_z = f"无进场信号。评分{score}，VP{vp_score}。{rat_z}。"
+        reason_e = f"No evidence-review condition. Score {score}, VP {vp_score}. {rat_e}."
+        reason_z = f"暂无证据复核条件。评分{score}，VP{vp_score}。{rat_z}。"
 
     result = {
         "ticker":       ticker,
@@ -433,8 +596,9 @@ def decide_watchlist_ticker(ticker, name, conf, vp_score, regime, sizing=None):
         "confluence":   score,
         "reason_e":     reason_e,
         "reason_z":     reason_z,
-        "entry_target": "Await BUY_WATCH confirmation" if action == "BUY_WATCH" else None,
+        "entry_target": "Awaiting human research review" if action == "BUY_WATCH" else None,
         "exit_trigger": None,
+        "execution_posture": execution_posture,
     }
 
     # Attach sizing recommendation for BUY_WATCH candidates
@@ -497,8 +661,8 @@ def compute_portfolio_risk(positions, regime_data):
         pnl = p.get("pnl_pct", 0)
         if pnl >= PROFIT_TAKE_PCT:
             flags.append(
-                f"💰 PROFIT REVIEW: {p['ticker']} +{pnl:.1f}% — "
-                f"consider partial trim to lock gains"
+                f"PROFIT REVIEW: {p['ticker']} +{pnl:.1f}% — "
+                f"exposure-review condition (sizable unrealised gain)"
             )
         if pnl <= STOP_REVIEW_PCT:
             flags.append(
@@ -512,6 +676,76 @@ def compute_portfolio_risk(positions, regime_data):
     return flags
 
 
+# ── Trade attribution capsules (v15.1) ────────────────────────────────────────
+
+def write_attribution_capsules(confluence_data, vp_data):
+    """
+    Snapshot per-ticker signal attribution at decision time.
+
+    Provides a stable copy-paste source for new trade entries: confluence.json
+    regenerates daily and its `contributing[]` values can shift between today's
+    decision and the moment Junyan adds a trade. Pinning the snapshot at
+    decision time keeps the attribution honest.
+
+    Output: public/data/trade_attribution_capsules.json
+    Schema matches the `signal_attribution` shape in trades.json (name/weight/
+    direction), so the capsule can be copy-pasted into a new trade entry.
+    """
+    capsules = {}
+    now = datetime.now(timezone.utc).isoformat()
+
+    for entry in confluence_data.get("scores", []) or []:
+        ticker = entry.get("ticker")
+        if not ticker:
+            continue
+
+        contributing_signals = []
+        for sig in entry.get("contributing", []) or []:
+            sig_type = sig.get("type")
+            if not sig_type:
+                continue
+            contributing_signals.append({
+                "name":        sig_type,
+                "weight":      round(sig.get("final_contribution", sig.get("base_weight", 0)), 1),
+                "base_weight": sig.get("base_weight", 0),
+                "direction":   SIGNAL_DIRECTION.get(sig_type, "neutral"),
+            })
+
+        # Pull VP + wrongIf from snapshot for this ticker
+        vp_at_capture = None
+        wrongif_at_capture_e = ""
+        wrongif_at_capture_z = ""
+        for snap in vp_data.get("snapshots", []) or []:
+            if snap.get("ticker") == ticker:
+                vp_at_capture = snap.get("vp_score")
+                wrongif_at_capture_e = snap.get("wrongIf_e", "") or ""
+                wrongif_at_capture_z = snap.get("wrongIf_z", "") or ""
+                break
+
+        capsules[ticker] = {
+            "confluence_score":     entry.get("score"),
+            "action":               entry.get("action"),
+            "zone":                 entry.get("zone"),
+            "contributing_signals": contributing_signals,
+            "vp_at_capture":        vp_at_capture,
+            "wrongIf_at_capture_e": wrongif_at_capture_e,
+            "wrongIf_at_capture_z": wrongif_at_capture_z,
+            "captured_at":          now,
+        }
+
+    output = {
+        "generated_at": now,
+        "date":         date.today().isoformat(),
+        "note":         "Per-ticker attribution snapshot for new-trade entry. Schema matches trades.json signal_attribution shape. Pin to today's decision; do not regenerate after entering a trade.",
+        "capsules":     capsules,
+    }
+
+    out_path = DATA_DIR / "trade_attribution_capsules.json"
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(output, f, ensure_ascii=False, indent=2)
+    return out_path, len(capsules)
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -523,9 +757,16 @@ def main():
     regime_data     = load_json(DATA_DIR / "regime_config.json",    {"sectors": []})
     sizing_data     = load_json(DATA_DIR / "position_sizing.json",  {"sizing": []})
     market_data     = load_json(DATA_DIR / "market_data.json",      {})
+    leading_data    = load_json(DATA_DIR / "leading_indicators.json", {})
 
     positions = positions_data.get("positions", [])
     held_tickers = {p["ticker"] for p in positions}
+
+    # CHURN_MODE flow-policy: read the model state stamped by signal_confluence.py
+    # (single source of truth); old confluence.json without the field → NORMAL.
+    model_state = confluence_data.get("model_state", "NORMAL_OBSERVATION_MODE")
+    print(f"[daily_decision] Model state: {model_state}"
+          + (" — flow-only positive cases cannot become BUY_WATCH" if model_state == "CHURN_MODE" else ""))
 
     decisions   = []
     buy_watches = []
@@ -558,7 +799,8 @@ def main():
         sizing    = get_sizing(ticker, sizing_data)
         # Try to get a name from positions or signals data
         name    = ticker  # default; could enrich later
-        dec     = decide_watchlist_ticker(ticker, name, entry, vp, regime, sizing)
+        dec     = decide_watchlist_ticker(ticker, name, entry, vp, regime, sizing,
+                                          model_state=model_state)
         decisions.append(dec)
         if dec["action"] == "BUY_WATCH":
             buy_watches.append(dec)
@@ -575,10 +817,45 @@ def main():
         wi_e, wi_z = get_wrongif(ticker, vp_data)
         if not wi_e:
             continue
-        alerts = check_wrongif(ticker, wi_e, market_data)
+        alerts = check_wrongif(ticker, wi_e, market_data, leading_indicators=leading_data)
         triggered = [a for a in alerts if a["status"] == "TRIGGERED"]
         manual    = [a for a in alerts if a["status"] == "MANUAL"]
+        clear     = [a for a in alerts if a["status"] == "CLEAR"]
 
+        # KR8: dedupe TRIGGERED alerts per indicator — keep the most-specific
+        # match (smallest |actual − threshold|). Multiple patterns can fire on
+        # the same indicator (e.g. 002594.SZ revenue_growth matches both
+        # below_zero (threshold=0, distance=13.5) AND below_neg
+        # (threshold=-10, distance=3.5) — both real, but the stricter threshold
+        # is the watchlist-author's intended gate; the looser match is noise).
+        # Applies WITHIN the TRIGGERED status only — MANUAL/CLEAR already cap
+        # at one per ticker.
+        if len(triggered) > 1:
+            best_per_indicator = {}
+            for a in triggered:
+                key = a.get("indicator")
+                actual = a.get("actual")
+                threshold = a.get("threshold")
+                existing = best_per_indicator.get(key)
+                if existing is None:
+                    best_per_indicator[key] = a
+                    continue
+                if actual is None or threshold is None:
+                    continue  # can't compute distance — keep existing
+                e_actual = existing.get("actual")
+                e_threshold = existing.get("threshold")
+                if e_actual is None or e_threshold is None:
+                    best_per_indicator[key] = a
+                elif abs(actual - threshold) < abs(e_actual - e_threshold):
+                    best_per_indicator[key] = a
+            triggered = list(best_per_indicator.values())
+
+        # Mutually-exclusive selection: TRIGGERED rows take precedence (emit all),
+        # then MANUAL (emit one), then CLEAR (emit one — confirms monitor active).
+        # Without the CLEAR branch, auto-monitored-but-currently-clear tickers
+        # silently disappeared from the dashboard, which read as "no monitor
+        # configured" instead of "monitor active and currently OK". KR7 surfaces
+        # them with severity NONE.
         if triggered:
             for a in triggered:
                 wrongif_alerts.append({
@@ -609,6 +886,21 @@ def main():
                     "threshold":None,
                 })
                 print(f"  👁️ {ticker}: manual check — {wi_e[:60]}…")
+        elif clear:
+            for a in clear[:1]:   # one CLEAR row per ticker — confirms monitor active
+                wrongif_alerts.append({
+                    "ticker":   ticker,
+                    "severity": "NONE",
+                    "status":   "CLEAR",
+                    "wrongIf_e": wi_e,
+                    "wrongIf_z": wi_z,
+                    "note_e":   a["note_e"],
+                    "note_z":   a["note_z"],
+                    "indicator":a["indicator"],
+                    "actual":   a.get("actual"),
+                    "threshold":a.get("threshold"),
+                })
+                print(f"  ✓ {ticker}: {a['note_e'][:80]}")
 
     if not wrongif_alerts:
         print("  No wrongIf alerts.")
@@ -639,28 +931,32 @@ def main():
     action_counts = {}
     for d in held_decisions:
         action_counts[d["action"]] = action_counts.get(d["action"], 0) + 1
-    brief_parts = []
+    # Display labels only (no-advice, Junyan PR #18) — internal action codes unchanged upstream.
+    BRIEF_LABEL_E = {
+        "BUY WATCH": "Research Watch", "EXIT": "Risk Review", "TRIM": "Exposure Review",
+        "REVIEW_TRIM": "Exposure Review", "REVIEW_STOP": "Risk Review",
+        "ADD": "Evidence Watch", "HOLD": "Paper Hold",
+    }
+    BRIEF_LABEL_Z = {
+        "BUY WATCH": "研究观察", "EXIT": "风险复核", "TRIM": "敞口复核",
+        "REVIEW_TRIM": "敞口复核", "REVIEW_STOP": "风险复核",
+        "ADD": "证据观察", "HOLD": "模拟持有",
+    }
+    brief_pairs = []
     if buy_watches:
-        brief_parts.append(f"{len(buy_watches)} BUY WATCH")
+        brief_pairs.append((len(buy_watches), "BUY WATCH"))
     for act in ["EXIT", "TRIM", "REVIEW_TRIM", "REVIEW_STOP", "ADD"]:
         if action_counts.get(act, 0) > 0:
-            brief_parts.append(f"{action_counts[act]} {act}")
-    if not brief_parts:
-        brief_parts.append(f"{len(held_decisions)} HOLD")
-    brief_e = " | ".join(brief_parts)
-    brief_z_map = {
-        "BUY WATCH": "关注建仓", "EXIT": "建议离场",
-        "TRIM": "建议减仓", "REVIEW_TRIM": "考虑减仓",
-        "REVIEW_STOP": "复核止损", "ADD": "考虑加仓", "HOLD": "持有"
-    }
-    brief_z = " | ".join(
-        f"{v}{brief_z_map.get(k.replace(f'{v} ','').strip(), k)}"
-        for k, v in [p.split(" ", 1) if " " in p else (p, "") for p in brief_parts]
-    ) or "全部持有"
+            brief_pairs.append((action_counts[act], act))
+    if not brief_pairs:
+        brief_pairs.append((len(held_decisions), "HOLD"))
+    brief_e = " | ".join(f"{n} {BRIEF_LABEL_E.get(code, code)}" for n, code in brief_pairs)
+    brief_z = " | ".join(f"{n} {BRIEF_LABEL_Z.get(code, code)}" for n, code in brief_pairs) or "全部模拟持有"
 
     output = {
         "generated_at":    datetime.now(timezone.utc).isoformat(),
         "date":            date.today().isoformat(),
+        "model_state":     model_state,
         "brief_e":         brief_e,
         "brief_z":         brief_z,
         "decisions": {
@@ -677,6 +973,7 @@ def main():
             "buy_watch_count":   len(buy_watches),
             "wrongif_triggered": sum(1 for a in wrongif_alerts if a["status"] == "TRIGGERED"),
             "wrongif_manual":    sum(1 for a in wrongif_alerts if a["status"] == "MANUAL"),
+            "wrongif_clear":     sum(1 for a in wrongif_alerts if a["status"] == "CLEAR"),
         },
     }
 
@@ -689,6 +986,10 @@ def main():
     print(f"  Risk flags:")
     for flag in risk_flags:
         print(f"    {flag}")
+
+    # ── 7. Trade attribution capsules (v15.1) ────────────────────────────────
+    cap_path, cap_count = write_attribution_capsules(confluence_data, vp_data)
+    print(f"\n[daily_decision] Attribution capsules → {cap_path}  ({cap_count} tickers)")
 
 
 if __name__ == "__main__":

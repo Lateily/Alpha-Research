@@ -1,0 +1,52 @@
+{
+  "verdict": "PASS",
+  "as_of": "2026-07-10T11:24:56.347711+00:00",
+  "max_age_days": 2,
+  "meta": {
+    "fetched_at": "2026-07-10T11:24:10.249397",
+    "count": 5521,
+    "version": "4.2",
+    "scorer": "barra_lite_v1"
+  },
+  "coverage": {
+    "price": 1.0,
+    "pe": 0.7366,
+    "pb": 0.9924,
+    "roe": 0.9768
+  },
+  "factor_summaries": {
+    "value": {
+      "coverage": 0.985872124615106,
+      "unique": 962,
+      "stdev": 24.555097,
+      "median": 55.1
+    },
+    "quality": {
+      "coverage": 0.985872124615106,
+      "unique": 973,
+      "stdev": 28.540983,
+      "median": 50.0
+    },
+    "momentum": {
+      "coverage": 0.985872124615106,
+      "unique": 1001,
+      "stdev": 28.464258,
+      "median": 50.0
+    },
+    "size": {
+      "coverage": 0.985872124615106,
+      "unique": 1001,
+      "stdev": 28.872875,
+      "median": 50.0
+    },
+    "low_vol": {
+      "coverage": 0.985872124615106,
+      "unique": 1001,
+      "stdev": 28.872766,
+      "median": 50.0
+    }
+  },
+  "errors": [],
+  "warnings": [],
+  "ticker_checks": []
+}

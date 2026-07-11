@@ -1,0 +1,73 @@
+{
+  "ticker": "603233.SH",
+  "thesis_logged_at": "2026-05-08T13:38:36.787798+00:00",
+  "thesis_source": "docs/research/factcheck/603233SH_thesis_2026-05-08_GROUNDED.json",
+  "thesis_source_commit": "ed45ada",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "Q2 2026 interim results disclosure — first full half reflecting nationwide Class C OTC online sales reopening and outpatient coordination (门诊统筹) settlement normalization; market will read same-store sales growth (SSSG) and gross margin trajectory as the binary signal on whether the pharmacy retail business model has structurally repaired",
+    "date_or_window": "2026-08-25 to 2026-08-31 (Da Shenlin historically discloses interims in late August; FY2025 annual was filed April 2026)",
+    "type": "earnings_revision",
+    "source": "SSE disclosure calendar; company FY2025 annual report filing pattern"
+  },
+  "mechanism_chain_length": 5,
+  "rightIf_conditions": [
+    "H1 2026 interim (Aug 2026) SSSG ≥ +2% YoY AND gross margin ≥ 34.5%",
+    "FY2026 NI guidance/consensus revises upward to ≥1.4B (from current implied ~1.3B)",
+    "Forward P/E re-rates above 15x within 6 months"
+  ],
+  "wrongIf_conditions": [
+    "H1 2026 SSSG < 0% YoY (negative comps continue)",
+    "Operating margin compresses below 9.0% in any reported quarter through 2026",
+    "Store-count growth slows below 5% YoY (signals expansion runway exhausted, per watchlist seed)"
+  ],
+  "what_changes_our_mind": "H1 2026 interim (2026-08-25 window) shows SSSG still ≤0% AND gross margin <33.5% — this confirms the FY2025 NI lift was one-off (e.g., inventory writeback, subsidy timing) rather than sustainable margin recapture, in which case the consolidation thesis is invalid and we exit",
+  "variant_view_one_sentence": "Market believes Da Shenlin's FY2025 NI +35% is low-base noise → We believe it's margin-driven proof of consolidation pricing power returning → Mechanism is H1 2026 interim printing positive SSSG forces re-rating from 13x to 17x fwd P/E.",
+  "time_to_resolution": "6 months (catalyst at H1 2026 interim disclosure ~2026-08-28)",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "+25% to +35% (target 23-25 vs spot 18.55)",
+    "downside_if_wrong": "-12% to -15% (downside floor near 52W low 16.78, ~10% below spot, plus risk of further de-rating to 11x fwd ≈ 15.8)",
+    "reward_to_risk": "2.3:1"
+  },
+  "quantification": {
+    "metric_target": "FY2026E EPS and re-rating multiple",
+    "current_value": "FY2025 EPS 1.08, fwd P/E 13.3x, price 18.55",
+    "predicted_value": "FY2026E EPS 1.30-1.40, target multiple 16-18x fwd",
+    "predicted_range": {
+      "low": "20.8 (16x × 1.30)",
+      "mid": "23.4 (17.3x × 1.35)",
+      "high": "25.2 (18x × 1.40)"
+    },
+    "predicted_horizon": "6-9 months (through Q3 2026 earnings, 2026-10/11)",
+    "confidence": "0.55"
+  },
+  "qc_quality_at_log_time": {
+    "score": 90,
+    "missingFields": [],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": true,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "PASS",
+    "qc_findings": [
+      "failed:step_8_position_sizing_curve_monotonic"
+    ],
+    "repairAttempted": false
+  },
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

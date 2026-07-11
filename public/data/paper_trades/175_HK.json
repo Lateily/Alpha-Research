@@ -1,0 +1,8 @@
+{
+  "ticker": "175.HK",
+  "direction": "PASS",
+  "_status": "skipped_non_actionable",
+  "thesis_logged_at": "2026-05-17T19:47:04.676828+00:00",
+  "pass_reason": "INSUFFICIENT_DATA",
+  "pass_reason_detail": "SEGMENT ECONOMICS = not_available (no_segment_disclosure). The Bull's variant mechanism (Lotus hybrid pivot + ZEEKR consolidation + global premium mix → margin accretion / operating leverage) is segment/mix-driven, but Geely does not disclose segment-level GM/OpM by brand (Lotus/Polestar/Volvo/ZEEKR/core Geely) or by geography (overseas vs domestic). At the H1 2026 catalyst, only consolidated GM/OpM will print — that is consistent with multiple incompatible causal stories (mix improvement, domestic price-war easing, FX, raw-material cost) and cannot uniquely confirm or refute the variant. Per RULE X, peer-relative revenue growth (+15.6% vs BYD -11.8%) is an [E1] fact but is NOT a valid [E1] structural base for this forward mix-margin claim because the causal mechanism is unmeasurable in issuer disclosure. Needed to re-classify as tradeable: segment GM disclosure by geography or by brand sub-portfolio in H1 2026 interim filing."
+}

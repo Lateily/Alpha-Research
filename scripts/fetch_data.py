@@ -30,51 +30,47 @@ ALPHA_VANTAGE_KEY  = os.getenv('ALPHA_VANTAGE_KEY', '')
 TUSHARE_TOKEN      = os.getenv('TUSHARE_TOKEN', '')
 VERCEL_URL         = os.getenv('VERCEL_URL', 'https://equity-research-ten.vercel.app')
 
-# ── Focus stock config ──────────────────────────────────────────────────────
-FOCUS_TICKERS = {
-    "300308.SZ": {"yahoo": "300308.SZ", "akshare": "300308", "exchange": "SZ",
-                  "name_en": "Innolight",       "name_zh": "中际旭创"},
-    "700.HK":    {"yahoo": "0700.HK",   "akshare": None,     "exchange": "HK",
-                  "name_en": "Tencent",         "name_zh": "腾讯控股"},
-    "9999.HK":   {"yahoo": "9999.HK",   "akshare": None,     "exchange": "HK",
-                  "name_en": "NetEase",         "name_zh": "网易"},
-    "6160.HK":   {"yahoo": "6160.HK",   "akshare": None,     "exchange": "HK",
-                  "name_en": "BeOne Medicines", "name_zh": "百济神州"},
-    "002594.SZ": {"yahoo": "002594.SZ", "akshare": "002594", "exchange": "SZ",
-                  "name_en": "BYD",             "name_zh": "比亚迪"},
-}
+def _load_watchlist():
+    """
+    Load focus tickers and VP seed values from public/data/watchlist.json.
 
-# ── VP scores for Supabase snapshot (kept in sync with Dashboard.jsx) ──────
-# VP_SCORES: seed/fallback values only.
-# These are overridden by DeepResearch output preserved in vp_snapshot.json.
-# Update last_updated when you manually recalibrate the seed values.
-VP_SCORES = {
-    "300308.SZ": {"vp": 79, "expectation_gap": 72, "fundamental_accel": 80,
-                  "narrative_shift": 65, "low_coverage": 55, "catalyst_prox": 85,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
-                  "wrongIf_z": "1.6T认证推迟至Q4 2025，或超大规模资本支出削减>20%"},
-    "700.HK":    {"vp": 64, "expectation_gap": 68, "fundamental_accel": 70,
-                  "narrative_shift": 75, "low_coverage": 40, "catalyst_prox": 60,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
-                  "wrongIf_z": "游戏监管扩大或宏观消费急剧恶化"},
-    "9999.HK":   {"vp": 58, "expectation_gap": 62, "fundamental_accel": 55,
-                  "narrative_shift": 50, "low_coverage": 45, "catalyst_prox": 65,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
-                  "wrongIf_z": "漫威对决DAU低于200万，或日本MAU未达Q3 2025的300万"},
-    "6160.HK":   {"vp": 65, "expectation_gap": 72, "fundamental_accel": 65,
-                  "narrative_shift": 68, "low_coverage": 45, "catalyst_prox": 70,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
-                  "wrongIf_z": "CELESTIAL三期uMRD数据不及预期(<50%)，或多替布鲁替尼1L CLL三期PFS更优"},
-    "002594.SZ": {"vp": 52, "expectation_gap": 55, "fundamental_accel": 60,
-                  "narrative_shift": 45, "low_coverage": 35, "catalyst_prox": 50,
-                  "last_updated": "2026-04-13",
-                  "wrongIf_e": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
-                  "wrongIf_z": "欧盟关税>35%且巴西本地化要求同时触发"},
-}
+    watchlist.json is the single source of truth for the monitored universe.
+    """
+    wl_path = OUTPUT_DIR / "watchlist.json"
+    with open(wl_path, encoding="utf-8") as f:
+        wl = json.load(f)
+
+    focus_tickers = {}
+    vp_scores = {}
+
+    for ticker, cfg in wl.get("tickers", {}).items():
+        seed = cfg.get("vp_seed", {})
+        focus_tickers[ticker] = {
+            "yahoo": cfg.get("yahoo", ticker),
+            "akshare": cfg.get("akshare"),
+            "exchange": cfg.get("exchange"),
+            "name_en": cfg.get("name_en", ticker),
+            "name_zh": cfg.get("name_zh", ticker),
+        }
+        vp_scores[ticker] = {
+            "vp": seed.get("vp", 50),
+            "expectation_gap": seed.get("expectation_gap", 50),
+            "fundamental_accel": seed.get("fundamental_accel", 50),
+            "narrative_shift": seed.get("narrative_shift", 50),
+            "low_coverage": seed.get("low_coverage", 50),
+            "catalyst_prox": seed.get("catalyst_prox", 50),
+            "last_updated": seed.get("last_updated", wl.get("_meta", {}).get("last_updated", "")),
+            "wrongIf_e": seed.get("wrongIf_e", ""),
+            "wrongIf_z": seed.get("wrongIf_z", ""),
+        }
+
+    if not focus_tickers:
+        raise RuntimeError(f"No tickers found in {wl_path}")
+    return focus_tickers, vp_scores
+
+
+# watchlist.json is the single source of truth.
+FOCUS_TICKERS, VP_SCORES = _load_watchlist()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # EQR Auto-Rating Engine
@@ -227,6 +223,14 @@ SECTOR_BETA_DEFAULTS = {
 DEFAULT_BETA = 1.15
 DCF_HORIZON  = 5   # forecast years
 
+# KR5: when 60-day regression beta lands more than (1 - this_fraction) below
+# the sector default, the regression is more likely contaminated by short-
+# window noise / benchmark-tracking failure / regime shift than to reflect
+# a genuine low-correlation stock. Fall back to sector default in that case.
+# 0.7 → engages on >30% deviation. [unvalidated intuition].
+# Tune via this constant; do not hardcode in function body.
+BETA_FLOOR_THRESHOLD_FRACTION = 0.7
+
 
 def _bisect(f, lo, hi, tol=1e-7, maxiter=200):
     """Pure-Python bisection. Returns None if root not bracketed."""
@@ -247,11 +251,29 @@ def _bisect(f, lo, hi, tol=1e-7, maxiter=200):
     return (lo + hi) / 2.0
 
 
-def _calc_beta_from_hist(stock_hist, bench_hist):
+def _calc_beta_from_hist(stock_hist, bench_hist, sector=""):
     """
     Compute beta from daily Close returns using last 60 trading days.
     stock_hist, bench_hist: pandas DataFrames with a 'Close' column.
-    Returns float beta, or DEFAULT_BETA on failure.
+    sector: Yahoo sector tag (e.g. "Consumer Cyclical"); used for the
+        sector-aware off-prior floor. Empty string → falls back to
+        DEFAULT_BETA when the floor engages.
+
+    Returns (beta, source_tag) where source_tag is one of:
+        "yfinance_60d"          regression result (most common)
+        "sector_floor_engaged"  KR5: regression below 0.7× sector default
+        "fallback_default"      regression failed (data error)
+
+    Asymmetric design: floor only, no ceiling. Regression betas have a
+    plausible-zero LOWER bound (every stock has SOME market correlation;
+    a near-zero beta is more likely a regression artifact than a genuine
+    "uncorrelated" stock) but no plausible UPPER bound (high-vol periods
+    + concentrated risk genuinely produce high betas — e.g., clinical-
+    stage biotech, single-product semis). Floor anchors against
+    regression-window noise; a ceiling would mute genuine signal.
+
+    Sector defaults are inherited US-market priors. Calibrating
+    A/HK-specific defaults is a future KR.
     """
     try:
         s = stock_hist["Close"].pct_change().dropna()
@@ -259,18 +281,27 @@ def _calc_beta_from_hist(stock_hist, bench_hist):
         # Align on shared dates
         common = s.index.intersection(b.index)
         if len(common) < 20:
-            return DEFAULT_BETA
+            return DEFAULT_BETA, "fallback_default"
         s = s.loc[common].tail(60)
         b = b.loc[common].tail(60)
         cov  = float(((s - s.mean()) * (b - b.mean())).mean())
         var  = float(((b - b.mean()) ** 2).mean())
         if var == 0:
-            return DEFAULT_BETA
+            return DEFAULT_BETA, "fallback_default"
         beta = cov / var
         # Clamp to reasonable range (0.3 – 2.5)
-        return round(max(0.30, min(2.50, beta)), 4)
+        beta_raw = round(max(0.30, min(2.50, beta)), 4)
+
+        # KR5: sector-aware off-prior floor. When regression result is
+        # more than (1 - BETA_FLOOR_THRESHOLD_FRACTION) below the sector
+        # prior, fall back to sector default. See module-level constant
+        # for rationale.
+        sector_default = SECTOR_BETA_DEFAULTS.get(sector, DEFAULT_BETA)
+        if beta_raw < BETA_FLOOR_THRESHOLD_FRACTION * sector_default:
+            return sector_default, "sector_floor_engaged"
+        return beta_raw, "yfinance_60d"
     except Exception:
-        return DEFAULT_BETA
+        return DEFAULT_BETA, "fallback_default"
 
 
 def _calc_wacc(beta, market):
@@ -321,17 +352,12 @@ def _biotech_equity_value(rev0, g, wacc, g_terminal, n_years,
     return pv - net_debt
 
 
-def _expectation_gap_score(delta):
-    """
-    Map (our_growth − implied_growth) → 0..100 score.
-    Positive delta = market underprices our thesis → higher score.
-    Scaled so delta = +15pp → ~75, delta = +30pp → ~90.
-    """
-    if delta is None:
-        return 50
-    # Sigmoid-ish: score = 50 + 50 × tanh(delta / 0.20)
-    import math
-    return round(50 + 50 * math.tanh(delta / 0.20), 1)
+# KR6 (2026-04-30): the previous tanh-based `_expectation_gap_score` helper
+# was deleted to eliminate divergence with vp_engine.py's canonical piecewise
+# mapping. vp_engine.py is the SINGLE owner of the delta→score mapping (see
+# `get_expectation_gap_from_rdcf` + CLAUDE.md "VP Score Architecture"). rdcf
+# JSON now exposes only the raw `delta` field; consumers read the canonical
+# score from vp_snapshot.json's per-snapshot `expectation_gap` field.
 
 
 def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
@@ -365,8 +391,10 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
             beta = rdcf_cfg["beta_override"]
             beta_source = "manual_override"
         elif stock_hist is not None and bench_hist is not None:
-            beta = _calc_beta_from_hist(stock_hist, bench_hist)
-            beta_source = "yfinance_60d"
+            sector = focus_data.get("meta", {}).get("sector", "")
+            # KR5: _calc_beta_from_hist now returns (beta, source_tag) and
+            # applies sector-aware off-prior floor internally.
+            beta, beta_source = _calc_beta_from_hist(stock_hist, bench_hist, sector)
         else:
             sector = focus_data.get("meta", {}).get("sector", "")
             beta = SECTOR_BETA_DEFAULTS.get(sector, DEFAULT_BETA)
@@ -414,7 +442,6 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
                 return result
 
             delta     = our_growth - implied_g
-            gap_score = _expectation_gap_score(delta)
             signal    = "UNDERPRICED" if delta > 0.05 else ("OVERPRICED" if delta < -0.05 else "FAIRLY_VALUED")
             # Flag hyper-growth: market pricing in >100% annual FCF growth
             hyper_growth = implied_g > 1.0
@@ -424,7 +451,8 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
                 "implied_fcf_growth": round(implied_g, 4),
                 "our_fcf_growth":     round(our_growth, 4),
                 "delta":              round(delta, 4),
-                "expectation_gap_score": gap_score,
+                # KR6: `expectation_gap_score` (tanh) field removed; canonical
+                # piecewise score is in vp_snapshot.json[snapshots[].expectation_gap].
                 "signal":             signal,
                 "hyper_growth":       hyper_growth,
                 "net_debt":           round(net_debt, 0),
@@ -454,7 +482,6 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
                 return result
 
             delta     = our_growth - implied_g
-            gap_score = _expectation_gap_score(delta)
             signal    = "UNDERPRICED" if delta > 0.05 else ("OVERPRICED" if delta < -0.05 else "FAIRLY_VALUED")
 
             result.update({
@@ -464,7 +491,7 @@ def generate_rdcf(pid, rdcf_cfg, focus_data, stock_hist, bench_hist):
                 "profitability_offset":  prof_offset,
                 "terminal_fcf_margin":   term_fcf_marg,
                 "delta":                 round(delta, 4),
-                "expectation_gap_score": gap_score,
+                # KR6: see standard_fcf path note above.
                 "signal":                signal,
                 "net_debt":              round(net_debt, 0),
                 "market_cap":            round(market_cap, 0),
@@ -519,7 +546,7 @@ def generate_rdcf_for_all(focus_data, hist_cache, rdcf_config):
         else:
             sig = rdcf.get("signal", "?")
             delta = rdcf.get("delta", 0)
-            print(f"  [{pid}] signal={sig}  delta={delta:+.1%}  gap_score={rdcf.get('expectation_gap_score')}")
+            print(f"  [{pid}] signal={sig}  delta={delta:+.1%}")
 
         safe_id = pid.replace(".", "_")
         with open(OUTPUT_DIR / f"rdcf_{safe_id}.json", "w", encoding="utf-8") as f:
@@ -668,15 +695,165 @@ def _df_to_dict(df):
 # ══════════════════════════════════════════════════════════════════════════════
 # 0. Universe Scorer — Barra CNE5-lite cross-sectional factor model
 # ══════════════════════════════════════════════════════════════════════════════
-def score_universe(stocks):
+UNIVERSE_FIELD_DEFINITIONS = {
+    "price": {
+        "source": "quote/universe provider",
+        "basis": "latest fetched market price",
+        "consumer_warning": "Must be treated as stale unless fetched_at is current for the intended decision date.",
+    },
+    "pe": {
+        "source": "quote/universe provider",
+        "basis": "provider valuation multiple; NOT guaranteed to be TTM, forecast, or annual-report PE",
+        "consumer_warning": "Do not label this as TTM PE or use it as a registration-grade valuation anchor without primary/financial reconciliation.",
+    },
+    "pb": {
+        "source": "quote/universe provider",
+        "basis": "provider price/book multiple",
+    },
+    "change_pct": {
+        "source": "quote/universe provider",
+        "basis": "same-day percentage change in the fetched quote snapshot",
+    },
+}
+
+UNIVERSE_FACTOR_DEFINITIONS = {
+    "value": {
+        "basis": "cross-sectional rank of lower PE and lower PB",
+        "status": "screening_only",
+        "consumer_warning": "Depends on provider PE/PB basis; not registration-grade valuation.",
+    },
+    "quality": {
+        "basis": "cross-sectional ROE rank when raw roe exists; otherwise neutral median fill",
+        "status": "often_inert_in_universe_a",
+        "consumer_warning": "If raw roe coverage is low, this factor collapses toward 50 and should not be interpreted as quality evidence.",
+    },
+    "momentum": {
+        "basis": "cross-sectional rank of 1-day change_pct",
+        "status": "short_tape_only",
+        "consumer_warning": "This is NOT 12-1 month momentum and must not be used as medium-term trend evidence.",
+    },
+    "size": {
+        "basis": "distance from 60th percentile log market-cap sweet spot",
+        "status": "screening_only",
+    },
+    "low_vol": {
+        "basis": "cross-sectional rank of lower same-day amplitude",
+        "status": "short_tape_only",
+    },
+}
+
+def _universe_meta(count, momentum_meta=None, financials_meta=None, cyclical_meta=None):
+    import copy
+    factor_defs = UNIVERSE_FACTOR_DEFINITIONS
+    field_defs = UNIVERSE_FIELD_DEFINITIONS
+
+    # Momentum: stamp the clean basis only when real 12-1 was actually used;
+    # otherwise leave the tape definition so the data-health gate honestly warns.
+    if momentum_meta and str(momentum_meta.get("basis", "")).startswith("12_minus_1"):
+        factor_defs = copy.deepcopy(factor_defs)
+        adjusted = momentum_meta.get("adjusted")
+        factor_defs["momentum"] = {
+            "basis": ("12-1 month %s return (T-252→T-21 trading days), "
+                      "cross-sectional rank"
+                      % ("HFQ-adjusted" if adjusted else "unadjusted")),
+            "status": "medium_term_trend",
+            "window": {
+                "lookback_td": momentum_meta.get("lookback_td"),
+                "skip_td": momentum_meta.get("skip_td"),
+                "start_date": momentum_meta.get("start_date"),
+                "end_date": momentum_meta.get("end_date"),
+            },
+            "coverage": momentum_meta.get("coverage"),
+            "adjusted": adjusted,
+            "source": "scripts/universe_momentum.py",
+            "consumer_warning": (
+                "Real 12-1 month momentum. Names without a full 12-month price "
+                "window are neutral-filled, not penalised."
+            ),
+        }
+
+    # Financials: stamp clean value + quality definitions and add the clean field
+    # definitions only when clean TTM data was actually used in scoring.
+    if financials_meta and str(financials_meta.get("basis", "")) == "clean_ttm_filings":
+        if factor_defs is UNIVERSE_FACTOR_DEFINITIONS:
+            factor_defs = copy.deepcopy(factor_defs)
+        field_defs = copy.deepcopy(field_defs)
+        cov = financials_meta.get("coverage", {})
+        periods = financials_meta.get("periods", {})
+        factor_defs["value"] = {
+            "basis": ("cross-sectional rank of low PE (computed TTM PE preferred per "
+                      "name, else provider) and low PB"),
+            "status": "screening_only",
+            "pe_ttm_coverage": cov.get("pe_ttm_clean"),
+            "source": "scripts/universe_financials.py",
+            "consumer_warning": "PE now prefers computed TTM PE where available; PB still provider.",
+        }
+        factor_defs["quality"] = {
+            "basis": "cross-sectional rank of ROE-TTM (trailing-12m net income / average equity)",
+            "status": "roe_ttm_backed",
+            "coverage": cov.get("roe_ttm"),
+            "source": "scripts/universe_financials.py",
+            "consumer_warning": ("Real ROE-TTM; loss-makers rank low, names without a "
+                                 "full TTM window are neutral-filled."),
+        }
+        for fld, desc in (
+            ("pe_ttm_clean", "computed TTM PE = market_cap / trailing-12m net income attr. parent"),
+            ("roe_ttm", "computed ROE-TTM = trailing-12m net income / average equity (percent)"),
+            ("ocf_to_ni", "trailing-12m operating cash flow / trailing-12m net income (earnings quality)"),
+            ("gross_margin_ttm", "trailing-12m (revenue - operating cost) / revenue (percent)"),
+        ):
+            field_defs[fld] = {"basis": desc, "coverage": cov.get(fld),
+                               "source": "scripts/universe_financials.py", "periods": periods}
+
+    meta = {
+        "fetched_at": datetime.now().isoformat(),
+        "count": count,
+        "version": "4.2",
+        "scored": True,
+        "scorer": "barra_lite_v1",
+        "field_definitions": field_defs,
+        "factor_definitions": factor_defs,
+        "research_use_warning": (
+            "universe_* factors are screening hints only. Registration-grade "
+            "thesis work must reconcile price, valuation, and financials against "
+            "primary/committed evidence."
+        ),
+    }
+    # screen v1.1: document the cyclical-normalization flag (per-stock under
+    # stocks[].cyclical_flag) when it was computed this run.
+    if cyclical_meta and str(cyclical_meta.get("basis", "")) == "filings_5y_median":
+        meta["cyclical_normalization"] = {
+            "basis": cyclical_meta.get("basis"),
+            "fy_ends": cyclical_meta.get("fy_ends"),
+            "n_cyclical": cyclical_meta.get("n_cyclical"),
+            "n_peak_earnings_risk": cyclical_meta.get("n_peak"),
+            "source": "scripts/cyclical_flag.py",
+            "consumer_warning": (
+                "stocks[].cyclical_flag marks commodity/cyclical names whose TTM "
+                "profitability is above their own 5y median (peak-cycle value-trap "
+                "shape); a deep thesis on a flagged name must build a NORMALIZED "
+                "earnings bridge, not extrapolate peak TTM."
+            ),
+        }
+    return meta
+
+def score_universe(stocks, use_real_momentum=None):
     """
     Cross-sectional factor scoring for a universe of stocks.
+
+    use_real_momentum: tri-state. None (default) auto-detects from 'momentum_12_1'
+    coverage; True/False lets the caller pass the SAME decision it stamps into
+    _meta so the ranked factor and the basis label can never disagree.
     Adds 'alpha_score' (0-100) and 'factors' sub-scores in-place.
 
     Factors (Barra CNE5 lite — all cross-sectional percentile ranks 0-100):
       value_rank:   lower PE + lower PB → higher rank (cheap is better)
       quality_rank: higher ROE → higher rank
-      momentum_rank: higher 1-day change_pct → higher rank
+      momentum_rank: real 12-1 month return (HFQ-adjusted, T-252→T-21) ranked
+                    cross-sectionally when stocks carry 'momentum_12_1' (attached
+                    by scripts/universe_momentum.py before scoring); falls back
+                    to the 1-day change_pct tape — labelled in _meta — if the
+                    whole universe lacks it (e.g. HK, or Tushare unavailable)
       size_rank:    mid-size preference — very large AND very small penalised
                     (log cap closest to 60th-pct gets highest rank; avoids
                     micro-cap liquidity traps AND mega-cap priced-in effect)
@@ -749,19 +926,41 @@ def score_universe(stocks):
         return [stocks[i].get(field) for i in eligible]
 
     pe_raw  = _get('pe')
+    pe_clean_raw = _get('pe_ttm_clean')   # clean TTM PE (universe_financials.py); None when absent
     pb_raw  = _get('pb')
-    roe_raw = _get('roe')
+    roe_raw = _get('roe')                 # provider ROE (often absent in universe_a)
+    roe_ttm_raw = _get('roe_ttm')         # clean ROE-TTM (universe_financials.py); preferred
     chg_raw = _get('change_pct')
+    mom_raw = _get('momentum_12_1')   # real 12-1 month return; None when absent
     cap_raw = _get('market_cap')
     amp_raw = _get('amplitude')
 
-    # ── Value: winsorize PE (1–200) and PB (0.1–30) before ranking ───────────
+    # ── Helpers ──────────────────────────────────────────────────────────────
     def _winsor(vals, lo, hi):
+        # PE/PB style: non-positive is invalid → None.
         return [max(lo, min(hi, v)) if v is not None and v > 0 else None
                 for v in vals]
 
-    pe_w  = _winsor(pe_raw,  1.0,  200.0)
-    pb_w  = _winsor(pb_raw,  0.1,  30.0)
+    def _winsor_signed(vals, lo, hi):
+        # ROE style: negatives are valid AND meaningful (loss-makers rank low).
+        return [max(lo, min(hi, v)) if v is not None else None for v in vals]
+
+    def _pct_rank_present(values):
+        """Percentile-rank only the non-None entries; missing stay None so the
+        downstream _fill() neutral-fills them (NOT a penalising bottom rank)."""
+        present = [i for i, v in enumerate(values) if v is not None]
+        if not present:
+            return [None] * len(values)
+        sub = _pct_rank([values[i] for i in present])
+        out = [None] * len(values)
+        for k, i in enumerate(present):
+            out[i] = sub[k]
+        return out
+
+    # ── Value: prefer clean TTM PE per name, else provider PE; winsorize PE/PB ──
+    pe_src = [c if c is not None else p for c, p in zip(pe_clean_raw, pe_raw)]
+    pe_w  = _winsor(pe_src, 1.0,  200.0)
+    pb_w  = _winsor(pb_raw, 0.1,  30.0)
 
     # Invert: low PE/PB → high rank; replace None with median before rank
     pe_inv  = [None if v is None else -v for v in pe_w]
@@ -781,12 +980,22 @@ def score_universe(stocks):
         else:
             value_rank.append((pr + pbr) / 2.0)
 
-    # ── Quality: ROE (cap at -50%..+80%) ─────────────────────────────────────
-    roe_w    = _winsor(roe_raw, -50.0, 80.0)
-    quality_rank = _pct_rank(roe_w)
+    # ── Quality: clean ROE-TTM preferred per name, else provider ROE; cap
+    #    -50%..+80%; loss-makers rank low, missing → neutral-filled (not bottom) ──
+    roe_src  = [rt if rt is not None else r for rt, r in zip(roe_ttm_raw, roe_raw)]
+    roe_w    = _winsor_signed(roe_src, -50.0, 80.0)
+    quality_rank = _pct_rank_present(roe_w)
 
-    # ── Momentum: 1-day change_pct ────────────────────────────────────────────
-    momentum_rank = _pct_rank(chg_raw)
+    # ── Momentum: real 12-1 month return when present, else 1-day tape ─────────
+    mom_coverage = sum(1 for v in mom_raw if v is not None)
+    if use_real_momentum is None:                       # auto-detect (e.g. HK path)
+        use_real_momentum = mom_coverage >= max(10, int(0.30 * n))
+    if use_real_momentum and mom_coverage > 0:
+        # Rank the real 12-1 signal; names missing it → neutral-filled (not bottom).
+        momentum_rank = _pct_rank_present(mom_raw)
+    else:
+        # 12-1 unavailable for the universe → honest 1-day tape fallback.
+        momentum_rank = _pct_rank(chg_raw)
 
     # ── Size: mid-size preference using log(cap) ──────────────────────────────
     log_cap  = [math.log(v) if v and v > 0 else None for v in cap_raw]
@@ -865,15 +1074,146 @@ def score_universe(stocks):
 # ══════════════════════════════════════════════════════════════════════════════
 # 1. Full A-Share Universe
 # ══════════════════════════════════════════════════════════════════════════════
+def _latest_tushare_trade_date(pro):
+    """Return the latest open A-share trade date in YYYYMMDD format."""
+    end = datetime.now().strftime("%Y%m%d")
+    start = (datetime.now() - timedelta(days=14)).strftime("%Y%m%d")
+    cal = pro.trade_cal(exchange="SSE", start_date=start, end_date=end, is_open=1)
+    if cal is None or cal.empty:
+        return end
+    return str(cal["cal_date"].max())
+
+
+def _fetch_a_share_universe_tushare():
+    """
+    Tushare fallback for the full A-share universe.
+
+    GitHub-hosted runners frequently get disconnected by the EastMoney/AKShare
+    full-market endpoint. Tushare by trade date is already available in CI and
+    gives us a fresh, PIT market snapshot for the universe freshness gate. The
+    output is shaped to match the AKShare universe contract used downstream.
+    """
+    if not TUSHARE_TOKEN:
+        print("  Tushare fallback unavailable: TUSHARE_TOKEN not set")
+        return []
+    try:
+        import tushare as ts
+    except ImportError:
+        print("  Tushare fallback unavailable: tushare not installed")
+        return []
+
+    try:
+        ts.set_token(TUSHARE_TOKEN)
+        pro = ts.pro_api()
+        trade_date = _latest_tushare_trade_date(pro)
+        print(f"  Calling Tushare daily/daily_basic fallback for {trade_date}...")
+
+        daily = pro.daily(
+            trade_date=trade_date,
+            fields=(
+                "ts_code,trade_date,open,high,low,close,pre_close,change,"
+                "pct_chg,vol,amount"
+            ),
+        )
+        basic = pro.daily_basic(
+            trade_date=trade_date,
+            fields=(
+                "ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,"
+                "total_mv,circ_mv"
+            ),
+        )
+        stock = pro.stock_basic(
+            exchange="",
+            list_status="L",
+            fields="ts_code,symbol,name,area,industry,market,exchange,list_date",
+        )
+
+        if daily is None or daily.empty:
+            print("  Tushare fallback returned no daily rows")
+            return []
+        if basic is None or basic.empty:
+            basic = daily[["ts_code"]].copy()
+        if stock is None or stock.empty:
+            stock = daily[["ts_code"]].copy()
+
+        df = daily.merge(basic, on="ts_code", how="left", suffixes=("", "_basic"))
+        df = df.merge(stock, on="ts_code", how="left")
+
+        stocks = []
+        for _, row in df.iterrows():
+            ts_code = str(row.get("ts_code", "")).strip()
+            if "." not in ts_code:
+                continue
+            code, ex = ts_code.split(".", 1)
+            name = str(row.get("name", "")).strip() or code
+            pre_close = _safe_float(row.get("pre_close"))
+            high = _safe_float(row.get("high"))
+            low = _safe_float(row.get("low"))
+            amplitude = None
+            if pre_close and high is not None and low is not None:
+                amplitude = round((high - low) / pre_close * 100.0, 4)
+
+            amount = _safe_float(row.get("amount"))
+            total_mv = _safe_float(row.get("total_mv"))
+            circ_mv = _safe_float(row.get("circ_mv"))
+
+            stocks.append({
+                "ticker": f"{code}.{ex}",
+                "code": code,
+                "name": name,
+                "exchange": ex,
+                "price": _safe_float(row.get("close")),
+                "change_pct": _safe_float(row.get("pct_chg")),
+                "change_amt": _safe_float(row.get("change")),
+                # Tushare daily.vol is in hands; amount is in thousand RMB.
+                "volume": _safe_float(row.get("vol")),
+                "turnover": round(amount * 1000.0, 4) if amount is not None else None,
+                "amplitude": amplitude,
+                "high": high,
+                "low": low,
+                "open": _safe_float(row.get("open")),
+                "prev_close": pre_close,
+                "volume_ratio": _safe_float(row.get("volume_ratio")),
+                "turnover_rate": _safe_float(row.get("turnover_rate")),
+                "pe": _safe_float(row.get("pe")),
+                "pe_ttm": _safe_float(row.get("pe_ttm")),
+                "pb": _safe_float(row.get("pb")),
+                # Tushare daily_basic total_mv/circ_mv are in ten-thousand RMB.
+                "market_cap": round(total_mv * 10000.0, 4) if total_mv is not None else None,
+                "float_cap": round(circ_mv * 10000.0, 4) if circ_mv is not None else None,
+                "high_52w": None,
+                "low_52w": None,
+                "roe": None,
+                "gross_margin": None,
+                "net_margin": None,
+                "revenue_growth": None,
+                "profit_growth": None,
+                "industry": str(row.get("industry", "") or ""),
+                "market": str(row.get("market", "") or ""),
+                "list_date": str(row.get("list_date", "") or ""),
+                "data_source": "tushare_daily_basic_fallback",
+                "trade_date": trade_date,
+            })
+
+        print(f"  OK: {len(stocks)} A-shares via Tushare fallback")
+        return stocks
+    except Exception as e:
+        print(f"  Tushare fallback error: {type(e).__name__}: {e}")
+        return []
+
+
 def fetch_a_share_universe():
     try:
         import akshare as ak
     except ImportError:
-        print("  ERROR: akshare not installed"); return []
+        print("  ERROR: akshare not installed; trying Tushare fallback")
+        return _fetch_a_share_universe_tushare()
     print("  Calling ak.stock_zh_a_spot_em()...")
     try:
         df = ak.stock_zh_a_spot_em()
-        if df is None or df.empty: return []
+        if df is None or df.empty:
+            print("  AKShare returned empty A-share universe; trying Tushare fallback")
+            return _fetch_a_share_universe_tushare()
         stocks = []
         for _, row in df.iterrows():
             code = str(row.get("代码", "")).strip()
@@ -909,7 +1249,9 @@ def fetch_a_share_universe():
         print(f"  OK: {len(stocks)} A-shares")
         return stocks
     except Exception as e:
-        print(f"  ERROR: {e}"); return []
+        print(f"  AKShare A-share universe error: {type(e).__name__}: {e}")
+        print("  Trying Tushare fallback for A-share universe...")
+        return _fetch_a_share_universe_tushare()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1348,6 +1690,23 @@ def _to_twelvedata_symbol(yf_ticker):
         return f"{yf_ticker[:-3]}:SHSE"
     # Plain ticker (US-listed ADR etc.)
     return yf_ticker
+
+def _ohlc_from_tushare_pack(pid):
+    """Daily bars from the committed tushare pack (public/data/tushare/<pid>.json),
+    mapped to the ohlc_*.json shape. Dates kept compact YYYYMMDD (matches the
+    direct-API path + sheet_checkpoints' staleness comparison). Ascending order."""
+    try:
+        with open(OUTPUT_DIR / "tushare" / f"{pid}.json") as f:
+            rows = (json.load(f).get("data", {}).get("daily", {}) or {}).get("rows") or []
+        bars = [{"date": r["trade_date"], "open": r.get("open"), "high": r.get("high"),
+                 "low": r.get("low"), "close": r.get("close"),
+                 "volume": int(r.get("vol") or 0)} for r in rows if r.get("trade_date") and r.get("close") is not None]
+        bars.sort(key=lambda b: b["date"])
+        return bars
+    except Exception as e:
+        print(f"    OHLC tushare fallback error: {e}")
+        return []
+
 
 def _fetch_ohlcv_twelvedata(yf_ticker, days=90):
     """
@@ -2052,7 +2411,12 @@ def fetch_focus_stocks():
                 ohlc_data = direct["ohlcv"]
                 print(f"    OHLC: using 5d direct-API data (yfinance unavailable)")
             else:
-                ohlc_data = []
+                # Fallback 2: tushare daily bars already fetched into public/data/tushare/
+                # (yfinance rate-limits on runners left NEW watchlist names with no ohlc
+                # file at all while paid daily bars sat one directory over, 2026-06-12)
+                ohlc_data = _ohlc_from_tushare_pack(pid)
+                if ohlc_data:
+                    print(f"    OHLC: using tushare daily bars fallback ({len(ohlc_data)} bars)")
 
             if ohlc_data:
                 with open(OUTPUT_DIR / f"ohlc_{safe_id}.json", "w") as f:
@@ -2117,12 +2481,60 @@ def main():
     print("[1/8] A-Share Universe...")
     a_stocks = fetch_a_share_universe()
     if a_stocks:
+        # Attach real 12-1 month momentum before scoring. Lean Tushare by-date
+        # fetch (whole market per call); on any failure it attaches nothing and
+        # score_universe falls back to the 1-day tape, labelled honestly in _meta.
+        try:
+            from universe_momentum import enrich_stocks_with_momentum
+            mom_meta = enrich_stocks_with_momentum(a_stocks, token=TUSHARE_TOKEN)
+            print(f"  Momentum 12-1: basis={mom_meta.get('basis')} "
+                  f"coverage={mom_meta.get('coverage')}/{len(a_stocks)}")
+        except Exception as e:
+            mom_meta = {"basis": "unavailable", "coverage": 0,
+                        "error": f"{type(e).__name__}: {e}"}
+            print(f"  Momentum 12-1 enrichment skipped: {mom_meta['error']}")
+        # Attach clean TTM financials (PE-TTM / ROE-TTM / OCF-NI / gross margin)
+        # before scoring. Lean ~8 by-period VIP calls (whole market per call); on
+        # any failure attaches nothing and score_universe keeps the provider pe +
+        # inert quality (the data-health gate keeps warning honestly).
+        try:
+            from universe_financials import enrich_stocks_with_financials
+            fin_meta = enrich_stocks_with_financials(a_stocks, token=TUSHARE_TOKEN)
+            _cov = fin_meta.get("coverage", {})
+            print(f"  Clean financials: basis={fin_meta.get('basis')} "
+                  f"pe_ttm={_cov.get('pe_ttm_clean')}/{len(a_stocks)} "
+                  f"roe_ttm={_cov.get('roe_ttm')}/{len(a_stocks)}")
+        except Exception as e:
+            fin_meta = {"basis": "unavailable", "coverage": {},
+                        "error": f"{type(e).__name__}: {e}"}
+            print(f"  Clean financials enrichment skipped: {fin_meta['error']}")
+        # Cyclical-normalization flag (screen v1.1): label commodity/cyclical names
+        # whose clean TTM profitability sits above their OWN 5y median (peak-cycle
+        # value-trap shape). Runs AFTER financials enrich — it reads its TTM reads.
+        try:
+            from cyclical_flag import enrich_stocks_with_cyclical_flag
+            cyc_meta = enrich_stocks_with_cyclical_flag(a_stocks, token=TUSHARE_TOKEN)
+            print(f"  Cyclical flag: basis={cyc_meta.get('basis')} "
+                  f"cyclical={cyc_meta.get('n_cyclical')} peak_risk={cyc_meta.get('n_peak')}")
+        except Exception as e:
+            cyc_meta = {"basis": "unavailable", "error": f"{type(e).__name__}: {e}"}
+            print(f"  Cyclical flag enrichment skipped: {cyc_meta['error']}")
+        # Decide ONCE per factor whether the universe carries enough real signal,
+        # then pass the SAME decision to both the scorer and the _meta label so the
+        # ranked factor and the basis string stay in lockstep.
+        used_12_1 = (str(mom_meta.get("basis", "")).startswith("12_minus_1")
+                     and mom_meta.get("coverage", 0) >= max(10, int(0.30 * len(a_stocks))))
+        used_clean_fin = (str(fin_meta.get("basis", "")) == "clean_ttm_filings"
+                          and fin_meta.get("coverage", {}).get("pe_ttm_clean", 0)
+                              >= max(10, int(0.30 * len(a_stocks))))
         print("  Scoring A-share universe (Barra-lite)...")
-        score_universe(a_stocks)
+        score_universe(a_stocks, use_real_momentum=used_12_1)
         with open(OUTPUT_DIR / "universe_a.json", "w", encoding="utf-8") as f:
-            json.dump({"_meta": {"fetched_at": datetime.now().isoformat(),
-                                 "count": len(a_stocks), "version": "4.1",
-                                 "scored": True, "scorer": "barra_lite_v1"},
+            json.dump({"_meta": _universe_meta(
+                           len(a_stocks),
+                           momentum_meta=mom_meta if used_12_1 else None,
+                           financials_meta=fin_meta if used_clean_fin else None,
+                           cyclical_meta=cyc_meta if str(cyc_meta.get("basis", "")) == "filings_5y_median" else None),
                        "stocks": a_stocks}, f, ensure_ascii=False, default=str)
     print()
 
@@ -2133,9 +2545,7 @@ def main():
         print("  Scoring HK universe (Barra-lite)...")
         score_universe(hk_stocks)
         with open(OUTPUT_DIR / "universe_hk.json", "w", encoding="utf-8") as f:
-            json.dump({"_meta": {"fetched_at": datetime.now().isoformat(),
-                                 "count": len(hk_stocks), "version": "4.1",
-                                 "scored": True, "scorer": "barra_lite_v1"},
+            json.dump({"_meta": _universe_meta(len(hk_stocks)),
                        "stocks": hk_stocks}, f, ensure_ascii=False, default=str)
     print()
 
@@ -2343,7 +2753,7 @@ def main():
             "fundamental_accel": prev.get("fundamental_accel",seed["fundamental_accel"]),
             "narrative_shift":   prev.get("narrative_shift",  seed["narrative_shift"]),
             "low_coverage":      prev.get("low_coverage",     seed["low_coverage"]),
-            "catalyst_proximity":prev.get("catalyst_proximity",seed["catalyst_prox"]),
+            "catalyst_prox":       prev.get("catalyst_prox", prev.get("catalyst_proximity", seed["catalyst_prox"])),
             "close":             close,
             "volume":            volume,
             "source":            prev_source,   # accurate provenance (vp_engine / deepresearch / seed)

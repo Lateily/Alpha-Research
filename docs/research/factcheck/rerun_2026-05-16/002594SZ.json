@@ -1,0 +1,940 @@
+{
+  "success": true,
+  "ticker": "002594.SZ",
+  "data": {
+    "ticker": "002594.SZ",
+    "thesis_protocol_version": "v2",
+    "_direction": "PASS",
+    "_divergence_score": 55,
+    "_synthesizer_rationale": "Both sides agree on the core data (segment GM, peer multiples, inst visits) — Forensic confirms ALL claims MATCH. The bull's margin-mix mechanism is real and E1-grounded for 2025, but the +280bps overseas premium is a backward-looking snapshot; the forward question (does the premium SURVIVE European localization capex + insurance/tariff friction?) is exactly what nobody in our data has measured. With overseas now 38.7% of regional sales already, 22 analyst targets clustered at +24% upside, 248 broker reports over 90d, six top-tier institutions doing same-day diligence, and 99.7% leveraged-long crowding — the export-margin story is the consensus, not a variant. Catalyst is H1 2026 print (Aug); no observable resolves before then.",
+    "_evidence_profile": {
+      "core_link_tier": "E2",
+      "counts": {
+        "E1": 4,
+        "E2": 3,
+        "E3": 3,
+        "E4": 3
+      },
+      "overstatement_corrected": true
+    },
+    "_pass_reason": "CATALYST_NOT_YET_OBSERVABLE",
+    "_pass_reason_detail": "The deciding observable — 2026 H1 consolidated GM and 2026 H1 overseas-segment GM (to confirm the +280bps premium persists post-European-localization-spend) — does not print until August 2026. Until then, the bull's variant collapses into the consensus narrative already articulated by 中信/华创/兴业/东方 and validated by State Street/Hillhouse/CPPIB on 2026-05-12. No interim disclosure in our data context resolves whether the margin premium is sustainable vs. eroding. The bull's core_causal_link (overseas-mix margin accretion FORWARD) is [E2:proxy] — we have 2025 segment GM (E1) but not forward, and the European-plant cost/utilization data needed to upgrade it to E1 is explicitly absent.",
+    "step_1_catalyst": {
+      "catalyst_event": "2026 H1 interim report disclosing consolidated GM, 汽车 segment GM, and overseas-region GM (testing whether 2025's +280bps overseas premium persists through European localization phase)",
+      "catalyst_date_or_window": "2026-08-01 to 2026-08-31 (exact date not in our data)",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "Interim reporting calendar; exact date not in our data context"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. [E1:direct] 2025 segment economics show overseas GM 19.46% vs domestic 16.66% (+280bps) per SEGMENT ECONOMICS BY REGION 20251231 — this is the bull's foundation and is true_gm, not proxy.",
+        "2. [E1:direct] But overseas is ALREADY 38.7% of disclosed regional sales (3107.4亿 / 8039.6亿) per the same segment table — meaning the mix-shift uplift has substantially printed; further re-rating requires the PREMIUM ITSELF to expand or hold through European localization, which is forward-unmeasured.",
+        "3. [E3:narrative] The overseas-growth thesis is the consensus, not a variant: 中信证券 20260510, 华创证券 20260507, 兴业证券 20260513, 东方证券 20260504 all center '海外销量高增' — 248 reports / 35 brokers / 22 analyst targets at mean 119.32 (+24% upside) confirms saturation.",
+        "4. [E4:crowding] Six top-tier institutions (State Street, Hillhouse, CPPIB, Invesco, Mirae, FIL) did same-day diligence on 2026-05-12; margin financing 140.6亿 (+4.9%) with 99.7% leveraged-long. The bull frames this as 'smart money validating' — but in tier-honest terms, this is [E4:crowding] showing the story is watched, not proof we're early.",
+        "5. [E2:proxy] Forward margin risk is real but unmeasured: Euronews 2026-05-15 (BYD in talks for idle European plants) implies capex/depreciation/labor-cost step-up in localized production; our data has no plant cost, utilization, or unit-economics disclosure. Whether European localization preserves the +280bps premium or compresses it is not answerable from current data — it is the H1 print itself."
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "[E1:direct] Overseas GM 19.46% vs domestic GM 16.66%, +280bps (SEGMENT ECONOMICS BY REGION 20251231)",
+        "[E1:direct] 汽车 segment GM 20.49% (SEGMENT ECONOMICS BY PRODUCT 20251231)",
+        "[E1:direct] Overseas sales 3107.4亿 / total regional 8039.6亿 = 38.7% mix (SEGMENT ECONOMICS BY REGION)",
+        "[E1:direct] Net income -19.0% YoY 2025 (40.3B → 32.6B), Rev TTM -11.8% (MULTI-YEAR IS + LIVE FUNDAMENTALS)",
+        "[E2:proxy] P/E TTM 49.6x vs P/E Fwd 17.2x implies 188% NTM earnings growth priced — premium already paid for recovery (LIVE FUNDAMENTALS)",
+        "[E2:proxy] BYD P/E TTM 49.6x vs 175.HK Geely 11.5x despite near-identical GM (17.2% vs 17.0%) and OpM (4.8% vs 5.0%) — BYD relative-premium ~330% (LIVE FUNDAMENTALS + PEER COMPARISON)",
+        "[E4:crowding] 融资余额 140.6亿 (+4.9%), 99.7% leveraged-long ratio (TUSHARE MARGIN TRADE)",
+        "[E4:crowding] 22 analyst targets, mean 119.32, range 90–137, +23.9% upside vs 96.30 (LIVE FUNDAMENTALS)"
+      ],
+      "evidence_qualitative": [
+        "[E3:narrative] 中信证券 20260510 '4月出海创新高，闪充车型值得期待' — overseas/flash-charge is explicit consensus (TUSHARE BROKER)",
+        "[E3:narrative] 华创证券 20260507, 兴业证券 20260513, 东方证券 20260504 all reiterate '海外销量高增' — story is saturated, not variant (TUSHARE BROKER)",
+        "[E4:crowding] 2026-05-12 same-day inst visits: State Street, Hillhouse, CPPIB, Invesco, Mirae, FIL — proves attention, not edge (TUSHARE INST VISITS)",
+        "[E3:narrative] Euronews 20260515 European plant acquisition talks — directionally a capex/localization signal, no cost data",
+        "[E3:narrative] Yahoo UK 20260516 Chinese-EV insurance friction — category-level adoption headwind, not BYD-specific"
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "Overseas volume growth + flash-charge tech sustains margin expansion; current P/E Fwd 17.2x will re-rate toward ¥119 mean target",
+          "z": "22 analysts at +24% upside, 248 broker reports, 6 top-tier inst on same day all align on this story"
+        },
+        "our_variant": {
+          "e": "[E2:proxy] We CANNOT articulate a true variant — the bull's 'margin-mix unpriced' claim is structurally consensus given 248 reports/35 brokers explicitly citing 海外 high-growth. The 'variant' would require forward overseas-GM data we do not possess.",
+          "z": "[E4:crowding] Wave of inst diligence on 2026-05-12 is evidence the trade is being CONFIRMED, not pre-positioned — this is later-stage, not early."
+        },
+        "what_changes_our_mind": "2026 H1 report prints consolidated GM ≥18.0% AND overseas-region GM ≥20.0% (premium expanded vs 2025's 19.46%) AND overseas mix ≥42% — this would prove forward-margin-accretion in the localization phase and flip to LONG"
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "2026 H1 consolidated gross margin (key falsifier)",
+      "current_value": "17.2% (LIVE FUNDAMENTALS TTM)",
+      "predicted_value": "16.5–18.0% range, no directional edge",
+      "predicted_range": {
+        "low": "16.0%",
+        "mid": "17.2%",
+        "high": "18.5%"
+      },
+      "predicted_horizon": "2026-08 (H1 report)",
+      "confidence": 0.35
+    },
+    "step_5_proves_right_if": [
+      "PASS direction — no LONG conditions to validate. Re-evaluation trigger: 2026 H1 consolidated GM ≥ 18.0% @ 2026 H1 报告 | source: 合并利润表 (营业收入 - 营业成本)/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "Re-evaluation trigger: 2026 H1 overseas-region GM ≥ 20.0% @ 2026 H1 报告 | source: 主营业务分地区情况 境外毛利率 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "Re-evaluation trigger: 2026 H1 overseas revenue share ≥ 42% @ 2026 H1 报告 | source: 主营业务分地区情况 (境外营业收入/营业收入合计) | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+    ],
+    "step_6_proves_wrong_if": [
+      "PASS direction — re-evaluation to SHORT trigger: 2026 H1 consolidated GM < 16.0% @ 2026 H1 报告 | source: 合并利润表 (营业收入 - 营业成本)/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "Re-evaluation to SHORT trigger: 2026 H1 汽车 segment GM < 19.0% @ 2026 H1 报告 | source: 主营业务分产品情况 汽车毛利率 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+      "Re-evaluation to SHORT trigger: 2026 H1 net income YoY < -25% @ 2026 H1 报告 | source: 合并利润表 归属于母公司股东的净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes overseas-mix margin accretion will drive re-rating toward ¥119 → We believe this story is already priced/consensus (38.7% mix achieved, 248 reports, 99.7% leveraged-long) and the forward leg (will +280bps premium SURVIVE European localization capex) is unmeasurable from our data until H1 prints → No edge until catalyst",
+      "core_causal_link": {
+        "link_sentence": "The 2025 overseas-vs-domestic +280bps GM premium will persist or expand through 2026 H1 despite European localization capex",
+        "evidence_tier": "E2:proxy",
+        "tier_justification": "2025 segment GM gap is [E1:direct] from SEGMENT ECONOMICS BY REGION 20251231 — but the FORWARD persistence claim requires 2026 H1 overseas-region GM data + European plant unit economics (acquisition cost, utilization, labor, depreciation), none of which are in our data context. To upgrade to E1 we would need: (a) 2026 H1 主营业务分地区 disclosure showing境外GM ≥ 19.46%, OR (b) primary plant-cost/capacity data on the European acquisition target. The bull's R2 tagged this [E1:direct] — we down-tier to [E2:proxy] because the load-bearing claim is forward-margin not 2025-margin."
+      },
+      "time_to_resolution": "~3 months until H1 print",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "PASS — no directional position",
+        "downside_if_wrong": "PASS — no directional position",
+        "reward_to_risk": "N/A (PASS)"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "now through 2026-08 H1 print",
+        "why_market_keeps_buying": [
+          "22 analysts at mean target 119.32 (+24% upside) anchors buying",
+          "Overseas-growth narrative reinforced monthly by 35 broker shop with 248 reports/90d",
+          "Top-tier inst diligence (Hillhouse/CPPIB/State Street 20260512) provides quality validation",
+          "Forward P/E 17.2x looks reasonable vs growth narrative even with TTM 49.6x"
+        ],
+        "early_signs_phase_1_weakening": [
+          "Monthly export sales print below YoY +30% (sales公告)",
+          "融资余额 declining from 140.6亿 peak",
+          "Broker target revisions downward from any of 中信/华创/兴业"
+        ],
+        "optional_long_play": {
+          "direction": "PASS — no long entry; story is consensus and catalyst is 3 months out",
+          "sizing": "0%",
+          "exit_trigger": "N/A"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "2026 H1 consolidated GM < 16.0% (vs 17.2% TTM) confirming localization margin compression",
+          "2026 H1 overseas-region GM disclosure showing premium compressed below +200bps",
+          "European plant acquisition closure with disclosed capex driving forward OpM expectations down"
+        ],
+        "estimated_timing": "August 2026 H1 report",
+        "short_play": {
+          "direction": "PASS — no short entry pre-print; 99.7% leveraged-long crowding + UP technical trend means short carry cost (squeeze risk) exceeds expected return until catalyst data arrives",
+          "sizing": "0%",
+          "entry_trigger": "Only after H1 print confirms consolidated GM < 16.0% AND 汽车 GM < 19.0%"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "0%",
+        "phase_1_weakening_confirmed": "0%",
+        "phase_2_catalyst_imminent": "0%"
+      }
+    },
+    "qc_checklist": {
+      "all_claims_tiered": true,
+      "core_link_tier_honestly_stated": true,
+      "core_link_downtiered_vs_bull_r2": true,
+      "falsifiability_conditions_mechanized": true,
+      "no_fabricated_numbers": true,
+      "pass_reason_named_with_detail": true,
+      "variant_view_is_actually_variant": false,
+      "variant_view_failure_acknowledged": true,
+      "position_sizing_monotone_non_decreasing": true,
+      "catalyst_date_is_future": true
+    },
+    "_bull_thesis": {
+      "ticker": "002594.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "2026 H1 Earnings Release, which will provide the next official print on overseas sales mix and its impact on consolidated gross margins, directly testing the bear case of margin compression.",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate reporting calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E3:narrative] The market is anchored on a narrative of intense domestic EV price wars and operational risks in overseas expansion (e.g., UK insurance friction, EU plant costs per recent news), leading to a pessimistic forward P/E of 17.2x.",
+          "2. [E1:direct] This narrative fundamentally under-models the powerful, margin-accretive impact of the overseas sales mix shift. Per 2025 segment data, overseas gross margin is 19.46% vs. domestic at 16.66%, a structural +280 basis point premium.",
+          "3. [E3:narrative] The bear case misinterprets strategic, long-term de-risking as a near-term cost burden. The Euronews report (5/15/2026) of BYD exploring idle European plants is a proactive move to mitigate tariff risk and localize production, thereby *protecting* the high-margin European business, not eroding it.",
+          "4. [E3:narrative] This overseas momentum is the central theme of recent sell-side research. For example, 华创证券's 2026-05-07 note highlights '海外销量增长势头强劲' (overseas sales growth momentum is strong), confirming the trend continues post-Q1.",
+          "5. [E4:crowding] Critically, this thesis is now attracting validation from sophisticated global capital. The dense cluster of top-tier institutional visits on 2026-05-12 (State Street, Hillhouse, CPPIB, Invesco) signals intensive, post-earnings due diligence. This isn't just a crowded trade; it's the 'smart money' moving in to underwrite the margin resilience story before it's obvious in headline numbers."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Overseas gross margin of 19.46% is 280bps higher than domestic gross margin of 16.66% (source: SEGMENT ECONOMICS, period 20251231).",
+          "[E1:direct] The core Automotive segment boasts a robust gross margin of 20.49%, significantly higher than the consolidated 17.2% and providing a strong profitability base (source: SEGMENT ECONOMICS, period 20251231).",
+          "[E1:direct] BYD's underlying profitability appears superior to peers. Its auto segment GM is 20.49% vs. peer 175.HK (Geely) consolidated GM of 17.0% (sources: SEGMENT ECONOMICS, PEER COMPARISON).",
+          "[E2:proxy] The market's pessimism is reflected in the valuation disconnect: a high TTM P/E of 49.6x contrasts with a forward P/E of just 17.2x, implying earnings are expected to grow substantially, a view we share (source: LIVE FUNDAMENTALS).",
+          "[E2:proxy] Leveraged retail conviction remains high, with margin financing balance (融资余额) at 140.6亿 and a long/short ratio of 99.7% leveraged-long, suggesting bullish sentiment among active traders (source: TUSHARE — MARGIN TRADE)."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] The bear's concern about European expansion costs is a misreading of a strategic positive. The 5/15/2026 Euronews report on talks to buy *idle* plants suggests a capital-efficient approach to de-risking tariffs and localizing supply chains.",
+          "[E4:crowding] A high concentration of premier global investors (Hillhouse, CPPIB, Invesco, State Street) conducted due diligence on the same day, 2026-05-12, immediately following the Q1 reporting season, indicating a synchronized, deep-dive validation of the post-earnings narrative (source: TUSHARE — INSTITUTIONAL RESEARCH VISITS).",
+          "[E3:narrative] Multiple, recent sell-side reports corroborate the overseas growth thesis, forming a strong consensus. Examples include 兴业证券 (20260513) '海外销量高增' and 东方证券 (20260504) '海外销量高增' (source: TUSHARE — BROKER RECOMMENDATIONS)."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The market acknowledges overseas volume growth but believes it will be offset by margin compression from domestic price wars and new costs/frictions associated with European expansion.",
+            "z": "This is evidenced by the low forward P/E (17.2x) and recent news flow (Euronews, Yahoo UK) highlighting potential overseas operational headwinds."
+          },
+          "our_variant": {
+            "e": "[E1:direct] We believe the market is under-modeling the resilience of the +280bps overseas margin premium, misinterpreting strategic de-risking (EU plant talks) as a simple cost headwind.",
+            "z": "[E4:crowding] This is unpriced because while the export *story* is known, its margin *implications* are not. The wave of post-Q1 diligence from top-tier institutions like Hillhouse and CPPIB on 2026-05-12 signals that sophisticated capital is just now validating this margin resilience thesis ahead of the broader market."
+          },
+          "what_changes_our_mind": "The 2026 H1 report showing consolidated gross margin falling below 16.5% AND overseas revenue failing to grow as a percentage of total sales, which would validate the bear's margin compression thesis."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "17.2x (source: LIVE FUNDAMENTALS)",
+        "predicted_value": "21.0x",
+        "predicted_range": {
+          "low": "90.00",
+          "mid": "119.32",
+          "high": "137.00"
+        },
+        "predicted_horizon": "6-9 months (post H1 2026 earnings)",
+        "confidence": 0.7
+      },
+      "step_5_proves_right_if": [
+        "2026 H1 consolidated Gross Margin ≥ 17.2% @ 2026 H1 报告 | source: 2026 H1 Report - 合并利润表 (营业总收入 - 营业总成本) / 营业总收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 overseas revenue as % of total revenue > 38% @ 2026 H1 报告 | source: 2026 H1 Report - 主营业务分地区情况 (境外收入 / 营业收入合计) | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 汽车 segment Gross Margin ≥ 20.0% @ 2026 H1 报告 | source: 2026 H1 Report - 主营业务分产品情况 (汽车相关产品毛利率) | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "2026 H1 consolidated Gross Margin < 16.5% @ 2026 H1 报告 | source: 2026 H1 Report - 合并利润表 (营业总收入 - 营业总成本) / 营业总收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 overseas revenue as % of total revenue ≤ 35% @ 2026 H1 报告 | source: 2026 H1 Report - 主营业务分地区情况 (境外收入 / 营业收入合计) | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net Income YoY for 2026 H1 < -20% @ 2026 H1 报告 | source: 2026 H1 Report - 合并利润表 (归属于母公司所有者的净利润) | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes overseas expansion costs will crush margins → We believe these are strategic, moat-building investments that protect the +280bps overseas margin premium, a view now being validated by deep-dive institutional diligence (e.g., Hillhouse/CPPIB 5/12 visits) before it's fully priced.",
+        "core_causal_link": {
+          "link_sentence": "The accelerating shift in sales mix towards the structurally higher-margin (+280 bps) overseas segment will lead to resilient or even expanding consolidated gross margins, despite domestic price competition.",
+          "evidence_tier": "E1:direct",
+          "tier_justification": "The +280 bps overseas vs. domestic gross margin gap is a disclosed, calculated figure from the 'SEGMENT ECONOMICS — BY REGION (period 20251231)' section of the data context. The core mechanism relies on this directly measured fact."
+        },
+        "time_to_resolution": "3-4 months (through H1 2026 earnings release)",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+24% to +42%",
+          "downside_if_wrong": "-11% to -17%",
+          "reward_to_risk": "2.2:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "1-3 months",
+          "why_market_keeps_buying": [
+            "Momentum traders following the positive price action (+6.9% over 60d).",
+            "Value investors attracted by the low forward P/E (17.2x).",
+            "Investors buying the sell-side narrative on overseas growth without fully modeling the margin impact."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Further positive monthly sales data showing accelerating overseas mix.",
+            "Additional broker reports upgrading margin forecasts, not just sales.",
+            "Official company announcement regarding European production plans, clarifying capex and timeline."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "Initiate 1/2 position",
+            "exit_trigger": "Price reaches analyst mean target of ~119 before H1 earnings are released."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "H1 2026 earnings report confirming consolidated GM resilience (≥17.2%) and continued growth in overseas revenue mix (>38%)."
+          ],
+          "estimated_timing": "August 2026",
+          "short_play": {
+            "direction": "NOT APPLICABLE",
+            "sizing": "NOT APPLICABLE",
+            "entry_trigger": "NOT APPLICABLE"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "50%",
+          "phase_2_catalyst_imminent": "100%"
+        }
+      },
+      "_rebuttal": "Bear claimed European plant talks imply margin compression — addressed by reframing this as a strategic, capital-efficient move to de-risk tariffs and *protect* long-term overseas margins. Bear claimed UK insurance issues signal broad adoption friction — addressed by classifying this as temporary, non-core market noise, not a structural threat to BYD's growth. Bear claimed the trade is crowded — addressed by nuancing the 'crowd' as recent, post-earnings validation by sophisticated institutions like Hillhouse and CPPIB, suggesting the margin implication is a fresh, unpriced insight. Bear cited weak TTM fundamentals — addressed by acknowledging these are lagging indicators that explain the currently depressed forward multiple, which is the entry point for our forward-looking thesis.",
+      "qc_checklist": {
+        "is_future_catalyst": true,
+        "is_variant_business_mechanism": true,
+        "is_variant_data_grounded": true,
+        "is_falsifiable": true,
+        "is_r_r_specific": true,
+        "is_chain_specific_to_ticker": true,
+        "is_evidence_tiered": true,
+        "is_core_link_identified": true
+      }
+    },
+    "_bear_thesis": {
+      "ticker": "002594.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "2026 H1 report: test whether the overseas-growth and flash-charge narrative is translating into durable gross-margin expansion or instead showing localization/export-friction margin compression",
+        "catalyst_date_or_window": "2026-08-01 to 2026-08-31; exact reporting date not available in our data",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Future interim reporting window; exact company calendar date not available in our data"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E3:narrative] The bull case is not hidden: 中信证券 2026-05-10 report '比亚迪2026年4月销量点评：4月出海创新高，闪充车型值得期待', 华创证券 2026-05-07 report '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲', and 兴业证券 2026-05-13 report '比亚迪：2025年业绩稳健，海外销量高增' all explicitly center overseas growth and flash-charge/new-model upside.",
+          "2. [E1:direct] The bull case depends on the higher-margin overseas mix remaining intact: 2025 overseas gross margin was 19.46% versus domestic gross margin of 16.66%, a +280 bps overseas-minus-domestic premium, per SEGMENT ECONOMICS BY REGION for period 20251231.",
+          "3. [E2:proxy] Our short mechanism is that the overseas-margin premium is vulnerable to business-model transition rather than guaranteed to scale: Euronews 2026-05-15 reports 'BYD in talks to buy idle European car plants as it eyes Maserati', which implies potential European localization/capacity commitments; our data does not provide plant-acquisition cost, utilization, depreciation, labor cost, or working-capital data, so the margin-compression mechanism is inferred and not yet measured.",
+          "4. [E3:narrative] A second export-friction mechanism is adoption cost outside the product itself: Yahoo Finance UK 2026-05-16 reports 'UK drivers struggle to get insurance for Chinese EVs such as Jaecoo', indicating category-level Chinese-EV ownership friction in Europe; this is not BYD-specific in the headline, so it is a narrative risk signal rather than direct proof of BYD demand impairment.",
+          "5. [E4:crowding] The same overseas/technology story is crowded: TUSHARE shows 248 broker reports from 35 unique brokers over 90 days, institutional roadshows on 2026-05-12 with State Street, Mirae Asset, Invesco Ltd., Hillhouse, FIL International, and CPPIB, plus margin financing balance of 140.6亿 up 4.9% with securities-lending balance of 0.47亿 and a 99.7% leveraged-long long/short ratio.",
+          "6. [E1:direct] Relative-value support is weaker than the bull suggests: BYD has live gross margin of 17.2% and operating margin of 4.8%, while peer 175.HK Geely has gross margin of 17.0% and operating margin of 5.0%; despite similar margins, BYD trades at P/E TTM 49.6x and P/E forward 17.2x versus Geely at P/E TTM 11.5x and P/E forward 8.1x, per PEER CROSS-SECTION COMPARISON and LIVE FUNDAMENTALS."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Live fundamentals show BYD P/E TTM of 49.6x, P/E forward of 17.2x, EV/EBITDA of 8.3x, ROE of 11.1%, gross margin of 17.2%, operating margin of 4.8%, and revenue growth TTM of -11.8%.",
+          "[E1:direct] Annual net income fell from 40.3B in 2024 to 32.6B in 2025, or -19.0% YoY, per MULTI-YEAR INCOME STATEMENT.",
+          "[E2:proxy] Diluted EPS fell from 9.22 in 2024 to 3.58 in 2025, a -61.2% change by arithmetic from MULTI-YEAR INCOME STATEMENT, while net income fell -19.0%; share count, split, minority-interest, and EPS reconciliation data are not available in our data, so this is a reconciliation/quality flag rather than proof of accounting misstatement.",
+          "[E1:direct] 2025 overseas gross margin was 19.46% versus domestic gross margin of 16.66%, a +280 bps overseas premium, per SEGMENT ECONOMICS BY REGION for period 20251231.",
+          "[E1:direct] 2025 domestic sales were 4932.2亿 and overseas sales were 3107.4亿, per SEGMENT ECONOMICS BY REGION for period 20251231; overseas sales were 38.7% of the disclosed domestic-plus-overseas regional sales base by arithmetic from those two fields.",
+          "[E1:direct] Product gross margins were 汽车 20.49%, 手机部件及组装等 6.29%, and 其他主营业务 17.59%, per SEGMENT ECONOMICS BY PRODUCT for period 20251231.",
+          "[E1:direct] Peer 175.HK Geely shows P/E TTM 11.5x, P/E forward 8.1x, gross margin 17.0%, operating margin 5.0%, revenue TTM growth 15.6%, and ROE 16.0%; BYD shows P/E TTM 49.6x, P/E forward 17.2x, gross margin 17.2%, operating margin 4.8%, revenue TTM growth -11.8%, and ROE 11.1%.",
+          "[E4:crowding] TUSHARE margin trade shows financing balance of 140.6亿, up 4.9% over the period, securities-lending balance of 0.47亿, and a 99.7% leveraged-long long/short ratio.",
+          "[E4:crowding] Live analyst targets show mean target 119.32 with range 90.00–137.00 across 22 analysts, implying 23.9% upside versus live price of 96.30."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] 中信证券 2026-05-10 report '比亚迪2026年4月销量点评：4月出海创新高，闪充车型值得期待' frames April exports and flash-charge models as positive business drivers.",
+          "[E3:narrative] 华创证券 2026-05-07 report '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲' asserts strong overseas sales momentum after Q1.",
+          "[E3:narrative] 东方证券 2026-05-04 report '比亚迪：海外销量高增，预计闪充及新车上市将促进国内销量改善' embeds the view that overseas growth plus flash charging/new launches can improve domestic sales.",
+          "[E3:narrative] Euronews 2026-05-15 reports 'BYD in talks to buy idle European car plants as it eyes Maserati', which is qualitatively different from simple export scaling and points to possible localized manufacturing exposure.",
+          "[E3:narrative] Yahoo Finance UK 2026-05-16 reports 'UK drivers struggle to get insurance for Chinese EVs such as Jaecoo'; this is a category-level Chinese-EV adoption-friction signal, not a BYD-specific metric.",
+          "[E4:crowding] Institutional research visits on 2026-05-12 included State Street, Mirae Asset, Invesco Ltd., Hillhouse, FIL International, and CPPIB, showing the export/technology story is already under active global buy-side diligence."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "[E3:narrative] Market believes BYD’s overseas growth and flash-charge/new-model cycle will offset domestic EV price-war pressure because multiple TUSHARE broker reports explicitly emphasize '出海创新高', '海外销量增长势头强劲', and '闪充车型值得期待'.",
+            "z": "[E4:crowding] This consensus is heavily watched because TUSHARE shows 248 broker reports from 35 unique brokers in 90 days, 7 surveys by 7 unique institutions in 30 days, and a 99.7% leveraged-long long/short ratio."
+          },
+          "our_variant": {
+            "e": "[E2:proxy] Per 中信证券 2026-05-10 '比亚迪2026年4月销量点评：4月出海创新高，闪充车型值得期待', the consensus treats overseas scale as margin-accretive; our business-mechanism variant is that Euronews 2026-05-15 'BYD in talks to buy idle European car plants as it eyes Maserati' signals a shift from high-margin export mix toward localized European fixed-cost exposure, which could compress the 2025 overseas gross-margin premium of 19.46% versus domestic 16.66%.",
+            "z": "[E2:proxy] This contradicts the consensus narrative because the bull case extrapolates the disclosed +280 bps overseas gross-margin premium, while our data contains fresh news of possible European plant acquisition and category-level UK insurance friction but does not yet contain utilization, European plant cost, or insurance-driven conversion-rate data; the mechanism is therefore inferred and should be tested at the 2026 H1 report rather than assumed away."
+          },
+          "what_changes_our_mind": "2026 H1 overseas gross margin remains ≥19.46% while 2026 H1 consolidated gross margin remains ≥17.2% at the 2026 H1 report."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E multiple and gross-margin trigger",
+        "current_value": "BYD live P/E forward 17.2x and live gross margin 17.2%; peer 175.HK Geely P/E forward 8.1x and gross margin 17.0%",
+        "predicted_value": "If 2026 H1 consolidated gross margin falls to ≤15.0%, the WATCHLIST threshold, we expect the market to begin valuing BYD closer to peer 175.HK Geely's 8.1x forward P/E rather than BYD's current 17.2x forward P/E; implied price using 96.30 × 8.1 / 17.2 = 45.37.",
+        "predicted_range": {
+          "low": "45.37, derived from live price 96.30 and forward P/E compression from 17.2x to peer 175.HK Geely 8.1x",
+          "mid": "64.39, derived from live price 96.30 and forward P/E compression from 17.2x to peer 175.HK Geely TTM P/E 11.5x",
+          "high": "90.00, equal to the low end of live analyst target range"
+        },
+        "predicted_horizon": "2026-08-01 to 2026-11-30, covering the 2026 H1 report and subsequent revision window",
+        "confidence": 0.56
+      },
+      "step_5_proves_right_if": [
+        "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 | source: 2026 H1 报告 合并利润表: 营业收入 and 营业成本, computed as (营业收入 - 营业成本) / 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 revenue growth YoY ≤ -10.0% @ 2026 H1 报告 | source: 2026 H1 报告 合并利润表: 营业收入 current period and prior-year comparable period | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net profit YoY ≤ -40.0% @ 2026 H1 报告 | source: 2026 H1 报告 合并利润表: 归属于母公司所有者的净利润 current period and prior-year comparable period | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 overseas gross margin ≤ 16.66% @ 2026 H1 报告 | source: 2026 H1 报告 主营业务分地区情况: 境外收入 and 境外成本, computed as (境外收入 - 境外成本) / 境外收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "2026 H1 consolidated gross margin ≥ 17.2% @ 2026 H1 报告 | source: 2026 H1 报告 合并利润表: 营业收入 and 营业成本, computed as (营业收入 - 营业成本) / 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 overseas gross margin ≥ 19.46% @ 2026 H1 报告 | source: 2026 H1 报告 主营业务分地区情况: 境外收入 and 境外成本, computed as (境外收入 - 境外成本) / 境外收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 revenue growth YoY > 0.0% @ 2026 H1 报告 | source: 2026 H1 报告 合并利润表: 营业收入 current period and prior-year comparable period | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net profit YoY > 0.0% @ 2026 H1 报告 | source: 2026 H1 报告 合并利润表: 归属于母公司所有者的净利润 current period and prior-year comparable period | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes BYD’s overseas growth and flash-charge cycle will offset domestic price-war pressure because 中信证券 2026-05-10 says '4月出海创新高，闪充车型值得期待' and 华创证券 2026-05-07 says '海外销量增长势头强劲' → We believe the under-modeled mechanism is overseas-margin compression from European localization/fixed-cost exposure and Chinese-EV ownership friction, signaled by Euronews 2026-05-15 reporting BYD is in talks to buy idle European car plants and Yahoo Finance UK 2026-05-16 reporting UK insurance difficulty for Chinese EVs → This is unpriced because the disclosed 2025 overseas gross-margin premium of 19.46% versus domestic 16.66% is being extrapolated while positioning is crowded at 99.7% leveraged-long.",
+        "core_causal_link": {
+          "link_sentence": "European localization and ownership-friction costs will compress BYD's overseas gross-margin premium, turning the 2025 overseas 19.46% gross margin versus domestic 16.66% from a bull proof point into the main earnings-risk line item.",
+          "evidence_tier": "E2:proxy",
+          "tier_justification": "The exact DATA CONTEXT supports the current regional margin gap directly via SEGMENT ECONOMICS BY REGION and supports the localization/friction risk via Euronews 2026-05-15 and Yahoo Finance UK 2026-05-16 news, but it does not provide European plant economics, utilization, insurance conversion data, warranty cost, or after-sales cost; primary data needed for E1 would be 2026 H1 regional gross margin and European cost disclosures showing overseas margin compression."
+        },
+        "time_to_resolution": "2026-08-01 to 2026-08-31 at the 2026 H1 report; exact reporting date not available in our data",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+33.1% to +52.9%, derived from live price 96.30 and forward P/E compression from BYD 17.2x to peer 175.HK Geely TTM P/E 11.5x or forward P/E 8.1x",
+          "downside_if_wrong": "-16.1% to -23.9%, derived from live price 96.30 to 52-week high 111.82 or analyst mean target 119.32",
+          "reward_to_risk": "2.2:1 using +52.9% downside-to-peer-forward-multiple reward versus -23.9% risk to analyst mean target; pre-catalyst sizing should remain conditional because the core causal link is E2:proxy, not E1:direct"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "Now to the 2026 H1 report window of 2026-08-01 to 2026-08-31",
+          "why_market_keeps_buying": [
+            "[E3:narrative] Multiple recent broker reports repeat the same overseas-growth and flash-charge narrative, including 中信证券 2026-05-10 '比亚迪2026年4月销量点评：4月出海创新高，闪充车型值得期待' and 华创证券 2026-05-07 '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲'.",
+            "[E1:direct] The 2025 regional disclosure gives bulls a clean datapoint: overseas gross margin of 19.46% versus domestic gross margin of 16.66%, a +280 bps premium.",
+            "[E4:crowding] Institutional roadshows on 2026-05-12 included State Street, Mirae Asset, Invesco Ltd., Hillhouse, FIL International, and CPPIB, reinforcing market confidence that global capital is diligencing the same story.",
+            "[E4:crowding] Live analyst mean target is 119.32, implying 23.9% upside from live price 96.30, which can support dip-buying."
+          ],
+          "early_signs_phase_1_weakening": [
+            "[E3:narrative] Additional news confirming actual acquisition terms for European plants would increase the probability that the Euronews 2026-05-15 localization-risk signal becomes a measured cost issue; acquisition price and cost data are not available in our data.",
+            "[E3:narrative] More reports of Chinese-EV insurance or after-sales friction in Europe would strengthen the Yahoo Finance UK 2026-05-16 category-friction concern; BYD-specific insurance data are not available in our data.",
+            "[E4:crowding] Margin financing balance rolling over from the current 140.6亿 after having risen 4.9% would indicate leveraged-long support is weakening; future margin-trade data are not available in our data."
+          ],
+          "optional_long_play": {
+            "direction": "None; avoid tactical long because the long thesis is crowded and the short thesis catalyst is within the 2026 H1 reporting window.",
+            "sizing": "0%",
+            "exit_trigger": "Not applicable"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "[E1:direct] 2026 H1 consolidated gross margin ≤15.0% at the 2026 H1 report.",
+            "[E1:direct] 2026 H1 overseas gross margin ≤16.66% at the 2026 H1 report.",
+            "[E1:direct] 2026 H1 revenue growth YoY ≤-10.0% at the 2026 H1 report.",
+            "[E1:direct] 2026 H1 net profit YoY ≤-40.0% at the 2026 H1 report."
+          ],
+          "estimated_timing": "2026-08-01 to 2026-11-30, covering 2026 H1 report publication and broker revision cycle",
+          "short_play": {
+            "direction": "Conditional short",
+            "sizing": "Start small before the catalyst; scale only if phase-1 weakening signs or H1 margin/revenue triggers appear.",
+            "entry_trigger": "Enter only if 2026 H1 consolidated gross margin is disclosed at ≤15.0% or 2026 H1 overseas gross margin is disclosed at ≤16.66%; if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "1%",
+          "phase_2_catalyst_imminent": "2%"
+        }
+      },
+      "_rebuttal": {
+        "bull_point_1_overseas_gross_margin_is_higher": {
+          "addressed": true,
+          "response": "[E1:direct] We accept the bull's 2025 fact that overseas gross margin was 19.46% versus domestic 16.66%, a +280 bps premium; the short argument is not that the historical margin gap is false, but that it is now the key vulnerability if European localization costs or ownership-friction costs compress it."
+        },
+        "bull_point_2_sell_side_reports_validate_overseas_momentum": {
+          "addressed": true,
+          "response": "[E3:narrative] We treat 中信证券 2026-05-10 '4月出海创新高，闪充车型值得期待' and 华创证券 2026-05-07 '海外销量增长势头强劲' as evidence of consensus narrative, not direct proof that the overseas margin premium will persist after localization."
+        },
+        "bull_point_3_institutional_visits_signal_smart_money_interest": {
+          "addressed": true,
+          "response": "[E4:crowding] The 2026-05-12 visits by State Street, Mirae Asset, Invesco Ltd., Hillhouse, FIL International, and CPPIB prove attention and due diligence, not differentiated fundamental upside; when paired with 248 broker reports from 35 unique brokers and a 99.7% leveraged-long ratio, this increases crowding risk."
+        },
+        "bull_point_4_european_plant_talks_support_expansion": {
+          "addressed": true,
+          "response": "[E2:proxy] Euronews 2026-05-15 reporting BYD is in talks to buy idle European car plants can be read as growth support, but our variant reads it as a business-model shift toward localized fixed-cost exposure; the decisive data will be utilization, depreciation, labor, and regional gross margin, which are not available in our data today."
+        },
+        "bull_point_5_forward_pe_discount_indicates_pessimism": {
+          "addressed": true,
+          "response": "[E1:direct] BYD's forward P/E of 17.2x still exceeds peer 175.HK Geely's forward P/E of 8.1x while BYD's gross margin of 17.2% is similar to Geely's 17.0% and BYD's operating margin of 4.8% is below Geely's 5.0%; valuation alone is not our variant view, but it limits the margin of safety if the business mechanism breaks."
+        },
+        "bull_point_6_q2_h1_margin_resilience_would_disprove_short": {
+          "addressed": true,
+          "response": "[E1:direct] Agreed; the short is falsifiable if 2026 H1 consolidated gross margin is ≥17.2% and overseas gross margin is ≥19.46%, both measured from the 2026 H1 report fields specified in step_6."
+        }
+      },
+      "qc_checklist": {
+        "catalyst_date_future_relative_to_2026_05_16": true,
+        "mechanism_chain_quotes_specific_broker_report_titles": true,
+        "mechanism_chain_quotes_specific_news_events": true,
+        "mechanism_chain_uses_business_mechanism_not_valuation_only": true,
+        "contrarian_view_our_variant_references_specific_broker_report_and_news": true,
+        "core_causal_link_identified_with_evidence_tier": true,
+        "core_causal_link_not_oversold_as_E1": true,
+        "every_step_2_item_has_evidence_tier_prefix": true,
+        "every_step_3_evidence_item_has_evidence_tier_prefix": true,
+        "step_5_conditions_are_mechanized_with_metric_operator_threshold_event_source_if_not_disclosed": true,
+        "step_6_conditions_are_mechanized_with_metric_operator_threshold_event_source_if_not_disclosed": true,
+        "numeric_claims_grounded_in_data_context_or_derived_from_data_context": true,
+        "uses_not_available_where_data_missing": true,
+        "round_2_rebuttal_addresses_bull_arguments": true
+      }
+    },
+    "_bull_r1": {
+      "ticker": "002594.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Q2 2026 Earnings Release, which will provide the next official print on overseas sales mix and its impact on consolidated gross margins.",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate reporting calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E3:narrative] The market is currently anchored on the narrative of intense domestic EV price wars and potential overseas headwinds (e.g., tariffs, UK insurance issues per recent news), leading to fears of significant margin compression.",
+          "2. [E1:direct] However, this narrative under-appreciates a powerful counter-dynamic: BYD's overseas sales are structurally higher margin. Per 2025 segment data, overseas gross margin is 19.46% vs. domestic at 16.66%, a +280 basis point premium.",
+          "3. [E3:narrative] This is not just a historical fact; it's the core of the current growth story. Recent sell-side reports are explicitly calling this out, such as 华创证券's 2026-05-07 note titled '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲' (26Q1 results in line, overseas sales growth momentum is strong).",
+          "4. [E4:crowding] This emerging thesis is now attracting significant attention from sophisticated, global capital. A dense cluster of top-tier institutional visits occurred on 2026-05-12, including State Street, Mirae Asset, Invesco, Hillhouse, and CPPIB, signaling intensive buy-side due diligence on this specific narrative post-Q1 results.",
+          "5. As the sales mix continues to shift towards the faster-growing, higher-margin overseas segment, consolidated gross margins will prove far more resilient than feared, potentially even expanding. This will trigger upward earnings revisions and a multiple re-rating as the market reprices BYD as a profitable global growth story, not just a low-margin domestic volume player."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Overseas gross margin of 19.46% is 280bps higher than domestic gross margin of 16.66% (source: SEGMENT ECONOMICS, period 20251231).",
+          "[E1:direct] The Automotive segment, the core driver, has a strong gross margin of 20.49% (source: SEGMENT ECONOMICS, period 20251231).",
+          "[E4:crowding] Analyst consensus reflects significant upside, with a mean target price of 119.32, representing a +23.9% upside from the live price of 96.30 (source: LIVE FUNDAMENTALS).",
+          "[E2:proxy] Leveraged long interest is expanding, with margin financing balance (融资余额) up +4.9% over the period, while the long/short ratio is an overwhelming 99.7% leveraged-long (source: TUSHARE — MARGIN TRADE).",
+          "[E2:proxy] The market is implying a forward P/E of 17.2x, a sharp discount to the TTM P/E of 49.6x, suggesting significant pessimism about future earnings is already priced in (source: LIVE FUNDAMENTALS)."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] Multiple, recent sell-side reports corroborate the overseas growth thesis. Examples include 兴业证券 (20260513) '海外销量高增' and 东方证券 (20260504) '海外销量高增' (source: TUSHARE — BROKER RECOMMENDATIONS).",
+          "[E4:crowding] A high concentration of premier global investors (Hillhouse, CPPIB, Invesco, FIL International, State Street, Mirae Asset) conducted due diligence via roadshows on the same day, 2026-05-12, immediately following the Q1 reporting season (source: TUSHARE — INSTITUTIONAL RESEARCH VISITS).",
+          "[E3:narrative] Strategic actions support the overseas expansion narrative, with recent news indicating 'BYD in talks to buy idle European car plants' (source: RECENT NEWS, euronews.com 5/15/2026)."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The market is pricing in margin compression.",
+            "z": "This is driven by fears of a domestic price war and potential overseas tariffs/headwinds, which are seen as overwhelming any other factor."
+          },
+          "our_variant": {
+            "e": "[E1:direct] We believe the market is under-modeling the margin-accretive impact of a structural sales mix shift towards higher-margin (+280 bps) overseas markets.",
+            "z": "[E4:crowding] This is not yet fully priced because the narrative is only now being validated by sell-side Q1 reports (e.g., 华创证券 '海外销量增长势头强劲') and is concurrently attracting a wave of due diligence from top-tier global institutions (e.g., Hillhouse, CPPIB visits on 2026-05-12), indicating the thesis is gaining traction with 'smart money' ahead of the broader market."
+          },
+          "what_changes_our_mind": "A Q2 2026 earnings report showing consolidated gross margin falling below 16.0% while overseas revenue as a percentage of total revenue fails to grow sequentially."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "17.2x (source: LIVE FUNDAMENTALS)",
+        "predicted_value": "21.0x",
+        "predicted_range": {
+          "low": "90.00",
+          "mid": "119.32",
+          "high": "137.00"
+        },
+        "predicted_horizon": "6-9 months (post Q2/Q3 2026 earnings)",
+        "confidence": 0.7
+      },
+      "step_5_proves_right_if": [
+        "2026 H1 consolidated Gross Margin ≥ 17.2% @ 2026 H1 报告 | source: 2026 H1 Report - 合并利润表 (营业总收入 - 营业总成本) / 营业总收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 overseas revenue as % of total revenue > 38% @ 2026 H1 报告 | source: 2026 H1 Report - 主营业务分地区情况 (境外收入 / 营业收入合计) | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 汽车 segment Gross Margin ≥ 20.0% @ 2026 H1 报告 | source: 2026 H1 Report - 主营业务分产品情况 (汽车相关产品毛利率) | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "2026 H1 consolidated Gross Margin < 16.0% @ 2026 H1 报告 | source: 2026 H1 Report - 合并利润表 (营业总收入 - 营业总成本) / 营业总收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 overseas revenue as % of total revenue ≤ 35% @ 2026 H1 报告 | source: 2026 H1 Report - 主营业务分地区情况 (境外收入 / 营业收入合计) | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "Net Income YoY for 2026 H1 < -25% @ 2026 H1 报告 | source: 2026 H1 Report - 合并利润表 (归属于母公司所有者的净利润) | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes domestic price wars will crush margins → We believe accelerating, higher-margin (+280bps) overseas sales are a more powerful, under-modeled driver of margin *expansion* → This is unpriced because top-tier institutional due diligence (e.g., Hillhouse, CPPIB on 2026-05-12) is only now converging with fresh sell-side reports (e.g., 华创证券 '海外销量增长势头强劲') that confirm the Q1 trend.",
+        "core_causal_link": {
+          "link_sentence": "The +280 bps gross margin premium on overseas sales, combined with accelerating overseas volume, will be sufficient to offset domestic price competition and drive consolidated gross margin resilience or expansion.",
+          "evidence_tier": "E1:direct",
+          "tier_justification": "The `SEGMENT ECONOMICS` data for period 20251231 provides true, disclosed gross margins for both domestic (16.66%) and overseas (19.46%) regions, allowing for a direct and precise calculation of the margin differential. No inference is required."
+        },
+        "time_to_resolution": "3-6 months (pending Q2 2026 results and subsequent market reaction)",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+24% to +42%",
+          "downside_if_wrong": "-11% to -15%",
+          "reward_to_risk": "2.2:1 (based on analyst mean target vs 52W low)"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "1-3 months",
+          "why_market_keeps_buying": [
+            "Value investors buying the dip on low forward P/E.",
+            "Momentum traders playing the range bounce from the 52W low."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Monthly sales data showing overseas sales consistently exceeding 35% of total units.",
+            "Further positive sell-side reports specifically modeling margin expansion from mix shift."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "Initiate 1/3 position",
+            "exit_trigger": "Price > 110 (take some profit) or thesis falsified by Q2 earnings."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Q2 2026 earnings release confirming stable or expanding consolidated gross margin (>17.2%)."
+          ],
+          "estimated_timing": "Late August 2026",
+          "short_play": {
+            "direction": "N/A - LONG thesis",
+            "sizing": "N/A",
+            "entry_trigger": "N/A"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "66% (if monthly export data is strong)",
+          "phase_2_catalyst_imminent": "100% (pre-Q2 earnings announcement)"
+        }
+      },
+      "qc_checklist": {
+        "is_long": true,
+        "is_short": false,
+        "is_contrarian_mechanism": true,
+        "is_not_valuation_only": true,
+        "is_grounded_in_data_context": true,
+        "is_falsifiable": true,
+        "cites_broker_report": true,
+        "cites_inst_visit_or_event": true,
+        "is_ticker_specific_mechanism": true
+      }
+    },
+    "_bear_r1": {
+      "ticker": "002594.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "2026 H1 report: test whether overseas growth and flash-charge/new-model narrative is offset by gross-margin compression, revenue decline, or earnings deterioration",
+        "catalyst_date_or_window": "2026-08-01 to 2026-08-31; exact reporting date not available in our data",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Future interim reporting window; exact company calendar date not available in our data"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. [E3:narrative] Sell-side narrative is explicitly bullish on exports and product cycle: 中信证券 2026-05-10 report '比亚迪2026年4月销量点评：4月出海创新高，闪充车型值得期待' and 华创证券 2026-05-07 report '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲' frame overseas growth and flash charging as the key business drivers.",
+          "2. [E1:direct] The business mechanism is margin-mix vulnerability: 2025 overseas gross margin was 19.46% versus domestic gross margin of 16.66%, a +280 bps overseas-minus-domestic gap, so the bull case relies on sustaining a higher-margin overseas mix rather than merely adding volume.",
+          "3. [E3:narrative] Recent news cuts against the clean export-margin story: Euronews 2026-05-15 says BYD is in talks to buy idle European car plants as it eyes Maserati, which implies localization/capacity-cost commitments; Yahoo Finance UK 2026-05-16 reports UK drivers struggle to get insurance for Chinese EVs such as Jaecoo, a sign of non-product adoption friction around Chinese EV ownership in Europe.",
+          "4. [E2:proxy] If European localization and insurance/after-sales friction raise fixed costs or slow sell-through, the overseas 19.46% gross margin premium over domestic 16.66% can compress; this causal link is inferred because our data contains the regional gross-margin gap and the news events, but not plant-acquisition cost, European warranty cost, or insurance-related conversion-rate data.",
+          "5. [E4:crowding] Positioning/narrative risk is asymmetric for a short: TUSHARE shows 248 broker reports from 35 unique brokers in the 90-day window, 7 surveys by 7 unique institutions in 30 days including State Street, Mirae Asset, Invesco Ltd., Hillhouse, FIL International, and CPPIB on 2026-05-12, plus margin financing balance of 140.6亿 up 4.9% with a 99.7% leveraged-long long/short ratio, indicating a crowded long narrative around the same overseas/technology story."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "[E1:direct] Live fundamentals show P/E TTM of 49.6x, P/E forward of 17.2x, EV/EBITDA of 8.3x, ROE of 11.1%, gross margin of 17.2%, operating margin of 4.8%, and revenue growth TTM of -11.8%.",
+          "[E1:direct] Annual net income fell from 40.3B in 2024 to 32.6B in 2025, or -19.0% YoY per the multi-year income statement.",
+          "[E2:proxy] Diluted EPS fell from 9.22 in 2024 to 3.58 in 2025 while net income fell -19.0%; our data does not include share count, split, or accounting reconciliation, so this is a quality/reconciliation flag rather than proof of accounting issue.",
+          "[E1:direct] 2025 regional gross margin shows overseas at 19.46% and domestic at 16.66%, a +280 bps overseas premium, making the overseas-margin thesis directly measurable in future segment disclosures.",
+          "[E1:direct] Product gross margins show 汽车 at 20.49%, 手机部件及组装等 at 6.29%, and 其他主营业务 at 17.59%, so mix shift away from autos would be margin dilutive if it occurred; future mix data is not available in our data.",
+          "[E1:direct] Peer 175.HK Geely shows P/E TTM 11.5x, P/E forward 8.1x, gross margin 17.0%, operating margin 5.0%, revenue TTM growth 15.6%, and ROE 16.0%, versus BYD live P/E TTM 49.6x, P/E forward 17.2x, gross margin 17.2%, operating margin 4.8%, revenue TTM growth -11.8%, and ROE 11.1%.",
+          "[E4:crowding] TUSHARE margin trade shows financing balance of 140.6亿, up 4.9% over the period, securities-lending balance of 0.47亿, and a 99.7% leveraged-long long/short ratio.",
+          "[E4:crowding] Live analyst targets show mean target 119.32 with range 90.00–137.00 across 22 analysts, implying 23.9% upside versus the live price of 96.30."
+        ],
+        "evidence_qualitative": [
+          "[E3:narrative] 兴业证券 2026-05-13 report '比亚迪：2025年业绩稳健，海外销量高增' reinforces the consensus that overseas sales growth can offset domestic pressure.",
+          "[E3:narrative] 东方证券 2026-05-04 report '比亚迪：海外销量高增，预计闪充及新车上市将促进国内销量改善' embeds two bullish assumptions: overseas growth remains strong and flash charging/new cars repair domestic demand.",
+          "[E3:narrative] 华金证券 2026-05-06 report '比亚迪2026年一季报点评：海外销量保持高增，闪充带动产品矩阵升级' also centers the export-plus-flash-charge product-cycle narrative.",
+          "[E3:narrative] Euronews 2026-05-15 reports BYD is in talks to buy idle European car plants, which is a business-model transition from asset-light export growth toward localized manufacturing exposure.",
+          "[E3:narrative] Yahoo Finance UK 2026-05-16 reports UK drivers struggle to get insurance for Chinese EVs such as Jaecoo; while not BYD-specific in the headline, it flags a European Chinese-EV ownership friction that could affect category adoption and residual-value perception.",
+          "[E4:crowding] Institutional research visits on 2026-05-12 included State Street, Mirae Asset, Invesco Ltd., Hillhouse, FIL International, and CPPIB, showing the story is heavily studied by global buy-side institutions."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "[E3:narrative] Market believes BYD’s overseas growth and flash-charging product cycle will offset domestic EV price-war pressure because multiple broker reports in the 90-day TUSHARE window emphasize '海外销量高增', '出海创新高', and '闪充车型值得期待'.",
+            "z": "[E4:crowding] This consensus is crowded because TUSHARE shows 248 broker reports from 35 unique brokers in 90 days, 7 unique institutional surveys in 30 days, and margin financing of 140.6亿 with a 99.7% leveraged-long ratio."
+          },
+          "our_variant": {
+            "e": "[E3:narrative] Per 中信证券 2026-05-10 '比亚迪2026年4月销量点评：4月出海创新高，闪充车型值得期待', the market is underwriting exports and fast charging as durable upside; however, Euronews 2026-05-15 says BYD is in talks to buy idle European car plants, and Yahoo Finance UK 2026-05-16 reports insurance friction for Chinese EVs in the UK, suggesting overseas expansion may require localization, after-sales support, and consumer-financing/insurance fixes rather than simply exporting high-margin vehicles.",
+            "z": "[E2:proxy] This contradicts the consensus narrative because the directly disclosed 2025 overseas gross margin premium of 19.46% versus domestic 16.66% is exactly the profit pool at risk; the causal compression from European localization and ownership-friction costs is not yet measured in our data, so the thesis resolves at the next segment-margin print."
+          },
+          "what_changes_our_mind": "2026 H1 overseas gross margin remains ≥19.46% while 2026 H1 consolidated revenue growth is >0.0% YoY at the 2026 H1 report; source: 主营业务分地区: 境外销售收入/销售成本 and 合并利润表: 营业收入."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "2026 H1 consolidated gross margin and overseas gross-margin compression",
+        "current_value": "Live gross margin 17.2%; 2025 overseas gross margin 19.46%; 2025 domestic gross margin 16.66%",
+        "predicted_value": "2026 H1 consolidated gross margin <15.0%, using the watchlist threshold 'gross_margin drops below 15%' from the data context",
+        "predicted_range": {
+          "low": "<15.0%",
+          "mid": "15.0%–16.66%",
+          "high": "≥17.2%"
+        },
+        "predicted_horizon": "2026-08-01 to 2026-08-31; exact 2026 H1 report date not available in our data",
+        "confidence": 0.55
+      },
+      "step_5_proves_right_if": [
+        "2026 H1 consolidated gross margin < 15.0% @ 2026 H1 报告 2026-08-31 window | source: 合并利润表: 营业收入/营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated revenue growth ≤ -10.0% YoY @ 2026 H1 报告 2026-08-31 window | source: 合并利润表: 营业收入 current period and prior-year comparable period | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net income growth < -40.0% YoY @ 2026 H1 报告 2026-08-31 window | source: 合并利润表: 归属于母公司股东的净利润 current period and prior-year comparable period | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 overseas gross margin ≤ 16.66% @ 2026 H1 报告 2026-08-31 window | source: 主营业务分地区: 境外销售收入/境外销售成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_6_proves_wrong_if": [
+        "2026 H1 consolidated gross margin ≥ 17.2% @ 2026 H1 报告 2026-08-31 window | source: 合并利润表: 营业收入/营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 consolidated revenue growth > 0.0% YoY @ 2026 H1 报告 2026-08-31 window | source: 合并利润表: 营业收入 current period and prior-year comparable period | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 net income growth ≥ 0.0% YoY @ 2026 H1 报告 2026-08-31 window | source: 合并利润表: 归属于母公司股东的净利润 current period and prior-year comparable period | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+        "2026 H1 overseas gross margin ≥ 19.46% @ 2026 H1 报告 2026-08-31 window | source: 主营业务分地区: 境外销售收入/境外销售成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes overseas growth and flash charging will offset domestic EV price-war pressure because 中信证券 2026-05-10 '比亚迪2026年4月销量点评：4月出海创新高，闪充车型值得期待' and 华创证券 2026-05-07 '26Q1业绩符合预期，海外销量增长势头强劲' reinforce the export/product-cycle narrative → We believe the next business mechanism is overseas-margin compression from European localization needs and ownership-friction costs, evidenced by Euronews 2026-05-15 reporting BYD talks to buy idle European plants and Yahoo Finance UK 2026-05-16 reporting insurance friction for Chinese EVs → This is unpriced because TUSHARE shows 248 broker reports from 35 brokers, 7 unique institutional visits in 30 days, and a 99.7% leveraged-long ratio focused on the same bullish narrative.",
+        "core_causal_link": {
+          "link_sentence": "European localization and Chinese-EV ownership friction will compress BYD’s overseas gross-margin premium, currently 19.46% overseas versus 16.66% domestic in 2025, before the market has revised the export-growth narrative.",
+          "evidence_tier": "E2:proxy",
+          "tier_justification": "The 2025 overseas gross margin of 19.46%, domestic gross margin of 16.66%, and +280 bps gap are [E1:direct] from SEGMENT ECONOMICS, while the localization/insurance-friction cost mechanism is inferred from Euronews 2026-05-15 and Yahoo Finance UK 2026-05-16 news rather than measured in BYD segment costs. To make this E1, we would need 2026 H1 disclosure of European plant costs, overseas warranty/insurance-related sales conversion, or region-level overseas gross margin deterioration attributable to Europe."
+        },
+        "time_to_resolution": "2026 H1 report window, 2026-08-01 to 2026-08-31; exact date not available in our data",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+15% to +25% [external estimate, not in our data context]",
+          "downside_if_wrong": "-8% to -14% [external estimate, not in our data context]",
+          "reward_to_risk": "Approximately 2:1 [external estimate, not in our data context]"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "From 2026-05-16 through the next monthly sales/news cycle and into the 2026 H1 report window; exact intervening company dates not available in our data",
+          "why_market_keeps_buying": [
+            "[E3:narrative] Multiple brokers including 中信证券, 华创证券, 华金证券, 东方证券, and 兴业证券 have recent reports emphasizing overseas high growth, flash charging, or domestic improvement.",
+            "[E4:crowding] TUSHARE shows 248 broker reports from 35 unique brokers in the 90-day window.",
+            "[E4:crowding] TUSHARE shows 2026-05-12 roadshow activity involving State Street, Mirae Asset, Invesco Ltd., Hillhouse, FIL International, and CPPIB.",
+            "[E4:crowding] Live analyst targets show mean target 119.32 versus live price 96.30, implying 23.9% upside."
+          ],
+          "early_signs_phase_1_weakening": [
+            "[E3:narrative] Additional news that European plant acquisitions are confirmed, delayed, or require unexpectedly large commitments; acquisition cost is not available in our data.",
+            "[E3:narrative] Additional European press reports that insurance, repair, or residual-value problems affect Chinese EV adoption; BYD-specific insurance impact is not available in our data.",
+            "[E1:direct] Live or reported gross margin moving toward the watchlist threshold of 15.0%."
+          ],
+          "optional_long_play": {
+            "direction": "No optional long; remain flat until phase-1 weakening because crowding can extend the export/flash-charge narrative.",
+            "sizing": "0%",
+            "exit_trigger": "Not applicable"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "[E1:direct] 2026 H1 consolidated gross margin <15.0% at the 2026 H1 report.",
+            "[E1:direct] 2026 H1 consolidated revenue growth ≤-10.0% YoY at the 2026 H1 report.",
+            "[E1:direct] 2026 H1 overseas gross margin ≤16.66% at the 2026 H1 report."
+          ],
+          "estimated_timing": "2026-08-01 to 2026-08-31; exact 2026 H1 report date not available in our data",
+          "short_play": {
+            "direction": "Short 002594.SZ or equivalent delta-adjusted bearish structure subject to borrow/liquidity constraints; borrow data not available in our data beyond 融券余额 0.47亿.",
+            "sizing": "Phase in from 0.5% to 1.0% gross exposure [external estimate, not in our data context].",
+            "entry_trigger": "Enter only after either confirmed European localization/insurance-friction news intensifies or pre-report price strength keeps valuation/crowding intact; use 2026 H1 report as the primary catalyst."
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "0.5% [external estimate, not in our data context]",
+          "phase_2_catalyst_imminent": "1.0% [external estimate, not in our data context]"
+        }
+      },
+      "qc_checklist": {
+        "mechanism_chain_cites_specific_broker_name_and_report_title": true,
+        "mechanism_chain_cites_at_least_two_required_sources": true,
+        "our_variant_references_specific_broker_report": true,
+        "our_variant_references_specific_news_or_inst_event": true,
+        "variant_view_is_business_mechanism_not_valuation_only": true,
+        "core_causal_link_named_and_tiered": true,
+        "non_E1_core_link_is_not_overstated_as_fact": true,
+        "every_step_2_item_has_evidence_tier_prefix": true,
+        "every_step_3_evidence_item_has_evidence_tier_prefix": true,
+        "step_5_conditions_are_mechanized_with_metric_operator_threshold_event_source_and_if_not_disclosed": true,
+        "step_6_conditions_are_mechanized_with_metric_operator_threshold_event_source_and_if_not_disclosed": true,
+        "catalyst_date_or_window_is_future_relative_to_2026-05-16": true,
+        "numeric_claims_are_grounded_or_labeled_external": true,
+        "used_not_available_where_data_missing": true,
+        "short_bias_expressed_but_not_forced_beyond_available_business_signal": true
+      }
+    },
+    "_technical": {
+      "trend": "UP",
+      "trend_strength": 65,
+      "momentum": {
+        "rsi_estimate": 45,
+        "macd_signal": "bullish",
+        "interpretation": "Price has recovered 6.9% from 60-day lows at 90.06 to current 96.30, showing bullish momentum despite today's 2.46% decline."
+      },
+      "key_levels": {
+        "support": [
+          90.06,
+          87.72,
+          85.88
+        ],
+        "resistance": [
+          111.82,
+          119.32
+        ]
+      },
+      "volume_profile": "normal",
+      "chip_concentration": "concentrated",
+      "margin_trend": "expanding_long",
+      "technical_summary_e": "BYD shows a constructive uptrend with price recovering 6.9% from recent 60-day lows of 90.06, though current 96.30 sits at only 36% of the 52-week range (85.88-111.82). Margin financing has expanded 4.9% to 140.6B yuan with 99.7% long positioning, indicating strong institutional conviction despite near-term volatility.",
+      "technical_summary_z": "技术面显示比亚迪从60日低点90.06反弹至96.30，涨幅6.9%，但仍处于52周区间的36%位置。融资余额增长4.9%至1406亿元，多头占比99.7%，显示机构对长期前景保持信心，关键阻力位在111.82和分析师目标价119.32附近。"
+    },
+    "_forensic": {
+      "bull_findings": [
+        {
+          "claim": "Overseas gross margin of 19.46% is 280bps higher than domestic gross margin of 16.66%",
+          "data_match": "MATCH",
+          "evidence": "SEGMENT ECONOMICS BY REGION (period 20251231): overseas GM 19.46% [true_gm], domestic GM 16.66% [true_gm]"
+        },
+        {
+          "claim": "Automotive segment gross margin of 20.49%",
+          "data_match": "MATCH",
+          "evidence": "SEGMENT ECONOMICS BY PRODUCT (period 20251231): 汽车 GM 20.49% [true_gm]"
+        },
+        {
+          "claim": "BYD auto segment GM 20.49% vs peer 175.HK Geely consolidated GM of 17.0%",
+          "data_match": "MATCH",
+          "evidence": "SEGMENT ECONOMICS shows 汽车 GM 20.49%; PEER COMPARISON shows 175.HK GM 17.0%"
+        },
+        {
+          "claim": "Forward P/E of 17.2x vs TTM P/E of 49.6x implies substantial earnings growth expected",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS: P/E TTM 49.6x, P/E Fwd 17.2x"
+        },
+        {
+          "claim": "Margin financing balance at 140.6亿 with 99.7% leveraged-long ratio",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE MARGIN TRADE: 融资余额 140.6亿 (+4.9%), 融券余额 0.47亿, long/short ratio 99.7%"
+        },
+        {
+          "claim": "Recent sell-side reports emphasize overseas growth (兴业证券, 中信证券, etc.)",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE BROKER RECOMMENDATIONS show multiple reports citing '海外销量高增' from 兴业证券 20260513, 华创证券 20260507, etc."
+        },
+        {
+          "claim": "High-tier institutional visits on 2026-05-12 (State Street, Hillhouse, CPPIB, Invesco)",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE INSTITUTIONAL RESEARCH VISITS: 20260512 shows State Street, Mirae Asset, Invesco Ltd., Hillhouse, FIL International, CPPIB"
+        }
+      ],
+      "bear_findings": [
+        {
+          "claim": "Net income fell from 40.3B in 2024 to 32.6B in 2025, or -19.0% YoY",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT: Net Income 2025=32.6B, 2024=40.3B, Net Income YoY (latest): -19.0%"
+        },
+        {
+          "claim": "Diluted EPS fell from 9.22 in 2024 to 3.58 in 2025, a -61.2% change",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT: Diluted EPS 2025=3.58, 2024=9.22 (arithmetic confirms -61.2%)"
+        },
+        {
+          "claim": "BYD P/E TTM 49.6x vs Geely P/E TTM 11.5x despite similar margins",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS: BYD P/E TTM 49.6x, GM 17.2%, OpM 4.8%; PEER COMPARISON: 175.HK P/E TTM 11.5x, GM 17.0%, OpM 5.0%"
+        },
+        {
+          "claim": "Revenue growth TTM of -11.8%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS: Rev Growth (TTM): -11.8%"
+        },
+        {
+          "claim": "248 broker reports from 35 unique brokers over 90 days",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE BROKER RECOMMENDATIONS: (Total 248 reports / 35 unique brokers / latest 2026-05-13)"
+        },
+        {
+          "claim": "Overseas sales were 38.7% of disclosed regional sales base",
+          "data_match": "MATCH",
+          "evidence": "SEGMENT ECONOMICS: domestic sales 4932.2亿, overseas sales 3107.4亿 → 3107.4/(4932.2+3107.4) = 38.7%"
+        }
+      ],
+      "shared_assumptions_at_risk": [
+        "Both sides assume the 2025 overseas vs domestic gross margin gap of +280bps is sustainable and representative of future performance",
+        "Both sides assume European expansion news (plant acquisition talks) will materially impact margins, but neither has visibility into actual acquisition costs, utilization rates, or operational impact",
+        "Both sides rely heavily on the H1 2026 earnings report to validate their thesis, making this a binary catalyst risk for both positions"
+      ],
+      "technical_vs_bull": "AGREES — Technical shows UP trend (strength 65) with 6.9% recovery from 60-day lows, expanding margin financing (+4.9%), and 99.7% leveraged-long positioning. This supports Bull's expectation of +24% to +42% upside despite near-term volatility.",
+      "technical_vs_bear": "CONFLICTS — Technical UP trend contradicts Bear's mechanism of margin compression and valuation multiple contraction. The expanding long positioning (融资余额 +4.9%) and recovery from lows suggests market is not pricing in Bear's downside scenario.",
+      "bull_contrarian_quality": "BUSINESS_MECHANISM — Bull cites specific broker reports (兴业证券 20260513, 中信证券 20260510, 华创证券 20260507), institutional visits (State Street, Hillhouse, CPPIB on 2026-05-12), and recent news (Euronews 5/15 plant talks) to construct a margin-mix business mechanism rather than just valuation comparison.",
+      "bear_contrarian_quality": "BUSINESS_MECHANISM — Bear cites specific broker reports, news events (Euronews plant talks, UK insurance friction), and constructs a localization-cost mechanism that could compress the overseas margin premium, going beyond simple valuation metrics.",
+      "bull_core_link_tier_audit": {
+        "agent_self_tier": "E1:direct",
+        "your_independent_tier": "E1:direct",
+        "verdict": "AGREE",
+        "evidence": "SEGMENT ECONOMICS BY REGION shows disclosed true_gm figures: overseas 19.46% vs domestic 16.66% with no LIMITATION warnings. The +280bps gap is directly calculated from disclosed segment data."
+      },
+      "bear_core_link_tier_audit": {
+        "agent_self_tier": "E2:proxy",
+        "your_independent_tier": "E2:proxy",
+        "verdict": "AGREE",
+        "evidence": "Bear correctly identifies its mechanism as inferred: 'our data does not provide plant-acquisition cost, utilization, depreciation, labor cost, or working-capital data, so the margin-compression mechanism is inferred and not yet measured.'"
+      },
+      "citations_edge_vs_crowding": "Bull: 70% crowding (多数 broker reports and institutional visits show story is widely known), 30% edge (margin-mix mechanism interpretation). Bear: 60% crowding (same broker/news coverage), 40% edge (localization cost mechanism that contradicts consensus view of export scaling).",
+      "verdict_on_grounding": "BULL_BETTER_GROUNDED",
+      "verdict_rationale": "Bull's core mechanism relies on directly disclosed segment margin data (E1:direct evidence) while Bear's mechanism depends on inferred cost impacts from news events without supporting financial data. Both show good business mechanism construction, but Bull has stronger quantitative foundation."
+    },
+    "_agent_status": {
+      "bull_r1": {
+        "status": "success",
+        "ms": 40904
+      },
+      "bear_r1": {
+        "status": "success",
+        "ms": 87322
+      },
+      "technical": {
+        "status": "success",
+        "ms": 8533
+      },
+      "bull_r2": {
+        "status": "success",
+        "ms": 41375
+      },
+      "bear_r2": {
+        "status": "success",
+        "ms": 84189
+      },
+      "forensic": {
+        "status": "success",
+        "ms": 34291
+      },
+      "synth": {
+        "status": "success",
+        "ms": 75267
+      }
+    },
+    "_quality": {
+      "score": 78,
+      "missingFields": [
+        "qc_checklist.all_8_steps_complete",
+        "qc_checklist.step_1_specific_not_vague",
+        "qc_checklist.step_2_no_unfounded_leaps",
+        "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "qc_checklist.step_5_observable",
+        "qc_checklist.step_6_observable",
+        "qc_checklist.step_7_one_sentence_tagline",
+        "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "qc_checklist.step_8_early_signs_observable",
+        "qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "qc_checklist.step_8_position_sizing_curve_monotonic",
+        "qc_checklist.reward_to_risk_at_least_threshold"
+      ],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": false,
+        "reward_to_risk_at_least_threshold": false,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": true,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "WARN",
+      "qc_findings": [
+        "failed:step_7_one_sentence_tagline",
+        "failed:step_8_position_sizing_curve_monotonic",
+        "failed:reward_to_risk_at_least_threshold",
+        "missing:qc_checklist.all_8_steps_complete",
+        "missing:qc_checklist.step_1_specific_not_vague",
+        "missing:qc_checklist.step_2_no_unfounded_leaps",
+        "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "missing:qc_checklist.step_5_observable",
+        "missing:qc_checklist.step_6_observable",
+        "missing:qc_checklist.step_7_one_sentence_tagline",
+        "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "missing:qc_checklist.step_8_early_signs_observable",
+        "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+        "missing:qc_checklist.reward_to_risk_at_least_threshold"
+      ]
+    }
+  },
+  "models_used": {
+    "bull": "gemini-2.5-pro",
+    "bear": "gpt-5.5",
+    "technical": "claude-sonnet-4-20250514",
+    "forensic": "claude-sonnet-4-20250514",
+    "synth": "claude-opus-4-7"
+  },
+  "_status": "OK",
+  "_partial_failures": [],
+  "pipeline_ms_total": 191837
+}

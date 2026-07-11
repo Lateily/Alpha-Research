@@ -1,0 +1,8 @@
+{
+  "ticker": "603233.SH",
+  "direction": "PASS",
+  "_status": "skipped_non_actionable",
+  "thesis_logged_at": "2026-05-17T19:47:04.595451+00:00",
+  "pass_reason": "CATALYST_NOT_YET_OBSERVABLE",
+  "pass_reason_detail": "No [E1:direct] structural base exists in our data for the bull's load-bearing claim that 'restarted store expansion will be margin-accretive': (i) store count YoY delta not in data, (ii) same-store-sales growth not in data, (iii) new-store maturity curve / store-level unit economics not in data, (iv) Q1 2026 expansion restart is asserted only by broker text (中泰 2026-05-03), not by primary operating disclosure. The deciding observable — 2026 H1 report on 2026-08-28 (est.) showing simultaneous store_count YoY ≥ 8% AND operating margin ≥ 10.5% AND SSSG ≥ 0% — has not printed. Bear's symmetric inference (expansion will dilute margin) is equally [E2:proxy]. Sell-side is uniformly bullish (38/38 positive, latest target 250000 / EPS 1.5 by 国信), so the consensus crowding ([E4]) means even a confirming H1 print may be largely priced. Pre-print, neither LONG nor SHORT carries ≥2:1 asymmetry."
+}

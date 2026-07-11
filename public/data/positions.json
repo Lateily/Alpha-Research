@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-04-22T11:52:56.765649",
+  "as_of": "2026-07-10T11:24:56.542328",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -13,17 +13,17 @@
       "currency": "CNY",
       "quantity": 150,
       "avg_cost": 681.36,
-      "current_price": 886.62,
-      "market_value": 132993.0,
+      "current_price": 1093.98,
+      "market_value": 164097.0,
       "cost_value": 102204.0,
-      "pnl_abs": 30789.0,
-      "pnl_pct": 30.13,
-      "market_value_cny": 132993.0,
+      "pnl_abs": 61893.0,
+      "pnl_pct": 60.56,
+      "market_value_cny": 164097.0,
       "cost_value_cny": 102204.0,
-      "pnl_abs_cny": 30789.0,
+      "pnl_abs_cny": 61893.0,
       "fx_rate_used": 1.0,
-      "holding_days": 43,
-      "as_of": "2026-04-22",
+      "holding_days": 122,
+      "as_of": "2026-07-10",
       "signal_attribution": {
         "confluence_score": 82,
         "action": "BUY_WATCH",
@@ -57,8 +57,8 @@
         "captured_at": "2026-03-10T09:35:00Z"
       },
       "vp_at_entry": 79,
-      "wrongIf_at_entry": "1.6T qualification slips to Q4 2025 OR hyperscaler CapEx cut >20%",
-      "weight_pct": 43.68
+      "wrongIf_at_entry": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter",
+      "weight_pct": 55.42
     },
     {
       "ticker": "6160.HK",
@@ -68,17 +68,17 @@
       "currency": "HKD",
       "quantity": 80,
       "avg_cost": 158.632,
-      "current_price": 189.5,
-      "market_value": 15160.0,
+      "current_price": 158.632,
+      "market_value": 12690.56,
       "cost_value": 12690.56,
-      "pnl_abs": 2469.44,
-      "pnl_pct": 19.46,
-      "market_value_cny": 13894.14,
+      "pnl_abs": 0.0,
+      "pnl_pct": 0.0,
+      "market_value_cny": 11630.9,
       "cost_value_cny": 11630.9,
-      "pnl_abs_cny": 2263.24,
+      "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
-      "holding_days": 43,
-      "as_of": "2026-04-22",
+      "holding_days": 122,
+      "as_of": "2026-07-10",
       "signal_attribution": {
         "confluence_score": 68,
         "action": "BUY_WATCH",
@@ -107,8 +107,8 @@
         "captured_at": "2026-03-10T09:40:00Z"
       },
       "vp_at_entry": 65,
-      "wrongIf_at_entry": "CELESTIAL Phase 3 uMRD data disappoints (<50%) OR pirtobrutinib 1L CLL Phase 3 shows superior PFS",
-      "weight_pct": 4.56
+      "wrongIf_at_entry": "CELESTIAL Phase 3 uMRD data disappoints (<50% rate) OR Brukinsa US BTK inhibitor market share drops below 15% OR revenue_growth < 20% for 2 consecutive quarters",
+      "weight_pct": 3.93
     },
     {
       "ticker": "700.HK",
@@ -118,17 +118,17 @@
       "currency": "HKD",
       "quantity": 200,
       "avg_cost": 379.512,
-      "current_price": 519,
-      "market_value": 103800,
+      "current_price": 379.512,
+      "market_value": 75902.4,
       "cost_value": 75902.4,
-      "pnl_abs": 27897.6,
-      "pnl_pct": 36.75,
-      "market_value_cny": 95132.7,
+      "pnl_abs": 0.0,
+      "pnl_pct": 0.0,
+      "market_value_cny": 69564.55,
       "cost_value_cny": 69564.55,
-      "pnl_abs_cny": 25568.15,
+      "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
-      "holding_days": 36,
-      "as_of": "2026-04-22",
+      "holding_days": 115,
+      "as_of": "2026-07-10",
       "signal_attribution": {
         "confluence_score": 71,
         "action": "BUY_WATCH",
@@ -162,8 +162,8 @@
         "captured_at": "2026-03-17T09:30:00Z"
       },
       "vp_at_entry": 64,
-      "wrongIf_at_entry": "Regulatory cap on gaming minors extended OR macro consumption weakens sharply",
-      "weight_pct": 31.24
+      "wrongIf_at_entry": "New gaming approval freeze lasting >3 months OR revenue_growth < -5% for 2 consecutive quarters",
+      "weight_pct": 23.49
     },
     {
       "ticker": "9999.HK",
@@ -173,17 +173,17 @@
       "currency": "HKD",
       "quantity": 300,
       "avg_cost": 145.58,
-      "current_price": 182.9,
-      "market_value": 54870.0,
+      "current_price": 145.58,
+      "market_value": 43674.0,
       "cost_value": 43674.0,
-      "pnl_abs": 11196.0,
-      "pnl_pct": 25.64,
-      "market_value_cny": 50288.35,
+      "pnl_abs": 0.0,
+      "pnl_pct": 0.0,
+      "market_value_cny": 40027.22,
       "cost_value_cny": 40027.22,
-      "pnl_abs_cny": 10261.13,
+      "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
-      "holding_days": 29,
-      "as_of": "2026-04-22",
+      "holding_days": 108,
+      "as_of": "2026-07-10",
       "signal_attribution": {
         "confluence_score": 62,
         "action": "BUY_WATCH",
@@ -212,8 +212,8 @@
         "captured_at": "2026-03-24T09:45:00Z"
       },
       "vp_at_entry": 58,
-      "wrongIf_at_entry": "Marvel Rivals DAU drops below 2M OR Japan MAU misses 3M by Q3 2025",
-      "weight_pct": 16.51
+      "wrongIf_at_entry": "earnings_growth < -30% for 2 consecutive quarters OR Japan revenue contribution fails to reach 15% of total by Q4 2026",
+      "weight_pct": 13.52
     },
     {
       "ticker": "002594.SZ",
@@ -223,17 +223,17 @@
       "currency": "CNY",
       "quantity": 120,
       "avg_cost": 96.192,
-      "current_price": 101.62,
-      "market_value": 12194.4,
+      "current_price": 90,
+      "market_value": 10800,
       "cost_value": 11543.04,
-      "pnl_abs": 651.36,
-      "pnl_pct": 5.64,
-      "market_value_cny": 12194.4,
+      "pnl_abs": -743.04,
+      "pnl_pct": -6.44,
+      "market_value_cny": 10800,
       "cost_value_cny": 11543.04,
-      "pnl_abs_cny": 651.36,
+      "pnl_abs_cny": -743.04,
       "fx_rate_used": 1.0,
-      "holding_days": 21,
-      "as_of": "2026-04-22",
+      "holding_days": 100,
+      "as_of": "2026-07-10",
       "signal_attribution": {
         "confluence_score": 55,
         "action": "WATCH",
@@ -257,17 +257,17 @@
         "captured_at": "2026-04-01T09:30:00Z"
       },
       "vp_at_entry": 52,
-      "wrongIf_at_entry": "EU tariffs on Chinese EVs exceed 35% AND Brazil imposes local content rules",
-      "weight_pct": 4.0
+      "wrongIf_at_entry": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "weight_pct": 3.65
     }
   ],
   "summary": {
-    "total_value_cny": 304502.6,
+    "total_value_cny": 296119.67,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 69532.89,
-    "total_pnl_pct": 29.59,
-    "total_value": 304502.6,
+    "total_pnl_cny": 61149.96,
+    "total_pnl_pct": 26.02,
+    "total_value": 296119.67,
     "total_cost": 234969.71,
-    "total_pnl": 69532.89
+    "total_pnl": 61149.96
   }
 }

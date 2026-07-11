@@ -1,0 +1,103 @@
+{
+  "ticker": "175.HK",
+  "thesis_logged_at": "2026-05-11T10:48:33.413339+00:00",
+  "thesis_source": "docs/research/factcheck/175HK_thesis_2026-05-10_PHASE2.json",
+  "thesis_source_commit": "125e427",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "H1 2026 interim results — test of whether +15.6% TTM revenue growth converts to net income re-acceleration above the latest +0.2% YoY print",
+    "date_or_window": "August 2026 (standard HK interim reporting window; exact date not available in our data)",
+    "type": "earnings_revision",
+    "source": "MULTI-YEAR INCOME STATEMENT + LIVE FUNDAMENTALS; exact reporting date not available in our data"
+  },
+  "mechanism_chain_length": 5,
+  "rightIf_conditions": [
+    "H1 2026 interim shows continued revenue growth >10% with operating margin still trapped at ~5.0% and net income growth <5% — confirming the conversion ambiguity that justified deferring",
+    "Stock chops sideways in 20–25 range over the next 1–3 months as the +40.8% move digests, validating that no immediate edge existed",
+    "Subsequent data refresh populates broker/inst/news layers, enabling a properly grounded thesis at that point"
+  ],
+  "wrongIf_conditions": [
+    "A clear business-mechanism signal emerges in data refresh (named broker thesis, inst visit, insider buying, ZEEKR news) that would have supported a directional call we missed",
+    "Stock breaks decisively above 25.62 52W high on volume with fundamental confirmation, indicating the LONG was the correct call",
+    "Operating margin breaches the 3% watchlist trigger on next print, indicating the SHORT was the correct call"
+  ],
+  "what_changes_our_mind": "Population of TUSHARE broker/institutional/LHB/insider data OR a recent news flow item identifying a specific unpriced business mechanism (e.g., a named broker upgrade with thesis, an inst visit note on margin trajectory, or a ZEEKR-related disclosure).",
+  "variant_view_one_sentence": "Market believes restructuring + EV transition justify the +40.8% 60d re-rating → We believe NEITHER side has a data-grounded business-mechanism edge → Mechanism is: defer until broker/news data populates or earnings resolves the revenue-to-margin conversion question.",
+  "time_to_resolution": "1–3 months (data refresh) or August 2026 (H1 interim)",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "0% (PASS — no position)",
+    "downside_if_wrong": "0% (PASS — no position)",
+    "reward_to_risk": "PASS — capital preservation"
+  },
+  "quantification": {
+    "metric_target": "N/A — PASS",
+    "current_value": "22.74 HKD",
+    "predicted_value": "No directional prediction issued",
+    "predicted_range": {
+      "low": "n/a",
+      "mid": "n/a",
+      "high": "n/a"
+    },
+    "predicted_horizon": "Re-evaluate at H1 2026 interim release (August 2026) or upon population of broker/news data",
+    "confidence": 0
+  },
+  "qc_quality_at_log_time": {
+    "score": 74,
+    "missingFields": [
+      "qc_checklist.all_8_steps_complete",
+      "qc_checklist.step_1_specific_not_vague",
+      "qc_checklist.step_2_no_unfounded_leaps",
+      "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "qc_checklist.step_5_observable",
+      "qc_checklist.step_6_observable",
+      "qc_checklist.step_7_one_sentence_tagline",
+      "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "qc_checklist.step_8_early_signs_observable",
+      "qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "qc_checklist.step_8_position_sizing_curve_monotonic",
+      "qc_checklist.reward_to_risk_at_least_threshold"
+    ],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": false,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": false,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "WARN",
+    "qc_findings": [
+      "failed:step_8_phase_timing_concrete_not_boilerplate",
+      "failed:step_8_position_sizing_curve_monotonic",
+      "failed:reward_to_risk_at_least_threshold",
+      "missing:qc_checklist.all_8_steps_complete",
+      "missing:qc_checklist.step_1_specific_not_vague",
+      "missing:qc_checklist.step_2_no_unfounded_leaps",
+      "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "missing:qc_checklist.step_5_observable",
+      "missing:qc_checklist.step_6_observable",
+      "missing:qc_checklist.step_7_one_sentence_tagline",
+      "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "missing:qc_checklist.step_8_early_signs_observable",
+      "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+      "missing:qc_checklist.reward_to_risk_at_least_threshold"
+    ]
+  },
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

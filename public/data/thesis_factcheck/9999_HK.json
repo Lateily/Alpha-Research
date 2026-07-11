@@ -1,0 +1,26 @@
+{
+  "ticker": "9999.HK",
+  "fact_checked_at": "2026-05-05T14:31:48.057964+00:00",
+  "thesis_source": "docs/research/factcheck/9999HK_thesis_2026-05-05_1530BST.json",
+  "ground_truth_source": "public/data/market_data.json",
+  "tolerance_pct": 5.0,
+  "live_price": 181.9,
+  "results": [
+    {
+      "thesis_path": "fin_insights[2]",
+      "matched_text": "14.5x P/E",
+      "claimed_value": 14.5,
+      "gt_field": "pe_trailing",
+      "label": "P/E (trailing)",
+      "context_snippet": "At 14.5x P/E vs sector 18x, NetEase trades at discou",
+      "status": "MATCH",
+      "diff_pct": -4.183607995977035,
+      "gt_value": 15.13311
+    }
+  ],
+  "summary": {
+    "MATCH": 1,
+    "MISMATCH": 0,
+    "UNVERIFIABLE": 0
+  }
+}

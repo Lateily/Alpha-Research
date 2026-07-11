@@ -1,0 +1,114 @@
+{
+  "_meta": {
+    "purpose": "Mock api/research.js Step 8 output for Dashboard rendering test",
+    "created": "2026-05-02",
+    "ticker_simulated": "300394.SZ (天孚通信 — short thesis)",
+    "thesis_protocol_version": "v2",
+    "model_simulated": "claude-opus-4-7",
+    "audit_note": "This is NOT real LLM output. Hand-written based on docs/research/PAIR_TRADE_PHASE_PLAYBOOK.md to validate Dashboard forward-compat null-handling on phaseTiming field."
+  },
+  "ticker": "300394.SZ",
+  "name": "天孚通信",
+  "en": "T&S Communications",
+  "sector": "Optical Components",
+  "dir": "SHORT",
+  "vp": 28,
+  "price": "¥185.40",
+  "mktcap": "¥51.6B",
+  "eqr": {
+    "overall": "MED-HIGH",
+    "biz": "MED-HIGH",
+    "variant": "HIGH",
+    "catalysts": "MED-HIGH",
+    "risks": "HIGH"
+  },
+  "pulse": {
+    "e": "Profit pool migration thesis: GM compressing -3.67pp 5q while peer Innolight +11.41pp same period. Phase 1 momentum still active until Q3 2026 earnings; Phase 2 catalyst ~2026-10. NOT a today short.",
+    "z": "利润池迁移 thesis: GM 5 季度压缩 -3.67pp, 同期 peer 旭创 +11.41pp. Phase 1 动能至 Q3 2026 财报; Phase 2 催化 ~2026-10. 现在 NOT short."
+  },
+  "biz": {
+    "problem":   { "e": "Mid-stream optical components supplier; 63% sales via Fabrinet (intermediary, no direct customer access).", "z": "中游光学组件供应商; 63% 销售经 Fabrinet (代工中介, 不直接对接终端云厂商)." },
+    "mechanism": { "e": "Fabrinet relationship + product mix shift to active optical engines (lower margin) creates negative operating leverage.", "z": "Fabrinet 关系 + 产品 mix 转向有源光引擎 (低毛利) 产生 negative operating leverage." },
+    "moneyFlow": { "e": "Fabrinet → 天孚 → upstream chips. 天孚 captures ~15-20% margin in middle of value chain.", "z": "Fabrinet → 天孚 → 上游芯片. 天孚在价值链中游取 ~15-20% margin." }
+  },
+  "variant": {
+    "marketBelieves":     { "e": "AI capex tailwind benefits all optical names equally; 天孚 will participate in CPO upside.", "z": "AI capex 顺风惠及所有光通信公司; 天孚将享受 CPO 上行空间." },
+    "weBelieve":          { "e": "Profit pool is migrating from middle (天孚) to integration platform (Innolight). 天孚 is structurally squeezed, not benefiting.", "z": "利润池正从中游 (天孚) 向下游集成 (Innolight) 迁移. 天孚被结构性挤压, 并非受益方." },
+    "mechanism":          { "e": "天孚 GM compresses as product mix shifts active (lower margin). Cost growth +71% > revenue growth +57% (negative OL).", "z": "天孚 GM 压缩因 product mix 偏 active (低毛利). 成本 +71% > 收入 +57% (负 OL)." },
+    "rightIf":            { "e": "Q3 2026 GM <47% AND Innolight GM >50% — divergence confirms thesis.", "z": "Q3 2026 GM <47% 且 Innolight GM >50% — 分化验证 thesis." },
+    "wrongIf":            { "e": "Fabrinet公告 deepening 天孚 partnership OR 天孚 GM stops declining for 2 consecutive quarters.", "z": "Fabrinet公告深化合作 OR 天孚 GM 连续 2 季停止下滑." },
+    "whatChangesOurMind": { "e": "Major Fabrinet exclusivity contract OR successful pivot to passive components dominant pricing.", "z": "Fabrinet 重大排他合同 OR 成功转向无源器件主导定价权." },
+    "rewardToRisk": {
+      "upsideIfRight":   "+30% to +50% (mean revert from 138x PE to ~80x PE over 12-18 months)",
+      "downsideIfWrong": "-15% to -20% (further multiple expansion to 160x if AI mania extends)",
+      "ratio":           "~2.5:1",
+      "timeToResolution":"Q3 2026 earnings ~2026-10-11 (primary), Q2 2026 earnings ~2026-08 (early signal)"
+    },
+    "phaseTiming": {
+      "phase1MarketBelief": {
+        "durationEstimate": "2-4 quarters from now (2026-05) until Q3 2026 earnings disclosure (~2026-10-11)",
+        "whyMarketKeepsBuying": [
+          "AI capex 普涨叙事仍主导 — NVDA/MSFT/GOOGL/META/AMZN 合计 capex Q4 2025 +64% YoY, 2026 预计 +53% YoY",
+          "天孚 FY2025 表观营收 +58.79% 强劲增长, 市场尚未在估值中计入 GM 同比 -3.67pp 压缩",
+          "光通信 / CPO 主题资金面活跃, 投资者按 sub-sector 配置而非个股选择",
+          "Fabrinet 关系 (63.31% 销售) 表面稳定, 客户没公开换供应商, 没明显警示信号"
+        ],
+        "earlySignsPhase1Weakening": [
+          "Q2 2026 财报 (~2026-08): GM 跌破 50% (从 53.62% → <50%, 连续两期下滑)",
+          "Fabrinet 公告 (任何时间): 减少天孚份额 / 引入新光引擎供应商",
+          "卖方分析师下调评级 (中信/中金/海通中任意 1 家从 BUY → HOLD/SELL)",
+          "北向资金 (Tushare moneyflow_hsgt) 5 日累计 north_money 在 300394.SZ 上转负"
+        ],
+        "optionalLongPlay": {
+          "direction": "no_position",
+          "sizing": "0% — short 信念强, 不浪费仓位 chase phase 1 momentum",
+          "exitTrigger": "n/a"
+        }
+      },
+      "phase2RealityRecognition": {
+        "catalystForReversion": [
+          "Q3 2026 财报 (~2026-10-11 预计披露): GM 继续压缩跌破 47%, 验证 multi-quarter trend",
+          "光引擎产品 ASP 公告大幅低于市场预期 (-15% 或更多)",
+          "Fabrinet / 大客户公告分散光引擎采购 (引入 2 家以上替代供应商)",
+          "天孚自身公告战略调整 — 主动降低光引擎 mix 比例或关闭某条产品线"
+        ],
+        "estimatedTiming": "Q3 2026 earnings ~2026-10-11 (主 catalyst); secondary windows: 2026-08 Q2 财报 (early sign), 2026-12 行业 Capex guidance",
+        "shortPlay": {
+          "direction": "core_short",
+          "sizing": "full conviction",
+          "entryTrigger": "等 phase_1_weakening 第一个信号出现 (Q2 财报 GM<50% 或 Fabrinet 公告)"
+        }
+      },
+      "positionSizingCurve": {
+        "prePhase1Weakening": "0% (现在 2026-05 — 不进场, 等 Q2 财报触发)",
+        "phase1WeakeningConfirmed": "30% (Q2 财报后 GM<50% 确认, 或 Fabrinet 公告确认 — 任一第一次出现)",
+        "phase2CatalystImminent": "80% (Q3 财报披露前 1-2 周, 或财报当周如已确认 GM<47%)"
+      }
+    }
+  },
+  "catalysts": [
+    { "e": "Q2 2026 earnings disclosure", "z": "Q2 2026 财报披露", "t": "earnings_revision", "date": "2026-08-25", "imp": "HIGH" },
+    { "e": "Q3 2026 earnings disclosure (primary catalyst)", "z": "Q3 2026 财报披露 (主 catalyst)", "t": "earnings_revision", "date": "2026-10-11", "imp": "HIGH" }
+  ],
+  "decomp": {
+    "expectation_gap": { "s": 25, "e": "Market overvaluing", "z": "市场高估" },
+    "fundamental_acc": { "s": 32, "e": "GM compressing trend", "z": "GM 压缩趋势" },
+    "narrative_shift": { "s": 18, "e": "AI普涨叙事覆盖分化", "z": "AI 普涨覆盖分化现实" },
+    "low_coverage":    { "s": 35, "e": "Mid-cap, moderate coverage", "z": "中盘, 中度覆盖" },
+    "catalyst_prox":   { "s": 60, "e": "Q3 2026 catalyst near-term", "z": "Q3 2026 催化近" }
+  },
+  "risks": [
+    { "e": "AI mania extends, multiple expansion to 160x PE", "z": "AI 狂热延续, 估值扩张到 160x", "p": "MED", "imp": "HIGH" },
+    { "e": "Fabrinet exclusivity deepens", "z": "Fabrinet 排他深化", "p": "LOW", "imp": "HIGH" }
+  ],
+  "pricing": { "level": "HIGH", "crowd": { "e": "Crowded long, narrative-driven", "z": "拥挤多头, 叙事驱动" } },
+  "nextActions": [
+    { "e": "Wait for Q2 2026 earnings (~2026-08) — do NOT enter short before then", "z": "等 Q2 2026 财报 (~2026-08) — 之前不开仓" },
+    { "e": "Monitor Fabrinet announcements + sell-side rating changes weekly", "z": "每周监控 Fabrinet 公告 + 卖方评级变化" }
+  ],
+  "fin": {
+    "rev": "¥51.63B", "revGr": "+58.79%", "gm": "53.62%",
+    "pe": 138, "ev_ebitda": 95, "fcf": "¥8.2B"
+  },
+  "peerAvg": { "pe": 95, "ev_ebitda": 65, "gm": "48%" }
+}

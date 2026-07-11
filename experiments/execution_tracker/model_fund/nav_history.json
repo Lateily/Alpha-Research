@@ -1,0 +1,42 @@
+[
+  {
+    "date": "20260706",
+    "nav": 1000000.0,
+    "cash": 1000000.0,
+    "n_positions": 0,
+    "daily_return": 0.0,
+    "cum_return": 0.0
+  },
+  {
+    "date": "20260707",
+    "nav": 997192.0,
+    "cash": 847720.0,
+    "n_positions": 1,
+    "daily_return": -0.00281,
+    "cum_return": -0.00281
+  },
+  {
+    "date": "20260708",
+    "nav": 993547.0,
+    "cash": 847720.0,
+    "n_positions": 1,
+    "daily_return": -0.00366,
+    "cum_return": -0.00645
+  },
+  {
+    "date": "20260709",
+    "nav": 997867.0,
+    "cash": 847720.0,
+    "n_positions": 1,
+    "daily_return": 0.00435,
+    "cum_return": -0.00213
+  },
+  {
+    "date": "20260710",
+    "nav": 995845.0,
+    "cash": 706720.0,
+    "n_positions": 2,
+    "daily_return": -0.00203,
+    "cum_return": -0.00416
+  }
+]

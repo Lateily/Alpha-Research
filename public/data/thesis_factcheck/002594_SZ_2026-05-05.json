@@ -1,0 +1,14 @@
+{
+  "ticker": "002594.SZ",
+  "fact_checked_at": "2026-05-05T14:34:55.358763+00:00",
+  "thesis_source": "docs/research/factcheck/002594SZ_thesis_2026-05-05_1530BST.json",
+  "ground_truth_source": "public/data/market_data.json",
+  "tolerance_pct": 5.0,
+  "live_price": 102.98,
+  "results": [],
+  "summary": {
+    "MATCH": 0,
+    "MISMATCH": 0,
+    "UNVERIFIABLE": 0
+  }
+}

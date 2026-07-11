@@ -1,0 +1,111 @@
+[
+  {
+    "date": "20260706",
+    "action": "REGISTER_ORDER",
+    "ticker": "601899.SH",
+    "shares": 5000,
+    "notional": 141000.0,
+    "entry": 28.2,
+    "stop": 26.2,
+    "target": 32.2,
+    "risk_budget_cny": 10000.0,
+    "reason": "资金轮动:黄金/有色5日持续IN,0702 RISK_OFF日主力+11.96亿跌中承接(全场最大);PE11.3全场最便宜避险资产;金铜双驱。breakout入场=只在延续强势时成交。wrong-if:金价回落+主力转出",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260706",
+    "action": "REGISTER_ORDER",
+    "ticker": "603259.SH",
+    "shares": 1100,
+    "notional": 138050.0,
+    "entry": 125.5,
+    "stop": 117.5,
+    "target": 141.5,
+    "risk_budget_cny": 10000.0,
+    "reason": "CXO=5日资金IN主线,0703主力+3.81亿回流[REL];PE17.5唯一合理估值成长龙头;screen deepen#1连续兑现。wrong-if:主力转出+跌破117",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260706",
+    "action": "REGISTER_ORDER",
+    "ticker": "600900.SH",
+    "shares": 5400,
+    "notional": 147420.0,
+    "entry": 27.3,
+    "stop": 26.0,
+    "target": 29.9,
+    "risk_budget_cny": 10000.0,
+    "reason": "防御主线:电力/公用5日+50亿,0702跌中承接+6.22亿;股息3.5%下行垫,组合波动锚。wrong-if:利率上行+防御轮动结束",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260706",
+    "action": "REGISTER_ORDER",
+    "ticker": "600276.SH",
+    "shares": 2700,
+    "notional": 149850.0,
+    "entry": 55.5,
+    "stop": 52.2,
+    "target": 62.1,
+    "risk_budget_cny": 10000.0,
+    "reason": "创新药主线(license-out催化),0703尾盘走强+2.19%,>MA20趋势完好;与CXO同链不同环节。wrong-if:出海订单证伪",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260706",
+    "action": "NO_TRADE_DECISION",
+    "scope": "AI硬件(新易盛/中际/利通/香农/深科技)",
+    "reason": "中际/利通 0703定盘EXIT_REVIEW,香农/深科技 大单卖小单接WARNING;板块5日主力-2000亿机构撤退未止;posture禁开新单",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "CANCEL_ORDER",
+    "ticker": "600900.SH",
+    "reason": "行业技术垫底(公用事业mom20 -10.3%)+0706定盘WARNING+价在entry下 — v3三因子否决",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "RISK_REVIEW",
+    "ticker": "603259.SH",
+    "reason": "0706主力-0.81亿WARNING第1天;连续2天负才撤;今日保留,收盘复核",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "REGISTER_ORDER",
+    "ticker": "002714.SZ",
+    "shares": 3800,
+    "notional": 148580.0,
+    "entry": 39.1,
+    "stop": 36.9,
+    "target": 43.5,
+    "risk_budget_cny": 10000.0,
+    "reason": "v3三门共振首位:行业技术(农林牧渔贴20日高-0.2%)+消息(猪价反转+中报改善)+资金(0706主力+3.62亿,板块5日+55亿);breakout 39.1=破20日高确认。wrong-if:猪价回落/主力转出2日",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "PAPER_FILL",
+    "ticker": "600276.SH",
+    "price": 56.4,
+    "shares": 2700,
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260707",
+    "action": "CANCEL_ORDER",
+    "ticker": "603259.SH",
+    "reason": "WARNING连续第2天主力为负(0706 -0.81亿, 0707 -7.18亿) — 规则触发撤单",
+    "no_trade_flag": true
+  },
+  {
+    "date": "20260710",
+    "action": "PAPER_FILL",
+    "ticker": "601899.SH",
+    "price": 28.2,
+    "shares": 5000,
+    "no_trade_flag": true
+  }
+]

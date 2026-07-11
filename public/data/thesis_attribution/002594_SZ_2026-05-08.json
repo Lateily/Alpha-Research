@@ -1,0 +1,74 @@
+{
+  "ticker": "002594.SZ",
+  "thesis_logged_at": "2026-05-08T13:38:36.653890+00:00",
+  "thesis_source": "docs/research/factcheck/002594SZ_thesis_2026-05-08_GROUNDED.json",
+  "thesis_source_commit": "ed45ada",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "Q2 2026 earnings release — first full quarter to reflect post-price-war margin stabilization and overseas mix shift; key tests are gross margin trajectory (vs. 17.2% TTM), monthly export run-rate, and any guidance on 5-min Super e-Platform vehicle ramp",
+    "date_or_window": "2026-08-28 (±2 weeks, BYD historical Q2 reporting window)",
+    "type": "earnings_revision",
+    "source": "BYD H1 2026 interim report scheduled per HKEX/SZSE disclosure calendar"
+  },
+  "mechanism_chain_length": 6,
+  "rightIf_conditions": [
+    "Q2 2026 earnings (Aug 2026): GM ≥ 18.5% AND export volume ≥ 50K/month run-rate AND overseas revenue mix > 22% (vs ~15% in 2024)",
+    "FY2026 net income returns to >38B (above FY2024 trough comparable)",
+    "Forward P/E re-rates from 17.7x toward 21-22x as EPS estimates revised up by sell-side"
+  ],
+  "wrongIf_conditions": [
+    "Revenue growth <-10% for 2 consecutive quarters (per watchlist wrongIf)",
+    "Gross margin drops below 15% in any reported quarter — invalidates margin recovery mechanism",
+    "Q2 2026 export volume run-rate falls below 40K/month — overseas mix thesis broken",
+    "Net income YoY decline exceeds -40% in any quarter (per watchlist)"
+  ],
+  "what_changes_our_mind": "If H1 2026 export volume run-rate falls below 45K/month (vs current ~50K) for two consecutive months AND overseas gross margin compresses below domestic GM in interim disclosure, the export-mix thesis is broken — convert to consensus neutral stance.",
+  "variant_view_one_sentence": "Market believes 5-min charging is the bull case → We believe overseas mix + premium brand ASP lift is the real driver → Mechanism is export run-rate scaling + Hungary/Brazil capacity unlock + Yangwang/Denza margin contribution becoming material in H2 2026.",
+  "time_to_resolution": "4-6 months until Q2 2026 earnings (Aug 2026)",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "+30% to +40% (toward 130-140 RMB) on margin+volume beat and EPS revision",
+    "downside_if_wrong": "-15% to -18% (toward 82-85 RMB, 52W low support)",
+    "reward_to_risk": "2.2:1"
+  },
+  "quantification": {
+    "metric_target": "FY2026 gross margin and net income recovery",
+    "current_value": "GM 17.2% TTM, NI 32.6B FY2025 (-19% YoY)",
+    "predicted_value": "GM 19.5% FY2026, NI ~38-42B FY2026 (+17-29% YoY)",
+    "predicted_range": {
+      "low": "GM 18.5%, NI 35B",
+      "mid": "GM 19.5%, NI 39B",
+      "high": "GM 20.5%, NI 43B"
+    },
+    "predicted_horizon": "FY2026 reported by 2027-03",
+    "confidence": "0.60"
+  },
+  "qc_quality_at_log_time": {
+    "score": 90,
+    "missingFields": [],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": true,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "PASS",
+    "qc_findings": [
+      "failed:step_8_position_sizing_curve_monotonic"
+    ],
+    "repairAttempted": false
+  },
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

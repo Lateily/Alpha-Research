@@ -1,0 +1,26 @@
+{
+  "ticker": "700.HK",
+  "fact_checked_at": "2026-05-05T14:31:48.022816+00:00",
+  "thesis_source": "docs/research/factcheck/700HK_thesis_2026-05-05_1530BST.json",
+  "ground_truth_source": "public/data/market_data.json",
+  "tolerance_pct": 5.0,
+  "live_price": 473,
+  "results": [
+    {
+      "thesis_path": "step_7_variant_view.variant_view_one_sentence",
+      "matched_text": "15x forward P/E",
+      "claimed_value": 15.0,
+      "gt_field": "pe_forward",
+      "label": "forward P/E",
+      "context_snippet": "e and multiple de-rating from 17x to 14-15x forward P/E.",
+      "status": "MISMATCH",
+      "diff_pct": 23.346509207446864,
+      "gt_value": 12.160863
+    }
+  ],
+  "summary": {
+    "MATCH": 0,
+    "MISMATCH": 1,
+    "UNVERIFIABLE": 0
+  }
+}

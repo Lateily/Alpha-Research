@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "generated_at": "2026-07-10T11:31:50.571166+00:00",
+    "schema_version": 1,
+    "thresholds_status": "[unvalidated intuition]",
+    "method": "ev_ebitda_target_multiple",
+    "target_multiples": {
+      "A": 15.0,
+      "HK": 12.0
+    },
+    "signal_threshold_pct": 15.0,
+    "note": "AHF-2 Method 2. NOT folded into VP composite (INVARIANT 3). Triangulated with FCF DCF (Method 1) + Residual Income (Method 3, KR2 pending) by KR3 aggregator (pending). Per-market single-multiple is v1; per-sector targets deferred to future KR."
+  },
+  "tickers": {
+    "300308.SZ": {
+      "ticker": "300308.SZ",
+      "model_status": "ebitda_missing",
+      "signal": null,
+      "delta_pct": null,
+      "reason": "Both fund.ebitda and (enterprise_value / ev_ebitda) derivation failed"
+    },
+    "002594.SZ": {
+      "ticker": "002594.SZ",
+      "model_status": "ebitda_missing",
+      "signal": null,
+      "delta_pct": null,
+      "reason": "Both fund.ebitda and (enterprise_value / ev_ebitda) derivation failed"
+    },
+    "175.HK": {
+      "ticker": "175.HK",
+      "model_status": "ebitda_missing",
+      "signal": null,
+      "delta_pct": null,
+      "reason": "Both fund.ebitda and (enterprise_value / ev_ebitda) derivation failed"
+    },
+    "603233.SH": {
+      "ticker": "603233.SH",
+      "model_status": "ebitda_missing",
+      "signal": null,
+      "delta_pct": null,
+      "reason": "Both fund.ebitda and (enterprise_value / ev_ebitda) derivation failed"
+    },
+    "688120.SH": {
+      "ticker": "688120.SH",
+      "model_status": "ebitda_missing",
+      "signal": null,
+      "delta_pct": null,
+      "reason": "Both fund.ebitda and (enterprise_value / ev_ebitda) derivation failed"
+    },
+    "300054.SZ": {
+      "ticker": "300054.SZ",
+      "model_status": "ebitda_missing",
+      "signal": null,
+      "delta_pct": null,
+      "reason": "Both fund.ebitda and (enterprise_value / ev_ebitda) derivation failed"
+    }
+  }
+}

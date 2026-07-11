@@ -1,0 +1,88 @@
+{
+  "schema": "v3_variant_manifest",
+  "variant": {
+    "variant_id": "quant_c1_lowturnover_tilt",
+    "registered_at": "2026-06-10T14:36:05.583673+00:00",
+    "hypothesis": "C1: on the liquid top-500 A-share universe, an equal-weight top-20 portfolio ranked by the value(E/P)+low_vol z-composite, rebalanced at low cadence with a rank-exit buffer so annual book turnover stays <= 2.0x, delivers post-cost same-gross alpha whose bootstrap CI clears zero vs BOTH CSI300 and EW-liquid, full-sample and walk-forward.",
+    "causal_logic_label": "unestablished — value/low_vol IC is real [validated against data]; that a low-cost tilt converts it into net alpha (not premia) is the unproven step",
+    "expected_failure_modes": [
+      "premia-not-alpha (most likely): vs-EW CI keeps straddling zero -> kill and close the line",
+      "concentration noise: top-K idiosyncratic noise swamps the weak IC",
+      "stale-rank decay: lower cadence -> composite information decays before the next rebalance",
+      "low_vol crowding post-2017 -> the premium thins exactly when measurable"
+    ],
+    "hypothesis_lock_hash": "5e08e1a1aa78fe5aff8814e4d55ab70ec934c608b219893230a1f641fbec19d9"
+  },
+  "test_plan": {
+    "windows": [
+      {
+        "name": "full_2006_2026",
+        "start": "20060104",
+        "end": "20260526"
+      },
+      {
+        "name": "wf_2006_2010",
+        "start": "20060104",
+        "end": "20091231"
+      },
+      {
+        "name": "wf_2010_2014",
+        "start": "20100101",
+        "end": "20131231"
+      },
+      {
+        "name": "wf_2014_2018",
+        "start": "20140101",
+        "end": "20171231"
+      },
+      {
+        "name": "wf_2018_2022",
+        "start": "20180101",
+        "end": "20211231"
+      },
+      {
+        "name": "wf_2022_2026",
+        "start": "20220101",
+        "end": "20260526"
+      }
+    ],
+    "cost_scenarios": [
+      "optimistic_0.20_RT",
+      "baseline_0.40_RT",
+      "pessimistic_0.60_RT"
+    ],
+    "benchmarks": [
+      "csi300",
+      "zz500",
+      "csi1000",
+      "ew500",
+      "cash2pct"
+    ],
+    "arms": {
+      "c1a_rebal40": {
+        "rebal_days": 40,
+        "top_k": 20
+      },
+      "c1b_rebal20_buffer": {
+        "rebal_days": 20,
+        "top_k": 20,
+        "rank_buffer_mult": 2.0
+      },
+      "c1c_rebal60": {
+        "rebal_days": 60,
+        "top_k": 20
+      },
+      "random_control": {
+        "rebal_days": 40,
+        "top_k": 20,
+        "random_seed": 42
+      }
+    },
+    "family_for_multiple_testing": [
+      "c1a_rebal40",
+      "c1b_rebal20_buffer",
+      "c1c_rebal60"
+    ],
+    "claim_gate": "ci_positive_after_cost vs CSI300 AND EW + WF1 + exact-name OOS not sig-neg + 19-gate PASS (Junyan-ratified, strict)"
+  }
+}

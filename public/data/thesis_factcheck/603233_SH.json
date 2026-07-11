@@ -1,0 +1,14 @@
+{
+  "ticker": "603233.SH",
+  "fact_checked_at": "2026-05-08T13:38:10.664441+00:00",
+  "thesis_source": "docs/research/factcheck/603233SH_thesis_2026-05-08_GROUNDED.json",
+  "ground_truth_source": "public/data/market_data.json",
+  "tolerance_pct": 5.0,
+  "live_price": 18.55,
+  "results": [],
+  "summary": {
+    "MATCH": 0,
+    "MISMATCH": 0,
+    "UNVERIFIABLE": 0
+  }
+}

@@ -1,0 +1,349 @@
+{
+  "ticker": "002594.SZ",
+  "thesis_source": "docs/research/factcheck/rerun_2026-05-16/002594SZ_recal.json",
+  "thesis_source_commit": "aaa1cc4",
+  "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00",
+  "direction": "LONG",
+  "entry_date": "2026-05-17",
+  "entry_price": 96.3,
+  "current_price": 90,
+  "current_date": "2026-07-10",
+  "days_held": 54,
+  "return_since_entry_pct": -6.54,
+  "expected_pnl": {
+    "upside_if_right": "+22% to +35% (toward analyst target 119.32 mid, range 117-130)",
+    "downside_if_wrong": "-9% to -15% (toward 52W low 85.88, support 87.72)",
+    "reward_to_risk": "2.4:1"
+  },
+  "upside_target_pct": 22.0,
+  "downside_stop_pct": -9.0,
+  "catalyst_window": "2026-08-15 to 2026-08-31",
+  "catalyst_dates_parsed": [
+    "2026-08-15",
+    "2026-08-31"
+  ],
+  "days_to_catalyst": 36,
+  "current_status": "ACTIVE",
+  "wrongIf_conditions": [
+    "2026 H1 overseas segment gross margin ≤ 16.5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 consolidated gross margin ≤ 15.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 net profit YoY ≤ -40% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 revenue YoY ≤ -10% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+  ],
+  "rightIf_conditions": [
+    "2026 H1 overseas segment gross margin ≥ 18.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 consolidated gross margin ≥ 17.0% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 营业收入与营业成本 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 overseas revenue YoY ≥ +35% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 分部信息披露: 境外 营业收入 vs 2025 H1 同口径 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "2026 H1 net profit YoY ≥ +5% @ 2026 H1 报告 2026-08-31 | source: 2026 H1 报告 合并利润表: 归母净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+  ],
+  "what_changes_our_mind": "2026 H1 报告 discloses overseas segment GM < 17% (collapsing the +280bps premium toward zero) OR consolidated GM < 16% — either would invalidate the mix-shift accretion mechanism.",
+  "conviction_state": "STARTER_CAPPED_UNTIL_E1",
+  "tradeable_not_proven_statement": "Tradeable, but not proven. Historical base is [E1:direct] (2025 Overseas GM 19.46% vs Domestic GM 16.66%, +280bps, SEGMENT ECONOMICS period 20251231); forward persistence is [E2:proxy] (H1 2026 mix-shift margin-accretion through European localization not yet measured); size capped until 2026 H1 报告 segment disclosure confirms overseas GM holds ≥18% and consolidated GM holds ≥17%.",
+  "core_causal_link": {
+    "link_sentence": "The FY2025 segment-disclosed +280bps overseas-vs-domestic GM premium persists into H1 2026 despite ramping European localization capex.",
+    "evidence_tier": "E2:proxy",
+    "tier_justification": "The HISTORICAL BASE is [E1:direct] — SEGMENT ECONOMICS period 20251231 shows true_gm overseas 19.46% vs domestic 16.66%, isolable not proxy. The FORWARD claim that this persists into H1 2026 is honestly [E2:proxy] — it has not yet printed. To become [E1] requires the 2026 H1 报告 分部信息披露 to disclose overseas segment GM ≥ 18% with disclosed bz_sales and bz_cost (not blended PROXY)."
+  },
+  "evidence_profile": {
+    "core_link_tier": "E2",
+    "counts": {
+      "E1": 7,
+      "E2": 3,
+      "E3": 2,
+      "E4": 2
+    },
+    "overstatement_corrected": true
+  },
+  "daily_log": [
+    {
+      "date": "2026-05-11",
+      "price": 100.44,
+      "return_pct": null,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-12",
+      "price": 99.23,
+      "return_pct": -1.2,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-13",
+      "price": 98.6,
+      "return_pct": -1.83,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-14",
+      "price": 98.73,
+      "return_pct": -1.7,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-15",
+      "price": 96.3,
+      "return_pct": -4.12,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-17",
+      "price": 96.3,
+      "return_pct": 0.0,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-18",
+      "price": 94.51,
+      "return_pct": -1.86,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-19",
+      "price": 96,
+      "return_pct": -0.31,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-20",
+      "price": 93.36,
+      "return_pct": -3.05,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-21",
+      "price": 93.51,
+      "return_pct": -2.9,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-22",
+      "price": 93.75,
+      "return_pct": -2.65,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-25",
+      "price": 95.82,
+      "return_pct": -0.5,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-26",
+      "price": 96.78,
+      "return_pct": 0.5,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-27",
+      "price": 95.09,
+      "return_pct": -1.26,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-28",
+      "price": 95.88,
+      "return_pct": -0.44,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-05-29",
+      "price": 96.18,
+      "return_pct": -0.12,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-01",
+      "price": 93.65,
+      "return_pct": -2.75,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-02",
+      "price": 96.76,
+      "return_pct": 0.48,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-03",
+      "price": 94.82,
+      "return_pct": -1.54,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-04",
+      "price": 93.44,
+      "return_pct": -2.97,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-05",
+      "price": 93.01,
+      "return_pct": -3.42,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-08",
+      "price": 91.19,
+      "return_pct": -5.31,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-09",
+      "price": 91.89,
+      "return_pct": -4.58,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-10",
+      "price": 90.31,
+      "return_pct": -6.22,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-11",
+      "price": 89.8,
+      "return_pct": -6.75,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-12",
+      "price": 91.6,
+      "return_pct": -4.88,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-15",
+      "price": 90.82,
+      "return_pct": -5.69,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-16",
+      "price": 89.64,
+      "return_pct": -6.92,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-17",
+      "price": 87.47,
+      "return_pct": -9.17,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-06-18",
+      "price": 88.13,
+      "return_pct": -8.48,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-19",
+      "price": 88.13,
+      "return_pct": -8.48,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-20",
+      "price": 88.13,
+      "return_pct": -8.48,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-21",
+      "price": 88.13,
+      "return_pct": -8.48,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-06-22",
+      "price": 87.59,
+      "return_pct": -9.04,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-06-23",
+      "price": 85,
+      "return_pct": -11.73,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-06-24",
+      "price": 83.3,
+      "return_pct": -13.5,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-06-25",
+      "price": 82.2,
+      "return_pct": -14.64,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-06-26",
+      "price": 78.2,
+      "return_pct": -18.8,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-06-29",
+      "price": 79.64,
+      "return_pct": -17.3,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-06-30",
+      "price": 79.7,
+      "return_pct": -17.24,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-07-01",
+      "price": 80.66,
+      "return_pct": -16.24,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-07-02",
+      "price": 83.57,
+      "return_pct": -13.22,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-07-03",
+      "price": 88.47,
+      "return_pct": -8.13,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-07-06",
+      "price": 87.54,
+      "return_pct": -9.1,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-07-07",
+      "price": 86.26,
+      "return_pct": -10.43,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-07-08",
+      "price": 87.8,
+      "return_pct": -8.83,
+      "status": "ACTIVE"
+    },
+    {
+      "date": "2026-07-09",
+      "price": 86.87,
+      "return_pct": -9.79,
+      "status": "STOPPED_OUT"
+    },
+    {
+      "date": "2026-07-10",
+      "price": 90,
+      "return_pct": -6.54,
+      "status": "ACTIVE"
+    }
+  ],
+  "_verification_pending": true,
+  "_note": "wrongIf/rightIf conditions kept as text — semantic verification deferred to verify_thesis.py"
+}

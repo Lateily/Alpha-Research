@@ -1,0 +1,105 @@
+{
+  "ticker": "002594.SZ",
+  "thesis_logged_at": "2026-05-11T10:48:33.297986+00:00",
+  "thesis_source": "docs/research/factcheck/002594SZ_thesis_2026-05-10_PHASE2.json",
+  "thesis_source_commit": "125e427",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "Q2 2026 earnings release confirming sustained overseas volume growth AND gross margin holding at/above 17.2% TTM level, forcing consensus EPS upward revision and a re-rating from 'domestic price warrior' to 'global vertically-integrated leader'",
+    "date_or_window": "2026-07-15 to 2026-08-31",
+    "type": "earnings_revision",
+    "source": "Q1 broker review cycle dated 2026-04-30 to 2026-05-08 (TUSHARE: 华创证券, 华金证券, 东方证券, 国联民生证券, 招商证券) sets the testable bar; exact Q2 release date not available in our data"
+  },
+  "mechanism_chain_length": 5,
+  "rightIf_conditions": [
+    "Q2 2026 reported gross margin ≥ 17.2% (current TTM level) — confirms mix-shift thesis intact",
+    "Q2 2026 overseas sales volume shows continued sequential growth consistent with broker '海外销量增长势头强劲' language",
+    "Consensus FY2026 NP estimates revised upward ≥5% within 2 weeks of Q2 report",
+    "Price sustainably breaks and holds above the ¥103.2/¥104.0 chip-cluster resistance band (combined 18.64% of float)",
+    "May/June 2026 monthly export sales prints maintain the Q1 momentum that sell-side cited"
+  ],
+  "wrongIf_conditions": [
+    "Q2 2026 gross margin drops below 15% (WATCHLIST wrongIf trigger)",
+    "Mgmt Q2 commentary explicitly cites European price competition / localization pressure as a margin driver",
+    "Consensus FY2026 NP revised DOWN post-Q2, or broker downgrades from the same houses (华创/华金/东方/国联民生) that just upgraded",
+    "Price fails at ¥104 cluster and breaks back below ¥95 on volume (loss of 60d momentum structure)",
+    "Margin financing 融资余额 reverses materially (>5% drawdown from 140.1亿) signaling leveraged-long capitulation"
+  ],
+  "what_changes_our_mind": "Q2 2026 reported gross margin falls below 15% (WATCHLIST wrongIf threshold) AND mgmt commentary attributes it to European price competition — would validate the localization-erosion mechanism.",
+  "variant_view_one_sentence": "Market believes BYD's overseas growth is volume without margin (anchored to -11.8% TTM rev, 4.8% Op Margin, and Stellantis-Leapmotor localization news) → We believe vertical integration makes exports a durable mix-shift tailwind already visible in 国联民生 2026-04-30 Q1 QoQ GM improvement → Mechanism is Q2 print converting Q1 margin trajectory + sell-side narrative coherence (5 brokers, April inst visits by Value Partners/国寿/高盛) into consensus EPS upward revisions, closing the reverse-DCF 15.1% vs 28.0% growth gap.",
+  "time_to_resolution": "10-16 weeks (through Q2 2026 earnings + immediate revision cycle)",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "+15% to +30% (toward mean target 119.55, high 137.00)",
+    "downside_if_wrong": "-10% to -15% (toward 60d support 87.05/85.88)",
+    "reward_to_risk": "2:1"
+  },
+  "quantification": {
+    "metric_target": "Forward P/E re-rating accompanying consensus EPS upward revision",
+    "current_value": "17.7x Fwd P/E at price 100.02",
+    "predicted_value": "20-22x Fwd P/E at price ~120",
+    "predicted_range": {
+      "low": "100.00",
+      "mid": "119.55",
+      "high": "130.00"
+    },
+    "predicted_horizon": "2026-07-15 to 2026-09-30 (post-Q2 earnings)",
+    "confidence": 0.62
+  },
+  "qc_quality_at_log_time": {
+    "score": 90,
+    "missingFields": [
+      "qc_checklist.all_8_steps_complete",
+      "qc_checklist.step_1_specific_not_vague",
+      "qc_checklist.step_2_no_unfounded_leaps",
+      "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "qc_checklist.step_5_observable",
+      "qc_checklist.step_6_observable",
+      "qc_checklist.step_7_one_sentence_tagline",
+      "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "qc_checklist.step_8_early_signs_observable",
+      "qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "qc_checklist.step_8_position_sizing_curve_monotonic",
+      "qc_checklist.reward_to_risk_at_least_threshold"
+    ],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": true,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "PASS",
+    "qc_findings": [
+      "failed:step_8_position_sizing_curve_monotonic",
+      "missing:qc_checklist.all_8_steps_complete",
+      "missing:qc_checklist.step_1_specific_not_vague",
+      "missing:qc_checklist.step_2_no_unfounded_leaps",
+      "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "missing:qc_checklist.step_5_observable",
+      "missing:qc_checklist.step_6_observable",
+      "missing:qc_checklist.step_7_one_sentence_tagline",
+      "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "missing:qc_checklist.step_8_early_signs_observable",
+      "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+      "missing:qc_checklist.reward_to_risk_at_least_threshold"
+    ]
+  },
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

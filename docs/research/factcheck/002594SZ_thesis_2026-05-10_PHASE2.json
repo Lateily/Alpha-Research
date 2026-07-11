@@ -1,0 +1,914 @@
+{
+  "success": true,
+  "ticker": "002594.SZ",
+  "data": {
+    "ticker": "002594.SZ",
+    "thesis_protocol_version": "v2",
+    "_direction": "LONG",
+    "_divergence_score": 55,
+    "_synthesizer_rationale": "Forensic verdict is EVENLY_GROUNDED with both sides citing specific broker reports and inst visits, but Technical AGREES with Bull (UP trend strength 72, bullish MACD, expanding leveraged-long margin balance +2.2% to 140.1亿) and CONFLICTS with Bear's reversion thesis. Bull's vertical-integration moat mechanism — anchored to 华创证券 2026-05-07 '海外销量增长势头强劲' and 国联民生证券 2026-04-30 '出口高增打开成长空间' plus Value Partners/国寿资产/高盛April diligence — articulates a business-mechanism contrarian view that the reverse DCF gap (implied 15.1% vs our 28.0% FCF growth) directly supports. Bear's localization-competition risk (Stellantis-Leapmotor news) is a real what-changes-our-mind condition but is not yet visible in margins; we go LONG with moderate sizing and explicit margin-compression kill switch.",
+    "step_1_catalyst": {
+      "catalyst_event": "Q2 2026 earnings release confirming sustained overseas volume growth AND gross margin holding at/above 17.2% TTM level, forcing consensus EPS upward revision and a re-rating from 'domestic price warrior' to 'global vertically-integrated leader'",
+      "catalyst_date_or_window": "2026-07-15 to 2026-08-31",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "Q1 broker review cycle dated 2026-04-30 to 2026-05-08 (TUSHARE: 华创证券, 华金证券, 东方证券, 国联民生证券, 招商证券) sets the testable bar; exact Q2 release date not available in our data"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. Market is anchored on lagging TTM metrics (LIVE FUNDAMENTALS Rev Growth -11.8%, 2025 Net Income 32.6B vs 2024 40.3B = -19.0% YoY) and a domestic-price-war narrative, treating BYD's 17.7x Fwd P/E as appropriate for a margin-pressured commodity OEM.",
+        "2. The structural mechanism the market under-models is BYD's vertically integrated cost stack (in-house batteries, power semiconductors, electronics) which lets export units carry materially higher contribution margins than domestic price-war units — a mix-shift effect, not a price effect.",
+        "3. Sell-side post-Q1 narrative has converged on this exact mechanism: 华创证券 2026-05-07 '海外销量增长势头强劲', 华金证券 2026-05-06 '海外销量保持高增，闪充带动产品矩阵升级', 东方证券 2026-05-04 '海外销量高增', 国联民生证券 2026-04-30 '2026Q1毛利率环比改善，出口高增打开成长空间', and 招商证券 2026-04-30 '单车营收趋势良好' (TUSHARE broker recs). The 国联民生 quote is specifically QoQ gross margin improvement — direct evidence the mix shift is already in the P&L.",
+        "4. Sophisticated buy-side is doing pre-narrative diligence: TUSHARE inst visits show Value Partners (2026-04-09), 国寿资产 (2026-04-07), 高盛 (2026-04-02), 华创 auto analyst 张睿希 (2026-04-07), and a 60-investor targeted survey (2026-04-02) — concentrated April diligence ahead of Q2 print, consistent with informed accumulation rather than crowded retail-driven momentum.",
+        "5. Reverse DCF in our data context shows implied_fcf_growth=15.1% vs our_fcf_growth=28.0% (delta +12.9pp). This is the quantified gap between the price-war narrative and the vertical-integration export story; Q2 print is the catalyst that forces convergence. Bear's Stellantis-Leapmotor localization risk (RECENT NEWS 2026-05-08) is real but multi-year and would show up in margin compression — which the WATCHLIST gross_margin<15% threshold would flag and is our explicit kill switch."
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "Forward P/E 17.7x vs TTM P/E 51.3x (LIVE FUNDAMENTALS) — market is pricing recovery but not a structural global-leader re-rating",
+        "Reverse DCF: implied_fcf_growth=15.1%, our_fcf_growth=28.0%, delta +12.9pp (FULL DATA CONTEXT) — quantified market under-pricing of growth",
+        "Analyst mean target 119.55, range 90.00–137.00, 22 analysts, 19.5% upside vs live 100.02 (LIVE FUNDAMENTALS)",
+        "60d price action +14.9% from 87.05 to 100.02 (FULL DATA CONTEXT OHLC) with Technical trend strength 72 and bullish MACD",
+        "Margin loan balance 融资余额 140.1亿, +2.2% over period, 99.7% leveraged-long ratio (TUSHARE margin trade) — leveraged longs accumulating",
+        "Gross Margin 17.2%, Op Margin 4.8% (LIVE FUNDAMENTALS) — thin operating margin is the key vulnerability and defines our wrongIf threshold",
+        "TUSHARE: 245 broker reports / 34 unique brokers / 90d window — broad coverage, narrative converging post-Q1"
+      ],
+      "evidence_qualitative": [
+        "Five distinct brokers in the 2026-04-30 to 2026-05-08 window independently cite overseas growth + flash-charging product cycle as primary drivers (华创, 华金, 东方, 国联民生, 招商) — narrative coherence post-Q1",
+        "国联民生证券 2026-04-30 specifically calls out '2026Q1毛利率环比改善' — sequential gross margin improvement is in the actuals, not just forecasts",
+        "April institutional visits include Value Partners, 国寿资产 (insurance asset mgr), 高盛, and a 60-investor targeted survey — pre-Q2 diligence pattern",
+        "No buyback program (TUSHARE capital structure) — consistent with mgmt deploying capital into global expansion rather than returning it",
+        "Pledge ratio only 3.92% as of 2026-04-10 (TUSHARE) — low controlling-shareholder financial stress",
+        "RECENT NEWS 2026-05-08 Stellantis-Leapmotor factory deal is a real multi-year competitive headwind but not a Q2 P&L event"
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "BYD is a margin-pressured volume player whose overseas growth is a temporary window before Chinese competitors localize European production and compete margins away.",
+          "z": "Supported by TTM Rev Growth -11.8%, 2025 NI -19.0% YoY, thin 4.8% Op Margin, and the Stellantis-Leapmotor news dated 2026-05-08."
+        },
+        "our_variant": {
+          "e": "BYD's vertical integration (batteries + semis + electronics) creates a structural unit-economics advantage that makes exports a durable mix-shift tailwind, not a price-driven volume push — a mechanism the 17.7x Fwd P/E and 15.1% implied FCF growth do not yet reflect.",
+          "z": "国联民生 2026-04-30 already documents Q1 QoQ gross margin improvement coincident with export growth, and April diligence by Value Partners / 国寿资产 / 高盛 indicates informed capital is underwriting this mechanism pre-Q2 print."
+        },
+        "what_changes_our_mind": "Q2 2026 reported gross margin falls below 15% (WATCHLIST wrongIf threshold) AND mgmt commentary attributes it to European price competition — would validate the localization-erosion mechanism."
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "Forward P/E re-rating accompanying consensus EPS upward revision",
+      "current_value": "17.7x Fwd P/E at price 100.02",
+      "predicted_value": "20-22x Fwd P/E at price ~120",
+      "predicted_range": {
+        "low": "100.00",
+        "mid": "119.55",
+        "high": "130.00"
+      },
+      "predicted_horizon": "2026-07-15 to 2026-09-30 (post-Q2 earnings)",
+      "confidence": 0.62
+    },
+    "step_5_proves_right_if": [
+      "Q2 2026 reported gross margin ≥ 17.2% (current TTM level) — confirms mix-shift thesis intact",
+      "Q2 2026 overseas sales volume shows continued sequential growth consistent with broker '海外销量增长势头强劲' language",
+      "Consensus FY2026 NP estimates revised upward ≥5% within 2 weeks of Q2 report",
+      "Price sustainably breaks and holds above the ¥103.2/¥104.0 chip-cluster resistance band (combined 18.64% of float)",
+      "May/June 2026 monthly export sales prints maintain the Q1 momentum that sell-side cited"
+    ],
+    "step_6_proves_wrong_if": [
+      "Q2 2026 gross margin drops below 15% (WATCHLIST wrongIf trigger)",
+      "Mgmt Q2 commentary explicitly cites European price competition / localization pressure as a margin driver",
+      "Consensus FY2026 NP revised DOWN post-Q2, or broker downgrades from the same houses (华创/华金/东方/国联民生) that just upgraded",
+      "Price fails at ¥104 cluster and breaks back below ¥95 on volume (loss of 60d momentum structure)",
+      "Margin financing 融资余额 reverses materially (>5% drawdown from 140.1亿) signaling leveraged-long capitulation"
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes BYD's overseas growth is volume without margin (anchored to -11.8% TTM rev, 4.8% Op Margin, and Stellantis-Leapmotor localization news) → We believe vertical integration makes exports a durable mix-shift tailwind already visible in 国联民生 2026-04-30 Q1 QoQ GM improvement → Mechanism is Q2 print converting Q1 margin trajectory + sell-side narrative coherence (5 brokers, April inst visits by Value Partners/国寿/高盛) into consensus EPS upward revisions, closing the reverse-DCF 15.1% vs 28.0% growth gap.",
+      "time_to_resolution": "10-16 weeks (through Q2 2026 earnings + immediate revision cycle)",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "+15% to +30% (toward mean target 119.55, high 137.00)",
+        "downside_if_wrong": "-10% to -15% (toward 60d support 87.05/85.88)",
+        "reward_to_risk": "2:1"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "4-8 weeks (through May/June monthly sales prints into Q2 release)",
+        "why_market_keeps_buying": [
+          "Coherent post-Q1 sell-side narrative across 5+ brokers citing overseas + flash-charging",
+          "Expanding leveraged longs (融资余额 +2.2% to 140.1亿, 99.7% long ratio)",
+          "Technical UP trend strength 72 with bullish MACD, +14.9% 60d momentum",
+          "April institutional diligence (Value Partners, 国寿, 高盛) signaling informed accumulation",
+          "Reverse DCF gap (15.1% implied vs 28.0% our) provides analytical anchor"
+        ],
+        "early_signs_phase_1_weakening": [
+          "Failure to break ¥104 chip cluster after multiple attempts",
+          "May or June monthly export sales decelerating sequentially",
+          "Margin balance declining from 140.1亿 peak",
+          "Any broker from the 华创/华金/东方/国联民生/招商 cluster downgrading or cutting target"
+        ],
+        "optional_long_play": {
+          "direction": "LONG",
+          "sizing": "Initial 50% on confirmed hold above 100, add to 100% on break and retest of 104 cluster",
+          "exit_trigger": "Q2 GM <15%, OR price breaks below 95 on volume, OR mgmt cites European price competition"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "Q2 2026 GM <15% (WATCHLIST wrongIf)",
+          "European localization (Stellantis-Leapmotor and follow-on deals) showing up as visible BYD price concessions",
+          "Domestic flash-charging product cycle disappoints (no volume lift cited by 华金/东方)"
+        ],
+        "estimated_timing": "Late Q3 2026 to early Q4 2026 if margin compression materializes",
+        "short_play": {
+          "direction": "SHORT (only if phase-2 catalyst fires)",
+          "sizing": "Half of phase-1 long exposure, defensive only — not a pre-emptive short given Technical AGREES with Bull",
+          "entry_trigger": "Q2 GM print <15% confirmed AND price breaks back below ¥95 on expanding volume"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "50%",
+        "phase_1_weakening_confirmed": "50%",
+        "phase_2_catalyst_imminent": "50% (held flat — flip to defensive/short only on confirmed wrongIf trigger; do not add into deteriorating fundamentals)"
+      }
+    },
+    "qc_checklist": {
+      "catalyst_is_future_dated": true,
+      "mechanism_chain_has_5plus_steps": true,
+      "every_numeric_claim_grounded_in_data_context": true,
+      "contrarian_view_cites_business_mechanism_not_valuation": true,
+      "what_changes_our_mind_is_concrete_observable": true,
+      "reward_to_risk_at_least_2to1": true,
+      "position_sizing_monotonic_non_decreasing": true,
+      "wrongIf_thresholds_explicit": true,
+      "technical_alignment_considered": true,
+      "forensic_grounding_verdict_respected": true
+    },
+    "_bull_thesis": {
+      "ticker": "002594.SZ",
+      "thesis_protocol_version": "v2",
+      "_rebuttal": "Bear claimed overseas growth is vulnerable to localized competition (e.g., Leapmotor/Stellantis news) — addressed by arguing BYD's vertical integration creates a durable cost moat, a mechanism the market underappreciates. Bear claimed the trade is crowded (245 reports, institutional visits) — addressed by reframing this as conviction-building in a nascent recovery, with valuation (17.7x Fwd P/E) still far from euphoric. Bear claimed limited margin cushion (4.8% OpM) — addressed by clarifying the thesis is a mix-shift story where higher-margin exports will support consolidated margins. Bear claimed tactical risk from trapped supply overhead — addressed by acknowledging the risk but arguing the upcoming Q2 catalyst is powerful enough to resolve this supply, making the reward/risk attractive.",
+      "step_1_catalyst": {
+        "catalyst_event": "Q2 2026 Earnings Release: Confirmation of sustained, high-margin export growth, demonstrating resilience to the localized competition fears raised by bears and forcing consensus EPS upgrades.",
+        "catalyst_date_or_window": "Late July / Early August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Company filings and validation of broker report theses (e.g., 华创证券 20260507 report)."
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. The market is anchored to lagging TTM metrics (Rev Growth -11.8%) and a narrative of intense domestic price wars, viewing the crucial export growth story as fragile.",
+          "2. The bear case crystallizes this fear, citing news of competitors (e.g., Leapmotor/Stellantis) localizing production in Europe to argue that BYD's export margins will be competed away, neutralizing the growth vector.",
+          "3. Our variant view is that this fear fundamentally misunderstands BYD's competitive advantage. Its deep vertical integration (batteries, semiconductors, electronics) provides a structural cost and technology moat that smaller peers cannot replicate, allowing for profitable market share gains even in a competitive environment.",
+          "4. Recent sell-side reports confirm the *current* strength of this moat. 华创证券's 2026-05-07 report highlights '海外销量增长势头强劲' (overseas sales growth momentum is strong) and 国联民生证券's 2026-04-30 report notes '出口高增打开成长空间' (high export growth opens up space for growth). This is a Q1 2026 reality, not a future hope.",
+          "5. Diligence by sophisticated investors like Value Partners (2026-04-09) and 国寿资产 (2026-04-07) ahead of this narrative pivot suggests they are underwriting this structural advantage. The upcoming Q2 earnings print will be the catalyst that forces the market to re-rate the stock from a 'domestic price warrior' to a 'global vertically-integrated leader'."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Forward P/E of 17.7x represents a steep discount to the TTM P/E of 51.3x, indicating the market expects recovery, but the multiple does not reflect a durable, high-margin global growth vector.",
+          "Analyst consensus mean price target of 119.55 implies 19.5% upside from the current price of 100.02, with the high end of the range at 137.00.",
+          "Leveraged longs are expanding with conviction: margin loan balance (`融资余额`) is a substantial 140.1亿 RMB, with a 99.7% long-to-short ratio.",
+          "Reverse DCF model indicates the market is pricing in FCF growth of 15.1%, while our assessment of the profitable export channel suggests 28.0% is achievable, a positive delta of +12.9% (`implied_fcf_growth`, `our_fcf_growth`)."
+        ],
+        "evidence_qualitative": [
+          "A unified, bullish narrative is forming among sell-side analysts post-Q1 earnings (e.g., 华创证券, 华金证券, 东方证券), specifically identifying overseas sales as the key driver, providing a clear and testable thesis.",
+          "Recent institutional research visits in April 2026 by respected asset managers like Value Partners and 国寿资产 signal deep-dive interest in the company's structural advantages before the narrative became consensus.",
+          "The absence of a share buyback program suggests management's confidence in deploying capital into high-return growth initiatives, namely the global expansion at the core of our thesis, rather than financial engineering."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "BYD's overseas growth is a temporary volume play, highly vulnerable to margin erosion from localized competition by other Chinese players in key markets like Europe.",
+            "z": "This view is supported by news of competitors (Leapmotor/Stellantis) gaining local production assets, and is reinforced by BYD's low consolidated operating margin of 4.8%."
+          },
+          "our_variant": {
+            "e": "BYD's vertical integration provides a durable cost and technology moat, allowing for sustained, profitable export growth that the market is under-modeling.",
+            "z": "The strong Q1 momentum cited in 华创证券's 2026-05-07 report ('海外销量增长势头强劲') is direct evidence of this resilience. The April diligence by firms like Value Partners is a leading indicator that sophisticated capital is underwriting this very moat, a factor not captured in the current 17.7x Fwd P/E."
+          },
+          "what_changes_our_mind": "Q2 2026 earnings showing gross margins falling below 15% AND management explicitly citing European price competition as the primary cause, which would validate the bear's core mechanism."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "17.7x (P/E Fwd)",
+        "predicted_value": "22.5x",
+        "predicted_range": {
+          "low": "100.00",
+          "mid": "119.55",
+          "high": "130.00"
+        },
+        "predicted_horizon": "3-6 months (Post-Q2 2026 earnings)",
+        "confidence": 0.8
+      },
+      "step_5_proves_right_if": [
+        "Q2 2026 export sales volume shows >20% sequential growth.",
+        "Q2 2026 gross margin is reported at or above the current 17.2% TTM level, demonstrating the positive mix-shift from exports.",
+        "Consensus FY2026 Net Profit estimates are revised upwards by at least 5% following the Q2 report.",
+        "Stock price sustainably breaks and holds above the heavy cost-basis cluster around ¥104.0."
+      ],
+      "step_6_proves_wrong_if": [
+        "Monthly export sales data for May or June 2026 shows a significant sequential slowdown.",
+        "Gross margin drops below 15% in Q2 2026 earnings (`WATCHLIST wrongIf`).",
+        "Management provides cautious guidance on H2 2026 international demand or profitability, citing competition.",
+        "The stock price breaks below the 52-week low of 85.88."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes BYD's export story is fragile and will be crushed by localized competition → We believe BYD's vertical integration provides a durable cost moat enabling sustained profitable growth, a mechanism validated by 华创证券's Q1 report of '海外销量增长势头强劲' → This is unpriced because the market is over-weighting single data points on competition while sophisticated capital (e.g., Value Partners' April visit) is underwriting BYD's structural advantage.",
+        "time_to_resolution": "3-4 months (by Q2 2026 earnings release)",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+20% to +30%",
+          "downside_if_wrong": "-14% to -15%",
+          "reward_to_risk": "1.7:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "1-2 months",
+          "why_market_keeps_buying": [
+            "Positive monthly sales data (especially export figures) acting as mini-catalysts.",
+            "Continued positive sell-side report flow emphasizing the overseas growth angle."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Monthly export figures showing sequential deceleration.",
+            "Negative pre-announcements from European auto part suppliers citing Chinese EV competition."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "Build initial position",
+            "exit_trigger": "Price breaks below 52W low of 85.88"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Q2 2026 earnings report confirming strong export growth AND stable/improving gross margins."
+          ],
+          "estimated_timing": "Late July / Early August 2026",
+          "short_play": {
+            "direction": "N/A",
+            "sizing": "N/A",
+            "entry_trigger": "N/A"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "50% of full position",
+          "phase_1_weakening_confirmed": "25% (reduce size on signs bear thesis is playing out)",
+          "phase_2_catalyst_imminent": "100% (increase to full size ahead of Q2 earnings if monthly data remains strong)"
+        }
+      },
+      "qc_checklist": {
+        "is_future_catalyst_date": true,
+        "is_bullish_thesis": true,
+        "is_variant_view_a_business_mechanism": true,
+        "is_variant_view_grounded_in_data_context": true,
+        "is_numeric_claim_grounded_in_data_context": true,
+        "is_using_correct_schema": true,
+        "is_contrarian_view_non_valuation": true,
+        "is_passing_all_hard_citation_rules": true
+      }
+    },
+    "_bear_thesis": {
+      "ticker": "002594.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "May-June 2026 monthly sales updates and 2026Q2 earnings / broker-revision cycle: test whether the overseas-growth plus flash-charging product-cycle narrative converts into revenue growth and margin resilience, or instead shows price-led volume with margin leakage.",
+        "catalyst_date_or_window": "2026-07-01 to 2026-08-31",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Future reporting window following TUSHARE broker Q1 reports dated 2026-04-30 to 2026-05-08; exact company Q2 release date is not available in our data."
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. The Bull case is not an under-owned variant anymore; it is the published consensus narrative. TUSHARE broker recommendations show 华创证券 2026-05-07 report '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲', 华金证券 2026-05-06 report '比亚迪2026年一季报点评：海外销量保持高增，闪充带动产品矩阵升级', 东方证券 2026-05-04 report '比亚迪：海外销量高增，预计闪充及新车上市将促进国内销量改善', and 国联民生证券 2026-04-30 report '比亚迪系列点评四十二：2026Q1毛利率环比改善，出口高增打开成长空间'. The specific business narrative is export growth plus domestic product-cycle repair.",
+          "2. Our short mechanism is that export growth can become a margin-dilutive arms race as Chinese EV competitors localize European capacity. The RECENT NEWS item from finance.yahoo.com dated 2026-05-08, 'Selling factories to Chinese partners: risky road for European carmakers', says Stellantis is considering selling an underutilised factory in Spain to its Chinese joint venture Leapmotor. If Chinese competitors gain local European manufacturing through incumbent partnerships, BYD's overseas business faces local-cost competitors and may need price concessions, dealer incentives, or mix concessions to defend share.",
+          "3. This directly attacks the Bull's 'high-margin export' premise: export volume momentum is cited in broker titles, but export gross margin by region is not available in our data. What is available is company-level live gross margin of 17.2% and operating margin of 4.8% per LIVE FUNDAMENTALS. With only 4.8% operating margin, even a modest business shift from mix-led export growth to price-led export growth can materially change earnings power; the data's own WATCHLIST flags gross margin below 15% as a wrong-way condition.",
+          "4. Institutional attention looks like narrative crowding, not necessarily undiscounted information. TUSHARE institutional research visits show Value Partners on 2026-04-09 via phone conference, 国寿资产 on 2026-04-07 via phone conference, 高盛 on 2026-04-02 via phone conference, and '受邀投资人60人' on 2026-04-02 in a targeted survey. Combined with TUSHARE's 245 broker reports from 34 unique brokers in the 90d window, the setup suggests the export-growth thesis is already widely distributed before the Europe-localization competitive response is reflected in revisions.",
+          "5. The domestic leg of the Bull case is also not self-funding in the data. 华金证券's 2026-05-06 report highlights '闪充带动产品矩阵升级' and 东方证券's 2026-05-04 report expects '闪充及新车上市将促进国内销量改善', but domestic revenue recovery and product-level margins are not available in our data. Meanwhile LIVE FUNDAMENTALS show TTM revenue growth of -11.8%, MULTI-YEAR INCOME STATEMENT shows latest net income YoY of -19.0%, and there is no buyback program in TUSHARE capital-structure signals. If domestic recovery requires promotions while Europe gets more competitive, the Q2 revision risk is negative."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Live price is 100.02 and the stock is down 0.44% today per REAL-TIME ENRICHMENT CONTEXT.",
+          "The 60d OHLC trend shows the close moved from 87.05 to 100.02, a +14.9% move per FULL DATA CONTEXT.",
+          "P/E TTM is 51.3x, forward P/E is 17.7x, and EV/EBITDA is 8.4x per LIVE FUNDAMENTALS.",
+          "TTM revenue growth is -11.8% per LIVE FUNDAMENTALS.",
+          "Gross margin is 17.2% and operating margin is 4.8% per LIVE FUNDAMENTALS.",
+          "The WATCHLIST wrongIf threshold flags revenue_growth < -10% for 2 consecutive quarters, gross_margin below 15%, or earnings_growth < -40% per FULL DATA CONTEXT.",
+          "Net income declined from 40.3B in 2024 to 32.6B in 2025, and latest net income YoY is -19.0%, per MULTI-YEAR INCOME STATEMENT.",
+          "Diluted EPS declined from 9.22 in 2024 to 3.58 in 2025 per MULTI-YEAR INCOME STATEMENT.",
+          "Consensus analyst mean target is 119.55, with a range of 90.00 to 137.00 across 22 analysts, implying 19.5% upside versus live price per LIVE FUNDAMENTALS.",
+          "TUSHARE broker recommendations show 245 reports from 34 unique brokers in the 90d window.",
+          "TUSHARE margin trade shows 融资余额 of 140.1亿, +2.2% over the period, 融券余额 of 0.47亿, and a 99.7% leveraged-long long/short ratio.",
+          "TUSHARE chip distribution shows cost-basis concentrations at ¥103.2 for 10.05% of float, ¥104.0 for 8.59%, ¥100.8 for 8.39%, ¥100.0 for 7.93%, and ¥102.4 for 7.17% of float.",
+          "TUSHARE capital-structure signals show pledge ratio of 3.92% as of 2026-04-10 and buyback programs: NONE."
+        ],
+        "evidence_qualitative": [
+          "The sell-side narrative is highly synchronized around the same drivers: overseas sales growth, flash charging, product-matrix upgrade, export growth, and domestic sales improvement.",
+          "The RECENT NEWS item dated 2026-05-08 highlights European incumbent capacity potentially being transferred to Chinese-linked EV competitors, specifically Stellantis considering selling an underutilised factory in Spain to its Chinese joint venture Leapmotor.",
+          "Institutional research attention is active, with TUSHARE listing Value Partners, 国寿资产, 华创证券, 高盛, and 受邀投资人60人 in April 2026.",
+          "The data does not provide export gross margin by region, so the Bull's claim that international sales are high-margin is not available in our data.",
+          "The data does not provide May or June 2026 monthly export volumes, so near-term validation of the broker export-growth narrative is not available in our data.",
+          "There is no listed buyback program in TUSHARE capital-structure signals, so no company-level capital-return cushion is visible in our data if sentiment turns."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Market believes BYD is entering a re-acceleration phase led by overseas sales growth and domestic product upgrades.",
+            "z": "This consensus is supported by the cluster of TUSHARE broker reports such as 华创证券 2026-05-07 '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲', 华金证券 2026-05-06 '比亚迪2026年一季报点评：海外销量保持高增，闪充带动产品矩阵升级', and 东方证券 2026-05-04 '比亚迪：海外销量高增，预计闪充及新车上市将促进国内销量改善'."
+          },
+          "our_variant": {
+            "e": "Per 华创证券 2026-05-07 '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲', the market is extrapolating overseas volume momentum into earnings recovery; the business mechanism we underwrite is different: European capacity localization by Chinese-linked competitors can turn overseas growth from a scarcity/mix benefit into a price-competition problem.",
+            "z": "This contradicts the consensus narrative because the 2026-05-08 finance.yahoo.com news item 'Selling factories to Chinese partners: risky road for European carmakers' says Stellantis is considering selling an underutilised factory in Spain to its Chinese joint venture Leapmotor, implying Chinese EV competitors may gain local European capacity just as BYD's broker narrative depends on overseas growth; with company-level gross margin only 17.2% and operating margin only 4.8% per LIVE FUNDAMENTALS, the Q2 print can disappoint even if units grow."
+          },
+          "what_changes_our_mind": "We would abandon the short if Q2 2026 results show TTM revenue growth no longer below the WATCHLIST-style pressure zone, gross margin remains at or above the current 17.2% LIVE FUNDAMENTALS level, and management or reported segment data demonstrates export growth is margin-accretive; export margin by region is currently not available in our data."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Gross margin and earnings-revision risk as the trigger for price reversion",
+        "current_value": "Gross margin 17.2%, operating margin 4.8%, TTM revenue growth -11.8%, live price 100.02 per LIVE FUNDAMENTALS / REAL-TIME ENRICHMENT CONTEXT",
+        "predicted_value": "Gross margin moves toward the WATCHLIST risk threshold of below 15% or Q2 revisions fail to support the broker export-growth narrative; exact Q2 gross margin is not available in our data.",
+        "predicted_range": {
+          "low": "85.88, the 52W range low per LIVE FUNDAMENTALS",
+          "mid": "90.00, the low end of analyst target range per LIVE FUNDAMENTALS",
+          "high": "104.00, a nearby chip-distribution cost-basis cluster per TUSHARE CHIP DISTRIBUTION"
+        },
+        "predicted_horizon": "2026-07-01 to 2026-08-31",
+        "confidence": 0.62
+      },
+      "step_5_proves_right_if": [
+        "Q2 2026 or monthly sales commentary shows overseas growth continuing but gross margin moving toward or below the WATCHLIST threshold of 15%.",
+        "TTM or quarterly revenue growth remains below -10% for a second consecutive quarter, matching the WATCHLIST wrongIf framework; current TTM revenue growth is -11.8% per LIVE FUNDAMENTALS.",
+        "Broker revisions after Q2 move FY2026 net profit expectations down from the cited TUSHARE broker NP forecasts, such as 华创证券 NP=434.9亿, 华金证券 NP=411.4亿, 东方证券 NP=423.5亿, or 招商证券 NP=612.9亿.",
+        "News flow confirms more European localized capacity for Chinese EV competitors after the 2026-05-08 finance.yahoo.com item involving Stellantis, Spain, and Leapmotor.",
+        "Price fails near the TUSHARE chip-distribution clusters around ¥100.0, ¥100.8, ¥102.4, ¥103.2, and ¥104.0 while margin financing remains elevated."
+      ],
+      "step_6_proves_wrong_if": [
+        "Q2 2026 gross margin is at or above 17.2%, the current LIVE FUNDAMENTALS gross margin, despite continued overseas expansion.",
+        "Q2 2026 operating margin is at or above 4.8%, the current LIVE FUNDAMENTALS operating margin, and management attributes the resilience to export mix rather than one-off items.",
+        "Monthly sales updates through June 2026 show export growth with no evidence of pricing concessions; export pricing data is currently not available in our data.",
+        "Broker reports after Q2 raise rather than cut FY2026 net profit expectations from the TUSHARE-listed forecasts.",
+        "The stock breaks and holds above 111.82, the 52W range high per LIVE FUNDAMENTALS, after Q2 earnings without margin deterioration."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes BYD's Q1 export momentum and flash-charging product cycle will drive a clean earnings re-acceleration because brokers such as 华创证券 2026-05-07 and 华金证券 2026-05-06 emphasize '海外销量增长势头强劲' and '闪充带动产品矩阵升级' → We believe the under-modeled business mechanism is export-margin compression from localized Chinese EV competition in Europe, highlighted by the 2026-05-08 finance.yahoo.com news that Stellantis is considering selling a Spanish factory to its Chinese JV Leapmotor, while domestic recovery may require promotion rather than pure mix uplift → This is unpriced because TUSHARE shows 245 broker reports from 34 brokers and April visits by Value Partners, 国寿资产, 高盛, and 受邀投资人60人 clustered around the same growth narrative, while export regional margin data is not available in our data.",
+        "time_to_resolution": "2026-07-01 to 2026-08-31",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+10.0% to +14.1% short profit if price moves from 100.02 toward the analyst low target of 90.00 or 52W low of 85.88, per LIVE FUNDAMENTALS",
+          "downside_if_wrong": "-4.0% to -4.2% if stopped around the nearby TUSHARE chip-distribution cluster at ¥104.0 from live price 100.02",
+          "reward_to_risk": "2.4:1 to 3.5:1 using 90.00/85.88 downside targets and a ¥104.0 stop"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "From 2026-05-10 to the next monthly sales and Q2 earnings window in 2026-07-01 to 2026-08-31",
+          "why_market_keeps_buying": [
+            "Recent broker titles repeatedly emphasize overseas sales growth, including 华创证券 2026-05-07 '海外销量增长势头强劲' and 国联民生证券 2026-04-30 '出口高增打开成长空间'.",
+            "Consensus analyst mean target is 119.55, implying 19.5% upside versus live price per LIVE FUNDAMENTALS.",
+            "Leveraged-long positioning remains strong, with TUSHARE margin data showing 融资余额 of 140.1亿, +2.2% over the period, and a 99.7% leveraged-long long/short ratio.",
+            "Institutional research visits in April 2026 by Value Partners, 国寿资产, 高盛, and 受邀投资人60人 reinforce the perception that global investors are diligencing the same overseas-growth story."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Price repeatedly fails at the TUSHARE chip-distribution clusters of ¥100.8, ¥102.4, ¥103.2, and ¥104.0.",
+            "Broker reports begin shifting from 'overseas high growth' language to discussion of pricing, incentives, or margin pressure.",
+            "Follow-up industry news expands on the 2026-05-08 finance.yahoo.com theme of Chinese EV competitors obtaining localized European capacity.",
+            "Margin financing stops expanding from the TUSHARE-reported 融资余额 of 140.1亿 or leveraged-long positioning begins to unwind."
+          ],
+          "optional_long_play": {
+            "direction": "No long; stay neutral until phase-1 weakening appears.",
+            "sizing": "0%",
+            "exit_trigger": "Not applicable; this is a short-biased setup and the data show narrative crowding rather than a clean long edge."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Q2 2026 earnings show gross margin moving toward or below the WATCHLIST threshold of 15%.",
+            "Q2 2026 revenue growth fails to recover from the current TTM revenue growth of -11.8% per LIVE FUNDAMENTALS.",
+            "Post-Q2 broker revisions reduce NP forecasts cited in TUSHARE broker recommendations.",
+            "News confirms European localized capacity expansion by Chinese-linked EV competitors, extending the 2026-05-08 finance.yahoo.com Stellantis/Leapmotor Spain-factory signal."
+          ],
+          "estimated_timing": "2026-07-01 to 2026-08-31",
+          "short_play": {
+            "direction": "SHORT",
+            "sizing": "Start only after price rejection near ¥103.2-¥104.0 chip clusters or after a Q2 margin/revision miss; avoid pre-confirmation full sizing.",
+            "entry_trigger": "Enter if the stock fails near the ¥103.2 or ¥104.0 TUSHARE chip-distribution clusters and Q2/monthly data do not validate margin-accretive overseas growth; add if gross margin approaches the 15% WATCHLIST threshold."
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "1%",
+          "phase_2_catalyst_imminent": "2%"
+        }
+      },
+      "_rebuttal": {
+        "bull_argument_1": {
+          "claim_addressed": "Bull says market is anchored to lagging domestic weakness and under-models international expansion.",
+          "rebuttal": "The export-growth thesis is not under-modeled in the supplied data: TUSHARE shows 245 broker reports from 34 unique brokers in 90d, and multiple recent titles explicitly cite overseas growth, including 华创证券 2026-05-07 '海外销量增长势头强劲' and 国联民生证券 2026-04-30 '出口高增打开成长空间'. Our dispute is not whether overseas volumes can grow; it is whether that growth is margin-accretive once Chinese competitors localize European capacity."
+        },
+        "bull_argument_2": {
+          "claim_addressed": "Bull says international sales are high-margin and will force EPS upgrades.",
+          "rebuttal": "Export gross margin by region is not available in our data. What is available is company-level gross margin of 17.2% and operating margin of 4.8% per LIVE FUNDAMENTALS, plus TTM revenue growth of -11.8%. The Bull is assuming margin mix without a regional margin datapoint in the provided context."
+        },
+        "bull_argument_3": {
+          "claim_addressed": "Bull says Value Partners and 国寿资产 visits are smart-money diligence ahead of the narrative shift.",
+          "rebuttal": "The same visits can indicate crowding rather than edge. TUSHARE institutional research visits list Value Partners on 2026-04-09, 国寿资产 on 2026-04-07, 高盛 on 2026-04-02, and 受邀投资人60人 on 2026-04-02. Combined with 245 broker reports, this suggests the export-growth story is already broadly syndicated."
+        },
+        "bull_argument_4": {
+          "claim_addressed": "Bull says Q2 earnings will validate the export story and re-rate forward P/E.",
+          "rebuttal": "Q2 is also the key short catalyst because it will reveal whether export growth is price-led or margin-accretive. The WATCHLIST flags gross margin below 15% as a wrong-way condition, and current operating margin is only 4.8%. The short does not require export volumes to fail; it requires the earnings bridge to fail."
+        },
+        "bull_argument_5": {
+          "claim_addressed": "Bull uses reverse DCF and forward P/E to argue upside.",
+          "rebuttal": "Valuation arithmetic is secondary and not our mechanism. Our mechanism is competitive: the 2026-05-08 finance.yahoo.com news that Stellantis may sell a Spanish factory to its Chinese JV Leapmotor points to Chinese competitor capacity localization in Europe, which can pressure BYD's overseas export economics."
+        },
+        "bull_argument_6": {
+          "claim_addressed": "Bull says the absence of buybacks shows management confidence in growth investment.",
+          "rebuttal": "TUSHARE capital-structure data only says buyback programs: NONE. The inference that absence of buybacks proves high-return growth opportunities is not available in our data; from a short-risk perspective it means no visible buyback support if earnings revisions turn negative."
+        }
+      },
+      "qc_checklist": {
+        "numeric_claims_grounded_in_data_context": true,
+        "catalyst_date_future_relative_to_2026_05_10": true,
+        "mechanism_chain_cites_specific_broker_report_title": true,
+        "mechanism_chain_cites_inst_visit_or_news": true,
+        "contrarian_view_our_variant_references_specific_broker_title": true,
+        "contrarian_view_our_variant_references_specific_news_event": true,
+        "contrarian_view_is_business_mechanism_not_valuation_only": true,
+        "avoids_forbidden_generic_market_anchored_language": true,
+        "states_not_available_when_data_missing": true,
+        "position_sizing_curve_monotonically_non_decreasing": true
+      }
+    },
+    "_bull_r1": {
+      "ticker": "002594.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Q2 2026 Earnings Release: Confirmation of sustained export growth and margin resilience.",
+        "catalyst_date_or_window": "Late July / Early August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Company filings and validation of broker report theses (e.g., 华创证券 20260507 report)."
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. Market is anchored to lagging indicators of domestic weakness: TTM Revenue Growth of -11.8% and Net Income YoY of -19.0% have created a narrative of a company struggling with intense domestic price wars.",
+          "2. A new, high-margin growth driver is being under-modeled: Post-Q1 2026 earnings, multiple brokers initiated positive coverage explicitly citing international expansion as the key driver. For example, 华创证券's 2026-05-07 report is titled '26Q1业绩符合预期，海外销量增长势头强劲' (26Q1 results in line, overseas sales growth momentum is strong) and 国联民生证券's 2026-04-30 report highlights '出口高增打开成长空间' (high export growth opens up space for growth).",
+          "3. 'Smart money' is performing diligence ahead of the narrative shift: High-quality institutional investors, including Value Partners (2026-04-09) and 国寿资产 (2026-04-07), conducted research visits in April, prior to the widespread sell-side narrative pivot in May. This suggests sophisticated capital is building conviction early.",
+          "4. The upcoming Q2 2026 earnings report will serve as the primary catalyst for consensus to catch up. A strong print will force analysts to upgrade full-year EPS forecasts to reflect the material contribution from the export business.",
+          "5. This fundamental validation will trigger a multiple re-rating. The stock will shift from being valued as a domestic cyclical facing margin pressure to a global EV leader with a new, durable growth vector, justifying an expansion of its Forward P/E from the current 17.7x."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Forward P/E of 17.7x represents a steep discount to the TTM P/E of 51.3x, indicating the market expects a recovery, but we believe the magnitude is underestimated.",
+          "Analyst consensus mean price target of 119.55 implies 19.5% upside from the current price of 100.02.",
+          "Margin trading data shows extreme bullish sentiment among leveraged investors, with a 99.7% long-to-short ratio and a 140.1亿 RMB balance in margin longs (`融资余额`), which has been increasing by 2.2% over the period.",
+          "Reverse DCF model indicates the market is pricing in FCF growth of 15.1%, while our internal assessment suggests 28.0% is achievable, a positive delta of +12.9% (`implied_fcf_growth`, `our_fcf_growth`)."
+        ],
+        "evidence_qualitative": [
+          "A unified, bullish narrative is forming among sell-side analysts post-Q1 earnings, with at least 8 positive reports between April 30 and May 8, 2026, all emphasizing the strength of overseas sales (e.g., 华创证券, 华金证券, 东方证券).",
+          "Recent institutional research visits in April 2026 by respected asset managers like Value Partners and 国寿资产 signal deep-dive interest from long-term capital before the narrative became consensus.",
+          "The absence of a share buyback program, in contrast to other large-caps, suggests management's confidence in deploying capital into high-return growth initiatives, namely the global expansion at the core of our thesis."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "BYD is a low-growth incumbent.",
+            "z": "The thesis is anchored to negative TTM revenue growth (-11.8%) and severe domestic price competition, viewing international expansion as a high-risk, long-dated, low-impact venture."
+          },
+          "our_variant": {
+            "e": "BYD is a re-accelerating global growth story.",
+            "z": "The market is mispricing the immediacy and profitability of the international expansion. Per 华创证券's 2026-05-07 report, the '海外销量增长势头强劲' is a Q1 2026 reality, not a future hope. The April 2026 diligence by firms like Value Partners is a leading indicator that sophisticated investors are front-running this narrative shift."
+          },
+          "what_changes_our_mind": "Q2 2026 earnings showing sequential deceleration in export volumes OR gross margins falling below 15%, which would invalidate the 'high-margin export' thesis."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "17.7x (P/E Fwd)",
+        "predicted_value": "22.5x",
+        "predicted_range": {
+          "low": "100.00",
+          "mid": "119.55",
+          "high": "125.00"
+        },
+        "predicted_horizon": "3-6 months (Post-Q2 2026 earnings)",
+        "confidence": 0.75
+      },
+      "step_5_proves_right_if": [
+        "Q2 2026 export sales volume shows >20% sequential growth.",
+        "Q2 2026 gross margin is reported at or above 17.2% (current TTM level).",
+        "Consensus FY2026 Net Profit estimates are revised upwards following the Q2 report.",
+        "Stock price sustainably breaks and holds above the 52-week high of 111.82."
+      ],
+      "step_6_proves_wrong_if": [
+        "Monthly export sales data for May or June 2026 shows a significant slowdown.",
+        "Gross margin drops below 15% in Q2 2026 earnings (`WATCHLIST wrongIf`).",
+        "Management provides cautious guidance on H2 2026 international demand or profitability.",
+        "The stock price breaks below the 52-week low of 85.88."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes BYD's growth is stalled by domestic price wars → We believe the market is ignoring a powerful, ongoing re-acceleration driven by high-margin international sales, a mechanism validated by 华创证券's Q1 report highlighting '海外销量增长势头强劲' → This is unpriced because the narrative shift is recent (post-Q1 reports in May 2026) and institutional diligence (e.g., Value Partners' April visit) is a leading indicator not yet reflected in the share price.",
+        "time_to_resolution": "3-4 months (by Q2 2026 earnings release)",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+20% to +25%",
+          "downside_if_wrong": "-14% to -15%",
+          "reward_to_risk": "1.8:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "1-2 months",
+          "why_market_keeps_buying": [
+            "Positive monthly sales data (especially export figures) acting as mini-catalysts.",
+            "Continued positive sell-side research notes reinforcing the new narrative.",
+            "Quiet accumulation from institutions that completed diligence in April."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Stock price breaking and holding above the heavy cost-basis cluster at ¥103.2-¥104.0.",
+            "Upward revisions to consensus EPS estimates *before* the Q2 earnings announcement."
+          ],
+          "optional_long_play": {
+            "direction": "not applicable",
+            "sizing": "not applicable",
+            "exit_trigger": "not applicable"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Q2 2026 earnings report showing strong export growth and resilient gross margins, forcing a re-evaluation of the company's growth profile."
+          ],
+          "estimated_timing": "Late July / Early August 2026",
+          "short_play": {
+            "direction": "not applicable",
+            "sizing": "not applicable",
+            "entry_trigger": "not applicable"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "5%",
+          "phase_2_catalyst_imminent": "10%"
+        }
+      },
+      "qc_checklist": {
+        "is_contrarian_mechanism_business_not_valuation": true,
+        "is_catalyst_future_dated": true,
+        "is_numeric_claim_grounded_in_context": true,
+        "is_specific_broker_or_inst_visit_cited_in_mechanism": true,
+        "is_variant_view_supported_by_specific_data_point": true,
+        "is_thesis_falsifiable_with_specific_conditions": true
+      }
+    },
+    "_bear_r1": {
+      "ticker": "002594.SZ",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Next monthly sales updates plus 2026Q2 earnings/revision cycle: test whether the sell-side overseas-growth and flash-charging/domestic-recovery narrative is translating into revenue growth and margin resilience.",
+        "catalyst_date_or_window": "2026-07-01 to 2026-08-31",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Future reporting and sales-update window following TUSHARE broker Q1 reports dated 2026-04-30 to 2026-05-08; exact company release date not available in our data."
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. The consensus long case is now explicitly concentrated in one business mechanism: overseas growth plus domestic product-cycle recovery. This is visible in 华创证券 2026-05-07 report '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲', 华金证券 2026-05-06 report '比亚迪2026年一季报点评：海外销量保持高增，闪充带动产品矩阵升级', and 东方证券 2026-05-04 report '比亚迪：海外销量高增，预计闪充及新车上市将促进国内销量改善'.",
+          "2. Our short variant is that the overseas-growth narrative is vulnerable to a capacity-localization and price-competition mechanism in Europe, not merely a tariff mechanism. The recent news item from finance.yahoo.com on 2026-05-08, 'Selling factories to Chinese partners: risky road for European carmakers', says Stellantis is considering selling an underutilised factory in Spain to its Chinese joint venture Leapmotor. That points to Chinese EV competitors gaining localized European capacity through incumbent partnerships, which can pressure BYD's export economics and force price competition.",
+          "3. The crowding signal is not just valuation: TUSHARE shows 245 broker reports from 34 unique brokers in the 90d window, while buy-side attention includes Value Partners on 2026-04-09, 国寿资产 on 2026-04-07, 高盛 on 2026-04-02, and 受邀投资人60人 on 2026-04-02. The risk is that the same overseas-growth mechanism has become the dominant institutional narrative before the margin impact of localized Chinese competition in Europe is visible.",
+          "4. The company has limited margin cushion if the overseas thesis becomes price-led rather than mix-led: live gross margin is 17.2% and operating margin is 4.8% per LIVE FUNDAMENTALS, while the watchlist threshold flags gross margin below 15% as a key wrong-way condition. If Europe requires local pricing concessions and domestic '闪充及新车上市' requires promotional support, the margin bridge can fail even if unit volumes remain healthy.",
+          "5. The setup is asymmetric tactically because leveraged longs are expanded and cost bases are clustered just above spot: TUSHARE margin data shows 融资余额 140.1亿, up 2.2% over the period, and a 99.7% leveraged-long long/short ratio; TUSHARE chip distribution shows major float cost-basis clusters at ¥100.0, ¥100.8, ¥102.4, ¥103.2, and ¥104.0. If Q2 revisions show margin or revenue slippage, this can convert the consensus overseas-growth trade into trapped supply."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Live price is 100.02, down 0.44% today, per REAL-TIME ENRICHMENT CONTEXT.",
+          "The stock has risen from 87.05 to 100.02 over the 60d OHLC trend, a +14.9% move per FULL DATA CONTEXT.",
+          "P/E TTM is 51.3x, forward P/E is 17.7x, and EV/EBITDA is 8.4x per LIVE FUNDAMENTALS.",
+          "Revenue growth TTM is -11.8% per LIVE FUNDAMENTALS, already past the watchlist revenue-growth threshold of revenue_growth < -10% if repeated for two consecutive quarters.",
+          "Gross margin is 17.2% and operating margin is 4.8% per LIVE FUNDAMENTALS; the watchlist flags gross_margin below 15% as a key downside trigger.",
+          "Net income declined from 40.3B in 2024 to 32.6B in 2025, a latest YoY decline of -19.0%, per MULTI-YEAR INCOME STATEMENT.",
+          "Diluted EPS declined from 9.22 in 2024 to 3.58 in 2025 per MULTI-YEAR INCOME STATEMENT.",
+          "Consensus analyst mean target is 119.55, with a range of 90.00 to 137.00 and 22 analysts, implying 19.5% upside versus live price per LIVE FUNDAMENTALS.",
+          "TUSHARE broker recommendations show 245 reports from 34 unique brokers in the 90d window.",
+          "TUSHARE margin trade shows 融资余额 140.1亿, +2.2% over the period, 融券余额 0.47亿, and a 99.7% leveraged-long long/short ratio.",
+          "TUSHARE chip distribution shows cost-basis concentrations at ¥103.2 for 10.05% of float, ¥104.0 for 8.59%, ¥100.8 for 8.39%, ¥100.0 for 7.93%, and ¥102.4 for 7.17%."
+        ],
+        "evidence_qualitative": [
+          "Sell-side titles are tightly aligned around overseas volume growth, flash charging, new products, and domestic recovery rather than debating downside: 华创证券 emphasizes '海外销量增长势头强劲', 华金证券 emphasizes '海外销量保持高增，闪充带动产品矩阵升级', and 东方证券 emphasizes '海外销量高增，预计闪充及新车上市将促进国内销量改善'.",
+          "Institutional research attention is active: Value Partners, 国寿资产, 华创证券, 高盛, and 受邀投资人60人 appear in TUSHARE institutional research visits during April 2026.",
+          "Recent industry news on 2026-05-08 highlights European carmakers potentially selling factories to Chinese partners, with Stellantis considering selling an underutilised factory in Spain to its Chinese joint venture Leapmotor. This is directly relevant to the overseas-China-EV expansion narrative.",
+          "There is no buyback program listed in TUSHARE capital-structure signals, while the data notes buyback programs as NONE; this means there is no identified capital-return support in our data if sentiment turns.",
+          "Controlling-shareholder pledge ratio is 3.92% as of 2026-04-10 per TUSHARE capital-structure signals; this is not our core short point but is a monitored capital-structure signal."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Market believes BYD can grow through overseas expansion and new domestic product technology because recent broker reports are overwhelmingly framed around '海外销量高增', '闪充', and domestic sales improvement.",
+            "z": "The consensus is reinforced by 245 broker reports from 34 unique brokers in the 90d TUSHARE window, 22 analysts in LIVE FUNDAMENTALS, and a mean target of 119.55 implying 19.5% upside versus the live price."
+          },
+          "our_variant": {
+            "e": "Per 华创证券 2026-05-07 '比亚迪2026年一季报点评：26Q1业绩符合预期，海外销量增长势头强劲', the bull case assumes overseas growth remains a positive mix driver. Per finance.yahoo.com 2026-05-08 'Selling factories to Chinese partners: risky road for European carmakers', Stellantis is considering selling an underutilised factory in Spain to its Chinese joint venture Leapmotor, which suggests Chinese EV competition can localize inside Europe through incumbent assets.",
+            "z": "This contradicts the consensus narrative because the sell-side is emphasizing overseas growth and flash-charging product upgrades, while the business mechanism we underwrite is localized European capacity and peer Chinese competition turning overseas expansion into a price-competition channel. That matters because BYD's live gross margin is only 17.2%, live operating margin is 4.8%, and the watchlist flags gross_margin below 15% as a downside threshold."
+          },
+          "what_changes_our_mind": "We would abandon the short if the next reporting cycle shows revenue growth no longer below the -10% watchlist concern, gross margin remains above the 15% watchlist threshold, and new broker reports still identify overseas growth as margin-accretive rather than price-led."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Gross margin deterioration toward the watchlist threshold as overseas competition and domestic product-cycle costs pressure mix.",
+        "current_value": "17.2% gross margin per LIVE FUNDAMENTALS.",
+        "predicted_value": "Below the 15% watchlist threshold; exact predicted gross margin not available in our data.",
+        "predicted_range": {
+          "low": "Below 15% watchlist threshold; exact low not available in our data.",
+          "mid": "Around the 15% watchlist threshold; exact mid not available in our data.",
+          "high": "17.2% current LIVE FUNDAMENTALS gross margin if the short thesis is wrong."
+        },
+        "predicted_horizon": "By 2026-08-31 reporting/revision window.",
+        "confidence": 0.55
+      },
+      "step_5_proves_right_if": [
+        "Gross margin falls below the 15% watchlist threshold in the next reporting cycle.",
+        "Revenue growth remains below -10% for two consecutive quarters, matching the watchlist wrongIf condition.",
+        "Earnings growth falls below -40%, matching the watchlist wrongIf condition.",
+        "Broker follow-up reports after the next print revise down net-profit expectations versus current TUSHARE report figures such as 华创证券 NP=434.9亿, 华金证券 NP=411.4亿, 东方证券 NP=423.5亿, or 招商证券 NP=612.9亿.",
+        "New broker titles shift from '海外销量高增' and '闪充带动产品矩阵升级' toward pricing pressure, margin pressure, export profitability, or European competitive localization."
+      ],
+      "step_6_proves_wrong_if": [
+        "Gross margin stays above the 15% watchlist threshold and does not show deterioration from the 17.2% LIVE FUNDAMENTALS level.",
+        "Revenue growth improves so that the watchlist condition of revenue_growth < -10% for two consecutive quarters is not met.",
+        "Earnings growth does not approach the watchlist downside condition of earnings_growth < -40%.",
+        "Overseas growth remains explicitly described by new broker reports as margin-accretive, not merely volume-accretive.",
+        "The stock clears the ¥104.0 chip-distribution cluster without negative earnings revisions, invalidating the tactical trapped-supply setup."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes BYD's overseas growth plus flash-charging product cycle will offset domestic weakness because 华创证券 2026-05-07 says '海外销量增长势头强劲' and 华金证券 2026-05-06 says '海外销量保持高增，闪充带动产品矩阵升级' → We believe localized European Chinese-EV capacity and peer competition can turn overseas expansion into a price-competition channel, as suggested by the 2026-05-08 finance.yahoo.com report that Stellantis is considering selling a Spanish factory to the Leapmotor JV → This is unpriced because TUSHARE shows 245 broker reports from 34 brokers, active institutional visits including Value Partners and 高盛, and a 99.7% leveraged-long long/short ratio while live gross margin is only 17.2% versus the 15% watchlist threshold.",
+        "time_to_resolution": "2026-07-01 to 2026-08-31 reporting and earnings-revision window.",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+10.0% if price falls from live price 100.02 to the analyst-target low of 90.00 from LIVE FUNDAMENTALS.",
+          "downside_if_wrong": "-4.0% if stopped above the ¥104.0 TUSHARE chip-distribution cluster from live price 100.02.",
+          "reward_to_risk": "2.5:1 using 90.00 downside target and ¥104.0 stop reference."
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "Until the next monthly sales updates and 2026Q2 earnings/revision cycle, estimated 2026-07-01 to 2026-08-31.",
+          "why_market_keeps_buying": [
+            "Broker narrative is strongly supportive: recent titles emphasize '海外销量增长势头强劲', '海外销量保持高增', '闪充带动产品矩阵升级', and domestic sales improvement.",
+            "Consensus analyst mean target is 119.55, implying 19.5% upside versus live price per LIVE FUNDAMENTALS.",
+            "TUSHARE margin trade shows 融资余额 140.1亿, +2.2% over the period, and a 99.7% leveraged-long long/short ratio.",
+            "Institutional research visits include Value Partners, 国寿资产, 高盛, and 受邀投资人60人 in April 2026, indicating active buy-side attention."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Price fails around TUSHARE chip-distribution clusters at ¥100.8, ¥102.4, ¥103.2, or ¥104.0.",
+            "New sell-side notes stop using '海外销量高增' or '闪充带动产品矩阵升级' as the primary thesis language.",
+            "Margin discussions become more prominent than volume-growth discussions in broker or institutional narratives.",
+            "融资余额 stops expanding from the current 140.1亿 level or the 99.7% leveraged-long ratio begins to unwind; exact future levels not available in our data."
+          ],
+          "optional_long_play": {
+            "direction": "None; avoid tactical long because the thesis is a crowded-consensus setup rather than an uncrowded upside setup.",
+            "sizing": "0%",
+            "exit_trigger": "Not applicable."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Gross margin approaches or falls below the 15% watchlist threshold.",
+            "Revenue growth remains worse than the -10% watchlist condition for two consecutive quarters.",
+            "Earnings growth approaches the watchlist downside condition of less than -40%.",
+            "Broker revisions reduce NP assumptions from current TUSHARE report levels such as 华创证券 NP=434.9亿, 华金证券 NP=411.4亿, 东方证券 NP=423.5亿, or 招商证券 NP=612.9亿."
+          ],
+          "estimated_timing": "2026-07-01 to 2026-08-31.",
+          "short_play": {
+            "direction": "Short 002594.SZ tactically on evidence of margin or revenue slippage.",
+            "sizing": "Initial risk budget only after phase_1 weakening; increase into confirmed phase_2 catalyst.",
+            "entry_trigger": "Enter when price fails below the ¥100.0 to ¥104.0 TUSHARE chip-distribution band after a broker-revision or earnings/sales signal that challenges the overseas-growth margin narrative."
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "1%",
+          "phase_2_catalyst_imminent": "2%"
+        }
+      },
+      "qc_checklist": {
+        "mechanism_chain_cites_specific_broker_name_and_report_title": true,
+        "mechanism_chain_cites_at_least_two_required_narrative_items": true,
+        "our_variant_references_specific_broker_report": true,
+        "our_variant_references_specific_news_or_institutional_visit": true,
+        "contrarian_view_is_business_mechanism_not_valuation_only": true,
+        "catalyst_date_is_future_relative_to_2026-05-10": true,
+        "all_numeric_claims_grounded_in_data_context_or_marked_not_available": true,
+        "no_fabricated_lhb_or_holder_transaction_used": true,
+        "acknowledges_missing_data_where_needed": true,
+        "short_bias_expressed_with_risk_controls": true
+      }
+    },
+    "_technical": {
+      "trend": "UP",
+      "trend_strength": 72,
+      "momentum": {
+        "rsi_estimate": 58,
+        "macd_signal": "bullish",
+        "interpretation": "Price surge from 87.05 to 100.02 (+14.9% over 60d) suggests bullish momentum, though approaching overbought territory near previous resistance levels."
+      },
+      "key_levels": {
+        "support": [
+          87.05,
+          85.88
+        ],
+        "resistance": [
+          103.2,
+          104,
+          111.82
+        ]
+      },
+      "volume_profile": "expanding",
+      "chip_concentration": "concentrated",
+      "margin_trend": "expanding_long",
+      "technical_summary_e": "Price has broken above the 100 level with strong momentum, recovering 14.9% from the 60-day low of 87.05. Heavy chip concentration around 100-104 range (42.13% of float clustered in top 5 cost-basis levels) suggests significant resistance ahead. Margin financing expansion (+2.2% to 140.1B yuan) with 99.7% long bias indicates leveraged bullish positioning supporting the uptrend.",
+      "technical_summary_z": "技术面显示从87.05的强劲反弹至100.02，突破关键整数位100。筹码高度集中在100-104区间（前5个成本密集区占流通盘42.13%），形成重要阻力带。融资余额扩张至1401亿元（+2.2%），融资融券比例99.7%偏多，反映杠杆资金看多情绪推动上涨趋势。"
+    },
+    "_forensic": {
+      "bull_findings": [
+        {
+          "claim": "Forward P/E of 17.7x",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS confirms P/E Fwd: 17.7x"
+        },
+        {
+          "claim": "TTM P/E of 51.3x",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS confirms P/E TTM: 51.3x"
+        },
+        {
+          "claim": "Analyst consensus mean price target of 119.55 implies 19.5% upside",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows mean 119.55, 19.5% upside vs live"
+        },
+        {
+          "claim": "Revenue Growth -11.8%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Rev Growth (TTM): -11.8%"
+        },
+        {
+          "claim": "Margin loan balance 140.1亿 RMB",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE margin trade shows 融资余额: 140.1亿"
+        },
+        {
+          "claim": "99.7% long-to-short ratio",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE shows long/short ratio: 99.7% leveraged-long"
+        },
+        {
+          "claim": "Reverse DCF implied FCF growth 15.1% vs our 28.0%",
+          "data_match": "MATCH",
+          "evidence": "REVERSE DCF shows implied_fcf_growth=0.151, our_fcf_growth=0.280"
+        },
+        {
+          "claim": "华创证券 2026-05-07 report highlights overseas sales growth",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE broker data confirms 华创证券 20260507 report '海外销量增长势头强劲'"
+        },
+        {
+          "claim": "Value Partners and 国寿资产 April visits",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE institutional visits show Value Partners 20260409 and 国寿资产 20260407"
+        }
+      ],
+      "bear_findings": [
+        {
+          "claim": "Live price 100.02 down 0.44% today",
+          "data_match": "MATCH",
+          "evidence": "REAL-TIME ENRICHMENT shows LIVE PRICE: 100.02 (-0.44% today)"
+        },
+        {
+          "claim": "60d move from 87.05 to 100.02 (+14.9%)",
+          "data_match": "MATCH",
+          "evidence": "OHLC TREND (60d): close 87.05 → 100.02 (+14.9%)"
+        },
+        {
+          "claim": "TTM revenue growth -11.8%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Rev Growth (TTM): -11.8%"
+        },
+        {
+          "claim": "Gross margin 17.2%, operating margin 4.8%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Gross Margin: 17.2%, Op Margin: 4.8%"
+        },
+        {
+          "claim": "Net income declined from 40.3B to 32.6B",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT shows 2024=40.3B, 2025=32.6B"
+        },
+        {
+          "claim": "245 broker reports from 34 unique brokers",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE shows (Total 245 reports / 34 unique brokers)"
+        },
+        {
+          "claim": "Stellantis selling factory to Leapmotor",
+          "data_match": "MATCH",
+          "evidence": "RECENT NEWS confirms Stellantis considering selling factory in Spain to Chinese joint venture Leapmotor"
+        },
+        {
+          "claim": "Chip concentration at specific price levels",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE chip distribution shows ¥103.2: 10.05%, ¥104.0: 8.59%, etc."
+        }
+      ],
+      "shared_assumptions_at_risk": [
+        "Both sides assume Q2 2026 earnings will be the definitive catalyst that resolves the export growth sustainability question - if Q2 results are mixed or inconclusive, both theses face extended uncertainty",
+        "Both depend on the premise that overseas sales margin profile is materially different from domestic - but export gross margin by region is not available in our data, making this core assumption unverifiable"
+      ],
+      "technical_vs_bull": "AGREES — Technical shows UP trend with 72 strength, price surge +14.9% over 60d from 87.05 to 100.02, bullish momentum with RSI 58 and bullish MACD. This supports Bull's expectation of continued upside toward 119.55-130.00 target range, though heavy resistance around 103.2-104.0 aligns with Bull's tactical risk acknowledgment.",
+      "technical_vs_bear": "CONFLICTS — Technical shows strong UP trend (72 strength) with expanding long margin financing (+2.2% to 140.1B yuan) and 99.7% leveraged-long bias. This contradicts Bear's expectation of price reversion and margin compression. However, heavy chip concentration around 100-104 range (42.13% of float) does support Bear's view of potential supply overhead.",
+      "bull_contrarian_quality": "BUSINESS_MECHANISM",
+      "bear_contrarian_quality": "BUSINESS_MECHANISM",
+      "verdict_on_grounding": "EVENLY_GROUNDED",
+      "verdict_rationale": "Both sides demonstrate strong data grounding with extensive citations of specific broker reports, institutional visits, and technical metrics. Bull correctly identifies vertical integration moat mechanism with specific broker report validation, while Bear accurately highlights competitive localization risk with concrete Stellantis/Leapmotor news catalyst."
+    },
+    "_agent_status": {
+      "bull_r1": {
+        "status": "success",
+        "ms": 41149
+      },
+      "bear_r1": {
+        "status": "success",
+        "ms": 92579
+      },
+      "technical": {
+        "status": "success",
+        "ms": 9261
+      },
+      "bull_r2": {
+        "status": "success",
+        "ms": 40584
+      },
+      "bear_r2": {
+        "status": "success",
+        "ms": 67632
+      },
+      "forensic": {
+        "status": "success",
+        "ms": 23347
+      },
+      "synth": {
+        "status": "success",
+        "ms": 80669
+      }
+    },
+    "_quality": {
+      "score": 90,
+      "missingFields": [
+        "qc_checklist.all_8_steps_complete",
+        "qc_checklist.step_1_specific_not_vague",
+        "qc_checklist.step_2_no_unfounded_leaps",
+        "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "qc_checklist.step_5_observable",
+        "qc_checklist.step_6_observable",
+        "qc_checklist.step_7_one_sentence_tagline",
+        "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "qc_checklist.step_8_early_signs_observable",
+        "qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "qc_checklist.step_8_position_sizing_curve_monotonic",
+        "qc_checklist.reward_to_risk_at_least_threshold"
+      ],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": true,
+        "reward_to_risk_at_least_threshold": true,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": true,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "PASS",
+      "qc_findings": [
+        "failed:step_8_position_sizing_curve_monotonic",
+        "missing:qc_checklist.all_8_steps_complete",
+        "missing:qc_checklist.step_1_specific_not_vague",
+        "missing:qc_checklist.step_2_no_unfounded_leaps",
+        "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "missing:qc_checklist.step_5_observable",
+        "missing:qc_checklist.step_6_observable",
+        "missing:qc_checklist.step_7_one_sentence_tagline",
+        "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "missing:qc_checklist.step_8_early_signs_observable",
+        "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+        "missing:qc_checklist.reward_to_risk_at_least_threshold"
+      ]
+    }
+  },
+  "models_used": {
+    "bull": "gemini-2.5-pro",
+    "bear": "gpt-5.5",
+    "technical": "claude-sonnet-4-20250514",
+    "forensic": "claude-sonnet-4-20250514",
+    "synth": "claude-opus-4-7"
+  },
+  "_status": "OK",
+  "_partial_failures": [],
+  "pipeline_ms_total": 185749
+}

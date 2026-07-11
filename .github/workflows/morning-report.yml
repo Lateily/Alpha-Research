@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # ── Step 1: Fetch live prices from Yahoo Finance ──────────────────────
       - name: Fetch live prices
@@ -107,6 +107,20 @@ jobs:
           print(f"News: {len(macro)} macro, {len(portfolio)} portfolio articles")
           PYEOF
 
+      # ── Step 3.5: Regenerate thesis↔portfolio alignment marker ───────────
+      # Read-only marker (no trades, no commit). Regenerates from committed
+      # thesis records + positions.json so the daily report's human-review queue
+      # is always fresh and never skips on a missing/stale file. stdlib-only.
+      # Best-effort: a failure degrades to the payload step's graceful fallback.
+      - name: Regenerate thesis alignment marker
+        continue-on-error: true
+        run: |
+          python3 scripts/backfill_thesis_direction.py   || echo "backfill skipped (non-fatal)"
+          python3 scripts/portfolio_thesis_alignment.py  || echo "alignment skipped (non-fatal)"
+          test -f public/data/portfolio_thesis_alignment.json \
+            && echo "alignment marker regenerated (read-only)" \
+            || echo "no alignment marker — report queue will be empty (non-fatal)"
+
       # ── Step 4: Call morning-report API ──────────────────────────────────
       - name: Generate morning report
         id: report
@@ -122,6 +136,14 @@ jobs:
           with open('/tmp/news_macro.json')    as f: macro_news   = json.load(f)
           with open('/tmp/news_portfolio.json')as f: portfolio_news= json.load(f)
 
+          # Thesis↔portfolio alignment marker → deterministic human-review queue
+          # in the report (no LLM, never triggers trades). Best-effort: if the
+          # committed artifact is absent the queue simply doesn't render.
+          try:
+            with open('public/data/portfolio_thesis_alignment.json') as f: thesis_alignment = json.load(f)
+          except Exception:
+            thesis_alignment = None
+
           hkt = timezone(timedelta(hours=8))
           today = datetime.now(hkt).strftime('%Y-%m-%d')
 
@@ -132,6 +154,7 @@ jobs:
             'portfolio_news': portfolio_news,
             'regime_data':    regime_data,
             'predictions':    pred_data.get('predictions', []),
+            'thesis_alignment': thesis_alignment,
             'is_github_action': True,
           }
 

@@ -1,0 +1,52 @@
+{
+  "ticker": "688120.SH",
+  "generated_at": "2026-07-10",
+  "price": 344.0,
+  "zone": "BULLISH",
+  "entry_zone": true,
+  "exit_zone": false,
+  "signals": [
+    {
+      "type": "BULLISH_ALIGNMENT",
+      "strength": "strong",
+      "date": "20260709",
+      "bullish": true,
+      "description": {
+        "e": "MA5(290.3) > MA20(257.3) > MA60(238.7), price above all — full bullish alignment",
+        "z": "MA5(290.3)>MA20(257.3)>MA60(238.7)，均线多头排列，趋势强"
+      }
+    }
+  ],
+  "signal_count": {
+    "bullish": 1,
+    "bearish": 0,
+    "total": 1
+  },
+  "indicators": {
+    "ma5": 290.3,
+    "ma20": 257.31,
+    "ma60": 238.67,
+    "rsi14": 68.1,
+    "vol_ma20": 174242,
+    "vol_ratio": 1.1,
+    "price_vs_ma20": 33.69,
+    "price_vs_ma60": 44.13,
+    "change_1d": 16.61,
+    "change_5d": 22.42,
+    "change_20d": 88.78,
+    "macd_dif": 19.8904,
+    "macd_dea": 14.6338,
+    "macd_hist": 10.5133,
+    "bb_upper": 350.63,
+    "bb_mid": 257.31,
+    "bb_lower": 163.98,
+    "bb_bandwidth": 72.54,
+    "kdj_k": 58.0,
+    "kdj_d": 54.7,
+    "kdj_j": 64.6,
+    "cvd_latest": null,
+    "cvd_slope_5d": null,
+    "cvd_chg_1d": null,
+    "cvd_chg_3d": null
+  }
+}

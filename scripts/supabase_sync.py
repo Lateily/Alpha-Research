@@ -13,6 +13,10 @@ Setup:
 
 SQL Schema (run once in Supabase SQL editor):
 ──────────────────────────────────────────────────────────────────────────────
+-- NOTE: column is named `catalyst_proximity` for production data continuity;
+--       Python pipeline uses canonical `catalyst_prox` and translates at
+--       write time below (see sync_vp_scores). Do not "fix" the divergence
+--       without an explicit ALTER TABLE migration plan.
 CREATE TABLE IF NOT EXISTS vp_scores (
   ticker             VARCHAR(12)   NOT NULL,
   date               DATE          NOT NULL,
@@ -116,6 +120,16 @@ def sync_vp_scores(client):
     rows = snap.get("snapshots", [])
     if not rows:
         print("  No VP snapshots to sync"); return 0
+
+    # Translate canonical Python field name → DB column name.
+    # Pipeline uses `catalyst_prox` everywhere; the `vp_scores` Postgres
+    # column is `catalyst_proximity` (preserved for historical row continuity).
+    # setdefault + pop is idempotent: handles new-only, legacy-only, and
+    # transient both-present rows without losing data.
+    for r in rows:
+        if "catalyst_prox" in r:
+            r.setdefault("catalyst_proximity", r["catalyst_prox"])
+            r.pop("catalyst_prox", None)
 
     # Supabase upsert (handles duplicate ticker+date gracefully)
     success = upsert_with_retry(client, "vp_scores", rows)

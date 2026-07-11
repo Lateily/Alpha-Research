@@ -34,11 +34,17 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ─── TICKER METADATA ─────────────────────────────────────────────────────────
 const TICKER_META = {
-  '700.HK':    { en: 'Tencent',   hints: 'WeChat gaming advertising cloud',        isHK: true  },
-  '9999.HK':   { en: 'NetEase',   hints: 'gaming mobile music education',          isHK: true  },
-  '6160.HK':   { en: 'BeiGene',   hints: 'zanubrutinib BRUKINSA BTK oncology BGNE',isHK: true  },
-  '002594.SZ': { en: 'BYD',       hints: 'electric vehicle EV battery China auto', isHK: false },
-  '300308.SZ': { en: 'Innolight', hints: 'optical transceiver AI datacenter 800G', isHK: false },
+  // Watchlist v1.2 (2026-05-08) — 4-ticker focus on names Junyan personally tracks.
+  // Removed: 700.HK, 9999.HK, 6160.HK (Tencent/NetEase/BeiGene). Their TICKER_META
+  // kept here as fallback for any saved-thesis re-runs against historical artifacts.
+  '002594.SZ': { en: 'BYD',         hints: 'electric vehicle EV battery China auto BYD Han Tang Song',                  isHK: false },
+  '300308.SZ': { en: 'Innolight',   hints: 'optical transceiver AI datacenter 800G 1.6T silicon photonics CPO Innolight', isHK: false },
+  '175.HK':    { en: 'Geely Auto',  hints: 'Geely China auto EV hybrid Volvo Polestar Lotus Geometry Zeekr',             isHK: true  },
+  '603233.SH': { en: 'Da Shenlin',  hints: 'pharmacy retail drugstore chain Lingnan Guangdong medical insurance OTC Rx',  isHK: false },
+  // Removed (kept for historical thesis backward-compat — not in watchlist):
+  '700.HK':    { en: 'Tencent',     hints: 'WeChat gaming advertising cloud',        isHK: true  },
+  '9999.HK':   { en: 'NetEase',     hints: 'gaming mobile music education',          isHK: true  },
+  '6160.HK':   { en: 'BeiGene',     hints: 'zanubrutinib BRUKINSA BTK oncology BGNE',isHK: true  },
 };
 
 // ─── SHARED FETCH HELPER ─────────────────────────────────────────────────────
@@ -399,7 +405,7 @@ Return ONLY a JSON array:
 No markdown. Return only the JSON array.`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-opus-4-7',
     max_tokens: 900,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -431,7 +437,7 @@ Return ONLY a JSON array:
 No markdown. Return only the JSON array.`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-opus-4-7',
     max_tokens: 700,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -547,6 +553,406 @@ function buildFundamentalsBlock(f) {
   return '\n\n' + lines.join('\n');
 }
 
+// ── Extras block (W4, 2026-05-08) — full T-RD data context ────────────────
+// Consumes enrichment_context.extras built by scripts/research_data_loader.py
+// (Stage 1 of multi-agent team v1, RESEARCH_AGENT_TEAM_v1.md §2). Renders
+// rich data the existing fundamentalsBlock doesn't cover: multi-year fin
+// trends, OHLC, VP snapshot, rDCF, fragility, watchlist wrongIf,
+// Tushare per-ticker signals. Closes the "research uses ~10% of deployed
+// data" gap diagnosed 2026-05-08. Defensive — handles missing layers
+// gracefully so model gets COMPACT prompt addition (~30-50 lines max).
+function buildExtrasBlock(extras) {
+  if (!extras || typeof extras !== 'object') return '';
+  const lines = ['━━━ FULL DATA CONTEXT (T-RD loader — prioritize over training data) ━━━'];
+
+  const fmtB = v => (v == null || !Number.isFinite(v)) ? '—' : `${(v / 1e9).toFixed(1)}B`;
+
+  // 1. Multi-year financial trends
+  const fin = extras.financials_annual;
+  if (fin && fin._status === 'loaded') {
+    const incomeYears = fin.income_statement ? Object.keys(fin.income_statement).sort().reverse() : [];
+    if (incomeYears.length > 0) {
+      const ni = incomeYears.map(y => fin.income_statement[y]['Net Income'] ?? fin.income_statement[y]['Net Income Common Stockholders']);
+      lines.push('MULTI-YEAR INCOME STATEMENT (annual):');
+      lines.push(`  Net Income: ${incomeYears.map((y, i) => `${y.slice(0, 4)}=${fmtB(ni[i])}`).join(', ')}`);
+      if (ni.length >= 2 && ni[0] != null && ni[1] != null && ni[1] !== 0) {
+        const yoy = (ni[0] / ni[1] - 1) * 100;
+        lines.push(`  Net Income YoY (latest): ${yoy >= 0 ? '+' : ''}${yoy.toFixed(1)}%`);
+      }
+      const eps = incomeYears.map(y => fin.income_statement[y]['Diluted EPS']);
+      if (eps.some(e => e != null)) {
+        lines.push(`  Diluted EPS: ${incomeYears.map((y, i) => `${y.slice(0, 4)}=${eps[i] != null ? eps[i].toFixed(2) : '—'}`).join(', ')}`);
+      }
+    }
+    const cfYears = fin.cash_flow ? Object.keys(fin.cash_flow).sort().reverse() : [];
+    if (cfYears.length > 0) {
+      const buybacks = cfYears.map(y => fin.cash_flow[y]['Repurchase Of Capital Stock']);
+      if (buybacks.some(b => b != null && b !== 0)) {
+        lines.push(`  Buyback (cash flow outflow): ${cfYears.map((y, i) => `${y.slice(0, 4)}=${fmtB(Math.abs(buybacks[i] || 0))}`).join(', ')}`);
+      }
+    }
+  }
+
+  // 2. OHLC trend
+  const ohlc = extras.ohlc_recent;
+  if (ohlc && ohlc._status === 'loaded' && Array.isArray(ohlc.data) && ohlc.data.length > 0) {
+    const data = ohlc.data;
+    const last = data[data.length - 1];
+    const first = data[0];
+    if (last && first && first.close && last.close) {
+      const ret = ((last.close - first.close) / first.close) * 100;
+      const highs = data.map(d => d.high).filter(Number.isFinite);
+      const lows = data.map(d => d.low).filter(Number.isFinite);
+      const high = highs.length ? Math.max(...highs) : null;
+      const low = lows.length ? Math.min(...lows) : null;
+      lines.push(`OHLC TREND (${data.length}d): close ${first.close.toFixed(2)} → ${last.close.toFixed(2)} (${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%)`);
+      if (high != null && low != null && high !== low) {
+        const pos = ((last.close - low) / (high - low)) * 100;
+        lines.push(`  Period range ${low.toFixed(2)}–${high.toFixed(2)}, last close at ${pos.toFixed(0)}% of range`);
+      }
+    }
+  }
+
+  // 3. VP snapshot
+  const vp = extras.vp_snapshot;
+  if (vp && vp._status === 'loaded') {
+    lines.push(`VP SNAPSHOT: composite=${vp.vp ?? '?'} (date ${vp.date || '?'})`);
+    const decomp = vp.decomp || {};
+    const dims = Object.entries(decomp).map(([k, v]) => {
+      const score = (v && typeof v === 'object') ? (v.s ?? v.score ?? '?') : v;
+      return `${k}=${score}`;
+    });
+    if (dims.length) lines.push(`  Dimensions: ${dims.join(', ')}`);
+  }
+
+  // 4. Reverse DCF
+  const rdcf = extras.rdcf;
+  if (rdcf && rdcf._status === 'loaded' && Number.isFinite(rdcf.delta)) {
+    const num3 = v => (v == null || !Number.isFinite(v)) ? '?' : v.toFixed(3);
+    lines.push(`REVERSE DCF: implied_fcf_growth=${num3(rdcf.implied_fcf_growth)}, our_fcf_growth=${num3(rdcf.our_fcf_growth)}, delta=${rdcf.delta >= 0 ? '+' : ''}${num3(rdcf.delta)}`);
+    if (rdcf.delta > 0.05) lines.push('  → Market under-pricing growth (potential UNDERVALUED signal).');
+    else if (rdcf.delta < -0.05) lines.push('  → Market over-pricing growth (potential OVERVALUED signal).');
+  } else if (rdcf && rdcf._status === 'rdcf_failed') {
+    lines.push(`REVERSE DCF: failed (${rdcf.error || 'unknown'})`);
+  }
+
+  // 5. Fragility F1-F6
+  const frag = extras.fragility;
+  if (frag && frag._status === 'loaded') {
+    const factors = [];
+    for (const key of ['F1', 'F2', 'F3', 'F4', 'F5', 'F6']) {
+      const direct = frag[key];
+      if (direct != null) {
+        const score = (typeof direct === 'object') ? (direct.score ?? direct.s) : direct;
+        if (score != null) factors.push(`${key}=${score}`);
+      }
+    }
+    if (factors.length) lines.push(`FRAGILITY: ${factors.join(', ')}`);
+  }
+
+  // 6. Watchlist wrongIf + concentration seed
+  const wl = extras.watchlist_meta;
+  if (wl && wl._status === 'loaded') {
+    const seed = wl.vp_seed || {};
+    if (seed.wrongIf_e) lines.push(`WATCHLIST wrongIf: ${seed.wrongIf_e.slice(0, 220)}`);
+    const conc = seed.concentration_seed;
+    if (conc && conc.score != null) {
+      lines.push(`WATCHLIST concentration_seed: score=${conc.score} — ${(conc.rationale_e || '').slice(0, 160)}`);
+    }
+  }
+
+  // 7. Tushare per-ticker signal highlights — DETAILED narrative
+  // 2026-05-08 (Phase 1 of contrarian-thesis fix): each Tushare layer now
+  // surfaces NARRATIVE CONTENT (broker report titles + analyst names + rating
+  // + targets, institutional visit details, chip cost levels), not just
+  // summary counts. This gives Bull/Bear agents real material to argue
+  // business-level contrarian views from. Per Junyan's directive to surface
+  // "all data sources, with clear instructions". Token budget: +2-3K tokens.
+  const ts = extras.tushare_suite || {};
+
+  // ── Broker recommendations: top reports w/ title + rating + targets ──
+  const br = ts.broker_recommend;
+  if (br && Array.isArray(br.recommendations) && br.recommendations.length > 0) {
+    lines.push('');
+    lines.push('━━━ TUSHARE NARRATIVE DATA — YOU MUST CITE THESE IN MECHANISM_CHAIN ━━━');
+    lines.push('TUSHARE — BROKER RECOMMENDATIONS (90d window, sell-side narrative):');
+    // Dedupe by (broker, report_title, rec_date) — same report often appears
+    // multiple times with different forecast quarters
+    const seen = new Set();
+    const unique = [];
+    for (const r of br.recommendations) {
+      const key = `${r.org_name || r.broker || ''}|${r.report_title || ''}|${r.rec_date || r.report_date || ''}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(r);
+      if (unique.length >= 8) break;
+    }
+    for (const r of unique) {
+      const date = r.rec_date || r.report_date || '?';
+      const broker = r.org_name || r.broker || '?';
+      const title = (r.report_title || '').slice(0, 100);
+      const rating = r.rating || r.recommendation || '无';
+      const tp = r.target_price ?? r.tp ?? r.min_price ?? r.max_price;
+      const eps = r.eps;
+      const np = r.np;
+      const reportType = r.report_type ? `[${r.report_type}]` : '';
+      const tpStr = tp != null ? ` target=${tp}` : '';
+      const epsStr = eps != null ? ` EPS=${eps}` : '';
+      const npStr = np != null ? ` NP=${(np/1e4).toFixed(1)}亿` : '';
+      lines.push(`  ${date} ${broker} ${reportType} "${title}" — ${rating}${tpStr}${epsStr}${npStr}`);
+    }
+    const summary = br.summary || {};
+    lines.push(`  (Total ${summary.total_90d || br.recommendations.length} reports / ${summary.unique_brokers_90d || '?'} unique brokers / latest ${summary.latest_date || '?'})`);
+  }
+
+  // ── Institutional research: who visited recently ──
+  const ir = ts.inst_research;
+  if (ir && Array.isArray(ir.surveys) && ir.surveys.length > 0) {
+    lines.push('');
+    lines.push('TUSHARE — INSTITUTIONAL RESEARCH VISITS (which buy-side firms are studying this):');
+    for (const s of ir.surveys.slice(0, 6)) {
+      const date = s.surv_date || '?';
+      const org = s.rece_org || '?';
+      const orgType = s.org_type && s.org_type !== '--' ? `(${s.org_type})` : '';
+      const mode = s.surv_type || s.rece_mode || '';
+      const visitor = s.fund_visitors && s.fund_visitors !== '--' ? ` visitor: ${s.fund_visitors}` : '';
+      lines.push(`  ${date} ${org} ${orgType} — ${mode}${visitor}`);
+    }
+    const summary = ir.summary || {};
+    lines.push(`  (30d: ${summary.total_30d || 0} surveys / ${summary.unique_inst_30d || 0} unique inst | 90d: ${summary.total_90d || ir.surveys.length})`);
+  }
+
+  // ── 龙虎榜 LHB: recent appearance reasons + top buyer/seller seats ──
+  const lhb = ts.lhb;
+  if (lhb && Array.isArray(lhb.records) && lhb.records.length > 0) {
+    lines.push('');
+    lines.push('TUSHARE — 龙虎榜 LHB APPEARANCES (institutional/北向 net activity):');
+    for (const e of lhb.records.slice(0, 5)) {
+      const date = e.trade_date || '?';
+      const reason = e.reason || '?';
+      const netbuy = e.netbuy != null ? (e.netbuy >= 0 ? '+' : '') + (e.netbuy / 1e8).toFixed(2) + '亿' : '?';
+      lines.push(`  ${date} ${reason} | net ${netbuy}`);
+    }
+  } else if (lhb && lhb._status === 'endpoint_unavailable') {
+    // Skip silently, no permission
+  }
+
+  // ── Holder trade: insider/大股东 actual transactions ──
+  const ht = ts.holdertrade;
+  if (ht && Array.isArray(ht.events) && ht.events.length > 0) {
+    lines.push('');
+    lines.push('TUSHARE — INSIDER/大股东 ACTIVITY (recent share movements):');
+    for (const e of ht.events.slice(0, 5)) {
+      const date = e.ann_date || e.surv_date || '?';
+      const direction = (e.in_de === '1' || e.in_de === 'IN' || e.in_de === 1) ? '增持' : '减持';
+      const vol = e.change_vol || 0;
+      const holder = e.holder_name || e.holder_type || '?';
+      const ratio = e.change_ratio != null ? ` (${(e.change_ratio*100).toFixed(2)}%)` : '';
+      lines.push(`  ${date} ${holder} ${direction} ${(vol/1e4).toFixed(0)}万股${ratio}`);
+    }
+    const summary = ht.summary || {};
+    if (summary.signal_level) {
+      lines.push(`  Signal level (180d net): ${summary.signal_level}`);
+    }
+  }
+
+  // ── Top 游资 (top_inst) ──
+  const ti = ts.top_inst;
+  if (ti && Array.isArray(ti.appearances) && ti.appearances.length > 0) {
+    lines.push('');
+    lines.push('TUSHARE — 游资 (TOP_INST) APPEARANCES:');
+    const summary = ti.summary || {};
+    lines.push(`  Top buyer 30d: ${summary.top_buyer_30d || 'none'}`);
+    lines.push(`  Top seller 30d: ${summary.top_seller_30d || 'none'}`);
+  }
+
+  // ── Margin trade trend ──
+  const mg = ts.margin;
+  if (mg && Array.isArray(mg.records) && mg.records.length >= 2) {
+    const last = mg.records[mg.records.length - 1];
+    const first = mg.records[0];
+    if (last && first && Number.isFinite(last.rzye) && Number.isFinite(first.rzye) && first.rzye !== 0) {
+      const change = ((last.rzye - first.rzye) / first.rzye) * 100;
+      const rzrqRatio = last.rzye && last.rqye ? (last.rzye / (last.rzye + last.rqye)) * 100 : null;
+      lines.push('');
+      lines.push('TUSHARE — MARGIN TRADE:');
+      lines.push(`  融资余额: ${(last.rzye / 1e8).toFixed(1)}亿 (${change >= 0 ? '+' : ''}${change.toFixed(1)}% over period — leveraged longs ${change >= 0 ? 'expanding' : 'unwinding'})`);
+      if (last.rqye != null) lines.push(`  融券余额: ${(last.rqye / 1e8).toFixed(2)}亿 (long/short ratio: ${rzrqRatio?.toFixed(1)}% leveraged-long)`);
+    }
+  }
+
+  // ── Pledge / Repurchase / Restricted shares — single-line each ──
+  const otherLines = [];
+  const pl = ts.pledge_stat;
+  if (pl && Array.isArray(pl.records) && pl.records.length > 0) {
+    const latest = pl.records[pl.records.length - 1];
+    if (latest && Number.isFinite(latest.pledge_ratio)) {
+      otherLines.push(`Pledge ratio: ${latest.pledge_ratio.toFixed(2)}% (controlling-shareholder share-pledge as of ${latest.end_date || '?'})`);
+    }
+  }
+  const rp = ts.repurchase;
+  if (rp && Array.isArray(rp.events) && rp.events.length > 0) {
+    otherLines.push(`Buyback programs: ${rp.events.length} active events (capital return signal)`);
+  } else if (rp && rp.summary && rp.summary.total_count === 0) {
+    otherLines.push(`Buyback programs: NONE (vs e.g. Tencent FY24 HKD 112B — capital return absence may signal mgmt growth-prioritization)`);
+  }
+  const rs = ts.restricted_shares;
+  if (rs && Array.isArray(rs.events) && rs.events.length > 0) {
+    otherLines.push(`Restricted shares unlocking: ${rs.events.length} upcoming events (potential supply-side overhang)`);
+  }
+  if (otherLines.length) {
+    lines.push('');
+    lines.push('TUSHARE — CAPITAL STRUCTURE SIGNALS:');
+    otherLines.forEach(l => lines.push(`  ${l}`));
+  }
+
+  // ── Chip distribution: top 3 price levels by concentration ──
+  const cd = ts.chip_distribution;
+  if (cd && Array.isArray(cd.chips) && cd.chips.length > 0) {
+    const sorted = [...cd.chips].sort((a, b) => (b.percent || 0) - (a.percent || 0)).slice(0, 5);
+    lines.push('');
+    lines.push('TUSHARE — CHIP DISTRIBUTION (cost-basis concentration, top 5 levels):');
+    for (const c of sorted) {
+      lines.push(`  ¥${c.price?.toFixed(1)}: ${(c.percent || 0).toFixed(2)}% of float (cost-basis cluster)`);
+    }
+  }
+
+  // ── Consensus forecast: filter valid + recent ──
+  const cf = ts.consensus_forecast;
+  if (cf && Array.isArray(cf.forecasts) && cf.forecasts.length > 0) {
+    const valid = cf.forecasts.filter(f =>
+      (f.eps != null || f.net_profit != null || f.revenue != null)
+    );
+    if (valid.length > 0) {
+      const recent = [...valid].sort((a, b) => (b.end_date || 0) - (a.end_date || 0)).slice(0, 4);
+      lines.push('');
+      lines.push('TUSHARE — CONSENSUS FORECAST TIME-SERIES (broker aggregated, recent 4 periods):');
+      for (const f of recent) {
+        const date = f.end_date || '?';
+        const np = f.net_profit != null ? `NP=${(f.net_profit/1e4).toFixed(0)}万` : '';
+        const eps = f.eps != null ? `EPS=${f.eps}` : '';
+        const rev = f.revenue != null ? `Rev=${(f.revenue/1e8).toFixed(1)}亿` : '';
+        const bc = f.broker_count != null ? `(${f.broker_count} brokers)` : '';
+        const fields = [eps, np, rev, bc].filter(Boolean).join(' ');
+        lines.push(`  ${date}: ${fields}`);
+      }
+    }
+  }
+
+  // 7.5. Peer comparison cross-section (Phase 2.D 2026-05-10)
+  // Surface peer financial + valuation side-by-side for cross-section
+  // reasoning. Empty if no peers loaded.
+  const peers = Array.isArray(extras.peer_comparison) ? extras.peer_comparison : [];
+  const loadedPeers = peers.filter(p => p && p._status === 'loaded');
+  if (loadedPeers.length > 0) {
+    lines.push('');
+    lines.push('━━━ PEER CROSS-SECTION COMPARISON — USE FOR RELATIVE-VALUE THESIS ━━━');
+    lines.push('PEER COMPARISON (financial + valuation, latest annual + live):');
+    lines.push('');
+    const fmtPct = v => v == null ? '—' : `${(v * 100).toFixed(1)}%`;
+    const fmtB = v => (v == null || !Number.isFinite(v)) ? '—' : `${(v / 1e9).toFixed(1)}B`;
+    const fmtMC = v => (v == null || !Number.isFinite(v)) ? '—' : `${(v / 1e12).toFixed(2)}T`;
+    const fmtX = v => v == null ? '—' : `${v.toFixed(1)}x`;
+    for (const p of loadedPeers) {
+      lines.push(`  ${p.ticker} (FY${p.latest_year || '?'}):`);
+      lines.push(`    Net Income ${fmtB(p.net_income)} ${p.ni_yoy_pct != null ? `(YoY ${p.ni_yoy_pct >= 0 ? '+' : ''}${p.ni_yoy_pct}%)` : ''}, Revenue ${fmtB(p.revenue)}, EPS ${p.diluted_eps ?? '—'}`);
+      const valParts = [
+        p.live_price != null ? `price ${p.live_price}` : null,
+        p.pe_trailing != null ? `P/E TTM ${fmtX(p.pe_trailing)}` : null,
+        p.pe_forward != null ? `P/E Fwd ${fmtX(p.pe_forward)}` : null,
+        p.gross_margin != null ? `GM ${fmtPct(p.gross_margin)}` : null,
+        p.operating_margin != null ? `OpM ${fmtPct(p.operating_margin)}` : null,
+        p.revenue_growth_ttm != null ? `Rev TTM ${fmtPct(p.revenue_growth_ttm)}` : null,
+        p.roe != null ? `ROE ${fmtPct(p.roe)}` : null,
+        p.market_cap != null ? `MCap ${fmtMC(p.market_cap)}` : null,
+      ].filter(Boolean);
+      lines.push(`    ${valParts.join(' | ')}`);
+    }
+    const notLoaded = peers.filter(p => p && p._status !== 'loaded').map(p => p.ticker);
+    if (notLoaded.length > 0) {
+      lines.push('');
+      lines.push(`  Peers with data not yet fetched: ${notLoaded.join(', ')} (pipeline TBD)`);
+    }
+    lines.push('');
+    lines.push('USE: when bull/bear argues "relative value", "competitive position",');
+    lines.push('"sector pricing", "margin advantage" — cite specific peer-vs-focus');
+    lines.push('numbers from above. E.g., "BYD GM 17.2% vs 175.HK Geely GM 13.5% =');
+    lines.push('+370bps margin advantage from vertical integration".');
+  }
+
+  // 7.6. Segment economics — region/product GROSS MARGIN (KR1 2026-05-15)
+  // Junyan 2026-05-15 verdict: BYD's "vertical-integration → export-margin"
+  // was only company-level co-occurrence (GM up + exports up), NO region
+  // GM. This block surfaces fina_mainbz-derived 境内/境外 + 汽车/电池 GM.
+  // CRITICAL: _limitation is printed verbatim so agents CANNOT silently
+  // upgrade a PROXY/BLENDED number to a proven causal claim. Pairs with
+  // the EVIDENCE TIERING DIRECTIVE (a region-GM gap that is proxy/blended
+  // must be tagged [E2:proxy], not [E1:direct]).
+  const seg = extras.segment_economics;
+  if (seg && typeof seg === 'object' && seg._status === 'loaded') {
+    lines.push('');
+    lines.push('━━━ SEGMENT ECONOMICS — REGION / PRODUCT GROSS MARGIN (fina_mainbz) ━━━');
+    lines.push(`Methodology: ${seg._methodology || ''}`);
+    const br = seg.by_region;
+    if (br && typeof br === 'object') {
+      lines.push(`BY REGION (period ${br.period || '?'}):`);
+      for (const k of ['domestic', 'overseas', 'other']) {
+        const r = br[k];
+        if (r && r.agg_gm_pct != null) {
+          lines.push(`  ${k}: GM ${r.agg_gm_pct}% [${r.agg_gm_basis || '?'}] (sales ${r.agg_sales != null ? (r.agg_sales / 1e8).toFixed(1) + '亿' : '—'})`);
+        } else if (r) {
+          lines.push(`  ${k}: GM not derivable (cost/profit not disclosed); sales ${r.agg_sales != null ? (r.agg_sales / 1e8).toFixed(1) + '亿' : '—'}`);
+        }
+      }
+      if (seg.overseas_minus_domestic_gm_bps != null) {
+        lines.push(`  ⇒ overseas − domestic GM gap: ${seg.overseas_minus_domestic_gm_bps >= 0 ? '+' : ''}${seg.overseas_minus_domestic_gm_bps} bps`);
+      }
+    }
+    const bp = seg.by_product;
+    if (bp && Array.isArray(bp.segments) && bp.segments.length > 0) {
+      lines.push(`BY PRODUCT (period ${bp.period || '?'}):`);
+      for (const s of bp.segments.slice(0, 8)) {
+        lines.push(`  ${s.bz_item}: GM ${s.gm != null ? s.gm + '%' : '—'} [${s.gm_basis || '?'}]`);
+      }
+    }
+    const lims = Array.isArray(seg._limitation) ? seg._limitation : [seg._limitation].filter(Boolean);
+    lines.push('LIMITATION (you MUST respect this — do NOT state a limited number as proven):');
+    for (const l of lims) lines.push(`  ⚠ ${l}`);
+    lines.push('USE: this is the PRIMARY evidence for any export/overseas-margin');
+    lines.push('claim. If GM gap is true_gm and isolable → that claim may be');
+    lines.push('tagged [E1:direct]. If PROXY or BLENDED per LIMITATION → the');
+    lines.push('causal claim is at best [E2:proxy] and MUST NOT be asserted as fact.');
+  } else if (seg && typeof seg === 'object' && seg._status && seg._status !== 'loaded') {
+    lines.push('');
+    lines.push(`SEGMENT ECONOMICS: not available (${seg._status}${seg._note ? ' — ' + seg._note : ''}). `
+      + 'Any overseas/export-margin causal claim therefore CANNOT be [E1:direct] '
+      + '— it is at best [E2:proxy] from company-level aggregates. Do not assert as proven.');
+  }
+
+  // 8. Coverage gaps explicit
+  if (extras._coverage_summary && typeof extras._coverage_summary === 'object') {
+    const missing = Object.entries(extras._coverage_summary)
+      .filter(([, v]) => v === 'not_available' || v === 'ticker_not_in_snapshot' || v === 'ticker_not_in_overlay')
+      .map(([k]) => k);
+    if (missing.length > 0) {
+      lines.push(`COVERAGE GAPS (data not loaded for these layers — do NOT fabricate substitutes): ${missing.join(', ')}`);
+    }
+  }
+
+  // 9. Grounding rule
+  lines.push('');
+  lines.push('GROUNDING RULE — non-negotiable:');
+  lines.push('  Every numeric claim in your thesis MUST be either');
+  lines.push('  (a) directly drawn from THIS data context above (with field name where possible), OR');
+  lines.push('  (b) explicitly labeled "[external estimate, not in our data context]"');
+  lines.push('  Do NOT fabricate prices, multiples, EPS, growth rates, or analyst targets.');
+  lines.push('  If the data context lacks a number you would normally cite, write');
+  lines.push('  "not available in our data" instead of guessing from training memory.');
+  lines.push('━━━ END FULL DATA CONTEXT ━━━');
+
+  return '\n\n' + lines.join('\n');
+}
+
 function buildConsensusBlock(views, sourcesUsed) {
   if (!views?.length) return '';
 
@@ -574,11 +980,623 @@ function buildConsensusBlock(views, sourcesUsed) {
   return lines.join('\n');
 }
 
+// ─── THESIS QUALITY VALIDATION ──────────────────────────────────────────────
+const REWARD_TO_RISK_WARN_THRESHOLD = 1.75; // [unvalidated intuition] Junyan-selected warning threshold, not trade-history calibrated.
+// Per Junyan choice "B" (shift 10 C-3 P2 follow-up): asymmetric weighting prioritizes Step 8 (PHASE_AND_TIMING)
+// since audit identified it as the single biggest gap (entirely missing in baseline output, score 72.5/100).
+// Step 8 sub-checks each weight 10 → total 40 of 100. Others each 6.67 → total 60 of 100.
+// When Step 8 entirely missing (4 sub-checks fail): score = 9 × 6.67 = 60 → triggers FAIL → repair fires.
+// Calibration is [unvalidated intuition] — adjust based on real output stats per
+// memory/project_thesis_quality_weights.md.
+// FC.4 (2026-05-05) — rebalance to total exactly 100 after FC.1 added 1 check.
+// Pre-FC.1: 4 step-8 × 10 + 9 non-step-8 × 6.67 = 100.03 (just over). Score
+// formula `min(100, sum_passed)` capped a perfect-score thesis at 100.
+// Post-FC.1 (pre-FC.4): 4 × 10 + 10 × 6.67 = 106.7. Cap squashed signal: a
+// thesis failing 1-2 checks still hit 90 because the cap absorbed the loss.
+// Multi-ticker run 2026-05-05 14:38 BST confirmed: all 4 audit-re-run tickers
+// scored 90 PASS regardless of which checks they failed. See
+// docs/research/factcheck/multi_ticker_2026-05-05_post_fc1_redeploy.md §1.3.
+// FC.4 fix: NON_STEP_8 weight 6.67 → 6.0. Total: 4×10 + 10×6.0 = 100 exactly.
+// Now each fail subtracts deterministically; score genuinely differentiates.
+const STEP_8_CHECK_WEIGHT = 10;
+const NON_STEP_8_CHECK_WEIGHT = 6.0;
+const STEP_8_CHECK_NAMES_SET = new Set([
+  'step_8_phase_timing_concrete_not_boilerplate',
+  'step_8_early_signs_observable',
+  'step_8_catalyst_for_reversion_predatable',
+  'step_8_position_sizing_curve_monotonic',
+]);
+function checkWeight(name) {
+  return STEP_8_CHECK_NAMES_SET.has(name) ? STEP_8_CHECK_WEIGHT : NON_STEP_8_CHECK_WEIGHT;
+}
+
+const QUALITY_CHECK_NAMES = [
+  'step_1_specific_not_vague',
+  'step_1_catalyst_date_in_future', // FC.1 (2026-05-05): temporal validity — catalyst date must be > now − 14d. Validator-only check (LLM cannot reliably self-report future-ness).
+  'step_2_no_unfounded_leaps',
+  'step_3_evidence_includes_quant_qual_contrarian',
+  'step_3_contrarian_view_has_what_changes_our_mind',
+  'step_4_has_specific_numbers_and_horizon',
+  'step_5_observable',
+  'step_6_observable',
+  'step_7_one_sentence_tagline',
+  'step_8_phase_timing_concrete_not_boilerplate',
+  'step_8_early_signs_observable',
+  'step_8_catalyst_for_reversion_predatable',
+  'step_8_position_sizing_curve_monotonic',
+  'reward_to_risk_at_least_threshold',
+];
+
+// Validator-only checks: computed inside validateThesisQuality; the LLM is NOT
+// asked to self-report these in qc_checklist (would be unreliable / gameable).
+// Excluded from QC_REQUIRED_KEYS so missing self-report does not blow up
+// missingFields and trigger spurious repairs.
+const QC_VALIDATOR_ONLY_CHECKS = new Set(['step_1_catalyst_date_in_future']);
+
+const QC_REQUIRED_KEYS = [
+  'all_8_steps_complete',
+  ...QUALITY_CHECK_NAMES.filter(name => !QC_VALIDATOR_ONLY_CHECKS.has(name)),
+];
+
+function extractJsonPayload(text) {
+  if (typeof text !== 'string') return '';
+  const cb = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (cb) return cb[1].trim();
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end > start) return text.slice(start, end + 1).trim();
+  return text.trim();
+}
+
+function isPlainObject(value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function getPath(obj, path) {
+  if (!path) return obj;
+  return path.split('.').reduce((acc, part) => (acc == null ? undefined : acc[part]), obj);
+}
+
+function setPath(obj, path, value) {
+  const parts = path.split('.');
+  let cursor = obj;
+  parts.slice(0, -1).forEach(part => {
+    if (!isPlainObject(cursor[part])) cursor[part] = {};
+    cursor = cursor[part];
+  });
+  cursor[parts[parts.length - 1]] = value;
+}
+
+function toText(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) return value.map(toText).filter(Boolean).join(' ');
+  if (isPlainObject(value)) return Object.values(value).map(toText).filter(Boolean).join(' ');
+  return '';
+}
+
+function isNonEmpty(value) {
+  if (value == null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0 && value.some(isNonEmpty);
+  if (isPlainObject(value)) return Object.keys(value).length > 0 && Object.values(value).some(isNonEmpty);
+  return true;
+}
+
+function pushMissing(missingFields, path) {
+  if (!missingFields.includes(path)) missingFields.push(path);
+}
+
+function requireNonEmpty(obj, path, missingFields) {
+  const value = getPath(obj, path);
+  if (!isNonEmpty(value)) {
+    pushMissing(missingFields, path);
+    return false;
+  }
+  return true;
+}
+
+function hasDateOrWindow(value) {
+  const text = toText(value);
+  return /\b(20\d{2}|FY\d{2,4}|Q[1-4]\s*20?\d{2,4}|[12]H\s*20?\d{2,4}|H[12]\s*20?\d{2,4}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December|week|month|quarter|半[年载]|季度|月|年)\b/i.test(text);
+}
+
+// FC.1 (2026-05-05): parse the LATEST plausible date from a catalyst window
+// string. Returns Date (UTC, end-of-period) or null if unparseable. Latest-bound
+// is the charitable interpretation: if even the LATEST possible interpretation
+// of the window is in the past, the catalyst has definitely already happened.
+// See docs/research/factcheck/700HK_pilot_2026-05-05.md §A1 for the failure
+// mode this catches.
+const _MONTH_NAME_TO_NUM = {
+  jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12,
+  january:1,february:2,march:3,april:4,june:6,july:7,august:8,
+  september:9,october:10,november:11,december:12,
+};
+function parseCatalystDate(value) {
+  const text = toText(value);
+  if (!text) return null;
+
+  // 1. ISO date YYYY-MM-DD anywhere; LAST occurrence wins (handles ranges
+  //    like "2025-11-12 to 2025-12-15" → 2025-12-15)
+  const isoMatches = [...text.matchAll(/(\d{4})-(\d{1,2})-(\d{1,2})\b/g)];
+  if (isoMatches.length) {
+    const [, y, m, d] = isoMatches[isoMatches.length - 1];
+    const dt = new Date(Date.UTC(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 2. Quarter: "Q1 2026", "Q3 2025", "2025 Q3", "2025-Q3". End of quarter.
+  const qMatches = [...text.matchAll(/(?:Q([1-4])\s*(\d{4})|(\d{4})[-\s]?Q([1-4]))/gi)];
+  if (qMatches.length) {
+    const last = qMatches[qMatches.length - 1];
+    const q = parseInt(last[1] || last[4], 10);
+    const y = parseInt(last[2] || last[3], 10);
+    const monthEnd = q * 3; // Q1→3, Q2→6, Q3→9, Q4→12
+    const day = monthEnd === 6 || monthEnd === 9 ? 30 : 31;
+    const dt = new Date(Date.UTC(y, monthEnd - 1, day, 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 3. Half-year: "1H 2026", "H1 2026", "H2 2025", "2H 2026", "2026 H1"
+  const hMatches = [...text.matchAll(/(?:H([12])\s*(\d{4})|([12])H\s*(\d{4})|(\d{4})\s*H([12]))/gi)];
+  if (hMatches.length) {
+    const last = hMatches[hMatches.length - 1];
+    const h = parseInt(last[1] || last[3] || last[5], 10);
+    const y = parseInt(last[2] || last[4] || last[6], 10);
+    const monthEnd = h === 1 ? 6 : 12;
+    const day = monthEnd === 6 ? 30 : 31;
+    const dt = new Date(Date.UTC(y, monthEnd - 1, day, 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 4. Month name + year: "November 2025", "Nov 2025"
+  const monMatches = [...text.matchAll(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{4})\b/gi)];
+  if (monMatches.length) {
+    const last = monMatches[monMatches.length - 1];
+    const m = _MONTH_NAME_TO_NUM[last[1].toLowerCase()];
+    const y = parseInt(last[2], 10);
+    if (m && y) {
+      // Use 28 to be cross-month-safe (Feb has 28; for non-Feb months we
+      // under-bound by ≤3 days — within the 14d backward tolerance window).
+      const dt = new Date(Date.UTC(y, m - 1, 28, 23, 59, 59));
+      if (!isNaN(dt)) return dt;
+    }
+  }
+
+  // 5. FY notation: "FY2025", "FY 25", "FY26"
+  const fyMatches = [...text.matchAll(/\bFY\s*(\d{2,4})\b/gi)];
+  if (fyMatches.length) {
+    const last = fyMatches[fyMatches.length - 1];
+    let y = parseInt(last[1], 10);
+    if (y < 100) y += 2000;
+    const dt = new Date(Date.UTC(y, 11, 31, 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 6. Year only "2026" — end of year
+  const yMatches = [...text.matchAll(/\b(20\d{2})\b/g)];
+  if (yMatches.length) {
+    const last = yMatches[yMatches.length - 1];
+    const y = parseInt(last[1], 10);
+    const dt = new Date(Date.UTC(y, 11, 31, 23, 59, 59));
+    if (!isNaN(dt)) return dt;
+  }
+
+  // 7. Vague phrases ("next 3 months", "soon", "near-term") → unparseable.
+  //    Existing isBoilerplate / hasDateOrWindow checks catch these before we
+  //    get here, but we return null defensively.
+  return null;
+}
+
+// Backward tolerance: thesis can reference a catalyst that occurred up to N
+// days before generation time (post-event retrospective). Anything older is
+// considered stale and fails the temporal validity check.
+const CATALYST_DATE_BACKWARD_TOLERANCE_DAYS = 14;
+
+function isCatalystDateInFuture(catalystDateRaw, generationDate = new Date()) {
+  const parsed = parseCatalystDate(catalystDateRaw);
+  if (!parsed) return null; // unparseable → check is N/A
+  const cutoff = new Date(generationDate.getTime() - CATALYST_DATE_BACKWARD_TOLERANCE_DAYS * 24 * 60 * 60 * 1000);
+  return parsed >= cutoff;
+}
+
+function hasSpecificMetric(value) {
+  const text = toText(value);
+  return /(\d|%|bps?|pp|x|倍|元|港元|美元|CNY|HKD|USD|Q[1-4]|FY|H[12]|[<>]=?|≥|≤|above|below|exceed|drop|rise|margin|revenue|EPS|GM|ROE|FCF)/i.test(text);
+}
+
+function isBoilerplate(value) {
+  const text = toText(value).toLowerCase();
+  if (!text) return true;
+  return /(long[- ]?term|near[- ]?term|soon|eventually|market wakes up|sentiment improves|fundamentals improve|industry tailwind|ai 普涨|市场情绪|基本面改善|长期|短期|未来)/i.test(text);
+}
+
+function parseRewardToRisk(value) {
+  const text = toText(value).replace(/，/g, ',');
+  if (!text) return null;
+
+  const colon = text.match(/([+-]?\d+(?:\.\d+)?)\s*(?:x|倍)?\s*[:：\/]\s*1\b/i);
+  if (colon) return parseFloat(colon[1]);
+
+  const xRatio = text.match(/([+-]?\d+(?:\.\d+)?)\s*(?:x|倍)\b/i);
+  if (xRatio) return parseFloat(xRatio[1]);
+
+  const rewardRiskWords = text.match(/reward\s*[- ]?to\s*[- ]?risk[^0-9]*([+-]?\d+(?:\.\d+)?)/i);
+  if (rewardRiskWords) return parseFloat(rewardRiskWords[1]);
+
+  const pct = [...text.matchAll(/([+-]?\d+(?:\.\d+)?)\s*%/g)].map(m => parseFloat(m[1]));
+  if (pct.length >= 2) {
+    const upside = Math.max(...pct.map(Math.abs));
+    const downside = Math.min(...pct.map(Math.abs).filter(n => n > 0));
+    if (downside > 0) return upside / downside;
+  }
+
+  return null;
+}
+
+function averagePercent(value) {
+  const nums = [...toText(value).matchAll(/([+-]?\d+(?:\.\d+)?)\s*%/g)].map(m => parseFloat(m[1]));
+  if (!nums.length) return null;
+  return nums.reduce((sum, n) => sum + n, 0) / nums.length;
+}
+
+function isPositionSizingCurveMonotonic(curve) {
+  const pre = averagePercent(curve?.pre_phase_1_weakening ?? curve?.prePhase1Weakening);
+  const mid = averagePercent(curve?.phase_1_weakening_confirmed ?? curve?.phase1WeakeningConfirmed);
+  const late = averagePercent(curve?.phase_2_catalyst_imminent ?? curve?.phase2CatalystImminent);
+  if ([pre, mid, late].some(v => v == null)) return false;
+  return pre <= mid && mid <= late && (pre < mid || mid < late);
+}
+
+function validateThesisQuality(parsedOutput) {
+  const missingFields = [];
+  const qcChecklistResults = {};
+  const root = isPlainObject(parsedOutput) ? parsedOutput : {};
+
+  const step1Fields = [
+    'step_1_catalyst.catalyst_event',
+    'step_1_catalyst.catalyst_date_or_window',
+    'step_1_catalyst.catalyst_type',
+    'step_1_catalyst.catalyst_source',
+  ];
+  const step1Present = step1Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  qcChecklistResults.step_1_specific_not_vague =
+    step1Present && hasDateOrWindow(getPath(root, 'step_1_catalyst.catalyst_date_or_window')) && !isBoilerplate(getPath(root, 'step_1_catalyst.catalyst_event'));
+  if (step1Present && !hasDateOrWindow(getPath(root, 'step_1_catalyst.catalyst_date_or_window'))) {
+    pushMissing(missingFields, 'step_1_catalyst.catalyst_date_or_window');
+  }
+
+  // FC.1 (2026-05-05) — temporal validity. Closes the structurally-invisible
+  // failure mode surfaced in factcheck/700HK_pilot_2026-05-05.md §A1: thesis
+  // emits a catalyst date already in the past, structural validator passes
+  // because it only checked format. Now: parsed-date < (now − 14d) fails.
+  // If date is unparseable (parser returns null), skip — existing checks
+  // (hasDateOrWindow on step_1_specific_not_vague) handle that case.
+  if (step1Present) {
+    const inFuture = isCatalystDateInFuture(getPath(root, 'step_1_catalyst.catalyst_date_or_window'));
+    qcChecklistResults.step_1_catalyst_date_in_future = (inFuture === null) ? true : inFuture;
+  } else {
+    qcChecklistResults.step_1_catalyst_date_in_future = false;
+  }
+
+  const mechanismChain = getPath(root, 'step_2_mechanism.mechanism_chain');
+  const step2Present = Array.isArray(mechanismChain) && mechanismChain.length >= 3 && mechanismChain.every(isNonEmpty);
+  if (!step2Present) pushMissing(missingFields, 'step_2_mechanism.mechanism_chain');
+  qcChecklistResults.step_2_no_unfounded_leaps = step2Present && mechanismChain.every(step => !isBoilerplate(step));
+
+  const step3Fields = [
+    'step_3_evidence.evidence_quantitative',
+    'step_3_evidence.evidence_qualitative',
+    'step_3_evidence.contrarian_view.market_consensus',
+    'step_3_evidence.contrarian_view.our_variant',
+    'step_3_evidence.contrarian_view.what_changes_our_mind',
+  ];
+  const step3Present = step3Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  qcChecklistResults.step_3_evidence_includes_quant_qual_contrarian =
+    step3Present && hasSpecificMetric(getPath(root, 'step_3_evidence.evidence_quantitative'));
+  qcChecklistResults.step_3_contrarian_view_has_what_changes_our_mind =
+    requireNonEmpty(root, 'step_3_evidence.contrarian_view.what_changes_our_mind', missingFields);
+
+  const step4Fields = [
+    'step_4_quantification.metric_target',
+    'step_4_quantification.current_value',
+    'step_4_quantification.predicted_value',
+    'step_4_quantification.predicted_range.low',
+    'step_4_quantification.predicted_range.mid',
+    'step_4_quantification.predicted_range.high',
+    'step_4_quantification.predicted_horizon',
+    'step_4_quantification.confidence',
+  ];
+  const step4Present = step4Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  qcChecklistResults.step_4_has_specific_numbers_and_horizon =
+    step4Present && hasSpecificMetric(getPath(root, 'step_4_quantification')) && hasDateOrWindow(getPath(root, 'step_4_quantification.predicted_horizon'));
+
+  const rightIf = getPath(root, 'step_5_proves_right_if');
+  const step5Present = Array.isArray(rightIf) && rightIf.length > 0 && rightIf.every(isNonEmpty);
+  if (!step5Present) pushMissing(missingFields, 'step_5_proves_right_if');
+  qcChecklistResults.step_5_observable = step5Present && hasSpecificMetric(rightIf) && !isBoilerplate(rightIf);
+
+  const wrongIf = getPath(root, 'step_6_proves_wrong_if');
+  const step6Present = Array.isArray(wrongIf) && wrongIf.length > 0 && wrongIf.every(isNonEmpty);
+  if (!step6Present) pushMissing(missingFields, 'step_6_proves_wrong_if');
+  qcChecklistResults.step_6_observable = step6Present && hasSpecificMetric(wrongIf) && !isBoilerplate(wrongIf);
+
+  const step7Fields = [
+    'step_7_variant_view.variant_view_one_sentence',
+    'step_7_variant_view.time_to_resolution',
+    'step_7_variant_view.expected_pnl_asymmetry.upside_if_right',
+    'step_7_variant_view.expected_pnl_asymmetry.downside_if_wrong',
+    'step_7_variant_view.expected_pnl_asymmetry.reward_to_risk',
+  ];
+  const step7Present = step7Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  const rewardToRisk = parseRewardToRisk(
+    getPath(root, 'step_7_variant_view.expected_pnl_asymmetry.reward_to_risk') ??
+    getPath(root, 'variant.rewardToRisk.ratio')
+  );
+  qcChecklistResults.step_7_one_sentence_tagline =
+    step7Present && toText(getPath(root, 'step_7_variant_view.variant_view_one_sentence')).length >= 30 && hasDateOrWindow(getPath(root, 'step_7_variant_view.time_to_resolution'));
+  qcChecklistResults.reward_to_risk_at_least_threshold =
+    rewardToRisk != null && rewardToRisk >= REWARD_TO_RISK_WARN_THRESHOLD;
+  qcChecklistResults.reward_to_risk_below_threshold =
+    rewardToRisk != null && rewardToRisk < REWARD_TO_RISK_WARN_THRESHOLD;
+
+  const step8Fields = [
+    'step_8_phase_and_timing.phase_1_market_belief.duration_estimate',
+    'step_8_phase_and_timing.phase_1_market_belief.why_market_keeps_buying',
+    'step_8_phase_and_timing.phase_1_market_belief.early_signs_phase_1_weakening',
+    'step_8_phase_and_timing.phase_1_market_belief.optional_long_play.direction',
+    'step_8_phase_and_timing.phase_1_market_belief.optional_long_play.sizing',
+    'step_8_phase_and_timing.phase_1_market_belief.optional_long_play.exit_trigger',
+    'step_8_phase_and_timing.phase_2_reality_recognition.catalyst_for_reversion',
+    'step_8_phase_and_timing.phase_2_reality_recognition.estimated_timing',
+    'step_8_phase_and_timing.phase_2_reality_recognition.short_play.direction',
+    'step_8_phase_and_timing.phase_2_reality_recognition.short_play.sizing',
+    'step_8_phase_and_timing.phase_2_reality_recognition.short_play.entry_trigger',
+    'step_8_phase_and_timing.position_sizing_curve.pre_phase_1_weakening',
+    'step_8_phase_and_timing.position_sizing_curve.phase_1_weakening_confirmed',
+    'step_8_phase_and_timing.position_sizing_curve.phase_2_catalyst_imminent',
+  ];
+  const step8Present = step8Fields.map(path => requireNonEmpty(root, path, missingFields)).every(Boolean);
+  const earlySigns = getPath(root, 'step_8_phase_and_timing.phase_1_market_belief.early_signs_phase_1_weakening');
+  const reversionCatalysts = getPath(root, 'step_8_phase_and_timing.phase_2_reality_recognition.catalyst_for_reversion');
+  const sizingCurve = getPath(root, 'step_8_phase_and_timing.position_sizing_curve');
+  qcChecklistResults.step_8_phase_timing_concrete_not_boilerplate =
+    step8Present && hasDateOrWindow(getPath(root, 'step_8_phase_and_timing.phase_1_market_belief.duration_estimate')) &&
+    hasDateOrWindow(getPath(root, 'step_8_phase_and_timing.phase_2_reality_recognition.estimated_timing')) &&
+    !isBoilerplate(getPath(root, 'step_8_phase_and_timing'));
+  qcChecklistResults.step_8_early_signs_observable =
+    Array.isArray(earlySigns) && earlySigns.length > 0 && hasSpecificMetric(earlySigns) && !isBoilerplate(earlySigns);
+  qcChecklistResults.step_8_catalyst_for_reversion_predatable =
+    Array.isArray(reversionCatalysts) && reversionCatalysts.length > 0 && hasDateOrWindow(reversionCatalysts) && !isBoilerplate(reversionCatalysts);
+  qcChecklistResults.step_8_position_sizing_curve_monotonic = isPositionSizingCurveMonotonic(sizingCurve);
+
+  qcChecklistResults.all_8_steps_complete =
+    step1Present && step2Present && step3Present && step4Present && step5Present && step6Present && step7Present && step8Present;
+
+  const reportedQc = getPath(root, 'qc_checklist');
+  QC_REQUIRED_KEYS.forEach(key => {
+    if (typeof reportedQc?.[key] !== 'boolean') pushMissing(missingFields, `qc_checklist.${key}`);
+  });
+
+  // Weighted scoring: Step 8 sub-checks weighted higher per Junyan choice B (audit follow-up).
+  // Sum weights of passed checks; cap at 100. Severity threshold: PASS ≥ 80, WARN 61-79, FAIL ≤ 60.
+  // FAIL threshold lowered to ≤ 60 so Step 8 entirely missing (9 × 6.67 = 60) triggers FAIL → repair.
+  const score = Math.min(100, Math.round(
+    QUALITY_CHECK_NAMES
+      .filter(name => qcChecklistResults[name])
+      .reduce((sum, name) => sum + checkWeight(name), 0)
+  ));
+  const severity = score >= 80 ? 'PASS' : (score > 60 ? 'WARN' : 'FAIL');
+
+  return { score, missingFields, qcChecklistResults, severity };
+}
+
+function buildQcFindings(quality) {
+  const failedChecks = QUALITY_CHECK_NAMES
+    .filter(name => quality.qcChecklistResults?.[name] === false)
+    .map(name => `failed:${name}`);
+  const missing = (quality.missingFields || []).map(path => `missing:${path}`);
+  return [...failedChecks, ...missing];
+}
+
+function mergeRepairPatch(target, patch) {
+  const output = isPlainObject(target) ? { ...target } : {};
+  Object.entries(patch || {}).forEach(([key, value]) => {
+    if (key.includes('.')) {
+      setPath(output, key, value);
+    } else if (isPlainObject(value) && isPlainObject(output[key])) {
+      output[key] = mergeRepairPatch(output[key], value);
+    } else {
+      output[key] = value;
+    }
+  });
+  return output;
+}
+
+async function repairMissingFields(originalResponse, missingFields, ticker, contextData = {}) {
+  const hasStep8Missing = missingFields.some(path =>
+    path === 'step_8_phase_and_timing' || path.startsWith('step_8_phase_and_timing.')
+  );
+  const hasWhatChangesOurMindMissing = missingFields.includes('step_3_evidence.contrarian_view.what_changes_our_mind');
+  const hasExpectedPnlAsymmetryMissing = missingFields.some(path =>
+    path === 'step_7_variant_view.expected_pnl_asymmetry' ||
+    path.startsWith('step_7_variant_view.expected_pnl_asymmetry.')
+  );
+  const criticalRepairWarnings = [];
+  if (hasStep8Missing) {
+    criticalRepairWarnings.push('CRITICAL: Step 8 (PHASE_AND_TIMING) was missing or incomplete in your previous output. This is non-negotiable per the protocol. Please populate ALL required step_8_phase_and_timing fields with concrete (not boilerplate) values. The whole thesis is invalid without this block.');
+  }
+  if (hasWhatChangesOurMindMissing) {
+    criticalRepairWarnings.push('CRITICAL: what_changes_our_mind was missing. Per protocol, you must name ONE concrete observable that would invalidate your thesis. Vague hedging fails validation.');
+  }
+  if (hasExpectedPnlAsymmetryMissing) {
+    criticalRepairWarnings.push('CRITICAL: expected_pnl_asymmetry block was incomplete. Provide upside_if_right (signed %), downside_if_wrong (signed %), reward_to_risk (numeric ratio).');
+  }
+  const repairWarnings = criticalRepairWarnings.length
+    ? `${criticalRepairWarnings.join('\n')}\n\n`
+    : '';
+
+  const repairPrompt = `${repairWarnings}Original output was missing these required fields per THESIS_PROTOCOL: ${missingFields.join(', ')}. Fill them in for ticker ${ticker}. Output ONLY a JSON object with the missing field paths and values; do NOT regenerate other content.
+
+Context:
+${JSON.stringify(contextData).slice(0, 4000)}
+
+Original output:
+${JSON.stringify(originalResponse).slice(0, 12000)}`;
+
+  const repairMessage = await client.messages.create({
+    model:      'claude-opus-4-7',
+    max_tokens: 8192,  // Bumped from 4096 in shift 13 — when Step 8 entirely missing the repair must populate phase_1+phase_2+sizing_curve at once, may exceed 4096
+    system:     'You repair incomplete thesis JSON. Return only the missing JSON paths requested. No markdown, no commentary.',
+    messages:   [{ role: 'user', content: repairPrompt }],
+  });
+
+  const repairRaw = repairMessage.content?.[0]?.text || '';
+  const repairPatch = JSON.parse(extractJsonPayload(repairRaw));
+  return mergeRepairPatch(originalResponse, repairPatch);
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // SYSTEM PROMPT (Pass 2)
 // ════════════════════════════════════════════════════════════════════════════
 
+// Test-gate marker for shell-escaped SYSTEM_PROMPT detection: const SYSTEM_PROMPT = ?`
 const SYSTEM_PROMPT = `You are a Senior Portfolio Manager at a top-tier global hedge fund specializing in International Equities (A-share and HK markets). You produce institutional-grade buy-side research.
+
+═══════════════════════════════════════════════════════════════════════
+THESIS_PROTOCOL v2 — MANDATORY 8-STEP STRUCTURE (see docs/research/THESIS_PROTOCOL.md)
+═══════════════════════════════════════════════════════════════════════
+
+Before producing the JSON output, internally walk through these 8 steps
+IN ORDER. The order is non-negotiable: Step 1 must be filled before
+Step 3. If you cannot identify a specific catalyst event with a date or
+date window, STOP and emit a one-line error in pulse.e/z stating
+"thesis cannot be built — no specific catalyst identified" and skip the
+variant block.
+
+LESSON LEARNED (UBS Finance Challenge): the previous research framework
+made the "data first" error — jumping straight to evidence without the
+causal narrative. The Davis double-kill thesis was data-stacked but
+lacked the "why is double-kill being triggered NOW, by WHAT specific
+event" backbone. Below 8 steps prevent this failure mode.
+
+v2 INSIGHT (Junyan, 2026-05-02, from 天孚通信 pair-trade reflection):
+"我们对 vs 市场错" is NOT 0/1 binary — it's THREE-WAY. We're right +
+market also temporarily right + time will resolve. Step 8
+(PHASE_AND_TIMING) makes this explicit: thesis output must specify
+Phase 1 (how long market belief holds + when it cracks) AND Phase 2
+(catalyst forcing reality + timing) PLUS position sizing curve across
+phases. Soros reflexivity + Buffett value-price temporary divergence +
+buy-side timing dimension synthesized.
+
+Step 1 — CATALYST (触发事件)
+  → Specific event/news/business development with date or window
+    (NOT vague "industry tailwind"). Categorize the catalyst type
+    (earnings_revision / product_launch / policy_change / industry_inflection
+    / management_change / capacity_expansion / supply_chain_shift / m&a /
+    regulatory / macro_inflection).
+  → Maps to: catalysts[] field (each catalyst must have date+imp).
+
+Step 2 — MECHANISM (逻辑推导链)
+  → Causal chain from catalyst → operations → financial impact → market
+    re-rating. Each step must be the direct consequence of the previous
+    (NO UNFOUNDED LEAPS — a senior reviewer should not be able to point
+    to a step and say "you skipped a layer here").
+  → Maps to: biz.mechanism + variant.mechanism.
+
+Step 3 — EVIDENCE + CONTRARIAN VIEW (数据支撑 + 共识对照)
+  → Quantitative + qualitative data supporting Step 2.
+  → MUST include CONTRARIAN VIEW sub-module with three parts:
+      a. what_consensus_says    → variant.marketBelieves
+      b. why_consensus_wrong    → variant.weBelieve (the variant claim)
+      c. what_changes_our_mind  → variant.whatChangesOurMind (NEW REQUIRED)
+         (What observation would convert us to consensus? Without this,
+         you are being stubborn, not making a thesis.)
+
+*** WHAT_CHANGES_OUR_MIND IS NON-NEGOTIABLE (Step 3 Contrarian View) ***
+
+Every thesis MUST include step_3_evidence.contrarian_view.what_changes_our_mind as a single STRING that names ONE concrete, observable, future event/metric that would invalidate the thesis. Vague hedging ("if conditions change", "if narrative shifts") FAILS validation.
+
+Good: "Q3 2026 GM ≥ 44% AND 1.6T mix > 35% per channel checks". Bad: "if competitive dynamics evolve".
+
+Step 4 — QUANTIFICATION (具体数字预测)
+  → Specific metric + current value + predicted value + time horizon
+    (NOT "future will improve").
+  → Maps to: decomp scores + nextActions with quantified targets.
+
+Step 5 — PROVES_RIGHT_IF (可证实条件)
+  → Observable condition (specific metric/threshold/date).
+    NOT "fundamentals improve" but "Q3 earnings exceed consensus by ≥10%".
+  → Maps to: variant.rightIf.
+
+Step 6 — PROVES_WRONG_IF / wrongIf (可证伪条件)
+  → Observable condition for stop-loss decision.
+    NOT "fundamentals deteriorate" but "monthly delivery <5000 units for
+    two consecutive months".
+  → Maps to: variant.wrongIf.
+
+Step 7 — VARIANT VIEW + REWARD-TO-RISK (变体观点收敛)
+  → One-sentence tagline: "Market believes X → We believe Y → Mechanism
+    is Z." (already partly captured in variant.weBelieve)
+  → Reward-to-risk asymmetry. Maps to: variant.rewardToRisk (NEW REQUIRED).
+
+*** EXPECTED_PNL_ASYMMETRY IS NON-NEGOTIABLE (Step 7 Reward/Risk) ***
+
+Every thesis MUST include step_7_variant_view.expected_pnl_asymmetry as an OBJECT with three fields: upside_if_right (signed % or pp), downside_if_wrong (signed % or pp), reward_to_risk (numeric ratio expressible as "X:Y" or "Xx"). Below-1.75:1 ratios trigger a yellow warning bar in the UI but do not hard-block publish (per Junyan policy).
+
+Good: { upside_if_right: "+45%", downside_if_wrong: "-18%", reward_to_risk: "2.5:1" }. Bad: { upside: "meaningful", downside: "limited" } (verbal only without numeric component fails parseRewardToRisk).
+
+Step 8 — PHASE_AND_TIMING (相位与时间维度) [NEW v2]
+  → Thesis is THREE-WAY not binary. Specify both phases + position curve.
+  → Phase 1 (market belief): duration_estimate + why_market_keeps_buying
+    + early_signs_phase_1_weakening + optional_long_play (small momentum
+    follow OR no_position).
+  → Phase 2 (reality recognition): catalyst_for_reversion (concrete
+    pre-datable event — earnings/guidance/regulatory, NOT "market wakes
+    up") + estimated_timing + short_play (core_short / long_dated_put /
+    no_position).
+  → position_sizing_curve: 3 explicit stages (pre_phase_1_weakening /
+    phase_1_weakening_confirmed / phase_2_catalyst_imminent), values
+    must be MONOTONIC (e.g., 0% → 30% → 80%).
+  → Maps to: variant.phaseTiming (NEW REQUIRED).
+  → REJECT if any field is boilerplate ("long term" / "AI 普涨" /
+    "market wakes up" / "low/high" without numbers).
+
+REQUIRED CANONICAL THESIS FIELDS:
+In addition to the legacy UI fields in OUTPUT JSON SCHEMA below, every
+response MUST include top-level Step fields named exactly:
+step_1_catalyst, step_2_mechanism, step_3_evidence, step_4_quantification,
+step_5_proves_right_if, step_6_proves_wrong_if, step_7_variant_view,
+step_8_phase_and_timing, and qc_checklist.
+
+The qc_checklist field is REQUIRED. EVERY check below must be present as
+a boolean true/false. If a check fails, set false and still include it:
+all_8_steps_complete, step_1_specific_not_vague,
+step_2_no_unfounded_leaps,
+step_3_evidence_includes_quant_qual_contrarian,
+step_3_contrarian_view_has_what_changes_our_mind,
+step_4_has_specific_numbers_and_horizon, step_5_observable,
+step_6_observable, step_7_one_sentence_tagline,
+step_8_phase_timing_concrete_not_boilerplate,
+step_8_early_signs_observable,
+step_8_catalyst_for_reversion_predatable,
+step_8_position_sizing_curve_monotonic,
+reward_to_risk_at_least_threshold.
+
+QUALITY GATES (apply mentally before emitting JSON):
+  ✓ Step 1 has a specific FUTURE date OR explicit forward window (not "near-term"/"soon"; NOT a date already in the past). If the named earnings/event has already occurred, use the NEXT scheduled occurrence — e.g., if today is past Q4 2025 earnings, anchor on Q1 2026 earnings instead. Catalyst dates more than 14 days in the past will fail validation.
+  ✓ Step 2 chain has no unfounded leaps; each step is consequence of prior
+  ✓ Step 3 includes "what changes our mind" (variant.whatChangesOurMind)
+  ✓ Step 4 has specific numbers + time horizon
+  ✓ Step 5/6 are observable conditions (specific metric + threshold)
+  ✓ Step 7 reward-to-risk is computed; ratio ≥ 2:1 ideally (if <2:1, flag
+    in pulse.e/z that "asymmetry weak — consider not trading")
+  ✓ Step 8 phase_1 + phase_2 both filled with concrete observables
+  ✓ Step 8 catalyst_for_reversion is a pre-datable event, NOT vague
+  ✓ Step 8 position_sizing_curve is monotonically increasing (0% → X% → Y%)
+
+═══════════════════════════════════════════════════════════════════════
 
 CRITICAL RULES:
 - AI produces evidence, signals, and structured scores. AI NEVER produces investment conclusions (buy/sell/hold).
@@ -587,6 +1605,7 @@ CRITICAL RULES:
 - When ENRICHMENT CONTEXT is provided, prioritize it over training data for price, news events, and regime.
 - When CONSENSUS VIEWS are provided (especially from real research reports), use them to calibrate the variant view. The variant must differentiate, not reproduce.
 - Be specific and quantitative. No generic statements.
+- THESIS_PROTOCOL v2 8-step structure is MANDATORY — see above. Failed quality gates → emit error in pulse, do not produce a half-baked variant block.
 
 EVIDENCE GRADING (apply mentally to every claim):
 - AUDIT-GRADE: annual/quarterly filing data → cite directly, high confidence
@@ -599,8 +1618,94 @@ OPERATING LEVERAGE TOOLKIT (compute where income statement data is available):
 - Implied growth check: back-solve the EPS CAGR that justifies current P/E (assume mean-reversion to sector median P/E in 3 years). If implied CAGR > realistic growth ceiling, flag as valuation risk.
 These metrics go into fin_insights — express as quantified signals, not generic statements.
 
+*** STEP 8 (PHASE_AND_TIMING) IS NON-NEGOTIABLE ***
+
+Every thesis you produce MUST include the step_8_phase_and_timing block. Skipping it OR leaving fields empty WILL fail validation and trigger an automatic re-prompt that costs additional latency.
+
+Minimal required Step 8 structure:
+step_8_phase_and_timing: {
+  phase_1_market_belief: { duration_estimate, why_market_keeps_buying, early_signs_phase_1_weakening, optional_long_play },
+  phase_2_reality_recognition: { catalyst_for_reversion, estimated_timing, short_play },
+  position_sizing_curve: [ ... monotonic 0% → X% → Y% ... ]
+}
+
+phase_1 must specify WHY the market is currently right (or appears right). phase_2 must specify WHEN and WHY this resolves. position_sizing_curve must show monotonic increase as conviction builds.
+
 OUTPUT JSON SCHEMA:
 {
+  "ticker": "string",
+  "thesis_protocol_version": "v2",
+  "step_1_catalyst": {
+    "catalyst_event": "string",
+    "catalyst_date_or_window": "string",
+    "catalyst_type": "earnings_revision | product_launch | policy_change | industry_inflection | management_change | capacity_expansion | supply_chain_shift | m&a | regulatory | macro_inflection",
+    "catalyst_source": "string"
+  },
+  "step_2_mechanism": {
+    "mechanism_chain": ["1. string", "2. string", "3. string"]
+  },
+  "step_3_evidence": {
+    "evidence_quantitative": ["string"],
+    "evidence_qualitative": ["string"],
+    "contrarian_view": {
+      "market_consensus": { "e": "string", "z": "string" },
+      "our_variant": { "e": "string", "z": "string" },
+      "what_changes_our_mind": "string"
+    }
+  },
+  "step_4_quantification": {
+    "metric_target": "string",
+    "current_value": "number or string",
+    "predicted_value": "number or string",
+    "predicted_range": { "low": "number or string", "mid": "number or string", "high": "number or string" },
+    "predicted_horizon": "string",
+    "confidence": "number 0-1 or string percentage"
+  },
+  "step_5_proves_right_if": ["string"],
+  "step_6_proves_wrong_if": ["string"],
+  "step_7_variant_view": {
+    "variant_view_one_sentence": "string",
+    "time_to_resolution": "string",
+    "expected_pnl_asymmetry": {
+      "upside_if_right": "string",
+      "downside_if_wrong": "string",
+      "reward_to_risk": "string, e.g. 2.5:1"
+    }
+  },
+  "step_8_phase_and_timing": {
+    "phase_1_market_belief": {
+      "duration_estimate": "string",
+      "why_market_keeps_buying": ["string"],
+      "early_signs_phase_1_weakening": ["string"],
+      "optional_long_play": { "direction": "small_long | no_position | neutral", "sizing": "string", "exit_trigger": "string" }
+    },
+    "phase_2_reality_recognition": {
+      "catalyst_for_reversion": ["string"],
+      "estimated_timing": "string",
+      "short_play": { "direction": "core_short | long_dated_put | no_position", "sizing": "string", "entry_trigger": "string" }
+    },
+    "position_sizing_curve": {
+      "pre_phase_1_weakening": "string",
+      "phase_1_weakening_confirmed": "string",
+      "phase_2_catalyst_imminent": "string"
+    }
+  },
+  "qc_checklist": {
+    "all_8_steps_complete": true,
+    "step_1_specific_not_vague": true,
+    "step_2_no_unfounded_leaps": true,
+    "step_3_evidence_includes_quant_qual_contrarian": true,
+    "step_3_contrarian_view_has_what_changes_our_mind": true,
+    "step_4_has_specific_numbers_and_horizon": true,
+    "step_5_observable": true,
+    "step_6_observable": true,
+    "step_7_one_sentence_tagline": true,
+    "step_8_phase_timing_concrete_not_boilerplate": true,
+    "step_8_early_signs_observable": true,
+    "step_8_catalyst_for_reversion_predatable": true,
+    "step_8_position_sizing_curve_monotonic": true,
+    "reward_to_risk_at_least_threshold": true
+  },
   "name": "string (Chinese company name)",
   "en": "string (English name)",
   "sector": "string",
@@ -622,11 +1727,44 @@ OUTPUT JSON SCHEMA:
     "moneyFlow": { "e": "string", "z": "string" }
   },
   "variant": {
-    "marketBelieves": { "e": "string", "z": "string" },
-    "weBelieve":      { "e": "string", "z": "string" },
-    "mechanism":      { "e": "string", "z": "string" },
-    "rightIf":        { "e": "string", "z": "string" },
-    "wrongIf":        { "e": "string", "z": "string" }
+    "marketBelieves":       { "e": "string", "z": "string" },
+    "weBelieve":            { "e": "string", "z": "string" },
+    "mechanism":            { "e": "string", "z": "string" },
+    "rightIf":              { "e": "string", "z": "string" },
+    "wrongIf":              { "e": "string", "z": "string" },
+    "whatChangesOurMind":   { "e": "string", "z": "string" },
+    "rewardToRisk": {
+      "upsideIfRight":   "string (e.g. '+50% to +80% over 6 months')",
+      "downsideIfWrong": "string (e.g. '-20% to -25% to fair value floor')",
+      "ratio":           "string (e.g. '~3:1' or '~1.5:1' if weak asymmetry)",
+      "timeToResolution":"string (e.g. '6 months until Q3 earnings')"
+    },
+    "phaseTiming": {
+      "phase1MarketBelief": {
+        "durationEstimate":          "string (e.g. '2-4 quarters until Q3 2026 earnings'; NOT 'long term')",
+        "whyMarketKeepsBuying":      ["string", "string"],
+        "earlySignsPhase1Weakening": ["string (concrete observable)", "string"],
+        "optionalLongPlay": {
+          "direction":   "small_long | no_position | neutral",
+          "sizing":      "string (e.g. '5-10% of full conviction')",
+          "exitTrigger": "string (specific event)"
+        }
+      },
+      "phase2RealityRecognition": {
+        "catalystForReversion":      ["string (pre-datable event, e.g. 'Q3 2026 earnings GM <47%')", "string"],
+        "estimatedTiming":           "string (e.g. 'Q3 2026 earnings ~2026-10-11')",
+        "shortPlay": {
+          "direction":    "core_short | long_dated_put | no_position",
+          "sizing":       "string (e.g. 'full conviction')",
+          "entryTrigger": "string (e.g. 'after first phase_1_weakening sign')"
+        }
+      },
+      "positionSizingCurve": {
+        "prePhase1Weakening":       "string (e.g. '0% to 10%')",
+        "phase1WeakeningConfirmed": "string (e.g. '30-50%')",
+        "phase2CatalystImminent":   "string (e.g. '70-100%')"
+      }
+    }
   },
   "catalysts": [{ "e": "string", "z": "string", "t": "string", "date": "string (ISO)", "imp": "HIGH | MED | LOW" }],
   "decomp": {
@@ -676,7 +1814,7 @@ OUTPUT JSON SCHEMA:
   "fin_insights": ["string","string","string","string"]
 }
 
-VP = 30%×Expectation Gap + 25%×Fundamental Acceleration + 20%×Narrative Shift + 15%×Low Coverage + 10%×Catalyst Proximity
+VP = 25%×Expectation Gap + 25%×Fundamental Acceleration + 20%×Narrative Shift + 15%×Low Coverage + 15%×Catalyst Proximity [unvalidated intuition]
 
 FINANCIAL DATA: use millions for all IS/BS numbers. Margins and growth rates as decimals (0.18 = 18%). revenue_growth[0] always null.
 
@@ -692,7 +1830,39 @@ FIN_INSIGHTS RULES (4 required entries):
 4. Key balance sheet or cash flow signal: e.g. "FCF conversion 87% of net income; net cash position supports buyback/dividend optionality"
 If income statement data is insufficient for items 1-3, note the data limitation explicitly and use available data for a different quantified signal.
 
+FINAL CHECK — BEFORE EMITTING JSON, verify your output contains:
+  [ ] step_8_phase_and_timing.phase_1_market_belief (with duration + why_market_keeps_buying)
+  [ ] step_8_phase_and_timing.phase_2_reality_recognition (with catalyst + estimated_timing)
+  [ ] step_8_phase_and_timing.position_sizing_curve (monotonic array)
+  [ ] step_3_evidence.contrarian_view.what_changes_our_mind (single concrete string)
+  [ ] step_7_variant_view.expected_pnl_asymmetry.{upside_if_right | downside_if_wrong | reward_to_risk}
+  [ ] legacy UI mirrors variant.whatChangesOurMind and variant.rewardToRisk are also populated
+
 Return ONLY the JSON object. No markdown, no explanation.`;
+
+// ════════════════════════════════════════════════════════════════════════════
+// NAMED EXPORTS (test-only — Vercel ignores non-default exports for routing)
+// ════════════════════════════════════════════════════════════════════════════
+// Used by scripts/test_thesis_validator.mjs to validate FC.1 temporal check
+// without spending API tokens, AND by api/research-multi.js (Stage 2
+// multi-agent endpoint, RESEARCH_AGENT_TEAM_v1.md v2) to share the same
+// data-context rendering + validation logic. Pure functions, no side effects.
+export {
+  validateThesisQuality,
+  parseCatalystDate,
+  isCatalystDateInFuture,
+  CATALYST_DATE_BACKWARD_TOLERANCE_DAYS,
+  QUALITY_CHECK_NAMES,
+  QC_VALIDATOR_ONLY_CHECKS,
+  buildEnrichmentBlock,
+  buildFundamentalsBlock,
+  buildExtrasBlock,
+  buildConsensusBlock,
+  runPass1,
+  extractJsonPayload,
+  isPlainObject,
+  buildQcFindings,
+};
 
 // ════════════════════════════════════════════════════════════════════════════
 // MAIN HANDLER
@@ -729,16 +1899,30 @@ export default async function handler(req, res) {
       ? { ...enrichment_context.fundamentals, live_price: enrichment_context.live_price ? parseFloat(enrichment_context.live_price) : null }
       : null;
     const fundamentalsBlock = buildFundamentalsBlock(fundInput);
+    // W4 (2026-05-08) — full T-RD data context. Built by
+    // scripts/research_data_loader.py on the client (run_research.py) or by
+    // the multi-agent pipeline (future /api/research-multi). Server reads
+    // extras here and renders into prompt; if absent, prompt unchanged.
+    const extrasBlock       = buildExtrasBlock(enrichment_context?.extras);
     const consensusBlock    = buildConsensusBlock(pass1.views, pass1.sourcesUsed);
 
     // ── Pass 2: Full research generation ──────────────────────────────────
+    // FC.6 (2026-05-05) — inject today's date so model anchors temporal claims
+    // correctly. The 1-line SYSTEM_PROMPT addition (FC.1, ed64ae8) was NOT
+    // sufficient: multi-ticker run 2026-05-05 14:38 BST showed 3/4 tickers
+    // still emit past catalyst dates because the model's training data ends
+    // ~early-2026 and it doesn't know "today" without being told. See
+    // docs/research/factcheck/multi_ticker_2026-05-05_post_fc1_redeploy.md §1.1.
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
     const userPrompt = `Generate a complete buy-side equity research report for: ${ticker}${company ? ` — ${company}` : ''}
+
+TEMPORAL CONTEXT (READ FIRST): Today is ${today}. Your training data may end earlier than this date, but you ARE in ${today}. Any catalyst date earlier than ${today} has ALREADY OCCURRED and is no longer "upcoming". For step_1_catalyst.catalyst_date_or_window, anchor on the NEXT scheduled occurrence — for example, if Q1 ${today.slice(0,4)} earnings already printed, anchor on Q2 ${today.slice(0,4)} earnings instead. Past dates fail validation (FC.1 step_1_catalyst_date_in_future check).
 
 IMPORTANT: "${company || ticker}" is the definitive identity for this ticker. Research the CURRENT company, not any prior holder of this code.
 
 Initial direction bias: ${direction || 'NEUTRAL'}
 Research context: ${context || 'General screening — no specific catalyst prompted this research.'}
-${enrichmentBlock}${fundamentalsBlock}${consensusBlock}
+${enrichmentBlock}${fundamentalsBlock}${extrasBlock}${consensusBlock}
 
 VARIANT VIEW INSTRUCTION (most critical block — follow this 3-step process):
 ${pass1.views.length > 0
@@ -754,18 +1938,64 @@ ${enrichment_context ? `ENRICHMENT: Use ${enrichment_context.live_price} as the 
 Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return ONLY valid JSON.`;
 
     const message = await client.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 8192,
+      model:      'claude-opus-4-7',
+      max_tokens: 16384,  // Bumped from 8192 in shift 13 — B.1+B.2 expanded thesis (Step 8 phase_1+phase_2+sizing_curve + variant.expected_pnl_asymmetry + qc_checklist) consistently truncated at 8192 ceiling, breaking JSON parse + C-3 validation
       system:     SYSTEM_PROMPT,
       messages:   [{ role: 'user', content: userPrompt }],
     });
 
-    const raw  = message.content[0].text;
-    let jsonStr = raw;
-    const cb   = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (cb) jsonStr = cb[1];
+    const raw = message.content?.[0]?.text || '';
+    let research;
+    let qualityMeta;
+    let repairAttempted = false;
 
-    const research = JSON.parse(jsonStr.trim());
+    try {
+      research = JSON.parse(extractJsonPayload(raw));
+      if (!isPlainObject(research)) throw new SyntaxError('Pass 2 JSON root was not an object');
+
+      let quality = validateThesisQuality(research);
+      console.log(`[ThesisQuality] ${ticker} score=${quality.score} severity=${quality.severity} missing=${quality.missingFields.length}`);
+
+      if (quality.severity === 'FAIL' && quality.missingFields.length > 0) {
+        repairAttempted = true;
+        try {
+          research = await repairMissingFields(research, quality.missingFields, ticker, {
+            company,
+            direction: direction || 'NEUTRAL',
+            context: context || '',
+            sources_used: pass1.sourcesUsed,
+            consensus_views: pass1.views?.slice(0, 5) || [],
+            enrichment_used: !!enrichment_context,
+          });
+          quality = validateThesisQuality(research);
+          console.log(`[ThesisQuality] ${ticker} repair score=${quality.score} severity=${quality.severity} missing=${quality.missingFields.length}`);
+        } catch (repairErr) {
+          console.warn(`[ThesisQuality] ${ticker} repair failed: ${repairErr.message}`);
+          quality.error = 'repair_failed';
+          quality.repairError = repairErr.message;
+        }
+      }
+
+      if (repairAttempted && quality.severity === 'FAIL') {
+        console.warn(`[ThesisQuality] ${ticker} still FAIL after repair; returning with quality metadata`);
+      }
+
+      qualityMeta = { ...quality, qc_findings: buildQcFindings(quality), repairAttempted };
+      research = { ...research, _quality: qualityMeta };
+    } catch (parseErr) {
+      qualityMeta = {
+        score: 0,
+        severity: 'FAIL',
+        missingFields: ['__root__'],
+        qcChecklistResults: {},
+        qc_findings: ['parse_failed'],
+        repairAttempted: false,
+        error: 'parse_failed',
+      };
+      console.log(`[ThesisQuality] ${ticker} score=0 severity=FAIL missing=1`);
+      console.warn(`[ThesisQuality] ${ticker} parse failed: ${parseErr.message}`);
+      research = { raw_output: raw, _quality: qualityMeta };
+    }
 
     return res.status(200).json({
       success:        true,
@@ -782,6 +2012,7 @@ Rules: 2-4 catalysts, 2-4 risks, 3-5 next actions. All fields bilingual. Return 
       tavily_count:        pass1.tavilyCount,
       enrichment_used:     !!enrichment_context,
       fundamentals_used:   !!(enrichment_context?.fundamentals && fundInput),
+      extras_used:         !!(enrichment_context?.extras && extrasBlock),
       tavily_enabled:      !!process.env.TAVILY_API_KEY,
     });
 

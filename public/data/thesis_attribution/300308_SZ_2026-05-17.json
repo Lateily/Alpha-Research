@@ -1,0 +1,122 @@
+{
+  "ticker": "300308.SZ",
+  "thesis_logged_at": "2026-05-17T19:47:04.634714+00:00",
+  "thesis_source": "docs/research/factcheck/rerun_2026-05-16/300308SZ_recal.json",
+  "thesis_source_commit": "aaa1cc4",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "2026 H1 earnings report — first hard print on 1.6T ramp magnitude, gross margin trajectory, and Q2 sequential revenue",
+    "date_or_window": "2026-08-15 to 2026-08-31",
+    "type": "earnings_revision",
+    "source": "Standard A-share semi-annual reporting window; exact date not in our data"
+  },
+  "mechanism_chain_length": 6,
+  "rightIf_conditions": [
+    "PASS direction proves right if: 2026 H1 consolidated gross margin <45% @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表: (营业收入-营业成本)/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "PASS direction proves right if: Q2 2026 single-quarter revenue <15.0B CNY @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表 Q2单季: 营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "PASS direction proves right if: stock price between 850 and 1150 CNY @ 2026-08-31 close | source: 交易所收盘价 | if_not_disclosed: INSUFFICIENT_DISCLOSURE (i.e., range-bound, no asymmetric move materializes)"
+  ],
+  "wrongIf_conditions": [
+    "PASS proves wrong (should have been LONG) if: 2026 H1 consolidated gross margin ≥47% @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表: (营业收入-营业成本)/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "PASS proves wrong (should have been LONG) if: Q2 2026 single-quarter net income ≥5.5B CNY @ 2026 H1 报告 (~2026-08-20) | source: 2026 H1 合并利润表 Q2单季: 净利润 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "PASS proves wrong (should have been SHORT) if: stock price ≤750 CNY @ 2026-08-31 close | source: 交易所收盘价 | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+  ],
+  "what_changes_our_mind": "2026 H1 report: consolidated gross margin >45% AND Q2 single-quarter revenue ≥15B CNY → re-engage LONG with starter size; OR GM <40% / Q2 rev <12B / 1.6T delay disclosure → re-engage SHORT.",
+  "variant_view_one_sentence": "Market believes 1.6T cycle delivers a 5-6x 2026 EPS jump justifying price above analyst mean → We believe this is an [E3:narrative] claim with no [E1] verification possible until H1 2026 prints, and positioning is too crowded for asymmetric edge in either direction → Mechanism is: wait for the segment/margin data the broker reports assume but our data lacks.",
+  "time_to_resolution": "~3.5 months until 2026 H1 report (~2026-08-20)",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "0% (PASS — capital preserved, opportunity cost only)",
+    "downside_if_wrong": "0% to -10% (opportunity cost if stock rips to 1200-1500 on H1 beat)",
+    "reward_to_risk": "n/a (PASS — explicit non-bet pending H1 print)"
+  },
+  "quantification": {
+    "metric_target": "PASS — no directional price target issued",
+    "current_value": "1049.87",
+    "predicted_value": "PASS — re-evaluate post-H1 print",
+    "predicted_range": {
+      "low": "n/a",
+      "mid": "n/a",
+      "high": "n/a"
+    },
+    "predicted_horizon": "2026-08-31 (re-evaluation date, not price prediction)",
+    "confidence": 0
+  },
+  "qc_quality_at_log_time": {
+    "score": 84,
+    "missingFields": [
+      "qc_checklist.all_8_steps_complete",
+      "qc_checklist.step_1_specific_not_vague",
+      "qc_checklist.step_2_no_unfounded_leaps",
+      "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "qc_checklist.step_5_observable",
+      "qc_checklist.step_6_observable",
+      "qc_checklist.step_7_one_sentence_tagline",
+      "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "qc_checklist.step_8_early_signs_observable",
+      "qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "qc_checklist.step_8_position_sizing_curve_monotonic",
+      "qc_checklist.reward_to_risk_at_least_threshold"
+    ],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": false,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "PASS",
+    "qc_findings": [
+      "failed:step_8_position_sizing_curve_monotonic",
+      "failed:reward_to_risk_at_least_threshold",
+      "missing:qc_checklist.all_8_steps_complete",
+      "missing:qc_checklist.step_1_specific_not_vague",
+      "missing:qc_checklist.step_2_no_unfounded_leaps",
+      "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "missing:qc_checklist.step_5_observable",
+      "missing:qc_checklist.step_6_observable",
+      "missing:qc_checklist.step_7_one_sentence_tagline",
+      "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "missing:qc_checklist.step_8_early_signs_observable",
+      "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+      "missing:qc_checklist.reward_to_risk_at_least_threshold"
+    ]
+  },
+  "direction": "PASS",
+  "conviction_state": null,
+  "tradeable_not_proven_statement": null,
+  "core_causal_link": {
+    "link_sentence": "The 1.6T cycle delivers 2026 EPS in the 50-65 CNY range (vs 2025's 9.71) — this is the load-bearing claim for the LONG, and the absence of any segment/product-level data means it can only be sourced from broker narrative.",
+    "evidence_tier": "E3:narrative",
+    "tier_justification": "Source is exclusively broker reports (西部证券, 长江证券, 国盛, 中信建投) — forensic flagged bull's '65 CNY EPS' as MISMATCH (field is target price, not EPS). SEGMENT ECONOMICS returned no rows (fina_mainbz not available). To reach [E1:direct] we would need: (a) product-line revenue/margin disclosure for 800G vs 1.6T, OR (b) H1 2026 consolidated GM ≥45% + Q2 rev ≥15B as proxy print. Neither exists yet."
+  },
+  "evidence_profile": {
+    "core_link_tier": "E3",
+    "counts": {
+      "E1": 6,
+      "E2": 3,
+      "E3": 3,
+      "E4": 4
+    },
+    "overstatement_corrected": true
+  },
+  "pass_reason": "BALANCED_RISK_REWARD",
+  "pass_reason_detail": "Live price 1049.87 vs analyst mean target 873.33 = -16.8% downside to consensus already; bull predicted_value 1500 requires 2026 EPS ~50-60 CNY (a >5x jump from 2025's 9.71) which is [E3:narrative] from broker target-price fields (forensic MISMATCH on EPS=65.74 claim — that figure is a target price, not EPS), unverifiable without segment disclosure (fina_mainbz no rows). Reward:risk to upside ≈ +43% vs downside to mean target -17% ≈ 2.5:1 numerically but the upside leg is E3-only while downside leg is E1+E4 (crowded leveraged-long 99.6%, insider NET_SELL_HIGH, RSI 85, 92% of 52W range) — risk-adjusted R:R collapses below 1.5:1. SHORT side equally weak: no [E1:direct] evidence of 1.6T delay, hyperscaler CapEx cut, or margin contraction in our data — only valuation/positioning. Unresolved observable: 2026 H1 报告 (~2026-08-20) consolidated gross margin and Q2 single-quarter revenue, which neither side can pre-position on with [E1] base.",
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

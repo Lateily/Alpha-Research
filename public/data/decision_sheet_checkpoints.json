@@ -1,0 +1,1105 @@
+{
+  "_meta": {
+    "layer": "CTF v1 decision-sheet forward checkpoints (PR-D)",
+    "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md §3",
+    "updated_at": "2026-07-10T05:01:19.916156+00:00",
+    "n_active": 7
+  },
+  "registrations": [
+    {
+      "ticker": "002594.SZ",
+      "name": {
+        "zh": "比亚迪",
+        "en": "BYD Company"
+      },
+      "content_lock": "ea3402301dff717e8bae387242cc6025078f13cbd213208a4e2309d4f40a6bef",
+      "sheet_as_of": "2026-06-10",
+      "registered_at": "2026-06-10T16:27:38.191007+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "LONG",
+      "conviction_at_registration": "STARTER_CAPPED_UNTIL_E1 — and WATCH_NOT_CONVICTION at the current reference price (R/R < 2:1; see reward_to_risk)",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 93.75,
+      "reference_price_date": "2026-05-22",
+      "band": {
+        "bear": {
+          "low": 50,
+          "high": 60
+        },
+        "base": {
+          "low": 95,
+          "high": 105
+        },
+        "bull": {
+          "low": 145,
+          "high": 160
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "2026 H1 海外分部毛利率 (overseas segment GM)",
+          "threshold": "≤ 16.5%",
+          "source": "2026 H1 报告 分部信息披露: 海外/境外 营业收入与营业成本 (if_not_disclosed: INSUFFICIENT_DISCLOSURE)",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 H1 合并毛利率 (consolidated GM)",
+          "threshold": "≤ 15.0%",
+          "source": "2026 H1 报告 合并利润表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 H1 归母净利润 YoY",
+          "threshold": "≤ −40%",
+          "source": "2026 H1 报告 合并利润表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "海外月度销量 YoY (overseas monthly units YoY)",
+          "threshold": "< 0 for any 2 consecutive months in 2026 H2",
+          "source": "公司月度产销快报 (巨潮/公司公告)",
+          "check_date": "monthly ~10th, 2026-07 → 2026-12"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "2026-08-31",
+          "event": "2026 半年报(分部披露 = E1 证明事件)"
+        },
+        {
+          "date": "monthly ~10th (next ≈ 2026-07-10)",
+          "event": "月度产销快报(海外销量)"
+        },
+        {
+          "date": "H2-2026 launches",
+          "event": "新车周期/闪充平台节奏(中信 5/27 所述)"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "002594.SZ",
+        "content_lock": "ea3402301dff717e",
+        "sheet": "docs/research/decision_sheets/002594_SZ_2026-06-10.md",
+        "scored_at": "2026-06-11",
+        "scorer_roles": {
+          "first_red_team_qa": "advisor (Junyan's research QA)",
+          "final_adjudicator": "Junyan"
+        },
+        "scores": {
+          "specificity": {
+            "score": 82,
+            "comment": "明确 E1 事件、日期、毛利率阈值、R/R、目标区间;不是空泛叙事"
+          },
+          "falsifiability": {
+            "score": 86,
+            "comment": "8/31 半年报、海外 GM≤16.5%、合并 GM≤15%、净利 YoY≤−40%、海外销量连续两月负增长,均可验证"
+          },
+          "valuation_discipline": {
+            "score": 56,
+            "comment": "最弱轴:bear/base/bull 有区间,但盈利路径与 PE 仍是 analyst-constructed;自动估值栈坏,缺模型化锚"
+          },
+          "information_increment": {
+            "score": 63,
+            "comment": "+280bps 海外毛利率差是有价值的 variant,但中信 5/27 后 bull case 开始拥挤;增量还在,不够强"
+          },
+          "risk_identification": {
+            "score": 72,
+            "comment": "价格战、EU、估值、crowding 都有;政策补贴退坡、对手份额挤压、EU 本地化 GM 拖累可再量化"
+          }
+        },
+        "average": 71.8,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 56
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS-LOW",
+        "conditions": [
+          "may register 30/60/90 checkpoints — first qualified CTF v1 sample",
+          "may NOT upgrade to conviction buy",
+          "execution stance stays WATCH_NOT_CONVICTION / starter-capped only",
+          "next revision priority = valuation discipline (model-anchored band: fix the broken rDCF/EV-EBITDA/RI generators for this name + sensitivity grid), NOT thesis narrative"
+        ],
+        "note": "first quality data point of Core Thesis Factory v1; human score = measure of record per spec #62"
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-10",
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-07-10T05:01:19.916121+00:00",
+            "price": 86.87,
+            "price_date": "20260709",
+            "price_staleness_note": "committed bar may lag — confirm with a live quote",
+            "chg_vs_reference_pct": -7.34,
+            "directional_read": "AGAINST_THESIS",
+            "band_position": "BETWEEN_BEAR_AND_BASE",
+            "wrong_if_due_for_human_check": [
+              "海外月度销量 YoY (overseas monthly units YoY)"
+            ],
+            "wrong_if_not_yet_due": [
+              "2026 H1 海外分部毛利率 (overseas segment GM)",
+              "2026 H1 合并毛利率 (consolidated GM)",
+              "2026 H1 归母净利润 YoY"
+            ],
+            "catalysts_due": null,
+            "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
+          }
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-09",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-08",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "may register 30/60/90 checkpoints — first qualified CTF v1 sample",
+        "may NOT upgrade to conviction buy",
+        "execution stance stays WATCH_NOT_CONVICTION / starter-capped only",
+        "next revision priority = valuation discipline (model-anchored band: fix the broken rDCF/EV-EBITDA/RI generators for this name + sensitivity grid), NOT thesis narrative"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    },
+    {
+      "ticker": "688120.SH",
+      "name": {
+        "zh": "华海清科",
+        "en": "Huahai Qingke"
+      },
+      "content_lock": "9c318ab0198ec444c7df90ee77b7c88546881d688449caa6bbe6285248fdaccc",
+      "sheet_as_of": "2026-06-11",
+      "registered_at": "2026-06-12T08:07:01.776121+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "LONG",
+      "conviction_at_registration": "WATCH_ONLY — R/R at the 2026-06-11 live price (≈0.43) is FAR below the 2:1 bar and even the committed split-adjusted reference (≈1.98) misses it; STARTER eligibility begins only at the add zone (≤~139, where the bar is met) or on a post-E1 re-band. No position at current price.",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 139.67,
+      "reference_price_date": "2026-05-08",
+      "band": {
+        "bear": {
+          "low": 90,
+          "high": 102
+        },
+        "base": {
+          "low": 155,
+          "high": 175
+        },
+        "bull": {
+          "low": 220,
+          "high": 232
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "2026 H1 营收同比 (revenue YoY)",
+          "threshold": "< +20%",
+          "source": "2026 半年报 合并利润表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 H1 毛利率 (gross margin)",
+          "threshold": "< 38%",
+          "source": "2026 半年报 (FY25 41.81% / Q1 42.31%; 38% = 结构性恶化线)",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 H1 扣非归母净利同比 (non-GAAP net profit YoY)",
+          "threshold": "< 0",
+          "source": "2026 半年报 合并利润表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "新签/在手订单同比 (new/backlog orders YoY)",
+          "threshold": "< +15% (if_not_disclosed: 半年报与业绩说明会均无订单口径 → 记 INSUFFICIENT_DISCLOSURE,不猜测)",
+          "source": "2026 半年报 + 半年度业绩说明会 IR 记录",
+          "check_date": "2026-09-15"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "2026-08-2x (statutory by 2026-08-31)",
+          "event": "2026 半年报(收入/毛利率/扣非/OCF = E1 证明事件)"
+        },
+        {
+          "date": "rolling H2-2026",
+          "event": "定增审核节点(上交所受理/问询/注册)"
+        },
+        {
+          "date": "2026-06-25",
+          "event": "临时股东会(薪酬制度;激励计划推进节奏观察)"
+        },
+        {
+          "date": "H2-2026",
+          "event": "长鑫 IPO 上市与扩产新闻流(主题 beta,双刃)"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "688120.SH",
+        "content_lock": "9c318ab0198ec444",
+        "sheet": "docs/research/decision_sheets/688120_SH_2026-06-11.md",
+        "scored_at": "2026-06-12",
+        "scorer_roles": {
+          "five_axis_red_team": "Junyan (direct scoring + final adjudication, #69 review)"
+        },
+        "scores": {
+          "specificity": {
+            "score": 88,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          },
+          "falsifiability": {
+            "score": 92,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          },
+          "valuation_discipline": {
+            "score": 76,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          },
+          "information_increment": {
+            "score": 80,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          },
+          "risk_identification": {
+            "score": 86,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          }
+        },
+        "average": 84.4,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 76
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS",
+        "conditions": [
+          "register 30/60/90 forward checkpoints (after #66 merges)",
+          "execution stays WATCH_ONLY — NOT a buy list; no position at reference",
+          "re-entry only at the add zone (≤139.33) or post-E1 re-band per the sheet's execution plan"
+        ],
+        "note": "Junyan one-line verdict: 两份研究质量都过关，适合进入 30/60/90 检查点；但执行层都是 WATCH_ONLY，不是买入名单。 Verification basis he stated: selftest ✓ / py_compile ✓ / npm build ✓ / git diff --check ✓ / external spot-check of load-bearing facts (华海 FY25 + 10转4派4; 鼎龙 FY25 + 皓飞). CTF v1 sample #2/#3 quality data points; human score = measure of record per spec #62."
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-12",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-11",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-10",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "register 30/60/90 forward checkpoints (after #66 merges)",
+        "execution stays WATCH_ONLY — NOT a buy list; no position at reference",
+        "re-entry only at the add zone (≤139.33) or post-E1 re-band per the sheet's execution plan"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    },
+    {
+      "ticker": "300054.SZ",
+      "name": {
+        "zh": "鼎龙股份",
+        "en": "Dinglong"
+      },
+      "content_lock": "5e653f506281d16dfe6fb9b99ddf56d720b5e1d8331fc6832e6737aef06ef5b8",
+      "sheet_as_of": "2026-06-11",
+      "registered_at": "2026-06-12T08:07:01.805547+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "LONG",
+      "conviction_at_registration": "WATCH_ONLY — R/R at the 2026-06-11 live price (≈0.29) is FAR below the 2:1 bar; even the committed 5/08 reference gives ≈0.87. STARTER eligibility begins only at the add zone (≤~54.7) or on a post-E1 re-band. No position at current price.",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 64.19,
+      "reference_price_date": "2026-05-08",
+      "band": {
+        "bear": {
+          "low": 36,
+          "high": 42
+        },
+        "base": {
+          "low": 56,
+          "high": 63
+        },
+        "bull": {
+          "low": 82,
+          "high": 90
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "2026 H1 CMP 抛光垫收入同比 (pad revenue YoY)",
+          "threshold": "< +30% (Q1 +71.2%; 若半年报/预告均不披露分项 → INSUFFICIENT_DISCLOSURE,不猜测)",
+          "source": "半年报业绩预告变动说明 或 2026 半年报分项披露(公司有 Q1 披露先例)",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 H1 毛利率 (gross margin)",
+          "threshold": "< 48% (Q1 54.95%, FY25 50.85%; 48% = 共振逆转线)",
+          "source": "2026 半年报 合并利润表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 H1 归母净利同比 (net profit YoY)",
+          "threshold": "< +25% (vs 卖方隐含全年 +46~57%)",
+          "source": "2026 半年报(或 7 月中预告区间下沿)",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "董监高/控股股东累计新增减持预披露 (cumulative NEW insider-sale pre-disclosures beyond the 6/08 filing)",
+          "threshold": "> 总股本 0.5% (rolling)",
+          "source": "减持预披露公告(巨潮)",
+          "check_date": "2026-12-31"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "~2026-07-15 (mid-July)",
+          "event": "创业板 2026 半年报业绩预告(分阶段 E1 第一站;历史上含垫收入拆分的变动说明)"
+        },
+        {
+          "date": "2026-08-2x (statutory by 2026-08-31)",
+          "event": "2026 半年报(E1 证明事件)"
+        },
+        {
+          "date": "2026-06-17 (ex-date); window 2026-06-30 → 09-29",
+          "event": "除权除息(10派1)+ 高管减持窗口"
+        },
+        {
+          "date": "rolling H2-2026 (line-3 target: built by end-2026)",
+          "event": "潜江三线/武汉中心建设节点 + 存储双雄(长存/长鑫)扩产与 IPO 新闻流"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "300054.SZ",
+        "content_lock": "5e653f506281d16d",
+        "sheet": "docs/research/decision_sheets/300054_SZ_2026-06-11.md",
+        "scored_at": "2026-06-12",
+        "scorer_roles": {
+          "five_axis_red_team": "Junyan (direct scoring + final adjudication, #69 review)"
+        },
+        "scores": {
+          "specificity": {
+            "score": 88,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          },
+          "falsifiability": {
+            "score": 90,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          },
+          "valuation_discipline": {
+            "score": 74,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          },
+          "information_increment": {
+            "score": 76,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          },
+          "risk_identification": {
+            "score": 85,
+            "comment": "score per Junyan 2026-06-12 #69 review (numbers given directly; no per-axis commentary — faithful transcription, nothing invented)"
+          }
+        },
+        "average": 82.6,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 74
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS",
+        "conditions": [
+          "register 30/60/90 forward checkpoints (after #66 merges)",
+          "execution stays WATCH_ONLY — NOT a buy list; no position at reference",
+          "re-entry only at the add zone (≤54.67) or post-E1 re-band (staged: ~7/15 forecast → 8/2x H1 report)"
+        ],
+        "note": "Junyan one-line verdict: 两份研究质量都过关，适合进入 30/60/90 检查点；但执行层都是 WATCH_ONLY，不是买入名单。 Verification basis he stated: selftest ✓ / py_compile ✓ / npm build ✓ / git diff --check ✓ / external spot-check of load-bearing facts (华海 FY25 + 10转4派4; 鼎龙 FY25 + 皓飞). CTF v1 sample #2/#3 quality data points; human score = measure of record per spec #62."
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-12",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-11",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-10",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "register 30/60/90 forward checkpoints (after #66 merges)",
+        "execution stays WATCH_ONLY — NOT a buy list; no position at reference",
+        "re-entry only at the add zone (≤54.67) or post-E1 re-band (staged: ~7/15 forecast → 8/2x H1 report)"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    },
+    {
+      "ticker": "688008.SH",
+      "name": {
+        "zh": "澜起科技",
+        "en": "Montage Technology"
+      },
+      "content_lock": "f7e3b135ecc0a0120785631601f801d4538e39075d7124c56c88e8e1f397f6aa",
+      "sheet_as_of": "2026-06-14",
+      "registered_at": "2026-06-14T07:18:44.107449+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "LONG",
+      "conviction_at_registration": "WATCH_ONLY — franchise is real (global memory-interface oligopoly + a genuine mix-driven second curve), but at the committed reference price the R/R is ≈0.11, catastrophically below the 2:1 bar (price has run to the bull scenario). No position. STARTER eligibility begins only at the add zone (≤~150, where the bar is met) or on a fundamentals-driven re-band; near-term supply overhang = 8/9 HK cornerstone unlock.",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 229.28,
+      "reference_price_date": "2026-06-12",
+      "band": {
+        "bear": {
+          "low": 95,
+          "high": 115
+        },
+        "base": {
+          "low": 145,
+          "high": 170
+        },
+        "bull": {
+          "low": 225,
+          "high": 260
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "新品占互连比重 (new-product share of interconnect)",
+          "threshold": "连续两季 ≤ 19% (横住 = 第二曲线无独立 alpha)",
+          "source": "季报 p2 互连/新品拆分",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "互连类毛利率 (interconnect gross margin)",
+          "threshold": "< 65% (回到 FY25 全年水平 = mix 改善证伪)",
+          "source": "季报",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "单季营收同比 (quarterly revenue YoY)",
+          "threshold": "连续两季 < +15% (base 熄火坐实 / 卖方营收偏高证伪)",
+          "source": "季报合并利润表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "扣非归母净利同比 (non-GAAP net profit YoY, ex one-offs)",
+          "threshold": "< +10% (剔一次性后真实经营熄火)",
+          "source": "季报 扣非口径",
+          "check_date": "2026-08-31"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "2026-08-31 (statutory deadline)",
+          "event": "2026 半年报(新品占互连比重 / 互连毛利率 / 扣非 / 单季营收 = E1 证明事件)"
+        },
+        {
+          "date": "2026-08-09",
+          "event": "港股基石解禁(~4.5亿美元,6个月锁定到期)"
+        },
+        {
+          "date": "rolling 2026",
+          "event": "DDR5 渗透率 / MRDIMM 二代放量节奏(主题 beta)"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "688008.SH",
+        "content_lock": "f7e3b135ecc0a012",
+        "sheet": "docs/research/decision_sheets/688008_SH_DEEP_2026-06-14.md",
+        "scored_at": "2026-06-14",
+        "scorer_roles": {
+          "first_red_team_qa": "T1 (composer auto-floor = structural PASS only)",
+          "final_adjudicator": "Junyan"
+        },
+        "comment_provenance": "the five NUMERIC scores (91/93/84/91/89, avg 89.6) are Junyan's VERBATIM five-axis red-team of the 澜起 deep thesis (#77 chat verdict, conditional PASS, 2026-06-14); the two P1 fixes he required (earnings-bridge bull-row column order; in-file source appendix) were applied before #77 merged. The per-axis COMMENTS here are a faithful T1 summary of each axis's basis in this sheet (the #77 verdict recorded scores without verbatim per-axis prose) — NOT presented as Junyan's words. Scores bind to the composer sheet content_lock f7e3b135ecc0a012 (public/data/decision_sheets/688008_SH.json), which encodes the same red-teamed deep thesis; committed reference price 229.28 (universe_a 2026-06-12) vs the deep thesis's web ¥228 (inside its flagged 225-231 conflict band) — both yield the same WATCH conclusion.",
+        "scores": {
+          "specificity": {
+            "score": 91,
+            "comment": "[T1 summary] 拆到 Q1 一次性公允价值收益 2.39亿、扣非 +20.1% vs 表观 +61.3%、新品占互连 11.9%→19% 斜率、互连毛利 62.66%→65.57%→71.5% — 不是空泛叙事。"
+          },
+          "falsifiability": {
+            "score": 93,
+            "comment": "[T1 summary] 4 条 wrong_if 绑季报强制披露(新品占比、互连毛利率、单季营收、扣非同比),H1 报告可直接打脸。"
+          },
+          "valuation_discipline": {
+            "score": 84,
+            "comment": "[T1 summary] 三场景 earnings bridge(营收→毛利→opex→归母→EPS×forward PE)+ 显式假设 + R/R 自然推出;倍数仍是 [unvalidated intuition] 判断锚,但已足够做研究决策。最弱轴。"
+          },
+          "information_increment": {
+            "score": 91,
+            "comment": "[T1 summary] '表观+61% vs 真实+20%(一次性)''卖方营收偏高 58 vs 70-77''第二曲线真实但仅占 19% 托不住 81% base' 是实质增量,不是普通摘要能稳定产出的。"
+          },
+          "risk_identification": {
+            "score": 89,
+            "comment": "[T1 summary] base 减速、政策/周期、估值双杀、8/9 港股基石解禁供给、拥挤反身都覆盖,且没有 over-bear(承认第二曲线是真的)。"
+          }
+        },
+        "average": 89.6,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 84
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS",
+        "conditions": [
+          "may register 30/60/90 forward checkpoints — the first CTF deep-thesis sample (the 88+ template)",
+          "verdict认可: WATCH_ONLY / 加仓区 ≤150 / R/R 0.10 (committed 0.11) — NOT a buy",
+          "may NOT upgrade to conviction at current price; STARTER eligibility only inside the add zone or on a fundamentals-driven re-band",
+          "the two #77 P1s (bull-row column order; in-file source appendix) were fixed before merge"
+        ],
+        "note": "CTF deep-thesis upgrade #1; human score = measure of record per spec #62. The template that proved 'deep + honest' reaches investment grade (88+) without manufacturing a buy — depth corrected the quick screen's wrong valuation (PE 108→116-119) and still landed WATCH_ONLY."
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-13",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-12",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "may register 30/60/90 forward checkpoints — the first CTF deep-thesis sample (the 88+ template)",
+        "verdict认可: WATCH_ONLY / 加仓区 ≤150 / R/R 0.10 (committed 0.11) — NOT a buy",
+        "may NOT upgrade to conviction at current price; STARTER eligibility only inside the add zone or on a fundamentals-driven re-band",
+        "the two #77 P1s (bull-row column order; in-file source appendix) were fixed before merge"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    },
+    {
+      "ticker": "688072.SH",
+      "name": {
+        "zh": "拓荆科技",
+        "en": "Piotech"
+      },
+      "content_lock": "297c7f5804b4abdd1dbcff4cbc3d8670d0f62ec568857ab463eb855c2e517f0a",
+      "sheet_as_of": "2026-06-14",
+      "registered_at": "2026-06-14T07:18:44.142163+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "LONG",
+      "conviction_at_registration": "WATCH_ONLY — franchise is real (sole domestic PECVD + entity-list-locked demand + a genuinely strong FY25 扣非/OCF), so it earns a full deep sheet + checkpoints (NOT NOT_ADVANCED). But at the committed reference price the R/R is NEGATIVE (≈−0.06) — price is at/above the bull scenario and above the only sell-side target (538). No position rationale. Add zone = ≤~383 (2:1 met) OR a fundamentals-driven re-band.",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 664.42,
+      "reference_price_date": "2026-06-12",
+      "band": {
+        "bear": {
+          "low": 230,
+          "high": 280
+        },
+        "base": {
+          "low": 380,
+          "high": 440
+        },
+        "bull": {
+          "low": 600,
+          "high": 680
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "合同负债 (contract liabilities — the order-conversion leading signal)",
+          "threshold": "跌破 48亿 (已横盘 3 季: 25Q3 48.94 → FY25末 48.52 → Q1末 48.77)",
+          "source": "季报资产负债表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "综合毛利率 (consolidated gross margin)",
+          "threshold": "连续两季 < 38% (Q1 41.69% 是否可持续;FY25 -6.9pp 未真修复)",
+          "source": "季报",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "扣非归母同比 (non-GAAP net profit YoY, ex investment gains — the real-operations read)",
+          "threshold": "< +40%",
+          "source": "季报 扣非口径",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "经营现金流 (operating cash flow, H1 cumulative)",
+          "threshold": "仍为负 (Q1 -5.2亿 是季节性还是回款恶化)",
+          "source": "季报现金流量表",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "混合键合 (hybrid bonding — the second-curve option)",
+          "threshold": "C2W/D2W 长期停'验证'、占营收不破 5%",
+          "source": "年报分产品 + 量产订单公告",
+          "check_date": "2027-04-30"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "2026-08-31 (statutory deadline)",
+          "event": "2026 半年报(扣非 / 毛利率 / 合同负债 / 经营现金流 = E1 证明事件)"
+        },
+        {
+          "date": "2027-04 (statutory by 2027-04-30)",
+          "event": "FY2026 年报(分产品:混合键合 C2W/D2W 是否量产)"
+        },
+        {
+          "date": "rolling 2026",
+          "event": "产业资本减持新闻流(大基金/中微,供给侧)"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "688072.SH",
+        "content_lock": "297c7f5804b4abdd",
+        "sheet": "docs/research/decision_sheets/688072_SH_DEEP_2026-06-14.md",
+        "scored_at": "2026-06-14",
+        "scorer_roles": {
+          "first_red_team_qa": "T1 (composer auto-floor = structural PASS only)",
+          "final_adjudicator": "Junyan"
+        },
+        "comment_provenance": "per-axis scores AND comments are Junyan's VERBATIM five-axis red-team of the 拓荆 deep thesis (#78 chat verdict, 2026-06-14). Scores bind to the composer sheet content_lock 297c7f5804b4abdd (public/data/decision_sheets/688072_SH.json), which encodes the same red-teamed deep thesis; committed reference price 664.42 (universe_a 2026-06-12) vs the deep thesis's web ¥645 — both yield the same negative-R/R WATCH conclusion.",
+        "scores": {
+          "specificity": {
+            "score": 92,
+            "comment": "没停在'设备龙头很贵',而是拆到 Q1 公允价值收益、扣非、合同负债、发出商品、demo 验收周期。"
+          },
+          "falsifiability": {
+            "score": 94,
+            "comment": "wrong-if 绑定合同负债、毛利、扣非、经营现金流、混合键合放量,后续季报能直接打脸。"
+          },
+          "valuation_discipline": {
+            "score": 88,
+            "comment": "比澜起更强:表观归母与清洁扣非双视角 bridge 很关键,R/R 为负的结论从模型自然推出。倍数仍是判断锚,但已经足够做研究决策。"
+          },
+          "information_increment": {
+            "score": 93,
+            "comment": "'Q1 表观 +488% ≠ 主业高增''FY25 全年质量反而好''订单确定性被高估'是实质增量,不是普通摘要能稳定产出的东西。"
+          },
+          "risk_identification": {
+            "score": 92,
+            "comment": "价格/拥挤、产业资本减持、订单兑现、毛利、现金流、二曲线期权都覆盖,而且没有 over-bear。"
+          }
+        },
+        "average": 91.8,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 88
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS",
+        "conditions": [
+          "may register 30/60/90 forward checkpoints — the second CTF deep-thesis sample (profit-quality test)",
+          "verdict认可: WATCH_ONLY / 加仓区 ≤383 / R/R -0.01 (committed -0.06) — NOT a buy",
+          "may NOT upgrade to conviction at current price; STARTER eligibility only inside the add zone or on a post-H1 fundamentals re-band",
+          "this sheet证明 the factory keeps discipline in a high-heat sector: it held BOTH 'Q1 quality is bad' AND 'FY25 full-year quality is good' without over-bearing — not a no-for-the-sake-of-no"
+        ],
+        "note": "CTF deep-thesis upgrade #2; human score = measure of record per spec #62. Highest-graded sheet in the corpus (91.8 > 澜起 89.6 > 华海 84.4 > 鼎龙 82.6 > BYD 71.8). The profit-quality test Junyan explicitly requested: depth did NOT get carried by the +488% headline."
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-13",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-12",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "may register 30/60/90 forward checkpoints — the second CTF deep-thesis sample (profit-quality test)",
+        "verdict认可: WATCH_ONLY / 加仓区 ≤383 / R/R -0.01 (committed -0.06) — NOT a buy",
+        "may NOT upgrade to conviction at current price; STARTER eligibility only inside the add zone or on a post-H1 fundamentals re-band",
+        "this sheet证明 the factory keeps discipline in a high-heat sector: it held BOTH 'Q1 quality is bad' AND 'FY25 full-year quality is good' without over-bearing — not a no-for-the-sake-of-no"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    },
+    {
+      "ticker": "601138.SH",
+      "name": {
+        "zh": "工业富联",
+        "en": "Foxconn Industrial Internet"
+      },
+      "content_lock": "73eb81e27755cce8ded6664ebbd6191b10935d4ffbf8355455cb7192af40c43c",
+      "sheet_as_of": "2026-06-15",
+      "registered_at": "2026-06-15T14:13:32.355814+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "LONG",
+      "conviction_at_registration": "WATCH_CONSTRUCTIVE — thesis and price are both discussable (the rare such name in the AI chain), but at the committed reference price the R/R is ~1.72, BELOW the 2:1 bar. No position. STARTER eligibility begins only at the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band. NOT a buy.",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 70.57,
+      "reference_price_date": "2026-06-12",
+      "band": {
+        "bear": {
+          "low": 47,
+          "high": 53
+        },
+        "base": {
+          "low": 65,
+          "high": 79
+        },
+        "bull": {
+          "low": 100,
+          "high": 112
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "2026 H1 归母净利(年化)",
+          "threshold": "< ~450亿 (即 H1 < ~210亿)",
+          "source": "2026 半年报 合并利润表",
+          "check_date": "2026-08-30"
+        },
+        {
+          "metric": "云计算/AI 服务器分部毛利率",
+          "threshold": "< ~6% 或无结构性改善证据",
+          "source": "2026 半年报 分部信息",
+          "check_date": "2026-08-30"
+        },
+        {
+          "metric": "营收增但净利率不改善 (revenue beats, net margin flat/down)",
+          "threshold": "net margin YoY 不升",
+          "source": "2026 半年报 + FY26 年报",
+          "check_date": "2026-08-30"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "2026-08-30 (statutory by 2026-08-31)",
+          "event": "2026 半年报(Q1 run-rate 是否延续 + 云/AI 服务器分部毛利率 = E1 证明事件)"
+        },
+        {
+          "date": "H2-2026",
+          "event": "GB300 机柜量产节奏(2026H2)"
+        },
+        {
+          "date": "rolling 2026",
+          "event": "北美云资本开支指引(季度)"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "601138.SH",
+        "content_lock": "73eb81e27755cce8",
+        "sheet": "docs/research/decision_sheets/601138_SH_DEEP_2026-06-14.md (corrected per PR-G #86) + cores/601138_SH_core.json",
+        "scored_at": "2026-06-15",
+        "scorer_roles": {
+          "red_team": "Junyan (owner)",
+          "final_adjudicator": "Junyan",
+          "record_type": "owner-authorized red-team floor"
+        },
+        "basis": "owner-authorized floor / post-#86 verified",
+        "comment_provenance": "Owner-authorized red-team record. The five axis scores and the 87.2 average are Junyan's owner-authorized FLOOR judgment, recorded after the PR-G #86 一手财务对账门 verified the load-bearing numbers against the filed cninfo PDFs (Q1'26 归母 105.95亿; FY2025 352.86亿; 股本 198.44亿). The per-axis comments below are a faithful summary of each axis's basis in this sheet (NOT presented as verbatim quotes). This is NOT an agent or self score — it is Junyan's owner-authorized red-team floor; the prior 87.2 figure is used only as supporting audit context.",
+        "scores": {
+          "specificity": {
+            "score": 88,
+            "comment": "[owner floor; summary] 拆到 Q1'26 105.95亿/扣非 102.50亿/OCF 250.24亿、FY25 352.86亿、forward PE 23-28x、ODM 净利率 ~3-4% 的承重变量,不是空泛叙事"
+          },
+          "falsifiability": {
+            "score": 92,
+            "comment": "[owner floor; summary] wrong-if 绑半年报强制披露:H1 归母年化 <450亿 / 分部毛利率 <6% / 营收增而净利率不改善,H1 报告可直接打脸"
+          },
+          "valuation_discipline": {
+            "score": 84,
+            "comment": "[owner floor; summary] 三档 earnings bridge(归母×forward PE÷198.44亿股)+ 显式假设;R/R 1.72<2:1 的结论自然推出;倍数仍 [unvalidated intuition],但已足够做研究决策。最弱轴"
+          },
+          "information_increment": {
+            "score": 86,
+            "comment": "[owner floor; summary] 'forward-PE 被盈利压便宜'+'margin 能否随 GB300 上台阶' 是有价值的增量;但工业富联是 1.4万亿共识大票,edge 偏估值时点判断而非深度非共识变体——五轴里最'宽'的一档"
+          },
+          "risk_identification": {
+            "score": 86,
+            "comment": "[owner floor; summary] ODM 薄 margin、capex 周期、1.4万亿估值双杀、共识拥挤(+200% YoY)都覆盖;承重变量(margin)明确标出且绑 H1 披露"
+          }
+        },
+        "average": 87.2,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 84
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS",
+        "conditions": [
+          "may register 30/60/90 forward checkpoints — owner-authorized WATCH_CONSTRUCTIVE",
+          "may NOT upgrade to conviction at current price; R/R 1.72 < 2:1 — NOT a buy list",
+          "STARTER eligibility only inside the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band",
+          "the load-bearing variable is ODM net MARGIN, resolving at the 2026-08-30 H1 segment-GM print; revenue growth alone does not confirm the thesis",
+          "post-#86 verified: Q1'26 归母 105.95亿 + FY2025 352.86亿 E1-confirmed (the upstream '302亿' was wrong and never entered this thesis)"
+        ],
+        "note": "Owner-authorized red-team floor for the AI value-chain's most price-discussable mega-cap. PASS (87.2) registers it as a forward-checkpoint WATCH_CONSTRUCTIVE case — a thesis whose forward path the band will grade, NOT a recommendation to buy. Registration to the official ledger is human-authorized (Junyan), not AI self-approval."
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-15",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-14",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-13",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "may register 30/60/90 forward checkpoints — owner-authorized WATCH_CONSTRUCTIVE",
+        "may NOT upgrade to conviction at current price; R/R 1.72 < 2:1 — NOT a buy list",
+        "STARTER eligibility only inside the add zone (owner research trigger ≤~60, or the composer 2:1 bar ≤~68.67) OR on a post-H1 margin/run-rate re-band",
+        "the load-bearing variable is ODM net MARGIN, resolving at the 2026-08-30 H1 segment-GM print; revenue growth alone does not confirm the thesis",
+        "post-#86 verified: Q1'26 归母 105.95亿 + FY2025 352.86亿 E1-confirmed (the upstream '302亿' was wrong and never entered this thesis)"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    },
+    {
+      "ticker": "600066.SH",
+      "name": {
+        "zh": "宇通客车",
+        "en": "Yutong Bus"
+      },
+      "content_lock": "a9687692ab6a2f76ad04d0bdfe4b43d647c1ac59ae105df0e3c67241cb417421",
+      "sheet_as_of": "2026-06-21",
+      "registered_at": "2026-06-21T09:18:19.163549+00:00",
+      "status": "ACTIVE",
+      "supersedes": null,
+      "direction": "WATCH",
+      "conviction_at_registration": "WATCH_NOT_CONVICTION — the export step-up and operating-driven (not leverage-driven) ROE are real, but ¥26.04 is PE 10.5 on PEAK earnings and the normalized R/R ≈0.67 is unfavorable. Research posture only, no position. STARTER-research trigger ≈¥20.0 (NOT a buy instruction), or a post-H1/annual re-band confirming overseas volume+margin hold through domestic normalization.",
+      "stance_at_registration": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)",
+      "reference_price": 26.04,
+      "reference_price_date": "2026-06-21",
+      "band": {
+        "bear": {
+          "low": 11.5,
+          "high": 13.5
+        },
+        "base": {
+          "low": 22.0,
+          "high": 26.0
+        },
+        "bull": {
+          "low": 32.0,
+          "high": 37.0
+        }
+      },
+      "wrong_if": [
+        {
+          "metric": "2026H1 出口销量 YoY",
+          "threshold": "< 0 (转负)",
+          "source": "2026 半年报 §产销量 + 月度产销快报",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "2026 中报/年报 海外毛利率",
+          "threshold": "< 26%",
+          "source": "2026 半年报/年报 §主营业务分地区",
+          "check_date": "2026-08-31"
+        },
+        {
+          "metric": "FY2026 净利率",
+          "threshold": "< 10%",
+          "source": "FY2026 年报 合并利润表",
+          "check_date": "2027-03-31"
+        },
+        {
+          "metric": "FY2026 OCF/归母净利",
+          "threshold": "< 0.5",
+          "source": "FY2026 年报 合并现金流量表",
+          "check_date": "2027-03-31"
+        },
+        {
+          "metric": "2026 国内收入 YoY",
+          "threshold": "< -15%",
+          "source": "2026 半年报/年报 §分地区",
+          "check_date": "2026-08-31"
+        }
+      ],
+      "catalysts": [
+        {
+          "date": "~Aug 2026",
+          "event": "2026 半年报(出口量 + 海外GM + 减速)"
+        },
+        {
+          "date": "rolling 2026",
+          "event": "月度产销快报(高频出口量)"
+        },
+        {
+          "date": "~Mar 2027",
+          "event": "FY2026 年报(正常化全年)"
+        }
+      ],
+      "human_red_team": {
+        "ticker": "600066.SH",
+        "content_lock": "a9687692ab6a2f76",
+        "sheet": "docs/research/decision_sheets/600066_SH_2026-06-21.md",
+        "scored_at": "2026-06-21",
+        "scorer_roles": {
+          "first_red_team_qa": "Claude (factory) + 2-pass primary-filing factpack",
+          "final_adjudicator": "Junyan"
+        },
+        "scores": {
+          "specificity": {
+            "score": 88,
+            "comment": "units × ASP × 地区毛利 × 费用率,正常化桥非泛泛净利率拍脑袋"
+          },
+          "falsifiability": {
+            "score": 89,
+            "comment": "H1/年报 wrong-if 清楚:出口量、海外毛利、净利率、OCF、国内收入均可查"
+          },
+          "valuation_discipline": {
+            "score": 81,
+            "comment": "正常化桥(units×ASP×地区GM−费用−税)足够注册 WATCH,但情景 PE/GM/销量仍是未校准假设(最弱轴)"
+          },
+          "information_increment": {
+            "score": 90,
+            "comment": "'PE 10 是顶部 EPS 便宜,不是真便宜'是强增量;cyclical_flag 把 ROE 35.9% 拆成相对自身历史的盈利顶(2.751×)"
+          },
+          "risk_identification": {
+            "score": 85,
+            "comment": "OCF(0.576 vs TTM 0.966)、99.65% 分红压薄净资产、ROE 放大机制均处理诚实"
+          }
+        },
+        "average": 86.6,
+        "min_axis": {
+          "axis": "valuation_discipline",
+          "score": 81
+        },
+        "bar": {
+          "average_min": 70,
+          "axis_min": 50,
+          "label": "[unvalidated intuition]"
+        },
+        "verdict": "PASS",
+        "conditions": [
+          "register as forward-court WATCH only — NOT starter / NOT buy",
+          "stance stays WATCH_NOT_CONVICTION; 2:1 research trigger ≈¥20.0 (composer-computed ¥19.83)",
+          "FRAMING LOCK: peak-earnings NORMALIZATION thesis, NOT value — never state 'PE 10 / 9.6% 股息率' without 'on peak earnings / 基于顶部盈利' in the same sentence",
+          "core checkpoint = 2026 半年报 (出口销量 / 海外毛利 / 净利率 / 现金质量)",
+          "platform follow-up (NON-blocking): label universe ocf_to_ni as FY-anchor + TTM-aside (#100 no bug — this case proved TTM OCF/NI is single-quarter working-capital sensitive)"
+        ],
+        "checklist": [
+          {
+            "claim": "e1_e2_disclosure",
+            "status": "missing"
+          },
+          {
+            "claim": "filing_line_item_citation",
+            "status": "missing"
+          },
+          {
+            "claim": "non_recurring_ocf_decomposition",
+            "status": "supplied",
+            "evidence_tier": "E1",
+            "source_title": "FY2025 年报 + 2026Q1 报告",
+            "line_item_or_quote": "FY2025 OCF ¥31.97亿 / 归母 ¥55.54亿 = OCF/NI 0.576 (−55.67% YoY); 扣非归母 ¥45.80亿 = 82.5% of 归母 (非经常性 ~17.5%); pipeline TTM 0.966 = Q1'26 营运资金窗口效应 (Q1'26 OCF 34.94亿 vs Q1'25 14.17亿), NOT operating leverage"
+          },
+          {
+            "claim": "conflict_source_line_quote",
+            "status": "supplied",
+            "evidence_tier": "E1",
+            "source_title": "FY2025 年报 §利润分配预案 + §资产负债表日后事项",
+            "line_item_or_quote": "'每10股派息25元(含税)…现金分红5,534,848,057.50元…占归母99.65%'(利润分配预案表) = 中期10派5(¥11.07亿) + 末次10派20(¥44.28亿);日后事项的'10派20'是末次部分,非竞争全年口径"
+          }
+        ],
+        "note": "Core Thesis Factory v1 — FIRST clean-screen (post #99 momentum / #100 clean financials / #101 cyclical-flag) deep thesis. cyclical_flag peak_earnings_risk=True (ROE 2.751× its own 5y median) drove the normalization frame; a 2-pass fix-forward closed the OCF / dividend / normalized-bridge 口径 before PASS. Human score = measure of record per spec #62. Registered as forward-court WATCH, NOT a buy."
+      },
+      "checkpoints": [
+        {
+          "offset_days": 30,
+          "due_date": "2026-07-21",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 60,
+          "due_date": "2026-08-20",
+          "status": "PENDING",
+          "result": null
+        },
+        {
+          "offset_days": 90,
+          "due_date": "2026-09-19",
+          "status": "PENDING",
+          "result": null
+        }
+      ],
+      "constraints_from_redteam": [
+        "register as forward-court WATCH only — NOT starter / NOT buy",
+        "stance stays WATCH_NOT_CONVICTION; 2:1 research trigger ≈¥20.0 (composer-computed ¥19.83)",
+        "FRAMING LOCK: peak-earnings NORMALIZATION thesis, NOT value — never state 'PE 10 / 9.6% 股息率' without 'on peak earnings / 基于顶部盈利' in the same sentence",
+        "core checkpoint = 2026 半年报 (出口销量 / 海外毛利 / 净利率 / 现金质量)",
+        "platform follow-up (NON-blocking): label universe ocf_to_ni as FY-anchor + TTM-aside (#100 no bug — this case proved TTM OCF/NI is single-quarter working-capital sensitive)"
+      ],
+      "disclaimer": "case-level forward checkpoints — NOT statistics, NOT an alpha claim; theme/peer residual validation remains the CORE factory's job"
+    }
+  ]
+}

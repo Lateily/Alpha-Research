@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "generated_at": "2026-07-10T11:31:50.616729+00:00",
+    "schema_version": 1,
+    "thresholds_status": "[unvalidated intuition]",
+    "method": "residual_income_no_growth_ebo",
+    "forecast_horizon_years": 5,
+    "signal_threshold_pp": 15.0,
+    "p_b_hyper_growth_ceiling": 10.0,
+    "wacc_anomalous_floor": 0.02,
+    "r_e_proxy": "wacc_from_rdcf_wacc_detail",
+    "delta_unit": "pp (percentage points of ROE)",
+    "note": "AHF-2 Method 3. NOT folded into VP composite (INVARIANT 3). WACC used as r_e proxy (handoff Q2 option a; cleaner pure ke computation deferred to future polish KR). KR3 aggregator must NOT cross-compare delta_pp (this method) vs delta_pct (KR1 EV/EBITDA) — only the {UNDERPRICED, FAIRLY_VALUED, OVERPRICED} signal enums are unit-comparable."
+  },
+  "tickers": {
+    "300308.SZ": {
+      "ticker": "300308.SZ",
+      "model_status": "roe_missing",
+      "signal": null,
+      "delta_pp": null,
+      "reason": "fund.roe missing or null"
+    },
+    "002594.SZ": {
+      "ticker": "002594.SZ",
+      "model_status": "roe_missing",
+      "signal": null,
+      "delta_pp": null,
+      "reason": "fund.roe missing or null"
+    },
+    "175.HK": {
+      "ticker": "175.HK",
+      "model_status": "roe_missing",
+      "signal": null,
+      "delta_pp": null,
+      "reason": "fund.roe missing or null"
+    },
+    "603233.SH": {
+      "ticker": "603233.SH",
+      "model_status": "roe_missing",
+      "signal": null,
+      "delta_pp": null,
+      "reason": "fund.roe missing or null"
+    },
+    "688120.SH": {
+      "ticker": "688120.SH",
+      "model_status": "roe_missing",
+      "signal": null,
+      "delta_pp": null,
+      "reason": "fund.roe missing or null"
+    },
+    "300054.SZ": {
+      "ticker": "300054.SZ",
+      "model_status": "roe_missing",
+      "signal": null,
+      "delta_pp": null,
+      "reason": "fund.roe missing or null"
+    }
+  }
+}

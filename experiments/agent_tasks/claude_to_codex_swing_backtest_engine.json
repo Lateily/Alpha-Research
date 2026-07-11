@@ -1,0 +1,82 @@
+{
+  "task_id": "2026-05-26-swing-backtest-engine",
+  "from": "claude_t1_orchestrator",
+  "to": "codex",
+  "spec_doc": "docs/strategy/SWING_STRATEGY_v1.md",
+  "spec_sections": ["§5 Execution model", "§6 Backtest methodology"],
+  "deliverable": "scripts/run_swing_backtest.py",
+  "loc_budget": 400,
+  "depends_on": [
+    "scripts/swing_signal_scan.py (Codex task: claude_to_codex_swing_signal_scanner)",
+    "scripts/sector_scorer.py (Codex task: claude_to_codex_swing_sector_scorer)",
+    "scripts/swing_risk_manager.py (Codex task: claude_to_codex_swing_risk_manager)",
+    "data_history/panel/daily_prices.parquet",
+    "data_history/panel/daily_adj_factor.parquet",
+    "data_history/sector_mapping.json"
+  ],
+  "what_to_implement": {
+    "module_signature": "run_swing_backtest(start: date, end: date, capital: float = 1_000_000, walk_forward: bool = True, config: dict | None = None) -> dict",
+    "main_loop_pseudocode": [
+      "trade_dates = sorted unique trade_dates in [start, end]",
+      "positions = {}; equity = [capital]; equity_curve = []",
+      "for T in trade_dates:",
+      "    # T = current eval date; T+1 = execution date",
+      "    market_state = compute_market_state(T) # vol, regime, drawdown",
+      "    sector_ranks = score_sectors(daily_panel, sector_mapping, T)",
+      "    top_sectors = top_k(sector_ranks, k=5)",
+      "    members = universe_filter(panel_members_alive_at_T, sectors=top_sectors)",
+      "    signal_scores = compute_swing_signals(daily_panel, T, members)",
+      "    exits = evaluate_exits(positions, daily_panel, T, signal_scores)",
+      "    sells = {tk for tk, action in exits.items() if action.startswith('sell')}",
+      "    # apply sells at T+1 open (or carry if limit-down)",
+      "    halves = {tk for tk, action in exits.items() if action == 'take_profit_half'}",
+      "    target_weights = compute_target_weights(signal_scores, panel, T, sector_mapping, config)",
+      "    target_weights = apply_circuit_breakers(target_weights, market_state)",
+      "    buys = {tk: w for tk, w in target_weights.items() if tk not in positions or w > current_w(tk) + 0.01}",
+      "    # apply buys at T+1 open (or carry if limit-up)",
+      "    executed_trades = execute_at_T_plus_1(buys, sells, halves, daily_panel, T)",
+      "    update positions + cash",
+      "    record equity, attribution, holdings",
+      "trade_log + equity_curve + metrics → output"
+    ],
+    "execution_rules": {
+      "T_plus_1_fill_price": "(open + (high+low+close)/3) / 2 = blended slippage proxy",
+      "limit_up_unfillable": "if T+1 open >= T_prev_close * 1.099 AND we want to BUY → mark UNFILLABLE, carry to T+2 (max 3 days, then drop)",
+      "limit_down_unfillable_sell": "if T+1 open <= T_prev_close * 0.901 AND we want to SELL → carry to T+2 (forced hold + emergency stop -15%)",
+      "commission": "0.025% per side",
+      "slippage": "0.10% per side (already approximated in blended fill price; add explicit if not)",
+      "stamp_duty_sell": "0.05% sell-side only"
+    },
+    "walk_forward_logic": {
+      "is_window_months": 12,
+      "oos_window_months": 6,
+      "step_months": 3,
+      "weights_recalibration": "NONE for v1 — weights are spec-set a-priori (per Junyan: no curve-fit). Walk-forward IS only validates parameter stability not refit."
+    },
+    "metrics_output": {
+      "headline": "CAGR / Sharpe (annualized) / MaxDD / Calmar / volatility / turnover_ann",
+      "alpha_vs_csi300": "Bootstrap CI on (strat_daily_returns - csi300_daily_returns) using scripts/stationary_bootstrap.py",
+      "ic_on_composite_vs_5d_forward": "From scripts/ic_analysis.py (extended for daily horizon)",
+      "ff_attribution": "From scripts/ff_attribution.py (need daily versions of MKT/SMB/HML/WML)",
+      "per_year_breakdown": "annual return + DD + Sharpe per calendar year"
+    },
+    "output_format": "JSON to public/data/swing_backtest_v1.json + per-day artifacts to public/data/swing_daily/YYYY-MM-DD.json",
+    "PIT_discipline": "Engine never queries panel data with trade_date > T at evaluation step T. All exits + sizing decisions made at T-close, executed at T+1-open."
+  },
+  "selftest_requirements": [
+    "Synthetic: 30 stocks × 2 years daily; verify engine runs end-to-end, equity curve makes sense (no NaN, monotone-ish from buys/sells), turnover reasonable, costs deducted correctly.",
+    "Limit-up unfillable: construct fixture where target buy is at +10% limit-up → verify UNFILLABLE log entry, no fill.",
+    "Hard stop: verify when position triggers -8% MTM, sells at T+1 open.",
+    "Deterministic: same seed → same result."
+  ],
+  "out_of_scope": [
+    "Paper trading live mode (separate, swing_daily_run.py)",
+    "Real Tushare data fetch (already done in upstream tasks)",
+    "Microstructure factor extension (gated on 3-API)"
+  ],
+  "test_gate_commands": [
+    "python3 -m py_compile scripts/run_swing_backtest.py",
+    "python3 scripts/run_swing_backtest.py --selftest"
+  ],
+  "owner_after_handoff": "codex (writes), claude_t1 (runs walk-forward on real data + stat gate)"
+}

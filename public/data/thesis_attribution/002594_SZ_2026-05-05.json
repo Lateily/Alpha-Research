@@ -1,0 +1,75 @@
+{
+  "ticker": "002594.SZ",
+  "thesis_logged_at": "2026-05-05T14:31:48.131717+00:00",
+  "thesis_source": "docs/research/factcheck/002594SZ_thesis_2026-05-05_1530BST.json",
+  "thesis_source_commit": "0ed49e0",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "BYD Q2 2026 earnings release — first full quarter reflecting price-war exhaustion impact on auto gross margin and the ramp of Yangwang/Denza premium mix; also first quarter with full European CKD plant (Hungary) contribution",
+    "date_or_window": "Late August 2026 (typical BYD H1 reporting window 2026-08-25 to 2026-08-30)",
+    "type": "earnings_revision",
+    "source": "BYD historical reporting cadence; Hungary plant SOP guidance from FY2025 annual report"
+  },
+  "mechanism_chain_length": 5,
+  "rightIf_conditions": [
+    "Q2 2026 auto gross margin ≥ 19.5% (vs consensus ~18.5%)",
+    "Overseas monthly unit sales ≥ 55K by Aug 2026 (vs ~35K monthly run-rate Q1 2026)",
+    "Yangwang + Denza + Fangchengbao combined H1 2026 volume ≥ 280K units (>15% of group)",
+    "Hungary plant first vehicle off-line by end-September 2026 per current guidance"
+  ],
+  "wrongIf_conditions": [
+    "Q2 2026 auto gross margin < 18.5% — confirms price-war drag exceeds mix-up offset",
+    "Overseas monthly volume falls below 35K for two consecutive months Jun-Jul 2026",
+    "Hungary plant SOP delayed beyond Q4 2026 — removes Europe tariff arbitrage catalyst",
+    "Premium brand monthly volume (Yangwang+Denza+Fangchengbao) falls below 35K — indicates premium ramp stalling"
+  ],
+  "what_changes_our_mind": "Q2 2026 auto gross margin prints below 18.5% (vs our 19.5%+ expectation) AND overseas monthly volume falls below 35K units for two consecutive months in Jun-Jul 2026 — would confirm consensus 'commodity OEM' framing and invalidate mix-shift thesis.",
+  "variant_view_one_sentence": "Market believes BYD is a margin-compressed Chinese mass-market OEM stuck at 18x fwd P/E → We believe Q2 2026 will reveal mix-driven margin defense + Hungary SOP unlocking 'global platform' re-rating → Mechanism is premium brands + overseas volume offsetting >60% of domestic price-war GM compression in Q2 print.",
+  "time_to_resolution": "4-5 months until Q2 2026 earnings (~late August 2026)",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "+35% to +50% over 6 months (re-rating to 22-24x fwd P/E on FY26E EPS)",
+    "downside_if_wrong": "-15% to -20% to ~14x fwd P/E floor if Q2 GM disappoints",
+    "reward_to_risk": "2.3:1"
+  },
+  "quantification": {
+    "metric_target": "FY2026E auto gross margin and overseas volume share",
+    "current_value": "FY24 auto GM 22.8%; FY25 overseas volume ~420K (~9% share)",
+    "predicted_value": "FY26E auto GM 20.5-21.0%; overseas volume 650-720K (~13-14% share)",
+    "predicted_range": {
+      "low": "Auto GM 19.0% / Overseas 580K",
+      "mid": "Auto GM 20.5% / Overseas 680K",
+      "high": "Auto GM 21.5% / Overseas 750K"
+    },
+    "predicted_horizon": "FY2026 full year, key inflection at Q2 2026 print (Aug 2026)",
+    "confidence": "0.6"
+  },
+  "qc_quality_at_log_time": {
+    "score": 90,
+    "missingFields": [],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": true,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "PASS",
+    "qc_findings": [
+      "failed:step_8_position_sizing_curve_monotonic"
+    ],
+    "repairAttempted": false
+  },
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}

@@ -1,0 +1,42 @@
+{
+  "task_id": "2026-05-26-swing-sector-scorer",
+  "from": "claude_t1_orchestrator",
+  "to": "codex",
+  "spec_doc": "docs/strategy/SWING_STRATEGY_v1.md",
+  "spec_sections": ["§2 Universe construction"],
+  "deliverable": "scripts/sector_scorer.py",
+  "loc_budget": 150,
+  "depends_on": [
+    "data_history/panel/daily_prices.parquet",
+    "data_history/sector_mapping.json"
+  ],
+  "what_to_implement": {
+    "module_signature": "score_sectors(daily_panel: pd.DataFrame, sector_mapping: dict, as_of: date, lookback_days: int = 60) -> dict[sector, dict]",
+    "returns": "Per-sector dict with {return_60d: float, breadth_pct_up_60d: float, volume_60d_trend: float, composite_z_score: float, rank: int, members: list[ts_code]}",
+    "sector_metrics": {
+      "return_60d": "Equal-weighted mean return of sector members from as_of - 60 trading days to as_of",
+      "breadth_pct_up_60d": "Fraction of sector members with 60d return > 0",
+      "volume_60d_trend": "(mean(volume[-20:]) - mean(volume[-60:-20])) / mean(volume[-60:-20]) — recent volume vs older window"
+    },
+    "composite": "Equal-weighted z-score across the 3 metrics, then rank sectors. Top-K (default K=5) → 'trendy' sectors.",
+    "output_format": "JSON dict {sector_name: {...metrics, rank, members, is_top_k: bool}}",
+    "PIT_discipline": "as_of slices the panel to trade_date <= as_of. NO forward look.",
+    "min_members_per_sector": "Sectors with <10 active members are EXCLUDED from ranking (too small to be reliable)",
+    "out_function": "select_universe(top_k_sectors, members_alive_at_as_of) -> filtered list of tickers in trendy sectors"
+  },
+  "selftest_requirements": [
+    "Synthetic: 50 tickers across 5 sectors, where Sector-A has all uptrending stocks and Sector-E has all downtrending → A should rank top, E bottom.",
+    "Empty sector / single-member sector handling (skip).",
+    "PIT: changing future data does not change rankings at as_of."
+  ],
+  "out_of_scope": [
+    "Sentiment / news scoring (separate module, may not happen this week)",
+    "Stock-level signal scoring (separate, swing_signal_scan.py)",
+    "Position sizing (risk_manager.py)"
+  ],
+  "test_gate_commands": [
+    "python3 -m py_compile scripts/sector_scorer.py",
+    "python3 scripts/sector_scorer.py --selftest"
+  ],
+  "owner_after_handoff": "codex"
+}

@@ -1,0 +1,869 @@
+{
+  "success": true,
+  "ticker": "175.HK",
+  "data": {
+    "ticker": "175.HK",
+    "thesis_protocol_version": "v2",
+    "_direction": "PASS",
+    "_divergence_score": 45,
+    "_synthesizer_rationale": "Forensic verdict is BOTH_VALUATION_ONLY — both Bull and Bear explicitly self-flagged INSUFFICIENT_NARRATIVE_DATA and could not articulate a business-mechanism contrarian view (no broker reports, no institutional visits, no 龙虎榜, no news, no mgmt commentary in data context). Per the CONTRARIAN VIEW REQUIREMENT, when neither side articulates a business-level contrarian view from data context, the correct output is PASS. Technical momentum favors the long side (trend UP, strength 85, RSI ~75), but momentum without a grounded mechanism is not an underwritable thesis; furthermore RSI ~75 near upper resistance is a poor risk-reward entry even if directionally correct.",
+    "step_1_catalyst": {
+      "catalyst_event": "Next Geely Auto interim/annual results release — first observable test of whether 15.6% TTM revenue growth is converting into operating margin expansion above the current 5.0% base, or breaching the WATCHLIST wrongIf threshold of <3%",
+      "catalyst_date_or_window": "August 2026 (interim results window — exact date not available in our data)",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "Standard HK-listed auto OEM reporting cadence; exact date not available in our data context"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. INSUFFICIENT_NARRATIVE_DATA: data context contains NO TUSHARE broker recommendations, NO institutional research visits, NO 龙虎榜 LHB appearances, NO insider/大股东 activity, and NO recent news section for 175.HK. Coverage gaps explicitly listed: rdcf, fragility, persona_overlay, sector_regime.",
+        "2. Without any of these narrative inputs, neither a long nor short business mechanism can be articulated to the protocol's standard. The available signals are purely quantitative: 15.6% TTM revenue growth, 5.0% op margin, 8.6x fwd P/E vs 12.2x TTM, +40.8% 60d price move, flat +0.2% Net Income YoY.",
+        "3. The Bull's operating-leverage story (5.0% margin as 'coiled spring') is a plausible quantitative pattern but is not backed by any specific product, segment, pricing, cost-program, or management-guidance reference in our data — it is valuation-and-growth arithmetic.",
+        "4. The Bear's margin-fragility story is similarly unsupported — operating margin at 5.0% is well above the 3.0% wrongIf threshold, with no specific evidence of imminent compression in the data context.",
+        "5. Per CONTRARIAN VIEW REQUIREMENT and Forensic verdict (BOTH_VALUATION_ONLY), the correct action is PASS. Re-engage when narrative data (broker reports, inst visits, news, mgmt commentary) is loaded, OR when a wrongIf threshold is breached on a future print."
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "LIVE PRICE 22.74, +0.18% today (REAL-TIME ENRICHMENT).",
+        "P/E TTM 12.2x, P/E Fwd 8.6x, EV/EBITDA 12.4x, ROE 16.0%, Gross Margin 17.0%, Op Margin 5.0%, Rev Growth TTM 15.6% (LIVE FUNDAMENTALS).",
+        "Net Income: 2025=16.9B, 2024=16.8B, 2023=5.3B; YoY latest +0.2% (MULTI-YEAR INCOME STATEMENT).",
+        "60d OHLC: 16.15 → 22.74 (+40.8%); price at 73% of 52W range 14.96–25.62 (OHLC TREND).",
+        "Analyst mean target 29.36 (range 21.11–36.10, 25 analysts) → 29.1% upside vs live (ANALYST TARGETS).",
+        "Buyback programs: NONE; 2025 buyback CF outflow 0.3B (TUSHARE CAPITAL STRUCTURE)."
+      ],
+      "evidence_qualitative": [
+        "Coverage gaps explicitly flagged: rdcf, fragility, persona_overlay, sector_regime not loaded.",
+        "No broker recommendations, institutional visits, 龙虎榜, holder transactions, or news available in data context for 175.HK.",
+        "WATCHLIST wrongIf thresholds defined: rev_growth < -10% for 2 consecutive Q, op_margin < 3%, EV share loss to BYD > 300bp QoQ — but flagged [NEEDS_JUNYAN_REVIEW].",
+        "Technical reads UP/strength 85, RSI ~75 (overbought), near upper resistance 25.62 — momentum favors longs directionally but entry risk-reward is poor."
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "Consensus is constructive: 25 analysts, mean target 29.36 (29.1% upside), stock +40.8% over 60d, fwd P/E 8.6x pricing in earnings recovery off 15.6% revenue growth.",
+          "z": "市场押注收入增速15.6%将转化为利润弹性，远期PE仅8.6倍。"
+        },
+        "our_variant": {
+          "e": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, institutional visits, 龙虎榜, insider activity, and news. Per Forensic verdict BOTH_VALUATION_ONLY, neither Bull nor Bear articulated a business-mechanism contrarian view. Synthesizer cannot manufacture one. PASS.",
+          "z": "数据缺失券商报告、机构调研、龙虎榜、新闻——多空双方均仅有估值算术，无法形成业务层面的差异化观点。暂不交易。"
+        },
+        "what_changes_our_mind": "Loading of TUSHARE broker recommendations, institutional research visits, or recent news for 175.HK that identifies a specific segment-level margin or volume driver — OR the next earnings print breaching/clearly beating the WATCHLIST wrongIf thresholds (op margin <3% bearish trigger, or op margin meaningfully >7% bullish confirmation)."
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "N/A — PASS (no underwritten directional thesis)",
+      "current_value": "Op Margin 5.0%, Fwd P/E 8.6x (LIVE FUNDAMENTALS)",
+      "predicted_value": "not available in our data — PASS",
+      "predicted_range": {
+        "low": "n/a",
+        "mid": "n/a",
+        "high": "n/a"
+      },
+      "predicted_horizon": "Re-evaluate at next interim results (August 2026 window) or upon narrative-data load",
+      "confidence": 0
+    },
+    "step_5_proves_right_if": [
+      "PASS thesis is validated if next earnings print is mixed/in-line and stock chops in 20–25 range without clear directional resolution, confirming insufficient edge.",
+      "PASS validated if narrative data remains absent and stock moves materially on broker/news catalysts we could not see in advance.",
+      "PASS validated if either wrongIf threshold (op margin <3% or rev growth <-10% for 2Q) is breached unexpectedly, confirming bear risk we could not underwrite, OR if margin expands sharply confirming bull case we could not underwrite."
+    ],
+    "step_6_proves_wrong_if": [
+      "Forensic-grade narrative data (broker reports, inst visits, news, mgmt commentary) becomes available pre-catalyst and clearly supports one side — PASS was overly conservative.",
+      "Technical breakout above 25.62 with confirming volume signature would have offered a tradable momentum long even without fundamental narrative.",
+      "Clear pre-announcement of margin-program or volume-guidance from management would have allowed a grounded LONG before the August print."
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market and both debate agents see a tradable setup on quantitative signals → We believe a thesis without business-mechanism narrative grounding fails the protocol → Mechanism: per Forensic BOTH_VALUATION_ONLY verdict and CONTRARIAN VIEW REQUIREMENT, valuation arithmetic alone is insufficient regardless of direction.",
+      "time_to_resolution": "Re-evaluate when narrative data loads or at August 2026 interim results",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "0% (no position)",
+        "downside_if_wrong": "0% (no position)",
+        "reward_to_risk": "N/A — PASS"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "Through August 2026 interim results",
+        "why_market_keeps_buying": [
+          "8.6x forward P/E on 15.6% revenue growth screens cheap.",
+          "25 analysts, 29.1% mean upside provides sell-side tailwind.",
+          "Multi-brand portfolio (Volvo/Polestar/Lotus + ICE/EV/hybrid) supports diversification narrative.",
+          "Strong 60d momentum (+40.8%) attracts trend-followers."
+        ],
+        "early_signs_phase_1_weakening": [
+          "Break of 20.5 support on volume.",
+          "RSI divergence as price fails to make new highs above 25.62.",
+          "Negative EV market-share datapoints vs BYD."
+        ],
+        "optional_long_play": {
+          "direction": "NONE — PASS",
+          "sizing": "0%",
+          "exit_trigger": "n/a"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "Op margin print <3% (WATCHLIST wrongIf).",
+          "Revenue growth turning negative for 2 consecutive Q.",
+          "EV market-share loss to BYD >300bp QoQ."
+        ],
+        "estimated_timing": "August 2026 interim or subsequent quarterly update",
+        "short_play": {
+          "direction": "NONE — PASS",
+          "sizing": "0%",
+          "entry_trigger": "n/a"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "0%",
+        "phase_1_weakening_confirmed": "0%",
+        "phase_2_catalyst_imminent": "0%"
+      }
+    },
+    "qc_checklist": {
+      "all_numbers_grounded_in_data_context": true,
+      "catalyst_date_is_future": true,
+      "contrarian_view_is_business_mechanism_not_valuation": false,
+      "contrarian_view_failure_acknowledged_and_pass_emitted": true,
+      "forensic_verdict_respected": true,
+      "technical_alignment_noted": true,
+      "wrongIf_thresholds_referenced": true,
+      "position_sizing_monotonic_non_decreasing": true,
+      "no_fabricated_broker_or_news_references": true
+    },
+    "_bull_thesis": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "_rebuttal": "Bear claimed the +40.8% stock run vs +0.2% Net Income YoY is a bearish divergence — this is a lagging indicator argument; we argue the market is correctly pricing in a forward earnings inflection driven by 15.6% revenue growth, as reflected in the 8.6x fwd P/E. Bear claimed the 5.0% operating margin is fragile — we see this as the base for powerful operating leverage, where strong revenue growth will drive non-linear margin expansion. Bear claimed the lack of a major buyback signals weak support — we see this as a prudent pro-growth capital allocation strategy, prioritizing reinvestment to fuel the 15.6% top-line growth over financial engineering.",
+      "step_1_catalyst": {
+        "catalyst_event": "Q2 2026 Earnings Release, which will be the first test of whether strong 15.6% TTM revenue growth is converting into operating margin expansion and validating the low 8.6x forward P/E.",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate earnings calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. The Bear's core thesis rests on a lagging indicator: the flat +0.2% YoY net income (MULTI-YEAR INCOME STATEMENT). Our thesis is that the market is correctly looking past this and focusing on the leading indicator: robust 15.6% TTM revenue growth (LIVE FUNDAMENTALS).",
+          "2. This top-line growth is creating the conditions for significant operating leverage. The market has priced in margin fears, compressing the forward P/E to 8.6x, a steep discount to the TTM P/E of 12.2x.",
+          "3. The Bear sees the current 5.0% operating margin as fragile; we see it as a coiled spring. In the auto industry, scale matters, and sustained double-digit revenue growth is the primary driver of margin expansion. The flat historical earnings reflect a period of heavy investment; we are now at the cusp of harvesting the returns.",
+          "4. The absence of a major buyback program is not a weakness but a sign of disciplined capital allocation. Management is rightly prioritizing reinvestment to fuel growth, a strategy that will create more long-term value than share repurchases at this stage.",
+          "5. INSUFFICIENT_NARRATIVE_DATA: The data context lacks specific broker reports or institutional visit notes to confirm this mechanism with a narrative. Therefore, the thesis relies on the quantitative data points forming a classic earnings-inflection setup, where the next earnings print will be the definitive catalyst."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Forward P/E of 8.6x implies significant earnings growth is expected, contrasting sharply with the TTM P/E of 12.2x (LIVE FUNDAMENTALS).",
+          "TTM Revenue Growth is a strong 15.6%, providing the fuel for future earnings growth and operating leverage (LIVE FUNDAMENTALS).",
+          "Analyst consensus remains bullish with a mean target price of 29.36, implying 29.1% upside from the live price of 22.74 (ANALYST TARGETS).",
+          "The stock's +40.8% run in the last 60 days (OHLC TREND) is evidence that the market is beginning to price in this recovery story, but the low forward multiple suggests the move is not yet complete.",
+          "Projected Net Income for 2025 (16.9B) is nearly flat versus 2024 (16.8B), creating a low hurdle for an earnings beat driven by margin surprise (MULTI-YEAR INCOME STATEMENT)."
+        ],
+        "evidence_qualitative": [
+          "The business is diversified across powertrains (ICE, EV, hybrid) and brands (Volvo, Polestar, Lotus), reducing single-product risk (WATCHLIST concentration_seed).",
+          "Management's focus on reinvesting for growth over large buybacks is the correct strategy for a company with a 15.6% revenue growth rate (TUSHARE — CAPITAL STRUCTURE SIGNALS)."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The market is cautious, pricing in the narrative of an auto industry price war and investment cycle that will keep margins compressed, hence the flat 2024-2025 net income projection (16.8B -> 16.9B) and a forward P/E discount.",
+            "z": "This explains why the stock trades at only 8.6x forward earnings despite strong sales growth."
+          },
+          "our_variant": {
+            "e": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, inst visits, 龙虎榜, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic available which is insufficient. PASS.",
+            "z": "The quantitative setup for an operating leverage thesis is compelling (15.6% sales growth into a 5.0% op margin). However, without a specific, evidence-backed business mechanism from a broker or company source to disprove the margin compression narrative, we cannot establish a high-conviction variant view."
+          },
+          "what_changes_our_mind": "This is a PASS. Our view would change upon receiving narrative data, such as a broker report detailing unexpected margin expansion in a specific segment or management commentary outlining a clear path to overcoming industry-wide cost pressures."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "8.6x (fin.peFwd)",
+        "predicted_value": "11.0x",
+        "predicted_range": {
+          "low": "9.5x",
+          "mid": "11.0x",
+          "high": "12.2x"
+        },
+        "predicted_horizon": "6-12 months",
+        "confidence": 0.3
+      },
+      "step_5_proves_right_if": [
+        "Next quarterly earnings show operating margin expansion above 5.0% while revenue growth remains strong.",
+        "FY2025 net income significantly beats the current 16.9B projection.",
+        "The company issues FY2026 guidance indicating a return to double-digit net income growth.",
+        "The stock re-rates towards its TTM P/E of 12.2x as the earnings growth materializes."
+      ],
+      "step_6_proves_wrong_if": [
+        "Operating margin falls below 3% for any quarter (per WATCHLIST wrongIf).",
+        "Revenue growth falls below -10% for two consecutive quarters (per WATCHLIST wrongIf).",
+        "The company lowers guidance for FY2025, confirming margin pressures are worse than expected.",
+        "EV market share is reported to have lost more than 300 basis points to key competitors like BYD in a single quarter (per WATCHLIST wrongIf)."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, inst visits, 龙虎榜, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic available which is insufficient. PASS.",
+        "time_to_resolution": "N/A",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+29.1% (to analyst mean target of 29.36)",
+          "downside_if_wrong": "-34.2% (to 52W low of 14.96)",
+          "reward_to_risk": "PASS — no edge"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "3-6 months",
+          "why_market_keeps_buying": [
+            "Attractive forward P/E multiple of 8.6x.",
+            "Strong TTM revenue growth of 15.6% as a leading indicator.",
+            "Positive price momentum (+40.8% in 60d) attracting trend followers."
+          ],
+          "early_signs_phase_1_weakening": [
+            "A sharp rejection of the price from the 52-week high of 25.62.",
+            "Negative industry data points on pricing or demand ahead of earnings.",
+            "Downward revisions to analyst price targets."
+          ],
+          "optional_long_play": {
+            "direction": "FLAT",
+            "sizing": "0%",
+            "exit_trigger": "N/A - Thesis is a PASS pending further narrative data to de-risk the operating margin question."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "The Q2 2026 earnings report will be the primary catalyst, either confirming margin fears (downside) or alleviating them (upside)."
+          ],
+          "estimated_timing": "August 2026",
+          "short_play": {
+            "direction": "FLAT",
+            "sizing": "0%",
+            "entry_trigger": "N/A"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "0%",
+          "phase_2_catalyst_imminent": "0%"
+        }
+      },
+      "qc_checklist": {
+        "is_contrarian_view_a_business_mechanism": false,
+        "is_every_number_grounded": true,
+        "is_catalyst_date_future": true,
+        "is_variant_view_supported_by_specific_data": false
+      }
+    },
+    "_bear_thesis": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Next company financial results release or trading update testing whether operating margin, revenue growth, or EV market-share loss breach the WATCHLIST wrongIf conditions",
+        "catalyst_date_or_window": "2026-08-31 or next company financial update; exact reporting date not available in our data",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "WATCHLIST wrongIf conditions in data context; exact company reporting calendar not available in our data"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. INSUFFICIENT_NARRATIVE_DATA: the DATA CONTEXT does not include a TUSHARE — BROKER RECOMMENDATIONS section, so no specific broker name, report date, or report title is available to ground a ticker-specific business-mechanism short thesis.",
+          "2. INSUFFICIENT_NARRATIVE_DATA: the DATA CONTEXT does not include TUSHARE — INSTITUTIONAL RESEARCH VISITS, TUSHARE — 龙虎榜 LHB APPEARANCES, TUSHARE — INSIDER/大股东 ACTIVITY, or RECENT NEWS sections, so no specific visit, holder transaction, market-structure event, or news catalyst can be quoted.",
+          "3. The strongest bearish setup is quantitative rather than narrative-grounded: the share price rose from 16.15 to 22.74 over the 60d OHLC trend, a +40.8% move, while latest annual Net Income YoY was only +0.2% per MULTI-YEAR INCOME STATEMENT.",
+          "4. The Bull argues the 8.6x forward P/E versus 12.2x TTM P/E implies earnings recovery, but that is valuation arithmetic rather than a business mechanism; the provided data does not identify the specific product, region, channel, pricing, cost, or regulatory driver that would deliver the recovery.",
+          "5. The most underwritable risk remains margin fragility: LIVE FUNDAMENTALS show operating margin of 5.0%, and WATCHLIST wrongIf flags operating_margin < 3% as an auto-industry stress proxy. However, without broker reports, institutional visits, news, or management commentary, this remains a monitorable risk rather than a high-conviction short mechanism."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "LIVE PRICE is 22.74, up +0.18% today per REAL-TIME ENRICHMENT CONTEXT.",
+          "OHLC TREND shows close 16.15 to 22.74 over 60d, a +40.8% move, with period range 14.96–25.62 and last close at 73% of range.",
+          "Net Income was 16.9B in 2025, 16.8B in 2024, and 5.3B in 2023 per MULTI-YEAR INCOME STATEMENT; latest Net Income YoY was +0.2%.",
+          "Diluted EPS was 1.63 in 2025, 1.63 in 2024, and 0.51 in 2023 per MULTI-YEAR INCOME STATEMENT.",
+          "LIVE FUNDAMENTALS show P/E TTM of 12.2x, P/E Fwd of 8.6x, EV/EBITDA of 12.4x, ROE of 16.0%, gross margin of 17.0%, operating margin of 5.0%, and revenue growth TTM of 15.6%.",
+          "ANALYST TARGETS show mean target of 29.36, range of 21.11–36.10, based on 25 analysts, implying 29.1% upside versus live price per LIVE FUNDAMENTALS.",
+          "WATCHLIST wrongIf flags operating_margin < 3% as an auto-industry stress proxy; current live operating margin is 5.0% per LIVE FUNDAMENTALS.",
+          "TUSHARE — CAPITAL STRUCTURE SIGNALS shows Buyback programs: NONE; MULTI-YEAR INCOME STATEMENT shows buyback cash-flow outflow of 0.3B in 2025, 0.0B in 2024, and 0.0B in 2023."
+        ],
+        "evidence_qualitative": [
+          "Coverage gaps are material: rdcf, fragility, persona_overlay, and sector_regime are explicitly not loaded.",
+          "The data context contains no broker recommendation titles, institutional research visits, 龙虎榜 events, holder transactions, or recent news for 175.HK.",
+          "The Bull's long case rests mainly on forward P/E, revenue growth, analyst target upside, and price momentum; those are not sufficient to establish a business mechanism under the required protocol.",
+          "TUSHARE — CAPITAL STRUCTURE SIGNALS states Buyback programs: NONE, which weakens visible capital-return support if earnings momentum disappoints, but the data does not provide management rationale."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Consensus appears constructive because ANALYST TARGETS show mean target of 29.36 versus live price of 22.74, with 29.1% upside and 25 analysts per LIVE FUNDAMENTALS.",
+            "z": "The market may be extrapolating TTM revenue growth of 15.6% and forward P/E of 8.6x per LIVE FUNDAMENTALS, but this is a valuation-and-growth framing rather than a specific event-grounded business narrative in the provided data."
+          },
+          "our_variant": {
+            "e": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, inst visits, 龙虎榜, holder transactions, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic available which is insufficient. PASS.",
+            "z": "The bearish caution is that price momentum of +40.8% over 60d and analyst upside of 29.1% sit against latest Net Income YoY of only +0.2% and operating margin of 5.0%, but without a specific broker report, institutional visit, holder transaction, news event, regulatory event, or management commentary, this cannot be upgraded into an underwritable short thesis."
+          },
+          "what_changes_our_mind": "A future company print showing operating_margin < 3% or revenue_growth < -10% for 2 consecutive quarters, matching WATCHLIST wrongIf conditions, would turn the cautionary setup into a data-backed short signal."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Operating margin stress threshold",
+        "current_value": "5.0% per LIVE FUNDAMENTALS",
+        "predicted_value": "not available in our data; short is not underwritten without a narrative mechanism or future print",
+        "predicted_range": {
+          "low": "not available in our data",
+          "mid": "not available in our data",
+          "high": "not available in our data"
+        },
+        "predicted_horizon": "2026-08-31 or next company financial update; exact reporting date not available in our data",
+        "confidence": 0.15
+      },
+      "step_5_proves_right_if": [
+        "Operating margin falls below 3%, matching the WATCHLIST wrongIf auto-industry stress proxy.",
+        "Revenue growth is below -10% for 2 consecutive quarters, matching the WATCHLIST wrongIf condition.",
+        "EV market-share loss to BYD exceeds 300bp QoQ, matching the WATCHLIST wrongIf condition.",
+        "Latest net income remains close to flat after 2025 Net Income YoY of +0.2% while the share price remains near the upper part of the 52W range; the current price is at 73% of the 52W range per LIVE FUNDAMENTALS.",
+        "TUSHARE continues to show Buyback programs: NONE while earnings momentum weakens, reducing visible capital-return support."
+      ],
+      "step_6_proves_wrong_if": [
+        "Operating margin expands above 5.0% in the next company financial update; current operating margin is 5.0% per LIVE FUNDAMENTALS.",
+        "Revenue growth remains positive and above the WATCHLIST wrongIf threshold of -10% for two consecutive quarters; current TTM revenue growth is 15.6% per LIVE FUNDAMENTALS.",
+        "Net Income growth re-accelerates materially versus latest Net Income YoY of +0.2%; exact required growth rate is not available in our data.",
+        "The company announces a material buyback program after TUSHARE — CAPITAL STRUCTURE SIGNALS currently shows Buyback programs: NONE; exact materiality threshold is not available in our data.",
+        "A future broker report, institutional visit, holder transaction, or news item provides a specific business mechanism supporting margin expansion or sustained growth; no such item is available in the current data context."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, inst visits, 龙虎榜, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic available which is insufficient. PASS.",
+        "time_to_resolution": "No underwritable time-to-resolution until new narrative data or the next company financial update; 2026-08-31 or next company financial update is the monitor date, exact reporting date not available in our data.",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "not available in our data because no underwritten short target is supported",
+          "downside_if_wrong": "not available in our data because no underwritten short entry is supported",
+          "reward_to_risk": "PASS — no edge"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "Until 2026-08-31 or next company financial update; exact reporting date not available in our data",
+          "why_market_keeps_buying": [
+            "Analyst consensus mean target is 29.36 versus live price of 22.74, implying 29.1% upside per LIVE FUNDAMENTALS.",
+            "TTM revenue growth is 15.6% per LIVE FUNDAMENTALS.",
+            "Forward P/E is 8.6x versus TTM P/E of 12.2x per LIVE FUNDAMENTALS.",
+            "The stock rose +40.8% over 60d per OHLC TREND."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Price fails to hold momentum after reaching the upper part of the 52W range; current price is at 73% of the 52W range per LIVE FUNDAMENTALS.",
+            "Operating margin trends toward the WATCHLIST wrongIf threshold of <3%; current operating margin is 5.0% per LIVE FUNDAMENTALS.",
+            "Revenue growth trends toward the WATCHLIST wrongIf threshold of below -10% for 2 consecutive quarters; current TTM revenue growth is 15.6% per LIVE FUNDAMENTALS.",
+            "TUSHARE continues to show Buyback programs: NONE while earnings momentum remains flat or weakens."
+          ],
+          "optional_long_play": {
+            "direction": "FLAT",
+            "sizing": "0%",
+            "exit_trigger": "N/A — the protocol lacks narrative data to support either a high-conviction short or long variant view."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Next company financial update shows operating_margin < 3%, matching WATCHLIST wrongIf.",
+            "Next company financial updates show revenue_growth < -10% for 2 consecutive quarters, matching WATCHLIST wrongIf.",
+            "Future disclosure shows EV market-share loss to BYD by >300bp QoQ, matching WATCHLIST wrongIf."
+          ],
+          "estimated_timing": "2026-08-31 or next company financial update; exact reporting date not available in our data",
+          "short_play": {
+            "direction": "FLAT until trigger; SHORT only after WATCHLIST wrongIf breach or new narrative evidence",
+            "sizing": "0% before trigger; post-trigger sizing not available in our data",
+            "entry_trigger": "Enter only if operating_margin < 3%, revenue_growth < -10% for 2 consecutive quarters, EV market-share loss to BYD >300bp QoQ, or a future broker/inst/news item creates a specific business-mechanism short thesis."
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "0%",
+          "phase_2_catalyst_imminent": "0%"
+        }
+      },
+      "qc_checklist": {
+        "is_contrarian_view_a_business_mechanism": false,
+        "is_every_number_grounded": true,
+        "is_catalyst_date_future": true,
+        "is_variant_view_supported_by_specific_data": false,
+        "does_mechanism_chain_quote_two_required_narrative_items": false,
+        "reason_required_narrative_items_not_quoted": "DATA CONTEXT lacks TUSHARE — BROKER RECOMMENDATIONS, TUSHARE — INSTITUTIONAL RESEARCH VISITS, TUSHARE — 龙虎榜 LHB APPEARANCES, TUSHARE — INSIDER/大股东 ACTIVITY, and RECENT NEWS sections for this ticker.",
+        "uses_insufficient_narrative_data_safe_harbor": true,
+        "recommendation": "NEUTRAL/PASS rather than underwritten SHORT"
+      },
+      "_rebuttal": {
+        "bull_argument_1_forward_pe_discount": {
+          "bull_claim_addressed": "Bull says forward P/E of 8.6x versus TTM P/E of 12.2x implies near-term earnings growth.",
+          "short_response": "Rejected as insufficient under protocol: this is valuation arithmetic, not a business mechanism. The data context provides no broker report, institutional visit, management commentary, or news explaining the operational source of the implied earnings growth."
+        },
+        "bull_argument_2_revenue_growth": {
+          "bull_claim_addressed": "Bull says TTM revenue growth of 15.6% supports the long case.",
+          "short_response": "Partially accepted but not decisive: LIVE FUNDAMENTALS show TTM revenue growth of 15.6%, yet MULTI-YEAR INCOME STATEMENT shows latest Net Income YoY of only +0.2%, indicating revenue growth has not translated into latest annual net income growth in the provided data."
+        },
+        "bull_argument_3_analyst_target_upside": {
+          "bull_claim_addressed": "Bull cites analyst mean target of 29.36 and 29.1% upside from live price.",
+          "short_response": "Not enough for a long thesis: ANALYST TARGETS are supportive, but the data lacks the underlying broker report titles, assumptions, or segment-level business mechanism. Without that, the 29.1% upside is consensus optimism rather than a testable variant view."
+        },
+        "bull_argument_4_price_momentum": {
+          "bull_claim_addressed": "Bull cites +40.8% 60d price momentum as positive confirmation.",
+          "short_response": "Momentum cuts both ways: OHLC TREND shows the stock already rose from 16.15 to 22.74 over 60d, a +40.8% move, while latest Net Income YoY was +0.2%. That creates setup risk if the next print fails to show operating leverage."
+        },
+        "bull_argument_5_margin_surprise": {
+          "bull_claim_addressed": "Bull says margin stability or expansion from current 5.0% operating margin could trigger upside.",
+          "short_response": "Agreed as the key risk to a short. This is why the updated short stance is NEUTRAL/PASS. The WATCHLIST wrongIf threshold is operating_margin < 3%, but current operating margin is 5.0%; absent evidence of imminent compression, we cannot underwrite a short."
+        },
+        "bull_argument_6_buyback_absence_as_growth_reinvestment": {
+          "bull_claim_addressed": "Bull argues absence of a buyback may signal management is reinvesting for growth.",
+          "short_response": "Possible but unproven: TUSHARE — CAPITAL STRUCTURE SIGNALS shows Buyback programs: NONE, and MULTI-YEAR INCOME STATEMENT shows buyback cash-flow outflow of 0.3B in 2025 and 0.0B in 2024 and 2023. The data provides no management commentary confirming reinvestment rationale."
+        },
+        "net_rebuttal_conclusion": "The Bull case is directionally plausible but not protocol-compliant as a business-mechanism thesis. The Short case also lacks required narrative data, so the disciplined Round 2 conclusion is NEUTRAL/PASS pending future broker/inst/news data or a WATCHLIST wrongIf breach."
+      }
+    },
+    "_bull_r1": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Q2 2026 Earnings Release, which could confirm the earnings growth implied by the low forward P/E and contradict the flat full-year 2025 net income projection.",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate earnings calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. The market is pricing in significant near-term earnings growth, reflected by the forward P/E of 8.6x, a steep discount to the TTM P/E of 12.2x.",
+          "2. This forward-looking optimism is supported by strong top-line momentum, with TTM revenue growth at a robust 15.6%.",
+          "3. However, sentiment is capped by the company's own full-year projections showing nearly flat net income growth from 2024 to 2025 (16.8B to 16.9B), suggesting fears of margin compression or a heavy investment cycle.",
+          "4. A positive surprise in the upcoming quarterly results, particularly on operating margins (currently 5.0%), would validate the forward multiple and force a re-evaluation of the flat full-year earnings narrative.",
+          "5. With analyst consensus already pointing to 29.1% upside (mean target 29.36), a confirmation of margin stability or expansion would likely trigger a re-rating towards the TTM multiple of 12.2x or higher."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Forward P/E multiple is 8.6x, a significant discount to the TTM P/E of 12.2x (LIVE FUNDAMENTALS).",
+          "TTM Revenue Growth is strong at 15.6% (LIVE FUNDAMENTALS).",
+          "Analyst consensus mean target price is 29.36, implying 29.1% upside from the live price of 22.74 (ANALYST TARGETS).",
+          "The stock has strong recent momentum, rising +40.8% over the last 60 days (OHLC TREND).",
+          "Projected Net Income for 2025 (16.9B) is nearly flat versus 2024 (16.8B), creating a low bar for an earnings surprise (MULTI-YEAR INCOME STATEMENT)."
+        ],
+        "evidence_qualitative": [
+          "The business is diversified across traditional internal combustion engines (ICE), electric vehicles (EV), and hybrids, as well as multiple brands including Volvo, Polestar, and Lotus (WATCHLIST concentration_seed).",
+          "The absence of a major buyback program may signal management's focus on reinvesting capital into growth projects (TUSHARE — CAPITAL STRUCTURE SIGNALS)."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The market consensus, reflected in the flat 2024-2025 net income projections (16.8B -> 16.9B), is that Geely faces significant margin pressure from the auto industry's price war and heavy EV investment cycle, which will offset its strong revenue growth.",
+            "z": "This explains why the stock, despite strong momentum, has not yet re-rated higher."
+          },
+          "our_variant": {
+            "e": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, inst visits, 龙虎榜, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic available which is insufficient. PASS.",
+            "z": "The valuation discount (8.6x fwd P/E) is compelling, but without a specific, evidence-backed business mechanism to disprove the margin compression narrative, we cannot establish a high-conviction variant view."
+          },
+          "what_changes_our_mind": "This is a PASS. Our view would change upon receiving narrative data, such as a broker report detailing unexpected margin expansion in a specific segment or management commentary outlining a clear path to overcoming industry-wide cost pressures."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "8.6x (fin.peFwd)",
+        "predicted_value": "11.0x",
+        "predicted_range": {
+          "low": "9.0x",
+          "mid": "11.0x",
+          "high": "13.0x"
+        },
+        "predicted_horizon": "6-12 months",
+        "confidence": 0.4
+      },
+      "step_5_proves_right_if": [
+        "Q2 or Q3 2026 earnings report shows operating margin expanding above 5.0%.",
+        "FY2025 net income beats the current 16.9B projection.",
+        "The company provides FY2026 guidance indicating a return to double-digit percentage net income growth.",
+        "Stock price sustainably breaks above the 52-week high of 25.62."
+      ],
+      "step_6_proves_wrong_if": [
+        "Operating margin falls below 3% for any quarter (per watchlist wrongIf).",
+        "Revenue growth falls below -10% for two consecutive quarters (per watchlist wrongIf).",
+        "The company lowers guidance for FY2025 net income.",
+        "EV market share is reported to have lost more than 300 basis points to key competitors like BYD in a single quarter (per watchlist wrongIf)."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, inst visits, 龙虎榜, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic available which is insufficient. PASS.",
+        "time_to_resolution": "N/A",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+29.1% (to analyst mean target of 29.36)",
+          "downside_if_wrong": "-34.2% (to 52W low of 14.96)",
+          "reward_to_risk": "PASS — no edge"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "3-6 months",
+          "why_market_keeps_buying": [
+            "Attractive forward P/E multiple of 8.6x.",
+            "Strong TTM revenue growth of 15.6%.",
+            "Positive price momentum (+40.8% in 60d)."
+          ],
+          "early_signs_phase_1_weakening": [
+            "A rejection of the price from the 52-week high of 25.62.",
+            "Negative channel checks or pre-announcements regarding margins.",
+            "Downward revisions to analyst price targets."
+          ],
+          "optional_long_play": {
+            "direction": "FLAT",
+            "sizing": "0%",
+            "exit_trigger": "N/A - Thesis is a PASS pending further narrative data."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "The Q2 2026 earnings report will be the primary catalyst, either confirming margin fears (downside) or alleviating them (upside)."
+          ],
+          "estimated_timing": "August 2026",
+          "short_play": {
+            "direction": "FLAT",
+            "sizing": "0%",
+            "entry_trigger": "N/A"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "0%",
+          "phase_2_catalyst_imminent": "0%"
+        }
+      },
+      "qc_checklist": {
+        "is_contrarian_view_a_business_mechanism": false,
+        "is_every_number_grounded": true,
+        "is_catalyst_date_future": true,
+        "is_variant_view_supported_by_specific_data": false,
+        "is_mechanism_chain_specific": false,
+        "is_thesis_falsifiable": true,
+        "comment": "Thesis is a PASS due to INSUFFICIENT_NARRATIVE_DATA. All rules for this condition have been followed, including setting the variant_view_one_sentence and reward_to_risk fields appropriately. The thesis outlines the quantitative bull case but correctly identifies the lack of a specific, data-backed business mechanism required to form a high-conviction contrarian view."
+      }
+    },
+    "_bear_r1": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Next financial results release or trading update testing whether revenue growth, operating margin, and EV market-share loss breach the WATCHLIST wrongIf conditions",
+        "catalyst_date_or_window": "2026-08-31 or next company financial update; exact reporting date not available in our data",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "WATCHLIST wrongIf conditions in data context; exact company reporting calendar not available in our data"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. INSUFFICIENT_NARRATIVE_DATA: the data context does not include a TUSHARE — BROKER RECOMMENDATIONS section, so no specific broker name or report title is available to ground a business-mechanism short thesis.",
+          "2. INSUFFICIENT_NARRATIVE_DATA: the data context does not include TUSHARE — INSTITUTIONAL RESEARCH VISITS, TUSHARE — 龙虎榜 LHB APPEARANCES, TUSHARE — INSIDER/大股东 ACTIVITY, or RECENT NEWS sections, so no event-level competitive, regulatory, demand, or management mechanism can be cited.",
+          "3. The quantitative bearish setup is real but incomplete: the share price moved from 16.15 to 22.74 over the 60d OHLC trend, a +40.8% move, while latest annual net income was essentially flat at +0.2% YoY per MULTI-YEAR INCOME STATEMENT.",
+          "4. Margin sensitivity is the clearest observable risk: live operating margin is 5.0% per LIVE FUNDAMENTALS, and the WATCHLIST wrongIf stress proxy flags operating_margin < 3% as a key condition; however, no narrative evidence explains why that compression should occur.",
+          "5. Capital-return support is weak in the provided data: TUSHARE — CAPITAL STRUCTURE SIGNALS shows Buyback programs: NONE, while annual cash-flow buyback outflow was 0.3B in 2025 and 0.0B in 2024 and 2023 per MULTI-YEAR INCOME STATEMENT; this supports caution but is not a standalone business-mechanism short."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "LIVE PRICE is 22.74, up +0.18% today per REAL-TIME ENRICHMENT CONTEXT.",
+          "OHLC TREND shows close 16.15 to 22.74 over 60d, a +40.8% move, with period range 14.96–25.62 and last close at 73% of range.",
+          "Net Income was 16.9B in 2025, 16.8B in 2024, and 5.3B in 2023 per MULTI-YEAR INCOME STATEMENT; latest Net Income YoY was +0.2%.",
+          "Diluted EPS was 1.63 in 2025, 1.63 in 2024, and 0.51 in 2023 per MULTI-YEAR INCOME STATEMENT.",
+          "LIVE FUNDAMENTALS show P/E TTM 12.2x, P/E Fwd 8.6x, EV/EBITDA 12.4x, ROE 16.0%, gross margin 17.0%, operating margin 5.0%, and revenue growth TTM 15.6%.",
+          "ANALYST TARGETS show mean 29.36, range 21.11–36.10, based on 25 analysts, implying 29.1% upside vs live per LIVE FUNDAMENTALS.",
+          "WATCHLIST wrongIf flags operating_margin < 3% as an auto-industry stress proxy; current live operating margin is 5.0% per LIVE FUNDAMENTALS.",
+          "TUSHARE — CAPITAL STRUCTURE SIGNALS shows Buyback programs: NONE; MULTI-YEAR INCOME STATEMENT shows buyback cash-flow outflow of 0.3B in 2025, 0.0B in 2024, and 0.0B in 2023."
+        ],
+        "evidence_qualitative": [
+          "Coverage gaps are material: rdcf, fragility, persona_overlay, and sector_regime are explicitly not loaded, limiting confidence in a short thesis.",
+          "The data context contains no broker recommendation titles, institutional research visits, 龙虎榜 events, holder transactions, or recent news for 175.HK.",
+          "The clearest bearish observation is a mismatch between strong recent share-price momentum and flat latest annual net-income growth, but that is an arithmetic setup rather than a business-mechanism edge.",
+          "Capital-return absence may reduce downside support, because TUSHARE — CAPITAL STRUCTURE SIGNALS states Buyback programs: NONE, but the data does not provide management rationale."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Consensus appears constructive because ANALYST TARGETS show mean target 29.36 versus live price 22.74, with 29.1% upside and 25 analysts per LIVE FUNDAMENTALS.",
+            "z": "The market may be extrapolating TTM revenue growth of 15.6% and forward P/E of 8.6x per LIVE FUNDAMENTALS, but this is valuation-and-growth framing rather than an event-grounded narrative in the provided data."
+          },
+          "our_variant": {
+            "e": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, institutional visits, 龙虎榜, holder transactions, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic and financial snapshot data are available.",
+            "z": "PASS: without a specific broker report, institutional visit, news event, regulatory event, or management commentary, the short case cannot be elevated from cautionary setup to underwritable business-mechanism thesis."
+          },
+          "what_changes_our_mind": "A future company print showing operating_margin < 3% or revenue_growth < -10% for 2 consecutive quarters, matching WATCHLIST wrongIf conditions, would turn the cautionary setup into a data-backed short signal."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Operating margin stress threshold",
+        "current_value": "5.0% per LIVE FUNDAMENTALS",
+        "predicted_value": "not available in our data; short is not underwritten without a narrative mechanism or future print",
+        "predicted_range": {
+          "low": "not available in our data",
+          "mid": "not available in our data",
+          "high": "not available in our data"
+        },
+        "predicted_horizon": "2026-08-31 or next company financial update; exact reporting date not available in our data",
+        "confidence": 0.15
+      },
+      "step_5_proves_right_if": [
+        "Operating margin falls below 3%, matching the WATCHLIST wrongIf auto-industry stress proxy.",
+        "Revenue growth is below -10% for 2 consecutive quarters, matching the WATCHLIST wrongIf condition.",
+        "EV market-share loss to BYD exceeds 300bp QoQ, matching the WATCHLIST wrongIf condition.",
+        "Latest net income remains close to flat after 2025 Net Income YoY of +0.2% while the share price remains near the upper part of the 52W range; the current price is at 73% of the 52W range per LIVE FUNDAMENTALS.",
+        "TUSHARE continues to show Buyback programs: NONE while earnings momentum weakens, reducing visible capital-return support."
+      ],
+      "step_6_proves_wrong_if": [
+        "Operating margin stays materially above the 3% WATCHLIST wrongIf threshold in the next financial update.",
+        "Revenue growth remains positive versus the WATCHLIST wrongIf threshold of revenue_growth < -10% for 2 consecutive quarters.",
+        "No EV market-share loss to BYD greater than 300bp QoQ is observed in future data.",
+        "Net income growth re-accelerates materially from the latest +0.2% YoY figure in MULTI-YEAR INCOME STATEMENT.",
+        "A new capital-return program appears after TUSHARE — CAPITAL STRUCTURE SIGNALS currently shows Buyback programs: NONE."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, inst visits, 龙虎榜, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic available which is insufficient. PASS.",
+        "time_to_resolution": "Next financial update, tentatively 2026-08-31 or next company financial update; exact reporting date not available in our data",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "not underwritten — PASS",
+          "downside_if_wrong": "not underwritten — PASS",
+          "reward_to_risk": "PASS — no edge"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "Until next financial update; exact duration not available in our data",
+          "why_market_keeps_buying": [
+            "LIVE FUNDAMENTALS show analyst mean target 29.36 versus live price 22.74, with 29.1% upside.",
+            "LIVE FUNDAMENTALS show revenue growth TTM of 15.6%.",
+            "LIVE FUNDAMENTALS show forward P/E of 8.6x, which may support the bullish valuation narrative.",
+            "OHLC TREND shows 60d price momentum from 16.15 to 22.74, a +40.8% move."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Operating margin approaches the WATCHLIST wrongIf threshold of < 3%; current operating margin is 5.0% per LIVE FUNDAMENTALS.",
+            "Revenue growth turns negative toward the WATCHLIST wrongIf threshold of < -10% for 2 consecutive quarters.",
+            "Evidence emerges of EV market-share loss to BYD greater than 300bp QoQ, which is a WATCHLIST wrongIf condition.",
+            "Analyst target range shifts lower from the current 21.11–36.10 range per LIVE FUNDAMENTALS."
+          ],
+          "optional_long_play": {
+            "direction": "None",
+            "sizing": "0%",
+            "exit_trigger": "No optional long play because mandate is short thesis and narrative data is insufficient."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Next financial update confirms operating margin below 3%.",
+            "Next financial update confirms revenue_growth < -10% for 2 consecutive quarters.",
+            "Future sector or company data confirms EV market-share loss to BYD by more than 300bp QoQ.",
+            "Analyst target mean falls from 29.36 or the low end of target range moves below the current low of 21.11; current target figures per LIVE FUNDAMENTALS."
+          ],
+          "estimated_timing": "2026-08-31 or next company financial update; exact date not available in our data",
+          "short_play": {
+            "direction": "Wait for data-confirmed short rather than initiate now",
+            "sizing": "0% before confirmation; sizing after confirmation not available in our data",
+            "entry_trigger": "Enter only if WATCHLIST wrongIf conditions are triggered: revenue_growth < -10% for 2 consecutive quarters, operating_margin < 3%, or EV market-share loss to BYD by >300bp QoQ."
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "0%",
+          "phase_2_catalyst_imminent": "0%"
+        }
+      },
+      "qc_checklist": {
+        "all_numeric_claims_grounded_or_marked_not_available": true,
+        "catalyst_date_is_future_relative_to_2026_05_10": true,
+        "mechanism_chain_cites_specific_broker_report_title": false,
+        "mechanism_chain_cites_inst_visit_lhb_holdertrade_or_news": false,
+        "broker_inst_lhb_holdertrade_news_sections_absent_in_data_context": true,
+        "used_insufficient_narrative_data_exception": true,
+        "contrarian_view_is_business_mechanism_not_valuation_only": false,
+        "contrarian_view_exception_used_because_no_narrative_data": true,
+        "no_fabricated_broker_reports_or_news": true,
+        "short_recommendation_is_pass_due_to_no_edge": true
+      }
+    },
+    "_technical": {
+      "trend": "UP",
+      "trend_strength": 85,
+      "momentum": {
+        "rsi_estimate": 75,
+        "macd_signal": "bullish",
+        "interpretation": "Strong upward momentum with 60-day rally of +40.8% from 16.15 to 22.74, positioning near upper range at 73% of 52-week range."
+      },
+      "key_levels": {
+        "support": [
+          20.5,
+          18.8,
+          16.15
+        ],
+        "resistance": [
+          25.62,
+          24
+        ]
+      },
+      "volume_profile": "uncertain",
+      "chip_concentration": "uncertain",
+      "margin_trend": "unknown",
+      "technical_summary_e": "175.HK exhibits strong bullish momentum with a substantial 40.8% rally over 60 days, advancing from 16.15 to current levels of 22.74. The stock is positioned at 73% of its 52-week range (14.96-25.62), approaching the upper resistance zone at 25.62.",
+      "technical_summary_z": "技术面显示强劲上涨趋势，60日内涨幅达40.8%，从16.15升至22.74。当前处于52周区间的73%位置，接近25.62阻力位，短期动能依然强劲但需关注上方压力。"
+    },
+    "_forensic": {
+      "bull_findings": [
+        {
+          "claim": "Forward P/E of 8.6x vs TTM P/E of 12.2x",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows P/E TTM: 12.2x and P/E Fwd: 8.6x"
+        },
+        {
+          "claim": "TTM Revenue Growth is 15.6%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Rev Growth (TTM): 15.6%"
+        },
+        {
+          "claim": "Analyst mean target of 29.36 implying 29.1% upside",
+          "data_match": "MATCH",
+          "evidence": "ANALYST TARGETS shows mean 29.36 with 29.1% upside vs live price"
+        },
+        {
+          "claim": "Stock +40.8% run in 60 days",
+          "data_match": "MATCH",
+          "evidence": "OHLC TREND shows close 16.15 → 22.74 (+40.8%)"
+        },
+        {
+          "claim": "Net Income 2025: 16.9B vs 2024: 16.8B",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT shows Net Income: 2025=16.9B, 2024=16.8B"
+        },
+        {
+          "claim": "Operating margin of 5.0% as base for leverage",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Op Margin: 5.0%"
+        },
+        {
+          "claim": "No major buyback signals pro-growth allocation",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE shows Buyback programs: NONE"
+        }
+      ],
+      "bear_findings": [
+        {
+          "claim": "Price rose +40.8% while Net Income YoY only +0.2%",
+          "data_match": "MATCH",
+          "evidence": "OHLC TREND shows +40.8% move; MULTI-YEAR INCOME STATEMENT shows Net Income YoY: +0.2%"
+        },
+        {
+          "claim": "Operating margin at 5.0% near stress threshold of 3%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Op Margin: 5.0%; WATCHLIST wrongIf flags operating_margin < 3%"
+        },
+        {
+          "claim": "Current price at 73% of 52W range",
+          "data_match": "MATCH",
+          "evidence": "Data shows last close at 73% of range with 52W RANGE: 14.96 — 25.62"
+        },
+        {
+          "claim": "No buyback programs available",
+          "data_match": "MATCH",
+          "evidence": "TUSHARE — CAPITAL STRUCTURE SIGNALS shows Buyback programs: NONE"
+        },
+        {
+          "claim": "Watchlist flags for revenue growth < -10% for 2 quarters",
+          "data_match": "MATCH",
+          "evidence": "WATCHLIST wrongIf explicitly states revenue_growth < -10% for 2 consecutive quarters"
+        }
+      ],
+      "shared_assumptions_at_risk": [
+        "Both sides assume the 15.6% TTM revenue growth will continue - if this reverses to negative growth for 2 consecutive quarters, both Bull's operating leverage thesis and Bear's monitoring triggers activate",
+        "Both depend on the next earnings release (August 2026) as the key catalyst - if results are mixed/inconclusive, both theses lack resolution",
+        "Both acknowledge operating margin is critical at 5.0% - if it drops below 3%, Bear wins; if it expands significantly, Bull wins; but moderate changes could invalidate both"
+      ],
+      "technical_vs_bull": "AGREES — Technical shows strong bullish momentum (trend=UP, strength=85) with 40.8% rally, supporting Bull's thesis of continued upward movement toward analyst targets. Current position at 73% of 52W range aligns with Bull's expectation of further gains.",
+      "technical_vs_bear": "CONFLICTS — Technical momentum is strongly bullish (RSI ~75, MACD bullish) which directly contradicts Bear's expectation of downside. The 40.8% rally and positioning near 52W highs suggests continued strength rather than Bear's margin-driven weakness.",
+      "bull_contrarian_quality": "VALUATION_ONLY",
+      "bear_contrarian_quality": "VALUATION_ONLY",
+      "verdict_on_grounding": "BOTH_VALUATION_ONLY",
+      "verdict_rationale": "Both sides explicitly acknowledge 'INSUFFICIENT_NARRATIVE_DATA' and lack specific broker reports, institutional visits, or news to support business-mechanism contrarian views. Both rely purely on valuation arithmetic (P/E multiples, growth rates) rather than concrete business catalysts."
+    },
+    "_agent_status": {
+      "bull_r1": {
+        "status": "success",
+        "ms": 42466
+      },
+      "bear_r1": {
+        "status": "success",
+        "ms": 62354
+      },
+      "technical": {
+        "status": "success",
+        "ms": 7668
+      },
+      "bull_r2": {
+        "status": "success",
+        "ms": 41404
+      },
+      "bear_r2": {
+        "status": "success",
+        "ms": 56512
+      },
+      "forensic": {
+        "status": "success",
+        "ms": 18843
+      },
+      "synth": {
+        "status": "success",
+        "ms": 57635
+      }
+    },
+    "_quality": {
+      "score": 74,
+      "missingFields": [
+        "qc_checklist.all_8_steps_complete",
+        "qc_checklist.step_1_specific_not_vague",
+        "qc_checklist.step_2_no_unfounded_leaps",
+        "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "qc_checklist.step_5_observable",
+        "qc_checklist.step_6_observable",
+        "qc_checklist.step_7_one_sentence_tagline",
+        "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "qc_checklist.step_8_early_signs_observable",
+        "qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "qc_checklist.step_8_position_sizing_curve_monotonic",
+        "qc_checklist.reward_to_risk_at_least_threshold"
+      ],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": true,
+        "reward_to_risk_at_least_threshold": false,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": true,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": false,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "WARN",
+      "qc_findings": [
+        "failed:step_8_catalyst_for_reversion_predatable",
+        "failed:step_8_position_sizing_curve_monotonic",
+        "failed:reward_to_risk_at_least_threshold",
+        "missing:qc_checklist.all_8_steps_complete",
+        "missing:qc_checklist.step_1_specific_not_vague",
+        "missing:qc_checklist.step_2_no_unfounded_leaps",
+        "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "missing:qc_checklist.step_5_observable",
+        "missing:qc_checklist.step_6_observable",
+        "missing:qc_checklist.step_7_one_sentence_tagline",
+        "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "missing:qc_checklist.step_8_early_signs_observable",
+        "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+        "missing:qc_checklist.reward_to_risk_at_least_threshold"
+      ]
+    }
+  },
+  "models_used": {
+    "bull": "gemini-2.5-pro",
+    "bear": "gpt-5.5",
+    "technical": "claude-sonnet-4-20250514",
+    "forensic": "claude-sonnet-4-20250514",
+    "synth": "claude-opus-4-7"
+  },
+  "_status": "OK",
+  "_partial_failures": [],
+  "pipeline_ms_total": 160348
+}

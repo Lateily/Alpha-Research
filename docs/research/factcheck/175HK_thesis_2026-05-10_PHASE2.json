@@ -1,0 +1,868 @@
+{
+  "success": true,
+  "ticker": "175.HK",
+  "data": {
+    "ticker": "175.HK",
+    "thesis_protocol_version": "v2",
+    "_direction": "PASS",
+    "_divergence_score": 35,
+    "_synthesizer_rationale": "Forensic explicitly rules BOTH_VALUATION_ONLY — neither Bull nor Bear satisfied the CONTRARIAN VIEW REQUIREMENT. Both sides acknowledged INSUFFICIENT_NARRATIVE_DATA (no broker reports, no inst visits, no LHB, no insider activity, no recent news in the data context). Despite low forensic divergence (all numeric claims MATCH on both sides), the absence of a business-mechanism edge — combined with the stock already up +40.8% in 60d at 73% of 52W range with RSI ~68 — means there is no defensible variant view to trade against consensus.",
+    "step_1_catalyst": {
+      "catalyst_event": "H1 2026 interim results — test of whether +15.6% TTM revenue growth converts to net income re-acceleration above the latest +0.2% YoY print",
+      "catalyst_date_or_window": "August 2026 (standard HK interim reporting window; exact date not available in our data)",
+      "catalyst_type": "earnings_revision",
+      "catalyst_source": "MULTI-YEAR INCOME STATEMENT + LIVE FUNDAMENTALS; exact reporting date not available in our data"
+    },
+    "step_2_mechanism": {
+      "mechanism_chain": [
+        "1. PASS rationale: Forensic verdict is BOTH_VALUATION_ONLY — neither Bull nor Bear produced a business-mechanism contrarian view grounded in broker reports, institutional research visits, 龙虎榜 activity, insider transactions, or recent news.",
+        "2. The data context for 175.HK lacks populated TUSHARE — BROKER RECOMMENDATIONS, INSTITUTIONAL RESEARCH VISITS, LHB, INSIDER ACTIVITY, and RECENT NEWS sections; therefore no fresh business signal is available to override or differentiate from the SELL-SIDE CONSENSUS VIEWS already in market (ZEEKR privatization, EV transition, multi-brand global portfolio).",
+        "3. The strongest factual tension in the data — revenue +15.6% TTM vs net income +0.2% YoY with flat diluted EPS at 1.63 (2025 vs 2024) — is symmetric: it can support either Bull's 'operating leverage coming' or Bear's 'margin conversion failure' narrative, and neither side has independent evidence to break the tie.",
+        "4. Technical posture (price at 73% of 52W range, +40.8% in 60d, RSI ~68) argues against initiating a fresh LONG at current levels (poor entry), while strong uptrend + bullish MACD argues against SHORT (fighting the tape). This asymmetry favors waiting.",
+        "5. Per CIO protocol: when forensic flags BOTH_VALUATION_ONLY and neither side articulates a business-level contrarian mechanism from data context, the correct output is PASS — defer until either (a) broker/inst/news data populates, or (b) the next earnings print resolves the revenue-to-margin conversion question."
+      ]
+    },
+    "step_3_evidence": {
+      "evidence_quantitative": [
+        "LIVE PRICE 22.74; +0.18% today (REAL-TIME ENRICHMENT)",
+        "P/E TTM 12.2x, P/E Fwd 8.6x, EV/EBITDA 12.4x (LIVE FUNDAMENTALS)",
+        "Revenue Growth TTM +15.6%, Net Income YoY +0.2%, Diluted EPS flat at 1.63 (2025 vs 2024) (LIVE FUNDAMENTALS + MULTI-YEAR INCOME STATEMENT)",
+        "60d move +40.8% (16.15 → 22.74); price at 73% of 52W range 14.96–25.62 (OHLC TREND)",
+        "Analyst mean target 29.36 (25 analysts), 29.1% implied upside (LIVE FUNDAMENTALS)",
+        "Peer BYD 002594.SZ: P/E Fwd 17.7x, GM 17.2%, OpM 4.8%, Rev TTM -11.8% — vs 175.HK GM 17.0%, OpM 5.0%, Rev TTM +15.6% (PEER CROSS-SECTION)"
+      ],
+      "evidence_qualitative": [
+        "Forensic verdict: BOTH_VALUATION_ONLY — both Bull and Bear explicitly acknowledged INSUFFICIENT_NARRATIVE_DATA",
+        "All four SELL-SIDE CONSENSUS VIEWS (ZEEKR privatization, EV transition to 50% mix, multi-brand global portfolio, valuation reassessment) are already priced; no variant lever identified",
+        "Coverage gaps: rdcf, fragility, persona_overlay, sector_regime not loaded — material context missing",
+        "WATCHLIST stress trigger (op margin <3%) not currently breached (5.0%); EV market-share QoQ vs BYD not available in data"
+      ],
+      "contrarian_view": {
+        "market_consensus": {
+          "e": "Market is constructive on Geely's restructuring (ZEEKR privatization, EV transition, multi-brand global) and has bid the stock +40.8% in 60d toward the 29.36 mean target.",
+          "z": "Forward P/E 8.6x with 25 analysts at mean 29.36 reflects a re-rating already in motion."
+        },
+        "our_variant": {
+          "e": "INSUFFICIENT_BUSINESS_SIGNAL — no broker report, institutional visit, LHB event, insider transaction, or recent news in the supplied data context permits articulating a differentiated business mechanism. The CIO protocol mandates PASS.",
+          "z": "Trading on a valuation-only thesis after a +40.8% 60d move with RSI ~68 has poor risk/reward in either direction."
+        },
+        "what_changes_our_mind": "Population of TUSHARE broker/institutional/LHB/insider data OR a recent news flow item identifying a specific unpriced business mechanism (e.g., a named broker upgrade with thesis, an inst visit note on margin trajectory, or a ZEEKR-related disclosure)."
+      }
+    },
+    "step_4_quantification": {
+      "metric_target": "N/A — PASS",
+      "current_value": "22.74 HKD",
+      "predicted_value": "No directional prediction issued",
+      "predicted_range": {
+        "low": "n/a",
+        "mid": "n/a",
+        "high": "n/a"
+      },
+      "predicted_horizon": "Re-evaluate at H1 2026 interim release (August 2026) or upon population of broker/news data",
+      "confidence": 0
+    },
+    "step_5_proves_right_if": [
+      "H1 2026 interim shows continued revenue growth >10% with operating margin still trapped at ~5.0% and net income growth <5% — confirming the conversion ambiguity that justified deferring",
+      "Stock chops sideways in 20–25 range over the next 1–3 months as the +40.8% move digests, validating that no immediate edge existed",
+      "Subsequent data refresh populates broker/inst/news layers, enabling a properly grounded thesis at that point"
+    ],
+    "step_6_proves_wrong_if": [
+      "A clear business-mechanism signal emerges in data refresh (named broker thesis, inst visit, insider buying, ZEEKR news) that would have supported a directional call we missed",
+      "Stock breaks decisively above 25.62 52W high on volume with fundamental confirmation, indicating the LONG was the correct call",
+      "Operating margin breaches the 3% watchlist trigger on next print, indicating the SHORT was the correct call"
+    ],
+    "step_7_variant_view": {
+      "variant_view_one_sentence": "Market believes restructuring + EV transition justify the +40.8% 60d re-rating → We believe NEITHER side has a data-grounded business-mechanism edge → Mechanism is: defer until broker/news data populates or earnings resolves the revenue-to-margin conversion question.",
+      "time_to_resolution": "1–3 months (data refresh) or August 2026 (H1 interim)",
+      "expected_pnl_asymmetry": {
+        "upside_if_right": "0% (PASS — no position)",
+        "downside_if_wrong": "0% (PASS — no position)",
+        "reward_to_risk": "PASS — capital preservation"
+      }
+    },
+    "step_8_phase_and_timing": {
+      "phase_1_market_belief": {
+        "duration_estimate": "1–3 months until next earnings or data refresh",
+        "why_market_keeps_buying": [
+          "Forward P/E 8.6x optically cheap vs BYD 17.7x",
+          "+15.6% TTM revenue growth vs BYD -11.8%",
+          "ZEEKR privatization + EV transition narrative momentum",
+          "25-analyst mean target 29.36 (29.1% upside)"
+        ],
+        "early_signs_phase_1_weakening": [
+          "RSI sustained >70 with negative divergence",
+          "Failure to break 25.62 resistance on multiple attempts",
+          "Monthly sales data showing EV mix shift slowing"
+        ],
+        "optional_long_play": {
+          "direction": "NONE",
+          "sizing": "0%",
+          "exit_trigger": "n/a — PASS"
+        }
+      },
+      "phase_2_reality_recognition": {
+        "catalyst_for_reversion": [
+          "H1 2026 interim showing op margin stagnation or compression",
+          "WATCHLIST trigger: op margin <3% or EV share loss to BYD >300bp QoQ"
+        ],
+        "estimated_timing": "August 2026",
+        "short_play": {
+          "direction": "NONE",
+          "sizing": "0%",
+          "entry_trigger": "n/a — PASS"
+        }
+      },
+      "position_sizing_curve": {
+        "pre_phase_1_weakening": "0%",
+        "phase_1_weakening_confirmed": "0%",
+        "phase_2_catalyst_imminent": "0%"
+      }
+    },
+    "qc_checklist": {
+      "catalyst_is_future_dated": true,
+      "all_numeric_claims_grounded_in_data_context": true,
+      "variant_view_articulates_business_mechanism": false,
+      "variant_view_cites_broker_or_inst_or_news": false,
+      "forensic_verdict_respected": true,
+      "technical_alignment_considered": true,
+      "pass_triggered_due_to_both_valuation_only": true,
+      "position_sizing_monotonic_non_decreasing": true,
+      "no_fabricated_numbers": true
+    },
+    "_bull_thesis": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "H1 2026 Earnings Release, demonstrating conversion of top-line growth to profit.",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate reporting calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. The bear case correctly identifies that Geely's strong TTM revenue growth (+15.6%) has not yet translated into profit growth (Net Income YoY +0.2%), creating a narrative of 'profitless growth'.",
+          "2. We argue this disconnect is a temporary and understood investment phase. Consensus views (per Reuters, TipRanks) highlight the company's aggressive and costly EV transition and the ZEEKR privatization as near-term margin headwinds.",
+          "3. The market has priced in this profitability lag, assigning a low forward P/E of 8.6x, a steep discount to peer BYD's 17.7x (per PEER CROSS-SECTION COMPARISON). This valuation reflects skepticism that the investment phase will pay off.",
+          "4. Our thesis is that the +15.6% revenue growth is the crucial leading indicator of a successful strategy. As new models scale and restructuring completes, significant operating leverage will be unlocked.",
+          "5. The H1 2026 earnings will be the catalyst, proving this leverage and forcing upward revisions to the currently flat consensus earnings forecasts (2025 Net Income 16.9B vs 2024 16.8B), driving a re-rating of the forward multiple closer to peer levels."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Valuation remains compelling despite the recent rally: 8.6x Forward P/E vs peer BYD at 17.7x (PEER CROSS-SECTION COMPARISON).",
+          "Top-line momentum is undeniable: TTM Revenue Growth of +15.6% provides the substrate for future operating leverage (LIVE FUNDAMENTALS).",
+          "The profitability bar is low: Consensus forecasts flat Net Income YoY growth of +0.2% for 2025 (16.8B to 16.9B), making an earnings beat achievable if leverage materializes.",
+          "Analyst consensus remains bullish with a mean price target of 29.36, implying 29.1% upside from the live price of 22.74, suggesting the re-rating story has further to run.",
+          "Operating margin at 5.0% is comparable to peer BYD's 4.8%, countering the bear's claim of a unique margin fragility issue for Geely versus its primary competitor."
+        ],
+        "evidence_qualitative": [
+          "The bear's core concern about profitless growth is already a well-understood consensus narrative (per Reuters, TipRanks views on EV transition costs), suggesting it is priced in.",
+          "The +40.8% stock move in 60 days (OHLC TREND) indicates the market is beginning to look through the current investment phase towards future profitability, a trend we expect to continue.",
+          "Absence of a major buyback program (TUSHARE — CAPITAL STRUCTURE SIGNALS) reinforces the narrative of a company in a growth investment phase, prioritizing reinvestment over capital return."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The market is cautiously optimistic about Geely's strategic initiatives (EV transition, global brands) but remains highly skeptical about its ability to convert strong revenue growth into near-term profit, fearing margin pressure from competition.",
+            "z": "This is evidenced by the low 8.6x forward P/E multiple despite +15.6% TTM revenue growth and a flat consensus net income forecast for FY2025."
+          },
+          "our_variant": {
+            "e": "We believe the market is underestimating the operating leverage that will result from the current investment cycle, and that the conversion from revenue to profit will occur faster and with greater magnitude than the flat earnings forecast implies.",
+            "z": "However, this view is an inference based on financial data and existing consensus narratives. The data context lacks specific, unpriced signals from broker reports, institutional visits, or news to elevate this to a true, mechanism-driven contrarian thesis."
+          },
+          "what_changes_our_mind": "A failure to show any operating margin improvement in the next two earnings reports alongside continued revenue growth would indicate a structural profitability problem, invalidating our operating leverage thesis."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "8.6x",
+        "predicted_value": "12.0x",
+        "predicted_range": {
+          "low": "26.4 HKD (at 10.0x P/E on FY25 EPS 1.63, assuming modest beat)",
+          "mid": "31.7 HKD (at 12.0x P/E on FY25 EPS 1.63, assuming solid beat & re-rating)",
+          "high": "37.0 HKD (at 14.0x P/E on FY25 EPS 1.63, assuming strong beat & guidance)"
+        },
+        "predicted_horizon": "6-12 months",
+        "confidence": 0.6
+      },
+      "step_5_proves_right_if": [
+        "H1 2026 earnings report shows Net Income growth accelerating to >10% YoY, decisively beating the flat consensus.",
+        "Operating margin expands by at least 50bps in H1 2026, demonstrating operating leverage.",
+        "Management guidance points to sustained margin improvement in H2 2026.",
+        "The forward P/E multiple re-rates to and sustains above 10.0x post-earnings."
+      ],
+      "step_6_proves_wrong_if": [
+        "Next earnings report shows revenue growth slowing below 10% while operating margin remains stagnant at or below 5.0%.",
+        "Operating margin compresses below 3%, hitting the watchlist stress trigger (per `WATCHLIST wrongIf`).",
+        "Management guides for continued margin pressure, citing competition and delaying the timeline for profitability improvement.",
+        "The stock price breaks below the 60-day low of 16.15 HKD, indicating a complete reversal of the recent positive momentum."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "INSUFFICIENT_BUSINESS_SIGNAL — data context contains valuation arrows + technical data but no broker/inst/news narrative supporting a specific contrarian mechanism. Recommend deferring thesis pending news/sector context.",
+        "time_to_resolution": "6 months",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+30% to +40%",
+          "downside_if_wrong": "-20% to -25%",
+          "reward_to_risk": "PASS — no edge"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "3-6 months",
+          "why_market_keeps_buying": [
+            "Continued strong monthly sales data, especially from premium/export brands.",
+            "Positive momentum trading, as the stock has risen +40.8% in 60 days.",
+            "Attractive relative valuation (8.6x Fwd P/E) continues to draw in value-oriented buyers."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Sell-side analysts begin upgrading FY2026 EPS estimates ahead of the earnings print.",
+            "Stock price consolidates constructively above the 22 HKD level, building a base for the next leg up."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "not available in our data",
+            "exit_trigger": "not available in our data"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "H1 2026 earnings report confirming profit conversion with double-digit Net Income growth and margin expansion."
+          ],
+          "estimated_timing": "August 2026",
+          "short_play": {
+            "direction": "not applicable",
+            "sizing": "not available in our data",
+            "entry_trigger": "not available in our data"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "50%",
+          "phase_2_catalyst_imminent": "100%"
+        }
+      },
+      "_rebuttal": "Bear claimed INSUFFICIENT_NARRATIVE_DATA — We agree and have revised the thesis accordingly. The `variant_view_one_sentence` now explicitly states `INSUFFICIENT_BUSINESS_SIGNAL` as per protocol, acknowledging the lack of specific broker/inst/news data. The long case is now framed as a re-rating based on consensus narratives delivering better-than-expected results, not a unique contrarian insight. Bear claimed poor earnings quality (revenue growth not translating to profit) — We address this by framing it as a temporary, priced-in investment phase linked to the EV transition and ZEEKR restructuring, both cited in `SELL-SIDE CONSENSUS VIEWS`. The thesis anticipates profit conversion as the catalyst, betting against the flat `Net Income YoY (+0.2%)` forecast. Bear claimed thin margin buffer — We acknowledge this sector-wide risk but note Geely's margins (`OpM 5.0%`) are comparable to its key peer BYD (`OpM 4.8%`), indicating no specific competitive disadvantage. Bear claimed the price has moved ahead of fundamentals — We reframe the `+40.8%` move as the first phase of a re-rating, noting the still-low `8.6x Fwd P/E` and `29.1%` upside to the mean analyst target (`29.36`) show the move is incomplete and opportunity remains."
+    },
+    "_bear_thesis": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Next financial-results or earnings-revision window testing whether 175.HK can translate TTM revenue growth into net-income growth while keeping operating margin above the auto-industry stress proxy",
+        "catalyst_date_or_window": "2026-05-11 onward; exact company reporting date not available in our data",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "DATA CONTEXT: LIVE FUNDAMENTALS, MULTI-YEAR INCOME STATEMENT, and WATCHLIST wrongIf; exact scheduled earnings date not available in our data"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. INSUFFICIENT_NARRATIVE_DATA: the data context does not provide populated TUSHARE — BROKER RECOMMENDATIONS, TUSHARE — INSTITUTIONAL RESEARCH VISITS, TUSHARE — 龙虎榜 LHB APPEARANCES, TUSHARE — INSIDER/大股东 ACTIVITY, or RECENT NEWS sections for 175.HK; therefore a valid broker-report or event-grounded business-mechanism variant cannot be constructed under the stated rules.",
+          "2. The strongest available bearish business mechanism is margin-conversion failure: LIVE FUNDAMENTALS show revenue growth TTM of 15.6%, but MULTI-YEAR INCOME STATEMENT shows latest annual net income growth of only +0.2%, with net income 16.9B in 2025 versus 16.8B in 2024.",
+          "3. Peer comparison does not support the Bull's claim of a clear profitability moat: PEER CROSS-SECTION COMPARISON shows BYD 002594.SZ gross margin 17.2% versus 175.HK gross margin 17.0% from LIVE FUNDAMENTALS, while BYD operating margin is 4.8% versus 175.HK operating margin 5.0%.",
+          "4. A second peer-comparison signal weakens the Bull's 'growth quality' claim: PEER CROSS-SECTION COMPARISON shows BYD revenue TTM -11.8% versus 175.HK revenue growth TTM 15.6%, yet 175.HK's latest annual net income YoY is only +0.2% per MULTI-YEAR INCOME STATEMENT, implying that superior top-line momentum has not yet translated into bottom-line acceleration.",
+          "5. The Bull's multi-brand mechanism is not variant because SELL-SIDE CONSENSUS VIEWS already list Geely's diversified global automotive portfolio, including Volvo, Polestar, Lotus, and ZEEKR, as a positive view from CNBC / Benzinga; absent specific recent broker reports, institutional visits, holder transactions, LHB events, or news, we cannot prove the market is under-modeling this business mechanism rather than already paying for it."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "REAL-TIME ENRICHMENT CONTEXT shows LIVE PRICE of 22.74, up +0.18% today.",
+          "OHLC TREND shows the close moved from 16.15 to 22.74 over 60d, a +40.8% move.",
+          "OHLC TREND shows the 60d period range was 14.96–25.62 and the last close was at 73% of that range.",
+          "LIVE FUNDAMENTALS show P/E TTM of 12.2x, P/E Fwd of 8.6x, and EV/EBITDA of 12.4x.",
+          "LIVE FUNDAMENTALS show ROE of 16.0%, gross margin of 17.0%, operating margin of 5.0%, and revenue growth TTM of 15.6%.",
+          "MULTI-YEAR INCOME STATEMENT shows net income of 16.9B in 2025, 16.8B in 2024, and 5.3B in 2023.",
+          "MULTI-YEAR INCOME STATEMENT shows latest net income YoY of +0.2%.",
+          "MULTI-YEAR INCOME STATEMENT shows diluted EPS of 1.63 in 2025, 1.63 in 2024, and 0.51 in 2023.",
+          "LIVE FUNDAMENTALS show analyst targets with mean 29.36, range 21.11–36.10, based on 25 analysts, implying 29.1% upside versus live price.",
+          "PEER CROSS-SECTION COMPARISON shows BYD 002594.SZ FY2025 net income of 32.6B, revenue of 804.0B, EPS of 3.58, P/E TTM of 51.3x, P/E Fwd of 17.7x, gross margin of 17.2%, operating margin of 4.8%, revenue TTM of -11.8%, ROE of 11.1%, and market cap of 0.91T.",
+          "TUSHARE — CAPITAL STRUCTURE SIGNALS states buyback programs: NONE, while MULTI-YEAR INCOME STATEMENT shows buyback cash-flow outflow of 0.3B in 2025, 0.0B in 2024, and 0.0B in 2023."
+        ],
+        "evidence_qualitative": [
+          "Consensus views already include the positive restructuring and EV-transition narratives: ZEEKR privatization, EV transition, and diversified global portfolio exposure are all listed under SELL-SIDE CONSENSUS VIEWS.",
+          "The Bull's multi-brand argument relies on a consensus-listed view from CNBC / Benzinga rather than a fresh broker report, institutional visit, LHB event, holder transaction, or recent news item from the supplied data.",
+          "The watchlist explicitly flags operating_margin < 3% as an auto-industry stress proxy; current operating margin is 5.0% per LIVE FUNDAMENTALS, so margin deterioration is the key observable risk.",
+          "The watchlist also flags EV market-share loss to BYD by more than 300bp QoQ, but current EV market-share data and QoQ share-loss data are not available in our data.",
+          "Coverage gaps are material: rdcf, fragility, persona_overlay, and sector_regime are not loaded."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Consensus is constructive because SELL-SIDE CONSENSUS VIEWS highlight ZEEKR privatization, accelerated EV transition, and a diversified global portfolio including Volvo, Polestar, Lotus, and ZEEKR; LIVE FUNDAMENTALS also show 25 analysts with mean target 29.36 and 29.1% upside versus live price.",
+            "z": "The market appears to believe restructuring plus EV transition can sustain a re-rating despite the 60d share-price increase of +40.8% per OHLC TREND."
+          },
+          "our_variant": {
+            "e": "INSUFFICIENT_NARRATIVE_DATA — no broker name/report date/title from TUSHARE — BROKER RECOMMENDATIONS, no institutional visit, no 龙虎榜 event, no holder transaction, and no RECENT NEWS item are available in the supplied data context. Therefore the required format 'Per [broker name] [report date] [exact title quote]' cannot be truthfully satisfied.",
+            "z": "The available bearish observation is financial-mechanism risk rather than a fully valid business-mechanism variant: LIVE FUNDAMENTALS show revenue growth TTM of 15.6%, but MULTI-YEAR INCOME STATEMENT shows latest annual net income YoY of only +0.2% and diluted EPS flat at 1.63 in 2025 versus 1.63 in 2024."
+          },
+          "what_changes_our_mind": "A future results print showing operating margin staying at or above 5.0% while net income growth re-accelerates materially above the latest +0.2% annual net-income YoY would weaken the bearish observation; exact future reporting date not available in our data."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Operating margin and net-income conversion",
+        "current_value": "Operating margin 5.0%; revenue growth TTM 15.6%; latest annual net income YoY +0.2%",
+        "predicted_value": "PASS / NEUTRAL base case because no valid narrative-grounded short mechanism is available; bearish risk would be confirmed if operating margin moves toward the 3% watchlist stress proxy",
+        "predicted_range": {
+          "low": "Bear-confirming: operating margin below 3.0%, the WATCHLIST wrongIf auto-industry stress proxy",
+          "mid": "Unresolved: operating margin between 3.0% and 5.0%",
+          "high": "Bear-invalidating: operating margin at or above 5.0% with net income growth above the latest +0.2% annual net-income YoY"
+        },
+        "predicted_horizon": "2026-05-11 onward through the next financial-results or earnings-revision window; exact reporting date not available in our data",
+        "confidence": 0.25
+      },
+      "step_5_proves_right_if": [
+        "Operating margin falls below 3.0%, matching the WATCHLIST wrongIf auto-industry stress proxy.",
+        "Future reported net income growth remains close to the latest +0.2% annual net-income YoY despite LIVE FUNDAMENTALS revenue growth TTM of 15.6%.",
+        "Diluted EPS remains flat versus the 2025 and 2024 level of 1.63 per MULTI-YEAR INCOME STATEMENT.",
+        "Future data show EV market-share loss to BYD by more than 300bp QoQ, the WATCHLIST wrongIf competitive-stress trigger.",
+        "Analyst target support weakens from the current LIVE FUNDAMENTALS mean target of 29.36 or analyst count of 25; exact downgrade thresholds are not available in our data."
+      ],
+      "step_6_proves_wrong_if": [
+        "Operating margin remains at or above the current 5.0% level from LIVE FUNDAMENTALS.",
+        "Net income growth re-accelerates materially above the latest +0.2% annual net-income YoY from MULTI-YEAR INCOME STATEMENT.",
+        "Diluted EPS rises above the 2025 and 2024 level of 1.63 from MULTI-YEAR INCOME STATEMENT.",
+        "Future company disclosures show no EV market-share loss to BYD by more than 300bp QoQ; current QoQ share data are not available in our data.",
+        "A future broker report, institutional visit, holder transaction, LHB event, or recent news item provides a specific business mechanism proving that ZEEKR, Volvo, Polestar, Lotus, or export exposure is driving durable profit growth; such evidence is not available in the current data."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, inst visits, 龙虎榜, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic available which is insufficient. PASS.",
+        "time_to_resolution": "2026-05-11 onward through the next financial-results or earnings-revision window; exact reporting date not available in our data",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "not available in our data",
+          "downside_if_wrong": "not available in our data",
+          "reward_to_risk": "PASS — no edge"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "2026-05-11 onward until next financial-results or earnings-revision window; exact duration not available in our data",
+          "why_market_keeps_buying": [
+            "LIVE FUNDAMENTALS show 25 analysts with mean target 29.36 and 29.1% upside versus live price.",
+            "SELL-SIDE CONSENSUS VIEWS already include constructive narratives around ZEEKR privatization, EV transition, and diversified global portfolio exposure.",
+            "OHLC TREND shows the stock rose +40.8% over 60d, which can reinforce momentum buying."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Operating margin moves down from the current 5.0% level toward the 3.0% WATCHLIST wrongIf stress proxy.",
+            "Future net income growth continues to lag LIVE FUNDAMENTALS revenue growth TTM of 15.6%.",
+            "Future disclosures show EV market-share loss to BYD by more than 300bp QoQ, the WATCHLIST wrongIf competitive-stress signal."
+          ],
+          "optional_long_play": {
+            "direction": "NO POSITION / PASS",
+            "sizing": "0%",
+            "exit_trigger": "Exit pass stance only if future broker reports, institutional visits, holder transactions, LHB events, or recent news create a specific business-mechanism edge; not available in current data."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Next financial-results or earnings-revision window shows operating margin below 3.0%, the WATCHLIST wrongIf stress proxy.",
+            "Next results show net income growth failing to improve from the latest +0.2% annual net-income YoY despite LIVE FUNDAMENTALS revenue growth TTM of 15.6%.",
+            "Future competitive data show EV market-share loss to BYD by more than 300bp QoQ, the WATCHLIST wrongIf competitive trigger."
+          ],
+          "estimated_timing": "2026-05-11 onward; exact timing not available in our data",
+          "short_play": {
+            "direction": "WAIT / NO SHORT UNTIL BUSINESS-SIGNAL CONFIRMATION",
+            "sizing": "0%",
+            "entry_trigger": "Enter only after a future results print or verified business update confirms operating margin deterioration toward or below 3.0%, or EV market-share loss to BYD by more than 300bp QoQ; current data do not provide this confirmation."
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "0%",
+          "phase_2_catalyst_imminent": "0%"
+        }
+      },
+      "_rebuttal": {
+        "bull_argument_1_forward_pe_discount_to_byd": {
+          "bull_claim_addressed": "Bull argues 175.HK is attractive because P/E Fwd is 8.6x versus BYD 17.7x.",
+          "short_rebuttal": "This is valuation arithmetic, not a business mechanism. It does not explain why profits should accelerate. The relevant bearish mechanism is conversion risk: LIVE FUNDAMENTALS show revenue growth TTM of 15.6%, while MULTI-YEAR INCOME STATEMENT shows latest annual net income YoY of only +0.2%."
+        },
+        "bull_argument_2_superior_growth_and_roe": {
+          "bull_claim_addressed": "Bull argues 175.HK has revenue growth TTM of 15.6% and ROE of 16.0%, better than BYD revenue TTM of -11.8% and ROE of 11.1%.",
+          "short_rebuttal": "The growth-quality point is incomplete because superior revenue growth has not yet translated into bottom-line growth: net income was 16.9B in 2025 versus 16.8B in 2024, and diluted EPS was flat at 1.63 in 2025 versus 1.63 in 2024 per MULTI-YEAR INCOME STATEMENT."
+        },
+        "bull_argument_3_multi_brand_strategy": {
+          "bull_claim_addressed": "Bull argues Geely's diversified global portfolio, including Volvo, Polestar, Lotus, and ZEEKR, is an underappreciated mechanism.",
+          "short_rebuttal": "This is not underappreciated in the supplied data: SELL-SIDE CONSENSUS VIEWS already list the diversified global automotive portfolio and Western/premium exposure as a CNBC / Benzinga view. No specific broker report, institutional visit, LHB event, holder transaction, or recent news item is provided to show a fresh variant business signal."
+        },
+        "bull_argument_4_h1_2026_earnings_as_catalyst": {
+          "bull_claim_addressed": "Bull uses H1 2026 earnings release in August 2026 as the catalyst.",
+          "short_rebuttal": "The date source is not in the provided data; exact scheduled reporting date is not available in our data. A future earnings window is relevant, but the required business-mechanism edge is still absent."
+        },
+        "bull_argument_5_momentum_confirms_undervaluation": {
+          "bull_claim_addressed": "Bull argues the +40.8% 60d move suggests early recognition of undervaluation.",
+          "short_rebuttal": "The +40.8% 60d move can also mean the consensus restructuring and EV-transition narratives are already capitalized before confirmed profit acceleration. MULTI-YEAR INCOME STATEMENT still shows latest annual net income YoY of only +0.2% and EPS flat at 1.63 in 2025 versus 1.63 in 2024."
+        },
+        "net_revised_stance": "NEUTRAL / PASS rather than active SHORT, because the supplied data support bearish concerns around margin conversion and narrative crowding, but do not provide the required broker/inst/news/LHB/holder-transaction business signal for a valid contrarian short mechanism."
+      },
+      "qc_checklist": {
+        "future_catalyst_date_or_window": true,
+        "all_numeric_claims_grounded_in_data_context_or_marked_unavailable": true,
+        "mechanism_chain_quotes_two_allowed_items": true,
+        "mechanism_chain_allowed_items_used": [
+          "PEER CROSS-SECTION COMPARISON: BYD gross margin 17.2% versus 175.HK gross margin 17.0%; BYD operating margin 4.8% versus 175.HK operating margin 5.0%",
+          "PEER CROSS-SECTION COMPARISON: BYD revenue TTM -11.8% versus 175.HK revenue growth TTM 15.6%"
+        ],
+        "specific_broker_report_title_available": false,
+        "specific_broker_report_title_absence_explained": true,
+        "institutional_visit_available": false,
+        "lhb_event_available": false,
+        "holder_transaction_available": false,
+        "recent_news_item_available": false,
+        "hard_rule_3_insufficient_narrative_data_invoked": true,
+        "contrarian_business_mechanism_valid": false,
+        "variant_view_set_to_pass_due_to_insufficient_business_signal": true,
+        "valuation_only_variant_avoided": true,
+        "rebuttal_addresses_bull_points": true
+      }
+    },
+    "_bull_r1": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "H1 2026 Earnings Release",
+        "catalyst_date_or_window": "August 2026",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "Standard corporate reporting calendar"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. The market prices 175.HK at a severe forward P/E discount to its primary peer, 002594.SZ (BYD), at 8.6x versus 17.7x respectively (PEER CROSS-SECTION COMPARISON).",
+          "2. This discount implies a consensus belief that Geely has inferior growth prospects and profitability, a view seemingly supported by flat Net Income forecasts for 2025 (16.9B vs 16.8B in 2024).",
+          "3. However, this narrative is directly contradicted by live TTM performance metrics. Per the PEER CROSS-SECTION COMPARISON, Geely's Revenue Growth is +15.6% vs. BYD's -11.8%, and its ROE is 16.0% vs. BYD's 11.1%.",
+          "4. The mechanism driving this outperformance is Geely's diversified global portfolio (Volvo, Polestar, Lotus, ZEEKR), a strategic advantage noted in the consensus view from CNBC/Benzinga. This multi-brand strategy provides access to premium segments and Western markets, delivering superior growth and capital efficiency that the market currently underappreciates.",
+          "5. The upcoming H1 2026 earnings will act as a catalyst, demonstrating sustained top-line growth and stable margins, forcing analysts to revise their pessimistic, flat earnings forecasts upwards and begin closing the valuation gap."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "Forward P/E multiple of 8.6x, less than half of peer BYD's 17.7x (PEER CROSS-SECTION COMPARISON).",
+          "TTM Revenue Growth of +15.6%, starkly outperforming BYD's -11.8% (PEER CROSS-SECTION COMPARISON).",
+          "Superior capital efficiency demonstrated by a 16.0% ROE versus BYD's 11.1% (PEER CROSS-SECTION COMPARISON).",
+          "Analyst consensus mean price target is 29.36, representing a 29.1% upside from the live price of 22.74.",
+          "The core pessimistic assumption to be challenged is the projected flat Net Income YoY growth of +0.2% for 2025 (16.8B to 16.9B)."
+        ],
+        "evidence_qualitative": [
+          "A minority sell-side view (CNBC/Benzinga) explicitly identifies the diversified global automotive portfolio as a key strategic asset, providing a qualitative foundation for our mechanism.",
+          "The company's focus on reinvesting for growth, implied by the absence of a major buyback program, aligns with the thesis of sustained business momentum.",
+          "The stock has strong recent momentum, rising +40.8% over the last 60 days, suggesting early recognition of its undervaluation may be underway."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "The market believes Geely is a lower-quality, domestically-focused automaker whose growth is stalling.",
+            "z": "This is evidenced by the flat YoY Net Income forecast for 2025 and a forward P/E multiple at a >50% discount to its main peer, BYD."
+          },
+          "our_variant": {
+            "e": "We believe Geely's global multi-brand strategy is a superior and underappreciated mechanism for delivering high growth and capital efficiency.",
+            "z": "This is evidenced by its current +15.6% TTM revenue growth and 16.0% ROE, both significantly outpacing peer BYD (per `PEER CROSS-SECTION COMPARISON`), directly contradicting the market's 'stalling growth' narrative."
+          },
+          "what_changes_our_mind": "Two consecutive quarters of revenue growth below 5% or operating margins falling below 3.0%, which would validate the market's fears of margin compression and slowing growth."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Forward P/E Multiple",
+        "current_value": "8.6x",
+        "predicted_value": "12.0x",
+        "predicted_range": {
+          "low": "26.4 HKD (at 10.0x P/E)",
+          "mid": "31.7 HKD (at 12.0x P/E)",
+          "high": "37.0 HKD (at 14.0x P/E)"
+        },
+        "predicted_horizon": "6-12 months",
+        "confidence": 0.7
+      },
+      "step_5_proves_right_if": [
+        "H1 2026 revenue growth is reported above 10% YoY.",
+        "H1 2026 operating margin is maintained at or above 5.0%.",
+        "Management earnings commentary explicitly credits global brands (ZEEKR, Volvo, Polestar) for driving growth.",
+        "Sell-side consensus for FY2026 EPS is revised upwards by more than 5% post-earnings.",
+        "The forward P/E multiple expands to and sustains above 10.0x."
+      ],
+      "step_6_proves_wrong_if": [
+        "Revenue growth falls below -10% for 2 consecutive quarters (per `WATCHLIST wrongIf`).",
+        "Operating margin compresses below 3% (per `WATCHLIST wrongIf`).",
+        "Management provides disappointing guidance for H2 2026, citing intensified domestic price competition.",
+        "Geely loses significant EV market share to BYD by >300bp QoQ (per `WATCHLIST wrongIf`).",
+        "The stock price breaks below the 60-day low of 16.15 HKD on high volume."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "Market believes Geely's growth is stalling (per flat FY25 NI forecast) → We believe its global multi-brand strategy is driving superior growth and capital efficiency (+15.6% Rev Growth, 16.0% ROE) vs. peers like BYD → This is unpriced because the market is anchored to a 'domestic-laggard' narrative, a view contradicted by the live performance metrics in the `PEER CROSS-SECTION COMPARISON`.",
+        "time_to_resolution": "6-12 months",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "+35% to +45%",
+          "downside_if_wrong": "-15% to -20%",
+          "reward_to_risk": "2.0:1"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "3-6 months",
+          "why_market_keeps_buying": [
+            "Strong price momentum (+40.8% in 60d).",
+            "Positive high-level narrative around EV transition and strategic actions like ZEEKR privatization."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Strong monthly sales data releases, particularly for export and premium brands.",
+            "Pre-earnings reports from sell-side explicitly highlighting the valuation and performance disconnect with peers."
+          ],
+          "optional_long_play": {
+            "direction": "LONG",
+            "sizing": "not available in our data",
+            "exit_trigger": "not available in our data"
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "H1 2026 earnings report confirming sustained double-digit revenue growth and stable operating margins (>5.0%)."
+          ],
+          "estimated_timing": "August-September 2026",
+          "short_play": {
+            "direction": "not applicable",
+            "sizing": "not applicable",
+            "entry_trigger": "not applicable"
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "50%",
+          "phase_2_catalyst_imminent": "100%"
+        }
+      },
+      "qc_checklist": {
+        "is_contrarian_mechanism_business_not_valuation": true,
+        "is_catalyst_future_dated": true,
+        "are_all_numerics_grounded": true,
+        "is_r_r_specified": true,
+        "is_falsifiable": true,
+        "is_specific_and_actionable": true
+      }
+    },
+    "_bear_r1": {
+      "ticker": "175.HK",
+      "thesis_protocol_version": "v2",
+      "step_1_catalyst": {
+        "catalyst_event": "Next financial results or earnings-revision window testing whether 175.HK can convert TTM revenue growth into net-income growth and sustain operating margin above the watchlist stress proxy",
+        "catalyst_date_or_window": "2026-05-11 onward; exact company reporting date not available in our data",
+        "catalyst_type": "earnings_revision",
+        "catalyst_source": "DATA CONTEXT: LIVE FUNDAMENTALS and WATCHLIST wrongIf; exact scheduled earnings date not available in our data"
+      },
+      "step_2_mechanism": {
+        "mechanism_chain": [
+          "1. INSUFFICIENT_NARRATIVE_DATA: the data context lacks populated sections for TUSHARE — BROKER RECOMMENDATIONS, TUSHARE — INSTITUTIONAL RESEARCH VISITS, TUSHARE — 龙虎榜 LHB APPEARANCES, TUSHARE — INSIDER/大股东 ACTIVITY, and RECENT NEWS; therefore no broker-name/report-title or event-grounded business-mechanism contrarian view can be validly built.",
+          "2. The strongest available bearish business mechanism is earnings-quality/margin fragility: revenue growth is positive at 15.6% TTM per LIVE FUNDAMENTALS, but latest annual net income grew only +0.2% per MULTI-YEAR INCOME STATEMENT, suggesting growth is not translating into profit expansion.",
+          "3. Margin buffer is thin for an auto OEM: 175.HK gross margin is 17.0% and operating margin is 5.0% per LIVE FUNDAMENTALS; the WATCHLIST wrongIf explicitly flags operating_margin < 3% as an auto-industry stress proxy, leaving only a narrow gap between current operating margin and the stated stress trigger.",
+          "4. Peer comparison does not show a clear margin moat versus BYD: 002594.SZ has gross margin 17.2% and operating margin 4.8% per PEER CROSS-SECTION COMPARISON, while 175.HK has gross margin 17.0% and operating margin 5.0% per LIVE FUNDAMENTALS; this weakens any claim that 175.HK has a defensible profitability advantage in a competitive EV/auto market.",
+          "5. The share price has already moved sharply ahead of confirmed profit acceleration: OHLC TREND shows close 16.15 to 22.74 over 60d, or +40.8%, while MULTI-YEAR INCOME STATEMENT shows diluted EPS flat at 1.63 in 2025 versus 1.63 in 2024 and net income only 16.9B in 2025 versus 16.8B in 2024."
+        ]
+      },
+      "step_3_evidence": {
+        "evidence_quantitative": [
+          "LIVE PRICE is 22.74, up +0.18% today per REAL-TIME ENRICHMENT CONTEXT.",
+          "OHLC TREND shows the stock moved from 16.15 to 22.74 over 60d, a +40.8% move, with period range 14.96–25.62 and last close at 73% of range.",
+          "LIVE FUNDAMENTALS show P/E TTM 12.2x, P/E Fwd 8.6x, and EV/EBITDA 12.4x.",
+          "LIVE FUNDAMENTALS show ROE 16.0%, gross margin 17.0%, operating margin 5.0%, and revenue growth TTM 15.6%.",
+          "MULTI-YEAR INCOME STATEMENT shows net income of 16.9B in 2025, 16.8B in 2024, and 5.3B in 2023; latest net income YoY is +0.2%.",
+          "MULTI-YEAR INCOME STATEMENT shows diluted EPS of 1.63 in 2025, 1.63 in 2024, and 0.51 in 2023.",
+          "ANALYST TARGETS show mean 29.36, range 21.11–36.10, based on 25 analysts, implying 29.1% upside versus live price per LIVE FUNDAMENTALS.",
+          "PEER CROSS-SECTION COMPARISON shows BYD 002594.SZ FY2025 net income 32.6B, revenue 804.0B, EPS 3.58, P/E TTM 51.3x, P/E Fwd 17.7x, gross margin 17.2%, operating margin 4.8%, revenue TTM -11.8%, ROE 11.1%, and market cap 0.91T.",
+          "TUSHARE — CAPITAL STRUCTURE SIGNALS states buyback programs: NONE, while MULTI-YEAR INCOME STATEMENT shows buyback cash-flow outflow of 0.3B in 2025, 0.0B in 2024, and 0.0B in 2023."
+        ],
+        "evidence_qualitative": [
+          "Consensus views already emphasize positive restructuring and EV-transition narratives: ZEEKR privatization, EV mix shift, and a diversified global portfolio including Volvo, Polestar, Lotus, and ZEEKR are all listed in SELL-SIDE CONSENSUS VIEWS.",
+          "The stock’s 60d price move appears to front-run margin/profit delivery, because the latest annual net income growth is only +0.2% while the share price rose +40.8% over 60d per OHLC TREND and MULTI-YEAR INCOME STATEMENT.",
+          "The watchlist explicitly identifies operating margin below 3% and EV market-share loss to BYD by more than 300bp QoQ as key stress indicators, but current EV market-share data and QoQ share-loss data are not available in our data.",
+          "Coverage gaps are material: rdcf, fragility, persona_overlay, and sector_regime are not loaded, and broker recommendations, institutional visits, LHB activity, insider activity, and recent news are not available in the supplied context."
+        ],
+        "contrarian_view": {
+          "market_consensus": {
+            "e": "Consensus is constructive because SELL-SIDE CONSENSUS VIEWS highlight ZEEKR privatization, accelerated EV transition, and global portfolio synergies; LIVE FUNDAMENTALS also show 25 analysts with mean target 29.36 and 29.1% upside versus live price.",
+            "z": "The market appears to believe restructuring and EV transition can sustain a re-rating despite the 60d share-price increase of +40.8% per OHLC TREND."
+          },
+          "our_variant": {
+            "e": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, institutional visits, 龙虎榜, holder transactions, and recent news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic and financial/peer data are available, which is insufficient under the stated protocol.",
+            "z": "The available bearish angle is therefore not a fully valid variant business mechanism: it is a risk-control observation that TTM revenue growth of 15.6% per LIVE FUNDAMENTALS is not flowing through to profit, with latest annual net income YoY only +0.2% and EPS flat at 1.63 per MULTI-YEAR INCOME STATEMENT."
+          },
+          "what_changes_our_mind": "A future results print showing operating margin staying clearly above the 3% watchlist stress proxy while net income growth re-accelerates materially above the latest +0.2% annual net-income YoY would weaken the bearish case; exact future reporting date not available in our data."
+        }
+      },
+      "step_4_quantification": {
+        "metric_target": "Operating margin versus watchlist stress proxy, and net income growth versus revenue growth",
+        "current_value": "Operating margin 5.0%, revenue growth TTM 15.6%, latest net income YoY +0.2%, diluted EPS 1.63 in 2025 versus 1.63 in 2024; sources: LIVE FUNDAMENTALS and MULTI-YEAR INCOME STATEMENT",
+        "predicted_value": "Bear case is that operating margin moves toward the <3% WATCHLIST stress proxy or net income remains near-stagnant despite positive revenue growth; exact forecast not available in our data",
+        "predicted_range": {
+          "low": "Operating margin <3% per WATCHLIST wrongIf stress proxy",
+          "mid": "Operating margin near 3% per WATCHLIST wrongIf stress proxy",
+          "high": "Operating margin remains at current 5.0% per LIVE FUNDAMENTALS"
+        },
+        "predicted_horizon": "2026-05-11 onward through the next reported financial update; exact reporting date not available in our data",
+        "confidence": 0.42
+      },
+      "step_5_proves_right_if": [
+        "Operating margin falls below the 3% WATCHLIST wrongIf stress proxy in a future financial print.",
+        "Net income growth remains close to the latest +0.2% YoY level from MULTI-YEAR INCOME STATEMENT despite revenue growth remaining positive versus the 15.6% TTM figure in LIVE FUNDAMENTALS.",
+        "Diluted EPS fails to rise from the 2025 level of 1.63 shown in MULTI-YEAR INCOME STATEMENT.",
+        "Evidence emerges of EV market-share loss to BYD by more than 300bp QoQ, matching the WATCHLIST wrongIf condition; current QoQ market-share data not available in our data.",
+        "The stock de-rates toward or below the analyst target range low of 21.11 per LIVE FUNDAMENTALS, especially if accompanied by margin deterioration."
+      ],
+      "step_6_proves_wrong_if": [
+        "Operating margin remains at or above the current 5.0% level from LIVE FUNDAMENTALS in the next financial update.",
+        "Net income growth re-accelerates materially above the latest +0.2% YoY figure from MULTI-YEAR INCOME STATEMENT while revenue growth remains positive.",
+        "Diluted EPS rises meaningfully above the 2025 level of 1.63 shown in MULTI-YEAR INCOME STATEMENT.",
+        "New data show no EV market-share loss to BYD greater than 300bp QoQ; current QoQ market-share data not available in our data.",
+        "A future broker report, institutional visit, news event, or management commentary provides a specific evidence-backed business mechanism for margin expansion; such narrative data are not available in the current context."
+      ],
+      "step_7_variant_view": {
+        "variant_view_one_sentence": "INSUFFICIENT_NARRATIVE_DATA — data context lacks broker reports, inst visits, 龙虎榜, and news. Cannot articulate a business-mechanism contrarian view; only valuation arithmetic available which is insufficient. PASS.",
+        "time_to_resolution": "Next reported results or earnings-revision window after 2026-05-10; exact date not available in our data",
+        "expected_pnl_asymmetry": {
+          "upside_if_right": "not available in our data",
+          "downside_if_wrong": "not available in our data",
+          "reward_to_risk": "PASS — no edge"
+        }
+      },
+      "step_8_phase_and_timing": {
+        "phase_1_market_belief": {
+          "duration_estimate": "Until next financial update after 2026-05-10; exact reporting date not available in our data",
+          "why_market_keeps_buying": [
+            "LIVE FUNDAMENTALS show 25 analysts with mean target 29.36 and 29.1% upside versus live price.",
+            "SELL-SIDE CONSENSUS VIEWS include positive narratives around ZEEKR privatization, EV transition, and global portfolio synergies.",
+            "LIVE FUNDAMENTALS show revenue growth TTM of 15.6% and ROE of 16.0%, which can support headline optimism despite flat EPS."
+          ],
+          "early_signs_phase_1_weakening": [
+            "Price fails to hold gains after the 60d move from 16.15 to 22.74 per OHLC TREND.",
+            "Consensus begins cutting targets from the current mean of 29.36 per LIVE FUNDAMENTALS.",
+            "Future data show operating margin trending toward the 3% WATCHLIST stress proxy."
+          ],
+          "optional_long_play": {
+            "direction": "none",
+            "sizing": "0%",
+            "exit_trigger": "Not applicable; no valid long setup under SHORT-thesis mandate and insufficient narrative data."
+          }
+        },
+        "phase_2_reality_recognition": {
+          "catalyst_for_reversion": [
+            "Next financial update shows operating margin approaching or falling below the 3% WATCHLIST stress proxy.",
+            "Next financial update shows net income growth remains near the latest +0.2% YoY figure despite revenue growth TTM of 15.6%.",
+            "Evidence appears of EV market-share loss to BYD by more than 300bp QoQ, the WATCHLIST wrongIf threshold."
+          ],
+          "estimated_timing": "2026-05-11 onward; exact date not available in our data",
+          "short_play": {
+            "direction": "watchlist-only short / defer until catalyst confirmation",
+            "sizing": "0% before evidence, because variant view is marked INSUFFICIENT_NARRATIVE_DATA",
+            "entry_trigger": "Enter only after a future print confirms operating margin near or below the 3% WATCHLIST stress proxy or confirms profit stagnation versus the latest +0.2% net-income YoY."
+          }
+        },
+        "position_sizing_curve": {
+          "pre_phase_1_weakening": "0%",
+          "phase_1_weakening_confirmed": "0%",
+          "phase_2_catalyst_imminent": "0%"
+        }
+      },
+      "qc_checklist": {
+        "all_numeric_claims_grounded_in_data_context_or_marked_unavailable": true,
+        "catalyst_date_is_future_relative_to_2026_05_10": true,
+        "mechanism_chain_mentions_specific_broker_name_and_report_title": false,
+        "reason_broker_check_failed": "No TUSHARE — BROKER RECOMMENDATIONS section or report title is present in the supplied data context.",
+        "our_variant_references_inst_visit_lhb_holdertrade_or_news": false,
+        "reason_event_check_failed": "No institutional research visits, 龙虎榜 events, holder transactions, or recent news are present in the supplied data context.",
+        "insufficient_narrative_data_protocol_used": true,
+        "contrarian_view_is_business_mechanism_not_valuation_only": false,
+        "reason_business_mechanism_check_failed": "A valid ticker-specific business mechanism cannot be supported without broker, institutional, LHB, holder, or recent-news data; output therefore uses INSUFFICIENT_NARRATIVE_DATA as required.",
+        "peer_comparison_used_where_available": true,
+        "short_recommendation_status": "PASS / watchlist-only due to insufficient narrative data"
+      }
+    },
+    "_technical": {
+      "trend": "UP",
+      "trend_strength": 75,
+      "momentum": {
+        "rsi_estimate": 68,
+        "macd_signal": "bullish",
+        "interpretation": "Strong upward momentum with +40.8% gain over 60 days from 16.15 to 22.74, though approaching overbought levels near 52W high of 25.62."
+      },
+      "key_levels": {
+        "support": [
+          20,
+          16.15
+        ],
+        "resistance": [
+          25.62,
+          29.36
+        ]
+      },
+      "volume_profile": "normal",
+      "chip_concentration": "uncertain",
+      "margin_trend": "unknown",
+      "technical_summary_e": "Strong uptrend with price advancing 40.8% over 60 days from 16.15 to current 22.74, positioning at 73% of 52-week range (14.96-25.62). Key resistance lies at prior 52W high of 25.62 and analyst mean target of 29.36, while support exists around the 20.00 psychological level and the 60-day breakout point of 16.15.",
+      "technical_summary_z": "技术面显示强劲上升趋势，60日内从16.15涨至22.74，涨幅40.8%，目前处于52周区间的73%位置。关键阻力位于前期高点25.62和分析师目标价29.36，支撑位在心理关口20.00和突破起点16.15附近。"
+    },
+    "_forensic": {
+      "bull_findings": [
+        {
+          "claim": "Forward P/E of 8.6x vs peer BYD at 17.7x",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows P/E Fwd: 8.6x and PEER CROSS-SECTION shows BYD P/E Fwd 17.7x"
+        },
+        {
+          "claim": "TTM Revenue Growth of +15.6%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Rev Growth (TTM): 15.6%"
+        },
+        {
+          "claim": "Net Income YoY growth of +0.2% for 2025",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT shows Net Income YoY (latest): +0.2%"
+        },
+        {
+          "claim": "Analyst mean price target of 29.36 implying 29.1% upside",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows ANALYST TARGETS: mean 29.36 → 29.1% upside vs live"
+        },
+        {
+          "claim": "Operating margin at 5.0% comparable to BYD's 4.8%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Op Margin: 5.0% and PEER CROSS-SECTION shows BYD operating margin 4.8%"
+        },
+        {
+          "claim": "+40.8% stock move in 60 days",
+          "data_match": "MATCH",
+          "evidence": "OHLC TREND shows close 16.15 → 22.74 (+40.8%)"
+        }
+      ],
+      "bear_findings": [
+        {
+          "claim": "Revenue growth TTM of 15.6% but net income YoY only +0.2%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Rev Growth (TTM): 15.6% and MULTI-YEAR INCOME STATEMENT shows Net Income YoY (latest): +0.2%"
+        },
+        {
+          "claim": "BYD gross margin 17.2% vs 175.HK gross margin 17.0%",
+          "data_match": "MATCH",
+          "evidence": "PEER CROSS-SECTION shows BYD GM 17.2% and LIVE FUNDAMENTALS shows GM 17.0%"
+        },
+        {
+          "claim": "BYD revenue TTM -11.8% vs 175.HK +15.6%",
+          "data_match": "MATCH",
+          "evidence": "PEER CROSS-SECTION shows BYD revenue TTM -11.8% and LIVE FUNDAMENTALS shows Rev Growth (TTM): 15.6%"
+        },
+        {
+          "claim": "Operating margin 5.0% vs watchlist stress proxy of <3%",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows Op Margin: 5.0% and WATCHLIST wrongIf states operating_margin < 3%"
+        },
+        {
+          "claim": "25 analysts with mean target 29.36",
+          "data_match": "MATCH",
+          "evidence": "LIVE FUNDAMENTALS shows 25 analysts → 29.1% upside vs live"
+        },
+        {
+          "claim": "Diluted EPS flat at 1.63 in 2025 vs 2024",
+          "data_match": "MATCH",
+          "evidence": "MULTI-YEAR INCOME STATEMENT shows Diluted EPS: 2025=1.63, 2024=1.63"
+        }
+      ],
+      "shared_assumptions_at_risk": [
+        "Both sides assume operating leverage will either materialize (Bull) or fail (Bear) based on the next earnings cycle, but neither provides concrete evidence of margin trajectory",
+        "Both rely on the premise that the EV transition and ZEEKR restructuring are temporary headwinds, but lack specific timeline or completion metrics",
+        "Both assume BYD comparison is valid proxy for competitive positioning, but lack broader sector context or other peer data"
+      ],
+      "technical_vs_bull": "AGREES — Technical shows strong uptrend (+40.8% in 60d) with 75% trend strength supporting Bull's re-rating thesis and price targets of 26-37 HKD vs current 22.74",
+      "technical_vs_bear": "CONFLICTS — Technical momentum is bullish with price at 73% of 52W range, contradicting Bear's margin deterioration concerns and defensive positioning",
+      "bull_contrarian_quality": "VALUATION_ONLY",
+      "bear_contrarian_quality": "VALUATION_ONLY",
+      "verdict_on_grounding": "BOTH_VALUATION_ONLY",
+      "verdict_rationale": "Both sides explicitly acknowledge INSUFFICIENT_NARRATIVE_DATA and lack broker reports, institutional visits, or news-driven mechanisms. Bull relies on P/E re-rating expectations while Bear focuses on margin conversion risk, but neither presents a genuine business-level contrarian insight."
+    },
+    "_agent_status": {
+      "bull_r1": {
+        "status": "success",
+        "ms": 47720
+      },
+      "bear_r1": {
+        "status": "success",
+        "ms": 62432
+      },
+      "technical": {
+        "status": "success",
+        "ms": 7995
+      },
+      "bull_r2": {
+        "status": "success",
+        "ms": 41082
+      },
+      "bear_r2": {
+        "status": "success",
+        "ms": 69691
+      },
+      "forensic": {
+        "status": "success",
+        "ms": 19134
+      },
+      "synth": {
+        "status": "success",
+        "ms": 53400
+      }
+    },
+    "_quality": {
+      "score": 74,
+      "missingFields": [
+        "qc_checklist.all_8_steps_complete",
+        "qc_checklist.step_1_specific_not_vague",
+        "qc_checklist.step_2_no_unfounded_leaps",
+        "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "qc_checklist.step_5_observable",
+        "qc_checklist.step_6_observable",
+        "qc_checklist.step_7_one_sentence_tagline",
+        "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "qc_checklist.step_8_early_signs_observable",
+        "qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "qc_checklist.step_8_position_sizing_curve_monotonic",
+        "qc_checklist.reward_to_risk_at_least_threshold"
+      ],
+      "qcChecklistResults": {
+        "step_1_specific_not_vague": true,
+        "step_1_catalyst_date_in_future": true,
+        "step_2_no_unfounded_leaps": true,
+        "step_3_evidence_includes_quant_qual_contrarian": true,
+        "step_3_contrarian_view_has_what_changes_our_mind": true,
+        "step_4_has_specific_numbers_and_horizon": true,
+        "step_5_observable": true,
+        "step_6_observable": true,
+        "step_7_one_sentence_tagline": true,
+        "reward_to_risk_at_least_threshold": false,
+        "reward_to_risk_below_threshold": false,
+        "step_8_phase_timing_concrete_not_boilerplate": false,
+        "step_8_early_signs_observable": true,
+        "step_8_catalyst_for_reversion_predatable": true,
+        "step_8_position_sizing_curve_monotonic": false,
+        "all_8_steps_complete": true
+      },
+      "severity": "WARN",
+      "qc_findings": [
+        "failed:step_8_phase_timing_concrete_not_boilerplate",
+        "failed:step_8_position_sizing_curve_monotonic",
+        "failed:reward_to_risk_at_least_threshold",
+        "missing:qc_checklist.all_8_steps_complete",
+        "missing:qc_checklist.step_1_specific_not_vague",
+        "missing:qc_checklist.step_2_no_unfounded_leaps",
+        "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+        "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+        "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+        "missing:qc_checklist.step_5_observable",
+        "missing:qc_checklist.step_6_observable",
+        "missing:qc_checklist.step_7_one_sentence_tagline",
+        "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+        "missing:qc_checklist.step_8_early_signs_observable",
+        "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+        "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+        "missing:qc_checklist.reward_to_risk_at_least_threshold"
+      ]
+    }
+  },
+  "models_used": {
+    "bull": "gemini-2.5-pro",
+    "bear": "gpt-5.5",
+    "technical": "claude-sonnet-4-20250514",
+    "forensic": "claude-sonnet-4-20250514",
+    "synth": "claude-opus-4-7"
+  },
+  "_status": "OK",
+  "_partial_failures": [],
+  "pipeline_ms_total": 161336
+}

@@ -1,0 +1,297 @@
+{
+  "_meta": {
+    "generated_at": "2026-07-10T11:31:50.525195+00:00",
+    "schema_version": 1,
+    "thresholds_status": "[unvalidated intuition]",
+    "personas_included": [
+      "buffett",
+      "burry",
+      "damodaran"
+    ],
+    "note": "Deterministic persona checklists from named investor frameworks. NOT folded into VP composite (INVARIANT 3). Read alongside VP for richer perspective."
+  },
+  "personas": {
+    "300308.SZ": {
+      "buffett": {
+        "score": 0,
+        "max": 6,
+        "criteria": [
+          {
+            "name": "ROE > 15%",
+            "actual": null,
+            "threshold": 0.15,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "Operating margin > 15%",
+            "actual": null,
+            "threshold": 0.15,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "D/E < 50%",
+            "actual": null,
+            "threshold": 0.5,
+            "comparator": "<",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "FCF yield > 4%",
+            "actual": null,
+            "threshold": 0.04,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "Trailing P/E < 20",
+            "actual": null,
+            "threshold": 20.0,
+            "comparator": "<",
+            "passed": null,
+            "format": "ratio"
+          },
+          {
+            "name": "Current ratio > 1.5",
+            "actual": null,
+            "threshold": 1.5,
+            "comparator": ">",
+            "passed": null,
+            "format": "ratio"
+          }
+        ],
+        "verdict_e": "Not a Buffett name on these criteria.",
+        "verdict_z": "按此清单非巴菲特类标的。"
+      },
+      "burry": {
+        "score": 0,
+        "max": 4,
+        "criteria": [
+          {
+            "name": "P/B < 1.5",
+            "actual": null,
+            "threshold": 1.5,
+            "comparator": "<",
+            "passed": null,
+            "format": "ratio"
+          },
+          {
+            "name": "FCF yield > 8%",
+            "actual": null,
+            "threshold": 0.08,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "EV/EBITDA < 10",
+            "actual": null,
+            "threshold": 10.0,
+            "comparator": "<",
+            "passed": null,
+            "format": "ratio"
+          },
+          {
+            "name": "Net cash > 20% of mkt cap",
+            "actual": null,
+            "threshold": 0.2,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          }
+        ],
+        "verdict_e": "Growth-priced; not a deep-value candidate.",
+        "verdict_z": "成长定价——非深度价值候选。"
+      },
+      "damodaran": {
+        "score": 0,
+        "max": 3,
+        "criteria": [
+          {
+            "name": "|implied vs our growth gap| < ±5%",
+            "actual": null,
+            "threshold": 0.05,
+            "comparator": "<",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "WACC in [8%, 15%]",
+            "actual": null,
+            "threshold": [
+              0.08,
+              0.15
+            ],
+            "comparator": "in",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "Our growth < 25% (terminal sanity)",
+            "actual": null,
+            "threshold": 0.25,
+            "comparator": "<",
+            "passed": null,
+            "format": "percent"
+          }
+        ],
+        "verdict_e": "Aggressive thesis: our_growth diverges from market price meaningfully.",
+        "verdict_z": "激进假设：我们的增长预期与市场价格意义性背离。"
+      }
+    },
+    "002594.SZ": {
+      "buffett": {
+        "score": 0,
+        "max": 6,
+        "criteria": [
+          {
+            "name": "ROE > 15%",
+            "actual": null,
+            "threshold": 0.15,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "Operating margin > 15%",
+            "actual": null,
+            "threshold": 0.15,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "D/E < 50%",
+            "actual": null,
+            "threshold": 0.5,
+            "comparator": "<",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "FCF yield > 4%",
+            "actual": null,
+            "threshold": 0.04,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "Trailing P/E < 20",
+            "actual": null,
+            "threshold": 20.0,
+            "comparator": "<",
+            "passed": null,
+            "format": "ratio"
+          },
+          {
+            "name": "Current ratio > 1.5",
+            "actual": null,
+            "threshold": 1.5,
+            "comparator": ">",
+            "passed": null,
+            "format": "ratio"
+          }
+        ],
+        "verdict_e": "Not a Buffett name on these criteria.",
+        "verdict_z": "按此清单非巴菲特类标的。"
+      },
+      "burry": {
+        "score": 0,
+        "max": 4,
+        "criteria": [
+          {
+            "name": "P/B < 1.5",
+            "actual": null,
+            "threshold": 1.5,
+            "comparator": "<",
+            "passed": null,
+            "format": "ratio"
+          },
+          {
+            "name": "FCF yield > 8%",
+            "actual": null,
+            "threshold": 0.08,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "EV/EBITDA < 10",
+            "actual": null,
+            "threshold": 10.0,
+            "comparator": "<",
+            "passed": null,
+            "format": "ratio"
+          },
+          {
+            "name": "Net cash > 20% of mkt cap",
+            "actual": null,
+            "threshold": 0.2,
+            "comparator": ">",
+            "passed": null,
+            "format": "percent"
+          }
+        ],
+        "verdict_e": "Growth-priced; not a deep-value candidate.",
+        "verdict_z": "成长定价——非深度价值候选。"
+      },
+      "damodaran": {
+        "score": 0,
+        "max": 3,
+        "criteria": [
+          {
+            "name": "|implied vs our growth gap| < ±5%",
+            "actual": null,
+            "threshold": 0.05,
+            "comparator": "<",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "WACC in [8%, 15%]",
+            "actual": null,
+            "threshold": [
+              0.08,
+              0.15
+            ],
+            "comparator": "in",
+            "passed": null,
+            "format": "percent"
+          },
+          {
+            "name": "Our growth < 25% (terminal sanity)",
+            "actual": null,
+            "threshold": 0.25,
+            "comparator": "<",
+            "passed": null,
+            "format": "percent"
+          }
+        ],
+        "verdict_e": "Aggressive thesis: our_growth diverges from market price meaningfully.",
+        "verdict_z": "激进假设：我们的增长预期与市场价格意义性背离。"
+      }
+    },
+    "175.HK": {
+      "error": "rdcf_missing",
+      "scores": null
+    },
+    "603233.SH": {
+      "error": "rdcf_missing",
+      "scores": null
+    },
+    "688120.SH": {
+      "error": "rdcf_missing",
+      "scores": null
+    },
+    "300054.SZ": {
+      "error": "rdcf_missing",
+      "scores": null
+    }
+  }
+}

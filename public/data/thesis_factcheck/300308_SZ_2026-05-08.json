@@ -1,0 +1,48 @@
+{
+  "ticker": "300308.SZ",
+  "fact_checked_at": "2026-05-08T13:38:10.598174+00:00",
+  "thesis_source": "docs/research/factcheck/300308SZ_thesis_2026-05-08_GROUNDED.json",
+  "ground_truth_source": "public/data/market_data.json",
+  "tolerance_pct": 5.0,
+  "live_price": 886,
+  "results": [
+    {
+      "thesis_path": "step_2_mechanism.mechanism_chain[3]",
+      "matched_text": "23.5x forward P/E",
+      "claimed_value": 23.5,
+      "gt_field": "pe_forward",
+      "label": "forward P/E",
+      "context_snippet": "x <30%, consensus FY2026 EPS gets cut → 23.5x forward P/E re-rates lower; if hyperscaler CapEx co",
+      "status": "MATCH",
+      "diff_pct": 0.136266283381968,
+      "gt_value": 23.468021
+    },
+    {
+      "thesis_path": "variant.marketBelieves.e",
+      "matched_text": "23.5x forward P/E",
+      "claimed_value": 23.5,
+      "gt_field": "pe_forward",
+      "label": "forward P/E",
+      "context_snippet": "oat; multi-year AI CapEx ramp justifies 23.5x forward P/E and 873 consensus target.",
+      "status": "MATCH",
+      "diff_pct": 0.136266283381968,
+      "gt_value": 23.468021
+    },
+    {
+      "thesis_path": "fin_insights[2]",
+      "matched_text": "23.5x forward P/E",
+      "claimed_value": 23.5,
+      "gt_field": "pe_forward",
+      "label": "forward P/E",
+      "context_snippet": "Implied growth check: 23.5x forward P/E mean-reverting to peer 18x in 3yr requi",
+      "status": "MATCH",
+      "diff_pct": 0.136266283381968,
+      "gt_value": 23.468021
+    }
+  ],
+  "summary": {
+    "MATCH": 3,
+    "MISMATCH": 0,
+    "UNVERIFIABLE": 0
+  }
+}

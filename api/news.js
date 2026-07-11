@@ -8,18 +8,23 @@
 
 // ─── PORTFOLIO FEEDS ─────────────────────────────────────────────────────────
 // Per-stock Yahoo Finance RSS + sector ETFs. Updated every ~15min by Yahoo.
+// Watchlist v1.2 (2026-05-08) — 4-ticker focus.
+// Removed: 700.HK Tencent, 9999.HK NetEase, 6160.HK BeOne (no longer tracked).
+// Added: 175.HK Geely (via 0175.HK + GELYY ADR), 603233.SH Da Shenlin
+// (Yahoo coverage thin for A-share retail — Chinese-source news upgrade
+// queued as Phase 2.B-2 via Tushare news_cct).
 const PORTFOLIO_FEEDS = [
-  // Focus stocks
-  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=0700.HK&region=US&lang=en-US',   ticker: '700.HK',       label: 'Tencent' },
-  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=9999.HK&region=US&lang=en-US',   ticker: '9999.HK',      label: 'NetEase' },
-  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=6160.HK&region=US&lang=en-US',   ticker: '6160.HK',      label: 'BeOne Medicines' },
-  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=BYDDY&region=US&lang=en-US',     ticker: '002594.SZ',    label: 'BYD' },
-  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=ITRUF&region=US&lang=en-US',     ticker: '300308.SZ',    label: 'Innolight' },
-  // Sector proxies
-  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=SMH&region=US&lang=en-US',       ticker: 'AI-INFRA',     label: 'AI / Semis Sector' },
-  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=XBI&region=US&lang=en-US',       ticker: 'BIOTECH',      label: 'Biotech / Pharma Sector' },
-  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=KWEB&region=US&lang=en-US',      ticker: 'CHINA-INTERNET', label: 'China Internet Sector' },
+  // Focus stocks (current watchlist)
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=BYDDY&region=US&lang=en-US',     ticker: '002594.SZ',    label: 'BYD (BYDDY ADR)' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=ITRUF&region=US&lang=en-US',     ticker: '300308.SZ',    label: 'Innolight (ITRUF ADR)' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=GELYY&region=US&lang=en-US',     ticker: '175.HK',       label: 'Geely Auto (GELYY ADR)' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=0175.HK&region=US&lang=en-US',   ticker: '175.HK',       label: 'Geely Auto (HK)' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=603233.SS&region=US&lang=en-US', ticker: '603233.SH',    label: 'Da Shenlin (Yahoo limited)' },
+  // Sector proxies (broader narrative)
   { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=KARS&region=US&lang=en-US',      ticker: 'EV-SECTOR',    label: 'EV / Auto Sector' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=SMH&region=US&lang=en-US',       ticker: 'AI-INFRA',     label: 'AI / Semis Sector' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=XLV&region=US&lang=en-US',       ticker: 'HEALTHCARE',   label: 'Healthcare / Pharma Sector' },
+  { url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=FXI&region=US&lang=en-US',       ticker: 'CHINA-LARGE',  label: 'China Large-Cap Sector' },
 ];
 
 // ─── MACRO FEEDS ─────────────────────────────────────────────────────────────

@@ -1,0 +1,408 @@
+{
+  "ticker": "MSFT",
+  "cik": "0000789019",
+  "fetched_at": "2026-05-02T11:33:47.152956+00:00",
+  "_status": "ok",
+  "filings": [
+    {
+      "accession_no": "0001193125-26-191507",
+      "form": "10-Q",
+      "filed_date": "2026-04-29",
+      "primary_doc": "msft-20260331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526191507/msft-20260331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001193125-26-191457",
+      "form": "8-K",
+      "filed_date": "2026-04-29",
+      "primary_doc": "msft-20260429.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526191457/msft-20260429.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-26-027207",
+      "form": "10-Q",
+      "filed_date": "2026-01-28",
+      "primary_doc": "msft-20251231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526027207/msft-20251231.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001193125-26-027198",
+      "form": "8-K",
+      "filed_date": "2026-01-28",
+      "primary_doc": "msft-20260128.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526027198/msft-20260128.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-311196",
+      "form": "8-K",
+      "filed_date": "2025-12-08",
+      "primary_doc": "d34077d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525311196/d34077d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-256321",
+      "form": "10-Q",
+      "filed_date": "2025-10-29",
+      "primary_doc": "msft-20250930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525256321/msft-20250930.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001193125-25-256310",
+      "form": "8-K",
+      "filed_date": "2025-10-29",
+      "primary_doc": "msft-20251028.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525256310/msft-20251028.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-245150",
+      "form": "DEF 14A",
+      "filed_date": "2025-10-21",
+      "primary_doc": "d908201ddef14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525245150/d908201ddef14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001193125-25-225125",
+      "form": "8-K",
+      "filed_date": "2025-09-30",
+      "primary_doc": "d863209d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525225125/d863209d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-25-100235",
+      "form": "10-K",
+      "filed_date": "2025-07-30",
+      "primary_doc": "msft-20250630.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0000950170-25-100226",
+      "form": "8-K",
+      "filed_date": "2025-07-30",
+      "primary_doc": "msft-20250730.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100226/msft-20250730.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-154103",
+      "form": "8-K",
+      "filed_date": "2025-07-01",
+      "primary_doc": "d84624d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525154103/d84624d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-25-061046",
+      "form": "10-Q",
+      "filed_date": "2025-04-30",
+      "primary_doc": "msft-20250331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025061046/msft-20250331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0000950170-25-061032",
+      "form": "8-K",
+      "filed_date": "2025-04-30",
+      "primary_doc": "msft-20250430.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025061032/msft-20250430.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-25-010491",
+      "form": "10-Q",
+      "filed_date": "2025-01-29",
+      "primary_doc": "msft-20241231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025010491/msft-20241231.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0000950170-25-010484",
+      "form": "8-K",
+      "filed_date": "2025-01-29",
+      "primary_doc": "msft-20250129.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025010484/msft-20250129.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-25-010492",
+      "form": "8-K",
+      "filed_date": "2025-01-22",
+      "primary_doc": "d929748d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312525010492/d929748d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-24-275524",
+      "form": "8-K",
+      "filed_date": "2024-12-11",
+      "primary_doc": "d865252d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312524275524/d865252d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-24-132722",
+      "form": "8-K",
+      "filed_date": "2024-12-03",
+      "primary_doc": "msft-20241203.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024132722/msft-20241203.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-24-118967",
+      "form": "10-Q",
+      "filed_date": "2024-10-30",
+      "primary_doc": "msft-20240930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024118967/msft-20240930.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0000950170-24-118955",
+      "form": "8-K",
+      "filed_date": "2024-10-30",
+      "primary_doc": "msft-20241030.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024118955/msft-20241030.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-24-242883",
+      "form": "DEF 14A",
+      "filed_date": "2024-10-24",
+      "primary_doc": "d858775ddef14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312524242883/d858775ddef14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001193125-24-204403",
+      "form": "8-K",
+      "filed_date": "2024-08-21",
+      "primary_doc": "d846847d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312524204403/d846847d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-24-087843",
+      "form": "10-K",
+      "filed_date": "2024-07-30",
+      "primary_doc": "msft-20240630.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0000950170-24-087835",
+      "form": "8-K",
+      "filed_date": "2024-07-30",
+      "primary_doc": "msft-20240730.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024087835/msft-20240730.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-24-048288",
+      "form": "10-Q",
+      "filed_date": "2024-04-25",
+      "primary_doc": "msft-20240331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024048288/msft-20240331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0000950170-24-048268",
+      "form": "8-K",
+      "filed_date": "2024-04-25",
+      "primary_doc": "msft-20240425.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024048268/msft-20240425.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-24-008814",
+      "form": "10-Q",
+      "filed_date": "2024-01-30",
+      "primary_doc": "msft-20231231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024008814/msft-20231231.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0000950170-24-008809",
+      "form": "8-K",
+      "filed_date": "2024-01-30",
+      "primary_doc": "msft-20240130.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024008809/msft-20240130.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-24-011295",
+      "form": "8-K",
+      "filed_date": "2024-01-19",
+      "primary_doc": "d708866d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312524011295/d708866d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-291720",
+      "form": "8-K",
+      "filed_date": "2023-12-08",
+      "primary_doc": "d636199d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523291720/d636199d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-271376",
+      "form": "8-K",
+      "filed_date": "2023-11-06",
+      "primary_doc": "d566386d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523271376/d566386d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-265616",
+      "form": "8-K",
+      "filed_date": "2023-10-30",
+      "primary_doc": "d572684d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523265616/d572684d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-23-054855",
+      "form": "10-Q",
+      "filed_date": "2023-10-24",
+      "primary_doc": "msft-20230930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023054855/msft-20230930.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0000950170-23-054848",
+      "form": "8-K",
+      "filed_date": "2023-10-24",
+      "primary_doc": "msft-20231024.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023054848/msft-20231024.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-259247",
+      "form": "DEF 14A",
+      "filed_date": "2023-10-19",
+      "primary_doc": "d356108ddef14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523259247/d356108ddef14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001104659-23-109428",
+      "form": "8-K",
+      "filed_date": "2023-10-16",
+      "primary_doc": "tm2328507d1_8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000110465923109428/tm2328507d1_8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-255762",
+      "form": "8-K",
+      "filed_date": "2023-10-13",
+      "primary_doc": "d537928d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523255762/d537928d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-254151",
+      "form": "8-K",
+      "filed_date": "2023-10-11",
+      "primary_doc": "d530324d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523254151/d530324d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-23-035122",
+      "form": "10-K",
+      "filed_date": "2023-07-27",
+      "primary_doc": "msft-20230630.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023035122/msft-20230630.htm",
+      "category": "Annual Report"
+    },
+    {
+      "accession_no": "0000950170-23-034400",
+      "form": "8-K",
+      "filed_date": "2023-07-25",
+      "primary_doc": "msft-20230725.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023034400/msft-20230725.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-181341",
+      "form": "8-K",
+      "filed_date": "2023-07-03",
+      "primary_doc": "d288670d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523181341/d288670d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0000950170-23-014423",
+      "form": "10-Q",
+      "filed_date": "2023-04-25",
+      "primary_doc": "msft-20230331.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017023014423/msft-20230331.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001193125-23-115280",
+      "form": "8-K",
+      "filed_date": "2023-04-25",
+      "primary_doc": "d321368d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523115280/d321368d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001564590-23-000733",
+      "form": "10-Q",
+      "filed_date": "2023-01-24",
+      "primary_doc": "msft-10q_20221231.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000156459023000733/msft-10q_20221231.htm",
+      "category": "Quarterly Report"
+    },
+    {
+      "accession_no": "0001193125-23-014230",
+      "form": "8-K",
+      "filed_date": "2023-01-24",
+      "primary_doc": "d406070d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523014230/d406070d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-23-009934",
+      "form": "8-K",
+      "filed_date": "2023-01-18",
+      "primary_doc": "d447690d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312523009934/d447690d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-22-306591",
+      "form": "8-K",
+      "filed_date": "2022-12-16",
+      "primary_doc": "d434535d8k.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312522306591/d434535d8k.htm",
+      "category": "Material Event"
+    },
+    {
+      "accession_no": "0001193125-22-270484",
+      "form": "DEF 14A",
+      "filed_date": "2022-10-27",
+      "primary_doc": "d318171ddef14a.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312522270484/d318171ddef14a.htm",
+      "category": "Proxy Statement"
+    },
+    {
+      "accession_no": "0001564590-22-035087",
+      "form": "10-Q",
+      "filed_date": "2022-10-25",
+      "primary_doc": "msft-10q_20220930.htm",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/000156459022035087/msft-10q_20220930.htm",
+      "category": "Quarterly Report"
+    }
+  ]
+}

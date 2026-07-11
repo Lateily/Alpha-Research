@@ -1,0 +1,354 @@
+{
+  "_meta": {
+    "layer": "Core Thesis Factory v1 — Single-Name Decision Sheet (单票决策书)",
+    "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md",
+    "generated_at": "2026-06-11T09:12:48.928051+00:00",
+    "sheet_version": "v1",
+    "disclaimer": "INTERNAL, UNVALIDATED research output of the model-recommendation pilot — not validated alpha, not external/personalized investment advice; sizing fields are SUGGESTIONS only; the human executes. Quality gate = human red-team (auto checks are the floor only)."
+  },
+  "identity": {
+    "ticker": "688120.SH",
+    "name": {
+      "zh": "华海清科",
+      "en": "Huahai Qingke"
+    },
+    "market": "A",
+    "sector_theme": {
+      "zh": "半导体设备 · CMP 国产垄断 · HBM 减薄第二引擎",
+      "en": "Semiconductor equipment · domestic CMP monopoly · HBM thinning second engine"
+    },
+    "as_of": "2026-06-11",
+    "ticker_one_context": {
+      "objective_horizon": "6-12 months (batch-1, inherits the ticker #1 ruling)",
+      "real_money_consideration": "pending red-team PASS + Junyan ruling"
+    },
+    "corporate_actions": [
+      {
+        "type": "split_dividend",
+        "ex_date": "2026-06-10",
+        "split_factor": 1.4,
+        "dividend_per_share": 0.4,
+        "source": "2025年度权益分派实施公告 2026-06-04 (10派4转4, E1) — 总股本 353,379,376 → 494,731,127"
+      }
+    ],
+    "provenance": {
+      "research_core_lineage": "CTF batch-1 ticker #2 — discovered via Serenity Scan #1 (docs/research/serenity/SCAN_1_AI_SEMIS.md, #68 merged; serenity_score 74 = T2 [unvalidated intuition]); nominations ratified by Junyan 2026-06-11",
+      "generation_note": "fresh-generation path per CTF spec §4 + #67: production api/research 8-step thesis generated 2026-06-11 (auto _quality 90 = FLOOR only; committed at cores/api_generated/688120_SH_20260611.json), then FACT-CHECKED against a dedicated web fact pack (E1-pinned to 年报/一季报/公告/IR记录 PDF). Material api errors corrected by the factcheck: GM stated 44.5% (actual 41.81% E1); an UNDISCLOSED 'order book ¥8.3B' invented (no order-book number exists in any filing); consumables-attach framing partially misassigned (耗材/维保 exists but pad/slurry are 鼎龙/安集's business). Finding logged: api/research on out-of-watchlist names produces fluent but numerically wrong theses — auto-score ≠ factual quality; the data-layer gap closes via the watchlist extension in this PR",
+      "factcheck_basis": "two-agent web fact pack 2026-06-11: price/valuation from exchange feed (E1 行情); FY25/Q1 absolutes from 年报/一季报 PDF + IR记录 2026-04-24 原文 (E1); consensus from 国盛 4/23 / 东海 5/8 (E2 卖方)"
+    }
+  },
+  "thesis": {
+    "variant_perception": {
+      "zh": "市场相信:存储超级周期 + 长鑫过会让国产设备订单'确定性爆发',因此一个月内(5/08→6/11)在零新增基本面披露下把市值推高 33% 至 924 亿(静态 PE 85×)。我们相信:垄断卡位是真的(国内唯一 12 寸 CMP 量产商,累计出机 1000+ 台 E2;减薄抛光一体机累计 20+ 台、部分先进制程 CMP 已进头部存储厂 HBM 产线作基线设备,E1 公司主张),但三个被主题行情掩盖的事实是——(a) 公司自己的激励草案隐含 2026 归母净利底线仅 ≈10.9 亿(≈与 2025 持平),与卖方 26E 13.9-14.2 亿之间有 +28% 缺口;(b) 毛利率三连降(FY25 41.81%,-1.39pp)+ 净利增速(+5.9%)远落后营收(+36.5%)的剪刀差;(c) 经营现金流连续恶化(FY25 -30.7%,Q1 -38.9%)。当前价格是为'订单兑现的最乐观路径'付费;分辨事件 = 2026 半年报的收入/毛利率/扣非打印。",
+      "en": "Market believes: the storage super-cycle + CXMT's IPO approval make domestic-equipment orders a 'certainty', so it repriced the name +33% in one month (5/08→6/11) to ¥92.4B (85x static PE) on ZERO new fundamental disclosure. We believe: the monopoly position is real (sole domestic 12\" CMP maker, 1000+ cumulative tools E2; 20+ thinning-polishing integrated tools and CMP units installed as BASELINE equipment on a leading memory maker's HBM line, E1 company claims), but three facts buried under the theme rally are — (a) the company's own incentive draft implies a 2026 net-profit floor of only ≈¥1.09B (≈flat vs 2025), a +28% gap below sell-side FY26E ¥1.39-1.42B; (b) three consecutive years of GM decline (FY25 41.81%, −1.39pp) with profit growth (+5.9%) far behind revenue (+36.5%); (c) deteriorating operating cash flow (FY25 −30.7%, Q1 −38.9%). The current price pays for the most optimistic order-conversion path; the discriminating event is the 2026 H1 report's revenue/GM/non-GAAP print."
+    },
+    "mechanism": {
+      "zh": "第一性链条:存储/逻辑扩产(长存三期装机、长鑫过会后扩产)→ 每条 12 寸线必配 CMP(多重曝光与 HBM 堆叠使步数倍增)→ 国内唯一量产商承接制度性锁定的需求(同业实体清单背景)→ 订单→收入转化在半年报打印 → 若收入增速 ≥30% 且毛利率守住 40%±,'垄断+第二引擎(减薄/离子注入/晶圆再生)'叙事获得 E1 支撑,利润缺口向卖方数字收敛;反之激励底线情形兑现,85× 静态估值失去支撑。诚实锚:公司拒绝披露存储/逻辑客户拆分('占比较大'是全部口径),订单无量化指引('在手订单充足'),所以本论点不依赖任何订单数字——只依赖将在半年报强制披露的收入/毛利率/扣非。",
+      "en": "First-principles chain: storage/logic capex (YMTC phase-3 install, CXMT post-approval expansion) → every 12\" line must run CMP (multi-patterning and HBM stacking multiply step counts) → the sole domestic production-grade maker absorbs institutionally locked-in demand (peers entity-listed) → order-to-revenue conversion prints at the H1 report → if revenue grows ≥30% with GM holding ~40%, the 'monopoly + second engines (thinning / ion implant / wafer regen)' narrative gains E1 support and the profit gap converges toward sell-side numbers; otherwise the incentive-floor case materializes and the 85x static multiple loses support. Honesty anchor: the company refuses customer-mix splits ('较大' is the entire register) and gives no quantified order guidance ('充足') — so this thesis depends on NO order number, only on the H1-mandated revenue/GM/non-GAAP prints."
+    },
+    "direction": "LONG",
+    "horizon": "6-12 months (E1 proof event = 2026 H1 report ~2026-08-2x; secondary checkpoints quarterly)",
+    "conviction": "WATCH_ONLY — R/R at the 2026-06-11 live price (≈0.43) is FAR below the 2:1 bar and even the committed split-adjusted reference (≈1.98) misses it; STARTER eligibility begins only at the add zone (≤~139, where the bar is met) or on a post-E1 re-band. No position at current price."
+  },
+  "evidence": {
+    "items": [
+      {
+        "claim": "FY2025: revenue ¥4.648B +36.46%, 归母 ¥1.084B +5.89%, 扣非 ¥0.965B +12.69%, GM 41.81% (−1.39pp, third consecutive decline), OCF ¥0.80B −30.73%; 26Q1: revenue ¥1.201B +31.66%, 归母 ¥0.247B +5.95%, GM 42.31%, OCF ¥7.89M −38.91% — the revenue/profit scissors is the central tension",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "2025年报 PDF (sina 12154282) + 2026一季报 PDF (sina 12154262) + IR记录 2026-04-24 原文 (cninfo b29d0c09); GM/OCF via two consistent media transcriptions of the filings"
+      },
+      {
+        "claim": "Incentive draft implies a 2026 net-profit FLOOR of ≈¥1.09B (EPS ≥4.60 on the 236,724,893 pre-issue share base) — ≈FLAT vs 2025, a +28% gap below sell-side FY26E ¥1.386-1.415B; the company's own bar does not promise the growth the market is paying for",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "激励计划草案摘要 (公告 2026-018, sina 12095148) [底线为 derived: 236.7M × 4.60 ≈ ¥1.089B]; 国盛 4/23 (FY26E 13.86亿, cut from 15.25亿) + 东海 5/8 (14.15亿) — both sell-side numbers CUT post-annual-report"
+      },
+      {
+        "claim": "Second engines are E1-claimed but early: 减薄抛光一体机 cumulative 20+ units with repeat orders from multiple leading houses (correct register: 一体机, NOT bare 减薄机); 部分先进制程 CMP 装备已进入头部存储厂商 HBM 产线作为基线设备; 12\" high-current ion implanter batch-delivered; wafer-regen Tianjin 200k wpm full",
+        "tier": "E1",
+        "causal_tag": "INFERRED",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "IR记录 2026-04-24 原文 (company claims; no third-party verification; 'HBM 基线设备' has no revenue split attached) — the cadence of these units through 2026 is the under-modeled variable"
+      },
+      {
+        "claim": "Cumulative 1000+ CMP tools shipped (1000th unit ceremony 2026-04-08); orders qualitative only: '部分核心客户提前锁定产能/在手订单充足' — the company REFUSES customer-mix splits and gives NO quantified order guidance; media claims of an 'order-guidance raise' are lead-grade with no filing",
+        "tier": "E2",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "新浪科技/证券时报 2026-04-08 (第1000台出机, E2 转述) + 财联社 2026-01-29 (董秘办口径) + IR记录 4/24 ('存储及逻辑订单占比较大', refusal to split)"
+      },
+      {
+        "claim": "Theme repricing without new fundamentals: 5/08 ¥69.3B → 5/20 peak (intraday ATH 5/21) → 6/11 ¥92.4B (+33%), driven by storage-super-cycle/CXMT-approval headlines; static PE 85.25x, TTM 84.17x, PB 12.19; 155 institutions at the FY25 results call (UBS/BlackRock/GS Asia) — the name is HEAVILY covered and theme-crowded",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CROWDING_SIGNAL",
+        "source": "exchange feed 2026-06-11 (qt.gtimg.cn, E1 行情) + 腾讯K线 + IR记录参会名单 (E1) + 金融界/新浪 theme attribution (E2) — tracked as crowding, not support"
+      },
+      {
+        "claim": "≤¥4.0B A-share placement (定增) passed the AGM 5/13, plan revised 5/28, awaiting SSE review — ~4.3% dilution at current market cap; proceeds fund Shanghai equipment base / Kunshan wafer-regen / R&D",
+        "tier": "E1",
+        "causal_tag": "PROVEN",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "预案公告 2026-025 (4/22) + 股东会决议 5/14 + 修订稿提示性公告 5/29 (cnstock)"
+      }
+    ],
+    "rule_x_check": {
+      "pass": true,
+      "why": "The forward mechanism (order→revenue conversion + GM hold) is re-confirmable by issuer disclosure: the 2026 H1 report MUST print revenue, GM, 扣非 and OCF — no channel checks or undisclosed metrics required. The order-mix sub-leg is explicitly NOT load-bearing because the company refuses to disclose it (handled via if_not_disclosed). This satisfies the 2026-05-17 Rule-X boundary: same mechanism, issuer-disclosure-confirmable."
+    },
+    "contrarian_view": "Bears: (1) the GM three-year slide + profit/revenue scissors say pricing power is ALREADY eroding as the product mix shifts to market-development-stage units — monopoly ≠ margin; (2) OCF deterioration (FY25 −31%, Q1 −39%) plus a delayed 募投 project (2/14 公告) signal working-capital strain under the order ramp; (3) the company's own incentive floor (≈flat 2026) is the single most informed forecast in the file and it contradicts the +28% sell-side consensus; (4) 85x static / 93x dynamic-annualized PE prices in FY27 already — equipment names历史上 in down-cycles de-rate to 30-45x, and 2026 storage capex is the cycle TOP narrative; (5) ~4.3% placement dilution ahead; (6) the 5/12→5/20 +52% melt-up then −12% retrace shows the marginal buyer is theme money, not fundamental money."
+  },
+  "catalyst_calendar": [
+    {
+      "event": {
+        "zh": "2026 半年报(收入/毛利率/扣非/OCF = E1 证明事件)",
+        "en": "2026 H1 report (revenue/GM/non-GAAP/OCF = the E1 proof event)"
+      },
+      "date": "2026-08-2x (statutory by 2026-08-31)",
+      "watch": "营收同比、毛利率、扣非同比、经营现金流;若披露:新签/在手订单、减薄一体机出机数",
+      "expected": "rev YoY ≥+30% & GM ≥40% supports the conversion narrative; rev <+20% or GM <38% fires wrong_if"
+    },
+    {
+      "event": {
+        "zh": "定增审核节点(上交所受理/问询/注册)",
+        "en": "Placement review milestones (SSE acceptance/inquiry/registration)"
+      },
+      "date": "rolling H2-2026",
+      "watch": "受理与问询进度、最终规模",
+      "expected": "smooth review = neutral; termination or >50% downsize = capital-plan break (watch-grade, not wrong_if)"
+    },
+    {
+      "event": {
+        "zh": "临时股东会(薪酬制度;激励计划推进节奏观察)",
+        "en": "EGM (compensation policy; incentive-plan cadence watch)"
+      },
+      "date": "2026-06-25",
+      "watch": "激励计划是否随后上会(其 4.60 EPS 底线是本论点的关键锚)",
+      "expected": "incentive finalization locks the floor anchor"
+    },
+    {
+      "event": {
+        "zh": "长鑫 IPO 上市与扩产新闻流(主题 beta,双刃)",
+        "en": "CXMT IPO listing + expansion newsflow (theme beta, double-edged)"
+      },
+      "date": "H2-2026",
+      "watch": "上市定价、扩产节奏的公告级信号",
+      "expected": "supportive headlines sustain the multiple; theme cooling de-rates it regardless of fundamentals — CROWDING-flagged, not load-bearing"
+    }
+  ],
+  "wrong_if": {
+    "triggers": [
+      {
+        "metric": "2026 H1 营收同比 (revenue YoY)",
+        "threshold": "< +20%",
+        "source": "2026 半年报 合并利润表",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "2026 H1 毛利率 (gross margin)",
+        "threshold": "< 38%",
+        "source": "2026 半年报 (FY25 41.81% / Q1 42.31%; 38% = 结构性恶化线)",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "2026 H1 扣非归母净利同比 (non-GAAP net profit YoY)",
+        "threshold": "< 0",
+        "source": "2026 半年报 合并利润表",
+        "check_date": "2026-08-31"
+      },
+      {
+        "metric": "新签/在手订单同比 (new/backlog orders YoY)",
+        "threshold": "< +15% (if_not_disclosed: 半年报与业绩说明会均无订单口径 → 记 INSUFFICIENT_DISCLOSURE,不猜测)",
+        "source": "2026 半年报 + 半年度业绩说明会 IR 记录",
+        "check_date": "2026-09-15"
+      }
+    ],
+    "note": {
+      "zh": "前三条全部绑定半年报强制披露科目(公司无法不披露);第四条按 if_not_disclosed 协议处理——公司拒绝拆分客户结构的前科已记录。任一触发即复核论点;触发后未更新决策书记为诚实性失败。",
+      "en": "First three bind to MANDATORY H1 line items (the company cannot withhold them); the fourth follows the if_not_disclosed protocol — the company's refusal to split customer mix is on record. Any trigger forces a thesis review; an un-updated sheet after a trigger is an honesty failure."
+    }
+  },
+  "valuation_target_range": {
+    "calibrated": false,
+    "basis": "net-profit path × PE scenarios ÷ 494,731,127 post-split shares (E1: 权益分派实施公告). Anchors: incentive floor ≈¥1.09B [E1-derived]; sell-side FY26E ¥1.386-1.415B / FY27E ¥1.845-1.871B (国盛/东海, both cut post-annual-report, E2). Automated valuation stack NOT yet run for this name (watchlist-driven; fetch lands after this PR) — band is analyst-constructed; every multiple is [unvalidated intuition] with stated anchors. All per-share figures POST-split (6/10 10转4派4).",
+    "bear": {
+      "low": 90,
+      "high": 102,
+      "assumptions": [
+        "2026 lands at the incentive floor: NP ¥10.9-11.2B范围内取 ≈¥1.10B (flat) — the company's own bar",
+        "GM slide continues (<40%), OCF stays weak; storage-theme money exits",
+        "de-rated monopoly-equipment PE 40-46x [unvalidated intuition; cycle-trough for a sole-source name, above generic industrials]",
+        "math: 1.10B × 40-46 ÷ 494.7M ≈ ¥89-102 → band 90-102"
+      ]
+    },
+    "base": {
+      "low": 155,
+      "high": 175,
+      "assumptions": [
+        "H1 prints rev ≥+30% / GM ≈40-42%; FY26 NP lands slightly under consensus at ≈¥1.35B (consensus 1.386-1.415B haircut for the scissors history)",
+        "PE 57-64x [unvalidated intuition; monopoly + visible storage capex, below today's 85x]",
+        "math: 1.35B × 57-64 ÷ 494.7M ≈ ¥156-175 → band 155-175"
+      ]
+    },
+    "bull": {
+      "low": 220,
+      "high": 232,
+      "assumptions": [
+        "storage capex super-cycle converts on schedule AND second engines (thinning integrated tools / ion implant / wafer regen) contribute visibly; FY27E ¥1.85B effectively prints early",
+        "market holds a growth multiple ~59-62x [unvalidated intuition]",
+        "math: 1.85B × 59-62 ÷ 494.7M ≈ ¥221-232 → band 220-232"
+      ]
+    },
+    "sensitivity_note": "every scenario = (profit path × PE) ÷ the FIXED post-split 494.7M share count (placement dilution ~4.3% NOT yet in the math — would shave each band ~4%); ±5x of PE moves bands ~8-9%; the profit path is the thesis-loaded variable and resolves at the H1 print"
+  },
+  "execution_plan": {
+    "summary": {
+      "zh": "两个口径的 R/R 都不达标:按 6/11 实价 186.74(E2 行情,换算后),R/R≈0.43——一个月 +33% 的主题行情已把入场数学打坏;按提交快照(5/08 经 6/10 除权调整后 139.67),R/R≈1.98 也仍略低于 2:1。结论:当前不允许任何仓位(连 STARTER 也不允许),这与 Scan #1 的'结构紧张真实、入场定价不优'判断一致。两条路径重新进入:(a) 价格回落至 ≤139 一线(bar 价 139.33,巧合地 ≈5/08 水平——即把主题涨幅全部回吐);(b) 2026-08 半年报 E1 兑现(rev ≥+30%、GM ≥40%)后用打印数字重算区间,bear 下沿抬升会在更高价位满足 2:1。任何执行前必须取实时价;human_executes——系统只建议、不下单。",
+      "en": "BOTH references fail the bar: at the 6/11 live price 186.74 (E2 feed) R/R ≈0.43 — the one-month +33% theme rally broke the entry math; at the committed snapshot (5/08, split-adjusted to 139.67) R/R ≈1.98, still under 2:1. Conclusion: NO position at current price (not even STARTER) — consistent with Scan #1's 'tightness real, entry pricing not disconnected'. Two re-entry paths: (a) pullback to ≤~139 (bar price 139.33 — coincidentally ≈the 5/08 level, i.e. a full give-back of the theme rally); (b) the 2026-08 H1 E1 print (rev ≥+30%, GM ≥40%) re-bases the bear floor — re-run the band on printed numbers. Pull a live quote before ANY execution; human_executes — the system suggests, never trades."
+    },
+    "entry": "committed reference 139.67 (universe_a 5/08 snapshot, corporate-action adjusted; live 186.74 on 2026-06-11 E2); NO entry at current — add zone = ≤139.33 (bar met) OR post-E1 re-band",
+    "staging": "WATCH now (no position) → STARTER only inside the add zone or after the H1 E1 print re-band → conviction requires R/R ≥2:1 on the re-based band; never average into a fired wrong_if",
+    "invalidation": "price: n/a while flat (no position to invalidate); thesis: any mechanized wrong_if trigger kills the thesis and the name reverts to pool-watch",
+    "sizing_suggestion": "tier: NONE at reference (WATCH_ONLY); STARTER_CAPPED inside the add zone [suggestion only — human_executes; the system never auto-trades or sizes]",
+    "holding_horizon": "6-12 months from first entry (if ever); thesis resolves at the 2026-08 H1 print and quarterly thereafter",
+    "review_dates": [
+      "2026-07-11 (30d: 定增进度 + 激励上会节奏 + 池内增量)",
+      "2026-08-10 (60d: pre-H1 positioning check)",
+      "2026-09-09 (90d: post-H1 E1 verdict — decisive)"
+    ]
+  },
+  "serenity": {
+    "theme_system_change": "A股 AI 半导体(Scan #1 #68):国产算力 capex 政策性放大(国家级 AI 算力网络计划草案要求 ≥80% 国产芯片)× HBM/存储产能为最紧物理瓶颈 × 同业实体清单使国产设备需求被制度性锁定",
+    "value_chain_map": [
+      "L1 薄膜沉积+混合键合(最紧)",
+      "L2 HBM后段三件套+存储封测闸门(本票:减薄)",
+      "L3 CMP全链 设备+垫+液(本票:设备,垄断结构最清晰)",
+      "L4 内存接口(认证型寡头)",
+      "L9 算力芯片设计(非瓶颈,降级)"
+    ],
+    "scarce_layer": "L2/L3 — 每条 12 寸线必配 CMP(国内唯一量产商);HBM ≤50μm 减薄是堆叠前置工序(一体机累计仅 20+ 台 = 供给刚起步)",
+    "company_role": "CONTROLS",
+    "bottleneck_evidence": [
+      {
+        "claim": "国内唯一 12 寸 CMP 量产商;累计出机 1000+ 台(第 1000 台 2026-04-08 出机)",
+        "tier": "E2",
+        "citation_grade": "CONSENSUS_CONFIRMING",
+        "source": "新浪/证券时报 2026-04-08 转述 + 东海研报"
+      },
+      {
+        "claim": "减薄抛光一体机累计出货 20+ 台、多家头部企业重复订单;部分先进制程 CMP 进入头部存储厂 HBM 产线作基线设备",
+        "tier": "E1",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "IR记录 2026-04-24 原文(公司主张,无第三方核验)"
+      },
+      {
+        "claim": "拓荆/北方华创/盛美列美实体清单 → 长鑫级新厂设备采购被制度性导向国产(华海自身未列清单 = 既受益于锁定又保留海外零部件通道)",
+        "tier": "E1",
+        "citation_grade": "EDGE_ESTABLISHING",
+        "source": "证券时报 2024-12 实体清单名单(政策事件)"
+      }
+    ],
+    "market_may_be_missing": "诚实结论:市场没漏多少——+33%/月、155 家机构参会、85× 静态说明发现已完成。真正的边际分辨点是【激励底线 ≈10.9 亿(持平) vs 卖方 26E 13.9-14.2 亿】这 28% 缺口将在半年报收敛方向;以及减薄一体机从 20 台基数的放量节奏(市场当作期权定价,半年报出机数披露会给出第一个可证伪读数)",
+    "substitution_route": "海外(AMAT/Ebara)在管制放松情形下回流;国产二供(中电科 45 所等)技术代差仍大(弱);客户自建产能不可行 — 替代路径短期(6-12mo)不构成威胁,长期看管制政策",
+    "expansion_difficulty": "设备验证周期 1-2 年 + 产线绑定(基线设备替换成本高);公司自身产能扩张依赖上海基地定增落地(~4.3% 摊薄的对价)",
+    "customer_validation": "头部存储厂 HBM 产线基线设备(E1 公司主张);存储+逻辑订单'占比较大'(公司拒绝拆分,口径诚实记录);155 家机构调研含 UBS/贝莱德/高盛亚洲(E1 参会名单)",
+    "what_weakens_the_view": [
+      {
+        "metric": "2026H1 CMP+减薄新签订单同比(若披露)",
+        "threshold": "< +15%(不披露则记 INSUFFICIENT_DISCLOSURE)",
+        "source": "2026 半年报 + 业绩说明会 IR 记录",
+        "check_date": "2026-09-15"
+      },
+      {
+        "metric": "2026 全年减薄抛光一体机累计出机",
+        "threshold": "≤ 35 台(年初 20+ 基数上未放量)",
+        "source": "公司 IR 记录/年报披露的累计口径",
+        "check_date": "2027-04-30"
+      },
+      {
+        "metric": "毛利率",
+        "threshold": "连续两季 < 42%(三连降未止)",
+        "source": "季报/半年报",
+        "check_date": "2026-10-31"
+      },
+      {
+        "metric": "定增摊薄",
+        "threshold": "> 8% 股本且订单证据未同步上修",
+        "source": "发行结果公告",
+        "check_date": "rolling-2026"
+      }
+    ]
+  },
+  "risk": {
+    "fundamental": "GM 三连降 + 利润/营收剪刀差说明新机型仍在'市场开拓阶段毛利率较低'(公司原话)——订单放量与毛利率修复可能不同步;OCF 恶化(Q1 仅 789 万)在扩产备货周期里可能进一步承压;2027 年扩产潮后的订单空窗是设备股的结构性周期风险",
+    "policy": "美对零部件/子系统管制升级会抬高 BOM 与交付风险(公司未列实体清单,进口通道现存但政策可变);国产化补贴/大基金节奏变化影响下游扩产时点",
+    "valuation": "85× 静态 / 93× 动态年化已把 FY27 计入;若 H1 打印靠近激励底线,E(下修)与 PE(去主题化)双杀——bear 区间 90-102 即该情形的诚实下界;~4.3% 定增摊薄未含在区间数学内",
+    "liquidity": "科创板,流通盘相对小 + 主题资金主导边际定价(5/12 单日 +13.7%、5/21 振幅 11.8%)→ 双向波动放大;东方证券 5/19 起做市略有缓冲",
+    "crowding_reflexivity": "本票即 Scan #1 拥挤判断的实例:一个月 +33% 无新基本面、设备 ETF 权重、155 家机构覆盖 → '存储超级周期'叙事一旦降温,估值去主题化先于基本面证伪;sentiment feeds 仍 stubbed,拥挤监控部分盲区由行情/两融/调研记录代理 [data break]"
+  },
+  "disclaimers": {
+    "unvalidated": true,
+    "human_executes": true,
+    "pilot": "internal model-recommendation pilot output — NOT validated alpha, NOT external/personalized advice; serenity_score 74 (T2) is [unvalidated intuition] discovery-ranking, never a signal",
+    "data_breaks_logged": [
+      "no committed per-ticker ohlc/signals/eqr/fin yet — name added to watchlist in THIS PR; daily CI fetch starts next run; committed reference price falls back to the universe_a 2026-05-08 snapshot",
+      "universe_a snapshot (195.94) PRE-DATES the 2026-06-10 10转4派4 ex-date — composer applies the declared corporate-action adjustment → committed reference 139.67 (post-split basis); operative R/R in the plan text uses the 2026-06-11 live quote 186.74 (E2 行情接口)",
+      "automated valuation stack (rDCF/EV-EBITDA/RI) not yet run for this name (watchlist-driven) — band is analyst-constructed, every multiple [unvalidated intuition]",
+      "company refuses customer-mix splits (存储/逻辑) and gives no quantified order guidance — order legs handled via if_not_disclosed, never guessed",
+      "api/research 8-step generation contained material numeric errors for this out-of-coverage name (GM, invented order book) — corrected by the E1 fact pack; api artifact kept as lineage at cores/api_generated/688120_SH_20260611.json",
+      "sentiment feeds stubbed (crowding monitoring partially blind; proxied by 行情/两融/调研记录)"
+    ]
+  },
+  "auto_context": {
+    "last_price": {
+      "close": 139.67,
+      "date": "2026-05-08",
+      "source": "universe_a_snapshot_fallback",
+      "note": "latest COMMITTED price — staleness is flagged, never papered over",
+      "raw_close_before_adjustment": 195.94,
+      "adjustment": "split_dividend ex 2026-06-10: (195.94 - 0.4) / 1.4 = 139.67",
+      "adjustment_source": "2025年度权益分派实施公告 2026-06-04 (10派4转4, E1) — 总股本 353,379,376 → 494,731,127"
+    },
+    "technical": {
+      "zone": null,
+      "generated_at": null,
+      "rsi14": null,
+      "signals": []
+    },
+    "eqr": {
+      "overall": null,
+      "sections": {}
+    },
+    "market_anchors": {
+      "as_of": "2026-05-08T12:23:55.359808",
+      "price": 195.94,
+      "market_cap": 69294571117.0,
+      "pe_dynamic": 70.05,
+      "pb": 8.97
+    },
+    "valuation_stack_status": {
+      "triangulated_signal": null,
+      "methods_used": null,
+      "note": "automated valuation generators' status — breaks logged honestly"
+    }
+  },
+  "reward_to_risk": {
+    "reference_price": 139.67,
+    "bull_mid": 226.0,
+    "bear_mid": 96.0,
+    "reward_to_risk": 1.98,
+    "conviction_bar": 2.0,
+    "meets_conviction_bar": false,
+    "entry_where_bar_met": 139.33,
+    "stance_at_reference": "WATCH_NOT_CONVICTION (R/R below 2:1 at reference price)"
+  },
+  "quality": {
+    "auto_floor": "PASS (structurally qualified)",
+    "human_red_team": "PENDING — the measure of record",
+    "forward_checkpoints": "PENDING registration (30/60/90d, PR-D)"
+  },
+  "content_lock_sha256": "9c318ab0198ec444c7df90ee77b7c88546881d688449caa6bbe6285248fdaccc"
+}

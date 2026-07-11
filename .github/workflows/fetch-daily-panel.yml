@@ -1,0 +1,119 @@
+name: Fetch Daily Panel (SWING strategy, 20yr OHLCV)
+
+# Tushare TOKEN lives only in GHA secrets — local token is invalid.
+# Workflow: run scripts/fetch_daily_panel.py + scripts/fetch_sector_mapping.py
+# remotely → upload data as artifact for local download via `gh run download`.
+#
+# Manual trigger (Junyan or Claude T1, Actions tab or `gh workflow run`).
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: 'Start date YYYY-MM-DD (default 20yr back)'
+        required: false
+        default: '2006-01-01'
+      end:
+        description: 'End date YYYY-MM-DD'
+        required: false
+        default: '2026-05-26'
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350    # 20yr × ~5000 dates × 2 endpoints × ~1s/call ≈ 3-4 hours
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install tushare pandas pyarrow --quiet
+
+      # ── Sanity: confirm token works ────────────────────────────────────────
+      - name: Verify Tushare token
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os, tushare as ts
+          tok = os.environ["TUSHARE_TOKEN"]
+          ts.set_token(tok)
+          pro = ts.pro_api()
+          df = pro.trade_cal(start_date="20260520", end_date="20260526")
+          print(f"trade_cal OK: {len(df)} rows")
+          assert len(df) > 0, "trade_cal empty — token may be invalid"
+          PY
+
+      # ── Sector mapping (cheap, single-digit API calls) ─────────────────────
+      - name: Fetch sector mapping (CITIC/SW L1)
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          python scripts/fetch_sector_mapping.py --out data_history/sector_mapping.json
+          echo "===== sector_mapping size ====="
+          ls -la data_history/sector_mapping.json || true
+          python - <<'PY'
+          import json
+          d = json.load(open("data_history/sector_mapping.json"))
+          meta = d.get("_meta", {})
+          print(f"primary: {meta.get('primary')}  n_tickers: {meta.get('n_tickers')}")
+          sectors_key = "sectors_sw_l1" if meta.get("primary") == "sw_l1" else "sectors_tushare"
+          sectors = d.get(sectors_key, {})
+          top5 = sorted(sectors.items(), key=lambda x: -x[1].get("n", 0))[:5]
+          for s, info in top5:
+              print(f"  {s}: {info.get('n')} members")
+          PY
+
+      # ── Daily OHLCV + adj_factor (full window) ─────────────────────────────
+      - name: Fetch daily OHLCV
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: |
+          # -u: unbuffered stdout so progress lines appear in real time
+          python -u scripts/fetch_daily_panel.py \
+            --start "${{ github.event.inputs.start }}" \
+            --end "${{ github.event.inputs.end }}"
+          echo "===== panel files ====="
+          ls -la data_history/panel/
+
+      # ── Depth + sanity report ──────────────────────────────────────────────
+      - name: Report depth
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          for name, path in [
+              ("prices", "data_history/panel/daily_prices.parquet"),
+              ("adj_factor", "data_history/panel/daily_adj_factor.parquet"),
+          ]:
+              p = Path(path)
+              if not p.exists():
+                  print(f"{name}: MISSING")
+                  continue
+              df = pd.read_parquet(path)
+              print(f"{name}: {len(df):,} rows, {df['ts_code'].nunique()} tickers, "
+                    f"dates {df['trade_date'].min()} → {df['trade_date'].max()}")
+          PY
+
+      # ── Upload panel as artifact (gitignored + LARGE → not committed) ──────
+      # if: always() — preserve partial data even if fetch hits timeout or fails
+      - name: Upload panel artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: daily-panel-${{ github.run_id }}
+          path: |
+            data_history/panel/daily_prices.parquet
+            data_history/panel/daily_adj_factor.parquet
+            data_history/sector_mapping.json
+          retention-days: 14
+          if-no-files-found: warn

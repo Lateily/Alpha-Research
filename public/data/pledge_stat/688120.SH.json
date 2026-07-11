@@ -1,0 +1,52 @@
+{
+  "_status": "ok",
+  "ticker": "688120.SH",
+  "fetched_at": "2026-07-10T11:31:31Z",
+  "api_used": "pledge_stat",
+  "window_quarters": 4,
+  "records": [
+    {
+      "ts_code": "688120.SH",
+      "end_date": "20240112",
+      "pledge_count": 1,
+      "unrest_pledge": 130.22,
+      "rest_pledge": 0.0,
+      "total_share": 15893.34,
+      "pledge_ratio": 0.82
+    },
+    {
+      "ts_code": "688120.SH",
+      "end_date": "20240105",
+      "pledge_count": 1,
+      "unrest_pledge": 130.22,
+      "rest_pledge": 0.0,
+      "total_share": 15893.34,
+      "pledge_ratio": 0.82
+    },
+    {
+      "ts_code": "688120.SH",
+      "end_date": "20231229",
+      "pledge_count": 1,
+      "unrest_pledge": 130.22,
+      "rest_pledge": 0.0,
+      "total_share": 15893.34,
+      "pledge_ratio": 0.82
+    },
+    {
+      "ts_code": "688120.SH",
+      "end_date": "20231222",
+      "pledge_count": 1,
+      "unrest_pledge": 130.22,
+      "rest_pledge": 0.0,
+      "total_share": 15893.34,
+      "pledge_ratio": 0.82
+    }
+  ],
+  "summary": {
+    "latest_pledge_ratio": 0.82,
+    "latest_end_date": "2024-01-12",
+    "trend_direction": "flat",
+    "risk_level": "LOW",
+    "records_count": 4
+  }
+}

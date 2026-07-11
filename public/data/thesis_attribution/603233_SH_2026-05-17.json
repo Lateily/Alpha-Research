@@ -1,0 +1,122 @@
+{
+  "ticker": "603233.SH",
+  "thesis_logged_at": "2026-05-17T19:47:04.595451+00:00",
+  "thesis_source": "docs/research/factcheck/rerun_2026-05-16/603233SH_recal.json",
+  "thesis_source_commit": "aaa1cc4",
+  "thesis_protocol_version": "v2",
+  "catalyst": {
+    "event": "2026 H1 results disclosure — first primary disclosure that quantifies whether Q1 2026 store-expansion restart is preserving (or eroding) the +35% NI YoY margin gain; resolves both bull and bear core link",
+    "date_or_window": "2026-08-15 to 2026-08-31 [external estimate, not in our data context]",
+    "type": "earnings_revision",
+    "source": "Historical H1 reporting window for A-share retailers; exact date not in our data context"
+  },
+  "mechanism_chain_length": 5,
+  "rightIf_conditions": [
+    "Re-engage LONG if: store count YoY ≥ 8% AND operating margin ≥ 10.5% AND SSSG ≥ 0% @ 2026 H1 报告 (≈2026-08-28) | source: 2026 H1 报告 经营数据章节 (store count, SSSG) + 合并利润表 (营业利润/营业收入) | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "Re-engage SHORT if: store count YoY ≥ 8% AND operating margin < 9.5% @ 2026 H1 报告 (≈2026-08-28) | source: 2026 H1 报告 经营数据章节 + 合并利润表 营业利润/营业收入 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "Re-engage SHORT if: revenue YoY < 2% AND operating margin < 10% @ 2026 H1 报告 (≈2026-08-28) | source: 2026 H1 合并利润表 营业收入 + (营业利润/营业收入) | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+  ],
+  "wrongIf_conditions": [
+    "PASS thesis invalidated (forces re-engage either direction) if 2026 H1 report discloses all three of: store count YoY delta, SSSG, and segment-level new-store margins @ 2026 H1 报告 (≈2026-08-28) | source: 2026 H1 报告 经营数据章节 + 分部数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "PASS thesis invalidated if pre-print primary disclosure (e.g. monthly operating bulletin or interim store-count filing) prints store count YoY ≥ 10% before 2026-07-31 @ interim 公告 | source: 临时公告 经营数据 | if_not_disclosed: INSUFFICIENT_DISCLOSURE",
+    "PASS thesis invalidated if 融资余额 falls below 1.8亿 with price < 17.0 before 2026-07-31 (forced-unwind shorting opportunity) @ Tushare margin daily | source: Tushare margin_detail 融资余额 + daily close | if_not_disclosed: INSUFFICIENT_DISCLOSURE"
+  ],
+  "what_changes_our_mind": "2026 H1 report (≈2026-08-28) discloses ALL of: (i) store count YoY ≥ +8% AND (ii) operating margin ≥ 10.5% AND (iii) SSSG ≥ 0% → moves to LONG. If store count YoY ≥ +8% BUT operating margin < 9.5% → moves to SHORT. Any partial outcome resolves the [E3]→[E1] tier gap and is the trigger to re-engage.",
+  "variant_view_one_sentence": "Market believes Dashenlin's broker-narrated two-phase turnaround (efficiency done, expansion restarted) is investable now → We believe both the bull margin-accretive-expansion link AND the bear margin-dilutive-expansion link are unmeasured in our data ([E3]/[E2] only, no [E1] structural base) → Mechanism resolves only on 2026 H1 primary disclosure of store count, SSSG, and segment margin, and pre-print neither direction offers ≥2:1 asymmetry given crowded consensus and leveraged-long positioning.",
+  "time_to_resolution": "≈100 days to 2026 H1 disclosure (est. 2026-08-28)",
+  "expected_pnl_asymmetry": {
+    "upside_if_right": "Avoided drawdown of -10% to -15% if H1 disappoints into leveraged-long unwind; opportunity cost of +8% to +15% if H1 confirms",
+    "downside_if_wrong": "Opportunity cost only — no capital at risk",
+    "reward_to_risk": "PASS (capital preservation; re-engage post-print with [E1] data)"
+  },
+  "quantification": {
+    "metric_target": "2026 H1 operating margin AND store count YoY (joint disclosure)",
+    "current_value": "Op Margin TTM 10.5% (live); store count YoY not in our data",
+    "predicted_value": "Unresolved pre-print — symmetric distribution",
+    "predicted_range": {
+      "low": "Op Margin 9.0% / store YoY +3%",
+      "mid": "Op Margin 10.5% / store YoY +6%",
+      "high": "Op Margin 11.5% / store YoY +10%"
+    },
+    "predicted_horizon": "2026-08-31",
+    "confidence": 0.4
+  },
+  "qc_quality_at_log_time": {
+    "score": 84,
+    "missingFields": [
+      "qc_checklist.all_8_steps_complete",
+      "qc_checklist.step_1_specific_not_vague",
+      "qc_checklist.step_2_no_unfounded_leaps",
+      "qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "qc_checklist.step_5_observable",
+      "qc_checklist.step_6_observable",
+      "qc_checklist.step_7_one_sentence_tagline",
+      "qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "qc_checklist.step_8_early_signs_observable",
+      "qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "qc_checklist.step_8_position_sizing_curve_monotonic",
+      "qc_checklist.reward_to_risk_at_least_threshold"
+    ],
+    "qcChecklistResults": {
+      "step_1_specific_not_vague": true,
+      "step_1_catalyst_date_in_future": true,
+      "step_2_no_unfounded_leaps": true,
+      "step_3_evidence_includes_quant_qual_contrarian": true,
+      "step_3_contrarian_view_has_what_changes_our_mind": true,
+      "step_4_has_specific_numbers_and_horizon": true,
+      "step_5_observable": true,
+      "step_6_observable": true,
+      "step_7_one_sentence_tagline": true,
+      "reward_to_risk_at_least_threshold": false,
+      "reward_to_risk_below_threshold": false,
+      "step_8_phase_timing_concrete_not_boilerplate": true,
+      "step_8_early_signs_observable": true,
+      "step_8_catalyst_for_reversion_predatable": true,
+      "step_8_position_sizing_curve_monotonic": false,
+      "all_8_steps_complete": true
+    },
+    "severity": "PASS",
+    "qc_findings": [
+      "failed:step_8_position_sizing_curve_monotonic",
+      "failed:reward_to_risk_at_least_threshold",
+      "missing:qc_checklist.all_8_steps_complete",
+      "missing:qc_checklist.step_1_specific_not_vague",
+      "missing:qc_checklist.step_2_no_unfounded_leaps",
+      "missing:qc_checklist.step_3_evidence_includes_quant_qual_contrarian",
+      "missing:qc_checklist.step_3_contrarian_view_has_what_changes_our_mind",
+      "missing:qc_checklist.step_4_has_specific_numbers_and_horizon",
+      "missing:qc_checklist.step_5_observable",
+      "missing:qc_checklist.step_6_observable",
+      "missing:qc_checklist.step_7_one_sentence_tagline",
+      "missing:qc_checklist.step_8_phase_timing_concrete_not_boilerplate",
+      "missing:qc_checklist.step_8_early_signs_observable",
+      "missing:qc_checklist.step_8_catalyst_for_reversion_predatable",
+      "missing:qc_checklist.step_8_position_sizing_curve_monotonic",
+      "missing:qc_checklist.reward_to_risk_at_least_threshold"
+    ]
+  },
+  "direction": "PASS",
+  "conviction_state": null,
+  "tradeable_not_proven_statement": null,
+  "core_causal_link": {
+    "link_sentence": "Resumed Q1 2026 store expansion will be margin-accretive (bull) or margin-dilutive (bear) — but this is asserted by brokers and inferred from aggregate divergence, NOT measured at store level in our data.",
+    "evidence_tier": "E3:narrative",
+    "tier_justification": "Bull's claim rests on broker text (中泰 2026-05-03, 中金 2026-04-28) — [E3]. Bear's claim is inferred from revenue 0.2% vs NI +35% divergence — [E2]. To become [E1], our data context would need: (i) store count YoY series, (ii) SSSG disclosure, (iii) new-store maturity P&L, or (iv) segment-level same-store vs new-store gross margin split. fina_mainbz 20251231 only shows product-mix GMs, not store-cohort economics."
+  },
+  "evidence_profile": {
+    "core_link_tier": "E3",
+    "counts": {
+      "E1": 6,
+      "E2": 2,
+      "E3": 4,
+      "E4": 2
+    },
+    "overstatement_corrected": false
+  },
+  "pass_reason": "CATALYST_NOT_YET_OBSERVABLE",
+  "pass_reason_detail": "No [E1:direct] structural base exists in our data for the bull's load-bearing claim that 'restarted store expansion will be margin-accretive': (i) store count YoY delta not in data, (ii) same-store-sales growth not in data, (iii) new-store maturity curve / store-level unit economics not in data, (iv) Q1 2026 expansion restart is asserted only by broker text (中泰 2026-05-03), not by primary operating disclosure. The deciding observable — 2026 H1 report on 2026-08-28 (est.) showing simultaneous store_count YoY ≥ 8% AND operating margin ≥ 10.5% AND SSSG ≥ 0% — has not printed. Bear's symmetric inference (expansion will dilute margin) is equally [E2:proxy]. Sell-side is uniformly bullish (38/38 positive, latest target 250000 / EPS 1.5 by 国信), so the consensus crowding ([E4]) means even a confirming H1 print may be largely priced. Pre-print, neither LONG nor SHORT carries ≥2:1 asymmetry.",
+  "outcomes_recorded_at": null,
+  "outcomes": []
+}
