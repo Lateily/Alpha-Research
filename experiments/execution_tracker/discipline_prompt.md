@@ -99,7 +99,15 @@ sections. If any is missing, the output is stamped `REPORT_INCOMPLETE` and does 
 count as delivered** — the reader should never have to ask "catalyst 呢? risk
 mitigation 呢? portfolio impact 呢?".
 
-1. **Variant View** — market believes X · we believe Y · how the disagreement is measured.
+1. **View vs Consensus** — declare ONE honest stance; never manufacture a variant to
+   fill the box (不能为了 variant 而 variant — a fake variant is worse than none):
+   - `VARIANT`: market believes X · we believe Y · measured by Z · **edge_source**
+     (informational / analytical / behavioral — why do WE know something the market
+     doesn't?). "Market believes" needs evidence (positioning/flows/implied
+     expectations), not a strawman.
+   - `CONSENSUS_RIDE`: we AGREE with consensus (e.g. trend-following breakouts);
+     the edge is execution / timing / risk-management — say which.
+   - `NO_EDGE`: no differentiated view — the honest default; posture capped at WATCH.
 2. **Clean Valuation** — sector-appropriate caliber (金融=PB/股息 · 科技=PE/ROE-TTM/GM/OCF ·
    周期=normalized bridge · 成长=PE+pipeline) + 盈利位置.
 3. **Catalyst Map** — what the next 1w / 1m / 3m each verify or falsify, with dates.
