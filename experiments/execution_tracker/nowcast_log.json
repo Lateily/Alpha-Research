@@ -306,5 +306,131 @@
     "actual_main_flow": -26.6744,
     "flow_hit": true,
     "next_day_return": 0.0209
+  },
+  {
+    "nowcast_id": "f97a2224e82d",
+    "ticker": "601899.SH",
+    "name": "紫金矿业",
+    "date": "20260710",
+    "checkpoint": "wt0927",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.61,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0138,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": 3.0191,
+    "flow_hit": true
+  },
+  {
+    "nowcast_id": "6a6d323f6323",
+    "ticker": "002130.SZ",
+    "name": "沃尔核材",
+    "date": "20260710",
+    "checkpoint": "wt1212",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0536,
+      "from_open": 0.0439,
+      "from_high": -0.0044,
+      "intraday_range": 0.0653
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -0.064,
+    "flow_hit": null
+  },
+  {
+    "nowcast_id": "a9a3ce4ecd30",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "date": "20260710",
+    "checkpoint": "wt1212",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.71,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0267,
+      "from_open": 0.037,
+      "from_high": -0.0094,
+      "intraday_range": 0.066
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": 2.6214,
+    "flow_hit": true
+  },
+  {
+    "nowcast_id": "367cd99ed5c9",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260710",
+    "checkpoint": "wt1212",
+    "state": "OPENING_FADE",
+    "confidence": 0.9,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0367,
+      "from_open": -0.0487,
+      "from_high": -0.0549,
+      "intraday_range": 0.06
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -51.744,
+    "flow_hit": true
+  },
+  {
+    "nowcast_id": "53273af80a76",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "date": "20260710",
+    "checkpoint": "wt1212",
+    "state": "OPENING_FADE",
+    "confidence": 0.71,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0126,
+      "from_open": -0.0206,
+      "from_high": -0.0326,
+      "intraday_range": 0.0459
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -5.8701,
+    "flow_hit": true
+  },
+  {
+    "nowcast_id": "adf535ebdffa",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "date": "20260710",
+    "checkpoint": "wt1337",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.64,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0269,
+      "from_open": -0.017,
+      "from_high": -0.0595,
+      "intraday_range": 0.078
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -1.5892,
+    "flow_hit": true
   }
 ]
