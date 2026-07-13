@@ -2,7 +2,7 @@
   "_meta": {
     "layer": "CTF v1 decision-sheet forward checkpoints (PR-D)",
     "spec": "docs/strategy/CORE_THESIS_FACTORY_v1_SPEC.md §3",
-    "updated_at": "2026-07-10T05:01:19.916156+00:00",
+    "updated_at": "2026-07-13T04:38:09.877887+00:00",
     "n_active": 7
   },
   "registrations": [
@@ -298,8 +298,30 @@
         {
           "offset_days": 30,
           "due_date": "2026-07-12",
-          "status": "PENDING",
-          "result": null
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-07-13T04:38:09.877720+00:00",
+            "price": 324.6,
+            "price_date": "20260710",
+            "price_staleness_note": "committed bar may lag — confirm with a live quote",
+            "chg_vs_reference_pct": 132.4,
+            "directional_read": "WITH_THESIS",
+            "band_position": "ABOVE_BULL_HIGH",
+            "wrong_if_due_for_human_check": null,
+            "wrong_if_not_yet_due": [
+              "2026 H1 营收同比 (revenue YoY)",
+              "2026 H1 毛利率 (gross margin)",
+              "2026 H1 扣非归母净利同比 (non-GAAP net profit YoY)",
+              "新签/在手订单同比 (new/backlog orders YoY)"
+            ],
+            "catalysts_due": [
+              {
+                "date": "2026-06-25",
+                "event": "临时股东会(薪酬制度;激励计划推进节奏观察)"
+              }
+            ],
+            "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
+          }
         },
         {
           "offset_days": 60,
@@ -447,8 +469,30 @@
         {
           "offset_days": 30,
           "due_date": "2026-07-12",
-          "status": "PENDING",
-          "result": null
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-07-13T04:38:09.877867+00:00",
+            "price": 83.1,
+            "price_date": "20260710",
+            "price_staleness_note": "committed bar may lag — confirm with a live quote",
+            "chg_vs_reference_pct": 29.46,
+            "directional_read": "WITH_THESIS",
+            "band_position": "IN_BULL_BAND",
+            "wrong_if_due_for_human_check": null,
+            "wrong_if_not_yet_due": [
+              "2026 H1 CMP 抛光垫收入同比 (pad revenue YoY)",
+              "2026 H1 毛利率 (gross margin)",
+              "2026 H1 归母净利同比 (net profit YoY)",
+              "董监高/控股股东累计新增减持预披露 (cumulative NEW insider-sale pre-disclosures beyond the 6/08 filing)"
+            ],
+            "catalysts_due": [
+              {
+                "date": "2026-06-17 (ex-date); window 2026-06-30 → 09-29",
+                "event": "除权除息(10派1)+ 高管减持窗口"
+              }
+            ],
+            "note": "mechanical reads only — wrong_if/catalyst resolution requires the human (disclosure-bound)"
+          }
         },
         {
           "offset_days": 60,
