@@ -107,5 +107,13 @@
     "price": 28.2,
     "shares": 5000,
     "no_trade_flag": true
+  },
+  {
+    "date": "20260713",
+    "action": "PAPER_FILL",
+    "ticker": "002714.SZ",
+    "price": 39.1,
+    "shares": 3800,
+    "no_trade_flag": true
   }
 ]
