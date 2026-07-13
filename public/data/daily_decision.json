@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-13T04:38:09.696963+00:00",
+  "generated_at": "2026-07-13T11:40:17.542540+00:00",
   "date": "2026-07-13",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review",
@@ -13,13 +13,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 0,
-        "pnl_pct": 61.63,
+        "pnl_pct": 62.62,
         "holding_days": 125,
-        "weight_pct": 55.6,
+        "weight_pct": 55.8,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Large unrealised gain +61.6% after 125d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+61.6%（持有125天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +62.6% after 125d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+62.6%（持有125天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -69,7 +69,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 111,
-        "weight_pct": 13.5,
+        "weight_pct": 13.4,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 111d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -85,13 +85,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 6,
-        "pnl_pct": -9.16,
+        "pnl_pct": -9.58,
         "holding_days": 103,
         "weight_pct": 3.5,
         "vp_score": 48,
         "confluence": 6,
-        "reason_e": "Signal neutral (score 6). P&L -9.2% after 103d. Paper-hold — no new review trigger. Bullish: Ma20 Bounce | RSI 55 | Price vs MA20 +5.0% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分6），浮盈-9.2%，持有103天，无新触发条件。多头：MA20支撑反弹 | RSI 55 | 距MA20 +5.0% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 6). P&L -9.6% after 103d. Paper-hold — no new review trigger. Bullish: Ma20 Bounce | RSI 55 | Price vs MA20 +5.0% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分6），浮盈-9.6%，持有103天，无新触发条件。多头：MA20支撑反弹 | RSI 55 | 距MA20 +5.0% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -175,21 +175,9 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 56% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +61.6% — exposure-review condition (sizable unrealised gain)"
+    "PROFIT REVIEW: 300308.SZ +62.6% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "002594.SZ",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
-      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
-      "indicator": "revenue_growth",
-      "actual": null,
-      "threshold": null
-    },
     {
       "ticker": "300308.SZ",
       "severity": "NONE",
@@ -201,6 +189,18 @@
       "indicator": "hyperscaler_basket_drawdown_pct",
       "actual": 12.7,
       "threshold": 25.0
+    },
+    {
+      "ticker": "002594.SZ",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
+      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
+      "indicator": "revenue_growth",
+      "actual": null,
+      "threshold": null
     },
     {
       "ticker": "688120.SH",
