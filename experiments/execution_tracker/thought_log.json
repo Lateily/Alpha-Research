@@ -22,5 +22,21 @@
     "thought": "首批pre-registration;周末注册,先于周一开盘,无盘中数据参与",
     "changed_action": false,
     "why": "no-lookahead:注册先于结果"
+  },
+  {
+    "signal_id": "80a62f3bc67b",
+    "at": "20260714 16:35",
+    "author": "Claude",
+    "thought": "证伪成立:大盘RISK_ON日新易盛+10.99%主力+44.2亿直接收复。教训:板块级负向持续假设在regime翻转日失效——下版假设要加regime条件分支",
+    "changed_action": false,
+    "why": "判分即学习"
+  },
+  {
+    "signal_id": "14e4ef8d4b35",
+    "at": "20260714 16:35",
+    "author": "Claude",
+    "thought": "利通day2:收113(+4.48%)主力仅+0.43亿,承接条件(≥3亿)未达标;98.5防线安全。反弹存在但资金背书不足,警示维持",
+    "changed_action": false,
+    "why": "复活三条件0/3"
   }
 ]
