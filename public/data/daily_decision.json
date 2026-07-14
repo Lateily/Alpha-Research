@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-14T04:11:44.886562+00:00",
+  "generated_at": "2026-07-14T10:19:10.854206+00:00",
   "date": "2026-07-14",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review",
@@ -12,14 +12,14 @@
         "status": "HELD",
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
-        "confidence": 16,
-        "pnl_pct": 67.65,
+        "confidence": 0,
+        "pnl_pct": 73.78,
         "holding_days": 126,
-        "weight_pct": 56.5,
+        "weight_pct": 57.4,
         "vp_score": 48,
-        "confluence": 16,
-        "reason_e": "Large unrealised gain +67.7% after 126d. Signal still NEUTRAL (score 16). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+67.7%（持有126天），信号16仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "confluence": 0,
+        "reason_e": "Large unrealised gain +73.8% after 126d. Signal still NEUTRAL (score 0). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+73.8%（持有126天），信号0仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -51,7 +51,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 119,
-        "weight_pct": 22.9,
+        "weight_pct": 22.5,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 119d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -69,7 +69,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 112,
-        "weight_pct": 13.2,
+        "weight_pct": 12.9,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 112d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -85,37 +85,19 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 0,
-        "pnl_pct": -7.83,
+        "pnl_pct": -6.25,
         "holding_days": 104,
         "weight_pct": 3.5,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L -7.8% after 104d. Paper-hold — no new review trigger. RSI 48 | Price vs MA20 +1.7% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分0），浮盈-7.8%，持有104天，无新触发条件。RSI 48 | 距MA20 +1.7% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 0). P&L -6.2% after 104d. Paper-hold — no new review trigger. RSI 48 | Price vs MA20 +1.7% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分0），浮盈-6.2%，持有104天，无新触发条件。RSI 48 | 距MA20 +1.7% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
       }
     ],
     "watchlist": [
-      {
-        "ticker": "603233.SH",
-        "name": "603233.SH",
-        "status": "WATCHLIST",
-        "action": "WATCH",
-        "priority": "LOW",
-        "confidence": 14,
-        "pnl_pct": null,
-        "holding_days": null,
-        "weight_pct": 0,
-        "vp_score": 50,
-        "confluence": 14,
-        "reason_e": "No evidence-review condition. Score 14, VP 50. Bullish: Ma60 Bounce | RSI 65 | Price vs MA20 +9.6% | VP 50.",
-        "reason_z": "暂无证据复核条件。评分14，VP50。多头：MA60强支撑反弹 | RSI 65 | 距MA20 +9.6% | VP 50。",
-        "entry_target": null,
-        "exit_trigger": null,
-        "execution_posture": null
-      },
       {
         "ticker": "688120.SH",
         "name": "688120.SH",
@@ -169,13 +151,31 @@
         "entry_target": null,
         "exit_trigger": null,
         "execution_posture": null
+      },
+      {
+        "ticker": "603233.SH",
+        "name": "603233.SH",
+        "status": "WATCHLIST",
+        "action": "WATCH",
+        "priority": "LOW",
+        "confidence": 0,
+        "pnl_pct": null,
+        "holding_days": null,
+        "weight_pct": 0,
+        "vp_score": 50,
+        "confluence": 0,
+        "reason_e": "No evidence-review condition. Score 0, VP 50. RSI 65 | Price vs MA20 +9.6% | VP 50.",
+        "reason_z": "暂无证据复核条件。评分0，VP50。RSI 65 | 距MA20 +9.6% | VP 50。",
+        "entry_target": null,
+        "exit_trigger": null,
+        "execution_posture": null
       }
     ]
   },
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 57% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +67.7% — exposure-review condition (sizable unrealised gain)"
+    "PROFIT REVIEW: 300308.SZ +73.8% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {
@@ -201,18 +201,6 @@
       "indicator": "hyperscaler_basket_drawdown_pct",
       "actual": 13.7,
       "threshold": 25.0
-    },
-    {
-      "ticker": "603233.SH",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
-      "wrongIf_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
-      "note_e": "Unstructured condition — monitor manually: [NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
-      "note_z": "非结构化条件——需人工监控：[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
-      "indicator": "unstructured",
-      "actual": null,
-      "threshold": null
     },
     {
       "ticker": "688120.SH",
@@ -247,6 +235,18 @@
       "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
       "note_z": "无法自动核验「revenue_growth」——需人工检查。",
       "indicator": "revenue_growth",
+      "actual": null,
+      "threshold": null
+    },
+    {
+      "ticker": "603233.SH",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
+      "wrongIf_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
+      "note_e": "Unstructured condition — monitor manually: [NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
+      "note_z": "非结构化条件——需人工监控：[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarte",
+      "indicator": "unstructured",
       "actual": null,
       "threshold": null
     }
