@@ -1,0 +1,55 @@
+{
+ "generated_at": "20260715 16:42",
+ "steps": [
+  {
+   "step": "rotation_panel",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 5.04,
+   "tail": "念, 碳基材料, 2026中报扭亏, 汽车一体化压铸, 人脑工程, 复合集流体, 成渝特区, PVDF概念, TOPCon电池, 电子竞技, 参股期货, 昨日触板, 碳纤维, 铜缆高速连接, 昨日炸板, 科创板做市商, 3D玻璃, 2026一季报扭亏, 股权激励, 昨日涨停, 金融地产风格, 氟化工概念, 蓝宝石, 海工装备, 互联网金融, 智能电网, 减速器, 小米汽车, 3D打印, 氢能源, 先进制造风格, 光伏概念, 软件开发, 锂电专用设备, 房屋建设Ⅲ, 房屋建设Ⅱ, 旅游综合, 摩托车及其他, 摩托车, 铁路运输, 鞋帽及其他, 影视院线, 视频媒体, 数字水印, MLOps概念, 百日新高, 其他运输设备, 农药兽药, B股, 计算机, 计算机设备, 其他计算机设备, 集成电路制造, 数字媒体, 门户网站, 安防设备, 文字媒体, 云计算, 网络安全, 车联网(车路云), 大数据, 东数西算, 信创, 人工智能, 智慧城市, 国产软件, 国资云概念, 液冷概念, 科创板做市股, 元宇宙概念, 数据中心, 数字货币, AI芯片, 上海板块, 安徽板块, 湖北板块, 北京板块, 影视动漫制作, 成品家居, 屏下摄像, ERP概念, 数字阅读, 盲盒经济, 近期新高, 炭黑, 会展服务, 公路货运, 上海自贸, 影视概念, 新型城镇化, 历史新高, 模拟芯片设计, 多业态零售, 空间计算, 鸿蒙概念, 端到端供应链服务, 高速公路, 广告媒体, 粘胶, 仓储物流, 电商服务, 装修装饰Ⅲ, 装修装饰Ⅱ, 消费电子零部件及组装, 农药, 消费电子, 住宅开发, 橡胶助剂, 橡胶, 光伏辅材, 工程咨询服务Ⅲ, 工程咨询服务Ⅱ, 光学元件, 工控设备, 其他专用设备, 专用设备, 分立器件, LED, 光学光电子, 半导体材料, 证券Ⅲ, 证券Ⅱ, 自动化设备, 集成电路封测, 数字芯片设计, 半导体, 电子, 移动支付, 地摊经济, 第四代半导体, 量子科技, 植物照明, 虚拟机器人, 工业气体, 工程建设, 工业互联, 蚂蚁概念, 最近多板, 机器视觉, AI手机, 次新股, 碳化硅, 茅指数, 趋势股, 转债标的, 虚拟现实, 生物识别, 昨日涨停_含一字, 券商概念, 光刻机(胶), IGBT概念, 中芯概念, 氮化镓, 医疗器械概念, 基金重仓, 昨日高换手, 物联网, 传感器, 第三代半导体, 汽车芯片, 上证380, 先进封装, 中盘成长, 题材股, 国产芯片, 专精特新, 中证500, 存储芯片, 中盘股, 半导体概念\n\n不是买卖指令；研究信号，human executes.\n\n[written] /Users/years/ar-live/experiments/execution_tracker/rotation_panel.json\n"
+  },
+  {
+   "step": "momentum_prefilter",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 23.35,
+   "tail": " | +28.7% | -1.1% |\n| 600488.SH | 津药药业 | 化学制药 | +34.0% | +33.4% | -2.3% |\n| 603815.SH | 交建股份 | 建筑工程 | +33.1% | +11.1% | -1.8% |\n| 600988.SH | 赤峰黄金 | 黄金 | +32.8% | +7.1% | -0.4% |\n| 002123.SZ | 梦网科技 | 互联网 | +31.8% | +24.4% | -0.4% |\n| 920015.BJ | 锦华新材 | 化工原料 | +31.0% | +34.0% | -0.1% |\n| 603233.SH | 大参林 | 医药商业 | +30.9% | +18.0% | -0.6% |\n| 603669.SH | 灵康药业 | 化学制药 | +30.5% | +56.4% | -1.1% |\n| 003033.SZ | 征和工业 | 汽车配件 | +30.3% | +42.7% | -1.0% |\n| 600882.SH | 妙可蓝多 | 乳制品 | +28.3% | +8.0% | -2.3% |\n| 920267.BJ | 鑫汇科 | 元器件 | +28.2% | +14.6% | -3.0% |\n| 300759.SZ | 康龙化成 | 化学制药 | +27.7% | +64.4% | -0.7% |\n| 003030.SZ | 祖名股份 | 食品 | +26.4% | +7.5% | -0.7% |\n| 300039.SZ | 上海凯宝 | 中成药 | +26.3% | +21.2% | -1.1% |\n| 003001.SZ | 中岩大地 | 建筑工程 | +25.1% | +10.3% | +0.0% |\n| 603590.SH | 康辰药业 | 生物制药 | +24.0% | +20.8% | -0.8% |\n| 603087.SH | 甘李药业 | 生物制药 | +23.3% | +23.9% | -1.4% |\n| 301584.SZ | 建发致新 | 医药商业 | +22.9% | +13.6% | -0.9% |\n| 600513.SH | 联环药业 | 化学制药 | +22.6% | +11.2% | +0.0% |\n| 688293.SH | 奥浦迈 | 生物制药 | +22.3% | +41.9% | -1.9% |\n| 688488.SH | 艾迪药业 | 生物制药 | +22.3% | +23.9% | -2.9% |\n\n[written] /Users/years/ar-live/experiments/execution_tracker/momentum_prefilter.json\n不是买卖指令；研究信号，human executes.\n"
+  },
+  {
+   "step": "rotation_stats",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 0.06,
+   "tail": "## 轮动实验室统计层 v0(20260714)\n\n### 转移矩阵(窗口内描述统计,非 alpha)\n- FLICKER: {'FLICKER': 0.969, 'WARMING': 0.031}\n- INFLOW_CONT: {'INFLOW_CONT': 1.0}\n- NEUTRAL: {'FLICKER': 0.466, 'OUTFLOW_CONT': 0.437, 'WARMING': 0.097}\n- OUTFLOW_CONT: {'OUTFLOW_CONT': 1.0}\n- WARMING: {'INFLOW_CONT': 1.0}\n\n### 龙头广度 / 动量集中度\n- 医药: top30 15 席, top10 4 席, avg10d 30.8%, 例: 亚虹医药(50.9%), 陇神戎发(47.9%), 迪哲医药(41.1%), 新天地(35.4%)\n- 其他: top30 9 席, top10 3 席, avg10d 32.5%, 例: 山东墨龙(41.6%), 华骐环保(38.1%), 中远海特(35.5%), 交建股份(33.1%)\n- 能源/资源: top30 3 席, top10 2 席, avg10d 43.3%, 例: 科力股份(54.9%), 通源石油(42.3%), 赤峰黄金(32.8%)\n- 消费/服务: top30 2 席, top10 1 席, avg10d 35.8%, 例: 梦百合(45.1%), 祖名股份(26.4%)\n- 汽车/电动车: top30 1 席, top10 0 席, avg10d 30.3%, 例: 征和工业(30.3%)\n\n不是买卖指令；研究信号，human executes.\n[written] /Users/years/ar-live/experiments/execution_tracker/rotation_stats.json\n"
+  },
+  {
+   "step": "court_wakeup",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 4.4,
+   "tail": "## Court 唤醒扫描(20260715 · 在册 7)\n  ⏰ 大参林 603233.SH — W1 价格移动 +16.0%(|x|>=15%)\n  ⏰ 华海清科 688120.SH — W1 价格移动 +44.1%(|x|>=15%)\n  ⏰ 恒瑞医药 600276.SH — W1 价格移动 +21.4%(|x|>=15%) | W2 板块唤醒:创新药 streak>=3\n[written] /Users/years/ar-live/experiments/execution_tracker/court_wakeup.json\n不是买卖指令；研究信号，human executes.\n"
+  },
+  {
+   "step": "watch_dynamic",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 0.04,
+   "tail": "## 动态名单(15 名,截断 0)\n  601899.SH 紫金矿业 — 基金filled\n  600276.SH 恒瑞医药 — 基金filled\n  002714.SZ 牧原股份 — 基金filled\n  603629.SH 利通电子 — 信号14e4ef\n  002463.SZ 沪电股份 — 信号a2a40a\n  002594.SZ 比亚迪 — 在册thesis\n  603233.SH 大参林 — 在册thesis\n  300308.SZ 中际旭创 — 在册thesis\n  688120.SH 华海清科 — 在册thesis\n  300054.SZ 鼎龙股份 — 在册thesis\n  920088.BJ 科力股份 — 动量雷达54.9%\n  688176.SH 亚虹医药 — 动量雷达50.9%\n  300534.SZ 陇神戎发 — 动量雷达47.9%\n  603313.SH 梦百合 — 动量雷达45.1%\n  300164.SZ 通源石油 — 动量雷达42.3%\n[written] /Users/years/ar-live/experiments/execution_tracker/watch_dynamic.json\n"
+  },
+  {
+   "step": "position_review",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 2.61,
+   "tail": "## 仓位复审(20260715 · NAV≈¥1,008,210 · 现金 55.4%)\n\n- 紫金矿业 浮+2.23% 权重14.3% R=0.31 stop距离-9.12% \n- 恒瑞医药 浮+1.95% 权重15.4% R=0.26 stop距离-9.22% \n- 牧原股份 浮+1.41% 权重14.9% R=0.25 stop距离-6.94% \n\n不是买卖指令；研究信号，human executes.\n[written] /Users/years/ar-live/experiments/execution_tracker/position_review.json\n"
+  },
+  {
+   "step": "setup_promoter",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 0.83,
+   "tail": "## 晋级桥(regime=RISK_OFF)\n  沪电股份 MANUAL_REVIEW checks={'G1_regime': False, 'G2_sector_streak>=2': False}\n[written] /Users/years/ar-live/experiments/execution_tracker/promotion_queue.json\n不是买卖指令；研究信号，human executes.\n"
+  }
+ ],
+ "note": "nightly orchestrator; review/paper outputs only. 不是买卖指令。"
+}

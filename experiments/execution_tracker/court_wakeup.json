@@ -3,15 +3,6 @@
  "court_size": 7,
  "wakes": [
   {
-   "ticker": "002594.SZ",
-   "name": "比亚迪",
-   "thesis": "出海GM重估;LONG STARTER_CAPPED_UNTIL_E1;E1=0831分部披露",
-   "reasons": [
-    "W3 checkpoint 到期:20260710 30d读数(价带50-60/95-105/145-160)"
-   ],
-   "action": "WAKE_RESCAN(送人审复核,不改posture)"
-  },
-  {
    "ticker": "603233.SH",
    "name": "大参林",
    "thesis": "药房集中度提升;R/R 1.5:1 -> WATCH_NOT_CONVICTION(Junyan verdict 5/15)",
@@ -25,17 +16,7 @@
    "name": "华海清科",
    "thesis": "CMP国产替代;batch-1决策书",
    "reasons": [
-    "W1 价格移动 +44.1%(|x|>=15%)",
-    "W3 checkpoint 到期:20260712 batch-1 30d首读"
-   ],
-   "action": "WAKE_RESCAN(送人审复核,不改posture)"
-  },
-  {
-   "ticker": "300054.SZ",
-   "name": "鼎龙股份",
-   "thesis": "CMP抛光垫;batch-1决策书;0710破位后结构受损",
-   "reasons": [
-    "W3 checkpoint 到期:20260712 batch-1 30d首读"
+    "W1 价格移动 +44.1%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
