@@ -62,7 +62,7 @@ INDICES = [("000001.SH", "上证"), ("399006.SZ", "创业板")]
 def notify_mac(title, body):
     try:
         subprocess.run(["osascript", "-e",
-                        f'display notification "{body}" with title "{title}"'],
+                        f'display notification "{body}" with title "{title}" sound name "Glass"'],
                        capture_output=True, timeout=5)
         return True
     except Exception:                              # noqa: BLE001
