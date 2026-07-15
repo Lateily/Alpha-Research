@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-15T04:13:47.086925+00:00",
+  "generated_at": "2026-07-15T10:24:53.436584+00:00",
   "date": "2026-07-15",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review",
@@ -12,14 +12,14 @@
         "status": "HELD",
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
-        "confidence": 25,
-        "pnl_pct": 72.37,
+        "confidence": 9,
+        "pnl_pct": 71.61,
         "holding_days": 127,
-        "weight_pct": 57.1,
+        "weight_pct": 57.0,
         "vp_score": 48,
-        "confluence": 25,
-        "reason_e": "Large unrealised gain +72.4% after 127d. Signal still HOLD (score 25). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+72.4%（持有127天），信号25仍属温和多头，持有，敞口复核条件（浮盈较大）。",
+        "confluence": 9,
+        "reason_e": "Large unrealised gain +71.6% after 127d. Signal still NEUTRAL (score 9). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+71.6%（持有127天），信号9仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -85,13 +85,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 12,
-        "pnl_pct": -3.82,
+        "pnl_pct": -4.61,
         "holding_days": 105,
         "weight_pct": 3.6,
         "vp_score": 48,
         "confluence": 12,
-        "reason_e": "Signal neutral (score 12). P&L -3.8% after 105d. Paper-hold — no new review trigger. Bullish: Ma20 Bounce | RSI 54 | Price vs MA20 +5.5% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分12），浮盈-3.8%，持有105天，无新触发条件。多头：MA20支撑反弹 | RSI 54 | 距MA20 +5.5% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 12). P&L -4.6% after 105d. Paper-hold — no new review trigger. Bullish: Ma20 Bounce | RSI 54 | Price vs MA20 +5.5% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分12），浮盈-4.6%，持有105天，无新触发条件。多头：MA20支撑反弹 | RSI 54 | 距MA20 +5.5% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -175,7 +175,7 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 57% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +72.4% — exposure-review condition (sizable unrealised gain)"
+    "PROFIT REVIEW: 300308.SZ +71.6% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {

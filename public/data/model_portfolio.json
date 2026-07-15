@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-07-15",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-07-15T04:13:47.127440+00:00",
+    "generated_at": "2026-07-15T10:24:53.490171+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -22,7 +22,7 @@
     "disclaimer": "Internal model-recommendation pilot. UNVALIDATED model output — not validated alpha, and not external investment advice. Target ranges are thesis-derived and NOT calibrated; entry references pend the next market sync. Live execution-return tracking begins from the next trading-day pilot run. The product edge is the loop: recommendation -> user execution -> performance attribution -> model improvement.",
     "counts": {
       "core_thesis": 5,
-      "quant_swing_active": 1,
+      "quant_swing_active": 0,
       "quant_swing_setup_watch": 9,
       "research_pool": 20,
       "watch_pool": 31
@@ -241,40 +241,7 @@
     }
   ],
   "quant_swing": {
-    "active": [
-      {
-        "ticker": "300308.SZ",
-        "name": "中际旭创",
-        "market": "A",
-        "sleeve": "quant_swing",
-        "model_action": "HOLD",
-        "horizon_days": 5,
-        "evidence_tier": "quant_confluence",
-        "why": "Bullish: Ma60 Bounce, Kdj Golden Cross | RSI 51 | Price vs MA20 -2.9% | Regime: PERMISSIVE | VP 48",
-        "target_range": {
-          "basis": "quant_signal",
-          "calibrated": false,
-          "entry_reference": "pending_next_market_sync",
-          "reward_to_risk": null,
-          "note": "Quant-signal idea — not yet calibrated to a live entry."
-        },
-        "construction_plan": "Confluence-confirmed short-term idea; stage entry on the next session — pending calibration. No size, no auto-trade.",
-        "risk_rules": {
-          "invalidation": [],
-          "current_blocker": null
-        },
-        "source_signals": {
-          "quant_confluence": {
-            "action": "HOLD",
-            "score": 25,
-            "rationale": "Bullish: Ma60 Bounce, Kdj Golden Cross | RSI 51 | Price vs MA20 -2.9% | Regime: PERMISSIVE | VP 48",
-            "regime": "PERMISSIVE"
-          }
-        },
-        "validation_status": "unvalidated_pilot",
-        "no_trade_flag": true
-      }
-    ],
+    "active": [],
     "setup_watch": [
       {
         "ticker": "002594.SZ",
@@ -298,8 +265,8 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 54.4,
-            "macd_hist": 2.3079,
+            "rsi14": 54.3,
+            "macd_hist": 2.3064,
             "price_vs_ma20": 5.52,
             "price_vs_ma60": -3.36,
             "change_5d": 4.54,
@@ -383,7 +350,7 @@
           },
           "key_indicators": {
             "rsi14": 46.4,
-            "macd_hist": -5.2311,
+            "macd_hist": -5.2376,
             "price_vs_ma20": -10.41,
             "price_vs_ma60": 9.23,
             "change_5d": -9.49,
@@ -402,9 +369,9 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "ma60_bounce / kdj_golden_cross",
+        "setup_type": "kdj_golden_cross",
         "bias": "bullish",
-        "why_not_active": "confluence verdict is HOLD — no active swing trade today",
+        "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
         "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.27).",
         "risk_rule": "Setup invalidated on a decisive close below MA20 (1218.81); loss of MA60 (1090.48) ends it.",
         "technical": {
@@ -412,25 +379,19 @@
           "entry_zone": true,
           "exit_zone": false,
           "signal_count": {
-            "bullish": 2,
+            "bullish": 1,
             "bearish": 0,
-            "total": 2
+            "total": 1
           },
           "key_indicators": {
             "rsi14": 51.4,
-            "macd_hist": -32.8926,
+            "macd_hist": -32.925,
             "price_vs_ma20": -2.85,
             "price_vs_ma60": 8.58,
             "change_5d": 5.54,
             "vol_ratio": 1.27
           },
           "signals": [
-            {
-              "type": "MA60_BOUNCE",
-              "strength": "strong",
-              "bullish": true,
-              "desc": "Price bounced off MA60 (1083.7) — major support held"
-            },
             {
               "type": "KDJ_GOLDEN_CROSS",
               "strength": "moderate",
@@ -466,7 +427,7 @@
           },
           "key_indicators": {
             "rsi14": 74.2,
-            "macd_hist": 0.7478,
+            "macd_hist": 0.7523,
             "price_vs_ma20": 18.25,
             "price_vs_ma60": 14.26,
             "change_5d": 12.59,
@@ -580,7 +541,7 @@
           },
           "key_indicators": {
             "rsi14": 57.9,
-            "macd_hist": 7.1254,
+            "macd_hist": 7.0491,
             "price_vs_ma20": 11.65,
             "price_vs_ma60": 25.84,
             "change_5d": 11.96,

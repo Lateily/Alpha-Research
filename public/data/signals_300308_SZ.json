@@ -7,16 +7,6 @@
   "exit_zone": false,
   "signals": [
     {
-      "type": "MA60_BOUNCE",
-      "strength": "strong",
-      "date": "20260714",
-      "bullish": true,
-      "description": {
-        "e": "Price bounced off MA60 (1083.7) — major support held",
-        "z": "股价从MA60(1083.7)附近反弹，主要支撑有效"
-      }
-    },
-    {
       "type": "KDJ_GOLDEN_CROSS",
       "strength": "moderate",
       "date": "20260714",
@@ -28,9 +18,9 @@
     }
   ],
   "signal_count": {
-    "bullish": 2,
+    "bullish": 1,
     "bearish": 0,
-    "total": 2
+    "total": 1
   },
   "indicators": {
     "ma5": 1141.86,
@@ -44,9 +34,9 @@
     "change_1d": 6.86,
     "change_5d": 5.54,
     "change_20d": -4.9,
-    "macd_dif": -6.0955,
-    "macd_dea": 10.3508,
-    "macd_hist": -32.8926,
+    "macd_dif": -6.0698,
+    "macd_dea": 10.3927,
+    "macd_hist": -32.925,
     "bb_upper": 1399.28,
     "bb_mid": 1218.81,
     "bb_lower": 1038.33,
