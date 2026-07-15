@@ -26,6 +26,7 @@ STEPS = [
     ("rotation_panel", ["python3", "rotation_panel.py"], True),
     ("momentum_prefilter", ["python3", "momentum_prefilter.py"], True),
     ("rotation_stats", ["python3", "rotation_stats.py"], False),
+    ("rotation_validation", ["python3", "rotation_validation.py", "--append"], True),
     ("court_wakeup", ["python3", "court_wakeup.py"], True),
     ("watch_dynamic", ["python3", "watch_dynamic.py"], False),
     ("position_review", ["python3", "position_review.py"], True),

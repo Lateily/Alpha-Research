@@ -1,0 +1,20 @@
+{
+ "as_of": "20260716",
+ "anchors": [
+  {"key": "tsmc_monthly_rev", "sector": "半导体/AI硬件", "tier": "E1",
+   "source": "https://investor.tsmc.com/english/monthly-revenue (unaudited)",
+   "series": [
+    {"month": "2026-04", "rev_ntd_mn": 410726, "yoy_pct": 17.5},
+    {"month": "2026-05", "rev_ntd_mn": 416975, "yoy_pct": 30.1},
+    {"month": "2026-06", "rev_ntd_mn": 442680, "yoy_pct": 67.9}
+   ],
+   "read": "YoY 连续加速 17.5→30.1→67.9%:AI capex 周期上行的最强 E1 锚;A股链条(设备/材料/光模块/PCB)的需求侧背书",
+   "refresh": "每月10日后"},
+  {"key": "sia_wsts_monthly_sales", "sector": "半导体", "tier": "E2",
+   "source": "https://www.semiconductors.org (WSTS 3MMA)",
+   "series": [],
+   "read": "DATA_BLOCKED: 站点反爬(403);WSTS Historical Billings 需人工下载(https://www.wsts.org/67/Historical-Billings-Report)",
+   "refresh": "人工月度"}
+ ],
+ "note": "行业锚只做底层现状证据(E1/E2),不做目标价输入。不是买卖指令。"
+}
