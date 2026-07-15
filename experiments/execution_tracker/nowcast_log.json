@@ -326,7 +326,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": 3.0191,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": -0.013
   },
   {
     "nowcast_id": "6a6d323f6323",
@@ -347,7 +348,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -0.064,
-    "flow_hit": null
+    "flow_hit": null,
+    "next_day_return": -0.0732
   },
   {
     "nowcast_id": "a9a3ce4ecd30",
@@ -368,7 +370,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": 2.6214,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": 0.0107
   },
   {
     "nowcast_id": "367cd99ed5c9",
@@ -389,7 +392,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -51.744,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": 0.0128
   },
   {
     "nowcast_id": "53273af80a76",
@@ -410,7 +414,8 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -5.8701,
-    "flow_hit": true
+    "flow_hit": true,
+    "next_day_return": -0.0202
   },
   {
     "nowcast_id": "adf535ebdffa",
@@ -431,6 +436,244 @@
     "no_trade_flag": true,
     "scored": true,
     "actual_main_flow": -1.5892,
+    "flow_hit": true,
+    "next_day_return": -0.0725
+  },
+  {
+    "nowcast_id": "12d24d0f271f",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260713",
+    "checkpoint": "wt0930",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.6,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0131,
+      "from_open": 0.0076,
+      "from_high": -0.0048,
+      "intraday_range": 0.0125
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -9.5754,
+    "flow_hit": false,
+    "next_day_return": 0.0686
+  },
+  {
+    "nowcast_id": "4f29aaa4e5db",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "date": "20260713",
+    "checkpoint": "wt0930",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.67,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0776,
+      "from_open": 0.0207,
+      "from_high": -0.0,
+      "intraday_range": 0.0295
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -21.3851,
+    "flow_hit": false,
+    "next_day_return": 0.065
+  },
+  {
+    "nowcast_id": "79ac385f4510",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "date": "20260713",
+    "checkpoint": "wt0930",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.64,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0395,
+      "from_open": 0.0181,
+      "from_high": -0.008,
+      "intraday_range": 0.0248
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -1.8298,
+    "flow_hit": false,
+    "next_day_return": 0.0448
+  },
+  {
+    "nowcast_id": "ca080bb95c00",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "date": "20260713",
+    "checkpoint": "wt0934",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.1099,
+      "from_open": -0.015,
+      "from_high": -0.049,
+      "intraday_range": 0.053
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -21.3851,
+    "flow_hit": true,
+    "next_day_return": 0.065
+  },
+  {
+    "nowcast_id": "938bc8f5885f",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "date": "20260713",
+    "checkpoint": "wt0934",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.73,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0282,
+      "from_open": 0.0382,
+      "from_high": -0.0004,
+      "intraday_range": 0.0401
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -13.9397,
+    "flow_hit": false,
+    "next_day_return": 0.1099
+  },
+  {
+    "nowcast_id": "ec754535fdbe",
+    "ticker": "002130.SZ",
+    "name": "沃尔核材",
+    "date": "20260713",
+    "checkpoint": "wt0936",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.64,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0238,
+      "from_open": -0.0171,
+      "from_high": -0.0216,
+      "intraday_range": 0.0227
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -1.1283,
+    "flow_hit": true,
+    "next_day_return": 0.0055
+  },
+  {
+    "nowcast_id": "3b333f56e9e3",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "date": "20260714",
+    "checkpoint": "wt0947",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.64,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.017,
+      "from_open": -0.017,
+      "from_high": -0.017,
+      "intraday_range": 0.0196
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -4.3646,
+    "flow_hit": true
+  },
+  {
+    "nowcast_id": "9229f2ee360d",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "date": "20260714",
+    "checkpoint": "wt0947",
+    "state": "OPENING_FADE",
+    "confidence": 0.9,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0409,
+      "from_open": -0.0512,
+      "from_high": -0.0645,
+      "intraday_range": 0.0681
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": 0.4316,
+    "flow_hit": false
+  },
+  {
+    "nowcast_id": "69cf85e3515d",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "date": "20260714",
+    "checkpoint": "wt1020",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.65,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0184,
+      "from_open": 0.0222,
+      "from_high": -0.0,
+      "intraday_range": 0.045
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -1.0264,
+    "flow_hit": false
+  },
+  {
+    "nowcast_id": "ea1b9827f4d4",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "date": "20260714",
+    "checkpoint": "wt1058",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0189,
+      "from_open": -0.0152,
+      "from_high": -0.0418,
+      "intraday_range": 0.0505
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": -1.0264,
+    "flow_hit": true
+  },
+  {
+    "nowcast_id": "dd5407642171",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "date": "20260714",
+    "checkpoint": "wt1435",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.78,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0356,
+      "from_open": 0.0244,
+      "from_high": -0.004,
+      "intraday_range": 0.0912
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": true,
+    "actual_main_flow": 0.4316,
     "flow_hit": true
   }
 ]
