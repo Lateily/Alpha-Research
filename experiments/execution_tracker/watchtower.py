@@ -169,11 +169,16 @@ def poll_once(token, dry=False):
     import datetime
     today = datetime.datetime.now().strftime("%Y%m%d")
     orders = load_json(FUND_ORDERS, [])
+    dyn = load_json(os.path.join(HERE, "watch_dynamic.json"), None)
+    if isinstance(dyn, dict) and dyn.get("watch"):
+        watch_pairs = [(w["ticker"], w.get("name") or w["ticker"]) for w in dyn["watch"]]
+    else:
+        watch_pairs = list(WATCH)          # P4 回退:无动态名单时用硬编码
     tickers = sorted({o["ticker"] for o in orders if o["status"] in ("pending", "filled")}
-                     | {t for t, _ in WATCH} | {c for c, _ in INDICES})
+                     | {t for t, _ in watch_pairs} | {c for c, _ in INDICES})
     rows = fs.tushare_realtime_quotes(tickers, src="sina")
     quotes = {}
-    name_map = dict(WATCH); name_map.update({c: n for c, n in INDICES})
+    name_map = dict(watch_pairs); name_map.update({c: n for c, n in INDICES})
     name_map.update({o["ticker"]: o["name"] for o in orders})
     for r in rows:
         t = r.get("ticker") or ""

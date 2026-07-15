@@ -1,0 +1,46 @@
+{
+ "as_of": "20260715",
+ "nav_est": 996158.0,
+ "cash_pct": 56.0,
+ "rows": [
+  {
+   "ticker": "601899.SH",
+   "name": "紫金矿业",
+   "kind": "filled",
+   "pnl_pct": 3.05,
+   "weight_pct": 14.6,
+   "r_mult": 0.43,
+   "stop": 26.2,
+   "stop_dist_pct": -9.84,
+   "ladder": null,
+   "wrong_if": "见reason wrong-if"
+  },
+  {
+   "ticker": "600276.SH",
+   "name": "恒瑞医药",
+   "kind": "filled",
+   "pnl_pct": -2.8,
+   "weight_pct": 14.9,
+   "r_mult": -0.38,
+   "stop": 52.2,
+   "stop_dist_pct": -4.78,
+   "ladder": null,
+   "wrong_if": "见reason wrong-if"
+  },
+  {
+   "ticker": "002714.SZ",
+   "name": "牧原股份",
+   "kind": "filled",
+   "pnl_pct": -2.61,
+   "weight_pct": 14.5,
+   "r_mult": -0.46,
+   "stop": 36.9,
+   "stop_dist_pct": -3.1,
+   "ladder": null,
+   "wrong_if": "猪价回落+主力连续2日净流出"
+  }
+ ],
+ "flags": [],
+ "data_blocked": [],
+ "note": "review输出;--apply-tighten 仅执行tighten-only保本位。不是买卖指令。"
+}

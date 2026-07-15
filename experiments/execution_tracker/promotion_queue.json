@@ -1,0 +1,18 @@
+{
+ "market_state": "RISK_ON",
+ "queue": [
+  {
+   "ticker": "002463.SZ",
+   "name": "沪电股份",
+   "signal_id": "a2a40a749c6b",
+   "verdict": "MANUAL_REVIEW",
+   "why": "trigger/invalidation 无法机械解析,送人审",
+   "checks": {
+    "G1_regime": true,
+    "G2_sector_streak>=2": false
+   }
+  }
+ ],
+ "data_blocked": [],
+ "note": "晋级复核单;不注册不成交。不是买卖指令。"
+}

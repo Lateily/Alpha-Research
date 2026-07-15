@@ -1,0 +1,103 @@
+{
+ "generated_at": "20260715 15:35",
+ "watch": [
+  {
+   "ticker": "601899.SH",
+   "name": "紫金矿业",
+   "why": "基金filled",
+   "prio": 1
+  },
+  {
+   "ticker": "600276.SH",
+   "name": "恒瑞医药",
+   "why": "基金filled",
+   "prio": 1
+  },
+  {
+   "ticker": "002714.SZ",
+   "name": "牧原股份",
+   "why": "基金filled",
+   "prio": 1
+  },
+  {
+   "ticker": "603629.SH",
+   "name": "利通电子",
+   "why": "信号14e4ef",
+   "prio": 2
+  },
+  {
+   "ticker": "600584.SH",
+   "name": "长电科技",
+   "why": "信号63d4e9",
+   "prio": 2
+  },
+  {
+   "ticker": "002463.SZ",
+   "name": "沪电股份",
+   "why": "信号a2a40a",
+   "prio": 2
+  },
+  {
+   "ticker": "002594.SZ",
+   "name": "比亚迪",
+   "why": "在册thesis",
+   "prio": 3
+  },
+  {
+   "ticker": "603233.SH",
+   "name": "大参林",
+   "why": "在册thesis",
+   "prio": 3
+  },
+  {
+   "ticker": "300308.SZ",
+   "name": "中际旭创",
+   "why": "在册thesis",
+   "prio": 3
+  },
+  {
+   "ticker": "688120.SH",
+   "name": "华海清科",
+   "why": "在册thesis",
+   "prio": 3
+  },
+  {
+   "ticker": "300054.SZ",
+   "name": "鼎龙股份",
+   "why": "在册thesis",
+   "prio": 3
+  },
+  {
+   "ticker": "920088.BJ",
+   "name": "科力股份",
+   "why": "动量雷达54.9%",
+   "prio": 4
+  },
+  {
+   "ticker": "688176.SH",
+   "name": "亚虹医药",
+   "why": "动量雷达50.9%",
+   "prio": 4
+  },
+  {
+   "ticker": "300534.SZ",
+   "name": "陇神戎发",
+   "why": "动量雷达47.9%",
+   "prio": 4
+  },
+  {
+   "ticker": "603313.SH",
+   "name": "梦百合",
+   "why": "动量雷达45.1%",
+   "prio": 4
+  },
+  {
+   "ticker": "300164.SZ",
+   "name": "通源石油",
+   "why": "动量雷达42.3%",
+   "prio": 4
+  }
+ ],
+ "truncated": [],
+ "note": "动态盯盘名单;来源=持仓/信号/在册/动量雷达。不是买卖指令。"
+}
