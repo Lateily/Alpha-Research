@@ -16,16 +16,7 @@
    "name": "大参林",
    "thesis": "药房集中度提升;R/R 1.5:1 -> WATCH_NOT_CONVICTION(Junyan verdict 5/15)",
    "reasons": [
-    "W1 价格移动 +18.0%(|x|>=15%)"
-   ],
-   "action": "WAKE_RESCAN(送人审复核,不改posture)"
-  },
-  {
-   "ticker": "300308.SZ",
-   "name": "中际旭创",
-   "thesis": "1.6T能力+订单现金流双支柱;Q2预告窗~0715",
-   "reasons": [
-    "W3 checkpoint 到期:20260715 Q2预告窗开启核对"
+    "W1 价格移动 +16.0%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
@@ -34,7 +25,7 @@
    "name": "华海清科",
    "thesis": "CMP国产替代;batch-1决策书",
    "reasons": [
-    "W1 价格移动 +55.0%(|x|>=15%)",
+    "W1 价格移动 +44.1%(|x|>=15%)",
     "W3 checkpoint 到期:20260712 batch-1 30d首读"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
@@ -44,8 +35,7 @@
    "name": "鼎龙股份",
    "thesis": "CMP抛光垫;batch-1决策书;0710破位后结构受损",
    "reasons": [
-    "W3 checkpoint 到期:20260712 batch-1 30d首读",
-    "W3 checkpoint 到期:20260715 业绩预告窗"
+    "W3 checkpoint 到期:20260712 batch-1 30d首读"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
@@ -54,6 +44,7 @@
    "name": "恒瑞医药",
    "thesis": "创新药license-out;基金持仓thesis-lite",
    "reasons": [
+    "W1 价格移动 +21.4%(|x|>=15%)",
     "W2 板块唤醒:创新药 streak>=3"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"

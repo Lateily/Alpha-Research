@@ -1,5 +1,5 @@
 {
- "generated_at": "20260715 15:35",
+ "generated_at": "20260715 16:24",
  "watch": [
   {
    "ticker": "601899.SH",
@@ -23,12 +23,6 @@
    "ticker": "603629.SH",
    "name": "利通电子",
    "why": "信号14e4ef",
-   "prio": 2
-  },
-  {
-   "ticker": "600584.SH",
-   "name": "长电科技",
-   "why": "信号63d4e9",
    "prio": 2
   },
   {

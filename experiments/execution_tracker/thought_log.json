@@ -54,5 +54,29 @@
     "thought": "sweep结构与持续流出冲突时资金条款优先",
     "changed_action": false,
     "why": "invalidation即学习"
+  },
+  {
+    "signal_id": "17ae46ccc3d6",
+    "at": "20260715 16:40",
+    "author": "Claude",
+    "thought": "0715 RISK_OFF(-498亿):RISK_ON又只活一天(第2次);连续两日确认现在只剩0716+0717一种路径,假设强在轨",
+    "changed_action": false,
+    "why": "判分中间记录"
+  },
+  {
+    "signal_id": "14e4ef8d4b35",
+    "at": "20260715 16:40",
+    "author": "Claude",
+    "thought": "重大E1:0715盘后公告Q2预增1172-1368%(净利6.5-7.5亿)。复活条件③满足+①98.5安全=2/3;②跌中承接(≥3亿)仍缺。明日盘面是大考,horizon至0717",
+    "changed_action": false,
+    "why": "判分中间记录"
+  },
+  {
+    "signal_id": "0401ddb9b9ae",
+    "at": "20260715 16:40",
+    "author": "Claude",
+    "thought": "0715算力概念资金续弱,5日滚动趋负;0717判定在轨",
+    "changed_action": false,
+    "why": "判分中间记录"
   }
 ]
