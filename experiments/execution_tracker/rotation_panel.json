@@ -1,0 +1,3659 @@
+{
+ "days": [
+  "20260708",
+  "20260709",
+  "20260710",
+  "20260713",
+  "20260714"
+ ],
+ "n_sectors": 1019,
+ "inflow_cont": [
+  {
+   "sector": "油田服务",
+   "seq": "+++++",
+   "streak": 5,
+   "status": "INFLOW_CONT",
+   "last_pct": 6.25,
+   "last_sign": "+"
+  },
+  {
+   "sector": "可燃冰",
+   "seq": "+++++",
+   "streak": 5,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.78,
+   "last_sign": "+"
+  },
+  {
+   "sector": "海洋捕捞",
+   "seq": "+++++",
+   "streak": 5,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.28,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他专业服务",
+   "seq": "+++++",
+   "streak": 5,
+   "status": "INFLOW_CONT",
+   "last_pct": -0.64,
+   "last_sign": "+"
+  },
+  {
+   "sector": "房屋检测",
+   "seq": "+++++",
+   "streak": 5,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.97,
+   "last_sign": "+"
+  },
+  {
+   "sector": "微盘精选",
+   "seq": "+++++",
+   "streak": 5,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.89,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他医疗服务",
+   "seq": "-++++",
+   "streak": 4,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.54,
+   "last_sign": "+"
+  },
+  {
+   "sector": "黄金",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 4.06,
+   "last_sign": "+"
+  },
+  {
+   "sector": "铝",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 4.21,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医药流通",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 4.63,
+   "last_sign": "+"
+  },
+  {
+   "sector": "中药Ⅲ",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.56,
+   "last_sign": "+"
+  },
+  {
+   "sector": "中药Ⅱ",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.56,
+   "last_sign": "+"
+  },
+  {
+   "sector": "预加工食品",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 0.84,
+   "last_sign": "+"
+  },
+  {
+   "sector": "果蔬加工",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.32,
+   "last_sign": "+"
+  },
+  {
+   "sector": "保健品",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 3.35,
+   "last_sign": "+"
+  },
+  {
+   "sector": "血液制品",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.59,
+   "last_sign": "+"
+  },
+  {
+   "sector": "专业连锁Ⅲ",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.7,
+   "last_sign": "+"
+  },
+  {
+   "sector": "专业连锁Ⅱ",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.7,
+   "last_sign": "+"
+  },
+  {
+   "sector": "肝素概念",
+   "seq": "+-+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.38,
+   "last_sign": "+"
+  },
+  {
+   "sector": "特色药",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.67,
+   "last_sign": "+"
+  },
+  {
+   "sector": "粮食概念",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.4,
+   "last_sign": "+"
+  },
+  {
+   "sector": "特钢Ⅲ",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 0.92,
+   "last_sign": "+"
+  },
+  {
+   "sector": "特钢Ⅱ",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 0.92,
+   "last_sign": "+"
+  },
+  {
+   "sector": "跨境物流",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.05,
+   "last_sign": "+"
+  },
+  {
+   "sector": "食用菌",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.89,
+   "last_sign": "+"
+  },
+  {
+   "sector": "食品加工",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.51,
+   "last_sign": "+"
+  },
+  {
+   "sector": "冰洗",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.04,
+   "last_sign": "+"
+  },
+  {
+   "sector": "独家药品",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.66,
+   "last_sign": "+"
+  },
+  {
+   "sector": "化妆品概念",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.93,
+   "last_sign": "+"
+  },
+  {
+   "sector": "免疫治疗",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.46,
+   "last_sign": "+"
+  },
+  {
+   "sector": "钒电池",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.32,
+   "last_sign": "+"
+  },
+  {
+   "sector": "噪声防治",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.53,
+   "last_sign": "+"
+  },
+  {
+   "sector": "农产品加工",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.69,
+   "last_sign": "+"
+  },
+  {
+   "sector": "化妆品",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.35,
+   "last_sign": "+"
+  },
+  {
+   "sector": "快递",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.41,
+   "last_sign": "+"
+  },
+  {
+   "sector": "物流",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.91,
+   "last_sign": "+"
+  },
+  {
+   "sector": "纺织化学制品",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 3.48,
+   "last_sign": "+"
+  },
+  {
+   "sector": "炼化及贸易",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 3.01,
+   "last_sign": "+"
+  },
+  {
+   "sector": "农林牧渔",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.33,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他生物制品",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.87,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医疗服务",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.53,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医疗研发外包",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.78,
+   "last_sign": "+"
+  },
+  {
+   "sector": "重组蛋白",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.5,
+   "last_sign": "+"
+  },
+  {
+   "sector": "肝炎概念",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 1.93,
+   "last_sign": "+"
+  },
+  {
+   "sector": "CRO",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 3.14,
+   "last_sign": "+"
+  },
+  {
+   "sector": "创新药",
+   "seq": "--+++",
+   "streak": 3,
+   "status": "INFLOW_CONT",
+   "last_pct": 2.52,
+   "last_sign": "+"
+  }
+ ],
+ "warming": [
+  {
+   "sector": "石油石化",
+   "seq": "++-++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 4.63,
+   "last_sign": "+"
+  },
+  {
+   "sector": "油服工程",
+   "seq": "++-++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 6.97,
+   "last_sign": "+"
+  },
+  {
+   "sector": "油气及炼化工程",
+   "seq": "++-++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 7.92,
+   "last_sign": "+"
+  },
+  {
+   "sector": "油气开采Ⅲ",
+   "seq": "+--++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 7.79,
+   "last_sign": "+"
+  },
+  {
+   "sector": "油气开采Ⅱ",
+   "seq": "+--++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 7.79,
+   "last_sign": "+"
+  },
+  {
+   "sector": "煤炭开采",
+   "seq": "+--++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 4.25,
+   "last_sign": "+"
+  },
+  {
+   "sector": "煤炭",
+   "seq": "+--++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 4.17,
+   "last_sign": "+"
+  },
+  {
+   "sector": "动力煤",
+   "seq": "++-++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 4.39,
+   "last_sign": "+"
+  },
+  {
+   "sector": "青海板块",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 2.44,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医药商业",
+   "seq": "+--++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 4.76,
+   "last_sign": "+"
+  },
+  {
+   "sector": "煤化工",
+   "seq": "+--++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 4.15,
+   "last_sign": "+"
+  },
+  {
+   "sector": "页岩气",
+   "seq": "++-++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 2.53,
+   "last_sign": "+"
+  },
+  {
+   "sector": "资源开采概念",
+   "seq": "++-++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 5.77,
+   "last_sign": "+"
+  },
+  {
+   "sector": "微盘股",
+   "seq": "++-++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 2.54,
+   "last_sign": "+"
+  },
+  {
+   "sector": "线下药店",
+   "seq": "+--++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 5.13,
+   "last_sign": "+"
+  },
+  {
+   "sector": "纺织鞋类制造",
+   "seq": "+--++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 0.37,
+   "last_sign": "+"
+  },
+  {
+   "sector": "油气资源",
+   "seq": "++-++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 2.65,
+   "last_sign": "+"
+  },
+  {
+   "sector": "SPD概念",
+   "seq": "+--++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 3.54,
+   "last_sign": "+"
+  },
+  {
+   "sector": "彩票概念",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 1.22,
+   "last_sign": "+"
+  },
+  {
+   "sector": "体育Ⅲ",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 2.77,
+   "last_sign": "+"
+  },
+  {
+   "sector": "体育Ⅱ",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 2.77,
+   "last_sign": "+"
+  },
+  {
+   "sector": "文娱用品",
+   "seq": "-+-++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 2.48,
+   "last_sign": "+"
+  },
+  {
+   "sector": "特种纸",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 2.41,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他建材Ⅲ",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 2.67,
+   "last_sign": "+"
+  },
+  {
+   "sector": "炼油化工",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 4.52,
+   "last_sign": "+"
+  },
+  {
+   "sector": "蓄电池及其他电池",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 1.74,
+   "last_sign": "+"
+  },
+  {
+   "sector": "民爆制品",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 1.99,
+   "last_sign": "+"
+  },
+  {
+   "sector": "钾肥",
+   "seq": "---++",
+   "streak": 2,
+   "status": "WARMING",
+   "last_pct": 3.33,
+   "last_sign": "+"
+  }
+ ],
+ "flicker": [
+  {
+   "sector": "贵金属",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 4.06,
+   "last_sign": "+"
+  },
+  {
+   "sector": "电动乘用车",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.34,
+   "last_sign": "+"
+  },
+  {
+   "sector": "乘用车",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.04,
+   "last_sign": "+"
+  },
+  {
+   "sector": "旅游及景区",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.22,
+   "last_sign": "+"
+  },
+  {
+   "sector": "通信终端及配件",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.44,
+   "last_sign": "+"
+  },
+  {
+   "sector": "自然景区",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.59,
+   "last_sign": "+"
+  },
+  {
+   "sector": "宁夏板块",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.66,
+   "last_sign": "+"
+  },
+  {
+   "sector": "山西板块",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.65,
+   "last_sign": "+"
+  },
+  {
+   "sector": "内蒙古",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.52,
+   "last_sign": "+"
+  },
+  {
+   "sector": "广西板块",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.28,
+   "last_sign": "+"
+  },
+  {
+   "sector": "海南板块",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.66,
+   "last_sign": "+"
+  },
+  {
+   "sector": "江西板块",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.56,
+   "last_sign": "+"
+  },
+  {
+   "sector": "饮料乳品",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.19,
+   "last_sign": "+"
+  },
+  {
+   "sector": "普钢",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.1,
+   "last_sign": "+"
+  },
+  {
+   "sector": "板材",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.3,
+   "last_sign": "+"
+  },
+  {
+   "sector": "人工景区",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.42,
+   "last_sign": "+"
+  },
+  {
+   "sector": "焦煤",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 4.02,
+   "last_sign": "+"
+  },
+  {
+   "sector": "电视广播Ⅲ",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.76,
+   "last_sign": "+"
+  },
+  {
+   "sector": "电视广播Ⅱ",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.76,
+   "last_sign": "+"
+  },
+  {
+   "sector": "汽车服务",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.02,
+   "last_sign": "+"
+  },
+  {
+   "sector": "汽车综合服务",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.34,
+   "last_sign": "+"
+  },
+  {
+   "sector": "电子身份证",
+   "seq": "++-+-",
+   "streak": 0,
+   "status": "FLICKER",
+   "last_pct": -0.09,
+   "last_sign": "-"
+  },
+  {
+   "sector": "内贸流通",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.58,
+   "last_sign": "+"
+  },
+  {
+   "sector": "旅游酒店",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.29,
+   "last_sign": "+"
+  },
+  {
+   "sector": "低价股",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.49,
+   "last_sign": "+"
+  },
+  {
+   "sector": "价值股",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.8,
+   "last_sign": "+"
+  },
+  {
+   "sector": "涂料",
+   "seq": "++-+-",
+   "streak": 0,
+   "status": "FLICKER",
+   "last_pct": -1.13,
+   "last_sign": "-"
+  },
+  {
+   "sector": "一般零售",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.84,
+   "last_sign": "+"
+  },
+  {
+   "sector": "非运动服装",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.71,
+   "last_sign": "+"
+  },
+  {
+   "sector": "酒店",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.21,
+   "last_sign": "+"
+  },
+  {
+   "sector": "渔业",
+   "seq": "++-+-",
+   "streak": 0,
+   "status": "FLICKER",
+   "last_pct": 2.05,
+   "last_sign": "-"
+  },
+  {
+   "sector": "种子",
+   "seq": "+-+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 3.79,
+   "last_sign": "+"
+  },
+  {
+   "sector": "水产养殖",
+   "seq": "-+-+-",
+   "streak": 0,
+   "status": "FLICKER",
+   "last_pct": 2.62,
+   "last_sign": "-"
+  },
+  {
+   "sector": "土地流转",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.95,
+   "last_sign": "+"
+  },
+  {
+   "sector": "汽车整车",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.79,
+   "last_sign": "+"
+  },
+  {
+   "sector": "旅游概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.24,
+   "last_sign": "+"
+  },
+  {
+   "sector": "低碳冶金",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.54,
+   "last_sign": "+"
+  },
+  {
+   "sector": "汽车拆解",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.31,
+   "last_sign": "+"
+  },
+  {
+   "sector": "超级品牌",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.86,
+   "last_sign": "+"
+  },
+  {
+   "sector": "阿兹海默",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.29,
+   "last_sign": "+"
+  },
+  {
+   "sector": "统一大市场",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.47,
+   "last_sign": "+"
+  },
+  {
+   "sector": "生态农业",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.87,
+   "last_sign": "+"
+  },
+  {
+   "sector": "耐火材料",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.02,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医院",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.66,
+   "last_sign": "+"
+  },
+  {
+   "sector": "期货",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.01,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他纺织",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.44,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医美耗材",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.24,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医疗美容",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.35,
+   "last_sign": "+"
+  },
+  {
+   "sector": "种植业",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.75,
+   "last_sign": "+"
+  },
+  {
+   "sector": "玻璃制造",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.83,
+   "last_sign": "+"
+  },
+  {
+   "sector": "百货",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.86,
+   "last_sign": "+"
+  },
+  {
+   "sector": "REITs概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.5,
+   "last_sign": "+"
+  },
+  {
+   "sector": "包装材料",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.36,
+   "last_sign": "+"
+  },
+  {
+   "sector": "供销社概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.74,
+   "last_sign": "+"
+  },
+  {
+   "sector": "青蒿素",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.33,
+   "last_sign": "+"
+  },
+  {
+   "sector": "净水概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.43,
+   "last_sign": "+"
+  },
+  {
+   "sector": "快递概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.41,
+   "last_sign": "+"
+  },
+  {
+   "sector": "同步磁阻电机",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.35,
+   "last_sign": "+"
+  },
+  {
+   "sector": "冰雪经济",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.21,
+   "last_sign": "+"
+  },
+  {
+   "sector": "流感",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.63,
+   "last_sign": "+"
+  },
+  {
+   "sector": "酿酒概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.84,
+   "last_sign": "+"
+  },
+  {
+   "sector": "电商概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.66,
+   "last_sign": "+"
+  },
+  {
+   "sector": "钛白粉",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.69,
+   "last_sign": "+"
+  },
+  {
+   "sector": "印染",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 4.17,
+   "last_sign": "+"
+  },
+  {
+   "sector": "化妆品制造及其他",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 4.5,
+   "last_sign": "+"
+  },
+  {
+   "sector": "焦炭Ⅲ",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 3.86,
+   "last_sign": "+"
+  },
+  {
+   "sector": "焦炭Ⅱ",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 3.86,
+   "last_sign": "+"
+  },
+  {
+   "sector": "氮肥",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 3.94,
+   "last_sign": "+"
+  },
+  {
+   "sector": "娱乐用品",
+   "seq": "-+-+-",
+   "streak": 0,
+   "status": "FLICKER",
+   "last_pct": 2.61,
+   "last_sign": "-"
+  },
+  {
+   "sector": "纺织服饰",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.72,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他农产品加工",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.88,
+   "last_sign": "+"
+  },
+  {
+   "sector": "纺织服装设备",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.24,
+   "last_sign": "+"
+  },
+  {
+   "sector": "美容护理",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.93,
+   "last_sign": "+"
+  },
+  {
+   "sector": "零食",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.36,
+   "last_sign": "+"
+  },
+  {
+   "sector": "服装家纺",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.67,
+   "last_sign": "+"
+  },
+  {
+   "sector": "电工仪器仪表",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.55,
+   "last_sign": "+"
+  },
+  {
+   "sector": "休闲食品",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.99,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他石化",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.72,
+   "last_sign": "+"
+  },
+  {
+   "sector": "钢铁",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.93,
+   "last_sign": "+"
+  },
+  {
+   "sector": "涤纶",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.14,
+   "last_sign": "+"
+  },
+  {
+   "sector": "配电设备",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.85,
+   "last_sign": "+"
+  },
+  {
+   "sector": "商贸零售",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.79,
+   "last_sign": "+"
+  },
+  {
+   "sector": "聚氨酯",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.76,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他专业工程",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.01,
+   "last_sign": "+"
+  },
+  {
+   "sector": "体外诊断",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.77,
+   "last_sign": "+"
+  },
+  {
+   "sector": "运动服装",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 4.1,
+   "last_sign": "+"
+  },
+  {
+   "sector": "电能综合服务",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.16,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医疗器械",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.66,
+   "last_sign": "+"
+  },
+  {
+   "sector": "综合Ⅲ",
+   "seq": "-+-+-",
+   "streak": 0,
+   "status": "FLICKER",
+   "last_pct": 1.97,
+   "last_sign": "-"
+  },
+  {
+   "sector": "综合",
+   "seq": "-+-+-",
+   "streak": 0,
+   "status": "FLICKER",
+   "last_pct": 1.97,
+   "last_sign": "-"
+  },
+  {
+   "sector": "综合Ⅱ",
+   "seq": "-+-+-",
+   "streak": 0,
+   "status": "FLICKER",
+   "last_pct": 1.97,
+   "last_sign": "-"
+  },
+  {
+   "sector": "纸包装",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.64,
+   "last_sign": "+"
+  },
+  {
+   "sector": "基础建设",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.22,
+   "last_sign": "+"
+  },
+  {
+   "sector": "保险Ⅲ",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.91,
+   "last_sign": "+"
+  },
+  {
+   "sector": "保险Ⅱ",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.91,
+   "last_sign": "+"
+  },
+  {
+   "sector": "航空运输",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.62,
+   "last_sign": "+"
+  },
+  {
+   "sector": "火力发电",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.56,
+   "last_sign": "+"
+  },
+  {
+   "sector": "基建市政工程",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.98,
+   "last_sign": "+"
+  },
+  {
+   "sector": "包装印刷",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.79,
+   "last_sign": "+"
+  },
+  {
+   "sector": "航空机场",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.74,
+   "last_sign": "+"
+  },
+  {
+   "sector": "白银",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 4.05,
+   "last_sign": "+"
+  },
+  {
+   "sector": "冶钢辅料",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.49,
+   "last_sign": "+"
+  },
+  {
+   "sector": "白酒Ⅲ",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.7,
+   "last_sign": "+"
+  },
+  {
+   "sector": "白酒Ⅱ",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 0.7,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他塑料制品",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.4,
+   "last_sign": "+"
+  },
+  {
+   "sector": "专业工程",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.16,
+   "last_sign": "+"
+  },
+  {
+   "sector": "轻工制造",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.48,
+   "last_sign": "+"
+  },
+  {
+   "sector": "食品饮料",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.28,
+   "last_sign": "+"
+  },
+  {
+   "sector": "原料药",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.54,
+   "last_sign": "+"
+  },
+  {
+   "sector": "工程机械整机",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.36,
+   "last_sign": "+"
+  },
+  {
+   "sector": "线缆部件及其他",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.0,
+   "last_sign": "+"
+  },
+  {
+   "sector": "铜",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 5.08,
+   "last_sign": "+"
+  },
+  {
+   "sector": "环境治理",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.99,
+   "last_sign": "+"
+  },
+  {
+   "sector": "工程机械",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.43,
+   "last_sign": "+"
+  },
+  {
+   "sector": "生物制品",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.79,
+   "last_sign": "+"
+  },
+  {
+   "sector": "环保",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.79,
+   "last_sign": "+"
+  },
+  {
+   "sector": "金属新材料",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.91,
+   "last_sign": "+"
+  },
+  {
+   "sector": "工业金属",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 4.56,
+   "last_sign": "+"
+  },
+  {
+   "sector": "其他小金属",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.63,
+   "last_sign": "+"
+  },
+  {
+   "sector": "化学制药",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.67,
+   "last_sign": "+"
+  },
+  {
+   "sector": "汽车",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.49,
+   "last_sign": "+"
+  },
+  {
+   "sector": "小金属",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 3.33,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医药生物",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.66,
+   "last_sign": "+"
+  },
+  {
+   "sector": "有色金属",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 3.48,
+   "last_sign": "+"
+  },
+  {
+   "sector": "维生素",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.98,
+   "last_sign": "+"
+  },
+  {
+   "sector": "宠物经济",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.13,
+   "last_sign": "+"
+  },
+  {
+   "sector": "化债(AMC)概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.38,
+   "last_sign": "+"
+  },
+  {
+   "sector": "破发股",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.91,
+   "last_sign": "+"
+  },
+  {
+   "sector": "养老概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.87,
+   "last_sign": "+"
+  },
+  {
+   "sector": "海南自贸",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.69,
+   "last_sign": "+"
+  },
+  {
+   "sector": "煤化工概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.24,
+   "last_sign": "+"
+  },
+  {
+   "sector": "乡村振兴",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.61,
+   "last_sign": "+"
+  },
+  {
+   "sector": "虚拟电厂",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.04,
+   "last_sign": "+"
+  },
+  {
+   "sector": "农业种植",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.48,
+   "last_sign": "+"
+  },
+  {
+   "sector": "婴童概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.24,
+   "last_sign": "+"
+  },
+  {
+   "sector": "AI制药（医疗）",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.31,
+   "last_sign": "+"
+  },
+  {
+   "sector": "生物疫苗",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.41,
+   "last_sign": "+"
+  },
+  {
+   "sector": "病毒防治",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.28,
+   "last_sign": "+"
+  },
+  {
+   "sector": "垃圾分类",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.31,
+   "last_sign": "+"
+  },
+  {
+   "sector": "刀片电池",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.53,
+   "last_sign": "+"
+  },
+  {
+   "sector": "工程机械概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.24,
+   "last_sign": "+"
+  },
+  {
+   "sector": "中字头",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.2,
+   "last_sign": "+"
+  },
+  {
+   "sector": "黄金概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 3.11,
+   "last_sign": "+"
+  },
+  {
+   "sector": "创新医疗服务",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.28,
+   "last_sign": "+"
+  },
+  {
+   "sector": "病原体防治",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.7,
+   "last_sign": "+"
+  },
+  {
+   "sector": "麒麟电池",
+   "seq": "-+-+-",
+   "streak": 0,
+   "status": "FLICKER",
+   "last_pct": 1.87,
+   "last_sign": "-"
+  },
+  {
+   "sector": "雅下水电概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.45,
+   "last_sign": "+"
+  },
+  {
+   "sector": "合成生物",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.15,
+   "last_sign": "+"
+  },
+  {
+   "sector": "大盘价值",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.73,
+   "last_sign": "+"
+  },
+  {
+   "sector": "医药医疗风格",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.44,
+   "last_sign": "+"
+  },
+  {
+   "sector": "稀缺资源",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 4.25,
+   "last_sign": "+"
+  },
+  {
+   "sector": "一带一路",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.72,
+   "last_sign": "+"
+  },
+  {
+   "sector": "参股银行",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 2.01,
+   "last_sign": "+"
+  },
+  {
+   "sector": "小盘价值",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.54,
+   "last_sign": "+"
+  },
+  {
+   "sector": "证金持股",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.3,
+   "last_sign": "+"
+  },
+  {
+   "sector": "新能源",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.07,
+   "last_sign": "+"
+  },
+  {
+   "sector": "燃料电池概念",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.68,
+   "last_sign": "+"
+  },
+  {
+   "sector": "养老金",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.65,
+   "last_sign": "+"
+  },
+  {
+   "sector": "西部大开发",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.52,
+   "last_sign": "+"
+  },
+  {
+   "sector": "机构重仓",
+   "seq": "--+-+",
+   "streak": 1,
+   "status": "FLICKER",
+   "last_pct": 1.59,
+   "last_sign": "+"
+  }
+ ],
+ "outflow_cont": [
+  {
+   "sector": "西藏板块",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.48,
+   "last_sign": "-"
+  },
+  {
+   "sector": "湖南板块",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.69,
+   "last_sign": "-"
+  },
+  {
+   "sector": "浙江板块",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.42,
+   "last_sign": "-"
+  },
+  {
+   "sector": "烘焙食品",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.58,
+   "last_sign": "-"
+  },
+  {
+   "sector": "餐饮",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.72,
+   "last_sign": "-"
+  },
+  {
+   "sector": "卫浴制品",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.01,
+   "last_sign": "-"
+  },
+  {
+   "sector": "房地产综合服务",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.7,
+   "last_sign": "-"
+  },
+  {
+   "sector": "托育服务",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.7,
+   "last_sign": "-"
+  },
+  {
+   "sector": "食品安全",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.49,
+   "last_sign": "-"
+  },
+  {
+   "sector": "ST股",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.78,
+   "last_sign": "-"
+  },
+  {
+   "sector": "农用机械",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.13,
+   "last_sign": "-"
+  },
+  {
+   "sector": "铁路公路",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.9,
+   "last_sign": "-"
+  },
+  {
+   "sector": "洗护用品",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.3,
+   "last_sign": "-"
+  },
+  {
+   "sector": "印刷",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.0,
+   "last_sign": "-"
+  },
+  {
+   "sector": "锦纶",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.53,
+   "last_sign": "-"
+  },
+  {
+   "sector": "卫浴电器",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.6,
+   "last_sign": "-"
+  },
+  {
+   "sector": "管材",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.09,
+   "last_sign": "-"
+  },
+  {
+   "sector": "垂直应用软件",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.27,
+   "last_sign": "-"
+  },
+  {
+   "sector": "水泥制品",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.74,
+   "last_sign": "-"
+  },
+  {
+   "sector": "昨日打二板以上表现",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -4.4,
+   "last_sign": "-"
+  },
+  {
+   "sector": "交运设备",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.7,
+   "last_sign": "-"
+  },
+  {
+   "sector": "粤港自贸",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.46,
+   "last_sign": "-"
+  },
+  {
+   "sector": "2025三季报扭亏",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.86,
+   "last_sign": "-"
+  },
+  {
+   "sector": "综合包装",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.82,
+   "last_sign": "-"
+  },
+  {
+   "sector": "啤酒",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.43,
+   "last_sign": "-"
+  },
+  {
+   "sector": "楼宇设备",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.06,
+   "last_sign": "-"
+  },
+  {
+   "sector": "林业Ⅲ",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.89,
+   "last_sign": "-"
+  },
+  {
+   "sector": "林业Ⅱ",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.89,
+   "last_sign": "-"
+  },
+  {
+   "sector": "品牌消费电子",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.67,
+   "last_sign": "-"
+  },
+  {
+   "sector": "非白酒",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.9,
+   "last_sign": "-"
+  },
+  {
+   "sector": "综合乘用车",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.89,
+   "last_sign": "-"
+  },
+  {
+   "sector": "印刷包装机械",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.71,
+   "last_sign": "-"
+  },
+  {
+   "sector": "硅料硅片",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -2.82,
+   "last_sign": "-"
+  },
+  {
+   "sector": "有机硅",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.02,
+   "last_sign": "-"
+  },
+  {
+   "sector": "租赁",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.16,
+   "last_sign": "-"
+  },
+  {
+   "sector": "检测服务",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.53,
+   "last_sign": "-"
+  },
+  {
+   "sector": "专业服务",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.03,
+   "last_sign": "-"
+  },
+  {
+   "sector": "机床工具",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.13,
+   "last_sign": "-"
+  },
+  {
+   "sector": "光伏发电",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.38,
+   "last_sign": "-"
+  },
+  {
+   "sector": "航运",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.09,
+   "last_sign": "-"
+  },
+  {
+   "sector": "光伏加工设备",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.03,
+   "last_sign": "-"
+  },
+  {
+   "sector": "光伏电池组件",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.93,
+   "last_sign": "-"
+  },
+  {
+   "sector": "逆变器",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.1,
+   "last_sign": "-"
+  },
+  {
+   "sector": "机器人",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.21,
+   "last_sign": "-"
+  },
+  {
+   "sector": "电子化学品Ⅲ",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.6,
+   "last_sign": "-"
+  },
+  {
+   "sector": "电子化学品Ⅱ",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.6,
+   "last_sign": "-"
+  },
+  {
+   "sector": "光伏设备",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.46,
+   "last_sign": "-"
+  },
+  {
+   "sector": "非银金融",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.2,
+   "last_sign": "-"
+  },
+  {
+   "sector": "电池化学品",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.38,
+   "last_sign": "-"
+  },
+  {
+   "sector": "电力设备",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.4,
+   "last_sign": "-"
+  },
+  {
+   "sector": "北交所概念",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.13,
+   "last_sign": "-"
+  },
+  {
+   "sector": "氦气概念",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.42,
+   "last_sign": "-"
+  },
+  {
+   "sector": "碳基材料",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.83,
+   "last_sign": "-"
+  },
+  {
+   "sector": "2026中报扭亏",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.28,
+   "last_sign": "-"
+  },
+  {
+   "sector": "汽车一体化压铸",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.46,
+   "last_sign": "-"
+  },
+  {
+   "sector": "人脑工程",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.7,
+   "last_sign": "-"
+  },
+  {
+   "sector": "复合集流体",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 3.52,
+   "last_sign": "-"
+  },
+  {
+   "sector": "成渝特区",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.51,
+   "last_sign": "-"
+  },
+  {
+   "sector": "PVDF概念",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.9,
+   "last_sign": "-"
+  },
+  {
+   "sector": "TOPCon电池",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.4,
+   "last_sign": "-"
+  },
+  {
+   "sector": "电子竞技",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.01,
+   "last_sign": "-"
+  },
+  {
+   "sector": "参股期货",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.4,
+   "last_sign": "-"
+  },
+  {
+   "sector": "昨日触板",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -2.03,
+   "last_sign": "-"
+  },
+  {
+   "sector": "碳纤维",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.29,
+   "last_sign": "-"
+  },
+  {
+   "sector": "铜缆高速连接",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.47,
+   "last_sign": "-"
+  },
+  {
+   "sector": "昨日炸板",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -1.82,
+   "last_sign": "-"
+  },
+  {
+   "sector": "科创板做市商",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.7,
+   "last_sign": "-"
+  },
+  {
+   "sector": "3D玻璃",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.46,
+   "last_sign": "-"
+  },
+  {
+   "sector": "2026一季报扭亏",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.69,
+   "last_sign": "-"
+  },
+  {
+   "sector": "股权激励",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.12,
+   "last_sign": "-"
+  },
+  {
+   "sector": "昨日涨停",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 4.21,
+   "last_sign": "-"
+  },
+  {
+   "sector": "金融地产风格",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.8,
+   "last_sign": "-"
+  },
+  {
+   "sector": "氟化工概念",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.65,
+   "last_sign": "-"
+  },
+  {
+   "sector": "蓝宝石",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.32,
+   "last_sign": "-"
+  },
+  {
+   "sector": "海工装备",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.73,
+   "last_sign": "-"
+  },
+  {
+   "sector": "互联网金融",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.75,
+   "last_sign": "-"
+  },
+  {
+   "sector": "智能电网",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.67,
+   "last_sign": "-"
+  },
+  {
+   "sector": "减速器",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.9,
+   "last_sign": "-"
+  },
+  {
+   "sector": "小米汽车",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.91,
+   "last_sign": "-"
+  },
+  {
+   "sector": "3D打印",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.55,
+   "last_sign": "-"
+  },
+  {
+   "sector": "氢能源",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.53,
+   "last_sign": "-"
+  },
+  {
+   "sector": "先进制造风格",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.02,
+   "last_sign": "-"
+  },
+  {
+   "sector": "光伏概念",
+   "seq": "-----",
+   "streak": -5,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.38,
+   "last_sign": "-"
+  },
+  {
+   "sector": "软件开发",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.02,
+   "last_sign": "-"
+  },
+  {
+   "sector": "锂电专用设备",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.58,
+   "last_sign": "-"
+  },
+  {
+   "sector": "房屋建设Ⅲ",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.58,
+   "last_sign": "-"
+  },
+  {
+   "sector": "房屋建设Ⅱ",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.58,
+   "last_sign": "-"
+  },
+  {
+   "sector": "旅游综合",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.56,
+   "last_sign": "-"
+  },
+  {
+   "sector": "摩托车及其他",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.48,
+   "last_sign": "-"
+  },
+  {
+   "sector": "摩托车",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.39,
+   "last_sign": "-"
+  },
+  {
+   "sector": "铁路运输",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.54,
+   "last_sign": "-"
+  },
+  {
+   "sector": "鞋帽及其他",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.84,
+   "last_sign": "-"
+  },
+  {
+   "sector": "影视院线",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.31,
+   "last_sign": "-"
+  },
+  {
+   "sector": "视频媒体",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -1.02,
+   "last_sign": "-"
+  },
+  {
+   "sector": "数字水印",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.51,
+   "last_sign": "-"
+  },
+  {
+   "sector": "MLOps概念",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.44,
+   "last_sign": "-"
+  },
+  {
+   "sector": "百日新高",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.4,
+   "last_sign": "-"
+  },
+  {
+   "sector": "其他运输设备",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.56,
+   "last_sign": "-"
+  },
+  {
+   "sector": "农药兽药",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.08,
+   "last_sign": "-"
+  },
+  {
+   "sector": "B股",
+   "seq": "+----",
+   "streak": -4,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.38,
+   "last_sign": "-"
+  },
+  {
+   "sector": "计算机",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.08,
+   "last_sign": "-"
+  },
+  {
+   "sector": "计算机设备",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.58,
+   "last_sign": "-"
+  },
+  {
+   "sector": "其他计算机设备",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.49,
+   "last_sign": "-"
+  },
+  {
+   "sector": "集成电路制造",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -1.04,
+   "last_sign": "-"
+  },
+  {
+   "sector": "数字媒体",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.78,
+   "last_sign": "-"
+  },
+  {
+   "sector": "门户网站",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.87,
+   "last_sign": "-"
+  },
+  {
+   "sector": "安防设备",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.79,
+   "last_sign": "-"
+  },
+  {
+   "sector": "文字媒体",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -2.12,
+   "last_sign": "-"
+  },
+  {
+   "sector": "云计算",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.82,
+   "last_sign": "-"
+  },
+  {
+   "sector": "网络安全",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.55,
+   "last_sign": "-"
+  },
+  {
+   "sector": "车联网(车路云)",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.3,
+   "last_sign": "-"
+  },
+  {
+   "sector": "大数据",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.22,
+   "last_sign": "-"
+  },
+  {
+   "sector": "东数西算",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.28,
+   "last_sign": "-"
+  },
+  {
+   "sector": "信创",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.31,
+   "last_sign": "-"
+  },
+  {
+   "sector": "人工智能",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.74,
+   "last_sign": "-"
+  },
+  {
+   "sector": "智慧城市",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.49,
+   "last_sign": "-"
+  },
+  {
+   "sector": "国产软件",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.03,
+   "last_sign": "-"
+  },
+  {
+   "sector": "国资云概念",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -1.95,
+   "last_sign": "-"
+  },
+  {
+   "sector": "液冷概念",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.35,
+   "last_sign": "-"
+  },
+  {
+   "sector": "科创板做市股",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.61,
+   "last_sign": "-"
+  },
+  {
+   "sector": "元宇宙概念",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.16,
+   "last_sign": "-"
+  },
+  {
+   "sector": "数据中心",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.65,
+   "last_sign": "-"
+  },
+  {
+   "sector": "数字货币",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.11,
+   "last_sign": "-"
+  },
+  {
+   "sector": "AI芯片",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.76,
+   "last_sign": "-"
+  },
+  {
+   "sector": "上海板块",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.27,
+   "last_sign": "-"
+  },
+  {
+   "sector": "安徽板块",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.43,
+   "last_sign": "-"
+  },
+  {
+   "sector": "湖北板块",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.68,
+   "last_sign": "-"
+  },
+  {
+   "sector": "北京板块",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.03,
+   "last_sign": "-"
+  },
+  {
+   "sector": "影视动漫制作",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.04,
+   "last_sign": "-"
+  },
+  {
+   "sector": "成品家居",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.59,
+   "last_sign": "-"
+  },
+  {
+   "sector": "屏下摄像",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.57,
+   "last_sign": "-"
+  },
+  {
+   "sector": "ERP概念",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.74,
+   "last_sign": "-"
+  },
+  {
+   "sector": "数字阅读",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.89,
+   "last_sign": "-"
+  },
+  {
+   "sector": "盲盒经济",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.21,
+   "last_sign": "-"
+  },
+  {
+   "sector": "近期新高",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.26,
+   "last_sign": "-"
+  },
+  {
+   "sector": "炭黑",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.47,
+   "last_sign": "-"
+  },
+  {
+   "sector": "会展服务",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.5,
+   "last_sign": "-"
+  },
+  {
+   "sector": "公路货运",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.35,
+   "last_sign": "-"
+  },
+  {
+   "sector": "上海自贸",
+   "seq": "++---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.84,
+   "last_sign": "-"
+  },
+  {
+   "sector": "影视概念",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.93,
+   "last_sign": "-"
+  },
+  {
+   "sector": "新型城镇化",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.47,
+   "last_sign": "-"
+  },
+  {
+   "sector": "历史新高",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.0,
+   "last_sign": "-"
+  },
+  {
+   "sector": "模拟芯片设计",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.07,
+   "last_sign": "-"
+  },
+  {
+   "sector": "多业态零售",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.08,
+   "last_sign": "-"
+  },
+  {
+   "sector": "空间计算",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.33,
+   "last_sign": "-"
+  },
+  {
+   "sector": "鸿蒙概念",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.27,
+   "last_sign": "-"
+  },
+  {
+   "sector": "端到端供应链服务",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.83,
+   "last_sign": "-"
+  },
+  {
+   "sector": "高速公路",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.78,
+   "last_sign": "-"
+  },
+  {
+   "sector": "广告媒体",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.63,
+   "last_sign": "-"
+  },
+  {
+   "sector": "粘胶",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 6.14,
+   "last_sign": "-"
+  },
+  {
+   "sector": "仓储物流",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.6,
+   "last_sign": "-"
+  },
+  {
+   "sector": "电商服务",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.29,
+   "last_sign": "-"
+  },
+  {
+   "sector": "装修装饰Ⅲ",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.49,
+   "last_sign": "-"
+  },
+  {
+   "sector": "装修装饰Ⅱ",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.49,
+   "last_sign": "-"
+  },
+  {
+   "sector": "消费电子零部件及组装",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.96,
+   "last_sign": "-"
+  },
+  {
+   "sector": "农药",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.21,
+   "last_sign": "-"
+  },
+  {
+   "sector": "消费电子",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.82,
+   "last_sign": "-"
+  },
+  {
+   "sector": "住宅开发",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.01,
+   "last_sign": "-"
+  },
+  {
+   "sector": "橡胶助剂",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -2.01,
+   "last_sign": "-"
+  },
+  {
+   "sector": "橡胶",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.41,
+   "last_sign": "-"
+  },
+  {
+   "sector": "光伏辅材",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.74,
+   "last_sign": "-"
+  },
+  {
+   "sector": "工程咨询服务Ⅲ",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.71,
+   "last_sign": "-"
+  },
+  {
+   "sector": "工程咨询服务Ⅱ",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.71,
+   "last_sign": "-"
+  },
+  {
+   "sector": "光学元件",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 3.12,
+   "last_sign": "-"
+  },
+  {
+   "sector": "工控设备",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.14,
+   "last_sign": "-"
+  },
+  {
+   "sector": "其他专用设备",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.45,
+   "last_sign": "-"
+  },
+  {
+   "sector": "专用设备",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.51,
+   "last_sign": "-"
+  },
+  {
+   "sector": "分立器件",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.0,
+   "last_sign": "-"
+  },
+  {
+   "sector": "LED",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.27,
+   "last_sign": "-"
+  },
+  {
+   "sector": "光学光电子",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.52,
+   "last_sign": "-"
+  },
+  {
+   "sector": "半导体材料",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.46,
+   "last_sign": "-"
+  },
+  {
+   "sector": "证券Ⅲ",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.97,
+   "last_sign": "-"
+  },
+  {
+   "sector": "证券Ⅱ",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.97,
+   "last_sign": "-"
+  },
+  {
+   "sector": "自动化设备",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.7,
+   "last_sign": "-"
+  },
+  {
+   "sector": "集成电路封测",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.03,
+   "last_sign": "-"
+  },
+  {
+   "sector": "数字芯片设计",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.29,
+   "last_sign": "-"
+  },
+  {
+   "sector": "半导体",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.17,
+   "last_sign": "-"
+  },
+  {
+   "sector": "电子",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.81,
+   "last_sign": "-"
+  },
+  {
+   "sector": "移动支付",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.49,
+   "last_sign": "-"
+  },
+  {
+   "sector": "地摊经济",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.51,
+   "last_sign": "-"
+  },
+  {
+   "sector": "第四代半导体",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -1.8,
+   "last_sign": "-"
+  },
+  {
+   "sector": "量子科技",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.09,
+   "last_sign": "-"
+  },
+  {
+   "sector": "植物照明",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.46,
+   "last_sign": "-"
+  },
+  {
+   "sector": "虚拟机器人",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.09,
+   "last_sign": "-"
+  },
+  {
+   "sector": "工业气体",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.78,
+   "last_sign": "-"
+  },
+  {
+   "sector": "工程建设",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.13,
+   "last_sign": "-"
+  },
+  {
+   "sector": "工业互联",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.97,
+   "last_sign": "-"
+  },
+  {
+   "sector": "蚂蚁概念",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.51,
+   "last_sign": "-"
+  },
+  {
+   "sector": "最近多板",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -0.32,
+   "last_sign": "-"
+  },
+  {
+   "sector": "机器视觉",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.1,
+   "last_sign": "-"
+  },
+  {
+   "sector": "AI手机",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.24,
+   "last_sign": "-"
+  },
+  {
+   "sector": "次新股",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.0,
+   "last_sign": "-"
+  },
+  {
+   "sector": "碳化硅",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.87,
+   "last_sign": "-"
+  },
+  {
+   "sector": "茅指数",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.94,
+   "last_sign": "-"
+  },
+  {
+   "sector": "趋势股",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.07,
+   "last_sign": "-"
+  },
+  {
+   "sector": "转债标的",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.4,
+   "last_sign": "-"
+  },
+  {
+   "sector": "虚拟现实",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.72,
+   "last_sign": "-"
+  },
+  {
+   "sector": "生物识别",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.13,
+   "last_sign": "-"
+  },
+  {
+   "sector": "昨日涨停_含一字",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 4.07,
+   "last_sign": "-"
+  },
+  {
+   "sector": "券商概念",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.98,
+   "last_sign": "-"
+  },
+  {
+   "sector": "光刻机(胶)",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.96,
+   "last_sign": "-"
+  },
+  {
+   "sector": "IGBT概念",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.1,
+   "last_sign": "-"
+  },
+  {
+   "sector": "中芯概念",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.33,
+   "last_sign": "-"
+  },
+  {
+   "sector": "氮化镓",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.6,
+   "last_sign": "-"
+  },
+  {
+   "sector": "医疗器械概念",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.05,
+   "last_sign": "-"
+  },
+  {
+   "sector": "基金重仓",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.54,
+   "last_sign": "-"
+  },
+  {
+   "sector": "昨日高换手",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": -1.29,
+   "last_sign": "-"
+  },
+  {
+   "sector": "物联网",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.64,
+   "last_sign": "-"
+  },
+  {
+   "sector": "传感器",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.19,
+   "last_sign": "-"
+  },
+  {
+   "sector": "第三代半导体",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.77,
+   "last_sign": "-"
+  },
+  {
+   "sector": "汽车芯片",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.35,
+   "last_sign": "-"
+  },
+  {
+   "sector": "上证380",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.25,
+   "last_sign": "-"
+  },
+  {
+   "sector": "先进封装",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 2.03,
+   "last_sign": "-"
+  },
+  {
+   "sector": "中盘成长",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.42,
+   "last_sign": "-"
+  },
+  {
+   "sector": "题材股",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.05,
+   "last_sign": "-"
+  },
+  {
+   "sector": "国产芯片",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.49,
+   "last_sign": "-"
+  },
+  {
+   "sector": "专精特新",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.52,
+   "last_sign": "-"
+  },
+  {
+   "sector": "中证500",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.3,
+   "last_sign": "-"
+  },
+  {
+   "sector": "存储芯片",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.04,
+   "last_sign": "-"
+  },
+  {
+   "sector": "中盘股",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 1.31,
+   "last_sign": "-"
+  },
+  {
+   "sector": "半导体概念",
+   "seq": "-+---",
+   "streak": -3,
+   "status": "OUTFLOW_CONT",
+   "last_pct": 0.83,
+   "last_sign": "-"
+  }
+ ],
+ "note": "连续性优先视图;绝对金额 ordinal-only 不入表。描述性状态,非选股结论。不是买卖指令。"
+}
