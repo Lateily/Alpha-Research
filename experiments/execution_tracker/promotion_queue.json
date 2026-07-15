@@ -1,5 +1,5 @@
 {
- "market_state": "RISK_ON",
+ "market_state": "RISK_OFF",
  "queue": [
   {
    "ticker": "002463.SZ",
@@ -7,8 +7,9 @@
    "signal_id": "a2a40a749c6b",
    "verdict": "MANUAL_REVIEW",
    "why": "trigger/invalidation 无法机械解析,送人审",
+   "matched_sector": null,
    "checks": {
-    "G1_regime": true,
+    "G1_regime": false,
     "G2_sector_streak>=2": false
    }
   }
