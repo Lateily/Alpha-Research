@@ -69,7 +69,7 @@ Claude 等待 Codex 完成 → 读 codex_output.json → 综合产出
 | Security audit | Claude (ar-security-auditor skill) | Codex 二审 | 手动触发 |
 | Release engineering | Claude (ar-release-engineer skill) | — | 手动触发 |
 | 周期数据拉取（fetch_data.py） | **Cron + 现有脚本** | continue-on-error 兜底 | GitHub Actions |
-| 学长 Franky 反馈处理 | **Claude (主)** | — | Claude 每次 session 强制读 REVIEW_REQUEST.md |
+| 审阅者反馈处理 | **Claude (主)** | — | Claude 每次 session 强制读 REVIEW_REQUEST.md |
 
 ---
 

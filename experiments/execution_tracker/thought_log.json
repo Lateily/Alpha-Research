@@ -38,5 +38,21 @@
     "thought": "利通day2:收113(+4.48%)主力仅+0.43亿,承接条件(≥3亿)未达标;98.5防线安全。反弹存在但资金背书不足,警示维持",
     "changed_action": false,
     "why": "复活三条件0/3"
+  },
+  {
+    "signal_id": "7a45c7fdec06",
+    "at": "20260715 13:45",
+    "author": "Claude",
+    "thought": "价格给教科书回踩,资金给两日-30亿:timing票内部price×flow双确认,资金veto优先——写进下版模板",
+    "changed_action": false,
+    "why": "invalidation即学习"
+  },
+  {
+    "signal_id": "e585f64f97b0",
+    "at": "20260715 13:45",
+    "author": "Claude",
+    "thought": "sweep结构与持续流出冲突时资金条款优先",
+    "changed_action": false,
+    "why": "invalidation即学习"
   }
 ]

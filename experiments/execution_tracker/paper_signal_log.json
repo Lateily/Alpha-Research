@@ -2515,5 +2515,279 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "260ac4edec96",
+    "ticker": "SECTOR.MIL",
+    "name": "军工/商业航天集群",
+    "timestamp": "20260711 20:10",
+    "line": "rotation",
+    "market_state": "RISK_OFF",
+    "setup_type": "rotation_hypothesis",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": null,
+    "created_by": "Claude",
+    "sector": "军工/航天",
+    "sector_state": "",
+    "hypothesis": "半衰期检验:周五单日爆发的军工/商业航天/卫星互联网集群,到20260715不能维持主力净流入连续性(0713-0715三日中净流入日≤1)",
+    "variant_view": "CONSENSUS_RIDE",
+    "catalyst": "churn市热点半衰期检验(第4次观察)",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "周五军工系包揽单日流入TOP6中5席但5日累计负",
+        "tier": "E3",
+        "source": "moneyflow_ind_dc",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "军工系周五单日大流入,5日累计负",
+    "forecast_claim": "3日内流入连续性断裂",
+    "trigger_condition": "无(判分型)",
+    "invalidation": "0713-0715中该集群主力净流入日≥2且板块指数累计上涨",
+    "human_status": "not_executed",
+    "outcome_status": "pending",
+    "provenance": {
+      "recovered": true,
+      "lost_via": "ops git-reset-hard on ar-live 20260712 23:35 (post-#135 sync)",
+      "reinserted_at": "20260715 13:45",
+      "pre_registration_evidence": "GitHub PR #139 body + conversation log 20260711 (conditions cited before outcomes)"
+    }
+  },
+  {
+    "signal_id": "0401ddb9b9ae",
+    "ticker": "SECTOR.AICOMPUTE",
+    "name": "AI算力复合体",
+    "timestamp": "20260711 20:10",
+    "line": "rotation",
+    "market_state": "RISK_OFF",
+    "setup_type": "distribution_warning",
+    "horizon": [
+      "5d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": null,
+    "created_by": "Claude",
+    "sector": "算力/半导体",
+    "sector_state": "",
+    "hypothesis": "拥挤解体:本周5日累计流入TOP的算力概念,到20260717其5日滚动累计主力净流转负",
+    "variant_view": "NO_EDGE方向观察",
+    "catalyst": "旭创等Q2预告窗~0715",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "算力5日累计第1但0710单日转出",
+        "tier": "E3",
+        "source": "moneyflow_ind_dc",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "5日大流入+周五价崩转出",
+    "forecast_claim": "5日滚动流量转负",
+    "trigger_condition": "无(判分型)",
+    "invalidation": "0717收盘时算力概念5日滚动累计主力净流仍为正,或期间连续2日板块级净流入+指数上行",
+    "human_status": "not_executed",
+    "outcome_status": "pending",
+    "provenance": {
+      "recovered": true,
+      "lost_via": "ops git-reset-hard on ar-live 20260712 23:35 (post-#135 sync)",
+      "reinserted_at": "20260715 13:45",
+      "pre_registration_evidence": "GitHub PR #139 body + conversation log 20260711 (conditions cited before outcomes)"
+    }
+  },
+  {
+    "signal_id": "7a45c7fdec06",
+    "ticker": "002185.SZ",
+    "name": "华天科技",
+    "timestamp": "20260711 21:05",
+    "line": "smc",
+    "market_state": "RISK_OFF",
+    "setup_type": "execution_gate",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {
+      "note": "0714回踩日主力-5.39亿(>5亿bar)+0713 -24.54亿:价格结构确认但资金条款veto——两日+42亿完全反转"
+    },
+    "entry_close": 25.31,
+    "created_by": "Claude",
+    "sector": "封测/先进封装",
+    "sector_state": "",
+    "hypothesis": "SMC:bull-BOS(破23.86)+主力连续两日+22.2/+20.8亿=龙头确认;premium 94%只做回踩——回踩24.0±0.3企稳则结构延续",
+    "variant_view": "CONSENSUS_RIDE",
+    "catalyst": "Q2预告季+先进封装叙事",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "0709/0710主力+22.23/+20.84亿,全段唯一逆势+6.66%",
+        "tier": "E3",
+        "source": "moneyflow_dc",
+        "status": "verified"
+      },
+      {
+        "claim": "bull-BOS:收25.31>swing高23.86",
+        "tier": "E3",
+        "source": "qfq结构",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "两日大额净流入",
+    "forecast_claim": "回踩后结构延续",
+    "trigger_condition": "回踩24.0±0.3且当日承接不破23.5,绝不追26.1上方",
+    "invalidation": "收盘<23.0或回踩时主力单日净流出>5亿",
+    "human_status": "not_executed",
+    "outcome_status": "invalidated",
+    "provenance": {
+      "recovered": true,
+      "lost_via": "ops git-reset-hard on ar-live 20260712 23:35 (post-#135 sync)",
+      "reinserted_at": "20260715 13:45",
+      "pre_registration_evidence": "GitHub PR #139 body + conversation log 20260711 (conditions cited before outcomes)"
+    }
+  },
+  {
+    "signal_id": "e585f64f97b0",
+    "ticker": "688012.SH",
+    "name": "中微公司",
+    "timestamp": "20260711 21:05",
+    "line": "smc",
+    "market_state": "RISK_OFF",
+    "setup_type": "execution_gate",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {
+      "note": "承接区两日续出-14.24/-9.60亿:0710承接未延续,资金证伪结构"
+    },
+    "entry_close": 434.51,
+    "created_by": "Claude",
+    "sector": "半导体设备",
+    "sector_state": "",
+    "hypothesis": "SMC:跌中承接(-7.86%仍+3.76亿)+HH+HL未破;回踩392-410承接企稳=设备段分歧买点结构",
+    "variant_view": "NO_EDGE待确认",
+    "catalyst": "设备段国产化+订单E1;Q2预告季",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "0710 -7.86%但主力+3.76亿(0709 +17.29亿)",
+        "tier": "E3",
+        "source": "moneyflow_dc",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "大跌日净流入(承接候选)",
+    "forecast_claim": "回踩承接后修复",
+    "trigger_condition": "回踩400-410企稳,不接飞刀不追492",
+    "invalidation": "收盘<392或承接区放量继续流出",
+    "human_status": "not_executed",
+    "outcome_status": "invalidated",
+    "provenance": {
+      "recovered": true,
+      "lost_via": "ops git-reset-hard on ar-live 20260712 23:35 (post-#135 sync)",
+      "reinserted_at": "20260715 13:45",
+      "pre_registration_evidence": "GitHub PR #139 body + conversation log 20260711 (conditions cited before outcomes)"
+    }
+  },
+  {
+    "signal_id": "63d4e9cc3408",
+    "ticker": "600584.SH",
+    "name": "长电科技",
+    "timestamp": "20260711 21:05",
+    "line": "smc",
+    "market_state": "RISK_OFF",
+    "setup_type": "distribution_warning",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": 101.11,
+    "created_by": "Claude",
+    "sector": "封测",
+    "sector_state": "",
+    "hypothesis": "SMC警示:周五上摸113.87(扫111.11上方流动性)后全数回吐收最低101.11=顶部扫荡+派发签名;3日内不收复107.5",
+    "variant_view": "NO_EDGE方向观察",
+    "catalyst": "无(负向签名判分)",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "周五H113.87(新高)收101.11(最低),主力-16.16亿",
+        "tier": "E3",
+        "source": "daily+moneyflow_dc",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "前日巨量流入次日半数回吐",
+    "forecast_claim": "3日不收复中点",
+    "trigger_condition": "观察项:reclaim 107.5解除警示;跌破97结构复核",
+    "invalidation": "0713-0715任一收盘>107.5(reclaim成立,警示解除)",
+    "human_status": "not_executed",
+    "outcome_status": "pending",
+    "provenance": {
+      "recovered": true,
+      "lost_via": "ops git-reset-hard on ar-live 20260712 23:35 (post-#135 sync)",
+      "reinserted_at": "20260715 13:45",
+      "pre_registration_evidence": "GitHub PR #139 body + conversation log 20260711 (conditions cited before outcomes)"
+    }
+  },
+  {
+    "signal_id": "a2a40a749c6b",
+    "ticker": "002463.SZ",
+    "name": "沪电股份",
+    "timestamp": "20260715 13:45",
+    "line": "smc",
+    "market_state": "CHURN",
+    "setup_type": "execution_gate",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": 137.13,
+    "created_by": "Claude",
+    "sector": "PCB/AI硬件",
+    "sector_state": "段内唯一结构资金双完好",
+    "hypothesis": "0714涨停+主力+26.56亿+HH+HL完好(生益/胜宏皆破位反弹,唯沪电双完好);回踩127-130承接且当日资金≥-3亿则结构延续",
+    "variant_view": "CONSENSUS_RIDE:资金已选龙头,edge在入场纪律与资金veto",
+    "catalyst": "AI服务器PCB量价逻辑+Q2预告季;三条件门今晚判定",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "0714涨停+26.56亿段内最大,HH+HL,premium 65%",
+        "tier": "E3",
+        "source": "tushare+qfq",
+        "status": "verified"
+      },
+      {
+        "claim": "同段生益/胜宏0714涨停但结构已破位",
+        "tier": "E3",
+        "source": "qfq结构扫描",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "单日+26.56亿段内最大",
+    "forecast_claim": "回踩承接后延续",
+    "trigger_condition": "两票齐+三条件门过;涨停价追入禁止",
+    "invalidation": "收盘<123(swing低)或回踩日主力净流出>5亿(华天教训:资金veto优先)",
+    "human_status": "not_executed",
+    "outcome_status": "pending"
   }
 ]
