@@ -2,9 +2,9 @@
 
 > 正式化自 `experiments/pm_research_ops_2026_07/WEEKLY_REPORT_TEMPLATE.md`
 > (Codex 起草)+ Claude 修正案 A2,Junyan 批准 2026-07-09。
-> 读者:Junyan、学长(PM)、非技术审阅者。实例存 `docs/team/weekly/YYYY-Www.md`。
+> 读者:Junyan、审阅者(PM)、非技术审阅者。实例存 `docs/team/weekly/YYYY-Www.md`。
 
-## 写作风格(mentor-facing 硬规则,学长意见 2026-07-14)
+## 写作风格(面向审阅者的硬规则,审阅者意见 2026-07-14)
 
 - **直接写结论**,禁用"不是什么…而是什么…"句式("本周市场修复不连续",
   不写"这不是趋势修复,而是…")。
