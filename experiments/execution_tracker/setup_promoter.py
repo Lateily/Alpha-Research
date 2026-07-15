@@ -19,6 +19,8 @@ import os
 import re
 import sys
 
+import sector_keys
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "promotion_queue.json")
 RISK_PCT = 0.0075          # 提案风险预算 0.75% NAV [unvalidated intuition]
@@ -61,9 +63,7 @@ def evaluate(signals, market_state, sector_streaks, bars_by_ticker, nav):
         t = s["ticker"]
         checks = {}
         checks["G1_regime"] = market_state in ("RISK_ON", "WEAK_REPAIR")
-        streak = max((v for k, v in sector_streaks.items()
-                      if k and s.get("sector") and (k in s["sector"] or s["sector"] in k)),
-                     default=0)
+        streak, matched_sector = sector_keys.best_streak(s.get("sector"), sector_streaks)
         checks["G2_sector_streak>=2"] = streak >= 2
         zone = _zone_from_trigger(s.get("trigger_condition"))
         stop = _stop_from_invalidation(s.get("invalidation"))
@@ -76,6 +76,7 @@ def evaluate(signals, market_state, sector_streaks, bars_by_ticker, nav):
                           "signal_id": s.get("signal_id"),
                           "verdict": "MANUAL_REVIEW",
                           "why": "trigger/invalidation 无法机械解析,送人审",
+                          "matched_sector": matched_sector,
                           "checks": checks})
             continue
         touched = bar["low"] <= zone[1] and bar["high"] >= zone[0]
@@ -86,6 +87,7 @@ def evaluate(signals, market_state, sector_streaks, bars_by_ticker, nav):
         shares = int(nav * RISK_PCT / max(entry_ref - stop, 1e-9) // 100 * 100) if ready else 0
         queue.append({"ticker": t, "name": s.get("name"), "signal_id": s.get("signal_id"),
                       "verdict": "PROMOTE_REVIEW_READY" if ready else "NOT_READY",
+                      "matched_sector": matched_sector,
                       "checks": checks,
                       "proposal": ({"entry_review": entry_ref, "stop": stop,
                                     "shares": shares, "risk_pct_nav": RISK_PCT,

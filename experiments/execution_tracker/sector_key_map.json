@@ -1,0 +1,94 @@
+{
+  "version": "2026-07-15.v1",
+  "note": "Canonical sector aliases for joining human signal sectors, Eastmoney/Tushare sector names, court keys, and dynamic watch labels. Matching is a review aid, not a trade signal.",
+  "keys": {
+    "pharma": {
+      "label": "医药",
+      "aliases": [
+        "医药",
+        "医药生物",
+        "医药商业",
+        "医药流通",
+        "其他医疗服务",
+        "医疗服务",
+        "医疗研发外包",
+        "CXO",
+        "创新药",
+        "化学制药",
+        "特色药",
+        "中药",
+        "中药Ⅱ",
+        "中药Ⅲ",
+        "中成药",
+        "生物制药",
+        "血液制品",
+        "保健品",
+        "药房",
+        "零售药房"
+      ]
+    },
+    "semi_ai_hardware": {
+      "label": "半导体/AI硬件",
+      "aliases": [
+        "半导体",
+        "半导体设备",
+        "半导体材料",
+        "先进封装",
+        "封测",
+        "光模块",
+        "CPO",
+        "PCB",
+        "AI硬件",
+        "印制电路板",
+        "覆铜板",
+        "CCL",
+        "元件",
+        "电子元件",
+        "光学元件",
+        "消费电子",
+        "高速铜缆",
+        "服务器"
+      ]
+    },
+    "energy_resources": {
+      "label": "能源/资源",
+      "aliases": [
+        "石油",
+        "油田服务",
+        "油服工程",
+        "油气",
+        "可燃冰",
+        "煤炭",
+        "动力煤",
+        "黄金",
+        "贵金属",
+        "工业金属",
+        "铝",
+        "铜"
+      ]
+    },
+    "auto_ev": {
+      "label": "汽车/电动车",
+      "aliases": [
+        "汽车",
+        "乘用车",
+        "电动乘用车",
+        "新能源汽车",
+        "整车",
+        "零部件"
+      ]
+    },
+    "consumer_services": {
+      "label": "消费/服务",
+      "aliases": [
+        "旅游",
+        "餐饮",
+        "家居",
+        "食品",
+        "烘焙",
+        "商业",
+        "零售"
+      ]
+    }
+  }
+}

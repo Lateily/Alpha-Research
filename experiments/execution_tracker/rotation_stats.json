@@ -1,0 +1,289 @@
+{
+ "as_of": "20260714",
+ "panel_days": [
+  "20260708",
+  "20260709",
+  "20260710",
+  "20260713",
+  "20260714"
+ ],
+ "transition": {
+  "counts": {
+   "INFLOW_CONT": 7,
+   "WARMING": 39,
+   "NEUTRAL": 277,
+   "FLICKER": 32,
+   "OUTFLOW_CONT": 100
+  },
+  "matrix_counts": {
+   "INFLOW_CONT": {
+    "INFLOW_CONT": 7
+   },
+   "WARMING": {
+    "INFLOW_CONT": 39
+   },
+   "NEUTRAL": {
+    "WARMING": 27,
+    "FLICKER": 129,
+    "OUTFLOW_CONT": 121
+   },
+   "FLICKER": {
+    "WARMING": 1,
+    "FLICKER": 31
+   },
+   "OUTFLOW_CONT": {
+    "OUTFLOW_CONT": 100
+   }
+  },
+  "matrix_prob": {
+   "INFLOW_CONT": {
+    "INFLOW_CONT": 1.0
+   },
+   "WARMING": {
+    "INFLOW_CONT": 1.0
+   },
+   "NEUTRAL": {
+    "FLICKER": 0.466,
+    "OUTFLOW_CONT": 0.437,
+    "WARMING": 0.097
+   },
+   "FLICKER": {
+    "FLICKER": 0.969,
+    "WARMING": 0.031
+   },
+   "OUTFLOW_CONT": {
+    "OUTFLOW_CONT": 1.0
+   }
+  },
+  "examples": [
+   {
+    "sector": "油田服务",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "可燃冰",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "海洋捕捞",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "其他专业服务",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "房屋检测",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "微盘精选",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "其他医疗服务",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "黄金",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "铝",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "医药流通",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "中药Ⅲ",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "中药Ⅱ",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "预加工食品",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "果蔬加工",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "保健品",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "血液制品",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "专业连锁Ⅲ",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "专业连锁Ⅱ",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "肝素概念",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "特色药",
+    "seq": "--+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   }
+  ]
+ },
+ "leader_breadth": [
+  {
+   "group": "医药",
+   "count": 15,
+   "share_top30": 0.5,
+   "top10_count": 4,
+   "avg_ret10": 30.8,
+   "examples": [
+    "亚虹医药(50.9%)",
+    "陇神戎发(47.9%)",
+    "迪哲医药(41.1%)",
+    "新天地(35.4%)",
+    "津药药业(34.0%)",
+    "大参林(30.9%)",
+    "灵康药业(30.5%)",
+    "康龙化成(27.7%)"
+   ]
+  },
+  {
+   "group": "其他",
+   "count": 9,
+   "share_top30": 0.3,
+   "top10_count": 3,
+   "avg_ret10": 32.5,
+   "examples": [
+    "山东墨龙(41.6%)",
+    "华骐环保(38.1%)",
+    "中远海特(35.5%)",
+    "交建股份(33.1%)",
+    "梦网科技(31.8%)",
+    "锦华新材(31.0%)",
+    "妙可蓝多(28.3%)",
+    "鑫汇科(28.2%)"
+   ]
+  },
+  {
+   "group": "能源/资源",
+   "count": 3,
+   "share_top30": 0.1,
+   "top10_count": 2,
+   "avg_ret10": 43.3,
+   "examples": [
+    "科力股份(54.9%)",
+    "通源石油(42.3%)",
+    "赤峰黄金(32.8%)"
+   ]
+  },
+  {
+   "group": "消费/服务",
+   "count": 2,
+   "share_top30": 0.067,
+   "top10_count": 1,
+   "avg_ret10": 35.8,
+   "examples": [
+    "梦百合(45.1%)",
+    "祖名股份(26.4%)"
+   ]
+  },
+  {
+   "group": "汽车/电动车",
+   "count": 1,
+   "share_top30": 0.033,
+   "top10_count": 0,
+   "avg_ret10": 30.3,
+   "examples": [
+    "征和工业(30.3%)"
+   ]
+  }
+ ],
+ "dominant_groups": [
+  {
+   "group": "医药",
+   "count": 15,
+   "share_top30": 0.5,
+   "top10_count": 4,
+   "avg_ret10": 30.8,
+   "examples": [
+    "亚虹医药(50.9%)",
+    "陇神戎发(47.9%)",
+    "迪哲医药(41.1%)",
+    "新天地(35.4%)",
+    "津药药业(34.0%)",
+    "大参林(30.9%)",
+    "灵康药业(30.5%)",
+    "康龙化成(27.7%)"
+   ]
+  },
+  {
+   "group": "其他",
+   "count": 9,
+   "share_top30": 0.3,
+   "top10_count": 3,
+   "avg_ret10": 32.5,
+   "examples": [
+    "山东墨龙(41.6%)",
+    "华骐环保(38.1%)",
+    "中远海特(35.5%)",
+    "交建股份(33.1%)",
+    "梦网科技(31.8%)",
+    "锦华新材(31.0%)",
+    "妙可蓝多(28.3%)",
+    "鑫汇科(28.2%)"
+   ]
+  }
+ ],
+ "data_blocked": [],
+ "claim_allowed": false,
+ "note": "描述统计层;需要后续多日快照才能校准前瞻概率。不是买卖指令。"
+}
