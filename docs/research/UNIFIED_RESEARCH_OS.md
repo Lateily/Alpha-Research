@@ -99,8 +99,25 @@ churn 市热点半衰期 ≈1 天(2026-07 第 4 次观察,[E3 计数中]):单日
 换手/涨停密度高)默认演化方向是 DISTRIBUTING,研究的边际价值在拥挤**前**与
 回调**中**,不在追逐中。
 
+## 5.5 推断层与 E1 层(v1.2 熔炼,2026-07-16)
+
+**轮动实验室推断层**(`rotation_validation.py`,60 日回填 + 每日 --append):
+Q1 HOT 存续率(Wilson CI)· Q2 龙头广度切分(Mann-Whitney)· Q3 链对
+lead-lag(BH 校正)· 双负控制。首轮结果(校准先验,claim_allowed=false):
+HOT T+3 存续仅 27%;**广度切分显著(z=4.23:有广度 +0.68% vs 无广度
+-0.06% 前瞻中位)**;油服→油气、化药→医药流通两链对过 BH。
+使用规则:这些是 Stage A 状态判定与快层三条件门的**校准依据**,不是信号;
+升级为规则须跨窗稳定 + paper 前瞻 ≥30。
+
+**图谱 E1 层**:行业锚 `sector_anchors.json`(TSMC 月营收 E1:4-6 月 yoy
+17.5→30.1→67.9% 加速;SIA DATA_BLOCKED 人工)· 关系边 `relationship_edges.json`
+(E2 边使用时须寻 E1 再确认)· E1 factpack 存 `docs/research/factpacks/`
+(事实先行,不给 posture;首批 大参林/恒瑞)。
+慢层深研的入场券:factpack 在库 + 所属 Sector OS 有据。
+
 ## 6. 版本与变更
 
+v1.2(2026-07-16):推断层(Q1-Q3+双负控制)与 E1 层(锚/边表/factpack)熔炼入合同;首轮校准先验入档。
 v1.1(2026-07-15):Stage A 增连续性优先子表(大参林/医药 miss 根因);全市场动量 pre-filter 与 Registered Court 唤醒进入数据包旁路(送审不选股)。
 v1.0 锁定 2026-07-11。任何格式/枚举/门槛变更 = 提 PR 改本文档 + 版本号递增 +
 Junyan 批准;screen 输出必须声明所用合同版本。

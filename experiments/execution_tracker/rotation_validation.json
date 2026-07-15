@@ -1,0 +1,141 @@
+{
+ "window": [
+  "20260417",
+  "20260715"
+ ],
+ "n_days": 60,
+ "n_sectors": 1006,
+ "effective_n_note": "横截面高相关,有效独立样本≈交易日数",
+ "Q1_persistence": {
+  "persist_T1": {
+   "p": 0.563,
+   "ci": [
+    0.549,
+    0.577
+   ],
+   "n": 4781
+  },
+  "persist_T3": {
+   "p": 0.272,
+   "ci": [
+    0.259,
+    0.285
+   ],
+   "n": 4598
+  },
+  "fwd3_hot_vs_random": {
+   "hot_median": 0.0,
+   "rand_median": -0.15,
+   "mw_z": 1.81,
+   "mw_p": 0.0704,
+   "n": [
+    4598,
+    4598
+   ]
+  }
+ },
+ "C1_label_shuffle_control": {
+  "persist_T1": {
+   "p": 0.563,
+   "ci": [
+    0.549,
+    0.577
+   ],
+   "n": 4781
+  },
+  "persist_T3": {
+   "p": 0.272,
+   "ci": [
+    0.259,
+    0.285
+   ],
+   "n": 4598
+  },
+  "fwd3_hot_vs_random": {
+   "hot_median": -0.16,
+   "rand_median": -0.18,
+   "mw_z": 1.08,
+   "mw_p": 0.2799,
+   "n": [
+    4598,
+    4598
+   ]
+  }
+ },
+ "Q2_leader_breadth": {
+  "broad_n": 471,
+  "narrow_n": 4127,
+  "broad_med_fwd3": 0.68,
+  "narrow_med_fwd3": -0.06,
+  "mw_z": 4.23,
+  "mw_p": 0.0,
+  "note": "广度=板块名匹配的当日涨停数>=2 [行业名跨表模糊匹配,匹配失败按narrow计]"
+ },
+ "Q3_chain_leadlag": [
+  {
+   "pair": "半导体设备->半导体材料",
+   "best_lag": 1,
+   "r": 0.177,
+   "p": 0.1742,
+   "bh_pass_10pct": false
+  },
+  {
+   "pair": "光模块(CPO)->印制电路板",
+   "status": "DATA_BLOCKED: 板块名缺失",
+   "bh_pass_10pct": false
+  },
+  {
+   "pair": "油田服务->油气开采Ⅱ",
+   "best_lag": 3,
+   "r": 0.313,
+   "p": 0.0147,
+   "bh_pass_10pct": true
+  },
+  {
+   "pair": "化学制药->医药流通",
+   "best_lag": 2,
+   "r": 0.298,
+   "p": 0.0193,
+   "bh_pass_10pct": true
+  },
+  {
+   "pair": "黄金->铝",
+   "best_lag": 3,
+   "r": -0.138,
+   "p": 0.302,
+   "bh_pass_10pct": false
+  },
+  {
+   "pair": "煤炭开采->电力",
+   "best_lag": 3,
+   "r": 0.031,
+   "p": 0.8188,
+   "bh_pass_10pct": false
+  }
+ ],
+ "C2_lag_shuffle_control": [
+  {
+   "pair": "半导体设备->半导体材料",
+   "best_lag": 1,
+   "r": 0.037,
+   "p": 0.7799,
+   "bh_pass_10pct": false
+  },
+  {
+   "pair": "油田服务->油气开采Ⅱ",
+   "best_lag": 3,
+   "r": -0.073,
+   "p": 0.5897,
+   "bh_pass_10pct": false
+  },
+  {
+   "pair": "化学制药->医药流通",
+   "best_lag": 1,
+   "r": -0.205,
+   "p": 0.1144,
+   "bh_pass_10pct": false
+  }
+ ],
+ "claim_allowed": false,
+ "note": "描述/校准统计;真实信号须显著优于双负控制且跨窗稳定,才有资格进入 paper 前瞻判分。不是买卖指令。"
+}
