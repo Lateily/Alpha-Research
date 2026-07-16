@@ -10,8 +10,8 @@
       "narrative_shift": 72,
       "low_coverage": 50,
       "catalyst_prox": 80,
-      "close": 1114.94,
-      "volume": 1795027400,
+      "close": 1113,
+      "volume": 3066336300,
       "source": "vp_engine",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
@@ -28,7 +28,7 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-07-16T04:17:28.418880+00:00"
+      "engine_run_at": "2026-07-16T10:29:21.244824+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -39,8 +39,8 @@
       "narrative_shift": 38,
       "low_coverage": 32,
       "catalyst_prox": 45,
-      "close": 93.73,
-      "volume": 3194445300,
+      "close": 94.14,
+      "volume": 6072039700,
       "source": "vp_engine",
       "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
       "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
@@ -57,7 +57,7 @@
         "signal": null,
         "delta": null
       },
-      "engine_run_at": "2026-07-16T04:17:28.418964+00:00"
+      "engine_run_at": "2026-07-16T10:29:21.244966+00:00"
     },
     {
       "ticker": "175.HK",
@@ -69,7 +69,7 @@
       "low_coverage": 50,
       "catalyst_prox": 50,
       "close": 18.4,
-      "volume": 407,
+      "volume": 521,
       "source": "vp_engine",
       "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] revenue_growth < -10% for 2 consecutive quarters OR operating_margin < 3% (auto-industry stress proxy) OR EV market-share loss to BYD by >300bp QoQ",
       "wrongIf_z": "[等 Junyan 审核] 连续两季度营收增速<-10%，或经营利润率<3%（车企承压代理指标），或新能源车份额相比比亚迪季度环比下降>300bp",
@@ -84,7 +84,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-07-16T04:17:28.419025+00:00"
+      "engine_run_at": "2026-07-16T10:29:21.245071+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -95,8 +95,8 @@
       "narrative_shift": 50,
       "low_coverage": 50,
       "catalyst_prox": 50,
-      "close": 19.26,
-      "volume": 704623000,
+      "close": 19.25,
+      "volume": 1088053200,
       "source": "vp_engine",
       "wrongIf_e": "[NEEDS_JUNYAN_REVIEW] same-store sales growth < -5% YoY for 2 consecutive quarters OR operating_margin < 5% OR store-count growth < 5% YoY (expansion runway exhausted proxy)",
       "wrongIf_z": "[等 Junyan 审核] 连续两季度同店销售增速 < -5%，或经营利润率 < 5%，或门店数同比增速 < 5%（扩张跑道见顶代理指标）",
@@ -111,7 +111,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-07-16T04:17:28.419069+00:00"
+      "engine_run_at": "2026-07-16T10:29:21.245159+00:00"
     },
     {
       "ticker": "688120.SH",
@@ -122,8 +122,8 @@
       "narrative_shift": 40,
       "low_coverage": 25,
       "catalyst_prox": 60,
-      "close": 274.26,
-      "volume": 831459300,
+      "close": 258.43,
+      "volume": 1614248100,
       "source": "vp_engine",
       "wrongIf_e": "2026H1 revenue YoY < +20% OR gross margin < 38% OR non-GAAP net profit YoY < 0 (per decision sheet wrong_if, source-bound to the H1 report)",
       "wrongIf_z": "2026半年报营收同比<+20%,或毛利率<38%,或扣非归母净利同比转负(决策书 wrong_if,披露绑定)",
@@ -138,7 +138,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-07-16T04:17:28.419114+00:00"
+      "engine_run_at": "2026-07-16T10:29:21.245238+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -149,8 +149,8 @@
       "narrative_shift": 45,
       "low_coverage": 30,
       "catalyst_prox": 60,
-      "close": 75.69,
-      "volume": 2278759900,
+      "close": 72.5,
+      "volume": 4495968200,
       "source": "vp_engine",
       "wrongIf_e": "2026H1 CMP-pad revenue YoY < +30% (if disclosed) OR gross margin < 48% OR net profit YoY < +25% (per decision sheet wrong_if)",
       "wrongIf_z": "2026半年报抛光垫收入同比<+30%(如披露),或毛利率<48%,或归母净利同比<+25%(决策书 wrong_if)",
@@ -165,7 +165,7 @@
         "source": "seed_fallback",
         "reason": "no_delta_in_rdcf"
       },
-      "engine_run_at": "2026-07-16T04:17:28.419150+00:00"
+      "engine_run_at": "2026-07-16T10:29:21.245314+00:00"
     }
   ]
 }
