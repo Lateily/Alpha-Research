@@ -1,48 +1,17 @@
 {
-  "_status": "ok",
+  "_status": "empty",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-07-15T10:24:46Z",
+  "fetched_at": "2026-07-16T04:17:22Z",
   "api_used": "stk_holdertrade",
   "window_days": 180,
-  "events": [
-    {
-      "ts_code": "300308.SZ",
-      "ann_date": "20260116",
-      "holder_name": "山东中际投资控股有限公司",
-      "holder_type": "C",
-      "in_de": "DE",
-      "change_vol": 5500000,
-      "change_ratio": 0.4975,
-      "after_share": 121440135.0,
-      "after_ratio": 10.9851,
-      "avg_price": 521.73,
-      "total_share": 121440135,
-      "begin_date": null,
-      "close_date": null
-    },
-    {
-      "ts_code": "300308.SZ",
-      "ann_date": "20260116",
-      "holder_name": "山东中际投资控股有限公司",
-      "holder_type": "C",
-      "in_de": "DE",
-      "change_vol": 5500000,
-      "change_ratio": 0.4975,
-      "after_share": 121440135.0,
-      "after_ratio": 10.9851,
-      "avg_price": 521.73,
-      "total_share": 121440135,
-      "begin_date": null,
-      "close_date": null
-    }
-  ],
+  "events": [],
   "summary": {
-    "total_count": 2,
+    "total_count": 0,
     "in_count": 0,
-    "de_count": 2,
-    "net_change_vol_180d": -11000000,
-    "net_change_ratio_180d": -0.995,
-    "last_announce_date": "2026-01-16",
-    "signal_level": "NET_SELL_MED"
+    "de_count": 0,
+    "net_change_vol_180d": 0,
+    "net_change_ratio_180d": 0.0,
+    "last_announce_date": null,
+    "signal_level": "NEUTRAL"
   }
 }

@@ -1,13 +1,41 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-07-15T10:22:23Z",
+  "fetched_at": "2026-07-16T04:15:01Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
   ],
   "window_days": 90,
   "surveys": [
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260709",
+      "fund_visitors": "分析师 张扬",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "特定对象调研",
+      "rece_org": "长江证券",
+      "org_type": "证券公司",
+      "comp_rece": "吴越",
+      "inst_count": 2,
+      "surv_type": "特定对象调研",
+      "description": null
+    },
+    {
+      "ts_code": "002594.SZ",
+      "name": "比亚迪",
+      "surv_date": "20260709",
+      "fund_visitors": "分析师 Ming Hsun Lee",
+      "rece_place": "比亚迪六角大楼",
+      "rece_mode": "电话会议",
+      "rece_org": "美银",
+      "org_type": "--",
+      "comp_rece": "吴越,常恩铭",
+      "inst_count": 2,
+      "surv_type": "电话会议",
+      "description": null
+    },
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
@@ -164,9 +192,9 @@
     }
   ],
   "summary": {
-    "total_30d": 3,
-    "total_90d": 11,
-    "unique_inst_30d": 5,
-    "latest_date": "2026-07-02"
+    "total_30d": 5,
+    "total_90d": 13,
+    "unique_inst_30d": 9,
+    "latest_date": "2026-07-09"
   }
 }

@@ -1,12 +1,12 @@
 {
-  "as_of": "2026-07-15",
-  "generated": "2026-07-15T10:20:21.214244",
+  "as_of": "2026-07-16",
+  "generated": "2026-07-16T04:13:22.249226",
   "status": "ok",
   "config": {
     "vp_threshold": 60,
     "min_positions": 1,
     "forward_days": 20,
-    "benchmark": "proxy (6160.HK, flat)",
+    "benchmark": "proxy (700.HK, flat)",
     "risk_free_annual": 0.02
   },
   "summary": {

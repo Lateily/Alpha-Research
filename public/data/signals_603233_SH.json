@@ -1,79 +1,49 @@
 {
   "ticker": "603233.SH",
-  "generated_at": "2026-07-15",
-  "price": 19.68,
-  "zone": "OVERBOUGHT",
-  "entry_zone": true,
+  "generated_at": "2026-07-16",
+  "price": 19.25,
+  "zone": "NEUTRAL",
+  "entry_zone": false,
   "exit_zone": true,
   "signals": [
     {
-      "type": "RSI_OVERBOUGHT",
+      "type": "VOLUME_SELLOFF",
       "strength": "moderate",
-      "date": "20260714",
+      "date": "20260715",
       "bullish": false,
       "description": {
-        "e": "RSI(14) = 74.2 — overbought, watch for exhaustion",
-        "z": "RSI(14)=74.2，超买，注意回调风险"
-      }
-    },
-    {
-      "type": "VOLUME_BREAKOUT",
-      "strength": "moderate",
-      "date": "20260714",
-      "bullish": true,
-      "description": {
-        "e": "Volume 2.5× avg, price +8.8% — buying surge",
-        "z": "成交量2.5倍均量，股价+8.8%，放量上攻"
-      }
-    },
-    {
-      "type": "BB_UPPER_BREAK",
-      "strength": "moderate",
-      "date": "20260714",
-      "bullish": true,
-      "description": {
-        "e": "Price (19.7) broke above Bollinger upper (18.9) — momentum breakout",
-        "z": "股价(19.7)突破布林上轨(18.9)，动能突破"
-      }
-    },
-    {
-      "type": "KDJ_OVERBOUGHT",
-      "strength": "strong",
-      "date": "20260714",
-      "bullish": false,
-      "description": {
-        "e": "KDJ J=101.3 (extreme >100) — high pullback risk",
-        "z": "KDJ J=101.3极度超买，回调风险高"
+        "e": "Volume 2.1× avg, price -2.2% — distribution",
+        "z": "成交量2.1倍均量，股价-2.2%，放量下跌"
       }
     }
   ],
   "signal_count": {
-    "bullish": 2,
-    "bearish": 2,
-    "total": 4
+    "bullish": 0,
+    "bearish": 1,
+    "total": 1
   },
   "indicators": {
-    "ma5": 18.17,
-    "ma20": 16.64,
-    "ma60": 17.22,
-    "rsi14": 74.2,
-    "vol_ma20": 79720,
-    "vol_ratio": 2.48,
-    "price_vs_ma20": 18.25,
-    "price_vs_ma60": 14.26,
-    "change_1d": 8.85,
-    "change_5d": 12.59,
-    "change_20d": 17.99,
-    "macd_dif": 0.4626,
-    "macd_dea": 0.0864,
-    "macd_hist": 0.7523,
-    "bb_upper": 18.93,
-    "bb_mid": 16.64,
-    "bb_lower": 14.35,
-    "bb_bandwidth": 27.53,
-    "kdj_k": 91.0,
-    "kdj_d": 85.8,
-    "kdj_j": 101.3,
+    "ma5": 18.46,
+    "ma20": 16.78,
+    "ma60": 17.25,
+    "rsi14": 68.9,
+    "vol_ma20": 86321,
+    "vol_ratio": 2.08,
+    "price_vs_ma20": 14.75,
+    "price_vs_ma60": 11.58,
+    "change_1d": -2.18,
+    "change_5d": 8.09,
+    "change_20d": 16.03,
+    "macd_dif": 0.5676,
+    "macd_dea": 0.1827,
+    "macd_hist": 0.7698,
+    "bb_upper": 19.33,
+    "bb_mid": 16.78,
+    "bb_lower": 14.22,
+    "bb_bandwidth": 30.48,
+    "kdj_k": 87.5,
+    "kdj_d": 86.4,
+    "kdj_j": 89.8,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
