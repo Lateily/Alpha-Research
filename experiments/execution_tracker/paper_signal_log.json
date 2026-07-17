@@ -2109,7 +2109,9 @@
     "no_trade_flag": true,
     "official_sample": false,
     "data_source": "pre_registered:research",
-    "returns": {},
+    "returns": {
+      "note": "0711-0716无连续两日RISK_ON(0714孤日+109亿,0715 -498亿,0716 -839亿),0717前证伪已数学不可能;churn持续假设验证HIT。半衰期doctrine第6次一致"
+    },
     "entry_close": null,
     "created_by": "Claude",
     "sector": "全市场",
@@ -2137,7 +2139,7 @@
     "trigger_condition": "",
     "invalidation": "出现连续两日RISK_ON确认(0713-0717任意相邻两日)",
     "human_status": "not_executed",
-    "outcome_status": "pending"
+    "outcome_status": "hit"
   },
   {
     "signal_id": "80a62f3bc67b",
@@ -2899,6 +2901,373 @@
     "reclaim": 1207.98,
     "invalidation": 1160.0,
     "atr14": 82.7607,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "3b1f93d088a5",
+    "ticker": "601600.SH",
+    "name": "中国铝业",
+    "timestamp": "20260716 21:30",
+    "line": "smc",
+    "market_state": "RISK_OFF",
+    "setup_type": "execution_gate",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": 8.98,
+    "created_by": "Claude",
+    "sector": "铝",
+    "sector_state": "streak3+广度2",
+    "hypothesis": "SMC:收8.98站上swing高8.70(above-SH)+两日主力+8.12/+0.98亿,段内双龙头同步(云铝同构)=广度≥2打印;回踩8.60-8.75承接则LH+LL早期反转延续",
+    "variant_view": "CONSENSUS_RIDE:资金与结构已动,edge在入场纪律与资金veto",
+    "catalyst": "铝板块streak3(轮动面板)+Q2广度先验(z=4.23)背书;宏观铝价/电解铝供给为E2待补",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "0714主力+8.12亿段内最大,0715续+0.98亿",
+        "tier": "E3",
+        "source": "moneyflow_dc",
+        "status": "verified"
+      },
+      {
+        "claim": "收8.98>SH8.70且云铝同日+4.48%同构=广度2",
+        "tier": "E3",
+        "source": "qfq结构扫描",
+        "status": "verified"
+      },
+      {
+        "claim": "铝板块连续3日净流入",
+        "tier": "E3",
+        "source": "rotation_panel",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "两日净流入+段内双票同步",
+    "forecast_claim": "回踩承接后延续",
+    "trigger_condition": "三条件门过(regime非逆风+铝streak维持+广度维持)后:回踩8.60-8.75企稳,不追9上方",
+    "invalidation": "收盘<8.40(结构失效)或回踩日主力净流出>3亿(资金veto)",
+    "human_status": "not_executed",
+    "outcome_status": "pending"
+  },
+  {
+    "signal_id": "adb5a9d07771",
+    "ticker": "000807.SZ",
+    "name": "云铝股份",
+    "timestamp": "20260716 21:30",
+    "line": "smc",
+    "market_state": "RISK_OFF",
+    "setup_type": "execution_gate",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": 26.1,
+    "created_by": "Claude",
+    "sector": "铝",
+    "sector_state": "streak3+广度2",
+    "hypothesis": "SMC:收26.10远上swing高23.46+两日+5.07/+1.48亿;与铝业互为广度确认;回踩24.5-25.2承接则延续",
+    "variant_view": "CONSENSUS_RIDE",
+    "catalyst": "同铝业;水电铝成本属性为E2待补",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "0714/0715主力+5.07/+1.48亿",
+        "tier": "E3",
+        "source": "moneyflow_dc",
+        "status": "verified"
+      },
+      {
+        "claim": "above-SH且段内同构双票",
+        "tier": "E3",
+        "source": "qfq结构扫描",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "两日净流入",
+    "forecast_claim": "回踩承接后延续",
+    "trigger_condition": "三条件门过后:回踩24.5-25.2企稳,绝不追26上方(premium将过高)",
+    "invalidation": "收盘<23.2或回踩日主力净流出>2亿",
+    "human_status": "not_executed",
+    "outcome_status": "pending"
+  },
+  {
+    "signal_id": "6e88e827bfbf",
+    "ticker": "SECTOR.OILGAS",
+    "name": "油气开采板块",
+    "timestamp": "20260716 21:30",
+    "line": "rotation",
+    "market_state": "RISK_OFF",
+    "setup_type": "rotation_hypothesis",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": null,
+    "created_by": "Claude",
+    "sector": "油气开采",
+    "sector_state": "上游油服streak5",
+    "hypothesis": "实验室先验首次前瞻检验:Q3发现油服→油气 lag3(r=0.31,BH过,C2负控制通过);油田服务概念已连续5日净流入,预测油气开采板块在0716-0718三日内出现≥2日净流入且累计超额为正",
+    "variant_view": "NO_EDGE方向观察:检验实验室产出,不构成观点",
+    "catalyst": "无事件——纯先验前瞻检验(历史归纳→前瞻判分的第一次毕业考试)",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "油田服务概念5日+++++(streak5)",
+        "tier": "E3",
+        "source": "rotation_panel",
+        "status": "verified"
+      },
+      {
+        "claim": "Q3: 油服→油气 lag3 r=0.313 p=0.0147 BH✓,C2打乱归零",
+        "tier": "E3",
+        "source": "rotation_validation",
+        "status": "verified"
+      },
+      {
+        "claim": "但油服龙头个股结构全弱(杰瑞破低/墨龙-9.9%)=窄广度",
+        "tier": "E3",
+        "source": "SMC扫描",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "上游概念级连续流入,个股级无广度",
+    "forecast_claim": "lag3传导3日内兑现",
+    "trigger_condition": "判分型,无入场;注意:油服个股结构全弱=窄广度警示,先验可能因此失效——失效同样是有价值判分",
+    "invalidation": "0718收盘时油气开采3日内净流入日≤1或累计超额为负",
+    "human_status": "not_executed",
+    "outcome_status": "pending"
+  },
+  {
+    "signal_id": "743e172b40c2",
+    "ticker": "SECTOR.PHARMA",
+    "name": "医药主线假设(H2)",
+    "timestamp": "20260717 09:00",
+    "line": "thesis",
+    "market_state": "RISK_OFF",
+    "setup_type": "rotation_hypothesis",
+    "horizon": [
+      "20d",
+      "60d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": null,
+    "created_by": "Claude+Junyan",
+    "sector": "医药生物",
+    "sector_state": "动量成熟+E1初步",
+    "hypothesis": "医药是2026下半年主线:至20260930,①医药生物板块相对全A等权累计超额>0 ②我们的医药E1篮子(恒瑞/大参林/康龙化成 等权)相对全A超额>0 ③期间医药板块在轮动面板出现≥3次独立的streak>=3区间(持续性反复出现=主线签名,而非单波动量)",
+    "variant_view": "这是Junyan的direction question转化的可证伪形式;系统当前无半年尺度工具,本假设就是工具的替代品",
+    "catalyst": "中报季(8月:恒瑞剪刀差/大参林修复/CXO订单)+ license-out公告流 + 医保政策窗口",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "医药系连续3-4日净流入,全场唯一产业群级连续性",
+        "tier": "E3",
+        "source": "rotation_panel 0710-0715",
+        "status": "verified"
+      },
+      {
+        "claim": "动量雷达top30医药占半,康龙20日+64%",
+        "tier": "E3",
+        "source": "momentum_prefilter",
+        "status": "verified"
+      },
+      {
+        "claim": "恒瑞13/22剪刀差+GM86.6%,大参林净利+35%修复,均E1",
+        "tier": "E1",
+        "source": "factpacks 20260716",
+        "status": "verified"
+      },
+      {
+        "claim": "化药→医药流通 lag2链对过BH(内部传导存在)",
+        "tier": "E3",
+        "source": "rotation_validation",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "产业群级连续流入+动量集中",
+    "forecast_claim": "H2持续超额+持续性反复出现",
+    "trigger_condition": "判分型(Junyan 0717提问驱动);季度中每周五在周报回读进度",
+    "invalidation": "20260930收盘:①或②为负,或③<2次——任一触发即主线假设降级为'单波轮动'",
+    "human_status": "not_executed",
+    "outcome_status": "pending"
+  },
+  {
+    "signal_id": "8c9469120ba1",
+    "ticker": "SECTOR.DRAM",
+    "name": "长鑫IPO存储链传导假设",
+    "timestamp": "20260716 10:45",
+    "line": "thesis",
+    "market_state": "RISK_OFF",
+    "setup_type": "rotation_hypothesis",
+    "horizon": [
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {},
+    "entry_close": null,
+    "created_by": "Claude+Junyan",
+    "sector": "存储/半导体",
+    "sector_state": "申购日兑现流出",
+    "hypothesis": "CXMT(688825,募295亿,申购0716,上市约0727)上市传导:至上市日+3个交易日,存储链篮子(兆易创新/澜起/深科技/江波龙 等权)相对全A等权累计超额>0,且链内广度(≥3票同日站上各自swing结构)至少出现1次",
+    "variant_view": "VARIANT:市场今日按'利好兑现+打新抽血'交易(链上全线-3~-10%);我们认为上市日映射与扩产订单构成第二腿,edge_source=事件结构分析。若错,判分会说话",
+    "catalyst": "0727前后上市日(dated E1);上市后募资扩产→设备材料订单为季度级第二腿",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "0714兆易+17.4亿/澜起+12.2亿抢跑,0715申购前夜转出-8.1/-12.9亿",
+        "tier": "E3",
+        "source": "moneyflow_dc",
+        "status": "verified"
+      },
+      {
+        "claim": "0716申购日盘中链上全线下挫(兆易-7/澜起-9.2/江丰-10.2),半导体ETF-3.08%全场最弱",
+        "tier": "E3",
+        "source": "realtime推断",
+        "status": "verified"
+      },
+      {
+        "claim": "IPO事实:688825,募295亿,科创板史上第二大,申购0716,上市约0727",
+        "tier": "E1",
+        "source": "上交所公告/证券时报",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "抢跑资金申购日兑现+打新冻结抽血",
+    "forecast_claim": "上市窗口出现第二腿",
+    "trigger_condition": "判分型;个股入场另走两票制(回调给出SMC合法位+资金转向才有timing票)",
+    "invalidation": "上市日+3收盘:篮子相对超额≤0 或 广度事件0次——传导假设降级为'抢跑已完成'",
+    "human_status": "not_executed",
+    "outcome_status": "pending"
+  },
+  {
+    "signal_id": "39fe8cf5525e",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260716 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": true,
+    "market_main_flow_total": -838.86,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -13.8652,
+    "trigger_price": 542.6,
+    "support": 551.0,
+    "reclaim": 579.42,
+    "invalidation": 549.803,
+    "atr14": 43.9393,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "f47e536622d3",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260716 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": true,
+    "market_main_flow_total": -838.86,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -9.9182,
+    "trigger_price": 206.0,
+    "support": 220.0,
+    "reclaim": 242.89,
+    "invalidation": 220.0,
+    "atr14": 28.0143,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "6150592c78bf",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260716 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": true,
+    "market_main_flow_total": -838.86,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -4.0295,
+    "trigger_price": 100.88,
+    "support": 112.01,
+    "reclaim": 119.85,
+    "invalidation": 112.01,
+    "atr14": 16.8,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "db63b9a26556",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260716 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": true,
+    "market_main_flow_total": -838.86,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -34.7425,
+    "trigger_price": 1113.0,
+    "support": 1160.0,
+    "reclaim": 1207.98,
+    "invalidation": 1160.0,
+    "atr14": 81.5493,
     "horizon": [
       "intraday",
       "1d",

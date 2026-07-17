@@ -98,5 +98,24 @@
     "thesis_date": "2026-07-15",
     "thesis_oneline": "AI服务器PCB量价;a2a40a执行门信号;T1A深化中",
     "checkpoints": []
+  },
+  {
+    "ticker": "688166.SH",
+    "name": "博瑞医药",
+    "sector_key": "化学制药",
+    "thesis_date": "2026-07-16",
+    "thesis_oneline": "GLP-1期权票(阿姨点名):BGM0504减重III期达标+NDA受理;现金流翻译全在未来,PE304=纯管线定价;封顶WATCH",
+    "checkpoints": [
+      {
+        "date": "20260831",
+        "what": "中报:API基本盘是否止血(净利yoy)",
+        "done": false
+      },
+      {
+        "date": "20261031",
+        "what": "BGM0504 NDA审批进展节点(事件型,滚动核)",
+        "done": false
+      }
+    ]
   }
 ]
