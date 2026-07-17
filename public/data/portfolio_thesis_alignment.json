@@ -2,7 +2,7 @@
   "_meta": {
     "read_only": true,
     "marks_only_no_trades": true,
-    "as_of": "2026-07-17T04:11:43",
+    "as_of": "2026-07-17T10:16:21",
     "source_positions": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/positions.json",
     "source_backfill": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/thesis_direction_backfill.json",
     "rule_doc": "docs/strategy/PORTFOLIO_THESIS_ALIGNMENT_RULES.md",
@@ -18,8 +18,8 @@
     {
       "ts_code": "300308.SZ",
       "name": "中际旭创",
-      "weight_pct": 53.14,
-      "pnl_pct": 46.92,
+      "weight_pct": 52.59,
+      "pnl_pct": 43.75,
       "vp_at_entry": 79,
       "position_side": "LONG",
       "latest_thesis_direction": "PASS",
@@ -31,7 +31,7 @@
     {
       "ts_code": "6160.HK",
       "name": "百济神州",
-      "weight_pct": 4.12,
+      "weight_pct": 4.16,
       "pnl_pct": 0.0,
       "vp_at_entry": 65,
       "position_side": "LONG",
@@ -44,7 +44,7 @@
     {
       "ts_code": "700.HK",
       "name": "腾讯控股",
-      "weight_pct": 24.62,
+      "weight_pct": 24.9,
       "pnl_pct": 0.0,
       "vp_at_entry": 64,
       "position_side": "LONG",
@@ -57,7 +57,7 @@
     {
       "ts_code": "9999.HK",
       "name": "网易",
-      "weight_pct": 14.16,
+      "weight_pct": 14.33,
       "pnl_pct": 0.0,
       "vp_at_entry": 58,
       "position_side": "LONG",
@@ -70,8 +70,8 @@
     {
       "ts_code": "002594.SZ",
       "name": "比亚迪",
-      "weight_pct": 3.97,
-      "pnl_pct": -2.84,
+      "weight_pct": 4.02,
+      "pnl_pct": -2.83,
       "vp_at_entry": 52,
       "position_side": "LONG",
       "latest_thesis_direction": "LONG",

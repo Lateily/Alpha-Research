@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-07-17T04:16:08.773995+00:00",
+    "generated_at": "2026-07-17T10:20:29.349676+00:00",
     "layer": "Factory Progress aggregator (read-only over committed artifacts)",
     "disclaimer": "internal progress dashboard — UNVALIDATED research pipeline state; nothing here is a recommendation, a buy list, or validated alpha"
   },
@@ -398,12 +398,12 @@
           "days_to_due": 23
         },
         "technical": {
-          "price_change_pct": 2.5937,
-          "turnover_rate": 1.7415,
-          "volume_ratio": 1.18,
-          "momentum_factor": 24.3,
-          "low_vol_factor": 61.5,
-          "alpha_score": 48.2,
+          "price_change_pct": -0.7117,
+          "turnover_rate": 1.9714,
+          "volume_ratio": 1.23,
+          "momentum_factor": 22.7,
+          "low_vol_factor": 83.2,
+          "alpha_score": 50.7,
           "source": "universe_a",
           "signals": {
             "zone": "NEUTRAL",
@@ -411,9 +411,7 @@
             "rsi14": 60.9,
             "ma20": 85.9,
             "ma60": 92.93,
-            "signals": [
-              "MA60_BOUNCE"
-            ],
+            "signals": [],
             "source": "signals_file"
           }
         },
@@ -551,12 +549,12 @@
           "days_to_due": 25
         },
         "technical": {
-          "price_change_pct": -10.8801,
-          "turnover_rate": 3.2629,
-          "volume_ratio": 0.77,
-          "momentum_factor": 92.8,
-          "low_vol_factor": 4.8,
-          "alpha_score": 48.4,
+          "price_change_pct": -6.4853,
+          "turnover_rate": 3.998,
+          "volume_ratio": 0.98,
+          "momentum_factor": 94.2,
+          "low_vol_factor": 23.2,
+          "alpha_score": 51.4,
           "source": "universe_a",
           "signals": {
             "zone": "NEUTRAL",
@@ -704,12 +702,12 @@
           "days_to_due": 25
         },
         "technical": {
-          "price_change_pct": -6.9559,
-          "turnover_rate": 6.0497,
-          "volume_ratio": 0.77,
-          "momentum_factor": 94.5,
-          "low_vol_factor": 14.1,
-          "alpha_score": 52.0,
+          "price_change_pct": -4.2621,
+          "turnover_rate": 6.8829,
+          "volume_ratio": 0.92,
+          "momentum_factor": 95.4,
+          "low_vol_factor": 45.9,
+          "alpha_score": 56.8,
           "source": "universe_a",
           "signals": {
             "zone": "NEUTRAL",
@@ -832,12 +830,12 @@
           "days_to_due": -3
         },
         "technical": {
-          "price_change_pct": -16.4437,
-          "turnover_rate": 10.1338,
-          "volume_ratio": 1.71,
-          "momentum_factor": 95.1,
-          "low_vol_factor": 1.0,
-          "alpha_score": 48.8,
+          "price_change_pct": -13.0394,
+          "turnover_rate": 8.5335,
+          "volume_ratio": 1.31,
+          "momentum_factor": 95.4,
+          "low_vol_factor": 9.5,
+          "alpha_score": 50.4,
           "source": "universe_a",
           "signals": {
             "zone": null,
@@ -963,12 +961,12 @@
           "days_to_due": -3
         },
         "technical": {
-          "price_change_pct": -6.7183,
-          "turnover_rate": 2.92,
-          "volume_ratio": 0.61,
-          "momentum_factor": 97.7,
-          "low_vol_factor": 19.9,
-          "alpha_score": 52.5,
+          "price_change_pct": -3.1745,
+          "turnover_rate": 3.6657,
+          "volume_ratio": 0.75,
+          "momentum_factor": 98.3,
+          "low_vol_factor": 23.4,
+          "alpha_score": 53.1,
           "source": "universe_a",
           "signals": {
             "zone": null,
@@ -1082,12 +1080,12 @@
           "days_to_due": -2
         },
         "technical": {
-          "price_change_pct": -0.9431,
-          "turnover_rate": 0.4953,
-          "volume_ratio": 0.66,
-          "momentum_factor": 96.5,
-          "low_vol_factor": 34.6,
-          "alpha_score": 59.7,
+          "price_change_pct": -8.6163,
+          "turnover_rate": 0.7806,
+          "volume_ratio": 1.16,
+          "momentum_factor": 95.4,
+          "low_vol_factor": 27.9,
+          "alpha_score": 58.7,
           "source": "universe_a",
           "signals": {
             "zone": null,
@@ -1213,12 +1211,12 @@
           "days_to_due": 4
         },
         "technical": {
-          "price_change_pct": 3.155,
-          "turnover_rate": 1.1917,
-          "volume_ratio": 1.37,
-          "momentum_factor": 58.8,
-          "low_vol_factor": 28.6,
-          "alpha_score": 57.2,
+          "price_change_pct": -1.0638,
+          "turnover_rate": 0.9567,
+          "volume_ratio": 1.05,
+          "momentum_factor": 59.0,
+          "low_vol_factor": 67.7,
+          "alpha_score": 62.8,
           "source": "universe_a",
           "signals": {
             "zone": null,
@@ -1318,12 +1316,12 @@
           "days_to_due": 27
         },
         "technical": {
-          "price_change_pct": -0.9431,
+          "price_change_pct": -8.6163,
           "turnover_rate": 0.6,
-          "volume_ratio": 0.66,
+          "volume_ratio": 1.16,
           "momentum_factor": 57.3,
-          "low_vol_factor": 34.6,
-          "alpha_score": 59.7,
+          "low_vol_factor": 27.9,
+          "alpha_score": 58.7,
           "source": "universe_a",
           "value_factor": 45.6,
           "signals": {
@@ -1419,12 +1417,12 @@
           "days_to_due": 27
         },
         "technical": {
-          "price_change_pct": -0.3119,
+          "price_change_pct": -4.6308,
           "turnover_rate": 3.43,
-          "volume_ratio": 0.6,
+          "volume_ratio": 0.92,
           "momentum_factor": 84.8,
-          "low_vol_factor": 61.6,
-          "alpha_score": 62.4,
+          "low_vol_factor": 49.7,
+          "alpha_score": 61.0,
           "source": "universe_a",
           "value_factor": 63.7,
           "signals": {
@@ -1520,12 +1518,12 @@
           "days_to_due": 27
         },
         "technical": {
-          "price_change_pct": -2.606,
+          "price_change_pct": -3.8518,
           "turnover_rate": 1.69,
-          "volume_ratio": 0.64,
+          "volume_ratio": 0.68,
           "momentum_factor": 42.3,
-          "low_vol_factor": 70.6,
-          "alpha_score": 52.4,
+          "low_vol_factor": 74.0,
+          "alpha_score": 53.5,
           "source": "universe_a",
           "value_factor": 54.6,
           "signals": {
@@ -1621,12 +1619,12 @@
           "days_to_due": 27
         },
         "technical": {
-          "price_change_pct": -0.3716,
+          "price_change_pct": -6.5243,
           "turnover_rate": 3.23,
-          "volume_ratio": 1.02,
+          "volume_ratio": 1.24,
           "momentum_factor": 38.0,
-          "low_vol_factor": 19.5,
-          "alpha_score": 54.2,
+          "low_vol_factor": 21.4,
+          "alpha_score": 54.5,
           "source": "universe_a",
           "value_factor": 36.9,
           "signals": {
@@ -1722,12 +1720,12 @@
           "days_to_due": 27
         },
         "technical": {
-          "price_change_pct": -5.002,
+          "price_change_pct": -14.5797,
           "turnover_rate": 5.97,
-          "volume_ratio": 0.88,
+          "volume_ratio": 1.21,
           "momentum_factor": 90.3,
-          "low_vol_factor": 15.4,
-          "alpha_score": 56.3,
+          "low_vol_factor": 4.8,
+          "alpha_score": 55.2,
           "source": "universe_a",
           "value_factor": 50.2,
           "signals": {
@@ -1823,12 +1821,12 @@
           "days_to_due": 27
         },
         "technical": {
-          "price_change_pct": -1.1447,
+          "price_change_pct": -4.8439,
           "turnover_rate": 1.63,
-          "volume_ratio": 0.71,
+          "volume_ratio": 0.98,
           "momentum_factor": 27.4,
-          "low_vol_factor": 21.0,
-          "alpha_score": 46.6,
+          "low_vol_factor": 35.9,
+          "alpha_score": 48.9,
           "source": "universe_a",
           "value_factor": 21.4,
           "signals": {

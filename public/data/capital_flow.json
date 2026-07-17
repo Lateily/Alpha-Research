@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-07-17T04:13:05Z",
+  "fetched_at": "2026-07-17T10:17:40Z",
   "trade_date": "20260717",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "电力",
+      "ts_code": "BK0428.DC",
+      "net_inflow_yuan": 5531717120000.0,
+      "pct_chg": 1.24
+    },
+    {
+      "name": "国有大型银行Ⅲ",
+      "ts_code": "BK1611.DC",
+      "net_inflow_yuan": 5112389280000.0,
+      "pct_chg": 2.0
+    },
+    {
+      "name": "火力发电",
+      "ts_code": "BK1377.DC",
+      "net_inflow_yuan": 5080125600000.0,
+      "pct_chg": 1.74
+    },
+    {
+      "name": "公用事业",
+      "ts_code": "BK0427.DC",
+      "net_inflow_yuan": 4669980160000.0,
+      "pct_chg": 0.59
+    },
+    {
+      "name": "炼油化工",
+      "ts_code": "BK1569.DC",
+      "net_inflow_yuan": 3745901280000.0,
+      "pct_chg": 0.47
+    },
+    {
+      "name": "炼化及贸易",
+      "ts_code": "BK1274.DC",
+      "net_inflow_yuan": 3456868160000.0,
+      "pct_chg": -1.7
+    },
+    {
+      "name": "麒麟电池",
+      "ts_code": "BK1092.DC",
+      "net_inflow_yuan": 3311879520000.0,
+      "pct_chg": -7.5
+    },
+    {
+      "name": "体外诊断",
+      "ts_code": "BK1603.DC",
+      "net_inflow_yuan": 2795518240000.0,
+      "pct_chg": -5.3
+    },
+    {
+      "name": "数字货币",
+      "ts_code": "BK0883.DC",
+      "net_inflow_yuan": 2381002240000.0,
+      "pct_chg": -3.18
+    },
+    {
+      "name": "锂电池",
+      "ts_code": "BK1303.DC",
+      "net_inflow_yuan": 1991531520000.0,
+      "pct_chg": -4.82
+    },
+    {
+      "name": "风力发电",
+      "ts_code": "BK1374.DC",
+      "net_inflow_yuan": 1984696480000.0,
+      "pct_chg": 0.93
+    },
+    {
+      "name": "聚氨酯",
+      "ts_code": "BK1426.DC",
+      "net_inflow_yuan": 1806433280000.0,
+      "pct_chg": -3.63
+    },
+    {
+      "name": "电能综合服务",
+      "ts_code": "BK1373.DC",
+      "net_inflow_yuan": 1619790080000.0,
+      "pct_chg": 2.84
+    },
+    {
+      "name": "超超临界发电",
+      "ts_code": "BK1087.DC",
+      "net_inflow_yuan": 1067497920000.0,
+      "pct_chg": -0.21
+    },
+    {
+      "name": "生物质能发电",
+      "ts_code": "BK1098.DC",
+      "net_inflow_yuan": 837445930000.0,
+      "pct_chg": -1.88
+    },
+    {
+      "name": "纯碱",
+      "ts_code": "BK1417.DC",
+      "net_inflow_yuan": 617985130000.0,
+      "pct_chg": 0.09
+    },
+    {
+      "name": "氮肥",
+      "ts_code": "BK1432.DC",
+      "net_inflow_yuan": 539021660000.0,
+      "pct_chg": 1.23
+    },
+    {
+      "name": "会展服务",
+      "ts_code": "BK1565.DC",
+      "net_inflow_yuan": 379731690000.0,
+      "pct_chg": 3.88
+    },
+    {
+      "name": "油品石化贸易",
+      "ts_code": "BK1571.DC",
+      "net_inflow_yuan": 373093640000.0,
+      "pct_chg": -1.95
+    },
+    {
+      "name": "环氧丙烷",
+      "ts_code": "BK1011.DC",
+      "net_inflow_yuan": 324683040000.0,
+      "pct_chg": -1.72
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": -1496491171840000.0,
+      "pct_chg": -4.66
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": -960426844160000.0,
+      "pct_chg": -3.81
+    },
+    {
+      "name": "富时罗素",
+      "ts_code": "BK0867.DC",
+      "net_inflow_yuan": -917091491840000.0,
+      "pct_chg": -3.35
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": -867535134720000.0,
+      "pct_chg": -4.94
+    },
+    {
+      "name": "大盘股",
+      "ts_code": "BK1663.DC",
+      "net_inflow_yuan": -714895441920000.0,
+      "pct_chg": -3.2
+    },
+    {
+      "name": "深成500",
+      "ts_code": "BK0568.DC",
+      "net_inflow_yuan": -676633600000000.0,
+      "pct_chg": -4.34
+    },
+    {
+      "name": "标准普尔",
+      "ts_code": "BK0879.DC",
+      "net_inflow_yuan": -652659343360000.0,
+      "pct_chg": -2.93
+    },
+    {
+      "name": "沪股通",
+      "ts_code": "BK0707.DC",
+      "net_inflow_yuan": -635876761600000.0,
+      "pct_chg": -4.45
+    },
+    {
+      "name": "HS300_",
+      "ts_code": "BK0500.DC",
+      "net_inflow_yuan": -628461404160000.0,
+      "pct_chg": -2.61
+    },
+    {
+      "name": "百元股",
+      "ts_code": "BK1059.DC",
+      "net_inflow_yuan": -574025195520000.0,
+      "pct_chg": -9.63
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1022,
     "_status": "ok"
   }
 }

@@ -3,24 +3,13 @@
   "generated_at": "2026-07-17",
   "price": 94.14,
   "zone": "NEUTRAL",
-  "entry_zone": true,
+  "entry_zone": false,
   "exit_zone": false,
-  "signals": [
-    {
-      "type": "MA60_BOUNCE",
-      "strength": "strong",
-      "date": "20260716",
-      "bullish": true,
-      "description": {
-        "e": "Price bounced off MA60 (93.1) — major support held",
-        "z": "股价从MA60(93.1)附近反弹，主要支撑有效"
-      }
-    }
-  ],
+  "signals": [],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 0,
-    "total": 1
+    "total": 0
   },
   "indicators": {
     "ma5": 90.61,
@@ -34,9 +23,9 @@
     "change_1d": 2.59,
     "change_5d": 8.37,
     "change_20d": 7.63,
-    "macd_dif": 0.1238,
-    "macd_dea": -1.3234,
-    "macd_hist": 2.8944,
+    "macd_dif": 0.1289,
+    "macd_dea": -1.3157,
+    "macd_hist": 2.8893,
     "bb_upper": 94.28,
     "bb_mid": 85.9,
     "bb_lower": 77.52,
