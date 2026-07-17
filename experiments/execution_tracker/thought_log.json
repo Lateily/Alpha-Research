@@ -78,5 +78,77 @@
     "thought": "0715算力概念资金续弱,5日滚动趋负;0717判定在轨",
     "changed_action": false,
     "why": "判分中间记录"
+  },
+  {
+    "signal_id": "3b1f93d088a5",
+    "at": "20260715 21:40",
+    "author": "Claude",
+    "thought": "时间戳勘误:该信号实际注册于 20260715 21:30-21:37(对话记录可证),原字段误写为0716/0717(日期锚定错误)。超前戳对no-lookahead是保守方向;判分窗口以真实注册时间起算:0716起3日窗,H2假设0930不变",
+    "changed_action": false,
+    "why": "clock-error correction, no retro-edit of original field"
+  },
+  {
+    "signal_id": "adb5a9d07771",
+    "at": "20260715 21:40",
+    "author": "Claude",
+    "thought": "时间戳勘误:该信号实际注册于 20260715 21:30-21:37(对话记录可证),原字段误写为0716/0717(日期锚定错误)。超前戳对no-lookahead是保守方向;判分窗口以真实注册时间起算:0716起3日窗,H2假设0930不变",
+    "changed_action": false,
+    "why": "clock-error correction, no retro-edit of original field"
+  },
+  {
+    "signal_id": "6e88e827bfbf",
+    "at": "20260715 21:40",
+    "author": "Claude",
+    "thought": "时间戳勘误:该信号实际注册于 20260715 21:30-21:37(对话记录可证),原字段误写为0716/0717(日期锚定错误)。超前戳对no-lookahead是保守方向;判分窗口以真实注册时间起算:0716起3日窗,H2假设0930不变",
+    "changed_action": false,
+    "why": "clock-error correction, no retro-edit of original field"
+  },
+  {
+    "signal_id": "743e172b40c2",
+    "at": "20260715 21:40",
+    "author": "Claude",
+    "thought": "时间戳勘误:该信号实际注册于 20260715 21:30-21:37(对话记录可证),原字段误写为0716/0717(日期锚定错误)。超前戳对no-lookahead是保守方向;判分窗口以真实注册时间起算:0716起3日窗,H2假设0930不变",
+    "changed_action": false,
+    "why": "clock-error correction, no retro-edit of original field"
+  },
+  {
+    "signal_id": "743e172b40c2",
+    "at": "20260716 15:40",
+    "author": "Claude",
+    "thought": "结构证据入档:创新药14名扫描,12/14呈HH+HL多头结构、20日+15%~+75%、40d位普遍60-92%——H2主线假设的结构腿异常宽;恒瑞0715主力+11.57亿单日大额。战术面今日回调=首个回踩窗口形成中",
+    "changed_action": false,
+    "why": "行业扫描证据流"
+  },
+  {
+    "signal_id": "3b1f93d088a5",
+    "at": "20260717 09:15",
+    "author": "Claude",
+    "thought": "0716判定:回踩区8.60-8.75打印(L8.60)且收区内8.68>inv8.40——timing结构条件成立;但G1 regime(-839亿RISK_OFF)否决晋级,资金腿今晚核0716主力。setup存活,等门",
+    "changed_action": false,
+    "why": "0716补账判分"
+  },
+  {
+    "signal_id": "adb5a9d07771",
+    "at": "20260717 09:15",
+    "author": "Claude",
+    "thought": "0716:L25.33未深回区(区顶25.2),收25.37>inv23.2,存活未触发",
+    "changed_action": false,
+    "why": "0716补账判分"
+  },
+  {
+    "signal_id": "14e4ef8d4b35",
+    "at": "20260717 09:15",
+    "author": "Claude",
+    "thought": "0716跌停收100.88确认,主力-4.03亿(第7日无承接);复活3条件终验1/3(仅E1预增),horizon今日0717到期——除非今日大幅收复,今晚判HIT方向",
+    "changed_action": false,
+    "why": "0716补账判分"
+  },
+  {
+    "signal_id": "6e88e827bfbf",
+    "at": "20260717 09:15",
+    "author": "Claude",
+    "thought": "链对检验day1(0716):大盘-839亿背景下油气板块方向待今晚核;窄广度警示仍在",
+    "changed_action": false,
+    "why": "0716补账判分"
   }
 ]

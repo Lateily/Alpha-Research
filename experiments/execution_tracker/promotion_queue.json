@@ -12,6 +12,32 @@
     "G1_regime": false,
     "G2_sector_streak>=2": false
    }
+  },
+  {
+   "ticker": "601600.SH",
+   "name": "中国铝业",
+   "signal_id": "3b1f93d088a5",
+   "verdict": "NOT_READY",
+   "matched_sector": null,
+   "checks": {
+    "G1_regime": false,
+    "G2_sector_streak>=2": false,
+    "G3_zone_printed_and_held": true
+   },
+   "proposal": null
+  },
+  {
+   "ticker": "000807.SZ",
+   "name": "云铝股份",
+   "signal_id": "adb5a9d07771",
+   "verdict": "NOT_READY",
+   "matched_sector": null,
+   "checks": {
+    "G1_regime": false,
+    "G2_sector_streak>=2": false,
+    "G3_zone_printed_and_held": false
+   },
+   "proposal": null
   }
  ],
  "data_blocked": [],

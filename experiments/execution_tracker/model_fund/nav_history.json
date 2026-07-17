@@ -62,5 +62,13 @@
     "n_positions": 3,
     "daily_return": 0.0121,
     "cum_return": 0.00821
+  },
+  {
+    "date": "20260716",
+    "nav": 1010983.0,
+    "cash": 558140.0,
+    "n_positions": 3,
+    "daily_return": 0.00275,
+    "cum_return": 0.01098
   }
 ]

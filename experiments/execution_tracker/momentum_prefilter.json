@@ -1,275 +1,275 @@
 {
- "as_of": "20260714",
- "universe": 5538,
+ "as_of": "20260716",
+ "universe": 5539,
  "candidates": [
-  {
-   "ts_code": "920088.BJ",
-   "name": "科力股份",
-   "industry": "石油开采",
-   "ret10": 54.9,
-   "ret20": 19.2,
-   "close": 50.8,
-   "dist_high20": -0.9
-  },
-  {
-   "ts_code": "688176.SH",
-   "name": "亚虹医药",
-   "industry": "化学制药",
-   "ret10": 50.9,
-   "ret20": 46.5,
-   "close": 14.97,
-   "dist_high20": -1.4
-  },
   {
    "ts_code": "300534.SZ",
    "name": "陇神戎发",
    "industry": "中成药",
-   "ret10": 47.9,
-   "ret20": 37.2,
-   "close": 10.47,
-   "dist_high20": -0.3
+   "ret10": 55.0,
+   "ret20": 56.7,
+   "close": 11.58,
+   "dist_high20": -2.6
   },
   {
-   "ts_code": "603313.SH",
-   "name": "梦百合",
-   "industry": "家居用品",
-   "ret10": 45.1,
-   "ret20": 65.2,
-   "close": 8.59,
-   "dist_high20": -2.2
-  },
-  {
-   "ts_code": "300164.SZ",
-   "name": "通源石油",
-   "industry": "石油开采",
-   "ret10": 42.3,
-   "ret20": 25.2,
-   "close": 11.38,
-   "dist_high20": 0.0
-  },
-  {
-   "ts_code": "002490.SZ",
-   "name": "山东墨龙",
-   "industry": "化工机械",
-   "ret10": 41.6,
-   "ret20": 10.1,
-   "close": 9.05,
-   "dist_high20": -0.2
-  },
-  {
-   "ts_code": "688192.SH",
-   "name": "迪哲医药",
-   "industry": "生物制药",
-   "ret10": 41.1,
-   "ret20": 48.5,
-   "close": 56.33,
-   "dist_high20": 0.0
-  },
-  {
-   "ts_code": "300929.SZ",
-   "name": "华骐环保",
-   "industry": "环境保护",
-   "ret10": 38.1,
-   "ret20": 33.8,
-   "close": 14.56,
-   "dist_high20": -0.1
-  },
-  {
-   "ts_code": "600428.SH",
-   "name": "中远海特",
-   "industry": "水运",
-   "ret10": 35.5,
-   "ret20": 29.2,
-   "close": 10.58,
-   "dist_high20": -0.6
-  },
-  {
-   "ts_code": "301277.SZ",
-   "name": "新天地",
-   "industry": "化学制药",
-   "ret10": 35.4,
-   "ret20": 28.7,
-   "close": 11.85,
-   "dist_high20": -1.1
-  },
-  {
-   "ts_code": "600488.SH",
-   "name": "津药药业",
-   "industry": "化学制药",
-   "ret10": 34.0,
-   "ret20": 33.4,
-   "close": 6.47,
-   "dist_high20": -2.3
-  },
-  {
-   "ts_code": "603815.SH",
-   "name": "交建股份",
-   "industry": "建筑工程",
-   "ret10": 33.1,
-   "ret20": 11.1,
-   "close": 6.92,
-   "dist_high20": -1.8
-  },
-  {
-   "ts_code": "600988.SH",
-   "name": "赤峰黄金",
-   "industry": "黄金",
-   "ret10": 32.8,
-   "ret20": 7.1,
-   "close": 34.95,
-   "dist_high20": -0.4
-  },
-  {
-   "ts_code": "002123.SZ",
-   "name": "梦网科技",
-   "industry": "互联网",
-   "ret10": 31.8,
-   "ret20": 24.4,
-   "close": 9.48,
-   "dist_high20": -0.4
-  },
-  {
-   "ts_code": "920015.BJ",
-   "name": "锦华新材",
-   "industry": "化工原料",
-   "ret10": 31.0,
-   "ret20": 34.0,
-   "close": 69.7,
-   "dist_high20": -0.1
-  },
-  {
-   "ts_code": "603233.SH",
-   "name": "大参林",
-   "industry": "医药商业",
-   "ret10": 30.9,
-   "ret20": 18.0,
-   "close": 19.68,
-   "dist_high20": -0.6
-  },
-  {
-   "ts_code": "603669.SH",
-   "name": "灵康药业",
-   "industry": "化学制药",
-   "ret10": 30.5,
-   "ret20": 56.4,
-   "close": 7.4,
-   "dist_high20": -1.1
-  },
-  {
-   "ts_code": "003033.SZ",
-   "name": "征和工业",
-   "industry": "汽车配件",
-   "ret10": 30.3,
-   "ret20": 42.7,
-   "close": 71.0,
-   "dist_high20": -1.0
-  },
-  {
-   "ts_code": "600882.SH",
-   "name": "妙可蓝多",
-   "industry": "乳制品",
-   "ret10": 28.3,
-   "ret20": 8.0,
-   "close": 20.52,
-   "dist_high20": -2.3
+   "ts_code": "001395.SZ",
+   "name": "亚联机械",
+   "industry": "专用机械",
+   "ret10": 36.4,
+   "ret20": 27.2,
+   "close": 32.43,
+   "dist_high20": -0.8
   },
   {
    "ts_code": "920267.BJ",
    "name": "鑫汇科",
    "industry": "元器件",
-   "ret10": 28.2,
-   "ret20": 14.6,
-   "close": 17.8,
-   "dist_high20": -3.0
+   "ret10": 34.9,
+   "ret20": 25.8,
+   "close": 19.01,
+   "dist_high20": 0.0
   },
   {
-   "ts_code": "300759.SZ",
-   "name": "康龙化成",
-   "industry": "化学制药",
-   "ret10": 27.7,
-   "ret20": 64.4,
-   "close": 36.93,
-   "dist_high20": -0.7
-  },
-  {
-   "ts_code": "003030.SZ",
-   "name": "祖名股份",
-   "industry": "食品",
-   "ret10": 26.4,
-   "ret20": 7.5,
-   "close": 25.97,
-   "dist_high20": -0.7
-  },
-  {
-   "ts_code": "300039.SZ",
-   "name": "上海凯宝",
-   "industry": "中成药",
-   "ret10": 26.3,
-   "ret20": 21.2,
-   "close": 5.38,
-   "dist_high20": -1.1
+   "ts_code": "600882.SH",
+   "name": "妙可蓝多",
+   "industry": "乳制品",
+   "ret10": 34.1,
+   "ret20": 20.6,
+   "close": 22.11,
+   "dist_high20": -1.4
   },
   {
    "ts_code": "003001.SZ",
    "name": "中岩大地",
    "industry": "建筑工程",
-   "ret10": 25.1,
-   "ret20": 10.3,
-   "close": 16.2,
+   "ret10": 31.7,
+   "ret20": 24.2,
+   "close": 17.78,
+   "dist_high20": -1.0
+  },
+  {
+   "ts_code": "688068.SH",
+   "name": "热景生物",
+   "industry": "医疗保健",
+   "ret10": 29.8,
+   "ret20": 87.9,
+   "close": 143.0,
+   "dist_high20": -1.9
+  },
+  {
+   "ts_code": "920478.BJ",
+   "name": "峆一药业",
+   "industry": "化学制药",
+   "ret10": 29.4,
+   "ret20": 56.1,
+   "close": 13.85,
+   "dist_high20": -0.9
+  },
+  {
+   "ts_code": "300231.SZ",
+   "name": "银信科技",
+   "industry": "软件服务",
+   "ret10": 27.0,
+   "ret20": 17.0,
+   "close": 10.06,
+   "dist_high20": -1.9
+  },
+  {
+   "ts_code": "300039.SZ",
+   "name": "上海凯宝",
+   "industry": "中成药",
+   "ret10": 26.4,
+   "ret20": 29.0,
+   "close": 5.65,
+   "dist_high20": -2.6
+  },
+  {
+   "ts_code": "300528.SZ",
+   "name": "幸福蓝海",
+   "industry": "影视音像",
+   "ret10": 26.0,
+   "ret20": 25.5,
+   "close": 17.99,
+   "dist_high20": -1.3
+  },
+  {
+   "ts_code": "920701.BJ",
+   "name": "豪声电子",
+   "industry": "元器件",
+   "ret10": 25.5,
+   "ret20": 8.9,
+   "close": 13.52,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "002900.SZ",
+   "name": "哈三联",
+   "industry": "化学制药",
+   "ret10": 24.7,
+   "ret20": 20.5,
+   "close": 12.11,
+   "dist_high20": -1.5
+  },
+  {
+   "ts_code": "600436.SH",
+   "name": "片仔癀",
+   "industry": "中成药",
+   "ret10": 24.0,
+   "ret20": 23.2,
+   "close": 141.15,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "601168.SH",
+   "name": "西部矿业",
+   "industry": "铜",
+   "ret10": 23.8,
+   "ret20": 7.5,
+   "close": 33.84,
+   "dist_high20": -2.4
+  },
+  {
+   "ts_code": "301100.SZ",
+   "name": "风光股份",
+   "industry": "化工原料",
+   "ret10": 22.9,
+   "ret20": 18.5,
+   "close": 17.87,
+   "dist_high20": -0.9
+  },
+  {
+   "ts_code": "002365.SZ",
+   "name": "永安药业",
+   "industry": "化学制药",
+   "ret10": 22.4,
+   "ret20": 22.7,
+   "close": 13.18,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "600988.SH",
+   "name": "赤峰黄金",
+   "industry": "黄金",
+   "ret10": 21.9,
+   "ret20": 6.5,
+   "close": 34.62,
+   "dist_high20": -2.8
+  },
+  {
+   "ts_code": "001230.SZ",
+   "name": "劲旅环境",
+   "industry": "环境保护",
+   "ret10": 21.6,
+   "ret20": 3.3,
+   "close": 19.46,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "000504.SZ",
+   "name": "南华生物",
+   "industry": "医疗保健",
+   "ret10": 21.2,
+   "ret20": 18.8,
+   "close": 9.36,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "000829.SZ",
+   "name": "天音控股",
+   "industry": "其他商业",
+   "ret10": 20.8,
+   "ret20": 7.3,
+   "close": 9.12,
    "dist_high20": 0.0
   },
   {
    "ts_code": "603590.SH",
    "name": "康辰药业",
    "industry": "生物制药",
-   "ret10": 24.0,
-   "ret20": 20.8,
-   "close": 35.96,
-   "dist_high20": -0.8
-  },
-  {
-   "ts_code": "603087.SH",
-   "name": "甘李药业",
-   "industry": "生物制药",
-   "ret10": 23.3,
-   "ret20": 23.9,
-   "close": 70.0,
-   "dist_high20": -1.4
-  },
-  {
-   "ts_code": "301584.SZ",
-   "name": "建发致新",
-   "industry": "医药商业",
-   "ret10": 22.9,
-   "ret20": 13.6,
-   "close": 24.5,
+   "ret10": 20.7,
+   "ret20": 29.0,
+   "close": 37.6,
    "dist_high20": -0.9
   },
   {
-   "ts_code": "600513.SH",
-   "name": "联环药业",
+   "ts_code": "600721.SH",
+   "name": "百花医药",
+   "industry": "生物制药",
+   "ret10": 20.4,
+   "ret20": 16.2,
+   "close": 8.31,
+   "dist_high20": -0.1
+  },
+  {
+   "ts_code": "300454.SZ",
+   "name": "深信服",
+   "industry": "软件服务",
+   "ret10": 20.2,
+   "ret20": 11.1,
+   "close": 112.6,
+   "dist_high20": -2.4
+  },
+  {
+   "ts_code": "300347.SZ",
+   "name": "泰格医药",
+   "industry": "医疗保健",
+   "ret10": 18.8,
+   "ret20": 34.3,
+   "close": 53.99,
+   "dist_high20": -2.8
+  },
+  {
+   "ts_code": "000739.SZ",
+   "name": "普洛药业",
    "industry": "化学制药",
-   "ret10": 22.6,
-   "ret20": 11.2,
-   "close": 17.82,
+   "ret10": 18.4,
+   "ret20": 28.9,
+   "close": 21.0,
+   "dist_high20": -2.3
+  },
+  {
+   "ts_code": "600521.SH",
+   "name": "华海药业",
+   "industry": "化学制药",
+   "ret10": 18.2,
+   "ret20": 23.4,
+   "close": 17.63,
+   "dist_high20": -1.0
+  },
+  {
+   "ts_code": "601058.SH",
+   "name": "赛轮轮胎",
+   "industry": "汽车配件",
+   "ret10": 18.1,
+   "ret20": 16.8,
+   "close": 13.78,
+   "dist_high20": -0.6
+  },
+  {
+   "ts_code": "300805.SZ",
+   "name": "电声股份",
+   "industry": "广告包装",
+   "ret10": 17.9,
+   "ret20": 11.8,
+   "close": 8.83,
    "dist_high20": 0.0
   },
   {
-   "ts_code": "688293.SH",
-   "name": "奥浦迈",
-   "industry": "生物制药",
-   "ret10": 22.3,
-   "ret20": 41.9,
-   "close": 51.0,
-   "dist_high20": -1.9
+   "ts_code": "000676.SZ",
+   "name": "智度股份",
+   "industry": "互联网",
+   "ret10": 17.8,
+   "ret20": 13.1,
+   "close": 6.22,
+   "dist_high20": 0.0
   },
   {
-   "ts_code": "688488.SH",
-   "name": "艾迪药业",
-   "industry": "生物制药",
-   "ret10": 22.3,
-   "ret20": 23.9,
-   "close": 15.72,
+   "ts_code": "002303.SZ",
+   "name": "美盈森",
+   "industry": "造纸",
+   "ret10": 17.5,
+   "ret20": 31.6,
+   "close": 5.04,
    "dist_high20": -2.9
   }
  ],
