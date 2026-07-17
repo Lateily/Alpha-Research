@@ -353,10 +353,16 @@ def main():
                    start_date=hist["days"][-1], end_date=endx)
         new_days = sorted(r["cal_date"] for r in cal
                           if r["cal_date"] > hist["days"][-1] and r["cal_date"] < endx)
+        import datetime as _dt
+        today_str = _dt.date.today().strftime("%Y%m%d")
         for d in new_days:
             rows = _api("moneyflow_ind_dc", token, trade_date=d)
             if not rows:
-                print(f"DATA_BLOCKED: {d} 无板块资金,追加中止")
+                if d >= today_str:
+                    # 当日尚未定盘(如早晨运行):优雅跳过,非错误
+                    print(f"SKIP: {d} 尚未定盘,跳过(晚间定时跑会补)")
+                    continue
+                print(f"DATA_BLOCKED: {d} 历史日无板块资金,追加中止")
                 sys.exit(1)
             hist["flows"][d] = {r["name"]: [float(r.get("net_amount") or 0),
                                             float(r.get("pct_change") or 0)] for r in rows}
