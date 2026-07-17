@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-07-16T10:24:53.181500",
+  "fetched_at": "2026-07-17T04:11:43.276806",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-07-16"
+    "updated": "2026-07-17"
   },
   "southbound": {
     "latest_net_flow": 50.3948,
     "5d_cumulative": 324.4397,
     "20d_cumulative": 745.2393,
     "trend": "inflow",
-    "updated": "2026-07-16"
+    "updated": "2026-07-17"
   },
   "dragon_tiger": [
     {

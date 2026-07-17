@@ -1,194 +1,12 @@
 {
-  "fetched_at": "2026-07-16T10:26:17Z",
-  "trade_date": "20260716",
+  "fetched_at": "2026-07-17T04:13:05Z",
+  "trade_date": "20260717",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [
-    {
-      "name": "计算机",
-      "ts_code": "BK1207.DC",
-      "net_inflow_yuan": 20853324800000.0,
-      "pct_chg": 0.63
-    },
-    {
-      "name": "安防概念",
-      "ts_code": "BK0667.DC",
-      "net_inflow_yuan": 14727406080000.0,
-      "pct_chg": 0.07
-    },
-    {
-      "name": "IT服务Ⅲ",
-      "ts_code": "BK1444.DC",
-      "net_inflow_yuan": 14509665280000.0,
-      "pct_chg": 0.95
-    },
-    {
-      "name": "IT服务Ⅱ",
-      "ts_code": "BK1238.DC",
-      "net_inflow_yuan": 14509665280000.0,
-      "pct_chg": 0.95
-    },
-    {
-      "name": "数字经济",
-      "ts_code": "BK1061.DC",
-      "net_inflow_yuan": 14077511680000.0,
-      "pct_chg": 0.75
-    },
-    {
-      "name": "在线教育",
-      "ts_code": "BK0662.DC",
-      "net_inflow_yuan": 13847083520000.0,
-      "pct_chg": 0.99
-    },
-    {
-      "name": "IPv6",
-      "ts_code": "BK0897.DC",
-      "net_inflow_yuan": 11299696640000.0,
-      "pct_chg": 0.45
-    },
-    {
-      "name": "化妆品概念",
-      "ts_code": "BK0974.DC",
-      "net_inflow_yuan": 10755787520000.0,
-      "pct_chg": 1.6
-    },
-    {
-      "name": "小红书概念",
-      "ts_code": "BK1187.DC",
-      "net_inflow_yuan": 9876391360000.0,
-      "pct_chg": 1.52
-    },
-    {
-      "name": "印制电路板",
-      "ts_code": "BK1340.DC",
-      "net_inflow_yuan": 9441523200000.0,
-      "pct_chg": -0.9
-    },
-    {
-      "name": "互联网服务",
-      "ts_code": "BK0447.DC",
-      "net_inflow_yuan": 9127966720000.0,
-      "pct_chg": 1.14
-    },
-    {
-      "name": "昨日首板",
-      "ts_code": "BK1630.DC",
-      "net_inflow_yuan": 8717867520000.0,
-      "pct_chg": 3.0
-    },
-    {
-      "name": "抖音概念(字节概念)",
-      "ts_code": "BK0923.DC",
-      "net_inflow_yuan": 8664245760000.0,
-      "pct_chg": 1.42
-    },
-    {
-      "name": "Web3.0",
-      "ts_code": "BK1110.DC",
-      "net_inflow_yuan": 8360416000000.0,
-      "pct_chg": 1.86
-    },
-    {
-      "name": "传媒",
-      "ts_code": "BK0486.DC",
-      "net_inflow_yuan": 8295900160000.0,
-      "pct_chg": 2.26
-    },
-    {
-      "name": "华为昇腾",
-      "ts_code": "BK0995.DC",
-      "net_inflow_yuan": 8180048000000.0,
-      "pct_chg": 0.95
-    },
-    {
-      "name": "文娱消费",
-      "ts_code": "BK1654.DC",
-      "net_inflow_yuan": 8172474880000.0,
-      "pct_chg": 2.25
-    },
-    {
-      "name": "华为欧拉",
-      "ts_code": "BK1013.DC",
-      "net_inflow_yuan": 8089299360000.0,
-      "pct_chg": 1.29
-    },
-    {
-      "name": "短剧互动游戏",
-      "ts_code": "BK1151.DC",
-      "net_inflow_yuan": 8036167520000.0,
-      "pct_chg": 2.69
-    },
-    {
-      "name": "WiFi",
-      "ts_code": "BK0915.DC",
-      "net_inflow_yuan": 7297433600000.0,
-      "pct_chg": -1.38
-    }
-  ],
-  "cold_industries": [
-    {
-      "name": "融资融券",
-      "ts_code": "BK0596.DC",
-      "net_inflow_yuan": -826540400640000.0,
-      "pct_chg": -0.88
-    },
-    {
-      "name": "MSCI中国",
-      "ts_code": "BK0821.DC",
-      "net_inflow_yuan": -485065646080000.0,
-      "pct_chg": -1.16
-    },
-    {
-      "name": "富时罗素",
-      "ts_code": "BK0867.DC",
-      "net_inflow_yuan": -481871134720000.0,
-      "pct_chg": -0.42
-    },
-    {
-      "name": "沪股通",
-      "ts_code": "BK0707.DC",
-      "net_inflow_yuan": -462781358080000.0,
-      "pct_chg": -1.26
-    },
-    {
-      "name": "半导体概念",
-      "ts_code": "BK0917.DC",
-      "net_inflow_yuan": -430169210880000.0,
-      "pct_chg": -4.29
-    },
-    {
-      "name": "百元股",
-      "ts_code": "BK1059.DC",
-      "net_inflow_yuan": -394858577920000.0,
-      "pct_chg": -3.8
-    },
-    {
-      "name": "电子",
-      "ts_code": "BK1201.DC",
-      "net_inflow_yuan": -369752186880000.0,
-      "pct_chg": -3.24
-    },
-    {
-      "name": "深股通",
-      "ts_code": "BK0804.DC",
-      "net_inflow_yuan": -363585781760000.0,
-      "pct_chg": -0.75
-    },
-    {
-      "name": "大盘股",
-      "ts_code": "BK1663.DC",
-      "net_inflow_yuan": -358584770560000.0,
-      "pct_chg": -1.2
-    },
-    {
-      "name": "昨日高振幅",
-      "ts_code": "BK1633.DC",
-      "net_inflow_yuan": -354496143360000.0,
-      "pct_chg": -1.74
-    }
-  ],
+  "hot_industries": [],
+  "cold_industries": [],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -205,7 +23,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 1022,
+    "row_count": 0,
     "_status": "ok"
   }
 }
