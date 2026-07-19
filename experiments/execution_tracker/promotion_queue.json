@@ -35,7 +35,7 @@
    "checks": {
     "G1_regime": false,
     "G2_sector_streak>=2": false,
-    "G3_zone_printed_and_held": false
+    "G3_zone_printed_and_held": true
    },
    "proposal": null
   }

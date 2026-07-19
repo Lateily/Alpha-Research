@@ -1,0 +1,1042 @@
+[
+  {
+    "date": "20260709",
+    "rule": "NOWCAST_FLIP",
+    "key": "002130.SZ|OPENING_FADE",
+    "title": "🔮 沃尔核材 nowcast → OPENING_FADE",
+    "body": "conf 0.90 gap-4.7% 距开-4.8% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260709",
+    "rule": "NOWCAST_FLIP",
+    "key": "300475.SZ|FAKE_STRENGTH",
+    "title": "🔮 香农芯创 nowcast → FAKE_STRENGTH",
+    "body": "conf 0.80 gap+2.3% 距开-1.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260709",
+    "rule": "NOWCAST_FLIP",
+    "key": "603629.SH|FAKE_STRENGTH",
+    "title": "🔮 利通电子 nowcast → FAKE_STRENGTH",
+    "body": "conf 0.79 gap+3.4% 距开+1.0% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260709",
+    "rule": "NOWCAST_FLIP",
+    "key": "300308.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 中际旭创 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.90 gap+5.5% 距开+3.2% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260709",
+    "rule": "NOWCAST_FLIP",
+    "key": "300475.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 香农芯创 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.90 gap+8.6% 距开+4.4% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260709",
+    "rule": "NOWCAST_FLIP",
+    "key": "300502.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 新易盛 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.90 gap+6.9% 距开+3.8% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260709",
+    "rule": "NOWCAST_FLIP",
+    "key": "600276.SH|ACCUMULATION_PROBABLE",
+    "title": "🔮 恒瑞医药 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.71 gap+2.6% 距开+4.2% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260709",
+    "rule": "INDEX_MOVE",
+    "key": "399006.SZ|up",
+    "title": "📊 创业板 +4.1%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260710",
+    "rule": "NOWCAST_FLIP",
+    "key": "601899.SH|ACCUMULATION_PROBABLE",
+    "title": "🔮 紫金矿业 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.61 gap+1.4% 距开+0.0% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260710",
+    "rule": "ENTRY_CROSSED",
+    "key": "601899.SH",
+    "title": "⚡ 紫金矿业 触发 entry",
+    "body": "日高28.45 ≥ entry 28.2 — 收盘结算时按T+1规则成交 (5000股, stop 26.2 / target 32.2)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260710",
+    "rule": "NOWCAST_FLIP",
+    "key": "002130.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 沃尔核材 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.90 gap+5.4% 距开+4.4% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260710",
+    "rule": "NOWCAST_FLIP",
+    "key": "002714.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 牧原股份 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.71 gap+2.7% 距开+3.7% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260710",
+    "rule": "NOWCAST_FLIP",
+    "key": "300308.SZ|OPENING_FADE",
+    "title": "🔮 中际旭创 nowcast → OPENING_FADE",
+    "body": "conf 0.90 gap-3.7% 距开-4.9% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260710",
+    "rule": "NOWCAST_FLIP",
+    "key": "300502.SZ|OPENING_FADE",
+    "title": "🔮 新易盛 nowcast → OPENING_FADE",
+    "body": "conf 0.71 gap+1.3% 距开-2.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260710",
+    "rule": "NOWCAST_FLIP",
+    "key": "603629.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 利通电子 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.64 gap-2.7% 距开-1.7% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260710",
+    "rule": "INDEX_MOVE",
+    "key": "399006.SZ|down",
+    "title": "📊 创业板 -1.6%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260713",
+    "rule": "NOWCAST_FLIP",
+    "key": "300308.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 中际旭创 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.60 gap+1.3% 距开+0.8% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260713",
+    "rule": "NOWCAST_FLIP",
+    "key": "300475.SZ|RECLAIM_ATTEMPT",
+    "title": "🔮 香农芯创 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.67 gap-7.8% 距开+2.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260713",
+    "rule": "NOWCAST_FLIP",
+    "key": "603629.SH|RECLAIM_ATTEMPT",
+    "title": "🔮 利通电子 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.64 gap-4.0% 距开+1.8% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260713",
+    "rule": "NOWCAST_FLIP",
+    "key": "300475.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 香农芯创 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.62 gap-11.0% 距开-1.5% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260713",
+    "rule": "NOWCAST_FLIP",
+    "key": "300502.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 新易盛 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.73 gap+2.8% 距开+3.8% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260713",
+    "rule": "NOWCAST_FLIP",
+    "key": "002130.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 沃尔核材 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.64 gap-2.4% 距开-1.7% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260713",
+    "rule": "INDEX_MOVE",
+    "key": "399006.SZ|down",
+    "title": "📊 创业板 -1.6%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260713",
+    "rule": "INDEX_MOVE",
+    "key": "000001.SH|down",
+    "title": "📊 上证 -1.6%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260714",
+    "rule": "NOWCAST_FLIP",
+    "key": "600276.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 恒瑞医药 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.64 gap-1.7% 距开-1.7% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260714",
+    "rule": "NOWCAST_FLIP",
+    "key": "603629.SH|OPENING_FADE",
+    "title": "🔮 利通电子 nowcast → OPENING_FADE",
+    "body": "conf 0.90 gap-4.1% 距开-5.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260714",
+    "rule": "NOWCAST_FLIP",
+    "key": "300475.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 香农芯创 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.65 gap+1.8% 距开+2.2% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260714",
+    "rule": "INDEX_MOVE",
+    "key": "399006.SZ|up",
+    "title": "📊 创业板 +1.7%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260714",
+    "rule": "NOWCAST_FLIP",
+    "key": "300475.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 香农芯创 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.62 gap-1.9% 距开-1.5% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260714",
+    "rule": "NOWCAST_FLIP",
+    "key": "603629.SH|ACCUMULATION_PROBABLE",
+    "title": "🔮 利通电子 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.78 gap+3.6% 距开+2.4% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260715",
+    "rule": "NOWCAST_FLIP",
+    "key": "300308.SZ|OPENING_FADE",
+    "title": "🔮 中际旭创 nowcast → OPENING_FADE",
+    "body": "conf 0.63 gap-0.8% 距开-1.3% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260715",
+    "rule": "NOWCAST_FLIP",
+    "key": "300475.SZ|OPENING_FADE",
+    "title": "🔮 香农芯创 nowcast → OPENING_FADE",
+    "body": "conf 0.90 gap-2.9% 距开-4.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260715",
+    "rule": "NOWCAST_FLIP",
+    "key": "600276.SH|ACCUMULATION_PROBABLE",
+    "title": "🔮 恒瑞医药 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.86 gap+4.5% 距开+5.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260715",
+    "rule": "NOWCAST_FLIP",
+    "key": "603629.SH|OPENING_FADE",
+    "title": "🔮 利通电子 nowcast → OPENING_FADE",
+    "body": "conf 0.61 gap+3.3% 距开-1.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260715",
+    "rule": "NOWCAST_FLIP",
+    "key": "300502.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 新易盛 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.63 gap-2.2% 距开-1.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "INDEX_MOVE",
+    "key": "399006.SZ|down",
+    "title": "📊 创业板 -2.5%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "300534.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 陇神戎发 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.81 gap-6.7% 距开-3.9% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "688120.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 华海清科 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.64 gap-4.3% 距开-1.7% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "920088.BJ|ACCUMULATION_PROBABLE",
+    "title": "🔮 科力股份 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.77 gap+3.4% 距开+2.4% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "300164.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 通源石油 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.81 gap-4.2% 距开-3.9% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "603313.SH|RECLAIM_ATTEMPT",
+    "title": "🔮 梦百合 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.72 gap-1.8% 距开+2.8% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "603629.SH|RECLAIM_ATTEMPT",
+    "title": "🔮 利通电子 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.73 gap-2.0% 距开+2.9% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "688176.SH|RECLAIM_ATTEMPT",
+    "title": "🔮 亚虹医药 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.62 gap-2.5% 距开+1.5% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "920088.BJ|OPENING_FADE",
+    "title": "🔮 科力股份 nowcast → OPENING_FADE",
+    "body": "conf 0.82 gap-2.2% 距开-3.2% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "002463.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 沪电股份 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.63 gap+1.6% 距开+4.2% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "300308.SZ|RECLAIM_ATTEMPT",
+    "title": "🔮 中际旭创 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.67 gap-2.0% 距开+2.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "688176.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 亚虹医药 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.66 gap-5.9% 距开-2.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "600276.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 恒瑞医药 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.67 gap-3.3% 距开-2.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "300054.SZ|RECLAIM_ATTEMPT",
+    "title": "🔮 鼎龙股份 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.66 gap-1.2% 距开+1.9% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "002594.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 比亚迪 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.67 gap+2.1% 距开+2.2% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "603313.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 梦百合 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.71 gap-6.9% 距开-2.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "300054.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 鼎龙股份 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.87 gap-7.5% 距开-4.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "300308.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 中际旭创 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.65 gap-5.8% 距开-1.9% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "NOWCAST_FLIP",
+    "key": "603629.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 利通电子 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.90 gap-10.0% 距开-5.5% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260716",
+    "rule": "INDEX_MOVE",
+    "key": "000001.SH|down",
+    "title": "📊 上证 -2.1%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "003001.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 中岩大地 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.90 gap+10.0% 距开+0.0% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "600882.SH|ACCUMULATION_PROBABLE",
+    "title": "🔮 妙可蓝多 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.66 gap+2.0% 距开+0.0% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "688120.SH|ACCUMULATION_PROBABLE",
+    "title": "🔮 华海清科 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.62 gap+1.5% 距开+1.5% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "920267.BJ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 鑫汇科 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.62 gap-3.6% 距开-1.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "INDEX_MOVE",
+    "key": "399006.SZ|down",
+    "title": "📊 创业板 -1.6%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "002463.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 沪电股份 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.89 gap-6.7% 距开-4.9% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "300534.SZ|RECLAIM_ATTEMPT",
+    "title": "🔮 陇神戎发 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.65 gap-2.9% 距开+1.9% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "688120.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 华海清科 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.68 gap-2.3% 距开-2.3% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "300054.SZ|OPENING_FADE",
+    "title": "🔮 鼎龙股份 nowcast → OPENING_FADE",
+    "body": "conf 0.62 gap-0.7% 距开-1.2% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "688166.SH|RECLAIM_ATTEMPT",
+    "title": "🔮 博瑞医药 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.63 gap-3.6% 距开+1.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "600276.SH|OPENING_FADE",
+    "title": "🔮 恒瑞医药 nowcast → OPENING_FADE",
+    "body": "conf 0.63 gap-1.3% 距开-1.3% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "001395.SZ|RECLAIM_ATTEMPT",
+    "title": "🔮 亚联机械 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.63 gap-2.6% 距开+1.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "002714.SZ|OPENING_FADE",
+    "title": "🔮 牧原股份 nowcast → OPENING_FADE",
+    "body": "conf 0.61 gap-1.1% 距开-1.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "300534.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 陇神戎发 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.69 gap-6.9% 距开-2.4% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "920267.BJ|ACCUMULATION_PROBABLE",
+    "title": "🔮 鑫汇科 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.63 gap+1.6% 距开+3.8% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "601899.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 紫金矿业 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.62 gap-3.5% 距开-1.5% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "688166.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 博瑞医药 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.68 gap-7.3% 距开-2.3% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "300054.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 鼎龙股份 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.61 gap+1.4% 距开+0.8% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "600882.SH|OPENING_FADE",
+    "title": "🔮 妙可蓝多 nowcast → OPENING_FADE",
+    "body": "conf 0.61 gap+0.9% 距开-1.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "601600.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 中国铝业 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.62 gap-2.2% 距开-1.5% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "000807.SZ|DISTRIBUTION_PROBABLE",
+    "title": "🔮 云铝股份 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.71 gap-2.6% 距开-2.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "001395.SZ|ACCUMULATION_PROBABLE",
+    "title": "🔮 亚联机械 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.73 gap+2.8% 距开+7.2% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "INDEX_MOVE",
+    "key": "000001.SH|down",
+    "title": "📊 上证 -1.5%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "001395.SZ|FAKE_STRENGTH",
+    "title": "🔮 亚联机械 nowcast → FAKE_STRENGTH",
+    "body": "conf 0.70 gap+2.2% 距开+6.6% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260717",
+    "rule": "NOWCAST_FLIP",
+    "key": "603233.SH|DISTRIBUTION_PROBABLE",
+    "title": "🔮 大参林 nowcast → DISTRIBUTION_PROBABLE",
+    "body": "conf 0.66 gap-3.7% 距开-2.0% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  }
+]
