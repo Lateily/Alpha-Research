@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-20T04:50:50.886890+00:00",
+  "generated_at": "2026-07-20T11:27:06.771998+00:00",
   "date": "2026-07-20",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review",
@@ -13,13 +13,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 2,
-        "pnl_pct": 49.1,
+        "pnl_pct": 47.35,
         "holding_days": 132,
-        "weight_pct": 53.5,
+        "weight_pct": 53.2,
         "vp_score": 48,
         "confluence": 2,
-        "reason_e": "Large unrealised gain +49.1% after 132d. Signal still NEUTRAL (score 2). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+49.1%（持有132天），信号2仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +47.4% after 132d. Signal still NEUTRAL (score 2). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+47.4%（持有132天），信号2仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -51,7 +51,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 125,
-        "weight_pct": 24.4,
+        "weight_pct": 24.6,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 125d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -85,13 +85,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 0,
-        "pnl_pct": -2.79,
+        "pnl_pct": -2.36,
         "holding_days": 110,
-        "weight_pct": 3.9,
+        "weight_pct": 4.0,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L -2.8% after 110d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +8.5% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分0），浮盈-2.8%，持有110天，无新触发条件。RSI 59 | 距MA20 +8.5% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 0). P&L -2.4% after 110d. Paper-hold — no new review trigger. RSI 59 | Price vs MA20 +8.5% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分0），浮盈-2.4%，持有110天，无新触发条件。RSI 59 | 距MA20 +8.5% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -174,8 +174,8 @@
   },
   "buy_watches": [],
   "portfolio_risk": [
-    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 54% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +49.1% — exposure-review condition (sizable unrealised gain)"
+    "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 53% of portfolio — above 40.0% limit",
+    "PROFIT REVIEW: 300308.SZ +47.4% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {
