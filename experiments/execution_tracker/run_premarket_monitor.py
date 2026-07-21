@@ -38,6 +38,7 @@ CONFIRM_GAP = 0.005   # avg gap must clear +0.5% to call OPENING_CONFIRM (else N
 PORTFOLIO = [("300502.SZ", "新易盛"), ("300475.SZ", "香农芯创"),
              ("603629.SH", "利通电子"), ("300308.SZ", "中际旭创")]
 INDICES = [("000001.SH", "上证"), ("399006.SZ", "创业板")]
+OVERNIGHT_ANCHOR = os.path.join(HERE, "overnight_anchor.json")
 
 
 def read_quote(q):
@@ -97,6 +98,19 @@ def classify(reads):
             "single_beta_same_direction": single_beta,
             "single_beta_amplified": amplified,
             "high_reflexivity": state == "HIGH_REFLEXIVITY" or big_range or amplified}
+
+
+def load_overnight_anchor(path=OVERNIGHT_ANCHOR):
+    """Read the premarket overseas beta frame if present. Missing data is an
+    explicit frame, not a silent omission."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return {"layer": "overnight_anchor_v0", "bias": "DATA_BLOCKED",
+                "why": "overnight_anchor.json missing; run overnight_anchor.py or provide manual feed",
+                "anchors": [], "data_blocked": ["overnight anchor frame missing"],
+                "claim_allowed": False}
 
 
 # ---------------------------------------------------------------- nowcast ----
@@ -200,6 +214,7 @@ def monitor(token, portfolio=PORTFOLIO, indices=INDICES, quote_fn=None, market_o
                 "market_state": "MARKET_CLOSED", "reason": why,
                 "avg_portfolio_gap": None, "single_beta_amplified": False,
                 "high_reflexivity": False, "holdings": [], "indices": [],
+                "overnight_anchor": load_overnight_anchor(),
                 "note": "闭市/非交易时段 — 拒绝对 stale 行情分类(--force 可覆盖)"}
     quote_fn = quote_fn or (lambda tickers: fs.tushare_realtime_quotes(tickers, src="sina"))
     name_map = dict(portfolio)
@@ -222,6 +237,7 @@ def monitor(token, portfolio=PORTFOLIO, indices=INDICES, quote_fn=None, market_o
         "single_beta_amplified": cls["single_beta_amplified"],
         "high_reflexivity": cls["high_reflexivity"],
         "holdings": reads, "indices": idx_reads,
+        "overnight_anchor": load_overnight_anchor(),
         "thresholds_note": "GAP_RISK/GAP_AMPLIFY/RANGE_REFLEX are [unvalidated intuition]",
     }
 
@@ -281,6 +297,8 @@ def selftest():
     ck("monitor no_trade_flag True", out["no_trade_flag"] is True)
     ck("every holding read sample_eligible False", all(h["sample_eligible"] is False for h in out["holdings"]))
     ck("monitor classifies PREMARKET_RISK", out["market_state"] == "PREMARKET_RISK")
+    ck("monitor carries overnight anchor frame", out["overnight_anchor"]["bias"] in
+       ("DATA_BLOCKED", "OVERNIGHT_RISK_ON_BETA", "OVERNIGHT_RISK_OFF_BETA", "MIXED"))
 
     # MARKET_CLOSED guard (2026-06 weekend incident: stale quotes classified as
     # HIGH_REFLEXIVITY). Closed -> refuse to classify; no quote_fn ever called.
@@ -290,6 +308,7 @@ def selftest():
     ck("closed -> MARKET_CLOSED", closed["market_state"] == "MARKET_CLOSED")
     ck("closed -> no holdings classified", closed["holdings"] == [])
     ck("closed -> still sample_eligible False", closed["sample_eligible"] is False)
+    ck("closed -> still carries overnight anchor", "overnight_anchor" in closed)
     import datetime as _dt
     ok_evening, why_evening = is_market_open_now(token="", now=_dt.datetime(2026, 7, 2, 20, 0))
     ck("20:00 -> closed (time window, offline)", ok_evening is False and "不在交易时段" in why_evening)
@@ -356,6 +375,8 @@ def main():
             print("NO TUSHARE_TOKEN — run `source ~/.zprofile` first"); sys.exit(1)
         obs = monitor(token, market_open=True if args.force else None)
         print(f"\n=== PREMARKET / OPENING OBSERVATION (sample_eligible=false) ===")
+        oa = obs.get("overnight_anchor") or {}
+        print(f"overnight anchor : {oa.get('bias')} | {oa.get('why')}")
         print(f"state : {obs['market_state']} | {obs['reason']}")
         if obs["market_state"] == "MARKET_CLOSED":
             print(obs["note"]); print("不是买卖指令；研究信号，human executes。"); return

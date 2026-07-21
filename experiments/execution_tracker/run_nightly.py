@@ -7,8 +7,9 @@ settle data is available. The orchestrator makes the engine chain memorable and
 auditable; it does not create, fill, or modify fund orders.
 
 Default order:
-  rotation_panel -> momentum_prefilter -> rotation_stats -> court_wakeup ->
-  watch_dynamic -> position_review -> setup_promoter
+  rotation_panel -> momentum_prefilter -> rotation_stats -> rotation_validation ->
+  lead_precursor -> overnight_anchor -> court_wakeup -> watch_dynamic ->
+  position_review -> setup_promoter
 
 不是买卖指令；研究信号，human executes。
 """
@@ -27,6 +28,8 @@ STEPS = [
     ("momentum_prefilter", ["python3", "momentum_prefilter.py"], True),
     ("rotation_stats", ["python3", "rotation_stats.py"], False),
     ("rotation_validation", ["python3", "rotation_validation.py", "--append"], True),
+    ("lead_precursor", ["python3", "lead_precursor.py"], False),
+    ("overnight_anchor_frame", ["python3", "overnight_anchor.py"], False),
     ("court_wakeup", ["python3", "court_wakeup.py"], True),
     ("watch_dynamic", ["python3", "watch_dynamic.py"], False),
     ("position_review", ["python3", "position_review.py"], True),
