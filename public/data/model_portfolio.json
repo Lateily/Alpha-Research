@@ -6,9 +6,9 @@
     "no_size": true,
     "no_buy_sell": true,
     "no_position_mutation": true,
-    "run_date": "2026-07-20",
+    "run_date": "2026-07-21",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-07-20T11:27:06.834306+00:00",
+    "generated_at": "2026-07-21T04:22:21.224301+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -63,8 +63,8 @@
         },
         "quant_confluence": {
           "action": "NEUTRAL",
-          "score": 0,
-          "rationale": "RSI 59 | Price vs MA20 +8.5% | Regime: PERMISSIVE | VP 48"
+          "score": 16,
+          "rationale": "Bullish: Ma60 Bounce | RSI 60 | Price vs MA20 +8.6% | Regime: PERMISSIVE | VP 48"
         }
       },
       "validation_status": "PENDING",
@@ -106,7 +106,7 @@
         "quant_confluence": {
           "action": "NEUTRAL",
           "score": 0,
-          "rationale": "RSI 61 | Price vs MA20 +8.9% | VP 50"
+          "rationale": "RSI 62 | Price vs MA20 +9.4% | VP 50"
         }
       },
       "validation_status": "PENDING",
@@ -250,31 +250,38 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "no_signal",
-        "bias": "neutral",
+        "setup_type": "ma60_bounce",
+        "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
-        "risk_rule": "No setup yet — watch MA20 (86.17) / MA60 (92.77) for the first directional signal.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.81).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (86.48); loss of MA60 (92.64) ends it.",
         "technical": {
           "zone": "NEUTRAL",
-          "entry_zone": false,
+          "entry_zone": true,
           "exit_zone": false,
           "signal_count": {
-            "bullish": 0,
+            "bullish": 1,
             "bearish": 0,
-            "total": 0
+            "total": 1
           },
           "key_indicators": {
-            "rsi14": 59.4,
-            "macd_hist": 2.8926,
-            "price_vs_ma20": 8.48,
-            "price_vs_ma60": 0.76,
-            "change_5d": 3.86,
-            "vol_ratio": 1.25
+            "rsi14": 60.2,
+            "macd_hist": 2.8212,
+            "price_vs_ma20": 8.6,
+            "price_vs_ma60": 1.38,
+            "change_5d": 7.98,
+            "vol_ratio": 0.81
           },
-          "signals": []
+          "signals": [
+            {
+              "type": "MA60_BOUNCE",
+              "strength": "strong",
+              "bullish": true,
+              "desc": "Price bounced off MA60 (92.8) — major support held"
+            }
+          ]
         },
-        "as_of": "2026-07-20",
+        "as_of": "2026-07-21",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -316,7 +323,7 @@
             }
           ]
         },
-        "as_of": "2026-07-20",
+        "as_of": "2026-07-21",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -330,8 +337,8 @@
         "setup_type": "kdj_oversold",
         "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.91).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (89.8); loss of MA60 (76.66) ends it.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.96).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (88.53); loss of MA60 (76.89) ends it.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": true,
@@ -342,23 +349,23 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 36.3,
-            "macd_hist": -7.1105,
-            "price_vs_ma20": -22.71,
-            "price_vs_ma60": -9.46,
-            "change_5d": -16.47,
-            "vol_ratio": 0.91
+            "rsi14": 34.0,
+            "macd_hist": -7.608,
+            "price_vs_ma20": -25.58,
+            "price_vs_ma60": -14.32,
+            "change_5d": -17.57,
+            "vol_ratio": 0.96
           },
           "signals": [
             {
               "type": "KDJ_OVERSOLD",
               "strength": "strong",
               "bullish": true,
-              "desc": "KDJ J=-7.1 (extreme <0) — high-probability reversal zone"
+              "desc": "KDJ J=-3.0 (extreme <0) — high-probability reversal zone"
             }
           ]
         },
-        "as_of": "2026-07-20",
+        "as_of": "2026-07-21",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -369,11 +376,11 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "bb_lower_break",
+        "setup_type": "rsi_recovering",
         "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.68).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (1187.29); loss of MA60 (1103.0) ends it.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.32).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (1168.38); loss of MA60 (1105.32) ends it.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": true,
@@ -384,23 +391,23 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 36.4,
-            "macd_hist": -42.7026,
-            "price_vs_ma20": -17.5,
-            "price_vs_ma60": -11.2,
-            "change_5d": -10.47,
-            "vol_ratio": 1.68
+            "rsi14": 38.8,
+            "macd_hist": -47.5545,
+            "price_vs_ma20": -14.07,
+            "price_vs_ma60": -9.17,
+            "change_5d": -9.39,
+            "vol_ratio": 1.32
           },
           "signals": [
             {
-              "type": "BB_LOWER_BREAK",
+              "type": "RSI_RECOVERING",
               "strength": "moderate",
               "bullish": true,
-              "desc": "Price (979.5) touched Bollinger lower (993.6) — oversold, mean reversion watch"
+              "desc": "RSI recovering 36.4→38.8 — momentum rebuilding"
             }
           ]
         },
-        "as_of": "2026-07-20",
+        "as_of": "2026-07-21",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -415,7 +422,7 @@
         "bias": "neutral",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
         "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
-        "risk_rule": "No setup yet — watch MA20 (17.06) / MA60 (17.3) for the first directional signal.",
+        "risk_rule": "No setup yet — watch MA20 (17.2) / MA60 (17.32) for the first directional signal.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": false,
@@ -426,16 +433,16 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 60.8,
-            "macd_hist": 0.6017,
-            "price_vs_ma20": 8.88,
-            "price_vs_ma60": 7.34,
-            "change_5d": 5.21,
-            "vol_ratio": 1.06
+            "rsi14": 62.5,
+            "macd_hist": 0.5008,
+            "price_vs_ma20": 9.4,
+            "price_vs_ma60": 8.67,
+            "change_5d": 4.09,
+            "vol_ratio": 1.09
           },
           "signals": []
         },
-        "as_of": "2026-07-20",
+        "as_of": "2026-07-21",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -489,7 +496,7 @@
             }
           ]
         },
-        "as_of": "2026-07-20",
+        "as_of": "2026-07-21",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -503,8 +510,8 @@
         "setup_type": "kdj_oversold",
         "bias": "bullish",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.08).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (283.74); loss of MA60 (249.26) ends it.",
+        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 1.03).",
+        "risk_rule": "Setup invalidated on a decisive close below MA20 (283.39); loss of MA60 (249.88) ends it.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": true,
@@ -515,23 +522,23 @@
             "total": 1
           },
           "key_indicators": {
-            "rsi14": 42.8,
-            "macd_hist": -12.8,
-            "price_vs_ma20": -14.83,
-            "price_vs_ma60": -3.04,
-            "change_5d": -25.55,
-            "vol_ratio": 1.08
+            "rsi14": 40.4,
+            "macd_hist": -18.5627,
+            "price_vs_ma20": -19.56,
+            "price_vs_ma60": -8.77,
+            "change_5d": -29.97,
+            "vol_ratio": 1.03
           },
           "signals": [
             {
               "type": "KDJ_OVERSOLD",
               "strength": "strong",
               "bullish": true,
-              "desc": "KDJ J=-11.6 (extreme <0) — high-probability reversal zone"
+              "desc": "KDJ J=-13.4 (extreme <0) — high-probability reversal zone"
             }
           ]
         },
-        "as_of": "2026-07-20",
+        "as_of": "2026-07-21",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -566,7 +573,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-07-20",
+        "as_of": "2026-07-21",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       },
@@ -601,7 +608,7 @@
           },
           "signals": []
         },
-        "as_of": "2026-07-20",
+        "as_of": "2026-07-21",
         "validation_status": "unvalidated_pilot",
         "no_trade_flag": true
       }

@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "688120.SH",
-  "fetched_at": "2026-07-20T11:27:05Z",
+  "fetched_at": "2026-07-21T04:22:20Z",
   "api_used": "margin_detail",
   "window_days": 30,
   "records": [
@@ -264,16 +264,29 @@
       "rqmcl": 4600,
       "rzrqye": 1670420381.21,
       "name": null
+    },
+    {
+      "trade_date": "20260720",
+      "ts_code": "688120.SH",
+      "rzye": 1498888155.0,
+      "rqye": 39066307.02,
+      "rzmre": 152259666.0,
+      "rqyl": 171366.0,
+      "rzche": 284191122.0,
+      "rqchl": 10713,
+      "rqmcl": 18216,
+      "rzrqye": 1537954462.02,
+      "name": null
     }
   ],
   "summary": {
-    "total_count": 20,
-    "latest_date": "2026-07-17",
-    "latest_rzye": 1630819610.0,
-    "latest_rqye": 39600771.21,
-    "rzye_change_30d_pct": 14.20916283212566,
-    "rqye_change_30d_pct": 105.34224368225816,
-    "net_leverage_change_30d": -91.1330808501325,
+    "total_count": 21,
+    "latest_date": "2026-07-20",
+    "latest_rzye": 1498888155.0,
+    "latest_rqye": 39066307.02,
+    "rzye_change_30d_pct": 4.9697712192333805,
+    "rqye_change_30d_pct": 102.57088159538277,
+    "net_leverage_change_30d": -97.60111037614939,
     "signal_level": "LEVERAGE_BEAR_HIGH"
   }
 }
