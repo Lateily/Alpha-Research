@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-07-21T04:21:50Z",
+  "fetched_at": "2026-07-21T10:40:05Z",
   "api_used": "report_rc",
   "_attempted_endpoints": [
     "broker_recommend",

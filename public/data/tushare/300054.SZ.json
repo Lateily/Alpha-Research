@@ -1,11 +1,24 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-07-21T04:19:33Z",
+  "fetched_at": "2026-07-21T10:38:10Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260721",
+          "open": 67.05,
+          "high": 77.9,
+          "low": 64.11,
+          "close": 77.32,
+          "pre_close": 65.88,
+          "change": 11.44,
+          "pct_chg": 17.3649,
+          "vol": 675004.2,
+          "amount": 4817718.05487
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260720",
@@ -787,11 +800,31 @@
           "amount": 2035550.408
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260721",
+          "close": 77.32,
+          "turnover_rate": 9.0828,
+          "turnover_rate_f": 10.0172,
+          "volume_ratio": 1.46,
+          "pe": 102.3403,
+          "pe_ttm": 88.7845,
+          "pb": 13.4951,
+          "ps": 20.1388,
+          "ps_ttm": 19.1139,
+          "dv_ratio": 0.1282,
+          "dv_ttm": 0.1293,
+          "total_share": 95325.8681,
+          "float_share": 74316.8479,
+          "free_share": 67384.8246,
+          "total_mv": 7370596.2684,
+          "circ_mv": 5746178.842
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260720",
@@ -1993,7 +2026,7 @@
           "circ_mv": 4028087.3822
         }
       ],
-      "row_count": 60,
+      "row_count": 61,
       "_status": "ok"
     },
     "adj_factor": {
