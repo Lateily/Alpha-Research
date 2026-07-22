@@ -8,7 +8,7 @@
     "no_buy_sell": true,
     "no_position_mutation": true,
     "run_date": "2026-07-22",
-    "generated_at": "2026-07-22T04:25:14.575467+00:00",
+    "generated_at": "2026-07-22T10:42:28.879217+00:00",
     "data_tier": "degraded_ci_focus_only",
     "data_as_of": null,
     "horizon": "20d primary / 5d secondary diagnostic",
@@ -64,35 +64,35 @@
       "ticker": "002594.SZ",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 61,
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "300054.SZ",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 61,
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "300308.SZ",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 61,
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "603233.SH",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 61,
+      "n_bars": 60,
       "need_bars": 212
     },
     {
       "ticker": "688120.SH",
       "basis": "focus_ohlc_diagnostic",
       "action": "INSUFFICIENT_DATA",
-      "n_bars": 61,
+      "n_bars": 60,
       "need_bars": 212
     }
   ],
