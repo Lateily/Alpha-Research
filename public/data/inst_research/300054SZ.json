@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-07-21T10:38:37Z",
+  "fetched_at": "2026-07-22T04:23:05Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -945,67 +945,11 @@
       "inst_count": 1,
       "surv_type": "“鼎龙控股集团”微信视频号直播",
       "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260422",
-      "fund_visitors": "王元廷",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "理成资产",
-      "org_type": "资产管理公司",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 2,
-      "surv_type": "特定对象调研",
-      "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260422",
-      "fund_visitors": "陈威威",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "国盛证券",
-      "org_type": "证券公司",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 2,
-      "surv_type": "特定对象调研",
-      "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260422",
-      "fund_visitors": "王可",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "南土资产",
-      "org_type": "资产管理公司",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 2,
-      "surv_type": "特定对象调研",
-      "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260422",
-      "fund_visitors": "桑翔宇,于嘉轩,刘潇,王斌,吴秋一",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "华安基金",
-      "org_type": "基金管理公司",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 6,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 60,
-    "total_90d": 71,
+    "total_90d": 67,
     "unique_inst_30d": 167,
     "latest_date": "2026-07-15"
   }

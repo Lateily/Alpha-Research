@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-21T10:40:32.310671+00:00",
+  "updated_at": "2026-07-22T04:25:15.806002+00:00",
   "total_theses": 4,
   "active_positions": [
     {
@@ -7,12 +7,12 @@
       "direction": "LONG",
       "entry_date": "2026-05-17",
       "entry_price": 96.3,
-      "current_price": 94.3,
-      "return_since_entry_pct": -2.08,
+      "current_price": 91.18,
+      "return_since_entry_pct": -5.32,
       "upside_target_pct": 22.0,
       "downside_stop_pct": -9.0,
-      "days_held": 65,
-      "days_to_catalyst": 25,
+      "days_held": 66,
+      "days_to_catalyst": 24,
       "current_status": "ACTIVE",
       "conviction_state": "STARTER_CAPPED_UNTIL_E1",
       "tradeable_not_proven_statement": "Tradeable, but not proven. Historical base is [E1:direct] (2025 Overseas GM 19.46% vs Domestic GM 16.66%, +280bps, SEGMENT ECONOMICS period 20251231); forward persistence is [E2:proxy] (H1 2026 mix-shift margin-accretion through European localization not yet measured); size capped until 2026 H1 报告 segment disclosure confirms overseas GM holds ≥18% and consolidated GM holds ≥17%."

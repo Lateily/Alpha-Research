@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "603233.SH",
-  "fetched_at": "2026-07-21T10:40:29Z",
+  "fetched_at": "2026-07-22T04:25:13Z",
   "api_used": "margin_detail",
   "window_days": 30,
   "records": [
@@ -277,16 +277,29 @@
       "rqmcl": 8800,
       "rzrqye": 227023893.0,
       "name": null
+    },
+    {
+      "trade_date": "20260721",
+      "ts_code": "603233.SH",
+      "rzye": 217475206.0,
+      "rqye": 5962323.0,
+      "rzmre": 6203903.0,
+      "rqyl": 315300.0,
+      "rzche": 9910862.0,
+      "rqchl": 7100,
+      "rqmcl": 12000,
+      "rzrqye": 223437529.0,
+      "name": null
     }
   ],
   "summary": {
-    "total_count": 21,
-    "latest_date": "2026-07-20",
-    "latest_rzye": 221182165.0,
-    "latest_rqye": 5841728.0,
-    "rzye_change_30d_pct": 2.9282507533622244,
-    "rqye_change_30d_pct": 55.77604857068421,
-    "net_leverage_change_30d": -52.84779781732199,
+    "total_count": 22,
+    "latest_date": "2026-07-21",
+    "latest_rzye": 217475206.0,
+    "latest_rqye": 5962323.0,
+    "rzye_change_30d_pct": 1.2031984396531472,
+    "rqye_change_30d_pct": 58.991845776131235,
+    "net_leverage_change_30d": -57.788647336478085,
     "signal_level": "LEVERAGE_BEAR_HIGH"
   }
 }
