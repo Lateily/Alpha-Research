@@ -1,0 +1,49 @@
+{
+ "as_of": "20260722 09:13",
+ "layer": "overnight_anchor_v0",
+ "anchors": [
+  {
+   "key": "NVDA",
+   "label": "NVIDIA",
+   "group": "US_AI",
+   "status": "DATA_BLOCKED",
+   "pct_change": null,
+   "source": null
+  },
+  {
+   "key": "SOX",
+   "label": "费城半导体指数",
+   "group": "US_SEMI",
+   "status": "DATA_BLOCKED",
+   "pct_change": null,
+   "source": null
+  },
+  {
+   "key": "TSM",
+   "label": "台积电 ADR",
+   "group": "FOUNDRY_ADR",
+   "status": "DATA_BLOCKED",
+   "pct_change": null,
+   "source": null
+  },
+  {
+   "key": "A50",
+   "label": "富时中国 A50",
+   "group": "CN_BETA",
+   "status": "DATA_BLOCKED",
+   "pct_change": null,
+   "source": null
+  }
+ ],
+ "bias": "DATA_BLOCKED",
+ "why": "less than 3 anchors available",
+ "data_blocked": [
+  "NVDA: no pct_change in overnight anchor feed",
+  "SOX: no pct_change in overnight anchor feed",
+  "TSM: no pct_change in overnight anchor feed",
+  "A50: no pct_change in overnight anchor feed"
+ ],
+ "claim_allowed": false,
+ "policy": "盘前第一行;只改变科技 beta 背景读数,不直接生成交易动作。",
+ "note": "不是买卖指令；研究信号，human executes。"
+}

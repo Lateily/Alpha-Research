@@ -1,45 +1,6 @@
 {
- "market_state": "RISK_OFF",
- "queue": [
-  {
-   "ticker": "002463.SZ",
-   "name": "沪电股份",
-   "signal_id": "a2a40a749c6b",
-   "verdict": "MANUAL_REVIEW",
-   "why": "trigger/invalidation 无法机械解析,送人审",
-   "matched_sector": null,
-   "checks": {
-    "G1_regime": false,
-    "G2_sector_streak>=2": false
-   }
-  },
-  {
-   "ticker": "601600.SH",
-   "name": "中国铝业",
-   "signal_id": "3b1f93d088a5",
-   "verdict": "NOT_READY",
-   "matched_sector": null,
-   "checks": {
-    "G1_regime": false,
-    "G2_sector_streak>=2": false,
-    "G3_zone_printed_and_held": true
-   },
-   "proposal": null
-  },
-  {
-   "ticker": "000807.SZ",
-   "name": "云铝股份",
-   "signal_id": "adb5a9d07771",
-   "verdict": "NOT_READY",
-   "matched_sector": null,
-   "checks": {
-    "G1_regime": false,
-    "G2_sector_streak>=2": false,
-    "G3_zone_printed_and_held": false
-   },
-   "proposal": null
-  }
- ],
+ "market_state": "WEAK_REPAIR",
+ "queue": [],
  "data_blocked": [],
  "note": "晋级复核单;不注册不成交。不是买卖指令。"
 }

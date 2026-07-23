@@ -1080,5 +1080,2418 @@
     "scored": true,
     "actual_main_flow": -4.0295,
     "flow_hit": true
+  },
+  {
+    "nowcast_id": "9e2088d50ec7",
+    "ticker": "003001.SZ",
+    "name": "中岩大地",
+    "date": "20260717",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.1001,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "19721dac2f29",
+    "ticker": "600882.SH",
+    "name": "妙可蓝多",
+    "date": "20260717",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.66,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0199,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "f600602130df",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260717",
+    "checkpoint": "wt0930",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0147,
+      "from_open": 0.0147,
+      "from_high": -0.003,
+      "intraday_range": 0.0177
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9eac7132749c",
+    "ticker": "920267.BJ",
+    "name": "鑫汇科",
+    "date": "20260717",
+    "checkpoint": "wt0930",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0363,
+      "from_open": -0.0156,
+      "from_high": -0.0156,
+      "intraday_range": 0.0321
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "beaaf47439b6",
+    "ticker": "002463.SZ",
+    "name": "沪电股份",
+    "date": "20260717",
+    "checkpoint": "wt0932",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.89,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0674,
+      "from_open": -0.0491,
+      "from_high": -0.0656,
+      "intraday_range": 0.0691
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "dea189ecfaab",
+    "ticker": "300534.SZ",
+    "name": "陇神戎发",
+    "date": "20260717",
+    "checkpoint": "wt0932",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.65,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0285,
+      "from_open": 0.019,
+      "from_high": -0.0071,
+      "intraday_range": 0.025
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "4638e24955f1",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260717",
+    "checkpoint": "wt0932",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.68,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0227,
+      "from_open": -0.0227,
+      "from_high": -0.0464,
+      "intraday_range": 0.0534
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "84e3c9bc0a5e",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260717",
+    "checkpoint": "wt0934",
+    "state": "OPENING_FADE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.007,
+      "from_open": -0.0122,
+      "from_high": -0.0213,
+      "intraday_range": 0.0284
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "41ae6b460186",
+    "ticker": "688166.SH",
+    "name": "博瑞医药",
+    "date": "20260717",
+    "checkpoint": "wt0936",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.63,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.036,
+      "from_open": 0.0164,
+      "from_high": -0.0217,
+      "intraday_range": 0.0671
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9f400407680a",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "date": "20260717",
+    "checkpoint": "wt0938",
+    "state": "OPENING_FADE",
+    "confidence": 0.63,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0129,
+      "from_open": -0.013,
+      "from_high": -0.016,
+      "intraday_range": 0.0163
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "af14e1173ff4",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260717",
+    "checkpoint": "wt0940",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.63,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0256,
+      "from_open": 0.0161,
+      "from_high": -0.0066,
+      "intraday_range": 0.0336
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "fc6c360a4b61",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "date": "20260717",
+    "checkpoint": "wt0940",
+    "state": "OPENING_FADE",
+    "confidence": 0.61,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.011,
+      "from_open": -0.0112,
+      "from_high": -0.0265,
+      "intraday_range": 0.0276
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "dc8d8f4702c8",
+    "ticker": "300534.SZ",
+    "name": "陇神戎发",
+    "date": "20260717",
+    "checkpoint": "wt0942",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.69,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0691,
+      "from_open": -0.0236,
+      "from_high": -0.0691,
+      "intraday_range": 0.0734
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "e5f24df451f3",
+    "ticker": "920267.BJ",
+    "name": "鑫汇科",
+    "date": "20260717",
+    "checkpoint": "wt0942",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0158,
+      "from_open": 0.0376,
+      "from_high": -0.0041,
+      "intraday_range": 0.0731
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "e35b8facffd2",
+    "ticker": "601899.SH",
+    "name": "紫金矿业",
+    "date": "20260717",
+    "checkpoint": "wt0944",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0352,
+      "from_open": -0.015,
+      "from_high": -0.0195,
+      "intraday_range": 0.0198
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "d03b0fb09207",
+    "ticker": "688166.SH",
+    "name": "博瑞医药",
+    "date": "20260717",
+    "checkpoint": "wt0948",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.68,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0734,
+      "from_open": -0.0231,
+      "from_high": -0.0712,
+      "intraday_range": 0.0793
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "110e141eb158",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260717",
+    "checkpoint": "wt0952",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.61,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0135,
+      "from_open": 0.0082,
+      "from_high": -0.0011,
+      "intraday_range": 0.0339
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b0a8c3a79edd",
+    "ticker": "600882.SH",
+    "name": "妙可蓝多",
+    "date": "20260717",
+    "checkpoint": "wt0952",
+    "state": "OPENING_FADE",
+    "confidence": 0.61,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.009,
+      "from_open": -0.0106,
+      "from_high": -0.0346,
+      "intraday_range": 0.066
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "74cbdd660d9d",
+    "ticker": "601600.SH",
+    "name": "中国铝业",
+    "date": "20260717",
+    "checkpoint": "wt0954",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0219,
+      "from_open": -0.0151,
+      "from_high": -0.0241,
+      "intraday_range": 0.0253
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "89524fa4644c",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260717",
+    "checkpoint": "wt0954",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.68,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.022,
+      "from_open": 0.022,
+      "from_high": -0.0028,
+      "intraday_range": 0.0747
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "5c9a7e826d52",
+    "ticker": "000807.SZ",
+    "name": "云铝股份",
+    "date": "20260717",
+    "checkpoint": "wt0956",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.71,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0264,
+      "from_open": -0.0264,
+      "from_high": -0.0276,
+      "intraday_range": 0.028
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "87e88c13adb3",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260717",
+    "checkpoint": "wt1022",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.73,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0284,
+      "from_open": 0.0723,
+      "from_high": -0.0012,
+      "intraday_range": 0.0823
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "8f63a1f26d8c",
+    "ticker": "920267.BJ",
+    "name": "鑫汇科",
+    "date": "20260717",
+    "checkpoint": "wt1026",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0363,
+      "from_open": -0.0156,
+      "from_high": -0.0552,
+      "intraday_range": 0.0731
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "905aec9b35c3",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260717",
+    "checkpoint": "wt1032",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.65,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0191,
+      "from_open": -0.0191,
+      "from_high": -0.0452,
+      "intraday_range": 0.0772
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "f1559debc8b5",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260717",
+    "checkpoint": "wt1044",
+    "state": "OPENING_FADE",
+    "confidence": 0.61,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0055,
+      "from_open": -0.0107,
+      "from_high": -0.0321,
+      "intraday_range": 0.0468
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "8d4fa0462cfd",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260717",
+    "checkpoint": "wt1054",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.7,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0225,
+      "from_open": 0.0662,
+      "from_high": -0.04,
+      "intraday_range": 0.1178
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "40470d781590",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260717",
+    "checkpoint": "wt1058",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.6,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0127,
+      "from_open": 0.0074,
+      "from_high": -0.0144,
+      "intraday_range": 0.0468
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "6f7641ae9640",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260717",
+    "checkpoint": "wt1447",
+    "state": "OPENING_FADE",
+    "confidence": 0.88,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0334,
+      "from_open": -0.0384,
+      "from_high": -0.0592,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "42d66113e003",
+    "ticker": "603233.SH",
+    "name": "大参林",
+    "date": "20260717",
+    "checkpoint": "wt1447",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.66,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0374,
+      "from_open": -0.0201,
+      "from_high": -0.0354,
+      "intraday_range": 0.0358
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "f858a62394ca",
+    "ticker": "000807.SZ",
+    "name": "云铝股份",
+    "date": "20260720",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.6,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0131,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "622177f1a045",
+    "ticker": "002463.SZ",
+    "name": "沪电股份",
+    "date": "20260720",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.66,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.02,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "e37fa441b79d",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260720",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.73,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0291,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "60bd4797f233",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.05,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "d3b47eadf680",
+    "ticker": "601600.SH",
+    "name": "中国铝业",
+    "date": "20260720",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.66,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0201,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "d62c495ad875",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "date": "20260720",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0671,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "698538c1d08f",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260720",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.68,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0221,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "7c2699c96072",
+    "ticker": "002463.SZ",
+    "name": "沪电股份",
+    "date": "20260720",
+    "checkpoint": "wt0932",
+    "state": "OPENING_FADE",
+    "confidence": 0.79,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0095,
+      "from_open": -0.0289,
+      "from_high": -0.0373,
+      "intraday_range": 0.0426
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "cb1b15c7ec49",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260720",
+    "checkpoint": "wt0932",
+    "state": "OPENING_FADE",
+    "confidence": 0.7,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0091,
+      "from_open": -0.0195,
+      "from_high": -0.027,
+      "intraday_range": 0.0285
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "a6bff3ffb73f",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260720",
+    "checkpoint": "wt0932",
+    "state": "OPENING_FADE",
+    "confidence": 0.82,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0109,
+      "from_open": -0.0323,
+      "from_high": -0.0552,
+      "intraday_range": 0.0578
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "7db4f86e2028",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "date": "20260720",
+    "checkpoint": "wt0934",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0158,
+      "from_open": 0.02,
+      "from_high": -0.0028,
+      "intraday_range": 0.0241
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "8a956e31db76",
+    "ticker": "601899.SH",
+    "name": "紫金矿业",
+    "date": "20260720",
+    "checkpoint": "wt0934",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0162,
+      "from_open": 0.0162,
+      "from_high": -0.0021,
+      "intraday_range": 0.0208
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "79752b453c43",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260720",
+    "checkpoint": "wt0936",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.66,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0201,
+      "from_open": 0.0206,
+      "from_high": -0.0042,
+      "intraday_range": 0.0422
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "f350fa1f2436",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260720",
+    "checkpoint": "wt0938",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.79,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0367,
+      "from_open": 0.0074,
+      "from_high": -0.0006,
+      "intraday_range": 0.0321
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "d9700e015d1c",
+    "ticker": "000807.SZ",
+    "name": "云铝股份",
+    "date": "20260720",
+    "checkpoint": "wt0940",
+    "state": "OPENING_FADE",
+    "confidence": 0.63,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0,
+      "from_open": -0.013,
+      "from_high": -0.0248,
+      "intraday_range": 0.0295
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "4c782c1127c9",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "date": "20260720",
+    "checkpoint": "wt0940",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.67,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0344,
+      "from_open": -0.0209,
+      "from_high": -0.0356,
+      "intraday_range": 0.0367
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "e81fa5d9bfd5",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260720",
+    "checkpoint": "wt0946",
+    "state": "OPENING_FADE",
+    "confidence": 0.68,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0108,
+      "from_open": -0.0178,
+      "from_high": -0.0257,
+      "intraday_range": 0.0323
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "7c1b9a57f5f3",
+    "ticker": "000807.SZ",
+    "name": "云铝股份",
+    "date": "20260720",
+    "checkpoint": "wt0948",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.66,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0203,
+      "from_open": 0.0071,
+      "from_high": -0.005,
+      "intraday_range": 0.0295
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "1804f17b289a",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260720",
+    "checkpoint": "wt0952",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0544,
+      "from_open": -0.0151,
+      "from_high": -0.049,
+      "intraday_range": 0.0547
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "f7ac34309e44",
+    "ticker": "003001.SZ",
+    "name": "中岩大地",
+    "date": "20260720",
+    "checkpoint": "wt0952",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.73,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0491,
+      "from_open": -0.0465,
+      "from_high": -0.0465,
+      "intraday_range": 0.0511
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "57714ece2e87",
+    "ticker": "003001.SZ",
+    "name": "中岩大地",
+    "date": "20260720",
+    "checkpoint": "wt0954",
+    "state": "OPENING_FADE",
+    "confidence": 0.9,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0516,
+      "from_open": -0.138,
+      "from_high": -0.138,
+      "intraday_range": 0.1524
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "515adb374214",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt0954",
+    "state": "OPENING_FADE",
+    "confidence": 0.61,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0381,
+      "from_open": -0.0114,
+      "from_high": -0.0388,
+      "intraday_range": 0.044
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "c2cd0241a847",
+    "ticker": "300534.SZ",
+    "name": "陇神戎发",
+    "date": "20260720",
+    "checkpoint": "wt0954",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.66,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0199,
+      "from_open": 0.0439,
+      "from_high": -0.0145,
+      "intraday_range": 0.0847
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b9ae60040826",
+    "ticker": "603233.SH",
+    "name": "大参林",
+    "date": "20260720",
+    "checkpoint": "wt0954",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.64,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0172,
+      "from_open": 0.025,
+      "from_high": 0.0,
+      "intraday_range": 0.028
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "fe2cfee9f8cf",
+    "ticker": "688166.SH",
+    "name": "博瑞医药",
+    "date": "20260720",
+    "checkpoint": "wt0954",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.64,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0431,
+      "from_open": 0.0177,
+      "from_high": -0.0016,
+      "intraday_range": 0.0696
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "163476a179f8",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "date": "20260720",
+    "checkpoint": "wt1010",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.61,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0138,
+      "from_open": 0.028,
+      "from_high": -0.0005,
+      "intraday_range": 0.0497
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9e146b578c42",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1010",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.72,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0321,
+      "from_open": -0.017,
+      "from_high": -0.0443,
+      "intraday_range": 0.0488
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "8cbfbc8df925",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1024",
+    "state": "OPENING_FADE",
+    "confidence": 0.79,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0194,
+      "from_open": -0.0291,
+      "from_high": -0.056,
+      "intraday_range": 0.0623
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b4604323b411",
+    "ticker": "300534.SZ",
+    "name": "陇神戎发",
+    "date": "20260720",
+    "checkpoint": "wt1024",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.75,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0708,
+      "from_open": 0.0959,
+      "from_high": -0.0496,
+      "intraday_range": 0.1765
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "6af6619a802e",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1026",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.77,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0211,
+      "from_open": -0.0275,
+      "from_high": -0.0545,
+      "intraday_range": 0.0623
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "1d3439997b44",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1028",
+    "state": "OPENING_FADE",
+    "confidence": 0.8,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0189,
+      "from_open": -0.0296,
+      "from_high": -0.0565,
+      "intraday_range": 0.0623
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "3977f568ff31",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1032",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.77,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.021,
+      "from_open": -0.0276,
+      "from_high": -0.0546,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "e9b8d114d872",
+    "ticker": "300534.SZ",
+    "name": "陇神戎发",
+    "date": "20260720",
+    "checkpoint": "wt1032",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.1196,
+      "from_open": 0.1459,
+      "from_high": -0.0062,
+      "intraday_range": 0.1765
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "8583552573a8",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1034",
+    "state": "OPENING_FADE",
+    "confidence": 0.81,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0176,
+      "from_open": -0.0308,
+      "from_high": -0.0577,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "ead387b4b09b",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1038",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.76,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.023,
+      "from_open": -0.0257,
+      "from_high": -0.0527,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b59ec21e0c0e",
+    "ticker": "600882.SH",
+    "name": "妙可蓝多",
+    "date": "20260720",
+    "checkpoint": "wt1042",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0148,
+      "from_open": 0.0359,
+      "from_high": -0.0005,
+      "intraday_range": 0.0421
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "4bfe931671d6",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1123",
+    "state": "OPENING_FADE",
+    "confidence": 0.61,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0384,
+      "from_open": -0.011,
+      "from_high": -0.0384,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "6d5c01b29732",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1321",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.74,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.028,
+      "from_open": -0.021,
+      "from_high": -0.0481,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "793274c4384e",
+    "ticker": "688166.SH",
+    "name": "博瑞医药",
+    "date": "20260720",
+    "checkpoint": "wt1323",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0746,
+      "from_open": -0.0158,
+      "from_high": -0.0614,
+      "intraday_range": 0.0972
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "752789cb31a3",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "date": "20260720",
+    "checkpoint": "wt1337",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.71,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.053,
+      "from_open": -0.0132,
+      "from_high": -0.0428,
+      "intraday_range": 0.0481
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "bf163d980787",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1339",
+    "state": "OPENING_FADE",
+    "confidence": 0.8,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0187,
+      "from_open": -0.0298,
+      "from_high": -0.0567,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9847962bcd32",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1341",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.74,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0283,
+      "from_open": -0.0207,
+      "from_high": -0.0478,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "6ea52a45a495",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1351",
+    "state": "OPENING_FADE",
+    "confidence": 0.79,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0199,
+      "from_open": -0.0286,
+      "from_high": -0.0556,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "0b992996d24a",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1404",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.77,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0209,
+      "from_open": -0.0277,
+      "from_high": -0.0547,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b43e7dadfde6",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1408",
+    "state": "OPENING_FADE",
+    "confidence": 0.81,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0169,
+      "from_open": -0.0315,
+      "from_high": -0.0584,
+      "intraday_range": 0.0712
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "49ad329afa63",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1446",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.77,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.021,
+      "from_open": -0.0276,
+      "from_high": -0.0546,
+      "intraday_range": 0.092
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "5d8c9267d171",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1448",
+    "state": "OPENING_FADE",
+    "confidence": 0.83,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0152,
+      "from_open": -0.0332,
+      "from_high": -0.06,
+      "intraday_range": 0.092
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "098539cb7ed1",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260720",
+    "checkpoint": "wt1450",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.73,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0309,
+      "from_open": -0.0182,
+      "from_high": -0.0454,
+      "intraday_range": 0.092
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "4916e78c62e0",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "date": "20260720",
+    "checkpoint": "wt1452",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0915,
+      "from_open": 0.0229,
+      "from_high": -0.0077,
+      "intraday_range": 0.0663
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9663ee340613",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260721",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.64,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0178,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b2419b384300",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260721",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0159,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b711cb96ca18",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260721",
+    "checkpoint": "wt0926",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.75,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0308,
+      "from_open": 0.0,
+      "from_high": 0.0,
+      "intraday_range": 0.0
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "f66482e5b0ef",
+    "ticker": "000676.SZ",
+    "name": "智度股份",
+    "date": "20260721",
+    "checkpoint": "wt0930",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.85,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0442,
+      "from_open": 0.0409,
+      "from_high": 0.0,
+      "intraday_range": 0.0442
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9fb08eb82ac1",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260721",
+    "checkpoint": "wt0930",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.63,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0384,
+      "from_open": 0.0163,
+      "from_high": -0.0135,
+      "intraday_range": 0.0286
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "8dd1ce9a2bdb",
+    "ticker": "601899.SH",
+    "name": "紫金矿业",
+    "date": "20260721",
+    "checkpoint": "wt0930",
+    "state": "OPENING_FADE",
+    "confidence": 0.66,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0037,
+      "from_open": -0.0164,
+      "from_high": -0.0164,
+      "intraday_range": 0.0194
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "d0253c3d671a",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260721",
+    "checkpoint": "wt0930",
+    "state": "OPENING_FADE",
+    "confidence": 0.67,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0129,
+      "from_open": -0.0174,
+      "from_high": -0.0207,
+      "intraday_range": 0.0232
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "ff2000864723",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "date": "20260721",
+    "checkpoint": "wt0932",
+    "state": "OPENING_FADE",
+    "confidence": 0.7,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0126,
+      "from_open": -0.02,
+      "from_high": -0.02,
+      "intraday_range": 0.0211
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "a54ce6943df0",
+    "ticker": "603567.SH",
+    "name": "珍宝岛",
+    "date": "20260721",
+    "checkpoint": "wt0932",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.82,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0696,
+      "from_open": -0.0395,
+      "from_high": -0.0446,
+      "intraday_range": 0.0452
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "93d1a371decb",
+    "ticker": "000807.SZ",
+    "name": "云铝股份",
+    "date": "20260721",
+    "checkpoint": "wt0940",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.71,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0365,
+      "from_open": -0.0268,
+      "from_high": -0.0305,
+      "intraday_range": 0.0327
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9a911b2861b7",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260721",
+    "checkpoint": "wt0944",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.65,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0184,
+      "from_open": 0.0763,
+      "from_high": -0.0067,
+      "intraday_range": 0.0791
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "c238ea027986",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260721",
+    "checkpoint": "wt0950",
+    "state": "OPENING_FADE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0056,
+      "from_open": -0.0119,
+      "from_high": -0.0296,
+      "intraday_range": 0.0329
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "f9715a1eff7e",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260721",
+    "checkpoint": "wt1000",
+    "state": "OPENING_FADE",
+    "confidence": 0.67,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.001,
+      "from_open": -0.0167,
+      "from_high": -0.0337,
+      "intraday_range": 0.0352
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "92ecb27c1fe1",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260721",
+    "checkpoint": "wt1017",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.7,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0233,
+      "from_open": 0.0815,
+      "from_high": -0.0406,
+      "intraday_range": 0.1204
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "2734e1dbc45f",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260721",
+    "checkpoint": "wt1023",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.68,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0222,
+      "from_open": 0.0062,
+      "from_high": -0.0112,
+      "intraday_range": 0.049
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "d9bac2007ce5",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260721",
+    "checkpoint": "wt1025",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.67,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0217,
+      "from_open": 0.0039,
+      "from_high": -0.0141,
+      "intraday_range": 0.0631
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "46d3aee07d5b",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260721",
+    "checkpoint": "wt1033",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.77,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0337,
+      "from_open": 0.0028,
+      "from_high": -0.0006,
+      "intraday_range": 0.0869
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b371312e6512",
+    "ticker": "002463.SZ",
+    "name": "沪电股份",
+    "date": "20260721",
+    "checkpoint": "wt1037",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.61,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0138,
+      "from_open": 0.0116,
+      "from_high": -0.0001,
+      "intraday_range": 0.108
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "198c92d92004",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "date": "20260721",
+    "checkpoint": "wt1128",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.65,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0335,
+      "from_open": -0.0192,
+      "from_high": -0.0396,
+      "intraday_range": 0.0428
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "688702c1e653",
+    "ticker": "003001.SZ",
+    "name": "中岩大地",
+    "date": "20260721",
+    "checkpoint": "wt1128",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.84,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0619,
+      "from_open": 0.0423,
+      "from_high": -0.0351,
+      "intraday_range": 0.0722
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "97d14d1002da",
+    "ticker": "601899.SH",
+    "name": "紫金矿业",
+    "date": "20260721",
+    "checkpoint": "wt1402",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.67,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0218,
+      "from_open": 0.0013,
+      "from_high": -0.0066,
+      "intraday_range": 0.0361
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "466a4737dc5d",
+    "ticker": "603567.SH",
+    "name": "珍宝岛",
+    "date": "20260721",
+    "checkpoint": "wt1402",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.67,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0209,
+      "from_open": 0.0539,
+      "from_high": -0.0134,
+      "intraday_range": 0.1148
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "fcb3b622f090",
+    "ticker": "003001.SZ",
+    "name": "中岩大地",
+    "date": "20260721",
+    "checkpoint": "wt1410",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0523,
+      "from_open": 0.1692,
+      "from_high": -0.0149,
+      "intraday_range": 0.1682
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "dadd8fcfbcc2",
+    "ticker": "603567.SH",
+    "name": "珍宝岛",
+    "date": "20260721",
+    "checkpoint": "wt1432",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.7,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.04,
+      "from_open": 0.0736,
+      "from_high": -0.0401,
+      "intraday_range": 0.1635
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "dfd1705fd36b",
+    "ticker": "603567.SH",
+    "name": "珍宝岛",
+    "date": "20260721",
+    "checkpoint": "wt1444",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0678,
+      "from_open": 0.1023,
+      "from_high": -0.0144,
+      "intraday_range": 0.1635
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "02174152aa85",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260721",
+    "checkpoint": "wt1454",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0535,
+      "from_open": 0.1134,
+      "from_high": -0.0123,
+      "intraday_range": 0.1204
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9c39312ef64b",
+    "ticker": "000676.SZ",
+    "name": "智度股份",
+    "date": "20260722",
+    "checkpoint": "wt0930",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.76,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0925,
+      "from_open": -0.0324,
+      "from_high": -0.0427,
+      "intraday_range": 0.0448
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "03dc45a0616c",
+    "ticker": "001395.SZ",
+    "name": "亚联机械",
+    "date": "20260722",
+    "checkpoint": "wt0930",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0554,
+      "from_open": -0.0152,
+      "from_high": -0.0158,
+      "intraday_range": 0.0152
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "8438e50a00e1",
+    "ticker": "003001.SZ",
+    "name": "中岩大地",
+    "date": "20260722",
+    "checkpoint": "wt0932",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.66,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0187,
+      "from_open": 0.0206,
+      "from_high": -0.0392,
+      "intraday_range": 0.0678
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b9debccc63cd",
+    "ticker": "688166.SH",
+    "name": "博瑞医药",
+    "date": "20260722",
+    "checkpoint": "wt0932",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.6,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0125,
+      "from_open": 0.0248,
+      "from_high": 0.0,
+      "intraday_range": 0.0291
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "17081b091ee1",
+    "ticker": "003001.SZ",
+    "name": "中岩大地",
+    "date": "20260722",
+    "checkpoint": "wt0934",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0155,
+      "from_open": 0.0561,
+      "from_high": -0.015,
+      "intraday_range": 0.0775
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "0eef5406c742",
+    "ticker": "603567.SH",
+    "name": "珍宝岛",
+    "date": "20260722",
+    "checkpoint": "wt0934",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.7,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0211,
+      "from_open": 0.0255,
+      "from_high": 0.0,
+      "intraday_range": 0.0405
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "71f4e7f7d335",
+    "ticker": "002594.SZ",
+    "name": "比亚迪",
+    "date": "20260722",
+    "checkpoint": "wt0938",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.62,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0324,
+      "from_open": -0.015,
+      "from_high": -0.0189,
+      "intraday_range": 0.0188
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "4f2e2ff1400e",
+    "ticker": "000676.SZ",
+    "name": "智度股份",
+    "date": "20260722",
+    "checkpoint": "wt0940",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.7,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.039,
+      "from_open": 0.0247,
+      "from_high": 0.0,
+      "intraday_range": 0.0592
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "38f9f9a31539",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "date": "20260722",
+    "checkpoint": "wt0940",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.61,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0138,
+      "from_open": 0.0247,
+      "from_high": -0.0002,
+      "intraday_range": 0.026
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "838172bb30cd",
+    "ticker": "003001.SZ",
+    "name": "中岩大地",
+    "date": "20260722",
+    "checkpoint": "wt0942",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.72,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0123,
+      "from_open": 0.0272,
+      "from_high": -0.043,
+      "intraday_range": 0.0785
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "aca6c79b6372",
+    "ticker": "000807.SZ",
+    "name": "云铝股份",
+    "date": "20260722",
+    "checkpoint": "wt0954",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.65,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0191,
+      "from_open": 0.0227,
+      "from_high": -0.0008,
+      "intraday_range": 0.0346
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "c1682be36fec",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260722",
+    "checkpoint": "wt0954",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.63,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0152,
+      "from_open": 0.0166,
+      "from_high": -0.0374,
+      "intraday_range": 0.0726
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "4fc6f90b1ce8",
+    "ticker": "688166.SH",
+    "name": "博瑞医药",
+    "date": "20260722",
+    "checkpoint": "wt1010",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.71,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.1194,
+      "from_open": 0.133,
+      "from_high": -0.0412,
+      "intraday_range": 0.1841
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "eef897f2eece",
+    "ticker": "603233.SH",
+    "name": "大参林",
+    "date": "20260722",
+    "checkpoint": "wt1012",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0175,
+      "from_open": -0.0159,
+      "from_high": -0.0323,
+      "intraday_range": 0.0333
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "b56fb4a6c186",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260722",
+    "checkpoint": "wt1022",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.64,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0179,
+      "from_open": 0.0508,
+      "from_high": -0.005,
+      "intraday_range": 0.0726
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "08ca3dab3f69",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "date": "20260722",
+    "checkpoint": "wt1041",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.61,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0132,
+      "from_open": 0.0241,
+      "from_high": -0.0005,
+      "intraday_range": 0.0342
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "bcbe31e74e22",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260722",
+    "checkpoint": "wt1045",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.67,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0106,
+      "from_open": 0.0213,
+      "from_high": -0.0329,
+      "intraday_range": 0.0726
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "3783b6877a16",
+    "ticker": "003001.SZ",
+    "name": "中岩大地",
+    "date": "20260722",
+    "checkpoint": "wt1101",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.054,
+      "from_open": -0.0161,
+      "from_high": -0.0833,
+      "intraday_range": 0.0913
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "33e069b381e6",
+    "ticker": "002463.SZ",
+    "name": "沪电股份",
+    "date": "20260722",
+    "checkpoint": "wt1103",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.029,
+      "from_open": -0.0162,
+      "from_high": -0.0398,
+      "intraday_range": 0.0406
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "7a7b9c1c5b2f",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260722",
+    "checkpoint": "wt1119",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.6,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0131,
+      "from_open": 0.0458,
+      "from_high": -0.0098,
+      "intraday_range": 0.0726
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "672cd9ea2e88",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260722",
+    "checkpoint": "wt1353",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.64,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0408,
+      "from_open": -0.0179,
+      "from_high": -0.0428,
+      "intraday_range": 0.0459
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "69f75a6a2d14",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260722",
+    "checkpoint": "wt1357",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.67,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.011,
+      "from_open": 0.021,
+      "from_high": -0.0477,
+      "intraday_range": 0.0881
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9c1b66352fdd",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260722",
+    "checkpoint": "wt1405",
+    "state": "DISTRIBUTION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": -0.0261,
+      "from_open": -0.0165,
+      "from_high": -0.0507,
+      "intraday_range": 0.0529
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
   }
 ]
