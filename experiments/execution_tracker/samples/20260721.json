@@ -1,0 +1,153 @@
+{
+  "schema": "execution_gate_snapshot/v1",
+  "timestamp": "20260721 close (official)",
+  "market_gate": {
+    "state": "RISK_ON",
+    "one_line": "趋势恢复:指数上行+主力净流入 +326亿",
+    "main_flow_total": 326.07,
+    "index": {
+      "sh": {
+        "chg": 1.7935
+      },
+      "sz": {
+        "chg": 4.8056
+      },
+      "cyb": {
+        "chg": 7.0537
+      }
+    }
+  },
+  "sector_single_beta": true,
+  "ticker_gates": [
+    {
+      "ticker": "300502.SZ",
+      "name": "新易盛",
+      "sector": "AI/光模块",
+      "price": 551.77,
+      "change_pct": 8.1902,
+      "main_flow": 14.9937,
+      "super_large": 14.1519,
+      "small": -0.082,
+      "fund_structure": "主力回流",
+      "technical": {
+        "ma20": 541.363,
+        "ma60": 593.0225,
+        "ma120": 513.0555,
+        "atr14": 46.3921,
+        "today_high": 554.4,
+        "today_low": 490.99,
+        "prev_high": 523.96,
+        "prev_low": 481.5,
+        "high_20d": 618.87,
+        "low_20d": 452.96,
+        "support": 490.99,
+        "break_level": 490.99,
+        "reclaim_level": 554.4
+      },
+      "posture": "HOLD_OBSERVE",
+      "relative_strength": false
+    },
+    {
+      "ticker": "300475.SZ",
+      "name": "香农芯创",
+      "sector": "AI/光模块",
+      "price": 176.98,
+      "change_pct": 15.1614,
+      "main_flow": 3.3756,
+      "super_large": 2.0413,
+      "small": -2.0353,
+      "fund_structure": "主力回流",
+      "technical": {
+        "ma20": 249.685,
+        "ma60": 211.071,
+        "ma120": 180.3992,
+        "atr14": 29.6671,
+        "today_high": 177.65,
+        "today_low": 140.1,
+        "prev_high": 183.0,
+        "prev_low": 147.09,
+        "high_20d": 325.82,
+        "low_20d": 140.1,
+        "support": 147.09,
+        "break_level": 147.09,
+        "reclaim_level": 183.0
+      },
+      "posture": "HOLD_OBSERVE",
+      "relative_strength": false
+    },
+    {
+      "ticker": "603629.SH",
+      "name": "利通电子",
+      "sector": "AI/光模块",
+      "price": 107.58,
+      "change_pct": 10.0,
+      "main_flow": 4.6562,
+      "super_large": 4.5267,
+      "small": -2.5128,
+      "fund_structure": "主力回流",
+      "technical": {
+        "ma20": 143.6645,
+        "ma60": 162.3815,
+        "ma120": 111.0563,
+        "atr14": 15.025,
+        "today_high": 107.58,
+        "today_low": 98.86,
+        "prev_high": 99.87,
+        "prev_low": 93.85,
+        "high_20d": 225.85,
+        "low_20d": 90.79,
+        "support": 98.86,
+        "break_level": 98.86,
+        "reclaim_level": 107.58
+      },
+      "posture": "RECLAIM_REVIEW",
+      "relative_strength": false
+    },
+    {
+      "ticker": "300308.SZ",
+      "name": "中际旭创",
+      "sector": "AI/光模块",
+      "price": 1136.55,
+      "change_pct": 13.2022,
+      "main_flow": 30.3816,
+      "super_large": 45.7087,
+      "small": -0.0073,
+      "fund_structure": "主力回流",
+      "technical": {
+        "ma20": 1159.703,
+        "ma60": 1109.4882,
+        "ma120": 862.1037,
+        "atr14": 90.1807,
+        "today_high": 1136.8,
+        "today_low": 988.82,
+        "prev_high": 1057.77,
+        "prev_low": 967.68,
+        "high_20d": 1345.09,
+        "low_20d": 950.55,
+        "support": 988.82,
+        "break_level": 988.82,
+        "reclaim_level": 1136.8
+      },
+      "posture": "HOLD_OBSERVE",
+      "relative_strength": false
+    }
+  ],
+  "portfolio_gate": {
+    "single_beta_exposure": true,
+    "held_sectors": [
+      "AI/光模块"
+    ],
+    "portfolio_posture": "DE_RISK_REVIEW",
+    "note": "组合=单一 beta 暴露,先看组合风险再看个股强弱"
+  },
+  "self_audit": {
+    "rebound_as_reversal": false,
+    "any_price_strong_but_flow_out": false,
+    "high_reflexivity_book": true,
+    "no_buy_sell_instruction": true
+  },
+  "disclaimer": "不是买卖指令；研究信号，human executes。thresholds=[unvalidated intuition]",
+  "official_sample": true,
+  "date_consistency_check": "passed",
+  "data_source": "tushare:moneyflow_dc+daily+index_daily+moneyflow_mkt_dc"
+}
