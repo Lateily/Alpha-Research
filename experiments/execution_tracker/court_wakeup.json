@@ -12,20 +12,11 @@
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
   {
-   "ticker": "603233.SH",
-   "name": "大参林",
-   "thesis": "药房集中度提升;R/R 1.5:1 -> WATCH_NOT_CONVICTION(Junyan verdict 5/15)",
+   "ticker": "300308.SZ",
+   "name": "中际旭创",
+   "thesis": "1.6T能力+订单现金流双支柱;Q2预告窗~0715",
    "reasons": [
-    "W1 价格移动 +19.8%(|x|>=15%)"
-   ],
-   "action": "WAKE_RESCAN(送人审复核,不改posture)"
-  },
-  {
-   "ticker": "688120.SH",
-   "name": "华海清科",
-   "thesis": "CMP国产替代;batch-1决策书",
-   "reasons": [
-    "W1 价格移动 +16.2%(|x|>=15%)"
+    "W1 价格移动 -28.4%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
@@ -34,16 +25,7 @@
    "name": "鼎龙股份",
    "thesis": "CMP抛光垫;batch-1决策书;0710破位后结构受损",
    "reasons": [
-    "W1 价格移动 -20.4%(|x|>=15%)"
-   ],
-   "action": "WAKE_RESCAN(送人审复核,不改posture)"
-  },
-  {
-   "ticker": "600276.SH",
-   "name": "恒瑞医药",
-   "thesis": "创新药license-out;基金持仓thesis-lite",
-   "reasons": [
-    "W1 价格移动 +19.2%(|x|>=15%)"
+    "W1 价格移动 -24.7%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   }
