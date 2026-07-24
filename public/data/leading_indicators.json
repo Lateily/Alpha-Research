@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-07-23T10:38:51.989719+00:00",
+  "generated_at": "2026-07-24T04:19:53.514733+00:00",
   "industry": "ai_infrastructure",
   "composite_score": 59.0,
   "composite_signal": "MODERATE",
   "hyperscaler_basket": {
     "NVDA": {
-      "price": 212.06,
+      "price": 208.76,
       "ath_3mo": 235.47,
-      "drawdown_3mo_pct": -9.9
+      "drawdown_3mo_pct": -11.3
     },
     "MSFT": {
-      "price": 390.34,
+      "price": 381.58,
       "ath_3mo": 460.52,
-      "drawdown_3mo_pct": -15.2
+      "drawdown_3mo_pct": -17.1
     },
     "GOOGL": {
-      "price": 342.09,
+      "price": 317.69,
       "ath_3mo": 402.38,
-      "drawdown_3mo_pct": -15.0
+      "drawdown_3mo_pct": -21.0
     },
-    "_avg_drawdown_pct": 13.4,
+    "_avg_drawdown_pct": 16.5,
     "_window": "3 months (~63 trading days)",
     "_constituents": [
       "NVDA",
@@ -62,18 +62,18 @@
         }
       ],
       "price": {
-        "price": 212.06,
-        "return_3m_pct": 20.9,
+        "price": 208.76,
+        "return_3m_pct": 19.3,
         "ath_3mo": 235.47,
-        "drawdown_3mo_pct": -9.9
+        "drawdown_3mo_pct": -11.3
       },
       "latest_qoq": 19.8,
       "score": 68,
       "signal": "STABLE"
     },
     "hyperscaler_capex": {
-      "combined_capex_latest_bn": 129.8,
-      "combined_capex_qoq_pct": 9.4,
+      "combined_capex_latest_bn": 139.0,
+      "combined_capex_qoq_pct": 9.9,
       "score": 55,
       "components": {
         "MSFT": {
@@ -101,10 +101,10 @@
             }
           ],
           "price": {
-            "price": 390.34,
-            "return_3m_pct": 2.1,
+            "price": 381.58,
+            "return_3m_pct": 2.6,
             "ath_3mo": 460.52,
-            "drawdown_3mo_pct": -15.2
+            "drawdown_3mo_pct": -17.1
           },
           "latest_qoq": 3.3,
           "score": 50,
@@ -113,6 +113,11 @@
         "GOOGL": {
           "name": "Alphabet",
           "quarters": [
+            {
+              "quarter": "2026-06-30",
+              "capex_bn": 44.92,
+              "qoq_pct": 25.9
+            },
             {
               "quarter": "2026-03-31",
               "capex_bn": 35.67,
@@ -127,20 +132,15 @@
               "quarter": "2025-09-30",
               "capex_bn": 23.95,
               "qoq_pct": 6.7
-            },
-            {
-              "quarter": "2025-06-30",
-              "capex_bn": 22.45,
-              "qoq_pct": 30.5
             }
           ],
           "price": {
-            "price": 342.09,
-            "return_3m_pct": 13.3,
+            "price": 317.69,
+            "return_3m_pct": 9.4,
             "ath_3mo": 402.38,
-            "drawdown_3mo_pct": -15.0
+            "drawdown_3mo_pct": -21.0
           },
-          "latest_qoq": 28.1,
+          "latest_qoq": 25.9,
           "score": 78,
           "weight": 0.25
         },
@@ -169,10 +169,10 @@
             }
           ],
           "price": {
-            "price": 627.17,
-            "return_3m_pct": 3.9,
+            "price": 606.1,
+            "return_3m_pct": 2.3,
             "ath_3mo": 681.31,
-            "drawdown_3mo_pct": -7.9
+            "drawdown_3mo_pct": -11.0
           },
           "latest_qoq": -11.2,
           "score": 20,
@@ -203,10 +203,10 @@
             }
           ],
           "price": {
-            "price": 244.85,
-            "return_3m_pct": 16.5,
+            "price": 233.66,
+            "return_3m_pct": 12.7,
             "ath_3mo": 274.99,
-            "drawdown_3mo_pct": -11.0
+            "drawdown_3mo_pct": -15.0
           },
           "latest_qoq": 11.8,
           "score": 65,
@@ -242,17 +242,17 @@
         }
       ],
       "price": {
-        "price": 421.21,
-        "return_3m_pct": 24.7,
+        "price": 415.58,
+        "return_3m_pct": 21.4,
         "ath_3mo": 477.57,
-        "drawdown_3mo_pct": -11.8
+        "drawdown_3mo_pct": -13.0
       },
       "latest_qoq": 12.0,
       "score": 55,
       "signal": "MODERATE"
     },
     "price_momentum": {
-      "basket_return_3m_pct": 8.9,
+      "basket_return_3m_pct": 6.8,
       "score": 50,
       "signal": "NEUTRAL"
     }

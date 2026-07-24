@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-07-23T10:40:32Z",
+  "fetched_at": "2026-07-24T04:21:49Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -21,25 +21,11 @@
       "inst_count": 1,
       "surv_type": "投资者网上集体接待日",
       "description": null
-    },
-    {
-      "ts_code": "300308.SZ",
-      "name": "中际旭创",
-      "surv_date": "20260424",
-      "fund_visitors": "--",
-      "rece_place": "价值在线(https://www.ir-online.cn/)网络互动",
-      "rece_mode": "业绩说明会",
-      "rece_org": "线上参与公司2025年度业绩说明会的投资者",
-      "org_type": "--",
-      "comp_rece": "董事长、总裁 刘圣,董事、副总裁、财务总监 王晓丽,副总裁、董事会秘书 王军,独立董事 战淑萍",
-      "inst_count": 1,
-      "surv_type": "业绩说明会",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 0,
-    "total_90d": 2,
+    "total_90d": 1,
     "unique_inst_30d": null,
     "latest_date": "2026-05-15"
   }

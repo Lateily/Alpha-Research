@@ -1,18 +1,18 @@
 {
   "ticker": "002594.SZ",
-  "verification_run_at": "2026-07-23T10:43:17.556992+00:00",
+  "verification_run_at": "2026-07-24T04:24:58.916671+00:00",
   "thesis_source": "docs/research/factcheck/rerun_2026-05-16/002594SZ_recal.json",
   "thesis_source_commit": "aaa1cc4",
   "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00",
   "direction": "LONG",
   "entry_date": "2026-05-17",
   "entry_price": 96.3,
-  "current_price_at_verification": 92.65,
-  "return_since_entry_pct": -3.79,
+  "current_price_at_verification": 92.45,
+  "return_since_entry_pct": -4.0,
   "current_status": "ACTIVE",
   "outcome_category": "PENDING — position still active",
   "catalyst_window": "2026-08-15 to 2026-08-31",
-  "days_to_catalyst": 23,
+  "days_to_catalyst": 22,
   "rightIf_verification": [
     {
       "index": 0,
