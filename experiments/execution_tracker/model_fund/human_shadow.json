@@ -1,0 +1,25 @@
+[
+ {
+  "date": "20260722",
+  "ticker": "002156.SZ",
+  "name": "通富微电",
+  "side": "buy",
+  "fill_price": 75.873,
+  "fill_price_est": [
+   75.5,
+   76.23
+  ],
+  "shares": 1700,
+  "source": "junyan_realtime_report_intraday",
+  "note": "Junyan 实盘首笔(human-shadow week5);执行价/股数待补报,先以板价区间估;当日收盘 75.45 +8.87% 主力+24.3亿;三分支复核线 76.23/73.2/69.30 已入档(factpack PR #151);0723 Junyan 补报实数 1700股@75.873(市值12.90万);0723收69.82 浮亏-10,290(-7.98%);0723晚 Junyan 确认B路线:69.30硬线守到8月中报,破线无条件执行(竞价<68.4即执行),不加仓不摊平",
+  "no_trade_flag": true,
+  "needs_junyan_fill": false,
+  "position_cost": 128984.1,
+  "risk_plan": {
+   "hard_stop": 69.3,
+   "auction_rule": "<68.4 execute",
+   "review_event": "2026中报(预告下沿16亿)",
+   "no_add": true
+  }
+ }
+]
