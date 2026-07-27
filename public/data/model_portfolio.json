@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-07-27",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-07-27T04:46:09.755707+00:00",
+    "generated_at": "2026-07-27T11:52:35.751212+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -266,7 +266,7 @@
           },
           "key_indicators": {
             "rsi14": 54.0,
-            "macd_hist": 1.3933,
+            "macd_hist": 1.3913,
             "price_vs_ma20": 3.75,
             "price_vs_ma60": -0.22,
             "change_5d": -1.69,
@@ -343,7 +343,7 @@
           },
           "key_indicators": {
             "rsi14": 43.8,
-            "macd_hist": -3.6597,
+            "macd_hist": -3.6255,
             "price_vs_ma20": -12.73,
             "price_vs_ma60": -5.57,
             "change_5d": 6.31,
@@ -377,8 +377,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 44.1,
-            "macd_hist": -23.3482,
+            "rsi14": 44.2,
+            "macd_hist": -23.2353,
             "price_vs_ma20": -6.91,
             "price_vs_ma60": -6.43,
             "change_5d": 6.85,
@@ -412,8 +412,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 56.5,
-            "macd_hist": 0.1089,
+            "rsi14": 56.4,
+            "macd_hist": 0.1111,
             "price_vs_ma20": 3.31,
             "price_vs_ma60": 6.02,
             "change_5d": -0.92,
@@ -486,36 +486,29 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "ma60_bounce",
-        "bias": "bullish",
+        "setup_type": "no_signal",
+        "bias": "neutral",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakout (current vol_ratio 0.79).",
-        "risk_rule": "Setup invalidated on a decisive close below MA20 (287.36); loss of MA60 (255.14) ends it.",
+        "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
+        "risk_rule": "No setup yet — watch MA20 (287.36) / MA60 (255.14) for the first directional signal.",
         "technical": {
           "zone": "NEUTRAL",
-          "entry_zone": true,
+          "entry_zone": false,
           "exit_zone": false,
           "signal_count": {
-            "bullish": 1,
+            "bullish": 0,
             "bearish": 0,
-            "total": 1
+            "total": 0
           },
           "key_indicators": {
-            "rsi14": 48.8,
-            "macd_hist": -11.4531,
+            "rsi14": 48.9,
+            "macd_hist": -11.3178,
             "price_vs_ma20": -8.16,
             "price_vs_ma60": 3.43,
             "change_5d": 9.2,
             "vol_ratio": 0.79
           },
-          "signals": [
-            {
-              "type": "MA60_BOUNCE",
-              "strength": "strong",
-              "bullish": true,
-              "desc": "Price bounced off MA60 (254.0) — major support held"
-            }
-          ]
+          "signals": []
         },
         "as_of": "2026-07-27",
         "validation_status": "unvalidated_pilot",

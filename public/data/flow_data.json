@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-07-27T04:41:43.182843",
+  "fetched_at": "2026-07-27T11:48:26.276573",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
@@ -8,9 +8,9 @@
     "updated": "2026-07-27"
   },
   "southbound": {
-    "latest_net_flow": -15.1819,
-    "5d_cumulative": 29.7772,
-    "20d_cumulative": 746.3124,
+    "latest_net_flow": -15.744,
+    "5d_cumulative": 73.6563,
+    "20d_cumulative": 755.6064,
     "trend": "inflow",
     "updated": "2026-07-27"
   },
@@ -20,6 +20,16 @@
       "name": "深物业A",
       "date": "",
       "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000417",
+      "name": "合百集团",
+      "date": "",
+      "reason": "日跌幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -146,10 +156,40 @@
       "focus": false
     },
     {
+      "code": "000636",
+      "name": "风华高科",
+      "date": "",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
       "code": "000668",
       "name": "荣丰控股",
       "date": "",
       "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000670",
+      "name": "盈方微",
+      "date": "",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000672",
+      "name": "上峰材料",
+      "date": "",
+      "reason": "日跌幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -199,7 +239,27 @@
       "code": "000779",
       "name": "甘咨询",
       "date": "",
+      "reason": "日换手率达到20%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000779",
+      "name": "甘咨询",
+      "date": "",
       "reason": "日跌幅偏离值达到7%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000815",
+      "name": "美利云",
+      "date": "",
+      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -229,7 +289,7 @@
       "code": "000815",
       "name": "美利云",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -239,7 +299,7 @@
       "code": "000815",
       "name": "美利云",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -339,7 +399,7 @@
       "code": "001258",
       "name": "立新能源",
       "date": "",
-      "reason": "严重异常期间日收盘价格涨幅偏离值累计达到100%的证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -349,7 +409,7 @@
       "code": "001258",
       "name": "立新能源",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "严重异常期间日收盘价格涨幅偏离值累计达到100%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -450,66 +510,6 @@
       "name": "豫能控股",
       "date": "",
       "reason": "日跌幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002015",
-      "name": "协鑫能科",
-      "date": "",
-      "reason": "日跌幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002036",
-      "name": "联创电子",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002082",
-      "name": "ST万邦",
-      "date": "",
-      "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002083",
-      "name": "孚日股份",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002083",
-      "name": "孚日股份",
-      "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "002141",
-      "name": "贤丰控股",
-      "date": "",
-      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,

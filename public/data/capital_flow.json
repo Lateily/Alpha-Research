@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-07-27T04:43:04Z",
+  "fetched_at": "2026-07-27T11:49:45Z",
   "trade_date": "20260727",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": 867478937600000.0,
+      "pct_chg": 2.93
+    },
+    {
+      "name": "小米概念",
+      "ts_code": "BK0833.DC",
+      "net_inflow_yuan": 741467742720000.0,
+      "pct_chg": 3.43
+    },
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": 726848757760000.0,
+      "pct_chg": 3.4
+    },
+    {
+      "name": "2026中报扭亏",
+      "ts_code": "BK1750.DC",
+      "net_inflow_yuan": 722654074880000.0,
+      "pct_chg": 3.37
+    },
+    {
+      "name": "安徽板块",
+      "ts_code": "BK0149.DC",
+      "net_inflow_yuan": 721847375360000.0,
+      "pct_chg": 2.85
+    },
+    {
+      "name": "荣耀概念",
+      "ts_code": "BK1177.DC",
+      "net_inflow_yuan": 721469217280000.0,
+      "pct_chg": 3.68
+    },
+    {
+      "name": "阿里概念",
+      "ts_code": "BK0689.DC",
+      "net_inflow_yuan": 719230359040000.0,
+      "pct_chg": 3.11
+    },
+    {
+      "name": "抖音概念(字节概念)",
+      "ts_code": "BK0923.DC",
+      "net_inflow_yuan": 709097277440000.0,
+      "pct_chg": 3.64
+    },
+    {
+      "name": "半导体概念",
+      "ts_code": "BK0917.DC",
+      "net_inflow_yuan": 679770071040000.0,
+      "pct_chg": 3.01
+    },
+    {
+      "name": "国产芯片",
+      "ts_code": "BK0891.DC",
+      "net_inflow_yuan": 663207895040000.0,
+      "pct_chg": 2.74
+    },
+    {
+      "name": "东方财富热股",
+      "ts_code": "BK1637.DC",
+      "net_inflow_yuan": 658533416960000.0,
+      "pct_chg": 2.86
+    },
+    {
+      "name": "存储芯片",
+      "ts_code": "BK1137.DC",
+      "net_inflow_yuan": 650745000960000.0,
+      "pct_chg": 2.85
+    },
+    {
+      "name": "数字芯片设计",
+      "ts_code": "BK1331.DC",
+      "net_inflow_yuan": 645259422720000.0,
+      "pct_chg": 1.49
+    },
+    {
+      "name": "半导体",
+      "ts_code": "BK1036.DC",
+      "net_inflow_yuan": 622666974720000.0,
+      "pct_chg": 2.2
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": 139797790720000.0,
+      "pct_chg": 3.29
+    },
+    {
+      "name": "电池技术",
+      "ts_code": "BK1648.DC",
+      "net_inflow_yuan": 109419266560000.0,
+      "pct_chg": 3.69
+    },
+    {
+      "name": "PCB",
+      "ts_code": "BK0877.DC",
+      "net_inflow_yuan": 102669852160000.0,
+      "pct_chg": 4.74
+    },
+    {
+      "name": "华为概念",
+      "ts_code": "BK0854.DC",
+      "net_inflow_yuan": 102184578560000.0,
+      "pct_chg": 3.52
+    },
+    {
+      "name": "5G概念",
+      "ts_code": "BK0714.DC",
+      "net_inflow_yuan": 95431252480000.0,
+      "pct_chg": 3.87
+    },
+    {
+      "name": "小盘股",
+      "ts_code": "BK1643.DC",
+      "net_inflow_yuan": 87324293120000.0,
+      "pct_chg": 3.01
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "物联网",
+      "ts_code": "BK0554.DC",
+      "net_inflow_yuan": -63324316160000.0,
+      "pct_chg": 2.95
+    },
+    {
+      "name": "科技风格",
+      "ts_code": "BK1713.DC",
+      "net_inflow_yuan": -62481408000000.0,
+      "pct_chg": 2.53
+    },
+    {
+      "name": "消费电子概念",
+      "ts_code": "BK1646.DC",
+      "net_inflow_yuan": -53929825280000.0,
+      "pct_chg": 3.64
+    },
+    {
+      "name": "智能穿戴",
+      "ts_code": "BK0641.DC",
+      "net_inflow_yuan": -53649541120000.0,
+      "pct_chg": 3.56
+    },
+    {
+      "name": "上证50_",
+      "ts_code": "BK0611.DC",
+      "net_inflow_yuan": -50022986240000.0,
+      "pct_chg": 0.08
+    },
+    {
+      "name": "上证180_",
+      "ts_code": "BK0612.DC",
+      "net_inflow_yuan": -47163660800000.0,
+      "pct_chg": 0.77
+    },
+    {
+      "name": "AIPC",
+      "ts_code": "BK1164.DC",
+      "net_inflow_yuan": -45989928960000.0,
+      "pct_chg": 3.12
+    },
+    {
+      "name": "汽车芯片",
+      "ts_code": "BK0969.DC",
+      "net_inflow_yuan": -45820234240000.0,
+      "pct_chg": 2.18
+    },
+    {
+      "name": "央视50_",
+      "ts_code": "BK0610.DC",
+      "net_inflow_yuan": -42528396800000.0,
+      "pct_chg": 1.24
+    },
+    {
+      "name": "AH股",
+      "ts_code": "BK0499.DC",
+      "net_inflow_yuan": -42510845440000.0,
+      "pct_chg": 1.45
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1022,
     "_status": "ok"
   }
 }
