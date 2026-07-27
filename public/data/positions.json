@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-07-24T10:32:41.557472",
+  "as_of": "2026-07-27T04:41:43.567289",
   "base_currency": "CNY",
   "fx_rates": {
     "HKDCNY": 0.9165
@@ -13,17 +13,17 @@
       "currency": "CNY",
       "quantity": 150,
       "avg_cost": 681.36,
-      "current_price": 1046.51,
-      "market_value": 156976.5,
+      "current_price": 1046.49,
+      "market_value": 156973.5,
       "cost_value": 102204.0,
-      "pnl_abs": 54772.5,
+      "pnl_abs": 54769.5,
       "pnl_pct": 53.59,
-      "market_value_cny": 156976.5,
+      "market_value_cny": 156973.5,
       "cost_value_cny": 102204.0,
-      "pnl_abs_cny": 54772.5,
+      "pnl_abs_cny": 54769.5,
       "fx_rate_used": 1.0,
-      "holding_days": 136,
-      "as_of": "2026-07-24",
+      "holding_days": 139,
+      "as_of": "2026-07-27",
       "signal_attribution": {
         "confluence_score": 82,
         "action": "BUY_WATCH",
@@ -58,7 +58,7 @@
       },
       "vp_at_entry": 79,
       "wrongIf_at_entry": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter",
-      "weight_pct": 54.27
+      "weight_pct": 54.26
     },
     {
       "ticker": "6160.HK",
@@ -77,8 +77,8 @@
       "cost_value_cny": 11630.9,
       "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
-      "holding_days": 136,
-      "as_of": "2026-07-24",
+      "holding_days": 139,
+      "as_of": "2026-07-27",
       "signal_attribution": {
         "confluence_score": 68,
         "action": "BUY_WATCH",
@@ -127,8 +127,8 @@
       "cost_value_cny": 69564.55,
       "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
-      "holding_days": 129,
-      "as_of": "2026-07-24",
+      "holding_days": 132,
+      "as_of": "2026-07-27",
       "signal_attribution": {
         "confluence_score": 71,
         "action": "BUY_WATCH",
@@ -182,8 +182,8 @@
       "cost_value_cny": 40027.22,
       "pnl_abs_cny": 0.0,
       "fx_rate_used": 0.9165,
-      "holding_days": 122,
-      "as_of": "2026-07-24",
+      "holding_days": 125,
+      "as_of": "2026-07-27",
       "signal_attribution": {
         "confluence_score": 62,
         "action": "BUY_WATCH",
@@ -223,17 +223,17 @@
       "currency": "CNY",
       "quantity": 120,
       "avg_cost": 96.192,
-      "current_price": 91.89,
-      "market_value": 11026.8,
+      "current_price": 92.32,
+      "market_value": 11078.4,
       "cost_value": 11543.04,
-      "pnl_abs": -516.24,
-      "pnl_pct": -4.47,
-      "market_value_cny": 11026.8,
+      "pnl_abs": -464.64,
+      "pnl_pct": -4.03,
+      "market_value_cny": 11078.4,
       "cost_value_cny": 11543.04,
-      "pnl_abs_cny": -516.24,
+      "pnl_abs_cny": -464.64,
       "fx_rate_used": 1.0,
-      "holding_days": 114,
-      "as_of": "2026-07-24",
+      "holding_days": 117,
+      "as_of": "2026-07-27",
       "signal_attribution": {
         "confluence_score": 55,
         "action": "WATCH",
@@ -258,16 +258,16 @@
       },
       "vp_at_entry": 52,
       "wrongIf_at_entry": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "weight_pct": 3.81
+      "weight_pct": 3.83
     }
   ],
   "summary": {
-    "total_value_cny": 289225.97,
+    "total_value_cny": 289274.57,
     "total_cost_cny": 234969.71,
-    "total_pnl_cny": 54256.26,
-    "total_pnl_pct": 23.09,
-    "total_value": 289225.97,
+    "total_pnl_cny": 54304.86,
+    "total_pnl_pct": 23.11,
+    "total_value": 289274.57,
     "total_cost": 234969.71,
-    "total_pnl": 54256.26
+    "total_pnl": 54304.86
   }
 }

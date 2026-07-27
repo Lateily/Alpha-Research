@@ -1,6 +1,6 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-07-24T10:33:50Z",
+  "fetched_at": "2026-07-27T04:42:57Z",
   "current_tier": 6000,
   "_status": "partial",
   "data": {
@@ -785,22 +785,9 @@
           "pct_chg": 5.1323,
           "vol": 545297.53,
           "amount": 3230871.964
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260427",
-          "open": 57.2,
-          "high": 59.99,
-          "low": 55.28,
-          "close": 56.31,
-          "pre_close": 57.0,
-          "change": -0.69,
-          "pct_chg": -1.2105,
-          "vol": 563683.33,
-          "amount": 3270152.918
         }
       ],
-      "row_count": 61,
+      "row_count": 60,
       "_status": "ok"
     },
     "daily_basic": {
@@ -2004,33 +1991,18 @@
           "free_share": 66883.0286,
           "total_mv": 5612575.1518,
           "circ_mv": 4369862.3501
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260427",
-          "close": 56.31,
-          "turnover_rate": 7.6364,
-          "turnover_rate_f": 8.4279,
-          "volume_ratio": 1.56,
-          "pe": 74.1258,
-          "pe_ttm": 74.1258,
-          "pb": 10.2867,
-          "ps": 14.5866,
-          "ps_ttm": 14.5866,
-          "dv_ratio": 0.1769,
-          "dv_ttm": 0.1769,
-          "total_share": 94806.8222,
-          "float_share": 73815.0519,
-          "free_share": 66883.0286,
-          "total_mv": 5338572.1581,
-          "circ_mv": 4156525.5725
         }
       ],
-      "row_count": 61,
+      "row_count": 60,
       "_status": "ok"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260727",
+          "adj_factor": 12.967
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260724",
@@ -2329,11 +2301,6 @@
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260428",
-          "adj_factor": 12.9517
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260427",
           "adj_factor": 12.9517
         }
       ],

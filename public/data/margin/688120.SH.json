@@ -1,49 +1,10 @@
 {
   "_status": "ok",
   "ticker": "688120.SH",
-  "fetched_at": "2026-07-24T10:36:33Z",
+  "fetched_at": "2026-07-27T04:46:08Z",
   "api_used": "margin_detail",
   "window_days": 30,
   "records": [
-    {
-      "trade_date": "20260624",
-      "ts_code": "688120.SH",
-      "rzye": 1405760878.0,
-      "rqye": 20987267.01,
-      "rzmre": 242493003.0,
-      "rqyl": 86549.0,
-      "rzche": 216763259.0,
-      "rqchl": 4347,
-      "rqmcl": 8487,
-      "rzrqye": 1426748145.01,
-      "name": null
-    },
-    {
-      "trade_date": "20260625",
-      "ts_code": "688120.SH",
-      "rzye": 1340444982.0,
-      "rqye": 23974370.0,
-      "rzmre": 251974510.0,
-      "rqyl": 94948.0,
-      "rzche": 317290406.0,
-      "rqchl": 6477,
-      "rqmcl": 14876,
-      "rzrqye": 1364419352.0,
-      "name": null
-    },
-    {
-      "trade_date": "20260626",
-      "ts_code": "688120.SH",
-      "rzye": 1350047802.0,
-      "rqye": 24002098.0,
-      "rzmre": 272754686.0,
-      "rqyl": 91055.0,
-      "rzche": 263151867.0,
-      "rqchl": 11486,
-      "rqmcl": 7593,
-      "rzrqye": 1374049900.0,
-      "name": null
-    },
     {
       "trade_date": "20260629",
       "ts_code": "688120.SH",
@@ -290,16 +251,29 @@
       "rqmcl": 24445,
       "rzrqye": 1747351584.2,
       "name": null
+    },
+    {
+      "trade_date": "20260724",
+      "ts_code": "688120.SH",
+      "rzye": 1724274254.0,
+      "rqye": 55418472.2,
+      "rzmre": 332630307.0,
+      "rqyl": 209998.0,
+      "rzche": 302124700.0,
+      "rqchl": 4706,
+      "rqmcl": 7460,
+      "rzrqye": 1779692726.2,
+      "name": null
     }
   ],
   "summary": {
-    "total_count": 22,
-    "latest_date": "2026-07-23",
-    "latest_rzye": 1693768648.0,
-    "latest_rqye": 53582936.2,
-    "rzye_change_30d_pct": 20.48767855951103,
-    "rqye_change_30d_pct": 155.31164288551165,
-    "net_leverage_change_30d": -134.8239643260006,
+    "total_count": 20,
+    "latest_date": "2026-07-24",
+    "latest_rzye": 1724274254.0,
+    "latest_rqye": 55418472.2,
+    "rzye_change_30d_pct": 21.14832960123972,
+    "rqye_change_30d_pct": 69.89342413708465,
+    "net_leverage_change_30d": -48.74509453584493,
     "signal_level": "LEVERAGE_BEAR_HIGH"
   }
 }

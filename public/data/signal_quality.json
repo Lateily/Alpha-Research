@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-07-24T10:36:35.477370+00:00",
-  "date": "2026-07-24",
+  "generated_at": "2026-07-27T04:46:10.732411+00:00",
+  "date": "2026-07-27",
   "portfolio_summary": {
     "total_attributed_trades": 5,
     "open_positions": 5,
     "closed_unknown": 0,
     "overall_win_rate": 20.0,
-    "avg_pnl": 9.82,
+    "avg_pnl": 9.91,
     "best_position": 53.59,
-    "worst_position": -4.47
+    "worst_position": -4.03
   },
   "by_signal": [
     {
@@ -44,9 +44,9 @@
       "count": 3,
       "win_count": 1,
       "win_rate": 33.3,
-      "avg_pnl": 16.37,
+      "avg_pnl": 16.52,
       "best_pnl": 53.59,
-      "worst_pnl": -4.47,
+      "worst_pnl": -4.03,
       "avg_weight": 18.0,
       "tickers": [
         "300308.SZ",
@@ -103,9 +103,9 @@
       "count": 3,
       "win_count": 0,
       "win_rate": 0.0,
-      "avg_pnl": -1.49,
+      "avg_pnl": -1.34,
       "best_pnl": 0.0,
-      "worst_pnl": -4.47,
+      "worst_pnl": -4.03,
       "avg_weight": 12.0,
       "tickers": [
         "700.HK",
@@ -118,9 +118,9 @@
       "count": 3,
       "win_count": 0,
       "win_rate": 0.0,
-      "avg_pnl": -1.49,
+      "avg_pnl": -1.34,
       "best_pnl": 0.0,
-      "worst_pnl": -4.47,
+      "worst_pnl": -4.03,
       "avg_weight": 10.0,
       "tickers": [
         "700.HK",
@@ -140,7 +140,7 @@
       "action": "WATCH",
       "count": 1,
       "win_rate": 0.0,
-      "avg_pnl": -4.47
+      "avg_pnl": -4.03
     }
   ],
   "vp_buckets": [
@@ -160,7 +160,7 @@
       "bucket": "VP 50-60",
       "count": 2,
       "win_rate": 0.0,
-      "avg_pnl": -2.23
+      "avg_pnl": -2.02
     }
   ],
   "by_ticker": [
@@ -214,7 +214,7 @@
     },
     {
       "ticker": "002594.SZ",
-      "pnl_pct": -4.47,
+      "pnl_pct": -4.03,
       "vp_at_entry": 52,
       "conf_at_entry": 55,
       "signal_count": 3,
@@ -228,7 +228,7 @@
   "insights": [
     "CVD_FLOOR_FORMED best win rate 50% (1/2 trades, avg P&L +26.8%)",
     "VOLUME_BREAKOUT underperforming: 0% win rate — consider reducing weight in signal_confluence.py",
-    "Portfolio: 20% win rate · avg P&L +9.8% across 5 open positions",
+    "Portfolio: 20% win rate · avg P&L +9.9% across 5 open positions",
     "300308.SZ leads portfolio P&L at +53.6% (VP=79, conf=+82)"
   ]
 }

@@ -11,7 +11,7 @@
       "paper": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/positions.json (read-only)",
       "registered": "/home/runner/work/Alpha-Research/Alpha-Research/public/data/thesis_queue.json"
     },
-    "as_of_paper": "2026-07-24T10:32:41"
+    "as_of_paper": "2026-07-27T04:41:43"
   },
   "books": {
     "A_current_paper": {
@@ -20,7 +20,7 @@
           "ticker": "300308.SZ",
           "name": "中际旭创",
           "side": "LONG",
-          "weight_pct": 54.27,
+          "weight_pct": 54.26,
           "pnl_pct": 53.59
         },
         {
@@ -48,11 +48,11 @@
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "weight_pct": 3.81,
-          "pnl_pct": -4.47
+          "weight_pct": 3.83,
+          "pnl_pct": -4.03
         }
       ],
-      "gross_pct": 99.99,
+      "gross_pct": 100.0,
       "no_trade_flag": true
     },
     "B_thesis_aligned": {
@@ -61,7 +61,7 @@
           "ticker": "002594.SZ",
           "name": "比亚迪",
           "side": "LONG",
-          "paper_weight_pct": 3.81,
+          "paper_weight_pct": 3.83,
           "renorm_weight_pct": 100.0
         }
       ],
@@ -118,7 +118,7 @@
       "name": "比亚迪",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 3.81,
+      "paper_weight_pct": 3.83,
       "in_registered": true,
       "registered_direction": "LONG",
       "registered_role": "directional",
@@ -142,7 +142,7 @@
       "name": "中际旭创",
       "in_paper": true,
       "paper_side": "LONG",
-      "paper_weight_pct": 54.27,
+      "paper_weight_pct": 54.26,
       "in_registered": true,
       "registered_direction": "PASS",
       "registered_role": "observer_control",
@@ -214,9 +214,9 @@
     "registered_not_held": [
       "603233.SH"
     ],
-    "paper_gross_pct": 99.99,
-    "paper_weight_aligned_pct": 3.81,
-    "paper_weight_aligned_share": 0.0381
+    "paper_gross_pct": 100.0,
+    "paper_weight_aligned_pct": 3.83,
+    "paper_weight_aligned_share": 0.0383
   },
   "performance": {
     "status": "PENDING",
