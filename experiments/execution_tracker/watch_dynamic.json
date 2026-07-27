@@ -1,12 +1,6 @@
 {
- "generated_at": "20260717 09:10",
+ "generated_at": "20260722 16:35",
  "watch": [
-  {
-   "ticker": "601899.SH",
-   "name": "紫金矿业",
-   "why": "基金filled",
-   "prio": 1
-  },
   {
    "ticker": "600276.SH",
    "name": "恒瑞医药",
@@ -18,30 +12,6 @@
    "name": "牧原股份",
    "why": "基金filled",
    "prio": 1
-  },
-  {
-   "ticker": "603629.SH",
-   "name": "利通电子",
-   "why": "信号14e4ef",
-   "prio": 2
-  },
-  {
-   "ticker": "002463.SZ",
-   "name": "沪电股份",
-   "why": "信号a2a40a",
-   "prio": 2
-  },
-  {
-   "ticker": "601600.SH",
-   "name": "中国铝业",
-   "why": "信号3b1f93",
-   "prio": 2
-  },
-  {
-   "ticker": "000807.SZ",
-   "name": "云铝股份",
-   "why": "信号adb5a9",
-   "prio": 2
   },
   {
    "ticker": "002594.SZ",
@@ -74,39 +44,45 @@
    "prio": 3
   },
   {
+   "ticker": "002463.SZ",
+   "name": "沪电股份",
+   "why": "在册thesis",
+   "prio": 3
+  },
+  {
    "ticker": "688166.SH",
    "name": "博瑞医药",
    "why": "在册thesis",
    "prio": 3
   },
   {
-   "ticker": "300534.SZ",
-   "name": "陇神戎发",
-   "why": "动量雷达55.0%",
-   "prio": 4
-  },
-  {
-   "ticker": "001395.SZ",
-   "name": "亚联机械",
-   "why": "动量雷达36.4%",
+   "ticker": "001258.SZ",
+   "name": "立新能源",
+   "why": "动量雷达49.0%",
    "prio": 4
   },
   {
    "ticker": "920267.BJ",
    "name": "鑫汇科",
-   "why": "动量雷达34.9%",
+   "why": "动量雷达48.1%",
    "prio": 4
   },
   {
-   "ticker": "600882.SH",
-   "name": "妙可蓝多",
-   "why": "动量雷达34.1%",
+   "ticker": "300968.SZ",
+   "name": "格林精密",
+   "why": "动量雷达41.4%",
    "prio": 4
   },
   {
-   "ticker": "003001.SZ",
-   "name": "中岩大地",
-   "why": "动量雷达31.7%",
+   "ticker": "000676.SZ",
+   "name": "智度股份",
+   "why": "动量雷达35.7%",
+   "prio": 4
+  },
+  {
+   "ticker": "603567.SH",
+   "name": "珍宝岛",
+   "why": "动量雷达32.7%",
    "prio": 4
   }
  ],

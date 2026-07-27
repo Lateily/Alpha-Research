@@ -1,74 +1,114 @@
 [
-  {
-    "date": "20260706",
-    "nav": 1000000.0,
-    "cash": 1000000.0,
-    "n_positions": 0,
-    "daily_return": 0.0,
-    "cum_return": 0.0
-  },
-  {
-    "date": "20260707",
-    "nav": 997192.0,
-    "cash": 847720.0,
-    "n_positions": 1,
-    "daily_return": -0.00281,
-    "cum_return": -0.00281
-  },
-  {
-    "date": "20260708",
-    "nav": 993547.0,
-    "cash": 847720.0,
-    "n_positions": 1,
-    "daily_return": -0.00366,
-    "cum_return": -0.00645
-  },
-  {
-    "date": "20260709",
-    "nav": 997867.0,
-    "cash": 847720.0,
-    "n_positions": 1,
-    "daily_return": 0.00435,
-    "cum_return": -0.00213
-  },
-  {
-    "date": "20260710",
-    "nav": 995845.0,
-    "cash": 706720.0,
-    "n_positions": 2,
-    "daily_return": -0.00203,
-    "cum_return": -0.00416
-  },
-  {
-    "date": "20260713",
-    "nav": 991955.0,
-    "cash": 558140.0,
-    "n_positions": 3,
-    "daily_return": -0.00391,
-    "cum_return": -0.00804
-  },
-  {
-    "date": "20260714",
-    "nav": 996158.0,
-    "cash": 558140.0,
-    "n_positions": 3,
-    "daily_return": 0.00424,
-    "cum_return": -0.00384
-  },
-  {
-    "date": "20260715",
-    "nav": 1008210.0,
-    "cash": 558140.0,
-    "n_positions": 3,
-    "daily_return": 0.0121,
-    "cum_return": 0.00821
-  },
-  {
-    "date": "20260716",
-    "nav": 1010983.0,
-    "cash": 558140.0,
-    "n_positions": 3,
-    "daily_return": 0.00275,
-    "cum_return": 0.01098
-  }
+ {
+  "date": "20260706",
+  "nav": 1000000.0,
+  "cash": 1000000.0,
+  "n_positions": 0,
+  "daily_return": 0.0,
+  "cum_return": 0.0
+ },
+ {
+  "date": "20260707",
+  "nav": 997192.0,
+  "cash": 847720.0,
+  "n_positions": 1,
+  "daily_return": -0.00281,
+  "cum_return": -0.00281
+ },
+ {
+  "date": "20260708",
+  "nav": 993547.0,
+  "cash": 847720.0,
+  "n_positions": 1,
+  "daily_return": -0.00366,
+  "cum_return": -0.00645
+ },
+ {
+  "date": "20260709",
+  "nav": 997867.0,
+  "cash": 847720.0,
+  "n_positions": 1,
+  "daily_return": 0.00435,
+  "cum_return": -0.00213
+ },
+ {
+  "date": "20260710",
+  "nav": 995845.0,
+  "cash": 706720.0,
+  "n_positions": 2,
+  "daily_return": -0.00203,
+  "cum_return": -0.00416
+ },
+ {
+  "date": "20260713",
+  "nav": 991955.0,
+  "cash": 558140.0,
+  "n_positions": 3,
+  "daily_return": -0.00391,
+  "cum_return": -0.00804
+ },
+ {
+  "date": "20260714",
+  "nav": 996158.0,
+  "cash": 558140.0,
+  "n_positions": 3,
+  "daily_return": 0.00424,
+  "cum_return": -0.00384
+ },
+ {
+  "date": "20260715",
+  "nav": 1008210.0,
+  "cash": 558140.0,
+  "n_positions": 3,
+  "daily_return": 0.0121,
+  "cum_return": 0.00821
+ },
+ {
+  "date": "20260716",
+  "nav": 1010983.0,
+  "cash": 558140.0,
+  "n_positions": 3,
+  "daily_return": 0.00275,
+  "cum_return": 0.01098
+ },
+ {
+  "date": "20260717",
+  "nav": 994907.0,
+  "cash": 558140.0,
+  "n_positions": 3,
+  "daily_return": -0.0159,
+  "cum_return": -0.00509
+ },
+ {
+  "date": "20260720",
+  "nav": 1009247.0,
+  "cash": 558140.0,
+  "n_positions": 3,
+  "daily_return": 0.01441,
+  "cum_return": 0.00925
+ },
+ {
+  "date": "20260721",
+  "nav": 1007297.0,
+  "cash": 558140.0,
+  "n_positions": 3,
+  "daily_return": -0.00193,
+  "cum_return": 0.0073
+ },
+ {
+  "date": "20260722",
+  "nav": 1018565.0,
+  "cash": 719140.0,
+  "n_positions": 2,
+  "daily_return": 0.01119,
+  "cum_return": 0.01856
+ },
+ {
+  "date": "20260723",
+  "nav": 1018257.0,
+  "cash": 719140.0,
+  "n_positions": 2,
+  "daily_return": -0.0003,
+  "cum_return": 0.01826
+ }
 ]

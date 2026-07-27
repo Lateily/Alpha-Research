@@ -2366,7 +2366,9 @@
     "no_trade_flag": true,
     "official_sample": false,
     "data_source": "pre_registered:research",
-    "returns": {},
+    "returns": {
+      "note": "0717收90.79跌停(-10.0%),首次收盘<98.5=LH+LL空头结构完全确认(假设的预测路径)。修复三条件至终未同时成立:预告已兑现(Q2预增1172-1368%)但承接日(跌中主力净流入≥3亿)从未出现,98.5失守。0717主力-1.17亿,大单卖小单接。业绩定价倒置最强样本:预增13倍仍跌停破位。判HIT"
+    },
     "entry_close": 108.15,
     "created_by": "Claude",
     "sector": "AI算力/服务器",
@@ -2400,7 +2402,7 @@
     "trigger_condition": "观察项:收盘<98.5=结构死刑确认;承接日出现=修复讨论资格",
     "invalidation": "0717前:收盘守住98.5 且 出现单日跌中主力净流入≥3亿的承接日 且 预告不低于预期——三者同时成立则警示解除",
     "human_status": "not_executed",
-    "outcome_status": "pending"
+    "outcome_status": "hit"
   },
   {
     "signal_id": "8a8ec7d3303c",
@@ -2578,7 +2580,9 @@
     "no_trade_flag": true,
     "official_sample": false,
     "data_source": "pre_registered:research",
-    "returns": {},
+    "returns": {
+      "note": "0717定盘:算力概念5d滚动主力净流-575.4亿(0713-0717仅0714一日+28.0亿,孤日),CPO -638.1亿,AI芯片-170.9亿——全部深负。失效条件(5d仍为正/连续2日净流入+指数上行)未出现。拥挤解体假设判HIT;0717板块单日:新易盛-11.0%/旭创-12.0%/香农-15.5%"
+    },
     "entry_close": null,
     "created_by": "Claude",
     "sector": "算力/半导体",
@@ -2600,7 +2604,7 @@
     "trigger_condition": "无(判分型)",
     "invalidation": "0717收盘时算力概念5日滚动累计主力净流仍为正,或期间连续2日板块级净流入+指数上行",
     "human_status": "not_executed",
-    "outcome_status": "pending",
+    "outcome_status": "hit",
     "provenance": {
       "recovered": true,
       "lost_via": "ops git-reset-hard on ar-live 20260712 23:35 (post-#135 sync)",
@@ -2766,7 +2770,9 @@
     "no_trade_flag": true,
     "official_sample": false,
     "data_source": "pre_registered:research",
-    "returns": {},
+    "returns": {
+      "note": "0717回踩日:收127.8(-6.52%),主力-10.39亿>5亿bar——资金veto触发。价格仍>123(结构未破),但0714 +26.56亿两日内完全反转。双完好结构在RISK_OFF日(-1569亿)不豁免。判invalidated——资金veto优先条款本周4/4全部被行情验证"
+    },
     "entry_close": 137.13,
     "created_by": "Claude",
     "sector": "PCB/AI硬件",
@@ -2794,7 +2800,7 @@
     "trigger_condition": "两票齐+三条件门过;涨停价追入禁止",
     "invalidation": "收盘<123(swing低)或回踩日主力净流出>5亿(华天教训:资金veto优先)",
     "human_status": "not_executed",
-    "outcome_status": "pending"
+    "outcome_status": "invalidated"
   },
   {
     "signal_id": "206e5821c598",
@@ -2926,7 +2932,9 @@
     "no_trade_flag": true,
     "official_sample": false,
     "data_source": "pre_registered:research",
-    "returns": {},
+    "returns": {
+      "note": "0716回踩日:收8.68落在8.60-8.75区间内,但主力-4.18亿>3亿bar——资金veto触发(华天模板第3例)。0717继续-2.77%收8.44(仍>8.40,价格结构未死,但veto优先)。veto再次被后续行情验证。判invalidated"
+    },
     "entry_close": 8.98,
     "created_by": "Claude",
     "sector": "铝",
@@ -2960,7 +2968,7 @@
     "trigger_condition": "三条件门过(regime非逆风+铝streak维持+广度维持)后:回踩8.60-8.75企稳,不追9上方",
     "invalidation": "收盘<8.40(结构失效)或回踩日主力净流出>3亿(资金veto)",
     "human_status": "not_executed",
-    "outcome_status": "pending"
+    "outcome_status": "invalidated"
   },
   {
     "signal_id": "adb5a9d07771",
@@ -2976,7 +2984,9 @@
     "no_trade_flag": true,
     "official_sample": false,
     "data_source": "pre_registered:research",
-    "returns": {},
+    "returns": {
+      "note": "窗口收官:0717打印回踩区(收25.12入24.5-25.2)且当日无否决(-0.13亿<2亿),0721收26.02验证承接,0722创业板-3.4%大跌日仍收25.58(+1.59%,主力+0.05亿)——全程未触23.2失效线、未触资金否决。'回踩承接则延续'成立,判hit;诚实注记:延续幅度温和(区间打印价→收官约+1.8%,峰值26.02),且广度前提折半(同段铝业0716已被veto)。P5尾盘引擎0721曾给REVIEW_CANDIDATE,引擎与判分一致"
+    },
     "entry_close": 26.1,
     "created_by": "Claude",
     "sector": "铝",
@@ -3004,7 +3014,7 @@
     "trigger_condition": "三条件门过后:回踩24.5-25.2企稳,绝不追26上方(premium将过高)",
     "invalidation": "收盘<23.2或回踩日主力净流出>2亿",
     "human_status": "not_executed",
-    "outcome_status": "pending"
+    "outcome_status": "hit"
   },
   {
     "signal_id": "6e88e827bfbf",
@@ -3020,7 +3030,9 @@
     "no_trade_flag": true,
     "official_sample": false,
     "data_source": "pre_registered:research",
-    "returns": {},
+    "returns": {
+      "note": "判分窗0716-0718(0718周六,交易日=0716+0717):油气资源0716 -18.49亿/0717 -6.92亿,油气设服同负——净流入日=0,'≥2日净流入'数学不可达,累计超额为负。实验室先验(油服→油气 lag3,r=0.31,BH过)首次前瞻检验证伪。注册时自带的窄广度警示(油服个股结构全弱)兑现:概念级相关在个股结构弱时不传导。判invalidated——先验降级,回炉负控制"
+    },
     "entry_close": null,
     "created_by": "Claude",
     "sector": "油气开采",
@@ -3054,7 +3066,7 @@
     "trigger_condition": "判分型,无入场;注意:油服个股结构全弱=窄广度警示,先验可能因此失效——失效同样是有价值判分",
     "invalidation": "0718收盘时油气开采3日内净流入日≤1或累计超额为负",
     "human_status": "not_executed",
-    "outcome_status": "pending"
+    "outcome_status": "invalidated"
   },
   {
     "signal_id": "743e172b40c2",
@@ -3268,6 +3280,689 @@
     "reclaim": 1207.98,
     "invalidation": 1160.0,
     "atr14": 81.5493,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "9fcd1474ebce",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260717 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": true,
+    "market_main_flow_total": -1568.77,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -42.5954,
+    "trigger_price": 482.88,
+    "support": 526.21,
+    "reclaim": 558.0,
+    "invalidation": 526.21,
+    "atr14": 46.6436,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "ff40c2980370",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260717 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": true,
+    "market_main_flow_total": -1568.77,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -9.0568,
+    "trigger_price": 174.1,
+    "support": 199.0,
+    "reclaim": 216.99,
+    "invalidation": 199.0,
+    "atr14": 28.2929,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "43aa9bd1ed37",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260717 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": true,
+    "market_main_flow_total": -1568.77,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -1.1698,
+    "trigger_price": 90.79,
+    "support": 100.88,
+    "reclaim": 112.88,
+    "invalidation": 100.88,
+    "atr14": 16.2086,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "f8b7d970a27f",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260717 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": true,
+    "market_main_flow_total": -1568.77,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -32.3254,
+    "trigger_price": 979.46,
+    "support": 1098.0,
+    "reclaim": 1163.0,
+    "invalidation": 1098.0,
+    "atr14": 86.3871,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "e2a57f0dc5bb",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260721 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": true,
+    "market_main_flow_total": 326.07,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 14.9937,
+    "trigger_price": 551.77,
+    "support": 490.99,
+    "reclaim": 554.4,
+    "invalidation": 490.99,
+    "atr14": 46.3921,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "d318886f5515",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260721 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": true,
+    "market_main_flow_total": 326.07,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 3.3756,
+    "trigger_price": 176.98,
+    "support": 147.09,
+    "reclaim": 183.0,
+    "invalidation": 147.09,
+    "atr14": 29.6671,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "1451a2a0b1d1",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260721 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": true,
+    "market_main_flow_total": 326.07,
+    "setup_type": "RECLAIM_REVIEW",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 4.6562,
+    "trigger_price": 107.58,
+    "support": 98.86,
+    "reclaim": 107.58,
+    "invalidation": 98.86,
+    "atr14": 15.025,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "cacc09bffc03",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260721 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": true,
+    "market_main_flow_total": 326.07,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 30.3816,
+    "trigger_price": 1136.55,
+    "support": 988.82,
+    "reclaim": 1136.8,
+    "invalidation": 988.82,
+    "atr14": 90.1807,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "3e59e6558980",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260722 09:18",
+    "line": "execution",
+    "market_state": "RISK_ON_DAY1",
+    "setup_type": "execution_gate",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {
+      "note": "0722定盘:收508.8(-7.79%)<失效线510,且回踩日主力净流出48.1亿=否决线(5亿)的9.6倍——价格失效+资金否决双杀。条款单当日两度挡下接刀(10:32区间触碰-15.9亿、午后加速-45亿),否决条款完整履职。复盘:RISK_ON day1后的回踩单在day2确认失败时的正确结局就是作废;损失=0,判invalidated"
+    },
+    "entry_close": null,
+    "created_by": "Claude",
+    "sector": "光模块",
+    "sector_state": "repair_day1",
+    "hypothesis": "RISK_ON确认第1天+前兆3灯背景下,光模块链内价量最硬的一票(0720唯一价量双硬,0721 +8.19%/主力+15.0亿):回踩不破昨日起点则修复延续,可小仓条款单",
+    "variant_view": "CONSENSUS_RIDE:修复方向随大流,edge在入场位置纪律(确认日禁追涨,只买回踩)",
+    "catalyst": "RISK_ON day-2 确认(0722定盘)+ 光模块 Q2 预告窗",
+    "mechanism_chain": [
+      "AI capex E1(TSMC+67.9%)",
+      "拥挤解体后筹码出清(5d -638亿)",
+      "主力回流首日 0721"
+    ],
+    "evidence": [
+      {
+        "claim": "0721 定盘首个 RISK_ON:指数上行+主力净流入 +326亿",
+        "tier": "E3",
+        "source": "samples/20260721.json",
+        "status": "verified"
+      },
+      {
+        "claim": "0720 前兆层亮3灯(流出衰竭+邻域新钱+龙头背离代理)",
+        "tier": "E3",
+        "source": "lead_precursor.json",
+        "status": "verified"
+      },
+      {
+        "claim": "TSMC 月营收 yoy +67.9% 加速,产业 E1 锚未变",
+        "tier": "E1",
+        "source": "sector_anchors.json",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "0721 新易盛主力 +14.99亿(主力回流),链内五日出清后首日转正",
+    "forecast_claim": "回踩承接后 3 日内不破位并延续",
+    "trigger_condition": "回踩 525-535(0721实体半分位口径)且当日主力净流出不超 5亿;0.75% NAV 级小仓条款,人工复核后才可挂",
+    "invalidation": "收盘 <510(跌回0721起点=修复证伪)或回踩日主力净流出 >5亿(资金veto)",
+    "human_status": "not_executed",
+    "outcome_status": "invalidated"
+  },
+  {
+    "signal_id": "906a0dddb4e5",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260722 09:18",
+    "line": "execution",
+    "market_state": "RISK_ON_DAY1",
+    "setup_type": "execution_gate",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {
+      "note": "0722定盘:收1060.8(-6.66%),盘中1084.8触区但回踩日主力净流出37.6亿=否决线(8亿)的4.7倍——资金否决触发(华天模板)。价格线1004未破但veto优先条款生效。与新易盛同结局:两张条款单都以零损失作废,'开枪但不硬扣扳机'的第一次完整演练。判invalidated"
+    },
+    "entry_close": null,
+    "created_by": "Claude",
+    "sector": "光模块",
+    "sector_state": "repair_day1",
+    "hypothesis": "同链龙头:0721 +13.2%/主力+30.4亿为全场科技最大单票回流;回踩昨日实体半分位承接则延续;半衰期风险由回踩条款+资金veto对冲",
+    "variant_view": "CONSENSUS_RIDE:同新易盛;龙头广度口径(两票同亮=z=4.23先验的广度条件)",
+    "catalyst": "RISK_ON day-2 确认 + Q2 预告窗",
+    "mechanism_chain": [
+      "AI capex E1",
+      "0721 主力+30.4亿回流",
+      "龙头广度2/2"
+    ],
+    "evidence": [
+      {
+        "claim": "0721 定盘首个 RISK_ON:指数上行+主力净流入 +326亿",
+        "tier": "E3",
+        "source": "samples/20260721.json",
+        "status": "verified"
+      },
+      {
+        "claim": "0720 前兆层亮3灯(流出衰竭+邻域新钱+龙头背离代理)",
+        "tier": "E3",
+        "source": "lead_precursor.json",
+        "status": "verified"
+      },
+      {
+        "claim": "TSMC 月营收 yoy +67.9% 加速,产业 E1 锚未变",
+        "tier": "E1",
+        "source": "sector_anchors.json",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "0721 旭创主力 +30.38亿,五日出清后最大回流",
+    "forecast_claim": "回踩承接后 3 日内不破位并延续",
+    "trigger_condition": "回踩 1050-1085(0721实体半分位口径)且当日主力净流出不超 8亿;小仓条款,人工复核后才可挂",
+    "invalidation": "收盘 <1004(跌回0721起点)或回踩日主力净流出 >8亿(资金veto)",
+    "human_status": "not_executed",
+    "outcome_status": "invalidated"
+  },
+  {
+    "signal_id": "cdae6bed5efc",
+    "ticker": "MARKET.A",
+    "name": "RISK_ON确认假设",
+    "timestamp": "20260722 09:18",
+    "line": "rotation",
+    "market_state": "RISK_ON_DAY1",
+    "setup_type": "rotation_hypothesis",
+    "horizon": [
+      "1d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {
+      "note": "0722定盘:上证微涨但全市场主力净流出-196亿——判据『指数上行+主力净流入』资金腿失败,两日确认不成立。0721(+326亿)记孤日,churn半衰期doctrine第7次一致:单日RISK_ON在本轮从未活过第二天。连带教训:0722早盘按『确认日』给的条款单双双被否决保护,阶梯(确认日禁追涨+小仓条款)按设计工作"
+    },
+    "entry_close": null,
+    "created_by": "Claude",
+    "sector": "全市场",
+    "sector_state": "repair_day1",
+    "hypothesis": "0722 定盘再次出现『指数上行+主力净流入』=RISK_ON 两日确认成立;若成立,第3层进攻预备队解锁讨论开启;若不成立,0721 记为孤日(churn 第7次一致)",
+    "variant_view": "判分型,无方向下注;检验半衰期 doctrine 是否首次被两日确认打破",
+    "catalyst": "0722 收盘定盘",
+    "mechanism_chain": [],
+    "evidence": [
+      {
+        "claim": "0721 定盘首个 RISK_ON:指数上行+主力净流入 +326亿",
+        "tier": "E3",
+        "source": "samples/20260721.json",
+        "status": "verified"
+      },
+      {
+        "claim": "0720 前兆层亮3灯(流出衰竭+邻域新钱+龙头背离代理)",
+        "tier": "E3",
+        "source": "lead_precursor.json",
+        "status": "verified"
+      },
+      {
+        "claim": "TSMC 月营收 yoy +67.9% 加速,产业 E1 锚未变",
+        "tier": "E1",
+        "source": "sector_anchors.json",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "0721 全市场主力 +326亿(四日 -3700亿 后首日转正)",
+    "forecast_claim": "两日确认或孤日证伪,二选一今晚落判",
+    "trigger_condition": "判分型,无入场",
+    "invalidation": "0722 定盘指数下行或主力净流出——RISK_ON 确认失败,记孤日",
+    "human_status": "not_executed",
+    "outcome_status": "invalidated"
+  },
+  {
+    "signal_id": "a8167d071616",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260722 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": true,
+    "market_main_flow_total": -195.55,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -48.1101,
+    "trigger_price": 508.8,
+    "support": 506.16,
+    "reclaim": 554.4,
+    "invalidation": 506.16,
+    "atr14": 44.5814,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "2dbdf0291b0c",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260722 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": true,
+    "market_main_flow_total": -195.55,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -1.4056,
+    "trigger_price": 166.6,
+    "support": 166.18,
+    "reclaim": 185.87,
+    "invalidation": 166.18,
+    "atr14": 28.0371,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "5b89fcebb120",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260722 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": true,
+    "market_main_flow_total": -195.55,
+    "setup_type": "RECLAIM_REVIEW",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 3.2097,
+    "trigger_price": 118.34,
+    "support": 112.8,
+    "reclaim": 118.34,
+    "invalidation": 112.8,
+    "atr14": 14.4121,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "1b5664968b2c",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260722 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": true,
+    "market_main_flow_total": -195.55,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -37.5702,
+    "trigger_price": 1060.8,
+    "support": 1060.5,
+    "reclaim": 1138.88,
+    "invalidation": 1060.5,
+    "atr14": 88.9386,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "49f676781b7a",
+    "ticker": "002384.SZ",
+    "name": "东山精密",
+    "timestamp": "20260723 09:38",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "setup_type": "execution_gate",
+    "horizon": [
+      "3d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": false,
+    "data_source": "pre_registered:research",
+    "returns": {
+      "note": "当日全过程:09:35有效触发(219.07区内+主力-0.48亿无否决)→10:30资金追溯否决(-7.71亿>5亿bar)→10:45价格破失效线210→收206.65(-4.99%,主力-23.3亿)。条款双腿全死,判invalidated。教训入库:触发成立≠持续成立,盘中否决翻转需要实时降级机制(哨兵已具备);E1最猛(H1预告+283~296%)也挡不住满估值(PE207)在退潮日的贝塔——E1分层三包的'满'字被当日验证"
+    },
+    "entry_close": null,
+    "created_by": "Claude",
+    "sector": "PCB/FPC",
+    "sector_state": "元件板块领涨",
+    "hypothesis": "0722 factpack 预设条款(PR #151,外部预注册证据):回踩 218-226 承接且当日主力净流出≤5亿 → 小仓条款资格;E1: Q1 归母 11.1亿≈FY25全年80%,H1预告+283~296%;风险: PE_TTM 207 满估值高贝塔",
+    "variant_view": "CONSENSUS_RIDE:AI PCB 超级周期共识内,edge 在入场位置与失效纪律",
+    "catalyst": "8月中报正式报表(预告 29-30亿 落地质量)",
+    "mechanism_chain": [
+      "AI 硬件放量→FPC/PCB 利润弹性",
+      "Q1 GM 19.3% 结构升级证据"
+    ],
+    "evidence": [
+      {
+        "claim": "H1 预告 29-30亿(+283~296%)",
+        "tier": "E1",
+        "source": "tushare:forecast",
+        "status": "verified"
+      },
+      {
+        "claim": "条款区/失效线 0722 晚预设",
+        "tier": "E1",
+        "source": "PR #151 002384 factpack",
+        "status": "verified"
+      },
+      {
+        "claim": "0723 09:35 区内 219.07 且主力-0.48亿(否决线内)",
+        "tier": "E3",
+        "source": "eastmoney realtime",
+        "status": "verified"
+      }
+    ],
+    "flow_fact": "0723 09:35: 219.07 在区间内,主力-0.48亿;元件板块 +2.73%/+3.4亿 领涨",
+    "forecast_claim": "区间承接后 3 日内不破 210 并修复",
+    "trigger_condition": "已于 0723 09:35 触发(区内+无否决);小仓≤0.75% NAV 级别,人工复核决策",
+    "invalidation": "收盘 <210(回吐 0721 全部涨幅)或触发日主力净流出 >5亿(资金veto)",
+    "human_status": "not_executed",
+    "outcome_status": "invalidated"
+  },
+  {
+    "signal_id": "f7f1a3c672b4",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260723 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": true,
+    "market_main_flow_total": -222.8,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -24.0255,
+    "trigger_price": 497.3,
+    "support": 506.16,
+    "reclaim": 551.6,
+    "invalidation": 506.16,
+    "atr14": 43.48,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "585b575aa381",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260723 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": true,
+    "market_main_flow_total": -222.8,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -1.8719,
+    "trigger_price": 163.02,
+    "support": 166.18,
+    "reclaim": 185.87,
+    "invalidation": 166.18,
+    "atr14": 27.2771,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "4400b67f4ba7",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260723 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": true,
+    "market_main_flow_total": -222.8,
+    "setup_type": "WARNING",
+    "fund_structure": "涨着派发",
+    "relative_strength": false,
+    "main_flow": -1.098,
+    "trigger_price": 120.68,
+    "support": 119.33,
+    "reclaim": 130.17,
+    "invalidation": 119.33,
+    "atr14": 14.2271,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily"
+  },
+  {
+    "signal_id": "fceb3f499425",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260723 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": true,
+    "market_main_flow_total": -222.8,
+    "setup_type": "WARNING",
+    "fund_structure": "涨着派发",
+    "relative_strength": false,
+    "main_flow": -3.9688,
+    "trigger_price": 1072.52,
+    "support": 1060.5,
+    "reclaim": 1138.88,
+    "invalidation": 1060.5,
+    "atr14": 87.6521,
     "horizon": [
       "intraday",
       "1d",

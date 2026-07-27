@@ -1,29 +1,17 @@
 {
- "as_of": "20260717",
- "nav_est": 1010983.0,
- "cash_pct": 55.2,
+ "as_of": "20260722",
+ "nav_est": 1018565.0,
+ "cash_pct": 70.6,
  "rows": [
-  {
-   "ticker": "601899.SH",
-   "name": "紫金矿业",
-   "kind": "filled",
-   "pnl_pct": 3.72,
-   "weight_pct": 14.5,
-   "r_mult": 0.53,
-   "stop": 26.2,
-   "stop_dist_pct": -10.43,
-   "ladder": null,
-   "wrong_if": "见reason wrong-if"
-  },
   {
    "ticker": "600276.SH",
    "name": "恒瑞医药",
    "kind": "filled",
-   "pnl_pct": -0.73,
-   "weight_pct": 15.0,
-   "r_mult": -0.1,
+   "pnl_pct": -1.79,
+   "weight_pct": 14.7,
+   "r_mult": -0.24,
    "stop": 52.2,
-   "stop_dist_pct": -6.77,
+   "stop_dist_pct": -5.76,
    "ladder": null,
    "wrong_if": "见reason wrong-if"
   },
@@ -31,11 +19,11 @@
    "ticker": "002714.SZ",
    "name": "牧原股份",
    "kind": "filled",
-   "pnl_pct": 4.6,
-   "weight_pct": 15.4,
-   "r_mult": 0.82,
+   "pnl_pct": 0.87,
+   "weight_pct": 14.7,
+   "r_mult": 0.15,
    "stop": 36.9,
-   "stop_dist_pct": -9.78,
+   "stop_dist_pct": -6.44,
    "ladder": null,
    "wrong_if": "猪价回落+主力连续2日净流出"
   }
