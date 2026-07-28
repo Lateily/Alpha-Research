@@ -1,18 +1,155 @@
 {
-  "_status": "empty",
+  "_status": "ok",
   "ticker": "300308.SZ",
-  "fetched_at": "2026-07-28T04:16:40Z",
+  "fetched_at": "2026-07-28T10:59:03Z",
   "api_used": "top_inst",
   "_attempted_endpoints": [
     "top_inst"
   ],
   "window_days": 30,
-  "appearances": [],
+  "appearances": [
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "中国国际金融股份有限公司上海分公司",
+      "buy": 649804427.3,
+      "buy_rate": 1.26,
+      "sell": 650304621.82,
+      "sell_rate": 1.26,
+      "net_buy": -500194.52,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": -500194.52
+    },
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "国泰海通证券股份有限公司上海松江区中山东路证券营业部",
+      "buy": 664536521.0,
+      "buy_rate": 1.29,
+      "sell": 1916725.0,
+      "sell_rate": 0.0,
+      "net_buy": 662619796.0,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": 662619796.0
+    },
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "机构专用",
+      "buy": 1072150923.39,
+      "buy_rate": 2.08,
+      "sell": 846722701.38,
+      "sell_rate": 1.64,
+      "net_buy": 225428222.01,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": 225428222.01
+    },
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "机构专用",
+      "buy": 860836948.85,
+      "buy_rate": 1.67,
+      "sell": 559785051.56,
+      "sell_rate": 1.08,
+      "net_buy": 301051897.29,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": 301051897.29
+    },
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "机构专用",
+      "buy": 1397892427.38,
+      "buy_rate": 2.71,
+      "sell": 174111728.12,
+      "sell_rate": 0.34,
+      "net_buy": 1223780699.26,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": 1223780699.26
+    },
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "机构专用",
+      "buy": 31914932.28,
+      "buy_rate": 0.06,
+      "sell": 633728032.95,
+      "sell_rate": 1.23,
+      "net_buy": -601813100.67,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": -601813100.67
+    },
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "机构专用",
+      "buy": 1072150923.39,
+      "buy_rate": 2.08,
+      "sell": 846722701.38,
+      "sell_rate": 1.64,
+      "net_buy": 225428222.01,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": 225428222.01
+    },
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "机构专用",
+      "buy": 860836948.85,
+      "buy_rate": 1.67,
+      "sell": 559785051.56,
+      "sell_rate": 1.08,
+      "net_buy": 301051897.29,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": 301051897.29
+    },
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "深股通专用",
+      "buy": 5924681834.39,
+      "buy_rate": 11.48,
+      "sell": 4896350769.46,
+      "sell_rate": 9.49,
+      "net_buy": 1028331064.93,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": 1028331064.93
+    },
+    {
+      "trade_date": "20260728",
+      "ts_code": "300308.SZ",
+      "exalter": "深股通专用",
+      "buy": 5924681834.39,
+      "buy_rate": 11.48,
+      "sell": 4896350769.46,
+      "sell_rate": 9.49,
+      "net_buy": 1028331064.93,
+      "side": "both",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_buy_amount": 1028331064.93
+    }
+  ],
   "summary": {
-    "total_appearances_30d": 0,
-    "unique_seats_30d": 0,
-    "top_buyer_30d": null,
-    "top_seller_30d": null,
-    "latest_date": null
+    "total_appearances_30d": 10,
+    "unique_seats_30d": 4,
+    "top_buyer_30d": {
+      "exalter": "深股通专用",
+      "net_buy_amount": 2056662129.86
+    },
+    "top_seller_30d": {
+      "exalter": "中国国际金融股份有限公司上海分公司",
+      "net_buy_amount": -500194.52
+    },
+    "latest_date": "2026-07-28"
   }
 }

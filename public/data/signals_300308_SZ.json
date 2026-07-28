@@ -4,23 +4,12 @@
   "price": 1076.94,
   "zone": "BEARISH",
   "entry_zone": false,
-  "exit_zone": true,
-  "signals": [
-    {
-      "type": "DEATH_CROSS",
-      "strength": "strong",
-      "date": "20260727",
-      "bullish": false,
-      "description": {
-        "e": "MA20 (1117.1) crossed below MA60 (1122.7) — bearish trend shift",
-        "z": "MA20(1117.1)下穿MA60(1122.7)死叉看跌"
-      }
-    }
-  ],
+  "exit_zone": false,
+  "signals": [],
   "signal_count": {
     "bullish": 0,
-    "bearish": 1,
-    "total": 1
+    "bearish": 0,
+    "total": 0
   },
   "indicators": {
     "ma5": 1078.66,
@@ -34,9 +23,9 @@
     "change_1d": 2.91,
     "change_5d": 7.26,
     "change_20d": -11.73,
-    "macd_dif": -29.11,
-    "macd_dea": -20.6174,
-    "macd_hist": -16.9851,
+    "macd_dif": -29.4365,
+    "macd_dea": -21.1024,
+    "macd_hist": -16.668,
     "bb_upper": 1253.85,
     "bb_mid": 1117.07,
     "bb_lower": 980.29,

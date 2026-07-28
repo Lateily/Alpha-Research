@@ -1,12 +1,194 @@
 {
-  "fetched_at": "2026-07-28T04:16:01Z",
+  "fetched_at": "2026-07-28T10:58:17Z",
   "trade_date": "20260728",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [],
-  "cold_industries": [],
+  "hot_industries": [
+    {
+      "name": "跨境支付",
+      "ts_code": "BK1071.DC",
+      "net_inflow_yuan": 24387901440000.0,
+      "pct_chg": 2.66
+    },
+    {
+      "name": "银行",
+      "ts_code": "BK1283.DC",
+      "net_inflow_yuan": 15271270400000.0,
+      "pct_chg": 1.04
+    },
+    {
+      "name": "银行Ⅱ",
+      "ts_code": "BK0475.DC",
+      "net_inflow_yuan": 15271270400000.0,
+      "pct_chg": 1.04
+    },
+    {
+      "name": "红利破净股",
+      "ts_code": "BK1636.DC",
+      "net_inflow_yuan": 12785495040000.0,
+      "pct_chg": 0.41
+    },
+    {
+      "name": "国有大型银行Ⅲ",
+      "ts_code": "BK1611.DC",
+      "net_inflow_yuan": 12007399200000.0,
+      "pct_chg": 2.44
+    },
+    {
+      "name": "红利股",
+      "ts_code": "BK1641.DC",
+      "net_inflow_yuan": 10701977600000.0,
+      "pct_chg": 0.24
+    },
+    {
+      "name": "AI制药（医疗）",
+      "ts_code": "BK1170.DC",
+      "net_inflow_yuan": 9507589280000.0,
+      "pct_chg": 0.09
+    },
+    {
+      "name": "白酒Ⅲ",
+      "ts_code": "BK1575.DC",
+      "net_inflow_yuan": 7696350560000.0,
+      "pct_chg": 3.0
+    },
+    {
+      "name": "白酒Ⅱ",
+      "ts_code": "BK1277.DC",
+      "net_inflow_yuan": 7696350560000.0,
+      "pct_chg": 3.0
+    },
+    {
+      "name": "酿酒概念",
+      "ts_code": "BK0477.DC",
+      "net_inflow_yuan": 7638383520000.0,
+      "pct_chg": 2.1
+    },
+    {
+      "name": "白酒",
+      "ts_code": "BK0896.DC",
+      "net_inflow_yuan": 7065757600000.0,
+      "pct_chg": 1.47
+    },
+    {
+      "name": "食品饮料",
+      "ts_code": "BK0438.DC",
+      "net_inflow_yuan": 6837604480000.0,
+      "pct_chg": 2.2
+    },
+    {
+      "name": "股份制银行Ⅲ",
+      "ts_code": "BK1610.DC",
+      "net_inflow_yuan": 5925465120000.0,
+      "pct_chg": 1.02
+    },
+    {
+      "name": "味蕾经济",
+      "ts_code": "BK1653.DC",
+      "net_inflow_yuan": 5453774720000.0,
+      "pct_chg": 1.77
+    },
+    {
+      "name": "汽车整车",
+      "ts_code": "BK1029.DC",
+      "net_inflow_yuan": 5319146720000.0,
+      "pct_chg": 1.49
+    },
+    {
+      "name": "破净股",
+      "ts_code": "BK1112.DC",
+      "net_inflow_yuan": 5140083200000.0,
+      "pct_chg": 0.52
+    },
+    {
+      "name": "AI语料",
+      "ts_code": "BK1172.DC",
+      "net_inflow_yuan": 5019235840000.0,
+      "pct_chg": 1.5
+    },
+    {
+      "name": "首发经济",
+      "ts_code": "BK1186.DC",
+      "net_inflow_yuan": 4769083360000.0,
+      "pct_chg": 1.18
+    },
+    {
+      "name": "超级品牌",
+      "ts_code": "BK0811.DC",
+      "net_inflow_yuan": 4297551040000.0,
+      "pct_chg": 1.43
+    },
+    {
+      "name": "超跌股",
+      "ts_code": "BK1671.DC",
+      "net_inflow_yuan": 4001319360000.0,
+      "pct_chg": 1.33
+    }
+  ],
+  "cold_industries": [
+    {
+      "name": "融资融券",
+      "ts_code": "BK0596.DC",
+      "net_inflow_yuan": -1056412385280000.0,
+      "pct_chg": -1.15
+    },
+    {
+      "name": "MSCI中国",
+      "ts_code": "BK0821.DC",
+      "net_inflow_yuan": -811852922880000.0,
+      "pct_chg": -1.94
+    },
+    {
+      "name": "富时罗素",
+      "ts_code": "BK0867.DC",
+      "net_inflow_yuan": -724163543040000.0,
+      "pct_chg": -0.65
+    },
+    {
+      "name": "大盘股",
+      "ts_code": "BK1663.DC",
+      "net_inflow_yuan": -688035143680000.0,
+      "pct_chg": -2.29
+    },
+    {
+      "name": "科技风格",
+      "ts_code": "BK1713.DC",
+      "net_inflow_yuan": -646805544960000.0,
+      "pct_chg": -7.2
+    },
+    {
+      "name": "深股通",
+      "ts_code": "BK0804.DC",
+      "net_inflow_yuan": -636808396800000.0,
+      "pct_chg": -1.19
+    },
+    {
+      "name": "2026中报预增",
+      "ts_code": "BK1749.DC",
+      "net_inflow_yuan": -585314959360000.0,
+      "pct_chg": -2.35
+    },
+    {
+      "name": "深成500",
+      "ts_code": "BK0568.DC",
+      "net_inflow_yuan": -576577331200000.0,
+      "pct_chg": -2.04
+    },
+    {
+      "name": "电子",
+      "ts_code": "BK1201.DC",
+      "net_inflow_yuan": -559413575680000.0,
+      "pct_chg": -4.23
+    },
+    {
+      "name": "HS300_",
+      "ts_code": "BK0500.DC",
+      "net_inflow_yuan": -542329733120000.0,
+      "pct_chg": -1.31
+    }
+  ],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -23,7 +205,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 0,
+    "row_count": 1022,
     "_status": "ok"
   }
 }
