@@ -138,3 +138,21 @@ git push
 ---
 
 *This file is maintained by Claude. Last updated: 2026-04-25*
+
+---
+
+## Collaborator Red Lines (团队协作红线,2026-07-28 起,适用于所有成员的所有 AI 会话)
+
+> 本节对 Codex/Claude/任何 AI 结对会话自动生效。违反任何一条 = PR 直接拒。
+
+1. **永不直推 main** — 一切改动走 `分支 → PR → review → Junyan 口令合并`(main 已开启强制保护);
+2. **禁止 `git add .`** — 只添加当前任务明确涉及的文件;
+3. **秘钥零容忍** — 任何 API key/token/密码不进代码不进 commit;一律环境变量;开发用自己的 key,生产 key 只在 GitHub Actions Secrets;
+4. **前端只读契约** — `web/` 只读 `public/data/` 契约文件,永不直连外部 API、永不写数据;
+5. **不运行账本引擎** — `experiments/execution_tracker/` 下脚本只在项目所有者机器运行;成员改代码,不产数据;
+6. **AI 产出三标签** — 任何 LLM 产出入库必须带 `model + prompt_version + E级` 标签;
+7. **不出买卖指令** — 页面与文档永不出现"应该买/卖";输出带"不是买卖指令;研究信号,human executes.";
+8. **看不懂的代码不合并** — 先让 AI 解释,再让 AI 写;PR 描述必须逐条自查验收标准。
+
+分工:Junyan(研究与决策)· Xuhang(前后端载体)· Tianrui(AI 工程/Agent 体系)· Claude(嵌入式架构与代码审核)。
+手册:`docs/team/PLATFORM_BUILD_GUIDE_v1.md`。
