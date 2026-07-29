@@ -2,6 +2,22 @@
 
 This is the contract layer for real-model Agent Jury Harness work.
 
+## Parking Status
+
+Status: PARKED. Do not merge yet.
+
+This work is useful future infrastructure, but it must wait behind the current
+AI roadmap order:
+
+1. PR #163 Kimi K0 adapter is merged.
+2. K1 20-question evaluation set is completed.
+3. Junyan approves the Agent Jury methodology, especially E-grade labeling,
+   anonymous-review rules, anchoring controls, and synthesis boundaries.
+
+Until those conditions are met, every synthesis packet described here is an
+evaluation artifact only. It is not a research conclusion and not a production
+answer.
+
 The key design choice is simple: every model must answer the full task first,
 and only then review anonymous answers. The harness must not hard-code that one
 model is always best at one role.
@@ -36,10 +52,10 @@ model is always best at one role.
      risks.
    - High risk blocks normal final output until human review.
 
-5. Final synthesis
-   - The synthesizer selects the strongest parts by rubric.
+5. Candidate synthesis
+   - The synthesizer selects candidate strongest parts by rubric.
    - It preserves disagreements and open questions.
-   - It returns `agent-jury.synthesis.v1`.
+   - It returns `agent-jury.synthesis.v1` as an evaluation artifact.
 
 ## Safety
 
@@ -55,7 +71,7 @@ Without contracts, each model will return a different shape and the harness will
 become a pile of special cases. These schemas and prompts make real Kimi, Claude,
 and Codex outputs comparable, scoreable, and auditable.
 
-## Next Implementation Step
+## Deferred Implementation Step
 
 Wire Kimi K3 into the independent-answer phase first:
 
@@ -64,3 +80,5 @@ Kimi real answer + two mock answers + mock reviews + safety audit + deterministi
 ```
 
 After that works, add Claude as another real jury member.
+
+This step is deferred until the parking conditions above are satisfied.
