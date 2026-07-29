@@ -2,13 +2,30 @@
 
 Agent Jury Lab is a no-API sandbox for Tianrui's multi-agent idea.
 
+## Parking Status
+
+Status: PARKED. Do not merge yet.
+
+This lab is useful future infrastructure, but it is parked behind the current AI
+roadmap order:
+
+1. PR #163 Kimi K0 adapter is merged.
+2. K1 20-question evaluation set is completed.
+3. Junyan approves the Agent Jury methodology, especially E-grade labeling,
+   anonymous-review rules, anchoring controls, and candidate-synthesis
+   boundaries.
+
+Until those conditions are met, this lab is only an experiment. It is not a
+production research workflow and its candidate synthesis is not a research
+conclusion.
+
 It proves the workflow before real Claude, Kimi, or Codex adapters are wired in:
 
 1. every agent answers the full question independently
 2. answers are anonymized as Answer A, Answer B, Answer C
 3. every agent reviews every anonymous answer across the same rubrics
 4. the harness extracts the highest-scoring part for each rubric
-5. the final synthesis combines the strongest parts and preserves concerns
+5. the candidate synthesis combines the strongest parts and preserves concerns
 
 This avoids hard-coding that one model is always best at one kind of task.
 
@@ -66,10 +83,11 @@ The process view shows four phases:
 - `PHASE 1`: independent answers
 - `PHASE 2`: anonymous cross-review scores
 - `PHASE 3`: best parts by rubric
-- `PHASE 4`: final synthesis
+- `PHASE 4`: candidate synthesis
 
 The important idea is not "which agent won." The important idea is which part of
-which anonymous answer performed best under each scoring dimension.
+which anonymous answer performed best under each scoring dimension. The output is
+an evaluation artifact, not a research conclusion.
 
 ## Safety Boundary
 

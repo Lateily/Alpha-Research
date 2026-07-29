@@ -1,7 +1,7 @@
 """Agent Jury Lab: a no-API sandbox for multi-agent review flow.
 
 The lab demonstrates the target logic before real model adapters are wired in:
-independent answers, anonymous cross-review, best-part extraction, and final
+independent answers, anonymous cross-review, best-part extraction, and candidate
 synthesis. It never produces trading instructions.
 """
 
@@ -116,7 +116,7 @@ def run_jury(spec: JurySpec) -> dict[str, Any]:
         "phase_1_independent_answers": answers,
         "phase_2_anonymous_reviews": reviews,
         "phase_3_best_parts": best_parts,
-        "phase_4_final_synthesis": synthesize(spec, best_parts, reviews),
+        "phase_4_candidate_synthesis": synthesize(spec, best_parts, reviews),
         "safety_flags": [
             "external_content_is_untrusted_input",
             "no_trading_instruction",
@@ -316,9 +316,9 @@ def synthesize(
 ) -> dict[str, Any]:
     return {
         "summary": (
-            f"The jury reviewed '{spec.question}' by combining the strongest "
+            f"The jury experiment reviewed '{spec.question}' by combining candidate strongest "
             "evidence, logic, safety, usability, and structure sections across "
-            "anonymous answers."
+            "anonymous answers. This is an evaluation artifact, not a research conclusion."
         ),
         "selected_parts": best_parts,
         "disagreements": collect_disagreements(reviews),
@@ -365,8 +365,8 @@ def print_process(result: dict[str, Any]) -> None:
         print(f"  {part['selected_text']}")
     print()
 
-    print("PHASE 4 - Final synthesis")
-    print(result["phase_4_final_synthesis"]["summary"])
+    print("PHASE 4 - Candidate synthesis")
+    print(result["phase_4_candidate_synthesis"]["summary"])
     print("Safety flags: " + ", ".join(result["safety_flags"]))
     print(f"Cost: CNY {result['cost_cny']}")
 
