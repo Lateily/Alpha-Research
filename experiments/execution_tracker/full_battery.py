@@ -78,8 +78,10 @@ def battery(pro, tk, today):
             D["消息面"] = {"近30日公告数": int(len(an)),
                            "最新3条": [str(t)[:40] for t in an[col].head(3)],
                            "note": "公告层;实时快讯层待 M3 宏观面板上线"}
+        elif an is None:
+            D["消息面"] = {"status": "DATA_BLOCKED", "err": "公告接口不可用/无权限——不伪装为0条"}
         else:
-            D["消息面"] = {"近30日公告数": 0, "note": "无公告或接口无权限;快讯层待 M3"}
+            D["消息面"] = {"近30日公告数": 0, "note": "接口可用且确认无公告;快讯层待 M3"}
     except Exception as e:
         D["消息面"] = {"status": "NOT_RUN", "err": str(e)[:80]}
     # ── 6 估值 ──

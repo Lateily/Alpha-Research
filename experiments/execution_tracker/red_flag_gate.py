@@ -23,10 +23,12 @@ NEG_TYPES = {"首亏", "预亏", "预减", "略减", "续亏"}
 def check_ticker(pro, ts_code, today):
     out = {"ts_code": ts_code, "verdict": "PASS", "reasons": [],
            "latest_e1_date": None, "checked_at": today}
+    evidence_seen = 0
     try:
         fc = pro.forecast(ts_code=ts_code, start_date="20250101", end_date=today,
                           fields="ann_date,end_date,type,net_profit_min,net_profit_max")
         if fc is not None and len(fc):
+            evidence_seen += 1
             fc = fc.sort_values("ann_date")
             last = fc.iloc[-1]
             out["latest_e1_date"] = str(last["ann_date"])
@@ -42,6 +44,7 @@ def check_ticker(pro, ts_code, today):
         ex = pro.express(ts_code=ts_code, start_date="20250101", end_date=today,
                          fields="ann_date,end_date,yoy_net_profit")
         if ex is not None and len(ex):
+            evidence_seen += 1
             ex = ex.sort_values("ann_date"); last = ex.iloc[-1]
             out["latest_e1_date"] = max(out["latest_e1_date"] or "0", str(last["ann_date"]))
             y = last.get("yoy_net_profit")
@@ -55,6 +58,7 @@ def check_ticker(pro, ts_code, today):
                          fields="end_date,report_type,n_income_attr_p")
         inc = inc[inc.report_type == "1"].drop_duplicates("end_date").sort_values("end_date")
         if len(inc) >= 3:
+            evidence_seen += 1
             cum = list(inc["n_income_attr_p"])[-3:]
             q_last = cum[-1] - cum[-2] if str(inc.end_date.iloc[-1])[4:6] != "03" else cum[-1]
             q_prev = cum[-2] - cum[-3] if str(inc.end_date.iloc[-2])[4:6] != "03" else cum[-2]
@@ -65,6 +69,10 @@ def check_ticker(pro, ts_code, today):
     except Exception as e:
         if out["verdict"] == "PASS":
             out["verdict"] = "DATA_BLOCKED"; out["reasons"].append(f"income:{e}")
+    # 缺数据≠通过:三条证据线一条都没看到,不许 PASS(2026-07-29 审查修正)
+    if out["verdict"] == "PASS" and evidence_seen == 0:
+        out["verdict"] = "DATA_BLOCKED"
+        out["reasons"].append("零证据可查(无预告/无快报/季度不足)——缺数据不等于通过")
     return out
 
 

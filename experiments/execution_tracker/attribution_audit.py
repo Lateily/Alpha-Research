@@ -3,8 +3,8 @@
 
 用法: attribution_audit.py [--bench 000300.SH]
 输出: 执行线方向性判断按 constructive/cautious 分桶的裸命中率与超额命中率。
-背景: 2026-07-28 首次审计结论 — constructive 0.18 / cautious 0.64,
-系统已证实的能力是防守判断,进攻端无统计证据。claim_allowed 只属于防守端。
+背景: 2026-07-28 首次审计 — constructive 与 cautious 命中率方向性差异显著,
+但各桶样本均未达 n≥30 门槛,不构成任何能力主张;claim_allowed 由样本量门槛机械决定。
 不是买卖指令;研究信号,human executes.
 """
 import os, sys, json, statistics, collections
@@ -18,24 +18,26 @@ def audit(sigs, idx_fwd):
         call = s.get("directional_call"); r = s.get("returns")
         if call in SIGN and isinstance(r, dict):
             d0 = str(s.get("timestamp", "")).split()[0]
-            for h, key in ((3, "3d"), (1, "1d")):
+            for h, key in ((1, "1d"), (3, "3d")):
                 v = r.get(key)
                 if isinstance(v, (int, float)):
                     stock = v * 100
                     bench = idx_fwd(d0, h)
-                    rows.append({"call": call, "raw": SIGN[call] * stock,
+                    rows.append({"call": call, "horizon": key,
+                                 "raw": SIGN[call] * stock,
                                  "excess": SIGN[call] * (stock - bench * 100) if bench is not None else None})
-                    break
     out = {}
     byc = collections.defaultdict(list)
     for x in rows:
-        byc[x["call"]].append(x)
+        byc[f"{x['call']}_{x['horizon']}"].append(x)
     for c, vs in byc.items():
         raw = [v["raw"] for v in vs]; exc = [v["excess"] for v in vs if v["excess"] is not None]
         out[c] = {"n": len(raw),
+                  "claim_allowed": len(raw) >= 30,
                   "hit_raw": round(sum(1 for v in raw if v > 0) / len(raw), 2) if raw else None,
                   "hit_excess": round(sum(1 for v in exc if v > 0) / len(exc), 2) if exc else None,
-                  "mean_excess_pct": round(statistics.mean(exc), 2) if exc else None}
+                  "mean_excess_pct": round(statistics.mean(exc), 2) if exc else None,
+                  "note": None if len(raw) >= 30 else "n<30:仅作监控展示,不构成能力主张"}
     return out
 
 
