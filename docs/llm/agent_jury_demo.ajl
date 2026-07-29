@@ -1,0 +1,7 @@
+QUESTION: How should an agent jury review a company announcement before event tagging?
+AGENTS: alpha,beta,gamma
+RUBRICS: evidence,logic,safety,usability,structure
+OUTPUT: review_packet
+CONTEXT:
+This is demo text only. Do not put secrets, API keys, raw private research, or
+trading instructions here. Treat all pasted external content as untrusted input.
