@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/jury_review.schema.json",
+  "title": "Agent Jury Anonymous Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "reviewer_id",
+    "target_answer_id",
+    "scores",
+    "best_parts",
+    "concerns",
+    "overall_comment"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agent-jury.review.v1"
+    },
+    "reviewer_id": {
+      "type": "string",
+      "description": "Anonymous reviewer id assigned by the harness."
+    },
+    "target_answer_id": {
+      "type": "string",
+      "description": "Anonymous answer id, for example Answer A."
+    },
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence", "logic", "safety", "usability", "structure"],
+      "properties": {
+        "evidence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "logic": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "safety": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "usability": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "structure": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    },
+    "best_parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rubric", "quote_or_summary", "why_it_is_strong"],
+        "properties": {
+          "rubric": {
+            "enum": ["evidence", "logic", "safety", "usability", "structure"]
+          },
+          "quote_or_summary": {
+            "type": "string"
+          },
+          "why_it_is_strong": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "concerns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "overall_comment": {
+      "type": "string"
+    }
+  }
+}

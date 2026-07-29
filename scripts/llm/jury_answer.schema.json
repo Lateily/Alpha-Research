@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/jury_answer.schema.json",
+  "title": "Agent Jury Independent Answer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "answer_id",
+    "task",
+    "summary",
+    "evidence",
+    "logic",
+    "safety",
+    "usability",
+    "structure",
+    "confidence",
+    "open_questions",
+    "non_decision_notice"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agent-jury.answer.v1"
+    },
+    "answer_id": {
+      "type": "string",
+      "description": "Anonymous answer id assigned by the harness, for example Answer A."
+    },
+    "task": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim", "source_label", "confidence"],
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "source_label": {
+            "type": "string",
+            "description": "Short source label, not raw secret content."
+          },
+          "confidence": {
+            "enum": ["low", "medium", "high"]
+          },
+          "gap": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "logic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reasoning", "assumptions", "falsifiable_checks"],
+      "properties": {
+        "reasoning": {
+          "type": "string"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "falsifiable_checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["flags", "prompt_injection_risk", "decision_boundary"],
+      "properties": {
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "prompt_injection_risk": {
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "decision_boundary": {
+          "type": "string"
+        }
+      }
+    },
+    "usability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tags", "next_human_action"],
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "next_human_action": {
+          "type": "string"
+        }
+      }
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_packet", "json_ready"],
+      "properties": {
+        "target_packet": {
+          "type": "string"
+        },
+        "json_ready": {
+          "type": "boolean"
+        },
+        "missing_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "confidence": {
+      "enum": ["low", "medium", "high"]
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "non_decision_notice": {
+      "const": "This is evidence processing only, not investment advice or a trading instruction."
+    }
+  }
+}
