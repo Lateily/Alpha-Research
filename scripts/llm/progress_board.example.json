@@ -1,0 +1,29 @@
+[
+  {
+    "schema": "ai-progress.v1",
+    "event": "DONE",
+    "task": "#160",
+    "owner": "Tianrui-Codex",
+    "status": "done",
+    "summary": "Kimi K3 K0 adapter smoke completed.",
+    "branch": "feat/k0-adapter",
+    "files": ["scripts/llm", "docs/llm"],
+    "pr": "https://github.com/Lateily/Alpha-Research/pull/163",
+    "cost_cny": "0.011275",
+    "risk": "none",
+    "timestamp_utc": "2026-07-29T09:42:41.937193+00:00"
+  },
+  {
+    "schema": "ai-progress.v1",
+    "event": "CLAIM",
+    "task": "#164",
+    "owner": "Tianrui-Codex",
+    "status": "in_progress",
+    "summary": "Create AI Progress Board protocol and helper tooling.",
+    "branch": "feat/ai-progress-board",
+    "files": ["docs/llm", "scripts/llm"],
+    "risk": "none",
+    "timestamp_utc": "2026-07-29T10:00:00+00:00",
+    "expires_at_utc": "2026-07-29T12:00:00+00:00"
+  }
+]
