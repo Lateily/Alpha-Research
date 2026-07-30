@@ -16,7 +16,9 @@ def battery(pro, tk, today):
     D = out["dims"]
     # ── 1 行情(位置)──
     try:
-        d = pro.daily(ts_code=tk, start_date="20250728", end_date=today,
+        start_52w = (datetime.datetime.strptime(today, "%Y%m%d")
+                     - datetime.timedelta(days=365)).strftime("%Y%m%d")
+        d = pro.daily(ts_code=tk, start_date=start_52w, end_date=today,
                       fields="trade_date,close,high,low,pct_chg,amount,vol").sort_values("trade_date")
         c = float(d.close.iloc[-1]); hi = float(d.high.max()); lo = float(d.low.min())
         D["行情"] = {"close": c, "52w_high": hi, "52w_low": lo,
@@ -89,9 +91,11 @@ def battery(pro, tk, today):
         db = pro.daily_basic(ts_code=tk, start_date=(datetime.datetime.strptime(today, "%Y%m%d")
              - datetime.timedelta(days=400)).strftime("%Y%m%d"), end_date=today,
              fields="trade_date,pe_ttm,pb,total_mv").sort_values("trade_date")
-        pe = db.pe_ttm.dropna()
-        cur = float(pe.iloc[-1]) if len(pe) else None
-        pct = round(float((pe < cur).mean())*100, 0) if cur is not None and len(pe) > 60 else None
+        pe = db.pe_ttm  # 亏损票最新行为 NaN:如实报 None,不许回捞历史正值伪装现值
+        last = pe.iloc[-1] if len(pe) else None
+        cur = float(last) if last is not None and last == last else None
+        hist = pe.dropna()
+        pct = round(float((hist < cur).mean())*100, 0) if cur is not None and len(hist) > 60 else None
         D["估值"] = {"pe_ttm": cur, "pb": float(db.pb.iloc[-1]) if len(db) else None,
                      "总市值亿": round(float(db.total_mv.iloc[-1])/1e4, 0) if len(db) else None,
                      "pe_1年分位%": pct,

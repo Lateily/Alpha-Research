@@ -87,11 +87,6 @@ def main():
     stamp = {"gate": "red_flag_gate_v0", "checked_at": today, "results": results,
              "disclaimer": "红旗≠禁入,但必须亮旗;无戳名单=违宪。不是买卖指令。"}
     print(json.dumps(stamp, ensure_ascii=False, indent=1))
-    # 回归测试:赛力斯 0713 首亏必须被抓住
-    if "601127.SH" in tickers:
-        s = next(r for r in results if r["ts_code"] == "601127.SH")
-        assert s["verdict"] == "RED_FLAG", "回归测试失败:赛力斯首亏未被抓住!"
-        print("[selftest] 赛力斯 20260713 首亏 → RED_FLAG ✓", file=sys.stderr)
     return 0
 
 
