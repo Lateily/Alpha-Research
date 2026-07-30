@@ -1,38 +1,38 @@
 {
- "as_of": "20260721",
+ "as_of": "20260728",
  "panel_days": [
-  "20260715",
-  "20260716",
-  "20260717",
-  "20260720",
-  "20260721"
+  "20260722",
+  "20260723",
+  "20260724",
+  "20260727",
+  "20260728"
  ],
  "transition": {
   "counts": {
-   "INFLOW_CONT": 2,
-   "WARMING": 5,
-   "NEUTRAL": 169,
-   "FLICKER": 25,
-   "OUTFLOW_CONT": 270
+   "INFLOW_CONT": 15,
+   "WARMING": 4,
+   "NEUTRAL": 261,
+   "FLICKER": 196,
+   "OUTFLOW_CONT": 156
   },
   "matrix_counts": {
    "INFLOW_CONT": {
-    "INFLOW_CONT": 2
+    "INFLOW_CONT": 15
    },
    "WARMING": {
-    "INFLOW_CONT": 5
+    "INFLOW_CONT": 4
    },
    "NEUTRAL": {
-    "WARMING": 45,
-    "FLICKER": 23,
-    "OUTFLOW_CONT": 101
+    "WARMING": 106,
+    "FLICKER": 77,
+    "OUTFLOW_CONT": 78
    },
    "FLICKER": {
-    "WARMING": 15,
-    "FLICKER": 10
+    "WARMING": 32,
+    "FLICKER": 164
    },
    "OUTFLOW_CONT": {
-    "OUTFLOW_CONT": 270
+    "OUTFLOW_CONT": 156
    }
   },
   "matrix_prob": {
@@ -43,13 +43,13 @@
     "INFLOW_CONT": 1.0
    },
    "NEUTRAL": {
-    "FLICKER": 0.136,
-    "OUTFLOW_CONT": 0.598,
-    "WARMING": 0.266
+    "FLICKER": 0.295,
+    "OUTFLOW_CONT": 0.299,
+    "WARMING": 0.406
    },
    "FLICKER": {
-    "FLICKER": 0.4,
-    "WARMING": 0.6
+    "FLICKER": 0.837,
+    "WARMING": 0.163
    },
    "OUTFLOW_CONT": {
     "OUTFLOW_CONT": 1.0
@@ -57,123 +57,123 @@
   },
   "examples": [
    {
-    "sector": "炼油化工",
-    "seq": "-++++",
+    "sector": "工程机械整机",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "炼化及贸易",
-    "seq": "-++++",
+    "sector": "商用载客车",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "麒麟电池",
-    "seq": "+-+++",
-    "from": "WARMING",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "托育服务",
-    "seq": "--+++",
-    "from": "WARMING",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "聚氨酯",
-    "seq": "+-+++",
-    "from": "WARMING",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "会展服务",
-    "seq": "+-+++",
-    "from": "WARMING",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "房地产综合服务",
-    "seq": "--+++",
-    "from": "WARMING",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "茅指数",
-    "seq": "+--++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
-   },
-   {
-    "sector": "宁组合",
-    "seq": "+--++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
-   },
-   {
-    "sector": "蚂蚁概念",
-    "seq": "+--++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
-   },
-   {
-    "sector": "宁夏板块",
-    "seq": "---++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
-   },
-   {
-    "sector": "福建板块",
-    "seq": "---++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
-   },
-   {
-    "sector": "权重股",
-    "seq": "+--++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
-   },
-   {
-    "sector": "空间计算",
-    "seq": "+--++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
-   },
-   {
-    "sector": "抽水蓄能",
-    "seq": "+--++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
    },
    {
     "sector": "噪声防治",
-    "seq": "++-++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
    },
    {
-    "sector": "退税商店",
-    "seq": "++-++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
+    "sector": "人力资源服务",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
    },
    {
-    "sector": "微盘精选",
-    "seq": "++-++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
+    "sector": "果蔬加工",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
    },
    {
-    "sector": "财税数字化",
-    "seq": "---++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
+    "sector": "个护小家电",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
    },
    {
-    "sector": "安防概念",
-    "seq": "-+-++",
-    "from": "FLICKER",
+    "sector": "包装材料",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "其他养殖",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "汽车服务",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "汽车综合服务",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "端到端供应链服务",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "金属包装",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "炭黑",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "风电零部件",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "包装印刷",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "瓷砖地板",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "涂料",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "大气治理",
+    "seq": "--+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "纺织鞋类制造",
+    "seq": "--+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "辽宁板块",
+    "seq": "+--++",
+    "from": "NEUTRAL",
     "to": "WARMING"
    }
   ]
@@ -181,71 +181,68 @@
  "leader_breadth": [
   {
    "group": "其他",
-   "count": 24,
-   "share_top30": 0.8,
-   "top10_count": 9,
-   "avg_ret10": 26.3,
+   "count": 27,
+   "share_top30": 0.9,
+   "top10_count": 8,
+   "avg_ret10": 24.2,
    "examples": [
-    "立新能源(49.0%)",
-    "鑫汇科(48.1%)",
-    "格林精密(41.4%)",
-    "智度股份(35.7%)",
-    "紫光股份(31.7%)",
-    "深信服(31.3%)",
-    "星网宇达(30.1%)",
-    "科蓝软件(30.0%)"
+    "科蓝软件(41.8%)",
+    "顺钠股份(36.6%)",
+    "爱朋医疗(35.3%)",
+    "创新医疗(34.8%)",
+    "传智教育(30.3%)",
+    "博汇科技(27.5%)",
+    "新强联(27.1%)",
+    "新中港(26.4%)"
    ]
   },
   {
    "group": "医药",
-   "count": 2,
-   "share_top30": 0.067,
+   "count": 1,
+   "share_top30": 0.033,
    "top10_count": 1,
-   "avg_ret10": 23.8,
+   "avg_ret10": 42.7,
    "examples": [
-    "珍宝岛(32.7%)",
-    "海正药业(14.8%)"
+    "珍宝岛(42.7%)"
    ]
   },
   {
-   "group": "半导体/AI硬件",
-   "count": 2,
-   "share_top30": 0.067,
-   "top10_count": 0,
-   "avg_ret10": 20.5,
+   "group": "消费/服务",
+   "count": 1,
+   "share_top30": 0.033,
+   "top10_count": 1,
+   "avg_ret10": 44.5,
    "examples": [
-    "华虹宏力(22.8%)",
-    "西部矿业(18.1%)"
+    "爱丽家居(44.5%)"
    ]
   },
   {
-   "group": "能源/资源",
-   "count": 2,
-   "share_top30": 0.067,
+   "group": "汽车/电动车",
+   "count": 1,
+   "share_top30": 0.033,
    "top10_count": 0,
-   "avg_ret10": 15.9,
+   "avg_ret10": 25.5,
    "examples": [
-    "赤峰黄金(16.6%)",
-    "兖矿能源(15.1%)"
+    "捷众科技(25.5%)"
    ]
   }
  ],
  "dominant_groups": [
   {
    "group": "其他",
-   "count": 24,
-   "share_top30": 0.8,
-   "top10_count": 9,
-   "avg_ret10": 26.3,
+   "count": 27,
+   "share_top30": 0.9,
+   "top10_count": 8,
+   "avg_ret10": 24.2,
    "examples": [
-    "立新能源(49.0%)",
-    "鑫汇科(48.1%)",
-    "格林精密(41.4%)",
-    "智度股份(35.7%)",
-    "紫光股份(31.7%)",
-    "深信服(31.3%)",
-    "星网宇达(30.1%)",
-    "科蓝软件(30.0%)"
+    "科蓝软件(41.8%)",
+    "顺钠股份(36.6%)",
+    "爱朋医疗(35.3%)",
+    "创新医疗(34.8%)",
+    "传智教育(30.3%)",
+    "博汇科技(27.5%)",
+    "新强联(27.1%)",
+    "新中港(26.4%)"
    ]
   }
  ],

@@ -1,0 +1,72 @@
+[
+ {
+  "ticker": "000807.SZ",
+  "name": "云铝股份",
+  "signal_id": "adb5a9d07771",
+  "date": "20260720",
+  "window": "1426",
+  "verdict": "REVIEW_CANDIDATE",
+  "why": "尾盘1426: 价区24.5-25.2已打印,现价25.64>invalidation 23.2;flow_leg=DEFERRED_TO_SETTLE",
+  "eod_price": 25.64,
+  "sample_eligible": false,
+  "no_trade_flag": true
+ },
+ {
+  "ticker": "000807.SZ",
+  "name": "云铝股份",
+  "signal_id": "adb5a9d07771",
+  "date": "20260721",
+  "window": "1426",
+  "verdict": "REVIEW_CANDIDATE",
+  "why": "尾盘1426: 价区24.5-25.2已打印,现价25.0>invalidation 23.2;flow_leg=DEFERRED_TO_SETTLE",
+  "eod_price": 25.0,
+  "sample_eligible": false,
+  "no_trade_flag": true
+ },
+ {
+  "ticker": "000807.SZ",
+  "name": "云铝股份",
+  "signal_id": "adb5a9d07771",
+  "date": "20260722",
+  "window": "1426",
+  "verdict": "REVIEW_CANDIDATE",
+  "why": "尾盘1426: 价区24.5-25.2已打印,现价25.57>invalidation 23.2;flow_leg=DEFERRED_TO_SETTLE",
+  "eod_price": 25.57,
+  "sample_eligible": false,
+  "no_trade_flag": true
+ },
+ {
+  "ticker": "300502.SZ",
+  "name": "新易盛",
+  "signal_id": "3e59e6558980",
+  "date": "20260722",
+  "window": "1426",
+  "verdict": "REVIEW_CANDIDATE",
+  "why": "尾盘1426: 价区525.0-535.0已打印,现价516.5>invalidation 510.0;flow_leg=DEFERRED_TO_SETTLE",
+  "eod_price": 516.5,
+  "sample_eligible": false,
+  "no_trade_flag": true
+ },
+ {
+  "ticker": "300308.SZ",
+  "name": "中际旭创",
+  "signal_id": "906a0dddb4e5",
+  "date": "20260722",
+  "window": "1426",
+  "verdict": "REVIEW_CANDIDATE",
+  "why": "尾盘1426: 价区1050.0-1085.0已打印,现价1077.0>invalidation 1004.0;flow_leg=DEFERRED_TO_SETTLE",
+  "eod_price": 1077.0,
+  "sample_eligible": false,
+  "no_trade_flag": true
+ },
+ {
+  "ticker": "002384.SZ",
+  "name": "东山精密",
+  "date": "20260723",
+  "window": "1426",
+  "verdict": "NO_ACTION",
+  "why": "trigger/invalidation 不可机械解析(人审)",
+  "sample_eligible": false,
+  "no_trade_flag": true
+ }
+]
