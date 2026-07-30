@@ -24,6 +24,9 @@ If you stop without finishing, post RELEASE.
 
 Use GitHub Issue #164 as the live page.
 
+For a beginner step-by-step workflow, see
+`docs/llm/AI_PROGRESS_PLAYBOOK_V0.md`.
+
 Every agent or human should check the latest comments on #164 before starting
 work. If an active CLAIM overlaps the same issue, branch, or files, do not start
 the same work. Reply to the active CLAIM instead.
