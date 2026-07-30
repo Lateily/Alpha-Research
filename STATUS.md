@@ -1,3 +1,7 @@
+> ⚠ **本文件已冻结(2026-07-29)** — 手工状态记录停止维护;当前系统状态以
+> `experiments/execution_tracker/nightly_run.json` 与 `public/data/v2/meta.json`(自动生成)
+> 及 `docs/team/TEAM_CHARTER_v2.md` 为准。历史内容保留作档案。
+
 # STATUS — Platform State Snapshot
 
 > **强制读取协议** — Every Claude Code session, every auto-work fire, every

@@ -76,17 +76,41 @@ def check_ticker(pro, ts_code, today):
     return out
 
 
+def watchlist_tickers(limit=25, path=None):
+    here = os.path.dirname(os.path.abspath(__file__))
+    p = path or os.path.join(here, "watch_dynamic.json")
+    try:
+        wd = json.load(open(p))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []  # 调用方负责报 DATA_BLOCKED
+    return [r.get("ticker") for r in (wd.get("watch") or []) if r.get("ticker")][:limit]
+
+
 def main():
     import tushare as ts
     pro = ts.pro_api(os.environ["TUSHARE_TOKEN"])
     today = datetime.date.today().strftime("%Y%m%d")
-    tickers = sys.argv[1:] or []
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if "--from-watchlist" in sys.argv:
+        tickers = watchlist_tickers()
+        if not tickers:
+            print("DATA_BLOCKED: watch_dynamic 缺失或为空"); return 1
+    else:
+        tickers = args
     if not tickers:
-        print("usage: red_flag_gate.py TS_CODE [TS_CODE...]"); return 1
+        print("usage: red_flag_gate.py TS_CODE [...] | --from-watchlist"); return 1
     results = [check_ticker(pro, t, today) for t in tickers]
     stamp = {"gate": "red_flag_gate_v0", "checked_at": today, "results": results,
              "disclaimer": "红旗≠禁入,但必须亮旗;无戳名单=违宪。不是买卖指令。"}
-    print(json.dumps(stamp, ensure_ascii=False, indent=1))
+    if "--from-watchlist" in sys.argv:
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, "red_flags.json"), "w", encoding="utf-8") as fh:
+            json.dump(stamp, fh, ensure_ascii=False, indent=1)
+        print(f"[written] red_flags.json n={len(results)} "
+              f"red={sum(1 for r in results if r['verdict']=='RED_FLAG')}")
+        print("不是买卖指令;研究信号,human executes.")
+    else:
+        print(json.dumps(stamp, ensure_ascii=False, indent=1))
     return 0
 
 
