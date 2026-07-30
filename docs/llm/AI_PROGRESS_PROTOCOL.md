@@ -28,6 +28,10 @@ Every agent or human should check the latest comments on #164 before starting
 work. If an active CLAIM overlaps the same issue, branch, or files, do not start
 the same work. Reply to the active CLAIM instead.
 
+Every AI session must run the read-only conflict checker before posting a CLAIM.
+The checker prevents collisions; running it after a collision is only an
+after-the-fact audit.
+
 ## Message Types
 
 ### CLAIM
@@ -143,6 +147,21 @@ python scripts/llm/progress_conflicts.py scripts/llm/progress_board.example.json
 
 The checker is read-only. It warns about conflicts and never releases or edits a
 claim automatically.
+
+Run the checker before every new AI work session posts CLAIM. If it reports an
+active overlap, pause and coordinate under the earlier CLAIM instead of starting
+parallel work.
+
+## Board Rotation
+
+Issue #164 can grow indefinitely. Archive it by season:
+
+- Keep the current board active during the season.
+- At quarter end, close the active issue.
+- Open the next board, for example `#164-Q4`, and link it from the old board.
+- Old boards remain read-only audit history.
+
+No automation is required for v0. This is a team operating rule.
 
 ## Relationship To Agent Console
 
