@@ -26,6 +26,7 @@ It proves the workflow before real Claude, Kimi, or Codex adapters are wired in:
 3. every agent reviews every anonymous answer across the same rubrics
 4. the harness extracts the highest-scoring part for each rubric
 5. the candidate synthesis combines the strongest parts and preserves concerns
+6. the deterministic safety audit scans for red-line risks
 
 This avoids hard-coding that one model is always best at one kind of task.
 
@@ -78,16 +79,20 @@ into AJL.
 
 ## What To Look For
 
-The process view shows four phases:
+The process view shows five phases:
 
 - `PHASE 1`: independent answers
 - `PHASE 2`: anonymous cross-review scores
 - `PHASE 3`: best parts by rubric
 - `PHASE 4`: candidate synthesis
+- `PHASE 5`: deterministic safety audit
 
 The important idea is not "which agent won." The important idea is which part of
 which anonymous answer performed best under each scoring dimension. The output is
 an evaluation artifact, not a research conclusion.
+
+If `PHASE 5` reports `blocked=true`, stop and hand the case to a human reviewer.
+Do not treat the candidate synthesis as usable output.
 
 ## Safety Boundary
 
@@ -102,3 +107,9 @@ It does not:
 
 Future real-model versions should continue to log token cost, failures, and
 safety flags.
+
+For CI-style local checks, use:
+
+```powershell
+python scripts/llm/agent_jury_lab.py --spec docs/llm/agent_jury_demo.ajl --fail-on-high-risk
+```

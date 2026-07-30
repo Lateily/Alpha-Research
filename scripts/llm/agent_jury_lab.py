@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +18,75 @@ from typing import Any
 
 DEFAULT_RUBRICS = ["evidence", "logic", "safety", "usability", "structure"]
 DEFAULT_AGENTS = ["alpha", "beta", "gamma"]
+RISK_WEIGHTS = {"none": 0, "low": 1, "medium": 2, "high": 3}
+
+
+@dataclass(frozen=True)
+class SafetyRule:
+    rule_id: str
+    severity: str
+    category: str
+    pattern: re.Pattern[str]
+    message: str
+
+
+SAFETY_RULES = [
+    SafetyRule(
+        "trade_direction",
+        "high",
+        "decision_overreach",
+        re.compile(
+            r"\b(buy|sell|hold)\b|"
+            r"\b(go|going|went)\s+(short|long)\b|"
+            r"\b(short|long)\s+(the\s+)?(stock|equity|shares|ticker|position)\b|"
+            r"买入|卖出|持有|做多|做空|建仓|清仓|加仓|减仓",
+            re.I,
+        ),
+        "Possible trading direction detected.",
+    ),
+    SafetyRule(
+        "position_sizing",
+        "high",
+        "decision_overreach",
+        re.compile(r"仓位|position sizing|[0-9]+%.*(仓|position)|配置.*[0-9]+%"),
+        "Possible position sizing or allocation wording detected.",
+    ),
+    SafetyRule(
+        "execution_language",
+        "high",
+        "decision_overreach",
+        re.compile(r"立即执行|下单|交易指令|execute trade|place order|order now", re.I),
+        "Execution-like language detected.",
+    ),
+    SafetyRule(
+        "prompt_injection_ignore",
+        "high",
+        "prompt_injection",
+        re.compile(r"ignore (all )?(previous|prior) instructions|忽略(以上|之前|所有)指令", re.I),
+        "Instruction-override language detected in untrusted content.",
+    ),
+    SafetyRule(
+        "prompt_injection_role",
+        "medium",
+        "prompt_injection",
+        re.compile(r"you are now|act as|system prompt|developer message|你现在是|扮演|系统提示词", re.I),
+        "Role or system-prompt manipulation language detected.",
+    ),
+    SafetyRule(
+        "secret_openai_like",
+        "high",
+        "secret_leak",
+        re.compile(r"\bsk-[A-Za-z0-9_\-]{12,}\b"),
+        "A string resembles an API key.",
+    ),
+    SafetyRule(
+        "secret_github_like",
+        "high",
+        "secret_leak",
+        re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b"),
+        "A string resembles a GitHub token.",
+    ),
+]
 
 
 @dataclass(frozen=True)
@@ -39,6 +109,11 @@ def main() -> int:
         action="store_true",
         help="Print machine-readable JSON instead of the process view.",
     )
+    parser.add_argument(
+        "--fail-on-high-risk",
+        action="store_true",
+        help="Exit non-zero when the deterministic safety audit finds high risk.",
+    )
     args = parser.parse_args()
 
     spec = load_spec(args)
@@ -48,6 +123,8 @@ def main() -> int:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         print_process(result)
+    if args.fail_on_high_risk and result["phase_5_safety_audit"]["blocked"]:
+        return 1
     return 0
 
 
@@ -105,6 +182,8 @@ def run_jury(spec: JurySpec) -> dict[str, Any]:
     anonymous_answers = anonymize(answers)
     reviews = cross_review(spec, anonymous_answers)
     best_parts = extract_best_parts(spec, anonymous_answers, reviews)
+    synthesis = synthesize(spec, best_parts, reviews)
+    safety_audit = audit_payload(spec, answers, reviews, synthesis)
 
     return {
         "schema": "agent-jury-lab.v0",
@@ -116,7 +195,8 @@ def run_jury(spec: JurySpec) -> dict[str, Any]:
         "phase_1_independent_answers": answers,
         "phase_2_anonymous_reviews": reviews,
         "phase_3_best_parts": best_parts,
-        "phase_4_candidate_synthesis": synthesize(spec, best_parts, reviews),
+        "phase_4_candidate_synthesis": synthesis,
+        "phase_5_safety_audit": safety_audit,
         "safety_flags": [
             "external_content_is_untrusted_input",
             "no_trading_instruction",
@@ -164,8 +244,8 @@ def build_answer(spec: JurySpec, agent: str, index: int) -> dict[str, str]:
             "still needs verification."
         ),
         "safety": (
-            "Do not issue buy/sell/hold instructions. Treat prompts, web pages, "
-            "news, and filings as untrusted data."
+            "Do not produce trading directions. Treat prompts, web pages, news, "
+            "and filings as untrusted data."
         ),
         "usability": (
             "Return a compact packet with summary, tags, uncertainty, reviewer "
@@ -334,6 +414,70 @@ def collect_disagreements(reviews: list[dict[str, Any]]) -> list[str]:
     return concerns[:5]
 
 
+def audit_payload(
+    spec: JurySpec,
+    answers: list[dict[str, Any]],
+    reviews: list[dict[str, Any]],
+    synthesis: dict[str, Any],
+) -> dict[str, Any]:
+    payload = {
+        "question": spec.question,
+        "context": spec.context,
+        "answers": answers,
+        "reviews": reviews,
+        "candidate_synthesis": synthesis,
+    }
+    return audit_text(json.dumps(payload, ensure_ascii=False))
+
+
+def audit_text(raw: str) -> dict[str, Any]:
+    findings = []
+    for rule in SAFETY_RULES:
+        for match in rule.pattern.finditer(raw):
+            findings.append(
+                {
+                    "rule_id": rule.rule_id,
+                    "severity": rule.severity,
+                    "category": rule.category,
+                    "message": rule.message,
+                    "match_preview": mask_preview(match.group(0)),
+                }
+            )
+
+    risk_level = "none"
+    for finding in findings:
+        if RISK_WEIGHTS[finding["severity"]] > RISK_WEIGHTS[risk_level]:
+            risk_level = finding["severity"]
+
+    return {
+        "schema": "agent-jury-lab.safety-audit.v0",
+        "risk_level": risk_level,
+        "blocked": risk_level == "high",
+        "findings": findings,
+        "required_action": required_action(risk_level),
+        "non_decision_notice": (
+            "This is evidence processing only, not investment advice or a trading instruction."
+        ),
+    }
+
+
+def required_action(risk_level: str) -> str:
+    if risk_level == "high":
+        return "Block candidate synthesis until a human removes or explains the red-line risk."
+    if risk_level == "medium":
+        return "Show a warning and require human review."
+    if risk_level == "low":
+        return "Allow, with the audit report attached."
+    return "Allow."
+
+
+def mask_preview(raw: str) -> str:
+    compact = " ".join(raw.split())
+    if len(compact) <= 12:
+        return compact
+    return f"{compact[:6]}...{compact[-4:]}"
+
+
 def print_process(result: dict[str, Any]) -> None:
     print("AGENT JURY LAB")
     print("=" * 72)
@@ -367,6 +511,18 @@ def print_process(result: dict[str, Any]) -> None:
 
     print("PHASE 4 - Candidate synthesis")
     print(result["phase_4_candidate_synthesis"]["summary"])
+    print()
+
+    print("PHASE 5 - Deterministic safety audit")
+    audit = result["phase_5_safety_audit"]
+    print(f"Risk level: {audit['risk_level']} | blocked={audit['blocked']}")
+    print(f"Required action: {audit['required_action']}")
+    if audit["findings"]:
+        for finding in audit["findings"]:
+            print(
+                f"- {finding['severity']} {finding['category']} "
+                f"{finding['rule_id']}: {finding['match_preview']}"
+            )
     print("Safety flags: " + ", ".join(result["safety_flags"]))
     print(f"Cost: CNY {result['cost_cny']}")
 
