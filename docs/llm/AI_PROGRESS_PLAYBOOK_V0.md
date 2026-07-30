@@ -141,3 +141,5 @@ for the issue.
 Future Agent Console work may render these comments as a page, but v0 is the
 GitHub issue plus the two local scripts.
 
+For a local auto-refreshing view of the same events, see
+`docs/llm/AI_PROGRESS_WATCHER_V1.md`.
