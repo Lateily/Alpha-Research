@@ -100,7 +100,32 @@ def test_attribution_split_and_gate():
     print("PASS attribution: horizon 分桶 + n<30 → claim_allowed=false")
 
 
+def test_trade_card_real_schema():
+    """审查F1回归:字段名必须匹配真实 orders.json(realized_R/stop_reference/...)。"""
+    from export_contracts import _make_card
+    o = {"ticker": "601899.SH", "name": "紫金矿业", "status": "closed",
+         "fill_date": "20260710", "fill_price": 28.2, "shares": 5000,
+         "stop_reference": 26.2, "take_profit_reference": 32.2,
+         "exit_date": "20260722", "exit_price": 32.2, "realized_R": 2.0}
+    c = _make_card(o, [])
+    assert c["stop"] == 26.2 and c["target"] == 32.2 and c["realized_r"] == 2.0, c
+    assert c["entry"] == 28.2 and c["qty"] == 5000 and c["month"] == "202607", c
+    print("PASS trade_card: 真实账本字段映射(F1)")
+
+
+def test_watchlist_tickers_guard():
+    """审查F12回归:名单文件缺失/损坏 → [],不裸炸。"""
+    import tempfile, json as _json
+    from red_flag_gate import watchlist_tickers
+    assert watchlist_tickers(path="/nonexistent/x.json") == []
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+        _json.dump({"watch": [{"ticker": "600276.SH"}, {"name": "无代码票"}]}, f)
+    assert watchlist_tickers(path=f.name) == ["600276.SH"]
+    print("PASS watchlist_tickers: 缺失→[] / 缺字段行跳过(F12)")
+
+
 if __name__ == "__main__":
     test_gate_catches_first_loss(); test_gate_passes_clean(); test_gate_blocks_on_zero_evidence()
     test_battery_flags_blocked_news(); test_attribution_split_and_gate()
+    test_trade_card_real_schema(); test_watchlist_tickers_guard()
     print("ALL OFFLINE TESTS PASS (0 network calls)")

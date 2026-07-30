@@ -132,6 +132,7 @@ def main():
             json.dump(out, fh, ensure_ascii=False, indent=1)
         partial = sum(1 for r in res if r["completeness"]["verdict"] != "COMPLETE")
         print(f"[written] battery.json n={len(res)} partial={partial}")
+        print("不是买卖指令;研究信号,human executes.")
     else:
         print(json.dumps(out, ensure_ascii=False, indent=1))
     return 0

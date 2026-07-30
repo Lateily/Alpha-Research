@@ -1,6 +1,7 @@
-> ⚠ **本文件已冻结(2026-07-29)** — 手工路线记录停止维护;当前系统状态以
-> `experiments/execution_tracker/nightly_run.json` 与 `public/data/v2/meta.json`(自动生成)
-> 及 `docs/team/TEAM_CHARTER_v2.md` 为准。历史内容保留作档案。
+> ⚠ **本文件已冻结(2026-07-29)** — 手工路线记录停止维护;当前进度以
+> `docs/ARCHITECTURE_MAP.md`(仓库内,每周五刷新)为准;本地运行时状态见
+> `experiments/execution_tracker/nightly_run.json`(仅 Junyan 机器;v2 契约发布管道
+> 上线后再指向 public/data/v2/meta.json)。历史内容保留作档案。
 
 # Platform Roadmap
 

@@ -1,7 +1,8 @@
 # 数据契约层(public/data/v2/)字段说明
 
-规则(章程 §0):前端只读这里的文件;每份契约必有 `schema_version / generated_at /
-sources / status / blocked_why / data / disclaimer` 七个外层字段。
+规则(章程 §0):前端只读这里的文件;每份契约必有 `schema_version / generated_at / sources / sources_meta / status / blocked_why / data /
+disclaimer` 八个外层字段。status ∈ {OK, STALE_INPUT, DATA_BLOCKED}:上游超过 20 小时
+或内部自报 blocked ⇒ STALE_INPUT,前端必须降饱和展示并显示 sources_meta 的时间戳。
 `status=DATA_BLOCKED` 时 `data` 可能为 null,前端必须显式展示 `blocked_why`,
 永不伪装有数。改契约必须先改本目录文档再改代码(接口先行)。
 
