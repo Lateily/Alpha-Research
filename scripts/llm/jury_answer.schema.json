@@ -7,7 +7,12 @@
   "required": [
     "schema",
     "answer_id",
+    "run_id",
+    "model",
+    "prompt_version",
+    "input_hash",
     "task",
+    "data_status",
     "summary",
     "evidence",
     "logic",
@@ -16,6 +21,7 @@
     "structure",
     "confidence",
     "open_questions",
+    "no_trade_flag",
     "non_decision_notice"
   ],
   "properties": {
@@ -26,9 +32,33 @@
       "type": "string",
       "description": "Anonymous answer id assigned by the harness, for example Answer A."
     },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable run id assigned by the harness for traceability."
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Model identifier used for this answer, for example kimi-k3 or mock-alpha."
+    },
+    "prompt_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Prompt template/version id used for this answer."
+    },
+    "input_hash": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Hash of the normalized input packet so the run can be audited or replayed."
+    },
     "task": {
       "type": "string",
       "minLength": 1
+    },
+    "data_status": {
+      "enum": ["OK", "DATA_BLOCKED", "DATA_CONFLICT"],
+      "description": "Use DATA_BLOCKED when required source data is unavailable; use DATA_CONFLICT when sources disagree."
     },
     "summary": {
       "type": "string",
@@ -39,14 +69,38 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["claim", "source_label", "confidence"],
+        "required": [
+          "claim",
+          "evidence_tier",
+          "source_label",
+          "source_url_or_file",
+          "publish_date",
+          "data_cutoff",
+          "confidence"
+        ],
         "properties": {
           "claim": {
             "type": "string"
           },
+          "evidence_tier": {
+            "enum": ["E1", "E2", "E3", "E4"],
+            "description": "AR platform evidence tier. E1 is strongest direct primary evidence; E4 is weakest or indirect context."
+          },
           "source_label": {
             "type": "string",
             "description": "Short source label, not raw secret content."
+          },
+          "source_url_or_file": {
+            "type": "string",
+            "description": "URL or repository/local file reference for the evidence. Do not include secrets."
+          },
+          "publish_date": {
+            "type": "string",
+            "description": "Source publication date in ISO format. If unavailable, set data_status to DATA_BLOCKED and explain the gap."
+          },
+          "data_cutoff": {
+            "type": "string",
+            "description": "Latest data timestamp or date covered by this evidence."
           },
           "confidence": {
             "enum": ["low", "medium", "high"]
@@ -141,6 +195,10 @@
       "items": {
         "type": "string"
       }
+    },
+    "no_trade_flag": {
+      "const": true,
+      "description": "Must always be true. Agent Jury answers are evidence processing only."
     },
     "non_decision_notice": {
       "const": "This is evidence processing only, not investment advice or a trading instruction."

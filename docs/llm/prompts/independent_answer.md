@@ -22,6 +22,11 @@ Required behavior:
 - Answer the full task independently.
 - Do not assume another model will cover a missing dimension.
 - Separate evidence, logic, safety, usability, and structure.
+- Include traceability fields: `run_id`, `model`, `prompt_version`, and `input_hash`.
+- Set `data_status` to `OK`, `DATA_BLOCKED`, or `DATA_CONFLICT`.
+- For every evidence item, include `evidence_tier`, `source_url_or_file`,
+  `publish_date`, and `data_cutoff`.
+- Set `no_trade_flag` to `true`.
 - Mark uncertainty and open questions.
 - Keep the output compact enough for review.
 
@@ -30,6 +35,10 @@ Input packet:
 ```json
 {
   "answer_id": "{{answer_id}}",
+  "run_id": "{{run_id}}",
+  "model": "{{model}}",
+  "prompt_version": "{{prompt_version}}",
+  "input_hash": "{{input_hash}}",
   "task": "{{task}}",
   "context": "{{context}}"
 }

@@ -32,6 +32,27 @@ model is always best at one role.
 - `docs/llm/prompts/anonymous_review.md`: prompt for anonymous cross-review
 - `docs/llm/prompts/final_synthesis.md`: prompt for final aggregation
 
+## AR Evidence Contract
+
+Independent answers must carry enough evidence metadata for Junyan to audit
+source quality and rerun the case. In particular, `agent-jury.answer.v1`
+requires:
+
+- `evidence_tier`: `E1`, `E2`, `E3`, or `E4`
+- `source_url_or_file`
+- `publish_date`
+- `data_cutoff`
+- `data_status`: `OK`, `DATA_BLOCKED`, or `DATA_CONFLICT`
+- `model`
+- `prompt_version`
+- `run_id`
+- `input_hash`
+- `no_trade_flag: true`
+
+This prevents an answer from passing review by saying only "company
+announcement, high confidence" without enough source and run metadata to verify
+the claim.
+
 ## Flow
 
 1. Independent answer
