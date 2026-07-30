@@ -148,6 +148,12 @@ claim automatically.
 
 Issue #162 defines the future UI shape for this protocol:
 
+- v0 is not a web app. GitHub Issue #164 itself is the real-time collaboration
+  board.
+- The five comment types in this protocol are the shared data layer:
+  CLAIM -> UPDATE -> DONE -> BLOCKED -> RELEASE.
+- Agent Console is deferred. When built, it should only render this protocol
+  instead of inventing another coordination system.
 - Agent Console v0 may live in the repo, but not in the seven-panel product
   navigation.
 - The future UI belongs in the `web/` tool room on an independent `/team` path.
@@ -157,8 +163,8 @@ Issue #162 defines the future UI shape for this protocol:
 - A personal read-only PAT may be stored in browser `localStorage` for local
   acceleration, but never in code, commits, docs, or chat.
 
-In short: this PR defines the event contract; Agent Console reads this contract
-later.
+In short: this PR defines the v0 standard. Issue #164 is the tool today; Agent
+Console is only a later display layer.
 
 ## Board Fields
 
