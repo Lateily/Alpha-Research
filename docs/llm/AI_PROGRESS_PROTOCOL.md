@@ -36,13 +36,15 @@ Use CLAIM when someone starts a task.
 
 Required fields:
 
-- `owner`: human or agent name, for example `Tianrui-Codex`
 - `task`: issue number or short task name
+- `human_owner`: accountable human, for example `Tianrui`
+- `executor`: person or tool doing the work, for example `Codex`
+- `reviewer`: human reviewer or approver, for example `Junyan`
 - `summary`: one sentence about the work
 - `branch`: planned branch name
 - `files`: expected file or folder scope
 - `status`: `in_progress`
-- `expires_at_utc`: when the claim should be considered stale
+- `expires_at`: when the claim should be considered stale
 
 ### UPDATE
 
@@ -63,7 +65,9 @@ Use DONE when the task has a PR, final output, or explicit handoff.
 Required fields:
 
 - `task`
-- `owner`
+- `human_owner`
+- `executor`
+- `reviewer`
 - `summary`
 - `pr`, if code changed
 - `cost_cny`, if any LLM call was made
@@ -85,7 +89,7 @@ Treat a CLAIM as active until one of these happens:
 
 - a matching DONE appears
 - a matching RELEASE appears
-- `expires_at_utc` is in the past
+- `expires_at` is in the past
 
 If two active CLAIMs overlap, the later owner pauses and comments under the
 earlier CLAIM instead of continuing independently.
@@ -107,7 +111,9 @@ Generate a standard CLAIM block:
 
 ```powershell
 python scripts/llm/progress_event.py claim `
-  --owner "Tianrui-Codex" `
+  --human-owner "Tianrui" `
+  --executor "Codex" `
+  --reviewer "Junyan" `
   --task "#164" `
   --branch "feat/ai-progress-board" `
   --files "docs/llm,scripts/llm" `
@@ -118,7 +124,9 @@ Generate a standard DONE block:
 
 ```powershell
 python scripts/llm/progress_event.py done `
-  --owner "Tianrui-Codex" `
+  --human-owner "Tianrui" `
+  --executor "Codex" `
+  --reviewer "Junyan" `
   --task "#164" `
   --pr "https://github.com/Lateily/Alpha-Research/pull/..." `
   --cost-cny "0" `
@@ -126,6 +134,31 @@ python scripts/llm/progress_event.py done `
 ```
 
 Paste the generated block into GitHub Issue #164.
+
+Check exported board events for overlapping active CLAIMs:
+
+```powershell
+python scripts/llm/progress_conflicts.py scripts/llm/progress_board.example.json
+```
+
+The checker is read-only. It warns about conflicts and never releases or edits a
+claim automatically.
+
+## Relationship To Agent Console
+
+Issue #162 defines the future UI shape for this protocol:
+
+- Agent Console v0 may live in the repo, but not in the seven-panel product
+  navigation.
+- The future UI belongs in the `web/` tool room on an independent `/team` path.
+- Public Pages code must not contain tokens.
+- v0 should work without tokens by polling one GitHub events endpoint at a slow
+  interval.
+- A personal read-only PAT may be stored in browser `localStorage` for local
+  acceleration, but never in code, commits, docs, or chat.
+
+In short: this PR defines the event contract; Agent Console reads this contract
+later.
 
 ## Board Fields
 

@@ -8,14 +8,36 @@
     "schema",
     "event",
     "task",
-    "owner",
+    "human_owner",
+    "executor",
+    "reviewer",
     "status",
     "summary",
     "timestamp_utc"
   ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "CLAIM"
+          }
+        },
+        "required": ["event"]
+      },
+      "then": {
+        "required": ["branch", "files", "expires_at"],
+        "properties": {
+          "files": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
   "properties": {
     "schema": {
-      "const": "ai-progress.v1"
+      "const": "ai-progress.v2"
     },
     "event": {
       "enum": ["CLAIM", "UPDATE", "DONE", "BLOCKED", "RELEASE"]
@@ -24,7 +46,15 @@
       "type": "string",
       "minLength": 1
     },
-    "owner": {
+    "human_owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "executor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer": {
       "type": "string",
       "minLength": 1
     },
@@ -65,7 +95,7 @@
       "type": "string",
       "format": "date-time"
     },
-    "expires_at_utc": {
+    "expires_at": {
       "type": "string",
       "format": "date-time"
     }

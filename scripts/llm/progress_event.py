@@ -20,9 +20,23 @@ def main() -> int:
         choices=("claim", "update", "done", "blocked", "release"),
         help="Progress event type.",
     )
-    parser.add_argument("--owner", required=True, help="Human or agent owner.")
     parser.add_argument("--task", required=True, help="Issue number or task name.")
     parser.add_argument("--summary", required=True, help="One-sentence summary.")
+    parser.add_argument(
+        "--human-owner",
+        required=True,
+        help="Human accountable for the work, for example Tianrui.",
+    )
+    parser.add_argument(
+        "--executor",
+        required=True,
+        help="Person or tool doing the work, for example Codex.",
+    )
+    parser.add_argument(
+        "--reviewer",
+        required=True,
+        help="Human reviewer or approver, for example Junyan.",
+    )
     parser.add_argument("--branch", default=None, help="Working branch.")
     parser.add_argument(
         "--files",
@@ -44,10 +58,16 @@ def main() -> int:
         default=DEFAULT_TTL_MINUTES,
         help="Minutes until a CLAIM becomes stale.",
     )
+    parser.add_argument(
+        "--expires-at",
+        default=None,
+        help="Explicit CLAIM expiry timestamp with timezone. Defaults to now + ttl.",
+    )
     args = parser.parse_args()
+    validate_args(parser, args)
 
     event = build_event(args)
-    print("<!-- ai-progress:v1 -->")
+    print("<!-- ai-progress:v2 -->")
     print("```json")
     print(json.dumps(event, ensure_ascii=False, indent=2))
     print("```")
@@ -66,10 +86,12 @@ def build_event(args: argparse.Namespace) -> dict[str, Any]:
     }
 
     event: dict[str, Any] = {
-        "schema": "ai-progress.v1",
+        "schema": "ai-progress.v2",
         "event": event_type,
         "task": args.task,
-        "owner": args.owner,
+        "human_owner": args.human_owner,
+        "executor": args.executor,
+        "reviewer": args.reviewer,
         "status": status_by_event[event_type],
         "summary": args.summary,
         "branch": args.branch,
@@ -83,11 +105,20 @@ def build_event(args: argparse.Namespace) -> dict[str, Any]:
     }
 
     if event_type == "CLAIM":
-        event["expires_at_utc"] = (
+        event["expires_at"] = args.expires_at or (
             now + timedelta(minutes=max(args.ttl_minutes, 1))
         ).isoformat()
 
     return {key: value for key, value in event.items() if value not in (None, [], "")}
+
+
+def validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if args.event != "claim":
+        return
+    if not args.branch:
+        parser.error("CLAIM requires --branch.")
+    if not split_csv(args.files):
+        parser.error("CLAIM requires --files with at least one file or folder scope.")
 
 
 def split_csv(raw: str) -> list[str]:
