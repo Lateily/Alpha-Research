@@ -45,6 +45,9 @@ The machine-readable snapshot schema is:
 scripts/llm/progress_snapshot.schema.json
 ```
 
+For frontend integration details, local CORS, fixture data, and `/team` handoff
+checks, use the v1.5 UI contract.
+
 ## First Run With Local Example Data
 
 Open PowerShell in the repository:
@@ -82,6 +85,12 @@ python scripts/llm/progress_snapshot.py `
   --output docs/llm/AI_PROGRESS_SNAPSHOT.example.json
 ```
 
+To run a fixture with all five event types and one conflict:
+
+```powershell
+python scripts/llm/progress_watch.py --source scripts/llm/progress_board.fixture.json
+```
+
 ## Reading GitHub Issue #164
 
 For the real board, run:
@@ -111,6 +120,30 @@ python scripts/llm/progress_watch.py --repo Lateily/Alpha-Research --issue 164
 
 Close that PowerShell window when done if you do not want to keep the temporary
 token in the process environment.
+
+## Local Frontend Reads
+
+The watcher supports read-only browser access to `/events` from explicit local
+development origins:
+
+- `http://localhost:5173`
+- `http://127.0.0.1:5173`
+- `http://localhost:8765`
+- `http://127.0.0.1:8765`
+
+Only `GET` and `OPTIONS` are supported. The watcher has no write endpoint.
+
+For another local Vite or dev-server port, pass an explicit origin:
+
+```powershell
+python scripts/llm/progress_watch.py `
+  --repo Lateily/Alpha-Research `
+  --issue 164 `
+  --cors-origin http://localhost:3000
+```
+
+Do not use wildcard CORS. Public team sharing needs a Junyan-approved
+server-side HTTPS proxy; it must not put GitHub tokens in browser code.
 
 ## Boundary
 

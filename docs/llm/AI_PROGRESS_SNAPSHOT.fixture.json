@@ -1,0 +1,176 @@
+{
+  "schema": "ai-progress.snapshot.v1",
+  "contract_version": "1.5",
+  "ok": true,
+  "source": {
+    "kind": "file",
+    "value": "scripts/llm/progress_board.fixture.json"
+  },
+  "refreshed_at_utc": "2026-07-30T17:42:00.973427+00:00",
+  "summary": {
+    "events": 7,
+    "active_claims": 2,
+    "done": 1,
+    "blocked": 1,
+    "released": 1,
+    "conflicts": 1
+  },
+  "active_claims": [
+    {
+      "schema": "ai-progress.v2",
+      "event": "CLAIM",
+      "task": "#300",
+      "human_owner": "Tianrui",
+      "executor": "Codex",
+      "reviewer": "Junyan",
+      "status": "in_progress",
+      "summary": "Prepare the AI Progress Board UI contract fixture.",
+      "branch": "feat/ai-progress-board-v15",
+      "files": [
+        "docs/llm",
+        "scripts/llm"
+      ],
+      "risk": "none",
+      "timestamp_utc": "2026-07-30T17:00:00+00:00",
+      "expires_at": "2099-01-01T00:00:00+00:00"
+    },
+    {
+      "schema": "ai-progress.v2",
+      "event": "CLAIM",
+      "task": "#301",
+      "human_owner": "Xuhang",
+      "executor": "Claude",
+      "reviewer": "Junyan",
+      "status": "in_progress",
+      "summary": "Build the read-only team progress UI using the local watcher.",
+      "branch": "feat/team-progress-ui",
+      "files": [
+        "docs/llm/AI_PROGRESS_UI_CONTRACT_V1_5.md"
+      ],
+      "risk": "none",
+      "timestamp_utc": "2026-07-30T17:12:00+00:00",
+      "expires_at": "2099-01-01T00:15:00+00:00"
+    }
+  ],
+  "conflicts": [
+    {
+      "left": "Tianrui:Codex",
+      "right": "Xuhang:Claude",
+      "left_task": "#300",
+      "right_task": "#301",
+      "files": [
+        "docs/llm<->docs/llm/ai_progress_ui_contract_v1_5.md"
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "schema": "ai-progress.v2",
+      "event": "CLAIM",
+      "task": "#300",
+      "human_owner": "Tianrui",
+      "executor": "Codex",
+      "reviewer": "Junyan",
+      "status": "in_progress",
+      "summary": "Prepare the AI Progress Board UI contract fixture.",
+      "branch": "feat/ai-progress-board-v15",
+      "files": [
+        "docs/llm",
+        "scripts/llm"
+      ],
+      "risk": "none",
+      "timestamp_utc": "2026-07-30T17:00:00+00:00",
+      "expires_at": "2099-01-01T00:00:00+00:00"
+    },
+    {
+      "schema": "ai-progress.v2",
+      "event": "UPDATE",
+      "task": "#300",
+      "human_owner": "Tianrui",
+      "executor": "Codex",
+      "reviewer": "Junyan",
+      "status": "in_progress",
+      "summary": "Snapshot contract is versioned and local CORS is under test.",
+      "branch": "feat/ai-progress-board-v15",
+      "files": [
+        "docs/llm",
+        "scripts/llm"
+      ],
+      "risk": "none",
+      "timestamp_utc": "2026-07-30T17:10:00+00:00"
+    },
+    {
+      "schema": "ai-progress.v2",
+      "event": "CLAIM",
+      "task": "#301",
+      "human_owner": "Xuhang",
+      "executor": "Claude",
+      "reviewer": "Junyan",
+      "status": "in_progress",
+      "summary": "Build the read-only team progress UI using the local watcher.",
+      "branch": "feat/team-progress-ui",
+      "files": [
+        "docs/llm/AI_PROGRESS_UI_CONTRACT_V1_5.md"
+      ],
+      "risk": "none",
+      "timestamp_utc": "2026-07-30T17:12:00+00:00",
+      "expires_at": "2099-01-01T00:15:00+00:00"
+    },
+    {
+      "schema": "ai-progress.v2",
+      "event": "BLOCKED",
+      "task": "#302",
+      "human_owner": "Tianrui",
+      "executor": "Codex",
+      "reviewer": "Junyan",
+      "status": "blocked",
+      "summary": "Team sharing needs a Junyan-approved server-side proxy design.",
+      "blocked_by": "Junyan approval for HTTPS read-only proxy",
+      "risk": "token_boundary",
+      "timestamp_utc": "2026-07-30T17:20:00+00:00"
+    },
+    {
+      "schema": "ai-progress.v2",
+      "event": "DONE",
+      "task": "#165",
+      "human_owner": "Tianrui",
+      "executor": "Codex",
+      "reviewer": "Junyan",
+      "status": "done",
+      "summary": "AI Progress Board v0 protocol and local watcher are ready.",
+      "pr": "https://github.com/Lateily/Alpha-Research/pull/165",
+      "cost_cny": "0",
+      "risk": "none",
+      "timestamp_utc": "2026-07-30T17:25:00+00:00"
+    },
+    {
+      "schema": "ai-progress.v2",
+      "event": "CLAIM",
+      "task": "#303",
+      "human_owner": "Junyan",
+      "executor": "Claude",
+      "reviewer": "Junyan",
+      "status": "in_progress",
+      "summary": "Draft a merge note for the approved progress protocol.",
+      "branch": "docs/progress-merge-note",
+      "files": [
+        "docs/team"
+      ],
+      "risk": "none",
+      "timestamp_utc": "2026-07-30T17:30:00+00:00",
+      "expires_at": "2026-07-30T18:30:00+00:00"
+    },
+    {
+      "schema": "ai-progress.v2",
+      "event": "RELEASE",
+      "task": "#303",
+      "human_owner": "Junyan",
+      "executor": "Claude",
+      "reviewer": "Junyan",
+      "status": "released",
+      "summary": "Merge note is no longer needed because PR comments are sufficient.",
+      "risk": "none",
+      "timestamp_utc": "2026-07-30T17:40:00+00:00"
+    }
+  ]
+}

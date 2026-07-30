@@ -39,6 +39,21 @@ For development without GitHub access, use the sample snapshot:
 docs/llm/AI_PROGRESS_SNAPSHOT.example.json
 ```
 
+For UI development that needs every event type plus a conflict, use the fixture:
+
+```text
+docs/llm/AI_PROGRESS_SNAPSHOT.fixture.json
+```
+
+It is generated from:
+
+```text
+scripts/llm/progress_board.fixture.json
+```
+
+The fixture is synthetic and contains no tokens, API keys, private chats, or
+research content.
+
 ## Export Command
 
 To export one snapshot without running the local web server:
@@ -57,6 +72,29 @@ python scripts/llm/progress_snapshot.py `
 ```
 
 The exporter is read-only.
+
+## Local Browser CORS
+
+`progress_watch.py` supports read-only `GET` and `OPTIONS` for `/events`.
+
+Default allowed local origins:
+
+- `http://localhost:5173`
+- `http://127.0.0.1:5173`
+- `http://localhost:8765`
+- `http://127.0.0.1:8765`
+
+To allow another explicit local development origin:
+
+```powershell
+python scripts/llm/progress_watch.py `
+  --repo Lateily/Alpha-Research `
+  --issue 164 `
+  --cors-origin http://localhost:3000
+```
+
+Do not use wildcard CORS. Do not add public preview domains until Junyan
+approves a server-side proxy design.
 
 ## Snapshot Shape
 
@@ -103,6 +141,53 @@ If `ok` is `false`, show the `error` field and keep the page read-only.
 
 Do not hide failures behind empty states. A disconnected board is different
 from a board with no events.
+
+## Local `/team` Handoff Check
+
+Use this flow when handing the watcher to a local Vite UI:
+
+1. Start the watcher:
+
+```powershell
+python scripts/llm/progress_watch.py --repo Lateily/Alpha-Research --issue 164
+```
+
+2. Start the Vite frontend in another terminal.
+
+3. Open `/team` in the Vite page.
+
+4. Confirm the page shows `schema=ai-progress.snapshot.v1` and
+   `contract_version=1.5`.
+
+5. Confirm the page refreshes within 30 seconds after a new #164 event appears.
+
+6. Stop the watcher and confirm the UI shows an explicit disconnected/error
+   state instead of pretending the board is empty.
+
+7. Test conflict rendering with:
+
+```powershell
+python scripts/llm/progress_watch.py --source scripts/llm/progress_board.fixture.json
+```
+
+Then open the local UI and confirm `summary.conflicts` is non-zero and the
+conflict block is visible.
+
+## Team Sharing Proposal Only
+
+Team sharing needs Junyan approval before implementation.
+
+The safe design is:
+
+- a server-side HTTPS read-only API reads GitHub Issue #164 comments
+- GitHub token stays only in server environment variables
+- frontend reads only the server's sanitized snapshot JSON
+- no browser token storage
+- no GitHub write endpoint
+- no model API calls
+- no private chat ingestion
+
+Until approved, use local watcher plus local UI only.
 
 ## Safety Boundary
 
