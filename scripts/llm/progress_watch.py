@@ -20,6 +20,8 @@ import progress_conflicts
 DEFAULT_REPO = "Lateily/Alpha-Research"
 DEFAULT_ISSUE = "164"
 DEFAULT_INTERVAL_SECONDS = 30
+SNAPSHOT_SCHEMA = "ai-progress.snapshot.v1"
+CONTRACT_VERSION = "1.5"
 
 
 def main() -> int:
@@ -141,6 +143,8 @@ def build_snapshot(source: dict[str, str]) -> dict[str, Any]:
         conflicts = progress_conflicts.find_conflicts(events, now)
         active = progress_conflicts.active_claims(events, now)
         return {
+            "schema": SNAPSHOT_SCHEMA,
+            "contract_version": CONTRACT_VERSION,
             "ok": True,
             "source": redacted_source(source),
             "refreshed_at_utc": now.isoformat(),
@@ -151,6 +155,8 @@ def build_snapshot(source: dict[str, str]) -> dict[str, Any]:
         }
     except (OSError, ValueError, HTTPError, URLError) as exc:
         return {
+            "schema": SNAPSHOT_SCHEMA,
+            "contract_version": CONTRACT_VERSION,
             "ok": False,
             "source": redacted_source(source),
             "refreshed_at_utc": now.isoformat(),

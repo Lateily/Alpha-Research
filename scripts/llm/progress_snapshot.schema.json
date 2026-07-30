@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/progress_snapshot.schema.json",
+  "title": "AI Progress Board Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "contract_version",
+    "ok",
+    "source",
+    "refreshed_at_utc",
+    "summary",
+    "active_claims",
+    "conflicts",
+    "timeline"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-progress.snapshot.v1"
+    },
+    "contract_version": {
+      "const": "1.5"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": {
+          "enum": ["file", "github", "url"]
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "refreshed_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "error": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "events",
+        "active_claims",
+        "done",
+        "blocked",
+        "released",
+        "conflicts"
+      ],
+      "properties": {
+        "events": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "active_claims": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "done": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "released": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "conflicts": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "active_claims": {
+      "type": "array",
+      "items": {
+        "$ref": "progress_event.schema.json"
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["left", "right", "left_task", "right_task", "files"],
+        "properties": {
+          "left": {
+            "type": "string"
+          },
+          "right": {
+            "type": "string"
+          },
+          "left_task": {
+            "type": "string"
+          },
+          "right_task": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "$ref": "progress_event.schema.json"
+      }
+    }
+  }
+}

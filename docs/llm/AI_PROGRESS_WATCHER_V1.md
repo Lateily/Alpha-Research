@@ -22,6 +22,29 @@ The page refreshes itself and shows:
 The watcher does not post comments, does not read private model chats, does not
 call model APIs, and does not store tokens.
 
+## v1.5 UI Contract
+
+The `/events` endpoint now returns a versioned snapshot:
+
+```json
+{
+  "schema": "ai-progress.snapshot.v1",
+  "contract_version": "1.5"
+}
+```
+
+The display-layer contract is documented in:
+
+```text
+docs/llm/AI_PROGRESS_UI_CONTRACT_V1_5.md
+```
+
+The machine-readable snapshot schema is:
+
+```text
+scripts/llm/progress_snapshot.schema.json
+```
+
 ## First Run With Local Example Data
 
 Open PowerShell in the repository:
@@ -50,6 +73,13 @@ To print one JSON snapshot without starting the page:
 
 ```powershell
 python scripts/llm/progress_watch.py --once
+```
+
+To export the same snapshot to a file:
+
+```powershell
+python scripts/llm/progress_snapshot.py `
+  --output docs/llm/AI_PROGRESS_SNAPSHOT.example.json
 ```
 
 ## Reading GitHub Issue #164
