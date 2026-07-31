@@ -113,15 +113,16 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_chip_distribution.py
 
-      # ── Step 2d.8: Tushare consensus forecast ──────────────────────────
-      # Tushare 15000-tier per-watchlist 盈利预测 / consensus forecast.
-      # Forward-compatible: unavailable endpoint names/tiers preserve schema
-      # with _status: endpoint_unavailable or tier_locked per ticker.
-      - name: "Step 2d.8: Fetch Tushare consensus forecast (15000-tier)"
+      # ── Step 2d.8: Tushare issuer guidance (业绩预告+快报) ───────────────
+      # SEMANTIC FIX (PR-A A3): forecast/express are COMPANY-ISSUED guidance,
+      # not broker consensus. Writes issuer_guidance/ + one deprecation-cycle
+      # copy into consensus_forecast/ (deprecated:true, moved_to marker).
+      # Sell-side data = report_rc via Step 2d.15 (E2; 目标价不作为模型估值结论).
+      - name: "Step 2d.8: Fetch Tushare issuer guidance 业绩预告/快报"
         continue-on-error: true
         env:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
-        run: python scripts/fetch_consensus_forecast.py
+        run: python scripts/fetch_issuer_guidance.py
 
       # ── Step 2d.9: Tushare 龙虎榜 ───────────────────────────────────────
       # Tushare 15000-tier per-watchlist 30-day 龙虎榜 appearances.
@@ -456,6 +457,7 @@ jobs:
                  public/data/signals_*.json public/data/cflow_*.json \
                  public/data/tushare/*.json \
                  public/data/chip_distribution/*.json \
+                 public/data/issuer_guidance/*.json \
                  public/data/consensus_forecast/*.json \
                  public/data/lhb/*.json \
                  public/data/quant_factors/*.json \
