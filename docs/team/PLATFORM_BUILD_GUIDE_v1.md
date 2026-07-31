@@ -6,6 +6,9 @@
 >
 > 维护人:Junyan(产品与研究决策)+ Claude(架构与审核)。
 > 版本:v1.1,2026-07-27。学长(PM/审阅者)意见每周消化进本手册的修订记录。
+> Better 的 Product Engineer / Product Manager 施工权威已扩展到
+> `docs/product/PRODUCT_ENGINEERING_BUILD_GUIDE.md`;本手册继续作为全员平台导览,
+> 两者冲突时产品工程细节以后者为准。
 
 ---
 

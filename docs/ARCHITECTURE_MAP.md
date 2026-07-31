@@ -33,6 +33,8 @@
 | [Macro OS](research/macro/MACRO_OS.md) | 把宏观事实、预期差、MRG、行业和组合暴露串成闭环 | 全组合宏观门与下钻接口 |
 | [AI OS 技术搭建指南](llm/AI_OS_BUILD_GUIDE.md) | 让每个任务自动经历规格、认领、执行、验证、复核、批准、Memory 和总账回写 | Reed 的 Agent 控制平面、工作平面、证据平面与观测平面 |
 | [AI OS 永久工程总账](llm/AI_OS_ENGINEERING_BACKLOG.md) | 防止 AI harness、评测、自动化与安全任务随会话丢失 | A-ID、状态、owner、验收和实施顺序 |
+| [Product OS 技术搭建指南](product/PRODUCT_ENGINEERING_BUILD_GUIDE.md) | 把需求、契约、设计、前后端、QA、发布和反馈串成产品闭环 | Better 的 Product Engineer / Product Manager 权威手册 |
+| [Product Engineering 永久总账](product/PRODUCT_ENGINEERING_BACKLOG.md) | 防止产品需求、迁移、质量与发布债散落 | PE-ID、状态、owner、验收和里程碑 |
 
 **状态解释:**文档或脚本存在不等于闭环完成。进度必须区分 `DELIVERED_UNWIRED`、
 `VALIDATING` 和 `DONE`;研究项与 AI 系统项分别以对应永久总账为准。

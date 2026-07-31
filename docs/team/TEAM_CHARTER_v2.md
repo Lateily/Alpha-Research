@@ -44,6 +44,11 @@
 
 核心工作:把 repo 里的研究产物变成稳定网页 — 不发明研究结论,准确展示合同。
 
+**完整技术与产品权威:**`docs/product/PRODUCT_ENGINEERING_BUILD_GUIDE.md`。Better 同时
+承担 Product Engineer / Product Manager:先把需求变成用户问题、旅程、非目标、数据
+契约和验收,再负责信息架构、前后端实现、QA、发布、回滚和反馈闭环。全部产品工程
+状态记录在 `docs/product/PRODUCT_ENGINEERING_BACKLOG.md`,不能只存在于设计稿或聊天。
+
 首月任务:
 
 | 周 | 任务 | 具体交付 | 验收标准 |
