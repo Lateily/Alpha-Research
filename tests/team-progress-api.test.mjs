@@ -118,6 +118,38 @@ async function testOptionsIsReadOnly() {
   assert.equal(res.headers['Access-Control-Allow-Methods'], 'GET, OPTIONS');
 }
 
+async function testGithubFailureKeepsSnapshotShape() {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 502,
+    statusText: 'Bad Gateway',
+    async json() {
+      return [];
+    },
+  });
+
+  try {
+    const req = { method: 'GET', headers: { origin: 'http://localhost:5173' } };
+    const res = makeResponse();
+    await handler(req, res);
+
+    assert.equal(res.code, 502);
+    assert.equal(res.body.schema, 'ai-progress.snapshot.v1');
+    assert.equal(res.body.contract_version, '1.5');
+    assert.equal(res.body.ok, false);
+    assert.equal(res.body.summary.events, 0);
+    assert.deepEqual(res.body.active_claims, []);
+    assert.deepEqual(res.body.conflicts, []);
+    assert.deepEqual(res.body.timeline, []);
+    assert.match(res.body.error, /GitHub comments read failed/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
 await testReadOnlySnapshot();
 await testOptionsIsReadOnly();
+await testGithubFailureKeepsSnapshotShape();
 console.log('ALL TEAM PROGRESS API TESTS PASS (0 network calls)');

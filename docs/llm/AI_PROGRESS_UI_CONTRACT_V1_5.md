@@ -54,6 +54,15 @@ scripts/llm/progress_board.fixture.json
 The fixture is synthetic and contains no tokens, API keys, private chats, or
 research content.
 
+For error-state UI development, use:
+
+```text
+docs/llm/AI_PROGRESS_SNAPSHOT.error.example.json
+```
+
+The error fixture keeps the same top-level shape as a healthy snapshot, sets
+`ok=false`, returns zero counts and empty lists, and includes an `error` string.
+
 ## Export Command
 
 To export one snapshot without running the local web server:

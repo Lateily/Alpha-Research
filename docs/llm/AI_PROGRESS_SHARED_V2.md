@@ -103,6 +103,16 @@ Refresh no faster than every 30 seconds.
 
 If `ok=false`, show the `error` field and keep the page read-only.
 
+Contract fixtures:
+
+- success snapshot: `docs/llm/AI_PROGRESS_SNAPSHOT.example.json`
+- full event/conflict snapshot: `docs/llm/AI_PROGRESS_SNAPSHOT.fixture.json`
+- error snapshot: `docs/llm/AI_PROGRESS_SNAPSHOT.error.example.json`
+
+The `/team` route in the Vite frontend reads `GET /api/team-progress` from the
+same origin. It does not read GitHub directly, hold a token, post comments, or
+call model APIs.
+
 ## Junyan Trial Conditions
 
 Junyan approved v2 as a two-week trial. The trial clock starts when the v2 UI is
