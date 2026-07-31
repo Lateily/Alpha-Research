@@ -244,6 +244,15 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_macro_gate.py
 
+      # ── Step 2d.21b: Tushare major_news 要闻 (PR-A A6) ───────────────────
+      # Entitled endpoint (verified live). Titles are UNTRUSTED external text —
+      # the JSON carries a _trust_boundary note; wrap before any LLM use.
+      - name: "Step 2d.21b: Fetch major_news 要闻 (24h window)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_major_news.py
+
       # ── Step 2d.22: Data-source health gate (PR-A A1/A5) ─────────────────
       # Probes every entitled Tushare endpoint and writes
       # public/data/v2/ops/data_source_health.json. INTENTIONALLY NO
