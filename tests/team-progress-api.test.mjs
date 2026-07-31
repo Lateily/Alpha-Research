@@ -88,6 +88,7 @@ async function testReadOnlySnapshot() {
     assert.equal(res.code, 200);
     assert.equal(res.headers['X-Progress-Board-Readonly'], 'true');
     assert.equal(res.headers['Access-Control-Allow-Origin'], 'http://localhost:5173');
+    assert.equal(res.headers['Cache-Control'], 's-maxage=30, stale-while-revalidate=60');
     assert.equal(calls.length, 1);
     assert.equal(calls[0].options.headers.Authorization, undefined);
     assert.equal(res.body.schema, 'ai-progress.snapshot.v1');

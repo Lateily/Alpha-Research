@@ -37,8 +37,9 @@ The endpoint must remain read-only.
 - No frontend token.
 - No buy, sell, hold, or position sizing output.
 
-If GitHub authentication is needed for rate limits, the token must live only in
-server environment variables:
+The repository is public, so the preferred v2 path is no token plus CDN caching.
+If GitHub authentication is needed for rate limits, the token must be
+fine-grained read-only and must live only in server environment variables:
 
 ```text
 GITHUB_TOKEN
@@ -51,6 +52,19 @@ PROGRESS_GITHUB_TOKEN
 ```
 
 Do not put either value in code, docs, commits, screenshots, or chat.
+
+The browser must never receive or store a GitHub token.
+
+## Cache Floor
+
+The shared endpoint sets:
+
+```text
+Cache-Control: s-maxage=30, stale-while-revalidate=60
+```
+
+Do not lower `s-maxage` below 30 seconds. This protects GitHub rate limits and
+keeps the v2 trial on the free or lowest-cost hosting path.
 
 ## Configuration
 
@@ -91,10 +105,11 @@ If `ok=false`, show the `error` field and keep the page read-only.
 
 ## Junyan Trial Conditions
 
-Junyan approved v2 as a trial through 2026-08-14.
+Junyan approved v2 as a two-week trial. The trial clock starts when the v2 UI is
+actually online for the team, not when this data-layer PR is opened.
 
-Keep or destroy will be reviewed after the trial. Cost must stay on the free or
-lowest-cost hosting path and be reported in the weekly note.
+Junyan's dated review checkpoint is 2026-08-14: keep or destroy. Cost must stay
+on the free or lowest-cost hosting path and be reported in the weekly note.
 
 ## Local Validation
 
