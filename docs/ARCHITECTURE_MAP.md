@@ -32,8 +32,8 @@
 | 2 数据源 | 原料:Tushare/东财/yfinance;财联社·FRED 未接 | scripts/fetch_*.py | Junyan+Claude | 55% |
 | 3 引擎层 | 车间:夜链v2/哨兵/模型基金/判分/闸门/电池/归因 | experiments/execution_tracker/ | Claude | 60→80%(#169/#170) |
 | 4 契约层 | 传送带:引擎→七契约JSON→前端只读 | public/data/v2/ + docs/contracts/ | Junyan定稿+Claude | 0→70%(#170) |
-| 5 前端载体 | 展厅(七面板+工作台)+工具间;旧Dashboard=legacy | src/(旧) → web/(新) | Xuhang | 10% |
-| 6 AI系统 | 工人:Claude(架构审核)/Codex(结对)/Kimi(考核中);评测/prompt库/成本 | scripts/llm/ + docs/llm/ + AGENTS.md | Tianrui | 15% |
+| 5 前端载体 | 展厅(七面板+工作台)+工具间;旧Dashboard=legacy | src/(旧) → web/(新) | Better | 10% |
+| 6 AI系统 | 工人:Claude(架构审核)/Codex(结对)/Kimi(考核中);评测/prompt库/成本 | scripts/llm/ + docs/llm/ + AGENTS.md | Reed | 15% |
 | 7 团队流程 | 神经:main保护/PR口令/认领协议/Notion审阅/周消化 | GitHub 设置 + TEAM_CHARTER_v2 | Junyan | 60% |
 | 8 运维 | 电力:launchd/Actions/Vercel(API停用)/凭证 | plist + .github/workflows/ | Claude | 55% |
 

@@ -25,7 +25,7 @@ def main() -> int:
     parser.add_argument(
         "--human-owner",
         required=True,
-        help="Human accountable for the work, for example Tianrui.",
+        help="Human accountable for the work, for example Reed.",
     )
     parser.add_argument(
         "--executor",

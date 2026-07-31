@@ -84,7 +84,7 @@ token in the process environment.
 
 ## Boundary
 
-This is a Tianrui-side local coordination tool. It belongs to the AI/tooling
+This is a Reed-side local coordination tool. It belongs to the AI/tooling
 layer for now.
 
 Future Agent Console or `/team` work may render the same protocol in the

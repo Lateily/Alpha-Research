@@ -11,7 +11,7 @@ This folder contains the K0 smoke adapter for Moonshot Kimi K3.
   `public/data/v2/ops/llm_usage.jsonl`.
 - Avoids writing prompts or responses to the ledger.
 
-## Tianrui Setup
+## Reed Setup
 
 Do this part yourself. Never paste the API key into code, commits, documents, or chat.
 
