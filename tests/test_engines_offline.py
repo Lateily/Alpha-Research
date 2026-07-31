@@ -4,6 +4,7 @@
 归因 n<30 必须 claim_allowed=false。运行: python3 tests/test_engines_offline.py
 """
 import sys, os
+os.environ["AR_OFFLINE"] = "1"  # 零网络铁则:禁用一切真实外呼
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "experiments", "execution_tracker"))
 import pandas as pd
 from red_flag_gate import check_ticker
@@ -124,8 +125,25 @@ def test_watchlist_tickers_guard():
     print("PASS watchlist_tickers: 缺失→[] / 缺字段行跳过(F12)")
 
 
+def test_backfill_skips_not_scorable_and_preserves_invalid():
+    """审计回归:NOT_SCORABLE 不发请求;异型 returns 保留原值不洗白(token=None 即零网络证明)。"""
+    from run_post_close_report import backfill
+    sigs = [
+        {"signal_id": "ns1", "ticker": "SECTOR:测试", "scoring": "NOT_SCORABLE",
+         "timestamp": "20260731 close", "returns": None},
+        {"signal_id": "bad1", "ticker": "600000.SH", "timestamp": "20260731 close",
+         "returns": "corrupted-string"},
+    ]
+    n = backfill(sigs, token=None)
+    assert n == 0
+    assert sigs[0]["returns"] is None or sigs[0]["returns"] == {}  # NS条目未被网络路径触碰
+    assert sigs[1]["returns"] == "corrupted-string"  # 异型保留原值,未静默抹除
+    print("PASS backfill: NOT_SCORABLE跳过 + 异型不洗白(零网络)")
+
+
 if __name__ == "__main__":
     test_gate_catches_first_loss(); test_gate_passes_clean(); test_gate_blocks_on_zero_evidence()
     test_battery_flags_blocked_news(); test_attribution_split_and_gate()
     test_trade_card_real_schema(); test_watchlist_tickers_guard()
+    test_backfill_skips_not_scorable_and_preserves_invalid()
     print("ALL OFFLINE TESTS PASS (0 network calls)")
