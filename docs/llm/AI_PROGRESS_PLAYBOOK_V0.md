@@ -76,7 +76,7 @@ Example:
 
 ```powershell
 python scripts/llm/progress_event.py claim `
-  --human-owner "Tianrui" `
+  --human-owner "Reed" `
   --executor "Codex" `
   --reviewer "Junyan" `
   --task "#164" `
@@ -94,7 +94,7 @@ Use this after a meaningful step, or every 30 minutes during active work:
 
 ```powershell
 python scripts/llm/progress_event.py update `
-  --human-owner "Tianrui" `
+  --human-owner "Reed" `
   --executor "Codex" `
   --reviewer "Junyan" `
   --task "#164" `
@@ -108,7 +108,7 @@ Use this when there is a PR, finished artifact, or handoff:
 
 ```powershell
 python scripts/llm/progress_event.py done `
-  --human-owner "Tianrui" `
+  --human-owner "Reed" `
   --executor "Codex" `
   --reviewer "Junyan" `
   --task "#164" `

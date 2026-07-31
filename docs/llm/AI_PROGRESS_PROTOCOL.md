@@ -4,7 +4,7 @@ GitHub Issue #164 is the shared remote progress board:
 
 https://github.com/Lateily/Alpha-Research/issues/164
 
-This protocol keeps Junyan, Xuhang, Tianrui, Claude, Codex, and Kimi from
+This protocol keeps Junyan, Better, Reed, Claude, Codex, and Kimi from
 duplicating work. It is a coordination layer only. It does not make investment
 decisions and must not bypass Junyan's review and scoring system.
 
@@ -44,7 +44,7 @@ Use CLAIM when someone starts a task.
 Required fields:
 
 - `task`: issue number or short task name
-- `human_owner`: accountable human, for example `Tianrui`
+- `human_owner`: accountable human, for example `Reed`
 - `executor`: person or tool doing the work, for example `Codex`
 - `reviewer`: human reviewer or approver, for example `Junyan`
 - `summary`: one sentence about the work
@@ -118,7 +118,7 @@ Generate a standard CLAIM block:
 
 ```powershell
 python scripts/llm/progress_event.py claim `
-  --human-owner "Tianrui" `
+  --human-owner "Reed" `
   --executor "Codex" `
   --reviewer "Junyan" `
   --task "#164" `
@@ -131,7 +131,7 @@ Generate a standard DONE block:
 
 ```powershell
 python scripts/llm/progress_event.py done `
-  --human-owner "Tianrui" `
+  --human-owner "Reed" `
   --executor "Codex" `
   --reviewer "Junyan" `
   --task "#164" `
