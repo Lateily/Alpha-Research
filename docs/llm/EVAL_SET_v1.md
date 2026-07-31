@@ -36,6 +36,10 @@ human verification before escalation.
 Use `BLUE` when the event is background context, routine, already expected, or
 not actionable for the research queue.
 
+Platform mapping: red = immediately affects holdings or today's research queue;
+yellow = relevant but needs human verification before escalation; blue =
+background noise.
+
 These are research-state labels, not trade labels.
 
 ## Required Model Output
