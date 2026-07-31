@@ -19,7 +19,6 @@ if not token:
     print('FAIL [TEST 0] TUSHARE_TOKEN not in env')
     print('  Fix: source ~/.zshrc, or restart terminal')
     sys.exit(1)
-print(f'PASS [TEST 0] token loaded (len={len(token)}, head={token[:6]})')
 
 # --- Test 1: import tushare ---
 try:

@@ -97,7 +97,14 @@ def backfill(log, token):
     filled = 0
     series_cache = {}
     for sig in log:
-        sig.setdefault("returns", {})
+        if str(sig.get("scoring") or "") == "NOT_SCORABLE":
+            continue  # 声明为不可判分的条目:不请求行情、不改写任何字段
+        r = sig.get("returns")
+        if r is None:
+            sig["returns"] = {}  # null 视为未初始化,安全初始化
+        elif not isinstance(r, dict):
+            print(f"  ⚠ SCHEMA_INVALID returns 保留原值不洗白: {sig.get('signal_id')}")
+            continue  # 审计F:异型数据隔离,不静默抹除
         if all(h in sig["returns"] for h in HORIZON_DAYS):
             continue                                   # already complete
         td = parse_trade_date(sig.get("timestamp"))

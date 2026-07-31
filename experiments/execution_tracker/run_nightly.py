@@ -28,7 +28,8 @@ ALARM_FLAG = "/tmp/ar-nightly-incomplete"
 STEPS = [
     # ── 结算主干(闭环根修复:定盘并入夜链,消灭手工补账)──
     ("official_sample", ["python3", "run_official_sample.py"], True, []),
-    ("fwd_backfill", ["python3", "run_post_close_report.py"], True, ["official_sample"]),
+    ("fwd_backfill", ["python3", "run_post_close_report.py", "--backfill-only"], True,
+     ["official_sample"]),  # F8:正式样本每天只生成一次(official_sample 步),此处仅回填
     # ── 轮动/发现链 ──
     ("rotation_panel", ["python3", "rotation_panel.py"], True, []),
     ("momentum_prefilter", ["python3", "momentum_prefilter.py"], True, []),
@@ -43,13 +44,15 @@ STEPS = [
     ("watch_dynamic", ["python3", "watch_dynamic.py"], False,
      ["court_wakeup", "momentum_prefilter"]),
     ("position_review", ["python3", "position_review.py"], True, ["official_sample"]),
-    ("setup_promoter", ["python3", "setup_promoter.py"], True,
-     ["watch_dynamic", "official_sample"]),
     # ── 强制质检层(2026-07-27/28 事故驱动)──
     ("red_flag_gate", ["python3", "red_flag_gate.py", "--from-watchlist"], True,
      ["watch_dynamic"]),
     ("full_battery", ["python3", "full_battery.py", "--from-watchlist"], True,
      ["watch_dynamic"]),
+    # 晋级必须在质检之后(审计F4:亏损预告票不得先READY后亮旗)+ 轮动面板硬依赖(F5)
+    ("setup_promoter", ["python3", "setup_promoter.py"], True,
+     ["watch_dynamic", "official_sample", "red_flag_gate", "full_battery",
+      "rotation_panel"]),
     # ── 前端契约导出(引擎写、前端读的唯一通道)──
     # 设计决定(审查F4/F5):export 无前置依赖、永远运行 —— 跳过导出只会让磁盘上
     # 留着更旧的契约;诚实性由 export 内部的逐源新鲜度/内部状态戳保证。
@@ -193,9 +196,62 @@ def selftest():
     return all(ok for _, ok in checks)
 
 
+def preflight():
+    """首跑前体检:真实读取账本与引擎文件,校验 schema 与依赖,不联网不写盘。"""
+    checks = []
+    # 1) 信号账本可解析 + 每条 returns 为 dict/缺失 + 时间戳可解析
+    try:
+        log = json.load(open(os.path.join(HERE, "paper_signal_log.json")))
+        sigs = log if isinstance(log, list) else log.get("signals", [])
+        checks.append((f"信号账本可解析(n={len(sigs)})", True))
+        bad_ret = [x.get("signal_id") for x in sigs
+                   if "returns" in x and x["returns"] is not None and not isinstance(x["returns"], dict)]
+        checks.append(("returns 类型合法(dict/null)", bad_ret == []))
+        if bad_ret: print(f"  ✗ 异型 returns: {bad_ret[:5]}")
+        import re as _re
+        bad_tk = [x.get("signal_id") for x in sigs
+                  if not _re.fullmatch(r"\d{6}\.(SH|SZ|BJ)", str(x.get("ticker",""))) 
+                  and not str(x.get("scoring") or "") == "NOT_SCORABLE"]
+        checks.append(("非标资产均已声明 NOT_SCORABLE", bad_tk == []))
+        if bad_tk: print(f"  ✗ 非标 ticker 未声明: {bad_tk[:5]}")
+        bad_ts = [x.get("signal_id") for x in sigs
+                  if not _re.match(r"20\d{6}", str(x.get("timestamp","")))]
+        checks.append(("时间戳可解析", bad_ts == []))
+        if bad_ts: print(f"  ✗ 坏时间戳: {bad_ts[:5]}")
+    except Exception as e:
+        checks.append((f"信号账本解析: {e}", False))
+    # 2) 基金账本三件可解析
+    for f in ("model_fund/fund.json", "model_fund/nav_history.json", "model_fund/orders.json"):
+        try:
+            json.load(open(os.path.join(HERE, f))); checks.append((f"{f} 可解析", True))
+        except Exception as e:
+            checks.append((f"{f}: {e}", False))
+    # 3) STEPS 依赖闭合(引用的依赖都是已定义步骤,且无前向引用)
+    seen, dep_ok = set(), True
+    for name, _, _, deps in STEPS:
+        if any(d not in seen for d in deps):
+            dep_ok = False; print(f"  ✗ {name} 依赖了未定义/后置步骤: {deps}")
+        seen.add(name)
+    checks.append(("依赖图闭合无前向引用", dep_ok))
+    # 4) 各步骤脚本文件存在
+    miss = [c[1] for _, c, _, _ in STEPS if not os.path.exists(os.path.join(HERE, c[1]))]
+    checks.append((f"全部步骤脚本存在({len(STEPS)}步)", not miss))
+    if miss: print(f"  ✗ 缺脚本: {miss}")
+    # 5) 依赖语义干跑(fake runner)
+    res = run_steps(lambda c: (0, "ok"), require_live=False)
+    checks.append(("干跑全通 ⇒ COMPLETE", res["report"] == "COMPLETE"))
+    for name, ok in checks:
+        print(("  ✓ " if ok else "  ✗ ") + str(name))
+    good = all(ok for _, ok in checks)
+    print(f"preflight: {'PASS' if good else 'FAIL'}(零网络零写入)")
+    return good
+
+
 def main():
     if "--selftest" in sys.argv:
         sys.exit(0 if selftest() else 1)
+    if "--preflight" in sys.argv:
+        sys.exit(0 if preflight() else 1)
     require_live = "--allow-data-blocked" not in sys.argv
     res = run_steps(require_live=require_live)
     with open(OUT, "w", encoding="utf-8") as fh:
