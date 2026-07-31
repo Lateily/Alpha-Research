@@ -24,13 +24,24 @@
 
 **前后端链接铁律:块3 写、块4 传、块5 读 — 契约层是唯一通道,其他连接方式非法。**
 
+## 永久工程入口
+
+| 入口 | 解决的问题 | 权威范围 |
+|---|---|---|
+| [研究工程永久总账](research/RESEARCH_ENGINEERING_BACKLOG.md) | 防止研究债、承诺和未接线能力随聊天或 Agent 会话丢失 | 所有研究工程的状态、owner、证据和验收条件 |
+| [全市场分层研究漏斗](research/ALL_MARKET_RESEARCH_FUNNEL.md) | 从全 A 永久在线到候选、电池、深研、法庭的稳定路径 | 证券覆盖、运行节奏、通道、状态机和 Agent 分工 |
+| [Macro OS](research/macro/MACRO_OS.md) | 把宏观事实、预期差、MRG、行业和组合暴露串成闭环 | 全组合宏观门与下钻接口 |
+
+**状态解释:**文档或脚本存在不等于闭环完成。进度必须区分 `DELIVERED_UNWIRED`、
+`VALIDATING` 和 `DONE`;具体定义以研究工程永久总账为准。
+
 ## 八块登记表
 
 | 块 | 一句话 | 载体 | 负责人 | 完成度(E4) |
 |---|---|---|---|---|
-| 1 研究框架 | 怎么想:宪法v1.4/金字塔/两票/双层线/E1-E4/判分 | docs/research/ + docs/team/ | Junyan | 75% |
-| 2 数据源 | 原料:Tushare/东财/yfinance;财联社·FRED 未接 | scripts/fetch_*.py | Junyan+Claude | 55% |
-| 3 引擎层 | 车间:夜链v2/哨兵/模型基金/判分/闸门/电池/归因 | experiments/execution_tracker/ | Claude | 60→80%(#169/#170) |
+| 1 研究框架 | 怎么想:宪法v1.4/全市场漏斗/Macro OS/两票/双层线/E1-E4/判分 | docs/research/ + docs/team/ | Junyan | 75% |
+| 2 数据源 | 原料:Tushare/东财/yfinance;健康表/宏观原料/新闻链在 #181 待验收 | scripts/fetch_*.py | Junyan+Claude | 55% |
+| 3 引擎层 | 车间:夜链v2/哨兵/模型基金/判分/闸门/电池/归因;硬闸在 #180 待验收 | experiments/execution_tracker/ | Claude | 60→80%(#169/#170/#180) |
 | 4 契约层 | 传送带:引擎→七契约JSON→前端只读 | public/data/v2/ + docs/contracts/ | Junyan定稿+Claude | 0→70%(#170) |
 | 5 前端载体 | 展厅(七面板+工作台)+工具间;旧Dashboard=legacy | src/(旧) → web/(新) | Better | 10% |
 | 6 AI系统 | 工人:Claude(架构审核)/Codex(结对)/Kimi(考核中);评测/prompt库/成本 | scripts/llm/ + docs/llm/ + AGENTS.md | Reed | 15% |
