@@ -7,7 +7,8 @@ This folder contains the K0 smoke adapter for Moonshot Kimi K3.
 - Calls the OpenAI-compatible chat completions API at `https://api.moonshot.cn/v1`.
 - Uses model `kimi-k3`.
 - Reads the API key only from local environment variable `MOONSHOT_API_KEY`.
-- Appends token and estimated cost metadata to `scripts/llm/llm_usage.json`.
+- Appends token and estimated cost metadata to
+  `public/data/v2/ops/llm_usage.jsonl`.
 - Avoids writing prompts or responses to the ledger.
 
 ## Tianrui Setup
@@ -45,7 +46,28 @@ Expected result:
 
 - The terminal prints one Kimi K3 answer.
 - The terminal prints this call's estimated cost in RMB.
-- `scripts/llm/llm_usage.json` contains a new usage record.
+- `public/data/v2/ops/llm_usage.jsonl` contains one new JSONL usage record.
+
+The real runtime ledger is ignored by git. Commit only this format example:
+
+```text
+public/data/v2/ops/llm_usage.example.jsonl
+```
+
+## Ledger Fields
+
+Every JSONL row includes:
+
+- `run_id`: unique run identifier for traceability
+- `prompt_version`: prompt contract used for the run
+- `input_hash`: SHA-256 digest of the input messages, without storing the input
+  text
+- `provider`, `base_url`, `model`, and `task_name`
+- input, cached input, and output token counts
+- estimated USD and CNY cost
+- `ledger_schema`: currently `llm_usage.v1`
+
+Prompts and responses are intentionally not written to the ledger.
 
 ## Cost Notes
 
@@ -61,10 +83,25 @@ The default USD/CNY estimate is `7.20`. Override it only from the terminal if ne
 $env:LLM_USD_CNY = "7.20"
 ```
 
+## Offline Test
+
+Run the zero-network mock test:
+
+```powershell
+python tests/test_llm_adapter_offline.py
+```
+
+The test fakes the HTTP response, checks cost calculation, and verifies JSONL
+append behavior without `MOONSHOT_API_KEY`.
+
 ## PR Self-Check
 
 - [ ] Smoke question and answer run through `python scripts/llm/smoke_kimi.py`.
-- [ ] `scripts/llm/llm_usage.json` contains the new cost record.
+- [ ] `public/data/v2/ops/llm_usage.jsonl` contains the new local cost record.
+- [ ] Real `public/data/v2/ops/llm_usage.jsonl` is not committed.
+- [ ] `public/data/v2/ops/llm_usage.example.jsonl` documents the row format.
+- [ ] Each record includes `run_id`, `prompt_version`, and `input_hash`.
+- [ ] Offline mock test passes with `python tests/test_llm_adapter_offline.py`.
 - [ ] No API key appears in source code, docs, commits, or chat.
-- [ ] All changes stay inside `scripts/llm/` and `docs/llm/`.
+- [ ] Runtime ledger lives in `public/data/v2/ops/`, not in code folders.
 - [ ] Output is treated as evidence processing only, not an investment instruction.

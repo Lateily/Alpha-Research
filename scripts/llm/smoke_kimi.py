@@ -11,10 +11,14 @@ def main() -> int:
         messages=[
             {
                 "role": "system",
-                "content": "你是 Kimi K3 接入冒烟测试；只用一句中文介绍自己，不提供投资建议。",
+                "content": (
+                    "You are a Kimi K3 adapter smoke test. Introduce yourself "
+                    "in one short sentence and do not provide investment advice."
+                ),
             },
-            {"role": "user", "content": "请用一句话介绍你自己。"},
+            {"role": "user", "content": "Introduce yourself in one sentence."},
         ],
+        prompt_version="k0_smoke_v1",
         max_tokens=80,
         reasoning_effort="low",
     )
@@ -23,7 +27,7 @@ def main() -> int:
     print("Kimi K3 answer:")
     print(result["text"])
     print()
-    print(f"Estimated cost: ¥{usage_record['estimated_cost_cny']}")
+    print(f"Estimated cost: CNY {usage_record['estimated_cost_cny']}")
     print(f"Usage logged to: {USAGE_PATH}")
     return 0
 

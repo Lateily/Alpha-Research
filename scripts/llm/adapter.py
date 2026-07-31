@@ -1,12 +1,13 @@
-"""Moonshot Kimi K3 adapter with a tiny usage ledger.
+"""Moonshot Kimi K3 adapter with a JSONL usage ledger.
 
 This module is intentionally small and dependency-free. It reads the API key
 only from MOONSHOT_API_KEY, calls the OpenAI-compatible chat completions API,
-and appends token/cost metadata to llm_usage.json.
+and appends token/cost metadata to the platform ops ledger.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import urllib.error
@@ -15,11 +16,14 @@ from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 
 BASE_URL = "https://api.moonshot.cn/v1"
 MODEL = "kimi-k3"
-USAGE_PATH = Path(__file__).with_name("llm_usage.json")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+USAGE_PATH = REPO_ROOT / "public" / "data" / "v2" / "ops" / "llm_usage.jsonl"
+DEFAULT_PROMPT_VERSION = "k0_smoke_v1"
 
 DEFAULT_USD_CNY = Decimal(os.environ.get("LLM_USD_CNY", "7.20"))
 INPUT_CACHE_HIT_USD_PER_1M = Decimal(
@@ -35,6 +39,7 @@ def chat_completion(
     *,
     task_name: str,
     messages: list[dict[str, str]],
+    prompt_version: str = DEFAULT_PROMPT_VERSION,
     max_tokens: int = 128,
     reasoning_effort: str = "low",
     timeout_seconds: int = 60,
@@ -56,7 +61,13 @@ def chat_completion(
     response_json = _post_chat_completion(api_key, payload, timeout_seconds)
     usage = response_json.get("usage") or {}
     cost = estimate_cost(usage)
-    usage_record = _build_usage_record(task_name, usage, cost)
+    usage_record = _build_usage_record(
+        task_name=task_name,
+        prompt_version=prompt_version,
+        messages=messages,
+        usage=usage,
+        cost=cost,
+    )
     append_usage_record(usage_record)
 
     return {
@@ -113,18 +124,11 @@ def extract_text(response_json: dict[str, Any]) -> str:
 
 
 def append_usage_record(record: dict[str, Any], usage_path: Path = USAGE_PATH) -> None:
-    """Append one record to the JSON usage ledger."""
-
-    ledger = _read_usage_ledger(usage_path)
-    ledger.append(record)
+    """Append one record to the JSONL usage ledger."""
 
     usage_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = usage_path.with_suffix(usage_path.suffix + ".tmp")
-    tmp_path.write_text(
-        json.dumps(ledger, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    tmp_path.replace(usage_path)
+    with usage_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
 
 
 def _post_chat_completion(
@@ -155,7 +159,10 @@ def _post_chat_completion(
 
 
 def _build_usage_record(
+    *,
     task_name: str,
+    prompt_version: str,
+    messages: list[dict[str, str]],
     usage: dict[str, Any],
     cost: dict[str, str],
 ) -> dict[str, Any]:
@@ -168,18 +175,23 @@ def _build_usage_record(
     cached_tokens = _int_token(
         usage.get("cached_tokens", usage.get("cache_read_input_tokens", 0))
     )
+    now = datetime.now(timezone.utc)
 
     return {
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "run_id": f"llm_{now.strftime('%Y%m%dT%H%M%SZ')}_{uuid4().hex[:12]}",
+        "timestamp_utc": now.isoformat(),
         "provider": "moonshot",
         "base_url": BASE_URL,
         "model": MODEL,
         "task_name": task_name,
+        "prompt_version": prompt_version,
+        "input_hash": _input_hash(messages),
         "input_tokens": input_tokens,
         "cached_input_tokens": cached_tokens,
         "output_tokens": output_tokens,
         "estimated_cost_usd": cost["estimated_cost_usd"],
         "estimated_cost_cny": cost["estimated_cost_cny"],
+        "ledger_schema": "llm_usage.v1",
     }
 
 
@@ -193,18 +205,9 @@ def _read_api_key() -> str:
     return api_key
 
 
-def _read_usage_ledger(usage_path: Path) -> list[dict[str, Any]]:
-    if not usage_path.exists():
-        return []
-
-    raw = usage_path.read_text(encoding="utf-8").strip()
-    if not raw:
-        return []
-
-    ledger = json.loads(raw)
-    if not isinstance(ledger, list):
-        raise ValueError(f"{usage_path} must contain a JSON list.")
-    return ledger
+def _input_hash(messages: list[dict[str, str]]) -> str:
+    payload = json.dumps(messages, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _int_token(value: Any) -> int:
