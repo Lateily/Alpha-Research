@@ -235,6 +235,28 @@ jobs:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/fetch_margin.py
 
+      # ── Step 2d.21: Macro gate 宏观原料 (PR-A A5) ────────────────────────
+      # cn_gdp/cn_cpi/cn_ppi/cn_pmi/shibor + us_tycr (2Y/10Y + 2s10s).
+      # mode=review_context_only — v1 predicts nothing, changes no position.
+      - name: "Step 2d.21: Fetch macro gate 宏观原料 (review_context_only)"
+        continue-on-error: true
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/fetch_macro_gate.py
+
+      # ── Step 2d.22: Data-source health gate (PR-A A1/A5) ─────────────────
+      # Probes every entitled Tushare endpoint and writes
+      # public/data/v2/ops/data_source_health.json. INTENTIONALLY NO
+      # continue-on-error: if any of the required five (daily, daily_basic,
+      # moneyflow_dc, moneyflow_ind_dc, moneyflow_mkt_dc) is not OK the
+      # script exits 1 and the WHOLE WORKFLOW MUST FAIL — a broken critical
+      # feed must never be masked by a green run. Optional endpoints without
+      # permission are DATA_BLOCKED → report=PARTIAL (exit 0).
+      - name: "Step 2d.22: Data-source health gate (required-5 hard fail)"
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+        run: python scripts/data_source_health.py
+
       # ── Step 2e: VP Score live engine ────────────────────────────────────
       # Runs BEFORE confluence so updated VP scores flow into position sizing.
       # Reads rdcf_*.json + fin_*.json (written by step 1), updates vp_snapshot.json,
@@ -446,7 +468,10 @@ jobs:
             public/data/persona_overlay.json \
             public/data/ev_ebitda_valuation.json \
             public/data/residual_income_valuation.json \
-            public/data/multi_method_valuation.json; do
+            public/data/multi_method_valuation.json \
+            public/data/v2/macro_gate.json \
+            public/data/v2/ops/data_source_health.json \
+            public/data/v2/ops/major_news.json; do
             [ -f "$f" ] && git add "$f"
           done
 
