@@ -313,7 +313,7 @@ Every work session must end with a `你现在需要做的操作` block containin
 
 ```
 你现在需要做的操作：
-1. cd ~/Desktop/Stock/ar-platform
+1. cd ~/ar-live  # 2026-07-29 起唯一运行时(旧 ar-platform 已退役)
 2. git add <specific files only — never git add .>
 3. git commit -m "..."
 4. git push

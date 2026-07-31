@@ -18,3 +18,7 @@ jobs:
       - run: pip install pandas
       - name: Offline deterministic tests (zero network)
         run: python3 tests/test_engines_offline.py
+      - name: Nightly v2 orchestrator selftest
+        run: python3 experiments/execution_tracker/run_nightly.py --selftest
+      - name: Contract exporter selftest
+        run: python3 experiments/execution_tracker/export_contracts.py --selftest

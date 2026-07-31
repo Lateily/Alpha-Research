@@ -114,13 +114,27 @@ def main():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     pro = ts.pro_api(os.environ["TUSHARE_TOKEN"])
     today = datetime.date.today().strftime("%Y%m%d")
-    tks = sys.argv[1:]
+    if "--from-watchlist" in sys.argv:
+        from red_flag_gate import watchlist_tickers
+        tks = watchlist_tickers()
+        if not tks:
+            print("DATA_BLOCKED: watch_dynamic 为空"); return 1
+    else:
+        tks = [a for a in sys.argv[1:] if not a.startswith("--")]
     if not tks:
-        print("usage: full_battery.py TS_CODE [...]"); return 1
+        print("usage: full_battery.py TS_CODE [...] | --from-watchlist"); return 1
     res = [battery(pro, t, today) for t in tks]
-    print(json.dumps({"battery": "six_dim_v0", "results": res,
-                      "rule": "分析先跑电池后写观点;缺维必须显式标注。不是买卖指令。"},
-                     ensure_ascii=False, indent=1))
+    out = {"battery": "six_dim_v0", "checked_at": today, "results": res,
+           "rule": "分析先跑电池后写观点;缺维必须显式标注。不是买卖指令。"}
+    if "--from-watchlist" in sys.argv:
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, "battery.json"), "w", encoding="utf-8") as fh:
+            json.dump(out, fh, ensure_ascii=False, indent=1)
+        partial = sum(1 for r in res if r["completeness"]["verdict"] != "COMPLETE")
+        print(f"[written] battery.json n={len(res)} partial={partial}")
+        print("不是买卖指令;研究信号,human executes.")
+    else:
+        print(json.dumps(out, ensure_ascii=False, indent=1))
     return 0
 
 

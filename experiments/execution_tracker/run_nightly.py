@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
-run_nightly.py — post-close orchestration for execution_tracker.
+run_nightly.py — Nightly v2:post-close 强制流水线(2026-07-29 审查驱动重构)。
 
-Runs the new discovery/execution engines in dependency order after official
-settle data is available. The orchestrator makes the engine chain memorable and
-auditable; it does not create, fill, or modify fund orders.
+v2 变化(相对 v1 平铺十步):
+  1. 补齐闭环:官方定盘结算 → 收益回填 → 红旗闸门 → 六维电池 → 契约导出;
+  2. 依赖语义:上游 FAILED/DATA_BLOCKED 时,下游标 SKIPPED_STALE_INPUT,绝不读旧数据装新;
+  3. 终态诚实:任何非 OK ⇒ report=INCOMPLETE,退出码 FAILED=1 / INCOMPLETE=2,
+     并落 /tmp/ar-nightly-incomplete 报警旗(桌面通知 best-effort);
+  4. DATA_BLOCKED 不再伪装成功(v1 第 94 行问题)。
 
-Default order:
-  rotation_panel -> momentum_prefilter -> rotation_stats -> rotation_validation ->
-  lead_precursor -> overnight_anchor -> court_wakeup -> watch_dynamic ->
-  position_review -> setup_promoter
-
-不是买卖指令；研究信号，human executes。
+编排只做 review/paper 产出,不创建、不成交、不修改任何基金订单。
+不是买卖指令;研究信号,human executes。
 """
 
 import json
@@ -22,61 +21,175 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "nightly_run.json")
+ALARM_FLAG = "/tmp/ar-nightly-incomplete"
 
+# (name, cmd, needs_token, depends_on)
+# depends_on 里任一步非 OK ⇒ 本步 SKIPPED_STALE_INPUT
 STEPS = [
-    ("rotation_panel", ["python3", "rotation_panel.py"], True),
-    ("momentum_prefilter", ["python3", "momentum_prefilter.py"], True),
-    ("rotation_stats", ["python3", "rotation_stats.py"], False),
-    ("rotation_validation", ["python3", "rotation_validation.py", "--append"], True),
-    ("lead_precursor", ["python3", "lead_precursor.py"], False),
-    ("overnight_anchor_frame", ["python3", "overnight_anchor.py"], False),
-    ("court_wakeup", ["python3", "court_wakeup.py"], True),
-    ("watch_dynamic", ["python3", "watch_dynamic.py"], False),
-    ("position_review", ["python3", "position_review.py"], True),
-    ("setup_promoter", ["python3", "setup_promoter.py"], True),
+    # ── 结算主干(闭环根修复:定盘并入夜链,消灭手工补账)──
+    ("official_sample", ["python3", "run_official_sample.py"], True, []),
+    ("fwd_backfill", ["python3", "run_post_close_report.py"], True, ["official_sample"]),
+    # ── 轮动/发现链 ──
+    ("rotation_panel", ["python3", "rotation_panel.py"], True, []),
+    ("momentum_prefilter", ["python3", "momentum_prefilter.py"], True, []),
+    ("rotation_stats", ["python3", "rotation_stats.py"], False,
+     ["rotation_panel", "momentum_prefilter"]),
+    ("rotation_validation", ["python3", "rotation_validation.py", "--append"], True,
+     ["rotation_stats"]),
+    ("lead_precursor", ["python3", "lead_precursor.py"], False, ["rotation_validation"]),
+    ("overnight_anchor_frame", ["python3", "overnight_anchor.py"], False, []),
+    # ── 名单与持仓 ──
+    ("court_wakeup", ["python3", "court_wakeup.py"], True, []),
+    ("watch_dynamic", ["python3", "watch_dynamic.py"], False,
+     ["court_wakeup", "momentum_prefilter"]),
+    ("position_review", ["python3", "position_review.py"], True, ["official_sample"]),
+    ("setup_promoter", ["python3", "setup_promoter.py"], True,
+     ["watch_dynamic", "official_sample"]),
+    # ── 强制质检层(2026-07-27/28 事故驱动)──
+    ("red_flag_gate", ["python3", "red_flag_gate.py", "--from-watchlist"], True,
+     ["watch_dynamic"]),
+    ("full_battery", ["python3", "full_battery.py", "--from-watchlist"], True,
+     ["watch_dynamic"]),
+    # ── 前端契约导出(引擎写、前端读的唯一通道)──
+    # 设计决定(审查F4/F5):export 无前置依赖、永远运行 —— 跳过导出只会让磁盘上
+    # 留着更旧的契约;诚实性由 export 内部的逐源新鲜度/内部状态戳保证。
+    ("export_contracts", ["python3", "export_contracts.py"], False, []),
 ]
+
+_BLOCK_MARKERS = ("DATA_BLOCKED", "DATA-BLOCKED")
+
+
+def _classify(code, out):
+    """状态协议(审查F3/F16):
+    - 退出非0:输出含 blocked 标记 ⇒ DATA_BLOCKED(如 official_sample 的
+      SystemExit("DATA_BLOCKED: ...")),否则 FAILED;
+    - 退出0:仅当 stdout 最后一个非空行以 DATA_BLOCKED 开头才算整步 blocked ——
+      中途的逐项提示(⛔ xx: DATA_BLOCKED)/矩阵token 不再误伤整步。"""
+    if code != 0:
+        return "DATA_BLOCKED" if any(m in out for m in _BLOCK_MARKERS) else "FAILED"
+    lines = [l.strip() for l in out.splitlines() if l.strip()]
+    last = lines[-1] if lines else ""
+    if last.startswith("DATA_BLOCKED") or last.startswith("STEP_STATUS=DATA_BLOCKED"):
+        return "DATA_BLOCKED"
+    return "OK"
 
 
 def run_steps(runner=None, require_live=True):
     runner = runner or _subprocess_runner
-    results = []
-    for name, cmd, needs_token in STEPS:
+    results, status_by = [], {}
+
+    for name, cmd, needs_token, deps in STEPS:
+        bad = [d for d in deps if status_by.get(d) != "OK"]
+        if bad:
+            status_by[name] = "SKIPPED_STALE_INPUT"
+            results.append({"step": name, "status": "SKIPPED_STALE_INPUT",
+                            "why": f"上游非OK: {','.join(bad)}"})
+            continue
         if needs_token and require_live and not os.environ.get("TUSHARE_TOKEN", "").strip():
+            status_by[name] = "DATA_BLOCKED"
             results.append({"step": name, "status": "DATA_BLOCKED", "why": "NO TUSHARE_TOKEN"})
             continue
         t0 = time.time()
         code, out = runner(cmd)
-        results.append({"step": name,
-                        "status": "OK" if code == 0 else "FAILED",
-                        "exit_code": code,
-                        "elapsed_sec": round(time.time() - t0, 2),
-                        "tail": out[-1200:]})
+        status = _classify(code, out)
+        status_by[name] = status
+        results.append({"step": name, "status": status, "exit_code": code,
+                        "elapsed_sec": round(time.time() - t0, 2), "tail": out[-1200:]})
+
+    non_ok = [r for r in results if r["status"] != "OK"]
+    report = "COMPLETE" if not non_ok else "INCOMPLETE"
     return {"generated_at": time.strftime("%Y%m%d %H:%M"),
+            "orchestrator": "nightly_v2",
+            "report": report,
+            "non_ok_steps": [{"step": r["step"], "status": r["status"]} for r in non_ok],
             "steps": results,
-            "note": "nightly orchestrator; review/paper outputs only. 不是买卖指令。"}
+            "note": "nightly v2;review/paper 产出;上游失败下游必跳。不是买卖指令。"}
 
 
 def _subprocess_runner(cmd):
-    p = subprocess.run(cmd, cwd=HERE, text=True, capture_output=True, timeout=180)
+    try:
+        p = subprocess.run(cmd, cwd=HERE, text=True, capture_output=True, timeout=600)
+    except subprocess.TimeoutExpired as e:
+        # 审查F2:挂死的步必须变成 FAILED 并继续走完报警,绝不让编排器整体崩掉
+        out = ((e.stdout or "") if isinstance(e.stdout, str) else "") +               ((e.stderr or "") if isinstance(e.stderr, str) else "")
+        return 124, out + f"\nTIMEOUT after 600s: {' '.join(cmd)}"
     return p.returncode, (p.stdout + p.stderr)
 
 
+def _alarm(res):
+    """终态非 COMPLETE:落旗 + 桌面通知(best-effort,失败不影响退出码)。"""
+    try:
+        if res["report"] == "COMPLETE":
+            if os.path.exists(ALARM_FLAG):
+                os.remove(ALARM_FLAG)
+            return
+        with open(ALARM_FLAG, "w", encoding="utf-8") as fh:
+            json.dump({"at": res["generated_at"], "non_ok": res["non_ok_steps"]}, fh,
+                      ensure_ascii=False)
+        bad = ",".join(f"{s['step']}={s['status']}" for s in res["non_ok_steps"][:4])
+        subprocess.run(["osascript", "-e",
+                        f'display notification "{bad}" with title "AR 夜链 INCOMPLETE"'],
+                       capture_output=True, timeout=10)
+    except Exception:
+        pass
+
+
 def selftest():
+    checks = []
+
+    # 1) 全 OK 路径:顺序正确、终态 COMPLETE
     calls = []
+    res = run_steps(lambda c: (calls.append(c[1]) or (0, "ok")), require_live=False)
+    checks.append(("依赖序执行全部步骤", calls == [c[1] for _, c, _, _ in STEPS]))
+    checks.append(("全OK ⇒ COMPLETE", res["report"] == "COMPLETE"))
 
-    def fake(cmd):
-        calls.append(cmd[1])
-        return 0, "ok"
+    # 2) 根失败传染:official_sample FAILED ⇒ 回填/仓位复审/晋级必跳,轮动链不受影响,
+    #    export 照常运行(诚实性在逐源戳里,跳过只会留更旧的契约)
+    def fail_root(cmd):
+        return (1, "boom") if cmd[1] == "run_official_sample.py" else (0, "ok")
+    res2 = run_steps(fail_root, require_live=False)
+    st = {r["step"]: r["status"] for r in res2["steps"]}
+    checks.append(("根失败 ⇒ FAILED", st["official_sample"] == "FAILED"))
+    checks.append(("回填被跳", st["fwd_backfill"] == "SKIPPED_STALE_INPUT"))
+    checks.append(("仓位复审被跳", st["position_review"] == "SKIPPED_STALE_INPUT"))
+    checks.append(("晋级被跳(F4新边)", st["setup_promoter"] == "SKIPPED_STALE_INPUT"))
+    checks.append(("导出仍运行(设计决定)", st["export_contracts"] == "OK"))
+    checks.append(("轮动链不受影响", st["rotation_panel"] == "OK"))
+    checks.append(("终态 INCOMPLETE", res2["report"] == "INCOMPLETE"))
 
-    res = run_steps(fake, require_live=False)
-    order_ok = calls == [cmd[1] for _, cmd, _ in STEPS]
-    statuses_ok = all(s["status"] == "OK" for s in res["steps"])
-    note_ok = "不是买卖指令" in res["note"]
-    checks = [("dependency order", order_ok), ("all fake steps OK", statuses_ok),
-              ("disclaimer in note", note_ok)]
+    # 3) 状态协议(F3/F16)
+    def blocked_final_line(cmd):
+        if cmd[1] == "watch_dynamic.py":
+            return (0, "工作正常\nDATA_BLOCKED: 名单为空")
+        return (0, "ok")
+    res3 = run_steps(blocked_final_line, require_live=False)
+    st3 = {r["step"]: r["status"] for r in res3["steps"]}
+    checks.append(("尾行blocked ⇒ DATA_BLOCKED", st3["watch_dynamic"] == "DATA_BLOCKED"))
+    checks.append(("其下游(闸门/电池/晋级)被跳", st3["red_flag_gate"] == "SKIPPED_STALE_INPUT"
+                   and st3["full_battery"] == "SKIPPED_STALE_INPUT"
+                   and st3["setup_promoter"] == "SKIPPED_STALE_INPUT"))
+
+    def mid_note_ok(cmd):
+        if cmd[1] == "court_wakeup.py":
+            return (0, "⛔ 某票: DATA_BLOCKED: 20日行情缺失\n完成,其余7票正常\n不是买卖指令")
+        return (0, "ok")
+    res4 = run_steps(mid_note_ok, require_live=False)
+    st4 = {r["step"]: r["status"] for r in res4["steps"]}
+    checks.append(("逐项提示不误伤整步(F3)", st4["court_wakeup"] == "OK"))
+
+    def blocked_nonzero(cmd):
+        if cmd[1] == "run_official_sample.py":
+            return (1, "DATA_BLOCKED: settlement-date mismatch")
+        return (0, "ok")
+    res5 = run_steps(blocked_nonzero, require_live=False)
+    st5 = {r["step"]: r["status"] for r in res5["steps"]}
+    checks.append(("非零+blocked ⇒ DATA_BLOCKED非FAILED(F16)",
+                   st5["official_sample"] == "DATA_BLOCKED"))
+    checks.append(("免责句在", "不是买卖指令" in res5["note"]))
+
     for name, ok in checks:
         print(("  ✓ " if ok else "  ✗ ") + name)
-    print(f"run_nightly selftest: {sum(ok for _, ok in checks)}/{len(checks)}")
+    print(f"run_nightly v2 selftest: {sum(ok for _, ok in checks)}/{len(checks)}")
     return all(ok for _, ok in checks)
 
 
@@ -89,10 +202,13 @@ def main():
         json.dump(res, fh, ensure_ascii=False, indent=1)
     for s in res["steps"]:
         print(f"{s['step']}: {s['status']}")
-    print(f"[written] {OUT}")
-    print("不是买卖指令；研究信号，human executes.")
+    print(f"[report] {res['report']}  [written] {OUT}")
+    print("不是买卖指令;研究信号,human executes.")
+    _alarm(res)
     if any(s["status"] == "FAILED" for s in res["steps"]):
         sys.exit(1)
+    if res["report"] != "COMPLETE":
+        sys.exit(2)
 
 
 if __name__ == "__main__":
