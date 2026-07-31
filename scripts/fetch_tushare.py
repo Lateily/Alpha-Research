@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Fetch Tushare 6000-tier A-share data into forward-compatible JSON outputs.
+Fetch Tushare A-share data into forward-compatible JSON outputs.
 
 Outputs:
   public/data/tushare/<ticker>.json — per-watchlist A-share OHLCV,
@@ -16,10 +16,14 @@ Outputs:
 Usage:
   python3 scripts/fetch_tushare.py [--ticker 300308.SZ]
 
-Per docs/architecture/DATA_SOURCE_REGISTRY.md §2.1: forward-compatible
-schema. Tier-locked APIs (forecast — needs Tushare 10000-tier) write
-_status: tier_locked + _need_tier so consumers can detect + degrade.
-When tier upgraded, no schema change needed — fields just populate.
+Permission model (PR-A A2, 2026-07-31): NO hardcoded tier assumptions.
+Every API is actually called; a call that succeeds proves permission. A call
+whose error text contains 没有接口/权限 is marked _status: DATA_BLOCKED (real
+entitlement gap); 接口名 errors are PARAM_ERROR; anything else is failed.
+Each data dimension records its own `as_of` (real content date extracted from
+the returned rows) — `fetched_at` alone is NOT data freshness.
+
+不是买卖指令;研究信号,human executes.
 """
 
 import argparse
@@ -34,18 +38,17 @@ from pathlib import Path
 import tushare as ts
 
 
-CURRENT_TIER = 6000
 OUTPUT_DIR = Path(__file__).parent.parent / "public" / "data"
 TUSHARE_DIR = OUTPUT_DIR / "tushare"
-TIER_LOCKED_FORECAST = {
-    "rows": None,
-    "row_count": 0,
-    "_status": "tier_locked",
-    "_need_tier": 10000,
-    "_unlock_action": (
-        "Upgrade Tushare to 10000-tier (~¥3000-5000/yr) to unlock forecast"
-    ),
-}
+
+# Runtime permission detection (verified live 2026-07-31):
+#   no-permission → "抱歉，您没有接口(xxx)访问权限，权限的具体详情访问：…"
+#   bad api name  → "请指定正确的接口名"
+PERMISSION_CUES = ("没有接口", "权限")
+PARAM_CUES = ("正确的接口名", "接口名有误")
+
+# Priority-ordered content-date fields for per-dimension as_of extraction.
+AS_OF_FIELDS = ("trade_date", "ann_date", "end_date", "date", "cal_date")
 
 
 def _today_utc():
@@ -121,6 +124,32 @@ def _ok_or_empty(rows):
     return "ok" if rows else "empty"
 
 
+def _classify_error(error_text):
+    """Runtime permission probe: classify a Tushare error by its message text."""
+    text = str(error_text or "")
+    if any(cue in text for cue in PARAM_CUES):
+        return "PARAM_ERROR"
+    if any(cue in text for cue in PERMISSION_CUES):
+        return "DATA_BLOCKED"
+    return "failed"
+
+
+def _rows_as_of(rows):
+    """Real content date of a dimension: first AS_OF_FIELDS present, max value."""
+    for field in AS_OF_FIELDS:
+        best = None
+        for row in rows or []:
+            value = row.get(field)
+            if value is None:
+                continue
+            value = str(value).strip()
+            if value and (best is None or value > best):
+                best = value
+        if best is not None:
+            return best
+    return None
+
+
 def _api_result(callable_obj, api_name):
     try:
         df = callable_obj()
@@ -129,13 +158,16 @@ def _api_result(callable_obj, api_name):
             "rows": rows,
             "row_count": len(rows),
             "_status": _ok_or_empty(rows),
+            "as_of": _rows_as_of(rows),
         }
     except Exception as exc:
+        error_text = f"{type(exc).__name__}: {exc}"
         return {
             "rows": None,
             "row_count": 0,
-            "_status": "failed",
-            "_error": f"{type(exc).__name__}: {exc}",
+            "_status": _classify_error(error_text),
+            "as_of": None,
+            "_error": error_text,
         }
     finally:
         print(f"  fetched {api_name}")
@@ -146,7 +178,9 @@ def _top_status(api_results, require_hsgt=False):
     statuses = [v.get("_status") for v in api_results.values()]
     if require_hsgt and api_results.get("moneyflow_hsgt", {}).get("_status") != "ok":
         return "partial" if any(s == "ok" for s in statuses) else "failed"
-    if all(s in ("ok", "tier_locked") for s in statuses):
+    # DATA_BLOCKED = honest entitlement gap, non-fatal for the aggregate
+    # (mirrors the old tier_locked semantics, but detected at runtime).
+    if all(s in ("ok", "DATA_BLOCKED") for s in statuses):
         return "ok"
     if any(s == "ok" for s in statuses):
         return "partial"
@@ -237,13 +271,19 @@ def _per_ticker_payload(pro, ticker):
             ),
             "fina_mainbz_product",
         ),
-        "forecast": dict(TIER_LOCKED_FORECAST),
+        # 业绩预告 — REAL runtime call (was hardcoded tier_locked pre-2026-07-31;
+        # live scope probe proved the token covers it). Success ⇒ permission;
+        # a genuine entitlement error text ⇒ DATA_BLOCKED via _classify_error.
+        "forecast": _api_result(
+            lambda: pro.forecast(ts_code=ts_code, start_date=start_730, end_date=end_date),
+            "forecast",
+        ),
     }
 
     return {
         "ticker": ticker,
         "fetched_at": _iso_now(),
-        "current_tier": CURRENT_TIER,
+        "permission_model": "runtime_probe",
         "_status": _top_status(data),
         "data": data,
         "completeness_pct": _completeness_pct(data),
@@ -254,7 +294,7 @@ def _skipped_payload(ticker):
     return {
         "ticker": ticker,
         "fetched_at": _iso_now(),
-        "current_tier": CURRENT_TIER,
+        "permission_model": "runtime_probe",
         "_status": "skipped",
         "_reason": "not_a_share",
         "data": {},
@@ -280,7 +320,7 @@ def _fetch_market_payload(pro):
     }
     return {
         "fetched_at": _iso_now(),
-        "current_tier": CURRENT_TIER,
+        "permission_model": "runtime_probe",
         "_status": _top_status(data, require_hsgt=True),
         "data": data,
     }
@@ -334,7 +374,7 @@ def main(argv=None):
             payload = {
                 "ticker": ticker,
                 "fetched_at": _iso_now(),
-                "current_tier": CURRENT_TIER,
+                "permission_model": "runtime_probe",
                 "_status": "failed",
                 "_error": f"{type(exc).__name__}: {exc}",
                 "data": {},
@@ -355,7 +395,7 @@ def main(argv=None):
         print(f"  market fetch failed: {type(exc).__name__}: {exc}", file=sys.stderr)
         market_payload = {
             "fetched_at": _iso_now(),
-            "current_tier": CURRENT_TIER,
+            "permission_model": "runtime_probe",
             "_status": "failed",
             "_error": f"{type(exc).__name__}: {exc}",
             "data": {},
