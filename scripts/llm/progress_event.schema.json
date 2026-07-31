@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/progress_event.schema.json",
+  "title": "AI Progress Board Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "event",
+    "task",
+    "human_owner",
+    "executor",
+    "reviewer",
+    "status",
+    "summary",
+    "timestamp_utc"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "CLAIM"
+          }
+        },
+        "required": ["event"]
+      },
+      "then": {
+        "required": ["branch", "files", "expires_at"],
+        "properties": {
+          "files": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-progress.v2"
+    },
+    "event": {
+      "enum": ["CLAIM", "UPDATE", "DONE", "BLOCKED", "RELEASE"]
+    },
+    "task": {
+      "type": "string",
+      "minLength": 1
+    },
+    "human_owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "executor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": ["in_progress", "done", "blocked", "released"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch": {
+      "type": "string"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "pr": {
+      "type": "string"
+    },
+    "next": {
+      "type": "string"
+    },
+    "blocked_by": {
+      "type": "string"
+    },
+    "cost_cny": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+)?$"
+    },
+    "risk": {
+      "type": "string"
+    },
+    "timestamp_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

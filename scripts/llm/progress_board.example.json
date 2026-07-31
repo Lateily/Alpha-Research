@@ -1,0 +1,48 @@
+[
+  {
+    "schema": "ai-progress.v2",
+    "event": "DONE",
+    "task": "#160",
+    "human_owner": "Tianrui",
+    "executor": "Codex",
+    "reviewer": "Junyan",
+    "status": "done",
+    "summary": "Kimi K3 K0 adapter smoke completed.",
+    "branch": "feat/k0-adapter",
+    "files": ["scripts/llm", "docs/llm"],
+    "pr": "https://github.com/Lateily/Alpha-Research/pull/163",
+    "cost_cny": "0.011275",
+    "risk": "none",
+    "timestamp_utc": "2026-07-29T09:42:41.937193+00:00"
+  },
+  {
+    "schema": "ai-progress.v2",
+    "event": "CLAIM",
+    "task": "#164",
+    "human_owner": "Tianrui",
+    "executor": "Codex",
+    "reviewer": "Junyan",
+    "status": "in_progress",
+    "summary": "Revise AI Progress Board protocol for team v0 usage.",
+    "branch": "feat/ai-progress-board",
+    "files": ["docs/llm", "scripts/llm"],
+    "risk": "none",
+    "timestamp_utc": "2026-07-30T10:00:00+00:00",
+    "expires_at": "2026-07-30T12:00:00+00:00"
+  },
+  {
+    "schema": "ai-progress.v2",
+    "event": "CLAIM",
+    "task": "#170",
+    "human_owner": "Xuhang",
+    "executor": "Claude",
+    "reviewer": "Junyan",
+    "status": "in_progress",
+    "summary": "Sketch future Agent Console v0 UI without wiring model APIs.",
+    "branch": "feat/agent-console-v0",
+    "files": ["web/team"],
+    "risk": "none",
+    "timestamp_utc": "2026-07-30T10:05:00+00:00",
+    "expires_at": "2026-07-30T12:05:00+00:00"
+  }
+]
