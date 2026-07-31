@@ -3,6 +3,8 @@
 > 生效日期:2026-07-31。维护人:Junyan。工程协作:Claude/Codex/Reed/Better。
 > 本文件解决一个具体问题:研究工程不能只存在于聊天记录、临时承诺或某个 Agent 的记忆里。
 > `docs/ARCHITECTURE_MAP.md` 负责看全局,本文件负责保存研究工程的每一笔债务与验收证据。
+> AI harness、Agent 调度、评测、成本和 Memory 自动化由
+> `docs/llm/AI_OS_ENGINEERING_BACKLOG.md` 单独管理;两份总账由 AI OS Reconciler 对账。
 
 ## 1. 总账规则
 

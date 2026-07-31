@@ -31,9 +31,11 @@
 | [研究工程永久总账](research/RESEARCH_ENGINEERING_BACKLOG.md) | 防止研究债、承诺和未接线能力随聊天或 Agent 会话丢失 | 所有研究工程的状态、owner、证据和验收条件 |
 | [全市场分层研究漏斗](research/ALL_MARKET_RESEARCH_FUNNEL.md) | 从全 A 永久在线到候选、电池、深研、法庭的稳定路径 | 证券覆盖、运行节奏、通道、状态机和 Agent 分工 |
 | [Macro OS](research/macro/MACRO_OS.md) | 把宏观事实、预期差、MRG、行业和组合暴露串成闭环 | 全组合宏观门与下钻接口 |
+| [AI OS 技术搭建指南](llm/AI_OS_BUILD_GUIDE.md) | 让每个任务自动经历规格、认领、执行、验证、复核、批准、Memory 和总账回写 | Reed 的 Agent 控制平面、工作平面、证据平面与观测平面 |
+| [AI OS 永久工程总账](llm/AI_OS_ENGINEERING_BACKLOG.md) | 防止 AI harness、评测、自动化与安全任务随会话丢失 | A-ID、状态、owner、验收和实施顺序 |
 
 **状态解释:**文档或脚本存在不等于闭环完成。进度必须区分 `DELIVERED_UNWIRED`、
-`VALIDATING` 和 `DONE`;具体定义以研究工程永久总账为准。
+`VALIDATING` 和 `DONE`;研究项与 AI 系统项分别以对应永久总账为准。
 
 ## 八块登记表
 

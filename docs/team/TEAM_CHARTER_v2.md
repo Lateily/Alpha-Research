@@ -66,6 +66,11 @@
 
 核心工作:让 AI 工人可用、可测、可控,不是"多接几个模型"。
 
+**完整技术权威:**`docs/llm/AI_OS_BUILD_GUIDE.md`。Reed 的目标不止是 adapter 与
+进度页,而是建立任务操作系统:每项工作自动完成规格编译、冲突检查、Agent 路由、
+隔离执行、证据验证、独立复核、人类批准、Memory 蒸馏和永久总账回写。实施状态
+统一记录在 `docs/llm/AI_OS_ENGINEERING_BACKLOG.md`,不得只留在 Issue 评论或聊天。
+
 首月任务:
 
 | 周 | 任务 | 具体交付 | 验收标准 |
