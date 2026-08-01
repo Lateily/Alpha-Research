@@ -141,9 +141,46 @@ def test_backfill_skips_not_scorable_and_preserves_invalid():
     print("PASS backfill: NOT_SCORABLE跳过 + 异型不洗白(零网络)")
 
 
+def test_portfolio_gate_uses_real_holdings():
+    """审计BLOCKER回归:0731样本把组合暴露写成AI/光模块,实际持仓是恒瑞/牧原。
+    组合门必须按 status=filled 订单算,不得按观察名单。"""
+    import tempfile, json as _json, os as _os
+    import run_official_sample as ros
+    from execution_tracker import build_snapshot
+    with tempfile.TemporaryDirectory() as td:
+        _json.dump([
+            {"ticker": "600276.SH", "name": "恒瑞医药", "status": "filled"},
+            {"ticker": "002714.SZ", "name": "牧原股份", "status": "filled"},
+            {"ticker": "300308.SZ", "name": "中际旭创", "status": "cancelled"},
+        ], open(_os.path.join(td, "orders.json"), "w"))
+        holdings = ros.real_holdings(fund_dir=td)
+    assert [h[0] for h in holdings] == ["600276.SH", "002714.SZ"], holdings
+    assert holdings[0][2] == "医药/创新药" and holdings[1][2] == "农林牧渔/生猪养殖"
+    # 观察名单里的票即使同板块,也不得让组合门判 single_beta
+    tickers = [
+        {"ticker": "300502.SZ", "name": "新易盛", "sector": "AI/光模块", "price": 400,
+         "change_pct": 1.0, "main_flow": 1.0, "super_large": 0, "small": 0, "ohlc_bars": []},
+        {"ticker": "300308.SZ", "name": "中际旭创", "sector": "AI/光模块", "price": 900,
+         "change_pct": 1.0, "main_flow": 1.0, "super_large": 0, "small": 0, "ohlc_bars": []},
+        {"ticker": "600276.SH", "name": "恒瑞医药", "sector": "医药/创新药", "price": 54,
+         "change_pct": -1.0, "main_flow": -0.2, "super_large": 0, "small": 0, "ohlc_bars": []},
+        {"ticker": "002714.SZ", "name": "牧原股份", "sector": "农林牧渔/生猪养殖", "price": 39,
+         "change_pct": -1.0, "main_flow": -0.8, "super_large": 0, "small": 0, "ohlc_bars": []},
+    ]
+    snap = build_snapshot({"sh": {"chg": 0.7}, "sz": {"chg": 2.2}, "cyb": {"chg": 4.0},
+                           "main_flow_total": 625.0},
+                          tickers, ["600276.SH", "002714.SZ"], timestamp="20260731 close (test)")
+    pg = snap["portfolio_gate"]
+    assert pg["single_beta_exposure"] is False, pg
+    assert set(pg["held_sectors"]) == {"医药/创新药", "农林牧渔/生猪养殖"}, pg
+    assert "AI/光模块" not in pg["held_sectors"], "观察名单板块不得进组合暴露"
+    print("PASS portfolio_gate: 按真实filled持仓算暴露,观察名单不污染(审计BLOCKER回归)")
+
+
 if __name__ == "__main__":
     test_gate_catches_first_loss(); test_gate_passes_clean(); test_gate_blocks_on_zero_evidence()
     test_battery_flags_blocked_news(); test_attribution_split_and_gate()
     test_trade_card_real_schema(); test_watchlist_tickers_guard()
     test_backfill_skips_not_scorable_and_preserves_invalid()
+    test_portfolio_gate_uses_real_holdings()
     print("ALL OFFLINE TESTS PASS (0 network calls)")

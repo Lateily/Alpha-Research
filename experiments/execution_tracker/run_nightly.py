@@ -50,6 +50,8 @@ STEPS = [
     ("watch_dynamic", ["python3", "watch_dynamic.py"], False,
      ["court_wakeup", "momentum_prefilter"]),
     ("position_review", ["python3", "position_review.py"], True, ["official_sample"]),
+    ("court_10d", ["python3", "court_10d.py"], False,
+     ["official_sample", "position_review"]),   # 10天检察官(2026-08-01 兑现)
     # ── 强制质检层(2026-07-27/28 事故驱动)──
     ("red_flag_gate", ["python3", "red_flag_gate.py", "--from-watchlist"], True,
      ["watch_dynamic"]),
