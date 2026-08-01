@@ -1,44 +1,55 @@
 {
-  "report_date": "20260731",
-  "generated_under_discipline": true,
-  "discipline_prompt_chars": 8474,
-  "market": null,
-  "portfolio": {
-    "posture": null,
-    "single_beta": null,
-    "tickers": []
+ "report_date": "20260731",
+ "generated_under_discipline": true,
+ "discipline_prompt_chars": 8474,
+ "market": null,
+ "portfolio": {
+  "posture": null,
+  "single_beta": null,
+  "tickers": []
+ },
+ "today_signals": 0,
+ "winrate_scorecard": {
+  "1d": {
+   "n_scored": 89,
+   "hit_rate": 0.427,
+   "avg_signed_return": -0.0187,
+   "avg_gate_aligned_return": -0.0008
   },
-  "today_signals": 0,
-  "winrate_scorecard": {
-    "1d": {
-      "n_scored": 89,
-      "hit_rate": 0.427,
-      "avg_signed_return": -0.0187,
-      "avg_gate_aligned_return": -0.0008
-    },
-    "3d": {
-      "n_scored": 89,
-      "hit_rate": 0.438,
-      "avg_signed_return": -0.0429,
-      "avg_gate_aligned_return": -0.0006
-    },
-    "5d": {
-      "n_scored": 89,
-      "hit_rate": 0.449,
-      "avg_signed_return": -0.0618,
-      "avg_gate_aligned_return": -0.0007
-    },
-    "10d": {
-      "n_scored": 75,
-      "hit_rate": 0.493,
-      "avg_signed_return": -0.1015,
-      "avg_gate_aligned_return": 0.0149
-    },
-    "total_scored_signals": 89,
-    "min_required": 30,
-    "claim_allowed": true
+  "3d": {
+   "n_scored": 89,
+   "hit_rate": 0.438,
+   "avg_signed_return": -0.0429,
+   "avg_gate_aligned_return": -0.0006
   },
-  "unvalidated_warning": "89 scored signals — threshold met; still treat as provisional, not validated alpha.",
-  "no_trade_flag": true,
-  "official_sample": true
+  "5d": {
+   "n_scored": 89,
+   "hit_rate": 0.449,
+   "avg_signed_return": -0.0618,
+   "avg_gate_aligned_return": -0.0007
+  },
+  "10d": {
+   "n_scored": 75,
+   "hit_rate": 0.493,
+   "avg_signed_return": -0.1015,
+   "avg_gate_aligned_return": 0.0149
+  },
+  "total_scored_signals": 89,
+  "min_required": 30,
+  "claim_allowed": true
+ },
+ "unvalidated_warning": "89 scored signals — threshold met; still treat as provisional, not validated alpha.",
+ "no_trade_flag": true,
+ "official_sample": true,
+ "claim_allowed": false,
+ "independent_clusters": 0,
+ "claim_note": "独立簇=0(cluster_id 未落地)⇒ claim 禁止;原按 signal_id 计数属把相关样本当独立样本",
+ "_migration": {
+  "corrected_at": "20260801 17:32:00",
+  "reason": "审计 MAJOR(2026-08-01):判分门槛改为独立簇数,原 claim_allowed=True 无效",
+  "original_value": {
+   "claim_allowed": null,
+   "scored": null
+  }
+ }
 }
