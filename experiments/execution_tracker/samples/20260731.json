@@ -133,12 +133,31 @@
     }
   ],
   "portfolio_gate": {
-    "single_beta_exposure": true,
+    "single_beta_exposure": false,
+    "single_beta_status": "OK",
+    "single_beta_blocked_why": null,
     "held_sectors": [
-      "AI/光模块"
+      "农业综合",
+      "化学制药"
     ],
-    "portfolio_posture": "DE_RISK_REVIEW",
-    "note": "组合=单一 beta 暴露,先看组合风险再看个股强弱"
+    "held_tickers": [
+      "600276.SH",
+      "002714.SZ"
+    ],
+    "portfolio_posture": "HOLD_OBSERVE",
+    "note": "组合按真实 filled 持仓判定(恒瑞/牧原),非观察名单",
+    "_migration": {
+      "corrected_at": "20260801 17:31:31",
+      "reason": "审计 BLOCKER(2026-08-01):原值把 AI/光模块观察名单当成持仓,判定单一beta;实际持仓是恒瑞医药(化学制药)与牧原股份(农业综合),分属不同行业",
+      "original_value": {
+        "single_beta_exposure": true,
+        "held_sectors": [
+          "AI/光模块"
+        ],
+        "portfolio_posture": "DE_RISK_REVIEW",
+        "note": "组合=单一 beta 暴露,先看组合风险再看个股强弱"
+      }
+    }
   },
   "self_audit": {
     "rebound_as_reversal": false,

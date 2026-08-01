@@ -110,5 +110,10 @@
    "tail": "model_portfolio_state.json: STALE_INPUT\ntrade_cards.json: STALE_INPUT\npremarket_frame.json: STALE_INPUT\nrotation_panel.json: OK\nred_flags.json: OK\nbattery.json: OK\nposition_review.json: OK\n[report] PARTIAL  → public/data/v2/\n不是买卖指令;研究信号,human executes.\n"
   }
  ],
- "note": "nightly v2;review/paper 产出;上游失败下游必跳。不是买卖指令。"
+ "note": "nightly v2;review/paper 产出;上游失败下游必跳。不是买卖指令。",
+ "_superseded": {
+  "at": "20260801 17:31:31",
+  "why": "该次运行使用旧版组合暴露与判分口径;结论已由 samples/20260731.json 与 reports/ 的 _migration 更正",
+  "keep_reason": "保留原始运行日志作审计痕迹,不删改 steps"
+ }
 }
