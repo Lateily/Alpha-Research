@@ -357,7 +357,36 @@ def preflight(base=None, now=None):
     # 5) 依赖语义干跑(fake runner)
     res = run_steps(lambda c: (0, "ok"), require_live=False)
     checks.append(("干跑全通 ⇒ COMPLETE", res["report"] == "COMPLETE"))
-    # 6) 关键契约 freshness:缺文件 FAIL;mtime 超 36h 仅 WARN 列出,不阻断
+    # 6) 跨层事实一致性(审计 2026-08-01:半程迁移导致文件内部自相矛盾)
+    try:
+        from consistency import check_all as _cons
+        cons = []
+        try:
+            _log = json.load(open(os.path.join(HERE, "paper_signal_log.json")))
+            _sigs = _log if isinstance(_log, list) else _log.get("signals", [])
+        except Exception:
+            _sigs = []
+        for sub, kw in (("samples", "sample"), ("reports", "report")):
+            d = os.path.join(HERE, sub)
+            if not os.path.isdir(d):
+                continue
+            for f in sorted(x for x in os.listdir(d) if x.endswith(".json"))[-5:]:
+                try:
+                    obj = json.load(open(os.path.join(d, f)))
+                except Exception:
+                    continue
+                args = {kw: obj}
+                if kw == "sample":
+                    args["signals"] = _sigs
+                for iss in _cons(**args):
+                    cons.append(f"{sub}/{f}: {iss['fact']} — {iss['why']}")
+        checks.append(("跨层事实一致性(近5日样本/报告)", not cons))
+        for c in cons[:6]:
+            print(f"  ✗ {c}")
+    except Exception as e:
+        checks.append((f"跨层一致性检查执行失败: {e}", False))
+
+    # 7) 关键契约 freshness:缺文件 FAIL;mtime 超 36h 仅 WARN 列出,不阻断
     for fn in FRESHNESS_FILES:
         p = os.path.join(base, fn)
         if not os.path.exists(p):

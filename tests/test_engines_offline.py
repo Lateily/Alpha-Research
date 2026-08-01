@@ -177,10 +177,42 @@ def test_portfolio_gate_uses_real_holdings():
     print("PASS portfolio_gate: 按真实filled持仓算暴露,观察名单不污染(审计BLOCKER回归)")
 
 
+def test_cross_layer_consistency():
+    """审计回归(2026-08-01):半程迁移 —— 同一事实只改外层,其余层仍是旧值。
+    用本次事故的真实形态构造:portfolio_gate 已改 False,其余三层仍 True。"""
+    from consistency import check_all, check_report_claim, check_migration_provenance
+    half = {"timestamp": "20260731 close (official)", "sector_single_beta": True,
+            "portfolio_gate": {"single_beta_exposure": False},
+            "self_audit": {"high_reflexivity_book": True}}
+    sigs = [{"timestamp": "20260731 close", "sector_single_beta": True}]
+    issues = check_all(sample=half, signals=sigs)
+    assert issues and issues[0]["fact"] == "single_beta", issues
+    full = {"timestamp": "20260731 close (official)", "sector_single_beta": False,
+            "portfolio_gate": {"single_beta_exposure": False},
+            "self_audit": {"high_reflexivity_book": False}}
+    assert not check_all(sample=full, signals=[{"timestamp": "20260731 close",
+                                                "sector_single_beta": False}])
+    # 报告内外层
+    bad_rep = {"claim_allowed": False, "winrate_scorecard": {"claim_allowed": True}}
+    assert check_report_claim(bad_rep), "内外层不一致必须检出"
+    # claim 禁止却称门槛已满足
+    warn_rep = {"claim_allowed": False, "winrate_scorecard": {"claim_allowed": False},
+                "unvalidated_warning": "89 scored signals — threshold met; provisional."}
+    assert any(i["fact"] == "unvalidated_warning" for i in check_report_claim(warn_rep))
+    # provenance 原值必须真记
+    assert check_migration_provenance({"_migration": {"fields": {
+        "claim_allowed": {"original_value": None, "new_value": False}}}})
+    assert not check_migration_provenance({"_migration": {"fields": {
+        "claim_allowed": {"original_value": True, "new_value": False}}}})
+    print("PASS consistency: 半程迁移/内外层/文案/provenance 四类均检出(审计回归)")
+
+
 if __name__ == "__main__":
     test_gate_catches_first_loss(); test_gate_passes_clean(); test_gate_blocks_on_zero_evidence()
     test_battery_flags_blocked_news(); test_attribution_split_and_gate()
     test_trade_card_real_schema(); test_watchlist_tickers_guard()
+    test_cross_layer_consistency()
     test_backfill_skips_not_scorable_and_preserves_invalid()
     test_portfolio_gate_uses_real_holdings()
     print("ALL OFFLINE TESTS PASS (0 network calls)")
+
