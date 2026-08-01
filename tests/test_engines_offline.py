@@ -207,12 +207,62 @@ def test_cross_layer_consistency():
     print("PASS consistency: 半程迁移/内外层/文案/provenance 四类均检出(审计回归)")
 
 
+def test_consistency_scan_fail_closed():
+    """审计回归(2026-08-01 四轮):一致性闸门自身曾 fail-open ——
+    `except: continue` 会静默跳过损坏文件,把最新报告改成 BROKEN_JSON 后
+    preflight 仍 PASS。本测试覆盖四条 fail-closed 路径。"""
+    import tempfile, json as _json
+    from consistency import scan_dirs
+
+    def _mk(root, sample=True, report=True, log=True,
+            broken_report=False, broken_sample=False, empty_report_dir=False):
+        os.makedirs(os.path.join(root, "samples"), exist_ok=True) if sample else None
+        if report:
+            os.makedirs(os.path.join(root, "reports"), exist_ok=True)
+        good_sample = {"timestamp": "20260731 close", "sector_single_beta": False,
+                       "portfolio_gate": {"single_beta_exposure": False},
+                       "self_audit": {"high_reflexivity_book": False}}
+        good_report = {"claim_allowed": False, "winrate_scorecard": {"claim_allowed": False}}
+        if sample:
+            p_ = os.path.join(root, "samples", "20260731.json")
+            open(p_, "w").write("{{BROKEN" if broken_sample else _json.dumps(good_sample))
+        if report and not empty_report_dir:
+            p_ = os.path.join(root, "reports", "20260731.json")
+            open(p_, "w").write("BROKEN_JSON" if broken_report else _json.dumps(good_report))
+        if log:
+            open(os.path.join(root, "paper_signal_log.json"), "w").write("[]")
+
+    # ① 全部健康 ⇒ 零 issue
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d)
+        assert scan_dirs(d) == [], scan_dirs(d)
+    # ② 最新报告损坏 ⇒ 必须报错(审计原案例)
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, broken_report=True)
+        iss = scan_dirs(d)
+        assert any("reports/" in x and "解析失败" in x for x in iss), iss
+    # ③ 样本损坏 ⇒ 必须报错
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, broken_sample=True)
+        assert any("samples/" in x and "解析失败" in x for x in scan_dirs(d))
+    # ④ 目录缺失 / 目录空 / 账本缺失 ⇒ 必须报错
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, report=False)
+        assert any("reports/" in x and "目录缺失" in x for x in scan_dirs(d))
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, empty_report_dir=True)
+        assert any("reports/" in x and "无可检查" in x for x in scan_dirs(d))
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, log=False)
+        assert any("paper_signal_log" in x for x in scan_dirs(d))
+    print("PASS consistency: 损坏文件/缺目录/空目录/缺账本 四类均 fail-closed(审计回归)")
+
+
 if __name__ == "__main__":
     test_gate_catches_first_loss(); test_gate_passes_clean(); test_gate_blocks_on_zero_evidence()
     test_battery_flags_blocked_news(); test_attribution_split_and_gate()
     test_trade_card_real_schema(); test_watchlist_tickers_guard()
-    test_cross_layer_consistency()
+    test_cross_layer_consistency(); test_consistency_scan_fail_closed()
     test_backfill_skips_not_scorable_and_preserves_invalid()
     test_portfolio_gate_uses_real_holdings()
     print("ALL OFFLINE TESTS PASS (0 network calls)")
-

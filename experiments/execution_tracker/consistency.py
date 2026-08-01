@@ -103,3 +103,56 @@ def check_all(sample=None, signals=None, report=None):
         if isinstance(report.get("winrate_scorecard"), dict):
             out += check_migration_provenance(report["winrate_scorecard"])
     return out
+
+
+def scan_dirs(here, sample_dir="samples", report_dir="reports",
+              signal_log="paper_signal_log.json", recent=5):
+    """扫描近 N 份样本与报告的跨层一致性 → issue 字符串列表。
+
+    fail-closed 契约(2026-08-01 审计:本函数前身用 except: continue 静默跳过
+    损坏文件,导致把最新报告改成 BROKEN_JSON 后 preflight 仍 PASS):
+      - 目录缺失 ⇒ issue(不是"没有就算过")
+      - 目录存在但无可检查文件 ⇒ issue
+      - 任一文件解析失败 ⇒ issue(损坏≠无问题)
+      - 信号账本解析失败 ⇒ issue(不能当成空账本继续)
+    """
+    import json as _json
+    import os as _os
+
+    issues = []
+    log_path = _os.path.join(here, signal_log)
+    sigs = []
+    if not _os.path.exists(log_path):
+        issues.append(f"{signal_log}: 缺失 —— 无法做信号层一致性核对")
+    else:
+        try:
+            _log = _json.load(open(log_path, encoding="utf-8"))
+            sigs = _log if isinstance(_log, list) else _log.get("signals", [])
+        except Exception as e:
+            issues.append(f"{signal_log}: 解析失败({type(e).__name__})—— 损坏≠空账本")
+
+    for sub, kw in ((sample_dir, "sample"), (report_dir, "report")):
+        d = _os.path.join(here, sub)
+        if not _os.path.isdir(d):
+            issues.append(f"{sub}/: 目录缺失 —— 一致性无从核对(缺数据≠通过)")
+            continue
+        files = sorted(x for x in _os.listdir(d) if x.endswith(".json"))
+        if not files:
+            issues.append(f"{sub}/: 无可检查的 .json —— 一致性无从核对")
+            continue
+        for f in files[-recent:]:
+            fp = _os.path.join(d, f)
+            try:
+                obj = _json.load(open(fp, encoding="utf-8"))
+            except Exception as e:
+                issues.append(f"{sub}/{f}: 解析失败({type(e).__name__})—— 损坏文件不得放行")
+                continue
+            if not isinstance(obj, dict):
+                issues.append(f"{sub}/{f}: 顶层不是对象({type(obj).__name__})")
+                continue
+            args = {kw: obj}
+            if kw == "sample":
+                args["signals"] = sigs
+            for iss in check_all(**args):
+                issues.append(f"{sub}/{f}: {iss['fact']} — {iss['why']}")
+    return issues
