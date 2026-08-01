@@ -821,7 +821,11 @@ function buildExtrasBlock(extras) {
   // ── Issuer guidance (业绩预告/快报): company-issued, NOT broker consensus ──
   // Semantic fix PR-A A3: Tushare forecast/express are issuer self-disclosure.
   // Reads issuer_guidance/ first; consensus_forecast/ kept one deprecation cycle.
-  const cf = ts.issuer_guidance || ts.consensus_forecast;
+  // 审计F1:loader 对缺失目录返回 {_status:'not_available'}(truthy),裸 || 会永远选中
+  // issuer_guidance 并静默丢弃 consensus_forecast 存量数据 —— 必须按内容有效性择源。
+  const cf = Array.isArray(ts.issuer_guidance?.forecasts) && ts.issuer_guidance.forecasts.length > 0
+    ? ts.issuer_guidance
+    : ts.consensus_forecast;
   if (cf && Array.isArray(cf.forecasts) && cf.forecasts.length > 0) {
     const valid = cf.forecasts.filter(f =>
       (f.eps != null || f.net_profit != null || f.revenue != null)

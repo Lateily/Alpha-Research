@@ -123,4 +123,23 @@ assert.deepEqual(
 );
 console.log('PASS entity: <3字符英文词不入词表(防误伤)');
 
+// ── 7. 审计回归:3位港股代码不得当作独立数字词元(175 ≠ "adds 175 million")──
+const hkVocab = buildEntityVocab([{ ticker: '175.HK', yahoo: '0175.HK', names: ['Geely', '吉利汽车'] }]);
+assert.deepEqual(
+  matchEntities('Nvidia adds 175 million to capex guidance', hkVocab),
+  [],
+  '裸数字 175 不得命中 175.HK —— 审计发现的误挂案例',
+);
+assert.deepEqual(
+  matchEntities('Geely reports July deliveries', hkVocab),
+  ['175.HK'],
+  '正式公司名仍须命中',
+);
+assert.deepEqual(
+  matchEntities('Shares of 0175.HK rose after the update', hkVocab),
+  ['175.HK'],
+  '带后缀写法 0175.HK 视为实体证据',
+);
+console.log('PASS entity: 裸3位数字不入词表 / 公司名与带后缀代码仍命中(审计回归)');
+
 console.log('ALL news-entity TESTS PASS (0 network calls)');

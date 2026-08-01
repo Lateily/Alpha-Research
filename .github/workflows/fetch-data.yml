@@ -431,6 +431,7 @@ jobs:
           [ "$before" = "$after" ] || echo "::warning::marker regen modified protected paper-state (positions/analytics/snapshots) — these must be read-only"
 
       - name: Commit and push data
+        if: always()   # 审计:健康门失败时仍须提交当日数据与健康报告(否则失败证据一起丢)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

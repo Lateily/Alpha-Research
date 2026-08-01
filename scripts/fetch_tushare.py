@@ -180,7 +180,9 @@ def _top_status(api_results, require_hsgt=False):
         return "partial" if any(s == "ok" for s in statuses) else "failed"
     # DATA_BLOCKED = honest entitlement gap, non-fatal for the aggregate
     # (mirrors the old tier_locked semantics, but detected at runtime).
-    if all(s in ("ok", "DATA_BLOCKED") for s in statuses):
+    # 审计F4:全部维度 DATA_BLOCKED 时不得汇总为 ok(缺数据≠成功);
+    # 至少要有一个真实成功的维度才配 ok。
+    if all(s in ("ok", "DATA_BLOCKED") for s in statuses) and any(s == "ok" for s in statuses):
         return "ok"
     if any(s == "ok" for s in statuses):
         return "partial"

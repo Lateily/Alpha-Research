@@ -117,7 +117,14 @@ export function buildEntityVocab(entries) {
     const zh = [];
     const terms = new Set();
     const codeRoot = String(entry.ticker).split('.')[0];
-    if (/^\d{3,6}$/.test(codeRoot)) terms.add(codeRoot);
+    // 审计F2:3-5位裸数字(如港股 175)会命中任意含该数字的英文句子
+    // ("adds 175 million to capex")。只接受6位A股代码为独立词元;
+    // 短代码必须带交易所后缀或括号形式才算实体证据。
+    if (/^\d{6}$/.test(codeRoot)) terms.add(codeRoot);
+    if (/^\d{3,5}$/.test(codeRoot)) {
+      terms.add(String(entry.ticker));            // 175.HK
+      terms.add(`0${codeRoot}.HK`);               // 0175.HK 常见写法
+    }
     for (const alias of EXTRA_ALIASES[entry.ticker] || []) terms.add(alias);
     for (const name of entry.names || []) terms.add(name.trim());
     for (const term of terms) {
