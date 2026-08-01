@@ -1,40 +1,57 @@
 {
- "generated_at": "20260729 16:35",
+ "generated_at": "20260731 16:36",
+ "orchestrator": "nightly_v2",
+ "report": "COMPLETE",
+ "non_ok_steps": [],
  "steps": [
+  {
+   "step": "official_sample",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 12.66,
+   "tail": "\n=== OFFICIAL SAMPLE 20260731 ===\nmarket : RISK_ON | 趋势恢复:指数上行+主力净流入 +625亿\nportfolio : DE_RISK_REVIEW | single_beta: True\n  新易盛 收396.01 +6.71% 主力15.6402亿 小0.9308亿 [主力回流] -> HOLD_OBSERVE\n  香农芯创 收145.79 +3.52% 主力6.2897亿 小-3.9646亿 [主力回流] -> HOLD_OBSERVE\n  利通电子 收96.01 +10.00% 主力7.4064亿 小-3.2507亿 [主力回流] -> HOLD_OBSERVE\n  中际旭创 收902.01 +4.40% 主力15.1263亿 小-0.0098亿 [主力回流] -> HOLD_OBSERVE\nsignals : +4 (log total 122) · official_sample=true · no_trade_flag=true\nsamples/20260731.json + paper_signal_log.json written.\n不是买卖指令；研究信号，human executes。\n"
+  },
+  {
+   "step": "fwd_backfill",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 26.63,
+   "tail": "\n=== POST-CLOSE REPORT 20260731 ===\nbackfilled 309 horizon-returns | scored: 89/30 (claim_allowed=True)\n  1d: n=89 hit_rate=0.427 avg_gate_aligned=-0.0008\n  3d: n=89 hit_rate=0.438 avg_gate_aligned=-0.0006\n  5d: n=89 hit_rate=0.449 avg_gate_aligned=-0.0007\n  10d: n=75 hit_rate=0.493 avg_gate_aligned=0.0149\nreports/20260731.json + paper_signal_log.json (returns backfilled) written.\n不是买卖指令；研究信号，human executes。\n"
+  },
   {
    "step": "rotation_panel",
    "status": "OK",
    "exit_code": 0,
-   "elapsed_sec": 5.03,
-   "tail": " 汽车芯片, 创新医疗服务, 运动服装, 光伏加工设备, 生物制品, 城商行Ⅲ, 胶黏剂及胶带, 智能穿戴, AIPC, 百日新高, 消费电子概念, 人工智能, 超清视频, 近期新高, 创新药, 医药医疗风格, 上证180_, IGBT概念, 传感器, 东数西算, 医疗器械, 体外诊断, 化学制药, 化学制剂, 集成电路制造, 通信网络设备及器件, 央视50_, 互联网服务, AI眼镜, 昨日高换手, 元宇宙概念, 算力概念, 权重股, 大盘成长, CPO概念, HS300_, 大盘股, 科技风格, MSCI中国, 火力发电, 模拟芯片设计, 计算机设备, 空调, 其他计算机设备, IT服务Ⅲ, 边缘计算, 云计算, 昨日涨停_含一字, AH股, 卫星互联网, IPv6, 腾讯云, 网络安全, 在线教育, 上证50_, 智慧城市, 信创, 数字经济, 无线耳机, AI手机, 贬值受益, 物联网, IT服务Ⅱ, 炼油化工, 炼化及贸易, 电能综合服务, 通信应用增值服务, 车身附件及饰件, 专业服务, 白色家电, 乳品, 其他化学原料, 昨日触板, 国资云概念, 数字货币, VPN, 上海自贸, 数据安全, 昨日炸板, 昨日连板_含一字, 昨日连板, 华为欧拉, WiFi, 趋势股, 检测服务, 激光设备, 空间计算, 激光雷达, 乳业, 反转股, 净水概念, 微盘精选, 仓储物流, 粮油加工, 医美服务, 化学原料, 煤化工, 石油石化, 聚氨酯, 其他小金属, 航运, 军工电子Ⅲ, 军工电子Ⅱ, 非银金融, 安防设备, 镍, 钾肥, 煤化工概念, 油气资源, 湖南板块, 宁夏板块, 山西板块, 陕西板块, 广西板块, 新疆板块, 煤炭, 焦煤, 煤炭开采, 环氧丙烷, 昨日打二板以上表现, 资源开采概念, 钼, 其他家居用品, 工程机械器件, 轮胎轮毂, 其他石化, 超超临界发电, 宠物经济, 期货, 生活用纸, 卫浴制品, 其他黑色家电, 水产概念, 社保重仓, 2026一季报预减, 海洋捕捞, 复合肥, 种子, 钴, 动物保健Ⅲ, 动物保健Ⅱ, 印刷, 农药兽药, 装配建筑, 航天航空, CRO, 化学工程, 水泥制品, 油品石化贸易, 公交, 空间站概念, 新型工业化, 金融地产风格, 航海装备Ⅲ, 航海装备Ⅱ, 氯碱, 综合电力设备商, 燃气Ⅲ, 燃气Ⅱ, 券商概念, 大盘价值, 证券Ⅲ, 证券Ⅱ, 国防军工, 硅料硅片, 医疗研发外包, 影视院线, 纺织服饰, 无人机, 茅指数, 2026一季报扭亏, 航天装备Ⅲ, 航天装备Ⅱ\n\n不是买卖指令；研究信号，human executes.\n\n[written] /Users/years/ar-live/experiments/execution_tracker/rotation_panel.json\n"
+   "elapsed_sec": 5.05,
+   "tail": "激励, 2025三季报预增, MiniLED, 虚拟数字人, OLED, 网红经济, AI智能体, 军工, 量子科技, 小盘价值, ChatGPT概念, 医疗器械概念, 独角兽, 低空经济, 苹果概念, 商业航天, 中盘成长, 工业互联, 氢能源, 2026一季报预增, 稀缺资源, 充电桩, 先进制造风格, 英伟达概念, 中字头, AIGC概念, 国产软件, 小盘成长, 国产芯片, 创投, DeepSeek概念, 专精特新, 小金属概念, 液冷概念, 新材料, 绿色电力, 光纤概念, 长江三角, 区块链, 深圳特区, 储能概念, 光通信模块, 光伏概念, PCB, 数据中心, 上证380, QFII重仓, 新能源车, 创业成份, 一带一路, 大数据, 机器人概念, 百元股, 小盘股, 华为概念, 行业龙头, 昨日高振幅, 通信技术, 中盘股, 创业板综, 中证500, 深证100R, 5G概念, 2026中报预增, 深成500, 央国企改革, 深股通, 沪股通, 标准普尔, 富时罗素, 融资融券, 耐火材料, 其他医疗服务, 化妆品制造及其他, 娱乐用品, 综合环境治理, 其他种植业, 教育运营及其他, 照明设备Ⅲ, 照明设备Ⅱ, 文娱用品, 化妆品, 保健品, 特钢Ⅲ, 特钢Ⅱ, 国际工程, 塑料包装, 跨境物流, 机场, 原材料供应链服务, 旅游综合, 玻璃制造, 工控设备, 个护用品, 人工景区, 焦炭Ⅲ, 焦炭Ⅱ, 自然景区, 大宗用纸, 光伏辅材, 电工仪器仪表, 冶钢辅料, 有机硅, 造纸, 农商行Ⅲ, 冶钢原料, 塑料, 电视广播Ⅲ, 电视广播Ⅱ, 磁性材料, 航空运输, 合成树脂, 其他自动化设备, 仪器仪表, 种植业, 逆变器, 综合Ⅲ, 综合, 综合Ⅱ, 非金属材料Ⅲ, 非金属材料Ⅱ, 磨具磨料, 航空机场, 旅游及景区, 风电设备, 光伏主材, 住宅开发, 通信终端及配件, 风电整机, 金融控股, 光伏发电, 房地产开发, 电子化学品Ⅲ, 电子化学品Ⅱ, 分立器件, 房地产, 板材, 热力服务, 其他通用设备, 普钢, 光伏电池组件, 化学制品, 门户网站, 原料药, 其他电源设备Ⅲ, 底盘与发动机系统, 钨, 钢铁, 铅锌, 机器人, 农林牧渔, 其他电源设备Ⅱ, 中药Ⅲ, 中药Ⅱ, 光伏设备, 医疗服务, 交通运输, 通用设备, 建筑装饰, 风力发电, 汽车零部件, 小金属, 自动化设备, 消费电子零部件及组装, 消费电子, 光学光电子, 基础化工, 机械设备, 印制电路板, 电子, 医药生物, 通信设备, 通信\n\n不是买卖指令；研究信号，human executes.\n\n[written] /Users/years/ar-live/experiments/execution_tracker/rotation_panel.json\n"
   },
   {
    "step": "momentum_prefilter",
    "status": "OK",
    "exit_code": 0,
-   "elapsed_sec": 22.41,
-   "tail": ".4% | +19.7% | +0.0% |\n| 920651.BJ | 天罡股份 | 电器仪表 | +26.0% | +23.3% | +0.0% |\n| 920717.BJ | 瑞星股份 | 专用机械 | +25.6% | +31.6% | -0.7% |\n| 920690.BJ | 捷众科技 | 汽车配件 | +25.5% | +19.5% | +0.0% |\n| 000893.SZ | 亚钾国际 | 农药化肥 | +23.5% | +23.6% | -1.5% |\n| 920018.BJ | 宏远股份 | 电气设备 | +23.5% | +15.1% | -0.1% |\n| 002891.SZ | 中宠股份 | 饲料 | +21.7% | +18.6% | -0.2% |\n| 300067.SZ | 安诺其 | 染料涂料 | +21.4% | +3.7% | -1.6% |\n| 601038.SH | 一拖股份 | 农用机械 | +20.7% | +31.8% | -1.6% |\n| 000526.SZ | 学大教育 | 文教休闲 | +20.4% | +30.1% | -1.8% |\n| 600415.SH | 小商品城 | 商品城 | +20.1% | +16.4% | -1.7% |\n| 001328.SZ | 登康口腔 | 日用化工 | +20.0% | +22.8% | -1.2% |\n| 002832.SZ | 比音勒芬 | 服饰 | +19.9% | +22.8% | -2.5% |\n| 002003.SZ | 伟星股份 | 服饰 | +19.7% | +25.5% | -0.1% |\n| 002860.SZ | 星帅尔 | 家用电器 | +19.5% | +35.5% | -0.6% |\n| 002895.SZ | 川恒股份 | 化工原料 | +19.5% | +20.5% | -0.9% |\n| 002612.SZ | 朗姿股份 | 服饰 | +19.2% | +19.3% | -1.7% |\n| 301381.SZ | 赛维时代 | 互联网 | +18.7% | +23.5% | -1.1% |\n| 600199.SH | 金种子酒 | 白酒 | +18.4% | +22.3% | +0.0% |\n| 300979.SZ | 华利集团 | 服饰 | +18.2% | +20.7% | -0.2% |\n| 688296.SH | 和达科技 | 软件服务 | +18.1% | +32.0% | -0.7% |\n\n[written] /Users/years/ar-live/experiments/execution_tracker/momentum_prefilter.json\n不是买卖指令；研究信号，human executes.\n"
+   "elapsed_sec": 24.19,
+   "tail": "4% | +28.4% | +0.0% |\n| 600389.SH | 江山股份 | 农药化肥 | +25.4% | +9.1% | -2.4% |\n| 300875.SZ | 捷强装备 | 专用机械 | +25.1% | +20.9% | -2.4% |\n| 002882.SZ | 金龙羽 | 电气设备 | +23.9% | +14.4% | +0.0% |\n| 002258.SZ | 利尔化学 | 农药化肥 | +23.5% | +17.0% | +0.0% |\n| 920765.BJ | 美之高 | 家居用品 | +22.0% | +17.2% | -2.2% |\n| 002539.SZ | 云图控股 | 农药化肥 | +21.6% | +6.5% | -1.2% |\n| 600663.SH | 陆家嘴 | 园区开发 | +20.2% | +29.8% | +0.0% |\n| 601567.SH | 三星电气 | 电气设备 | +20.2% | +18.9% | -0.9% |\n| 601598.SH | 中国外运 | 仓储物流 | +20.0% | +27.6% | -0.2% |\n| 603338.SH | 浙江鼎力 | 工程机械 | +18.6% | +28.6% | -1.7% |\n| 600801.SH | 华新建材 | 水泥 | +18.5% | +36.5% | -1.9% |\n| 301668.SZ | 昊创瑞通 | 电气设备 | +18.1% | +13.1% | +0.0% |\n| 600415.SH | 小商品城 | 商品城 | +18.1% | +23.9% | -1.1% |\n| 002270.SZ | 华明装备 | 电气设备 | +17.4% | +12.2% | -2.1% |\n| 300688.SZ | 创业黑马 | 文教休闲 | +17.3% | +16.5% | -3.0% |\n| 600409.SH | 三友化工 | 化纤 | +17.3% | +2.3% | -2.8% |\n| 002003.SZ | 伟星股份 | 服饰 | +17.0% | +22.0% | -1.2% |\n| 002112.SZ | 三变科技 | 电气设备 | +16.8% | +2.5% | -2.8% |\n| 002895.SZ | 川恒股份 | 化工原料 | +16.6% | +15.2% | -1.0% |\n| 300465.SZ | 高伟达 | 软件服务 | +16.6% | +9.5% | -2.3% |\n\n[written] /Users/years/ar-live/experiments/execution_tracker/momentum_prefilter.json\n不是买卖指令；研究信号，human executes.\n"
   },
   {
    "step": "rotation_stats",
    "status": "OK",
    "exit_code": 0,
-   "elapsed_sec": 0.07,
-   "tail": "## 轮动实验室统计层 v0(20260728)\n\n### 转移矩阵(窗口内描述统计,非 alpha)\n- FLICKER: {'FLICKER': 0.837, 'WARMING': 0.163}\n- INFLOW_CONT: {'INFLOW_CONT': 1.0}\n- NEUTRAL: {'FLICKER': 0.295, 'OUTFLOW_CONT': 0.299, 'WARMING': 0.406}\n- OUTFLOW_CONT: {'OUTFLOW_CONT': 1.0}\n- WARMING: {'INFLOW_CONT': 1.0}\n\n### 龙头广度 / 动量集中度\n- 其他: top30 27 席, top10 8 席, avg10d 24.2%, 例: 科蓝软件(41.8%), 顺钠股份(36.6%), 爱朋医疗(35.3%), 创新医疗(34.8%)\n- 医药: top30 1 席, top10 1 席, avg10d 42.7%, 例: 珍宝岛(42.7%)\n- 消费/服务: top30 1 席, top10 1 席, avg10d 44.5%, 例: 爱丽家居(44.5%)\n- 汽车/电动车: top30 1 席, top10 0 席, avg10d 25.5%, 例: 捷众科技(25.5%)\n\n不是买卖指令；研究信号，human executes.\n[written] /Users/years/ar-live/experiments/execution_tracker/rotation_stats.json\n"
+   "elapsed_sec": 0.06,
+   "tail": "## 轮动实验室统计层 v0(20260730)\n\n### 转移矩阵(窗口内描述统计,非 alpha)\n- FLICKER: {'FLICKER': 0.859, 'WARMING': 0.141}\n- INFLOW_CONT: {'INFLOW_CONT': 1.0}\n- NEUTRAL: {'FLICKER': 0.088, 'OUTFLOW_CONT': 0.869, 'WARMING': 0.043}\n- OUTFLOW_CONT: {'OUTFLOW_CONT': 1.0}\n- WARMING: {'INFLOW_CONT': 1.0}\n\n### 龙头广度 / 动量集中度\n- 其他: top30 26 席, top10 7 席, avg10d 22.7%, 例: 传智教育(41.8%), 学大教育(32.1%), 中电电机(31.2%), 新强联(30.7%)\n- 汽车/电动车: top30 3 席, top10 3 席, avg10d 31.3%, 例: 浙江华远(33.8%), 明新旭腾(31.8%), 安徽凤凰(28.3%)\n- 消费/服务: top30 1 席, top10 0 席, avg10d 22.0%, 例: 美之高(22.0%)\n\n不是买卖指令；研究信号，human executes.\n[written] /Users/years/ar-live/experiments/execution_tracker/rotation_stats.json\n"
   },
   {
    "step": "rotation_validation",
    "status": "OK",
    "exit_code": 0,
-   "elapsed_sec": 1.54,
-   "tail": "[append] +1 日,滚动窗 70 日\n{\n \"window\": [\n  \"20260417\",\n  \"20260729\"\n ],\n \"n_days\": 70,\n \"n_sectors\": 1005,\n \"Q1_persistence\": {\n  \"persist_T1\": {\n   \"p\": 0.563,\n   \"ci\": [\n    0.55,\n    0.576\n   ],\n   \"n\": 5686\n  },\n  \"persist_T3\": {\n   \"p\": 0.273,\n   \"ci\": [\n    0.262,\n    0.285\n   ],\n   \"n\": 5480\n  },\n  \"fwd3_hot_vs_random\": {\n   \"hot_median\": -0.0,\n   \"rand_median\": -0.08,\n   \"mw_z\": 1.19,\n   \"mw_p\": 0.2348,\n   \"n\": [\n    5480,\n    5480\n   ]\n  }\n },\n \"Q2_leader_breadth\": {\n  \"broad_n\": 487,\n  \"narrow_n\": 4993,\n  \"broad_med_fwd3\": 0.66,\n  \"narrow_med_fwd3\": -0.06,\n  \"mw_z\": 3.73,\n  \"mw_p\": 0.0002,\n  \"note\": \"广度=板块名匹配的当日涨停数>=2 [行业名跨表模糊匹配,匹配失败按narrow计]\"\n }\n}\nQ3: [{\"pair\": \"半导体设备->半导体材料\", \"best_lag\": 1, \"r\": 0.185, \"p\": 0.123, \"bh_pass_10pct\": false}, {\"pair\": \"光模块(CPO)->印制电路板\", \"status\": \"DATA_BLOCKED: 板块名缺失\", \"bh_pass_10pct\": false}, {\"pair\": \"油田服务->油气开采Ⅱ\", \"best_lag\": 3, \"r\": 0.166, \"p\": 0.1751, \"bh_pass_10pct\": false}, {\"pair\": \"化学制药->医药流通\", \"best_lag\": 2, \"r\": 0.342, \"p\": 0.0031, \"bh_pass_10pct\": true}, {\"pair\": \"黄金->铝\", \"best_lag\": 3, \"r\": -0.157, \"p\n[written] /Users/years/ar-live/experiments/execution_tracker/rotation_validation.json\n不是买卖指令；研究信号，human executes.\n"
+   "elapsed_sec": 2.99,
+   "tail": "[append] +2 日,滚动窗 72 日\n{\n \"window\": [\n  \"20260417\",\n  \"20260731\"\n ],\n \"n_days\": 72,\n \"n_sectors\": 1005,\n \"Q1_persistence\": {\n  \"persist_T1\": {\n   \"p\": 0.559,\n   \"ci\": [\n    0.546,\n    0.572\n   ],\n   \"n\": 5896\n  },\n  \"persist_T3\": {\n   \"p\": 0.267,\n   \"ci\": [\n    0.256,\n    0.279\n   ],\n   \"n\": 5686\n  },\n  \"fwd3_hot_vs_random\": {\n   \"hot_median\": -0.03,\n   \"rand_median\": -0.08,\n   \"mw_z\": 0.5,\n   \"mw_p\": 0.6196,\n   \"n\": [\n    5686,\n    5686\n   ]\n  }\n },\n \"Q2_leader_breadth\": {\n  \"broad_n\": 487,\n  \"narrow_n\": 5199,\n  \"broad_med_fwd3\": 0.66,\n  \"narrow_med_fwd3\": -0.09,\n  \"mw_z\": 4.0,\n  \"mw_p\": 0.0001,\n  \"note\": \"广度=板块名匹配的当日涨停数>=2 [行业名跨表模糊匹配,匹配失败按narrow计]\"\n }\n}\nQ3: [{\"pair\": \"半导体设备->半导体材料\", \"best_lag\": 1, \"r\": 0.193, \"p\": 0.1015, \"bh_pass_10pct\": false}, {\"pair\": \"光模块(CPO)->印制电路板\", \"status\": \"DATA_BLOCKED: 板块名缺失\", \"bh_pass_10pct\": false}, {\"pair\": \"油田服务->油气开采Ⅱ\", \"best_lag\": 3, \"r\": 0.106, \"p\": 0.3851, \"bh_pass_10pct\": false}, {\"pair\": \"化学制药->医药流通\", \"best_lag\": 2, \"r\": 0.337, \"p\": 0.0031, \"bh_pass_10pct\": true}, {\"pair\": \"黄金->铝\", \"best_lag\": 3, \"r\": -0.152, \"\n[written] /Users/years/ar-live/experiments/execution_tracker/rotation_validation.json\n不是买卖指令；研究信号，human executes.\n"
   },
   {
    "step": "lead_precursor",
    "status": "OK",
    "exit_code": 0,
    "elapsed_sec": 0.13,
-   "tail": "## L0.5 前兆层 v0(20260729)\n\n最新: ALLOW_SMALL_TEST_ONLY · 亮灯 3\n- 流出衰竭: 电子连续流出但跌幅未继续创近4日新低,卖压边际收窄\n- 邻域新钱: 电子仍流出,但科技邻域已有多条子线正流入/收正\n- 龙头背离代理: 母板块弱,但个股观察已有正向 nowcast: 中际旭创:ACCUMULATION_PROBABLE / 华海清科:ACCUMULATION_PROBABLE\n\n### 历史校准(只用 rotation_history,claim_allowed=false)\n- lights>=1: n=44, T+1>0 0.477, T+1中位 -0.365%, 随机中位 0.035%\n- lights>=2: n=28, T+1>0 0.536, T+1中位 0.755%, 随机中位 -0.002%\n- lights>=3: n=16, T+1>0 0.562, T+1中位 1.03%, 随机中位 0.037%\n- lights>=4: n=2, T+1>0 1.0, T+1中位 1.03%, 随机中位 -0.031%\n\n- DATA_LIMITED: rotation_history provides sector settle flow/pct and limit-up industry counts only\n- DATA_LIMITED: latest read may include nowcast observation data; historical calibration remains sector-only\n- DATA_LIMITED: leader price structure and overnight anchors require separate feeds\n\n不是买卖指令；研究信号，human executes.\n[written] /Users/years/ar-live/experiments/execution_tracker/lead_precursor.json\n"
+   "tail": "## L0.5 前兆层 v0(20260731)\n\n最新: NO_PRECURSOR · 亮灯 0\n- 无前兆灯。\n\n### 历史校准(只用 rotation_history,claim_allowed=false)\n- lights>=1: n=45, T+1>0 0.467, T+1中位 -0.48%, 随机中位 -0.002%\n- lights>=2: n=29, T+1>0 0.517, T+1中位 0.75%, 随机中位 -0.038%\n- lights>=3: n=17, T+1>0 0.529, T+1中位 0.75%, 随机中位 0.054%\n- lights>=4: n=2, T+1>0 1.0, T+1中位 1.03%, 随机中位 -0.129%\n\n- DATA_LIMITED: rotation_history provides sector settle flow/pct and limit-up industry counts only\n- DATA_LIMITED: latest read may include nowcast observation data; historical calibration remains sector-only\n- DATA_LIMITED: leader price structure and overnight anchors require separate feeds\n\n不是买卖指令；研究信号，human executes.\n[written] /Users/years/ar-live/experiments/execution_tracker/lead_precursor.json\n"
   },
   {
    "step": "overnight_anchor_frame",
@@ -47,30 +64,51 @@
    "step": "court_wakeup",
    "status": "OK",
    "exit_code": 0,
-   "elapsed_sec": 4.87,
-   "tail": "## Court 唤醒扫描(20260729 · 在册 8)\n  ⏰ 比亚迪 002594.SZ — W1 价格移动 +17.6%(|x|>=15%) | W2 板块唤醒:汽车 streak>=3\n  ⏰ 大参林 603233.SH — W1 价格移动 +17.5%(|x|>=15%)\n  ⏰ 中际旭创 300308.SZ — W1 价格移动 -22.3%(|x|>=15%)\n  ⏰ 华海清科 688120.SH — W1 价格移动 -18.6%(|x|>=15%)\n  ⏰ 鼎龙股份 300054.SZ — W1 价格移动 -30.6%(|x|>=15%)\n  ⏰ 沪电股份 002463.SZ — W1 价格移动 -27.4%(|x|>=15%)\n[written] /Users/years/ar-live/experiments/execution_tracker/court_wakeup.json\n不是买卖指令；研究信号，human executes.\n"
+   "elapsed_sec": 5.76,
+   "tail": "## Court 唤醒扫描(20260731 · 在册 8)\n  ⏰ 比亚迪 002594.SZ — W2 板块唤醒:汽车 streak>=3\n  ⏰ 中际旭创 300308.SZ — W1 价格移动 -19.2%(|x|>=15%)\n  ⏰ 鼎龙股份 300054.SZ — W1 价格移动 -23.6%(|x|>=15%)\n  ⏰ 沪电股份 002463.SZ — W1 价格移动 -23.3%(|x|>=15%)\n[written] /Users/years/ar-live/experiments/execution_tracker/court_wakeup.json\n不是买卖指令；研究信号，human executes.\n"
   },
   {
    "step": "watch_dynamic",
    "status": "OK",
    "exit_code": 0,
    "elapsed_sec": 0.05,
-   "tail": "## 动态名单(14 名,截断 0)\n  600276.SH 恒瑞医药 — 基金filled\n  002714.SZ 牧原股份 — 基金filled\n  002594.SZ 比亚迪 — 在册thesis\n  603233.SH 大参林 — 在册thesis\n  300308.SZ 中际旭创 — 在册thesis\n  688120.SH 华海清科 — 在册thesis\n  300054.SZ 鼎龙股份 — 在册thesis\n  002463.SZ 沪电股份 — 在册thesis\n  688166.SH 博瑞医药 — 在册thesis\n  603221.SH 爱丽家居 — 动量雷达44.5%\n  603567.SH 珍宝岛 — 动量雷达42.7%\n  300663.SZ 科蓝软件 — 动量雷达41.8%\n  000533.SZ 顺钠股份 — 动量雷达36.6%\n  300753.SZ 爱朋医疗 — 动量雷达35.3%\n[written] /Users/years/ar-live/experiments/execution_tracker/watch_dynamic.json\n"
+   "tail": "## 动态名单(14 名,截断 0)\n  600276.SH 恒瑞医药 — 基金filled\n  002714.SZ 牧原股份 — 基金filled\n  002594.SZ 比亚迪 — 在册thesis\n  603233.SH 大参林 — 在册thesis\n  300308.SZ 中际旭创 — 在册thesis\n  688120.SH 华海清科 — 在册thesis\n  300054.SZ 鼎龙股份 — 在册thesis\n  002463.SZ 沪电股份 — 在册thesis\n  688166.SH 博瑞医药 — 在册thesis\n  003032.SZ 传智教育 — 动量雷达41.8%\n  301535.SZ 浙江华远 — 动量雷达33.8%\n  000526.SZ 学大教育 — 动量雷达32.1%\n  605068.SH 明新旭腾 — 动量雷达31.8%\n  603988.SH 中电电机 — 动量雷达31.2%\n[written] /Users/years/ar-live/experiments/execution_tracker/watch_dynamic.json\n"
   },
   {
    "step": "position_review",
    "status": "OK",
    "exit_code": 0,
-   "elapsed_sec": 1.34,
-   "tail": "## 仓位复审(20260729 · NAV≈¥1,012,387 · 现金 71.0%)\n\n- 恒瑞医药 浮-4.45% 权重14.4% R=-0.6 stop距离-3.14% \n- 牧原股份 浮-0.56% 权重14.6% R=-0.1 stop距离-5.09% \n\n不是买卖指令；研究信号，human executes.\n[written] /Users/years/ar-live/experiments/execution_tracker/position_review.json\n"
+   "elapsed_sec": 1.76,
+   "tail": "## 仓位复审(20260731 · NAV≈¥1,014,344 · 现金 70.9%)\n\n- 恒瑞医药 浮-4.11% 权重14.4% R=-0.55 stop距离-3.48% \n- 牧原股份 浮+0.41% 权重14.7% R=0.07 stop距离-6.01% \n\n不是买卖指令；研究信号，human executes.\n[written] /Users/years/ar-live/experiments/execution_tracker/position_review.json\n"
+  },
+  {
+   "step": "red_flag_gate",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 7.57,
+   "tail": "[written] red_flags.json n=14 red=4\n不是买卖指令;研究信号,human executes.\n/Users/years/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\n"
+  },
+  {
+   "step": "full_battery",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 20.56,
+   "tail": "[written] battery.json n=14 partial=0\n不是买卖指令;研究信号,human executes.\n/Users/years/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\n"
   },
   {
    "step": "setup_promoter",
    "status": "OK",
    "exit_code": 0,
-   "elapsed_sec": 0.08,
-   "tail": "## 晋级桥(regime=RISK_OFF)\n[written] /Users/years/ar-live/experiments/execution_tracker/promotion_queue.json\n不是买卖指令；研究信号，human executes.\n"
+   "elapsed_sec": 0.04,
+   "tail": "## 晋级桥(regime=RISK_ON)\n[written] /Users/years/ar-live/experiments/execution_tracker/promotion_queue.json\n不是买卖指令；研究信号，human executes.\n"
+  },
+  {
+   "step": "export_contracts",
+   "status": "OK",
+   "exit_code": 0,
+   "elapsed_sec": 0.03,
+   "tail": "model_portfolio_state.json: STALE_INPUT\ntrade_cards.json: STALE_INPUT\npremarket_frame.json: STALE_INPUT\nrotation_panel.json: OK\nred_flags.json: OK\nbattery.json: OK\nposition_review.json: OK\n[report] PARTIAL  → public/data/v2/\n不是买卖指令;研究信号,human executes.\n"
   }
  ],
- "note": "nightly orchestrator; review/paper outputs only. 不是买卖指令。"
+ "note": "nightly v2;review/paper 产出;上游失败下游必跳。不是买卖指令。"
 }
