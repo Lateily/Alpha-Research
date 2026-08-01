@@ -55,6 +55,26 @@ def real_holdings(fund_dir=None):
     rows = obj if isinstance(obj, list) else obj.get("orders", [])
     return [(o["ticker"], o.get("name"), HOLDING_SECTORS.get(o["ticker"], "UNKNOWN"))
             for o in rows if o.get("status") == "filled"]
+
+
+def canonical_sectors(codes, token, fallback=None):
+    """canonical 行业映射:Tushare stock_basic.industry(权威源)。
+    取不到的票保持 UNKNOWN —— 调用方必须把 UNKNOWN 当 DATA_BLOCKED,不得猜、
+    更不得把多个 UNKNOWN 当成同一板块判定单一 beta(审计 MAJOR 2026-08-01)。"""
+    fallback = fallback or {}
+    out = {c: fallback.get(c, "UNKNOWN") for c in codes}
+    if not codes:
+        return out
+    try:
+        d = fs._tushare_call("stock_basic", token, {"ts_code": ",".join(codes)},
+                             "ts_code,industry")
+        for it in d["items"]:
+            row = dict(zip(d["fields"], it))
+            if row.get("industry"):
+                out[row["ts_code"]] = row["industry"]
+    except Exception:
+        pass   # 取不到就保持 UNKNOWN,由上层标 DATA_BLOCKED
+    return out
 INDICES = [("000001.SH", "sh"), ("399001.SZ", "sz"), ("399006.SZ", "cyb")]
 
 
@@ -102,6 +122,11 @@ def build(token):
     idx["main_flow_total"] = _market_main_flow(token)     # 亿, into the market gate
     holdings = real_holdings()
     holding_codes = {c for c, _, _ in holdings}
+    # canonical 行业覆盖硬编码兜底(审计 MAJOR:两只新持仓都会落 UNKNOWN 并被
+    # 误判为"同属 UNKNOWN ⇒ 单一 beta")
+    csec = canonical_sectors(sorted(holding_codes), token,
+                             fallback={c: sec for c, _, sec in holdings})
+    holdings = [(c, n, csec.get(c, "UNKNOWN")) for c, n, _ in holdings]
     # 扫描集 = 观察名单 ∪ 真实持仓(持仓必须在场,否则组合门无从判定)
     scan = [(c, n, SECTOR) for c, n in OBSERVE_LIST if c not in holding_codes] + list(holdings)
     td, fund_dates, daily_dates = [], set(), set()
@@ -176,7 +201,26 @@ def main():
     trade_date, snap, sigs = build(token)
     samples_dir = os.path.join(HERE, "samples")
     os.makedirs(samples_dir, exist_ok=True)
-    with open(os.path.join(samples_dir, f"{trade_date}.json"), "w") as fh:
+    sample_path = os.path.join(samples_dir, f"{trade_date}.json")
+    # ── 幂等闸门(审计 BLOCKER 2026-08-01)────────────────────────────────────
+    # 该交易日已结算过 ⇒ 正式模式零新增。周末/节假日重跑时 Tushare 仍返回上一
+    # 交易日,若无此闸门会补写一批 timestamp=上个交易日、实际写入却是今天的
+    # "事后信号",污染判分池。历史纠错必须走带 provenance 的 migration。
+    already = os.path.exists(sample_path)
+    force = "--force-resettle" in sys.argv
+    if already and not force:
+        print(f"IDEMPOTENT_SKIP: samples/{trade_date}.json 已存在 —— 该交易日已结算,正式模式零新增。")
+        print("  (历史纠错请走 migration 带 corrected_at/reason/original_value;")
+        print("   确需重算请显式 --force-resettle,信号仍不会重复写入)")
+        print("不是买卖指令;研究信号,human executes.")
+        return
+    ingested_at = time.strftime("%Y%m%d %H:%M:%S")
+    snap["ingested_at"] = ingested_at
+    snap["backfilled"] = ingested_at[:8] != trade_date   # 写入日≠交易日 ⇒ 事后补写,显式暴露
+    for sg in sigs:
+        sg["ingested_at"] = ingested_at
+        sg["backfilled"] = snap["backfilled"]
+    with open(sample_path, "w") as fh:
         json.dump(snap, fh, ensure_ascii=False, indent=2)
     added, total = append_log(os.path.join(HERE, "paper_signal_log.json"), sigs)
     print(f"\n=== OFFICIAL SAMPLE {trade_date} ===")

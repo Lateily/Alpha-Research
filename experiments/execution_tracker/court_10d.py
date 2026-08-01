@@ -105,7 +105,20 @@ def review(today=None, marks=None):
             "note": "引擎只取证与初判;终审判定书由人/AI 撰写并需 Junyan 口令方可执行处置",
         })
     due_n = sum(1 for c in cases if c["due_for_tribunal"])
-    return {"court": "court_10d_v0", "status": "OK", "checked_at": today,
+    # 审计 MAJOR(2026-08-01):此前所有持仓 mark=null/R=null 仍报 status=OK。
+    # 无 mark ⇒ 五查中的①R 与⑤距 stop 余量都无从判定,不得当作完整取证。
+    no_mark = [c["ticker"] for c in cases if c.get("mark") is None]
+    status = "OK" if not cases else ("PARTIAL" if no_mark and len(no_mark) < len(cases)
+                                     else ("DATA_BLOCKED" if no_mark else "OK"))
+    for c in cases:
+        if c.get("mark") is None:
+            c["evidence_status"] = "DATA_BLOCKED"
+            c["evidence_why"] = "无定盘 mark:R 与距 stop 余量不可判定"
+            c["engine_verdict"] = "TRIBUNAL_BLOCKED_NO_MARK"
+        else:
+            c["evidence_status"] = "OK"
+    return {"court": "court_10d_v0", "status": status, "checked_at": today,
+            "no_mark_tickers": no_mark,
             "tenure_days_bar": TENURE_DAYS, "r_bar": R_BAR,
             "n_positions": len(cases), "n_due": due_n, "cases": cases,
             "disclaimer": "不是买卖指令;研究信号,human executes."}
@@ -125,6 +138,14 @@ def selftest():
     # 账本缺失 ⇒ DATA_BLOCKED 而非空庭
     out = review(today="20260801", marks={})
     checks.append(("产出结构完整", out.get("court") == "court_10d_v0" and "cases" in out))
+    # 审计回归:全部持仓缺 mark ⇒ 整体不得 OK,逐案标 DATA_BLOCKED
+    if out.get("cases"):
+        checks.append(("全缺mark ⇒ status 非OK", out["status"] in ("DATA_BLOCKED", "PARTIAL")))
+        checks.append(("逐案 evidence_status=DATA_BLOCKED",
+                       all(c.get("evidence_status") == "DATA_BLOCKED" for c in out["cases"])))
+        checks.append(("逐案 verdict=TRIBUNAL_BLOCKED_NO_MARK",
+                       all(c.get("engine_verdict") == "TRIBUNAL_BLOCKED_NO_MARK"
+                           for c in out["cases"])))
     checks.append(("免责句在", "不是买卖指令" in out["disclaimer"]))
     for name, ok in checks:
         print(("  ✓ " if ok else "  ✗ ") + name)
@@ -136,7 +157,14 @@ def main():
     if "--selftest" in sys.argv:
         return 0 if selftest() else 1
     marks = {}
-    # 从最新 official sample 取收盘价作为 mark(不联网;缺失则 R=None 并如实标注)
+    # 审计 MAJOR:优先读 position_review.json 的定盘 mark(持仓专用,权威);
+    # official sample 的 ticker_gates 只覆盖扫描集,持仓未必在内 —— 作次选。
+    pr, _e = _load("position_review.json", {})
+    for row in (pr or {}).get("rows", []):
+        tk = row.get("ticker")
+        m = row.get("mark") or row.get("close") or row.get("price")
+        if tk and m is not None:
+            marks[tk] = m
     snap_dir = os.path.join(HERE, "samples")
     if os.path.isdir(snap_dir):
         files = sorted(f for f in os.listdir(snap_dir) if f.endswith(".json"))
@@ -144,7 +172,7 @@ def main():
             snap, _ = _load(os.path.join("samples", files[-1]), {})
             for g in (snap or {}).get("ticker_gates", []):
                 if g.get("ticker") and g.get("price") is not None:
-                    marks[g["ticker"]] = g["price"]
+                    marks.setdefault(g["ticker"], g["price"])   # position_review 优先
     out = review(marks=marks)
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=1)

@@ -169,7 +169,11 @@ def scorecard(log):
               and any(h in (s.get("returns") or {}) for h in HORIZON_DAYS)}
     # ── 独立性门(2026-08-01 审计 MAJOR:同日同逻辑最多重复5条,按 signal_id 计数
     #    等于把相关样本当独立样本;cluster_id 未落地前 claim 一律禁止)──
-    clusters = {s.get("cluster_id") for s in log if s.get("cluster_id")}
+    # 审计 MAJOR(2026-08-01 二轮):簇集合必须与 scored 用**完全相同**的过滤条件,
+    # 否则 1 条可判信号 + 29 条 neutral 就能把门冲开(已构造复现)。
+    clusters = {s.get("cluster_id") for s in log
+                if s.get("cluster_id")
+                and s.get("signal_id") in scored}
     card["total_scored_signals"] = len(scored)
     card["independent_clusters"] = len(clusters)
     card["min_required"] = MIN_SCORED_FOR_CLAIM
