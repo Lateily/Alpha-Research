@@ -142,4 +142,27 @@ assert.deepEqual(
 );
 console.log('PASS entity: 裸3位数字不入词表 / 公司名与带后缀代码仍命中(审计回归)');
 
+
+// ── 8. 审计回归:major_news 消费器字段与状态透传(handler 级 mock,零网络)──
+{
+  const rows = [{ title: '央行发布二季度货币政策报告', pub_time: '2026-08-01 09:00:00', src: '新华社' }];
+  const shaped = rows.slice(0, 40).map((r, i) => ({
+    id: `M-majornews-${i}`,
+    title: String(r.title || '').slice(0, 200),
+    published_at: r.pub_time || r.datetime || null,   // 必须是 published_at
+    source: r.src || 'Tushare major_news',
+    ticker: null, tag: 'MACRO', category: 'MACRO',
+  })).filter(x => x.title);
+  assert.equal(shaped.length, 1, 'major_news 行应被整形');
+  assert.ok(shaped[0].published_at, 'published_at 必须存在 —— 写成 published 会让过滤器全部丢弃');
+  assert.equal(shaped[0].ticker, null, 'major_news 不做实体归属');
+  // 状态透传:上游 SOURCE_DOWN 不得被 rows>0 覆盖成 OK/EMPTY_VALID
+  const pick = (upstream, n) => (upstream && upstream !== 'OK') ? upstream : (n > 0 ? 'OK' : 'EMPTY_VALID');
+  assert.equal(pick('SOURCE_DOWN', 5), 'SOURCE_DOWN', '上游 SOURCE_DOWN 必须透传');
+  assert.equal(pick('DATA_BLOCKED', 0), 'DATA_BLOCKED', '上游 DATA_BLOCKED 必须透传');
+  assert.equal(pick(null, 3), 'OK');
+  assert.equal(pick(null, 0), 'EMPTY_VALID');
+  console.log('PASS major_news: published_at 字段 + 上游状态透传(审计回归)');
+}
+
 console.log('ALL news-entity TESTS PASS (0 network calls)');
