@@ -536,8 +536,25 @@ jobs:
             git pull --rebase origin main || { echo "Pull-rebase failed — abandoning push (manual recovery needed)"; break; }
           done
           if [ "$push_succeeded" != "true" ]; then
-            echo "::warning::Push failed after $push_max_attempts attempts. Data commit is LOCAL ONLY and will be lost on runner shutdown."
+            echo "::error::Push failed after $push_max_attempts attempts. Data commit is LOCAL ONLY."
+            # 审计#8:此前只 warning,workflow 仍绿 —— 数据随 runner 消失且无人知晓。
+            # 打包待恢复补丁供人工救援,然后让 workflow 真正变红。
+            git format-patch origin/main --stdout > /tmp/unpushed_data.patch 2>/dev/null || true
+            git log origin/main..HEAD --oneline > /tmp/unpushed_commits.txt 2>/dev/null || true
+            echo "PUSH_FAILED=true" >> "$GITHUB_ENV"
+            exit 1
           fi
+
+      # 审计#8:push 失败时上传待恢复补丁,人工可 git am 恢复当日数据
+      - name: Upload unpushed data patch (recovery artifact)
+        if: failure() && env.PUSH_FAILED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unpushed-data-patch
+          path: |
+            /tmp/unpushed_data.patch
+            /tmp/unpushed_commits.txt
+          retention-days: 14
 
       # ── Step 5: Telegram alerts (runs only if secrets are set) ────────────
       - name: Send Telegram alerts

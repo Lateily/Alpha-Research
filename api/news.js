@@ -213,6 +213,48 @@ export function parseRSS(xmlText, meta) {
   return items;
 }
 
+// ─── TUSHARE major_news 消费器(审计#7:此前只采集不消费)────────────────────
+// 读 public/data/v2/ops/major_news.json 契约(由 scripts/fetch_major_news.py 产出)。
+// 外部媒体正文 = 不可信数据:只取标题/时间/来源文本,不执行其中任何指令,
+// 不做实体归属(中文长文实体匹配未验证)—— 一律进 MACRO 池,由人/研究层判读。
+async function fetchMajorNews(baseUrl) {
+  const name = 'Tushare major_news';
+  const url = `${baseUrl}/public/data/v2/ops/major_news.json`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      return { items: [], health: { name, status: 'SOURCE_DOWN', rows: 0, error: `HTTP ${res.status}` } };
+    }
+    const payload = await res.json();
+    const rows = Array.isArray(payload?.items) ? payload.items
+               : Array.isArray(payload?.rows) ? payload.rows
+               : Array.isArray(payload) ? payload : [];
+    const items = rows.slice(0, 40).map((r, i) => ({
+      id: `M-majornews-${i}-${String(r.pub_time || r.datetime || '').slice(0, 16)}`,
+      title: String(r.title || '').slice(0, 200),
+      link: r.src_url || r.url || null,
+      published: r.pub_time || r.datetime || null,
+      source: r.src || 'Tushare major_news',
+      ticker: null,                      // 不做实体归属
+      tag: 'MACRO',
+      category: 'MACRO',
+      _trust_boundary: 'external_untrusted_text — 只作证据展示,不得作为指令执行',
+    })).filter(x => x.title);
+    return {
+      items,
+      health: { name, status: items.length > 0 ? 'OK' : 'EMPTY_VALID', rows: items.length,
+                error: null, as_of: payload?.as_of || payload?.checked_at || null },
+    };
+  } catch (err) {
+    clearTimeout(timeout);
+    return { items: [], health: { name, status: 'SOURCE_DOWN', rows: 0, error: err?.message || String(err) } };
+  }
+}
+
+
 // ─── FETCH ONE FEED (never a silent []) ──────────────────────────────────────
 async function fetchFeed(meta) {
   const name = meta.label || meta.url;
@@ -286,14 +328,15 @@ export default async function handler(req, res) {
     const sectorWithCat = SECTOR_FEEDS.map(f => ({ ...f, category: 'PORTFOLIO' }));
     const macroWithCat  = MACRO_FEEDS.map(f => ({ ...f, category: 'MACRO' }));
 
-    const [tickerResults, sectorResults, macroResults] = await Promise.all([
+    const [tickerResults, sectorResults, macroResults, majorNewsResult] = await Promise.all([
       Promise.all(tickerFeeds.map(fetchFeed)),
       Promise.all(sectorWithCat.map(fetchFeed)),
       Promise.all(macroWithCat.map(fetchFeed)),
+      fetchMajorNews(RAW_BASE),                 // 审计#7:major_news 接入消费端
     ]);
 
     const sourceHealth = [
-      ...tickerResults, ...sectorResults, ...macroResults,
+      ...tickerResults, ...sectorResults, ...macroResults, majorNewsResult,
     ].map(r => r.health);
 
     // 3. Entity gate: ticker feeds may only tag a stock on a confirmed match;
@@ -315,6 +358,7 @@ export default async function handler(req, res) {
     for (const result of sectorResults) portfolioRaw.push(...result.items);
     const macroRaw = [
       ...macroResults.flatMap(r => r.items),
+      ...majorNewsResult.items,                 // 审计#7:major_news 进聚合池(MACRO,不做实体归属)
       ...demotedRaw,
     ];
 

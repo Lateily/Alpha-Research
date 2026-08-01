@@ -97,7 +97,7 @@ Never present an invented threshold or weight as if it were calibrated from data
 
 ## Current Known Gaps (Prioritized)
 
-1. **Tushare Pro not integrated** — User has paid access; needs `TUSHARE_TOKEN` GitHub Secret → unlocks real-time A-share quotes, capital flows, northbound data
+1. ~~**Tushare Pro not integrated**~~ — **已接入(2026-08-01 更正)**:`TUSHARE_TOKEN` 已配置(本地 `~/.ar_env` 600 权限 + GitHub Secret)。29 端点实测 **25 OK / 4 DATA_BLOCKED**;可用含行情/估值/资金流(个股·行业·全市场·北向)/财务三表/预告快报/龙虎榜/筹码/量化因子/机构调研/券商预测/宏观(GDP·CPI·PPI·PMI·Shibor)/美债曲线/长篇新闻 major_news。**无权限(标 DATA_BLOCKED,不伪装空数据)**:`news`(中文快讯)、`anns_d`(正式公告)、`cctv_news`、`rt_min_daily` —— 这四项是独立付费权限,未购买;公告层当前用东财免费源平替。健康表见 `public/data/v2/ops/data_source_health.json`。
 2. **VP history is synthetic pre-launch** — vp_history.json populates forward only; backtest results are illustrative
 3. **Signal weights unvalidated** — No real trade history to calibrate against yet
 4. **Portfolio construction absent** — No correlation matrix, no portfolio-level VaR
