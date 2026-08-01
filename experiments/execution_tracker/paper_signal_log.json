@@ -4648,7 +4648,7 @@
     "timestamp": "20260731 close (official)",
     "line": "execution",
     "market_state": "RISK_ON",
-    "sector_single_beta": true,
+    "sector_single_beta": false,
     "market_main_flow_total": 625.36,
     "setup_type": "HOLD_OBSERVE",
     "fund_structure": "主力回流",
@@ -4671,7 +4671,19 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {},
     "entry_close": 396.01,
-    "directional_call": "constructive"
+    "directional_call": "constructive",
+    "_migrations": [
+      {
+        "corrected_at": "20260801 17:43:27",
+        "reason": "审计 BLOCKER(2026-08-01):single_beta 由观察名单(4只 AI/光模块)算出并散播到四层,但真实 filled 持仓是恒瑞医药(化学制药)+牧原股份(农业综合),分属不同行业 ⇒ 非单一 beta。本次为跨层完整回写,消除同一事实的层间矛盾。",
+        "fields": {
+          "sector_single_beta": {
+            "original_value": true,
+            "new_value": false
+          }
+        }
+      }
+    ]
   },
   {
     "signal_id": "9ac30706aa75",
@@ -4680,7 +4692,7 @@
     "timestamp": "20260731 close (official)",
     "line": "execution",
     "market_state": "RISK_ON",
-    "sector_single_beta": true,
+    "sector_single_beta": false,
     "market_main_flow_total": 625.36,
     "setup_type": "HOLD_OBSERVE",
     "fund_structure": "主力回流",
@@ -4703,7 +4715,19 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {},
     "entry_close": 145.79,
-    "directional_call": "constructive"
+    "directional_call": "constructive",
+    "_migrations": [
+      {
+        "corrected_at": "20260801 17:43:27",
+        "reason": "审计 BLOCKER(2026-08-01):single_beta 由观察名单(4只 AI/光模块)算出并散播到四层,但真实 filled 持仓是恒瑞医药(化学制药)+牧原股份(农业综合),分属不同行业 ⇒ 非单一 beta。本次为跨层完整回写,消除同一事实的层间矛盾。",
+        "fields": {
+          "sector_single_beta": {
+            "original_value": true,
+            "new_value": false
+          }
+        }
+      }
+    ]
   },
   {
     "signal_id": "256ae5df0592",
@@ -4712,7 +4736,7 @@
     "timestamp": "20260731 close (official)",
     "line": "execution",
     "market_state": "RISK_ON",
-    "sector_single_beta": true,
+    "sector_single_beta": false,
     "market_main_flow_total": 625.36,
     "setup_type": "HOLD_OBSERVE",
     "fund_structure": "主力回流",
@@ -4735,7 +4759,19 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {},
     "entry_close": 96.01,
-    "directional_call": "constructive"
+    "directional_call": "constructive",
+    "_migrations": [
+      {
+        "corrected_at": "20260801 17:43:27",
+        "reason": "审计 BLOCKER(2026-08-01):single_beta 由观察名单(4只 AI/光模块)算出并散播到四层,但真实 filled 持仓是恒瑞医药(化学制药)+牧原股份(农业综合),分属不同行业 ⇒ 非单一 beta。本次为跨层完整回写,消除同一事实的层间矛盾。",
+        "fields": {
+          "sector_single_beta": {
+            "original_value": true,
+            "new_value": false
+          }
+        }
+      }
+    ]
   },
   {
     "signal_id": "b47895f37969",
@@ -4744,7 +4780,7 @@
     "timestamp": "20260731 close (official)",
     "line": "execution",
     "market_state": "RISK_ON",
-    "sector_single_beta": true,
+    "sector_single_beta": false,
     "market_main_flow_total": 625.36,
     "setup_type": "HOLD_OBSERVE",
     "fund_structure": "主力回流",
@@ -4767,6 +4803,18 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {},
     "entry_close": 902.01,
-    "directional_call": "constructive"
+    "directional_call": "constructive",
+    "_migrations": [
+      {
+        "corrected_at": "20260801 17:43:27",
+        "reason": "审计 BLOCKER(2026-08-01):single_beta 由观察名单(4只 AI/光模块)算出并散播到四层,但真实 filled 持仓是恒瑞医药(化学制药)+牧原股份(农业综合),分属不同行业 ⇒ 非单一 beta。本次为跨层完整回写,消除同一事实的层间矛盾。",
+        "fields": {
+          "sector_single_beta": {
+            "original_value": true,
+            "new_value": false
+          }
+        }
+      }
+    ]
   }
 ]
