@@ -44,6 +44,11 @@
 
 核心工作:把 repo 里的研究产物变成稳定网页 — 不发明研究结论,准确展示合同。
 
+**完整技术与产品权威:**`docs/product/PRODUCT_ENGINEERING_BUILD_GUIDE.md`。Better 同时
+承担 Product Engineer / Product Manager:先把需求变成用户问题、旅程、非目标、数据
+契约和验收,再负责信息架构、前后端实现、QA、发布、回滚和反馈闭环。全部产品工程
+状态记录在 `docs/product/PRODUCT_ENGINEERING_BACKLOG.md`,不能只存在于设计稿或聊天。
+
 首月任务:
 
 | 周 | 任务 | 具体交付 | 验收标准 |
@@ -65,6 +70,11 @@
 ## 3. Reed:AI Engineer / Agent 体系负责人
 
 核心工作:让 AI 工人可用、可测、可控,不是"多接几个模型"。
+
+**完整技术权威:**`docs/llm/AI_OS_BUILD_GUIDE.md`。Reed 的目标不止是 adapter 与
+进度页,而是建立任务操作系统:每项工作自动完成规格编译、冲突检查、Agent 路由、
+隔离执行、证据验证、独立复核、人类批准、Memory 蒸馏和永久总账回写。实施状态
+统一记录在 `docs/llm/AI_OS_ENGINEERING_BACKLOG.md`,不得只留在 Issue 评论或聊天。
 
 首月任务:
 
