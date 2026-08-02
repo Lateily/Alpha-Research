@@ -2,7 +2,8 @@
 ## 任务对照总账:AI OS 的"账实相符"引擎
 
 > 发出日期:2026-08-01 · 任务编号 **AIOS-K1 / Issue #193** · 归属块:块6-AI系统
-> 直属:Junyan(裁决与验收)· 技术对接:Claude(架构与代码审核)· 同组:Reed(AI 工程)
+> 直属:Junyan(裁决与验收)· 技术对接:Claude(架构与代码审核)
+> **本任务为双人协作:Jason + Reed(AI 工程)——分工见 §3.5**
 > 不是买卖指令;研究信号,human executes.
 
 ---
@@ -75,6 +76,30 @@ acceptance(可验收标准,必须可被机器或人明确判定) / depends_on / 
 
 ---
 
+### 3.5 双人分工(Junyan 定,2026-08-01)
+
+AIOS-K1 由你与 **Reed** 共同承担。切法按天然边界,避免撞车:
+
+| 子任务 | 负责人 | 为什么这么切 |
+|---|---|---|
+| **K1-a** schema + 正反例 | **共同起草,你落笔** | 契约是你俩的公共接口,必须先对齐再各写各的 |
+| **K1-b** compiler + registry(事件重放) | **Reed** | 事件流协议 `ai-progress.v2` 是 Reed 写的(#165),重放是他的地盘 |
+| **K1-c** reconciler + 首份报告 | **你** | 对照审计需要"新眼睛" —— 你没参与过去两周的施工,更容易看出账实不符 |
+
+**协作纪律(四条,违反会导致返工)**
+1. **K1-a 必须先完成并双方签字**,再各自开工 b/c —— 契约先行,否则两边写出来对不上;
+2. 各自开**独立分支、独立 PR**(`feat/aios-k1-reconciler` / `feat/aios-k1-registry`),
+   **不共用分支**;
+3. 开工前都在 Issue #164 发 CLAIM 并跑 `progress_conflicts.py` 查撞车;
+4. **Reed 的现有主线(#161 Kimi 影子评测)优先** —— 他的 K1-b 排在影子评测之后。
+   **你可以立即开工 K1-a 与 K1-c,不必等他**;但 K1-a 的 schema 定稿要他确认。
+
+**你和 Reed 的接口约定**:你的 reconciler 消费 Reed 的 registry 输出。
+在 registry 落地前,你用 schema 的正例造 fixture 先行开发 —— 这也是正确做法
+(先按契约写,后接真实实现)。
+
+---
+
 ## 四、验收标准(达不到就不算完成)
 
 1. **对真实数据实跑**:必须跑通 Issue #182-#188 与两份永久总账,产出第一份
@@ -117,10 +142,10 @@ PR 描述里必须贴出这两次运行的真实输出。
 
 ## 七、前置条件与协作
 
-- **权威指南**:`docs/llm/AI_OS_BUILD_GUIDE.md`(566 行)—— ⚠ 目前在**未合并的 PR #189**
-  里,开工前需 Junyan 合并或你 checkout 该分支阅读;
-- **不要与 Reed 撞车**:Reed 当前主线是 Kimi adapter 与评测集(K0/K1-eval);
-  你的 K1 是任务对照总账,两条线不重叠。**开工前先在 Issue #164 发 CLAIM**
+- **权威指南**:`docs/llm/AI_OS_BUILD_GUIDE.md`(566 行)—— ✅ **已随 #189 合并进 main**,
+  `git pull` 后直接可读。配套:`docs/llm/AI_OS_ENGINEERING_BACKLOG.md`(27 个 A-ID,
+  你的任务对应 A-006/A-007/A-008);
+- **与 Reed 的协作见 §3.5**。开工前先在 Issue #164 发 CLAIM
   (格式见 `docs/llm/AI_PROGRESS_PROTOCOL.md`),并跑一次 `progress_conflicts.py` 查撞车;
 - **节律**:周一领任务 → 周二三出 PR 草稿 → 周四联调 → 周五 Junyan 验收。
 
