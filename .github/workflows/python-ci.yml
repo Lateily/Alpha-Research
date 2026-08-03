@@ -64,7 +64,25 @@ jobs:
       # 拿 HEAD 比等于跟自己比,永远相同,是个空转的检查。
       # PR 上这一步才有牙:任何改写/删除既有行的 PR 在这里就红。
       # (push 到 main 时 origin/main == HEAD,该层平凡满足,门在 PR 上。)
-      - name: Event ledger append-only verification (vs origin/main)
+      # 基准必须随事件类型变 —— 上一版固定用 origin/main:
+      #   PR 事件下若目标分支不是 main 就比错了对象;
+      #   push 到 main 时 origin/main 就是刚推上去的那个提交 ⇒ 跟自己比 ⇒ 整步空转,
+      #   而 push 触发器恰恰是为了挡 0712 那种直推 main 的形态。
+      - name: Resolve append-only base ref
+        id: base
         run: |
-          git fetch -q origin main
-          python3 experiments/execution_tracker/event_ledger.py --ref origin/main
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch -q origin "${{ github.base_ref }}"
+            echo "ref=origin/${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            BEFORE="${{ github.event.before }}"
+            # 全零 = 分支新建。main 已存在,出现全零属异常 ⇒ fail-closed,不静默放行。
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              echo "::error::push 事件的 before 为空或全零,无法确定 append-only 基准 —— fail-closed"
+              exit 1
+            fi
+            echo "ref=$BEFORE" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Event ledger append-only verification
+        run: python3 experiments/execution_tracker/event_ledger.py --ref "${{ steps.base.outputs.ref }}"
