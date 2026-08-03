@@ -1,21 +1,40 @@
-"""Build the K1 question-only evaluation pack from the teacher eval set."""
+"""Build the K1 question-only evaluation pack from the public eval set."""
 
 from __future__ import annotations
 
 import argparse
+import random
 import re
+import sys
 from pathlib import Path
 
 
 QUESTION_RE = re.compile(r"(?=^### Q\d{2}\s*$)", re.MULTILINE)
 QUESTION_HEADING_RE = re.compile(r"^### Q\d{2}\s*$", re.MULTILINE)
-STRIP_LINE_RE = re.compile(
-    r"^(Expected label|Difficulty|Known gap):.*$", re.IGNORECASE
+PACKET_RE = re.compile(
+    r"\A(?P<heading>### Q\d{2})\s*\n\n"
+    r"Packet:\s*\n\n```text\n(?P<packet>.*?)\n```\s*\Z",
+    re.DOTALL,
 )
-ANSWER_KEY_RE = re.compile(
-    r"^Answer key rationale:.*?(?=^### Q\d{2}\s*$|\Z)",
-    re.IGNORECASE | re.MULTILINE | re.DOTALL,
-)
+PACKET_FIELD_RE = re.compile(r"^([A-Z][A-Za-z ]+):")
+ALLOWED_PACKET_FIELDS = {
+    "Source label",
+    "Publish date",
+    "Data cutoff",
+    "Event",
+    "Known gap",
+    "Task",
+}
+REQUIRED_PACKET_FIELDS = [
+    "Source label",
+    "Publish date",
+    "Data cutoff",
+    "Event",
+    "Known gap",
+    "Task",
+]
+DEFAULT_SHUFFLE_SEED = "k1-eval-v1-question-order-2026-08-03"
+MIN_PYTHON = (3, 10)
 
 
 HEADER = """# Evaluation Set v1 - Question-Only Pack
@@ -103,6 +122,14 @@ All cases below are synthetic evaluation packets.
 
 
 def main() -> int:
+    if sys.version_info < MIN_PYTHON:
+        required = ".".join(str(part) for part in MIN_PYTHON)
+        current = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        raise SystemExit(
+            f"make_eval_question_only.py requires Python >= {required}; "
+            f"current Python is {current}. Use the bundled Codex Python or CI Python 3.11."
+        )
+
     parser = argparse.ArgumentParser(
         description="Generate docs/llm/EVAL_SET_v1_QUESTION_ONLY.md."
     )
@@ -116,13 +143,22 @@ def main() -> int:
         default="docs/llm/EVAL_SET_v1_QUESTION_ONLY.md",
         help="Question-only output file.",
     )
+    parser.add_argument(
+        "--shuffle-seed",
+        default=DEFAULT_SHUFFLE_SEED,
+        help="Deterministic seed used to shuffle and renumber questions.",
+    )
     args = parser.parse_args()
 
     source = Path(args.source)
     output = Path(args.output)
     text = source.read_text(encoding="utf-8")
     questions = extract_questions(text)
-    output.write_text(build_question_only(questions), encoding="utf-8", newline="\n")
+    output.write_text(
+        build_question_only(questions, shuffle_seed=args.shuffle_seed),
+        encoding="utf-8",
+        newline="\n",
+    )
     print(f"Wrote {output} with {len(questions)} questions.")
     return 0
 
@@ -142,23 +178,53 @@ def extract_questions(text: str) -> list[str]:
     return questions
 
 
-def build_question_only(questions: list[str]) -> str:
+def build_question_only(questions: list[str], shuffle_seed: str = DEFAULT_SHUFFLE_SEED) -> str:
     cleaned = [clean_question(section) for section in questions]
+    rng = random.Random(shuffle_seed)
+    rng.shuffle(cleaned)
+    cleaned = [renumber_question(section, index) for index, section in enumerate(cleaned, start=1)]
     return HEADER.rstrip() + "\n\n" + "\n\n".join(cleaned).rstrip() + "\n"
 
 
 def clean_question(section: str) -> str:
-    section = ANSWER_KEY_RE.sub("", section)
-    lines = []
-    for line in section.splitlines():
-        if STRIP_LINE_RE.match(line.strip()):
+    match = PACKET_RE.match(section.strip())
+    if not match:
+        heading = section.splitlines()[0] if section.splitlines() else "<empty>"
+        raise ValueError(
+            f"{heading}: question must contain only a heading and one Packet text block."
+        )
+
+    packet = validate_packet(match.group("packet"), match.group("heading"))
+    return f"{match.group('heading')}\n\nPacket:\n\n```text\n{packet}\n```"
+
+
+def validate_packet(packet: str, heading: str) -> str:
+    fields_seen: list[str] = []
+    current_field: str | None = None
+    lines = packet.splitlines()
+    for line in lines:
+        field_match = PACKET_FIELD_RE.match(line)
+        if field_match:
+            field = field_match.group(1)
+            if field not in ALLOWED_PACKET_FIELDS:
+                raise ValueError(f"{heading}: unknown packet field: {field}")
+            fields_seen.append(field)
+            current_field = field
             continue
-        lines.append(line)
-    return compact_blank_lines("\n".join(lines)).strip()
+
+        if not line.strip():
+            raise ValueError(f"{heading}: blank lines are not allowed inside packet blocks.")
+        if current_field not in {"Event", "Known gap"}:
+            raise ValueError(f"{heading}: continuation line is only allowed for Event or Known gap.")
+
+    missing = [field for field in REQUIRED_PACKET_FIELDS if field not in fields_seen]
+    if missing:
+        raise ValueError(f"{heading}: missing required packet fields: {', '.join(missing)}")
+    return "\n".join(lines).strip()
 
 
-def compact_blank_lines(text: str) -> str:
-    return re.sub(r"\n{3,}", "\n\n", text)
+def renumber_question(section: str, index: int) -> str:
+    return QUESTION_HEADING_RE.sub(f"### Q{index:02d}", section, count=1)
 
 
 if __name__ == "__main__":
