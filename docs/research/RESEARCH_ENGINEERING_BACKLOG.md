@@ -66,7 +66,7 @@
 
 | ID | 工程 | 状态 | 负责人 | 当前缺口 | 完成验收 |
 |---|---|---|---|---|---|
-| R-007 | 全市场批量 E1 事件层 | `SUPERSEDED_BY_R-036` | Data/Universe Agent | red flag 当前逐票跑动态名单,不能覆盖全 A,线性扩展会放大 API 成本 | forecast/express/公告等先按日期批量抓取,再本地 join 到证券注册表;每个事件带 source/as_of/fetched_at/trust_boundary |
+| R-007 | 全市场批量 E1 事件层 | `RETIRED` | Data/Universe Agent |**由 R-036 取代**(全 A 事件层);原描述:red flag 当前逐票跑动态名单,不能覆盖全 A,线性扩展会放大 API 成本 | forecast/express/公告等先按日期批量抓取,再本地 join 到证券注册表;每个事件带 source/as_of/fetched_at/trust_boundary |
 | R-008 | 本地特征仓与增量计算 | `PROPOSED` | Claude+Better | 多个引擎重复请求同一行情和基本面,全市场逐票电池预计不可接受 | 日频原始层和特征层分离;按 trade_date 增量;Parquet/SQLite 二选一做 v0;相同输入可复跑并得到相同结果 |
 | R-009 | 多通道候选并集与探索配额 | `APPROVED` | Junyan+Scanner Agent | 单一动量排序会遗漏慢牛、基本面拐点、事件驱动和逆向修复 | 动量、反转、E1 事件、基本面/估值、行业轮动、宏观敏感度六路独立产候选后取并集;保留随机控制样本;记录每路贡献与淘汰原因 |
 | R-010 | 六维电池语义完整化 | `APPROVED` | Research Agent | 技术维仍是部分代理;消息维以公告为主;缺宏观/行业映射;局部 DATA_BLOCKED 曾被总体 COMPLETE 掩盖 | 每维独立 `status/as_of/coverage/source`;任一必需维阻断时总体不得 COMPLETE;新增 `sector_context` 和 `macro_context`;PASS 不得解释成值得买 |
@@ -97,12 +97,16 @@
 | R-030 | 输出层措辞检查器 | `APPROVED` | Claude | 合同 v1.5 C4:day-1 只能写"候选",当前靠人工纪律;旭创 0729 案为同周第二次越权 | 扫描含单日证据的结论,命中"确认/成立/已验证"即阻断并要求改写 |
 | R-031 | MRG 两阶段接线 | `APPROVED` | Claude+Macro Agent | 合同 v1.5 C6 修订:未校准的门若先拿阻断权会形成循环依赖(它造成的"没开仓"被记成"避免损失",从此无法证伪) | 阶段A只标注+RISK_OFF_BIAS 降 sizing 上限至 STARTER_CAPPED 并每日入判分;阶段B 达 ≥30 独立因果簇且优于随机后由 Junyan 单独批准阻断权 |
 | R-037 | 单票结论电池戳校验 | `APPROVED` | Claude | 合同 v1.5 C2:full_battery 只对动态名单强制,临时单票分析(含对话产出)无机器强制 | 单票结论产出路径校验 24h 内电池戳,无戳拒绝并标 `NO_BATTERY_STAMP` |
-| R-038 | 因果簇 id 生成器与历史回填 | `APPROVED` | Claude+Validation Agent | 合同 v1.5 C5 采用因果事件簇;claim 解锁的唯一路径 | 按四级判据生成 cluster_id 与 cluster_reason;122 条历史信号回填;登记时冻结,只许拆分不许合并 |
+| R-038 | 因果簇 id 生成器与历史回填 | `BLOCKED` | Claude+Validation Agent | 合同 v1.5 C5 采用因果事件簇;claim 解锁的唯一路径。**BLOCKED 说明**:阻断源 = R-039/040/041 + 硬前置 R-014/R-015(账本无文件锁,B 不可原子计算)未建成;**下次复核日期 = 2026-09-01**。C5 §4 三态阶梯只约束 correction/migration 不约束 genesis,retrospective genesis 可在 S2 信号上执行,循环已解 | 规则版本先冻结 → 单一 genesis 批次回填 122 条 → manifest 落盘(approval_ref/manifest_hash)→ R-039 即刻对该批生效;genesis 当期 claim_allowed 强制 false |
 | R-032 | U0 全市场证券注册表 | `APPROVED` | Claude+Data Agent | 漏斗 v1:红旗/电池当前只覆盖 14 只动态名单,全 A 99.7% 从未被检查 | 全部 A 股永久注册 + 资格标签(ST/北交所/低流动性标注不删除) |
 | R-033 | U1 六通道批量扫描器 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板一:通道独立,不得复合总分抵消 | 六通道各自阈值取并集;entry_reasons[] 逐条留痕;禁跨通道排序字段 |
 | R-034 | U2 候选池与三项保留配额 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板二:慢牛/逆向修复/随机控制必须保配额 | 100-300 候选,进入与淘汰理由留痕,保留配额不参与主通道竞争 |
 | R-035 | 随机控制分组判分 | `APPROVED` | Validation Agent | 漏斗 v1 §10.4:漏斗自身需可证伪 | 同池分层抽样(市值分位×行业,与主通道分布对齐)+ 固定 seed + 抽样框完整留痕;U1/U2 与 U3 两层检验分开;判据预注册不可改 |
 | R-036 | 全市场 E1 事件层 | `APPROVED` | Data Agent | 漏斗 v1 Phase 1;**取代 R-007** | 红旗闸门从逐票 14 只扩到全 A 批量口径,最廉价且最高价值 |
+| R-039 | 簇可变性校验 | `APPROVED` | Claude | C5 §2/§3/§7:未记录未批准的拆分合并双向禁止;三分类以 object_hash 判定 | 按 C5 §2.2 以 object_hash 三分类;genesis 仅限 P1新登记/P2批准manifest/P3冻结输入补齐(仅S0)三条路径,其余 null→值 与 值→null 一律 rewrite;directional_call 为纯派生(f(fund_structure,relative_strength,setup_type))恒 no-op;§2.4 台账须含 cluster_id 与 split_born 并收录迁移新生簇;§3.1 新 cluster_id ⟺ level 4 且机制登记+approval_ref;**§0.4 批准有效性(通道/绑定/时序/失败处置)—— 不实现这条,genesis 侧只会做存在性检查,P1/P2 批准可自签**;§0.2 基准集(flock + git blob 取 B);对键含 field 的有效 R-040 记录放行 |
+| R-040 | cluster_migration 事件账本 | `APPROVED` | Claude | C5 §4:S0 由世界时钟 outcome_first_bar_settled 判定(非窗口关闭、非账本是否为空);S2 由「是否出现在已登记快照中」判定 | append-only;field_changes[] 每项带 signal_id、簇字段取 object_hash;evidence as_of ≤ registered_at(同日须带可核验盘中时间戳;锚点取 min(timestamp, 首次 git 出现日),相差>0 标 backdated 不计门槛);批准须 Junyan 个人密钥签名或会话原文粘贴(GitHub 评论仅辅助留痕——agent 用 owner 凭证驱动 gh,author_identity 只证明凭证被使用);单次使用 + 未编辑 + approved_at>requested_at;操作=一条记录禁净额抵消;拆分产生簇标 split_born 在有前瞻成员前不计数;合并须留 merged_from[] 且观测取等权平均;**状态机 selftest:D 日收盘后按生产写手默认字段登记的信号,在 D 日内必须判为 S0(此即四轮 BLOCKER-A 的回归测试)** |
+| R-041 | publication snapshot | `APPROVED` | Claude+Validation Agent | C5 修正规则3:已公布结论的唯一事实源,防"先公布保守结论再重新归簇解锁"的 p-hacking | 统计量与快照同代码路径,快照失败即拒绝渲染统计量;canonical 哈希+链+双向 selftest;完整性 CI(快照集合==当时 scored 集合);已发布产物补 reconstructed 快照(允许 cluster_map_status=PRE_GENESIS,须早于 R-038);补登记须追溯作废 published_at→补登记 之间影响该批 signal_ids 的 migration;更正走 supersedes |
+| R-042 | 停止把 intraday 写进 horizon | `PROPOSED` | Claude | `execution_tracker.py:237` 硬编码 `["intraday","1d","3d","5d","10d"]`,而 `run_post_close_report.HORIZON_DAYS` 无 intraday、backfill 永不回填它;该装饰标签曾令 C5 四版的 S0 判据把计数锁死为 0 | **非前置**:C5 §4.1 已声明 intraday 惰性,零迁移;不得改成"先让代码停止写"——§2.3 冻结 horizon,已登记 108 行无法在不逐条走 §4 批准的情况下合法剥离 |
 
 ## 6. 已交付但仍需继续验证的能力
 
