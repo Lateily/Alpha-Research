@@ -1,0 +1,189 @@
+{
+  "schema": "execution_gate_snapshot/v1",
+  "timestamp": "20260731 close (official)",
+  "market_gate": {
+    "state": "RISK_ON",
+    "one_line": "趋势恢复:指数上行+主力净流入 +625亿",
+    "main_flow_total": 625.36,
+    "index": {
+      "sh": {
+        "chg": 0.7246
+      },
+      "sz": {
+        "chg": 2.2063
+      },
+      "cyb": {
+        "chg": 3.0619
+      }
+    }
+  },
+  "sector_single_beta": false,
+  "ticker_gates": [
+    {
+      "ticker": "300502.SZ",
+      "name": "新易盛",
+      "sector": "AI/光模块",
+      "price": 396.01,
+      "change_pct": 6.7125,
+      "main_flow": 15.6402,
+      "super_large": 22.2593,
+      "small": 0.9308,
+      "fund_structure": "主力回流",
+      "technical": {
+        "ma20": 494.464,
+        "ma60": 579.6983,
+        "ma120": 516.5916,
+        "atr14": 49.9021,
+        "today_high": 430.4,
+        "today_low": 395.88,
+        "prev_high": 414.02,
+        "prev_low": 347.0,
+        "high_20d": 579.42,
+        "low_20d": 347.0,
+        "support": 395.88,
+        "break_level": 395.88,
+        "reclaim_level": 430.4
+      },
+      "posture": "HOLD_OBSERVE",
+      "relative_strength": false
+    },
+    {
+      "ticker": "300475.SZ",
+      "name": "香农芯创",
+      "sector": "AI/光模块",
+      "price": 145.79,
+      "change_pct": 3.522,
+      "main_flow": 6.2897,
+      "super_large": 2.3435,
+      "small": -3.9646,
+      "fund_structure": "主力回流",
+      "technical": {
+        "ma20": 195.4245,
+        "ma60": 208.447,
+        "ma120": 179.7034,
+        "atr14": 21.45,
+        "today_high": 160.77,
+        "today_low": 145.79,
+        "prev_high": 147.59,
+        "prev_low": 134.28,
+        "high_20d": 283.45,
+        "low_20d": 134.28,
+        "support": 145.79,
+        "break_level": 145.79,
+        "reclaim_level": 160.77
+      },
+      "posture": "HOLD_OBSERVE",
+      "relative_strength": false
+    },
+    {
+      "ticker": "603629.SH",
+      "name": "利通电子",
+      "sector": "AI/光模块",
+      "price": 96.01,
+      "change_pct": 10.0023,
+      "main_flow": 7.4064,
+      "super_large": 9.3384,
+      "small": -3.2507,
+      "fund_structure": "主力回流",
+      "technical": {
+        "ma20": 110.803,
+        "ma60": 159.0465,
+        "ma120": 115.9227,
+        "atr14": 11.0414,
+        "today_high": 96.01,
+        "today_low": 94.16,
+        "prev_high": 99.68,
+        "prev_low": 87.26,
+        "high_20d": 174.78,
+        "low_20d": 87.26,
+        "support": 94.16,
+        "break_level": 94.16,
+        "reclaim_level": 99.68
+      },
+      "posture": "HOLD_OBSERVE",
+      "relative_strength": false
+    },
+    {
+      "ticker": "300308.SZ",
+      "name": "中际旭创",
+      "sector": "AI/光模块",
+      "price": 902.01,
+      "change_pct": 4.3993,
+      "main_flow": 15.1263,
+      "super_large": 23.1013,
+      "small": -0.0098,
+      "fund_structure": "主力回流",
+      "technical": {
+        "ma20": 1060.71,
+        "ma60": 1125.8013,
+        "ma120": 887.6173,
+        "atr14": 100.5257,
+        "today_high": 986.89,
+        "today_low": 901.0,
+        "prev_high": 933.0,
+        "prev_low": 793.03,
+        "high_20d": 1218.0,
+        "low_20d": 793.03,
+        "support": 901.0,
+        "break_level": 901.0,
+        "reclaim_level": 986.89
+      },
+      "posture": "HOLD_OBSERVE",
+      "relative_strength": false
+    }
+  ],
+  "portfolio_gate": {
+    "single_beta_exposure": false,
+    "single_beta_status": "OK",
+    "single_beta_blocked_why": null,
+    "held_sectors": [
+      "农业综合",
+      "化学制药"
+    ],
+    "held_tickers": [
+      "600276.SH",
+      "002714.SZ"
+    ],
+    "portfolio_posture": "HOLD_OBSERVE",
+    "note": "组合按真实 filled 持仓判定(恒瑞/牧原),非观察名单",
+    "_migration": {
+      "corrected_at": "20260801 17:31:31",
+      "reason": "审计 BLOCKER(2026-08-01):原值把 AI/光模块观察名单当成持仓,判定单一beta;实际持仓是恒瑞医药(化学制药)与牧原股份(农业综合),分属不同行业",
+      "original_value": {
+        "single_beta_exposure": true,
+        "held_sectors": [
+          "AI/光模块"
+        ],
+        "portfolio_posture": "DE_RISK_REVIEW",
+        "note": "组合=单一 beta 暴露,先看组合风险再看个股强弱"
+      }
+    }
+  },
+  "self_audit": {
+    "rebound_as_reversal": false,
+    "any_price_strong_but_flow_out": false,
+    "high_reflexivity_book": false,
+    "no_buy_sell_instruction": true
+  },
+  "disclaimer": "不是买卖指令；研究信号，human executes。thresholds=[unvalidated intuition]",
+  "official_sample": true,
+  "date_consistency_check": "passed",
+  "data_source": "tushare:moneyflow_dc+daily+index_daily+moneyflow_mkt_dc",
+  "_migrations": [
+    {
+      "corrected_at": "20260801 17:43:27",
+      "reason": "审计 BLOCKER(2026-08-01):single_beta 由观察名单(4只 AI/光模块)算出并散播到四层,但真实 filled 持仓是恒瑞医药(化学制药)+牧原股份(农业综合),分属不同行业 ⇒ 非单一 beta。本次为跨层完整回写,消除同一事实的层间矛盾。",
+      "fields": {
+        "sector_single_beta": {
+          "original_value": true,
+          "new_value": false
+        },
+        "self_audit.high_reflexivity_book": {
+          "original_value": true,
+          "new_value": false
+        }
+      },
+      "note": "portfolio_gate.single_beta_exposure 已于同日先行回写(见其 _migration)"
+    }
+  ]
+}
