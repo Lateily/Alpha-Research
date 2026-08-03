@@ -93,6 +93,9 @@
 | R-026 | 结算者唯一与数据/工程分 PR | `APPROVED` | Junyan | 约定已在实践中使用,未形成单一书面协议 | 每个交易日只有一名 settlement owner;数据 PR 与工程 PR 分离;冲突检测进入 preflight |
 | R-027 | 审阅问题清账 | `APPROVED` | Junyan | 历史审阅问题和到期回复可能滞留 Notion,未进入 repo 总账 | 每周五输出 open/answered/closed;逾期原因入账;答案链接回周报或研究文档 |
 | R-028 | 研究漏斗质量仪表 | `PROPOSED` | Junyan+Validation Agent | 目前只看最终名单,无法判断哪层漏掉机会或制造噪声 | 展示全市场覆盖率、通道贡献、晋级率、DATA_BLOCKED、遗漏回溯、研究耗时;不使用未经门槛支持的收益语言 |
+| R-029 | 下单层红旗闸门戳校验 | `APPROVED` | Claude | 合同 v1.5 C1:红旗闸门当前只管名单层,paper 下单路径无闸;牧原 002714(0711 首亏预告 / 0713 建仓)是直接事故 | `paper_tracker.py` / `model_paper_fund.py` 注册路径强制校验当日闸门戳,无戳拒绝写入并标 `ENTRY_UNGATED` |
+| R-030 | 输出层措辞检查器 | `APPROVED` | Claude | 合同 v1.5 C4:day-1 只能写"候选",当前靠人工纪律;旭创 0729 案为同周第二次越权 | 扫描含单日证据的结论,命中"确认/成立/已验证"即阻断并要求改写 |
+| R-031 | MRG 接晋级前置门 | `APPROVED` | Claude+Macro Agent | 合同 v1.5 C6:宏观门只能影响优先级与风险预算;当前 MRG 未接任何下游 | `MRG=RISK_OFF_BIAS` 时冻结晋级(只冻结不卖出),契约保持 `mode: review_context_only` |
 
 ## 6. 已交付但仍需继续验证的能力
 
