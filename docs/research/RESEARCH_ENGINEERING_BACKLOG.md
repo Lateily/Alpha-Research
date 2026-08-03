@@ -97,15 +97,15 @@
 | R-030 | 输出层措辞检查器 | `APPROVED` | Claude | 合同 v1.5 C4:day-1 只能写"候选",当前靠人工纪律;旭创 0729 案为同周第二次越权 | 扫描含单日证据的结论,命中"确认/成立/已验证"即阻断并要求改写 |
 | R-031 | MRG 两阶段接线 | `APPROVED` | Claude+Macro Agent | 合同 v1.5 C6 修订:未校准的门若先拿阻断权会形成循环依赖(它造成的"没开仓"被记成"避免损失",从此无法证伪) | 阶段A只标注+RISK_OFF_BIAS 降 sizing 上限至 STARTER_CAPPED 并每日入判分;阶段B 达 ≥30 独立因果簇且优于随机后由 Junyan 单独批准阻断权 |
 | R-037 | 单票结论电池戳校验 | `APPROVED` | Claude | 合同 v1.5 C2:full_battery 只对动态名单强制,临时单票分析(含对话产出)无机器强制 | 单票结论产出路径校验 24h 内电池戳,无戳拒绝并标 `NO_BATTERY_STAMP` |
-| R-038 | 因果簇 id 生成器与历史回填 | `BLOCKED` | Claude+Validation Agent | 合同 v1.5 C5 采用因果事件簇;claim 解锁的唯一路径。**BLOCKED 说明**:阻断源 = R-039/040/041 未建成 + R-041 须先为已发布产物补 reconstructed 快照;**下次复核日期 = 三项建成当日**。genesis(null→值)不受改写禁令,与 R-039 无循环依赖 | 规则版本先冻结 → 单一 genesis 批次回填 122 条 → manifest 落盘(approval_ref/manifest_hash)→ R-039 即刻对该批生效;genesis 当期 claim_allowed 强制 false |
+| R-038 | 因果簇 id 生成器与历史回填 | `BLOCKED` | Claude+Validation Agent | 合同 v1.5 C5 采用因果事件簇;claim 解锁的唯一路径。**BLOCKED 说明**:阻断源 = R-039/040/041 + 硬前置 R-014/R-015 未建成;**下次复核日期 = 2026-09-01**。C5 §4 三态阶梯只约束 correction/migration 不约束 genesis,retrospective genesis 可在 S2 信号上执行,循环已解 | 规则版本先冻结 → 单一 genesis 批次回填 122 条 → manifest 落盘(approval_ref/manifest_hash)→ R-039 即刻对该批生效;genesis 当期 claim_allowed 强制 false |
 | R-032 | U0 全市场证券注册表 | `APPROVED` | Claude+Data Agent | 漏斗 v1:红旗/电池当前只覆盖 14 只动态名单,全 A 99.7% 从未被检查 | 全部 A 股永久注册 + 资格标签(ST/北交所/低流动性标注不删除) |
 | R-033 | U1 六通道批量扫描器 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板一:通道独立,不得复合总分抵消 | 六通道各自阈值取并集;entry_reasons[] 逐条留痕;禁跨通道排序字段 |
 | R-034 | U2 候选池与三项保留配额 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板二:慢牛/逆向修复/随机控制必须保配额 | 100-300 候选,进入与淘汰理由留痕,保留配额不参与主通道竞争 |
 | R-035 | 随机控制分组判分 | `APPROVED` | Validation Agent | 漏斗 v1 §10.4:漏斗自身需可证伪 | 同池分层抽样(市值分位×行业,与主通道分布对齐)+ 固定 seed + 抽样框完整留痕;U1/U2 与 U3 两层检验分开;判据预注册不可改 |
 | R-036 | 全市场 E1 事件层 | `APPROVED` | Data Agent | 漏斗 v1 Phase 1;**取代 R-007** | 红旗闸门从逐票 14 只扩到全 A 批量口径,最廉价且最高价值 |
-| R-039 | 簇可变性校验 | `APPROVED` | Claude | C5 修正规则1:双向禁止;区分 genesis/rewrite/no-op 以解除与 R-038 的循环依赖 | genesis(null→值)放行且一次性;rewrite(值→异值)preflight FAIL;no-op 幂等 |
-| R-040 | cluster_migration 事件账本 | `APPROVED` | Claude | C5 修正规则2:按结果可见性三态分级(S0 未回填/S1 已回填未公布/S2 已公布) | append-only;evidence_refs 结构化(type/locator/as_of/claim);S1/S2 需可解析 approval_ref;执行方不得自批;状态机器判定 |
-| R-041 | publication snapshot | `APPROVED` | Claude+Validation Agent | C5 修正规则3:已公布结论的唯一事实源,防"先公布保守结论再重新归簇解锁"的 p-hacking | 公布即冻结快照(signal_ids/cluster_map/簇数/claim/by_direction/snapshot_hash);S2 比对;更正走 supersedes 新快照 |
+| R-039 | 簇可变性校验 | `APPROVED` | Claude | C5 §2/§3/§7:未记录未批准的拆分合并双向禁止;三分类以 object_hash 判定 | 按 C5 §2.2 以 object_hash 三分类:genesis 仅限 §3 的 P1/P2 两条路径,其余 null→值 一律按 rewrite 阻断;值→null 亦属 rewrite;§2.3 字段级缺失→值属 genesis、值→异值属 rewrite、派生字段幂等重算属 no-op;§3.1 新 cluster_id ⟺ level 4 且有机制登记+approval_ref;§0 基准集校验;对键含 field 的有效 R-040 记录放行 |
+| R-040 | cluster_migration 事件账本 | `APPROVED` | Claude | C5 §4:按结果可见性三态分级,S0/S1 由 outcome_window_closed(时间窗)判定而非 returns 是否为空,S2 由「是否出现在已登记快照中」判定 | append-only;field_changes[] 支持非簇字段纠错;evidence as_of ≤ registered_at(降簇数迁移豁免、恒禁结果派生证据);批准绑被引用产物的作者身份 + 含 migration_id/request_hash + approved_at>requested_at + 单次使用 + 未编辑;执行方不得自批;门槛贡献取 min(from,to) |
+| R-041 | publication snapshot | `APPROVED` | Claude+Validation Agent | C5 修正规则3:已公布结论的唯一事实源,防"先公布保守结论再重新归簇解锁"的 p-hacking | 统计量与快照同代码路径,快照失败即拒绝渲染统计量;canonical 哈希+链+双向 selftest;完整性 CI(快照集合==当时 scored 集合);已发布产物补 reconstructed 快照(允许 cluster_map_status=PRE_GENESIS,须早于 R-038);更正走 supersedes |
 
 ## 6. 已交付但仍需继续验证的能力
 
