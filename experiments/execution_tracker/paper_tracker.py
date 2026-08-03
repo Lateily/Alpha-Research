@@ -123,6 +123,19 @@ def register_research_signal(*, ticker, name, setup_type, line, market_state,
         "human_status":   "not_executed",
         "outcome_status": "pending",
     }
+    # ── R-014 schema v2:三字段与信号同一次原子操作写入,并落 R-015 事件账本 ──
+    # C5 §4.1/§4.3/§3.1 都依赖这三字段;账本写不进去 ⇒ 登记失败,
+    # 不允许产生没有审计轨迹的信号。
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import registry
+        record = registry.stamp_new_record(
+            record, registered_at=registered_at, script="paper_tracker.py",
+            version="paper_tracker/v2", run_id=sid,
+            ledger_path=registry.ledger_path_for(log_path))
+    except Exception as exc:                     # noqa: BLE001 — fail-closed
+        return None, f"refused: R-014 注册打戳失败 ({exc})"
+
     log.append(record)
     _dump(log_path, log)
     return record, "registered"

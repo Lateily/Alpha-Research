@@ -409,6 +409,22 @@ def main():
         snap = build_snapshot(inp["index_data"], inp["tickers"], inp.get("portfolio", []),
                               inp.get("timestamp", "UNSTAMPED"))
         sigs = make_paper_signals(snap)
+        # ── R-014 schema v2 + R-015 事件账本(官方样本路径)──
+        # 与研究预注册同一套规矩:三字段随信号写入,事件落不可篡改链;
+        # 账本写不进去 ⇒ 整批拒写,不产生没有审计轨迹的信号。
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import registry
+            sigs = [registry.stamp_new_record(
+                        s, registered_at=snap["timestamp"],
+                        script="execution_tracker.py", version="execution_tracker/v2",
+                        run_id=s.get("signal_id", "UNKNOWN"),
+                        ledger_path=registry.ledger_path_for(args.log))
+                    for s in sigs]
+        except Exception as exc:                  # noqa: BLE001 — fail-closed
+            print(f"REFUSED: R-014 注册打戳失败 ({exc}) —— 本批信号未写入")
+            print("不是买卖指令；研究信号，human executes。")
+            return 1
         added, total = append_log(args.log, sigs)
         snap_out = (os.path.splitext(args.log)[0].replace("paper_signal_log", "execution_gate_snapshot")
                     + ".json")
