@@ -13,8 +13,10 @@ v2 变化(相对 v1 平铺十步):
 不是买卖指令;研究信号,human executes。
 """
 
+import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -23,12 +25,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "nightly_run.json")
 ALARM_FLAG = "/tmp/ar-nightly-incomplete"
 
+# 关键契约新鲜度(P0-B):缺文件 = FAIL;mtime 超时 = WARN 列出但不阻断
+FRESHNESS_FILES = ("watch_dynamic.json", "rotation_panel.json")
+FRESH_WARN_H = 36
+
 # (name, cmd, needs_token, depends_on)
 # depends_on 里任一步非 OK ⇒ 本步 SKIPPED_STALE_INPUT
 STEPS = [
     # ── 结算主干(闭环根修复:定盘并入夜链,消灭手工补账)──
     ("official_sample", ["python3", "run_official_sample.py"], True, []),
-    ("fwd_backfill", ["python3", "run_post_close_report.py"], True, ["official_sample"]),
+    ("fwd_backfill", ["python3", "run_post_close_report.py", "--backfill-only"], True,
+     ["official_sample"]),  # F8:正式样本每天只生成一次(official_sample 步),此处仅回填
     # ── 轮动/发现链 ──
     ("rotation_panel", ["python3", "rotation_panel.py"], True, []),
     ("momentum_prefilter", ["python3", "momentum_prefilter.py"], True, []),
@@ -43,13 +50,17 @@ STEPS = [
     ("watch_dynamic", ["python3", "watch_dynamic.py"], False,
      ["court_wakeup", "momentum_prefilter"]),
     ("position_review", ["python3", "position_review.py"], True, ["official_sample"]),
-    ("setup_promoter", ["python3", "setup_promoter.py"], True,
-     ["watch_dynamic", "official_sample"]),
+    ("court_10d", ["python3", "court_10d.py"], False,
+     ["official_sample", "position_review"]),   # 10天检察官(2026-08-01 兑现)
     # ── 强制质检层(2026-07-27/28 事故驱动)──
     ("red_flag_gate", ["python3", "red_flag_gate.py", "--from-watchlist"], True,
      ["watch_dynamic"]),
     ("full_battery", ["python3", "full_battery.py", "--from-watchlist"], True,
      ["watch_dynamic"]),
+    # 晋级必须在质检之后(审计F4:亏损预告票不得先READY后亮旗)+ 轮动面板硬依赖(F5)
+    ("setup_promoter", ["python3", "setup_promoter.py"], True,
+     ["watch_dynamic", "official_sample", "red_flag_gate", "full_battery",
+      "rotation_panel"]),
     # ── 前端契约导出(引擎写、前端读的唯一通道)──
     # 设计决定(审查F4/F5):export 无前置依赖、永远运行 —— 跳过导出只会让磁盘上
     # 留着更旧的契约;诚实性由 export 内部的逐源新鲜度/内部状态戳保证。
@@ -187,17 +198,225 @@ def selftest():
                    st5["official_sample"] == "DATA_BLOCKED"))
     checks.append(("免责句在", "不是买卖指令" in res5["note"]))
 
+    # 4) preflight 反例(P0-B):临时目录注入假账本,绝不触碰真账本
+    import tempfile
+
+    def _fixture(tmp, sigs, fund_cash=100.0, nav_cash=100.0, n_pos=0, orders=(),
+                 skip=()):
+        os.makedirs(os.path.join(tmp, "model_fund"), exist_ok=True)
+
+        def w(rel, obj):
+            with open(os.path.join(tmp, rel), "w", encoding="utf-8") as fh:
+                json.dump(obj, fh, ensure_ascii=False)
+        w("paper_signal_log.json", sigs)
+        w("model_fund/fund.json", {"initial_capital": 100.0, "cash": fund_cash})
+        w("model_fund/nav_history.json",
+          [{"date": "20260730", "nav": 100.0, "cash": nav_cash, "n_positions": n_pos}])
+        w("model_fund/orders.json", list(orders))
+        for fn in FRESHNESS_FILES:
+            if fn not in skip:
+                w(fn, {})
+        return tmp
+
+    good_sig = {"signal_id": "s1", "ticker": "600000.SH",
+                "timestamp": "20260730 close", "returns": None, "horizon": ["1d", "3d"]}
+    with tempfile.TemporaryDirectory() as tmp:
+        checks.append(("preflight 好账本 ⇒ PASS(夹具自证非永假)",
+                       preflight(base=_fixture(tmp, [good_sig]))["pass"]))
+    with tempfile.TemporaryDirectory() as tmp:
+        bad = dict(good_sig, timestamp="20269999 close")
+        checks.append(("preflight 假日期20269999 ⇒ FAIL",
+                       not preflight(base=_fixture(tmp, [bad]))["pass"]))
+    with tempfile.TemporaryDirectory() as tmp:
+        checks.append(("preflight 重复signal_id ⇒ FAIL",
+                       not preflight(base=_fixture(tmp, [good_sig, dict(good_sig)]))["pass"]))
+    with tempfile.TemporaryDirectory() as tmp:
+        checks.append(("preflight 坏horizon(非t+N非列表形) ⇒ FAIL",
+                       not preflight(base=_fixture(tmp, [dict(good_sig, horizon="随缘")]))["pass"]))
+    with tempfile.TemporaryDirectory() as tmp:
+        checks.append(("preflight horizon='t+5' ⇒ PASS",
+                       preflight(base=_fixture(tmp, [dict(good_sig, horizon="t+5")]))["pass"]))
+    with tempfile.TemporaryDirectory() as tmp:
+        checks.append(("preflight nav末行cash≠fund.cash ⇒ FAIL",
+                       not preflight(base=_fixture(tmp, [good_sig], nav_cash=50.0))["pass"]))
+    with tempfile.TemporaryDirectory() as tmp:
+        checks.append(("preflight filled数≠n_positions ⇒ FAIL",
+                       not preflight(base=_fixture(tmp, [good_sig], n_pos=2))["pass"]))
+    with tempfile.TemporaryDirectory() as tmp:
+        checks.append(("preflight 缺watch_dynamic ⇒ FAIL",
+                       not preflight(base=_fixture(tmp, [good_sig],
+                                                   skip=("watch_dynamic.json",)))["pass"]))
+    with tempfile.TemporaryDirectory() as tmp:
+        base = _fixture(tmp, [good_sig])
+        old = time.time() - 40 * 3600
+        os.utime(os.path.join(base, "watch_dynamic.json"), (old, old))
+        pf = preflight(base=base)
+        checks.append(("preflight 契约mtime>36h ⇒ WARN不阻断", pf["pass"] and pf["warns"] != []))
+
     for name, ok in checks:
         print(("  ✓ " if ok else "  ✗ ") + name)
     print(f"run_nightly v2 selftest: {sum(ok for _, ok in checks)}/{len(checks)}")
     return all(ok for _, ok in checks)
 
 
+def _valid_ts8(ts):
+    """真实日期校验(P0-B):timestamp 前8位必须能被 datetime 严格解析。
+    20269999 这类"位数对但不是日期"的时间戳必须失败(旧正则 20\\d{6} 放行了它)。"""
+    try:
+        datetime.datetime.strptime(str(ts)[:8], "%Y%m%d")
+        return True
+    except ValueError:
+        return False
+
+
+def _valid_horizon(h):
+    """horizon 字段若存在必须形态合法:
+    - 字符串:形如 t+数字(如 "t+5");
+    - 列表(现实账本 117 条全为此形,严格拒列表会永久 FAIL 整条夜链):
+      每个元素必须是 intraday / N d / t+N 之一。其余形态一律 FAIL。"""
+    if isinstance(h, str):
+        return re.fullmatch(r"t\+\d+", h) is not None
+    if isinstance(h, list) and h:
+        return all(isinstance(x, str) and re.fullmatch(r"(intraday|\d+d|t\+\d+)", x)
+                   for x in h)
+    return False
+
+
+def preflight(base=None, now=None):
+    """首跑前体检:真实读取账本与引擎文件,校验 schema 与依赖,不联网不写盘。
+    base 仅注入账本/契约文件位置(供 selftest 用临时目录造反例,不碰真账本);
+    STEPS 依赖图与脚本存在性永远查 HERE(那是代码布局,不是数据)。
+    返回 {"pass": bool, "checks": [(name, ok)], "failures": [...], "warns": [...]}。"""
+    base = base or HERE
+    now = time.time() if now is None else now
+    checks, warns = [], []
+    # 1) 信号账本:可解析 + returns 类型 + NOT_SCORABLE 声明 + 真实日期 + horizon + id 唯一
+    try:
+        log = json.load(open(os.path.join(base, "paper_signal_log.json")))
+        sigs = log if isinstance(log, list) else log.get("signals", [])
+        checks.append((f"信号账本可解析(n={len(sigs)})", True))
+        bad_ret = [x.get("signal_id") for x in sigs
+                   if "returns" in x and x["returns"] is not None and not isinstance(x["returns"], dict)]
+        checks.append(("returns 类型合法(dict/null)", bad_ret == []))
+        if bad_ret: print(f"  ✗ 异型 returns: {bad_ret[:5]}")
+        bad_tk = [x.get("signal_id") for x in sigs
+                  if not re.fullmatch(r"\d{6}\.(SH|SZ|BJ)", str(x.get("ticker","")))
+                  and not str(x.get("scoring") or "") == "NOT_SCORABLE"]
+        checks.append(("非标资产均已声明 NOT_SCORABLE", bad_tk == []))
+        if bad_tk: print(f"  ✗ 非标 ticker 未声明: {bad_tk[:5]}")
+        bad_ts = [x.get("signal_id") for x in sigs if not _valid_ts8(x.get("timestamp", ""))]
+        checks.append(("时间戳前8位为真实日期(datetime严格解析)", bad_ts == []))
+        if bad_ts: print(f"  ✗ 坏时间戳: {bad_ts[:5]}")
+        bad_hz = [x.get("signal_id") for x in sigs
+                  if "horizon" in x and not _valid_horizon(x["horizon"])]
+        checks.append(("horizon 形态合法(t+N 或既有列表形)", bad_hz == []))
+        if bad_hz: print(f"  ✗ 坏 horizon: {bad_hz[:5]}")
+        ids = [x.get("signal_id") for x in sigs]
+        dup = sorted({i for i in ids if i is not None and ids.count(i) > 1})
+        id_ok = dup == [] and None not in ids
+        checks.append(("signal_id 全局唯一且非空", id_ok))
+        if not id_ok: print(f"  ✗ 重复signal_id: {dup[:5]}" + (" +存在null id" if None in ids else ""))
+    except Exception as e:
+        checks.append((f"信号账本解析: {e}", False))
+    # 2) 基金账本三件可解析 + 三账一致性(P0-B)
+    fund = navh = orders = None
+    for f in ("model_fund/fund.json", "model_fund/nav_history.json", "model_fund/orders.json"):
+        try:
+            data = json.load(open(os.path.join(base, f)))
+            checks.append((f"{f} 可解析", True))
+            if f.endswith("fund.json"): fund = data
+            elif f.endswith("nav_history.json"): navh = data
+            else: orders = data
+        except Exception as e:
+            checks.append((f"{f}: {e}", False))
+    if fund is not None and navh is not None and orders is not None:
+        try:
+            last = navh[-1]  # nav 为空 ⇒ IndexError ⇒ fail-closed(无末行无法对账)
+            cash_ok = abs(float(last["cash"]) - float(fund["cash"])) <= 1.0
+            checks.append(("三账一致:nav末行cash==fund.cash(±1元)", cash_ok))
+            if not cash_ok:
+                print(f"  ✗ cash不一致: nav末行{last['cash']} vs fund {fund['cash']}")
+            filled = sum(1 for o in orders if o.get("status") == "filled")
+            pos_ok = filled == int(last["n_positions"])
+            checks.append(("三账一致:orders filled数==nav末行n_positions", pos_ok))
+            if not pos_ok:
+                print(f"  ✗ 持仓数不一致: filled={filled} vs n_positions={last['n_positions']}")
+        except Exception as e:
+            checks.append((f"三账一致性无法判定(缺数据≠通过): {e}", False))
+    # 3) STEPS 依赖闭合(引用的依赖都是已定义步骤,且无前向引用)
+    seen, dep_ok = set(), True
+    for name, _, _, deps in STEPS:
+        if any(d not in seen for d in deps):
+            dep_ok = False; print(f"  ✗ {name} 依赖了未定义/后置步骤: {deps}")
+        seen.add(name)
+    checks.append(("依赖图闭合无前向引用", dep_ok))
+    # 4) 各步骤脚本文件存在
+    miss = [c[1] for _, c, _, _ in STEPS if not os.path.exists(os.path.join(HERE, c[1]))]
+    checks.append((f"全部步骤脚本存在({len(STEPS)}步)", not miss))
+    if miss: print(f"  ✗ 缺脚本: {miss}")
+    # 5) 依赖语义干跑(fake runner)
+    res = run_steps(lambda c: (0, "ok"), require_live=False)
+    checks.append(("干跑全通 ⇒ COMPLETE", res["report"] == "COMPLETE"))
+    # 6) 跨层事实一致性(审计:半程迁移 + 本身曾 fail-open,现为 fail-closed)
+    try:
+        from consistency import scan_dirs as _scan
+        cons = _scan(HERE)
+        checks.append(("跨层事实一致性(近5日样本/报告;损坏与缺失均阻断)", not cons))
+        for c in cons[:8]:
+            print(f"  ✗ {c}")
+    except Exception as e:
+        checks.append((f"跨层一致性检查执行失败: {e}", False))
+
+    # 7) 关键契约 freshness:缺文件 FAIL;mtime 超 36h 仅 WARN 列出,不阻断
+    for fn in FRESHNESS_FILES:
+        p = os.path.join(base, fn)
+        if not os.path.exists(p):
+            checks.append((f"关键契约存在: {fn}", False))
+            continue
+        checks.append((f"关键契约存在: {fn}", True))
+        age_h = (now - os.path.getmtime(p)) / 3600.0
+        if age_h > FRESH_WARN_H:
+            warns.append(f"{fn} mtime {age_h:.1f}h > {FRESH_WARN_H}h(WARN,不阻断)")
+    failures = [str(n) for n, ok in checks if not ok]
+    return {"pass": not failures, "checks": checks, "failures": failures, "warns": warns}
+
+
+def _print_preflight(pf):
+    for name, ok in pf["checks"]:
+        print(("  ✓ " if ok else "  ✗ ") + str(name))
+    for w in pf["warns"]:
+        print("  ⚠ " + w)
+    print(f"preflight: {'PASS' if pf['pass'] else 'FAIL'}(零网络零写入)")
+
+
 def main():
     if "--selftest" in sys.argv:
         sys.exit(0 if selftest() else 1)
+    if "--preflight" in sys.argv or "--preflight-only" in sys.argv:
+        pf = preflight()
+        _print_preflight(pf)
+        sys.exit(0 if pf["pass"] else 1)
+    # ── P0-B 硬闸:正式运行路径 preflight 自动前置,FAIL ⇒ 任何引擎不得启动 ──
+    pf = preflight()
+    _print_preflight(pf)
+    if not pf["pass"]:
+        res = {"generated_at": time.strftime("%Y%m%d %H:%M"),
+               "orchestrator": "nightly_v2",
+               "report": "INCOMPLETE",
+               "preflight": {"pass": False, "failures": pf["failures"],
+                             "warns": pf["warns"]},
+               "non_ok_steps": [{"step": "preflight", "status": "FAILED"}],
+               "steps": [],
+               "note": "preflight FAIL ⇒ 硬闸:未启动任何引擎。不是买卖指令;研究信号,human executes."}
+        with open(OUT, "w", encoding="utf-8") as fh:
+            json.dump(res, fh, ensure_ascii=False, indent=1)
+        print(f"[report] INCOMPLETE(preflight FAIL,引擎未启动) [written] {OUT}")
+        print("不是买卖指令;研究信号,human executes.")
+        _alarm(res)
+        sys.exit(1)
     require_live = "--allow-data-blocked" not in sys.argv
     res = run_steps(require_live=require_live)
+    res["preflight"] = {"pass": True, "warns": pf["warns"]}
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(res, fh, ensure_ascii=False, indent=1)
     for s in res["steps"]:

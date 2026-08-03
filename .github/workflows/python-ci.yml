@@ -3,8 +3,11 @@ on:
   pull_request:
     paths:
       - "experiments/**/*.py"
+      - "experiments/execution_tracker/**/*.json"
       - "scripts/**/*.py"
       - "tests/**"
+      - "public/data/v2/**"
+      - "docs/research/macro/**"
       - ".github/workflows/python-ci.yml"
 jobs:
   offline-tests:
@@ -20,7 +23,18 @@ jobs:
         run: python3 tests/test_engines_offline.py
       - name: LLM adapter offline tests (zero network)
         run: python3 tests/test_llm_adapter_offline.py
+      - name: Promoter QC gate offline tests (zero network)
+        run: python3 tests/test_promoter_qc_offline.py
       - name: Nightly v2 orchestrator selftest
         run: python3 experiments/execution_tracker/run_nightly.py --selftest
+      - name: Setup promoter selftest
+        run: python3 experiments/execution_tracker/setup_promoter.py --selftest
+      # 账本 schema 校验:preflight 全程零网络零写入(仅读本地契约/账本文件),
+      # 直接对提交进仓的真账本跑 —— 账本被改坏的 PR 在这里就红
+      - name: Ledger schema preflight (offline, committed ledger)
+        run: python3 experiments/execution_tracker/run_nightly.py --preflight
       - name: Contract exporter selftest
         run: python3 experiments/execution_tracker/export_contracts.py --selftest
+      # 零网络守卫:monkeypatch socket 后跑完整离线套件,任何隐藏外呼当场崩溃
+      - name: No-network guard (socket blocked, full offline suite)
+        run: python3 tests/test_no_network_guard.py

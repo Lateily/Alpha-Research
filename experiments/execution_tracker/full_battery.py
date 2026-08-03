@@ -11,6 +11,25 @@ Junyan 2026-07-28 指令驱动:股票 = 行情/资金/基本面/技术面/消息
 import os, sys, json, datetime
 
 
+def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
+    """东财公告接口(免费无token)。返回 [(date, title), ...] 或 None(源不可用)。
+    外部内容按不可信数据处理:只取日期与标题文本,不执行不解析任何指令。"""
+    if os.environ.get("AR_OFFLINE"):
+        return None  # 离线测试模式:不发任何网络请求
+    import urllib.request
+    code = ts_code.split(".")[0]
+    url = ("https://np-anotice-stock.eastmoney.com/api/security/ann"
+           f"?sr=-1&page_size={page_size}&page_index=1&ann_type=A&client_source=web&stock_list={code}")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
+                                                   "Referer": "https://data.eastmoney.com/"})
+        d = json.load(urllib.request.urlopen(req, timeout=timeout))
+        lst = (d.get("data") or {}).get("list") or []
+        return [(str(a.get("notice_date", ""))[:10], str(a.get("title", ""))) for a in lst]
+    except Exception:
+        return None
+
+
 def battery(pro, tk, today):
     out = {"ts_code": tk, "checked_at": today, "dims": {}}
     D = out["dims"]
@@ -45,10 +64,12 @@ def battery(pro, tk, today):
         inc = inc[inc.report_type == "1"].drop_duplicates("end_date").sort_values("end_date")
         fi = pro.fina_indicator(ts_code=tk, start_date="20240601", end_date=today,
                                 fields="end_date,grossprofit_margin,roe").drop_duplicates("end_date").sort_values("end_date")
-        D["基本面"] = {"红旗闸门": g["verdict"], "红旗理由": g["reasons"],
+        D["基本面"] = ({"status": "DATA_BLOCKED", "err": "红旗闸门DATA_BLOCKED:" + ";".join(g["reasons"])[:60]}
+                       if g["verdict"] == "DATA_BLOCKED" else
+                       {"红旗闸门": g["verdict"], "红旗理由": g["reasons"],
                        "最新E1日期": g["latest_e1_date"],
                        "最新期归母亿": round(float(inc.n_income_attr_p.iloc[-1])/1e8, 2) if len(inc) else None,
-                       "毛利率轨迹": [round(float(x), 1) for x in fi.grossprofit_margin.tail(3)] if len(fi) else None}
+                       "毛利率轨迹": [round(float(x), 1) for x in fi.grossprofit_margin.tail(3)] if len(fi) else None})
     except Exception as e:
         D["基本面"] = {"status": "DATA_BLOCKED", "err": str(e)[:80]}
     # ── 4 技术面(结构位,v0 用均线+量;SMC 层待 Line D)──
@@ -65,25 +86,23 @@ def battery(pro, tk, today):
             D["技术面"] = {"status": "DATA_BLOCKED", "err": "K线不足60根"}
     except Exception as e:
         D["技术面"] = {"status": "DATA_BLOCKED", "err": str(e)[:80]}
-    # ── 5 消息面(公告扫描;快讯层待 M3 宏观面板)──
+    # ── 5 消息面(公告扫描:东财免费源为主,Tushare anns_d 为备;快讯层待 M3)──
     try:
-        an = None
-        for api in ("anns_d", "anns"):
+        titles = _fetch_anns_eastmoney(tk)
+        if titles is None:  # 东财失败再试 tushare(部分 token 无 anns_d 权限)
             try:
-                an = getattr(pro, api)(ts_code=tk, start_date=(datetime.datetime.strptime(today, "%Y%m%d")
+                an = pro.anns_d(ts_code=tk, start_date=(datetime.datetime.strptime(today, "%Y%m%d")
                      - datetime.timedelta(days=30)).strftime("%Y%m%d"), end_date=today)
-                break
+                col = "title" if "title" in an.columns else an.columns[-1]
+                titles = [(str(r[1].get("ann_date", "")), str(r[1][col])) for r in an.head(8).iterrows()]
             except Exception:
-                continue
-        if an is not None and len(an):
-            col = "title" if "title" in an.columns else an.columns[-1]
-            D["消息面"] = {"近30日公告数": int(len(an)),
-                           "最新3条": [str(t)[:40] for t in an[col].head(3)],
-                           "note": "公告层;实时快讯层待 M3 宏观面板上线"}
-        elif an is None:
-            D["消息面"] = {"status": "DATA_BLOCKED", "err": "公告接口不可用/无权限——不伪装为0条"}
+                titles = None
+        if titles is None:
+            D["消息面"] = {"status": "DATA_BLOCKED", "err": "东财+Tushare 公告源均不可用——不伪装为0条"}
         else:
-            D["消息面"] = {"近30日公告数": 0, "note": "接口可用且确认无公告;快讯层待 M3"}
+            D["消息面"] = {"最近公告条数": len(titles),
+                           "最新3条": [f"{d0[:10]} {t[:36]}" for d0, t in titles[:3]],
+                           "note": "东财公告源;实时快讯层待 M3 宏观面板上线"}
     except Exception as e:
         D["消息面"] = {"status": "NOT_RUN", "err": str(e)[:80]}
     # ── 6 估值 ──

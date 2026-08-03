@@ -27,9 +27,54 @@ sys.path.insert(0, HERE)
 import fund_source as fs            # noqa: E402
 import execution_tracker as et     # noqa: E402
 
-PORTFOLIO = [("300502.SZ", "新易盛"), ("300475.SZ", "香农芯创"),
-             ("603629.SH", "利通电子"), ("300308.SZ", "中际旭创")]
-SECTOR = "AI/光模块"
+# ⚠ 语义区分(2026-08-01 审计 BLOCKER 修复):
+#   OBSERVE_LIST = 每日扫描的观察universe(产生 ticker_gates 与 paper 观察信号);
+#   真实持仓 = model_fund/orders.json 里 status=filled 的订单 —— portfolio_gate
+#   的单一beta暴露必须按真实持仓算,此前误用观察名单导致 0731 样本把组合暴露
+#   写成"AI/光模块"(实际持仓是恒瑞/牧原),下游组合风险判断全部基于错误持仓。
+OBSERVE_LIST = [("300502.SZ", "新易盛"), ("300475.SZ", "香农芯创"),
+                ("603629.SH", "利通电子"), ("300308.SZ", "中际旭创")]
+PORTFOLIO = OBSERVE_LIST          # 兼容别名(旧引用),语义=观察名单
+SECTOR = "AI/光模块"               # 观察名单的共同板块标签
+
+# 真实持仓的板块标签(用于组合暴露判定);缺失时标 UNKNOWN 而非猜测
+HOLDING_SECTORS = {
+    "600276.SH": "医药/创新药",
+    "002714.SZ": "农林牧渔/生猪养殖",
+    "601899.SH": "有色/黄金铜",
+}
+
+
+def real_holdings(fund_dir=None):
+    """读 model_fund/orders.json 的 status=filled 订单 → [(ticker, name, sector)]。
+    返回空列表表示空仓(合法),读不到文件抛异常(缺数据≠空仓)。"""
+    here = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(fund_dir or os.path.join(here, "model_fund"), "orders.json")
+    with open(path, encoding="utf-8") as fh:
+        obj = json.load(fh)
+    rows = obj if isinstance(obj, list) else obj.get("orders", [])
+    return [(o["ticker"], o.get("name"), HOLDING_SECTORS.get(o["ticker"], "UNKNOWN"))
+            for o in rows if o.get("status") == "filled"]
+
+
+def canonical_sectors(codes, token, fallback=None):
+    """canonical 行业映射:Tushare stock_basic.industry(权威源)。
+    取不到的票保持 UNKNOWN —— 调用方必须把 UNKNOWN 当 DATA_BLOCKED,不得猜、
+    更不得把多个 UNKNOWN 当成同一板块判定单一 beta(审计 MAJOR 2026-08-01)。"""
+    fallback = fallback or {}
+    out = {c: fallback.get(c, "UNKNOWN") for c in codes}
+    if not codes:
+        return out
+    try:
+        d = fs._tushare_call("stock_basic", token, {"ts_code": ",".join(codes)},
+                             "ts_code,industry")
+        for it in d["items"]:
+            row = dict(zip(d["fields"], it))
+            if row.get("industry"):
+                out[row["ts_code"]] = row["industry"]
+    except Exception:
+        pass   # 取不到就保持 UNKNOWN,由上层标 DATA_BLOCKED
+    return out
 INDICES = [("000001.SH", "sh"), ("399001.SZ", "sz"), ("399006.SZ", "cyb")]
 
 
@@ -75,20 +120,30 @@ def build(token):
         index_dates.append(row.get("trade_date"))
         time.sleep(0.4)
     idx["main_flow_total"] = _market_main_flow(token)     # 亿, into the market gate
+    holdings = real_holdings()
+    holding_codes = {c for c, _, _ in holdings}
+    # canonical 行业覆盖硬编码兜底(审计 MAJOR:两只新持仓都会落 UNKNOWN 并被
+    # 误判为"同属 UNKNOWN ⇒ 单一 beta")
+    csec = canonical_sectors(sorted(holding_codes), token,
+                             fallback={c: sec for c, _, sec in holdings})
+    holdings = [(c, n, csec.get(c, "UNKNOWN")) for c, n, _ in holdings]
+    # 扫描集 = 观察名单 ∪ 真实持仓(持仓必须在场,否则组合门无从判定)
+    scan = [(c, n, SECTOR) for c, n in OBSERVE_LIST if c not in holding_codes] + list(holdings)
     td, fund_dates, daily_dates = [], set(), set()
-    for code, name in PORTFOLIO:
+    for code, name, sector in scan:
         f = fs.get_stock_fund(code, source="tushare", token=token)
         time.sleep(0.4)
         b = fs.tushare_daily(code, token=token)
         time.sleep(0.4)
         fund_dates.add(f.get("date"))
         daily_dates.add(b.get("date"))
-        td.append({"ticker": code, "name": name, "sector": SECTOR,
+        td.append({"ticker": code, "name": name, "sector": sector,
                    "price": b["close"], "change_pct": b["pct_chg"],
                    "main_flow": f["main"], "super_large": f["super_large"], "small": f["small"],
                    "ohlc_bars": b["ohlc_bars"]})
     trade_date = assert_date_consistent(fund_dates, daily_dates, index_dates)
-    snap = et.build_snapshot(idx, td, [c for c, _ in PORTFOLIO],
+    # portfolio_gate 只按真实持仓算(审计 BLOCKER 修复)
+    snap = et.build_snapshot(idx, td, sorted(holding_codes),
                              timestamp=f"{trade_date} close (official)")
     sigs = et.make_paper_signals(snap)
     snap["official_sample"] = True
@@ -146,13 +201,33 @@ def main():
     trade_date, snap, sigs = build(token)
     samples_dir = os.path.join(HERE, "samples")
     os.makedirs(samples_dir, exist_ok=True)
-    with open(os.path.join(samples_dir, f"{trade_date}.json"), "w") as fh:
+    sample_path = os.path.join(samples_dir, f"{trade_date}.json")
+    # ── 幂等闸门(审计 BLOCKER 2026-08-01)────────────────────────────────────
+    # 该交易日已结算过 ⇒ 正式模式零新增。周末/节假日重跑时 Tushare 仍返回上一
+    # 交易日,若无此闸门会补写一批 timestamp=上个交易日、实际写入却是今天的
+    # "事后信号",污染判分池。历史纠错必须走带 provenance 的 migration。
+    already = os.path.exists(sample_path)
+    force = "--force-resettle" in sys.argv
+    if already and not force:
+        print(f"IDEMPOTENT_SKIP: samples/{trade_date}.json 已存在 —— 该交易日已结算,正式模式零新增。")
+        print("  (历史纠错请走 migration 带 corrected_at/reason/original_value;")
+        print("   确需重算请显式 --force-resettle,信号仍不会重复写入)")
+        print("不是买卖指令;研究信号,human executes.")
+        return
+    ingested_at = time.strftime("%Y%m%d %H:%M:%S")
+    snap["ingested_at"] = ingested_at
+    snap["backfilled"] = ingested_at[:8] != trade_date   # 写入日≠交易日 ⇒ 事后补写,显式暴露
+    for sg in sigs:
+        sg["ingested_at"] = ingested_at
+        sg["backfilled"] = snap["backfilled"]
+    with open(sample_path, "w") as fh:
         json.dump(snap, fh, ensure_ascii=False, indent=2)
     added, total = append_log(os.path.join(HERE, "paper_signal_log.json"), sigs)
     print(f"\n=== OFFICIAL SAMPLE {trade_date} ===")
     print("market :", snap["market_gate"]["state"], "|", snap["market_gate"]["one_line"])
     print("portfolio :", snap["portfolio_gate"]["portfolio_posture"],
-          "| single_beta:", snap["portfolio_gate"]["single_beta_exposure"])
+          "| single_beta:", snap["portfolio_gate"]["single_beta_exposure"],
+          "| 真实持仓:", snap["portfolio_gate"].get("held_sectors"))
     for g in snap["ticker_gates"]:
         rs = " [REL_STRENGTH]" if g["relative_strength"] else ""
         print(f"  {g['name']} 收{g['price']} {g['change_pct']:+.2f}% "

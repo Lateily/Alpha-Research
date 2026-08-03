@@ -4,6 +4,7 @@
 归因 n<30 必须 claim_allowed=false。运行: python3 tests/test_engines_offline.py
 """
 import sys, os
+os.environ["AR_OFFLINE"] = "1"  # 零网络铁则:禁用一切真实外呼
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "experiments", "execution_tracker"))
 import pandas as pd
 from red_flag_gate import check_ticker
@@ -124,8 +125,144 @@ def test_watchlist_tickers_guard():
     print("PASS watchlist_tickers: 缺失→[] / 缺字段行跳过(F12)")
 
 
+def test_backfill_skips_not_scorable_and_preserves_invalid():
+    """审计回归:NOT_SCORABLE 不发请求;异型 returns 保留原值不洗白(token=None 即零网络证明)。"""
+    from run_post_close_report import backfill
+    sigs = [
+        {"signal_id": "ns1", "ticker": "SECTOR:测试", "scoring": "NOT_SCORABLE",
+         "timestamp": "20260731 close", "returns": None},
+        {"signal_id": "bad1", "ticker": "600000.SH", "timestamp": "20260731 close",
+         "returns": "corrupted-string"},
+    ]
+    n = backfill(sigs, token=None)
+    assert n == 0
+    assert sigs[0]["returns"] is None or sigs[0]["returns"] == {}  # NS条目未被网络路径触碰
+    assert sigs[1]["returns"] == "corrupted-string"  # 异型保留原值,未静默抹除
+    print("PASS backfill: NOT_SCORABLE跳过 + 异型不洗白(零网络)")
+
+
+def test_portfolio_gate_uses_real_holdings():
+    """审计BLOCKER回归:0731样本把组合暴露写成AI/光模块,实际持仓是恒瑞/牧原。
+    组合门必须按 status=filled 订单算,不得按观察名单。"""
+    import tempfile, json as _json, os as _os
+    import run_official_sample as ros
+    from execution_tracker import build_snapshot
+    with tempfile.TemporaryDirectory() as td:
+        _json.dump([
+            {"ticker": "600276.SH", "name": "恒瑞医药", "status": "filled"},
+            {"ticker": "002714.SZ", "name": "牧原股份", "status": "filled"},
+            {"ticker": "300308.SZ", "name": "中际旭创", "status": "cancelled"},
+        ], open(_os.path.join(td, "orders.json"), "w"))
+        holdings = ros.real_holdings(fund_dir=td)
+    assert [h[0] for h in holdings] == ["600276.SH", "002714.SZ"], holdings
+    assert holdings[0][2] == "医药/创新药" and holdings[1][2] == "农林牧渔/生猪养殖"
+    # 观察名单里的票即使同板块,也不得让组合门判 single_beta
+    tickers = [
+        {"ticker": "300502.SZ", "name": "新易盛", "sector": "AI/光模块", "price": 400,
+         "change_pct": 1.0, "main_flow": 1.0, "super_large": 0, "small": 0, "ohlc_bars": []},
+        {"ticker": "300308.SZ", "name": "中际旭创", "sector": "AI/光模块", "price": 900,
+         "change_pct": 1.0, "main_flow": 1.0, "super_large": 0, "small": 0, "ohlc_bars": []},
+        {"ticker": "600276.SH", "name": "恒瑞医药", "sector": "医药/创新药", "price": 54,
+         "change_pct": -1.0, "main_flow": -0.2, "super_large": 0, "small": 0, "ohlc_bars": []},
+        {"ticker": "002714.SZ", "name": "牧原股份", "sector": "农林牧渔/生猪养殖", "price": 39,
+         "change_pct": -1.0, "main_flow": -0.8, "super_large": 0, "small": 0, "ohlc_bars": []},
+    ]
+    snap = build_snapshot({"sh": {"chg": 0.7}, "sz": {"chg": 2.2}, "cyb": {"chg": 4.0},
+                           "main_flow_total": 625.0},
+                          tickers, ["600276.SH", "002714.SZ"], timestamp="20260731 close (test)")
+    pg = snap["portfolio_gate"]
+    assert pg["single_beta_exposure"] is False, pg
+    assert set(pg["held_sectors"]) == {"医药/创新药", "农林牧渔/生猪养殖"}, pg
+    assert "AI/光模块" not in pg["held_sectors"], "观察名单板块不得进组合暴露"
+    print("PASS portfolio_gate: 按真实filled持仓算暴露,观察名单不污染(审计BLOCKER回归)")
+
+
+def test_cross_layer_consistency():
+    """审计回归(2026-08-01):半程迁移 —— 同一事实只改外层,其余层仍是旧值。
+    用本次事故的真实形态构造:portfolio_gate 已改 False,其余三层仍 True。"""
+    from consistency import check_all, check_report_claim, check_migration_provenance
+    half = {"timestamp": "20260731 close (official)", "sector_single_beta": True,
+            "portfolio_gate": {"single_beta_exposure": False},
+            "self_audit": {"high_reflexivity_book": True}}
+    sigs = [{"timestamp": "20260731 close", "sector_single_beta": True}]
+    issues = check_all(sample=half, signals=sigs)
+    assert issues and issues[0]["fact"] == "single_beta", issues
+    full = {"timestamp": "20260731 close (official)", "sector_single_beta": False,
+            "portfolio_gate": {"single_beta_exposure": False},
+            "self_audit": {"high_reflexivity_book": False}}
+    assert not check_all(sample=full, signals=[{"timestamp": "20260731 close",
+                                                "sector_single_beta": False}])
+    # 报告内外层
+    bad_rep = {"claim_allowed": False, "winrate_scorecard": {"claim_allowed": True}}
+    assert check_report_claim(bad_rep), "内外层不一致必须检出"
+    # claim 禁止却称门槛已满足
+    warn_rep = {"claim_allowed": False, "winrate_scorecard": {"claim_allowed": False},
+                "unvalidated_warning": "89 scored signals — threshold met; provisional."}
+    assert any(i["fact"] == "unvalidated_warning" for i in check_report_claim(warn_rep))
+    # provenance 原值必须真记
+    assert check_migration_provenance({"_migration": {"fields": {
+        "claim_allowed": {"original_value": None, "new_value": False}}}})
+    assert not check_migration_provenance({"_migration": {"fields": {
+        "claim_allowed": {"original_value": True, "new_value": False}}}})
+    print("PASS consistency: 半程迁移/内外层/文案/provenance 四类均检出(审计回归)")
+
+
+def test_consistency_scan_fail_closed():
+    """审计回归(2026-08-01 四轮):一致性闸门自身曾 fail-open ——
+    `except: continue` 会静默跳过损坏文件,把最新报告改成 BROKEN_JSON 后
+    preflight 仍 PASS。本测试覆盖四条 fail-closed 路径。"""
+    import tempfile, json as _json
+    from consistency import scan_dirs
+
+    def _mk(root, sample=True, report=True, log=True,
+            broken_report=False, broken_sample=False, empty_report_dir=False):
+        os.makedirs(os.path.join(root, "samples"), exist_ok=True) if sample else None
+        if report:
+            os.makedirs(os.path.join(root, "reports"), exist_ok=True)
+        good_sample = {"timestamp": "20260731 close", "sector_single_beta": False,
+                       "portfolio_gate": {"single_beta_exposure": False},
+                       "self_audit": {"high_reflexivity_book": False}}
+        good_report = {"claim_allowed": False, "winrate_scorecard": {"claim_allowed": False}}
+        if sample:
+            p_ = os.path.join(root, "samples", "20260731.json")
+            open(p_, "w").write("{{BROKEN" if broken_sample else _json.dumps(good_sample))
+        if report and not empty_report_dir:
+            p_ = os.path.join(root, "reports", "20260731.json")
+            open(p_, "w").write("BROKEN_JSON" if broken_report else _json.dumps(good_report))
+        if log:
+            open(os.path.join(root, "paper_signal_log.json"), "w").write("[]")
+
+    # ① 全部健康 ⇒ 零 issue
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d)
+        assert scan_dirs(d) == [], scan_dirs(d)
+    # ② 最新报告损坏 ⇒ 必须报错(审计原案例)
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, broken_report=True)
+        iss = scan_dirs(d)
+        assert any("reports/" in x and "解析失败" in x for x in iss), iss
+    # ③ 样本损坏 ⇒ 必须报错
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, broken_sample=True)
+        assert any("samples/" in x and "解析失败" in x for x in scan_dirs(d))
+    # ④ 目录缺失 / 目录空 / 账本缺失 ⇒ 必须报错
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, report=False)
+        assert any("reports/" in x and "目录缺失" in x for x in scan_dirs(d))
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, empty_report_dir=True)
+        assert any("reports/" in x and "无可检查" in x for x in scan_dirs(d))
+    with tempfile.TemporaryDirectory() as d:
+        _mk(d, log=False)
+        assert any("paper_signal_log" in x for x in scan_dirs(d))
+    print("PASS consistency: 损坏文件/缺目录/空目录/缺账本 四类均 fail-closed(审计回归)")
+
+
 if __name__ == "__main__":
     test_gate_catches_first_loss(); test_gate_passes_clean(); test_gate_blocks_on_zero_evidence()
     test_battery_flags_blocked_news(); test_attribution_split_and_gate()
     test_trade_card_real_schema(); test_watchlist_tickers_guard()
+    test_cross_layer_consistency(); test_consistency_scan_fail_closed()
+    test_backfill_skips_not_scorable_and_preserves_invalid()
+    test_portfolio_gate_uses_real_holdings()
     print("ALL OFFLINE TESTS PASS (0 network calls)")
