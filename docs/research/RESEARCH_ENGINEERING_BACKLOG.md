@@ -97,12 +97,15 @@
 | R-030 | 输出层措辞检查器 | `APPROVED` | Claude | 合同 v1.5 C4:day-1 只能写"候选",当前靠人工纪律;旭创 0729 案为同周第二次越权 | 扫描含单日证据的结论,命中"确认/成立/已验证"即阻断并要求改写 |
 | R-031 | MRG 两阶段接线 | `APPROVED` | Claude+Macro Agent | 合同 v1.5 C6 修订:未校准的门若先拿阻断权会形成循环依赖(它造成的"没开仓"被记成"避免损失",从此无法证伪) | 阶段A只标注+RISK_OFF_BIAS 降 sizing 上限至 STARTER_CAPPED 并每日入判分;阶段B 达 ≥30 独立因果簇且优于随机后由 Junyan 单独批准阻断权 |
 | R-037 | 单票结论电池戳校验 | `APPROVED` | Claude | 合同 v1.5 C2:full_battery 只对动态名单强制,临时单票分析(含对话产出)无机器强制 | 单票结论产出路径校验 24h 内电池戳,无戳拒绝并标 `NO_BATTERY_STAMP` |
-| R-038 | 因果簇 id 生成器与历史回填 | `APPROVED` | Claude+Validation Agent | 合同 v1.5 C5 采用因果事件簇;claim 解锁的唯一路径 | 按四级判据生成 cluster_id 与 cluster_reason;122 条历史信号回填;登记时冻结,只许拆分不许合并 |
+| R-038 | 因果簇 id 生成器与历史回填 | `BLOCKED_BY_R-039/040/041` | Claude+Validation Agent | 合同 v1.5 C5 采用因果事件簇;claim 解锁的唯一路径。**前置约束**:必须在不可篡改机制就位后才能开始,否则历史回填本身就是一次无约束的大规模归簇 | 按四级判据生成 cluster_id 与 cluster_reason;122 条历史信号回填;双向冻结 |
 | R-032 | U0 全市场证券注册表 | `APPROVED` | Claude+Data Agent | 漏斗 v1:红旗/电池当前只覆盖 14 只动态名单,全 A 99.7% 从未被检查 | 全部 A 股永久注册 + 资格标签(ST/北交所/低流动性标注不删除) |
 | R-033 | U1 六通道批量扫描器 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板一:通道独立,不得复合总分抵消 | 六通道各自阈值取并集;entry_reasons[] 逐条留痕;禁跨通道排序字段 |
 | R-034 | U2 候选池与三项保留配额 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板二:慢牛/逆向修复/随机控制必须保配额 | 100-300 候选,进入与淘汰理由留痕,保留配额不参与主通道竞争 |
 | R-035 | 随机控制分组判分 | `APPROVED` | Validation Agent | 漏斗 v1 §10.4:漏斗自身需可证伪 | 同池分层抽样(市值分位×行业,与主通道分布对齐)+ 固定 seed + 抽样框完整留痕;U1/U2 与 U3 两层检验分开;判据预注册不可改 |
 | R-036 | 全市场 E1 事件层 | `APPROVED` | Data Agent | 漏斗 v1 Phase 1;**取代 R-007** | 红旗闸门从逐票 14 只扩到全 A 批量口径,最廉价且最高价值 |
+| R-039 | 簇不可变校验 | `APPROVED` | Claude | C5 修正规则1:登记后拆分与合并双向禁止 | cluster_id/cluster_reason 就地改写在 preflight FAIL |
+| R-040 | cluster_migration 事件账本 | `APPROVED` | Claude | C5 修正规则2:纠错只能走带 provenance 的迁移 | append-only;evidence 必填;approved_by=Junyan 必需,不可执行方自签 |
+| R-041 | 公布后回溯保护 | `APPROVED` | Claude+Validation Agent | C5 修正规则3:公布后重新归簇不得回溯解锁 claim(防 p-hacking) | published 标记;post_publication_migration 不参与该期簇计数;新口径只对之后登记的信号生效 |
 
 ## 6. 已交付但仍需继续验证的能力
 

@@ -309,8 +309,12 @@ vs cautious 0.64(+2.47%),此前对外报的"0.55-0.63 池子命中率"是防守�
 `cluster_reason`(采用了上述哪一级判据 + 该簇的共同证伪事实 F)。
 **无 cluster_reason 的 cluster_id 无效**(防止事后随意归并输家、拆分赢家)。
 
-**簇的冻结时点**:`cluster_id` 与 `cluster_reason` 在**登记当时**写死,
-事后**只允许拆分不允许合并** —— 合并会稀释失败样本、抬高有效 n。
+**簇的冻结时点与不可篡改性**:`cluster_id` 与 `cluster_reason` 在**登记当时**写死。
+⚠ **本条已被修正(2026-08-03)**:初版写"只许拆分不许合并"是一个**后门** ——
+拆分会增加独立簇数,正是解锁 `claim_allowed` 的方向。
+**现行规则:拆分与合并双向禁止;纠错必须走带 provenance 的 cluster migration
+且需 Junyan 批准;结果公布后的重新归簇不得回溯解锁 claim。**
+完整条文见 `docs/research/C5_CLUSTER_INTEGRITY.md`(与合同同等效力)。
 
 **强制方**:`run_post_close_report.scorecard`(簇同过滤 **已在线**;
 因果簇 id 生成器 **待接线**,工程债 R-038)· `attribution_audit.py`(方向分列 已在线)。
