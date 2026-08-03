@@ -56,11 +56,11 @@
 | ID | 工程 | 状态 | 负责人 | 当前实物/证据 | 完成验收 |
 |---|---|---|---|---|---|
 | R-001 | 夜链终态必须服从子契约语义 | `APPROVED` | Claude | 2026-07-31 真实运行中 `nightly_run.json=COMPLETE`,但 `public/data/v2/meta.json=PARTIAL` 且三份契约为 `STALE_INPUT`;#180 未明确覆盖该分支 | 任一必需契约 `PARTIAL/INCOMPLETE/STALE_INPUT/DATA_BLOCKED` 时夜链非 COMPLETE、exit 非 0、报警旗生成;加入该失败案例的端到端回归测试 |
-| R-002 | 自动 preflight 与晋级前质检硬闸 | `IN_PROGRESS` | Claude | PR #180:正式路径自动 preflight,晋级器消费红旗/电池/freshness,新增离线回归测试 | 独立复验 #180;坏账本时 0 引擎启动;红旗、PARTIAL、过期、缺文件四类均不能 READY;合并后真实夜跑一次 |
+| R-002 | 自动 preflight 与晋级前质检硬闸 | `DONE` | Claude | **PR #205 已合并**(#180 因 squash 堆叠失效后重建):正式路径自动 preflight,晋级器消费红旗/电池/freshness,离线回归测试 | **验收通过 2026-08-03**:①坏账本注入 ⇒ 0 引擎启动、报警旗落盘、report=INCOMPLETE、steps=0 ②四类拒绝全部有回归断言,且已用「短路 qc_decide」反证四条同时 ✗(13/13 恢复)③真实夜跑 nightly_v2 report=COMPLETE 15/15 步 OK |
 | R-003 | 永久在线证券注册表与全市场多通道扫描 | `APPROVED` | Junyan+Claude | 当前 `momentum_prefilter.py` 扫约 5500 只,但候选主要由动量 TOP5 注入;红旗和六维电池只覆盖约 14 只动态名单 | 全 A 每只证券每日保留状态、最后扫描时间、进入/未进入原因;六类通道使用批量数据并集;扫描失败不能沿用旧结果冒充新结果 |
 | R-004 | 判分样本独立性与方向分列 | `APPROVED` | Junyan+Claude | 主 scorecard 以 signal_id 去重并混合 constructive/cautious;尚无 `cluster_id`;现有 `claim_allowed` 不能证明 30 个独立簇 | schema 增 `cluster_id` 与主期限;存量回溯;正式 scorecard 永久分方向;门槛按独立簇计算;修复前撤销合并口径的 claim_allowed |
 | R-005 | Macro OS 与 MRG 完整闭环 | `APPROVED` | Junyan+Macro Agent | PR #179 有 MRG 规格;PR #181 有第一版 Tushare 宏观原料,尚无完整引擎、全局契约、组合/行业消费者和判分 | 数据抓取→事件标准化→宏观状态→MRG→行业敏感度→组合暴露→消费者→T+1/T+5/T+20 判分全链影子运行 |
-| R-006 | Tushare 数据健康、语义与新闻链修复 | `IN_PROGRESS` | Claude | PR #181:29 端点健康表、issuer_guidance 改名、四个参数修复、宏观抓取、major_news 边界 | 独立复验真实端点与离线网络守卫;关键端点失败使工作流失败;四个无权限源保持 DATA_BLOCKED;旧目录完成迁移后再删除 |
+| R-006 | Tushare 数据健康、语义与新闻链修复 | `DONE` | Claude | **PR #206 已合并**(#181 因 squash 堆叠失效后重建):29 端点健康表、issuer_guidance 改名、四个参数修复、宏观抓取、major_news 边界 | **验收通过 2026-08-03**:`data_source_health.py` 步刻意不带 continue-on-error,五个关键源(daily/daily_basic/moneyflow_dc/moneyflow_ind_dc/moneyflow_mkt_dc)任一非 OK 即 exit 1 ⇒ 整个工作流失败;AR_OFFLINE 离线守卫在位;无权限源保持 DATA_BLOCKED 不伪装为 0;issuer_guidance 改名已覆盖 4 个消费方 |
 
 ## 4. P1:研究发现与证据质量
 
@@ -77,7 +77,7 @@
 | R-015 | 不可篡改事件账本与数据 CI | `APPROVED` | Claude+Audit Agent | JSON 可手工改写,缺文件锁、哈希链和完整账本 schema CI | append-only JSONL 或等价事件层;文件锁、前序哈希、迁移工具;任何账本 diff 触发 schema、时间和一致性校验 |
 | R-016 | 十日检察官与法庭唤醒 | `APPROVED` | Court Agent | 规则已经提出,仍依赖人工记得开庭;历史上出现延迟数晚 | `court_10d` 进入夜链;到期自动入 review queue;结论带证据更新时间;逾期成为夜链非完整项 |
 | R-017 | 隔夜锚生产化 | `APPROVED` | Macro Agent | 2026-07-31 运行时文件仍停在 20260722,四锚 DATA_BLOCKED | 盘前自动刷新 NVDA/SOX/TSM ADR/A50;逐源 freshness;旧文件不得冒充当日;失败进入盘前告警 |
-| R-018 | 新闻与信息面可信边界 | `IN_PROGRESS` | Reed+Claude | PR #181 新增 major_news 与实体闸门;正式公告 `anns_d` 和部分实时新闻仍无权限 | 外部文本只作不可信输入;实体解析、来源健康、重复去除、注入隔离、E 级标签齐;无权限源清楚显示替代来源和覆盖缺口 |
+| R-018 | 新闻与信息面可信边界 | `IN_PROGRESS` | Reed+Claude | **PR #206 已合并**:major_news 消费器 + 实体闸门 + 不可信输入隔离;正式公告 `anns_d` 与部分实时新闻仍无权限 | **部分达成 2026-08-03**:已有 = 实体闸门(仅当实体确认才挂 ticker)· 来源健康 · 去重 · 外部正文按不可信数据只取标题/时间/来源 · major_news 消费器。**残留 = ①E 级标签未落到新闻链**(E 级只在 `api/research.js`/`research-multi.js`)②`anns_d` 无权限时未显式展示替代来源与覆盖缺口 |
 | R-019 | 行业 OS 持续填数 | `APPROVED` | Junyan+Sector Agents | 半导体、医药已有 v0,但锚点日期、缺失 E1、关系边和指标更新节奏没有统一 SLA | 每个 Sector OS 有指标字典、E1/E2 数据源、关系边、公司覆盖、催化剂、wrong-if、更新时间;过期自动提醒 |
 | R-020 | 宏观到行业和组合的暴露矩阵 | `APPROVED` | Macro Agent+Portfolio Agent | 当前宏观想法停在全局判断,没有说明对行业和现有持仓如何传导 | 因子→行业方向/时滞/证据→持仓暴露→风险预算调整建议逐层留痕;只改变 posture/gate,不直接生成交易动作 |
 
@@ -88,7 +88,7 @@
 | R-021 | v2 契约与 schema 覆盖 | `APPROVED` | Junyan+Better | `public/data/v2/` 产物多于 `docs/contracts/` 文档;字段、required 和 freshness 无统一 schema | 每个前端可见 JSON 有 schema、版本、required、source、as_of、report 语义和失败样例;前端只读契约 |
 | R-022 | 夜链报警消费闭环 | `APPROVED` | Ops Agent | 生成报警旗不等于有人消费;日志中的失败与 Issue/queue 没有自动绑定 | 每个报警有 owner、ack 时间、处理结果;未确认报警进入次日 preflight;最近三晚健康可查询 |
 | R-023 | 协议文档去冲突 | `APPROVED` | Junyan+Reed | `AGENTS.md`、`CLAUDE.md`、冻结 `STATUS.md` 与现行章程存在旧路径、旧数据源和旧权限描述 | 每条关键规则只有一个权威位置;旧文件加冻结横幅和真实替代链接;自动链接检查通过 |
-| R-024 | 总账、Issue 与进度板同步 | `IN_PROGRESS` | Reed+Junyan | Issue #164/PR #175 建进度板,但研究债此前没有持久化清单;最近任务可从聊天丢失 | 本总账是研究 source-of-truth;每个活跃 ID 对应 Issue/PR;进度板只读状态;每周自动查孤儿任务和失联 PR |
+| R-024 | 总账、Issue 与进度板同步 | `IN_PROGRESS` | Reed+Junyan | Issue #164/PR #175 建进度板,但研究债此前没有持久化清单;最近任务可从聊天丢失 | **部分达成 2026-08-03**:总账已是 source-of-truth。**残留 = ①26 个活跃项中 20 项背景列无 Issue/PR 引用**(R-003/004/007/009~017/019/020 等)②无周检孤儿任务/失联 PR 的工作流 ③本轮已修一类真实故障:R-002/R-006/R-018 曾长期引用 #180/#181,而这两个 PR 因 squash 堆叠早已 CLOSED,真正合并的是 #205/#206 |
 | R-025 | Agent 项目制和边界 | `APPROVED` | Junyan+Reed | 多 Agent 能力增加,但项目 owner、输入、输出、评测与文件边界未覆盖每条研究线 | Universe/Macro/Sector/Single-name/Validation/Portfolio/Audit Agent 各有岗位合同;越权修改 CI 拦截或 review 阻断 |
 | R-026 | 结算者唯一与数据/工程分 PR | `APPROVED` | Junyan | 约定已在实践中使用,未形成单一书面协议 | 每个交易日只有一名 settlement owner;数据 PR 与工程 PR 分离;冲突检测进入 preflight |
 | R-027 | 审阅问题清账 | `APPROVED` | Junyan | 历史审阅问题和到期回复可能滞留 Notion,未进入 repo 总账 | 每周五输出 open/answered/closed;逾期原因入账;答案链接回周报或研究文档 |

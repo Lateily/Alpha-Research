@@ -254,6 +254,14 @@ def selftest():
     r8 = evaluate([sig], "RISK_ON", {"PCB": 3}, bars, 1_000_000,
                   qc={**qc_ok, "red_fresh": "STALE_FILE(mtime 30.0h>26h)"})
     ck("质检输入过期 → BLOCKED_STALE_INPUT", r8["queue"][0]["verdict"] == "BLOCKED_STALE_INPUT")
+    # R-002 验收第四类:电池 PARTIAL / 任一维阻断,均不得 READY
+    r9 = evaluate([sig], "RISK_ON", {"PCB": 3}, bars, 1_000_000,
+                  qc={**qc_ok, "bat_by": {"002463.SZ": {"verdict": "PARTIAL",
+                                                        "blocked_dims": ["资金"]}}})
+    ck("电池PARTIAL → 不得READY", r9["queue"][0]["verdict"] != "PROMOTE_REVIEW_READY")
+    r10 = evaluate([sig], "RISK_ON", {"PCB": 3}, bars, 1_000_000,
+                   qc={**qc_ok, "bat_by": {}})       # 该票未被电池覆盖
+    ck("电池未覆盖 → 不得READY", r10["queue"][0]["verdict"] != "PROMOTE_REVIEW_READY")
     passed = sum(1 for _, c in ok if c)
     print(f"setup_promoter selftest: {passed}/{len(ok)}")
     return passed == len(ok)
