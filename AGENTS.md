@@ -161,3 +161,11 @@ git push
 
 角色改动边界:Better 限 `web/`、`public/data/v2/`、`docs/contracts/`;Reed 限 `scripts/llm/`、`docs/llm/`;越界改动需在 PR 中说明原因并等 Junyan 口令。
 团队章程:`docs/team/TEAM_CHARTER_v2.md`(三层系统/每周产出/接口表/优先级)。
+
+## Claim Protocol(认领协议 — 2026-07-31 起,防重复施工)
+
+任何 AI 会话开工前,按 `docs/llm/AI_PROGRESS_PROTOCOL.md` 执行:
+1. 先跑 `python3 scripts/llm/progress_conflicts.py` 查撞车(撞完再查是验尸);
+2. 在 Issue #164 发 CLAIM(human_owner/executor/reviewer 三字段 + expires_at);
+3. 开工 1 小时内开 Draft PR;做完发 DONE(附 PR/成本/next),卡住发 BLOCKED,不做发 RELEASE;
+4. 一个任务一个 owner;发现有效期内的他人 CLAIM ⇒ 换任务。
