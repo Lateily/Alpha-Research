@@ -66,7 +66,7 @@
 
 | ID | 工程 | 状态 | 负责人 | 当前缺口 | 完成验收 |
 |---|---|---|---|---|---|
-| R-007 | 全市场批量 E1 事件层 | `APPROVED` | Data/Universe Agent | red flag 当前逐票跑动态名单,不能覆盖全 A,线性扩展会放大 API 成本 | forecast/express/公告等先按日期批量抓取,再本地 join 到证券注册表;每个事件带 source/as_of/fetched_at/trust_boundary |
+| R-007 | 全市场批量 E1 事件层 | `SUPERSEDED_BY_R-036` | Data/Universe Agent | red flag 当前逐票跑动态名单,不能覆盖全 A,线性扩展会放大 API 成本 | forecast/express/公告等先按日期批量抓取,再本地 join 到证券注册表;每个事件带 source/as_of/fetched_at/trust_boundary |
 | R-008 | 本地特征仓与增量计算 | `PROPOSED` | Claude+Better | 多个引擎重复请求同一行情和基本面,全市场逐票电池预计不可接受 | 日频原始层和特征层分离;按 trade_date 增量;Parquet/SQLite 二选一做 v0;相同输入可复跑并得到相同结果 |
 | R-009 | 多通道候选并集与探索配额 | `APPROVED` | Junyan+Scanner Agent | 单一动量排序会遗漏慢牛、基本面拐点、事件驱动和逆向修复 | 动量、反转、E1 事件、基本面/估值、行业轮动、宏观敏感度六路独立产候选后取并集;保留随机控制样本;记录每路贡献与淘汰原因 |
 | R-010 | 六维电池语义完整化 | `APPROVED` | Research Agent | 技术维仍是部分代理;消息维以公告为主;缺宏观/行业映射;局部 DATA_BLOCKED 曾被总体 COMPLETE 掩盖 | 每维独立 `status/as_of/coverage/source`;任一必需维阻断时总体不得 COMPLETE;新增 `sector_context` 和 `macro_context`;PASS 不得解释成值得买 |
@@ -98,6 +98,11 @@
 | R-031 | MRG 两阶段接线 | `APPROVED` | Claude+Macro Agent | 合同 v1.5 C6 修订:未校准的门若先拿阻断权会形成循环依赖(它造成的"没开仓"被记成"避免损失",从此无法证伪) | 阶段A只标注+RISK_OFF_BIAS 降 sizing 上限至 STARTER_CAPPED 并每日入判分;阶段B 达 ≥30 独立因果簇且优于随机后由 Junyan 单独批准阻断权 |
 | R-037 | 单票结论电池戳校验 | `APPROVED` | Claude | 合同 v1.5 C2:full_battery 只对动态名单强制,临时单票分析(含对话产出)无机器强制 | 单票结论产出路径校验 24h 内电池戳,无戳拒绝并标 `NO_BATTERY_STAMP` |
 | R-038 | 因果簇 id 生成器与历史回填 | `APPROVED` | Claude+Validation Agent | 合同 v1.5 C5 采用因果事件簇;claim 解锁的唯一路径 | 按四级判据生成 cluster_id 与 cluster_reason;122 条历史信号回填;登记时冻结,只许拆分不许合并 |
+| R-032 | U0 全市场证券注册表 | `APPROVED` | Claude+Data Agent | 漏斗 v1:红旗/电池当前只覆盖 14 只动态名单,全 A 99.7% 从未被检查 | 全部 A 股永久注册 + 资格标签(ST/北交所/低流动性标注不删除) |
+| R-033 | U1 六通道批量扫描器 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板一:通道独立,不得复合总分抵消 | 六通道各自阈值取并集;entry_reasons[] 逐条留痕;禁跨通道排序字段 |
+| R-034 | U2 候选池与三项保留配额 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板二:慢牛/逆向修复/随机控制必须保配额 | 100-300 候选,进入与淘汰理由留痕,保留配额不参与主通道竞争 |
+| R-035 | 随机控制分组判分 | `APPROVED` | Validation Agent | 漏斗 v1 §10.4:漏斗自身需可证伪 | 同池分层抽样(市值分位×行业,与主通道分布对齐)+ 固定 seed + 抽样框完整留痕;U1/U2 与 U3 两层检验分开;判据预注册不可改 |
+| R-036 | 全市场 E1 事件层 | `APPROVED` | Data Agent | 漏斗 v1 Phase 1;**取代 R-007** | 红旗闸门从逐票 14 只扩到全 A 批量口径,最廉价且最高价值 |
 
 ## 6. 已交付但仍需继续验证的能力
 
