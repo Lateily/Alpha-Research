@@ -97,7 +97,7 @@ Never present an invented threshold or weight as if it were calibrated from data
 
 ## Current Known Gaps (Prioritized)
 
-1. **Tushare Pro not integrated** — User has paid access; needs `TUSHARE_TOKEN` GitHub Secret → unlocks real-time A-share quotes, capital flows, northbound data
+1. ~~**Tushare Pro not integrated**~~ — **已接入(2026-08-01 更正)**:`TUSHARE_TOKEN` 已配置(本地 `~/.ar_env` 600 权限 + GitHub Secret)。29 端点实测 **25 OK / 4 DATA_BLOCKED**;可用含行情/估值/资金流(个股·行业·全市场·北向)/财务三表/预告快报/龙虎榜/筹码/量化因子/机构调研/券商预测/宏观(GDP·CPI·PPI·PMI·Shibor)/美债曲线/长篇新闻 major_news。**无权限(标 DATA_BLOCKED,不伪装空数据)**:`news`(中文快讯)、`anns_d`(正式公告)、`cctv_news`、`rt_min_daily` —— 这四项是独立付费权限,未购买;公告层当前用东财免费源平替。健康表见 `public/data/v2/ops/data_source_health.json`。
 2. **VP history is synthetic pre-launch** — vp_history.json populates forward only; backtest results are illustrative
 3. **Signal weights unvalidated** — No real trade history to calibrate against yet
 4. **Portfolio construction absent** — No correlation matrix, no portfolio-level VaR
@@ -161,3 +161,11 @@ git push
 
 角色改动边界:Better 限 `web/`、`public/data/v2/`、`docs/contracts/`;Reed 限 `scripts/llm/`、`docs/llm/`;越界改动需在 PR 中说明原因并等 Junyan 口令。
 团队章程:`docs/team/TEAM_CHARTER_v2.md`(三层系统/每周产出/接口表/优先级)。
+
+## Claim Protocol(认领协议 — 2026-07-31 起,防重复施工)
+
+任何 AI 会话开工前,按 `docs/llm/AI_PROGRESS_PROTOCOL.md` 执行:
+1. 先跑 `python3 scripts/llm/progress_conflicts.py` 查撞车(撞完再查是验尸);
+2. 在 Issue #164 发 CLAIM(human_owner/executor/reviewer 三字段 + expires_at);
+3. 开工 1 小时内开 Draft PR;做完发 DONE(附 PR/成本/next),卡住发 BLOCKED,不做发 RELEASE;
+4. 一个任务一个 owner;发现有效期内的他人 CLAIM ⇒ 换任务。

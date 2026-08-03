@@ -1,0 +1,23 @@
+[
+ {
+  "schema": "macro_event.v0",
+  "event_id": "FOMC_20260729",
+  "recorded_at": "20260731",
+  "label": "RED",
+  "event_date": "20260729",
+  "source_count": 6,
+  "headline": "FOMC维持3.50-3.75%,9-3三票主张加息;次日MSFT Azure破$100B引发引擎切换反转",
+  "impact_tags": [
+   "利率路径",
+   "AI-capex盈利证据",
+   "A股科技映射",
+   "防御抽血"
+  ],
+  "linked_hypotheses": [
+   "RISK_ON候选0731(需day-2定盘确认)",
+   "旭创判分复盘0730-0731"
+  ],
+  "doc": "docs/research/macro/FOMC_20260729_WARSH.md",
+  "disclaimer": "不是买卖指令;研究信号,human executes."
+ }
+]

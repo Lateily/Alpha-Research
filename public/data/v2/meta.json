@@ -1,0 +1,35 @@
+{
+ "generated_at": "20260731 16:36:53",
+ "contracts": {
+  "model_portfolio_state.json": {
+   "status": "STALE_INPUT",
+   "blocked_why": null
+  },
+  "trade_cards.json": {
+   "status": "STALE_INPUT",
+   "blocked_why": null
+  },
+  "premarket_frame.json": {
+   "status": "STALE_INPUT",
+   "blocked_why": null
+  },
+  "rotation_panel.json": {
+   "status": "OK",
+   "blocked_why": null
+  },
+  "red_flags.json": {
+   "status": "OK",
+   "blocked_why": null
+  },
+  "battery.json": {
+   "status": "OK",
+   "blocked_why": null
+  },
+  "position_review.json": {
+   "status": "OK",
+   "blocked_why": null
+  }
+ },
+ "disclaimer": "不是买卖指令;研究信号,human executes.",
+ "report": "PARTIAL"
+}

@@ -3,15 +3,28 @@ on:
   pull_request:
     paths:
       - "experiments/**/*.py"
+      - "experiments/execution_tracker/**/*.json"
+      # R-015 账本是 .jsonl —— 不加这条,"只改账本数据"的 PR 根本不触发本工作流,
+      # 而那正是第③层唯一要把关的 diff 形态(实测:.jsonl 不匹配 *.json)
+      - "experiments/execution_tracker/event_ledger.jsonl*"
       - "scripts/**/*.py"
       - "tests/**"
+      - "public/data/v2/**"
+      - "docs/research/macro/**"
+      - "api/**"
       - ".github/workflows/python-ci.yml"
+  # 直推 main 也必须过闸 —— 0712 的 git-reset-hard 正是这个形态,
+  # 而本工作流此前只有 pull_request 触发器,直推完全不受任何检查。
+  push:
+    branches: [main]
 jobs:
   offline-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0      # R-015 需完整历史做 git 行前缀比对
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -20,7 +33,38 @@ jobs:
         run: python3 tests/test_engines_offline.py
       - name: LLM adapter offline tests (zero network)
         run: python3 tests/test_llm_adapter_offline.py
+      - name: Promoter QC gate offline tests (zero network)
+        run: python3 tests/test_promoter_qc_offline.py
       - name: Nightly v2 orchestrator selftest
         run: python3 experiments/execution_tracker/run_nightly.py --selftest
+      - name: Setup promoter selftest
+        run: python3 experiments/execution_tracker/setup_promoter.py --selftest
+      # 账本 schema 校验:preflight 全程零网络零写入(仅读本地契约/账本文件),
+      # 直接对提交进仓的真账本跑 —— 账本被改坏的 PR 在这里就红
+      - name: Ledger schema preflight (offline, committed ledger)
+        run: python3 experiments/execution_tracker/run_nightly.py --preflight
       - name: Contract exporter selftest
         run: python3 experiments/execution_tracker/export_contracts.py --selftest
+      # 零网络守卫:monkeypatch socket 后跑完整离线套件,任何隐藏外呼当场崩溃
+      - name: No-network guard (socket blocked, full offline suite)
+        run: python3 tests/test_no_network_guard.py
+      # ── PR-A(数据源)的两个回归锚 ──
+      - name: Data-source health offline test
+        env:
+          AR_OFFLINE: "1"
+        run: python3 tests/test_data_source_health_offline.py
+      - name: News entity-matching regression (node)
+        run: node tests/news-entity.test.mjs
+      # ── R-015 不可篡改事件账本(C5 §6.2 硬前置)──
+      # 三层:①哈希链(改写/中删/换序/坏行)②锚点(尾部截断——链证明抓不到)
+      # ③git 行前缀(整份重写但自洽)。selftest 对每一类篡改都断言"必须抓到"。
+      - name: Event ledger selftest (tamper detection)
+        run: python3 experiments/execution_tracker/event_ledger.py --selftest
+      # 对提交进仓的真账本走三层校验。基准取 origin/main 而非 HEAD ——
+      # 拿 HEAD 比等于跟自己比,永远相同,是个空转的检查。
+      # PR 上这一步才有牙:任何改写/删除既有行的 PR 在这里就红。
+      # (push 到 main 时 origin/main == HEAD,该层平凡满足,门在 PR 上。)
+      - name: Event ledger append-only verification (vs origin/main)
+        run: |
+          git fetch -q origin main
+          python3 experiments/execution_tracker/event_ledger.py --ref origin/main

@@ -1,38 +1,38 @@
 {
- "as_of": "20260728",
+ "as_of": "20260730",
  "panel_days": [
-  "20260722",
-  "20260723",
   "20260724",
   "20260727",
-  "20260728"
+  "20260728",
+  "20260729",
+  "20260730"
  ],
  "transition": {
   "counts": {
-   "INFLOW_CONT": 15,
-   "WARMING": 4,
-   "NEUTRAL": 261,
-   "FLICKER": 196,
-   "OUTFLOW_CONT": 156
+   "INFLOW_CONT": 26,
+   "WARMING": 13,
+   "NEUTRAL": 329,
+   "FLICKER": 220,
+   "OUTFLOW_CONT": 143
   },
   "matrix_counts": {
    "INFLOW_CONT": {
-    "INFLOW_CONT": 15
+    "INFLOW_CONT": 26
    },
    "WARMING": {
-    "INFLOW_CONT": 4
+    "INFLOW_CONT": 13
    },
    "NEUTRAL": {
-    "WARMING": 106,
-    "FLICKER": 77,
-    "OUTFLOW_CONT": 78
+    "WARMING": 14,
+    "FLICKER": 29,
+    "OUTFLOW_CONT": 286
    },
    "FLICKER": {
-    "WARMING": 32,
-    "FLICKER": 164
+    "WARMING": 31,
+    "FLICKER": 189
    },
    "OUTFLOW_CONT": {
-    "OUTFLOW_CONT": 156
+    "OUTFLOW_CONT": 143
    }
   },
   "matrix_prob": {
@@ -43,13 +43,13 @@
     "INFLOW_CONT": 1.0
    },
    "NEUTRAL": {
-    "FLICKER": 0.295,
-    "OUTFLOW_CONT": 0.299,
-    "WARMING": 0.406
+    "FLICKER": 0.088,
+    "OUTFLOW_CONT": 0.869,
+    "WARMING": 0.043
    },
    "FLICKER": {
-    "FLICKER": 0.837,
-    "WARMING": 0.163
+    "FLICKER": 0.859,
+    "WARMING": 0.141
    },
    "OUTFLOW_CONT": {
     "OUTFLOW_CONT": 1.0
@@ -57,13 +57,7 @@
   },
   "examples": [
    {
-    "sector": "工程机械整机",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "商用载客车",
+    "sector": "包装材料",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
@@ -75,174 +69,172 @@
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "人力资源服务",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "果蔬加工",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "个护小家电",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "包装材料",
-    "seq": "-++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "其他养殖",
-    "seq": "-++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "汽车服务",
-    "seq": "-++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "汽车综合服务",
-    "seq": "-++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "端到端供应链服务",
-    "seq": "-++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
     "sector": "金属包装",
-    "seq": "-++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "炭黑",
-    "seq": "-++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "风电零部件",
-    "seq": "-++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "包装印刷",
-    "seq": "-++++",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
     "sector": "瓷砖地板",
-    "seq": "+-+++",
-    "from": "WARMING",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
     "sector": "涂料",
-    "seq": "+-+++",
-    "from": "WARMING",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "大气治理",
-    "seq": "--+++",
-    "from": "WARMING",
+    "sector": "贵州板块",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "纺织鞋类制造",
-    "seq": "--+++",
-    "from": "WARMING",
+    "sector": "房屋检测",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "辽宁板块",
-    "seq": "+--++",
-    "from": "NEUTRAL",
-    "to": "WARMING"
+    "sector": "海绵城市",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "刀片电池",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "基因测序",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "维生素",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "超跌股",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "汽车整车",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "酿酒概念",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "白酒",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "参股保险",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "消费风格",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "综合包装",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "家纺",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "培训教育",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
    }
   ]
  },
  "leader_breadth": [
   {
    "group": "其他",
-   "count": 27,
-   "share_top30": 0.9,
-   "top10_count": 8,
-   "avg_ret10": 24.2,
+   "count": 26,
+   "share_top30": 0.867,
+   "top10_count": 7,
+   "avg_ret10": 22.7,
    "examples": [
-    "科蓝软件(41.8%)",
-    "顺钠股份(36.6%)",
-    "爱朋医疗(35.3%)",
-    "创新医疗(34.8%)",
-    "传智教育(30.3%)",
-    "博汇科技(27.5%)",
-    "新强联(27.1%)",
-    "新中港(26.4%)"
+    "传智教育(41.8%)",
+    "学大教育(32.1%)",
+    "中电电机(31.2%)",
+    "新强联(30.7%)",
+    "朗姿股份(29.4%)",
+    "一鸣食品(26.1%)",
+    "高争民爆(25.4%)",
+    "江山股份(25.4%)"
    ]
   },
   {
-   "group": "医药",
-   "count": 1,
-   "share_top30": 0.033,
-   "top10_count": 1,
-   "avg_ret10": 42.7,
+   "group": "汽车/电动车",
+   "count": 3,
+   "share_top30": 0.1,
+   "top10_count": 3,
+   "avg_ret10": 31.3,
    "examples": [
-    "珍宝岛(42.7%)"
+    "浙江华远(33.8%)",
+    "明新旭腾(31.8%)",
+    "安徽凤凰(28.3%)"
    ]
   },
   {
    "group": "消费/服务",
    "count": 1,
    "share_top30": 0.033,
-   "top10_count": 1,
-   "avg_ret10": 44.5,
-   "examples": [
-    "爱丽家居(44.5%)"
-   ]
-  },
-  {
-   "group": "汽车/电动车",
-   "count": 1,
-   "share_top30": 0.033,
    "top10_count": 0,
-   "avg_ret10": 25.5,
+   "avg_ret10": 22.0,
    "examples": [
-    "捷众科技(25.5%)"
+    "美之高(22.0%)"
    ]
   }
  ],
  "dominant_groups": [
   {
    "group": "其他",
-   "count": 27,
-   "share_top30": 0.9,
-   "top10_count": 8,
-   "avg_ret10": 24.2,
+   "count": 26,
+   "share_top30": 0.867,
+   "top10_count": 7,
+   "avg_ret10": 22.7,
    "examples": [
-    "科蓝软件(41.8%)",
-    "顺钠股份(36.6%)",
-    "爱朋医疗(35.3%)",
-    "创新医疗(34.8%)",
-    "传智教育(30.3%)",
-    "博汇科技(27.5%)",
-    "新强联(27.1%)",
-    "新中港(26.4%)"
+    "传智教育(41.8%)",
+    "学大教育(32.1%)",
+    "中电电机(31.2%)",
+    "新强联(30.7%)",
+    "朗姿股份(29.4%)",
+    "一鸣食品(26.1%)",
+    "高争民爆(25.4%)",
+    "江山股份(25.4%)"
    ]
   }
  ],

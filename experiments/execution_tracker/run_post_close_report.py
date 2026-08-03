@@ -97,7 +97,14 @@ def backfill(log, token):
     filled = 0
     series_cache = {}
     for sig in log:
-        sig.setdefault("returns", {})
+        if str(sig.get("scoring") or "") == "NOT_SCORABLE":
+            continue  # 声明为不可判分的条目:不请求行情、不改写任何字段
+        r = sig.get("returns")
+        if r is None:
+            sig["returns"] = {}  # null 视为未初始化,安全初始化
+        elif not isinstance(r, dict):
+            print(f"  ⚠ SCHEMA_INVALID returns 保留原值不洗白: {sig.get('signal_id')}")
+            continue  # 审计F:异型数据隔离,不静默抹除
         if all(h in sig["returns"] for h in HORIZON_DAYS):
             continue                                   # already complete
         td = parse_trade_date(sig.get("timestamp"))
@@ -143,12 +150,39 @@ def scorecard(log):
             "avg_signed_return": round(sum(rets) / n, 4) if n else None,
             "avg_gate_aligned_return": round(sum(aligned) / n, 4) if n else None,
         }
+    # ── 方向分列(2026-07-28 归因铁律:混方向报命中率=违规)──
+    by_dir = {}
+    for call in ("constructive", "cautious"):
+        subset = [s for s in log if s.get("directional_call") == call
+                  and any(h in (s.get("returns") or {}) for h in HORIZON_DAYS)]
+        hs = []
+        for s in subset:
+            r = (s.get("returns") or {}).get("1d")
+            if isinstance(r, (int, float)):
+                hs.append((r > 0) if call == "constructive" else (r < 0))
+        by_dir[call] = {"n": len(subset),
+                        "hit_rate_1d": round(sum(hs) / len(hs), 3) if hs else None}
+    card["by_direction"] = by_dir
+
     scored = {s["signal_id"] for s in log
               if s.get("directional_call") in ("constructive", "cautious")
-              and any(h in s.get("returns", {}) for h in HORIZON_DAYS)}
+              and any(h in (s.get("returns") or {}) for h in HORIZON_DAYS)}
+    # ── 独立性门(2026-08-01 审计 MAJOR:同日同逻辑最多重复5条,按 signal_id 计数
+    #    等于把相关样本当独立样本;cluster_id 未落地前 claim 一律禁止)──
+    # 审计 MAJOR(2026-08-01 二轮):簇集合必须与 scored 用**完全相同**的过滤条件,
+    # 否则 1 条可判信号 + 29 条 neutral 就能把门冲开(已构造复现)。
+    clusters = {s.get("cluster_id") for s in log
+                if s.get("cluster_id")
+                and s.get("signal_id") in scored}
     card["total_scored_signals"] = len(scored)
+    card["independent_clusters"] = len(clusters)
     card["min_required"] = MIN_SCORED_FOR_CLAIM
-    card["claim_allowed"] = len(scored) >= MIN_SCORED_FOR_CLAIM
+    card["claim_allowed"] = (len(clusters) >= MIN_SCORED_FOR_CLAIM)
+    card["claim_note"] = (
+        f"cluster_id 未落地(独立簇={len(clusters)});signal_id 计数={len(scored)} "
+        f"含同日同逻辑相关样本,不构成独立样本 —— claim 一律禁止"
+        if len(clusters) < MIN_SCORED_FOR_CLAIM else
+        f"独立簇 {len(clusters)}≥{MIN_SCORED_FOR_CLAIM};仍须方向分列与留出期审查")
     return card
 
 

@@ -25,3 +25,7 @@ public/data/v3c_alpha1*_wf_*.json
 public/data/v3c_alpha1*_full_*.json
 public/data/iter1*_backtest_*.json
 public/data/iter1*_bootstrap_*.json
+
+# R-015 事件账本的 flock 句柄与原子写临时文件:运行时产物,不入库
+experiments/execution_tracker/*.jsonl.lock
+experiments/execution_tracker/*.anchor.json.tmp

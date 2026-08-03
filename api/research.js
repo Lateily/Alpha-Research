@@ -703,6 +703,7 @@ function buildExtrasBlock(extras) {
     }
     const summary = br.summary || {};
     lines.push(`  (Total ${summary.total_90d || br.recommendations.length} reports / ${summary.unique_brokers_90d || '?'} unique brokers / latest ${summary.latest_date || '?'})`);
+    lines.push('  [evidence tier E2 — sell-side narrative only; 目标价不作为模型估值结论]');
   }
 
   // ── Institutional research: who visited recently ──
@@ -817,8 +818,14 @@ function buildExtrasBlock(extras) {
     }
   }
 
-  // ── Consensus forecast: filter valid + recent ──
-  const cf = ts.consensus_forecast;
+  // ── Issuer guidance (业绩预告/快报): company-issued, NOT broker consensus ──
+  // Semantic fix PR-A A3: Tushare forecast/express are issuer self-disclosure.
+  // Reads issuer_guidance/ first; consensus_forecast/ kept one deprecation cycle.
+  // 审计F1:loader 对缺失目录返回 {_status:'not_available'}(truthy),裸 || 会永远选中
+  // issuer_guidance 并静默丢弃 consensus_forecast 存量数据 —— 必须按内容有效性择源。
+  const cf = Array.isArray(ts.issuer_guidance?.forecasts) && ts.issuer_guidance.forecasts.length > 0
+    ? ts.issuer_guidance
+    : ts.consensus_forecast;
   if (cf && Array.isArray(cf.forecasts) && cf.forecasts.length > 0) {
     const valid = cf.forecasts.filter(f =>
       (f.eps != null || f.net_profit != null || f.revenue != null)
@@ -826,14 +833,14 @@ function buildExtrasBlock(extras) {
     if (valid.length > 0) {
       const recent = [...valid].sort((a, b) => (b.end_date || 0) - (a.end_date || 0)).slice(0, 4);
       lines.push('');
-      lines.push('TUSHARE — CONSENSUS FORECAST TIME-SERIES (broker aggregated, recent 4 periods):');
+      lines.push('TUSHARE — ISSUER GUIDANCE 业绩预告/快报 (COMPANY-ISSUED disclosure — NOT broker consensus; recent 4 periods):');
       for (const f of recent) {
         const date = f.end_date || '?';
+        const src = f.source === 'express' ? '快报' : (f.type || '预告');
         const np = f.net_profit != null ? `NP=${(f.net_profit/1e4).toFixed(0)}万` : '';
         const eps = f.eps != null ? `EPS=${f.eps}` : '';
         const rev = f.revenue != null ? `Rev=${(f.revenue/1e8).toFixed(1)}亿` : '';
-        const bc = f.broker_count != null ? `(${f.broker_count} brokers)` : '';
-        const fields = [eps, np, rev, bc].filter(Boolean).join(' ');
+        const fields = [`[${src}]`, eps, np, rev].filter(Boolean).join(' ');
         lines.push(`  ${date}: ${fields}`);
       }
     }

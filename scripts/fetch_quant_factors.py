@@ -1,52 +1,41 @@
 #!/usr/bin/env python3
 """
-Fetch Tushare 15000-tier 量化因子 (stk_factor_pro) per-watchlist daily factors.
+Fetch Tushare 量化因子 (stk_factor_pro) per-watchlist daily factors.
 
-Strategy: one bulk Tushare call covering the last 30-day window (no ts_code
-filter), then group rows per ticker in Python. Each output JSON has:
-  - factors: dict of latest day's numeric columns (PE/PB/PS/turnover/momentum/...)
-  - history: list of last 30 days, each row {trade_date, ...numeric cols}
+CALL-SHAPE FIX (PR-A A4, 2026-07-31): stk_factor_pro requires ts_code or a
+single trade_date — the old market-wide start/end bulk call (no ts_code) was
+illegal, returned nothing, and got mislabeled tier_locked. Now one legal call
+per A-share watchlist ticker: stk_factor_pro(ts_code=..., start_date=...,
+end_date=...) (verified live 2026-07-31: 300308.SZ 10-day window → 9 rows).
 
-This is the data layer for the AR platform's eventual "cleaned-up our own
-quant strategy" (future KR per Junyan 2026-05-03 directive). Display-only
-for now; VP integration / factor calibration is separate work.
+Each output JSON has:
+  - factors: dict of latest day's numeric columns (PE/PB/PS/turnover/...)
+  - history: list of the window's days, each row {trade_date, ...numeric cols}
+  - as_of: real latest trade_date in the returned rows (not fetched_at)
 
-Forward-compat schema: 5-state _status (ok / skipped / endpoint_unavailable
-/ tier_locked / fetch_failed). Per-ticker isolation via outer try/except.
-HK/US tickers get _status='skipped' + _reason='not_available_tushare_hk_us'.
+Status vocabulary: ok / skipped / EMPTY_VALID / DATA_BLOCKED / PARAM_ERROR /
+SOURCE_DOWN. 0 rows is NEVER marked ok. Per-ticker isolation via try/except.
+
+不是买卖指令;研究信号,human executes.
 """
 
 import json
 import os
 import sys
 import time
-from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import tushare as ts
 
 
-CURRENT_TIER = 15000
 OUTPUT_DIR = Path(__file__).parent.parent / "public" / "data" / "quant_factors"
 WATCHLIST_PATH = Path(__file__).parent.parent / "public" / "data" / "watchlist.json"
 WINDOW_DAYS = 30
-FACTOR_ENDPOINTS = ["stk_factor_pro", "stk_factor", "stock_factor"]
-LAST_FACTOR_ERRORS = []
+FACTOR_ENDPOINT = "stk_factor_pro"
 
-TIER_LOCK_CUES = (
-    "permission",
-    "access",
-    "权限",
-    "积分",
-    "points",
-    "level",
-    "tier",
-    "not enough",
-    "没有访问",
-    "未开通",
-    "请升级",
-)
+PERMISSION_CUES = ("没有接口", "权限")
+PARAM_CUES = ("正确的接口名", "接口名有误")
 
 # Columns that are identifiers / dates, not factor values
 ID_COLUMNS = {"ts_code", "trade_date", "code", "symbol", "name", "date"}
@@ -131,17 +120,6 @@ def _frame_to_rows(frame):
     return frame if isinstance(frame, list) else []
 
 
-def _normalize_ts_code(value):
-    value = str(_json_safe(value) or "").strip().upper()
-    if value.endswith((".SZ", ".SH")):
-        return value
-    digits = "".join(ch for ch in value if ch.isdigit())
-    if len(digits) == 6:
-        suffix = ".SH" if digits.startswith(("5", "6", "9")) else ".SZ"
-        return f"{digits}{suffix}"
-    return value or None
-
-
 def _call_tushare_api(api, api_name, params):
     result = api.query(api_name, **params) if hasattr(api, "query") else getattr(api, api_name)(**params)
     if result is None:
@@ -153,43 +131,37 @@ def _call_tushare_api(api, api_name, params):
     return result
 
 
-def fetch_bulk_factors(api, start_date, end_date):
-    LAST_FACTOR_ERRORS.clear()
-    params = {"start_date": start_date, "end_date": end_date}
-    for api_name in FACTOR_ENDPOINTS:
-        try:
-            print(f"quant_factors: trying {api_name} start_date={start_date} end_date={end_date}", file=sys.stderr)
-            rows = _frame_to_rows(_call_tushare_api(api, api_name, params))
-            print(f"quant_factors: {api_name} ok rows={len(rows)}", file=sys.stderr)
-            return api_name, rows
-        except Exception as exc:
-            LAST_FACTOR_ERRORS.append(f"{api_name}: {type(exc).__name__}: {exc}")
-            print(f"quant_factors: {api_name} failed: {type(exc).__name__}: {exc}", file=sys.stderr)
-        finally:
-            time.sleep(0.2)
-    return None, []
+def classify_error(error_text):
+    """Locked vocabulary: DATA_BLOCKED / PARAM_ERROR / SOURCE_DOWN."""
+    text = str(error_text or "")
+    if any(cue in text for cue in PARAM_CUES):
+        return "PARAM_ERROR"
+    if any(cue in text for cue in PERMISSION_CUES):
+        return "DATA_BLOCKED"
+    return "SOURCE_DOWN"
 
 
-def _looks_tier_locked(error_text):
-    return any(cue in (error_text or "").lower() for cue in TIER_LOCK_CUES)
-
-
-def _attempted_endpoints(api_used=None):
-    if not api_used:
-        return list(FACTOR_ENDPOINTS)
-    return list(FACTOR_ENDPOINTS[: FACTOR_ENDPOINTS.index(api_used) + 1])
-
-
-def _group_by_ts_code(rows):
-    grouped = defaultdict(list)
-    for raw in rows:
-        if not isinstance(raw, dict):
-            continue
-        safe = {str(key): _json_safe(value) for key, value in raw.items()}
-        ts_code = _normalize_ts_code(safe.get("ts_code") or safe.get("code") or safe.get("symbol"))
-        if ts_code:
-            grouped[ts_code].append(safe)
-    return grouped
+def fetch_ticker_factors(api, ts_code, start_date, end_date):
+    """One LEGAL stk_factor_pro call per ticker. Returns (rows, error_text)."""
+    try:
+        print(f"quant_factors[{ts_code}]: {FACTOR_ENDPOINT} "
+              f"start_date={start_date} end_date={end_date}", file=sys.stderr)
+        rows = _frame_to_rows(_call_tushare_api(
+            api, FACTOR_ENDPOINT,
+            {"ts_code": ts_code, "start_date": start_date, "end_date": end_date},
+        ))
+        safe_rows = [
+            {str(k): _json_safe(v) for k, v in row.items()}
+            for row in rows if isinstance(row, dict)
+        ]
+        print(f"quant_factors[{ts_code}]: rows={len(safe_rows)}", file=sys.stderr)
+        return safe_rows, None
+    except Exception as exc:
+        error = f"{FACTOR_ENDPOINT}: {type(exc).__name__}: {exc}"
+        print(f"quant_factors[{ts_code}]: failed: {error}", file=sys.stderr)
+        return None, error
+    finally:
+        time.sleep(0.2)
 
 
 def _extract_factors(row):
@@ -225,38 +197,34 @@ def _base_payload(ticker, trade_date, status, api_used=None):
         "ticker": ticker,
         "fetched_at": _iso_now(),
         "trade_date": trade_date,
-        "tier": CURRENT_TIER,
         "_status": status,
         "api_used": api_used,
-        "_attempted_endpoints": _attempted_endpoints(api_used) if api_used else [],
         "days_window": WINDOW_DAYS,
+        "as_of": None,
         "factors": {},
         "history": [],
         "_factor_count": 0,
     }
 
 
-def _payload_for_ticker(ticker, trade_date, api_used, grouped, bulk_status, bulk_error):
+def _payload_for_ticker(ticker, trade_date, rows, error_text):
     if not _is_a_share(ticker):
         payload = _base_payload(ticker, trade_date, "skipped")
         payload["_reason"] = "not_available_tushare_hk_us"
         return payload
-    if bulk_status != "ok":
-        payload = _base_payload(ticker, trade_date, bulk_status)
-        payload["_attempted_endpoints"] = _attempted_endpoints()
-        if bulk_status == "tier_locked":
-            payload["_need_tier"] = CURRENT_TIER
-        if bulk_error:
-            payload["_error"] = bulk_error
+    if error_text is not None:
+        payload = _base_payload(ticker, trade_date, classify_error(error_text))
+        payload["_error"] = error_text
         return payload
-    rows = grouped.get(ticker, [])
+    if not rows:
+        # A liquid A-share with zero factor rows over 30 days is missing data,
+        # not success — explicit EMPTY_VALID, never 0-rows-ok.
+        return _base_payload(ticker, trade_date, "EMPTY_VALID")
     history = _build_history(rows)
-    factors = _extract_factors(rows[0]) if rows else {}
-    if rows:
-        # Pick the row with the latest trade_date for `factors`
-        latest = max(rows, key=lambda r: _json_safe(r.get("trade_date") or r.get("date")) or "")
-        factors = _extract_factors(latest)
-    payload = _base_payload(ticker, trade_date, "ok", api_used=api_used)
+    latest = max(rows, key=lambda r: _json_safe(r.get("trade_date") or r.get("date")) or "")
+    factors = _extract_factors(latest)
+    payload = _base_payload(ticker, trade_date, "ok", api_used=FACTOR_ENDPOINT)
+    payload["as_of"] = _json_safe(latest.get("trade_date") or latest.get("date"))
     payload["factors"] = factors
     payload["history"] = history
     payload["_factor_count"] = len(factors)
@@ -287,29 +255,24 @@ def main():
     start_date = _start_date_n_days_ago(WINDOW_DAYS)
     watchlist = _load_watchlist()
 
-    api_used, grouped, bulk_status, bulk_error = None, {}, "ok", None
-    if any(_is_a_share(ticker) for ticker in watchlist):
-        api_used, rows = fetch_bulk_factors(ts.pro_api(token), start_date, trade_date)
-        if api_used:
-            grouped = _group_by_ts_code(rows)
-        else:
-            bulk_error = " | ".join(LAST_FACTOR_ERRORS)
-            bulk_status = "tier_locked" if _looks_tier_locked(bulk_error) else "endpoint_unavailable"
+    api = ts.pro_api(token) if any(_is_a_share(t) for t in watchlist) else None
 
     counts = {"ok": 0, "skipped": 0, "failed": 0, "empty": 0}
     for idx, ticker in enumerate(watchlist, 1):
         output_path = OUTPUT_DIR / f"{ticker}.json"
         try:
-            payload = _payload_for_ticker(ticker, trade_date, api_used, grouped, bulk_status, bulk_error)
+            rows, error_text = (None, None)
+            if _is_a_share(ticker):
+                rows, error_text = fetch_ticker_factors(api, ticker, start_date, trade_date)
+            payload = _payload_for_ticker(ticker, trade_date, rows, error_text)
             _write_json(output_path, payload)
             status = payload["_status"]
             if status == "skipped":
                 counts["skipped"] += 1
+            elif status == "EMPTY_VALID":
+                counts["empty"] += 1
             elif status == "ok":
-                if payload["_factor_count"] == 0:
-                    counts["empty"] += 1
-                else:
-                    counts["ok"] += 1
+                counts["ok"] += 1
             else:
                 counts["failed"] += 1
             print(f"[{idx}/{len(watchlist)}] wrote public/data/quant_factors/{ticker}.json "

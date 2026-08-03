@@ -394,6 +394,10 @@ def _base_payload(ticker, status, api_used=None, attempted=None):
         "api_used": api_used,
         "_attempted_endpoints": attempted or [],
         "window_days": WINDOW_DAYS,
+        # Sell-side reports are E2 evidence (narrative/positioning signal only).
+        # 目标价不作为模型估值结论 — target prices NEVER feed model valuation.
+        "_evidence_tier": "E2",
+        "_valuation_note": "目标价不作为模型估值结论",
         "recommendations": [],
         "summary": _empty_summary(),
     }
