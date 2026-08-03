@@ -10,6 +10,7 @@ import {
   Radio,
   RefreshCw,
   ShieldCheck,
+  Clipboard,
   UserRound,
   XCircle,
 } from 'lucide-react';
@@ -18,6 +19,8 @@ const ENDPOINT = '/api/team-progress';
 const SNAPSHOT_SCHEMA = 'ai-progress.snapshot.v1';
 const CONTRACT_VERSION = '1.5';
 const REFRESH_MS = 30000;
+const ISSUE_URL = 'https://github.com/Lateily/Alpha-Research/issues/164';
+const EVENT_TYPES = ['CLAIM', 'UPDATE', 'DONE', 'BLOCKED', 'RELEASE'];
 
 const palette = {
   ink: '#172033',
@@ -71,6 +74,58 @@ function asList(value) {
   if (Array.isArray(value)) return value;
   if (value === undefined || value === null || value === '') return [];
   return [String(value)];
+}
+
+function splitCsv(value) {
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function eventStatus(event) {
+  return {
+    CLAIM: 'in_progress',
+    UPDATE: 'in_progress',
+    DONE: 'done',
+    BLOCKED: 'blocked',
+    RELEASE: 'released',
+  }[event] || 'in_progress';
+}
+
+export function buildProgressComment(form, now = new Date()) {
+  const event = String(form.event || 'CLAIM').toUpperCase();
+  const payload = {
+    schema: 'ai-progress.v2',
+    event,
+    task: form.task?.trim(),
+    human_owner: form.human_owner?.trim(),
+    executor: form.executor?.trim(),
+    reviewer: form.reviewer?.trim(),
+    status: eventStatus(event),
+    summary: form.summary?.trim(),
+    branch: form.branch?.trim(),
+    files: splitCsv(form.files),
+    pr: form.pr?.trim(),
+    next: form.next?.trim(),
+    cost_cny: form.cost_cny?.trim(),
+    risk: form.risk?.trim() || 'none',
+    timestamp_utc: now.toISOString(),
+  };
+
+  if (event === 'CLAIM') {
+    const expires = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+    payload.expires_at = expires.toISOString();
+  }
+
+  const cleaned = Object.fromEntries(
+    Object.entries(payload).filter(([, value]) => {
+      if (Array.isArray(value)) return value.length > 0;
+      return value !== undefined && value !== null && value !== '';
+    })
+  );
+
+  return `<!-- ai-progress:v2 -->\n\`\`\`json\n${JSON.stringify(cleaned, null, 2)}\n\`\`\``;
 }
 
 function SummaryTile({ icon: Icon, label, value, tone = palette.ink }) {
@@ -191,6 +246,112 @@ function EmptyState({ text }) {
   return <div style={styles.empty}>{text}</div>;
 }
 
+function FormField({ label, value, onChange, placeholder, textarea = false }) {
+  const Input = textarea ? 'textarea' : 'input';
+  return (
+    <label style={styles.formField}>
+      <span style={styles.formLabel}>{label}</span>
+      <Input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        style={textarea ? styles.textarea : styles.input}
+      />
+    </label>
+  );
+}
+
+function CommentComposer() {
+  const [form, setForm] = useState({
+    event: 'CLAIM',
+    task: '',
+    human_owner: 'Reed',
+    executor: 'Codex',
+    reviewer: 'Junyan',
+    summary: '',
+    branch: '',
+    files: '',
+    pr: '',
+    next: '',
+    cost_cny: '0',
+    risk: 'none',
+  });
+  const [copyMessage, setCopyMessage] = useState('No token, no GitHub write, local generation only.');
+
+  const update = (key, value) => {
+    setCopyMessage('No token, no GitHub write, local generation only.');
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+  const comment = useMemo(() => buildProgressComment(form), [form]);
+
+  const copyComment = async () => {
+    try {
+      await navigator.clipboard.writeText(comment);
+      setCopyMessage('Copied. Paste it into GitHub Issue #164.');
+    } catch {
+      setCopyMessage('Clipboard blocked. Select the generated text and copy it manually.');
+    }
+  };
+
+  return (
+    <section style={styles.panel}>
+      <div style={styles.panelHead}>
+        <div>
+          <h2 style={styles.panelTitle}>Comment Composer</h2>
+          <div style={styles.panelHint}>Generate a safe ai-progress.v2 comment, then paste it into #164.</div>
+        </div>
+        <a href={ISSUE_URL} target="_blank" rel="noreferrer" style={styles.issueLink}>
+          Open #164
+          <ExternalLink size={13} />
+        </a>
+      </div>
+      <div style={styles.composerBody}>
+        <div style={styles.formGrid}>
+          <label style={styles.formField}>
+            <span style={styles.formLabel}>Event</span>
+            <select value={form.event} onChange={(event) => update('event', event.target.value)} style={styles.input}>
+              {EVENT_TYPES.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </label>
+          <FormField label="Task" value={form.task} onChange={(value) => update('task', value)} placeholder="#161 or short task name" />
+          <FormField label="Human owner" value={form.human_owner} onChange={(value) => update('human_owner', value)} placeholder="Reed / Better / Junyan" />
+          <FormField label="Executor" value={form.executor} onChange={(value) => update('executor', value)} placeholder="Codex / Claude / human" />
+          <FormField label="Reviewer" value={form.reviewer} onChange={(value) => update('reviewer', value)} placeholder="Junyan" />
+          <FormField label="Branch" value={form.branch} onChange={(value) => update('branch', value)} placeholder="feat/example" />
+          <FormField label="Files" value={form.files} onChange={(value) => update('files', value)} placeholder="docs/llm,scripts/llm" />
+          <FormField label="PR" value={form.pr} onChange={(value) => update('pr', value)} placeholder="https://github.com/.../pull/..." />
+          <FormField label="Cost CNY" value={form.cost_cny} onChange={(value) => update('cost_cny', value)} placeholder="0" />
+          <FormField label="Risk" value={form.risk} onChange={(value) => update('risk', value)} placeholder="none" />
+        </div>
+        <FormField
+          label="Summary"
+          value={form.summary}
+          onChange={(value) => update('summary', value)}
+          placeholder="One sentence: what changed or what you are claiming."
+          textarea
+        />
+        <FormField
+          label="Next"
+          value={form.next}
+          onChange={(value) => update('next', value)}
+          placeholder="Next reviewer or next action."
+          textarea
+        />
+        <textarea value={comment} readOnly style={styles.commentBox} aria-label="Generated GitHub comment" />
+        <div style={styles.composerActions}>
+          <button type="button" onClick={copyComment} style={styles.copyButton}>
+            <Clipboard size={15} />
+            Copy comment
+          </button>
+          <span style={styles.copyStatus}>{copyMessage}</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function TeamProgressPage() {
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -293,6 +454,8 @@ export default function TeamProgressPage() {
           <SummaryTile icon={ShieldCheck} label="Released" value={summary.released} tone={palette.amber} />
           <SummaryTile icon={AlertTriangle} label="Conflicts" value={summary.conflicts} tone={summary.conflicts ? palette.red : palette.green} />
         </section>
+
+        <CommentComposer />
 
         <section style={styles.columns}>
           <section style={styles.panel}>
@@ -506,6 +669,22 @@ const styles = {
     fontWeight: 800,
     letterSpacing: 0,
   },
+  panelHint: {
+    marginTop: 4,
+    color: palette.muted,
+    fontSize: 12,
+    lineHeight: 1.4,
+  },
+  issueLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    color: palette.blue,
+    textDecoration: 'none',
+    fontSize: 12,
+    fontWeight: 800,
+    whiteSpace: 'nowrap',
+  },
   countPill: {
     minWidth: 28,
     height: 26,
@@ -523,6 +702,90 @@ const styles = {
     display: 'grid',
     gap: 10,
     padding: 12,
+  },
+  composerBody: {
+    display: 'grid',
+    gap: 12,
+    padding: 12,
+  },
+  formGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: 10,
+  },
+  formField: {
+    display: 'grid',
+    gap: 5,
+    minWidth: 0,
+  },
+  formLabel: {
+    color: palette.muted,
+    fontSize: 11,
+    fontWeight: 800,
+  },
+  input: {
+    width: '100%',
+    minHeight: 38,
+    boxSizing: 'border-box',
+    border: `1px solid ${palette.line}`,
+    borderRadius: 6,
+    padding: '8px 10px',
+    background: '#fff',
+    color: palette.ink,
+    fontSize: 13,
+    lineHeight: 1.4,
+  },
+  textarea: {
+    width: '100%',
+    minHeight: 64,
+    boxSizing: 'border-box',
+    border: `1px solid ${palette.line}`,
+    borderRadius: 6,
+    padding: '8px 10px',
+    background: '#fff',
+    color: palette.ink,
+    fontSize: 13,
+    lineHeight: 1.5,
+    resize: 'vertical',
+  },
+  commentBox: {
+    width: '100%',
+    minHeight: 220,
+    boxSizing: 'border-box',
+    border: `1px solid ${palette.line}`,
+    borderRadius: 8,
+    padding: 12,
+    background: '#fbfcf8',
+    color: palette.ink,
+    fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+    fontSize: 12,
+    lineHeight: 1.45,
+    resize: 'vertical',
+  },
+  composerActions: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 10,
+  },
+  copyButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 7,
+    minHeight: 38,
+    border: `1px solid ${palette.blue}55`,
+    borderRadius: 6,
+    padding: '8px 12px',
+    background: palette.blue,
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 800,
+    cursor: 'pointer',
+  },
+  copyStatus: {
+    color: palette.muted,
+    fontSize: 12,
+    lineHeight: 1.4,
   },
   claimCard: {
     border: `1px solid ${palette.line}`,
@@ -681,3 +944,4 @@ const styles = {
     background: '#fff',
   },
 };
+
