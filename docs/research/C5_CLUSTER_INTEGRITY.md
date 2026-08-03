@@ -10,7 +10,8 @@
 | 初版 | Claude 留下"只许拆分不许合并"后门(拆分正是解锁 claim 的方向),Junyan 抓出 |
 | 二版 | Junyan 六项修正 + 一轮对抗复核 21 项 |
 | 三版 | 二轮复核 6 BLOCKER,**其中 3 项为二版修补自身引入**(§0 令计数永不增长 · fail-closed×宽发布定义冻结全部信号 · R-041→R-038 死环) |
-| **四版(本版)** | 三轮复核 4 BLOCKER,**其中 3 项为三版修补自身引入**;并抓出三版**静默删除**了两条承重条款 |
+| 四版 | 三轮复核 4 BLOCKER(3 项为三版自伤);抓出三版**静默删除**两条承重条款。**四版自己也静默删除了三处**(§4.1 反"拆着看"句 · §5.5③ 新口径不追溯句 · 表头"摘要不构成独立规则"括号句)—— 与它指控三版的是同一种病 |
+| **五版(本版)** | 四轮五视角复核 2 BLOCKER,**两条仍是四版修补自身引入**:intraday 析取项令 `independent_clusters ≡ 0`(第四次发作"计数无法增长")· 批准有效性只写在 §4.3 而 §4 声明不管 genesis ⇒ P1/P2 批准可自签。根因定位为 **§0 从来只有安全性约束、没有活性约束**,补 §0.3.1 |
 
 **三版静默删除、本版恢复的两条**:
 ① S0 判据中的世界时钟合取项(删除后 13 条真实行由 S1 翻回 S0);
@@ -34,7 +35,12 @@
               且 ¬( c.split_born == true
                     ∧ c 无任何经 P1 登记的 prospective 成员 ) } |
 
-不存在第二个计数口径。`scorecard()` 必须实现此式且仅此式。
+**本式按方向实例化两次**(合同规则 5b):`independent_clusters_constructive` /
+`independent_clusters_cautious`,各自独立与 `MIN_SCORED_FOR_CLAIM` 比较;
+**`claim_allowed` 是方向级布尔**,不存在跨方向合并的门槛
+—— 用总数 30 去 claim 一个只有 5 簇的方向是违宪的。
+"唯一口径"指计数**函数**唯一,不指计数**结果**只有一个标量。
+`scorecard()` 必须实现此式且仅此式。
 
 ### 0.2 禁令
 
@@ -57,6 +63,52 @@ retrospective 不进 §0.1 的计数 —— **它在数学上就不可能提高�
 
 **本条只禁"提高",不禁"降低"** —— 过度拆分是唯一无法自我纠正的失真方向,
 降低通道见 §4.2.1。
+
+### 0.3.1 活性义务(四轮 BLOCKER-A 的结构性补丁)
+
+> **任何对 S0 判据的修改,必须同时给出这样一个证明:
+> 按当时生产写手的默认字段登记的新信号,在登记日内被判定为 S0。
+> 给不出该证明的修改无效。**
+
+**为什么单加这一条**:§0 从一版到四版**通篇只有安全性约束**(不得提高计数),
+**从来没有活性约束**(计数必须**能够**增长)。于是每一轮的收紧都可能把
+"诚实地累计前瞻簇"这条路一起焊死,而没有任何条款会报警 ——
+二版让计数永不增长、四版让计数恒为 0,是同一个空缺的两次发作。
+安全性与活性必须成对存在,守门条款才算完整。
+
+### 0.4 批准有效性(全文唯一定义,一切 approval_ref 引用此式)
+
+本条约束**一切** `approval_ref`,不区分路径与状态:§3.1(a) 机制登记条目 ·
+§3.2 P2 manifest · §3.2.7 `genesis_void` · §4.3 migration 记录。
+
+- **通道** —— 必须是执行方无法伪造的通道:①Junyan 个人设备持有的 GPG/SSH 密钥签名
+  (**该密钥不得存在于任何 agent 环境**),或 ②Junyan 在会话中原文粘贴的批准串。
+  `github_issue_comment` / `github_pr_review` **仅作辅助留痕,不单独构成批准**;
+  不接受裸 `commit_trailer`;AI 之间互批无效。
+- **绑定** —— 引用内容必须字面包含被批准对象的唯一标识与其 `request_hash`
+  (migration → `migration_id`;机制登记 → `mechanism_id`;manifest → `genesis_id`)。
+- **一次批准只绑定一个被批准对象**(一条 migration / 一条机制登记条目 / 一份 manifest)。
+  已获批的机制条目**可被任意多条走 level 1-3 的后续信号复用** ——
+  复用既有 `cluster_id` 本就不需要新批准。(不可写成"只能被引用一次",那会堵死日常合规路径。)
+- **机制登记条目须为新条目**;既有条目的任何改写按 §2.2 rewrite 处理。
+- **时序** —— `approved_at > requested_at`;机制登记条目的批准必须早于第一条引用它的信号写入
+  (`approval.created_at ≤ 该信号 written_by.run_id 的写入时刻`)。
+- **未编辑** —— `last_edited_at > created_at` ⇒ 无效。
+- **executor 与 approver 为同一主体** ⇒ 无效。
+- **失败处置** —— level 4 的批准不合格 ⇒ 该次 P1 **不产生新 `cluster_id`**,
+  按 §2.2 rewrite 阻断;**不得静默降级为 level 1-3**。
+
+**为什么必须上提为 §0(四轮 BLOCKER-B)**:四版把批准有效性**只写在 §4.3**,
+且措辞逐字锚在 migration 上(`S1/S2 的 approval_ref`、`字面包含 migration_id`、
+`一次批准只能被一条 migration 引用`);而 §4 开篇又声明"不约束 §3 的 genesis"。
+§3.1(a) 与 §3.2 只要求 `approval_ref` **携带**,从不定义**有效**
+—— 于是 **P1/P2 的批准可由执行方自签**(agent 用 owner 凭证发的评论
+`author_identity` 就是 `Lateily`,本文档 §4.3 自己承认这一点)。
+守 `claim_allowed` 的唯一人类门,执行方可以自我满足。
+注意:删掉 §4 那句作用域声明**修不好这个洞** —— §4.3 靠自身措辞就已把自己钉死在
+migration 上;修复只能是正向新增全局条款。
+
+---
 
 **诚实说明其强制力**:§0 目前**是纪律不是机制**。账本是单文件整体重写,
 至少两个写手(`execution_tracker.py --log` / `run_post_close_report.append_log`)
@@ -213,22 +265,27 @@ R-039 维护 append-only 台账:
 
 ## 4. 纠错与迁移:按结果可见性三态
 
-**§4 只约束 correction 与 migration,不约束 §3 的 genesis**(genesis 的门在 §3 与 §0.3)。
+**§4.2 的三态阶梯只约束 correction 与 migration,不约束 §3 的 genesis**
+(genesis 的门在 §3、§0.3 与 §0.4;**批准有效性一律见 §0.4,不分路径**)。
 
 ### 4.1 状态判定(按账本真实字段形态)
 
-    # 判分档解析(现账本 102/122 行的 horizon 含 "intraday")
+    判分档 := TRADING_DAY_HORIZON 的键集
     TRADING_DAY_HORIZON = {"1d":1,"3d":3,"5d":5,"10d":10,"20d":20,"60d":60}
-    intraday → 0 个交易日(登记日收盘即结算)
-    max_horizon(s)  := max(可解析元素);无任一元素可解析 ⇒ fail-closed 按 S1 + horizon_malformed
-    # 注意:是"无任一元素可解析"才 malformed,不是"存在不可解析元素" ——
-    # 否则含 intraday 的 102 行会全部永久 S1,每个笔误修正都要 Junyan 批准
+
+    # "intraday" 不是判分档 —— 它在 run_post_close_report.HORIZON_DAYS 中不存在,
+    # backfill() 永不为它回填任何收益。它是装饰性标签:
+    # 不参与 max_horizon、不参与 returns_empty、不参与 outcome_first_bar_settled。
+
+    max_horizon(s)   := max(可解析判分档);无任一元素是判分档 ⇒ fail-closed 按 S1 + horizon_malformed
+    # 是"无任一元素是判分档"才 malformed,不是"存在非判分档元素"
 
     returns_empty(s) := s.returns 中不存在任何属于 TRADING_DAY_HORIZON 的键
     # 现账本 9 行 returns=={"note":...}、8 行 =={} —— 两者同义,note 不算回填
 
+    registered_trade_date(s) := parse_trade_date(s.timestamp) 归整到该日或其后第一个交易日
+                                (过渡期口径;R-014 落地后一律以 schema 字段为准)
     outcome_first_bar_settled(s) := 今日交易日 > registered_trade_date
-                                    或(horizon 含 intraday 且登记日已收盘)
     outcome_window_closed(s)     := 今日交易日 >= registered_trade_date + max_horizon(s)
 
 | 情形 | 判定 |
@@ -237,6 +294,27 @@ R-039 维护 append-only 台账:
 | `outcome_first_bar_settled` 且窗口未关闭 | **S1** |
 | 窗口已关闭 但 `returns_empty` | **S1 + `outcome_missing: DATA_BLOCKED` + `outcome_missing_reason`** |
 | `signal_id` 出现在任一**已登记** publication snapshot 中 | **S2** |
+
+**为什么删掉 intraday 析取项不产生后视漏洞(四轮 BLOCKER-A)**:最短判分档是 `1d`,
+entry 取登记日收盘、结果取 D+1 收盘 —— **没有任何判分档在登记日内结算**;
+`backfill()` 一律以 `parse_trade_date(timestamp)` 当日收盘为 entry。
+S0 仍在下一交易日开始时自动终止,与 `max_horizon` 无关,
+三轮那个"登记 20 条 60d 压住回填看三个月"的洞保持关闭。
+**不得**改用"把与登记同刻结算的档排除在结算之外"的写法 ——
+那等于合法化「盘后登记 → 申报一个 bar 已打印的档 → 出生即 S0 → `retrospective: false`」。
+**也不得**把 S0 判据下沉到 `(signal, horizon)` 粒度 —— 与本节"一次操作的状态取 max"打架。
+
+**四版原文错在哪(留档)**:四版写 `outcome_first_bar_settled := ... 或(horizon 含
+intraday 且登记日已收盘)`。而 `execution_tracker.py:237` 把
+`"horizon": ["intraday","1d","3d","5d","10d"]` 硬编码进每条官方样本,官方样本又是
+**盘后运行**(RUN AFTER CLOSE ONLY)⇒ 每条信号在 genesis 时点即
+`outcome_first_bar_settled == true` ⇒ 非 S0 ⇒ §0.3/§3.3 强制 `retrospective: true`
+⇒ 永不进 §0.1 计数。实测:**已计分 93 行全部携带 intraday,不携带 intraday 的已计分行 0 条**;
+另一条注册通道 `paper_tracker.register_research_signal` 不收
+`fund_structure`/`relative_strength` 且其 setup_type 集合与 `CAUTIOUS_POSTURE` 无交集,
+`directional_call` 恒 `neutral`、永不计分。
+即 §0.1 的两个合取项(`∈ scored` / `¬retrospective`)由两条互不相交的生产路径分别独占,
+**`independent_clusters ≡ 0`,永久**。一个连回填都不认的装饰标签,单独锁死了整个计数体系。
 
 **S0 由世界时钟判定,不由账本内容判定(三轮 BLOCKER-3,本版恢复三版删掉的合取项)。**
 三版写成"窗口未关闭 且 returns 四档全空",于是 S0 完全由操作者可控的两个杠杆决定:
@@ -343,7 +421,7 @@ fail-closed 只适用于"快照存在但内容不可解析"。
 - **豁免**:降低门槛簇数的 migration 豁免 `as_of` 前置(仍恒禁结果派生证据),
   **但受 §6.4 的统计口径约束**。
 
-**批准有效性 —— 先说清楚它能证明什么**:
+**批准有效性:见 §0.4(全文唯一定义,一切路径同款)。** 此处只留下它为什么必须这样写 ——
 
 > `author_identity`(GitHub author login / commit signer)**只能证明"owner 的凭证被使用过",
 > 不能证明"Junyan 批准了"**。本仓库近 25 条非 bot 提交(含全部 AI 产出)的 author
@@ -453,8 +531,11 @@ repo 文档、Notion 页面、发给审阅者或第三方的聊天陈述、邮�
 
 ### 6.3 claim 冻结期
 
-- **`claim 冻结期`** := 自 genesis manifest 落盘至 `claim_frozen_until`;
-  期间 `scorecard()` 强制 `claim_allowed = false`,不论簇数;
+- **`claim 冻结期`** := 自「使 `independent_clusters` 首次达到 `MIN_SCORED_FOR_CLAIM`
+  的那条信号的登记日」起算至 `claim_frozen_until`,**不论其 genesis 路径(P1/P2/P3)**;
+  P2 批次另自 manifest 落盘日起算,**取两者较晚者**。
+  期间 `scorecard()` 强制 `claim_allowed = false`,不论簇数。
+  (四版把它只锚在 manifest 上,而 manifest 只有 P2 有 ⇒ P1 路径不受任何冻结期约束。)
 - **"一个完整判分周期"** := ≥10 个交易日且 ≥1 次周复盘;
 - `claim_frozen_until` = 落盘日 + 一个完整判分周期,**必须写成具体日期**。
 
@@ -471,6 +552,11 @@ claim 解锁后**必须报簇聚合口径**(每簇每方向一个观测);同时�
 亏损簇(证据规则全部满足)→ 计数掉到 22、`claim_allowed` 转 false → 新登记 8 条 →
 回到 30,而亏损质量已被压缩成 2 个观测 → 报 ≈0.9。整份文档守的是 `n ≥ 30`,
 **对"重组如何改变那个比率"一条规则都没有**。
+
+**簇观测的构成**:`claim` 解锁后,**簇观测只由该簇的 prospective 成员构成**;
+retrospective 成员不进入任何用于 claim 的比率。
+(§3.3 的簇级继承允许一个簇含 1 条 prospective + N 条 retrospective 成员,
+若不写死这条,后视样本会从比率的后门进来。)
 
 **规则**:任何 migration 不得改变其影响期间内已计分观测的方向分布 ——
 **合并后该簇的观测取合并前各成员的等权平均**,并在记录中留 `merged_from[]`。
