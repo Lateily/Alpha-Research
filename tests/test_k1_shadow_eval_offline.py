@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -41,7 +42,10 @@ class K1ShadowEvalOfflineTest(unittest.TestCase):
                 self.assertIn("### Q20", text)
                 self.assertNotIn("Expected label", text)
                 self.assertNotIn("Answer key rationale", text)
-                self.assertNotIn("Known gap", text)
+                self.assertEqual(
+                    len(re.findall(r"^Known gap:", text, flags=re.MULTILINE)),
+                    20,
+                )
 
             mapping = json.loads(
                 (run_dir / "private" / "unblind_map.json").read_text(
