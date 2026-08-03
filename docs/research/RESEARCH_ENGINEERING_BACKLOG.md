@@ -98,6 +98,9 @@
 | R-034 | U2 候选池与三项保留配额 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板二:慢牛/逆向修复/随机控制必须保配额 | 100-300 候选,进入与淘汰理由留痕,保留配额不参与主通道竞争 |
 | R-035 | 随机控制分组判分 | `APPROVED` | Validation Agent | 漏斗 v1 §10.4:漏斗自身需可证伪 | 随机样本走同流程但单独成组;主通道不优于随机 ⇒ 声明无信息量并重构 |
 | R-036 | 全市场 E1 事件层 | `APPROVED` | Data Agent | 漏斗 v1 Phase 1;原 R-007 并入 | 红旗闸门从逐票 14 只扩到全 A 批量口径 |
+| R-029 | 下单层红旗闸门戳校验 | `APPROVED` | Claude | 合同 v1.5 C1:红旗闸门当前只管名单层,paper 下单路径无闸;牧原 002714(0711 首亏预告 / 0713 建仓)是直接事故 | `paper_tracker.py` / `model_paper_fund.py` 注册路径强制校验当日闸门戳,无戳拒绝写入并标 `ENTRY_UNGATED` |
+| R-030 | 输出层措辞检查器 | `APPROVED` | Claude | 合同 v1.5 C4:day-1 只能写"候选",当前靠人工纪律;旭创 0729 案为同周第二次越权 | 扫描含单日证据的结论,命中"确认/成立/已验证"即阻断并要求改写 |
+| R-031 | MRG 接晋级前置门 | `APPROVED` | Claude+Macro Agent | 合同 v1.5 C6:宏观门只能影响优先级与风险预算;当前 MRG 未接任何下游 | `MRG=RISK_OFF_BIAS` 时冻结晋级(只冻结不卖出),契约保持 `mode: review_context_only` |
 
 ## 6. 已交付但仍需继续验证的能力
 
