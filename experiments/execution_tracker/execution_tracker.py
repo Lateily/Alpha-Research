@@ -166,7 +166,11 @@ def build_snapshot(index_data, tickers_data, portfolio, timestamp):
     sectors = [t.get("sector") for t in tickers_data]
     held = [t for t in tickers_data if t["ticker"] in set(portfolio)]
     held_sectors = {t.get("sector") for t in held}
-    single_beta = len(held) >= 2 and len(held_sectors) == 1
+    # 审计 MAJOR(2026-08-01):行业未知时不得猜。多个 UNKNOWN 同属一"板块"会被
+    # 误判成单一 beta;集中度判定必须 DATA_BLOCKED,由人工/canonical 源补齐后再判。
+    sector_unknown = any((not s0) or s0 == "UNKNOWN" for s0 in held_sectors)
+    single_beta = (None if sector_unknown
+                   else (len(held) >= 2 and len(held_sectors) == 1))
     gates = []
     for t in tickers_data:
         tech = compute_technicals(t.get("ohlc_bars", []))
@@ -183,6 +187,9 @@ def build_snapshot(index_data, tickers_data, portfolio, timestamp):
         })
     portfolio_gate = {
         "single_beta_exposure": single_beta,
+        "single_beta_status": "DATA_BLOCKED" if sector_unknown else "OK",
+        "single_beta_blocked_why": ("持仓行业含 UNKNOWN,集中度不可判定(缺数据≠无集中)"
+                                    if sector_unknown else None),
         "held_sectors": sorted(s for s in held_sectors if s),
         "portfolio_posture": "DE_RISK_REVIEW" if single_beta else "HOLD_OBSERVE",
         "note": ("组合=单一 beta 暴露,先看组合风险再看个股强弱" if single_beta
