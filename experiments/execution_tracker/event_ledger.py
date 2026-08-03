@@ -338,6 +338,34 @@ def selftest():
         ck("账本与锚点全删 → ①②放行(诚实承认此边界)",
            verify(wp)["ok"] and verify_anchor(wp)["ok"])
         ck("账本与锚点全删 → 第③层抓到", not verify_append_only(wp, "HEAD")["ok"])
+
+        # ── push 事件形态:基准是**父提交**,两侧都是 commit(而非工作树 vs commit)──
+        # 父提交 3 行 → 当前提交重写成 4 行(更长但非前缀)⇒ 必须失败。
+        # 上一版 CI 在 push 到 main 时用 origin/main 作基准,那就是刚推上去的提交本身,
+        # 比较恒等 ⇒ 整步空转。本条断言把"基准必须是父提交"这件事钉死。
+        gpush = os.path.join(d, "pushrepo")
+        os.makedirs(gpush); subprocess.run(["git", "init", "-q", gpush], check=True)
+        for k, v in (("user.email", "t@t"), ("user.name", "t")):
+            subprocess.run(["git", "-C", gpush, "config", k, v], check=True)
+        pp = os.path.join(gpush, "led.jsonl")
+        for i in range(3):
+            append("register", f"p{i}", {}, path=pp, now=f"2026-08-0{i+1}T15:00:00")
+        subprocess.run(["git", "-C", gpush, "add", "-A"], check=True)
+        subprocess.run(["git", "-C", gpush, "commit", "-qm", "parent(3 lines)"], check=True)
+        parent = subprocess.run(["git", "-C", gpush, "rev-parse", "HEAD"],
+                                capture_output=True, text=True, check=True).stdout.strip()
+        os.remove(pp); os.remove(_anchor_path(pp))          # 整份重写成 4 行
+        for i in range(4):
+            append("register", f"q{i}", {}, path=pp, now=f"2026-08-0{i+1}T15:00:00")
+        subprocess.run(["git", "-C", gpush, "add", "-A"], check=True)
+        subprocess.run(["git", "-C", gpush, "commit", "-qm", "current(4 rewritten)"], check=True)
+        ck("push形态:父提交3行 vs 当前重写4行 → 抓到",
+           not verify_append_only(pp, parent)["ok"])
+        ck("push形态:与自身提交比 → 恒等放行(这正是固定用 origin/main 的空转形态)",
+           verify_append_only(pp, "HEAD")["ok"])
+        subprocess.run(["git", "-C", gpush, "commit", "-q", "--allow-empty", "-m", "next"], check=True)
+        append("register", "q4", {}, path=pp, now="2026-08-09T15:00:00")
+        ck("push形态:纯追加 vs 父提交 → 放行", verify_append_only(pp, "HEAD")["ok"])
         for q6 in (q, q2, q3, q4):
             pass
         try:
