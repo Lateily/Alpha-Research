@@ -1,0 +1,132 @@
+{
+ "contract": "red_flags",
+ "schema_version": "v2.1",
+ "generated_at": "20260731 16:36:53",
+ "sources": [
+  "red_flags.json"
+ ],
+ "sources_meta": {
+  "red_flags.json": {
+   "as_of": "20260731",
+   "age_hours": 0.0
+  }
+ },
+ "status": "OK",
+ "blocked_why": null,
+ "data": {
+  "gate": "red_flag_gate_v0",
+  "checked_at": "20260731",
+  "results": [
+   {
+    "ts_code": "600276.SH",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": null,
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "002714.SZ",
+    "verdict": "RED_FLAG",
+    "reasons": [
+     "最新预告[首亏] 20260711 期末20260630 净利下限-67.0亿",
+     "最近季度归母-12.1亿为负且环比恶化(前季7.1亿)"
+    ],
+    "latest_e1_date": "20260711",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "002594.SZ",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": "20250408",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "603233.SH",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": null,
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "300308.SZ",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": "20260228",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "688120.SH",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": "20260228",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "300054.SZ",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": "20260710",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "002463.SZ",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": "20260714",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "688166.SH",
+    "verdict": "RED_FLAG",
+    "reasons": [
+     "最新预告[预减] 20260131 期末20251231 净利下限0.4亿"
+    ],
+    "latest_e1_date": "20260228",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "003032.SZ",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": "20260715",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "301535.SZ",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": "20250306",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "000526.SZ",
+    "verdict": "PASS",
+    "reasons": [],
+    "latest_e1_date": "20250715",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "605068.SH",
+    "verdict": "RED_FLAG",
+    "reasons": [
+     "最新预告[续亏] 20260715 期末20260630 净利下限-0.5亿",
+     "最近季度归母-0.2亿为负且环比恶化(前季0.5亿)"
+    ],
+    "latest_e1_date": "20260715",
+    "checked_at": "20260731"
+   },
+   {
+    "ts_code": "603988.SH",
+    "verdict": "RED_FLAG",
+    "reasons": [
+     "最新预告[预减] 20260715 期末20260630 净利下限0.0亿"
+    ],
+    "latest_e1_date": "20260715",
+    "checked_at": "20260731"
+   }
+  ],
+  "disclaimer": "红旗≠禁入,但必须亮旗;无戳名单=违宪。不是买卖指令。"
+ },
+ "disclaimer": "不是买卖指令;研究信号,human executes."
+}

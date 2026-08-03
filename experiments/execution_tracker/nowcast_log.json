@@ -5431,5 +5431,138 @@
     "sample_eligible": false,
     "no_trade_flag": true,
     "scored": false
+  },
+  {
+    "nowcast_id": "c0b8203fc16f",
+    "ticker": "000533.SZ",
+    "name": "顺钠股份",
+    "date": "20260731",
+    "checkpoint": "wt1438",
+    "state": "RECLAIM_ATTEMPT",
+    "confidence": 0.9,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": -0.0394,
+      "from_open": 0.0671,
+      "from_high": -0.0251,
+      "intraday_range": 0.0852
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "9763596560ae",
+    "ticker": "300054.SZ",
+    "name": "鼎龙股份",
+    "date": "20260731",
+    "checkpoint": "wt1438",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.78,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0575,
+      "from_open": -0.0237,
+      "from_high": -0.055,
+      "intraday_range": 0.0638
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "7cd271f6173c",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "date": "20260731",
+    "checkpoint": "wt1438",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.85,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0628,
+      "from_open": -0.0435,
+      "from_high": -0.0695,
+      "intraday_range": 0.0877
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "1d92b9a2dad8",
+    "ticker": "300663.SZ",
+    "name": "科蓝软件",
+    "date": "20260731",
+    "checkpoint": "wt1438",
+    "state": "FAKE_STRENGTH",
+    "confidence": 0.76,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.1363,
+      "from_open": 0.1806,
+      "from_high": -0.0528,
+      "intraday_range": 0.2371
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "826cb2020be8",
+    "ticker": "603567.SH",
+    "name": "珍宝岛",
+    "date": "20260731",
+    "checkpoint": "wt1438",
+    "state": "ACCUMULATION_PROBABLE",
+    "confidence": 0.63,
+    "predicted_flow_dir": 1,
+    "features": {
+      "gap": 0.0165,
+      "from_open": 0.0712,
+      "from_high": -0.0128,
+      "intraday_range": 0.0807
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "07829e1cc906",
+    "ticker": "688120.SH",
+    "name": "华海清科",
+    "date": "20260731",
+    "checkpoint": "wt1438",
+    "state": "OPENING_FADE",
+    "confidence": 0.9,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0027,
+      "from_open": -0.1033,
+      "from_high": -0.1054,
+      "intraday_range": 0.1248
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
+  },
+  {
+    "nowcast_id": "5b59bbeca06d",
+    "ticker": "002463.SZ",
+    "name": "沪电股份",
+    "date": "20260731",
+    "checkpoint": "wt1446",
+    "state": "OPENING_FADE",
+    "confidence": 0.61,
+    "predicted_flow_dir": -1,
+    "features": {
+      "gap": 0.0782,
+      "from_open": -0.0114,
+      "from_high": -0.0199,
+      "intraday_range": 0.0285
+    },
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "scored": false
   }
 ]

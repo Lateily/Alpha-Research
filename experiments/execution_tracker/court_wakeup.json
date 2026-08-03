@@ -1,5 +1,5 @@
 {
- "as_of": "20260729",
+ "as_of": "20260731",
  "court_size": 8,
  "wakes": [
   {
@@ -7,17 +7,7 @@
    "name": "比亚迪",
    "thesis": "出海GM重估;LONG STARTER_CAPPED_UNTIL_E1;E1=0831分部披露",
    "reasons": [
-    "W1 价格移动 +17.6%(|x|>=15%)",
     "W2 板块唤醒:汽车 streak>=3"
-   ],
-   "action": "WAKE_RESCAN(送人审复核,不改posture)"
-  },
-  {
-   "ticker": "603233.SH",
-   "name": "大参林",
-   "thesis": "药房集中度提升;R/R 1.5:1 -> WATCH_NOT_CONVICTION(Junyan verdict 5/15)",
-   "reasons": [
-    "W1 价格移动 +17.5%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
@@ -26,16 +16,7 @@
    "name": "中际旭创",
    "thesis": "1.6T能力+订单现金流双支柱;Q2预告窗~0715",
    "reasons": [
-    "W1 价格移动 -22.3%(|x|>=15%)"
-   ],
-   "action": "WAKE_RESCAN(送人审复核,不改posture)"
-  },
-  {
-   "ticker": "688120.SH",
-   "name": "华海清科",
-   "thesis": "CMP国产替代;batch-1决策书",
-   "reasons": [
-    "W1 价格移动 -18.6%(|x|>=15%)"
+    "W1 价格移动 -19.2%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
@@ -44,7 +25,7 @@
    "name": "鼎龙股份",
    "thesis": "CMP抛光垫;batch-1决策书;0710破位后结构受损",
    "reasons": [
-    "W1 价格移动 -30.6%(|x|>=15%)"
+    "W1 价格移动 -23.6%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
@@ -53,7 +34,7 @@
    "name": "沪电股份",
    "thesis": "AI服务器PCB量价;a2a40a执行门信号;T1A深化中",
    "reasons": [
-    "W1 价格移动 -27.4%(|x|>=15%)"
+    "W1 价格移动 -23.3%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   }

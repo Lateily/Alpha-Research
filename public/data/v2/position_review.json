@@ -1,0 +1,51 @@
+{
+ "contract": "position_review",
+ "schema_version": "v2.1",
+ "generated_at": "20260731 16:36:53",
+ "sources": [
+  "position_review.json"
+ ],
+ "sources_meta": {
+  "position_review.json": {
+   "as_of": "20260731",
+   "age_hours": 0.0
+  }
+ },
+ "status": "OK",
+ "blocked_why": null,
+ "data": {
+  "as_of": "20260731",
+  "nav_est": 1014344.0,
+  "cash_pct": 70.9,
+  "rows": [
+   {
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "kind": "filled",
+    "pnl_pct": -4.11,
+    "weight_pct": 14.4,
+    "r_mult": -0.55,
+    "stop": 52.2,
+    "stop_dist_pct": -3.48,
+    "ladder": null,
+    "wrong_if": "见reason wrong-if"
+   },
+   {
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "kind": "filled",
+    "pnl_pct": 0.41,
+    "weight_pct": 14.7,
+    "r_mult": 0.07,
+    "stop": 36.9,
+    "stop_dist_pct": -6.01,
+    "ladder": null,
+    "wrong_if": "猪价回落+主力连续2日净流出"
+   }
+  ],
+  "flags": [],
+  "data_blocked": [],
+  "note": "review输出;--apply-tighten 仅执行tighten-only保本位。不是买卖指令。"
+ },
+ "disclaimer": "不是买卖指令;研究信号,human executes."
+}
