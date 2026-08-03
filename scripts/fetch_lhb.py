@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """
-Fetch Tushare 15000-tier 龙虎榜 (top_list) watchlist history.
+Fetch Tushare 龙虎榜 (top_list) watchlist history.
 
-The fetcher makes one market-wide call for the last 30-day window, groups the
-returned rows by ts_code in Python, and writes one stable JSON file per
-watchlist ticker. HK/US/non-A-share tickers get explicit skipped placeholders.
+CALL-SHAPE FIX (PR-A A4, 2026-07-31): top_list is a trade_date interface —
+the old full-range start_date/end_date call was illegal and returned nothing,
+which then got mislabeled as tier_locked. The fetcher now loops per trading
+day over the window calling top_list(trade_date=YYYYMMDD) (verified live:
+trade_date=20260730 → 113 rows), groups rows by ts_code, and writes one JSON
+per watchlist ticker. HK/US tickers get explicit skipped placeholders.
+NOTE: 龙虎榜 is T+1 — today's board publishes next day; the loop naturally
+covers that by walking the whole window.
+
+不是买卖指令;研究信号,human executes.
 """
 
 import json
@@ -18,26 +25,14 @@ from pathlib import Path
 import tushare as ts
 
 
-CURRENT_TIER = 15000
 OUTPUT_DIR = Path(__file__).parent.parent / "public" / "data" / "lhb"
 WATCHLIST_PATH = Path(__file__).parent.parent / "public" / "data" / "watchlist.json"
 WINDOW_DAYS = 30
-LHB_ENDPOINTS = ["top_list", "lhb_detail", "top_list_daily"]
+LHB_ENDPOINT = "top_list"
 LAST_LHB_ERRORS = []
 
-TIER_LOCK_CUES = (
-    "permission",
-    "access",
-    "权限",
-    "积分",
-    "points",
-    "level",
-    "tier",
-    "not enough",
-    "没有访问",
-    "未开通",
-    "请升级",
-)
+PERMISSION_CUES = ("没有接口", "权限")
+PARAM_CUES = ("正确的接口名", "接口名有误")
 
 
 def _iso_now():
@@ -148,31 +143,53 @@ def _call_tushare_api(api, api_name, params):
     return result
 
 
+def classify_error(error_text):
+    """Locked vocabulary: DATA_BLOCKED / PARAM_ERROR / SOURCE_DOWN."""
+    text = str(error_text or "")
+    if any(cue in text for cue in PARAM_CUES):
+        return "PARAM_ERROR"
+    if any(cue in text for cue in PERMISSION_CUES):
+        return "DATA_BLOCKED"
+    return "SOURCE_DOWN"
+
+
 def fetch_bulk_lhb(api, start_date, end_date):
+    """Loop top_list(trade_date=YYYYMMDD) per weekday in [start_date, end_date].
+
+    Returns (bulk_status, rows, error_text, days_with_data).
+    Empty single days are NORMAL (weekends/holidays/T+1 lag); an exception on
+    any day aborts the loop and classifies (permission errors do not fix
+    themselves by walking on).
+    """
     LAST_LHB_ERRORS.clear()
-    params = {"start_date": start_date, "end_date": end_date}
-    for api_name in LHB_ENDPOINTS:
-        try:
-            print(f"lhb: trying {api_name} start_date={start_date} end_date={end_date}", file=sys.stderr)
-            rows = _frame_to_rows(_call_tushare_api(api, api_name, params))
-            print(f"lhb: {api_name} ok rows={len(rows)}", file=sys.stderr)
-            return api_name, rows
-        except Exception as exc:
-            LAST_LHB_ERRORS.append(f"{api_name}: {type(exc).__name__}: {exc}")
-            print(f"lhb: {api_name} failed: {type(exc).__name__}: {exc}", file=sys.stderr)
-        finally:
-            time.sleep(0.2)
-    return None, []
-
-
-def _looks_tier_locked(error_text):
-    return any(cue in (error_text or "").lower() for cue in TIER_LOCK_CUES)
-
-
-def _attempted_endpoints(api_used=None):
-    if not api_used:
-        return list(LHB_ENDPOINTS)
-    return list(LHB_ENDPOINTS[: LHB_ENDPOINTS.index(api_used) + 1])
+    rows = []
+    days_with_data = 0
+    day = datetime.strptime(start_date, "%Y%m%d").date()
+    end = datetime.strptime(end_date, "%Y%m%d").date()
+    while day <= end:
+        if day.weekday() < 5:  # Sat/Sun are never CN trading days
+            trade_date = _ts_date(day)
+            try:
+                day_rows = _frame_to_rows(
+                    _call_tushare_api(api, LHB_ENDPOINT, {"trade_date": trade_date})
+                )
+                if day_rows:
+                    days_with_data += 1
+                    rows.extend(day_rows)
+            except Exception as exc:
+                error = f"{LHB_ENDPOINT}[{trade_date}]: {type(exc).__name__}: {exc}"
+                LAST_LHB_ERRORS.append(error)
+                print(f"lhb: {error}", file=sys.stderr)
+                return classify_error(str(exc)), [], " | ".join(LAST_LHB_ERRORS), days_with_data
+            time.sleep(0.15)
+        day += timedelta(days=1)
+    if not rows:
+        # A whole 30-day window with zero market-wide LHB rows is not credible
+        # data — surface as EMPTY_VALID (explicit), never silently ok.
+        return "EMPTY_VALID", [], None, 0
+    print(f"lhb: {LHB_ENDPOINT} per-day loop ok rows={len(rows)} days_with_data={days_with_data}",
+          file=sys.stderr)
+    return "ok", rows, None, days_with_data
 
 
 def _group_by_ts_code(rows):
@@ -228,31 +245,30 @@ def _base_payload(ticker, trade_date, status, api_used=None):
         "ticker": ticker,
         "fetched_at": _iso_now(),
         "trade_date": trade_date,
-        "tier": CURRENT_TIER,
         "_status": status,
         "api_used": api_used,
-        "_attempted_endpoints": _attempted_endpoints(api_used) if api_used else [],
         "days_window": WINDOW_DAYS,
+        "as_of": None,
         "appearances": [],
         "summary": _empty_summary(),
     }
 
 
-def _payload_for_ticker(ticker, trade_date, api_used, grouped, bulk_status, bulk_error):
+def _payload_for_ticker(ticker, trade_date, api_used, grouped, bulk_status, bulk_error, bulk_as_of=None):
     if not _is_a_share(ticker):
         payload = _base_payload(ticker, trade_date, "skipped")
         payload["_reason"] = "not_available_tushare_hk_us"
         return payload
     if bulk_status != "ok":
         payload = _base_payload(ticker, trade_date, bulk_status)
-        payload["_attempted_endpoints"] = _attempted_endpoints()
-        if bulk_status == "tier_locked":
-            payload["_need_tier"] = CURRENT_TIER
         if bulk_error:
             payload["_error"] = bulk_error
         return payload
+    # NB: 0 appearances under a healthy bulk window is GENUINE content — most
+    # stocks are simply not on the 龙虎榜; that is ok, not EMPTY_VALID.
     appearances = _normalize_appearances(grouped.get(ticker, []))
     payload = _base_payload(ticker, trade_date, "ok", api_used=api_used)
+    payload["as_of"] = bulk_as_of
     payload["appearances"] = appearances
     payload["summary"] = _summary(appearances)
     return payload
@@ -282,20 +298,26 @@ def main():
     start_date = _start_date_n_days_ago(WINDOW_DAYS)
     watchlist = _load_watchlist()
 
-    api_used, grouped, bulk_status, bulk_error = None, {}, "ok", None
+    api_used, grouped, bulk_status, bulk_error, bulk_as_of = None, {}, "ok", None, None
     if any(_is_a_share(ticker) for ticker in watchlist):
-        api_used, rows = fetch_bulk_lhb(ts.pro_api(token), start_date, trade_date)
-        if api_used:
+        bulk_status, rows, bulk_error, _days = fetch_bulk_lhb(
+            ts.pro_api(token), start_date, trade_date
+        )
+        if bulk_status == "ok":
+            api_used = LHB_ENDPOINT
             grouped = _group_by_ts_code(rows)
-        else:
-            bulk_error = " | ".join(LAST_LHB_ERRORS)
-            bulk_status = "tier_locked" if _looks_tier_locked(bulk_error) else "endpoint_unavailable"
+            bulk_as_of = max(
+                (str(r.get("trade_date")) for r in rows if r.get("trade_date")),
+                default=None,
+            )
 
     counts = {"ok": 0, "skipped": 0, "failed": 0}
     for idx, ticker in enumerate(watchlist, 1):
         output_path = OUTPUT_DIR / f"{ticker}.json"
         try:
-            payload = _payload_for_ticker(ticker, trade_date, api_used, grouped, bulk_status, bulk_error)
+            payload = _payload_for_ticker(
+                ticker, trade_date, api_used, grouped, bulk_status, bulk_error, bulk_as_of
+            )
             _write_json(output_path, payload)
             status = payload["_status"]
             if status == "skipped":

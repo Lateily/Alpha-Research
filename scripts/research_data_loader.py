@@ -48,8 +48,12 @@ PEER_TICKERS = {
 }
 
 # Tushare per-ticker directories (most use <TICKER>.json filename)
+# issuer_guidance = 公司业绩预告/快报 (renamed from consensus_forecast, PR-A A3 —
+# the old name mislabeled issuer self-disclosure as broker consensus).
+# consensus_forecast stays ONE deprecation cycle (files carry deprecated:true).
 TUSHARE_DIRS = [
-    'chip_distribution', 'consensus_forecast', 'lhb', 'quant_factors',
+    'chip_distribution', 'issuer_guidance', 'consensus_forecast', 'lhb',
+    'quant_factors',
     'top_inst', 'broker_recommend', 'pledge_stat', 'restricted_shares',
     'holdertrade', 'margin', 'repurchase', 'tushare',
 ]

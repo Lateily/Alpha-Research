@@ -1,12 +1,11 @@
 {
   "ticker": "175.HK",
-  "fetched_at": "2026-07-28T10:58:27Z",
-  "trade_date": "20260728",
-  "tier": 15000,
+  "fetched_at": "2026-07-31T08:41:37Z",
+  "trade_date": "20260731",
   "_status": "skipped",
   "api_used": null,
-  "_attempted_endpoints": [],
   "days_window": 30,
+  "as_of": null,
   "appearances": [],
   "summary": {
     "total_appearances": 0,

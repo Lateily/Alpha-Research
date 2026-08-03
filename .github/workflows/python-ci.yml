@@ -8,6 +8,7 @@ on:
       - "tests/**"
       - "public/data/v2/**"
       - "docs/research/macro/**"
+      - "api/**"
       - ".github/workflows/python-ci.yml"
 jobs:
   offline-tests:
@@ -38,3 +39,10 @@ jobs:
       # 零网络守卫:monkeypatch socket 后跑完整离线套件,任何隐藏外呼当场崩溃
       - name: No-network guard (socket blocked, full offline suite)
         run: python3 tests/test_no_network_guard.py
+      # ── PR-A(数据源)的两个回归锚 ──
+      - name: Data-source health offline test
+        env:
+          AR_OFFLINE: "1"
+        run: python3 tests/test_data_source_health_offline.py
+      - name: News entity-matching regression (node)
+        run: node tests/news-entity.test.mjs
