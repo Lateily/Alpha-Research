@@ -9,7 +9,9 @@ C5 §6.2 把本模块列为硬前置:C5 的不可篡改性预设账本本身不�
                                     非规范序列化 · ts 倒流 · register 重复
   ② 锚点 verify_anchor()          — 尾部截断/替换。**哈希链证明抓不到尾部截断**:
                                     砍掉最后一行后 seq 与 prev 链依然完美自洽。
-  ③ git 行前缀 verify_append_only() — 整份重写但自洽(①②都发现不了)
+  ③ git 行前缀 verify_append_only() — 整份重写但自洽 · **账本与锚点被一并删除**
+                                    (这两类①②构造上都发现不了:全删之后本地
+                                     无从区分"被清空"和"真正第一次运行")
 
 写入持排他 flock:账本将有多个写手,无锁则 preflight 时点状态 ≠ 写入时点状态。
 链、锚点、ts、唯一性任一不过则拒绝追加,不在坏账本上叠加。
@@ -320,7 +322,22 @@ def selftest():
         q4 = mut(lambda l: l[:-1]); open(_anchor_path(q4), "w").write("{坏")
         ck("截断并损坏锚点 → 仍抓到", not verify_anchor(q4)["ok"])
         q5 = mut(lambda l: [], keep_anchor=True); os.remove(q5)
-        ck("账本与锚点全删 → 抓到(空链+有锚点)", not verify_anchor(q5)["ok"])
+        ck("删账本但锚点还在 → 锚点抓到", not verify_anchor(q5)["ok"])
+        # 账本与锚点一并删除:①②构造上必然放行(本地无从区分全删与首次运行),
+        # 必须由第③层接住 —— 与"尾部截断由锚点接住"同款,如实写出而非粉饰。
+        gw = os.path.join(d, "wipe")
+        os.makedirs(gw); subprocess.run(["git", "init", "-q", gw], check=True)
+        for k, v in (("user.email", "t@t"), ("user.name", "t")):
+            subprocess.run(["git", "-C", gw, "config", k, v], check=True)
+        wp = os.path.join(gw, "led.jsonl")
+        for i in range(3):
+            append("register", f"w{i}", {}, path=wp, now=f"2026-08-0{i+1}T15:00:00")
+        subprocess.run(["git", "-C", gw, "add", "-A"], check=True)
+        subprocess.run(["git", "-C", gw, "commit", "-qm", "s"], check=True)
+        os.remove(wp); os.remove(_anchor_path(wp))
+        ck("账本与锚点全删 → ①②放行(诚实承认此边界)",
+           verify(wp)["ok"] and verify_anchor(wp)["ok"])
+        ck("账本与锚点全删 → 第③层抓到", not verify_append_only(wp, "HEAD")["ok"])
         for q6 in (q, q2, q3, q4):
             pass
         try:
