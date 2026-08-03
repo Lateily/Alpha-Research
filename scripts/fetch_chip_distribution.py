@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
 """
-Fetch Tushare 15000-tier 筹码分布 (chip distribution) snapshots.
+Fetch Tushare 筹码分布 (cyq_chips) snapshots per watchlist A-share.
 
-Purpose:
-  Pull per-watchlist A-share shareholder cost-basis distribution from the
-  Tushare `cyq_chips` endpoint. The output lets downstream research infer
-  support/resistance zones from price-level concentration without changing
-  any trading decision logic.
-
-Input:
-  TUSHARE_TOKEN environment variable with Tushare 15000-tier access.
+FRESHNESS FIX (PR-A A4, 2026-07-31): cyq_chips publishes T+1 — querying
+today's Beijing date intraday/evening returns 0 rows (verified live:
+20260731 → 0 rows, 20260730 → 191 rows). The old code wrote those 0 rows
+as _status: ok, which is a silent-empty lie. Now:
+  - requested trade_date empty → walk back up to MAX_FALLBACK_DAYS calendar
+    days to the most recent non-empty day and record the REAL as_of;
+  - fallback older than STALE_AFTER_DAYS → _status: STALE (data present but
+    old — consumer must decide);
+  - nothing in the whole walk-back window → _status: EMPTY_VALID;
+  - 0 rows is NEVER marked ok.
+Phantom endpoint fallbacks (chip_distribution/shareholder_chips — those API
+names never existed) removed; errors classify to the locked vocabulary
+(DATA_BLOCKED / PARAM_ERROR / SOURCE_DOWN).
 
 Output:
   public/data/chip_distribution/<ticker>.json — one file per watchlist ticker.
   HK/US/non-A-share tickers are written as skipped placeholders so the
   watchlist schema remains uniform.
 
-Requirement:
-  Tushare Pro 15000 tier (顶配) for 筹码分布 / cyq_chips.
+不是买卖指令;研究信号,human executes.
 """
 
 import argparse
@@ -31,25 +35,16 @@ from pathlib import Path
 import tushare as ts
 
 
-CURRENT_TIER = 15000
 OUTPUT_DIR = Path(__file__).parent.parent / "public" / "data" / "chip_distribution"
 WATCHLIST_PATH = Path(__file__).parent.parent / "public" / "data" / "watchlist.json"
-CHIP_ENDPOINTS = ["cyq_chips", "chip_distribution", "shareholder_chips"]
-LAST_CHIP_ERRORS = []
+CHIP_ENDPOINT = "cyq_chips"
+MAX_FALLBACK_DAYS = 10
+STALE_AFTER_DAYS = 5
 
 PRICE_FIELDS = ("price", "cost_price", "cost", "avg_price", "chip_price", "close")
 PERCENT_FIELDS = ("percent", "pct", "ratio", "concentration", "chip_percent", "prop")
-TIER_LOCK_CUES = (
-    "permission",
-    "权限",
-    "积分",
-    "points",
-    "level",
-    "tier",
-    "not enough",
-    "没有访问",
-    "未开通",
-)
+PERMISSION_CUES = ("没有接口", "权限")
+PARAM_CUES = ("正确的接口名", "接口名有误")
 
 
 def _iso_now():
@@ -163,27 +158,46 @@ def _call_tushare_api(api, api_name, params):
     return result
 
 
+def classify_error(error_text):
+    """Locked vocabulary: DATA_BLOCKED / PARAM_ERROR / SOURCE_DOWN."""
+    text = str(error_text or "")
+    if any(cue in text for cue in PARAM_CUES):
+        return "PARAM_ERROR"
+    if any(cue in text for cue in PERMISSION_CUES):
+        return "DATA_BLOCKED"
+    return "SOURCE_DOWN"
+
+
 def fetch_one_chip(api, ts_code, trade_date):
-    LAST_CHIP_ERRORS.clear()
-    params = {"ts_code": ts_code, "trade_date": trade_date}
-    for api_name in CHIP_ENDPOINTS:
-        try:
-            print(f"chip_distribution[{ts_code}]: trying {api_name}", file=sys.stderr)
-            frame = _call_tushare_api(api, api_name, params)
-            print(
-                f"chip_distribution[{ts_code}]: {api_name} ok rows={len(_frame_to_rows(frame))}",
-                file=sys.stderr,
-            )
-            return api_name, frame
-        except Exception as exc:
-            LAST_CHIP_ERRORS.append(f"{api_name}: {type(exc).__name__}: {exc}")
-            print(
-                f"chip_distribution[{ts_code}]: {api_name} failed: {type(exc).__name__}: {exc}",
-                file=sys.stderr,
-            )
-        finally:
-            time.sleep(0.2)
-    return None, None
+    """cyq_chips with T+1 walk-back.
+
+    Returns (frame, actual_trade_date, error_text). Walks back from the
+    requested trade_date up to MAX_FALLBACK_DAYS calendar days until a
+    non-empty day is found; actual_trade_date is the REAL as_of of the data.
+    (None, None, None) = genuinely no rows in the window; error_text set =
+    call failed (classify with classify_error).
+    """
+    day = datetime.strptime(trade_date, "%Y%m%d").date()
+    for _ in range(MAX_FALLBACK_DAYS + 1):
+        query_date = day.strftime("%Y%m%d")
+        if day.weekday() < 5:  # weekends are never CN trading days
+            try:
+                frame = _call_tushare_api(
+                    api, CHIP_ENDPOINT, {"ts_code": ts_code, "trade_date": query_date}
+                )
+                rows = _frame_to_rows(frame)
+                print(f"chip_distribution[{ts_code}]: {CHIP_ENDPOINT} "
+                      f"trade_date={query_date} rows={len(rows)}", file=sys.stderr)
+                if rows:
+                    return frame, query_date, None
+            except Exception as exc:
+                error = f"{CHIP_ENDPOINT}[{query_date}]: {type(exc).__name__}: {exc}"
+                print(f"chip_distribution[{ts_code}]: {error}", file=sys.stderr)
+                return None, None, error
+            finally:
+                time.sleep(0.2)
+        day -= timedelta(days=1)
+    return None, None, None
 
 
 def _normalize_chip_rows(frame):
@@ -204,15 +218,6 @@ def _normalize_chip_rows(frame):
     )
 
 
-def _looks_tier_locked(error_text):
-    lowered = (error_text or "").lower()
-    return any(cue in lowered for cue in TIER_LOCK_CUES)
-
-
-def _last_chip_error_text():
-    return " | ".join(LAST_CHIP_ERRORS)
-
-
 def _write_json(path, payload):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -229,54 +234,54 @@ def _skipped_payload(ticker):
     }
 
 
-def _endpoint_unavailable_payload(ticker, trade_date):
+def _empty_valid_payload(ticker, trade_date):
     return {
         "ticker": ticker,
         "fetched_at": _iso_now(),
         "trade_date": trade_date,
-        "tier": CURRENT_TIER,
-        "_status": "endpoint_unavailable",
-        "_attempted_endpoints": list(CHIP_ENDPOINTS),
+        "_status": "EMPTY_VALID",
+        "_note": f"no cyq_chips rows within {MAX_FALLBACK_DAYS}-day walk-back window",
+        "as_of": None,
         "chips": [],
     }
 
 
-def _tier_locked_payload(ticker, trade_date, error_text):
+def _error_payload(ticker, trade_date, error_text):
     return {
         "ticker": ticker,
         "fetched_at": _iso_now(),
         "trade_date": trade_date,
-        "tier": CURRENT_TIER,
-        "_status": "tier_locked",
-        "_need_tier": 15000,
-        "_attempted_endpoints": list(CHIP_ENDPOINTS),
+        "_status": classify_error(error_text),
         "_error": error_text,
+        "as_of": None,
         "chips": [],
     }
 
 
-def _failed_payload(ticker, trade_date, exc):
-    return {
+def _success_payload(ticker, trade_date, actual_date, frame):
+    """actual_date = REAL data date (walk-back result), recorded as as_of.
+
+    Fallback older than STALE_AFTER_DAYS calendar days → STALE, not ok.
+    """
+    requested = datetime.strptime(trade_date, "%Y%m%d").date()
+    actual = datetime.strptime(actual_date, "%Y%m%d").date()
+    age_days = (requested - actual).days
+    payload = {
         "ticker": ticker,
         "fetched_at": _iso_now(),
         "trade_date": trade_date,
-        "tier": CURRENT_TIER,
-        "_status": "fetch_failed",
-        "_error": f"{type(exc).__name__}: {exc}",
-        "chips": [],
-    }
-
-
-def _success_payload(ticker, trade_date, api_used, frame):
-    return {
-        "ticker": ticker,
-        "fetched_at": _iso_now(),
-        "trade_date": trade_date,
-        "tier": CURRENT_TIER,
-        "_status": "ok",
-        "api_used": api_used,
+        "_status": "STALE" if age_days > STALE_AFTER_DAYS else "ok",
+        "api_used": CHIP_ENDPOINT,
+        "as_of": actual_date,
+        "fallback_days": age_days,
         "chips": _normalize_chip_rows(frame),
     }
+    if age_days > 0:
+        payload["_note"] = (
+            f"requested trade_date={trade_date} was empty (cyq_chips is T+1); "
+            f"fell back to most recent non-empty day {actual_date}"
+        )
+    return payload
 
 
 def _selected_tickers(watchlist, ticker_arg):
@@ -328,29 +333,26 @@ def main(argv=None):
                 continue
 
             print(f"[{idx}/{len(selected)}] processing {ticker}...")
-            api_used, frame = fetch_one_chip(api, ticker, args.trade_date)
-            if api_used:
-                payload = _success_payload(ticker, args.trade_date, api_used, frame)
-            elif _looks_tier_locked(_last_chip_error_text()):
-                payload = _tier_locked_payload(ticker, args.trade_date, _last_chip_error_text())
+            frame, actual_date, error_text = fetch_one_chip(api, ticker, args.trade_date)
+            if error_text is not None:
+                payload = _error_payload(ticker, args.trade_date, error_text)
+            elif actual_date is not None:
+                payload = _success_payload(ticker, args.trade_date, actual_date, frame)
             else:
-                payload = _endpoint_unavailable_payload(ticker, args.trade_date)
+                payload = _empty_valid_payload(ticker, args.trade_date)
             _write_json(output_path, payload)
-            if payload["_status"] == "ok":
+            if payload["_status"] in ("ok", "STALE", "EMPTY_VALID"):
                 ok_count += 1
             else:
                 failed_count += 1
             print(
                 f"  wrote public/data/chip_distribution/{ticker}.json "
-                f"status={payload['_status']}"
+                f"status={payload['_status']} as_of={payload.get('as_of')}"
             )
         except Exception as exc:
             error_text = f"{type(exc).__name__}: {exc}"
             print(f"  chip fetch failed: {error_text}", file=sys.stderr)
-            if _looks_tier_locked(error_text):
-                payload = _tier_locked_payload(ticker, args.trade_date, error_text)
-            else:
-                payload = _failed_payload(ticker, args.trade_date, exc)
+            payload = _error_payload(ticker, args.trade_date, error_text)
             try:
                 _write_json(output_path, payload)
             except Exception as write_exc:

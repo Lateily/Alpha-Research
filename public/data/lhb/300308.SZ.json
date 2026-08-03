@@ -1,22 +1,25 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-07-28T10:58:27Z",
-  "trade_date": "20260728",
-  "tier": 15000,
-  "_status": "endpoint_unavailable",
-  "api_used": null,
-  "_attempted_endpoints": [
-    "top_list",
-    "lhb_detail",
-    "top_list_daily"
-  ],
+  "fetched_at": "2026-07-31T08:41:37Z",
+  "trade_date": "20260731",
+  "_status": "ok",
+  "api_used": "top_list",
   "days_window": 30,
-  "appearances": [],
+  "as_of": "20260730",
+  "appearances": [
+    {
+      "trade_date": "20260728",
+      "reason": "日跌幅达到15%的前5只证券",
+      "net_amount": 2838898384.3,
+      "net_rate": 5.5,
+      "l_buy": 10601818014.59,
+      "l_sell": 7762919630.29
+    }
+  ],
   "summary": {
-    "total_appearances": 0,
-    "total_net_amount": 0,
-    "last_appearance_date": null,
-    "top_reason": null
-  },
-  "_error": "top_list: Exception: 必填参数, trade_date | lhb_detail: Exception: 请指定正确的接口名 | top_list_daily: Exception: 请指定正确的接口名"
+    "total_appearances": 1,
+    "total_net_amount": 2838898384.3,
+    "last_appearance_date": "20260728",
+    "top_reason": "日跌幅达到15%的前5只证券"
+  }
 }
