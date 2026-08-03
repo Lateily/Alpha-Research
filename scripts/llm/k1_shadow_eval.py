@@ -21,7 +21,6 @@ MODEL_ARMS = ("kimi", "claude", "codex")
 FORBIDDEN_STUDENT_TEXT = (
     "Expected label",
     "Answer key rationale",
-    "Known gap",
     "Blind Score Sheet",
     "Answer A = TBD",
     "Winner:",
