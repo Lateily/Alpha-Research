@@ -3326,5 +3326,109 @@
       "mac": true,
       "telegram": false
     }
+  },
+  {
+    "date": "20260731",
+    "rule": "NOWCAST_FLIP",
+    "key": "000533.SZ|RECLAIM_ATTEMPT",
+    "title": "🔮 顺钠股份 nowcast → RECLAIM_ATTEMPT",
+    "body": "conf 0.90 gap-3.9% 距开+6.7% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260731",
+    "rule": "NOWCAST_FLIP",
+    "key": "300054.SZ|FAKE_STRENGTH",
+    "title": "🔮 鼎龙股份 nowcast → FAKE_STRENGTH",
+    "body": "conf 0.78 gap+5.8% 距开-2.4% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260731",
+    "rule": "NOWCAST_FLIP",
+    "key": "300308.SZ|FAKE_STRENGTH",
+    "title": "🔮 中际旭创 nowcast → FAKE_STRENGTH",
+    "body": "conf 0.85 gap+6.3% 距开-4.3% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260731",
+    "rule": "NOWCAST_FLIP",
+    "key": "300663.SZ|FAKE_STRENGTH",
+    "title": "🔮 科蓝软件 nowcast → FAKE_STRENGTH",
+    "body": "conf 0.76 gap+13.6% 距开+18.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260731",
+    "rule": "NOWCAST_FLIP",
+    "key": "603567.SH|ACCUMULATION_PROBABLE",
+    "title": "🔮 珍宝岛 nowcast → ACCUMULATION_PROBABLE",
+    "body": "conf 0.63 gap+1.7% 距开+7.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260731",
+    "rule": "NOWCAST_FLIP",
+    "key": "688120.SH|OPENING_FADE",
+    "title": "🔮 华海清科 nowcast → OPENING_FADE",
+    "body": "conf 0.90 gap+0.3% 距开-10.3% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260731",
+    "rule": "INDEX_MOVE",
+    "key": "399006.SZ|up",
+    "title": "📊 创业板 +4.1%",
+    "body": "指数波动超±1.5% — 组合风险复核",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
+  },
+  {
+    "date": "20260731",
+    "rule": "NOWCAST_FLIP",
+    "key": "002463.SZ|OPENING_FADE",
+    "title": "🔮 沪电股份 nowcast → OPENING_FADE",
+    "body": "conf 0.61 gap+7.8% 距开-1.1% (推断,收盘判分)",
+    "sample_eligible": false,
+    "no_trade_flag": true,
+    "sent": {
+      "mac": true,
+      "telegram": false
+    }
   }
 ]
