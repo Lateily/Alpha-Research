@@ -177,6 +177,50 @@ def stamp_new_record(rec, *, registered_at, script, version, run_id):
 
 
 # ────────────────────────── 三段式登记事务 ──────────────────────────
+class LedgerCorrupt(Exception):
+    """账本不可解析或状态自相矛盾。**绝不降级为空账本 / 绝不当作正常** ——
+    降级会让历史信号静默消失,而下一次写入把空账本当事实落盘,损失不可逆。"""
+
+
+def load_signal_log_strict(path):
+    """读信号账本。不存在 ⇒ 空列表(合法首次);存在但不可解析 ⇒ 抛错停机。"""
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (json.JSONDecodeError, OSError) as e:
+        raise LedgerCorrupt(f"{path} 不可解析 ({e}) —— fail-closed,不得当作空账本") from e
+    rows = data if isinstance(data, list) else data.get("signals", data.get("log"))
+    if rows is None or not isinstance(rows, list):
+        raise LedgerCorrupt(f"{path} 结构非预期(既非列表也无 signals/log 键)—— fail-closed")
+    return rows
+
+
+def write_signal_log_atomic(path, rows):
+    """临时文件 + fsync + os.replace。半程崩溃留下的是旧文件,不是截断的新文件。"""
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(rows, fh, ensure_ascii=False, indent=2)
+        fh.flush(); os.fsync(fh.fileno())
+    os.replace(tmp, path)
+
+
+def audit_ledger(path):
+    """只读体检:统计三字段覆盖与可派生率。不写盘。"""
+    rows = load_signal_log_strict(path)
+    out = {"n": len(rows), "has_field": {f: 0 for f in LEDGER_FIELDS},
+           "derivable_trade_date": 0, "unparseable_timestamp": []}
+    for s in rows:
+        for f in LEDGER_FIELDS:
+            if s.get(f):
+                out["has_field"][f] += 1
+        d, _ = registered_trade_date(s)
+        (out.__setitem__("derivable_trade_date", out["derivable_trade_date"] + 1)
+         if d else out["unparseable_timestamp"].append(s.get("signal_id")))
+    return out
+
+
 def _el():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import event_ledger
@@ -210,142 +254,167 @@ def _txn_state(events):
     return intents, commits, aborts
 
 
+def record_hash(rec):
+    """记录指纹。恢复时逐字段核对用 —— 只认 signal_id 会给伪造记录盖章。"""
+    payload = {k: v for k, v in rec.items() if k not in ("registry_txn_id", "record_hash")}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False,
+                                     separators=(",", ":"), default=str).encode()).hexdigest()
+
+
+def _signal_lock(log_path):
+    os.makedirs(os.path.dirname(os.path.abspath(log_path)) or ".", exist_ok=True)
+    return open(log_path + ".lock", "w")
+
+
+def _terminal_states(events):
+    """commit XOR abort。同一 txn 双终态 ⇒ 账本损坏,不得继续。"""
+    intents, commits, aborts = _txn_state(events)
+    both = commits & aborts
+    if both:
+        raise LedgerCorrupt(f"txn 同时有 commit 与 abort(双终态): {sorted(both)}")
+    return intents, commits, aborts
+
+
+def _project(rows, stamped, log_path):
+    """把 stamped 记录写进投影(幂等:已存在同 signal_id 则不重复追加)。"""
+    sid = stamped["signal_id"]
+    if not any(r.get("signal_id") == sid for r in rows):
+        rows = rows + [stamped]
+        write_signal_log_atomic(log_path, rows)
+    return rows
+
+
 def register_transaction(record, *, registered_at, script, version, run_id,
                          ledger_path, log_path, transaction_id=None):
-    """三段式:register_intent → 原子写信号投影 → register_commit。
+    """三段式:register_intent(含可重放记录)→ 原子写投影 → register_commit。
 
-    幂等:同一 (transaction_id, signal_id) 重试不重复登记 —— 已 commit 直接返回,
-    intent 已存在则续做而非报错。
-    崩溃可恢复:任何一段之后中断,recover_pending() 都能判定并前滚或中止。
-    并发:全程持信号账本的排他 flock。
+    intent 携带**完整 stamped 记录与 record_hash**,因此:
+      · intent 后崩溃 ⇒ 恢复可重建投影并提交,信号不会永久丢失
+      · 投影与 intent 不符 ⇒ 恢复拒绝盖章,判 abort 并报损坏
+      · commit 在而投影丢失 ⇒ 从 intent 重建,重建不了才硬失败(不返回幂等成功)
     """
     import fcntl
     el = _el()
     sid = record.get("signal_id")
     if not sid:
         raise ValueError("signal_id 必填")
-    written_by_stamp(script, version, run_id)          # 写入者身份先校验,不合格立刻拒
+    written_by_stamp(script, version, run_id)
     txn = transaction_id or transaction_id_for(sid, registered_at, run_id)
 
-    os.makedirs(os.path.dirname(os.path.abspath(log_path)) or ".", exist_ok=True)
-    with open(log_path + ".lock", "w") as lf:
+    with _signal_lock(log_path) as lf:
         fcntl.flock(lf, fcntl.LOCK_EX)
         try:
             events = read_events(ledger_path)
-            intents, commits, aborts = _txn_state(events)
+            intents, commits, aborts = _terminal_states(events)
             rows = load_signal_log_strict(log_path)
-            present = any(r.get("signal_id") == sid for r in rows)
+            existing = next((r for r in rows if r.get("signal_id") == sid), None)
 
-            if txn in commits:
-                return (next((r for r in rows if r.get("signal_id") == sid), None),
-                        "idempotent: already committed")
             if txn in aborts:
-                return None, f"refused: transaction {txn} 已被中止,不得复用"
-            if present and txn not in intents:
-                # 投影已有该信号,却不是本事务写的 ⇒ 另一次登记已完成
+                return None, f"refused: transaction {txn} 已被中止(intent 不可用),需人工复核"
+
+            # 已 commit:投影必须真的在,否则从 intent 重建;重建不了 ⇒ 硬失败
+            if txn in commits:
+                if existing is not None:
+                    return existing, "idempotent: already committed"
+                saved = (intents.get(txn) or {}).get("record")
+                if not saved:
+                    raise LedgerCorrupt(
+                        f"txn {txn} 已 commit 但投影丢失,且 intent 无可重放记录 —— "
+                        f"不得当作幂等成功")
+                rows = _project(rows, saved, log_path)
+                return saved, "recovered: projection rebuilt from intent"
+
+            # 投影里已有该 signal_id,却不是本事务的 ⇒ 另一次登记已完成
+            if existing is not None and txn not in intents:
                 return None, f"refused: signal_id {sid} 已登记(非本事务)"
 
-            if txn not in intents:
-                el.append("register_intent", txn,
-                          {"signal_id": sid, "ticker": record.get("ticker"),
-                           "registered_at": registered_at, "log_path": os.path.basename(log_path),
-                           "written_by": written_by_stamp(script, version, run_id)},
-                          path=ledger_path)
-
-            if not present:
+            stamped = ((intents.get(txn) or {}).get("record")
+                       if txn in intents else None)
+            if stamped is None:
                 stamped = stamp_new_record(record, registered_at=registered_at,
                                            script=script, version=version, run_id=run_id)
-                rows = load_signal_log_strict(log_path)          # 锁内重读,避免用陈旧快照
-                if any(r.get("signal_id") == sid for r in rows):
-                    stamped = next(r for r in rows if r.get("signal_id") == sid)
-                else:
-                    rows.append(stamped)
-                    write_signal_log_atomic(log_path, rows)
-            else:
-                stamped = next(r for r in rows if r.get("signal_id") == sid)
+                stamped["registry_txn_id"] = txn
+                stamped["record_hash"] = record_hash(stamped)
+                # intent 只在**尚不存在**时写。旧格式 intent(无 record)也已存在,
+                # 重复 append 会撞链层 (kind,id) 唯一性 —— 那是接续,不是新事务。
+                if txn not in intents:
+                    el.append("register_intent", txn,
+                              {"signal_id": sid, "record": stamped,
+                               "record_hash": stamped["record_hash"],
+                               "written_by": stamped["written_by"]},
+                              path=ledger_path)
 
-            el.append("register_commit", txn, {"signal_id": sid}, path=ledger_path)
+            if existing is not None and existing.get("record_hash") != stamped.get("record_hash"):
+                el.append("register_abort", txn,
+                          {"signal_id": sid, "reason": "投影与 intent 的 record_hash 不符"},
+                          path=ledger_path)
+                raise LedgerCorrupt(f"signal {sid} 的投影与 intent 不符,拒绝提交")
+
+            rows = _project(rows, stamped, log_path)
+            el.append("register_commit", txn,
+                      {"signal_id": sid, "record_hash": stamped["record_hash"]},
+                      path=ledger_path)
             return stamped, "registered"
         finally:
             fcntl.flock(lf, fcntl.LOCK_UN)
 
 
 def recover_pending(ledger_path, log_path, apply=True):
-    """扫描 intent 无 commit/abort 的孤立事务,按投影是否落盘前滚或中止。**幂等。**
+    """收拾悬空事务。**取与登记事务同一把信号锁**,避免与在写事务竞争产生双终态。
 
-    投影在 ⇒ 补 commit(前滚,信号是真的,只是 commit 那一步没写成)
-    投影不在 ⇒ 写 abort(该 intent 作废,不留悬空事务)
+    intent 有可重放记录 ⇒ 缺投影就重建并 commit(前滚),不再一律 abort ——
+    初版看到没投影就 abort,而确定性 txn_id 让重试永远撞上「已中止」,信号永久丢失。
+    投影存在但 record_hash 与 intent 不符 ⇒ abort 并报损坏,绝不盖章。
     """
+    import fcntl
     el = _el()
-    events = read_events(ledger_path)
-    intents, commits, aborts = _txn_state(events)
-    rows = load_signal_log_strict(log_path)
-    have = {r.get("signal_id") for r in rows}
-    out = {"rolled_forward": [], "aborted": [], "pending_examined": 0}
-    for txn, payload in intents.items():
-        if txn in commits or txn in aborts:
-            continue
-        out["pending_examined"] += 1
-        sid = payload.get("signal_id")
-        if sid in have:
-            if apply:
-                el.append("register_commit", txn, {"signal_id": sid, "by": "recover_pending"},
-                          path=ledger_path)
-            out["rolled_forward"].append(txn)
-        else:
-            if apply:
-                el.append("register_abort", txn,
-                          {"signal_id": sid, "reason": "intent 无投影 —— 崩溃于投影写入之前"},
-                          path=ledger_path)
-            out["aborted"].append(txn)
-    return out
-
-
-class LedgerCorrupt(Exception):
-    """账本不可解析。**绝不降级为空账本** —— 那会让历史信号静默消失,
-    而下一次写入把空账本当成事实落盘,损失不可逆。"""
-
-
-def load_signal_log_strict(path):
-    """读信号账本。不存在 ⇒ 空列表(合法首次);存在但不可解析 ⇒ 抛错停机。"""
-    if not os.path.exists(path):
-        return []
-    try:
-        with open(path, encoding="utf-8") as fh:
-            data = json.load(fh)
-    except (json.JSONDecodeError, OSError) as e:
-        raise LedgerCorrupt(f"{path} 不可解析 ({e}) —— fail-closed,不得当作空账本") from e
-    rows = data if isinstance(data, list) else data.get("signals", data.get("log"))
-    if rows is None or not isinstance(rows, list):
-        raise LedgerCorrupt(f"{path} 结构非预期(既非列表也无 signals/log 键)—— fail-closed")
-    return rows
-
-
-def write_signal_log_atomic(path, rows):
-    """临时文件 + fsync + os.replace。半程崩溃留下的是旧文件,不是截断的新文件。"""
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump(rows, fh, ensure_ascii=False, indent=2)
-        fh.flush(); os.fsync(fh.fileno())
-    os.replace(tmp, path)
-
-
-def audit_ledger(path):
-    """只读体检:统计三字段覆盖、可派生率、backdated 命中。不写盘。"""
-    data = json.load(open(path, encoding="utf-8"))
-    rows = data if isinstance(data, list) else data.get("signals", data.get("log", []))
-    out = {"n": len(rows), "has_field": {f: 0 for f in LEDGER_FIELDS},
-           "derivable_trade_date": 0, "unparseable_timestamp": [], "backdated": []}
-    for s in rows:
-        for f in LEDGER_FIELDS:
-            if s.get(f):
-                out["has_field"][f] += 1
-        d, src = registered_trade_date(s)
-        if d:
-            out["derivable_trade_date"] += 1
-        else:
-            out["unparseable_timestamp"].append(s.get("signal_id"))
-    return out
+    with _signal_lock(log_path) as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        try:
+            events = read_events(ledger_path)
+            intents, commits, aborts = _terminal_states(events)
+            rows = load_signal_log_strict(log_path)
+            by_sid = {r.get("signal_id"): r for r in rows}
+            out = {"rolled_forward": [], "rebuilt": [], "aborted": [],
+                   "mismatch": [], "pending_examined": 0}
+            for txn, payload in intents.items():
+                if txn in commits or txn in aborts:
+                    continue
+                out["pending_examined"] += 1
+                sid = payload.get("signal_id")
+                saved = payload.get("record")
+                existing = by_sid.get(sid)
+                if existing is not None:
+                    if saved and existing.get("record_hash") != saved.get("record_hash"):
+                        if apply:
+                            el.append("register_abort", txn,
+                                      {"signal_id": sid,
+                                       "reason": "投影 record_hash 与 intent 不符 —— 拒绝盖章"},
+                                      path=ledger_path)
+                        out["mismatch"].append(txn); out["aborted"].append(txn)
+                        continue
+                    if apply:
+                        el.append("register_commit", txn,
+                                  {"signal_id": sid, "by": "recover_pending"}, path=ledger_path)
+                    out["rolled_forward"].append(txn)
+                elif saved:
+                    if apply:
+                        rows = _project(rows, saved, log_path)
+                        by_sid[sid] = saved
+                        el.append("register_commit", txn,
+                                  {"signal_id": sid, "by": "recover_pending/rebuild"},
+                                  path=ledger_path)
+                    out["rebuilt"].append(txn); out["rolled_forward"].append(txn)
+                else:
+                    # intent 里没有可重放记录(旧格式)⇒ 只能作废
+                    if apply:
+                        el.append("register_abort", txn,
+                                  {"signal_id": sid, "reason": "intent 无可重放记录(旧格式)"},
+                                  path=ledger_path)
+                    out["aborted"].append(txn)
+            return out
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
 
 
 def selftest():

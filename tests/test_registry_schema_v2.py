@@ -132,7 +132,140 @@ class RegistrySchemaV2Test(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
-    def test_crash_after_intent_aborts(self) -> None:
+    def test_nightly_entry_point_is_wired(self) -> None:
+        """B1:run_nightly 调的是 run_official_sample.py,不是 execution_tracker.py。
+        接错文件 = 正式夜链根本没接上 WAL。这条钉死真实入口。"""
+        nightly = (ET / "run_nightly.py").read_text(encoding="utf-8")
+        self.assertIn("run_official_sample.py", nightly)
+        ros = (ET / "run_official_sample.py").read_text(encoding="utf-8")
+        self.assertIn("register_transaction", ros, "夜链入口未接注册事务")
+        self.assertIn("recover_pending", ros, "夜链入口未接崩溃恢复")
+        self.assertNotIn("json.dump(log, fh", ros, "仍有裸写信号账本的路径")
+
+    def test_process_exit_code_is_nonzero_on_txn_failure(self) -> None:
+        """B6:main() 返回 1 但没 sys.exit,进程仍退 0,夜链会把失败当成功。"""
+        tmp = tempfile.mkdtemp()
+        try:
+            inp = os.path.join(tmp, "in.json")
+            json.dump({"index_data": {"main_flow_total": -100, "pct_chg": -1.0,
+                                      "limit_up": 5, "limit_down": 20},
+                       "tickers": [{"ticker": "600000.SH", "name": "x", "price": 10.0,
+                                    "main_flow": -1, "support": 9.0,
+                                    "reclaim_level": 11.0, "sector": "银行"}],
+                       "timestamp": "20260803 close"}, open(inp, "w"))
+            os.makedirs(os.path.join(tmp, "event_ledger.jsonl"))    # 账本不可写
+            r = subprocess.run([sys.executable, str(ET / "execution_tracker.py"),
+                                "--input", inp, "--log", os.path.join(tmp, "sig.json")],
+                               capture_output=True, text=True, cwd=str(ROOT))
+            self.assertEqual(r.returncode, 1, "事务失败时进程必须非零退出")
+            self.assertIn("REFUSED", r.stdout)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_crash_after_intent_replays_never_loses_signal(self) -> None:
+        """B3:intent 后崩溃不得永久丢失信号 —— 恢复须从 intent 重建投影。"""
+        import event_ledger, registry
+        tmp = tempfile.mkdtemp()
+        try:
+            sp = os.path.join(tmp, "sig.json"); lp = registry.ledger_path_for(sp)
+            registry.register_transaction({"signal_id": "s", "ticker": "600000.SH"},
+                                          registered_at="20260803 15:00",
+                                          script="paper_tracker.py", version="v2",
+                                          run_id="r", ledger_path=lp, log_path=sp)
+            lines = event_ledger._read_lines(lp)              # 砍掉 commit,清空投影
+            open(lp, "w").write(lines[0] + "\n")
+            event_ledger.write_anchor(lp, 1, json.loads(lines[0])["hash"])
+            registry.write_signal_log_atomic(sp, [])
+            r = registry.recover_pending(lp, sp)
+            rows = registry.load_signal_log_strict(sp)
+            self.assertTrue(r["rebuilt"], "恢复未重建投影")
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["ticker"], "600000.SH")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_recovery_refuses_to_stamp_mismatched_projection(self) -> None:
+        """B4:恢复只认 signal_id 会给伪造记录盖章 —— 必须逐字段核对 record_hash。"""
+        import event_ledger, registry
+        tmp = tempfile.mkdtemp()
+        try:
+            sp = os.path.join(tmp, "sig.json"); lp = registry.ledger_path_for(sp)
+            registry.register_transaction({"signal_id": "s", "ticker": "600000.SH"},
+                                          registered_at="20260803 15:00",
+                                          script="paper_tracker.py", version="v2",
+                                          run_id="r", ledger_path=lp, log_path=sp)
+            lines = event_ledger._read_lines(lp)
+            open(lp, "w").write(lines[0] + "\n")
+            event_ledger.write_anchor(lp, 1, json.loads(lines[0])["hash"])
+            registry.write_signal_log_atomic(
+                sp, [{"signal_id": "s", "ticker": "000999.SZ", "record_hash": "FAKE"}])
+            r = registry.recover_pending(lp, sp)
+            self.assertTrue(r["mismatch"], "伪造投影未被识别")
+            self.assertFalse(r["rolled_forward"], "仍给伪造记录盖了章")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_commit_present_projection_missing_is_rebuilt_not_idempotent(self) -> None:
+        """B5:commit 在而投影丢失,不得返回幂等成功。"""
+        import registry
+        tmp = tempfile.mkdtemp()
+        try:
+            sp = os.path.join(tmp, "sig.json"); lp = registry.ledger_path_for(sp)
+            kw = dict(registered_at="20260803 15:00", script="paper_tracker.py",
+                      version="v2", run_id="r", ledger_path=lp, log_path=sp)
+            registry.register_transaction({"signal_id": "s", "ticker": "600000.SH"}, **kw)
+            registry.write_signal_log_atomic(sp, [])
+            rec, st = registry.register_transaction({"signal_id": "s", "ticker": "600000.SH"}, **kw)
+            self.assertIsNotNone(rec, f"返回幂等成功但信号不存在: {st}")
+            self.assertEqual(len(registry.load_signal_log_strict(sp)), 1)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_recovery_and_writer_concurrency_no_dual_terminal(self) -> None:
+        """B2:恢复器必须取同一把锁,否则会与在写事务打架produce双终态。"""
+        import concurrent.futures as cf
+        import event_ledger, registry
+        tmp = tempfile.mkdtemp()
+        try:
+            sp = os.path.join(tmp, "sig.json"); lp = registry.ledger_path_for(sp)
+            base = dict(registered_at="20260803 15:00", script="paper_tracker.py",
+                        version="v2", ledger_path=lp, log_path=sp)
+            registry.register_transaction({"signal_id": "seed", "ticker": "t"},
+                                          run_id="seed", **base)
+
+            def job(i):
+                if i % 2:
+                    return registry.recover_pending(lp, sp)
+                return registry.register_transaction({"signal_id": f"n{i}", "ticker": "t"},
+                                                     run_id=f"r{i}", **base)
+
+            with cf.ThreadPoolExecutor(8) as ex:
+                list(ex.map(job, range(8)))
+            evs = registry.read_events(lp)
+            C = {e["id"] for e in evs if e["kind"] == "register_commit"}
+            A = {e["id"] for e in evs if e["kind"] == "register_abort"}
+            I = {e["id"] for e in evs if e["kind"] == "register_intent"}
+            self.assertEqual(C & A, set(), "同一 txn 出现双终态")
+            self.assertEqual(C - I, set(), "孤立 commit")
+            self.assertEqual(I - C - A, set(), "悬空 intent")
+            self.assertTrue(event_ledger.verify(lp)["ok"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_dual_terminal_state_is_corruption(self) -> None:
+        import event_ledger, registry
+        tmp = tempfile.mkdtemp()
+        try:
+            sp = os.path.join(tmp, "sig.json"); lp = registry.ledger_path_for(sp)
+            for k in ("register_intent", "register_commit", "register_abort"):
+                event_ledger.append(k, "dead", {"signal_id": "x"}, path=lp)
+            with self.assertRaises(registry.LedgerCorrupt):
+                registry.recover_pending(lp, sp)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_legacy_intent_without_record_aborts(self) -> None:
+        """无可重放记录的旧格式 intent 才作废;有记录的一律前滚(见 B3)。"""
         import event_ledger, registry
         tmp = tempfile.mkdtemp()
         try:

@@ -155,14 +155,35 @@ def build(token):
     return trade_date, snap, sigs
 
 
-def append_log(path, sigs):
-    log = json.load(open(path)) if os.path.exists(path) else []
-    seen = {s["signal_id"] for s in log}
-    added = [s for s in sigs if s["signal_id"] not in seen]
-    log.extend(added)
-    with open(path, "w") as fh:
-        json.dump(log, fh, ensure_ascii=False, indent=2)
-    return len(added), len(log)
+def append_log(path, sigs, registered_at=None):
+    """经 R-014 三段式登记事务写入。**夜链真正的入口就是这里** ——
+    #217 初版接的是 execution_tracker.py --input,而 run_nightly.py:36 调的是本文件,
+    于是正式夜链根本没接上 WAL(裸 json.load/dump 直写)。
+
+    开跑前先 recover_pending 收拾上次崩溃的悬空事务;逐条独立事务,
+    任何一条失败都不静默吞掉,由调用方决定退出码。
+    """
+    import sys as _sys
+    _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import registry
+    lp = registry.ledger_path_for(path)
+    rec = registry.recover_pending(lp, path)
+    if rec["pending_examined"]:
+        print(f"[R-014] recovered pending txns: {rec}")
+    added, failed = 0, []
+    for s in sigs:
+        ts = registered_at or s.get("timestamp") or s.get("ingested_at")
+        _, st = registry.register_transaction(
+            s, registered_at=ts, script="run_official_sample.py",
+            version="run_official_sample/v2", run_id=s.get("signal_id", "UNKNOWN"),
+            ledger_path=lp, log_path=path)
+        if st == "registered":
+            added += 1
+        elif not st.startswith(("idempotent", "recovered")):
+            failed.append((s.get("signal_id"), st))
+    if failed:
+        raise RuntimeError(f"R-014 登记事务失败 {len(failed)} 条: {failed[:3]}")
+    return added, len(registry.load_signal_log_strict(path))
 
 
 def selftest():
@@ -238,4 +259,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

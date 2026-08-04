@@ -450,4 +450,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main() 返回 1 表示拒绝写入;不 sys.exit 的话进程仍退 0,夜链会把失败当成功
+    sys.exit(main() or 0)
