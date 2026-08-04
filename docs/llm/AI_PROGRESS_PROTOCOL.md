@@ -188,6 +188,10 @@ Issue #162 defines the future UI shape for this protocol:
 In short: this PR defines the v0 standard. Issue #164 is the tool today; Agent
 Console is only a later display layer.
 
+The v1.5 display-layer contract is documented in
+`docs/llm/AI_PROGRESS_UI_CONTRACT_V1_5.md`. It defines the read-only snapshot
+shape that a future UI can render without becoming the source of truth.
+
 ## Board Fields
 
 The machine-readable event format is documented in

@@ -20,6 +20,14 @@ import progress_conflicts
 DEFAULT_REPO = "Lateily/Alpha-Research"
 DEFAULT_ISSUE = "164"
 DEFAULT_INTERVAL_SECONDS = 30
+SNAPSHOT_SCHEMA = "ai-progress.snapshot.v1"
+CONTRACT_VERSION = "1.5"
+DEFAULT_CORS_ORIGINS = (
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8765",
+    "http://127.0.0.1:8765",
+)
 
 
 def main() -> int:
@@ -64,6 +72,15 @@ def main() -> int:
         action="store_true",
         help="Print one board snapshot as JSON instead of starting the server.",
     )
+    parser.add_argument(
+        "--cors-origin",
+        action="append",
+        default=None,
+        help=(
+            "Allowed local browser origin for /events, for example "
+            "http://localhost:5173. May be repeated."
+        ),
+    )
     args = parser.parse_args()
 
     source = build_source(args)
@@ -89,7 +106,8 @@ def build_source(args: argparse.Namespace) -> dict[str, str]:
 
 
 def serve(args: argparse.Namespace, source: dict[str, str]) -> None:
-    handler = make_handler(source, max(args.interval_seconds, 5))
+    cors_origins = tuple(args.cors_origin or DEFAULT_CORS_ORIGINS)
+    handler = make_handler(source, max(args.interval_seconds, 5), cors_origins)
     server = ThreadingHTTPServer((args.host, args.port), handler)
     url = f"http://{args.host}:{args.port}"
     print(f"AI Progress Board live view: {url}")
@@ -103,7 +121,7 @@ def serve(args: argparse.Namespace, source: dict[str, str]) -> None:
 
 
 def make_handler(
-    source: dict[str, str], interval_seconds: int
+    source: dict[str, str], interval_seconds: int, cors_origins: tuple[str, ...]
 ) -> type[BaseHTTPRequestHandler]:
     class ProgressHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
@@ -119,17 +137,35 @@ def make_handler(
                 return
             self.send_error(404)
 
+        def do_OPTIONS(self) -> None:
+            if self.path != "/events":
+                self.send_error(404)
+                return
+            self.send_response(204)
+            self.send_cors_headers()
+            self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Access-Control-Max-Age", "600")
+            self.end_headers()
+
         def log_message(self, format: str, *args: Any) -> None:
             return
 
         def send_text(self, content: str, content_type: str) -> None:
             body = content.encode("utf-8")
             self.send_response(200)
+            self.send_cors_headers()
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
             self.wfile.write(body)
+
+        def send_cors_headers(self) -> None:
+            origin = self.headers.get("Origin", "")
+            if origin in cors_origins:
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Vary", "Origin")
 
     return ProgressHandler
 
@@ -141,6 +177,8 @@ def build_snapshot(source: dict[str, str]) -> dict[str, Any]:
         conflicts = progress_conflicts.find_conflicts(events, now)
         active = progress_conflicts.active_claims(events, now)
         return {
+            "schema": SNAPSHOT_SCHEMA,
+            "contract_version": CONTRACT_VERSION,
             "ok": True,
             "source": redacted_source(source),
             "refreshed_at_utc": now.isoformat(),
@@ -149,13 +187,15 @@ def build_snapshot(source: dict[str, str]) -> dict[str, Any]:
             "conflicts": serialize_conflicts(conflicts),
             "timeline": sorted(events, key=lambda item: item.get("timestamp_utc", "")),
         }
-    except (OSError, ValueError, HTTPError, URLError) as exc:
+    except (OSError, ValueError, HTTPError, URLError, subprocess.SubprocessError) as exc:
         return {
+            "schema": SNAPSHOT_SCHEMA,
+            "contract_version": CONTRACT_VERSION,
             "ok": False,
             "source": redacted_source(source),
             "refreshed_at_utc": now.isoformat(),
             "error": str(exc),
-            "summary": {},
+            "summary": empty_summary(),
             "active_claims": [],
             "conflicts": [],
             "timeline": [],
@@ -229,6 +269,17 @@ def summarize(
         "blocked": count_events(events, "BLOCKED"),
         "released": count_events(events, "RELEASE"),
         "conflicts": len(conflicts),
+    }
+
+
+def empty_summary() -> dict[str, int]:
+    return {
+        "events": 0,
+        "active_claims": 0,
+        "done": 0,
+        "blocked": 0,
+        "released": 0,
+        "conflicts": 0,
     }
 
 

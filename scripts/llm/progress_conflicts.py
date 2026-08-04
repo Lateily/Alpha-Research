@@ -32,8 +32,17 @@ def main() -> int:
     args = parser.parse_args()
 
     now = parse_time(args.now) if args.now else datetime.now(timezone.utc)
-    events = load_events(Path(args.path))
-    conflicts = find_conflicts(events, now)
+    try:
+        events = load_events(Path(args.path))
+    except (OSError, ValueError) as exc:
+        print(f"ERROR: could not load progress events: {exc}")
+        return 2
+
+    try:
+        conflicts = find_conflicts(events, now)
+    except ValueError as exc:
+        print(f"ERROR: could not evaluate progress events: {exc}")
+        return 2
 
     if not conflicts:
         print("OK: no active overlapping CLAIMs found.")
@@ -51,7 +60,7 @@ def main() -> int:
 
 
 def load_events(path: Path) -> list[dict[str, Any]]:
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw = json.loads(path.read_text(encoding="utf-8-sig"))
 
     if isinstance(raw, list):
         if all(is_event(item) for item in raw):
