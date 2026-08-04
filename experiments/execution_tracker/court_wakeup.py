@@ -18,6 +18,7 @@ import os
 import sys
 import time
 import urllib.request
+from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 COURT = os.path.join(HERE, "registered_court.json")
@@ -102,7 +103,7 @@ def run(token, today):
         moves[e["ticker"]] = (closes[-1] / closes[-21] - 1) if len(closes) >= 21 else None
         time.sleep(0.2)
     hit_sectors = {e.get("sector_key") for e in court if sector_hit(e.get("sector_key"))}
-    result = evaluate(court, moves, hit_sectors, today)
+    result = bind(evaluate(court, moves, hit_sectors, today), target=today)
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(result, fh, ensure_ascii=False, indent=1)
     print(f"## Court 唤醒扫描({today} · 在册 {result['court_size']})")
@@ -160,8 +161,7 @@ def main():
     if not token:
         print("DATA_BLOCKED: NO TUSHARE_TOKEN")
         sys.exit(1)
-    import datetime
-    run(token, datetime.date.today().strftime("%Y%m%d"))
+    run(token, target_trade_date())
 
 
 if __name__ == "__main__":

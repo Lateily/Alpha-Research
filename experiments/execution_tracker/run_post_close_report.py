@@ -33,6 +33,7 @@ RUN AFTER CLOSE ONLY. Needs TUSHARE_TOKEN (`source ~/.zprofile`).
   python3 run_post_close_report.py --selftest      # offline unit test (no network)
 """
 import argparse
+import copy
 import json
 import os
 import sys
@@ -42,11 +43,33 @@ sys.path.insert(0, HERE)
 import fund_source as fs            # noqa: E402
 import run_official_sample as ros  # noqa: E402
 import prompts                     # noqa: E402
+from nightly_context import bind, target_trade_date   # noqa: E402
 
 HORIZON_DAYS = {"1d": 1, "3d": 3, "5d": 5, "10d": 10}
+EVALUATION_ALGORITHM_VERSION = "qfq-forward-return/v2"
 MIN_SCORED_FOR_CLAIM = 30          # no win-rate claim below this (constitution)
 
 CAUTIOUS_POSTURE = {"WARNING", "DE_RISK_REVIEW", "EXIT_REVIEW"}
+
+
+def declared_forward_horizons(signal):
+    """Return only horizons frozen when the signal was registered.
+
+    Pre-registry legacy rows without a horizon keep the old four-window behavior;
+    registry/v2 rows must declare their windows and cannot gain one after outcome.
+    """
+    raw = signal.get("horizon")
+    if raw is None:
+        return set(HORIZON_DAYS) if signal.get("registry_schema") != "registry/v2" else set()
+    values = raw if isinstance(raw, list) else [raw]
+    out = set()
+    for value in values:
+        value = str(value or "")
+        if value.startswith("t+") and value[2:].isdigit():
+            value = f"{value[2:]}d"
+        if value in HORIZON_DAYS:
+            out.add(value)
+    return out
 CAUTIOUS_FUND = {"涨着派发", "大单卖小单接"}
 CONSTRUCTIVE_FUND = {"主力回流", "跌中承接"}
 
@@ -106,7 +129,10 @@ def backfill(log, token):
         elif not isinstance(r, dict):
             print(f"  ⚠ SCHEMA_INVALID returns 保留原值不洗白: {sig.get('signal_id')}")
             continue  # 审计F:异型数据隔离,不静默抹除
-        if all(h in sig["returns"] for h in HORIZON_DAYS):
+        declared = declared_forward_horizons(sig)
+        if not declared:
+            continue
+        if all(h in sig["returns"] for h in declared):
             continue                                   # already complete
         td = parse_trade_date(sig.get("timestamp"))
         if not td:
@@ -118,9 +144,13 @@ def backfill(log, token):
         if td not in dates:
             continue
         i = dates.index(td)
-        sig["entry_close"] = round(series[i][1], 4)
-        sig["directional_call"] = directional_call(sig)
+        sig["entry_close"] = (sig.get("entry_close")
+                              if sig.get("entry_close") is not None
+                              else round(series[i][1], 4))
+        sig["directional_call"] = sig.get("directional_call") or directional_call(sig)
         for h, n in HORIZON_DAYS.items():
+            if h not in declared:
+                continue
             if h in sig["returns"]:
                 continue
             j = i + n
@@ -131,7 +161,11 @@ def backfill(log, token):
             filled += 1
             fills.append({"signal_id": sig.get("signal_id"), "horizon": h, "value": v,
                           "entry_close": sig.get("entry_close"),
-                          "directional_call": sig.get("directional_call")})
+                          "directional_call": sig.get("directional_call"),
+                          "entry_trade_date": dates[i],
+                          "source_trade_date": dates[j],
+                          "source_close": round(series[j][1], 4),
+                          "algorithm_version": EVALUATION_ALGORITHM_VERSION})
     return filled, fills
 
 
@@ -193,7 +227,7 @@ def scorecard(log):
 
 def build_report(trade_date, snap, today_sigs, card):
     pg = snap.get("portfolio_gate", {})
-    return {
+    return bind({
         "report_date": trade_date,
         "generated_under_discipline": True,
         "discipline_prompt_chars": len(prompts.load_discipline_prompt()),
@@ -220,7 +254,7 @@ def build_report(trade_date, snap, today_sigs, card):
         ),
         "no_trade_flag": True,
         "official_sample": True,
-    }
+    }, target=trade_date)
 
 
 def main():
@@ -247,35 +281,23 @@ def main():
             json.dump(snap, fh, ensure_ascii=False, indent=2)
         ros.append_log(log_path, today_sigs)
 
-    # ── 第三个写手也必须走同一把信号锁与原子写 ──
-    # 它此前裸读裸写整个账本:与人工预注册并发时,会用旧快照覆盖刚登记的新信号。
-    import fcntl
+    # 判分先在内存副本上形成候选,再由 evaluation WAL 一次性验证并更新投影。
+    # 不允许先写 paper_signal_log 再补事件:事件冲突时会把未审计结果留给报告消费。
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import registry as _reg
-    with _reg._signal_lock(log_path) as _lf:
-        fcntl.flock(_lf, fcntl.LOCK_EX)
-        try:
-            log = _reg.load_signal_log_strict(log_path)      # 损坏必抛错,不当空账本
-            if trade_date is None:
-                tds = [d for d in (parse_trade_date(s.get("timestamp")) for s in log) if d]
-                trade_date = max(tds) if tds else "unknown"
-            filled, fills = backfill(log, token)
-            _reg.write_signal_log_atomic(log_path, log)
-            # ── B9 判分 WAL:每笔回填落 evaluation 事件,preflight 交叉核对 ──
-            # returns 不在注册指纹里(它是活字段),它的完整性由这条链单独保护:
-            # 改 returns.1d=99 而无对应事件 ⇒ preflight 红。
-            _lp = _reg.ledger_path_for(log_path)
-            import event_ledger as _el
-            for f in fills:
-                try:
-                    _el.append("evaluation", f"{f['signal_id']}:{f['horizon']}",
-                               f, path=_lp)
-                except ValueError as e:
-                    # (kind,id) 已存在 = 该档已判过 —— 幂等跳过;其他错误不吞
-                    if "已存在" not in str(e):
-                        raise
-        finally:
-            fcntl.flock(_lf, fcntl.LOCK_UN)
+    original_log = _reg.load_signal_log_strict(log_path)
+    if trade_date is None:
+        pinned = target_trade_date(default_today=False)
+        if pinned:
+            trade_date = pinned
+        else:
+            tds = [d for d in (parse_trade_date(s.get("timestamp")) for s in original_log) if d]
+            trade_date = max(tds) if tds else "unknown"
+    candidate_log = copy.deepcopy(original_log)
+    filled, fills = backfill(candidate_log, token)
+    _lp = _reg.ledger_path_for(log_path)
+    _reg.apply_evaluation_transactions(log_path, _lp, fills)
+    log = _reg.load_signal_log_strict(log_path)
 
     card = scorecard(log)
     report = build_report(trade_date, snap, today_sigs, card)
@@ -341,6 +363,16 @@ def selftest():
 
         # idempotent: re-run fills nothing new
         ck("idempotent re-backfill = 0", backfill(log, token=None)[0] == 0)
+
+        limited = [{"signal_id": "limited", "ticker": "UP.SZ",
+                    "timestamp": "20260101 close (official)",
+                    "registry_schema": "registry/v2", "horizon": ["3d"],
+                    "setup_type": "HOLD_OBSERVE", "fund_structure": "主力回流",
+                    "relative_strength": True}]
+        limited_n, limited_fills = backfill(limited, token=None)
+        ck("v2 只回填登记时冻结的期限",
+           limited_n == 1 and set(limited[0]["returns"]) == {"3d"}
+           and [f["horizon"] for f in limited_fills] == ["3d"])
 
         # neutral posture is NOT scored
         neutral = [{"signal_id": "n1", "ticker": "UP.SZ", "timestamp": "20260101 close (official)",

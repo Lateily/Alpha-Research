@@ -19,6 +19,17 @@ ET = ROOT / "experiments" / "execution_tracker"
 sys.path.insert(0, str(ET))
 
 
+def _write_json(path, value):
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(value, fh, ensure_ascii=False)
+
+
+def _read_json(path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
 def _fake_snapshot(trade_date="20260805", n=2):
     sigs = [{"signal_id": f"fx{trade_date}{i}", "ticker": f"6000{i:02d}.SH",
              "setup_type": "execution_gate", "horizon": ["1d", "3d", "5d", "10d"],
@@ -35,7 +46,8 @@ class OfficialSampleProcessTest(unittest.TestCase):
     正因为没有任何测试真正执行过 main()。"""
 
     def _run(self, workdir, fixture):
-        env = dict(os.environ, AR_FAKE_SNAPSHOT=str(fixture))
+        env = dict(os.environ, AR_FAKE_SNAPSHOT=str(fixture),
+                   AR_TEST_MODE="1", AR_OFFLINE="1")
         env.pop("TUSHARE_TOKEN", None)
         return subprocess.run([sys.executable, str(ET / "run_official_sample.py")],
                               capture_output=True, text=True, env=env, cwd=str(ET))
@@ -49,27 +61,28 @@ class OfficialSampleProcessTest(unittest.TestCase):
             "paper_signal_log.json", "*.lock", "run_state.json", "run_target.json"))
         os.makedirs(os.path.join(dst, "samples"), exist_ok=True)
         # 空信号账本起步
-        json.dump([], open(os.path.join(dst, "paper_signal_log.json"), "w"))
+        _write_json(os.path.join(dst, "paper_signal_log.json"), [])
         return tmp, dst
 
     def test_new_day_and_reconcile_paths_run_as_processes(self) -> None:
         tmp, dst = self._fresh_et_copy()
         try:
             fx = os.path.join(tmp, "fx.json")
-            json.dump(_fake_snapshot(), open(fx, "w"), ensure_ascii=False)
-            env = dict(os.environ, AR_FAKE_SNAPSHOT=fx)
+            _write_json(fx, _fake_snapshot())
+            env = dict(os.environ, AR_FAKE_SNAPSHOT=fx,
+                       AR_TEST_MODE="1", AR_OFFLINE="1")
             env.pop("TUSHARE_TOKEN", None)
             # ① 新交易日路径(B1 的 NameError 就死在这条路上)
             r1 = subprocess.run([sys.executable, os.path.join(dst, "run_official_sample.py")],
                                 capture_output=True, text=True, env=env, cwd=dst)
             self.assertEqual(r1.returncode, 0, r1.stdout + r1.stderr)
             self.assertNotIn("NameError", r1.stderr)
-            sample = json.load(open(os.path.join(dst, "samples", "20260805.json")))
+            sample = _read_json(os.path.join(dst, "samples", "20260805.json"))
             self.assertIn("signals_manifest", sample)
             self.assertIn("records", sample["signals_manifest"], "manifest 必须冻结完整正文(B7)")
-            tgt = json.load(open(os.path.join(dst, "run_target.json")))
+            tgt = _read_json(os.path.join(dst, "run_target.json"))
             self.assertEqual(tgt["trade_date"], "20260805")
-            rows = json.load(open(os.path.join(dst, "paper_signal_log.json")))
+            rows = _read_json(os.path.join(dst, "paper_signal_log.json"))
             self.assertEqual(len(rows), 2)
             self.assertTrue(all(r.get("registry_txn_id") for r in rows))
             # ② 对账路径(sample 已存在)
@@ -77,7 +90,7 @@ class OfficialSampleProcessTest(unittest.TestCase):
                                 capture_output=True, text=True, env=env, cwd=dst)
             self.assertEqual(r2.returncode, 0, r2.stdout + r2.stderr)
             self.assertIn("manifest 校验通过", r2.stdout)
-            rows2 = json.load(open(os.path.join(dst, "paper_signal_log.json")))
+            rows2 = _read_json(os.path.join(dst, "paper_signal_log.json"))
             self.assertEqual(len(rows2), 2, "对账路径重复登记或丢信号")
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -87,15 +100,16 @@ class OfficialSampleProcessTest(unittest.TestCase):
         tmp, dst = self._fresh_et_copy()
         try:
             fx = os.path.join(tmp, "fx.json")
-            json.dump(_fake_snapshot(), open(fx, "w"), ensure_ascii=False)
-            json.dump({"paper_signals": [{"signal_id": "inj", "ticker": "999999.SZ"}]},
-                      open(os.path.join(dst, "samples", "20260805.json"), "w"))
-            env = dict(os.environ, AR_FAKE_SNAPSHOT=fx); env.pop("TUSHARE_TOKEN", None)
+            _write_json(fx, _fake_snapshot())
+            _write_json(os.path.join(dst, "samples", "20260805.json"),
+                        {"paper_signals": [{"signal_id": "inj", "ticker": "999999.SZ"}]})
+            env = dict(os.environ, AR_FAKE_SNAPSHOT=fx,
+                       AR_TEST_MODE="1", AR_OFFLINE="1"); env.pop("TUSHARE_TOKEN", None)
             r = subprocess.run([sys.executable, os.path.join(dst, "run_official_sample.py")],
                                capture_output=True, text=True, env=env, cwd=dst)
             self.assertEqual(r.returncode, 1)
             self.assertIn("REFUSED", r.stdout)
-            rows = json.load(open(os.path.join(dst, "paper_signal_log.json")))
+            rows = _read_json(os.path.join(dst, "paper_signal_log.json"))
             self.assertEqual(rows, [], "注入/重算信号被登记了")
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -108,7 +122,8 @@ class StaticUndefinedNameTest(unittest.TestCase):
                "registry.py", "event_ledger.py", "paper_tracker.py",
                "execution_tracker.py", "setup_promoter.py", "red_flag_gate.py",
                "full_battery.py", "court_10d.py", "position_review.py",
-               "watch_dynamic.py", "consistency.py"]
+               "watch_dynamic.py", "consistency.py", "nightly_context.py",
+               "nightly_publish.py"]
 
     MODULE_DUNDERS = {"__file__", "__name__", "__doc__", "__package__",
                       "__spec__", "__loader__", "__builtins__", "__path__"}
@@ -150,6 +165,20 @@ class StaticUndefinedNameTest(unittest.TestCase):
                                  ast.For, ast.AsyncFor, ast.With, ast.AsyncWith,
                                  ast.Try, ast.If, ast.While)):
                 _bind_targets(st, mod)
+
+        def module_loads(node):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                # Bodies are separate scopes. Decorators/defaults are uncommon here and are
+                # covered by execution tests; do not mix them into module assignment order.
+                return
+            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+                if node.id not in mod:
+                    bad.append(("<module>", node.id, node.lineno))
+            for child in ast.iter_child_nodes(node):
+                module_loads(child)
+
+        for st in tree.body:
+            module_loads(st)
 
         def walk_scope(fn, outer):
             """检查一个函数作用域;嵌套函数单独递归,不在父作用域里展开其函数体。"""
@@ -218,6 +247,10 @@ class StaticUndefinedNameTest(unittest.TestCase):
         bad = self._undefined_names(snippet)
         self.assertTrue(any(n == "_x" for _, n, _ in bad), "检查器抓不到 _sys 类事故")
 
+    def test_checker_catches_module_level_undefined_name(self) -> None:
+        bad = self._undefined_names("X = MISSING_NAME\n")
+        self.assertTrue(any(n == "MISSING_NAME" for _, n, _ in bad))
+
     def test_no_undefined_names_in_nightly_scripts(self) -> None:
         problems = {}
         for f in self.CHECKED:
@@ -246,7 +279,7 @@ class ArtifactVerificationTest(unittest.TestCase):
     def _w(self, rel, obj):
         p = os.path.join(self.tmp, rel)
         os.makedirs(os.path.dirname(p) or self.tmp, exist_ok=True)
-        json.dump(obj, open(p, "w"))
+        _write_json(p, obj)
         return p
 
     def test_fresh_matching_ok(self):
@@ -302,18 +335,18 @@ class CrashRollbackTest(unittest.TestCase):
         old = (rn.HERE, rn.RUNS_DIR, rn.RUN_STATE)
         try:
             rn.HERE, rn.RUNS_DIR, rn.RUN_STATE = tmp, os.path.join(tmp, "runs"), os.path.join(tmp, "run_state.json")
-            json.dump({"as_of": "OLD"}, open(os.path.join(tmp, "momentum_prefilter.json"), "w"))
-            json.dump([{"signal_id": "keep"}], open(os.path.join(tmp, "paper_signal_log.json"), "w"))
+            _write_json(os.path.join(tmp, "momentum_prefilter.json"), {"as_of": "OLD"})
+            _write_json(os.path.join(tmp, "paper_signal_log.json"), [{"signal_id": "keep"}])
             rn._snapshot_before("R1")
-            json.dump({"as_of": "NEW"}, open(os.path.join(tmp, "momentum_prefilter.json"), "w"))
-            json.dump([{"signal_id": "keep"}, {"signal_id": "new"}],
-                      open(os.path.join(tmp, "paper_signal_log.json"), "w"))
-            json.dump({"run_id": "R1"}, open(rn.RUN_STATE, "w"))
+            _write_json(os.path.join(tmp, "momentum_prefilter.json"), {"as_of": "NEW"})
+            _write_json(os.path.join(tmp, "paper_signal_log.json"),
+                        [{"signal_id": "keep"}, {"signal_id": "new"}])
+            _write_json(rn.RUN_STATE, {"run_id": "R1"})
             info = rn._crash_check_and_rollback()
             self.assertIsNotNone(info)
-            self.assertEqual(json.load(open(os.path.join(tmp, "momentum_prefilter.json")))["as_of"],
+            self.assertEqual(_read_json(os.path.join(tmp, "momentum_prefilter.json"))["as_of"],
                              "OLD", "派生产物未回滚")
-            self.assertEqual(len(json.load(open(os.path.join(tmp, "paper_signal_log.json")))),
+            self.assertEqual(len(_read_json(os.path.join(tmp, "paper_signal_log.json"))),
                              2, "信号账本被回滚 —— WAL 态绝不允许回滚")
             self.assertFalse(os.path.exists(rn.RUN_STATE))
             self.assertIsNone(rn._crash_check_and_rollback(), "无标记时不得再回滚")

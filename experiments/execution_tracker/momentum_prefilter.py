@@ -19,6 +19,7 @@ import os
 import sys
 import time
 import urllib.request
+from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "momentum_prefilter.json")
@@ -78,10 +79,9 @@ def screen_panel(panel, names):
 def run(token):
     cal = _api("trade_cal", token, exchange="SSE", is_open="1",
                start_date="20260501", end_date="20301231")
-    import datetime
-    today = datetime.date.today().strftime("%Y%m%d")
+    today = target_trade_date()
     days = [r["cal_date"] for r in sorted(cal, key=lambda x: x["cal_date"])
-            if r["cal_date"] < today][-21:]
+            if r["cal_date"] <= today][-21:]
     if len(days) < 21:
         print("DATA_BLOCKED: 交易日历不足 21 日")
         return None
@@ -104,11 +104,11 @@ def run(token):
     for code in panel:
         panel[code].sort()
     cands = screen_panel(panel, names)
-    result = {"as_of": days[-1], "universe": len(panel), "candidates": cands,
+    result = bind({"as_of": days[-1], "universe": len(panel), "candidates": cands,
               "filters": {"min_price": MIN_PRICE, "ret10": [RET10_LO, RET10_HI],
                           "near_high20": NEAR_HIGH, "top_n": TOP_N},
               "note": "价格雷达只送复核,不选股不给posture;资金隐形慢牛的安全网。"
-                      "不是买卖指令。"}
+                      "不是买卖指令。"}, target=days[-1])
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(result, fh, ensure_ascii=False, indent=1)
     print(f"## 动量雷达 v0(as_of {days[-1]},全市场 {len(panel)} 只)")

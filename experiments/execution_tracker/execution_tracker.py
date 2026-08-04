@@ -425,7 +425,7 @@ def main():
                 _, st = registry.register_transaction(
                     s, registered_at=snap["timestamp"],
                     script="execution_tracker.py", version="execution_tracker/v2",
-                    run_id=s.get("signal_id", "UNKNOWN"),
+                    run_id=os.environ.get("AR_RUN_ID") or f"standalone:{s.get('signal_id', 'UNKNOWN')}",
                     ledger_path=lp, log_path=args.log)
                 if st == "registered":
                     added += 1

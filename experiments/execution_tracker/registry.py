@@ -10,8 +10,8 @@ C5 的三条实质规则都依赖本模块提供的字段,而现账本 0/128 行
 而 P3 仅在 S0 合法(§3);历史行全部处于 S1/S2,回填即 rewrite,preflight 必须阻断。
 因此 `registered_at_of()` 返回 (值, 来源),来源标明是字段还是派生,**从不落盘**。
 
-**新登记走 `stamp_new_record()`**,三字段与信号同一次原子操作写入,
-并向 R-015 事件账本追加一条 `register` 记录;账本写不进去 ⇒ 登记失败,
+**新登记走 `register_transaction()`**,三字段与信号在 intent → 投影 → commit
+事务中落地;事件账本写不进去 ⇒ 登记失败,
 不允许产生没有审计轨迹的信号。
 
 不是买卖指令;研究信号,human executes.
@@ -19,6 +19,8 @@ C5 的三条实质规则都依赖本模块提供的字段,而现账本 0/128 行
 import os, re, sys, json, hashlib, datetime, subprocess
 
 SCHEMA_VERSION = "registry/v2"
+REGISTRY_ACTIVATION_DATE = "20260731"
+EVALUATION_SCHEMA = "evaluation/v2"
 LEDGER_FIELDS = ("registered_at", "registered_trade_date", "written_by")
 
 # C5 §3.1:只有允许清单内的可执行文件可以写注册记录
@@ -173,6 +175,13 @@ def stamp_new_record(rec, *, registered_at, script, version, run_id):
     rec["registered_trade_date"] = d
     rec["written_by"] = written_by_stamp(script, version, run_id)
     rec["registry_schema"] = SCHEMA_VERSION
+    seeded = {
+        key: rec.get(key) for key in ("entry_close", "directional_call")
+        if rec.get(key) is not None
+    }
+    if seeded:
+        # 实际投影字段要允许判分 WAL 首次生成,但登记时已经给出的值属于冻结输入。
+        rec["registered_evaluation_seed"] = seeded
     return rec
 
 
@@ -199,11 +208,18 @@ def load_signal_log_strict(path):
 
 def write_signal_log_atomic(path, rows):
     """临时文件 + fsync + os.replace。半程崩溃留下的是旧文件,不是截断的新文件。"""
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(rows, fh, ensure_ascii=False, indent=2)
         fh.flush(); os.fsync(fh.fileno())
     os.replace(tmp, path)
+    # rename 的目录项也要持久化;否则掉电后可能出现“文件内容 fsync 过、名字却没落盘”。
+    dir_fd = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
 
 
 def audit_ledger(path):
@@ -237,8 +253,12 @@ def read_events(ledger_path):
 
 
 def transaction_id_for(signal_id, registered_at, run_id):
-    """确定性 —— 同一次重试必然得到同一个 txn_id,幂等性才有依据。"""
-    return hashlib.sha256(f"{signal_id}|{registered_at}|{run_id}".encode()).hexdigest()[:16]
+    """稳定幂等键。run_id 只作兼容参数,不得参与事务身份。
+
+    同一登记在夜链 R1 崩溃、R2 重试时仍是同一事务;run_id 属运行溯源,
+    若混入幂等键会把恢复变成第二次登记。
+    """
+    return hashlib.sha256(f"{signal_id}|{registered_at}".encode()).hexdigest()[:16]
 
 
 def _txn_state(events):
@@ -261,6 +281,7 @@ def _txn_state(events):
 # 单独保护,不靠指纹。
 MUTABLE_EVALUATION_FIELDS = frozenset({
     "returns", "entry_close", "directional_call",     # backfill 每晚合法写入
+    "evaluation_meta",                                # 判分 WAL 的投影索引
     "registry_txn_id", "record_hash",                 # 事务元数据,不入指纹
 })
 
@@ -308,6 +329,9 @@ def validate_transaction_projection(txn, intent_payload, projection,
             why.append(f"投影 registry_txn_id={projection.get('registry_txn_id')!r} ≠ txn")
         if projection.get("signal_id") != sid:
             why.append("投影与 intent 的 signal_id 不符")
+        for key, value in (saved.get("registered_evaluation_seed") or {}).items():
+            if projection.get(key) != value:
+                why.append(f"登记时冻结的 {key} 被改")
     if commit_payload is None:
         if require_commit:
             why.append("commit 缺失")
@@ -353,9 +377,16 @@ def quarantine_projection(log_path, rows, sid, reason):
     clean = [r for r in rows if r.get("signal_id") != sid]
     qp = log_path + QUARANTINE_SUFFIX
     try:
-        box = json.load(open(qp, encoding="utf-8")) if os.path.exists(qp) else []
-    except (json.JSONDecodeError, OSError):
-        box = []          # 隔离区本身坏了不阻断隔离动作 —— 宁可丢隔离历史不留毒行
+        if os.path.exists(qp):
+            with open(qp, encoding="utf-8") as fh:
+                box = json.load(fh)
+        else:
+            box = []
+    except (json.JSONDecodeError, OSError) as exc:
+        raise LedgerCorrupt(
+            f"隔离区 {qp} 已损坏,拒绝覆盖其审计历史: {exc}") from exc
+    if not isinstance(box, list):
+        raise LedgerCorrupt(f"隔离区 {qp} 顶层不是列表,拒绝覆盖审计历史")
     for r in poison:
         box.append({"quarantined_at": datetime.datetime.now().isoformat(timespec="seconds"),
                     "reason": reason, "record": r})
@@ -395,6 +426,11 @@ def register_transaction(record, *, registered_at, script, version, run_id,
         if _test_transaction_id != txn:
             raise ValueError("_test_transaction_id 与由输入计算出的 txn 不符 —— 拒绝交叉事务")
 
+    candidate = stamp_new_record(record, registered_at=registered_at,
+                                 script=script, version=version, run_id=run_id)
+    candidate["registry_txn_id"] = txn
+    candidate["record_hash"] = record_hash(candidate)
+
     with _signal_lock(log_path) as lf:
         fcntl.flock(lf, fcntl.LOCK_EX)
         try:
@@ -405,6 +441,18 @@ def register_transaction(record, *, registered_at, script, version, run_id,
 
             if txn in aborts:
                 return None, f"refused: transaction {txn} 已被中止(intent 不可用),需人工复核"
+
+            saved_intent = (intents.get(txn) or {}).get("record")
+            if saved_intent is not None:
+                # run_id 是“本次尝试”的溯源,不是研究输入。跨轮重试沿用首次 intent
+                # 的 written_by 戳,其余冻结字段必须完全相同。
+                origin_writer = saved_intent.get("written_by")
+                if isinstance(origin_writer, dict):
+                    candidate["written_by"] = dict(origin_writer)
+                    candidate["record_hash"] = record_hash(candidate)
+                if record_hash(saved_intent) != record_hash(candidate):
+                    raise LedgerCorrupt(
+                        f"txn {txn} 的重试请求改变了冻结输入 —— 不得把旧事务当成新请求的幂等成功")
 
             # 已 commit:投影必须真的在,否则从 intent 重建;重建不了 ⇒ 硬失败
             if txn in commits:
@@ -437,13 +485,9 @@ def register_transaction(record, *, registered_at, script, version, run_id,
             if existing is not None and txn not in intents:
                 return None, f"refused: signal_id {sid} 已登记(非本事务)"
 
-            stamped = ((intents.get(txn) or {}).get("record")
-                       if txn in intents else None)
+            stamped = saved_intent if txn in intents else None
             if stamped is None:
-                stamped = stamp_new_record(record, registered_at=registered_at,
-                                           script=script, version=version, run_id=run_id)
-                stamped["registry_txn_id"] = txn
-                stamped["record_hash"] = record_hash(stamped)
+                stamped = candidate
                 # intent 只在**尚不存在**时写。旧格式 intent(无 record)也已存在,
                 # 重复 append 会撞链层 (kind,id) 唯一性 —— 那是接续,不是新事务。
                 if txn not in intents:
@@ -548,6 +592,355 @@ def recover_pending(ledger_path, log_path, apply=True):
             fcntl.flock(lf, fcntl.LOCK_UN)
 
 
+# ────────────────────────── 判分事务 WAL ──────────────────────────
+EVALUATION_FIELDS = (
+    "signal_id", "horizon", "value", "entry_close", "directional_call",
+    "entry_trade_date", "source_trade_date", "source_close", "algorithm_version",
+)
+
+
+def evaluation_id(evaluation):
+    return f"{evaluation.get('signal_id')}:{evaluation.get('horizon')}"
+
+
+def evaluation_hash(evaluation):
+    payload = {k: evaluation.get(k) for k in EVALUATION_FIELDS}
+    return hashlib.sha256(json.dumps(
+        payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"),
+        allow_nan=False, default=str).encode()).hexdigest()
+
+
+def _validate_evaluation(evaluation):
+    missing = [k for k in EVALUATION_FIELDS if evaluation.get(k) is None]
+    if missing:
+        raise ValueError(f"判分事务缺必填字段: {missing}")
+    if not re.fullmatch(r"\d+d", str(evaluation.get("horizon"))):
+        raise ValueError(f"非法 horizon: {evaluation.get('horizon')!r}")
+    if evaluation.get("directional_call") not in ("constructive", "cautious", "neutral"):
+        raise ValueError(f"非法 directional_call: {evaluation.get('directional_call')!r}")
+    for key in ("entry_trade_date", "source_trade_date"):
+        try:
+            datetime.datetime.strptime(str(evaluation.get(key)), "%Y%m%d")
+        except ValueError as exc:
+            raise ValueError(f"非法 {key}: {evaluation.get(key)!r}") from exc
+    if evaluation["source_trade_date"] < evaluation["entry_trade_date"]:
+        raise ValueError("source_trade_date 早于 entry_trade_date")
+    for key in ("value", "entry_close", "source_close"):
+        value = evaluation.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{key} 必须是有限数值")
+        if not (float("-inf") < float(value) < float("inf")):
+            raise ValueError(f"{key} 不得为 NaN/Inf")
+    if evaluation["entry_close"] <= 0 or evaluation["source_close"] <= 0:
+        raise ValueError("entry_close/source_close 必须为正数")
+
+
+def _registered_horizons(row):
+    raw = row.get("horizon")
+    values = raw if isinstance(raw, list) else [raw]
+    out = set()
+    for value in values:
+        value = str(value or "")
+        matched = re.fullmatch(r"t\+(\d+)", value)
+        out.add(f"{matched.group(1)}d" if matched else value)
+    return out
+
+
+def _validate_evaluation_against_registration(row, evaluation):
+    horizon = str(evaluation["horizon"])
+    allowed = _registered_horizons(row)
+    if horizon not in allowed:
+        raise LedgerCorrupt(
+            f"判分期限 {horizon} 不在登记时冻结的 horizon {sorted(allowed)} 内")
+    registered = row.get("registered_trade_date") or parse_trade_date(row.get("timestamp"))
+    if not registered:
+        raise LedgerCorrupt("判分对象缺可解析的 registered_trade_date")
+    if evaluation["entry_trade_date"] < registered:
+        raise LedgerCorrupt(
+            f"entry_trade_date {evaluation['entry_trade_date']} 早于登记日 {registered}")
+
+
+def _evaluation_states(events):
+    intents, commits, aborts = {}, {}, set()
+    for event in events:
+        kind, eid = event.get("kind"), event.get("id")
+        if kind == "evaluation_intent":
+            intents[eid] = event.get("payload") or {}
+        elif kind == "evaluation_commit":
+            commits[eid] = event.get("payload") or {}
+        elif kind == "evaluation_abort":
+            aborts.add(eid)
+    both = set(commits) & aborts
+    if both:
+        raise LedgerCorrupt(f"判分事务同时有 commit 与 abort: {sorted(both)}")
+    return intents, commits, aborts
+
+
+def _evaluation_from_intent(payload):
+    evaluation = (payload or {}).get("evaluation")
+    if not isinstance(evaluation, dict):
+        raise LedgerCorrupt("evaluation_intent 缺完整可重放 evaluation")
+    _validate_evaluation(evaluation)
+    actual = evaluation_hash(evaluation)
+    if payload.get("evaluation_hash") != actual:
+        raise LedgerCorrupt("evaluation_intent 自报哈希与完整内容重算不符")
+    return evaluation, actual
+
+
+def _validate_evaluation_projection(row, evaluation, expected_hash):
+    horizon = str(evaluation["horizon"])
+    meta = (row.get("evaluation_meta") or {}).get(horizon)
+    reasons = []
+    if (row.get("returns") or {}).get(horizon) != evaluation["value"]:
+        reasons.append("returns 值不符")
+    if row.get("entry_close") != evaluation["entry_close"]:
+        reasons.append("entry_close 不符")
+    if row.get("directional_call") != evaluation["directional_call"]:
+        reasons.append("directional_call 不符")
+    if not isinstance(meta, dict):
+        reasons.append("evaluation_meta 缺失")
+    else:
+        for key in ("entry_trade_date", "source_trade_date", "source_close",
+                    "algorithm_version"):
+            if meta.get(key) != evaluation[key]:
+                reasons.append(f"evaluation_meta.{key} 不符")
+        if meta.get("evaluation_hash") != expected_hash:
+            reasons.append("evaluation_meta.evaluation_hash 不符")
+    return reasons
+
+
+def _apply_evaluation_to_row(row, evaluation, expected_hash):
+    horizon = str(evaluation["horizon"])
+    returns = dict(row.get("returns") or {})
+    meta = dict(row.get("evaluation_meta") or {})
+    returns[horizon] = evaluation["value"]
+    row["returns"] = returns
+    row["entry_close"] = evaluation["entry_close"]
+    row["directional_call"] = evaluation["directional_call"]
+    meta[horizon] = {
+        "evaluation_hash": expected_hash,
+        "entry_trade_date": evaluation["entry_trade_date"],
+        "source_trade_date": evaluation["source_trade_date"],
+        "source_close": evaluation["source_close"],
+        "algorithm_version": evaluation["algorithm_version"],
+        "schema": EVALUATION_SCHEMA,
+    }
+    row["evaluation_meta"] = meta
+
+
+def apply_evaluation_transactions(log_path, ledger_path, evaluations):
+    """判分批事务:intent 全部落链后,投影只原子写一次,最后逐笔 commit。
+
+    已提交判分必须与本次请求及当前投影完全一致;任何冲突在写投影前失败。
+    """
+    import fcntl
+    el = _el()
+    requested = {}
+    shared_by_signal = {}
+    for raw in evaluations:
+        evaluation = {k: raw.get(k) for k in EVALUATION_FIELDS}
+        _validate_evaluation(evaluation)
+        eid = evaluation_id(evaluation)
+        if eid in requested:
+            raise ValueError(f"同一批次重复 evaluation id: {eid}")
+        shared = (evaluation["entry_close"], evaluation["directional_call"],
+                  evaluation["entry_trade_date"])
+        prior = shared_by_signal.setdefault(evaluation["signal_id"], shared)
+        if prior != shared:
+            raise LedgerCorrupt(
+                f"同批次同一信号的共享判分字段冲突: {evaluation['signal_id']} "
+                f"{prior!r} != {shared!r}")
+        requested[eid] = (evaluation, evaluation_hash(evaluation))
+
+    with _signal_lock(log_path) as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        try:
+            events = read_events(ledger_path)
+            intents, commits, aborts = _evaluation_states(events)
+            rows = load_signal_log_strict(log_path)
+            by_sid = {r.get("signal_id"): r for r in rows}
+
+            pending = []
+            for eid, (evaluation, expected_hash) in requested.items():
+                if eid in aborts:
+                    raise LedgerCorrupt(f"判分事务 {eid} 已 abort,拒绝重用")
+                if eid in intents:
+                    saved, saved_hash = _evaluation_from_intent(intents[eid])
+                    if saved_hash != expected_hash:
+                        raise LedgerCorrupt(f"判分事务 {eid} 的重试内容与 intent 不同")
+                if eid in commits:
+                    commit_hash = commits[eid].get("evaluation_hash")
+                    if commit_hash != expected_hash:
+                        raise LedgerCorrupt(f"判分事务 {eid} 已提交另一份结果")
+                    row = by_sid.get(evaluation["signal_id"])
+                    if row is None:
+                        raise LedgerCorrupt(f"判分事务 {eid} 已提交但信号投影缺失")
+                    reasons = _validate_evaluation_projection(row, evaluation, expected_hash)
+                    if reasons:
+                        raise LedgerCorrupt(f"判分事务 {eid} 投影被改: {reasons}")
+                    continue
+                if evaluation["signal_id"] not in by_sid:
+                    raise LedgerCorrupt(f"判分对象不存在: {evaluation['signal_id']}")
+                row = by_sid[evaluation["signal_id"]]
+                _validate_evaluation_against_registration(row, evaluation)
+                horizon = evaluation["horizon"]
+                has_projection = (horizon in (row.get("returns") or {}) or
+                                  horizon in (row.get("evaluation_meta") or {}))
+                if has_projection:
+                    reasons = _validate_evaluation_projection(row, evaluation, expected_hash)
+                    if reasons:
+                        raise LedgerCorrupt(f"判分事务 {eid} 写入前发现冲突投影: {reasons}")
+                if (row.get("entry_close") is not None and
+                        row.get("entry_close") != evaluation["entry_close"]):
+                    raise LedgerCorrupt(f"判分事务 {eid} 会改动其他期限冻结的 entry_close")
+                if (row.get("directional_call") is not None and
+                        row.get("directional_call") != evaluation["directional_call"]):
+                    raise LedgerCorrupt(f"判分事务 {eid} 会改动其他期限冻结的 directional_call")
+                pending.append((eid, evaluation, expected_hash))
+
+            for eid, evaluation, expected_hash in pending:
+                if eid not in intents:
+                    el.append("evaluation_intent", eid, {
+                        "schema": EVALUATION_SCHEMA,
+                        "evaluation": evaluation,
+                        "evaluation_hash": expected_hash,
+                    }, path=ledger_path)
+
+            if pending:
+                for _, evaluation, expected_hash in pending:
+                    _apply_evaluation_to_row(
+                        by_sid[evaluation["signal_id"]], evaluation, expected_hash)
+                write_signal_log_atomic(log_path, rows)
+
+            for eid, evaluation, expected_hash in pending:
+                el.append("evaluation_commit", eid, {
+                    "signal_id": evaluation["signal_id"],
+                    "horizon": evaluation["horizon"],
+                    "evaluation_hash": expected_hash,
+                }, path=ledger_path)
+            return {"committed": len(pending), "idempotent": len(requested) - len(pending)}
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
+
+
+def recover_evaluations(ledger_path, log_path, apply=True):
+    """前滚悬空判分 intent。intent 内容不完整或与现有投影冲突时 fail-closed。"""
+    import fcntl
+    el = _el()
+    with _signal_lock(log_path) as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        try:
+            events = read_events(ledger_path)
+            intents, commits, aborts = _evaluation_states(events)
+            rows = load_signal_log_strict(log_path)
+            by_sid = {r.get("signal_id"): r for r in rows}
+            pending = [eid for eid in intents if eid not in commits and eid not in aborts]
+            changed = False
+            materialized = []
+            for eid in pending:
+                evaluation, expected_hash = _evaluation_from_intent(intents[eid])
+                row = by_sid.get(evaluation["signal_id"])
+                if row is None:
+                    raise LedgerCorrupt(f"悬空判分 {eid} 对应信号不存在")
+                _validate_evaluation_against_registration(row, evaluation)
+                existing_meta = (row.get("evaluation_meta") or {}).get(evaluation["horizon"])
+                if existing_meta:
+                    reasons = _validate_evaluation_projection(row, evaluation, expected_hash)
+                    if reasons:
+                        raise LedgerCorrupt(f"悬空判分 {eid} 与已有投影冲突: {reasons}")
+                elif apply:
+                    if evaluation["horizon"] in (row.get("returns") or {}):
+                        raise LedgerCorrupt(f"悬空判分 {eid} 遇到无 meta 的既有 returns,拒绝覆盖")
+                    if (row.get("entry_close") is not None and
+                            row.get("entry_close") != evaluation["entry_close"]):
+                        raise LedgerCorrupt(f"悬空判分 {eid} 与其他期限 entry_close 冲突")
+                    if (row.get("directional_call") is not None and
+                            row.get("directional_call") != evaluation["directional_call"]):
+                        raise LedgerCorrupt(f"悬空判分 {eid} 与其他期限 directional_call 冲突")
+                    _apply_evaluation_to_row(row, evaluation, expected_hash)
+                    changed = True
+                materialized.append((eid, evaluation, expected_hash))
+            if changed:
+                write_signal_log_atomic(log_path, rows)
+            if apply:
+                for eid, evaluation, expected_hash in materialized:
+                    el.append("evaluation_commit", eid, {
+                        "signal_id": evaluation["signal_id"],
+                        "horizon": evaluation["horizon"],
+                        "evaluation_hash": expected_hash,
+                        "by": "recover_evaluations",
+                    }, path=ledger_path)
+            return {"pending_examined": len(pending), "rolled_forward": len(materialized)}
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
+
+
+def audit_projection_bijection(rows, events):
+    """注册与判分事件到账本投影的双向一致性。返回可读错误列表。"""
+    errors = []
+    intents, commits, aborts = _terminal_states(events)
+    by_sid = {}
+    txn_rows = {}
+    for row in rows:
+        sid = row.get("signal_id")
+        if sid in by_sid:
+            errors.append(f"重复 signal_id: {sid}")
+        by_sid[sid] = row
+        txn = row.get("registry_txn_id")
+        if txn:
+            txn_rows.setdefault(txn, []).append(row)
+        elif row.get("registry_schema") or str(parse_trade_date(row.get("timestamp")) or "") > REGISTRY_ACTIVATION_DATE:
+            errors.append(f"{sid}: 激活日后投影缺注册事务")
+    for txn, txrows in txn_rows.items():
+        if len(txrows) != 1:
+            errors.append(f"{txn}: 对应投影 {len(txrows)} 条")
+            continue
+        if txn not in intents or txn not in commits or txn in aborts:
+            errors.append(f"{txn}: 投影没有唯一 intent+commit")
+            continue
+        cp = _commit_payload(events, txn)
+        ok, why = validate_transaction_projection(
+            txn, intents[txn], txrows[0], cp,
+            require_projection=True, require_commit=True)
+        if not ok:
+            errors.append(f"{txn}: {'; '.join(why)}")
+    for txn in commits:
+        if len(txn_rows.get(txn, [])) != 1:
+            errors.append(f"{txn}: commit 没有唯一投影")
+
+    eval_intents, eval_commits, eval_aborts = _evaluation_states(events)
+    for eid, commit in eval_commits.items():
+        if eid not in eval_intents or eid in eval_aborts:
+            errors.append(f"{eid}: evaluation commit 没有合法 intent")
+            continue
+        try:
+            evaluation, expected_hash = _evaluation_from_intent(eval_intents[eid])
+        except (LedgerCorrupt, ValueError) as exc:
+            errors.append(f"{eid}: {exc}")
+            continue
+        if commit.get("evaluation_hash") != expected_hash:
+            errors.append(f"{eid}: evaluation commit hash 不符")
+        row = by_sid.get(evaluation["signal_id"])
+        if row is None:
+            errors.append(f"{eid}: evaluation 投影信号缺失")
+        else:
+            try:
+                _validate_evaluation_against_registration(row, evaluation)
+            except LedgerCorrupt as exc:
+                errors.append(f"{eid}: {exc}")
+            reasons = _validate_evaluation_projection(row, evaluation, expected_hash)
+            if reasons:
+                errors.append(f"{eid}: {'; '.join(reasons)}")
+    for row in rows:
+        if row.get("registry_schema") != SCHEMA_VERSION:
+            continue
+        for horizon, value in (row.get("returns") or {}).items():
+            eid = f"{row.get('signal_id')}:{horizon}"
+            if eid not in eval_commits:
+                errors.append(f"{eid}: v2 returns 无 evaluation commit ({value})")
+    return errors
+
+
 def selftest():
     """每一条拒绝都必须被证明会触发 —— 只证明"正常路径能过"是不够的。"""
     import tempfile, shutil
@@ -601,7 +994,9 @@ def selftest():
     # ── 严格读写 ──
     d0 = tempfile.mkdtemp()
     try:
-        bad = os.path.join(d0, "bad.json"); open(bad, "w").write("{坏")
+        bad = os.path.join(d0, "bad.json")
+        with open(bad, "w", encoding="utf-8") as fh:
+            fh.write("{坏")
         try:
             load_signal_log_strict(bad); blocked = False
         except LedgerCorrupt:
@@ -609,8 +1004,10 @@ def selftest():
         ck("旧 JSON 损坏 → 报错停机(绝不当空账本)", blocked)
         ck("文件不存在 → 空列表(合法首次)", load_signal_log_strict(os.path.join(d0, "none.json")) == [])
         ap = os.path.join(d0, "a.json"); write_signal_log_atomic(ap, [{"x": 1}])
+        with open(ap, encoding="utf-8") as fh:
+            atomic_rows = json.load(fh)
         ck("原子写:落盘内容正确且无残留 .tmp",
-           json.load(open(ap)) == [{"x": 1}] and not os.path.exists(ap + ".tmp"))
+           atomic_rows == [{"x": 1}] and not os.path.exists(ap + ".tmp"))
 
         # ── 时间判断:正反两组边界,调真函数、用真 git 仓库 ──
         gd = tempfile.mkdtemp()
@@ -619,8 +1016,9 @@ def selftest():
             for k, v in (("user.email", "t@t"), ("user.name", "t")):
                 subprocess.run(["git", "-C", gd, "config", k, v], check=True)
             gl = os.path.join(gd, "led.json")
-            json.dump([{"signal_id": "SIGX", "timestamp": "20260803 15:00"}],
-                      open(gl, "w"), ensure_ascii=False)
+            with open(gl, "w", encoding="utf-8") as fh:
+                json.dump([{"signal_id": "SIGX", "timestamp": "20260803 15:00"}],
+                          fh, ensure_ascii=False)
             subprocess.run(["git", "-C", gd, "add", "-A"], check=True)
             subprocess.run(["git", "-C", gd, "commit", "-qm", "s",
                             "--date=2026-08-03T15:00:00"],
@@ -651,7 +1049,10 @@ def selftest():
             dd = tempfile.mkdtemp()
             return dd, os.path.join(dd, "sig.json"), os.path.join(dd, "event_ledger.jsonl")
         def sids(sp):
-            return [r["signal_id"] for r in (json.load(open(sp)) if os.path.exists(sp) else [])]
+            if not os.path.exists(sp):
+                return []
+            with open(sp, encoding="utf-8") as fh:
+                return [r["signal_id"] for r in json.load(fh)]
         def kinds(lp):
             return [json.loads(l)["kind"] for l in el._read_lines(lp)]
 
@@ -668,7 +1069,8 @@ def selftest():
         register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
                              ledger_path=lp, log_path=sp, **KW)
         L = el._read_lines(lp)                       # 砍掉 commit,保留 intent 与投影
-        open(lp, "w").write(L[0] + "\n")
+        with open(lp, "w", encoding="utf-8") as fh:
+            fh.write(L[0] + "\n")
         el.write_anchor(lp, 1, json.loads(L[0])["hash"])
         txn = transaction_id_for("s2", "20260803 15:00", "r1")
         r = recover_pending(lp, sp)
@@ -691,7 +1093,9 @@ def selftest():
         dd, sp, lp = fresh()
         register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
                              ledger_path=lp, log_path=sp, **KW)
-        L = el._read_lines(lp); open(lp, "w").write(L[0] + "\n")
+        L = el._read_lines(lp)
+        with open(lp, "w", encoding="utf-8") as fh:
+            fh.write(L[0] + "\n")
         el.write_anchor(lp, 1, json.loads(L[0])["hash"])
         rws = load_signal_log_strict(sp); rws[0]["ticker"] = "999999.SZ"
         write_signal_log_atomic(sp, rws)
@@ -709,7 +1113,8 @@ def selftest():
         write_signal_log_atomic(sp, rws)
         rec_e, st_e = register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
                                            ledger_path=lp, log_path=sp, **KW)
-        box = json.load(open(sp + QUARANTINE_SUFFIX))
+        with open(sp + QUARANTINE_SUFFIX, encoding="utf-8") as fh:
+            box = json.load(fh)
         ck("②e 已提交记录被篡改 → 隔离毒行并重建真身",
            st_e.startswith("recovered") and rec_e["ticker"] == "600000.SH"
            and len(box) == 1 and box[0]["record"]["ticker"] == "999999.SZ"
@@ -735,7 +1140,8 @@ def selftest():
            s2.startswith("idempotent") and len(sids(sp)) == 1)
         _, s3 = register_transaction(dict(base), ledger_path=lp, log_path=sp,
                                      **{**KW, "run_id": "r2"})
-        ck("④ 不同 txn 同一 signal_id → 拒绝", "已登记" in s3 and len(sids(sp)) == 1)
+        ck("④ 跨 run_id 重试仍是同一 txn → 幂等",
+           s3.startswith("idempotent") and len(sids(sp)) == 1)
         shutil.rmtree(dd, ignore_errors=True)
 
         dd, sp, lp = fresh()
@@ -794,7 +1200,9 @@ def selftest():
         # 链损坏时拒绝做事务判定
         dd, sp, lp = fresh()
         register_transaction({"signal_id": "z", "ticker": "t"}, ledger_path=lp, log_path=sp, **KW)
-        lines = el._read_lines(lp); open(lp, "w").write(lines[0] + "\n")   # 砍尾
+        lines = el._read_lines(lp)
+        with open(lp, "w", encoding="utf-8") as fh:
+            fh.write(lines[0] + "\n")   # 砍尾
         try:
             register_transaction({"signal_id": "z2", "ticker": "t"},
                                  ledger_path=lp, log_path=sp, **KW); blocked = False

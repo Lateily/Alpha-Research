@@ -15,6 +15,7 @@ watch_dynamic.py — P4 动态盯盘名单(watchlist 不再静态)
 import json
 import os
 import sys
+from nightly_context import bind, generated_at
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "watch_dynamic.json")
@@ -111,11 +112,10 @@ def main():
         print("DATA_BLOCKED: 账本为空,无法构建名单")
         sys.exit(1)
     kept, cut = build(orders, signals, court, momentum)
-    import datetime
-    payload = {"generated_at": datetime.datetime.now().strftime("%Y%m%d %H:%M"),
-               "watch": kept,
-               "truncated": [c["ticker"] for c in cut],
-               "note": "动态盯盘名单;来源=持仓/信号/在册/动量雷达。不是买卖指令。"}
+    payload = bind({"generated_at": generated_at(),
+                    "watch": kept,
+                    "truncated": [c["ticker"] for c in cut],
+                    "note": "动态盯盘名单;来源=持仓/信号/在册/动量雷达。不是买卖指令。"})
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=False, indent=1)
     print(f"## 动态名单({len(kept)} 名,截断 {len(cut)})")

@@ -126,7 +126,8 @@ def scan_dirs(here, sample_dir="samples", report_dir="reports",
         issues.append(f"{signal_log}: 缺失 —— 无法做信号层一致性核对")
     else:
         try:
-            _log = _json.load(open(log_path, encoding="utf-8"))
+            with open(log_path, encoding="utf-8") as _fh:
+                _log = _json.load(_fh)
             sigs = _log if isinstance(_log, list) else _log.get("signals", [])
         except Exception as e:
             issues.append(f"{signal_log}: 解析失败({type(e).__name__})—— 损坏≠空账本")
@@ -143,7 +144,8 @@ def scan_dirs(here, sample_dir="samples", report_dir="reports",
         for f in files[-recent:]:
             fp = _os.path.join(d, f)
             try:
-                obj = _json.load(open(fp, encoding="utf-8"))
+                with open(fp, encoding="utf-8") as _fh:
+                    obj = _json.load(_fh)
             except Exception as e:
                 issues.append(f"{sub}/{f}: 解析失败({type(e).__name__})—— 损坏文件不得放行")
                 continue

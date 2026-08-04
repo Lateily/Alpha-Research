@@ -147,6 +147,8 @@ def build(token):
                              timestamp=f"{trade_date} close (official)")
     sigs = et.make_paper_signals(snap)
     snap["official_sample"] = True
+    snap["run_id"] = os.environ.get("AR_RUN_ID", "STANDALONE")
+    snap["target_trade_date"] = trade_date
     snap["date_consistency_check"] = "passed"
     snap["data_source"] = "tushare:moneyflow_dc+daily+index_daily+moneyflow_mkt_dc"
     for s in sigs:
@@ -163,6 +165,12 @@ def build_signals_manifest(sigs):
     import hashlib as _hl
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import registry as _reg
+    ids = [s.get("signal_id") for s in sigs]
+    missing = [i for i, sid in enumerate(ids) if not sid]
+    duplicates = sorted({sid for sid in ids if sid and ids.count(sid) > 1})
+    if missing or duplicates:
+        raise ValueError(
+            f"信号 manifest 拒绝非双射输入: missing_indexes={missing}, duplicates={duplicates}")
     records = {s["signal_id"]: s for s in sigs}
     fps = {sid: _reg.record_hash(s) for sid, s in records.items()}
     blob = json.dumps({"records": records, "fingerprints": fps},
@@ -202,10 +210,38 @@ def _write_run_target(trade_date, mode):
     """本轮夜链的唯一 target_trade_date(B4)。runner 读它钉死全链日期。"""
     tmp = os.path.join(HERE, "run_target.json.tmp")
     with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump({"trade_date": trade_date, "mode": mode,
+        json.dump({"trade_date": trade_date, "target_trade_date": trade_date, "mode": mode,
+                   "run_id": os.environ.get("AR_RUN_ID", "STANDALONE"),
                    "written_at": time.strftime("%Y%m%d %H:%M:%S")}, fh, ensure_ascii=False)
         fh.flush(); os.fsync(fh.fileno())
     os.replace(tmp, os.path.join(HERE, "run_target.json"))
+
+
+def load_test_snapshot_from_env(env=None, data_root=None):
+    """显式、隔离的测试入口。生产目录即使设置环境变量也拒绝读取 fixture。"""
+    env = os.environ if env is None else env
+    fake = str(env.get("AR_FAKE_SNAPSHOT") or "").strip()
+    if not fake:
+        return None
+    if env.get("AR_TEST_MODE") != "1" or env.get("AR_OFFLINE") != "1":
+        raise PermissionError("AR_FAKE_SNAPSHOT 仅在 AR_TEST_MODE=1 且 AR_OFFLINE=1 时可用")
+    if env.get("AR_NIGHTLY_STAGING") == "1":
+        raise PermissionError("正式夜链 staging 禁止 AR_FAKE_SNAPSHOT 测试缝")
+    root = os.path.realpath(data_root or HERE)
+    cursor = root
+    while True:
+        if os.path.exists(os.path.join(cursor, ".git")):
+            raise PermissionError("测试快照禁止在 git 工作树的真实运行目录启用")
+        parent = os.path.dirname(cursor)
+        if parent == cursor:
+            break
+        cursor = parent
+    with open(fake, encoding="utf-8") as fh:
+        payload = json.load(fh)
+    required = {"trade_date", "snap", "sigs"}
+    if not isinstance(payload, dict) or not required.issubset(payload):
+        raise ValueError(f"测试快照缺字段: {sorted(required - set(payload or {}))}")
+    return payload
 
 
 def append_log(path, sigs, registered_at=None):
@@ -227,7 +263,8 @@ def append_log(path, sigs, registered_at=None):
         ts = registered_at or s.get("timestamp") or s.get("ingested_at")
         _, st = registry.register_transaction(
             s, registered_at=ts, script="run_official_sample.py",
-            version="run_official_sample/v2", run_id=s.get("signal_id", "UNKNOWN"),
+            version="run_official_sample/v2",
+            run_id=os.environ.get("AR_RUN_ID") or f"standalone:{s.get('signal_id', 'UNKNOWN')}",
             ledger_path=lp, log_path=path)
         if st == "registered":
             added += 1
@@ -267,18 +304,20 @@ def selftest():
 def main():
     if "--selftest" in sys.argv:
         sys.exit(0 if selftest() else 1)
-    fake = os.environ.get("AR_FAKE_SNAPSHOT", "").strip()
-    if fake:
+    test_payload = load_test_snapshot_from_env(data_root=HERE)
+    if test_payload is not None:
         # 显式测试缝:进程级测试用канned快照跑完整 main() 路径(含新交易日与对账两条)。
         # B1 的 NameError 逃过全部测试,正因为没有任何测试真正执行过 main()。
-        payload = json.load(open(fake, encoding="utf-8"))
-        trade_date, snap, sigs = payload["trade_date"], payload["snap"], payload["sigs"]
+        trade_date, snap, sigs = (test_payload["trade_date"], test_payload["snap"],
+                                  test_payload["sigs"])
     else:
         token = os.environ.get("TUSHARE_TOKEN", "").strip()
         if not token:
             print("NO TUSHARE_TOKEN — run `source ~/.zprofile` first")
             sys.exit(1)
         trade_date, snap, sigs = build(token)
+    snap["run_id"] = os.environ.get("AR_RUN_ID", "STANDALONE")
+    snap["target_trade_date"] = trade_date
     samples_dir = os.path.join(HERE, "samples")
     os.makedirs(samples_dir, exist_ok=True)
     sample_path = os.path.join(samples_dir, f"{trade_date}.json")
@@ -296,7 +335,8 @@ def main():
         print(f"IDEMPOTENT_SKIP(样本): samples/{trade_date}.json 已存在 —— 不重写样本。")
         print("  但仍按当天样本重建候选信号并做幂等登记对账(缺则补,已有则跳过)。")
         try:
-            prior = json.load(open(sample_path))
+            with open(sample_path, encoding="utf-8") as fh:
+                prior = json.load(fh)
         except (json.JSONDecodeError, OSError) as e:
             print(f"REFUSED: 已存在的样本不可解析 ({e}) —— 不得当作没有,请人工处理。")
             return 1
