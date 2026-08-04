@@ -54,20 +54,42 @@ def preflight_fixture(root: str, signals: list[dict], *, with_ledger: bool = Tru
 
 
 class RegistryBijectionTest(unittest.TestCase):
-    def test_post_activation_legacy_projection_is_rejected(self) -> None:
+    def _bijection_errors(self, root: str) -> list[str]:
+        rows = registry.load_signal_log_strict(os.path.join(root, "paper_signal_log.json"))
+        events = registry.read_events(os.path.join(root, "event_ledger.jsonl"))
+        return registry.audit_projection_bijection(rows, events)
+
+    def test_last_predeployment_day_legacy_projection_is_read_only_compatible(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            preflight_fixture(
+                tmp,
+                [{
+                    "signal_id": "LEGACY_0804",
+                    "ticker": "600000.SH",
+                    "timestamp": "20260804 close",
+                    "horizon": ["1d"],
+                    "returns": {"1d": 1.0},
+                    "directional_call": "constructive",
+                }],
+            )
+            self.assertEqual([], self._bijection_errors(tmp))
+
+    def test_first_wal_day_legacy_projection_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             preflight_fixture(
                 tmp,
                 [{
                     "signal_id": "FORGED_LEGACY",
                     "ticker": "600000.SH",
-                    "timestamp": "20260804 close",
+                    "timestamp": "20260805 close",
                     "horizon": ["1d"],
                     "returns": {"1d": 99.0},
                     "directional_call": "constructive",
                 }],
             )
-            self.assertFalse(nightly.preflight(base=tmp)["pass"])
+            errors = self._bijection_errors(tmp)
+            self.assertEqual(1, len(errors))
+            self.assertIn("WAL 启用后投影缺注册事务", errors[0])
 
     def test_v2_projection_without_intent_and_commit_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -85,7 +107,9 @@ class RegistryBijectionTest(unittest.TestCase):
                     "written_by": {"script": "paper_tracker.py"},
                 }],
             )
-            self.assertFalse(nightly.preflight(base=tmp)["pass"])
+            errors = self._bijection_errors(tmp)
+            self.assertEqual(1, len(errors))
+            self.assertIn("投影没有唯一 intent+commit", errors[0])
 
     def test_idempotent_retry_must_compare_frozen_request(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

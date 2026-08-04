@@ -19,7 +19,12 @@ C5 的三条实质规则都依赖本模块提供的字段,而现账本 0/128 行
 import os, re, sys, json, hashlib, datetime, subprocess
 
 SCHEMA_VERSION = "registry/v2"
-REGISTRY_ACTIVATION_DATE = "20260731"
+# The WAL code did not reach the launchd runtime until after the 2026-08-04
+# close.  Signals through that date are immutable legacy projections: they are
+# readable, but must never be dressed up with reconstructed intent/commit
+# events.  From the next trade date onward, a projection without WAL is a hard
+# consistency failure.
+REGISTRY_LEGACY_CUTOFF_DATE = "20260804"
 EVALUATION_SCHEMA = "evaluation/v2"
 LEDGER_FIELDS = ("registered_at", "registered_trade_date", "written_by")
 
@@ -889,8 +894,9 @@ def audit_projection_bijection(rows, events):
         txn = row.get("registry_txn_id")
         if txn:
             txn_rows.setdefault(txn, []).append(row)
-        elif row.get("registry_schema") or str(parse_trade_date(row.get("timestamp")) or "") > REGISTRY_ACTIVATION_DATE:
-            errors.append(f"{sid}: 激活日后投影缺注册事务")
+        elif (row.get("registry_schema") or
+              str(parse_trade_date(row.get("timestamp")) or "") > REGISTRY_LEGACY_CUTOFF_DATE):
+            errors.append(f"{sid}: WAL 启用后投影缺注册事务")
     for txn, txrows in txn_rows.items():
         if len(txrows) != 1:
             errors.append(f"{txn}: 对应投影 {len(txrows)} 条")
