@@ -1,16 +1,17 @@
-# AI Progress Board Shared Read-Only v2
+# AI Progress Board Shared v2
 
-This document defines the approved shared read path for the team Progress Board.
+This document defines the approved shared path for the team Progress Board.
 
-GitHub Issue #164 remains the only source of truth. The shared page and API only
-render existing `ai-progress.v2` comments.
+GitHub Issue #164 remains the only source of truth. The shared page and API
+render existing `ai-progress.v2` comments. v2.1 can optionally post one standard
+progress comment back to #164 through a server-only endpoint.
 
 ## What v2 Adds
 
-v2 adds a server-side read-only endpoint:
+v2 adds a server-side read endpoint:
 
 ```text
-/api/team-progress
+GET /api/team-progress
 ```
 
 The endpoint reads GitHub Issue #164 comments, extracts fenced
@@ -25,39 +26,88 @@ local watcher:
 ```
 
 The snapshot contract stays at `1.5` because the UI data shape is unchanged.
-`v2` is the deployment mode: shared HTTPS read-only access.
+`v2` is the deployment mode: shared HTTPS read access.
 
 ## Safety Boundary
 
-The endpoint must remain read-only.
+The board must stay inside the progress-log boundary.
 
-- No GitHub write API.
 - No model API.
 - No private chat ingestion.
-- No frontend token.
+- No frontend GitHub token.
+- No free-form bot output posting.
 - No buy, sell, hold, or position sizing output.
 
-The repository is public, so the preferred v2 path is no token plus CDN caching.
-If GitHub authentication is needed for rate limits, the token must be
-fine-grained read-only and must live only in server environment variables:
-
-```text
-GITHUB_TOKEN
-```
-
-or:
+The repository is public, so the preferred read path is no token plus CDN
+caching. If GitHub authentication is needed for rate limits or write access,
+the token must be fine-grained and must live only in server environment
+variables:
 
 ```text
 PROGRESS_GITHUB_TOKEN
 ```
 
-Do not put either value in code, docs, commits, screenshots, or chat.
+`GITHUB_TOKEN` is accepted only as a fallback for existing deployment setups.
+
+Do not put either value in code, docs, commits, screenshots, GitHub comments,
+or chat.
 
 The browser must never receive or store a GitHub token.
 
+## v2.1 Team Write Path
+
+v2.1 adds an optional server-side write endpoint:
+
+```text
+POST /api/team-progress-event
+```
+
+The endpoint posts one standard `ai-progress.v2` comment to GitHub Issue #164.
+It is for team progress logs only. It must not accept free-form bot output,
+private chat transcripts, model API calls, or research conclusions.
+
+Required server environment variables:
+
+```text
+PROGRESS_GITHUB_TOKEN
+PROGRESS_WRITE_KEY
+```
+
+`PROGRESS_GITHUB_TOKEN` is a fine-grained GitHub token with the minimum
+repository permission needed to create issue comments. It must live only in the
+hosting provider's server environment variables.
+
+`PROGRESS_WRITE_KEY` is a separate team posting passphrase. Teammates can enter
+this key in the Progress Board UI when posting a progress event. It is not a
+GitHub token and can be rotated without changing GitHub permissions.
+
+The frontend sends:
+
+```text
+X-Progress-Write-Key: <team posting passphrase>
+```
+
+The frontend never receives `PROGRESS_GITHUB_TOKEN`.
+
+The write endpoint accepts only:
+
+```text
+CLAIM / UPDATE / DONE / BLOCKED / RELEASE
+```
+
+and validates the same team fields used by the read-only board:
+
+```text
+task, human_owner, executor, reviewer, summary, branch, files, pr, next,
+cost_cny, risk
+```
+
+`CLAIM` requires `branch` and at least one repository-relative file or folder
+scope. File scopes cannot be absolute paths and cannot contain `..`.
+
 ## Cache Floor
 
-The shared endpoint sets:
+The read endpoint sets:
 
 ```text
 Cache-Control: s-maxage=30, stale-while-revalidate=60
@@ -65,6 +115,12 @@ Cache-Control: s-maxage=30, stale-while-revalidate=60
 
 Do not lower `s-maxage` below 30 seconds. This protects GitHub rate limits and
 keeps the v2 trial on the free or lowest-cost hosting path.
+
+The write endpoint sets:
+
+```text
+Cache-Control: no-store
+```
 
 ## Configuration
 
@@ -101,17 +157,19 @@ and render:
 
 Refresh no faster than every 30 seconds.
 
-If `ok=false`, show the `error` field and keep the page read-only.
+If `ok=false`, show the `error` field and keep the page usable for viewing the
+last successful state if one exists.
+
+The `/team` route in the Vite frontend reads `GET /api/team-progress` from the
+same origin. It can submit standard progress events through
+`POST /api/team-progress-event`, but it does not read GitHub directly, hold a
+GitHub token, or call model APIs.
 
 Contract fixtures:
 
 - success snapshot: `docs/llm/AI_PROGRESS_SNAPSHOT.example.json`
 - full event/conflict snapshot: `docs/llm/AI_PROGRESS_SNAPSHOT.fixture.json`
 - error snapshot: `docs/llm/AI_PROGRESS_SNAPSHOT.error.example.json`
-
-The `/team` route in the Vite frontend reads `GET /api/team-progress` from the
-same origin. It does not read GitHub directly, hold a token, post comments, or
-call model APIs.
 
 ## Junyan Trial Conditions
 
@@ -121,18 +179,23 @@ actually online for the team, not when this data-layer PR is opened.
 Junyan's dated review checkpoint is 2026-08-14: keep or destroy. Cost must stay
 on the free or lowest-cost hosting path and be reported in the weekly note.
 
+v2.1 write access is optional and can be disabled by omitting
+`PROGRESS_WRITE_KEY` or `PROGRESS_GITHUB_TOKEN`.
+
 ## Local Validation
 
-Syntax-check the endpoint:
+Syntax-check the endpoints:
 
 ```powershell
 node --check api/team-progress.js
+node --check api/team-progress-event.js
 ```
 
-Run the zero-network handler test:
+Run the zero-network handler tests:
 
 ```powershell
 node tests/team-progress-api.test.mjs
+node tests/team-progress-event-api.test.mjs
 ```
 
 Build the app:

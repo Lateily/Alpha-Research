@@ -9,6 +9,7 @@ import {
   GitPullRequest,
   Radio,
   RefreshCw,
+  Send,
   ShieldCheck,
   Clipboard,
   UserRound,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 
 const ENDPOINT = '/api/team-progress';
+const WRITE_ENDPOINT = '/api/team-progress-event';
 const SNAPSHOT_SCHEMA = 'ai-progress.snapshot.v1';
 const CONTRACT_VERSION = '1.5';
 const REFRESH_MS = 30000;
@@ -261,7 +263,7 @@ function FormField({ label, value, onChange, placeholder, textarea = false }) {
   );
 }
 
-function CommentComposer() {
+function CommentComposer({ onSubmitted }) {
   const [form, setForm] = useState({
     event: 'CLAIM',
     task: '',
@@ -276,10 +278,12 @@ function CommentComposer() {
     cost_cny: '0',
     risk: 'none',
   });
-  const [copyMessage, setCopyMessage] = useState('No token, no GitHub write, local generation only.');
+  const [writeKey, setWriteKey] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [copyMessage, setCopyMessage] = useState('No frontend GitHub token. Server writes only standard #164 comments.');
 
   const update = (key, value) => {
-    setCopyMessage('No token, no GitHub write, local generation only.');
+    setCopyMessage('No frontend GitHub token. Server writes only standard #164 comments.');
     setForm((current) => ({ ...current, [key]: value }));
   };
   const comment = useMemo(() => buildProgressComment(form), [form]);
@@ -290,6 +294,31 @@ function CommentComposer() {
       setCopyMessage('Copied. Paste it into GitHub Issue #164.');
     } catch {
       setCopyMessage('Clipboard blocked. Select the generated text and copy it manually.');
+    }
+  };
+
+  const submitComment = async () => {
+    setSubmitting(true);
+    setCopyMessage('Submitting to GitHub Issue #164...');
+    try {
+      const response = await fetch(WRITE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Progress-Write-Key': writeKey,
+        },
+        body: JSON.stringify(form),
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.error || `Submit failed with HTTP ${response.status}.`);
+      }
+      setCopyMessage('Submitted to #164. Refreshing board...');
+      onSubmitted?.();
+    } catch (err) {
+      setCopyMessage(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -339,8 +368,27 @@ function CommentComposer() {
           placeholder="Next reviewer or next action."
           textarea
         />
+        <FormField
+          label="Team write key"
+          value={writeKey}
+          onChange={setWriteKey}
+          placeholder="PROGRESS_WRITE_KEY, not a GitHub token"
+        />
         <textarea value={comment} readOnly style={styles.commentBox} aria-label="Generated GitHub comment" />
         <div style={styles.composerActions}>
+          <button
+            type="button"
+            onClick={submitComment}
+            disabled={submitting}
+            style={{
+              ...styles.submitButton,
+              opacity: submitting ? 0.65 : 1,
+              cursor: submitting ? 'wait' : 'pointer',
+            }}
+          >
+            <Send size={15} />
+            {submitting ? 'Submitting' : 'Submit to #164'}
+          </button>
           <button type="button" onClick={copyComment} style={styles.copyButton}>
             <Clipboard size={15} />
             Copy comment
@@ -455,7 +503,7 @@ export default function TeamProgressPage() {
           <SummaryTile icon={AlertTriangle} label="Conflicts" value={summary.conflicts} tone={summary.conflicts ? palette.red : palette.green} />
         </section>
 
-        <CommentComposer />
+        <CommentComposer onSubmitted={() => loadSnapshot({ quiet: true })} />
 
         <section style={styles.columns}>
           <section style={styles.panel}>
@@ -777,6 +825,20 @@ const styles = {
     borderRadius: 6,
     padding: '8px 12px',
     background: palette.blue,
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 800,
+    cursor: 'pointer',
+  },
+  submitButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 7,
+    minHeight: 38,
+    border: `1px solid ${palette.green}55`,
+    borderRadius: 6,
+    padding: '8px 12px',
+    background: palette.green,
     color: '#fff',
     fontSize: 13,
     fontWeight: 800,
