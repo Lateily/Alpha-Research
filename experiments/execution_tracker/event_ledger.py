@@ -28,7 +28,10 @@ DEFAULT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "event_l
 ANCHOR_SUFFIX = ".anchor.json"
 HASHED_FIELDS = ("seq", "ts", "kind", "id", "payload", "prev")
 ALLOWED_FIELDS = set(HASHED_FIELDS) | {"hash"}
-UNIQUE_KINDS = {"register", "genesis"}      # 这些 kind 的 (kind,id) 全账本唯一
+# 这些 kind 的 (kind,id) 全账本唯一。事务三段以 transaction_id 为 id,
+# 故"同一 txn 重试"在链层就被拒,不依赖上层记得判重。
+UNIQUE_KINDS = {"register", "genesis",
+                "register_intent", "register_commit", "register_abort"}
 
 
 def canonical(obj):

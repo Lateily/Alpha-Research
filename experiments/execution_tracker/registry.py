@@ -16,7 +16,7 @@ C5 的三条实质规则都依赖本模块提供的字段,而现账本 0/128 行
 
 不是买卖指令;研究信号,human executes.
 """
-import os, re, sys, json, datetime, subprocess
+import os, re, sys, json, hashlib, datetime, subprocess
 
 SCHEMA_VERSION = "registry/v2"
 LEDGER_FIELDS = ("registered_at", "registered_trade_date", "written_by")
@@ -123,8 +123,15 @@ def registered_at_of(sig, ledger_path=None):
         return out
     claimed = out["value"][:8]
     out["anchor_git_date"] = g
-    out["value"] = min(claimed, g)
-    out["backdated"] = claimed > g            # 自称早于首次入库 ⇒ 回填过去日期
+    # 风险方向是 claimed **早于** 首次入库 —— 今天登记却谎称上月,
+    # 结果已经可见却算「前瞻」。初版写成 claimed > g,方向反了,抓不到这个攻击;
+    # 且 anchor 取 min 会选中伪造值本身,等于替攻击者背书。
+    out["backdated"] = claimed < g
+    # 前瞻性锚点:不得早于它真正出现在 git 的那天
+    out["prospective_from"] = max(claimed, g)
+    # 证据准入锚点保持保守(取早者)—— 它限制的是「能引用哪些证据」,越早越严
+    out["evidence_anchor"] = min(claimed, g)
+    out["value"] = out["prospective_from"]
     return out
 
 
@@ -144,13 +151,14 @@ def ledger_path_for(signal_log_path):
     return os.path.join(os.path.dirname(os.path.abspath(signal_log_path)), "event_ledger.jsonl")
 
 
-def stamp_new_record(rec, *, registered_at, script, version, run_id,
-                     ledger_path=None, ledger_append=None):
+def stamp_new_record(rec, *, registered_at, script, version, run_id):
     """给**新**登记记录打 schema v2 三字段,并向 R-015 事件账本追加 register 事件。
 
     拒绝:①registered_at 为空(不许本模块发明时间戳)②记录已有任一 schema v2 字段
     (那是既有记录,再写即 rewrite,C5 §2.2)③写入者不在允许清单
-    ④事件账本写入失败(不允许产生无审计轨迹的信号)。
+    **纯函数:只打戳,不碰任何账本。** 事务编排在 register_transaction()。
+    (初版有 ledger_append=False 这个公开旁路,等于给调用方一个"跳过审计"的开关;
+     已删除 —— 想不写账本的唯一合法方式是不走登记。)
     """
     if not str(registered_at or "").strip():
         raise ValueError("registered_at 必填 —— 本模块从不发明时间戳")
@@ -165,24 +173,161 @@ def stamp_new_record(rec, *, registered_at, script, version, run_id,
     rec["registered_trade_date"] = d
     rec["written_by"] = written_by_stamp(script, version, run_id)
     rec["registry_schema"] = SCHEMA_VERSION
-
-    appender = ledger_append if ledger_append is not None else _make_appender(ledger_path)
-    if appender is not False:
-        appender("register", rec.get("signal_id") or "UNKNOWN",
-                 {"ticker": rec.get("ticker"), "setup_type": rec.get("setup_type"),
-                  "registered_at": rec["registered_at"],
-                  "registered_trade_date": d, "written_by": rec["written_by"]})
     return rec
 
 
-def _make_appender(ledger_path):
-    if ledger_path is None:
-        raise ValueError("ledger_path 必填 —— 不得隐式落到仓库里那条真链")
-    def _append(kind, rec_id, payload):
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        import event_ledger
-        return event_ledger.append(kind, rec_id, payload, path=ledger_path)
-    return _append
+# ────────────────────────── 三段式登记事务 ──────────────────────────
+def _el():
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import event_ledger
+    return event_ledger
+
+
+def read_events(ledger_path):
+    """读事件账本。链损坏 ⇒ 抛错停机(不得在坏链上继续做事务判定)。"""
+    el = _el()
+    st = el.verify(ledger_path)
+    if not st["ok"]:
+        raise LedgerCorrupt(f"事件链损坏,拒绝进行事务判定: {st['errors'][:2]}")
+    return [json.loads(ln) for ln in el._read_lines(ledger_path)]
+
+
+def transaction_id_for(signal_id, registered_at, run_id):
+    """确定性 —— 同一次重试必然得到同一个 txn_id,幂等性才有依据。"""
+    return hashlib.sha256(f"{signal_id}|{registered_at}|{run_id}".encode()).hexdigest()[:16]
+
+
+def _txn_state(events):
+    intents, commits, aborts = {}, set(), set()
+    for e in events:
+        k, i = e.get("kind"), e.get("id")
+        if k == "register_intent":
+            intents[i] = e.get("payload") or {}
+        elif k == "register_commit":
+            commits.add(i)
+        elif k == "register_abort":
+            aborts.add(i)
+    return intents, commits, aborts
+
+
+def register_transaction(record, *, registered_at, script, version, run_id,
+                         ledger_path, log_path, transaction_id=None):
+    """三段式:register_intent → 原子写信号投影 → register_commit。
+
+    幂等:同一 (transaction_id, signal_id) 重试不重复登记 —— 已 commit 直接返回,
+    intent 已存在则续做而非报错。
+    崩溃可恢复:任何一段之后中断,recover_pending() 都能判定并前滚或中止。
+    并发:全程持信号账本的排他 flock。
+    """
+    import fcntl
+    el = _el()
+    sid = record.get("signal_id")
+    if not sid:
+        raise ValueError("signal_id 必填")
+    written_by_stamp(script, version, run_id)          # 写入者身份先校验,不合格立刻拒
+    txn = transaction_id or transaction_id_for(sid, registered_at, run_id)
+
+    os.makedirs(os.path.dirname(os.path.abspath(log_path)) or ".", exist_ok=True)
+    with open(log_path + ".lock", "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        try:
+            events = read_events(ledger_path)
+            intents, commits, aborts = _txn_state(events)
+            rows = load_signal_log_strict(log_path)
+            present = any(r.get("signal_id") == sid for r in rows)
+
+            if txn in commits:
+                return (next((r for r in rows if r.get("signal_id") == sid), None),
+                        "idempotent: already committed")
+            if txn in aborts:
+                return None, f"refused: transaction {txn} 已被中止,不得复用"
+            if present and txn not in intents:
+                # 投影已有该信号,却不是本事务写的 ⇒ 另一次登记已完成
+                return None, f"refused: signal_id {sid} 已登记(非本事务)"
+
+            if txn not in intents:
+                el.append("register_intent", txn,
+                          {"signal_id": sid, "ticker": record.get("ticker"),
+                           "registered_at": registered_at, "log_path": os.path.basename(log_path),
+                           "written_by": written_by_stamp(script, version, run_id)},
+                          path=ledger_path)
+
+            if not present:
+                stamped = stamp_new_record(record, registered_at=registered_at,
+                                           script=script, version=version, run_id=run_id)
+                rows = load_signal_log_strict(log_path)          # 锁内重读,避免用陈旧快照
+                if any(r.get("signal_id") == sid for r in rows):
+                    stamped = next(r for r in rows if r.get("signal_id") == sid)
+                else:
+                    rows.append(stamped)
+                    write_signal_log_atomic(log_path, rows)
+            else:
+                stamped = next(r for r in rows if r.get("signal_id") == sid)
+
+            el.append("register_commit", txn, {"signal_id": sid}, path=ledger_path)
+            return stamped, "registered"
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
+
+
+def recover_pending(ledger_path, log_path, apply=True):
+    """扫描 intent 无 commit/abort 的孤立事务,按投影是否落盘前滚或中止。**幂等。**
+
+    投影在 ⇒ 补 commit(前滚,信号是真的,只是 commit 那一步没写成)
+    投影不在 ⇒ 写 abort(该 intent 作废,不留悬空事务)
+    """
+    el = _el()
+    events = read_events(ledger_path)
+    intents, commits, aborts = _txn_state(events)
+    rows = load_signal_log_strict(log_path)
+    have = {r.get("signal_id") for r in rows}
+    out = {"rolled_forward": [], "aborted": [], "pending_examined": 0}
+    for txn, payload in intents.items():
+        if txn in commits or txn in aborts:
+            continue
+        out["pending_examined"] += 1
+        sid = payload.get("signal_id")
+        if sid in have:
+            if apply:
+                el.append("register_commit", txn, {"signal_id": sid, "by": "recover_pending"},
+                          path=ledger_path)
+            out["rolled_forward"].append(txn)
+        else:
+            if apply:
+                el.append("register_abort", txn,
+                          {"signal_id": sid, "reason": "intent 无投影 —— 崩溃于投影写入之前"},
+                          path=ledger_path)
+            out["aborted"].append(txn)
+    return out
+
+
+class LedgerCorrupt(Exception):
+    """账本不可解析。**绝不降级为空账本** —— 那会让历史信号静默消失,
+    而下一次写入把空账本当成事实落盘,损失不可逆。"""
+
+
+def load_signal_log_strict(path):
+    """读信号账本。不存在 ⇒ 空列表(合法首次);存在但不可解析 ⇒ 抛错停机。"""
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (json.JSONDecodeError, OSError) as e:
+        raise LedgerCorrupt(f"{path} 不可解析 ({e}) —— fail-closed,不得当作空账本") from e
+    rows = data if isinstance(data, list) else data.get("signals", data.get("log"))
+    if rows is None or not isinstance(rows, list):
+        raise LedgerCorrupt(f"{path} 结构非预期(既非列表也无 signals/log 键)—— fail-closed")
+    return rows
+
+
+def write_signal_log_atomic(path, rows):
+    """临时文件 + fsync + os.replace。半程崩溃留下的是旧文件,不是截断的新文件。"""
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(rows, fh, ensure_ascii=False, indent=2)
+        fh.flush(); os.fsync(fh.fileno())
+    os.replace(tmp, path)
 
 
 def audit_ledger(path):
@@ -231,57 +376,149 @@ def selftest():
     ck("允许清单内 → 通过", written_by_stamp("paper_tracker.py", "2", "r1")["script"] == "paper_tracker.py")
 
     base = {"signal_id": "s1", "ticker": "000001.SZ", "setup_type": "x"}
-    got = stamp_new_record(base, registered_at="20260803 15:00", script="registry_selftest",
-                           version="1", run_id="r1", ledger_append=False)
+    KW = dict(registered_at="20260803 15:00", script="paper_tracker.py",
+              version="v2", run_id="r1")
+    got = stamp_new_record(dict(base), **KW)
     ck("新登记三字段齐备", all(got.get(f) for f in LEDGER_FIELDS))
     ck("registered_trade_date 由 registered_at 派生", got["registered_trade_date"] == "20260803")
 
-    # 断言必须指认**具体哪道闸门**拦住的 —— 否则空值被下游"不可解析"接住时,
-    # 这条断言照样绿,而它声称测的那道闸门已经被拆了(实测:短路它 → 转红 0 条)。
+    # 断言必须指认**具体哪道闸门** —— 否则空值被下游『不可解析』接住时,
+    # 这条断言照样绿,而它声称测的那道门已经被拆了(实测:短路它 → 转红 0 条)。
     for name, kw, want in (
             ("registered_at 为空 → 被『必填』闸门拦住", dict(registered_at=""), "必填"),
             ("registered_at 不可解析 → 被『交易日解析』闸门拦住", dict(registered_at="昨天"), "不可解析")):
         try:
-            stamp_new_record(base, script="registry_selftest", version="1", run_id="r1",
-                             ledger_append=False, **kw)
-            hit = ""
+            stamp_new_record(dict(base), **{**KW, **kw}); hit = ""
         except ValueError as e:
             hit = str(e)
         ck(name, want in hit)
     try:
-        stamp_new_record(got, registered_at="20260803 15:00", script="registry_selftest",
-                         version="1", run_id="r1", ledger_append=False); blocked = False
+        stamp_new_record(got, **KW); blocked = False
     except ValueError:
         blocked = True
     ck("已有 schema v2 字段再写 → 拒绝(rewrite)", blocked)
 
-    # 事件账本写不进去 ⇒ 登记必须失败,不允许无审计轨迹的信号
-    def boom(*a, **k):
-        raise IOError("ledger down")
-    try:
-        stamp_new_record(base, registered_at="20260803 15:00", script="registry_selftest",
-                         version="1", run_id="r1", ledger_append=boom); blocked = False
-    except IOError:
-        blocked = True
-    ck("事件账本写入失败 → 登记失败(不产生无审计信号)", blocked)
-
-    # 真实追加到临时事件账本
+    # ── 严格读写 ──
     d0 = tempfile.mkdtemp()
     try:
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        import event_ledger
-        lp = os.path.join(d0, "t.jsonl")
-        stamp_new_record(base, registered_at="20260803 15:00", script="registry_selftest",
-                         version="1", run_id="r1", ledger_path=lp)
-        st = event_ledger.verify(lp)
-        ck("register 事件真的落进 R-015 链", st["ok"] and st["n"] == 1)
+        bad = os.path.join(d0, "bad.json"); open(bad, "w").write("{坏")
         try:
-            stamp_new_record({"signal_id": "s9"}, registered_at="20260803 15:00",
-                             script="registry_selftest", version="1", run_id="r9")
-            blocked = False
-        except ValueError as e:
-            blocked = "ledger_path 必填" in str(e)
-        ck("不给 ledger_path → 拒绝(不得隐式写真链)", blocked)
+            load_signal_log_strict(bad); blocked = False
+        except LedgerCorrupt:
+            blocked = True
+        ck("旧 JSON 损坏 → 报错停机(绝不当空账本)", blocked)
+        ck("文件不存在 → 空列表(合法首次)", load_signal_log_strict(os.path.join(d0, "none.json")) == [])
+        ap = os.path.join(d0, "a.json"); write_signal_log_atomic(ap, [{"x": 1}])
+        ck("原子写:落盘内容正确且无残留 .tmp",
+           json.load(open(ap)) == [{"x": 1}] and not os.path.exists(ap + ".tmp"))
+
+        # ── 时间判断:正反两组边界,调真函数、用真 git 仓库 ──
+        gd = tempfile.mkdtemp()
+        try:
+            subprocess.run(["git", "init", "-q", gd], check=True)
+            for k, v in (("user.email", "t@t"), ("user.name", "t")):
+                subprocess.run(["git", "-C", gd, "config", k, v], check=True)
+            gl = os.path.join(gd, "led.json")
+            json.dump([{"signal_id": "SIGX", "timestamp": "20260803 15:00"}],
+                      open(gl, "w"), ensure_ascii=False)
+            subprocess.run(["git", "-C", gd, "add", "-A"], check=True)
+            subprocess.run(["git", "-C", gd, "commit", "-qm", "s",
+                            "--date=2026-08-03T15:00:00"],
+                           check=True, env={**os.environ,
+                                            "GIT_COMMITTER_DATE": "2026-08-03T15:00:00"})
+            gday = first_git_appearance("SIGX", gl)
+            ck("首次 git 出现日可取到", gday == "20260803")
+            # 反例:今天登记却谎称上月 —— 结果已可见,却会被算成「前瞻」
+            neg = registered_at_of({"signal_id": "SIGX", "timestamp": "20260701 15:00"}, gl)
+            ck("反例 claimed<git → backdated=True", neg["backdated"] is True)
+            ck("反例 前瞻锚点取晚者(不替伪造值背书)", neg["prospective_from"] == "20260803")
+            ck("反例 证据锚点取早者(限制可引用证据,越早越严)", neg["evidence_anchor"] == "20260701")
+            # 正例:如实登记
+            pos = registered_at_of({"signal_id": "SIGX", "timestamp": "20260803 15:00"}, gl)
+            ck("正例 claimed==git → backdated=False", pos["backdated"] is False)
+            # 边界:claimed 晚于 git(补登,不是回填风险)
+            late = registered_at_of({"signal_id": "SIGX", "timestamp": "20260905 15:00"}, gl)
+            ck("边界 claimed>git → 非 backdated(补登不是倒填)", late["backdated"] is False)
+            # 取不到 git 日期时不得当作干净
+            unk = registered_at_of({"signal_id": "NOPE", "timestamp": "20260701 15:00"}, gl)
+            ck("取不到 git 日期 → backdated=UNKNOWN(不判干净)", unk["backdated"] == "UNKNOWN")
+        finally:
+            shutil.rmtree(gd, ignore_errors=True)
+
+        # ── 三段式事务:六个场景 ──
+        el = _el()
+        def fresh():
+            dd = tempfile.mkdtemp()
+            return dd, os.path.join(dd, "sig.json"), os.path.join(dd, "event_ledger.jsonl")
+        def sids(sp):
+            return [r["signal_id"] for r in (json.load(open(sp)) if os.path.exists(sp) else [])]
+        def kinds(lp):
+            return [json.loads(l)["kind"] for l in el._read_lines(lp)]
+
+        dd, sp, lp = fresh()
+        txn = transaction_id_for("s1", "20260803 15:00", "r1")
+        el.append("register_intent", txn, {"signal_id": "s1"}, path=lp)
+        r = recover_pending(lp, sp)
+        ck("① intent 后中断 → 恢复判 abort(投影没写成)",
+           r["aborted"] == [txn] and "register_abort" in kinds(lp))
+        shutil.rmtree(dd, ignore_errors=True)
+
+        dd, sp, lp = fresh()
+        txn = transaction_id_for("s2", "20260803 15:00", "r1")
+        el.append("register_intent", txn, {"signal_id": "s2"}, path=lp)
+        write_signal_log_atomic(sp, [stamp_new_record({"signal_id": "s2"}, **KW)])
+        r = recover_pending(lp, sp)
+        ck("② 投影已写 commit 未写 → 恢复前滚", r["rolled_forward"] == [txn])
+        ck("②b 恢复幂等(再跑一次无待处理)", recover_pending(lp, sp)["pending_examined"] == 0)
+        shutil.rmtree(dd, ignore_errors=True)
+
+        dd, sp, lp = fresh()
+        register_transaction(dict(base), ledger_path=lp, log_path=sp, **KW)
+        _, s2 = register_transaction(dict(base), ledger_path=lp, log_path=sp, **KW)
+        ck("③ 同一 txn 重试 → 幂等,不重复登记",
+           s2.startswith("idempotent") and len(sids(sp)) == 1)
+        _, s3 = register_transaction(dict(base), ledger_path=lp, log_path=sp,
+                                     **{**KW, "run_id": "r2"})
+        ck("④ 不同 txn 同一 signal_id → 拒绝", "已登记" in s3 and len(sids(sp)) == 1)
+        shutil.rmtree(dd, ignore_errors=True)
+
+        dd, sp, lp = fresh()
+        txn = transaction_id_for("s5", "20260803 15:00", "r1")
+        el.append("register_intent", txn, {"signal_id": "s5"}, path=lp)
+        _, s5 = register_transaction({"signal_id": "s5", "ticker": "t"},
+                                     ledger_path=lp, log_path=sp, **KW)
+        ck("⑤ 中断后重试(非恢复)→ 续做,只有一条 intent",
+           s5 == "registered" and len(sids(sp)) == 1 and kinds(lp).count("register_intent") == 1)
+        shutil.rmtree(dd, ignore_errors=True)
+
+        import concurrent.futures as cf
+        for label, mk, want in (("同一 signal_id", lambda i: {"signal_id": "same", "ticker": "t"}, 1),
+                                ("不同 signal_id", lambda i: {"signal_id": f"c{i}", "ticker": "t"}, 8)):
+            dd, sp, lp = fresh()
+            def go(i):
+                try:
+                    return register_transaction(mk(i), ledger_path=lp, log_path=sp,
+                                                **{**KW, "run_id": f"r{i}"})[1]
+                except Exception as e:
+                    return f"ERR {e}"
+            with cf.ThreadPoolExecutor(8) as ex:
+                list(ex.map(go, range(8)))
+            n = sids(sp)
+            ck(f"⑥ 并发 {label} ×8 → {want} 条且无重复",
+               len(n) == want and len(set(n)) == want)
+            shutil.rmtree(dd, ignore_errors=True)
+
+        # 链损坏时拒绝做事务判定
+        dd, sp, lp = fresh()
+        register_transaction({"signal_id": "z", "ticker": "t"}, ledger_path=lp, log_path=sp, **KW)
+        lines = el._read_lines(lp); open(lp, "w").write(lines[0] + "\n")   # 砍尾
+        try:
+            register_transaction({"signal_id": "z2", "ticker": "t"},
+                                 ledger_path=lp, log_path=sp, **KW); blocked = False
+        except Exception:
+            blocked = True
+        ck("链被砍尾 → 拒绝继续做事务", blocked)
+        shutil.rmtree(dd, ignore_errors=True)
     finally:
         shutil.rmtree(d0, ignore_errors=True)
 

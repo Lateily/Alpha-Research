@@ -123,21 +123,21 @@ def register_research_signal(*, ticker, name, setup_type, line, market_state,
         "human_status":   "not_executed",
         "outcome_status": "pending",
     }
-    # ── R-014 schema v2:三字段与信号同一次原子操作写入,并落 R-015 事件账本 ──
-    # C5 §4.1/§4.3/§3.1 都依赖这三字段;账本写不进去 ⇒ 登记失败,
-    # 不允许产生没有审计轨迹的信号。
+    # ── R-014 三段式登记事务 ──
+    # register_intent → 原子写信号投影 → register_commit。
+    # 事务接管信号账本的写入(临时文件+fsync+原子替换),中途崩溃可检测、
+    # 可由 recover_pending() 前滚或中止,同一 txn 重试幂等。
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import registry
-        record = registry.stamp_new_record(
+        record, txn_status = registry.register_transaction(
             record, registered_at=registered_at, script="paper_tracker.py",
             version="paper_tracker/v2", run_id=sid,
-            ledger_path=registry.ledger_path_for(log_path))
+            ledger_path=registry.ledger_path_for(log_path), log_path=log_path)
     except Exception as exc:                     # noqa: BLE001 — fail-closed
-        return None, f"refused: R-014 注册打戳失败 ({exc})"
-
-    log.append(record)
-    _dump(log_path, log)
+        return None, f"refused: R-014 登记事务失败 ({exc})"
+    if record is None:
+        return None, txn_status
     return record, "registered"
 
 
