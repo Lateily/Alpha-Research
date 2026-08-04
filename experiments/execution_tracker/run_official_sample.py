@@ -147,6 +147,8 @@ def build(token):
                              timestamp=f"{trade_date} close (official)")
     sigs = et.make_paper_signals(snap)
     snap["official_sample"] = True
+    snap["run_id"] = os.environ.get("AR_RUN_ID", "STANDALONE")
+    snap["target_trade_date"] = trade_date
     snap["date_consistency_check"] = "passed"
     snap["data_source"] = "tushare:moneyflow_dc+daily+index_daily+moneyflow_mkt_dc"
     for s in sigs:
@@ -155,14 +157,122 @@ def build(token):
     return trade_date, snap, sigs
 
 
-def append_log(path, sigs):
-    log = json.load(open(path)) if os.path.exists(path) else []
-    seen = {s["signal_id"] for s in log}
-    added = [s for s in sigs if s["signal_id"] not in seen]
-    log.extend(added)
-    with open(path, "w") as fh:
-        json.dump(log, fh, ensure_ascii=False, indent=2)
-    return len(added), len(log)
+def build_signals_manifest(sigs):
+    """写 sample 时冻结**完整信号正文** + 逐条指纹 + 总哈希。
+
+    只存指纹不够(B7):manifest 缺失或旧格式时,旧日期的信号会被**当前算法**
+    重新生成 —— 事后污染。冻结完整正文后,对账只能用当时的原文,永不重算。"""
+    import hashlib as _hl
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import registry as _reg
+    ids = [s.get("signal_id") for s in sigs]
+    missing = [i for i, sid in enumerate(ids) if not sid]
+    duplicates = sorted({sid for sid in ids if sid and ids.count(sid) > 1})
+    if missing or duplicates:
+        raise ValueError(
+            f"信号 manifest 拒绝非双射输入: missing_indexes={missing}, duplicates={duplicates}")
+    records = {s["signal_id"]: s for s in sigs}
+    fps = {sid: _reg.record_hash(s) for sid, s in records.items()}
+    blob = json.dumps({"records": records, "fingerprints": fps},
+                      sort_keys=True, separators=(",", ":"), default=str).encode()
+    return {"records": records, "fingerprints": fps,
+            "manifest_hash": _hl.sha256(blob).hexdigest()}
+
+
+def trusted_sample_signals(prior, fresh_sigs=None):
+    """对账只认 manifest 里冻结的完整正文。返回 (sigs, why, ok)。
+
+    B7 修正:manifest 缺失/旧格式/哈希不符 ⇒ **一律拒绝(ok=False),不回退重算** ——
+    上一版回退到 fresh_sigs,对旧日期就是拿当前算法重造历史信号,事后污染。
+    fresh_sigs 参数仅为兼容旧调用签名保留,不再作为回退来源。"""
+    import hashlib as _hl
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import registry as _reg
+    man = prior.get("signals_manifest")
+    if not man or "records" not in man:
+        return [], "sample 无含完整正文的 manifest —— 拒绝对账,需人工 migration", False
+    records = man.get("records") or {}
+    fps = man.get("fingerprints") or {}
+    blob = json.dumps({"records": records, "fingerprints": fps},
+                      sort_keys=True, separators=(",", ":"), default=str).encode()
+    if _hl.sha256(blob).hexdigest() != man.get("manifest_hash"):
+        return [], "manifest_hash 与正文重算不符 —— sample 被改动,拒绝对账", False
+    ok = []
+    for sid, s in sorted(records.items()):
+        if _reg.record_hash(s) == fps.get(sid):
+            ok.append(s)
+        else:
+            return [], f"manifest 内 {sid} 指纹自不一致 —— 拒绝对账", False
+    return ok, f"manifest 校验通过({len(ok)} 条,取冻结正文,不采 paper_signals 字段)", True
+
+
+def _write_run_target(trade_date, mode):
+    """本轮夜链的唯一 target_trade_date(B4)。runner 读它钉死全链日期。"""
+    tmp = os.path.join(HERE, "run_target.json.tmp")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump({"trade_date": trade_date, "target_trade_date": trade_date, "mode": mode,
+                   "run_id": os.environ.get("AR_RUN_ID", "STANDALONE"),
+                   "written_at": time.strftime("%Y%m%d %H:%M:%S")}, fh, ensure_ascii=False)
+        fh.flush(); os.fsync(fh.fileno())
+    os.replace(tmp, os.path.join(HERE, "run_target.json"))
+
+
+def load_test_snapshot_from_env(env=None, data_root=None):
+    """显式、隔离的测试入口。生产目录即使设置环境变量也拒绝读取 fixture。"""
+    env = os.environ if env is None else env
+    fake = str(env.get("AR_FAKE_SNAPSHOT") or "").strip()
+    if not fake:
+        return None
+    if env.get("AR_TEST_MODE") != "1" or env.get("AR_OFFLINE") != "1":
+        raise PermissionError("AR_FAKE_SNAPSHOT 仅在 AR_TEST_MODE=1 且 AR_OFFLINE=1 时可用")
+    if env.get("AR_NIGHTLY_STAGING") == "1":
+        raise PermissionError("正式夜链 staging 禁止 AR_FAKE_SNAPSHOT 测试缝")
+    root = os.path.realpath(data_root or HERE)
+    cursor = root
+    while True:
+        if os.path.exists(os.path.join(cursor, ".git")):
+            raise PermissionError("测试快照禁止在 git 工作树的真实运行目录启用")
+        parent = os.path.dirname(cursor)
+        if parent == cursor:
+            break
+        cursor = parent
+    with open(fake, encoding="utf-8") as fh:
+        payload = json.load(fh)
+    required = {"trade_date", "snap", "sigs"}
+    if not isinstance(payload, dict) or not required.issubset(payload):
+        raise ValueError(f"测试快照缺字段: {sorted(required - set(payload or {}))}")
+    return payload
+
+
+def append_log(path, sigs, registered_at=None):
+    """经 R-014 三段式登记事务写入。**夜链真正的入口就是这里** ——
+    #217 初版接的是 execution_tracker.py --input,而 run_nightly.py:36 调的是本文件,
+    于是正式夜链根本没接上 WAL(裸 json.load/dump 直写)。
+
+    开跑前先 recover_pending 收拾上次崩溃的悬空事务;逐条独立事务,
+    任何一条失败都不静默吞掉,由调用方决定退出码。
+    """
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import registry
+    lp = registry.ledger_path_for(path)
+    rec = registry.recover_pending(lp, path)
+    if rec["pending_examined"]:
+        print(f"[R-014] recovered pending txns: {rec}")
+    added, failed = 0, []
+    for s in sigs:
+        ts = registered_at or s.get("timestamp") or s.get("ingested_at")
+        _, st = registry.register_transaction(
+            s, registered_at=ts, script="run_official_sample.py",
+            version="run_official_sample/v2",
+            run_id=os.environ.get("AR_RUN_ID") or f"standalone:{s.get('signal_id', 'UNKNOWN')}",
+            ledger_path=lp, log_path=path)
+        if st == "registered":
+            added += 1
+        elif not st.startswith(("idempotent", "recovered")):
+            failed.append((s.get("signal_id"), st))
+    if failed:
+        raise RuntimeError(f"R-014 登记事务失败 {len(failed)} 条: {failed[:3]}")
+    return added, len(registry.load_signal_log_strict(path))
 
 
 def selftest():
@@ -194,11 +304,20 @@ def selftest():
 def main():
     if "--selftest" in sys.argv:
         sys.exit(0 if selftest() else 1)
-    token = os.environ.get("TUSHARE_TOKEN", "").strip()
-    if not token:
-        print("NO TUSHARE_TOKEN — run `source ~/.zprofile` first")
-        sys.exit(1)
-    trade_date, snap, sigs = build(token)
+    test_payload = load_test_snapshot_from_env(data_root=HERE)
+    if test_payload is not None:
+        # 显式测试缝:进程级测试用канned快照跑完整 main() 路径(含新交易日与对账两条)。
+        # B1 的 NameError 逃过全部测试,正因为没有任何测试真正执行过 main()。
+        trade_date, snap, sigs = (test_payload["trade_date"], test_payload["snap"],
+                                  test_payload["sigs"])
+    else:
+        token = os.environ.get("TUSHARE_TOKEN", "").strip()
+        if not token:
+            print("NO TUSHARE_TOKEN — run `source ~/.zprofile` first")
+            sys.exit(1)
+        trade_date, snap, sigs = build(token)
+    snap["run_id"] = os.environ.get("AR_RUN_ID", "STANDALONE")
+    snap["target_trade_date"] = trade_date
     samples_dir = os.path.join(HERE, "samples")
     os.makedirs(samples_dir, exist_ok=True)
     sample_path = os.path.join(samples_dir, f"{trade_date}.json")
@@ -209,19 +328,42 @@ def main():
     already = os.path.exists(sample_path)
     force = "--force-resettle" in sys.argv
     if already and not force:
-        print(f"IDEMPOTENT_SKIP: samples/{trade_date}.json 已存在 —— 该交易日已结算,正式模式零新增。")
+        # 幂等只跳过**样本重写**,绝不跳过**信号对账**。
+        # 初版在这里直接 return,于是真实失败序列是:
+        #   sample 写成功 → 信号登记尚未开始或中途崩溃 → 第二次夜跑见 sample 已存在
+        #   → IDEMPOTENT_SKIP → 信号与事件永远不补。实测:信号文件与事件账本都没生成。
+        print(f"IDEMPOTENT_SKIP(样本): samples/{trade_date}.json 已存在 —— 不重写样本。")
+        print("  但仍按当天样本重建候选信号并做幂等登记对账(缺则补,已有则跳过)。")
+        try:
+            with open(sample_path, encoding="utf-8") as fh:
+                prior = json.load(fh)
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"REFUSED: 已存在的样本不可解析 ({e}) —— 不得当作没有,请人工处理。")
+            return 1
+        _write_run_target(trade_date, "reconcile")
+        prior_sigs, why, man_ok = trusted_sample_signals(prior, sigs)
+        print(f"  对账信号来源: {why}")
+        if not man_ok:
+            print("REFUSED: 无可信 manifest,不得用当前算法重造历史信号(事后污染)。")
+            print("不是买卖指令;研究信号,human executes.")
+            return 1
+        added, total = append_log(os.path.join(HERE, "paper_signal_log.json"), prior_sigs)
+        print(f"  对账结果: 补登 {added} 条,账本共 {total} 条。")
         print("  (历史纠错请走 migration 带 corrected_at/reason/original_value;")
-        print("   确需重算请显式 --force-resettle,信号仍不会重复写入)")
+        print("   确需重算样本请显式 --force-resettle)")
         print("不是买卖指令;研究信号,human executes.")
-        return
+        return 0
     ingested_at = time.strftime("%Y%m%d %H:%M:%S")
     snap["ingested_at"] = ingested_at
     snap["backfilled"] = ingested_at[:8] != trade_date   # 写入日≠交易日 ⇒ 事后补写,显式暴露
     for sg in sigs:
         sg["ingested_at"] = ingested_at
         sg["backfilled"] = snap["backfilled"]
-    with open(sample_path, "w") as fh:
-        json.dump(snap, fh, ensure_ascii=False, indent=2)
+    _write_run_target(trade_date, "new_sample")
+    snap["signals_manifest"] = build_signals_manifest(sigs)   # 不可变信号清单(含完整正文)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import registry as _reg
+    _reg.write_signal_log_atomic(sample_path, snap)      # 原子写,半程崩溃不留截断样本
     added, total = append_log(os.path.join(HERE, "paper_signal_log.json"), sigs)
     print(f"\n=== OFFICIAL SAMPLE {trade_date} ===")
     print("market :", snap["market_gate"]["state"], "|", snap["market_gate"]["one_line"])
@@ -238,4 +380,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

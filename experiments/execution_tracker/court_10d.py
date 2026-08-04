@@ -20,6 +20,7 @@ import json
 import os
 import sys
 import datetime
+from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "court_10d.json")
@@ -55,12 +56,12 @@ def _r_multiple(entry, stop, mark):
 
 def review(today=None, marks=None):
     """产出每个 filled 持仓的庭审状态。marks = {ticker: 最新收盘},缺失则用 nav 口径无法算 R。"""
-    today = today or datetime.date.today().strftime("%Y%m%d")
+    today = today or target_trade_date()
     orders, e_ord = _load("model_fund/orders.json", [])
     if e_ord:
-        return {"court": "court_10d_v0", "status": "DATA_BLOCKED", "why": e_ord,
-                "checked_at": today, "cases": [],
-                "disclaimer": "不是买卖指令;研究信号,human executes."}
+        return bind({"court": "court_10d_v0", "status": "DATA_BLOCKED", "why": e_ord,
+                     "checked_at": today, "cases": [],
+                     "disclaimer": "不是买卖指令;研究信号,human executes."}, target=today)
     rows = orders if isinstance(orders, list) else orders.get("orders", [])
     red, _ = _load("red_flags.json", {})
     bat, _ = _load("battery.json", {})
@@ -117,11 +118,11 @@ def review(today=None, marks=None):
             c["engine_verdict"] = "TRIBUNAL_BLOCKED_NO_MARK"
         else:
             c["evidence_status"] = "OK"
-    return {"court": "court_10d_v0", "status": status, "checked_at": today,
-            "no_mark_tickers": no_mark,
-            "tenure_days_bar": TENURE_DAYS, "r_bar": R_BAR,
-            "n_positions": len(cases), "n_due": due_n, "cases": cases,
-            "disclaimer": "不是买卖指令;研究信号,human executes."}
+    return bind({"court": "court_10d_v0", "status": status, "checked_at": today,
+                 "no_mark_tickers": no_mark,
+                 "tenure_days_bar": TENURE_DAYS, "r_bar": R_BAR,
+                 "n_positions": len(cases), "n_due": due_n, "cases": cases,
+                 "disclaimer": "不是买卖指令;研究信号,human executes."}, target=today)
 
 
 def selftest():

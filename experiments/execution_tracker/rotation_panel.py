@@ -18,6 +18,7 @@ import os
 import sys
 import time
 import urllib.request
+from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "rotation_panel.json")
@@ -44,9 +45,8 @@ def recent_trade_dates(token, n=5):
     rows = _api("trade_cal", token, exchange="SSE", is_open="1",
                 start_date="20260601", end_date="20301231")
     dates = sorted(r["cal_date"] for r in rows)
-    import datetime
-    today = datetime.date.today().strftime("%Y%m%d")
-    past = [d for d in dates if d < today]             # 只用已定盘日
+    today = target_trade_date()
+    past = [d for d in dates if d <= today]            # official_sample 已确认 target 定盘
     return past[-n:]
 
 
@@ -137,7 +137,8 @@ def run(token, n_days=5):
             flows.setdefault(nm, {})[d] = (float(r.get("net_amount") or 0),
                                            float(r.get("pct_change") or 0))
         time.sleep(0.25)
-    panel = build_panel(flows, days)
+    panel = bind(build_panel(flows, days), target=days[-1])
+    panel["as_of"] = days[-1]
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(panel, fh, ensure_ascii=False, indent=1)
     print(render(panel))

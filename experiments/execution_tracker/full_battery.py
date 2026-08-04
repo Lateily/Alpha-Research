@@ -9,6 +9,7 @@ Junyan 2026-07-28 指令驱动:股票 = 行情/资金/基本面/技术面/消息
 不是买卖指令;研究信号,human executes.
 """
 import os, sys, json, datetime
+from nightly_context import bind, target_trade_date
 
 
 def _fetch_anns_eastmoney(ts_code, page_size=30, timeout=10):
@@ -132,7 +133,7 @@ def main():
     import tushare as ts
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     pro = ts.pro_api(os.environ["TUSHARE_TOKEN"])
-    today = datetime.date.today().strftime("%Y%m%d")
+    today = target_trade_date()
     if "--from-watchlist" in sys.argv:
         from red_flag_gate import watchlist_tickers
         tks = watchlist_tickers()
@@ -143,8 +144,9 @@ def main():
     if not tks:
         print("usage: full_battery.py TS_CODE [...] | --from-watchlist"); return 1
     res = [battery(pro, t, today) for t in tks]
-    out = {"battery": "six_dim_v0", "checked_at": today, "results": res,
-           "rule": "分析先跑电池后写观点;缺维必须显式标注。不是买卖指令。"}
+    out = bind({"battery": "six_dim_v0", "checked_at": today, "results": res,
+                "rule": "分析先跑电池后写观点;缺维必须显式标注。不是买卖指令。"},
+               target=today)
     if "--from-watchlist" in sys.argv:
         here = os.path.dirname(os.path.abspath(__file__))
         with open(os.path.join(here, "battery.json"), "w", encoding="utf-8") as fh:

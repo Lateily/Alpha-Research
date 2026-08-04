@@ -18,6 +18,7 @@ import json
 import os
 import re
 import sys
+from nightly_context import bind, target_trade_date
 
 import sector_keys
 
@@ -51,7 +52,7 @@ def _freshness(path, checked_at, now):
     age_h = (now - os.path.getmtime(path)) / 3600.0
     if age_h > QC_MAX_AGE_H:
         return f"STALE_FILE(mtime {age_h:.1f}h>{QC_MAX_AGE_H}h)"
-    today = _t.strftime("%Y%m%d", _t.localtime(now))
+    today = target_trade_date()
     if str(checked_at) not in (today, _prev_trading_day(today)):
         return f"STALE_CHECKED_AT({checked_at})"
     return "FRESH"
@@ -309,7 +310,9 @@ def main():
             if ser:
                 b = ser[-1]
                 bars[t] = {"low": b["low"], "high": b["high"], "close": b["close"]}
-    result = evaluate(signals, market_state, streaks, bars, nav, qc=qc)
+    target = target_trade_date()
+    result = bind(evaluate(signals, market_state, streaks, bars, nav, qc=qc), target=target)
+    result["as_of"] = target
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(result, fh, ensure_ascii=False, indent=1)
     print(f"## 晋级桥(regime={market_state})")

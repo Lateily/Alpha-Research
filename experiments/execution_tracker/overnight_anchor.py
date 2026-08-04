@@ -30,6 +30,7 @@ import json
 import os
 import sys
 import time
+from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MANUAL = os.path.join(HERE, "overnight_anchor_manual.json")
@@ -87,8 +88,8 @@ def build_anchor(payload=None):
         bias = "MIXED"
         why = f"{positives} positive / {negatives} negative"
 
-    return {
-        "as_of": payload.get("as_of") or time.strftime("%Y%m%d %H:%M"),
+    return bind({
+        "as_of": payload.get("as_of") or f"{target_trade_date()} 09:00",
         "layer": "overnight_anchor_v0",
         "anchors": rows,
         "bias": bias,
@@ -97,7 +98,7 @@ def build_anchor(payload=None):
         "claim_allowed": False,
         "policy": "盘前第一行;只改变科技 beta 背景读数,不直接生成交易动作。",
         "note": "不是买卖指令；研究信号，human executes。",
-    }
+    })
 
 
 def render(rep):
