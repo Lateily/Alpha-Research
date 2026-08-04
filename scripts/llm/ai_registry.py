@@ -34,9 +34,10 @@ class TaskState:
     pr: str = ""
     next: str = ""
     blocked_by: str = ""
-    cost_cny: str = "0"
+    cost_cny: str = ""
     risk: str = ""
     updated_at: str = ""
+    expires_at: str = ""
     history_count: int = 0
 
     def apply(self, event: dict[str, Any]) -> None:
@@ -53,9 +54,10 @@ class TaskState:
         self.pr = str(event.get("pr", self.pr) or "")
         self.next = str(event.get("next", self.next) or "")
         self.blocked_by = str(event.get("blocked_by", self.blocked_by) or "")
-        self.cost_cny = str(event.get("cost_cny", self.cost_cny) or "0")
+        self.cost_cny = str(event.get("cost_cny", self.cost_cny) or "")
         self.risk = str(event.get("risk", self.risk) or "")
         self.updated_at = str(event.get("timestamp_utc", self.updated_at) or "")
+        self.expires_at = str(event.get("expires_at", self.expires_at) or "")
         self.history_count += 1
 
         if event_type in TERMINAL_EVENTS or event_type == "BLOCKED":
@@ -79,6 +81,7 @@ class TaskState:
             "cost_cny": self.cost_cny,
             "risk": self.risk,
             "updated_at": self.updated_at,
+            "expires_at": self.expires_at,
             "history_count": self.history_count,
         }
 
