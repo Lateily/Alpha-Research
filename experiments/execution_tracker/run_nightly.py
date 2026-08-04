@@ -290,6 +290,42 @@ def preflight(base=None, now=None):
     base = base or HERE
     now = time.time() if now is None else now
     checks, warns = [], []
+    # 0) R-014/R-015 三方一致性:intent / commit / projection 必须对得上。
+    #    悬空 intent、孤立 commit、双终态、投影哈希不符 —— 任何一条都表示上一次
+    #    夜链中途崩溃或账本被动过,不得在这种状态上继续跑引擎。
+    try:
+        sys.path.insert(0, HERE)
+        import registry as _reg
+        _lp = _reg.ledger_path_for(os.path.join(base, "paper_signal_log.json"))
+        if os.path.exists(_lp):
+            _evs = _reg.read_events(_lp)
+            _intents, _C, _A = _reg._terminal_states(_evs)   # intents 是 dict
+            _I = set(_intents)
+            _rows = _reg.load_signal_log_strict(os.path.join(base, "paper_signal_log.json"))
+            _by = {r.get("signal_id"): r for r in _rows}
+            dangling = sorted(_I - _C - _A)
+            orphan = sorted(_C - _I)
+            bad_proj = []
+            for _txn in sorted(_C):
+                _pl = _intents.get(_txn)
+                if not _pl:
+                    continue
+                _sid = _pl.get("signal_id")
+                _ok, _why = _reg.validate_transaction_projection(
+                    _txn, _pl, _by.get(_sid), None)
+                if not _ok:
+                    bad_proj.append((_txn, _why[:1]))
+            checks.append((f"事务无悬空 intent(n={len(dangling)})", not dangling))
+            checks.append((f"事务无孤立 commit(n={len(orphan)})", not orphan))
+            checks.append((f"已提交投影三方一致(异常 n={len(bad_proj)})", not bad_proj))
+            if dangling: print(f"  ✗ 悬空 intent: {dangling[:5]} —— 先跑 registry.recover_pending")
+            if orphan:   print(f"  ✗ 孤立 commit: {orphan[:5]}")
+            if bad_proj: print(f"  ✗ 投影不一致: {bad_proj[:3]}")
+        else:
+            warns.append("事件账本尚未建立(R-015 未接线)—— 三方一致性未检")
+    except Exception as e:                       # noqa: BLE001 — fail-closed
+        checks.append((f"事务一致性检查可执行({type(e).__name__})", False))
+        print(f"  ✗ 事务一致性检查失败: {e}")
     # 1) 信号账本:可解析 + returns 类型 + NOT_SCORABLE 声明 + 真实日期 + horizon + id 唯一
     try:
         log = json.load(open(os.path.join(base, "paper_signal_log.json")))

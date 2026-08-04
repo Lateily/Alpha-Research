@@ -261,6 +261,47 @@ def record_hash(rec):
                                      separators=(",", ":"), default=str).encode()).hexdigest()
 
 
+def validate_transaction_projection(txn, intent_payload, projection, commit_payload=None):
+    """三方一致性校验。**全部重算,绝不信任记录自填的 record_hash。**
+
+    初版比较的是 existing["record_hash"] == saved["record_hash"] —— 两个自报的标签。
+    把投影里的 ticker 改掉、保留原 hash 字符串,恢复器照样盖章。
+    标签不是证据;只有对当前内容重算出来的哈希才是。
+    返回 (ok, reasons)。
+    """
+    why = []
+    saved = (intent_payload or {}).get("record")
+    if not saved:
+        return False, ["intent 无可重放记录(旧格式)—— 不得凭 signal_id 前滚"]
+    h_intent = record_hash(saved)
+    if saved.get("record_hash") and saved["record_hash"] != h_intent:
+        why.append("intent 内记录的自报 hash 与重算不符")
+    if saved.get("registry_txn_id") not in (None, txn):
+        why.append(f"intent 记录的 registry_txn_id={saved.get('registry_txn_id')} ≠ {txn}")
+    if projection is not None:
+        h_proj = record_hash(projection)
+        if h_proj != h_intent:
+            why.append(f"投影重算 hash {h_proj[:12]} ≠ intent 重算 hash {h_intent[:12]}")
+        if projection.get("registry_txn_id") != txn:
+            why.append(f"投影 registry_txn_id={projection.get('registry_txn_id')} ≠ {txn}")
+        if projection.get("signal_id") != saved.get("signal_id"):
+            why.append("投影与 intent 的 signal_id 不符")
+    if commit_payload is not None:
+        if commit_payload.get("record_hash") and commit_payload["record_hash"] != h_intent:
+            why.append("commit 保存的 hash 与 intent 重算不符")
+        if (commit_payload.get("signal_id")
+                and commit_payload["signal_id"] != saved.get("signal_id")):
+            why.append("commit 的 signal_id 与 intent 不符")
+    return (not why), why
+
+
+def _commit_payload(events, txn):
+    for e in events:
+        if e.get("kind") == "register_commit" and e.get("id") == txn:
+            return e.get("payload") or {}
+    return None
+
+
 def _signal_lock(log_path):
     os.makedirs(os.path.dirname(os.path.abspath(log_path)) or ".", exist_ok=True)
     return open(log_path + ".lock", "w")
@@ -285,7 +326,7 @@ def _project(rows, stamped, log_path):
 
 
 def register_transaction(record, *, registered_at, script, version, run_id,
-                         ledger_path, log_path, transaction_id=None):
+                         ledger_path, log_path, _test_transaction_id=None):
     """三段式:register_intent(含可重放记录)→ 原子写投影 → register_commit。
 
     intent 携带**完整 stamped 记录与 record_hash**,因此:
@@ -299,7 +340,12 @@ def register_transaction(record, *, registered_at, script, version, run_id,
     if not sid:
         raise ValueError("signal_id 必填")
     written_by_stamp(script, version, run_id)
-    txn = transaction_id or transaction_id_for(sid, registered_at, run_id)
+    # 生产 API 不接受外部 transaction_id —— 初版允许后,可以用 sid1 的 txn 去登记 sid2:
+    # 投影写 sid1、commit 声称 sid2、函数还返回 registered。txn 必须由输入自身决定。
+    txn = transaction_id_for(sid, registered_at, run_id)
+    if _test_transaction_id is not None:
+        if _test_transaction_id != txn:
+            raise ValueError("_test_transaction_id 与由输入计算出的 txn 不符 —— 拒绝交叉事务")
 
     with _signal_lock(log_path) as lf:
         fcntl.flock(lf, fcntl.LOCK_EX)
@@ -314,15 +360,20 @@ def register_transaction(record, *, registered_at, script, version, run_id,
 
             # 已 commit:投影必须真的在,否则从 intent 重建;重建不了 ⇒ 硬失败
             if txn in commits:
+                ip = intents.get(txn)
+                cp = _commit_payload(events, txn)
                 if existing is not None:
-                    return existing, "idempotent: already committed"
-                saved = (intents.get(txn) or {}).get("record")
-                if not saved:
+                    ok, why = validate_transaction_projection(txn, ip, existing, cp)
+                    if not ok:
+                        raise LedgerCorrupt(
+                            f"txn {txn} 已 commit,但三方校验不通过,拒绝返回幂等成功: {why}")
+                    return existing, "idempotent: already committed (validated)"
+                ok, why = validate_transaction_projection(txn, ip, None, cp)
+                if not ok:
                     raise LedgerCorrupt(
-                        f"txn {txn} 已 commit 但投影丢失,且 intent 无可重放记录 —— "
-                        f"不得当作幂等成功")
-                rows = _project(rows, saved, log_path)
-                return saved, "recovered: projection rebuilt from intent"
+                        f"txn {txn} 已 commit 但投影丢失且无法重建: {why}")
+                rows = _project(rows, ip["record"], log_path)
+                return ip["record"], "recovered: projection rebuilt from intent"
 
             # 投影里已有该 signal_id,却不是本事务的 ⇒ 另一次登记已完成
             if existing is not None and txn not in intents:
@@ -344,15 +395,18 @@ def register_transaction(record, *, registered_at, script, version, run_id,
                                "written_by": stamped["written_by"]},
                               path=ledger_path)
 
-            if existing is not None and existing.get("record_hash") != stamped.get("record_hash"):
-                el.append("register_abort", txn,
-                          {"signal_id": sid, "reason": "投影与 intent 的 record_hash 不符"},
-                          path=ledger_path)
-                raise LedgerCorrupt(f"signal {sid} 的投影与 intent 不符,拒绝提交")
+            if existing is not None:
+                ok, why = validate_transaction_projection(
+                    txn, intents.get(txn) or {"record": stamped}, existing)
+                if not ok:
+                    el.append("register_abort", txn,
+                              {"signal_id": sid, "reason": "; ".join(why)[:200]},
+                              path=ledger_path)
+                    raise LedgerCorrupt(f"signal {sid} 的投影与 intent 不符,拒绝提交: {why}")
 
             rows = _project(rows, stamped, log_path)
             el.append("register_commit", txn,
-                      {"signal_id": sid, "record_hash": stamped["record_hash"]},
+                      {"signal_id": sid, "record_hash": record_hash(stamped)},
                       path=ledger_path)
             return stamped, "registered"
         finally:
@@ -385,25 +439,28 @@ def recover_pending(ledger_path, log_path, apply=True):
                 saved = payload.get("record")
                 existing = by_sid.get(sid)
                 if existing is not None:
-                    if saved and existing.get("record_hash") != saved.get("record_hash"):
+                    # 全部重算。旧格式 intent(无 record)在这里必然不通过 ——
+                    # 不得凭 signal_id 前滚,那会把内容完全不同的记录盖成已提交。
+                    ok, why = validate_transaction_projection(txn, payload, existing)
+                    if not ok:
                         if apply:
                             el.append("register_abort", txn,
-                                      {"signal_id": sid,
-                                       "reason": "投影 record_hash 与 intent 不符 —— 拒绝盖章"},
+                                      {"signal_id": sid, "reason": "; ".join(why)[:200]},
                                       path=ledger_path)
                         out["mismatch"].append(txn); out["aborted"].append(txn)
                         continue
                     if apply:
                         el.append("register_commit", txn,
-                                  {"signal_id": sid, "by": "recover_pending"}, path=ledger_path)
+                                  {"signal_id": sid, "record_hash": record_hash(existing),
+                                   "by": "recover_pending"}, path=ledger_path)
                     out["rolled_forward"].append(txn)
                 elif saved:
                     if apply:
                         rows = _project(rows, saved, log_path)
                         by_sid[sid] = saved
                         el.append("register_commit", txn,
-                                  {"signal_id": sid, "by": "recover_pending/rebuild"},
-                                  path=ledger_path)
+                                  {"signal_id": sid, "record_hash": record_hash(saved),
+                                   "by": "recover_pending/rebuild"}, path=ledger_path)
                     out["rebuilt"].append(txn); out["rolled_forward"].append(txn)
                 else:
                     # intent 里没有可重放记录(旧格式)⇒ 只能作废
@@ -532,13 +589,68 @@ def selftest():
            r["aborted"] == [txn] and "register_abort" in kinds(lp))
         shutil.rmtree(dd, ignore_errors=True)
 
+        # ② 用**真实事务**制造中断态(手工造 intent 会变成旧格式,那是另一个场景)
         dd, sp, lp = fresh()
+        register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
+                             ledger_path=lp, log_path=sp, **KW)
+        L = el._read_lines(lp)                       # 砍掉 commit,保留 intent 与投影
+        open(lp, "w").write(L[0] + "\n")
+        el.write_anchor(lp, 1, json.loads(L[0])["hash"])
         txn = transaction_id_for("s2", "20260803 15:00", "r1")
-        el.append("register_intent", txn, {"signal_id": "s2"}, path=lp)
-        write_signal_log_atomic(sp, [stamp_new_record({"signal_id": "s2"}, **KW)])
         r = recover_pending(lp, sp)
         ck("② 投影已写 commit 未写 → 恢复前滚", r["rolled_forward"] == [txn])
         ck("②b 恢复幂等(再跑一次无待处理)", recover_pending(lp, sp)["pending_examined"] == 0)
+        shutil.rmtree(dd, ignore_errors=True)
+
+        # ②c 旧格式 intent(无 record)即便投影里有同 ID,也一律 abort ——
+        #     不得凭 signal_id 前滚,否则会把内容完全不同的记录盖成已提交。
+        dd, sp, lp = fresh()
+        txn = transaction_id_for("s2", "20260803 15:00", "r1")
+        el.append("register_intent", txn, {"signal_id": "s2"}, path=lp)
+        write_signal_log_atomic(sp, [{"signal_id": "s2", "ticker": "完全不同"}])
+        r = recover_pending(lp, sp)
+        ck("②c 旧格式 intent + 同 ID 异内容 → abort 不前滚",
+           r["aborted"] == [txn] and not r["rolled_forward"])
+        shutil.rmtree(dd, ignore_errors=True)
+
+        # ②d 篡改投影内容但保留自报 record_hash → 必须被重算揪出
+        dd, sp, lp = fresh()
+        register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
+                             ledger_path=lp, log_path=sp, **KW)
+        L = el._read_lines(lp); open(lp, "w").write(L[0] + "\n")
+        el.write_anchor(lp, 1, json.loads(L[0])["hash"])
+        rws = load_signal_log_strict(sp); rws[0]["ticker"] = "999999.SZ"
+        write_signal_log_atomic(sp, rws)
+        r = recover_pending(lp, sp)
+        ck("②d 篡改内容保留 hash 标签 → 重算揪出,拒绝盖章",
+           r["mismatch"] and not r["rolled_forward"])
+        shutil.rmtree(dd, ignore_errors=True)
+
+        # ②e 已 commit 的投影被篡改 → 幂等返回前必须校验
+        dd, sp, lp = fresh()
+        register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
+                             ledger_path=lp, log_path=sp, **KW)
+        rws = load_signal_log_strict(sp); rws[0]["ticker"] = "999999.SZ"
+        write_signal_log_atomic(sp, rws)
+        try:
+            register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
+                                 ledger_path=lp, log_path=sp, **KW)
+            blocked = False
+        except LedgerCorrupt:
+            blocked = True
+        ck("②e 已提交记录被篡改 → 拒绝返回幂等成功", blocked)
+        shutil.rmtree(dd, ignore_errors=True)
+
+        # ②f 交叉事务:用别的 signal 的 txn 登记
+        dd, sp, lp = fresh()
+        other = transaction_id_for("other", "20260803 15:00", "r1")
+        try:
+            register_transaction({"signal_id": "s2", "ticker": "t"}, ledger_path=lp,
+                                 log_path=sp, _test_transaction_id=other, **KW)
+            blocked = False
+        except ValueError:
+            blocked = True
+        ck("②f 交叉事务(借用他人 txn)→ 拒绝", blocked)
         shutil.rmtree(dd, ignore_errors=True)
 
         dd, sp, lp = fresh()

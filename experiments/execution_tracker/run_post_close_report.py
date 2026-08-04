@@ -242,13 +242,22 @@ def main():
             json.dump(snap, fh, ensure_ascii=False, indent=2)
         ros.append_log(log_path, today_sigs)
 
-    log = json.load(open(log_path)) if os.path.exists(log_path) else []
-    if trade_date is None:
-        tds = [d for d in (parse_trade_date(s.get("timestamp")) for s in log) if d]
-        trade_date = max(tds) if tds else "unknown"
-    filled = backfill(log, token)
-    with open(log_path, "w") as fh:
-        json.dump(log, fh, ensure_ascii=False, indent=2)
+    # ── 第三个写手也必须走同一把信号锁与原子写 ──
+    # 它此前裸读裸写整个账本:与人工预注册并发时,会用旧快照覆盖刚登记的新信号。
+    import fcntl
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import registry as _reg
+    with _reg._signal_lock(log_path) as _lf:
+        fcntl.flock(_lf, fcntl.LOCK_EX)
+        try:
+            log = _reg.load_signal_log_strict(log_path)      # 损坏必抛错,不当空账本
+            if trade_date is None:
+                tds = [d for d in (parse_trade_date(s.get("timestamp")) for s in log) if d]
+                trade_date = max(tds) if tds else "unknown"
+            filled = backfill(log, token)
+            _reg.write_signal_log_atomic(log_path, log)
+        finally:
+            fcntl.flock(_lf, fcntl.LOCK_UN)
 
     card = scorecard(log)
     report = build_report(trade_date, snap, today_sigs, card)

@@ -230,19 +230,36 @@ def main():
     already = os.path.exists(sample_path)
     force = "--force-resettle" in sys.argv
     if already and not force:
-        print(f"IDEMPOTENT_SKIP: samples/{trade_date}.json 已存在 —— 该交易日已结算,正式模式零新增。")
+        # 幂等只跳过**样本重写**,绝不跳过**信号对账**。
+        # 初版在这里直接 return,于是真实失败序列是:
+        #   sample 写成功 → 信号登记尚未开始或中途崩溃 → 第二次夜跑见 sample 已存在
+        #   → IDEMPOTENT_SKIP → 信号与事件永远不补。实测:信号文件与事件账本都没生成。
+        print(f"IDEMPOTENT_SKIP(样本): samples/{trade_date}.json 已存在 —— 不重写样本。")
+        print("  但仍按当天样本重建候选信号并做幂等登记对账(缺则补,已有则跳过)。")
+        try:
+            prior = json.load(open(sample_path))
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"REFUSED: 已存在的样本不可解析 ({e}) —— 不得当作没有,请人工处理。")
+            return 1
+        prior_sigs = prior.get("paper_signals") or prior.get("signals") or []
+        if not prior_sigs:
+            print("  样本内无 paper_signals 字段 —— 改用本次重算的候选信号对账。")
+            prior_sigs = sigs
+        added, total = append_log(os.path.join(HERE, "paper_signal_log.json"), prior_sigs)
+        print(f"  对账结果: 补登 {added} 条,账本共 {total} 条。")
         print("  (历史纠错请走 migration 带 corrected_at/reason/original_value;")
-        print("   确需重算请显式 --force-resettle,信号仍不会重复写入)")
+        print("   确需重算样本请显式 --force-resettle)")
         print("不是买卖指令;研究信号,human executes.")
-        return
+        return 0
     ingested_at = time.strftime("%Y%m%d %H:%M:%S")
     snap["ingested_at"] = ingested_at
     snap["backfilled"] = ingested_at[:8] != trade_date   # 写入日≠交易日 ⇒ 事后补写,显式暴露
     for sg in sigs:
         sg["ingested_at"] = ingested_at
         sg["backfilled"] = snap["backfilled"]
-    with open(sample_path, "w") as fh:
-        json.dump(snap, fh, ensure_ascii=False, indent=2)
+    _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import registry as _reg
+    _reg.write_signal_log_atomic(sample_path, snap)      # 原子写,半程崩溃不留截断样本
     added, total = append_log(os.path.join(HERE, "paper_signal_log.json"), sigs)
     print(f"\n=== OFFICIAL SAMPLE {trade_date} ===")
     print("market :", snap["market_gate"]["state"], "|", snap["market_gate"]["one_line"])

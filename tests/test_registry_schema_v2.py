@@ -123,24 +123,96 @@ class RegistrySchemaV2Test(unittest.TestCase):
         tmp = tempfile.mkdtemp()
         try:
             sp = os.path.join(tmp, "sig.json"); lp = registry.ledger_path_for(sp)
+            # 用**真实事务**造中断态:手工 append 的 intent 是旧格式(无 record),
+            # 那属于另一个场景(旧格式一律 abort,见 test_legacy_intent_without_record_aborts)。
+            registry.register_transaction({"signal_id": "s", "ticker": "600000.SH"},
+                                          registered_at="20260803 15:00",
+                                          script="paper_tracker.py", version="v2",
+                                          run_id="r", ledger_path=lp, log_path=sp)
+            lines = event_ledger._read_lines(lp)          # 砍掉 commit,保留 intent 与投影
+            open(lp, "w").write(lines[0] + "\n")
+            event_ledger.write_anchor(lp, 1, json.loads(lines[0])["hash"])
             txn = registry.transaction_id_for("s", "20260803 15:00", "r")
-            event_ledger.append("register_intent", txn, {"signal_id": "s"}, path=lp)
-            registry.write_signal_log_atomic(sp, [{"signal_id": "s"}])
             r = registry.recover_pending(lp, sp)
             self.assertEqual(r["rolled_forward"], [txn])
             self.assertEqual(registry.recover_pending(lp, sp)["pending_examined"], 0)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
-    def test_nightly_entry_point_is_wired(self) -> None:
-        """B1:run_nightly 调的是 run_official_sample.py,不是 execution_tracker.py。
-        接错文件 = 正式夜链根本没接上 WAL。这条钉死真实入口。"""
-        nightly = (ET / "run_nightly.py").read_text(encoding="utf-8")
-        self.assertIn("run_official_sample.py", nightly)
+    def test_nightly_entry_actually_executes_wal(self) -> None:
+        """B1:**真执行** run_official_sample.append_log,不是在源码里搜字符串。
+
+        上一版这条测试只做 `assertIn("register_transaction", 源码)` —— 拿"看起来测了"
+        冒充"测了"。现在真跑这条路径,断言事件链、幂等与三方一致。
+        """
+        import importlib.util
+        import event_ledger, registry
+        spec = importlib.util.spec_from_file_location(
+            "ros_probe", str(ET / "run_official_sample.py"))
+        ros = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(ros)
+        tmp = tempfile.mkdtemp()
+        try:
+            sp = os.path.join(tmp, "paper_signal_log.json")
+            lp = registry.ledger_path_for(sp)
+            sigs = [{"signal_id": f"n{i}", "ticker": f"6000{i:02d}.SH",
+                     "setup_type": "execution_gate",
+                     "timestamp": "20260803 close (official)"} for i in range(4)]
+            added, total = ros.append_log(sp, sigs)
+            self.assertEqual((added, total), (4, 4))
+            added2, total2 = ros.append_log(sp, sigs)          # 重跑必须幂等
+            self.assertEqual((added2, total2), (0, 4))
+            rows = registry.load_signal_log_strict(sp)
+            self.assertTrue(all("registry_txn_id" in r for r in rows))
+            evs = registry.read_events(lp)
+            I = {e["id"] for e in evs if e["kind"] == "register_intent"}
+            C = {e["id"] for e in evs if e["kind"] == "register_commit"}
+            A = {e["id"] for e in evs if e["kind"] == "register_abort"}
+            self.assertEqual(C - I, set(), "孤立 commit")
+            self.assertEqual(I - C - A, set(), "悬空 intent")
+            self.assertTrue(event_ledger.verify(lp)["ok"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_nightly_preflight_runs_as_real_process(self) -> None:
+        """进程级:真起 run_nightly.py --preflight,并断言三方一致性检查在里面跑。"""
+        r = subprocess.run([sys.executable, str(ET / "run_nightly.py"), "--preflight"],
+                           capture_output=True, text=True, cwd=str(ROOT))
+        self.assertIn("事务无悬空 intent", r.stdout + r.stderr)
+        self.assertIn("已提交投影三方一致", r.stdout + r.stderr)
+
+    def test_preflight_fails_on_dangling_intent(self) -> None:
+        """反证:注入悬空 intent,preflight 必须红 —— 否则这道闸门是装饰。"""
+        import event_ledger
+        sys.path.insert(0, str(ET))
+        import run_nightly
+        tmp = tempfile.mkdtemp()
+        try:
+            shutil.copy(ET / "paper_signal_log.json",
+                        os.path.join(tmp, "paper_signal_log.json"))
+            event_ledger.append("register_intent", "DANGLING",
+                                {"signal_id": "ghost", "record": {"signal_id": "ghost"}},
+                                path=os.path.join(tmp, "event_ledger.jsonl"))
+            res = run_nightly.preflight(base=tmp)
+            self.assertFalse(res["pass"])
+            self.assertTrue(any("悬空 intent" in n and not ok for n, ok in res["checks"]))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_sample_gate_still_reconciles_signals(self) -> None:
+        """B4:sample 已存在时只跳过样本重写,信号对账必须照做。"""
         ros = (ET / "run_official_sample.py").read_text(encoding="utf-8")
-        self.assertIn("register_transaction", ros, "夜链入口未接注册事务")
-        self.assertIn("recover_pending", ros, "夜链入口未接崩溃恢复")
-        self.assertNotIn("json.dump(log, fh", ros, "仍有裸写信号账本的路径")
+        gate = ros[ros.index("if already and not force:"):]
+        gate = gate[:gate.index("ingested_at =")]
+        self.assertIn("append_log", gate, "幂等门内没有信号对账 —— 信号会永久漏掉")
+        self.assertNotIn("        return\n", gate, "幂等门仍直接 return,跳过了对账")
+
+    def test_no_bare_signal_log_writers_remain(self) -> None:
+        """所有写手必须走同一把锁与原子写接口。"""
+        for name in ("run_official_sample.py", "run_post_close_report.py",
+                     "execution_tracker.py", "paper_tracker.py"):
+            src = (ET / name).read_text(encoding="utf-8")
+            self.assertNotIn('json.dump(log, fh', src, f"{name} 仍裸写信号账本")
 
     def test_process_exit_code_is_nonzero_on_txn_failure(self) -> None:
         """B6:main() 返回 1 但没 sys.exit,进程仍退 0,夜链会把失败当成功。"""
