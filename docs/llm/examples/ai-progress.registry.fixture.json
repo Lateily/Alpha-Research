@@ -1,0 +1,23 @@
+[
+  {
+    "body": "<!-- ai-progress:v2 -->\n```json\n{\n  \"schema\": \"ai-progress.v2\",\n  \"event\": \"CLAIM\",\n  \"task\": \"task-alpha\",\n  \"human_owner\": \"Reed\",\n  \"executor\": \"Codex\",\n  \"reviewer\": \"Junyan\",\n  \"status\": \"in_progress\",\n  \"summary\": \"Start alpha task.\",\n  \"branch\": \"feat/alpha\",\n  \"files\": [\"docs/llm\"],\n  \"risk\": \"offline only\",\n  \"cost_cny\": \"0\",\n  \"timestamp_utc\": \"2026-08-04T01:00:00Z\",\n  \"expires_at\": \"2026-08-04T04:00:00Z\"\n}\n```"
+  },
+  {
+    "body": "<!-- ai-progress:v2 -->\n```json\n{\n  \"schema\": \"ai-progress.v2\",\n  \"event\": \"UPDATE\",\n  \"task\": \"task-alpha\",\n  \"human_owner\": \"Reed\",\n  \"executor\": \"Codex\",\n  \"reviewer\": \"Junyan\",\n  \"status\": \"in_progress\",\n  \"summary\": \"Alpha task has tests now.\",\n  \"branch\": \"feat/alpha\",\n  \"files\": [\"docs/llm\", \"tests\"],\n  \"risk\": \"offline only\",\n  \"cost_cny\": \"0\",\n  \"timestamp_utc\": \"2026-08-04T01:30:00Z\"\n}\n```"
+  },
+  {
+    "body": "<!-- ai-progress:v2 -->\n```json\n{\n  \"schema\": \"ai-progress.v2\",\n  \"event\": \"DONE\",\n  \"task\": \"task-alpha\",\n  \"human_owner\": \"Reed\",\n  \"executor\": \"Codex\",\n  \"reviewer\": \"Junyan\",\n  \"status\": \"done\",\n  \"summary\": \"Alpha task is ready in PR.\",\n  \"pr\": \"https://github.com/Lateily/Alpha-Research/pull/999\",\n  \"cost_cny\": \"0\",\n  \"risk\": \"offline only\",\n  \"timestamp_utc\": \"2026-08-04T02:00:00Z\"\n}\n```"
+  },
+  {
+    "body": "<!-- ai-progress:v2 -->\n```json\n{\n  \"schema\": \"ai-progress.v2\",\n  \"event\": \"CLAIM\",\n  \"task\": \"task-beta\",\n  \"human_owner\": \"Jason\",\n  \"executor\": \"Codex\",\n  \"reviewer\": \"Junyan\",\n  \"status\": \"in_progress\",\n  \"summary\": \"Start beta task.\",\n  \"branch\": \"feat/beta\",\n  \"files\": [\"scripts/llm\"],\n  \"risk\": \"offline only\",\n  \"cost_cny\": \"0\",\n  \"timestamp_utc\": \"2026-08-04T01:10:00Z\",\n  \"expires_at\": \"2026-08-04T04:10:00Z\"\n}\n```"
+  },
+  {
+    "body": "<!-- ai-progress:v2 -->\n```json\n{\n  \"schema\": \"ai-progress.v2\",\n  \"event\": \"BLOCKED\",\n  \"task\": \"task-beta\",\n  \"human_owner\": \"Jason\",\n  \"executor\": \"Codex\",\n  \"reviewer\": \"Junyan\",\n  \"status\": \"blocked\",\n  \"summary\": \"Beta task needs contract sign-off.\",\n  \"blocked_by\": \"contract sign-off\",\n  \"next\": \"Wait for reviewer decision.\",\n  \"cost_cny\": \"0\",\n  \"risk\": \"offline only\",\n  \"timestamp_utc\": \"2026-08-04T01:40:00Z\"\n}\n```"
+  },
+  {
+    "body": "<!-- ai-progress:v2 -->\n```json\n{\n  \"schema\": \"ai-progress.v2\",\n  \"event\": \"CLAIM\",\n  \"task\": \"task-gamma\",\n  \"human_owner\": \"Better\",\n  \"executor\": \"Codex\",\n  \"reviewer\": \"Junyan\",\n  \"status\": \"in_progress\",\n  \"summary\": \"Start gamma task.\",\n  \"branch\": \"feat/gamma\",\n  \"files\": [\"src\"],\n  \"risk\": \"read-only UI\",\n  \"cost_cny\": \"0\",\n  \"timestamp_utc\": \"2026-08-04T01:20:00Z\",\n  \"expires_at\": \"2026-08-04T04:20:00Z\"\n}\n```"
+  },
+  {
+    "body": "<!-- ai-progress:v2 -->\n```json\n{\n  \"schema\": \"ai-progress.v2\",\n  \"event\": \"RELEASE\",\n  \"task\": \"task-gamma\",\n  \"human_owner\": \"Better\",\n  \"executor\": \"Codex\",\n  \"reviewer\": \"Junyan\",\n  \"status\": \"released\",\n  \"summary\": \"Gamma task released before edits.\",\n  \"cost_cny\": \"0\",\n  \"risk\": \"read-only UI\",\n  \"timestamp_utc\": \"2026-08-04T01:50:00Z\"\n}\n```"
+  }
+]

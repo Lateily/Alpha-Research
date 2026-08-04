@@ -1,0 +1,14 @@
+{
+  "comments": [
+    {
+      "author": {"login": "reed-bot"},
+      "createdAt": "2026-08-04T01:00:00Z",
+      "body": "<!-- ai-progress:v2 -->\n```json\n{\n  \"schema\": \"ai-progress.v2\",\n  \"event\": \"CLAIM\",\n  \"task\": \"task-delta\",\n  \"human_owner\": \"Reed\",\n  \"executor\": \"Codex\",\n  \"reviewer\": \"Junyan\",\n  \"status\": \"in_progress\",\n  \"summary\": \"Start delta task from comments response.\",\n  \"branch\": \"feat/delta\",\n  \"files\": [\"scripts/llm\"],\n  \"risk\": \"offline only\",\n  \"cost_cny\": \"0\",\n  \"timestamp_utc\": \"2026-08-04T01:00:00Z\",\n  \"expires_at\": \"2026-08-04T04:00:00Z\"\n}\n```"
+    },
+    {
+      "author": {"login": "reed-bot"},
+      "createdAt": "2026-08-04T02:00:00Z",
+      "body": "<!-- ai-progress:v2 -->\n```json\n{\n  \"schema\": \"ai-progress.v2\",\n  \"event\": \"DONE\",\n  \"task\": \"task-delta\",\n  \"human_owner\": \"Reed\",\n  \"executor\": \"Codex\",\n  \"reviewer\": \"Junyan\",\n  \"status\": \"done\",\n  \"summary\": \"Delta task completed from comments response.\",\n  \"pr\": \"https://github.com/Lateily/Alpha-Research/pull/1000\",\n  \"cost_cny\": \"0\",\n  \"risk\": \"offline only\",\n  \"timestamp_utc\": \"2026-08-04T02:00:00Z\"\n}\n```"
+    }
+  ]
+}
