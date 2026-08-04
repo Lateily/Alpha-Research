@@ -1,0 +1,59 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "issue-164-progress-board-readonly",
+  "title": "Progress Board read-only projection",
+  "source": {
+    "kind": "progress",
+    "ref": "https://github.com/Lateily/Alpha-Research/issues/164"
+  },
+  "architecture_blocks": ["block-6-ai-system", "block-7-team-process"],
+  "objective": "Render ai-progress.v2 events as a read-only team progress snapshot.",
+  "non_goals": [
+    "Do not write GitHub comments from the UI.",
+    "Do not connect model APIs.",
+    "Do not store frontend tokens."
+  ],
+  "human_owner": "Reed",
+  "executor": "Codex",
+  "reviewer": "Junyan",
+  "status": "VALIDATING",
+  "risk_level": "LOW",
+  "scope_paths": [
+    "api",
+    "docs/llm",
+    "scripts/llm",
+    "tests"
+  ],
+  "forbidden_paths": [
+    "experiments/execution_tracker"
+  ],
+  "input_contracts": [
+    "docs/llm/AI_PROGRESS_PROTOCOL.md"
+  ],
+  "output_artifacts": [
+    "api/team-progress.js",
+    "docs/llm/AI_PROGRESS_SHARED_V2.md"
+  ],
+  "acceptance_tests": [
+    {
+      "id": "PB-001",
+      "description": "API returns sanitized read-only progress snapshot.",
+      "method": "command",
+      "expected": "team-progress tests pass with zero model calls"
+    }
+  ],
+  "depends_on": ["issue-164"],
+  "authority_docs": [
+    "AGENTS.md",
+    "docs/llm/AI_PROGRESS_PROTOCOL.md"
+  ],
+  "network_policy": "ALLOWLIST",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 180
+  },
+  "approval_gates": [
+    "Junyan review"
+  ],
+  "created_at": "2026-08-04T04:10:00Z"
+}

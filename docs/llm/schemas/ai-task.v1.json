@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/llm/schemas/ai-task.v1.json",
+  "title": "AR AIOS Task Manifest",
+  "description": "Machine-readable task contract for AIOS-K1. Missing required fields must block execution as SPEC_BLOCKED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "task_id",
+    "title",
+    "source",
+    "objective",
+    "non_goals",
+    "human_owner",
+    "executor",
+    "reviewer",
+    "status",
+    "risk_level",
+    "scope_paths",
+    "acceptance_tests",
+    "depends_on",
+    "authority_docs",
+    "network_policy",
+    "budget",
+    "approval_gates",
+    "created_at"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-task.v1"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable task id, for example issue-193-a006."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {
+          "enum": ["issue", "pr", "progress", "backlog", "manual"]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "architecture_blocks": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "default": []
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "non_goals": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "human_owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "executor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "DISCOVERED",
+        "TRIAGED",
+        "SPEC_READY",
+        "CLAIMED",
+        "RUNNING",
+        "VERIFYING",
+        "REVIEWING",
+        "AWAITING_APPROVAL",
+        "MERGED",
+        "DEPLOYED",
+        "VALIDATING",
+        "DONE",
+        "SPEC_BLOCKED",
+        "BLOCKED",
+        "RELEASED",
+        "FAILED",
+        "SUPERSEDED",
+        "RETIRED"
+      ]
+    },
+    "risk_level": {
+      "enum": ["LOW", "MEDIUM", "HIGH", "CONSTITUTIONAL"]
+    },
+    "scope_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "forbidden_paths": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "default": []
+    },
+    "input_contracts": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "default": []
+    },
+    "output_artifacts": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "default": []
+    },
+    "acceptance_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "method", "expected"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1},
+          "method": {
+            "enum": ["command", "schema", "file_check", "manual_review"]
+          },
+          "expected": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "authority_docs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "network_policy": {
+      "enum": ["OFFLINE", "ALLOWLIST", "LIVE_DATA"]
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_cny", "max_minutes"],
+      "properties": {
+        "max_cny": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]{1,2})?$"
+        },
+        "max_minutes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "approval_gates": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
