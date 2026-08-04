@@ -306,13 +306,19 @@ def preflight(base=None, now=None):
             dangling = sorted(_I - _C - _A)
             orphan = sorted(_C - _I)
             bad_proj = []
+            _cps = {e["id"]: (e.get("payload") or {}) for e in _evs
+                    if e.get("kind") == "register_commit"}
             for _txn in sorted(_C):
                 _pl = _intents.get(_txn)
                 if not _pl:
-                    continue
+                    continue          # 无 intent 的 commit 已由「孤立 commit」检查抓
                 _sid = _pl.get("signal_id")
+                # 四方强制:投影必须存在、commit payload 必须完整 ——
+                # 上一版 commit_payload 传 None、投影缺失也放行,
+                # 「intent 在、commit 空、投影不存在」被判为一致。
                 _ok, _why = _reg.validate_transaction_projection(
-                    _txn, _pl, _by.get(_sid), None)
+                    _txn, _pl, _by.get(_sid), _cps.get(_txn),
+                    require_projection=True, require_commit=True)
                 if not _ok:
                     bad_proj.append((_txn, _why[:1]))
             checks.append((f"事务无悬空 intent(n={len(dangling)})", not dangling))
@@ -425,14 +431,40 @@ def _print_preflight(pf):
     print(f"preflight: {'PASS' if pf['pass'] else 'FAIL'}(零网络零写入)")
 
 
+def _recover_phase():
+    """恢复阶段:必须在 preflight 硬闸**之前**跑。
+
+    上一版把 recover_pending 放在 official_sample 步内 —— 而 preflight 遇到
+    悬空 intent 会先 FAIL 整条夜链,官方样本步永远执行不到:
+    真实崩溃后,夜链永远走不到自己的恢复器。恢复是给硬闸清路的,不能站在硬闸后面。
+    恢复自身失败(链损坏/双终态)不吞:打印后交给 preflight 判死,fail-closed。"""
+    try:
+        sys.path.insert(0, HERE)
+        import registry as _reg
+        _lp = _reg.ledger_path_for(os.path.join(HERE, "paper_signal_log.json"))
+        if not os.path.exists(_lp):
+            return None
+        r = _reg.recover_pending(_lp, os.path.join(HERE, "paper_signal_log.json"))
+        if r["pending_examined"]:
+            print(f"[recover] 悬空事务处理: 前滚 {len(r['rolled_forward'])} · "
+                  f"重建 {len(r['rebuilt'])} · 作废 {len(r['aborted'])} · 不符 {len(r['mismatch'])}")
+        return r
+    except Exception as e:                       # noqa: BLE001 — 不吞,交给 preflight 判死
+        print(f"[recover] 恢复阶段失败(交由 preflight fail-closed): {e}")
+        return None
+
+
 def main():
     if "--selftest" in sys.argv:
         sys.exit(0 if selftest() else 1)
     if "--preflight" in sys.argv or "--preflight-only" in sys.argv:
+        if "--no-recover" not in sys.argv:
+            _recover_phase()
         pf = preflight()
         _print_preflight(pf)
         sys.exit(0 if pf["pass"] else 1)
-    # ── P0-B 硬闸:正式运行路径 preflight 自动前置,FAIL ⇒ 任何引擎不得启动 ──
+    # ── 恢复阶段 → P0-B 硬闸:先清路再验闸,FAIL ⇒ 任何引擎不得启动 ──
+    _recover_phase()
     pf = preflight()
     _print_preflight(pf)
     if not pf["pass"]:

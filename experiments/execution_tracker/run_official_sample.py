@@ -155,6 +155,51 @@ def build(token):
     return trade_date, snap, sigs
 
 
+def build_signals_manifest(sigs):
+    """写 sample 时为信号建不可变 manifest:逐条注册指纹 + 总哈希。"""
+    import hashlib as _hl
+    import sys as _s
+    _s.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import registry as _reg
+    fps = {s["signal_id"]: _reg.record_hash(s) for s in sigs}
+    blob = json.dumps(fps, sort_keys=True, separators=(",", ":")).encode()
+    return {"fingerprints": fps, "manifest_hash": _hl.sha256(blob).hexdigest()}
+
+
+def trusted_sample_signals(prior, fresh_sigs):
+    """决定对账用哪份信号。**绝不直接信任 sample 里的 paper_signals 字段** ——
+    在 sample 里塞 paper_signals=[injected],上一版会把注入信号原样登记。
+    只有带 manifest 且逐条指纹 + 总哈希全部核对通过,才用 sample 的信号;
+    否则回退到本次模型重算的 fresh_sigs,并明说原因。
+    返回 (sigs, source_desc)。"""
+    import hashlib as _hl
+    import sys as _s
+    _s.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import registry as _reg
+    prior_sigs = prior.get("paper_signals") or prior.get("signals") or []
+    man = prior.get("signals_manifest")
+    if not prior_sigs:
+        return fresh_sigs, "sample 无信号字段 —— 用本次重算"
+    if not man:
+        return fresh_sigs, "sample 无 signals_manifest(旧格式)—— 不信任其 paper_signals,用本次重算"
+    fps = man.get("fingerprints") or {}
+    blob = json.dumps(fps, sort_keys=True, separators=(",", ":")).encode()
+    if _hl.sha256(blob).hexdigest() != man.get("manifest_hash"):
+        return fresh_sigs, "manifest_hash 与 fingerprints 重算不符 —— sample 被改动,用本次重算"
+    ok = []
+    for s in prior_sigs:
+        sid = s.get("signal_id")
+        if sid in fps and _reg.record_hash(s) == fps[sid]:
+            ok.append(s)
+        else:
+            print(f"  [reject] sample 信号 {sid} 指纹不符或不在 manifest —— 拒绝登记该条")
+    if len(ok) != len(fps):
+        missing = set(fps) - {s.get("signal_id") for s in ok}
+        if missing:
+            print(f"  [warn] manifest 中 {len(missing)} 条在 sample 里缺失或被改: {sorted(missing)[:3]}")
+    return ok, f"sample manifest 校验通过({len(ok)}/{len(prior_sigs)} 条可信)"
+
+
 def append_log(path, sigs, registered_at=None):
     """经 R-014 三段式登记事务写入。**夜链真正的入口就是这里** ——
     #217 初版接的是 execution_tracker.py --input,而 run_nightly.py:36 调的是本文件,
@@ -241,10 +286,8 @@ def main():
         except (json.JSONDecodeError, OSError) as e:
             print(f"REFUSED: 已存在的样本不可解析 ({e}) —— 不得当作没有,请人工处理。")
             return 1
-        prior_sigs = prior.get("paper_signals") or prior.get("signals") or []
-        if not prior_sigs:
-            print("  样本内无 paper_signals 字段 —— 改用本次重算的候选信号对账。")
-            prior_sigs = sigs
+        prior_sigs, why = trusted_sample_signals(prior, sigs)
+        print(f"  对账信号来源: {why}")
         added, total = append_log(os.path.join(HERE, "paper_signal_log.json"), prior_sigs)
         print(f"  对账结果: 补登 {added} 条,账本共 {total} 条。")
         print("  (历史纠错请走 migration 带 corrected_at/reason/original_value;")
@@ -257,6 +300,7 @@ def main():
     for sg in sigs:
         sg["ingested_at"] = ingested_at
         sg["backfilled"] = snap["backfilled"]
+    snap["signals_manifest"] = build_signals_manifest(sigs)   # 不可变信号清单
     _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import registry as _reg
     _reg.write_signal_log_atomic(sample_path, snap)      # 原子写,半程崩溃不留截断样本

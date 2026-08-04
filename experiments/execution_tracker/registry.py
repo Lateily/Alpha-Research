@@ -254,44 +254,77 @@ def _txn_state(events):
     return intents, commits, aborts
 
 
+# 注册指纹只盖**冻结字段**(C5 §2.3 的冻结输入 + 身份字段)。
+# returns / entry_close / directional_call 等判分产物是"活字段" —— backfill 每晚
+# 合法地写它们。上一版把整条记录都盖进指纹,第一次合法回填就让三方校验爆炸,
+# 下一轮 preflight 封死夜链:守门条款自我锁死,与留后门是同一类失效。
+# 白名单语义:字段在名单内且**存在**才入哈希 ⇒ 改值、删字段、加名单内字段都会变指纹;
+# 名单外字段(判分产物)自由进出,不碰指纹。
+FROZEN_FINGERPRINT_FIELDS = (
+    # 身份
+    "signal_id", "ticker", "name", "timestamp", "line", "market_state",
+    # C5 §2.3 冻结输入
+    "setup_type", "fund_structure", "relative_strength", "scoring",
+    "horizon", "primary_horizon",
+    # 可证伪性核心(研究预注册)
+    "hypothesis", "invalidation", "catalyst", "trigger_condition",
+    # R-014 注册戳
+    "registered_at", "registered_trade_date", "written_by", "registry_schema",
+    "official_sample", "no_trade_flag",
+)
+
+
 def record_hash(rec):
-    """记录指纹。恢复时逐字段核对用 —— 只认 signal_id 会给伪造记录盖章。"""
-    payload = {k: v for k, v in rec.items() if k not in ("registry_txn_id", "record_hash")}
+    """注册指纹:仅冻结字段,恢复/幂等校验全部重算此值,不信任何自报标签。"""
+    payload = {k: rec[k] for k in FROZEN_FINGERPRINT_FIELDS if k in rec}
     return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False,
                                      separators=(",", ":"), default=str).encode()).hexdigest()
 
 
-def validate_transaction_projection(txn, intent_payload, projection, commit_payload=None):
-    """三方一致性校验。**全部重算,绝不信任记录自填的 record_hash。**
+def validate_transaction_projection(txn, intent_payload, projection,
+                                    commit_payload=None, *,
+                                    require_projection=False, require_commit=False):
+    """四方一致性:intent 顶层 / intent.record / projection / commit。
 
-    初版比较的是 existing["record_hash"] == saved["record_hash"] —— 两个自报的标签。
-    把投影里的 ticker 改掉、保留原 hash 字符串,恢复器照样盖章。
-    标签不是证据;只有对当前内容重算出来的哈希才是。
+    **全部重算指纹,绝不信任自报标签;必查字段缺失即失败** ——
+    上一版 commit_payload 为 None 就跳过、投影缺失也放行,
+    于是「intent 在、commit 空、投影不存在」被判为一致。
     返回 (ok, reasons)。
     """
     why = []
-    saved = (intent_payload or {}).get("record")
+    if not intent_payload:
+        return False, ["无 intent payload"]
+    saved = intent_payload.get("record")
     if not saved:
         return False, ["intent 无可重放记录(旧格式)—— 不得凭 signal_id 前滚"]
+    sid = saved.get("signal_id")
+    if not sid:
+        why.append("intent.record 无 signal_id")
+    if intent_payload.get("signal_id") != sid:
+        why.append("intent 顶层 signal_id 与 record 不符")
+    if saved.get("registry_txn_id") != txn:
+        why.append(f"record.registry_txn_id={saved.get('registry_txn_id')!r} ≠ txn(缺失同罪)")
     h_intent = record_hash(saved)
-    if saved.get("record_hash") and saved["record_hash"] != h_intent:
-        why.append("intent 内记录的自报 hash 与重算不符")
-    if saved.get("registry_txn_id") not in (None, txn):
-        why.append(f"intent 记录的 registry_txn_id={saved.get('registry_txn_id')} ≠ {txn}")
-    if projection is not None:
-        h_proj = record_hash(projection)
-        if h_proj != h_intent:
-            why.append(f"投影重算 hash {h_proj[:12]} ≠ intent 重算 hash {h_intent[:12]}")
+    if intent_payload.get("record_hash") != h_intent:
+        why.append("intent 自报 record_hash 与重算不符(缺失同罪)")
+    if projection is None:
+        if require_projection:
+            why.append("投影缺失 —— 已提交事务必须有投影")
+    else:
+        if record_hash(projection) != h_intent:
+            why.append("投影重算指纹 ≠ intent 重算指纹(冻结字段被改)")
         if projection.get("registry_txn_id") != txn:
-            why.append(f"投影 registry_txn_id={projection.get('registry_txn_id')} ≠ {txn}")
-        if projection.get("signal_id") != saved.get("signal_id"):
+            why.append(f"投影 registry_txn_id={projection.get('registry_txn_id')!r} ≠ txn")
+        if projection.get("signal_id") != sid:
             why.append("投影与 intent 的 signal_id 不符")
-    if commit_payload is not None:
-        if commit_payload.get("record_hash") and commit_payload["record_hash"] != h_intent:
-            why.append("commit 保存的 hash 与 intent 重算不符")
-        if (commit_payload.get("signal_id")
-                and commit_payload["signal_id"] != saved.get("signal_id")):
-            why.append("commit 的 signal_id 与 intent 不符")
+    if commit_payload is None:
+        if require_commit:
+            why.append("commit 缺失")
+    else:
+        if commit_payload.get("record_hash") != h_intent:
+            why.append("commit 保存的 record_hash 与 intent 重算不符(空/缺失同罪)")
+        if commit_payload.get("signal_id") != sid:
+            why.append("commit 的 signal_id 与 intent 不符(缺失同罪)")
     return (not why), why
 
 
@@ -363,12 +396,14 @@ def register_transaction(record, *, registered_at, script, version, run_id,
                 ip = intents.get(txn)
                 cp = _commit_payload(events, txn)
                 if existing is not None:
-                    ok, why = validate_transaction_projection(txn, ip, existing, cp)
+                    ok, why = validate_transaction_projection(
+                        txn, ip, existing, cp, require_projection=True, require_commit=True)
                     if not ok:
                         raise LedgerCorrupt(
                             f"txn {txn} 已 commit,但三方校验不通过,拒绝返回幂等成功: {why}")
                     return existing, "idempotent: already committed (validated)"
-                ok, why = validate_transaction_projection(txn, ip, None, cp)
+                ok, why = validate_transaction_projection(
+                    txn, ip, None, cp, require_commit=True)
                 if not ok:
                     raise LedgerCorrupt(
                         f"txn {txn} 已 commit 但投影丢失且无法重建: {why}")
@@ -455,6 +490,17 @@ def recover_pending(ledger_path, log_path, apply=True):
                                    "by": "recover_pending"}, path=ledger_path)
                     out["rolled_forward"].append(txn)
                 elif saved:
+                    # 重建之前必须先验 intent 自身(txn 一致 / 顶层 sid / 自报 hash)——
+                    # 上一版无条件 _project,构造 registry_txn_id=WRONG、伪 hash、
+                    # 顶层与 record sid 不一致的 intent 照样被写入投影并 commit。
+                    ok, why = validate_transaction_projection(txn, payload, None)
+                    if not ok:
+                        if apply:
+                            el.append("register_abort", txn,
+                                      {"signal_id": sid, "reason": "; ".join(why)[:200]},
+                                      path=ledger_path)
+                        out["mismatch"].append(txn); out["aborted"].append(txn)
+                        continue
                     if apply:
                         rows = _project(rows, saved, log_path)
                         by_sid[sid] = saved
@@ -688,6 +734,33 @@ def selftest():
             ck(f"⑥ 并发 {label} ×8 → {want} 条且无重复",
                len(n) == want and len(set(n)) == want)
             shutil.rmtree(dd, ignore_errors=True)
+
+        # 四方校验的 commit 门必须**单独**可证伪 —— 其余三方全部合法、
+        # 仅 commit 为空/缺失,也必须失败(否则"intent 在、commit 空"被判一致)。
+        dd, sp, lp = fresh()
+        register_transaction({"signal_id": "s9", "ticker": "600000.SH"},
+                             ledger_path=lp, log_path=sp, **{**KW, "run_id": "r9"})
+        evs9 = read_events(lp)
+        ip9 = next(e["payload"] for e in evs9 if e["kind"] == "register_intent")
+        txn9 = next(e["id"] for e in evs9 if e["kind"] == "register_intent")
+        proj9 = load_signal_log_strict(sp)[0]
+        ok_full, _ = validate_transaction_projection(txn9, ip9, proj9,
+                                                     {"signal_id": "s9",
+                                                      "record_hash": record_hash(proj9)},
+                                                     require_projection=True, require_commit=True)
+        ck("四方全合法 → 通过", ok_full)
+        ok_none, _ = validate_transaction_projection(txn9, ip9, proj9, None,
+                                                     require_projection=True, require_commit=True)
+        ck("仅 commit 缺失 → 失败", not ok_none)
+        ok_empty, _ = validate_transaction_projection(txn9, ip9, proj9, {},
+                                                      require_projection=True, require_commit=True)
+        ck("仅 commit 为空 dict → 失败", not ok_empty)
+        ok_noproj, _ = validate_transaction_projection(txn9, ip9, None,
+                                                       {"signal_id": "s9",
+                                                        "record_hash": record_hash(proj9)},
+                                                       require_projection=True, require_commit=True)
+        ck("仅投影缺失 → 失败", not ok_noproj)
+        shutil.rmtree(dd, ignore_errors=True)
 
         # 链损坏时拒绝做事务判定
         dd, sp, lp = fresh()

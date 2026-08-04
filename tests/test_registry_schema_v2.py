@@ -336,6 +336,134 @@ class RegistrySchemaV2Test(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
+    def test_full_lifecycle_register_crash_recover_backfill_preflight(self) -> None:
+        """完整组合回归(复审第 6 项):注册 → 中断恢复 → 收益回填 → 次日 preflight。
+
+        上一版所有测试全绿却漏掉「第一次合法回填就自锁」—— 因为没有任何测试
+        跑过 official_sample → backfill → 下一次 preflight 这条完整链。
+        """
+        import importlib.util
+        import event_ledger, registry
+        sys.path.insert(0, str(ET))
+        import run_nightly
+        spec = importlib.util.spec_from_file_location("ros_lc", str(ET / "run_official_sample.py"))
+        ros = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(ros)
+        tmp = tempfile.mkdtemp()
+        try:
+            sp = os.path.join(tmp, "paper_signal_log.json")
+            lp = registry.ledger_path_for(sp)
+            shutil.copy(ET / "paper_signal_log.json", sp)     # 真实历史行打底
+            base_n = len(registry.load_signal_log_strict(sp))
+            sigs = [{"signal_id": f"lc{i}", "ticker": f"6000{i:02d}.SH",
+                     "setup_type": "execution_gate", "horizon": ["1d", "3d", "5d", "10d"],
+                     "timestamp": "20260803 close (official)"} for i in range(3)]
+            # ① 注册(夜链入口真函数)
+            added, total = ros.append_log(sp, sigs)
+            self.assertEqual((added, total), (3, base_n + 3))
+            # ② 模拟崩溃:砍掉最后一条 commit
+            lines = event_ledger._read_lines(lp)
+            open(lp, "w").write("\n".join(lines[:-1]) + "\n")
+            event_ledger.write_anchor(lp, len(lines) - 1,
+                                      json.loads(lines[-2])["hash"])
+            # ③ 恢复(夜链恢复阶段做的事)
+            r = registry.recover_pending(lp, sp)
+            self.assertEqual(len(r["rolled_forward"]), 1)
+            # ④ 合法收益回填(backfill 干的事:加 returns/entry_close/directional_call)
+            rows = registry.load_signal_log_strict(sp)
+            for row in rows:
+                if str(row.get("signal_id", "")).startswith("lc"):
+                    row["returns"] = {"1d": 0.011}
+                    row["entry_close"] = 10.0
+                    row["directional_call"] = "neutral"
+            registry.write_signal_log_atomic(sp, rows)
+            # ⑤ 次日 preflight:必须 PASS —— 合法回填不得触发三方不一致
+            res = run_nightly.preflight(base=tmp)
+            three = [ok for n, ok in res["checks"] if "三方一致" in n]
+            self.assertTrue(all(three), f"合法回填被判为篡改: {res['failures']}")
+            dang = [ok for n, ok in res["checks"] if "悬空" in n]
+            self.assertTrue(all(dang))
+            # ⑥ 反证:改一条冻结字段(ticker),preflight 必须红
+            rows = registry.load_signal_log_strict(sp)
+            for row in rows:
+                if row.get("signal_id") == "lc0":
+                    row["ticker"] = "999999.SZ"
+            registry.write_signal_log_atomic(sp, rows)
+            res2 = run_nightly.preflight(base=tmp)
+            three2 = [ok for n, ok in res2["checks"] if "三方一致" in n]
+            self.assertFalse(all(three2), "冻结字段被改却未被抓")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_preflight_fails_on_empty_commit_or_missing_projection(self) -> None:
+        """B4:intent 在、commit 空、投影不存在 —— 三方一致性必须红。"""
+        import event_ledger, registry
+        sys.path.insert(0, str(ET))
+        import run_nightly
+        tmp = tempfile.mkdtemp()
+        try:
+            sp = os.path.join(tmp, "paper_signal_log.json")
+            shutil.copy(ET / "paper_signal_log.json", sp)
+            lp = registry.ledger_path_for(sp)
+            event_ledger.append("register_intent", "T1",
+                                {"signal_id": "ghost",
+                                 "record": {"signal_id": "ghost", "registry_txn_id": "T1"}},
+                                path=lp)
+            event_ledger.append("register_commit", "T1", {}, path=lp)
+            res = run_nightly.preflight(base=tmp)
+            three = [ok for n, ok in res["checks"] if "三方一致" in n]
+            self.assertFalse(all(three))
+            self.assertFalse(res["pass"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_recovery_never_commits_poisoned_intent(self) -> None:
+        """B3:registry_txn_id 错 / 伪 hash / 顶层与 record sid 不一致 → 拒绝重建。"""
+        import event_ledger, registry
+        tmp = tempfile.mkdtemp()
+        try:
+            sp = os.path.join(tmp, "sig.json"); lp = registry.ledger_path_for(sp)
+            event_ledger.append("register_intent", "T9",
+                                {"signal_id": "x",
+                                 "record": {"signal_id": "DIFFERENT",
+                                            "registry_txn_id": "WRONG",
+                                            "record_hash": "FAKE", "ticker": "t"}},
+                                path=lp)
+            r = registry.recover_pending(lp, sp)
+            self.assertFalse(r["rebuilt"])
+            self.assertTrue(r["aborted"])
+            self.assertEqual(registry.load_signal_log_strict(sp), [])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_sample_injection_is_rejected(self) -> None:
+        """M5:sample 的 paper_signals 不可直接信任 —— 只认带 hash 的 manifest。"""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("ros_inj", str(ET / "run_official_sample.py"))
+        ros = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(ros)
+        fresh = [{"signal_id": "fresh1", "ticker": "600000.SH",
+                  "setup_type": "execution_gate", "timestamp": "20260803 close (official)"}]
+        inj = [{"signal_id": "injected", "ticker": "999999.SZ",
+                "setup_type": "execution_gate", "timestamp": "20260803 close (official)"}]
+        got, _ = ros.trusted_sample_signals({"paper_signals": inj}, fresh)
+        self.assertEqual([g["signal_id"] for g in got], ["fresh1"], "无 manifest 时信了注入信号")
+        legit = [{"signal_id": "real1", "ticker": "600001.SH",
+                  "setup_type": "execution_gate", "timestamp": "20260803 close (official)"}]
+        sample = {"paper_signals": legit + inj,
+                  "signals_manifest": ros.build_signals_manifest(legit)}
+        got2, _ = ros.trusted_sample_signals(sample, fresh)
+        self.assertEqual([g["signal_id"] for g in got2], ["real1"], "manifest 外的注入条被登记")
+
+    def test_nightly_recovery_phase_precedes_gate(self) -> None:
+        """B(可达性):恢复必须在 preflight 硬闸之前,否则崩溃后夜链永远到不了恢复器。"""
+        src = (ET / "run_nightly.py").read_text(encoding="utf-8")
+        self.assertIn("_recover_phase", src)
+        body = src[src.index("def main():"):]
+        # 正式路径是 main() 里最后一组:恢复必须先于硬闸
+        self.assertLess(body.rindex("_recover_phase()"), body.rindex("pf = preflight()"),
+                        "恢复阶段在硬闸之后 —— 生产崩溃后不可达")
+
     def test_legacy_intent_without_record_aborts(self) -> None:
         """无可重放记录的旧格式 intent 才作废;有记录的一律前滚(见 B3)。"""
         import event_ledger, registry
