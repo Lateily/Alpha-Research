@@ -92,9 +92,10 @@ def qfq_close_series(ticker, token, start_date):
 def backfill(log, token):
     """Fill T+N forward returns for elapsed horizons. Idempotent; no look-ahead.
 
-    Returns the number of horizon-returns newly filled.
+    Returns (filled_count, fills) — fills 为逐笔明细,供判分 WAL 落账。
     """
     filled = 0
+    fills = []
     series_cache = {}
     for sig in log:
         if str(sig.get("scoring") or "") == "NOT_SCORABLE":
@@ -125,9 +126,13 @@ def backfill(log, token):
             j = i + n
             if j >= len(series):                       # T+N not settled yet -> no look-ahead
                 continue
-            sig["returns"][h] = round(series[j][1] / series[i][1] - 1.0, 4)
+            v = round(series[j][1] / series[i][1] - 1.0, 4)
+            sig["returns"][h] = v
             filled += 1
-    return filled
+            fills.append({"signal_id": sig.get("signal_id"), "horizon": h, "value": v,
+                          "entry_close": sig.get("entry_close"),
+                          "directional_call": sig.get("directional_call")})
+    return filled, fills
 
 
 def scorecard(log):
@@ -254,8 +259,21 @@ def main():
             if trade_date is None:
                 tds = [d for d in (parse_trade_date(s.get("timestamp")) for s in log) if d]
                 trade_date = max(tds) if tds else "unknown"
-            filled = backfill(log, token)
+            filled, fills = backfill(log, token)
             _reg.write_signal_log_atomic(log_path, log)
+            # ── B9 判分 WAL:每笔回填落 evaluation 事件,preflight 交叉核对 ──
+            # returns 不在注册指纹里(它是活字段),它的完整性由这条链单独保护:
+            # 改 returns.1d=99 而无对应事件 ⇒ preflight 红。
+            _lp = _reg.ledger_path_for(log_path)
+            import event_ledger as _el
+            for f in fills:
+                try:
+                    _el.append("evaluation", f"{f['signal_id']}:{f['horizon']}",
+                               f, path=_lp)
+                except ValueError as e:
+                    # (kind,id) 已存在 = 该档已判过 —— 幂等跳过;其他错误不吞
+                    if "已存在" not in str(e):
+                        raise
         finally:
             fcntl.flock(_lf, fcntl.LOCK_UN)
 
@@ -303,7 +321,7 @@ def selftest():
             {"signal_id": "dn1", "ticker": "DN.SZ", "timestamp": "20260101 close (official)",
              "setup_type": "WARNING", "fund_structure": "大单卖小单接", "relative_strength": False},
         ]
-        filled = backfill(log, token=None)
+        filled, _fills = backfill(log, token=None)
         ck("backfill filled returns", filled == 8)                       # 2 signals x 4 horizons
         ck("constructive call (rel-strength)", log[0]["directional_call"] == "constructive")
         ck("cautious call (WARNING/大单卖小单接)", log[1]["directional_call"] == "cautious")
@@ -322,7 +340,7 @@ def selftest():
         ck("claim NOT allowed (<30)", card["claim_allowed"] is False)
 
         # idempotent: re-run fills nothing new
-        ck("idempotent re-backfill = 0", backfill(log, token=None) == 0)
+        ck("idempotent re-backfill = 0", backfill(log, token=None)[0] == 0)
 
         # neutral posture is NOT scored
         neutral = [{"signal_id": "n1", "ticker": "UP.SZ", "timestamp": "20260101 close (official)",

@@ -59,6 +59,10 @@ jobs:
       # 覆盖:registry 自检 · 两条注册路径确实打戳 · 账本挂掉时登记被拒且信号不落盘
       - name: Registry schema v2 + ledger wiring regression
         run: python3 tests/test_registry_schema_v2.py
+      # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
+      # B1 的 NameError 逃过了全部测试,因为没有任何测试真正执行过 main()。
+      - name: Nightly v3 regression (process-level entry + artifact contracts)
+        run: python3 tests/test_nightly_v3.py
       # 既有缺口(#215 复核发现):本文件逐个点名执行测试,无发现机制,
       # 故新增测试若不在此登记就永远不跑。以下两条此前从未在 CI 运行过。
       - name: PIT no-look-ahead regression

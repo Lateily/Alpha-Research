@@ -376,6 +376,10 @@ class RegistrySchemaV2Test(unittest.TestCase):
                     row["returns"] = {"1d": 0.011}
                     row["entry_close"] = 10.0
                     row["directional_call"] = "neutral"
+                    # 生产路径同款:回填值必须同时落判分 WAL(B9)
+                    event_ledger.append("evaluation", f"{row['signal_id']}:1d",
+                                        {"signal_id": row["signal_id"], "horizon": "1d",
+                                         "value": 0.011}, path=lp)
             registry.write_signal_log_atomic(sp, rows)
             # ⑤ 次日 preflight:必须 PASS —— 合法回填不得触发三方不一致
             res = run_nightly.preflight(base=tmp)
@@ -437,23 +441,30 @@ class RegistrySchemaV2Test(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
     def test_sample_injection_is_rejected(self) -> None:
-        """M5:sample 的 paper_signals 不可直接信任 —— 只认带 hash 的 manifest。"""
+        """M5+B7:sample 的 paper_signals 不可信;manifest 缺失/被改一律**拒绝对账**,
+        不再回退重算(回退=拿当前算法重造历史信号,事后污染)。"""
         import importlib.util
         spec = importlib.util.spec_from_file_location("ros_inj", str(ET / "run_official_sample.py"))
         ros = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(ros)
-        fresh = [{"signal_id": "fresh1", "ticker": "600000.SH",
-                  "setup_type": "execution_gate", "timestamp": "20260803 close (official)"}]
         inj = [{"signal_id": "injected", "ticker": "999999.SZ",
                 "setup_type": "execution_gate", "timestamp": "20260803 close (official)"}]
-        got, _ = ros.trusted_sample_signals({"paper_signals": inj}, fresh)
-        self.assertEqual([g["signal_id"] for g in got], ["fresh1"], "无 manifest 时信了注入信号")
+        got, why, ok = ros.trusted_sample_signals({"paper_signals": inj})
+        self.assertFalse(ok, "无 manifest 却判为可对账")
+        self.assertEqual(got, [], f"注入信号被采纳: {why}")
         legit = [{"signal_id": "real1", "ticker": "600001.SH",
                   "setup_type": "execution_gate", "timestamp": "20260803 close (official)"}]
-        sample = {"paper_signals": legit + inj,
-                  "signals_manifest": ros.build_signals_manifest(legit)}
-        got2, _ = ros.trusted_sample_signals(sample, fresh)
+        man = ros.build_signals_manifest(legit)
+        # 合法:取 manifest 冻结正文,与 paper_signals 字段无关
+        got2, _, ok2 = ros.trusted_sample_signals({"paper_signals": legit + inj,
+                                                   "signals_manifest": man})
+        self.assertTrue(ok2)
         self.assertEqual([g["signal_id"] for g in got2], ["real1"], "manifest 外的注入条被登记")
+        # 篡改 manifest 正文 ⇒ 整份拒信
+        bad = json.loads(json.dumps(man))
+        bad["records"]["real1"]["ticker"] = "999999.SZ"
+        got3, _, ok3 = ros.trusted_sample_signals({"signals_manifest": bad})
+        self.assertFalse(ok3, "manifest 正文被改却仍可信")
 
     def test_nightly_recovery_phase_precedes_gate(self) -> None:
         """B(可达性):恢复必须在 preflight 硬闸之前,否则崩溃后夜链永远到不了恢复器。"""

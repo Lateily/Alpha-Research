@@ -254,29 +254,20 @@ def _txn_state(events):
     return intents, commits, aborts
 
 
-# 注册指纹只盖**冻结字段**(C5 §2.3 的冻结输入 + 身份字段)。
-# returns / entry_close / directional_call 等判分产物是"活字段" —— backfill 每晚
-# 合法地写它们。上一版把整条记录都盖进指纹,第一次合法回填就让三方校验爆炸,
-# 下一轮 preflight 封死夜链:守门条款自我锁死,与留后门是同一类失效。
-# 白名单语义:字段在名单内且**存在**才入哈希 ⇒ 改值、删字段、加名单内字段都会变指纹;
-# 名单外字段(判分产物)自由进出,不碰指纹。
-FROZEN_FINGERPRINT_FIELDS = (
-    # 身份
-    "signal_id", "ticker", "name", "timestamp", "line", "market_state",
-    # C5 §2.3 冻结输入
-    "setup_type", "fund_structure", "relative_strength", "scoring",
-    "horizon", "primary_horizon",
-    # 可证伪性核心(研究预注册)
-    "hypothesis", "invalidation", "catalyst", "trigger_condition",
-    # R-014 注册戳
-    "registered_at", "registered_trade_date", "written_by", "registry_schema",
-    "official_sample", "no_trade_flag",
-)
+# 注册指纹:**默认冻结**。上一版用"冻结白名单",trigger_price / support /
+# main_flow / forecast_claim / mechanism_chain 等研究输入全在名单外 —— 改了照样过校验。
+# 白名单永远漏字段;现在反转:除下列**显式判分产物**外,一切字段(含未来新增)
+# 默认冻结,改动即指纹变化即校验失败。判分产物的完整性由判分 WAL(evaluation 事件)
+# 单独保护,不靠指纹。
+MUTABLE_EVALUATION_FIELDS = frozenset({
+    "returns", "entry_close", "directional_call",     # backfill 每晚合法写入
+    "registry_txn_id", "record_hash",                 # 事务元数据,不入指纹
+})
 
 
 def record_hash(rec):
-    """注册指纹:仅冻结字段,恢复/幂等校验全部重算此值,不信任何自报标签。"""
-    payload = {k: rec[k] for k in FROZEN_FINGERPRINT_FIELDS if k in rec}
+    """注册指纹:默认冻结(除 MUTABLE_EVALUATION_FIELDS),全部重算,不信自报标签。"""
+    payload = {k: rec[k] for k in sorted(rec) if k not in MUTABLE_EVALUATION_FIELDS}
     return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False,
                                      separators=(",", ":"), default=str).encode()).hexdigest()
 
@@ -349,6 +340,30 @@ def _terminal_states(events):
     return intents, commits, aborts
 
 
+QUARANTINE_SUFFIX = ".quarantine.json"
+
+
+def quarantine_projection(log_path, rows, sid, reason):
+    """把与 intent 不符的投影行移出账本、存入隔离区(B10)。
+
+    上一版只追加 abort 事件、毒投影原样留在账本里 —— abort 之后错误投影
+    仍被当成事实,preflight 照样 PASS。abort 必须伴随隔离,二者同一原子写。
+    返回移除后的 rows。"""
+    poison = [r for r in rows if r.get("signal_id") == sid]
+    clean = [r for r in rows if r.get("signal_id") != sid]
+    qp = log_path + QUARANTINE_SUFFIX
+    try:
+        box = json.load(open(qp, encoding="utf-8")) if os.path.exists(qp) else []
+    except (json.JSONDecodeError, OSError):
+        box = []          # 隔离区本身坏了不阻断隔离动作 —— 宁可丢隔离历史不留毒行
+    for r in poison:
+        box.append({"quarantined_at": datetime.datetime.now().isoformat(timespec="seconds"),
+                    "reason": reason, "record": r})
+    write_signal_log_atomic(qp, box)
+    write_signal_log_atomic(log_path, clean)
+    return clean
+
+
 def _project(rows, stamped, log_path):
     """把 stamped 记录写进投影(幂等:已存在同 signal_id 则不重复追加)。"""
     sid = stamped["signal_id"]
@@ -399,8 +414,16 @@ def register_transaction(record, *, registered_at, script, version, run_id,
                     ok, why = validate_transaction_projection(
                         txn, ip, existing, cp, require_projection=True, require_commit=True)
                     if not ok:
+                        # 已提交但投影被改:隔离毒行(B10),并尝试从 intent 重建真身
+                        rows = quarantine_projection(log_path, rows, sid,
+                                                     "committed-mismatch: " + "; ".join(why)[:140])
+                        ok2, why2 = validate_transaction_projection(
+                            txn, ip, None, cp, require_commit=True)
+                        if ok2:
+                            rows = _project(rows, ip["record"], log_path)
+                            return ip["record"], "recovered: poisoned projection quarantined, rebuilt from intent"
                         raise LedgerCorrupt(
-                            f"txn {txn} 已 commit,但三方校验不通过,拒绝返回幂等成功: {why}")
+                            f"txn {txn} 已 commit,投影被改已隔离,且 intent 不足以重建: {why}")
                     return existing, "idempotent: already committed (validated)"
                 ok, why = validate_transaction_projection(
                     txn, ip, None, cp, require_commit=True)
@@ -434,10 +457,12 @@ def register_transaction(record, *, registered_at, script, version, run_id,
                 ok, why = validate_transaction_projection(
                     txn, intents.get(txn) or {"record": stamped}, existing)
                 if not ok:
+                    rows = quarantine_projection(log_path, rows, sid,
+                                                 "register: " + "; ".join(why)[:160])
                     el.append("register_abort", txn,
-                              {"signal_id": sid, "reason": "; ".join(why)[:200]},
-                              path=ledger_path)
-                    raise LedgerCorrupt(f"signal {sid} 的投影与 intent 不符,拒绝提交: {why}")
+                              {"signal_id": sid, "reason": "; ".join(why)[:200],
+                               "quarantined": True}, path=ledger_path)
+                    raise LedgerCorrupt(f"signal {sid} 的投影与 intent 不符,已隔离并中止: {why}")
 
             rows = _project(rows, stamped, log_path)
             el.append("register_commit", txn,
@@ -479,9 +504,12 @@ def recover_pending(ledger_path, log_path, apply=True):
                     ok, why = validate_transaction_projection(txn, payload, existing)
                     if not ok:
                         if apply:
+                            rows = quarantine_projection(log_path, rows, sid,
+                                                         "recover: " + "; ".join(why)[:160])
+                            by_sid.pop(sid, None)
                             el.append("register_abort", txn,
-                                      {"signal_id": sid, "reason": "; ".join(why)[:200]},
-                                      path=ledger_path)
+                                      {"signal_id": sid, "reason": "; ".join(why)[:200],
+                                       "quarantined": True}, path=ledger_path)
                         out["mismatch"].append(txn); out["aborted"].append(txn)
                         continue
                     if apply:
@@ -672,19 +700,20 @@ def selftest():
            r["mismatch"] and not r["rolled_forward"])
         shutil.rmtree(dd, ignore_errors=True)
 
-        # ②e 已 commit 的投影被篡改 → 幂等返回前必须校验
+        # ②e 已 commit 的投影被篡改 → 绝不把毒行当幂等成功返回:
+        #     隔离毒行 + 从 intent 重建真身(B10),返回的必须是原始记录
         dd, sp, lp = fresh()
         register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
                              ledger_path=lp, log_path=sp, **KW)
         rws = load_signal_log_strict(sp); rws[0]["ticker"] = "999999.SZ"
         write_signal_log_atomic(sp, rws)
-        try:
-            register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
-                                 ledger_path=lp, log_path=sp, **KW)
-            blocked = False
-        except LedgerCorrupt:
-            blocked = True
-        ck("②e 已提交记录被篡改 → 拒绝返回幂等成功", blocked)
+        rec_e, st_e = register_transaction({"signal_id": "s2", "ticker": "600000.SH"},
+                                           ledger_path=lp, log_path=sp, **KW)
+        box = json.load(open(sp + QUARANTINE_SUFFIX))
+        ck("②e 已提交记录被篡改 → 隔离毒行并重建真身",
+           st_e.startswith("recovered") and rec_e["ticker"] == "600000.SH"
+           and len(box) == 1 and box[0]["record"]["ticker"] == "999999.SZ"
+           and load_signal_log_strict(sp)[0]["ticker"] == "600000.SH")
         shutil.rmtree(dd, ignore_errors=True)
 
         # ②f 交叉事务:用别的 signal 的 txn 登记

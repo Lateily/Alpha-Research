@@ -31,7 +31,8 @@ ALLOWED_FIELDS = set(HASHED_FIELDS) | {"hash"}
 # 这些 kind 的 (kind,id) 全账本唯一。事务三段以 transaction_id 为 id,
 # 故"同一 txn 重试"在链层就被拒,不依赖上层记得判重。
 UNIQUE_KINDS = {"register", "genesis",
-                "register_intent", "register_commit", "register_abort"}
+                "register_intent", "register_commit", "register_abort",
+                "evaluation"}    # 判分 WAL:每 (signal_id:horizon) 只判一次,重判即篡改
 
 
 def canonical(obj):
