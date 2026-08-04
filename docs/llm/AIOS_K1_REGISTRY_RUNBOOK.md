@@ -69,3 +69,38 @@ Do not commit the real #164 snapshot. The registry output is a derived view; Git
 - It does not perform reconciliation findings such as orphan PRs or premature DONE.
 - It does not call model APIs.
 
+## Reconciler v0
+
+The reconciler is the first read-only "task accountant" on top of the registry.
+It turns the current task states into actionable findings.
+
+Local fixture check:
+
+```powershell
+C:\Users\19463\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe scripts\llm\ai_reconciler.py docs\llm\examples\ai-progress.reconciler.fixture.json --now 2026-08-04T06:00:00Z --json
+```
+
+v0 checks:
+
+- active tasks past `expires_at`
+- active tasks missing `branch` or `files`
+- `DONE` tasks missing `pr` or `cost_cny`
+- `BLOCKED` tasks missing `blocked_by` or `next`
+- unexpired active tasks that claim overlapping file scopes
+
+Optional strict history mode:
+
+- progress events that appear before any `CLAIM`
+
+Run strict history mode only when auditing a clean v2-only board. It is disabled
+by default because #164 contains legacy pre-v2 records that would otherwise
+create noisy false positives.
+
+Boundary:
+
+- It is read-only and offline.
+- It does not write #164 comments.
+- It does not call model APIs.
+- It reports coordination problems; humans still decide whether to update, release,
+  or keep working.
+
