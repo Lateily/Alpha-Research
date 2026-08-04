@@ -66,6 +66,27 @@ The endpoint posts one standard `ai-progress.v2` comment to GitHub Issue #164.
 It is for team progress logs only. It must not accept free-form bot output,
 private chat transcripts, model API calls, or research conclusions.
 
+### Boundary amendment (Junyan, 2026-08-04)
+
+The original ratified boundary said "the web page must not write GitHub".
+Junyan personally amended it for this endpoint as groundwork for the AI OS
+task layer, under these standing conditions:
+
+1. The browser NEVER holds a GitHub token. Writes go only through this
+   server endpoint; the server holds the token.
+2. The endpoint is dormant unless `PROGRESS_WRITE_KEY` is configured, and
+   every request must present the key (constant-time compared).
+3. Key discipline: the write key is distributed out-of-band by Junyan only —
+   never committed to the repo, never posted in chat or issues, never stored
+   in localStorage. Rotate immediately on suspicion.
+4. Server-side CLAIM conflict gate: a CLAIM overlapping an active claim's
+   task or file scope (different actor) is refused with 409 — the protocol's
+   "check before CLAIM" rule is enforced by the server, not trusted to clients.
+5. Best-effort per-instance rate limit (6 posts / 10 min). Serverless
+   instances share no state; this bounds abuse per warm instance only.
+6. Output stays restricted to standard `ai-progress.v2` fenced blocks with
+   field length caps and path sanitization — never free-form text.
+
 Required server environment variables:
 
 ```text

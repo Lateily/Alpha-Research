@@ -1,3 +1,5 @@
+import { timingSafeEqual as cryptoTimingSafeEqual } from 'node:crypto';
+
 const DEFAULT_REPO = 'Lateily/Alpha-Research';
 const DEFAULT_ISSUE = '164';
 const EVENT_TYPES = new Set(['CLAIM', 'UPDATE', 'DONE', 'BLOCKED', 'RELEASE']);
@@ -9,6 +11,18 @@ const STATUS_BY_EVENT = {
   RELEASE: 'released',
 };
 const DEFAULT_TTL_MS = 3 * 60 * 60 * 1000;
+// Best-effort per-instance rate limit. Serverless instances do not share state,
+// so this bounds abuse per warm instance only — honest limit, not a guarantee.
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+const RATE_MAX_POSTS = 6;
+const rateLog = [];
+
+function rateLimited(now = Date.now()) {
+  while (rateLog.length && now - rateLog[0] > RATE_WINDOW_MS) rateLog.shift();
+  if (rateLog.length >= RATE_MAX_POSTS) return true;
+  rateLog.push(now);
+  return false;
+}
 const MAX_FIELD_LENGTH = 1200;
 const MAX_FILES = 20;
 const MAX_FILE_LENGTH = 180;
@@ -35,6 +49,19 @@ function headerValue(req, name) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function timingSafeEqualString(a, b) {
+  // Constant-time compare: a plain !== leaks length/prefix timing.
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+  if (bufA.length !== bufB.length) {
+    // Still burn a comparison so length mismatch costs the same as content mismatch.
+    cryptoTimingSafeEqual(bufB, bufB);
+    return false;
+  }
+  return cryptoTimingSafeEqual(bufA, bufB);
+}
+
 function requireWriteAccess(req) {
   const configuredKey = process.env.PROGRESS_WRITE_KEY;
   if (!configuredKey) {
@@ -42,7 +69,7 @@ function requireWriteAccess(req) {
   }
 
   const providedKey = headerValue(req, 'x-progress-write-key');
-  if (providedKey !== configuredKey) {
+  if (!timingSafeEqualString(providedKey || '', configuredKey)) {
     return { ok: false, code: 401, error: 'Invalid progress write key.' };
   }
 
@@ -147,6 +174,60 @@ function formatComment(event) {
   return `<!-- ai-progress:v2 -->\n\`\`\`json\n${JSON.stringify(event, null, 2)}\n\`\`\``;
 }
 
+const FENCED_JSON_RE = /```json\s*(\{[\s\S]*?\})\s*```/g;
+
+function activeClaims(comments, nowMs = Date.now()) {
+  // Same parse discipline as the read endpoint: fenced JSON blocks only,
+  // CLAIM closed by matching DONE/RELEASE on the same task, or by expiry.
+  const claims = new Map();
+  for (const comment of comments) {
+    const body = typeof comment?.body === 'string' ? comment.body : '';
+    for (const match of body.matchAll(FENCED_JSON_RE)) {
+      let event;
+      try {
+        event = JSON.parse(match[1]);
+      } catch {
+        continue;
+      }
+      const task = String(event.task || '');
+      if (event.event === 'CLAIM') {
+        const expires = event.expires_at ? Date.parse(event.expires_at) : 0;
+        if (expires > nowMs) claims.set(task, event);
+      } else if (event.event === 'DONE' || event.event === 'RELEASE') {
+        claims.delete(task);
+      }
+    }
+  }
+  return claims;
+}
+
+function claimConflict(claims, candidate) {
+  const actor = (e) => `${e.human_owner || ''}:${e.executor || ''}`;
+  const mine = actor(candidate);
+  const files = new Set(candidate.files || []);
+  for (const claim of claims.values()) {
+    if (actor(claim) === mine) continue;                 // 同人续领不算冲突
+    if (String(claim.task || '') === candidate.task) return claim;
+    for (const f of claim.files || []) {
+      if (files.has(f)) return claim;
+    }
+  }
+  return null;
+}
+
+async function fetchIssueComments(repo, issue, token) {
+  const url = `https://api.github.com/repos/${repo}/issues/${issue}/comments?per_page=100`;
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'User-Agent': 'alpha-research-team-progress',
+    },
+  });
+  if (!response.ok) throw new Error(`GitHub comments read failed: ${response.status}`);
+  return response.json();
+}
+
 async function postGithubComment(repo, issue, token, body) {
   const url = `https://api.github.com/repos/${repo}/issues/${issue}/comments`;
   const response = await fetch(url, {
@@ -167,7 +248,7 @@ async function postGithubComment(repo, issue, token, body) {
   return data;
 }
 
-export { buildProgressEvent, formatComment };
+export { buildProgressEvent, formatComment, activeClaims, claimConflict, rateLimited };
 
 export default async function handler(req, res) {
   allowCors(req, res);
@@ -180,12 +261,30 @@ export default async function handler(req, res) {
   const access = requireWriteAccess(req);
   if (!access.ok) return res.status(access.code).json({ ok: false, error: access.error });
 
+  if (rateLimited()) {
+    return res.status(429).json({ ok: false, error: 'Rate limited: too many progress posts. Wait a few minutes.' });
+  }
+
   try {
     const input = await parseBody(req);
     const event = buildProgressEvent(input);
     const comment = formatComment(event);
     const repo = process.env.PROGRESS_REPO || DEFAULT_REPO;
     const issue = process.env.PROGRESS_ISSUE || DEFAULT_ISSUE;
+    if (event.event === 'CLAIM') {
+      // Protocol: run the conflict check BEFORE posting a CLAIM — checking after
+      // a collision is only an after-the-fact audit.
+      const comments = await fetchIssueComments(repo, issue, access.token);
+      const conflict = claimConflict(activeClaims(Array.isArray(comments) ? comments : []), event);
+      if (conflict) {
+        return res.status(409).json({
+          ok: false,
+          error: 'Active CLAIM overlaps this task or file scope. Coordinate under the earlier CLAIM.',
+          conflict: { task: conflict.task, human_owner: conflict.human_owner,
+                      executor: conflict.executor, expires_at: conflict.expires_at || '' },
+        });
+      }
+    }
     const result = await postGithubComment(repo, issue, access.token, comment);
 
     return res.status(201).json({

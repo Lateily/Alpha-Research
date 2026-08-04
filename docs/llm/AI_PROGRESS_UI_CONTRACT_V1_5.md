@@ -197,8 +197,10 @@ The safe design remains:
 - a server-side HTTPS read-only API reads GitHub Issue #164 comments
 - GitHub token stays only in server environment variables
 - frontend reads only the server's sanitized snapshot JSON
-- no browser token storage
-- no GitHub write endpoint
+- no browser GitHub-token storage
+- writes go ONLY through the key-gated server endpoint
+  `POST /api/team-progress-event` (boundary amendment, Junyan 2026-08-04 —
+  see AI_PROGRESS_SHARED_V2.md "Boundary amendment")
 - no model API calls
 - no private chat ingestion
 
