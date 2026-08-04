@@ -18,6 +18,7 @@ saved and scored forward. It is not a tradable edge.
 import json
 import os
 import sys
+from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "rotation_stats.json")
@@ -150,7 +151,9 @@ def main():
         sys.exit(0 if selftest() else 1)
     panel = _load(os.path.join(HERE, "rotation_panel.json"), {})
     momentum = _load(os.path.join(HERE, "momentum_prefilter.json"), {})
-    stats = build_stats(panel, momentum)
+    as_of = str(momentum.get("as_of") or panel.get("as_of") or target_trade_date())[:8]
+    stats = bind(build_stats(panel, momentum), target=as_of)
+    stats["as_of"] = as_of
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(stats, fh, ensure_ascii=False, indent=1)
     print(render(stats))

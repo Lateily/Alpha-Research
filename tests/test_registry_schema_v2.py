@@ -13,11 +13,23 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ET = ROOT / "experiments" / "execution_tracker"
 sys.path.insert(0, str(ET))
+
+
+def _write_json(path, value):
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(value, fh, ensure_ascii=False)
+
+
+def _read_json(path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 class RegistrySchemaV2Test(unittest.TestCase):
@@ -70,7 +82,7 @@ class RegistrySchemaV2Test(unittest.TestCase):
                 created_by="CI", registered_at="20260803 15:01", log_path=sig_log)
             self.assertIsNone(rec)
             self.assertIn("refused", status)
-            written = json.load(open(sig_log)) if os.path.exists(sig_log) else []
+            written = _read_json(sig_log) if os.path.exists(sig_log) else []
             self.assertFalse(any(s.get("ticker") == "000002.SZ" for s in written))
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -130,7 +142,7 @@ class RegistrySchemaV2Test(unittest.TestCase):
                                           script="paper_tracker.py", version="v2",
                                           run_id="r", ledger_path=lp, log_path=sp)
             lines = event_ledger._read_lines(lp)          # 砍掉 commit,保留 intent 与投影
-            open(lp, "w").write(lines[0] + "\n")
+            Path(lp).write_text(lines[0] + "\n", encoding="utf-8")
             event_ledger.write_anchor(lp, 1, json.loads(lines[0])["hash"])
             txn = registry.transaction_id_for("s", "20260803 15:00", "r")
             r = registry.recover_pending(lp, sp)
@@ -219,12 +231,12 @@ class RegistrySchemaV2Test(unittest.TestCase):
         tmp = tempfile.mkdtemp()
         try:
             inp = os.path.join(tmp, "in.json")
-            json.dump({"index_data": {"main_flow_total": -100, "pct_chg": -1.0,
-                                      "limit_up": 5, "limit_down": 20},
-                       "tickers": [{"ticker": "600000.SH", "name": "x", "price": 10.0,
-                                    "main_flow": -1, "support": 9.0,
-                                    "reclaim_level": 11.0, "sector": "银行"}],
-                       "timestamp": "20260803 close"}, open(inp, "w"))
+            _write_json(inp, {"index_data": {"main_flow_total": -100, "pct_chg": -1.0,
+                                              "limit_up": 5, "limit_down": 20},
+                              "tickers": [{"ticker": "600000.SH", "name": "x", "price": 10.0,
+                                           "main_flow": -1, "support": 9.0,
+                                           "reclaim_level": 11.0, "sector": "银行"}],
+                              "timestamp": "20260803 close"})
             os.makedirs(os.path.join(tmp, "event_ledger.jsonl"))    # 账本不可写
             r = subprocess.run([sys.executable, str(ET / "execution_tracker.py"),
                                 "--input", inp, "--log", os.path.join(tmp, "sig.json")],
@@ -245,7 +257,7 @@ class RegistrySchemaV2Test(unittest.TestCase):
                                           script="paper_tracker.py", version="v2",
                                           run_id="r", ledger_path=lp, log_path=sp)
             lines = event_ledger._read_lines(lp)              # 砍掉 commit,清空投影
-            open(lp, "w").write(lines[0] + "\n")
+            Path(lp).write_text(lines[0] + "\n", encoding="utf-8")
             event_ledger.write_anchor(lp, 1, json.loads(lines[0])["hash"])
             registry.write_signal_log_atomic(sp, [])
             r = registry.recover_pending(lp, sp)
@@ -267,7 +279,7 @@ class RegistrySchemaV2Test(unittest.TestCase):
                                           script="paper_tracker.py", version="v2",
                                           run_id="r", ledger_path=lp, log_path=sp)
             lines = event_ledger._read_lines(lp)
-            open(lp, "w").write(lines[0] + "\n")
+            Path(lp).write_text(lines[0] + "\n", encoding="utf-8")
             event_ledger.write_anchor(lp, 1, json.loads(lines[0])["hash"])
             registry.write_signal_log_atomic(
                 sp, [{"signal_id": "s", "ticker": "000999.SZ", "record_hash": "FAKE"}])
@@ -363,7 +375,7 @@ class RegistrySchemaV2Test(unittest.TestCase):
             self.assertEqual((added, total), (3, base_n + 3))
             # ② 模拟崩溃:砍掉最后一条 commit
             lines = event_ledger._read_lines(lp)
-            open(lp, "w").write("\n".join(lines[:-1]) + "\n")
+            Path(lp).write_text("\n".join(lines[:-1]) + "\n", encoding="utf-8")
             event_ledger.write_anchor(lp, len(lines) - 1,
                                       json.loads(lines[-2])["hash"])
             # ③ 恢复(夜链恢复阶段做的事)
@@ -371,16 +383,19 @@ class RegistrySchemaV2Test(unittest.TestCase):
             self.assertEqual(len(r["rolled_forward"]), 1)
             # ④ 合法收益回填(backfill 干的事:加 returns/entry_close/directional_call)
             rows = registry.load_signal_log_strict(sp)
+            evaluations = []
             for row in rows:
                 if str(row.get("signal_id", "")).startswith("lc"):
-                    row["returns"] = {"1d": 0.011}
-                    row["entry_close"] = 10.0
-                    row["directional_call"] = "neutral"
-                    # 生产路径同款:回填值必须同时落判分 WAL(B9)
-                    event_ledger.append("evaluation", f"{row['signal_id']}:1d",
-                                        {"signal_id": row["signal_id"], "horizon": "1d",
-                                         "value": 0.011}, path=lp)
-            registry.write_signal_log_atomic(sp, rows)
+                    evaluations.append({
+                        "signal_id": row["signal_id"], "horizon": "1d",
+                        "value": 0.011, "entry_close": 10.0,
+                        "directional_call": "neutral",
+                        "entry_trade_date": "20260803",
+                        "source_trade_date": "20260804",
+                        "source_close": 10.11,
+                        "algorithm_version": "test/v2",
+                    })
+            registry.apply_evaluation_transactions(sp, lp, evaluations)
             # ⑤ 次日 preflight:必须 PASS —— 合法回填不得触发三方不一致
             res = run_nightly.preflight(base=tmp)
             three = [ok for n, ok in res["checks"] if "三方一致" in n]
@@ -468,12 +483,36 @@ class RegistrySchemaV2Test(unittest.TestCase):
 
     def test_nightly_recovery_phase_precedes_gate(self) -> None:
         """B(可达性):恢复必须在 preflight 硬闸之前,否则崩溃后夜链永远到不了恢复器。"""
-        src = (ET / "run_nightly.py").read_text(encoding="utf-8")
-        self.assertIn("_recover_phase", src)
-        body = src[src.index("def main():"):]
-        # 正式路径是 main() 里最后一组:恢复必须先于硬闸
-        self.assertLess(body.rindex("_recover_phase()"), body.rindex("pf = preflight()"),
-                        "恢复阶段在硬闸之后 —— 生产崩溃后不可达")
+        import run_nightly
+        with tempfile.TemporaryDirectory() as tmp:
+            old = {name: getattr(run_nightly, name) for name in
+                   ("HERE", "RUNS_DIR", "RUN_STATE", "OUT")}
+            order = []
+            try:
+                run_nightly.HERE = tmp
+                run_nightly.RUNS_DIR = os.path.join(tmp, "runs")
+                run_nightly.RUN_STATE = os.path.join(tmp, "run_state.json")
+                run_nightly.OUT = os.path.join(tmp, "nightly_run.json")
+                with (
+                    mock.patch.object(run_nightly, "_crash_check_and_rollback", return_value=None),
+                    mock.patch.object(
+                        run_nightly, "_recover_phase",
+                        side_effect=lambda: order.append("recover") or {},
+                    ),
+                    mock.patch.object(
+                        run_nightly, "preflight",
+                        side_effect=lambda: order.append("preflight") or {
+                            "pass": False, "checks": [], "failures": ["stop"], "warns": [],
+                        },
+                    ),
+                    mock.patch.object(run_nightly, "_print_preflight"),
+                    mock.patch.object(run_nightly, "_alarm"),
+                ):
+                    self.assertEqual(run_nightly._execute_nightly(), 1)
+                self.assertEqual(order, ["recover", "preflight"])
+            finally:
+                for name, value in old.items():
+                    setattr(run_nightly, name, value)
 
     def test_legacy_intent_without_record_aborts(self) -> None:
         """无可重放记录的旧格式 intent 才作废;有记录的一律前滚(见 B3)。"""
@@ -491,7 +530,8 @@ class RegistrySchemaV2Test(unittest.TestCase):
         import registry
         tmp = tempfile.mkdtemp()
         try:
-            bad = os.path.join(tmp, "bad.json"); open(bad, "w").write("{坏")
+            bad = os.path.join(tmp, "bad.json")
+            Path(bad).write_text("{坏", encoding="utf-8")
             with self.assertRaises(registry.LedgerCorrupt):
                 registry.load_signal_log_strict(bad)
         finally:
@@ -506,7 +546,7 @@ class RegistrySchemaV2Test(unittest.TestCase):
             for k, v in (("user.email", "t@t"), ("user.name", "t")):
                 subprocess.run(["git", "-C", tmp, "config", k, v], check=True)
             gl = os.path.join(tmp, "led.json")
-            json.dump([{"signal_id": "SIGX"}], open(gl, "w"))
+            _write_json(gl, [{"signal_id": "SIGX"}])
             subprocess.run(["git", "-C", tmp, "add", "-A"], check=True)
             subprocess.run(["git", "-C", tmp, "commit", "-qm", "s"], check=True)
             g = registry.first_git_appearance("SIGX", gl)

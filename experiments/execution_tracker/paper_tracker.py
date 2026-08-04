@@ -132,7 +132,8 @@ def register_research_signal(*, ticker, name, setup_type, line, market_state,
         import registry
         record, txn_status = registry.register_transaction(
             record, registered_at=registered_at, script="paper_tracker.py",
-            version="paper_tracker/v2", run_id=sid,
+            version="paper_tracker/v2",
+            run_id=os.environ.get("AR_RUN_ID") or f"manual:{sid}",
             ledger_path=registry.ledger_path_for(log_path), log_path=log_path)
     except Exception as exc:                     # noqa: BLE001 — fail-closed
         return None, f"refused: R-014 登记事务失败 ({exc})"

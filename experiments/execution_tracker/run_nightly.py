@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-run_nightly.py — Nightly v2:post-close 强制流水线(2026-07-29 审查驱动重构)。
+run_nightly.py — Nightly v4:同日快照、事务账本与 staging 发布流水线。
 
-v2 变化(相对 v1 平铺十步):
-  1. 补齐闭环:官方定盘结算 → 收益回填 → 红旗闸门 → 六维电池 → 契约导出;
-  2. 依赖语义:上游 FAILED/DATA_BLOCKED 时,下游标 SKIPPED_STALE_INPUT,绝不读旧数据装新;
-  3. 终态诚实:任何非 OK ⇒ report=INCOMPLETE,退出码 FAILED=1 / INCOMPLETE=2,
-     并落 /tmp/ar-nightly-incomplete 报警旗(桌面通知 best-effort);
-  4. DATA_BLOCKED 不再伪装成功(v1 第 94 行问题)。
+v4 根修复:
+  1. official_sample 唯一确定 target_trade_date,所有步骤共享同一 run_id/目标日;
+  2. 注册与判分分别走可恢复 WAL,恢复完成后才允许 preflight 放行;
+  3. 全部引擎在隔离 staging 运行,只有 COMPLETE 才按发布日志原子替换别名;
+  4. 步骤状态由退出码、结构化产物、日期、run_id 与内部 DATA_BLOCKED 共同判定;
+  5. 崩溃后恢复未完成事务/发布,不留下半新半旧的可见流水线状态。
 
 编排只做 review/paper 产出,不创建、不成交、不修改任何基金订单。
 不是买卖指令;研究信号,human executes。
@@ -20,6 +20,7 @@ import re
 import subprocess
 import sys
 import time
+import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "nightly_run.json")
@@ -73,24 +74,26 @@ STEPS = [
 # ── 产物契约(B2/B3/B4):步骤状态由**产物实物**判定,不再猜 stdout ──
 # (path, date_key, fresh_required):date_key 非空 ⇒ 该字段前 8 位必须 == target;
 # fresh_required ⇒ 本轮必须重写(mtime >= run_start)。
-# rotation_panel / rotation_validation / promotion_queue 顶层无日期戳(工程债 R-043:
-# 引擎补 as_of),暂只能验 mtime —— 在此明记,不假装验过日期。
+# 正式步骤必须以日期字段、run_id 与 target_trade_date 绑定本轮上下文。
 ARTIFACTS = {
-    "official_sample":       [("run_target.json", "trade_date", True)],
-    "fwd_backfill":          [("paper_signal_log.json", None, False)],
-    "rotation_panel":        [("rotation_panel.json", None, True)],
+    "official_sample":       [("run_target.json", "trade_date", True),
+                               (os.path.join("samples", "{target}.json"),
+                                "target_trade_date", False)],
+    "fwd_backfill":          [(os.path.join("reports", "{target}.json"),
+                                "target_trade_date", True)],
+    "rotation_panel":        [("rotation_panel.json", "as_of", True)],
     "momentum_prefilter":    [("momentum_prefilter.json", "as_of", True)],
     "rotation_stats":        [("rotation_stats.json", "as_of", True)],
-    "rotation_validation":   [("rotation_validation.json", None, True)],
+    "rotation_validation":   [("rotation_validation.json", "as_of", True)],
     "lead_precursor":        [("lead_precursor.json", "as_of", True)],
     "overnight_anchor_frame": [("overnight_anchor.json", "as_of", True)],
     "court_wakeup":          [("court_wakeup.json", "as_of", True)],
     "watch_dynamic":         [("watch_dynamic.json", "generated_at", True)],
     "position_review":       [("position_review.json", "as_of", True)],
-    "court_10d":             [("court_10d.json", None, True)],
+    "court_10d":             [("court_10d.json", "checked_at", True)],
     "red_flag_gate":         [("red_flags.json", "checked_at", True)],
     "full_battery":          [("battery.json", "checked_at", True)],
-    "setup_promoter":        [("promotion_queue.json", None, True)],
+    "setup_promoter":        [("promotion_queue.json", "as_of", True)],
     "export_contracts":      [(os.path.join("..", "..", "public", "data", "v2", "meta.json"),
                                None, True)],
 }
@@ -111,33 +114,83 @@ def _artifact_status_scan(step, data):
         txt = json.dumps(data, ensure_ascii=False)
         if "STALE_INPUT" in txt or '"PARTIAL"' in txt:
             return "PARTIAL", "契约含 STALE_INPUT/PARTIAL 标记"
+    if step == "court_10d":
+        status = str(data.get("status") or "").upper()
+        if status in ("DATA_BLOCKED", "BLOCKED"):
+            return "DATA_BLOCKED", f"法庭内部状态={status}"
+        if status in ("PARTIAL", "INCOMPLETE"):
+            return "PARTIAL", f"法庭内部状态={status}"
+    if step == "overnight_anchor_frame":
+        if str(data.get("bias") or "").upper() == "DATA_BLOCKED":
+            return "DATA_BLOCKED", "隔夜锚无足够可用数据"
+    if step == "red_flag_gate":
+        verdicts = [str(r.get("verdict") or "").upper()
+                    for r in (data.get("results") or [])]
+        blocked = [v for v in verdicts if v == "DATA_BLOCKED"]
+        if verdicts and len(blocked) == len(verdicts):
+            return "DATA_BLOCKED", "红旗扫描全部对象 DATA_BLOCKED"
+        if blocked:
+            return "PARTIAL", f"红旗扫描部分 DATA_BLOCKED(n={len(blocked)})"
+    if step == "position_review" and data.get("data_blocked"):
+        return "PARTIAL", f"仓位复审缺证据 n={len(data['data_blocked'])}"
+    if step == "court_wakeup" and data.get("data_blocked"):
+        return "PARTIAL", f"研究法庭唤醒缺行情 n={len(data['data_blocked'])}"
+    if step == "rotation_validation":
+        blocked = []
+        for key, value in data.items():
+            if isinstance(value, dict) and str(value.get("status") or "").upper().startswith("DATA_BLOCKED"):
+                blocked.append(key)
+            elif isinstance(value, list) and any(
+                isinstance(item, dict)
+                and str(item.get("status") or "").upper().startswith("DATA_BLOCKED")
+                for item in value
+            ):
+                blocked.append(key)
+        if blocked:
+            return "PARTIAL", f"轮动检验部分 DATA_BLOCKED: {','.join(blocked[:3])}"
+    if step in ("rotation_stats", "setup_promoter") and data.get("data_blocked"):
+        return "PARTIAL", f"内部 DATA_BLOCKED n={len(data['data_blocked'])}"
     return "OK", ""
 
 
-def verify_step_artifacts(step, target, run_start, base=None):
+def verify_step_artifacts(step, target, run_start, base=None, run_id=None):
     """产物实物校验:存在 → 可解析 → 本轮已重写 → 日期==target → 内部状态。
     返回 (最重状态, [逐产物明细])。这是 B2 的核心:COMPLETE 必须由实物背书。"""
     base = base or HERE
     worst, details = "OK", []
-    for rel, date_key, fresh_required in ARTIFACTS.get(step, []):
+    for rel_template, date_key, fresh_required in ARTIFACTS.get(step, []):
+        rel = rel_template.format(target=target or "")
         path = os.path.join(base, rel)
         d = {"artifact": rel, "verdict": "OK", "why": ""}
         if not os.path.exists(path):
             d.update(verdict="FAILED", why="产物不存在")
         else:
             try:
-                data = json.load(open(path, encoding="utf-8"))
+                with open(path, encoding="utf-8") as fh:
+                    data = json.load(fh)
             except (json.JSONDecodeError, OSError) as e:
                 data = None
                 d.update(verdict="FAILED", why=f"不可解析: {e}")
             if data is not None:
-                if fresh_required and os.path.getmtime(path) < run_start - 2:
+                if fresh_required and os.path.getmtime(path) < run_start:
                     d.update(verdict="STALE_OUTPUT", why="本轮未重写(mtime 早于本轮开始)")
                 elif date_key and target:
                     v = str((data.get(date_key) if isinstance(data, dict) else "") or "")[:8]
                     if v != target:
                         d.update(verdict="DATE_MISMATCH",
                                  why=f"{date_key}={v or '缺失'} ≠ target {target}")
+                # 不可变历史输入(sample)允许跨 run 复用;本轮活性由同一步的
+                # fresh run_target.json 背书。所有 fresh 产物必须绑定当前 run_id。
+                if (d["verdict"] == "OK" and fresh_required
+                        and run_id and isinstance(data, dict)):
+                    artifact_run = str(data.get("run_id") or "")
+                    artifact_target = str(data.get("target_trade_date") or "")[:8]
+                    if artifact_run != run_id:
+                        d.update(verdict="STALE_OUTPUT",
+                                 why=f"run_id={artifact_run or '缺失'} ≠ {run_id}")
+                    elif target and artifact_target != target:
+                        d.update(verdict="DATE_MISMATCH",
+                                 why=f"target_trade_date={artifact_target or '缺失'} ≠ {target}")
                 if d["verdict"] == "OK" and isinstance(data, dict):
                     sv, swhy = _artifact_status_scan(step, data)
                     if sv != "OK":
@@ -148,16 +201,20 @@ def verify_step_artifacts(step, target, run_start, base=None):
     return worst, details
 
 
-def read_run_target(base=None, run_start=None):
+def read_run_target(base=None, run_start=None, run_id=None):
     """本轮 target_trade_date:由 official_sample 写的 run_target.json 提供,
     且必须是本轮写的(mtime 校验)—— 不接受上一轮残留。"""
     p = os.path.join(base or HERE, "run_target.json")
     if not os.path.exists(p):
         return None
-    if run_start and os.path.getmtime(p) < run_start - 2:
+    if run_start and os.path.getmtime(p) < run_start:
         return None
     try:
-        return str(json.load(open(p, encoding="utf-8")).get("trade_date") or "")[:8] or None
+        with open(p, encoding="utf-8") as fh:
+            data = json.load(fh)
+        if run_id and data.get("run_id") != run_id:
+            return None
+        return str(data.get("trade_date") or "")[:8] or None
     except (json.JSONDecodeError, OSError):
         return None
 
@@ -183,7 +240,6 @@ def _classify(code, out):
 def run_steps(runner=None, require_live=True, verify=False, base=None, run_id=None):
     """verify=True(正式路径):步骤终态 = max(进程判定, 产物实物判定)。
     COMPLETE 从此必须由实物背书 —— 进程退 0 + 免责声明不再等于成功(B2/B3)。"""
-    runner = runner or _subprocess_runner
     base = base or HERE
     run_start = time.time()
     results, status_by = [], {}
@@ -201,39 +257,65 @@ def run_steps(runner=None, require_live=True, verify=False, base=None, run_id=No
             results.append({"step": name, "status": "DATA_BLOCKED", "why": "NO TUSHARE_TOKEN"})
             continue
         t0 = time.time()
-        code, out = runner(cmd)
+        if runner is None:
+            env = dict(os.environ)
+            env["AR_RUN_ID"] = str(run_id or "STANDALONE")
+            env["AR_NIGHTLY_STEP"] = name
+            env["AR_NIGHTLY_STAGING"] = "1" if os.path.realpath(base) != os.path.realpath(HERE) else "0"
+            if target:
+                env["AR_TARGET_TRADE_DATE"] = target
+            else:
+                env.pop("AR_TARGET_TRADE_DATE", None)
+            code, out = _subprocess_runner(cmd, cwd=base, env=env)
+        else:
+            code, out = runner(cmd)
         status = _classify(code, out)
         entry = {"step": name, "status": status, "exit_code": code,
                  "elapsed_sec": round(time.time() - t0, 2), "tail": out[-1200:]}
         if verify:
             if name == "official_sample" and status == "OK":
-                target = read_run_target(base, run_start)
+                target = read_run_target(base, run_start, run_id)
                 if not target:
                     status = "FAILED"
                     entry["why"] = "official_sample 未产出本轮 run_target.json —— 无法钉死 target_trade_date"
-            av, adet = verify_step_artifacts(name, target, run_start, base)
+            av, adet = verify_step_artifacts(name, target, run_start, base, run_id)
             entry["artifacts"] = adet
             if _SEVERITY.get(av, 5) > _SEVERITY.get(status, 5):
                 status = av
             entry["status"] = status
         status_by[name] = status
         results.append(entry)
-
     non_ok = [r for r in results if r["status"] != "OK"]
+    if verify and run_id:
+        status_dir = os.path.join(base, "step_status")
+        os.makedirs(status_dir, exist_ok=True)
+        for entry in results:
+            _atomic_write(os.path.join(status_dir, f"{entry['step']}.json"), {
+                "schema": "nightly_step_status/v1",
+                "run_id": run_id,
+                "target_trade_date": target,
+                "step": entry["step"],
+                "status": entry["status"],
+                "exit_code": entry.get("exit_code"),
+                "elapsed_sec": entry.get("elapsed_sec"),
+                "why": entry.get("why"),
+                "artifacts": entry.get("artifacts", []),
+            })
     report = "COMPLETE" if not non_ok else "INCOMPLETE"
     return {"generated_at": time.strftime("%Y%m%d %H:%M"),
-            "orchestrator": "nightly_v3" if verify else "nightly_v2",
+            "orchestrator": "nightly_v4" if verify else "nightly_v2",
             "run_id": run_id,
             "target_trade_date": target,
             "report": report,
             "non_ok_steps": [{"step": r["step"], "status": r["status"]} for r in non_ok],
             "steps": results,
-            "note": "nightly v3;COMPLETE 由产物实物背书(存在/可解析/本轮重写/日期==target)。不是买卖指令。"}
+            "note": "nightly v4;COMPLETE 由结构化状态、实物、run_id 与统一交易日共同背书。不是买卖指令。"}
 
 
-def _subprocess_runner(cmd):
+def _subprocess_runner(cmd, cwd=None, env=None):
     try:
-        p = subprocess.run(cmd, cwd=HERE, text=True, capture_output=True, timeout=600)
+        p = subprocess.run(cmd, cwd=cwd or HERE, env=env, text=True,
+                           capture_output=True, timeout=600)
     except subprocess.TimeoutExpired as e:
         # 审查F2:挂死的步必须变成 FAILED 并继续走完报警,绝不让编排器整体崩掉
         out = ((e.stdout or "") if isinstance(e.stdout, str) else "") +               ((e.stderr or "") if isinstance(e.stderr, str) else "")
@@ -318,6 +400,8 @@ def selftest():
     def _fixture(tmp, sigs, fund_cash=100.0, nav_cash=100.0, n_pos=0, orders=(),
                  skip=()):
         os.makedirs(os.path.join(tmp, "model_fund"), exist_ok=True)
+        os.makedirs(os.path.join(tmp, "samples"), exist_ok=True)
+        os.makedirs(os.path.join(tmp, "reports"), exist_ok=True)
 
         def w(rel, obj):
             with open(os.path.join(tmp, rel), "w", encoding="utf-8") as fh:
@@ -327,6 +411,8 @@ def selftest():
         w("model_fund/nav_history.json",
           [{"date": "20260730", "nav": 100.0, "cash": nav_cash, "n_positions": n_pos}])
         w("model_fund/orders.json", list(orders))
+        w("samples/20260730.json", {"timestamp": "20260730 close"})
+        w("reports/20260730.json", {"report_date": "20260730"})
         for fn in FRESHNESS_FILES:
             if fn not in skip:
                 w(fn, {})
@@ -369,7 +455,7 @@ def selftest():
 
     for name, ok in checks:
         print(("  ✓ " if ok else "  ✗ ") + name)
-    print(f"run_nightly v2 selftest: {sum(ok for _, ok in checks)}/{len(checks)}")
+    print(f"run_nightly v4 selftest: {sum(ok for _, ok in checks)}/{len(checks)}")
     return all(ok for _, ok in checks)
 
 
@@ -416,41 +502,20 @@ def preflight(base=None, now=None):
             _intents, _C, _A = _reg._terminal_states(_evs)   # intents 是 dict
             _I = set(_intents)
             _rows = _reg.load_signal_log_strict(os.path.join(base, "paper_signal_log.json"))
-            _by = {r.get("signal_id"): r for r in _rows}
             dangling = sorted(_I - _C - _A)
             orphan = sorted(_C - _I)
-            bad_proj = []
-            _cps = {e["id"]: (e.get("payload") or {}) for e in _evs
-                    if e.get("kind") == "register_commit"}
-            for _txn in sorted(_C):
-                _pl = _intents.get(_txn)
-                if not _pl:
-                    continue          # 无 intent 的 commit 已由「孤立 commit」检查抓
-                _sid = _pl.get("signal_id")
-                # 四方强制:投影必须存在、commit payload 必须完整 ——
-                # 上一版 commit_payload 传 None、投影缺失也放行,
-                # 「intent 在、commit 空、投影不存在」被判为一致。
-                _ok, _why = _reg.validate_transaction_projection(
-                    _txn, _pl, _by.get(_sid), _cps.get(_txn),
-                    require_projection=True, require_commit=True)
-                if not _ok:
-                    bad_proj.append((_txn, _why[:1]))
-            # ── B9 判分交叉核对:v2 注册行的每个 returns 档必须有对应 evaluation 事件 ──
-            _evmap = {e["id"]: (e.get("payload") or {}).get("value") for e in _evs
-                      if e.get("kind") == "evaluation"}
-            bad_eval = []
-            for _r in _rows:
-                if not _r.get("registry_schema"):
-                    continue          # 遗留行:returns 无 WAL,豁免(它们也不进指纹校验)
-                for _h, _v in (_r.get("returns") or {}).items():
-                    if not isinstance(_v, (int, float)):
-                        continue
-                    _k = f"{_r.get('signal_id')}:{_h}"
-                    if _k not in _evmap or _evmap[_k] != _v:
-                        bad_eval.append((_k, _v, _evmap.get(_k)))
-            checks.append((f"判分与 WAL 一致(异常 n={len(bad_eval)})", not bad_eval))
-            if bad_eval:
-                print(f"  ✗ returns 无 WAL 背书或值不符: {bad_eval[:3]} —— 判分被无痕修改")
+            _ei, _ec, _ea = _reg._evaluation_states(_evs)
+            eval_dangling = sorted(set(_ei) - set(_ec) - _ea)
+            eval_orphan = sorted(set(_ec) - set(_ei))
+            bijection_errors = _reg.audit_projection_bijection(_rows, _evs)
+            checks.append((f"注册/判分 WAL 与已提交投影三方一致(双向,异常 n={len(bijection_errors)})",
+                           not bijection_errors))
+            if bijection_errors:
+                print(f"  ✗ WAL/投影不一致: {bijection_errors[:5]}")
+            checks.append((f"判分事务无悬空 intent(n={len(eval_dangling)})",
+                           not eval_dangling))
+            checks.append((f"判分事务无孤立 commit(n={len(eval_orphan)})",
+                           not eval_orphan))
             # ── B10 abort 行残留:被中止事务的投影必须已隔离,不得留在账本 ──
             leftover = [r.get("signal_id") for r in _rows
                         if r.get("registry_txn_id") in _A]
@@ -459,10 +524,10 @@ def preflight(base=None, now=None):
                 print(f"  ✗ 已中止事务的投影仍在账本: {leftover[:5]} —— 应在隔离区")
             checks.append((f"事务无悬空 intent(n={len(dangling)})", not dangling))
             checks.append((f"事务无孤立 commit(n={len(orphan)})", not orphan))
-            checks.append((f"已提交投影三方一致(异常 n={len(bad_proj)})", not bad_proj))
             if dangling: print(f"  ✗ 悬空 intent: {dangling[:5]} —— 先跑 registry.recover_pending")
             if orphan:   print(f"  ✗ 孤立 commit: {orphan[:5]}")
-            if bad_proj: print(f"  ✗ 投影不一致: {bad_proj[:3]}")
+            if eval_dangling: print(f"  ✗ 悬空 evaluation intent: {eval_dangling[:5]}")
+            if eval_orphan: print(f"  ✗ 孤立 evaluation commit: {eval_orphan[:5]}")
         else:
             warns.append("事件账本尚未建立(R-015 未接线)—— 三方一致性未检")
     except Exception as e:                       # noqa: BLE001 — fail-closed
@@ -470,7 +535,8 @@ def preflight(base=None, now=None):
         print(f"  ✗ 事务一致性检查失败: {e}")
     # 1) 信号账本:可解析 + returns 类型 + NOT_SCORABLE 声明 + 真实日期 + horizon + id 唯一
     try:
-        log = json.load(open(os.path.join(base, "paper_signal_log.json")))
+        with open(os.path.join(base, "paper_signal_log.json"), encoding="utf-8") as fh:
+            log = json.load(fh)
         sigs = log if isinstance(log, list) else log.get("signals", [])
         checks.append((f"信号账本可解析(n={len(sigs)})", True))
         bad_ret = [x.get("signal_id") for x in sigs
@@ -500,7 +566,8 @@ def preflight(base=None, now=None):
     fund = navh = orders = None
     for f in ("model_fund/fund.json", "model_fund/nav_history.json", "model_fund/orders.json"):
         try:
-            data = json.load(open(os.path.join(base, f)))
+            with open(os.path.join(base, f), encoding="utf-8") as fh:
+                data = json.load(fh)
             checks.append((f"{f} 可解析", True))
             if f.endswith("fund.json"): fund = data
             elif f.endswith("nav_history.json"): navh = data
@@ -538,7 +605,7 @@ def preflight(base=None, now=None):
     # 6) 跨层事实一致性(审计:半程迁移 + 本身曾 fail-open,现为 fail-closed)
     try:
         from consistency import scan_dirs as _scan
-        cons = _scan(HERE)
+        cons = _scan(base)
         checks.append(("跨层事实一致性(近5日样本/报告;损坏与缺失均阻断)", not cons))
         for c in cons[:8]:
             print(f"  ✗ {c}")
@@ -567,7 +634,7 @@ def _print_preflight(pf):
     print(f"preflight: {'PASS' if pf['pass'] else 'FAIL'}(零网络零写入)")
 
 
-def _recover_phase():
+def _recover_phase(base=None):
     """恢复阶段:必须在 preflight 硬闸**之前**跑。
 
     上一版把 recover_pending 放在 official_sample 步内 —— 而 preflight 遇到
@@ -575,16 +642,22 @@ def _recover_phase():
     真实崩溃后,夜链永远走不到自己的恢复器。恢复是给硬闸清路的,不能站在硬闸后面。
     恢复自身失败(链损坏/双终态)不吞:打印后交给 preflight 判死,fail-closed。"""
     try:
+        base = base or HERE
         sys.path.insert(0, HERE)
         import registry as _reg
-        _lp = _reg.ledger_path_for(os.path.join(HERE, "paper_signal_log.json"))
+        _log = os.path.join(base, "paper_signal_log.json")
+        _lp = _reg.ledger_path_for(_log)
         if not os.path.exists(_lp):
             return None
-        r = _reg.recover_pending(_lp, os.path.join(HERE, "paper_signal_log.json"))
+        r = _reg.recover_pending(_lp, _log)
+        er = _reg.recover_evaluations(_lp, _log)
         if r["pending_examined"]:
             print(f"[recover] 悬空事务处理: 前滚 {len(r['rolled_forward'])} · "
                   f"重建 {len(r['rebuilt'])} · 作废 {len(r['aborted'])} · 不符 {len(r['mismatch'])}")
-        return r
+        if er["pending_examined"]:
+            print(f"[recover] 悬空判分处理: 检查 {er['pending_examined']} · "
+                  f"前滚 {er['rolled_forward']}")
+        return {"registration": r, "evaluation": er}
     except Exception as e:                       # noqa: BLE001
         print(f"[recover] 恢复阶段失败: {e} —— fail-closed,本轮判 INCOMPLETE,引擎不得启动")
         return False
@@ -593,6 +666,8 @@ def _recover_phase():
 RUNS_DIR = os.path.join(HERE, "runs")
 RUN_STATE = os.path.join(HERE, "run_state.json")
 NIGHTLY_LOCK = os.path.join(HERE, "nightly.lock")
+REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
+PUBLICATION_STATE = os.path.join(HERE, "publication_state.json")
 # 回滚只覆盖**可再生的派生产物**;事务态(信号账本/WAL/锚点/隔离区)绝不回滚 ——
 # WAL 是 append-only 的,回滚它就是删记录;账本一致性由 R-014 事务 + recover 保证。
 ROLLBACK_EXCLUDE = {"paper_signal_log.json"}
@@ -612,11 +687,14 @@ def _snapshot_before(run_id):
     import shutil
     bdir = os.path.join(RUNS_DIR, run_id, "before")
     os.makedirs(bdir, exist_ok=True)
+    existed = []
     for rel in _declared_artifacts():
         src = os.path.join(HERE, rel)
         if os.path.exists(src):
+            existed.append(rel)
             dst = os.path.join(bdir, rel.replace(os.sep, "__"))
             shutil.copy2(src, dst)
+    _atomic_write(os.path.join(bdir, "snapshot.json"), {"existed": existed})
     return bdir
 
 
@@ -626,44 +704,58 @@ def _rollback_from(run_id):
     bdir = os.path.join(RUNS_DIR, run_id, "before")
     if not os.path.isdir(bdir):
         return 0
+    state_path = os.path.join(bdir, "snapshot.json")
+    if not os.path.exists(state_path):
+        raise RuntimeError("回滚快照缺 snapshot.json —— fail-closed,不得猜哪些文件原先存在")
+    with open(state_path, encoding="utf-8") as fh:
+        existed = set(json.load(fh).get("existed") or [])
     n = 0
     for rel in _declared_artifacts():
+        dst = os.path.join(HERE, rel)
         src = os.path.join(bdir, rel.replace(os.sep, "__"))
-        if os.path.exists(src):
-            shutil.copy2(src, os.path.join(HERE, rel)); n += 1
+        if rel in existed:
+            if not os.path.exists(src):
+                raise RuntimeError(f"回滚快照声明存在却缺副本: {rel}")
+            os.makedirs(os.path.dirname(os.path.abspath(dst)), exist_ok=True)
+            shutil.copy2(src, dst); n += 1
+        elif os.path.exists(dst):
+            os.remove(dst); n += 1
     return n
 
 
 def _crash_check_and_rollback():
     """上一轮留下 run_state 标记 = 中途崩溃:派生产物是混合态,先回滚再开新轮。"""
+    import nightly_publish as _np
+    publish_recovery = _np.recover_interrupted_publish(
+        PUBLICATION_STATE, HERE, REPO_ROOT)
     if not os.path.exists(RUN_STATE):
-        return None
+        return ({"publication": publish_recovery} if publish_recovery else None)
     try:
-        prev = json.load(open(RUN_STATE, encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        prev = {"run_id": "UNKNOWN"}
-    n = _rollback_from(prev.get("run_id", ""))
+        with open(RUN_STATE, encoding="utf-8") as fh:
+            prev = json.load(fh)
+    except (json.JSONDecodeError, OSError) as exc:
+        raise RuntimeError(f"run_state 不可解析 —— fail-closed: {exc}") from exc
+    if prev.get("orchestrator") == "nightly_v4":
+        # v4 引擎只写 staging。若 commit marker 已落,保留已提交发布;
+        # 若崩在发布中,上面的 publication journal 已回滚。
+        if ((publish_recovery or {}).get("status") == "COMMITTED_VERIFIED"
+                and (publish_recovery or {}).get("run_id") == prev.get("run_id")):
+            os.remove(RUN_STATE)
+            print(f"[crash-recovery] 上一轮 {prev.get('run_id')} 已提交发布,"
+                  "仅终态报告未完成;已验证 commit marker 并保留产物")
+            return {
+                "committed_run_recovered": prev.get("run_id"),
+                "restored": 0,
+                "publication": publish_recovery,
+            }
+        n = (publish_recovery or {}).get("restored", 0)
+    else:
+        n = _rollback_from(prev.get("run_id", ""))
     os.remove(RUN_STATE)
     print(f"[crash-recovery] 上一轮 {prev.get('run_id')} 中途崩溃,已回滚 {n} 个派生产物"
           f"(事务态不回滚,由 WAL recover 保证)")
-    return {"rolled_back_run": prev.get("run_id"), "restored": n}
-
-
-def _write_manifest(run_id, res):
-    import hashlib
-    man = {"run_id": run_id, "report": res["report"],
-           "target_trade_date": res.get("target_trade_date"),
-           "artifacts": {}}
-    for rel in _declared_artifacts():
-        pth = os.path.join(HERE, rel)
-        if os.path.exists(pth):
-            man["artifacts"][rel] = hashlib.sha256(open(pth, "rb").read()).hexdigest()
-    mdir = os.path.join(RUNS_DIR, run_id)
-    os.makedirs(mdir, exist_ok=True)
-    tmp = os.path.join(mdir, "manifest.json.tmp")
-    with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump(man, fh, ensure_ascii=False, indent=1)
-    os.replace(tmp, os.path.join(mdir, "manifest.json"))
+    return {"rolled_back_run": prev.get("run_id"), "restored": n,
+            "publication": publish_recovery}
 
 
 def _prune_runs(keep=14):
@@ -677,36 +769,50 @@ def _prune_runs(keep=14):
 
 
 def _atomic_write(path, obj):
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(obj, fh, ensure_ascii=False, indent=1)
         fh.flush(); os.fsync(fh.fileno())
     os.replace(tmp, path)
-
-
-def main():
-    if "--selftest" in sys.argv:
-        sys.exit(0 if selftest() else 1)
-    if "--preflight" in sys.argv or "--preflight-only" in sys.argv:
-        # --preflight 是**只读**检查:不做恢复、不写任何文件 ——
-        # 上一版在这里跑 recover(会写 WAL)却自称"零写入",CI 也把它当只读。
-        pf = preflight()
-        _print_preflight(pf)
-        sys.exit(0 if pf["pass"] else 1)
-
-    # ── B6:全局锁(整轮唯一)──
-    import fcntl
-    lockf = open(NIGHTLY_LOCK, "w")
+    parent_fd = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
     try:
-        fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except OSError:
-        print("REFUSED: 另一轮夜链正在运行(nightly.lock 被持有)—— 不并发跑两轮")
-        sys.exit(1)
+        os.fsync(parent_fd)
+    finally:
+        os.close(parent_fd)
 
-    run_id = time.strftime("%Y%m%d_%H%M%S")
+
+def _clear_run_state_if_terminal(run_id, terminal_written, state_path=None):
+    """Ordinary exceptions must leave the marker for next-run recovery."""
+    state_path = state_path or RUN_STATE
+    if not terminal_written or not os.path.exists(state_path):
+        return False
+    try:
+        with open(state_path, encoding="utf-8") as fh:
+            current = json.load(fh)
+    except (json.JSONDecodeError, OSError):
+        return False
+    if current.get("run_id") != run_id:
+        return False
+    os.remove(state_path)
+    return True
+
+
+def _execute_nightly():
+    """在已持有全局锁时执行一轮。普通异常不清 run_state,交给下一轮恢复。"""
+    run_id = f"{time.strftime('%Y%m%d_%H%M%S')}_{time.time_ns()}_{uuid.uuid4().hex[:8]}"
+    run_dir = os.path.join(RUNS_DIR, run_id)
+    os.makedirs(run_dir, exist_ok=True)
+    terminal_written = False
     crash_info = _crash_check_and_rollback()
-    _snapshot_before(run_id)
-    _atomic_write(RUN_STATE, {"run_id": run_id, "started_at": time.strftime("%Y%m%d %H:%M:%S")})
+    _atomic_write(RUN_STATE, {
+        "schema": "nightly_run_state/v1",
+        "orchestrator": "nightly_v4",
+        "run_id": run_id,
+        "phase": "PREPARING",
+        "run_dir": run_dir,
+        "started_at": time.strftime("%Y%m%d %H:%M:%S"),
+    })
 
     try:
         # ── 恢复阶段(写路径,只在正式运行做)→ P0-B 硬闸 ──
@@ -715,8 +821,9 @@ def main():
         _print_preflight(pf)
         if recover_ok is False or not pf["pass"]:
             res = {"generated_at": time.strftime("%Y%m%d %H:%M"),
-                   "orchestrator": "nightly_v3", "run_id": run_id,
+                   "orchestrator": "nightly_v4", "run_id": run_id,
                    "report": "INCOMPLETE",
+                   "published": False,
                    "crash_recovery": crash_info,
                    "preflight": {"pass": bool(pf["pass"]), "failures": pf["failures"],
                                  "warns": pf["warns"],
@@ -725,39 +832,99 @@ def main():
                    "steps": [],
                    "note": "preflight/恢复 FAIL ⇒ 硬闸:未启动任何引擎。不是买卖指令;研究信号,human executes."}
             _atomic_write(OUT, res)
+            _atomic_write(os.path.join(run_dir, "result.json"), res)
             print(f"[report] INCOMPLETE(硬闸,引擎未启动) [written] {OUT}")
             print("不是买卖指令;研究信号,human executes.")
             _alarm(res)
-            sys.exit(1)
+            terminal_written = True
+            return 1
 
+        import nightly_publish as _np
+        stage = _np.prepare_stage(HERE, REPO_ROOT, run_dir)
+        _atomic_write(RUN_STATE, {
+            "schema": "nightly_run_state/v1", "orchestrator": "nightly_v4",
+            "run_id": run_id, "phase": "RUNNING_STAGING", "run_dir": run_dir,
+            "stage_et": stage["et"], "started_at": time.strftime("%Y%m%d %H:%M:%S"),
+        })
         require_live = "--allow-data-blocked" not in sys.argv
-        res = run_steps(require_live=require_live, verify=True, run_id=run_id)
+        res = run_steps(require_live=require_live, verify=True,
+                        base=stage["et"], run_id=run_id)
         res["preflight"] = {"pass": True, "warns": pf["warns"]}
         res["crash_recovery"] = crash_info
-        _write_manifest(run_id, res)
+
+        if res["report"] == "COMPLETE":
+            stage_pf = preflight(base=stage["et"])
+            res["staging_preflight"] = {
+                "pass": stage_pf["pass"], "failures": stage_pf["failures"],
+                "warns": stage_pf["warns"],
+            }
+            if not stage_pf["pass"]:
+                res["report"] = "INCOMPLETE"
+                res["non_ok_steps"].append({"step": "staging_preflight", "status": "FAILED"})
+
+        if res["report"] == "COMPLETE":
+            _atomic_write(RUN_STATE, {
+                "schema": "nightly_run_state/v1", "orchestrator": "nightly_v4",
+                "run_id": run_id, "phase": "PUBLISHING", "run_dir": run_dir,
+                "target_trade_date": res.get("target_trade_date"),
+            })
+            try:
+                manifest = _np.publish_stage(
+                    run_id, res.get("target_trade_date"), stage,
+                    HERE, REPO_ROOT, run_dir, PUBLICATION_STATE)
+                res["published"] = True
+                res["publication_manifest"] = manifest
+            except Exception as exc:
+                res["report"] = "INCOMPLETE"
+                res["published"] = False
+                res["non_ok_steps"].append({"step": "publication", "status": "FAILED"})
+                res["publication_error"] = f"{type(exc).__name__}: {exc}"
+        else:
+            res["published"] = False
+
         _atomic_write(OUT, res)
+        _atomic_write(os.path.join(run_dir, "result.json"), res)
         for s in res["steps"]:
             print(f"{s['step']}: {s['status']}")
         print(f"[report] {res['report']}  run_id={run_id}  target={res.get('target_trade_date')}  [written] {OUT}")
         print("不是买卖指令;研究信号,human executes.")
         _alarm(res)
         _prune_runs()
+        terminal_written = True
         if any(s["status"] == "FAILED" for s in res["steps"]):
-            sys.exit(1)
+            return 1
         if res["report"] != "COMPLETE":
-            sys.exit(2)
+            return 2
+        return 0
     finally:
-        # 正常走到这里(含 sys.exit)= 本轮有终态报告,清除崩溃标记;
-        # 真崩溃(进程被杀/异常穿透)标记留存,下一轮回滚。
-        if os.path.exists(RUN_STATE):
-            try:
-                cur = json.load(open(RUN_STATE, encoding="utf-8"))
-                if cur.get("run_id") == run_id:
-                    os.remove(RUN_STATE)
-            except (json.JSONDecodeError, OSError):
-                pass
-        fcntl.flock(lockf, fcntl.LOCK_UN)
+        # 只有明确写出终态报告才清标记。普通 Python 异常与 SIGKILL 都保留,
+        # 下一轮依据 staging/publication journal 恢复。旧版 finally 会误清普通异常。
+        _clear_run_state_if_terminal(run_id, terminal_written)
+
+
+def main():
+    if "--selftest" in sys.argv:
+        return 0 if selftest() else 1
+    if "--preflight" in sys.argv or "--preflight-only" in sys.argv:
+        # --preflight 是**只读**检查:不做恢复、不写任何文件 ——
+        # 上一版在这里跑 recover(会写 WAL)却自称"零写入",CI 也把它当只读。
+        pf = preflight()
+        _print_preflight(pf)
+        return 0 if pf["pass"] else 1
+
+    # 锁的关闭由 with 保证,包括 crash recovery / preflight 自身抛错的路径。
+    import fcntl
+    with open(NIGHTLY_LOCK, "w") as lockf:
+        try:
+            fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            print("REFUSED: 另一轮夜链正在运行(nightly.lock 被持有)—— 不并发跑两轮")
+            return 1
+        try:
+            return _execute_nightly()
+        finally:
+            fcntl.flock(lockf, fcntl.LOCK_UN)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)
