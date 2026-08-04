@@ -1,0 +1,56 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "aios-a019-audit-skill-spec",
+  "title": "Package hostile audit prompt as reusable skill spec",
+  "source": {
+    "kind": "manual",
+    "ref": "docs/llm/AI_CODE_REFLECTION_SKILL_SPEC.md"
+  },
+  "architecture_blocks": ["block-6-ai-system"],
+  "objective": "Define how the full-type hostile audit prompt becomes a reusable AIOS review skill.",
+  "non_goals": [
+    "Do not install a local Codex skill in this task.",
+    "Do not modify production safety policy.",
+    "Do not mark the skill adopted before a real PR review uses it."
+  ],
+  "human_owner": "Reed",
+  "executor": "Codex",
+  "reviewer": "Junyan",
+  "status": "SPEC_READY",
+  "risk_level": "LOW",
+  "scope_paths": [
+    "docs/llm",
+    "docs/llm/prompts"
+  ],
+  "forbidden_paths": [
+    "experiments/execution_tracker"
+  ],
+  "input_contracts": [
+    "docs/llm/prompts/AUDIT_FULL_v2.md"
+  ],
+  "output_artifacts": [
+    "docs/llm/AI_CODE_REFLECTION_SKILL_SPEC.md"
+  ],
+  "acceptance_tests": [
+    {
+      "id": "AUDIT-SKILL-001",
+      "description": "Skill spec defines trigger, inputs, outputs, guardrails, and adoption phases.",
+      "method": "manual_review",
+      "expected": "Reviewer can use the spec without private chat context."
+    }
+  ],
+  "depends_on": [],
+  "authority_docs": [
+    "AGENTS.md",
+    "docs/llm/prompts/AUDIT_FULL_v2.md"
+  ],
+  "network_policy": "OFFLINE",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 60
+  },
+  "approval_gates": [
+    "Junyan review"
+  ],
+  "created_at": "2026-08-04T04:10:00Z"
+}

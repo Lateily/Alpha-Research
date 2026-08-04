@@ -51,7 +51,7 @@ def main() -> int:
 
 
 def load_events(path: Path) -> list[dict[str, Any]]:
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw = json.loads(path.read_text(encoding="utf-8-sig"))
 
     if isinstance(raw, list):
         if all(is_event(item) for item in raw):

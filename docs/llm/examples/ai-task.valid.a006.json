@@ -1,0 +1,68 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "issue-193-a006",
+  "title": "AIOS-K1 A-006 task contract seed",
+  "source": {
+    "kind": "issue",
+    "ref": "https://github.com/Lateily/Alpha-Research/issues/193"
+  },
+  "architecture_blocks": ["block-6-ai-system"],
+  "objective": "Create the first machine-readable task manifest contract for AIOS work.",
+  "non_goals": [
+    "Do not claim Jason sign-off.",
+    "Do not run model APIs.",
+    "Do not change research methodology."
+  ],
+  "human_owner": "Reed",
+  "executor": "Codex",
+  "reviewer": "Junyan/Jason",
+  "status": "SPEC_READY",
+  "risk_level": "LOW",
+  "scope_paths": [
+    "docs/llm/schemas",
+    "docs/llm/examples",
+    "scripts/llm",
+    "tests"
+  ],
+  "forbidden_paths": [
+    "experiments/execution_tracker"
+  ],
+  "input_contracts": [
+    "docs/llm/AI_OS_BUILD_GUIDE.md",
+    "docs/team/JASON_AIOS_K1_BRIEF.md"
+  ],
+  "output_artifacts": [
+    "docs/llm/schemas/ai-task.v1.json",
+    "scripts/llm/ai_task.py"
+  ],
+  "acceptance_tests": [
+    {
+      "id": "A006-001",
+      "description": "Valid examples pass task manifest validation.",
+      "method": "command",
+      "expected": "python tests/test_ai_task_contract.py exits 0"
+    },
+    {
+      "id": "A006-002",
+      "description": "Missing required fields produce SPEC_BLOCKED.",
+      "method": "command",
+      "expected": "Invalid fixtures fail with explicit field errors"
+    }
+  ],
+  "depends_on": [],
+  "authority_docs": [
+    "AGENTS.md",
+    "docs/llm/AI_OS_BUILD_GUIDE.md",
+    "docs/llm/AI_OS_ENGINEERING_BACKLOG.md"
+  ],
+  "network_policy": "OFFLINE",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 120
+  },
+  "approval_gates": [
+    "Jason contract sign-off",
+    "Junyan review"
+  ],
+  "created_at": "2026-08-04T04:10:00Z"
+}

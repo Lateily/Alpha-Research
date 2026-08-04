@@ -1,0 +1,26 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "invalid-missing-acceptance",
+  "title": "Invalid task without acceptance",
+  "source": {
+    "kind": "manual",
+    "ref": "local-fixture"
+  },
+  "objective": "Show that missing acceptance tests block execution.",
+  "non_goals": [],
+  "human_owner": "Reed",
+  "executor": "Codex",
+  "reviewer": "Junyan",
+  "status": "SPEC_READY",
+  "risk_level": "LOW",
+  "scope_paths": ["docs/llm"],
+  "depends_on": [],
+  "authority_docs": ["docs/llm/AI_OS_BUILD_GUIDE.md"],
+  "network_policy": "OFFLINE",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 30
+  },
+  "approval_gates": ["Junyan review"],
+  "created_at": "2026-08-04T04:10:00Z"
+}
