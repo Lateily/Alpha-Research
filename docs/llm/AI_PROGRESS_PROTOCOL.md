@@ -4,7 +4,7 @@ GitHub Issue #164 is the shared remote progress board:
 
 https://github.com/Lateily/Alpha-Research/issues/164
 
-This protocol keeps Junyan, Better, Reed, Claude, Codex, and Kimi from
+This protocol keeps Junyan, Xuhang, Tianrui, Claude, Codex, and Kimi from
 duplicating work. It is a coordination layer only. It does not make investment
 decisions and must not bypass Junyan's review and scoring system.
 
@@ -44,7 +44,7 @@ Use CLAIM when someone starts a task.
 Required fields:
 
 - `task`: issue number or short task name
-- `human_owner`: accountable human, for example `Reed`
+- `human_owner`: accountable human, for example `Tianrui`
 - `executor`: person or tool doing the work, for example `Codex`
 - `reviewer`: human reviewer or approver, for example `Junyan`
 - `summary`: one sentence about the work
@@ -118,7 +118,7 @@ Generate a standard CLAIM block:
 
 ```powershell
 python scripts/llm/progress_event.py claim `
-  --human-owner "Reed" `
+  --human-owner "Tianrui" `
   --executor "Codex" `
   --reviewer "Junyan" `
   --task "#164" `
@@ -131,7 +131,7 @@ Generate a standard DONE block:
 
 ```powershell
 python scripts/llm/progress_event.py done `
-  --human-owner "Reed" `
+  --human-owner "Tianrui" `
   --executor "Codex" `
   --reviewer "Junyan" `
   --task "#164" `
@@ -187,6 +187,10 @@ Issue #162 defines the future UI shape for this protocol:
 
 In short: this PR defines the v0 standard. Issue #164 is the tool today; Agent
 Console is only a later display layer.
+
+The v1.5 display-layer contract is documented in
+`docs/llm/AI_PROGRESS_UI_CONTRACT_V1_5.md`. It defines the read-only snapshot
+shape that a future UI can render without becoming the source of truth.
 
 ## Board Fields
 

@@ -1,0 +1,22 @@
+{
+  "schema": "ai-progress.snapshot.v1",
+  "contract_version": "1.5",
+  "ok": false,
+  "source": {
+    "kind": "github",
+    "value": "Lateily/Alpha-Research#164"
+  },
+  "refreshed_at_utc": "2026-07-31T06:40:00.000000+00:00",
+  "summary": {
+    "events": 0,
+    "active_claims": 0,
+    "done": 0,
+    "blocked": 0,
+    "released": 0,
+    "conflicts": 0
+  },
+  "active_claims": [],
+  "conflicts": [],
+  "timeline": [],
+  "error": "GitHub comments read failed: 502 Bad Gateway"
+}
