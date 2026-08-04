@@ -26,6 +26,7 @@ import random
 import sys
 import time
 import urllib.request
+from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HIST = os.path.join(HERE, "rotation_history.json")
@@ -63,7 +64,7 @@ def backfill(token, n_days=60, end_exclusive=None):
     dates = sorted(r["cal_date"] for r in cal)
     if end_exclusive is None:                     # 默认:只用已定盘日(≤今天)
         import datetime
-        end_exclusive = (datetime.date.today()
+        end_exclusive = (datetime.datetime.strptime(target_trade_date(), "%Y%m%d").date()
                          + datetime.timedelta(days=1)).strftime("%Y%m%d")
     dates = [d for d in dates if d < end_exclusive]
     days = dates[-n_days:]
@@ -348,17 +349,16 @@ def main():
         # 夜链模式:只追加最新定盘日,滚动保留 90 日
         hist = json.load(open(HIST))
         import datetime
-        endx = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y%m%d")
+        target = target_trade_date()
+        endx = target
         cal = _api("trade_cal", token, exchange="SSE", is_open="1",
                    start_date=hist["days"][-1], end_date=endx)
         new_days = sorted(r["cal_date"] for r in cal
-                          if r["cal_date"] > hist["days"][-1] and r["cal_date"] < endx)
-        import datetime as _dt
-        today_str = _dt.date.today().strftime("%Y%m%d")
+                          if r["cal_date"] > hist["days"][-1] and r["cal_date"] <= target)
         for d in new_days:
             rows = _api("moneyflow_ind_dc", token, trade_date=d)
             if not rows:
-                if d >= today_str:
+                if d >= target:
                     # 当日尚未定盘(如早晨运行):优雅跳过,非错误
                     print(f"SKIP: {d} 尚未定盘,跳过(晚间定时跑会补)")
                     continue
@@ -384,7 +384,8 @@ def main():
         if backfill(token) is None:
             sys.exit(1)
     hist = json.load(open(HIST))
-    v = validate(hist)
+    v = bind(validate(hist), target=hist["days"][-1])
+    v["as_of"] = hist["days"][-1]
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(v, fh, ensure_ascii=False, indent=1)
     print(json.dumps({k: v[k] for k in ("window", "n_days", "n_sectors",

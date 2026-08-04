@@ -134,7 +134,7 @@ def test_backfill_skips_not_scorable_and_preserves_invalid():
         {"signal_id": "bad1", "ticker": "600000.SH", "timestamp": "20260731 close",
          "returns": "corrupted-string"},
     ]
-    n = backfill(sigs, token=None)
+    n, _fills = backfill(sigs, token=None)
     assert n == 0
     assert sigs[0]["returns"] is None or sigs[0]["returns"] == {}  # NS条目未被网络路径触碰
     assert sigs[1]["returns"] == "corrupted-string"  # 异型保留原值,未静默抹除

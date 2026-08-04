@@ -21,7 +21,9 @@ import os
 import random
 import statistics
 import sys
+import tempfile
 import time
+from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HIST = os.path.join(HERE, "rotation_history.json")
@@ -392,7 +394,6 @@ def selftest():
         },
         "limit_up_by_industry": {"d6": {"电力": 3}},
     }
-    import tempfile
     tmp = tempfile.mktemp(suffix=".json")
     with open(tmp, "w", encoding="utf-8") as fh:
         json.dump([{"date": "d8", "name": "新易盛", "state": "ACCUMULATION_PROBABLE",
@@ -421,7 +422,8 @@ def main():
     if "--selftest" in sys.argv:
         sys.exit(0 if selftest() else 1)
     hist = _load(HIST, {})
-    report = evaluate_history(hist)
+    report = bind(evaluate_history(hist))
+    report["as_of"] = target_trade_date()
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(report, fh, ensure_ascii=False, indent=1)
     print(render(report))

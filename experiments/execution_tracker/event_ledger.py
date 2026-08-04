@@ -28,7 +28,12 @@ DEFAULT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "event_l
 ANCHOR_SUFFIX = ".anchor.json"
 HASHED_FIELDS = ("seq", "ts", "kind", "id", "payload", "prev")
 ALLOWED_FIELDS = set(HASHED_FIELDS) | {"hash"}
-UNIQUE_KINDS = {"register", "genesis"}      # 这些 kind 的 (kind,id) 全账本唯一
+# 这些 kind 的 (kind,id) 全账本唯一。事务三段以 transaction_id 为 id,
+# 故"同一 txn 重试"在链层就被拒,不依赖上层记得判重。
+UNIQUE_KINDS = {"register", "genesis",
+                "register_intent", "register_commit", "register_abort",
+                "evaluation",
+                "evaluation_intent", "evaluation_commit", "evaluation_abort"}
 
 
 def canonical(obj):
@@ -116,7 +121,8 @@ def read_anchor(path=DEFAULT_PATH):
     if not os.path.exists(p):
         return None, "absent"
     try:
-        a = json.load(open(p, encoding="utf-8"))
+        with open(p, encoding="utf-8") as fh:
+            a = json.load(fh)
     except (json.JSONDecodeError, OSError):
         return None, "corrupt"
     if not isinstance(a, dict) or "n" not in a or "head" not in a:
@@ -133,6 +139,11 @@ def write_anchor(path, n, head):
                   fh, ensure_ascii=False)
         fh.flush(); os.fsync(fh.fileno())
     os.replace(tmp, p)
+    dir_fd = os.open(os.path.dirname(os.path.abspath(p)), os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
 
 
 def verify_anchor(path=DEFAULT_PATH):
@@ -243,8 +254,21 @@ def append(kind, rec_id, payload, path=DEFAULT_PATH, now=None):
                    "ts": ts, "prev": st["head"] or GENESIS_PREV}
             rec["hash"] = record_hash(rec)
             line = canonical(rec)                      # 与 verify 的行等值校验同一函数
-            with open(path, "a", encoding="utf-8") as fh:
-                fh.write(line + "\n"); fh.flush(); os.fsync(fh.fileno())
+            # 整份临时文件替换,避免 append 在进程崩溃时留下半行 JSON。
+            # ledger 已替换而 anchor 尚未来得及更新是安全的:verify_anchor 会确认
+            # 旧 anchor head 仍在链上,下一次写入再推进 anchor。
+            tmp = path + ".append.tmp"
+            with open(tmp, "w", encoding="utf-8") as fh:
+                for old_line in lines:
+                    fh.write(old_line + "\n")
+                fh.write(line + "\n")
+                fh.flush(); os.fsync(fh.fileno())
+            os.replace(tmp, path)
+            dir_fd = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
             write_anchor(path, st["n"] + 1, rec["hash"])
             return rec
         finally:
@@ -258,6 +282,9 @@ def selftest():
     import tempfile, shutil
     ok = []
     def ck(name, cond): ok.append((name, cond)); print(f"  {'✓' if cond else '✗'} {name}")
+    def overwrite(path, text):
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(text)
     d = tempfile.mkdtemp(); p = os.path.join(d, "t.jsonl")
     try:
         for i in range(4):
@@ -272,7 +299,7 @@ def selftest():
             shutil.copy(p, q)
             if keep_anchor: shutil.copy(_anchor_path(p), _anchor_path(q))
             ls = fn(_read_lines(q))
-            open(q, "w", encoding="utf-8").write(("\n".join(ls) + "\n") if ls else "")
+            overwrite(q, ("\n".join(ls) + "\n") if ls else "")
             return q
 
         # ── ① 哈希链 ──
@@ -319,7 +346,7 @@ def selftest():
            not verify_anchor(q2)["ok"])
         q3 = mut(lambda l: l[:-1]); os.remove(_anchor_path(q3))
         ck("截断并删掉锚点 → 仍抓到(不得当首次运行)", not verify_anchor(q3)["ok"])
-        q4 = mut(lambda l: l[:-1]); open(_anchor_path(q4), "w").write("{坏")
+        q4 = mut(lambda l: l[:-1]); overwrite(_anchor_path(q4), "{坏")
         ck("截断并损坏锚点 → 仍抓到", not verify_anchor(q4)["ok"])
         q5 = mut(lambda l: [], keep_anchor=True); os.remove(q5)
         ck("删账本但锚点还在 → 锚点抓到", not verify_anchor(q5)["ok"])
@@ -386,10 +413,10 @@ def selftest():
         subprocess.run(["git", "-C", g, "commit", "-qm", "seed"], check=True)
         ck("git层:未改动 → 放行", verify_append_only(gp, "HEAD")["ok"])
         base = _read_lines(gp)
-        open(gp, "w").write("\n".join(base[:-1]) + "\n")
+        overwrite(gp, "\n".join(base[:-1]) + "\n")
         ck("git层:尾部截断 → 抓到", not verify_append_only(gp, "HEAD")["ok"])
         o = json.loads(base[1]); o["payload"]["x"] = 1; o["hash"] = record_hash(o)
-        open(gp, "w").write("\n".join([base[0], canonical(o)] + base[2:]) + "\n")
+        overwrite(gp, "\n".join([base[0], canonical(o)] + base[2:]) + "\n")
         ck("git层:改写既有行 → 抓到", not verify_append_only(gp, "HEAD")["ok"])
         w = os.path.join(d, "whole.jsonl")
         for i in range(5):
@@ -397,7 +424,7 @@ def selftest():
         shutil.copy(w, gp)
         ck("git层:整份重写但自洽且更长 → 抓到(①②都发现不了)",
            not verify_append_only(gp, "HEAD")["ok"])
-        open(gp, "w").write("\n".join(base) + "\n")
+        overwrite(gp, "\n".join(base) + "\n")
         ck("git层:恢复 → 放行", verify_append_only(gp, "HEAD")["ok"])
         ck("git层:非仓库路径 → fail-closed", not verify_append_only(os.path.join(d, "x.jsonl"))["ok"])
         # 符号链接回归:macOS tempdir 本身就是 /var→/private/var 的软链,

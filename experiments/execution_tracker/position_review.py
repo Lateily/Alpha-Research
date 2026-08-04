@@ -18,6 +18,7 @@ R 阶梯参数 [unvalidated intuition],paper 先行,30 样本后再谈校准。
 import json
 import os
 import sys
+from nightly_context import bind, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FUND_DIR = os.path.join(HERE, "model_fund")
@@ -174,13 +175,12 @@ def main():
     if "--selftest" in sys.argv:
         sys.exit(0 if selftest() else 1)
     sys.path.insert(0, HERE)
-    import datetime
     import paper_portfolio as pp
     token = os.environ.get("TUSHARE_TOKEN", "").strip()
     if not token:
         print("DATA_BLOCKED: NO TUSHARE_TOKEN")
         sys.exit(1)
-    today = datetime.date.today().strftime("%Y%m%d")
+    today = target_trade_date()
     fund = _load(os.path.join(FUND_DIR, "fund.json"), {})
     orders = _load(os.path.join(FUND_DIR, "orders.json"), [])
     dlog = _load(os.path.join(FUND_DIR, "decision_log.json"), [])
@@ -190,7 +190,7 @@ def main():
             s = pp.qfq_ohlc_series(o["ticker"], token, o.get("registered_at", "20260601"))
             if s:
                 marks[o["ticker"]] = s[-1]["close"]
-    res = review(fund, orders, marks, today)
+    res = bind(review(fund, orders, marks, today), target=today)
     print(render(res))
     if "--apply-tighten" in sys.argv:
         done = apply_tighten(res, orders, dlog, today)

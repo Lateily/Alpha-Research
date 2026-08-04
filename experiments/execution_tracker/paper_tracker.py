@@ -123,8 +123,22 @@ def register_research_signal(*, ticker, name, setup_type, line, market_state,
         "human_status":   "not_executed",
         "outcome_status": "pending",
     }
-    log.append(record)
-    _dump(log_path, log)
+    # ── R-014 三段式登记事务 ──
+    # register_intent → 原子写信号投影 → register_commit。
+    # 事务接管信号账本的写入(临时文件+fsync+原子替换),中途崩溃可检测、
+    # 可由 recover_pending() 前滚或中止,同一 txn 重试幂等。
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import registry
+        record, txn_status = registry.register_transaction(
+            record, registered_at=registered_at, script="paper_tracker.py",
+            version="paper_tracker/v2",
+            run_id=os.environ.get("AR_RUN_ID") or f"manual:{sid}",
+            ledger_path=registry.ledger_path_for(log_path), log_path=log_path)
+    except Exception as exc:                     # noqa: BLE001 — fail-closed
+        return None, f"refused: R-014 登记事务失败 ({exc})"
+    if record is None:
+        return None, txn_status
     return record, "registered"
 
 

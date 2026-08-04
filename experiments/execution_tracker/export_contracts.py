@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import time
+from nightly_context import run_id, target_trade_date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -66,6 +67,7 @@ def _resolve_status(blocked, sources_meta):
 def _contract(name, data, sources, blocked=None, sources_meta=None):
     return {"contract": name, "schema_version": "v2.1",
             "generated_at": time.strftime("%Y%m%d %H:%M:%S"),
+            "run_id": run_id(), "target_trade_date": target_trade_date(),
             "sources": sources,
             "sources_meta": sources_meta or {},
             "status": _resolve_status(blocked, sources_meta),
@@ -177,6 +179,7 @@ def export_all(v2dir=None):
     v2dir = v2dir or V2
     os.makedirs(v2dir, exist_ok=True)
     meta = {"generated_at": time.strftime("%Y%m%d %H:%M:%S"),
+            "run_id": run_id(), "target_trade_date": target_trade_date(),
             "contracts": {}, "disclaimer": DISCLAIMER}
     for fname, builder in BUILDERS:
         c = builder()
@@ -198,7 +201,8 @@ def selftest():
         files = set(os.listdir(td))
         ok.append(("meta.json written", "meta.json" in files))
         ok.append(("all contracts written", all(f in files for f, _ in BUILDERS)))
-        one = json.load(open(os.path.join(td, "model_portfolio_state.json")))
+        with open(os.path.join(td, "model_portfolio_state.json"), encoding="utf-8") as fh:
+            one = json.load(fh)
         ok.append(("disclaimer present", one["disclaimer"] == DISCLAIMER))
         ok.append(("schema version", one["schema_version"] == "v2.1"))
         ok.append(("status field honest", one["status"] in ("OK", "DATA_BLOCKED", "STALE_INPUT")))

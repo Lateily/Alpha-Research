@@ -21,6 +21,8 @@ jobs:
   offline-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    env:
+      AR_OFFLINE: "1"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,7 +37,7 @@ jobs:
         run: python3 tests/test_llm_adapter_offline.py
       - name: Promoter QC gate offline tests (zero network)
         run: python3 tests/test_promoter_qc_offline.py
-      - name: Nightly v2 orchestrator selftest
+      - name: Nightly v4 orchestrator selftest
         run: python3 experiments/execution_tracker/run_nightly.py --selftest
       - name: Setup promoter selftest
         run: python3 experiments/execution_tracker/setup_promoter.py --selftest
@@ -55,6 +57,23 @@ jobs:
         run: python3 tests/test_data_source_health_offline.py
       - name: News entity-matching regression (node)
         run: node tests/news-entity.test.mjs
+      # ── R-014 注册 schema v2 + R-015 接线回归 ──
+      # 覆盖:registry 自检 · 两条注册路径确实打戳 · 账本挂掉时登记被拒且信号不落盘
+      - name: Registry schema v2 + ledger wiring regression
+        run: python3 tests/test_registry_schema_v2.py
+      - name: Transactional forward-return backfill selftest
+        run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
+      # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
+      # B1 的 NameError 逃过了全部测试,因为没有任何测试真正执行过 main()。
+      - name: Nightly v3 regression (process-level entry + artifact contracts)
+        run: python3 tests/test_nightly_v3.py
+      # ── 夜链 v4:双 WAL / 统一交易日 / staging 发布 / 崩溃恢复 ──
+      - name: Nightly v4 adversarial regression
+        run: python3 tests/test_nightly_v4_adversarial.py
+      # 既有缺口(#215 复核发现):本文件逐个点名执行测试,无发现机制,
+      # 故新增测试若不在此登记就永远不跑。以下两条此前从未在 CI 运行过。
+      - name: PIT no-look-ahead regression
+        run: python3 tests/test_pit_no_look_ahead.py
       # ── R-015 不可篡改事件账本(C5 §6.2 硬前置)──
       # 三层:①哈希链(改写/中删/换序/坏行)②锚点(尾部截断——链证明抓不到)
       # ③git 行前缀(整份重写但自洽)。selftest 对每一类篡改都断言"必须抓到"。

@@ -16,6 +16,7 @@
 不是买卖指令;研究信号,human executes.
 """
 import os, sys, json, datetime
+from nightly_context import bind, target_trade_date
 
 NEG_TYPES = {"首亏", "预亏", "预减", "略减", "续亏"}
 
@@ -89,7 +90,7 @@ def watchlist_tickers(limit=25, path=None):
 def main():
     import tushare as ts
     pro = ts.pro_api(os.environ["TUSHARE_TOKEN"])
-    today = datetime.date.today().strftime("%Y%m%d")
+    today = target_trade_date()
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if "--from-watchlist" in sys.argv:
         tickers = watchlist_tickers()
@@ -100,8 +101,9 @@ def main():
     if not tickers:
         print("usage: red_flag_gate.py TS_CODE [...] | --from-watchlist"); return 1
     results = [check_ticker(pro, t, today) for t in tickers]
-    stamp = {"gate": "red_flag_gate_v0", "checked_at": today, "results": results,
-             "disclaimer": "红旗≠禁入,但必须亮旗;无戳名单=违宪。不是买卖指令。"}
+    stamp = bind({"gate": "red_flag_gate_v0", "checked_at": today, "results": results,
+                  "disclaimer": "红旗≠禁入,但必须亮旗;无戳名单=违宪。不是买卖指令。"},
+                 target=today)
     if "--from-watchlist" in sys.argv:
         here = os.path.dirname(os.path.abspath(__file__))
         with open(os.path.join(here, "red_flags.json"), "w", encoding="utf-8") as fh:

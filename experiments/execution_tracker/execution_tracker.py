@@ -409,7 +409,34 @@ def main():
         snap = build_snapshot(inp["index_data"], inp["tickers"], inp.get("portfolio", []),
                               inp.get("timestamp", "UNSTAMPED"))
         sigs = make_paper_signals(snap)
-        added, total = append_log(args.log, sigs)
+        # ── R-014 schema v2 + R-015 事件账本(官方样本路径)──
+        # 与研究预注册同一套规矩:三字段随信号写入,事件落不可篡改链;
+        # 账本写不进去 ⇒ 整批拒写,不产生没有审计轨迹的信号。
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import registry
+            lp = registry.ledger_path_for(args.log)
+            # 开跑前先收拾上一次崩溃留下的悬空事务(幂等)
+            rec_info = registry.recover_pending(lp, args.log)
+            if rec_info["pending_examined"]:
+                print(f"recovered pending txns: {rec_info}")
+            added = 0
+            for s in sigs:
+                _, st = registry.register_transaction(
+                    s, registered_at=snap["timestamp"],
+                    script="execution_tracker.py", version="execution_tracker/v2",
+                    run_id=os.environ.get("AR_RUN_ID") or f"standalone:{s.get('signal_id', 'UNKNOWN')}",
+                    ledger_path=lp, log_path=args.log)
+                if st == "registered":
+                    added += 1
+                elif not st.startswith("idempotent"):
+                    print(f"  skip {s.get('ticker')}: {st}")
+            total = len(registry.load_signal_log_strict(args.log))
+        except Exception as exc:                  # noqa: BLE001 — fail-closed
+            print(f"REFUSED: R-014 登记事务失败 ({exc}) —— 本批未完整写入,"
+                  f"下次运行会自动 recover_pending")
+            print("不是买卖指令；研究信号，human executes。")
+            return 1
         snap_out = (os.path.splitext(args.log)[0].replace("paper_signal_log", "execution_gate_snapshot")
                     + ".json")
         with open(snap_out, "w") as f:
@@ -423,4 +450,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main() 返回 1 表示拒绝写入;不 sys.exit 的话进程仍退 0,夜链会把失败当成功
+    sys.exit(main() or 0)
