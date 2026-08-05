@@ -26,6 +26,7 @@ Expected manual shape:
 """
 
 import argparse
+import datetime
 import json
 import os
 import sys
@@ -63,6 +64,16 @@ AUTO_ANCHORS = [
 ]
 
 
+def _overnight_window(target):
+    """目标日的合法隔夜窗口:目标交易日当天,或其前一日(美股隔夜早于 A 股开盘)。
+    自然日近似即可 —— 这道门要挡的是"上周的手工值冒充今天",不是精确到交易日历。"""
+    if not target:
+        return None
+    d = datetime.datetime.strptime(str(target)[:8], "%Y%m%d")
+    return {d.strftime("%Y%m%d"), (d - datetime.timedelta(days=1)).strftime("%Y%m%d"),
+            (d - datetime.timedelta(days=2)).strftime("%Y%m%d")}
+
+
 def fetch_auto_anchors(token=None, today=None):
     """抓 Tushare index_global 的隔夜读数。返回 {key: {pct_change, source, as_of, proxy}}。
     离线或无 token ⇒ 返回 {},由调用方走 DATA_BLOCKED —— 绝不返回编造值。"""
@@ -76,21 +87,35 @@ def fetch_auto_anchors(token=None, today=None):
         pro = ts.pro_api(token)
     except Exception:
         return {}
-    end = today or time.strftime("%Y%m%d")
-    start = time.strftime("%Y%m%d", time.localtime(time.time() - 14 * 86400))
+    # 窗口必须由 **target_trade_date** 推导,不能用系统当天:
+    # 8/5 重跑 8/4 时,用系统当天会读到 8/5 的隔夜数据却标成 8/4 —— 前视污染。
+    end = today or target_trade_date()
+    if not end:
+        return {}
+    end_dt = datetime.datetime.strptime(str(end)[:8], "%Y%m%d")
+    start = (end_dt - datetime.timedelta(days=14)).strftime("%Y%m%d")
+    end = end_dt.strftime("%Y%m%d")
     out = {}
     for key, spec in AUTO_SOURCES.items():
         try:
             df = pro.index_global(ts_code=spec["code"], start_date=start, end_date=end)
             if df is None or not len(df):
                 continue
-            row = df.sort_values("trade_date").iloc[-1]
+            df = df.sort_values("trade_date")
+            # 双保险:即便接口忽略 end_date,也显式剔除晚于目标日的行。
+            df = df[df["trade_date"].astype(str).str[:8] <= end]
+            if not len(df):
+                continue
+            row = df.iloc[-1]
             pct = row.get("pct_chg")
             if pct is None or pct != pct:
                 continue
+            as_of = str(row.get("trade_date"))[:8]
+            if as_of > end:                      # 兜底:绝不接受未来数据
+                continue
             out[key] = {"pct_change": round(float(pct), 2),
                         "source": f"tushare/index_global/{spec['code']}",
-                        "as_of": str(row.get("trade_date")),
+                        "as_of": as_of,
                         "proxy": spec["proxy"],
                         "proxy_for": spec.get("proxy_for")}
         except Exception:
@@ -108,9 +133,20 @@ def _load(path):
 
 def build_anchor(payload=None, auto=None):
     payload = payload or _load(MANUAL) or {}
-    raw = dict(payload.get("anchors") or {})
-    # 自动抓取的读数并入(手工文件优先 —— 人工覆盖永远赢自动源)
+    target = target_trade_date()
     auto = fetch_auto_anchors() if auto is None else auto
+    # 手工锚**不再无条件优先**:一条过期的手工 A50 会长期压住当天 Tushare 数据,
+    # 而最终产物仍标着本轮目标日 —— 陈旧值伪装成当日读数。
+    # 规则:手工锚必须带 as_of,且落在目标隔夜窗口(target 或其前一日)才可覆盖;
+    # 否则降级为 stale_manual,不参与判读。
+    raw, stale_manual = {}, []
+    window = _overnight_window(target)
+    for k, v in (payload.get("anchors") or {}).items():
+        as_of = str((v or {}).get("as_of") or payload.get("as_of") or "")[:8]
+        if window and as_of not in window:
+            stale_manual.append({"key": k, "as_of": as_of or None, "window": sorted(window)})
+            continue
+        raw[k] = dict(v or {}, as_of=as_of or None, source=(v or {}).get("source") or "manual")
     for k, v in (auto or {}).items():
         raw.setdefault(k, v)
     rows = []
@@ -161,6 +197,7 @@ def build_anchor(payload=None, auto=None):
         "bias": bias,
         "why": why,
         "data_blocked": blocked,
+        "stale_manual_ignored": stale_manual,
         # 契约层消费它:有任一真实读数 ⇒ PARTIAL_OK(可用但方向不可判),
         # 一条都没有 ⇒ DATA_BLOCKED。区分"抓不全"和"完全没抓到"。
         "internal_status": ("DATA_BLOCKED" if not ok_rows
@@ -188,12 +225,18 @@ def render(rep):
 
 
 def selftest():
+    os.environ.setdefault("AR_TARGET_TRADE_DATE", "20260721")
+    W = {"as_of": "20260721"}
     rep = build_anchor({"as_of": "20260721 08:55", "anchors": {
-        "NVDA": {"pct_change": 1.2}, "SOX": {"pct_change": 0.8},
-        "TSM": {"pct_change": 1.0}, "A50": {"pct_change": -0.2},
+        "NVDA": dict(W, pct_change=1.2), "SOX": dict(W, pct_change=0.8),
+        "TSM": dict(W, pct_change=1.0), "A50": dict(W, pct_change=-0.2),
     }}, auto={})
     # 自动源必须显式关掉,否则 selftest 会打网络、结果随行情漂
-    partial = build_anchor({"anchors": {"NVDA": {"pct_change": 1.2}}}, auto={})
+    partial = build_anchor({"anchors": {"NVDA": {"pct_change": 1.2, "as_of": "20260721"}}},
+                           auto={})
+    # 手工锚过期(不在目标隔夜窗口)⇒ 不得覆盖,须降级为 stale_manual_ignored
+    stale_m = build_anchor({"anchors": {"A50": {"pct_change": 9.9, "as_of": "20260601"}}},
+                           auto={"A50": {"pct_change": 1.1, "source": "tushare", "as_of": "20260721"}})
     blocked = build_anchor({"anchors": {}}, auto={})
     proxy_only = build_anchor({"anchors": {}},
                               auto={"TWII": {"pct_change": 1.0, "proxy": True,
@@ -207,6 +250,11 @@ def selftest():
          partial["bias"] == "INSUFFICIENT_ANCHORS" and partial["internal_status"] == "PARTIAL_OK"),
         ("empty: 0 anchor ⇒ DATA_BLOCKED",
          blocked["bias"] == "DATA_BLOCKED" and blocked["internal_status"] == "DATA_BLOCKED"),
+        ("过期手工锚不得覆盖自动源(降级 stale_manual_ignored)",
+         bool(stale_m["stale_manual_ignored"])
+         and next(a["pct_change"] for a in stale_m["anchors"] if a["key"] == "A50") == 1.1),
+        ("无 as_of 的手工锚一律不采信",
+         not build_anchor({"anchors": {"A50": {"pct_change": 5.5}}}, auto={})["anchors"][3]["pct_change"]),
         ("proxy 不替本尊投票:只有代理仍判 DATA_BLOCKED",
          proxy_only["bias"] == "DATA_BLOCKED" and proxy_only["fetched_count"] == 0
          and proxy_only["proxy_count"] == 1),

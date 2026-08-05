@@ -84,13 +84,35 @@ def _open_orders(orders):
     return [o for o in orders if o["status"] in ("pending", "filled")]
 
 
-def current_nav(fund, orders, marks=None):
-    """cash + Σ filled positions marked at `marks` (fallback: fill price)."""
+class NavMarksIncomplete(Exception):
+    """并非所有 filled 持仓都取到目标日定盘价。**官方 NAV 路径必须拒绝出数。**
+
+    缺一只就回退该只的成本价,会产出「部分市值 + 部分成本」的混合 NAV,
+    而它照样以当天日期正式入账 —— 混合口径比缺数据更危险,因为它看起来正常、
+    不触发任何告警,且此后再也无法从账本里区分哪一天是混的。
+    """
+
+    def __init__(self, missing):
+        self.missing = list(missing)
+        super().__init__(f"缺目标日定盘价: {self.missing}")
+
+
+def current_nav(fund, orders, marks=None, *, require_complete_marks=False):
+    """cash + Σ filled positions。
+
+    require_complete_marks=True(官方 NAV 路径必须用):任一 filled 持仓缺目标日
+    定盘价即抛 NavMarksIncomplete,绝不产出混合口径。
+    默认 False 只供 --status 一类的**只读估算**,其结果不得写入 nav_history。
+    """
+    marks = marks or {}
+    missing = [o["ticker"] for o in orders
+               if o["status"] == "filled" and o["ticker"] not in marks]
+    if require_complete_marks and missing:
+        raise NavMarksIncomplete(missing)
     nav = fund["cash"]
     for o in orders:
         if o["status"] == "filled":
-            px = (marks or {}).get(o["ticker"], o["fill_price"])
-            nav += o["shares"] * px
+            nav += o["shares"] * marks.get(o["ticker"], o["fill_price"])
     return round(nav, 2)
 
 
@@ -210,8 +232,9 @@ def process_day(fund, orders, decision_log, token, series_fn=None):
     return events
 
 
-def update_nav(fund, orders, nav_history, date, marks=None):
-    nav = current_nav(fund, orders, marks)
+def update_nav(fund, orders, nav_history, date, marks=None, *,
+               require_complete_marks=False):
+    nav = current_nav(fund, orders, marks, require_complete_marks=require_complete_marks)
     prev = nav_history[-1]["nav"] if nav_history else fund["initial_capital"]
     rec = {"date": date, "nav": nav, "cash": fund["cash"],
            "n_positions": sum(1 for o in orders if o["status"] == "filled"),
@@ -482,7 +505,15 @@ def main():
                 print(f"  marks: {marks}")
             else:
                 print("  WARN 无可用收盘价 ⇒ NAV 按成本标记(不是市值)")
-        rec = update_nav(fund, orders, navh, date, marks=marks)
+        try:
+            rec = update_nav(fund, orders, navh, date, marks=marks,
+                             require_complete_marks=True)
+        except NavMarksIncomplete as e:
+            # 官方 NAV 宁可不出,也不出混合口径。不写任何账本、非零退出、显式 DATA_BLOCKED。
+            print(f"DATA_BLOCKED: {date} 有 filled 持仓未取到目标日定盘价 {e.missing} —— "
+                  f"拒绝写入 NAV(不接受部分市值+部分成本的混合口径)")
+            print("不是买卖指令；研究信号，human executes。")
+            return 1
         save("fund.json", fund); save("orders.json", orders)
         save("decision_log.json", decision_log); save("nav_history.json", navh)
         print(f"[daily] {date} nav={rec['nav']:,.0f} cash={rec['cash']:,.0f} "

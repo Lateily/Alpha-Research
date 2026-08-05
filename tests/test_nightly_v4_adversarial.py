@@ -1048,6 +1048,87 @@ class ProtectedLedgerAppendOnlyTest(unittest.TestCase):
         self.assertTrue(any("消失" in e for e in errs), errs)
 
 
+class OvernightAnchorLookAheadTest(unittest.TestCase):
+    """历史重跑不得混入未来隔夜数据 —— 8/5 重跑 8/4 时读到 8/5 却标成 8/4。"""
+
+    def test_fetch_window_is_derived_from_target_not_system_today(self):
+        src = (ET / "overnight_anchor.py").read_text(encoding="utf-8")
+        self.assertIn("end = today or target_trade_date()", src,
+                      "抓取窗口仍用系统当天 —— 历史重跑会前视")
+        self.assertNotIn('end = today or time.strftime("%Y%m%d")', src)
+        self.assertIn('df["trade_date"].astype(str).str[:8] <= end', src,
+                      "没有显式剔除晚于目标日的行")
+        self.assertIn("if as_of > end:", src, "缺少未来数据兜底")
+
+    def test_manual_anchor_outside_window_cannot_override_auto(self):
+        import overnight_anchor as oa
+        os.environ["AR_TARGET_TRADE_DATE"] = "20260805"
+        try:
+            rep = oa.build_anchor(
+                {"anchors": {"A50": {"pct_change": 9.9, "as_of": "20260601"}}},
+                auto={"A50": {"pct_change": 1.1, "source": "tushare", "as_of": "20260805"}})
+            a50 = next(a for a in rep["anchors"] if a["key"] == "A50")
+            self.assertEqual(1.1, a50["pct_change"], "过期手工值压住了当天自动数据")
+            self.assertTrue(rep["stale_manual_ignored"], "被忽略的手工锚没有留痕")
+        finally:
+            os.environ.pop("AR_TARGET_TRADE_DATE", None)
+
+    def test_manual_anchor_without_as_of_is_not_trusted(self):
+        import overnight_anchor as oa
+        os.environ["AR_TARGET_TRADE_DATE"] = "20260805"
+        try:
+            rep = oa.build_anchor({"anchors": {"A50": {"pct_change": 5.5}}}, auto={})
+            a50 = next(a for a in rep["anchors"] if a["key"] == "A50")
+            self.assertEqual("DATA_BLOCKED", a50["status"], "无 as_of 的手工锚被采信了")
+        finally:
+            os.environ.pop("AR_TARGET_TRADE_DATE", None)
+
+    def test_in_window_manual_anchor_still_wins(self):
+        """窗口内的人工覆盖仍应优先 —— 这道门只挡陈旧值,不废掉人工干预。"""
+        import overnight_anchor as oa
+        os.environ["AR_TARGET_TRADE_DATE"] = "20260805"
+        try:
+            rep = oa.build_anchor(
+                {"anchors": {"A50": {"pct_change": 9.9, "as_of": "20260804"}}},
+                auto={"A50": {"pct_change": 1.1, "source": "tushare", "as_of": "20260805"}})
+            a50 = next(a for a in rep["anchors"] if a["key"] == "A50")
+            self.assertEqual(9.9, a50["pct_change"])
+        finally:
+            os.environ.pop("AR_TARGET_TRADE_DATE", None)
+
+
+class ContractStatusOrthogonalityTest(unittest.TestCase):
+    """「成功发布」不等于「信息完整」—— 两个维度不许互相冒充。"""
+
+    def test_partial_ok_does_not_become_top_level_complete(self):
+        import export_contracts as ec
+        p, q, deg = ec._resolve_status(None,
+                                       {"overnight_anchor.json": {"internal_status": "PARTIAL_OK"}})
+        self.assertEqual("OK", p, "可发布却被判不可发布")
+        self.assertEqual("PARTIAL", q, "信息不完整却被写成完整")
+        self.assertTrue(deg, "降级源没有留痕")
+
+    def test_blocked_source_marks_both_dimensions(self):
+        import export_contracts as ec
+        p, q, _ = ec._resolve_status(None,
+                                     {"x.json": {"internal_status": "DATA_BLOCKED"}})
+        self.assertEqual("STALE_INPUT", p)
+        self.assertEqual("BLOCKED", q)
+
+    def test_clean_sources_are_complete(self):
+        import export_contracts as ec
+        p, q, deg = ec._resolve_status(None, {"x.json": {"internal_status": "OK"}})
+        self.assertEqual(("OK", "COMPLETE"), (p, q))
+        self.assertEqual([], deg)
+
+    def test_meta_reports_both_dimensions_and_honest_contract_count(self):
+        src = (ET / "export_contracts.py").read_text(encoding="utf-8")
+        self.assertIn('meta["data_quality"]', src, "meta 未单独报 data_quality")
+        self.assertIn('meta["business_contract_count"]', src,
+                      "未区分业务契约与控制文件 —— 对外说「9 份契约」把控制文件也算进去了")
+        self.assertIn('"control_files"', src)
+
+
 class RuleCompletenessTest(unittest.TestCase):
     """规则**完整性**测试:检查"规则有没有漏",而不只是"现有规则有没有执行"。
 
@@ -1199,17 +1280,55 @@ class NavMarkToMarketTest(unittest.TestCase):
         usable = bool(close) and str(stale_bar.get("date"))[:8] == target
         self.assertFalse(usable, "旧日期的收盘价被当成了本轮标记价")
 
-    def test_missing_marks_flags_cost_basis_explicitly(self):
-        """无可用收盘价时:NAV 退化为成本口径这件事必须被**显式声明**,
-        不能悄悄发生 —— 调用方要能区分"市值"和"成本"。"""
+    def test_official_nav_refuses_any_missing_mark(self):
+        """官方 NAV 路径:**任一** filled 持仓缺目标日定盘价即拒绝出数。
+
+        上一版这条测试把 bug 断言成了正确行为 —— 它断言"成本回退成立",
+        再检查源码里存在一行警告文字。那不是防线,那是给缺陷背书:
+        缺一只就产出「部分市值 + 部分成本」的混合 NAV(实测 1,012,278),
+        而它照样以当天日期正式入账,此后再也无法从账本区分哪一天是混的。
+        """
         import model_paper_fund as mpf
-        nav_no_marks = mpf.current_nav(self._fund(), self._orders(), None)
-        self.assertAlmostEqual(nav_no_marks, self._cost_nav(), places=0)
+        with self.assertRaises(mpf.NavMarksIncomplete) as cm:
+            mpf.current_nav(self._fund(), self._orders(),
+                            {"600276.SH": 53.54},           # 只有一只
+                            require_complete_marks=True)
+        self.assertEqual(["002714.SZ"], cm.exception.missing)
+
+    def test_official_nav_refuses_when_all_marks_missing(self):
+        import model_paper_fund as mpf
+        with self.assertRaises(mpf.NavMarksIncomplete):
+            mpf.current_nav(self._fund(), self._orders(), None,
+                            require_complete_marks=True)
+
+    def test_mixed_basis_nav_is_never_produced_on_the_official_path(self):
+        """混合口径的具体数值不得出现在任何强制路径上。"""
+        import model_paper_fund as mpf
+        mixed = mpf.current_nav(self._fund(), self._orders(), {"600276.SH": 53.54})
+        self.assertNotAlmostEqual(mixed, 1009466, places=0)   # 不是全市值
+        self.assertNotAlmostEqual(mixed, self._cost_nav(), places=0)  # 也不是全成本
+        with self.assertRaises(mpf.NavMarksIncomplete):       # ⇒ 强制路径必须拒绝
+            mpf.current_nav(self._fund(), self._orders(), {"600276.SH": 53.54},
+                            require_complete_marks=True)
+
+    def test_update_nav_propagates_the_refusal(self):
+        """update_nav 必须把拒绝传上去,而不是自己吞掉写一条混合 NAV。"""
+        import model_paper_fund as mpf
+        navh = []
+        with self.assertRaises(mpf.NavMarksIncomplete):
+            mpf.update_nav(self._fund(), self._orders(), navh, "20260805",
+                           marks={"600276.SH": 53.54}, require_complete_marks=True)
+        self.assertEqual([], navh, "拒绝之后仍然写了 NAV 行")
+
+    def test_daily_cli_exits_nonzero_and_writes_nothing_when_marks_incomplete(self):
+        """进程级:--daily 缺定盘价须 DATA_BLOCKED + 非零退出 + 不动账本。"""
         src = (ET / "model_paper_fund.py").read_text(encoding="utf-8")
-        self.assertIn("NAV 按成本标记", src,
-                      "marks 为空时没有任何显式提示 —— 假 NAV 会静默通过")
-        self.assertIn('bar_date == date', src,
-                      "没有校验 bar 日期是否等于本轮 target")
+        self.assertIn("require_complete_marks=True", src, "--daily 未启用强制完整")
+        i_try = src.index("except NavMarksIncomplete")
+        i_save = src.index('save("fund.json", fund)')
+        self.assertLess(i_try, i_save, "拒绝分支排在写盘之后 —— 会先落盘再报错")
+        self.assertIn("DATA_BLOCKED", src[i_try:i_save])
+        self.assertIn("return 1", src[i_try:i_save], "拒绝时未非零退出")
 
 
 class ProtectedLedgerIsPublishedTest(unittest.TestCase):

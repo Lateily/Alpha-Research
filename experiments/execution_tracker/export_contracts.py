@@ -87,25 +87,49 @@ def _load(relpath):
 
 
 def _resolve_status(blocked, sources_meta):
-    """契约状态。PARTIAL_OK 是**可用**状态,不拖累整份契约 ——
-    否则单条 NVDA 抓不到就会让盘前帧永远 STALE_INPUT,发布门永远解不开。"""
+    """**两个正交维度**,不许把其中一个写成另一个:
+
+      pipeline_status —— 本轮流水线是否成功产出并可发布(OK / STALE_INPUT / DATA_BLOCKED)
+      data_quality    —— 信息是否完整(COMPLETE / PARTIAL / BLOCKED)
+
+    此前只有一个 status:隔夜锚 PARTIAL_OK 被包装成顶层 OK,meta.report 进而
+    COMPLETE —— 下游只读顶层就会误以为宏观数据完整。
+    「成功发布」不等于「信息完整」。
+    返回 (pipeline_status, data_quality, degraded_sources)。
+    """
+    degraded = []
     if blocked:
-        return "DATA_BLOCKED"
-    for m in (sources_meta or {}).values():
-        if m.get("internal_status") == "DATA_BLOCKED":
-            return "STALE_INPUT"
-        if m.get("stale"):
-            return "STALE_INPUT"
-    return "OK"
+        return "DATA_BLOCKED", "BLOCKED", degraded
+    pipeline = "OK"
+    quality = "COMPLETE"
+    for name, m in (sources_meta or {}).items():
+        internal = m.get("internal_status")
+        if internal == "DATA_BLOCKED" or m.get("stale"):
+            pipeline = "STALE_INPUT"
+            quality = "BLOCKED" if internal == "DATA_BLOCKED" else "PARTIAL"
+            degraded.append({"source": name, "internal_status": internal,
+                             "stale": bool(m.get("stale")),
+                             "why": m.get("stale_why")})
+        elif internal == "PARTIAL_OK":
+            # 可发布,但信息不完整 —— 只降 data_quality,不降 pipeline_status
+            quality = "PARTIAL" if quality != "BLOCKED" else quality
+            degraded.append({"source": name, "internal_status": "PARTIAL_OK"})
+    return pipeline, quality, degraded
 
 
 def _contract(name, data, sources, blocked=None, sources_meta=None):
-    return {"contract": name, "schema_version": "v2.1",
+    pipeline, quality, degraded = _resolve_status(blocked, sources_meta)
+    return {"contract": name, "schema_version": "v2.2",
             "generated_at": time.strftime("%Y%m%d %H:%M:%S"),
             "run_id": run_id(), "target_trade_date": target_trade_date(),
             "sources": sources,
             "sources_meta": sources_meta or {},
-            "status": _resolve_status(blocked, sources_meta),
+            # status 保留为 pipeline_status 的别名(向后兼容),但**新消费方应读
+            # data_quality** —— 只读 status 会把「发布成功」误解成「信息完整」。
+            "status": pipeline,
+            "pipeline_status": pipeline,
+            "data_quality": quality,
+            "degraded_sources": degraded,
             "blocked_why": blocked, "data": data, "disclaimer": DISCLAIMER}
 
 
@@ -220,9 +244,23 @@ def export_all(v2dir=None):
         c = builder()
         with open(os.path.join(v2dir, fname), "w", encoding="utf-8") as fh:
             json.dump(c, fh, ensure_ascii=False, indent=1)
-        meta["contracts"][fname] = {"status": c["status"], "blocked_why": c["blocked_why"]}
-    meta["report"] = ("COMPLETE" if all(v["status"] == "OK" for v in meta["contracts"].values())
-                      else "PARTIAL")  # STALE_INPUT/DATA_BLOCKED 均使总报为 PARTIAL
+        meta["contracts"][fname] = {"status": c["status"],
+                                    "pipeline_status": c["pipeline_status"],
+                                    "data_quality": c["data_quality"],
+                                    "degraded_sources": c["degraded_sources"],
+                                    "blocked_why": c["blocked_why"]}
+    vals = list(meta["contracts"].values())
+    # report = 流水线是否全部成功(可发布);data_quality = 信息是否完整。
+    # 两者必须分开报 —— 否则 PARTIAL 的宏观数据会被 COMPLETE 掩盖。
+    meta["report"] = "COMPLETE" if all(v["pipeline_status"] == "OK" for v in vals) else "PARTIAL"
+    meta["data_quality"] = ("COMPLETE" if all(v["data_quality"] == "COMPLETE" for v in vals)
+                            else ("BLOCKED" if any(v["data_quality"] == "BLOCKED" for v in vals)
+                                  else "PARTIAL"))
+    meta["degraded_sources"] = sorted({d["source"] for v in vals for d in v["degraded_sources"]})
+    # 口径:业务契约 = BUILDERS 产出的那些;meta.json / current_run.json 是**控制文件**,
+    # 不计入契约数(此前对外说「9 份契约」是把控制文件也算进去了)。
+    meta["business_contract_count"] = len(vals)
+    meta["control_files"] = ["meta.json", "current_run.json"]
     with open(os.path.join(v2dir, "meta.json"), "w", encoding="utf-8") as fh:
         json.dump(meta, fh, ensure_ascii=False, indent=1)
     return meta
@@ -239,8 +277,12 @@ def selftest():
         with open(os.path.join(td, "model_portfolio_state.json"), encoding="utf-8") as fh:
             one = json.load(fh)
         ok.append(("disclaimer present", one["disclaimer"] == DISCLAIMER))
-        ok.append(("schema version", one["schema_version"] == "v2.1"))
-        ok.append(("status field honest", one["status"] in ("OK", "DATA_BLOCKED", "STALE_INPUT")))
+        ok.append(("schema version v2.2(新增 pipeline_status/data_quality)",
+                   one["schema_version"] == "v2.2"))
+        ok.append(("status 保留为 pipeline_status 别名(向后兼容)",
+                   one["status"] == one["pipeline_status"]))
+        ok.append(("data_quality 与 pipeline_status 正交",
+                   one["data_quality"] in ("COMPLETE", "PARTIAL", "BLOCKED")))
         ok.append(("sources_meta present", "sources_meta" in one))
         ok.append(("meta report honest", meta["report"] in ("COMPLETE", "PARTIAL")))
     for name, passed in ok:
