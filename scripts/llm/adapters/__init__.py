@@ -11,6 +11,7 @@ from .base import (
     run_adapter,
 )
 from .deterministic import DeterministicAdapter
+from .kimi import KimiAdapter
 
 __all__ = [
     "AgentAdapter",
@@ -19,6 +20,7 @@ __all__ = [
     "AgentResult",
     "AgentStatus",
     "DeterministicAdapter",
+    "KimiAdapter",
     "Usage",
     "UsageStatus",
     "run_adapter",
