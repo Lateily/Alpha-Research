@@ -145,6 +145,22 @@ def test_provider_error_is_structured_and_redacted() -> None:
     assert result.usage.status is UsageStatus.COST_UNKNOWN
 
 
+def test_missing_model_attribute_cannot_break_failed_result() -> None:
+    class ProviderWithoutModel(AgentAdapter):
+        provider = "missing-model-test"
+
+        def execute(self, _request):
+            raise RuntimeError("provider failed")
+
+    result = run(ProviderWithoutModel(), request())
+
+    assert result.status is AgentStatus.FAILED
+    assert result.provider == "missing-model-test"
+    assert result.model is None
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
 def test_worker_must_return_mapping() -> None:
     result = run(DeterministicAdapter(lambda _payload: "bad output"), request())
     assert result.status is AgentStatus.FAILED

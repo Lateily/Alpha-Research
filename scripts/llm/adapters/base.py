@@ -178,8 +178,8 @@ class AgentResult:
 class AgentAdapter(ABC):
     """Provider wrapper contract. Implementations must enforce their timeout."""
 
-    provider: str
-    model: str | None
+    provider: str = "unknown"
+    model: str | None = None
 
     @abstractmethod
     def execute(self, request: AgentRequest) -> AdapterOutput:
@@ -276,8 +276,8 @@ def _result(
         run_id=run_id,
         task_id=request.task_id,
         task_type=request.task_type,
-        provider=adapter.provider,
-        model=adapter.model,
+        provider=getattr(adapter, "provider", "unknown"),
+        model=getattr(adapter, "model", None),
         prompt_version=request.prompt_version,
         evidence_grade=request.evidence_grade,
         input_hash=_safe_input_hash(request),
