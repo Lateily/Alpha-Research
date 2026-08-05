@@ -1,11 +1,89 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-07-28T10:57:31Z",
-  "current_tier": 6000,
+  "fetched_at": "2026-08-05T11:17:15Z",
+  "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260805",
+          "open": 91.08,
+          "high": 91.18,
+          "low": 89.15,
+          "close": 90.82,
+          "pre_close": 91.15,
+          "change": -0.33,
+          "pct_chg": -0.362,
+          "vol": 515597.62,
+          "amount": 4654039.88458
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260804",
+          "open": 94.45,
+          "high": 94.49,
+          "low": 90.8,
+          "close": 91.15,
+          "pre_close": 94.45,
+          "change": -3.3,
+          "pct_chg": -3.4939,
+          "vol": 667715.3,
+          "amount": 6134764.11983
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260803",
+          "open": 96.03,
+          "high": 96.59,
+          "low": 94.1,
+          "close": 94.45,
+          "pre_close": 95.77,
+          "change": -1.32,
+          "pct_chg": -1.3783,
+          "vol": 363897.11,
+          "amount": 3462874.20705
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260731",
+          "open": 93.72,
+          "high": 95.86,
+          "low": 93.13,
+          "close": 95.77,
+          "pre_close": 95.84,
+          "change": -0.07,
+          "pct_chg": -0.073,
+          "vol": 436130.5,
+          "amount": 4139523.70668
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260730",
+          "open": 94.92,
+          "high": 96.66,
+          "low": 94.75,
+          "close": 96.2,
+          "pre_close": 94.85,
+          "change": 1.35,
+          "pct_chg": 1.4233,
+          "vol": 480361.13,
+          "amount": 4604080.48035
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260729",
+          "open": 93.55,
+          "high": 96.27,
+          "low": 93.1,
+          "close": 94.85,
+          "pre_close": 93.35,
+          "change": 1.5,
+          "pct_chg": 1.6069,
+          "vol": 514457.29,
+          "amount": 4891877.96573
+        },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260728",
@@ -759,52 +837,134 @@
           "pct_chg": -0.2878,
           "vol": 468845.96,
           "amount": 4708289.851
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260506",
-          "open": 101.7,
-          "high": 101.89,
-          "low": 100.2,
-          "close": 100.75,
-          "pre_close": 102.98,
-          "change": -2.23,
-          "pct_chg": -2.1655,
-          "vol": 670487.11,
-          "amount": 6746578.445
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260430",
-          "open": 104.54,
-          "high": 105.45,
-          "low": 102.37,
-          "close": 102.98,
-          "pre_close": 105.4,
-          "change": -2.42,
-          "pct_chg": -2.296,
-          "vol": 600978.53,
-          "amount": 6206126.903
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260429",
-          "open": 101.47,
-          "high": 105.64,
-          "low": 101.0,
-          "close": 105.4,
-          "pre_close": 101.48,
-          "change": 3.92,
-          "pct_chg": 3.8628,
-          "vol": 1056557.81,
-          "amount": 11021927.729
         }
       ],
-      "row_count": 61,
-      "_status": "ok"
+      "row_count": 64,
+      "_status": "ok",
+      "as_of": "20260805"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260805",
+          "close": 90.82,
+          "turnover_rate": 1.4788,
+          "turnover_rate_f": 2.0989,
+          "volume_ratio": 1.05,
+          "pe": 25.3847,
+          "pe_ttm": 30.0569,
+          "pb": 3.5704,
+          "ps": 1.0299,
+          "ps_ttm": 1.0564,
+          "dv_ratio": 1.4586,
+          "dv_ttm": 0.3942,
+          "total_share": 911719.7565,
+          "float_share": 348661.35,
+          "free_share": 245652.5341,
+          "total_mv": 82802388.6032,
+          "circ_mv": 31665423.807
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260804",
+          "close": 91.15,
+          "turnover_rate": 1.9151,
+          "turnover_rate_f": 2.7181,
+          "volume_ratio": 1.55,
+          "pe": 25.4769,
+          "pe_ttm": 30.1661,
+          "pb": 3.5834,
+          "ps": 1.0337,
+          "ps_ttm": 1.0602,
+          "dv_ratio": 1.4533,
+          "dv_ttm": 0.3928,
+          "total_share": 911719.7565,
+          "float_share": 348661.35,
+          "free_share": 245652.5341,
+          "total_mv": 83103256.124,
+          "circ_mv": 31780482.0525
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260803",
+          "close": 94.45,
+          "turnover_rate": 1.0437,
+          "turnover_rate_f": 1.4813,
+          "volume_ratio": 0.88,
+          "pe": 26.3993,
+          "pe_ttm": 31.2582,
+          "pb": 3.7131,
+          "ps": 1.0711,
+          "ps_ttm": 1.0986,
+          "dv_ratio": 1.4025,
+          "dv_ttm": 0.379,
+          "total_share": 911719.7565,
+          "float_share": 348661.35,
+          "free_share": 245652.5341,
+          "total_mv": 86111931.332,
+          "circ_mv": 32931064.5075
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260731",
+          "close": 95.77,
+          "turnover_rate": 1.2509,
+          "turnover_rate_f": 1.7754,
+          "volume_ratio": 1.17,
+          "pe": 26.7682,
+          "pe_ttm": 31.6951,
+          "pb": 3.765,
+          "ps": 1.0861,
+          "ps_ttm": 1.114,
+          "dv_ratio": 1.3832,
+          "dv_ttm": 0.3738,
+          "total_share": 911719.7565,
+          "float_share": 348661.35,
+          "free_share": 245652.5341,
+          "total_mv": 87315401.4152,
+          "circ_mv": 33391297.4895
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260730",
+          "close": 96.2,
+          "turnover_rate": 1.3777,
+          "turnover_rate_f": 1.9554,
+          "volume_ratio": 1.39,
+          "pe": 26.8884,
+          "pe_ttm": 31.8374,
+          "pb": 3.7819,
+          "ps": 1.0909,
+          "ps_ttm": 1.119,
+          "dv_ratio": 1.377,
+          "dv_ttm": null,
+          "total_share": 911719.7565,
+          "float_share": 348661.35,
+          "free_share": 245652.5341,
+          "total_mv": 87707440.912,
+          "circ_mv": 33541221.87
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260729",
+          "close": 94.85,
+          "turnover_rate": 1.4755,
+          "turnover_rate_f": 2.0942,
+          "volume_ratio": 1.42,
+          "pe": 26.5111,
+          "pe_ttm": 31.3906,
+          "pb": 3.7288,
+          "ps": 1.0756,
+          "ps_ttm": 1.1033,
+          "dv_ratio": 1.3966,
+          "dv_ttm": null,
+          "total_share": 911719.7565,
+          "float_share": 348661.35,
+          "free_share": 245652.5341,
+          "total_mv": 86476619.236,
+          "circ_mv": 33070529.0475
+        },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260728",
@@ -1964,73 +2124,44 @@
           "free_share": 245652.5341,
           "total_mv": 91591366.738,
           "circ_mv": 35026519.221
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260506",
-          "close": 100.75,
-          "turnover_rate": 1.923,
-          "turnover_rate_f": 2.7294,
-          "volume_ratio": 1.13,
-          "pe": 28.1602,
-          "pe_ttm": 33.3432,
-          "pb": 3.9608,
-          "ps": 1.1425,
-          "ps_ttm": 1.1719,
-          "dv_ratio": 1.3148,
-          "dv_ttm": 1.3148,
-          "total_share": 911719.7565,
-          "float_share": 348661.35,
-          "free_share": 245652.5341,
-          "total_mv": 91855765.4674,
-          "circ_mv": 35127631.0125
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260430",
-          "close": 102.98,
-          "turnover_rate": 1.7237,
-          "turnover_rate_f": 2.4465,
-          "volume_ratio": 1.05,
-          "pe": 28.7835,
-          "pe_ttm": 34.0812,
-          "pb": 4.0485,
-          "ps": 1.1678,
-          "ps_ttm": 1.1978,
-          "dv_ratio": 1.2863,
-          "dv_ttm": 1.2863,
-          "total_share": 911719.7565,
-          "float_share": 348661.35,
-          "free_share": 245652.5341,
-          "total_mv": 93888900.5244,
-          "circ_mv": 35905145.823
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260429",
-          "close": 105.4,
-          "turnover_rate": 3.0303,
-          "turnover_rate_f": 4.301,
-          "volume_ratio": 2.47,
-          "pe": 29.4599,
-          "pe_ttm": 34.8821,
-          "pb": 4.1436,
-          "ps": 1.1953,
-          "ps_ttm": 1.226,
-          "dv_ratio": 1.2568,
-          "dv_ttm": 1.2568,
-          "total_share": 911719.7565,
-          "float_share": 348661.35,
-          "free_share": 245652.5341,
-          "total_mv": 96095262.3351,
-          "circ_mv": 36748906.29
         }
       ],
-      "row_count": 61,
-      "_status": "ok"
+      "row_count": 64,
+      "_status": "ok",
+      "as_of": "20260805"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260805",
+          "adj_factor": 3.1617
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260804",
+          "adj_factor": 3.1617
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260803",
+          "adj_factor": 3.1617
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260731",
+          "adj_factor": 3.1617
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260730",
+          "adj_factor": 3.1499
+        },
+        {
+          "ts_code": "002594.SZ",
+          "trade_date": "20260729",
+          "adj_factor": 3.1499
+        },
         {
           "ts_code": "002594.SZ",
           "trade_date": "20260728",
@@ -2320,25 +2451,11 @@
           "ts_code": "002594.SZ",
           "trade_date": "20260507",
           "adj_factor": 3.1499
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260506",
-          "adj_factor": 3.1499
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260430",
-          "adj_factor": 3.1499
-        },
-        {
-          "ts_code": "002594.SZ",
-          "trade_date": "20260429",
-          "adj_factor": 3.1499
         }
       ],
-      "row_count": 61,
-      "_status": "ok"
+      "row_count": 64,
+      "_status": "ok",
+      "as_of": "20260805"
     },
     "income": {
       "rows": [
@@ -2491,8 +2608,8 @@
           "t_compr_income": 35553909000.0,
           "compr_inc_attr_p": 34430248000.0,
           "compr_inc_attr_m_s": 1123661000.0,
-          "ebit": 39732014000.0,
-          "ebitda": 120257798000.0,
+          "ebit": 36487584000.0,
+          "ebitda": 117013368000.0,
           "insurance_exp": null,
           "undist_profit": null,
           "distable_profit": null,
@@ -3127,7 +3244,8 @@
         }
       ],
       "row_count": 9,
-      "_status": "ok"
+      "_status": "ok",
+      "as_of": "20260429"
     },
     "balancesheet": {
       "rows": [
@@ -4827,7 +4945,8 @@
         }
       ],
       "row_count": 11,
-      "_status": "ok"
+      "_status": "ok",
+      "as_of": "20260429"
     },
     "cashflow": {
       "rows": [
@@ -5082,7 +5201,7 @@
           "proc_issue_bonds": 19997500000.0,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 226265882000.0,
-          "free_cashflow": -113636133228.34,
+          "free_cashflow": -116391504673.633,
           "c_prepay_amt_borr": 69220472000.0,
           "c_pay_dist_dpcp_int_exp": 14125279000.0,
           "incl_dvd_profit_paid_sc_ms": 438210000.0,
@@ -6120,29 +6239,21 @@
         }
       ],
       "row_count": 13,
-      "_status": "ok"
+      "_status": "ok",
+      "as_of": "20260429"
     },
     "dividend": {
       "rows": [],
       "row_count": 0,
-      "_status": "empty"
+      "_status": "empty",
+      "as_of": null
     },
     "fina_mainbz_region": {
       "rows": [
         {
           "ts_code": "002594.SZ",
           "end_date": "20251231",
-          "bz_item": "境内(含中国港澳台地区)",
-          "bz_code": "D",
-          "bz_sales": 493223970000.0,
-          "bz_profit": 82189754000.0,
-          "bz_cost": 411034216000.0,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "002594.SZ",
-          "end_date": "20251231",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 310740988000.0,
           "bz_profit": 60470043000.0,
@@ -6151,18 +6262,28 @@
         },
         {
           "ts_code": "002594.SZ",
-          "end_date": "20250630",
-          "bz_item": "境内(含中国港澳台地区)",
+          "end_date": "20251231",
+          "bz_item": "地区",
           "bz_code": "D",
-          "bz_sales": 235923281000.0,
-          "bz_profit": 40043233000.0,
-          "bz_cost": 195880048000.0,
+          "bz_sales": 803964958000.0,
+          "bz_profit": 142659797000.0,
+          "bz_cost": 661305161000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20251231",
+          "bz_item": "中国(包括港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 493223970000.0,
+          "bz_profit": 82189754000.0,
+          "bz_cost": 411034216000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
           "end_date": "20250630",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 135357667000.0,
           "bz_profit": 26822626000.0,
@@ -6171,18 +6292,28 @@
         },
         {
           "ts_code": "002594.SZ",
-          "end_date": "20241231",
-          "bz_item": "境内(含中国港澳台地区)",
+          "end_date": "20250630",
+          "bz_item": "地区",
           "bz_code": "D",
-          "bz_sales": 555217682000.0,
-          "bz_profit": 112040517000.0,
-          "bz_cost": 443177165000.0,
+          "bz_sales": 371280948000.0,
+          "bz_profit": 66865859000.0,
+          "bz_cost": 304415089000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20250630",
+          "bz_item": "中国(包括港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 235923281000.0,
+          "bz_profit": 40043233000.0,
+          "bz_cost": 195880048000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
           "end_date": "20241231",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 221884773000.0,
           "bz_profit": 39015322000.0,
@@ -6191,18 +6322,28 @@
         },
         {
           "ts_code": "002594.SZ",
-          "end_date": "20240630",
-          "bz_item": "境内(含港澳台地区)",
+          "end_date": "20241231",
+          "bz_item": "地区",
           "bz_code": "D",
-          "bz_sales": 211180522000.0,
-          "bz_profit": 44604718000.0,
-          "bz_cost": 166575804000.0,
+          "bz_sales": 777102455000.0,
+          "bz_profit": 151055839000.0,
+          "bz_cost": 626046616000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20241231",
+          "bz_item": "中国(包括港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 555217682000.0,
+          "bz_profit": 112040517000.0,
+          "bz_cost": 443177165000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
           "end_date": "20240630",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 89946191000.0,
           "bz_profit": 15662013000.0,
@@ -6211,28 +6352,28 @@
         },
         {
           "ts_code": "002594.SZ",
-          "end_date": "20231231",
-          "bz_item": "境内(含港澳台地区)",
+          "end_date": "20240630",
+          "bz_item": "地区",
           "bz_code": "D",
-          "bz_sales": 442093854000.0,
-          "bz_profit": 110367228000.0,
-          "bz_cost": 331726626000.0,
+          "bz_sales": 301126713000.0,
+          "bz_profit": 60266731000.0,
+          "bz_cost": 240859982000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20240630",
+          "bz_item": "中国(包括港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 211180522000.0,
+          "bz_profit": 44604718000.0,
+          "bz_cost": 166575804000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
           "end_date": "20231231",
-          "bz_item": "境内(含中国港澳台地区)",
-          "bz_code": "D",
-          "bz_sales": 442093854000.0,
-          "bz_profit": 110367228000.0,
-          "bz_cost": 331726626000.0,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "002594.SZ",
-          "end_date": "20231231",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 160221500000.0,
           "bz_profit": 11389776000.0,
@@ -6241,18 +6382,28 @@
         },
         {
           "ts_code": "002594.SZ",
-          "end_date": "20230630",
-          "bz_item": "境内(含港澳台地区)",
+          "end_date": "20231231",
+          "bz_item": "地区",
           "bz_code": "D",
-          "bz_sales": 195714569000.0,
-          "bz_profit": 42456782000.0,
-          "bz_cost": 153257787000.0,
+          "bz_sales": 602315354000.0,
+          "bz_profit": 121757004000.0,
+          "bz_cost": 480558350000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20231231",
+          "bz_item": "中国(包括港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 442093854000.0,
+          "bz_profit": 110367228000.0,
+          "bz_cost": 331726626000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
           "end_date": "20230630",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 64409574000.0,
           "bz_profit": 5215805000.0,
@@ -6261,18 +6412,28 @@
         },
         {
           "ts_code": "002594.SZ",
-          "end_date": "20221231",
-          "bz_item": "境内(含港澳台地区)",
+          "end_date": "20230630",
+          "bz_item": "地区",
           "bz_code": "D",
-          "bz_sales": 332607435000.0,
-          "bz_profit": 68571796000.0,
-          "bz_cost": 264035639000.0,
+          "bz_sales": 260124143000.0,
+          "bz_profit": 47672587000.0,
+          "bz_cost": 212451556000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20230630",
+          "bz_item": "中国（包括港澳台地区）",
+          "bz_code": "D",
+          "bz_sales": 195714569000.0,
+          "bz_profit": 42456782000.0,
+          "bz_cost": 153257787000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
           "end_date": "20221231",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 91453200000.0,
           "bz_profit": 3673159000.0,
@@ -6281,18 +6442,28 @@
         },
         {
           "ts_code": "002594.SZ",
-          "end_date": "20220630",
-          "bz_item": "境内(含港澳台地区)",
+          "end_date": "20221231",
+          "bz_item": "地区",
           "bz_code": "D",
-          "bz_sales": 117224189000.0,
-          "bz_profit": 19477155000.0,
-          "bz_cost": 97747034000.0,
+          "bz_sales": 424060635000.0,
+          "bz_profit": 72244955000.0,
+          "bz_cost": 351815680000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20221231",
+          "bz_item": "中国(包括港澳台地区)",
+          "bz_code": "D",
+          "bz_sales": 332607435000.0,
+          "bz_profit": 68571796000.0,
+          "bz_cost": 264035639000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
           "end_date": "20220630",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 33383063000.0,
           "bz_profit": 864619000.0,
@@ -6302,7 +6473,37 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20220630",
-          "bz_item": "中国(包括港澳台地区)",
+          "bz_item": "地区",
+          "bz_code": "D",
+          "bz_sales": 150607252000.0,
+          "bz_profit": 20341774000.0,
+          "bz_cost": 130265478000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "合计特别调整",
+          "bz_code": "D",
+          "bz_sales": null,
+          "bz_profit": null,
+          "bz_cost": -2931853000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "其他业务收入",
+          "bz_code": "D",
+          "bz_sales": null,
+          "bz_profit": null,
+          "bz_cost": 2931853000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "中国（包括港澳台地区）",
           "bz_code": "D",
           "bz_sales": 117224189000.0,
           "bz_profit": 19477155000.0,
@@ -6312,17 +6513,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20211231",
-          "bz_item": "境内(含港澳台地区)",
-          "bz_code": "D",
-          "bz_sales": 152235378000.0,
-          "bz_profit": 23688691000.0,
-          "bz_cost": 128546687000.0,
-          "curr_type": "CNY"
-        },
-        {
-          "ts_code": "002594.SZ",
-          "end_date": "20211231",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 63907017000.0,
           "bz_profit": 4456015000.0,
@@ -6332,7 +6523,17 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20211231",
-          "bz_item": "中国(包括港澳台地区)",
+          "bz_item": "地区",
+          "bz_code": "D",
+          "bz_sales": 216142395000.0,
+          "bz_profit": 28144706000.0,
+          "bz_cost": 187997689000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "中国（包括港澳台地区）",
           "bz_code": "D",
           "bz_sales": 152235378000.0,
           "bz_profit": 23688691000.0,
@@ -6340,15 +6541,16 @@
           "curr_type": "CNY"
         }
       ],
-      "row_count": 21,
-      "_status": "ok"
+      "row_count": 29,
+      "_status": "ok",
+      "as_of": "20251231"
     },
     "fina_mainbz_product": {
       "rows": [
         {
           "ts_code": "002594.SZ",
           "end_date": "20251231",
-          "bz_item": "汽车",
+          "bz_item": "汽车、汽车相关产品及其他产品",
           "bz_code": "P",
           "bz_sales": 648645636000.0,
           "bz_profit": 132882696000.0,
@@ -6358,7 +6560,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20251231",
-          "bz_item": "手机部件及组装等",
+          "bz_item": "手机部件、组装及其他产品",
           "bz_code": "P",
           "bz_sales": 155236528000.0,
           "bz_profit": 9762539000.0,
@@ -6368,7 +6570,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20251231",
-          "bz_item": "其他主营业务",
+          "bz_item": "其他",
           "bz_code": "P",
           "bz_sales": 82794000.0,
           "bz_profit": 14562000.0,
@@ -6377,8 +6579,18 @@
         },
         {
           "ts_code": "002594.SZ",
+          "end_date": "20251231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 803964958000.0,
+          "bz_profit": 142659797000.0,
+          "bz_cost": 661305161000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
           "end_date": "20250630",
-          "bz_item": "汽车",
+          "bz_item": "汽车、汽车相关产品及其他产品",
           "bz_code": "P",
           "bz_sales": 302506271000.0,
           "bz_profit": 61564841000.0,
@@ -6388,7 +6600,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20250630",
-          "bz_item": "手机部件及组装等",
+          "bz_item": "手机部件、组装及其他产品",
           "bz_code": "P",
           "bz_sales": 68743903000.0,
           "bz_profit": 5296189000.0,
@@ -6398,7 +6610,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20250630",
-          "bz_item": "其他主营业务",
+          "bz_item": "其他",
           "bz_code": "P",
           "bz_sales": 30774000.0,
           "bz_profit": 4829000.0,
@@ -6407,8 +6619,18 @@
         },
         {
           "ts_code": "002594.SZ",
+          "end_date": "20250630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 371280948000.0,
+          "bz_profit": 66865859000.0,
+          "bz_cost": 304415089000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
           "end_date": "20241231",
-          "bz_item": "汽车",
+          "bz_item": "汽车、汽车相关产品及其他产品",
           "bz_code": "P",
           "bz_sales": 617381935000.0,
           "bz_profit": 137721076000.0,
@@ -6418,7 +6640,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20241231",
-          "bz_item": "手机部件及组装等",
+          "bz_item": "手机部件、组装及其他产品",
           "bz_code": "P",
           "bz_sales": 159608576000.0,
           "bz_profit": 13319187000.0,
@@ -6428,7 +6650,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20241231",
-          "bz_item": "其他主营业务",
+          "bz_item": "其他",
           "bz_code": "P",
           "bz_sales": 111944000.0,
           "bz_profit": 15576000.0,
@@ -6437,8 +6659,18 @@
         },
         {
           "ts_code": "002594.SZ",
+          "end_date": "20241231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 777102455000.0,
+          "bz_profit": 151055839000.0,
+          "bz_cost": 626046616000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
           "end_date": "20240630",
-          "bz_item": "汽车",
+          "bz_item": "汽车、汽车相关产品及其他产品",
           "bz_code": "P",
           "bz_sales": 228316902000.0,
           "bz_profit": 54650168000.0,
@@ -6448,7 +6680,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20240630",
-          "bz_item": "手机部件及组装等",
+          "bz_item": "手机部件、组装及其他产品",
           "bz_code": "P",
           "bz_sales": 72778443000.0,
           "bz_profit": 5612535000.0,
@@ -6458,7 +6690,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20240630",
-          "bz_item": "其他主营业务",
+          "bz_item": "其他",
           "bz_code": "P",
           "bz_sales": 31368000.0,
           "bz_profit": 4028000.0,
@@ -6467,8 +6699,18 @@
         },
         {
           "ts_code": "002594.SZ",
+          "end_date": "20240630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 301126713000.0,
+          "bz_profit": 60266731000.0,
+          "bz_cost": 240859982000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
           "end_date": "20231231",
-          "bz_item": "汽车",
+          "bz_item": "汽车、汽车相关产品及其他产品",
           "bz_code": "P",
           "bz_sales": 483453318000.0,
           "bz_profit": 111296815000.0,
@@ -6478,7 +6720,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20231231",
-          "bz_item": "手机部件及组装等",
+          "bz_item": "手机部件、组装及其他产品",
           "bz_code": "P",
           "bz_sales": 118576910000.0,
           "bz_profit": 10411276000.0,
@@ -6488,7 +6730,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20231231",
-          "bz_item": "其他主营业务",
+          "bz_item": "其他",
           "bz_code": "P",
           "bz_sales": 285126000.0,
           "bz_profit": 48913000.0,
@@ -6497,8 +6739,18 @@
         },
         {
           "ts_code": "002594.SZ",
+          "end_date": "20231231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 602315354000.0,
+          "bz_profit": 121757004000.0,
+          "bz_cost": 480558350000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
           "end_date": "20230630",
-          "bz_item": "汽车",
+          "bz_item": "汽车、汽车相关产品及其他产品",
           "bz_code": "P",
           "bz_sales": 208823603000.0,
           "bz_profit": 43160709000.0,
@@ -6508,7 +6760,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20230630",
-          "bz_item": "手机部件及组装等",
+          "bz_item": "手机部件、组装及其他产品",
           "bz_code": "P",
           "bz_sales": 51090165000.0,
           "bz_profit": 4483020000.0,
@@ -6518,17 +6770,37 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20230630",
-          "bz_item": "其他主营业务",
+          "bz_item": "合计特别调整",
           "bz_code": "P",
-          "bz_sales": 210375000.0,
-          "bz_profit": 28858000.0,
+          "bz_sales": null,
+          "bz_profit": null,
           "bz_cost": 181517000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
+          "end_date": "20230630",
+          "bz_item": "其他",
+          "bz_code": "P",
+          "bz_sales": 210375000.0,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20230630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 260124143000.0,
+          "bz_profit": 47672587000.0,
+          "bz_cost": 212451556000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
           "end_date": "20221231",
-          "bz_item": "汽车",
+          "bz_item": "汽车、汽车相关产品及其他产品",
           "bz_code": "P",
           "bz_sales": 324691175000.0,
           "bz_profit": 66192238000.0,
@@ -6538,7 +6810,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20221231",
-          "bz_item": "手机部件及组装等",
+          "bz_item": "手机部件、组装及其他产品",
           "bz_code": "P",
           "bz_sales": 98815054000.0,
           "bz_profit": 5986423000.0,
@@ -6548,17 +6820,37 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20221231",
-          "bz_item": "其他主营业务",
+          "bz_item": "合计特别调整",
           "bz_code": "P",
-          "bz_sales": 554406000.0,
-          "bz_profit": 66294000.0,
+          "bz_sales": 0.0,
+          "bz_profit": null,
           "bz_cost": 488112000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
+          "end_date": "20221231",
+          "bz_item": "其他",
+          "bz_code": "P",
+          "bz_sales": 554406000.0,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20221231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 424060635000.0,
+          "bz_profit": 72244955000.0,
+          "bz_cost": 351815680000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
           "end_date": "20220630",
-          "bz_item": "汽车",
+          "bz_item": "汽车、相关产品及其他产品",
           "bz_code": "P",
           "bz_sales": 109267418000.0,
           "bz_profit": 17815861000.0,
@@ -6568,7 +6860,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20220630",
-          "bz_item": "手机部件及组装等",
+          "bz_item": "手机部件、组装及其他产品",
           "bz_code": "P",
           "bz_sales": 41069650000.0,
           "bz_profit": 2495797000.0,
@@ -6578,17 +6870,47 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20220630",
-          "bz_item": "其他主营业务",
+          "bz_item": "合计特别调整",
+          "bz_code": "P",
+          "bz_sales": null,
+          "bz_profit": null,
+          "bz_cost": -2691785000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "其他业务收入",
+          "bz_code": "P",
+          "bz_sales": null,
+          "bz_profit": null,
+          "bz_cost": 2931853000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "其他",
           "bz_code": "P",
           "bz_sales": 270184000.0,
-          "bz_profit": 30116000.0,
-          "bz_cost": 240068000.0,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20220630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 150607252000.0,
+          "bz_profit": 20341774000.0,
+          "bz_cost": 130265478000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
           "end_date": "20211231",
-          "bz_item": "汽车",
+          "bz_item": "汽车、汽车相关产品及其他产品",
           "bz_code": "P",
           "bz_sales": 112489244000.0,
           "bz_profit": 19562632000.0,
@@ -6598,7 +6920,7 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20211231",
-          "bz_item": "手机部件及组装等",
+          "bz_item": "手机部件、组装及其他产品",
           "bz_code": "P",
           "bz_sales": 86454452000.0,
           "bz_profit": 6547920000.0,
@@ -6608,34 +6930,70 @@
         {
           "ts_code": "002594.SZ",
           "end_date": "20211231",
-          "bz_item": "其他主营业务",
+          "bz_item": "合计特别调整",
           "bz_code": "P",
-          "bz_sales": 727493000.0,
-          "bz_profit": 67738000.0,
-          "bz_cost": 659755000.0,
+          "bz_sales": 0.0,
+          "bz_profit": null,
+          "bz_cost": 15164545000.0,
           "curr_type": "CNY"
         },
         {
           "ts_code": "002594.SZ",
           "end_date": "20211231",
-          "bz_item": "二次充电电池",
+          "bz_item": "其他",
+          "bz_code": "P",
+          "bz_sales": 727493000.0,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 216142395000.0,
+          "bz_profit": 28144706000.0,
+          "bz_cost": 187997689000.0,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "002594.SZ",
+          "end_date": "20211231",
+          "bz_item": "二次充电电池及光伏",
           "bz_code": "P",
           "bz_sales": 16471206000.0,
-          "bz_profit": 1966416000.0,
-          "bz_cost": 14504790000.0,
+          "bz_profit": null,
+          "bz_cost": null,
           "curr_type": "CNY"
         }
       ],
-      "row_count": 28,
-      "_status": "ok"
+      "row_count": 42,
+      "_status": "ok",
+      "as_of": "20251231"
     },
     "forecast": {
-      "rows": null,
-      "row_count": 0,
-      "_status": "tier_locked",
-      "_need_tier": 10000,
-      "_unlock_action": "Upgrade Tushare to 10000-tier (~¥3000-5000/yr) to unlock forecast"
+      "rows": [
+        {
+          "ts_code": "002594.SZ",
+          "ann_date": "20250408",
+          "end_date": "20250331",
+          "type": "预增",
+          "p_change_min": 86.04,
+          "p_change_max": 118.88,
+          "net_profit_min": 850000.0,
+          "net_profit_max": 1000000.0,
+          "last_parent_net": 456879.3,
+          "first_ann_date": "20250408",
+          "summary": "预计:净利润850000-1000000",
+          "change_reason": "二零二五年第一季度，新能源汽车行业依旧保持强劲的增长势能，公司作为行业领军企业，新能源汽车销量再创同期历史新高，且海外新能源汽车销量实现跨越式增长，进一步巩固了全球新能源汽车销量第一的领先地位。此外，公司依托持续扩大的规模效应和垂直整合的战略布局，助力集团业务盈利实现大幅增长。",
+          "update_flag": "0"
+        }
+      ],
+      "row_count": 1,
+      "_status": "ok",
+      "as_of": "20250408"
     }
   },
-  "completeness_pct": 80
+  "completeness_pct": 90
 }

@@ -1,10 +1,12 @@
 {
   "_status": "skipped_hk",
   "ticker": "175.HK",
-  "fetched_at": "2026-07-28T11:00:28Z",
+  "fetched_at": "2026-08-05T11:22:04Z",
   "api_used": null,
   "_attempted_endpoints": [],
   "window_days": 90,
+  "_evidence_tier": "E2",
+  "_valuation_note": "目标价不作为模型估值结论",
   "recommendations": [],
   "summary": {
     "total_90d": 0,

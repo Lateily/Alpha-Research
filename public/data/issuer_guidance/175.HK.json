@@ -6,7 +6,5 @@
   "_status": "skipped",
   "_reason": "not_a_share",
   "guidance": [],
-  "forecasts": [],
-  "deprecated": true,
-  "moved_to": "issuer_guidance/"
+  "forecasts": []
 }
