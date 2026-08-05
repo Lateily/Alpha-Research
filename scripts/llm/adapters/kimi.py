@@ -1,7 +1,8 @@
 """Kimi provider wrapper for the provider-neutral AIOS Agent Harness.
 
-Real calls are frozen by default. Tests inject a completion callable; a caller
-must set ``allow_real_call=True`` explicitly to use the legacy K0 adapter.
+Real calls are frozen by default. Offline tests must explicitly mark their
+injected callable with ``offline_stub=True``; dependency injection alone is not
+evidence that a callable cannot reach the network.
 """
 
 from __future__ import annotations
@@ -25,16 +26,21 @@ class KimiAdapter(AgentAdapter):
         completion: Completion | None = None,
         *,
         allow_real_call: bool = False,
+        offline_stub: bool = False,
     ) -> None:
         self._completion = completion or legacy_kimi.chat_completion
-        self._uses_injected_completion = completion is not None
         self._allow_real_call = allow_real_call
+        self._offline_stub = offline_stub
+        self._is_legacy_completion = self._completion is legacy_kimi.chat_completion
 
     def execute(self, request: AgentRequest) -> AdapterOutput:
         if request.network_policy != "provider_only":
             raise PermissionError("Kimi requires network_policy=provider_only")
-        if not self._uses_injected_completion and not self._allow_real_call:
-            raise PermissionError("real Kimi calls are frozen without explicit opt-in")
+        if not self._allow_real_call:
+            if not self._offline_stub:
+                raise PermissionError("Kimi calls are frozen without explicit opt-in")
+            if self._is_legacy_completion:
+                raise PermissionError("legacy Kimi completion cannot be an offline stub")
 
         messages = request.input_payload.get("messages")
         if not _valid_messages(messages):
@@ -58,11 +64,7 @@ class KimiAdapter(AgentAdapter):
             raise TypeError("Kimi completion text must be a string")
 
         usage = _usage_from_record(result.get("usage_record"))
-        if (
-            self._allow_real_call
-            and not self._uses_injected_completion
-            and usage.status is not UsageStatus.REPORTED
-        ):
+        if self._allow_real_call and usage.status is not UsageStatus.REPORTED:
             raise RuntimeError("real Kimi calls require REPORTED usage")
 
         return AdapterOutput(

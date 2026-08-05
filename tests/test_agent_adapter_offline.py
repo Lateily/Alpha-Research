@@ -227,7 +227,10 @@ def test_kimi_wrapper_maps_reported_usage_without_network() -> None:
             },
         }
 
-    result = run(KimiAdapter(fake_completion), kimi_request())
+    result = run(
+        KimiAdapter(fake_completion, offline_stub=True),
+        kimi_request(),
+    )
 
     assert result.status is AgentStatus.SUCCEEDED
     assert result.provider == "moonshot"
@@ -246,7 +249,10 @@ def test_kimi_wrapper_maps_reported_usage_without_network() -> None:
 
 def test_kimi_wrapper_missing_usage_is_cost_unknown() -> None:
     result = run(
-        KimiAdapter(lambda **_kwargs: {"text": "offline"}),
+        KimiAdapter(
+            lambda **_kwargs: {"text": "offline"},
+            offline_stub=True,
+        ),
         kimi_request(),
     )
     assert result.status is AgentStatus.SUCCEEDED
@@ -261,6 +267,21 @@ def test_kimi_real_mode_requires_reported_usage() -> None:
         result = run(KimiAdapter(allow_real_call=True), kimi_request())
     finally:
         kimi_module.legacy_kimi.chat_completion = original_completion
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+    assert result.usage.status is UsageStatus.COST_UNKNOWN
+
+
+def test_kimi_injected_callable_real_mode_requires_reported_usage() -> None:
+    result = run(
+        KimiAdapter(
+            lambda **_kwargs: {"text": "offline injected fixture"},
+            allow_real_call=True,
+        ),
+        kimi_request(),
+    )
 
     assert result.status is AgentStatus.FAILED
     assert result.error is not None
@@ -301,6 +322,21 @@ def test_kimi_wrapper_real_call_is_frozen_by_default() -> None:
     assert result.usage.status is UsageStatus.COST_UNKNOWN
 
 
+def test_kimi_legacy_callable_cannot_masquerade_as_offline_stub() -> None:
+    result = run(
+        KimiAdapter(
+            kimi_module.legacy_kimi.chat_completion,
+            offline_stub=True,
+        ),
+        kimi_request(),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+    assert result.error.message == "PermissionError during provider execution"
+
+
 def test_kimi_wrapper_denies_wrong_network_policy() -> None:
     called = False
 
@@ -310,7 +346,7 @@ def test_kimi_wrapper_denies_wrong_network_policy() -> None:
         return {"text": "must not run"}
 
     result = run(
-        KimiAdapter(fake_completion),
+        KimiAdapter(fake_completion, offline_stub=True),
         kimi_request(network_policy="deny"),
     )
     assert result.status is AgentStatus.FAILED
@@ -321,7 +357,7 @@ def test_kimi_wrapper_timeout_and_secret_error_are_structured() -> None:
     def timeout(**_kwargs):
         raise TimeoutError("sk-SECRET123 ghp_LEAK")
 
-    result = run(KimiAdapter(timeout), kimi_request())
+    result = run(KimiAdapter(timeout, offline_stub=True), kimi_request())
     serialized = json.dumps(result.to_dict())
 
     assert result.status is AgentStatus.TIMEOUT
@@ -338,7 +374,7 @@ def test_kimi_wrapper_rejects_bad_messages_without_calling_provider() -> None:
         return {"text": "must not run"}
 
     result = run(
-        KimiAdapter(fake_completion),
+        KimiAdapter(fake_completion, offline_stub=True),
         kimi_request(input_payload={"messages": []}),
     )
 
