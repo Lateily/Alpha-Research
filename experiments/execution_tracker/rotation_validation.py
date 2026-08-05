@@ -32,11 +32,29 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 HIST = os.path.join(HERE, "rotation_history.json")
 OUT = os.path.join(HERE, "rotation_validation.json")
 
-CHAIN_PAIRS = [                     # 预注册链对(来自两份 Sector OS)
-    ("半导体设备", "半导体材料"), ("光模块(CPO)", "印制电路板"),
-    ("油田服务", "油气开采Ⅱ"), ("化学制药", "医药流通"),
-    ("黄金", "铝"), ("煤炭开采", "电力"),
+# 预注册链对(来自两份 Sector OS)。每个节点写成**别名列表** ——
+# 数据源里同一条产业链有多个同义名,写死一个就会因该名不存在而整条 DATA_BLOCKED。
+# 「光模块(CPO)」这个字面名在 rotation_history 里根本不存在(真名是 光通信模块 /
+# CPO概念),于是 Q3 长期缺项,把整个前兆层和轮动检验一起拖住。
+# 别名顺序 = 优先级:取第一个在当日数据里存在的名字,并在结果里记下用了哪个。
+CHAIN_PAIRS = [
+    (["半导体设备"], ["半导体材料"]),
+    (["光通信模块", "CPO概念", "光模块(CPO)", "光模块"], ["印制电路板", "PCB"]),
+    (["油田服务"], ["油气开采Ⅱ", "油气开采"]),
+    (["化学制药"], ["医药流通"]),
+    (["黄金"], ["铝"]),
+    (["煤炭开采"], ["电力"]),
 ]
+
+
+def _resolve(names, sectors):
+    """按优先级取第一个真实存在的板块名;都不在则返回 None。"""
+    if isinstance(names, str):
+        names = [names]
+    for n in names:
+        if n in sectors:
+            return n
+    return None
 HOT_Q = 0.8                         # 双前1/5分位 [方法论预注册]
 
 
@@ -255,9 +273,14 @@ def run_q3(hist, sectors, exc, lag_shuffle=False, seed=11):
     days = hist["days"]
     rng = random.Random(seed)
     results, pvals = [], []
-    for a, b in CHAIN_PAIRS:
-        if a not in sectors or b not in sectors:
-            results.append({"pair": f"{a}->{b}", "status": "DATA_BLOCKED: 板块名缺失"})
+    for a_names, b_names in CHAIN_PAIRS:
+        a, b = _resolve(a_names, sectors), _resolve(b_names, sectors)
+        label = f"{(a_names if isinstance(a_names, str) else a_names[0])}->" \
+                f"{(b_names if isinstance(b_names, str) else b_names[0])}"
+        if a is None or b is None:
+            miss = [n for n, r in ((a_names, a), (b_names, b)) if r is None]
+            results.append({"pair": label,
+                            "status": f"DATA_BLOCKED: 板块名缺失,所有别名均不在数据源 {miss}"})
             pvals.append(1.0)
             continue
         xa = [exc[(d, a)] for d in days]
@@ -267,7 +290,7 @@ def run_q3(hist, sectors, exc, lag_shuffle=False, seed=11):
         best = max(((lag, pearson(xa[:-lag], xb[lag:])) for lag in (1, 2, 3)),
                    key=lambda t: abs(t[1]))
         p = corr_p(best[1], len(days) - best[0])
-        results.append({"pair": f"{a}->{b}", "best_lag": best[0],
+        results.append({"pair": label, "resolved": f"{a}->{b}", "best_lag": best[0],
                         "r": round(best[1], 3), "p": p})
         pvals.append(p)
     passed = bh_correct(pvals)

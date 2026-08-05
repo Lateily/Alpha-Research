@@ -419,6 +419,8 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--init", action="store_true", help="create the ¥1,000,000 virtual ledger")
     ap.add_argument("--status", action="store_true")
+    ap.add_argument("--daily", action="store_true",
+                    help="每日结算:推进成交/退出并按当轮 target 追加 NAV(append-only,一天一条)")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(0 if selftest() else 1)
@@ -431,6 +433,65 @@ def main():
         print(f"Model Paper Fund initialized: ¥{fund['initial_capital']:,.0f} (VIRTUAL) at {FUND_DIR}")
         print("不是买卖指令；研究信号，human executes。")
         return
+    if args.daily:
+        # NAV 每日更新此前**没有任何 CLI 入口**,update_nav 定义了却从不被调用 ——
+        # 这就是 nav_history 停在 0731、把 model_portfolio_state 拖成 STALE_INPUT 的根因。
+        from nightly_context import run_id, target_trade_date
+        date = target_trade_date()
+        if not date:
+            print("DATA_BLOCKED: 无 target_trade_date"); return 1
+        fund = load("fund.json", None)
+        if not fund:
+            print("DATA_BLOCKED: fund.json 未初始化 — 先跑 --init"); return 1
+        orders = load("orders.json", [])
+        decision_log = load("decision_log.json", [])
+        navh = load("nav_history.json", [])
+        token = os.environ.get("TUSHARE_TOKEN", "").strip()
+        events = []
+        if token and not os.environ.get("AR_OFFLINE"):
+            try:
+                events = process_day(fund, orders, decision_log, token)
+            except Exception as e:                      # 行情失败不伪造:只是不推进
+                print(f"WARN 推进成交失败(不影响 NAV 标记): {e}")
+        marks = None
+        if token and not os.environ.get("AR_OFFLINE"):
+            marks = {}
+            for o in orders:
+                if o["status"] != "filled":
+                    continue
+                try:
+                    s = pp.qfq_ohlc_series(o["ticker"], token, o["registered_at"])
+                    if not s:
+                        continue
+                    bar = s[-1]
+                    # qfq_ohlc_series 返回的是 **dict** 列表({date,open,high,low,close}),
+                    # 不是元组。初版按 s[-1][4] 取值必然拿不到,marks 全空 ⇒ NAV 悄悄
+                    # 回退成成本价,产出一个看起来正常的假 NAV。按 dict 取,并要求
+                    # 该 bar 的日期就是本轮 target,否则宁可不标也不用旧价。
+                    close = bar.get("close") if isinstance(bar, dict) else (
+                        bar[4] if isinstance(bar, (list, tuple)) and len(bar) > 4 else None)
+                    bar_date = str(bar.get("date") if isinstance(bar, dict) else "")[:8]
+                    if close and bar_date == date:
+                        marks[o["ticker"]] = float(close)
+                    elif close:
+                        print(f"  WARN {o['ticker']} 最新 bar {bar_date} ≠ target {date},不用于标记")
+                except Exception as e:
+                    print(f"  WARN {o['ticker']} 取价失败: {str(e)[:50]}")
+            marks = {k: v for k, v in marks.items() if v} or None
+            if marks:
+                print(f"  marks: {marks}")
+            else:
+                print("  WARN 无可用收盘价 ⇒ NAV 按成本标记(不是市值)")
+        rec = update_nav(fund, orders, navh, date, marks=marks)
+        save("fund.json", fund); save("orders.json", orders)
+        save("decision_log.json", decision_log); save("nav_history.json", navh)
+        print(f"[daily] {date} nav={rec['nav']:,.0f} cash={rec['cash']:,.0f} "
+              f"n_pos={rec['n_positions']} events={len(events)} run_id={run_id()}")
+        for e in events:
+            print("  ", e)
+        print("不是买卖指令；研究信号，human executes。")
+        return 0
+
     if args.status:
         fund = load("fund.json", None)
         if not fund:

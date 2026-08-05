@@ -22,6 +22,14 @@ DISCLAIMER = "不是买卖指令;研究信号,human executes."
 
 STALE_HOURS = 20  # 审查F5:超过一个交易日的引擎产出不许当新鲜货导出
 
+# 事件驱动账本:无交易时**不变才是正确的**,拿 mtime 判陈旧是误判。
+# 它们的新鲜度由内容判(nav_history 末条日期必须==target),不由文件时间判。
+# fund.json 是静态配置(初始资金/政策),根本没有日期维度。
+EVENT_DRIVEN = {"model_fund/fund.json", "model_fund/orders.json",
+                "model_fund/decision_log.json", "model_fund/human_shadow.json"}
+# 必须每日更新的账本:末条日期不等于本轮 target 即陈旧
+DAILY_SERIES = {"model_fund/nav_history.json": "date"}
+
 
 def _internal_meta(obj):
     """读产物内部的时间戳与自报状态(如 overnight_anchor 的 bias=DATA_BLOCKED)。"""
@@ -32,9 +40,21 @@ def _internal_meta(obj):
             if isinstance(v, str) and v[:8].isdigit():
                 meta["as_of"] = v[:8]
                 break
-        for k in ("status", "bias", "verdict"):
-            if str(obj.get(k, "")).startswith("DATA_BLOCKED"):
-                meta["internal_status"] = "DATA_BLOCKED"
+        # 产物**显式自报**的 internal_status 优先(overnight_anchor 用它区分
+        # "抓不全 PARTIAL_OK" 与 "完全没抓到 DATA_BLOCKED")。
+        self_reported = str(obj.get("internal_status") or "")
+        if self_reported in ("DATA_BLOCKED", "PARTIAL_OK", "OK"):
+            meta["internal_status"] = self_reported
+        else:
+            for k in ("status", "bias", "verdict"):
+                if str(obj.get(k, "")).startswith("DATA_BLOCKED"):
+                    meta["internal_status"] = "DATA_BLOCKED"
+        # 产物自报的 target_trade_date 与本轮不符 ⇒ 陈旧,不看 mtime 也能判
+        tgt = target_trade_date()
+        got = str(obj.get("target_trade_date") or meta.get("as_of") or "")[:8]
+        if tgt and got and got != tgt:
+            meta["stale"] = True
+            meta["stale_why"] = f"target_trade_date {got} ≠ 本轮 {tgt}"
     return meta
 
 
@@ -50,16 +70,31 @@ def _load(relpath):
         return None, f"unreadable:{relpath}:{e}", {}
     meta = _internal_meta(obj)
     meta["age_hours"] = round((time.time() - os.path.getmtime(p)) / 3600.0, 1)
-    if meta["age_hours"] > STALE_HOURS:
+    if relpath in EVENT_DRIVEN:
+        meta["cadence"] = "event_driven"          # 无变动即正确,不按 mtime 判陈旧
+    elif relpath in DAILY_SERIES:
+        meta["cadence"] = "daily_series"
+        key = DAILY_SERIES[relpath]
+        tgt = target_trade_date()
+        last = str((obj[-1] or {}).get(key) or "")[:8] if isinstance(obj, list) and obj else ""
+        meta["last_entry"] = last
+        if tgt and last != tgt:
+            meta["stale"] = True
+            meta["stale_why"] = f"末条 {last or '无'} ≠ 本轮 {tgt}"
+    elif meta["age_hours"] > STALE_HOURS:
         meta["stale"] = True
     return obj, None, meta
 
 
 def _resolve_status(blocked, sources_meta):
+    """契约状态。PARTIAL_OK 是**可用**状态,不拖累整份契约 ——
+    否则单条 NVDA 抓不到就会让盘前帧永远 STALE_INPUT,发布门永远解不开。"""
     if blocked:
         return "DATA_BLOCKED"
     for m in (sources_meta or {}).values():
-        if m.get("stale") or m.get("internal_status") == "DATA_BLOCKED":
+        if m.get("internal_status") == "DATA_BLOCKED":
+            return "STALE_INPUT"
+        if m.get("stale"):
             return "STALE_INPUT"
     return "OK"
 

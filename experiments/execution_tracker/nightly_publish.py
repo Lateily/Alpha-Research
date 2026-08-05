@@ -40,6 +40,40 @@ ET_FILES = {
 ET_DIRS = ("samples", "reports")
 PROTECTED_DIRS = ("model_fund",)
 
+# model_fund 是**资金账本**,夜链默认不得改写它 —— 这条守卫要留。
+# 但 NAV 每日结算是一次正当追加,所以把守卫从"逐字节不变"升级为 append-only 语义:
+#   · 下列文件允许**只追加**:既有元素必须逐字节不变,新增元素受各自规则约束
+#   · 其余受保护文件仍要求逐字节不变
+#   · fund.json 只允许 cash 变,且必须有对应的成交/退出事件解释它
+APPEND_ONLY_PROTECTED = {
+    "nav_history.json": {"date_key": "date", "one_per_target": True},
+    "decision_log.json": {},
+    # 人工影子盘记录:只许追加。此前没有处置规则,会落到"逐字节不变"分支 ——
+    # 将来任何一次合法写入都会把发布卡死,而卡死原因不会出现在任何清单里。
+    "human_shadow.json": {},
+}
+# 订单不是纯 append-only:pending→filled→closed 是**原地状态迁移**,不是追加。
+# 但迁移必须单向、且已成交的价格/数量不得改写 —— 否则改一个 fill_price 就能
+# 重写历史成本。允许的迁移与不可变字段在此写死。
+# 状态清单必须**穷举真实账本里出现过的全部状态**,否则连"没变化"都会被判非法 ——
+# 初版漏了 cancelled(未成交撤单,真实存在 2 笔),于是 cancelled→cancelled 被拒。
+# 漏一个状态,守卫就从"防篡改"变成"拦正常运行"。
+ORDER_TRANSITIONS = {
+    None:        {"pending", "filled", "closed", "cancelled"},
+    "pending":   {"pending", "filled", "closed", "cancelled"},
+    "filled":    {"filled", "closed"},
+    "closed":    {"closed"},                   # 已了结不可复活
+    "cancelled": {"cancelled"},                # 已撤单不可复活
+}
+ORDER_IMMUTABLE_ONCE_SET = ("ticker", "shares", "fill_price", "fill_date",
+                            "exit_price", "exit_date", "registered_at")
+FUND_MUTABLE_FIELDS = {"cash"}
+# 资金账本**受保护但可发布**:先过 append-only + 现金对账,通过了才随本轮原子发布。
+# 初版只把它列进 PROTECTED_DIRS(只校验、不发布)—— 于是 fund_daily_mark 在 staging
+# 里算出的正确 NAV(1,009,466 定盘价)永远回不到 live,账本停在 0731,
+# 而夜链却报 COMPLETE+published=true。"校验过了"不等于"发布了"。
+PUBLISHABLE_PROTECTED = ("model_fund",)
+
 
 def sha256_file(path):
     h = hashlib.sha256()
@@ -116,21 +150,198 @@ def prepare_stage(live_et, live_repo, run_dir):
     snapshot = {
         "protected": {
             rel: _tree_hashes(os.path.join(stage_et, rel)) for rel in PROTECTED_DIRS
-        }
+        },
+        # append-only 校验需要**内容**快照,不能只留哈希 —— 哈希只能答"变没变",
+        # 答不了"变的是不是一次合法追加"。
+        "protected_content": {
+            rel: _protected_content(os.path.join(stage_et, rel)) for rel in PROTECTED_DIRS
+        },
     }
     atomic_json(os.path.join(run_dir, "staging_input.json"), snapshot)
     return {"repo": stage_repo, "et": stage_et, "public": stage_public}
 
 
-def verify_protected_inputs(stage_et, run_dir):
+def _protected_content(root):
+    """受保护目录的内容快照(仅 .json)。append-only 判定要看内容,哈希不够。"""
+    out = {}
+    if not os.path.isdir(root):
+        return out
+    for name in sorted(os.listdir(root)):
+        if not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(root, name), encoding="utf-8") as fh:
+                out[name] = json.load(fh)
+        except Exception:
+            out[name] = None          # 读不了就记 None,校验时按"必须逐字节不变"处理
+    return out
+
+
+def _order_key(o):
+    return str(o.get("order_id") or o.get("id") or (o.get("ticker"), o.get("registered_at")))
+
+
+def _scan_unknown_order_status(root):
+    """无条件扫描订单状态是否都已登记 —— 不依赖"本轮有没有变"。"""
+    path = os.path.join(root, "orders.json")
+    if not os.path.isfile(path):
+        return []
+    try:
+        with open(path, encoding="utf-8") as fh:
+            orders = json.load(fh)
+    except Exception as e:
+        return [f"model_fund/orders.json 不可解析: {e}"]
+    if not isinstance(orders, list):
+        return ["model_fund/orders.json: 期望 JSON 数组"]
+    bad = sorted({str(o.get("status")) for o in orders
+                  if isinstance(o, dict) and o.get("status") not in ORDER_TRANSITIONS})
+    return [f"model_fund/orders.json: 出现未登记状态 {bad} —— "
+            f"状态机需显式补齐,不得默默放行"] if bad else []
+
+
+def _check_orders(before, after):
+    """订单:允许单向状态推进 + 追加新单;禁止倒退、删除、改写已定值字段。"""
+    if not isinstance(before, list) or not isinstance(after, list):
+        return ["model_fund/orders.json: 期望 JSON 数组"]
+    bmap = {_order_key(o): o for o in before}
+    amap = {_order_key(o): o for o in after}
+    errs = []
+    for k in bmap:
+        if k not in amap:
+            errs.append(f"model_fund/orders.json: 订单 {k} 消失,不许删除")
+    for k, a in amap.items():
+        b = bmap.get(k)
+        if b is None:
+            continue                                   # 新单:允许追加
+        was, now = b.get("status"), a.get("status")
+        if was not in ORDER_TRANSITIONS:
+            errs.append(f"model_fund/orders.json: 订单 {k} 出现未登记状态 {was!r} —— "
+                        f"状态机需显式补齐,不得默默放行")
+        elif now not in ORDER_TRANSITIONS[was]:
+            errs.append(f"model_fund/orders.json: 订单 {k} 状态 {was}→{now} 非法迁移")
+        for f in ORDER_IMMUTABLE_ONCE_SET:
+            if b.get(f) not in (None, "") and b.get(f) != a.get(f):
+                errs.append(f"model_fund/orders.json: 订单 {k} 的 {f} 已定值却被改写"
+                            f"({b.get(f)!r}→{a.get(f)!r})")
+    return errs
+
+
+def _check_append_only(name, before, after, target):
+    """既有元素逐字节不变 + 新增元素合法。返回错误列表。"""
+    rule = APPEND_ONLY_PROTECTED[name]
+    if not isinstance(before, list) or not isinstance(after, list):
+        return [f"model_fund/{name}: 期望 JSON 数组,拿到 {type(before).__name__}/{type(after).__name__}"]
+    if len(after) < len(before):
+        return [f"model_fund/{name}: 元素减少 {len(before)}→{len(after)},append-only 不允许删除"]
+    for i, old in enumerate(before):
+        if json.dumps(old, sort_keys=True, ensure_ascii=False) != \
+           json.dumps(after[i], sort_keys=True, ensure_ascii=False):
+            return [f"model_fund/{name}: 第 {i} 条既有记录被改写,append-only 只许追加"]
+    errs = []
+    added = after[len(before):]
+    dk = rule.get("date_key")
+    if dk:
+        for row in added:
+            got = str((row or {}).get(dk) or "")[:8]
+            if target and got != target:
+                errs.append(f"model_fund/{name}: 新增行 {dk}={got or '缺失'} ≠ 本轮 {target}")
+        if rule.get("one_per_target") and len(added) > 1:
+            errs.append(f"model_fund/{name}: 本轮新增 {len(added)} 行,该文件每个交易日只许一行")
+    return errs
+
+
+def _cash_delta_from_orders(before_orders, after_orders):
+    """按真实记账规则算出本轮应有的现金变动:
+       pending→filled  : -shares*fill_price
+       filled →closed  : +shares*exit_price
+    返回 (期望变动, 无法解释的原因列表)。"""
+    if not isinstance(before_orders, list) or not isinstance(after_orders, list):
+        return 0.0, ["model_fund/orders.json 结构非预期或缺失,现金无法对账"]
+    prev = {}
+    for o in before_orders:
+        key = o.get("order_id") or o.get("id") or (o.get("ticker"), o.get("registered_at"))
+        prev[str(key)] = o
+    delta, why = 0.0, []
+    for o in after_orders:
+        key = str(o.get("order_id") or o.get("id") or (o.get("ticker"), o.get("registered_at")))
+        was = (prev.get(key) or {}).get("status")
+        now = o.get("status")
+        if was == now:
+            continue
+        try:
+            if was in (None, "pending") and now in ("filled", "closed"):
+                delta -= float(o["shares"]) * float(o["fill_price"])
+            if now == "closed" and was in ("filled",):
+                delta += float(o["shares"]) * float(o["exit_price"])
+            if was in (None, "pending") and now == "closed":
+                delta += float(o["shares"]) * float(o["exit_price"])
+        except (KeyError, TypeError, ValueError) as e:
+            why.append(f"model_fund/orders.json 订单 {key} 状态 {was}→{now} 缺少成交字段({e}),现金无法对账")
+    return round(delta, 2), why
+
+
+def _check_fund(before, after, before_orders, after_orders):
+    """资金账本:只有 cash 可变,且变动必须能被订单状态迁移解释。
+
+    只判"字段名是否在白名单"不够 —— 那样任意改现金都会放行,
+    而无事件解释的现金变动正是这道守卫要拦的静默改写。"""
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return ["model_fund/fund.json: 结构非预期"]
+    diff = {k for k in set(before) | set(after) if before.get(k) != after.get(k)}
+    illegal = diff - FUND_MUTABLE_FIELDS
+    errs = []
+    if illegal:
+        errs.append(f"model_fund/fund.json: 只允许 {sorted(FUND_MUTABLE_FIELDS)} 变动,"
+                    f"实际变了 {sorted(illegal)}")
+    if "cash" in diff:
+        try:
+            actual = round(float(after.get("cash")) - float(before.get("cash")), 2)
+        except (TypeError, ValueError):
+            return errs + ["model_fund/fund.json: cash 非数值"]
+        expected, why = _cash_delta_from_orders(before_orders, after_orders)
+        errs.extend(why)
+        if abs(actual - expected) > 1.0:            # ±1 元容差(四舍五入)
+            errs.append(f"model_fund/fund.json: 现金变动 {actual:+.2f} 无成交事件解释"
+                        f"(按订单状态迁移应为 {expected:+.2f})")
+    return errs
+
+
+def verify_protected_inputs(stage_et, run_dir, target=None):
+    """资金账本守卫。默认逐字节不变;APPEND_ONLY_PROTECTED 内的文件按 append-only 判。
+
+    升级理由:NAV 每日结算是**正当追加**,而原守卫拿整目录哈希比对,
+    把这次合法写入判成了篡改(17/17 步全 OK 却发布失败)。
+    拆守卫是错的答案 —— 它护的是资金账本;正确答案是让它看懂"什么算合法追加"。
+    """
     path = os.path.join(run_dir, "staging_input.json")
     with open(path, encoding="utf-8") as fh:
-        before = json.load(fh).get("protected") or {}
+        snap = json.load(fh)
+    before_h = snap.get("protected") or {}
+    before_c = snap.get("protected_content") or {}
     errors = []
     for rel in PROTECTED_DIRS:
-        after = _tree_hashes(os.path.join(stage_et, rel))
-        if after != before.get(rel, {}):
-            errors.append(f"受保护输入在 staging 被修改: {rel}")
+        root = os.path.join(stage_et, rel)
+        after_h = _tree_hashes(root)
+        # 未登记状态是**结构性**问题,与本轮是否改动无关:文件没变也要扫,
+        # 否则一个从未被处理过的状态能永远藏在账本里(哈希相同 ⇒ 整份跳过)。
+        errors.extend(_scan_unknown_order_status(root))
+        if after_h == before_h.get(rel, {}):
+            continue                                   # 完全未动,其余校验跳过
+        after_c = _protected_content(root)
+        bmap, amap = before_c.get(rel) or {}, after_c
+        changed = sorted(set(after_h) | set(before_h.get(rel, {})))
+        for fname in changed:
+            if before_h.get(rel, {}).get(fname) == after_h.get(fname):
+                continue
+            if fname == "orders.json":
+                errors.extend(_check_orders(bmap.get(fname), amap.get(fname)))
+            elif fname in APPEND_ONLY_PROTECTED:
+                errors.extend(_check_append_only(fname, bmap.get(fname), amap.get(fname), target))
+            elif fname == "fund.json":
+                errors.extend(_check_fund(bmap.get(fname), amap.get(fname),
+                                          bmap.get("orders.json"), amap.get("orders.json")))
+            else:
+                errors.append(f"受保护输入在 staging 被修改: {rel}/{fname}")
     return errors
 
 
@@ -140,6 +351,15 @@ def _allowed_stage_files(stage_et, stage_public):
         path = os.path.join(stage_et, rel)
         if os.path.isfile(path):
             files.append(("et", rel, path))
+    for dirname in PUBLISHABLE_PROTECTED:
+        root = os.path.join(stage_et, dirname)
+        if not os.path.isdir(root):
+            continue
+        for base, _, names in os.walk(root):
+            for name in sorted(names):
+                if name.endswith(".json"):
+                    path = os.path.join(base, name)
+                    files.append(("et", os.path.relpath(path, stage_et), path))
     for dirname in ET_DIRS:
         root = os.path.join(stage_et, dirname)
         if not os.path.isdir(root):
@@ -165,7 +385,7 @@ def _destination(scope, rel, live_et, live_repo):
 
 
 def build_publish_plan(run_id, target, stage, live_et, live_repo, run_dir):
-    protected = verify_protected_inputs(stage["et"], run_dir)
+    protected = verify_protected_inputs(stage["et"], run_dir, target=target)
     if protected:
         raise RuntimeError("; ".join(protected))
     backup_dir = os.path.join(run_dir, "publish_before")

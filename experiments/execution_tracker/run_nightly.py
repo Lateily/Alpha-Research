@@ -36,6 +36,10 @@ STEPS = [
     # ── 结算主干(闭环根修复:定盘并入夜链,消灭手工补账)──
     ("official_sample", ["python3", "run_official_sample.py"], True, []),
     ("fwd_backfill", ["python3", "run_post_close_report.py", "--backfill-only"], True,
+     ["official_sample"]),
+    # NAV 每日结算:update_nav 此前定义了却无 CLI 入口,从不被调用 ——
+    # nav_history 停在 0731 正是因此,并把 model_portfolio_state 拖成 STALE_INPUT。
+    ("fund_daily_mark", ["python3", "model_paper_fund.py", "--daily"], True,
      ["official_sample"]),  # F8:正式样本每天只生成一次(official_sample 步),此处仅回填
     # ── 轮动/发现链 ──
     ("rotation_panel", ["python3", "rotation_panel.py"], True, []),
@@ -81,6 +85,10 @@ ARTIFACTS = {
                                 "target_trade_date", False)],
     "fwd_backfill":          [(os.path.join("reports", "{target}.json"),
                                 "target_trade_date", True)],
+    # NAV 每日结算的产物契约。加步骤时漏了这条 —— 没有产物契约的步骤等于没被验过,
+    # 它可以静默失败而整轮照报 COMPLETE(由 RuleCompletenessTest 抓出)。
+    "fund_daily_mark":       [(os.path.join("model_fund", "nav_history.json"),
+                                None, True)],
     "rotation_panel":        [("rotation_panel.json", "as_of", True)],
     "momentum_prefilter":    [("momentum_prefilter.json", "as_of", True)],
     "rotation_stats":        [("rotation_stats.json", "as_of", True)],

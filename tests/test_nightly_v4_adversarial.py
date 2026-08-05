@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import shutil
 import tempfile
 import threading
 import time
@@ -875,5 +876,364 @@ class UnifiedRunContextTest(unittest.TestCase):
                 nightly.STEPS, nightly.ARTIFACTS = old_steps, old_artifacts
 
 
+class ProtectedLedgerAppendOnlyTest(unittest.TestCase):
+    """资金账本守卫升级为 append-only 语义后,必须仍拦得住篡改。
+
+    背景:NAV 每日结算是正当追加,而原守卫拿整目录哈希比对,把合法写入判成篡改
+    (17/17 步全 OK 却发布失败)。拆守卫是错的答案 —— 它护的是资金账本。
+    """
+
+    def _stage(self, before_nav, after_nav, *, before_fund=None, after_fund=None,
+               before_orders=None, after_orders=None):
+        import nightly_publish as npub
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        stage_et = os.path.join(tmp, "et")
+        run_dir = os.path.join(tmp, "run")
+        mf = os.path.join(stage_et, "model_fund")
+        os.makedirs(mf); os.makedirs(run_dir)
+        bf = before_fund if before_fund is not None else {"cash": 100.0, "policy": "p"}
+        bo = before_orders if before_orders is not None else []
+        json.dump(before_nav, open(os.path.join(mf, "nav_history.json"), "w"))
+        json.dump(bf, open(os.path.join(mf, "fund.json"), "w"))
+        json.dump(bo, open(os.path.join(mf, "orders.json"), "w"))
+        snap = {"protected": {"model_fund": npub._tree_hashes(mf)},
+                "protected_content": {"model_fund": npub._protected_content(mf)}}
+        json.dump(snap, open(os.path.join(run_dir, "staging_input.json"), "w"))
+        json.dump(after_nav, open(os.path.join(mf, "nav_history.json"), "w"))
+        if after_fund is not None:
+            json.dump(after_fund, open(os.path.join(mf, "fund.json"), "w"))
+        if after_orders is not None:
+            json.dump(after_orders, open(os.path.join(mf, "orders.json"), "w"))
+        return npub, stage_et, run_dir
+
+    def test_legitimate_nav_append_passes(self):
+        npub, et, rd = self._stage([{"date": "20260804", "nav": 1.0}],
+                                   [{"date": "20260804", "nav": 1.0},
+                                    {"date": "20260805", "nav": 2.0}])
+        self.assertEqual([], npub.verify_protected_inputs(et, rd, target="20260805"))
+
+    def test_untouched_ledger_passes(self):
+        rows = [{"date": "20260804", "nav": 1.0}]
+        npub, et, rd = self._stage(rows, rows)
+        self.assertEqual([], npub.verify_protected_inputs(et, rd, target="20260805"))
+
+    def test_rewriting_an_existing_nav_row_is_rejected(self):
+        npub, et, rd = self._stage([{"date": "20260804", "nav": 1.0}],
+                                   [{"date": "20260804", "nav": 999.0},
+                                    {"date": "20260805", "nav": 2.0}])
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(errs and "既有记录被改写" in errs[0], errs)
+
+    def test_deleting_nav_rows_is_rejected(self):
+        npub, et, rd = self._stage([{"date": "20260803", "nav": 1.0},
+                                    {"date": "20260804", "nav": 1.5}],
+                                   [{"date": "20260803", "nav": 1.0}])
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(errs and "元素减少" in errs[0], errs)
+
+    def test_appending_wrong_trade_date_is_rejected(self):
+        npub, et, rd = self._stage([{"date": "20260804", "nav": 1.0}],
+                                   [{"date": "20260804", "nav": 1.0},
+                                    {"date": "20260731", "nav": 2.0}])
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(errs and "≠ 本轮" in errs[0], errs)
+
+    def test_multiple_rows_for_one_target_is_rejected(self):
+        npub, et, rd = self._stage([], [{"date": "20260805", "nav": 1.0},
+                                        {"date": "20260805", "nav": 2.0}])
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(any("只许一行" in e for e in errs), errs)
+
+    def test_unexplained_cash_change_is_rejected(self):
+        """现金变了但订单没动 ⇒ 无成交事件解释 ⇒ 拒绝。
+        只判"字段名在白名单"是不够的:那样任意改现金都会放行。"""
+        rows = [{"date": "20260804", "nav": 1.0}]
+        npub, et, rd = self._stage(rows, rows, after_fund={"cash": 200.0, "policy": "p"})
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(any("无成交事件解释" in e for e in errs), errs)
+
+    def test_cash_change_explained_by_a_fill_passes(self):
+        """pending→filled 扣 shares×fill_price,现金变动对得上 ⇒ 放行。"""
+        rows = [{"date": "20260804", "nav": 1.0}]
+        npub, et, rd = self._stage(
+            rows, rows,
+            before_fund={"cash": 1000.0, "policy": "p"},
+            after_fund={"cash": 700.0, "policy": "p"},
+            before_orders=[{"id": 1, "status": "pending", "shares": 100,
+                            "fill_price": 3.0, "ticker": "600000.SH"}],
+            after_orders=[{"id": 1, "status": "filled", "shares": 100,
+                           "fill_price": 3.0, "ticker": "600000.SH"}])
+        self.assertEqual([], npub.verify_protected_inputs(et, rd, target="20260805"))
+
+    def test_cash_change_not_matching_the_fill_is_rejected(self):
+        """有成交但金额对不上(多扣 ¥50)⇒ 仍拒。"""
+        rows = [{"date": "20260804", "nav": 1.0}]
+        npub, et, rd = self._stage(
+            rows, rows,
+            before_fund={"cash": 1000.0, "policy": "p"},
+            after_fund={"cash": 650.0, "policy": "p"},
+            before_orders=[{"id": 1, "status": "pending", "shares": 100,
+                            "fill_price": 3.0, "ticker": "600000.SH"}],
+            after_orders=[{"id": 1, "status": "filled", "shares": 100,
+                           "fill_price": 3.0, "ticker": "600000.SH"}])
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(any("无成交事件解释" in e for e in errs), errs)
+
+    def test_non_cash_field_change_is_rejected(self):
+        rows = [{"date": "20260804", "nav": 1.0}]
+        npub, et, rd = self._stage(rows, rows, after_fund={"cash": 100.0, "policy": "TAMPERED"})
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(any("只允许" in e for e in errs), errs)
+
+    def test_orders_append_and_forward_transition_allowed(self):
+        rows = [{"date": "20260804", "nav": 1.0}]
+        npub, et, rd = self._stage(rows, rows,
+                                   before_orders=[{"id": 1, "status": "filled"}],
+                                   after_orders=[{"id": 1, "status": "filled"}, {"id": 2}])
+        self.assertEqual([], npub.verify_protected_inputs(et, rd, target="20260805"))
+
+    def test_orders_illegal_transition_rejected(self):
+        """closed 不许复活,filled 不许退回 pending。"""
+        rows = [{"date": "20260804", "nav": 1.0}]
+        for was, now in (("closed", "filled"), ("filled", "pending")):
+            npub, et, rd = self._stage(rows, rows,
+                                       before_orders=[{"id": 1, "status": was}],
+                                       after_orders=[{"id": 1, "status": now}])
+            errs = npub.verify_protected_inputs(et, rd, target="20260805")
+            self.assertTrue(any("非法迁移" in e for e in errs), f"{was}->{now}: {errs}")
+
+    def test_all_real_statuses_are_registered(self):
+        """状态清单必须覆盖真实账本出现过的全部状态 —— 漏一个,守卫就从
+        防篡改变成拦正常运行(0805 第三轮实际被 cancelled→cancelled 拦住)。"""
+        import nightly_publish as npub
+        for st in ("pending", "filled", "closed", "cancelled"):
+            self.assertIn(st, npub.ORDER_TRANSITIONS, f"{st} 未登记")
+            self.assertIn(st, npub.ORDER_TRANSITIONS[st], f"{st}→{st} 自转必须合法")
+
+    def test_terminal_statuses_cannot_revive(self):
+        rows = [{"date": "20260804", "nav": 1.0}]
+        for was, now in (("closed", "filled"), ("cancelled", "pending"),
+                         ("cancelled", "filled")):
+            npub, et, rd = self._stage(rows, rows,
+                                       before_orders=[{"id": 1, "status": was}],
+                                       after_orders=[{"id": 1, "status": now}])
+            errs = npub.verify_protected_inputs(et, rd, target="20260805")
+            self.assertTrue(any("非法迁移" in e for e in errs), f"{was}->{now}: {errs}")
+
+    def test_unknown_status_is_reported_not_silently_passed(self):
+        rows = [{"date": "20260804", "nav": 1.0}]
+        npub, et, rd = self._stage(rows, rows,
+                                   before_orders=[{"id": 1, "status": "WEIRD_NEW"}],
+                                   after_orders=[{"id": 1, "status": "WEIRD_NEW"}])
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(any("未登记状态" in e for e in errs), errs)
+
+    def test_orders_immutable_price_rejected(self):
+        """已成交价不得改写 —— 否则改一个 fill_price 就能重写历史成本。"""
+        rows = [{"date": "20260804", "nav": 1.0}]
+        npub, et, rd = self._stage(
+            rows, rows,
+            before_orders=[{"id": 1, "status": "filled", "fill_price": 3.0, "shares": 100}],
+            after_orders=[{"id": 1, "status": "filled", "fill_price": 1.0, "shares": 100}])
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(any("已定值却被改写" in e for e in errs), errs)
+
+    def test_orders_deletion_rejected(self):
+        rows = [{"date": "20260804", "nav": 1.0}]
+        npub, et, rd = self._stage(rows, rows,
+                                   before_orders=[{"id": 1, "status": "filled"}],
+                                   after_orders=[])
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(any("消失" in e for e in errs), errs)
+
+
+class RuleCompletenessTest(unittest.TestCase):
+    """规则**完整性**测试:检查"规则有没有漏",而不只是"现有规则有没有执行"。
+
+    Junyan 自评(2026-08-05):守卫已经有牙,但连续四轮修补证明规则完整性仍依赖
+    人工发现 —— cancelled 是被生产数据撞出来的,不是被测试找出来的。
+    这一类测试的判据不是"某条规则работает",而是"现实里出现的每个取值,规则表里
+    都有对应条目";发现漏项时**失败并指名**,而不是默默放行。
+    """
+
+    # 现实取值的来源:真实账本 + 各引擎源码里出现的字面量。
+    LIVE_ORDERS = ET / "model_fund" / "orders.json"
+
+    def _live_order_statuses(self):
+        if not self.LIVE_ORDERS.exists():
+            self.skipTest("本地无真实订单账本(CI 环境);由 live preflight 兜底")
+        rows = json.loads(self.LIVE_ORDERS.read_text(encoding="utf-8"))
+        return {str(o.get("status")) for o in rows if isinstance(o, dict)}
+
+    def test_order_state_machine_covers_every_status_in_the_live_ledger(self):
+        """真实账本里出现过的每个状态,状态机都必须登记 —— 漏一个,守卫就从
+        防篡改退化成拦正常运行(0805 第三轮被 cancelled→cancelled 拦停)。"""
+        import nightly_publish as npub
+        live = self._live_order_statuses()
+        missing = sorted(s for s in live if s not in npub.ORDER_TRANSITIONS)
+        self.assertEqual([], missing,
+                         f"真实账本存在未登记状态 {missing};"
+                         f"已登记 {sorted(str(k) for k in npub.ORDER_TRANSITIONS)}")
+
+    def test_every_registered_status_allows_self_transition(self):
+        """任何已登记状态都必须允许"不变" —— 否则一轮什么都没做也会被判非法。"""
+        import nightly_publish as npub
+        for st, allowed in npub.ORDER_TRANSITIONS.items():
+            if st is None:
+                continue
+            self.assertIn(st, allowed, f"{st}→{st} 自转被判非法")
+
+    def test_every_published_engine_output_has_an_artifact_contract(self):
+        """夜链每一步都必须在 ARTIFACTS 里声明产物 —— 没声明的步骤等于没被验过,
+        它可以静默失败而整轮照报 COMPLETE。"""
+        import run_nightly as rn
+        steps = {s[0] for s in rn.STEPS}
+        undeclared = sorted(steps - set(rn.ARTIFACTS))
+        self.assertEqual([], undeclared, f"这些步骤没有产物契约: {undeclared}")
+
+    def test_no_artifact_contract_points_at_a_nonexistent_step(self):
+        """反向:ARTIFACTS 里不得有指向已删除步骤的孤儿条目。"""
+        import run_nightly as rn
+        steps = {s[0] for s in rn.STEPS}
+        orphan = sorted(set(rn.ARTIFACTS) - steps)
+        self.assertEqual([], orphan, f"孤儿产物契约: {orphan}")
+
+    def test_every_dependency_names_a_real_step(self):
+        import run_nightly as rn
+        steps = [s[0] for s in rn.STEPS]
+        for name, _cmd, _tok, deps in rn.STEPS:
+            for d in deps:
+                self.assertIn(d, steps, f"{name} 依赖不存在的步骤 {d}")
+                self.assertLess(steps.index(d), steps.index(name),
+                                f"{name} 依赖了排在它后面的 {d}(前向引用)")
+
+    def test_chain_pairs_resolve_against_the_live_sector_universe(self):
+        """预注册链对的每个节点,至少一个别名要能在真实板块表里解析出来 ——
+        写死一个字面名(如"光模块(CPO)")而它在数据源里不存在,就是静默 DATA_BLOCKED。"""
+        hist = ET / "rotation_history.json"
+        if not hist.exists():
+            self.skipTest("本地无 rotation_history(CI 环境)")
+        import rotation_validation as rv
+        h = json.loads(hist.read_text(encoding="utf-8"))
+        sectors = set(h["flows"][h["days"][-1]])
+        unresolved = []
+        for a, b in rv.CHAIN_PAIRS:
+            for node in (a, b):
+                if rv._resolve(node, sectors) is None:
+                    unresolved.append(node)
+        self.assertEqual([], unresolved,
+                         f"这些链节点的所有别名都不在数据源里: {unresolved}")
+
+    def test_tech_neighbor_aliases_are_not_all_dead(self):
+        """科技邻域别名表不得整体失配 —— 命中率过低说明数据源改了名而表没跟。"""
+        hist = ET / "rotation_history.json"
+        if not hist.exists():
+            self.skipTest("本地无 rotation_history(CI 环境)")
+        import lead_precursor as lp
+        h = json.loads(hist.read_text(encoding="utf-8"))
+        sectors = set(h["flows"][h["days"][-1]])
+        hit = [n for n in lp.TECH_NEIGHBORS if n in sectors]
+        self.assertGreaterEqual(len(hit), 15,
+                                f"别名表仅命中 {len(hit)}/{len(lp.TECH_NEIGHBORS)} 条,"
+                                f"疑似数据源改名;命中={hit}")
+
+    def test_protected_ledger_files_are_all_classified(self):
+        """受保护目录里的每个 .json 都必须有明确处置规则:
+        append-only / 状态机 / fund 专用。没分类的文件会走"逐字节不变"分支,
+        将来任何合法写入都会把发布卡死 —— 而卡死的原因不会写在任何清单里。"""
+        import nightly_publish as npub
+        live = ET / "model_fund"
+        if not live.exists():
+            self.skipTest("本地无 model_fund(CI 环境)")
+        classified = set(npub.APPEND_ONLY_PROTECTED) | {"orders.json", "fund.json"}
+        present = {f.name for f in live.glob("*.json")}
+        unclassified = sorted(present - classified)
+        self.assertEqual([], unclassified,
+                         f"这些受保护文件没有处置规则,将走「逐字节不变」分支: {unclassified}")
+
+
+class NavMarkToMarketTest(unittest.TestCase):
+    """目标日行情缺失时,NAV 绝不能悄悄回退成本价。
+
+    实战教训:第一版按 s[-1][4] 取收盘价,而 qfq_ohlc_series 返回的是 **dict**,
+    于是 marks 全空 → NAV 静默按成本标记 → 产出一个看起来正常的假 NAV
+    (1,020,000 vs 真值 1,009,466,差 ¥10,534)。假数据比缺数据更危险,
+    因为它不会触发任何告警。
+    """
+
+    def _fund(self, cash=719140.0):
+        return {"initial_capital": 1000000.0, "cash": cash}
+
+    def _orders(self):
+        return [
+            {"status": "filled", "ticker": "600276.SH", "shares": 2700, "fill_price": 56.4},
+            {"status": "filled", "ticker": "002714.SZ", "shares": 3800, "fill_price": 39.1},
+        ]
+
+    def _cost_nav(self):
+        return 719140.0 + 2700 * 56.4 + 3800 * 39.1
+
+    def test_marks_from_target_day_are_used_not_cost(self):
+        import model_paper_fund as mpf
+        marks = {"600276.SH": 53.54, "002714.SZ": 38.36}
+        nav = mpf.current_nav(self._fund(), self._orders(), marks)
+        expected = 719140.0 + 2700 * 53.54 + 3800 * 38.36
+        self.assertAlmostEqual(nav, expected, places=0)
+        self.assertNotAlmostEqual(nav, self._cost_nav(), places=0,
+                                  msg="NAV 等于成本价 ⇒ marks 没被用上")
+
+    def test_dict_shaped_bars_are_parsed(self):
+        """qfq_ohlc_series 返回 dict;按 bar[4] 取值会静默拿到 None。"""
+        bar = {"date": "20260805", "open": 53.43, "high": 53.79,
+               "low": 52.88, "close": 53.54}
+        close = bar.get("close") if isinstance(bar, dict) else (
+            bar[4] if isinstance(bar, (list, tuple)) and len(bar) > 4 else None)
+        self.assertEqual(close, 53.54)
+
+    def test_stale_bar_must_not_be_used_as_target_day_mark(self):
+        """最新 bar 的日期 ≠ 本轮 target ⇒ 不得用于标记(宁可不标也不用旧价)。"""
+        target = "20260805"
+        stale_bar = {"date": "20260731", "close": 99.9}
+        close = stale_bar.get("close")
+        usable = bool(close) and str(stale_bar.get("date"))[:8] == target
+        self.assertFalse(usable, "旧日期的收盘价被当成了本轮标记价")
+
+    def test_missing_marks_flags_cost_basis_explicitly(self):
+        """无可用收盘价时:NAV 退化为成本口径这件事必须被**显式声明**,
+        不能悄悄发生 —— 调用方要能区分"市值"和"成本"。"""
+        import model_paper_fund as mpf
+        nav_no_marks = mpf.current_nav(self._fund(), self._orders(), None)
+        self.assertAlmostEqual(nav_no_marks, self._cost_nav(), places=0)
+        src = (ET / "model_paper_fund.py").read_text(encoding="utf-8")
+        self.assertIn("NAV 按成本标记", src,
+                      "marks 为空时没有任何显式提示 —— 假 NAV 会静默通过")
+        self.assertIn('bar_date == date', src,
+                      "没有校验 bar 日期是否等于本轮 target")
+
+
+class ProtectedLedgerIsPublishedTest(unittest.TestCase):
+    """资金账本必须**既受保护又被发布** —— 只校验不发布会让 staging 里算对的 NAV
+    永远回不到 live,而夜链照报 COMPLETE+published=true(0805 首轮实际发生)。"""
+
+    def test_model_fund_files_are_in_publish_plan(self) -> None:
+        import nightly_publish as npub
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        stage_et = os.path.join(tmp, "et")
+        mf = os.path.join(stage_et, "model_fund")
+        os.makedirs(mf)
+        json.dump([{"date": "20260805", "nav": 1.0}],
+                  open(os.path.join(mf, "nav_history.json"), "w"))
+        json.dump({"cash": 1.0}, open(os.path.join(mf, "fund.json"), "w"))
+        files = npub._allowed_stage_files(stage_et, os.path.join(tmp, "public"))
+        rels = {rel for scope, rel, _ in files if scope == "et"}
+        self.assertIn(os.path.join("model_fund", "nav_history.json"), rels,
+                      "nav_history 不在发布清单 —— 算对了也回不到 live")
+        self.assertIn(os.path.join("model_fund", "fund.json"), rels)
+
+
+
 if __name__ == "__main__":
     unittest.main()
+
