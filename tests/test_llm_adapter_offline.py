@@ -16,7 +16,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "llm"))
 
 import adapter  # noqa: E402
-import test_agent_adapter_offline  # noqa: E402
 
 
 def test_chat_completion_appends_jsonl_usage() -> None:
@@ -100,8 +99,4 @@ def test_chat_completion_appends_jsonl_usage() -> None:
 
 if __name__ == "__main__":
     test_chat_completion_appends_jsonl_usage()
-    harness_test_count = test_agent_adapter_offline.run_all_tests()
-    print(
-        "ALL LLM + AGENT ADAPTER OFFLINE TESTS PASS "
-        f"({harness_test_count} Harness tests, 0 network calls)"
-    )
+    print("ALL LLM ADAPTER OFFLINE TESTS PASS (0 network calls)")

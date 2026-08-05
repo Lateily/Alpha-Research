@@ -66,6 +66,9 @@ jobs:
       # 覆盖:registry 自检 · 两条注册路径确实打戳 · 账本挂掉时登记被拒且信号不落盘
       - name: Registry schema v2 + ledger wiring regression
         run: python3 tests/test_registry_schema_v2.py
+      # AIOS Harness A-013:provider-neutral AgentAdapter 契约(零网络、零成本)
+      - name: Agent adapter contract regression (offline)
+        run: python3 tests/test_agent_adapter_offline.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
