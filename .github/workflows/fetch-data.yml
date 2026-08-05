@@ -10,7 +10,16 @@ on:
 
 permissions:
   contents: write
-  actions: write    # needed to dispatch deploy.yml via gh workflow run
+  pull-requests: write
+
+# Both scheduled runs update one persistent review branch. A second run waits
+# instead of racing the first run or creating a second data PR.
+concurrency:
+  group: daily-market-data-pr
+  cancel-in-progress: false
+
+env:
+  DATA_BRANCH: automation/daily-market-data
 
 jobs:
   fetch-and-alert:
@@ -20,6 +29,26 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      # Data changes never write directly to protected main. If a review PR is
+      # still open, continue from its branch so unmerged event-driven history is
+      # not discarded by the next scheduled run.
+      - name: Prepare persistent data review branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          if git ls-remote --exit-code --heads origin "$DATA_BRANCH" >/dev/null 2>&1; then
+            git fetch origin "$DATA_BRANCH"
+            git switch -C "$DATA_BRANCH" "origin/$DATA_BRANCH"
+            git rebase origin/main
+          else
+            git switch -c "$DATA_BRANCH" origin/main
+          fi
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
@@ -262,6 +291,7 @@ jobs:
       # feed must never be masked by a green run. Optional endpoints without
       # permission are DATA_BLOCKED → report=PARTIAL (exit 0).
       - name: "Step 2d.22: Data-source health gate (required-5 hard fail)"
+        id: data_health
         env:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
         run: python scripts/data_source_health.py
@@ -404,7 +434,7 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/supabase_sync.py
 
-      # ── Step 4: Commit all JSON files ─────────────────────────────────────
+      # ── Step 4: Commit JSON files to a review branch ──────────────────────
       # Uses 'git add -f --ignore-errors' so missing glob expansions (e.g. no
       # ohlc_*.json yet) don't abort the step. git diff --cached guard means
       # we only commit when there are actual changes.
@@ -430,9 +460,10 @@ jobs:
           after=$(git hash-object public/data/positions.json public/data/analytics.json public/data/snapshots.json 2>/dev/null)
           [ "$before" = "$after" ] || echo "::warning::marker regen modified protected paper-state (positions/analytics/snapshots) — these must be read-only"
 
-      - name: Commit and push data
+      - name: Commit and push data review branch
         if: always()   # 审计:健康门失败时仍须提交当日数据与健康报告(否则失败证据一起丢)
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -511,38 +542,69 @@ jobs:
           shopt -u nullglob
           [ ${#files[@]} -gt 0 ] && git add "${files[@]}"
 
-          # Only commit if something changed
-          git diff --cached --quiet && echo "No data changes to commit." || \
-            git commit -m "data: daily update $(date -u +'%Y-%m-%d %H:%M') UTC [fetcher:${{ steps.fetcher.outcome }}]"
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+            echo "DATA_CHANGES=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
 
-          # Push with rebase-on-conflict retry. Pipeline runs ~10-15 min; if
-          # another commit lands on main during that window (e.g., Junyan or
-          # T1 push), `git push` is rejected. Without retry the data commit
-          # is local-only and lost when runner shuts down (real loss observed
-          # 2026-05-08 run 25554339852: full new-ticker data committed but
-          # discarded). Retry up to 3x with `git pull --rebase` between.
-          push_attempts=0
-          push_max_attempts=3
-          push_succeeded=false
-          while [ $push_attempts -lt $push_max_attempts ]; do
-            push_attempts=$((push_attempts + 1))
-            if git push 2>&1; then
-              push_succeeded=true
-              echo "Push succeeded on attempt $push_attempts"
-              break
-            fi
-            echo "Push rejected on attempt $push_attempts — pulling rebase + retry"
-            git fetch origin main || { echo "Fetch failed — abandoning push retries"; break; }
-            git pull --rebase origin main || { echo "Pull-rebase failed — abandoning push (manual recovery needed)"; break; }
-          done
-          if [ "$push_succeeded" != "true" ]; then
-            echo "::error::Push failed after $push_max_attempts attempts. Data commit is LOCAL ONLY."
-            # 审计#8:此前只 warning,workflow 仍绿 —— 数据随 runner 消失且无人知晓。
-            # 打包待恢复补丁供人工救援,然后让 workflow 真正变红。
+          git commit -m "data: daily update $(date -u +'%Y-%m-%d %H:%M') UTC [fetcher:${{ steps.fetcher.outcome }}]"
+
+          # The branch is serialized by the workflow concurrency group. A
+          # lease is still required so an unexpected external write cannot be
+          # overwritten silently after this run rebases the persistent branch.
+          if ! git push --force-with-lease origin "HEAD:refs/heads/$DATA_BRANCH"; then
+            echo "::error::Data review branch push failed. Data commit is LOCAL ONLY."
             git format-patch origin/main --stdout > /tmp/unpushed_data.patch 2>/dev/null || true
             git log origin/main..HEAD --oneline > /tmp/unpushed_commits.txt 2>/dev/null || true
             echo "PUSH_FAILED=true" >> "$GITHUB_ENV"
             exit 1
+          fi
+          echo "DATA_CHANGES=true" >> "$GITHUB_ENV"
+          echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      # One open PR represents the latest unmerged data state. Scheduled runs
+      # update it; they never merge it and never approve it. Junyan remains the
+      # release gate for every data publication.
+      - name: Create or update data review PR
+        if: always() && env.DATA_CHANGES == 'true' && env.PUSH_FAILED != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          title="data: automated market refresh (review required)"
+          body=$(cat <<EOF
+          ## Automated data refresh
+
+          This PR is generated by fetch-data.yml. It is never auto-merged.
+
+          - Latest commit: ${DATA_COMMIT}
+          - Workflow run: ${run_url}
+          - Fetcher outcome: ${{ steps.fetcher.outcome }}
+          - Required-source health gate: ${{ steps.data_health.outcome }}
+          - Review policy: Junyan reviews the diff and merges manually.
+
+          A failed health gate is intentionally preserved in this PR so the
+          failure evidence is reviewable instead of disappearing with the runner.
+          EOF
+          )
+          number=$(gh pr list \
+            --base main \
+            --head "$DATA_BRANCH" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh pr edit "$number" --title "$title" --body "$body"
+            gh pr comment "$number" --body "Data branch refreshed by [workflow run ${GITHUB_RUN_ID}](${run_url}) at commit \`${DATA_COMMIT}\`."
+            echo "Updated data PR #$number"
+          else
+            gh pr create \
+              --base main \
+              --head "$DATA_BRANCH" \
+              --title "$title" \
+              --body "$body"
           fi
 
       # 审计#8:push 失败时上传待恢复补丁,人工可 git am 恢复当日数据
@@ -564,10 +626,5 @@ jobs:
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/telegram_alert.py
 
-      # ── Step 6: Trigger GitHub Pages redeploy ─────────────────────────────
-      # github-actions[bot] push commits do NOT auto-trigger other workflows.
-      # We explicitly dispatch deploy.yml via workflow_dispatch (allowed with GITHUB_TOKEN).
-      - name: Redeploy GitHub Pages
-        run: gh workflow run deploy.yml --ref main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # GitHub Pages deploys from the normal push-to-main trigger only after
+      # Junyan merges the data PR. Unreviewed branch data is never published.
