@@ -98,7 +98,7 @@
 | R-031 | MRG 两阶段接线 | `APPROVED` | Claude+Macro Agent | 合同 v1.5 C6 修订:未校准的门若先拿阻断权会形成循环依赖(它造成的"没开仓"被记成"避免损失",从此无法证伪) | 阶段A只标注+RISK_OFF_BIAS 降 sizing 上限至 STARTER_CAPPED 并每日入判分;阶段B 达 ≥30 独立因果簇且优于随机后由 Junyan 单独批准阻断权 |
 | R-037 | 单票结论电池戳校验 | `APPROVED` | Claude | 合同 v1.5 C2:full_battery 只对动态名单强制,临时单票分析(含对话产出)无机器强制 | 单票结论产出路径校验 24h 内电池戳,无戳拒绝并标 `NO_BATTERY_STAMP` |
 | R-038 | 因果簇 id 生成器与历史回填 | `BLOCKED` | Claude+Validation Agent | 合同 v1.5 C5 采用因果事件簇;claim 解锁的唯一路径。**BLOCKED 说明**:阻断源 = R-039/040/041 + 硬前置 R-014/R-015(账本无文件锁,B 不可原子计算)未建成;**下次复核日期 = 2026-09-01**。C5 §4 三态阶梯只约束 correction/migration 不约束 genesis,retrospective genesis 可在 S2 信号上执行,循环已解 | 规则版本先冻结 → 单一 genesis 批次回填 122 条 → manifest 落盘(approval_ref/manifest_hash)→ R-039 即刻对该批生效;genesis 当期 claim_allowed 强制 false |
-| R-032 | U0 全市场证券注册表 | `APPROVED` | Claude+Data Agent | 漏斗 v1:红旗/电池当前只覆盖 14 只动态名单,全 A 99.7% 从未被检查 | 全部 A 股永久注册 + 资格标签(ST/北交所/低流动性标注不删除) |
+| R-032 | U0 全市场证券注册表 | `IN_PROGRESS` | Codex+Data Agent | 2026-08-05 CLAIM `R-032-u0-security-registry`,分支 `codex/r032-security-registry`:建立全 A 身份注册、永久保留、ST/北交所/低流动性标签、来源时间与覆盖状态;文件范围与 Claude 夜链修复隔离 | 全部 A 股永久注册 + 资格标签(ST/北交所/低流动性标注不删除);原子更新;损坏 prior/重复证券 fail-closed;离线 selftest;首轮 Tushare 全市场实跑 |
 | R-033 | U1 六通道批量扫描器 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板一:通道独立,不得复合总分抵消 | 六通道各自阈值取并集;entry_reasons[] 逐条留痕;禁跨通道排序字段 |
 | R-034 | U2 候选池与三项保留配额 | `APPROVED` | Claude+Scanner Agent | 漏斗 v1 拍板二:慢牛/逆向修复/随机控制必须保配额 | 100-300 候选,进入与淘汰理由留痕,保留配额不参与主通道竞争 |
 | R-035 | 随机控制分组判分 | `APPROVED` | Validation Agent | 漏斗 v1 §10.4:漏斗自身需可证伪 | 同池分层抽样(市值分位×行业,与主通道分布对齐)+ 固定 seed + 抽样框完整留痕;U1/U2 与 U3 两层检验分开;判据预注册不可改 |

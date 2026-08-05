@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/research/contracts/security_registry.schema.json",
+  "title": "AR U0 Security Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "status",
+    "as_of",
+    "generated_at",
+    "source",
+    "policy",
+    "coverage",
+    "eligible_universe_hash",
+    "registry_hash",
+    "rows",
+    "disclaimer"
+  ],
+  "properties": {
+    "schema": { "const": "ar.security_registry" },
+    "schema_version": { "const": "1.0" },
+    "status": { "enum": ["COMPLETE", "PARTIAL", "INCOMPLETE", "DATA_BLOCKED", "STALE_INPUT"] },
+    "as_of": { "type": "string", "pattern": "^[0-9]{8}$" },
+    "generated_at": { "type": "string", "minLength": 1 },
+    "source": { "type": "object" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "permanent_identity",
+        "missing_symbols_are_preserved",
+        "qualification_tags_do_not_delete_rows",
+        "low_liquidity_threshold_cny",
+        "threshold_status",
+        "registry_hash_algorithm",
+        "eligible_hash_algorithm"
+      ],
+      "properties": {
+        "permanent_identity": { "const": true },
+        "missing_symbols_are_preserved": { "const": true },
+        "qualification_tags_do_not_delete_rows": { "const": true },
+        "low_liquidity_threshold_cny": { "type": "number", "exclusiveMinimum": 0 },
+        "threshold_status": { "const": "UNVALIDATED_INITIAL_TAG_ONLY" },
+        "registry_hash_algorithm": { "const": "sha256(canonical_json(rows))/v1" },
+        "eligible_hash_algorithm": { "const": "sha256(canonical_json(sorted_eligible_ts_codes))/v1" }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_rows",
+        "registry_rows",
+        "listed",
+        "delisted",
+        "prelisted",
+        "st_labeled",
+        "bse_labeled",
+        "low_liquidity_labeled",
+        "liquidity_data_blocked",
+        "preserved_missing_from_source"
+      ],
+      "properties": {
+        "source_rows": { "type": "integer", "minimum": 0 },
+        "registry_rows": { "type": "integer", "minimum": 0 },
+        "listed": { "type": "integer", "minimum": 0 },
+        "delisted": { "type": "integer", "minimum": 0 },
+        "prelisted": { "type": "integer", "minimum": 0 },
+        "st_labeled": { "type": "integer", "minimum": 0 },
+        "bse_labeled": { "type": "integer", "minimum": 0 },
+        "low_liquidity_labeled": { "type": "integer", "minimum": 0 },
+        "liquidity_data_blocked": { "type": "integer", "minimum": 0 },
+        "preserved_missing_from_source": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "eligible_universe_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "registry_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ts_code",
+          "symbol",
+          "name",
+          "market",
+          "board",
+          "exchange",
+          "list_status",
+          "list_date",
+          "delist_date",
+          "area",
+          "industry_key",
+          "industry_source",
+          "first_seen",
+          "last_seen",
+          "last_scanned_at",
+          "source_presence",
+          "current_stage",
+          "reason_codes",
+          "next_review_at",
+          "qualification",
+          "data_coverage",
+          "source",
+          "source_as_of",
+          "fetched_at"
+        ],
+        "properties": {
+          "ts_code": { "type": "string", "pattern": "^(T)?[0-9]{6}\\.(SH|SZ|BJ)$" },
+          "symbol": { "type": "string" },
+          "name": { "type": "string" },
+          "market": { "const": "A_SHARE" },
+          "board": { "type": "string" },
+          "exchange": { "type": "string" },
+          "list_status": { "enum": ["L", "D", "P"] },
+          "list_date": { "type": ["string", "null"] },
+          "delist_date": { "type": ["string", "null"] },
+          "area": { "type": ["string", "null"] },
+          "industry_key": { "type": "string" },
+          "industry_source": { "type": "string" },
+          "first_seen": { "type": "string", "pattern": "^[0-9]{8}$" },
+          "last_seen": { "type": "string", "pattern": "^[0-9]{8}$" },
+          "last_scanned_at": { "type": "string" },
+          "source_presence": { "enum": ["CURRENT", "MISSING_PRESERVED"] },
+          "current_stage": { "enum": ["UNSCANNED", "SCANNED", "CANDIDATE", "BATTERY", "DEEP_RESEARCH", "COURT", "PORTFOLIO", "EXCLUDED", "MONITOR"] },
+          "reason_codes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "next_review_at": { "type": ["string", "null"] },
+          "qualification": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "is_st",
+              "is_bse",
+              "u1_scan_eligible",
+              "liquidity_label",
+              "liquidity_20d_median_cny",
+              "liquidity_observations",
+              "liquidity_window_target",
+              "low_liquidity_threshold_cny",
+              "threshold_status",
+              "has_daily_bar_on_as_of"
+            ],
+            "properties": {
+              "is_st": { "type": "boolean" },
+              "is_bse": { "type": "boolean" },
+              "u1_scan_eligible": { "type": "boolean" },
+              "liquidity_label": { "enum": ["NORMAL", "LOW", "DATA_BLOCKED", "NOT_APPLICABLE"] },
+              "liquidity_20d_median_cny": { "type": ["number", "null"], "minimum": 0 },
+              "liquidity_observations": { "type": "integer", "minimum": 0 },
+              "liquidity_window_target": { "type": "integer", "minimum": 1 },
+              "low_liquidity_threshold_cny": { "type": "number", "exclusiveMinimum": 0 },
+              "threshold_status": { "const": "UNVALIDATED_INITIAL_TAG_ONLY" },
+              "has_daily_bar_on_as_of": { "type": ["boolean", "null"] }
+            }
+          },
+          "data_coverage": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["identity", "industry", "liquidity"],
+            "properties": {
+              "identity": { "enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"] },
+              "industry": { "enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"] },
+              "liquidity": { "enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED", "NOT_APPLICABLE"] }
+            }
+          },
+          "source": { "const": "tushare.stock_basic" },
+          "source_as_of": { "type": "string", "pattern": "^[0-9]{8}$" },
+          "fetched_at": { "type": "string" }
+        }
+      }
+    },
+    "disclaimer": { "type": "string" }
+  }
+}
