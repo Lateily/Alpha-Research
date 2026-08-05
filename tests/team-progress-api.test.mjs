@@ -118,6 +118,15 @@ async function testOptionsIsReadOnly() {
   assert.equal(res.headers['Access-Control-Allow-Methods'], 'GET, OPTIONS');
 }
 
+async function testOfficialGithubPagesOriginIsAllowed() {
+  const req = { method: 'OPTIONS', headers: { origin: 'https://lateily.github.io' } };
+  const res = makeResponse();
+  await handler(req, res);
+
+  assert.equal(res.code, 200);
+  assert.equal(res.headers['Access-Control-Allow-Origin'], 'https://lateily.github.io');
+}
+
 async function testGithubFailureKeepsSnapshotShape() {
   const originalFetch = globalThis.fetch;
 
@@ -151,5 +160,6 @@ async function testGithubFailureKeepsSnapshotShape() {
 
 await testReadOnlySnapshot();
 await testOptionsIsReadOnly();
+await testOfficialGithubPagesOriginIsAllowed();
 await testGithubFailureKeepsSnapshotShape();
 console.log('ALL TEAM PROGRESS API TESTS PASS (0 network calls)');

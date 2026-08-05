@@ -31,6 +31,11 @@ jobs:
           # Value: your Vercel deployment URL, e.g. https://ar-platform.vercel.app
           # Leave unset to disable Deep Research on GitHub Pages build
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_PROGRESS_API_BASE_URL: https://equity-research-ten.vercel.app
+      - name: Add static Progress Board route
+        run: |
+          mkdir -p dist/team
+          cp dist/index.html dist/team/index.html
       - uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist

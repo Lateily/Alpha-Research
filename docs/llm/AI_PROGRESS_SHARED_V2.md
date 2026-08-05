@@ -160,6 +160,19 @@ PROGRESS_ALLOWED_ORIGINS=https://example-team-ui.vercel.app
 
 Use a comma-separated list for multiple approved UI origins. Local Vite origins
 `http://localhost:5173` and `http://127.0.0.1:5173` are allowed for development.
+The official GitHub Pages origin `https://lateily.github.io` is allowed by
+default. Other origins still require `PROGRESS_ALLOWED_ORIGINS`.
+
+Canonical team URL:
+
+```text
+https://equity-research-ten.vercel.app/team
+```
+
+Generated Vercel deployment URLs may be protected by Vercel Authentication and
+must not be distributed as the team entry point. GitHub Pages builds use the
+same stable Vercel origin for Progress Board APIs through
+`VITE_PROGRESS_API_BASE_URL`.
 
 ## Xuhang UI Handoff
 
@@ -181,8 +194,9 @@ Refresh no faster than every 30 seconds.
 If `ok=false`, show the `error` field and keep the page usable for viewing the
 last successful state if one exists.
 
-The `/team` route in the Vite frontend reads `GET /api/team-progress` from the
-same origin. It can submit standard progress events through
+The `/team` route reads `GET /api/team-progress` from the same origin on Vercel.
+The GitHub Pages build uses the stable Vercel API origin above. It can submit
+standard progress events through
 `POST /api/team-progress-event`, but it does not read GitHub directly, hold a
 GitHub token, or call model APIs.
 
