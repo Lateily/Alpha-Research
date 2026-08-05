@@ -174,7 +174,7 @@ def test_adapter_contract_uses_zero_network(monkeypatch=None) -> None:
     assert result.status is AgentStatus.SUCCEEDED
 
 
-if __name__ == "__main__":
+def run_all_tests() -> int:
     tests = [
         value
         for name, value in sorted(globals().items())
@@ -182,4 +182,9 @@ if __name__ == "__main__":
     ]
     for test in tests:
         test()
-    print(f"ALL AGENT ADAPTER OFFLINE TESTS PASS ({len(tests)} tests, 0 network calls)")
+    return len(tests)
+
+
+if __name__ == "__main__":
+    test_count = run_all_tests()
+    print(f"ALL AGENT ADAPTER OFFLINE TESTS PASS ({test_count} tests, 0 network calls)")

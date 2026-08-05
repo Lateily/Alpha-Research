@@ -35,8 +35,6 @@ jobs:
         run: python3 tests/test_engines_offline.py
       - name: LLM adapter offline tests (zero network)
         run: python3 tests/test_llm_adapter_offline.py
-      - name: Agent Harness adapter contract tests (zero network)
-        run: python3 tests/test_agent_adapter_offline.py
       - name: Promoter QC gate offline tests (zero network)
         run: python3 tests/test_promoter_qc_offline.py
       - name: Nightly v4 orchestrator selftest
