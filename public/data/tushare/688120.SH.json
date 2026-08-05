@@ -1,11 +1,89 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-07-28T10:57:57Z",
-  "current_tier": 6000,
+  "fetched_at": "2026-08-05T11:17:45Z",
+  "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260805",
+          "open": 225.0,
+          "high": 247.0,
+          "low": 223.5,
+          "close": 243.0,
+          "pre_close": 228.11,
+          "change": 14.89,
+          "pct_chg": 6.5276,
+          "vol": 203469.23,
+          "amount": 4832122.246
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260804",
+          "open": 227.36,
+          "high": 236.16,
+          "low": 222.5,
+          "close": 228.11,
+          "pre_close": 226.99,
+          "change": 1.12,
+          "pct_chg": 0.4934,
+          "vol": 170245.05,
+          "amount": 3894628.164
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260803",
+          "open": 248.0,
+          "high": 249.6,
+          "low": 222.2,
+          "close": 226.99,
+          "pre_close": 256.98,
+          "change": -29.99,
+          "pct_chg": -11.6702,
+          "vol": 204306.99,
+          "amount": 4770015.39
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260731",
+          "open": 300.0,
+          "high": 300.68,
+          "low": 255.11,
+          "close": 256.98,
+          "pre_close": 268.28,
+          "change": -11.3,
+          "pct_chg": -4.212,
+          "vol": 227905.99,
+          "amount": 6447605.637
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260730",
+          "open": 262.0,
+          "high": 283.99,
+          "low": 247.06,
+          "close": 268.28,
+          "pre_close": 268.7,
+          "change": -0.42,
+          "pct_chg": -0.1563,
+          "vol": 203702.25,
+          "amount": 5354909.109
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260729",
+          "open": 258.12,
+          "high": 268.76,
+          "low": 236.46,
+          "close": 268.7,
+          "pre_close": 258.0,
+          "change": 10.7,
+          "pct_chg": 4.1473,
+          "vol": 192805.35,
+          "amount": 4856037.96
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260728",
@@ -759,52 +837,134 @@
           "pct_chg": 3.7813,
           "vol": 72392.31,
           "amount": 1439421.176
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260506",
-          "open": 205.87,
-          "high": 207.99,
-          "low": 193.0,
-          "close": 193.32,
-          "pre_close": 197.43,
-          "change": -4.11,
-          "pct_chg": -2.0818,
-          "vol": 108895.68,
-          "amount": 2180708.307
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260430",
-          "open": 192.14,
-          "high": 199.6,
-          "low": 192.14,
-          "close": 197.43,
-          "pre_close": 193.2,
-          "change": 4.23,
-          "pct_chg": 2.1894,
-          "vol": 81535.9,
-          "amount": 1598622.746
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260429",
-          "open": 194.32,
-          "high": 197.89,
-          "low": 187.0,
-          "close": 193.2,
-          "pre_close": 194.44,
-          "change": -1.24,
-          "pct_chg": -0.6377,
-          "vol": 67382.94,
-          "amount": 1291485.014
         }
       ],
-      "row_count": 61,
-      "_status": "ok"
+      "row_count": 64,
+      "_status": "ok",
+      "as_of": "20260805"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260805",
+          "close": 243.0,
+          "turnover_rate": 4.0999,
+          "turnover_rate_f": 6.1234,
+          "volume_ratio": 1.02,
+          "pe": 111.2795,
+          "pe_ttm": 109.8716,
+          "pb": 15.6196,
+          "ps": 25.9446,
+          "ps_ttm": 24.4263,
+          "dv_ratio": 0.1077,
+          "dv_ttm": 0.117,
+          "total_share": 49628.1438,
+          "float_share": 49628.1438,
+          "free_share": 33228.0838,
+          "total_mv": 12059638.02,
+          "circ_mv": 12059638.02
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260804",
+          "close": 228.11,
+          "turnover_rate": 3.4304,
+          "turnover_rate_f": 5.1235,
+          "volume_ratio": 0.87,
+          "pe": 104.4608,
+          "pe_ttm": 103.1391,
+          "pb": 14.6625,
+          "ps": 24.3548,
+          "ps_ttm": 22.9296,
+          "dv_ratio": 0.1148,
+          "dv_ttm": 0.1246,
+          "total_share": 49628.1438,
+          "float_share": 49628.1438,
+          "free_share": 33228.0838,
+          "total_mv": 11320675.0154,
+          "circ_mv": 11320675.0154
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260803",
+          "close": 226.99,
+          "turnover_rate": 4.1168,
+          "turnover_rate_f": 6.1486,
+          "volume_ratio": 1.11,
+          "pe": 103.9479,
+          "pe_ttm": 102.6327,
+          "pb": 14.5905,
+          "ps": 24.2352,
+          "ps_ttm": 22.817,
+          "dv_ratio": 0.1153,
+          "dv_ttm": 0.1252,
+          "total_share": 49628.1438,
+          "float_share": 49628.1438,
+          "free_share": 33228.0838,
+          "total_mv": 11265091.4986,
+          "circ_mv": 11265091.4986
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260731",
+          "close": 256.98,
+          "turnover_rate": 4.6067,
+          "turnover_rate_f": 6.8588,
+          "volume_ratio": 1.35,
+          "pe": 117.3139,
+          "pe_ttm": 115.8296,
+          "pb": 16.4666,
+          "ps": 27.3515,
+          "ps_ttm": 25.7509,
+          "dv_ratio": 0.1022,
+          "dv_ttm": 0.111,
+          "total_share": 49473.1127,
+          "float_share": 49473.1127,
+          "free_share": 33228.0838,
+          "total_mv": 12713599.8078,
+          "circ_mv": 12713599.8078
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260730",
+          "close": 268.28,
+          "turnover_rate": 4.1174,
+          "turnover_rate_f": 6.1304,
+          "volume_ratio": 1.28,
+          "pe": 122.4725,
+          "pe_ttm": 120.9229,
+          "pb": 17.1907,
+          "ps": 28.5542,
+          "ps_ttm": 26.8832,
+          "dv_ratio": 0.0979,
+          "dv_ttm": 0.1063,
+          "total_share": 49473.1127,
+          "float_share": 49473.1127,
+          "free_share": 33228.0838,
+          "total_mv": 13272645.9508,
+          "circ_mv": 13272645.9508
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260729",
+          "close": 268.7,
+          "turnover_rate": 3.8972,
+          "turnover_rate_f": 5.8025,
+          "volume_ratio": 1.18,
+          "pe": 122.6642,
+          "pe_ttm": 121.1122,
+          "pb": 17.2176,
+          "ps": 28.5989,
+          "ps_ttm": 26.9253,
+          "dv_ratio": 0.0977,
+          "dv_ttm": 0.1061,
+          "total_share": 49473.1127,
+          "float_share": 49473.1127,
+          "free_share": 33228.0838,
+          "total_mv": 13293424.657,
+          "circ_mv": 13293424.657
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260728",
@@ -1964,73 +2124,44 @@
           "free_share": 25419.1104,
           "total_mv": 7095319.8954,
           "circ_mv": 7095319.8954
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260506",
-          "close": 193.32,
-          "turnover_rate": 3.0792,
-          "turnover_rate_f": 4.284,
-          "volume_ratio": 1.48,
-          "pe": 63.0861,
-          "pe_ttm": 62.2879,
-          "pb": 8.855,
-          "ps": 14.7084,
-          "ps_ttm": 13.8477,
-          "dv_ratio": 0.19,
-          "dv_ttm": 0.19,
-          "total_share": 35365.1991,
-          "float_share": 35365.1991,
-          "free_share": 25419.1104,
-          "total_mv": 6836800.29,
-          "circ_mv": 6836800.29
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260430",
-          "close": 197.43,
-          "turnover_rate": 2.3055,
-          "turnover_rate_f": 3.2077,
-          "volume_ratio": 1.18,
-          "pe": 64.4274,
-          "pe_ttm": 63.6122,
-          "pb": 9.0432,
-          "ps": 15.0211,
-          "ps_ttm": 14.1421,
-          "dv_ratio": 0.1861,
-          "dv_ttm": 0.1861,
-          "total_share": 35365.1991,
-          "float_share": 35365.1991,
-          "free_share": 25419.1104,
-          "total_mv": 6982151.2583,
-          "circ_mv": 6982151.2583
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260429",
-          "close": 193.2,
-          "turnover_rate": 1.9053,
-          "turnover_rate_f": 2.6509,
-          "volume_ratio": 1.05,
-          "pe": 63.047,
-          "pe_ttm": 62.2493,
-          "pb": 8.8495,
-          "ps": 14.6993,
-          "ps_ttm": 13.8391,
-          "dv_ratio": 0.1901,
-          "dv_ttm": 0.1901,
-          "total_share": 35365.1991,
-          "float_share": 35365.1991,
-          "free_share": 25419.1104,
-          "total_mv": 6832556.4661,
-          "circ_mv": 6832556.4661
         }
       ],
-      "row_count": 61,
-      "_status": "ok"
+      "row_count": 64,
+      "_status": "ok",
+      "as_of": "20260805"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260805",
+          "adj_factor": 4.6652
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260804",
+          "adj_factor": 4.6652
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260803",
+          "adj_factor": 4.6652
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260731",
+          "adj_factor": 4.6652
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260730",
+          "adj_factor": 4.6652
+        },
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260729",
+          "adj_factor": 4.6652
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260728",
@@ -2320,25 +2451,11 @@
           "ts_code": "688120.SH",
           "trade_date": "20260507",
           "adj_factor": 3.3296
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260506",
-          "adj_factor": 3.3296
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260430",
-          "adj_factor": 3.3296
-        },
-        {
-          "ts_code": "688120.SH",
-          "trade_date": "20260429",
-          "adj_factor": 3.3296
         }
       ],
-      "row_count": 61,
-      "_status": "ok"
+      "row_count": 64,
+      "_status": "ok",
+      "as_of": "20260805"
     },
     "income": {
       "rows": [
@@ -3040,7 +3157,8 @@
         }
       ],
       "row_count": 8,
-      "_status": "ok"
+      "_status": "ok",
+      "as_of": "20260423"
     },
     "balancesheet": {
       "rows": [
@@ -4278,7 +4396,8 @@
         }
       ],
       "row_count": 8,
-      "_status": "ok"
+      "_status": "ok",
+      "as_of": "20260423"
     },
     "cashflow": {
       "rows": [
@@ -5127,7 +5246,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": null,
-          "free_cashflow": 1216618376.4544,
+          "free_cashflow": 3237210416.8744,
           "c_prepay_amt_borr": 210240000.0,
           "c_pay_dist_dpcp_int_exp": 99794425.6,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -5472,29 +5591,31 @@
         }
       ],
       "row_count": 12,
-      "_status": "ok"
+      "_status": "ok",
+      "as_of": "20260423"
     },
     "dividend": {
       "rows": [],
       "row_count": 0,
-      "_status": "empty"
+      "_status": "empty",
+      "as_of": null
     },
     "fina_mainbz_region": {
       "rows": [
         {
           "ts_code": "688120.SH",
           "end_date": "20251231",
-          "bz_item": "国外",
+          "bz_item": "地区",
           "bz_code": "D",
-          "bz_sales": 42749144.8,
-          "bz_profit": 16874099.15,
-          "bz_cost": 25875045.65,
+          "bz_sales": 4648227726.05,
+          "bz_profit": 1943595389.84,
+          "bz_cost": 2704632336.21,
           "curr_type": "CNY"
         },
         {
           "ts_code": "688120.SH",
           "end_date": "20251231",
-          "bz_item": "中国大陆",
+          "bz_item": "内地",
           "bz_code": "D",
           "bz_sales": 4605478581.25,
           "bz_profit": 1926721290.69,
@@ -5503,18 +5624,28 @@
         },
         {
           "ts_code": "688120.SH",
-          "end_date": "20241231",
-          "bz_item": "国外",
+          "end_date": "20251231",
+          "bz_item": "其他",
           "bz_code": "D",
-          "bz_sales": 87887360.21,
-          "bz_profit": 46416116.41,
-          "bz_cost": 41471243.8,
+          "bz_sales": 42749144.8,
+          "bz_profit": 16874099.15,
+          "bz_cost": 25875045.65,
           "curr_type": "CNY"
         },
         {
           "ts_code": "688120.SH",
           "end_date": "20241231",
-          "bz_item": "中国大陆",
+          "bz_item": "地区",
+          "bz_code": "D",
+          "bz_sales": 3406228610.47,
+          "bz_profit": 1471577865.56,
+          "bz_cost": 1934650744.91,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20241231",
+          "bz_item": "内地",
           "bz_code": "D",
           "bz_sales": 3318341250.26,
           "bz_profit": 1425161749.15,
@@ -5523,18 +5654,28 @@
         },
         {
           "ts_code": "688120.SH",
-          "end_date": "20231231",
-          "bz_item": "国外",
+          "end_date": "20241231",
+          "bz_item": "保税区",
           "bz_code": "D",
-          "bz_sales": 22230749.84,
-          "bz_profit": 8634452.31,
-          "bz_cost": 13596297.53,
+          "bz_sales": 87887360.21,
+          "bz_profit": 46416116.41,
+          "bz_cost": 41471243.8,
           "curr_type": "CNY"
         },
         {
           "ts_code": "688120.SH",
           "end_date": "20231231",
-          "bz_item": "中国大陆",
+          "bz_item": "地区",
+          "bz_code": "D",
+          "bz_sales": 2507991057.37,
+          "bz_profit": 1154091207.27,
+          "bz_cost": 1353899850.1,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20231231",
+          "bz_item": "内地",
           "bz_code": "D",
           "bz_sales": 2485760307.53,
           "bz_profit": 1145456754.96,
@@ -5543,18 +5684,28 @@
         },
         {
           "ts_code": "688120.SH",
-          "end_date": "20221231",
-          "bz_item": "国外",
+          "end_date": "20231231",
+          "bz_item": "保税区",
           "bz_code": "D",
-          "bz_sales": 2258685.54,
-          "bz_profit": 1146269.76,
-          "bz_cost": 1112415.78,
+          "bz_sales": 22230749.84,
+          "bz_profit": 8634452.31,
+          "bz_cost": 13596297.53,
           "curr_type": "CNY"
         },
         {
           "ts_code": "688120.SH",
           "end_date": "20221231",
-          "bz_item": "中国大陆",
+          "bz_item": "地区",
+          "bz_code": "D",
+          "bz_sales": 1648838308.18,
+          "bz_profit": 786862726.38,
+          "bz_cost": 861975581.8,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20221231",
+          "bz_item": "内地",
           "bz_code": "D",
           "bz_sales": 1646579622.64,
           "bz_profit": 785716456.62,
@@ -5563,8 +5714,18 @@
         },
         {
           "ts_code": "688120.SH",
+          "end_date": "20221231",
+          "bz_item": "保税区",
+          "bz_code": "D",
+          "bz_sales": 2258685.54,
+          "bz_profit": 1146269.76,
+          "bz_cost": 1112415.78,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
           "end_date": "20211231",
-          "bz_item": "国外",
+          "bz_item": "境外",
           "bz_code": "D",
           "bz_sales": 1589800.0,
           "bz_profit": null,
@@ -5574,23 +5735,54 @@
         {
           "ts_code": "688120.SH",
           "end_date": "20211231",
-          "bz_item": "中国大陆",
+          "bz_item": "境内",
           "bz_code": "D",
           "bz_sales": 803290600.0,
           "bz_profit": null,
           "bz_cost": null,
           "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20211231",
+          "bz_item": "地区",
+          "bz_code": "D",
+          "bz_sales": 804880460.7,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20211231",
+          "bz_item": "合计特别调整",
+          "bz_code": "D",
+          "bz_sales": 60.7,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
         }
       ],
-      "row_count": 10,
-      "_status": "ok"
+      "row_count": 16,
+      "_status": "ok",
+      "as_of": "20251231"
     },
     "fina_mainbz_product": {
       "rows": [
         {
           "ts_code": "688120.SH",
           "end_date": "20251231",
-          "bz_item": "配套材料及技术服务",
+          "bz_item": "半导体装备",
+          "bz_code": "P",
+          "bz_sales": 4054051946.1,
+          "bz_profit": 1657125340.62,
+          "bz_cost": 2396926605.48,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20251231",
+          "bz_item": "半导体服务",
           "bz_code": "P",
           "bz_sales": 594175779.95,
           "bz_profit": 286470049.22,
@@ -5600,17 +5792,37 @@
         {
           "ts_code": "688120.SH",
           "end_date": "20251231",
-          "bz_item": "CMP设备",
+          "bz_item": "产品",
           "bz_code": "P",
-          "bz_sales": 4054051946.1,
-          "bz_profit": 1657125340.62,
-          "bz_cost": 2396926605.48,
+          "bz_sales": 4648227726.05,
+          "bz_profit": 1943595389.84,
+          "bz_cost": 2704632336.21,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20250630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 1949592075.74,
+          "bz_profit": 898289314.58,
+          "bz_cost": 1051302761.16,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20250630",
+          "bz_item": "主营业务",
+          "bz_code": "P",
+          "bz_sales": 1949592075.74,
+          "bz_profit": 898289314.58,
+          "bz_cost": 1051302761.16,
           "curr_type": "CNY"
         },
         {
           "ts_code": "688120.SH",
           "end_date": "20241231",
-          "bz_item": "其他主营业务",
+          "bz_item": "其他产品和服务",
           "bz_code": "P",
           "bz_sales": 418805422.52,
           "bz_profit": 184991434.85,
@@ -5620,7 +5832,17 @@
         {
           "ts_code": "688120.SH",
           "end_date": "20241231",
-          "bz_item": "CMP设备",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 3406228610.47,
+          "bz_profit": 1471577865.56,
+          "bz_cost": 1934650744.91,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20241231",
+          "bz_item": "CMP/减薄装备销售",
           "bz_code": "P",
           "bz_sales": 2987423187.95,
           "bz_profit": 1286586430.71,
@@ -5630,7 +5852,7 @@
         {
           "ts_code": "688120.SH",
           "end_date": "20231231",
-          "bz_item": "其他主营业务",
+          "bz_item": "其他",
           "bz_code": "P",
           "bz_sales": 230215643.61,
           "bz_profit": 105850430.48,
@@ -5640,7 +5862,17 @@
         {
           "ts_code": "688120.SH",
           "end_date": "20231231",
-          "bz_item": "CMP设备",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 2507991057.37,
+          "bz_profit": 1154091207.27,
+          "bz_cost": 1353899850.1,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20231231",
+          "bz_item": "CMP设备销售",
           "bz_code": "P",
           "bz_sales": 2277775413.76,
           "bz_profit": 1048240776.79,
@@ -5660,7 +5892,7 @@
         {
           "ts_code": "688120.SH",
           "end_date": "20230630",
-          "bz_item": "CMP设备",
+          "bz_item": "设备销售",
           "bz_code": "P",
           "bz_sales": 1142764815.48,
           "bz_profit": null,
@@ -5669,8 +5901,18 @@
         },
         {
           "ts_code": "688120.SH",
+          "end_date": "20230630",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 1234424929.07,
+          "bz_profit": null,
+          "bz_cost": null,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
           "end_date": "20221231",
-          "bz_item": "其他主营业务",
+          "bz_item": "其他",
           "bz_code": "P",
           "bz_sales": 218109612.24,
           "bz_profit": 105161556.91,
@@ -5680,7 +5922,17 @@
         {
           "ts_code": "688120.SH",
           "end_date": "20221231",
-          "bz_item": "CMP设备",
+          "bz_item": "产品",
+          "bz_code": "P",
+          "bz_sales": 1648838308.18,
+          "bz_profit": 786862726.38,
+          "bz_cost": 861975581.8,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20221231",
+          "bz_item": "CMP设备销售",
           "bz_code": "P",
           "bz_sales": 1430728695.94,
           "bz_profit": 681701169.47,
@@ -5700,34 +5952,60 @@
         {
           "ts_code": "688120.SH",
           "end_date": "20211231",
-          "bz_item": "300系列",
+          "bz_item": "合计特别调整",
           "bz_code": "P",
-          "bz_sales": 682173000.0,
+          "bz_sales": -39.3,
           "bz_profit": null,
-          "bz_cost": null,
+          "bz_cost": 29.99,
           "curr_type": "CNY"
         },
         {
           "ts_code": "688120.SH",
           "end_date": "20211231",
-          "bz_item": "200系列",
+          "bz_item": "产品",
           "bz_code": "P",
-          "bz_sales": 11550000.0,
-          "bz_profit": null,
-          "bz_cost": null,
+          "bz_sales": 804880460.7,
+          "bz_profit": 360019600.0,
+          "bz_cost": 444860929.99,
+          "curr_type": "CNY"
+        },
+        {
+          "ts_code": "688120.SH",
+          "end_date": "20211231",
+          "bz_item": "CMP设备",
+          "bz_code": "P",
+          "bz_sales": 693723000.0,
+          "bz_profit": 296746000.0,
+          "bz_cost": 396977000.0,
           "curr_type": "CNY"
         }
       ],
-      "row_count": 13,
-      "_status": "ok"
+      "row_count": 21,
+      "_status": "ok",
+      "as_of": "20251231"
     },
     "forecast": {
-      "rows": null,
-      "row_count": 0,
-      "_status": "tier_locked",
-      "_need_tier": 10000,
-      "_unlock_action": "Upgrade Tushare to 10000-tier (~¥3000-5000/yr) to unlock forecast"
+      "rows": [
+        {
+          "ts_code": "688120.SH",
+          "ann_date": "20250124",
+          "end_date": "20241231",
+          "type": "略增",
+          "p_change_min": 34.02,
+          "p_change_max": 49.22,
+          "net_profit_min": 97000.0,
+          "net_profit_max": 108000.0,
+          "last_parent_net": 72374.66,
+          "first_ann_date": "20250124",
+          "summary": "预计:净利润97000-108000",
+          "change_reason": "1、公司凭借产品技术优势，成功把握市场机遇，CMP产品市场占有率和销售规模持续提高，有效保障了经营业绩的稳步增长；2、公司持续加大研发投入和生产能力建设，增强企业核心竞争力，新产品研发和销售进展顺利，减薄装备、清洗装备、晶圆再生、CDS和SDS等初显市场成效，提升了公司营收和盈利规模。",
+          "update_flag": "0"
+        }
+      ],
+      "row_count": 1,
+      "_status": "ok",
+      "as_of": "20250124"
     }
   },
-  "completeness_pct": 80
+  "completeness_pct": 90
 }

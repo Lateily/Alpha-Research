@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-07-31T08:46:04Z",
+  "fetched_at": "2026-08-05T11:18:49Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -177,7 +177,7 @@
       "ts_code": "885338.TI",
       "name": "融资融券",
       "type": "N",
-      "total_count": 3837.0,
+      "total_count": 3844.0,
       "member_count": 5,
       "members": [
         "002594.SZ",
@@ -292,10 +292,23 @@
       ]
     },
     {
+      "ts_code": "883926.TI",
+      "name": "高贝塔值",
+      "type": "S",
+      "total_count": 100.0,
+      "member_count": 4,
+      "members": [
+        "300054.SZ",
+        "300308.SZ",
+        "603233.SH",
+        "688120.SH"
+      ]
+    },
+    {
       "ts_code": "885756.TI",
       "name": "芯片概念",
       "type": "N",
-      "total_count": 906.0,
+      "total_count": 910.0,
       "member_count": 4,
       "members": [
         "002594.SZ",
@@ -494,18 +507,6 @@
         "002594.SZ",
         "300054.SZ",
         "300308.SZ"
-      ]
-    },
-    {
-      "ts_code": "883926.TI",
-      "name": "高贝塔值",
-      "type": "S",
-      "total_count": 100.0,
-      "member_count": 3,
-      "members": [
-        "300054.SZ",
-        "603233.SH",
-        "688120.SH"
       ]
     },
     {
@@ -909,7 +910,7 @@
       "ts_code": "885520.TI",
       "name": "沪股通",
       "type": "N",
-      "total_count": 1640.0,
+      "total_count": 1639.0,
       "member_count": 2,
       "members": [
         "603233.SH",
@@ -920,7 +921,7 @@
       "ts_code": "885710.TI",
       "name": "锂电池概念",
       "type": "N",
-      "total_count": 606.0,
+      "total_count": 608.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -931,7 +932,7 @@
       "ts_code": "885736.TI",
       "name": "无人驾驶",
       "type": "N",
-      "total_count": 408.0,
+      "total_count": 407.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -942,7 +943,7 @@
       "ts_code": "885887.TI",
       "name": "数据中心(AIDC)",
       "type": "N",
-      "total_count": 645.0,
+      "total_count": 649.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -953,7 +954,7 @@
       "ts_code": "885897.TI",
       "name": "中芯国际概念",
       "type": "N",
-      "total_count": 89.0,
+      "total_count": 90.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -975,7 +976,7 @@
       "ts_code": "886009.TI",
       "name": "先进封装",
       "type": "N",
-      "total_count": 200.0,
+      "total_count": 203.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -986,7 +987,7 @@
       "ts_code": "886042.TI",
       "name": "存储芯片",
       "type": "N",
-      "total_count": 201.0,
+      "total_count": 200.0,
       "member_count": 2,
       "members": [
         "300054.SZ",
@@ -997,7 +998,7 @@
       "ts_code": "886100.TI",
       "name": "DeepSeek概念",
       "type": "N",
-      "total_count": 768.0,
+      "total_count": 769.0,
       "member_count": 2,
       "members": [
         "002594.SZ",
@@ -2008,7 +2009,7 @@
       "ts_code": "885431.TI",
       "name": "新能源汽车",
       "type": "N",
-      "total_count": 1051.0,
+      "total_count": 1061.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2028,7 +2029,7 @@
       "ts_code": "885517.TI",
       "name": "机器人概念",
       "type": "N",
-      "total_count": 1210.0,
+      "total_count": 1216.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2038,7 +2039,7 @@
       "ts_code": "885521.TI",
       "name": "粤港澳大湾区",
       "type": "N",
-      "total_count": 486.0,
+      "total_count": 489.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2048,7 +2049,7 @@
       "ts_code": "885531.TI",
       "name": "光伏概念",
       "type": "N",
-      "total_count": 599.0,
+      "total_count": 601.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2058,7 +2059,7 @@
       "ts_code": "885539.TI",
       "name": "医疗器械概念",
       "type": "N",
-      "total_count": 407.0,
+      "total_count": 408.0,
       "member_count": 1,
       "members": [
         "603233.SH"
@@ -2068,7 +2069,7 @@
       "ts_code": "885545.TI",
       "name": "汽车电子",
       "type": "N",
-      "total_count": 389.0,
+      "total_count": 391.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2125,6 +2126,16 @@
       ]
     },
     {
+      "ts_code": "885770.TI",
+      "name": "智能物流",
+      "type": "N",
+      "total_count": 246.0,
+      "member_count": 1,
+      "members": [
+        "603233.SH"
+      ]
+    },
+    {
       "ts_code": "885809.TI",
       "name": "柔性屏(折叠屏)",
       "type": "N",
@@ -2138,7 +2149,7 @@
       "ts_code": "885840.TI",
       "name": "人民币贬值受益",
       "type": "N",
-      "total_count": 605.0,
+      "total_count": 606.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2188,7 +2199,7 @@
       "ts_code": "885922.TI",
       "name": "盐湖提锂",
       "type": "N",
-      "total_count": 46.0,
+      "total_count": 45.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2208,7 +2219,7 @@
       "ts_code": "885929.TI",
       "name": "专精特新",
       "type": "N",
-      "total_count": 1212.0,
+      "total_count": 1226.0,
       "member_count": 1,
       "members": [
         "688120.SH"
@@ -2218,7 +2229,7 @@
       "ts_code": "885944.TI",
       "name": "动力电池回收",
       "type": "N",
-      "total_count": 93.0,
+      "total_count": 94.0,
       "member_count": 1,
       "members": [
         "002594.SZ"
@@ -2288,7 +2299,7 @@
       "ts_code": "886033.TI",
       "name": "共封装光学(CPO)",
       "type": "N",
-      "total_count": 203.0,
+      "total_count": 204.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2298,7 +2309,7 @@
       "ts_code": "886044.TI",
       "name": "液冷服务器",
       "type": "N",
-      "total_count": 226.0,
+      "total_count": 228.0,
       "member_count": 1,
       "members": [
         "300308.SZ"
@@ -2358,7 +2369,7 @@
       "ts_code": "886110.TI",
       "name": "2026中报预增",
       "type": "N",
-      "total_count": 484.0,
+      "total_count": 507.0,
       "member_count": 1,
       "members": [
         "300054.SZ"
@@ -2481,7 +2492,8 @@
       "883443.TI",
       "700309.TI",
       "700340.TI",
-      "883913.TI"
+      "883913.TI",
+      "883926.TI"
     ],
     "002594.SZ": [
       "700001.TI",
@@ -2616,7 +2628,8 @@
       "703793.TI",
       "883441.TI",
       "700306.TI",
-      "700332.TI"
+      "700332.TI",
+      "885770.TI"
     ],
     "688120.SH": [
       "700001.TI",
@@ -2778,7 +2791,7 @@
       "700802.TI"
     ]
   },
-  "total_concepts": 222,
-  "total_memberships": 381,
+  "total_concepts": 223,
+  "total_memberships": 383,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }
