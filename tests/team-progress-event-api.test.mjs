@@ -123,6 +123,15 @@ async function testInvalidWriteKeyDoesNotCallGitHub() {
   }
 }
 
+async function testOfficialGithubPagesOriginIsAllowed() {
+  const req = { method: 'OPTIONS', headers: { origin: 'https://lateily.github.io' } };
+  const res = makeResponse();
+  await handler(req, res);
+
+  assert.equal(res.code, 200);
+  assert.equal(res.headers['Access-Control-Allow-Origin'], 'https://lateily.github.io');
+}
+
 async function testValidPostWritesStandardComment() {
   const originalFetch = globalThis.fetch;
   const calls = [];
@@ -199,6 +208,7 @@ function testCommentFormat() {
 
 await testMissingWriteKeyDoesNotCallGitHub();
 await testInvalidWriteKeyDoesNotCallGitHub();
+await testOfficialGithubPagesOriginIsAllowed();
 await testValidPostWritesStandardComment();
 await testValidationRejectsUnsafeFilesBeforeWrite();
 testCommentFormat();
