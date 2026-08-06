@@ -1,4 +1,4 @@
-# AR 研究工程永久总账
+﻿# AR 研究工程永久总账
 
 > 生效日期:2026-07-31。维护人:Junyan。工程协作:Claude/Codex/Reed/Better。
 > 本文件解决一个具体问题:研究工程不能只存在于聊天记录、临时承诺或某个 Agent 的记忆里。
@@ -73,7 +73,7 @@
 | R-011 | 前兆层四格表 | `APPROVED` | Validation Agent | 目前容易只讲亮灯后应验案例,未固定统计漏报和误报 | 每晚保存昨日灯数与后续结果;固定 TP/FP/FN/TN 和基准率;按独立事件簇报告;n 未达门槛只显示计数 |
 | R-012 | 主力净额指标体检 | `APPROVED` | Validation Agent | 资金门、轮动面板、nowcast 依赖同一地基指标,但尚无定盘预测信息量与稳定性体检 | 近 60 日全市场按日和行业聚类检验 T+1/T+3;报告覆盖、缺失、极值、方向稳定性;结果决定权重,不能由既有规则反推结论 |
 | R-013 | 否决信号机会成本 | `APPROVED` | Validation Agent | 被 veto/NO_TRADE 的对象只看短期防损,没有统一跟踪 T+10 反事实 | 全部否决对象回填 T+1/T+3/T+10;以可执行触发价计,无触发价标 NOT_SCORABLE;周报固定展示保护与机会成本两面 |
-| R-014 | 注册 schema v2 与 tainted 检测 | `IN_PROGRESS` | Claude | **PR 待合并**:`registry.py` schema v2 —— `registered_at`/`registered_trade_date`/`written_by` 随信号原子写入,并向 R-015 事件账本追加 `register` 事件;账本写不进去 ⇒ 登记失败、信号不落盘。两条注册路径(paper_tracker 研究预注册 / execution_tracker 官方样本)均已接线。selftest 20/20,CI 已接 | **历史 128 行一律只派生不写入** —— C5 §2.2 冻结输入的缺失→值属 P3 genesis,P3 仅在 S0 合法,历史行全在 S1/S2,回填即 rewrite。`registered_at_of()` 返回 (值,来源) 从不落盘。过渡期锚点 = min(parse_trade_date(timestamp), 首次 git 出现日),相差>0 标 backdated 不计门槛。**升 DONE 的条件**:R-039 簇冻结落地 + 首次正式夜链验证新字段真的写出来 |
+| R-014 | 注册 schema v2 与 tainted 检测 | `DELIVERED_UNWIRED` | Claude | **PR #217 已合并**(feat(r014): 注册 schema v2 —— R-015 首次真正接线):`registry.py` schema v2 —— `registered_at`/`registered_trade_date`/`written_by` 随信号原子写入,并向 R-015 事件账本追加 `register` 事件;账本写不进去 ⇒ 登记失败、信号不落盘。两条注册路径(paper_tracker 研究预注册 / execution_tracker 官方样本)均已接线。selftest 20/20,CI 已接 | **历史 128 行一律只派生不写入** —— C5 §2.2 冻结输入的缺失→值属 P3 genesis,P3 仅在 S0 合法,历史行全在 S1/S2,回填即 rewrite。`registered_at_of()` 返回 (值,来源) 从不落盘。过渡期锚点 = min(parse_trade_date(timestamp), 首次 git 出现日),相差>0 标 backdated 不计门槛。**升 DONE 的条件**:R-039 簇冻结落地 + 首次正式夜链验证新字段真的写出来 |
 | R-015 | 不可篡改事件账本与数据 CI | `DELIVERED_UNWIRED` | Claude+Audit Agent | **PR #212 已合并**:event_ledger.py 三层篡改检测(哈希链 / 锚点 / git 行前缀)+ 排他 flock + CI 双触发器(pull_request 加 .jsonl* 路径、新增 push:main)。敌意复核 4 BLOCKER + 3 MAJOR 全修,selftest 27/27,逐层短路转红数 4/6/4 | **为什么是 UNWIRED 而不是 DONE**:模块完全没有接线 —— `grep -rn event_ledger` 在模块自身之外零命中,生产写手 `execution_tracker.py --log` 与 `run_official_sample.append_log` 仍直接写 `paper_signal_log.json`,flock 目前什么都没保护、三条种子记录是装饰性的。**接线是 R-014/R-039 的工作,完成后才升级状态**。已知边界(已写进模块 docstring,不得对外声称“账本已不可篡改”):①尾部截断哈希链构造上抓不到,靠锚点;②账本与锚点一并删除①②都抓不到,靠 git 行前缀;③三层叠加只提高门槛,真正的保证来自已提交的 git 历史,而 0712 的 git-reset-hard 证明 git 本身在此仓库也不构成 append-only |
 | R-016 | 十日检察官与法庭唤醒 | `APPROVED` | Court Agent | 规则已经提出,仍依赖人工记得开庭;历史上出现延迟数晚 | `court_10d` 进入夜链;到期自动入 review queue;结论带证据更新时间;逾期成为夜链非完整项 |
 | R-017 | 隔夜锚生产化 | `APPROVED` | Macro Agent | 2026-07-31 运行时文件仍停在 20260722,四锚 DATA_BLOCKED | 盘前自动刷新 NVDA/SOX/TSM ADR/A50;逐源 freshness;旧文件不得冒充当日;失败进入盘前告警 |

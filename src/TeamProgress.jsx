@@ -38,18 +38,11 @@ const BP_BLOCKS = [
   { id:'块1', name:'研究框架', role:'大脑',   pct:75, owner:'Junyan',        lbl:'块1-研究框架', ok:true  },
   { id:'块2', name:'数据源',   role:'原料',   pct:55, owner:'Junyan+Claude', lbl:'块2-数据源',   ok:true  },
   { id:'块3', name:'引擎层',   role:'车间',   pct:60, owner:'Claude',        lbl:'块3-引擎层',   ok:true  },
-  { id:'块4', name:'契约层',   role:'传送带', pct:10, owner:'Junyan',        lbl:'块4-契约层',   ok:false, note:'堵点'  },
+  { id:'块4', name:'契约层',   role:'传送带', pct:70, owner:'Junyan',        lbl:'块4-契约层',   ok:true  },
   { id:'块5', name:'前端载体', role:'展厅',   pct:10, owner:'Better',        lbl:'块5-前端',     ok:false, note:'最薄弱'},
   { id:'块6', name:'AI 系统',  role:'工人',   pct:15, owner:'Reed',          lbl:'块6-AI系统',   ok:false },
   { id:'块7', name:'团队流程', role:'神经',   pct:60, owner:'Junyan',        lbl:'块7-团队流程', ok:true  },
   { id:'块8', name:'运维',     role:'电力',   pct:55, owner:'Claude',        lbl:'块8-运维',     ok:true  },
-];
-
-// ── BLUEPRINT: 关键路径 ───────────────────────────────────────────────────────
-const CRITICAL = [
-  { kind:'blocked', tag:'堵点', title:'契约层接线 #170',  body:'块4(0→70%)未接通 → 块5前端被卡在 10%。打通 #170 是解锁前端的唯一前置。', n:170 },
-  { kind:'warn',    tag:'验证', title:'夜链硬闸 #184',    body:'块3靠 #184 [R0] 收口终态 → 60% 推至 80% 并给契约可信上游。',             n:184 },
-  { kind:'info',    tag:'积累', title:'纸面样本 < 30',    body:'< 30 独立样本前不谈胜率。持续跑官方纸面样本是一切有效性论断的前置门槛。',  n:null },
 ];
 
 // ── BLUEPRINT: 在途工作流分组(GitHub label 匹配) ─────────────────────────────
@@ -502,13 +495,22 @@ function ProjectBlueprint() {
         fetch(`${GH_API}/issues?state=open&per_page=100`, { headers: GH_ACCEPT }),
         fetch(`${GH_API}/pulls?state=open&per_page=50`,   { headers: GH_ACCEPT }),
       ]);
-      const [id, pd] = await Promise.all([ir.json(), pr.json()]);
+      // Parse both bodies once; catch JSON failures independently
+      const [id, pd] = await Promise.all([
+        ir.json().catch(() => null),
+        pr.json().catch(() => null),
+      ]);
+      if (!ir.ok) throw new Error(`GitHub Issues API ${ir.status}: ${id?.message || 'rate limit or access error'}`);
+      if (!pr.ok) throw new Error(`GitHub PRs API ${pr.status}: ${pd?.message || 'rate limit or access error'}`);
+      if (!Array.isArray(id)) throw new Error(`Issues: unexpected response shape — ${id?.message || String(id).slice(0, 80)}`);
+      if (!Array.isArray(pd)) throw new Error(`PRs: unexpected response shape — ${pd?.message || String(pd).slice(0, 80)}`);
       // /issues endpoint returns PRs too — filter them out
-      setIssues(Array.isArray(id) ? id.filter(i => !i.pull_request) : []);
-      setPrs(Array.isArray(pd) ? pd : []);
+      setIssues(id.filter(i => !i.pull_request));
+      setPrs(pd);
       setGhAt(new Date().toISOString());
       setGhError('');
     } catch (e) {
+      // Keep existing issues/prs in state (stale data > empty); only update error banner
       setGhError(e instanceof Error ? e.message : String(e));
     } finally {
       setGhLoading(false);
@@ -520,6 +522,9 @@ function ProjectBlueprint() {
     const t = setInterval(fetchGh, GH_REFRESH_MS);
     return () => clearInterval(t);
   }, [fetchGh]);
+
+  // Bug-labeled open issues → drive the critical path section (never hardcode issue numbers)
+  const bugIssues = useMemo(() => issues.filter(i => i.labels.some(l => l.name === 'bug')), [issues]);
 
   // Issues grouped by stream (union of block labels)
   const streamIssues = useMemo(() =>
@@ -556,28 +561,41 @@ function ProjectBlueprint() {
         {/* GitHub API error */}
         {ghError && <div style={bpS.errBand}>GitHub API: {ghError}</div>}
 
-        {/* ── 关键路径 ── */}
+        {/* ── 关键路径:bug 标签 open issues + 固定样本提醒 ── */}
         <div>
-          <div style={bpS.subHead}>关键路径 · 下一步先做什么</div>
+          <div style={bpS.subHead}>关键路径 · 当前堵点(实时 GitHub bug 标签)</div>
           <div style={bpS.critGrid}>
-            {CRITICAL.map(c => {
-              const borderColor = c.kind === 'blocked' ? palette.red : c.kind === 'warn' ? palette.amber : palette.blue;
-              return (
-                <div key={c.tag} style={{ ...bpS.critCard, borderLeftColor: borderColor }}>
+            {/* Live bug-labeled issues — never hardcode issue numbers here */}
+            {ghLoading && !issues.length ? (
+              <div style={{ color:palette.muted, fontSize:12 }}>加载中…</div>
+            ) : bugIssues.length > 0 ? (
+              bugIssues.map(iss => (
+                <div key={iss.number} style={{ ...bpS.critCard, borderLeftColor: palette.red }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                    <span style={{ ...bpS.critTag, color: borderColor }}>{c.tag}</span>
-                    {c.n && (
-                      <a href={GH_ISSUE_LINK(c.n)} target="_blank" rel="noreferrer"
-                        style={{ fontSize:11, color:palette.blue, display:'flex', gap:3, alignItems:'center', textDecoration:'none' }}>
-                        #{c.n} <ExternalLink size={11} />
-                      </a>
-                    )}
+                    <span style={{ ...bpS.critTag, color: palette.red }}>堵点</span>
+                    <a href={GH_ISSUE_LINK(iss.number)} target="_blank" rel="noreferrer"
+                      style={{ fontSize:11, color:palette.blue, display:'flex', gap:3, alignItems:'center', textDecoration:'none' }}>
+                      #{iss.number} <ExternalLink size={11} />
+                    </a>
                   </div>
-                  <div style={bpS.critTitle}>{c.title}</div>
-                  <div style={bpS.critBody}>{c.body}</div>
+                  <div style={bpS.critTitle}>{iss.title}</div>
+                  <div style={bpS.critBody}>{iss.labels.filter(l => l.name !== 'bug').map(l => l.name).join(' · ')}</div>
                 </div>
-              );
-            })}
+              ))
+            ) : !ghError ? (
+              <div style={{ ...bpS.critCard, borderLeftColor: palette.green }}>
+                <span style={{ ...bpS.critTag, color: palette.green }}>无堵点</span>
+                <div style={bpS.critBody}>当前无 bug 标签 open issue。</div>
+              </div>
+            ) : null}
+            {/* Static: sample-count gate — always shown, no issue number */}
+            <div style={{ ...bpS.critCard, borderLeftColor: palette.blue }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span style={{ ...bpS.critTag, color: palette.blue }}>积累</span>
+              </div>
+              <div style={bpS.critTitle}>纸面样本 &lt; 30</div>
+              <div style={bpS.critBody}>&lt; 30 独立样本前不谈胜率。持续跑官方纸面样本是一切有效性论断的前置门槛。</div>
+            </div>
           </div>
         </div>
 
