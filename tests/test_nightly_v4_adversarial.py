@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import shutil
 import tempfile
@@ -1051,14 +1052,24 @@ class ProtectedLedgerAppendOnlyTest(unittest.TestCase):
 class OvernightAnchorLookAheadTest(unittest.TestCase):
     """历史重跑不得混入未来隔夜数据 —— 8/5 重跑 8/4 时读到 8/5 却标成 8/4。"""
 
-    def test_fetch_window_is_derived_from_target_not_system_today(self):
-        src = (ET / "overnight_anchor.py").read_text(encoding="utf-8")
-        self.assertIn("end = today or target_trade_date()", src,
-                      "抓取窗口仍用系统当天 —— 历史重跑会前视")
-        self.assertNotIn('end = today or time.strftime("%Y%m%d")', src)
-        self.assertIn('df["trade_date"].astype(str).str[:8] <= end', src,
-                      "没有显式剔除晚于目标日的行")
-        self.assertIn("if as_of > end:", src, "缺少未来数据兜底")
+    def test_admissible_cutoff_excludes_target_day_itself(self):
+        """**行为级**:每个源的可用时点由其收盘时刻决定,T 当天一律不可用。
+
+        产物盖的是「T 09:00 盘前」戳,而 trade_date==T 的读数那时还不存在:
+        A50 夜盘 T+1 凌晨才收,台湾加权 T 日 13:30(北京时间)才收。
+        上一版只按 target 裁剪,于是 TWII as_of=T 被当成了 T 日的隔夜锚。
+        """
+        import overnight_anchor as oa
+        for key, spec in oa.AUTO_SOURCES.items():
+            cutoff = oa._latest_admissible("20260805", spec["max_trade_date_offset"])
+            self.assertLess(cutoff, "20260805",
+                            f"{key} 允许了 T 当天({cutoff}),盘前戳时该数据尚未存在")
+
+    def test_overnight_window_excludes_target_day(self):
+        import overnight_anchor as oa
+        window = oa._overnight_window("20260805")
+        self.assertNotIn("20260805", window, "窗口含 T 当天 —— 盘中/盘后数据会冒充盘前锚")
+        self.assertIn("20260804", window, "T-1 应可用")
 
     def test_manual_anchor_outside_window_cannot_override_auto(self):
         import overnight_anchor as oa
@@ -1122,11 +1133,91 @@ class ContractStatusOrthogonalityTest(unittest.TestCase):
         self.assertEqual([], deg)
 
     def test_meta_reports_both_dimensions_and_honest_contract_count(self):
-        src = (ET / "export_contracts.py").read_text(encoding="utf-8")
-        self.assertIn('meta["data_quality"]', src, "meta 未单独报 data_quality")
-        self.assertIn('meta["business_contract_count"]', src,
-                      "未区分业务契约与控制文件 —— 对外说「9 份契约」把控制文件也算进去了")
-        self.assertIn('"control_files"', src)
+        """**行为级**:真跑 export_all 到临时目录,检查产出的 meta 本身。"""
+        import export_contracts as ec
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        meta = ec.export_all(v2dir=tmp)
+        self.assertIn("data_quality", meta, "meta 未单独报 data_quality")
+        self.assertIn(meta["data_quality"], ("COMPLETE", "PARTIAL", "BLOCKED"))
+        self.assertIn("business_contract_count", meta)
+        self.assertEqual(meta["business_contract_count"], len(meta["contracts"]))
+        self.assertEqual(["meta.json", "current_run.json"], meta["control_files"])
+        written = {f for f in os.listdir(tmp) if f.endswith(".json")}
+        self.assertNotIn("meta.json", set(meta["contracts"]),
+                         "meta.json 被当成业务契约计数了")
+        self.assertTrue(written, "export_all 没有真的写出文件")
+
+
+class BackdatedAppendTest(unittest.TestCase):
+    """append-only 只保证「不改旧的」,不保证「新增的不是旧日期」。"""
+
+    def _stage(self, name, before, after, target="20260805"):
+        import nightly_publish as npub
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        et = os.path.join(tmp, "et"); mf = os.path.join(et, "model_fund")
+        rd = os.path.join(tmp, "run")
+        os.makedirs(mf); os.makedirs(rd)
+        base = {"nav_history.json": [], "decision_log.json": [], "human_shadow.json": [],
+                "orders.json": [], "fund.json": {"cash": 1.0}}
+        base[name] = before
+        for n, v in base.items():
+            json.dump(v, open(os.path.join(mf, n), "w"))
+        snap = {"protected": {"model_fund": npub._tree_hashes(mf)},
+                "protected_content": {"model_fund": npub._protected_content(mf)}}
+        json.dump(snap, open(os.path.join(rd, "staging_input.json"), "w"))
+        json.dump(after, open(os.path.join(mf, name), "w"))
+        return npub.verify_protected_inputs(et, rd, target=target)
+
+    def test_backdated_row_is_rejected_in_every_dated_ledger(self):
+        for name in ("decision_log.json", "human_shadow.json", "nav_history.json"):
+            errs = self._stage(name, [{"date": "20260804"}],
+                               [{"date": "20260804"}, {"date": "20260701"}])
+            self.assertTrue(any("≠ 本轮" in e for e in errs),
+                            f"{name} 允许了回填旧日期: {errs}")
+
+    def test_future_dated_row_is_rejected(self):
+        errs = self._stage("decision_log.json", [], [{"date": "20260901"}])
+        self.assertTrue(any("≠ 本轮" in e for e in errs), errs)
+
+    def test_target_dated_append_passes(self):
+        errs = self._stage("decision_log.json", [{"date": "20260804"}],
+                           [{"date": "20260804"}, {"date": "20260805"}])
+        self.assertEqual([], errs)
+
+    def test_multi_row_allowed_where_declared(self):
+        """决策/影子盘一天可多行;NAV 一天只许一行。"""
+        errs = self._stage("decision_log.json", [],
+                           [{"date": "20260805"}, {"date": "20260805"}])
+        self.assertEqual([], errs)
+        errs2 = self._stage("nav_history.json", [],
+                            [{"date": "20260805"}, {"date": "20260805"}])
+        self.assertTrue(any("只许一行" in e for e in errs2), errs2)
+
+
+class NightlyDataQualitySurfacedTest(unittest.TestCase):
+    """report=COMPLETE 只说明流水线成功;信息完整度必须在同一层可见。"""
+
+    def test_collect_data_quality_never_fakes_complete(self):
+        import run_nightly as rn
+        orig = rn.HERE
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        try:
+            rn.HERE = os.path.join(tmp, "experiments", "execution_tracker")
+            os.makedirs(rn.HERE)
+            got = rn._collect_data_quality(base=rn.HERE)   # meta.json 不存在
+            self.assertEqual("UNKNOWN", got["data_quality"],
+                             "meta 不可读时假装 COMPLETE")
+        finally:
+            rn.HERE = orig
+
+    def test_top_level_report_and_data_quality_are_separate_keys(self):
+        import run_nightly as rn
+        src = (ET / "run_nightly.py").read_text(encoding="utf-8")
+        self.assertIn("_collect_data_quality()", src)
+        self.assertTrue(hasattr(rn, "_collect_data_quality"))
 
 
 class RuleCompletenessTest(unittest.TestCase):
@@ -1321,14 +1412,29 @@ class NavMarkToMarketTest(unittest.TestCase):
         self.assertEqual([], navh, "拒绝之后仍然写了 NAV 行")
 
     def test_daily_cli_exits_nonzero_and_writes_nothing_when_marks_incomplete(self):
-        """进程级:--daily 缺定盘价须 DATA_BLOCKED + 非零退出 + 不动账本。"""
-        src = (ET / "model_paper_fund.py").read_text(encoding="utf-8")
-        self.assertIn("require_complete_marks=True", src, "--daily 未启用强制完整")
-        i_try = src.index("except NavMarksIncomplete")
-        i_save = src.index('save("fund.json", fund)')
-        self.assertLess(i_try, i_save, "拒绝分支排在写盘之后 —— 会先落盘再报错")
-        self.assertIn("DATA_BLOCKED", src[i_try:i_save])
-        self.assertIn("return 1", src[i_try:i_save], "拒绝时未非零退出")
+        """**行为级**:真起进程跑 --daily,缺定盘价须 DATA_BLOCKED + 退出码 1 + 账本零改动。
+
+        上一版这条只检查源码里有没有 `return 1` —— 而 model_paper_fund 的
+        `if __name__` 里当时是裸 `main()`,返回值被丢弃,进程实际退 0。
+        源码字符串检查绿着,夜链把「拒绝写 NAV」当成功。
+        """
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        work = os.path.join(tmp, "et")
+        shutil.copytree(ET, work, ignore=shutil.ignore_patterns(
+            "runs", "samples", "reports", "*.lock", "*.jsonl", "*.anchor.json"))
+        mf = os.path.join(work, "model_fund")
+        before = {n: open(os.path.join(mf, n), "rb").read()
+                  for n in os.listdir(mf) if n.endswith(".json")}
+        env = dict(os.environ, AR_OFFLINE="1", AR_TARGET_TRADE_DATE="20260806")
+        env.pop("TUSHARE_TOKEN", None)
+        r = subprocess.run([sys.executable, os.path.join(work, "model_paper_fund.py"), "--daily"],
+                           capture_output=True, text=True, env=env, cwd=work)
+        self.assertEqual(1, r.returncode, f"退出码应为 1,实得 {r.returncode}\n{r.stdout}")
+        self.assertIn("DATA_BLOCKED", r.stdout)
+        after = {n: open(os.path.join(mf, n), "rb").read()
+                 for n in os.listdir(mf) if n.endswith(".json")}
+        self.assertEqual(before, after, "拒绝之后账本仍被改动")
 
 
 class ProtectedLedgerIsPublishedTest(unittest.TestCase):

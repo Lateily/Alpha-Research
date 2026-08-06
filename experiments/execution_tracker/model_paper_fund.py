@@ -536,4 +536,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main() 返回 1 表示 DATA_BLOCKED(如缺目标日定盘价);不 sys.exit 的话进程仍退 0,
+    # 夜链会把「拒绝写 NAV」当成功。execution_tracker / run_official_sample 早已修过,
+    # 这里漏了 —— 而漏掉它的原因是那条测试只检查源码里有没有 `return 1`,没跑进程。
+    sys.exit(main() or 0)

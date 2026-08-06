@@ -806,6 +806,31 @@ def _clear_run_state_if_terminal(run_id, terminal_written, state_path=None):
     return True
 
 
+def _collect_data_quality(base=None):
+    """把 export 层已算好的**信息完整度**提到夜链顶层。
+
+    `report` 与 `data_quality` 是两个正交维度:前者说流水线有没有跑完,
+    后者说这轮拿到的数据全不全。只报 report=COMPLETE 会让「隔夜锚缺
+    NVDA/SOX/TSM」这类降级在顶层消失。取不到 meta ⇒ UNKNOWN,
+    **不假装 COMPLETE**(缺数据 ≠ 通过)。
+    """
+    meta_path = os.path.join(base or HERE, "..", "..", "public", "data", "v2", "meta.json")
+    try:
+        with open(os.path.abspath(meta_path), encoding="utf-8") as fh:
+            meta = json.load(fh)
+    except Exception:
+        return {"data_quality": "UNKNOWN", "degraded_sources": [],
+                "business_contract_count": None}
+    if not isinstance(meta, dict):
+        return {"data_quality": "UNKNOWN", "degraded_sources": [],
+                "business_contract_count": None}
+    return {
+        "data_quality": meta.get("data_quality", "UNKNOWN"),
+        "degraded_sources": list(meta.get("degraded_sources") or []),
+        "business_contract_count": meta.get("business_contract_count"),
+    }
+
+
 def _execute_nightly():
     """在已持有全局锁时执行一轮。普通异常不清 run_state,交给下一轮恢复。"""
     run_id = f"{time.strftime('%Y%m%d_%H%M%S')}_{time.time_ns()}_{uuid.uuid4().hex[:8]}"
@@ -858,6 +883,10 @@ def _execute_nightly():
         res = run_steps(require_live=require_live, verify=True,
                         base=stage["et"], run_id=run_id)
         res["preflight"] = {"pass": True, "warns": pf["warns"]}
+        # ── 状态聚合:data_quality 必须上到夜链顶层 ──
+        # report=COMPLETE 只说明流水线成功;若宏观等来源是 PARTIAL,
+        # 只读 nightly_run.report 的消费方会误以为信息完整。两个维度都要在顶层可见。
+        res.update(_collect_data_quality())
         res["crash_recovery"] = crash_info
 
         if res["report"] == "COMPLETE":
@@ -894,7 +923,10 @@ def _execute_nightly():
         _atomic_write(os.path.join(run_dir, "result.json"), res)
         for s in res["steps"]:
             print(f"{s['step']}: {s['status']}")
-        print(f"[report] {res['report']}  run_id={run_id}  target={res.get('target_trade_date')}  [written] {OUT}")
+        print(f"[report] {res['report']}  data_quality={res.get('data_quality')}  "
+              f"run_id={run_id}  target={res.get('target_trade_date')}  [written] {OUT}")
+        if res.get("degraded_sources"):
+            print(f"  degraded: {res['degraded_sources']}")
         print("不是买卖指令;研究信号,human executes.")
         _alarm(res)
         _prune_runs()

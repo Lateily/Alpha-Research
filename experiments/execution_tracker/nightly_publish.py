@@ -45,12 +45,15 @@ PROTECTED_DIRS = ("model_fund",)
 #   · 下列文件允许**只追加**:既有元素必须逐字节不变,新增元素受各自规则约束
 #   · 其余受保护文件仍要求逐字节不变
 #   · fund.json 只允许 cash 变,且必须有对应的成交/退出事件解释它
+# append-only **只保证「不改旧的」,不保证「新增的不是旧日期」** ——
+# 这两个账本都有 date 键,却曾用 date_key=None,于是可以往回追加一条上个月的记录:
+# 既有行逐字节未变、条数只增,守卫全过,而账本被塞进了一条伪造的历史。
+# 故:凡带日期的追加型账本,新增行的日期都必须 == 本轮 target(不早不晚)。
+# one_per_target 区别在于「每日只许一行」(NAV)还是「一日可多行」(决策/影子盘)。
 APPEND_ONLY_PROTECTED = {
-    "nav_history.json": {"date_key": "date", "one_per_target": True},
-    "decision_log.json": {},
-    # 人工影子盘记录:只许追加。此前没有处置规则,会落到"逐字节不变"分支 ——
-    # 将来任何一次合法写入都会把发布卡死,而卡死原因不会出现在任何清单里。
-    "human_shadow.json": {},
+    "nav_history.json":  {"date_key": "date", "one_per_target": True},
+    "decision_log.json": {"date_key": "date", "one_per_target": False},
+    "human_shadow.json": {"date_key": "date", "one_per_target": False},
 }
 # 订单不是纯 append-only:pending→filled→closed 是**原地状态迁移**,不是追加。
 # 但迁移必须单向、且已成交的价格/数量不得改写 —— 否则改一个 fill_price 就能

@@ -52,12 +52,27 @@ ANCHORS = [
 #   · yfinance           —— 被限流
 # 所以 NVDA / SOX / TSM 保持 DATA_BLOCKED,不伪造;IXIC 与 TWII 作为**显式标注的
 # 代理**(proxy=True)供参考,绝不冒充本尊。
+# 每个源的**可用时点**:该 trade_date 的收盘,相对 A 股目标日 T 的 09:00 盘前戳,
+# 是否已经发生。max_trade_date_offset = 允许的最新 trade_date 相对 T 的偏移(天)。
+#   · 美股指数(IXIC):trade_date=T-1 的收盘在北京时间 T 日 04:00 —— T 09:00 前可得 ⇒ 0 也安全,
+#     但为避免时区/节假日错位统一取 -1(只用确定已收的那一根)
+#   · 富时A50 期货(XIN9):trade_date=T 的夜盘要到 T+1 凌晨才收 ⇒ 只能用 T-1
+#   · 台湾加权(TWII):T 日 13:30(北京时间)才收盘 ⇒ T 09:00 时不存在,只能用 T-1
+# 这道门要挡的是:产物盖着「T 09:00 盘前」的戳,内容却是 T 日盘中/盘后才存在的数据。
 AUTO_SOURCES = {
-    "A50":  {"code": "XIN9", "proxy": False, "label": "富时中国A50"},
-    "IXIC": {"code": "IXIC", "proxy": False, "label": "纳斯达克综合"},
+    "A50":  {"code": "XIN9", "proxy": False, "label": "富时中国A50",
+             "max_trade_date_offset": -1},
+    "IXIC": {"code": "IXIC", "proxy": False, "label": "纳斯达克综合",
+             "max_trade_date_offset": -1},
     "TWII": {"code": "TWII", "proxy": True,  "label": "台湾加权(半导体链代理)",
-             "proxy_for": "SOX"},
+             "proxy_for": "SOX", "max_trade_date_offset": -1},
 }
+
+
+def _latest_admissible(target, offset_days):
+    """目标日 T 的盘前帧里,某源允许的最新 trade_date。"""
+    d = datetime.datetime.strptime(str(target)[:8], "%Y%m%d")
+    return (d + datetime.timedelta(days=offset_days)).strftime("%Y%m%d")
 AUTO_ANCHORS = [
     ("IXIC", "纳斯达克综合", "US_AI"),
     ("TWII", "台湾加权(SOX 代理)", "US_SEMI_PROXY"),
@@ -65,13 +80,16 @@ AUTO_ANCHORS = [
 
 
 def _overnight_window(target):
-    """目标日的合法隔夜窗口:目标交易日当天,或其前一日(美股隔夜早于 A 股开盘)。
-    自然日近似即可 —— 这道门要挡的是"上周的手工值冒充今天",不是精确到交易日历。"""
+    """目标日 T 盘前帧可采信的 as_of 集合:**不含 T 当天**。
+
+    T 日的隔夜锚必须在 T 09:00 之前就已存在,而 trade_date==T 的读数
+    (A50 夜盘 T+1 凌晨收、台股 T 日 13:30 收)那时都还没出来。
+    上溯 3 个自然日以容纳周末与节假日;这道门挡的是「T 日盘中/盘后数据冒充盘前锚」
+    和「上周的手工值冒充今天」两件事。"""
     if not target:
         return None
     d = datetime.datetime.strptime(str(target)[:8], "%Y%m%d")
-    return {d.strftime("%Y%m%d"), (d - datetime.timedelta(days=1)).strftime("%Y%m%d"),
-            (d - datetime.timedelta(days=2)).strftime("%Y%m%d")}
+    return {(d - datetime.timedelta(days=k)).strftime("%Y%m%d") for k in (1, 2, 3)}
 
 
 def fetch_auto_anchors(token=None, today=None):
@@ -103,7 +121,10 @@ def fetch_auto_anchors(token=None, today=None):
                 continue
             df = df.sort_values("trade_date")
             # 双保险:即便接口忽略 end_date,也显式剔除晚于目标日的行。
-            df = df[df["trade_date"].astype(str).str[:8] <= end]
+            # 按**可用时点**裁剪,而不是按目标日裁剪:
+            # trade_date == T 的读数在 T 日 09:00 盘前戳的时候还不存在。
+            cutoff = _latest_admissible(end, spec.get("max_trade_date_offset", -1))
+            df = df[df["trade_date"].astype(str).str[:8] <= cutoff]
             if not len(df):
                 continue
             row = df.iloc[-1]
@@ -111,7 +132,7 @@ def fetch_auto_anchors(token=None, today=None):
             if pct is None or pct != pct:
                 continue
             as_of = str(row.get("trade_date"))[:8]
-            if as_of > end:                      # 兜底:绝不接受未来数据
+            if as_of > cutoff:                   # 兜底:绝不接受尚未收盘的数据
                 continue
             out[key] = {"pct_change": round(float(pct), 2),
                         "source": f"tushare/index_global/{spec['code']}",
@@ -226,17 +247,19 @@ def render(rep):
 
 def selftest():
     os.environ.setdefault("AR_TARGET_TRADE_DATE", "20260721")
-    W = {"as_of": "20260721"}
+    W = {"as_of": "20260720"}   # T-1:T 日 09:00 前已存在
     rep = build_anchor({"as_of": "20260721 08:55", "anchors": {
         "NVDA": dict(W, pct_change=1.2), "SOX": dict(W, pct_change=0.8),
         "TSM": dict(W, pct_change=1.0), "A50": dict(W, pct_change=-0.2),
     }}, auto={})
     # 自动源必须显式关掉,否则 selftest 会打网络、结果随行情漂
-    partial = build_anchor({"anchors": {"NVDA": {"pct_change": 1.2, "as_of": "20260721"}}},
+    partial = build_anchor({"anchors": {"NVDA": {"pct_change": 1.2, "as_of": "20260720"}}},
                            auto={})
     # 手工锚过期(不在目标隔夜窗口)⇒ 不得覆盖,须降级为 stale_manual_ignored
     stale_m = build_anchor({"anchors": {"A50": {"pct_change": 9.9, "as_of": "20260601"}}},
-                           auto={"A50": {"pct_change": 1.1, "source": "tushare", "as_of": "20260721"}})
+                           auto={"A50": {"pct_change": 1.1, "source": "tushare", "as_of": "20260720"}})
+    # T 当天的手工值不得采信 —— T 09:00 盘前戳的时候它还不存在
+    same_day = build_anchor({"anchors": {"A50": {"pct_change": 7.7, "as_of": "20260721"}}}, auto={})
     blocked = build_anchor({"anchors": {}}, auto={})
     proxy_only = build_anchor({"anchors": {}},
                               auto={"TWII": {"pct_change": 1.0, "proxy": True,
@@ -253,6 +276,9 @@ def selftest():
         ("过期手工锚不得覆盖自动源(降级 stale_manual_ignored)",
          bool(stale_m["stale_manual_ignored"])
          and next(a["pct_change"] for a in stale_m["anchors"] if a["key"] == "A50") == 1.1),
+        ("T 当天的手工锚不得采信(盘前戳时尚不存在)",
+         same_day["anchors"][3]["status"] == "DATA_BLOCKED"
+         and bool(same_day["stale_manual_ignored"])),
         ("无 as_of 的手工锚一律不采信",
          not build_anchor({"anchors": {"A50": {"pct_change": 5.5}}}, auto={})["anchors"][3]["pct_change"]),
         ("proxy 不替本尊投票:只有代理仍判 DATA_BLOCKED",
