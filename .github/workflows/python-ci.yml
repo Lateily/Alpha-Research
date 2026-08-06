@@ -4,6 +4,7 @@ on:
     paths:
       - "experiments/**/*.py"
       - "experiments/execution_tracker/**/*.json"
+      - "experiments/macro_os/**/*.json"
       # R-015 账本是 .jsonl —— 不加这条,"只改账本数据"的 PR 根本不触发本工作流,
       # 而那正是第③层唯一要把关的 diff 形态(实测:.jsonl 不匹配 *.json)
       - "experiments/execution_tracker/event_ledger.jsonl*"

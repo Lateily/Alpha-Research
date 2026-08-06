@@ -4,6 +4,10 @@
 This module defines the boundary between point-in-time macro facts, public
 consensus, pre-registered house expectations, and published event outcomes.
 It performs no network requests and emits no market or portfolio action.
+
+M0-A validates declared provider/independence identities and timestamp math.
+M0-B must still bind those declarations to immutable raw snapshots and an
+append-only registration timestamp before either property is production proof.
 """
 
 from __future__ import annotations
@@ -138,10 +142,22 @@ def house_expectation_hash(payload: dict[str, Any]) -> str:
     )
 
 
+def _reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ContractError(f"duplicate JSON key is forbidden: {key}")
+        result[key] = value
+    return result
+
+
 def load_json(path: str | Path) -> Any:
     value = Path(path)
     try:
-        return json.loads(value.read_text(encoding="utf-8"))
+        return json.loads(
+            value.read_text(encoding="utf-8"),
+            object_pairs_hook=_reject_duplicate_json_keys,
+        )
     except (OSError, json.JSONDecodeError) as exc:
         raise ContractError(f"cannot read valid JSON from {value}: {exc}") from exc
 
@@ -289,6 +305,8 @@ def validate_source_registry(payload: dict[str, Any], *, verify_hash: bool = Tru
         ids.append(source_id)
         if not re.fullmatch(r"[a-z0-9_]+", source_id):
             raise ContractError(f"invalid source_id: {source_id}")
+        if not isinstance(row["provider"], str) or not row["provider"].strip():
+            raise ContractError(f"source {source_id} requires provider")
         if not isinstance(row["independence_group"], str) or not row["independence_group"]:
             raise ContractError(f"source {source_id} requires independence_group")
         if row["region"] not in SOURCE_REGIONS:
@@ -747,8 +765,11 @@ def validate_macro_event(payload: dict[str, Any], tiers: dict[str, Any], sources
         consensus_sources.append(source)
     if consensus["status"] in {"OK", "DATA_CONFLICT"}:
         unique_groups = {source["independence_group"] for source in consensus_sources}
-        if len(unique_groups) < 2:
-            raise ContractError("formal market consensus requires two independent sources")
+        unique_providers = {source["provider"] for source in consensus_sources}
+        if len(unique_groups) < 2 or len(unique_providers) < 2:
+            raise ContractError(
+                "formal market consensus requires two independent providers and groups"
+            )
     if consensus["status"] == "OK":
         if tier in {1, 2}:
             tier_row = registered_events[event_type][1]
@@ -859,8 +880,12 @@ def validate_macro_event(payload: dict[str, Any], tiers: dict[str, Any], sources
     else:
         if payload["published_at"] is not None:
             raise ContractError("unpublished event cannot carry published_at")
+        if payload["actual"] is not None:
+            raise ContractError("unpublished event cannot carry actual")
         if payload["actual_source_id"] is not None:
             raise ContractError("unpublished event cannot carry actual_source_id")
+        if payload["surprises"] != {}:
+            raise ContractError("unpublished event cannot carry surprise results")
 
 
 def validate_default_specs() -> tuple[dict[str, Any], dict[str, Any]]:

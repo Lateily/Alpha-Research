@@ -6,6 +6,7 @@ from __future__ import annotations
 import copy
 import json
 import sys
+import tempfile
 from pathlib import Path
 from typing import Callable
 
@@ -185,6 +186,88 @@ def published_event() -> dict:
     }
 
 
+def assert_schema_shape(instance: dict, schema: dict, label: str) -> None:
+    assert schema.get("type") == "object", label
+    assert schema.get("additionalProperties") is False, label
+    properties = set(schema.get("properties", {}))
+    required = set(schema.get("required", []))
+    assert set(instance) == properties, (label, set(instance) ^ properties)
+    assert required.issubset(instance), (label, required - set(instance))
+
+
+def test_schema_python_field_shape_parity() -> None:
+    sources = contracts.load_json(contracts.SOURCE_REGISTRY)
+    tiers = contracts.load_json(contracts.EVENT_TIERS)
+    source_schema = contracts.load_json(
+        contracts.SCHEMA_DIR / "source_registry.schema.json"
+    )
+    tier_schema = contracts.load_json(
+        contracts.SCHEMA_DIR / "event_tiers.schema.json"
+    )
+    expectation_schema = contracts.load_json(
+        contracts.SCHEMA_DIR / "house_expectation.schema.json"
+    )
+    event_schema = contracts.load_json(
+        contracts.SCHEMA_DIR / "macro_event.schema.json"
+    )
+
+    assert_schema_shape(sources, source_schema, "source registry")
+    assert_schema_shape(
+        sources["sources"][0], source_schema["$defs"]["source"], "source row"
+    )
+    assert_schema_shape(
+        sources["consensus_policy"],
+        source_schema["properties"]["consensus_policy"],
+        "consensus policy",
+    )
+    assert_schema_shape(tiers, tier_schema, "event tiers")
+    assert_schema_shape(
+        tiers["tier_1_policy"],
+        tier_schema["properties"]["tier_1_policy"],
+        "tier-1 policy",
+    )
+    assert_schema_shape(
+        tiers["tier_1"][0], tier_schema["$defs"]["event_row"], "tier event row"
+    )
+
+    expected = expectation()
+    assert_schema_shape(expected, expectation_schema, "house expectation")
+    assert_schema_shape(
+        expected["forecast"], expectation_schema["properties"]["forecast"], "forecast"
+    )
+    assert_schema_shape(
+        expected["transmission_hypotheses"][0],
+        expectation_schema["properties"]["transmission_hypotheses"]["items"],
+        "transmission hypothesis",
+    )
+
+    event = published_event()
+    assert_schema_shape(event, event_schema, "macro event")
+    assert_schema_shape(
+        event["market_consensus"],
+        event_schema["properties"]["market_consensus"],
+        "market consensus",
+    )
+    assert_schema_shape(
+        event["market_consensus"]["source_values"][0],
+        event_schema["properties"]["market_consensus"]["properties"][
+            "source_values"
+        ]["items"],
+        "consensus source value",
+    )
+    assert_schema_shape(
+        event["house_expectations"][0],
+        event_schema["properties"]["house_expectations"]["items"],
+        "house expectation reference",
+    )
+    assert_schema_shape(
+        event["source_refs"][0],
+        event_schema["properties"]["source_refs"]["items"],
+        "source reference",
+    )
+    print("PASS JSON Schema and Python fixture field shapes are aligned")
+
+
 def test_default_specs_and_schemas() -> None:
     sources, tiers = contracts.validate_default_specs()
     assert sources["status"] == "APPROVED_SPEC"
@@ -195,6 +278,25 @@ def test_default_specs_and_schemas() -> None:
         for path in contracts.SCHEMA_DIR.glob("*.schema.json")
     )
     print("PASS default source registry, tier registry, and four schemas")
+
+    macro_schema = contracts.load_json(
+        contracts.SCHEMA_DIR / "macro_event.schema.json"
+    )
+    unpublished_rules = macro_schema["allOf"][0]["else"]["properties"]
+    assert unpublished_rules["actual"] == {"const": None}
+    assert unpublished_rules["actual_source_id"] == {"const": None}
+    assert unpublished_rules["published_at"] == {"const": None}
+    assert unpublished_rules["surprises"]["maxProperties"] == 0
+    print("PASS macro-event schema matches Python unpublished-event boundary")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        duplicate = Path(tmp) / "duplicate.json"
+        duplicate.write_text('{"status":"OK","status":"DATA_BLOCKED"}', encoding="utf-8")
+        rejected(
+            "duplicate JSON keys fail closed",
+            lambda: contracts.load_json(duplicate),
+            "duplicate JSON key",
+        )
 
 
 def test_source_registry_failures() -> None:
@@ -222,6 +324,19 @@ def test_source_registry_failures() -> None:
     fake_official["registry_hash"] = contracts.source_registry_hash(fake_official)
     rejected("official source cannot be E2", lambda: contracts.validate_source_registry(fake_official), "must be E1")
 
+    missing_actual_role = copy.deepcopy(sources)
+    for row in missing_actual_role["sources"]:
+        if row["source_id"] == "bls_public_api":
+            row["roles"] = ["MARKET_SERIES"]
+    missing_actual_role["registry_hash"] = contracts.source_registry_hash(
+        missing_actual_role
+    )
+    rejected(
+        "official actual source requires OFFICIAL_ACTUAL role",
+        lambda: contracts.validate_source_registry(missing_actual_role),
+        "must declare OFFICIAL_ACTUAL",
+    )
+
     same_provider = available_sources()
     for row in same_provider["sources"]:
         if row["source_id"] in {"trading_economics_calendar", "reuters_economic_calendar"}:
@@ -234,7 +349,25 @@ def test_source_registry_failures() -> None:
     rejected(
         "two source ids from one provider are not independent",
         lambda: contracts.validate_macro_event(event, tiers, same_provider),
-        "two independent sources",
+        "two independent providers and groups",
+    )
+
+    same_named_provider = available_sources()
+    for row in same_named_provider["sources"]:
+        if row["source_id"] in {
+            "trading_economics_calendar",
+            "reuters_economic_calendar",
+        }:
+            row["provider"] = "Shared upstream mirror"
+    same_named_provider["registry_hash"] = contracts.source_registry_hash(
+        same_named_provider
+    )
+    contracts.validate_source_registry(same_named_provider)
+    tiers = active_tiers(same_named_provider)
+    rejected(
+        "distinct groups cannot hide one shared provider",
+        lambda: contracts.validate_macro_event(event, tiers, same_named_provider),
+        "two independent providers and groups",
     )
 
 
@@ -251,6 +384,17 @@ def test_event_tier_failures() -> None:
     mirror_actual["tier_1"][0]["actual_source_ids"] = ["tushare_macro"]
     mirror_actual["registry_hash"] = contracts.event_tiers_hash(mirror_actual)
     rejected("E2 mirror cannot be official actual", lambda: contracts.validate_event_tiers(mirror_actual, sources), "official E1")
+
+    calibrating_with_value = copy.deepcopy(tiers)
+    calibrating_with_value["tier_1"][0]["consensus_tolerance"] = 0.05
+    calibrating_with_value["registry_hash"] = contracts.event_tiers_hash(
+        calibrating_with_value
+    )
+    rejected(
+        "CALIBRATING tolerance cannot carry a numeric threshold",
+        lambda: contracts.validate_event_tiers(calibrating_with_value, sources),
+        "calibrating tolerance must be null",
+    )
 
 
 def test_expectation_contract() -> None:
@@ -307,7 +451,11 @@ def test_published_event_contract() -> None:
 
     single_source = copy.deepcopy(event)
     single_source["market_consensus"]["source_values"] = single_source["market_consensus"]["source_values"][:1]
-    rejected("single-source consensus", lambda: contracts.validate_macro_event(single_source, tiers, sources), "two independent sources")
+    rejected(
+        "single-source consensus",
+        lambda: contracts.validate_macro_event(single_source, tiers, sources),
+        "two independent providers and groups",
+    )
 
     missing_provenance = copy.deepcopy(event)
     missing_provenance["source_refs"] = [
@@ -329,6 +477,28 @@ def test_published_event_contract() -> None:
     averaged_conflict["market_consensus"]["status"] = "DATA_CONFLICT"
     averaged_conflict["market_consensus"]["value"] = 0.3
     rejected("conflict cannot be averaged", lambda: contracts.validate_macro_event(averaged_conflict, tiers, sources), "must not average")
+
+    blocked_with_value = copy.deepcopy(event)
+    blocked_with_value["market_consensus"] = {
+        "status": "DATA_BLOCKED",
+        "value": 0.205,
+        "tolerance": None,
+        "tolerance_version": None,
+        "source_values": [],
+    }
+    rejected(
+        "DATA_BLOCKED consensus cannot carry a formal value",
+        lambda: contracts.validate_macro_event(blocked_with_value, tiers, sources),
+        "cannot carry a formal value",
+    )
+
+    outside_source_range = copy.deepcopy(event)
+    outside_source_range["market_consensus"]["value"] = 0.22
+    rejected(
+        "formal consensus value must remain inside source range",
+        lambda: contracts.validate_macro_event(outside_source_range, tiers, sources),
+        "must lie within source values",
+    )
 
     wrong_sources = copy.deepcopy(sources)
     for row in wrong_sources["sources"]:
@@ -352,8 +522,35 @@ def test_published_event_contract() -> None:
     rejected("unvalidated tolerance cannot emit OK consensus", lambda: contracts.validate_macro_event(event, calibrating, sources), "tolerance is calibrating")
 
     unpublished = copy.deepcopy(event)
-    unpublished["status"] = "SCHEDULED"
-    rejected("unpublished event cannot carry publish time", lambda: contracts.validate_macro_event(unpublished, tiers, sources), "cannot carry published_at")
+    unpublished.update(
+        {
+            "status": "SCHEDULED",
+            "published_at": None,
+            "actual": None,
+            "actual_source_id": None,
+            "surprises": {},
+        }
+    )
+    contracts.validate_macro_event(unpublished, tiers, sources)
+    print("PASS unpublished event with no outcome values")
+
+    unpublished_actual = copy.deepcopy(unpublished)
+    unpublished_actual["actual"] = 3.2
+    rejected(
+        "unpublished event cannot carry actual",
+        lambda: contracts.validate_macro_event(unpublished_actual, tiers, sources),
+        "cannot carry actual",
+    )
+
+    unpublished_surprise = copy.deepcopy(unpublished)
+    unpublished_surprise["surprises"] = {
+        "vs_market": {"value": 0.1, "status": "SCORABLE"}
+    }
+    rejected(
+        "unpublished event cannot carry surprise results",
+        lambda: contracts.validate_macro_event(unpublished_surprise, tiers, sources),
+        "cannot carry surprise results",
+    )
 
     tier2 = copy.deepcopy(event)
     tier2["event_id"] = "US_PPI_20260813"
@@ -383,6 +580,7 @@ def test_published_event_contract() -> None:
 
 
 if __name__ == "__main__":
+    test_schema_python_field_shape_parity()
     test_default_specs_and_schemas()
     test_source_registry_failures()
     test_event_tier_failures()
