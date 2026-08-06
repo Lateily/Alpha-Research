@@ -6,6 +6,7 @@
 import sys, os
 os.environ["AR_OFFLINE"] = "1"  # 零网络铁则:禁用一切真实外呼
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "experiments", "execution_tracker"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "experiments", "research_funnel"))
 import pandas as pd
 from red_flag_gate import check_ticker
 from attribution_audit import audit
@@ -258,6 +259,13 @@ def test_consistency_scan_fail_closed():
     print("PASS consistency: 损坏文件/缺目录/空目录/缺账本 四类均 fail-closed(审计回归)")
 
 
+def test_feature_store_atomic_pit_contract():
+    """R-008: batch atomicity, idempotency, PIT features and health reconciliation."""
+    from feature_store import _selftest
+    assert _selftest() == 0
+    print("PASS feature_store: atomic batches + PIT + idempotency + coverage")
+
+
 if __name__ == "__main__":
     test_gate_catches_first_loss(); test_gate_passes_clean(); test_gate_blocks_on_zero_evidence()
     test_battery_flags_blocked_news(); test_attribution_split_and_gate()
@@ -265,4 +273,5 @@ if __name__ == "__main__":
     test_cross_layer_consistency(); test_consistency_scan_fail_closed()
     test_backfill_skips_not_scorable_and_preserves_invalid()
     test_portfolio_gate_uses_real_holdings()
+    test_feature_store_atomic_pit_contract()
     print("ALL OFFLINE TESTS PASS (0 network calls)")
