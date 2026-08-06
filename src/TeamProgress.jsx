@@ -33,6 +33,38 @@ const REFRESH_MS = 30000;
 const ISSUE_URL = 'https://github.com/Lateily/Alpha-Research/issues/164';
 const EVENT_TYPES = ['CLAIM', 'UPDATE', 'DONE', 'BLOCKED', 'RELEASE'];
 
+// ── BLUEPRINT: 八块元数据 (事实源 docs/ARCHITECTURE_MAP.md · 2026-07-29) ─────
+const BP_BLOCKS = [
+  { id:'块1', name:'研究框架', role:'大脑',   pct:75, owner:'Junyan',        lbl:'块1-研究框架', ok:true  },
+  { id:'块2', name:'数据源',   role:'原料',   pct:55, owner:'Junyan+Claude', lbl:'块2-数据源',   ok:true  },
+  { id:'块3', name:'引擎层',   role:'车间',   pct:60, owner:'Claude',        lbl:'块3-引擎层',   ok:true  },
+  { id:'块4', name:'契约层',   role:'传送带', pct:10, owner:'Junyan',        lbl:'块4-契约层',   ok:false, note:'堵点'  },
+  { id:'块5', name:'前端载体', role:'展厅',   pct:10, owner:'Better',        lbl:'块5-前端',     ok:false, note:'最薄弱'},
+  { id:'块6', name:'AI 系统',  role:'工人',   pct:15, owner:'Reed',          lbl:'块6-AI系统',   ok:false },
+  { id:'块7', name:'团队流程', role:'神经',   pct:60, owner:'Junyan',        lbl:'块7-团队流程', ok:true  },
+  { id:'块8', name:'运维',     role:'电力',   pct:55, owner:'Claude',        lbl:'块8-运维',     ok:true  },
+];
+
+// ── BLUEPRINT: 关键路径 ───────────────────────────────────────────────────────
+const CRITICAL = [
+  { kind:'blocked', tag:'堵点', title:'契约层接线 #170',  body:'块4(0→70%)未接通 → 块5前端被卡在 10%。打通 #170 是解锁前端的唯一前置。', n:170 },
+  { kind:'warn',    tag:'验证', title:'夜链硬闸 #184',    body:'块3靠 #184 [R0] 收口终态 → 60% 推至 80% 并给契约可信上游。',             n:184 },
+  { kind:'info',    tag:'积累', title:'纸面样本 < 30',    body:'< 30 独立样本前不谈胜率。持续跑官方纸面样本是一切有效性论断的前置门槛。',  n:null },
+];
+
+// ── BLUEPRINT: 在途工作流分组(GitHub label 匹配) ─────────────────────────────
+const STREAMS = [
+  { title:'研究线 R0–R6',   sub:'Junyan · Claude', lbls:['块1-研究框架','块2-数据源','块3-引擎层'] },
+  { title:'AI OS 线 K1–K6', sub:'Reed (+ Jason)',  lbls:['块6-AI系统']                            },
+  { title:'产品线 M0–M6',   sub:'Better',          lbls:['块5-前端']                              },
+];
+
+const GH_REFRESH_MS  = 300000; // 5 min — GitHub unauthenticated rate limit = 60 req/hr
+const GH_API         = 'https://api.github.com/repos/Lateily/Alpha-Research';
+const GH_ISSUE_LINK  = (n) => `https://github.com/Lateily/Alpha-Research/issues/${n}`;
+const GH_PR_LINK     = (n) => `https://github.com/Lateily/Alpha-Research/pull/${n}`;
+const GH_ACCEPT      = { Accept: 'application/vnd.github+json' };
+
 const palette = {
   ink: '#172033',
   muted: '#647084',
@@ -418,6 +450,220 @@ function CommentComposer({ onSubmitted }) {
   );
 }
 
+// ── BLUEPRINT STYLES (scoped to bpS to avoid collision with `styles`) ────────
+const bpS = {
+  wrap:       { marginTop:16, border:`1px solid ${palette.line}`, borderRadius:8, background:palette.panel, overflow:'hidden' },
+  head:       { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 14px', gap:12, flexWrap:'wrap', background:palette.soft, borderBottom:`1px solid ${palette.line}` },
+  headTitle:  { margin:0, fontSize:15, fontWeight:800 },
+  headHint:   { color:palette.muted, fontSize:12, marginTop:3 },
+  headRight:  { display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' },
+  body:       { padding:12, display:'grid', gap:14 },
+  subHead:    { fontSize:11, fontWeight:800, color:palette.muted, textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 },
+  critGrid:   { display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:8 },
+  critCard:   { padding:12, border:`1px solid ${palette.line}`, borderLeft:'4px solid', borderRadius:8, background:'#fff', display:'grid', gap:5 },
+  critTag:    { fontSize:11, fontWeight:800 },
+  critTitle:  { fontWeight:800, fontSize:13 },
+  critBody:   { color:palette.muted, fontSize:12, lineHeight:1.45 },
+  blockGrid:  { display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))', gap:8 },
+  blockCard:  { padding:10, border:`1px solid ${palette.line}`, borderRadius:8, background:'#fff' },
+  blockId:    { fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:11, fontWeight:800 },
+  blockName:  { fontWeight:800, fontSize:13, marginTop:2 },
+  blockSub:   { color:palette.muted, fontSize:11, marginTop:1 },
+  blockBar:   { marginTop:8, height:5, background:palette.line, borderRadius:20, overflow:'hidden' },
+  blockFill:  { height:'100%', borderRadius:20 },
+  blockPct:   { fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:12, fontWeight:800, marginTop:4 },
+  streamGrid: { display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:10 },
+  streamCard: { padding:12, border:`1px solid ${palette.line}`, borderRadius:8, background:'#fff', display:'grid', gap:0 },
+  streamHead: { display:'flex', justifyContent:'space-between', alignItems:'center' },
+  streamTitle:{ fontWeight:800, fontSize:13 },
+  streamCount:{ fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:11, color:palette.muted },
+  streamSub:  { color:palette.muted, fontSize:11, marginBottom:8, marginTop:2 },
+  issRow:     { display:'flex', alignItems:'center', gap:6, padding:'5px 7px', borderRadius:6, background:palette.soft, textDecoration:'none', color:'inherit', minWidth:0, marginBottom:4 },
+  issNum:     { fontFamily:"'JetBrains Mono','Courier New',monospace", fontSize:11, flexShrink:0 },
+  issTitle:   { fontSize:12, color:palette.ink, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis', flex:1 },
+  errBand:    { color:palette.red, fontSize:12, padding:'8px 10px', background:'#fff1f0', borderRadius:6, border:`1px solid ${palette.red}33` },
+  stamp:      { color:palette.muted, fontSize:12, whiteSpace:'nowrap' },
+  mono:       { fontFamily:"'JetBrains Mono','Courier New',monospace" },
+};
+
+// ── PROJECT BLUEPRINT COMPONENT ───────────────────────────────────────────────
+// Self-contained: fetches GitHub Issues/PRs every 5 min (unauthenticated public API).
+// Adds no side effects to the rest of the board — isolated state, isolated timers.
+function ProjectBlueprint() {
+  const [issues,    setIssues]    = useState([]);
+  const [prs,       setPrs]       = useState([]);
+  const [ghLoading, setGhLoading] = useState(true);
+  const [ghError,   setGhError]   = useState('');
+  const [ghAt,      setGhAt]      = useState('');
+
+  const fetchGh = useCallback(async () => {
+    try {
+      const [ir, pr] = await Promise.all([
+        fetch(`${GH_API}/issues?state=open&per_page=100`, { headers: GH_ACCEPT }),
+        fetch(`${GH_API}/pulls?state=open&per_page=50`,   { headers: GH_ACCEPT }),
+      ]);
+      const [id, pd] = await Promise.all([ir.json(), pr.json()]);
+      // /issues endpoint returns PRs too — filter them out
+      setIssues(Array.isArray(id) ? id.filter(i => !i.pull_request) : []);
+      setPrs(Array.isArray(pd) ? pd : []);
+      setGhAt(new Date().toISOString());
+      setGhError('');
+    } catch (e) {
+      setGhError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGhLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGh();
+    const t = setInterval(fetchGh, GH_REFRESH_MS);
+    return () => clearInterval(t);
+  }, [fetchGh]);
+
+  // Issues grouped by stream (union of block labels)
+  const streamIssues = useMemo(() =>
+    STREAMS.map(s => issues.filter(iss => iss.labels.some(l => s.lbls.includes(l.name)))),
+  [issues]);
+
+  // Open-issue count per block (live badge)
+  const blockCounts = useMemo(() => {
+    const m = {};
+    for (const b of BP_BLOCKS) m[b.lbl] = issues.filter(i => i.labels.some(l => l.name === b.lbl)).length;
+    return m;
+  }, [issues]);
+
+  return (
+    <section style={bpS.wrap} aria-label="项目蓝图">
+      {/* ── header ── */}
+      <div style={bpS.head}>
+        <div>
+          <h2 style={bpS.headTitle}>项目蓝图 · 实时</h2>
+          <div style={bpS.headHint}>八块进度 · 关键路径 · 在途工作流 — GitHub Issues 每 5 分钟刷新</div>
+        </div>
+        <div style={bpS.headRight}>
+          {ghAt && <span style={bpS.stamp}>更新 {formatTime(ghAt)}</span>}
+          <button type="button" onClick={fetchGh} style={styles.iconButton} title="刷新 GitHub 数据">
+            <RefreshCw size={16} />
+          </button>
+          <a href="https://github.com/Lateily/Alpha-Research/issues" target="_blank" rel="noreferrer" style={styles.issueLink}>
+            Issues <ExternalLink size={12} />
+          </a>
+        </div>
+      </div>
+
+      <div style={bpS.body}>
+        {/* GitHub API error */}
+        {ghError && <div style={bpS.errBand}>GitHub API: {ghError}</div>}
+
+        {/* ── 关键路径 ── */}
+        <div>
+          <div style={bpS.subHead}>关键路径 · 下一步先做什么</div>
+          <div style={bpS.critGrid}>
+            {CRITICAL.map(c => {
+              const borderColor = c.kind === 'blocked' ? palette.red : c.kind === 'warn' ? palette.amber : palette.blue;
+              return (
+                <div key={c.tag} style={{ ...bpS.critCard, borderLeftColor: borderColor }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <span style={{ ...bpS.critTag, color: borderColor }}>{c.tag}</span>
+                    {c.n && (
+                      <a href={GH_ISSUE_LINK(c.n)} target="_blank" rel="noreferrer"
+                        style={{ fontSize:11, color:palette.blue, display:'flex', gap:3, alignItems:'center', textDecoration:'none' }}>
+                        #{c.n} <ExternalLink size={11} />
+                      </a>
+                    )}
+                  </div>
+                  <div style={bpS.critTitle}>{c.title}</div>
+                  <div style={bpS.critBody}>{c.body}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── 八块完成度 ── */}
+        <div>
+          <div style={bpS.subHead}>八块完成度 · E4 工程成熟度 (ARCHITECTURE_MAP · 2026-07-29)</div>
+          <div style={bpS.blockGrid}>
+            {BP_BLOCKS.map(b => {
+              const accent = b.ok ? palette.amber : palette.red;
+              return (
+                <div key={b.id} style={{ ...bpS.blockCard, borderTop:`3px solid ${accent}` }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <span style={{ ...bpS.blockId, color: accent }}>{b.id}</span>
+                    {blockCounts[b.lbl] > 0 && (
+                      <span style={{ ...bpS.mono, fontSize:11, color:palette.muted }}>{blockCounts[b.lbl]} open</span>
+                    )}
+                  </div>
+                  <div style={bpS.blockName}>{b.name}</div>
+                  <div style={bpS.blockSub}>{b.role} · {b.owner}</div>
+                  <div style={bpS.blockBar}>
+                    <div style={{ ...bpS.blockFill, width:`${b.pct}%`, background: accent }} />
+                  </div>
+                  <div style={{ ...bpS.blockPct, color: b.ok ? palette.ink : palette.red }}>
+                    {b.pct}%{b.note ? ` · ${b.note}` : ''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── 在途工作流 + 开放 PR ── */}
+        <div>
+          <div style={bpS.subHead}>在途工作流 · 实时 GitHub Issues</div>
+          <div style={bpS.streamGrid}>
+            {STREAMS.map((s, si) => (
+              <div key={s.title} style={bpS.streamCard}>
+                <div style={bpS.streamHead}>
+                  <span style={bpS.streamTitle}>{s.title}</span>
+                  <span style={bpS.streamCount}>{streamIssues[si]?.length ?? 0} open</span>
+                </div>
+                <div style={bpS.streamSub}>{s.sub}</div>
+                {ghLoading ? (
+                  <div style={{ color:palette.muted, fontSize:12 }}>加载中…</div>
+                ) : streamIssues[si]?.length ? (
+                  streamIssues[si].slice(0, 9).map(iss => (
+                    <a key={iss.number} href={GH_ISSUE_LINK(iss.number)} target="_blank" rel="noreferrer" style={bpS.issRow}>
+                      <span style={{ ...bpS.issNum, color:palette.blue }}>#{iss.number}</span>
+                      <span style={bpS.issTitle}>{iss.title}</span>
+                      <ExternalLink size={11} style={{ flexShrink:0, color:palette.muted }} />
+                    </a>
+                  ))
+                ) : (
+                  <div style={{ color:palette.muted, fontSize:12 }}>No open issues.</div>
+                )}
+              </div>
+            ))}
+
+            {/* 开放 PR */}
+            <div style={bpS.streamCard}>
+              <div style={bpS.streamHead}>
+                <span style={bpS.streamTitle}>开放 PR</span>
+                <span style={bpS.streamCount}>{prs.length}</span>
+              </div>
+              <div style={bpS.streamSub}>等待 Junyan 审核合并</div>
+              {ghLoading ? (
+                <div style={{ color:palette.muted, fontSize:12 }}>加载中…</div>
+              ) : prs.length ? (
+                prs.slice(0, 9).map(pr => (
+                  <a key={pr.number} href={GH_PR_LINK(pr.number)} target="_blank" rel="noreferrer" style={bpS.issRow}>
+                    <span style={{ ...bpS.issNum, color:palette.violet }}>#{pr.number}</span>
+                    <span style={bpS.issTitle}>{pr.title}</span>
+                    <GitPullRequest size={11} style={{ flexShrink:0, color:palette.muted }} />
+                  </a>
+                ))
+              ) : (
+                <div style={{ color:palette.muted, fontSize:12 }}>No open PRs.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function TeamProgressPage() {
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -579,6 +825,8 @@ export default function TeamProgressPage() {
             )}
           </div>
         </section>
+
+        <ProjectBlueprint />
       </section>
     </main>
   );
