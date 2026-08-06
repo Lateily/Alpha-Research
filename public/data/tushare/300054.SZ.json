@@ -1,11 +1,24 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-06T04:19:06Z",
+  "fetched_at": "2026-08-06T11:01:19Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260806",
+          "open": 73.0,
+          "high": 77.82,
+          "low": 72.0,
+          "close": 76.8,
+          "pre_close": 74.02,
+          "change": 2.78,
+          "pct_chg": 3.7557,
+          "vol": 432164.2,
+          "amount": 3278088.76776
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260805",
@@ -826,12 +839,32 @@
           "amount": 3474820.583
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260806"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260806",
+          "close": 76.8,
+          "turnover_rate": 5.8064,
+          "turnover_rate_f": 6.4027,
+          "volume_ratio": 0.94,
+          "pe": 101.7838,
+          "pe_ttm": 88.3017,
+          "pb": 13.4217,
+          "ps": 20.0292,
+          "ps_ttm": 19.01,
+          "dv_ratio": 0.1289,
+          "dv_ttm": 0.13,
+          "total_share": 95449.376,
+          "float_share": 74429.4808,
+          "free_share": 67497.4575,
+          "total_mv": 7330512.384,
+          "circ_mv": 5716184.064
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260805",
@@ -2093,9 +2126,9 @@
           "circ_mv": 4738200.4097
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260806"
     },
     "adj_factor": {
       "rows": [
@@ -3097,7 +3130,7 @@
           "t_compr_income": 472551925.73,
           "compr_inc_attr_p": 376751264.84,
           "compr_inc_attr_m_s": 95800660.89,
-          "ebit": null,
+          "ebit": 527373227.39,
           "ebitda": null,
           "insurance_exp": null,
           "undist_profit": null,
@@ -3120,7 +3153,7 @@
           "comshare_payable_dvd": null,
           "capit_comstock_div": null,
           "continued_net_profit": 472123311.75,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "300054.SZ",
@@ -3184,7 +3217,7 @@
           "t_compr_income": 472551925.73,
           "compr_inc_attr_p": 376751264.84,
           "compr_inc_attr_m_s": 95800660.89,
-          "ebit": 527373227.39,
+          "ebit": null,
           "ebitda": null,
           "insurance_exp": null,
           "undist_profit": null,
@@ -3207,7 +3240,7 @@
           "comshare_payable_dvd": null,
           "capit_comstock_div": null,
           "continued_net_profit": 472123311.75,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300054.SZ",
@@ -5046,10 +5079,10 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 2189280671.96,
-          "free_cashflow": -282550109.5169,
+          "free_cashflow": null,
           "c_prepay_amt_borr": 832328552.87,
           "c_pay_dist_dpcp_int_exp": 133000207.72,
-          "incl_dvd_profit_paid_sc_ms": 8310000.0,
+          "incl_dvd_profit_paid_sc_ms": null,
           "oth_cashpay_ral_fnc_act": 10689151.73,
           "stot_cashout_fnc_act": 976017912.32,
           "n_cash_flows_fnc_act": 1213262759.64,
@@ -5058,7 +5091,7 @@
           "c_cash_equ_beg_period": 1025581460.12,
           "c_cash_equ_end_period": 1760271519.17,
           "c_recp_cap_contrib": 150093934.6,
-          "incl_cash_rec_saims": 6000000.0,
+          "incl_cash_rec_saims": null,
           "uncon_invest_loss": null,
           "prov_depr_assets": null,
           "depr_fa_coga_dpba": null,
@@ -5090,7 +5123,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300054.SZ",
@@ -5145,10 +5178,10 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 2189280671.96,
-          "free_cashflow": null,
+          "free_cashflow": -282550109.5169,
           "c_prepay_amt_borr": 832328552.87,
           "c_pay_dist_dpcp_int_exp": 133000207.72,
-          "incl_dvd_profit_paid_sc_ms": null,
+          "incl_dvd_profit_paid_sc_ms": 8310000.0,
           "oth_cashpay_ral_fnc_act": 10689151.73,
           "stot_cashout_fnc_act": 976017912.32,
           "n_cash_flows_fnc_act": 1213262759.64,
@@ -5157,7 +5190,7 @@
           "c_cash_equ_beg_period": 1025581460.12,
           "c_cash_equ_end_period": 1760271519.17,
           "c_recp_cap_contrib": 150093934.6,
-          "incl_cash_rec_saims": null,
+          "incl_cash_rec_saims": 6000000.0,
           "uncon_invest_loss": null,
           "prov_depr_assets": null,
           "depr_fa_coga_dpba": null,
@@ -5189,7 +5222,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "300054.SZ",
@@ -5442,7 +5475,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 304384370.81,
-          "free_cashflow": null,
+          "free_cashflow": -84399147.3122,
           "c_prepay_amt_borr": 92349637.63,
           "c_pay_dist_dpcp_int_exp": 8341132.9,
           "incl_dvd_profit_paid_sc_ms": 0.0,
@@ -5486,7 +5519,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "300054.SZ",
@@ -5541,7 +5574,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 304384370.81,
-          "free_cashflow": -84399147.3122,
+          "free_cashflow": null,
           "c_prepay_amt_borr": 92349637.63,
           "c_pay_dist_dpcp_int_exp": 8341132.9,
           "incl_dvd_profit_paid_sc_ms": 0.0,
@@ -5585,7 +5618,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300054.SZ",
@@ -6036,7 +6069,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 672091496.85,
-          "free_cashflow": 48087635.374,
+          "free_cashflow": 79587635.374,
           "c_prepay_amt_borr": 229590815.42,
           "c_pay_dist_dpcp_int_exp": 34824565.24,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -6080,7 +6113,7 @@
           "beg_bal_cash": 1101529581.37,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300054.SZ",
@@ -6135,7 +6168,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 672091496.85,
-          "free_cashflow": 79587635.374,
+          "free_cashflow": 48087635.374,
           "c_prepay_amt_borr": 229590815.42,
           "c_pay_dist_dpcp_int_exp": 34824565.24,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -6179,7 +6212,7 @@
           "beg_bal_cash": 1101529581.37,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         }
       ],
       "row_count": 15,
