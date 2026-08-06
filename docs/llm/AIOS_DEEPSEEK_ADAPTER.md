@@ -14,14 +14,14 @@ https://lateily.github.io/Alpha-Research/
 ```
 
 GitHub Pages is static. It cannot safely hold provider API keys and it cannot
-run backend model calls. The `/aios/deepseek` page is therefore a static request
-builder and dry-run preview only. Real DeepSeek calls belong in the backend AIOS
-Harness or another approved server-side runner.
+run backend model calls. The `#/aios/deepseek` page is therefore a static
+request builder and dry-run preview only. Real DeepSeek calls belong in the
+backend AIOS Harness or another approved server-side runner.
 
 ## Runtime Boundary
 
 ```text
-GitHub Pages /aios/deepseek
+GitHub Pages #/aios/deepseek
   -> builds a sanitized AgentRequest preview
   -> no provider key, no network call, no model cost
 
@@ -45,7 +45,7 @@ Real backend execution requires all of these:
 Open:
 
 ```text
-/aios/deepseek
+https://lateily.github.io/Alpha-Research/#/aios/deepseek
 ```
 
 Use it to create a backend `AgentRequest` payload and verify that no frontend key
