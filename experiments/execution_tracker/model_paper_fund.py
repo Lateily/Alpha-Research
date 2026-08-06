@@ -20,6 +20,7 @@ Ledger dir (append-only JSON): experiments/execution_tracker/model_fund/
   python3 model_paper_fund.py --status
 """
 import json
+import math
 import os
 import sys
 
@@ -84,13 +85,45 @@ def _open_orders(orders):
     return [o for o in orders if o["status"] in ("pending", "filled")]
 
 
-def current_nav(fund, orders, marks=None):
-    """cash + Σ filled positions marked at `marks` (fallback: fill price)."""
+class NavMarksIncomplete(Exception):
+    """并非所有 filled 持仓都取到目标日定盘价。**官方 NAV 路径必须拒绝出数。**
+
+    缺一只就回退该只的成本价,会产出「部分市值 + 部分成本」的混合 NAV,
+    而它照样以当天日期正式入账 —— 混合口径比缺数据更危险,因为它看起来正常、
+    不触发任何告警,且此后再也无法从账本里区分哪一天是混的。
+    """
+
+    def __init__(self, missing):
+        self.missing = list(missing)
+        super().__init__(f"缺目标日定盘价: {self.missing}")
+
+
+def _usable_mark(value):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return None
+    return value if math.isfinite(value) and value > 0 else None
+
+
+def current_nav(fund, orders, marks=None, *, require_complete_marks=False):
+    """cash + Σ filled positions。
+
+    require_complete_marks=True(官方 NAV 路径必须用):任一 filled 持仓缺目标日
+    定盘价即抛 NavMarksIncomplete,绝不产出混合口径。
+    默认 False 只供 --status 一类的**只读估算**,其结果不得写入 nav_history。
+    """
+    marks = marks or {}
+    valid_marks = {ticker: mark for ticker, raw in marks.items()
+                   if (mark := _usable_mark(raw)) is not None}
+    missing = [o["ticker"] for o in orders
+               if o["status"] == "filled" and o["ticker"] not in valid_marks]
+    if require_complete_marks and missing:
+        raise NavMarksIncomplete(missing)
     nav = fund["cash"]
     for o in orders:
         if o["status"] == "filled":
-            px = (marks or {}).get(o["ticker"], o["fill_price"])
-            nav += o["shares"] * px
+            nav += o["shares"] * valid_marks.get(o["ticker"], o["fill_price"])
     return round(nav, 2)
 
 
@@ -210,8 +243,9 @@ def process_day(fund, orders, decision_log, token, series_fn=None):
     return events
 
 
-def update_nav(fund, orders, nav_history, date, marks=None):
-    nav = current_nav(fund, orders, marks)
+def update_nav(fund, orders, nav_history, date, marks=None, *,
+               require_complete_marks=False):
+    nav = current_nav(fund, orders, marks, require_complete_marks=require_complete_marks)
     prev = nav_history[-1]["nav"] if nav_history else fund["initial_capital"]
     rec = {"date": date, "nav": nav, "cash": fund["cash"],
            "n_positions": sum(1 for o in orders if o["status"] == "filled"),
@@ -419,6 +453,8 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--init", action="store_true", help="create the ¥1,000,000 virtual ledger")
     ap.add_argument("--status", action="store_true")
+    ap.add_argument("--daily", action="store_true",
+                    help="每日结算:推进成交/退出并按当轮 target 追加 NAV(append-only,一天一条)")
     args = ap.parse_args()
     if args.selftest:
         sys.exit(0 if selftest() else 1)
@@ -431,6 +467,74 @@ def main():
         print(f"Model Paper Fund initialized: ¥{fund['initial_capital']:,.0f} (VIRTUAL) at {FUND_DIR}")
         print("不是买卖指令；研究信号，human executes。")
         return
+    if args.daily:
+        # NAV 每日更新此前**没有任何 CLI 入口**,update_nav 定义了却从不被调用 ——
+        # 这就是 nav_history 停在 0731、把 model_portfolio_state 拖成 STALE_INPUT 的根因。
+        from nightly_context import run_id, target_trade_date
+        date = target_trade_date()
+        if not date:
+            print("DATA_BLOCKED: 无 target_trade_date"); return 1
+        fund = load("fund.json", None)
+        if not fund:
+            print("DATA_BLOCKED: fund.json 未初始化 — 先跑 --init"); return 1
+        orders = load("orders.json", [])
+        decision_log = load("decision_log.json", [])
+        navh = load("nav_history.json", [])
+        token = os.environ.get("TUSHARE_TOKEN", "").strip()
+        events = []
+        if token and not os.environ.get("AR_OFFLINE"):
+            try:
+                events = process_day(fund, orders, decision_log, token)
+            except Exception as e:                      # 行情失败不伪造:只是不推进
+                print(f"WARN 推进成交失败(不影响 NAV 标记): {e}")
+        marks = None
+        if token and not os.environ.get("AR_OFFLINE"):
+            marks = {}
+            for o in orders:
+                if o["status"] != "filled":
+                    continue
+                try:
+                    s = pp.qfq_ohlc_series(o["ticker"], token, o["registered_at"])
+                    if not s:
+                        continue
+                    bar = s[-1]
+                    # qfq_ohlc_series 返回的是 **dict** 列表({date,open,high,low,close}),
+                    # 不是元组。初版按 s[-1][4] 取值必然拿不到,marks 全空 ⇒ NAV 悄悄
+                    # 回退成成本价,产出一个看起来正常的假 NAV。按 dict 取,并要求
+                    # 该 bar 的日期就是本轮 target,否则宁可不标也不用旧价。
+                    close = bar.get("close") if isinstance(bar, dict) else (
+                        bar[4] if isinstance(bar, (list, tuple)) and len(bar) > 4 else None)
+                    bar_date = str(bar.get("date") if isinstance(bar, dict) else "")[:8]
+                    usable_close = _usable_mark(close)
+                    if usable_close is not None and bar_date == date:
+                        marks[o["ticker"]] = usable_close
+                    elif usable_close is not None:
+                        print(f"  WARN {o['ticker']} 最新 bar {bar_date} ≠ target {date},不用于标记")
+                except Exception as e:
+                    print(f"  WARN {o['ticker']} 取价失败: {str(e)[:50]}")
+            marks = {k: v for k, v in marks.items() if v} or None
+            if marks:
+                print(f"  marks: {marks}")
+            else:
+                print("  WARN 无可用收盘价 ⇒ NAV 按成本标记(不是市值)")
+        try:
+            rec = update_nav(fund, orders, navh, date, marks=marks,
+                             require_complete_marks=True)
+        except NavMarksIncomplete as e:
+            # 官方 NAV 宁可不出,也不出混合口径。不写任何账本、非零退出、显式 DATA_BLOCKED。
+            print(f"DATA_BLOCKED: {date} 有 filled 持仓未取到目标日定盘价 {e.missing} —— "
+                  f"拒绝写入 NAV(不接受部分市值+部分成本的混合口径)")
+            print("不是买卖指令；研究信号，human executes。")
+            return 1
+        save("fund.json", fund); save("orders.json", orders)
+        save("decision_log.json", decision_log); save("nav_history.json", navh)
+        print(f"[daily] {date} nav={rec['nav']:,.0f} cash={rec['cash']:,.0f} "
+              f"n_pos={rec['n_positions']} events={len(events)} run_id={run_id()}")
+        for e in events:
+            print("  ", e)
+        print("不是买卖指令；研究信号，human executes。")
+        return 0
+
     if args.status:
         fund = load("fund.json", None)
         if not fund:
@@ -444,4 +548,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main() 返回 1 表示 DATA_BLOCKED(如缺目标日定盘价);不 sys.exit 的话进程仍退 0,
+    # 夜链会把「拒绝写 NAV」当成功。execution_tracker / run_official_sample 早已修过,
+    # 这里漏了 —— 而漏掉它的原因是那条测试只检查源码里有没有 `return 1`,没跑进程。
+    sys.exit(main() or 0)

@@ -36,6 +36,10 @@ STEPS = [
     # ── 结算主干(闭环根修复:定盘并入夜链,消灭手工补账)──
     ("official_sample", ["python3", "run_official_sample.py"], True, []),
     ("fwd_backfill", ["python3", "run_post_close_report.py", "--backfill-only"], True,
+     ["official_sample"]),
+    # NAV 每日结算:update_nav 此前定义了却无 CLI 入口,从不被调用 ——
+    # nav_history 停在 0731 正是因此,并把 model_portfolio_state 拖成 STALE_INPUT。
+    ("fund_daily_mark", ["python3", "model_paper_fund.py", "--daily"], True,
      ["official_sample"]),  # F8:正式样本每天只生成一次(official_sample 步),此处仅回填
     # ── 轮动/发现链 ──
     ("rotation_panel", ["python3", "rotation_panel.py"], True, []),
@@ -81,6 +85,10 @@ ARTIFACTS = {
                                 "target_trade_date", False)],
     "fwd_backfill":          [(os.path.join("reports", "{target}.json"),
                                 "target_trade_date", True)],
+    # NAV 每日结算的产物契约。加步骤时漏了这条 —— 没有产物契约的步骤等于没被验过,
+    # 它可以静默失败而整轮照报 COMPLETE(由 RuleCompletenessTest 抓出)。
+    "fund_daily_mark":       [(os.path.join("model_fund", "nav_history.json"),
+                                None, True)],
     "rotation_panel":        [("rotation_panel.json", "as_of", True)],
     "momentum_prefilter":    [("momentum_prefilter.json", "as_of", True)],
     "rotation_stats":        [("rotation_stats.json", "as_of", True)],
@@ -798,6 +806,31 @@ def _clear_run_state_if_terminal(run_id, terminal_written, state_path=None):
     return True
 
 
+def _collect_data_quality(base=None):
+    """把 export 层已算好的**信息完整度**提到夜链顶层。
+
+    `report` 与 `data_quality` 是两个正交维度:前者说流水线有没有跑完,
+    后者说这轮拿到的数据全不全。只报 report=COMPLETE 会让「隔夜锚缺
+    NVDA/SOX/TSM」这类降级在顶层消失。取不到 meta ⇒ UNKNOWN,
+    **不假装 COMPLETE**(缺数据 ≠ 通过)。
+    """
+    meta_path = os.path.join(base or HERE, "..", "..", "public", "data", "v2", "meta.json")
+    try:
+        with open(os.path.abspath(meta_path), encoding="utf-8") as fh:
+            meta = json.load(fh)
+    except Exception:
+        return {"data_quality": "UNKNOWN", "degraded_sources": [],
+                "business_contract_count": None}
+    if not isinstance(meta, dict):
+        return {"data_quality": "UNKNOWN", "degraded_sources": [],
+                "business_contract_count": None}
+    return {
+        "data_quality": meta.get("data_quality", "UNKNOWN"),
+        "degraded_sources": list(meta.get("degraded_sources") or []),
+        "business_contract_count": meta.get("business_contract_count"),
+    }
+
+
 def _execute_nightly():
     """在已持有全局锁时执行一轮。普通异常不清 run_state,交给下一轮恢复。"""
     run_id = f"{time.strftime('%Y%m%d_%H%M%S')}_{time.time_ns()}_{uuid.uuid4().hex[:8]}"
@@ -850,6 +883,10 @@ def _execute_nightly():
         res = run_steps(require_live=require_live, verify=True,
                         base=stage["et"], run_id=run_id)
         res["preflight"] = {"pass": True, "warns": pf["warns"]}
+        # ── 状态聚合:data_quality 必须上到夜链顶层 ──
+        # report=COMPLETE 只说明流水线成功;若宏观等来源是 PARTIAL,
+        # 只读 nightly_run.report 的消费方会误以为信息完整。两个维度都要在顶层可见。
+        res.update(_collect_data_quality())
         res["crash_recovery"] = crash_info
 
         if res["report"] == "COMPLETE":
@@ -886,7 +923,10 @@ def _execute_nightly():
         _atomic_write(os.path.join(run_dir, "result.json"), res)
         for s in res["steps"]:
             print(f"{s['step']}: {s['status']}")
-        print(f"[report] {res['report']}  run_id={run_id}  target={res.get('target_trade_date')}  [written] {OUT}")
+        print(f"[report] {res['report']}  data_quality={res.get('data_quality')}  "
+              f"run_id={run_id}  target={res.get('target_trade_date')}  [written] {OUT}")
+        if res.get("degraded_sources"):
+            print(f"  degraded: {res['degraded_sources']}")
         print("不是买卖指令;研究信号,human executes.")
         _alarm(res)
         _prune_runs()

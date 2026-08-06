@@ -22,6 +22,14 @@ DISCLAIMER = "不是买卖指令;研究信号,human executes."
 
 STALE_HOURS = 20  # 审查F5:超过一个交易日的引擎产出不许当新鲜货导出
 
+# 事件驱动账本:无交易时**不变才是正确的**,拿 mtime 判陈旧是误判。
+# 它们的新鲜度由内容判(nav_history 末条日期必须==target),不由文件时间判。
+# fund.json 是静态配置(初始资金/政策),根本没有日期维度。
+EVENT_DRIVEN = {"model_fund/fund.json", "model_fund/orders.json",
+                "model_fund/decision_log.json", "model_fund/human_shadow.json"}
+# 必须每日更新的账本:末条日期不等于本轮 target 即陈旧
+DAILY_SERIES = {"model_fund/nav_history.json": "date"}
+
 
 def _internal_meta(obj):
     """读产物内部的时间戳与自报状态(如 overnight_anchor 的 bias=DATA_BLOCKED)。"""
@@ -32,9 +40,21 @@ def _internal_meta(obj):
             if isinstance(v, str) and v[:8].isdigit():
                 meta["as_of"] = v[:8]
                 break
-        for k in ("status", "bias", "verdict"):
-            if str(obj.get(k, "")).startswith("DATA_BLOCKED"):
-                meta["internal_status"] = "DATA_BLOCKED"
+        # 产物**显式自报**的 internal_status 优先(overnight_anchor 用它区分
+        # "抓不全 PARTIAL_OK" 与 "完全没抓到 DATA_BLOCKED")。
+        self_reported = str(obj.get("internal_status") or "")
+        if self_reported in ("DATA_BLOCKED", "PARTIAL_OK", "OK"):
+            meta["internal_status"] = self_reported
+        else:
+            for k in ("status", "bias", "verdict"):
+                if str(obj.get(k, "")).startswith("DATA_BLOCKED"):
+                    meta["internal_status"] = "DATA_BLOCKED"
+        # 产物自报的 target_trade_date 与本轮不符 ⇒ 陈旧,不看 mtime 也能判
+        tgt = target_trade_date()
+        got = str(obj.get("target_trade_date") or meta.get("as_of") or "")[:8]
+        if tgt and got and got != tgt:
+            meta["stale"] = True
+            meta["stale_why"] = f"target_trade_date {got} ≠ 本轮 {tgt}"
     return meta
 
 
@@ -50,27 +70,73 @@ def _load(relpath):
         return None, f"unreadable:{relpath}:{e}", {}
     meta = _internal_meta(obj)
     meta["age_hours"] = round((time.time() - os.path.getmtime(p)) / 3600.0, 1)
-    if meta["age_hours"] > STALE_HOURS:
+    if relpath in EVENT_DRIVEN:
+        meta["cadence"] = "event_driven"          # 无变动即正确,不按 mtime 判陈旧
+    elif relpath in DAILY_SERIES:
+        meta["cadence"] = "daily_series"
+        key = DAILY_SERIES[relpath]
+        tgt = target_trade_date()
+        last = str((obj[-1] or {}).get(key) or "")[:8] if isinstance(obj, list) and obj else ""
+        meta["last_entry"] = last
+        if tgt and last != tgt:
+            meta["stale"] = True
+            meta["stale_why"] = f"末条 {last or '无'} ≠ 本轮 {tgt}"
+    elif meta["age_hours"] > STALE_HOURS:
         meta["stale"] = True
     return obj, None, meta
 
 
 def _resolve_status(blocked, sources_meta):
+    """**两个正交维度**,不许把其中一个写成另一个:
+
+      pipeline_status —— 本轮流水线是否成功产出并可发布(OK / STALE_INPUT / DATA_BLOCKED)
+      data_quality    —— 信息是否完整(COMPLETE / PARTIAL / BLOCKED)
+
+    此前只有一个 status:隔夜锚 PARTIAL_OK 被包装成顶层 OK,meta.report 进而
+    COMPLETE —— 下游只读顶层就会误以为宏观数据完整。
+    「成功发布」不等于「信息完整」。
+    返回 (pipeline_status, data_quality, degraded_sources)。
+    """
+    degraded = []
     if blocked:
-        return "DATA_BLOCKED"
-    for m in (sources_meta or {}).values():
-        if m.get("stale") or m.get("internal_status") == "DATA_BLOCKED":
-            return "STALE_INPUT"
-    return "OK"
+        return "DATA_BLOCKED", "BLOCKED", degraded
+    has_blocked = False
+    has_stale = False
+    has_partial = False
+    for name, m in (sources_meta or {}).items():
+        internal = m.get("internal_status")
+        stale = bool(m.get("stale"))
+        if internal == "DATA_BLOCKED" or stale:
+            has_blocked = has_blocked or internal == "DATA_BLOCKED"
+            has_stale = has_stale or stale
+            degraded.append({"source": name, "internal_status": internal,
+                             "stale": stale,
+                             "why": m.get("stale_why")})
+        elif internal == "PARTIAL_OK":
+            has_partial = True
+            degraded.append({"source": name, "internal_status": "PARTIAL_OK"})
+    # Aggregate after scanning every source. Mutating the verdict in iteration order
+    # made DATA_BLOCKED -> stale yield PARTIAL while the reverse order yielded BLOCKED.
+    pipeline = "STALE_INPUT" if has_blocked or has_stale else "OK"
+    quality = "BLOCKED" if has_blocked else (
+        "PARTIAL" if has_stale or has_partial else "COMPLETE"
+    )
+    return pipeline, quality, degraded
 
 
 def _contract(name, data, sources, blocked=None, sources_meta=None):
-    return {"contract": name, "schema_version": "v2.1",
+    pipeline, quality, degraded = _resolve_status(blocked, sources_meta)
+    return {"contract": name, "schema_version": "v2.2",
             "generated_at": time.strftime("%Y%m%d %H:%M:%S"),
             "run_id": run_id(), "target_trade_date": target_trade_date(),
             "sources": sources,
             "sources_meta": sources_meta or {},
-            "status": _resolve_status(blocked, sources_meta),
+            # status 保留为 pipeline_status 的别名(向后兼容),但**新消费方应读
+            # data_quality** —— 只读 status 会把「发布成功」误解成「信息完整」。
+            "status": pipeline,
+            "pipeline_status": pipeline,
+            "data_quality": quality,
+            "degraded_sources": degraded,
             "blocked_why": blocked, "data": data, "disclaimer": DISCLAIMER}
 
 
@@ -185,9 +251,23 @@ def export_all(v2dir=None):
         c = builder()
         with open(os.path.join(v2dir, fname), "w", encoding="utf-8") as fh:
             json.dump(c, fh, ensure_ascii=False, indent=1)
-        meta["contracts"][fname] = {"status": c["status"], "blocked_why": c["blocked_why"]}
-    meta["report"] = ("COMPLETE" if all(v["status"] == "OK" for v in meta["contracts"].values())
-                      else "PARTIAL")  # STALE_INPUT/DATA_BLOCKED 均使总报为 PARTIAL
+        meta["contracts"][fname] = {"status": c["status"],
+                                    "pipeline_status": c["pipeline_status"],
+                                    "data_quality": c["data_quality"],
+                                    "degraded_sources": c["degraded_sources"],
+                                    "blocked_why": c["blocked_why"]}
+    vals = list(meta["contracts"].values())
+    # report = 流水线是否全部成功(可发布);data_quality = 信息是否完整。
+    # 两者必须分开报 —— 否则 PARTIAL 的宏观数据会被 COMPLETE 掩盖。
+    meta["report"] = "COMPLETE" if all(v["pipeline_status"] == "OK" for v in vals) else "PARTIAL"
+    meta["data_quality"] = ("COMPLETE" if all(v["data_quality"] == "COMPLETE" for v in vals)
+                            else ("BLOCKED" if any(v["data_quality"] == "BLOCKED" for v in vals)
+                                  else "PARTIAL"))
+    meta["degraded_sources"] = sorted({d["source"] for v in vals for d in v["degraded_sources"]})
+    # 口径:业务契约 = BUILDERS 产出的那些;meta.json / current_run.json 是**控制文件**,
+    # 不计入契约数(此前对外说「9 份契约」是把控制文件也算进去了)。
+    meta["business_contract_count"] = len(vals)
+    meta["control_files"] = ["meta.json", "current_run.json"]
     with open(os.path.join(v2dir, "meta.json"), "w", encoding="utf-8") as fh:
         json.dump(meta, fh, ensure_ascii=False, indent=1)
     return meta
@@ -204,8 +284,12 @@ def selftest():
         with open(os.path.join(td, "model_portfolio_state.json"), encoding="utf-8") as fh:
             one = json.load(fh)
         ok.append(("disclaimer present", one["disclaimer"] == DISCLAIMER))
-        ok.append(("schema version", one["schema_version"] == "v2.1"))
-        ok.append(("status field honest", one["status"] in ("OK", "DATA_BLOCKED", "STALE_INPUT")))
+        ok.append(("schema version v2.2(新增 pipeline_status/data_quality)",
+                   one["schema_version"] == "v2.2"))
+        ok.append(("status 保留为 pipeline_status 别名(向后兼容)",
+                   one["status"] == one["pipeline_status"]))
+        ok.append(("data_quality 与 pipeline_status 正交",
+                   one["data_quality"] in ("COMPLETE", "PARTIAL", "BLOCKED")))
         ok.append(("sources_meta present", "sources_meta" in one))
         ok.append(("meta report honest", meta["report"] in ("COMPLETE", "PARTIAL")))
     for name, passed in ok:
