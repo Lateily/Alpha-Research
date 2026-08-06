@@ -3,34 +3,24 @@
   "generated_at": "2026-08-06",
   "price": 90.82,
   "zone": "NEUTRAL",
-  "entry_zone": true,
+  "entry_zone": false,
   "exit_zone": true,
   "signals": [
-    {
-      "type": "GOLDEN_CROSS",
-      "strength": "strong",
-      "date": "20260805",
-      "bullish": true,
-      "description": {
-        "e": "MA20 (92.3) crossed above MA60 (91.1) — bullish trend shift",
-        "z": "MA20(92.3)上穿MA60(91.1)金叉看涨"
-      }
-    },
     {
       "type": "MACD_DEATH_CROSS",
       "strength": "moderate",
       "date": "20260805",
       "bullish": false,
       "description": {
-        "e": "MACD DIF(1.055) crossed below DEA(1.201) above zero — bearish momentum",
-        "z": "MACD DIF(1.055)下穿DEA(1.201)零轴上方死叉看跌"
+        "e": "MACD DIF(1.059) crossed below DEA(1.206) above zero — bearish momentum",
+        "z": "MACD DIF(1.059)下穿DEA(1.206)零轴上方死叉看跌"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 0,
     "bearish": 1,
-    "total": 2
+    "total": 1
   },
   "indicators": {
     "ma5": 93.68,
@@ -44,9 +34,9 @@
     "change_1d": -0.36,
     "change_5d": -4.25,
     "change_20d": 3.44,
-    "macd_dif": 1.055,
-    "macd_dea": 1.2007,
-    "macd_hist": -0.2913,
+    "macd_dif": 1.0585,
+    "macd_dea": 1.2059,
+    "macd_hist": -0.2946,
     "bb_upper": 97.3,
     "bb_mid": 92.34,
     "bb_lower": 87.38,
