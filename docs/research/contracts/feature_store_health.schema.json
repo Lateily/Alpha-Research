@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/research/contracts/feature_store_health.schema.json",
+  "title": "AR Local Feature Store Health",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "status",
+    "as_of",
+    "generated_at",
+    "registry_ref",
+    "store",
+    "coverage",
+    "integrity",
+    "policy",
+    "disclaimer"
+  ],
+  "properties": {
+    "schema": { "const": "ar.feature_store_health" },
+    "schema_version": { "const": "1.0" },
+    "status": { "const": "COMPLETE" },
+    "as_of": { "type": "string", "pattern": "^[0-9]{8}$" },
+    "generated_at": { "type": "string", "minLength": 1 },
+    "registry_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["as_of", "registry_hash", "eligible_universe_hash", "eligible_count"],
+      "properties": {
+        "as_of": { "type": "string", "pattern": "^[0-9]{8}$" },
+        "registry_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "eligible_universe_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "eligible_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "store": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "engine",
+        "logical_path",
+        "schema_version",
+        "required_endpoints",
+        "date_commit_policy",
+        "source_revision_policy"
+      ],
+      "properties": {
+        "engine": { "const": "sqlite" },
+        "logical_path": { "const": "data_history/feature_store.sqlite3" },
+        "schema_version": { "const": "1" },
+        "required_endpoints": {
+          "const": ["daily", "daily_basic", "adj_factor"]
+        },
+        "date_commit_policy": { "const": "ALL_REQUIRED_ENDPOINTS_ATOMIC" },
+        "source_revision_policy": { "const": "REJECT_REQUIRES_MIGRATION" }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "committed_dates",
+        "latest_endpoint_rows",
+        "latest_daily_eligible_rows",
+        "latest_feature_rows",
+        "latest_return_20d_ready",
+        "latest_missing_daily_count",
+        "latest_missing_daily_codes"
+      ],
+      "properties": {
+        "committed_dates": { "type": "integer", "minimum": 1 },
+        "latest_endpoint_rows": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["daily", "daily_basic", "adj_factor"],
+          "properties": {
+            "daily": { "type": "integer", "minimum": 1 },
+            "daily_basic": { "type": "integer", "minimum": 1 },
+            "adj_factor": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "latest_daily_eligible_rows": { "type": "integer", "minimum": 1 },
+        "latest_feature_rows": { "type": "integer", "minimum": 1 },
+        "latest_return_20d_ready": { "type": "integer", "minimum": 0 },
+        "latest_missing_daily_count": { "type": "integer", "minimum": 0 },
+        "latest_missing_daily_codes": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9]{6}\\.(SH|SZ|BJ)$" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_batches_hash", "features_hash"],
+      "properties": {
+        "source_batches_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "features_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "point_in_time_only",
+        "adjusted_return_basis",
+        "no_forward_fill",
+        "complete_means_pipeline_complete_not_every_security_traded",
+        "selection_or_trade_output"
+      ],
+      "properties": {
+        "point_in_time_only": { "const": true },
+        "adjusted_return_basis": { "const": "close_times_adj_factor" },
+        "no_forward_fill": { "const": true },
+        "complete_means_pipeline_complete_not_every_security_traded": { "const": true },
+        "selection_or_trade_output": { "const": false }
+      }
+    },
+    "disclaimer": { "type": "string", "minLength": 1 }
+  }
+}
