@@ -1,141 +1,155 @@
 {
  "window": [
   "20260417",
-  "20260731"
+  "20260806"
  ],
- "n_days": 72,
- "n_sectors": 1005,
+ "n_days": 76,
+ "n_sectors": 1004,
  "effective_n_note": "横截面高相关,有效独立样本≈交易日数",
  "Q1_persistence": {
   "persist_T1": {
-   "p": 0.559,
+   "p": 0.56,
    "ci": [
-    0.546,
+    0.547,
     0.572
    ],
-   "n": 5896
+   "n": 6282
   },
   "persist_T3": {
-   "p": 0.267,
+   "p": 0.262,
    "ci": [
-    0.256,
-    0.279
+    0.251,
+    0.273
    ],
-   "n": 5686
+   "n": 6111
   },
   "fwd3_hot_vs_random": {
-   "hot_median": -0.03,
-   "rand_median": -0.08,
-   "mw_z": 0.5,
-   "mw_p": 0.6196,
+   "hot_median": -0.04,
+   "rand_median": -0.13,
+   "mw_z": 0.15,
+   "mw_p": 0.8842,
    "n": [
-    5686,
-    5686
+    6111,
+    6111
    ]
   }
  },
  "C1_label_shuffle_control": {
   "persist_T1": {
-   "p": 0.559,
+   "p": 0.56,
    "ci": [
-    0.546,
+    0.547,
     0.572
    ],
-   "n": 5896
+   "n": 6282
   },
   "persist_T3": {
-   "p": 0.267,
+   "p": 0.262,
    "ci": [
-    0.256,
-    0.279
+    0.251,
+    0.273
    ],
-   "n": 5686
+   "n": 6111
   },
   "fwd3_hot_vs_random": {
-   "hot_median": -0.1,
-   "rand_median": -0.13,
-   "mw_z": 1.14,
-   "mw_p": 0.2523,
+   "hot_median": -0.15,
+   "rand_median": -0.1,
+   "mw_z": 0.08,
+   "mw_p": 0.9323,
    "n": [
-    5686,
-    5686
+    6111,
+    6111
    ]
   }
  },
  "Q2_leader_breadth": {
-  "broad_n": 487,
-  "narrow_n": 5199,
+  "broad_n": 495,
+  "narrow_n": 5616,
   "broad_med_fwd3": 0.66,
-  "narrow_med_fwd3": -0.09,
-  "mw_z": 4.0,
-  "mw_p": 0.0001,
+  "narrow_med_fwd3": -0.1,
+  "mw_z": 4.37,
+  "mw_p": 0.0,
   "note": "广度=板块名匹配的当日涨停数>=2 [行业名跨表模糊匹配,匹配失败按narrow计]"
  },
  "Q3_chain_leadlag": [
   {
    "pair": "半导体设备->半导体材料",
+   "resolved": "半导体设备->半导体材料",
    "best_lag": 1,
-   "r": 0.193,
-   "p": 0.1015,
+   "r": 0.179,
+   "p": 0.1201,
    "bh_pass_10pct": false
   },
   {
-   "pair": "光模块(CPO)->印制电路板",
-   "status": "DATA_BLOCKED: 板块名缺失",
+   "pair": "光通信模块->印制电路板",
+   "resolved": "光通信模块->印制电路板",
+   "best_lag": 2,
+   "r": 0.079,
+   "p": 0.4996,
    "bh_pass_10pct": false
   },
   {
    "pair": "油田服务->油气开采Ⅱ",
+   "resolved": "油田服务->油气开采Ⅱ",
    "best_lag": 3,
-   "r": 0.106,
-   "p": 0.3851,
+   "r": 0.098,
+   "p": 0.4066,
    "bh_pass_10pct": false
   },
   {
    "pair": "化学制药->医药流通",
+   "resolved": "化学制药->医药流通",
    "best_lag": 2,
-   "r": 0.337,
-   "p": 0.0031,
+   "r": 0.341,
+   "p": 0.0021,
    "bh_pass_10pct": true
   },
   {
    "pair": "黄金->铝",
+   "resolved": "黄金->铝",
    "best_lag": 3,
-   "r": -0.152,
-   "p": 0.2077,
+   "r": -0.149,
+   "p": 0.2047,
    "bh_pass_10pct": false
   },
   {
    "pair": "煤炭开采->电力",
+   "resolved": "煤炭开采->电力",
    "best_lag": 3,
-   "r": 0.151,
-   "p": 0.2097,
+   "r": 0.165,
+   "p": 0.1585,
    "bh_pass_10pct": false
   }
  ],
  "C2_lag_shuffle_control": [
   {
    "pair": "半导体设备->半导体材料",
+   "resolved": "半导体设备->半导体材料",
    "best_lag": 2,
-   "r": -0.165,
-   "p": 0.1673,
+   "r": -0.182,
+   "p": 0.1161,
+   "bh_pass_10pct": false
+  },
+  {
+   "pair": "光通信模块->印制电路板",
+   "resolved": "光通信模块->印制电路板",
+   "best_lag": 2,
+   "r": -0.117,
+   "p": 0.317,
    "bh_pass_10pct": false
   },
   {
    "pair": "油田服务->油气开采Ⅱ",
-   "best_lag": 2,
-   "r": -0.168,
-   "p": 0.1602,
-   "bh_pass_10pct": false
-  },
-  {
-   "pair": "化学制药->医药流通",
-   "best_lag": 2,
-   "r": -0.083,
-   "p": 0.4921,
+   "resolved": "油田服务->油气开采Ⅱ",
+   "best_lag": 1,
+   "r": 0.128,
+   "p": 0.2706,
    "bh_pass_10pct": false
   }
  ],
  "claim_allowed": false,
- "note": "描述/校准统计;真实信号须显著优于双负控制且跨窗稳定,才有资格进入 paper 前瞻判分。不是买卖指令。"
+ "note": "描述/校准统计;真实信号须显著优于双负控制且跨窗稳定,才有资格进入 paper 前瞻判分。不是买卖指令。",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "target_trade_date": "20260806",
+ "as_of": "20260806"
 }
