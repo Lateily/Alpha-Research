@@ -396,6 +396,16 @@ def test_event_tier_failures() -> None:
         "calibrating tolerance must be null",
     )
 
+    # 复审 fix-forward:事件表哈希门此前无负向回归 —— 变异检验(verify_hash 永真)
+    # 曾在整套测试全绿下存活,篡改层级/校准状态而不换哈希将无声通过。
+    tampered_hash = copy.deepcopy(tiers)
+    tampered_hash["registry_hash"] = "0" * 64
+    rejected(
+        "event tiers hash mismatch",
+        lambda: contracts.validate_event_tiers(tampered_hash, sources),
+        "hash mismatch",
+    )
+
 
 def test_expectation_contract() -> None:
     sources, tiers = contracts.validate_default_specs()
