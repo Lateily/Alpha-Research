@@ -550,15 +550,23 @@ class StagingPublicationTest(unittest.TestCase):
     def _layout(self, tmp: str):
         repo = os.path.join(tmp, "repo")
         et = os.path.join(repo, "experiments", "execution_tracker")
+        research = os.path.join(repo, "experiments", "research_funnel")
         public = os.path.join(repo, "public", "data", "v2")
         run_dir = os.path.join(tmp, "run")
         os.makedirs(os.path.join(et, "model_fund"), exist_ok=True)
+        os.makedirs(research, exist_ok=True)
+        Path(os.path.join(research, "fixture_engine.py")).write_text("VALUE = 1\n")
         os.makedirs(public, exist_ok=True)
         write_json(os.path.join(et, "rotation_panel.json"), {"value": "old"})
         write_json(os.path.join(et, "model_fund", "fund.json"), {"cash": 1})
         write_json(os.path.join(public, "meta.json"), {"value": "old-public"})
         stage = nightly_publish.prepare_stage(et, repo, run_dir)
         return repo, et, public, run_dir, stage
+
+    def test_research_funnel_code_is_copied_into_staging(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            _, _, _, _, stage = self._layout(tmp)
+            self.assertTrue(os.path.isfile(os.path.join(stage["research"], "fixture_engine.py")))
 
     def test_staging_is_invisible_until_commit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -743,9 +751,13 @@ class StagingPublicationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = os.path.join(tmp, "repo")
             et = os.path.join(repo, "experiments", "execution_tracker")
+            research = os.path.join(repo, "experiments", "research_funnel")
             public = os.path.join(repo, "public", "data", "v2")
             os.makedirs(os.path.join(et, "model_fund"), exist_ok=True)
+            os.makedirs(research, exist_ok=True)
             os.makedirs(public, exist_ok=True)
+            with open(os.path.join(research, "fixture.py"), "w", encoding="utf-8") as fh:
+                fh.write("# staged research-funnel fixture\n")
             write_json(os.path.join(et, "model_fund", "fund.json"), {"cash": 1})
             write_json(os.path.join(et, "rotation_panel.json"), {"value": "old"})
             write_json(os.path.join(public, "meta.json"), {"value": "old-public"})
@@ -754,8 +766,12 @@ class StagingPublicationTest(unittest.TestCase):
             )}
             clean = {"pass": True, "checks": [], "failures": [], "warns": []}
 
-            def fake_steps(*, require_live, verify, base, run_id):
+            def fake_steps(*, require_live, verify, base, run_id, persistent_feature_db):
                 self.assertTrue(verify)
+                self.assertEqual(
+                    persistent_feature_db,
+                    os.path.join(repo, "data_history", "feature_store.sqlite3"),
+                )
                 write_json(os.path.join(base, "rotation_panel.json"), {
                     "value": "new", "run_id": run_id,
                     "target_trade_date": "20260804", "as_of": "20260804",
@@ -1215,9 +1231,87 @@ class NightlyDataQualitySurfacedTest(unittest.TestCase):
 
     def test_top_level_report_and_data_quality_are_separate_keys(self):
         import run_nightly as rn
-        src = (ET / "run_nightly.py").read_text(encoding="utf-8")
-        self.assertIn("_collect_data_quality()", src)
         self.assertTrue(hasattr(rn, "_collect_data_quality"))
+        self.assertEqual("PARTIAL", rn._merge_data_quality("COMPLETE", "PARTIAL"))
+        self.assertEqual("UNKNOWN", rn._merge_data_quality("UNKNOWN", "COMPLETE"))
+
+
+class ResearchDataLaneTest(unittest.TestCase):
+    TARGET = "20260805"
+
+    def _stage_contracts(self, root: str) -> str:
+        et = os.path.join(root, "experiments", "execution_tracker")
+        public = os.path.join(root, "public", "data", "v2")
+        os.makedirs(et, exist_ok=True)
+        os.makedirs(public, exist_ok=True)
+        for name in ("security_registry.json", "feature_store_health.json", "e1_event_layer.json"):
+            shutil.copy2(ROOT / "public" / "data" / "v2" / name, os.path.join(public, name))
+            os.utime(os.path.join(public, name), None)
+        return et
+
+    def test_u0_precedes_both_full_market_consumers(self) -> None:
+        steps = {name: (idx, deps) for idx, (name, _cmd, _token, deps) in enumerate(nightly.STEPS)}
+        for child in ("feature_store", "e1_event_layer"):
+            self.assertIn("security_registry", steps[child][1])
+            self.assertLess(steps["security_registry"][0], steps[child][0])
+        self.assertIn("official_sample", steps["security_registry"][1])
+
+    def test_u0_failure_skips_both_consumers(self) -> None:
+        def runner(cmd):
+            if cmd[1].endswith("security_registry.py"):
+                return 1, "provider failure"
+            return 0, "ok"
+        result = nightly.run_steps(runner=runner, require_live=False)
+        statuses = {row["step"]: row["status"] for row in result["steps"]}
+        self.assertEqual("FAILED", statuses["security_registry"])
+        self.assertEqual("SKIPPED_STALE_INPUT", statuses["feature_store"])
+        self.assertEqual("SKIPPED_STALE_INPUT", statuses["e1_event_layer"])
+
+    def test_valid_partial_contract_is_process_ok_but_quality_partial(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            et = self._stage_contracts(tmp)
+            started = time.time() - 1
+            for step in ("security_registry", "feature_store", "e1_event_layer"):
+                status, details = nightly.verify_step_artifacts(
+                    step, self.TARGET, started, et, "RUN-1"
+                )
+                self.assertEqual("OK", status, details)
+            e1 = nightly.verify_step_artifacts(
+                "e1_event_layer", self.TARGET, started, et, "RUN-1"
+            )[1][0]
+            self.assertEqual("PARTIAL", e1["quality_status"])
+
+    def test_contract_date_mismatch_and_schema_damage_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            et = self._stage_contracts(tmp)
+            started = time.time() - 1
+            status, _ = nightly.verify_step_artifacts(
+                "feature_store", "20260804", started, et, "RUN-1"
+            )
+            self.assertEqual("DATE_MISMATCH", status)
+            feature = os.path.join(tmp, "public", "data", "v2", "feature_store_health.json")
+            payload = read_json(feature)
+            payload["integrity"]["features_hash"] = "bad"
+            write_json(feature, payload)
+            status, details = nightly.verify_step_artifacts(
+                "feature_store", self.TARGET, started, et, "RUN-1"
+            )
+            self.assertEqual("FAILED", status, details)
+
+    def test_persistent_feature_db_is_injected_into_subprocess(self) -> None:
+        captured = {}
+
+        def fake(cmd, cwd=None, env=None):
+            if cmd[1].endswith("feature_store.py"):
+                captured["db"] = env.get("AR_FEATURE_STORE_DB")
+            return 0, "ok"
+
+        with mock.patch.object(nightly, "_subprocess_runner", side_effect=fake):
+            nightly.run_steps(
+                require_live=False,
+                persistent_feature_db="/tmp/ar-feature-store-test.sqlite3",
+            )
+        self.assertEqual("/tmp/ar-feature-store-test.sqlite3", captured["db"])
 
 
 class RuleCompletenessTest(unittest.TestCase):
@@ -1461,4 +1555,3 @@ class ProtectedLedgerIsPublishedTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

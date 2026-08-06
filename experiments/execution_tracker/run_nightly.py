@@ -35,6 +35,15 @@ FRESH_WARN_H = 36
 STEPS = [
     # ── 结算主干(闭环根修复:定盘并入夜链,消灭手工补账)──
     ("official_sample", ["python3", "run_official_sample.py"], True, []),
+    # ── 全市场研究数据支线:R-032 是 R-008/R-036 的唯一 universe 事实源 ──
+    ("security_registry",
+     ["python3", "../research_funnel/security_registry.py", "--allow-partial-exit-zero"],
+     True, ["official_sample"]),
+    ("feature_store", ["python3", "../research_funnel/feature_store.py"], True,
+     ["security_registry"]),
+    ("e1_event_layer",
+     ["python3", "../research_funnel/e1_event_layer.py", "--allow-partial-exit-zero"],
+     True, ["security_registry"]),
     ("fwd_backfill", ["python3", "run_post_close_report.py", "--backfill-only"], True,
      ["official_sample"]),
     # NAV 每日结算:update_nav 此前定义了却无 CLI 入口,从不被调用 ——
@@ -83,6 +92,12 @@ ARTIFACTS = {
     "official_sample":       [("run_target.json", "trade_date", True),
                                (os.path.join("samples", "{target}.json"),
                                 "target_trade_date", False)],
+    "security_registry":     [(os.path.join("..", "..", "public", "data", "v2",
+                                             "security_registry.json"), "as_of", True)],
+    "feature_store":         [(os.path.join("..", "..", "public", "data", "v2",
+                                             "feature_store_health.json"), "as_of", True)],
+    "e1_event_layer":        [(os.path.join("..", "..", "public", "data", "v2",
+                                             "e1_event_layer.json"), "as_of", True)],
     "fwd_backfill":          [(os.path.join("reports", "{target}.json"),
                                 "target_trade_date", True)],
     # NAV 每日结算的产物契约。加步骤时漏了这条 —— 没有产物契约的步骤等于没被验过,
@@ -109,6 +124,40 @@ ARTIFACTS = {
 # 状态精度(越大越糟);步骤终态 = max(进程判定, 各产物判定)
 _SEVERITY = {"OK": 0, "PARTIAL": 1, "DATA_BLOCKED": 2, "STALE_OUTPUT": 3,
              "DATE_MISMATCH": 4, "FAILED": 5}
+RESEARCH_DATA_STEPS = {"security_registry", "feature_store", "e1_event_layer"}
+RUN_CONTEXT_EXTERNAL_STEPS = set(RESEARCH_DATA_STEPS)
+
+
+def _research_quality(step, data):
+    """Keep process completion separate from evidence completeness.
+
+    The generators validate their own contracts before writing. A valid PARTIAL
+    contract is publishable evidence with an explicit quality gap, not a process
+    failure. Total E1 coverage loss is promoted to DATA_BLOCKED.
+    """
+    if step not in RESEARCH_DATA_STEPS or not isinstance(data, dict):
+        return None
+    status = str(data.get("status") or "UNKNOWN").upper()
+    if step == "e1_event_layer":
+        coverage = data.get("coverage") or {}
+        if coverage.get("rows") and coverage.get("data_blocked") == coverage.get("rows"):
+            return "DATA_BLOCKED"
+    return status
+
+
+def _validate_research_contract(step, data):
+    research_dir = os.path.abspath(os.path.join(HERE, "..", "research_funnel"))
+    if research_dir not in sys.path:
+        sys.path.insert(0, research_dir)
+    if step == "security_registry":
+        from security_registry import validate_registry
+        validate_registry(data)
+    elif step == "feature_store":
+        from feature_store import validate_health
+        validate_health(data)
+    elif step == "e1_event_layer":
+        from e1_event_layer import validate_event_layer
+        validate_event_layer(data)
 
 
 def _artifact_status_scan(step, data):
@@ -118,6 +167,15 @@ def _artifact_status_scan(step, data):
         bad = [r.get("ts_code") for r in (data.get("results") or [])
                if (r.get("completeness") or {}).get("verdict") not in (None, "COMPLETE")]
         return ("PARTIAL", f"电池非完整: {bad[:3]}") if bad else ("OK", "")
+    if step in RESEARCH_DATA_STEPS:
+        try:
+            _validate_research_contract(step, data)
+        except Exception as exc:
+            return "FAILED", f"研究数据契约校验失败: {exc}"
+        quality = _research_quality(step, data)
+        if quality not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED"):
+            return "FAILED", f"研究数据契约状态非法: {quality}"
+        return "OK", ""
     if step == "export_contracts":
         txt = json.dumps(data, ensure_ascii=False)
         if "STALE_INPUT" in txt or '"PARTIAL"' in txt:
@@ -190,7 +248,8 @@ def verify_step_artifacts(step, target, run_start, base=None, run_id=None):
                 # 不可变历史输入(sample)允许跨 run 复用;本轮活性由同一步的
                 # fresh run_target.json 背书。所有 fresh 产物必须绑定当前 run_id。
                 if (d["verdict"] == "OK" and fresh_required
-                        and run_id and isinstance(data, dict)):
+                        and run_id and isinstance(data, dict)
+                        and step not in RUN_CONTEXT_EXTERNAL_STEPS):
                     artifact_run = str(data.get("run_id") or "")
                     artifact_target = str(data.get("target_trade_date") or "")[:8]
                     if artifact_run != run_id:
@@ -200,6 +259,9 @@ def verify_step_artifacts(step, target, run_start, base=None, run_id=None):
                         d.update(verdict="DATE_MISMATCH",
                                  why=f"target_trade_date={artifact_target or '缺失'} ≠ {target}")
                 if d["verdict"] == "OK" and isinstance(data, dict):
+                    quality = _research_quality(step, data)
+                    if quality:
+                        d["quality_status"] = quality
                     sv, swhy = _artifact_status_scan(step, data)
                     if sv != "OK":
                         d.update(verdict=sv, why=swhy)
@@ -245,7 +307,14 @@ def _classify(code, out):
     return "OK"
 
 
-def run_steps(runner=None, require_live=True, verify=False, base=None, run_id=None):
+def run_steps(
+    runner=None,
+    require_live=True,
+    verify=False,
+    base=None,
+    run_id=None,
+    persistent_feature_db=None,
+):
     """verify=True(正式路径):步骤终态 = max(进程判定, 产物实物判定)。
     COMPLETE 从此必须由实物背书 —— 进程退 0 + 免责声明不再等于成功(B2/B3)。"""
     base = base or HERE
@@ -270,6 +339,8 @@ def run_steps(runner=None, require_live=True, verify=False, base=None, run_id=No
             env["AR_RUN_ID"] = str(run_id or "STANDALONE")
             env["AR_NIGHTLY_STEP"] = name
             env["AR_NIGHTLY_STAGING"] = "1" if os.path.realpath(base) != os.path.realpath(HERE) else "0"
+            if persistent_feature_db:
+                env["AR_FEATURE_STORE_DB"] = persistent_feature_db
             if target:
                 env["AR_TARGET_TRADE_DATE"] = target
             else:
@@ -310,12 +381,27 @@ def run_steps(runner=None, require_live=True, verify=False, base=None, run_id=No
                 "artifacts": entry.get("artifacts", []),
             })
     report = "COMPLETE" if not non_ok else "INCOMPLETE"
+    research_quality = []
+    for entry in results:
+        for artifact in entry.get("artifacts", []):
+            quality = artifact.get("quality_status")
+            if quality and quality != "COMPLETE":
+                research_quality.append({
+                    "step": entry["step"],
+                    "quality": quality,
+                    "artifact": artifact.get("artifact"),
+                })
     return {"generated_at": time.strftime("%Y%m%d %H:%M"),
             "orchestrator": "nightly_v4" if verify else "nightly_v2",
             "run_id": run_id,
             "target_trade_date": target,
             "report": report,
             "non_ok_steps": [{"step": r["step"], "status": r["status"]} for r in non_ok],
+            "research_data_quality": (
+                "DATA_BLOCKED" if any(item["quality"] == "DATA_BLOCKED" for item in research_quality)
+                else "PARTIAL" if research_quality else "COMPLETE"
+            ),
+            "research_data_gaps": research_quality,
             "steps": results,
             "note": "nightly v4;COMPLETE 由结构化状态、实物、run_id 与统一交易日共同背书。不是买卖指令。"}
 
@@ -831,6 +917,13 @@ def _collect_data_quality(base=None):
     }
 
 
+def _merge_data_quality(contract_quality, research_quality):
+    order = {"COMPLETE": 0, "PARTIAL": 1, "DATA_BLOCKED": 2, "UNKNOWN": 3}
+    left = str(contract_quality or "UNKNOWN").upper()
+    right = str(research_quality or "UNKNOWN").upper()
+    return left if order.get(left, 3) >= order.get(right, 3) else right
+
+
 def _execute_nightly():
     """在已持有全局锁时执行一轮。普通异常不清 run_state,交给下一轮恢复。"""
     run_id = f"{time.strftime('%Y%m%d_%H%M%S')}_{time.time_ns()}_{uuid.uuid4().hex[:8]}"
@@ -880,13 +973,30 @@ def _execute_nightly():
             "stage_et": stage["et"], "started_at": time.strftime("%Y%m%d %H:%M:%S"),
         })
         require_live = "--allow-data-blocked" not in sys.argv
-        res = run_steps(require_live=require_live, verify=True,
-                        base=stage["et"], run_id=run_id)
+        res = run_steps(
+            require_live=require_live,
+            verify=True,
+            base=stage["et"],
+            run_id=run_id,
+            persistent_feature_db=os.path.join(
+                REPO_ROOT, "data_history", "feature_store.sqlite3"
+            ),
+        )
         res["preflight"] = {"pass": True, "warns": pf["warns"]}
         # ── 状态聚合:data_quality 必须上到夜链顶层 ──
         # report=COMPLETE 只说明流水线成功;若宏观等来源是 PARTIAL,
         # 只读 nightly_run.report 的消费方会误以为信息完整。两个维度都要在顶层可见。
-        res.update(_collect_data_quality())
+        contract_quality = _collect_data_quality(stage["et"])
+        res["contract_data_quality"] = contract_quality["data_quality"]
+        res["data_quality"] = _merge_data_quality(
+            contract_quality["data_quality"], res.get("research_data_quality")
+        )
+        res["degraded_sources"] = list(contract_quality["degraded_sources"])
+        for gap in res.get("research_data_gaps", []):
+            source = f"{gap['step']}:{gap['quality']}"
+            if source not in res["degraded_sources"]:
+                res["degraded_sources"].append(source)
+        res["business_contract_count"] = contract_quality["business_contract_count"]
         res["crash_recovery"] = crash_info
 
         if res["report"] == "COMPLETE":

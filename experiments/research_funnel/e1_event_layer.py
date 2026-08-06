@@ -946,11 +946,19 @@ def _selftest() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build the full-market U0-linked E1 event layer")
-    parser.add_argument("--as-of", default=date.today().strftime("%Y%m%d"))
+    parser.add_argument(
+        "--as-of",
+        default=os.environ.get("AR_TARGET_TRADE_DATE") or date.today().strftime("%Y%m%d"),
+    )
     parser.add_argument("--registry", default="public/data/v2/security_registry.json")
     parser.add_argument("--output", default="public/data/v2/e1_event_layer.json")
     parser.add_argument("--input", help="offline JSON containing endpoint rows/errors/calls")
     parser.add_argument("--selftest", action="store_true")
+    parser.add_argument(
+        "--allow-partial-exit-zero",
+        action="store_true",
+        help="Treat a structurally valid PARTIAL artifact as process success for nightly quality reporting.",
+    )
     args = parser.parse_args()
     if args.selftest:
         return _selftest()
@@ -986,7 +994,9 @@ def main() -> int:
         f"blocked={coverage['data_blocked']}"
     )
     print("E1 red-flag triage only; no research approval or trading action.")
-    return 0 if payload["status"] == "COMPLETE" else 2
+    if payload["status"] == "COMPLETE":
+        return 0
+    return 0 if args.allow_partial_exit_zero and payload["status"] == "PARTIAL" else 2
 
 
 if __name__ == "__main__":
