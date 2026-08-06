@@ -1064,6 +1064,37 @@ class ProtectedLedgerAppendOnlyTest(unittest.TestCase):
         errs = npub.verify_protected_inputs(et, rd, target="20260805")
         self.assertTrue(any("消失" in e for e in errs), errs)
 
+    def test_same_ticker_same_day_orders_keep_distinct_entry_ids(self):
+        """Deleting one of two same-ticker/day orders must not hide in a key collision."""
+        rows = [{"date": "20260804", "nav": 1.0}]
+        first = {
+            "entry_id": "600000.SH_20260805_SETUP_A",
+            "ticker": "600000.SH", "registered_at": "20260805",
+            "setup": "SETUP_A", "status": "pending",
+        }
+        second = {
+            "entry_id": "600000.SH_20260805_SETUP_B",
+            "ticker": "600000.SH", "registered_at": "20260805",
+            "setup": "SETUP_B", "status": "pending",
+        }
+        npub, et, rd = self._stage(
+            rows, rows, before_orders=[first, second], after_orders=[first]
+        )
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(any("消失" in e for e in errs), errs)
+
+    def test_duplicate_order_identity_is_rejected(self):
+        rows = [{"date": "20260804", "nav": 1.0}]
+        order = {
+            "entry_id": "DUP", "ticker": "600000.SH",
+            "registered_at": "20260805", "status": "pending",
+        }
+        npub, et, rd = self._stage(
+            rows, rows, before_orders=[order], after_orders=[order, dict(order)]
+        )
+        errs = npub.verify_protected_inputs(et, rd, target="20260805")
+        self.assertTrue(any("重复订单身份" in e for e in errs), errs)
+
 
 class OvernightAnchorLookAheadTest(unittest.TestCase):
     """历史重跑不得混入未来隔夜数据 —— 8/5 重跑 8/4 时读到 8/5 却标成 8/4。"""
@@ -1142,6 +1173,19 @@ class ContractStatusOrthogonalityTest(unittest.TestCase):
         self.assertEqual("STALE_INPUT", p)
         self.assertEqual("BLOCKED", q)
 
+    def test_status_aggregation_is_independent_of_source_order(self):
+        """A blocked source must dominate a merely stale source in any order."""
+        import export_contracts as ec
+        blocked_then_stale = {
+            "blocked.json": {"internal_status": "DATA_BLOCKED"},
+            "stale.json": {"stale": True},
+        }
+        stale_then_blocked = dict(reversed(list(blocked_then_stale.items())))
+        left = ec._resolve_status(None, blocked_then_stale)[:2]
+        right = ec._resolve_status(None, stale_then_blocked)[:2]
+        self.assertEqual(left, right)
+        self.assertEqual(("STALE_INPUT", "BLOCKED"), left)
+
     def test_clean_sources_are_complete(self):
         import export_contracts as ec
         p, q, deg = ec._resolve_status(None, {"x.json": {"internal_status": "OK"}})
@@ -1210,6 +1254,16 @@ class BackdatedAppendTest(unittest.TestCase):
         errs2 = self._stage("nav_history.json", [],
                             [{"date": "20260805"}, {"date": "20260805"}])
         self.assertTrue(any("只许一行" in e for e in errs2), errs2)
+
+    def test_existing_target_nav_plus_new_target_nav_is_rejected(self):
+        """A rerun cannot add a second target row behind an existing target row."""
+        errs = self._stage(
+            "nav_history.json",
+            [{"date": "20260805", "nav": 1.0}],
+            [{"date": "20260805", "nav": 1.0},
+             {"date": "20260805", "nav": 2.0}],
+        )
+        self.assertTrue(any("只许一行" in e for e in errs), errs)
 
 
 class NightlyDataQualitySurfacedTest(unittest.TestCase):
@@ -1485,6 +1539,17 @@ class NavMarkToMarketTest(unittest.TestCase):
         with self.assertRaises(mpf.NavMarksIncomplete):
             mpf.current_nav(self._fund(), self._orders(), None,
                             require_complete_marks=True)
+
+    def test_official_nav_refuses_non_finite_or_non_positive_marks(self):
+        import model_paper_fund as mpf
+        for bad in (float("nan"), float("inf"), float("-inf"), 0.0, -1.0):
+            with self.subTest(mark=bad):
+                with self.assertRaises(mpf.NavMarksIncomplete):
+                    mpf.current_nav(
+                        self._fund(), self._orders(),
+                        {"600276.SH": bad, "002714.SZ": 38.36},
+                        require_complete_marks=True,
+                    )
 
     def test_mixed_basis_nav_is_never_produced_on_the_official_path(self):
         """混合口径的具体数值不得出现在任何强制路径上。"""

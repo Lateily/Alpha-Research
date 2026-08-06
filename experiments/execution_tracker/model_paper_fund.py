@@ -20,6 +20,7 @@ Ledger dir (append-only JSON): experiments/execution_tracker/model_fund/
   python3 model_paper_fund.py --status
 """
 import json
+import math
 import os
 import sys
 
@@ -97,6 +98,14 @@ class NavMarksIncomplete(Exception):
         super().__init__(f"缺目标日定盘价: {self.missing}")
 
 
+def _usable_mark(value):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return None
+    return value if math.isfinite(value) and value > 0 else None
+
+
 def current_nav(fund, orders, marks=None, *, require_complete_marks=False):
     """cash + Σ filled positions。
 
@@ -105,14 +114,16 @@ def current_nav(fund, orders, marks=None, *, require_complete_marks=False):
     默认 False 只供 --status 一类的**只读估算**,其结果不得写入 nav_history。
     """
     marks = marks or {}
+    valid_marks = {ticker: mark for ticker, raw in marks.items()
+                   if (mark := _usable_mark(raw)) is not None}
     missing = [o["ticker"] for o in orders
-               if o["status"] == "filled" and o["ticker"] not in marks]
+               if o["status"] == "filled" and o["ticker"] not in valid_marks]
     if require_complete_marks and missing:
         raise NavMarksIncomplete(missing)
     nav = fund["cash"]
     for o in orders:
         if o["status"] == "filled":
-            nav += o["shares"] * marks.get(o["ticker"], o["fill_price"])
+            nav += o["shares"] * valid_marks.get(o["ticker"], o["fill_price"])
     return round(nav, 2)
 
 
@@ -494,9 +505,10 @@ def main():
                     close = bar.get("close") if isinstance(bar, dict) else (
                         bar[4] if isinstance(bar, (list, tuple)) and len(bar) > 4 else None)
                     bar_date = str(bar.get("date") if isinstance(bar, dict) else "")[:8]
-                    if close and bar_date == date:
-                        marks[o["ticker"]] = float(close)
-                    elif close:
+                    usable_close = _usable_mark(close)
+                    if usable_close is not None and bar_date == date:
+                        marks[o["ticker"]] = usable_close
+                    elif usable_close is not None:
                         print(f"  WARN {o['ticker']} 最新 bar {bar_date} ≠ target {date},不用于标记")
                 except Exception as e:
                     print(f"  WARN {o['ticker']} 取价失败: {str(e)[:50]}")
