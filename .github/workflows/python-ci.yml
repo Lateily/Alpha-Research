@@ -62,6 +62,8 @@ jobs:
           node tests/team-progress-api.test.mjs
           node tests/team-progress-event-api.test.mjs
           node tests/team-progress-client.test.mjs
+      - name: AIOS DeepSeek backend gate regression (node, zero network)
+        run: node tests/aios-deepseek-api.test.mjs
       # ── R-014 注册 schema v2 + R-015 接线回归 ──
       # 覆盖:registry 自检 · 两条注册路径确实打戳 · 账本挂掉时登记被拒且信号不落盘
       - name: Registry schema v2 + ledger wiring regression

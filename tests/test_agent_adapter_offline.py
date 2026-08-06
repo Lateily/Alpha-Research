@@ -16,6 +16,7 @@ from adapters import (  # noqa: E402
     AgentAdapter,
     AgentRequest,
     AgentStatus,
+    DeepSeekAdapter,
     DeterministicAdapter,
     UsageStatus,
     run_adapter,
@@ -188,6 +189,90 @@ def test_adapter_contract_uses_zero_network(monkeypatch=None) -> None:
         socket.socket = original_socket
 
     assert result.status is AgentStatus.SUCCEEDED
+
+
+def test_deepseek_offline_stub_uses_common_envelope() -> None:
+    def offline_completion(payload, timeout_seconds):
+        assert payload["model"] == "deepseek-v4-flash"
+        assert payload["messages"] == [{"role": "user", "content": "summarize this packet"}]
+        assert timeout_seconds == 3
+        return {
+            "choices": [
+                {"message": {"content": "offline DeepSeek packet"}, "finish_reason": "stop"}
+            ],
+            "usage": {
+                "prompt_tokens": 100,
+                "prompt_cache_hit_tokens": 20,
+                "prompt_cache_miss_tokens": 80,
+                "completion_tokens": 10,
+            },
+        }
+
+    offline_completion.offline_stub = True
+
+    result = run(
+        DeepSeekAdapter(completion=offline_completion),
+        request(input_payload={"prompt": "summarize this packet"}),
+    )
+
+    assert result.status is AgentStatus.SUCCEEDED
+    assert result.provider == "deepseek"
+    assert result.model == "deepseek-v4-flash"
+    assert result.output == {
+        "text": "offline DeepSeek packet",
+        "finish_reason": "stop",
+        "provider_mode": "offline_stub",
+    }
+    assert result.usage.status is UsageStatus.REPORTED
+    assert result.usage.input_tokens == 100
+    assert result.usage.cached_input_tokens == 20
+    assert result.usage.output_tokens == 10
+    assert result.usage.estimated_cost_cny == "0.000101"
+
+
+def test_deepseek_injected_completion_must_be_declared_offline() -> None:
+    def unsafe_completion(_payload, _timeout_seconds):
+        return {"choices": [{"message": {"content": "should not run"}}]}
+
+    result = run(
+        DeepSeekAdapter(completion=unsafe_completion),
+        request(input_payload={"prompt": "hello"}),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_requires_provider_network_policy() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "real-like response"}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="deny"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_requires_reported_usage() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {"choices": [{"message": {"content": "missing usage"}}]}
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
 
 
 def run_all_tests() -> int:
