@@ -10,6 +10,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
+import tempfile
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -23,7 +25,21 @@ BASE_URL = "https://api.moonshot.cn/v1"
 MODEL = "kimi-k3"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 USAGE_PATH = REPO_ROOT / "public" / "data" / "v2" / "ops" / "llm_usage.jsonl"
+USAGE_SPOOL_PATH = Path(
+    os.environ.get(
+        "LLM_USAGE_SPOOL_PATH",
+        str(Path(tempfile.gettempdir()) / "alpha-research-llm-usage-spool.jsonl"),
+    )
+)
 DEFAULT_PROMPT_VERSION = "k0_smoke_v1"
+
+
+class UsageLedgerWriteError(RuntimeError):
+    """A paid response exists but the primary usage ledger write failed."""
+
+    def __init__(self, usage_record: dict[str, Any]) -> None:
+        super().__init__("primary usage ledger write failed after provider response")
+        self.usage_record = usage_record
 
 DEFAULT_USD_CNY = Decimal(os.environ.get("LLM_USD_CNY", "7.20"))
 INPUT_CACHE_HIT_USD_PER_1M = Decimal(
@@ -68,7 +84,11 @@ def chat_completion(
         usage=usage,
         cost=cost,
     )
-    append_usage_record(usage_record)
+    try:
+        append_usage_record(usage_record)
+    except Exception as exc:
+        _preserve_usage_after_ledger_failure(usage_record)
+        raise UsageLedgerWriteError(usage_record) from exc
 
     return {
         "text": extract_text(response_json),
@@ -129,6 +149,35 @@ def append_usage_record(record: dict[str, Any], usage_path: Path = USAGE_PATH) -
     usage_path.parent.mkdir(parents=True, exist_ok=True)
     with usage_path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def append_usage_spool(
+    record: dict[str, Any], usage_path: Path = USAGE_SPOOL_PATH
+) -> None:
+    """Durably preserve sanitized usage when the primary ledger is unavailable."""
+
+    usage_path.parent.mkdir(parents=True, exist_ok=True)
+    with usage_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _preserve_usage_after_ledger_failure(record: dict[str, Any]) -> None:
+    try:
+        append_usage_spool(record)
+    except Exception:
+        # The usage record contains hashes and operational metadata only, never
+        # prompt/response text or credentials. stderr is the last-resort trace.
+        sys.stderr.write(
+            json.dumps(
+                {"event": "LLM_USAGE_LEDGER_WRITE_FAILED", "usage_record": record},
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+            + "\n"
+        )
+        sys.stderr.flush()
 
 
 def _post_chat_completion(

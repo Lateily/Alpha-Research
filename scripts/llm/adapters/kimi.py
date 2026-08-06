@@ -7,14 +7,37 @@ evidence that a callable cannot reach the network.
 
 from __future__ import annotations
 
+import importlib.util
+import socket
+from contextlib import contextmanager
+from pathlib import Path
+from types import ModuleType
 from typing import Any, Callable, Mapping
 
-import adapter as legacy_kimi
-
-from .base import AdapterOutput, AgentAdapter, AgentRequest, Usage, UsageStatus
+from .base import (
+    AdapterExecutionError,
+    AdapterOutput,
+    AgentAdapter,
+    AgentRequest,
+    Usage,
+    UsageStatus,
+)
 
 
 Completion = Callable[..., Mapping[str, Any]]
+
+
+def _load_legacy_kimi() -> ModuleType:
+    module_path = Path(__file__).resolve().parents[1] / "adapter.py"
+    spec = importlib.util.spec_from_file_location("aios_legacy_kimi_adapter", module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load legacy Kimi adapter from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+legacy_kimi = _load_legacy_kimi()
 
 
 class KimiAdapter(AgentAdapter):
@@ -28,6 +51,8 @@ class KimiAdapter(AgentAdapter):
         allow_real_call: bool = False,
         offline_stub: bool = False,
     ) -> None:
+        if allow_real_call and offline_stub:
+            raise ValueError("allow_real_call and offline_stub are mutually exclusive")
         self._completion = completion or legacy_kimi.chat_completion
         self._allow_real_call = allow_real_call
         self._offline_stub = offline_stub
@@ -46,16 +71,27 @@ class KimiAdapter(AgentAdapter):
         if not _valid_messages(messages):
             raise ValueError("input_payload.messages must be a non-empty message list")
 
-        result = self._completion(
-            task_name=request.task_type,
-            messages=messages,
-            prompt_version=request.prompt_version,
-            max_tokens=_positive_int(request.input_payload.get("max_tokens"), 128),
-            reasoning_effort=_non_empty_string(
-                request.input_payload.get("reasoning_effort"), "low"
-            ),
-            timeout_seconds=request.timeout_seconds,
-        )
+        try:
+            with _network_access(allowed=self._allow_real_call):
+                result = self._completion(
+                    task_name=request.task_type,
+                    messages=messages,
+                    prompt_version=request.prompt_version,
+                    max_tokens=_positive_int(
+                        request.input_payload.get("max_tokens"), 128
+                    ),
+                    reasoning_effort=_non_empty_string(
+                        request.input_payload.get("reasoning_effort"), "low"
+                    ),
+                    timeout_seconds=request.timeout_seconds,
+                )
+        except legacy_kimi.UsageLedgerWriteError as exc:
+            raise AdapterExecutionError(
+                code="USAGE_LEDGER_WRITE_FAILED",
+                message="paid provider usage was preserved outside the primary ledger",
+                retryable=False,
+                usage=_usage_from_record(exc.usage_record),
+            ) from exc
         if not isinstance(result, Mapping):
             raise TypeError("Kimi completion must return a mapping")
 
@@ -144,3 +180,24 @@ def _non_empty_string(value: Any, default: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError("value must be a non-empty string")
     return value
+
+
+@contextmanager
+def _network_access(*, allowed: bool):
+    if allowed:
+        yield
+        return
+
+    original_socket = socket.socket
+    original_create_connection = socket.create_connection
+
+    def blocked(*_args, **_kwargs):
+        raise PermissionError("network access is forbidden for offline Kimi stubs")
+
+    socket.socket = blocked
+    socket.create_connection = blocked
+    try:
+        yield
+    finally:
+        socket.socket = original_socket
+        socket.create_connection = original_create_connection

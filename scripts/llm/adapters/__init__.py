@@ -3,6 +3,7 @@
 from .base import (
     AgentAdapter,
     AgentError,
+    AdapterExecutionError,
     AgentRequest,
     AgentResult,
     AgentStatus,
@@ -11,16 +12,15 @@ from .base import (
     run_adapter,
 )
 from .deterministic import DeterministicAdapter
-from .kimi import KimiAdapter
 
 __all__ = [
     "AgentAdapter",
     "AgentError",
+    "AdapterExecutionError",
     "AgentRequest",
     "AgentResult",
     "AgentStatus",
     "DeterministicAdapter",
-    "KimiAdapter",
     "Usage",
     "UsageStatus",
     "run_adapter",
