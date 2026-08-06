@@ -100,20 +100,27 @@ def _resolve_status(blocked, sources_meta):
     degraded = []
     if blocked:
         return "DATA_BLOCKED", "BLOCKED", degraded
-    pipeline = "OK"
-    quality = "COMPLETE"
+    has_blocked = False
+    has_stale = False
+    has_partial = False
     for name, m in (sources_meta or {}).items():
         internal = m.get("internal_status")
-        if internal == "DATA_BLOCKED" or m.get("stale"):
-            pipeline = "STALE_INPUT"
-            quality = "BLOCKED" if internal == "DATA_BLOCKED" else "PARTIAL"
+        stale = bool(m.get("stale"))
+        if internal == "DATA_BLOCKED" or stale:
+            has_blocked = has_blocked or internal == "DATA_BLOCKED"
+            has_stale = has_stale or stale
             degraded.append({"source": name, "internal_status": internal,
-                             "stale": bool(m.get("stale")),
+                             "stale": stale,
                              "why": m.get("stale_why")})
         elif internal == "PARTIAL_OK":
-            # 可发布,但信息不完整 —— 只降 data_quality,不降 pipeline_status
-            quality = "PARTIAL" if quality != "BLOCKED" else quality
+            has_partial = True
             degraded.append({"source": name, "internal_status": "PARTIAL_OK"})
+    # Aggregate after scanning every source. Mutating the verdict in iteration order
+    # made DATA_BLOCKED -> stale yield PARTIAL while the reverse order yielded BLOCKED.
+    pipeline = "STALE_INPUT" if has_blocked or has_stale else "OK"
+    quality = "BLOCKED" if has_blocked else (
+        "PARTIAL" if has_stale or has_partial else "COMPLETE"
+    )
     return pipeline, quality, degraded
 
 

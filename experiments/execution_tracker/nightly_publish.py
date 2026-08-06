@@ -181,7 +181,24 @@ def _protected_content(root):
 
 
 def _order_key(o):
-    return str(o.get("order_id") or o.get("id") or (o.get("ticker"), o.get("registered_at")))
+    stable_id = o.get("entry_id") or o.get("order_id") or o.get("id")
+    if stable_id not in (None, ""):
+        return f"id:{stable_id}"
+    return "legacy:" + repr((o.get("ticker"), o.get("registered_at"), o.get("setup")))
+
+
+def _index_orders(rows, label):
+    indexed = {}
+    duplicates = []
+    for order in rows:
+        key = _order_key(order)
+        if key in indexed:
+            duplicates.append(key)
+        else:
+            indexed[key] = order
+    errors = [f"model_fund/orders.json: {label} 出现重复订单身份 {key}"
+              for key in sorted(set(duplicates))]
+    return indexed, errors
 
 
 def _scan_unknown_order_status(root):
@@ -206,9 +223,11 @@ def _check_orders(before, after):
     """订单:允许单向状态推进 + 追加新单;禁止倒退、删除、改写已定值字段。"""
     if not isinstance(before, list) or not isinstance(after, list):
         return ["model_fund/orders.json: 期望 JSON 数组"]
-    bmap = {_order_key(o): o for o in before}
-    amap = {_order_key(o): o for o in after}
-    errs = []
+    bmap, before_errors = _index_orders(before, "变更前")
+    amap, after_errors = _index_orders(after, "变更后")
+    errs = before_errors + after_errors
+    if errs:
+        return errs
     for k in bmap:
         if k not in amap:
             errs.append(f"model_fund/orders.json: 订单 {k} 消失,不许删除")
@@ -248,8 +267,14 @@ def _check_append_only(name, before, after, target):
             got = str((row or {}).get(dk) or "")[:8]
             if target and got != target:
                 errs.append(f"model_fund/{name}: 新增行 {dk}={got or '缺失'} ≠ 本轮 {target}")
-        if rule.get("one_per_target") and len(added) > 1:
-            errs.append(f"model_fund/{name}: 本轮新增 {len(added)} 行,该文件每个交易日只许一行")
+        if rule.get("one_per_target") and target:
+            target_rows = sum(
+                1 for row in after
+                if str((row or {}).get(dk) or "")[:8] == target
+            )
+            if target_rows > 1:
+                errs.append(f"model_fund/{name}: 本轮日期 {target} 共 {target_rows} 行,"
+                            "该文件每个交易日只许一行")
     return errs
 
 
@@ -262,11 +287,10 @@ def _cash_delta_from_orders(before_orders, after_orders):
         return 0.0, ["model_fund/orders.json 结构非预期或缺失,现金无法对账"]
     prev = {}
     for o in before_orders:
-        key = o.get("order_id") or o.get("id") or (o.get("ticker"), o.get("registered_at"))
-        prev[str(key)] = o
+        prev[_order_key(o)] = o
     delta, why = 0.0, []
     for o in after_orders:
-        key = str(o.get("order_id") or o.get("id") or (o.get("ticker"), o.get("registered_at")))
+        key = _order_key(o)
         was = (prev.get(key) or {}).get("status")
         now = o.get("status")
         if was == now:
