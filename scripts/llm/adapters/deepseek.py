@@ -13,11 +13,13 @@ import urllib.error
 import urllib.request
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Callable, Mapping
+from urllib.parse import urlparse
 
 from .base import AdapterOutput, AgentAdapter, AgentRequest, Usage, UsageStatus
 
 
 BASE_URL = "https://api.deepseek.com"
+OFFICIAL_DEEPSEEK_HOST = "api.deepseek.com"
 DEFAULT_MODEL = "deepseek-v4-flash"
 DEFAULT_PROMPT_VERSION = "aios_deepseek_v1"
 DEFAULT_USD_CNY = Decimal(os.environ.get("LLM_USD_CNY", "7.20"))
@@ -72,6 +74,8 @@ class DeepSeekAdapter(AgentAdapter):
 
         if self._allow_real_call and request.network_policy != "provider_only":
             raise PermissionError("real DeepSeek calls require network_policy=provider_only")
+        if self._allow_real_call:
+            self._validate_real_call_origin()
 
         if self._completion is not None:
             if not self._allow_real_call and not getattr(self._completion, "offline_stub", False):
@@ -92,6 +96,7 @@ class DeepSeekAdapter(AgentAdapter):
                 "text": text,
                 "finish_reason": _finish_reason(response),
                 "provider_mode": "real" if self._allow_real_call else "offline_stub",
+                "no_trade_flag": True,
             },
             usage=usage,
             evidence_refs=("provider:deepseek",),
@@ -115,6 +120,13 @@ class DeepSeekAdapter(AgentAdapter):
                 "never paste it into code, commits, frontend, or chat."
             )
         return api_key
+
+    def _validate_real_call_origin(self) -> None:
+        parsed = urlparse(self.base_url)
+        if parsed.scheme != "https" or parsed.hostname != OFFICIAL_DEEPSEEK_HOST:
+            raise PermissionError("real DeepSeek calls are pinned to https://api.deepseek.com")
+        if parsed.port is not None or parsed.path not in ("", "/"):
+            raise PermissionError("real DeepSeek calls are pinned to the official DeepSeek origin")
 
     def _post_chat_completion(
         self,
@@ -194,14 +206,29 @@ def usage_from_response(
             raise RuntimeError("DeepSeek response did not report usage")
         return Usage.cost_unknown()
 
-    input_tokens = _int_token(raw_usage.get("prompt_tokens", raw_usage.get("input_tokens", 0)))
-    output_tokens = _int_token(raw_usage.get("completion_tokens", raw_usage.get("output_tokens", 0)))
-    cache_hit_tokens = _int_token(
-        raw_usage.get("prompt_cache_hit_tokens", raw_usage.get("cached_tokens", 0))
+    input_tokens = _required_token(
+        raw_usage,
+        "prompt_tokens",
+        "input_tokens",
+        require_reported=require_reported,
     )
-    cache_miss_tokens = _int_token(raw_usage.get("prompt_cache_miss_tokens", 0))
-    if cache_miss_tokens == 0:
-        cache_miss_tokens = max(input_tokens - cache_hit_tokens, 0)
+    output_tokens = _required_token(
+        raw_usage,
+        "completion_tokens",
+        "output_tokens",
+        require_reported=require_reported,
+    )
+    cache_hit_tokens = _optional_token(
+        raw_usage,
+        "prompt_cache_hit_tokens",
+        "cached_tokens",
+    )
+    cache_miss_tokens = _optional_token(raw_usage, "prompt_cache_miss_tokens")
+    cache_hit_tokens, cache_miss_tokens = _validate_cache_tokens(
+        input_tokens=input_tokens,
+        cache_hit_tokens=cache_hit_tokens,
+        cache_miss_tokens=cache_miss_tokens,
+    )
 
     estimated_cost_cny = estimate_cost_cny(
         model=model,
@@ -225,6 +252,13 @@ def estimate_cost_cny(
     cache_miss_input_tokens: int,
     output_tokens: int,
 ) -> str:
+    for name, value in (
+        ("cache_hit_input_tokens", cache_hit_input_tokens),
+        ("cache_miss_input_tokens", cache_miss_input_tokens),
+        ("output_tokens", output_tokens),
+    ):
+        if value < 0:
+            raise ValueError(f"{name} must be non-negative")
     pricing = MODEL_PRICING_USD_PER_1M[model]
     usd = (
         Decimal(cache_hit_input_tokens) * pricing["cache_hit_input"]
@@ -243,7 +277,57 @@ def _finish_reason(response_json: Mapping[str, Any]) -> str | None:
 
 
 def _int_token(value: Any) -> int:
-    try:
-        return int(value or 0)
-    except (TypeError, ValueError):
-        return 0
+    if isinstance(value, bool):
+        raise ValueError("token counts must be integers, not booleans")
+    if isinstance(value, int):
+        token = value
+    elif isinstance(value, str) and value.isdecimal():
+        token = int(value)
+    else:
+        raise ValueError("token counts must be integers")
+    if token < 0:
+        raise ValueError("token counts must be non-negative")
+    return token
+
+
+def _required_token(
+    raw_usage: Mapping[str, Any],
+    primary: str,
+    fallback: str,
+    *,
+    require_reported: bool,
+) -> int:
+    if primary in raw_usage:
+        return _int_token(raw_usage[primary])
+    if fallback in raw_usage:
+        return _int_token(raw_usage[fallback])
+    if require_reported:
+        raise RuntimeError(f"DeepSeek response did not report {primary}")
+    return 0
+
+
+def _optional_token(raw_usage: Mapping[str, Any], primary: str, fallback: str | None = None) -> int | None:
+    if primary in raw_usage:
+        return _int_token(raw_usage[primary])
+    if fallback and fallback in raw_usage:
+        return _int_token(raw_usage[fallback])
+    return None
+
+
+def _validate_cache_tokens(
+    *,
+    input_tokens: int,
+    cache_hit_tokens: int | None,
+    cache_miss_tokens: int | None,
+) -> tuple[int, int]:
+    if cache_hit_tokens is None and cache_miss_tokens is None:
+        return 0, input_tokens
+    if cache_hit_tokens is None:
+        cache_hit_tokens = input_tokens - int(cache_miss_tokens)
+    if cache_miss_tokens is None:
+        cache_miss_tokens = input_tokens - cache_hit_tokens
+    if cache_hit_tokens < 0 or cache_miss_tokens < 0:
+        raise ValueError("DeepSeek cache token counts must be non-negative")
+    if cache_hit_tokens + cache_miss_tokens != input_tokens:
+        raise ValueError("DeepSeek cache hit plus miss tokens must equal prompt tokens")
+    return cache_hit_tokens, cache_miss_tokens

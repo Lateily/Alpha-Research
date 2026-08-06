@@ -222,6 +222,7 @@ def test_deepseek_offline_stub_uses_common_envelope() -> None:
         "text": "offline DeepSeek packet",
         "finish_reason": "stop",
         "provider_mode": "offline_stub",
+        "no_trade_flag": True,
     }
     assert result.usage.status is UsageStatus.REPORTED
     assert result.usage.input_tokens == 100
@@ -273,6 +274,112 @@ def test_deepseek_real_call_requires_reported_usage() -> None:
     assert result.status is AgentStatus.FAILED
     assert result.error is not None
     assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_rejects_empty_usage() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "empty usage"}}],
+            "usage": {},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_usage_rejects_bad_token_values() -> None:
+    bad_usage_payloads = [
+        {"prompt_tokens": -1, "completion_tokens": 1},
+        {"prompt_tokens": True, "completion_tokens": 1},
+        {"prompt_tokens": 1, "completion_tokens": "one"},
+    ]
+
+    for usage in bad_usage_payloads:
+        def real_like_completion(_payload, _timeout_seconds, usage=usage):
+            return {
+                "choices": [{"message": {"content": "bad usage"}}],
+                "usage": usage,
+            }
+
+        result = run(
+            DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+            request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+        )
+
+        assert result.status is AgentStatus.FAILED
+        assert result.error is not None
+        assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_usage_rejects_cache_mismatch() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "cache mismatch"}}],
+            "usage": {
+                "prompt_tokens": 10,
+                "prompt_cache_hit_tokens": 6,
+                "prompt_cache_miss_tokens": 5,
+                "completion_tokens": 1,
+            },
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_rejects_unofficial_origin_before_completion() -> None:
+    called = False
+
+    def real_like_completion(_payload, _timeout_seconds):
+        nonlocal called
+        called = True
+        return {
+            "choices": [{"message": {"content": "should not call"}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(
+            base_url="https://attacker.invalid",
+            completion=real_like_completion,
+            allow_real_call=True,
+        ),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert called is False
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_output_carries_no_trade_flag() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "real-like response"}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.SUCCEEDED
+    assert result.output is not None
+    assert result.output["no_trade_flag"] is True
 
 
 def run_all_tests() -> int:
