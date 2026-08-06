@@ -160,12 +160,65 @@
     "cum_return": 0.01434
   },
   {
+    "date": "20260803",
+    "nav": 1010174.0,
+    "cash": 719140.0,
+    "n_positions": 2,
+    "daily_return": -0.00411,
+    "cum_return": 0.01017,
+    "provenance": {
+      "migration": "backfill_0803_0804",
+      "migrated_at": "2026-08-06T23:05:42+0800",
+      "reason": "0803/0804 夜链未运行造成账本缺口;按当日官方定盘价重算,0731/0805 同口径复算与账面分毫不差",
+      "price_source": "tushare daily close (official, unadjusted)",
+      "prices": {
+        "600276.SH": 53.0,
+        "002714.SZ": 38.93
+      },
+      "holdings": {
+        "600276.SH": 2700,
+        "002714.SZ": 3800
+      },
+      "formula": "cash + Σ shares×close"
+    }
+  },
+  {
+    "date": "20260804",
+    "nav": 1007850.0,
+    "cash": 719140.0,
+    "n_positions": 2,
+    "daily_return": -0.0023,
+    "cum_return": 0.00785,
+    "provenance": {
+      "migration": "backfill_0803_0804",
+      "migrated_at": "2026-08-06T23:05:42+0800",
+      "reason": "0803/0804 夜链未运行造成账本缺口;按当日官方定盘价重算,0731/0805 同口径复算与账面分毫不差",
+      "price_source": "tushare daily close (official, unadjusted)",
+      "prices": {
+        "600276.SH": 53.42,
+        "002714.SZ": 38.02
+      },
+      "holdings": {
+        "600276.SH": 2700,
+        "002714.SZ": 3800
+      },
+      "formula": "cash + Σ shares×close"
+    }
+  },
+  {
     "date": "20260805",
     "nav": 1009466.0,
     "cash": 719140.0,
     "n_positions": 2,
-    "daily_return": -0.00481,
-    "cum_return": 0.00947
+    "daily_return": 0.0016,
+    "cum_return": 0.00947,
+    "migration": {
+      "original_daily_return": -0.00481,
+      "original_basis": "20260731→20260805,实际跨 3 个交易日,曾错标为 daily",
+      "corrected_basis": "20260804→20260805 真实单日",
+      "migrated_at": "2026-08-06T23:05:42+0800",
+      "reason": "0803/0804 补记后,单日语义成立;原值按平台迁移规则保留于此"
+    }
   },
   {
     "date": "20260806",
