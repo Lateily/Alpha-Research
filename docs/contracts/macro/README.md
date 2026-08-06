@@ -1,0 +1,68 @@
+# Macro OS M0-A 契约
+
+> 状态:`APPROVED_SPEC / NOT_DEPLOYED`。本目录定义输入边界,不代表抓取器、状态机、面板或夜链接线已经上线。
+
+## 1. 本批交付
+
+| 实物 | 用途 | 当前状态 |
+|---|---|---|
+| `source_registry.v1.json` | 数据源身份、E 级、独立供应商分组、可用性和历史版本能力 | 已冻结规格 |
+| `event_tiers.v1.json` | 一级事件、双时间点预测、判分窗口和共识容差状态 | 已冻结规格 |
+| `source_registry.schema.json` | 数据源注册表 JSON Schema | 已完成 |
+| `event_tiers.schema.json` | 事件分层 JSON Schema | 已完成 |
+| `house_expectation.schema.json` | 内部宏观预判 JSON Schema | 已完成 |
+| `macro_event.schema.json` | 事件事实、共识和预期差 JSON Schema | 已完成 |
+| `contracts.py` | 零网络、失败即阻断的语义校验器 | 已完成 |
+
+权威路径位于 `experiments/macro_os/`。M0-B 才会生成运行数据;Better 的前端现在不应自行发明另一套字段。
+
+## 2. 四类事实不能混写
+
+1. **官方实际值**:只认事件注册表指定的原始发布机关,证据等级 E1。
+2. **历史版本镜像**:FRED/ALFRED 等用于保存当时可见版本,属于 E2,不能替原发布机关背书。
+3. **市场共识**:至少两个不同 `independence_group` 的来源;两个接口若属于同一供应商,仍只算一个来源。
+4. **内部预判**:一级事件在 T-24h 与 T-60m 各冻结一次,必须由 Junyan 的 GitHub PR Review 批准;预测实质内容单独哈希,Review URL 与批准 commit SHA 作为外层证明,避免审批后写回元数据造成循环。
+
+冲突共识进入 `DATA_CONFLICT`,不得取平均后继续装成正常值。容差仍为 `CALIBRATING`,因此当前不得生成 `status=OK` 的正式市场共识。
+每个正式事件同时绑定 `actual_source_ids` 与 `actual_series`;机构正确但指标取错同样拒绝。
+
+## 3. 数据源边界
+
+- 美国 CPI/就业实际值:美国劳工统计局。
+- 美国 GDP/PCE 实际值:美国经济分析局。
+- 美国零售销售实际值:美国人口普查局 Economic Indicators。
+- ISM PMI 实际值:ISM 官方发布。
+- 中国增长、通胀、PMI:国家统计局。
+- 中国货币与信贷:中国人民银行。
+- VIX:Cboe 官方历史数据。
+- FRED/ALFRED:利率、信用与历史版本镜像,不冒充第三方指标的原发布机关。
+- 市场共识源目前均为 `DATA_BLOCKED`;M0-B 未解决双源接入前,共识与预期差必须如实阻断。
+
+## 4. 时间与版本纪律
+
+- T-24h 登记不得晚于事件前 24 小时,T-60m 不得晚于事件前 60 分钟。
+- 预测获批后修改任一实质内容都会造成 `expectation_hash` 不匹配并被拒绝。
+- M0-A 只校验 Review URL、commit SHA 与哈希的格式和不可变关系;M0-B 必须读取 GitHub Review,确认被批准 commit 中确实含同一 `expectation_hash` 后才能发布。
+- Tier-1 只容纳可预先确定发布时间的事件;社融、新增贷款归 Tier-2,临时政策动作归背景层,不伪造 T-60m 精度。
+- 每份事实保存 `as_of`、`fetched_at` 与原始响应 `snapshot_hash`;数据库修订不能覆盖当时可见值。
+- 市场共识容差按事件类型和版本管理;校准期阈值为 null。
+- 一级事件发布后必须同时保留市场共识、T-24h 内部预判、T-60m 内部预判三组比较。
+
+## 5. 失败语义
+
+以下任一情况必须拒绝正式输出:
+
+- 官方实际值来自错误机构或 E2 镜像;
+- 共识只有一个独立供应商;
+- 两个来源差异超过容差却仍标 `OK`;
+- 容差尚未校准却输出正式 `OK`;
+- 内部预判迟到、未审批或只有 PR 链接而没有 Review 记录;
+- 输出出现买卖、目标价或仓位指令字段。
+
+## 6. 后续批次
+
+1. **M0-B**:采集器、SQLite 历史仓、双源共识、adaptive scheduler、source health。
+2. **M1-A**:GLOBAL/US 与 CHINA 双状态机、MRG、行业和组合传导。
+3. **M1-B**:内部宏观面板、告警中心、夜链 U1 标注消费者和校准记录。
+
+不是买卖指令;研究信号,human executes。

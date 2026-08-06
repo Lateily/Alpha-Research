@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alpha-research.local/schemas/macro/house_expectation.v1.json",
+  "title": "AR Macro House Expectation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "expectation_id", "event_id", "event_type", "event_scheduled_at", "snapshot_type", "registered_at", "status", "forecast", "surprise_bucket", "transmission_hypotheses", "formula_version", "submitted_by", "approved_by", "approval_ref", "approval_commit_sha", "expectation_hash"],
+  "properties": {
+    "schema": {"const": "ar.macro.house_expectation"},
+    "schema_version": {"const": "1.0"},
+    "expectation_id": {"type": "string", "minLength": 1},
+    "event_id": {"type": "string", "minLength": 1},
+    "event_type": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+    "event_scheduled_at": {"type": "string", "format": "date-time"},
+    "snapshot_type": {"enum": ["T_MINUS_24H", "T_MINUS_60M"]},
+    "registered_at": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["DRAFT", "APPROVED"]},
+    "forecast": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["low", "high", "unit"],
+      "properties": {
+        "low": {"type": "number"},
+        "high": {"type": "number"},
+        "unit": {"type": "string", "minLength": 1}
+      }
+    },
+    "surprise_bucket": {"type": "string", "minLength": 1},
+    "transmission_hypotheses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["factor", "condition", "expected_effect", "wrong_if", "evidence_refs"],
+        "properties": {
+          "factor": {"type": "string", "minLength": 1},
+          "condition": {"type": "string", "minLength": 1},
+          "expected_effect": {"type": "string", "minLength": 1},
+          "wrong_if": {"type": "string", "minLength": 1},
+          "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "formula_version": {"type": "string", "minLength": 1},
+    "submitted_by": {"type": "string", "minLength": 1},
+    "approved_by": {"type": ["string", "null"]},
+    "approval_ref": {"type": ["string", "null"]},
+    "approval_commit_sha": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+    "expectation_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

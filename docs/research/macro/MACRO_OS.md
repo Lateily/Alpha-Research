@@ -1,6 +1,6 @@
 # Macro OS v0:全组合宏观研究操作系统
 
-> 状态:`APPROVED / DESIGN`。MRG 已有规格草案,PR #181 提供第一批宏观原料;完整生产闭环尚未成立。
+> 状态:`M0-A CONTRACT IMPLEMENTED / NOT DEPLOYED`。数据源、事件分级、双时间点内部预判与事件事实契约已实现;抓取、状态机、面板和夜链接线仍未成立。
 > 目标:提前识别宏观环境、预期和跨资产定价的变化,将其映射到全组合、行业和个股研究优先级。
 
 ## 1. MRG 在系统中的位置
@@ -147,19 +147,42 @@ Macro OS 不止给一个大盘标签。它必须产生两次下钻:
 
 | 子项目 | Owner | 第一阶段交付 |
 |---|---|---|
-| Macro Data Agent | Reed/Claude | 数据源 adapter、事件 schema、vintage/revision、防注入 |
-| Macro State Agent | Junyan+Claude | 四轴状态机、MRG 规则树、DATA_BLOCKED 语义 |
+| Macro 治理 | Junyan | 公式、事件层级、阈值与最终批准 |
+| Macro 项目管理 | Simon | 路线图、依赖、验收节拍和跨角色协调 |
+| Macro Data Agent | Reed/Jason + Codex/Claude | 数据源 adapter、事件 schema、vintage/revision、防注入 |
+| Macro State Agent | Junyan + Codex/Claude | 双区域状态机、MRG 规则树、DATA_BLOCKED 语义 |
 | Macro-Sector Agent | Junyan+Sector Agents | 首批半导体、医药、有色敏感度表 |
 | Macro-Portfolio Agent | Junyan+Portfolio Agent | 持仓因子暴露与组合聚合 |
 | Macro Validation Agent | Reed+Validation Agent | 事件簇、T+1/T+5/T+20、基准和负控制 |
-| Macro UI | Better | 日历、四轴、MRG、行业/组合暴露;只读契约 |
+| Macro UI / Product | Better | 独立内部面板;成熟后并入产品前端,全程只读契约 |
 
-## 10. 首个实施里程碑
+## 10. 已冻结架构
 
-M0 数据可信:
+- GLOBAL/US 与 CHINA 两套状态机独立运行,冲突不互相抵消;分别生成 A/H 传导。
+- 战术层观察 0-5 个交易日,慢周期层观察 1-3 个月。
+- 正式状态由确定性规则树产生;AI 只负责解释、质疑和提出 challenger。
+- 展示同时给出相对平稳市场的环境等级和组合压力等级。
+- 组合压力 = 行业基线 + 公司 factpack 调整,再按组合权重聚合。
+- 全行业使用申万一级粗粒度映射;半导体、医药、有色先建深模型。
+- Champion 使用可解释规则树,Challenger 使用统计模型;替换公式必须经 Junyan PR Review。
+- 校准期只做标注、研究优先级和风险预算,不获得直接阻断权。
+- `api/macro.js` 只能生成解释文字,不得拥有或改写正式 `macro_state`。
+- 团队云端只展示宏观状态与 paper portfolio;真实组合仅从本地手工覆盖层读取。
+
+## 11. 实施里程碑
+
+M0-A 契约地基(本批):
+
+- 四份 JSON Schema + 两份带内容哈希的注册表。
+- 官方事实、历史镜像、市场共识和内部预判分层。
+- Tier-1 事件 T-24h/T-60m 双快照与 GitHub Review 审批。
+- 市场/利率 10 年覆盖 95%、事件 5 年 90%、共识 3 年 80% 的校准退出门槛。
+
+M0-B 数据可信:
 
 - PR #181 宏观原料独立复验。
-- 补 consensus/vintage 来源和源健康。
+- 接入 official/free sources、SQLite 历史仓、双源 consensus/vintage 和源健康。
+- 数据公布延迟先以 5 分钟为目标,后续按源强度自适应优化。
 - 盘前隔夜锚恢复当日新鲜度。
 
 M1 状态闭环:

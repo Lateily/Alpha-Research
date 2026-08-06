@@ -1,0 +1,65 @@
+{
+  "schema": "ar.macro.event_tiers",
+  "schema_version": "1.0",
+  "policy_version": "macro-m0a/1.0",
+  "effective_from": "20260806",
+  "status": "APPROVED_SPEC",
+  "tolerance_policy_version": "macro-consensus-tolerance/unvalidated-v0",
+  "tier_1_policy": {
+    "market_consensus_required": true,
+    "house_expectation_required": true,
+    "expectation_snapshots": [
+      "T_MINUS_24H",
+      "T_MINUS_60M"
+    ],
+    "event_evaluation_horizons": [
+      "M30",
+      "CLOSE",
+      "T1",
+      "T5"
+    ],
+    "regime_evaluation_horizons": [
+      "T20",
+      "T60"
+    ]
+  },
+  "tier_1": [
+    {"event_type": "US_NFP", "region": "GLOBAL_US", "name_zh": "美国非农就业", "actual_source_ids": ["bls_public_api"], "actual_series": "nonfarm_payrolls", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_UNEMPLOYMENT", "region": "GLOBAL_US", "name_zh": "美国失业率", "actual_source_ids": ["bls_public_api"], "actual_series": "unemployment_rate", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_WAGES", "region": "GLOBAL_US", "name_zh": "美国平均时薪", "actual_source_ids": ["bls_public_api"], "actual_series": "average_hourly_earnings", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_CPI", "region": "GLOBAL_US", "name_zh": "美国CPI", "actual_source_ids": ["bls_public_api"], "actual_series": "cpi", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_CORE_PCE", "region": "GLOBAL_US", "name_zh": "美国核心PCE", "actual_source_ids": ["bea_public_api"], "actual_series": "core_pce", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_FOMC", "region": "GLOBAL_US", "name_zh": "美联储议息会议", "actual_source_ids": ["federal_reserve_board"], "actual_series": "fomc_target_rate", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_GDP", "region": "GLOBAL_US", "name_zh": "美国GDP", "actual_source_ids": ["bea_public_api"], "actual_series": "gdp", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_ISM_MANUFACTURING_PMI", "region": "GLOBAL_US", "name_zh": "美国ISM制造业PMI", "actual_source_ids": ["ism_official_release"], "actual_series": "manufacturing_pmi", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_ISM_SERVICES_PMI", "region": "GLOBAL_US", "name_zh": "美国ISM服务业PMI", "actual_source_ids": ["ism_official_release"], "actual_series": "services_pmi", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_RETAIL_SALES", "region": "GLOBAL_US", "name_zh": "美国零售销售", "actual_source_ids": ["us_census_economic_indicators"], "actual_series": "retail_sales", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_JOLTS", "region": "GLOBAL_US", "name_zh": "美国JOLTS职位空缺", "actual_source_ids": ["bls_public_api"], "actual_series": "jolts_job_openings", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_GDP", "region": "CHINA", "name_zh": "中国GDP", "actual_source_ids": ["china_nbs"], "actual_series": "cn_gdp", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_PMI", "region": "CHINA", "name_zh": "中国PMI", "actual_source_ids": ["china_nbs"], "actual_series": "cn_pmi", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_CPI", "region": "CHINA", "name_zh": "中国CPI", "actual_source_ids": ["china_nbs"], "actual_series": "cn_cpi", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_PPI", "region": "CHINA", "name_zh": "中国PPI", "actual_source_ids": ["china_nbs"], "actual_series": "cn_ppi", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_LPR", "region": "CHINA", "name_zh": "中国LPR", "actual_source_ids": ["pboc"], "actual_series": "lpr", "tolerance_status": "CALIBRATING", "consensus_tolerance": null}
+  ],
+  "tier_2_policy": {
+    "market_consensus_required": true,
+    "house_expectation_required": false,
+    "usage": "EVENT_CONTEXT"
+  },
+  "tier_2": [
+    {"event_type": "US_PPI", "region": "GLOBAL_US", "name_zh": "美国PPI", "actual_source_ids": ["bls_public_api"], "actual_series": "ppi", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "US_INDUSTRIAL_PRODUCTION", "region": "GLOBAL_US", "name_zh": "美国工业产出", "actual_source_ids": ["federal_reserve_board"], "actual_series": "industrial_production", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_INDUSTRIAL_PRODUCTION", "region": "CHINA", "name_zh": "中国工业增加值", "actual_source_ids": ["china_nbs"], "actual_series": "industrial_production", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_RETAIL_SALES", "region": "CHINA", "name_zh": "中国社会消费品零售总额", "actual_source_ids": ["china_nbs"], "actual_series": "retail_sales", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_FIXED_ASSET_INVESTMENT", "region": "CHINA", "name_zh": "中国固定资产投资", "actual_source_ids": ["china_nbs"], "actual_series": "fixed_asset_investment", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_MONEY_SUPPLY", "region": "CHINA", "name_zh": "中国货币供应量", "actual_source_ids": ["pboc"], "actual_series": "money_supply", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_TSF", "region": "CHINA", "name_zh": "中国社会融资规模", "actual_source_ids": ["pboc"], "actual_series": "aggregate_financing", "tolerance_status": "CALIBRATING", "consensus_tolerance": null},
+    {"event_type": "CN_NEW_LOANS", "region": "CHINA", "name_zh": "中国新增贷款", "actual_source_ids": ["pboc"], "actual_series": "new_loans", "tolerance_status": "CALIBRATING", "consensus_tolerance": null}
+  ],
+  "tier_3_policy": {
+    "market_consensus_required": false,
+    "house_expectation_required": false,
+    "usage": "BACKGROUND_ONLY"
+  },
+  "registry_hash": "78d4e0a4def1b996a45cd49f33a43d844323af961a8127b2f532e509e9f6ee5f"
+}
