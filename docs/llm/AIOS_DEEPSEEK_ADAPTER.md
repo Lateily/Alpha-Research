@@ -5,28 +5,42 @@
 ## What This Is
 
 DeepSeek is added as a backend AIOS provider behind the shared `AgentAdapter`
-contract. The frontend page is only a test console. It never receives the
-DeepSeek API key and it does not decide which model is allowed in production.
+contract.
+
+The platform entrypoint is GitHub Pages:
+
+```text
+https://lateily.github.io/Alpha-Research/
+```
+
+GitHub Pages is static. It cannot safely hold provider API keys and it cannot
+run backend model calls. The `/aios/deepseek` page is therefore a static request
+builder and dry-run preview only. Real DeepSeek calls belong in the backend AIOS
+Harness or another approved server-side runner.
 
 ## Runtime Boundary
 
 ```text
-Frontend /aios/deepseek
-  -> POST /api/aios-deepseek
-    -> server gate checks mode, key, size, cost reporting
-      -> DeepSeek provider call only when explicitly allowed
+GitHub Pages /aios/deepseek
+  -> builds a sanitized AgentRequest preview
+  -> no provider key, no network call, no model cost
+
+Backend AIOS Harness
+  -> DeepSeekAdapter
+  -> provider call only after policy, cost, and human gates pass
 ```
 
-Default mode is `dry_run`, which makes no provider call and costs `0`.
+The static page always costs `0`.
 
-`live` mode requires all of these:
+Real backend execution requires all of these:
 
-- `DEEPSEEK_API_KEY` set on the server only.
-- `AIOS_DEEPSEEK_RUN_KEY` set on the server only.
-- Matching `X-AIOS-Run-Key` header from an approved operator.
-- Provider response must include usage tokens, otherwise the request fails.
+- `DEEPSEEK_API_KEY` set only in the backend runner environment.
+- `allow_real_call=True` in the adapter.
+- `network_policy="provider_only"` in the `AgentRequest`.
+- Provider response must include usage tokens; otherwise the request fails.
+- Junyan-approved cost window before any live smoke.
 
-## Local Test Window
+## GitHub Pages Test Window
 
 Open:
 
@@ -34,8 +48,8 @@ Open:
 /aios/deepseek
 ```
 
-Use `dry_run` for unlimited UI and backend gate testing. Use `live` only after
-Junyan approves the server environment and cost window.
+Use it to create a backend `AgentRequest` payload and verify that no frontend key
+or model call is involved.
 
 ## Cost And Safety Rules
 
@@ -45,12 +59,12 @@ Junyan approves the server environment and cost window.
 - Missing usage is not treated as zero cost; it fails closed.
 - This adapter does not grant DeepSeek production status. Capability routing
   still depends on later AIOS evaluation and policy gates.
+- No Vercel deployment or environment-variable setup is required for this PR.
 
 ## Offline Verification
 
 ```bash
 python tests/test_agent_adapter_offline.py
-node tests/aios-deepseek-api.test.mjs
 npm run build
 ```
 
