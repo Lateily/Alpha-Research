@@ -1,11 +1,24 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-08-06T04:18:50Z",
+  "fetched_at": "2026-08-06T11:01:05Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260806",
+          "open": 235.0,
+          "high": 250.0,
+          "low": 230.2,
+          "close": 244.6,
+          "pre_close": 243.0,
+          "change": 1.6,
+          "pct_chg": 0.6584,
+          "vol": 154730.89,
+          "amount": 3725231.544
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260805",
@@ -826,12 +839,32 @@
           "amount": 1160641.917
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260806"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260806",
+          "close": 244.6,
+          "turnover_rate": 3.1178,
+          "turnover_rate_f": 4.6566,
+          "volume_ratio": 0.77,
+          "pe": 112.0122,
+          "pe_ttm": 110.595,
+          "pb": 15.7224,
+          "ps": 26.1154,
+          "ps_ttm": 24.5872,
+          "dv_ratio": 0.107,
+          "dv_ttm": 0.1162,
+          "total_share": 49628.1438,
+          "float_share": 49628.1438,
+          "free_share": 33228.0838,
+          "total_mv": 12139043.044,
+          "circ_mv": 12139043.044
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260805",
@@ -2093,9 +2126,9 @@
           "circ_mv": 6929457.1117
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260806"
     },
     "adj_factor": {
       "rows": [
@@ -4619,7 +4652,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 40504199.13,
-          "free_cashflow": -274125729.5942,
+          "free_cashflow": null,
           "c_prepay_amt_borr": 80065302.77,
           "c_pay_dist_dpcp_int_exp": 136888784.92,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -4663,7 +4696,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "688120.SH",
@@ -4718,7 +4751,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 40504199.13,
-          "free_cashflow": null,
+          "free_cashflow": -274125729.5942,
           "c_prepay_amt_borr": 80065302.77,
           "c_pay_dist_dpcp_int_exp": 136888784.92,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -4762,7 +4795,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "688120.SH",
@@ -5015,7 +5048,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": null,
-          "free_cashflow": -530431563.9628,
+          "free_cashflow": null,
           "c_prepay_amt_borr": 3000000.0,
           "c_pay_dist_dpcp_int_exp": 2648111.57,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -5059,7 +5092,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "688120.SH",
@@ -5114,7 +5147,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": null,
-          "free_cashflow": null,
+          "free_cashflow": -530431563.9628,
           "c_prepay_amt_borr": 3000000.0,
           "c_pay_dist_dpcp_int_exp": 2648111.57,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -5158,7 +5191,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "688120.SH",
@@ -5312,7 +5345,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": null,
-          "free_cashflow": null,
+          "free_cashflow": 204399470.5259,
           "c_prepay_amt_borr": 174240000.0,
           "c_pay_dist_dpcp_int_exp": 97213308.74,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -5356,7 +5389,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "688120.SH",
@@ -5411,7 +5444,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": null,
-          "free_cashflow": 204399470.5259,
+          "free_cashflow": null,
           "c_prepay_amt_borr": 174240000.0,
           "c_pay_dist_dpcp_int_exp": 97213308.74,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -5455,7 +5488,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "688120.SH",
