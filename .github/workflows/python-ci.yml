@@ -78,6 +78,15 @@ jobs:
       # ── 夜链 v4:双 WAL / 统一交易日 / staging 发布 / 崩溃恢复 ──
       - name: Nightly v4 adversarial regression
         run: python3 tests/test_nightly_v4_adversarial.py
+      # ── 全市场研究数据支线:R-032 → R-008/R-036 ──
+      # 三台生成器会在夜链中依次运行;各自 schema/哈希/覆盖率闸门也必须在 CI
+      # 独立执行,避免夜链测试只验证编排而漏掉契约内部漂移。
+      - name: Security registry contract selftest
+        run: python3 experiments/research_funnel/security_registry.py --selftest
+      - name: Feature store contract selftest
+        run: python3 experiments/research_funnel/feature_store.py --selftest
+      - name: Full-market E1 event layer contract selftest
+        run: python3 experiments/research_funnel/e1_event_layer.py --selftest
       # 既有缺口(#215 复核发现):本文件逐个点名执行测试,无发现机制,
       # 故新增测试若不在此登记就永远不跑。以下两条此前从未在 CI 运行过。
       - name: PIT no-look-ahead regression
