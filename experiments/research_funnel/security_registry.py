@@ -570,7 +570,10 @@ def _selftest() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build the permanent all-A-share U0 registry")
-    parser.add_argument("--as-of", default=date.today().strftime("%Y%m%d"))
+    parser.add_argument(
+        "--as-of",
+        default=os.environ.get("AR_TARGET_TRADE_DATE") or date.today().strftime("%Y%m%d"),
+    )
     parser.add_argument("--output", default="public/data/v2/security_registry.json")
     parser.add_argument("--prior", default="")
     parser.add_argument("--input", help="offline JSON with rows/liquidity_by_code/as_of_traded")
@@ -579,6 +582,11 @@ def main() -> int:
     parser.add_argument("--min-liquidity-observations", type=int, default=5)
     parser.add_argument("--low-liquidity-threshold-cny", type=float, default=20_000_000.0)
     parser.add_argument("--selftest", action="store_true")
+    parser.add_argument(
+        "--allow-partial-exit-zero",
+        action="store_true",
+        help="Treat a structurally valid PARTIAL artifact as process success for nightly quality reporting.",
+    )
     args = parser.parse_args()
     if args.selftest:
         return _selftest()
@@ -632,7 +640,9 @@ def main() -> int:
         f"low_liquidity={coverage['low_liquidity_labeled']} blocked={coverage['liquidity_data_blocked']}"
     )
     print("Identity and eligibility metadata only; no research conclusion or trading action.")
-    return 0 if payload["status"] == "COMPLETE" else 2
+    if payload["status"] == "COMPLETE":
+        return 0
+    return 0 if args.allow_partial_exit_zero and payload["status"] == "PARTIAL" else 2
 
 
 if __name__ == "__main__":
