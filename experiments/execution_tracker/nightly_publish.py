@@ -133,6 +133,7 @@ def prepare_stage(live_et, live_repo, run_dir):
     """Copy runtime state and code into an isolated repository-shaped staging tree."""
     stage_repo = os.path.join(run_dir, "staging", "repo")
     stage_et = os.path.join(stage_repo, "experiments", "execution_tracker")
+    stage_research = os.path.join(stage_repo, "experiments", "research_funnel")
     stage_public = os.path.join(stage_repo, "public", "data", "v2")
     if os.path.exists(stage_repo):
         shutil.rmtree(stage_repo)
@@ -144,6 +145,14 @@ def prepare_stage(live_et, live_repo, run_dir):
             "runs", "__pycache__", "*.pyc", "*.lock", "*.tmp",
             "run_state.json", "nightly.lock", "publication_state.json",
         ),
+    )
+    live_research = os.path.join(live_repo, "experiments", "research_funnel")
+    if not os.path.isdir(live_research):
+        raise RuntimeError(f"research_funnel source missing: {live_research}")
+    shutil.copytree(
+        live_research,
+        stage_research,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.lock", "*.tmp"),
     )
     live_public = os.path.join(live_repo, "public", "data", "v2")
     if os.path.isdir(live_public):
@@ -161,7 +170,12 @@ def prepare_stage(live_et, live_repo, run_dir):
         },
     }
     atomic_json(os.path.join(run_dir, "staging_input.json"), snapshot)
-    return {"repo": stage_repo, "et": stage_et, "public": stage_public}
+    return {
+        "repo": stage_repo,
+        "et": stage_et,
+        "research": stage_research,
+        "public": stage_public,
+    }
 
 
 def _protected_content(root):

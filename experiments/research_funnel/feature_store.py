@@ -816,7 +816,7 @@ def _selftest() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build the R-008 local feature store")
     parser.add_argument("--registry", default=DEFAULT_REGISTRY)
-    parser.add_argument("--db", default=DEFAULT_DB)
+    parser.add_argument("--db", default=os.environ.get("AR_FEATURE_STORE_DB", DEFAULT_DB))
     parser.add_argument("--out", default=DEFAULT_OUT)
     parser.add_argument("--as-of")
     parser.add_argument("--lookback", type=int, default=25)
@@ -832,7 +832,9 @@ def main() -> int:
     try:
         result = run_live(
             token, args.registry, args.db, args.out,
-            as_of=args.as_of, lookback=args.lookback, sleep_seconds=args.sleep_seconds,
+            as_of=args.as_of or os.environ.get("AR_TARGET_TRADE_DATE"),
+            lookback=args.lookback,
+            sleep_seconds=args.sleep_seconds,
         )
     except (FeatureStoreError, RegistryError, OSError, sqlite3.Error) as exc:
         print(f"REFUSED: {exc}")
