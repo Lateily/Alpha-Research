@@ -3,6 +3,7 @@
 from .base import (
     AgentAdapter,
     AgentError,
+    AdapterExecutionError,
     AgentRequest,
     AgentResult,
     AgentStatus,
@@ -15,6 +16,7 @@ from .deterministic import DeterministicAdapter
 __all__ = [
     "AgentAdapter",
     "AgentError",
+    "AdapterExecutionError",
     "AgentRequest",
     "AgentResult",
     "AgentStatus",
