@@ -382,6 +382,57 @@ def test_deepseek_real_output_carries_no_trade_flag() -> None:
     assert result.output["no_trade_flag"] is True
 
 
+def test_deepseek_real_call_rejects_empty_choices() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_rejects_empty_content() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": ""}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_rejects_zero_live_tokens() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "ok"}}],
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
 def run_all_tests() -> int:
     tests = [
         value

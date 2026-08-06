@@ -90,6 +90,8 @@ class DeepSeekAdapter(AgentAdapter):
             raise TypeError("DeepSeek response must be a mapping")
 
         text = extract_text(response)
+        if self._allow_real_call and not text:
+            raise RuntimeError("DeepSeek response did not include non-empty text")
         usage = usage_from_response(response, model=self.model, require_reported=self._allow_real_call)
         return AdapterOutput(
             output={
@@ -218,6 +220,8 @@ def usage_from_response(
         "output_tokens",
         require_reported=require_reported,
     )
+    if require_reported:
+        _require_positive_live_tokens(input_tokens=input_tokens, output_tokens=output_tokens)
     cache_hit_tokens = _optional_token(
         raw_usage,
         "prompt_cache_hit_tokens",
@@ -304,6 +308,13 @@ def _required_token(
     if require_reported:
         raise RuntimeError(f"DeepSeek response did not report {primary}")
     return 0
+
+
+def _require_positive_live_tokens(*, input_tokens: int, output_tokens: int) -> None:
+    if input_tokens <= 0:
+        raise RuntimeError("DeepSeek response must report positive prompt tokens")
+    if output_tokens <= 0:
+        raise RuntimeError("DeepSeek response must report positive completion tokens")
 
 
 def _optional_token(raw_usage: Mapping[str, Any], primary: str, fallback: str | None = None) -> int | None:
