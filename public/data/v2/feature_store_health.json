@@ -1,0 +1,56 @@
+{
+  "schema": "ar.feature_store_health",
+  "schema_version": "1.0",
+  "status": "COMPLETE",
+  "as_of": "20260805",
+  "generated_at": "2026-08-06T01:34:30+00:00",
+  "registry_ref": {
+    "as_of": "20260805",
+    "registry_hash": "3db0aa29bbbba29aee5df60c2e57f2cdb320212c96adfa779cc04361caa2768b",
+    "eligible_universe_hash": "63852f8d817876c7c2f44694c95743a77fac012c81754307f64b2abad99ba749",
+    "eligible_count": 5537
+  },
+  "store": {
+    "engine": "sqlite",
+    "logical_path": "data_history/feature_store.sqlite3",
+    "schema_version": "1",
+    "required_endpoints": [
+      "daily",
+      "daily_basic",
+      "adj_factor"
+    ],
+    "date_commit_policy": "ALL_REQUIRED_ENDPOINTS_ATOMIC",
+    "source_revision_policy": "REJECT_REQUIRES_MIGRATION"
+  },
+  "coverage": {
+    "committed_dates": 25,
+    "latest_endpoint_rows": {
+      "daily": 5532,
+      "daily_basic": 5532,
+      "adj_factor": 5537
+    },
+    "latest_daily_eligible_rows": 5532,
+    "latest_feature_rows": 5532,
+    "latest_return_20d_ready": 5499,
+    "latest_missing_daily_count": 5,
+    "latest_missing_daily_codes": [
+      "000838.SZ",
+      "300246.SZ",
+      "300333.SZ",
+      "300862.SZ",
+      "603221.SH"
+    ]
+  },
+  "integrity": {
+    "source_batches_hash": "3354489205aba8ef21e7f6c6b08f30a7122a723eff84a97fa46ebaa03d3f5ea0",
+    "features_hash": "3605d8c0844940d230585e508e35a70e8cb9b7dcfb727c874e531b646a18a729"
+  },
+  "policy": {
+    "point_in_time_only": true,
+    "adjusted_return_basis": "close_times_adj_factor",
+    "no_forward_fill": true,
+    "complete_means_pipeline_complete_not_every_security_traded": true,
+    "selection_or_trade_output": false
+  },
+  "disclaimer": "Research data infrastructure only; no rankings or trade instructions."
+}

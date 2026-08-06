@@ -15,9 +15,18 @@ import {
   UserRound,
   XCircle,
 } from 'lucide-react';
+import {
+  normalizeProgressWriteKey,
+  readProgressApiResponse,
+  resolveProgressApiBase,
+} from './progressBoardClient.js';
 
-const ENDPOINT = '/api/team-progress';
-const WRITE_ENDPOINT = '/api/team-progress-event';
+const PROGRESS_API_BASE = resolveProgressApiBase({
+  configuredBase: import.meta.env.VITE_PROGRESS_API_BASE_URL,
+  hostname: window.location.hostname,
+});
+const ENDPOINT = `${PROGRESS_API_BASE}/api/team-progress`;
+const WRITE_ENDPOINT = `${PROGRESS_API_BASE}/api/team-progress-event`;
 const SNAPSHOT_SCHEMA = 'ai-progress.snapshot.v1';
 const CONTRACT_VERSION = '1.5';
 const REFRESH_MS = 30000;
@@ -248,7 +257,7 @@ function EmptyState({ text }) {
   return <div style={styles.empty}>{text}</div>;
 }
 
-function FormField({ label, value, onChange, placeholder, textarea = false }) {
+function FormField({ label, value, onChange, placeholder, textarea = false, type = 'text', autoComplete }) {
   const Input = textarea ? 'textarea' : 'input';
   return (
     <label style={styles.formField}>
@@ -257,6 +266,8 @@ function FormField({ label, value, onChange, placeholder, textarea = false }) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        type={textarea ? undefined : type}
+        autoComplete={autoComplete}
         style={textarea ? styles.textarea : styles.input}
       />
     </label>
@@ -298,6 +309,11 @@ function CommentComposer({ onSubmitted }) {
   };
 
   const submitComment = async () => {
+    const normalizedWriteKey = normalizeProgressWriteKey(writeKey);
+    if (!normalizedWriteKey) {
+      setCopyMessage('Team write key is required.');
+      return;
+    }
     setSubmitting(true);
     setCopyMessage('Submitting to GitHub Issue #164...');
     try {
@@ -305,11 +321,11 @@ function CommentComposer({ onSubmitted }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Progress-Write-Key': writeKey,
+          'X-Progress-Write-Key': normalizedWriteKey,
         },
         body: JSON.stringify(form),
       });
-      const data = await response.json();
+      const data = await readProgressApiResponse(response);
       if (!response.ok || data.ok === false) {
         throw new Error(data.error || `Submit failed with HTTP ${response.status}.`);
       }
@@ -373,6 +389,8 @@ function CommentComposer({ onSubmitted }) {
           value={writeKey}
           onChange={setWriteKey}
           placeholder="PROGRESS_WRITE_KEY, not a GitHub token"
+          type="password"
+          autoComplete="off"
         />
         <textarea value={comment} readOnly style={styles.commentBox} aria-label="Generated GitHub comment" />
         <div style={styles.composerActions}>
@@ -414,7 +432,7 @@ export default function TeamProgressPage() {
 
     try {
       const response = await fetch(ENDPOINT, { method: 'GET', cache: 'no-store' });
-      const data = validateSnapshot(await response.json());
+      const data = validateSnapshot(await readProgressApiResponse(response));
       setSnapshot(data);
 
       if (!response.ok || data.ok === false) {

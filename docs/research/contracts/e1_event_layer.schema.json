@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/research/contracts/e1_event_layer.schema.json",
+  "title": "AR Full-Market E1 Event Layer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "rule_version",
+    "status",
+    "as_of",
+    "generated_at",
+    "registry_ref",
+    "source",
+    "policy",
+    "coverage",
+    "rows_hash",
+    "rows",
+    "disclaimer"
+  ],
+  "properties": {
+    "schema": { "const": "ar.e1_event_layer" },
+    "schema_version": { "const": "1.0" },
+    "rule_version": { "const": "R036_E1_RULES_V1" },
+    "status": { "enum": ["COMPLETE", "PARTIAL", "INCOMPLETE", "DATA_BLOCKED", "STALE_INPUT"] },
+    "as_of": { "type": "string", "pattern": "^[0-9]{8}$" },
+    "generated_at": { "type": "string", "minLength": 1 },
+    "registry_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "as_of",
+        "status",
+        "registry_hash",
+        "eligible_universe_hash",
+        "eligible_count",
+        "accepted_partial_dimensions"
+      ],
+      "properties": {
+        "schema_version": { "type": "string" },
+        "as_of": { "type": "string", "pattern": "^[0-9]{8}$" },
+        "status": { "enum": ["COMPLETE", "PARTIAL"] },
+        "registry_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "eligible_universe_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "eligible_count": { "type": "integer", "minimum": 1 },
+        "accepted_partial_dimensions": {
+          "type": "array",
+          "items": { "const": "liquidity" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "endpoints", "periods", "calls", "errors", "unavailable_dimensions"],
+      "properties": {
+        "provider": { "const": "Tushare Pro" },
+        "endpoints": {
+          "const": ["forecast_vip", "express_vip", "income_vip"]
+        },
+        "periods": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9]{8}$" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "calls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["endpoint", "period", "status", "rows"],
+            "properties": {
+              "endpoint": { "enum": ["forecast_vip", "express_vip", "income_vip"] },
+              "period": { "type": "string", "pattern": "^[0-9]{8}$" },
+              "status": { "enum": ["OK", "DATA_BLOCKED"] },
+              "rows": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["endpoint", "period", "error"],
+            "properties": {
+              "endpoint": { "enum": ["forecast_vip", "express_vip", "income_vip"] },
+              "period": { "type": "string", "pattern": "^[0-9]{8}$" },
+              "error": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "unavailable_dimensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dimension", "endpoint", "status", "reason"],
+            "properties": {
+              "dimension": { "type": "string", "minLength": 1 },
+              "endpoint": { "type": "string", "minLength": 1 },
+              "status": { "const": "DATA_BLOCKED" },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "policy": { "type": "object" },
+    "coverage": {
+      "type": "object",
+      "required": [
+        "registry_eligible",
+        "rows",
+        "red_flag",
+        "no_red_flag_found",
+        "data_blocked",
+        "forecast_latest_rows",
+        "forecast_active_rows",
+        "forecast_superseded_rows",
+        "express_latest_rows",
+        "express_active_rows",
+        "express_superseded_rows",
+        "income_tickers",
+        "formal_announcements",
+        "source_row_occurrences_outside_u0",
+        "source_tickers_outside_u0"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "registry_eligible": { "type": "integer", "minimum": 1 },
+        "rows": { "type": "integer", "minimum": 1 },
+        "red_flag": { "type": "integer", "minimum": 0 },
+        "no_red_flag_found": { "type": "integer", "minimum": 0 },
+        "data_blocked": { "type": "integer", "minimum": 0 },
+        "forecast_latest_rows": { "type": "integer", "minimum": 0 },
+        "forecast_active_rows": { "type": "integer", "minimum": 0 },
+        "forecast_superseded_rows": { "type": "integer", "minimum": 0 },
+        "express_latest_rows": { "type": "integer", "minimum": 0 },
+        "express_active_rows": { "type": "integer", "minimum": 0 },
+        "express_superseded_rows": { "type": "integer", "minimum": 0 },
+        "income_tickers": { "type": "integer", "minimum": 0 },
+        "formal_announcements": { "const": "DATA_BLOCKED" },
+        "source_row_occurrences_outside_u0": { "type": "integer", "minimum": 0 },
+        "source_tickers_outside_u0": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "rows_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ts_code",
+          "name",
+          "industry_key",
+          "verdict",
+          "reason_codes",
+          "latest_e1_date",
+          "evidence_coverage",
+          "evidence"
+        ],
+        "properties": {
+          "ts_code": { "type": "string", "pattern": "^[0-9]{6}\\.(SH|SZ|BJ)$" },
+          "name": { "type": "string", "minLength": 1 },
+          "industry_key": { "type": "string", "minLength": 1 },
+          "verdict": { "enum": ["RED_FLAG", "NO_RED_FLAG_FOUND", "DATA_BLOCKED"] },
+          "reason_codes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          },
+          "latest_e1_date": { "type": ["string", "null"], "pattern": "^[0-9]{8}$" },
+          "evidence_coverage": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["forecast", "express", "filed_quarters", "income", "formal_announcements"],
+            "properties": {
+              "forecast": { "enum": ["PRESENT", "EMPTY_VALID", "SUPERSEDED"] },
+              "express": { "enum": ["PRESENT", "EMPTY_VALID", "DATA_BLOCKED", "SUPERSEDED"] },
+              "filed_quarters": { "type": "integer", "minimum": 0 },
+              "income": { "enum": ["COMPLETE", "DATA_BLOCKED"] },
+              "formal_announcements": { "const": "DATA_BLOCKED" }
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind", "source", "evidence_grade", "ann_date", "period", "observed", "triggered", "rule"],
+              "properties": {
+                "evidence_grade": { "const": "E1" },
+                "triggered": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "disclaimer": { "type": "string", "minLength": 1 }
+  }
+}

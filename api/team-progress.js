@@ -182,7 +182,11 @@ async function fetchGithubComments(repo, issue) {
 
 function allowCors(req, res) {
   const origin = req.headers?.origin;
-  const localOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+  const localOrigins = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://lateily.github.io',
+  ];
   const configured = (process.env.PROGRESS_ALLOWED_ORIGINS || '')
     .split(',')
     .map((item) => item.trim())

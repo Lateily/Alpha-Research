@@ -1,444 +1,250 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-07-28T10:58:25Z",
-  "tier": 15000,
-  "_status": "ok",
-  "api_used": "forecast",
-  "_attempted_endpoints": [
-    "forecast"
+  "fetched_at": "2026-08-05T11:18:19Z",
+  "_semantics": "issuer_guidance = 公司业绩预告(forecast) + 业绩快报(express) — 发行人自披露,NOT broker consensus. 卖方预测见 broker_recommend (report_rc, E2).",
+  "disclaimer": "不是买卖指令;研究信号,human executes.",
+  "_status": "PARTIAL",
+  "as_of": "20260710",
+  "dimensions": {
+    "forecast": {
+      "row_count": 8,
+      "_status": "OK",
+      "as_of": "20260710"
+    },
+    "express": {
+      "row_count": 0,
+      "_status": "EMPTY_VALID",
+      "as_of": null
+    }
+  },
+  "guidance": [
+    {
+      "source": "forecast",
+      "ann_date": "20260710",
+      "end_date": "20260630",
+      "type": "预增",
+      "net_profit": 525000000.0,
+      "net_profit_min": 510000000.0,
+      "net_profit_max": 540000000.0,
+      "p_change_min": 63.96,
+      "p_change_max": 73.61,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计:净利润51000-54000"
+    },
+    {
+      "source": "forecast",
+      "ann_date": "20260327",
+      "end_date": "20260331",
+      "type": "预增",
+      "net_profit": 250000000.0,
+      "net_profit_min": 240000000.0,
+      "net_profit_max": 260000000.0,
+      "p_change_min": 70.22,
+      "p_change_max": 84.41,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计:净利润24000-26000"
+    },
+    {
+      "source": "forecast",
+      "ann_date": "20260120",
+      "end_date": "20251231",
+      "type": "略增",
+      "net_profit": 715000000.0,
+      "net_profit_min": 700000000.0,
+      "net_profit_max": 730000000.0,
+      "p_change_min": 34.44,
+      "p_change_max": 40.2,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计:净利润70000-73000"
+    },
+    {
+      "source": "forecast",
+      "ann_date": "20251010",
+      "end_date": "20250930",
+      "type": "略增",
+      "net_profit": 516000000.0,
+      "net_profit_min": 501000000.0,
+      "net_profit_max": 531000000.0,
+      "p_change_min": 33.13,
+      "p_change_max": 41.1,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计:净利润50100-53100"
+    },
+    {
+      "source": "forecast",
+      "ann_date": "20250709",
+      "end_date": "20250630",
+      "type": "略增",
+      "net_profit": 305000000.0,
+      "net_profit_min": 290000000.0,
+      "net_profit_max": 320000000.0,
+      "p_change_min": 33.12,
+      "p_change_max": 46.9,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计:净利润29000-32000"
+    },
+    {
+      "source": "forecast",
+      "ann_date": "20250115",
+      "end_date": "20241231",
+      "type": "预增",
+      "net_profit": 510000000.0,
+      "net_profit_min": 490000000.0,
+      "net_profit_max": 530000000.0,
+      "p_change_min": 120.71,
+      "p_change_max": 138.73,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计:净利润49000-53000"
+    },
+    {
+      "source": "forecast",
+      "ann_date": "20241009",
+      "end_date": "20240930",
+      "type": "预增",
+      "net_profit": 372785000.0,
+      "net_profit_min": 366620000.0,
+      "net_profit_max": 378950000.0,
+      "p_change_min": 108.0,
+      "p_change_max": 115.0,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计:净利润36662-37895"
+    },
+    {
+      "source": "forecast",
+      "ann_date": "20241009",
+      "end_date": "20240930",
+      "type": "预增",
+      "net_profit": 372785000.0,
+      "net_profit_min": 366620000.0,
+      "net_profit_max": 378950000.0,
+      "p_change_min": 108.0,
+      "p_change_max": 115.0,
+      "eps": null,
+      "revenue": null,
+      "summary": "预计:净利润36662-37895"
+    }
   ],
   "forecasts": [
     {
+      "source": "forecast",
+      "ann_date": "20260710",
       "end_date": "20260630",
+      "type": "预增",
+      "net_profit": 525000000.0,
+      "net_profit_min": 510000000.0,
+      "net_profit_max": 540000000.0,
+      "p_change_min": 63.96,
+      "p_change_max": 73.61,
       "eps": null,
       "revenue": null,
-      "net_profit": 52500.0,
-      "op_income": null,
-      "broker_count": null
+      "summary": "预计:净利润51000-54000"
     },
     {
+      "source": "forecast",
+      "ann_date": "20260327",
       "end_date": "20260331",
+      "type": "预增",
+      "net_profit": 250000000.0,
+      "net_profit_min": 240000000.0,
+      "net_profit_max": 260000000.0,
+      "p_change_min": 70.22,
+      "p_change_max": 84.41,
       "eps": null,
       "revenue": null,
-      "net_profit": 25000.0,
-      "op_income": null,
-      "broker_count": null
+      "summary": "预计:净利润24000-26000"
     },
     {
+      "source": "forecast",
+      "ann_date": "20260120",
       "end_date": "20251231",
+      "type": "略增",
+      "net_profit": 715000000.0,
+      "net_profit_min": 700000000.0,
+      "net_profit_max": 730000000.0,
+      "p_change_min": 34.44,
+      "p_change_max": 40.2,
       "eps": null,
       "revenue": null,
-      "net_profit": 71500.0,
-      "op_income": null,
-      "broker_count": null
+      "summary": "预计:净利润70000-73000"
     },
     {
+      "source": "forecast",
+      "ann_date": "20251010",
       "end_date": "20250930",
+      "type": "略增",
+      "net_profit": 516000000.0,
+      "net_profit_min": 501000000.0,
+      "net_profit_max": 531000000.0,
+      "p_change_min": 33.13,
+      "p_change_max": 41.1,
       "eps": null,
       "revenue": null,
-      "net_profit": 51600.0,
-      "op_income": null,
-      "broker_count": null
+      "summary": "预计:净利润50100-53100"
     },
     {
+      "source": "forecast",
+      "ann_date": "20250709",
       "end_date": "20250630",
+      "type": "略增",
+      "net_profit": 305000000.0,
+      "net_profit_min": 290000000.0,
+      "net_profit_max": 320000000.0,
+      "p_change_min": 33.12,
+      "p_change_max": 46.9,
       "eps": null,
       "revenue": null,
-      "net_profit": 30500.0,
-      "op_income": null,
-      "broker_count": null
+      "summary": "预计:净利润29000-32000"
     },
     {
+      "source": "forecast",
+      "ann_date": "20250115",
       "end_date": "20241231",
+      "type": "预增",
+      "net_profit": 510000000.0,
+      "net_profit_min": 490000000.0,
+      "net_profit_max": 530000000.0,
+      "p_change_min": 120.71,
+      "p_change_max": 138.73,
       "eps": null,
       "revenue": null,
-      "net_profit": 51000.0,
-      "op_income": null,
-      "broker_count": null
+      "summary": "预计:净利润49000-53000"
     },
     {
+      "source": "forecast",
+      "ann_date": "20241009",
       "end_date": "20240930",
+      "type": "预增",
+      "net_profit": 372785000.0,
+      "net_profit_min": 366620000.0,
+      "net_profit_max": 378950000.0,
+      "p_change_min": 108.0,
+      "p_change_max": 115.0,
       "eps": null,
       "revenue": null,
-      "net_profit": 37278.5,
-      "op_income": null,
-      "broker_count": null
+      "summary": "预计:净利润36662-37895"
     },
     {
+      "source": "forecast",
+      "ann_date": "20241009",
       "end_date": "20240930",
+      "type": "预增",
+      "net_profit": 372785000.0,
+      "net_profit_min": 366620000.0,
+      "net_profit_max": 378950000.0,
+      "p_change_min": 108.0,
+      "p_change_max": 115.0,
       "eps": null,
       "revenue": null,
-      "net_profit": 37278.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20240630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 21092.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20240630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 21092.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20231231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 23401.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20231231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 23401.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20221231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 39000.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20220630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 18723.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20220331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 7000.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20211231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 22330.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20210331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 3500.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20201231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": -15350.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20201231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": null,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20200331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 1735.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20191231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 3664.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20191231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": null,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20190930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 18371.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20190630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 13802.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20190331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 4872.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20181231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 30270.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20180930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 22722.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20180630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 11648.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20180331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 5155.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20171231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 33614.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20170930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 22577.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20170630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 15714.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20170331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 7130.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20161231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 25414.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20160930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 17815.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20160630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 10014.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20160331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 4503.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20151231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 16463.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20150930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 11593.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20150630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 7822.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20150331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 3880.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20141231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 13621.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20140930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 9193.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20140630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 6241.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20140331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 2795.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20131231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 7592.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20130930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 4754.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20130630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 3277.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20130331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 1587.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20121231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 6428.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20120930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 3800.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20120630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 2531.8199999999997,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20120331",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 1150.0,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20111231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 5300.0,
-      "op_income": null,
-      "broker_count": null
+      "summary": "预计:净利润36662-37895"
     }
-  ]
+  ],
+  "deprecated": true,
+  "moved_to": "issuer_guidance/"
 }

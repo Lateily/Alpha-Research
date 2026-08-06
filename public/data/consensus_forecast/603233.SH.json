@@ -1,36 +1,24 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-07-28T10:58:23Z",
-  "tier": 15000,
-  "_status": "ok",
-  "api_used": "forecast",
-  "_attempted_endpoints": [
-    "forecast"
-  ],
-  "forecasts": [
-    {
-      "end_date": "20220930",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 92571.5,
-      "op_income": null,
-      "broker_count": null
+  "fetched_at": "2026-08-05T11:18:16Z",
+  "_semantics": "issuer_guidance = 公司业绩预告(forecast) + 业绩快报(express) — 发行人自披露,NOT broker consensus. 卖方预测见 broker_recommend (report_rc, E2).",
+  "disclaimer": "不是买卖指令;研究信号,human executes.",
+  "_status": "EMPTY_VALID",
+  "as_of": null,
+  "dimensions": {
+    "forecast": {
+      "row_count": 0,
+      "_status": "EMPTY_VALID",
+      "as_of": null
     },
-    {
-      "end_date": "20201231",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 108912.5,
-      "op_income": null,
-      "broker_count": null
-    },
-    {
-      "end_date": "20170630",
-      "eps": null,
-      "revenue": null,
-      "net_profit": 24961.0,
-      "op_income": null,
-      "broker_count": null
+    "express": {
+      "row_count": 0,
+      "_status": "EMPTY_VALID",
+      "as_of": null
     }
-  ]
+  },
+  "guidance": [],
+  "forecasts": [],
+  "deprecated": true,
+  "moved_to": "issuer_guidance/"
 }
