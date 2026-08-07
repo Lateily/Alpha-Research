@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-05T11:18:58Z",
+  "fetched_at": "2026-08-07T09:34:43Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -1169,25 +1169,11 @@
       "inst_count": 8,
       "surv_type": "特定对象调研",
       "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260507",
-      "fund_visitors": "--",
-      "rece_place": "“鼎龙控股集团”微信视频号直播,公司9楼会议室",
-      "rece_mode": "“鼎龙控股集团”微信视频号直播",
-      "rece_org": "社会公众投资者",
-      "org_type": "--",
-      "comp_rece": "董事会秘书 杨平彩,投资者关系总监 熊亚威",
-      "inst_count": 1,
-      "surv_type": "“鼎龙控股集团”微信视频号直播",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 46,
-    "total_90d": 84,
+    "total_90d": 83,
     "unique_inst_30d": 116,
     "latest_date": "2026-07-28"
   }

@@ -1,11 +1,37 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-08-05T11:17:00Z",
+  "fetched_at": "2026-08-07T09:32:40Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260807",
+          "open": 981.09,
+          "high": 999.88,
+          "low": 902.0,
+          "close": 919.87,
+          "pre_close": 955.0,
+          "change": -35.13,
+          "pct_chg": -3.6785,
+          "vol": 571891.57,
+          "amount": 54670636.3291
+        },
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260806",
+          "open": 901.02,
+          "high": 995.0,
+          "low": 882.55,
+          "close": 955.0,
+          "pre_close": 947.74,
+          "change": 7.26,
+          "pct_chg": 0.766,
+          "vol": 422950.59,
+          "amount": 39767147.8988
+        },
         {
           "ts_code": "300308.SZ",
           "trade_date": "20260805",
@@ -811,40 +837,54 @@
           "pct_chg": 6.1095,
           "vol": 322655.43,
           "amount": 29399331.289
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260508",
-          "open": 864.95,
-          "high": 898.95,
-          "low": 861.56,
-          "close": 886.0,
-          "pre_close": 877.47,
-          "change": 8.53,
-          "pct_chg": 0.9721,
-          "vol": 197640.77,
-          "amount": 17406542.425
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260507",
-          "open": 858.0,
-          "high": 889.15,
-          "low": 835.0,
-          "close": 877.47,
-          "pre_close": 856.0,
-          "change": 21.47,
-          "pct_chg": 2.5082,
-          "vol": 277190.1,
-          "amount": 23995585.894
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260807"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260807",
+          "close": 919.87,
+          "turnover_rate": 5.1525,
+          "turnover_rate_f": 6.8072,
+          "volume_ratio": 1.12,
+          "pe": 99.6553,
+          "pe_ttm": 71.9789,
+          "pb": 30.2358,
+          "ps": 28.1382,
+          "ps_ttm": 21.0724,
+          "dv_ratio": 0.0975,
+          "dv_ttm": 0.1519,
+          "total_share": 116973.4641,
+          "float_share": 110993.9778,
+          "free_share": 84012.6316,
+          "total_mv": 107600385.8489,
+          "circ_mv": 102100032.3826
+        },
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260806",
+          "close": 955.0,
+          "turnover_rate": 3.8106,
+          "turnover_rate_f": 5.0344,
+          "volume_ratio": 0.75,
+          "pe": 103.4612,
+          "pe_ttm": 74.7278,
+          "pb": 31.3905,
+          "ps": 29.2128,
+          "ps_ttm": 21.8772,
+          "dv_ratio": 0.0939,
+          "dv_ttm": 0.1463,
+          "total_share": 116973.4641,
+          "float_share": 110993.9778,
+          "free_share": 84012.6316,
+          "total_mv": 111709663.85,
+          "circ_mv": 105999250.9
+        },
         {
           "ts_code": "300308.SZ",
           "trade_date": "20260805",
@@ -2084,54 +2124,24 @@
           "free_share": 83849.2209,
           "total_mv": 104692927.0029,
           "circ_mv": 104195141.0477
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260508",
-          "close": 886.0,
-          "turnover_rate": 1.7833,
-          "turnover_rate_f": 2.3571,
-          "volume_ratio": 0.73,
-          "pe": 91.3797,
-          "pe_ttm": 66.0016,
-          "pb": 28.5462,
-          "ps": 25.8016,
-          "ps_ttm": 19.3225,
-          "dv_ratio": 0.1014,
-          "dv_ttm": 0.1579,
-          "total_share": 111360.0534,
-          "float_share": 110830.5671,
-          "free_share": 83849.2209,
-          "total_mv": 98665007.3124,
-          "circ_mv": 98195882.4506
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260507",
-          "close": 877.47,
-          "turnover_rate": 2.501,
-          "turnover_rate_f": 3.3058,
-          "volume_ratio": 1.0,
-          "pe": 90.5,
-          "pe_ttm": 65.3662,
-          "pb": 28.2714,
-          "ps": 25.5532,
-          "ps_ttm": 19.1365,
-          "dv_ratio": 0.1023,
-          "dv_ttm": 0.1594,
-          "total_share": 111360.0534,
-          "float_share": 110830.5671,
-          "free_share": 83849.2209,
-          "total_mv": 97715106.0569,
-          "circ_mv": 97250497.7132
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260807"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260807",
+          "adj_factor": 6.6039
+        },
+        {
+          "ts_code": "300308.SZ",
+          "trade_date": "20260806",
+          "adj_factor": 6.6039
+        },
         {
           "ts_code": "300308.SZ",
           "trade_date": "20260805",
@@ -2441,21 +2451,11 @@
           "ts_code": "300308.SZ",
           "trade_date": "20260511",
           "adj_factor": 6.6039
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260508",
-          "adj_factor": 6.6039
-        },
-        {
-          "ts_code": "300308.SZ",
-          "trade_date": "20260507",
-          "adj_factor": 6.6039
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260807"
     },
     "income": {
       "rows": [
@@ -2695,7 +2695,7 @@
           "t_compr_income": 7540220164.17,
           "compr_inc_attr_p": 7113028381.9,
           "compr_inc_attr_m_s": 427191782.27,
-          "ebit": 8631897047.87,
+          "ebit": null,
           "ebitda": null,
           "insurance_exp": null,
           "undist_profit": null,
@@ -2718,7 +2718,7 @@
           "comshare_payable_dvd": null,
           "capit_comstock_div": null,
           "continued_net_profit": 7569731091.52,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300308.SZ",
@@ -2782,7 +2782,7 @@
           "t_compr_income": 7540220164.17,
           "compr_inc_attr_p": 7113028381.9,
           "compr_inc_attr_m_s": 427191782.27,
-          "ebit": null,
+          "ebit": 8631897047.87,
           "ebitda": null,
           "insurance_exp": null,
           "undist_profit": null,
@@ -2805,7 +2805,7 @@
           "comshare_payable_dvd": null,
           "capit_comstock_div": null,
           "continued_net_profit": 7569731091.52,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "300308.SZ",
@@ -4739,7 +4739,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 1068858268.09,
-          "free_cashflow": null,
+          "free_cashflow": 3689507313.142,
           "c_prepay_amt_borr": 1792980534.37,
           "c_pay_dist_dpcp_int_exp": 607470690.94,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -4751,7 +4751,7 @@
           "c_cash_equ_beg_period": 4987790480.51,
           "c_cash_equ_end_period": 7742614560.56,
           "c_recp_cap_contrib": 208284948.09,
-          "incl_cash_rec_saims": null,
+          "incl_cash_rec_saims": 53567775.0,
           "uncon_invest_loss": null,
           "prov_depr_assets": null,
           "depr_fa_coga_dpba": null,
@@ -4783,7 +4783,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "300308.SZ",
@@ -4838,7 +4838,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 1068858268.09,
-          "free_cashflow": 3689507313.142,
+          "free_cashflow": null,
           "c_prepay_amt_borr": 1792980534.37,
           "c_pay_dist_dpcp_int_exp": 607470690.94,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -4850,7 +4850,7 @@
           "c_cash_equ_beg_period": 4987790480.51,
           "c_cash_equ_end_period": 7742614560.56,
           "c_recp_cap_contrib": 208284948.09,
-          "incl_cash_rec_saims": 53567775.0,
+          "incl_cash_rec_saims": null,
           "uncon_invest_loss": null,
           "prov_depr_assets": null,
           "depr_fa_coga_dpba": null,
@@ -4882,7 +4882,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300308.SZ",
@@ -5036,7 +5036,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 157142745.51,
-          "free_cashflow": 1391409147.2276,
+          "free_cashflow": null,
           "c_prepay_amt_borr": 84174500.0,
           "c_pay_dist_dpcp_int_exp": 13818590.58,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -5080,7 +5080,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300308.SZ",
@@ -5135,7 +5135,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 157142745.51,
-          "free_cashflow": null,
+          "free_cashflow": 1391409147.2276,
           "c_prepay_amt_borr": 84174500.0,
           "c_pay_dist_dpcp_int_exp": 13818590.58,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -5179,7 +5179,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "300308.SZ",
@@ -6320,27 +6320,12 @@
           "net_profit_max": 580000.0,
           "last_parent_net": 217352.77,
           "first_ann_date": "20250124",
-          "summary": "预计净利润460000-580000万",
-          "change_reason": "1、报告期内，得益于终端客户对算力基础设施的持续建设、资本开支强劲增长带来800G和400G高端光模块销售的大幅增加，产品结构持续优化，公司营业收入和净利润同比得到大幅提升。2、报告期内，公司对限制性股票激励计划、员工持股计划等事项确认股权激励费用，导致归属于上市公司股东的净利润减少约19,200万元。3、报告期内，对投资并购时确认的子公司苏州旭创、储翰科技及君歌电子等的固定资产及无形资产评估增值计提折旧摊销，导致归属于上市公司股东的净利润减少约4,000万元。4、报告期内，对子公司账面可能形成呆滞的库存计提存货减值准备、并对预计存在坏账风险的应收账款计提信用减值损失，合计导致归属于上市公司股东的净利润减少约6,200万元。5、报告期内，处置股权投资形成收益和按照直接或间接投资的标的公司公允价值变动确认公允价值变动损益，合计增加归属于上市公司股东的净利润约2,900万元，其中5,600万元投资收益计入非经常性损益事项。6、报告期内，除事项5外，公司发生政府补助等非经常性损益事项增加归属于上市公司股东的净利润约4,600万元，对报告期的业绩产生一定的正向影响。",
-          "update_flag": "1"
-        },
-        {
-          "ts_code": "300308.SZ",
-          "ann_date": "20250124",
-          "end_date": "20241231",
-          "type": "预增",
-          "p_change_min": 111.64,
-          "p_change_max": 166.85,
-          "net_profit_min": 460000.0,
-          "net_profit_max": 580000.0,
-          "last_parent_net": 217352.77,
-          "first_ann_date": "20250124",
           "summary": "预计:净利润460000-580000",
           "change_reason": "1、报告期内，得益于终端客户对算力基础设施的持续建设、资本开支强劲增长带来800G和400G高端光模块销售的大幅增加，产品结构持续优化，公司营业收入和净利润同比得到大幅提升。2、报告期内，公司对限制性股票激励计划、员工持股计划等事项确认股权激励费用，导致归属于上市公司股东的净利润减少约19,200万元。3、报告期内，对投资并购时确认的子公司苏州旭创、储翰科技及君歌电子等的固定资产及无形资产评估增值计提折旧摊销，导致归属于上市公司股东的净利润减少约4,000万元。4、报告期内，对子公司账面可能形成呆滞的库存计提存货减值准备、并对预计存在坏账风险的应收账款计提信用减值损失，合计导致归属于上市公司股东的净利润减少约6,200万元。5、报告期内，处置股权投资形成收益和按照直接或间接投资的标的公司公允价值变动确认公允价值变动损益，合计增加归属于上市公司股东的净利润约2,900万元，其中5,600万元投资收益计入非经常性损益事项。6、报告期内，除事项5外，公司发生政府补助等非经常性损益事项增加归属于上市公司股东的净利润约4,600万元，对报告期的业绩产生一定的正向影响。",
           "update_flag": "0"
         }
       ],
-      "row_count": 5,
+      "row_count": 4,
       "_status": "ok",
       "as_of": "20260131"
     }

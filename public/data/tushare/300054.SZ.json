@@ -1,11 +1,37 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-05T11:18:00Z",
+  "fetched_at": "2026-08-07T09:33:46Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260807",
+          "open": 76.7,
+          "high": 79.17,
+          "low": 76.19,
+          "close": 77.74,
+          "pre_close": 76.8,
+          "change": 0.94,
+          "pct_chg": 1.224,
+          "vol": 429576.0,
+          "amount": 3342084.38884
+        },
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260806",
+          "open": 73.0,
+          "high": 77.82,
+          "low": 72.0,
+          "close": 76.8,
+          "pre_close": 74.02,
+          "change": 2.78,
+          "pct_chg": 3.7557,
+          "vol": 432164.2,
+          "amount": 3278088.76776
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260805",
@@ -811,40 +837,54 @@
           "pct_chg": 5.8888,
           "vol": 534283.23,
           "amount": 3502251.868
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260508",
-          "open": 66.0,
-          "high": 67.0,
-          "low": 63.8,
-          "close": 64.19,
-          "pre_close": 68.8,
-          "change": -4.61,
-          "pct_chg": -6.7006,
-          "vol": 534438.57,
-          "amount": 3474820.583
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260507",
-          "open": 67.26,
-          "high": 69.99,
-          "low": 65.7,
-          "close": 68.8,
-          "pre_close": 64.68,
-          "change": 4.12,
-          "pct_chg": 6.3698,
-          "vol": 485286.6,
-          "amount": 3305217.666
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260807"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260807",
+          "close": 77.74,
+          "turnover_rate": 5.7716,
+          "turnover_rate_f": 6.3643,
+          "volume_ratio": 0.94,
+          "pe": 103.0295,
+          "pe_ttm": 89.3825,
+          "pb": 13.586,
+          "ps": 20.2744,
+          "ps_ttm": 19.2427,
+          "dv_ratio": 0.1273,
+          "dv_ttm": 0.1284,
+          "total_share": 95449.376,
+          "float_share": 74429.4808,
+          "free_share": 67497.4575,
+          "total_mv": 7420234.8012,
+          "circ_mv": 5786147.7752
+        },
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260806",
+          "close": 76.8,
+          "turnover_rate": 5.8064,
+          "turnover_rate_f": 6.4027,
+          "volume_ratio": 0.94,
+          "pe": 101.7838,
+          "pe_ttm": 88.3017,
+          "pb": 13.4217,
+          "ps": 20.0292,
+          "ps_ttm": 19.01,
+          "dv_ratio": 0.1289,
+          "dv_ttm": 0.13,
+          "total_share": 95449.376,
+          "float_share": 74429.4808,
+          "free_share": 67497.4575,
+          "total_mv": 7330512.384,
+          "circ_mv": 5716184.064
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260805",
@@ -2084,54 +2124,24 @@
           "free_share": 66883.2191,
           "total_mv": 6444032.6532,
           "circ_mv": 5017222.0259
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260508",
-          "close": 64.19,
-          "turnover_rate": 7.2402,
-          "turnover_rate_f": 7.9906,
-          "volume_ratio": 1.14,
-          "pe": 84.4991,
-          "pe_ttm": 73.3065,
-          "pb": 11.1424,
-          "ps": 16.6279,
-          "ps_ttm": 15.7818,
-          "dv_ratio": 0.1552,
-          "dv_ttm": 0.1552,
-          "total_share": 94807.0127,
-          "float_share": 73815.2424,
-          "free_share": 66883.2191,
-          "total_mv": 6085662.1452,
-          "circ_mv": 4738200.4097
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260507",
-          "close": 68.8,
-          "turnover_rate": 6.5743,
-          "turnover_rate_f": 7.2557,
-          "volume_ratio": 1.0,
-          "pe": 90.5676,
-          "pe_ttm": 78.5712,
-          "pb": 11.9427,
-          "ps": 17.8221,
-          "ps_ttm": 16.9152,
-          "dv_ratio": 0.1448,
-          "dv_ttm": 0.1448,
-          "total_share": 94807.0127,
-          "float_share": 73815.2424,
-          "free_share": 66883.2191,
-          "total_mv": 6522722.4738,
-          "circ_mv": 5078488.6771
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260807"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260807",
+          "adj_factor": 12.967
+        },
+        {
+          "ts_code": "300054.SZ",
+          "trade_date": "20260806",
+          "adj_factor": 12.967
+        },
         {
           "ts_code": "300054.SZ",
           "trade_date": "20260805",
@@ -2441,21 +2451,11 @@
           "ts_code": "300054.SZ",
           "trade_date": "20260511",
           "adj_factor": 12.9517
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260508",
-          "adj_factor": 12.9517
-        },
-        {
-          "ts_code": "300054.SZ",
-          "trade_date": "20260507",
-          "adj_factor": 12.9517
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260805"
+      "as_of": "20260807"
     },
     "income": {
       "rows": [
@@ -3130,7 +3130,7 @@
           "t_compr_income": 472551925.73,
           "compr_inc_attr_p": 376751264.84,
           "compr_inc_attr_m_s": 95800660.89,
-          "ebit": null,
+          "ebit": 527373227.39,
           "ebitda": null,
           "insurance_exp": null,
           "undist_profit": null,
@@ -3153,7 +3153,7 @@
           "comshare_payable_dvd": null,
           "capit_comstock_div": null,
           "continued_net_profit": 472123311.75,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "300054.SZ",
@@ -3217,7 +3217,7 @@
           "t_compr_income": 472551925.73,
           "compr_inc_attr_p": 376751264.84,
           "compr_inc_attr_m_s": 95800660.89,
-          "ebit": 527373227.39,
+          "ebit": null,
           "ebitda": null,
           "insurance_exp": null,
           "undist_profit": null,
@@ -3240,7 +3240,7 @@
           "comshare_payable_dvd": null,
           "capit_comstock_div": null,
           "continued_net_profit": 472123311.75,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300054.SZ",
@@ -5079,10 +5079,10 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 2189280671.96,
-          "free_cashflow": -282550109.5169,
+          "free_cashflow": null,
           "c_prepay_amt_borr": 832328552.87,
           "c_pay_dist_dpcp_int_exp": 133000207.72,
-          "incl_dvd_profit_paid_sc_ms": 8310000.0,
+          "incl_dvd_profit_paid_sc_ms": null,
           "oth_cashpay_ral_fnc_act": 10689151.73,
           "stot_cashout_fnc_act": 976017912.32,
           "n_cash_flows_fnc_act": 1213262759.64,
@@ -5091,7 +5091,7 @@
           "c_cash_equ_beg_period": 1025581460.12,
           "c_cash_equ_end_period": 1760271519.17,
           "c_recp_cap_contrib": 150093934.6,
-          "incl_cash_rec_saims": 6000000.0,
+          "incl_cash_rec_saims": null,
           "uncon_invest_loss": null,
           "prov_depr_assets": null,
           "depr_fa_coga_dpba": null,
@@ -5123,7 +5123,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300054.SZ",
@@ -5178,10 +5178,10 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 2189280671.96,
-          "free_cashflow": null,
+          "free_cashflow": -282550109.5169,
           "c_prepay_amt_borr": 832328552.87,
           "c_pay_dist_dpcp_int_exp": 133000207.72,
-          "incl_dvd_profit_paid_sc_ms": null,
+          "incl_dvd_profit_paid_sc_ms": 8310000.0,
           "oth_cashpay_ral_fnc_act": 10689151.73,
           "stot_cashout_fnc_act": 976017912.32,
           "n_cash_flows_fnc_act": 1213262759.64,
@@ -5190,7 +5190,7 @@
           "c_cash_equ_beg_period": 1025581460.12,
           "c_cash_equ_end_period": 1760271519.17,
           "c_recp_cap_contrib": 150093934.6,
-          "incl_cash_rec_saims": null,
+          "incl_cash_rec_saims": 6000000.0,
           "uncon_invest_loss": null,
           "prov_depr_assets": null,
           "depr_fa_coga_dpba": null,
@@ -5222,7 +5222,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "300054.SZ",
@@ -5475,7 +5475,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 304384370.81,
-          "free_cashflow": null,
+          "free_cashflow": -84399147.3122,
           "c_prepay_amt_borr": 92349637.63,
           "c_pay_dist_dpcp_int_exp": 8341132.9,
           "incl_dvd_profit_paid_sc_ms": 0.0,
@@ -5519,7 +5519,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         },
         {
           "ts_code": "300054.SZ",
@@ -5574,7 +5574,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 304384370.81,
-          "free_cashflow": -84399147.3122,
+          "free_cashflow": null,
           "c_prepay_amt_borr": 92349637.63,
           "c_pay_dist_dpcp_int_exp": 8341132.9,
           "incl_dvd_profit_paid_sc_ms": 0.0,
@@ -5618,7 +5618,7 @@
           "beg_bal_cash": null,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300054.SZ",
@@ -6069,7 +6069,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 672091496.85,
-          "free_cashflow": 48087635.374,
+          "free_cashflow": 79587635.374,
           "c_prepay_amt_borr": 229590815.42,
           "c_pay_dist_dpcp_int_exp": 34824565.24,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -6113,7 +6113,7 @@
           "beg_bal_cash": 1101529581.37,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "1"
+          "update_flag": "0"
         },
         {
           "ts_code": "300054.SZ",
@@ -6168,7 +6168,7 @@
           "proc_issue_bonds": null,
           "oth_cash_recp_ral_fnc_act": null,
           "stot_cash_in_fnc_act": 672091496.85,
-          "free_cashflow": 79587635.374,
+          "free_cashflow": 48087635.374,
           "c_prepay_amt_borr": 229590815.42,
           "c_pay_dist_dpcp_int_exp": 34824565.24,
           "incl_dvd_profit_paid_sc_ms": null,
@@ -6212,7 +6212,7 @@
           "beg_bal_cash": 1101529581.37,
           "end_bal_cash_equ": null,
           "beg_bal_cash_equ": null,
-          "update_flag": "0"
+          "update_flag": "1"
         }
       ],
       "row_count": 15,
@@ -6742,8 +6742,8 @@
           "net_profit_max": 54000.0,
           "last_parent_net": 31104.24,
           "first_ann_date": "20260710",
-          "summary": "预计:净利润51000-54000",
-          "change_reason": "公司经营业绩稳步增长，主要原因为：（一）半导体材料板块行业景气度上行，多品类产品放量增长受益于全球半导体产业拓展与技术迭代，AI算力、存储芯片需求持续释放，带动下游晶圆制造产能持续扩容。公司半导体材料业务保持良好增长态势，多款核心创新材料验证落地、持续放量。（二）优化产业布局，业务结构持续改善，增厚盈利水平。本报告期内新并购的深圳皓飞，其上半年度营收（3-6月并表口径）同比增长约60%，盈利能力显著提升。同时，公司在完成对深圳皓飞的并购后迅速推动深圳皓飞在仙桃产业园的项目扩产。截至目前，仙桃产业园出产的负极粘结剂开始少量出货。此外，锂电材料业务端，除深圳皓飞现有材料业务外，上半年鼎龙本部与深圳皓飞一起依据行业痛点深度布局其它锂电功能材料，与国内下游的绝对头部企业合作，正在集中开发多款与锂电安全性、热管理、电性能与能量密度提升相关的创新性功能材料；另一方面，剥离打印耗材终端业务后，公司彩色聚合碳粉和耗材芯片业务发展平稳，公司资源全面聚焦半导体核心材料主业，整体盈利能力持续加强。（三）其他情况说明。预计本报告期非经常性损益约为2,700万元，去年同期非经常性损益金额为1,729.04万元，主要为政府补助。",
+          "summary": "预计2026年1-6月归属于上市公司股东的净利润盈利:51,000万元至54,000万元,同比上年增长:63.96%至73.61%。",
+          "change_reason": "公司是国内领先的关键大赛道领域中各类核心创新材料的平台型公司。2026年上半年度,公司预计实现营业收入19.25亿元,同比增长约11%;预计实现归属于上市公司股东的净利润5.1亿元~5.4亿元,同比增长63.96%~73.61%。若剔除出表的打印耗材终端业务利润,今年上半年归母净利润同比增幅超80%。公司经营业绩稳步增长,主要原因为:(一)半导体材料板块行业景气度上行,多品类产品放量增长受益于全球半导体产业拓展与技术迭代,AI算力、存储芯片需求持续释放,带动下游晶圆制造产能持续扩容。公司半导体材料业务保持良好增长态势,多款核心创新材料验证落地、持续放量。具体为:①CMP抛光液及清洗液:作为公司半导体材料重要的新增长极,鼎泽抛光液(含清洗液,不含体系内研磨粒子)业务上半年取得重大突破,合计营业收入同比增长63%,实现规模盈利约4,700万元。其中6月单月抛光液及清洗液的销售额突破4,000万元,创下月度销售额的历史新高。随着下半年销售规模持续增长,其竞争实力、毛利率水平及盈利能力将进一步提升。目前,公司实现了CMP抛光液产品全品类布局,应用领域全面覆盖:集成电路制造、单晶硅晶片制造、先进封装、第三代半导体等领域。②CMP抛光垫:营业收入同比增长57%;其中6月单月出货首次突破5万片,创下月度出货量的历史新高。同时,公司近期已启动潜江园区第三条软抛光垫生产线建设项目。本项目重点布局玻璃基板CMP抛光垫与大尺寸(直径大于2米)抛光垫两大高端产品新增应用方向。③高端晶圆光刻胶:本报告期合计约获得1,000加仑采购订单,产品批量交付规模持续提升中,国产替代进程显著提速。目前,公司已经累计布局40余款高端晶圆光刻胶,近30款产品向客户送样开展验证测试,在客户端的在测产品型号数量同比翻倍。同时,公司还布局了数款配套的BARC、SOC等光刻辅材。④半导体显示材料业务:尽管受下游显示面板厂产能稼动率不足因素的影响,公司显示材料业务收入同比略有下滑,呈现阶段性波动。但是,公司半导体显示材料产品的市场占有率及新产品覆盖度持续提升,业务整体竞争力显著增强。报告期内,公司自主研发的感光PSPI和TFE-INK两款核心材料顺利在国内首条G8.6代AMOLED产线上实现首发批量配套供应。结合下游市场需求趋势预判,以及公司产品线布局,公司半导体材料板块预计在下半年度将持续保持显著增长态势。(二)优化产业布局,业务结构持续改善,增厚盈利水平本报告期内新并购的深圳皓飞,其上半年度营收(3-6月并表口径)同比增长约60%,盈利能力显著提升。同时,公司在完成对深圳皓飞的并购后迅速推动深圳皓飞在仙桃产业园的项目扩产。截至目前,仙桃产业园出产的负极粘结剂开始少量出货。此外,锂电材料业务端,除深圳皓飞现有材料业务外,上半年鼎龙本部与深圳皓飞一起依据行业痛点深度布局其它锂电功能材料,与国内下游的绝对头部企业合作,正在集中开发多款与锂电安全性、热管理、电性能与能量密度提升相关的创新性功能材料;另一方面,剥离打印耗材终端业务后,公司彩色聚合碳粉和耗材芯片业务发展平稳,公司资源全面聚焦半导体核心材料主业,整体盈利能力持续加强。(三)其他情况说明预计本报告期非经常性损益约为2,700万元,去年同期非经常性损益金额为1,729.04万元,主要为政府补助。",
           "update_flag": "0"
         },
         {
@@ -6834,25 +6834,10 @@
           "first_ann_date": "20241009",
           "summary": "预计:净利润36662-37895",
           "change_reason": "公司是国内领先的关键大赛道领域中各类核心“卡脖子”进口替代类创新材料的平台型公司，目前重点聚焦半导体创新材料领域。2024年前三季度，累计实现营业收入约24.10亿元，其中：第三季度营业收入约8.92亿元，环比增长10%；2024年前三季度，归属于上市公司股东的净利润预计约为3.67亿元至3.79亿元，其中：第三季度约为1.49亿元至1.61亿元，环比较第二季度1.36亿元持续稳健增长。相关情况如下：1、半导体材料业务及集成电路芯片设计和应用业务：实现营业收入约10.89亿元，同比增长88%，营收占比从2023年的32%持续提升至约45%水平。其中，第三季度：实现营业收入约4.49亿元，同比增长68%，环比增长33%；具体为：①CMP抛光垫销售约5.24亿元，同比增长95%。其中，今年第三季度实现销售收入约2.26亿元，环比增长39%，同比增长90%；②CMP抛光液、清洗液产品合计销售约1.38亿元，同比增长186%。其中，今年第三季度实现销售收入约6,155万元，环比增长53%，同比增长183%；③半导体显示材料业务（YPI、PSPI、TFE-INK）合计销售约2.82亿元，同比增长162%。其中，今年第三季度实现销售收入约1.15亿元，环比增长18%，同比增长102%。此外，公司半导体先进封装材料及晶圆光刻胶业务亦在快速推进中，多款产品在其客户端分别进入不同验证及市场开拓阶段，客户反馈良好，进展符合公司预期。2、打印复印通用耗材业务：持续保持稳健经营，本期预计实现营业收入约13.21亿元，同比略有增长。公司将继续多举措进行降本增效，提升公司经营效率，多渠道拓展业务，夯实公司在行业的竞争力。3、受汇率波动及上市公司实施股权激励成本影响，第三季度归属于上市公司的净利润影响额环比减少约1,500万元。4、非经常性损益影响预计本报告期非经常性损益约为2,815万元，主要是政府补助影响；去年同期非经常性损益金额为4,680.91万元。",
-          "update_flag": "1"
-        },
-        {
-          "ts_code": "300054.SZ",
-          "ann_date": "20241009",
-          "end_date": "20240930",
-          "type": "预增",
-          "p_change_min": 108.0,
-          "p_change_max": 115.0,
-          "net_profit_min": 36662.0,
-          "net_profit_max": 37895.0,
-          "last_parent_net": 17625.81,
-          "first_ann_date": "20241009",
-          "summary": "预计:净利润36662-37895",
-          "change_reason": "公司是国内领先的关键大赛道领域中各类核心“卡脖子”进口替代类创新材料的平台型公司，目前重点聚焦半导体创新材料领域。2024年前三季度，累计实现营业收入约24.10亿元，其中：第三季度营业收入约8.92亿元，环比增长10%；2024年前三季度，归属于上市公司股东的净利润预计约为3.67亿元至3.79亿元，其中：第三季度约为1.49亿元至1.61亿元，环比较第二季度1.36亿元持续稳健增长。相关情况如下：1、半导体材料业务及集成电路芯片设计和应用业务：实现营业收入约10.89亿元，同比增长88%，营收占比从2023年的32%持续提升至约45%水平。其中，第三季度：实现营业收入约4.49亿元，同比增长68%，环比增长33%；具体为：①CMP抛光垫销售约5.24亿元，同比增长95%。其中，今年第三季度实现销售收入约2.26亿元，环比增长39%，同比增长90%；②CMP抛光液、清洗液产品合计销售约1.38亿元，同比增长186%。其中，今年第三季度实现销售收入约6,155万元，环比增长53%，同比增长183%；③半导体显示材料业务（YPI、PSPI、TFE-INK）合计销售约2.82亿元，同比增长162%。其中，今年第三季度实现销售收入约1.15亿元，环比增长18%，同比增长102%。此外，公司半导体先进封装材料及晶圆光刻胶业务亦在快速推进中，多款产品在其客户端分别进入不同验证及市场开拓阶段，客户反馈良好，进展符合公司预期。2、打印复印通用耗材业务：持续保持稳健经营，本期预计实现营业收入约13.21亿元，同比略有增长。公司将继续多举措进行降本增效，提升公司经营效率，多渠道拓展业务，夯实公司在行业的竞争力。3、受汇率波动及上市公司实施股权激励成本影响，第三季度归属于上市公司的净利润影响额环比减少约1,500万元。4、非经常性损益影响预计本报告期非经常性损益约为2,815万元，主要是政府补助影响；去年同期非经常性损益金额为4,680.91万元。",
           "update_flag": "0"
         }
       ],
-      "row_count": 8,
+      "row_count": 7,
       "_status": "ok",
       "as_of": "20260710"
     }

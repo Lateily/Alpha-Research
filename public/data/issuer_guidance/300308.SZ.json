@@ -1,13 +1,13 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-08-05T11:18:13Z",
+  "fetched_at": "2026-08-07T09:34:01Z",
   "_semantics": "issuer_guidance = 公司业绩预告(forecast) + 业绩快报(express) — 发行人自披露,NOT broker consensus. 卖方预测见 broker_recommend (report_rc, E2).",
   "disclaimer": "不是买卖指令;研究信号,human executes.",
   "_status": "OK",
   "as_of": "20260228",
   "dimensions": {
     "forecast": {
-      "row_count": 5,
+      "row_count": 4,
       "_status": "OK",
       "as_of": "20260131"
     },
@@ -100,20 +100,6 @@
       "p_change_max": 166.85,
       "eps": null,
       "revenue": null,
-      "summary": "预计净利润460000-580000万"
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20250124",
-      "end_date": "20241231",
-      "type": "预增",
-      "net_profit": 5200000000.0,
-      "net_profit_min": 4600000000.0,
-      "net_profit_max": 5800000000.0,
-      "p_change_min": 111.64,
-      "p_change_max": 166.85,
-      "eps": null,
-      "revenue": null,
       "summary": "预计:净利润460000-580000"
     }
   ],
@@ -187,20 +173,6 @@
       "eps": 4.71,
       "revenue": 23861489011.49,
       "summary": null
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20250124",
-      "end_date": "20241231",
-      "type": "预增",
-      "net_profit": 5200000000.0,
-      "net_profit_min": 4600000000.0,
-      "net_profit_max": 5800000000.0,
-      "p_change_min": 111.64,
-      "p_change_max": 166.85,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计净利润460000-580000万"
     },
     {
       "source": "forecast",
