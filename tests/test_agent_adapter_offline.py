@@ -21,6 +21,8 @@ from adapters import (  # noqa: E402
     UsageStatus,
     run_adapter,
 )
+import adapters.kimi as kimi_module  # noqa: E402
+from adapters.kimi import KimiAdapter  # noqa: E402
 
 
 def request(**overrides) -> AgentRequest:
@@ -431,6 +433,277 @@ def test_deepseek_real_call_rejects_zero_live_tokens() -> None:
     assert result.status is AgentStatus.FAILED
     assert result.error is not None
     assert result.error.code == "PROVIDER_ERROR"
+
+
+def kimi_request(**overrides) -> AgentRequest:
+    values = {
+        "task_id": "A-013-kimi-test",
+        "task_type": "event_tagging",
+        "input_payload": {
+            "messages": [{"role": "user", "content": "offline fixture"}],
+            "max_tokens": 32,
+            "reasoning_effort": "low",
+        },
+        "prompt_version": "kimi_wrapper_test_v1",
+        "risk_level": "LOW",
+        "timeout_seconds": 5,
+        "evidence_grade": "E4",
+        "network_policy": "provider_only",
+    }
+    values.update(overrides)
+    return AgentRequest(**values)
+
+
+def test_kimi_wrapper_maps_reported_usage_without_network() -> None:
+    captured = {}
+
+    def fake_completion(**kwargs):
+        captured.update(kwargs)
+        return {
+            "text": "offline Kimi result",
+            "response": {"must_not": "escape into AgentResult"},
+            "usage_record": {
+                "input_tokens": 100,
+                "cached_input_tokens": 20,
+                "output_tokens": 10,
+                "estimated_cost_cny": "0.002851",
+            },
+        }
+
+    result = run(
+        KimiAdapter(fake_completion, offline_stub=True),
+        kimi_request(),
+    )
+
+    assert result.status is AgentStatus.SUCCEEDED
+    assert result.provider == "moonshot"
+    assert result.model == "kimi-k3"
+    assert result.output == {"text": "offline Kimi result"}
+    assert result.usage.status is UsageStatus.REPORTED
+    assert result.usage.input_tokens == 100
+    assert result.usage.cached_input_tokens == 20
+    assert result.usage.output_tokens == 10
+    assert result.usage.estimated_cost_cny == "0.002851"
+    assert captured["task_name"] == "event_tagging"
+    assert captured["prompt_version"] == "kimi_wrapper_test_v1"
+    assert captured["timeout_seconds"] == 5
+    assert "must_not" not in json.dumps(result.to_dict())
+
+
+def test_kimi_wrapper_missing_usage_is_cost_unknown() -> None:
+    result = run(
+        KimiAdapter(
+            lambda **_kwargs: {"text": "offline"},
+            offline_stub=True,
+        ),
+        kimi_request(),
+    )
+    assert result.status is AgentStatus.SUCCEEDED
+    assert result.usage.status is UsageStatus.COST_UNKNOWN
+    assert result.usage.estimated_cost_cny is None
+
+
+def test_kimi_real_mode_requires_reported_usage() -> None:
+    original_completion = kimi_module.legacy_kimi.chat_completion
+    kimi_module.legacy_kimi.chat_completion = lambda **_kwargs: {"text": "offline"}
+    try:
+        result = run(KimiAdapter(allow_real_call=True), kimi_request())
+    finally:
+        kimi_module.legacy_kimi.chat_completion = original_completion
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+    assert result.usage.status is UsageStatus.COST_UNKNOWN
+
+
+def test_kimi_injected_callable_real_mode_requires_reported_usage() -> None:
+    result = run(
+        KimiAdapter(
+            lambda **_kwargs: {"text": "offline injected fixture"},
+            allow_real_call=True,
+        ),
+        kimi_request(),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+    assert result.usage.status is UsageStatus.COST_UNKNOWN
+
+
+def test_kimi_real_mode_accepts_complete_reported_usage() -> None:
+    def fake_legacy_completion(**_kwargs):
+        return {
+            "text": "offline real-mode fixture",
+            "usage_record": {
+                "input_tokens": 8,
+                "cached_input_tokens": 2,
+                "output_tokens": 3,
+                "estimated_cost_cny": "0.000900",
+            },
+        }
+
+    original_completion = kimi_module.legacy_kimi.chat_completion
+    kimi_module.legacy_kimi.chat_completion = fake_legacy_completion
+    try:
+        result = run(KimiAdapter(allow_real_call=True), kimi_request())
+    finally:
+        kimi_module.legacy_kimi.chat_completion = original_completion
+
+    assert result.status is AgentStatus.SUCCEEDED
+    assert result.output == {"text": "offline real-mode fixture"}
+    assert result.usage.status is UsageStatus.REPORTED
+    assert result.usage.estimated_cost_cny == "0.000900"
+
+
+def test_kimi_wrapper_real_call_is_frozen_by_default() -> None:
+    result = run(KimiAdapter(), kimi_request())
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+    assert result.usage.status is UsageStatus.COST_UNKNOWN
+
+
+def test_kimi_injected_callable_requires_explicit_offline_stub() -> None:
+    result = run(
+        KimiAdapter(lambda **_kwargs: {"text": "must not run"}),
+        kimi_request(),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.message == "PermissionError during provider execution"
+
+
+def test_kimi_offline_stub_cannot_reach_network_through_wrapper() -> None:
+    attempted = False
+
+    def wrapped_legacy(**_kwargs):
+        nonlocal attempted
+        attempted = True
+        socket.create_connection(("api.moonshot.cn", 443))
+        return {"text": "must not run"}
+
+    result = run(
+        KimiAdapter(wrapped_legacy, offline_stub=True),
+        kimi_request(),
+    )
+
+    assert attempted is True
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.message == "PermissionError during provider execution"
+
+
+def test_kimi_rejects_contradictory_execution_flags() -> None:
+    try:
+        KimiAdapter(
+            lambda **_kwargs: {"text": "must not run"},
+            allow_real_call=True,
+            offline_stub=True,
+        )
+    except ValueError as exc:
+        assert "mutually exclusive" in str(exc)
+    else:
+        raise AssertionError("contradictory execution flags must be rejected")
+
+
+def test_kimi_paid_call_ledger_failure_is_preserved_and_not_retryable() -> None:
+    preserved = []
+    original_read_key = kimi_module.legacy_kimi._read_api_key
+    original_post = kimi_module.legacy_kimi._post_chat_completion
+    original_append = kimi_module.legacy_kimi.append_usage_record
+    original_spool = kimi_module.legacy_kimi.append_usage_spool
+
+    kimi_module.legacy_kimi._read_api_key = lambda: "offline-test-key"
+    kimi_module.legacy_kimi._post_chat_completion = lambda *_args, **_kwargs: {
+        "choices": [{"message": {"content": "paid offline fixture"}}],
+        "usage": {
+            "prompt_tokens": 10,
+            "cached_tokens": 2,
+            "completion_tokens": 3,
+        },
+    }
+    kimi_module.legacy_kimi.append_usage_record = lambda _record: (_ for _ in ()).throw(
+        NotADirectoryError("primary ledger unavailable")
+    )
+    kimi_module.legacy_kimi.append_usage_spool = lambda record: preserved.append(record)
+    try:
+        result = run(KimiAdapter(allow_real_call=True), kimi_request())
+    finally:
+        kimi_module.legacy_kimi._read_api_key = original_read_key
+        kimi_module.legacy_kimi._post_chat_completion = original_post
+        kimi_module.legacy_kimi.append_usage_record = original_append
+        kimi_module.legacy_kimi.append_usage_spool = original_spool
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "USAGE_LEDGER_WRITE_FAILED"
+    assert result.error.retryable is False
+    assert result.usage.status is UsageStatus.REPORTED
+    assert len(preserved) == 1
+    assert preserved[0]["estimated_cost_cny"] == result.usage.estimated_cost_cny
+
+
+def test_kimi_legacy_callable_cannot_masquerade_as_offline_stub() -> None:
+    result = run(
+        KimiAdapter(
+            kimi_module.legacy_kimi.chat_completion,
+            offline_stub=True,
+        ),
+        kimi_request(),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+    assert result.error.message == "PermissionError during provider execution"
+
+
+def test_kimi_wrapper_denies_wrong_network_policy() -> None:
+    called = False
+
+    def fake_completion(**_kwargs):
+        nonlocal called
+        called = True
+        return {"text": "must not run"}
+
+    result = run(
+        KimiAdapter(fake_completion, offline_stub=True),
+        kimi_request(network_policy="deny"),
+    )
+    assert result.status is AgentStatus.FAILED
+    assert called is False
+
+
+def test_kimi_wrapper_timeout_and_secret_error_are_structured() -> None:
+    def timeout(**_kwargs):
+        raise TimeoutError("sk-SECRET123 ghp_LEAK")
+
+    result = run(KimiAdapter(timeout, offline_stub=True), kimi_request())
+    serialized = json.dumps(result.to_dict())
+
+    assert result.status is AgentStatus.TIMEOUT
+    assert "sk-SECRET123" not in serialized
+    assert "ghp_LEAK" not in serialized
+
+
+def test_kimi_wrapper_rejects_bad_messages_without_calling_provider() -> None:
+    called = False
+
+    def fake_completion(**_kwargs):
+        nonlocal called
+        called = True
+        return {"text": "must not run"}
+
+    result = run(
+        KimiAdapter(fake_completion, offline_stub=True),
+        kimi_request(input_payload={"messages": []}),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert called is False
 
 
 def run_all_tests() -> int:

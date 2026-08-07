@@ -1269,6 +1269,104 @@ class BackdatedAppendTest(unittest.TestCase):
 class NightlyDataQualitySurfacedTest(unittest.TestCase):
     """report=COMPLETE 只说明流水线成功;信息完整度必须在同一层可见。"""
 
+    @staticmethod
+    def _export_meta(report="COMPLETE", quality="PARTIAL", pipeline="OK"):
+        import export_contracts as ec
+        names = [name for name, _builder in ec.BUILDERS]
+        return {
+            "report": report,
+            "data_quality": quality,
+            "degraded_sources": ["overnight_anchor.json:PARTIAL_OK"],
+            "business_contract_count": len(names),
+            "contracts": {
+                name: {
+                    "status": pipeline,
+                    "pipeline_status": pipeline,
+                    "data_quality": quality,
+                }
+                for name in names
+            },
+        }
+
+    def test_honest_partial_quality_does_not_fail_successful_export_pipeline(self):
+        import run_nightly as rn
+        meta = self._export_meta(quality="PARTIAL")
+        self.assertIn('"PARTIAL"', json.dumps(meta), "夹具没有复现旧子串扫描条件")
+        status, why = rn._artifact_status_scan(
+            "export_contracts", meta
+        )
+        self.assertEqual(("OK", ""), (status, why))
+
+    def test_blocked_quality_does_not_override_successful_pipeline_state(self):
+        import run_nightly as rn
+        status, why = rn._artifact_status_scan(
+            "export_contracts", self._export_meta(quality="BLOCKED")
+        )
+        self.assertEqual(("OK", ""), (status, why))
+
+    def test_non_ok_pipeline_still_blocks_publication(self):
+        import run_nightly as rn
+        for pipeline_status in ("STALE_INPUT", "DATA_BLOCKED"):
+            with self.subTest(pipeline_status=pipeline_status):
+                meta = self._export_meta(report="PARTIAL", quality="PARTIAL")
+                meta["contracts"]["premarket_frame.json"].update(
+                    status=pipeline_status, pipeline_status=pipeline_status
+                )
+                status, why = rn._artifact_status_scan(
+                    "export_contracts", meta,
+                )
+                self.assertEqual("PARTIAL", status)
+                self.assertIn("premarket_frame.json", why)
+
+    def test_report_cannot_disagree_with_contract_pipeline_states(self):
+        import run_nightly as rn
+        meta = self._export_meta(report="COMPLETE", quality="PARTIAL")
+        meta["contracts"]["premarket_frame.json"].update(
+            status="STALE_INPUT", pipeline_status="STALE_INPUT"
+        )
+        status, why = rn._artifact_status_scan(
+            "export_contracts", meta,
+        )
+        self.assertEqual("FAILED", status)
+        self.assertIn("不一致", why)
+
+    def test_missing_or_malformed_quality_is_unknown_not_pipeline_failure(self):
+        import run_nightly as rn
+        for value in (None, "", "BANANA", {"bad": True}):
+            with self.subTest(value=value):
+                meta = self._export_meta()
+                meta["data_quality"] = value
+                self.assertEqual("OK", rn._artifact_status_scan("export_contracts", meta)[0])
+                self.assertEqual("UNKNOWN", rn._normalize_data_quality(value))
+
+    def test_contract_set_and_count_must_match_exporter_manifest(self):
+        import run_nightly as rn
+        missing = self._export_meta()
+        missing["contracts"].pop("trade_cards.json")
+        self.assertEqual("FAILED", rn._artifact_status_scan("export_contracts", missing)[0])
+
+        extra = self._export_meta()
+        extra["contracts"]["unknown.json"] = {
+            "status": "OK", "pipeline_status": "OK", "data_quality": "PARTIAL"
+        }
+        self.assertEqual("FAILED", rn._artifact_status_scan("export_contracts", extra)[0])
+
+        bad_count = self._export_meta()
+        bad_count["business_contract_count"] = 99
+        self.assertEqual("FAILED", rn._artifact_status_scan("export_contracts", bad_count)[0])
+
+    def test_pipeline_status_is_required_and_alias_cannot_disagree(self):
+        import run_nightly as rn
+        missing = self._export_meta()
+        missing["contracts"]["trade_cards.json"].pop("pipeline_status")
+        self.assertEqual("FAILED", rn._artifact_status_scan("export_contracts", missing)[0])
+
+        contradictory = self._export_meta()
+        contradictory["contracts"]["trade_cards.json"]["status"] = "STALE_INPUT"
+        self.assertEqual(
+            "FAILED", rn._artifact_status_scan("export_contracts", contradictory)[0]
+        )
+
     def test_collect_data_quality_never_fakes_complete(self):
         import run_nightly as rn
         orig = rn.HERE
@@ -1287,21 +1385,26 @@ class NightlyDataQualitySurfacedTest(unittest.TestCase):
         import run_nightly as rn
         self.assertTrue(hasattr(rn, "_collect_data_quality"))
         self.assertEqual("PARTIAL", rn._merge_data_quality("COMPLETE", "PARTIAL"))
+        self.assertEqual("DATA_BLOCKED", rn._merge_data_quality("BLOCKED", "PARTIAL"))
         self.assertEqual("UNKNOWN", rn._merge_data_quality("UNKNOWN", "COMPLETE"))
 
 
 class ResearchDataLaneTest(unittest.TestCase):
-    TARGET = "20260805"
-
-    def _stage_contracts(self, root: str) -> str:
+    def _stage_contracts(self, root: str):
         et = os.path.join(root, "experiments", "execution_tracker")
         public = os.path.join(root, "public", "data", "v2")
         os.makedirs(et, exist_ok=True)
         os.makedirs(public, exist_ok=True)
+        targets = set()
         for name in ("security_registry.json", "feature_store_health.json", "e1_event_layer.json"):
-            shutil.copy2(ROOT / "public" / "data" / "v2" / name, os.path.join(public, name))
-            os.utime(os.path.join(public, name), None)
-        return et
+            staged = os.path.join(public, name)
+            shutil.copy2(ROOT / "public" / "data" / "v2" / name, staged)
+            os.utime(staged, None)
+            targets.add(str(read_json(staged).get("as_of") or ""))
+        self.assertEqual(1, len(targets), "研究数据契约的 as_of 不一致")
+        target = targets.pop()
+        self.assertRegex(target, r"^\d{8}$")
+        return et, target
 
     def test_u0_precedes_both_full_market_consumers(self) -> None:
         steps = {name: (idx, deps) for idx, (name, _cmd, _token, deps) in enumerate(nightly.STEPS)}
@@ -1323,24 +1426,24 @@ class ResearchDataLaneTest(unittest.TestCase):
 
     def test_valid_partial_contract_is_process_ok_but_quality_partial(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            et = self._stage_contracts(tmp)
+            et, target = self._stage_contracts(tmp)
             started = time.time() - 1
             for step in ("security_registry", "feature_store", "e1_event_layer"):
                 status, details = nightly.verify_step_artifacts(
-                    step, self.TARGET, started, et, "RUN-1"
+                    step, target, started, et, "RUN-1"
                 )
                 self.assertEqual("OK", status, details)
             e1 = nightly.verify_step_artifacts(
-                "e1_event_layer", self.TARGET, started, et, "RUN-1"
+                "e1_event_layer", target, started, et, "RUN-1"
             )[1][0]
             self.assertEqual("PARTIAL", e1["quality_status"])
 
     def test_contract_date_mismatch_and_schema_damage_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            et = self._stage_contracts(tmp)
+            et, target = self._stage_contracts(tmp)
             started = time.time() - 1
             status, _ = nightly.verify_step_artifacts(
-                "feature_store", "20260804", started, et, "RUN-1"
+                "feature_store", "19000101", started, et, "RUN-1"
             )
             self.assertEqual("DATE_MISMATCH", status)
             feature = os.path.join(tmp, "public", "data", "v2", "feature_store_health.json")
@@ -1348,7 +1451,7 @@ class ResearchDataLaneTest(unittest.TestCase):
             payload["integrity"]["features_hash"] = "bad"
             write_json(feature, payload)
             status, details = nightly.verify_step_artifacts(
-                "feature_store", self.TARGET, started, et, "RUN-1"
+                "feature_store", target, started, et, "RUN-1"
             )
             self.assertEqual("FAILED", status, details)
 

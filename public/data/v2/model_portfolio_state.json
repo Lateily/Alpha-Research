@@ -1,7 +1,9 @@
 {
  "contract": "model_portfolio_state",
- "schema_version": "v2.1",
- "generated_at": "20260731 16:36:53",
+ "schema_version": "v2.2",
+ "generated_at": "20260806 16:38:27",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "target_trade_date": "20260806",
  "sources": [
   "model_fund/fund.json",
   "model_fund/nav_history.json",
@@ -9,24 +11,28 @@
  ],
  "sources_meta": {
   "fund.json": {
-   "age_hours": 113.7,
-   "stale": true
+   "age_hours": 0.0,
+   "cadence": "event_driven"
   },
   "nav_history.json": {
-   "age_hours": 113.7,
-   "stale": true
+   "age_hours": 0.0,
+   "cadence": "daily_series",
+   "last_entry": "20260806"
   },
   "orders.json": {
-   "age_hours": 113.7,
-   "stale": true
+   "age_hours": 0.0,
+   "cadence": "event_driven"
   }
  },
- "status": "STALE_INPUT",
+ "status": "OK",
+ "pipeline_status": "OK",
+ "data_quality": "COMPLETE",
+ "degraded_sources": [],
  "blocked_why": null,
  "data": {
   "paper_only": true,
   "initial_capital": 1000000.0,
-  "cash": 719140.0,
+  "cash": 860080.0,
   "nav_series": [
    {
     "date": "20260706",
@@ -147,46 +153,73 @@
     "n_positions": 2,
     "daily_return": -0.00768,
     "cum_return": 0.01044
+   },
+   {
+    "date": "20260727",
+    "nav": 1013314.0,
+    "cash": 719140.0,
+    "n_positions": 2,
+    "daily_return": 0.00285,
+    "cum_return": 0.01331
+   },
+   {
+    "date": "20260728",
+    "nav": 1012363.0,
+    "cash": 719140.0,
+    "n_positions": 2,
+    "daily_return": -0.00094,
+    "cum_return": 0.01236
+   },
+   {
+    "date": "20260729",
+    "nav": 1012387.0,
+    "cash": 719140.0,
+    "n_positions": 2,
+    "daily_return": 2e-05,
+    "cum_return": 0.01239
+   },
+   {
+    "date": "20260730",
+    "nav": 1018391.0,
+    "cash": 719140.0,
+    "n_positions": 2,
+    "daily_return": 0.00593,
+    "cum_return": 0.01839
+   },
+   {
+    "date": "20260731",
+    "nav": 1014344.0,
+    "cash": 719140.0,
+    "n_positions": 2,
+    "daily_return": -0.00397,
+    "cum_return": 0.01434
+   },
+   {
+    "date": "20260805",
+    "nav": 1009466.0,
+    "cash": 719140.0,
+    "n_positions": 2,
+    "daily_return": -0.00481,
+    "cum_return": 0.00947
+   },
+   {
+    "date": "20260806",
+    "nav": 1005886.0,
+    "cash": 860080.0,
+    "n_positions": 1,
+    "daily_return": -0.00355,
+    "cum_return": 0.00589
    }
   ],
   "nav_latest": {
-   "date": "20260724",
-   "nav": 1010439.0,
-   "cash": 719140.0,
-   "n_positions": 2,
-   "daily_return": -0.00768,
-   "cum_return": 0.01044
+   "date": "20260806",
+   "nav": 1005886.0,
+   "cash": 860080.0,
+   "n_positions": 1,
+   "daily_return": -0.00355,
+   "cum_return": 0.00589
   },
   "open_positions": [
-   {
-    "entry_id": "600276.SH_20260706_TREND_CONTINUATION",
-    "ticker": "600276.SH",
-    "name": "恒瑞医药",
-    "theme": "创新药",
-    "setup": "TREND_CONTINUATION",
-    "direction": "long",
-    "registered_at": "20260706",
-    "entry_review_price": 55.5,
-    "stop_reference": 52.2,
-    "take_profit_reference": 62.1,
-    "invalid_if": "见reason wrong-if",
-    "risk_R": 2.0,
-    "risk_budget_cny": 10000.0,
-    "shares": 2700,
-    "notional": 149850.0,
-    "reason": "创新药主线(license-out催化),0703尾盘走强+2.19%,>MA20趋势完好;与CXO同链不同环节。wrong-if:出海订单证伪",
-    "no_trade_flag": true,
-    "sample_eligible": true,
-    "status": "filled",
-    "fill_date": "20260707",
-    "fill_price": 56.4,
-    "exit_date": null,
-    "exit_price": null,
-    "exit_reason": null,
-    "paper_return": null,
-    "realized_R": null,
-    "pnl_cny": null
-   },
    {
     "entry_id": "002714.SZ_20260707_TRIPLE_CONFIRM_BREAKOUT",
     "ticker": "002714.SZ",
@@ -246,10 +279,39 @@
     "paper_return": 0.1418,
     "realized_R": 2.0,
     "pnl_cny": 20000.0
+   },
+   {
+    "entry_id": "600276.SH_20260706_TREND_CONTINUATION",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "theme": "创新药",
+    "setup": "TREND_CONTINUATION",
+    "direction": "long",
+    "registered_at": "20260706",
+    "entry_review_price": 55.5,
+    "stop_reference": 52.2,
+    "take_profit_reference": 62.1,
+    "invalid_if": "见reason wrong-if",
+    "risk_R": 2.0,
+    "risk_budget_cny": 10000.0,
+    "shares": 2700,
+    "notional": 149850.0,
+    "reason": "创新药主线(license-out催化),0703尾盘走强+2.19%,>MA20趋势完好;与CXO同链不同环节。wrong-if:出海订单证伪",
+    "no_trade_flag": true,
+    "sample_eligible": true,
+    "status": "closed",
+    "fill_date": "20260707",
+    "fill_price": 56.4,
+    "exit_date": "20260806",
+    "exit_price": 52.2,
+    "exit_reason": "stop",
+    "paper_return": -0.0745,
+    "realized_R": -1.0,
+    "pnl_cny": -11340.0
    }
   ],
-  "closed_trades_n": 1,
-  "win_rate_note": "closed n=1 < 30,胜率语言免谈"
+  "closed_trades_n": 2,
+  "win_rate_note": "closed n=2 < 30,胜率语言免谈"
  },
  "disclaimer": "不是买卖指令;研究信号,human executes."
 }

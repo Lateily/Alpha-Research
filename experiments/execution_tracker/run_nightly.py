@@ -160,6 +160,62 @@ def _validate_research_contract(step, data):
         validate_event_layer(data)
 
 
+def _normalize_data_quality(value):
+    quality = str(value or "UNKNOWN").upper()
+    if quality == "BLOCKED":
+        return "DATA_BLOCKED"
+    if quality not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED", "UNKNOWN"):
+        return "UNKNOWN"
+    return quality
+
+
+def _expected_export_contracts():
+    import export_contracts
+    return {name for name, _builder in export_contracts.BUILDERS}
+
+
+def _export_contract_status(data):
+    """Validate export process state without treating data quality as execution state."""
+    if not isinstance(data, dict):
+        return "FAILED", "export meta 不是 JSON object"
+    report = str(data.get("report") or "").upper()
+    contracts = data.get("contracts")
+    if report not in ("COMPLETE", "PARTIAL"):
+        return "FAILED", f"export report 非法或缺失: {report or '缺失'}"
+    if not isinstance(contracts, dict) or not contracts:
+        return "FAILED", "export contracts 为空或结构非法"
+
+    expected_names = _expected_export_contracts()
+    actual_names = set(contracts)
+    if actual_names != expected_names:
+        missing = sorted(expected_names - actual_names)
+        extra = sorted(actual_names - expected_names)
+        return "FAILED", f"export 契约集合不一致: missing={missing}, extra={extra}"
+    count = data.get("business_contract_count")
+    if not isinstance(count, int) or isinstance(count, bool) or count != len(contracts):
+        return "FAILED", f"business_contract_count={count!r} ≠ {len(contracts)}"
+
+    pipeline = {}
+    for name, item in contracts.items():
+        if not isinstance(item, dict):
+            return "FAILED", f"export contract {name} 结构非法"
+        status = str(item.get("pipeline_status") or "").upper()
+        if status not in ("OK", "STALE_INPUT", "DATA_BLOCKED"):
+            return "FAILED", f"export contract {name} pipeline_status 非法: {status or '缺失'}"
+        alias = str(item.get("status") or "").upper()
+        if alias != status:
+            return "FAILED", f"export contract {name} status={alias or '缺失'} ≠ pipeline_status={status}"
+        pipeline[name] = status
+
+    expected = "COMPLETE" if all(status == "OK" for status in pipeline.values()) else "PARTIAL"
+    if report != expected:
+        return "FAILED", f"export report={report} 与逐契约 pipeline_status 推导值 {expected} 不一致"
+    if report != "COMPLETE":
+        bad = [name for name, status in pipeline.items() if status != "OK"]
+        return "PARTIAL", f"export 流水线非完整: {bad[:3]}"
+    return "OK", ""
+
+
 def _artifact_status_scan(step, data):
     """个别产物的内部状态字段(仅对语义明确的两个,避免把逐票 DATA_BLOCKED
     的诚实条目误判成整步失败 —— 误报的下场是闸门被人关掉)。"""
@@ -177,9 +233,7 @@ def _artifact_status_scan(step, data):
             return "FAILED", f"研究数据契约状态非法: {quality}"
         return "OK", ""
     if step == "export_contracts":
-        txt = json.dumps(data, ensure_ascii=False)
-        if "STALE_INPUT" in txt or '"PARTIAL"' in txt:
-            return "PARTIAL", "契约含 STALE_INPUT/PARTIAL 标记"
+        return _export_contract_status(data)
     if step == "court_10d":
         status = str(data.get("status") or "").upper()
         if status in ("DATA_BLOCKED", "BLOCKED"):
@@ -911,7 +965,7 @@ def _collect_data_quality(base=None):
         return {"data_quality": "UNKNOWN", "degraded_sources": [],
                 "business_contract_count": None}
     return {
-        "data_quality": meta.get("data_quality", "UNKNOWN"),
+        "data_quality": _normalize_data_quality(meta.get("data_quality")),
         "degraded_sources": list(meta.get("degraded_sources") or []),
         "business_contract_count": meta.get("business_contract_count"),
     }
@@ -919,8 +973,8 @@ def _collect_data_quality(base=None):
 
 def _merge_data_quality(contract_quality, research_quality):
     order = {"COMPLETE": 0, "PARTIAL": 1, "DATA_BLOCKED": 2, "UNKNOWN": 3}
-    left = str(contract_quality or "UNKNOWN").upper()
-    right = str(research_quality or "UNKNOWN").upper()
+    left = _normalize_data_quality(contract_quality)
+    right = _normalize_data_quality(research_quality)
     return left if order.get(left, 3) >= order.get(right, 3) else right
 
 

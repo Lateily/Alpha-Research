@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alpha-research.local/schemas/macro/macro_event.v1.json",
+  "title": "AR Macro Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "PUBLISHED"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "published_at": {"type": "string", "format": "date-time"},
+          "actual": {"type": "number"},
+          "actual_source_id": {"type": "string", "minLength": 1}
+        }
+      },
+      "else": {
+        "properties": {
+          "published_at": {"const": null},
+          "actual": {"const": null},
+          "actual_source_id": {"const": null},
+          "surprises": {"type": "object", "maxProperties": 0}
+        }
+      }
+    }
+  ],
+  "required": ["schema", "schema_version", "event_id", "event_type", "tier", "region", "scheduled_at", "published_at", "status", "actual", "actual_source_id", "unit", "previous", "previous_revised", "market_consensus", "house_expectations", "surprises", "source_refs", "formula_version", "run_id", "generated_at"],
+  "properties": {
+    "schema": {"const": "ar.macro.event"},
+    "schema_version": {"const": "1.0"},
+    "event_id": {"type": "string", "minLength": 1},
+    "event_type": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+    "tier": {"enum": [1, 2, 3]},
+    "region": {"enum": ["GLOBAL_US", "CHINA"]},
+    "scheduled_at": {"type": "string", "format": "date-time"},
+    "published_at": {"type": ["string", "null"], "format": "date-time"},
+    "status": {"enum": ["SCHEDULED", "WAITING_FOR_OFFICIAL", "PUBLISHED", "DATA_CONFLICT", "DATA_BLOCKED"]},
+    "actual": {"type": ["number", "null"]},
+    "actual_source_id": {"type": ["string", "null"]},
+    "unit": {"type": "string", "minLength": 1},
+    "previous": {"type": ["number", "null"]},
+    "previous_revised": {"type": ["number", "null"]},
+    "market_consensus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "value", "source_values"],
+      "properties": {
+        "status": {"enum": ["OK", "DATA_CONFLICT", "DATA_BLOCKED"]},
+        "value": {"type": ["number", "null"]},
+        "tolerance": {"type": ["number", "null"], "minimum": 0},
+        "tolerance_version": {"type": ["string", "null"]},
+        "source_values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source_id", "value", "snapshot_hash", "as_of", "fetched_at"],
+            "properties": {
+              "source_id": {"type": "string"},
+              "value": {"type": "number"},
+              "snapshot_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "as_of": {"type": "string", "format": "date-time"},
+              "fetched_at": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      }
+    },
+    "house_expectations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expectation_id", "event_id", "snapshot_type", "status", "expectation_hash", "approval_ref", "approval_commit_sha"],
+        "properties": {
+          "expectation_id": {"type": "string", "minLength": 1},
+          "event_id": {"type": "string", "minLength": 1},
+          "snapshot_type": {"enum": ["T_MINUS_24H", "T_MINUS_60M"]},
+          "status": {"const": "APPROVED"},
+          "expectation_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "approval_ref": {"type": "string", "pattern": "^https://github\\.com/Lateily/Alpha-Research/pull/[0-9]+#pullrequestreview-[0-9]+$"},
+          "approval_commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+        }
+      }
+    },
+    "surprises": {"type": "object"},
+    "source_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "locator", "snapshot_hash", "as_of", "fetched_at"],
+        "properties": {
+          "source_id": {"type": "string"},
+          "locator": {"type": "string"},
+          "snapshot_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "as_of": {"type": "string", "format": "date-time"},
+          "fetched_at": {"type": "string", "format": "date-time"}
+        }
+      }
+    },
+    "formula_version": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"}
+  }
+}

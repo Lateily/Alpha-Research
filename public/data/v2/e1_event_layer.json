@@ -3,15 +3,15 @@
   "schema_version": "1.0",
   "rule_version": "R036_E1_RULES_V1",
   "status": "PARTIAL",
-  "as_of": "20260805",
-  "generated_at": "2026-08-05T09:52:28+00:00",
+  "as_of": "20260806",
+  "generated_at": "2026-08-06T08:37:05+00:00",
   "registry_ref": {
     "schema_version": "1.0",
-    "as_of": "20260805",
+    "as_of": "20260806",
     "status": "PARTIAL",
-    "registry_hash": "3db0aa29bbbba29aee5df60c2e57f2cdb320212c96adfa779cc04361caa2768b",
-    "eligible_universe_hash": "63852f8d817876c7c2f44694c95743a77fac012c81754307f64b2abad99ba749",
-    "eligible_count": 5537,
+    "registry_hash": "5f93f1eedd422d38366bca5633ee31d3f2c7bcba5824c53526440e58d4245eb8",
+    "eligible_universe_hash": "5107b97ee9dfd418e67ae1f0f84927453ed90be5e6bb16abaf499bb351061b56",
+    "eligible_count": 5538,
     "accepted_partial_dimensions": [
       "liquidity"
     ]
@@ -34,7 +34,7 @@
         "endpoint": "forecast_vip",
         "period": "20260630",
         "status": "OK",
-        "rows": 1914
+        "rows": 1918
       },
       {
         "endpoint": "forecast_vip",
@@ -82,19 +82,19 @@
         "endpoint": "income_vip",
         "period": "20260630",
         "status": "OK",
-        "rows": 156
+        "rows": 177
       },
       {
         "endpoint": "income_vip",
         "period": "20260331",
         "status": "OK",
-        "rows": 7532
+        "rows": 7538
       },
       {
         "endpoint": "income_vip",
         "period": "20251231",
         "status": "OK",
-        "rows": 7051
+        "rows": 7055
       },
       {
         "endpoint": "income_vip",
@@ -127,27 +127,31 @@
     "income_rule": "latest standalone attributable profit < 0 and below previous quarter",
     "no_red_flag_semantics": "absence of a locked red flag, not research approval or a selection signal",
     "row_evidence_semantics": "rows retain detailed evidence only for triggered red flags; coverage states and latest_e1_date prove which non-triggering dimensions were evaluated",
+    "source_documentation": {
+      "forecast": "https://tushare.pro/document/2?doc_id=45",
+      "express": "https://tushare.pro/document/2?doc_id=46"
+    },
     "evidence_grade": "E1",
     "rows_hash_algorithm": "sha256(canonical_json(rows))/v1"
   },
   "coverage": {
-    "registry_eligible": 5537,
-    "rows": 5537,
+    "registry_eligible": 5538,
+    "rows": 5538,
     "red_flag": 1319,
-    "no_red_flag_found": 4203,
-    "data_blocked": 15,
-    "forecast_latest_rows": 3491,
-    "forecast_active_rows": 1777,
+    "no_red_flag_found": 4205,
+    "data_blocked": 14,
+    "forecast_latest_rows": 3492,
+    "forecast_active_rows": 1778,
     "forecast_superseded_rows": 1714,
     "express_latest_rows": 1171,
-    "express_active_rows": 50,
-    "express_superseded_rows": 1120,
-    "income_tickers": 5537,
+    "express_active_rows": 49,
+    "express_superseded_rows": 1121,
+    "income_tickers": 5538,
     "formal_announcements": "DATA_BLOCKED",
-    "source_row_occurrences_outside_u0": 1586,
-    "source_tickers_outside_u0": 739
+    "source_row_occurrences_outside_u0": 1602,
+    "source_tickers_outside_u0": 744
   },
-  "rows_hash": "e9c33a6b05b1ce56d377523ef4540a733432686f9ee304c273c942fb8d0b7154",
+  "rows_hash": "609992340dcf5cf19432fc5219c5b3f3e6dd6b39b9863b39cf39740257dd4658",
   "rows": [
     {
       "ts_code": "000001.SZ",
@@ -38609,11 +38613,11 @@
       "industry_key": "石油开采",
       "verdict": "NO_RED_FLAG_FOUND",
       "reason_codes": [],
-      "latest_e1_date": "20260424",
+      "latest_e1_date": "20260806",
       "evidence_coverage": {
         "forecast": "SUPERSEDED",
         "express": "EMPTY_VALID",
-        "filed_quarters": 2,
+        "filed_quarters": 3,
         "income": "COMPLETE",
         "formal_announcements": "DATA_BLOCKED"
       },
@@ -40192,11 +40196,11 @@
       "industry_key": "陶瓷",
       "verdict": "NO_RED_FLAG_FOUND",
       "reason_codes": [],
-      "latest_e1_date": "20260428",
+      "latest_e1_date": "20260806",
       "evidence_coverage": {
         "forecast": "EMPTY_VALID",
         "express": "EMPTY_VALID",
-        "filed_quarters": 2,
+        "filed_quarters": 3,
         "income": "COMPLETE",
         "formal_announcements": "DATA_BLOCKED"
       },
@@ -57809,11 +57813,11 @@
       "industry_key": "元器件",
       "verdict": "NO_RED_FLAG_FOUND",
       "reason_codes": [],
-      "latest_e1_date": "20260422",
+      "latest_e1_date": "20260806",
       "evidence_coverage": {
         "forecast": "EMPTY_VALID",
         "express": "EMPTY_VALID",
-        "filed_quarters": 2,
+        "filed_quarters": 3,
         "income": "COMPLETE",
         "formal_announcements": "DATA_BLOCKED"
       },
@@ -61096,7 +61100,7 @@
     },
     {
       "ts_code": "301677.SZ",
-      "name": "C欣兴工具",
+      "name": "欣兴工具",
       "industry_key": "机械基件",
       "verdict": "DATA_BLOCKED",
       "reason_codes": [
@@ -73641,11 +73645,11 @@
       "industry_key": "化工原料",
       "verdict": "NO_RED_FLAG_FOUND",
       "reason_codes": [],
-      "latest_e1_date": "20260709",
+      "latest_e1_date": "20260806",
       "evidence_coverage": {
-        "forecast": "PRESENT",
+        "forecast": "SUPERSEDED",
         "express": "EMPTY_VALID",
-        "filed_quarters": 2,
+        "filed_quarters": 3,
         "income": "COMPLETE",
         "formal_announcements": "DATA_BLOCKED"
       },
@@ -90191,6 +90195,22 @@
       "evidence": []
     },
     {
+      "ts_code": "603468.SH",
+      "name": "N津富",
+      "industry_key": "摩托车",
+      "verdict": "NO_RED_FLAG_FOUND",
+      "reason_codes": [],
+      "latest_e1_date": "20260805",
+      "evidence_coverage": {
+        "forecast": "SUPERSEDED",
+        "express": "EMPTY_VALID",
+        "filed_quarters": 2,
+        "income": "COMPLETE",
+        "formal_announcements": "DATA_BLOCKED"
+      },
+      "evidence": []
+    },
+    {
       "ts_code": "603477.SH",
       "name": "巨星农牧",
       "industry_key": "农业综合",
@@ -100909,16 +100929,14 @@
       "ts_code": "688121.SH",
       "name": "*ST卓然",
       "industry_key": "专用机械",
-      "verdict": "DATA_BLOCKED",
-      "reason_codes": [
-        "INSUFFICIENT_FILED_QUARTER_HISTORY"
-      ],
-      "latest_e1_date": "20260228",
+      "verdict": "NO_RED_FLAG_FOUND",
+      "reason_codes": [],
+      "latest_e1_date": "20260806",
       "evidence_coverage": {
         "forecast": "EMPTY_VALID",
-        "express": "PRESENT",
-        "filed_quarters": 0,
-        "income": "DATA_BLOCKED",
+        "express": "SUPERSEDED",
+        "filed_quarters": 2,
+        "income": "COMPLETE",
         "formal_announcements": "DATA_BLOCKED"
       },
       "evidence": []
@@ -104461,9 +104479,9 @@
       "industry_key": "生物制药",
       "verdict": "NO_RED_FLAG_FOUND",
       "reason_codes": [],
-      "latest_e1_date": "20260429",
+      "latest_e1_date": "20260806",
       "evidence_coverage": {
-        "forecast": "SUPERSEDED",
+        "forecast": "PRESENT",
         "express": "SUPERSEDED",
         "filed_quarters": 2,
         "income": "COMPLETE",
@@ -109916,9 +109934,9 @@
       "industry_key": "化工原料",
       "verdict": "NO_RED_FLAG_FOUND",
       "reason_codes": [],
-      "latest_e1_date": "20260422",
+      "latest_e1_date": "20260806",
       "evidence_coverage": {
-        "forecast": "SUPERSEDED",
+        "forecast": "PRESENT",
         "express": "SUPERSEDED",
         "filed_quarters": 2,
         "income": "COMPLETE",
@@ -111258,11 +111276,11 @@
     },
     {
       "ts_code": "920038.BJ",
-      "name": "N森合",
+      "name": "森合高科",
       "industry_key": "化工原料",
       "verdict": "NO_RED_FLAG_FOUND",
       "reason_codes": [],
-      "latest_e1_date": "20260514",
+      "latest_e1_date": "20260525",
       "evidence_coverage": {
         "forecast": "EMPTY_VALID",
         "express": "EMPTY_VALID",

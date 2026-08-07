@@ -19,3 +19,9 @@ disclaimer` 八个外层字段。status ∈ {OK, STALE_INPUT, DATA_BLOCKED}:上�
 
 生产者:experiments/execution_tracker/export_contracts.py(夜链末步)。
 状态为草案 v0,字段规格的最终解释权 = Junyan(章程接口:研究契约)。
+
+## Macro OS 契约
+
+宏观契约采用独立的 M0-A 规格层,入口见 [`docs/contracts/macro/README.md`](macro/README.md)。
+当前只冻结数据源、事件分级、内部预判和宏观事件四类 schema;尚未写入
+`public/data/v2/`,前端不得把规格文件误当成在线数据。

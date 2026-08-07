@@ -4,6 +4,7 @@ on:
     paths:
       - "experiments/**/*.py"
       - "experiments/execution_tracker/**/*.json"
+      - "experiments/macro_os/**/*.json"
       # R-015 账本是 .jsonl —— 不加这条,"只改账本数据"的 PR 根本不触发本工作流,
       # 而那正是第③层唯一要把关的 diff 形态(实测:.jsonl 不匹配 *.json)
       - "experiments/execution_tracker/event_ledger.jsonl*"
@@ -11,6 +12,7 @@ on:
       - "tests/**"
       - "public/data/v2/**"
       - "docs/research/macro/**"
+      - "docs/contracts/macro/**"
       - "api/**"
       - ".github/workflows/python-ci.yml"
   # 直推 main 也必须过闸 —— 0712 的 git-reset-hard 正是这个形态,
@@ -87,6 +89,11 @@ jobs:
         run: python3 experiments/research_funnel/feature_store.py --selftest
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
+      # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
+      - name: Macro OS M0-A contract selftest
+        run: python3 experiments/macro_os/contracts.py --selftest
+      - name: Macro OS M0-A adversarial contract regression
+        run: python3 tests/test_macro_contracts_offline.py
       # 既有缺口(#215 复核发现):本文件逐个点名执行测试,无发现机制,
       # 故新增测试若不在此登记就永远不跑。以下两条此前从未在 CI 运行过。
       - name: PIT no-look-ahead regression

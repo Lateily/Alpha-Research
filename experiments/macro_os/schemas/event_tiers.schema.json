@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alpha-research.local/schemas/macro/event_tiers.v1.json",
+  "title": "AR Macro Event Tiers v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "policy_version", "effective_from", "status", "tolerance_policy_version", "tier_1_policy", "tier_1", "tier_2_policy", "tier_2", "tier_3_policy", "registry_hash"],
+  "properties": {
+    "schema": {"const": "ar.macro.event_tiers"},
+    "schema_version": {"const": "1.0"},
+    "policy_version": {"type": "string", "minLength": 1},
+    "effective_from": {"type": "string", "pattern": "^[0-9]{8}$"},
+    "status": {"const": "APPROVED_SPEC"},
+    "tolerance_policy_version": {"type": "string", "minLength": 1},
+    "tier_1_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["market_consensus_required", "house_expectation_required", "expectation_snapshots", "event_evaluation_horizons", "regime_evaluation_horizons"],
+      "properties": {
+        "market_consensus_required": {"const": true},
+        "house_expectation_required": {"const": true},
+        "expectation_snapshots": {"const": ["T_MINUS_24H", "T_MINUS_60M"]},
+        "event_evaluation_horizons": {"const": ["M30", "CLOSE", "T1", "T5"]},
+        "regime_evaluation_horizons": {"const": ["T20", "T60"]}
+      }
+    },
+    "tier_1": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_type", "region", "name_zh", "actual_source_ids", "actual_series", "tolerance_status", "consensus_tolerance"],
+        "properties": {
+          "event_type": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+          "region": {"enum": ["GLOBAL_US", "CHINA"]},
+          "name_zh": {"type": "string", "minLength": 1},
+          "actual_source_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "actual_series": {"type": "string", "minLength": 1},
+          "tolerance_status": {"enum": ["CALIBRATING", "ACTIVE"]},
+          "consensus_tolerance": {"type": ["number", "null"], "minimum": 0}
+        }
+      }
+    },
+    "tier_2": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/event_row"}
+    },
+    "tier_2_policy": {"$ref": "#/$defs/lower_tier"},
+    "tier_3_policy": {"$ref": "#/$defs/lower_tier"},
+    "registry_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "event_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_type", "region", "name_zh", "actual_source_ids", "actual_series", "tolerance_status", "consensus_tolerance"],
+      "properties": {
+        "event_type": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "region": {"enum": ["GLOBAL_US", "CHINA"]},
+        "name_zh": {"type": "string", "minLength": 1},
+        "actual_source_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "actual_series": {"type": "string", "minLength": 1},
+        "tolerance_status": {"enum": ["CALIBRATING", "ACTIVE"]},
+        "consensus_tolerance": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "lower_tier": {
+      "type": "object",
+      "required": ["market_consensus_required", "house_expectation_required", "usage"],
+      "properties": {
+        "market_consensus_required": {"type": "boolean"},
+        "house_expectation_required": {"type": "boolean"},
+        "usage": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

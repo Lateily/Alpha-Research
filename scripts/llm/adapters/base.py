@@ -114,6 +114,24 @@ class Usage:
         }
 
 
+class AdapterExecutionError(Exception):
+    """Structured provider failure with explicit retry and usage semantics."""
+
+    def __init__(
+        self,
+        *,
+        code: str,
+        message: str,
+        retryable: bool,
+        usage: Usage | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.safe_message = message
+        self.retryable = retryable
+        self.usage = usage or Usage.cost_unknown()
+
+
 @dataclass(frozen=True)
 class AgentError:
     code: str
@@ -244,6 +262,18 @@ def run_adapter(
             finished_at=now().astimezone(timezone.utc).isoformat(),
             duration_ms=_duration_ms(started, timer()),
             error=AgentError("TIMEOUT", "agent execution timed out", retryable=True),
+        )
+    except AdapterExecutionError as exc:
+        return _result(
+            adapter,
+            request,
+            run_id=run_id,
+            status=AgentStatus.FAILED,
+            started_at=started_at,
+            finished_at=now().astimezone(timezone.utc).isoformat(),
+            duration_ms=_duration_ms(started, timer()),
+            usage=exc.usage,
+            error=AgentError(exc.code, exc.safe_message, retryable=exc.retryable),
         )
     except Exception as exc:  # provider failures are data, not harness crashes
         return _result(

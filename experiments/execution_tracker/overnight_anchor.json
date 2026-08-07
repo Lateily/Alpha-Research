@@ -1,5 +1,5 @@
 {
- "as_of": "20260722 09:13",
+ "as_of": "20260806 09:00",
  "layer": "overnight_anchor_v0",
  "anchors": [
   {
@@ -30,20 +30,50 @@
    "key": "A50",
    "label": "富时中国 A50",
    "group": "CN_BETA",
-   "status": "DATA_BLOCKED",
-   "pct_change": null,
-   "source": null
+   "status": "OK",
+   "pct_change": 0.89,
+   "source": "tushare/index_global/XIN9",
+   "as_of": "20260805",
+   "proxy": false,
+   "proxy_for": null
+  },
+  {
+   "key": "IXIC",
+   "label": "纳斯达克综合",
+   "group": "US_AI",
+   "status": "OK",
+   "pct_change": -0.83,
+   "source": "tushare/index_global/IXIC",
+   "as_of": "20260805",
+   "proxy": false,
+   "proxy_for": null
+  },
+  {
+   "key": "TWII",
+   "label": "台湾加权(SOX 代理)",
+   "group": "US_SEMI_PROXY",
+   "status": "OK",
+   "pct_change": 2.88,
+   "source": "tushare/index_global/TWII",
+   "as_of": "20260805",
+   "proxy": true,
+   "proxy_for": "SOX"
   }
  ],
- "bias": "DATA_BLOCKED",
- "why": "less than 3 anchors available",
+ "bias": "INSUFFICIENT_ANCHORS",
+ "why": "only 2 non-proxy anchors available (need 3 for a direction read)",
  "data_blocked": [
   "NVDA: no pct_change in overnight anchor feed",
   "SOX: no pct_change in overnight anchor feed",
-  "TSM: no pct_change in overnight anchor feed",
-  "A50: no pct_change in overnight anchor feed"
+  "TSM: no pct_change in overnight anchor feed"
  ],
+ "stale_manual_ignored": [],
+ "internal_status": "PARTIAL_OK",
+ "fetched_count": 2,
+ "proxy_count": 1,
  "claim_allowed": false,
  "policy": "盘前第一行;只改变科技 beta 背景读数,不直接生成交易动作。",
- "note": "不是买卖指令；研究信号，human executes。"
+ "note": "不是买卖指令；研究信号，human executes。",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "target_trade_date": "20260806"
 }
