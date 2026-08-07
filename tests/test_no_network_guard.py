@@ -55,6 +55,8 @@ from experiments.macro_os import contracts as macro_contracts  # noqa: E402
 from experiments.macro_os import collectors as macro_collectors  # noqa: E402
 from experiments.macro_os import m0b2 as macro_m0b2  # noqa: E402,F401
 from experiments.macro_os import storage as macro_storage  # noqa: E402,F401
+from experiments.macro_os import m0b3 as macro_m0b3  # noqa: E402,F401
+from experiments.macro_os import expectation_registry as macro_expectations  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
 import test_engines_offline as teo        # noqa: E402
@@ -83,6 +85,11 @@ macro_m0b2_suite = unittest.defaultTestLoader.loadTestsFromTestCase(
 )
 macro_m0b2_result = unittest.TextTestRunner(verbosity=0).run(macro_m0b2_suite)
 assert macro_m0b2_result.wasSuccessful(), "Macro M0-B2 suite failed under socket guard"
+import test_macro_m0b3_offline as macro_m0b3_tests  # noqa: E402
+macro_m0b3_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(macro_m0b3_tests.MacroM0B3Tests)
+)
+assert macro_m0b3_result.wasSuccessful(), "Macro M0-B3 suite failed under socket guard"
 try:
     macro_collectors.UrllibTransport().fetch(
         macro_collectors._cboe_builder(

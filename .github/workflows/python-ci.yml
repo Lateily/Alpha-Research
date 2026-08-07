@@ -100,6 +100,9 @@ jobs:
       # ── Macro OS M0-B2:其余官方适配器 + 日历快照 + 双源共识门 ──
       - name: Macro OS M0-B2 official-release and consensus regression (offline)
         run: python3 tests/test_macro_m0b2_offline.py
+      # ── Macro OS M0-B3:官方 URL 发现 + 自适应调度 + 预期登记 WAL ──
+      - name: Macro OS M0-B3 discovery and scheduler regression (offline)
+        run: python3 tests/test_macro_m0b3_offline.py
       # 既有缺口(#215 复核发现):本文件逐个点名执行测试,无发现机制,
       # 故新增测试若不在此登记就永远不跑。以下两条此前从未在 CI 运行过。
       - name: PIT no-look-ahead regression

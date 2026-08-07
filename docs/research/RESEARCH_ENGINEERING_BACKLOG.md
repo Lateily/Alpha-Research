@@ -59,7 +59,7 @@
 | R-002 | 自动 preflight 与晋级前质检硬闸 | `DONE` | Claude | **PR #205 已合并**(#180 因 squash 堆叠失效后重建):正式路径自动 preflight,晋级器消费红旗/电池/freshness,离线回归测试 | **验收通过 2026-08-03**:①坏账本注入 ⇒ 0 引擎启动、报警旗落盘、report=INCOMPLETE、steps=0 ②四类拒绝全部有回归断言,且已用「短路 qc_decide」反证四条同时 ✗(13/13 恢复)③真实夜跑 nightly_v2 report=COMPLETE 15/15 步 OK |
 | R-003 | 永久在线证券注册表与全市场多通道扫描 | `APPROVED` | Junyan+Claude | 当前 `momentum_prefilter.py` 扫约 5500 只,但候选主要由动量 TOP5 注入;红旗和六维电池只覆盖约 14 只动态名单 | 全 A 每只证券每日保留状态、最后扫描时间、进入/未进入原因;六类通道使用批量数据并集;扫描失败不能沿用旧结果冒充新结果 |
 | R-004 | 判分样本独立性与方向分列 | `APPROVED` | Junyan+Claude | 主 scorecard 以 signal_id 去重并混合 constructive/cautious;尚无 `cluster_id`;现有 `claim_allowed` 不能证明 30 个独立簇 | schema 增 `cluster_id` 与主期限;存量回溯;正式 scorecard 永久分方向;门槛按独立簇计算;修复前撤销合并口径的 claim_allowed |
-| R-005 | Macro OS 与 MRG 完整闭环 | `APPROVED` | Junyan+Macro Agent | PR #179 有 MRG 规格;PR #181 有第一版 Tushare 宏观原料,尚无完整引擎、全局契约、组合/行业消费者和判分 | 数据抓取→事件标准化→宏观状态→MRG→行业敏感度→组合暴露→消费者→T+1/T+5/T+20 判分全链影子运行 |
+| R-005 | Macro OS 与 MRG 完整闭环 | `IN_PROGRESS` | Junyan+Macro Agent | M0-A/M0-B2 已有规格、历史仓与官方适配器;M0-B3 已交付 URL 发现、自适应调度、延迟监控、系统时钟预期登记与 launchd 模板但尚未部署;中国失业率缺 M0-A 事件合同;M1 状态/MRG/行业与组合消费者未建 | 数据抓取→事件标准化→宏观状态→MRG→行业敏感度→组合暴露→消费者→T+1/T+5/T+20 判分全链影子运行 |
 | R-006 | Tushare 数据健康、语义与新闻链修复 | `IN_PROGRESS` | Claude | **PR #206 已合并**(#181 因 squash 堆叠失效后重建):29 端点健康表、issuer_guidance 改名、四个参数修复、宏观抓取、major_news 边界 | **部分达成 2026-08-03(Junyan 驳回 DONE)**:已验 = `data_source_health.py` 步刻意不带 continue-on-error,五个关键源(daily/daily_basic/moneyflow_dc/moneyflow_ind_dc/moneyflow_mkt_dc)任一非 OK 即 exit 1 ⇒ 整个工作流失败 · AR_OFFLINE 离线守卫在位 · 无权限源保持 DATA_BLOCKED 不伪装为 0 · issuer_guidance 改名已覆盖 4 个消费方。**残留 = 验收第四条「旧目录完成迁移后再删除」根本未验** —— 我只验了健康表与硬失败两条就标了 DONE。需逐项确认:旧路径消费方是否已全部切到新契约 · 迁移是否完成 · 旧目录能否安全删除;在此之前不得标 DONE |
 
 ## 4. P1:研究发现与证据质量

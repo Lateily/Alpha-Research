@@ -1,6 +1,6 @@
 # Macro OS M0-B 数据可信层
 
-> 状态:`M0-B2 DELIVERED_UNWIRED / CALIBRATING`。代码和离线验收已具备;尚未接入夜链、盘前帧或生产调度,也没有直接阻断权。
+> 状态:`M0-B3 DELIVERED_UNWIRED / CALIBRATING`。代码、离线验收和 launchd 模板已具备;模板尚未安装,盘前帧和消费者尚未接线,也没有直接阻断权。
 
 ## 1. 本批解决的问题
 
@@ -52,7 +52,7 @@ M0-B2 新增 Census 稳定 API 适配器,以及国家统计局、人民银行和
 | 人民银行 | LPR、M2、社融、新增贷款 | 调度方传入本期官方 HTTPS 发布页 | 非 PBOC host 拒绝;页面结构不匹配即 `DATA_INVALID` |
 | ISM | 制造业/服务业 PMI | 官方发布页 | 未提供 `ISM_CONTENT_PERMISSION_CONFIRMED=1` 时发网前阻断;不擅自存储受限原文 |
 
-发布页适配器只接受来源机构 HTTPS host,从页面正文提取时期和值,再复用同一 SQLite 原始快照、来源身份和版本链。URL 发现尚未实现,因此这一批仍是 `DELIVERED_UNWIRED`,不能描述成后台自动监控已经上线。
+发布页适配器只接受来源机构 HTTPS host,从页面正文提取时期和值,再复用同一 SQLite 原始快照、来源身份和版本链。M0-B3 已实现 URL 发现,但 launchd 尚未安装,因此仍是 `DELIVERED_UNWIRED`,不能描述成后台自动监控已经上线。
 
 注册表中的 `AVAILABLE_EXISTING` 只表示该来源已有可调用并通过离线验收的适配器;它不表示调度、密钥、内容许可或生产发布已经就绪。生产可用性仍以抓取结果、健康表和接线状态共同判定。
 
@@ -109,6 +109,7 @@ python3 experiments/macro_os/collectors.py \
 ```bash
 AR_OFFLINE=1 python3 tests/test_macro_m0b_offline.py
 AR_OFFLINE=1 python3 tests/test_macro_m0b2_offline.py
+AR_OFFLINE=1 python3 tests/test_macro_m0b3_offline.py
 ```
 
 M0-B2 发布页采集示例(由 M0-B3 调度器生成本期 URL;这里不把历史 URL硬编码成“最新”):
@@ -126,6 +127,18 @@ python3 experiments/macro_os/official_releases.py --request nbs_cpi
 
 2026-08-07 真实页面解析冒烟:国家统计局 2026 年 6 月 CPI 官方页解析为同比 `+1.0%`;人民银行 2025 年 3 月 LPR 官方页解析为 1 年期 `3.1%`、5 年期以上 `3.6%`,观测月份均与页面标题一致。冒烟文件只在临时目录,未写入生产宏观库。
 
+### M0-B3 调度与发现
+
+`m0b3.py` 读取 M0-B2 的、已绑定 SQLite 官方快照的 release calendar。距事件大于 24 小时时每 6 小时检查;进入 24 小时后每 15 分钟;进入 1 小时后每 5 分钟;官方发布时间附近每分钟检查。launchd 模板每 5 分钟唤醒一次,程序依据 `next_check_at` 跳过未到期轮次,所以不等于每 5 分钟发一次网络请求。
+
+官方索引页只当不可信文本解析。链接必须命中冻结标题模式与 HTTPS host allowlist。第一次抓取只建立历史基线,不会把索引上的旧报告重放成新发布;此后只有一个新链接时才交给 M0-B2 适配器,零个为 `NO_NEW_RELEASE`,多个为 `AMBIGUOUS` 并阻断自动采集。历史“已见链接”从 append-only SQLite 原始快照重新推导,不信可编辑的上一轮 JSON。
+
+调度状态使用 `UPCOMING / WAITING_OFFICIAL_RELEASE / DELAYED / RELEASED`。动态页面必须存在对应 release request 的成功记录;稳定 API 必须先有发布前基线,再出现更晚观测期,才允许生成 `released_at`。缺基线时是 `DATA_BLOCKED`,不能冒充官方延迟。发现状态与调度状态先各自原子写入,最后发布 `m0b3_run_manifest.json`;消费者必须核对同一 `run_id` 与两个 SHA,否则视为半发布。
+
+预期登记入口为 `expectation_registry.py`:调用方只能提交预测内容,`registered_at` 由系统时钟生成并同步写入独立事件链;调用方提交时间戳或批准字段会被拒。登记时同时验证 M0-B2 日历与 SQLite 官方快照的绑定,并把当时的完整日历快照及其哈希封进 WAL,后续日历滚动不影响历史复验。它只产生 `DRAFT`,不代替 Junyan 的人工批准。
+
+当前诚实缺口:国家统计局失业率解析器已在 M0-B2,但 M0-A 尚无 `CN_UNEMPLOYMENT` 事件合同,因此该请求保持未接线,不参与自动调度。补齐需要版本化修改 M0-A,不能由 B3 私自创造事件。
+
 ## 6. 校准期边界
 
 `source_health.json` 固定携带:
@@ -141,12 +154,12 @@ python3 experiments/macro_os/official_releases.py --request nbs_cpi
 }
 ```
 
-这不是说明文字,而是后续消费者必须检查的机器字段。M0-B 未接夜链,当前还没有消费者可以依据本文件改变晋级、下单或持仓状态。
+这不是说明文字,而是后续消费者必须检查的机器字段。M0-B3 即使部署,也只允许面板标注和风险预算上下文;当前没有消费者可以依据本文件改变晋级、下单或持仓状态。
 
 ## 7. 后续工程
 
-1. M0-B3:官方 URL 发现、自适应调度、重大数据发布延迟监控、append-only 预期登记时间戳与生产接线。
-3. M1-A:在校准规则下生成 GLOBAL/US 与 CHINA 两套 `macro_state` 及 MRG 原料。
-4. M1-B:组合与行业消费者只读状态和 freshness;校准期只改标签和风险预算上下文。
+1. M0-B3 部署验收:合并后安全同步运行目录,安装 launchd,完成真实基线轮与到期轮;验收前不得标生产在线。
+2. M1-A:在校准规则下生成 GLOBAL/US 与 CHINA 两套 `macro_state` 及 MRG 原料。
+3. M1-B:组合与行业消费者只读状态和 freshness;校准期只改标签和风险预算上下文。
 
 不是买卖指令;研究信号,human executes。
