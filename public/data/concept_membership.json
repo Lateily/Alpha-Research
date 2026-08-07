@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-08-06T11:02:11Z",
+  "fetched_at": "2026-08-07T03:55:58Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -1716,6 +1716,16 @@
       ]
     },
     {
+      "ts_code": "883426.TI",
+      "name": "同花顺拟回购指数",
+      "type": "S",
+      "total_count": 115.0,
+      "member_count": 1,
+      "members": [
+        "300054.SZ"
+      ]
+    },
+    {
       "ts_code": "883433.TI",
       "name": "先进制造",
       "type": "S",
@@ -2788,10 +2798,11 @@
       "886110.TI",
       "886111.TI",
       "700302.TI",
-      "700802.TI"
+      "700802.TI",
+      "883426.TI"
     ]
   },
-  "total_concepts": 223,
-  "total_memberships": 383,
+  "total_concepts": 224,
+  "total_memberships": 384,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }
