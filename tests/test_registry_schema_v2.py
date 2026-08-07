@@ -366,6 +366,11 @@ class RegistrySchemaV2Test(unittest.TestCase):
             sp = os.path.join(tmp, "paper_signal_log.json")
             lp = registry.ledger_path_for(sp)
             shutil.copy(ET / "paper_signal_log.json", sp)     # 真实历史行打底
+            # A production projection and its WAL are one fixture. Copying only
+            # the projection makes committed transactions look orphaned as soon
+            # as the repository contains real WAL-backed signals.
+            shutil.copy(ET / "event_ledger.jsonl", lp)
+            shutil.copy(ET / "event_ledger.jsonl.anchor.json", lp + ".anchor.json")
             base_n = len(registry.load_signal_log_strict(sp))
             sigs = [{"signal_id": f"lc{i}", "ticker": f"6000{i:02d}.SH",
                      "setup_type": "execution_gate", "horizon": ["1d", "3d", "5d", "10d"],
