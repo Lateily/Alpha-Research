@@ -16,6 +16,7 @@ from adapters import (  # noqa: E402
     AgentAdapter,
     AgentRequest,
     AgentStatus,
+    DeepSeekAdapter,
     DeterministicAdapter,
     UsageStatus,
     run_adapter,
@@ -190,6 +191,248 @@ def test_adapter_contract_uses_zero_network(monkeypatch=None) -> None:
         socket.socket = original_socket
 
     assert result.status is AgentStatus.SUCCEEDED
+
+
+def test_deepseek_offline_stub_uses_common_envelope() -> None:
+    def offline_completion(payload, timeout_seconds):
+        assert payload["model"] == "deepseek-v4-flash"
+        assert payload["messages"] == [{"role": "user", "content": "summarize this packet"}]
+        assert timeout_seconds == 3
+        return {
+            "choices": [
+                {"message": {"content": "offline DeepSeek packet"}, "finish_reason": "stop"}
+            ],
+            "usage": {
+                "prompt_tokens": 100,
+                "prompt_cache_hit_tokens": 20,
+                "prompt_cache_miss_tokens": 80,
+                "completion_tokens": 10,
+            },
+        }
+
+    offline_completion.offline_stub = True
+
+    result = run(
+        DeepSeekAdapter(completion=offline_completion),
+        request(input_payload={"prompt": "summarize this packet"}),
+    )
+
+    assert result.status is AgentStatus.SUCCEEDED
+    assert result.provider == "deepseek"
+    assert result.model == "deepseek-v4-flash"
+    assert result.output == {
+        "text": "offline DeepSeek packet",
+        "finish_reason": "stop",
+        "provider_mode": "offline_stub",
+        "no_trade_flag": True,
+    }
+    assert result.usage.status is UsageStatus.REPORTED
+    assert result.usage.input_tokens == 100
+    assert result.usage.cached_input_tokens == 20
+    assert result.usage.output_tokens == 10
+    assert result.usage.estimated_cost_cny == "0.000101"
+
+
+def test_deepseek_injected_completion_must_be_declared_offline() -> None:
+    def unsafe_completion(_payload, _timeout_seconds):
+        return {"choices": [{"message": {"content": "should not run"}}]}
+
+    result = run(
+        DeepSeekAdapter(completion=unsafe_completion),
+        request(input_payload={"prompt": "hello"}),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_requires_provider_network_policy() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "real-like response"}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="deny"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_requires_reported_usage() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {"choices": [{"message": {"content": "missing usage"}}]}
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_rejects_empty_usage() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "empty usage"}}],
+            "usage": {},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_usage_rejects_bad_token_values() -> None:
+    bad_usage_payloads = [
+        {"prompt_tokens": -1, "completion_tokens": 1},
+        {"prompt_tokens": True, "completion_tokens": 1},
+        {"prompt_tokens": 1, "completion_tokens": "one"},
+    ]
+
+    for usage in bad_usage_payloads:
+        def real_like_completion(_payload, _timeout_seconds, usage=usage):
+            return {
+                "choices": [{"message": {"content": "bad usage"}}],
+                "usage": usage,
+            }
+
+        result = run(
+            DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+            request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+        )
+
+        assert result.status is AgentStatus.FAILED
+        assert result.error is not None
+        assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_usage_rejects_cache_mismatch() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "cache mismatch"}}],
+            "usage": {
+                "prompt_tokens": 10,
+                "prompt_cache_hit_tokens": 6,
+                "prompt_cache_miss_tokens": 5,
+                "completion_tokens": 1,
+            },
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_rejects_unofficial_origin_before_completion() -> None:
+    called = False
+
+    def real_like_completion(_payload, _timeout_seconds):
+        nonlocal called
+        called = True
+        return {
+            "choices": [{"message": {"content": "should not call"}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(
+            base_url="https://attacker.invalid",
+            completion=real_like_completion,
+            allow_real_call=True,
+        ),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert called is False
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_output_carries_no_trade_flag() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "real-like response"}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.SUCCEEDED
+    assert result.output is not None
+    assert result.output["no_trade_flag"] is True
+
+
+def test_deepseek_real_call_rejects_empty_choices() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_rejects_empty_content() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": ""}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
+
+
+def test_deepseek_real_call_rejects_zero_live_tokens() -> None:
+    def real_like_completion(_payload, _timeout_seconds):
+        return {
+            "choices": [{"message": {"content": "ok"}}],
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0},
+        }
+
+    result = run(
+        DeepSeekAdapter(completion=real_like_completion, allow_real_call=True),
+        request(input_payload={"prompt": "hello"}, network_policy="provider_only"),
+    )
+
+    assert result.status is AgentStatus.FAILED
+    assert result.error is not None
+    assert result.error.code == "PROVIDER_ERROR"
 
 
 def kimi_request(**overrides) -> AgentRequest:

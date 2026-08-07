@@ -11,6 +11,7 @@ from .base import (
     UsageStatus,
     run_adapter,
 )
+from .deepseek import DeepSeekAdapter
 from .deterministic import DeterministicAdapter
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "AgentRequest",
     "AgentResult",
     "AgentStatus",
+    "DeepSeekAdapter",
     "DeterministicAdapter",
     "Usage",
     "UsageStatus",
