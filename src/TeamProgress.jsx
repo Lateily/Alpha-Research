@@ -543,8 +543,8 @@ function ProjectBlueprint() {
       {/* ── header ── */}
       <div style={bpS.head}>
         <div>
-          <h2 style={bpS.headTitle}>项目蓝图 · 实时</h2>
-          <div style={bpS.headHint}>八块进度 · 关键路径 · 在途工作流 — GitHub Issues 每 5 分钟刷新</div>
+          <h2 style={bpS.headTitle}>项目蓝图</h2>
+          <div style={bpS.headHint}>八块进度 = ARCHITECTURE_MAP 周更快照 · 关键路径 + 在途工作流 = GitHub Issues/PR 每 5 分钟实时</div>
         </div>
         <div style={bpS.headRight}>
           {ghAt && <span style={bpS.stamp}>更新 {formatTime(ghAt)}</span>}
