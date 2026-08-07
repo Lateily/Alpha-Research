@@ -774,6 +774,24 @@ def test_capability_router_prefers_deterministic_worker() -> None:
     assert decision.selected_agent == "deterministic"
 
 
+def test_capability_router_deterministic_priority_beats_lower_model_cost() -> None:
+    registry = CapabilityRegistry(
+        [
+            capability("kimi", cost="1"),
+            capability(
+                "deterministic",
+                deterministic=True,
+                cost="5",
+                eval_version=None,
+                eval_score=None,
+            ),
+        ]
+    )
+    decision = route(registry, route_request(budget_max_cny="10"))
+    assert decision.status is RouteStatus.SELECTED
+    assert decision.selected_agent == "deterministic"
+
+
 def test_capability_router_blocks_shadow_only_from_production() -> None:
     registry = CapabilityRegistry(
         [capability("kimi", status=CapabilityStatus.SHADOW_ONLY)]
@@ -790,6 +808,24 @@ def test_capability_router_allows_shadow_only_in_shadow_mode() -> None:
     decision = route(registry, route_request(mode=RouteMode.SHADOW))
     assert decision.status is RouteStatus.SELECTED
     assert decision.selected_agent == "kimi"
+
+
+def test_capability_router_filters_task_type_before_selection() -> None:
+    registry = CapabilityRegistry([capability("translator", task_type="translate")])
+    decision = route(registry, route_request(task_type="summarize"))
+    assert decision.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
+    assert decision.selected_agent is None
+    assert "translator: task_type mismatch" in decision.reasons
+
+
+def test_capability_router_suspended_and_retired_are_kill_switches() -> None:
+    for status in (CapabilityStatus.SUSPENDED, CapabilityStatus.RETIRED):
+        registry = CapabilityRegistry([capability("kimi", status=status)])
+        for mode in (RouteMode.SHADOW, RouteMode.PRODUCTION):
+            decision = route(registry, route_request(mode=mode))
+            assert decision.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
+            assert decision.selected_agent is None
+            assert f"kimi: status={status.value}" in decision.reasons
 
 
 def test_capability_router_enforces_tools_network_scope_and_budget() -> None:
@@ -826,6 +862,51 @@ def test_capability_router_requires_independent_high_risk_reviewer() -> None:
     assert missing.status is RouteStatus.SPEC_BLOCKED
     assert same.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
     assert different.status is RouteStatus.SELECTED
+
+
+def test_capability_router_reviewer_identity_is_case_and_space_insensitive() -> None:
+    registry = CapabilityRegistry([capability("Codex")])
+    decision = route(
+        registry,
+        route_request(risk_level="HIGH", reviewer_agent="  codex  "),
+    )
+    assert decision.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
+
+
+def test_capability_router_prefers_lower_cost_then_stable_name() -> None:
+    lower_cost = route(
+        CapabilityRegistry(
+            [capability("expensive", cost="0.20"), capability("cheap", cost="0.10")]
+        ),
+        route_request(),
+    )
+    stable_tie = route(
+        CapabilityRegistry(
+            [capability("Zulu", cost="0.10"), capability("alpha", cost="0.10")]
+        ),
+        route_request(),
+    )
+    assert lower_cost.selected_agent == "cheap"
+    assert stable_tie.selected_agent == "alpha"
+
+
+def test_route_decision_preserves_requested_mode() -> None:
+    registry = CapabilityRegistry(
+        [capability("kimi", status=CapabilityStatus.SHADOW_ONLY)]
+    )
+    decision = route(registry, route_request(mode=RouteMode.SHADOW))
+    assert decision.mode is RouteMode.SHADOW
+
+
+def test_capability_router_normalizes_file_scopes_before_matching() -> None:
+    registry = CapabilityRegistry(
+        [capability("deterministic", deterministic=True, scopes=("docs//llm/",))]
+    )
+    decision = route(
+        registry,
+        route_request(target_paths=("docs/llm/example.md",)),
+    )
+    assert decision.status is RouteStatus.SELECTED
 
 
 def test_capability_registry_rejects_qualification_leaks_and_duplicates() -> None:

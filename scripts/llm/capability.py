@@ -150,6 +150,7 @@ class RouteRequest:
 @dataclass(frozen=True)
 class RouteDecision:
     status: RouteStatus
+    mode: RouteMode | None
     selected_agent: str | None
     reasons: tuple[str, ...]
 
@@ -166,7 +167,7 @@ class CapabilityRegistry:
             errors.extend(
                 f"record[{index}]: {error}" for error in record.validation_errors()
             )
-            key = (record.agent, record.task_type)
+            key = (_agent_identity(record.agent), record.task_type)
             if key in seen:
                 errors.append(f"duplicate capability: {record.agent}/{record.task_type}")
             seen.add(key)
@@ -181,7 +182,12 @@ class CapabilityRegistry:
 def route(registry: CapabilityRegistry, request: RouteRequest) -> RouteDecision:
     errors = request.validation_errors()
     if errors:
-        return RouteDecision(RouteStatus.SPEC_BLOCKED, None, tuple(errors))
+        return RouteDecision(
+            status=RouteStatus.SPEC_BLOCKED,
+            mode=request.mode if isinstance(request.mode, RouteMode) else None,
+            selected_agent=None,
+            reasons=tuple(errors),
+        )
 
     rejected: list[str] = []
     eligible: list[CapabilityRecord] = []
@@ -194,9 +200,10 @@ def route(registry: CapabilityRegistry, request: RouteRequest) -> RouteDecision:
 
     if not eligible:
         return RouteDecision(
-            RouteStatus.NO_ELIGIBLE_CAPABILITY,
-            None,
-            tuple(rejected) or ("registry has no capabilities",),
+            status=RouteStatus.NO_ELIGIBLE_CAPABILITY,
+            mode=request.mode,
+            selected_agent=None,
+            reasons=tuple(rejected) or ("registry has no capabilities",),
         )
 
     selected = min(
@@ -205,13 +212,16 @@ def route(registry: CapabilityRegistry, request: RouteRequest) -> RouteDecision:
             not item.deterministic,
             item.cost() is None,
             item.cost() or Decimal("0"),
-            item.agent,
+            _agent_identity(item.agent),
         ),
     )
     return RouteDecision(
-        RouteStatus.SELECTED,
-        selected.agent,
-        ("deterministic-first, then known lower cost, then stable agent name",),
+        status=RouteStatus.SELECTED,
+        mode=request.mode,
+        selected_agent=selected.agent,
+        reasons=(
+            "deterministic-first, then known lower cost, then stable agent name",
+        ),
     )
 
 
@@ -234,10 +244,13 @@ def _ineligible_reasons(
         reasons.append("network policy not allowed")
     if not all(_path_allowed(path, capability.file_scope) for path in request.target_paths):
         reasons.append("target path outside file scope")
-    if request.reviewer_agent == capability.agent and request.risk_level in {
+    if (
+        _agent_identity(request.reviewer_agent) == _agent_identity(capability.agent)
+        and request.risk_level in {
         "HIGH",
         "CONSTITUTIONAL",
-    }:
+        }
+    ):
         reasons.append("executor cannot be the independent reviewer")
     if request.budget_max_cny is not None:
         cost = capability.cost()
@@ -252,9 +265,11 @@ def _path_allowed(path: str, scopes: tuple[str, ...]) -> bool:
     normalized = _safe_relative_path(path)
     if normalized is None:
         return False
+    normalized_scopes = tuple(_safe_relative_path(scope) for scope in scopes)
     return any(
-        normalized == scope or normalized.startswith(scope.rstrip("/") + "/")
-        for scope in scopes
+        scope is not None
+        and (normalized == scope or normalized.startswith(scope + "/"))
+        for scope in normalized_scopes
     )
 
 
@@ -278,3 +293,9 @@ def _decimal(value: str) -> Decimal:
 
 def _non_empty(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def _agent_identity(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
+    return value.strip().casefold()
