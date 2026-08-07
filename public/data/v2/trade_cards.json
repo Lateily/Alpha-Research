@@ -1,22 +1,27 @@
 {
  "contract": "trade_cards",
- "schema_version": "v2.1",
- "generated_at": "20260731 16:36:53",
+ "schema_version": "v2.2",
+ "generated_at": "20260806 16:38:27",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "target_trade_date": "20260806",
  "sources": [
   "model_fund/orders.json",
   "model_fund/decision_log.json"
  ],
  "sources_meta": {
   "orders.json": {
-   "age_hours": 113.7,
-   "stale": true
+   "age_hours": 0.0,
+   "cadence": "event_driven"
   },
   "decision_log.json": {
-   "age_hours": 113.7,
-   "stale": true
+   "age_hours": 0.0,
+   "cadence": "event_driven"
   }
  },
- "status": "STALE_INPUT",
+ "status": "OK",
+ "pipeline_status": "OK",
+ "data_quality": "COMPLETE",
+ "degraded_sources": [],
  "blocked_why": null,
  "data": [
   {
@@ -148,15 +153,15 @@
   {
    "ticker": "600276.SH",
    "name": "恒瑞医药",
-   "status": "filled",
+   "status": "closed",
    "fill_date": "20260707",
    "entry": 56.4,
    "qty": 2700,
    "stop": 52.2,
    "target": 62.1,
-   "exit_date": null,
-   "exit_price": null,
-   "realized_r": null,
+   "exit_date": "20260806",
+   "exit_price": 52.2,
+   "realized_r": -1.0,
    "reasoning_trail": [
     {
      "date": "20260706",
@@ -177,6 +182,16 @@
      "ticker": "600276.SH",
      "price": 56.4,
      "shares": 2700,
+     "no_trade_flag": true
+    },
+    {
+     "date": "20260806",
+     "action": "PAPER_EXIT",
+     "ticker": "600276.SH",
+     "price": 52.2,
+     "exit_reason": "stop",
+     "pnl_cny": -11340.0,
+     "realized_R": -1.0,
      "no_trade_flag": true
     }
    ],

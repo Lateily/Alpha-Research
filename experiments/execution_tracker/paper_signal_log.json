@@ -3828,7 +3828,8 @@
     "returns": {
       "1d": -0.0779,
       "3d": -0.1373,
-      "5d": -0.2626
+      "5d": -0.2626,
+      "10d": -0.1881
     },
     "entry_close": 551.77,
     "directional_call": "constructive"
@@ -3864,7 +3865,8 @@
     "returns": {
       "1d": -0.0587,
       "3d": -0.087,
-      "5d": -0.1679
+      "5d": -0.1679,
+      "10d": -0.1965
     },
     "entry_close": 176.98,
     "directional_call": "constructive"
@@ -3900,7 +3902,8 @@
     "returns": {
       "1d": 0.1,
       "3d": 0.0096,
-      "5d": -0.0375
+      "5d": -0.0375,
+      "10d": -0.0481
     },
     "entry_close": 107.58,
     "directional_call": "constructive"
@@ -3936,7 +3939,8 @@
     "returns": {
       "1d": -0.0666,
       "3d": -0.0792,
-      "5d": -0.2011
+      "5d": -0.2011,
+      "10d": -0.1008
     },
     "entry_close": 1136.55,
     "directional_call": "constructive"
@@ -4146,10 +4150,21 @@
     "returns": {
       "1d": -0.0226,
       "3d": -0.035,
-      "5d": -0.1722
+      "5d": -0.1722,
+      "10d": -0.1661
     },
     "entry_close": 508.8,
-    "directional_call": "neutral"
+    "directional_call": "neutral",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "50b4a8b39d45aad8f6f33e7fbc16e7144c1e6f17b887288e4118ceb84f4418f1",
+        "entry_trade_date": "20260722",
+        "source_trade_date": "20260805",
+        "source_close": 424.3,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "2dbdf0291b0c",
@@ -4182,10 +4197,21 @@
     "returns": {
       "1d": -0.0215,
       "3d": -0.0046,
-      "5d": -0.1267
+      "5d": -0.1267,
+      "10d": -0.0915
     },
     "entry_close": 166.6,
-    "directional_call": "cautious"
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "8a831070d08bb7587375567e1879d6f749a147bd924be1d39a07f58eb0da5417",
+        "entry_trade_date": "20260722",
+        "source_trade_date": "20260805",
+        "source_close": 151.35,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "5b89fcebb120",
@@ -4218,10 +4244,21 @@
     "returns": {
       "1d": 0.0198,
       "3d": -0.0277,
-      "5d": -0.1808
+      "5d": -0.1808,
+      "10d": -0.0481
     },
     "entry_close": 118.34,
-    "directional_call": "constructive"
+    "directional_call": "constructive",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "7194405d85b8189903d017c088bb2be48b7447b31f84131f92ee1471ef18c3c5",
+        "entry_trade_date": "20260722",
+        "source_trade_date": "20260805",
+        "source_close": 112.65,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "1b5664968b2c",
@@ -4254,10 +4291,21 @@
     "returns": {
       "1d": 0.011,
       "3d": 0.0152,
-      "5d": -0.1035
+      "5d": -0.1035,
+      "10d": -0.1066
     },
     "entry_close": 1060.8,
-    "directional_call": "neutral"
+    "directional_call": "neutral",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "b7e229386cec59e5600911688635ce0774451aad41ece14cb97928912a2c641c",
+        "entry_trade_date": "20260722",
+        "source_trade_date": "20260805",
+        "source_close": 947.74,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "49f676781b7a",
@@ -4349,10 +4397,21 @@
     "returns": {
       "1d": -0.0428,
       "3d": -0.1818,
-      "5d": -0.2538
+      "5d": -0.2538,
+      "10d": -0.1517
     },
     "entry_close": 497.3,
-    "directional_call": "cautious"
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "53e47a286088cf24d0aca299d59f755a66459817e986122483122bcf520ca8b5",
+        "entry_trade_date": "20260723",
+        "source_trade_date": "20260806",
+        "source_close": 421.87,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "585b575aa381",
@@ -4385,10 +4444,21 @@
     "returns": {
       "1d": -0.0088,
       "3d": -0.0966,
-      "5d": -0.1361
+      "5d": -0.1361,
+      "10d": -0.064
     },
     "entry_close": 163.02,
-    "directional_call": "cautious"
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "a33e6f8855f27d0ecf679524168dc4bc010c72e6bcc9314a80648d760ce345da",
+        "entry_trade_date": "20260723",
+        "source_trade_date": "20260806",
+        "source_close": 152.59,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "4400b67f4ba7",
@@ -4421,10 +4491,21 @@
     "returns": {
       "1d": -0.1,
       "3d": -0.1419,
-      "5d": -0.2768
+      "5d": -0.2768,
+      "10d": 0.0152
     },
     "entry_close": 120.68,
-    "directional_call": "cautious"
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "4b45637bf33ed44ea78b2a0b0890bf17a48f983972894285877baaa53fed8c00",
+        "entry_trade_date": "20260723",
+        "source_trade_date": "20260806",
+        "source_close": 122.52,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "fceb3f499425",
@@ -4457,10 +4538,21 @@
     "returns": {
       "1d": -0.0243,
       "3d": -0.1534,
-      "5d": -0.1944
+      "5d": -0.1944,
+      "10d": -0.1096
     },
     "entry_close": 1072.52,
-    "directional_call": "cautious"
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "f02e0b1a4d847d8387bfb4551533d194460436236a5c0d5ecf8ee80df2e0b687",
+        "entry_trade_date": "20260723",
+        "source_trade_date": "20260806",
+        "source_close": 955.0,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "512508a92916",
@@ -4669,21 +4761,33 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.0049,
+      "3d": 0.0714
+    },
     "entry_close": 396.01,
     "directional_call": "constructive",
-    "_migrations": [
-      {
-        "corrected_at": "20260801 17:43:27",
-        "reason": "审计 BLOCKER(2026-08-01):single_beta 由观察名单(4只 AI/光模块)算出并散播到四层,但真实 filled 持仓是恒瑞医药(化学制药)+牧原股份(农业综合),分属不同行业 ⇒ 非单一 beta。本次为跨层完整回写,消除同一事实的层间矛盾。",
-        "fields": {
-          "sector_single_beta": {
-            "original_value": true,
-            "new_value": false
-          }
-        }
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "67e79de44f8a99d1c8454d18744a0958b2d7734806c2f712a36af51218954889",
+        "entry_trade_date": "20260731",
+        "source_trade_date": "20260805",
+        "source_close": 424.3,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
       }
-    ]
+    },
+    "_migration": {
+      "corrected_at": "20260807 09:25:49",
+      "reason": "0731 跨层迁移补齐(#241 复核 BLOCKER):样本层 20260731.json 已于 0801 将 sector_single_beta 回写为 false(single_beta 由观察名单算出、真实 filled 持仓恒瑞+牧原分属不同行业 ⇒ 非单一 beta),但同日四条信号行漏改,造成同一事实的层间矛盾。本次与样本层 _migrations[0] 同口径同步。",
+      "fields": {
+        "sector_single_beta": {
+          "original_value": true,
+          "new_value": false
+        }
+      },
+      "sync_of": "samples/20260731.json _migrations[0] (corrected_at 20260801 17:43:27)"
+    }
   },
   {
     "signal_id": "9ac30706aa75",
@@ -4713,21 +4817,33 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.0807,
+      "3d": 0.0381
+    },
     "entry_close": 145.79,
     "directional_call": "constructive",
-    "_migrations": [
-      {
-        "corrected_at": "20260801 17:43:27",
-        "reason": "审计 BLOCKER(2026-08-01):single_beta 由观察名单(4只 AI/光模块)算出并散播到四层,但真实 filled 持仓是恒瑞医药(化学制药)+牧原股份(农业综合),分属不同行业 ⇒ 非单一 beta。本次为跨层完整回写,消除同一事实的层间矛盾。",
-        "fields": {
-          "sector_single_beta": {
-            "original_value": true,
-            "new_value": false
-          }
-        }
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "e4ebdcffc19497cd3ed99f10d32804f94c8d7b6d681a7d58e673b8b2c1963906",
+        "entry_trade_date": "20260731",
+        "source_trade_date": "20260805",
+        "source_close": 151.35,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
       }
-    ]
+    },
+    "_migration": {
+      "corrected_at": "20260807 09:25:49",
+      "reason": "0731 跨层迁移补齐(#241 复核 BLOCKER):样本层 20260731.json 已于 0801 将 sector_single_beta 回写为 false(single_beta 由观察名单算出、真实 filled 持仓恒瑞+牧原分属不同行业 ⇒ 非单一 beta),但同日四条信号行漏改,造成同一事实的层间矛盾。本次与样本层 _migrations[0] 同口径同步。",
+      "fields": {
+        "sector_single_beta": {
+          "original_value": true,
+          "new_value": false
+        }
+      },
+      "sync_of": "samples/20260731.json _migrations[0] (corrected_at 20260801 17:43:27)"
+    }
   },
   {
     "signal_id": "256ae5df0592",
@@ -4757,21 +4873,33 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": -0.0303,
+      "3d": 0.1733
+    },
     "entry_close": 96.01,
     "directional_call": "constructive",
-    "_migrations": [
-      {
-        "corrected_at": "20260801 17:43:27",
-        "reason": "审计 BLOCKER(2026-08-01):single_beta 由观察名单(4只 AI/光模块)算出并散播到四层,但真实 filled 持仓是恒瑞医药(化学制药)+牧原股份(农业综合),分属不同行业 ⇒ 非单一 beta。本次为跨层完整回写,消除同一事实的层间矛盾。",
-        "fields": {
-          "sector_single_beta": {
-            "original_value": true,
-            "new_value": false
-          }
-        }
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "21d757c3c34e63d45a01b674034f72e5449bbe1f45200852aa83b05089d1aa4c",
+        "entry_trade_date": "20260731",
+        "source_trade_date": "20260805",
+        "source_close": 112.65,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
       }
-    ]
+    },
+    "_migration": {
+      "corrected_at": "20260807 09:25:49",
+      "reason": "0731 跨层迁移补齐(#241 复核 BLOCKER):样本层 20260731.json 已于 0801 将 sector_single_beta 回写为 false(single_beta 由观察名单算出、真实 filled 持仓恒瑞+牧原分属不同行业 ⇒ 非单一 beta),但同日四条信号行漏改,造成同一事实的层间矛盾。本次与样本层 _migrations[0] 同口径同步。",
+      "fields": {
+        "sector_single_beta": {
+          "original_value": true,
+          "new_value": false
+        }
+      },
+      "sync_of": "samples/20260731.json _migrations[0] (corrected_at 20260801 17:43:27)"
+    }
   },
   {
     "signal_id": "b47895f37969",
@@ -4801,20 +4929,1172 @@
     "no_trade_flag": true,
     "official_sample": true,
     "data_source": "tushare:moneyflow_dc+daily",
-    "returns": {},
+    "returns": {
+      "1d": 0.0005,
+      "3d": 0.0507
+    },
     "entry_close": 902.01,
     "directional_call": "constructive",
-    "_migrations": [
-      {
-        "corrected_at": "20260801 17:43:27",
-        "reason": "审计 BLOCKER(2026-08-01):single_beta 由观察名单(4只 AI/光模块)算出并散播到四层,但真实 filled 持仓是恒瑞医药(化学制药)+牧原股份(农业综合),分属不同行业 ⇒ 非单一 beta。本次为跨层完整回写,消除同一事实的层间矛盾。",
-        "fields": {
-          "sector_single_beta": {
-            "original_value": true,
-            "new_value": false
-          }
-        }
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "bd5e52f8c55cbae2ad35d0977424113dbc9e9b37a687ba4fcd5b0a86e1bd3956",
+        "entry_trade_date": "20260731",
+        "source_trade_date": "20260805",
+        "source_close": 947.74,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
       }
-    ]
+    },
+    "_migration": {
+      "corrected_at": "20260807 09:25:49",
+      "reason": "0731 跨层迁移补齐(#241 复核 BLOCKER):样本层 20260731.json 已于 0801 将 sector_single_beta 回写为 false(single_beta 由观察名单算出、真实 filled 持仓恒瑞+牧原分属不同行业 ⇒ 非单一 beta),但同日四条信号行漏改,造成同一事实的层间矛盾。本次与样本层 _migrations[0] 同口径同步。",
+      "fields": {
+        "sector_single_beta": {
+          "original_value": true,
+          "new_value": false
+        }
+      },
+      "sync_of": "samples/20260731.json _migrations[0] (corrected_at 20260801 17:43:27)"
+    }
+  },
+  {
+    "signal_id": "21c4648b53a1",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260803 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -418.71,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": 0.265,
+    "trigger_price": 394.08,
+    "support": 395.88,
+    "reclaim": 430.4,
+    "invalidation": 395.88,
+    "atr14": 47.7364,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260803 16:35:21",
+    "backfilled": false,
+    "returns": {
+      "1d": 0.1368,
+      "3d": 0.0705
+    },
+    "entry_close": 394.08,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "f869d95b288e7c48c75323eee58e60bd6c1f1c94ab1cf60f96fb5cc4d3d15b0f",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260806",
+        "source_close": 421.87,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "da248e626401",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260803 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -418.71,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -3.6712,
+    "trigger_price": 134.03,
+    "support": 145.79,
+    "reclaim": 160.77,
+    "invalidation": 145.79,
+    "atr14": 19.9929,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260803 16:35:21",
+    "backfilled": false,
+    "returns": {
+      "1d": 0.061,
+      "3d": 0.1385
+    },
+    "entry_close": 134.03,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "54bdda042235697cddd612ba16a5384f76ac5da22fd7eba137593ff2c656357f",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260806",
+        "source_close": 152.59,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "03dc20cbbe64",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260803 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -418.71,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -6.9273,
+    "trigger_price": 93.1,
+    "support": 94.16,
+    "reclaim": 104.62,
+    "invalidation": 94.16,
+    "atr14": 11.1864,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260803 16:35:21",
+    "backfilled": false,
+    "returns": {
+      "1d": 0.1,
+      "3d": 0.316
+    },
+    "entry_close": 93.1,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "8056727df0deb22a53c474249e479cc3829e8763a212b936aad31ed3a33174fe",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260806",
+        "source_close": 122.52,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "bf4b9f573687",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260803 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -418.71,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -5.6675,
+    "trigger_price": 902.5,
+    "support": 901.0,
+    "reclaim": 986.89,
+    "invalidation": 901.0,
+    "atr14": 97.46,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260803 16:35:21",
+    "backfilled": false,
+    "returns": {
+      "1d": 0.1324,
+      "3d": 0.0582
+    },
+    "entry_close": 902.5,
+    "directional_call": "neutral",
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "f8987c54d15a5f3c51725872e93882e57a4261725a1a2504ec927458cf8d2013",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260806",
+        "source_close": 955.0,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "643845fe7dda",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "timestamp": "20260803 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -418.71,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -5.0593,
+    "trigger_price": 53.0,
+    "support": 53.5,
+    "reclaim": 54.45,
+    "invalidation": 53.5,
+    "atr14": 2.0636,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260803 16:35:21",
+    "backfilled": false,
+    "returns": {
+      "1d": 0.0079,
+      "3d": -0.0168
+    },
+    "entry_close": 53.0,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "b554bd288d7a456925c182872d0588a4fcad856431abc8080b58386a2a66222c",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260806",
+        "source_close": 52.11,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "f1aca842c622",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "timestamp": "20260803 close (official)",
+    "line": "execution",
+    "market_state": "RISK_OFF",
+    "sector_single_beta": false,
+    "market_main_flow_total": -418.71,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -1.1281,
+    "trigger_price": 38.93,
+    "support": 38.83,
+    "reclaim": 39.9,
+    "invalidation": 38.83,
+    "atr14": 1.5679,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260803 16:35:21",
+    "backfilled": false,
+    "returns": {
+      "1d": -0.0234,
+      "3d": -0.0144
+    },
+    "entry_close": 38.93,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "3d": {
+        "evaluation_hash": "51a21ab2de17eacf0c0dc002fab6b5bddd965680e2513971c785b34d83394c97",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260806",
+        "source_close": 38.37,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "a53147e3fef4",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260804 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 585.49,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 45.6522,
+    "trigger_price": 448.0,
+    "support": 409.0,
+    "reclaim": 453.18,
+    "invalidation": 409.0,
+    "atr14": 49.9279,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260804 16:35:19",
+    "backfilled": false,
+    "returns": {
+      "1d": -0.0529
+    },
+    "entry_close": 448.0,
+    "directional_call": "constructive",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "7d1b995b0992172eaf9cf1be3d803f8896f8a6cce7bb35483ccaae08f4f1e642",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260805",
+        "source_close": 424.3,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "8cfdcbaa52be",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260804 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 585.49,
+    "setup_type": "WARNING",
+    "fund_structure": "涨着派发",
+    "relative_strength": false,
+    "main_flow": -0.0243,
+    "trigger_price": 142.2,
+    "support": 133.68,
+    "reclaim": 145.0,
+    "invalidation": 133.68,
+    "atr14": 19.0521,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260804 16:35:19",
+    "backfilled": false,
+    "returns": {
+      "1d": 0.0643
+    },
+    "entry_close": 142.2,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "4b8edceeaf21531a89958af1c2f11330829c108da91a790bc9de74eca3bbf499",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260805",
+        "source_close": 151.35,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "451b3b9ae1a2",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260804 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 585.49,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 6.7695,
+    "trigger_price": 102.41,
+    "support": 99.39,
+    "reclaim": 104.62,
+    "invalidation": 99.39,
+    "atr14": 11.2914,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260804 16:35:19",
+    "backfilled": false,
+    "returns": {
+      "1d": 0.1
+    },
+    "entry_close": 102.41,
+    "directional_call": "constructive",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "f0c9b11ae13e0d091647977af86864c7f485b20780ed93672f105c87b2ba8cd3",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260805",
+        "source_close": 112.65,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "e37e2fda7dba",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260804 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 585.49,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 50.4598,
+    "trigger_price": 1021.99,
+    "support": 934.44,
+    "reclaim": 1033.89,
+    "invalidation": 934.44,
+    "atr14": 103.4179,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260804 16:35:19",
+    "backfilled": false,
+    "returns": {
+      "1d": -0.0727
+    },
+    "entry_close": 1021.99,
+    "directional_call": "constructive",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "6f34f6271d9391c64137815e744571453678fcfa3e57eb06495c9e3c2de66b4c",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260805",
+        "source_close": 947.74,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "4718f358c7e8",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "timestamp": "20260804 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 585.49,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -0.0614,
+    "trigger_price": 53.42,
+    "support": 53.05,
+    "reclaim": 54.35,
+    "invalidation": 53.05,
+    "atr14": 1.8929,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260804 16:35:19",
+    "backfilled": false,
+    "returns": {
+      "1d": 0.0022
+    },
+    "entry_close": 53.42,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "439b97f3412dc3766b084180d798614e5319e4096419f69b4821e0099c57f4bb",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260805",
+        "source_close": 53.54,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "5afafa34974f",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "timestamp": "20260804 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 585.49,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -2.6208,
+    "trigger_price": 38.02,
+    "support": 38.83,
+    "reclaim": 39.9,
+    "invalidation": 38.83,
+    "atr14": 1.47,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260804 16:35:19",
+    "backfilled": false,
+    "returns": {
+      "1d": 0.0089
+    },
+    "entry_close": 38.02,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "fcef7a958233b7157f35a6873d0755eba7c544e5554c42f55271ce3e2e1ac898",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260805",
+        "source_close": 38.36,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "8048d296e968",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260805 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 504.7,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -20.3841,
+    "trigger_price": 424.3,
+    "support": 409.0,
+    "reclaim": 453.18,
+    "invalidation": 409.0,
+    "atr14": 51.0857,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260805 17:02:47",
+    "backfilled": false,
+    "registered_at": "20260805 close (official)",
+    "registered_trade_date": "20260805",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260805_170230_1785920550227957000_498677c7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "cfa7dd5bd1c9e6af",
+    "record_hash": "8460f16eca55051d757584cccdd1f5195a99189de371af93decacce3197b04a6",
+    "returns": {
+      "1d": -0.0057
+    },
+    "entry_close": 424.3,
+    "directional_call": "neutral",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "94400b356000dc135f1238c74e867ef5f409404e05c5b12df69d0014ca654f61",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260806",
+        "source_close": 421.87,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "4082f7e4a602",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260805 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 504.7,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 1.9338,
+    "trigger_price": 151.35,
+    "support": 143.21,
+    "reclaim": 154.29,
+    "invalidation": 143.21,
+    "atr14": 18.33,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260805 17:02:47",
+    "backfilled": false,
+    "registered_at": "20260805 close (official)",
+    "registered_trade_date": "20260805",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260805_170230_1785920550227957000_498677c7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "ee3de8c71c6ef207",
+    "record_hash": "ce3e996a201e131c3c1e32dd98d141892043c8047a2d5f00f934998f3f055d2e",
+    "returns": {
+      "1d": 0.0082
+    },
+    "entry_close": 151.35,
+    "directional_call": "constructive",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "2cc9a103d9f42d9125cfb79c6c63eec45ecdba60dca01b2707c70786421da44f",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260806",
+        "source_close": 152.59,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "c514ec8681ab",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260805 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 504.7,
+    "setup_type": "RECLAIM_REVIEW",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 4.866,
+    "trigger_price": 112.65,
+    "support": 107.53,
+    "reclaim": 112.65,
+    "invalidation": 106.244,
+    "atr14": 11.1657,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260805 17:02:47",
+    "backfilled": false,
+    "registered_at": "20260805 close (official)",
+    "registered_trade_date": "20260805",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260805_170230_1785920550227957000_498677c7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "3d19d399b646d7f9",
+    "record_hash": "6fe1f3a0a109528c1186943f29bb0adedc80dce8cb43b7992615e25af3149dfb",
+    "returns": {
+      "1d": 0.0876
+    },
+    "entry_close": 112.65,
+    "directional_call": "constructive",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "ceb89d1f3770d8bcf23b67fb7b6862debd5336cf2efa89620eb458f71e247b9b",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260806",
+        "source_close": 122.52,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "e3aff509edf9",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260805 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 504.7,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -14.461,
+    "trigger_price": 947.74,
+    "support": 934.44,
+    "reclaim": 1033.89,
+    "invalidation": 934.44,
+    "atr14": 108.4664,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260805 17:02:47",
+    "backfilled": false,
+    "registered_at": "20260805 close (official)",
+    "registered_trade_date": "20260805",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260805_170230_1785920550227957000_498677c7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "f03bf2429393d48a",
+    "record_hash": "d5bcba26ea1723f3db66b8bb9af359cb0de225e192cd3850e5e9c8cb7afc2815",
+    "returns": {
+      "1d": 0.0077
+    },
+    "entry_close": 947.74,
+    "directional_call": "neutral",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "8ee2091ae53e927102ca55e016e7ccb1bad001c2e028550299bd3c8f4d88962a",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260806",
+        "source_close": 955.0,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "48cc441c2dca",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "timestamp": "20260805 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 504.7,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 1.5336,
+    "trigger_price": 53.54,
+    "support": 53.05,
+    "reclaim": 54.35,
+    "invalidation": 53.05,
+    "atr14": 1.8157,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260805 17:02:47",
+    "backfilled": false,
+    "registered_at": "20260805 close (official)",
+    "registered_trade_date": "20260805",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260805_170230_1785920550227957000_498677c7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "2428b9cef43ba1d2",
+    "record_hash": "6a90aa533f9f664fb564cb7a7b27bfbcca8bf1b6b79063cd091f67fa5658147a",
+    "returns": {
+      "1d": -0.0267
+    },
+    "entry_close": 53.54,
+    "directional_call": "constructive",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "d21716e6b9d3a1fe9ed013b5af9aff3bb79670d200293c67d14da715cbcae602",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260806",
+        "source_close": 52.11,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "e64a8857fd06",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "timestamp": "20260805 close (official)",
+    "line": "execution",
+    "market_state": "RISK_ON",
+    "sector_single_beta": false,
+    "market_main_flow_total": 504.7,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": false,
+    "main_flow": 1.7056,
+    "trigger_price": 38.36,
+    "support": 37.88,
+    "reclaim": 38.92,
+    "invalidation": 37.88,
+    "atr14": 1.4286,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260805 17:02:47",
+    "backfilled": false,
+    "registered_at": "20260805 close (official)",
+    "registered_trade_date": "20260805",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260805_170230_1785920550227957000_498677c7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "13b7e80f674f9c69",
+    "record_hash": "f48b2a336b4a3675f37e13c1824d767243ec07c1e292322a268a74028e8de08d",
+    "returns": {
+      "1d": 0.0003
+    },
+    "entry_close": 38.36,
+    "directional_call": "constructive",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "a2c9a122c54a0d39c768a07b4b417e3b1581eff7cd8a27008f6c14a3bde13486",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260806",
+        "source_close": 38.37,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "e093b64bd931",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260806 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -382.56,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -11.4616,
+    "trigger_price": 421.87,
+    "support": 400.0,
+    "reclaim": 439.84,
+    "invalidation": 400.0,
+    "atr14": 47.7364,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260806 16:35:17",
+    "backfilled": false,
+    "registered_at": "20260806 close (official)",
+    "registered_trade_date": "20260806",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260806_163500_1786005300147458000_dc66d0a7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "01b3af63b96a6bb9",
+    "record_hash": "1f0333ecf4f888c047dfba6420bc4df89fbef39f1c3b548c54137abc3cf4b962"
+  },
+  {
+    "signal_id": "3d52f7d2a89d",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260806 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -382.56,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -0.9485,
+    "trigger_price": 152.59,
+    "support": 144.44,
+    "reclaim": 156.38,
+    "invalidation": 144.44,
+    "atr14": 16.8614,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260806 16:35:17",
+    "backfilled": false,
+    "registered_at": "20260806 close (official)",
+    "registered_trade_date": "20260806",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260806_163500_1786005300147458000_dc66d0a7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "fd1d2f0bfe4dd4f7",
+    "record_hash": "022e03b51d33b12420a7f2e2d6bb4064fb1b4b909f27f61a6d1a6503a6747f25"
+  },
+  {
+    "signal_id": "cf13c62d3e07",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260806 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -382.56,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 0.8362,
+    "trigger_price": 122.52,
+    "support": 112.31,
+    "reclaim": 123.92,
+    "invalidation": 106.2025,
+    "atr14": 11.2743,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260806 16:35:17",
+    "backfilled": false,
+    "registered_at": "20260806 close (official)",
+    "registered_trade_date": "20260806",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260806_163500_1786005300147458000_dc66d0a7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "f3908065275a01c0",
+    "record_hash": "8835c22703b308ab204eaa411a018922a07f8ed9f11c7463a67cdbf2d5060c6f"
+  },
+  {
+    "signal_id": "efa32f6e1f91",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260806 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -382.56,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "无量修复",
+    "relative_strength": false,
+    "main_flow": -4.0854,
+    "trigger_price": 955.0,
+    "support": 882.55,
+    "reclaim": 995.0,
+    "invalidation": 882.55,
+    "atr14": 104.895,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260806 16:35:17",
+    "backfilled": false,
+    "registered_at": "20260806 close (official)",
+    "registered_trade_date": "20260806",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260806_163500_1786005300147458000_dc66d0a7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "7429f1d8724a559d",
+    "record_hash": "7b4e343e491f4c1ede33efc73a85a1a39977c662be665fd71af679cf3aa3ffd5"
+  },
+  {
+    "signal_id": "40224363e5c8",
+    "ticker": "600276.SH",
+    "name": "恒瑞医药",
+    "timestamp": "20260806 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -382.56,
+    "setup_type": "EXIT_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -7.7076,
+    "trigger_price": 52.11,
+    "support": 52.88,
+    "reclaim": 53.81,
+    "invalidation": 52.88,
+    "atr14": 1.72,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260806 16:35:17",
+    "backfilled": false,
+    "registered_at": "20260806 close (official)",
+    "registered_trade_date": "20260806",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260806_163500_1786005300147458000_dc66d0a7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "d7a70dc1d0e99b79",
+    "record_hash": "9b060c469bbffd7f381890acd4ea120c94ba3812f446fc51003e6d4a3909b0c2"
+  },
+  {
+    "signal_id": "e849cc5df76b",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "timestamp": "20260806 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -382.56,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -0.7066,
+    "trigger_price": 38.37,
+    "support": 37.8,
+    "reclaim": 38.67,
+    "invalidation": 37.8,
+    "atr14": 1.3186,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260806 16:35:17",
+    "backfilled": false,
+    "registered_at": "20260806 close (official)",
+    "registered_trade_date": "20260806",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260806_163500_1786005300147458000_dc66d0a7"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "292f254267cfec68",
+    "record_hash": "ec384daaf80e4fcd00a2f1dc82ab117ebd776b48bdc9857eb276024c10a8077a"
   }
 ]

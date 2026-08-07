@@ -1,38 +1,38 @@
 {
- "as_of": "20260730",
+ "as_of": "20260806",
  "panel_days": [
-  "20260724",
-  "20260727",
-  "20260728",
-  "20260729",
-  "20260730"
+  "20260731",
+  "20260803",
+  "20260804",
+  "20260805",
+  "20260806"
  ],
  "transition": {
   "counts": {
-   "INFLOW_CONT": 26,
-   "WARMING": 13,
-   "NEUTRAL": 329,
-   "FLICKER": 220,
-   "OUTFLOW_CONT": 143
+   "INFLOW_CONT": 25,
+   "WARMING": 83,
+   "NEUTRAL": 112,
+   "FLICKER": 35,
+   "OUTFLOW_CONT": 168
   },
   "matrix_counts": {
    "INFLOW_CONT": {
-    "INFLOW_CONT": 26
+    "INFLOW_CONT": 25
    },
    "WARMING": {
-    "INFLOW_CONT": 13
+    "INFLOW_CONT": 83
    },
    "NEUTRAL": {
-    "WARMING": 14,
+    "WARMING": 33,
     "FLICKER": 29,
-    "OUTFLOW_CONT": 286
+    "OUTFLOW_CONT": 50
    },
    "FLICKER": {
-    "WARMING": 31,
-    "FLICKER": 189
+    "WARMING": 10,
+    "FLICKER": 25
    },
    "OUTFLOW_CONT": {
-    "OUTFLOW_CONT": 143
+    "OUTFLOW_CONT": 168
    }
   },
   "matrix_prob": {
@@ -43,13 +43,13 @@
     "INFLOW_CONT": 1.0
    },
    "NEUTRAL": {
-    "FLICKER": 0.088,
-    "OUTFLOW_CONT": 0.869,
-    "WARMING": 0.043
+    "FLICKER": 0.259,
+    "OUTFLOW_CONT": 0.446,
+    "WARMING": 0.295
    },
    "FLICKER": {
-    "FLICKER": 0.859,
-    "WARMING": 0.141
+    "FLICKER": 0.714,
+    "WARMING": 0.286
    },
    "OUTFLOW_CONT": {
     "OUTFLOW_CONT": 1.0
@@ -57,122 +57,122 @@
   },
   "examples": [
    {
-    "sector": "包装材料",
+    "sector": "通信设备",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "噪声防治",
+    "sector": "小金属",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "金属包装",
+    "sector": "其他小金属",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "瓷砖地板",
+    "sector": "塑料",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "涂料",
+    "sector": "其他电源设备Ⅲ",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "贵州板块",
-    "seq": "-++++",
+    "sector": "分立器件",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "房屋检测",
-    "seq": "-++++",
+    "sector": "模拟芯片设计",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "海绵城市",
-    "seq": "-++++",
+    "sector": "仪器仪表",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "刀片电池",
-    "seq": "-++++",
+    "sector": "制冷空调设备",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "基因测序",
-    "seq": "-++++",
+    "sector": "合成树脂",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "维生素",
-    "seq": "-++++",
+    "sector": "磁性材料",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "超跌股",
-    "seq": "-++++",
+    "sector": "通信终端及配件",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "汽车整车",
-    "seq": "-++++",
+    "sector": "纯碱",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "酿酒概念",
-    "seq": "-++++",
+    "sector": "塑料包装",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "白酒",
-    "seq": "-++++",
+    "sector": "光学元件",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "参股保险",
-    "seq": "-++++",
+    "sector": "果蔬加工",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "消费风格",
-    "seq": "-++++",
+    "sector": "个护小家电",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "综合包装",
-    "seq": "-++++",
+    "sector": "光纤概念",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "家纺",
-    "seq": "-++++",
+    "sector": "商业航天",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "培训教育",
-    "seq": "-++++",
+    "sector": "激光雷达",
+    "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    }
@@ -181,31 +181,39 @@
  "leader_breadth": [
   {
    "group": "其他",
-   "count": 26,
-   "share_top30": 0.867,
-   "top10_count": 7,
-   "avg_ret10": 22.7,
+   "count": 27,
+   "share_top30": 0.9,
+   "top10_count": 10,
+   "avg_ret10": 37.9,
    "examples": [
-    "传智教育(41.8%)",
-    "学大教育(32.1%)",
-    "中电电机(31.2%)",
-    "新强联(30.7%)",
-    "朗姿股份(29.4%)",
-    "一鸣食品(26.1%)",
-    "高争民爆(25.4%)",
-    "江山股份(25.4%)"
+    "恒银科技(56.9%)",
+    "中国科传(52.2%)",
+    "甘咨询(51.9%)",
+    "风范股份(44.6%)",
+    "锦和商管(43.9%)",
+    "春光科技(43.1%)",
+    "汉嘉数智(42.8%)",
+    "华体科技(41.8%)"
+   ]
+  },
+  {
+   "group": "医药",
+   "count": 1,
+   "share_top30": 0.033,
+   "top10_count": 0,
+   "avg_ret10": 37.8,
+   "examples": [
+    "百花医药(37.8%)"
    ]
   },
   {
    "group": "汽车/电动车",
-   "count": 3,
-   "share_top30": 0.1,
-   "top10_count": 3,
-   "avg_ret10": 31.3,
+   "count": 1,
+   "share_top30": 0.033,
+   "top10_count": 0,
+   "avg_ret10": 30.9,
    "examples": [
-    "浙江华远(33.8%)",
-    "明新旭腾(31.8%)",
-    "安徽凤凰(28.3%)"
+    "德迈仕(30.9%)"
    ]
   },
   {
@@ -213,32 +221,34 @@
    "count": 1,
    "share_top30": 0.033,
    "top10_count": 0,
-   "avg_ret10": 22.0,
+   "avg_ret10": 32.2,
    "examples": [
-    "美之高(22.0%)"
+    "华资实业(32.2%)"
    ]
   }
  ],
  "dominant_groups": [
   {
    "group": "其他",
-   "count": 26,
-   "share_top30": 0.867,
-   "top10_count": 7,
-   "avg_ret10": 22.7,
+   "count": 27,
+   "share_top30": 0.9,
+   "top10_count": 10,
+   "avg_ret10": 37.9,
    "examples": [
-    "传智教育(41.8%)",
-    "学大教育(32.1%)",
-    "中电电机(31.2%)",
-    "新强联(30.7%)",
-    "朗姿股份(29.4%)",
-    "一鸣食品(26.1%)",
-    "高争民爆(25.4%)",
-    "江山股份(25.4%)"
+    "恒银科技(56.9%)",
+    "中国科传(52.2%)",
+    "甘咨询(51.9%)",
+    "风范股份(44.6%)",
+    "锦和商管(43.9%)",
+    "春光科技(43.1%)",
+    "汉嘉数智(42.8%)",
+    "华体科技(41.8%)"
    ]
   }
  ],
  "data_blocked": [],
  "claim_allowed": false,
- "note": "描述统计层;需要后续多日快照才能校准前瞻概率。不是买卖指令。"
+ "note": "描述统计层;需要后续多日快照才能校准前瞻概率。不是买卖指令。",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "target_trade_date": "20260806"
 }

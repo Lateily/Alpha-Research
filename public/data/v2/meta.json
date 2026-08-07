@@ -1,35 +1,72 @@
 {
- "generated_at": "20260731 16:36:53",
+ "generated_at": "20260806 16:38:27",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "target_trade_date": "20260806",
  "contracts": {
   "model_portfolio_state.json": {
-   "status": "STALE_INPUT",
+   "status": "OK",
+   "pipeline_status": "OK",
+   "data_quality": "COMPLETE",
+   "degraded_sources": [],
    "blocked_why": null
   },
   "trade_cards.json": {
-   "status": "STALE_INPUT",
+   "status": "OK",
+   "pipeline_status": "OK",
+   "data_quality": "COMPLETE",
+   "degraded_sources": [],
    "blocked_why": null
   },
   "premarket_frame.json": {
-   "status": "STALE_INPUT",
+   "status": "OK",
+   "pipeline_status": "OK",
+   "data_quality": "PARTIAL",
+   "degraded_sources": [
+    {
+     "source": "overnight_anchor.json",
+     "internal_status": "PARTIAL_OK"
+    }
+   ],
    "blocked_why": null
   },
   "rotation_panel.json": {
    "status": "OK",
+   "pipeline_status": "OK",
+   "data_quality": "COMPLETE",
+   "degraded_sources": [],
    "blocked_why": null
   },
   "red_flags.json": {
    "status": "OK",
+   "pipeline_status": "OK",
+   "data_quality": "COMPLETE",
+   "degraded_sources": [],
    "blocked_why": null
   },
   "battery.json": {
    "status": "OK",
+   "pipeline_status": "OK",
+   "data_quality": "COMPLETE",
+   "degraded_sources": [],
    "blocked_why": null
   },
   "position_review.json": {
    "status": "OK",
+   "pipeline_status": "OK",
+   "data_quality": "COMPLETE",
+   "degraded_sources": [],
    "blocked_why": null
   }
  },
  "disclaimer": "不是买卖指令;研究信号,human executes.",
- "report": "PARTIAL"
+ "report": "COMPLETE",
+ "data_quality": "PARTIAL",
+ "degraded_sources": [
+  "overnight_anchor.json"
+ ],
+ "business_contract_count": 7,
+ "control_files": [
+  "meta.json",
+  "current_run.json"
+ ]
 }
