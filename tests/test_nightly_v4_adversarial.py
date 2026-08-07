@@ -1390,17 +1390,21 @@ class NightlyDataQualitySurfacedTest(unittest.TestCase):
 
 
 class ResearchDataLaneTest(unittest.TestCase):
-    TARGET = "20260805"
-
-    def _stage_contracts(self, root: str) -> str:
+    def _stage_contracts(self, root: str):
         et = os.path.join(root, "experiments", "execution_tracker")
         public = os.path.join(root, "public", "data", "v2")
         os.makedirs(et, exist_ok=True)
         os.makedirs(public, exist_ok=True)
+        targets = set()
         for name in ("security_registry.json", "feature_store_health.json", "e1_event_layer.json"):
-            shutil.copy2(ROOT / "public" / "data" / "v2" / name, os.path.join(public, name))
-            os.utime(os.path.join(public, name), None)
-        return et
+            staged = os.path.join(public, name)
+            shutil.copy2(ROOT / "public" / "data" / "v2" / name, staged)
+            os.utime(staged, None)
+            targets.add(str(read_json(staged).get("as_of") or ""))
+        self.assertEqual(1, len(targets), "研究数据契约的 as_of 不一致")
+        target = targets.pop()
+        self.assertRegex(target, r"^\d{8}$")
+        return et, target
 
     def test_u0_precedes_both_full_market_consumers(self) -> None:
         steps = {name: (idx, deps) for idx, (name, _cmd, _token, deps) in enumerate(nightly.STEPS)}
@@ -1422,24 +1426,24 @@ class ResearchDataLaneTest(unittest.TestCase):
 
     def test_valid_partial_contract_is_process_ok_but_quality_partial(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            et = self._stage_contracts(tmp)
+            et, target = self._stage_contracts(tmp)
             started = time.time() - 1
             for step in ("security_registry", "feature_store", "e1_event_layer"):
                 status, details = nightly.verify_step_artifacts(
-                    step, self.TARGET, started, et, "RUN-1"
+                    step, target, started, et, "RUN-1"
                 )
                 self.assertEqual("OK", status, details)
             e1 = nightly.verify_step_artifacts(
-                "e1_event_layer", self.TARGET, started, et, "RUN-1"
+                "e1_event_layer", target, started, et, "RUN-1"
             )[1][0]
             self.assertEqual("PARTIAL", e1["quality_status"])
 
     def test_contract_date_mismatch_and_schema_damage_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            et = self._stage_contracts(tmp)
+            et, target = self._stage_contracts(tmp)
             started = time.time() - 1
             status, _ = nightly.verify_step_artifacts(
-                "feature_store", "20260804", started, et, "RUN-1"
+                "feature_store", "19000101", started, et, "RUN-1"
             )
             self.assertEqual("DATE_MISMATCH", status)
             feature = os.path.join(tmp, "public", "data", "v2", "feature_store_health.json")
@@ -1447,7 +1451,7 @@ class ResearchDataLaneTest(unittest.TestCase):
             payload["integrity"]["features_hash"] = "bad"
             write_json(feature, payload)
             status, details = nightly.verify_step_artifacts(
-                "feature_store", self.TARGET, started, et, "RUN-1"
+                "feature_store", target, started, et, "RUN-1"
             )
             self.assertEqual("FAILED", status, details)
 
