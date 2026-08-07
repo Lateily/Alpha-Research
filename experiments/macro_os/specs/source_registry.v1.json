@@ -1,8 +1,8 @@
 {
   "schema": "ar.macro.source_registry",
   "schema_version": "1.0",
-  "policy_version": "macro-m0a/1.0",
-  "effective_from": "20260806",
+  "policy_version": "macro-m0b2/1.0",
+  "effective_from": "20260807",
   "status": "APPROVED_SPEC",
   "coverage_policy": {
     "market_series": {
@@ -57,7 +57,7 @@
       "evidence_level": "E2",
       "roles": ["VINTAGE_MIRROR", "MARKET_SERIES"],
       "transport": "API",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "FULL",
       "base_url": "https://api.stlouisfed.org/fred",
       "series": [
@@ -78,10 +78,11 @@
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "API",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_SNAPSHOT_REQUIRED",
       "base_url": "https://api.census.gov/data/timeseries/eits",
       "series": [
+        "release_calendar",
         "retail_sales"
       ]
     },
@@ -99,6 +100,7 @@
       "base_url": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business",
       "series": [
         "manufacturing_pmi",
+        "release_calendar",
         "services_pmi"
       ]
     },
@@ -111,7 +113,7 @@
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "API",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_SNAPSHOT_REQUIRED",
       "base_url": "https://api.bls.gov/publicAPI/v2",
       "series": [
@@ -120,7 +122,8 @@
         "average_hourly_earnings",
         "cpi",
         "ppi",
-        "jolts_job_openings"
+        "jolts_job_openings",
+        "release_calendar"
       ]
     },
     {
@@ -132,7 +135,7 @@
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "API",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_SNAPSHOT_REQUIRED",
       "base_url": "https://apps.bea.gov/api/data",
       "series": [
@@ -140,7 +143,8 @@
         "pce",
         "core_pce",
         "personal_income",
-        "personal_consumption"
+        "personal_consumption",
+        "release_calendar"
       ]
     },
     {
@@ -161,7 +165,8 @@
         "fomc_target_rate",
         "sep",
         "h15_rates",
-        "industrial_production"
+        "industrial_production",
+        "release_calendar"
       ]
     },
     {
@@ -173,7 +178,7 @@
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "OFFICIAL_DATA_PORTAL",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_SNAPSHOT_REQUIRED",
       "base_url": "https://data.stats.gov.cn",
       "series": [
@@ -184,7 +189,8 @@
         "industrial_production",
         "retail_sales",
         "fixed_asset_investment",
-        "unemployment_rate"
+        "unemployment_rate",
+        "release_calendar"
       ]
     },
     {
@@ -196,7 +202,7 @@
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "OFFICIAL_RELEASE",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_ARCHIVE",
       "base_url": "https://www.pbc.gov.cn",
       "series": [
@@ -204,7 +210,8 @@
         "new_loans",
         "money_supply",
         "policy_operations",
-        "lpr"
+        "lpr",
+        "release_calendar"
       ]
     },
     {
@@ -216,7 +223,7 @@
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL", "MARKET_SERIES"],
       "transport": "OFFICIAL_DOWNLOAD",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "DAILY_HISTORY",
       "base_url": "https://www.cboe.com/tradable_products/vix/vix_historical_data",
       "series": [
@@ -256,5 +263,5 @@
       ]
     }
   ],
-  "registry_hash": "22be7ae52a5679e0afc10e5fc69850d15bd7d60c1eef7cab86e05be8e5ce447b"
+  "registry_hash": "8613c9ee5826c9c9fb05a21ec9f8ce8e7b8b21a4ea6622b7a6442536fcea6475"
 }

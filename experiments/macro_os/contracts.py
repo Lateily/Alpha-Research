@@ -894,8 +894,19 @@ def validate_default_specs() -> tuple[dict[str, Any], dict[str, Any]]:
     validate_source_registry(sources)
     validate_event_tiers(tiers, sources)
     schema_files = sorted(SCHEMA_DIR.glob("*.schema.json"))
-    if len(schema_files) != 4:
-        raise ContractError(f"expected four macro schema files, found {len(schema_files)}")
+    expected_schemas = {
+        "consensus_gate.schema.json",
+        "event_tiers.schema.json",
+        "house_expectation.schema.json",
+        "macro_event.schema.json",
+        "release_calendar.schema.json",
+        "source_registry.schema.json",
+    }
+    if {path.name for path in schema_files} != expected_schemas:
+        raise ContractError(
+            "macro schema set mismatch: "
+            f"expected {sorted(expected_schemas)}, found {[path.name for path in schema_files]}"
+        )
     for path in schema_files:
         schema = load_json(path)
         if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":

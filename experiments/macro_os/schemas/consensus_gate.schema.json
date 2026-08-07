@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lateily.github.io/Alpha-Research/schemas/macro/consensus_gate.schema.json",
+  "title": "AR Macro Consensus Gate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "report",
+    "mode",
+    "event_type",
+    "tier",
+    "unit",
+    "generated_at",
+    "source_registry_hash",
+    "event_tiers_hash",
+    "formula_version",
+    "reason",
+    "market_consensus",
+    "rejected_sources",
+    "policy",
+    "disclaimer"
+  ],
+  "properties": {
+    "schema": {"const": "ar.macro.consensus_gate"},
+    "schema_version": {"const": "1.0"},
+    "report": {"const": "DATA_BLOCKED"},
+    "mode": {"const": "CALIBRATING"},
+    "event_type": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+    "tier": {"enum": [1, 2]},
+    "unit": {"type": ["string", "null"]},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_registry_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "event_tiers_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "formula_version": {"const": "macro-m0b2/1.0"},
+    "reason": {"type": "string", "minLength": 1},
+    "market_consensus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "value", "tolerance", "tolerance_version", "source_values"],
+      "properties": {
+        "status": {"const": "DATA_BLOCKED"},
+        "value": {"const": null},
+        "tolerance": {"const": null},
+        "tolerance_version": {"const": null},
+        "source_values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source_id", "value", "snapshot_hash", "as_of", "fetched_at"],
+            "properties": {
+              "source_id": {"type": "string"},
+              "value": {"type": "number"},
+              "snapshot_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "as_of": {"type": "string", "format": "date-time"},
+              "fetched_at": {"type": "string", "format": "date-time"}
+            }
+          }
+        }
+      }
+    },
+    "rejected_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "reason"],
+        "properties": {
+          "source_id": {"type": "string"},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "policy": {"$ref": "release_calendar.schema.json#/$defs/policy"},
+    "disclaimer": {"type": "string", "minLength": 1}
+  }
+}
