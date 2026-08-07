@@ -198,6 +198,10 @@ CREATE TABLE IF NOT EXISTS observations (
     value_real REAL,
     unit TEXT NOT NULL,
     attributes_json TEXT NOT NULL,
+    UNIQUE (
+        source_id, source_identity_hash, series_id, metric_key,
+        observation_at, vintage_at
+    ),
     FOREIGN KEY (source_identity_hash) REFERENCES source_identities(identity_hash),
     FOREIGN KEY (source_id, source_identity_hash, snapshot_hash)
         REFERENCES raw_snapshots(source_id, source_identity_hash, snapshot_hash)
@@ -276,6 +280,8 @@ class MacroHistoryStore:
 
     @staticmethod
     def _validate_source(source: dict[str, Any], registry_hash: str) -> tuple[str, str]:
+        from experiments.macro_os import contracts as macro_contracts
+
         required = {
             "source_id",
             "provider",
@@ -293,6 +299,17 @@ class MacroHistoryStore:
         missing = sorted(required - set(source))
         if missing:
             raise MacroStoreError(f"registered source row is incomplete: {missing}")
+        registry = macro_contracts.load_json(macro_contracts.SOURCE_REGISTRY)
+        macro_contracts.validate_source_registry(registry)
+        canonical = macro_contracts.source_index(registry).get(str(source["source_id"]))
+        if (
+            registry_hash != registry["registry_hash"]
+            or canonical is None
+            or _canonical(source) != _canonical(canonical)
+        ):
+            raise MacroStoreError(
+                "source identity does not match the canonical M0-A registry"
+            )
         identity_hash = source_identity_hash(source, registry_hash)
         return str(source["source_id"]), identity_hash
 
@@ -472,6 +489,7 @@ class MacroHistoryStore:
                     raise MacroStoreError("raw snapshot provenance metadata mismatch")
 
                 latest_by_period: dict[tuple[str, str, str], sqlite3.Row] = {}
+                by_vintage: dict[tuple[str, str, str, str], sqlite3.Row] = {}
                 for existing in conn.execute(
                     """
                     SELECT rowid, * FROM observations
@@ -486,10 +504,33 @@ class MacroHistoryStore:
                         existing["observation_at"],
                     )
                     latest_by_period.setdefault(key, existing)
+                    by_vintage[
+                        (
+                            existing["series_id"],
+                            existing["metric_key"],
+                            existing["observation_at"],
+                            existing["vintage_at"],
+                        )
+                    ] = existing
 
                 for row in rows:
                     attributes_json = _canonical(row["attributes"]).decode("utf-8")
                     key = (row["series_id"], row["metric_key"], row["observation_at"])
+                    vintage_key = (*key, row["vintage_at"])
+                    same_vintage = by_vintage.get(vintage_key)
+                    if same_vintage is not None:
+                        if all(
+                            (
+                                same_vintage["value_text"] == row["value_text"],
+                                same_vintage["value_real"] == row["value_real"],
+                                same_vintage["unit"] == row["unit"],
+                                same_vintage["attributes_json"] == attributes_json,
+                            )
+                        ):
+                            continue
+                        raise MacroStoreError(
+                            "conflicting observation for the same source period and vintage"
+                        )
                     prior = latest_by_period.get(key)
                     if prior is not None and all(
                         (
@@ -969,7 +1010,7 @@ class MacroHistoryStore:
                 for table in IMMUTABLE_TABLES
             }
 
-    def verify_integrity(self) -> list[str]:
+    def _verify_integrity(self) -> list[str]:
         problems: list[str] = []
         with self.connect() as conn:
             integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
@@ -1078,6 +1119,12 @@ class MacroHistoryStore:
             if foreign_keys:
                 problems.append(f"foreign key violations: {len(foreign_keys)}")
         return problems
+
+    def verify_integrity(self) -> list[str]:
+        try:
+            return self._verify_integrity()
+        except sqlite3.DatabaseError as exc:
+            return [f"sqlite structure invalid: {type(exc).__name__}: {exc}"]
 
 
 __all__ = [

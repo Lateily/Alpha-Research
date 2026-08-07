@@ -47,6 +47,8 @@ DEFAULT_HEALTH = Path("public/data/v2/macro/source_health.json")
 DISCLAIMER = "不是买卖指令;研究信号,human executes."
 FAILURE_STATUSES = {"DATA_BLOCKED", "SOURCE_DOWN", "DATA_INVALID"}
 SECRET_QUERY_KEYS = {"api_key", "key", "userid", "registrationkey"}
+SECRET_ENV_NAMES = ("BEA_API_KEY", "BLS_API_KEY", "FRED_API_KEY")
+REDACTION_MARKER = b"[REDACTED_SECRET]"
 
 
 class CollectionError(RuntimeError):
@@ -185,13 +187,41 @@ def _period_iso(raw: str) -> str:
     raise CollectionError("DATA_INVALID", "INVALID_PERIOD", f"unsupported period {value!r}")
 
 
-def _sanitize_url(url: str) -> str:
+def _sanitize_url(url: str, environment: dict[str, str] | None = None) -> str:
     parsed = urllib.parse.urlsplit(url)
     query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
     safe_query = [(key, value) for key, value in query if key.lower() not in SECRET_QUERY_KEYS]
-    return urllib.parse.urlunsplit(
+    safe_url = urllib.parse.urlunsplit(
         (parsed.scheme, parsed.netloc, parsed.path, urllib.parse.urlencode(safe_query), "")
     )
+    encoded, _names = _redact_response_body(
+        safe_url.encode("utf-8"), environment or {}
+    )
+    return encoded.decode("utf-8")
+
+
+def _redact_response_body(
+    raw: bytes, environment: dict[str, str]
+) -> tuple[bytes, list[str]]:
+    redacted = raw
+    names: list[str] = []
+    for name in SECRET_ENV_NAMES:
+        value = environment.get(name, "").strip()
+        if not value:
+            continue
+        variants = {
+            value.encode("utf-8"),
+            urllib.parse.quote(value, safe="").encode("utf-8"),
+            urllib.parse.quote_plus(value, safe="").encode("utf-8"),
+        }
+        matched = False
+        for variant in sorted(variants, key=len, reverse=True):
+            if variant and variant in redacted:
+                redacted = redacted.replace(variant, REDACTION_MARKER)
+                matched = True
+        if matched:
+            names.append(name)
+    return redacted, names
 
 
 def _validate_response_origin(request: HttpRequest, response: HttpResponse) -> None:
@@ -576,11 +606,24 @@ def collection_plan() -> tuple[RequestSpec, ...]:
     return tuple(specs)
 
 
-def _transport_meta(response: HttpResponse) -> dict[str, Any]:
+def _transport_meta(
+    response: HttpResponse,
+    environment: dict[str, str],
+    redacted_secret_names: Iterable[str] = (),
+) -> dict[str, Any]:
     keep = ("content-type", "content-length", "etag", "last-modified")
-    return {
+    meta = {
         "final_host": (urllib.parse.urlsplit(response.final_url).hostname or "").lower(),
         "headers": {key: response.headers[key] for key in keep if key in response.headers},
+    }
+    encoded = json.dumps(meta, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    safe_encoded, header_names = _redact_response_body(encoded, environment)
+    safe_meta = json.loads(safe_encoded.decode("utf-8"))
+    redacted = sorted(set(redacted_secret_names) | set(header_names))
+    return {
+        **safe_meta,
+        "redacted": bool(redacted),
+        "redacted_secret_names": redacted,
     }
 
 
@@ -607,6 +650,8 @@ def collect(
         started_at = _iso_now(request_now)
         request: HttpRequest | None = None
         response: HttpResponse | None = None
+        storage_body: bytes | None = None
+        transport_meta: dict[str, Any] | None = None
         origin_validated = False
         try:
             if source["status"] in {"DATA_BLOCKED", "RETIRED"}:
@@ -624,12 +669,16 @@ def collect(
             response = transport.fetch(request)
             _validate_response_origin(request, response)
             origin_validated = True
+            storage_body, redacted_names = _redact_response_body(
+                response.body, environment
+            )
+            transport_meta = _transport_meta(response, environment, redacted_names)
             if response.status < 200 or response.status >= 300:
                 raise CollectionError(
                     "SOURCE_DOWN", f"HTTP_{response.status}", f"source returned HTTP {response.status}"
                 )
             fetched_at = _iso_now(now or datetime.now(timezone.utc))
-            observations = spec.parser(response.body, fetched_at, spec)
+            observations = spec.parser(storage_body, fetched_at, spec)
             emitted = {(row.series_id, row.metric_key) for row in observations}
             expected = {(row.series_id, row.metric_key) for row in spec.metrics}
             missing = sorted(expected - emitted)
@@ -646,12 +695,12 @@ def collect(
                 started_at=started_at,
                 fetched_at=fetched_at,
                 public_locator=request.public_locator,
-                response_url=_sanitize_url(response.final_url),
+                response_url=_sanitize_url(response.final_url, environment),
                 response_status=response.status,
                 media_type=response.headers.get("content-type", "application/octet-stream"),
-                raw_payload=response.body,
+                raw_payload=storage_body,
                 collector_version=COLLECTOR_VERSION,
-                transport_meta=_transport_meta(response),
+                transport_meta=transport_meta,
                 observations=observations,
             )
             results.append(
@@ -672,6 +721,10 @@ def collect(
                 and origin_validated
                 and 200 <= response.status < 300
             ):
+                if storage_body is None or transport_meta is None:
+                    raise MacroStoreError(
+                        "validated response lacks redacted storage payload"
+                    )
                 stored = store.record_invalid_response(
                     run_id=run_id,
                     request_id=spec.request_id,
@@ -681,12 +734,12 @@ def collect(
                     started_at=started_at,
                     fetched_at=completed_at,
                     public_locator=request.public_locator,
-                    response_url=_sanitize_url(response.final_url),
+                    response_url=_sanitize_url(response.final_url, environment),
                     response_status=response.status,
                     media_type=response.headers.get("content-type", "application/octet-stream"),
-                    raw_payload=response.body,
+                    raw_payload=storage_body,
                     collector_version=COLLECTOR_VERSION,
-                    transport_meta=_transport_meta(response),
+                    transport_meta=transport_meta,
                     error_code=exc.code,
                     error_message=exc.safe_message,
                 )

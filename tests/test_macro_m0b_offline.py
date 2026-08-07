@@ -195,43 +195,81 @@ class MacroM0BTests(unittest.TestCase):
 
     def test_same_payload_under_new_source_identity_is_a_new_version(self) -> None:
         record_vix(self.store, run_id="run_identity_v1", raw=b"same-payload")
-        source, _registry_hash = source_row("cboe_vix")
-        source_v2 = copy.deepcopy(source)
-        source_v2["provider"] = "Cboe Global Markets Renamed"
-        self.store.record_success(
-            run_id="run_identity_v2",
-            request_id="cboe_vix_history",
-            source=source_v2,
-            registry_hash="f" * 64,
-            requested_series=["vix_close"],
-            started_at="2026-08-08T01:00:00Z",
-            fetched_at="2026-08-08T01:00:00Z",
-            public_locator="https://cdn.cboe.com/vix.csv",
-            response_url="https://cdn.cboe.com/vix.csv",
-            response_status=200,
-            media_type="text/csv",
-            raw_payload=b"same-payload",
-            collector_version=collectors.COLLECTOR_VERSION,
-            transport_meta={"final_host": "cdn.cboe.com"},
-            observations=[
-                Observation(
-                    series_id="vix_close",
-                    metric_key="vix_close",
-                    observation_at="2026-08-06T00:00:00Z",
-                    vintage_at="2026-08-08T01:00:00Z",
-                    value_text="18.5",
-                    value=18.5,
-                    unit="index_points",
-                    attributes={"fixture": True},
-                )
-            ],
+        original_loader = contracts.load_json
+        registry_v2 = copy.deepcopy(original_loader(contracts.SOURCE_REGISTRY))
+        source_v2 = next(
+            row for row in registry_v2["sources"] if row["source_id"] == "cboe_vix"
         )
+        source_v2["provider"] = "Cboe Global Markets Renamed"
+        unsigned = {
+            key: value for key, value in registry_v2.items() if key != "registry_hash"
+        }
+        registry_v2["registry_hash"] = contracts.content_hash(unsigned)
+
+        def versioned_loader(path: Path) -> dict:
+            if path == contracts.SOURCE_REGISTRY:
+                return copy.deepcopy(registry_v2)
+            return original_loader(path)
+
+        contracts.load_json = versioned_loader
+        try:
+            self.store.record_success(
+                run_id="run_identity_v2",
+                request_id="cboe_vix_history",
+                source=copy.deepcopy(source_v2),
+                registry_hash=registry_v2["registry_hash"],
+                requested_series=["vix_close"],
+                started_at="2026-08-08T01:00:00Z",
+                fetched_at="2026-08-08T01:00:00Z",
+                public_locator="https://cdn.cboe.com/vix.csv",
+                response_url="https://cdn.cboe.com/vix.csv",
+                response_status=200,
+                media_type="text/csv",
+                raw_payload=b"same-payload",
+                collector_version=collectors.COLLECTOR_VERSION,
+                transport_meta={"final_host": "cdn.cboe.com"},
+                observations=[
+                    Observation(
+                        series_id="vix_close",
+                        metric_key="vix_close",
+                        observation_at="2026-08-06T00:00:00Z",
+                        vintage_at="2026-08-08T01:00:00Z",
+                        value_text="18.5",
+                        value=18.5,
+                        unit="index_points",
+                        attributes={"fixture": True},
+                    )
+                ],
+            )
+        finally:
+            contracts.load_json = original_loader
         counts = self.store.counts()
         self.assertEqual(2, counts["source_identities"])
         self.assertEqual(2, counts["raw_snapshots"])
         self.assertEqual(2, counts["observations"])
         stats = self.store.series_version_stats("cboe_vix", "vix_close", "vix_close")
         self.assertEqual(2, stats["snapshots"])
+
+    def test_storage_rejects_source_identity_not_in_canonical_registry(self) -> None:
+        source, _registry_hash = source_row("fred_alfred")
+        forged = copy.deepcopy(source)
+        forged["official"] = True
+        forged["evidence_level"] = "E1"
+        forged["roles"] = ["OFFICIAL_ACTUAL"]
+        with self.assertRaisesRegex(MacroStoreError, "canonical M0-A registry"):
+            self.store.record_failure(
+                run_id="run_forged_identity",
+                request_id="fred_dgs2",
+                source=forged,
+                registry_hash="a" * 64,
+                requested_series=["us_treasury_curve"],
+                started_at=NOW_ISO,
+                completed_at=NOW_ISO,
+                public_locator="source://fred_alfred/fred_dgs2",
+                status="DATA_BLOCKED",
+                error_code="FIXTURE",
+                error_message="fixture",
+            )
 
     def test_store_rejects_unregistered_series(self) -> None:
         source, registry_hash = source_row("cboe_vix")
@@ -258,7 +296,13 @@ class MacroM0BTests(unittest.TestCase):
     def test_store_is_idempotent_and_preserves_revisions(self) -> None:
         first = record_vix(self.store, run_id="run_1", raw=b"raw-v1", value=18.5)
         again = record_vix(self.store, run_id="run_2", raw=b"raw-v1", value=18.5)
-        revised = record_vix(self.store, run_id="run_3", raw=b"raw-v2", value=19.0)
+        revised = record_vix(
+            self.store,
+            run_id="run_3",
+            raw=b"raw-v2",
+            value=19.0,
+            fetched_at="2026-08-08T01:00:00Z",
+        )
         self.assertFalse(first.idempotent)
         self.assertTrue(again.idempotent)
         self.assertFalse(revised.idempotent)
@@ -333,6 +377,54 @@ class MacroM0BTests(unittest.TestCase):
         self.assertTrue(
             any("append-only triggers missing" in item for item in self.store.verify_integrity())
         )
+
+    def test_integrity_recomputes_all_four_record_fingerprints(self) -> None:
+        mutations = (
+            (
+                "raw_snapshots_no_update",
+                "UPDATE raw_snapshots SET raw_payload = X'74616d7065726564'",
+                "raw snapshot hash mismatch",
+            ),
+            (
+                "raw_snapshots_no_update",
+                "UPDATE raw_snapshots SET public_locator = 'https://tampered.invalid'",
+                "snapshot provenance hash mismatch",
+            ),
+            (
+                "fetch_attempts_no_update",
+                "UPDATE fetch_attempts SET row_count = 999",
+                "fetch attempt hash mismatch",
+            ),
+            (
+                "source_identities_no_update",
+                "UPDATE source_identities SET registry_hash = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+                "source identity hash mismatch",
+            ),
+        )
+        for index, (trigger, sql, expected) in enumerate(mutations):
+            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as tmp:
+                store = MacroHistoryStore(Path(tmp) / "macro.sqlite3")
+                store.initialize()
+                record_vix(store, run_id=f"run_integrity_{index}", raw=b"raw-v1")
+                with store.connect() as conn:
+                    conn.execute(f"DROP TRIGGER {trigger}")
+                    conn.execute(sql)
+                self.assertTrue(
+                    any(expected in item for item in store.verify_integrity()),
+                    store.verify_integrity(),
+                )
+
+    def test_integrity_reports_missing_table_without_crashing(self) -> None:
+        record_vix(self.store, run_id="run_drop_table", raw=b"raw-v1")
+        with self.store.connect() as conn:
+            conn.execute("DROP TABLE observations")
+        problems = self.store.verify_integrity()
+        self.assertTrue(any("sqlite structure invalid" in item for item in problems), problems)
+
+    def test_same_period_and_vintage_cannot_carry_conflicting_values(self) -> None:
+        record_vix(self.store, run_id="run_vintage_a", raw=b"raw-a", value=18.5)
+        with self.assertRaisesRegex(MacroStoreError, "conflicting observation"):
+            record_vix(self.store, run_id="run_vintage_b", raw=b"raw-b", value=19.0)
 
     def test_concurrent_same_fetch_is_single_projection(self) -> None:
         errors: list[Exception] = []
@@ -483,6 +575,41 @@ class MacroM0BTests(unittest.TestCase):
         self.assertEqual(0, self.store.counts()["observations"])
         self.assertEqual("DATA_INVALID", self.store.latest_attempt("cboe_vix", spec.request_id)["status"])
 
+    def test_echoed_bea_key_is_redacted_before_append_only_storage(self) -> None:
+        key = "SECRETKEY123BEA"
+        spec = next(row for row in collectors.collection_plan() if row.request_id == "bea_gdp")
+        request = spec.build_request(NOW, {"BEA_API_KEY": key})
+        payload = json.loads(bea_fixture("1", "2026Q2", "3.0"))
+        payload["BEAAPI"]["RequestParam"] = {"USERID": key}
+        raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        transport = MappingTransport(
+            {
+                request.public_locator: collectors.HttpResponse(
+                    200,
+                    "https://apps.bea.gov/api/data/" + key + "?UserID=" + key,
+                    {"content-type": "application/json", "etag": key},
+                    raw,
+                )
+            }
+        )
+        result = collectors.collect(
+            store=self.store,
+            transport=transport,
+            specs=(spec,),
+            run_id="run_bea_redaction",
+            now=NOW,
+            env={"BEA_API_KEY": key},
+        )
+        self.assertEqual("OK", result[0]["status"])
+        with self.store.connect() as conn:
+            snapshot = conn.execute("SELECT * FROM raw_snapshots").fetchone()
+        self.assertNotIn(key.encode("utf-8"), bytes(snapshot["raw_payload"]))
+        self.assertIn(collectors.REDACTION_MARKER, bytes(snapshot["raw_payload"]))
+        meta = json.loads(snapshot["transport_meta_json"])
+        self.assertTrue(meta["redacted"])
+        self.assertEqual(["BEA_API_KEY"], meta["redacted_secret_names"])
+        self.assertNotIn(key.encode("utf-8"), self.db.read_bytes())
+
     def test_missing_credentials_is_explicit_data_blocked(self) -> None:
         spec = next(row for row in collectors.collection_plan() if row.request_id == "fred_dgs2")
         transport = MappingTransport({})
@@ -544,8 +671,14 @@ class MacroM0BTests(unittest.TestCase):
         health = collectors.build_health(store=self.store, specs=(spec,), now=NOW)
         self.assertEqual("COMPLETE", health["report"])
         self.assertEqual("CALIBRATING", health["mode"])
-        self.assertFalse(health["policy"]["formal_blocking_authority"])
-        self.assertIn("DIRECT_BLOCK", health["policy"]["forbidden_outputs"])
+        self.assertEqual(
+            {
+                "formal_blocking_authority": False,
+                "allowed_outputs": ["LABEL", "RISK_BUDGET_CONTEXT"],
+                "forbidden_outputs": ["TRADE_ACTION", "DIRECT_BLOCK", "REGIME_CLAIM"],
+            },
+            health["policy"],
+        )
         self.assertEqual(1, health["data"][0]["version_stats"]["snapshots"])
         self.assertEqual(source_row("cboe_vix")[0]["provider"], health["data"][0]["provider"])
         self.assertEqual("DAILY_HISTORY", health["data"][0]["vintage_support"])

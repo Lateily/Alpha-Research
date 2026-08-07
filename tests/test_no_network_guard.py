@@ -7,6 +7,7 @@
 import os
 import socket
 import sys
+import unittest
 from datetime import datetime, timezone
 
 os.environ["AR_OFFLINE"] = "1"
@@ -69,6 +70,12 @@ run_nightly._print_preflight(pf)
 assert pf["pass"], f"preflight FAIL: {pf['failures']}"
 assert setup_promoter.selftest(), "setup_promoter selftest FAIL"
 macro_contracts.selftest()
+import test_macro_m0b_offline as macro_m0b_tests  # noqa: E402
+macro_suite = unittest.defaultTestLoader.loadTestsFromTestCase(
+    macro_m0b_tests.MacroM0BTests
+)
+macro_result = unittest.TextTestRunner(verbosity=0).run(macro_suite)
+assert macro_result.wasSuccessful(), "Macro M0-B suite failed under socket guard"
 try:
     macro_collectors.UrllibTransport().fetch(
         macro_collectors._cboe_builder(
