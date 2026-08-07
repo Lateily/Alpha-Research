@@ -1,6 +1,8 @@
-# Macro OS M0-A 契约
+# Macro OS 数据契约
 
-> 状态:`APPROVED_SPEC / NOT_DEPLOYED`。本目录定义输入边界,不代表抓取器、状态机、面板或夜链接线已经上线。
+> 状态:`M0-A APPROVED_SPEC / M0-B DELIVERED_UNWIRED`。M0-A 定义输入边界;M0-B 已交付历史仓和首批采集器,但仍未接入夜链、盘前帧或生产调度。
+
+M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PIPELINE.md)。
 
 ## 1. 本批交付
 
@@ -14,7 +16,7 @@
 | `macro_event.schema.json` | 事件事实、共识和预期差 JSON Schema | 已完成 |
 | `contracts.py` | 零网络、失败即阻断的语义校验器 | 已完成 |
 
-权威路径位于 `experiments/macro_os/`。M0-B 才会生成运行数据;Better 的前端现在不应自行发明另一套字段。
+权威路径位于 `experiments/macro_os/`。M0-B 能生成本地运行数据,但未完成生产接线;Better 的前端不应自行发明另一套字段。
 
 ## 2. 四类事实不能混写
 
@@ -62,7 +64,7 @@
 
 ## 6. 后续批次
 
-1. **M0-B**:采集器、SQLite 历史仓、双源共识、adaptive scheduler、source health。
+1. **M0-B2**:其余官方采集器、双源共识、adaptive scheduler 和生产接线。
 2. **M1-A**:GLOBAL/US 与 CHINA 双状态机、MRG、行业和组合传导。
 3. **M1-B**:内部宏观面板、告警中心、夜链 U1 标注消费者和校准记录。
 
