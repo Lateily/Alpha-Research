@@ -4740,7 +4740,7 @@
     "timestamp": "20260731 close (official)",
     "line": "execution",
     "market_state": "RISK_ON",
-    "sector_single_beta": true,
+    "sector_single_beta": false,
     "market_main_flow_total": 625.36,
     "setup_type": "HOLD_OBSERVE",
     "fund_structure": "主力回流",
@@ -4776,6 +4776,17 @@
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
+    },
+    "_migration": {
+      "corrected_at": "20260807 09:25:49",
+      "reason": "0731 跨层迁移补齐(#241 复核 BLOCKER):样本层 20260731.json 已于 0801 将 sector_single_beta 回写为 false(single_beta 由观察名单算出、真实 filled 持仓恒瑞+牧原分属不同行业 ⇒ 非单一 beta),但同日四条信号行漏改,造成同一事实的层间矛盾。本次与样本层 _migrations[0] 同口径同步。",
+      "fields": {
+        "sector_single_beta": {
+          "original_value": true,
+          "new_value": false
+        }
+      },
+      "sync_of": "samples/20260731.json _migrations[0] (corrected_at 20260801 17:43:27)"
     }
   },
   {
@@ -4785,7 +4796,7 @@
     "timestamp": "20260731 close (official)",
     "line": "execution",
     "market_state": "RISK_ON",
-    "sector_single_beta": true,
+    "sector_single_beta": false,
     "market_main_flow_total": 625.36,
     "setup_type": "HOLD_OBSERVE",
     "fund_structure": "主力回流",
@@ -4821,6 +4832,17 @@
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
+    },
+    "_migration": {
+      "corrected_at": "20260807 09:25:49",
+      "reason": "0731 跨层迁移补齐(#241 复核 BLOCKER):样本层 20260731.json 已于 0801 将 sector_single_beta 回写为 false(single_beta 由观察名单算出、真实 filled 持仓恒瑞+牧原分属不同行业 ⇒ 非单一 beta),但同日四条信号行漏改,造成同一事实的层间矛盾。本次与样本层 _migrations[0] 同口径同步。",
+      "fields": {
+        "sector_single_beta": {
+          "original_value": true,
+          "new_value": false
+        }
+      },
+      "sync_of": "samples/20260731.json _migrations[0] (corrected_at 20260801 17:43:27)"
     }
   },
   {
@@ -4830,7 +4852,7 @@
     "timestamp": "20260731 close (official)",
     "line": "execution",
     "market_state": "RISK_ON",
-    "sector_single_beta": true,
+    "sector_single_beta": false,
     "market_main_flow_total": 625.36,
     "setup_type": "HOLD_OBSERVE",
     "fund_structure": "主力回流",
@@ -4866,6 +4888,17 @@
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
+    },
+    "_migration": {
+      "corrected_at": "20260807 09:25:49",
+      "reason": "0731 跨层迁移补齐(#241 复核 BLOCKER):样本层 20260731.json 已于 0801 将 sector_single_beta 回写为 false(single_beta 由观察名单算出、真实 filled 持仓恒瑞+牧原分属不同行业 ⇒ 非单一 beta),但同日四条信号行漏改,造成同一事实的层间矛盾。本次与样本层 _migrations[0] 同口径同步。",
+      "fields": {
+        "sector_single_beta": {
+          "original_value": true,
+          "new_value": false
+        }
+      },
+      "sync_of": "samples/20260731.json _migrations[0] (corrected_at 20260801 17:43:27)"
     }
   },
   {
@@ -4875,7 +4908,7 @@
     "timestamp": "20260731 close (official)",
     "line": "execution",
     "market_state": "RISK_ON",
-    "sector_single_beta": true,
+    "sector_single_beta": false,
     "market_main_flow_total": 625.36,
     "setup_type": "HOLD_OBSERVE",
     "fund_structure": "主力回流",
@@ -4911,6 +4944,17 @@
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
+    },
+    "_migration": {
+      "corrected_at": "20260807 09:25:49",
+      "reason": "0731 跨层迁移补齐(#241 复核 BLOCKER):样本层 20260731.json 已于 0801 将 sector_single_beta 回写为 false(single_beta 由观察名单算出、真实 filled 持仓恒瑞+牧原分属不同行业 ⇒ 非单一 beta),但同日四条信号行漏改,造成同一事实的层间矛盾。本次与样本层 _migrations[0] 同口径同步。",
+      "fields": {
+        "sector_single_beta": {
+          "original_value": true,
+          "new_value": false
+        }
+      },
+      "sync_of": "samples/20260731.json _migrations[0] (corrected_at 20260801 17:43:27)"
     }
   },
   {
