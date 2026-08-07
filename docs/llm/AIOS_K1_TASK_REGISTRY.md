@@ -11,8 +11,9 @@ AIOS-K1 turns AI work from chat memory into three deterministic records:
 - `reconciler.py`: reports gaps such as orphan tasks, stale claims, unlinked PRs,
   oversold DONE events, and delivered-but-unwired work.
 
-This layer is read-only. It does not write GitHub comments, call model APIs, run
-ledger engines, or change research decisions.
+This layer is source-system read-only. It does not write GitHub comments, call
+model APIs, run ledger engines, mutate repo facts, or change research decisions.
+The CLI may write an explicit local `--output` report path chosen by the user.
 
 ## Why It Matters
 
@@ -68,7 +69,7 @@ C:\Users\19463\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\p
 ## Current Offline Verification
 
 ```text
-ALL AIOS K1 OFFLINE TESTS PASS (8 tests, 0 network calls)
+ALL AIOS K1 OFFLINE TESTS PASS (15 tests, 0 network calls)
 ALL AGENT ADAPTER OFFLINE TESTS PASS (36 tests, 0 network calls)
 ```
 

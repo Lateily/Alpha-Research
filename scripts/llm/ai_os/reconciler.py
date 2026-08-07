@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any, Mapping, Sequence
 
@@ -28,6 +29,7 @@ def reconcile(
         item.get("task_id") for item in manifests if isinstance(item.get("task_id"), str)
     }
     registry_tasks = (registry_snapshot or {}).get("tasks", {})
+    pr_by_number = _pr_index(pull_requests)
 
     return {
         "schema": "ai-os-reconciliation.v1",
@@ -35,7 +37,7 @@ def reconcile(
         "orphan_tasks": _orphan_tasks(backlog_items, manifest_ids, registry_tasks),
         "stale_claims": _stale_claims(progress_events, now),
         "unlinked_prs": _unlinked_prs(pull_requests),
-        "oversold_done": _oversold_done(progress_events, registry_tasks),
+        "oversold_done": _oversold_done(progress_events, registry_tasks, pr_by_number),
         "delivered_unwired": _delivered_unwired(backlog_items, pull_requests),
         "stale_docs": _stale_docs(doc_claims),
         "unconsumed_alerts": _unconsumed_alerts(alerts),
@@ -87,7 +89,15 @@ def _stale_claims(
     findings = []
     for task, event in active.items():
         expires_at = _parse_time(event.get("expires_at"))
-        if expires_at and expires_at < now:
+        if isinstance(expires_at, str):
+            findings.append(
+                {
+                    "task": task,
+                    "expires_at": event.get("expires_at"),
+                    "reason": expires_at,
+                }
+            )
+        elif expires_at < now:
             findings.append(
                 {
                     "task": task,
@@ -122,6 +132,7 @@ def _unlinked_prs(pull_requests: Sequence[Mapping[str, Any]]) -> list[dict[str, 
 def _oversold_done(
     progress_events: Sequence[Mapping[str, Any]],
     registry_tasks: Mapping[str, Any],
+    pr_by_number: Mapping[int, Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
     findings = []
     for event in progress_events:
@@ -135,6 +146,15 @@ def _oversold_done(
                         "reason": "DONE comment lacks required evidence fields",
                     }
                 )
+                continue
+            findings.extend(
+                _pr_findings(
+                    owner={"task": event.get("task")},
+                    pr_value=event.get("pr"),
+                    pr_by_number=pr_by_number,
+                    done_context=True,
+                )
+            )
     for task_id, state in registry_tasks.items():
         if state.get("state") == "DONE" and not state.get("evidence_refs"):
             findings.append(
@@ -144,6 +164,19 @@ def _oversold_done(
                     "reason": "registry DONE lacks evidence refs",
                 }
             )
+            continue
+        if state.get("state") in {"DONE", "MERGED"}:
+            for pr_value in state.get("evidence_refs", []):
+                if _pr_number(pr_value) is not None:
+                    findings.extend(
+                        _pr_findings(
+                            owner={"task": task_id},
+                            pr_value=pr_value,
+                            pr_by_number=pr_by_number,
+                            done_context=state.get("state") == "DONE",
+                            registry_state=state.get("state"),
+                        )
+                    )
     return findings
 
 
@@ -202,14 +235,67 @@ def _missing_followups(followups: Sequence[Mapping[str, Any]]) -> list[dict[str,
     ]
 
 
-def _parse_time(value: Any) -> datetime | None:
+def _parse_time(value: Any) -> datetime | str:
     if not isinstance(value, str) or not value.strip():
-        return None
+        return "CLAIM expires_at is missing"
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
-        return None
+        return "CLAIM expires_at is invalid"
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        return "CLAIM expires_at must include timezone"
     return parsed.astimezone(timezone.utc)
 
+
+def _pr_index(pull_requests: Sequence[Mapping[str, Any]]) -> dict[int, Mapping[str, Any]]:
+    index = {}
+    for pr in pull_requests:
+        number = pr.get("number")
+        if isinstance(number, int) and not isinstance(number, bool):
+            index[number] = pr
+    return index
+
+
+def _pr_findings(
+    *,
+    owner: dict[str, Any],
+    pr_value: Any,
+    pr_by_number: Mapping[int, Mapping[str, Any]],
+    done_context: bool,
+    registry_state: str | None = None,
+) -> list[dict[str, Any]]:
+    number = _pr_number(pr_value)
+    if number is None:
+        return [{**owner, "pr": pr_value, "reason": "PR reference is not parseable"}]
+    pr = pr_by_number.get(number)
+    if pr is None:
+        return [{**owner, "pr": number, "reason": "DONE references unknown PR"}]
+
+    findings = []
+    state = pr.get("state")
+    if state == "OPEN" and registry_state == "MERGED":
+        findings.append(
+            {**owner, "pr": number, "reason": "registry MERGED references PR that is still open"}
+        )
+    elif done_context and state != "MERGED":
+        findings.append({**owner, "pr": number, "reason": "DONE references PR that is not merged"})
+    if done_context and pr.get("requires_runtime") and not pr.get("runtime_verified"):
+        findings.append(
+            {
+                **owner,
+                "pr": number,
+                "reason": "DONE references PR without required runtime verification",
+            }
+        )
+    return findings
+
+
+def _pr_number(value: Any) -> int | None:
+    if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+        return value
+    if not isinstance(value, str):
+        return None
+    match = re.search(r"(?:/pull/|#)(\d+)\b", value)
+    if not match:
+        return None
+    return int(match.group(1))

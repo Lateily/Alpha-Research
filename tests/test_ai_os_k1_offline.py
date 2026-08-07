@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import socket
+import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -47,7 +49,13 @@ def valid_task_source(**overrides):
     return source
 
 
-def event(event_id, from_state, to_state, evidence_refs=None):
+def event(
+    event_id,
+    from_state,
+    to_state,
+    evidence_refs=None,
+    timestamp_utc="2026-08-07T09:00:00Z",
+):
     return {
         "event_id": event_id,
         "task_id": "A-006-task-manifest",
@@ -56,7 +64,7 @@ def event(event_id, from_state, to_state, evidence_refs=None):
         "actor": "Codex",
         "reason": f"{from_state}->{to_state}",
         "evidence_refs": evidence_refs or [],
-        "timestamp_utc": "2026-08-07T09:00:00Z",
+        "timestamp_utc": timestamp_utc,
     }
 
 
@@ -96,12 +104,64 @@ def test_task_manifest_rejects_bad_budget_and_network() -> None:
     assert "budget.max_cny must be non-negative" in result.errors
 
 
+def test_task_manifest_rejects_non_finite_budget_and_bad_created_at() -> None:
+    cases = [
+        valid_task_source(budget={"max_cny": "NaN", "max_minutes": 60}),
+        valid_task_source(budget={"max_cny": "Infinity", "max_minutes": 60}),
+        valid_task_source(created_at=123),
+        valid_task_source(created_at="   "),
+        valid_task_source(created_at="2026-08-07T09:30:00"),
+    ]
+
+    for source in cases:
+        result = compile_task_manifest(source, now=NOW)
+        assert result.status == SPEC_BLOCKED
+        assert result.manifest is None
+
+
+def test_task_manifest_cli_bad_input_exits_spec_blocked() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        source_path = Path(temp_dir) / "bad_task.json"
+        source_path.write_text(
+            json.dumps(valid_task_source(budget={"max_cny": "NaN", "max_minutes": 60})),
+            encoding="utf-8",
+        )
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / "llm" / "ai_os" / "cli.py"),
+                "compile",
+                "--input",
+                str(source_path),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+    assert completed.returncode == 2
+    assert '"status": "SPEC_BLOCKED"' in completed.stdout
+
+
 def test_registry_replays_events_idempotently() -> None:
     events = [
-        event("evt-1", "DISCOVERED", "TRIAGED"),
-        event("evt-2", "TRIAGED", "SPEC_READY"),
-        event("evt-2", "TRIAGED", "SPEC_READY"),
-        event("evt-3", "SPEC_READY", "DONE", ["pr#1", "test#1"]),
+        event("evt-1", "DISCOVERED", "TRIAGED", timestamp_utc="2026-08-07T09:00:00Z"),
+        event("evt-2", "TRIAGED", "SPEC_READY", timestamp_utc="2026-08-07T09:01:00Z"),
+        event("evt-2", "TRIAGED", "SPEC_READY", timestamp_utc="2026-08-07T09:01:00Z"),
+        event("evt-3", "SPEC_READY", "CLAIMED", timestamp_utc="2026-08-07T09:02:00Z"),
+        event("evt-4", "CLAIMED", "RUNNING", timestamp_utc="2026-08-07T09:03:00Z"),
+        event("evt-5", "RUNNING", "VERIFYING", timestamp_utc="2026-08-07T09:04:00Z"),
+        event("evt-6", "VERIFYING", "REVIEWING", timestamp_utc="2026-08-07T09:05:00Z"),
+        event(
+            "evt-7",
+            "REVIEWING",
+            "AWAITING_APPROVAL",
+            timestamp_utc="2026-08-07T09:06:00Z",
+        ),
+        event("evt-8", "AWAITING_APPROVAL", "MERGED", timestamp_utc="2026-08-07T09:07:00Z"),
+        event("evt-9", "MERGED", "VALIDATING", timestamp_utc="2026-08-07T09:08:00Z"),
+        event("evt-10", "VALIDATING", "DONE", ["pr#1", "test#1"], "2026-08-07T09:09:00Z"),
     ]
 
     snapshot = replay_events(events).to_dict()
@@ -127,7 +187,7 @@ def test_registry_blocks_forbidden_done_shortcut() -> None:
     ).to_dict()
 
     assert snapshot["tasks"]["A-006-task-manifest"]["state"] == "RUNNING"
-    assert snapshot["invalid_events"][0]["reason"] == "forbidden shortcut RUNNING->DONE"
+    assert snapshot["invalid_events"][0]["reason"] == "transition RUNNING->DONE is not allowed"
 
 
 def test_registry_requires_done_evidence() -> None:
@@ -140,7 +200,48 @@ def test_registry_requires_done_evidence() -> None:
     ).to_dict()
 
     assert snapshot["tasks"]["A-006-task-manifest"]["state"] == "SPEC_READY"
-    assert snapshot["invalid_events"][0]["reason"] == "DONE requires evidence_refs"
+    assert snapshot["invalid_events"][0]["reason"] == "transition SPEC_READY->DONE is not allowed"
+
+
+def test_registry_rejects_jump_back_self_loop_and_time_reversal() -> None:
+    snapshot = replay_events(
+        [
+            event("evt-1", "DISCOVERED", "DONE", ["pr#1"], "2026-08-07T09:00:00Z"),
+            event("evt-2", "DISCOVERED", "DEPLOYED", [], "2026-08-07T09:01:00Z"),
+            event("evt-3", "DISCOVERED", "DISCOVERED", [], "2026-08-07T09:02:00Z"),
+        ]
+    ).to_dict()
+
+    assert "A-006-task-manifest" in snapshot["tasks"]
+    assert snapshot["tasks"]["A-006-task-manifest"]["state"] == "DISCOVERED"
+    assert [item["reason"] for item in snapshot["invalid_events"]] == [
+        "transition DISCOVERED->DONE is not allowed",
+        "transition DISCOVERED->DEPLOYED is not allowed",
+        "transition DISCOVERED->DISCOVERED is not allowed",
+    ]
+
+    reversed_time = replay_events(
+        [
+            event("evt-1", "DISCOVERED", "TRIAGED", [], "2026-08-07T09:10:00Z"),
+            event("evt-2", "TRIAGED", "SPEC_READY", [], "2026-08-07T09:00:00Z"),
+        ]
+    ).to_dict()
+    assert reversed_time["tasks"]["A-006-task-manifest"]["state"] == "TRIAGED"
+    assert reversed_time["invalid_events"][0]["reason"] == "timestamp_utc is older than current task state"
+
+
+def test_registry_allows_blocked_recovery_path() -> None:
+    snapshot = replay_events(
+        [
+            event("evt-1", "DISCOVERED", "TRIAGED", [], "2026-08-07T09:00:00Z"),
+            event("evt-2", "TRIAGED", "SPEC_READY", [], "2026-08-07T09:01:00Z"),
+            event("evt-3", "SPEC_READY", "BLOCKED", ["issue#193"], "2026-08-07T09:02:00Z"),
+            event("evt-4", "BLOCKED", "SPEC_READY", ["issue#193"], "2026-08-07T09:03:00Z"),
+        ]
+    ).to_dict()
+
+    assert snapshot["tasks"]["A-006-task-manifest"]["state"] == "SPEC_READY"
+    assert snapshot["invalid_events"] == []
 
 
 def test_reconciler_reports_k1_gaps() -> None:
@@ -161,10 +262,17 @@ def test_reconciler_reports_k1_gaps() -> None:
                 "task": "#193",
                 "expires_at": "2026-08-07T08:00:00Z",
             },
-            {"event": "DONE", "task": "#237", "cost_cny": "0"},
+            {
+                "event": "DONE",
+                "task": "#237",
+                "pr": "https://github.com/Lateily/Alpha-Research/pull/237",
+                "next": "review",
+                "cost_cny": "0",
+            },
         ],
         pull_requests=[
             {"number": 250, "state": "OPEN", "linked_issue": None},
+            {"number": 237, "state": "OPEN", "linked_issue": 237},
             {
                 "number": 251,
                 "state": "MERGED",
@@ -192,6 +300,104 @@ def test_reconciler_reports_k1_gaps() -> None:
     assert report["unconsumed_alerts"][0]["alert_id"] == "alert-1"
     assert report["missing_followups"][0]["source"] == "memory-1"
     json.dumps(report, ensure_ascii=False)
+
+
+def test_reconciler_reports_invalid_claim_leases() -> None:
+    report = reconcile(
+        progress_events=[
+            {"event": "CLAIM", "task": "missing-expiry"},
+            {"event": "CLAIM", "task": "bad-expiry", "expires_at": "not-a-time"},
+            {"event": "CLAIM", "task": "naive-expiry", "expires_at": "2026-08-07T09:00:00"},
+        ],
+        now=NOW,
+    )
+
+    assert [item["task"] for item in report["stale_claims"]] == [
+        "missing-expiry",
+        "bad-expiry",
+        "naive-expiry",
+    ]
+    assert [item["reason"] for item in report["stale_claims"]] == [
+        "CLAIM expires_at is missing",
+        "CLAIM expires_at is invalid",
+        "CLAIM expires_at must include timezone",
+    ]
+
+
+def test_reconciler_cross_checks_done_against_pr_state() -> None:
+    report = reconcile(
+        registry_snapshot={
+            "tasks": {
+                "A-007": {
+                    "state": "MERGED",
+                    "evidence_refs": ["https://github.com/Lateily/Alpha-Research/pull/300"],
+                },
+            }
+        },
+        progress_events=[
+            {
+                "event": "DONE",
+                "task": "#999",
+                "pr": "#999",
+                "next": "none",
+                "cost_cny": "0",
+            },
+            {
+                "event": "DONE",
+                "task": "#301",
+                "pr": "#301",
+                "next": "none",
+                "cost_cny": "0",
+            },
+        ],
+        pull_requests=[
+            {"number": 999, "state": "OPEN"},
+            {"number": 300, "state": "OPEN"},
+            {
+                "number": 301,
+                "state": "MERGED",
+                "requires_runtime": True,
+                "runtime_verified": False,
+            },
+        ],
+        now=NOW,
+    )
+
+    reasons = [item["reason"] for item in report["oversold_done"]]
+    assert "DONE references PR that is not merged" in reasons
+    assert "registry MERGED references PR that is still open" in reasons
+    assert "DONE references PR without required runtime verification" in reasons
+
+
+def test_reconciler_cli_invalid_claim_exits_nonzero() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        fixture_path = Path(temp_dir) / "reconcile.json"
+        fixture_path.write_text(
+            json.dumps(
+                {
+                    "progress_events": [
+                        {"event": "CLAIM", "task": "bad", "expires_at": "not-a-time"}
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "scripts" / "llm" / "ai_os" / "cli.py"),
+                "reconcile",
+                "--input",
+                str(fixture_path),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+    assert completed.returncode == 1
+    assert "CLAIM expires_at is invalid" in completed.stdout
 
 
 def test_ai_os_k1_has_zero_network_surface() -> None:

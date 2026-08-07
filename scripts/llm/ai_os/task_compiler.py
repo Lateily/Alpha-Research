@@ -119,6 +119,9 @@ def compile_task_manifest(
         or source_issue <= 0
     ):
         errors.append("source_issue must be a positive integer when present")
+    created_at = _normalize_created_at(source.get("created_at"), now)
+    if isinstance(created_at, str) and created_at.startswith("created_at "):
+        errors.append(created_at)
 
     if errors:
         return CompileResult(SPEC_BLOCKED, None, tuple(errors))
@@ -146,8 +149,7 @@ def compile_task_manifest(
         "network_policy": source["network_policy"],
         "budget": budget,
         "approval_gates": _clean_string_list(source["approval_gates"]),
-        "created_at": source.get("created_at")
-        or now.astimezone(timezone.utc).isoformat(),
+        "created_at": created_at,
         "source_hash": _hash_json(source),
     }
     ordered = {key: manifest[key] for key in MANIFEST_ORDER}
@@ -163,6 +165,8 @@ def _normalize_budget(value: Any) -> dict[str, Any] | str:
         cost = Decimal(str(max_cny))
     except (InvalidOperation, ValueError):
         return "budget.max_cny must be a non-negative decimal"
+    if not cost.is_finite():
+        return "budget.max_cny must be finite"
     if cost < 0:
         return "budget.max_cny must be non-negative"
     if (
@@ -172,6 +176,20 @@ def _normalize_budget(value: Any) -> dict[str, Any] | str:
     ):
         return "budget.max_minutes must be a positive integer"
     return {"max_cny": format(cost, "f"), "max_minutes": max_minutes}
+
+
+def _normalize_created_at(value: Any, now: datetime) -> str:
+    if value is None:
+        return now.astimezone(timezone.utc).isoformat()
+    if not isinstance(value, str) or not value.strip():
+        return "created_at must be a non-empty string when present"
+    try:
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return "created_at must be a valid ISO-8601 timestamp"
+    if parsed.tzinfo is None:
+        return "created_at must include timezone"
+    return parsed.astimezone(timezone.utc).isoformat()
 
 
 def _non_empty_string(value: Any) -> bool:
@@ -199,4 +217,3 @@ def _clean_string_list(value: Any) -> list[str]:
 def _hash_json(value: Mapping[str, Any]) -> str:
     payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return "sha256:" + sha256(payload.encode("utf-8")).hexdigest()
-

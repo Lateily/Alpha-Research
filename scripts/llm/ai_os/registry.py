@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from hashlib import sha256
 from typing import Any, Mapping, Sequence
 
@@ -29,11 +30,44 @@ STATES = {
     "RETIRED",
     "DELIVERED_UNWIRED",
 }
-FORBIDDEN_SHORTCUTS = {
-    ("RUNNING", "DONE"),
-    ("MERGED", "DONE"),
-    ("BLOCKED", "DONE"),
-    ("DELIVERED_UNWIRED", "DONE"),
+ALLOWED_TRANSITIONS = {
+    ("DISCOVERED", "TRIAGED"),
+    ("TRIAGED", "SPEC_READY"),
+    ("TRIAGED", "SPEC_BLOCKED"),
+    ("SPEC_BLOCKED", "SPEC_READY"),
+    ("SPEC_READY", "CLAIMED"),
+    ("SPEC_READY", "BLOCKED"),
+    ("CLAIMED", "RUNNING"),
+    ("CLAIMED", "RELEASED"),
+    ("CLAIMED", "BLOCKED"),
+    ("RELEASED", "CLAIMED"),
+    ("RUNNING", "VERIFYING"),
+    ("RUNNING", "FAILED"),
+    ("RUNNING", "BLOCKED"),
+    ("VERIFYING", "REVIEWING"),
+    ("VERIFYING", "FAILED"),
+    ("VERIFYING", "BLOCKED"),
+    ("REVIEWING", "AWAITING_APPROVAL"),
+    ("REVIEWING", "FAILED"),
+    ("REVIEWING", "BLOCKED"),
+    ("AWAITING_APPROVAL", "MERGED"),
+    ("AWAITING_APPROVAL", "RETIRED"),
+    ("AWAITING_APPROVAL", "BLOCKED"),
+    ("MERGED", "DEPLOYED"),
+    ("MERGED", "VALIDATING"),
+    ("MERGED", "DELIVERED_UNWIRED"),
+    ("DEPLOYED", "VALIDATING"),
+    ("VALIDATING", "DONE"),
+    ("VALIDATING", "FAILED"),
+    ("VALIDATING", "BLOCKED"),
+    ("DELIVERED_UNWIRED", "VALIDATING"),
+    ("BLOCKED", "SPEC_READY"),
+    ("BLOCKED", "CLAIMED"),
+    ("BLOCKED", "RUNNING"),
+    ("BLOCKED", "VERIFYING"),
+    ("BLOCKED", "REVIEWING"),
+    ("BLOCKED", "AWAITING_APPROVAL"),
+    ("FAILED", "RUNNING"),
 }
 
 
@@ -43,6 +77,7 @@ class TaskState:
     state: str = "DISCOVERED"
     events: list[str] = field(default_factory=list)
     evidence_refs: list[str] = field(default_factory=list)
+    last_timestamp: datetime | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -99,6 +134,10 @@ def replay_events(events: Sequence[Mapping[str, Any]]) -> RegistrySnapshot:
         if error:
             invalid_events.append(_invalid(index, event, error))
             continue
+        timestamp = _parse_timestamp(str(event["timestamp_utc"]))
+        if isinstance(timestamp, str):
+            invalid_events.append(_invalid(index, event, timestamp))
+            continue
 
         task_id = str(event["task_id"])
         current = tasks.setdefault(task_id, TaskState(task_id=task_id))
@@ -115,9 +154,14 @@ def replay_events(events: Sequence[Mapping[str, Any]]) -> RegistrySnapshot:
                 )
             )
             continue
-        if (from_state, to_state) in FORBIDDEN_SHORTCUTS:
+        if current.last_timestamp and timestamp < current.last_timestamp:
             invalid_events.append(
-                _invalid(index, event, f"forbidden shortcut {from_state}->{to_state}")
+                _invalid(index, event, "timestamp_utc is older than current task state")
+            )
+            continue
+        if (from_state, to_state) not in ALLOWED_TRANSITIONS:
+            invalid_events.append(
+                _invalid(index, event, f"transition {from_state}->{to_state} is not allowed")
             )
             continue
         if to_state == "DONE" and not evidence_refs:
@@ -127,6 +171,7 @@ def replay_events(events: Sequence[Mapping[str, Any]]) -> RegistrySnapshot:
         current.state = to_state
         current.events.append(event_id)
         current.evidence_refs.extend(evidence_refs)
+        current.last_timestamp = timestamp
 
     return RegistrySnapshot(tasks, invalid_events, duplicate_events)
 
@@ -171,8 +216,17 @@ def _fingerprint(event: Mapping[str, Any]) -> str:
     return sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _parse_timestamp(value: str) -> datetime | str:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return "timestamp_utc is invalid"
+    if parsed.tzinfo is None:
+        return "timestamp_utc must include timezone"
+    return parsed.astimezone(timezone.utc)
+
+
 def _string_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [item.strip() for item in value if isinstance(item, str) and item.strip()]
-
