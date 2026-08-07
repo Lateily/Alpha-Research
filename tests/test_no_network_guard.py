@@ -7,6 +7,8 @@
 import os
 import socket
 import sys
+import unittest
+from datetime import datetime, timezone
 
 os.environ["AR_OFFLINE"] = "1"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -50,6 +52,8 @@ import attribution_audit       # noqa: E402,F401
 import export_contracts        # noqa: E402,F401
 import run_post_close_report   # noqa: E402,F401
 from experiments.macro_os import contracts as macro_contracts  # noqa: E402
+from experiments.macro_os import collectors as macro_collectors  # noqa: E402
+from experiments.macro_os import storage as macro_storage  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
 import test_engines_offline as teo        # noqa: E402
@@ -66,5 +70,20 @@ run_nightly._print_preflight(pf)
 assert pf["pass"], f"preflight FAIL: {pf['failures']}"
 assert setup_promoter.selftest(), "setup_promoter selftest FAIL"
 macro_contracts.selftest()
+import test_macro_m0b_offline as macro_m0b_tests  # noqa: E402
+macro_suite = unittest.defaultTestLoader.loadTestsFromTestCase(
+    macro_m0b_tests.MacroM0BTests
+)
+macro_result = unittest.TextTestRunner(verbosity=0).run(macro_suite)
+assert macro_result.wasSuccessful(), "Macro M0-B suite failed under socket guard"
+try:
+    macro_collectors.UrllibTransport().fetch(
+        macro_collectors._cboe_builder(
+            datetime.now(timezone.utc), {}
+        )
+    )
+    raise AssertionError("Macro M0-B transport ignored AR_OFFLINE")
+except macro_collectors.CollectionError as exc:
+    assert exc.code == "AR_OFFLINE", exc
 
 print("NO-NETWORK GUARD PASS: 全模块导入 + 离线套件 + selftest + preflight,0 网络调用")
