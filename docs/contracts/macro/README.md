@@ -1,6 +1,6 @@
 # Macro OS 数据契约
 
-> 状态:`M0-A APPROVED_SPEC / M0-B DELIVERED_UNWIRED`。M0-A 定义输入边界;M0-B 已交付历史仓和首批采集器,但仍未接入夜链、盘前帧或生产调度。
+> 状态:`M0-A APPROVED_SPEC / M0-B2 DELIVERED_UNWIRED`。M0-A 定义输入边界;M0-B2 已交付历史仓、官方适配器、发布日历和双源共识门,但仍未接入夜链、盘前帧或生产调度。
 
 M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PIPELINE.md)。
 
@@ -14,6 +14,8 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 | `event_tiers.schema.json` | 事件分层 JSON Schema | 已完成 |
 | `house_expectation.schema.json` | 内部宏观预判 JSON Schema | 已完成 |
 | `macro_event.schema.json` | 事件事实、共识和预期差 JSON Schema | 已完成 |
+| `release_calendar.schema.json` | 官方发布日历与不可变快照引用 | 已完成 |
+| `consensus_gate.schema.json` | 双源共识、冲突与阻断诊断 | 已完成 |
 | `contracts.py` | 零网络、失败即阻断的语义校验器 | 已完成 |
 
 权威路径位于 `experiments/macro_os/`。M0-B 能生成本地运行数据,但未完成生产接线;Better 的前端不应自行发明另一套字段。
@@ -38,7 +40,7 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 - 中国货币与信贷:中国人民银行。
 - VIX:Cboe 官方历史数据。
 - FRED/ALFRED:利率、信用与历史版本镜像,不冒充第三方指标的原发布机关。
-- 市场共识源目前均为 `DATA_BLOCKED`;M0-B 未解决双源接入前,共识与预期差必须如实阻断。
+- 市场共识的两条候选源目前仍为 `DATA_BLOCKED`;M0-B2 已交付双源校验器,但没有采购或伪造上游。两条独立正式源真正入库前,共识与预期差继续阻断。
 
 ## 4. 时间与版本纪律
 
@@ -64,7 +66,7 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 
 ## 6. 后续批次
 
-1. **M0-B2**:其余官方采集器、双源共识、adaptive scheduler 和生产接线。
+1. **M0-B3**:官方 release URL 发现、自适应调度、重大数据发布延迟监控、生产接线和 append-only 预期登记时间戳。
 2. **M1-A**:GLOBAL/US 与 CHINA 双状态机、MRG、行业和组合传导。
 3. **M1-B**:内部宏观面板、告警中心、夜链 U1 标注消费者和校准记录。
 

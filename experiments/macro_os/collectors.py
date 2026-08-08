@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Macro OS M0-B source collectors, provenance binding, and health export.
 
-Supported first-wave adapters:
+Supported adapters:
   * BLS Public Data API (official E1): labor and inflation series
   * BEA Public API (official E1): GDP and core-PCE tables
   * Cboe official VIX history download (official E1)
   * FRED/ALFRED (E2 mirror): Treasury, real-yield, and credit series
+  * U.S. Census Economic Indicators (official E1): retail sales
 
 Collection writes raw bytes and observations into the append-only SQLite store.
 The output remains CALIBRATING and has no direct blocking or trading authority.
@@ -47,7 +48,6 @@ DEFAULT_HEALTH = Path("public/data/v2/macro/source_health.json")
 DISCLAIMER = "不是买卖指令;研究信号,human executes."
 FAILURE_STATUSES = {"DATA_BLOCKED", "SOURCE_DOWN", "DATA_INVALID"}
 SECRET_QUERY_KEYS = {"api_key", "key", "userid", "registrationkey"}
-SECRET_ENV_NAMES = ("BEA_API_KEY", "BLS_API_KEY", "FRED_API_KEY")
 REDACTION_MARKER = b"[REDACTED_SECRET]"
 
 
@@ -172,7 +172,7 @@ def _date_iso(year: int, month: int = 1, day: int = 1) -> str:
 
 def _period_iso(raw: str) -> str:
     value = raw.strip()
-    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y%m%d"):
+    for fmt in ("%Y-%m-%d", "%Y-%m", "%m/%d/%Y", "%Y%m%d"):
         try:
             parsed = datetime.strptime(value, fmt).replace(tzinfo=timezone.utc)
             return parsed.isoformat().replace("+00:00", "Z")
@@ -205,7 +205,16 @@ def _redact_response_body(
 ) -> tuple[bytes, list[str]]:
     redacted = raw
     names: list[str] = []
-    for name in SECRET_ENV_NAMES:
+    source_payload = contracts.load_json(contracts.SOURCE_REGISTRY)
+    contracts.validate_source_registry(source_payload)
+    credential_names = sorted(
+        {
+            name
+            for source in source_payload["sources"]
+            for name in source["credential_env_vars"]
+        }
+    )
+    for name in credential_names:
         value = environment.get(name, "").strip()
         if not value:
             continue
@@ -551,6 +560,85 @@ def _bea_parser(raw: bytes, fetched_at: str, spec: RequestSpec) -> list[Observat
     return observations
 
 
+def _census_builder(now: datetime, env: dict[str, str]) -> HttpRequest:
+    key = env.get("CENSUS_API_KEY", "").strip()
+    if not key:
+        raise CollectionError(
+            "DATA_BLOCKED",
+            "CENSUS_API_KEY_MISSING",
+            "CENSUS_API_KEY is not configured",
+        )
+    params = {
+        "get": "cell_value,data_type_code,time_slot_id,category_code,seasonally_adj",
+        "time": f"from {now.year - 5}-01",
+        "data_type_code": "SM",
+        "category_code": "44X72",
+        "seasonally_adj": "yes",
+        "key": key,
+    }
+    public_params = {name: value for name, value in params.items() if name != "key"}
+    base = "https://api.census.gov/data/timeseries/eits/marts"
+    return HttpRequest(
+        method="GET",
+        url=base + "?" + urllib.parse.urlencode(params),
+        public_locator=base + "?" + urllib.parse.urlencode(public_params),
+        headers={"Accept": "application/json", "User-Agent": "Alpha-Research-MacroOS/1"},
+        body=None,
+        allowed_hosts=("api.census.gov",),
+    )
+
+
+def _census_parser(raw: bytes, fetched_at: str, spec: RequestSpec) -> list[Observation]:
+    try:
+        payload = json.loads(raw.decode("utf-8"), object_pairs_hook=_duplicate_guard)
+    except UnicodeDecodeError as exc:
+        raise CollectionError("DATA_INVALID", "INVALID_UTF8", "Census response is not UTF-8") from exc
+    except json.JSONDecodeError as exc:
+        raise CollectionError("DATA_INVALID", "INVALID_JSON", "Census response is not JSON") from exc
+    if not isinstance(payload, list) or len(payload) < 2 or not isinstance(payload[0], list):
+        raise CollectionError("DATA_INVALID", "CENSUS_SHAPE", "Census response lacks tabular rows")
+    header = [str(value) for value in payload[0]]
+    if len(header) != len(set(header)):
+        raise CollectionError("DATA_INVALID", "CENSUS_DUPLICATE_COLUMN", "Census response repeats a column")
+    required = {"cell_value", "data_type_code", "category_code", "seasonally_adj", "time"}
+    if not required.issubset(header):
+        raise CollectionError("DATA_INVALID", "CENSUS_HEADER", "Census response lacks required columns")
+    metric = spec.metrics[0]
+    observations: list[Observation] = []
+    for raw_row in payload[1:]:
+        if not isinstance(raw_row, list) or len(raw_row) != len(header):
+            raise CollectionError("DATA_INVALID", "CENSUS_SHAPE", "Census row width differs from header")
+        row = dict(zip(header, raw_row))
+        if (
+            str(row["data_type_code"]) != "SM"
+            or str(row["category_code"]) != "44X72"
+            or str(row["seasonally_adj"]).lower() != "yes"
+        ):
+            continue
+        value_text, value = _number_text(row["cell_value"])
+        observations.append(
+            Observation(
+                series_id=metric.series_id,
+                metric_key=metric.metric_key,
+                observation_at=_period_iso(str(row["time"])),
+                vintage_at=fetched_at,
+                value_text=value_text,
+                value=value,
+                unit=metric.unit,
+                attributes={
+                    "native_series_id": metric.native_series_id,
+                    "data_type_code": "SM",
+                    "category_code": "44X72",
+                    "seasonally_adjusted": True,
+                    "time_slot_id": row.get("time_slot_id"),
+                },
+            )
+        )
+    if not observations:
+        raise CollectionError("DATA_INVALID", "CENSUS_EMPTY", "Census returned no retail-sales rows")
+    return observations
+
+
 MONTHLY_AGE = 75 * 86400
 QUARTERLY_AGE = 150 * 86400
 DAILY_AGE = 7 * 86400
@@ -584,6 +672,15 @@ BEA_GDP = MetricSpec(
 BEA_CORE_PCE = MetricSpec(
     "core_pce", "core_pce_price_index", "NIPA_T20304_LINE_25", "price_index", "monthly", MONTHLY_AGE, MONTHLY_FETCH
 )
+CENSUS_RETAIL_SALES = MetricSpec(
+    "retail_sales",
+    "retail_sales_value_sa",
+    "MARTS_44X72_SM_SA",
+    "million_usd_sa",
+    "monthly",
+    MONTHLY_AGE,
+    MONTHLY_FETCH,
+)
 
 
 def collection_plan() -> tuple[RequestSpec, ...]:
@@ -592,6 +689,13 @@ def collection_plan() -> tuple[RequestSpec, ...]:
         RequestSpec("cboe_vix_history", "cboe_vix", (CBOE_METRIC,), _cboe_builder, _cboe_parser),
         RequestSpec("bea_gdp", "bea_public_api", (BEA_GDP,), _bea_builder("T10101", "Q"), _bea_parser),
         RequestSpec("bea_core_pce", "bea_public_api", (BEA_CORE_PCE,), _bea_builder("T20304", "M"), _bea_parser),
+        RequestSpec(
+            "census_retail_sales",
+            "us_census_economic_indicators",
+            (CENSUS_RETAIL_SALES,),
+            _census_builder,
+            _census_parser,
+        ),
     ]
     specs.extend(
         RequestSpec(

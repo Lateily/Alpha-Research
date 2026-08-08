@@ -1,8 +1,8 @@
 {
   "schema": "ar.macro.source_registry",
   "schema_version": "1.0",
-  "policy_version": "macro-m0a/1.0",
-  "effective_from": "20260806",
+  "policy_version": "macro-m0b2/1.0",
+  "effective_from": "20260807",
   "status": "APPROVED_SPEC",
   "coverage_policy": {
     "market_series": {
@@ -30,6 +30,7 @@
       "source_id": "tushare_macro",
       "provider": "Tushare Pro",
       "independence_group": "tushare",
+      "credential_env_vars": ["TUSHARE_TOKEN"],
       "region": "MULTI_REGION",
       "official": false,
       "evidence_level": "E2",
@@ -52,12 +53,13 @@
       "source_id": "fred_alfred",
       "provider": "Federal Reserve Bank of St. Louis",
       "independence_group": "fred_alfred",
+      "credential_env_vars": ["FRED_API_KEY"],
       "region": "GLOBAL_US",
       "official": false,
       "evidence_level": "E2",
       "roles": ["VINTAGE_MIRROR", "MARKET_SERIES"],
       "transport": "API",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "FULL",
       "base_url": "https://api.stlouisfed.org/fred",
       "series": [
@@ -73,15 +75,17 @@
       "source_id": "us_census_economic_indicators",
       "provider": "U.S. Census Bureau",
       "independence_group": "us_census",
+      "credential_env_vars": ["CENSUS_API_KEY"],
       "region": "GLOBAL_US",
       "official": true,
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "API",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_SNAPSHOT_REQUIRED",
       "base_url": "https://api.census.gov/data/timeseries/eits",
       "series": [
+        "release_calendar",
         "retail_sales"
       ]
     },
@@ -89,6 +93,7 @@
       "source_id": "ism_official_release",
       "provider": "Institute for Supply Management",
       "independence_group": "ism",
+      "credential_env_vars": [],
       "region": "GLOBAL_US",
       "official": true,
       "evidence_level": "E1",
@@ -99,6 +104,7 @@
       "base_url": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business",
       "series": [
         "manufacturing_pmi",
+        "release_calendar",
         "services_pmi"
       ]
     },
@@ -106,12 +112,13 @@
       "source_id": "bls_public_api",
       "provider": "U.S. Bureau of Labor Statistics",
       "independence_group": "us_bls",
+      "credential_env_vars": ["BLS_API_KEY"],
       "region": "GLOBAL_US",
       "official": true,
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "API",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_SNAPSHOT_REQUIRED",
       "base_url": "https://api.bls.gov/publicAPI/v2",
       "series": [
@@ -120,19 +127,21 @@
         "average_hourly_earnings",
         "cpi",
         "ppi",
-        "jolts_job_openings"
+        "jolts_job_openings",
+        "release_calendar"
       ]
     },
     {
       "source_id": "bea_public_api",
       "provider": "U.S. Bureau of Economic Analysis",
       "independence_group": "us_bea",
+      "credential_env_vars": ["BEA_API_KEY"],
       "region": "GLOBAL_US",
       "official": true,
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "API",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_SNAPSHOT_REQUIRED",
       "base_url": "https://apps.bea.gov/api/data",
       "series": [
@@ -140,13 +149,15 @@
         "pce",
         "core_pce",
         "personal_income",
-        "personal_consumption"
+        "personal_consumption",
+        "release_calendar"
       ]
     },
     {
       "source_id": "federal_reserve_board",
       "provider": "Board of Governors of the Federal Reserve System",
       "independence_group": "federal_reserve_board",
+      "credential_env_vars": [],
       "region": "GLOBAL_US",
       "official": true,
       "evidence_level": "E1",
@@ -161,19 +172,21 @@
         "fomc_target_rate",
         "sep",
         "h15_rates",
-        "industrial_production"
+        "industrial_production",
+        "release_calendar"
       ]
     },
     {
       "source_id": "china_nbs",
       "provider": "National Bureau of Statistics of China",
       "independence_group": "china_nbs",
+      "credential_env_vars": [],
       "region": "CHINA",
       "official": true,
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "OFFICIAL_DATA_PORTAL",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_SNAPSHOT_REQUIRED",
       "base_url": "https://data.stats.gov.cn",
       "series": [
@@ -184,19 +197,21 @@
         "industrial_production",
         "retail_sales",
         "fixed_asset_investment",
-        "unemployment_rate"
+        "unemployment_rate",
+        "release_calendar"
       ]
     },
     {
       "source_id": "pboc",
       "provider": "People's Bank of China",
       "independence_group": "pboc",
+      "credential_env_vars": [],
       "region": "CHINA",
       "official": true,
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL"],
       "transport": "OFFICIAL_RELEASE",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "RELEASE_ARCHIVE",
       "base_url": "https://www.pbc.gov.cn",
       "series": [
@@ -204,19 +219,21 @@
         "new_loans",
         "money_supply",
         "policy_operations",
-        "lpr"
+        "lpr",
+        "release_calendar"
       ]
     },
     {
       "source_id": "cboe_vix",
       "provider": "Cboe Global Markets",
       "independence_group": "cboe",
+      "credential_env_vars": [],
       "region": "GLOBAL_US",
       "official": true,
       "evidence_level": "E1",
       "roles": ["OFFICIAL_ACTUAL", "MARKET_SERIES"],
       "transport": "OFFICIAL_DOWNLOAD",
-      "status": "PLANNED_M0B",
+      "status": "AVAILABLE_EXISTING",
       "vintage_support": "DAILY_HISTORY",
       "base_url": "https://www.cboe.com/tradable_products/vix/vix_historical_data",
       "series": [
@@ -227,6 +244,7 @@
       "source_id": "trading_economics_calendar",
       "provider": "Trading Economics",
       "independence_group": "trading_economics",
+      "credential_env_vars": ["TRADING_ECONOMICS_API_KEY"],
       "region": "MULTI_REGION",
       "official": false,
       "evidence_level": "E2",
@@ -243,6 +261,7 @@
       "source_id": "reuters_economic_calendar",
       "provider": "Reuters",
       "independence_group": "reuters",
+      "credential_env_vars": ["REUTERS_API_KEY"],
       "region": "MULTI_REGION",
       "official": false,
       "evidence_level": "E2",
@@ -256,5 +275,5 @@
       ]
     }
   ],
-  "registry_hash": "22be7ae52a5679e0afc10e5fc69850d15bd7d60c1eef7cab86e05be8e5ce447b"
+  "registry_hash": "6a62c4208ea3551c3df401b1b2a44feba4b1fd83051b662133e8377af2ccb91a"
 }

@@ -53,11 +53,16 @@
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source_id", "provider", "independence_group", "region", "official", "evidence_level", "roles", "transport", "status", "vintage_support", "base_url", "series"],
+      "required": ["source_id", "provider", "independence_group", "credential_env_vars", "region", "official", "evidence_level", "roles", "transport", "status", "vintage_support", "base_url", "series"],
       "properties": {
         "source_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
         "provider": {"type": "string", "minLength": 1},
         "independence_group": {"type": "string", "minLength": 1},
+        "credential_env_vars": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}
+        },
         "region": {"enum": ["GLOBAL_US", "CHINA", "MULTI_REGION"]},
         "official": {"type": "boolean"},
         "evidence_level": {"enum": ["E1", "E2", "E3", "E4"]},
