@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/jury_synthesis.schema.json",
+  "title": "Agent Jury Candidate Synthesis",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "task",
+    "final_summary",
+    "selected_best_parts",
+    "disagreements",
+    "safety_flags",
+    "open_questions",
+    "human_gate",
+    "non_decision_notice"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agent-jury.synthesis.v1"
+    },
+    "task": {
+      "type": "string"
+    },
+    "final_summary": {
+      "type": "string"
+    },
+    "selected_best_parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rubric", "source_answer_id", "selected_text", "score_basis"],
+        "properties": {
+          "rubric": {
+            "enum": ["evidence", "logic", "safety", "usability", "structure"]
+          },
+          "source_answer_id": {
+            "type": "string"
+          },
+          "selected_text": {
+            "type": "string"
+          },
+          "score_basis": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "disagreements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "safety_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_gate": {
+      "type": "string"
+    },
+    "non_decision_notice": {
+      "const": "This is evidence processing only, not investment advice or a trading instruction."
+    }
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/jury_answer.schema.json",
+  "title": "Agent Jury Independent Answer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "answer_id",
+    "run_id",
+    "model",
+    "prompt_version",
+    "input_hash",
+    "task",
+    "data_status",
+    "summary",
+    "evidence",
+    "logic",
+    "safety",
+    "usability",
+    "structure",
+    "confidence",
+    "open_questions",
+    "no_trade_flag",
+    "non_decision_notice"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agent-jury.answer.v1"
+    },
+    "answer_id": {
+      "type": "string",
+      "description": "Anonymous answer id assigned by the harness, for example Answer A."
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable run id assigned by the harness for traceability."
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Model identifier used for this answer, for example kimi-k3 or mock-alpha."
+    },
+    "prompt_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Prompt template/version id used for this answer."
+    },
+    "input_hash": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Hash of the normalized input packet so the run can be audited or replayed."
+    },
+    "task": {
+      "type": "string",
+      "minLength": 1
+    },
+    "data_status": {
+      "enum": ["OK", "DATA_BLOCKED", "DATA_CONFLICT"],
+      "description": "Use DATA_BLOCKED when required source data is unavailable; use DATA_CONFLICT when sources disagree."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claim",
+          "evidence_tier",
+          "source_label",
+          "source_url_or_file",
+          "publish_date",
+          "data_cutoff",
+          "confidence"
+        ],
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "evidence_tier": {
+            "enum": ["E1", "E2", "E3", "E4"],
+            "description": "AR platform evidence tier. E1 is strongest direct primary evidence; E4 is weakest or indirect context."
+          },
+          "source_label": {
+            "type": "string",
+            "description": "Short source label, not raw secret content."
+          },
+          "source_url_or_file": {
+            "type": "string",
+            "description": "URL or repository/local file reference for the evidence. Do not include secrets."
+          },
+          "publish_date": {
+            "type": "string",
+            "description": "Source publication date in ISO format. If unavailable, set data_status to DATA_BLOCKED and explain the gap."
+          },
+          "data_cutoff": {
+            "type": "string",
+            "description": "Latest data timestamp or date covered by this evidence."
+          },
+          "confidence": {
+            "enum": ["low", "medium", "high"]
+          },
+          "gap": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "logic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reasoning", "assumptions", "falsifiable_checks"],
+      "properties": {
+        "reasoning": {
+          "type": "string"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "falsifiable_checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["flags", "prompt_injection_risk", "decision_boundary"],
+      "properties": {
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "prompt_injection_risk": {
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "decision_boundary": {
+          "type": "string"
+        }
+      }
+    },
+    "usability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tags", "next_human_action"],
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "next_human_action": {
+          "type": "string"
+        }
+      }
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_packet", "json_ready"],
+      "properties": {
+        "target_packet": {
+          "type": "string"
+        },
+        "json_ready": {
+          "type": "boolean"
+        },
+        "missing_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "confidence": {
+      "enum": ["low", "medium", "high"]
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "no_trade_flag": {
+      "const": true,
+      "description": "Must always be true. Agent Jury answers are evidence processing only."
+    },
+    "non_decision_notice": {
+      "const": "This is evidence processing only, not investment advice or a trading instruction."
+    }
+  }
+}
