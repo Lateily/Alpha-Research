@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/schemas/event.schema.json",
+  "title": "AIOS State Transition Event",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "event_id",
+    "task_id",
+    "from_state",
+    "to_state",
+    "actor",
+    "reason",
+    "evidence_refs",
+    "timestamp_utc"
+  ],
+  "properties": {
+    "event_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "from_state": {"type": "string", "minLength": 1},
+    "to_state": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "timestamp_utc": {"type": "string", "minLength": 1}
+  }
+}
+
