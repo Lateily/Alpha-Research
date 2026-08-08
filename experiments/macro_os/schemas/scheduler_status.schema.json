@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lateily.github.io/Alpha-Research/schemas/macro/scheduler_status.schema.json",
+  "title": "AR Macro Scheduler Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "report", "mode", "run_id", "generated_at", "formula_version", "policy", "coverage", "events", "next_check_at", "disclaimer"],
+  "properties": {
+    "schema": {"const": "ar.macro.scheduler_status"},
+    "schema_version": {"const": "1.0"},
+    "report": {"enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"]},
+    "mode": {"const": "CALIBRATING"},
+    "run_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "formula_version": {"const": "macro-m0b3/1.0"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formal_blocking_authority", "allowed_outputs", "forbidden_outputs"],
+      "properties": {
+        "formal_blocking_authority": {"const": false},
+        "allowed_outputs": {"const": ["LABEL", "RISK_BUDGET_CONTEXT"]},
+        "forbidden_outputs": {"const": ["TRADE_ACTION", "DIRECT_BLOCK", "REGIME_CLAIM"]}
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["window_start", "window_end", "official_slots", "mapped_slots", "blocked_slots", "delayed_slots", "denominator"],
+      "properties": {
+        "window_start": {"type": "string", "format": "date-time"},
+        "window_end": {"type": "string", "format": "date-time"},
+        "official_slots": {"type": "integer", "minimum": 0},
+        "mapped_slots": {"type": "integer", "minimum": 0},
+        "blocked_slots": {"type": "integer", "minimum": 0},
+        "delayed_slots": {"type": "integer", "minimum": 0},
+        "denominator": {"const": "official release-calendar slots inside the configured window"}
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_id", "event_type", "tier", "region", "scheduled_at", "status", "release_grace_seconds", "released_at", "release_evidence_status", "release_evidence", "next_check_at", "request_id", "release_url_env"],
+        "properties": {
+          "event_id": {"type": "string", "minLength": 1},
+          "event_type": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+          "tier": {"type": "integer", "minimum": 1, "maximum": 3},
+          "region": {"type": "string", "minLength": 1},
+          "scheduled_at": {"type": "string", "format": "date-time"},
+          "status": {"enum": ["UPCOMING", "WAITING_OFFICIAL_RELEASE", "DELAYED", "RELEASED", "DATA_BLOCKED"]},
+          "release_grace_seconds": {"type": ["integer", "null"], "minimum": 60, "maximum": 7200},
+          "released_at": {"type": ["string", "null"], "format": "date-time"},
+          "release_evidence_status": {"type": ["string", "null"]},
+          "release_evidence": {"type": ["string", "null"]},
+          "next_check_at": {"type": ["string", "null"], "format": "date-time"},
+          "request_id": {"type": ["string", "null"]},
+          "release_url_env": {"type": ["string", "null"]}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "RELEASED"}}},
+            "then": {"properties": {"released_at": {"type": "string", "format": "date-time"}}},
+            "else": {"properties": {"released_at": {"type": "null"}}}
+          }
+        ]
+      }
+    },
+    "next_check_at": {"type": ["string", "null"], "format": "date-time"},
+    "disclaimer": {"type": "string", "minLength": 1}
+  }
+}

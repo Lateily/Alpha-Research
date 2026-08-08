@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lateily.github.io/Alpha-Research/schemas/macro/m0b3_run_manifest.schema.json",
+  "title": "AR Macro M0-B3 Run Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "report", "mode", "run_id", "generated_at", "calendar_hash", "rules_hash", "artifacts", "policy", "disclaimer"],
+  "properties": {
+    "schema": {"const": "ar.macro.m0b3_run_manifest"},
+    "schema_version": {"const": "1.0"},
+    "report": {"enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"]},
+    "mode": {"const": "CALIBRATING"},
+    "run_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "calendar_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "rules_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["release_discovery_status.json", "scheduler_status.json"],
+      "properties": {
+        "release_discovery_status.json": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "scheduler_status.json": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formal_blocking_authority", "allowed_outputs", "forbidden_outputs"],
+      "properties": {
+        "formal_blocking_authority": {"const": false},
+        "allowed_outputs": {"const": ["LABEL", "RISK_BUDGET_CONTEXT"]},
+        "forbidden_outputs": {"const": ["TRADE_ACTION", "DIRECT_BLOCK", "REGIME_CLAIM"]}
+      }
+    },
+    "disclaimer": {"type": "string", "minLength": 1}
+  }
+}

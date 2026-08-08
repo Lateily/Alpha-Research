@@ -1,6 +1,6 @@
 # Macro OS 数据契约
 
-> 状态:`M0-A APPROVED_SPEC / M0-B2 DELIVERED_UNWIRED`。M0-A 定义输入边界;M0-B2 已交付历史仓、官方适配器、发布日历和双源共识门,但仍未接入夜链、盘前帧或生产调度。
+> 状态:`M0-A APPROVED_SPEC / M0-B3 DELIVERED_UNWIRED`。M0-A 定义输入边界;M0-B2 已交付历史仓、官方适配器、发布日历和双源共识门;M0-B3 已交付 URL 发现、调度、延迟标注和系统时钟预期登记,但 launchd 尚未安装,不等于生产已上线。
 
 M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PIPELINE.md)。
 
@@ -16,7 +16,12 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 | `macro_event.schema.json` | 事件事实、共识和预期差 JSON Schema | 已完成 |
 | `release_calendar.schema.json` | 官方发布日历与不可变快照引用 | 已完成 |
 | `consensus_gate.schema.json` | 双源共识、冲突与阻断诊断 | 已完成 |
+| `release_discovery*.schema.json` | 官方索引发现规则与运行状态 | 已完成 |
+| `scheduler_status.schema.json` | 发布延迟与下一检查时间 | 已完成 |
+| `m0b3_run_manifest.schema.json` | 同轮产物哈希绑定 | 已完成 |
 | `contracts.py` | 零网络、失败即阻断的语义校验器 | 已完成 |
+| `m0b3.py` | URL 发现、自适应调度、延迟监控与原子发布 | 已交付未部署 |
+| `expectation_registry.py` | 系统时钟预期登记与 append-only 事件链 | 已交付未部署 |
 
 权威路径位于 `experiments/macro_os/`。M0-B 能生成本地运行数据,但未完成生产接线;Better 的前端不应自行发明另一套字段。
 
@@ -45,7 +50,7 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 ## 4. 时间与版本纪律
 
 - T-24h 登记不得晚于事件前 24 小时,T-60m 不得晚于事件前 60 分钟。
-- M0-A 的 `registered_at` 仍是提交方自报字段,这里只验证时间数学;在接入 append-only 事件账本与系统写入时钟前,不得宣称已经机器级防止事后补写。
+- M0-A 契约仍允许读取历史自报 `registered_at`;M0-B3 新登记入口禁止调用方传入该字段,改由系统时钟写入独立 append-only 事件链。未走新入口的历史记录不得反向升级成机器级可信时间戳。
 - 预测获批后修改任一实质内容都会造成 `expectation_hash` 不匹配并被拒绝。
 - M0-A 只校验 Review URL、commit SHA 与哈希的格式和不可变关系;M0-B 必须读取 GitHub Review,确认被批准 commit 中确实含同一 `expectation_hash` 后才能发布。
 - Tier-1 只容纳可预先确定发布时间的事件;社融、新增贷款归 Tier-2,临时政策动作归背景层,不伪造 T-60m 精度。
@@ -66,8 +71,8 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 
 ## 6. 后续批次
 
-1. **M0-B3**:官方 release URL 发现、自适应调度、重大数据发布延迟监控、生产接线和 append-only 预期登记时间戳。
+1. **M0-B3 部署验收**:先合并 M0-B2/M0-B3,再安全同步运行目录、安装 launchd,完成一次真实官方页面基线与一次正式调度轮。验收前保持 `DELIVERED_UNWIRED`。
 2. **M1-A**:GLOBAL/US 与 CHINA 双状态机、MRG、行业和组合传导。
-3. **M1-B**:内部宏观面板、告警中心、夜链 U1 标注消费者和校准记录。
+3. **M1-B**:内部宏观面板、夜链 U1 标注消费者和校准记录;当前不接微信提醒。
 
 不是买卖指令;研究信号,human executes。

@@ -910,8 +910,12 @@ def validate_default_specs() -> tuple[dict[str, Any], dict[str, Any]]:
         "consensus_gate.schema.json",
         "event_tiers.schema.json",
         "house_expectation.schema.json",
+        "m0b3_run_manifest.schema.json",
         "macro_event.schema.json",
+        "release_discovery.schema.json",
+        "release_discovery_status.schema.json",
         "release_calendar.schema.json",
+        "scheduler_status.schema.json",
         "source_registry.schema.json",
     }
     if {path.name for path in schema_files} != expected_schemas:
