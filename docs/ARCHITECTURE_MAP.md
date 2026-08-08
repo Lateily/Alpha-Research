@@ -46,7 +46,7 @@
 | 1 研究框架 | 怎么想:宪法v1.4/全市场漏斗/Macro OS/两票/双层线/E1-E4/判分 | docs/research/ + docs/team/ | Junyan | 75% |
 | 2 数据源 | 原料:Tushare/东财/yfinance;健康表/宏观原料/新闻链在 #181 待验收 | scripts/fetch_*.py | Junyan+Claude | 55% |
 | 3 引擎层 | 车间:夜链v2/哨兵/模型基金/判分/闸门/电池/归因;硬闸在 #180 待验收 | experiments/execution_tracker/ | Claude | 60→80%(#169/#170/#180) |
-| 4 契约层 | 传送带:引擎→七契约JSON→前端只读 | public/data/v2/ + docs/contracts/ | Junyan定稿+Claude | 0→70%(#170) |
+| 4 契约层 | 传送带:引擎→七契约JSON→前端只读 | public/data/v2/ + docs/contracts/ | Junyan定稿+Claude | 70%(#170 已合并 2026-07-31) |
 | 5 前端载体 | 展厅(七面板+工作台)+工具间;旧Dashboard=legacy | src/(旧) → web/(新) | Better | 10% |
 | 6 AI系统 | 工人:Claude(架构审核)/Codex(结对)/Kimi(考核中);评测/prompt库/成本 | scripts/llm/ + docs/llm/ + AGENTS.md | Reed | 15% |
 | 7 团队流程 | 神经:main保护/PR口令/认领协议/Notion审阅/周消化 | GitHub 设置 + TEAM_CHARTER_v2 | Junyan | 60% |
@@ -67,3 +67,5 @@
 - 2026-07-29 初版:1:75 / 2:55 / 3:60 / 4:0(在途70) / 5:10 / 6:15 / 7:60 / 8:55。
   基准 = Codex 全面审查(2026-07-29)+ 当日在途 PR。百分比为工程成熟度 E4 估计,
   不代表收益能力。
+- 2026-08-06 更新:4:70(#170 已合并 2026-07-31,夜链v2强制流水线 + public/data/v2 契约导出落地)。
+  R-014 升 DELIVERED_UNWIRED(PR #217 已合并)。
