@@ -96,6 +96,11 @@ macro_m1a_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(macro_m1a_tests.MacroM1ATests)
 )
 assert macro_m1a_result.wasSuccessful(), "Macro M1-A suite failed under socket guard"
+import test_macro_m1b_offline as macro_m1b_tests  # noqa: E402
+macro_m1b_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(macro_m1b_tests.MacroM1BTests)
+)
+assert macro_m1b_result.wasSuccessful(), "Macro M1-B suite failed under socket guard"
 try:
     macro_collectors.UrllibTransport().fetch(
         macro_collectors._cboe_builder(

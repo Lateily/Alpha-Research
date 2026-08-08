@@ -1,6 +1,6 @@
 # Macro OS 数据契约
 
-> 状态:`M0-A APPROVED_SPEC / M0-B3 DELIVERED_UNWIRED / M1-A DELIVERED_UNWIRED`。M1-A 已能离线读取历史仓并生成双区域状态与 MRG 候选态;launchd、夜链和前端消费者仍未接线。
+> 状态:`M0-A APPROVED_SPEC / M0-B3 DELIVERED_UNWIRED / M1-A+M1-B DELIVERED_UNWIRED`。M1-A 已能离线读取历史仓并生成双区域状态与 MRG 候选态;M1-B 已能离线消费 M1-A 与 `model_portfolio_state.v2.2`,生成行业、组合和面板契约;launchd、夜链和前端消费者仍未接线。
 
 M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PIPELINE.md)。
 
@@ -28,6 +28,12 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 | `macro_risk_gate.json` | G1-G4、候选态与不可执行风险预算上下文 | M1-A 运行产物 |
 | `macro_events.json` | 实际值/前值与共识、预期差阻断状态 | M1-A 运行产物 |
 | `m1a_run_manifest.json` | 三份产物的同轮 run_id/as_of/SHA 绑定 | M1-A 运行产物 |
+| `industry_sensitivity.v1.json` | 31 个申万一级行业关系种子与主题精确映射 | 已交付,全部 UNVALIDATED_V0 |
+| `m1b.py` | 哈希校验后消费 M1-A 和组合契约,生成行业/组合/面板上下文 | 已交付未接线 |
+| `industry_macro_sensitivity.json` | 行业和深子行业的机制、方向、时滞、证据与 wrong-if | M1-B 运行产物 |
+| `portfolio_macro_exposure.json` | paper 组合的宏观暴露代理、缺口和非执行风险上下文 | M1-B 运行产物 |
+| `macro_panel.json` | 双区域状态、MRG、事件、行业和组合的只读总览 | M1-B 运行产物 |
+| `m1b_run_manifest.json` | 三份 M1-B 产物与两类输入的哈希绑定 | M1-B 运行产物 |
 
 权威路径位于 `experiments/macro_os/`。M0-B 能生成本地运行数据,但未完成生产接线;Better 的前端不应自行发明另一套字段。
 
@@ -80,5 +86,7 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 1. **M0-B3 部署验收**:先合并 M0-B2/M0-B3,再安全同步运行目录、安装 launchd,完成一次真实官方页面基线与一次正式调度轮。验收前保持 `DELIVERED_UNWIRED`。
 2. **M1-A 部署验收**:合并后用真实 SQLite 副本运行;正式共识源未建立时 `surprise=DATA_BLOCKED`,不得补 0。G2/G3 缺正式 `market_features` 生产者时同样阻断。
 3. **M1-B**:行业与组合消费者、内部宏观面板和校准记录;当前不接微信提醒。
+
+M1-B 的输入边界固定为哈希验证通过的 M1-A 产物和 `model_portfolio_state.v2.2`。它不会读取 `model_fund/orders.json`。当前组合契约不提供逐仓定盘市值,因此组合权重只可显示为 `notional / NAV` 代理并明确标注;未知主题必须 `DATA_BLOCKED`。校准期所有输出 `enforceable=false`,不得转成交易动作或直接阻断。
 
 不是买卖指令;研究信号,human executes。
