@@ -629,8 +629,13 @@ def build_mrg(
     if sox is None or kospi is None:
         g2 = {
             "status": "DATA_BLOCKED",
-            "inputs": {"sox_vs_ma100": sox, "kospi_vs_ma200": kospi},
-            "reason": f"MARKET_FEATURES_{sox_status}_{kospi_status}",
+            "inputs": {
+                "sox_vs_ma100": sox,
+                "sox_status": sox_status,
+                "kospi_vs_ma200": kospi,
+                "kospi_status": kospi_status,
+            },
+            "reason": "MARKET_FEATURES_UNAVAILABLE",
         }
     else:
         g2_status = "GREEN" if sox >= 1 and kospi >= 1 else "RED" if sox < 1 and kospi < 1 else "YELLOW"
@@ -642,7 +647,11 @@ def build_mrg(
 
     z_value, z_status = feature("sox_spx_log_ratio_z120")
     if z_value is None:
-        g3 = {"status": "DATA_BLOCKED", "inputs": {"z120": None}, "reason": f"MARKET_FEATURE_{z_status}"}
+        g3 = {
+            "status": "DATA_BLOCKED",
+            "inputs": {"z120": None, "feature_status": z_status},
+            "reason": "MARKET_FEATURE_UNAVAILABLE",
+        }
     else:
         magnitude = abs(z_value)
         status = (
