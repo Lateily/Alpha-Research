@@ -497,13 +497,11 @@ def build_portfolio_contract(
         )
         for row in portfolio["data"]["open_positions"]
     ]
-    mapped = [
-        row for row in positions
-        if row["mapping_status"] == "OK" and row["normalized_score_display_only"] is not None
-    ]
-    mapped_weight = sum(row["notional_nav_weight_proxy"] for row in mapped)
+    mapped = [row for row in positions if row["mapping_status"] == "OK"]
+    scorable = [row for row in mapped if row["normalized_score_display_only"] is not None]
+    mapped_weight = sum(row["notional_nav_weight_proxy"] for row in scorable)
     weighted = sum(
-        row["notional_nav_weight_proxy"] * row["normalized_score_display_only"] for row in mapped
+        row["notional_nav_weight_proxy"] * row["normalized_score_display_only"] for row in scorable
     )
     score = weighted / mapped_weight if mapped_weight else None
     if score is None:
@@ -524,7 +522,7 @@ def build_portfolio_contract(
         or portfolio["data_quality"] != "COMPLETE"
     )
     report = (
-        "DATA_BLOCKED" if positions and not mapped else
+        "DATA_BLOCKED" if positions and not scorable else
         "PARTIAL" if unknown or blocked_factors or portfolio_source_degraded else
         "COMPLETE"
     )
@@ -553,6 +551,7 @@ def build_portfolio_contract(
             "portfolio_pipeline_status": portfolio["pipeline_status"],
             "positions": len(positions),
             "mapped_positions": len(mapped),
+            "scorable_positions": len(scorable),
             "unknown_themes": unknown,
             "blocked_factors": blocked_factors,
         },

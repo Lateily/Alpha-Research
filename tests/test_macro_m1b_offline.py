@@ -131,6 +131,8 @@ class MacroM1BTests(unittest.TestCase):
         self.assertEqual(manifest, m1b.validate_run(self.out))
         portfolio = contracts.load_json(self.out / "portfolio_macro_exposure.json")
         self.assertEqual("DATA_BLOCKED", portfolio["data"]["portfolio_pressure"])
+        self.assertEqual(1, portfolio["source_health"]["mapped_positions"])
+        self.assertEqual(0, portfolio["source_health"]["scorable_positions"])
         self.assertFalse(portfolio["data"]["enforceable"])
         self.assertEqual("CONTRACT_NOTIONAL_DIVIDED_BY_NAV_PROXY", portfolio["data"]["position_weight_basis"])
         schemas = {
