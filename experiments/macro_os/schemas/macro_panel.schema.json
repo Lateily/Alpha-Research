@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lateily.github.io/Alpha-Research/schemas/macro/macro_panel.schema.json",
+  "title": "AR Macro Panel v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "report", "mode", "run_id", "as_of", "generated_at", "formula_version", "source_m1a_run_id", "source_m1a_manifest_hash", "validation_status", "data", "policy", "disclaimer"],
+  "properties": {
+    "schema": {"const": "ar.macro.panel"},
+    "schema_version": {"const": "1.0"},
+    "report": {"enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"]},
+    "mode": {"const": "CALIBRATING"},
+    "run_id": {"type": "string", "minLength": 1},
+    "as_of": {"type": "string", "format": "date-time"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "formula_version": {"const": "macro-m1b/1.0"},
+    "source_m1a_run_id": {"type": "string", "minLength": 1},
+    "source_m1a_manifest_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "validation_status": {"const": "UNVALIDATED_V0"},
+    "data": {"type": "object", "required": ["regions", "mrg", "events", "portfolio", "industry_review_focus", "blocked_items"]},
+    "policy": {"$ref": "state_rules.schema.json#/$defs/policy"},
+    "disclaimer": {"type": "string", "minLength": 1}
+  }
+}

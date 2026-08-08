@@ -1,6 +1,6 @@
 # Macro OS v0:全组合宏观研究操作系统
 
-> 状态:`M1-A DELIVERED_UNWIRED / CALIBRATING`。M0-A 至 M0-B3 提供事实与调度地基;M1-A 已实现双区域状态、MRG 候选态和事件上下文,尚未接夜链或获得阻断权。
+> 状态:`M1-A + M1-B DELIVERED_UNWIRED / CALIBRATING`。M0-A 至 M0-B3 提供事实与调度地基;M1-A 已实现双区域状态、MRG 候选态和事件上下文;M1-B 已实现全申万一级行业敏感度、组合宏观暴露和只读面板。两层均未接夜链或获得阻断权。
 > 目标:提前识别宏观环境、预期和跨资产定价的变化,将其映射到全组合、行业和个股研究优先级。
 
 ## 1. MRG 在系统中的位置
@@ -112,7 +112,7 @@ Macro OS 不止给一个大盘标签。它必须产生两次下钻:
 
 `growth_beta,inflation_beta,rate_duration,credit_sensitivity,usd_sensitivity,commodity_sensitivity,global_tech_beta,evidence_level,as_of`
 
-组合汇总输出集中暴露、对冲缺口和需要人工复核的相关性。宏观状态变化只修改风险预算、研究优先级和复核频率。
+组合汇总输出集中暴露和需要人工复核的相关性。M1-B 只读 `model_portfolio_state.v2.2`,不读取原始订单;由于当前契约没有逐仓定盘市值,权重统一标为 `CONTRACT_NOTIONAL_DIVIDED_BY_NAV_PROXY`,不得冒充实时仓位权重。未知主题直接 `DATA_BLOCKED`,不凭名称猜行业。宏观状态变化只修改风险预算、研究优先级和复核频率。
 
 ## 7. 五份正式契约
 
@@ -123,6 +123,7 @@ Macro OS 不止给一个大盘标签。它必须产生两次下钻:
 | `macro_risk_gate.json` | G1-G4 原始值、阈值版本、规则树结果 | 晋级器/盘前帧 |
 | `industry_macro_sensitivity.json` | 宏观因子到行业的机制、方向、时滞和证据 | Sector Agent/轮动面板 |
 | `portfolio_macro_exposure.json` | 持仓和组合暴露、集中度、状态变化影响 | Portfolio Agent/前端 |
+| `macro_panel.json` | 双区域状态、MRG、事件缺口、行业和组合上下文的只读总览 | 内部面板/审阅者 |
 | `macro_scorecard.json` | 每次预注册状态的 T+1/T+5/T+20 后验 | Validation Agent/周报 |
 
 统一 required:`schema_version,report,as_of,generated_at,source_health,data,disclaimer`。
@@ -195,8 +196,8 @@ M1 状态闭环:
 
 M2 研究下钻:
 
-- 半导体、医药、有色三行业敏感度种子。
-- 当前组合暴露聚合。
+- 全部 31 个申万一级行业粗粒度敏感度种子;电子/通信、医药、有色先建深模型。
+- 当前组合暴露聚合,只使用契约中的 theme/notional/NAV,不猜原始订单或实时市值。
 - 全市场扫描增加宏观敏感度通道。
 
 M3 判分:

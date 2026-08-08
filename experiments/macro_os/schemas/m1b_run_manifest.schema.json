@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lateily.github.io/Alpha-Research/schemas/macro/m1b_run_manifest.schema.json",
+  "title": "AR Macro M1-B Run Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "report", "mode", "run_id", "as_of", "generated_at", "formula_version", "spec_hash", "source_m1a_run_id", "source_m1a_manifest_hash", "source_portfolio_run_id", "source_portfolio_hash", "artifacts", "policy", "disclaimer"],
+  "properties": {
+    "schema": {"const": "ar.macro.m1b_run_manifest"},
+    "schema_version": {"const": "1.0"},
+    "report": {"enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"]},
+    "mode": {"const": "CALIBRATING"},
+    "run_id": {"type": "string", "minLength": 1},
+    "as_of": {"type": "string", "format": "date-time"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "formula_version": {"const": "macro-m1b/1.0"},
+    "spec_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_m1a_run_id": {"type": "string", "minLength": 1},
+    "source_m1a_manifest_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_portfolio_run_id": {"type": "string", "minLength": 1},
+    "source_portfolio_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifacts": {"type": "object", "required": ["industry_macro_sensitivity.json", "portfolio_macro_exposure.json", "macro_panel.json"]},
+    "policy": {"$ref": "state_rules.schema.json#/$defs/policy"},
+    "disclaimer": {"type": "string", "minLength": 1}
+  }
+}

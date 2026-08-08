@@ -1,0 +1,184 @@
+{
+  "schema": "ar.macro.industry_sensitivity_rules",
+  "schema_version": "1.0",
+  "status": "CALIBRATING",
+  "formula_version": "macro-m1b/1.0",
+  "validation_status": "UNVALIDATED_V0",
+  "policy": {
+    "formal_blocking_authority": false,
+    "allowed_outputs": ["LABEL", "RISK_BUDGET_CONTEXT", "RESEARCH_PRIORITY"],
+    "forbidden_outputs": ["TRADE_ACTION", "DIRECT_BLOCK", "FORMAL_REGIME_CLAIM"]
+  },
+  "theme_aliases": {
+    "生猪": {"industry": "农林牧渔", "subsector": "生猪养殖"},
+    "农林牧渔/生猪养殖": {"industry": "农林牧渔", "subsector": "生猪养殖"},
+    "黄金铜": {"industry": "有色金属", "subsector": "黄金与铜"},
+    "创新药": {"industry": "医药生物", "subsector": "创新药"},
+    "医药/创新药": {"industry": "医药生物", "subsector": "创新药"},
+    "CXO": {"industry": "医药生物", "subsector": "CXO"},
+    "医药流通": {"industry": "医药生物", "subsector": "医药流通"},
+    "半导体": {"industry": "电子", "subsector": "半导体"},
+    "半导体设备": {"industry": "电子", "subsector": "半导体设备与材料"},
+    "半导体材料": {"industry": "电子", "subsector": "半导体设备与材料"},
+    "集成电路封测": {"industry": "电子", "subsector": "封装测试"},
+    "PCB": {"industry": "电子", "subsector": "PCB"},
+    "PCB/AI硬件": {"industry": "电子", "subsector": "PCB"},
+    "AI/光模块": {"industry": "通信", "subsector": "光模块"},
+    "光模块": {"industry": "通信", "subsector": "光模块"},
+    "电力股息": {"industry": "公用事业", "subsector": null}
+  },
+  "industries": [
+    {"industry": "农林牧渔", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "居民消费改善通常提高终端食品需求的研究优先级。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "零售改善但农产品销量与价格连续两个季度不响应。"},
+      {"factor_id": "CN_CPI", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "温和通胀可改善农产品名义价格环境，但不能替代供给周期研究。", "lag": "1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "CPI 变化主要来自非食品分项。"}
+    ], "subsectors": [
+      {"subsector": "生猪养殖", "relations": [
+        {"factor_id": "CN_CPI", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "食品价格环境可影响猪价名义中枢，盈利仍以能繁母猪和饲料成本为主。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "猪价与食品 CPI 连续两个季度背离。"}
+      ]}
+    ]},
+    {"industry": "基础化工", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_INDUSTRIAL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "工业生产改善通常增加化工中间品需求。", "lag": "1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "产量增长由低附加值品种驱动且价差继续收窄。"},
+      {"factor_id": "CN_PPI", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "PPI 修复可改善名义收入环境，但需结合产品价差。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "PPI 修复未传导至行业价差。"}
+    ], "subsectors": []},
+    {"industry": "钢铁", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_FAI", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "固定资产投资是钢材需求的重要总量背景。", "lag": "1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "投资由低钢耗结构驱动或库存持续累积。"},
+      {"factor_id": "CN_PPI", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "再通胀环境通常有利于黑色商品名义定价。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "原料涨幅持续高于钢价。"}
+    ], "subsectors": []},
+    {"industry": "有色金属", "depth": "DEEP", "relations": [
+      {"factor_id": "CN_INDUSTRIAL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "中国工业生产影响铜铝等工业金属需求。", "lag": "0-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "工业生产改善但全球库存持续上升。"},
+      {"factor_id": "US_REAL_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "实际利率回落通常改善黄金持有机会成本。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "实际利率回落而黄金连续三个月相对走弱。"}
+    ], "subsectors": [
+      {"subsector": "黄金与铜", "relations": [
+        {"factor_id": "US_REAL_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 3, "mechanism": "黄金对实际利率更敏感，铜对中国工业需求更敏感，因此必须拆开解释贡献。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "金铜驱动长期同向假设被库存和实际利率数据同时证伪。"},
+        {"factor_id": "CN_INDUSTRIAL", "exposure_direction": "POSITIVE", "magnitude": 3, "mechanism": "铜需求对工业生产与电网投资更敏感。", "lag": "0-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "工业生产改善但铜库存连续八周上升。"}
+      ]}
+    ]},
+    {"industry": "电子", "depth": "DEEP", "relations": [
+      {"factor_id": "US_REAL_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "实际利率回落通常缓解长久期成长资产的估值压力。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "利率回落但盈利预期同步下修且板块相对收益不修复。"},
+      {"factor_id": "VIX_LEVEL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "较低波动环境通常降低高贝塔科技资产风险折价。", "lag": "0-1M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "VIX 回落但半导体相对大盘继续创新低。"}
+    ], "subsectors": [
+      {"subsector": "半导体", "relations": [
+        {"factor_id": "US_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 3, "mechanism": "美债利率回落通常缓解全球半导体估值折现压力。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "利率回落但全球半导体盈利预期连续两月下修。"},
+        {"factor_id": "US_GDP", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "增长稳定有利于终端需求，但 AI 资本开支需单独验证。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "GDP 稳定但半导体销售额连续两个季度下降。"}
+      ]},
+      {"subsector": "半导体设备与材料", "relations": [
+        {"factor_id": "CN_INDUSTRIAL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "国内制造活动和资本开支环境影响设备材料订单兑现。", "lag": "1-3Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "工业改善但合同负债和订单连续两个季度下降。"}
+      ]},
+      {"subsector": "封装测试", "relations": [
+        {"factor_id": "CN_PMI", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "制造景气修复可提高封测稼动率，但需结合终端库存。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "PMI 修复但稼动率与单价不升。"}
+      ]},
+      {"subsector": "PCB", "relations": [
+        {"factor_id": "US_GDP", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "全球需求稳定有利于消费电子和服务器订单背景。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "终端库存上升且订单增速转负。"}
+      ]}
+    ]},
+    {"industry": "汽车", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "消费改善通常有利于汽车销量环境。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "零售改善但汽车销量和订单连续两月下滑。"},
+      {"factor_id": "CN_LPR_5Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "中长期融资成本下降可改善大额耐用品负担。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "融资成本下降但终端折扣扩大、渠道库存上升。"}
+    ], "subsectors": []},
+    {"industry": "家用电器", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "居民消费和地产后周期共同影响家电需求。", "lag": "1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "零售改善但家电品类销量下降。"},
+      {"factor_id": "CN_LPR_5Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "住房融资环境改善可能传导至地产后周期。", "lag": "2-4Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "地产成交不响应利率变化。"}
+    ], "subsectors": []},
+    {"industry": "食品饮料", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "社零改善是消费品需求环境的粗粒度背景。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "社零改善但行业量价连续两个季度走弱。"}
+    ], "subsectors": []},
+    {"industry": "纺织服饰", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "国内服饰需求与消费环境相关。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "终端折扣和库存恶化抵消需求改善。"},
+      {"factor_id": "US_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "出口链订单受美国消费影响。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "美国零售改善但出口订单下降。"}
+    ], "subsectors": []},
+    {"industry": "轻工制造", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "消费和地产后周期影响家居及包装需求。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "需求改善未传导至订单和库存周转。"}
+    ], "subsectors": []},
+    {"industry": "医药生物", "depth": "DEEP", "relations": [
+      {"factor_id": "US_REAL_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "实际利率回落可缓解长研发周期资产估值压力。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "利率回落但研发兑现和盈利预期继续下修。"},
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "消费环境只作为支付能力背景，不能替代医保、管线和竞争格局研究。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "行业收入与消费周期长期脱钩。"}
+    ], "subsectors": [
+      {"subsector": "创新药", "relations": [
+        {"factor_id": "US_REAL_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "长久期研发现金流对实际利率更敏感，但 E1 临床和授权事件优先级更高。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "利率回落但创新药估值与融资环境不修复。"}
+      ]},
+      {"subsector": "CXO", "relations": [
+        {"factor_id": "US_GDP", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "全球融资和研发预算受增长环境影响，订单指标仍为主证据。", "lag": "2-4Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "增长稳定但订单与 backlog 连续两个季度下降。"}
+      ]},
+      {"subsector": "医药流通", "relations": [
+        {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "终端消费环境影响零售药房，但医保政策和同店增长优先。", "lag": "0-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "社零改善但同店增长和现金流恶化。"}
+      ]}
+    ]},
+    {"industry": "公用事业", "depth": "COARSE", "relations": [
+      {"factor_id": "US_REAL_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "利率回落可改善高股息资产相对估值背景。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "利率回落但公用事业相对收益持续走弱。"},
+      {"factor_id": "CN_INDUSTRIAL", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "工业活动影响用电需求。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "工业生产改善但售电量不增长。"}
+    ], "subsectors": []},
+    {"industry": "交通运输", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_INDUSTRIAL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "工业与贸易活动影响货运需求。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "工业改善但货运量和运价不响应。"}
+    ], "subsectors": []},
+    {"industry": "房地产", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_LPR_5Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 3, "mechanism": "五年期 LPR 下降可改善按揭负担，成交与库存仍需单独验证。", "lag": "1-3Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "利率下降后成交和去化率连续两个季度不修复。"},
+      {"factor_id": "CN_FAI", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "投资活动反映地产与基建总量背景。", "lag": "1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "FAI 改善完全由非地产分项驱动。"}
+    ], "subsectors": []},
+    {"industry": "商贸零售", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 3, "mechanism": "社零是行业需求最直接的宏观背景之一。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "行业同店和现金流与社零连续两个季度背离。"}
+    ], "subsectors": []},
+    {"industry": "社会服务", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "可选服务消费受居民支出意愿影响。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "客流与客单价不响应消费改善。"}
+    ], "subsectors": []},
+    {"industry": "银行", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_GDP", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "增长改善通常降低信用成本压力。", "lag": "1-3Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "GDP 改善但不良生成率上升。"},
+      {"factor_id": "CN_LPR_1Y_CHANGE", "exposure_direction": "NEGATIVE", "magnitude": 2, "mechanism": "降息对需求有利但可能压缩净息差，因此方向与多数资产不同。", "lag": "1-3Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "负债成本同步下降并完全抵消资产端重定价。"}
+    ], "subsectors": []},
+    {"industry": "非银金融", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_GDP", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "增长和风险偏好影响资本市场与保险负债环境。", "lag": "0-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "交易活跃度与保费增长不响应。"},
+      {"factor_id": "CN_M2", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "流动性改善可提高市场活动背景。", "lag": "0-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "M2 改善但资本市场成交继续下降。"}
+    ], "subsectors": []},
+    {"industry": "综合", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_GDP", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "综合行业仅使用增长总量作低权重背景，必须回到公司业务拆分。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "公司业务组合与宏观总量无关。"}
+    ], "subsectors": []},
+    {"industry": "建筑材料", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_FAI", "exposure_direction": "POSITIVE", "magnitude": 3, "mechanism": "基建和地产投资直接影响建材需求。", "lag": "0-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "投资改善但水泥玻璃库存继续累积。"}
+    ], "subsectors": []},
+    {"industry": "建筑装饰", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_FAI", "exposure_direction": "POSITIVE", "magnitude": 3, "mechanism": "固定资产投资影响工程订单与收入确认。", "lag": "1-4Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "新签订单和回款不响应投资改善。"}
+    ], "subsectors": []},
+    {"industry": "电力设备", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_FAI", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "制造和电网投资影响设备订单。", "lag": "1-3Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "投资改善但合同负债和新签订单下降。"},
+      {"factor_id": "US_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "海外长端利率回落可缓解新能源资产折现压力。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "利率回落但海外需求预期下修。"}
+    ], "subsectors": []},
+    {"industry": "国防军工", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_GDP", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "财政承受力只作为低权重背景，订单与预算披露优先。", "lag": "2-4Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "军工订单与宏观增长持续脱钩。"}
+    ], "subsectors": []},
+    {"industry": "计算机", "depth": "COARSE", "relations": [
+      {"factor_id": "US_REAL_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "实际利率回落可缓解软件和成长资产估值压力。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "利率回落但订单和续费预期下修。"},
+      {"factor_id": "CN_M2", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "流动性改善可支持成长资产风险预算。", "lag": "0-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "流动性改善但行业融资环境不修复。"}
+    ], "subsectors": []},
+    {"industry": "传媒", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "广告和线上娱乐受消费环境影响。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "广告投放和付费率不响应消费改善。"},
+      {"factor_id": "CN_M2", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "流动性是估值背景，不替代内容与用户数据。", "lag": "0-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "流动性改善但用户与盈利预期恶化。"}
+    ], "subsectors": []},
+    {"industry": "通信", "depth": "DEEP", "relations": [
+      {"factor_id": "US_REAL_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "利率回落可缓解全球通信成长资产估值压力。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "利率回落但运营商和云厂资本开支预期下修。"},
+      {"factor_id": "VIX_LEVEL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "低波动背景通常降低高贝塔通信设备风险折价。", "lag": "0-1M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "VIX 回落但通信设备相对收益不修复。"}
+    ], "subsectors": [
+      {"subsector": "光模块", "relations": [
+        {"factor_id": "US_GDP", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "增长稳定只提供云资本开支背景，实际云厂 capex 与订单仍是一等证据。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "云厂 capex 下修或订单增速转负。"},
+        {"factor_id": "US_REAL_10Y_CHANGE", "exposure_direction": "POSITIVE", "magnitude": 3, "mechanism": "高估值光模块对实际利率和风险折价更敏感。", "lag": "0-3M", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "实际利率回落但估值与盈利预期同步压缩。"}
+      ]}
+    ]},
+    {"industry": "煤炭", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_INDUSTRIAL", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "工业活动影响能源需求。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "工业改善但煤价和库存结构恶化。"},
+      {"factor_id": "CN_PPI", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "PPI 修复可反映商品名义价格环境。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "PPI 由非能源分项驱动。"}
+    ], "subsectors": []},
+    {"industry": "石油石化", "depth": "COARSE", "relations": [
+      {"factor_id": "US_GDP", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "全球增长影响石油需求总量。", "lag": "0-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "增长改善但全球原油库存上升。"},
+      {"factor_id": "CN_INDUSTRIAL", "exposure_direction": "POSITIVE", "magnitude": 1, "mechanism": "中国工业活动影响能源与化工需求。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "国内开工率与价差不响应。"}
+    ], "subsectors": []},
+    {"industry": "环保", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_FAI", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "公共和工业投资影响环保工程订单。", "lag": "1-4Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "投资改善但新签订单和回款不增。"}
+    ], "subsectors": []},
+    {"industry": "美容护理", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_RETAIL", "exposure_direction": "POSITIVE", "magnitude": 3, "mechanism": "可选消费环境影响美妆与医美需求。", "lag": "0-1Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "社零改善但品牌 GMV 和复购率下降。"}
+    ], "subsectors": []},
+    {"industry": "机械设备", "depth": "COARSE", "relations": [
+      {"factor_id": "CN_PMI", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "制造业景气影响设备更新和订单。", "lag": "1-2Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "PMI 修复但新订单和合同负债下降。"},
+      {"factor_id": "CN_FAI", "exposure_direction": "POSITIVE", "magnitude": 2, "mechanism": "固定资产投资影响通用与专用设备需求。", "lag": "1-3Q", "evidence_level": "E4", "last_reviewed": "20260808", "wrong_if": "投资改善由低设备需求分项驱动。"}
+    ], "subsectors": []}
+  ],
+  "spec_hash": "aa9d7210bb06bdbd871c16625af3fc237f427170924c0f9f7b12906d8bb788b3"
+}
