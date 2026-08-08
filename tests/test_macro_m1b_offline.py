@@ -8,7 +8,7 @@ import json
 import sys
 import tempfile
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -203,6 +203,65 @@ class MacroM1BTests(unittest.TestCase):
         self.assertEqual("SUPPORTIVE_PLUS1", body["data"]["portfolio_pressure"])
         self.assertFalse(body["data"]["enforceable"])
 
+    def test_current_context_contributions_scores_and_ranking_are_recomputed(self) -> None:
+        state = self._synthetic_state(
+            {"CN_CPI": "SUPPORTIVE", "CN_RETAIL": "SUPPORTIVE"}
+        )
+        industry = m1b.build_industry_contract(
+            spec=self.spec,
+            state=state,
+            source_manifest_hash="b" * 64,
+            as_of=NOW,
+            run_id="industry_current",
+        )
+        current_row = next(
+            row
+            for row in industry["data"]["industries"]
+            if row["relations"] and row["relations"][0]["data_status"] == "CURRENT"
+        )
+        bad_contribution = copy.deepcopy(industry)
+        bad_relation = next(
+            row
+            for row in bad_contribution["data"]["industries"]
+            if row["industry"] == current_row["industry"]
+        )["relations"][0]
+        bad_relation["contribution"] += 1
+        with self.assertRaisesRegex(m1b.M1BError, "contribution is not reproducible"):
+            m1b.validate_industry(bad_contribution)
+
+        bad_score = copy.deepcopy(industry)
+        score_row = next(
+            row
+            for row in bad_score["data"]["industries"]
+            if row["industry"] == current_row["industry"]
+        )
+        score_row["normalized_score_display_only"] = 0.987654
+        with self.assertRaisesRegex(m1b.M1BError, "context result is not reproducible"):
+            m1b.validate_industry(bad_score)
+
+        portfolio = m1b.build_portfolio_contract(
+            spec=self.spec,
+            state=state,
+            risk={"data": {"risk_budget_context": "NORMAL_REVIEW_BUDGET"}},
+            portfolio=self._portfolio(),
+            source_manifest_hash="b" * 64,
+            portfolio_hash="c" * 64,
+            as_of=NOW,
+            run_id="portfolio_current",
+        )
+        portfolio_rank = copy.deepcopy(portfolio)
+        portfolio_rank["data"]["ranking_allowed"] = True
+        with self.assertRaisesRegex(m1b.M1BError, "ranking input"):
+            m1b.validate_portfolio_exposure(portfolio_rank)
+        position_rank = copy.deepcopy(portfolio)
+        position_rank["data"]["positions"][0]["ranking_allowed"] = True
+        with self.assertRaisesRegex(m1b.M1BError, "cannot be used for ranking"):
+            m1b.validate_portfolio_exposure(position_rank)
+        bad_weight = copy.deepcopy(portfolio)
+        bad_weight["data"]["positions"][0]["notional_nav_weight_proxy"] = 0.99
+        with self.assertRaisesRegex(m1b.M1BError, "weight is not reproducible"):
+            m1b.validate_portfolio_exposure(bad_weight)
+
     def test_source_and_calibration_mutations_fail_closed(self) -> None:
         m1b.run(
             m1a_dir=self.m1a_dir,
@@ -285,6 +344,49 @@ class MacroM1BTests(unittest.TestCase):
                 run_id="tampered_source",
             )
 
+    def test_forbidden_action_and_formal_state_remain_impossible(self) -> None:
+        def fresh(run_id: str) -> None:
+            m1b.run(
+                m1a_dir=self.m1a_dir,
+                portfolio_path=self.portfolio_path,
+                spec_path=m1b.SPEC_PATH,
+                output_dir=self.out,
+                as_of=NOW,
+                run_id=run_id,
+            )
+
+        fresh("forbidden_action")
+        panel_path = self.out / "macro_panel.json"
+        panel = contracts.load_json(panel_path)
+        panel["data"]["trade_action"] = "BUY"
+        m1b.write_json(panel_path, panel)
+        self._rehash_artifact(panel_path.name)
+        with self.assertRaisesRegex(m1b.M1BError, "forbidden M1-B output"):
+            m1b.validate_run(self.out)
+
+        fresh("formal_state")
+        panel = contracts.load_json(panel_path)
+        panel["data"]["mrg"]["formal_state"] = "RISK_OFF"
+        m1b.write_json(panel_path, panel)
+        self._rehash_artifact(panel_path.name)
+        with self.assertRaisesRegex(m1b.M1BError, "cannot promote MRG"):
+            m1b.validate_run(self.out)
+
+    def test_manifest_hash_detects_byte_changes_without_semantic_changes(self) -> None:
+        m1b.run(
+            m1a_dir=self.m1a_dir,
+            portfolio_path=self.portfolio_path,
+            spec_path=m1b.SPEC_PATH,
+            output_dir=self.out,
+            as_of=NOW,
+            run_id="manifest_bytes",
+        )
+        path = self.out / "macro_panel.json"
+        payload = contracts.load_json(path)
+        path.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(m1b.M1BError, "manifest does not match"):
+            m1b.validate_run(self.out)
+
     def test_wrong_portfolio_version_future_and_stale_dates_are_rejected(self) -> None:
         wrong = self._portfolio()
         wrong["schema_version"] = "v2.1"
@@ -308,6 +410,12 @@ class MacroM1BTests(unittest.TestCase):
         with self.assertRaisesRegex(m1b.M1BError, "n_positions differs"):
             m1b.load_portfolio(self.portfolio_path, as_of=NOW)
 
+        not_paper = self._portfolio()
+        not_paper["data"]["paper_only"] = False
+        m1b.write_json(self.portfolio_path, not_paper)
+        with self.assertRaisesRegex(m1b.M1BError, "must remain paper_only"):
+            m1b.load_portfolio(self.portfolio_path, as_of=NOW)
+
     def test_stale_m1a_bundle_is_rejected_before_consumption(self) -> None:
         stale_dir = self.root / "stale_m1a"
         m1a.run(
@@ -326,6 +434,26 @@ class MacroM1BTests(unittest.TestCase):
                 output_dir=self.out,
                 as_of=NOW,
                 run_id="reject_stale",
+            )
+
+    def test_future_m1a_bundle_is_rejected_before_consumption(self) -> None:
+        future_dir = self.root / "future_m1a"
+        m1a.run(
+            db_path=self.db,
+            rules_path=m1a.RULES_PATH,
+            market_features_path=None,
+            output_dir=future_dir,
+            as_of=NOW + timedelta(hours=1),
+            run_id="future_m1a",
+        )
+        with self.assertRaisesRegex(m1b.M1BError, "from the future"):
+            m1b.run(
+                m1a_dir=future_dir,
+                portfolio_path=self.portfolio_path,
+                spec_path=m1b.SPEC_PATH,
+                output_dir=self.out,
+                as_of=NOW,
+                run_id="reject_future",
             )
 
     def test_semantic_tampering_fails_even_when_manifest_hash_is_updated(self) -> None:
