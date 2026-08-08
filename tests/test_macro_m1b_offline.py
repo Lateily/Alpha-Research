@@ -92,6 +92,12 @@ class MacroM1BTests(unittest.TestCase):
     def _write_portfolio(self, *, theme: str = "生猪", target: str = "20260808") -> None:
         m1b.write_json(self.portfolio_path, self._portfolio(theme=theme, target=target))
 
+    def _rehash_artifact(self, name: str) -> None:
+        manifest_path = self.out / "m1b_run_manifest.json"
+        manifest = contracts.load_json(manifest_path)
+        manifest["artifacts"][name] = m1b._sha256_path(self.out / name)
+        m1b.write_json(manifest_path, manifest)
+
     def _synthetic_state(self, signals: dict[str, str]) -> dict:
         rules = m1a.load_rules()
         factors = {region: [] for region in m1a.REGIONS}
@@ -321,6 +327,44 @@ class MacroM1BTests(unittest.TestCase):
                 as_of=NOW,
                 run_id="reject_stale",
             )
+
+    def test_semantic_tampering_fails_even_when_manifest_hash_is_updated(self) -> None:
+        def fresh(run_id: str) -> None:
+            m1b.run(
+                m1a_dir=self.m1a_dir,
+                portfolio_path=self.portfolio_path,
+                spec_path=m1b.SPEC_PATH,
+                output_dir=self.out,
+                as_of=NOW,
+                run_id=run_id,
+            )
+
+        fresh("tamper_industry")
+        path = self.out / "industry_macro_sensitivity.json"
+        body = contracts.load_json(path)
+        body["data"]["industries"][0]["relations"][0]["contribution"] = 3
+        m1b.write_json(path, body)
+        self._rehash_artifact(path.name)
+        with self.assertRaisesRegex(m1b.M1BError, "blocked relation carries"):
+            m1b.validate_run(self.out)
+
+        fresh("tamper_portfolio")
+        path = self.out / "portfolio_macro_exposure.json"
+        body = contracts.load_json(path)
+        body["data"]["portfolio_pressure"] = "STABLE_0"
+        m1b.write_json(path, body)
+        self._rehash_artifact(path.name)
+        with self.assertRaisesRegex(m1b.M1BError, "portfolio pressure is not reproducible"):
+            m1b.validate_run(self.out)
+
+        fresh("tamper_panel")
+        path = self.out / "macro_panel.json"
+        body = contracts.load_json(path)
+        body["data"]["portfolio"]["portfolio_pressure"] = "STABLE_0"
+        m1b.write_json(path, body)
+        self._rehash_artifact(path.name)
+        with self.assertRaisesRegex(m1b.M1BError, "panel portfolio summary differs"):
+            m1b.validate_run(self.out)
 
 
 if __name__ == "__main__":

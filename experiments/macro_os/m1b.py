@@ -55,6 +55,10 @@ PRESSURE_LEVELS = {
     "SUPPORTIVE_PLUS1", "STABLE_0", "CAUTION_1", "STRESS_2", "DATA_BLOCKED"
 }
 M1A_MAX_AGE_SECONDS = 345600
+STATIC_RELATION_FIELDS = {
+    "factor_id", "exposure_direction", "magnitude", "mechanism", "lag",
+    "evidence_level", "last_reviewed", "wrong_if",
+}
 
 
 class M1BError(RuntimeError):
@@ -382,6 +386,74 @@ def evaluate_context(relations: Iterable[Mapping[str, Any]], factors: Mapping[st
         "blocked_factors": blocked,
         "relations": evaluated,
     }
+
+
+def _validate_context_row(
+    row: Mapping[str, Any], *, label: str,
+    expected_relations: Iterable[Mapping[str, Any]] | None = None,
+) -> None:
+    relations = row.get("relations")
+    if not isinstance(relations, list) or not relations:
+        raise M1BError(f"{label} requires relation evidence")
+    if expected_relations is not None:
+        expected = {item["factor_id"]: item for item in expected_relations}
+        actual = {item.get("factor_id"): item for item in relations}
+        if set(actual) != set(expected):
+            raise M1BError(f"{label} relation set differs from frozen spec")
+        for factor_id, expected_row in expected.items():
+            if {key: actual[factor_id].get(key) for key in STATIC_RELATION_FIELDS} != expected_row:
+                raise M1BError(f"{label} relation {factor_id} differs from frozen spec")
+    current = []
+    blocked = []
+    for relation in relations:
+        if relation.get("data_status") == "CURRENT":
+            signal = relation.get("factor_signal")
+            if signal not in {"SUPPORTIVE", "NEUTRAL", "RESTRICTIVE"}:
+                raise M1BError(f"{label} has an invalid factor signal")
+            base = 1 if signal == "SUPPORTIVE" else -1 if signal == "RESTRICTIVE" else 0
+            if relation["exposure_direction"] == "NEGATIVE":
+                base *= -1
+            expected_contribution = base * int(relation["magnitude"])
+            if relation.get("contribution") != expected_contribution:
+                raise M1BError(f"{label} contribution is not reproducible")
+            current.append(relation)
+        elif relation.get("data_status") == "DATA_BLOCKED":
+            if relation.get("contribution") is not None:
+                raise M1BError(f"{label} blocked relation carries a contribution")
+            blocked.append(relation["factor_id"])
+        else:
+            raise M1BError(f"{label} relation data_status is invalid")
+    if row.get("ranking_allowed") is not False:
+        raise M1BError(f"{label} cannot be used for ranking")
+    if row.get("blocked_factors") != blocked:
+        raise M1BError(f"{label} blocked factor list is inconsistent")
+    coverage = round(len(current) / len(relations), 6)
+    if row.get("coverage") != coverage:
+        raise M1BError(f"{label} coverage is not reproducible")
+    if not current:
+        if (
+            row.get("context_direction") != "DATA_BLOCKED"
+            or row.get("review_priority") != "DATA_BLOCKED"
+            or row.get("normalized_score_display_only") is not None
+        ):
+            raise M1BError(f"{label} blocked context semantics are inconsistent")
+        return
+    score = round(
+        sum(item["contribution"] for item in current)
+        / sum(int(item["magnitude"]) for item in current),
+        6,
+    )
+    direction = (
+        "SUPPORTIVE_CONTEXT" if score >= 0.34 else
+        "RESTRICTIVE_CONTEXT" if score <= -0.34 else "MIXED_CONTEXT"
+    )
+    priority = "REVIEW_PRIORITY_UP" if abs(score) >= 0.34 else "UNCHANGED"
+    if (
+        row.get("normalized_score_display_only") != score
+        or row.get("context_direction") != direction
+        or row.get("review_priority") != priority
+    ):
+        raise M1BError(f"{label} context result is not reproducible")
 
 
 def _industry_spec_index(spec: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -718,11 +790,34 @@ def validate_industry(payload: Mapping[str, Any]) -> None:
     rows = payload["data"].get("industries")
     if not isinstance(rows, list) or len(rows) != 31:
         raise M1BError("industry contract must contain all 31 SW1 industries")
-    for row in [*rows, *payload["data"].get("subsectors", [])]:
+    spec = load_spec()
+    spec_index = _industry_spec_index(spec)
+    if {row.get("industry") for row in rows} != set(spec_index):
+        raise M1BError("industry contract names differ from frozen spec")
+    for row in rows:
         if row["context_direction"] not in CONTEXTS or row["review_priority"] not in PRIORITIES:
             raise M1BError("industry context/priority enum is invalid")
-        if row["ranking_allowed"] is not False:
-            raise M1BError("M1-B must not rank industries by aggregate score")
+        expected = spec_index[row["industry"]]
+        if row.get("depth") != expected["depth"]:
+            raise M1BError("industry depth differs from frozen spec")
+        _validate_context_row(
+            row, label=f"industry {row['industry']}", expected_relations=expected["relations"]
+        )
+    sub_rows = payload["data"].get("subsectors")
+    if not isinstance(sub_rows, list):
+        raise M1BError("industry subsectors must be a list")
+    expected_subs = {
+        (industry["industry"], sub["subsector"]): _combined_relations(industry, sub["subsector"])
+        for industry in spec["industries"] for sub in industry["subsectors"]
+    }
+    if {(row.get("industry"), row.get("subsector")) for row in sub_rows} != set(expected_subs):
+        raise M1BError("subsector contract names differ from frozen spec")
+    for row in sub_rows:
+        key = (row["industry"], row["subsector"])
+        _validate_context_row(
+            row, label=f"subsector {row['industry']}/{row['subsector']}",
+            expected_relations=expected_subs[key],
+        )
 
 
 def validate_portfolio_exposure(payload: Mapping[str, Any]) -> None:
@@ -741,9 +836,75 @@ def validate_portfolio_exposure(payload: Mapping[str, Any]) -> None:
         raise M1BError("portfolio score cannot become a ranking input")
     if payload["data"]["position_weight_basis"] != "CONTRACT_NOTIONAL_DIVIDED_BY_NAV_PROXY":
         raise M1BError("M1-B cannot silently change the position weight basis")
+    spec = load_spec()
+    industry_index = _industry_spec_index(spec)
+    nav = _finite(payload["data"]["nav"], "portfolio exposure.nav")
+    mapped = []
+    scorable = []
+    unknown = []
+    blocked_factors: set[str] = set()
+    entry_ids: set[str] = set()
     for row in payload["data"]["positions"]:
+        if row.get("entry_id") in entry_ids:
+            raise M1BError("portfolio exposure entry_id must be unique")
+        entry_ids.add(row.get("entry_id"))
+        expected_weight = round(_finite(row.get("notional"), "position notional") / nav, 8)
+        if row.get("notional_nav_weight_proxy") != expected_weight:
+            raise M1BError("position notional/NAV weight is not reproducible")
         if row["mapping_status"] == "DATA_BLOCKED" and row["industry"] is not None:
             raise M1BError("blocked position theme cannot carry a guessed industry")
+        if row["mapping_status"] == "DATA_BLOCKED":
+            if row["theme"] in spec["theme_aliases"]:
+                raise M1BError("registered theme cannot be reported as unmapped")
+            unknown.append(row["theme"])
+            continue
+        expected_mapping = spec["theme_aliases"].get(row["theme"])
+        if expected_mapping is None or row["industry"] != expected_mapping["industry"] or row["subsector"] != expected_mapping["subsector"]:
+            raise M1BError("position theme mapping differs from frozen spec")
+        expected_relations = _combined_relations(
+            industry_index[row["industry"]], row["subsector"]
+        )
+        _validate_context_row(
+            row, label=f"position {row['entry_id']}", expected_relations=expected_relations
+        )
+        mapped.append(row)
+        blocked_factors.update(row["blocked_factors"])
+        if row["normalized_score_display_only"] is not None:
+            scorable.append(row)
+    mapped_weight = round(sum(row["notional_nav_weight_proxy"] for row in scorable), 8)
+    if payload["data"]["mapped_notional_nav_weight"] != mapped_weight:
+        raise M1BError("portfolio mapped weight is not reproducible")
+    score = None
+    if scorable:
+        score = round(
+            sum(
+                row["notional_nav_weight_proxy"] * row["normalized_score_display_only"]
+                for row in scorable
+            ) / sum(row["notional_nav_weight_proxy"] for row in scorable),
+            6,
+        )
+    elif not payload["data"]["positions"]:
+        score = 0.0
+    pressure = (
+        "DATA_BLOCKED" if score is None else
+        "SUPPORTIVE_PLUS1" if score >= 0.50 else
+        "STRESS_2" if score <= -0.67 else
+        "CAUTION_1" if score <= -0.25 else "STABLE_0"
+    )
+    if (
+        payload["data"]["normalized_pressure_score_display_only"] != score
+        or payload["data"]["portfolio_pressure"] != pressure
+    ):
+        raise M1BError("portfolio pressure is not reproducible")
+    health = payload["source_health"]
+    if (
+        health.get("positions") != len(payload["data"]["positions"])
+        or health.get("mapped_positions") != len(mapped)
+        or health.get("scorable_positions") != len(scorable)
+        or health.get("unknown_themes") != unknown
+        or health.get("blocked_factors") != sorted(blocked_factors)
+    ):
+        raise M1BError("portfolio source-health counts are inconsistent")
 
 
 def validate_panel(payload: Mapping[str, Any]) -> None:
@@ -757,6 +918,13 @@ def validate_panel(payload: Mapping[str, Any]) -> None:
         raise M1BError("panel must keep GLOBAL_US and CHINA separate")
     if payload["data"]["mrg"]["formal_state"] is not None:
         raise M1BError("panel cannot promote MRG to a formal state")
+    if set(payload["data"]["mrg"]["gates"]) != {"G1", "G2", "G3", "G4"}:
+        raise M1BError("panel MRG coverage differs from G1-G4")
+    for row in payload["data"]["events"]["rows"]:
+        if row["consensus_status"] == "DATA_BLOCKED" and row["consensus"] is not None:
+            raise M1BError("panel blocked consensus cannot carry a value")
+        if row["surprise_status"] == "DATA_BLOCKED" and row["surprise"] is not None:
+            raise M1BError("panel blocked surprise cannot carry a value")
 
 
 def write_json(path: str | Path, payload: Mapping[str, Any]) -> None:
@@ -835,6 +1003,27 @@ def validate_run(output_dir: str | Path) -> dict[str, Any]:
     )
     if manifest["report"] != expected_report:
         raise M1BError("M1-B manifest report does not match artifacts")
+    if (
+        panel["data"]["portfolio"]["portfolio_pressure"]
+        != portfolio["data"]["portfolio_pressure"]
+        or panel["data"]["portfolio"]["cash_nav_weight"]
+        != portfolio["data"]["cash_nav_weight"]
+        or panel["data"]["portfolio"]["mapped_notional_nav_weight"]
+        != portfolio["data"]["mapped_notional_nav_weight"]
+    ):
+        raise M1BError("macro panel portfolio summary differs from source artifact")
+    expected_focus = [
+        {
+            "industry": row["industry"],
+            "context_direction": row["context_direction"],
+            "review_priority": row["review_priority"],
+            "coverage": row["coverage"],
+        }
+        for row in industry["data"]["industries"]
+        if row["review_priority"] == "REVIEW_PRIORITY_UP"
+    ]
+    if panel["data"]["industry_review_focus"] != expected_focus:
+        raise M1BError("macro panel industry focus differs from source artifact")
     _walk_forbidden(manifest)
     return manifest
 
