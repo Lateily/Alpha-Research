@@ -44,9 +44,10 @@ class MacroM1ATests(unittest.TestCase):
         observations: list[Observation],
         *,
         fetched_at: str = "2026-08-08T11:00:00Z",
+        store: MacroHistoryStore | None = None,
     ) -> None:
         source = self.sources[source_id]
-        self.store.record_success(
+        (store or self.store).record_success(
             run_id=f"seed_{request_id}_{fetched_at}",
             request_id=request_id,
             source=source,
@@ -64,6 +65,74 @@ class MacroM1ATests(unittest.TestCase):
             collector_version="test/m1a",
             transport_meta={"fixture": True},
             observations=observations,
+        )
+
+    def _mrg_fixture(
+        self,
+        *,
+        suffix: str,
+        vix_latest: float,
+        vix_prior: float,
+        g4_value: float,
+        sox: float,
+        kospi: float,
+        z120: float,
+    ) -> dict:
+        store = MacroHistoryStore(Path(self.tmp.name) / f"mrg_{suffix}.sqlite3")
+        store.initialize()
+        vix_rows = [
+            self._obs(
+                "vix_close",
+                "vix_close",
+                vix_latest if index < 5 else vix_prior,
+                "index_points",
+                NOW - timedelta(days=index),
+            )
+            for index in range(6)
+        ]
+        self._seed("cboe_vix", f"vix_{suffix}", vix_rows, store=store)
+        factors = {
+            "GLOBAL_US": [
+                {"factor_id": "VIX_LEVEL", "data_status": "CURRENT"},
+                {
+                    "factor_id": "IG_OAS_CHANGE",
+                    "data_status": "CURRENT",
+                    "value": g4_value,
+                },
+            ],
+            "CHINA": [],
+        }
+        features = {
+            "sox_vs_ma100": {
+                "value": sox,
+                "status": "CURRENT",
+                "as_of": m1a._utc(NOW),
+                "source_ref": "fixture://sox",
+                "proxy": False,
+            },
+            "kospi_vs_ma200": {
+                "value": kospi,
+                "status": "CURRENT",
+                "as_of": m1a._utc(NOW),
+                "source_ref": "fixture://kospi",
+                "proxy": False,
+            },
+            "sox_spx_log_ratio_z120": {
+                "value": z120,
+                "status": "CURRENT",
+                "as_of": m1a._utc(NOW),
+                "source_ref": "fixture://ratio",
+                "proxy": True,
+            },
+        }
+        return m1a.build_mrg(
+            factors,
+            store=store,
+            rules=self.rules,
+            identities=m1a._current_source_identities(),
+            market_features=features,
+            as_of=NOW,
+            run_id=f"mrg_{suffix}",
         )
 
     @staticmethod
@@ -231,6 +300,49 @@ class MacroM1ATests(unittest.TestCase):
         self.assertIsNone(risk["data"]["formal_state"])
         self.assertFalse(risk["data"]["enforceable"])
 
+    def test_mrg_numeric_gates_cover_green_yellow_and_red_boundaries(self) -> None:
+        green = self._mrg_fixture(
+            suffix="green",
+            vix_latest=17.0,
+            vix_prior=20.0,
+            g4_value=-0.1,
+            sox=1.02,
+            kospi=1.03,
+            z120=0.2,
+        )
+        self.assertEqual(
+            {"G1": "GREEN", "G2": "GREEN", "G3": "GREEN", "G4": "GREEN"},
+            {key: row["status"] for key, row in green["data"]["gates"].items()},
+        )
+
+        yellow = self._mrg_fixture(
+            suffix="yellow",
+            vix_latest=20.0,
+            vix_prior=20.0,
+            g4_value=0.05,
+            sox=1.02,
+            kospi=0.98,
+            z120=1.0,
+        )
+        self.assertEqual(
+            {"G1": "YELLOW", "G2": "YELLOW", "G3": "YELLOW", "G4": "YELLOW"},
+            {key: row["status"] for key, row in yellow["data"]["gates"].items()},
+        )
+
+        red = self._mrg_fixture(
+            suffix="red",
+            vix_latest=27.0,
+            vix_prior=25.0,
+            g4_value=0.2,
+            sox=0.98,
+            kospi=0.97,
+            z120=2.0,
+        )
+        self.assertEqual(
+            {"G1": "RED", "G2": "RED", "G3": "RED", "G4": "RED"},
+            {key: row["status"] for key, row in red["data"]["gates"].items()},
+        )
+
     def test_calibration_and_manifest_mutations_fail_closed(self) -> None:
         m1a.run(
             db_path=self.db,
@@ -261,6 +373,86 @@ class MacroM1ATests(unittest.TestCase):
         m1a.write_json(state_path, state)
         with self.assertRaisesRegex(m1a.M1AError, "forbidden macro output"):
             m1a.validate_run(self.out)
+
+        m1a.run(
+            db_path=self.db,
+            rules_path=m1a.RULES_PATH,
+            market_features_path=None,
+            output_dir=self.out,
+            as_of=NOW,
+            run_id="manifest_bytes",
+        )
+        events_path = self.out / "macro_events.json"
+        events = contracts.load_json(events_path)
+        events_path.write_text(json.dumps(events, indent=2) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(m1a.M1AError, "manifest does not match"):
+            m1a.validate_run(self.out)
+
+    def test_calibration_tamper_parity_covers_identity_and_formal_fields(self) -> None:
+        cases = [
+            ("macro_state.json", lambda row: row.__setitem__("mode", "ACTIVE"), "calibration-only"),
+            (
+                "macro_state.json",
+                lambda row: row.__setitem__("validation_status", "VALIDATED"),
+                "validation status",
+            ),
+            (
+                "macro_state.json",
+                lambda row: row["data"]["regions"]["GLOBAL_US"].__setitem__(
+                    "formal_regime", "RISK_ON"
+                ),
+                "formal regime",
+            ),
+            (
+                "macro_risk_gate.json",
+                lambda row: row["policy"].__setitem__("formal_blocking_authority", True),
+                "calibration-only",
+            ),
+            ("macro_events.json", lambda row: row.__setitem__("run_id", "other_run"), "one run_id"),
+        ]
+        for index, (filename, mutate, message) in enumerate(cases):
+            with self.subTest(filename=filename, index=index):
+                m1a.run(
+                    db_path=self.db,
+                    rules_path=m1a.RULES_PATH,
+                    market_features_path=None,
+                    output_dir=self.out,
+                    as_of=NOW,
+                    run_id=f"parity_{index}",
+                )
+                path = self.out / filename
+                payload = contracts.load_json(path)
+                mutate(payload)
+                m1a.write_json(path, payload)
+                if message == "one run_id":
+                    manifest_path = self.out / "m1a_run_manifest.json"
+                    manifest = contracts.load_json(manifest_path)
+                    manifest["artifacts"][filename] = m1a._sha256_path(path)
+                    m1a.write_json(manifest_path, manifest)
+                with self.assertRaisesRegex(m1a.M1AError, message):
+                    m1a.validate_run(self.out)
+
+    def test_stale_official_observation_cannot_emit_a_factor_signal(self) -> None:
+        old = NOW - timedelta(days=30)
+        self._seed(
+            "cboe_vix",
+            "stale_vix",
+            [self._obs("vix_close", "vix_close", 17.0, "index_points", old)],
+        )
+        rule = next(
+            row
+            for row in self.rules["regions"]["GLOBAL_US"]
+            if row["factor_id"] == "VIX_LEVEL"
+        )
+        factor = m1a.build_factor(
+            self.store,
+            rule,
+            as_of=NOW,
+            identities=m1a._current_source_identities(),
+        )
+        self.assertEqual("STALE", factor["data_status"])
+        self.assertIsNone(factor["signal"])
+        self.assertEqual("OBSERVATION_EXPIRED", factor["reason"])
 
     def test_market_features_reject_future_and_stale_values(self) -> None:
         path = Path(self.tmp.name) / "features.json"
