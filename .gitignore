@@ -10,6 +10,9 @@ __pycache__/
 # local LLM runtime usage ledger; commit only example JSONL files
 public/data/v2/ops/llm_usage.jsonl
 
+# local sealed evaluation answer keys; never expose to model input or PRs
+docs/llm/private/
+
 # auto-work-mode run state (per-shift, never commit)
 .shifts/
 

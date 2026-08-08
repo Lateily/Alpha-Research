@@ -37,6 +37,8 @@ jobs:
         run: python3 tests/test_engines_offline.py
       - name: LLM adapter offline tests (zero network)
         run: python3 tests/test_llm_adapter_offline.py
+      - name: K1 question-only eval hygiene tests (zero network)
+        run: python3 tests/test_eval_question_only.py
       - name: Promoter QC gate offline tests (zero network)
         run: python3 tests/test_promoter_qc_offline.py
       - name: Nightly v4 orchestrator selftest
