@@ -1,6 +1,6 @@
 # Macro OS v0:全组合宏观研究操作系统
 
-> 状态:`M0-A CONTRACT IMPLEMENTED / NOT DEPLOYED`。数据源、事件分级、双时间点内部预判与事件事实契约已实现;抓取、状态机、面板和夜链接线仍未成立。
+> 状态:`M1-A DELIVERED_UNWIRED / CALIBRATING`。M0-A 至 M0-B3 提供事实与调度地基;M1-A 已实现双区域状态、MRG 候选态和事件上下文,尚未接夜链或获得阻断权。
 > 目标:提前识别宏观环境、预期和跨资产定价的变化,将其映射到全组合、行业和个股研究优先级。
 
 ## 1. MRG 在系统中的位置
@@ -188,7 +188,9 @@ M0-B 数据可信:
 M1 状态闭环:
 
 - 生成 `macro_events/macro_state/macro_risk_gate` 三契约。
-- 夜链与盘前帧消费 report/freshness。
+- GLOBAL/US 与 CHINA 各自使用 Growth/Inflation/Liquidity/Risk 四轴,不得求平均抵消。
+- 所有阈值为 `UNVALIDATED_V0`;正式状态保持 null,只输出 `*_CANDIDATE`。
+- 夜链与盘前帧消费 report/freshness(尚未接线)。
 - 关键源阻断时进入 MACRO_PARTIAL。
 
 M2 研究下钻:

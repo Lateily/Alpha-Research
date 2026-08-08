@@ -159,7 +159,7 @@ python3 experiments/macro_os/official_releases.py --request nbs_cpi
 ## 7. 后续工程
 
 1. M0-B3 部署验收:合并后安全同步运行目录,安装 launchd,完成真实基线轮与到期轮;验收前不得标生产在线。
-2. M1-A:在校准规则下生成 GLOBAL/US 与 CHINA 两套 `macro_state` 及 MRG 原料。
+2. M1-A:代码已交付未接线;在校准规则下生成 GLOBAL/US 与 CHINA 两套 `macro_state` 及 MRG 候选态。G2/G3 的市场特征生产者仍是显式工程债,缺失时保持 `DATA_BLOCKED`。
 3. M1-B:组合与行业消费者只读状态和 freshness;校准期只改标签和风险预算上下文。
 
 不是买卖指令;研究信号,human executes。

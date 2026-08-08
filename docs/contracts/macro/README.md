@@ -1,6 +1,6 @@
 # Macro OS 数据契约
 
-> 状态:`M0-A APPROVED_SPEC / M0-B3 DELIVERED_UNWIRED`。M0-A 定义输入边界;M0-B2 已交付历史仓、官方适配器、发布日历和双源共识门;M0-B3 已交付 URL 发现、调度、延迟标注和系统时钟预期登记,但 launchd 尚未安装,不等于生产已上线。
+> 状态:`M0-A APPROVED_SPEC / M0-B3 DELIVERED_UNWIRED / M1-A DELIVERED_UNWIRED`。M1-A 已能离线读取历史仓并生成双区域状态与 MRG 候选态;launchd、夜链和前端消费者仍未接线。
 
 M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PIPELINE.md)。
 
@@ -22,6 +22,12 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 | `contracts.py` | 零网络、失败即阻断的语义校验器 | 已完成 |
 | `m0b3.py` | URL 发现、自适应调度、延迟监控与原子发布 | 已交付未部署 |
 | `expectation_registry.py` | 系统时钟预期登记与 append-only 事件链 | 已交付未部署 |
+| `state_rules.v1.json` | 双区域四轴阈值、freshness 与 MRG 规则树 | 已交付,阈值未校准 |
+| `m1a.py` | PIT 读取、双区域状态、MRG 与事件上下文原子发布 | 已交付未接线 |
+| `macro_state.json` | GLOBAL/US 与 CHINA 独立状态、四轴理由和环境等级 | M1-A 运行产物 |
+| `macro_risk_gate.json` | G1-G4、候选态与不可执行风险预算上下文 | M1-A 运行产物 |
+| `macro_events.json` | 实际值/前值与共识、预期差阻断状态 | M1-A 运行产物 |
+| `m1a_run_manifest.json` | 三份产物的同轮 run_id/as_of/SHA 绑定 | M1-A 运行产物 |
 
 权威路径位于 `experiments/macro_os/`。M0-B 能生成本地运行数据,但未完成生产接线;Better 的前端不应自行发明另一套字段。
 
@@ -72,7 +78,7 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 ## 6. 后续批次
 
 1. **M0-B3 部署验收**:先合并 M0-B2/M0-B3,再安全同步运行目录、安装 launchd,完成一次真实官方页面基线与一次正式调度轮。验收前保持 `DELIVERED_UNWIRED`。
-2. **M1-A**:GLOBAL/US 与 CHINA 双状态机、MRG、行业和组合传导。
-3. **M1-B**:内部宏观面板、夜链 U1 标注消费者和校准记录;当前不接微信提醒。
+2. **M1-A 部署验收**:合并后用真实 SQLite 副本运行;正式共识源未建立时 `surprise=DATA_BLOCKED`,不得补 0。G2/G3 缺正式 `market_features` 生产者时同样阻断。
+3. **M1-B**:行业与组合消费者、内部宏观面板和校准记录;当前不接微信提醒。
 
 不是买卖指令;研究信号,human executes。
