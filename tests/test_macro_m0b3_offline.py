@@ -163,6 +163,36 @@ class MacroM0B3Tests(unittest.TestCase):
         with self.assertRaisesRegex(m0b3.M0B3Error, "calibration-only"):
             m0b3.validate_rules(bad)
 
+    def test_rules_reject_status_hash_and_reachable_spec_mutations(self) -> None:
+        bad_status = copy.deepcopy(self.rules)
+        bad_status["status"] = "ACTIVE"
+        bad_status["registry_hash"] = m0b3.rules_hash(bad_status)
+        with self.assertRaisesRegex(m0b3.M0B3Error, "schema/status"):
+            m0b3.validate_rules(bad_status)
+
+        bad_hash = copy.deepcopy(self.rules)
+        bad_hash["rules"][0]["release_grace_seconds"] += 1
+        with self.assertRaisesRegex(m0b3.M0B3Error, "registry_hash mismatch"):
+            m0b3.validate_rules(bad_hash)
+
+        bad_host = copy.deepcopy(self.rules)
+        bad_host["rules"][0]["index_url"] = "https://evil.example/releases"
+        bad_host["registry_hash"] = m0b3.rules_hash(bad_host)
+        with self.assertRaisesRegex(m0b3.M0B3Error, "outside its allowlist"):
+            m0b3.validate_rules(bad_host)
+
+        bad_grace = copy.deepcopy(self.rules)
+        bad_grace["rules"][0]["release_grace_seconds"] = 59
+        bad_grace["registry_hash"] = m0b3.rules_hash(bad_grace)
+        with self.assertRaisesRegex(m0b3.M0B3Error, "must be 60..7200"):
+            m0b3.validate_rules(bad_grace)
+
+        unapproved_event = copy.deepcopy(self.rules)
+        unapproved_event["rules"][0]["event_type"] = "US_CPI"
+        unapproved_event["registry_hash"] = m0b3.rules_hash(unapproved_event)
+        with self.assertRaisesRegex(m0b3.M0B3Error, "unapproved event source"):
+            m0b3.validate_rules(unapproved_event)
+
     def test_discovery_rejects_external_host_and_first_run_does_not_replay_history(self) -> None:
         rule = next(row for row in self.rules["rules"] if row["request_id"] == "nbs_cpi")
         raw = """
@@ -261,6 +291,28 @@ class MacroM0B3Tests(unittest.TestCase):
         bad_coverage["coverage"]["official_slots"] = 99
         with self.assertRaisesRegex(m0b3.M0B3Error, "denominator"):
             m0b3.validate_scheduler_status(bad_coverage)
+        bad_mode = copy.deepcopy(scheduler)
+        bad_mode["mode"] = "ACTIVE"
+        with self.assertRaisesRegex(m0b3.M0B3Error, "policy/schema"):
+            m0b3.validate_scheduler_status(bad_mode)
+        bad_window = copy.deepcopy(scheduler)
+        bad_window["coverage"]["window_end"] = bad_window["coverage"]["window_start"]
+        with self.assertRaisesRegex(m0b3.M0B3Error, "window is invalid"):
+            m0b3.validate_scheduler_status(bad_window)
+        bad_grace = copy.deepcopy(scheduler)
+        bad_grace["events"][0]["release_grace_seconds"] = 59
+        with self.assertRaisesRegex(m0b3.M0B3Error, "grace interval"):
+            m0b3.validate_scheduler_status(bad_grace)
+        bad_next = copy.deepcopy(scheduler)
+        bad_next["next_check_at"] = "2026-08-12T13:00:00Z"
+        with self.assertRaisesRegex(m0b3.M0B3Error, "differs from event schedule"):
+            m0b3.validate_scheduler_status(bad_next)
+        bad_report = copy.deepcopy(scheduler)
+        bad_report["report"] = (
+            "DATA_BLOCKED" if scheduler["report"] != "DATA_BLOCKED" else "COMPLETE"
+        )
+        with self.assertRaisesRegex(m0b3.M0B3Error, "report does not match"):
+            m0b3.validate_scheduler_status(bad_report)
 
         with tempfile.TemporaryDirectory() as tmp:
             store = MacroHistoryStore(Path(tmp) / "macro.sqlite3")
@@ -279,6 +331,10 @@ class MacroM0B3Tests(unittest.TestCase):
         bad_discovery["policy"]["allowed_outputs"].append("TRADE_ACTION")
         with self.assertRaisesRegex(m0b3.M0B3Error, "policy/schema"):
             m0b3.validate_discovery_status(bad_discovery, self.rules)
+        bad_discovery_mode = copy.deepcopy(discovery)
+        bad_discovery_mode["mode"] = "ACTIVE"
+        with self.assertRaisesRegex(m0b3.M0B3Error, "policy/schema"):
+            m0b3.validate_discovery_status(bad_discovery_mode, self.rules)
 
     def test_system_clock_registration_and_duplicate_refusal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
