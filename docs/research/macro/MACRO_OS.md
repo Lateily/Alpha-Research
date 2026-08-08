@@ -1,6 +1,6 @@
 # Macro OS v0:全组合宏观研究操作系统
 
-> 状态:`M0-A CONTRACT IMPLEMENTED / NOT DEPLOYED`。数据源、事件分级、双时间点内部预判与事件事实契约已实现;抓取、状态机、面板和夜链接线仍未成立。
+> 状态:`M1-A DELIVERED_UNWIRED / CALIBRATING`。M0-A 至 M0-B3 提供事实与调度地基;M1-A 已实现双区域状态、MRG 候选态和事件上下文,尚未接夜链或获得阻断权。
 > 目标:提前识别宏观环境、预期和跨资产定价的变化,将其映射到全组合、行业和个股研究优先级。
 
 ## 1. MRG 在系统中的位置
@@ -54,9 +54,9 @@ v0 使用四轴状态,每轴输出 `direction/confidence/data_status/reasons`:
 | Liquidity | 利率/流动性宽松 | 稳定 | 利率或美元收紧 |
 | Risk/Credit | 信用与波动确认修复 | 未确认 | 信用恶化或波动冲击 |
 
-组合状态采用规则树,不采用未经校准的加权平均。信用红灯拥有否决权;数据不足输出 `MACRO_PARTIAL`,不得自动继承上一日绿灯。
+组合状态采用规则树,不采用未经校准的加权平均。校准期信用红灯只产生 `CREDIT_STRESS_CANDIDATE` 与风险预算上下文,不拥有正式否决权;数据不足输出 `MACRO_PARTIAL`,不得自动继承上一日绿灯。正式阻断权必须在达到独立因果簇门槛、优于随机控制并经 Junyan 单独批准后另行接线。
 
-初始 regime 枚举:
+以下是成熟期目标语义;M1-A 校准期只输出对应 `*_CANDIDATE`,`formal_regime` 保持 null:
 
 | Regime | 人话含义 | 允许影响 |
 |---|---|---|
@@ -76,13 +76,13 @@ v0 使用四轴状态,每轴输出 `direction/confidence/data_status/reasons`:
 | G1 情绪 | VIX 水平与 5 日方向 | yfinance/FRED 替代 | 免费,需健康监控 |
 | G2 趋势 | SOX vs MA100,KOSPI vs MA200,并附广度 | yfinance/市场数据 | 免费,需盘前 freshness |
 | G3 错位 | `ln(SOX/SPX)` 120 日 z-score | yfinance | PCA 原版不可用时的代理,不得混称 PCA |
-| G4 信用 | 美国 IG OAS 20 日变化 | FRED `BAMLC0A0CM` | 免费,G4 红为否决 |
+| G4 信用 | 美国 IG OAS 20 日变化 | FRED `BAMLC0A0CM` | 免费;校准期 G4 红只标候选压力,不执行否决 |
 
 规则树初版:
 
-1. G4 红 → `CREDIT_VETO`。
-2. 四绿 → `RISK_REPAIR_CONFIRMED`。
-3. 三绿一黄且信用黄 → `TACTICAL_BOUNCE`。
+1. G4 红 → `CREDIT_STRESS_CANDIDATE`,并把研究风险预算上下文标为收缩;`enforceable=false`。
+2. 四绿 → `RISK_REPAIR_CANDIDATE`。
+3. 三绿一黄且信用黄 → `TACTICAL_BOUNCE_CANDIDATE`。
 4. 任一必需源过期或阻断 → `MACRO_PARTIAL`。
 
 这组规则只复现当前研究思想,尚未证明前瞻能力。每次状态变化必须预注册并进入判分。
@@ -188,7 +188,9 @@ M0-B 数据可信:
 M1 状态闭环:
 
 - 生成 `macro_events/macro_state/macro_risk_gate` 三契约。
-- 夜链与盘前帧消费 report/freshness。
+- GLOBAL/US 与 CHINA 各自使用 Growth/Inflation/Liquidity/Risk 四轴,不得求平均抵消。
+- 所有阈值为 `UNVALIDATED_V0`;正式状态保持 null,只输出 `*_CANDIDATE`。
+- 夜链与盘前帧消费 report/freshness(尚未接线)。
 - 关键源阻断时进入 MACRO_PARTIAL。
 
 M2 研究下钻:

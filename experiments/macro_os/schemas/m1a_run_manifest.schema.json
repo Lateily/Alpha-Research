@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lateily.github.io/Alpha-Research/schemas/macro/m1a_run_manifest.schema.json",
+  "title": "AR Macro M1-A Run Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "report", "mode", "run_id", "as_of", "generated_at", "formula_version", "rules_hash", "artifacts", "policy", "disclaimer"],
+  "properties": {
+    "schema": {"const": "ar.macro.m1a_run_manifest"},
+    "schema_version": {"const": "1.0"},
+    "report": {"enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"]},
+    "mode": {"const": "CALIBRATING"},
+    "run_id": {"type": "string", "minLength": 1},
+    "as_of": {"type": "string", "format": "date-time"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "formula_version": {"const": "macro-m1a/1.0"},
+    "rules_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["macro_state.json", "macro_risk_gate.json", "macro_events.json"],
+      "properties": {
+        "macro_state.json": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "macro_risk_gate.json": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "macro_events.json": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "policy": {"$ref": "state_rules.schema.json#/$defs/policy"},
+    "disclaimer": {"type": "string", "minLength": 1}
+  }
+}
