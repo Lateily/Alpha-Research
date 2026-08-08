@@ -45,10 +45,35 @@ POLICY = {
     "allowed_outputs": ["LABEL", "RISK_BUDGET_CONTEXT"],
     "forbidden_outputs": ["TRADE_ACTION", "DIRECT_BLOCK", "REGIME_CLAIM"],
 }
+CALIBRATION_POLICY = {
+    "formal_blocking_authority": False,
+    "allowed_outputs": ["LABEL", "RISK_BUDGET_CONTEXT"],
+    "forbidden_outputs": ["TRADE_ACTION", "DIRECT_BLOCK", "REGIME_CLAIM"],
+}
 
 
 class M0B2Error(RuntimeError):
     pass
+
+
+def validate_calibration_output(payload: dict[str, Any]) -> None:
+    """Reject any M0-B2 artifact that acquires decision authority."""
+
+    if payload.get("mode") != "CALIBRATING" or payload.get("policy") != CALIBRATION_POLICY:
+        raise M0B2Error("M0-B2 output must remain calibration-only")
+    forbidden = {item.casefold() for item in CALIBRATION_POLICY["forbidden_outputs"]}
+
+    def walk(value: Any) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if str(key).casefold() in forbidden:
+                    raise M0B2Error(f"M0-B2 output contains forbidden action field {key}")
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(payload)
 
 
 def _iso(value: str, label: str) -> datetime:
@@ -578,7 +603,7 @@ def build_release_calendar(
         rows.append(row)
     rows.sort(key=lambda item: (item["scheduled_at"], item["event_type"], item["event_id"]))
     report = "PARTIAL" if rows else "DATA_BLOCKED"
-    return {
+    output = {
         "schema": CALENDAR_SCHEMA,
         "schema_version": SCHEMA_VERSION,
         "report": report,
@@ -593,6 +618,8 @@ def build_release_calendar(
         "data": rows,
         "disclaimer": DISCLAIMER,
     }
+    validate_calibration_output(output)
+    return output
 
 
 def resolve_market_consensus(
@@ -680,7 +707,7 @@ def resolve_market_consensus(
         "tolerance_version": None,
         "source_values": accepted,
     }
-    return {
+    output = {
         "schema": CONSENSUS_SCHEMA,
         "schema_version": SCHEMA_VERSION,
         "report": status,
@@ -698,6 +725,8 @@ def resolve_market_consensus(
         "policy": dict(POLICY),
         "disclaimer": DISCLAIMER,
     }
+    validate_calibration_output(output)
+    return output
 
 
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:

@@ -48,14 +48,6 @@ DEFAULT_HEALTH = Path("public/data/v2/macro/source_health.json")
 DISCLAIMER = "不是买卖指令;研究信号,human executes."
 FAILURE_STATUSES = {"DATA_BLOCKED", "SOURCE_DOWN", "DATA_INVALID"}
 SECRET_QUERY_KEYS = {"api_key", "key", "userid", "registrationkey"}
-SECRET_ENV_NAMES = (
-    "BEA_API_KEY",
-    "BLS_API_KEY",
-    "CENSUS_API_KEY",
-    "FRED_API_KEY",
-    "REUTERS_API_KEY",
-    "TRADING_ECONOMICS_API_KEY",
-)
 REDACTION_MARKER = b"[REDACTED_SECRET]"
 
 
@@ -213,7 +205,16 @@ def _redact_response_body(
 ) -> tuple[bytes, list[str]]:
     redacted = raw
     names: list[str] = []
-    for name in SECRET_ENV_NAMES:
+    source_payload = contracts.load_json(contracts.SOURCE_REGISTRY)
+    contracts.validate_source_registry(source_payload)
+    credential_names = sorted(
+        {
+            name
+            for source in source_payload["sources"]
+            for name in source["credential_env_vars"]
+        }
+    )
+    for name in credential_names:
         value = environment.get(name, "").strip()
         if not value:
             continue

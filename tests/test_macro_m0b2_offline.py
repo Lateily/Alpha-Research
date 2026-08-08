@@ -400,6 +400,56 @@ class MacroM0B2Tests(unittest.TestCase):
             {row["reason"] for row in result["rejected_sources"]},
         )
 
+    def test_two_sources_from_one_provider_group_do_not_form_consensus(self) -> None:
+        original = m0b2._load_specs
+        original_snapshot_check = m0b2._snapshot_is_bound
+        original_quote_check = m0b2._consensus_quote_is_bound
+        source_payload, tier_payload, _sources, events = original()
+        source_payload = copy.deepcopy(source_payload)
+        rows = {
+            row["source_id"]: row
+            for row in source_payload["sources"]
+            if row["source_id"] in {
+                "trading_economics_calendar",
+                "reuters_economic_calendar",
+            }
+        }
+        for row in rows.values():
+            row["status"] = "AVAILABLE_EXISTING"
+        rows["reuters_economic_calendar"]["provider"] = rows[
+            "trading_economics_calendar"
+        ]["provider"]
+        rows["reuters_economic_calendar"]["independence_group"] = rows[
+            "trading_economics_calendar"
+        ]["independence_group"]
+        source_payload["registry_hash"] = contracts.source_registry_hash(source_payload)
+        sources = {row["source_id"]: row for row in source_payload["sources"]}
+        m0b2._load_specs = lambda: (source_payload, tier_payload, sources, events)
+        m0b2._snapshot_is_bound = lambda *_args: True
+        m0b2._consensus_quote_is_bound = lambda *_args: True
+        try:
+            result = m0b2.resolve_market_consensus(
+                "US_CPI",
+                [
+                    m0b2.ConsensusQuote(
+                        "trading_economics_calendar", 3.0, "pct_yoy", "a" * 64,
+                        NOW_ISO, NOW_ISO,
+                    ),
+                    m0b2.ConsensusQuote(
+                        "reuters_economic_calendar", 3.1, "pct_yoy", "b" * 64,
+                        NOW_ISO, NOW_ISO,
+                    ),
+                ],
+                generated_at=NOW_ISO,
+                store=self.store,
+            )
+        finally:
+            m0b2._load_specs = original
+            m0b2._snapshot_is_bound = original_snapshot_check
+            m0b2._consensus_quote_is_bound = original_quote_check
+        self.assertEqual("INSUFFICIENT_INDEPENDENT_SOURCES", result["reason"])
+        self.assertIsNone(result["market_consensus"]["value"])
+
     def test_consensus_value_must_match_immutable_provider_projection(self) -> None:
         original_loader = contracts.load_json
         registry = copy.deepcopy(original_loader(contracts.SOURCE_REGISTRY))
@@ -472,6 +522,21 @@ class MacroM0B2Tests(unittest.TestCase):
                 generated_at=NOW_ISO,
                 store=self.store,
             )
+            forged_time = m0b2.resolve_market_consensus(
+                "US_CPI",
+                [
+                    m0b2.ConsensusQuote(
+                        "trading_economics_calendar",
+                        3.0,
+                        "pct_yoy",
+                        stored.snapshot_hash,
+                        "2026-08-07T11:59:00Z",
+                        NOW_ISO,
+                    )
+                ],
+                generated_at=NOW_ISO,
+                store=self.store,
+            )
         finally:
             contracts.load_json = original_loader
         self.assertEqual(1, len(accepted["market_consensus"]["source_values"]))
@@ -485,6 +550,35 @@ class MacroM0B2Tests(unittest.TestCase):
         self.assertEqual("pct_yoy", observation["unit"])
         self.assertEqual([], forged["market_consensus"]["source_values"])
         self.assertEqual("QUOTE_NOT_BOUND", forged["rejected_sources"][0]["reason"])
+        self.assertEqual([], forged_time["market_consensus"]["source_values"])
+        self.assertEqual("QUOTE_NOT_BOUND", forged_time["rejected_sources"][0]["reason"])
+
+    def test_calibrating_outputs_reject_authority_and_action_fields(self) -> None:
+        output = m0b2.resolve_market_consensus("US_CPI", [], generated_at=NOW_ISO)
+        blocking = copy.deepcopy(output)
+        blocking["policy"]["formal_blocking_authority"] = True
+        with self.assertRaisesRegex(m0b2.M0B2Error, "calibration-only"):
+            m0b2.validate_calibration_output(blocking)
+        action = copy.deepcopy(output)
+        action["trade_action"] = "ANY_VALUE"
+        with self.assertRaisesRegex(m0b2.M0B2Error, "forbidden action"):
+            m0b2.validate_calibration_output(action)
+
+    def test_secret_env_names_are_derived_from_the_source_registry(self) -> None:
+        payload = contracts.load_json(contracts.SOURCE_REGISTRY)
+        names = {
+            name
+            for source in payload["sources"]
+            for name in source["credential_env_vars"]
+        }
+        secret = "REGISTRY_DERIVED_SECRET"
+        redacted, matched = collectors._redact_response_body(
+            f"prefix={secret}".encode("utf-8"),
+            {"FRED_API_KEY": secret},
+        )
+        self.assertIn("FRED_API_KEY", names)
+        self.assertEqual(["FRED_API_KEY"], matched)
+        self.assertNotIn(secret.encode("utf-8"), redacted)
 
     def test_consensus_projection_cannot_claim_value_absent_from_provider_json(self) -> None:
         original_loader = contracts.load_json

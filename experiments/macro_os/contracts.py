@@ -289,6 +289,7 @@ def validate_source_registry(payload: dict[str, Any], *, verify_hash: bool = Tru
                 "source_id",
                 "provider",
                 "independence_group",
+                "credential_env_vars",
                 "region",
                 "official",
                 "evidence_level",
@@ -309,6 +310,17 @@ def validate_source_registry(payload: dict[str, Any], *, verify_hash: bool = Tru
             raise ContractError(f"source {source_id} requires provider")
         if not isinstance(row["independence_group"], str) or not row["independence_group"]:
             raise ContractError(f"source {source_id} requires independence_group")
+        credential_env_vars = row["credential_env_vars"]
+        if (
+            not isinstance(credential_env_vars, list)
+            or len(credential_env_vars) != len(set(credential_env_vars))
+            or not all(
+                isinstance(name, str)
+                and re.fullmatch(r"[A-Z][A-Z0-9_]*", name)
+                for name in credential_env_vars
+            )
+        ):
+            raise ContractError(f"source {source_id} has invalid credential_env_vars")
         if row["region"] not in SOURCE_REGIONS:
             raise ContractError(f"invalid source region for {source_id}")
         if not isinstance(row["official"], bool):
