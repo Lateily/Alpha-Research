@@ -283,7 +283,48 @@ Jason owns Router integration:
 The handoff line is strict: K2 says whether Router is allowed to run and gives a
 validated `RouteRequest`. Router picks the Agent only inside that boundary.
 
-## 11. Open Decisions For Junyan
+## 11. Implementation Sequence
+
+K2 should move in small, reviewable steps. This avoids building against an
+unstable K1 contract or silently expanding Router authority.
+
+Phase 0 is this spec PR:
+
+- Document the Policy/Context envelope.
+- Record Jason's Router-side constraints.
+- Keep the branch spec-only and free of model calls, GitHub writes, and
+  scheduler execution.
+
+Phase 1 starts only after #248 K1 registry is merged into `main`:
+
+- Add `scripts/llm/ai_os/policy_engine.py`.
+- Add offline fail-closed tests for budget, risk, mode, network, path scope,
+  forbidden scope, secret-like strings, and external-instruction handling.
+- Keep `LIVE_DATA` blocked until Junyan chooses a mapping.
+
+Phase 2 adds Context Builder:
+
+- Build a hashable context manifest from authority docs, task manifest,
+  relevant issue/PR state, schemas, fixtures, and validation output.
+- Return `CONTEXT_BLOCKED` for stale, missing, contradictory, or out-of-scope
+  context.
+- Store only hashes and allowed paths, not secrets or hidden reasoning.
+
+Phase 3 connects to Router after #246 is merged and its contract is stable:
+
+- Construct `RouteRequest` only from K2-approved fields.
+- Preserve `mode`; do not infer missing `task_type`.
+- Treat `risk_level` preservation as a future Router contract expansion unless
+  #246 adds it first.
+
+Phase 4 can discuss Scheduler/Lease:
+
+- No automatic execution before Policy/Context tests pass.
+- No overlapping write leases.
+- No #164 auto-commenting for blocked tasks unless Junyan approves that human
+  gate behavior.
+
+## 12. Open Decisions For Junyan
 
 1. Whether K2 v0 may include Scheduler/Lease implementation, or whether those
    stay as spec until Policy/Context tests pass.
@@ -294,7 +335,7 @@ validated `RouteRequest`. Router picks the Agent only inside that boundary.
 4. Whether K2 can auto-comment `POLICY_BLOCKED` findings to #164, or must remain
    local-only until K4 Human Gate exists.
 
-## 12. Acceptance For This Spec PR
+## 13. Acceptance For This Spec PR
 
 - The document is added under Reed's boundary `docs/llm/`.
 - It defines K2 input, output, block states, Router handoff, and tests.
