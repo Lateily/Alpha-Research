@@ -848,35 +848,44 @@ def test_capability_router_blocks_unknown_cost_under_budget() -> None:
     assert "kimi: cost unknown under finite budget" in decision.reasons
 
 
-def test_capability_router_requires_independent_high_risk_reviewer() -> None:
-    registry = CapabilityRegistry([capability("codex")])
-    missing = route(registry, route_request(risk_level="HIGH"))
-    same = route(
-        registry,
-        route_request(risk_level="HIGH", reviewer_agent="codex"),
+def test_capability_router_blocks_high_risk_until_reviewer_capabilities_are_wired() -> None:
+    registry = CapabilityRegistry(
+        [capability("codex"), capability("claude", task_type="review")]
     )
-    different = route(
-        registry,
-        route_request(risk_level="HIGH", reviewer_agent="claude"),
-    )
-    assert missing.status is RouteStatus.SPEC_BLOCKED
-    assert same.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
-    assert different.status is RouteStatus.SELECTED
+    for risk_level in ("HIGH", "CONSTITUTIONAL"):
+        for reviewer_agent in (None, "codex", "claude", "nonexistent-reviewer"):
+            decision = route(
+                registry,
+                route_request(
+                    risk_level=risk_level,
+                    reviewer_agent=reviewer_agent,
+                ),
+            )
+            assert decision.status is RouteStatus.SPEC_BLOCKED
+            assert decision.selected_agent is None
+            assert (
+                "high-risk routing is blocked until reviewer capabilities are wired"
+                in decision.reasons
+            )
 
 
-def test_capability_router_reviewer_identity_is_case_and_space_insensitive() -> None:
+def test_capability_router_blocks_high_risk_even_with_reviewer_name_alias() -> None:
     registry = CapabilityRegistry([capability("Codex")])
     decision = route(
         registry,
         route_request(risk_level="HIGH", reviewer_agent="  codex  "),
     )
-    assert decision.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
+    assert decision.status is RouteStatus.SPEC_BLOCKED
+    assert (
+        "high-risk routing is blocked until reviewer capabilities are wired"
+        in decision.reasons
+    )
 
 
 def test_capability_router_prefers_lower_cost_then_stable_name() -> None:
     lower_cost = route(
         CapabilityRegistry(
-            [capability("expensive", cost="0.20"), capability("cheap", cost="0.10")]
+            [capability("alpha", cost="0.20"), capability("zulu", cost="0.10")]
         ),
         route_request(),
     )
@@ -886,8 +895,25 @@ def test_capability_router_prefers_lower_cost_then_stable_name() -> None:
         ),
         route_request(),
     )
-    assert lower_cost.selected_agent == "cheap"
+    assert lower_cost.selected_agent == "zulu"
     assert stable_tie.selected_agent == "alpha"
+
+
+def test_capability_router_rejects_noncanonical_task_types() -> None:
+    for task_type in (" schema_check", "schema_check ", "SCHEMA_CHECK"):
+        try:
+            CapabilityRegistry([capability("codex", task_type=task_type)])
+        except ValueError as exc:
+            assert "task_type must be a canonical lowercase token" in str(exc)
+        else:
+            raise AssertionError("noncanonical capability task_type must fail closed")
+
+        decision = route(
+            CapabilityRegistry([capability("codex")]),
+            route_request(task_type=task_type),
+        )
+        assert decision.status is RouteStatus.SPEC_BLOCKED
+        assert "task_type must be a canonical lowercase token" in decision.reasons
 
 
 def test_route_decision_preserves_requested_mode() -> None:

@@ -2,6 +2,10 @@
 
 This module is an offline control-plane core. It does not call an AgentAdapter,
 grant production status, or persist a new production data contract.
+
+Reviewer identity is not yet backed by provider/model capability records.
+HIGH and CONSTITUTIONAL routing therefore remains SPEC_BLOCKED until that
+independent-review contract and the K2 Human Gate are wired.
 """
 
 from __future__ import annotations
@@ -52,6 +56,8 @@ class CapabilityRecord:
             errors.append("agent must be a non-empty string")
         if not _non_empty(self.task_type):
             errors.append("task_type must be a non-empty string")
+        elif self.task_type != _task_type_identity(self.task_type):
+            errors.append("task_type must be a canonical lowercase token")
         if not isinstance(self.status, CapabilityStatus):
             errors.append("status must be a CapabilityStatus")
         if not isinstance(self.tool_access, frozenset) or not all(
@@ -120,6 +126,8 @@ class RouteRequest:
         errors: list[str] = []
         if not _non_empty(self.task_type):
             errors.append("task_type must be a non-empty string")
+        elif self.task_type != _task_type_identity(self.task_type):
+            errors.append("task_type must be a canonical lowercase token")
         if not isinstance(self.mode, RouteMode):
             errors.append("mode must be a RouteMode")
         if not isinstance(self.required_tools, frozenset) or not all(
@@ -140,10 +148,14 @@ class RouteRequest:
                     errors.append("budget_max_cny must be non-negative")
             except (InvalidOperation, ValueError):
                 errors.append("budget_max_cny must be a decimal string or null")
-        if self.risk_level in {"HIGH", "CONSTITUTIONAL"} and not _non_empty(
-            self.reviewer_agent
-        ):
-            errors.append("high-risk routing requires a named independent reviewer")
+        if self.risk_level in {"HIGH", "CONSTITUTIONAL"}:
+            # reviewer_agent is reserved for the future K2 handoff. A
+            # name-only inequality check would overstate independence, so no
+            # reviewer gate remains reachable until provider/model-backed
+            # reviewer capabilities exist.
+            errors.append(
+                "high-risk routing is blocked until reviewer capabilities are wired"
+            )
         return errors
 
 
@@ -167,7 +179,7 @@ class CapabilityRegistry:
             errors.extend(
                 f"record[{index}]: {error}" for error in record.validation_errors()
             )
-            key = (_agent_identity(record.agent), record.task_type)
+            key = (_agent_identity(record.agent), _task_type_identity(record.task_type))
             if key in seen:
                 errors.append(f"duplicate capability: {record.agent}/{record.task_type}")
             seen.add(key)
@@ -229,7 +241,9 @@ def _ineligible_reasons(
     capability: CapabilityRecord, request: RouteRequest
 ) -> list[str]:
     reasons: list[str] = []
-    if capability.task_type != request.task_type:
+    if _task_type_identity(capability.task_type) != _task_type_identity(
+        request.task_type
+    ):
         reasons.append("task_type mismatch")
     if capability.status in {CapabilityStatus.SUSPENDED, CapabilityStatus.RETIRED}:
         reasons.append(f"status={capability.status.value}")
@@ -244,14 +258,6 @@ def _ineligible_reasons(
         reasons.append("network policy not allowed")
     if not all(_path_allowed(path, capability.file_scope) for path in request.target_paths):
         reasons.append("target path outside file scope")
-    if (
-        _agent_identity(request.reviewer_agent) == _agent_identity(capability.agent)
-        and request.risk_level in {
-        "HIGH",
-        "CONSTITUTIONAL",
-        }
-    ):
-        reasons.append("executor cannot be the independent reviewer")
     if request.budget_max_cny is not None:
         cost = capability.cost()
         if cost is None:
@@ -296,6 +302,12 @@ def _non_empty(value: object) -> bool:
 
 
 def _agent_identity(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
+    return value.strip().casefold()
+
+
+def _task_type_identity(value: object) -> str:
     if not isinstance(value, str):
         return ""
     return value.strip().casefold()
