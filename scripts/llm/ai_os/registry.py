@@ -159,6 +159,7 @@ def replay_events(events: Sequence[Mapping[str, Any]]) -> RegistrySnapshot:
                 _invalid(index, event, "timestamp_utc is older than current task state")
             )
             continue
+        # governance-mutation: AIOS_K1_STATE_TRANSITION
         if (from_state, to_state) not in ALLOWED_TRANSITIONS:
             invalid_events.append(
                 _invalid(index, event, f"transition {from_state}->{to_state} is not allowed")
