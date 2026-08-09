@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/schemas/event.schema.json",
+  "$comment": "Documentation contract for AIOS state events. Runtime validation is implemented in scripts/llm/ai_os/registry.py and guarded by offline consistency tests.",
   "title": "AIOS State Transition Event",
   "type": "object",
   "additionalProperties": true,

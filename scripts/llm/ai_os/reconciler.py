@@ -166,17 +166,30 @@ def _oversold_done(
             )
             continue
         if state.get("state") in {"DONE", "MERGED"}:
-            for pr_value in state.get("evidence_refs", []):
-                if _pr_number(pr_value) is not None:
-                    findings.extend(
-                        _pr_findings(
-                            owner={"task": task_id},
-                            pr_value=pr_value,
-                            pr_by_number=pr_by_number,
-                            done_context=state.get("state") == "DONE",
-                            registry_state=state.get("state"),
-                        )
+            pr_values = [
+                value
+                for value in state.get("evidence_refs", [])
+                if _pr_number(value) is not None
+            ]
+            if not pr_values:
+                findings.append(
+                    {
+                        "task": task_id,
+                        "pr": state.get("evidence_refs", []),
+                        "reason": f"registry {state.get('state')} lacks parseable PR evidence",
+                    }
+                )
+                continue
+            for pr_value in pr_values:
+                findings.extend(
+                    _pr_findings(
+                        owner={"task": task_id},
+                        pr_value=pr_value,
+                        pr_by_number=pr_by_number,
+                        done_context=state.get("state") == "DONE",
+                        registry_state=state.get("state"),
                     )
+                )
     return findings
 
 
@@ -295,7 +308,14 @@ def _pr_number(value: Any) -> int | None:
         return value
     if not isinstance(value, str):
         return None
-    match = re.search(r"(?:/pull/|#)(\d+)\b", value)
-    if not match:
-        return None
-    return int(match.group(1))
+    text = value.strip()
+    patterns = (
+        r"(?i)^PR#(\d+)$",
+        r"^!(\d+)$",
+        r"(?i)(?:^|/)pull/(\d+)(?:\b|$)",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return int(match.group(1))
+    return None

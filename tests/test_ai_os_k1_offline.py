@@ -16,7 +16,14 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "llm"))
 
 from ai_os.reconciler import reconcile  # noqa: E402
 from ai_os.registry import replay_events  # noqa: E402
-from ai_os.task_compiler import SPEC_BLOCKED, SPEC_READY, compile_task_manifest  # noqa: E402
+from ai_os.task_compiler import (  # noqa: E402
+    MANIFEST_ORDER,
+    NETWORK_POLICIES,
+    RISK_LEVELS,
+    SPEC_BLOCKED,
+    SPEC_READY,
+    compile_task_manifest,
+)
 
 
 NOW = datetime(2026, 8, 7, 9, 30, tzinfo=timezone.utc)
@@ -102,6 +109,33 @@ def test_task_manifest_rejects_bad_budget_and_network() -> None:
     assert result.manifest is None
     assert "network_policy is not supported" in result.errors
     assert "budget.max_cny must be non-negative" in result.errors
+
+
+def test_task_manifest_rejects_bad_schema_risk_and_source_issue() -> None:
+    cases = [
+        (
+            valid_task_source(schema="ai-task.v0"),
+            "schema must be ai-task.v1",
+        ),
+        (
+            valid_task_source(risk_level="AUTO_APPROVE"),
+            "risk_level is not supported",
+        ),
+        (
+            valid_task_source(source_issue=True),
+            "source_issue must be a positive integer when present",
+        ),
+        (
+            valid_task_source(source_issue=0),
+            "source_issue must be a positive integer when present",
+        ),
+    ]
+
+    for source, expected_error in cases:
+        result = compile_task_manifest(source, now=NOW)
+        assert result.status == SPEC_BLOCKED
+        assert result.manifest is None
+        assert expected_error in result.errors
 
 
 def test_task_manifest_rejects_non_finite_budget_and_bad_created_at() -> None:
@@ -195,12 +229,60 @@ def test_registry_requires_done_evidence() -> None:
         [
             event("evt-1", "DISCOVERED", "TRIAGED"),
             event("evt-2", "TRIAGED", "SPEC_READY"),
-            event("evt-3", "SPEC_READY", "DONE"),
+            event("evt-3", "SPEC_READY", "CLAIMED"),
+            event("evt-4", "CLAIMED", "RUNNING"),
+            event("evt-5", "RUNNING", "VERIFYING"),
+            event("evt-6", "VERIFYING", "REVIEWING"),
+            event("evt-7", "REVIEWING", "AWAITING_APPROVAL"),
+            event("evt-8", "AWAITING_APPROVAL", "MERGED"),
+            event("evt-9", "MERGED", "VALIDATING"),
+            event("evt-10", "VALIDATING", "DONE"),
         ]
     ).to_dict()
 
-    assert snapshot["tasks"]["A-006-task-manifest"]["state"] == "SPEC_READY"
-    assert snapshot["invalid_events"][0]["reason"] == "transition SPEC_READY->DONE is not allowed"
+    assert snapshot["tasks"]["A-006-task-manifest"]["state"] == "VALIDATING"
+    assert snapshot["invalid_events"][0]["reason"] == "DONE requires evidence_refs"
+
+
+def test_registry_rejects_from_state_mismatch() -> None:
+    snapshot = replay_events(
+        [
+            event("evt-1", "DISCOVERED", "TRIAGED"),
+            event("evt-2", "DISCOVERED", "DONE", ["PR#1"]),
+        ]
+    ).to_dict()
+
+    assert snapshot["tasks"]["A-006-task-manifest"]["state"] == "TRIAGED"
+    assert snapshot["invalid_events"][0]["reason"] == (
+        "from_state DISCOVERED does not match current TRIAGED"
+    )
+
+
+def test_registry_rejects_duplicate_event_id_with_changed_payload() -> None:
+    snapshot = replay_events(
+        [
+            event("evt-1", "DISCOVERED", "TRIAGED"),
+            event("evt-1", "DISCOVERED", "TRIAGED", evidence_refs=["PR#1"]),
+        ]
+    ).to_dict()
+
+    assert snapshot["tasks"]["A-006-task-manifest"]["state"] == "TRIAGED"
+    assert snapshot["duplicate_events"] == []
+    assert snapshot["invalid_events"][0]["reason"] == "event_id reused with different payload"
+
+
+def test_registry_rejects_empty_event_id_and_empty_required_fields() -> None:
+    empty_event_id = event("", "DISCOVERED", "TRIAGED")
+    empty_actor = event("evt-2", "DISCOVERED", "TRIAGED")
+    empty_actor["actor"] = " "
+
+    snapshot = replay_events([empty_event_id, empty_actor]).to_dict()
+
+    assert snapshot["tasks"] == {}
+    assert [item["reason"] for item in snapshot["invalid_events"]] == [
+        "event_id must be a non-empty string",
+        "actor must be a non-empty string",
+    ]
 
 
 def test_registry_rejects_jump_back_self_loop_and_time_reversal() -> None:
@@ -338,14 +420,14 @@ def test_reconciler_cross_checks_done_against_pr_state() -> None:
             {
                 "event": "DONE",
                 "task": "#999",
-                "pr": "#999",
+                "pr": "PR#999",
                 "next": "none",
                 "cost_cny": "0",
             },
             {
                 "event": "DONE",
                 "task": "#301",
-                "pr": "#301",
+                "pr": "https://github.com/Lateily/Alpha-Research/pull/301",
                 "next": "none",
                 "cost_cny": "0",
             },
@@ -367,6 +449,70 @@ def test_reconciler_cross_checks_done_against_pr_state() -> None:
     assert "DONE references PR that is not merged" in reasons
     assert "registry MERGED references PR that is still open" in reasons
     assert "DONE references PR without required runtime verification" in reasons
+
+
+def test_reconciler_reports_done_comment_missing_required_fields() -> None:
+    report = reconcile(
+        progress_events=[
+            {"event": "DONE", "task": "#248", "pr": "PR#248"},
+        ],
+        pull_requests=[{"number": 248, "state": "MERGED"}],
+        now=NOW,
+    )
+
+    assert report["oversold_done"] == [
+        {
+            "task": "#248",
+            "missing": ["next", "cost_cny"],
+            "reason": "DONE comment lacks required evidence fields",
+        }
+    ]
+
+
+def test_reconciler_requires_explicit_parseable_pr_evidence() -> None:
+    report = reconcile(
+        registry_snapshot={
+            "tasks": {
+                "A-note": {"state": "DONE", "evidence_refs": ["note#5"]},
+                "A-pull": {
+                    "state": "DONE",
+                    "evidence_refs": ["https://github.com/Lateily/Alpha-Research/pull/6"],
+                },
+            }
+        },
+        progress_events=[
+            {
+                "event": "DONE",
+                "task": "#bad-pr-field",
+                "pr": "test#1",
+                "next": "review",
+                "cost_cny": "0",
+            },
+        ],
+        pull_requests=[
+            {"number": 5, "state": "MERGED"},
+            {"number": 6, "state": "OPEN"},
+            {"number": 1, "state": "MERGED"},
+        ],
+        now=NOW,
+    )
+
+    findings = report["oversold_done"]
+    assert {
+        "task": "A-note",
+        "pr": ["note#5"],
+        "reason": "registry DONE lacks parseable PR evidence",
+    } in findings
+    assert {
+        "task": "A-pull",
+        "pr": 6,
+        "reason": "DONE references PR that is not merged",
+    } in findings
+    assert {
+        "task": "#bad-pr-field",
+        "pr": "test#1",
+        "reason": "PR reference is not parseable",
+    } in findings
 
 
 def test_reconciler_cli_invalid_claim_exits_nonzero() -> None:
@@ -415,6 +561,41 @@ def test_ai_os_k1_has_zero_network_surface() -> None:
 
     assert result.status == SPEC_READY
     assert report["schema"] == "ai-os-reconciliation.v1"
+
+
+def test_k1_schemas_are_documented_contracts_with_consistency_guards() -> None:
+    task_schema = json.loads(
+        (REPO_ROOT / "scripts" / "llm" / "schemas" / "task.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    event_schema = json.loads(
+        (REPO_ROOT / "scripts" / "llm" / "schemas" / "event.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    decision_schema = json.loads(
+        (REPO_ROOT / "scripts" / "llm" / "schemas" / "decision.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert "Runtime validation is implemented" in task_schema["$comment"]
+    assert "Runtime validation is implemented" in event_schema["$comment"]
+    assert "K1 does not consume this schema yet" in decision_schema["$comment"]
+    assert set(task_schema["required"]) == set(MANIFEST_ORDER) - {"source_issue"}
+    assert set(task_schema["properties"]["risk_level"]["enum"]) == RISK_LEVELS
+    assert set(task_schema["properties"]["network_policy"]["enum"]) == NETWORK_POLICIES
+    assert set(event_schema["required"]) == {
+        "event_id",
+        "task_id",
+        "from_state",
+        "to_state",
+        "actor",
+        "reason",
+        "evidence_refs",
+        "timestamp_utc",
+    }
 
 
 def run_all_tests() -> int:
