@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from policy_engine import POLICY_ALLOWED, evaluate_policy
 from registry import replay_events
 from reconciler import reconcile
 from task_compiler import SPEC_BLOCKED, compile_task_manifest
@@ -30,6 +31,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     reconcile_parser.add_argument("--input", required=True, help="Fixture JSON object")
     reconcile_parser.add_argument("--output", help="Optional output JSON path")
+
+    policy_parser = subparsers.add_parser(
+        "policy", help="Evaluate a K2 policy fixture without executing"
+    )
+    policy_parser.add_argument("--input", required=True, help="Policy fixture JSON object")
+    policy_parser.add_argument("--output", help="Optional output JSON path")
 
     args = parser.parse_args(argv)
     if args.command == "compile":
@@ -57,6 +64,23 @@ def main(argv: list[str] | None = None) -> int:
         )
         _write_json(result, args.output)
         return 1 if _has_findings(result) else 0
+    if args.command == "policy":
+        fixture = _load_json(args.input)
+        if not isinstance(fixture, dict):
+            print("policy input must be a JSON object", file=sys.stderr)
+            return 2
+        result = evaluate_policy(
+            fixture.get("task_manifest"),
+            mode=fixture.get("mode"),
+            task_type=fixture.get("task_type"),
+            required_tools=fixture.get("required_tools"),
+            target_paths=fixture.get("target_paths"),
+            reviewer_agent=fixture.get("reviewer_agent"),
+            approval_evidence=fixture.get("approval_evidence"),
+            external_texts=fixture.get("external_texts"),
+        ).to_dict()
+        _write_json(result, args.output)
+        return 0 if result["policy_status"] == POLICY_ALLOWED else 2
     return 2
 
 
