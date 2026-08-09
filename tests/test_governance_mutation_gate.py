@@ -20,7 +20,37 @@ import governance_mutation_gate as gate  # noqa: E402
 class GovernanceMutationGateTests(unittest.TestCase):
     def test_production_manifest_has_unique_live_anchors(self) -> None:
         gate.validate_manifest(REPO_ROOT, gate.MUTATIONS)
-        self.assertGreaterEqual(len(gate.MUTATIONS), 10)
+        self.assertGreaterEqual(len(gate.MUTATIONS), 15)
+
+    def test_k1_marker_coverage_rejects_missing_or_orphaned_mutations(self) -> None:
+        k1_case = next(
+            case for case in gate.MUTATIONS if case.component.startswith("AIOS K1")
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "k1.py"
+            source.write_text("# no marker\n", encoding="utf-8")
+            with self.assertRaisesRegex(gate.MutationGateError, "mutations_without_markers"):
+                gate.validate_k1_marker_coverage(root, [k1_case], ("k1.py",))
+
+            source.write_text(
+                "# governance-mutation: AIOS_K1_ORPHAN_GATE\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(gate.MutationGateError, "markers_without_mutations"):
+                gate.validate_k1_marker_coverage(root, [k1_case], ("k1.py",))
+
+    def test_k1_marker_coverage_rejects_duplicate_markers(self) -> None:
+        k1_case = next(
+            case for case in gate.MUTATIONS if case.component.startswith("AIOS K1")
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "k1.py"
+            marker = f"# governance-mutation: {k1_case.mutation_id}\n"
+            source.write_text(marker + marker, encoding="utf-8")
+            with self.assertRaisesRegex(gate.MutationGateError, "duplicate K1 governance marker"):
+                gate.validate_k1_marker_coverage(root, [k1_case], ("k1.py",))
 
     def test_exact_replace_rejects_missing_and_duplicate_anchors(self) -> None:
         with self.assertRaisesRegex(gate.MutationGateError, "found 0"):

@@ -118,6 +118,7 @@ def _unlinked_prs(pull_requests: Sequence[Mapping[str, Any]]) -> list[dict[str, 
             for name in ("linked_issue", "ai_id", "has_acceptance", "has_progress_claim")
             if not pr.get(name)
         ]
+        # governance-mutation: AIOS_K1_UNLINKED_OPEN_PR
         if missing:
             findings.append(
                 {
@@ -138,6 +139,7 @@ def _oversold_done(
     for event in progress_events:
         if event.get("event") == "DONE":
             missing = [name for name in ("pr", "next", "cost_cny") if not event.get(name)]
+            # governance-mutation: AIOS_K1_OVERSOLD_DONE_EVIDENCE
             if missing:
                 findings.append(
                     {
@@ -281,6 +283,7 @@ def _pr_findings(
     if number is None:
         return [{**owner, "pr": pr_value, "reason": "PR reference is not parseable"}]
     pr = pr_by_number.get(number)
+    # governance-mutation: AIOS_K1_UNKNOWN_PR
     if pr is None:
         return [{**owner, "pr": number, "reason": "DONE references unknown PR"}]
 

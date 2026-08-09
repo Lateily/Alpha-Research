@@ -384,6 +384,54 @@ def test_reconciler_reports_k1_gaps() -> None:
     json.dumps(report, ensure_ascii=False)
 
 
+def test_reconciler_does_not_hide_open_unlinked_pr() -> None:
+    report = reconcile(
+        pull_requests=[
+            {
+                "number": 250,
+                "state": "OPEN",
+                "linked_issue": None,
+                "ai_id": "AIOS-K1",
+                "has_acceptance": True,
+                "has_progress_claim": True,
+            }
+        ],
+        now=NOW,
+    )
+
+    assert report["unlinked_prs"] == [
+        {
+            "pr": 250,
+            "missing": ["linked_issue"],
+            "reason": "open PR is not fully linked to AIOS control records",
+        }
+    ]
+
+
+def test_reconciler_does_not_hide_done_with_unknown_pr() -> None:
+    report = reconcile(
+        progress_events=[
+            {
+                "event": "DONE",
+                "task": "#404",
+                "pr": "PR#404",
+                "next": "review",
+                "cost_cny": "0",
+            }
+        ],
+        pull_requests=[],
+        now=NOW,
+    )
+
+    assert report["oversold_done"] == [
+        {
+            "task": "#404",
+            "pr": 404,
+            "reason": "DONE references unknown PR",
+        }
+    ]
+
+
 def test_reconciler_reports_invalid_claim_leases() -> None:
     report = reconcile(
         progress_events=[
