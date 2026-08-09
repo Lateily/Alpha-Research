@@ -274,6 +274,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="DONE cannot be accepted without its required evidence fields.",
         test_function="test_reconciler_reports_done_comment_missing_required_fields",
     ),
+    MutationCase(
+        mutation_id="GOVERNANCE_K1_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_k1_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_k1_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_k1_marker_coverage",
+        rationale="The manifest validator must not silently stop enforcing K1 marker coverage.",
+    ),
 )
 
 
