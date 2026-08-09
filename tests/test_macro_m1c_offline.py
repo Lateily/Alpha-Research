@@ -22,7 +22,7 @@ if str(ROOT) not in sys.path:
 if str(ET) not in sys.path:
     sys.path.insert(0, str(ET))
 
-from experiments.macro_os import contracts, m0b2, m1c  # noqa: E402
+from experiments.macro_os import contracts, m0b2, m0b3, m1c  # noqa: E402
 from experiments.macro_os.storage import MacroHistoryStore  # noqa: E402
 import nightly_publish  # noqa: E402
 import run_nightly as nightly  # noqa: E402
@@ -128,7 +128,11 @@ class MacroM1CRuntimeTests(unittest.TestCase):
         self.assertEqual(RUN_ID, manifest["components"]["m1b"]["run_id"])
         self.assertFalse(manifest["risk_budget_annotation"]["enforceable"])
         self.assertFalse(manifest["risk_budget_annotation"]["formal_blocking_authority"])
-        self.assertEqual("STARTER_CAPPED", manifest["risk_budget_annotation"]["new_position_ceiling"])
+        self.assertEqual("UNCHANGED", manifest["risk_budget_annotation"]["new_position_ceiling"])
+        self.assertEqual(
+            "CALIBRATION_NO_MACRO_EVIDENCE",
+            manifest["risk_budget_annotation"]["reason"],
+        )
         self.assertEqual(manifest, m1c.validate_run(self.output))
         schema = contracts.load_json(m1c.REPO_ROOT / "experiments" / "macro_os" / "schemas" / "m1c_run_manifest.schema.json")
         self.assertEqual(set(manifest), set(schema["required"]))
@@ -142,6 +146,14 @@ class MacroM1CRuntimeTests(unittest.TestCase):
         write_json(panel_path, panel)
         with self.assertRaisesRegex(m1c.M1CError, "hash-mismatched"):
             m1c.validate_run(self.output)
+
+    def test_any_blocked_component_dominates_top_level_quality(self) -> None:
+        self.assertEqual(
+            "DATA_BLOCKED",
+            m1c._aggregate_quality(
+                ["COMPLETE", "DATA_BLOCKED", "DATA_BLOCKED", "DATA_BLOCKED"]
+            ),
+        )
 
     def test_child_manifests_must_share_current_snapshot_and_sources(self) -> None:
         self.run_m1c()
@@ -182,6 +194,23 @@ class MacroM1CRuntimeTests(unittest.TestCase):
         )
         self.assertEqual(manifest, m1c.validate_run(self.output))
 
+    def test_m0b3_nightly_uses_the_standalone_lock_resolver(self) -> None:
+        calendar = m0b2.build_release_calendar(
+            [], generated_at="2026-08-09T08:30:00Z", run_id="calendar_fixture"
+        )
+        m0b2.write_json(self.output / "release_calendar.json", calendar)
+        with mock.patch.object(
+            m1c.m0b3,
+            "lock_path_for_db",
+            wraps=m1c.m0b3.lock_path_for_db,
+        ) as resolver:
+            self.run_m1c()
+        resolver.assert_called_once_with(self.db)
+        self.assertEqual(
+            self.db.parent / m0b3.DEFAULT_LOCK.name,
+            m0b3.lock_path_for_db(self.db),
+        )
+
     def test_portfolio_must_belong_to_current_nightly_run_and_target(self) -> None:
         write_json(self.portfolio, portfolio(run_id="OLD_RUN"))
         with self.assertRaisesRegex(m1c.M1CError, "current nightly run"):
@@ -196,6 +225,35 @@ class MacroM1CRuntimeTests(unittest.TestCase):
         promoted["risk_budget_annotation"]["enforceable"] = True
         with self.assertRaisesRegex(m1c.M1CError, "authority changed"):
             m1c._walk_authority(promoted)
+        write_json(self.output / "m1c_run_manifest.json", promoted)
+        with self.assertRaises(m1c.M1CError):
+            m1c.validate_run(self.output)
+
+    def test_run_calls_authority_validator_before_writing_manifest(self) -> None:
+        original_validate_run = m1c.validate_run
+        with mock.patch.object(
+            m1c,
+            "validate_run",
+            side_effect=lambda output: contracts.load_json(
+                Path(output) / "m1c_run_manifest.json"
+            ),
+        ), mock.patch.object(
+            m1c, "_walk_authority", wraps=m1c._walk_authority
+        ) as authority:
+            self.run_m1c()
+        self.assertGreater(authority.call_count, 0)
+        self.assertEqual(
+            original_validate_run(self.output),
+            contracts.load_json(self.output / "m1c_run_manifest.json"),
+        )
+
+    def test_validate_run_calls_authority_validator(self) -> None:
+        self.run_m1c()
+        with mock.patch.object(
+            m1c, "_walk_authority", wraps=m1c._walk_authority
+        ) as authority:
+            m1c.validate_run(self.output)
+        self.assertGreater(authority.call_count, 0)
 
     def test_cli_publishes_data_blocked_evidence_with_success_exit(self) -> None:
         cli_root = self.root / "cli"
@@ -278,6 +336,61 @@ class MacroM1CNightlyWiringTests(unittest.TestCase):
         self.assertEqual(["export.py", "m1c.py"], calls)
         self.assertEqual("OK", result["steps"][1]["status"])
 
+    def test_macro_failure_is_isolated_and_cannot_stop_unrelated_publication(self) -> None:
+        original_steps = nightly.STEPS
+        nightly.STEPS = [
+            ("core", ["python3", "core.py"], False, []),
+            ("macro_m1c", ["python3", "m1c.py"], False, []),
+        ]
+
+        def runner(command):
+            return (1, "macro_m1c: REFUSED stale portfolio") if command[1] == "m1c.py" else (0, "OK")
+
+        try:
+            result = nightly.run_steps(runner=runner, require_live=False, verify=False)
+        finally:
+            nightly.STEPS = original_steps
+        rows = {row["step"]: row for row in result["steps"]}
+        self.assertEqual("COMPLETE", result["report"])
+        self.assertEqual("DATA_BLOCKED", result["research_data_quality"])
+        self.assertEqual([], result["non_ok_steps"])
+        self.assertEqual("DATA_BLOCKED", rows["macro_m1c"]["status"])
+        self.assertEqual("FAILED", rows["macro_m1c"]["isolated_status"])
+        self.assertFalse(rows["macro_m1c"]["blocks_publication"])
+        self.assertEqual(
+            [{"step": "macro_m1c", "status": "DATA_BLOCKED", "original_status": "FAILED"}],
+            result["isolated_steps"],
+        )
+
+    def test_failed_macro_step_discards_partial_outputs_but_keeps_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            et = root / "experiments" / "execution_tracker"
+            macro_data = root / "public" / "data" / "v2" / "macro"
+            et.mkdir(parents=True)
+            macro_data.mkdir(parents=True)
+            write_json(macro_data / "release_calendar.json", {})
+            write_json(macro_data / "macro_panel.json", {"run_id": "PARTIAL_WRITE"})
+            original_steps = nightly.STEPS
+            nightly.STEPS = [("macro_m1c", ["python3", "m1c.py"], False, [])]
+            try:
+                result = nightly.run_steps(
+                    runner=lambda _command: (1, "macro_m1c: REFUSED injected crash"),
+                    require_live=False,
+                    verify=True,
+                    base=str(et),
+                    run_id=RUN_ID,
+                )
+            finally:
+                nightly.STEPS = original_steps
+            self.assertEqual("COMPLETE", result["report"])
+            self.assertTrue((macro_data / "release_calendar.json").is_file())
+            self.assertFalse((macro_data / "macro_panel.json").exists())
+            self.assertIn(
+                "macro_panel.json",
+                result["steps"][0]["discarded_artifacts"],
+            )
+
     def test_persistent_macro_db_is_injected_only_as_runtime_environment(self) -> None:
         captured = {}
 
@@ -312,6 +425,26 @@ class MacroM1CNightlyWiringTests(unittest.TestCase):
             run_dir = Path(tmp) / "run"
             stage = nightly_publish.prepare_stage(str(et), str(root), str(run_dir))
             self.assertTrue((Path(stage["macro"]) / "m1c.py").is_file())
+
+    def test_staging_removes_stale_macro_outputs_but_preserves_runtime_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            et = root / "experiments" / "execution_tracker"
+            research = root / "experiments" / "research_funnel"
+            macro_code = root / "experiments" / "macro_os"
+            macro_data = root / "public" / "data" / "v2" / "macro"
+            for directory in (et, research, macro_code, macro_data):
+                directory.mkdir(parents=True, exist_ok=True)
+            (macro_data / "release_calendar.json").write_text("{}\n", encoding="utf-8")
+            (macro_data / "market_features.json").write_text("{}\n", encoding="utf-8")
+            (macro_data / "macro_panel.json").write_text('{"run_id":"OLD"}\n', encoding="utf-8")
+            stage = nightly_publish.prepare_stage(
+                str(et), str(root), str(Path(tmp) / "run")
+            )
+            staged = Path(stage["public"]) / "macro"
+            self.assertTrue((staged / "release_calendar.json").is_file())
+            self.assertTrue((staged / "market_features.json").is_file())
+            self.assertFalse((staged / "macro_panel.json").exists())
 
 
 if __name__ == "__main__":

@@ -129,6 +129,32 @@ def _tree_hashes(root):
     return out
 
 
+MACRO_RUNTIME_INPUTS = {"release_calendar.json", "market_features.json"}
+
+
+def reset_staged_macro_outputs(stage_public):
+    """Keep only immutable Macro inputs before the current staged run.
+
+    A failed calibration module must not republish last night's derived panel as
+    current evidence.  Existing live files remain untouched, but they are absent
+    from this run's publication manifest unless M1-C regenerates them.
+    """
+    macro_root = os.path.join(stage_public, "macro")
+    if not os.path.isdir(macro_root):
+        return []
+    removed = []
+    for name in sorted(os.listdir(macro_root)):
+        if name in MACRO_RUNTIME_INPUTS:
+            continue
+        path = os.path.join(macro_root, name)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+        removed.append(name)
+    return removed
+
+
 def prepare_stage(live_et, live_repo, run_dir):
     """Copy runtime state and code into an isolated repository-shaped staging tree."""
     stage_repo = os.path.join(run_dir, "staging", "repo")
@@ -168,6 +194,7 @@ def prepare_stage(live_et, live_repo, run_dir):
         shutil.copytree(live_public, stage_public)
     else:
         os.makedirs(stage_public, exist_ok=True)
+    reset_staged_macro_outputs(stage_public)
     snapshot = {
         "protected": {
             rel: _tree_hashes(os.path.join(stage_et, rel)) for rel in PROTECTED_DIRS

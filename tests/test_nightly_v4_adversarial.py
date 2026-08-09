@@ -760,7 +760,7 @@ class StagingPublicationTest(unittest.TestCase):
                     "R4", "20260804", stage, et, repo, run_dir
                 )
 
-    def test_execute_nightly_publishes_only_after_complete_staging_run(self) -> None:
+    def test_execute_nightly_publishes_unrelated_outputs_when_macro_is_isolated(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = os.path.join(tmp, "repo")
             et = os.path.join(repo, "experiments", "execution_tracker")
@@ -778,6 +778,9 @@ class StagingPublicationTest(unittest.TestCase):
             write_json(os.path.join(et, "model_fund", "fund.json"), {"cash": 1})
             write_json(os.path.join(et, "rotation_panel.json"), {"value": "old"})
             write_json(os.path.join(public, "meta.json"), {"value": "old-public"})
+            write_json(os.path.join(public, "macro", "macro_panel.json"), {
+                "run_id": "OLD_MACRO_RUN",
+            })
             old = {name: getattr(nightly, name) for name in (
                 "HERE", "REPO_ROOT", "RUNS_DIR", "RUN_STATE", "OUT", "PUBLICATION_STATE",
             )}
@@ -804,12 +807,28 @@ class StagingPublicationTest(unittest.TestCase):
                 write_json(os.path.join(stage_public, "meta.json"), {
                     "value": "new-public", "run_id": run_id,
                     "target_trade_date": "20260804", "report": "COMPLETE",
+                    "data_quality": "COMPLETE", "degraded_sources": [],
+                    "business_contract_count": 1,
                 })
                 return {
                     "generated_at": "20260804 16:35", "orchestrator": "nightly_v4",
                     "run_id": run_id, "target_trade_date": "20260804",
                     "report": "COMPLETE", "non_ok_steps": [],
-                    "steps": [{"step": "fake", "status": "OK"}],
+                    "research_data_quality": "DATA_BLOCKED",
+                    "research_data_gaps": [{
+                        "step": "macro_m1c", "quality": "DATA_BLOCKED", "artifact": None,
+                    }],
+                    "isolated_steps": [{
+                        "step": "macro_m1c", "status": "DATA_BLOCKED",
+                        "original_status": "FAILED",
+                    }],
+                    "steps": [
+                        {"step": "fake", "status": "OK"},
+                        {
+                            "step": "macro_m1c", "status": "DATA_BLOCKED",
+                            "isolated_status": "FAILED", "blocks_publication": False,
+                        },
+                    ],
                 }
 
             try:
@@ -832,7 +851,14 @@ class StagingPublicationTest(unittest.TestCase):
                 self.assertEqual(read_json(os.path.join(et, "rotation_panel.json"))["value"], "new")
                 self.assertEqual(read_json(os.path.join(public, "meta.json"))["value"], "new-public")
                 self.assertEqual(read_json(os.path.join(et, "current_run.json"))["target_trade_date"], "20260804")
-                self.assertTrue(read_json(nightly.OUT)["published"])
+                result = read_json(nightly.OUT)
+                self.assertTrue(result["published"])
+                self.assertEqual("COMPLETE", result["report"])
+                self.assertEqual("DATA_BLOCKED", result["data_quality"])
+                self.assertNotIn(
+                    "public:macro/macro_panel.json",
+                    read_json(os.path.join(public, "current_run.json"))["artifacts"],
+                )
                 self.assertFalse(os.path.exists(nightly.RUN_STATE))
             finally:
                 for name, value in old.items():

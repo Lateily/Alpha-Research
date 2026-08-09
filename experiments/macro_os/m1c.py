@@ -3,8 +3,10 @@
 
 M1-C runs inside nightly-v4 staging.  It may refresh a due M0-B3 release
 schedule, always rebuilds the M1-A/M1-B read-only contracts, and writes one
-hash-bound manifest last.  Evidence gaps are published as data quality; only
-contract, integrity, or authority violations fail the pipeline.
+hash-bound manifest last.  Evidence gaps are published as data quality.
+Contract, integrity, or authority violations fail this component closed; the
+nightly parent isolates that failure during calibration so unrelated outputs
+remain publishable.
 
 Calibration remains non-enforceable.  This module cannot emit a trade action,
 direct block, formal regime, or automatic order instruction.
@@ -113,12 +115,9 @@ def _walk_authority(value: Any) -> None:
 def _aggregate_quality(values: list[str]) -> str:
     if not values or any(value not in QUALITY for value in values):
         raise M1CError("component data quality is invalid")
-    states = set(values)
-    if states == {"COMPLETE"}:
-        return "COMPLETE"
-    if states == {"DATA_BLOCKED"}:
+    if "DATA_BLOCKED" in values:
         return "DATA_BLOCKED"
-    return "PARTIAL"
+    return "PARTIAL" if "PARTIAL" in values else "COMPLETE"
 
 
 def _artifact_hashes(root: Path, names: list[str]) -> dict[str, str]:
@@ -204,9 +203,9 @@ def _m0b3_component(
     discovery_path = output_dir / "release_discovery_status.json"
     scheduler_path = output_dir / "scheduler_status.json"
     manifest_path = output_dir / "m0b3_run_manifest.json"
-    # Use the exact lock name from the standalone M0-B3 CLI so launchd and the
-    # nightly refresh cannot run one discovery cycle concurrently.
-    lock_path = db_path.parent / "macro_os.lock"
+    # Share the exact helper used by standalone M0-B3.  Keeping the name in one
+    # function prevents comments and implementation from drifting apart again.
+    lock_path = m0b3.lock_path_for_db(db_path)
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+") as lock_handle:
         try:
@@ -264,7 +263,10 @@ def _risk_budget_annotation(risk: Mapping[str, Any]) -> dict[str, Any]:
     data = risk.get("data") or {}
     candidate = data.get("candidate_state")
     context = data.get("risk_budget_context")
-    reduced = context == "REDUCED_REVIEW_BUDGET"
+    reduced = (
+        candidate == "CREDIT_STRESS_CANDIDATE"
+        and context == "REDUCED_REVIEW_BUDGET"
+    )
     return {
         "candidate_state": candidate,
         "source_context": context,
@@ -273,8 +275,10 @@ def _risk_budget_annotation(risk: Mapping[str, Any]) -> dict[str, Any]:
         "enforceable": False,
         "formal_blocking_authority": False,
         "reason": (
-            "CALIBRATION_RISK_BUDGET_ONLY"
+            "CALIBRATION_CREDIT_STRESS_BUDGET_ONLY"
             if reduced
+            else "CALIBRATION_NO_MACRO_EVIDENCE"
+            if candidate == "MACRO_PARTIAL"
             else "CALIBRATION_NO_BUDGET_REDUCTION"
         ),
     }
@@ -472,6 +476,7 @@ def validate_run(output_dir: str | Path) -> dict[str, Any]:
     risk = contracts.load_json(root / "macro_risk_gate.json")
     if payload["risk_budget_annotation"] != _risk_budget_annotation(risk):
         raise M1CError("M1-C risk-budget annotation differs from M1-A evidence")
+    # governance-mutation: MACRO_M1C_VALIDATE_AUTHORITY_CALL
     _walk_authority(payload)
     return payload
 
@@ -591,13 +596,13 @@ def run(
         "policy": dict(POLICY),
         "disclaimer": DISCLAIMER,
     }
+    # governance-mutation: MACRO_M1C_RUN_AUTHORITY_CALL
     _walk_authority(manifest)
     m1a.write_json(output / "m1c_run_manifest.json", manifest)
     return validate_run(output)
 
 
 def selftest() -> None:
-    # governance-mutation: MACRO_M1C_CALIBRATION_AUTHORITY
     probe = {
         "policy": dict(POLICY),
         "risk_budget_annotation": {"enforceable": True},

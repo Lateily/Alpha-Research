@@ -95,7 +95,9 @@ M0-B3 写成已调度成功。禁止用空日历或人工日期消除这个阻�
 2. **M1-A 部署验收**:合并后用真实 SQLite 副本运行;正式共识源未建立时 `surprise=DATA_BLOCKED`,不得补 0。G2/G3 缺正式 `market_features` 生产者时同样阻断。
 3. **M1-B**:行业与组合消费者、内部宏观面板和校准记录;当前不接微信提醒。
 4. **M1-C 部署验收**:合并后安全同步运行目录,真实夜跑必须证明同一 `run_id/target_trade_date`,
-   M0-B/M0-B3/M1-A/M1-B 逐层哈希一致,诚实 `PARTIAL/DATA_BLOCKED` 可发布,结构失败不可发布。
+   M0-B/M0-B3/M1-A/M1-B 逐层哈希一致,诚实 `PARTIAL/DATA_BLOCKED` 可发布。Macro
+   结构失败只隔离本轮 Macro 派生产物并上浮 `DATA_BLOCKED`,不得冻结 NAV/账本等无关发布;
+   失败前先清除 staging 内上一轮 Macro 派生文件,不得用旧面板顶替。
 5. **官方日历物化器**:从来源注册表指定的官方日历页抓取、保存不可变原始快照,再调用
    M0-B2 投影器生成 `release_calendar.json`;真实来源、日期文本与快照绑定全部通过后,
    M0-B3 才可从 `RELEASE_CALENDAR_NOT_PUBLISHED` 升级为实际 due/reuse 调度。

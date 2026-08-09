@@ -98,6 +98,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Expired official observations cannot emit current factor signals.",
     ),
     MutationCase(
+        mutation_id="MACRO_M1A_RISK_BUDGET_EVIDENCE",
+        component="Macro M1-A",
+        source_path="experiments/macro_os/m1a.py",
+        test_script="tests/test_macro_m1a_offline.py",
+        before='    if data["risk_budget_context"] != expected_budget:\n'
+        '        raise M1AError("risk-budget context must come from observed credit stress, not missing evidence")',
+        after='    if False:\n'
+        '        raise M1AError("risk-budget context must come from observed credit stress, not missing evidence")',
+        expected_failure_marker="test_missing_evidence_cannot_tighten_risk_budget",
+        rationale="Missing Macro evidence cannot be reinterpreted as a risk-budget tightening signal.",
+    ),
+    MutationCase(
         mutation_id="MACRO_M1B_FORBIDDEN_OUTPUT",
         component="Macro M1-B",
         source_path="experiments/macro_os/m1b.py",
@@ -134,16 +146,34 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Calibration-only portfolio context cannot become a ranking input.",
     ),
     MutationCase(
-        mutation_id="MACRO_M1C_CALIBRATION_AUTHORITY",
-        component="Macro M1-C",
+        mutation_id="MACRO_M1C_FAILURE_ISOLATION",
+        component="Macro M1-C nightly boundary",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before='        if name in ISOLATED_CALIBRATION_STEPS and status != "OK":',
+        after='        if False:',
+        expected_failure_marker="test_macro_failure_is_isolated_and_cannot_stop_unrelated_publication",
+        rationale="A calibration-only Macro failure cannot veto unrelated nightly publication.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M1C_RUN_AUTHORITY_CALL",
+        component="Macro M1-C runtime boundary",
         source_path="experiments/macro_os/m1c.py",
         test_script="tests/test_macro_m1c_offline.py",
-        before='            if str(key) in {"enforceable", "formal_blocking_authority"} and child is not False:\n'
-        '                raise M1CError(f"M1-C calibration authority changed at {key}")',
-        after='            if False:\n'
-        '                raise M1CError(f"M1-C calibration authority changed at {key}")',
-        expected_failure_marker="test_calibration_authority_cannot_be_promoted",
-        rationale="M1-C may annotate risk budgets but cannot become enforceable during calibration.",
+        before="    _walk_authority(manifest)",
+        after="    pass  # mutation: skip pre-write authority validation",
+        expected_failure_marker="test_run_calls_authority_validator_before_writing_manifest",
+        rationale="The runtime must invoke the calibration authority validator before writing its manifest.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M1C_VALIDATE_AUTHORITY_CALL",
+        component="Macro M1-C validation boundary",
+        source_path="experiments/macro_os/m1c.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before="    _walk_authority(payload)",
+        after="    pass  # mutation: skip published-manifest authority validation",
+        expected_failure_marker="test_validate_run_calls_authority_validator",
+        rationale="Published M1-C manifests must pass the calibration authority validator.",
     ),
     MutationCase(
         mutation_id="AIOS_REQUEST_SPEC_BLOCK",
