@@ -9,7 +9,9 @@ on:
       # 而那正是第③层唯一要把关的 diff 形态(实测:.jsonl 不匹配 *.json)
       - "experiments/execution_tracker/event_ledger.jsonl*"
       - "scripts/**/*.py"
+      - "scripts/llm/**/*.json"
       - "tests/**"
+      - "docs/llm/**"
       - "public/data/v2/**"
       - "docs/research/macro/**"
       - "docs/contracts/macro/**"
@@ -71,6 +73,9 @@ jobs:
       # AIOS Harness A-013:provider-neutral AgentAdapter 契约(零网络、零成本)
       - name: Agent adapter contract regression (offline)
         run: python3 tests/test_agent_adapter_offline.py
+      # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
+      - name: AIOS K1 task registry regression (offline)
+        run: python3 tests/test_ai_os_k1_offline.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
