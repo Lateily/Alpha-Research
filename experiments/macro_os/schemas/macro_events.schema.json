@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lateily.github.io/Alpha-Research/schemas/macro/macro_events.schema.json",
+  "title": "AR Macro Event Context v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "report", "mode", "run_id", "as_of", "generated_at", "formula_version", "rules_hash", "source_health", "data", "policy", "disclaimer"],
+  "properties": {
+    "schema": {"const": "ar.macro.events"},
+    "schema_version": {"const": "1.0"},
+    "report": {"enum": ["PARTIAL", "DATA_BLOCKED"]},
+    "mode": {"const": "CALIBRATING"},
+    "run_id": {"type": "string", "minLength": 1},
+    "as_of": {"type": "string", "format": "date-time"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "formula_version": {"const": "macro-m1a/1.0"},
+    "rules_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_health": {"type": "object"},
+    "data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["context_id", "region", "series_id", "metric_key", "actual", "previous", "unit", "observation_at", "published_at", "actual_source_id", "snapshot_hash", "actual_status", "freshness_status", "consensus", "consensus_status", "consensus_reason", "surprise", "surprise_status", "house_expectation_status"],
+        "properties": {
+          "context_id": {"type": "string", "minLength": 1},
+          "region": {"enum": ["GLOBAL_US", "CHINA"]},
+          "series_id": {"type": "string", "minLength": 1},
+          "metric_key": {"type": "string", "minLength": 1},
+          "actual": {"type": ["number", "null"]},
+          "previous": {"type": ["number", "null"]},
+          "unit": {"type": "string", "minLength": 1},
+          "observation_at": {"type": ["string", "null"], "format": "date-time"},
+          "published_at": {"type": ["string", "null"], "format": "date-time"},
+          "actual_source_id": {"type": "string", "minLength": 1},
+          "snapshot_hash": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+          "actual_status": {"enum": ["AVAILABLE", "DATA_BLOCKED"]},
+          "freshness_status": {"enum": ["CURRENT", "STALE", "DATA_BLOCKED"]},
+          "consensus": {"type": "null"},
+          "consensus_status": {"const": "DATA_BLOCKED"},
+          "consensus_reason": {"type": "string", "minLength": 1},
+          "surprise": {"type": "null"},
+          "surprise_status": {"const": "DATA_BLOCKED"},
+          "house_expectation_status": {"const": "DATA_BLOCKED"}
+        }
+      }
+    },
+    "policy": {"$ref": "state_rules.schema.json#/$defs/policy"},
+    "disclaimer": {"type": "string", "minLength": 1}
+  }
+}

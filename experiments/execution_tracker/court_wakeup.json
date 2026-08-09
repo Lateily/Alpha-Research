@@ -1,22 +1,22 @@
 {
- "as_of": "20260731",
+ "as_of": "20260806",
  "court_size": 8,
  "wakes": [
-  {
-   "ticker": "002594.SZ",
-   "name": "比亚迪",
-   "thesis": "出海GM重估;LONG STARTER_CAPPED_UNTIL_E1;E1=0831分部披露",
-   "reasons": [
-    "W2 板块唤醒:汽车 streak>=3"
-   ],
-   "action": "WAKE_RESCAN(送人审复核,不改posture)"
-  },
   {
    "ticker": "300308.SZ",
    "name": "中际旭创",
    "thesis": "1.6T能力+订单现金流双支柱;Q2预告窗~0715",
    "reasons": [
-    "W1 价格移动 -19.2%(|x|>=15%)"
+    "W1 价格移动 -20.1%(|x|>=15%)"
+   ],
+   "action": "WAKE_RESCAN(送人审复核,不改posture)"
+  },
+  {
+   "ticker": "688120.SH",
+   "name": "华海清科",
+   "thesis": "CMP国产替代;batch-1决策书",
+   "reasons": [
+    "W1 价格移动 -28.9%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
@@ -25,7 +25,8 @@
    "name": "鼎龙股份",
    "thesis": "CMP抛光垫;batch-1决策书;0710破位后结构受损",
    "reasons": [
-    "W1 价格移动 -23.6%(|x|>=15%)"
+    "W1 价格移动 -20.0%(|x|>=15%)",
+    "W2 板块唤醒:半导体材料 streak>=3"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   },
@@ -34,11 +35,22 @@
    "name": "沪电股份",
    "thesis": "AI服务器PCB量价;a2a40a执行门信号;T1A深化中",
    "reasons": [
-    "W1 价格移动 -23.3%(|x|>=15%)"
+    "W2 板块唤醒:印制电路板 streak>=3"
+   ],
+   "action": "WAKE_RESCAN(送人审复核,不改posture)"
+  },
+  {
+   "ticker": "688166.SH",
+   "name": "博瑞医药",
+   "thesis": "GLP-1期权票(阿姨点名):BGM0504减重III期达标+NDA受理;现金流翻译全在未来,PE304=纯管线定价;封顶WATCH",
+   "reasons": [
+    "W1 价格移动 +16.9%(|x|>=15%)"
    ],
    "action": "WAKE_RESCAN(送人审复核,不改posture)"
   }
  ],
  "data_blocked": [],
- "note": "唤醒=复核请求,非信号非posture。不是买卖指令。"
+ "note": "唤醒=复核请求,非信号非posture。不是买卖指令。",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "target_trade_date": "20260806"
 }

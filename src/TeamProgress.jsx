@@ -33,12 +33,12 @@ const REFRESH_MS = 30000;
 const ISSUE_URL = 'https://github.com/Lateily/Alpha-Research/issues/164';
 const EVENT_TYPES = ['CLAIM', 'UPDATE', 'DONE', 'BLOCKED', 'RELEASE'];
 
-// ── BLUEPRINT: 八块元数据 (事实源 docs/ARCHITECTURE_MAP.md · 2026-07-29) ─────
+// ── BLUEPRINT: 八块元数据 (事实源 docs/ARCHITECTURE_MAP.md · 2026-08-09) ─────
 const BP_BLOCKS = [
   { id:'块1', name:'研究框架', role:'大脑',   pct:75, owner:'Junyan',        lbl:'块1-研究框架', ok:true  },
-  { id:'块2', name:'数据源',   role:'原料',   pct:55, owner:'Junyan+Claude', lbl:'块2-数据源',   ok:true  },
-  { id:'块3', name:'引擎层',   role:'车间',   pct:60, owner:'Claude',        lbl:'块3-引擎层',   ok:true  },
-  { id:'块4', name:'契约层',   role:'传送带', pct:70, owner:'Junyan',        lbl:'块4-契约层',   ok:true  },
+  { id:'块2', name:'数据源',   role:'原料',   pct:55, owner:'Junyan+Macro Agent', lbl:'块2-数据源',   ok:true  },
+  { id:'块3', name:'引擎层',   role:'车间',   pct:80, owner:'Claude+Macro Agent', lbl:'块3-引擎层',   ok:true  },
+  { id:'块4', name:'契约层',   role:'传送带', pct:70, owner:'Junyan+Claude', lbl:'块4-契约层',   ok:true  },
   { id:'块5', name:'前端载体', role:'展厅',   pct:10, owner:'Better',        lbl:'块5-前端',     ok:false, note:'最薄弱'},
   { id:'块6', name:'AI 系统',  role:'工人',   pct:15, owner:'Reed',          lbl:'块6-AI系统',   ok:false },
   { id:'块7', name:'团队流程', role:'神经',   pct:60, owner:'Junyan',        lbl:'块7-团队流程', ok:true  },
@@ -601,7 +601,7 @@ function ProjectBlueprint() {
 
         {/* ── 八块完成度 ── */}
         <div>
-          <div style={bpS.subHead}>八块完成度 · E4 工程成熟度 (ARCHITECTURE_MAP · 2026-07-29)</div>
+          <div style={bpS.subHead}>八块完成度 · E4 工程成熟度 (ARCHITECTURE_MAP · 2026-08-09)</div>
           <div style={bpS.blockGrid}>
             {BP_BLOCKS.map(b => {
               const accent = b.ok ? palette.amber : palette.red;
@@ -1290,4 +1290,3 @@ const styles = {
     background: '#fff',
   },
 };
-

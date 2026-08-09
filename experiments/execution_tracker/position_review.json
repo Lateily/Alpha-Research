@@ -1,34 +1,24 @@
 {
- "as_of": "20260731",
- "nav_est": 1014344.0,
- "cash_pct": 70.9,
+ "as_of": "20260806",
+ "nav_est": 1005886.0,
+ "cash_pct": 85.5,
  "rows": [
-  {
-   "ticker": "600276.SH",
-   "name": "恒瑞医药",
-   "kind": "filled",
-   "pnl_pct": -4.11,
-   "weight_pct": 14.4,
-   "r_mult": -0.55,
-   "stop": 52.2,
-   "stop_dist_pct": -3.48,
-   "ladder": null,
-   "wrong_if": "见reason wrong-if"
-  },
   {
    "ticker": "002714.SZ",
    "name": "牧原股份",
    "kind": "filled",
-   "pnl_pct": 0.41,
-   "weight_pct": 14.7,
-   "r_mult": 0.07,
+   "pnl_pct": -1.87,
+   "weight_pct": 14.5,
+   "r_mult": -0.33,
    "stop": 36.9,
-   "stop_dist_pct": -6.01,
+   "stop_dist_pct": -3.83,
    "ladder": null,
    "wrong_if": "猪价回落+主力连续2日净流出"
   }
  ],
  "flags": [],
  "data_blocked": [],
- "note": "review输出;--apply-tighten 仅执行tighten-only保本位。不是买卖指令。"
+ "note": "review输出;--apply-tighten 仅执行tighten-only保本位。不是买卖指令。",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "target_trade_date": "20260806"
 }

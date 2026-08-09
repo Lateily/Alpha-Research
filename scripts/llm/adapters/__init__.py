@@ -3,6 +3,7 @@
 from .base import (
     AgentAdapter,
     AgentError,
+    AdapterExecutionError,
     AgentRequest,
     AgentResult,
     AgentStatus,
@@ -10,14 +11,17 @@ from .base import (
     UsageStatus,
     run_adapter,
 )
+from .deepseek import DeepSeekAdapter
 from .deterministic import DeterministicAdapter
 
 __all__ = [
     "AgentAdapter",
     "AgentError",
+    "AdapterExecutionError",
     "AgentRequest",
     "AgentResult",
     "AgentStatus",
+    "DeepSeekAdapter",
     "DeterministicAdapter",
     "Usage",
     "UsageStatus",

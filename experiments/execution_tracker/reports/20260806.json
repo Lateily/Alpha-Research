@@ -1,0 +1,58 @@
+{
+  "report_date": "20260806",
+  "generated_under_discipline": true,
+  "discipline_prompt_chars": 8474,
+  "market": null,
+  "portfolio": {
+    "posture": null,
+    "single_beta": null,
+    "tickers": []
+  },
+  "today_signals": 0,
+  "winrate_scorecard": {
+    "1d": {
+      "n_scored": 108,
+      "hit_rate": 0.407,
+      "avg_signed_return": -0.0128,
+      "avg_gate_aligned_return": -0.0047
+    },
+    "3d": {
+      "n_scored": 98,
+      "hit_rate": 0.459,
+      "avg_signed_return": -0.0305,
+      "avg_gate_aligned_return": -0.0022
+    },
+    "5d": {
+      "n_scored": 89,
+      "hit_rate": 0.449,
+      "avg_signed_return": -0.0618,
+      "avg_gate_aligned_return": -0.0007
+    },
+    "10d": {
+      "n_scored": 85,
+      "hit_rate": 0.482,
+      "avg_signed_return": -0.1012,
+      "avg_gate_aligned_return": 0.011
+    },
+    "by_direction": {
+      "constructive": {
+        "n": 47,
+        "hit_rate_1d": 0.319
+      },
+      "cautious": {
+        "n": 61,
+        "hit_rate_1d": 0.475
+      }
+    },
+    "total_scored_signals": 108,
+    "independent_clusters": 0,
+    "min_required": 30,
+    "claim_allowed": false,
+    "claim_note": "cluster_id 未落地(独立簇=0);signal_id 计数=108 含同日同逻辑相关样本,不构成独立样本 —— claim 一律禁止"
+  },
+  "unvalidated_warning": "win-rate / expectancy NOT claimable: 108/30 scored signals. Numbers are descriptive only.",
+  "no_trade_flag": true,
+  "official_sample": true,
+  "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+  "target_trade_date": "20260806"
+}

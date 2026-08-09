@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alpha-research.local/schemas/macro/source_registry.v1.json",
+  "title": "AR Macro Source Registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "policy_version", "effective_from", "status", "coverage_policy", "consensus_policy", "sources", "registry_hash"],
+  "properties": {
+    "schema": {"const": "ar.macro.source_registry"},
+    "schema_version": {"const": "1.0"},
+    "policy_version": {"type": "string", "minLength": 1},
+    "effective_from": {"type": "string", "pattern": "^[0-9]{8}$"},
+    "status": {"const": "APPROVED_SPEC"},
+    "coverage_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["market_series", "macro_events", "consensus"],
+      "properties": {
+        "market_series": {"$ref": "#/$defs/coverage"},
+        "macro_events": {"$ref": "#/$defs/coverage"},
+        "consensus": {"$ref": "#/$defs/coverage"}
+      }
+    },
+    "consensus_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_independent_sources", "conflict_action", "average_conflicting_values", "tolerance_scope", "unresolved_source_action"],
+      "properties": {
+        "minimum_independent_sources": {"type": "integer", "minimum": 2},
+        "conflict_action": {"const": "DATA_CONFLICT"},
+        "average_conflicting_values": {"const": false},
+        "tolerance_scope": {"const": "EVENT_TYPE_VERSIONED"},
+        "unresolved_source_action": {"const": "DATA_BLOCKED"}
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/source"}
+    },
+    "registry_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lookback_years", "minimum_coverage"],
+      "properties": {
+        "lookback_years": {"type": "integer", "minimum": 1},
+        "minimum_coverage": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "provider", "independence_group", "credential_env_vars", "region", "official", "evidence_level", "roles", "transport", "status", "vintage_support", "base_url", "series"],
+      "properties": {
+        "source_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+        "provider": {"type": "string", "minLength": 1},
+        "independence_group": {"type": "string", "minLength": 1},
+        "credential_env_vars": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}
+        },
+        "region": {"enum": ["GLOBAL_US", "CHINA", "MULTI_REGION"]},
+        "official": {"type": "boolean"},
+        "evidence_level": {"enum": ["E1", "E2", "E3", "E4"]},
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["OFFICIAL_ACTUAL", "MIRROR_ACTUAL", "VINTAGE_MIRROR", "MARKET_SERIES", "CONSENSUS"]}
+        },
+        "transport": {"enum": ["API", "OFFICIAL_RELEASE", "OFFICIAL_DATA_PORTAL", "OFFICIAL_DOWNLOAD", "LICENSED_API", "LICENSED_FEED"]},
+        "status": {"enum": ["AVAILABLE_EXISTING", "PLANNED_M0B", "DATA_BLOCKED", "RETIRED"]},
+        "vintage_support": {"enum": ["FULL", "LIMITED", "RELEASE_ARCHIVE", "RELEASE_SNAPSHOT_REQUIRED", "DAILY_HISTORY", "NONE"]},
+        "base_url": {"type": "string", "pattern": "^https://"},
+        "series": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

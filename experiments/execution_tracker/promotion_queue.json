@@ -1,6 +1,10 @@
 {
- "market_state": "RISK_ON",
+ "market_state": "WEAK_REPAIR",
  "queue": [],
  "data_blocked": [],
- "note": "晋级复核单;不注册不成交。不是买卖指令。"
+ "qc_blocked_stats": {},
+ "note": "晋级复核单;不注册不成交。不是买卖指令。",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "target_trade_date": "20260806",
+ "as_of": "20260806"
 }

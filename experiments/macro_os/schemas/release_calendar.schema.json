@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lateily.github.io/Alpha-Research/schemas/macro/release_calendar.schema.json",
+  "title": "AR Macro Release Calendar",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "report",
+    "mode",
+    "run_id",
+    "as_of",
+    "generated_at",
+    "source_registry_hash",
+    "event_tiers_hash",
+    "formula_version",
+    "policy",
+    "data",
+    "disclaimer"
+  ],
+  "properties": {
+    "schema": {"const": "ar.macro.release_calendar"},
+    "schema_version": {"const": "1.0"},
+    "report": {"enum": ["PARTIAL", "DATA_BLOCKED"]},
+    "mode": {"const": "CALIBRATING"},
+    "run_id": {"type": "string", "minLength": 1},
+    "as_of": {"type": "string", "format": "date-time"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_registry_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "event_tiers_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "formula_version": {"const": "macro-m0b2/1.0"},
+    "policy": {"$ref": "#/$defs/policy"},
+    "data": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/entry"}
+    },
+    "disclaimer": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formal_blocking_authority", "allowed_outputs", "forbidden_outputs"],
+      "properties": {
+        "formal_blocking_authority": {"const": false},
+        "allowed_outputs": {"const": ["LABEL", "RISK_BUDGET_CONTEXT"]},
+        "forbidden_outputs": {"const": ["TRADE_ACTION", "DIRECT_BLOCK", "REGIME_CLAIM"]}
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_type",
+        "tier",
+        "region",
+        "scheduled_at",
+        "status",
+        "source_id",
+        "source_locator",
+        "source_snapshot_hash",
+        "as_of",
+        "fetched_at"
+      ],
+      "properties": {
+        "event_id": {"type": "string", "pattern": "^[A-Z0-9_:-]+$"},
+        "event_type": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "tier": {"enum": [1, 2]},
+        "region": {"enum": ["GLOBAL_US", "CHINA"]},
+        "scheduled_at": {"type": "string", "format": "date-time"},
+        "status": {"const": "SCHEDULED"},
+        "source_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+        "source_locator": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "source_snapshot_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "as_of": {"type": "string", "format": "date-time"},
+        "fetched_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

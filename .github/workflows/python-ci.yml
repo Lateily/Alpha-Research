@@ -4,13 +4,17 @@ on:
     paths:
       - "experiments/**/*.py"
       - "experiments/execution_tracker/**/*.json"
+      - "experiments/macro_os/**/*.json"
       # R-015 账本是 .jsonl —— 不加这条,"只改账本数据"的 PR 根本不触发本工作流,
       # 而那正是第③层唯一要把关的 diff 形态(实测:.jsonl 不匹配 *.json)
       - "experiments/execution_tracker/event_ledger.jsonl*"
       - "scripts/**/*.py"
+      - "scripts/llm/**/*.json"
       - "tests/**"
+      - "docs/llm/**"
       - "public/data/v2/**"
       - "docs/research/macro/**"
+      - "docs/contracts/macro/**"
       - "api/**"
       - ".github/workflows/python-ci.yml"
   # 直推 main 也必须过闸 —— 0712 的 git-reset-hard 正是这个形态,
@@ -69,6 +73,9 @@ jobs:
       # AIOS Harness A-013:provider-neutral AgentAdapter 契约(零网络、零成本)
       - name: Agent adapter contract regression (offline)
         run: python3 tests/test_agent_adapter_offline.py
+      # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
+      - name: AIOS K1 task registry regression (offline)
+        run: python3 tests/test_ai_os_k1_offline.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
@@ -87,6 +94,34 @@ jobs:
         run: python3 experiments/research_funnel/feature_store.py --selftest
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
+      # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
+      - name: Macro OS M0-A contract selftest
+        run: python3 experiments/macro_os/contracts.py --selftest
+      - name: Macro OS M0-A adversarial contract regression
+        run: python3 tests/test_macro_contracts_offline.py
+      # ── Macro OS M0-B:不可覆盖历史仓 + 官方采集器 + 来源绑定 + freshness ──
+      - name: Macro OS M0-B storage and collector regression (offline)
+        run: python3 tests/test_macro_m0b_offline.py
+      # ── Macro OS M0-B2:其余官方适配器 + 日历快照 + 双源共识门 ──
+      - name: Macro OS M0-B2 official-release and consensus regression (offline)
+        run: python3 tests/test_macro_m0b2_offline.py
+      # ── Macro OS M1-A:双区域状态机 + MRG + PIT/manifest 闸门 ──
+      - name: Macro OS M1-A state and MRG regression (offline)
+        run: python3 tests/test_macro_m1a_offline.py
+      # ── Macro OS M1-B:行业敏感度 + 组合暴露 + 只读面板 ──
+      - name: Macro OS M1-B industry and portfolio consumers (offline)
+        run: python3 tests/test_macro_m1b_offline.py
+      # ── Macro OS M0-B3:官方 URL 发现 + 自适应调度 + 预期登记 WAL ──
+      - name: Macro OS M0-B3 discovery and scheduler regression (offline)
+        run: python3 tests/test_macro_m0b3_offline.py
+      # Governance gates are not delivered until a precise no-op mutation makes
+      # the corresponding behavioral suite fail. The runner works in a temp
+      # copy, strips secrets, blocks sockets, and rejects infrastructure-red as
+      # a fake mutation kill.
+      - name: Macro and AIOS governance mutation gate (offline)
+        run: |
+          python3 tests/test_governance_mutation_gate.py
+          python3 scripts/governance_mutation_gate.py
       # 既有缺口(#215 复核发现):本文件逐个点名执行测试,无发现机制,
       # 故新增测试若不在此登记就永远不跑。以下两条此前从未在 CI 运行过。
       - name: PIT no-look-ahead regression

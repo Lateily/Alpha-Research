@@ -1,0 +1,74 @@
+{
+  "schema": "ar.macro.state_rules",
+  "schema_version": "1.0",
+  "status": "CALIBRATING",
+  "formula_version": "macro-m1a/1.0",
+  "validation_status": "UNVALIDATED_V0",
+  "policy": {
+    "formal_blocking_authority": false,
+    "allowed_outputs": ["LABEL", "RISK_BUDGET_CONTEXT", "RESEARCH_PRIORITY"],
+    "forbidden_outputs": ["TRADE_ACTION", "DIRECT_BLOCK", "FORMAL_REGIME_CLAIM"]
+  },
+  "axis_policy": {
+    "minimum_current_factors": 2,
+    "supportive_labels": {
+      "GROWTH": "IMPROVING",
+      "INFLATION": "EASING",
+      "LIQUIDITY": "EASING",
+      "RISK": "REPAIR"
+    },
+    "neutral_labels": {
+      "GROWTH": "STABLE_OR_MIXED",
+      "INFLATION": "STABLE_OR_MIXED",
+      "LIQUIDITY": "STABLE_OR_MIXED",
+      "RISK": "STABLE_OR_MIXED"
+    },
+    "restrictive_labels": {
+      "GROWTH": "WEAKENING",
+      "INFLATION": "HEATING_OR_DEFLATION_RISK",
+      "LIQUIDITY": "TIGHTENING",
+      "RISK": "STRESS"
+    }
+  },
+  "regions": {
+    "GLOBAL_US": [
+      {"factor_id": "US_GDP", "axis": "GROWTH", "source_id": "bea_public_api", "series_id": "gdp", "metric_key": "real_gdp_qoq_saar", "unit": "pct_qoq_saar", "transform": "latest", "lookback": 1, "supportive_when": {"op": "ge", "value": 2.5}, "restrictive_when": {"op": "le", "value": 1.0}, "max_age_seconds": 12960000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_UNEMPLOYMENT", "axis": "GROWTH", "source_id": "bls_public_api", "series_id": "unemployment_rate", "metric_key": "civilian_unemployment_rate", "unit": "pct", "transform": "delta_n", "lookback": 3, "supportive_when": {"op": "le", "value": -0.2}, "restrictive_when": {"op": "ge", "value": 0.2}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_NFP", "axis": "GROWTH", "source_id": "bls_public_api", "series_id": "nonfarm_payrolls", "metric_key": "total_nonfarm_employment", "unit": "thousands", "transform": "delta_n", "lookback": 1, "supportive_when": {"op": "ge", "value": 150.0}, "restrictive_when": {"op": "le", "value": 50.0}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_RETAIL", "axis": "GROWTH", "source_id": "us_census_economic_indicators", "series_id": "retail_sales", "metric_key": "retail_sales_value_sa", "unit": "million_usd_sa", "transform": "pct_change_n", "lookback": 1, "supportive_when": {"op": "ge", "value": 0.3}, "restrictive_when": {"op": "le", "value": -0.3}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_CPI_3M", "axis": "INFLATION", "source_id": "bls_public_api", "series_id": "cpi", "metric_key": "headline_cpi_sa", "unit": "index_1982_84_100", "transform": "annualized_pct_change", "lookback": 3, "supportive_when": {"op": "le", "value": 2.5}, "restrictive_when": {"op": "ge", "value": 3.5}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_CORE_PCE_3M", "axis": "INFLATION", "source_id": "bea_public_api", "series_id": "core_pce", "metric_key": "core_pce_price_index", "unit": "price_index", "transform": "annualized_pct_change", "lookback": 3, "supportive_when": {"op": "le", "value": 2.5}, "restrictive_when": {"op": "ge", "value": 3.5}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_PPI_3M", "axis": "INFLATION", "source_id": "bls_public_api", "series_id": "ppi", "metric_key": "final_demand_ppi_sa", "unit": "index_1982_100", "transform": "annualized_pct_change", "lookback": 3, "supportive_when": {"op": "le", "value": 2.5}, "restrictive_when": {"op": "ge", "value": 4.0}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_WAGES_3M", "axis": "INFLATION", "source_id": "bls_public_api", "series_id": "average_hourly_earnings", "metric_key": "ahe_level", "unit": "usd_per_hour", "transform": "annualized_pct_change", "lookback": 3, "supportive_when": {"op": "le", "value": 3.5}, "restrictive_when": {"op": "ge", "value": 4.5}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_2Y_CHANGE", "axis": "LIQUIDITY", "source_id": "fred_alfred", "series_id": "us_treasury_curve", "metric_key": "y2", "unit": "pct_annual", "transform": "delta_n", "lookback": 20, "supportive_when": {"op": "le", "value": -0.25}, "restrictive_when": {"op": "ge", "value": 0.25}, "max_age_seconds": 604800, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_10Y_CHANGE", "axis": "LIQUIDITY", "source_id": "fred_alfred", "series_id": "us_treasury_curve", "metric_key": "y10", "unit": "pct_annual", "transform": "delta_n", "lookback": 20, "supportive_when": {"op": "le", "value": -0.25}, "restrictive_when": {"op": "ge", "value": 0.25}, "max_age_seconds": 604800, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "US_REAL_10Y_CHANGE", "axis": "LIQUIDITY", "source_id": "fred_alfred", "series_id": "real_yields", "metric_key": "real_yield_10y", "unit": "pct_annual", "transform": "delta_n", "lookback": 20, "supportive_when": {"op": "le", "value": -0.2}, "restrictive_when": {"op": "ge", "value": 0.2}, "max_age_seconds": 604800, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "VIX_LEVEL", "axis": "RISK", "source_id": "cboe_vix", "series_id": "vix_close", "metric_key": "vix_close", "unit": "index_points", "transform": "latest", "lookback": 1, "supportive_when": {"op": "le", "value": 18.0}, "restrictive_when": {"op": "ge", "value": 25.0}, "max_age_seconds": 604800, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "IG_OAS_CHANGE", "axis": "RISK", "source_id": "fred_alfred", "series_id": "ig_oas", "metric_key": "ig_oas", "unit": "pct_points", "transform": "delta_n", "lookback": 20, "supportive_when": {"op": "le", "value": 0.0}, "restrictive_when": {"op": "ge", "value": 0.15}, "max_age_seconds": 604800, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "HY_OAS_CHANGE", "axis": "RISK", "source_id": "fred_alfred", "series_id": "hy_oas", "metric_key": "hy_oas", "unit": "pct_points", "transform": "delta_n", "lookback": 20, "supportive_when": {"op": "le", "value": 0.0}, "restrictive_when": {"op": "ge", "value": 0.5}, "max_age_seconds": 604800, "transmission_scope": "DOMESTIC"}
+    ],
+    "CHINA": [
+      {"factor_id": "CN_GDP", "axis": "GROWTH", "source_id": "china_nbs", "series_id": "cn_gdp", "metric_key": "real_gdp_yoy", "unit": "pct_yoy", "transform": "latest", "lookback": 1, "supportive_when": {"op": "ge", "value": 5.0}, "restrictive_when": {"op": "le", "value": 4.0}, "max_age_seconds": 12960000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_PMI", "axis": "GROWTH", "source_id": "china_nbs", "series_id": "cn_pmi", "metric_key": "manufacturing_pmi", "unit": "index_points", "transform": "latest", "lookback": 1, "supportive_when": {"op": "ge", "value": 50.5}, "restrictive_when": {"op": "le", "value": 49.5}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_INDUSTRIAL", "axis": "GROWTH", "source_id": "china_nbs", "series_id": "industrial_production", "metric_key": "industrial_production_yoy", "unit": "pct_yoy", "transform": "latest", "lookback": 1, "supportive_when": {"op": "ge", "value": 6.0}, "restrictive_when": {"op": "le", "value": 4.0}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_RETAIL", "axis": "GROWTH", "source_id": "china_nbs", "series_id": "retail_sales", "metric_key": "retail_sales_yoy", "unit": "pct_yoy", "transform": "latest", "lookback": 1, "supportive_when": {"op": "ge", "value": 6.0}, "restrictive_when": {"op": "le", "value": 3.0}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_FAI", "axis": "GROWTH", "source_id": "china_nbs", "series_id": "fixed_asset_investment", "metric_key": "fixed_asset_investment_yoy", "unit": "pct_yoy", "transform": "latest", "lookback": 1, "supportive_when": {"op": "ge", "value": 5.0}, "restrictive_when": {"op": "le", "value": 3.0}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_UNEMPLOYMENT", "axis": "GROWTH", "source_id": "china_nbs", "series_id": "unemployment_rate", "metric_key": "surveyed_unemployment_rate", "unit": "pct", "transform": "latest", "lookback": 1, "supportive_when": {"op": "le", "value": 5.2}, "restrictive_when": {"op": "ge", "value": 5.5}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_CPI", "axis": "INFLATION", "source_id": "china_nbs", "series_id": "cn_cpi", "metric_key": "headline_cpi_yoy", "unit": "pct_yoy", "transform": "latest", "lookback": 1, "supportive_when": {"op": "between", "low": 0.5, "high": 2.5}, "restrictive_when": {"op": "outside", "low": 0.0, "high": 3.0}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_PPI", "axis": "INFLATION", "source_id": "china_nbs", "series_id": "cn_ppi", "metric_key": "producer_price_yoy", "unit": "pct_yoy", "transform": "latest", "lookback": 1, "supportive_when": {"op": "between", "low": -1.0, "high": 2.0}, "restrictive_when": {"op": "outside", "low": -3.0, "high": 4.0}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_LPR_1Y_CHANGE", "axis": "LIQUIDITY", "source_id": "pboc", "series_id": "lpr", "metric_key": "lpr_1y", "unit": "pct", "transform": "delta_n", "lookback": 1, "supportive_when": {"op": "le", "value": -0.1}, "restrictive_when": {"op": "ge", "value": 0.1}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_LPR_5Y_CHANGE", "axis": "LIQUIDITY", "source_id": "pboc", "series_id": "lpr", "metric_key": "lpr_5y", "unit": "pct", "transform": "delta_n", "lookback": 1, "supportive_when": {"op": "le", "value": -0.1}, "restrictive_when": {"op": "ge", "value": 0.1}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "CN_M2", "axis": "LIQUIDITY", "source_id": "pboc", "series_id": "money_supply", "metric_key": "m2_yoy", "unit": "pct_yoy", "transform": "latest", "lookback": 1, "supportive_when": {"op": "ge", "value": 8.0}, "restrictive_when": {"op": "le", "value": 6.0}, "max_age_seconds": 6480000, "transmission_scope": "DOMESTIC"},
+      {"factor_id": "GLOBAL_VIX_TRANSMISSION", "axis": "RISK", "source_id": "cboe_vix", "series_id": "vix_close", "metric_key": "vix_close", "unit": "index_points", "transform": "latest", "lookback": 1, "supportive_when": {"op": "le", "value": 18.0}, "restrictive_when": {"op": "ge", "value": 25.0}, "max_age_seconds": 604800, "transmission_scope": "GLOBAL_TRANSMISSION"},
+      {"factor_id": "GLOBAL_IG_OAS_TRANSMISSION", "axis": "RISK", "source_id": "fred_alfred", "series_id": "ig_oas", "metric_key": "ig_oas", "unit": "pct_points", "transform": "delta_n", "lookback": 20, "supportive_when": {"op": "le", "value": 0.0}, "restrictive_when": {"op": "ge", "value": 0.15}, "max_age_seconds": 604800, "transmission_scope": "GLOBAL_TRANSMISSION"}
+    ]
+  },
+  "mrg": {
+    "G1": {"factor": "VIX_LEVEL", "level_green": 18.0, "level_red": 25.0, "direction_lookback": 5},
+    "G2": {"required_market_features": ["sox_vs_ma100", "kospi_vs_ma200"]},
+    "G3": {"required_market_feature": "sox_spx_log_ratio_z120", "green_abs_max": 0.5, "yellow_abs_max": 1.5},
+    "G4": {"factor": "IG_OAS_CHANGE", "green_max": 0.0, "red_min": 0.15},
+    "market_features_max_age_seconds": 259200
+  },
+  "rules_hash": "c6e919479649fe3b13c91f3b34ddd656da5ccdac66b1ff8e45c2a43debe41dd2"
+}

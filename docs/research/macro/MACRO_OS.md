@@ -1,6 +1,6 @@
 # Macro OS v0:全组合宏观研究操作系统
 
-> 状态:`APPROVED / DESIGN`。MRG 已有规格草案,PR #181 提供第一批宏观原料;完整生产闭环尚未成立。
+> 状态:`M1-A + M1-B DELIVERED_UNWIRED / CALIBRATING`。M0-A 至 M0-B3 的代码与契约已进入 main,尚未形成日常运行链;M1-A 已实现双区域状态、MRG 候选态和事件上下文;M1-B 已实现全申万一级行业敏感度、组合宏观暴露和只读面板。两层均未接夜链或获得阻断权。
 > 目标:提前识别宏观环境、预期和跨资产定价的变化,将其映射到全组合、行业和个股研究优先级。
 
 ## 1. MRG 在系统中的位置
@@ -54,9 +54,9 @@ v0 使用四轴状态,每轴输出 `direction/confidence/data_status/reasons`:
 | Liquidity | 利率/流动性宽松 | 稳定 | 利率或美元收紧 |
 | Risk/Credit | 信用与波动确认修复 | 未确认 | 信用恶化或波动冲击 |
 
-组合状态采用规则树,不采用未经校准的加权平均。信用红灯拥有否决权;数据不足输出 `MACRO_PARTIAL`,不得自动继承上一日绿灯。
+组合状态采用规则树,不采用未经校准的加权平均。校准期信用红灯只产生 `CREDIT_STRESS_CANDIDATE` 与风险预算上下文,不拥有正式否决权;数据不足输出 `MACRO_PARTIAL`,不得自动继承上一日绿灯。正式阻断权必须在达到独立因果簇门槛、优于随机控制并经 Junyan 单独批准后另行接线。
 
-初始 regime 枚举:
+以下是成熟期目标语义;M1-A 校准期只输出对应 `*_CANDIDATE`,`formal_regime` 保持 null:
 
 | Regime | 人话含义 | 允许影响 |
 |---|---|---|
@@ -76,13 +76,13 @@ v0 使用四轴状态,每轴输出 `direction/confidence/data_status/reasons`:
 | G1 情绪 | VIX 水平与 5 日方向 | yfinance/FRED 替代 | 免费,需健康监控 |
 | G2 趋势 | SOX vs MA100,KOSPI vs MA200,并附广度 | yfinance/市场数据 | 免费,需盘前 freshness |
 | G3 错位 | `ln(SOX/SPX)` 120 日 z-score | yfinance | PCA 原版不可用时的代理,不得混称 PCA |
-| G4 信用 | 美国 IG OAS 20 日变化 | FRED `BAMLC0A0CM` | 免费,G4 红为否决 |
+| G4 信用 | 美国 IG OAS 20 日变化 | FRED `BAMLC0A0CM` | 免费;校准期 G4 红只标候选压力,不执行否决 |
 
 规则树初版:
 
-1. G4 红 → `CREDIT_VETO`。
-2. 四绿 → `RISK_REPAIR_CONFIRMED`。
-3. 三绿一黄且信用黄 → `TACTICAL_BOUNCE`。
+1. G4 红 → `CREDIT_STRESS_CANDIDATE`,并把研究风险预算上下文标为收缩;`enforceable=false`。
+2. 四绿 → `RISK_REPAIR_CANDIDATE`。
+3. 三绿一黄且信用黄 → `TACTICAL_BOUNCE_CANDIDATE`。
 4. 任一必需源过期或阻断 → `MACRO_PARTIAL`。
 
 这组规则只复现当前研究思想,尚未证明前瞻能力。每次状态变化必须预注册并进入判分。
@@ -112,7 +112,7 @@ Macro OS 不止给一个大盘标签。它必须产生两次下钻:
 
 `growth_beta,inflation_beta,rate_duration,credit_sensitivity,usd_sensitivity,commodity_sensitivity,global_tech_beta,evidence_level,as_of`
 
-组合汇总输出集中暴露、对冲缺口和需要人工复核的相关性。宏观状态变化只修改风险预算、研究优先级和复核频率。
+组合汇总输出集中暴露和需要人工复核的相关性。M1-B 只读 `model_portfolio_state.v2.2`,不读取原始订单;由于当前契约没有逐仓定盘市值,权重统一标为 `CONTRACT_NOTIONAL_DIVIDED_BY_NAV_PROXY`,不得冒充实时仓位权重。未知主题直接 `DATA_BLOCKED`,不凭名称猜行业。宏观状态变化只修改风险预算、研究优先级和复核频率。
 
 ## 7. 五份正式契约
 
@@ -123,6 +123,7 @@ Macro OS 不止给一个大盘标签。它必须产生两次下钻:
 | `macro_risk_gate.json` | G1-G4 原始值、阈值版本、规则树结果 | 晋级器/盘前帧 |
 | `industry_macro_sensitivity.json` | 宏观因子到行业的机制、方向、时滞和证据 | Sector Agent/轮动面板 |
 | `portfolio_macro_exposure.json` | 持仓和组合暴露、集中度、状态变化影响 | Portfolio Agent/前端 |
+| `macro_panel.json` | 双区域状态、MRG、事件缺口、行业和组合上下文的只读总览 | 内部面板/审阅者 |
 | `macro_scorecard.json` | 每次预注册状态的 T+1/T+5/T+20 后验 | Validation Agent/周报 |
 
 统一 required:`schema_version,report,as_of,generated_at,source_health,data,disclaimer`。
@@ -147,31 +148,72 @@ Macro OS 不止给一个大盘标签。它必须产生两次下钻:
 
 | 子项目 | Owner | 第一阶段交付 |
 |---|---|---|
-| Macro Data Agent | Reed/Claude | 数据源 adapter、事件 schema、vintage/revision、防注入 |
-| Macro State Agent | Junyan+Claude | 四轴状态机、MRG 规则树、DATA_BLOCKED 语义 |
+| Macro 治理 | Junyan | 公式、事件层级、阈值与最终批准 |
+| Macro 项目管理 | Simon | 路线图、依赖、验收节拍和跨角色协调 |
+| Macro Data Agent | Reed/Jason + Codex/Claude | 数据源 adapter、事件 schema、vintage/revision、防注入 |
+| Macro State Agent | Junyan + Codex/Claude | 双区域状态机、MRG 规则树、DATA_BLOCKED 语义 |
 | Macro-Sector Agent | Junyan+Sector Agents | 首批半导体、医药、有色敏感度表 |
 | Macro-Portfolio Agent | Junyan+Portfolio Agent | 持仓因子暴露与组合聚合 |
 | Macro Validation Agent | Reed+Validation Agent | 事件簇、T+1/T+5/T+20、基准和负控制 |
-| Macro UI | Better | 日历、四轴、MRG、行业/组合暴露;只读契约 |
+| Macro UI / Product | Better | 独立内部面板;成熟后并入产品前端,全程只读契约 |
 
-## 10. 首个实施里程碑
+## 10. 已冻结架构
 
-M0 数据可信:
+- GLOBAL/US 与 CHINA 两套状态机独立运行,冲突不互相抵消;分别生成 A/H 传导。
+- 战术层观察 0-5 个交易日,慢周期层观察 1-3 个月。
+- 正式状态由确定性规则树产生;AI 只负责解释、质疑和提出 challenger。
+- 展示同时给出相对平稳市场的环境等级和组合压力等级。
+- 组合压力 = 行业基线 + 公司 factpack 调整,再按组合权重聚合。
+- 全行业使用申万一级粗粒度映射;半导体、医药、有色先建深模型。
+- Champion 使用可解释规则树,Challenger 使用统计模型;替换公式必须经 Junyan PR Review。
+- 校准期只做标注、研究优先级和风险预算,不获得直接阻断权。
+- `api/macro.js` 只能生成解释文字,不得拥有或改写正式 `macro_state`。
+- 团队云端只展示宏观状态与 paper portfolio;真实组合仅从本地手工覆盖层读取。
+
+## 11. 实施里程碑
+
+| 里程碑 | 已合并实物 | 当前状态 | 下一道门 |
+|---|---|---|---|
+| M0-A | #240:契约、schema、事件层级与来源注册表 | `DELIVERED_UNWIRED / CALIBRATING` | 由运行时生成不可变事实快照 |
+| M0-B | #245:SQLite 历史仓、官方采集器、来源身份与新鲜度记录 | `DELIVERED_UNWIRED / CALIBRATING` | 持续调度与真实运行证据 |
+| M0-B2 | #247:发布日历、双源共识门与系统时钟登记 | `DELIVERED_UNWIRED / CALIBRATING` | 扩充共识覆盖并接正式调度 |
+| M0-B3 | #249:URL 发现、自适应调度、延迟监控与 launchd 模板 | `DELIVERED_UNWIRED / CALIBRATING` | 安装调度并发布首批正式产物 |
+| M1-A | #251:GLOBAL/US 与 CHINA 四轴状态、MRG 候选态、事件上下文 | `DELIVERED_UNWIRED / CALIBRATING` | M1-C 接夜链/盘前帧并开始判分 |
+| M1-B | #252:行业敏感度、组合暴露、只读 Macro 面板 | `DELIVERED_UNWIRED / CALIBRATING` | M1-C 接正式消费者与发布链 |
+| M1-C | 尚无生产实物 | 待办 | 串起 M0-B3→M1-A→M1-B,统一 freshness/report 失败上浮 |
+
+“代码已交付”只说明可执行器、schema 和测试已经进入 `main`;“已接入生产”还要求
+调度安装、正式产物、消费者接线与真实运行证据。当前仓库的 `run_nightly.py` 没有
+Macro 步,`public/data/v2/macro/` 也没有正式产物,因此不得把 M1-A/M1-B 写成已上线。
+#253 已把代表性 Macro 治理门纳入 mutation-gate CI;AIOS K1 扩展由独立 PR 处理,
+不属于本里程碑的已完成项。
+
+M0-A 契约地基(本批):
+
+- 四份 JSON Schema + 两份带内容哈希的注册表。
+- 官方事实、历史镜像、市场共识和内部预判分层。
+- Tier-1 事件 T-24h/T-60m 双快照与 GitHub Review 审批。
+- 市场/利率 10 年覆盖 95%、事件 5 年 90%、共识 3 年 80% 的校准退出门槛。
+
+M0-B 数据可信:
 
 - PR #181 宏观原料独立复验。
-- 补 consensus/vintage 来源和源健康。
+- 接入 official/free sources、SQLite 历史仓、双源 consensus/vintage 和源健康。
+- 数据公布延迟先以 5 分钟为目标,后续按源强度自适应优化。
 - 盘前隔夜锚恢复当日新鲜度。
 
 M1 状态闭环:
 
 - 生成 `macro_events/macro_state/macro_risk_gate` 三契约。
-- 夜链与盘前帧消费 report/freshness。
+- GLOBAL/US 与 CHINA 各自使用 Growth/Inflation/Liquidity/Risk 四轴,不得求平均抵消。
+- 所有阈值为 `UNVALIDATED_V0`;正式状态保持 null,只输出 `*_CANDIDATE`。
+- 夜链与盘前帧消费 report/freshness(尚未接线)。
 - 关键源阻断时进入 MACRO_PARTIAL。
 
 M2 研究下钻:
 
-- 半导体、医药、有色三行业敏感度种子。
-- 当前组合暴露聚合。
+- 全部 31 个申万一级行业粗粒度敏感度种子;电子/通信、医药、有色先建深模型。
+- 当前组合暴露聚合,只使用契约中的 theme/notional/NAV,不猜原始订单或实时市值。
 - 全市场扫描增加宏观敏感度通道。
 
 M3 判分:
