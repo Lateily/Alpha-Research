@@ -1,6 +1,6 @@
 # Macro OS v0:全组合宏观研究操作系统
 
-> 状态:`M1-A + M1-B DELIVERED_UNWIRED / CALIBRATING`。M0-A 至 M0-B3 提供事实与调度地基;M1-A 已实现双区域状态、MRG 候选态和事件上下文;M1-B 已实现全申万一级行业敏感度、组合宏观暴露和只读面板。两层均未接夜链或获得阻断权。
+> 状态:`M1-A + M1-B DELIVERED_UNWIRED / CALIBRATING`。M0-A 至 M0-B3 的代码与契约已进入 main,尚未形成日常运行链;M1-A 已实现双区域状态、MRG 候选态和事件上下文;M1-B 已实现全申万一级行业敏感度、组合宏观暴露和只读面板。两层均未接夜链或获得阻断权。
 > 目标:提前识别宏观环境、预期和跨资产定价的变化,将其映射到全组合、行业和个股研究优先级。
 
 ## 1. MRG 在系统中的位置
@@ -171,6 +171,22 @@ Macro OS 不止给一个大盘标签。它必须产生两次下钻:
 - 团队云端只展示宏观状态与 paper portfolio;真实组合仅从本地手工覆盖层读取。
 
 ## 11. 实施里程碑
+
+| 里程碑 | 已合并实物 | 当前状态 | 下一道门 |
+|---|---|---|---|
+| M0-A | #240:契约、schema、事件层级与来源注册表 | `DELIVERED_UNWIRED / CALIBRATING` | 由运行时生成不可变事实快照 |
+| M0-B | #245:SQLite 历史仓、官方采集器、来源身份与新鲜度记录 | `DELIVERED_UNWIRED / CALIBRATING` | 持续调度与真实运行证据 |
+| M0-B2 | #247:发布日历、双源共识门与系统时钟登记 | `DELIVERED_UNWIRED / CALIBRATING` | 扩充共识覆盖并接正式调度 |
+| M0-B3 | #249:URL 发现、自适应调度、延迟监控与 launchd 模板 | `DELIVERED_UNWIRED / CALIBRATING` | 安装调度并发布首批正式产物 |
+| M1-A | #251:GLOBAL/US 与 CHINA 四轴状态、MRG 候选态、事件上下文 | `DELIVERED_UNWIRED / CALIBRATING` | M1-C 接夜链/盘前帧并开始判分 |
+| M1-B | #252:行业敏感度、组合暴露、只读 Macro 面板 | `DELIVERED_UNWIRED / CALIBRATING` | M1-C 接正式消费者与发布链 |
+| M1-C | 尚无生产实物 | 待办 | 串起 M0-B3→M1-A→M1-B,统一 freshness/report 失败上浮 |
+
+“代码已交付”只说明可执行器、schema 和测试已经进入 `main`;“已接入生产”还要求
+调度安装、正式产物、消费者接线与真实运行证据。当前仓库的 `run_nightly.py` 没有
+Macro 步,`public/data/v2/macro/` 也没有正式产物,因此不得把 M1-A/M1-B 写成已上线。
+#253 已把代表性 Macro 治理门纳入 mutation-gate CI;AIOS K1 扩展由独立 PR 处理,
+不属于本里程碑的已完成项。
 
 M0-A 契约地基(本批):
 
