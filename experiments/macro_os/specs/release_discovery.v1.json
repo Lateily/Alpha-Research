@@ -1,0 +1,27 @@
+{
+  "schema": "ar.macro.release_discovery_rules",
+  "schema_version": "1.0",
+  "status": "CALIBRATING",
+  "lookahead_days": 45,
+  "policy": {
+    "formal_blocking_authority": false,
+    "allowed_outputs": ["LABEL", "RISK_BUDGET_CONTEXT"],
+    "forbidden_outputs": ["TRADE_ACTION", "DIRECT_BLOCK", "REGIME_CLAIM"]
+  },
+  "rules": [
+    {"request_id": "nbs_cpi", "event_type": "CN_CPI", "source_id": "china_nbs", "release_url_env": "NBS_CPI_RELEASE_URL", "index_url": "https://www.stats.gov.cn/sj/zxfb/", "allowed_hosts": ["www.stats.gov.cn", "stats.gov.cn", "data.stats.gov.cn"], "title_patterns": ["居民消费价格"], "release_grace_seconds": 900},
+    {"request_id": "nbs_ppi", "event_type": "CN_PPI", "source_id": "china_nbs", "release_url_env": "NBS_PPI_RELEASE_URL", "index_url": "https://www.stats.gov.cn/sj/zxfb/", "allowed_hosts": ["www.stats.gov.cn", "stats.gov.cn", "data.stats.gov.cn"], "title_patterns": ["工业生产者出厂价格"], "release_grace_seconds": 900},
+    {"request_id": "nbs_pmi", "event_type": "CN_PMI", "source_id": "china_nbs", "release_url_env": "NBS_PMI_RELEASE_URL", "index_url": "https://www.stats.gov.cn/sj/zxfb/", "allowed_hosts": ["www.stats.gov.cn", "stats.gov.cn", "data.stats.gov.cn"], "title_patterns": ["采购经理指数"], "release_grace_seconds": 900},
+    {"request_id": "nbs_gdp", "event_type": "CN_GDP", "source_id": "china_nbs", "release_url_env": "NBS_GDP_RELEASE_URL", "index_url": "https://www.stats.gov.cn/sj/zxfb/", "allowed_hosts": ["www.stats.gov.cn", "stats.gov.cn", "data.stats.gov.cn"], "title_patterns": ["国民经济运行情况"], "release_grace_seconds": 1200},
+    {"request_id": "nbs_industrial", "event_type": "CN_INDUSTRIAL_PRODUCTION", "source_id": "china_nbs", "release_url_env": "NBS_INDUSTRIAL_RELEASE_URL", "index_url": "https://www.stats.gov.cn/sj/zxfb/", "allowed_hosts": ["www.stats.gov.cn", "stats.gov.cn", "data.stats.gov.cn"], "title_patterns": ["规模以上工业增加值", "国民经济运行情况"], "release_grace_seconds": 1200},
+    {"request_id": "nbs_retail", "event_type": "CN_RETAIL_SALES", "source_id": "china_nbs", "release_url_env": "NBS_RETAIL_RELEASE_URL", "index_url": "https://www.stats.gov.cn/sj/zxfb/", "allowed_hosts": ["www.stats.gov.cn", "stats.gov.cn", "data.stats.gov.cn"], "title_patterns": ["社会消费品零售总额", "国民经济运行情况"], "release_grace_seconds": 1200},
+    {"request_id": "nbs_fai", "event_type": "CN_FIXED_ASSET_INVESTMENT", "source_id": "china_nbs", "release_url_env": "NBS_FAI_RELEASE_URL", "index_url": "https://www.stats.gov.cn/sj/zxfb/", "allowed_hosts": ["www.stats.gov.cn", "stats.gov.cn", "data.stats.gov.cn"], "title_patterns": ["固定资产投资", "国民经济运行情况"], "release_grace_seconds": 1200},
+    {"request_id": "pboc_lpr", "event_type": "CN_LPR", "source_id": "pboc", "release_url_env": "PBOC_LPR_RELEASE_URL", "index_url": "https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125440/index.html", "allowed_hosts": ["www.pbc.gov.cn", "pbc.gov.cn"], "title_patterns": ["贷款市场报价利率", "LPR"], "release_grace_seconds": 900},
+    {"request_id": "pboc_money_supply", "event_type": "CN_MONEY_SUPPLY", "source_id": "pboc", "release_url_env": "PBOC_MONEY_SUPPLY_RELEASE_URL", "index_url": "https://www.pbc.gov.cn/goutongjiaoliu/113456/113469/index.html", "allowed_hosts": ["www.pbc.gov.cn", "pbc.gov.cn"], "title_patterns": ["金融统计数据报告"], "release_grace_seconds": 1800},
+    {"request_id": "pboc_tsf", "event_type": "CN_TSF", "source_id": "pboc", "release_url_env": "PBOC_TSF_RELEASE_URL", "index_url": "https://www.pbc.gov.cn/goutongjiaoliu/113456/113469/index.html", "allowed_hosts": ["www.pbc.gov.cn", "pbc.gov.cn"], "title_patterns": ["社会融资规模增量统计数据报告"], "release_grace_seconds": 1800},
+    {"request_id": "pboc_new_loans", "event_type": "CN_NEW_LOANS", "source_id": "pboc", "release_url_env": "PBOC_NEW_LOANS_RELEASE_URL", "index_url": "https://www.pbc.gov.cn/goutongjiaoliu/113456/113469/index.html", "allowed_hosts": ["www.pbc.gov.cn", "pbc.gov.cn"], "title_patterns": ["金融统计数据报告"], "release_grace_seconds": 1800},
+    {"request_id": "ism_manufacturing", "event_type": "US_ISM_MANUFACTURING_PMI", "source_id": "ism_official_release", "release_url_env": "ISM_MANUFACTURING_RELEASE_URL", "index_url": "https://www.ismworld.org/supply-management-news-and-reports/reports/rob-report-calendar/", "allowed_hosts": ["www.ismworld.org", "ismworld.org"], "title_patterns": ["Manufacturing PMI"], "release_grace_seconds": 600},
+    {"request_id": "ism_services", "event_type": "US_ISM_SERVICES_PMI", "source_id": "ism_official_release", "release_url_env": "ISM_SERVICES_RELEASE_URL", "index_url": "https://www.ismworld.org/supply-management-news-and-reports/reports/rob-report-calendar/", "allowed_hosts": ["www.ismworld.org", "ismworld.org"], "title_patterns": ["Services PMI"], "release_grace_seconds": 600}
+  ],
+  "registry_hash": "51a5bfbe94ca393567e863adc3900d1e8b40f0a1d9384fb8f7e9cff30d8c0d39"
+}

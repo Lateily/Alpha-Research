@@ -277,7 +277,7 @@ def test_default_specs_and_schemas() -> None:
         == "https://json-schema.org/draft/2020-12/schema"
         for path in contracts.SCHEMA_DIR.glob("*.schema.json")
     )
-    print("PASS default source registry, tier registry, and four schemas")
+    print("PASS default source registry, tier registry, and registered schema set")
 
     macro_schema = contracts.load_json(
         contracts.SCHEMA_DIR / "macro_event.schema.json"

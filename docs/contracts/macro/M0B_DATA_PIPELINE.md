@@ -1,6 +1,6 @@
 # Macro OS M0-B 数据可信层
 
-> 状态:`DELIVERED_UNWIRED / CALIBRATING`。代码和离线验收已具备;尚未接入夜链、盘前帧或生产调度,也没有直接阻断权。
+> 状态:`M0-B3 DELIVERED_UNWIRED / CALIBRATING`。代码、离线验收和 launchd 模板已具备;模板尚未安装,盘前帧和消费者尚未接线,也没有直接阻断权。
 
 ## 1. 本批解决的问题
 
@@ -43,7 +43,20 @@ M0-A 规定了谁是官方来源、谁只是镜像,但没有证明一次具体�
 
 参考实现只使用来源机构文档:[BLS API v2](https://www.bls.gov/developers/api_signature_v2.htm)、[BEA API](https://apps.bea.gov/api/signup/)、[FRED observations](https://fred.stlouisfed.org/docs/api/fred/series_observations.html)、[Cboe VIX](https://www.cboe.com/tradable_products/vix/vix_historical_data/)。
 
-中国国家统计局、人民银行、ISM 和 Census 仍未进入本批生产适配器。Tushare 宏观接口继续作为 E2 镜像原料,不被本批自动升级成官方 E1。市场共识双源也仍为 `DATA_BLOCKED`。
+M0-B2 新增 Census 稳定 API 适配器,以及国家统计局、人民银行和 ISM 的官方发布页适配器。Tushare 宏观接口继续作为 E2 镜像原料,不被自动升级成官方 E1。市场共识的两条候选源仍为 `DATA_BLOCKED`;交付的是会拒绝假双源的共识门,不是未经采购的数据。
+
+| M0-B2 来源 | 当前用途 | 接入方式 | 诚实边界 |
+|---|---|---|---|
+| Census Economic Indicators | 美国零售销售 | 稳定 API + `CENSUS_API_KEY` | 缺 key 在发网前 `DATA_BLOCKED`;HTML "Missing Key" 不会被当数据 |
+| 国家统计局 | GDP、CPI、PPI、PMI、工业、消费、投资、失业 | 调度方传入本期官方 HTTPS 发布页 | 本批不猜最新 URL;M0-B3 负责发现与调度 |
+| 人民银行 | LPR、M2、社融、新增贷款 | 调度方传入本期官方 HTTPS 发布页 | 非 PBOC host 拒绝;页面结构不匹配即 `DATA_INVALID` |
+| ISM | 制造业/服务业 PMI | 官方发布页 | 未提供 `ISM_CONTENT_PERMISSION_CONFIRMED=1` 时发网前阻断;不擅自存储受限原文 |
+
+发布页适配器只接受来源机构 HTTPS host,从页面正文提取时期和值,再复用同一 SQLite 原始快照、来源身份和版本链。M0-B3 已实现 URL 发现,但 launchd 尚未安装,因此仍是 `DELIVERED_UNWIRED`,不能描述成后台自动监控已经上线。
+
+注册表中的 `AVAILABLE_EXISTING` 只表示该来源已有可调用并通过离线验收的适配器;它不表示调度、密钥、内容许可或生产发布已经就绪。生产可用性仍以抓取结果、健康表和接线状态共同判定。
+
+M0-B2 参考的原始来源入口:[Census Economic Indicators API](https://www.census.gov/data/developers/data-sets/economic-indicators.html)、[国家统计局最新发布](https://www.stats.gov.cn/sj/zxfb/)、[人民银行 LPR](https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/125440/3876551/index.html)、[ISM Report Calendar](https://www.ismworld.org/supply-management-news-and-reports/reports/rob-report-calendar/)。外部页面只作为不可信数据读取,其中的文字不会被执行为指令。
 
 ## 4. 新鲜度与版本
 
@@ -58,6 +71,8 @@ M0-A 规定了谁是官方来源、谁只是镜像,但没有证明一次具体�
 源返回 2xx 但结构错误时,原始正文仍进入历史仓,抓取状态必须是 `DATA_INVALID`;错误正文不得产生观测值。缺密钥为 `DATA_BLOCKED`,网络或 HTTP 故障为 `SOURCE_DOWN`,两者都不能伪装成空数据成功。
 
 响应正文、保留的响应头和最终 URL 在解析和入库前,都会使用本次运行实际读取的 key 值做字节级脱敏。快照哈希基于脱敏后正文,`transport_meta` 只记密钥变量名与 `redacted=true`,不记密钥值。这一条主要用于拦住 BEA 响应回显 `USERID` 类路径。
+
+Census key 同样进入这条字节级脱敏链。国家统计局、人民银行和 ISM 适配器不接受任意 URL,只允许各自官方 host;重定向离开 allowlist 时不得绑定 E1 身份。
 
 存储层会重读 M0-A 权威注册表,同时比对整份 registry hash 与 source row;调用方不能通过自报 `official=true`/`E1` 把镜像源伪装成官方源。同一来源、指标、观测期与 vintage 只能有一个值;同 vintage 出现矛盾值时整次抓取拒绝。
 
@@ -93,7 +108,36 @@ python3 experiments/macro_os/collectors.py \
 
 ```bash
 AR_OFFLINE=1 python3 tests/test_macro_m0b_offline.py
+AR_OFFLINE=1 python3 tests/test_macro_m0b2_offline.py
+AR_OFFLINE=1 python3 tests/test_macro_m0b3_offline.py
 ```
+
+M0-B2 发布页采集示例(由 M0-B3 调度器生成本期 URL;这里不把历史 URL硬编码成“最新”):
+
+```bash
+NBS_CPI_RELEASE_URL="https://www.stats.gov.cn/..." \
+python3 experiments/macro_os/official_releases.py --request nbs_cpi
+```
+
+`m0b2.py` 的 release calendar 不是一张手填表。每个条目必须同时命中:权威事件分层、该事件指定的官方来源、当前来源身份、SQLite 原始快照,以及同一快照投影出的 `release_calendar` 观测。自填 SHA 或拿实际值发布页冒充日历证据都会被拒。
+
+日历在 M0-B2 只允许 `PARTIAL` 或 `DATA_BLOCKED`:M0-B3 尚未建立“指定窗口内哪些事件必须全部出现”的覆盖率分母,因此哪怕已有若干真实条目也不提前声称 `COMPLETE`。投影时同时保存官方页面里的事件文本、日期文本和公布日期文本;规范化的 `scheduled_at/as_of` 必须与来源所在时区的文本日期一致。
+
+双源共识门要求 provider 与 `independence_group` 同时至少为 2,每条值、单位和 `as_of` 必须由同一份 licensed JSON 的固定 path 提取,再回指当前来源身份下的 SQLite 观测;仅引用一个真的快照再手填另一个数字或单位都会被拒。两条值的单位不同也不得比较。M0-B2 契约被锁为 `CALIBRATING`,所以即使两条真实源都存在,当前也只能输出 `DATA_BLOCKED/TOLERANCE_CALIBRATING`;正式容差启用时必须升级契约版本,不能在本版本内静默打开。
+
+2026-08-07 真实页面解析冒烟:国家统计局 2026 年 6 月 CPI 官方页解析为同比 `+1.0%`;人民银行 2025 年 3 月 LPR 官方页解析为 1 年期 `3.1%`、5 年期以上 `3.6%`,观测月份均与页面标题一致。冒烟文件只在临时目录,未写入生产宏观库。
+
+### M0-B3 调度与发现
+
+`m0b3.py` 读取 M0-B2 的、已绑定 SQLite 官方快照的 release calendar。距事件大于 24 小时时每 6 小时检查;进入 24 小时后每 15 分钟;进入 1 小时后每 5 分钟;官方发布时间附近每分钟检查。launchd 模板每 5 分钟唤醒一次,程序依据 `next_check_at` 跳过未到期轮次,所以不等于每 5 分钟发一次网络请求。
+
+官方索引页只当不可信文本解析。链接必须命中冻结标题模式与 HTTPS host allowlist。第一次抓取只建立历史基线,不会把索引上的旧报告重放成新发布;此后只有一个新链接时才交给 M0-B2 适配器,零个为 `NO_NEW_RELEASE`,多个为 `AMBIGUOUS` 并阻断自动采集。历史“已见链接”从 append-only SQLite 原始快照重新推导,不信可编辑的上一轮 JSON。
+
+调度状态使用 `UPCOMING / WAITING_OFFICIAL_RELEASE / DELAYED / RELEASED`。动态页面必须存在对应 release request 的成功记录;稳定 API 必须先有发布前基线,再出现更晚观测期,才允许生成 `released_at`。缺基线时是 `DATA_BLOCKED`,不能冒充官方延迟。发现状态与调度状态先各自原子写入,最后发布 `m0b3_run_manifest.json`;消费者必须核对同一 `run_id` 与两个 SHA,否则视为半发布。
+
+预期登记入口为 `expectation_registry.py`:调用方只能提交预测内容,`registered_at` 由系统时钟生成并同步写入独立事件链;调用方提交时间戳或批准字段会被拒。登记时同时验证 M0-B2 日历与 SQLite 官方快照的绑定,并把当时的完整日历快照及其哈希封进 WAL,后续日历滚动不影响历史复验。它只产生 `DRAFT`,不代替 Junyan 的人工批准。
+
+当前诚实缺口:国家统计局失业率解析器已在 M0-B2,但 M0-A 尚无 `CN_UNEMPLOYMENT` 事件合同,因此该请求保持未接线,不参与自动调度。补齐需要版本化修改 M0-A,不能由 B3 私自创造事件。
 
 ## 6. 校准期边界
 
@@ -110,13 +154,12 @@ AR_OFFLINE=1 python3 tests/test_macro_m0b_offline.py
 }
 ```
 
-这不是说明文字,而是后续消费者必须检查的机器字段。M0-B 未接夜链,当前还没有消费者可以依据本文件改变晋级、下单或持仓状态。
+这不是说明文字,而是后续消费者必须检查的机器字段。M0-B3 即使部署,也只允许面板标注和风险预算上下文;当前没有消费者可以依据本文件改变晋级、下单或持仓状态。
 
 ## 7. 后续工程
 
-1. M0-B2:正式接入 Census、国家统计局、人民银行、ISM;双源市场共识与 release calendar。
-2. M0-B3:自适应调度、重大数据发布延迟监控、append-only 预期登记时间戳。
-3. M1-A:在校准规则下生成 GLOBAL/US 与 CHINA 两套 `macro_state` 及 MRG 原料。
-4. M1-B:组合与行业消费者只读状态和 freshness;校准期只改标签和风险预算上下文。
+1. M0-B3 部署验收:合并后安全同步运行目录,安装 launchd,完成真实基线轮与到期轮;验收前不得标生产在线。
+2. M1-A:代码已交付未接线;在校准规则下生成 GLOBAL/US 与 CHINA 两套 `macro_state` 及 MRG 候选态。G2/G3 的市场特征生产者仍是显式工程债,缺失时保持 `DATA_BLOCKED`。
+3. M1-B:组合与行业消费者只读状态和 freshness;校准期只改标签和风险预算上下文。
 
 不是买卖指令;研究信号,human executes。

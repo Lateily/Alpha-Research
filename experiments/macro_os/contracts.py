@@ -289,6 +289,7 @@ def validate_source_registry(payload: dict[str, Any], *, verify_hash: bool = Tru
                 "source_id",
                 "provider",
                 "independence_group",
+                "credential_env_vars",
                 "region",
                 "official",
                 "evidence_level",
@@ -309,6 +310,17 @@ def validate_source_registry(payload: dict[str, Any], *, verify_hash: bool = Tru
             raise ContractError(f"source {source_id} requires provider")
         if not isinstance(row["independence_group"], str) or not row["independence_group"]:
             raise ContractError(f"source {source_id} requires independence_group")
+        credential_env_vars = row["credential_env_vars"]
+        if (
+            not isinstance(credential_env_vars, list)
+            or len(credential_env_vars) != len(set(credential_env_vars))
+            or not all(
+                isinstance(name, str)
+                and re.fullmatch(r"[A-Z][A-Z0-9_]*", name)
+                for name in credential_env_vars
+            )
+        ):
+            raise ContractError(f"source {source_id} has invalid credential_env_vars")
         if row["region"] not in SOURCE_REGIONS:
             raise ContractError(f"invalid source region for {source_id}")
         if not isinstance(row["official"], bool):
@@ -894,8 +906,33 @@ def validate_default_specs() -> tuple[dict[str, Any], dict[str, Any]]:
     validate_source_registry(sources)
     validate_event_tiers(tiers, sources)
     schema_files = sorted(SCHEMA_DIR.glob("*.schema.json"))
-    if len(schema_files) != 4:
-        raise ContractError(f"expected four macro schema files, found {len(schema_files)}")
+    expected_schemas = {
+        "consensus_gate.schema.json",
+        "event_tiers.schema.json",
+        "house_expectation.schema.json",
+        "industry_macro_sensitivity.schema.json",
+        "m0b3_run_manifest.schema.json",
+        "m1a_run_manifest.schema.json",
+        "m1b_run_manifest.schema.json",
+        "macro_event.schema.json",
+        "macro_events.schema.json",
+        "macro_panel.schema.json",
+        "macro_risk_gate.schema.json",
+        "macro_state.schema.json",
+        "market_features.schema.json",
+        "portfolio_macro_exposure.schema.json",
+        "release_discovery.schema.json",
+        "release_discovery_status.schema.json",
+        "release_calendar.schema.json",
+        "scheduler_status.schema.json",
+        "source_registry.schema.json",
+        "state_rules.schema.json",
+    }
+    if {path.name for path in schema_files} != expected_schemas:
+        raise ContractError(
+            "macro schema set mismatch: "
+            f"expected {sorted(expected_schemas)}, found {[path.name for path in schema_files]}"
+        )
     for path in schema_files:
         schema = load_json(path)
         if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
