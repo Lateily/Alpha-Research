@@ -134,6 +134,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Calibration-only portfolio context cannot become a ranking input.",
     ),
     MutationCase(
+        mutation_id="MACRO_M1C_CALIBRATION_AUTHORITY",
+        component="Macro M1-C",
+        source_path="experiments/macro_os/m1c.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before='            if str(key) in {"enforceable", "formal_blocking_authority"} and child is not False:\n'
+        '                raise M1CError(f"M1-C calibration authority changed at {key}")',
+        after='            if False:\n'
+        '                raise M1CError(f"M1-C calibration authority changed at {key}")',
+        expected_failure_marker="test_calibration_authority_cannot_be_promoted",
+        rationale="M1-C may annotate risk budgets but cannot become enforceable during calibration.",
+    ),
+    MutationCase(
         mutation_id="AIOS_REQUEST_SPEC_BLOCK",
         component="AIOS AgentAdapter",
         source_path="scripts/llm/adapters/base.py",

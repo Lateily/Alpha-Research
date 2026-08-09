@@ -1,6 +1,6 @@
 # Macro OS 数据契约
 
-> 状态:`M0-A APPROVED_SPEC / M0-B3 DELIVERED_UNWIRED / M1-A+M1-B DELIVERED_UNWIRED`。M1-A 已能离线读取历史仓并生成双区域状态与 MRG 候选态;M1-B 已能离线消费 M1-A 与 `model_portfolio_state.v2.2`,生成行业、组合和面板契约;launchd、夜链和前端消费者仍未接线。
+> 状态:`M0-A APPROVED_SPEC / M0-B3+M1-A+M1-B+M1-C VALIDATING / CALIBRATING`。M1-C 已在代码层串起官方采集、调度检查、M1-A、M1-B 与夜链原子发布;尚未合并部署或完成真实夜跑,前端消费者也未接线。
 
 M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PIPELINE.md)。
 
@@ -19,6 +19,7 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 | `release_discovery*.schema.json` | 官方索引发现规则与运行状态 | 已完成 |
 | `scheduler_status.schema.json` | 发布延迟与下一检查时间 | 已完成 |
 | `m0b3_run_manifest.schema.json` | 同轮产物哈希绑定 | 已完成 |
+| `m1c_run_manifest.schema.json` | M1-C 四层状态、哈希、失败上浮与校准权限 | 已完成 |
 | `contracts.py` | 零网络、失败即阻断的语义校验器 | 已完成 |
 | `m0b3.py` | URL 发现、自适应调度、延迟监控与原子发布 | 已交付未部署 |
 | `expectation_registry.py` | 系统时钟预期登记与 append-only 事件链 | 已交付未部署 |
@@ -34,8 +35,15 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 | `portfolio_macro_exposure.json` | paper 组合的宏观暴露代理、缺口和非执行风险上下文 | M1-B 运行产物 |
 | `macro_panel.json` | 双区域状态、MRG、事件、行业和组合的只读总览 | M1-B 运行产物 |
 | `m1b_run_manifest.json` | 三份 M1-B 产物与两类输入的哈希绑定 | M1-B 运行产物 |
+| `m1c.py` | 同一 nightly run/date 下编排 M0-B、M0-B3、M1-A 与 M1-B | 已交付待部署 |
+| `m1c_run_manifest.json` | 四层组件状态、逐产物 SHA、失败上浮与校准风险预算标注 | M1-C 运行产物 |
 
-权威路径位于 `experiments/macro_os/`。M0-B 能生成本地运行数据,但未完成生产接线;Better 的前端不应自行发明另一套字段。
+权威路径位于 `experiments/macro_os/`。M1-C 已接入 `run_nightly.py` 的 staging 路径,
+但 `~/ar-live` 未部署且没有正式运行产物;Better 的前端不应自行发明另一套字段。
+M0-B2 当前提供日历快照绑定、投影和校验,并不提供官方日历抓取/物化入口。若
+`release_calendar.json` 不存在,M1-C 必须发布
+`components.m0b3.reason=RELEASE_CALENDAR_NOT_PUBLISHED`,继续生成只读校准包,但不得把
+M0-B3 写成已调度成功。禁止用空日历或人工日期消除这个阻断。
 
 ## 2. 四类事实不能混写
 
@@ -86,6 +94,11 @@ M0-B 的实现、运行方式和边界见 [`M0B_DATA_PIPELINE.md`](./M0B_DATA_PI
 1. **M0-B3 部署验收**:先合并 M0-B2/M0-B3,再安全同步运行目录、安装 launchd,完成一次真实官方页面基线与一次正式调度轮。验收前保持 `DELIVERED_UNWIRED`。
 2. **M1-A 部署验收**:合并后用真实 SQLite 副本运行;正式共识源未建立时 `surprise=DATA_BLOCKED`,不得补 0。G2/G3 缺正式 `market_features` 生产者时同样阻断。
 3. **M1-B**:行业与组合消费者、内部宏观面板和校准记录;当前不接微信提醒。
+4. **M1-C 部署验收**:合并后安全同步运行目录,真实夜跑必须证明同一 `run_id/target_trade_date`,
+   M0-B/M0-B3/M1-A/M1-B 逐层哈希一致,诚实 `PARTIAL/DATA_BLOCKED` 可发布,结构失败不可发布。
+5. **官方日历物化器**:从来源注册表指定的官方日历页抓取、保存不可变原始快照,再调用
+   M0-B2 投影器生成 `release_calendar.json`;真实来源、日期文本与快照绑定全部通过后,
+   M0-B3 才可从 `RELEASE_CALENDAR_NOT_PUBLISHED` 升级为实际 due/reuse 调度。
 
 M1-B 的输入边界固定为哈希验证通过的 M1-A 产物和 `model_portfolio_state.v2.2`。它不会读取 `model_fund/orders.json`。当前组合契约不提供逐仓定盘市值,因此组合权重只可显示为 `notional / NAV` 代理并明确标注;未知主题必须 `DATA_BLOCKED`。校准期所有输出 `enforceable=false`,不得转成交易动作或直接阻断。
 

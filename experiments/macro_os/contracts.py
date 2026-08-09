@@ -914,6 +914,7 @@ def validate_default_specs() -> tuple[dict[str, Any], dict[str, Any]]:
         "m0b3_run_manifest.schema.json",
         "m1a_run_manifest.schema.json",
         "m1b_run_manifest.schema.json",
+        "m1c_run_manifest.schema.json",
         "macro_event.schema.json",
         "macro_events.schema.json",
         "macro_panel.schema.json",

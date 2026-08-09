@@ -551,11 +551,14 @@ class StagingPublicationTest(unittest.TestCase):
         repo = os.path.join(tmp, "repo")
         et = os.path.join(repo, "experiments", "execution_tracker")
         research = os.path.join(repo, "experiments", "research_funnel")
+        macro = os.path.join(repo, "experiments", "macro_os")
         public = os.path.join(repo, "public", "data", "v2")
         run_dir = os.path.join(tmp, "run")
         os.makedirs(os.path.join(et, "model_fund"), exist_ok=True)
         os.makedirs(research, exist_ok=True)
+        os.makedirs(macro, exist_ok=True)
         Path(os.path.join(research, "fixture_engine.py")).write_text("VALUE = 1\n")
+        Path(os.path.join(macro, "fixture_engine.py")).write_text("VALUE = 1\n")
         os.makedirs(public, exist_ok=True)
         write_json(os.path.join(et, "rotation_panel.json"), {"value": "old"})
         write_json(os.path.join(et, "model_fund", "fund.json"), {"cash": 1})
@@ -567,6 +570,16 @@ class StagingPublicationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             _, _, _, _, stage = self._layout(tmp)
             self.assertTrue(os.path.isfile(os.path.join(stage["research"], "fixture_engine.py")))
+
+    def test_missing_macro_os_code_refuses_staging(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = os.path.join(tmp, "repo")
+            et = os.path.join(repo, "experiments", "execution_tracker")
+            research = os.path.join(repo, "experiments", "research_funnel")
+            os.makedirs(os.path.join(et, "model_fund"), exist_ok=True)
+            os.makedirs(research, exist_ok=True)
+            with self.assertRaisesRegex(RuntimeError, "macro_os source missing"):
+                nightly_publish.prepare_stage(et, repo, os.path.join(tmp, "run"))
 
     def test_staging_is_invisible_until_commit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -752,12 +765,16 @@ class StagingPublicationTest(unittest.TestCase):
             repo = os.path.join(tmp, "repo")
             et = os.path.join(repo, "experiments", "execution_tracker")
             research = os.path.join(repo, "experiments", "research_funnel")
+            macro = os.path.join(repo, "experiments", "macro_os")
             public = os.path.join(repo, "public", "data", "v2")
             os.makedirs(os.path.join(et, "model_fund"), exist_ok=True)
             os.makedirs(research, exist_ok=True)
+            os.makedirs(macro, exist_ok=True)
             os.makedirs(public, exist_ok=True)
             with open(os.path.join(research, "fixture.py"), "w", encoding="utf-8") as fh:
                 fh.write("# staged research-funnel fixture\n")
+            with open(os.path.join(macro, "fixture.py"), "w", encoding="utf-8") as fh:
+                fh.write("# staged macro-os fixture\n")
             write_json(os.path.join(et, "model_fund", "fund.json"), {"cash": 1})
             write_json(os.path.join(et, "rotation_panel.json"), {"value": "old"})
             write_json(os.path.join(public, "meta.json"), {"value": "old-public"})
@@ -766,11 +783,18 @@ class StagingPublicationTest(unittest.TestCase):
             )}
             clean = {"pass": True, "checks": [], "failures": [], "warns": []}
 
-            def fake_steps(*, require_live, verify, base, run_id, persistent_feature_db):
+            def fake_steps(
+                *, require_live, verify, base, run_id, persistent_feature_db,
+                persistent_macro_db,
+            ):
                 self.assertTrue(verify)
                 self.assertEqual(
                     persistent_feature_db,
                     os.path.join(repo, "data_history", "feature_store.sqlite3"),
+                )
+                self.assertEqual(
+                    persistent_macro_db,
+                    os.path.join(repo, "data_history", "macro_os.sqlite3"),
                 )
                 write_json(os.path.join(base, "rotation_panel.json"), {
                     "value": "new", "run_id": run_id,

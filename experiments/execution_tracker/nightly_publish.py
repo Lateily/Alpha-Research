@@ -134,6 +134,7 @@ def prepare_stage(live_et, live_repo, run_dir):
     stage_repo = os.path.join(run_dir, "staging", "repo")
     stage_et = os.path.join(stage_repo, "experiments", "execution_tracker")
     stage_research = os.path.join(stage_repo, "experiments", "research_funnel")
+    stage_macro = os.path.join(stage_repo, "experiments", "macro_os")
     stage_public = os.path.join(stage_repo, "public", "data", "v2")
     if os.path.exists(stage_repo):
         shutil.rmtree(stage_repo)
@@ -152,6 +153,14 @@ def prepare_stage(live_et, live_repo, run_dir):
     shutil.copytree(
         live_research,
         stage_research,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.lock", "*.tmp"),
+    )
+    live_macro = os.path.join(live_repo, "experiments", "macro_os")
+    if not os.path.isdir(live_macro):
+        raise RuntimeError(f"macro_os source missing: {live_macro}")
+    shutil.copytree(
+        live_macro,
+        stage_macro,
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.lock", "*.tmp"),
     )
     live_public = os.path.join(live_repo, "public", "data", "v2")
@@ -174,6 +183,7 @@ def prepare_stage(live_et, live_repo, run_dir):
         "repo": stage_repo,
         "et": stage_et,
         "research": stage_research,
+        "macro": stage_macro,
         "public": stage_public,
     }
 
