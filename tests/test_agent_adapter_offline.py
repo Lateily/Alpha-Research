@@ -882,6 +882,51 @@ def test_capability_router_blocks_high_risk_even_with_reviewer_name_alias() -> N
     )
 
 
+def test_capability_router_blocks_medium_production_without_review_contract() -> None:
+    registry = CapabilityRegistry(
+        [capability("codex"), capability("claude", task_type="review")]
+    )
+    for reviewer_agent in (None, "codex", "claude", "nonexistent-reviewer"):
+        decision = route(
+            registry,
+            route_request(
+                mode=RouteMode.PRODUCTION,
+                risk_level="MEDIUM",
+                reviewer_agent=reviewer_agent,
+            ),
+        )
+        assert decision.status is RouteStatus.SPEC_BLOCKED
+        assert decision.selected_agent is None
+        assert (
+            "medium-risk production routing is blocked until reviewer "
+            "capabilities are wired"
+            in decision.reasons
+        )
+
+
+def test_capability_router_allows_medium_shadow_without_production_authority() -> None:
+    registry = CapabilityRegistry(
+        [
+            capability(
+                "event_tagger",
+                task_type="event_tagging",
+                status=CapabilityStatus.SHADOW_ONLY,
+            )
+        ]
+    )
+    decision = route(
+        registry,
+        route_request(
+            task_type="event_tagging",
+            mode=RouteMode.SHADOW,
+            risk_level="MEDIUM",
+        ),
+    )
+    assert decision.status is RouteStatus.SELECTED
+    assert decision.mode is RouteMode.SHADOW
+    assert decision.selected_agent == "event_tagger"
+
+
 def test_capability_router_prefers_lower_cost_then_stable_name() -> None:
     lower_cost = route(
         CapabilityRegistry(

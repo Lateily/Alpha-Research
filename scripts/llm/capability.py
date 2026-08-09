@@ -4,8 +4,9 @@ This module is an offline control-plane core. It does not call an AgentAdapter,
 grant production status, or persist a new production data contract.
 
 Reviewer identity is not yet backed by provider/model capability records.
-HIGH and CONSTITUTIONAL routing therefore remains SPEC_BLOCKED until that
-independent-review contract and the K2 Human Gate are wired.
+MEDIUM production routing and all HIGH/CONSTITUTIONAL routing therefore remain
+SPEC_BLOCKED until that independent-review contract and the K2 Human Gate are
+wired. MEDIUM shadow routing remains available for approved shadow tasks.
 """
 
 from __future__ import annotations
@@ -155,6 +156,11 @@ class RouteRequest:
             # reviewer capabilities exist.
             errors.append(
                 "high-risk routing is blocked until reviewer capabilities are wired"
+            )
+        elif self.mode is RouteMode.PRODUCTION and self.risk_level == "MEDIUM":
+            errors.append(
+                "medium-risk production routing is blocked until reviewer "
+                "capabilities are wired"
             )
         return errors
 
