@@ -43,7 +43,6 @@ Required fields from the task manifest:
 | `objective` | Checks whether the task is specific enough to run |
 | `human_owner` | Accountable human |
 | `reviewer` | Review and approval owner |
-| `task_type` | Selects policy, context recipe, and Router candidate class |
 | `file_scope` | Maximum allowed read/write file boundary |
 | `forbidden_scope` | Paths that must never be touched |
 | `authority_docs` | Documents that define the task contract |
@@ -56,6 +55,17 @@ Required fields from the task manifest:
 
 Missing, malformed, contradictory, or unsupported required fields produce
 `SPEC_BLOCKED`. K2 must not infer missing authority from chat memory.
+
+Current #248 `ai-task.v1` does not yet include `task_type`. Router must not
+infer it from prose, branch names, or file paths. Before K2 implementation,
+Junyan must approve one authoritative source:
+
+- add `task_type` to `ai-task.v1`; or
+- add a deterministic K2 task-classification table whose output is stored in
+  the K2 envelope before Router is called.
+
+Until that source exists, any handoff that lacks explicit `task_type` is
+`SPEC_BLOCKED`.
 
 ## 4. K2 Output Envelope
 
@@ -134,7 +144,7 @@ Network mapping for Router:
 |---|---|---|
 | `OFFLINE` | `deny` | No network during execution |
 | `ALLOWLIST` | `provider_only` | Only approved provider or source endpoints |
-| `LIVE_DATA` | `provider_only` | Allowed only with explicit task-level source list |
+| `LIVE_DATA` | `TBD` | `POLICY_BLOCKED` until Junyan approves the mapping |
 
 Unsupported network values produce `POLICY_BLOCKED`.
 
@@ -188,17 +198,22 @@ K2 Context Builder
 
 | Field | Source | Required | Rule |
 |---|---|---:|---|
-| `task_type` | K1/K2 task contract | Yes | Must be supported by capability registry |
+| `task_type` | Approved K2 source | Yes | Must be explicit and supported by capability registry |
 | `mode` | Policy Engine | Yes | No defaulting; `SHADOW` is not production approval |
 | `required_tools` | Context Builder | Yes | Minimum tools only |
 | `target_paths` | Context Builder | Yes | Already checked against scope |
 | `network_policy` | Policy Engine | Yes | `deny` or `provider_only` |
-| `risk_level` | Policy Engine | Yes | Preserved into decision record |
+| `risk_level` | Policy Engine | Yes | Future Router integration requirement; current #246 does not preserve it |
 | `budget_max_cny` | Policy Engine | Yes | Finite, non-negative string |
 | `reviewer_agent` | Policy Engine | High risk | Must differ from selected executor |
 
 Router must preserve `mode` in `RouteDecision`. It may not infer mode from
 branch names or default missing mode to `SHADOW`.
+
+Risk preservation is a K2/K3 integration requirement, not a statement about the
+current #246 Router implementation. Current #246 preserves `mode`,
+`selected_agent`, and `reasons`; K2 should not require more from #246 until the
+Router contract is explicitly expanded.
 
 ## 8. Scheduler And Lease Boundary
 
@@ -272,8 +287,8 @@ validated `RouteRequest`. Router picks the Agent only inside that boundary.
 
 1. Whether K2 v0 may include Scheduler/Lease implementation, or whether those
    stay as spec until Policy/Context tests pass.
-2. Whether `ALLOWLIST` and `LIVE_DATA` both map to Router `provider_only`, or
-   whether `LIVE_DATA` should be a separate Router policy.
+2. Whether `LIVE_DATA` maps to Router `provider_only`, becomes a separate
+   Router policy, or remains blocked for K2 v0.
 3. Whether `HIGH` risk reviewer independence must be agent-name level for v0, or
    provider-level from day one.
 4. Whether K2 can auto-comment `POLICY_BLOCKED` findings to #164, or must remain
