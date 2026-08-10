@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-07T09:37:28.784762+00:00",
+  "generated_at": "2026-08-10T03:19:26.751731+00:00",
   "ticker": "300308.SZ",
   "composite": 52.8,
   "band": "FRAGILE",
@@ -20,9 +20,9 @@
   "valid_components": 3,
   "fundamentals": null,
   "price_metrics": {
-    "n_returns": 62,
-    "annual_vol": 0.873,
-    "skew": -0.171,
+    "n_returns": 63,
+    "annual_vol": 0.8694,
+    "skew": -0.143,
     "excess_kurtosis": 0.421,
     "max_drawdown": 0.375
   },
