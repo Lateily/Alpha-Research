@@ -156,6 +156,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A calibration-only Macro failure cannot veto unrelated nightly publication.",
     ),
     MutationCase(
+        mutation_id="MACRO_M1C_ISOLATION_ALLOWLIST",
+        component="Macro M1-C nightly boundary",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before="    _validate_isolated_calibration_steps()",
+        after="    pass  # mutation: skip isolation allowlist validation",
+        expected_failure_marker="test_business_steps_cannot_enter_macro_isolation_allowlist",
+        rationale="Business-critical steps must never acquire calibration failure isolation.",
+    ),
+    MutationCase(
         mutation_id="MACRO_M1C_RUN_AUTHORITY_CALL",
         component="Macro M1-C runtime boundary",
         source_path="experiments/macro_os/m1c.py",

@@ -136,8 +136,16 @@ _SEVERITY = {"OK": 0, "PARTIAL": 1, "DATA_BLOCKED": 2, "STALE_OUTPUT": 3,
              "DATE_MISMATCH": 4, "FAILED": 5}
 RESEARCH_DATA_STEPS = {"security_registry", "feature_store", "e1_event_layer"}
 MACRO_DATA_STEPS = {"macro_m1c"}
-ISOLATED_CALIBRATION_STEPS = {"macro_m1c"}
+ISOLATED_CALIBRATION_STEPS = frozenset({"macro_m1c"})
 RUN_CONTEXT_EXTERNAL_STEPS = set(RESEARCH_DATA_STEPS)
+
+
+def _validate_isolated_calibration_steps():
+    """Keep advisory failure isolation narrower than the business pipeline."""
+    if ISOLATED_CALIBRATION_STEPS != frozenset({"macro_m1c"}):
+        raise RuntimeError(
+            "isolated calibration allowlist may contain only macro_m1c"
+        )
 
 
 def _research_quality(step, data):
@@ -415,6 +423,8 @@ def run_steps(
 ):
     """verify=True(正式路径):步骤终态 = max(进程判定, 产物实物判定)。
     COMPLETE 从此必须由实物背书 —— 进程退 0 + 免责声明不再等于成功(B2/B3)。"""
+    # governance-mutation: MACRO_M1C_ISOLATION_ALLOWLIST
+    _validate_isolated_calibration_steps()
     base = base or HERE
     run_start = time.time()
     results, status_by = [], {}

@@ -362,6 +362,21 @@ class MacroM1CNightlyWiringTests(unittest.TestCase):
             result["isolated_steps"],
         )
 
+    def test_business_steps_cannot_enter_macro_isolation_allowlist(self) -> None:
+        original = nightly.ISOLATED_CALIBRATION_STEPS
+        nightly.ISOLATED_CALIBRATION_STEPS = frozenset(
+            {"macro_m1c", "official_sample"}
+        )
+        try:
+            with self.assertRaisesRegex(RuntimeError, "only macro_m1c"):
+                nightly.run_steps(
+                    runner=lambda _command: (1, "injected business failure"),
+                    require_live=False,
+                    verify=False,
+                )
+        finally:
+            nightly.ISOLATED_CALIBRATION_STEPS = original
+
     def test_failed_macro_step_discards_partial_outputs_but_keeps_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "repo"
