@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-08-10",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-08-10T03:19:25.732033+00:00",
+    "generated_at": "2026-08-10T10:01:14.787017+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -266,7 +266,7 @@
           },
           "key_indicators": {
             "rsi14": 46.1,
-            "macd_hist": -0.9961,
+            "macd_hist": -0.9983,
             "price_vs_ma20": -2.62,
             "price_vs_ma60": -0.8,
             "change_5d": -5.98,
@@ -350,7 +350,7 @@
           },
           "key_indicators": {
             "rsi14": 52.1,
-            "macd_hist": 1.7504,
+            "macd_hist": 1.7355,
             "price_vs_ma20": 6.63,
             "price_vs_ma60": -1.71,
             "change_5d": 13.19,
@@ -391,8 +391,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 42.2,
-            "macd_hist": -6.5411,
+            "rsi14": 42.1,
+            "macd_hist": -6.4416,
             "price_vs_ma20": -9.48,
             "price_vs_ma60": -18.02,
             "change_5d": 1.98,
@@ -426,8 +426,8 @@
             "total": 2
           },
           "key_indicators": {
-            "rsi14": 41.7,
-            "macd_hist": -0.3986,
+            "rsi14": 41.6,
+            "macd_hist": -0.4011,
             "price_vs_ma20": -6.26,
             "price_vs_ma60": 1.13,
             "change_5d": -7.11,
@@ -528,8 +528,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 50.1,
-            "macd_hist": -4.0749,
+            "rsi14": 49.9,
+            "macd_hist": -3.8898,
             "price_vs_ma20": -1.16,
             "price_vs_ma60": -1.0,
             "change_5d": 0.9,
