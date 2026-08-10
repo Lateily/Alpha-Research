@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T03:19:25Z",
+  "generated_at": "2026-08-10T10:01:14Z",
   "report": "PARTIAL",
   "required_endpoints": [
     "daily",
@@ -15,36 +15,36 @@
       "required": true,
       "permission": true,
       "status": "OK",
-      "rows": 6,
-      "as_of": "20260807",
-      "freshness_days": 3,
-      "latency_ms": 406,
+      "rows": 7,
+      "as_of": "20260810",
+      "freshness_days": 0,
+      "latency_ms": 522,
       "error": null,
-      "checked_at": "2026-08-10T03:18:51Z"
+      "checked_at": "2026-08-10T10:00:41Z"
     },
     {
       "endpoint": "daily_basic",
       "required": true,
       "permission": true,
       "status": "OK",
-      "rows": 6,
-      "as_of": "20260807",
-      "freshness_days": 3,
-      "latency_ms": 415,
+      "rows": 7,
+      "as_of": "20260810",
+      "freshness_days": 0,
+      "latency_ms": 582,
       "error": null,
-      "checked_at": "2026-08-10T03:18:52Z"
+      "checked_at": "2026-08-10T10:00:42Z"
     },
     {
       "endpoint": "moneyflow_dc",
       "required": true,
       "permission": true,
       "status": "OK",
-      "rows": 6,
-      "as_of": "20260807",
-      "freshness_days": 3,
-      "latency_ms": 421,
+      "rows": 7,
+      "as_of": "20260810",
+      "freshness_days": 0,
+      "latency_ms": 570,
       "error": null,
-      "checked_at": "2026-08-10T03:18:52Z"
+      "checked_at": "2026-08-10T10:00:43Z"
     },
     {
       "endpoint": "moneyflow_ind_dc",
@@ -52,23 +52,23 @@
       "permission": true,
       "status": "OK",
       "rows": 1031,
-      "as_of": "20260807",
-      "freshness_days": 3,
-      "latency_ms": 3241,
+      "as_of": "20260810",
+      "freshness_days": 0,
+      "latency_ms": 1331,
       "error": null,
-      "checked_at": "2026-08-10T03:18:56Z"
+      "checked_at": "2026-08-10T10:00:44Z"
     },
     {
       "endpoint": "moneyflow_mkt_dc",
       "required": true,
       "permission": true,
       "status": "OK",
-      "rows": 6,
-      "as_of": "20260807",
-      "freshness_days": 3,
-      "latency_ms": 416,
+      "rows": 7,
+      "as_of": "20260810",
+      "freshness_days": 0,
+      "latency_ms": 544,
       "error": null,
-      "checked_at": "2026-08-10T03:18:57Z"
+      "checked_at": "2026-08-10T10:00:45Z"
     },
     {
       "endpoint": "moneyflow_hsgt",
@@ -78,9 +78,9 @@
       "rows": 6,
       "as_of": "20260807",
       "freshness_days": 3,
-      "latency_ms": 409,
+      "latency_ms": 673,
       "error": null,
-      "checked_at": "2026-08-10T03:18:58Z"
+      "checked_at": "2026-08-10T10:00:46Z"
     },
     {
       "endpoint": "forecast",
@@ -90,9 +90,9 @@
       "rows": 2,
       "as_of": "20260131",
       "freshness_days": 191,
-      "latency_ms": 417,
+      "latency_ms": 559,
       "error": null,
-      "checked_at": "2026-08-10T03:18:58Z"
+      "checked_at": "2026-08-10T10:00:47Z"
     },
     {
       "endpoint": "express",
@@ -102,9 +102,9 @@
       "rows": 1,
       "as_of": "20260228",
       "freshness_days": 163,
-      "latency_ms": 404,
+      "latency_ms": 552,
       "error": null,
-      "checked_at": "2026-08-10T03:18:59Z"
+      "checked_at": "2026-08-10T10:00:48Z"
     },
     {
       "endpoint": "income",
@@ -114,9 +114,9 @@
       "rows": 5,
       "as_of": "20260417",
       "freshness_days": 115,
-      "latency_ms": 415,
+      "latency_ms": 954,
       "error": null,
-      "checked_at": "2026-08-10T03:19:00Z"
+      "checked_at": "2026-08-10T10:00:49Z"
     },
     {
       "endpoint": "balancesheet",
@@ -126,9 +126,9 @@
       "rows": 4,
       "as_of": "20260417",
       "freshness_days": 115,
-      "latency_ms": 438,
+      "latency_ms": 660,
       "error": null,
-      "checked_at": "2026-08-10T03:19:01Z"
+      "checked_at": "2026-08-10T10:00:51Z"
     },
     {
       "endpoint": "cashflow",
@@ -138,45 +138,45 @@
       "rows": 5,
       "as_of": "20260417",
       "freshness_days": 115,
-      "latency_ms": 421,
+      "latency_ms": 622,
       "error": null,
-      "checked_at": "2026-08-10T03:19:01Z"
+      "checked_at": "2026-08-10T10:00:51Z"
     },
     {
       "endpoint": "limit_list_d",
       "required": false,
       "permission": true,
       "status": "OK",
-      "rows": 104,
-      "as_of": "20260807",
-      "freshness_days": 3,
-      "latency_ms": 2698,
+      "rows": 118,
+      "as_of": "20260810",
+      "freshness_days": 0,
+      "latency_ms": 640,
       "error": null,
-      "checked_at": "2026-08-10T03:19:04Z"
+      "checked_at": "2026-08-10T10:00:52Z"
     },
     {
       "endpoint": "top_list",
       "required": false,
       "permission": true,
       "status": "OK",
-      "rows": 67,
-      "as_of": "20260807",
-      "freshness_days": 3,
-      "latency_ms": 2724,
+      "rows": 69,
+      "as_of": "20260810",
+      "freshness_days": 0,
+      "latency_ms": 683,
       "error": null,
-      "checked_at": "2026-08-10T03:19:07Z"
+      "checked_at": "2026-08-10T10:00:54Z"
     },
     {
       "endpoint": "top_inst",
       "required": false,
       "permission": true,
       "status": "OK",
-      "rows": 680,
-      "as_of": "20260807",
-      "freshness_days": 3,
-      "latency_ms": 2923,
+      "rows": 699,
+      "as_of": "20260810",
+      "freshness_days": 0,
+      "latency_ms": 1008,
       "error": null,
-      "checked_at": "2026-08-10T03:19:11Z"
+      "checked_at": "2026-08-10T10:00:55Z"
     },
     {
       "endpoint": "cyq_chips",
@@ -186,9 +186,9 @@
       "rows": 191,
       "as_of": "20260807",
       "freshness_days": 3,
-      "latency_ms": 2692,
+      "latency_ms": 3973,
       "error": null,
-      "checked_at": "2026-08-10T03:19:14Z"
+      "checked_at": "2026-08-10T10:00:59Z"
     },
     {
       "endpoint": "stk_factor_pro",
@@ -198,9 +198,9 @@
       "rows": 6,
       "as_of": "20260807",
       "freshness_days": 3,
-      "latency_ms": 487,
+      "latency_ms": 803,
       "error": null,
-      "checked_at": "2026-08-10T03:19:15Z"
+      "checked_at": "2026-08-10T10:01:00Z"
     },
     {
       "endpoint": "stk_surv",
@@ -210,9 +210,9 @@
       "rows": 400,
       "as_of": "20260728",
       "freshness_days": 13,
-      "latency_ms": 434,
+      "latency_ms": 923,
       "error": null,
-      "checked_at": "2026-08-10T03:19:15Z"
+      "checked_at": "2026-08-10T10:01:02Z"
     },
     {
       "endpoint": "report_rc",
@@ -222,9 +222,9 @@
       "rows": 29,
       "as_of": "20260803",
       "freshness_days": 7,
-      "latency_ms": 417,
+      "latency_ms": 550,
       "error": null,
-      "checked_at": "2026-08-10T03:19:16Z"
+      "checked_at": "2026-08-10T10:01:03Z"
     },
     {
       "endpoint": "cn_gdp",
@@ -234,9 +234,9 @@
       "rows": 5,
       "as_of": "2026Q1",
       "freshness_days": null,
-      "latency_ms": 400,
+      "latency_ms": 603,
       "error": null,
-      "checked_at": "2026-08-10T03:19:17Z"
+      "checked_at": "2026-08-10T10:01:03Z"
     },
     {
       "endpoint": "cn_cpi",
@@ -246,9 +246,9 @@
       "rows": 19,
       "as_of": "202607",
       "freshness_days": 40,
-      "latency_ms": 408,
+      "latency_ms": 702,
       "error": null,
-      "checked_at": "2026-08-10T03:19:18Z"
+      "checked_at": "2026-08-10T10:01:05Z"
     },
     {
       "endpoint": "cn_ppi",
@@ -258,9 +258,9 @@
       "rows": 19,
       "as_of": "202607",
       "freshness_days": 40,
-      "latency_ms": 428,
+      "latency_ms": 613,
       "error": null,
-      "checked_at": "2026-08-10T03:19:18Z"
+      "checked_at": "2026-08-10T10:01:05Z"
     },
     {
       "endpoint": "cn_pmi",
@@ -270,21 +270,21 @@
       "rows": 19,
       "as_of": "202607",
       "freshness_days": 40,
-      "latency_ms": 426,
+      "latency_ms": 736,
       "error": null,
-      "checked_at": "2026-08-10T03:19:19Z"
+      "checked_at": "2026-08-10T10:01:07Z"
     },
     {
       "endpoint": "shibor",
       "required": false,
       "permission": true,
       "status": "OK",
-      "rows": 6,
-      "as_of": "20260807",
-      "freshness_days": 3,
-      "latency_ms": 401,
+      "rows": 7,
+      "as_of": "20260810",
+      "freshness_days": 0,
+      "latency_ms": 584,
       "error": null,
-      "checked_at": "2026-08-10T03:19:20Z"
+      "checked_at": "2026-08-10T10:01:08Z"
     },
     {
       "endpoint": "us_tycr",
@@ -294,21 +294,21 @@
       "rows": 6,
       "as_of": "20260807",
       "freshness_days": 3,
-      "latency_ms": 405,
+      "latency_ms": 619,
       "error": null,
-      "checked_at": "2026-08-10T03:19:21Z"
+      "checked_at": "2026-08-10T10:01:08Z"
     },
     {
       "endpoint": "major_news",
       "required": false,
       "permission": true,
       "status": "OK",
-      "rows": 613,
-      "as_of": "2026-08-10 10:47:53",
+      "rows": 800,
+      "as_of": "2026-08-10 17:57:59",
       "freshness_days": 0,
-      "latency_ms": 725,
+      "latency_ms": 1197,
       "error": null,
-      "checked_at": "2026-08-10T03:19:22Z"
+      "checked_at": "2026-08-10T10:01:10Z"
     },
     {
       "endpoint": "news",
@@ -318,9 +318,9 @@
       "rows": 0,
       "as_of": null,
       "freshness_days": null,
-      "latency_ms": 772,
+      "latency_ms": 914,
       "error": "Exception: 抱歉，您没有接口(news)访问权限，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。",
-      "checked_at": "2026-08-10T03:19:23Z"
+      "checked_at": "2026-08-10T10:01:11Z"
     },
     {
       "endpoint": "anns_d",
@@ -330,9 +330,9 @@
       "rows": 0,
       "as_of": null,
       "freshness_days": null,
-      "latency_ms": 768,
+      "latency_ms": 976,
       "error": "Exception: 抱歉，您没有接口(anns_d)访问权限，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。",
-      "checked_at": "2026-08-10T03:19:23Z"
+      "checked_at": "2026-08-10T10:01:12Z"
     },
     {
       "endpoint": "cctv_news",
@@ -342,9 +342,9 @@
       "rows": 0,
       "as_of": null,
       "freshness_days": null,
-      "latency_ms": 764,
+      "latency_ms": 1036,
       "error": "Exception: 抱歉，您没有接口(cctv_news)访问权限，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。",
-      "checked_at": "2026-08-10T03:19:24Z"
+      "checked_at": "2026-08-10T10:01:13Z"
     },
     {
       "endpoint": "rt_min_daily",
@@ -354,9 +354,9 @@
       "rows": 0,
       "as_of": null,
       "freshness_days": null,
-      "latency_ms": 768,
+      "latency_ms": 1022,
       "error": "Exception: 抱歉，您没有接口(rt_min_daily)访问权限，权限的具体详情访问：https://tushare.pro/document/1?doc_id=108。",
-      "checked_at": "2026-08-10T03:19:25Z"
+      "checked_at": "2026-08-10T10:01:14Z"
     }
   ],
   "status_vocabulary": [
