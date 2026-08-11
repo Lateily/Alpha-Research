@@ -1,13 +1,14 @@
 # AIOS-K2 Policy And Context Spec
 
 > Owner: Reed. Reviewer: Junyan. Partner: Jason.
-> Status: DRAFT / SPEC ONLY.
+> Status: DRAFT / POLICY GATE V0.
 > Scope: A-009 Policy Engine, A-010 Context Builder, A-011 Scheduler contract,
 > A-012 Lease/heartbeat/file lock contract.
 
-This document is the handoff contract before K2 implementation. It does not
-start production execution, call model APIs, write GitHub automatically, or
-change any research rule.
+This document is the handoff contract for K2 implementation. Current code
+implements the deterministic Policy Gate only. It does not start production
+execution, call model APIs, write GitHub automatically, or change any research
+rule.
 
 ## 1. Plain-English Goal
 
@@ -24,7 +25,7 @@ Agent is selected.
 ## 2. Non-Goals
 
 - No Agent execution.
-- No Scheduler implementation until K1 is merged and reviewed.
+- No Scheduler implementation until Policy/Context tests pass.
 - No frontend integration.
 - No model API calls.
 - No automatic GitHub comments beyond the existing Progress Board protocol.
@@ -67,6 +68,10 @@ Junyan must approve one authoritative source:
 Until that source exists, any handoff that lacks explicit `task_type` is
 `SPEC_BLOCKED`.
 
+When supplied, `task_type` must be a Router-compatible canonical lowercase
+token, for example `docs_contract` or `event_tagging`. K2 and Router must not
+strip, lowercase, or otherwise repair non-canonical task types at handoff time.
+
 ## 4. K2 Output Envelope
 
 K2 produces one envelope. Router may run only when `policy_status` is
@@ -77,6 +82,7 @@ K2 produces one envelope. Router may run only when `policy_status` is
   "schema": "aios-policy-context-envelope.v1",
   "task_id": "A-009-example",
   "policy_status": "POLICY_ALLOWED",
+  "policy_decision_hash": "sha256:...",
   "policy_reasons": [],
   "context_status": "CONTEXT_READY",
   "context_hash": "sha256:...",
@@ -132,18 +138,22 @@ It must check:
 5. `budget.max_cny` is present, finite, non-negative, and a string amount.
 6. `risk_level` is one of `LOW`, `MEDIUM`, `HIGH`, `CONSTITUTIONAL`.
 7. `mode` is explicit: `SHADOW` or `PRODUCTION`.
-8. `HIGH` and `CONSTITUTIONAL` tasks include an independent `reviewer_agent`.
-9. `CONSTITUTIONAL` tasks have explicit Junyan approval evidence before action.
-10. Secret-like strings in task inputs are blocked or redacted before context
+8. `MEDIUM + PRODUCTION` is blocked until registry-backed reviewer
+   capabilities and K2 Human Gate are wired.
+9. `HIGH` and `CONSTITUTIONAL` are blocked in all modes until registry-backed
+   reviewer capabilities and K2 Human Gate are wired.
+10. `CONSTITUTIONAL` tasks have structured Junyan approval evidence with an
+    audit anchor before action.
+11. Secret-like strings in task inputs are blocked or redacted before context
     construction.
-11. External text is marked untrusted and cannot modify system instructions.
+12. External text is marked untrusted and cannot modify system instructions.
 
 Network mapping for Router:
 
 | Task manifest `network_policy` | Router `network_policy` | Meaning |
 |---|---|---|
 | `OFFLINE` | `deny` | No network during execution |
-| `ALLOWLIST` | `provider_only` | Only approved provider or source endpoints |
+| `ALLOWLIST` | `provider_only` | Only when structured allowlist evidence names approved endpoints and an audit anchor |
 | `LIVE_DATA` | `TBD` | `POLICY_BLOCKED` until Junyan approves the mapping |
 
 Unsupported network values produce `POLICY_BLOCKED`.
@@ -254,10 +264,12 @@ spec.
 | Missing explicit `mode` | `SPEC_BLOCKED` |
 | Unsupported `mode` | `SPEC_BLOCKED` |
 | Unsupported `network_policy` | `POLICY_BLOCKED` |
+| `ALLOWLIST` without endpoint and approval evidence | `POLICY_BLOCKED` |
 | Secret-like fixture appears in task input | `POLICY_BLOCKED` |
 | External text includes "ignore previous instructions" | Mark untrusted, ignore instruction |
-| `HIGH` task lacks `reviewer_agent` | `POLICY_BLOCKED` |
-| `reviewer_agent` equals selected executor | Router must reject |
+| `MEDIUM + PRODUCTION` before reviewer capabilities | `POLICY_BLOCKED` |
+| Any `HIGH` or `CONSTITUTIONAL` task before reviewer capabilities | `POLICY_BLOCKED` |
+| Name-only reviewer difference is supplied | Must not produce `POLICY_ALLOWED` for high-risk routing |
 | `POLICY_BLOCKED` task attempts Router call | Test must fail |
 | Stale context package | `CONTEXT_BLOCKED` |
 | Context hash changes after package creation | `CONTEXT_BLOCKED` |
@@ -292,15 +304,17 @@ Phase 0 is this spec PR:
 
 - Document the Policy/Context envelope.
 - Record Jason's Router-side constraints.
-- Keep the branch spec-only and free of model calls, GitHub writes, and
-  scheduler execution.
+- Keep the branch free of model calls, GitHub writes, and scheduler execution.
 
-Phase 1 starts only after #248 K1 registry is merged into `main`:
+Phase 1 starts after #248 K1 registry is merged into `main`:
 
 - Add `scripts/llm/ai_os/policy_engine.py`.
 - Add offline fail-closed tests for budget, risk, mode, network, path scope,
   forbidden scope, secret-like strings, and external-instruction handling.
 - Keep `LIVE_DATA` blocked until Junyan chooses a mapping.
+- Keep `ALLOWLIST` blocked unless structured allowlist evidence is provided.
+- Bind each decision to `task_id` with a stable `policy_decision_hash`.
+- Register critical K2 gates in the governance mutation gate.
 
 Phase 2 adds Context Builder:
 

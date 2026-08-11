@@ -77,6 +77,7 @@ def main(argv: list[str] | None = None) -> int:
             target_paths=fixture.get("target_paths"),
             reviewer_agent=fixture.get("reviewer_agent"),
             approval_evidence=fixture.get("approval_evidence"),
+            allowlist_evidence=fixture.get("allowlist_evidence"),
             external_texts=fixture.get("external_texts"),
         ).to_dict()
         _write_json(result, args.output)

@@ -172,6 +172,65 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Kimi execution cannot bypass the provider-only network policy.",
         test_function="test_kimi_wrapper_denies_wrong_network_policy",
     ),
+    MutationCase(
+        mutation_id="AIOS_K2_HIGH_RISK_BLOCK",
+        component="AIOS K2 policy gate",
+        source_path="scripts/llm/ai_os/policy_engine.py",
+        test_script="tests/test_ai_os_k2_policy_offline.py",
+        before='    if risk_level in {"HIGH", "CONSTITUTIONAL"}:\n',
+        after="    if False:\n",
+        expected_failure_marker=(
+            "test_policy_blocks_medium_production_and_all_high_risk_until_review_contract"
+        ),
+        rationale="HIGH and CONSTITUTIONAL routing must stay blocked until reviewer capabilities are wired.",
+        test_function="test_policy_blocks_medium_production_and_all_high_risk_until_review_contract",
+    ),
+    MutationCase(
+        mutation_id="AIOS_K2_MEDIUM_PRODUCTION_BLOCK",
+        component="AIOS K2 policy gate",
+        source_path="scripts/llm/ai_os/policy_engine.py",
+        test_script="tests/test_ai_os_k2_policy_offline.py",
+        before='    elif cleaned_mode == "PRODUCTION" and risk_level == "MEDIUM":\n',
+        after="    elif False:\n",
+        expected_failure_marker=(
+            "test_policy_blocks_medium_production_and_all_high_risk_until_review_contract"
+        ),
+        rationale="MEDIUM production routing cannot proceed before independent review is wired.",
+        test_function="test_policy_blocks_medium_production_and_all_high_risk_until_review_contract",
+    ),
+    MutationCase(
+        mutation_id="AIOS_K2_ALLOWLIST_EVIDENCE",
+        component="AIOS K2 policy gate",
+        source_path="scripts/llm/ai_os/policy_engine.py",
+        test_script="tests/test_ai_os_k2_policy_offline.py",
+        before="        if not _has_allowlist_evidence(allowlist_evidence):\n",
+        after="        if False:\n",
+        expected_failure_marker="test_policy_requires_concrete_allowlist_evidence",
+        rationale="ALLOWLIST cannot map to provider_only without structured allowlist evidence.",
+        test_function="test_policy_requires_concrete_allowlist_evidence",
+    ),
+    MutationCase(
+        mutation_id="AIOS_K2_EXECUTION_TRACKER_CASEFOLD",
+        component="AIOS K2 policy gate",
+        source_path="scripts/llm/ai_os/policy_engine.py",
+        test_script="tests/test_ai_os_k2_policy_offline.py",
+        before='    return unicodedata.normalize("NFKC", value).casefold()\n',
+        after='    return unicodedata.normalize("NFKC", value)\n',
+        expected_failure_marker="test_policy_blocks_execution_tracker_case_and_unicode_variants",
+        rationale="execution_tracker and forbidden scopes must be compared case-insensitively.",
+        test_function="test_policy_blocks_execution_tracker_case_and_unicode_variants",
+    ),
+    MutationCase(
+        mutation_id="AIOS_K2_APPROVAL_ANCHOR",
+        component="AIOS K2 policy gate",
+        source_path="scripts/llm/ai_os/policy_engine.py",
+        test_script="tests/test_ai_os_k2_policy_offline.py",
+        before="            and has_anchor\n",
+        after="            and True\n",
+        expected_failure_marker="test_policy_requires_junyan_approval_for_constitutional_risk",
+        rationale="CONSTITUTIONAL approval must include a structured audit anchor, not only a name.",
+        test_function="test_policy_requires_junyan_approval_for_constitutional_risk",
+    ),
 )
 
 
