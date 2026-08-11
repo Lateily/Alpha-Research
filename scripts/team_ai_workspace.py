@@ -15,6 +15,7 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Iterable, Sequence
+from urllib.parse import urlparse
 
 
 SCHEMA = "ar.team_ai_workspace_report.v1"
@@ -147,6 +148,23 @@ def _git(root: Path, *args: str) -> str | None:
     if result.returncode != 0:
         return None
     return result.stdout.strip()
+
+
+def remote_repository_slug(remote: str | None) -> str | None:
+    """Return owner/repository for common GitHub HTTPS and SSH remotes."""
+    value = (remote or "").strip().rstrip("/")
+    if not value:
+        return None
+    if "://" in value:
+        path = urlparse(value).path
+    elif value.startswith("git@") and ":" in value:
+        path = value.split(":", 1)[1]
+    else:
+        return None
+    slug = path.strip("/")
+    if slug.endswith(".git"):
+        slug = slug[:-4]
+    return slug or None
 
 
 def tracked_files(root: Path) -> list[str]:
@@ -292,7 +310,8 @@ def evaluate_workspace(root: Path, require_tools: bool = True) -> dict[str, Any]
     warnings = []
     if not head:
         failures.append("NOT_A_GIT_WORKSPACE")
-    if not remote or not remote.rstrip("/").endswith(config["expected_remote_suffix"]):
+    remote_slug = remote_repository_slug(remote)
+    if remote_slug is None or remote_slug.casefold() != config["repository"].casefold():
         failures.append("UNEXPECTED_ORIGIN_REMOTE")
     if missing_instructions:
         failures.append("MISSING_INSTRUCTION_FILES")

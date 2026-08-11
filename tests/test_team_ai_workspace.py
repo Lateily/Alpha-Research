@@ -85,6 +85,19 @@ def test_local_only_matching_never_rejects_env_example() -> None:
     assert not workspace._matches_local_only(".env.example", patterns)
 
 
+def test_remote_identity_accepts_equivalent_github_url_forms() -> None:
+    expected = "Lateily/Alpha-Research"
+    remotes = [
+        "https://github.com/Lateily/Alpha-Research",
+        "https://github.com/Lateily/Alpha-Research.git",
+        "git@github.com:Lateily/Alpha-Research",
+        "git@github.com:Lateily/Alpha-Research.git",
+    ]
+
+    assert all(workspace.remote_repository_slug(remote) == expected for remote in remotes)
+    assert workspace.remote_repository_slug("/tmp/local-repository") is None
+
+
 def test_doctor_cli_emits_parseable_redacted_report() -> None:
     result = subprocess.run(
         [sys.executable, str(ROOT / "scripts/team_ai_workspace.py"), "doctor", "--ci", "--json"],
