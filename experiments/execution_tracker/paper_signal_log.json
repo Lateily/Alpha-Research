@@ -4585,10 +4585,21 @@
     "returns": {
       "1d": 0.0315,
       "3d": -0.1152,
-      "5d": -0.1681
+      "5d": -0.1681,
+      "10d": -0.1157
     },
     "entry_close": 476.02,
-    "directional_call": "cautious"
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "2affe5e9bfc8185db9797ad4737c7a0ff44776c34972f6e4fc3a9702f58e7524",
+        "entry_trade_date": "20260724",
+        "source_trade_date": "20260807",
+        "source_close": 420.95,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "4679640014eb",
@@ -4621,10 +4632,21 @@
     "returns": {
       "1d": 0.0263,
       "3d": -0.0996,
-      "5d": -0.0978
+      "5d": -0.0978,
+      "10d": -0.0179
     },
     "entry_close": 161.59,
-    "directional_call": "cautious"
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "4d9d50f1f8b54a81be74cbae5d310a210f0578ebebe5a2019c56e5e1cc510833",
+        "entry_trade_date": "20260724",
+        "source_trade_date": "20260807",
+        "source_close": 158.69,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "4bcabf11680f",
@@ -4657,10 +4679,21 @@
     "returns": {
       "1d": 0.0594,
       "3d": -0.1074,
-      "5d": -0.116
+      "5d": -0.116,
+      "10d": 0.173
     },
     "entry_close": 108.61,
-    "directional_call": "cautious"
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "44c55259c3f7cc8b73fc9492ac9a2aa5f6bfa579adfa846d95dccd9760776756",
+        "entry_trade_date": "20260724",
+        "source_trade_date": "20260807",
+        "source_close": 127.4,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "acb61e1199be",
@@ -4693,10 +4726,21 @@
     "returns": {
       "1d": 0.0291,
       "3d": -0.0913,
-      "5d": -0.1381
+      "5d": -0.1381,
+      "10d": -0.121
     },
     "entry_close": 1046.51,
-    "directional_call": "cautious"
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "10d": {
+        "evaluation_hash": "b203ca059d19480fa35d8d5ad8d5c54cbc53ebed74298daa34a3a14a4700d3f2",
+        "entry_trade_date": "20260724",
+        "source_trade_date": "20260807",
+        "source_close": 919.87,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "ceb085692f00",
@@ -4763,7 +4807,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.0049,
-      "3d": 0.0714
+      "3d": 0.0714,
+      "5d": 0.063
     },
     "entry_close": 396.01,
     "directional_call": "constructive",
@@ -4773,6 +4818,14 @@
         "entry_trade_date": "20260731",
         "source_trade_date": "20260805",
         "source_close": 424.3,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "64eff3399a06c120a4823fd1746da0f4be55f9856653d0f21a080152fa0b6548",
+        "entry_trade_date": "20260731",
+        "source_trade_date": "20260807",
+        "source_close": 420.95,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -4819,7 +4872,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.0807,
-      "3d": 0.0381
+      "3d": 0.0381,
+      "5d": 0.0885
     },
     "entry_close": 145.79,
     "directional_call": "constructive",
@@ -4829,6 +4883,14 @@
         "entry_trade_date": "20260731",
         "source_trade_date": "20260805",
         "source_close": 151.35,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "97bdd659b4672d6763bf7a3df841571bf69bddd4118c0a58430834142db9a1ea",
+        "entry_trade_date": "20260731",
+        "source_trade_date": "20260807",
+        "source_close": 158.69,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -4875,7 +4937,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": -0.0303,
-      "3d": 0.1733
+      "3d": 0.1733,
+      "5d": 0.3269
     },
     "entry_close": 96.01,
     "directional_call": "constructive",
@@ -4885,6 +4948,14 @@
         "entry_trade_date": "20260731",
         "source_trade_date": "20260805",
         "source_close": 112.65,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "4e3c49e604468247bfc73b8e6f4c53897a54de663cc35333ea67b86ef1947ab8",
+        "entry_trade_date": "20260731",
+        "source_trade_date": "20260807",
+        "source_close": 127.4,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -4931,7 +5002,8 @@
     "data_source": "tushare:moneyflow_dc+daily",
     "returns": {
       "1d": 0.0005,
-      "3d": 0.0507
+      "3d": 0.0507,
+      "5d": 0.0198
     },
     "entry_close": 902.01,
     "directional_call": "constructive",
@@ -4941,6 +5013,14 @@
         "entry_trade_date": "20260731",
         "source_trade_date": "20260805",
         "source_close": 947.74,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "5b1bed0058af205435b6829cfdb1243cb10db1d93d358bda6ef89701c31575f3",
+        "entry_trade_date": "20260731",
+        "source_trade_date": "20260807",
+        "source_close": 919.87,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -4989,7 +5069,8 @@
     "backfilled": false,
     "returns": {
       "1d": 0.1368,
-      "3d": 0.0705
+      "3d": 0.0705,
+      "5d": 0.014
     },
     "entry_close": 394.08,
     "directional_call": "cautious",
@@ -4999,6 +5080,14 @@
         "entry_trade_date": "20260803",
         "source_trade_date": "20260806",
         "source_close": 421.87,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "cb21b287d2dff3277fde137cbf73f14f9a23d236c0d93196183d3d20207c075a",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260810",
+        "source_close": 399.6,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5036,7 +5125,8 @@
     "backfilled": false,
     "returns": {
       "1d": 0.061,
-      "3d": 0.1385
+      "3d": 0.1385,
+      "5d": 0.1687
     },
     "entry_close": 134.03,
     "directional_call": "cautious",
@@ -5046,6 +5136,14 @@
         "entry_trade_date": "20260803",
         "source_trade_date": "20260806",
         "source_close": 152.59,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "53193dbc6d353134f8b6117cf49725f17041dea5f56fe5949006b0eafaf52ccf",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260810",
+        "source_close": 156.64,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5083,7 +5181,8 @@
     "backfilled": false,
     "returns": {
       "1d": 0.1,
-      "3d": 0.316
+      "3d": 0.316,
+      "5d": 0.3513
     },
     "entry_close": 93.1,
     "directional_call": "cautious",
@@ -5093,6 +5192,14 @@
         "entry_trade_date": "20260803",
         "source_trade_date": "20260806",
         "source_close": 122.52,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "29ab7f52b035f1983d1a5f159b83363e936ab0c6bd8f8cc097b2f9be02efeef2",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260810",
+        "source_close": 125.81,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5130,7 +5237,8 @@
     "backfilled": false,
     "returns": {
       "1d": 0.1324,
-      "3d": 0.0582
+      "3d": 0.0582,
+      "5d": -0.042
     },
     "entry_close": 902.5,
     "directional_call": "neutral",
@@ -5140,6 +5248,14 @@
         "entry_trade_date": "20260803",
         "source_trade_date": "20260806",
         "source_close": 955.0,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "176cd3b373748e90e76521bc37caee036ad53e2af4921369ee6d05791ac89415",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260810",
+        "source_close": 864.58,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5177,7 +5293,8 @@
     "backfilled": false,
     "returns": {
       "1d": 0.0079,
-      "3d": -0.0168
+      "3d": -0.0168,
+      "5d": 0.0223
     },
     "entry_close": 53.0,
     "directional_call": "cautious",
@@ -5187,6 +5304,14 @@
         "entry_trade_date": "20260803",
         "source_trade_date": "20260806",
         "source_close": 52.11,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "4f34e40c43af0c884f3d2e83933e1667e7a014157150f02af53fa6559a2925e0",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260810",
+        "source_close": 54.18,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5224,7 +5349,8 @@
     "backfilled": false,
     "returns": {
       "1d": -0.0234,
-      "3d": -0.0144
+      "3d": -0.0144,
+      "5d": 0.0337
     },
     "entry_close": 38.93,
     "directional_call": "cautious",
@@ -5234,6 +5360,14 @@
         "entry_trade_date": "20260803",
         "source_trade_date": "20260806",
         "source_close": 38.37,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "ccb0f377961e6b8d56b44d4306cd8f79c993ff8a7ae7f3ee34d1593a09d47d78",
+        "entry_trade_date": "20260803",
+        "source_trade_date": "20260810",
+        "source_close": 40.24,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5270,7 +5404,9 @@
     "ingested_at": "20260804 16:35:19",
     "backfilled": false,
     "returns": {
-      "1d": -0.0529
+      "1d": -0.0529,
+      "3d": -0.0604,
+      "5d": -0.073
     },
     "entry_close": 448.0,
     "directional_call": "constructive",
@@ -5280,6 +5416,22 @@
         "entry_trade_date": "20260804",
         "source_trade_date": "20260805",
         "source_close": 424.3,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "920b741b11658c8e1434ee6afa60b10fa14ee74e31783ce329584c5e03761053",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260807",
+        "source_close": 420.95,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "8be62c6b6e9addc747edbe86e9fce966e17fe9d8f6628a41f622a734a8d3469b",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260811",
+        "source_close": 415.3,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5316,7 +5468,9 @@
     "ingested_at": "20260804 16:35:19",
     "backfilled": false,
     "returns": {
-      "1d": 0.0643
+      "1d": 0.0643,
+      "3d": 0.116,
+      "5d": 0.1111
     },
     "entry_close": 142.2,
     "directional_call": "cautious",
@@ -5326,6 +5480,22 @@
         "entry_trade_date": "20260804",
         "source_trade_date": "20260805",
         "source_close": 151.35,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "798fea1819b253cf19b677a3b4a5a1210d7a8737eec334f26c51b9560839aef2",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260807",
+        "source_close": 158.69,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "492d3dc0c85a48f5f444cb3054fbda5a2f3ac2053cd35cd9937e2dc7fa654e97",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260811",
+        "source_close": 158.0,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5362,7 +5532,9 @@
     "ingested_at": "20260804 16:35:19",
     "backfilled": false,
     "returns": {
-      "1d": 0.1
+      "1d": 0.1,
+      "3d": 0.244,
+      "5d": 0.1544
     },
     "entry_close": 102.41,
     "directional_call": "constructive",
@@ -5372,6 +5544,22 @@
         "entry_trade_date": "20260804",
         "source_trade_date": "20260805",
         "source_close": 112.65,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "41070c0b51c7461995e3158961b1eb6abc731897166624607b8b6eb2c3a66248",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260807",
+        "source_close": 127.4,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "556b259e25505148ce6a21f2e5b4c611e915607c4ffd077705cbc49d7b2a2275",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260811",
+        "source_close": 118.22,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5408,7 +5596,9 @@
     "ingested_at": "20260804 16:35:19",
     "backfilled": false,
     "returns": {
-      "1d": -0.0727
+      "1d": -0.0727,
+      "3d": -0.0999,
+      "5d": -0.1321
     },
     "entry_close": 1021.99,
     "directional_call": "constructive",
@@ -5418,6 +5608,22 @@
         "entry_trade_date": "20260804",
         "source_trade_date": "20260805",
         "source_close": 947.74,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "1560616c0bcc3b821fff237d481c027fd1a90d57ad56dec256b53172c00a3488",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260807",
+        "source_close": 919.87,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "68b1d9c9c2ed3d00c914859eb44fd1d5fb9338a1c6ead03c40cb6ca0ca297d27",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260811",
+        "source_close": 886.96,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5454,7 +5660,9 @@
     "ingested_at": "20260804 16:35:19",
     "backfilled": false,
     "returns": {
-      "1d": 0.0022
+      "1d": 0.0022,
+      "3d": 0.0225,
+      "5d": 0.029
     },
     "entry_close": 53.42,
     "directional_call": "cautious",
@@ -5464,6 +5672,22 @@
         "entry_trade_date": "20260804",
         "source_trade_date": "20260805",
         "source_close": 53.54,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "aa0202d68d739f37460259d7b0443d23e0b82b557b572e15943578fd17d13300",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260807",
+        "source_close": 54.62,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "bdf50c5a13b9031f05a1cf6cee0b6dcb046c91d50f452780087deb01096fdad0",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260811",
+        "source_close": 54.97,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5500,7 +5724,9 @@
     "ingested_at": "20260804 16:35:19",
     "backfilled": false,
     "returns": {
-      "1d": 0.0089
+      "1d": 0.0089,
+      "3d": 0.0118,
+      "5d": 0.055
     },
     "entry_close": 38.02,
     "directional_call": "cautious",
@@ -5510,6 +5736,22 @@
         "entry_trade_date": "20260804",
         "source_trade_date": "20260805",
         "source_close": 38.36,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "6d358acbaa60557222bc772c0b5b08c3f57c89bdec9c80092883a333c7144b93",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260807",
+        "source_close": 38.47,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "5d": {
+        "evaluation_hash": "a0d1561e4de86f1bfe3a6eba9b6e3e7dac5237cb059ead454081636ec919b280",
+        "entry_trade_date": "20260804",
+        "source_trade_date": "20260811",
+        "source_close": 40.11,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5556,7 +5798,8 @@
     "registry_txn_id": "cfa7dd5bd1c9e6af",
     "record_hash": "8460f16eca55051d757584cccdd1f5195a99189de371af93decacce3197b04a6",
     "returns": {
-      "1d": -0.0057
+      "1d": -0.0057,
+      "3d": -0.0582
     },
     "entry_close": 424.3,
     "directional_call": "neutral",
@@ -5566,6 +5809,14 @@
         "entry_trade_date": "20260805",
         "source_trade_date": "20260806",
         "source_close": 421.87,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "a104c1a98926b714a2aad3b3c996cf64564231296ea937e6aa15001700fbd13a",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260810",
+        "source_close": 399.6,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5612,7 +5863,8 @@
     "registry_txn_id": "ee3de8c71c6ef207",
     "record_hash": "ce3e996a201e131c3c1e32dd98d141892043c8047a2d5f00f934998f3f055d2e",
     "returns": {
-      "1d": 0.0082
+      "1d": 0.0082,
+      "3d": 0.035
     },
     "entry_close": 151.35,
     "directional_call": "constructive",
@@ -5622,6 +5874,14 @@
         "entry_trade_date": "20260805",
         "source_trade_date": "20260806",
         "source_close": 152.59,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "c7b3fc296034b63478e724b9fbd68a4c8c65a86242afffaeb201ed4fb1be3af9",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260810",
+        "source_close": 156.64,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5668,7 +5928,8 @@
     "registry_txn_id": "3d19d399b646d7f9",
     "record_hash": "6fe1f3a0a109528c1186943f29bb0adedc80dce8cb43b7992615e25af3149dfb",
     "returns": {
-      "1d": 0.0876
+      "1d": 0.0876,
+      "3d": 0.1168
     },
     "entry_close": 112.65,
     "directional_call": "constructive",
@@ -5678,6 +5939,14 @@
         "entry_trade_date": "20260805",
         "source_trade_date": "20260806",
         "source_close": 122.52,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "b658646e88fbb910f9160fc044635f7829890e91c6d8bd5e9842b12b86efe71c",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260810",
+        "source_close": 125.81,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5724,7 +5993,8 @@
     "registry_txn_id": "f03bf2429393d48a",
     "record_hash": "d5bcba26ea1723f3db66b8bb9af359cb0de225e192cd3850e5e9c8cb7afc2815",
     "returns": {
-      "1d": 0.0077
+      "1d": 0.0077,
+      "3d": -0.0877
     },
     "entry_close": 947.74,
     "directional_call": "neutral",
@@ -5734,6 +6004,14 @@
         "entry_trade_date": "20260805",
         "source_trade_date": "20260806",
         "source_close": 955.0,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "a31c47c3b9c96ceea52ba7f17bbb79f2bc48d8b51cb192b7ca5c2428e11b4a5f",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260810",
+        "source_close": 864.58,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5780,7 +6058,8 @@
     "registry_txn_id": "2428b9cef43ba1d2",
     "record_hash": "6a90aa533f9f664fb564cb7a7b27bfbcca8bf1b6b79063cd091f67fa5658147a",
     "returns": {
-      "1d": -0.0267
+      "1d": -0.0267,
+      "3d": 0.012
     },
     "entry_close": 53.54,
     "directional_call": "constructive",
@@ -5790,6 +6069,14 @@
         "entry_trade_date": "20260805",
         "source_trade_date": "20260806",
         "source_close": 52.11,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "c1fd1ddfad80ae266851957ca9f6710f015fa857e8fa92fc6f01c0348c05d59f",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260810",
+        "source_close": 54.18,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5836,7 +6123,8 @@
     "registry_txn_id": "13b7e80f674f9c69",
     "record_hash": "f48b2a336b4a3675f37e13c1824d767243ec07c1e292322a268a74028e8de08d",
     "returns": {
-      "1d": 0.0003
+      "1d": 0.0003,
+      "3d": 0.049
     },
     "entry_close": 38.36,
     "directional_call": "constructive",
@@ -5846,6 +6134,14 @@
         "entry_trade_date": "20260805",
         "source_trade_date": "20260806",
         "source_close": 38.37,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "722c44ead07f43f3600cfe7bd0941cdd199ff5bbd19cd924e83181f3d6a10da9",
+        "entry_trade_date": "20260805",
+        "source_trade_date": "20260810",
+        "source_close": 40.24,
         "algorithm_version": "qfq-forward-return/v2",
         "schema": "evaluation/v2"
       }
@@ -5890,7 +6186,31 @@
     },
     "registry_schema": "registry/v2",
     "registry_txn_id": "01b3af63b96a6bb9",
-    "record_hash": "1f0333ecf4f888c047dfba6420bc4df89fbef39f1c3b548c54137abc3cf4b962"
+    "record_hash": "1f0333ecf4f888c047dfba6420bc4df89fbef39f1c3b548c54137abc3cf4b962",
+    "returns": {
+      "1d": -0.0022,
+      "3d": -0.0156
+    },
+    "entry_close": 421.87,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "e51af1481a7ccac30377011a1a7153f277d7a545a596712ec20720604f5ce5fe",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260807",
+        "source_close": 420.95,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "784c53c87e35949a72d6672f8c0a1273fd431750c25822467df2a7076b12b025",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260811",
+        "source_close": 415.3,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "3d52f7d2a89d",
@@ -5931,7 +6251,31 @@
     },
     "registry_schema": "registry/v2",
     "registry_txn_id": "fd1d2f0bfe4dd4f7",
-    "record_hash": "022e03b51d33b12420a7f2e2d6bb4064fb1b4b909f27f61a6d1a6503a6747f25"
+    "record_hash": "022e03b51d33b12420a7f2e2d6bb4064fb1b4b909f27f61a6d1a6503a6747f25",
+    "returns": {
+      "1d": 0.04,
+      "3d": 0.0355
+    },
+    "entry_close": 152.59,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "354f05cfc65f0e18b56d4469d6cb7a092e9cd3e5b0fba78e2153ef9b7c6712d2",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260807",
+        "source_close": 158.69,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "ec64cc62a4ef1927009f409df57f6ecc424e2893c2e39174fc1e5265b983a5e1",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260811",
+        "source_close": 158.0,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "cf13c62d3e07",
@@ -5972,7 +6316,31 @@
     },
     "registry_schema": "registry/v2",
     "registry_txn_id": "f3908065275a01c0",
-    "record_hash": "8835c22703b308ab204eaa411a018922a07f8ed9f11c7463a67cdbf2d5060c6f"
+    "record_hash": "8835c22703b308ab204eaa411a018922a07f8ed9f11c7463a67cdbf2d5060c6f",
+    "returns": {
+      "1d": 0.0398,
+      "3d": -0.0351
+    },
+    "entry_close": 122.52,
+    "directional_call": "constructive",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "b311c2f5fa8e805fbfbbcb49a92d0497e006b26514aa9d6b776ba9be71925602",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260807",
+        "source_close": 127.4,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "ce82466136b051ef24219f8530b6d8750755d15b14f491d4ee68d2aa283a74ba",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260811",
+        "source_close": 118.22,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "efa32f6e1f91",
@@ -6013,7 +6381,31 @@
     },
     "registry_schema": "registry/v2",
     "registry_txn_id": "7429f1d8724a559d",
-    "record_hash": "7b4e343e491f4c1ede33efc73a85a1a39977c662be665fd71af679cf3aa3ffd5"
+    "record_hash": "7b4e343e491f4c1ede33efc73a85a1a39977c662be665fd71af679cf3aa3ffd5",
+    "returns": {
+      "1d": -0.0368,
+      "3d": -0.0712
+    },
+    "entry_close": 955.0,
+    "directional_call": "neutral",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "f9a75bc61cebc88adb37aeb14e345063355d2ecfc2d20c1947d0a603cf5fc9b5",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260807",
+        "source_close": 919.87,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "1af8adc7045355daa160e40d75b0cc6f81a004ec306aea0fa96d3c6e96c46852",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260811",
+        "source_close": 886.96,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "40224363e5c8",
@@ -6054,7 +6446,31 @@
     },
     "registry_schema": "registry/v2",
     "registry_txn_id": "d7a70dc1d0e99b79",
-    "record_hash": "9b060c469bbffd7f381890acd4ea120c94ba3812f446fc51003e6d4a3909b0c2"
+    "record_hash": "9b060c469bbffd7f381890acd4ea120c94ba3812f446fc51003e6d4a3909b0c2",
+    "returns": {
+      "1d": 0.0482,
+      "3d": 0.0549
+    },
+    "entry_close": 52.11,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "7ebcf2655236a215b75528c1be5a7eb6038b19158130ec59b9a25005a1cc58f8",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260807",
+        "source_close": 54.62,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "d16d73172e6c3b1565433c4bf956e631b6904869e10d196f82ed78551502236a",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260811",
+        "source_close": 54.97,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
   },
   {
     "signal_id": "e849cc5df76b",
@@ -6095,6 +6511,235 @@
     },
     "registry_schema": "registry/v2",
     "registry_txn_id": "292f254267cfec68",
-    "record_hash": "ec384daaf80e4fcd00a2f1dc82ab117ebd776b48bdc9857eb276024c10a8077a"
+    "record_hash": "ec384daaf80e4fcd00a2f1dc82ab117ebd776b48bdc9857eb276024c10a8077a",
+    "returns": {
+      "1d": 0.0026,
+      "3d": 0.0453
+    },
+    "entry_close": 38.37,
+    "directional_call": "cautious",
+    "evaluation_meta": {
+      "1d": {
+        "evaluation_hash": "1ef6c7930451eec9de82f97095afd9764a8b15c766b6d97680bda3d7711a28dc",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260807",
+        "source_close": 38.47,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      },
+      "3d": {
+        "evaluation_hash": "183e8bdef4c3606e50391335a23adff2791e2d635b508ef2e0b3209bc3145540",
+        "entry_trade_date": "20260806",
+        "source_trade_date": "20260811",
+        "source_close": 40.11,
+        "algorithm_version": "qfq-forward-return/v2",
+        "schema": "evaluation/v2"
+      }
+    }
+  },
+  {
+    "signal_id": "e074520cbe81",
+    "ticker": "300502.SZ",
+    "name": "新易盛",
+    "timestamp": "20260811 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -398.72,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 20.5419,
+    "trigger_price": 415.3,
+    "support": 398.88,
+    "reclaim": 424.24,
+    "invalidation": 398.88,
+    "atr14": 43.5664,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260811 23:41:56",
+    "backfilled": false,
+    "registered_at": "20260811 close (official)",
+    "registered_trade_date": "20260811",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260811_234144_1786462904379598000_b17d537f"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "1b094b583f9187ec",
+    "record_hash": "a2747135010d5821cf79644473494a39f1b1b3076c8960270b70c9cb97e3b6d7"
+  },
+  {
+    "signal_id": "8efec4aca7c5",
+    "ticker": "300475.SZ",
+    "name": "香农芯创",
+    "timestamp": "20260811 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -398.72,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 5.1791,
+    "trigger_price": 158.0,
+    "support": 153.3,
+    "reclaim": 161.8,
+    "invalidation": 153.3,
+    "atr14": 12.1921,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260811 23:41:56",
+    "backfilled": false,
+    "registered_at": "20260811 close (official)",
+    "registered_trade_date": "20260811",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260811_234144_1786462904379598000_b17d537f"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "9c685183079e53a5",
+    "record_hash": "097ccf9046ba1b3d33aae4eb6a5b1d85fcca1b117727969de1a4812806ca7fa7"
+  },
+  {
+    "signal_id": "deadbf773070",
+    "ticker": "603629.SH",
+    "name": "利通电子",
+    "timestamp": "20260811 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -398.72,
+    "setup_type": "DE_RISK_REVIEW",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -9.4037,
+    "trigger_price": 118.22,
+    "support": 120.49,
+    "reclaim": 129.0,
+    "invalidation": 107.8865,
+    "atr14": 11.0914,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260811 23:41:56",
+    "backfilled": false,
+    "registered_at": "20260811 close (official)",
+    "registered_trade_date": "20260811",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260811_234144_1786462904379598000_b17d537f"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "e298f7d693a0f036",
+    "record_hash": "c7ff37e6f2553b51a33fa43731aedccef2de553a1810a9e3a8c4d332072a9076"
+  },
+  {
+    "signal_id": "96a7fea3089a",
+    "ticker": "300308.SZ",
+    "name": "中际旭创",
+    "timestamp": "20260811 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -398.72,
+    "setup_type": "HOLD_OBSERVE",
+    "fund_structure": "主力回流",
+    "relative_strength": true,
+    "main_flow": 16.4527,
+    "trigger_price": 886.96,
+    "support": 850.4,
+    "reclaim": 919.8,
+    "invalidation": 850.4,
+    "atr14": 98.7793,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260811 23:41:56",
+    "backfilled": false,
+    "registered_at": "20260811 close (official)",
+    "registered_trade_date": "20260811",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260811_234144_1786462904379598000_b17d537f"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "e3ed3c1c9d9c60a9",
+    "record_hash": "7764b4d50e2cb0e1233dc674042f8e770377c9bb267eb591d55d96a3f5ffd6f3"
+  },
+  {
+    "signal_id": "2bdadb8044bc",
+    "ticker": "002714.SZ",
+    "name": "牧原股份",
+    "timestamp": "20260811 close (official)",
+    "line": "execution",
+    "market_state": "WEAK_REPAIR",
+    "sector_single_beta": false,
+    "market_main_flow_total": -398.72,
+    "setup_type": "WARNING",
+    "fund_structure": "大单卖小单接",
+    "relative_strength": false,
+    "main_flow": -1.9442,
+    "trigger_price": 40.11,
+    "support": 40.0,
+    "reclaim": 40.79,
+    "invalidation": 39.371,
+    "atr14": 1.1757,
+    "horizon": [
+      "intraday",
+      "1d",
+      "3d",
+      "5d",
+      "10d"
+    ],
+    "no_trade_flag": true,
+    "official_sample": true,
+    "data_source": "tushare:moneyflow_dc+daily",
+    "ingested_at": "20260811 23:41:56",
+    "backfilled": false,
+    "registered_at": "20260811 close (official)",
+    "registered_trade_date": "20260811",
+    "written_by": {
+      "script": "run_official_sample.py",
+      "version": "run_official_sample/v2",
+      "run_id": "20260811_234144_1786462904379598000_b17d537f"
+    },
+    "registry_schema": "registry/v2",
+    "registry_txn_id": "f4ce37f448130886",
+    "record_hash": "00656c3bfaf4400f35a9925418db3b82908c5325a2eb2426204d5a635b99c79a"
   }
 ]

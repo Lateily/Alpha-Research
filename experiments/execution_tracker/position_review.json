@@ -1,17 +1,17 @@
 {
- "as_of": "20260806",
- "nav_est": 1005886.0,
- "cash_pct": 85.5,
+ "as_of": "20260811",
+ "nav_est": 1012498.0,
+ "cash_pct": 84.9,
  "rows": [
   {
    "ticker": "002714.SZ",
    "name": "牧原股份",
    "kind": "filled",
-   "pnl_pct": -1.87,
-   "weight_pct": 14.5,
-   "r_mult": -0.33,
+   "pnl_pct": 2.58,
+   "weight_pct": 15.1,
+   "r_mult": 0.46,
    "stop": 36.9,
-   "stop_dist_pct": -3.83,
+   "stop_dist_pct": -8.0,
    "ladder": null,
    "wrong_if": "猪价回落+主力连续2日净流出"
   }
@@ -19,6 +19,6 @@
  "flags": [],
  "data_blocked": [],
  "note": "review输出;--apply-tighten 仅执行tighten-only保本位。不是买卖指令。",
- "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
- "target_trade_date": "20260806"
+ "run_id": "20260811_234144_1786462904379598000_b17d537f",
+ "target_trade_date": "20260811"
 }

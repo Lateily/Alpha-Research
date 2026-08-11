@@ -1,15 +1,15 @@
 {
  "contract": "red_flags",
  "schema_version": "v2.2",
- "generated_at": "20260806 16:38:27",
- "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
- "target_trade_date": "20260806",
+ "generated_at": "20260811 23:45:21",
+ "run_id": "20260811_234144_1786462904379598000_b17d537f",
+ "target_trade_date": "20260811",
  "sources": [
   "red_flags.json"
  ],
  "sources_meta": {
   "red_flags.json": {
-   "as_of": "20260806",
+   "as_of": "20260811",
    "age_hours": 0.0
   }
  },
@@ -20,7 +20,7 @@
  "blocked_why": null,
  "data": {
   "gate": "red_flag_gate_v0",
-  "checked_at": "20260806",
+  "checked_at": "20260811",
   "results": [
    {
     "ts_code": "002714.SZ",
@@ -30,56 +30,56 @@
      "最近季度归母-12.1亿为负且环比恶化(前季7.1亿)"
     ],
     "latest_e1_date": "20260711",
-    "checked_at": "20260806"
+    "checked_at": "20260811"
    },
    {
     "ts_code": "002594.SZ",
     "verdict": "PASS",
     "reasons": [],
     "latest_e1_date": "20250408",
-    "checked_at": "20260806"
+    "checked_at": "20260811"
    },
    {
     "ts_code": "603233.SH",
     "verdict": "PASS",
     "reasons": [],
     "latest_e1_date": null,
-    "checked_at": "20260806"
+    "checked_at": "20260811"
    },
    {
     "ts_code": "300308.SZ",
     "verdict": "PASS",
     "reasons": [],
     "latest_e1_date": "20260228",
-    "checked_at": "20260806"
+    "checked_at": "20260811"
    },
    {
     "ts_code": "688120.SH",
     "verdict": "PASS",
     "reasons": [],
     "latest_e1_date": "20260228",
-    "checked_at": "20260806"
+    "checked_at": "20260811"
    },
    {
     "ts_code": "300054.SZ",
     "verdict": "PASS",
     "reasons": [],
     "latest_e1_date": "20260710",
-    "checked_at": "20260806"
+    "checked_at": "20260811"
    },
    {
     "ts_code": "600276.SH",
     "verdict": "PASS",
     "reasons": [],
     "latest_e1_date": null,
-    "checked_at": "20260806"
+    "checked_at": "20260811"
    },
    {
     "ts_code": "002463.SZ",
     "verdict": "PASS",
     "reasons": [],
     "latest_e1_date": "20260714",
-    "checked_at": "20260806"
+    "checked_at": "20260811"
    },
    {
     "ts_code": "688166.SH",
@@ -88,49 +88,51 @@
      "最新预告[预减] 20260131 期末20251231 净利下限0.4亿"
     ],
     "latest_e1_date": "20260228",
-    "checked_at": "20260806"
+    "checked_at": "20260811"
    },
    {
-    "ts_code": "603106.SH",
+    "ts_code": "600272.SH",
     "verdict": "PASS",
     "reasons": [],
-    "latest_e1_date": "20250717",
-    "checked_at": "20260806"
+    "latest_e1_date": "20260715",
+    "checked_at": "20260811"
    },
    {
-    "ts_code": "601858.SH",
+    "ts_code": "000636.SZ",
     "verdict": "PASS",
     "reasons": [],
-    "latest_e1_date": null,
-    "checked_at": "20260806"
+    "latest_e1_date": "20260711",
+    "checked_at": "20260811"
    },
    {
-    "ts_code": "000779.SZ",
+    "ts_code": "688026.SH",
     "verdict": "PASS",
     "reasons": [],
-    "latest_e1_date": null,
-    "checked_at": "20260806"
+    "latest_e1_date": "20260228",
+    "checked_at": "20260811"
    },
    {
-    "ts_code": "601700.SH",
-    "verdict": "PASS",
-    "reasons": [],
-    "latest_e1_date": "20260714",
-    "checked_at": "20260806"
-   },
-   {
-    "ts_code": "603682.SH",
+    "ts_code": "301227.SZ",
     "verdict": "RED_FLAG",
     "reasons": [
-     "最新预告[预减] 20260715 期末20260630 净利下限0.2亿"
+     "最新预告[续亏] 20260127 期末20251231 净利下限-0.5亿"
     ],
-    "latest_e1_date": "20260715",
-    "checked_at": "20260806"
+    "latest_e1_date": "20260127",
+    "checked_at": "20260811"
+   },
+   {
+    "ts_code": "300426.SZ",
+    "verdict": "RED_FLAG",
+    "reasons": [
+     "最新预告[续亏] 20260126 期末20251231 净利下限-4.1亿"
+    ],
+    "latest_e1_date": "20260126",
+    "checked_at": "20260811"
    }
   ],
   "disclaimer": "红旗≠禁入,但必须亮旗;无戳名单=违宪。不是买卖指令。",
-  "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
-  "target_trade_date": "20260806"
+  "run_id": "20260811_234144_1786462904379598000_b17d537f",
+  "target_trade_date": "20260811"
  },
  "disclaimer": "不是买卖指令;研究信号,human executes."
 }

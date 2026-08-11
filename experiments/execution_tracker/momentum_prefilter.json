@@ -1,276 +1,276 @@
 {
- "as_of": "20260806",
- "universe": 5543,
+ "as_of": "20260811",
+ "universe": 5544,
  "candidates": [
   {
-   "ts_code": "603106.SH",
-   "name": "恒银科技",
-   "industry": "IT设备",
-   "ret10": 56.9,
-   "ret20": 49.6,
-   "close": 10.04,
+   "ts_code": "600272.SH",
+   "name": "开开实业",
+   "industry": "医药商业",
+   "ret10": 53.3,
+   "ret20": 38.9,
+   "close": 15.7,
    "dist_high20": 0.0
   },
   {
-   "ts_code": "601858.SH",
-   "name": "中国科传",
-   "industry": "出版业",
-   "ret10": 52.2,
-   "ret20": 54.8,
-   "close": 26.28,
-   "dist_high20": -0.8
+   "ts_code": "000636.SZ",
+   "name": "风华高科",
+   "industry": "元器件",
+   "ret10": 52.5,
+   "ret20": 10.8,
+   "close": 65.85,
+   "dist_high20": -3.0
   },
   {
-   "ts_code": "000779.SZ",
-   "name": "甘咨询",
-   "industry": "建筑工程",
-   "ret10": 51.9,
-   "ret20": 45.6,
-   "close": 14.28,
-   "dist_high20": -2.7
+   "ts_code": "688026.SH",
+   "name": "洁特生物",
+   "industry": "医疗保健",
+   "ret10": 52.3,
+   "ret20": 31.9,
+   "close": 18.44,
+   "dist_high20": -2.8
   },
   {
-   "ts_code": "601700.SH",
-   "name": "风范股份",
-   "industry": "电气设备",
-   "ret10": 44.6,
-   "ret20": 61.6,
-   "close": 7.16,
+   "ts_code": "301227.SZ",
+   "name": "森鹰窗业",
+   "industry": "家居用品",
+   "ret10": 52.0,
+   "ret20": 26.4,
+   "close": 25.97,
+   "dist_high20": -1.2
+  },
+  {
+   "ts_code": "300426.SZ",
+   "name": "华智数媒",
+   "industry": "影视音像",
+   "ret10": 49.7,
+   "ret20": 51.5,
+   "close": 7.8,
    "dist_high20": 0.0
-  },
-  {
-   "ts_code": "603682.SH",
-   "name": "锦和商管",
-   "industry": "房产服务",
-   "ret10": 43.9,
-   "ret20": 43.4,
-   "close": 11.4,
-   "dist_high20": -0.2
-  },
-  {
-   "ts_code": "603657.SH",
-   "name": "春光科技",
-   "industry": "家用电器",
-   "ret10": 43.1,
-   "ret20": 21.6,
-   "close": 28.17,
-   "dist_high20": -0.1
-  },
-  {
-   "ts_code": "300746.SZ",
-   "name": "汉嘉数智",
-   "industry": "建筑工程",
-   "ret10": 42.8,
-   "ret20": 49.8,
-   "close": 14.71,
-   "dist_high20": 0.0
-  },
-  {
-   "ts_code": "603679.SH",
-   "name": "华体科技",
-   "industry": "电气设备",
-   "ret10": 41.8,
-   "ret20": 24.7,
-   "close": 22.63,
-   "dist_high20": -2.5
-  },
-  {
-   "ts_code": "301395.SZ",
-   "name": "仁信新材",
-   "industry": "化工原料",
-   "ret10": 40.3,
-   "ret20": 9.2,
-   "close": 12.12,
-   "dist_high20": -2.3
   },
   {
    "ts_code": "603660.SH",
    "name": "苏州科达",
    "industry": "IT设备",
-   "ret10": 38.9,
-   "ret20": 6.2,
-   "close": 10.9,
-   "dist_high20": -1.8
+   "ret10": 47.2,
+   "ret20": 25.6,
+   "close": 12.1,
+   "dist_high20": -2.7
   },
   {
-   "ts_code": "600721.SH",
-   "name": "百花医药",
-   "industry": "生物制药",
-   "ret10": 37.8,
-   "ret20": 46.3,
-   "close": 9.58,
+   "ts_code": "600664.SH",
+   "name": "哈药股份",
+   "industry": "化学制药",
+   "ret10": 44.1,
+   "ret20": 102.7,
+   "close": 8.27,
    "dist_high20": 0.0
-  },
-  {
-   "ts_code": "300897.SZ",
-   "name": "山科智能",
-   "industry": "电器仪表",
-   "ret10": 37.2,
-   "ret20": 23.5,
-   "close": 17.45,
-   "dist_high20": -1.2
-  },
-  {
-   "ts_code": "688571.SH",
-   "name": "杭华股份",
-   "industry": "染料涂料",
-   "ret10": 36.1,
-   "ret20": -0.5,
-   "close": 9.53,
-   "dist_high20": -3.0
-  },
-  {
-   "ts_code": "603097.SH",
-   "name": "江苏华辰",
-   "industry": "电气设备",
-   "ret10": 35.9,
-   "ret20": 26.2,
-   "close": 21.0,
-   "dist_high20": -0.3
-  },
-  {
-   "ts_code": "300328.SZ",
-   "name": "宜安科技",
-   "industry": "小金属",
-   "ret10": 35.5,
-   "ret20": 22.0,
-   "close": 14.55,
-   "dist_high20": -1.5
-  },
-  {
-   "ts_code": "688585.SH",
-   "name": "上纬新材",
-   "industry": "化工原料",
-   "ret10": 34.9,
-   "ret20": 12.3,
-   "close": 163.88,
-   "dist_high20": -1.0
-  },
-  {
-   "ts_code": "002303.SZ",
-   "name": "美盈森",
-   "industry": "造纸",
-   "ret10": 34.7,
-   "ret20": 29.1,
-   "close": 5.59,
-   "dist_high20": -0.4
-  },
-  {
-   "ts_code": "300112.SZ",
-   "name": "万讯自控",
-   "industry": "电器仪表",
-   "ret10": 34.3,
-   "ret20": 41.3,
-   "close": 8.45,
-   "dist_high20": -0.8
-  },
-  {
-   "ts_code": "300983.SZ",
-   "name": "尤安设计",
-   "industry": "建筑工程",
-   "ret10": 34.1,
-   "ret20": 14.9,
-   "close": 40.64,
-   "dist_high20": -1.1
   },
   {
    "ts_code": "688215.SH",
    "name": "瑞晟智能",
    "industry": "专用机械",
-   "ret10": 34.1,
-   "ret20": 7.6,
-   "close": 41.4,
-   "dist_high20": -2.2
+   "ret10": 43.5,
+   "ret20": 22.4,
+   "close": 44.39,
+   "dist_high20": -2.8
   },
   {
-   "ts_code": "300711.SZ",
-   "name": "广哈通信",
-   "industry": "通信设备",
-   "ret10": 33.7,
-   "ret20": 22.3,
-   "close": 19.03,
-   "dist_high20": 0.0
+   "ts_code": "301395.SZ",
+   "name": "仁信新材",
+   "industry": "化工原料",
+   "ret10": 43.0,
+   "ret20": 13.8,
+   "close": 12.58,
+   "dist_high20": -1.3
   },
   {
-   "ts_code": "603988.SH",
-   "name": "中电电机",
-   "industry": "电气设备",
-   "ret10": 32.3,
-   "ret20": 44.3,
-   "close": 22.72,
-   "dist_high20": 0.0
+   "ts_code": "300112.SZ",
+   "name": "万讯自控",
+   "industry": "电器仪表",
+   "ret10": 42.5,
+   "ret20": 51.2,
+   "close": 9.09,
+   "dist_high20": -1.8
   },
   {
-   "ts_code": "600191.SH",
-   "name": "华资实业",
-   "industry": "食品",
-   "ret10": 32.2,
-   "ret20": 27.5,
-   "close": 11.18,
-   "dist_high20": -0.5
-  },
-  {
-   "ts_code": "002212.SZ",
-   "name": "天融信",
-   "industry": "软件服务",
-   "ret10": 32.1,
-   "ret20": 31.2,
-   "close": 7.36,
-   "dist_high20": 0.0
-  },
-  {
-   "ts_code": "300386.SZ",
-   "name": "飞天诚信",
-   "industry": "IT设备",
-   "ret10": 31.7,
-   "ret20": 28.2,
-   "close": 12.56,
-   "dist_high20": 0.0
-  },
-  {
-   "ts_code": "301007.SZ",
-   "name": "德迈仕",
+   "ts_code": "603758.SH",
+   "name": "秦安股份",
    "industry": "汽车配件",
-   "ret10": 30.9,
-   "ret20": 10.9,
-   "close": 33.78,
+   "ret10": 42.0,
+   "ret20": 34.0,
+   "close": 12.68,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "301209.SZ",
+   "name": "联合化学",
+   "industry": "染料涂料",
+   "ret10": 39.9,
+   "ret20": 23.5,
+   "close": 58.74,
+   "dist_high20": -2.6
+  },
+  {
+   "ts_code": "688296.SH",
+   "name": "和达科技",
+   "industry": "软件服务",
+   "ret10": 39.9,
+   "ret20": 65.1,
+   "close": 21.12,
+   "dist_high20": -0.2
+  },
+  {
+   "ts_code": "300939.SZ",
+   "name": "秋田微",
+   "industry": "元器件",
+   "ret10": 38.7,
+   "ret20": 1.4,
+   "close": 62.83,
+   "dist_high20": -1.8
+  },
+  {
+   "ts_code": "002859.SZ",
+   "name": "洁美科技",
+   "industry": "元器件",
+   "ret10": 38.6,
+   "ret20": 4.9,
+   "close": 81.32,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "603655.SH",
+   "name": "朗博科技",
+   "industry": "汽车配件",
+   "ret10": 38.1,
+   "ret20": 21.5,
+   "close": 33.79,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "300587.SZ",
+   "name": "天铁科技",
+   "industry": "橡胶",
+   "ret10": 37.2,
+   "ret20": 48.3,
+   "close": 5.16,
    "dist_high20": -0.6
   },
   {
-   "ts_code": "301197.SZ",
-   "name": "工大科雅",
-   "industry": "软件服务",
-   "ret10": 30.4,
-   "ret20": 8.9,
-   "close": 26.06,
-   "dist_high20": -1.7
+   "ts_code": "600683.SH",
+   "name": "京投发展",
+   "industry": "区域地产",
+   "ret10": 37.1,
+   "ret20": 11.5,
+   "close": 10.68,
+   "dist_high20": 0.0
   },
   {
-   "ts_code": "300901.SZ",
-   "name": "中胤时尚",
-   "industry": "服饰",
-   "ret10": 30.2,
-   "ret20": 9.5,
-   "close": 15.55,
+   "ts_code": "000802.SZ",
+   "name": "北京文化",
+   "industry": "影视音像",
+   "ret10": 36.8,
+   "ret20": 45.2,
+   "close": 5.17,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "600228.SH",
+   "name": "返利科技",
+   "industry": "互联网",
+   "ret10": 36.2,
+   "ret20": 21.9,
+   "close": 8.24,
+   "dist_high20": -1.8
+  },
+  {
+   "ts_code": "300749.SZ",
+   "name": "顶固集创",
+   "industry": "家居用品",
+   "ret10": 36.1,
+   "ret20": 12.0,
+   "close": 23.37,
+   "dist_high20": -0.7
+  },
+  {
+   "ts_code": "002779.SZ",
+   "name": "中坚科技",
+   "industry": "农用机械",
+   "ret10": 35.9,
+   "ret20": 8.0,
+   "close": 76.77,
+   "dist_high20": -2.3
+  },
+  {
+   "ts_code": "300163.SZ",
+   "name": "先锋新材",
+   "industry": "家居用品",
+   "ret10": 35.5,
+   "ret20": 17.7,
+   "close": 6.72,
+   "dist_high20": -2.0
+  },
+  {
+   "ts_code": "603269.SH",
+   "name": "海鸥股份",
+   "industry": "机械基件",
+   "ret10": 35.5,
+   "ret20": 0.4,
+   "close": 15.96,
+   "dist_high20": -1.8
+  },
+  {
+   "ts_code": "301205.SZ",
+   "name": "联特科技",
+   "industry": "通信设备",
+   "ret10": 35.4,
+   "ret20": 8.9,
+   "close": 293.91,
    "dist_high20": -1.6
   },
   {
-   "ts_code": "600663.SH",
-   "name": "陆家嘴",
-   "industry": "园区开发",
-   "ret10": 30.2,
-   "ret20": 42.7,
-   "close": 9.06,
-   "dist_high20": -1.0
+   "ts_code": "300508.SZ",
+   "name": "维宏股份",
+   "industry": "软件服务",
+   "ret10": 35.3,
+   "ret20": 6.0,
+   "close": 46.63,
+   "dist_high20": -2.7
   },
   {
-   "ts_code": "688290.SH",
-   "name": "景业智能",
-   "industry": "专用机械",
-   "ret10": 30.1,
-   "ret20": 9.5,
-   "close": 68.4,
-   "dist_high20": -0.1
+   "ts_code": "002585.SZ",
+   "name": "双星新材",
+   "industry": "塑料",
+   "ret10": 35.2,
+   "ret20": 11.0,
+   "close": 10.52,
+   "dist_high20": 0.0
+  },
+  {
+   "ts_code": "002896.SZ",
+   "name": "中大力德",
+   "industry": "机械基件",
+   "ret10": 35.0,
+   "ret20": 16.3,
+   "close": 83.0,
+   "dist_high20": -1.5
+  },
+  {
+   "ts_code": "688571.SH",
+   "name": "杭华股份",
+   "industry": "染料涂料",
+   "ret10": 34.8,
+   "ret20": 8.3,
+   "close": 9.42,
+   "dist_high20": -3.0
+  },
+  {
+   "ts_code": "002248.SZ",
+   "name": "华东数控",
+   "industry": "机床制造",
+   "ret10": 34.5,
+   "ret20": 31.8,
+   "close": 11.06,
+   "dist_high20": 0.0
   }
  ],
  "filters": {
@@ -283,6 +283,6 @@
   "top_n": 30
  },
  "note": "价格雷达只送复核,不选股不给posture;资金隐形慢牛的安全网。不是买卖指令。",
- "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
- "target_trade_date": "20260806"
+ "run_id": "20260811_234144_1786462904379598000_b17d537f",
+ "target_trade_date": "20260811"
 }

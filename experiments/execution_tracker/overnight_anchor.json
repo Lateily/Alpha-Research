@@ -1,5 +1,5 @@
 {
- "as_of": "20260806 09:00",
+ "as_of": "20260811 09:00",
  "layer": "overnight_anchor_v0",
  "anchors": [
   {
@@ -31,9 +31,9 @@
    "label": "富时中国 A50",
    "group": "CN_BETA",
    "status": "OK",
-   "pct_change": 0.89,
+   "pct_change": -0.05,
    "source": "tushare/index_global/XIN9",
-   "as_of": "20260805",
+   "as_of": "20260810",
    "proxy": false,
    "proxy_for": null
   },
@@ -42,9 +42,9 @@
    "label": "纳斯达克综合",
    "group": "US_AI",
    "status": "OK",
-   "pct_change": -0.83,
+   "pct_change": -0.32,
    "source": "tushare/index_global/IXIC",
-   "as_of": "20260805",
+   "as_of": "20260810",
    "proxy": false,
    "proxy_for": null
   },
@@ -53,9 +53,9 @@
    "label": "台湾加权(SOX 代理)",
    "group": "US_SEMI_PROXY",
    "status": "OK",
-   "pct_change": 2.88,
+   "pct_change": 1.59,
    "source": "tushare/index_global/TWII",
-   "as_of": "20260805",
+   "as_of": "20260810",
    "proxy": true,
    "proxy_for": "SOX"
   }
@@ -74,6 +74,6 @@
  "claim_allowed": false,
  "policy": "盘前第一行;只改变科技 beta 背景读数,不直接生成交易动作。",
  "note": "不是买卖指令；研究信号，human executes。",
- "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
- "target_trade_date": "20260806"
+ "run_id": "20260811_234144_1786462904379598000_b17d537f",
+ "target_trade_date": "20260811"
 }

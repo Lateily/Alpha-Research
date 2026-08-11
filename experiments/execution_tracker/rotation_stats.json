@@ -1,38 +1,38 @@
 {
- "as_of": "20260806",
+ "as_of": "20260811",
  "panel_days": [
-  "20260731",
-  "20260803",
-  "20260804",
   "20260805",
-  "20260806"
+  "20260806",
+  "20260807",
+  "20260810",
+  "20260811"
  ],
  "transition": {
   "counts": {
-   "INFLOW_CONT": 25,
-   "WARMING": 83,
-   "NEUTRAL": 112,
-   "FLICKER": 35,
-   "OUTFLOW_CONT": 168
+   "INFLOW_CONT": 18,
+   "WARMING": 18,
+   "NEUTRAL": 111,
+   "FLICKER": 47,
+   "OUTFLOW_CONT": 182
   },
   "matrix_counts": {
    "INFLOW_CONT": {
-    "INFLOW_CONT": 25
+    "INFLOW_CONT": 18
    },
    "WARMING": {
-    "INFLOW_CONT": 83
+    "INFLOW_CONT": 18
    },
    "NEUTRAL": {
-    "WARMING": 33,
-    "FLICKER": 29,
-    "OUTFLOW_CONT": 50
+    "WARMING": 43,
+    "FLICKER": 36,
+    "OUTFLOW_CONT": 32
    },
    "FLICKER": {
-    "WARMING": 10,
-    "FLICKER": 25
+    "WARMING": 8,
+    "FLICKER": 39
    },
    "OUTFLOW_CONT": {
-    "OUTFLOW_CONT": 168
+    "OUTFLOW_CONT": 182
    }
   },
   "matrix_prob": {
@@ -43,13 +43,13 @@
     "INFLOW_CONT": 1.0
    },
    "NEUTRAL": {
-    "FLICKER": 0.259,
-    "OUTFLOW_CONT": 0.446,
-    "WARMING": 0.295
+    "FLICKER": 0.324,
+    "OUTFLOW_CONT": 0.288,
+    "WARMING": 0.387
    },
    "FLICKER": {
-    "FLICKER": 0.714,
-    "WARMING": 0.286
+    "FLICKER": 0.83,
+    "WARMING": 0.17
    },
    "OUTFLOW_CONT": {
     "OUTFLOW_CONT": 1.0
@@ -57,85 +57,7 @@
   },
   "examples": [
    {
-    "sector": "通信设备",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "小金属",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "其他小金属",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "塑料",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "其他电源设备Ⅲ",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "分立器件",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "模拟芯片设计",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "仪器仪表",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "制冷空调设备",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "合成树脂",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "磁性材料",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "通信终端及配件",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "纯碱",
-    "seq": "+++++",
-    "from": "INFLOW_CONT",
-    "to": "INFLOW_CONT"
-   },
-   {
-    "sector": "塑料包装",
+    "sector": "其他专用设备",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
@@ -147,33 +69,111 @@
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "果蔬加工",
+    "sector": "仪器仪表",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "个护小家电",
+    "sector": "其他电子Ⅲ",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "光纤概念",
+    "sector": "其他电子Ⅱ",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "商业航天",
+    "sector": "制冷空调设备",
     "seq": "+++++",
     "from": "INFLOW_CONT",
     "to": "INFLOW_CONT"
    },
    {
-    "sector": "激光雷达",
+    "sector": "膜材料",
     "seq": "+++++",
     "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "光刻机",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "汽车一体化压铸",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "2026一季报预减",
+    "seq": "+++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "仓储物流",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "线下药店",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "民爆制品",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "医药商业",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "动力煤",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "煤炭开采",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "煤炭",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "土地流转",
+    "seq": "-++++",
+    "from": "INFLOW_CONT",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "通用设备",
+    "seq": "+-+++",
+    "from": "WARMING",
+    "to": "INFLOW_CONT"
+   },
+   {
+    "sector": "底盘与发动机系统",
+    "seq": "+-+++",
+    "from": "WARMING",
     "to": "INFLOW_CONT"
    }
   ]
@@ -181,74 +181,78 @@
  "leader_breadth": [
   {
    "group": "其他",
-   "count": 27,
-   "share_top30": 0.9,
-   "top10_count": 10,
-   "avg_ret10": 37.9,
+   "count": 23,
+   "share_top30": 0.767,
+   "top10_count": 7,
+   "avg_ret10": 39.9,
    "examples": [
-    "恒银科技(56.9%)",
-    "中国科传(52.2%)",
-    "甘咨询(51.9%)",
-    "风范股份(44.6%)",
-    "锦和商管(43.9%)",
-    "春光科技(43.1%)",
-    "汉嘉数智(42.8%)",
-    "华体科技(41.8%)"
-   ]
-  },
-  {
-   "group": "医药",
-   "count": 1,
-   "share_top30": 0.033,
-   "top10_count": 0,
-   "avg_ret10": 37.8,
-   "examples": [
-    "百花医药(37.8%)"
-   ]
-  },
-  {
-   "group": "汽车/电动车",
-   "count": 1,
-   "share_top30": 0.033,
-   "top10_count": 0,
-   "avg_ret10": 30.9,
-   "examples": [
-    "德迈仕(30.9%)"
+    "风华高科(52.5%)",
+    "洁特生物(52.3%)",
+    "华智数媒(49.7%)",
+    "苏州科达(47.2%)",
+    "瑞晟智能(43.5%)",
+    "仁信新材(43.0%)",
+    "万讯自控(42.5%)",
+    "联合化学(39.9%)"
    ]
   },
   {
    "group": "消费/服务",
-   "count": 1,
-   "share_top30": 0.033,
-   "top10_count": 0,
-   "avg_ret10": 32.2,
+   "count": 3,
+   "share_top30": 0.1,
+   "top10_count": 1,
+   "avg_ret10": 41.2,
    "examples": [
-    "华资实业(32.2%)"
+    "森鹰窗业(52.0%)",
+    "顶固集创(36.1%)",
+    "先锋新材(35.5%)"
+   ]
+  },
+  {
+   "group": "医药",
+   "count": 2,
+   "share_top30": 0.067,
+   "top10_count": 2,
+   "avg_ret10": 48.7,
+   "examples": [
+    "开开实业(53.3%)",
+    "哈药股份(44.1%)"
+   ]
+  },
+  {
+   "group": "汽车/电动车",
+   "count": 2,
+   "share_top30": 0.067,
+   "top10_count": 0,
+   "avg_ret10": 40.0,
+   "examples": [
+    "秦安股份(42.0%)",
+    "朗博科技(38.1%)"
    ]
   }
  ],
  "dominant_groups": [
   {
    "group": "其他",
-   "count": 27,
-   "share_top30": 0.9,
-   "top10_count": 10,
-   "avg_ret10": 37.9,
+   "count": 23,
+   "share_top30": 0.767,
+   "top10_count": 7,
+   "avg_ret10": 39.9,
    "examples": [
-    "恒银科技(56.9%)",
-    "中国科传(52.2%)",
-    "甘咨询(51.9%)",
-    "风范股份(44.6%)",
-    "锦和商管(43.9%)",
-    "春光科技(43.1%)",
-    "汉嘉数智(42.8%)",
-    "华体科技(41.8%)"
+    "风华高科(52.5%)",
+    "洁特生物(52.3%)",
+    "华智数媒(49.7%)",
+    "苏州科达(47.2%)",
+    "瑞晟智能(43.5%)",
+    "仁信新材(43.0%)",
+    "万讯自控(42.5%)",
+    "联合化学(39.9%)"
    ]
   }
  ],
  "data_blocked": [],
  "claim_allowed": false,
  "note": "描述统计层;需要后续多日快照才能校准前瞻概率。不是买卖指令。",
- "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
- "target_trade_date": "20260806"
+ "run_id": "20260811_234144_1786462904379598000_b17d537f",
+ "target_trade_date": "20260811"
 }

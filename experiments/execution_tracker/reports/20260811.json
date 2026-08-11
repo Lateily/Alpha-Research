@@ -1,0 +1,58 @@
+{
+  "report_date": "20260811",
+  "generated_under_discipline": true,
+  "discipline_prompt_chars": 8474,
+  "market": null,
+  "portfolio": {
+    "posture": null,
+    "single_beta": null,
+    "tickers": []
+  },
+  "today_signals": 0,
+  "winrate_scorecard": {
+    "1d": {
+      "n_scored": 113,
+      "hit_rate": 0.407,
+      "avg_signed_return": -0.0111,
+      "avg_gate_aligned_return": -0.0049
+    },
+    "3d": {
+      "n_scored": 113,
+      "hit_rate": 0.451,
+      "avg_signed_return": -0.0218,
+      "avg_gate_aligned_return": -0.0019
+    },
+    "5d": {
+      "n_scored": 104,
+      "hit_rate": 0.433,
+      "avg_signed_return": -0.041,
+      "avg_gate_aligned_return": -0.0038
+    },
+    "10d": {
+      "n_scored": 89,
+      "hit_rate": 0.494,
+      "avg_signed_return": -0.0975,
+      "avg_gate_aligned_return": 0.0114
+    },
+    "by_direction": {
+      "constructive": {
+        "n": 48,
+        "hit_rate_1d": 0.333
+      },
+      "cautious": {
+        "n": 65,
+        "hit_rate_1d": 0.462
+      }
+    },
+    "total_scored_signals": 113,
+    "independent_clusters": 0,
+    "min_required": 30,
+    "claim_allowed": false,
+    "claim_note": "cluster_id 未落地(独立簇=0);signal_id 计数=113 含同日同逻辑相关样本,不构成独立样本 —— claim 一律禁止"
+  },
+  "unvalidated_warning": "win-rate / expectancy NOT claimable: 113/30 scored signals. Numbers are descriptive only.",
+  "no_trade_flag": true,
+  "official_sample": true,
+  "run_id": "20260811_234144_1786462904379598000_b17d537f",
+  "target_trade_date": "20260811"
+}

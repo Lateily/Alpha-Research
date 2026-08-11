@@ -1,126 +1,79 @@
 {
- "as_of": "20260806",
- "history_days": 76,
+ "as_of": "20260811",
+ "history_days": 79,
  "latest": {
-  "date": "20260806",
-  "lights": [],
-  "light_count": 0,
-  "posture": "NO_PRECURSOR",
+  "date": "20260811",
+  "lights": [
+   {
+    "key": "neighborhood_new_money",
+    "label": "邻域新钱",
+    "why": "电子仍流出,但科技邻域已有多条子线正流入/收正"
+   },
+   {
+    "key": "defense_crowding",
+    "label": "防御拥挤",
+    "why": "防御/电力相关涨停 3 家,防御交易可能拥挤"
+   },
+   {
+    "key": "leader_divergence_proxy",
+    "label": "龙头背离代理",
+    "why": "母板块弱,但个股观察已有正向 nowcast: 中际旭创:ACCUMULATION_PROBABLE"
+   }
+  ],
+  "light_count": 3,
+  "posture": "ALLOW_SMALL_TEST_ONLY",
   "features": {
    "parent": {
-    "net": 679325696.0,
-    "pct": 2.06,
+    "net": -9089212416.0,
+    "pct": -0.4,
     "matched": [
      "电子"
     ]
    },
-   "parent_outflow_days_5": 1,
-   "prior_parent_pct_trough_4d": -1.43,
-   "tech_neighbor_positive_count": 19,
-   "tech_neighbor_net": 13494291652.0,
+   "parent_outflow_days_5": 2,
+   "prior_parent_pct_trough_4d": 0.15,
+   "tech_neighbor_positive_count": 4,
+   "tech_neighbor_net": -50223262634.0,
    "tech_neighbor_best": [
     {
-     "sector": "PCB",
-     "net": 6459360512.0,
-     "pct": 2.66
+     "sector": "通信网络设备及器件",
+     "net": 3434910976.0,
+     "pct": 0.15
     },
     {
-     "sector": "通信技术",
-     "net": 5925720064.0,
-     "pct": 1.96
+     "sector": "被动元件",
+     "net": 2084386816.0,
+     "pct": 1.14
     },
     {
-     "sector": "CPO概念",
-     "net": 3984172288.0,
-     "pct": 3.2
+     "sector": "被动元件概念",
+     "net": 1552837632.0,
+     "pct": 1.4
     },
     {
-     "sector": "集成电路封测",
-     "net": 3036819968.0,
-     "pct": 3.95
-    },
-    {
-     "sector": "先进封装",
-     "net": 2945444864.0,
-     "pct": 2.42
-    },
-    {
-     "sector": "印制电路板",
-     "net": 2930174720.0,
-     "pct": 3.83
-    },
-    {
-     "sector": "通信设备",
-     "net": 2456380928.0,
-     "pct": 2.99
-    },
-    {
-     "sector": "光纤概念",
-     "net": 2374674944.0,
-     "pct": 1.87
+     "sector": "算力概念",
+     "net": 804394752.0,
+     "pct": 0.09
     }
    ],
    "tech_positive_nowcasts": [
     {
-     "name": "华海清科",
-     "state": "RECLAIM_ATTEMPT",
-     "confidence": 0.69,
-     "features": {
-      "gap": -0.0103,
-      "from_open": 0.0234,
-      "from_high": -0.038,
-      "intraday_range": 0.0815
-     }
-    },
-    {
      "name": "中际旭创",
      "state": "ACCUMULATION_PROBABLE",
-     "confidence": 0.66,
+     "confidence": 0.74,
      "features": {
-      "gap": 0.02,
-      "from_open": 0.0729,
-      "from_high": -0.0,
-      "intraday_range": 0.0888
-     }
-    },
-    {
-     "name": "华海清科",
-     "state": "ACCUMULATION_PROBABLE",
-     "confidence": 0.64,
-     "features": {
-      "gap": 0.0171,
-      "from_open": 0.0517,
-      "from_high": -0.0019,
-      "intraday_range": 0.0717
-     }
-    },
-    {
-     "name": "中际旭创",
-     "state": "RECLAIM_ATTEMPT",
-     "confidence": 0.62,
-     "features": {
-      "gap": -0.0347,
-      "from_open": 0.0154,
-      "from_high": -0.0001,
-      "intraday_range": 0.0342
+      "gap": 0.0299,
+      "from_open": 0.0116,
+      "from_high": -0.009,
+      "intraday_range": 0.0556
      }
     }
    ],
-   "tech_negative_nowcasts": [
-    {
-     "name": "中际旭创",
-     "state": "DISTRIBUTION_PROBABLE",
-     "confidence": 0.65,
-     "features": {
-      "gap": -0.0673,
-      "from_open": -0.0189,
-      "from_high": -0.0286,
-      "intraday_range": 0.029
-     }
-    }
-   ],
-   "defense_limit_up_count": 0,
-   "defense_limit_up_matched": {}
+   "tech_negative_nowcasts": [],
+   "defense_limit_up_count": 3,
+   "defense_limit_up_matched": {
+    "电力": 3
+   }
   },
   "data_limits": [
    "DATA_LIMITED: 个股龙头是否不再创新低不在 rotation_history,这里用板块跌幅边际收窄做代理",
@@ -132,31 +85,31 @@
  },
  "calibration": {
   "lights>=1": {
-   "n": 47,
-   "fwd1_pos_rate": 0.468,
-   "fwd1_median_pct": -0.48,
+   "n": 48,
+   "fwd1_pos_rate": 0.458,
+   "fwd1_median_pct": -0.44,
    "fwd2_pos_rate": 0.553,
    "fwd2_median_pct": 0.67,
-   "random_fwd1_pos_rate_mean": 0.506,
-   "random_fwd1_median_mean": 0.152
+   "random_fwd1_pos_rate_mean": 0.511,
+   "random_fwd1_median_mean": 0.14
   },
   "lights>=2": {
-   "n": 32,
-   "fwd1_pos_rate": 0.5,
-   "fwd1_median_pct": 0.125,
+   "n": 33,
+   "fwd1_pos_rate": 0.485,
+   "fwd1_median_pct": -0.4,
    "fwd2_pos_rate": 0.594,
    "fwd2_median_pct": 1.165,
-   "random_fwd1_pos_rate_mean": 0.512,
-   "random_fwd1_median_mean": 0.206
+   "random_fwd1_pos_rate_mean": 0.51,
+   "random_fwd1_median_mean": 0.158
   },
   "lights>=3": {
-   "n": 21,
-   "fwd1_pos_rate": 0.524,
-   "fwd1_median_pct": 0.75,
+   "n": 22,
+   "fwd1_pos_rate": 0.5,
+   "fwd1_median_pct": 0.175,
    "fwd2_pos_rate": 0.667,
    "fwd2_median_pct": 2.06,
-   "random_fwd1_pos_rate_mean": 0.51,
-   "random_fwd1_median_mean": 0.192
+   "random_fwd1_pos_rate_mean": 0.518,
+   "random_fwd1_median_mean": 0.221
   },
   "lights>=4": {
    "n": 2,
@@ -164,142 +117,11 @@
    "fwd1_median_pct": 1.03,
    "fwd2_pos_rate": 1.0,
    "fwd2_median_pct": 3.14,
-   "random_fwd1_pos_rate_mean": 0.557,
-   "random_fwd1_median_mean": 0.498
+   "random_fwd1_pos_rate_mean": 0.485,
+   "random_fwd1_median_mean": -0.053
   }
  },
  "recent_reads": [
-  {
-   "date": "20260728",
-   "lights": [],
-   "light_count": 0,
-   "posture": "NO_PRECURSOR",
-   "features": {
-    "parent": {
-     "net": -55941357568.0,
-     "pct": -4.23,
-     "matched": [
-      "电子"
-     ]
-    },
-    "parent_outflow_days_5": 4,
-    "prior_parent_pct_trough_4d": -1.71,
-    "tech_neighbor_positive_count": 0,
-    "tech_neighbor_net": -467558304217.0,
-    "tech_neighbor_best": [],
-    "tech_positive_nowcasts": [],
-    "tech_negative_nowcasts": [],
-    "defense_limit_up_count": 0,
-    "defense_limit_up_matched": {}
-   },
-   "data_limits": [
-    "DATA_LIMITED: 个股龙头是否不再创新低不在 rotation_history,这里用板块跌幅边际收窄做代理",
-    "DATA_LIMITED: 龙头背离只能用邻域/子板块代理,不能替代新易盛/旭创等个股读数",
-    "DATA_BLOCKED: 隔夜 NVDA/SOX/TSMC ADR/A50 不在本历史文件,由 overnight_anchor.py 单独处理"
-   ]
-  },
-  {
-   "date": "20260729",
-   "lights": [
-    {
-     "key": "outflow_exhaustion",
-     "label": "流出衰竭",
-     "why": "电子连续流出但跌幅未继续创近4日新低,卖压边际收窄"
-    },
-    {
-     "key": "neighborhood_new_money",
-     "label": "邻域新钱",
-     "why": "电子仍流出,但科技邻域已有多条子线正流入/收正"
-    },
-    {
-     "key": "leader_divergence_proxy",
-     "label": "龙头背离代理",
-     "why": "母板块仍弱,但科技邻域最强子线已经率先转正"
-    }
-   ],
-   "light_count": 3,
-   "posture": "ALLOW_SMALL_TEST_ONLY",
-   "features": {
-    "parent": {
-     "net": -6440103936.0,
-     "pct": -0.33,
-     "matched": [
-      "电子"
-     ]
-    },
-    "parent_outflow_days_5": 4,
-    "prior_parent_pct_trough_4d": -4.23,
-    "tech_neighbor_positive_count": 5,
-    "tech_neighbor_net": -79431457776.0,
-    "tech_neighbor_best": [
-     {
-      "sector": "被动元件概念",
-      "net": 2749678080.0,
-      "pct": 2.17
-     },
-     {
-      "sector": "被动元件",
-      "net": 2594359040.0,
-      "pct": 2.11
-     },
-     {
-      "sector": "元件",
-      "net": 1170714880.0,
-      "pct": 0.11
-     },
-     {
-      "sector": "铜",
-      "net": 254363760.0,
-      "pct": 1.89
-     },
-     {
-      "sector": "品牌消费电子",
-      "net": 61766031.0,
-      "pct": 2.45
-     }
-    ],
-    "tech_positive_nowcasts": [],
-    "tech_negative_nowcasts": [],
-    "defense_limit_up_count": 0,
-    "defense_limit_up_matched": {}
-   },
-   "data_limits": [
-    "DATA_LIMITED: 个股龙头是否不再创新低不在 rotation_history,这里用板块跌幅边际收窄做代理",
-    "DATA_LIMITED: 龙头背离只能用邻域/子板块代理,不能替代新易盛/旭创等个股读数",
-    "DATA_BLOCKED: 隔夜 NVDA/SOX/TSMC ADR/A50 不在本历史文件,由 overnight_anchor.py 单独处理"
-   ]
-  },
-  {
-   "date": "20260730",
-   "lights": [],
-   "light_count": 0,
-   "posture": "NO_PRECURSOR",
-   "features": {
-    "parent": {
-     "net": -34406817792.0,
-     "pct": -5.92,
-     "matched": [
-      "电子"
-     ]
-    },
-    "parent_outflow_days_5": 4,
-    "prior_parent_pct_trough_4d": -4.23,
-    "tech_neighbor_positive_count": 0,
-    "tech_neighbor_net": -309670228917.0,
-    "tech_neighbor_best": [],
-    "tech_positive_nowcasts": [],
-    "tech_negative_nowcasts": [],
-    "defense_limit_up_count": 1,
-    "defense_limit_up_matched": {
-     "电力": 1
-    }
-   },
-   "data_limits": [
-    "DATA_LIMITED: 个股龙头是否不再创新低不在 rotation_history,这里用板块跌幅边际收窄做代理",
-    "DATA_LIMITED: 龙头背离只能用邻域/子板块代理,不能替代新易盛/旭创等个股读数",
-    "DATA_BLOCKED: 隔夜 NVDA/SOX/TSMC ADR/A50 不在本历史文件,由 overnight_anchor.py 单独处理"
-   ]
-  },
   {
    "date": "20260731",
    "lights": [],
@@ -655,21 +477,91 @@
     "DATA_LIMITED: 龙头背离只能用邻域/子板块代理,不能替代新易盛/旭创等个股读数",
     "DATA_BLOCKED: 隔夜 NVDA/SOX/TSMC ADR/A50 不在本历史文件,由 overnight_anchor.py 单独处理"
    ]
-  }
- ],
- "scored_examples": [
+  },
   {
-   "date": "20260707",
-   "lights": [
-    {
-     "key": "outflow_exhaustion",
-     "label": "流出衰竭",
-     "why": "电子连续流出但跌幅未继续创近4日新低,卖压边际收窄"
+   "date": "20260807",
+   "lights": [],
+   "light_count": 0,
+   "posture": "NO_PRECURSOR",
+   "features": {
+    "parent": {
+     "net": 26702635008.0,
+     "pct": 3.15,
+     "matched": [
+      "电子"
+     ]
     },
+    "parent_outflow_days_5": 1,
+    "prior_parent_pct_trough_4d": -1.43,
+    "tech_neighbor_positive_count": 25,
+    "tech_neighbor_net": 125819138402.0,
+    "tech_neighbor_best": [
+     {
+      "sector": "电子",
+      "net": 26702635008.0,
+      "pct": 3.15
+     },
+     {
+      "sector": "PCB",
+      "net": 24701897984.0,
+      "pct": 5.63
+     },
+     {
+      "sector": "半导体概念",
+      "net": 19840696320.0,
+      "pct": 2.78
+     },
+     {
+      "sector": "通信技术",
+      "net": 13535375360.0,
+      "pct": 2.1
+     },
+     {
+      "sector": "元件",
+      "net": 12431377920.0,
+      "pct": 6.41
+     },
+     {
+      "sector": "印制电路板",
+      "net": 12263356928.0,
+      "pct": 8.31
+     },
+     {
+      "sector": "半导体",
+      "net": 10820157440.0,
+      "pct": 3.51
+     },
+     {
+      "sector": "光纤概念",
+      "net": 5313984256.0,
+      "pct": 2.49
+     }
+    ],
+    "tech_positive_nowcasts": [],
+    "tech_negative_nowcasts": [],
+    "defense_limit_up_count": 1,
+    "defense_limit_up_matched": {
+     "电力": 1
+    }
+   },
+   "data_limits": [
+    "DATA_LIMITED: 个股龙头是否不再创新低不在 rotation_history,这里用板块跌幅边际收窄做代理",
+    "DATA_LIMITED: 龙头背离只能用邻域/子板块代理,不能替代新易盛/旭创等个股读数",
+    "DATA_BLOCKED: 隔夜 NVDA/SOX/TSMC ADR/A50 不在本历史文件,由 overnight_anchor.py 单独处理"
+   ]
+  },
+  {
+   "date": "20260810",
+   "lights": [
     {
      "key": "neighborhood_new_money",
      "label": "邻域新钱",
      "why": "电子仍流出,但科技邻域已有多条子线正流入/收正"
+    },
+    {
+     "key": "defense_crowding",
+     "label": "防御拥挤",
+     "why": "防御/电力相关涨停 4 家,防御交易可能拥挤"
     },
     {
      "key": "leader_divergence_proxy",
@@ -681,56 +573,116 @@
    "posture": "ALLOW_SMALL_TEST_ONLY",
    "features": {
     "parent": {
-     "net": -14088994816.0,
-     "pct": -1.39,
+     "net": -20383162368.0,
+     "pct": 0.15,
      "matched": [
       "电子"
      ]
     },
-    "parent_outflow_days_5": 5,
-    "prior_parent_pct_trough_4d": -4.47,
-    "tech_neighbor_positive_count": 5,
-    "tech_neighbor_net": -114584639051.0,
+    "parent_outflow_days_5": 1,
+    "prior_parent_pct_trough_4d": 2.06,
+    "tech_neighbor_positive_count": 3,
+    "tech_neighbor_net": -256148974139.0,
     "tech_neighbor_best": [
      {
-      "sector": "集成电路封测",
-      "net": 5030346496.0,
-      "pct": 2.88
+      "sector": "半导体设备",
+      "net": 3688109824.0,
+      "pct": 3.75
      },
      {
       "sector": "半导体材料",
-      "net": 1005748480.0,
-      "pct": 2.17
+      "net": 1035055616.0,
+      "pct": 1.88
      },
      {
-      "sector": "集成电路制造",
-      "net": 837111808.0,
-      "pct": 1.28
-     },
-     {
-      "sector": "半导体设备",
-      "net": 746996992.0,
-      "pct": 2.26
-     },
-     {
-      "sector": "第四代半导体",
-      "net": 58305344.0,
-      "pct": 2.59
+      "sector": "品牌消费电子",
+      "net": 5979223.0,
+      "pct": 1.05
      }
     ],
     "tech_positive_nowcasts": [],
     "tech_negative_nowcasts": [],
-    "defense_limit_up_count": 0,
-    "defense_limit_up_matched": {}
+    "defense_limit_up_count": 4,
+    "defense_limit_up_matched": {
+     "电力": 4
+    }
    },
    "data_limits": [
     "DATA_LIMITED: 个股龙头是否不再创新低不在 rotation_history,这里用板块跌幅边际收窄做代理",
     "DATA_LIMITED: 龙头背离只能用邻域/子板块代理,不能替代新易盛/旭创等个股读数",
     "DATA_BLOCKED: 隔夜 NVDA/SOX/TSMC ADR/A50 不在本历史文件,由 overnight_anchor.py 单独处理"
-   ],
-   "fwd1_parent_pct": -1.88,
-   "fwd2_parent_pct": 2.66
+   ]
   },
+  {
+   "date": "20260811",
+   "lights": [
+    {
+     "key": "neighborhood_new_money",
+     "label": "邻域新钱",
+     "why": "电子仍流出,但科技邻域已有多条子线正流入/收正"
+    },
+    {
+     "key": "defense_crowding",
+     "label": "防御拥挤",
+     "why": "防御/电力相关涨停 3 家,防御交易可能拥挤"
+    },
+    {
+     "key": "leader_divergence_proxy",
+     "label": "龙头背离代理",
+     "why": "母板块仍弱,但科技邻域最强子线已经率先转正"
+    }
+   ],
+   "light_count": 3,
+   "posture": "ALLOW_SMALL_TEST_ONLY",
+   "features": {
+    "parent": {
+     "net": -9089212416.0,
+     "pct": -0.4,
+     "matched": [
+      "电子"
+     ]
+    },
+    "parent_outflow_days_5": 2,
+    "prior_parent_pct_trough_4d": 0.15,
+    "tech_neighbor_positive_count": 4,
+    "tech_neighbor_net": -50223262634.0,
+    "tech_neighbor_best": [
+     {
+      "sector": "通信网络设备及器件",
+      "net": 3434910976.0,
+      "pct": 0.15
+     },
+     {
+      "sector": "被动元件",
+      "net": 2084386816.0,
+      "pct": 1.14
+     },
+     {
+      "sector": "被动元件概念",
+      "net": 1552837632.0,
+      "pct": 1.4
+     },
+     {
+      "sector": "算力概念",
+      "net": 804394752.0,
+      "pct": 0.09
+     }
+    ],
+    "tech_positive_nowcasts": [],
+    "tech_negative_nowcasts": [],
+    "defense_limit_up_count": 3,
+    "defense_limit_up_matched": {
+     "电力": 3
+    }
+   },
+   "data_limits": [
+    "DATA_LIMITED: 个股龙头是否不再创新低不在 rotation_history,这里用板块跌幅边际收窄做代理",
+    "DATA_LIMITED: 龙头背离只能用邻域/子板块代理,不能替代新易盛/旭创等个股读数",
+    "DATA_BLOCKED: 隔夜 NVDA/SOX/TSMC ADR/A50 不在本历史文件,由 overnight_anchor.py 单独处理"
+   ]
+  }
+ ],
+ "scored_examples": [
   {
    "date": "20260708",
    "lights": [
@@ -1479,6 +1431,71 @@
    ],
    "fwd1_parent_pct": 5.24,
    "fwd2_parent_pct": 10.13
+  },
+  {
+   "date": "20260810",
+   "lights": [
+    {
+     "key": "neighborhood_new_money",
+     "label": "邻域新钱",
+     "why": "电子仍流出,但科技邻域已有多条子线正流入/收正"
+    },
+    {
+     "key": "defense_crowding",
+     "label": "防御拥挤",
+     "why": "防御/电力相关涨停 4 家,防御交易可能拥挤"
+    },
+    {
+     "key": "leader_divergence_proxy",
+     "label": "龙头背离代理",
+     "why": "母板块仍弱,但科技邻域最强子线已经率先转正"
+    }
+   ],
+   "light_count": 3,
+   "posture": "ALLOW_SMALL_TEST_ONLY",
+   "features": {
+    "parent": {
+     "net": -20383162368.0,
+     "pct": 0.15,
+     "matched": [
+      "电子"
+     ]
+    },
+    "parent_outflow_days_5": 1,
+    "prior_parent_pct_trough_4d": 2.06,
+    "tech_neighbor_positive_count": 3,
+    "tech_neighbor_net": -256148974139.0,
+    "tech_neighbor_best": [
+     {
+      "sector": "半导体设备",
+      "net": 3688109824.0,
+      "pct": 3.75
+     },
+     {
+      "sector": "半导体材料",
+      "net": 1035055616.0,
+      "pct": 1.88
+     },
+     {
+      "sector": "品牌消费电子",
+      "net": 5979223.0,
+      "pct": 1.05
+     }
+    ],
+    "tech_positive_nowcasts": [],
+    "tech_negative_nowcasts": [],
+    "defense_limit_up_count": 4,
+    "defense_limit_up_matched": {
+     "电力": 4
+    }
+   },
+   "data_limits": [
+    "DATA_LIMITED: 个股龙头是否不再创新低不在 rotation_history,这里用板块跌幅边际收窄做代理",
+    "DATA_LIMITED: 龙头背离只能用邻域/子板块代理,不能替代新易盛/旭创等个股读数",
+    "DATA_BLOCKED: 隔夜 NVDA/SOX/TSMC ADR/A50 不在本历史文件,由 overnight_anchor.py 单独处理"
+   ],
+   "fwd1_parent_pct": -0.4,
+   "fwd2_parent_pct": null
   }
  ],
  "claim_allowed": false,
@@ -1494,6 +1511,6 @@
   "leader price structure and overnight anchors require separate feeds"
  ],
  "note": "L0.5 前兆层;只做注意力/仓位节奏校准。不是买卖指令。",
- "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
- "target_trade_date": "20260806"
+ "run_id": "20260811_234144_1786462904379598000_b17d537f",
+ "target_trade_date": "20260811"
 }

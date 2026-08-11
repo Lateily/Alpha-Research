@@ -2,13 +2,13 @@
   "schema": "ar.feature_store_health",
   "schema_version": "1.0",
   "status": "COMPLETE",
-  "as_of": "20260806",
-  "generated_at": "2026-08-06T08:36:54+00:00",
+  "as_of": "20260811",
+  "generated_at": "2026-08-11T15:42:17+00:00",
   "registry_ref": {
-    "as_of": "20260806",
-    "registry_hash": "5f93f1eedd422d38366bca5633ee31d3f2c7bcba5824c53526440e58d4245eb8",
-    "eligible_universe_hash": "5107b97ee9dfd418e67ae1f0f84927453ed90be5e6bb16abaf499bb351061b56",
-    "eligible_count": 5538
+    "as_of": "20260811",
+    "registry_hash": "bc3faf95fb08e2c257fc49ff116b650052823810b19609b04cd37f371f9f3ff9",
+    "eligible_universe_hash": "27ad830b0b20b6c29775bfbaf844a41b32ce525d008f9afe412098d1cd96b57e",
+    "eligible_count": 5542
   },
   "store": {
     "engine": "sqlite",
@@ -23,27 +23,25 @@
     "source_revision_policy": "REJECT_REQUIRES_MIGRATION"
   },
   "coverage": {
-    "committed_dates": 25,
+    "committed_dates": 28,
     "latest_endpoint_rows": {
-      "daily": 5533,
-      "daily_basic": 5533,
-      "adj_factor": 5538
+      "daily": 5539,
+      "daily_basic": 5539,
+      "adj_factor": 5542
     },
-    "latest_daily_eligible_rows": 5533,
-    "latest_feature_rows": 5533,
-    "latest_return_20d_ready": 5501,
-    "latest_missing_daily_count": 5,
+    "latest_daily_eligible_rows": 5539,
+    "latest_feature_rows": 5539,
+    "latest_return_20d_ready": 5519,
+    "latest_missing_daily_count": 3,
     "latest_missing_daily_codes": [
-      "000838.SZ",
-      "300125.SZ",
-      "300246.SZ",
       "300333.SZ",
-      "300862.SZ"
+      "600984.SH",
+      "603221.SH"
     ]
   },
   "integrity": {
-    "source_batches_hash": "b66798e6f3df196f1d76f4adf7917abfc6658683faa20844285a2d8bf32c3f1a",
-    "features_hash": "b3aaf7e0f1bc2f1f3455cdc71dd0d203eb934ed4f11314f69e1bd79fcdacc142"
+    "source_batches_hash": "15aa9641ad08c98b16fdf095f244249eb84b25ce9a29efb13ae1debed6c9e9e7",
+    "features_hash": "2dd5595a5baee685902367e99ba4a34c739aab5f279c61d52a8f56fd939f8b67"
   },
   "policy": {
     "point_in_time_only": true,

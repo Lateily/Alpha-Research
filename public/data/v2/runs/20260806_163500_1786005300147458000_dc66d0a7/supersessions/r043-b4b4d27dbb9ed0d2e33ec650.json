@@ -1,0 +1,9 @@
+{
+ "schema": "ar.manifest_supersession.v1",
+ "governance_ref": "R-043",
+ "migration_id": "r043-b4b4d27dbb9ed0d2e33ec650",
+ "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
+ "reason": "Reconcile the 0806 committed publication manifest after the approved #241 paper-signal correction and #242 NAV history migration",
+ "manifest_sha256_after": "a6d49b745e31ae000401755d3863d66476c89d3c761d8708144963380874fa83",
+ "manifest_sha256_before": "6bbd02ff1aa026425d79a6c121d3c977090dc379278b41e0f7ac01c9cc25ff15"
+}

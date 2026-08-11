@@ -1,7 +1,7 @@
 {
  "court": "court_10d_v0",
  "status": "OK",
- "checked_at": "20260806",
+ "checked_at": "20260811",
  "no_mark_tickers": [],
  "tenure_days_bar": 10,
  "r_bar": 0.5,
@@ -12,15 +12,15 @@
    "ticker": "002714.SZ",
    "name": "牧原股份",
    "fill_date": "20260713",
-   "tenure_days": 24,
+   "tenure_days": 29,
    "entry": 39.1,
    "stop": 36.9,
-   "mark": 38.37,
-   "r_multiple": -0.33,
+   "mark": 40.11,
+   "r_multiple": 0.46,
    "due_for_tribunal": true,
    "evidence": {
     "wrong_if_text": "v3三门共振首位:行业技术(农林牧渔贴20日高-0.2%)+消息(猪价反转+中报改善)+资金(0706主力+3.62亿,板块5日+55亿);breakout 39.1=破20日高确认。wrong-if:猪价回落/主力转出2日",
-    "flow_10d": -5.74,
+    "flow_10d": -7.1,
     "flow_positive_days": 3,
     "red_flag": "RED_FLAG",
     "red_reasons": [
@@ -28,12 +28,12 @@
      "最近季度归母-12.1亿为负且环比恶化(前季7.1亿)"
     ],
     "recent_announcements": [
-     "2026-08-06 牧原股份:2026年7月份销售简报",
-     "2026-08-06 牧原股份:H股公告(证券变动月报表)",
-     "2026-07-30 牧原股份:H股公告(根据上市规则第13.51B(2)及13.51(2)("
+     "2026-08-11 牧原股份:可转换公司债券2026年付息的公告",
+     "2026-08-07 牧原股份:H股公告(董事会会议通告)",
+     "2026-08-06 牧原股份:2026年7月份销售简报"
     ],
     "substitutes_in_queue": 0,
-    "stop_room_pct": 4.0
+    "stop_room_pct": 8.7
    },
    "engine_verdict": "TRIBUNAL_REQUIRED",
    "note": "引擎只取证与初判;终审判定书由人/AI 撰写并需 Junyan 口令方可执行处置",
@@ -41,6 +41,6 @@
   }
  ],
  "disclaimer": "不是买卖指令;研究信号,human executes.",
- "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
- "target_trade_date": "20260806"
+ "run_id": "20260811_234144_1786462904379598000_b17d537f",
+ "target_trade_date": "20260811"
 }

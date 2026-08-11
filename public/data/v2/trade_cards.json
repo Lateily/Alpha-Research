@@ -1,9 +1,9 @@
 {
  "contract": "trade_cards",
  "schema_version": "v2.2",
- "generated_at": "20260806 16:38:27",
- "run_id": "20260806_163500_1786005300147458000_dc66d0a7",
- "target_trade_date": "20260806",
+ "generated_at": "20260811 23:45:21",
+ "run_id": "20260811_234144_1786462904379598000_b17d537f",
+ "target_trade_date": "20260811",
  "sources": [
   "model_fund/orders.json",
   "model_fund/decision_log.json"
