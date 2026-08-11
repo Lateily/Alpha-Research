@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from context_builder import build_context_packet
 from registry import replay_events
 from reconciler import reconcile
 from task_compiler import SPEC_BLOCKED, compile_task_manifest
@@ -30,6 +31,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     reconcile_parser.add_argument("--input", required=True, help="Fixture JSON object")
     reconcile_parser.add_argument("--output", help="Optional output JSON path")
+
+    context_parser = subparsers.add_parser(
+        "context", help="Build one deterministic context packet"
+    )
+    context_parser.add_argument("--manifest", required=True, help="Compiled ai-task.v1 JSON")
+    context_parser.add_argument("--repo-root", default=".", help="Repository root")
+    context_parser.add_argument("--data-cutoff", help="Optional explicit data cutoff")
+    context_parser.add_argument("--output", help="Optional output JSON path")
 
     args = parser.parse_args(argv)
     if args.command == "compile":
@@ -57,11 +66,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         _write_json(result, args.output)
         return 1 if _has_findings(result) else 0
+    if args.command == "context":
+        result = build_context_packet(
+            _load_json(args.manifest),
+            repo_root=Path(args.repo_root),
+            data_cutoff=args.data_cutoff,
+        ).to_dict()
+        _write_json(result, args.output)
+        return 2 if result["status"] == SPEC_BLOCKED else 0
     return 2
 
 
 def _load_json(path: str) -> Any:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
 def _write_json(value: Any, output: str | None) -> None:
