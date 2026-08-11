@@ -24,6 +24,7 @@ fail-closed:任何无法解析、无法核验的情形一律 FAIL,不得当作�
 import os, sys, json, hashlib, datetime, subprocess
 
 GENESIS_PREV = "0" * 64
+OPERATIONAL_TIMEZONE = datetime.timezone(datetime.timedelta(hours=8), name="Asia/Shanghai")
 DEFAULT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "event_ledger.jsonl")
 ANCHOR_SUFFIX = ".anchor.json"
 HASHED_FIELDS = ("seq", "ts", "kind", "id", "payload", "prev")
@@ -36,6 +37,12 @@ UNIQUE_KINDS = {"register", "genesis",
                 "evaluation_intent", "evaluation_commit", "evaluation_abort",
                 "publication_migration_intent", "publication_migration_commit",
                 "publication_migration_abort"}
+
+
+def _runtime_timestamp():
+    """Return the ledger's legacy naive timestamp in the fixed platform timezone."""
+    return (datetime.datetime.now(OPERATIONAL_TIMEZONE)
+            .replace(tzinfo=None).isoformat(timespec="seconds"))
 
 
 def canonical(obj):
@@ -243,7 +250,7 @@ def append(kind, rec_id, payload, path=DEFAULT_PATH, now=None):
             an = verify_anchor(path)
             if not an["ok"]:
                 raise ValueError(f"账本与锚点不符,拒绝追加: {an['errors']}")
-            ts = now or datetime.datetime.now().isoformat(timespec="seconds")
+            ts = now or _runtime_timestamp()
             lines = _read_lines(path)
             if lines and str(ts) < str(json.loads(lines[-1])["ts"]):
                 raise ValueError(f"ts 早于链尾({ts} < {json.loads(lines[-1])['ts']}),拒绝回填过去日期")
