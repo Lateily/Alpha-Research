@@ -1,6 +1,6 @@
 {
   "ticker": "603233.SH",
-  "fetched_at": "2026-08-10T09:56:14Z",
+  "fetched_at": "2026-08-11T03:07:58Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
@@ -824,22 +824,9 @@
           "pct_chg": -0.0533,
           "vol": 35448.71,
           "amount": 66364.99
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260512",
-          "open": 18.58,
-          "high": 18.84,
-          "low": 18.52,
-          "close": 18.76,
-          "pre_close": 18.8,
-          "change": -0.04,
-          "pct_chg": -0.2128,
-          "vol": 40222.75,
-          "amount": 75297.979
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260810"
     },
@@ -2104,34 +2091,19 @@
           "free_share": 44991.6141,
           "total_mv": 2135340.1256,
           "circ_mv": 2135340.1256
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260512",
-          "close": 18.76,
-          "turnover_rate": 0.3532,
-          "turnover_rate_f": 0.894,
-          "volume_ratio": 0.54,
-          "pe": 17.296,
-          "pe_ttm": 16.6083,
-          "pb": 2.7813,
-          "ps": 0.7768,
-          "ps_ttm": 0.7764,
-          "dv_ratio": 3.4444,
-          "dv_ttm": 3.4444,
-          "total_share": 113884.8067,
-          "float_share": 113884.8067,
-          "free_share": 44991.6141,
-          "total_mv": 2136478.9737,
-          "circ_mv": 2136478.9737
         }
       ],
-      "row_count": 64,
+      "row_count": 63,
       "_status": "ok",
       "as_of": "20260810"
     },
     "adj_factor": {
       "rows": [
+        {
+          "ts_code": "603233.SH",
+          "trade_date": "20260811",
+          "adj_factor": 3.2361
+        },
         {
           "ts_code": "603233.SH",
           "trade_date": "20260810",
@@ -2446,16 +2418,11 @@
           "ts_code": "603233.SH",
           "trade_date": "20260513",
           "adj_factor": 3.1365
-        },
-        {
-          "ts_code": "603233.SH",
-          "trade_date": "20260512",
-          "adj_factor": 3.1365
         }
       ],
       "row_count": 64,
       "_status": "ok",
-      "as_of": "20260810"
+      "as_of": "20260811"
     },
     "income": {
       "rows": [
