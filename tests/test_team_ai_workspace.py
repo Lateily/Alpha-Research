@@ -177,6 +177,7 @@ def test_onboarding_contract_reuses_existing_clone_and_defines_write_boundary() 
     assert "Set-Location 'C:\\path\\to\\existing\\Alpha-Research'" in onboarding
     assert "py -3.11 .\\scripts\\team_ai_workspace.py doctor" in onboarding
     assert "`bootstrap` is optional" in onboarding.lower()
+    assert "`WARN` with `CODEX_CLI_UNAVAILABLE` as the only warning" in onboarding
     assert "team-command-policy.v1.json" in root_contract
     assert "layout adoption never justifies a duplicate clone" in normalized_root_contract
 

@@ -165,3 +165,14 @@ During the group onboarding session, record for each member:
 - whether Alpha Research is isolated under the single `AR/` container.
 
 Store only the redacted doctor report. Never paste keys or environment values.
+
+Onboarding acceptance is one of:
+
+- `PASS`; or
+- `WARN` with `CODEX_CLI_UNAVAILABLE` as the only warning, plus a successful
+  Codex Desktop smoke that opens this repository and reads the root
+  `AGENTS.md` without editing files.
+
+The second state authorizes repository-scoped Desktop work but not a task whose
+acceptance commands require the Codex CLI. Any other warning or failure remains
+unresolved until reviewed.
