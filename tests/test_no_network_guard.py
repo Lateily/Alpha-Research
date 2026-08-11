@@ -51,6 +51,7 @@ import full_battery            # noqa: E402,F401
 import attribution_audit       # noqa: E402,F401
 import export_contracts        # noqa: E402,F401
 import run_post_close_report   # noqa: E402,F401
+import publication_migration   # noqa: E402,F401
 from experiments.macro_os import contracts as macro_contracts  # noqa: E402
 from experiments.macro_os import collectors as macro_collectors  # noqa: E402
 from experiments.macro_os import m0b2 as macro_m0b2  # noqa: E402,F401
@@ -101,6 +102,15 @@ macro_m1b_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(macro_m1b_tests.MacroM1BTests)
 )
 assert macro_m1b_result.wasSuccessful(), "Macro M1-B suite failed under socket guard"
+import test_publication_migration_offline as publication_migration_tests  # noqa: E402
+publication_migration_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        publication_migration_tests.PublicationMigrationTests
+    )
+)
+assert publication_migration_result.wasSuccessful(), (
+    "R-043 publication migration suite failed under socket guard"
+)
 try:
     macro_collectors.UrllibTransport().fetch(
         macro_collectors._cboe_builder(
