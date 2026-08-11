@@ -1,0 +1,6 @@
+interface:
+  display_name: "AR Workspace Sync"
+  short_description: "Onboard and diagnose AR teammate workspace parity"
+  default_prompt: "Use $ar-workspace-sync to audit this teammate setup and produce a redacted parity report."
+policy:
+  allow_implicit_invocation: true

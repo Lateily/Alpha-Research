@@ -1,0 +1,42 @@
+{
+  "schema": "ar.team_ai_workspace.v1",
+  "repository": "Lateily/Alpha-Research",
+  "expected_remote_suffix": "Lateily/Alpha-Research.git",
+  "default_branch": "main",
+  "task_contract": "scripts/llm/schemas/task.schema.json",
+  "task_compiler": "scripts/llm/ai_os/cli.py",
+  "required_instruction_files": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "web/AGENTS.md"
+  ],
+  "required_skills": [
+    "ar-task-delivery",
+    "ar-adversarial-review",
+    "ar-research-framework",
+    "ar-aios-engineering",
+    "ar-product-engineering",
+    "ar-workspace-sync"
+  ],
+  "runtime_baseline": {
+    "python_minimum": "3.11",
+    "node_minimum": "20.0",
+    "codex_required": true,
+    "codex_version_enforcement": "REPORT_ONLY_UNTIL_TEAM_ONBOARDING"
+  },
+  "local_only": [
+    ".env",
+    ".env.*",
+    ".ai-workspace/",
+    ".codex-log/",
+    "data_history/",
+    ".shifts/",
+    ".agent_tasks/",
+    "*.pem",
+    "*.p12",
+    "*.key"
+  ],
+  "doctor_command": "python3 scripts/team_ai_workspace.py doctor",
+  "task_fixture": "scripts/llm/fixtures/team_task_source.example.json"
+}

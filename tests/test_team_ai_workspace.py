@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+"""Offline behavioral tests for the shared AR Team AI Workspace."""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import team_ai_workspace as workspace  # noqa: E402
+
+
+def test_current_workspace_contract_is_complete() -> None:
+    report = workspace.evaluate_workspace(ROOT, require_tools=False)
+
+    assert report["failures"] == [], report
+    assert report["skills"]["missing"] == []
+    assert report["skills"]["invalid"] == []
+    assert report["task_compiler"]["status"] == "SPEC_READY"
+    assert report["task_compiler"]["task_id"] == "TEAM-EXAMPLE-001"
+    assert report["hygiene"]["tracked_secret_findings"] == []
+
+
+def test_root_instructions_remove_legacy_role_and_contract_conflicts() -> None:
+    text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+
+    assert "secondary collaborator, not the primary builder" not in text
+    assert "Current 5-stock watchlist" not in text
+    assert "Compile the task source" in text
+    assert "Final merge authority belongs to Junyan" in text
+    assert "Do not create a parallel task format" in text
+
+
+def test_required_skills_have_metadata_and_ui_prompt() -> None:
+    config = workspace._strict_json(ROOT / workspace.CONFIG_REL)
+    report = workspace.inspect_skills(ROOT, config["required_skills"])
+
+    assert report["missing"] == []
+    assert report["invalid"] == []
+    assert sorted(report["discovered"]) == sorted(config["required_skills"])
+
+
+def test_secret_scanner_reports_rule_and_path_without_secret_value() -> None:
+    secret = "sk-" + "Z" * 32
+    with tempfile.TemporaryDirectory() as temp_dir:
+        root = Path(temp_dir)
+        path = root / "bad.py"
+        path.write_text(f'API_KEY = "{secret}"\n', encoding="utf-8")
+        findings = workspace.find_secret_violations(root, ["bad.py"])
+
+    rendered = json.dumps(findings)
+    assert findings == [
+        {"file": "bad.py", "rule": "OPENAI_STYLE_KEY"},
+        {"file": "bad.py", "rule": "ASSIGNED_SECRET"},
+    ]
+    assert secret not in rendered
+
+
+def test_secret_scanner_does_not_flag_environment_reads_or_test_placeholders() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        root = Path(temp_dir)
+        (root / "safe.py").write_text(
+            'token = os.environ.get("TUSHARE_TOKEN", "")\n'
+            'API_KEY = "CENSUS_SECRET_123"\n',
+            encoding="utf-8",
+        )
+        findings = workspace.find_secret_violations(root, ["safe.py"])
+
+    assert findings == []
+
+
+def test_local_only_matching_never_rejects_env_example() -> None:
+    patterns = [".env", ".env.*", ".ai-workspace/", "*.key"]
+
+    assert workspace._matches_local_only(".env", patterns)
+    assert workspace._matches_local_only(".env.local", patterns)
+    assert workspace._matches_local_only(".ai-workspace/report.json", patterns)
+    assert workspace._matches_local_only("secret.key", patterns)
+    assert not workspace._matches_local_only(".env.example", patterns)
+
+
+def test_doctor_cli_emits_parseable_redacted_report() -> None:
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/team_ai_workspace.py"), "doctor", "--ci", "--json"],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["schema"] == workspace.SCHEMA
+    assert payload["failures"] == []
+    assert "value" not in json.dumps(payload["hygiene"]).lower()
+
+
+def run_all_tests() -> int:
+    tests = [
+        value
+        for name, value in sorted(globals().items())
+        if name.startswith("test_") and callable(value)
+    ]
+    for test in tests:
+        test()
+    return len(tests)
+
+
+if __name__ == "__main__":
+    count = run_all_tests()
+    print(f"ALL TEAM AI WORKSPACE TESTS PASS ({count} tests, 0 network calls)")
