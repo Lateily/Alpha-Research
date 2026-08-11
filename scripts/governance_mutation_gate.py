@@ -496,6 +496,118 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_kimi_wrapper_denies_wrong_network_policy",
     ),
     MutationCase(
+        mutation_id="AIOS_A015_PROTECTED_BRANCH",
+        component="AIOS A-015 isolation planner",
+        source_path="scripts/llm/ai_os/executor.py",
+        test_script="tests/test_ai_os_a015_isolation_offline.py",
+        before='    if _branch_identity(request.branch) in PROTECTED_BRANCHES:\n'
+        '        policy_errors.append("protected branches cannot be isolation targets")',
+        after='    if False:\n'
+        '        policy_errors.append("protected branches cannot be isolation targets")',
+        expected_failure_marker="test_protected_branch_is_policy_blocked_including_unicode_alias",
+        rationale="An isolated run must never target main or an equivalent protected ref.",
+        test_function="test_protected_branch_is_policy_blocked_including_unicode_alias",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A015_TIMEOUT",
+        component="AIOS A-015 isolation planner",
+        source_path="scripts/llm/ai_os/executor.py",
+        test_script="tests/test_ai_os_a015_isolation_offline.py",
+        before=(
+            "        if (\n"
+            "            isinstance(self.timeout_seconds, bool)\n"
+            "            or not isinstance(self.timeout_seconds, int)\n"
+            "            or self.timeout_seconds <= 0\n"
+            "        ):\n"
+            '            errors.append("timeout_seconds must be a positive integer")'
+        ),
+        after=(
+            "        if False:\n"
+            '            errors.append("timeout_seconds must be a positive integer")'
+        ),
+        expected_failure_marker="test_timeout_must_be_a_positive_integer",
+        rationale="An isolated run plan must bind a finite positive timeout.",
+        test_function="test_timeout_must_be_a_positive_integer",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A015_LOW_RISK",
+        component="AIOS A-015 isolation planner",
+        source_path="scripts/llm/ai_os/executor.py",
+        test_script="tests/test_ai_os_a015_isolation_offline.py",
+        before='    if request.risk_level != "LOW":\n'
+        '        policy_errors.append("A-015a only permits LOW risk")',
+        after='    if False:\n'
+        '        policy_errors.append("A-015a only permits LOW risk")',
+        expected_failure_marker="test_a015a_only_allows_low_shadow_offline_plans",
+        rationale="The first isolated-run slice must not accept elevated-risk work.",
+        test_function="test_a015a_only_allows_low_shadow_offline_plans",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A015_SHADOW_MODE",
+        component="AIOS A-015 isolation planner",
+        source_path="scripts/llm/ai_os/executor.py",
+        test_script="tests/test_ai_os_a015_isolation_offline.py",
+        before='    if request.mode != "SHADOW":\n'
+        '        policy_errors.append("A-015a only permits SHADOW mode")',
+        after='    if False:\n'
+        '        policy_errors.append("A-015a only permits SHADOW mode")',
+        expected_failure_marker="test_a015a_only_allows_low_shadow_offline_plans",
+        rationale="A-015a cannot silently become a production execution path.",
+        test_function="test_a015a_only_allows_low_shadow_offline_plans",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A015_OFFLINE_NETWORK",
+        component="AIOS A-015 isolation planner",
+        source_path="scripts/llm/ai_os/executor.py",
+        test_script="tests/test_ai_os_a015_isolation_offline.py",
+        before='    if request.network_policy != "deny":\n'
+        '        policy_errors.append("A-015a requires network_policy=deny")',
+        after='    if False:\n'
+        '        policy_errors.append("A-015a requires network_policy=deny")',
+        expected_failure_marker="test_a015a_only_allows_low_shadow_offline_plans",
+        rationale="The planner must remain offline until the real sandbox is reviewed.",
+        test_function="test_a015a_only_allows_low_shadow_offline_plans",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A015_FORBIDDEN_SCOPE",
+        component="AIOS A-015 isolation planner",
+        source_path="scripts/llm/ai_os/executor.py",
+        test_script="tests/test_ai_os_a015_isolation_offline.py",
+        before="    if _contains_forbidden_scope(file_scope):\n"
+        '        policy_errors.append("file_scope overlaps a forbidden scope")',
+        after="    if False:\n"
+        '        policy_errors.append("file_scope overlaps a forbidden scope")',
+        expected_failure_marker="test_forbidden_file_scope_blocks_even_a_safe_sibling_target",
+        rationale="Declared scope cannot include Git metadata or the protected ledger engine.",
+        test_function="test_forbidden_file_scope_blocks_even_a_safe_sibling_target",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A015_TARGET_SCOPE",
+        component="AIOS A-015 isolation planner",
+        source_path="scripts/llm/ai_os/executor.py",
+        test_script="tests/test_ai_os_a015_isolation_offline.py",
+        before="    if not all(_path_is_within(path, file_scope) for path in target_paths):\n"
+        '        policy_errors.append("target_paths must stay within file_scope")',
+        after="    if False:\n"
+        '        policy_errors.append("target_paths must stay within file_scope")',
+        expected_failure_marker="test_target_paths_must_remain_inside_declared_file_scope",
+        rationale="An isolated plan cannot target undeclared files.",
+        test_function="test_target_paths_must_remain_inside_declared_file_scope",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A015_TOOL_SCOPE",
+        component="AIOS A-015 isolation planner",
+        source_path="scripts/llm/ai_os/executor.py",
+        test_script="tests/test_ai_os_a015_isolation_offline.py",
+        before="    if not request.requested_tools <= request.allowed_tools:\n"
+        '        policy_errors.append("requested_tools exceed allowed_tools")',
+        after="    if False:\n"
+        '        policy_errors.append("requested_tools exceed allowed_tools")',
+        expected_failure_marker="test_requested_tools_cannot_exceed_policy_allowance",
+        rationale="The executable tool set must remain a subset of policy allowance.",
+        test_function="test_requested_tools_cannot_exceed_policy_allowance",
+    ),
+    MutationCase(
         mutation_id="AIOS_K1_TASK_REQUIRED_FIELDS",
         component="AIOS K1 Task Compiler",
         source_path="scripts/llm/ai_os/task_compiler.py",

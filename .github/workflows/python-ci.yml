@@ -95,6 +95,9 @@ jobs:
       # runtime baseline metadata, and redacted secret/local-state hygiene.
       - name: Team AI Workspace contract and doctor regression (offline)
         run: python3 tests/test_team_ai_workspace.py
+      # AIOS Harness A-015a:只生成隔离计划,不执行 shell/Agent/真实 worktree
+      - name: AIOS A-015a isolation planner regression (offline)
+        run: python3 tests/test_ai_os_a015_isolation_offline.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
