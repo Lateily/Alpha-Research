@@ -47,6 +47,13 @@ py -3.11 .\scripts\team_ai_workspace.py doctor
 Use `python .\scripts\team_ai_workspace.py doctor` only when `py -3.11` is
 unavailable and `python --version` confirms Python 3.11 or newer.
 
+On Windows, Codex Desktop may be usable even when its packaged `codex.exe`
+cannot be launched from PowerShell (`Access is denied`). The doctor reports this
+as `WARN CODEX_CLI_UNAVAILABLE`, with `tools.codex.reason` preserving the local
+cause. This warning does not invalidate an otherwise clean repository, Skills,
+or task compiler. A task that specifically requires the Codex CLI must declare
+and enforce that dependency separately.
+
 Use a fresh clone only when the teammate has no valid clone. Never copy another
 member's dirty working tree:
 

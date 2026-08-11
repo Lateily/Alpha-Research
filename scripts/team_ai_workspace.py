@@ -92,16 +92,41 @@ def _version_tuple(text: str) -> tuple[int, int, int] | None:
 def _tool_version(command: Sequence[str], root: Path) -> dict[str, Any]:
     executable = shutil.which(command[0])
     if not executable:
-        return {"available": False, "command": command[0], "version": None}
+        return {
+            "available": False,
+            "command": command[0],
+            "version": None,
+            "reason": "NOT_FOUND",
+        }
     try:
         result = _run([executable, *command[1:]], root)
-    except (OSError, subprocess.TimeoutExpired):
-        return {"available": False, "command": command[0], "version": None}
+    except PermissionError:
+        return {
+            "available": False,
+            "command": executable,
+            "version": None,
+            "reason": "EXECUTION_DENIED",
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "available": False,
+            "command": executable,
+            "version": None,
+            "reason": "TIMEOUT",
+        }
+    except OSError:
+        return {
+            "available": False,
+            "command": executable,
+            "version": None,
+            "reason": "EXECUTION_FAILED",
+        }
     output = (result.stdout or result.stderr).strip().splitlines()
     return {
         "available": result.returncode == 0,
         "command": executable,
         "version": output[0] if output else None,
+        "reason": None if result.returncode == 0 else "NONZERO_EXIT",
     }
 
 
@@ -335,6 +360,19 @@ def validate_command_policy(policy: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def codex_cli_finding(
+    baseline: dict[str, Any], codex_tool: dict[str, Any], require_tools: bool
+) -> tuple[str, str] | None:
+    if not require_tools or not baseline.get("codex_required") or codex_tool.get("available"):
+        return None
+    enforcement = baseline.get("codex_version_enforcement")
+    if enforcement == "WARN_ONLY":
+        return ("WARN", "CODEX_CLI_UNAVAILABLE")
+    if enforcement == "REQUIRED":
+        return ("FAIL", "CODEX_UNAVAILABLE")
+    return ("FAIL", "CODEX_ENFORCEMENT_INVALID")
+
+
 def evaluate_workspace(root: Path, require_tools: bool = True) -> dict[str, Any]:
     root = root.resolve()
     config = _strict_json(root / CONFIG_REL)
@@ -394,8 +432,10 @@ def evaluate_workspace(root: Path, require_tools: bool = True) -> dict[str, Any]
         failures.append("PYTHON_BASELINE_UNAVAILABLE")
     if require_tools and not node_ok:
         warnings.append("NODE_BASELINE_UNAVAILABLE")
-    if require_tools and baseline.get("codex_required") and not codex_tool["available"]:
-        failures.append("CODEX_UNAVAILABLE")
+    codex_finding = codex_cli_finding(baseline, codex_tool, require_tools)
+    if codex_finding:
+        severity, finding = codex_finding
+        (failures if severity == "FAIL" else warnings).append(finding)
     if dirty_lines:
         warnings.append("WORKTREE_DIRTY")
     if behind_text and int(behind_text) > 0:

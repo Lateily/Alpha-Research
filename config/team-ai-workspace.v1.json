@@ -48,7 +48,7 @@
     "python_minimum": "3.11",
     "node_minimum": "20.0",
     "codex_required": true,
-    "codex_version_enforcement": "REPORT_ONLY_UNTIL_TEAM_ONBOARDING"
+    "codex_version_enforcement": "WARN_ONLY"
   },
   "local_only": [
     ".env",
