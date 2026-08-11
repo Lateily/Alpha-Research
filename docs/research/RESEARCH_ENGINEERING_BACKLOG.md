@@ -59,7 +59,7 @@
 | R-002 | 自动 preflight 与晋级前质检硬闸 | `DONE` | Claude | **PR #205 已合并**(#180 因 squash 堆叠失效后重建):正式路径自动 preflight,晋级器消费红旗/电池/freshness,离线回归测试 | **验收通过 2026-08-03**:①坏账本注入 ⇒ 0 引擎启动、报警旗落盘、report=INCOMPLETE、steps=0 ②四类拒绝全部有回归断言,且已用「短路 qc_decide」反证四条同时 ✗(13/13 恢复)③真实夜跑 nightly_v2 report=COMPLETE 15/15 步 OK |
 | R-003 | 永久在线证券注册表与全市场多通道扫描 | `APPROVED` | Junyan+Claude | 当前 `momentum_prefilter.py` 扫约 5500 只,但候选主要由动量 TOP5 注入;红旗和六维电池只覆盖约 14 只动态名单 | 全 A 每只证券每日保留状态、最后扫描时间、进入/未进入原因;六类通道使用批量数据并集;扫描失败不能沿用旧结果冒充新结果 |
 | R-004 | 判分样本独立性与方向分列 | `APPROVED` | Junyan+Claude | 主 scorecard 以 signal_id 去重并混合 constructive/cautious;尚无 `cluster_id`;现有 `claim_allowed` 不能证明 30 个独立簇 | schema 增 `cluster_id` 与主期限;存量回溯;正式 scorecard 永久分方向;门槛按独立簇计算;修复前撤销合并口径的 claim_allowed |
-| R-005 | Macro OS 与 MRG 完整闭环 | `IN_PROGRESS` | Junyan+Macro Agent | M0-A/M0-B2 已有规格、历史仓与官方适配器;M0-B3 已交付 URL 发现、自适应调度、延迟监控、系统时钟预期登记与 launchd 模板但尚未部署;中国失业率缺 M0-A 事件合同;M1 状态/MRG/行业与组合消费者未建 | 数据抓取→事件标准化→宏观状态→MRG→行业敏感度→组合暴露→消费者→T+1/T+5/T+20 判分全链影子运行 |
+| R-005 | Macro OS 与 MRG 完整闭环 | `IN_PROGRESS` | Junyan+Macro Agent | **M0-A #240、M0-B #245、M0-B2 #247、M0-B3 #249、M1-A #251、M1-B #252 均已合并**。M0-A 至 M0-B3 已交付契约、历史仓、官方采集器、发布日历、双源共识门、URL 发现、自适应调度、延迟监控和 launchd 模板;M1-A 已交付双区域四轴状态、MRG 候选态与事件上下文;M1-B 已交付 31 个申万一级行业敏感度、组合暴露和只读面板。**阶段状态 = `DELIVERED_UNWIRED / CALIBRATING`**:`run_nightly.py` 尚无 Macro 步,仓库无 `public/data/v2/macro/*` 正式产物,launchd 模板注明未安装。中国失业率事件合同、M1-C 运行接线和判分仍未完成 | M1-C 串起数据抓取→事件标准化→宏观状态→MRG→行业敏感度→组合暴露→消费者,并完成 T+1/T+5/T+20 判分影子运行;接线前不得声称正式 regime 或阻断权 |
 | R-006 | Tushare 数据健康、语义与新闻链修复 | `IN_PROGRESS` | Claude | **PR #206 已合并**(#181 因 squash 堆叠失效后重建):29 端点健康表、issuer_guidance 改名、四个参数修复、宏观抓取、major_news 边界 | **部分达成 2026-08-03(Junyan 驳回 DONE)**:已验 = `data_source_health.py` 步刻意不带 continue-on-error,五个关键源(daily/daily_basic/moneyflow_dc/moneyflow_ind_dc/moneyflow_mkt_dc)任一非 OK 即 exit 1 ⇒ 整个工作流失败 · AR_OFFLINE 离线守卫在位 · 无权限源保持 DATA_BLOCKED 不伪装为 0 · issuer_guidance 改名已覆盖 4 个消费方。**残留 = 验收第四条「旧目录完成迁移后再删除」根本未验** —— 我只验了健康表与硬失败两条就标了 DONE。需逐项确认:旧路径消费方是否已全部切到新契约 · 迁移是否完成 · 旧目录能否安全删除;在此之前不得标 DONE |
 
 ## 4. P1:研究发现与证据质量
@@ -73,13 +73,13 @@
 | R-011 | 前兆层四格表 | `APPROVED` | Validation Agent | 目前容易只讲亮灯后应验案例,未固定统计漏报和误报 | 每晚保存昨日灯数与后续结果;固定 TP/FP/FN/TN 和基准率;按独立事件簇报告;n 未达门槛只显示计数 |
 | R-012 | 主力净额指标体检 | `APPROVED` | Validation Agent | 资金门、轮动面板、nowcast 依赖同一地基指标,但尚无定盘预测信息量与稳定性体检 | 近 60 日全市场按日和行业聚类检验 T+1/T+3;报告覆盖、缺失、极值、方向稳定性;结果决定权重,不能由既有规则反推结论 |
 | R-013 | 否决信号机会成本 | `APPROVED` | Validation Agent | 被 veto/NO_TRADE 的对象只看短期防损,没有统一跟踪 T+10 反事实 | 全部否决对象回填 T+1/T+3/T+10;以可执行触发价计,无触发价标 NOT_SCORABLE;周报固定展示保护与机会成本两面 |
-| R-014 | 注册 schema v2 与 tainted 检测 | `IN_PROGRESS` | Claude | **PR 待合并**:`registry.py` schema v2 —— `registered_at`/`registered_trade_date`/`written_by` 随信号原子写入,并向 R-015 事件账本追加 `register` 事件;账本写不进去 ⇒ 登记失败、信号不落盘。两条注册路径(paper_tracker 研究预注册 / execution_tracker 官方样本)均已接线。selftest 20/20,CI 已接 | **历史 128 行一律只派生不写入** —— C5 §2.2 冻结输入的缺失→值属 P3 genesis,P3 仅在 S0 合法,历史行全在 S1/S2,回填即 rewrite。`registered_at_of()` 返回 (值,来源) 从不落盘。过渡期锚点 = min(parse_trade_date(timestamp), 首次 git 出现日),相差>0 标 backdated 不计门槛。**升 DONE 的条件**:R-039 簇冻结落地 + 首次正式夜链验证新字段真的写出来 |
+| R-014 | 注册 schema v2 与 tainted 检测 | `DELIVERED_UNWIRED` | Claude | **PR #217 已合并**(feat(r014): 注册 schema v2 —— R-015 首次真正接线):`registry.py` schema v2 —— `registered_at`/`registered_trade_date`/`written_by` 随信号原子写入,并向 R-015 事件账本追加 `register` 事件;账本写不进去 ⇒ 登记失败、信号不落盘。两条注册路径(paper_tracker 研究预注册 / execution_tracker 官方样本)均已接线。selftest 20/20,CI 已接 | **历史 128 行一律只派生不写入** —— C5 §2.2 冻结输入的缺失→值属 P3 genesis,P3 仅在 S0 合法,历史行全在 S1/S2,回填即 rewrite。`registered_at_of()` 返回 (值,来源) 从不落盘。过渡期锚点 = min(parse_trade_date(timestamp), 首次 git 出现日),相差>0 标 backdated 不计门槛。**升 DONE 的条件**:R-039 簇冻结落地 + 首次正式夜链验证新字段真的写出来 |
 | R-015 | 不可篡改事件账本与数据 CI | `DELIVERED_UNWIRED` | Claude+Audit Agent | **PR #212 已合并**:event_ledger.py 三层篡改检测(哈希链 / 锚点 / git 行前缀)+ 排他 flock + CI 双触发器(pull_request 加 .jsonl* 路径、新增 push:main)。敌意复核 4 BLOCKER + 3 MAJOR 全修,selftest 27/27,逐层短路转红数 4/6/4 | **为什么是 UNWIRED 而不是 DONE**:模块完全没有接线 —— `grep -rn event_ledger` 在模块自身之外零命中,生产写手 `execution_tracker.py --log` 与 `run_official_sample.append_log` 仍直接写 `paper_signal_log.json`,flock 目前什么都没保护、三条种子记录是装饰性的。**接线是 R-014/R-039 的工作,完成后才升级状态**。已知边界(已写进模块 docstring,不得对外声称“账本已不可篡改”):①尾部截断哈希链构造上抓不到,靠锚点;②账本与锚点一并删除①②都抓不到,靠 git 行前缀;③三层叠加只提高门槛,真正的保证来自已提交的 git 历史,而 0712 的 git-reset-hard 证明 git 本身在此仓库也不构成 append-only |
 | R-016 | 十日检察官与法庭唤醒 | `APPROVED` | Court Agent | 规则已经提出,仍依赖人工记得开庭;历史上出现延迟数晚 | `court_10d` 进入夜链;到期自动入 review queue;结论带证据更新时间;逾期成为夜链非完整项 |
 | R-017 | 隔夜锚生产化 | `APPROVED` | Macro Agent | 2026-07-31 运行时文件仍停在 20260722,四锚 DATA_BLOCKED | 盘前自动刷新 NVDA/SOX/TSM ADR/A50;逐源 freshness;旧文件不得冒充当日;失败进入盘前告警 |
 | R-018 | 新闻与信息面可信边界 | `IN_PROGRESS` | Reed+Claude | **PR #206 已合并**:major_news 消费器 + 实体闸门 + 不可信输入隔离;正式公告 `anns_d` 与部分实时新闻仍无权限 | **部分达成 2026-08-05**:已有 = 实体闸门(仅当实体确认才挂 ticker)· 来源健康 · 去重 · 外部正文按不可信数据只取标题/时间/来源 · major_news 消费器 · R-036 顶层已将 `anns_d` 明示为 DATA_BLOCKED 且拒绝用 E2 新闻冒充 E1。**残留 = ①E 级标签未落到新闻链**(E 级只在 `api/research.js`/`research-multi.js`)②仍未取得正式公告权限或建设经验证的 E1 替代源 |
 | R-019 | 行业 OS 持续填数 | `APPROVED` | Junyan+Sector Agents | 半导体、医药已有 v0,但锚点日期、缺失 E1、关系边和指标更新节奏没有统一 SLA | 每个 Sector OS 有指标字典、E1/E2 数据源、关系边、公司覆盖、催化剂、wrong-if、更新时间;过期自动提醒 |
-| R-020 | 宏观到行业和组合的暴露矩阵 | `APPROVED` | Macro Agent+Portfolio Agent | 当前宏观想法停在全局判断,没有说明对行业和现有持仓如何传导 | 因子→行业方向/时滞/证据→持仓暴露→风险预算调整建议逐层留痕;只改变 posture/gate,不直接生成交易动作 |
+| R-020 | 宏观到行业和组合的暴露矩阵 | `DELIVERED_UNWIRED` | Macro Agent+Portfolio Agent | **PR #252 已合并**:`m1b.py` 只读 M1-A 哈希核验包与 `model_portfolio_state.v2.2`,生成 31 个申万一级行业敏感度、组合宏观暴露和 `macro_panel`。未知主题显式 `DATA_BLOCKED`,组合权重仍是契约名义金额/NAV 代理。当前未接夜链或盘前帧,未发布正式运行产物 | M1-C 接入正式消费者并积累真实运行证据;补齐可验证的逐仓权重口径;校准期只改变标签、研究优先级和风险预算语境,不得生成交易动作或正式阻断 |
 
 ## 5. P2:治理、契约与可持续运行
 
@@ -95,7 +95,7 @@
 | R-028 | 研究漏斗质量仪表 | `PROPOSED` | Junyan+Validation Agent | 目前只看最终名单,无法判断哪层漏掉机会或制造噪声 | 展示全市场覆盖率、通道贡献、晋级率、DATA_BLOCKED、遗漏回溯、研究耗时;不使用未经门槛支持的收益语言 |
 | R-029 | 下单层红旗闸门戳校验 | `APPROVED` | Claude | 合同 v1.5 C1:红旗闸门当前只管名单层,paper 下单路径无闸;牧原 002714(0711 首亏预告 / 0713 建仓)是直接事故 | `paper_tracker.py` / `model_paper_fund.py` 注册路径强制校验当日闸门戳,无戳拒绝写入并标 `ENTRY_UNGATED` |
 | R-030 | 输出层措辞检查器 | `APPROVED` | Claude | 合同 v1.5 C4:day-1 只能写"候选",当前靠人工纪律;旭创 0729 案为同周第二次越权 | 扫描含单日证据的结论,命中"确认/成立/已验证"即阻断并要求改写 |
-| R-031 | MRG 两阶段接线 | `APPROVED` | Claude+Macro Agent | 合同 v1.5 C6 修订:未校准的门若先拿阻断权会形成循环依赖(它造成的"没开仓"被记成"避免损失",从此无法证伪) | 阶段A只标注+RISK_OFF_BIAS 降 sizing 上限至 STARTER_CAPPED 并每日入判分;阶段B 达 ≥30 独立因果簇且优于随机后由 Junyan 单独批准阻断权 |
+| R-031 | MRG 两阶段接线 | `APPROVED` | Claude+Macro Agent | **PR #251/#252 已把校准边界写进机器契约**:`formal_regime=null`,`formal_blocking_authority=false`,并禁止 `TRADE_ACTION/DIRECT_BLOCK/FORMAL_REGIME_CLAIM`。M1-C 尚未接线,所以当前只有可离线生成的候选标签和风险预算语境 | 阶段A由 M1-C 接入标签、研究优先级和风险预算语境并每日入判分;`CREDIT_STRESS_CANDIDATE/REDUCED_REVIEW_BUDGET` 必须落实宪法 C6 的风险预算约束(`RISK_OFF_BIAS` 对应新开仓 sizing 上限封顶 `STARTER_CAPPED`),但不获得晋级或交易阻断权;阶段B 达 ≥30 独立因果簇且优于随机后,再由 Junyan 单独批准正式阻断权 |
 | R-037 | 单票结论电池戳校验 | `APPROVED` | Claude | 合同 v1.5 C2:full_battery 只对动态名单强制,临时单票分析(含对话产出)无机器强制 | 单票结论产出路径校验 24h 内电池戳,无戳拒绝并标 `NO_BATTERY_STAMP` |
 | R-038 | 因果簇 id 生成器与历史回填 | `BLOCKED` | Claude+Validation Agent | 合同 v1.5 C5 采用因果事件簇;claim 解锁的唯一路径。**BLOCKED 说明**:阻断源 = R-039/040/041 + 硬前置 R-014/R-015(账本无文件锁,B 不可原子计算)未建成;**下次复核日期 = 2026-09-01**。C5 §4 三态阶梯只约束 correction/migration 不约束 genesis,retrospective genesis 可在 S2 信号上执行,循环已解 | 规则版本先冻结 → 单一 genesis 批次回填 122 条 → manifest 落盘(approval_ref/manifest_hash)→ R-039 即刻对该批生效;genesis 当期 claim_allowed 强制 false |
 | R-032 | U0 全市场证券注册表 | `VALIDATING` | Codex+Data Agent | **PR #226 + #234 已合并并部署**:生成器、schema 与 20260805 实物已交付;夜链固定在 `official_sample` 后运行,作为 R-008/R-036 的唯一 universe 事实源,三步共享同一 `AR_TARGET_TRADE_DATE`。20260805 接线沙箱实跑注册 5,877 只、当前上市 5,538 只,4 个流动性/行情缺口顶层诚实为 PARTIAL。**验证边界**:首次 launchd 16:35 正式值班尚待验收 | 全部 A 股永久注册+资格标签;原子写;重复/损坏 prior/哈希、日期错配与覆盖漂移 fail-closed;selftest 17/17;运行时 preflight PASS |
@@ -118,6 +118,7 @@
 | 轮动统计 | `VALIDATING` | 初始窗口给出描述结果,不等于跨期稳定或可作概率主张 |
 | 半导体/医药 Sector OS | `DELIVERED_UNWIRED` | 有行业模板和首批数据,不等于自动更新或已接全市场漏斗 |
 | v2 前端契约 | `DELIVERED_UNWIRED` | 部分 JSON 能导出,不等于所有契约新鲜、完整和可展示 |
+| Macro M1-A/M1-B | `DELIVERED_UNWIRED / CALIBRATING` | 双区域状态、MRG 候选态、行业与组合消费者代码已进 main;不等于已接夜链、已有正式 regime 或拥有阻断权 |
 
 ## 7. 延后但保留
 

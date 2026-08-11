@@ -123,6 +123,7 @@ def compile_task_manifest(
     if isinstance(created_at, str) and created_at.startswith("created_at "):
         errors.append(created_at)
 
+    # governance-mutation: AIOS_K1_TASK_REQUIRED_FIELDS
     if errors:
         return CompileResult(SPEC_BLOCKED, None, tuple(errors))
 

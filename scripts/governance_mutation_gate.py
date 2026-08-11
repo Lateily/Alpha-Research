@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import ast
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -30,6 +31,14 @@ INFRA_FAILURE_MARKERS = (
 )
 TEST_FAILURE_MARKERS = ("AssertionError", "FAILED (", "FAIL:")
 SECRET_NAME_PARTS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL")
+GOVERNANCE_MARKER_RE = re.compile(
+    r"^\s*# governance-mutation: (?P<mutation_id>[A-Z0-9_]+)\s*$"
+)
+K1_GOVERNANCE_PATHS = (
+    "scripts/llm/ai_os/task_compiler.py",
+    "scripts/llm/ai_os/registry.py",
+    "scripts/llm/ai_os/reconciler.py",
+)
 
 
 class MutationGateError(RuntimeError):
@@ -173,6 +182,113 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_kimi_wrapper_denies_wrong_network_policy",
     ),
     MutationCase(
+        mutation_id="AIOS_K1_TASK_REQUIRED_FIELDS",
+        component="AIOS K1 Task Compiler",
+        source_path="scripts/llm/ai_os/task_compiler.py",
+        test_script="tests/test_ai_os_k1_offline.py",
+        before="    if errors:\n        return CompileResult(SPEC_BLOCKED, None, tuple(errors))",
+        after="    if False:\n        return CompileResult(SPEC_BLOCKED, None, tuple(errors))",
+        expected_failure_marker="test_task_manifest_missing_acceptance_fails_closed",
+        rationale="Incomplete task specifications must remain SPEC_BLOCKED.",
+        test_function="test_task_manifest_missing_acceptance_fails_closed",
+    ),
+    MutationCase(
+        mutation_id="AIOS_K1_STATE_TRANSITION",
+        component="AIOS K1 Registry",
+        source_path="scripts/llm/ai_os/registry.py",
+        test_script="tests/test_ai_os_k1_offline.py",
+        before="        if (from_state, to_state) not in ALLOWED_TRANSITIONS:\n"
+        "            invalid_events.append(\n"
+        "                _invalid(index, event, f\"transition {from_state}->{to_state} is not allowed\")\n"
+        "            )\n"
+        "            continue",
+        after="        if False:\n"
+        "            invalid_events.append(\n"
+        "                _invalid(index, event, f\"transition {from_state}->{to_state} is not allowed\")\n"
+        "            )\n"
+        "            continue",
+        expected_failure_marker="test_registry_blocks_forbidden_done_shortcut",
+        rationale="Registry state transitions cannot skip review and verification states.",
+        test_function="test_registry_blocks_forbidden_done_shortcut",
+    ),
+    MutationCase(
+        mutation_id="AIOS_K1_UNLINKED_OPEN_PR",
+        component="AIOS K1 Reconciler",
+        source_path="scripts/llm/ai_os/reconciler.py",
+        test_script="tests/test_ai_os_k1_offline.py",
+        before="        if missing:\n"
+        "            findings.append(\n"
+        "                {\n"
+        '                    "pr": pr.get("number"),\n'
+        '                    "missing": missing,\n'
+        '                    "reason": "open PR is not fully linked to AIOS control records",\n'
+        "                }\n"
+        "            )",
+        after="        if False:\n"
+        "            findings.append(\n"
+        "                {\n"
+        '                    "pr": pr.get("number"),\n'
+        '                    "missing": missing,\n'
+        '                    "reason": "open PR is not fully linked to AIOS control records",\n'
+        "                }\n"
+        "            )",
+        expected_failure_marker="test_reconciler_does_not_hide_open_unlinked_pr",
+        rationale="Open PRs missing AIOS control links must remain visible findings.",
+        test_function="test_reconciler_does_not_hide_open_unlinked_pr",
+    ),
+    MutationCase(
+        mutation_id="AIOS_K1_UNKNOWN_PR",
+        component="AIOS K1 Reconciler",
+        source_path="scripts/llm/ai_os/reconciler.py",
+        test_script="tests/test_ai_os_k1_offline.py",
+        before='        return [{**owner, "pr": number, "reason": "DONE references unknown PR"}]',
+        after="        return []",
+        expected_failure_marker="test_reconciler_does_not_hide_done_with_unknown_pr",
+        rationale="DONE evidence pointing to an unknown PR cannot be treated as clean.",
+        test_function="test_reconciler_does_not_hide_done_with_unknown_pr",
+    ),
+    MutationCase(
+        mutation_id="AIOS_K1_OVERSOLD_DONE_EVIDENCE",
+        component="AIOS K1 Reconciler",
+        source_path="scripts/llm/ai_os/reconciler.py",
+        test_script="tests/test_ai_os_k1_offline.py",
+        before="            if missing:\n"
+        "                findings.append(\n"
+        "                    {\n"
+        '                        "task": event.get("task"),\n'
+        '                        "missing": missing,\n'
+        '                        "reason": "DONE comment lacks required evidence fields",\n'
+        "                    }\n"
+        "                )\n"
+        "                continue",
+        after="            if False:\n"
+        "                findings.append(\n"
+        "                    {\n"
+        '                        "task": event.get("task"),\n'
+        '                        "missing": missing,\n'
+        '                        "reason": "DONE comment lacks required evidence fields",\n'
+        "                    }\n"
+        "                )\n"
+        "                continue",
+        expected_failure_marker="test_reconciler_reports_done_comment_missing_required_fields",
+        rationale="DONE cannot be accepted without its required evidence fields.",
+        test_function="test_reconciler_reports_done_comment_missing_required_fields",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_K1_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_k1_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_k1_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_k1_marker_coverage",
+        rationale="The manifest validator must not silently stop enforcing K1 marker coverage.",
+    ),
+    MutationCase(
         mutation_id="AIOS_K2_HIGH_RISK_BLOCK",
         component="AIOS K2 policy gate",
         source_path="scripts/llm/ai_os/policy_engine.py",
@@ -281,6 +397,45 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
                 raise MutationGateError(
                     f"{case.mutation_id}: test function is missing: {case.test_function}"
                 )
+    validate_k1_marker_coverage(root, cases)
+
+
+def validate_k1_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = K1_GOVERNANCE_PATHS,
+) -> None:
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"K1 governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate K1 governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    declared = {
+        case.mutation_id for case in cases if case.component.startswith("AIOS K1")
+    }
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "K1 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
 
 
 def _copy_ignore(_directory: str, names: list[str]) -> set[str]:
