@@ -44,6 +44,31 @@ class RegistrySchemaV2Test(unittest.TestCase):
                            capture_output=True, text=True, cwd=str(ROOT))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
+    def test_publication_migration_events_are_unique_and_chain_valid(self) -> None:
+        import event_ledger
+        tmp = tempfile.mkdtemp()
+        try:
+            ledger = os.path.join(tmp, "publication_migration_events.jsonl")
+            txn_id = "pm-test-001"
+            event_ledger.append(
+                "publication_migration_intent", txn_id, {"plan_hash": "abc"}, path=ledger
+            )
+            with self.assertRaisesRegex(ValueError, "already exists|已存在"):
+                event_ledger.append(
+                    "publication_migration_intent", txn_id, {"plan_hash": "abc"}, path=ledger
+                )
+            event_ledger.append(
+                "publication_migration_commit", txn_id, {"plan_hash": "abc"}, path=ledger
+            )
+            with self.assertRaisesRegex(ValueError, "already exists|已存在"):
+                event_ledger.append(
+                    "publication_migration_commit", txn_id, {"plan_hash": "abc"}, path=ledger
+                )
+            self.assertTrue(event_ledger.verify(ledger)["ok"])
+            self.assertTrue(event_ledger.verify_anchor(ledger)["ok"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_research_registration_stamps_and_appends(self) -> None:
         import event_ledger, paper_tracker, registry
         tmp = tempfile.mkdtemp()

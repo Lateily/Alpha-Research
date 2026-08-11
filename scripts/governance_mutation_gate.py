@@ -145,6 +145,17 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_invalid_request_fails_closed_without_calling_worker",
     ),
     MutationCase(
+        mutation_id="R015_PUBLICATION_MIGRATION_EVENT_UNIQUENESS",
+        component="R-015 event ledger",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_registry_schema_v2.py",
+        before='                "publication_migration_intent", "publication_migration_commit",\n'
+        '                "publication_migration_abort"}',
+        after='                "publication_migration_abort"}',
+        expected_failure_marker="test_publication_migration_events_are_unique_and_chain_valid",
+        rationale="Publication migration WAL terminal events cannot be duplicated on retry.",
+    ),
+    MutationCase(
         mutation_id="AIOS_DEEPSEEK_NETWORK_POLICY",
         component="AIOS DeepSeek adapter",
         source_path="scripts/llm/adapters/deepseek.py",
