@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +29,9 @@ def test_current_workspace_contract_is_complete() -> None:
     assert report["command_policy"]["status"] == "VALID"
     assert report["hygiene"]["tracked_secret_findings"] == []
     assert report["workspace_contract"]["missing"] == []
+    assert workspace._strict_json(ROOT / workspace.CONFIG_REL)["runtime_baseline"][
+        "codex_version_enforcement"
+    ] == "WARN_ONLY"
     assert report["workspace_contract"]["layout"]["root_container"] == "AR"
     assert report["workspace_contract"]["layout"]["containers"] == [
         "projects",
@@ -211,6 +215,36 @@ def test_command_policy_pins_better_to_narrow_control_plane_allowlist() -> None:
 
     for mutation in mutations:
         assert workspace.validate_command_policy(mutation)["status"] == "INVALID"
+
+
+def test_windows_codex_execution_denied_is_diagnostic_not_workspace_failure() -> None:
+    with mock.patch.object(workspace.shutil, "which", return_value="C:/Codex/codex.exe"):
+        with mock.patch.object(workspace, "_run", side_effect=PermissionError("denied")):
+            tool = workspace._tool_version(["codex", "--version"], ROOT)
+
+    assert tool == {
+        "available": False,
+        "command": "C:/Codex/codex.exe",
+        "version": None,
+        "reason": "EXECUTION_DENIED",
+    }
+    baseline = {"codex_required": True, "codex_version_enforcement": "WARN_ONLY"}
+    assert workspace.codex_cli_finding(baseline, tool, True) == (
+        "WARN",
+        "CODEX_CLI_UNAVAILABLE",
+    )
+
+    hard = {"codex_required": True, "codex_version_enforcement": "REQUIRED"}
+    assert workspace.codex_cli_finding(hard, tool, True) == (
+        "FAIL",
+        "CODEX_UNAVAILABLE",
+    )
+
+    invalid = {"codex_required": True, "codex_version_enforcement": "SILENT"}
+    assert workspace.codex_cli_finding(invalid, tool, True) == (
+        "FAIL",
+        "CODEX_ENFORCEMENT_INVALID",
+    )
 
 
 def run_all_tests() -> int:
