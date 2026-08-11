@@ -39,6 +39,9 @@ K1_GOVERNANCE_PATHS = (
     "scripts/llm/ai_os/registry.py",
     "scripts/llm/ai_os/reconciler.py",
 )
+R043_GOVERNANCE_PATHS = (
+    "experiments/execution_tracker/publication_migration.py",
+)
 
 
 class MutationGateError(RuntimeError):
@@ -189,15 +192,62 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Verification must reject pointer and manifest artifact-map drift.",
     ),
     MutationCase(
-        mutation_id="R043_FIXED_APPROVAL_KEY",
+        mutation_id="R043_APPROVAL_EVIDENCE_STRENGTH",
         component="R-043 publication migration",
         source_path="experiments/execution_tracker/publication_migration.py",
         test_script="tests/test_publication_migration_offline.py",
-        before='    parser.add_argument("--approval-file")\n',
-        after='    parser.add_argument("--approval-file")\n'
-        '    parser.add_argument("--approval-key-file")\n',
-        expected_failure_marker="test_cli_rejects_caller_selected_approval_key",
-        rationale="A production caller cannot substitute a self-controlled approval key.",
+        before='    if str(approval.get("evidence_strength") or "") != "TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC":\n'
+        '        raise MigrationError(\n'
+        '            "approval must self-declare evidence_strength=TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC "\n'
+        '            "— the ledger must not imply more proof than it holds")',
+        after='    if False:\n'
+        '        raise MigrationError(\n'
+        '            "approval must self-declare evidence_strength=TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC "\n'
+        '            "— the ledger must not imply more proof than it holds")',
+        expected_failure_marker="test_approval_must_carry_verbatim_text_and_honest_strength",
+        rationale="Transcript-only approval must not masquerade as cryptographic identity proof.",
+    ),
+    MutationCase(
+        mutation_id="R043_APPROVAL_CHANNEL",
+        component="R-043 publication migration",
+        source_path="experiments/execution_tracker/publication_migration.py",
+        test_script="tests/test_publication_migration_offline.py",
+        before='    if approval.get("approval_channel") != "session_verbatim":\n'
+        '        raise MigrationError("approval_channel must be session_verbatim (plan B)")',
+        after='    if False:\n'
+        '        raise MigrationError("approval_channel must be session_verbatim (plan B)")',
+        expected_failure_marker="test_approval_must_carry_verbatim_text_and_honest_strength",
+        rationale="R-043 accepts only the explicitly documented transcript evidence channel.",
+    ),
+    MutationCase(
+        mutation_id="R043_APPROVAL_VERBATIM",
+        component="R-043 publication migration",
+        source_path="experiments/execution_tracker/publication_migration.py",
+        test_script="tests/test_publication_migration_offline.py",
+        before='    if len(verbatim) < 12:\n'
+        '        raise MigrationError(\n'
+        '            "approval_verbatim must carry the human authorization text, quoted in full")',
+        after='    if False:\n'
+        '        raise MigrationError(\n'
+        '            "approval_verbatim must carry the human authorization text, quoted in full")',
+        expected_failure_marker="test_approval_verbatim_length_floor_is_enforced",
+        rationale="A bare yes/no token is not enough audit evidence for an irreversible migration.",
+    ),
+    MutationCase(
+        mutation_id="R043_APPROVAL_FRESHNESS",
+        component="R-043 publication migration",
+        source_path="experiments/execution_tracker/publication_migration.py",
+        test_script="tests/test_publication_migration_offline.py",
+        before='    if approved_at - requested_at > dt.timedelta(hours=APPROVAL_MAX_AGE_HOURS):\n'
+        '        raise MigrationError(\n'
+        '            f"approval is stale: approved_at exceeds requested_at by more than "\n'
+        '            f"{APPROVAL_MAX_AGE_HOURS}h — re-approve against a fresh plan")',
+        after='    if False:\n'
+        '        raise MigrationError(\n'
+        '            f"approval is stale: approved_at exceeds requested_at by more than "\n'
+        '            f"{APPROVAL_MAX_AGE_HOURS}h — re-approve against a fresh plan")',
+        expected_failure_marker="test_approval_must_carry_verbatim_text_and_honest_strength",
+        rationale="Old transcript evidence cannot be replayed onto a newly requested plan indefinitely.",
     ),
     MutationCase(
         mutation_id="R043_APPROVAL_PLAN_BINDING",
@@ -276,16 +326,87 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="NOOP is valid only after complete publication verification.",
     ),
     MutationCase(
+        mutation_id="R043_CURRENT_MANIFEST_EQUALITY",
+        component="R-043 publication migration",
+        source_path="experiments/execution_tracker/publication_migration.py",
+        test_script="tests/test_publication_migration_offline.py",
+        before='        if et_sha != public_sha:\n'
+        '            problems.append("ET/public manifests differ")',
+        after='        if False:\n'
+        '            problems.append("ET/public manifests differ")',
+        expected_failure_marker="test_noop_rejects_et_public_manifest_byte_drift",
+        rationale="NOOP cannot hide byte drift between durable and published manifests.",
+    ),
+    MutationCase(
+        mutation_id="R043_VERIFY_BEFORE_COMMIT",
+        component="R-043 publication migration",
+        source_path="experiments/execution_tracker/publication_migration.py",
+        test_script="tests/test_publication_migration_offline.py",
+        before='    if problems:\n'
+        '        raise MigrationError(f"post-migration verification failed: {problems}")',
+        after='    if False:\n'
+        '        raise MigrationError(f"post-migration verification failed: {problems}")',
+        expected_failure_marker="test_verify_failure_cannot_be_committed",
+        rationale="A publication migration cannot append commit after target verification fails.",
+    ),
+    MutationCase(
+        mutation_id="R043_COMMIT_RECEIPT_BINDING",
+        component="R-043 publication migration",
+        source_path="experiments/execution_tracker/publication_migration.py",
+        test_script="tests/test_publication_migration_offline.py",
+        before='        if recorded_receipt != receipt:\n'
+        '            raise MigrationError("committed migration verification receipt drifted")',
+        after='        if False:\n'
+        '            raise MigrationError("committed migration verification receipt drifted")',
+        expected_failure_marker="test_committed_verification_receipt_drift_is_rejected",
+        rationale="A committed event must remain bound to the exact target bytes it verified.",
+    ),
+    MutationCase(
+        mutation_id="R043_ABORT_TERMINAL_WRITE",
+        component="R-043 publication migration",
+        source_path="experiments/execution_tracker/publication_migration.py",
+        test_script="tests/test_publication_migration_offline.py",
+        before='    event_ledger.append(\n'
+        '        "publication_migration_abort",',
+        after='    if False:\n'
+        '        event_ledger.append(\n'
+        '            "publication_migration_abort",',
+        expected_failure_marker="test_intent_then_third_state_drift_refuses_recovery",
+        rationale="An unrecoverable intent must receive one durable abort terminal, not remain wedged forever.",
+    ),
+    MutationCase(
+        mutation_id="R043_TERMINAL_EXCLUSIVITY",
+        component="R-043 publication migration",
+        source_path="experiments/execution_tracker/publication_migration.py",
+        test_script="tests/test_publication_migration_offline.py",
+        before='    if len(terminals) > 1:\n'
+        '        raise MigrationError(f"migration {migration_id} has two terminal states")',
+        after='    if False:\n'
+        '        raise MigrationError(f"migration {migration_id} has two terminal states")',
+        expected_failure_marker="test_dual_terminal_state_is_rejected",
+        rationale="Commit and abort are mutually exclusive terminal states for one migration.",
+    ),
+    MutationCase(
+        mutation_id="R043_RECOVERY_ARTIFACT_PREWRITE",
+        component="R-043 publication migration",
+        source_path="experiments/execution_tracker/publication_migration.py",
+        test_script="tests/test_publication_migration_offline.py",
+        before='        if _current_digest(path) != row["sha256_after"]:\n',
+        after='        if False and _current_digest(path) != row["sha256_after"]:\n',
+        expected_failure_marker="test_recover_refuses_before_any_write_when_artifact_drifts",
+        rationale="Recovery must reject changed artifacts before rewriting any manifest or pointer.",
+    ),
+    MutationCase(
         mutation_id="R043_RECOVERY_THIRD_STATE",
         component="R-043 publication migration",
         source_path="experiments/execution_tracker/publication_migration.py",
         test_script="tests/test_publication_migration_offline.py",
         before='    if current not in allowed:\n'
-        '        raise MigrationError(\n'
+        '        raise RecoveryConflict(\n'
         '            f"file drifted outside frozen before/after states: {path} ({current})"\n'
         '        )',
         after='    if False:\n'
-        '        raise MigrationError(\n'
+        '        raise RecoveryConflict(\n'
         '            f"file drifted outside frozen before/after states: {path} ({current})"\n'
         '        )',
         expected_failure_marker="test_intent_then_third_state_drift_refuses_recovery",
@@ -481,6 +602,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_validate_manifest_enforces_k1_marker_coverage",
         rationale="The manifest validator must not silently stop enforcing K1 marker coverage.",
     ),
+    MutationCase(
+        mutation_id="GOVERNANCE_R043_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_r043_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_r043_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_r043_marker_coverage",
+        rationale="The mutation manifest must not silently stop enforcing R-043 marker coverage.",
+    ),
 )
 
 
@@ -532,6 +667,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
                     f"{case.mutation_id}: test function is missing: {case.test_function}"
                 )
     validate_k1_marker_coverage(root, cases)
+    validate_r043_marker_coverage(root, cases)
 
 
 def validate_k1_marker_coverage(
@@ -567,6 +703,46 @@ def validate_k1_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "K1 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_r043_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = R043_GOVERNANCE_PATHS,
+) -> None:
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"R-043 governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate R-043 governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    declared = {
+        case.mutation_id
+        for case in cases
+        if case.component.startswith("R-043 publication migration")
+    }
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "R-043 governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )

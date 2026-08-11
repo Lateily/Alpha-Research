@@ -2,9 +2,9 @@
 """R-043 publication migration regression tests. Offline and temp-only."""
 from __future__ import annotations
 
+import copy
 import fcntl
 import hashlib
-import hmac
 import json
 import os
 import subprocess
@@ -44,15 +44,11 @@ class Fixture:
         self.root = root
         self.et = root / "et"
         self.public = root / "public"
-        self.key = root / "approval.key"
-        self.key.write_bytes(b"K" * 48)
-        os.chmod(self.key, 0o600)
         self.ctx = pm.Context(
             et_root=self.et,
             public_root=self.public,
             control_ledger=self.et / pm.CONTROL_LEDGER_NAME,
             nightly_lock=self.et / "nightly.lock",
-            approval_key=self.key,
         )
         self.a_path = self.et / "a.json"
         self.b_path = self.public / "b.json"
@@ -236,7 +232,7 @@ class PublicationMigrationTests(unittest.TestCase):
             ):
                 with self.subTest(bad=bad.get("approved_by")):
                     with self.assertRaises(pm.MigrationError):
-                        pm.validate_approval(bad, plan, fx.key)
+                        pm.validate_approval(bad, plan)
 
     def test_recover_refuses_before_any_write_when_artifact_drifts(self) -> None:
         """恢复路径必须在**任何写入之前**拒绝,而不是先改写再 verify。
@@ -259,7 +255,7 @@ class PublicationMigrationTests(unittest.TestCase):
                 "et_pointer": (fx.et / "current_run.json").read_bytes(),
                 "public_pointer": (fx.public / "current_run.json").read_bytes(),
             }
-            with self.assertRaisesRegex(pm.MigrationError, "refusing before any write"):
+            with self.assertRaisesRegex(pm.MigrationError, "migration aborted"):
                 pm.recover(fx.ctx, RUN_ID, plan["plan_hash"])
             for name, before in frozen.items():
                 self.assertEqual(
@@ -271,6 +267,38 @@ class PublicationMigrationTests(unittest.TestCase):
                     f"{name} was written before the refusal")
             kinds = [e.get("kind", "") for e in pm._load_events(fx.ctx)]
             self.assertNotIn("publication_migration_commit", kinds)
+            self.assertEqual(
+                kinds,
+                ["publication_migration_intent", "publication_migration_abort"],
+            )
+            with self.assertRaisesRegex(pm.MigrationError, "abort terminal"):
+                pm.recover(fx.ctx, RUN_ID, plan["plan_hash"])
+            self.assertEqual(len(pm._load_events(fx.ctx)), 2)
+            replacement = pm.build_plan(
+                fx.ctx,
+                RUN_ID,
+                reason="new approved plan after an aborted frozen state",
+                evidence=fx.evidence,
+                requested_at="2026-08-11T13:00:00+08:00",
+            )
+            self.assertNotEqual(replacement["migration_id"], plan["migration_id"])
+            result = pm.apply_plan(
+                fx.ctx,
+                replacement,
+                fx.approval(
+                    replacement, approved_at="2026-08-11T14:00:00+08:00"
+                ),
+            )
+            self.assertEqual(result["status"], "APPLIED")
+            self.assertEqual(
+                [row["kind"] for row in pm._load_events(fx.ctx)],
+                [
+                    "publication_migration_intent",
+                    "publication_migration_abort",
+                    "publication_migration_intent",
+                    "publication_migration_commit",
+                ],
+            )
 
     def test_approval_verbatim_length_floor_is_enforced(self) -> None:
         """长度下限单独钉住 —— 一段过短的『同意』不构成可核验的授权依据。"""
@@ -327,7 +355,7 @@ class PublicationMigrationTests(unittest.TestCase):
             plan["state_files"][0]["rel"] = "a.json"
             plan["plan_hash"] = pm._plan_hash(plan)
             with self.assertRaisesRegex(pm.MigrationError, "descriptor"):
-                pm.validate_approval(fx.approval(plan), plan, fx.key)
+                pm.validate_approval(fx.approval(plan), plan)
 
     def test_apply_preserves_both_originals_and_commits_once(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -340,6 +368,9 @@ class PublicationMigrationTests(unittest.TestCase):
             self.assertEqual([row["kind"] for row in events], [
                 "publication_migration_intent", "publication_migration_commit"
             ])
+            receipt = events[-1]["payload"]["verification_receipt"]
+            self.assertEqual(receipt["schema"], pm.VERIFICATION_RECEIPT_SCHEMA)
+            self.assertEqual(receipt["plan_hash"], plan["plan_hash"])
             archives = [row for row in plan["derived_files"] if row["phase"] == "archive"]
             contents = {
                 row["scope"]: pm._safe_path(fx.ctx, row["scope"], row["rel"]).read_bytes()
@@ -396,9 +427,55 @@ class PublicationMigrationTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "after_intent"):
                 pm.apply_plan(fx.ctx, plan, fx.approval(plan), fail_after="after_intent")
             (fx.et / "runs" / RUN_ID / "manifest.json").write_text("{}\n", encoding="utf-8")
-            with self.assertRaisesRegex(pm.MigrationError, "outside frozen"):
+            with self.assertRaisesRegex(pm.MigrationError, "migration aborted"):
                 pm.recover(fx.ctx, RUN_ID, plan["plan_hash"])
-            self.assertEqual(len(pm._load_events(fx.ctx)), 1)
+            events = pm._load_events(fx.ctx)
+            self.assertEqual(
+                [row["kind"] for row in events],
+                ["publication_migration_intent", "publication_migration_abort"],
+            )
+            self.assertEqual(
+                events[-1]["payload"]["reason_code"], "FROZEN_STATE_CONFLICT"
+            )
+
+    def test_verify_failure_cannot_be_committed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fx = self.fixture(tmp)
+            plan = fx.plan()
+            with mock.patch.object(pm, "verify_target", return_value=["forced mismatch"]):
+                with self.assertRaisesRegex(pm.MigrationError, "verification failed"):
+                    pm.apply_plan(fx.ctx, plan, fx.approval(plan))
+            events = pm._load_events(fx.ctx)
+            self.assertEqual([row["kind"] for row in events], ["publication_migration_intent"])
+            result = pm.recover(fx.ctx, RUN_ID, plan["plan_hash"])
+            self.assertEqual(result["status"], "RECOVERED")
+            self.assertEqual(
+                [row["kind"] for row in pm._load_events(fx.ctx)],
+                ["publication_migration_intent", "publication_migration_commit"],
+            )
+
+    def test_dual_terminal_state_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fx = self.fixture(tmp)
+            plan = fx.plan()
+            pm._bootstrap_control_ledger(fx.ctx)
+            pm._append_intent(fx.ctx, plan, fx.approval(plan))
+            receipt = {
+                "schema": pm.VERIFICATION_RECEIPT_SCHEMA,
+                "plan_hash": plan["plan_hash"],
+                "state_sha256": {},
+                "derived_sha256": {},
+                "guard_sha256": {},
+            }
+            pm._append_commit(fx.ctx, plan, fx.approval(plan), receipt)
+            pm._append_abort(
+                fx.ctx,
+                plan,
+                fx.approval(plan),
+                pm.RecoveryConflict("synthetic conflict"),
+            )
+            with self.assertRaisesRegex(pm.MigrationError, "two terminal states"):
+                pm._event_state(pm._load_events(fx.ctx), plan["migration_id"])
 
     def test_plan_hash_toctou_refuses_before_intent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -419,6 +496,17 @@ class PublicationMigrationTests(unittest.TestCase):
                 pm.apply_plan(fx.ctx, plan, fx.approval(plan))
             self.assertEqual(json.loads(fx.a_path.read_text())["v"], 999)
 
+    def test_committed_verification_receipt_drift_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fx = self.fixture(tmp)
+            plan = fx.plan()
+            pm.apply_plan(fx.ctx, plan, fx.approval(plan))
+            events = copy.deepcopy(pm._load_events(fx.ctx))
+            events[-1]["payload"]["verification_receipt"]["plan_hash"] = "0" * 64
+            with mock.patch.object(pm, "_load_events", return_value=events):
+                with self.assertRaisesRegex(pm.MigrationError, "receipt drifted"):
+                    pm.apply_plan(fx.ctx, plan, fx.approval(plan))
+
     def test_noop_requires_full_verification(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             fx = self.fixture(tmp, clean=True)
@@ -431,6 +519,21 @@ class PublicationMigrationTests(unittest.TestCase):
             pointer["manifest_sha256"] = "0" * 64
             _write(pointer_path, pointer)
             with self.assertRaisesRegex(pm.MigrationError, "NOOP refused"):
+                pm.apply_plan(fx.ctx, plan, fx.approval(plan))
+
+    def test_noop_rejects_et_public_manifest_byte_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fx = self.fixture(tmp, clean=True)
+            plan = fx.plan()
+            self.assertEqual(plan["changes"], [])
+            et_manifest_path = fx.et / "runs" / RUN_ID / "manifest.json"
+            et_manifest = json.loads(et_manifest_path.read_text())
+            et_manifest["audit_note"] = "same artifacts, different manifest bytes"
+            _write(et_manifest_path, et_manifest)
+            self.assertEqual(
+                pm.verify_current(fx.ctx, RUN_ID), ["ET/public manifests differ"]
+            )
+            with self.assertRaisesRegex(pm.MigrationError, "ET/public manifests differ"):
                 pm.apply_plan(fx.ctx, plan, fx.approval(plan))
 
     def test_control_ledger_cannot_enter_governed_manifest(self) -> None:

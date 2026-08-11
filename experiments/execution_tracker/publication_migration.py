@@ -8,11 +8,14 @@ nightly pipeline and it never edits production without an explicit apply call.
 Safety model:
   * plan: bind the current run, both manifests, both pointers, evidence and all
     target bytes into one plan_hash;
-  * approval: require a Junyan approval document signed by a local HMAC key;
+  * approval: preserve the session-verbatim authorization text and label its
+    evidence strength honestly; it is not a cryptographic identity proof;
   * apply: hold the exact nightly.lock used by run_nightly.py, append an R-015
-    intent, atomically converge files, verify, then append commit;
+    intent, atomically converge files, verify again, then append a commit bound
+    to the verification receipt;
   * recover: replay the complete intent. Every file must be either its frozen
-    before bytes or target bytes; a third state is refused;
+    before bytes or target bytes; an unrecoverable third state is recorded as
+    one append-only abort terminal so a new approved plan can be created;
   * audit: preserve both original manifests and append one immutable
     supersession record per migration.
 
@@ -33,7 +36,6 @@ import hmac
 import json
 import os
 import re
-import stat
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -49,6 +51,8 @@ PLAN_SCHEMA = "ar.publication_manifest_migration_plan.v1"
 APPROVAL_SCHEMA = "ar.publication_manifest_migration_approval.v1"
 INTENT_SCHEMA = "ar.publication_manifest_migration_intent.v1"
 COMMIT_SCHEMA = "ar.publication_manifest_migration_commit.v1"
+ABORT_SCHEMA = "ar.publication_manifest_migration_abort.v1"
+VERIFICATION_RECEIPT_SCHEMA = "ar.publication_manifest_migration_verification.v1"
 SUPERSESSION_SCHEMA = "ar.manifest_supersession.v1"
 GOVERNANCE_REF = "R-043"
 CONTROL_LEDGER_NAME = "publication_migration_events.jsonl"
@@ -65,13 +69,16 @@ class MigrationError(RuntimeError):
     """A fail-closed migration refusal."""
 
 
+class RecoveryConflict(MigrationError):
+    """A frozen migration can no longer converge without overwriting a third state."""
+
+
 @dataclass(frozen=True)
 class Context:
     et_root: Path
     public_root: Path
     control_ledger: Path
     nightly_lock: Path
-    approval_key: Path
 
     @classmethod
     def production(cls) -> "Context":
@@ -80,7 +87,6 @@ class Context:
             public_root=REPO / "public" / "data" / "v2",
             control_ledger=HERE / CONTROL_LEDGER_NAME,
             nightly_lock=HERE / "nightly.lock",
-            approval_key=Path.home() / ".ar_publication_migration_approval_key",
         )
 
 
@@ -206,6 +212,7 @@ def _read_current_pair(ctx: Context, run_id: str) -> tuple[dict[str, Any], bytes
     et, public = load_json(et_path), load_json(public_path)
     if et != public:
         raise MigrationError("ET/public current_run pointers differ before migration")
+    # governance-mutation: R043_CURRENT_RUN_BINDING
     if et.get("run_id") != run_id:
         raise MigrationError(
             f"requested run_id {run_id} is not current ({et.get('run_id')})"
@@ -267,6 +274,7 @@ def validate_plan(plan: dict[str, Any]) -> None:
     }
     for entry in plan["state_files"]:
         descriptor = (entry.get("phase"), entry.get("scope"), entry.get("rel"))
+        # governance-mutation: R043_STATE_FILE_TOPOLOGY
         if descriptor != expected_state[entry["name"]]:
             raise MigrationError(f"state file descriptor is invalid: {entry['name']}")
     guard = plan["guard_files"][0]
@@ -353,6 +361,7 @@ def build_plan(
     publication_state = load_json(publication_state_path)
     if publication_state.get("status") != "COMMITTED":
         raise MigrationError("publication_state is not COMMITTED")
+    # governance-mutation: R043_PUBLICATION_STATE_BINDING
     if publication_state.get("run_id") != run_id:
         raise MigrationError("publication_state does not name the current run")
     state_manifest = Path(str(publication_state.get("manifest") or "")).resolve()
@@ -374,6 +383,7 @@ def build_plan(
         f"et:{CONTROL_LEDGER_NAME}.lock",
     }
     overlap = forbidden_control & set(et_artifacts)
+    # governance-mutation: R043_CONTROL_WAL_CYCLE
     if overlap:
         raise MigrationError(f"control WAL cannot be governed by its own manifest: {sorted(overlap)}")
 
@@ -406,6 +416,7 @@ def build_plan(
     target_manifest_sha = sha256_bytes(target_manifest_bytes)
     target_current = copy.deepcopy(current)
     target_current["manifest_sha256"] = target_manifest_sha
+    # governance-mutation: R043_POINTER_ARTIFACT_REPLACEMENT
     target_current["artifacts"] = copy.deepcopy(actual)
     target_current_bytes = json_bytes(target_current)
 
@@ -517,26 +528,7 @@ def load_plan(path: Path) -> dict[str, Any]:
     return plan
 
 
-def _approval_payload(approval: dict[str, Any]) -> dict[str, Any]:
-    return {key: val for key, val in approval.items() if key != "signature"}
-
-
-def _read_approval_key(path: Path) -> bytes:
-    try:
-        mode = stat.S_IMODE(path.stat().st_mode)
-        if mode & 0o077:
-            raise MigrationError(f"approval key permissions must deny group/other access: {oct(mode)}")
-        key = path.read_bytes().strip()
-    except OSError as exc:
-        raise MigrationError(f"cannot read approval key {path}: {exc}") from exc
-    if len(key) < 32:
-        raise MigrationError("approval key must contain at least 32 bytes")
-    return key
-
-
-def validate_approval(
-    approval: dict[str, Any], plan: dict[str, Any], key_path: Path | None = None
-) -> dict[str, Any]:
+def validate_approval(approval: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
     """校验一份**会话原文**审批(方案 B)。
 
     ## 这道门证明什么、不证明什么(必须如实理解)
@@ -563,14 +555,17 @@ def validate_approval(
         raise MigrationError("unsupported approval schema")
     if approval.get("decision") != "APPROVE":
         raise MigrationError("approval decision must be APPROVE")
+    # governance-mutation: R043_APPROVAL_PLAN_BINDING
     if approval.get("plan_hash") != plan_hash:
         raise MigrationError("approval is not bound to this plan_hash")
     # 刻意不校验 approved_by == "Junyan":那是自报字段,相等只证明字符串相等,
     # 不证明授权 —— 「用相等近似授权」正是本平台反复出问题的那类门。
     # 承重的是下面的 verbatim 原文,它是人类可读、可与会话记录比对的证据。
+    # governance-mutation: R043_APPROVAL_CHANNEL
     if approval.get("approval_channel") != "session_verbatim":
         raise MigrationError("approval_channel must be session_verbatim (plan B)")
     verbatim = str(approval.get("approval_verbatim") or "").strip()
+    # governance-mutation: R043_APPROVAL_VERBATIM
     if len(verbatim) < 12:
         raise MigrationError(
             "approval_verbatim must carry the human authorization text, quoted in full")
@@ -580,6 +575,7 @@ def validate_approval(
     ref = str(approval.get("approval_ref") or "")
     if not APPROVAL_REF_RE.fullmatch(ref):
         raise MigrationError("approval_ref must be a non-empty session: anchor")
+    # governance-mutation: R043_APPROVAL_EVIDENCE_STRENGTH
     if str(approval.get("evidence_strength") or "") != "TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC":
         raise MigrationError(
             "approval must self-declare evidence_strength=TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC "
@@ -593,9 +589,11 @@ def validate_approval(
     requested_at = dt.datetime.fromisoformat(
         str(plan["requested_at"]).replace("Z", "+00:00")
     )
+    # governance-mutation: R043_APPROVAL_ORDERING
     if approved_at < requested_at:
         raise MigrationError("approved_at must not precede requested_at")
     # 新鲜度上界:旧授权不得无限期复用到新 plan 上
+    # governance-mutation: R043_APPROVAL_FRESHNESS
     if approved_at - requested_at > dt.timedelta(hours=APPROVAL_MAX_AGE_HOURS):
         raise MigrationError(
             f"approval is stale: approved_at exceeds requested_at by more than "
@@ -603,8 +601,8 @@ def validate_approval(
     return approval
 
 
-def load_approval(path: Path, plan: dict[str, Any], key_path: Path) -> dict[str, Any]:
-    return validate_approval(load_json(path), plan, key_path)
+def load_approval(path: Path, plan: dict[str, Any]) -> dict[str, Any]:
+    return validate_approval(load_json(path), plan)
 
 
 @contextlib.contextmanager
@@ -625,6 +623,7 @@ def _load_events(ctx: Context) -> list[dict[str, Any]]:
     chain = event_ledger.verify(str(ctx.control_ledger))
     anchor = event_ledger.verify_anchor(str(ctx.control_ledger))
     append_only = event_ledger.verify_append_only(str(ctx.control_ledger), "HEAD")
+    # governance-mutation: R043_CONTROL_WAL_GIT_PREFIX
     if not chain["ok"] or not anchor["ok"] or not append_only["ok"]:
         raise MigrationError(
             "publication migration WAL is invalid: "
@@ -634,6 +633,7 @@ def _load_events(ctx: Context) -> list[dict[str, Any]]:
     rows = []
     for raw in event_ledger._read_lines(str(ctx.control_ledger)):
         row = json.loads(raw)
+        # governance-mutation: R043_DEDICATED_WAL_KINDS
         if not row.get("kind", "").startswith("publication_migration_"):
             raise MigrationError(f"foreign event kind in dedicated migration WAL: {row.get('kind')}")
         rows.append(row)
@@ -672,6 +672,7 @@ def _event_state(events: list[dict[str, Any]], migration_id: str) -> dict[str, A
         for kind in ("publication_migration_commit", "publication_migration_abort")
         if kind in by_kind
     ]
+    # governance-mutation: R043_TERMINAL_EXCLUSIVITY
     if len(terminals) > 1:
         raise MigrationError(f"migration {migration_id} has two terminal states")
     commit = by_kind.get("publication_migration_commit")
@@ -703,10 +704,39 @@ def _assert_recoverable_file(path: Path, before: str | None, after: str) -> None
     allowed = {after}
     if before is not None:
         allowed.add(before)
+    # governance-mutation: R043_RECOVERY_THIRD_STATE
     if current not in allowed:
-        raise MigrationError(
+        raise RecoveryConflict(
             f"file drifted outside frozen before/after states: {path} ({current})"
         )
+
+
+def _assert_prewrite_recoverable(ctx: Context, plan: dict[str, Any]) -> None:
+    """Prove the entire frozen state can converge before writing any governed file."""
+    for entry in plan["guard_files"]:
+        path = _safe_path(ctx, entry["scope"], entry["rel"])
+        if _current_digest(path) != entry["sha256"]:
+            raise RecoveryConflict(
+                f"read-only guard changed after planning: {entry['name']}"
+            )
+    # governance-mutation: R043_RECOVERY_ARTIFACT_PREWRITE
+    for row in plan["changes"]:
+        path = _safe_path(ctx, *row["artifact"].split(":", 1))
+        if _current_digest(path) != row["sha256_after"]:
+            raise RecoveryConflict(
+                f"artifact drifted after planning, refusing before any write: "
+                f"{row['artifact']}"
+            )
+    for entry in plan["state_files"]:
+        path = _safe_path(ctx, entry["scope"], entry["rel"])
+        _assert_recoverable_file(path, entry["before_sha256"], entry["after_sha256"])
+    for entry in plan["derived_files"]:
+        path = _safe_path(ctx, entry["scope"], entry["rel"])
+        current = _current_digest(path)
+        if current not in {None, entry["sha256"]}:
+            raise RecoveryConflict(
+                f"immutable derived file drifted outside absent/target states: {path} ({current})"
+            )
 
 
 def _write_derived(ctx: Context, entry: dict[str, Any]) -> None:
@@ -716,7 +746,9 @@ def _write_derived(ctx: Context, entry: dict[str, Any]) -> None:
         raise MigrationError(f"derived file hash mismatch in plan: {entry['name']}")
     if path.exists():
         if sha256_file(path) != entry["sha256"]:
-            raise MigrationError(f"immutable derived file already exists with other bytes: {path}")
+            raise RecoveryConflict(
+                f"immutable derived file already exists with other bytes: {path}"
+            )
         return
     _atomic_write(path, target)
 
@@ -772,6 +804,7 @@ def verify_current(ctx: Context, run_id: str) -> list[str]:
         et_manifest = _manifest_path(ctx, "et", run_id)
         public_manifest = _manifest_path(ctx, "public", run_id)
         et_sha, public_sha = sha256_file(et_manifest), sha256_file(public_manifest)
+        # governance-mutation: R043_CURRENT_MANIFEST_EQUALITY
         if et_sha != public_sha:
             problems.append("ET/public manifests differ")
         if current.get("manifest_sha256") != public_sha:
@@ -781,6 +814,7 @@ def verify_current(ctx: Context, run_id: str) -> list[str]:
         if not isinstance(manifest_artifacts, dict):
             problems.append("current manifest artifacts is not an object")
             manifest_artifacts = {}
+        # governance-mutation: R043_POINTER_MANIFEST_EQUALITY
         if current.get("artifacts") != manifest_artifacts:
             problems.append("current_run artifact map differs from current manifest")
         for key, expected in manifest_artifacts.items():
@@ -797,19 +831,7 @@ def _converge(
     *,
     fail_after: str | None = None,
 ) -> None:
-    for entry in plan["guard_files"]:
-        path = _safe_path(ctx, entry["scope"], entry["rel"])
-        if _current_digest(path) != entry["sha256"]:
-            raise MigrationError(f"read-only guard changed after planning: {entry['name']}")
-    # 写前复检产物摘要 —— 恢复路径没有 apply 那道 rebuilt-plan_hash 门,
-    # 若只靠末尾 verify_target,崩溃后产物再变动时会「先把两份 manifest 与两个
-    # pointer 全改写、再抛错」,留下已改写的生产 + 无 commit 的账本。
-    # 任何写入之前先拒,才叫 fail-closed。
-    for row in plan["changes"]:
-        path = _safe_path(ctx, *row["artifact"].split(":", 1))
-        if _current_digest(path) != row["sha256_after"]:
-            raise MigrationError(
-                f"artifact drifted after planning, refusing before any write: {row['artifact']}")
+    _assert_prewrite_recoverable(ctx, plan)
     for phase in ("archive", "supersession"):
         for entry in plan["derived_files"]:
             if entry["phase"] == phase:
@@ -822,9 +844,36 @@ def _converge(
                 _write_state(ctx, entry)
         if fail_after == f"after_{phase}":
             raise RuntimeError(f"test crash {fail_after}")
+
+
+def _verification_receipt(ctx: Context, plan: dict[str, Any]) -> dict[str, Any]:
+    """Verify the complete target and return the exact bytes authorized for commit."""
     problems = verify_target(ctx, plan)
+    # governance-mutation: R043_VERIFY_BEFORE_COMMIT
     if problems:
         raise MigrationError(f"post-migration verification failed: {problems}")
+    return {
+        "schema": VERIFICATION_RECEIPT_SCHEMA,
+        "plan_hash": plan["plan_hash"],
+        "state_sha256": {
+            entry["name"]: _current_digest(
+                _safe_path(ctx, entry["scope"], entry["rel"])
+            )
+            for entry in plan["state_files"]
+        },
+        "derived_sha256": {
+            entry["name"]: _current_digest(
+                _safe_path(ctx, entry["scope"], entry["rel"])
+            )
+            for entry in plan["derived_files"]
+        },
+        "guard_sha256": {
+            entry["name"]: _current_digest(
+                _safe_path(ctx, entry["scope"], entry["rel"])
+            )
+            for entry in plan["guard_files"]
+        },
+    }
 
 
 def _append_intent(
@@ -843,7 +892,12 @@ def _append_intent(
     )
 
 
-def _append_commit(ctx: Context, plan: dict[str, Any], approval: dict[str, Any]) -> None:
+def _append_commit(
+    ctx: Context,
+    plan: dict[str, Any],
+    approval: dict[str, Any],
+    receipt: dict[str, Any],
+) -> None:
     event_ledger.append(
         "publication_migration_commit",
         plan["migration_id"],
@@ -851,12 +905,47 @@ def _append_commit(ctx: Context, plan: dict[str, Any], approval: dict[str, Any])
             "schema": COMMIT_SCHEMA,
             "plan_hash": plan["plan_hash"],
             "approval_ref": approval["approval_ref"],
-            "state_sha256": {
-                entry["name"]: entry["after_sha256"] for entry in plan["state_files"]
-            },
+            "verification_receipt": receipt,
         },
         path=str(ctx.control_ledger),
     )
+
+
+def _append_abort(
+    ctx: Context,
+    plan: dict[str, Any],
+    approval: dict[str, Any],
+    conflict: RecoveryConflict,
+) -> None:
+    # governance-mutation: R043_ABORT_TERMINAL_WRITE
+    event_ledger.append(
+        "publication_migration_abort",
+        plan["migration_id"],
+        {
+            "schema": ABORT_SCHEMA,
+            "plan_hash": plan["plan_hash"],
+            "approval_ref": approval["approval_ref"],
+            "reason_code": "FROZEN_STATE_CONFLICT",
+            "reason": str(conflict),
+        },
+        path=str(ctx.control_ledger),
+    )
+
+
+def _abort_conflicted_intent(
+    ctx: Context,
+    plan: dict[str, Any],
+    approval: dict[str, Any],
+    conflict: RecoveryConflict,
+) -> None:
+    state = _event_state(_load_events(ctx), plan["migration_id"])
+    if state["commit"]:
+        raise MigrationError("cannot abort a committed publication migration")
+    if state["abort"]:
+        return
+    if not state["intent"]:
+        return
+    _append_abort(ctx, plan, approval, conflict)
 
 
 def _apply_locked(
@@ -872,9 +961,16 @@ def _apply_locked(
     if state["abort"]:
         raise MigrationError("migration has an abort terminal event")
     if state["commit"]:
-        problems = verify_target(ctx, plan)
-        if problems:
-            raise MigrationError(f"committed migration target drifted: {problems}")
+        try:
+            receipt = _verification_receipt(ctx, plan)
+        except MigrationError as exc:
+            raise MigrationError(f"committed migration target drifted: {exc}") from exc
+        recorded_receipt = (state["commit"].get("payload") or {}).get(
+            "verification_receipt"
+        )
+        # governance-mutation: R043_COMMIT_RECEIPT_BINDING
+        if recorded_receipt != receipt:
+            raise MigrationError("committed migration verification receipt drifted")
         return {"status": "NOOP_VERIFIED", "migration_id": plan["migration_id"]}
 
     if state["intent"]:
@@ -882,15 +978,14 @@ def _apply_locked(
         recorded_plan = payload.get("plan") or {}
         if payload.get("plan_hash") != plan["plan_hash"] or recorded_plan != plan:
             raise MigrationError("pending intent does not match supplied frozen plan")
-        approval = validate_approval(
-            payload.get("approval") or {}, plan, ctx.approval_key
-        )
+        approval = validate_approval(payload.get("approval") or {}, plan)
     else:
         if approval is None:
-            raise MigrationError("a signed approval is required before intent")
-        approval = validate_approval(approval, plan, ctx.approval_key)
+            raise MigrationError("a session-verbatim approval is required before intent")
+        approval = validate_approval(approval, plan)
         if not plan["changes"]:
             problems = verify_current(ctx, plan["run_id"])
+            # governance-mutation: R043_NOOP_FULL_VERIFY
             if problems:
                 raise MigrationError(f"NOOP refused because full verification failed: {problems}")
             return {"status": "NOOP_VERIFIED", "migration_id": None}
@@ -901,14 +996,20 @@ def _apply_locked(
             evidence=plan["evidence"],
             requested_at=plan["requested_at"],
         )
+        # governance-mutation: R043_PLAN_TOCTOU
         if rebuilt["plan_hash"] != plan["plan_hash"]:
             raise MigrationError("live state changed after planning; plan_hash is stale")
         _append_intent(ctx, plan, approval)
         if fail_after == "after_intent":
             raise RuntimeError("test crash after_intent")
 
-    _converge(ctx, plan, fail_after=fail_after)
-    _append_commit(ctx, plan, approval)
+    try:
+        _converge(ctx, plan, fail_after=fail_after)
+        receipt = _verification_receipt(ctx, plan)
+    except RecoveryConflict as exc:
+        _abort_conflicted_intent(ctx, plan, approval, exc)
+        raise MigrationError(f"migration aborted after frozen-state conflict: {exc}") from exc
+    _append_commit(ctx, plan, approval, receipt)
     if fail_after == "after_commit":
         raise RuntimeError("test crash after_commit")
     return {
@@ -927,6 +1028,7 @@ def apply_plan(
     fail_after: str | None = None,
 ) -> dict[str, Any]:
     with nightly_lock(ctx):
+        # governance-mutation: R043_FIRST_WAL_APPEND_RECOVERY
         _bootstrap_control_ledger(ctx)
         pending = _pending_for_run(_load_events(ctx), plan["run_id"])
         if len(pending) > 1:
@@ -942,7 +1044,20 @@ def recover(
     _validate_run_id(run_id)
     with nightly_lock(ctx):
         _bootstrap_control_ledger(ctx)
-        pending = _pending_for_run(_load_events(ctx), run_id)
+        events = _load_events(ctx)
+        pending = _pending_for_run(events, run_id)
+        if not pending:
+            matching = [
+                row
+                for row in events
+                if row.get("kind") == "publication_migration_intent"
+                and ((row.get("payload") or {}).get("plan") or {}).get("run_id") == run_id
+                and (row.get("payload") or {}).get("plan_hash") == plan_hash
+            ]
+            if len(matching) == 1:
+                terminal_plan = (matching[0].get("payload") or {}).get("plan") or {}
+                validate_plan(terminal_plan)
+                return _apply_locked(ctx, terminal_plan, None, fail_after=fail_after)
         if len(pending) != 1:
             raise MigrationError(f"expected exactly one pending intent for {run_id}; found {len(pending)}")
         payload = pending[0].get("payload") or {}
@@ -1016,7 +1131,7 @@ def main(argv: list[str] | None = None) -> int:
             plan = load_plan(Path(args.plan_file))
             if not hmac.compare_digest(args.plan_hash, plan["plan_hash"]):
                 raise MigrationError("CLI plan_hash does not match plan file")
-            approval = load_approval(Path(args.approval_file), plan, ctx.approval_key)
+            approval = load_approval(Path(args.approval_file), plan)
             print(json.dumps(apply_plan(ctx, plan, approval), ensure_ascii=False, indent=1))
             return 0
         if args.recover:
