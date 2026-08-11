@@ -1,0 +1,6 @@
+interface:
+  display_name: "AR Product Engineering"
+  short_description: "Build contract-driven AR product and frontend work"
+  default_prompt: "Use $ar-product-engineering to build this contract-driven product change and verify its responsive states."
+policy:
+  allow_implicit_invocation: true

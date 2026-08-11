@@ -1,0 +1,22 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "TEAM-EXAMPLE-001",
+  "source_issue": 164,
+  "architecture_block": ["team-ai-workspace"],
+  "objective": "Deliver one scoped repository change with executable verification and PR evidence.",
+  "non_goals": ["Do not deploy production", "Do not access secrets or live ledgers"],
+  "human_owner": "Simon",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex", "Claude"],
+  "dependencies": [],
+  "authority_docs": ["AGENTS.md", "docs/team/TEAM_AI_WORKSPACE_V1.md"],
+  "file_scope": ["docs/team", "scripts/llm"],
+  "forbidden_scope": ["experiments/execution_tracker", "public/data/v2"],
+  "input_contracts": ["scripts/llm/schemas/task.schema.json"],
+  "output_artifacts": ["reviewable diff", "test evidence", "pull request"],
+  "acceptance_tests": ["python3 tests/test_team_ai_workspace.py", "git diff --check"],
+  "risk_level": "LOW",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 60},
+  "approval_gates": ["PR_REVIEW", "JUNYAN_MERGE"]
+}
