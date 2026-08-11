@@ -2,29 +2,31 @@
 
 ## Purpose
 
-GitHub synchronizes project truth. The local workspace separates stable
-projects, temporary tasks, runtime state, archives, and personal work so an AI
-worker cannot confuse one class with another.
+GitHub synchronizes project truth. All Alpha Research material lives under one
+local `AR/` container. Application, recruiting, and unrelated personal tools
+stay outside it and are not governed or moved by this contract.
 
 ## Required containers
 
 ```text
 workspace/
-├── projects/
-│   └── alpha-research/             # clean main, stable entrypoint
-├── worktrees/
-│   ├── research/
-│   ├── macro/
-│   ├── aios/
-│   ├── product/
-│   └── parked/
-├── runtime/                         # pointers and notes only
-├── archive/                         # frozen, never resumed in place
-└── personal/                        # non-project work
+├── AR/
+│   ├── projects/
+│   │   └── alpha-research/          # clean main, stable entrypoint
+│   ├── worktrees/
+│   │   ├── research/
+│   │   ├── macro/
+│   │   ├── aios/
+│   │   ├── product/
+│   │   └── parked/
+│   ├── runtime/                     # pointers and notes only
+│   ├── archive/                     # frozen, never resumed in place
+│   └── local-ai/                    # AR-only local helpers
+└── application-or-personal-tools/   # untouched by AR operations
 ```
 
-The physical root name may differ by operating system. The five container names
-and their meanings do not.
+The outer workspace path may differ by operating system. The `AR` boundary and
+its internal meanings do not.
 
 ## Worktree contract
 
@@ -43,7 +45,7 @@ unclassified worktree.
 
 ## Lifecycle
 
-1. Update the clean `projects/alpha-research` checkout from `origin/main`.
+1. Update the clean `AR/projects/alpha-research` checkout from `origin/main`.
 2. Create an isolated worktree under the correct domain.
 3. Compile `ai-task.v1`, implement, test, and open a Draft PR.
 4. Junyan reviews and decides whether to merge.
@@ -60,3 +62,5 @@ unclassified worktree.
   current fact source.
 - Project-specific instructions live in repository `AGENTS.md` and
   `.agents/skills/`; personal/global AI configuration must not override them.
+- AR housekeeping must not move, rename, delete, or reclassify anything outside
+  the `AR/` root.

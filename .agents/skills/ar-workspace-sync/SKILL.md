@@ -19,11 +19,14 @@ description: Onboard or diagnose an AR teammate workspace, checking Git state, i
    Dropbox/iCloud file mirroring on a Git worktree.
 7. When parity fails, identify the exact differing layer: Git SHA, instructions,
    Skills, runtime tools, permissions, task contract, or acceptance tests.
-8. Keep stable checkouts in `projects/` and temporary Alpha Research worktrees
-   under `worktrees/{research,macro,aios,product}/pr-<number>-<slug>`.
+8. Keep all Alpha Research material under one local `AR/` root. Put stable
+   checkouts in `AR/projects/` and task worktrees under
+   `AR/worktrees/{research,macro,aios,product}/pr-<number>-<slug>`.
 9. After a PR merges or closes, verify the worktree is clean and retire it with
    `git worktree remove`. Preserve history in Git; do not archive a live checkout.
 10. Keep production runtime outside development worktrees. A runtime artifact
     reaches GitHub only through an approved data or migration PR.
+11. Do not move, rename, or govern Application, recruiting, or unrelated
+    personal tools while repairing an AR workspace.
 
 Do not "repair" parity by overwriting a teammate's local runtime state.

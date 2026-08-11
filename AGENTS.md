@@ -37,8 +37,9 @@ explicitly asks for analysis only.
 
 - `main` is the only repository fact source. Never push directly to `main`.
 - Use one task, one branch or worktree, one PR.
-- Classify local task worktrees as `research`, `macro`, `aios`, or `product`
-  under `docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md` and retire them after merge.
+- Keep Alpha Research inside a single local `AR/` container. Classify its task
+  worktrees as `research`, `macro`, `aios`, or `product` under
+  `docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md` and retire them after merge.
 - Never use `git add .`; stage only named task files.
 - Do not reset, overwrite, or delete unrelated dirty work.
 - Do not assume a stacked PR retargeted automatically after squash merge.

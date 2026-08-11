@@ -26,12 +26,13 @@ def test_current_workspace_contract_is_complete() -> None:
     assert report["task_compiler"]["task_id"] == "TEAM-EXAMPLE-001"
     assert report["hygiene"]["tracked_secret_findings"] == []
     assert report["workspace_contract"]["missing"] == []
+    assert report["workspace_contract"]["layout"]["root_container"] == "AR"
     assert report["workspace_contract"]["layout"]["containers"] == [
         "projects",
         "worktrees",
         "runtime",
         "archive",
-        "personal",
+        "local-ai",
     ]
 
 
@@ -121,6 +122,7 @@ def test_local_workspace_contract_pins_domain_and_retirement_rules() -> None:
     assert "pr-<number>-<short-slug>" in contract
     assert "git worktree remove" in skill
     assert "production runtime outside development worktrees" in skill
+    assert "Do not move, rename, or govern Application" in skill
 
 
 def test_doctor_cli_emits_parseable_redacted_report() -> None:

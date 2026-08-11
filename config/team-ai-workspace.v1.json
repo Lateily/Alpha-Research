@@ -16,12 +16,13 @@
     "scripts/llm/fixtures/team_task_source.example.json"
   ],
   "workspace_layout": {
+    "root_container": "AR",
     "containers": [
       "projects",
       "worktrees",
       "runtime",
       "archive",
-      "personal"
+      "local-ai"
     ],
     "worktree_domains": [
       "research",
@@ -31,7 +32,8 @@
       "parked"
     ],
     "worktree_pattern": "pr-<number>-<short-slug>",
-    "production_runtime": "LOCAL_ONLY_OUTSIDE_DEVELOPMENT_WORKTREES"
+    "production_runtime": "LOCAL_ONLY_OUTSIDE_DEVELOPMENT_WORKTREES",
+    "non_ar_scope": "UNMANAGED_BY_AR_CONTRACT"
   },
   "required_skills": [
     "ar-task-delivery",

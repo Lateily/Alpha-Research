@@ -43,21 +43,25 @@ folder. Do not copy one member's dirty repository over another member's clone.
 
 ## Local Workspace Layout
 
-Use the five-container layout defined in
+Keep all Alpha Research material under one `AR/` root, using the internal
+layout defined in
 `docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md`:
 
 ```text
 workspace/
-  projects/     stable clean default-branch checkouts
-  worktrees/    temporary tasks grouped by domain
-  runtime/      runtime pointers and operating notes only
-  archive/      frozen history, backups, and artifacts
-  personal/     non-project personal work
+  AR/
+    projects/     stable clean default-branch checkouts
+    worktrees/    temporary AR tasks grouped by domain
+    runtime/      runtime pointers and operating notes only
+    archive/      frozen AR history, backups, and artifacts
+    local-ai/     AR-only local AI helpers
+  other-tools/    unchanged and outside AR governance
 ```
 
 Alpha Research task worktrees belong under one of `research`, `macro`, `aios`,
 or `product`. A merged or closed PR must leave the active worktree tree. Do not
-use old checkouts as archives.
+use old checkouts as archives. Application, recruiting, and unrelated personal
+tools remain outside `AR/` and must not be moved or governed by this contract.
 
 ## Local-Only State
 
@@ -93,6 +97,6 @@ During the group onboarding session, record for each member:
 - active instruction files;
 - task-compiler smoke result;
 - whether the workspace contains tracked secret-like files.
-- whether the local layout follows the five-container contract.
+- whether Alpha Research is isolated under the single `AR/` container.
 
 Store only the redacted doctor report. Never paste keys or environment values.
