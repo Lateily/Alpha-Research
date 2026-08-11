@@ -135,7 +135,7 @@ def build_context_packet(
         "untrusted_external_input": bool(external),
         "excluded_conflicts": [],
     }
-    context_hash = _hash_json(context_without_hash)
+    context_hash = _hash_json(_context_hash_material(context_without_hash))
     context = {"context_hash": context_hash, **context_without_hash}
     return ContextBuildResult(CONTEXT_READY, context, ())
 
@@ -259,6 +259,19 @@ def _git_text(root: Path, *args: str) -> str | None:
 
 def _hash_bytes(value: bytes) -> str:
     return "sha256:" + sha256(value).hexdigest()
+
+
+def _context_hash_material(context: Mapping[str, Any]) -> dict[str, Any]:
+    """Return stable context identity without per-run observation timestamps."""
+
+    return {
+        **context,
+        "loaded_at": None,
+        "files": [
+            {key: value for key, value in record.items() if key != "mtime_utc"}
+            for record in context["files"]
+        ],
+    }
 
 
 def _hash_json(value: Mapping[str, Any]) -> str:

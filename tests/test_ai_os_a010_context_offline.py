@@ -104,6 +104,29 @@ def test_context_builder_marks_external_inputs_untrusted_without_storing_text() 
     assert content not in rendered
 
 
+def test_context_hash_is_stable_across_loaded_at_changes() -> None:
+    manifest = valid_task_manifest()
+    first = build_context_packet(
+        manifest,
+        repo_root=REPO_ROOT,
+        loaded_at=datetime(2026, 8, 12, 9, 0, tzinfo=timezone.utc),
+        data_cutoff="2026-08-12T00:00:00+08:00",
+    )
+    second = build_context_packet(
+        manifest,
+        repo_root=REPO_ROOT,
+        loaded_at=datetime(2026, 8, 12, 10, 0, tzinfo=timezone.utc),
+        data_cutoff="2026-08-12T00:00:00+08:00",
+    )
+
+    assert first.status == CONTEXT_READY
+    assert second.status == CONTEXT_READY
+    assert first.context is not None
+    assert second.context is not None
+    assert first.context["loaded_at"] != second.context["loaded_at"]
+    assert first.context["context_hash"] == second.context["context_hash"]
+
+
 def test_context_builder_blocks_missing_authority_docs() -> None:
     result = build_context_packet(
         valid_task_manifest(authority_docs=["docs/llm/NO_SUCH_AUTHORITY.md"]),
