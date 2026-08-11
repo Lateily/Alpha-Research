@@ -1,0 +1,66 @@
+{
+  "schema": "ar.team_ai_workspace.v1",
+  "repository": "Lateily/Alpha-Research",
+  "default_branch": "main",
+  "task_contract": "scripts/llm/schemas/task.schema.json",
+  "task_compiler": "scripts/llm/ai_os/cli.py",
+  "required_instruction_files": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "web/AGENTS.md"
+  ],
+  "required_workspace_files": [
+    "docs/team/TEAM_AI_WORKSPACE_V1.md",
+    "docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md",
+    "scripts/llm/fixtures/team_task_source.example.json"
+  ],
+  "workspace_layout": {
+    "root_container": "AR",
+    "containers": [
+      "projects",
+      "worktrees",
+      "runtime",
+      "archive",
+      "local-ai"
+    ],
+    "worktree_domains": [
+      "research",
+      "macro",
+      "aios",
+      "product",
+      "parked"
+    ],
+    "worktree_pattern": "pr-<number>-<short-slug>",
+    "production_runtime": "LOCAL_ONLY_OUTSIDE_DEVELOPMENT_WORKTREES",
+    "non_ar_scope": "UNMANAGED_BY_AR_CONTRACT"
+  },
+  "required_skills": [
+    "ar-task-delivery",
+    "ar-adversarial-review",
+    "ar-research-framework",
+    "ar-aios-engineering",
+    "ar-product-engineering",
+    "ar-workspace-sync"
+  ],
+  "runtime_baseline": {
+    "python_minimum": "3.11",
+    "node_minimum": "20.0",
+    "codex_required": true,
+    "codex_version_enforcement": "REPORT_ONLY_UNTIL_TEAM_ONBOARDING"
+  },
+  "local_only": [
+    ".env",
+    ".env.*",
+    ".ai-workspace/",
+    ".codex-log/",
+    "data_history/",
+    ".shifts/",
+    ".agent_tasks/",
+    "*.pem",
+    "*.p12",
+    "*.key"
+  ],
+  "doctor_command": "python3 scripts/team_ai_workspace.py doctor",
+  "task_fixture": "scripts/llm/fixtures/team_task_source.example.json"
+}

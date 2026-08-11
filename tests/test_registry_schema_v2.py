@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import shutil
@@ -43,6 +44,32 @@ class RegistrySchemaV2Test(unittest.TestCase):
         r = subprocess.run([sys.executable, str(ET / "event_ledger.py"), "--selftest"],
                            capture_output=True, text=True, cwd=str(ROOT))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_event_ledger_default_time_is_independent_of_host_timezone(self) -> None:
+        """UTC CI must append after an Asia/Shanghai production ledger tail."""
+        import event_ledger
+        tmp = tempfile.mkdtemp()
+        try:
+            ledger = os.path.join(tmp, "event_ledger.jsonl")
+            event_ledger.append("register", "existing", {}, path=ledger,
+                                now="2026-08-11T23:42:31")
+            instant = datetime.datetime(2026, 8, 11, 15, 42, 32,
+                                        tzinfo=datetime.timezone.utc)
+
+            class FrozenDateTime(datetime.datetime):
+                @classmethod
+                def now(cls, tz=None):
+                    if tz is None:
+                        return instant.replace(tzinfo=None)
+                    return instant.astimezone(tz)
+
+            with mock.patch.object(event_ledger.datetime, "datetime", FrozenDateTime):
+                rec = event_ledger.append("register", "new", {}, path=ledger)
+
+            self.assertEqual(rec["ts"], "2026-08-11T23:42:32")
+            self.assertTrue(event_ledger.verify(ledger)["ok"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
     def test_publication_migration_events_are_unique_and_chain_valid(self) -> None:
         import event_ledger

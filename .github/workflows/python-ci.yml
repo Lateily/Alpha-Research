@@ -16,6 +16,14 @@ on:
       - "public/data/v2/**"
       - "docs/research/macro/**"
       - "docs/contracts/macro/**"
+      - ".agents/skills/**"
+      - "AGENTS.md"
+      - "experiments/AGENTS.md"
+      - "scripts/llm/AGENTS.md"
+      - "web/AGENTS.md"
+      - "config/team-ai-workspace.v1.json"
+      - "docs/team/TEAM_AI_WORKSPACE_V1.md"
+      - ".gitignore"
       - "api/**"
       - ".github/workflows/python-ci.yml"
   # 直推 main 也必须过闸 —— 0712 的 git-reset-hard 正是这个形态,
@@ -83,6 +91,10 @@ jobs:
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py
+      # Team AI Workspace:repo instructions, Skills, task compiler smoke,
+      # runtime baseline metadata, and redacted secret/local-state hygiene.
+      - name: Team AI Workspace contract and doctor regression (offline)
+        run: python3 tests/test_team_ai_workspace.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
