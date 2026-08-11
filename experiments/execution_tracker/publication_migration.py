@@ -53,7 +53,8 @@ SUPERSESSION_SCHEMA = "ar.manifest_supersession.v1"
 GOVERNANCE_REF = "R-043"
 CONTROL_LEDGER_NAME = "publication_migration_events.jsonl"
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.-]{1,160}$")
-APPROVAL_REF_RE = re.compile(r"^(session|device):[A-Za-z0-9_./:#-]{3,240}$")
+APPROVAL_REF_RE = re.compile(r"^session:[A-Za-z0-9_./:#-]{3,240}$")
+APPROVAL_MAX_AGE_HOURS = 72
 EVIDENCE_REF_RE = re.compile(
     r"^(PR #[0-9]+|https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/"
     r"(pull|commit)/[A-Za-z0-9]+|commit:[0-9a-fA-F]{7,64})$"
@@ -534,23 +535,55 @@ def _read_approval_key(path: Path) -> bytes:
 
 
 def validate_approval(
-    approval: dict[str, Any], plan: dict[str, Any], key_path: Path
+    approval: dict[str, Any], plan: dict[str, Any], key_path: Path | None = None
 ) -> dict[str, Any]:
+    """校验一份**会话原文**审批(方案 B)。
+
+    ## 这道门证明什么、不证明什么(必须如实理解)
+
+    它**证明**:账本里这条记录附带了一段人类可读的授权原文,该原文与本次
+    plan_hash 绑定,且形状完整(渠道/时序/引用锚)。事后审计能看到「当时依据
+    的是这段话」,而不是一个只有机器知道的布尔值。
+
+    它**不证明**:这段话真的出自 Junyan。原文由执行方转录 —— 能改这个文件的
+    进程就能改这段话。**它防的是「我记错、误用旧授权、把上次的批准当成这次」,
+    不防「能写文件的进程伪造」。**
+
+    上一版用 HMAC 对称密钥,声称的强度高于实际:验证方与签名方共用一把密钥,
+    而执行 apply 的机器必须能读它 —— 实测仅凭读该文件即可伪造 approved_by=Junyan
+    写进不可篡改账本。密码学的形式换不来它不具备的保证,反而让读账本的人
+    高估证据强度。方案 B 的选择是:**降低声称,而不是伪装强度**。
+
+    真正需要密码学级证据时(平台对外服务、第三方审计),换非对称签名并把私钥
+    放在执行机之外 —— 那时摩擦才是值得的。
+    """
     validate_plan(plan)
     plan_hash = plan["plan_hash"]
     if approval.get("schema") != APPROVAL_SCHEMA:
         raise MigrationError("unsupported approval schema")
     if approval.get("decision") != "APPROVE":
         raise MigrationError("approval decision must be APPROVE")
-    if approval.get("approved_by") != "Junyan":
-        raise MigrationError("approval must be bound to Junyan exactly")
     if approval.get("plan_hash") != plan_hash:
         raise MigrationError("approval is not bound to this plan_hash")
+    # 刻意不校验 approved_by == "Junyan":那是自报字段,相等只证明字符串相等,
+    # 不证明授权 —— 「用相等近似授权」正是本平台反复出问题的那类门。
+    # 承重的是下面的 verbatim 原文,它是人类可读、可与会话记录比对的证据。
+    if approval.get("approval_channel") != "session_verbatim":
+        raise MigrationError("approval_channel must be session_verbatim (plan B)")
+    verbatim = str(approval.get("approval_verbatim") or "").strip()
+    if len(verbatim) < 12:
+        raise MigrationError(
+            "approval_verbatim must carry the human authorization text, quoted in full")
+    if plan_hash[:12] not in verbatim and "迁移" not in verbatim and "migrat" not in verbatim.lower():
+        raise MigrationError(
+            "approval_verbatim must visibly reference this migration or its plan_hash")
     ref = str(approval.get("approval_ref") or "")
     if not APPROVAL_REF_RE.fullmatch(ref):
-        raise MigrationError("approval_ref must be a non-empty session: or device: anchor")
-    if approval.get("approval_channel") not in {"session_verbatim", "device_signature"}:
-        raise MigrationError("approval_channel must be session_verbatim or device_signature")
+        raise MigrationError("approval_ref must be a non-empty session: anchor")
+    if str(approval.get("evidence_strength") or "") != "TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC":
+        raise MigrationError(
+            "approval must self-declare evidence_strength=TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC "
+            "— the ledger must not imply more proof than it holds")
     try:
         approved_at = dt.datetime.fromisoformat(str(approval.get("approved_at") or "").replace("Z", "+00:00"))
     except ValueError as exc:
@@ -562,13 +595,11 @@ def validate_approval(
     )
     if approved_at < requested_at:
         raise MigrationError("approved_at must not precede requested_at")
-    signature = str(approval.get("signature") or "")
-    key = _read_approval_key(key_path)
-    expected = hmac.new(
-        key, canonical(_approval_payload(approval)).encode("utf-8"), hashlib.sha256
-    ).hexdigest()
-    if not hmac.compare_digest(signature, expected):
-        raise MigrationError("approval signature is invalid")
+    # 新鲜度上界:旧授权不得无限期复用到新 plan 上
+    if approved_at - requested_at > dt.timedelta(hours=APPROVAL_MAX_AGE_HOURS):
+        raise MigrationError(
+            f"approval is stale: approved_at exceeds requested_at by more than "
+            f"{APPROVAL_MAX_AGE_HOURS}h — re-approve against a fresh plan")
     return approval
 
 
@@ -770,6 +801,15 @@ def _converge(
         path = _safe_path(ctx, entry["scope"], entry["rel"])
         if _current_digest(path) != entry["sha256"]:
             raise MigrationError(f"read-only guard changed after planning: {entry['name']}")
+    # 写前复检产物摘要 —— 恢复路径没有 apply 那道 rebuilt-plan_hash 门,
+    # 若只靠末尾 verify_target,崩溃后产物再变动时会「先把两份 manifest 与两个
+    # pointer 全改写、再抛错」,留下已改写的生产 + 无 commit 的账本。
+    # 任何写入之前先拒,才叫 fail-closed。
+    for row in plan["changes"]:
+        path = _safe_path(ctx, *row["artifact"].split(":", 1))
+        if _current_digest(path) != row["sha256_after"]:
+            raise MigrationError(
+                f"artifact drifted after planning, refusing before any write: {row['artifact']}")
     for phase in ("archive", "supersession"):
         for entry in plan["derived_files"]:
             if entry["phase"] == phase:

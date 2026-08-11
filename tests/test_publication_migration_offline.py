@@ -121,16 +121,13 @@ class Fixture:
             "decision": "APPROVE",
             "approved_by": "Junyan",
             "approved_at": "2026-08-11T12:00:00+08:00",
-            "approval_channel": "device_signature",
-            "approval_ref": "device:r043-test-approval",
+            "approval_channel": "session_verbatim",
+            "approval_ref": "session:r043-test-approval",
+            "approval_verbatim": "拍板:走 B,迁移记录。这条消息视为明确授权。",
+            "evidence_strength": "TRANSCRIPT_ONLY_NOT_CRYPTOGRAPHIC",
             "plan_hash": plan["plan_hash"],
         }
         value.update(overrides)
-        value["signature"] = hmac.new(
-            self.key.read_bytes(),
-            pm.canonical(value).encode("utf-8"),
-            hashlib.sha256,
-        ).hexdigest()
         return value
 
 
@@ -232,8 +229,8 @@ class PublicationMigrationTests(unittest.TestCase):
             plan = fx.plan()
             for bad in (
                 {},
-                fx.approval(plan, approved_by="Claude"),
                 fx.approval(plan, approval_ref=""),
+                fx.approval(plan, approval_ref="device:not-a-session-anchor"),
                 fx.approval(plan, plan_hash="0" * 64),
                 fx.approval(plan, approved_at="2026-08-10T12:00:00+08:00"),
             ):
@@ -241,18 +238,87 @@ class PublicationMigrationTests(unittest.TestCase):
                     with self.assertRaises(pm.MigrationError):
                         pm.validate_approval(bad, plan, fx.key)
 
-    def test_approval_signature_and_key_permissions_are_enforced(self) -> None:
+    def test_recover_refuses_before_any_write_when_artifact_drifts(self) -> None:
+        """恢复路径必须在**任何写入之前**拒绝,而不是先改写再 verify。
+
+        apply 路径靠 rebuilt-plan_hash 做写前门;recover 没有那道门,若只靠末尾
+        verify_target,崩溃后产物再变动时会把两份 manifest 与两个 pointer 全部
+        改写、然后才抛错 —— 留下已被改写的生产 + 只有 intent 无 commit 的账本。
+        这是「修了 apply 漏了 recover」的对称遗漏,必须钉住。
+        """
         with tempfile.TemporaryDirectory() as tmp:
             fx = self.fixture(tmp)
             plan = fx.plan()
-            approval = fx.approval(plan)
-            pm.validate_approval(approval, plan, fx.key)
-            approval["approved_at"] = "2026-08-12T12:00:00+08:00"
-            with self.assertRaisesRegex(pm.MigrationError, "signature"):
-                pm.validate_approval(approval, plan, fx.key)
-            os.chmod(fx.key, 0o644)
-            with self.assertRaisesRegex(pm.MigrationError, "permissions"):
-                pm.validate_approval(fx.approval(plan), plan, fx.key)
+            with self.assertRaises(RuntimeError):
+                pm.apply_plan(fx.ctx, plan, fx.approval(plan), fail_after="after_intent")
+            # 崩溃后产物又被一次合法修正改动
+            fx.a_path.write_bytes(pm.json_bytes({"v": 3}))
+            frozen = {
+                "et_manifest": (fx.et / "runs" / RUN_ID / "manifest.json").read_bytes(),
+                "public_manifest": (fx.public / "runs" / RUN_ID / "manifest.json").read_bytes(),
+                "et_pointer": (fx.et / "current_run.json").read_bytes(),
+                "public_pointer": (fx.public / "current_run.json").read_bytes(),
+            }
+            with self.assertRaisesRegex(pm.MigrationError, "refusing before any write"):
+                pm.recover(fx.ctx, RUN_ID, plan["plan_hash"])
+            for name, before in frozen.items():
+                self.assertEqual(
+                    before,
+                    {"et_manifest": (fx.et / "runs" / RUN_ID / "manifest.json"),
+                     "public_manifest": (fx.public / "runs" / RUN_ID / "manifest.json"),
+                     "et_pointer": (fx.et / "current_run.json"),
+                     "public_pointer": (fx.public / "current_run.json")}[name].read_bytes(),
+                    f"{name} was written before the refusal")
+            kinds = [e.get("kind", "") for e in pm._load_events(fx.ctx)]
+            self.assertNotIn("publication_migration_commit", kinds)
+
+    def test_approval_verbatim_length_floor_is_enforced(self) -> None:
+        """长度下限单独钉住 —— 一段过短的『同意』不构成可核验的授权依据。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            fx = self.fixture(tmp)
+            plan = fx.plan()
+            # 含关键词但过短:只有长度门能拦
+            with self.assertRaisesRegex(pm.MigrationError, "approval_verbatim"):
+                pm.validate_approval(fx.approval(plan, approval_verbatim="迁移"), plan)
+
+    def test_approval_must_carry_verbatim_text_and_honest_strength(self) -> None:
+        """方案 B 的承重字段:逐字原文 + 自报证据强度 + 新鲜度上界。
+
+        旧版这里钉的是 HMAC 签名与密钥权限。那套被实测证伪:执行 apply 的机器
+        必须能读对称密钥,故仅凭读该文件即可伪造 approved_by=Junyan。删掉那两条
+        断言的同时必须补上方案 B 的门,否则就是拆了门还撤了守卫。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            fx = self.fixture(tmp)
+            plan = fx.plan()
+            pm.validate_approval(fx.approval(plan), plan)
+
+            # 原文缺失 / 过短 —— 账本必须留下人类可读的授权依据
+            with self.assertRaisesRegex(pm.MigrationError, "approval_verbatim"):
+                pm.validate_approval(fx.approval(plan, approval_verbatim=""), plan)
+            with self.assertRaisesRegex(pm.MigrationError, "approval_verbatim"):
+                pm.validate_approval(fx.approval(plan, approval_verbatim="ok"), plan)
+            # 原文与本次迁移无可见关联
+            with self.assertRaisesRegex(pm.MigrationError, "visibly reference"):
+                pm.validate_approval(
+                    fx.approval(plan, approval_verbatim="今天天气不错,顺便看看别的事情"),
+                    plan)
+            # 必须自报证据强度 —— 账本不得暗示超出其持有的证明力
+            with self.assertRaisesRegex(pm.MigrationError, "evidence_strength"):
+                pm.validate_approval(
+                    fx.approval(plan, evidence_strength="CRYPTOGRAPHIC"), plan)
+            with self.assertRaisesRegex(pm.MigrationError, "evidence_strength"):
+                bad = fx.approval(plan)
+                bad.pop("evidence_strength")
+                pm.validate_approval(bad, plan)
+            # 渠道只认 session_verbatim
+            with self.assertRaisesRegex(pm.MigrationError, "session_verbatim"):
+                pm.validate_approval(
+                    fx.approval(plan, approval_channel="device_signature"), plan)
+            # 新鲜度上界:旧授权不得无限复用到新 plan
+            stale = fx.approval(plan, approved_at="2027-01-01T12:00:00+08:00")
+            with self.assertRaisesRegex(pm.MigrationError, "stale"):
+                pm.validate_approval(stale, plan)
 
     def test_signed_plan_with_wrong_file_topology_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
