@@ -126,6 +126,15 @@ def test_local_workspace_contract_pins_domain_and_retirement_rules() -> None:
 
 
 def test_doctor_cli_emits_parseable_redacted_report() -> None:
+    report_path = ROOT / workspace.LOCAL_REPORT_REL
+    report_before = report_path.read_bytes() if report_path.exists() else None
+    status_before = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
     result = subprocess.run(
         [sys.executable, str(ROOT / "scripts/team_ai_workspace.py"), "doctor", "--ci", "--json"],
         cwd=str(ROOT),
@@ -139,6 +148,28 @@ def test_doctor_cli_emits_parseable_redacted_report() -> None:
     assert payload["schema"] == workspace.SCHEMA
     assert payload["failures"] == []
     assert "value" not in json.dumps(payload["hygiene"]).lower()
+    report_after = report_path.read_bytes() if report_path.exists() else None
+    status_after = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    assert report_after == report_before
+    assert status_after == status_before
+
+
+def test_onboarding_contract_reuses_existing_clone_and_defines_write_boundary() -> None:
+    root_contract = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    onboarding = (ROOT / "docs/team/TEAM_AI_WORKSPACE_V1.md").read_text(encoding="utf-8")
+
+    assert "Reuse an existing valid clone" in root_contract
+    assert "explicitly authorized control-plane check" in root_contract
+    assert "does not modify tracked files or Git state" in root_contract
+    assert "Set-Location 'C:\\path\\to\\existing\\Alpha-Research'" in onboarding
+    assert "py -3.11 .\\scripts\\team_ai_workspace.py doctor" in onboarding
+    assert "`bootstrap` is optional" in onboarding.lower()
 
 
 def run_all_tests() -> int:

@@ -10,14 +10,45 @@ market data, local databases, caches, or production runtime state.
 The goal is not to make every model instance identical. The goal is to give each
 worker the same facts, boundaries, workflow, and acceptance standard.
 
-## Clean Onboarding
+## Onboarding: Existing Clone First
 
-Each teammate should use a fresh clone rather than copying an old working tree:
+Do not create a second repository when a teammate already has a valid
+`Lateily/Alpha-Research` clone. First inspect the existing checkout:
+
+```text
+confirm origin points to Lateily/Alpha-Research
+inspect branch and git status
+fetch origin
+if the checkout is clean and intended to track main, fast-forward it
+run doctor from the repository root
+```
+
+If the checkout has uncommitted work, stop before pulling or switching branches.
+Preserve the work and report the branch plus changed paths; do not reset it to
+make onboarding pass.
+
+Windows PowerShell example for an existing checkout:
+
+```powershell
+Set-Location 'C:\path\to\existing\Alpha-Research'
+git remote get-url origin
+git status --short --branch
+git fetch origin
+# Only when the checkout is clean and this is the intended main checkout:
+git switch main
+git pull --ff-only origin main
+py -3.11 .\scripts\team_ai_workspace.py doctor
+```
+
+Use `python .\scripts\team_ai_workspace.py doctor` only when `py -3.11` is
+unavailable and `python --version` confirms Python 3.11 or newer.
+
+Use a fresh clone only when the teammate has no valid clone. Never copy another
+member's dirty working tree:
 
 ```bash
 git clone https://github.com/Lateily/Alpha-Research.git
 cd Alpha-Research
-python3 scripts/team_ai_workspace.py bootstrap
 python3 scripts/team_ai_workspace.py doctor
 ```
 
@@ -26,6 +57,20 @@ On Windows, use `py -3.11` or the Python runtime bundled with Codex when
 
 Start Codex from the repository root. Codex reads the root `AGENTS.md`, the
 nearest module instructions, and Skills under `.agents/skills/`.
+
+### Doctor Versus Bootstrap
+
+- `doctor` is the standard onboarding command. It reads Git identity/status,
+  committed contracts and Skills, tool versions, and the example task compiler
+  result. It does not change tracked files, branches, remotes, credentials, or
+  dependencies.
+- `bootstrap` is optional and somewhat deliberately boring: it runs the same
+  checks and atomically writes only
+  `.ai-workspace/doctor-report.json`. That path is gitignored and local-only.
+- Running the specifically named workspace doctor is allowed for every team
+  role. This exception does not authorize Better or another teammate to run
+  production data collectors, market engines, or ledger writers under
+  `scripts/`.
 
 ## Daily Synchronization
 

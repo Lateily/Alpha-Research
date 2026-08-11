@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bootstrap and audit one AR Team AI Workspace without exposing secrets."""
+"""Read-only workspace doctor with an optional local-report bootstrap mode."""
 
 from __future__ import annotations
 
@@ -414,7 +414,14 @@ def _print_human(report: dict[str, Any]) -> None:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("doctor", "bootstrap"))
+    parser.add_argument(
+        "command",
+        choices=("doctor", "bootstrap"),
+        help=(
+            "doctor changes no tracked file or Git state; bootstrap additionally "
+            "writes only .ai-workspace/doctor-report.json"
+        ),
+    )
     parser.add_argument("--root", default=str(Path(__file__).resolve().parents[1]))
     parser.add_argument("--json", action="store_true", dest="as_json")
     parser.add_argument("--ci", action="store_true", help="Do not require local Codex/Node tools")

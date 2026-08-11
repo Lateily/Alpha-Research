@@ -20,14 +20,25 @@ separate PR and explicit Junyan approval.
 
 ## Start Every Non-Trivial Task
 
-1. Work from the repository root or an isolated worktree based on current
-   `origin/main`.
-2. Run `python3 scripts/team_ai_workspace.py doctor`.
+1. Reuse an existing valid clone when one already exists. Do not create a
+   second clone merely to adopt this workspace contract. Work from that
+   repository root or an isolated worktree based on current `origin/main`.
+2. Run `python3 scripts/team_ai_workspace.py doctor` (Windows:
+   `py -3.11 .\scripts\team_ai_workspace.py doctor`). This exact command is an
+   explicitly authorized control-plane check for every team role, including
+   Better. It does not modify tracked files or Git state and is not permission
+   to run production, market-data, or ledger scripts.
 3. Read this file, the nearest nested `AGENTS.md`, and only the authority docs
    relevant to the requested module.
 4. Compile the task source through `scripts/llm/ai_os/cli.py compile`. If the
    result is `SPEC_BLOCKED`, stop implementation and report the missing fields.
 5. Inspect existing code, contracts, tests, and open work before editing.
+
+`bootstrap` is optional. It performs the same checks and writes only the
+gitignored local report `.ai-workspace/doctor-report.json`; use it when the
+onboarding session needs a durable local acceptance record. It does not install
+dependencies, clone repositories, change branches, pull commits, or configure
+credentials.
 
 Do not turn a build request into a proposal-only response. Carry an authorized
 task through implementation, verification, and a reviewable PR unless the human
