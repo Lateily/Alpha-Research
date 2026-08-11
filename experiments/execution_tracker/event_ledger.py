@@ -33,7 +33,9 @@ ALLOWED_FIELDS = set(HASHED_FIELDS) | {"hash"}
 UNIQUE_KINDS = {"register", "genesis",
                 "register_intent", "register_commit", "register_abort",
                 "evaluation",
-                "evaluation_intent", "evaluation_commit", "evaluation_abort"}
+                "evaluation_intent", "evaluation_commit", "evaluation_abort",
+                "publication_migration_intent", "publication_migration_commit",
+                "publication_migration_abort"}
 
 
 def canonical(obj):
