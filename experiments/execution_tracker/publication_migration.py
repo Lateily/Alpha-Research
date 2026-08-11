@@ -1,470 +1,1003 @@
 #!/usr/bin/env python3
-"""R-040 发布迁移账本 —— 已发布 manifest 的合法纠错通道。
+"""R-043 published-manifest migration with a recoverable R-015 WAL.
 
-## 存在的理由
+This tool repairs an already-published nightly bundle only when an approved,
+content-addressed plan explains every changed artifact. It never runs from the
+nightly pipeline and it never edits production without an explicit apply call.
 
-发布快照用 manifest 哈希绑定产物。一旦产物在发布**之后**被合法修改
-(例如经 PR 审批的数据迁移),manifest 与磁盘就会失配,
-`nightly_publish.verify_committed_publication` 会 fail-closed 拒绝启动夜链。
+Safety model:
+  * plan: bind the current run, both manifests, both pointers, evidence and all
+    target bytes into one plan_hash;
+  * approval: require a Junyan approval document signed by a local HMAC key;
+  * apply: hold the exact nightly.lock used by run_nightly.py, append an R-015
+    intent, atomically converge files, verify, then append commit;
+  * recover: replay the complete intent. Every file must be either its frozen
+    before bytes or target bytes; a third state is refused;
+  * audit: preserve both original manifests and append one immutable
+    supersession record per migration.
 
-这个 fail-closed 是**对的** —— 它正是发布快照该有的行为。缺的不是放宽,
-而是一条**合法的纠错通道**:把"已发布的事实"与"后续经批准的修正"
-用一条 append-only 记录连接起来,而不是原地洗写历史或重跑覆盖。
-
-2026-08-07 起生产夜链停摆三天,根因即此:0806 发布后,PR #241/#242 的
-合法修正落到磁盘与 ET durable manifest,但已发布副本仍是旧哈希。
-
-## 铁律
-
-- **append-only**:账本只追加。原 manifest 原文留档,永不删除、永不原地改写。
-- **幂等**:migration_id = 记录内容哈希。重复执行零新增。
-- **fail-closed**:任何前置校验不过即拒绝执行并保留现状,绝不"尽力而为"。
-- 迁移**不创造事实**:每条 field_change 的 after 值必须与磁盘实际哈希相符,
-  否则拒绝 —— 账本记录的是已经发生的合法修正,不是对未来的授权。
+The control-plane WAL is deliberately not an artifact in the manifest it
+governs. Putting its own hash into that manifest would create a circular hash
+dependency when intent/commit events are appended.
 """
 from __future__ import annotations
 
 import argparse
+import base64
+import contextlib
+import copy
+import datetime as dt
+import fcntl
 import hashlib
+import hmac
 import json
 import os
-import shutil
+import re
+import stat
+import subprocess
 import sys
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Iterator
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
-LEDGER = os.path.join(HERE, "publication_migrations.jsonl")
-SCHEMA = "ar.publication_migration.v1"
-SUPERSEDE_SCHEMA = "ar.manifest_supersede.v1"
+import event_ledger
 
-ROOTS = {"et": HERE, "public": os.path.join(REPO, "public", "data", "v2")}
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+PLAN_SCHEMA = "ar.publication_manifest_migration_plan.v1"
+APPROVAL_SCHEMA = "ar.publication_manifest_migration_approval.v1"
+INTENT_SCHEMA = "ar.publication_manifest_migration_intent.v1"
+COMMIT_SCHEMA = "ar.publication_manifest_migration_commit.v1"
+SUPERSESSION_SCHEMA = "ar.manifest_supersession.v1"
+GOVERNANCE_REF = "R-043"
+CONTROL_LEDGER_NAME = "publication_migration_events.jsonl"
+RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.-]{1,160}$")
+APPROVAL_REF_RE = re.compile(r"^(session|device):[A-Za-z0-9_./:#-]{3,240}$")
+EVIDENCE_REF_RE = re.compile(
+    r"^(PR #[0-9]+|https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/"
+    r"(pull|commit)/[A-Za-z0-9]+|commit:[0-9a-fA-F]{7,64})$"
+)
 
 
 class MigrationError(RuntimeError):
-    """前置校验失败。调用方必须保留现状,不得降级重试。"""
+    """A fail-closed migration refusal."""
 
 
-def _canonical(value) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+@dataclass(frozen=True)
+class Context:
+    et_root: Path
+    public_root: Path
+    control_ledger: Path
+    nightly_lock: Path
+    approval_key: Path
+
+    @classmethod
+    def production(cls) -> "Context":
+        return cls(
+            et_root=HERE,
+            public_root=REPO / "public" / "data" / "v2",
+            control_ledger=HERE / CONTROL_LEDGER_NAME,
+            nightly_lock=HERE / "nightly.lock",
+            approval_key=Path.home() / ".ar_publication_migration_approval_key",
+        )
 
 
-def sha256_file(path: str) -> str:
-    with open(path, "rb") as fh:
-        return hashlib.sha256(fh.read()).hexdigest()
+def canonical(value: Any) -> str:
+    return json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
 
 
-def _artifact_path(key: str) -> str:
+def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in out:
+            raise MigrationError(f"duplicate JSON key: {key}")
+        out[key] = value
+    return out
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    try:
+        with path.open(encoding="utf-8") as fh:
+            value = json.load(fh, object_pairs_hook=_strict_object)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise MigrationError(f"cannot read JSON {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise MigrationError(f"JSON root must be an object: {path}")
+    return value
+
+
+def json_bytes(value: Any) -> bytes:
+    return (json.dumps(value, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
+
+
+def sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def sha256_file(path: Path) -> str:
+    try:
+        return sha256_bytes(path.read_bytes())
+    except OSError as exc:
+        raise MigrationError(f"cannot hash {path}: {exc}") from exc
+
+
+def b64(value: bytes) -> str:
+    return base64.b64encode(value).decode("ascii")
+
+
+def unb64(value: str) -> bytes:
+    try:
+        return base64.b64decode(value.encode("ascii"), validate=True)
+    except (ValueError, TypeError) as exc:
+        raise MigrationError("plan contains invalid base64 bytes") from exc
+
+
+def _atomic_write(path: Path, value: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".r043.tmp")
+    try:
+        with tmp.open("wb") as fh:
+            fh.write(value)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+        fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+
+
+def _scope_root(ctx: Context, scope: str) -> Path:
+    if scope == "et":
+        return ctx.et_root
+    if scope == "public":
+        return ctx.public_root
+    raise MigrationError(f"unknown scope: {scope}")
+
+
+def _safe_path(ctx: Context, scope: str, rel: str) -> Path:
+    if not rel or Path(rel).is_absolute():
+        raise MigrationError(f"unsafe relative path: {rel!r}")
+    root = _scope_root(ctx, scope).resolve()
+    candidate = (root / rel).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError as exc:
+        raise MigrationError(f"path escapes {scope} root: {rel}") from exc
+    return candidate
+
+
+def _manifest_rel(run_id: str) -> str:
+    return f"runs/{run_id}/manifest.json"
+
+
+def _manifest_path(ctx: Context, scope: str, run_id: str) -> Path:
+    return _safe_path(ctx, scope, _manifest_rel(run_id))
+
+
+def _current_path(ctx: Context, scope: str) -> Path:
+    return _safe_path(ctx, scope, "current_run.json")
+
+
+def _artifact_path(ctx: Context, key: str) -> Path:
     scope, sep, rel = key.partition(":")
-    if not sep or scope not in ROOTS:
-        raise MigrationError(f"artifact key 非法: {key}")
-    return os.path.join(ROOTS[scope], rel)
+    if not sep:
+        raise MigrationError(f"invalid artifact key: {key}")
+    return _safe_path(ctx, scope, rel)
 
 
-def migration_id(record: dict) -> str:
-    """内容哈希 —— 幂等的判重依据。
-
-    刻意排除 executed_at:同一份迁移在不同时刻重放,必须算作同一条,
-    否则"重复执行零新增"无法成立。
-    """
-    payload = {k: v for k, v in record.items()
-               if k not in {"migration_id", "executed_at"}}
-    return hashlib.sha256(_canonical(payload).encode("utf-8")).hexdigest()[:16]
+def _validate_run_id(run_id: str) -> None:
+    if not RUN_ID_RE.fullmatch(run_id or ""):
+        raise MigrationError(f"invalid run_id: {run_id!r}")
 
 
-def read_ledger(path: str = LEDGER) -> list[dict]:
-    if not os.path.isfile(path):
-        return []
+def _read_current_pair(ctx: Context, run_id: str) -> tuple[dict[str, Any], bytes, bytes]:
+    et_path = _current_path(ctx, "et")
+    public_path = _current_path(ctx, "public")
+    et_bytes, public_bytes = et_path.read_bytes(), public_path.read_bytes()
+    et, public = load_json(et_path), load_json(public_path)
+    if et != public:
+        raise MigrationError("ET/public current_run pointers differ before migration")
+    if et.get("run_id") != run_id:
+        raise MigrationError(
+            f"requested run_id {run_id} is not current ({et.get('run_id')})"
+        )
+    if et.get("manifest_path") != _manifest_rel(run_id):
+        raise MigrationError("current_run manifest_path does not name the current run")
+    return et, et_bytes, public_bytes
+
+
+def _metadata_without_artifacts(value: dict[str, Any]) -> dict[str, Any]:
+    return {key: val for key, val in value.items() if key != "artifacts"}
+
+
+def _plan_hash(plan: dict[str, Any]) -> str:
+    payload = {key: val for key, val in plan.items() if key != "plan_hash"}
+    return hashlib.sha256(canonical(payload).encode("utf-8")).hexdigest()
+
+
+def validate_plan(plan: dict[str, Any]) -> None:
+    if plan.get("schema") != PLAN_SCHEMA or plan.get("governance_ref") != GOVERNANCE_REF:
+        raise MigrationError("unsupported publication migration plan")
+    _validate_run_id(str(plan.get("run_id") or ""))
+    if not str(plan.get("reason") or "").strip():
+        raise MigrationError("migration reason is required")
+    try:
+        requested_at = dt.datetime.fromisoformat(
+            str(plan.get("requested_at") or "").replace("Z", "+00:00")
+        )
+    except ValueError as exc:
+        raise MigrationError("requested_at must be an ISO-8601 timestamp") from exc
+    if requested_at.tzinfo is None:
+        raise MigrationError("requested_at must include a timezone")
+    expected = _plan_hash(plan)
+    if not hmac.compare_digest(str(plan.get("plan_hash") or ""), expected):
+        raise MigrationError("plan_hash does not match plan contents")
+    if not isinstance(plan.get("state_files"), list) or not plan["state_files"]:
+        raise MigrationError("plan has no frozen state files")
+    if not isinstance(plan.get("derived_files"), list) or not plan["derived_files"]:
+        raise MigrationError("plan has no immutable archive/supersession files")
+    if not isinstance(plan.get("guard_files"), list) or len(plan["guard_files"]) != 1:
+        raise MigrationError("plan must freeze publication_state as one read-only guard")
+    state_names = {entry.get("name") for entry in plan["state_files"]}
+    if state_names != {
+        "et_manifest", "public_manifest", "et_current_run", "public_current_run"
+    }:
+        raise MigrationError("plan state file set is incomplete or duplicated")
+    derived_names = {entry.get("name") for entry in plan["derived_files"]}
+    if derived_names != {
+        "et_manifest_archive", "public_manifest_archive",
+        "et_supersession", "public_supersession",
+    }:
+        raise MigrationError("plan audit file set is incomplete or duplicated")
+    run_id = str(plan["run_id"])
+    expected_state = {
+        "et_manifest": ("manifest", "et", _manifest_rel(run_id)),
+        "public_manifest": ("manifest", "public", _manifest_rel(run_id)),
+        "et_current_run": ("current", "et", "current_run.json"),
+        "public_current_run": ("current", "public", "current_run.json"),
+    }
+    for entry in plan["state_files"]:
+        descriptor = (entry.get("phase"), entry.get("scope"), entry.get("rel"))
+        if descriptor != expected_state[entry["name"]]:
+            raise MigrationError(f"state file descriptor is invalid: {entry['name']}")
+    guard = plan["guard_files"][0]
+    if (guard.get("name"), guard.get("scope"), guard.get("rel")) != (
+        "publication_state", "et", "publication_state.json"
+    ):
+        raise MigrationError("publication_state guard descriptor is invalid")
+    for entry in plan["state_files"]:
+        target = unb64(entry.get("after_b64", ""))
+        if sha256_bytes(target) != entry.get("after_sha256"):
+            raise MigrationError(f"state target hash is invalid: {entry.get('name')}")
+    for entry in plan["derived_files"]:
+        target = unb64(entry.get("content_b64", ""))
+        if sha256_bytes(target) != entry.get("sha256"):
+            raise MigrationError(f"audit target hash is invalid: {entry.get('name')}")
+    changes = plan.get("changes")
+    if not isinstance(changes, list):
+        raise MigrationError("plan changes must be a list")
+    artifacts = [row.get("artifact") for row in changes if isinstance(row, dict)]
+    if len(artifacts) != len(changes) or len(set(artifacts)) != len(artifacts):
+        raise MigrationError("plan changes contain invalid or duplicate artifacts")
+    if any(
+        not EVIDENCE_REF_RE.fullmatch(str(row.get("evidence_ref") or ""))
+        for row in changes
+    ):
+        raise MigrationError("every changed artifact requires a verifiable PR/commit evidence_ref")
+    core = {
+        key: val
+        for key, val in plan.items()
+        if key not in {"migration_id", "derived_files", "plan_hash"}
+    }
+    expected_migration_id = (
+        "r043-" + hashlib.sha256(canonical(core).encode("utf-8")).hexdigest()[:24]
+    )
+    if plan.get("migration_id") != expected_migration_id:
+        raise MigrationError("migration_id is not derived from the frozen plan core")
+    expected_derived = {
+        "et_manifest_archive": (
+            "archive", "et",
+            f"runs/{run_id}/migration_archive/{expected_migration_id}/et_manifest."
+            f"{next(row for row in plan['state_files'] if row['name'] == 'et_manifest')['before_sha256']}.json",
+        ),
+        "public_manifest_archive": (
+            "archive", "public",
+            f"runs/{run_id}/migration_archive/{expected_migration_id}/public_manifest."
+            f"{next(row for row in plan['state_files'] if row['name'] == 'public_manifest')['before_sha256']}.json",
+        ),
+        "et_supersession": (
+            "supersession", "et", f"runs/{run_id}/supersessions/{expected_migration_id}.json"
+        ),
+        "public_supersession": (
+            "supersession", "public", f"runs/{run_id}/supersessions/{expected_migration_id}.json"
+        ),
+    }
+    for entry in plan["derived_files"]:
+        descriptor = (entry.get("phase"), entry.get("scope"), entry.get("rel"))
+        if descriptor != expected_derived[entry["name"]]:
+            raise MigrationError(f"audit file descriptor is invalid: {entry['name']}")
+
+
+def build_plan(
+    ctx: Context,
+    run_id: str,
+    *,
+    reason: str,
+    evidence: dict[str, str],
+    requested_at: str | None = None,
+) -> dict[str, Any]:
+    """Build a frozen migration plan without writing any file."""
+    _validate_run_id(run_id)
+    reason = reason.strip()
+    if not reason:
+        raise MigrationError("migration reason is required")
+    requested_at = requested_at or dt.datetime.now(dt.timezone.utc).isoformat()
+
+    current, et_current_bytes, public_current_bytes = _read_current_pair(ctx, run_id)
+    et_manifest_path = _manifest_path(ctx, "et", run_id)
+    public_manifest_path = _manifest_path(ctx, "public", run_id)
+    et_manifest_bytes = et_manifest_path.read_bytes()
+    public_manifest_bytes = public_manifest_path.read_bytes()
+    et_manifest = load_json(et_manifest_path)
+    public_manifest = load_json(public_manifest_path)
+    publication_state_path = _safe_path(ctx, "et", "publication_state.json")
+    publication_state = load_json(publication_state_path)
+    if publication_state.get("status") != "COMMITTED":
+        raise MigrationError("publication_state is not COMMITTED")
+    if publication_state.get("run_id") != run_id:
+        raise MigrationError("publication_state does not name the current run")
+    state_manifest = Path(str(publication_state.get("manifest") or "")).resolve()
+    if state_manifest != et_manifest_path.resolve():
+        raise MigrationError("publication_state does not bind the durable current manifest")
+    if et_manifest.get("run_id") != run_id or public_manifest.get("run_id") != run_id:
+        raise MigrationError("manifest run_id does not match requested current run")
+    if _metadata_without_artifacts(et_manifest) != _metadata_without_artifacts(public_manifest):
+        raise MigrationError("manifest metadata differs beyond artifact hashes")
+    et_artifacts = et_manifest.get("artifacts")
+    public_artifacts = public_manifest.get("artifacts")
+    if not isinstance(et_artifacts, dict) or not isinstance(public_artifacts, dict):
+        raise MigrationError("manifest artifacts must be objects")
+    if set(et_artifacts) != set(public_artifacts):
+        raise MigrationError("ET/public manifest artifact key sets differ")
+    forbidden_control = {
+        f"et:{CONTROL_LEDGER_NAME}",
+        f"et:{CONTROL_LEDGER_NAME}.anchor.json",
+        f"et:{CONTROL_LEDGER_NAME}.lock",
+    }
+    overlap = forbidden_control & set(et_artifacts)
+    if overlap:
+        raise MigrationError(f"control WAL cannot be governed by its own manifest: {sorted(overlap)}")
+
+    actual: dict[str, str] = {}
+    changes: list[dict[str, str]] = []
+    for key in sorted(et_artifacts):
+        path = _artifact_path(ctx, key)
+        if not path.is_file():
+            raise MigrationError(f"artifact missing: {key}")
+        digest = sha256_file(path)
+        actual[key] = digest
+        if et_artifacts[key] == public_artifacts[key] == digest:
+            continue
+        ref = str(evidence.get(key) or "").strip()
+        if not ref:
+            raise MigrationError(f"evidence is required for changed artifact: {key}")
+        changes.append(
+            {
+                "artifact": key,
+                "sha256_et_before": str(et_artifacts[key]),
+                "sha256_public_before": str(public_artifacts[key]),
+                "sha256_after": digest,
+                "evidence_ref": ref,
+            }
+        )
+
+    target_manifest = copy.deepcopy(et_manifest)
+    target_manifest["artifacts"] = actual
+    target_manifest_bytes = json_bytes(target_manifest)
+    target_manifest_sha = sha256_bytes(target_manifest_bytes)
+    target_current = copy.deepcopy(current)
+    target_current["manifest_sha256"] = target_manifest_sha
+    target_current["artifacts"] = copy.deepcopy(actual)
+    target_current_bytes = json_bytes(target_current)
+
+    core = {
+        "schema": PLAN_SCHEMA,
+        "governance_ref": GOVERNANCE_REF,
+        "run_id": run_id,
+        "target_trade_date": str(et_manifest.get("target_trade_date") or ""),
+        "requested_at": requested_at,
+        "reason": reason,
+        "evidence": {key: str(evidence[key]) for key in sorted(evidence)},
+        "changes": changes,
+        "guard_files": [
+            {
+                "name": "publication_state",
+                "scope": "et",
+                "rel": "publication_state.json",
+                "sha256": sha256_file(publication_state_path),
+            }
+        ],
+        "state_files": [
+            {
+                "name": "et_manifest",
+                "phase": "manifest",
+                "scope": "et",
+                "rel": _manifest_rel(run_id),
+                "before_sha256": sha256_bytes(et_manifest_bytes),
+                "after_sha256": target_manifest_sha,
+                "after_b64": b64(target_manifest_bytes),
+            },
+            {
+                "name": "public_manifest",
+                "phase": "manifest",
+                "scope": "public",
+                "rel": _manifest_rel(run_id),
+                "before_sha256": sha256_bytes(public_manifest_bytes),
+                "after_sha256": target_manifest_sha,
+                "after_b64": b64(target_manifest_bytes),
+            },
+            {
+                "name": "et_current_run",
+                "phase": "current",
+                "scope": "et",
+                "rel": "current_run.json",
+                "before_sha256": sha256_bytes(et_current_bytes),
+                "after_sha256": sha256_bytes(target_current_bytes),
+                "after_b64": b64(target_current_bytes),
+            },
+            {
+                "name": "public_current_run",
+                "phase": "current",
+                "scope": "public",
+                "rel": "current_run.json",
+                "before_sha256": sha256_bytes(public_current_bytes),
+                "after_sha256": sha256_bytes(target_current_bytes),
+                "after_b64": b64(target_current_bytes),
+            },
+        ],
+    }
+    migration_id = "r043-" + hashlib.sha256(canonical(core).encode("utf-8")).hexdigest()[:24]
+    supersession_common = {
+        "schema": SUPERSESSION_SCHEMA,
+        "governance_ref": GOVERNANCE_REF,
+        "migration_id": migration_id,
+        "run_id": run_id,
+        "reason": reason,
+        "manifest_sha256_after": target_manifest_sha,
+    }
+    derived: list[dict[str, str]] = []
+    for scope, original, original_sha in (
+        ("et", et_manifest_bytes, sha256_bytes(et_manifest_bytes)),
+        ("public", public_manifest_bytes, sha256_bytes(public_manifest_bytes)),
+    ):
+        archive_rel = (
+            f"runs/{run_id}/migration_archive/{migration_id}/"
+            f"{scope}_manifest.{original_sha}.json"
+        )
+        supersession = dict(supersession_common, manifest_sha256_before=original_sha)
+        supersession_bytes = json_bytes(supersession)
+        derived.extend(
+            [
+                {
+                    "name": f"{scope}_manifest_archive",
+                    "phase": "archive",
+                    "scope": scope,
+                    "rel": archive_rel,
+                    "sha256": original_sha,
+                    "content_b64": b64(original),
+                },
+                {
+                    "name": f"{scope}_supersession",
+                    "phase": "supersession",
+                    "scope": scope,
+                    "rel": f"runs/{run_id}/supersessions/{migration_id}.json",
+                    "sha256": sha256_bytes(supersession_bytes),
+                    "content_b64": b64(supersession_bytes),
+                },
+            ]
+        )
+    plan = dict(core, migration_id=migration_id, derived_files=derived)
+    plan["plan_hash"] = _plan_hash(plan)
+    validate_plan(plan)
+    return plan
+
+
+def load_plan(path: Path) -> dict[str, Any]:
+    plan = load_json(path)
+    validate_plan(plan)
+    return plan
+
+
+def _approval_payload(approval: dict[str, Any]) -> dict[str, Any]:
+    return {key: val for key, val in approval.items() if key != "signature"}
+
+
+def _read_approval_key(path: Path) -> bytes:
+    try:
+        mode = stat.S_IMODE(path.stat().st_mode)
+        if mode & 0o077:
+            raise MigrationError(f"approval key permissions must deny group/other access: {oct(mode)}")
+        key = path.read_bytes().strip()
+    except OSError as exc:
+        raise MigrationError(f"cannot read approval key {path}: {exc}") from exc
+    if len(key) < 32:
+        raise MigrationError("approval key must contain at least 32 bytes")
+    return key
+
+
+def validate_approval(
+    approval: dict[str, Any], plan: dict[str, Any], key_path: Path
+) -> dict[str, Any]:
+    validate_plan(plan)
+    plan_hash = plan["plan_hash"]
+    if approval.get("schema") != APPROVAL_SCHEMA:
+        raise MigrationError("unsupported approval schema")
+    if approval.get("decision") != "APPROVE":
+        raise MigrationError("approval decision must be APPROVE")
+    if approval.get("approved_by") != "Junyan":
+        raise MigrationError("approval must be bound to Junyan exactly")
+    if approval.get("plan_hash") != plan_hash:
+        raise MigrationError("approval is not bound to this plan_hash")
+    ref = str(approval.get("approval_ref") or "")
+    if not APPROVAL_REF_RE.fullmatch(ref):
+        raise MigrationError("approval_ref must be a non-empty session: or device: anchor")
+    if approval.get("approval_channel") not in {"session_verbatim", "device_signature"}:
+        raise MigrationError("approval_channel must be session_verbatim or device_signature")
+    try:
+        approved_at = dt.datetime.fromisoformat(str(approval.get("approved_at") or "").replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise MigrationError("approved_at must be an ISO-8601 timestamp") from exc
+    if approved_at.tzinfo is None:
+        raise MigrationError("approved_at must include a timezone")
+    requested_at = dt.datetime.fromisoformat(
+        str(plan["requested_at"]).replace("Z", "+00:00")
+    )
+    if approved_at < requested_at:
+        raise MigrationError("approved_at must not precede requested_at")
+    signature = str(approval.get("signature") or "")
+    key = _read_approval_key(key_path)
+    expected = hmac.new(
+        key, canonical(_approval_payload(approval)).encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+    if not hmac.compare_digest(signature, expected):
+        raise MigrationError("approval signature is invalid")
+    return approval
+
+
+def load_approval(path: Path, plan: dict[str, Any], key_path: Path) -> dict[str, Any]:
+    return validate_approval(load_json(path), plan, key_path)
+
+
+@contextlib.contextmanager
+def nightly_lock(ctx: Context) -> Iterator[None]:
+    ctx.nightly_lock.parent.mkdir(parents=True, exist_ok=True)
+    with ctx.nightly_lock.open("a+") as handle:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            raise MigrationError("nightly.lock is held; migration refuses concurrent apply") from exc
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def _load_events(ctx: Context) -> list[dict[str, Any]]:
+    chain = event_ledger.verify(str(ctx.control_ledger))
+    anchor = event_ledger.verify_anchor(str(ctx.control_ledger))
+    append_only = event_ledger.verify_append_only(str(ctx.control_ledger), "HEAD")
+    if not chain["ok"] or not anchor["ok"] or not append_only["ok"]:
+        raise MigrationError(
+            "publication migration WAL is invalid: "
+            f"chain={chain['errors']} anchor={anchor['errors']} "
+            f"append_only={append_only['errors']}"
+        )
     rows = []
-    with open(path, encoding="utf-8") as fh:
-        for lineno, line in enumerate(fh, 1):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                rows.append(json.loads(line))
-            except json.JSONDecodeError as exc:
-                # 损坏的账本不能当空账本 —— 那是 #217 踩过的坑
-                raise MigrationError(f"迁移账本第 {lineno} 行损坏: {exc}") from exc
+    for raw in event_ledger._read_lines(str(ctx.control_ledger)):
+        row = json.loads(raw)
+        if not row.get("kind", "").startswith("publication_migration_"):
+            raise MigrationError(f"foreign event kind in dedicated migration WAL: {row.get('kind')}")
+        rows.append(row)
     return rows
 
 
-def _manifest_paths(run_id: str) -> tuple[str, str]:
-    rel = os.path.join("runs", run_id, "manifest.json")
-    return os.path.join(HERE, rel), os.path.join(ROOTS["public"], rel)
+def _bootstrap_control_ledger(ctx: Context) -> None:
+    """Create a durable empty-chain anchor before the first intent append.
 
-
-def _current_run_paths() -> tuple[str, str]:
-    return (os.path.join(HERE, "current_run.json"),
-            os.path.join(ROOTS["public"], "current_run.json"))
-
-
-def plan(run_id: str) -> dict:
-    """扫描三方(已发布 manifest / ET manifest / 磁盘),产出待迁移清单。
-
-    不修改任何东西。三方一致的产物一律不进 plan。
+    With an n=0 anchor already on disk, a crash after the first ledger replace
+    but before anchor advancement remains recoverable: the old anchor proves
+    the empty prefix and verify_anchor reports one appended row.
     """
-    et_mp, pub_mp = _manifest_paths(run_id)
-    for p in (et_mp, pub_mp):
-        if not os.path.isfile(p):
-            raise MigrationError(f"manifest 缺失,拒绝迁移: {p}")
-    et = json.load(open(et_mp, encoding="utf-8"))
-    pub = json.load(open(pub_mp, encoding="utf-8"))
-
-    if set(et.get("artifacts") or {}) != set(pub.get("artifacts") or {}):
-        raise MigrationError("两份 manifest 的 artifact 键集合不同 —— 超出迁移范围")
-
-    changes, unresolved = [], []
-    for key in sorted(et["artifacts"]):
-        published, declared = pub["artifacts"][key], et["artifacts"][key]
-        path = _artifact_path(key)
-        actual = sha256_file(path) if os.path.isfile(path) else None
-        if published == declared == actual:
-            continue
-        if actual is None:
-            unresolved.append((key, "产物文件缺失"))
-            continue
-        # 磁盘是事实。迁移把两份 manifest 对齐到磁盘 —— 前提是磁盘变化有据可依,
-        # 该依据由调用方通过 --evidence 显式提供,工具本身不臆断。
-        changes.append({"artifact": key,
-                        "sha256_published": published,
-                        "sha256_declared": declared,
-                        "sha256_actual": actual})
-    return {"run_id": run_id, "changes": changes, "unresolved": unresolved,
-            "total_artifacts": len(et["artifacts"])}
-
-
-def build_record(run_id: str, target: str, changes: list[dict], *,
-                 reason: str, authorized_by: str, approval_ref: str,
-                 evidence: dict[str, str], manifest_sha_before: str) -> dict:
-    field_changes = []
-    for c in changes:
-        ev = evidence.get(c["artifact"])
-        if not ev:
+    path = ctx.control_ledger
+    anchor = Path(str(path) + event_ledger.ANCHOR_SUFFIX)
+    if path.exists() and not path.is_file():
+        raise MigrationError(f"publication migration WAL is not a file: {path}")
+    if anchor.exists() and not path.exists():
+        raise MigrationError("publication migration WAL anchor exists without its ledger")
+    if not path.exists():
+        _atomic_write(path, b"")
+    if not anchor.exists():
+        chain = event_ledger.verify(str(path))
+        if not chain["ok"] or chain["n"] != 0:
             raise MigrationError(
-                f"{c['artifact']} 缺 --evidence —— 迁移必须有据,拒绝执行")
-        field_changes.append({
-            "artifact": c["artifact"],
-            "sha256_before": c["sha256_published"],
-            "sha256_after": c["sha256_actual"],
-            "evidence": ev,
-            "verified_on_disk": True,
-        })
-    record = {
-        "schema": SCHEMA,
-        "run_id": run_id,
-        "target_trade_date": target,
-        "reason": reason,
-        "authorized_by": authorized_by,
-        "approval_ref": approval_ref,
-        "superseded_manifest": {
-            "path": os.path.join("runs", run_id, "manifest.json"),
-            "sha256_before": manifest_sha_before,
-        },
-        "field_changes": field_changes,
-        "executed_by": "publication_migration.py",
-    }
-    record["migration_id"] = migration_id(record)
-    return record
+                "non-empty publication migration WAL has no anchor; refuse reconstruction"
+            )
+        event_ledger.write_anchor(str(path), 0, None)
 
 
-def apply_migration(run_id: str, *, reason: str, authorized_by: str,
-                    approval_ref: str, evidence: dict[str, str],
-                    dry_run: bool = False, ledger_path: str = LEDGER) -> dict:
-    p = plan(run_id)
-    if p["unresolved"]:
-        raise MigrationError(f"存在无法解释的分歧,拒绝执行: {p['unresolved']}")
-    if not p["changes"]:
-        return {"status": "NOOP", "detail": "三方已一致,无需迁移"}
-
-    et_mp, pub_mp = _manifest_paths(run_id)
-    pub_manifest_sha = sha256_file(pub_mp)
-    et_manifest = json.load(open(et_mp, encoding="utf-8"))
-    target = str(et_manifest.get("target_trade_date") or "")
-
-    record = build_record(run_id, target, p["changes"], reason=reason,
-                          authorized_by=authorized_by, approval_ref=approval_ref,
-                          evidence=evidence, manifest_sha_before=pub_manifest_sha)
-
-    # ── 幂等 = 收敛到目标状态,不是"见过就跳过" ──
-    # 崩溃场景(账本已写、manifest 未落地)下若直接返回,系统会卡在不一致状态
-    # 而工具宣称"已应用" —— 那是静默失败。正确语义:账本只追加一次,
-    # 状态变更可安全重放,直到 verify 干净为止。
-    already_recorded = any(row.get("migration_id") == record["migration_id"]
-                           for row in read_ledger(ledger_path))
-
-    if dry_run:
-        return {"status": "DRY_RUN", "record": record, "plan": p,
-                "already_recorded": already_recorded}
-
-    # ── 1. 原 manifest 原文留档(append-only:目标存在则不覆盖)──
-    orig_copy = f"{pub_mp}.orig-{pub_manifest_sha[:8]}"
-    if not os.path.exists(orig_copy):
-        shutil.copy2(pub_mp, orig_copy)
-
-    # ── 2. superseded 标记 ──
-    supersede = {
-        "schema": SUPERSEDE_SCHEMA,
-        "superseded_at": datetime.now(timezone.utc).isoformat(),
-        "superseded_by_migration": record["migration_id"],
-        "original_sha256": pub_manifest_sha,
-        "original_preserved_at": os.path.basename(orig_copy),
-    }
-    for mp in (et_mp, pub_mp):
-        with open(mp.replace("manifest.json", "manifest.superseded.json"),
-                  "w", encoding="utf-8") as fh:
-            json.dump(supersede, fh, ensure_ascii=False, indent=1)
-            fh.write("\n")
-
-    # ── 3. 两份 manifest 对齐到磁盘事实 ──
-    for c in p["changes"]:
-        et_manifest["artifacts"][c["artifact"]] = c["sha256_actual"]
-    blob = json.dumps(et_manifest, ensure_ascii=False, indent=1) + "\n"
-    for mp in (et_mp, pub_mp):
-        with open(mp, "w", encoding="utf-8") as fh:
-            fh.write(blob)
-    new_manifest_sha = sha256_file(pub_mp)
-    if sha256_file(et_mp) != new_manifest_sha:
-        raise MigrationError("两份 manifest 写后哈希不一致 —— fail-closed")
-
-    # ── 4. current_run 重新绑定 ──
-    for crp in _current_run_paths():
-        if not os.path.isfile(crp):
-            raise MigrationError(f"current_run 缺失: {crp}")
-        cr = json.load(open(crp, encoding="utf-8"))
-        for c in p["changes"]:
-            if c["artifact"] in (cr.get("artifacts") or {}):
-                cr["artifacts"][c["artifact"]] = c["sha256_actual"]
-        cr["manifest_sha256"] = new_manifest_sha
-        with open(crp, "w", encoding="utf-8") as fh:
-            json.dump(cr, fh, ensure_ascii=False, indent=1)
-            fh.write("\n")
-
-    # ── 5. 追加账本(append-only;已记录则跳过追加,状态变更仍已完成)──
-    if not already_recorded:
-        record["executed_at"] = datetime.now(timezone.utc).isoformat()
-        record["superseded_manifest"]["sha256_after"] = new_manifest_sha
-        with open(ledger_path, "a", encoding="utf-8") as fh:
-            fh.write(_canonical(record) + "\n")
-
-    # ── 6. 复验 ──
-    problems = verify(run_id)
-    if problems:
-        raise MigrationError(f"迁移后复验未通过: {problems}")
-    return {"status": "RECONVERGED" if already_recorded else "APPLIED",
-            "migration_id": record["migration_id"],
-            "changed": [c["artifact"] for c in p["changes"]],
-            "ledger_appended": not already_recorded,
-            "manifest_sha256": new_manifest_sha}
+def _event_state(events: list[dict[str, Any]], migration_id: str) -> dict[str, Any]:
+    selected = [row for row in events if row.get("id") == migration_id]
+    by_kind = {row["kind"]: row for row in selected}
+    terminals = [
+        kind
+        for kind in ("publication_migration_commit", "publication_migration_abort")
+        if kind in by_kind
+    ]
+    if len(terminals) > 1:
+        raise MigrationError(f"migration {migration_id} has two terminal states")
+    commit = by_kind.get("publication_migration_commit")
+    abort = by_kind.get("publication_migration_abort")
+    intent = by_kind.get("publication_migration_intent")
+    if (commit or abort) and not intent:
+        raise MigrationError(f"migration {migration_id} has an orphan terminal event")
+    return {"intent": intent, "commit": commit, "abort": abort}
 
 
-def verify(run_id: str) -> list[str]:
-    """迁移后一致性复验 —— 等价于 verify_committed_publication 的哈希绑定部分。"""
+def _pending_for_run(events: list[dict[str, Any]], run_id: str) -> list[dict[str, Any]]:
+    pending = []
+    for row in events:
+        if row.get("kind") != "publication_migration_intent":
+            continue
+        state = _event_state(events, str(row.get("id")))
+        plan = (row.get("payload") or {}).get("plan") or {}
+        if plan.get("run_id") == run_id and not state["commit"] and not state["abort"]:
+            pending.append(row)
+    return pending
+
+
+def _current_digest(path: Path) -> str | None:
+    return sha256_file(path) if path.is_file() else None
+
+
+def _assert_recoverable_file(path: Path, before: str | None, after: str) -> None:
+    current = _current_digest(path)
+    allowed = {after}
+    if before is not None:
+        allowed.add(before)
+    if current not in allowed:
+        raise MigrationError(
+            f"file drifted outside frozen before/after states: {path} ({current})"
+        )
+
+
+def _write_derived(ctx: Context, entry: dict[str, Any]) -> None:
+    path = _safe_path(ctx, entry["scope"], entry["rel"])
+    target = unb64(entry["content_b64"])
+    if sha256_bytes(target) != entry["sha256"]:
+        raise MigrationError(f"derived file hash mismatch in plan: {entry['name']}")
+    if path.exists():
+        if sha256_file(path) != entry["sha256"]:
+            raise MigrationError(f"immutable derived file already exists with other bytes: {path}")
+        return
+    _atomic_write(path, target)
+
+
+def _write_state(ctx: Context, entry: dict[str, Any]) -> None:
+    path = _safe_path(ctx, entry["scope"], entry["rel"])
+    target = unb64(entry["after_b64"])
+    if sha256_bytes(target) != entry["after_sha256"]:
+        raise MigrationError(f"target hash mismatch in plan: {entry['name']}")
+    _assert_recoverable_file(path, entry["before_sha256"], entry["after_sha256"])
+    if _current_digest(path) != entry["after_sha256"]:
+        _atomic_write(path, target)
+
+
+def verify_target(ctx: Context, plan: dict[str, Any]) -> list[str]:
     problems: list[str] = []
-    et_mp, pub_mp = _manifest_paths(run_id)
-    if sha256_file(et_mp) != sha256_file(pub_mp):
-        problems.append("ET 与 public 的 manifest 不一致")
-    manifest_sha = sha256_file(pub_mp)
-    et_cr, pub_cr = _current_run_paths()
-    a = json.load(open(et_cr, encoding="utf-8"))
-    b = json.load(open(pub_cr, encoding="utf-8"))
-    if a != b:
-        problems.append("ET 与 public 的 current_run pointer 不一致")
-    if b.get("manifest_sha256") != manifest_sha:
-        problems.append("current_run.manifest_sha256 与 manifest 实际不符")
-    manifest = json.load(open(pub_mp, encoding="utf-8"))
-    for key, expected in (manifest.get("artifacts") or {}).items():
-        path = _artifact_path(key)
-        if not os.path.isfile(path):
-            problems.append(f"{key}: 产物缺失")
-        elif sha256_file(path) != expected:
-            problems.append(f"{key}: 磁盘哈希与 manifest 不符")
+    for entry in plan["guard_files"]:
+        path = _safe_path(ctx, entry["scope"], entry["rel"])
+        if _current_digest(path) != entry["sha256"]:
+            problems.append(f"{entry['name']}: read-only guard changed")
+    for entry in plan["state_files"]:
+        path = _safe_path(ctx, entry["scope"], entry["rel"])
+        if _current_digest(path) != entry["after_sha256"]:
+            problems.append(f"{entry['name']}: target hash mismatch")
+    for entry in plan["derived_files"]:
+        path = _safe_path(ctx, entry["scope"], entry["rel"])
+        if _current_digest(path) != entry["sha256"]:
+            problems.append(f"{entry['name']}: immutable audit file missing or changed")
+    try:
+        current, _, _ = _read_current_pair(ctx, plan["run_id"])
+        if current.get("manifest_sha256") != plan["state_files"][0]["after_sha256"]:
+            problems.append("current_run does not bind the migrated manifest")
+        manifest = load_json(_manifest_path(ctx, "public", plan["run_id"]))
+        manifest_artifacts = manifest.get("artifacts")
+        if not isinstance(manifest_artifacts, dict):
+            problems.append("migrated manifest artifacts is not an object")
+            manifest_artifacts = {}
+        if current.get("artifacts") != manifest_artifacts:
+            problems.append("current_run artifact map differs from migrated manifest")
+        for key, expected in manifest_artifacts.items():
+            if _current_digest(_artifact_path(ctx, key)) != expected:
+                problems.append(f"{key}: artifact does not match migrated manifest")
+    except MigrationError as exc:
+        problems.append(str(exc))
     return problems
 
 
-def selftest() -> bool:
-    """离线自测:零网络、临时目录、不碰生产。"""
-    import tempfile
-    global HERE, ROOTS, LEDGER
-    saved = (HERE, dict(ROOTS), LEDGER)
-    ok = []
+def verify_current(ctx: Context, run_id: str) -> list[str]:
+    """Verify current publication without repairing it."""
+    problems: list[str] = []
     try:
-        tmp = tempfile.mkdtemp()
-        HERE = os.path.join(tmp, "et")
-        ROOTS = {"et": HERE, "public": os.path.join(tmp, "pub")}
-        LEDGER = os.path.join(HERE, "publication_migrations.jsonl")
-        rid = "TESTRUN"
-        for base in (HERE, ROOTS["public"]):
-            os.makedirs(os.path.join(base, "runs", rid), exist_ok=True)
-        art = os.path.join(HERE, "a.json")
-        with open(art, "w") as fh:
-            fh.write('{"v":2}')          # 磁盘 = 修正后
-        actual = sha256_file(art)
-        old = hashlib.sha256(b'{"v":1}').hexdigest()
-        man = {"schema": "m", "run_id": rid, "target_trade_date": "20260806",
-               "artifacts": {"et:a.json": old}}
-        for base in (HERE, ROOTS["public"]):
-            with open(os.path.join(base, "runs", rid, "manifest.json"), "w") as fh:
-                json.dump(man, fh, ensure_ascii=False, indent=1); fh.write("\n")
-        msha = sha256_file(os.path.join(ROOTS["public"], "runs", rid, "manifest.json"))
-        cr = {"run_id": rid, "artifacts": {"et:a.json": old}, "manifest_sha256": msha}
-        for base in (HERE, ROOTS["public"]):
-            with open(os.path.join(base, "current_run.json"), "w") as fh:
-                json.dump(cr, fh, ensure_ascii=False, indent=1); fh.write("\n")
-
-        kw = dict(reason="t", authorized_by="Junyan", approval_ref="ref",
-                  evidence={"et:a.json": "PR #X"}, ledger_path=LEDGER)
-        ok.append(("plan 只报真分歧", len(plan(rid)["changes"]) == 1))
-
-        # migration_id 必须与执行时刻无关 —— 否则"重复执行零新增"在真实场景失效。
-        # 直接比对而非依赖时间流逝,才能钉住 executed_at 被混进哈希这种回归。
-        rec_a = build_record(rid, "20260806", plan(rid)["changes"], reason="t",
-                             authorized_by="Junyan", approval_ref="ref",
-                             evidence={"et:a.json": "PR #X"}, manifest_sha_before="z")
-        rec_b = dict(rec_a, executed_at="1999-01-01T00:00:00Z")
-        ok.append(("migration_id 与 executed_at 无关",
-                   migration_id(rec_a) == migration_id(rec_b)))
-
-        pub_run_dir = os.path.join(ROOTS["public"], "runs", rid)
-        pre_manifest_bytes = open(os.path.join(pub_run_dir, "manifest.json"), "rb").read()
-
-        r1 = apply_migration(rid, **kw)
-        ok.append(("首次执行 APPLIED", r1["status"] == "APPLIED"))
-        ok.append(("迁移后复验干净", verify(rid) == []))
-
-        orig_files = [f for f in os.listdir(pub_run_dir)
-                      if f.startswith("manifest.json.orig-")]
-        ok.append(("原 manifest 留档存在", len(orig_files) == 1))
-        # 只检查"存在"抓不到无条件覆盖 —— 留档必须是迁移**前**的字节
-        ok.append(("留档内容是迁移前原文", bool(orig_files) and
-                   open(os.path.join(pub_run_dir, orig_files[0]), "rb").read()
-                   == pre_manifest_bytes))
-        ok.append(("superseded 标记存在", os.path.isfile(
-            os.path.join(pub_run_dir, "manifest.superseded.json"))))
-
-        n1 = len(read_ledger(LEDGER))
-        r2 = apply_migration(rid, **kw)
-        ok.append(("已迁移后重跑为 NOOP 且零新增",
-                   r2["status"] == "NOOP" and len(read_ledger(LEDGER)) == n1))
-
-        # 崩溃恢复场景:账本已写、manifest 未落地(步骤 3 与 5 之间中断)。
-        # 此时 plan 仍有分歧,唯一挡住重复追加的就是 migration_id 幂等门。
-        # 不构造这个场景,删掉幂等门也测不出来 —— 上一版正是如此。
-        with open(os.path.join(pub_run_dir, "manifest.json"), "wb") as fh:
-            fh.write(pre_manifest_bytes)
-        with open(os.path.join(HERE, "runs", rid, "manifest.json"), "wb") as fh:
-            fh.write(pre_manifest_bytes)
-        n2 = len(read_ledger(LEDGER))
-        r3 = apply_migration(rid, **kw)
-        # 幂等的正确语义:账本零新增,但状态必须被修好(收敛),而不是宣称已应用后撒手
-        ok.append(("崩溃恢复:账本零新增", len(read_ledger(LEDGER)) == n2))
-        ok.append(("崩溃恢复:状态被收敛而非静默跳过",
-                   r3["status"] == "RECONVERGED" and r3["ledger_appended"] is False
-                   and verify(rid) == []))
-
-        # verify() 是 --verify CLI 的承重逻辑,单独钉住它的三类判定。
-        #
-        # 注:apply_migration 末尾那次 verify 调用是**防御性冗余** —— plan() 已穷尽
-        # 三方分歧,迁移后 verify 结构上不可能失败,故删掉那次调用不会让本自测翻红。
-        # 这是等价变异,不是覆盖缺口;保留该调用是为了防止 plan/apply 将来解耦时
-        # 出现无声漏网。此处如实标注,不假装它被钉住了。
-        et_cr, pub_cr = _current_run_paths()
-        saved_cr = open(pub_cr, "rb").read()
-        bad = json.loads(saved_cr.decode())
-        bad["manifest_sha256"] = "0" * 64
-        with open(pub_cr, "w", encoding="utf-8") as fh:
-            json.dump(bad, fh, ensure_ascii=False, indent=1)
-        ok.append(("verify 抓到 current_run 指针失配",
-                   any("manifest_sha256" in p for p in verify(rid))))
-        with open(pub_cr, "wb") as fh:
-            fh.write(saved_cr)
-
-        saved_art = open(art, "rb").read()
-        with open(art, "wb") as fh:
-            fh.write(b'{"v":999}')                     # 磁盘被改,manifest 未跟
-        ok.append(("verify 抓到产物哈希漂移",
-                   any("磁盘哈希与 manifest 不符" in p for p in verify(rid))))
-        os.remove(art)
-        ok.append(("verify 抓到产物缺失",
-                   any("产物缺失" in p for p in verify(rid))))
-        with open(art, "wb") as fh:
-            fh.write(saved_art)
-        ok.append(("恢复后 verify 干净", verify(rid) == []))
-
-        # 不变式:留档以原文哈希命名,任何重放都不得改动已存在的留档字节。
-        # (无条件 shutil.copy2 属等价变异 —— 重放时 pub_mp 已是迁移后内容,
-        #  哈希不同故写的是新文件名。这条断言把不变式本身钉死,而不是钉实现。)
-        archives = {f: open(os.path.join(pub_run_dir, f), "rb").read()
-                    for f in os.listdir(pub_run_dir) if ".orig-" in f}
-        apply_migration(rid, **kw)
-        after = {f: open(os.path.join(pub_run_dir, f), "rb").read()
-                 for f in os.listdir(pub_run_dir) if ".orig-" in f}
-        ok.append(("留档字节在重放后不变", all(
-            after.get(f) == b for f, b in archives.items())))
-        ok.append(("留档文件名 == 其内容哈希", all(
-            f.rsplit("orig-", 1)[1] == hashlib.sha256(b).hexdigest()[:8]
-            for f, b in after.items())))
-        # 缺证据必须拒绝
-        try:
-            build_record(rid, "20260806", [{"artifact": "x", "sha256_published": "a",
-                                            "sha256_declared": "b", "sha256_actual": "c"}],
-                         reason="t", authorized_by="J", approval_ref="r",
-                         evidence={}, manifest_sha_before="z")
-            ok.append(("缺证据被拒", False))
-        except MigrationError:
-            ok.append(("缺证据被拒", True))
-        # 损坏账本不得当空账本
-        with open(LEDGER, "a") as fh:
-            fh.write("{not json\n")
-        try:
-            read_ledger(LEDGER); ok.append(("损坏账本阻断", False))
-        except MigrationError:
-            ok.append(("损坏账本阻断", True))
-    finally:
-        HERE, ROOTS, LEDGER = saved[0], saved[1], saved[2]
-    for name, passed in ok:
-        print(("  ✓ " if passed else "  ✗ ") + name)
-    print(f"publication_migration selftest: {sum(p for _, p in ok)}/{len(ok)}")
-    return all(p for _, p in ok)
+        current, _, _ = _read_current_pair(ctx, run_id)
+        et_manifest = _manifest_path(ctx, "et", run_id)
+        public_manifest = _manifest_path(ctx, "public", run_id)
+        et_sha, public_sha = sha256_file(et_manifest), sha256_file(public_manifest)
+        if et_sha != public_sha:
+            problems.append("ET/public manifests differ")
+        if current.get("manifest_sha256") != public_sha:
+            problems.append("current_run manifest_sha256 is stale")
+        manifest = load_json(public_manifest)
+        manifest_artifacts = manifest.get("artifacts")
+        if not isinstance(manifest_artifacts, dict):
+            problems.append("current manifest artifacts is not an object")
+            manifest_artifacts = {}
+        if current.get("artifacts") != manifest_artifacts:
+            problems.append("current_run artifact map differs from current manifest")
+        for key, expected in manifest_artifacts.items():
+            if _current_digest(_artifact_path(ctx, key)) != expected:
+                problems.append(f"{key}: artifact hash mismatch")
+    except (MigrationError, OSError) as exc:
+        problems.append(str(exc))
+    return problems
 
 
-def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--run-id")
-    ap.add_argument("--reason", default="")
-    ap.add_argument("--authorized-by", default="")
-    ap.add_argument("--approval-ref", default="")
-    ap.add_argument("--evidence", action="append", default=[],
-                    metavar="ARTIFACT=REF", help="每个待迁移产物的依据,可重复")
-    ap.add_argument("--plan", action="store_true")
-    ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--apply", action="store_true")
-    ap.add_argument("--verify", action="store_true")
-    ap.add_argument("--selftest", action="store_true")
-    a = ap.parse_args(argv)
+def _converge(
+    ctx: Context,
+    plan: dict[str, Any],
+    *,
+    fail_after: str | None = None,
+) -> None:
+    for entry in plan["guard_files"]:
+        path = _safe_path(ctx, entry["scope"], entry["rel"])
+        if _current_digest(path) != entry["sha256"]:
+            raise MigrationError(f"read-only guard changed after planning: {entry['name']}")
+    for phase in ("archive", "supersession"):
+        for entry in plan["derived_files"]:
+            if entry["phase"] == phase:
+                _write_derived(ctx, entry)
+        if fail_after == f"after_{phase}":
+            raise RuntimeError(f"test crash {fail_after}")
+    for phase in ("manifest", "current"):
+        for entry in plan["state_files"]:
+            if entry["phase"] == phase:
+                _write_state(ctx, entry)
+        if fail_after == f"after_{phase}":
+            raise RuntimeError(f"test crash {fail_after}")
+    problems = verify_target(ctx, plan)
+    if problems:
+        raise MigrationError(f"post-migration verification failed: {problems}")
+
+
+def _append_intent(
+    ctx: Context, plan: dict[str, Any], approval: dict[str, Any]
+) -> None:
+    event_ledger.append(
+        "publication_migration_intent",
+        plan["migration_id"],
+        {
+            "schema": INTENT_SCHEMA,
+            "plan_hash": plan["plan_hash"],
+            "plan": plan,
+            "approval": approval,
+        },
+        path=str(ctx.control_ledger),
+    )
+
+
+def _append_commit(ctx: Context, plan: dict[str, Any], approval: dict[str, Any]) -> None:
+    event_ledger.append(
+        "publication_migration_commit",
+        plan["migration_id"],
+        {
+            "schema": COMMIT_SCHEMA,
+            "plan_hash": plan["plan_hash"],
+            "approval_ref": approval["approval_ref"],
+            "state_sha256": {
+                entry["name"]: entry["after_sha256"] for entry in plan["state_files"]
+            },
+        },
+        path=str(ctx.control_ledger),
+    )
+
+
+def _apply_locked(
+    ctx: Context,
+    plan: dict[str, Any],
+    approval: dict[str, Any] | None,
+    *,
+    fail_after: str | None = None,
+) -> dict[str, Any]:
+    validate_plan(plan)
+    events = _load_events(ctx)
+    state = _event_state(events, plan["migration_id"])
+    if state["abort"]:
+        raise MigrationError("migration has an abort terminal event")
+    if state["commit"]:
+        problems = verify_target(ctx, plan)
+        if problems:
+            raise MigrationError(f"committed migration target drifted: {problems}")
+        return {"status": "NOOP_VERIFIED", "migration_id": plan["migration_id"]}
+
+    if state["intent"]:
+        payload = state["intent"].get("payload") or {}
+        recorded_plan = payload.get("plan") or {}
+        if payload.get("plan_hash") != plan["plan_hash"] or recorded_plan != plan:
+            raise MigrationError("pending intent does not match supplied frozen plan")
+        approval = validate_approval(
+            payload.get("approval") or {}, plan, ctx.approval_key
+        )
+    else:
+        if approval is None:
+            raise MigrationError("a signed approval is required before intent")
+        approval = validate_approval(approval, plan, ctx.approval_key)
+        if not plan["changes"]:
+            problems = verify_current(ctx, plan["run_id"])
+            if problems:
+                raise MigrationError(f"NOOP refused because full verification failed: {problems}")
+            return {"status": "NOOP_VERIFIED", "migration_id": None}
+        rebuilt = build_plan(
+            ctx,
+            plan["run_id"],
+            reason=plan["reason"],
+            evidence=plan["evidence"],
+            requested_at=plan["requested_at"],
+        )
+        if rebuilt["plan_hash"] != plan["plan_hash"]:
+            raise MigrationError("live state changed after planning; plan_hash is stale")
+        _append_intent(ctx, plan, approval)
+        if fail_after == "after_intent":
+            raise RuntimeError("test crash after_intent")
+
+    _converge(ctx, plan, fail_after=fail_after)
+    _append_commit(ctx, plan, approval)
+    if fail_after == "after_commit":
+        raise RuntimeError("test crash after_commit")
+    return {
+        "status": "APPLIED" if not state["intent"] else "RECOVERED",
+        "migration_id": plan["migration_id"],
+        "plan_hash": plan["plan_hash"],
+        "changed": [row["artifact"] for row in plan["changes"]],
+    }
+
+
+def apply_plan(
+    ctx: Context,
+    plan: dict[str, Any],
+    approval: dict[str, Any] | None,
+    *,
+    fail_after: str | None = None,
+) -> dict[str, Any]:
+    with nightly_lock(ctx):
+        _bootstrap_control_ledger(ctx)
+        pending = _pending_for_run(_load_events(ctx), plan["run_id"])
+        if len(pending) > 1:
+            raise MigrationError("more than one pending publication migration for current run")
+        if pending and pending[0]["id"] != plan["migration_id"]:
+            raise MigrationError("another publication migration is pending for this run")
+        return _apply_locked(ctx, plan, approval, fail_after=fail_after)
+
+
+def recover(
+    ctx: Context, run_id: str, plan_hash: str, *, fail_after: str | None = None
+) -> dict[str, Any]:
+    _validate_run_id(run_id)
+    with nightly_lock(ctx):
+        _bootstrap_control_ledger(ctx)
+        pending = _pending_for_run(_load_events(ctx), run_id)
+        if len(pending) != 1:
+            raise MigrationError(f"expected exactly one pending intent for {run_id}; found {len(pending)}")
+        payload = pending[0].get("payload") or {}
+        plan = payload.get("plan") or {}
+        validate_plan(plan)
+        if not hmac.compare_digest(str(plan_hash), str(plan.get("plan_hash"))):
+            raise MigrationError("recover plan_hash does not match pending intent")
+        return _apply_locked(ctx, plan, None, fail_after=fail_after)
+
+
+def _parse_evidence(values: list[str]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for item in values:
+        key, sep, value = item.partition("=")
+        if not sep or not key or not value.strip() or key in out:
+            raise MigrationError(f"invalid or duplicate --evidence: {item!r}")
+        out[key] = value.strip()
+    return out
+
+
+def _write_plan(path: Path, plan: dict[str, Any]) -> None:
+    if path.exists():
+        raise MigrationError(f"plan output already exists: {path}")
+    _atomic_write(path, json_bytes(plan))
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run-id")
+    parser.add_argument("--reason", default="")
+    parser.add_argument("--evidence", action="append", default=[], metavar="ARTIFACT=REF")
+    parser.add_argument("--plan", action="store_true")
+    parser.add_argument("--plan-output")
+    parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--recover", action="store_true")
+    parser.add_argument("--verify", action="store_true")
+    parser.add_argument("--selftest", action="store_true")
+    parser.add_argument("--plan-file")
+    parser.add_argument("--plan-hash")
+    parser.add_argument("--approval-file")
+    args = parser.parse_args(argv)
+    ctx = Context.production()
     try:
-        if a.selftest:
-            return 0 if selftest() else 1
-        if not a.run_id:
-            ap.error("--run-id required")
-        if a.plan:
-            print(json.dumps(plan(a.run_id), ensure_ascii=False, indent=1)); return 0
-        if a.verify:
-            problems = verify(a.run_id)
-            print(json.dumps({"problems": problems}, ensure_ascii=False, indent=1))
+        if sum(bool(flag) for flag in (args.plan, args.apply, args.recover, args.verify, args.selftest)) != 1:
+            raise MigrationError(
+                "choose exactly one of --plan, --apply, --recover, --verify or --selftest"
+            )
+        if args.selftest:
+            env = dict(os.environ, AR_OFFLINE="1")
+            result = subprocess.run(
+                [sys.executable, str(REPO / "tests" / "test_publication_migration_offline.py")],
+                cwd=str(REPO),
+                env=env,
+            )
+            return result.returncode
+        if args.plan:
+            if not args.run_id:
+                raise MigrationError("--run-id is required for --plan")
+            plan = build_plan(
+                ctx, args.run_id, reason=args.reason, evidence=_parse_evidence(args.evidence)
+            )
+            if args.plan_output:
+                _write_plan(Path(args.plan_output), plan)
+            print(json.dumps(plan, ensure_ascii=False, indent=1))
+            return 0
+        if args.apply:
+            if not args.plan_file or not args.plan_hash or not args.approval_file:
+                raise MigrationError(
+                    "--apply requires --plan-file, --plan-hash and --approval-file"
+                )
+            plan = load_plan(Path(args.plan_file))
+            if not hmac.compare_digest(args.plan_hash, plan["plan_hash"]):
+                raise MigrationError("CLI plan_hash does not match plan file")
+            approval = load_approval(Path(args.approval_file), plan, ctx.approval_key)
+            print(json.dumps(apply_plan(ctx, plan, approval), ensure_ascii=False, indent=1))
+            return 0
+        if args.recover:
+            if not args.run_id or not args.plan_hash:
+                raise MigrationError("--recover requires --run-id and --plan-hash")
+            print(
+                json.dumps(
+                    recover(ctx, args.run_id, args.plan_hash), ensure_ascii=False, indent=1
+                )
+            )
+            return 0
+        if args.verify:
+            if not args.run_id:
+                raise MigrationError("--run-id is required for --verify")
+            problems = verify_current(ctx, args.run_id)
+            print(json.dumps({"run_id": args.run_id, "problems": problems}, ensure_ascii=False, indent=1))
             return 1 if problems else 0
-        if a.dry_run or a.apply:
-            ev = dict(kv.split("=", 1) for kv in a.evidence)
-            res = apply_migration(a.run_id, reason=a.reason,
-                                  authorized_by=a.authorized_by,
-                                  approval_ref=a.approval_ref, evidence=ev,
-                                  dry_run=a.dry_run)
-            print(json.dumps(res, ensure_ascii=False, indent=1)); return 0
-        ap.error("需指定 --plan / --dry-run / --apply / --verify / --selftest")
+        parser.error("choose exactly one of --plan, --apply, --recover, --verify or --selftest")
     except MigrationError as exc:
-        print(f"REFUSED {exc}", file=sys.stderr)
+        print(f"REFUSED: {exc}", file=sys.stderr)
         return 1
-    return 0
 
 
 if __name__ == "__main__":
