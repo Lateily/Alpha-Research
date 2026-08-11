@@ -23,8 +23,8 @@ separate PR and explicit Junyan approval.
 1. Reuse an existing valid clone when one already exists. Do not create a
    second clone merely to adopt this workspace contract. Work from that
    repository root or an isolated worktree based on current `origin/main`.
-2. Run `python3 scripts/team_ai_workspace.py doctor` (Windows:
-   `py -3.11 .\scripts\team_ai_workspace.py doctor`). This exact command is an
+2. Run `python3 scripts/team_ai_workspace.py doctor --profile onboarding`
+   (Windows: `py -3.11 .\scripts\team_ai_workspace.py doctor --profile onboarding`). This exact command is an
    explicitly authorized control-plane check for every team role, including
    Better. It does not modify tracked files or Git state and is not permission
    to run production, market-data, or ledger scripts.
@@ -42,20 +42,22 @@ credentials.
 
 ## Command Execution Authority
 
-`config/team-command-policy.v1.json` is the machine-readable command boundary.
-The default is deny. A role may run only the common control-plane entrypoints or
-commands explicitly authorized by its compiled `ai-task.v1` and current Junyan
-approval.
+`config/team-command-policy.v2.json` is the machine-readable command boundary.
+The default is deny outside a declared task. Better, Reed, Jason, and Simon may
+create and test autonomously inside an approved `ai-task.v1`; they bring the
+finished PR to Junyan instead of requesting approval for every intermediate
+command.
 
-For Better, the standing allowlist is limited to:
+Before an active task is compiled, the standing allowlist is limited to:
 
 - `scripts/team_ai_workspace.py doctor`;
 - `scripts/llm/ai_os/cli.py compile` for the declared task source.
 
 These are offline control-plane checks, not production pipeline authority.
 Market-data collectors, nightly orchestration, publication, migrations, and
-ledger engines remain forbidden unless a task-specific Junyan instruction
-explicitly changes that boundary.
+ledger engines remain forbidden to product work unless a task-specific Junyan
+instruction explicitly changes that boundary. Final merge, production action,
+methodology, constitutional, and capital-rule authority always remains Junyan's.
 
 This section supersedes repository or documentation language that broadly says
 "never run anything under scripts/". It cannot silently override an explicit
@@ -69,19 +71,24 @@ explicitly asks for analysis only.
 
 ## Repository And Git Discipline
 
-- `main` is the only repository fact source. Never push directly to `main`.
+- Merged `main` is the canonical repository fact source. An open PR is pending
+  evidence only; a local commit, Preview, chat report, or newer timestamp is not
+  canonical. Never push directly to `main`.
 - Use one task, one branch or worktree, one PR.
 - New installations should keep Alpha Research inside a single local `AR/`
   container. An existing valid clone may remain at its approved path until a
   deliberate clean migration; layout adoption never justifies a duplicate
   clone. Classify new task worktrees as `research`, `macro`, `aios`, or
-  `product` under `docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md` and retire them
+  `product` under `docs/team/LOCAL_WORKSPACE_CONTRACT_V2.md` and retire them
   after merge.
 - Never use `git add .`; stage only named task files.
 - Do not reset, overwrite, or delete unrelated dirty work.
 - Do not assume a stacked PR retargeted automatically after squash merge.
 - Final merge authority belongs to Junyan. AI may prepare and review the PR but
   may not infer merge approval.
+- Reports must carry observation time, local HEAD, local `origin/main`, workspace
+  identity, and evidence expiry under `config/team-sync-policy.v2.json`. A green
+  report about locally cached `origin/main` is not a claim about live GitHub.
 - A chat summary is not a deliverable. The deliverable is a diff, tests, and a
   PR or a clearly evidenced blocker.
 
@@ -153,6 +160,9 @@ contracts. Keep these local only:
 
 Do not use Dropbox, iCloud, or another file-sync service on a Git worktree.
 Team synchronization is `fetch -> branch/worktree -> test -> PR -> review`.
+The active team and local workspace contracts are
+`docs/team/TEAM_AI_WORKSPACE_V2.md` and
+`docs/team/LOCAL_WORKSPACE_CONTRACT_V2.md`; v1 files are compatibility pointers.
 
 ## Review Mode
 

@@ -1,5 +1,5 @@
 {
-  "schema": "ar.team_ai_workspace.v1",
+  "schema": "ar.team_ai_workspace.v2",
   "repository": "Lateily/Alpha-Research",
   "default_branch": "main",
   "task_contract": "scripts/llm/schemas/task.schema.json",
@@ -11,27 +11,16 @@
     "web/AGENTS.md"
   ],
   "required_workspace_files": [
-    "config/team-command-policy.v1.json",
-    "docs/team/TEAM_AI_WORKSPACE_V1.md",
-    "docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md",
+    "config/team-command-policy.v2.json",
+    "config/team-sync-policy.v2.json",
+    "docs/team/TEAM_AI_WORKSPACE_V2.md",
+    "docs/team/LOCAL_WORKSPACE_CONTRACT_V2.md",
     "scripts/llm/fixtures/team_task_source.example.json"
   ],
   "workspace_layout": {
     "root_container": "AR",
-    "containers": [
-      "projects",
-      "worktrees",
-      "runtime",
-      "archive",
-      "local-ai"
-    ],
-    "worktree_domains": [
-      "research",
-      "macro",
-      "aios",
-      "product",
-      "parked"
-    ],
+    "containers": ["projects", "worktrees", "runtime", "archive", "local-ai"],
+    "worktree_domains": ["research", "macro", "aios", "product", "parked"],
     "worktree_pattern": "pr-<number>-<short-slug>",
     "production_runtime": "LOCAL_ONLY_OUTSIDE_DEVELOPMENT_WORKTREES",
     "non_ar_scope": "UNMANAGED_BY_AR_CONTRACT"
@@ -47,8 +36,7 @@
   "runtime_baseline": {
     "python_minimum": "3.11",
     "node_minimum": "20.0",
-    "codex_required": true,
-    "codex_version_enforcement": "WARN_ONLY"
+    "codex_cli_requirement": "TASK_DECLARED_ONLY"
   },
   "local_only": [
     ".env",
@@ -62,6 +50,6 @@
     "*.p12",
     "*.key"
   ],
-  "doctor_command": "python3 scripts/team_ai_workspace.py doctor",
+  "doctor_command": "python3 scripts/team_ai_workspace.py doctor --profile onboarding",
   "task_fixture": "scripts/llm/fixtures/team_task_source.example.json"
 }

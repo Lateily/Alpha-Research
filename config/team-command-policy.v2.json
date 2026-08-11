@@ -1,10 +1,20 @@
 {
-  "schema": "ar.team_command_execution_policy.v1",
+  "schema": "ar.team_command_execution_policy.v2",
   "authority": {
-    "default_script_execution": "DENY",
+    "default_outside_declared_task": "DENY",
+    "task_scoped_creation_without_intermediate_approval": true,
+    "final_human_approver": "Junyan",
+    "final_actions": [
+      "MERGE_PR",
+      "PRODUCTION_DEPLOY",
+      "PRODUCTION_DATA_MIGRATION",
+      "CONSTITUTIONAL_CHANGE",
+      "METHODOLOGY_CHANGE",
+      "CAPITAL_OR_TRADING_RULE_CHANGE"
+    ],
     "active_session_revocation_required_for_legacy_blanket_bans": true,
     "cross_boundary_override_requires": [
-      "CURRENT_HUMAN_INSTRUCTION",
+      "CURRENT_JUNYAN_INSTRUCTION",
       "AI_TASK_V1_SCOPE",
       "PR_SCOPE_DISCLOSURE"
     ]
@@ -13,15 +23,14 @@
     "reuse_existing_valid_clone": true,
     "duplicate_clone_for_layout_only": false,
     "immediate_relocation_required": false,
-    "dirty_checkout_action": "STOP_AND_REPORT"
+    "dirty_checkout_action": "STOP_AND_REPORT",
+    "unknown_duplicate_action": "DECLARE_AND_CLASSIFY"
   },
   "common_control_plane_allowlist": [
     {
       "id": "TEAM_WORKSPACE_DOCTOR",
       "path": "scripts/team_ai_workspace.py",
-      "subcommands": [
-        "doctor"
-      ],
+      "subcommands": ["doctor", "bootstrap"],
       "network": "OFFLINE",
       "tracked_writes": "NONE",
       "git_state_changes": "NONE"
@@ -29,9 +38,7 @@
     {
       "id": "AI_TASK_COMPILE",
       "path": "scripts/llm/ai_os/cli.py",
-      "subcommands": [
-        "compile"
-      ],
+      "subcommands": ["compile"],
       "network": "OFFLINE",
       "tracked_writes": "NONE",
       "git_state_changes": "NONE"
@@ -39,13 +46,9 @@
   ],
   "roles": {
     "Better": {
-      "default_script_execution": "DENY",
+      "default_script_execution": "TASK_SCOPED",
       "inherits_common_control_plane_allowlist": true,
-      "default_write_scope": [
-        "web/",
-        "docs/contracts/",
-        "product presentation files declared by ai-task.v1"
-      ],
+      "default_write_scope": ["web/", "docs/contracts/", "task-declared product files"],
       "forbidden_without_task_specific_junyan_approval": [
         "experiments/execution_tracker/",
         "scripts/run_nightly.py",
@@ -65,8 +68,9 @@
       "inherits_common_control_plane_allowlist": true
     },
     "Simon": {
-      "default_script_execution": "DENY",
-      "inherits_common_control_plane_allowlist": true
+      "default_script_execution": "TASK_SCOPED",
+      "inherits_common_control_plane_allowlist": true,
+      "default_write_scope": ["docs/", "task and architecture planning files"]
     },
     "Junyan": {
       "default_script_execution": "OWNER_AUTHORIZED",

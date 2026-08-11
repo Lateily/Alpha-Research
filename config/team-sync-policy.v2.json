@@ -1,0 +1,128 @@
+{
+  "schema": "ar.team_sync_policy.v2",
+  "repository": "Lateily/Alpha-Research",
+  "fact_source": {
+    "canonical": "MERGED_MAIN",
+    "pending": "OPEN_PR_WITH_HEAD_SHA",
+    "non_canonical": ["LOCAL_COMMIT", "DRAFT_PR", "CHAT_REPORT", "PREVIEW_DEPLOYMENT"],
+    "offline_doctor_remote_claim": "LOCAL_ORIGIN_MAIN_ONLY"
+  },
+  "authority": {
+    "final_approver": "Junyan",
+    "automation_may_merge": false,
+    "automation_may_deploy_production": false,
+    "automation_may_approve_methodology_or_capital_rules": false
+  },
+  "evidence": {
+    "ttl_hours": 24,
+    "required_report_fields": [
+      "observed_at",
+      "expires_at",
+      "workspace_id",
+      "canonical_root",
+      "local_head_sha",
+      "local_origin_main_sha",
+      "expected_main_sha",
+      "dirty_file_count",
+      "profile"
+    ]
+  },
+  "workspace_registration": {
+    "path": ".ai-workspace/workspace-registration.json",
+    "schema": "ar.local_workspace_registration.v1",
+    "required_fields": [
+      "schema",
+      "workspace_id",
+      "member",
+      "machine_id",
+      "canonical_root",
+      "repository",
+      "lifecycle",
+      "registered_at",
+      "approved_by",
+      "approval_ref",
+      "evidence_strength",
+      "legacy_roots"
+    ],
+    "lifecycles": ["ACTIVE", "READ_ONLY_LEGACY", "ARCHIVED"],
+    "active_approver": "Junyan",
+    "evidence_strength": "TRANSCRIPT_REFERENCE_NOT_CRYPTOGRAPHIC"
+  },
+  "profiles": {
+    "ci": {
+      "registration": "OPTIONAL",
+      "expected_main_sha": "OPTIONAL",
+      "active_task": "OPTIONAL"
+    },
+    "onboarding": {
+      "registration": "GAP_IF_MISSING",
+      "expected_main_sha": "GAP_IF_MISSING",
+      "active_task": "GAP_IF_MISSING"
+    },
+    "delivery": {
+      "registration": "REQUIRED",
+      "expected_main_sha": "REQUIRED",
+      "active_task": "REQUIRED"
+    }
+  },
+  "overall_statuses": ["PASS", "PASS_WITH_GAPS", "FAIL"],
+  "dimensions": [
+    "repository_sync",
+    "workspace_identity",
+    "shared_contracts",
+    "tools",
+    "active_task",
+    "canonical_readiness",
+    "deployment"
+  ],
+  "delivery_stages": [
+    "LOCAL_ONLY",
+    "PUSHED",
+    "PR_OPEN",
+    "MERGED",
+    "DEPLOYED",
+    "PRODUCTION_VERIFIED"
+  ],
+  "canonical_readiness_artifacts": [
+    {
+      "id": "ISSUE_158_AI_TASK",
+      "path": "scripts/llm/tasks/issue-158.ai-task.v1.json",
+      "owner": "Simon/Better"
+    },
+    {
+      "id": "ISSUE_198_AI_TASK",
+      "path": "scripts/llm/tasks/issue-198.ai-task.v1.json",
+      "owner": "Simon/Better"
+    },
+    {
+      "id": "MODEL_PORTFOLIO_STATE_SCHEMA",
+      "path": "docs/contracts/schemas/model_portfolio_state.v2.2.schema.json",
+      "owner": "Research producer"
+    },
+    {
+      "id": "TRADE_CARDS_SCHEMA",
+      "path": "docs/contracts/schemas/trade_cards.v2.2.schema.json",
+      "owner": "Research producer"
+    },
+    {
+      "id": "TRADING_SESSION_SCHEMA",
+      "path": "docs/contracts/schemas/trading_sessions.v1.schema.json",
+      "owner": "Research producer"
+    },
+    {
+      "id": "TRADING_SESSION_CONTRACT",
+      "path": "public/data/v2/trading_sessions.json",
+      "owner": "Research producer"
+    },
+    {
+      "id": "PRODUCT_CONTRACT_DRIFT_TEST",
+      "path": "tests/test_product_contract_drift.py",
+      "owner": "Research producer/Better"
+    },
+    {
+      "id": "SIMON_PLATFORM_ARCHITECTURE",
+      "path": "docs/team/SIMON_PLATFORM_ARCHITECTURE_v1.md",
+      "owner": "Simon"
+    }
+  ]
+}

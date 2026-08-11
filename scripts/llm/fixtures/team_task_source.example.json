@@ -9,7 +9,7 @@
   "reviewer": "Junyan",
   "executor_candidates": ["Codex", "Claude"],
   "dependencies": [],
-  "authority_docs": ["AGENTS.md", "docs/team/TEAM_AI_WORKSPACE_V1.md"],
+  "authority_docs": ["AGENTS.md", "docs/team/TEAM_AI_WORKSPACE_V2.md"],
   "file_scope": ["docs/team", "scripts/llm"],
   "forbidden_scope": ["experiments/execution_tracker", "public/data/v2"],
   "input_contracts": ["scripts/llm/schemas/task.schema.json"],

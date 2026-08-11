@@ -42,6 +42,7 @@ K1_GOVERNANCE_PATHS = (
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
+WORKSPACE_GOVERNANCE_PATHS = ("scripts/team_ai_workspace.py",)
 
 
 class MutationGateError(RuntimeError):
@@ -589,6 +590,104 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_reconciler_reports_done_comment_missing_required_fields",
     ),
     MutationCase(
+        mutation_id="TEAM_COMMAND_JUNYAN_FINAL_APPROVER",
+        component="Team Workspace command policy",
+        source_path="scripts/team_ai_workspace.py",
+        test_script="tests/test_team_ai_workspace.py",
+        before='    if authority.get("final_human_approver") != "Junyan":\n'
+        '        errors.append("FINAL_APPROVER_MUST_BE_JUNYAN")',
+        after='    if False:\n'
+        '        errors.append("FINAL_APPROVER_MUST_BE_JUNYAN")',
+        expected_failure_marker="test_command_policy_preserves_task_autonomy_and_junyan_final_authority",
+        rationale="Task autonomy cannot transfer final command authority away from Junyan.",
+        test_function="test_command_policy_preserves_task_autonomy_and_junyan_final_authority",
+    ),
+    MutationCase(
+        mutation_id="TEAM_SYNC_JUNYAN_FINAL_APPROVER",
+        component="Team Workspace sync policy",
+        source_path="scripts/team_ai_workspace.py",
+        test_script="tests/test_team_ai_workspace.py",
+        before='    if authority.get("final_approver") != "Junyan":\n'
+        '        errors.append("FINAL_APPROVER_MUST_BE_JUNYAN")',
+        after='    if False:\n'
+        '        errors.append("FINAL_APPROVER_MUST_BE_JUNYAN")',
+        expected_failure_marker="test_sync_policy_rejects_any_automation_takeover_of_final_authority",
+        rationale="The sync policy cannot name an agent or another role as final approver.",
+        test_function="test_sync_policy_rejects_any_automation_takeover_of_final_authority",
+    ),
+    MutationCase(
+        mutation_id="TEAM_SYNC_AUTOMATION_DENY",
+        component="Team Workspace sync policy",
+        source_path="scripts/team_ai_workspace.py",
+        test_script="tests/test_team_ai_workspace.py",
+        before='        if authority.get(key) is not False:\n'
+        '            errors.append(f"{key.upper()}_MUST_BE_FALSE")',
+        after='        if False:\n'
+        '            errors.append(f"{key.upper()}_MUST_BE_FALSE")',
+        expected_failure_marker="test_sync_policy_rejects_any_automation_takeover_of_final_authority",
+        rationale="Automation cannot acquire merge, production, methodology, or capital approval.",
+        test_function="test_sync_policy_rejects_any_automation_takeover_of_final_authority",
+    ),
+    MutationCase(
+        mutation_id="TEAM_WORKSPACE_JUNYAN_REGISTRATION",
+        component="Team Workspace identity",
+        source_path="scripts/team_ai_workspace.py",
+        test_script="tests/test_team_ai_workspace.py",
+        before='    if payload.get("approved_by") != contract["active_approver"]:\n'
+        '        errors.append("APPROVER_INVALID")',
+        after='    if False:\n'
+        '        errors.append("APPROVER_INVALID")',
+        expected_failure_marker="test_workspace_registration_records_junyan_reference_and_classifies_legacy_roots",
+        rationale="A local clone cannot self-declare itself as the approved canonical workspace.",
+        test_function="test_workspace_registration_records_junyan_reference_and_classifies_legacy_roots",
+    ),
+    MutationCase(
+        mutation_id="TEAM_REGISTRATION_EVIDENCE_STRENGTH",
+        component="Team Workspace sync policy",
+        source_path="scripts/team_ai_workspace.py",
+        test_script="tests/test_team_ai_workspace.py",
+        before='    if registration.get("evidence_strength") != "TRANSCRIPT_REFERENCE_NOT_CRYPTOGRAPHIC":\n'
+        '        errors.append("REGISTRATION_EVIDENCE_STRENGTH_INVALID")',
+        after='    if False:\n'
+        '        errors.append("REGISTRATION_EVIDENCE_STRENGTH_INVALID")',
+        expected_failure_marker="test_sync_policy_rejects_any_automation_takeover_of_final_authority",
+        rationale="A transcript reference cannot be upgraded into cryptographic identity proof by config text.",
+        test_function="test_sync_policy_rejects_any_automation_takeover_of_final_authority",
+    ),
+    MutationCase(
+        mutation_id="TEAM_REPORT_EXPIRY",
+        component="Team Workspace evidence",
+        source_path="scripts/team_ai_workspace.py",
+        test_script="tests/test_team_ai_workspace.py",
+        before="    return now <= expires.astimezone(dt.timezone.utc)",
+        after="    return True",
+        expected_failure_marker="test_report_expiry_prevents_stale_status_from_becoming_current_fact",
+        rationale="A stale member report cannot remain valid indefinitely.",
+        test_function="test_report_expiry_prevents_stale_status_from_becoming_current_fact",
+    ),
+    MutationCase(
+        mutation_id="TEAM_EXPECTED_MAIN_SHA",
+        component="Team Workspace repository sync",
+        source_path="scripts/team_ai_workspace.py",
+        test_script="tests/test_team_ai_workspace.py",
+        before="    return origin_main != expected_main_sha.lower()",
+        after="    return False",
+        expected_failure_marker="test_expected_main_sha_is_an_external_anchor_not_a_live_network_claim",
+        rationale="Local origin/main cannot masquerade as the independently observed GitHub main.",
+        test_function="test_expected_main_sha_is_an_external_anchor_not_a_live_network_claim",
+    ),
+    MutationCase(
+        mutation_id="TEAM_DELIVERY_ACTIVE_TASK",
+        component="Team Workspace task binding",
+        source_path="scripts/team_ai_workspace.py",
+        test_script="tests/test_team_ai_workspace.py",
+        before='    return active_task_status == "UNBOUND" and requirement == "REQUIRED"',
+        after="    return False",
+        expected_failure_marker="test_delivery_profile_requires_real_active_task",
+        rationale="A compiler smoke fixture cannot substitute for a real delivery task.",
+        test_function="test_delivery_profile_requires_real_active_task",
+    ),
+    MutationCase(
         mutation_id="GOVERNANCE_K1_MARKER_COVERAGE_CALL",
         component="Governance mutation gate",
         source_path="scripts/governance_mutation_gate.py",
@@ -615,6 +714,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_validate_manifest_enforces_r043_marker_coverage",
         rationale="The mutation manifest must not silently stop enforcing R-043 marker coverage.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_WORKSPACE_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_workspace_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_workspace_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_workspace_marker_coverage",
+        rationale="The mutation manifest must not silently stop enforcing workspace marker coverage.",
     ),
 )
 
@@ -668,6 +781,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
                 )
     validate_k1_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
+    validate_workspace_marker_coverage(root, cases)
 
 
 def validate_k1_marker_coverage(
@@ -743,6 +857,48 @@ def validate_r043_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "R-043 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_workspace_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = WORKSPACE_GOVERNANCE_PATHS,
+) -> None:
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"workspace governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith("TEAM_"):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate workspace governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    declared = {
+        case.mutation_id
+        for case in cases
+        if case.component.startswith("Team Workspace")
+    }
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "workspace governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
