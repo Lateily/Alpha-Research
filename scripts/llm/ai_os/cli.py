@@ -10,6 +10,7 @@ from typing import Any
 
 from registry import replay_events
 from reconciler import reconcile
+from scheduler import SCHEDULE_READY, build_schedule
 from task_compiler import SPEC_BLOCKED, compile_task_manifest
 
 
@@ -30,6 +31,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     reconcile_parser.add_argument("--input", required=True, help="Fixture JSON object")
     reconcile_parser.add_argument("--output", help="Optional output JSON path")
+
+    schedule_parser = subparsers.add_parser(
+        "schedule", help="Build one offline AIOS dispatch schedule"
+    )
+    schedule_parser.add_argument("--input", required=True, help="Fixture JSON object")
+    schedule_parser.add_argument("--output", help="Optional output JSON path")
 
     args = parser.parse_args(argv)
     if args.command == "compile":
@@ -57,11 +64,25 @@ def main(argv: list[str] | None = None) -> int:
         )
         _write_json(result, args.output)
         return 1 if _has_findings(result) else 0
+    if args.command == "schedule":
+        fixture = _load_json(args.input)
+        if not isinstance(fixture, dict):
+            print("schedule input must be a JSON object", file=sys.stderr)
+            return 2
+        result = build_schedule(
+            manifests=fixture.get("manifests", []),
+            registry_snapshot=fixture.get("registry_snapshot"),
+            policy_decisions=fixture.get("policy_decisions"),
+            context_packets=fixture.get("context_packets"),
+            max_context_age_minutes=fixture.get("max_context_age_minutes", 1440),
+        ).to_dict()
+        _write_json(result, args.output)
+        return 0 if result["status"] == SCHEDULE_READY else 1
     return 2
 
 
 def _load_json(path: str) -> Any:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
 def _write_json(value: Any, output: str | None) -> None:

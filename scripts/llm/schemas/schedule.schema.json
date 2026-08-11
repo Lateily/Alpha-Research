@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/schemas/schedule.schema.json",
+  "$comment": "Documentation contract for ai-schedule.v1. Runtime validation is implemented in scripts/llm/ai_os/scheduler.py and guarded by offline tests.",
+  "title": "AIOS Schedule Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "generated_at",
+    "ready",
+    "blocked",
+    "invalid_inputs"
+  ],
+  "properties": {
+    "schema": {"const": "ai-schedule.v1"},
+    "generated_at": {"type": "string", "minLength": 1},
+    "ready": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "reason", "dependencies"],
+        "properties": {
+          "task_id": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "dependencies": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "blocked": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "reasons"],
+        "properties": {
+          "task_id": {"type": "string", "minLength": 1},
+          "reasons": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "invalid_inputs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}
