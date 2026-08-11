@@ -282,6 +282,10 @@ def evaluate_workspace(root: Path, require_tools: bool = True) -> dict[str, Any]
     config = _strict_json(root / CONFIG_REL)
     required_instructions = config["required_instruction_files"]
     missing_instructions = [path for path in required_instructions if not (root / path).is_file()]
+    required_workspace_files = config["required_workspace_files"]
+    missing_workspace_files = [
+        path for path in required_workspace_files if not (root / path).is_file()
+    ]
     files = tracked_files(root)
     local_only_tracked = sorted(
         path for path in files if _matches_local_only(path, config["local_only"])
@@ -315,6 +319,8 @@ def evaluate_workspace(root: Path, require_tools: bool = True) -> dict[str, Any]
         failures.append("UNEXPECTED_ORIGIN_REMOTE")
     if missing_instructions:
         failures.append("MISSING_INSTRUCTION_FILES")
+    if missing_workspace_files:
+        failures.append("MISSING_WORKSPACE_CONTRACT_FILES")
     if skill_report["missing"] or skill_report["invalid"]:
         failures.append("SKILL_SET_INVALID")
     if local_only_tracked:
@@ -353,6 +359,11 @@ def evaluate_workspace(root: Path, require_tools: bool = True) -> dict[str, Any]
         "instructions": {
             "required": required_instructions,
             "missing": missing_instructions,
+        },
+        "workspace_contract": {
+            "required": required_workspace_files,
+            "missing": missing_workspace_files,
+            "layout": config["workspace_layout"],
         },
         "skills": skill_report,
         "tools": {

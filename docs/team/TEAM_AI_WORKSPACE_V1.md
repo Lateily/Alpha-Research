@@ -41,6 +41,24 @@ Junyan reviews and decides whether to merge
 Do not place a Git worktree in iCloud, Dropbox, or another file synchronization
 folder. Do not copy one member's dirty repository over another member's clone.
 
+## Local Workspace Layout
+
+Use the five-container layout defined in
+`docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md`:
+
+```text
+workspace/
+  projects/     stable clean default-branch checkouts
+  worktrees/    temporary tasks grouped by domain
+  runtime/      runtime pointers and operating notes only
+  archive/      frozen history, backups, and artifacts
+  personal/     non-project personal work
+```
+
+Alpha Research task worktrees belong under one of `research`, `macro`, `aios`,
+or `product`. A merged or closed PR must leave the active worktree tree. Do not
+use old checkouts as archives.
+
 ## Local-Only State
 
 Keep API keys in local environment files and production secrets in GitHub
@@ -75,5 +93,6 @@ During the group onboarding session, record for each member:
 - active instruction files;
 - task-compiler smoke result;
 - whether the workspace contains tracked secret-like files.
+- whether the local layout follows the five-container contract.
 
 Store only the redacted doctor report. Never paste keys or environment values.

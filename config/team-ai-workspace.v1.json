@@ -1,7 +1,6 @@
 {
   "schema": "ar.team_ai_workspace.v1",
   "repository": "Lateily/Alpha-Research",
-  "expected_remote_suffix": "Lateily/Alpha-Research.git",
   "default_branch": "main",
   "task_contract": "scripts/llm/schemas/task.schema.json",
   "task_compiler": "scripts/llm/ai_os/cli.py",
@@ -11,6 +10,29 @@
     "scripts/llm/AGENTS.md",
     "web/AGENTS.md"
   ],
+  "required_workspace_files": [
+    "docs/team/TEAM_AI_WORKSPACE_V1.md",
+    "docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md",
+    "scripts/llm/fixtures/team_task_source.example.json"
+  ],
+  "workspace_layout": {
+    "containers": [
+      "projects",
+      "worktrees",
+      "runtime",
+      "archive",
+      "personal"
+    ],
+    "worktree_domains": [
+      "research",
+      "macro",
+      "aios",
+      "product",
+      "parked"
+    ],
+    "worktree_pattern": "pr-<number>-<short-slug>",
+    "production_runtime": "LOCAL_ONLY_OUTSIDE_DEVELOPMENT_WORKTREES"
+  },
   "required_skills": [
     "ar-task-delivery",
     "ar-adversarial-review",

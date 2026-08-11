@@ -25,6 +25,14 @@ def test_current_workspace_contract_is_complete() -> None:
     assert report["task_compiler"]["status"] == "SPEC_READY"
     assert report["task_compiler"]["task_id"] == "TEAM-EXAMPLE-001"
     assert report["hygiene"]["tracked_secret_findings"] == []
+    assert report["workspace_contract"]["missing"] == []
+    assert report["workspace_contract"]["layout"]["containers"] == [
+        "projects",
+        "worktrees",
+        "runtime",
+        "archive",
+        "personal",
+    ]
 
 
 def test_root_instructions_remove_legacy_role_and_contract_conflicts() -> None:
@@ -35,6 +43,7 @@ def test_root_instructions_remove_legacy_role_and_contract_conflicts() -> None:
     assert "Compile the task source" in text
     assert "Final merge authority belongs to Junyan" in text
     assert "Do not create a parallel task format" in text
+    assert "LOCAL_WORKSPACE_CONTRACT_V1.md" in text
 
 
 def test_required_skills_have_metadata_and_ui_prompt() -> None:
@@ -96,6 +105,22 @@ def test_remote_identity_accepts_equivalent_github_url_forms() -> None:
 
     assert all(workspace.remote_repository_slug(remote) == expected for remote in remotes)
     assert workspace.remote_repository_slug("/tmp/local-repository") is None
+
+
+def test_local_workspace_contract_pins_domain_and_retirement_rules() -> None:
+    contract = (ROOT / "docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md").read_text(
+        encoding="utf-8"
+    )
+    skill = (ROOT / ".agents/skills/ar-workspace-sync/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+
+    for domain in ("research", "macro", "aios", "product"):
+        assert f"`{domain}/`" in contract
+    assert "git worktree remove" in contract
+    assert "pr-<number>-<short-slug>" in contract
+    assert "git worktree remove" in skill
+    assert "production runtime outside development worktrees" in skill
 
 
 def test_doctor_cli_emits_parseable_redacted_report() -> None:
