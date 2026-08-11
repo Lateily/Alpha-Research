@@ -40,6 +40,29 @@ onboarding session needs a durable local acceptance record. It does not install
 dependencies, clone repositories, change branches, pull commits, or configure
 credentials.
 
+## Command Execution Authority
+
+`config/team-command-policy.v1.json` is the machine-readable command boundary.
+The default is deny. A role may run only the common control-plane entrypoints or
+commands explicitly authorized by its compiled `ai-task.v1` and current Junyan
+approval.
+
+For Better, the standing allowlist is limited to:
+
+- `scripts/team_ai_workspace.py doctor`;
+- `scripts/llm/ai_os/cli.py compile` for the declared task source.
+
+These are offline control-plane checks, not production pipeline authority.
+Market-data collectors, nightly orchestration, publication, migrations, and
+ledger engines remain forbidden unless a task-specific Junyan instruction
+explicitly changes that boundary.
+
+This section supersedes repository or documentation language that broadly says
+"never run anything under scripts/". It cannot silently override an explicit
+human instruction already present in an active AI conversation: Junyan must
+revoke that old blanket ban once in that conversation before the allowlist is
+used. The worker must never infer the revocation.
+
 Do not turn a build request into a proposal-only response. Carry an authorized
 task through implementation, verification, and a reviewable PR unless the human
 explicitly asks for analysis only.
@@ -48,9 +71,12 @@ explicitly asks for analysis only.
 
 - `main` is the only repository fact source. Never push directly to `main`.
 - Use one task, one branch or worktree, one PR.
-- Keep Alpha Research inside a single local `AR/` container. Classify its task
-  worktrees as `research`, `macro`, `aios`, or `product` under
-  `docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md` and retire them after merge.
+- New installations should keep Alpha Research inside a single local `AR/`
+  container. An existing valid clone may remain at its approved path until a
+  deliberate clean migration; layout adoption never justifies a duplicate
+  clone. Classify new task worktrees as `research`, `macro`, `aios`, or
+  `product` under `docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md` and retire them
+  after merge.
 - Never use `git add .`; stage only named task files.
 - Do not reset, overwrite, or delete unrelated dirty work.
 - Do not assume a stacked PR retargeted automatically after squash merge.

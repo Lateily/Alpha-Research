@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 
 SCHEMA = "ar.team_ai_workspace_report.v1"
 CONFIG_REL = Path("config/team-ai-workspace.v1.json")
+COMMAND_POLICY_REL = Path("config/team-command-policy.v1.json")
 LOCAL_REPORT_REL = Path(".ai-workspace/doctor-report.json")
 SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 VERSION_RE = re.compile(r"(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?")
@@ -277,9 +278,67 @@ def compile_fixture(root: Path, config: dict[str, Any], python_tool: dict[str, A
     }
 
 
+def validate_command_policy(policy: dict[str, Any]) -> dict[str, Any]:
+    errors: list[str] = []
+    if policy.get("schema") != "ar.team_command_execution_policy.v1":
+        errors.append("SCHEMA_INVALID")
+
+    authority = policy.get("authority") or {}
+    if authority.get("default_script_execution") != "DENY":
+        errors.append("DEFAULT_MUST_DENY")
+    if authority.get("active_session_revocation_required_for_legacy_blanket_bans") is not True:
+        errors.append("ACTIVE_SESSION_REVOCATION_NOT_REQUIRED")
+
+    adoption = policy.get("workspace_adoption") or {}
+    if adoption.get("reuse_existing_valid_clone") is not True:
+        errors.append("EXISTING_CLONE_REUSE_NOT_REQUIRED")
+    if adoption.get("duplicate_clone_for_layout_only") is not False:
+        errors.append("DUPLICATE_CLONE_NOT_FORBIDDEN")
+
+    allowlist = policy.get("common_control_plane_allowlist") or []
+    allowed = {
+        (entry.get("path"), tuple(entry.get("subcommands") or []))
+        for entry in allowlist
+        if isinstance(entry, dict)
+    }
+    required = {
+        ("scripts/team_ai_workspace.py", ("doctor",)),
+        ("scripts/llm/ai_os/cli.py", ("compile",)),
+    }
+    if not required.issubset(allowed):
+        errors.append("CONTROL_PLANE_ALLOWLIST_INCOMPLETE")
+    for entry in allowlist:
+        if not isinstance(entry, dict):
+            errors.append("ALLOWLIST_ENTRY_INVALID")
+            continue
+        if entry.get("network") != "OFFLINE":
+            errors.append("CONTROL_PLANE_NETWORK_NOT_OFFLINE")
+        if entry.get("tracked_writes") != "NONE":
+            errors.append("CONTROL_PLANE_TRACKED_WRITE_ALLOWED")
+        if entry.get("git_state_changes") != "NONE":
+            errors.append("CONTROL_PLANE_GIT_CHANGE_ALLOWED")
+
+    better = (policy.get("roles") or {}).get("Better") or {}
+    if better.get("default_script_execution") != "DENY":
+        errors.append("BETTER_DEFAULT_MUST_DENY")
+    if better.get("inherits_common_control_plane_allowlist") is not True:
+        errors.append("BETTER_CONTROL_PLANE_NOT_INHERITED")
+    forbidden = better.get("forbidden_without_task_specific_junyan_approval") or []
+    if "experiments/execution_tracker/" not in forbidden or "production runtime" not in forbidden:
+        errors.append("BETTER_PRODUCTION_DENYLIST_INCOMPLETE")
+
+    return {
+        "status": "VALID" if not errors else "INVALID",
+        "errors": errors,
+        "better_default": better.get("default_script_execution"),
+        "allowed_entrypoints": sorted(path for path, _ in allowed),
+    }
+
+
 def evaluate_workspace(root: Path, require_tools: bool = True) -> dict[str, Any]:
     root = root.resolve()
     config = _strict_json(root / CONFIG_REL)
+    command_policy = validate_command_policy(_strict_json(root / COMMAND_POLICY_REL))
     required_instructions = config["required_instruction_files"]
     missing_instructions = [path for path in required_instructions if not (root / path).is_file()]
     required_workspace_files = config["required_workspace_files"]
@@ -321,6 +380,8 @@ def evaluate_workspace(root: Path, require_tools: bool = True) -> dict[str, Any]
         failures.append("MISSING_INSTRUCTION_FILES")
     if missing_workspace_files:
         failures.append("MISSING_WORKSPACE_CONTRACT_FILES")
+    if command_policy["status"] != "VALID":
+        failures.append("COMMAND_POLICY_INVALID")
     if skill_report["missing"] or skill_report["invalid"]:
         failures.append("SKILL_SET_INVALID")
     if local_only_tracked:
@@ -373,6 +434,7 @@ def evaluate_workspace(root: Path, require_tools: bool = True) -> dict[str, Any]
             "codex": codex_tool,
         },
         "task_compiler": compiler,
+        "command_policy": command_policy,
         "hygiene": {
             "local_only_tracked": local_only_tracked,
             "tracked_secret_findings": secret_findings,
