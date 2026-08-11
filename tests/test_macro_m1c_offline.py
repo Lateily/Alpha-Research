@@ -399,6 +399,16 @@ class MacroM1CNightlyWiringTests(unittest.TestCase):
             finally:
                 nightly.STEPS = original_steps
             self.assertEqual("COMPLETE", result["report"])
+            self.assertEqual("DATA_BLOCKED", result["research_data_quality"])
+            self.assertIn(
+                {
+                    "step": "macro_m1c",
+                    "quality": "DATA_BLOCKED",
+                    "artifact": None,
+                },
+                result["research_data_gaps"],
+            )
+            self.assertEqual([], result["non_ok_steps"])
             self.assertTrue((macro_data / "release_calendar.json").is_file())
             self.assertFalse((macro_data / "macro_panel.json").exists())
             self.assertIn(

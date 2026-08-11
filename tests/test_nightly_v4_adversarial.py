@@ -855,6 +855,10 @@ class StagingPublicationTest(unittest.TestCase):
                 self.assertTrue(result["published"])
                 self.assertEqual("COMPLETE", result["report"])
                 self.assertEqual("DATA_BLOCKED", result["data_quality"])
+                self.assertIn(
+                    "macro_m1c:DATA_BLOCKED",
+                    result["degraded_sources"],
+                )
                 self.assertNotIn(
                     "public:macro/macro_panel.json",
                     read_json(os.path.join(public, "current_run.json"))["artifacts"],

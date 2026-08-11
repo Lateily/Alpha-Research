@@ -525,7 +525,8 @@ def run_steps(
                     "quality": quality,
                     "artifact": artifact.get("artifact"),
                 })
-        if not entry.get("blocks_publication", True) and not entry.get("artifacts"):
+        # governance-mutation: MACRO_M1C_FAILURE_VISIBILITY
+        if not entry.get("blocks_publication", True):
             research_quality.append({
                 "step": entry["step"],
                 "quality": "DATA_BLOCKED",

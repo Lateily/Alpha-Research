@@ -166,6 +166,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Business-critical steps must never acquire calibration failure isolation.",
     ),
     MutationCase(
+        mutation_id="MACRO_M1C_FAILURE_VISIBILITY",
+        component="Macro M1-C nightly observability",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before='        if not entry.get("blocks_publication", True):',
+        after="        if False:",
+        expected_failure_marker="test_failed_macro_step_discards_partial_outputs_but_keeps_inputs",
+        rationale="An isolated Macro failure must remain visible in top-level data quality during production verification.",
+    ),
+    MutationCase(
         mutation_id="MACRO_M1C_RUN_AUTHORITY_CALL",
         component="Macro M1-C runtime boundary",
         source_path="experiments/macro_os/m1c.py",
