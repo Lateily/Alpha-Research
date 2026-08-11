@@ -1,0 +1,6 @@
+interface:
+  display_name: "AR AIOS Engineering"
+  short_description: "Build fail-closed AR model and agent infrastructure"
+  default_prompt: "Use $ar-aios-engineering to implement this AIOS task with deterministic policy, offline tests, and cost evidence."
+policy:
+  allow_implicit_invocation: true

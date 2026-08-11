@@ -47,6 +47,35 @@ class GovernanceMutationGateTests(unittest.TestCase):
             ):
                 gate.validate_manifest(root, [case])
 
+    def test_validate_manifest_enforces_r043_marker_coverage(self) -> None:
+        case = gate.MutationCase(
+            mutation_id="R043_SYNTHETIC_GATE",
+            component="R-043 publication migration synthetic",
+            source_path="source.py",
+            test_script="test_source.py",
+            before="guard = True",
+            after="guard = False",
+            expected_failure_marker="synthetic",
+            rationale="Synthetic case used to prove R-043 marker coverage is load-bearing.",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source.py").write_text("guard = True\n", encoding="utf-8")
+            (root / "test_source.py").write_text("# fixture\n", encoding="utf-8")
+            for relative in gate.K1_GOVERNANCE_PATHS:
+                marker_path = root / relative
+                marker_path.parent.mkdir(parents=True, exist_ok=True)
+                marker_path.write_text("# no K1 markers\n", encoding="utf-8")
+            for relative in gate.R043_GOVERNANCE_PATHS:
+                marker_path = root / relative
+                marker_path.parent.mkdir(parents=True, exist_ok=True)
+                marker_path.write_text("# missing marker\n", encoding="utf-8")
+            with self.assertRaisesRegex(
+                gate.MutationGateError,
+                "mutations_without_markers.*R043_SYNTHETIC_GATE",
+            ):
+                gate.validate_manifest(root, [case])
+
     def test_k1_marker_coverage_rejects_missing_or_orphaned_mutations(self) -> None:
         k1_case = next(
             case for case in gate.MUTATIONS if case.component.startswith("AIOS K1")
@@ -76,6 +105,26 @@ class GovernanceMutationGateTests(unittest.TestCase):
             source.write_text(marker + marker, encoding="utf-8")
             with self.assertRaisesRegex(gate.MutationGateError, "duplicate K1 governance marker"):
                 gate.validate_k1_marker_coverage(root, [k1_case], ("k1.py",))
+
+    def test_r043_marker_coverage_rejects_missing_or_orphaned_mutations(self) -> None:
+        r043_case = next(
+            case
+            for case in gate.MUTATIONS
+            if case.component.startswith("R-043 publication migration")
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "r043.py"
+            source.write_text("# no marker\n", encoding="utf-8")
+            with self.assertRaisesRegex(gate.MutationGateError, "mutations_without_markers"):
+                gate.validate_r043_marker_coverage(root, [r043_case], ("r043.py",))
+
+            source.write_text(
+                "# governance-mutation: R043_ORPHAN_GATE\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(gate.MutationGateError, "markers_without_mutations"):
+                gate.validate_r043_marker_coverage(root, [r043_case], ("r043.py",))
 
     def test_exact_replace_rejects_missing_and_duplicate_anchors(self) -> None:
         with self.assertRaisesRegex(gate.MutationGateError, "found 0"):
