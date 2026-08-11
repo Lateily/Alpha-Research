@@ -28,6 +28,12 @@ workspace/
 The outer workspace path may differ by operating system. The `AR` boundary and
 its internal meanings do not.
 
+For an existing valid clone, adoption is logical before it is physical: declare
+that checkout as the member's primary AR repository and keep using it. Do not
+create a second clone merely to match this diagram. Relocation into `AR/` is a
+separate, explicit housekeeping task that requires a clean checkout and must
+leave exactly one active primary clone.
+
 ## Worktree contract
 
 | Domain | Scope |

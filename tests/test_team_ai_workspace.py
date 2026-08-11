@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import copy
 import subprocess
 import sys
 import tempfile
@@ -24,6 +25,7 @@ def test_current_workspace_contract_is_complete() -> None:
     assert report["skills"]["invalid"] == []
     assert report["task_compiler"]["status"] == "SPEC_READY"
     assert report["task_compiler"]["task_id"] == "TEAM-EXAMPLE-001"
+    assert report["command_policy"]["status"] == "VALID"
     assert report["hygiene"]["tracked_secret_findings"] == []
     assert report["workspace_contract"]["missing"] == []
     assert report["workspace_contract"]["layout"]["root_container"] == "AR"
@@ -163,6 +165,7 @@ def test_doctor_cli_emits_parseable_redacted_report() -> None:
 def test_onboarding_contract_reuses_existing_clone_and_defines_write_boundary() -> None:
     root_contract = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     onboarding = (ROOT / "docs/team/TEAM_AI_WORKSPACE_V1.md").read_text(encoding="utf-8")
+    normalized_root_contract = " ".join(root_contract.split())
 
     assert "Reuse an existing valid clone" in root_contract
     assert "explicitly authorized control-plane check" in root_contract
@@ -170,6 +173,44 @@ def test_onboarding_contract_reuses_existing_clone_and_defines_write_boundary() 
     assert "Set-Location 'C:\\path\\to\\existing\\Alpha-Research'" in onboarding
     assert "py -3.11 .\\scripts\\team_ai_workspace.py doctor" in onboarding
     assert "`bootstrap` is optional" in onboarding.lower()
+    assert "team-command-policy.v1.json" in root_contract
+    assert "layout adoption never justifies a duplicate clone" in normalized_root_contract
+
+
+def test_command_policy_pins_better_to_narrow_control_plane_allowlist() -> None:
+    policy = workspace._strict_json(ROOT / workspace.COMMAND_POLICY_REL)
+    report = workspace.validate_command_policy(policy)
+
+    assert report["status"] == "VALID", report
+    assert report["better_default"] == "DENY"
+    assert report["allowed_entrypoints"] == [
+        "scripts/llm/ai_os/cli.py",
+        "scripts/team_ai_workspace.py",
+    ]
+
+    mutations = []
+    allow_all = copy.deepcopy(policy)
+    allow_all["authority"]["default_script_execution"] = "ALLOW"
+    mutations.append(allow_all)
+
+    no_doctor = copy.deepcopy(policy)
+    no_doctor["common_control_plane_allowlist"] = [
+        entry
+        for entry in no_doctor["common_control_plane_allowlist"]
+        if entry["id"] != "TEAM_WORKSPACE_DOCTOR"
+    ]
+    mutations.append(no_doctor)
+
+    duplicate_clone = copy.deepcopy(policy)
+    duplicate_clone["workspace_adoption"]["duplicate_clone_for_layout_only"] = True
+    mutations.append(duplicate_clone)
+
+    better_runs_all = copy.deepcopy(policy)
+    better_runs_all["roles"]["Better"]["default_script_execution"] = "TASK_SCOPED"
+    mutations.append(better_runs_all)
+
+    for mutation in mutations:
+        assert workspace.validate_command_policy(mutation)["status"] == "INVALID"
 
 
 def run_all_tests() -> int:

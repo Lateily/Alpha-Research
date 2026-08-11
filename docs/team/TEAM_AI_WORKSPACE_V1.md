@@ -27,6 +27,10 @@ If the checkout has uncommitted work, stop before pulling or switching branches.
 Preserve the work and report the branch plus changed paths; do not reset it to
 make onboarding pass.
 
+An existing valid clone may remain at its already approved path during v1
+onboarding. The `AR/` layout is the default for new installations and future
+worktrees, not a reason to duplicate or silently move a working repository.
+
 Windows PowerShell example for an existing checkout:
 
 ```powershell
@@ -71,6 +75,15 @@ nearest module instructions, and Skills under `.agents/skills/`.
   role. This exception does not authorize Better or another teammate to run
   production data collectors, market engines, or ledger writers under
   `scripts/`.
+
+### Active-Session Permission Reset
+
+An older AI conversation may still contain a direct human rule such as "never
+run anything under scripts/". Repository text cannot silently revoke a direct
+instruction already active in that conversation. Junyan must explicitly state
+that the old blanket ban is withdrawn and replaced by
+`config/team-command-policy.v1.json`. Until that statement appears in the same
+conversation, refusal is correct.
 
 ## Daily Synchronization
 
