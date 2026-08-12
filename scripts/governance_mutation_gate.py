@@ -911,6 +911,30 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="An E1 red flag is an exclusion fact, not a positive candidate signal.",
     ),
     MutationCase(
+        mutation_id="FUNNEL_U2_EXACT_EVIDENCE_PROJECTION",
+        component="Research funnel U2 evidence boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if row.get("source_channels") != expected_channels or row.get("entry_reasons") != expected_reasons:\n'
+        '            raise FunnelError("candidate U1 channel/reason projection is not exact")',
+        after='        if False:\n'
+        '            raise FunnelError("candidate U1 channel/reason projection is not exact")',
+        expected_failure_marker="test_u2_rejects_untraceable_reason_and_algorithm_drift",
+        rationale="U2 must be an exact projection of the same-day U1 channel evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_SAME_DAY_BATTERY",
+        component="Research funnel U4 evidence freshness",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if trade_date is not None and target != _date8(trade_date):\n'
+        '        raise FunnelError("U3 battery is not from the requested trade date")',
+        after='    if False:\n'
+        '        raise FunnelError("U3 battery is not from the requested trade date")',
+        expected_failure_marker="test_u4_rejects_stale_u3_battery",
+        rationale="U4 and U0 cannot advance a candidate using a stale U3 battery artifact.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_U4_HUMAN_SELECTION_SIZE",
         component="Research funnel U4 authority",
         source_path="experiments/research_funnel/funnel_pipeline.py",

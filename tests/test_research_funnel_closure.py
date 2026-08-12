@@ -155,6 +155,16 @@ def build_candidates(n: int = 30) -> tuple[dict, dict, dict, dict]:
     return registry, features, scan, candidates
 
 
+def battery_fixture(codes: list[str], trade_date: str = TRADE_DATE) -> dict:
+    return {
+        "target_trade_date": trade_date,
+        "data": {"results": [
+            {"ts_code": code, "completeness": {"verdict": "COMPLETE"}}
+            for code in codes
+        ]},
+    }
+
+
 class ResearchFunnelClosureTests(unittest.TestCase):
     def test_u1_has_exactly_six_independent_channel_rows(self) -> None:
         registry, _, scan = build_scan()
@@ -260,7 +270,13 @@ class ResearchFunnelClosureTests(unittest.TestCase):
         row = next(row for row in mutated["rows"] if row["entry_reasons"])
         row["entry_reasons"][0]["metric"] = "invented"
         mutated["rows_hash"] = fp._hash(mutated["rows"])
-        with self.assertRaisesRegex(fp.FunnelError, "not traceable"):
+        with self.assertRaisesRegex(fp.FunnelError, "projection is not exact"):
+            fp.validate_candidate_review(mutated, registry, scan)
+        mutated = copy.deepcopy(candidates)
+        row = next(row for row in mutated["rows"] if row["source_channels"])
+        row["source_channels"] = []
+        mutated["rows_hash"] = fp._hash(mutated["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "projection is not exact"):
             fp.validate_candidate_review(mutated, registry, scan)
         mutated = copy.deepcopy(candidates)
         mutated["control_sampling_frame"]["algo"] = "python-hash"
@@ -306,12 +322,7 @@ class ResearchFunnelClosureTests(unittest.TestCase):
     def test_u4_requires_explicit_human_selection_and_never_emits_action(self) -> None:
         _, _, _, candidates = build_candidates()
         codes = [row["ts_code"] for row in candidates["rows"] if "RED_FLAG" not in row["flags"]][:3]
-        battery = {
-            "data": {"results": [
-                {"ts_code": code, "completeness": {"verdict": "COMPLETE"}}
-                for code in codes
-            ]}
-        }
+        battery = battery_fixture(codes)
         waiting = fp.build_deep_research_queue(
             candidate_review=candidates, battery=battery, selected_tickers=[],
             trade_date=TRADE_DATE, generated_at=GENERATED_AT,
@@ -337,10 +348,7 @@ class ResearchFunnelClosureTests(unittest.TestCase):
     def test_u4_selection_size_is_human_governance_gate(self) -> None:
         _, _, _, candidates = build_candidates()
         codes = [row["ts_code"] for row in candidates["rows"] if "RED_FLAG" not in row["flags"]][:2]
-        battery = {"data": {"results": [
-            {"ts_code": code, "completeness": {"verdict": "COMPLETE"}}
-            for code in codes
-        ]}}
+        battery = battery_fixture(codes)
         with self.assertRaises(fp.FunnelError) as caught:
             fp.build_deep_research_queue(
                 candidate_review=candidates, battery=battery, selected_tickers=codes,
@@ -351,10 +359,7 @@ class ResearchFunnelClosureTests(unittest.TestCase):
     def test_u4_requires_an_explicit_research_question(self) -> None:
         _, _, _, candidates = build_candidates()
         codes = [row["ts_code"] for row in candidates["rows"] if "RED_FLAG" not in row["flags"]][:3]
-        battery = {"data": {"results": [
-            {"ts_code": code, "completeness": {"verdict": "COMPLETE"}}
-            for code in codes
-        ]}}
+        battery = battery_fixture(codes)
         with self.assertRaisesRegex(fp.FunnelError, "lacks a clear research question"):
             fp.build_deep_research_queue(
                 candidate_review=candidates, battery=battery, selected_tickers=codes,
@@ -366,10 +371,7 @@ class ResearchFunnelClosureTests(unittest.TestCase):
         _, _, _, candidates = build_candidates()
         red = next(row["ts_code"] for row in candidates["rows"] if "RED_FLAG" in row["flags"])
         clean = [row["ts_code"] for row in candidates["rows"] if "RED_FLAG" not in row["flags"]][:2]
-        battery = {"data": {"results": [
-            {"ts_code": code, "completeness": {"verdict": "COMPLETE"}}
-            for code in [red, *clean]
-        ]}}
+        battery = battery_fixture([red, *clean])
         with self.assertRaisesRegex(fp.FunnelError, "not backed"):
             fp.build_deep_research_queue(
                 candidate_review=candidates, battery=battery,
@@ -380,13 +382,25 @@ class ResearchFunnelClosureTests(unittest.TestCase):
                 },
             )
 
+    def test_u4_rejects_stale_u3_battery(self) -> None:
+        _, _, _, candidates = build_candidates()
+        codes = [row["ts_code"] for row in candidates["rows"] if "RED_FLAG" not in row["flags"]][:3]
+        with self.assertRaisesRegex(fp.FunnelError, "not from the requested trade date"):
+            fp.build_deep_research_queue(
+                candidate_review=candidates,
+                battery=battery_fixture(codes, "20260810"),
+                selected_tickers=codes,
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+                research_questions={
+                    code: f"What causal fact could invalidate {code}?" for code in codes
+                },
+            )
+
     def test_u0_advances_only_from_hashable_downstream_evidence(self) -> None:
         registry, _, scan, candidates = build_candidates()
         codes = [row["ts_code"] for row in candidates["rows"] if "RED_FLAG" not in row["flags"]][:3]
-        battery = {"data": {"results": [
-            {"ts_code": code, "completeness": {"verdict": "COMPLETE"}}
-            for code in codes
-        ]}}
+        battery = battery_fixture(codes)
         queue = fp.build_deep_research_queue(
             candidate_review=candidates, battery=battery, selected_tickers=codes,
             trade_date=TRADE_DATE, generated_at=GENERATED_AT,
@@ -432,7 +446,10 @@ class ResearchFunnelClosureTests(unittest.TestCase):
             registry_path.write_text(json.dumps(registry), encoding="utf-8")
             e1_path.write_text(json.dumps(e1), encoding="utf-8")
             rotation_path.write_text(json.dumps(rotation_fixture()), encoding="utf-8")
-            battery_path.write_text(json.dumps({"data": {"results": []}}), encoding="utf-8")
+            battery_path.write_text(
+                json.dumps({"target_trade_date": TRADE_DATE, "data": {"results": []}}),
+                encoding="utf-8",
+            )
             conn = sqlite3.connect(feature_db)
             columns = list(next(iter(features.values())))
             declarations = ",".join(

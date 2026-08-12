@@ -801,10 +801,10 @@ def validate_candidate_review(
     if not isinstance(rows, list) or payload.get("rows_hash") != _hash(rows):
         raise FunnelError("candidate_review rows/hash mismatch")
     eligible = {row["ts_code"] for row in _eligible_rows(registry)}
-    scan_reasons = {
-        (row["ts_code"], row["channel"], _hash(reason))
-        for row in scan["rows"] for reason in row["entry_reasons"]
-    }
+    triggered_by_code: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for scan_row in scan["rows"]:
+        if scan_row["triggered"]:
+            triggered_by_code[scan_row["ts_code"]].append(scan_row)
     seen: set[str] = set()
     control_rows: list[dict[str, Any]] = []
     for row in rows:
@@ -820,14 +820,24 @@ def validate_candidate_review(
         seen.add(code)
         if row["as_of"] != payload.get("as_of"):
             raise FunnelError("candidate row date differs from contract as_of")
+        triggered = triggered_by_code.get(code, [])
+        expected_channels = sorted({item["channel"] for item in triggered}, key=CHANNELS.index)
+        expected_reasons = [reason for item in triggered for reason in item["entry_reasons"]]
+        if row.get("source_channels") != expected_channels or row.get("entry_reasons") != expected_reasons:
+            raise FunnelError("candidate U1 channel/reason projection is not exact")
+        red_flagged = "E1_EVENT" in expected_channels
+        positive = any(channel != "E1_EVENT" for channel in expected_channels)
+        if ("RED_FLAG" in row.get("flags", [])) is not red_flagged:
+            raise FunnelError("candidate RED_FLAG flag differs from U1 evidence")
         if row.get("review_status") == "EXCLUDED_RED_FLAG":
             if not row.get("exclusion_reason") or row.get("next_action") == "U3_BATTERY_REVIEW":
                 raise FunnelError("red-flag exclusion semantics are inconsistent")
+            if not red_flagged or positive:
+                raise FunnelError("only an E1-only red flag may use EXCLUDED_RED_FLAG")
         elif row.get("exclusion_reason") is not None:
             raise FunnelError("active candidate cannot carry an exclusion reason")
-        for reason in row.get("entry_reasons", []):
-            if (code, reason.get("channel"), _hash(reason)) not in scan_reasons:
-                raise FunnelError("candidate entry reason is not traceable to U1")
+        elif red_flagged and not positive and row.get("review_status") != "RANDOM_CONTROL":
+            raise FunnelError("an E1-only red flag cannot become an active research candidate")
         if row["review_status"] == "RANDOM_CONTROL":
             control_rows.append(row)
             if row.get("control_batch_id") != payload["control_sampling_frame"]["control_batch_id"]:
@@ -888,11 +898,25 @@ def validate_candidate_review(
         raise FunnelError("random control draw is not reproducible from its frozen frame")
 
 
-def _battery_rows(payload: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:
+def _battery_rows(
+    payload: Mapping[str, Any] | None, trade_date: str | None = None,
+) -> dict[str, dict[str, Any]]:
     if payload is None:
         return {}
     data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+    target = str(
+        payload.get("target_trade_date")
+        or (data.get("checked_at") if isinstance(data, dict) else "")
+        or ""
+    ).replace("-", "")
+    if trade_date is not None and target != _date8(trade_date):
+        raise FunnelError("U3 battery is not from the requested trade date")
     rows = data.get("results", []) if isinstance(data, dict) else []
+    if not isinstance(rows, list):
+        raise FunnelError("U3 battery results must be a list")
+    codes = [str(row.get("ts_code") or "") for row in rows if isinstance(row, dict)]
+    if len(codes) != len(rows) or len(codes) != len(set(codes)):
+        raise FunnelError("U3 battery rows are invalid or duplicated")
     return {str(row.get("ts_code")): dict(row) for row in rows if isinstance(row, dict)}
 
 
@@ -919,7 +943,7 @@ def build_deep_research_queue(
     if missing_questions:
         raise FunnelError(f"U4 selection lacks a clear research question: {missing_questions}")
     candidates = {row["ts_code"]: row for row in candidate_review.get("rows", [])}
-    battery_by_code = _battery_rows(battery)
+    battery_by_code = _battery_rows(battery, trade_date)
     ready_pool: list[dict[str, Any]] = []
     for code in sorted(set(candidates) & set(battery_by_code)):
         candidate = candidates[code]
@@ -1040,7 +1064,8 @@ def advance_registry(
         row["ts_code"] for row in candidate_review["rows"]
         if row.get("review_status") != "EXCLUDED_RED_FLAG"
     }
-    battery_codes = set(_battery_rows(battery)) & candidates
+    battery_by_code = _battery_rows(battery, str(scan["as_of"]))
+    battery_codes = set(battery_by_code) & candidates
     deep_codes = {row["ts_code"] for row in deep_queue["rows"]}
     output = copy.deepcopy(dict(registry))
     transitions = Counter()
@@ -1059,7 +1084,7 @@ def advance_registry(
             evidence.append({"stage": "CANDIDATE", "artifact": CANDIDATE_SCHEMA, "hash": candidate_review["rows_hash"]})
         if code in battery_codes:
             target = "BATTERY"
-            evidence.append({"stage": "BATTERY", "artifact": "battery", "hash": _hash(_battery_rows(battery)[code])})
+            evidence.append({"stage": "BATTERY", "artifact": "battery", "hash": _hash(battery_by_code[code])})
         if code in deep_codes:
             target = "DEEP_RESEARCH"
             evidence.append({"stage": "DEEP_RESEARCH", "artifact": QUEUE_SCHEMA, "hash": deep_queue["rows_hash"]})
