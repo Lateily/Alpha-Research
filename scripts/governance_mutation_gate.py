@@ -854,6 +854,98 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_baseline_requires_one_clean_pass",
         rationale="A skipped baseline is not evidence that the declared test executes cleanly.",
     ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_NO_COMPOSITE_SCORE",
+        component="Research funnel U1",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if FORBIDDEN_AGGREGATE_KEYS.intersection(_walk_keys(payload)):\n'
+        '        raise FunnelError("cross-channel aggregate score is forbidden")',
+        after='    if False:\n'
+        '        raise FunnelError("cross-channel aggregate score is forbidden")',
+        expected_failure_marker="test_u1_rejects_composite_score_and_missing_channel",
+        rationale="U1 channels cannot be combined into a score that offsets contrary evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_SIX_CHANNEL_COVERAGE",
+        component="Research funnel U1",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if set(seen) != eligible or any(channels != set(CHANNELS) for channels in seen.values()):\n'
+        '        raise FunnelError("every eligible security must have exactly six channel rows")',
+        after='    if False:\n'
+        '        raise FunnelError("every eligible security must have exactly six channel rows")',
+        expected_failure_marker="test_u1_rejects_composite_score_and_missing_channel",
+        rationale="A full-market scan cannot silently omit one of the six independent channels.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_CONTROL_ALGORITHM",
+        component="Research funnel U2 random control",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if frame.get("algo") != CONTROL_ALGO:\n'
+        '        raise FunnelError("random control algorithm drift")',
+        after='    if False:\n'
+        '        raise FunnelError("random control algorithm drift")',
+        expected_failure_marker="test_u2_rejects_untraceable_reason_and_algorithm_drift",
+        rationale="The preregistered random-control algorithm cannot drift after outcomes become visible.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_CONTROL_SEED",
+        component="Research funnel U2 random control",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="    rng = random.Random(int(seed_hex[:16], 16))",
+        after="    rng = random.Random(0)",
+        expected_failure_marker="test_u2_random_control_is_same_pool_stratified_and_reproducible",
+        rationale="The preregistered seed must determine the actual draw, not merely its label.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_RED_FLAG_NOT_POSITIVE",
+        component="Research funnel U2 red-flag boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="    selected_main: set[str] = set()",
+        after="    selected_main: set[str] = set(red_flag_codes)",
+        expected_failure_marker="test_red_flag_without_positive_channel_is_excluded_not_a_u2_candidate",
+        rationale="An E1 red flag is an exclusion fact, not a positive candidate signal.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_HUMAN_SELECTION_SIZE",
+        component="Research funnel U4 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if selected and not 3 <= len(selected) <= 5:\n'
+        '        raise FunnelError("U4 human selection must contain 3..5 securities")',
+        after='    if False:\n'
+        '        raise FunnelError("U4 human selection must contain 3..5 securities")',
+        expected_failure_marker="test_u4_selection_size_is_human_governance_gate",
+        rationale="The weekly U4 queue must remain an explicit human-selected 3..5-name decision.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_NO_TRADE_AUTHORITY",
+        component="Research funnel U4 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if FORBIDDEN_ACTION_KEYS.intersection(_walk_keys(payload)):\n'
+        '        raise FunnelError("U4 queue cannot contain trade or blocking authority")',
+        after='    if False:\n'
+        '        raise FunnelError("U4 queue cannot contain trade or blocking authority")',
+        expected_failure_marker="test_u4_requires_explicit_human_selection_and_never_emits_action",
+        rationale="U4 can queue research work but cannot emit an order or acquire blocking authority.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_RESEARCH_QUESTION",
+        component="Research funnel U4 entry gate",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if missing_questions:\n'
+        '        raise FunnelError(f"U4 selection lacks a clear research question: {missing_questions}")',
+        after='    if False:\n'
+        '        raise FunnelError(f"U4 selection lacks a clear research question: {missing_questions}")',
+        expected_failure_marker="test_u4_requires_an_explicit_research_question",
+        rationale="A U3 name cannot enter deep research without a concrete question to answer.",
+    ),
 )
 
 
