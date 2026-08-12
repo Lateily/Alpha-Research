@@ -8,6 +8,7 @@ on:
       # R-015 账本是 .jsonl —— 不加这条,"只改账本数据"的 PR 根本不触发本工作流,
       # 而那正是第③层唯一要把关的 diff 形态(实测:.jsonl 不匹配 *.json)
       - "experiments/execution_tracker/event_ledger.jsonl*"
+      - "experiments/execution_tracker/publication_migration_events.jsonl*"
       - "scripts/**/*.py"
       - "scripts/llm/**/*.json"
       - "tests/**"
@@ -15,6 +16,14 @@ on:
       - "public/data/v2/**"
       - "docs/research/macro/**"
       - "docs/contracts/macro/**"
+      - ".agents/skills/**"
+      - "AGENTS.md"
+      - "experiments/AGENTS.md"
+      - "scripts/llm/AGENTS.md"
+      - "web/AGENTS.md"
+      - "config/team-ai-workspace.v1.json"
+      - "docs/team/TEAM_AI_WORKSPACE_V1.md"
+      - ".gitignore"
       - "api/**"
       - ".github/workflows/python-ci.yml"
   # 直推 main 也必须过闸 —— 0712 的 git-reset-hard 正是这个形态,
@@ -70,12 +79,22 @@ jobs:
       # 覆盖:registry 自检 · 两条注册路径确实打戳 · 账本挂掉时登记被拒且信号不落盘
       - name: Registry schema v2 + ledger wiring regression
         run: python3 tests/test_registry_schema_v2.py
+      # R-043:已发布 manifest 合法迁移。覆盖审批绑定、同锁、WAL 崩溃恢复、
+      # TOCTOU、双 manifest 留档与旧 run_id 拒绝。
+      - name: Publication manifest migration regression (offline)
+        run: |
+          python3 tests/test_publication_migration_offline.py
+          python3 experiments/execution_tracker/publication_migration.py --selftest
       # AIOS Harness A-013:provider-neutral AgentAdapter 契约(零网络、零成本)
       - name: Agent adapter contract regression (offline)
         run: python3 tests/test_agent_adapter_offline.py
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py
+      # Team AI Workspace:repo instructions, Skills, task compiler smoke,
+      # runtime baseline metadata, and redacted secret/local-state hygiene.
+      - name: Team AI Workspace contract and doctor regression (offline)
+        run: python3 tests/test_team_ai_workspace.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──

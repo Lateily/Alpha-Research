@@ -23,6 +23,15 @@ from adapters import (  # noqa: E402
 )
 import adapters.kimi as kimi_module  # noqa: E402
 from adapters.kimi import KimiAdapter  # noqa: E402
+from capability import (  # noqa: E402
+    CapabilityRecord,
+    CapabilityRegistry,
+    CapabilityStatus,
+    RouteMode,
+    RouteRequest,
+    RouteStatus,
+    route,
+)
 
 
 def request(**overrides) -> AgentRequest:
@@ -704,6 +713,329 @@ def test_kimi_wrapper_rejects_bad_messages_without_calling_provider() -> None:
 
     assert result.status is AgentStatus.FAILED
     assert called is False
+
+
+def capability(
+    agent: str,
+    *,
+    task_type: str = "schema_check",
+    status: CapabilityStatus = CapabilityStatus.PRODUCTION_ELIGIBLE,
+    deterministic: bool = False,
+    tools=frozenset({"read_repo"}),
+    scopes=("docs",),
+    networks=frozenset({"deny"}),
+    cost="0.10",
+    eval_version="eval_v1",
+    eval_score="20",
+) -> CapabilityRecord:
+    return CapabilityRecord(
+        agent=agent,
+        task_type=task_type,
+        tool_access=tools,
+        file_scope=scopes,
+        network_access=networks,
+        status=status,
+        cost_cny_per_run=cost,
+        eval_version=eval_version,
+        eval_score=eval_score,
+        deterministic=deterministic,
+    )
+
+
+def route_request(**overrides) -> RouteRequest:
+    values = {
+        "task_type": "schema_check",
+        "mode": RouteMode.PRODUCTION,
+        "required_tools": frozenset({"read_repo"}),
+        "target_paths": ("docs/llm/example.md",),
+        "network_policy": "deny",
+        "risk_level": "LOW",
+        "budget_max_cny": "1.00",
+    }
+    values.update(overrides)
+    return RouteRequest(**values)
+
+
+def test_capability_router_prefers_deterministic_worker() -> None:
+    registry = CapabilityRegistry(
+        [
+            capability("kimi", cost="0.01"),
+            capability(
+                "deterministic",
+                deterministic=True,
+                cost="0",
+                eval_version=None,
+                eval_score=None,
+            ),
+        ]
+    )
+    decision = route(registry, route_request())
+    assert decision.status is RouteStatus.SELECTED
+    assert decision.selected_agent == "deterministic"
+
+
+def test_capability_router_deterministic_priority_beats_lower_model_cost() -> None:
+    registry = CapabilityRegistry(
+        [
+            capability("kimi", cost="1"),
+            capability(
+                "deterministic",
+                deterministic=True,
+                cost="5",
+                eval_version=None,
+                eval_score=None,
+            ),
+        ]
+    )
+    decision = route(registry, route_request(budget_max_cny="10"))
+    assert decision.status is RouteStatus.SELECTED
+    assert decision.selected_agent == "deterministic"
+
+
+def test_capability_router_blocks_shadow_only_from_production() -> None:
+    registry = CapabilityRegistry(
+        [capability("kimi", status=CapabilityStatus.SHADOW_ONLY)]
+    )
+    decision = route(registry, route_request())
+    assert decision.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
+    assert "kimi: not production eligible" in decision.reasons
+
+
+def test_capability_router_allows_shadow_only_in_shadow_mode() -> None:
+    registry = CapabilityRegistry(
+        [capability("kimi", status=CapabilityStatus.SHADOW_ONLY)]
+    )
+    decision = route(registry, route_request(mode=RouteMode.SHADOW))
+    assert decision.status is RouteStatus.SELECTED
+    assert decision.selected_agent == "kimi"
+
+
+def test_capability_router_filters_task_type_before_selection() -> None:
+    registry = CapabilityRegistry([capability("translator", task_type="translate")])
+    decision = route(registry, route_request(task_type="summarize"))
+    assert decision.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
+    assert decision.selected_agent is None
+    assert "translator: task_type mismatch" in decision.reasons
+
+
+def test_capability_router_suspended_and_retired_are_kill_switches() -> None:
+    for status in (CapabilityStatus.SUSPENDED, CapabilityStatus.RETIRED):
+        registry = CapabilityRegistry([capability("kimi", status=status)])
+        for mode in (RouteMode.SHADOW, RouteMode.PRODUCTION):
+            decision = route(registry, route_request(mode=mode))
+            assert decision.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
+            assert decision.selected_agent is None
+            assert f"kimi: status={status.value}" in decision.reasons
+
+
+def test_capability_router_enforces_tools_network_scope_and_budget() -> None:
+    cases = [
+        route_request(required_tools=frozenset({"write_repo"})),
+        route_request(network_policy="provider_only"),
+        route_request(target_paths=("scripts/llm/adapter.py",)),
+        route_request(budget_max_cny="0.01"),
+    ]
+    registry = CapabilityRegistry([capability("kimi")])
+    for request_item in cases:
+        decision = route(registry, request_item)
+        assert decision.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
+
+
+def test_capability_router_blocks_unknown_cost_under_budget() -> None:
+    registry = CapabilityRegistry([capability("kimi", cost=None)])
+    decision = route(registry, route_request())
+    assert decision.status is RouteStatus.NO_ELIGIBLE_CAPABILITY
+    assert "kimi: cost unknown under finite budget" in decision.reasons
+
+
+def test_capability_router_blocks_high_risk_until_reviewer_capabilities_are_wired() -> None:
+    registry = CapabilityRegistry(
+        [capability("codex"), capability("claude", task_type="review")]
+    )
+    for risk_level in ("HIGH", "CONSTITUTIONAL"):
+        for reviewer_agent in (None, "codex", "claude", "nonexistent-reviewer"):
+            decision = route(
+                registry,
+                route_request(
+                    risk_level=risk_level,
+                    reviewer_agent=reviewer_agent,
+                ),
+            )
+            assert decision.status is RouteStatus.SPEC_BLOCKED
+            assert decision.selected_agent is None
+            assert (
+                "high-risk routing is blocked until reviewer capabilities are wired"
+                in decision.reasons
+            )
+
+
+def test_capability_router_blocks_high_risk_even_with_reviewer_name_alias() -> None:
+    registry = CapabilityRegistry([capability("Codex")])
+    decision = route(
+        registry,
+        route_request(risk_level="HIGH", reviewer_agent="  codex  "),
+    )
+    assert decision.status is RouteStatus.SPEC_BLOCKED
+    assert (
+        "high-risk routing is blocked until reviewer capabilities are wired"
+        in decision.reasons
+    )
+
+
+def test_capability_router_blocks_medium_production_without_review_contract() -> None:
+    registry = CapabilityRegistry(
+        [capability("codex"), capability("claude", task_type="review")]
+    )
+    for reviewer_agent in (None, "codex", "claude", "nonexistent-reviewer"):
+        decision = route(
+            registry,
+            route_request(
+                mode=RouteMode.PRODUCTION,
+                risk_level="MEDIUM",
+                reviewer_agent=reviewer_agent,
+            ),
+        )
+        assert decision.status is RouteStatus.SPEC_BLOCKED
+        assert decision.selected_agent is None
+        assert (
+            "medium-risk production routing is blocked until reviewer "
+            "capabilities are wired"
+            in decision.reasons
+        )
+
+
+def test_capability_router_allows_medium_shadow_without_production_authority() -> None:
+    registry = CapabilityRegistry(
+        [
+            capability(
+                "event_tagger",
+                task_type="event_tagging",
+                status=CapabilityStatus.SHADOW_ONLY,
+            )
+        ]
+    )
+    decision = route(
+        registry,
+        route_request(
+            task_type="event_tagging",
+            mode=RouteMode.SHADOW,
+            risk_level="MEDIUM",
+        ),
+    )
+    assert decision.status is RouteStatus.SELECTED
+    assert decision.mode is RouteMode.SHADOW
+    assert decision.selected_agent == "event_tagger"
+
+
+def test_capability_router_prefers_lower_cost_then_stable_name() -> None:
+    lower_cost = route(
+        CapabilityRegistry(
+            [capability("alpha", cost="0.20"), capability("zulu", cost="0.10")]
+        ),
+        route_request(),
+    )
+    stable_tie = route(
+        CapabilityRegistry(
+            [capability("Zulu", cost="0.10"), capability("alpha", cost="0.10")]
+        ),
+        route_request(),
+    )
+    assert lower_cost.selected_agent == "zulu"
+    assert stable_tie.selected_agent == "alpha"
+
+
+def test_capability_router_rejects_noncanonical_task_types() -> None:
+    for task_type in (" schema_check", "schema_check ", "SCHEMA_CHECK"):
+        try:
+            CapabilityRegistry([capability("codex", task_type=task_type)])
+        except ValueError as exc:
+            assert "task_type must be a canonical lowercase token" in str(exc)
+        else:
+            raise AssertionError("noncanonical capability task_type must fail closed")
+
+        decision = route(
+            CapabilityRegistry([capability("codex")]),
+            route_request(task_type=task_type),
+        )
+        assert decision.status is RouteStatus.SPEC_BLOCKED
+        assert "task_type must be a canonical lowercase token" in decision.reasons
+
+
+def test_route_decision_preserves_requested_mode() -> None:
+    registry = CapabilityRegistry(
+        [capability("kimi", status=CapabilityStatus.SHADOW_ONLY)]
+    )
+    decision = route(registry, route_request(mode=RouteMode.SHADOW))
+    assert decision.mode is RouteMode.SHADOW
+
+
+def test_capability_router_normalizes_file_scopes_before_matching() -> None:
+    registry = CapabilityRegistry(
+        [capability("deterministic", deterministic=True, scopes=("docs//llm/",))]
+    )
+    decision = route(
+        registry,
+        route_request(target_paths=("docs/llm/example.md",)),
+    )
+    assert decision.status is RouteStatus.SELECTED
+
+
+def test_capability_registry_rejects_qualification_leaks_and_duplicates() -> None:
+    invalid = capability("kimi", eval_version=None, eval_score=None)
+    try:
+        CapabilityRegistry([invalid])
+    except ValueError as exc:
+        assert "requires task-specific eval" in str(exc)
+    else:
+        raise AssertionError("unassessed model must not become production eligible")
+
+    duplicate = capability("kimi")
+    try:
+        CapabilityRegistry([duplicate, duplicate])
+    except ValueError as exc:
+        assert "duplicate capability" in str(exc)
+    else:
+        raise AssertionError("duplicate agent/task capability must be rejected")
+
+
+def test_capability_router_spec_blocks_unsafe_paths_and_bad_budget() -> None:
+    registry = CapabilityRegistry([capability("deterministic", deterministic=True)])
+    for request_item in (
+        route_request(target_paths=("../../secret",)),
+        route_request(target_paths=("/absolute/path",)),
+        route_request(budget_max_cny="free"),
+    ):
+        decision = route(registry, request_item)
+        assert decision.status is RouteStatus.SPEC_BLOCKED
+
+
+def test_capability_registry_rejects_malformed_runtime_types() -> None:
+    malformed = [
+        capability("kimi", status="PRODUCTION_ELIGIBLE"),
+        capability("kimi", tools=["read_repo"]),
+        capability("kimi", scopes=["docs"]),
+        capability("kimi", networks=["deny"]),
+        capability("kimi", deterministic="yes"),
+    ]
+    for record in malformed:
+        try:
+            CapabilityRegistry([record])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("malformed capability type must fail closed")
+
+
+def test_capability_router_spec_blocks_malformed_runtime_types() -> None:
+    registry = CapabilityRegistry([capability("deterministic", deterministic=True)])
+    malformed = [
+        route_request(mode="PRODUCTION"),
+        route_request(required_tools=["read_repo"]),
+        route_request(target_paths=["docs/llm/example.md"]),
+    ]
+    for request_item in malformed:
+        decision = route(registry, request_item)
+        assert decision.status is RouteStatus.SPEC_BLOCKED
 
 
 def run_all_tests() -> int:
