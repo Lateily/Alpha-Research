@@ -1,6 +1,7 @@
 # AR AI OS 永久工程总账
 
-> Owner:Reed。最终验收:Junyan。本文档是 AI 系统工程的永久清单。
+> Program/Workflow:Simon。Agent Platform/Runtime:Reed。Quality/Safety:Jason。Knowledge/Context/Product:Better。最终验收:Junyan。本文档是 AI 系统工程的永久清单。
+> Canonical strategy:`docs/llm/AR_AIOS_MASTER_BLUEPRINT_v3.md`。A-028 至 A-036 为 v3 批准战略下的 `PROPOSED` 实施项，未完成 Review/PR 前不得报告为已落地。
 > 状态枚举沿用研究工程总账:`PROPOSED/APPROVED/IN_PROGRESS/BLOCKED/DELIVERED_UNWIRED/VALIDATING/DONE/RETIRED`。
 > 任务不得静默删除;停止时必须写 RETIRED、原因和替代项。
 
@@ -69,7 +70,23 @@
 | A-026 | Prompt Registry 与回归 | `APPROVED` | Reed | prompt 按 task type/version 入库;每次修改触发对应 eval;旧版可追 |
 | A-027 | Agent 安全红队 | `APPROVED` | Reed+Audit Agent | prompt injection、secret、scope escape、恶意 PR、陈旧上下文、成本失控固定测试 |
 
-## 6. 实施顺序
+## 6. v3 Harness 扩展总账
+
+### A-028 至 A-036
+
+| ID | 工程 | 状态 | Owner | 前置 | 验收 |
+|---|---|---|---|---|---|
+| A-028 | Constitution Graph、Authority Resolver 与 protected paths | `PROPOSED` | Simon+Jason | A-009 | 输出 A0-A5 `authority-pack.v1`;冲突→AUTHORITY_CONFLICT;核心路径命中 Junyan gate;普通授权域不要求逐步批准 |
+| A-029 | Team Workflow Digital Twin 与 Program Mode | `PROPOSED` | Simon | A-006,A-007 | Issue→task/program→owner/reviewer→PR→deploy 状态可重放;跨模块任务有 DAG、合并顺序和 integration gate |
+| A-030 | Repository Intelligence Map | `PROPOSED` | Reed | A-007,A-010 | Symbol/Data/Test/Ownership/Decision/Incident 六图;真实任务输出入口、消费者、测试、owner、active PR 和 confidence |
+| A-031 | Context Broker 与 module profiles | `PROPOSED` | Better+Simon | A-010,A-030 | C0-C5 分阶段 Context Pack;source/location/reason/hash/freshness/trust 齐;main/合同变化→STALE;缺证据→CONTEXT_INCOMPLETE |
+| A-032 | Skill Registry、Router 与 Chain Compiler | `PROPOSED` | Reed | A-014,A-031 | Skill 声明 trigger/schema/tools/scope/network/risk/owner/eval;原子 Skill 可独立失败;无 Eval 不进默认链 |
+| A-033 | Session Checkpoint、Resume 与跨端恢复 | `PROPOSED` | Reed | A-012,A-017,A-031 | Mac/Windows 不依赖绝对路径;恢复时重验 SHA/authority/PR/CLAIM/context;过期状态不被继续执行 |
+| A-034 | Cross-file Impact Analyzer 与 `ai-program.v1` | `PROPOSED` | Reed+Simon | A-029,A-030 | producer/schema/consumer/test/owner 闭环;跨模块 blast radius、子任务 DAG、集成测试和回滚明确 |
+| A-035 | Harness Evals 与 Context/Prompt 回归 | `PROPOSED` | Jason | A-027,A-028,A-031,A-032 | 测 Authority 冲突、定位召回、Context precision、P5 越权、跨会话恢复、过度 DONE;高风险门含 mutation/current-head CI |
+| A-036 | Team Style、P5 Prompt Composer、Decision Memory 与 Progress Projection | `PROPOSED` | Better+Jason+Simon | A-021,A-026,A-029,A-031 | team-style 机器可读;P5 按 case/phase/module/risk 生成且不扩权;Board 可从 Issue/PR/event/CI/deploy 重建;Memory 只提案 |
+
+## 7. 依赖顺序
 
 | 里程碑 | 包含 | 前置 | 退出条件 |
 |---|---|---|---|
@@ -79,8 +96,11 @@
 | AIOS-K4 | A-017,A-018,A-019,A-020 | K3 | 一个真实 PR 完成证据→复核→人类裁决链 |
 | AIOS-K5 | A-021,A-022,A-023 | K4 | DONE 自动产 Memory、新债和周度 digest |
 | AIOS-K6 | A-024,A-025,A-026,A-027 | K5 | 连续运行期内无未消费高危报警、无越权、成本可停止 |
+| AIOS-H1 | A-028,A-029,A-036(P5/style 最小切片) | K2 | Issue 可生成 Authority/Task/Workflow/P5;普通授权域与 Junyan 核心门正确分流 |
+| AIOS-H2 | A-030,A-031,A-034 | H1 | 一个跨模块 Program 产 change-map、阶段 Context、DAG、集成门和回滚 |
+| AIOS-H3 | A-032,A-033,A-035,A-036(完整闭环) | H2,K4 | 一个真实任务完成跨端恢复、Skill Chain、独立 Eval/Review、Board 投影与 Memory 提案 |
 
-## 7. 每周检查
+## 8. 每周检查
 
 | A-ID | 上周状态 | 本周实物 | 测试/运行证据 | 成本 | 新状态 | blocker | next/owner/date |
 |---|---|---|---|---|---|---|---|

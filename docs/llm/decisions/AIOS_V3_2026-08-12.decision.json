@@ -1,0 +1,21 @@
+{
+  "schema": "ai-decision.v1",
+  "decision_id": "aios-v3-five-decisions-2026-08-12",
+  "task_id": "aios-master-blueprint-v3",
+  "decision": "APPROVE",
+  "decider": "Junyan",
+  "reason": "Approve the five clarified AIOS v3 strategic decisions after review of the complete v1 and v2 designs.",
+  "evidence_refs": [
+    "docs/llm/AR_AIOS_MASTER_BLUEPRINT_v3.md#0-已批准的五项决定",
+    "docs/llm/archive/AR_AIOS_COMPLETE_DESIGN_v1.md",
+    "docs/llm/archive/AR_AIOS_TOTAL_BLUEPRINT_v2.md"
+  ],
+  "conditions": [
+    "Junyan retains final oversight of main, protected/core files, research and capital methodology, high-risk production, and final merge without becoming a daily approval bottleneck.",
+    "GitHub Issues, pull requests, and append-only progress events are shared facts; the Progress Board is a read-only projection.",
+    "Authority, Context, and Prompt use separate A0-A5, C0-C5, and P0-P5 namespaces.",
+    "P5 case prompts may adapt method and role but may not expand authority, tools, scope, network, budget, or facts.",
+    "Shared AIOS architecture, contracts, Skills, and prompt profiles live in GitHub; local state is limited to safe runtime copies and secrets; models enter through the shared Harness."
+  ],
+  "timestamp_utc": "2026-08-12T07:00:00Z"
+}

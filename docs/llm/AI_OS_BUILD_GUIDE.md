@@ -1,6 +1,7 @@
 # AR AI OS 技术搭建指南 v0
 
-> Owner:Reed。产品与研究验收:Junyan。架构/代码复核:Claude/Codex。展示层:Better。
+> Canonical strategy:`docs/llm/AR_AIOS_MASTER_BLUEPRINT_v3.md`。本文只负责工程实施细节，冲突时以 v3 和根 `AGENTS.md` 为准。
+> Program/Workflow:Simon。Agent Platform/Runtime:Reed。Quality/Safety:Jason。Knowledge/Context/Product:Better。Main/Core/Final Gate:Junyan。
 > 本指南把 AI 从“临时聊天助手”变成可追踪、可复跑、可审计、可控成本的工程系统。
 > 当前状态:`APPROVED / DESIGN`。任何“自动化完成”声明仍需真实运行与失败路径证明。
 
@@ -15,7 +16,7 @@
 5. 执行任务,持续记录版本、模型、prompt、成本、文件和证据。
 6. 按任务风险自动选择测试,验证申报是否与实物一致。
 7. 由独立 Agent 做敌意复核,并把发现回到原任务。
-8. 等 Junyan 在宪法、合同、资金、合并等关键门上批准。
+8. 普通任务在完整授权域内自主推进；仅在 main、核心/宪法、高风险生产和最终合并门等待 Junyan 批准。
 9. 合并后检查部署/运行结果,不能把“代码存在”写成“生产闭环完成”。
 10. 自动更新永久总账、进度板、Memory、技术债和下次行动。
 
@@ -36,7 +37,7 @@
 
 ## 2. 十条设计原则
 
-1. **人类最终负责:**Junyan 决定研究规则、合同、资金规则、删除数据和合并口令。
+1. **人类最终负责但不制造日常瓶颈:**Junyan 决定研究/资金规则、核心合同、不可逆生产动作和最终合并；普通模块工作由 owner 在完整 task contract 内自主推进并接受独立 Review。
 2. **repo 与 GitHub 是事实源:**网页、Notion、聊天和 Agent 内存均为投影或输入。
 3. **先确定性后 LLM:**路径检查、schema、状态转换、依赖、测试和冲突用代码;LLM 只处理语义任务。
 4. **事件追加,状态派生:**保存每次 transition,当前状态由事件重放得到;不直接覆写历史。
@@ -46,6 +47,14 @@
 8. **独立复核:**执行 Agent 不能为自己的正式交付做唯一裁判。
 9. **申报不等于证据:**DONE 必须引用 commit、diff、命令、exit code、测试和运行证据。
 10. **Memory 不能改宪法:**蒸馏器只能提案;规则升格仍走 PR 与 Junyan 批准。
+
+### v3 统一语义
+
+- Authority 使用 A0-A5，Context 使用 C0-C5，Prompt 使用 P0-P5；禁止继续使用含义不明的单一 L0-L5。
+- GitHub Issue、PR 和 `ai-progress.v2` 追加事件是任务事实；Progress Board 是只读投影。
+- P5 是按 case/phase/module/risk 生成的动态角色 Prompt，只改变方法，不扩大权限。
+- 跨模块长任务使用 Parent Issue、子任务 DAG 和阶段性 Context；目标合同为 `ai-program.v1`。
+- 全队共享 config、schemas、Skills、Prompt profiles 和架构保存在 GitHub；本地 `.ai-workspace/` 只存缓存、session、索引和运行证据。
 
 ## 3. 总体架构
 
@@ -260,16 +269,16 @@ tests/ai_os/
 | 事件 | AI OS 自动动作 | 人类门 |
 |---|---|---|
 | Issue 新建/加工程标签 | 编译 task manifest,查重复、依赖和缺字段 | 规格不完整由 owner 补齐 |
-| 总账新增 APPROVED | 检查是否有 Issue;无则生成提案,不得静默丢失 | Junyan 确认 Issue 边界 |
+| 总账新增 APPROVED | 检查是否有 Issue;无则生成提案,不得静默丢失 | Simon/模块 owner 确认普通边界;核心/宪法项进入 Junyan gate |
 | CLAIM 请求 | 查 lease/文件冲突/权限/预算,生成隔离分支与 worktree 计划 | 高风险任务需先批 |
 | Agent 开跑 | 组装最小上下文,记录 run manifest,执行心跳 | 超预算或越权立即停 |
 | 文件变化/推送 | 根据 diff 选择测试,检查未声明文件和敏感信息 | HIGH/CONSTITUTIONAL 必须人工 review |
-| PR Ready | 生成 artifact/verify manifest,启动独立敌意 review | Junyan 裁决 findings |
+| PR Ready | 生成 artifact/verify manifest,启动独立敌意 review | owner 修复、独立 reviewer 裁决 findings;通过后生成 Junyan Final Merge Packet |
 | PR 合并 | 校验 merge SHA,触发部署/真实运行/文档同步检查 | 生产或规则任务保留验证期 |
 | 运行告警 | 自动开 failure event,关联 owner、最近变更和 run | 阻断需人类决定时 BLOCKED |
 | 任务 DONE | 回写总账,生成 Memory,检查残余风险和后续项 | 规则升格单独批准 |
 | 每日 reconciliation | 扫孤儿任务、陈旧 CLAIM、无 Issue PR、合并未部署、交付未接线 | 异常进入审阅队列 |
-| 每周五 digest | 汇总完成、阻断、成本、失败、Memory 提案和下周依赖 | Junyan 验收会 |
+| 每周五 digest | 汇总完成、阻断、成本、失败、Memory 提案和下周依赖 | Junyan 做总览和必要决策，不逐项重新审批日常工作 |
 
 ## 8. 自动发现陈旧工程
 
@@ -328,7 +337,7 @@ Agent 质量漂移经常来自每次读取的上下文不同。Context Builder �
 | 工人 | 优先任务 | 禁止假设 |
 |---|---|---|
 | Codex | repo 探索、实现、测试、独立代码复核 | 不假设聊天申报等于实物 |
-| Claude | 架构整合、跨文档审计、研究合同复核 | 不绕过 Junyan 批准 |
+| Claude | 架构整合、跨文档审计、研究合同复核 | 不绕过任务范围、独立 Review 与适用的 Junyan 保留门 |
 | Kimi | 结构化事件打标、长文本证据提取、影子任务 | 未通过评测前不进入生产结论 |
 | Deterministic worker | schema、链接、冲突、freshness、状态、成本、secret scan | 不调用 LLM 做可确定判断 |
 
@@ -395,7 +404,7 @@ Verifier 根据 diff 和 task manifest 自动生成测试矩阵:
 2. 重复根因聚类,避免同一教训写十遍。
 3. 新工程债自动申请 A-ID/R-ID。
 4. 规则提案进入 docs PR,不能自动覆盖权威文档。
-5. Junyan 批准后更新 Context Builder 的权威索引。
+5. 普通模块经验经 owner + 独立 reviewer 批准后更新相应索引；升格 A1、核心或宪法规则时由 Junyan 批准。
 
 Memory 的成功标准不是“写了总结”,而是下一次同类任务自动加载该回归测试和规则。
 

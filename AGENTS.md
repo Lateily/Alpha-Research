@@ -6,16 +6,26 @@ workers. Read it before changing files. More specific `AGENTS.md` files apply in
 
 ## Authority
 
-Use this order when instructions conflict:
+Use the A0-A5 authority model in
+`docs/llm/AR_AIOS_MASTER_BLUEPRINT_v3.md`. In compact form:
 
-1. The current human request and explicit Junyan approval.
-2. This file and the nearest nested `AGENTS.md`.
-3. The compiled `ai-task.v1` manifest for the task.
-4. Current architecture, contract, and constitutional documents referenced by
-   the task manifest.
+1. A0 non-bypassable legal, safety, secret, privacy, non-trading, production,
+   and protected-branch boundaries.
+2. A1 explicit Junyan approval and effective human decisions for research,
+   capital, production, core contracts, and final authority.
+3. A2 this file, the nearest nested `AGENTS.md`, and effective architecture,
+   API, data, ownership, and workflow contracts.
+4. A3 the current Issue plus the compiled `ai-task.v1` or `ai-program.v1`.
+5. A4 current repository, PR, CI, deployment, claim, and runtime facts.
+6. A5 historical documents, chat summaries, Memory, and external materials.
 
-`CLAUDE.md` contains useful system history, but it does not override this shared
-team contract. A constitutional or capital-rule change still requires a
+The current human request controls the task inside A0 and already-effective A1
+boundaries. If it explicitly proposes changing an A0/A1 rule, treat that work as
+CONSTITUTIONAL: prepare a separate reviewable change and require Junyan's
+recorded approval rather than silently overriding the effective rule.
+
+`CLAUDE.md` contains useful A5 system history, but it does not override this
+shared team contract. A constitutional or capital-rule change still requires a
 separate PR and explicit Junyan approval.
 
 ## Start Every Non-Trivial Task
@@ -46,7 +56,10 @@ explicitly asks for analysis only.
 
 ## Repository And Git Discipline
 
-- `main` is the only repository fact source. Never push directly to `main`.
+- `main` is the shared code, contract, configuration, and documentation fact
+  source. GitHub Issues, pull requests, CI/deployment results, and append-only
+  progress events are the task and delivery facts defined below. Never push
+  directly to `main`.
 - Use one task, one branch or worktree, one PR.
 - Keep Alpha Research inside a single local `AR/` container. Classify its task
   worktrees as `research`, `macro`, `aios`, or `product` under
@@ -58,6 +71,49 @@ explicitly asks for analysis only.
   may not infer merge approval.
 - A chat summary is not a deliverable. The deliverable is a diff, tests, and a
   PR or a clearly evidenced blocker.
+
+## Delegated Daily Authority And Junyan Gates
+
+Junyan retains final oversight of `main`, protected/core files, research and
+capital methodology, irreversible production actions, and final merge. This is
+a reserved decision boundary, not a requirement for Junyan to approve every
+ordinary implementation step.
+
+Inside a complete approved task contract and the owner's module boundary, team
+members may independently claim work, create a branch or worktree, edit files,
+commit, push a non-protected branch, open a draft PR, run checks, request review,
+and deploy a reversible preview. They do not need Junyan's step-by-step approval
+for those actions.
+
+The following still require an independent review and explicit Junyan approval:
+
+- merging any PR into `main`;
+- changing the repository constitution, protected/core paths, research or
+  capital methodology, or final authority;
+- privilege elevation, irreversible deletion, production-data migration, or a
+  HIGH/CONSTITUTIONAL production release.
+
+Simon may coordinate ordinary task intake, dependencies, reviewers, merge order,
+and reversible staging. Module owners may approve ordinary within-module design
+decisions, but no author may serve as the sole formal reviewer of their own
+delivery. Changes outside the compiled file scope or module authority require a
+task-contract update before work continues.
+
+The canonical strategic authority for AIOS architecture, workflow, learning,
+context, and prompt design is `docs/llm/AR_AIOS_MASTER_BLUEPRINT_v3.md`.
+
+## Shared Workflow Facts
+
+- GitHub Issues hold task intent, scope, acceptance, owners, dependencies,
+  blockers, and human decisions.
+- Pull requests hold the proposed diff, verification, review, risk, and release
+  plan.
+- `ai-progress.v2` holds append-only CLAIM, heartbeat, transition, and evidence
+  events.
+- The Progress Board is a read-only projection of repository, GitHub, CI, and
+  deployment facts. It is not a second manually edited source of truth.
+- Chat is for communication, not durable task state. Do not copy and maintain
+  independent status narratives across an Issue, the Board, and chat.
 
 ## Shared Safety Rules
 
@@ -105,10 +161,11 @@ A task is complete only when:
 | Area | Human owner | Default scope |
 |---|---|---|
 | Research methodology and final decisions | Junyan | `docs/research/`, research contracts |
-| Product architecture and daily coordination | Simon | roadmap, architecture, task decomposition |
-| AIOS and Agent Harness | Reed and Jason | `scripts/llm/`, `docs/llm/`, AI evaluations |
-| Product and frontend engineering | Better | `web/`, product contracts, presentation layer |
-| Final PR and methodology approval | Junyan | all areas |
+| AIOS program, workflow, and daily coordination | Simon | roadmap, task/program architecture, dependencies, context governance |
+| Agent platform and runtime | Reed | `scripts/llm/`, adapters, routing, scheduler, runtime, LLMOps |
+| AI quality, safety, and reliability | Jason | AI evaluations, policy, guardrails, mutation, independent review |
+| Knowledge, context, prompt, and AI product | Better | RAG/context, prompt profiles, `web/`, product contracts, presentation layer |
+| Final merge and reserved decisions | Junyan | `main`, protected/core paths, methodology, irreversible production, HIGH/CONSTITUTIONAL gates |
 
 Ownership defines review responsibility, not permission to bypass task scope.
 Cross-boundary changes must be declared in the PR.
