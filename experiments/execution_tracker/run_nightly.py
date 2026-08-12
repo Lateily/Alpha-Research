@@ -82,6 +82,13 @@ STEPS = [
     # 设计决定(审查F4/F5):export 无前置依赖、永远运行 —— 跳过导出只会让磁盘上
     # 留着更旧的契约;诚实性由 export 内部的逐源新鲜度/内部状态戳保证。
     ("export_contracts", ["python3", "export_contracts.py"], False, []),
+    # ── Macro OS M1-C:同轮 M0-B3→M1-A→M1-B,只发布校准标签/风险预算语境 ──
+    # 宏观缺数是 data_quality,不是执行失败。有效的降级产物必须携带哈希清单;
+    # 结构失败则仅隔离本轮 Macro 派生物,不得冻结 NAV/账本等无关发布。
+    # 组合输入来自本轮 export_contracts,但不依赖整个 export 步必须 COMPLETE:
+    # 其他无关契约 PARTIAL 不应卡死 Macro。M1-C 自己强校验组合 run_id/date,
+    # 因此 export 若没产出本轮组合,Macro 会 fail-closed,不会读取旧契约冒充。
+    ("macro_m1c", ["python3", "../macro_os/m1c.py"], False, []),
 ]
 
 # ── 产物契约(B2/B3/B4):步骤状态由**产物实物**判定,不再猜 stdout ──
@@ -119,13 +126,26 @@ ARTIFACTS = {
     "setup_promoter":        [("promotion_queue.json", "as_of", True)],
     "export_contracts":      [(os.path.join("..", "..", "public", "data", "v2", "meta.json"),
                                None, True)],
+    "macro_m1c":             [(os.path.join("..", "..", "public", "data", "v2", "macro",
+                                             "m1c_run_manifest.json"),
+                                "target_trade_date", True)],
 }
 
 # 状态精度(越大越糟);步骤终态 = max(进程判定, 各产物判定)
 _SEVERITY = {"OK": 0, "PARTIAL": 1, "DATA_BLOCKED": 2, "STALE_OUTPUT": 3,
              "DATE_MISMATCH": 4, "FAILED": 5}
 RESEARCH_DATA_STEPS = {"security_registry", "feature_store", "e1_event_layer"}
+MACRO_DATA_STEPS = {"macro_m1c"}
+ISOLATED_CALIBRATION_STEPS = frozenset({"macro_m1c"})
 RUN_CONTEXT_EXTERNAL_STEPS = set(RESEARCH_DATA_STEPS)
+
+
+def _validate_isolated_calibration_steps():
+    """Keep advisory failure isolation narrower than the business pipeline."""
+    if ISOLATED_CALIBRATION_STEPS != frozenset({"macro_m1c"}):
+        raise RuntimeError(
+            "isolated calibration allowlist may contain only macro_m1c"
+        )
 
 
 def _research_quality(step, data):
@@ -135,8 +155,10 @@ def _research_quality(step, data):
     contract is publishable evidence with an explicit quality gap, not a process
     failure. Total E1 coverage loss is promoted to DATA_BLOCKED.
     """
-    if step not in RESEARCH_DATA_STEPS or not isinstance(data, dict):
+    if step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS or not isinstance(data, dict):
         return None
+    if step in MACRO_DATA_STEPS:
+        return _normalize_data_quality(data.get("data_quality"))
     status = str(data.get("status") or "UNKNOWN").upper()
     if step == "e1_event_layer":
         coverage = data.get("coverage") or {}
@@ -158,6 +180,24 @@ def _validate_research_contract(step, data):
     elif step == "e1_event_layer":
         from e1_event_layer import validate_event_layer
         validate_event_layer(data)
+
+
+def _validate_macro_contract(path):
+    macro_dir = os.path.abspath(os.path.join(HERE, "..", "macro_os"))
+    if macro_dir not in sys.path:
+        sys.path.insert(0, macro_dir)
+    import m1c
+    m1c.validate_run(os.path.dirname(path))
+
+
+def _discard_failed_macro_outputs(base):
+    """Remove partial/current Macro derivatives after an isolated failure."""
+    import nightly_publish
+
+    stage_public = os.path.abspath(
+        os.path.join(base, "..", "..", "public", "data", "v2")
+    )
+    return nightly_publish.reset_staged_macro_outputs(stage_public)
 
 
 def _normalize_data_quality(value):
@@ -216,7 +256,7 @@ def _export_contract_status(data):
     return "OK", ""
 
 
-def _artifact_status_scan(step, data):
+def _artifact_status_scan(step, data, artifact_path=None):
     """个别产物的内部状态字段(仅对语义明确的两个,避免把逐票 DATA_BLOCKED
     的诚实条目误判成整步失败 —— 误报的下场是闸门被人关掉)。"""
     if step == "full_battery":
@@ -231,6 +271,17 @@ def _artifact_status_scan(step, data):
         quality = _research_quality(step, data)
         if quality not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED"):
             return "FAILED", f"研究数据契约状态非法: {quality}"
+        return "OK", ""
+    if step in MACRO_DATA_STEPS:
+        if not artifact_path:
+            return "FAILED", "Macro M1-C 产物路径缺失"
+        try:
+            _validate_macro_contract(artifact_path)
+        except Exception as exc:
+            return "FAILED", f"Macro M1-C 契约校验失败: {exc}"
+        quality = _research_quality(step, data)
+        if quality not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED"):
+            return "FAILED", f"Macro M1-C data_quality 非法: {quality}"
         return "OK", ""
     if step == "export_contracts":
         return _export_contract_status(data)
@@ -316,7 +367,7 @@ def verify_step_artifacts(step, target, run_start, base=None, run_id=None):
                     quality = _research_quality(step, data)
                     if quality:
                         d["quality_status"] = quality
-                    sv, swhy = _artifact_status_scan(step, data)
+                    sv, swhy = _artifact_status_scan(step, data, path)
                     if sv != "OK":
                         d.update(verdict=sv, why=swhy)
         details.append(d)
@@ -368,9 +419,12 @@ def run_steps(
     base=None,
     run_id=None,
     persistent_feature_db=None,
+    persistent_macro_db=None,
 ):
     """verify=True(正式路径):步骤终态 = max(进程判定, 产物实物判定)。
     COMPLETE 从此必须由实物背书 —— 进程退 0 + 免责声明不再等于成功(B2/B3)。"""
+    # governance-mutation: MACRO_M1C_ISOLATION_ALLOWLIST
+    _validate_isolated_calibration_steps()
     base = base or HERE
     run_start = time.time()
     results, status_by = [], {}
@@ -395,6 +449,8 @@ def run_steps(
             env["AR_NIGHTLY_STAGING"] = "1" if os.path.realpath(base) != os.path.realpath(HERE) else "0"
             if persistent_feature_db:
                 env["AR_FEATURE_STORE_DB"] = persistent_feature_db
+            if persistent_macro_db:
+                env["AR_MACRO_DB"] = persistent_macro_db
             if target:
                 env["AR_TARGET_TRADE_DATE"] = target
             else:
@@ -416,9 +472,31 @@ def run_steps(
             if _SEVERITY.get(av, 5) > _SEVERITY.get(status, 5):
                 status = av
             entry["status"] = status
+        entry["blocks_publication"] = True
+        # governance-mutation: MACRO_M1C_FAILURE_ISOLATION
+        if name in ISOLATED_CALIBRATION_STEPS and status != "OK":
+            # A calibration module may fail closed on its own evidence, but it
+            # cannot veto unrelated NAV, ledger, or research publication.  The
+            # staging layer removes prior Macro derivatives first, so isolation
+            # cannot silently republish yesterday's panel as current output.
+            entry["isolated_status"] = status
+            entry["blocks_publication"] = False
+            entry["why"] = entry.get("why") or "CALIBRATION_COMPONENT_FAILED_ISOLATED"
+            entry["discarded_artifacts"] = (
+                _discard_failed_macro_outputs(base) if verify else []
+            )
+            status = "DATA_BLOCKED"
+            entry["status"] = status
         status_by[name] = status
         results.append(entry)
-    non_ok = [r for r in results if r["status"] != "OK"]
+    non_ok = [
+        r for r in results
+        if r["status"] != "OK" and r.get("blocks_publication", True)
+    ]
+    isolated = [
+        r for r in results
+        if r["status"] != "OK" and not r.get("blocks_publication", True)
+    ]
     if verify and run_id:
         status_dir = os.path.join(base, "step_status")
         os.makedirs(status_dir, exist_ok=True)
@@ -432,6 +510,8 @@ def run_steps(
                 "exit_code": entry.get("exit_code"),
                 "elapsed_sec": entry.get("elapsed_sec"),
                 "why": entry.get("why"),
+                "blocks_publication": entry.get("blocks_publication", True),
+                "isolated_status": entry.get("isolated_status"),
                 "artifacts": entry.get("artifacts", []),
             })
     report = "COMPLETE" if not non_ok else "INCOMPLETE"
@@ -445,12 +525,27 @@ def run_steps(
                     "quality": quality,
                     "artifact": artifact.get("artifact"),
                 })
+        # governance-mutation: MACRO_M1C_FAILURE_VISIBILITY
+        if not entry.get("blocks_publication", True):
+            research_quality.append({
+                "step": entry["step"],
+                "quality": "DATA_BLOCKED",
+                "artifact": None,
+            })
     return {"generated_at": time.strftime("%Y%m%d %H:%M"),
             "orchestrator": "nightly_v4" if verify else "nightly_v2",
             "run_id": run_id,
             "target_trade_date": target,
             "report": report,
             "non_ok_steps": [{"step": r["step"], "status": r["status"]} for r in non_ok],
+            "isolated_steps": [
+                {
+                    "step": r["step"],
+                    "status": r["status"],
+                    "original_status": r.get("isolated_status"),
+                }
+                for r in isolated
+            ],
             "research_data_quality": (
                 "DATA_BLOCKED" if any(item["quality"] == "DATA_BLOCKED" for item in research_quality)
                 else "PARTIAL" if research_quality else "COMPLETE"
@@ -1034,6 +1129,9 @@ def _execute_nightly():
             run_id=run_id,
             persistent_feature_db=os.path.join(
                 REPO_ROOT, "data_history", "feature_store.sqlite3"
+            ),
+            persistent_macro_db=os.path.join(
+                REPO_ROOT, "data_history", "macro_os.sqlite3"
             ),
         )
         res["preflight"] = {"pass": True, "warns": pf["warns"]}

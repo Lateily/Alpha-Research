@@ -130,6 +130,9 @@ jobs:
       # ── Macro OS M1-B:行业敏感度 + 组合暴露 + 只读面板 ──
       - name: Macro OS M1-B industry and portfolio consumers (offline)
         run: python3 tests/test_macro_m1b_offline.py
+      # ── Macro OS M1-C:夜链接线 + 同轮输入 + 原子发布清单 + 校准权限 ──
+      - name: Macro OS M1-C production wiring (offline)
+        run: python3 tests/test_macro_m1c_offline.py
       # ── Macro OS M0-B3:官方 URL 发现 + 自适应调度 + 预期登记 WAL ──
       - name: Macro OS M0-B3 discovery and scheduler regression (offline)
         run: python3 tests/test_macro_m0b3_offline.py

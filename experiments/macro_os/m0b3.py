@@ -47,6 +47,11 @@ POLICY = {
     "allowed_outputs": ["LABEL", "RISK_BUDGET_CONTEXT"],
     "forbidden_outputs": ["TRADE_ACTION", "DIRECT_BLOCK", "REGIME_CLAIM"],
 }
+
+
+def lock_path_for_db(db_path: str | Path) -> Path:
+    """Return the one production lock shared by standalone and nightly runs."""
+    return Path(db_path).parent / DEFAULT_LOCK.name
 DEFAULT_GRACE_SECONDS = {1: 900, 2: 1800, 3: 3600}
 UNWIRED_RELEASE_REQUESTS = {
     "nbs_unemployment": "M0-A has no CN_UNEMPLOYMENT event contract",
@@ -1223,7 +1228,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--discovery-output", default=str(DEFAULT_DISCOVERY))
     parser.add_argument("--scheduler-output", default=str(DEFAULT_SCHEDULER))
     parser.add_argument("--manifest-output", default=str(DEFAULT_MANIFEST))
-    parser.add_argument("--lock", default=str(DEFAULT_LOCK))
+    parser.add_argument("--lock")
     parser.add_argument("--run-id")
     parser.add_argument("--now")
     parser.add_argument("--force", action="store_true")
@@ -1238,7 +1243,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         now = _iso(args.now, "now") if args.now else datetime.now(timezone.utc)
         calendar = contracts.load_json(args.calendar)
-        lock_path = Path(args.lock)
+        lock_path = Path(args.lock) if args.lock else lock_path_for_db(args.db)
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         with lock_path.open("a+") as lock_handle:
             try:

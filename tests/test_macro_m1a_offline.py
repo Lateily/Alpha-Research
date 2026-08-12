@@ -230,6 +230,7 @@ class MacroM1ATests(unittest.TestCase):
         self.assertEqual(manifest, m1a.validate_run(self.out))
         risk = contracts.load_json(self.out / "macro_risk_gate.json")
         self.assertEqual("MACRO_PARTIAL", risk["data"]["candidate_state"])
+        self.assertEqual("NORMAL_REVIEW_BUDGET", risk["data"]["risk_budget_context"])
         self.assertFalse(risk["data"]["enforceable"])
         self.assertEqual("DATA_BLOCKED", risk["data"]["gates"]["G2"]["status"])
         self.assertEqual("DATA_BLOCKED", risk["data"]["gates"]["G3"]["status"])
@@ -297,6 +298,7 @@ class MacroM1ATests(unittest.TestCase):
         )
         self.assertEqual("RED", risk["data"]["gates"]["G4"]["status"])
         self.assertEqual("CREDIT_STRESS_CANDIDATE", risk["data"]["candidate_state"])
+        self.assertEqual("REDUCED_REVIEW_BUDGET", risk["data"]["risk_budget_context"])
         self.assertIsNone(risk["data"]["formal_state"])
         self.assertFalse(risk["data"]["enforceable"])
 
@@ -387,6 +389,22 @@ class MacroM1ATests(unittest.TestCase):
         events_path.write_text(json.dumps(events, indent=2) + "\n", encoding="utf-8")
         with self.assertRaisesRegex(m1a.M1AError, "manifest does not match"):
             m1a.validate_run(self.out)
+
+    def test_missing_evidence_cannot_tighten_risk_budget(self) -> None:
+        m1a.run(
+            db_path=self.db,
+            rules_path=m1a.RULES_PATH,
+            market_features_path=None,
+            output_dir=self.out,
+            as_of=NOW,
+            run_id="missing_evidence_budget",
+        )
+        risk_path = self.out / "macro_risk_gate.json"
+        risk = contracts.load_json(risk_path)
+        self.assertEqual("MACRO_PARTIAL", risk["data"]["candidate_state"])
+        risk["data"]["risk_budget_context"] = "REDUCED_REVIEW_BUDGET"
+        with self.assertRaisesRegex(m1a.M1AError, "observed credit stress"):
+            m1a.validate_mrg(risk)
 
     def test_calibration_tamper_parity_covers_identity_and_formal_fields(self) -> None:
         cases = [
