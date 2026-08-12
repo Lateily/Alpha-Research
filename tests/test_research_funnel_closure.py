@@ -124,6 +124,22 @@ def rotation_fixture() -> dict:
     }
 
 
+def macro_fixture(*, mode: str = "CALIBRATING", formal_blocking: bool = False) -> dict:
+    return {
+        "schema": "ar.macro.industry_sensitivity",
+        "mode": mode,
+        "as_of": TRADE_DATE,
+        "policy": {"formal_blocking_authority": formal_blocking},
+        "data": {
+            "industries": [{
+                "industry": "BANK",
+                "context_direction": "NEUTRAL_CONTEXT",
+                "review_priority": "NORMAL",
+            }],
+        },
+    }
+
+
 def build_scan(top_n: int = 8, n: int = 30) -> tuple[dict, dict, dict]:
     registry = registry_fixture(n)
     features = features_fixture(registry)
@@ -166,6 +182,21 @@ def battery_fixture(codes: list[str], trade_date: str = TRADE_DATE) -> dict:
 
 
 class ResearchFunnelClosureTests(unittest.TestCase):
+    def test_u0_zero_eligible_universe_fails_closed(self) -> None:
+        registry = registry_fixture()
+        for row in registry["rows"]:
+            row["qualification"]["u1_scan_eligible"] = False
+        registry["eligible_universe_hash"] = _sha256([])
+        registry["registry_hash"] = _sha256(registry["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "no U1-eligible"):
+            fp.build_all_market_scan(
+                registry=registry,
+                e1_events=None,
+                features={},
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+            )
+
     def test_u1_has_exactly_six_independent_channel_rows(self) -> None:
         registry, _, scan = build_scan()
         self.assertEqual(scan["coverage"]["rows"], 30 * 6)
@@ -209,6 +240,136 @@ class ResearchFunnelClosureTests(unittest.TestCase):
                 rotation=rotation_fixture(), trade_date=TRADE_DATE,
                 generated_at=GENERATED_AT,
             )
+
+    def test_e1_schema_and_asof_are_bound_to_the_scan(self) -> None:
+        registry = registry_fixture()
+        for field, value in (("schema", "ar.fake"), ("as_of", "20260810")):
+            e1 = e1_fixture(registry)
+            e1[field] = value
+            with self.assertRaisesRegex(fp.FunnelError, "schema/as_of mismatch"):
+                fp.build_all_market_scan(
+                    registry=registry,
+                    e1_events=e1,
+                    features=features_fixture(registry),
+                    trade_date=TRADE_DATE,
+                    generated_at=GENERATED_AT,
+                )
+
+    def test_e1_rows_hash_is_recomputed(self) -> None:
+        registry = registry_fixture()
+        e1 = e1_fixture(registry)
+        e1["rows"][0]["verdict"] = "NO_RED_FLAG_FOUND"
+        with self.assertRaisesRegex(fp.FunnelError, "rows_hash mismatch"):
+            fp.build_all_market_scan(
+                registry=registry,
+                e1_events=e1,
+                features=features_fixture(registry),
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+            )
+
+    def test_e1_verdict_enum_is_fail_closed(self) -> None:
+        registry = registry_fixture()
+        e1 = e1_fixture(registry)
+        e1["rows"][0]["verdict"] = "PASS"
+        e1["rows_hash"] = fp._hash(e1["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "verdict is invalid"):
+            fp.build_all_market_scan(
+                registry=registry,
+                e1_events=e1,
+                features=features_fixture(registry),
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+            )
+
+    def test_e1_future_evidence_is_rejected(self) -> None:
+        registry = registry_fixture()
+        e1 = e1_fixture(registry)
+        e1["rows"][0]["latest_e1_date"] = "20260812"
+        e1["rows_hash"] = fp._hash(e1["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "exceeds scan as_of"):
+            fp.build_all_market_scan(
+                registry=registry,
+                e1_events=e1,
+                features=features_fixture(registry),
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+            )
+
+    def test_evidence_dates_normalize_iso_without_lexical_bypass(self) -> None:
+        registry = registry_fixture()
+        e1 = e1_fixture(registry)
+        e1["rows"][0]["latest_e1_date"] = "2026-08-12"
+        e1["rows_hash"] = fp._hash(e1["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "exceeds scan as_of"):
+            fp.build_all_market_scan(
+                registry=registry,
+                e1_events=e1,
+                features=features_fixture(registry),
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+            )
+
+    def test_rotation_panel_date_is_bound_to_scan_date(self) -> None:
+        registry = registry_fixture()
+        rotation = rotation_fixture()
+        rotation["target_trade_date"] = "20260810"
+        with self.assertRaisesRegex(fp.FunnelError, "not from the requested trade date"):
+            fp.build_all_market_scan(
+                registry=registry,
+                e1_events=e1_fixture(registry),
+                features=features_fixture(registry),
+                rotation=rotation,
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+            )
+
+    def test_macro_input_must_remain_calibrating(self) -> None:
+        registry = registry_fixture()
+        with self.assertRaisesRegex(fp.FunnelError, "must remain CALIBRATING"):
+            fp.build_all_market_scan(
+                registry=registry,
+                e1_events=e1_fixture(registry),
+                features=features_fixture(registry),
+                macro_industry=macro_fixture(mode="LIVE"),
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+            )
+
+    def test_macro_input_cannot_acquire_formal_blocking_authority(self) -> None:
+        registry = registry_fixture()
+        with self.assertRaisesRegex(fp.FunnelError, "acquired formal blocking authority"):
+            fp.build_all_market_scan(
+                registry=registry,
+                e1_events=e1_fixture(registry),
+                features=features_fixture(registry),
+                macro_industry=macro_fixture(formal_blocking=True),
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+            )
+
+    def test_u1_rejects_trade_or_blocking_authority_fields(self) -> None:
+        registry, _, scan = build_scan()
+        mutated = copy.deepcopy(scan)
+        mutated["trade_action"] = "BUY"
+        with self.assertRaisesRegex(fp.FunnelError, "trade or blocking authority"):
+            fp.validate_all_market_scan(mutated, registry)
+
+    def test_u1_rejects_future_source_evidence_after_iso_normalization(self) -> None:
+        registry, _, scan = build_scan()
+        mutated = copy.deepcopy(scan)
+        mutated["rows"][0]["source_as_of"] = "2026-08-12"
+        mutated["rows_hash"] = fp._hash(mutated["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "source evidence is from the future"):
+            fp.validate_all_market_scan(mutated, registry)
+
+    def test_u1_rejects_unknown_data_status(self) -> None:
+        registry, _, scan = build_scan()
+        mutated = copy.deepcopy(scan)
+        mutated["rows"][0]["data_status"] = "OK"
+        mutated["rows_hash"] = fp._hash(mutated["rows"])
+        with self.assertRaisesRegex(fp.FunnelError, "invalid channel data_status"):
+            fp.validate_all_market_scan(mutated, registry)
 
     def test_missing_channels_are_visible_not_filled(self) -> None:
         _, _, scan = build_scan()
@@ -297,6 +458,29 @@ class ResearchFunnelClosureTests(unittest.TestCase):
         self.assertEqual(candidates["quota"]["shortfalls"]["slow_bull"], 3)
         self.assertEqual(candidates["quota"]["shortfalls"]["contrarian_repair"], 3)
 
+    def test_u2_reserved_quota_floor_preserves_main_channel_capacity(self) -> None:
+        registry, features, scan = build_scan(top_n=80, n=180)
+        candidates = fp.build_candidate_review(
+            registry=registry,
+            scan=scan,
+            features=features,
+            trade_date=TRADE_DATE,
+            generated_at=GENERATED_AT,
+            target_size=100,
+            slow_bull_quota=5,
+            contrarian_quota=5,
+            control_quota=5,
+        )
+        main_count = sum(
+            row["review_status"] == "MAIN_CHANNEL" for row in candidates["rows"]
+        )
+        active_count = sum(
+            row["review_status"] != "EXCLUDED_RED_FLAG" for row in candidates["rows"]
+        )
+        self.assertLessEqual(main_count, 85)
+        self.assertLessEqual(active_count, 100)
+        self.assertIs(candidates["policy"]["reserved_quotas_are_floors"], True)
+
     def test_u2_stale_features_cannot_fill_reserved_quotas(self) -> None:
         registry, features, scan = build_scan()
         for row in features.values():
@@ -355,6 +539,25 @@ class ResearchFunnelClosureTests(unittest.TestCase):
                 trade_date=TRADE_DATE, generated_at=GENERATED_AT,
             )
         self.assertEqual(str(caught.exception), "U4 human selection must contain 3..5 securities")
+
+    def test_u4_authority_boundary_is_not_covered_only_by_rows_hash(self) -> None:
+        _, _, _, candidates = build_candidates()
+        queue = fp.build_deep_research_queue(
+            candidate_review=candidates,
+            battery=battery_fixture([]),
+            selected_tickers=[],
+            trade_date=TRADE_DATE,
+            generated_at=GENERATED_AT,
+        )
+        for field, value in (
+            ("auto_selection", True),
+            ("human_selection_required", False),
+            ("selection_owner", "RoboSelector9000"),
+        ):
+            mutated = copy.deepcopy(queue)
+            mutated["authority"][field] = value
+            with self.assertRaisesRegex(fp.FunnelError, "authority boundary changed"):
+                fp.validate_deep_research_queue(mutated)
 
     def test_u4_requires_an_explicit_research_question(self) -> None:
         _, _, _, candidates = build_candidates()

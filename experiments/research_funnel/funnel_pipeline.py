@@ -89,6 +89,19 @@ def _hash(value: Any) -> str:
     return hashlib.sha256(_canonical(value)).hexdigest()
 
 
+def _evidence_date(value: Any, field: str) -> str | None:
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if len(raw) >= 10 and raw[4] == "-" and raw[7] == "-":
+        raw = raw[:10]
+    try:
+        # governance-mutation: FUNNEL_EVIDENCE_DATE_NORMALIZATION
+        return _date8(raw)
+    except Exception as exc:
+        raise FunnelError(f"{field} is not a valid evidence date") from exc
+
+
 def _load_json(path: Path, *, optional: bool = False) -> dict[str, Any] | None:
     if optional and not path.exists():
         return None
@@ -129,6 +142,7 @@ def _eligible_rows(registry: Mapping[str, Any]) -> list[dict[str, Any]]:
         if row.get("qualification", {}).get("u1_scan_eligible") is True
     ]
     rows.sort(key=lambda row: row["ts_code"])
+    # governance-mutation: FUNNEL_U0_NONEMPTY_ELIGIBLE
     if not rows:
         raise FunnelError("U0 has no U1-eligible securities")
     return rows
@@ -158,11 +172,14 @@ def _e1_index(
 ) -> dict[str, dict[str, Any]]:
     if payload is None:
         return {}
-    if payload.get("schema") != "ar.e1_event_layer" or payload.get("as_of") != as_of:
+    payload_as_of = _evidence_date(payload.get("as_of"), "E1 event layer as_of")
+    # governance-mutation: FUNNEL_E1_SCHEMA_ASOF
+    if payload.get("schema") != "ar.e1_event_layer" or payload_as_of != as_of:
         raise FunnelError("E1 event layer schema/as_of mismatch")
     rows = payload.get("rows")
     if not isinstance(rows, list):
         raise FunnelError("E1 event rows must be a list")
+    # governance-mutation: FUNNEL_E1_ROWS_HASH
     if payload.get("rows_hash") != _hash(rows):
         raise FunnelError("E1 event rows_hash mismatch")
     registry_ref = payload.get("registry_ref") or {}
@@ -177,9 +194,12 @@ def _e1_index(
     for row in rows:
         verdict = row.get("verdict")
         latest = row.get("latest_e1_date")
+        # governance-mutation: FUNNEL_E1_VERDICT
         if verdict not in {"RED_FLAG", "NO_RED_FLAG_FOUND", "DATA_BLOCKED"}:
             raise FunnelError("E1 event verdict is invalid")
-        if latest is not None and (not isinstance(latest, str) or latest > as_of):
+        normalized_latest = _evidence_date(latest, "E1 latest_e1_date")
+        # governance-mutation: FUNNEL_E1_EVIDENCE_ASOF
+        if normalized_latest is not None and normalized_latest > as_of:
             raise FunnelError("E1 event evidence exceeds scan as_of")
     return {str(row.get("ts_code")): dict(row) for row in rows if isinstance(row, dict)}
 
@@ -187,7 +207,9 @@ def _e1_index(
 def _rotation_index(payload: Mapping[str, Any] | None, as_of: str) -> dict[str, dict[str, Any]]:
     if payload is None:
         return {}
-    target = str(payload.get("target_trade_date") or payload.get("as_of") or "").replace("-", "")
+    raw_target = payload.get("target_trade_date") or payload.get("as_of")
+    target = _evidence_date(raw_target, "rotation panel date") if raw_target else None
+    # governance-mutation: FUNNEL_ROTATION_DATE_BINDING
     if target and target != as_of:
         raise FunnelError("rotation panel is not from the requested trade date")
     data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
@@ -204,9 +226,11 @@ def _macro_index(payload: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]
         return {}
     if payload.get("schema") != "ar.macro.industry_sensitivity":
         raise FunnelError("Macro industry input schema mismatch")
+    # governance-mutation: FUNNEL_MACRO_CALIBRATING
     if payload.get("mode") != "CALIBRATING":
         raise FunnelError("Macro industry input must remain CALIBRATING")
     policy = payload.get("policy") or {}
+    # governance-mutation: FUNNEL_MACRO_NO_BLOCK_AUTHORITY
     if policy.get("formal_blocking_authority") is not False:
         raise FunnelError("Macro industry input acquired formal blocking authority")
     rows = (payload.get("data") or {}).get("industries", [])
@@ -410,8 +434,10 @@ def build_all_market_scan(
 def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, Any]) -> None:
     if payload.get("schema") != SCAN_SCHEMA or payload.get("schema_version") != SCHEMA_VERSION:
         raise FunnelError("all_market_scan schema/version mismatch")
+    # governance-mutation: FUNNEL_U1_NO_COMPOSITE_SCORE
     if FORBIDDEN_AGGREGATE_KEYS.intersection(_walk_keys(payload)):
         raise FunnelError("cross-channel aggregate score is forbidden")
+    # governance-mutation: FUNNEL_U1_NO_TRADE_AUTHORITY
     if FORBIDDEN_ACTION_KEYS.intersection(_walk_keys(payload)):
         raise FunnelError("trade or blocking authority field is forbidden")
     rows = payload.get("rows")
@@ -434,14 +460,14 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
         if row["trade_date"] != as_of:
             raise FunnelError("all_market_scan row date differs from contract as_of")
         source_as_of = row.get("source_as_of")
-        if (
-            isinstance(source_as_of, str) and len(source_as_of) == 8
-            and source_as_of.isdigit() and source_as_of > as_of
-        ):
+        normalized_source_as_of = _evidence_date(source_as_of, "scan source_as_of")
+        # governance-mutation: FUNNEL_U1_SOURCE_ASOF
+        if normalized_source_as_of is not None and normalized_source_as_of > as_of:
             raise FunnelError("all_market_scan source evidence is from the future")
         if row["channel"] in seen[row["ts_code"]]:
             raise FunnelError("duplicate channel row for one security")
         seen[row["ts_code"]].add(row["channel"])
+        # governance-mutation: FUNNEL_U1_DATA_STATUS
         if row["data_status"] not in VALID_DATA_STATUS:
             raise FunnelError("invalid channel data_status")
         reasons = row["entry_reasons"]
@@ -452,6 +478,7 @@ def validate_all_market_scan(payload: Mapping[str, Any], registry: Mapping[str, 
                 raise FunnelError("entry_reason fields are not exact")
             if reason["channel"] != row["channel"]:
                 raise FunnelError("entry_reason cannot be borrowed from another channel")
+    # governance-mutation: FUNNEL_U1_SIX_CHANNEL_COVERAGE
     if set(seen) != eligible or any(channels != set(CHANNELS) for channels in seen.values()):
         raise FunnelError("every eligible security must have exactly six channel rows")
 
@@ -577,7 +604,13 @@ def build_candidate_review(
         code for code, rows in all_triggered.items()
         if any(row["channel"] == "E1_EVENT" for row in rows)
     }
+    positive_triggered = {
+        code for code, source_rows in all_triggered.items()
+        if any(row["channel"] != "E1_EVENT" for row in source_rows)
+    }
+    # governance-mutation: FUNNEL_U2_QUOTA_FLOOR
     main_capacity = target_size - reserved_total
+    # governance-mutation: FUNNEL_U2_RED_FLAG_NOT_POSITIVE
     selected_main: set[str] = set()
     queues = {channel: list(rows) for channel, rows in triggered_by_channel.items() if channel != "E1_EVENT"}
     positions = {channel: 0 for channel in queues}
@@ -625,6 +658,7 @@ def build_candidate_review(
     seed_hex = hashlib.sha256(
         f"{trade_date}|AR_RANDOM_CONTROL|v1|{eligible_hash}".encode("utf-8")
     ).hexdigest()
+    # governance-mutation: FUNNEL_U2_CONTROL_SEED
     rng = random.Random(int(seed_hex[:16], 16))
     quotas = _allocate_quotas(main_counts, pools, control_quota)
     control_codes: list[str] = []
@@ -637,7 +671,7 @@ def build_candidate_review(
                 "ts_code": code, "stratum": stratum, "drawn_rank": len(drawn) + 1,
             })
     selected_all.update(control_codes)
-    excluded_red_flags = red_flag_codes - selected_all
+    excluded_red_flags = red_flag_codes - selected_all - positive_triggered
 
     rows: list[dict[str, Any]] = []
     category = {code: "MAIN_CHANNEL" for code in selected_main}
@@ -689,10 +723,6 @@ def build_candidate_review(
             "aligned_return": None,
         })
 
-    positive_triggered = {
-        code for code, source_rows in all_triggered.items()
-        if any(row["channel"] != "E1_EVENT" for row in source_rows)
-    }
     trigger_excluded = sorted(positive_triggered - selected_main)
     excluded_by_code = {row["ts_code"]: dict(row) for row in stratum_excluded}
     for row in registry["rows"]:
@@ -823,6 +853,7 @@ def validate_candidate_review(
         triggered = triggered_by_code.get(code, [])
         expected_channels = sorted({item["channel"] for item in triggered}, key=CHANNELS.index)
         expected_reasons = [reason for item in triggered for reason in item["entry_reasons"]]
+        # governance-mutation: FUNNEL_U2_EXACT_EVIDENCE_PROJECTION
         if row.get("source_channels") != expected_channels or row.get("entry_reasons") != expected_reasons:
             raise FunnelError("candidate U1 channel/reason projection is not exact")
         red_flagged = "E1_EVENT" in expected_channels
@@ -843,6 +874,7 @@ def validate_candidate_review(
             if row.get("control_batch_id") != payload["control_sampling_frame"]["control_batch_id"]:
                 raise FunnelError("random control batch linkage mismatch")
     frame = payload.get("control_sampling_frame") or {}
+    # governance-mutation: FUNNEL_U2_CONTROL_ALGORITHM
     if frame.get("algo") != CONTROL_ALGO:
         raise FunnelError("random control algorithm drift")
     if sorted(row["ts_code"] for row in control_rows) != sorted(row["ts_code"] for row in frame.get("drawn", [])):
@@ -897,6 +929,23 @@ def validate_candidate_review(
     if drawn != expected_drawn:
         raise FunnelError("random control draw is not reproducible from its frozen frame")
 
+    policy = payload.get("policy") or {}
+    required_quota = (payload.get("quota") or {}).get("required") or {}
+    target_size = int(policy.get("target_size") or 0)
+    reserved_total = sum(int(required_quota.get(key) or 0) for key in (
+        "slow_bull", "contrarian_repair", "random_control",
+    ))
+    main_count = sum(row.get("review_status") == "MAIN_CHANNEL" for row in rows)
+    active_count = sum(row.get("review_status") != "EXCLUDED_RED_FLAG" for row in rows)
+    if (
+        policy.get("reserved_quotas_are_floors") is not True
+        or target_size < 1
+        or reserved_total >= target_size
+        or main_count > target_size - reserved_total
+        or active_count > target_size
+    ):
+        raise FunnelError("reserved quotas did not preserve main-channel capacity")
+
 
 def _battery_rows(
     payload: Mapping[str, Any] | None, trade_date: str | None = None,
@@ -909,6 +958,7 @@ def _battery_rows(
         or (data.get("checked_at") if isinstance(data, dict) else "")
         or ""
     ).replace("-", "")
+    # governance-mutation: FUNNEL_U4_SAME_DAY_BATTERY
     if trade_date is not None and target != _date8(trade_date):
         raise FunnelError("U3 battery is not from the requested trade date")
     rows = data.get("results", []) if isinstance(data, dict) else []
@@ -937,9 +987,11 @@ def build_deep_research_queue(
     sector_os = {str(industry).strip() for industry in sector_os_industries if str(industry).strip()}
     if len(selected) != len(set(selected)):
         raise FunnelError("U4 human selection contains duplicates")
+    # governance-mutation: FUNNEL_U4_HUMAN_SELECTION_SIZE
     if selected and not 3 <= len(selected) <= 5:
         raise FunnelError("U4 human selection must contain 3..5 securities")
     missing_questions = [code for code in selected if not research_questions.get(code)]
+    # governance-mutation: FUNNEL_U4_RESEARCH_QUESTION
     if missing_questions:
         raise FunnelError(f"U4 selection lacks a clear research question: {missing_questions}")
     candidates = {row["ts_code"]: row for row in candidate_review.get("rows", [])}
@@ -1024,6 +1076,7 @@ def build_deep_research_queue(
 def validate_deep_research_queue(payload: Mapping[str, Any]) -> None:
     if payload.get("schema") != QUEUE_SCHEMA or payload.get("schema_version") != SCHEMA_VERSION:
         raise FunnelError("deep_research_queue schema/version mismatch")
+    # governance-mutation: FUNNEL_U4_NO_TRADE_AUTHORITY
     if FORBIDDEN_ACTION_KEYS.intersection(_walk_keys(payload)):
         raise FunnelError("U4 queue cannot contain trade or blocking authority")
     rows = payload.get("rows")
@@ -1032,6 +1085,7 @@ def validate_deep_research_queue(payload: Mapping[str, Any]) -> None:
     if rows and not 3 <= len(rows) <= 5:
         raise FunnelError("a populated U4 queue must contain 3..5 securities")
     authority = payload.get("authority") or {}
+    # governance-mutation: FUNNEL_U4_AUTHORITY_BOUNDARY
     if (
         authority.get("auto_selection") is not False
         or authority.get("human_selection_required") is not True
