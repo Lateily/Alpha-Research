@@ -31,6 +31,32 @@ INFRA_FAILURE_MARKERS = (
 )
 TEST_FAILURE_MARKERS = ("AssertionError", "FAILED (", "FAIL:")
 SECRET_NAME_PARTS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL")
+SINGLE_TEST_RUNNER = """
+import runpy
+import sys
+import unittest
+
+scope = runpy.run_path(sys.argv[1], run_name="mutation_gate_target")
+name = sys.argv[2]
+target = scope.get(name)
+if callable(target):
+    target()
+    raise SystemExit(0)
+
+classes = [
+    value
+    for value in scope.values()
+    if isinstance(value, type)
+    and issubclass(value, unittest.TestCase)
+    and hasattr(value, name)
+]
+if len(classes) != 1:
+    raise LookupError(f"exactly one test target required: {name}; found {len(classes)}")
+result = unittest.TextTestRunner(verbosity=2).run(
+    unittest.TestSuite([classes[0](name)])
+)
+raise SystemExit(0 if result.wasSuccessful() else 1)
+"""
 GOVERNANCE_MARKER_RE = re.compile(
     r"^\s*# governance-mutation: (?P<mutation_id>[A-Z0-9_]+)\s*$"
 )
@@ -857,22 +883,16 @@ def run_test_script(
     sandbox: Path,
     guard: Path,
     script: str,
-    test_function: str | None = None,
+    test_function: str,
 ) -> CommandResult:
-    command = [sys.executable, "-B", script]
-    if test_function is not None:
-        command = [
-            sys.executable,
-            "-B",
-            "-c",
-            (
-                "import runpy,sys; "
-                "scope=runpy.run_path(sys.argv[1], run_name='mutation_gate_target'); "
-                "scope[sys.argv[2]]()"
-            ),
-            script,
-            test_function,
-        ]
+    command = [
+        sys.executable,
+        "-B",
+        "-c",
+        SINGLE_TEST_RUNNER,
+        script,
+        test_function,
+    ]
     try:
         completed = subprocess.run(
             command,
@@ -913,6 +933,10 @@ def _tail(output: str, lines: int = 30) -> str:
     return "\n".join(output.splitlines()[-lines:])
 
 
+def _target_test(case: MutationCase) -> str:
+    return case.test_function or case.expected_failure_marker
+
+
 def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) -> None:
     validate_manifest(root, cases)
     with tempfile.TemporaryDirectory(prefix="ar-governance-mutations-") as tmp:
@@ -922,17 +946,15 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
         shutil.copytree(root, sandbox, ignore=_copy_ignore)
         _write_network_guard(guard)
 
-        targets = tuple(
-            dict.fromkeys((case.test_script, case.test_function) for case in cases)
-        )
+        targets = tuple(dict.fromkeys((case.test_script, _target_test(case)) for case in cases))
         for script, test_function in targets:
             result = run_test_script(sandbox, guard, script, test_function)
             if result.returncode != 0:
                 raise MutationGateError(
-                    f"baseline failed before mutation: {script}"
-                    f"::{test_function or 'all'}\n{_tail(result.output)}"
+                    f"baseline failed before mutation: {script}::{test_function}\n"
+                    f"{_tail(result.output)}"
                 )
-            print(f"BASELINE PASS  {script}::{test_function or 'all'}")
+            print(f"BASELINE PASS  {script}::{test_function}")
 
         for case in cases:
             target = _resolved_under(sandbox, case.source_path)
@@ -945,7 +967,7 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
                     sandbox,
                     guard,
                     case.test_script,
-                    case.test_function,
+                    _target_test(case),
                 )
                 classify_mutation(case, result)
             except MutationGateError as exc:

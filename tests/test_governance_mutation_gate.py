@@ -165,6 +165,61 @@ class GovernanceMutationGateTests(unittest.TestCase):
                 ),
             )
 
+    def test_default_target_is_the_declared_failure_marker(self) -> None:
+        case = gate.MUTATIONS[0]
+        self.assertEqual(case.expected_failure_marker, gate._target_test(case))
+
+    def test_single_test_runner_does_not_execute_unrelated_testcase_method(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            guard = root / "guard"
+            script = root / "test_exact.py"
+            script.write_text(
+                "import unittest\n"
+                "class ExactTests(unittest.TestCase):\n"
+                "    def test_target(self):\n"
+                "        self.assertTrue(True)\n"
+                "    def test_unrelated(self):\n"
+                "        self.fail('must not run')\n",
+                encoding="utf-8",
+            )
+            gate._write_network_guard(guard)
+            result = gate.run_test_script(root, guard, "test_exact.py", "test_target")
+        self.assertEqual(0, result.returncode, result.output)
+        self.assertIn("test_target", result.output)
+        self.assertNotIn("test_unrelated", result.output)
+
+    def test_gate_does_not_credit_an_unrelated_failure(self) -> None:
+        case = gate.MutationCase(
+            mutation_id="SYNTHETIC_EXACT_ATTRIBUTION",
+            component="synthetic exact attribution",
+            source_path="source.py",
+            test_script="test_source.py",
+            before="GUARD = True",
+            after="GUARD = False",
+            expected_failure_marker="test_declared_target",
+            rationale="An unrelated failure cannot be credited to the declared target.",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source.py").write_text("GUARD = True\n", encoding="utf-8")
+            (root / "test_source.py").write_text(
+                "import unittest\n"
+                "import source\n"
+                "class AttributionTests(unittest.TestCase):\n"
+                "    def test_declared_target(self):\n"
+                "        self.assertTrue(True)\n"
+                "    def test_unrelated(self):\n"
+                "        self.assertTrue(source.GUARD)\n",
+                encoding="utf-8",
+            )
+            for relative in (*gate.K1_GOVERNANCE_PATHS, *gate.R043_GOVERNANCE_PATHS):
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("# no governance markers in synthetic fixture\n", encoding="utf-8")
+            with self.assertRaisesRegex(gate.MutationGateError, "SURVIVED"):
+                gate.run_gate(root, [case])
+
     def test_paths_cannot_escape_repository(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
