@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-12T03:32:03.976626+00:00",
+  "generated_at": "2026-08-12T09:42:17.577537+00:00",
   "date": "2026-08-12",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review",
@@ -13,13 +13,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 6,
-        "pnl_pct": 36.46,
+        "pnl_pct": 35.17,
         "holding_days": 155,
-        "weight_pct": 51.4,
+        "weight_pct": 51.1,
         "vp_score": 48,
         "confluence": 6,
-        "reason_e": "Large unrealised gain +36.5% after 155d. Signal still NEUTRAL (score 6). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+36.5%（持有155天），信号6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +35.2% after 155d. Signal still NEUTRAL (score 6). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+35.2%（持有155天），信号6仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -51,7 +51,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 148,
-        "weight_pct": 25.6,
+        "weight_pct": 25.7,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 148d. Paper-hold — no new review trigger. RSI 41 | Price vs MA20 -3.5%.",
@@ -69,7 +69,7 @@
         "confidence": 0,
         "pnl_pct": 0.0,
         "holding_days": 141,
-        "weight_pct": 14.7,
+        "weight_pct": 14.8,
         "vp_score": null,
         "confluence": 0,
         "reason_e": "Signal neutral (score 0). P&L +0.0% after 141d. Paper-hold — no new review trigger. RSI 56 | Price vs MA20 +2.8%.",
@@ -85,13 +85,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 0,
-        "pnl_pct": -6.29,
+        "pnl_pct": -6.01,
         "holding_days": 133,
         "weight_pct": 4.0,
         "vp_score": 48,
         "confluence": 0,
-        "reason_e": "Signal neutral (score 0). P&L -6.3% after 133d. Paper-hold — no new review trigger. RSI 47 | Price vs MA20 -2.8% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分0），浮盈-6.3%，持有133天，无新触发条件。RSI 47 | 距MA20 -2.8% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 0). P&L -6.0% after 133d. Paper-hold — no new review trigger. RSI 47 | Price vs MA20 -2.8% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分0），浮盈-6.0%，持有133天，无新触发条件。RSI 47 | 距MA20 -2.8% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -175,21 +175,9 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 51% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +36.5% — exposure-review condition (sizable unrealised gain)"
+    "PROFIT REVIEW: 300308.SZ +35.2% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
-    {
-      "ticker": "002594.SZ",
-      "severity": "LOW",
-      "status": "MANUAL",
-      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
-      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
-      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
-      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
-      "indicator": "revenue_growth",
-      "actual": null,
-      "threshold": null
-    },
     {
       "ticker": "300308.SZ",
       "severity": "NONE",
@@ -201,6 +189,18 @@
       "indicator": "hyperscaler_basket_drawdown_pct",
       "actual": 7.5,
       "threshold": 25.0
+    },
+    {
+      "ticker": "002594.SZ",
+      "severity": "LOW",
+      "status": "MANUAL",
+      "wrongIf_e": "revenue_growth < -10% for 2 consecutive quarters (tariff impact proxy) OR gross_margin drops below 15% OR earnings_growth < -40%",
+      "wrongIf_z": "连续两季度营收增速<-10%（关税冲击代理指标），或毛利率跌破15%，或盈利增速<-40%",
+      "note_e": "Cannot auto-verify 'revenue_growth' — manual check required.",
+      "note_z": "无法自动核验「revenue_growth」——需人工检查。",
+      "indicator": "revenue_growth",
+      "actual": null,
+      "threshold": null
     },
     {
       "ticker": "603233.SH",

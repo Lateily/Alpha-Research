@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-12T03:26:37.750913+00:00",
+  "generated_at": "2026-08-12T09:37:19.459791+00:00",
   "industry": "ai_infrastructure",
-  "composite_score": 66.5,
+  "composite_score": 62.3,
   "composite_signal": "MODERATE",
   "hyperscaler_basket": {
     "NVDA": {
@@ -32,7 +32,7 @@
     "nvda_revenue": 68,
     "hyperscaler_capex": 73,
     "tsmc_revenue": 55,
-    "price_momentum": 62
+    "price_momentum": 20
   },
   "indicators": {
     "nvda_revenue": {
@@ -169,10 +169,10 @@
             }
           ],
           "price": {
-            "price": 599.12,
-            "return_3m_pct": -5.5,
+            "price": NaN,
+            "return_3m_pct": NaN,
             "ath_3mo": 681.31,
-            "drawdown_3mo_pct": -12.1
+            "drawdown_3mo_pct": NaN
           },
           "latest_qoq": 58.5,
           "score": 90,
@@ -252,9 +252,9 @@
       "signal": "MODERATE"
     },
     "price_momentum": {
-      "basket_return_3m_pct": 13.5,
-      "score": 62,
-      "signal": "BULLISH"
+      "basket_return_3m_pct": NaN,
+      "score": 20,
+      "signal": "BEARISH"
     }
   },
   "stock_implications": {
