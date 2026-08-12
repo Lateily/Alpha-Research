@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-11T09:33:28.263529+00:00",
+  "updated_at": "2026-08-12T03:32:05.370040+00:00",
   "total_theses_tracked": 1,
   "by_status": {
     "CATALYST_DUE": 1
@@ -13,7 +13,7 @@
       "ticker": "002594.SZ",
       "direction": "LONG",
       "status": "CATALYST_DUE",
-      "days_to_catalyst": 4,
+      "days_to_catalyst": 3,
       "thesis_logged_at": "2026-05-17T19:47:04.532052+00:00"
     }
   ],
