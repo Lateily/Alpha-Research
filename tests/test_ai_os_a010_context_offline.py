@@ -22,6 +22,7 @@ from ai_os.task_compiler import compile_task_manifest  # noqa: E402
 
 
 NOW = datetime(2026, 8, 12, 9, 0, tzinfo=timezone.utc)
+CONTEXT_SCHEMA_PATH = REPO_ROOT / "scripts" / "llm" / "schemas" / "context.schema.json"
 
 
 def valid_task_manifest(**overrides):
@@ -82,6 +83,35 @@ def test_context_builder_creates_traceable_packet_from_manifest() -> None:
     assert "scripts/llm/AGENTS.md" in context["read_order"]
     assert all(item["exists"] for item in context["files"])
     json.dumps(result.to_dict(), ensure_ascii=False)
+
+
+def test_context_schema_matches_runtime_packet_shape() -> None:
+    schema = json.loads(CONTEXT_SCHEMA_PATH.read_text(encoding="utf-8"))
+    result = build_context_packet(
+        valid_task_manifest(),
+        repo_root=REPO_ROOT,
+        loaded_at=NOW,
+        data_cutoff="2026-08-12T00:00:00+08:00",
+    )
+
+    assert result.status == CONTEXT_READY
+    assert result.context is not None
+    assert schema["properties"]["schema"]["const"] == result.context["schema"]
+    assert set(schema["required"]) == set(result.context)
+    assert set(schema["properties"]) == set(result.context)
+    freshness = schema["properties"]["freshness"]
+    assert set(freshness["required"]) == set(result.context["freshness"])
+    file_schema = schema["properties"]["files"]["items"]
+    assert set(file_schema["required"]) == set(result.context["files"][0])
+    external_schema = schema["properties"]["external_inputs"]["items"]
+    external = build_context_packet(
+        valid_task_manifest(),
+        repo_root=REPO_ROOT,
+        loaded_at=NOW,
+        external_inputs=[{"label": "issue", "kind": "github", "content": "text"}],
+    )
+    assert external.context is not None
+    assert set(external_schema["required"]) == set(external.context["external_inputs"][0])
 
 
 def test_context_builder_marks_external_inputs_untrusted_without_storing_text() -> None:

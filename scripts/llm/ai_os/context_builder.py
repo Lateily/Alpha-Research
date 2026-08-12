@@ -66,6 +66,7 @@ def build_context_packet(
 
     for role, rel_path in read_plan:
         safe_path = _normalize_repo_path(rel_path)
+        # governance-mutation: AIOS_A010_SAFE_PATH_BLOCK
         if safe_path is None:
             errors.append(f"{rel_path} is not a safe repository-relative path")
             continue
@@ -73,6 +74,7 @@ def build_context_packet(
         if not _is_within(root, absolute):
             errors.append(f"{safe_path} escapes repository root")
             continue
+        # governance-mutation: AIOS_A010_MISSING_CONTEXT_BLOCK
         if not absolute.exists() or not absolute.is_file():
             missing.append(safe_path)
             records.append(
@@ -89,6 +91,7 @@ def build_context_packet(
             continue
         content = absolute.read_bytes()
         text = content.decode("utf-8", errors="replace")
+        # governance-mutation: AIOS_A010_CONFLICT_MARKER_BLOCK
         if _has_conflict_marker(text):
             conflicts.append(safe_path)
         records.append(
