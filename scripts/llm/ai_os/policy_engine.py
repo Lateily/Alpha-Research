@@ -32,8 +32,10 @@ TASK_TYPE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 SECRET_PATTERNS = (
     re.compile(r"(?i)\b(?:moonshot|deepseek|progress|github|openai|api)[\w-]*(?:key|token|secret)\b"),
     re.compile(r"(?i)\bsk(?:_live)?-[a-z0-9_-]{8,}\b"),
+    re.compile(r"(?i)\bsk_live_[a-z0-9_-]{8,}\b"),
     re.compile(r"(?i)\bgh[opsu]_[a-z0-9_]{8,}\b"),
     re.compile(r"(?i)\bgithub_pat_[a-z0-9_]{20,}\b"),
+    re.compile(r"(?i)\baws[_-]*secret[_-]*access[_-]*key\b"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\bAIza[0-9A-Za-z_-]{20,}\b"),
     re.compile(r"(?i)\bxox[baprs]-[a-z0-9-]{8,}\b"),
@@ -182,6 +184,21 @@ def evaluate_policy(
     normalized_forbidden = [_normalize_path(path) for path in forbidden_scope]
     normalized_targets = [_normalize_path(path) for path in cleaned_targets]
 
+    # governance-mutation: AIOS_K2_SCOPE_NORMALIZATION
+    if any(path is None for path in normalized_scopes):
+        spec_reasons.append(
+            PolicyReason("file_scope.unsafe", "file_scope contains unsafe paths")
+        )
+    if any(path is None for path in normalized_forbidden):
+        spec_reasons.append(
+            PolicyReason(
+                "forbidden_scope.unsafe",
+                "forbidden_scope contains unsafe paths",
+            )
+        )
+    if spec_reasons:
+        return PolicyDecision(SPEC_BLOCKED, task_id, tuple(spec_reasons), None)
+
     for index, target in enumerate(normalized_targets):
         original = cleaned_targets[index]
         if target is None:
@@ -243,6 +260,7 @@ def evaluate_policy(
             "reviewer_agent": reviewer,
             "approval_evidence": approval_evidence,
             "allowlist_evidence": allowlist_evidence,
+            "external_texts": external_texts,
         }
     ):
         policy_reasons.append(
@@ -407,10 +425,11 @@ def _map_network_policy(value: str, allowlist_evidence: Any) -> str | PolicyReas
             "LIVE_DATA is blocked until Junyan approves the Router mapping",
         )
     if value == "ALLOWLIST":
-        if not _has_allowlist_evidence(allowlist_evidence):
+        # governance-mutation: AIOS_K2_ALLOWLIST_V0_BLOCK
+        if _allowlist_registry_is_unwired():
             return PolicyReason(
-                "network_policy.allowlist_evidence_required",
-                "ALLOWLIST requires structured provider allowlist evidence",
+                "network_policy.allowlist_registry_unwired",
+                "ALLOWLIST is blocked until trusted provider allowlist registry is wired",
             )
         return "provider_only"
     if value not in ROUTER_NETWORK_POLICIES:
@@ -511,6 +530,10 @@ def _has_allowlist_evidence(value: Any) -> bool:
         isinstance(value.get(field_name), str) and bool(value.get(field_name, "").strip())
         for field_name in ("approval_ref", "commit_sha", "issue_url")
     )
+
+
+def _allowlist_registry_is_unwired() -> bool:
+    return True
 
 
 def _hash_json(value: Mapping[str, Any]) -> str:

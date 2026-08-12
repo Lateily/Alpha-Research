@@ -65,6 +65,10 @@ def reason_codes(decision):
     return [reason["code"] for reason in decision.to_dict()["policy_reasons"]]
 
 
+def synthetic_secret(*parts):
+    return "".join(parts)
+
+
 def test_policy_allows_safe_offline_shadow_route_request() -> None:
     decision = evaluate_policy(valid_manifest(), **policy_kwargs()).to_dict()
 
@@ -150,23 +154,41 @@ def test_policy_requires_concrete_allowlist_evidence() -> None:
         valid_manifest(network_policy="ALLOWLIST"),
         **policy_kwargs(allowlist_evidence="Junyan approved provider_only"),
     )
-    allowed = evaluate_policy(
+    forged = evaluate_policy(
         valid_manifest(network_policy="ALLOWLIST"),
         **policy_kwargs(
             allowlist_evidence={
-                "allowed_endpoints": ["https://api.moonshot.cn/v1"],
-                "approval_ref": "https://github.com/Lateily/Alpha-Research/issues/164",
+                "allowed_endpoints": ["https://unapproved.example.invalid"],
+                "approval_ref": "x",
             }
         ),
     )
 
     assert missing.policy_status == POLICY_BLOCKED
-    assert "network_policy.allowlist_evidence_required" in reason_codes(missing)
+    assert "network_policy.allowlist_registry_unwired" in reason_codes(missing)
     assert free_text.policy_status == POLICY_BLOCKED
-    assert "network_policy.allowlist_evidence_required" in reason_codes(free_text)
-    assert allowed.policy_status == POLICY_ALLOWED
-    assert allowed.route_request is not None
-    assert allowed.route_request["network_policy"] == "provider_only"
+    assert "network_policy.allowlist_registry_unwired" in reason_codes(free_text)
+    assert forged.policy_status == POLICY_BLOCKED
+    assert "network_policy.allowlist_registry_unwired" in reason_codes(forged)
+
+
+def test_policy_spec_blocks_unsafe_file_scope_and_forbidden_scope() -> None:
+    unsafe_file_scope = evaluate_policy(
+        valid_manifest(file_scope=["scripts/llm/ai_os/allowed."]),
+        **policy_kwargs(),
+    )
+    unsafe_forbidden_scope = evaluate_policy(
+        valid_manifest(
+            file_scope=["scripts/llm/ai_os"],
+            forbidden_scope=["scripts/llm/ai_os/blocked."],
+        ),
+        **policy_kwargs(target_paths=["scripts/llm/ai_os/blocked"]),
+    )
+
+    assert unsafe_file_scope.policy_status == SPEC_BLOCKED
+    assert "file_scope.unsafe" in reason_codes(unsafe_file_scope)
+    assert unsafe_forbidden_scope.policy_status == SPEC_BLOCKED
+    assert "forbidden_scope.unsafe" in reason_codes(unsafe_forbidden_scope)
 
 
 def test_policy_blocks_out_of_scope_forbidden_and_execution_tracker_paths() -> None:
@@ -298,7 +320,9 @@ def test_policy_requires_junyan_approval_for_constitutional_risk() -> None:
 
 def test_policy_blocks_secret_like_and_external_instruction_inputs() -> None:
     secret = evaluate_policy(
-        valid_manifest(objective="Use MOONSHOT_API_KEY=abc for this task"),
+        valid_manifest(
+            objective="Use " + synthetic_secret("MOONSHOT", "_API_", "KEY") + "=abc"
+        ),
         **policy_kwargs(),
     )
     injection = evaluate_policy(
@@ -311,7 +335,26 @@ def test_policy_blocks_secret_like_and_external_instruction_inputs() -> None:
             allowlist_evidence={
                 "allowed_endpoints": ["https://example.com"],
                 "approval_ref": "https://github.com/Lateily/Alpha-Research/issues/1",
-                "aws_key": "AKIA1234567890ABCDEF",
+                "aws_key": synthetic_secret("AKIA", "1234567890ABCDEF"),
+            }
+        ),
+    )
+    stripe_secret = evaluate_policy(
+        valid_manifest(),
+        **policy_kwargs(
+            external_texts=[
+                "payment token "
+                + synthetic_secret("sk", "_live_", "testvalue123456")
+            ]
+        ),
+    )
+    aws_secret_name = evaluate_policy(
+        valid_manifest(),
+        **policy_kwargs(
+            allowlist_evidence={
+                synthetic_secret("AWS", "_SECRET_", "ACCESS_KEY"): (
+                    "synthetic-placeholder-not-real"
+                ),
             }
         ),
     )
@@ -322,7 +365,11 @@ def test_policy_blocks_secret_like_and_external_instruction_inputs() -> None:
     assert "external_instruction.untrusted" in reason_codes(injection)
     assert broad_secret.policy_status == POLICY_BLOCKED
     assert "secret_like_input.blocked" in reason_codes(broad_secret)
-    assert "AKIA1234567890ABCDEF" not in json.dumps(
+    assert stripe_secret.policy_status == POLICY_BLOCKED
+    assert "secret_like_input.blocked" in reason_codes(stripe_secret)
+    assert aws_secret_name.policy_status == POLICY_BLOCKED
+    assert "secret_like_input.blocked" in reason_codes(aws_secret_name)
+    assert synthetic_secret("AKIA", "1234567890ABCDEF") not in json.dumps(
         broad_secret.to_dict(),
         ensure_ascii=False,
     )

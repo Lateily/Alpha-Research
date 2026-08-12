@@ -300,29 +300,29 @@ validated `RouteRequest`. Router picks the Agent only inside that boundary.
 K2 should move in small, reviewable steps. This avoids building against an
 unstable K1 contract or silently expanding Router authority.
 
-Phase 0 is this spec PR:
+This PR is now A-009 Policy Gate Phase 1:
 
 - Document the Policy/Context envelope.
 - Record Jason's Router-side constraints.
-- Keep the branch free of model calls, GitHub writes, and scheduler execution.
-
-Phase 1 starts after #248 K1 registry is merged into `main`:
-
 - Add `scripts/llm/ai_os/policy_engine.py`.
 - Add offline fail-closed tests for budget, risk, mode, network, path scope,
   forbidden scope, secret-like strings, and external-instruction handling.
 - Keep `LIVE_DATA` blocked until Junyan chooses a mapping.
-- Keep `ALLOWLIST` blocked unless structured allowlist evidence is provided.
+- Keep `ALLOWLIST` blocked until a trusted provider allowlist registry is wired.
 - Bind each decision to `task_id` with a stable `policy_decision_hash`.
 - Register critical K2 gates in the governance mutation gate.
+- Keep the branch free of model calls, GitHub writes, Router calls, scheduler
+  execution, and production data mutation.
 
-Phase 2 adds Context Builder:
+Later phases stay separate PRs:
 
-- Build a hashable context manifest from authority docs, task manifest,
-  relevant issue/PR state, schemas, fixtures, and validation output.
-- Return `CONTEXT_BLOCKED` for stale, missing, contradictory, or out-of-scope
-  context.
-- Store only hashes and allowed paths, not secrets or hidden reasoning.
+- A-010 Context Builder builds hashable context packets from authority docs,
+  task manifests, relevant issue/PR state, schemas, fixtures, and validation
+  output.
+- A-011 Scheduler blocks tasks with unfinished dependencies, stale context,
+  policy/spec failures, or dependency cycles.
+- A-012 Lease/heartbeat/file lock prevents overlapping write execution and
+  releases expired leases safely.
 
 Phase 3 connects to Router after #246 is merged and its contract is stable:
 
@@ -330,13 +330,6 @@ Phase 3 connects to Router after #246 is merged and its contract is stable:
 - Preserve `mode`; do not infer missing `task_type`.
 - Treat `risk_level` preservation as a future Router contract expansion unless
   #246 adds it first.
-
-Phase 4 can discuss Scheduler/Lease:
-
-- No automatic execution before Policy/Context tests pass.
-- No overlapping write leases.
-- No #164 auto-commenting for blocked tasks unless Junyan approves that human
-  gate behavior.
 
 ## 12. Open Decisions For Junyan
 
@@ -349,12 +342,17 @@ Phase 4 can discuss Scheduler/Lease:
 4. Whether K2 can auto-comment `POLICY_BLOCKED` findings to #164, or must remain
    local-only until K4 Human Gate exists.
 
-## 13. Acceptance For This Spec PR
+## 13. Acceptance For This A-009 Policy Gate PR
 
-- The document is added under Reed's boundary `docs/llm/`.
-- It defines K2 input, output, block states, Router handoff, and tests.
-- It does not implement execution.
-- It does not call any model or external data source.
+- The document stays under Reed's boundary `docs/llm/`.
+- The deterministic Policy Gate implementation stays under `scripts/llm/ai_os/`.
+- The output contract is documented under `scripts/llm/schemas/`.
+- Offline tests cover required manifest fields, budget, mode, network, path
+  scope, forbidden scope, unsafe scope definitions, secret-like input, external
+  instruction handling, risk gates, approval evidence, and decision hashing.
+- Critical K2 gates are registered in the governance mutation gate.
+- It does not execute Agents, call Router, call any model, read live data, write
+  GitHub, or modify production data.
 - It does not contain secrets or production credentials.
 - It preserves Junyan as the approval owner for risky gates.
 
