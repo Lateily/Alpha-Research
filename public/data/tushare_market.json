@@ -1,10 +1,16 @@
 {
-  "fetched_at": "2026-08-12T09:38:35Z",
+  "fetched_at": "2026-08-13T03:30:19Z",
   "permission_model": "runtime_probe",
   "_status": "ok",
   "data": {
     "trade_cal": {
       "rows": [
+        {
+          "exchange": "SSE",
+          "cal_date": "20260813",
+          "is_open": 1,
+          "pretrade_date": "20260812"
+        },
         {
           "exchange": "SSE",
           "cal_date": "20260812",
@@ -1350,12 +1356,21 @@
           "pretrade_date": "20251231"
         }
       ],
-      "row_count": 224,
+      "row_count": 225,
       "_status": "ok",
-      "as_of": "20260812"
+      "as_of": "20260813"
     },
     "moneyflow_hsgt": {
       "rows": [
+        {
+          "trade_date": "20260812",
+          "ggt_ss": "31763.39",
+          "ggt_sz": "22979.1",
+          "hgt": "132657.52",
+          "sgt": "149629.3",
+          "north_money": "282286.82",
+          "south_money": "54742.49"
+        },
         {
           "trade_date": "20260811",
           "ggt_ss": "31782.21",
@@ -1717,9 +1732,9 @@
           "south_money": "54057.48"
         }
       ],
-      "row_count": 40,
+      "row_count": 41,
       "_status": "ok",
-      "as_of": "20260811"
+      "as_of": "20260812"
     }
   }
 }
