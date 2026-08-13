@@ -1247,10 +1247,11 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/research_funnel/nightly_funnel.py",
         test_script="tests/test_funnel_nightly_offline.py",
         before=(
-            "    if candidate.parent != resolved_root or candidate.name != target:\n"
-            '        raise FunnelError(f"漏斗产物目录越界: {candidate}")'
+            "    if candidate.is_symlink() or os.path.realpath(candidate) != os.path.join(\n"
+            "        os.path.realpath(root), target\n"
+            "    ):"
         ),
-        after="    pass",
+        after="    if False:",
         expected_failure_marker="test_bundle_directory_refuses_a_symlink_that_escapes_the_root",
         rationale="target comes from the environment; an unvalidated path is later handed to rmtree.",
     ),
@@ -1267,6 +1268,73 @@ MUTATIONS: tuple[MutationCase, ...] = (
         after="    if False:\n        pass",
         expected_failure_marker="test_runner_refuses_without_run_context",
         rationale="Producing a bundle without run context lets an unbound artifact claim this run.",
+    ),
+    # ── 复审(#269 第一轮)打出来的三条:health 可伪造 / 根 symlink 越界删除 /
+    #    隔离失败在运维层静默。外加观察区 retention。
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ROOT_SYMLINK",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if root.is_symlink():\n"
+            "        raise FunnelError(\n"
+            '            f"观察区根本身是符号链接,拒绝使用: {root} -> {os.path.realpath(root)}"\n'
+            "        )"
+        ),
+        after="    pass",
+        expected_failure_marker="test_a_symlinked_observation_root_is_refused",
+        rationale="A symlinked observation root turns the retention sweep into arbitrary deletion.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_EVIDENCE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            '    if str(manifest.get("as_of") or "") != target:'
+        ),
+        after="    if False:",
+        expected_failure_marker="test_health_refuses_a_manifest_from_another_trade_date",
+        rationale="Health must be derived from the bundle it claims to describe.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_CONTRACT",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "        try:\n"
+            "            _validate_funnel_health(data)\n"
+            "        except Exception as exc:\n"
+            '            return "FAILED", f"漏斗 health 契约校验失败: {exc}"'
+        ),
+        after='        pass',
+        expected_failure_marker="test_a_content_free_health_cannot_pass_the_artifact_contract",
+        rationale="Health is this step's only verifiable artifact; unvalidated means unverified.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ISOLATED_ALARM",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='        if res["report"] == "COMPLETE" and not isolated:',
+        after='        if res["report"] == "COMPLETE":',
+        expected_failure_marker="test_isolated_degradation_still_raises_the_ops_alarm",
+        rationale="Isolation means not vetoing others, never that the failure goes unnoticed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RETENTION",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if keep < 1:\n"
+            '        raise FunnelError(f"观察区保留天数必须 >= 1: {keep}")'
+        ),
+        after="    keep = max(keep, 1)",
+        expected_failure_marker="test_retention_refuses_a_non_positive_keep",
+        rationale="A silently clamped retention window hides a misconfigured sweep.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",

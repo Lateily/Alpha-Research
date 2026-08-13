@@ -39,11 +39,20 @@ from funnel_pipeline import (  # noqa: E402
     FunnelError,
     _atomic_write_json,
     _date8,
+    _hash,
     run_pipeline,
 )
 
 HEALTH_SCHEMA = "ar.research_funnel_health"
 REPO_ROOT = Path(__file__).resolve().parents[2]
+BUNDLE_FILES = (
+    "all_market_scan.json",
+    "candidate_review.json",
+    "deep_research_queue.json",
+    "security_registry_projected.json",
+)
+DEFAULT_RETENTION_DAYS = 14
+_QUALITY_ORDER = ("COMPLETE", "PARTIAL", "DATA_BLOCKED")
 
 
 def _require_env(name: str) -> str:
@@ -54,19 +63,44 @@ def _require_env(name: str) -> str:
     return value
 
 
+def observation_root(raw: str) -> Path:
+    """观察区根本身不得是符号链接。
+
+    这条是复审打出来的洞:原来先 `output_root.resolve()` 再比对父目录,等于把
+    逃逸**归一化掉**而不是检测出来 —— 根本身是 symlink 时,解析后的父目录当然
+    等于解析后的根,校验恒真,而随后 rmtree 删的是仓库外的目录(已实测)。
+    在 `data_history/funnel` 位置种一个链接,就能把"清理观察区"变成"删任意目录"。
+
+    只挡根这一层,不挡祖先路径:macOS 的 /var → /private/var 之类是常态,把整条
+    路径都禁掉会让工具在正常机器上跑不起来 —— 那种过严本身也是一种失效。
+    搬迁观察区请直接改 AR_FUNNEL_OUTPUT_ROOT,环境变量本来就是搬迁机制。
+    """
+    root = Path(os.path.abspath(raw))
+    # governance-mutation: FUNNEL_NIGHTLY_ROOT_SYMLINK
+    if root.is_symlink():
+        raise FunnelError(
+            f"观察区根本身是符号链接,拒绝使用: {root} -> {os.path.realpath(root)}"
+        )
+    return root
+
+
 def _bundle_dir(output_root: Path, target: str) -> Path:
     """把 bundle 目录钉死在 output_root/<target> 之下。
 
-    target 来自环境变量,直接拼进路径再 rmtree 是删错目录的经典写法。这里先解析
-    再校验父目录与目录名,任一不符即拒绝,不做"尽力而为"的清理。
+    target 来自环境变量,直接拼进路径再 rmtree 是删错目录的经典写法。这里同时挡
+    三件事:根这一层被换成链接、子目录被换成链接、以及解析后跑出根之外。
     """
     if not (len(target) == 8 and target.isdigit()):
         raise FunnelError(f"target_trade_date 必须是 8 位日期: {target!r}")
-    resolved_root = output_root.resolve()
-    candidate = (resolved_root / target).resolve()
+    root = Path(os.path.abspath(output_root))
+    if root.is_symlink():
+        raise FunnelError(f"观察区根本身是符号链接,拒绝使用: {root}")
+    candidate = root / target
     # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_PATH_GUARD
-    if candidate.parent != resolved_root or candidate.name != target:
-        raise FunnelError(f"漏斗产物目录越界: {candidate}")
+    if candidate.is_symlink() or os.path.realpath(candidate) != os.path.join(
+        os.path.realpath(root), target
+    ):
+        raise FunnelError(f"漏斗产物目录越界: {os.path.realpath(candidate)}")
     return candidate
 
 
@@ -84,27 +118,86 @@ def _discard_stale_bundle(bundle_dir: Path, output_root: Path, target: str) -> b
     return True
 
 
+def prune_observation_area(output_root: Path, keep: int) -> list[str]:
+    """观察区约 30MB/交易日,不清理一年就是 7-8GB。只保留最近 keep 个日期目录。
+
+    只认 8 位日期目录名,只删经 _bundle_dir 校验过的路径;认不出的东西一律不碰。
+    """
+    # governance-mutation: FUNNEL_NIGHTLY_RETENTION
+    if keep < 1:
+        raise FunnelError(f"观察区保留天数必须 >= 1: {keep}")
+    dated = sorted(
+        (p.name for p in output_root.iterdir()
+         if p.is_dir() and not p.is_symlink() and len(p.name) == 8 and p.name.isdigit()),
+        reverse=True,
+    )
+    removed = []
+    for name in dated[keep:]:
+        shutil.rmtree(_bundle_dir(output_root, name))
+        removed.append(name)
+    return removed
+
+
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _row_count(path: Path) -> int:
-    payload = json.loads(path.read_text(encoding="utf-8"))
+def _load(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _row_count(payload: dict) -> int:
     rows = payload.get("rows")
     return len(rows) if isinstance(rows, list) else 0
+
+
+def _worst(*qualities: str) -> str:
+    seen = [q for q in qualities if q in _QUALITY_ORDER]
+    if len(seen) != len(qualities):
+        raise FunnelError(f"bundle 内部状态不在允许集合内: {qualities}")
+    return max(seen, key=_QUALITY_ORDER.index)
 
 
 def build_health(
     *, target: str, run_id: str, outputs: dict[str, Path], bundle_dir: Path,
     generated_at: str, discarded_stale: bool,
 ) -> dict:
-    manifest_path = bundle_dir / "manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    """health 的每个字段都必须由 bundle 实物推导,不得是声称。
+
+    这条是复审打出来的洞:原来 status 写死 COMPLETE、u4_queue_empty 写死 True、
+    bundle_hash 原样抄 manifest —— 底层 DATA_BLOCKED、U4 非空、哈希伪造,health
+    照样报 COMPLETE(已实测)。一份把自己的结论硬编码进去的 health 不是证据。
+    """
+    manifest = _load(bundle_dir / "manifest.json")
+    # governance-mutation: FUNNEL_NIGHTLY_HEALTH_EVIDENCE
+    if str(manifest.get("as_of") or "") != target:
+        raise FunnelError(
+            f"bundle manifest 的 as_of={manifest.get('as_of')!r} 与本轮 target {target} 不符"
+        )
+    declared = manifest.get("artifacts")
+    if not isinstance(declared, dict) or set(declared) != set(BUNDLE_FILES):
+        raise FunnelError(f"bundle manifest 的产物清单不完整: {sorted(declared or {})}")
+    measured = {name: _sha256(bundle_dir / name) for name in BUNDLE_FILES}
+    drifted = sorted(n for n in BUNDLE_FILES if declared[n] != measured[n])
+    if drifted:
+        raise FunnelError(f"bundle 实物与 manifest 哈希不符: {drifted}")
+    if manifest.get("bundle_hash") != _hash(declared):
+        raise FunnelError("bundle_hash 与产物清单不自洽")
+
+    scan = _load(outputs["scan"])
+    candidates = _load(outputs["candidates"])
+    queue = _load(outputs["queue"])
+    queue_rows = _row_count(queue)
+    status = _worst(
+        str(scan.get("data_status") or scan.get("status") or "").upper(),
+        str(candidates.get("status") or "").upper(),
+    )
     return {
         "schema": HEALTH_SCHEMA,
         "schema_version": SCHEMA_VERSION,
         "rule_version": RULE_VERSION,
-        "status": "COMPLETE",
+        # 由 bundle 内部状态取最差,而不是断言成功
+        "status": status,
         "as_of": target,
         "target_trade_date": target,
         "run_id": run_id,
@@ -113,21 +206,20 @@ def build_health(
             # 只登记相对位置:bundle 在 untracked 观察区,发布树不得依赖它的绝对路径
             "location": f"data_history/funnel/{target}",
             "published": False,
-            "bundle_hash": manifest.get("bundle_hash"),
-            "artifacts": {name: _sha256(bundle_dir / name) for name in sorted(
-                p.name for p in outputs.values()
-            )},
+            "bundle_hash": manifest["bundle_hash"],
+            "artifacts": measured,
         },
         "counts": {
-            "scan_rows": _row_count(outputs["scan"]),
-            "candidate_rows": _row_count(outputs["candidates"]),
-            "deep_queue_rows": _row_count(outputs["queue"]),
+            "scan_rows": _row_count(scan),
+            "candidate_rows": _row_count(candidates),
+            "deep_queue_rows": queue_rows,
         },
         "policy": {
             "nightly_mode": "OBSERVATION_ONLY_NOT_PUBLISHED",
             "isolated_step": True,
             "u4_selection_supplied": False,
-            "u4_queue_empty_by_construction": True,
+            # 由实测行数推导:没有选票就该是 0 行,不是"我们说它是空的"
+            "u4_queue_empty_by_construction": queue_rows == 0,
             "macro_input_wired": False,
         },
         "stale_bundle_discarded": discarded_stale,
@@ -138,8 +230,9 @@ def build_health(
 def run(argv: list[str] | None = None) -> int:
     target = _date8(_require_env("AR_TARGET_TRADE_DATE"))
     run_id = _require_env("AR_RUN_ID")
-    output_root = Path(_require_env("AR_FUNNEL_OUTPUT_ROOT"))
+    output_root = observation_root(_require_env("AR_FUNNEL_OUTPUT_ROOT"))
     output_root.mkdir(parents=True, exist_ok=True)
+    keep = int(os.environ.get("AR_FUNNEL_RETENTION_DAYS") or DEFAULT_RETENTION_DAYS)
 
     # 输入读的是本轮 staging 树(本文件在 staging 副本里运行),产物写持久观察区。
     staged_root = REPO_ROOT
@@ -170,13 +263,17 @@ def run(argv: list[str] | None = None) -> int:
         target=target, run_id=run_id, outputs=outputs, bundle_dir=bundle_dir,
         generated_at=generated_at, discarded_stale=discarded,
     )
+    pruned = prune_observation_area(output_root, keep)
+    health["retention"] = {"keep_days": keep, "pruned": pruned}
     # health 最后写:它是本步的完成戳。中途死掉 ⇒ 契约判"产物不存在" ⇒ fail-closed。
     _atomic_write_json(public_v2 / "funnel_health.json", health)
     print(json.dumps({
         "step": "research_funnel",
         "target_trade_date": target,
         "bundle": str(bundle_dir),
+        "status": health["status"],
         "counts": health["counts"],
+        "pruned": pruned,
     }, ensure_ascii=False))
     print(DISCLAIMER)
     return 0

@@ -153,6 +153,7 @@ _SEVERITY = {"OK": 0, "PARTIAL": 1, "DATA_BLOCKED": 2, "STALE_OUTPUT": 3,
              "DATE_MISMATCH": 4, "FAILED": 5}
 RESEARCH_DATA_STEPS = {"security_registry", "feature_store", "e1_event_layer"}
 MACRO_DATA_STEPS = {"macro_m1c"}
+FUNNEL_DATA_STEPS = {"research_funnel"}
 ISOLATED_CALIBRATION_STEPS = frozenset({"macro_m1c", "research_funnel"})
 RUN_CONTEXT_EXTERNAL_STEPS = set(RESEARCH_DATA_STEPS)
 
@@ -221,6 +222,55 @@ def _discard_failed_macro_outputs(base):
         os.path.join(base, "..", "..", "public", "data", "v2")
     )
     return nightly_publish.reset_staged_macro_outputs(stage_public)
+
+
+FUNNEL_HEALTH_SCHEMA = "ar.research_funnel_health"
+
+
+def _validate_funnel_health(data):
+    """漏斗 health 的内容必须被校验,不能只看文件在不在。
+
+    复审打出来的洞:原来三个字段的极简 JSON 就能通过产物契约 —— 只要日期与
+    run_id 对得上,内容爱写什么写什么。health 是这一步唯一的可验证产物,它自己
+    不被校验,等于这一步没被校验。
+    """
+    if not isinstance(data, dict):
+        raise ValueError("health 必须是对象")
+    if data.get("schema") != FUNNEL_HEALTH_SCHEMA:
+        raise ValueError(f"schema 非法: {data.get('schema')!r}")
+    status = str(data.get("status") or "").upper()
+    if status not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED"):
+        raise ValueError(f"status 非法: {status!r}")
+    bundle = data.get("bundle")
+    if not isinstance(bundle, dict):
+        raise ValueError("缺少 bundle 段")
+    if bundle.get("published") is not False:
+        raise ValueError("观察期产物不得声称已发布")
+    artifacts = bundle.get("artifacts")
+    if not isinstance(artifacts, dict) or not artifacts:
+        raise ValueError("bundle.artifacts 缺失")
+    for name, digest in artifacts.items():
+        if not (isinstance(digest, str) and len(digest) == 64 and
+                all(c in "0123456789abcdef" for c in digest)):
+            raise ValueError(f"产物摘要不是 sha256: {name}")
+    counts = data.get("counts")
+    if not isinstance(counts, dict) or not all(
+        isinstance(counts.get(k), int) for k in
+        ("scan_rows", "candidate_rows", "deep_queue_rows")
+    ):
+        raise ValueError("counts 缺失或非整数")
+    policy = data.get("policy") or {}
+    if policy.get("nightly_mode") != "OBSERVATION_ONLY_NOT_PUBLISHED":
+        raise ValueError("观察期 nightly_mode 被改写")
+    # 声称与实测必须自洽:说队列是空的,行数就得是 0
+    if policy.get("u4_queue_empty_by_construction") is not (
+        counts["deep_queue_rows"] == 0
+    ):
+        raise ValueError(
+            "u4_queue_empty_by_construction 与 deep_queue_rows 矛盾"
+        )
+    if policy.get("u4_selection_supplied") is not False:
+        raise ValueError("观察期不得携带人工选票")
 
 
 def _discard_failed_funnel_outputs(base):
@@ -344,6 +394,13 @@ def _artifact_status_scan(step, data, artifact_path=None):
         quality = _research_quality(step, data)
         if quality not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED"):
             return "FAILED", f"Macro M1-C data_quality 非法: {quality}"
+        return "OK", ""
+    if step in FUNNEL_DATA_STEPS:
+        # governance-mutation: FUNNEL_NIGHTLY_HEALTH_CONTRACT
+        try:
+            _validate_funnel_health(data)
+        except Exception as exc:
+            return "FAILED", f"漏斗 health 契约校验失败: {exc}"
         return "OK", ""
     if step == "export_contracts":
         return _export_contract_status(data)
@@ -635,18 +692,34 @@ def _subprocess_runner(cmd, cwd=None, env=None):
 
 
 def _alarm(res):
-    """终态非 COMPLETE:落旗 + 桌面通知(best-effort,失败不影响退出码)。"""
+    """终态非 COMPLETE 或存在隔离降级:落旗 + 桌面通知。
+
+    隔离步骤失败时 report 仍是 COMPLETE、退出码仍是 0 —— 这是隔离的本意,不能改。
+    但原来这里会因 report==COMPLETE 直接清旗返回,于是隔离失败在运维层完全无声:
+    没有旗、没有通知、退出 0,而 isolated_steps 只存在于 JSON 里没人看。
+    隔离的意思是"不牵连别人",不是"没人知道"。所以隔离降级照样报警,只是用不同
+    的标题区分,且**不改变退出码**。
+    """
     try:
-        if res["report"] == "COMPLETE":
+        isolated = res.get("isolated_steps") or []
+        # governance-mutation: FUNNEL_NIGHTLY_ISOLATED_ALARM
+        if res["report"] == "COMPLETE" and not isolated:
             if os.path.exists(ALARM_FLAG):
                 os.remove(ALARM_FLAG)
             return
+        degraded_only = res["report"] == "COMPLETE" and bool(isolated)
         with open(ALARM_FLAG, "w", encoding="utf-8") as fh:
-            json.dump({"at": res["generated_at"], "non_ok": res["non_ok_steps"]}, fh,
+            json.dump({"at": res["generated_at"], "non_ok": res["non_ok_steps"],
+                       "isolated": isolated, "degraded_only": degraded_only}, fh,
                       ensure_ascii=False)
-        bad = ",".join(f"{s['step']}={s['status']}" for s in res["non_ok_steps"][:4])
+        if degraded_only:
+            title = "AR 夜链 COMPLETE(隔离降级)"
+            bad = ",".join(f"{s['step']}={s['status']}" for s in isolated[:4])
+        else:
+            title = "AR 夜链 INCOMPLETE"
+            bad = ",".join(f"{s['step']}={s['status']}" for s in res["non_ok_steps"][:4])
         subprocess.run(["osascript", "-e",
-                        f'display notification "{bad}" with title "AR 夜链 INCOMPLETE"'],
+                        f'display notification "{bad}" with title "{title}"'],
                        capture_output=True, timeout=10)
     except Exception:
         pass
