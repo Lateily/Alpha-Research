@@ -1,0 +1,68 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "RESEARCH-CLOSURE-OFFLINE-001",
+  "source_issue": null,
+  "architecture_block": ["research-framework", "U1-U5-offline-closure"],
+  "objective": "Deliver a deterministic offline replay that binds the U1/U2 random control, same-day U3 evidence, Junyan-scoped U4 review receipt, and an explicitly blocked U5 handoff.",
+  "non_goals": [
+    "Do not modify or run the production nightly chain",
+    "Do not write a production ledger, manifest, current_run pointer, NAV, or runtime data",
+    "Do not claim alpha, win rate, funnel effectiveness, or production authorization",
+    "Do not automate Junyan's U4 selection"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["PR #267 merged", "PR #269 remains independent"],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/ALL_MARKET_RESEARCH_FUNNEL.md",
+    "docs/research/C5_CLUSTER_INTEGRITY.md"
+  ],
+  "file_scope": [
+    "experiments/research_funnel/closure_experiment.py",
+    "tests/test_research_closure_experiment.py",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_governance_mutation_gate.py",
+    "tests/test_no_network_guard.py",
+    ".github/workflows/python-ci.yml",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",
+    "scripts/llm/fixtures/research_closure_offline.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "experiments/execution_tracker/model_fund",
+    "experiments/execution_tracker/run_nightly.py",
+    "public/data/v2"
+  ],
+  "input_contracts": [
+    "ar.research_funnel_bundle.v1.0",
+    "same-day six-dimensional battery",
+    "ar.u4_review_receipt.v1.0"
+  ],
+  "output_artifacts": [
+    "ar.u4_review_packet.v1.0",
+    "offline deep_research_queue",
+    "ar.research_closure_experiment.v1.0",
+    "independently verifiable ar.research_closure_bundle.v1.0"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_research_closure_experiment.py",
+    "python3 tests/test_research_funnel_closure.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 tests/test_no_network_guard.py",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": [
+    "JUNYAN_U4_SELECTION_RECEIPT",
+    "PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_PRODUCTION_DEPLOY_APPROVAL"
+  ],
+  "created_at": "2026-08-13T10:00:00+00:00"
+}
