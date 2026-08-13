@@ -113,6 +113,12 @@ jobs:
         run: python3 experiments/research_funnel/feature_store.py --selftest
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
+      # R-033/R-034/R-035:六通道独立并集、U0 状态投影、同池随机控制、
+      # 以及仅由 Junyan 显式选择生成的 U4 深研队列。
+      - name: Full-market research funnel closure regression (offline)
+        run: |
+          python3 experiments/research_funnel/funnel_pipeline.py --selftest
+          python3 tests/test_research_funnel_closure.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest

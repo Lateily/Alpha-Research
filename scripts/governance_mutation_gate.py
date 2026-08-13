@@ -124,6 +124,9 @@ K1_GOVERNANCE_PATHS = (
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
+FUNNEL_GOVERNANCE_PATHS = (
+    "experiments/research_funnel/funnel_pipeline.py",
+)
 
 
 class MutationGateError(RuntimeError):
@@ -854,6 +857,304 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_baseline_requires_one_clean_pass",
         rationale="A skipped baseline is not evidence that the declared test executes cleanly.",
     ),
+    MutationCase(
+        mutation_id="FUNNEL_U0_NONEMPTY_ELIGIBLE",
+        component="Research funnel U0 eligibility",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if not rows:\n'
+        '        raise FunnelError("U0 has no U1-eligible securities")',
+        after='    if False:\n'
+        '        raise FunnelError("U0 has no U1-eligible securities")',
+        expected_failure_marker="test_u0_zero_eligible_universe_fails_closed",
+        rationale="An empty eligible universe cannot be published as a successful zero-row scan.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_EVIDENCE_DATE_NORMALIZATION",
+        component="Research funnel PIT date parsing",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="        return _date8(raw)",
+        after="        return str(value)",
+        expected_failure_marker="test_evidence_dates_normalize_iso_without_lexical_bypass",
+        rationale="ISO-formatted evidence dates cannot bypass point-in-time checks through lexical ordering.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_E1_SCHEMA_ASOF",
+        component="Research funnel E1 boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if payload.get("schema") != "ar.e1_event_layer" or payload_as_of != as_of:\n'
+        '        raise FunnelError("E1 event layer schema/as_of mismatch")',
+        after='    if False:\n'
+        '        raise FunnelError("E1 event layer schema/as_of mismatch")',
+        expected_failure_marker="test_e1_schema_and_asof_are_bound_to_the_scan",
+        rationale="The E1 input must use the expected schema and the same PIT date as U1.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_E1_ROWS_HASH",
+        component="Research funnel E1 integrity",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if payload.get("rows_hash") != _hash(rows):\n'
+        '        raise FunnelError("E1 event rows_hash mismatch")',
+        after='    if False:\n'
+        '        raise FunnelError("E1 event rows_hash mismatch")',
+        expected_failure_marker="test_e1_rows_hash_is_recomputed",
+        rationale="The funnel cannot trust an E1 payload whose rows no longer match its hash.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_E1_VERDICT",
+        component="Research funnel E1 vocabulary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if verdict not in {"RED_FLAG", "NO_RED_FLAG_FOUND", "DATA_BLOCKED"}:\n'
+        '            raise FunnelError("E1 event verdict is invalid")',
+        after='        if False:\n'
+        '            raise FunnelError("E1 event verdict is invalid")',
+        expected_failure_marker="test_e1_verdict_enum_is_fail_closed",
+        rationale="Unknown E1 verdicts cannot become clean funnel evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_E1_EVIDENCE_ASOF",
+        component="Research funnel E1 PIT boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if normalized_latest is not None and normalized_latest > as_of:\n'
+        '            raise FunnelError("E1 event evidence exceeds scan as_of")',
+        after='        if False:\n'
+        '            raise FunnelError("E1 event evidence exceeds scan as_of")',
+        expected_failure_marker="test_e1_future_evidence_is_rejected",
+        rationale="Evidence published after the scan date cannot enter a point-in-time U1 row.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_ROTATION_DATE_BINDING",
+        component="Research funnel rotation boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if target and target != as_of:\n'
+        '        raise FunnelError("rotation panel is not from the requested trade date")',
+        after='    if False:\n'
+        '        raise FunnelError("rotation panel is not from the requested trade date")',
+        expected_failure_marker="test_rotation_panel_date_is_bound_to_scan_date",
+        rationale="A stale rotation panel cannot be presented as same-day industry evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_MACRO_CALIBRATING",
+        component="Research funnel Macro authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if payload.get("mode") != "CALIBRATING":\n'
+        '        raise FunnelError("Macro industry input must remain CALIBRATING")',
+        after='    if False:\n'
+        '        raise FunnelError("Macro industry input must remain CALIBRATING")',
+        expected_failure_marker="test_macro_input_must_remain_calibrating",
+        rationale="Macro context cannot silently graduate from calibration inside the funnel.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_MACRO_NO_BLOCK_AUTHORITY",
+        component="Research funnel Macro authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if policy.get("formal_blocking_authority") is not False:\n'
+        '        raise FunnelError("Macro industry input acquired formal blocking authority")',
+        after='    if False:\n'
+        '        raise FunnelError("Macro industry input acquired formal blocking authority")',
+        expected_failure_marker="test_macro_input_cannot_acquire_formal_blocking_authority",
+        rationale="Calibration-only Macro context cannot veto or direct research flow.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_NO_COMPOSITE_SCORE",
+        component="Research funnel U1",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if FORBIDDEN_AGGREGATE_KEYS.intersection(_walk_keys(payload)):\n'
+        '        raise FunnelError("cross-channel aggregate score is forbidden")',
+        after='    if False:\n'
+        '        raise FunnelError("cross-channel aggregate score is forbidden")',
+        expected_failure_marker="test_u1_rejects_composite_score_and_missing_channel",
+        rationale="U1 channels cannot be combined into a score that offsets contrary evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_NO_TRADE_AUTHORITY",
+        component="Research funnel U1 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if FORBIDDEN_ACTION_KEYS.intersection(_walk_keys(payload)):\n'
+        '        raise FunnelError("trade or blocking authority field is forbidden")',
+        after='    if False:\n'
+        '        raise FunnelError("trade or blocking authority field is forbidden")',
+        expected_failure_marker="test_u1_rejects_trade_or_blocking_authority_fields",
+        rationale="The scan layer cannot emit a trade action or formal blocking authority.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_SOURCE_ASOF",
+        component="Research funnel U1 PIT boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if normalized_source_as_of is not None and normalized_source_as_of > as_of:\n'
+        '            raise FunnelError("all_market_scan source evidence is from the future")',
+        after='        if False:\n'
+        '            raise FunnelError("all_market_scan source evidence is from the future")',
+        expected_failure_marker="test_u1_rejects_future_source_evidence_after_iso_normalization",
+        rationale="No channel may carry source evidence newer than the U1 scan date.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_DATA_STATUS",
+        component="Research funnel U1 data quality",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if row["data_status"] not in VALID_DATA_STATUS:\n'
+        '            raise FunnelError("invalid channel data_status")',
+        after='        if False:\n'
+        '            raise FunnelError("invalid channel data_status")',
+        expected_failure_marker="test_u1_rejects_unknown_data_status",
+        rationale="Unknown status labels cannot bypass visible DATA_BLOCKED/PARTIAL semantics.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_SIX_CHANNEL_COVERAGE",
+        component="Research funnel U1",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if set(seen) != eligible or any(channels != set(CHANNELS) for channels in seen.values()):\n'
+        '        raise FunnelError("every eligible security must have exactly six channel rows")',
+        after='    if False:\n'
+        '        raise FunnelError("every eligible security must have exactly six channel rows")',
+        expected_failure_marker="test_u1_rejects_composite_score_and_missing_channel",
+        rationale="A full-market scan cannot silently omit one of the six independent channels.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_QUOTA_FLOOR",
+        component="Research funnel U2 reserved quota",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="    main_capacity = target_size - reserved_total",
+        after="    main_capacity = target_size",
+        expected_failure_marker="test_u2_reserved_quota_floor_preserves_main_channel_capacity",
+        rationale="Main-channel intake must leave capacity for slow-bull, contrarian and control floors.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_CONTROL_ALGORITHM",
+        component="Research funnel U2 random control",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if frame.get("algo") != CONTROL_ALGO:\n'
+        '        raise FunnelError("random control algorithm drift")',
+        after='    if False:\n'
+        '        raise FunnelError("random control algorithm drift")',
+        expected_failure_marker="test_u2_rejects_untraceable_reason_and_algorithm_drift",
+        rationale="The preregistered random-control algorithm cannot drift after outcomes become visible.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_CONTROL_SEED",
+        component="Research funnel U2 random control",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="    rng = random.Random(int(seed_hex[:16], 16))",
+        after="    rng = random.Random(0)",
+        expected_failure_marker="test_u2_random_control_is_same_pool_stratified_and_reproducible",
+        rationale="The preregistered seed must determine the actual draw, not merely its label.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_RED_FLAG_NOT_POSITIVE",
+        component="Research funnel U2 red-flag boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="    selected_main: set[str] = set()",
+        after="    selected_main: set[str] = set(red_flag_codes)",
+        expected_failure_marker="test_red_flag_without_positive_channel_is_excluded_not_a_u2_candidate",
+        rationale="An E1 red flag is an exclusion fact, not a positive candidate signal.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_EXACT_EVIDENCE_PROJECTION",
+        component="Research funnel U2 evidence boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if row.get("source_channels") != expected_channels or row.get("entry_reasons") != expected_reasons:\n'
+        '            raise FunnelError("candidate U1 channel/reason projection is not exact")',
+        after='        if False:\n'
+        '            raise FunnelError("candidate U1 channel/reason projection is not exact")',
+        expected_failure_marker="test_u2_rejects_untraceable_reason_and_algorithm_drift",
+        rationale="U2 must be an exact projection of the same-day U1 channel evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_AUTHORITY_BOUNDARY",
+        component="Research funnel U4 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if (\n'
+        '        authority.get("auto_selection") is not False\n'
+        '        or authority.get("human_selection_required") is not True\n'
+        '        or authority.get("selection_owner") != "Junyan"\n'
+        '    ):\n'
+        '        raise FunnelError("U4 authority boundary changed")',
+        after='    if False:\n'
+        '        raise FunnelError("U4 authority boundary changed")',
+        expected_failure_marker="test_u4_authority_boundary_is_not_covered_only_by_rows_hash",
+        rationale="Only Junyan may select U4; sibling authority fields need their own fail-closed guard.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_SAME_DAY_BATTERY",
+        component="Research funnel U4 evidence freshness",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if trade_date is not None and target != _date8(trade_date):\n'
+        '        raise FunnelError("U3 battery is not from the requested trade date")',
+        after='    if False:\n'
+        '        raise FunnelError("U3 battery is not from the requested trade date")',
+        expected_failure_marker="test_u4_rejects_stale_u3_battery",
+        rationale="U4 and U0 cannot advance a candidate using a stale U3 battery artifact.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_HUMAN_SELECTION_SIZE",
+        component="Research funnel U4 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if selected and not 3 <= len(selected) <= 5:\n'
+        '        raise FunnelError("U4 human selection must contain 3..5 securities")',
+        after='    if False:\n'
+        '        raise FunnelError("U4 human selection must contain 3..5 securities")',
+        expected_failure_marker="test_u4_selection_size_is_human_governance_gate",
+        rationale="The weekly U4 queue must remain an explicit human-selected 3..5-name decision.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_NO_TRADE_AUTHORITY",
+        component="Research funnel U4 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if FORBIDDEN_ACTION_KEYS.intersection(_walk_keys(payload)):\n'
+        '        raise FunnelError("U4 queue cannot contain trade or blocking authority")',
+        after='    if False:\n'
+        '        raise FunnelError("U4 queue cannot contain trade or blocking authority")',
+        expected_failure_marker="test_u4_requires_explicit_human_selection_and_never_emits_action",
+        rationale="U4 can queue research work but cannot emit an order or acquire blocking authority.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_RESEARCH_QUESTION",
+        component="Research funnel U4 entry gate",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if missing_questions:\n'
+        '        raise FunnelError(f"U4 selection lacks a clear research question: {missing_questions}")',
+        after='    if False:\n'
+        '        raise FunnelError(f"U4 selection lacks a clear research question: {missing_questions}")',
+        expected_failure_marker="test_u4_requires_an_explicit_research_question",
+        rationale="A U3 name cannot enter deep research without a concrete question to answer.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_FUNNEL_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_funnel_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_funnel_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_funnel_marker_coverage",
+        rationale="The mutation manifest must not silently stop enforcing funnel marker coverage.",
+    ),
 )
 
 
@@ -1008,6 +1309,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
         _local_test_target(test_script, _target_test(case))
     validate_k1_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
+    validate_funnel_marker_coverage(root, cases)
 
 
 def validate_k1_marker_coverage(
@@ -1083,6 +1385,46 @@ def validate_r043_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "R-043 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_funnel_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = FUNNEL_GOVERNANCE_PATHS,
+) -> None:
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"funnel governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate funnel governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    declared = {
+        case.mutation_id
+        for case in cases
+        if case.component.startswith("Research funnel")
+    }
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "funnel governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
