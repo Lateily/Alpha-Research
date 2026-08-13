@@ -1507,6 +1507,61 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_deep_queue_contract_is_called",
         rationale="The U4 authority boundary must be re-checked, not assumed.",
     ),
+    # ── 终审复核第四轮:事务顺序 / 无交易权限 / 降级明细 / symlink / 崩溃备份 ──
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DROP_AFTER_STAMP",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="    _drop_reserved(reserved)",
+        after="    pass",
+        expected_failure_marker="test_backup_is_dropped_only_after_the_completion_stamp",
+        rationale="Dropping the backup before the completion stamp loses both old and new evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CRASH_RECOVERY",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="        _restore_reserved(reserved, bundle_dir)\n        recovered = True",
+        after="        recovered = True",
+        expected_failure_marker="test_a_crashed_reserve_is_rolled_forward",
+        rationale="A crashed reserve holds the last valid evidence and must be rolled forward.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_NO_TRADE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="    offending = fp.FORBIDDEN_ACTION_KEYS.intersection(fp._walk_keys(data))",
+        after="    offending = set()",
+        expected_failure_marker="test_health_cannot_carry_a_trade_action",
+        rationale="An observation artifact carrying trade_action or blocking authority crosses the platform's red line.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_DEGRADED",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    if data.get("degraded_channels") != measured_degraded:',
+        after="    if False:",
+        expected_failure_marker="test_degraded_channels_that_disagree_are_rejected",
+        rationale="The degradation breakdown is the only actionable part of a perpetual PARTIAL.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_SYMLINK",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if os.path.islink(bundle_dir) or os.path.realpath(bundle_dir) != os.path.join(\n"
+            "        os.path.realpath(funnel_root), as_of\n"
+            "    ):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_a_symlinked_bundle_pointing_outside_is_rejected",
+        rationale="os.path.isdir follows symlinks; a link out of the observation area borrows someone else's bundle.",
+    ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",
         component="Governance mutation gate",

@@ -126,13 +126,33 @@ def _reserve_stale_bundle(bundle_dir: Path, output_root: Path, target: str) -> P
         reserved = bundle_dir.with_name(f"{target}.superseded-file")
     else:
         reserved = bundle_dir.with_name(f"{target}.superseded")
-    if reserved.exists():
-        shutil.rmtree(reserved, ignore_errors=True)
-        if reserved.exists():
-            reserved.unlink()
+    if reserved.exists() or reserved.is_symlink():
+        raise FunnelError(
+            f"备份位已被占用,拒绝覆盖: {reserved.name} —— 它是上一轮崩溃留下的"
+            "最后一份有效证据,必须先由 recover_crashed_reserve 回滚"
+        )
     # governance-mutation: FUNNEL_NIGHTLY_STALE_RESERVE
     os.replace(bundle_dir, reserved)
     return reserved
+
+
+def recover_crashed_reserve(output_root: Path, target: str) -> bool:
+    """上一轮在 reserve 与 drop 之间被 SIGKILL:`.superseded` 是最后一份有效证据。
+
+    终审复核打出来的:原来无条件 rmtree 既有 `.superseded`,等于崩溃一次之后,
+    下一轮把唯一的旧证据也删了。正确做法是**先回滚**:把备份还原回目标位置
+    (连同丢弃崩溃那轮留下的半成品),再让本轮正常 reserve。
+    """
+    bundle_dir = _bundle_dir(output_root, target)
+    recovered = False
+    for suffix in (".superseded", ".superseded-file"):
+        reserved = bundle_dir.with_name(f"{target}{suffix}")
+        if not (reserved.exists() or reserved.is_symlink()):
+            continue
+        # governance-mutation: FUNNEL_NIGHTLY_CRASH_RECOVERY
+        _restore_reserved(reserved, bundle_dir)
+        recovered = True
+    return recovered
 
 
 def _drop_reserved(reserved: Path | None) -> bool:
@@ -347,6 +367,8 @@ def run(argv: list[str] | None = None) -> int:
     public_v2 = staged_root / "public" / "data" / "v2"
 
     bundle_dir = _bundle_dir(output_root, target)
+    # 上一轮若在 reserve 与 drop 之间崩溃,先把备份回滚,再正常 reserve
+    recovered = recover_crashed_reserve(output_root, target)
     # 同日残留先挪开而不是直接删:本轮若失败,上一轮已发布的 health 指向的 bundle
     # 必须还在。成功才丢弃,失败原样还原。
     reserved = _reserve_stale_bundle(bundle_dir, output_root, target)
@@ -371,15 +393,18 @@ def run(argv: list[str] | None = None) -> int:
             registry=_load(public_v2 / "security_registry.json"),
             generated_at=generated_at, discarded_stale=reserved is not None,
         )
+        health["crashed_reserve_recovered"] = recovered
+        pruned = prune_observation_area(output_root, keep, protect=target)
+        health["retention"] = dict(pruned, keep_days=keep)
+        # health 是本步的完成戳,必须先落盘。终审复核打出来的:原来在 retention 与
+        # 落盘**之前**就丢弃了备份 —— 后面任一步失败,旧证据已经没了,而新 bundle
+        # 又没有完成戳,两头落空。备份只有在完成戳落地之后才可以丢。
+        _atomic_write_json(public_v2 / "funnel_health.json", health)
     except BaseException:
         _restore_reserved(reserved, bundle_dir)
         raise
+    # governance-mutation: FUNNEL_NIGHTLY_DROP_AFTER_STAMP
     _drop_reserved(reserved)
-
-    pruned = prune_observation_area(output_root, keep, protect=target)
-    health["retention"] = dict(pruned, keep_days=keep)
-    # health 最后写:它是本步的完成戳。中途死掉 ⇒ 契约判"产物不存在" ⇒ fail-closed。
-    _atomic_write_json(public_v2 / "funnel_health.json", health)
     print(json.dumps({
         "step": "research_funnel",
         "target_trade_date": target,

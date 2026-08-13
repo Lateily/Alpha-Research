@@ -296,6 +296,26 @@ def _validate_funnel_health_shape(data):
         raise ValueError("观察期不得携带人工选票")
     if policy.get("macro_input_wired") is not False:
         raise ValueError("观察期不得声称已接入宏观输入")
+    _refuse_funnel_action_keys(data)
+
+
+def _refuse_funnel_action_keys(data):
+    """health 里不得出现任何交易动作或阻断权限字段。
+
+    终审复核打出来的:形状层逐字段校验得很细,却从没问过"有没有多出不该有的
+    字段"。观察期产物混进 trade_action=BUY 或 formal_blocking_authority=true,
+    照样能通过 —— 而这两样正是整个平台的红线。复用 #267 漏斗自己的禁字集合,
+    两边不会各写一份而漂移。
+    """
+    research_dir = os.path.abspath(os.path.join(HERE, "..", "research_funnel"))
+    if research_dir not in sys.path:
+        sys.path.insert(0, research_dir)
+    import funnel_pipeline as fp
+
+    # governance-mutation: FUNNEL_NIGHTLY_HEALTH_NO_TRADE
+    offending = fp.FORBIDDEN_ACTION_KEYS.intersection(fp._walk_keys(data))
+    if offending:
+        raise ValueError(f"health 携带交易或阻断权限字段: {sorted(offending)}")
 
 
 def _verify_funnel_bundle(data, repo_root, artifact_path=None):
@@ -316,7 +336,15 @@ def _verify_funnel_bundle(data, repo_root, artifact_path=None):
     # location 必须逐字等于约定位置:否则可以指向任意目录来"找一个能对上的 bundle"
     if location != f"data_history/funnel/{as_of}":
         raise ValueError(f"bundle.location 非法: {location!r}")
-    bundle_dir = os.path.join(repo_root, "data_history", "funnel", as_of)
+    funnel_root = os.path.join(repo_root, "data_history", "funnel")
+    bundle_dir = os.path.join(funnel_root, as_of)
+    # os.path.isdir 会跟随符号链接:观察区里种一个指向区外的链接,verifier 就会
+    # 拿别处的 bundle 给本轮 health 背书。用与生成侧同一套容器化判据。
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_SYMLINK
+    if os.path.islink(bundle_dir) or os.path.realpath(bundle_dir) != os.path.join(
+        os.path.realpath(funnel_root), as_of
+    ):
+        raise ValueError(f"bundle 目录越界或为符号链接: {os.path.realpath(bundle_dir)}")
     # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_EXISTS
     if not os.path.isdir(bundle_dir):
         raise ValueError(f"health 声称的 bundle 不存在: {location}")
@@ -344,6 +372,15 @@ def _verify_funnel_bundle(data, repo_root, artifact_path=None):
     if data.get("counts") != measured_counts:
         raise ValueError(
             f"health 的 counts 与实物不符: {data.get('counts')} != {measured_counts}"
+        )
+    measured_degraded = dict(
+        (scan.get("coverage") or {}).get("blocked_by_channel") or {}
+    )
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_DEGRADED
+    if data.get("degraded_channels") != measured_degraded:
+        raise ValueError(
+            f"health 的 degraded_channels 与实物不符: "
+            f"{data.get('degraded_channels')} != {measured_degraded}"
         )
     measured_status = nightly_funnel._worst(
         str(scan.get("data_status") or scan.get("status") or "").upper(),
