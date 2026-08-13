@@ -1,11 +1,24 @@
 {
   "ticker": "688120.SH",
-  "fetched_at": "2026-08-13T03:30:02Z",
+  "fetched_at": "2026-08-13T09:39:39Z",
   "permission_model": "runtime_probe",
   "_status": "partial",
   "data": {
     "daily": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260813",
+          "open": 276.01,
+          "high": 279.0,
+          "low": 262.0,
+          "close": 262.99,
+          "pre_close": 273.33,
+          "change": -10.34,
+          "pct_chg": -3.783,
+          "vol": 108083.92,
+          "amount": 2938425.918
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260812",
@@ -826,12 +839,32 @@
           "amount": 4242142.871
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260812"
+      "as_of": "20260813"
     },
     "daily_basic": {
       "rows": [
+        {
+          "ts_code": "688120.SH",
+          "trade_date": "20260813",
+          "close": 262.99,
+          "turnover_rate": 2.1779,
+          "turnover_rate_f": 3.2528,
+          "volume_ratio": 0.77,
+          "pe": 120.4338,
+          "pe_ttm": 118.91,
+          "pb": 16.9045,
+          "ps": 28.0789,
+          "ps_ttm": 26.4357,
+          "dv_ratio": 0.0995,
+          "dv_ttm": 0.1081,
+          "total_share": 49628.1438,
+          "float_share": 49628.1438,
+          "free_share": 33228.0838,
+          "total_mv": 13051704.5386,
+          "circ_mv": 13051704.5386
+        },
         {
           "ts_code": "688120.SH",
           "trade_date": "20260812",
@@ -2093,9 +2126,9 @@
           "circ_mv": 9460544.4112
         }
       ],
-      "row_count": 63,
+      "row_count": 64,
       "_status": "ok",
-      "as_of": "20260812"
+      "as_of": "20260813"
     },
     "adj_factor": {
       "rows": [
