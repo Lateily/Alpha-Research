@@ -69,6 +69,8 @@ Context Builder returns `SPEC_BLOCKED` when:
 - It does not schedule tasks.
 - It does not write GitHub comments or mutate repo state.
 - It does not decide whether a task is approved.
+- It does not package full file contents, Issue/PR state, dirty files, or runtime
+  verification results for model input.
 
 ## Local Commands
 

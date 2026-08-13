@@ -121,6 +121,9 @@ K1_GOVERNANCE_PATHS = (
     "scripts/llm/ai_os/registry.py",
     "scripts/llm/ai_os/reconciler.py",
 )
+A010_GOVERNANCE_PATHS = (
+    "scripts/llm/ai_os/context_builder.py",
+)
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
@@ -782,6 +785,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Authority files with merge conflict markers must block context construction.",
         test_function="test_context_builder_blocks_conflict_markers_in_authority_file",
     ),
+    MutationCase(
         mutation_id="GOVERNANCE_R043_MARKER_COVERAGE_CALL",
         component="Governance mutation gate",
         source_path="scripts/governance_mutation_gate.py",
@@ -1340,6 +1344,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
         replace_exact(source.read_text(encoding="utf-8"), case.before, case.after, case.mutation_id)
         _local_test_target(test_script, _target_test(case))
     validate_k1_marker_coverage(root, cases)
+    validate_a010_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
 

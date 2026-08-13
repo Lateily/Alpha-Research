@@ -16,6 +16,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "llm"))
 from ai_os.context_builder import (  # noqa: E402
     CONTEXT_READY,
     SPEC_BLOCKED,
+    _has_conflict_marker,
     build_context_packet,
 )
 from ai_os.task_compiler import compile_task_manifest  # noqa: E402
@@ -157,6 +158,97 @@ def test_context_hash_is_stable_across_loaded_at_changes() -> None:
     assert first.context["context_hash"] == second.context["context_hash"]
 
 
+def test_context_builder_rejects_incomplete_task_manifest() -> None:
+    manifest = valid_task_manifest()
+    for field in ("objective", "human_owner", "reviewer", "budget", "network_policy"):
+        broken = dict(manifest)
+        broken.pop(field)
+        result = build_context_packet(
+            broken,
+            repo_root=REPO_ROOT,
+            loaded_at=NOW,
+        )
+
+        assert result.status == SPEC_BLOCKED
+        assert result.context is None
+        assert any("manifest contract invalid" in item for item in result.errors)
+
+
+def test_context_builder_rejects_manifest_source_hash_drift() -> None:
+    manifest = valid_task_manifest()
+    drifted = {**manifest, "objective": "Changed after compilation."}
+    result = build_context_packet(
+        drifted,
+        repo_root=REPO_ROOT,
+        loaded_at=NOW,
+    )
+
+    assert result.status == SPEC_BLOCKED
+    assert result.context is None
+    assert "manifest must match compiled ai-task.v1 contract and source_hash" in result.errors
+
+
+def test_context_builder_rejects_malformed_external_inputs() -> None:
+    result = build_context_packet(
+        valid_task_manifest(),
+        repo_root=REPO_ROOT,
+        loaded_at=NOW,
+        external_inputs=["raw pasted text"],
+    )
+
+    assert result.status == SPEC_BLOCKED
+    assert result.context is None
+    assert "external_inputs[0] must be a mapping" in result.errors
+
+
+def test_context_builder_rejects_secret_like_external_metadata_without_echoing_secret() -> None:
+    secret_like = "sk_live_1234567890abcdef"
+    result = build_context_packet(
+        valid_task_manifest(),
+        repo_root=REPO_ROOT,
+        loaded_at=NOW,
+        external_inputs=[{"label": secret_like, "kind": "github_comment", "content": "ok"}],
+    )
+
+    rendered_errors = json.dumps(result.errors, ensure_ascii=False)
+    assert result.status == SPEC_BLOCKED
+    assert result.context is None
+    assert "secret-like material" in rendered_errors
+    assert secret_like not in rendered_errors
+
+
+def test_context_builder_blocks_missing_git_provenance() -> None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        root = Path(temp_dir)
+        for rel_path, content in {
+            "AGENTS.md": "root rules\n",
+            "docs/ARCHITECTURE_MAP.md": "architecture\n",
+            "docs/llm/AI_OS_ENGINEERING_BACKLOG.md": "backlog\n",
+            "docs/llm/AI_OS_BUILD_GUIDE.md": "guide\n",
+            "scripts/llm/AGENTS.md": "aios rules\n",
+            "scripts/llm/schemas/task.schema.json": "{}\n",
+            "tests/test_ai_os_a010_context_offline.py": "def test_ok(): pass\n",
+        }.items():
+            path = root / rel_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+
+        result = build_context_packet(
+            valid_task_manifest(),
+            repo_root=root,
+            loaded_at=NOW,
+        )
+
+    assert result.status == SPEC_BLOCKED
+    assert result.context is None
+    assert any("git provenance unavailable" in item for item in result.errors)
+
+
+def test_conflict_marker_detection_requires_full_git_conflict_shape() -> None:
+    assert not _has_conflict_marker("Heading\n=======\nBody\n")
+    assert _has_conflict_marker("<<<<<<< ours\nleft\n=======\nright\n>>>>>>> theirs\n")
+
+
 def test_context_builder_blocks_missing_authority_docs() -> None:
     result = build_context_packet(
         valid_task_manifest(authority_docs=["docs/llm/NO_SUCH_AUTHORITY.md"]),
@@ -188,7 +280,7 @@ def test_context_builder_blocks_conflict_markers_in_authority_file() -> None:
             "AGENTS.md": "root rules\n",
             "docs/ARCHITECTURE_MAP.md": "architecture\n",
             "docs/llm/AI_OS_ENGINEERING_BACKLOG.md": "backlog\n",
-            "docs/llm/AI_OS_BUILD_GUIDE.md": "<<<<<<< ours\nbad\n>>>>>>> theirs\n",
+            "docs/llm/AI_OS_BUILD_GUIDE.md": "<<<<<<< ours\nbad\n=======\nworse\n>>>>>>> theirs\n",
             "scripts/llm/AGENTS.md": "aios rules\n",
             "scripts/llm/schemas/task.schema.json": "{}\n",
             "tests/test_ai_os_a010_context_offline.py": "def test_ok(): pass\n",

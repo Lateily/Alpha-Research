@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import unicodedata
 from dataclasses import dataclass
@@ -10,6 +11,13 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+
+try:  # Support both package imports and direct CLI execution from this directory.
+    from .task_compiler import SPEC_READY as TASK_SPEC_READY
+    from .task_compiler import compile_task_manifest
+except ImportError:  # pragma: no cover - exercised by the standalone CLI path.
+    from task_compiler import SPEC_READY as TASK_SPEC_READY
+    from task_compiler import compile_task_manifest
 
 
 SCHEMA = "ai-context.v1"
@@ -25,7 +33,17 @@ NESTED_AUTHORITY_BY_PREFIX = (
     ("experiments", "experiments/AGENTS.md"),
     ("web", "web/AGENTS.md"),
 )
-CONFLICT_MARKERS = ("<<<<<<<", "=======", ">>>>>>>")
+SAFE_EXTERNAL_KIND_RE = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
+SAFE_EXTERNAL_LABEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/#_-]{0,79}$")
+SECRET_PATTERNS = (
+    re.compile(r"\bsk_(?:live|test)_[A-Za-z0-9_]{8,}\b", re.IGNORECASE),
+    re.compile(r"\bsk-[A-Za-z0-9]{12,}\b", re.IGNORECASE),
+    re.compile(r"\bghp_[A-Za-z0-9_]{12,}\b", re.IGNORECASE),
+    re.compile(r"\bgithub_pat_[A-Za-z0-9_]{12,}\b", re.IGNORECASE),
+    re.compile(r"\bAKIA[0-9A-Z]{12,}\b"),
+    re.compile(r"\bAWS_SECRET_ACCESS_KEY\b", re.IGNORECASE),
+    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+)
 
 
 @dataclass(frozen=True)
@@ -48,13 +66,15 @@ def build_context_packet(
     repo_root: Path,
     loaded_at: datetime | None = None,
     data_cutoff: str | None = None,
-    external_inputs: Iterable[Mapping[str, Any]] | None = None,
+    external_inputs: Iterable[Any] | None = None,
 ) -> ContextBuildResult:
     """Return a deterministic context packet or SPEC_BLOCKED with visible errors."""
 
     loaded_at = loaded_at or datetime.now(timezone.utc)
     root = repo_root.resolve()
-    errors = _validate_manifest(manifest)
+    errors = _validate_manifest(manifest, loaded_at)
+    external_errors, external = _build_external_inputs(external_inputs or [])
+    errors.extend(external_errors)
     if errors:
         return ContextBuildResult(SPEC_BLOCKED, None, tuple(errors))
 
@@ -108,19 +128,20 @@ def build_context_packet(
             }
         )
 
-    external = [
-        _external_input_record(item)
-        for item in (external_inputs or [])
-        if isinstance(item, Mapping)
-    ]
     if missing:
         errors.append("missing authority/input files: " + ", ".join(missing))
     if conflicts:
         errors.append("conflict markers in authority/input files: " + ", ".join(conflicts))
+
+    commit_sha = _git_text(root, "rev-parse", "HEAD")
+    if commit_sha is None:
+        errors.append("git provenance unavailable: repository HEAD is not readable")
+    missing_git_blobs = [record["path"] for record in records if record["exists"] and not record["git_blob"]]
+    if missing_git_blobs:
+        errors.append("git blob unavailable for context files: " + ", ".join(missing_git_blobs))
     if errors:
         return ContextBuildResult(SPEC_BLOCKED, None, tuple(errors))
 
-    commit_sha = _git_text(root, "rev-parse", "HEAD")
     context_without_hash: dict[str, Any] = {
         "schema": SCHEMA,
         "task_id": task_id,
@@ -143,28 +164,40 @@ def build_context_packet(
     return ContextBuildResult(CONTEXT_READY, context, ())
 
 
-def _validate_manifest(manifest: Mapping[str, Any]) -> list[str]:
-    errors: list[str] = []
+def _validate_manifest(manifest: Mapping[str, Any], loaded_at: datetime) -> list[str]:
     if not isinstance(manifest, Mapping):
         return ["manifest must be a mapping"]
-    if manifest.get("schema") != "ai-task.v1":
-        errors.append("manifest.schema must be ai-task.v1")
-    for field in ("task_id", "source_hash"):
-        if not isinstance(manifest.get(field), str) or not manifest.get(field, "").strip():
-            errors.append(f"manifest.{field} must be a non-empty string")
-    for field in (
-        "authority_docs",
-        "file_scope",
-        "forbidden_scope",
-        "input_contracts",
-        "acceptance_tests",
-    ):
-        if not isinstance(manifest.get(field), list) or not all(
-            isinstance(item, str) and item.strip() for item in manifest.get(field, [])
-        ):
-            errors.append(f"manifest.{field} must be a string list")
-    return errors
+    manifest_dict = dict(manifest)
+    source_with_created_at = dict(manifest_dict)
+    source_with_created_at.pop("source_hash", None)
+    source_without_created_at = dict(source_with_created_at)
+    source_without_created_at.pop("created_at", None)
+    compile_now = _manifest_created_at(manifest_dict) or loaded_at
 
+    compile_errors: tuple[str, ...] = ()
+    for source in (source_with_created_at, source_without_created_at):
+        compiled = compile_task_manifest(source, now=compile_now)
+        if compiled.status != TASK_SPEC_READY or compiled.manifest is None:
+            compile_errors = compiled.errors
+            continue
+        if compiled.manifest == manifest_dict:
+            return []
+    if compile_errors:
+        return [f"manifest contract invalid: {error}" for error in compile_errors]
+    return ["manifest must match compiled ai-task.v1 contract and source_hash"]
+
+
+def _manifest_created_at(manifest: Mapping[str, Any]) -> datetime | None:
+    value = manifest.get("created_at")
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    return parsed.astimezone(timezone.utc)
 
 def _read_plan(manifest: Mapping[str, Any]) -> list[tuple[str, str]]:
     planned: list[tuple[str, str]] = []
@@ -197,6 +230,35 @@ def _dedupe_plan(items: Iterable[tuple[str, str]]) -> list[tuple[str, str]]:
     return result
 
 
+def _build_external_inputs(items: Iterable[Any]) -> tuple[list[str], list[dict[str, Any]]]:
+    errors: list[str] = []
+    records: list[dict[str, Any]] = []
+    for index, item in enumerate(items):
+        if not isinstance(item, Mapping):
+            errors.append(f"external_inputs[{index}] must be a mapping")
+            continue
+        item_errors = _validate_external_input(item, index)
+        if item_errors:
+            errors.extend(item_errors)
+            continue
+        records.append(_external_input_record(item))
+    return errors, records
+
+
+def _validate_external_input(item: Mapping[str, Any], index: int) -> list[str]:
+    errors: list[str] = []
+    kind = item.get("kind", "external")
+    label = item.get("label", "")
+    if not isinstance(kind, str) or not SAFE_EXTERNAL_KIND_RE.fullmatch(kind.strip()):
+        errors.append(f"external_inputs[{index}].kind must be a safe lowercase token")
+    if not isinstance(label, str) or not SAFE_EXTERNAL_LABEL_RE.fullmatch(label.strip()):
+        errors.append(f"external_inputs[{index}].label must be a safe external input id")
+    for field, value in item.items():
+        if _looks_secret_like(str(value)):
+            errors.append(f"external_inputs[{index}].{field} contains secret-like material")
+    return errors
+
+
 def _external_input_record(item: Mapping[str, Any]) -> dict[str, Any]:
     label = str(item.get("label", "")).strip()
     kind = str(item.get("kind", "external")).strip() or "external"
@@ -209,8 +271,20 @@ def _external_input_record(item: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _looks_secret_like(value: str) -> bool:
+    return any(pattern.search(value) for pattern in SECRET_PATTERNS)
+
+
 def _has_conflict_marker(text: str) -> bool:
-    return any(line.startswith(CONFLICT_MARKERS) for line in text.splitlines())
+    state = "clean"
+    for line in text.splitlines():
+        if state == "clean" and line.startswith("<<<<<<< "):
+            state = "open"
+        elif state == "open" and line.startswith("======="):
+            state = "separator"
+        elif state == "separator" and line.startswith(">>>>>>> "):
+            return True
+    return False
 
 
 def _looks_like_repo_file(value: str) -> bool:

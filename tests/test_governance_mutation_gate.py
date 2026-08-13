@@ -76,7 +76,7 @@ class GovernanceMutationGateTests(unittest.TestCase):
                 "    return None\n",
                 encoding="utf-8",
             )
-            for relative in gate.K1_GOVERNANCE_PATHS:
+            for relative in (*gate.K1_GOVERNANCE_PATHS, *gate.A010_GOVERNANCE_PATHS):
                 marker_path = root / relative
                 marker_path.parent.mkdir(parents=True, exist_ok=True)
                 marker_path.write_text("# missing marker\n", encoding="utf-8")
@@ -109,6 +109,7 @@ class GovernanceMutationGateTests(unittest.TestCase):
                 *gate.K1_GOVERNANCE_PATHS,
                 *gate.A010_GOVERNANCE_PATHS,
                 *gate.R043_GOVERNANCE_PATHS,
+                *gate.FUNNEL_GOVERNANCE_PATHS,
             ):
                 marker_path = root / relative
                 marker_path.parent.mkdir(parents=True, exist_ok=True)
@@ -142,7 +143,7 @@ class GovernanceMutationGateTests(unittest.TestCase):
                 "    return None\n",
                 encoding="utf-8",
             )
-            for relative in gate.K1_GOVERNANCE_PATHS:
+            for relative in (*gate.K1_GOVERNANCE_PATHS, *gate.A010_GOVERNANCE_PATHS):
                 marker_path = root / relative
                 marker_path.parent.mkdir(parents=True, exist_ok=True)
                 marker_path.write_text("# no K1 markers\n", encoding="utf-8")
@@ -178,6 +179,7 @@ class GovernanceMutationGateTests(unittest.TestCase):
                 *gate.K1_GOVERNANCE_PATHS,
                 *gate.A010_GOVERNANCE_PATHS,
                 *gate.R043_GOVERNANCE_PATHS,
+                *gate.FUNNEL_GOVERNANCE_PATHS,
             ):
                 marker_path = root / relative
                 marker_path.parent.mkdir(parents=True, exist_ok=True)
@@ -516,6 +518,7 @@ class GovernanceMutationGateTests(unittest.TestCase):
             )
             for relative in (
                 *gate.K1_GOVERNANCE_PATHS,
+                *gate.A010_GOVERNANCE_PATHS,
                 *gate.R043_GOVERNANCE_PATHS,
                 *gate.FUNNEL_GOVERNANCE_PATHS,
             ):
