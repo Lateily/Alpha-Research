@@ -129,11 +129,38 @@ def _tree_hashes(root):
     return out
 
 
+MACRO_RUNTIME_INPUTS = {"release_calendar.json", "market_features.json"}
+
+
+def reset_staged_macro_outputs(stage_public):
+    """Keep only immutable Macro inputs before the current staged run.
+
+    A failed calibration module must not republish last night's derived panel as
+    current evidence.  Existing live files remain untouched, but they are absent
+    from this run's publication manifest unless M1-C regenerates them.
+    """
+    macro_root = os.path.join(stage_public, "macro")
+    if not os.path.isdir(macro_root):
+        return []
+    removed = []
+    for name in sorted(os.listdir(macro_root)):
+        if name in MACRO_RUNTIME_INPUTS:
+            continue
+        path = os.path.join(macro_root, name)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+        removed.append(name)
+    return removed
+
+
 def prepare_stage(live_et, live_repo, run_dir):
     """Copy runtime state and code into an isolated repository-shaped staging tree."""
     stage_repo = os.path.join(run_dir, "staging", "repo")
     stage_et = os.path.join(stage_repo, "experiments", "execution_tracker")
     stage_research = os.path.join(stage_repo, "experiments", "research_funnel")
+    stage_macro = os.path.join(stage_repo, "experiments", "macro_os")
     stage_public = os.path.join(stage_repo, "public", "data", "v2")
     if os.path.exists(stage_repo):
         shutil.rmtree(stage_repo)
@@ -154,11 +181,20 @@ def prepare_stage(live_et, live_repo, run_dir):
         stage_research,
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.lock", "*.tmp"),
     )
+    live_macro = os.path.join(live_repo, "experiments", "macro_os")
+    if not os.path.isdir(live_macro):
+        raise RuntimeError(f"macro_os source missing: {live_macro}")
+    shutil.copytree(
+        live_macro,
+        stage_macro,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.lock", "*.tmp"),
+    )
     live_public = os.path.join(live_repo, "public", "data", "v2")
     if os.path.isdir(live_public):
         shutil.copytree(live_public, stage_public)
     else:
         os.makedirs(stage_public, exist_ok=True)
+    reset_staged_macro_outputs(stage_public)
     snapshot = {
         "protected": {
             rel: _tree_hashes(os.path.join(stage_et, rel)) for rel in PROTECTED_DIRS
@@ -174,6 +210,7 @@ def prepare_stage(live_et, live_repo, run_dir):
         "repo": stage_repo,
         "et": stage_et,
         "research": stage_research,
+        "macro": stage_macro,
         "public": stage_public,
     }
 

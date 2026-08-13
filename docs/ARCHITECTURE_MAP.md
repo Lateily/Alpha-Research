@@ -44,9 +44,9 @@
 | 块 | 一句话 | 载体 | 负责人 | 完成度(E4) |
 |---|---|---|---|---|
 | 1 研究框架 | 怎么想:宪法v1.5/全市场漏斗/Macro OS/两票/双层线/E1-E4/判分 | docs/research/ + docs/team/ | Junyan | 75% |
-| 2 数据源 | 原料:Tushare/东财/yfinance/FRED/BLS/BEA;宏观历史仓与官方采集器代码已交付,尚未进入日常运行 | scripts/fetch_*.py + experiments/macro_os/ | Junyan+Macro Agent | 55% |
-| 3 引擎层 | 车间:夜链v4/哨兵/模型基金/判分/闸门/电池/归因;硬闸已在 main,Macro M1-C 尚未接线 | experiments/execution_tracker/ + experiments/macro_os/ | Claude+Macro Agent | 80%(#205/#236;Macro 未计入上线) |
-| 4 契约层 | 传送带:引擎→v2 JSON→前端只读;Macro schema/M1 产出器已交付但尚无正式运行产物 | public/data/v2/ + docs/contracts/ + experiments/macro_os/schemas/ | Junyan定稿+Claude | 70%(Macro 为 DELIVERED_UNWIRED) |
+| 2 数据源 | 原料:Tushare/东财/yfinance/FRED/BLS/BEA;宏观历史仓与官方采集器已纳入 M1-C 夜链代码,尚未部署到运行目录 | scripts/fetch_*.py + experiments/macro_os/ | Junyan+Macro Agent | 55% |
+| 3 引擎层 | 车间:夜链v4/哨兵/模型基金/判分/闸门/电池/归因;M1-C 已在代码层串接 Macro 全链,待合并部署与真实夜跑 | experiments/execution_tracker/ + experiments/macro_os/ | Claude+Macro Agent | 80%(Macro 仍未计入生产上线) |
+| 4 契约层 | 传送带:引擎→v2 JSON→前端只读;Macro M1-C 增加同轮 manifest 与失败上浮,尚无正式运行产物 | public/data/v2/ + docs/contracts/ + experiments/macro_os/schemas/ | Junyan定稿+Claude | 70%(Macro 为 VALIDATING) |
 | 5 前端载体 | 展厅(七面板+工作台)+工具间;旧Dashboard=legacy | src/(旧) → web/(新) | Better | 10% |
 | 6 AI系统 | 工人:Claude(架构审核)/Codex(结对)/Kimi(考核中);评测/prompt库/成本 | scripts/llm/ + docs/llm/ + AGENTS.md | Reed | 15% |
 | 7 团队流程 | 神经:main保护/PR口令/认领协议/Notion审阅/周消化 | GitHub 设置 + TEAM_CHARTER_v2 | Junyan | 60% |
@@ -57,15 +57,15 @@
 | 里程碑 | main 实物 | 当前状态 | 尚未完成 |
 |---|---|---|---|
 | M0-A | 契约、schema 与来源注册表,#240 | `DELIVERED_UNWIRED / CALIBRATING` | 运行时快照与生产消费者 |
-| M0-B | SQLite 历史仓、官方采集器与来源身份绑定,#245 | `DELIVERED_UNWIRED / CALIBRATING` | 正式调度、持续采集与运行证据 |
-| M0-B2 | 发布日历与双源共识门,#247 | `DELIVERED_UNWIRED / CALIBRATING` | 共识覆盖和正式调度接线 |
-| M0-B3 | URL 发现、自适应调度、延迟监控与 launchd 模板,#249 | `DELIVERED_UNWIRED / CALIBRATING` | 模板尚未安装,未形成日常运行产物 |
-| M1-A | 双区域四轴状态、MRG 候选态与事件上下文,#251 | `DELIVERED_UNWIRED / CALIBRATING` | 夜链/盘前消费者与校准判分 |
-| M1-B | 31 个申万一级行业敏感度、组合暴露与只读面板,#252 | `DELIVERED_UNWIRED / CALIBRATING` | M1-C 运行接线与正式发布 |
-| M1-C | 无生产实物 | 待办 | 串接采集、M1-A、M1-B、夜链/盘前帧与失败上浮 |
+| M0-B | SQLite 历史仓、官方采集器与来源身份绑定,#245 | `VALIDATING / CALIBRATING` | M1-C 部署后的持续采集与运行证据 |
+| M0-B2 | 发布日历与双源共识门,#247 | `DELIVERED_UNWIRED / CALIBRATING` | 校验器已交付;官方日历物化器尚不存在,不得用手填/空日历冒充生产日历 |
+| M0-B3 | URL 发现、自适应调度、延迟监控与 launchd 模板,#249 | `VALIDATING / CALIBRATING` | M1-C 已调用同一调度锁;模板仍未安装,待真实轮验证 |
+| M1-A | 双区域四轴状态、MRG 候选态与事件上下文,#251 | `VALIDATING / CALIBRATING` | M1-C 已接夜链代码;待真实产物与 T+1/T+5/T+20 判分 |
+| M1-B | 31 个申万一级行业敏感度、组合暴露与只读面板,#252 | `VALIDATING / CALIBRATING` | M1-C 已接原子发布代码;待正式运行与前端消费 |
+| M1-C | `m1c.py`、同轮 manifest、夜链步骤与 staged publish | `VALIDATING / CALIBRATING` | 合并、安全部署、真实夜跑和发布哈希验收;日历缺失时必须保持 `RELEASE_CALENDAR_NOT_PUBLISHED` |
 
-这里的“已交付”只表示代码和契约已经进入 `main`。“已接入生产”还要求调度安装、
-正式产物、消费者接线和真实运行证据。当前 Macro 只输出标签、研究优先级与风险预算
+这里的“已接线”只表示代码路径已经形成。“已接入生产”还要求合并、安全部署、调度运行、
+正式产物和真实运行证据。当前 Macro 只输出标签、研究优先级与风险预算
 语境;`formal_regime` 保持空值,没有交易动作或正式阻断权。#253 已把代表性 Macro
 治理门接入 mutation-gate CI;AIOS K1 扩展由独立 PR 负责,此处不预先计为完成。
 
@@ -88,3 +88,8 @@
   R-014 升 DELIVERED_UNWIRED(PR #217 已合并)。
 - 2026-08-09 Macro 状态同步:M0-A 至 M1-B 代码已进 `main`,统一按
   `DELIVERED_UNWIRED / CALIBRATING` 记账;M1-C 仍待接线,未上调生产完成度。
+- 2026-08-09 M1-C 开工:同轮采集、M0-B3、M1-A、M1-B 和夜链 staged publish
+  已在代码层串起,状态升为 `VALIDATING / CALIBRATING`;合并部署与真实夜跑前仍不算上线。
+- 2026-08-09 依赖复核:M0-B2 具备日历证据绑定/校验,M0-B3 具备按日历调度,但仓库尚无
+  从官方日历页生成 `release_calendar.json` 的生产物化器。M1-C 对该缺口 fail-closed,
+  不生成空日历,并将其保留为 R-005 上线前硬前置。
