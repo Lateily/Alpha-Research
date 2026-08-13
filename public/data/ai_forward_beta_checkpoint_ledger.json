@@ -10,7 +10,7 @@
     "n_excluded": 8,
     "red_team_status": "PENDING for every beta name",
     "disclaimer": "Research forward-validation list only; not a buy list, not alpha, not automated advice.",
-    "updated_at": "2026-07-14T04:11:45.190789+00:00"
+    "updated_at": "2026-08-13T03:34:12.187210+00:00"
   },
   "registrations": [
     {
@@ -103,8 +103,21 @@
         {
           "offset_days": 60,
           "due_date": "2026-08-13",
-          "status": "PENDING",
-          "result": null
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-08-13T03:34:12.187116+00:00",
+            "price": 65.6,
+            "price_date": "2026-08-12",
+            "reference_price": 70.57,
+            "chg_vs_reference_pct": -7.04,
+            "stance_at_registration": "WATCH_CONSTRUCTIVE",
+            "bucket": "FIRST_TIER",
+            "wrong_if_due_for_human_check": [
+              "2026 H1 归母净利(年化)",
+              "云计算分部毛利率"
+            ],
+            "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
+          }
         },
         {
           "offset_days": 90,
@@ -206,8 +219,21 @@
         {
           "offset_days": 60,
           "due_date": "2026-08-13",
-          "status": "PENDING",
-          "result": null
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-08-13T03:34:12.187160+00:00",
+            "price": 17.41,
+            "price_date": "2026-08-12",
+            "reference_price": 19.27,
+            "chg_vs_reference_pct": -9.65,
+            "stance_at_registration": "WATCH_DEEP_VALUE",
+            "bucket": "DEEPEN_CANDIDATE",
+            "wrong_if_due_for_human_check": [
+              "高速通信线 FY2026 营收",
+              "2027E 一致净利(CPO 替代担忧)"
+            ],
+            "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
+          }
         },
         {
           "offset_days": 90,
@@ -309,8 +335,21 @@
         {
           "offset_days": 60,
           "due_date": "2026-08-13",
-          "status": "PENDING",
-          "result": null
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-08-13T03:34:12.187176+00:00",
+            "price": 35.48,
+            "price_date": "2026-08-12",
+            "reference_price": 36.81,
+            "chg_vs_reference_pct": -3.61,
+            "stance_at_registration": "WATCH_TURNAROUND",
+            "bucket": "DEEPEN_CANDIDATE",
+            "wrong_if_due_for_human_check": [
+              "2026 H1 归母同比",
+              "数据中心/民品营收同比"
+            ],
+            "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
+          }
         },
         {
           "offset_days": 90,
@@ -411,8 +450,21 @@
         {
           "offset_days": 60,
           "due_date": "2026-08-13",
-          "status": "PENDING",
-          "result": null
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-08-13T03:34:12.187186+00:00",
+            "price": 123.01,
+            "price_date": "2026-08-12",
+            "reference_price": 127.71,
+            "chg_vs_reference_pct": -3.68,
+            "stance_at_registration": "WATCH",
+            "bucket": "WATCH",
+            "wrong_if_due_for_human_check": [
+              "2026 H1 综合毛利率",
+              "归母同比"
+            ],
+            "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
+          }
         },
         {
           "offset_days": 90,
@@ -514,8 +566,21 @@
         {
           "offset_days": 60,
           "due_date": "2026-08-13",
-          "status": "PENDING",
-          "result": null
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-08-13T03:34:12.187195+00:00",
+            "price": 414.3,
+            "price_date": "2026-08-12",
+            "reference_price": 536.69,
+            "chg_vs_reference_pct": -22.8,
+            "stance_at_registration": "CYCLE_WATCH",
+            "bucket": "WATCH",
+            "wrong_if_due_for_human_check": [
+              "NAND 合约价环比",
+              "企业存储营收占比 FY2026"
+            ],
+            "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
+          }
         },
         {
           "offset_days": 90,
@@ -617,8 +682,21 @@
         {
           "offset_days": 60,
           "due_date": "2026-08-13",
-          "status": "PENDING",
-          "result": null
+          "status": "EVALUATED",
+          "result": {
+            "evaluated_at": "2026-08-13T03:34:12.187204+00:00",
+            "price": 287.66,
+            "price_date": "2026-08-12",
+            "reference_price": 289.53,
+            "chg_vs_reference_pct": -0.65,
+            "stance_at_registration": "WATCH_ONLY_PRICE",
+            "bucket": "WATCH",
+            "wrong_if_due_for_human_check": [
+              "H1'26 净利增速 vs 营收增速",
+              "DCU 深算 出口/IP(chiplet/代工)"
+            ],
+            "note": "mechanical beta read only — catalyst/wrong_if resolution remains human/disclosure-bound"
+          }
         },
         {
           "offset_days": 90,
