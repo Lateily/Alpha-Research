@@ -788,12 +788,18 @@ class StagingPublicationTest(unittest.TestCase):
 
             def fake_steps(
                 *, require_live, verify, base, run_id, persistent_feature_db,
-                persistent_macro_db,
+                persistent_macro_db, persistent_funnel_root,
             ):
                 self.assertTrue(verify)
                 self.assertEqual(
                     persistent_feature_db,
                     os.path.join(repo, "data_history", "feature_store.sqlite3"),
+                )
+                # 引擎跑在 staging 里,漏斗的大体量 bundle 必须落 live 观察区,
+                # 否则 staging 一拆产物就没了 —— 和 feature store DB 同一模式。
+                self.assertEqual(
+                    persistent_funnel_root,
+                    os.path.join(repo, "data_history", "funnel"),
                 )
                 self.assertEqual(
                     persistent_macro_db,

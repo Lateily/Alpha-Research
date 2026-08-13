@@ -89,6 +89,16 @@ STEPS = [
     # 其他无关契约 PARTIAL 不应卡死 Macro。M1-C 自己强校验组合 run_id/date,
     # 因此 export 若没产出本轮组合,Macro 会 fail-closed,不会读取旧契约冒充。
     ("macro_m1c", ["python3", "../macro_os/m1c.py"], False, []),
+    # ── 研究漏斗 U1→U4:观察期,隔离接入 ──
+    # 全新代码首次进生产。给它阻断发布的权力,等于让一个未经生产验证的模块能停掉
+    # 整条夜链,所以先隔离:失败记 DATA_BLOCKED,不否决 NAV/账本/其余研究。
+    # 产物分工见 nightly_funnel.py —— 30MB 级 bundle 落 untracked 的 data_history
+    # 观察区(不入库、不进发布清单),发布树只收一个 1KB 的 funnel_health.json。
+    # 依赖显式声明:漏斗读 registry/feature/e1 与 rotation/battery 的**本轮**产物,
+    # 排在它们后面才不会拿昨天的证据算今天的候选池。
+    ("research_funnel", ["python3", "../research_funnel/nightly_funnel.py"], False,
+     ["security_registry", "feature_store", "e1_event_layer", "rotation_panel",
+      "full_battery"]),
 ]
 
 # ── 产物契约(B2/B3/B4):步骤状态由**产物实物**判定,不再猜 stdout ──
@@ -129,6 +139,13 @@ ARTIFACTS = {
     "macro_m1c":             [(os.path.join("..", "..", "public", "data", "v2", "macro",
                                              "m1c_run_manifest.json"),
                                 "target_trade_date", True)],
+    # 漏斗的可验证产物是 health 摘要,不是 30MB 的 bundle 本身 —— bundle 在
+    # untracked 观察区,不入发布清单。health 携带 run_id/target_trade_date,
+    # 因此本轮绑定与新鲜度都由通用契约校验,漏斗拿不到"自证"的余地。
+    # governance-mutation: FUNNEL_NIGHTLY_ARTIFACT_FRESHNESS
+    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",
+                                             "funnel_health.json"),
+                                "as_of", True)],
 }
 
 # 状态精度(越大越糟);步骤终态 = max(进程判定, 各产物判定)
@@ -136,15 +153,21 @@ _SEVERITY = {"OK": 0, "PARTIAL": 1, "DATA_BLOCKED": 2, "STALE_OUTPUT": 3,
              "DATE_MISMATCH": 4, "FAILED": 5}
 RESEARCH_DATA_STEPS = {"security_registry", "feature_store", "e1_event_layer"}
 MACRO_DATA_STEPS = {"macro_m1c"}
-ISOLATED_CALIBRATION_STEPS = frozenset({"macro_m1c"})
+ISOLATED_CALIBRATION_STEPS = frozenset({"macro_m1c", "research_funnel"})
 RUN_CONTEXT_EXTERNAL_STEPS = set(RESEARCH_DATA_STEPS)
 
 
 def _validate_isolated_calibration_steps():
-    """Keep advisory failure isolation narrower than the business pipeline."""
-    if ISOLATED_CALIBRATION_STEPS != frozenset({"macro_m1c"}):
+    """Keep advisory failure isolation narrower than the business pipeline.
+
+    这份名单是夜链唯一的 fail-closed 豁免通道,所以用精确相等而不是包含判断:
+    往里加成员必须改这个字面量,并且改动会被 mutation gate 逐条钉住。
+    research_funnel 在观察期内隔离 —— 见 STEPS 里的说明。
+    """
+    if ISOLATED_CALIBRATION_STEPS != frozenset({"macro_m1c", "research_funnel"}):
         raise RuntimeError(
-            "isolated calibration allowlist may contain only macro_m1c"
+            "isolated calibration allowlist may contain only "
+            "macro_m1c and research_funnel"
         )
 
 
@@ -198,6 +221,45 @@ def _discard_failed_macro_outputs(base):
         os.path.join(base, "..", "..", "public", "data", "v2")
     )
     return nightly_publish.reset_staged_macro_outputs(stage_public)
+
+
+def _discard_failed_funnel_outputs(base):
+    """漏斗隔离失败后,移除本轮暂存的 health 摘要。
+
+    staging 是 live 发布树的副本,所以昨天的 funnel_health.json 会躺在里面。
+    不删掉它,本轮发布清单就会收录昨天的摘要并把它当作今天的输出 —— 隔离机制
+    要防的正是这件事。删的是 staging 副本,live 文件不动;它只是不出现在本轮
+    发布清单里,除非漏斗自己重新产出。
+    30MB 的 bundle 不在这里处理:它落在 untracked 观察区、本就不进发布清单,
+    而且 run_pipeline 是 staging+os.replace 原子落地,不会留下半成品。
+    """
+    stage_health = os.path.abspath(
+        os.path.join(base, "..", "..", "public", "data", "v2", "funnel_health.json")
+    )
+    # governance-mutation: FUNNEL_NIGHTLY_DISCARD
+    if not os.path.isfile(stage_health):
+        return []
+    os.remove(stage_health)
+    return ["public/data/v2/funnel_health.json"]
+
+
+# 每个隔离步骤都必须声明自己的产物销毁方式。隔离 = 失败照样记账、暂存产物照样
+# 销毁,只是不牵连别人;缺了销毁,隔离就退化成"失败被无视,昨天的产物冒充今天"。
+_ISOLATED_DISCARD = {
+    "macro_m1c": _discard_failed_macro_outputs,
+    # governance-mutation: FUNNEL_NIGHTLY_DISCARD_DISPATCH
+    "research_funnel": _discard_failed_funnel_outputs,
+}
+
+
+def _discard_failed_isolated_outputs(step, base):
+    discard = _ISOLATED_DISCARD.get(step)
+    # governance-mutation: FUNNEL_NIGHTLY_DISCARD_POLICY_REQUIRED
+    if discard is None:
+        raise RuntimeError(
+            f"isolated step {step} has no declared output discard policy"
+        )
+    return discard(base)
 
 
 def _normalize_data_quality(value):
@@ -420,6 +482,7 @@ def run_steps(
     run_id=None,
     persistent_feature_db=None,
     persistent_macro_db=None,
+    persistent_funnel_root=None,
 ):
     """verify=True(正式路径):步骤终态 = max(进程判定, 产物实物判定)。
     COMPLETE 从此必须由实物背书 —— 进程退 0 + 免责声明不再等于成功(B2/B3)。"""
@@ -451,6 +514,10 @@ def run_steps(
                 env["AR_FEATURE_STORE_DB"] = persistent_feature_db
             if persistent_macro_db:
                 env["AR_MACRO_DB"] = persistent_macro_db
+            if persistent_funnel_root:
+                # 引擎跑在 staging 里,staging 拆了产物就没了。漏斗的 30MB bundle
+                # 必须落在 live 观察区才留得住 —— 和 feature store DB 同一模式。
+                env["AR_FUNNEL_OUTPUT_ROOT"] = persistent_funnel_root
             if target:
                 env["AR_TARGET_TRADE_DATE"] = target
             else:
@@ -474,6 +541,7 @@ def run_steps(
             entry["status"] = status
         entry["blocks_publication"] = True
         # governance-mutation: MACRO_M1C_FAILURE_ISOLATION
+        # governance-mutation: FUNNEL_NIGHTLY_ISOLATION
         if name in ISOLATED_CALIBRATION_STEPS and status != "OK":
             # A calibration module may fail closed on its own evidence, but it
             # cannot veto unrelated NAV, ledger, or research publication.  The
@@ -483,7 +551,7 @@ def run_steps(
             entry["blocks_publication"] = False
             entry["why"] = entry.get("why") or "CALIBRATION_COMPONENT_FAILED_ISOLATED"
             entry["discarded_artifacts"] = (
-                _discard_failed_macro_outputs(base) if verify else []
+                _discard_failed_isolated_outputs(name, base) if verify else []
             )
             status = "DATA_BLOCKED"
             entry["status"] = status
@@ -1132,6 +1200,9 @@ def _execute_nightly():
             ),
             persistent_macro_db=os.path.join(
                 REPO_ROOT, "data_history", "macro_os.sqlite3"
+            ),
+            persistent_funnel_root=os.path.join(
+                REPO_ROOT, "data_history", "funnel"
             ),
         )
         res["preflight"] = {"pass": True, "warns": pf["warns"]}

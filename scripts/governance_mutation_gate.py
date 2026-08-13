@@ -127,6 +127,15 @@ R043_GOVERNANCE_PATHS = (
 FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/funnel_pipeline.py",
 )
+# 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
+# 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
+# run_nightly.py 同时承载 Macro 的 marker,而那条规则是双向精确配对的。这里按
+# **ID 前缀**配对,只管 FUNNEL_NIGHTLY_*,不动同文件里别的治理族。
+FUNNEL_NIGHTLY_GOVERNANCE_PATHS = (
+    "experiments/research_funnel/nightly_funnel.py",
+    "experiments/execution_tracker/run_nightly.py",
+)
+FUNNEL_NIGHTLY_MUTATION_PREFIX = "FUNNEL_NIGHTLY_"
 
 
 class MutationGateError(RuntimeError):
@@ -1155,6 +1164,126 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_validate_manifest_enforces_funnel_marker_coverage",
         rationale="The mutation manifest must not silently stop enforcing funnel marker coverage.",
     ),
+    # ── 研究漏斗夜链接入(观察期隔离)──
+    # 守的是**接入方式**,不是漏斗自己的研究契约:隔离、销毁、不进发布树。
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ISOLATION",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            '        if name in ISOLATED_CALIBRATION_STEPS and status != "OK":'
+        ),
+        after='        if name == "macro_m1c" and status != "OK":',
+        expected_failure_marker="test_funnel_failure_cannot_stop_unrelated_publication",
+        rationale="A funnel crash must never veto NAV, ledger, or unrelated research publication.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DISCARD",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if not os.path.isfile(stage_health):\n"
+            "        return []\n"
+            "    os.remove(stage_health)"
+        ),
+        after=(
+            "    if not os.path.isfile(stage_health):\n"
+            "        return []\n"
+        ),
+        expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
+        rationale="Isolation without discard republishes yesterday's summary as today's output.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DISCARD_DISPATCH",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    "research_funnel": _discard_failed_funnel_outputs,',
+        after='    "research_funnel": _discard_failed_macro_outputs,',
+        expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
+        rationale="Two isolated steps share one branch; a funnel failure must not wipe Macro outputs.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DISCARD_POLICY_REQUIRED",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if discard is None:\n"
+            "        raise RuntimeError(\n"
+            '            f"isolated step {step} has no declared output discard policy"\n'
+            "        )"
+        ),
+        after=(
+            "    if discard is None:\n"
+            "        return []"
+        ),
+        expected_failure_marker="test_an_isolated_step_without_a_discard_policy_fails_closed",
+        rationale="A new isolated step must declare how its staged outputs are destroyed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ARTIFACT_FRESHNESS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '                                             "funnel_health.json"),\n'
+            '                                "as_of", True)],'
+        ),
+        after=(
+            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '                                             "funnel_health.json"),\n'
+            '                                "as_of", False)],'
+        ),
+        expected_failure_marker="test_funnel_health_artifact_is_bound_to_this_run",
+        rationale="Without freshness the funnel can report OK every night on yesterday's summary.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_PATH_GUARD",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if candidate.parent != resolved_root or candidate.name != target:\n"
+            '        raise FunnelError(f"漏斗产物目录越界: {candidate}")'
+        ),
+        after="    pass",
+        expected_failure_marker="test_bundle_directory_refuses_a_symlink_that_escapes_the_root",
+        rationale="target comes from the environment; an unvalidated path is later handed to rmtree.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RUN_CONTEXT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if not value:\n"
+            '        raise FunnelError(f"缺少必需环境变量 {name} '
+            '—— 拒绝在无本轮上下文时产出漏斗产物")'
+        ),
+        after="    if False:\n        pass",
+        expected_failure_marker="test_runner_refuses_without_run_context",
+        rationale="Producing a bundle without run context lets an unbound artifact claim this run.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_funnel_nightly_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_funnel_nightly_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker=(
+            "test_validate_manifest_enforces_funnel_nightly_marker_coverage"
+        ),
+        rationale="The manifest must not silently stop enforcing nightly wiring marker coverage.",
+    ),
 )
 
 
@@ -1310,6 +1439,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
     validate_k1_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
+    validate_funnel_nightly_marker_coverage(root, cases)
 
 
 def validate_k1_marker_coverage(
@@ -1425,6 +1555,55 @@ def validate_funnel_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "funnel governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_funnel_nightly_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = FUNNEL_NIGHTLY_GOVERNANCE_PATHS,
+    prefix: str = FUNNEL_NIGHTLY_MUTATION_PREFIX,
+) -> None:
+    """夜链接入的治理规则必须逐条带 marker,双向配对。
+
+    与上面那条的差别只有一个:按 mutation_id 前缀筛,不按 component 前缀。
+    原因是 run_nightly.py 同时承载 Macro 的 marker —— 按文件精确配对会把不相干的
+    治理族卷进来。前缀配对让两条规则互不干扰,同时谁都逃不掉。
+    """
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(
+                f"funnel nightly governance marker source is missing: {relative}"
+            )
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate funnel nightly governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "funnel nightly governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
