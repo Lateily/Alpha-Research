@@ -13,11 +13,9 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 try:  # Support both package imports and direct CLI execution from this directory.
-    from .task_compiler import SPEC_READY as TASK_SPEC_READY
-    from .task_compiler import compile_task_manifest
+    from .task_compiler import validate_compiled_manifest
 except ImportError:  # pragma: no cover - exercised by the standalone CLI path.
-    from task_compiler import SPEC_READY as TASK_SPEC_READY
-    from task_compiler import compile_task_manifest
+    from task_compiler import validate_compiled_manifest
 
 
 SCHEMA = "ai-context.v1"
@@ -38,7 +36,8 @@ SAFE_EXTERNAL_LABEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/#_-]{0,79}$")
 SECRET_PATTERNS = (
     re.compile(r"\bsk_(?:live|test)_[A-Za-z0-9_]{8,}\b", re.IGNORECASE),
     re.compile(r"\bsk-[A-Za-z0-9]{12,}\b", re.IGNORECASE),
-    re.compile(r"\bghp_[A-Za-z0-9_]{12,}\b", re.IGNORECASE),
+    # governance-mutation: AIOS_A010_GITHUB_TOKEN_FAMILY
+    re.compile(r"\bgh[porus]_[A-Za-z0-9_]{12,}\b", re.IGNORECASE),
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{12,}\b", re.IGNORECASE),
     re.compile(r"\bAKIA[0-9A-Z]{12,}\b"),
     re.compile(r"\bAWS_SECRET_ACCESS_KEY\b", re.IGNORECASE),
@@ -146,6 +145,7 @@ def build_context_packet(
         "schema": SCHEMA,
         "task_id": task_id,
         "source_hash": manifest.get("source_hash"),
+        "manifest_hash": manifest.get("manifest_hash"),
         "commit_sha": commit_sha,
         "loaded_at": loaded_at.astimezone(timezone.utc).isoformat(),
         "data_cutoff": data_cutoff,
@@ -164,40 +164,11 @@ def build_context_packet(
     return ContextBuildResult(CONTEXT_READY, context, ())
 
 
-def _validate_manifest(manifest: Mapping[str, Any], loaded_at: datetime) -> list[str]:
-    if not isinstance(manifest, Mapping):
-        return ["manifest must be a mapping"]
-    manifest_dict = dict(manifest)
-    source_with_created_at = dict(manifest_dict)
-    source_with_created_at.pop("source_hash", None)
-    source_without_created_at = dict(source_with_created_at)
-    source_without_created_at.pop("created_at", None)
-    compile_now = _manifest_created_at(manifest_dict) or loaded_at
-
-    compile_errors: tuple[str, ...] = ()
-    for source in (source_with_created_at, source_without_created_at):
-        compiled = compile_task_manifest(source, now=compile_now)
-        if compiled.status != TASK_SPEC_READY or compiled.manifest is None:
-            compile_errors = compiled.errors
-            continue
-        if compiled.manifest == manifest_dict:
-            return []
-    if compile_errors:
-        return [f"manifest contract invalid: {error}" for error in compile_errors]
-    return ["manifest must match compiled ai-task.v1 contract and source_hash"]
-
-
-def _manifest_created_at(manifest: Mapping[str, Any]) -> datetime | None:
-    value = manifest.get("created_at")
-    if not isinstance(value, str) or not value.strip():
-        return None
-    try:
-        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        return None
-    return parsed.astimezone(timezone.utc)
+def _validate_manifest(manifest: Mapping[str, Any], _loaded_at: datetime) -> list[str]:
+    return [
+        f"manifest contract invalid: {error}"
+        for error in validate_compiled_manifest(manifest)
+    ]
 
 def _read_plan(manifest: Mapping[str, Any]) -> list[tuple[str, str]]:
     planned: list[tuple[str, str]] = []

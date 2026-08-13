@@ -23,6 +23,7 @@ from ai_os.task_compiler import (  # noqa: E402
     SPEC_BLOCKED,
     SPEC_READY,
     compile_task_manifest,
+    validate_compiled_manifest,
 )
 
 
@@ -85,7 +86,19 @@ def test_task_manifest_compiles_complete_contract() -> None:
     assert result.manifest["created_at"] == "2026-08-07T09:30:00+00:00"
     assert result.manifest["budget"] == {"max_cny": "0", "max_minutes": 60}
     assert result.manifest["source_hash"].startswith("sha256:")
+    assert result.manifest["manifest_hash"].startswith("sha256:")
+    assert validate_compiled_manifest(result.manifest) == ()
     json.dumps(result.to_dict(), ensure_ascii=False)
+
+
+def test_compiled_manifest_validator_detects_canonical_content_drift() -> None:
+    result = compile_task_manifest(valid_task_source(), now=NOW)
+    assert result.manifest is not None
+    tampered = {**result.manifest, "objective": "Changed after compilation."}
+
+    assert validate_compiled_manifest(tampered) == (
+        "manifest_hash does not match canonical manifest content",
+    )
 
 
 def test_task_manifest_missing_acceptance_fails_closed() -> None:

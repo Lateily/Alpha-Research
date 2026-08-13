@@ -174,7 +174,7 @@ def test_context_builder_rejects_incomplete_task_manifest() -> None:
         assert any("manifest contract invalid" in item for item in result.errors)
 
 
-def test_context_builder_rejects_manifest_source_hash_drift() -> None:
+def test_context_builder_rejects_manifest_hash_drift() -> None:
     manifest = valid_task_manifest()
     drifted = {**manifest, "objective": "Changed after compilation."}
     result = build_context_packet(
@@ -185,7 +185,46 @@ def test_context_builder_rejects_manifest_source_hash_drift() -> None:
 
     assert result.status == SPEC_BLOCKED
     assert result.context is None
-    assert "manifest must match compiled ai-task.v1 contract and source_hash" in result.errors
+    assert "manifest contract invalid: manifest_hash does not match canonical manifest content" in result.errors
+
+
+def test_compiler_output_with_normalized_whitespace_reaches_context_builder() -> None:
+    manifest = valid_task_manifest(
+        task_id="  A-010-context-builder  ",
+        objective="  Build deterministic context packets for AIOS agents.  ",
+        authority_docs=["  docs/llm/AI_OS_BUILD_GUIDE.md  "],
+    )
+
+    result = build_context_packet(manifest, repo_root=REPO_ROOT, loaded_at=NOW)
+
+    assert result.status == CONTEXT_READY
+    assert result.context is not None
+    assert result.context["task_id"] == "A-010-context-builder"
+
+
+def test_compiler_output_with_omitted_defaults_reaches_context_builder() -> None:
+    source = {
+        "task_id": "A-010-minimal-source",
+        "architecture_block": ["block-6-aios"],
+        "objective": "Build a context packet from compiler defaults.",
+        "human_owner": "Reed",
+        "reviewer": "Junyan",
+        "file_scope": ["scripts/llm/ai_os"],
+        "acceptance_tests": ["tests/test_ai_os_a010_context_offline.py"],
+        "risk_level": "LOW",
+        "network_policy": "OFFLINE",
+        "budget": {"max_cny": "0", "max_minutes": 60},
+        "approval_gates": ["PR_REVIEW"],
+    }
+    compiled = compile_task_manifest(source, now=NOW)
+    assert compiled.status == "SPEC_READY"
+    assert compiled.manifest is not None
+
+    result = build_context_packet(compiled.manifest, repo_root=REPO_ROOT, loaded_at=NOW)
+
+    assert result.status == CONTEXT_READY
+    assert result.context is not None
+    assert result.context["task_id"] == "A-010-minimal-source"
 
 
 def test_context_builder_rejects_malformed_external_inputs() -> None:
@@ -202,19 +241,30 @@ def test_context_builder_rejects_malformed_external_inputs() -> None:
 
 
 def test_context_builder_rejects_secret_like_external_metadata_without_echoing_secret() -> None:
-    secret_like = "sk_live_1234567890abcdef"
-    result = build_context_packet(
-        valid_task_manifest(),
-        repo_root=REPO_ROOT,
-        loaded_at=NOW,
-        external_inputs=[{"label": secret_like, "kind": "github_comment", "content": "ok"}],
+    secret_families = (
+        "ghp_1234567890abcdef",
+        "gho_1234567890abcdef",
+        "ghu_1234567890abcdef",
+        "ghs_1234567890abcdef",
+        "ghr_1234567890abcdef",
+        "github_pat_1234567890abcdef",
+        "sk_live_1234567890abcdef",
     )
+    for secret_like in secret_families:
+        result = build_context_packet(
+            valid_task_manifest(),
+            repo_root=REPO_ROOT,
+            loaded_at=NOW,
+            external_inputs=[
+                {"label": secret_like, "kind": "github_comment", "content": "ok"}
+            ],
+        )
 
-    rendered_errors = json.dumps(result.errors, ensure_ascii=False)
-    assert result.status == SPEC_BLOCKED
-    assert result.context is None
-    assert "secret-like material" in rendered_errors
-    assert secret_like not in rendered_errors
+        rendered = json.dumps(result.to_dict(), ensure_ascii=False)
+        assert result.status == SPEC_BLOCKED
+        assert result.context is None
+        assert "secret-like material" in rendered
+        assert secret_like not in rendered
 
 
 def test_context_builder_blocks_missing_git_provenance() -> None:

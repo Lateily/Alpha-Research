@@ -26,7 +26,8 @@
     "budget",
     "approval_gates",
     "created_at",
-    "source_hash"
+    "source_hash",
+    "manifest_hash"
   ],
   "properties": {
     "schema": {"const": "ai-task.v1"},
@@ -58,7 +59,8 @@
     },
     "approval_gates": {"$ref": "#/$defs/non_empty_string_array"},
     "created_at": {"type": "string", "minLength": 1},
-    "source_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+    "source_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "manifest_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
   },
   "$defs": {
     "string_array": {

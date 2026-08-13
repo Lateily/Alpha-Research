@@ -44,6 +44,8 @@ Each packet includes:
 - `context_hash`
 - `task_id`
 - `source_hash`
+- `manifest_hash` for the canonical compiled contract; `source_hash` continues
+  to identify the original pre-normalization task source
 - `commit_sha`
 - `loaded_at`
 - `data_cutoff`
@@ -57,9 +59,15 @@ Each packet includes:
 Context Builder returns `SPEC_BLOCKED` when:
 
 - the manifest is malformed;
+- canonical manifest fields no longer match `manifest_hash`;
 - an authority or input contract file is missing;
 - a referenced path is absolute, encoded, parent-relative, or otherwise unsafe;
 - a loaded authority/input file contains Git conflict markers at line start.
+
+Context Builder deliberately does not reconstruct the pre-normalization source
+or recompute `source_hash`. Only the Task Compiler owns that original source
+digest; A-010 validates the canonical `manifest_hash` through the compiler's
+public validator.
 
 ## Non-Goals
 
