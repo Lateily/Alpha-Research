@@ -108,18 +108,49 @@ def _bundle_dir(output_root: Path, target: str) -> Path:
     return candidate
 
 
-def _discard_stale_bundle(bundle_dir: Path, output_root: Path, target: str) -> bool:
-    """产物契约要求本轮重写,所以同日残留必须先清掉再重跑。
+def _reserve_stale_bundle(bundle_dir: Path, output_root: Path, target: str) -> Path | None:
+    """产物契约要求本轮重写,所以同日残留必须先让位;但**不能直接删**。
 
-    只清 output_root/<target>,且路径已由 _bundle_dir 校验过;output_root 是
-    untracked 的观察区,不碰任何入库或已发布的东西。
+    对抗复核打出来的:原来在 run_pipeline 之前就 rmtree,一旦本轮随后失败,上一轮
+    已发布的 health 指向的 bundle 就没了 —— 清理把别人正在引用的东西删掉。改成
+    先重命名挪开,成功后再删,失败则原样还原。后缀不是 8 位日期,retention 的
+    扫描认不出它,不会被误清。
     """
-    if not bundle_dir.exists():
-        return False
+    if not bundle_dir.exists() and not bundle_dir.is_symlink():
+        return None
     if bundle_dir != _bundle_dir(output_root, target):
-        raise FunnelError("拒绝删除未经校验的漏斗产物目录")
-    shutil.rmtree(bundle_dir)
+        raise FunnelError("拒绝移动未经校验的漏斗产物目录")
+    if bundle_dir.is_file():
+        # 该位置上的杂散文件会把这个日期永久卡死:目录建不出来,retention 又只认
+        # 目录。就地移走,让它自愈而不是每晚重复失败。
+        reserved = bundle_dir.with_name(f"{target}.superseded-file")
+    else:
+        reserved = bundle_dir.with_name(f"{target}.superseded")
+    if reserved.exists():
+        shutil.rmtree(reserved, ignore_errors=True)
+        if reserved.exists():
+            reserved.unlink()
+    # governance-mutation: FUNNEL_NIGHTLY_STALE_RESERVE
+    os.replace(bundle_dir, reserved)
+    return reserved
+
+
+def _drop_reserved(reserved: Path | None) -> bool:
+    if reserved is None:
+        return False
+    if reserved.is_dir() and not reserved.is_symlink():
+        shutil.rmtree(reserved)
+    else:
+        reserved.unlink()
     return True
+
+
+def _restore_reserved(reserved: Path | None, bundle_dir: Path) -> None:
+    if reserved is None:
+        return
+    if bundle_dir.exists() or bundle_dir.is_symlink():
+        shutil.rmtree(bundle_dir, ignore_errors=True)
+    os.replace(reserved, bundle_dir)
 
 
 def prune_observation_area(
@@ -136,11 +167,17 @@ def prune_observation_area(
     # governance-mutation: FUNNEL_NIGHTLY_RETENTION
     if keep < 1:
         raise FunnelError(f"观察区保留天数必须 >= 1: {keep}")
-    dated = sorted(
-        (p.name for p in output_root.iterdir()
-         if p.is_dir() and not p.is_symlink() and len(p.name) == 8 and p.name.isdigit()),
-        reverse=True,
-    )
+    dated, skipped = [], []
+    for entry in output_root.iterdir():
+        if not (len(entry.name) == 8 and entry.name.isdigit()):
+            continue
+        if entry.is_dir() and not entry.is_symlink():
+            dated.append(entry.name)
+        else:
+            # 名字像日期但不是普通目录(杂散文件 / 符号链接):不碰,但要记下来,
+            # 否则它会永远躺在观察区里而没人知道。
+            skipped.append(entry.name)
+    dated.sort(reverse=True)
     removed = []
     for name in dated[keep:]:
         # governance-mutation: FUNNEL_NIGHTLY_RETENTION_PROTECT
@@ -148,7 +185,7 @@ def prune_observation_area(
             continue
         shutil.rmtree(_bundle_dir(output_root, name))
         removed.append(name)
-    return removed
+    return {"removed": removed, "skipped_not_a_directory": sorted(skipped)}
 
 
 def _sha256(path: Path) -> str:
@@ -210,11 +247,15 @@ def validate_bundle_contracts(payloads: dict, registry: dict, scan_key: str) -> 
     契约 —— 哈希只证明"文件没被改",证明不了"内容仍然合规"。
     """
     # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_CONTRACTS
+    # governance-mutation: FUNNEL_NIGHTLY_CONTRACT_REGISTRY
     validate_registry(payloads["security_registry_projected.json"])
+    # governance-mutation: FUNNEL_NIGHTLY_CONTRACT_SCAN
     validate_all_market_scan(payloads[scan_key], registry)
+    # governance-mutation: FUNNEL_NIGHTLY_CONTRACT_CANDIDATES
     validate_candidate_review(
         payloads["candidate_review.json"], registry, payloads[scan_key]
     )
+    # governance-mutation: FUNNEL_NIGHTLY_CONTRACT_QUEUE
     validate_deep_research_queue(payloads["deep_research_queue.json"])
 
 
@@ -279,6 +320,12 @@ def compose_health(
             "u4_queue_empty_by_construction": queue_rows == 0,
             "macro_input_wired": False,
         },
+        # status 在观察期几乎恒为 PARTIAL(有几个通道结构性缺数),光一个 PARTIAL
+        # 没有行动价值,还会把人训练成忽略它。把 scan 自己算出的逐通道缺数带上来,
+        # 顶层看到 PARTIAL 时能直接知道是哪几条链缺,以及有没有变化。
+        "degraded_channels": dict(
+            (scan.get("coverage") or {}).get("blocked_by_channel") or {}
+        ),
         "stale_bundle_discarded": discarded_stale,
         "disclaimer": DISCLAIMER,
     }
@@ -300,29 +347,37 @@ def run(argv: list[str] | None = None) -> int:
     public_v2 = staged_root / "public" / "data" / "v2"
 
     bundle_dir = _bundle_dir(output_root, target)
-    discarded = _discard_stale_bundle(bundle_dir, output_root, target)
+    # 同日残留先挪开而不是直接删:本轮若失败,上一轮已发布的 health 指向的 bundle
+    # 必须还在。成功才丢弃,失败原样还原。
+    reserved = _reserve_stale_bundle(bundle_dir, output_root, target)
 
     generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    outputs = run_pipeline(
-        registry_path=public_v2 / "security_registry.json",
-        e1_path=public_v2 / "e1_event_layer.json",
-        feature_db=feature_db,
-        output_dir=bundle_dir,
-        trade_date=target,
-        rotation_path=public_v2 / "rotation_panel.json",
-        battery_path=public_v2 / "battery.json",
-        # macro 输入与 u4 选票都不接:见模块 docstring
-        macro_industry_path=None,
-        selected_tickers=(),
-        generated_at=generated_at,
-    )
-    health = build_health(
-        target=target, run_id=run_id, bundle_dir=bundle_dir,
-        registry=_load(public_v2 / "security_registry.json"),
-        generated_at=generated_at, discarded_stale=discarded,
-    )
+    try:
+        run_pipeline(
+            registry_path=public_v2 / "security_registry.json",
+            e1_path=public_v2 / "e1_event_layer.json",
+            feature_db=feature_db,
+            output_dir=bundle_dir,
+            trade_date=target,
+            rotation_path=public_v2 / "rotation_panel.json",
+            battery_path=public_v2 / "battery.json",
+            # macro 输入与 u4 选票都不接:见模块 docstring
+            macro_industry_path=None,
+            selected_tickers=(),
+            generated_at=generated_at,
+        )
+        health = build_health(
+            target=target, run_id=run_id, bundle_dir=bundle_dir,
+            registry=_load(public_v2 / "security_registry.json"),
+            generated_at=generated_at, discarded_stale=reserved is not None,
+        )
+    except BaseException:
+        _restore_reserved(reserved, bundle_dir)
+        raise
+    _drop_reserved(reserved)
+
     pruned = prune_observation_area(output_root, keep, protect=target)
-    health["retention"] = {"keep_days": keep, "pruned": pruned}
+    health["retention"] = dict(pruned, keep_days=keep)
     # health 最后写:它是本步的完成戳。中途死掉 ⇒ 契约判"产物不存在" ⇒ fail-closed。
     _atomic_write_json(public_v2 / "funnel_health.json", health)
     print(json.dumps({
@@ -331,7 +386,8 @@ def run(argv: list[str] | None = None) -> int:
         "bundle": str(bundle_dir),
         "status": health["status"],
         "counts": health["counts"],
-        "pruned": pruned,
+        "degraded_channels": health["degraded_channels"],
+        "retention": health["retention"],
     }, ensure_ascii=False))
     print(DISCLAIMER)
     return 0

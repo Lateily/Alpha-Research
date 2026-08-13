@@ -1305,7 +1305,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_script="tests/test_funnel_nightly_offline.py",
         before=(
             "        try:\n"
-            "            _validate_funnel_health(data)\n"
+            "            _validate_funnel_health(data, artifact_path)\n"
             "        except Exception as exc:\n"
             '            return "FAILED", f"漏斗 health 契约校验失败: {exc}"'
         ),
@@ -1395,8 +1395,117 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_script="tests/test_funnel_nightly_offline.py",
         before='    validate_bundle_contracts(payloads, registry, "all_market_scan.json")',
         after="    pass",
-        expected_failure_marker="test_bundle_contracts_are_actually_run",
+        expected_failure_marker="test_build_health_runs_the_bundle_contracts",
         rationale="Hashes prove the files did not change, not that their content is still compliant.",
+    ),
+    # ── 对抗复核第三轮:rollup 只钉 helper 未钉传播 / as_of 未校形状 /
+    #    verifier 不跑契约 / status 重算未钉 / 陈旧 bundle 被直接删 ──
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_QUALITY_PROPAGATION",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='        for artifact in entry.get("artifacts", []):',
+        after="        for artifact in []:",
+        expected_failure_marker="test_partial_reaches_research_data_quality_end_to_end",
+        rationale="Pinning the helper is not pinning the wiring that carries its answer upward.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_DATE_SHAPE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    for key in (\"as_of\", \"target_trade_date\"):\n"
+            "        value = str(data.get(key) or \"\")\n"
+            "        if not (len(value) == 8 and value.isdigit()):"
+        ),
+        after=(
+            "    for key in ():\n"
+            "        value = str(data.get(key) or \"\")\n"
+            "        if not (len(value) == 8 and value.isdigit()):"
+        ),
+        expected_failure_marker="test_a_traversal_as_of_cannot_redirect_the_verifier",
+        rationale="as_of is joined into a filesystem path; an unshaped value redirects the verifier.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_VERIFIER_CONTRACTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if registry is None:\n"
+            '        raise ValueError("找不到本轮 registry,无法在验证侧复核 bundle 契约")\n'
+            "    nightly_funnel.validate_bundle_contracts(\n"
+            '        payloads, registry, "all_market_scan.json"\n'
+            "    )"
+        ),
+        after="    pass",
+        expected_failure_marker="test_the_verifier_also_runs_the_bundle_contracts",
+        rationale="Hashes prove the bytes are unchanged, not that the content is still compliant.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_STATUS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    if str(data.get("status") or "").upper() != measured_status:',
+        after="    if False:",
+        expected_failure_marker="test_a_status_that_disagrees_with_the_bundle_is_rejected",
+        rationale="Re-deriving status is the load-bearing half of making health a transcript.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_STALE_RESERVE",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="    os.replace(bundle_dir, reserved)\n    return reserved",
+        after=(
+            "    shutil.rmtree(bundle_dir, ignore_errors=True)\n"
+            "    return reserved"
+        ),
+        expected_failure_marker="test_a_stale_bundle_is_reserved_not_destroyed",
+        rationale="Destroying the prior bundle before this run succeeds orphans a published health.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_REGISTRY",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_registry(payloads["security_registry_projected.json"])',
+        after="    pass",
+        expected_failure_marker="test_projected_registry_contract_is_called",
+        rationale="The projected registry must still satisfy its own contract.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_SCAN",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_all_market_scan(payloads[scan_key], registry)',
+        after="    pass",
+        expected_failure_marker="test_scan_contract_is_called",
+        rationale="A scan carrying a composite score must be refused, not merely hashed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_CANDIDATES",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_candidate_review(\n        payloads["candidate_review.json"], registry, payloads[scan_key]\n    )',
+        after="    pass",
+        expected_failure_marker="test_candidate_contract_is_called",
+        rationale="Candidate review must stay bound to the same U0/U1 as_of.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_QUEUE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_deep_research_queue(payloads["deep_research_queue.json"])',
+        after="    pass",
+        expected_failure_marker="test_deep_queue_contract_is_called",
+        rationale="The U4 authority boundary must be re-checked, not assumed.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",

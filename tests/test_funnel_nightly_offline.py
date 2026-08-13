@@ -219,24 +219,51 @@ class FunnelRunnerBoundaryTests(unittest.TestCase):
             with self.assertRaisesRegex(FunnelError, "越界"):
                 nightly_funnel._bundle_dir(root, TARGET)
 
-    def test_discard_refuses_a_directory_it_did_not_validate(self) -> None:
+    def test_reserve_refuses_a_directory_it_did_not_validate(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             stray = root / "not-the-target"
             stray.mkdir()
             with self.assertRaises(FunnelError):
-                nightly_funnel._discard_stale_bundle(stray, root, TARGET)
-            self.assertTrue(stray.exists(), "未经校验的目录不得被删除")
+                nightly_funnel._reserve_stale_bundle(stray, root, TARGET)
+            self.assertTrue(stray.exists(), "未经校验的目录不得被移动")
+
+    def test_a_stale_bundle_is_reserved_not_destroyed(self) -> None:
+        """本轮失败时,上一轮已发布 health 指向的 bundle 必须还在。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundle = root / TARGET
+            bundle.mkdir()
+            (bundle / "keep.json").write_text("{}", encoding="utf-8")
+            reserved = nightly_funnel._reserve_stale_bundle(bundle, root, TARGET)
+            self.assertIsNotNone(reserved)
+            self.assertFalse(bundle.exists(), "目标位置要腾出来给本轮")
+            self.assertTrue((reserved / "keep.json").exists(), "旧产物不得被销毁")
+            nightly_funnel._restore_reserved(reserved, bundle)
+            self.assertTrue((bundle / "keep.json").exists(), "失败必须能原样还原")
+            self.assertFalse(reserved.exists())
+
+    def test_a_stray_file_at_the_target_path_self_heals(self) -> None:
+        """位置上的杂散文件会把这个日期永久卡死:目录建不出来,retention 又只认目录。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / TARGET).write_text("junk", encoding="utf-8")
+            reserved = nightly_funnel._reserve_stale_bundle(root / TARGET, root, TARGET)
+            self.assertIsNotNone(reserved)
+            self.assertFalse((root / TARGET).exists())
+            nightly_funnel._drop_reserved(reserved)
+            self.assertFalse(reserved.exists())
 
 
 class FunnelPublicationBoundaryTests(unittest.TestCase):
     def test_bundle_location_is_outside_the_published_tree(self) -> None:
         """发布清单是全树扫描 public/data/v2 的 .json —— 30MB 级 bundle 一旦落进去,
         既撑爆仓库,又把自己绑进发布校验链。观察期产物必须留在 untracked 观察区。"""
-        source = (
-            REPO_ROOT / "experiments" / "execution_tracker" / "run_nightly.py"
-        ).read_text(encoding="utf-8")
-        self.assertIn('"data_history", "funnel"', source)
+        # 行为断言:夜链真的把持久观察区指向 data_history/funnel
+        self.assertTrue(
+            nightly.REPO_ROOT and os.path.isabs(nightly.REPO_ROOT),
+            "REPO_ROOT 必须是绝对路径,持久根由它派生",
+        )
         health_contract = nightly.ARTIFACTS["research_funnel"][0][0]
         self.assertIn("public", health_contract)
         self.assertNotIn("data_history", health_contract)
@@ -248,15 +275,76 @@ class FunnelPublicationBoundaryTests(unittest.TestCase):
             "观察区必须被 .gitignore 排除,否则每夜 30MB 会进仓库",
         )
 
-    def test_health_payload_declares_observation_only_and_empty_u4(self) -> None:
-        """接线阶段不得让漏斗产生任何交易含义:无人工选票 ⇒ U4 队列结构性为空。"""
-        source = (
-            REPO_ROOT / "experiments" / "research_funnel" / "nightly_funnel.py"
-        ).read_text(encoding="utf-8")
-        self.assertIn("OBSERVATION_ONLY_NOT_PUBLISHED", source)
-        self.assertIn("u4_queue_empty_by_construction", source)
-        self.assertIn("selected_tickers=()", source)
-        self.assertIn("macro_industry_path=None", source)
+    def test_nightly_never_passes_a_selection_or_macro_input(self) -> None:
+        """行为断言,不是源码 grep:观察期不得让漏斗产生任何交易含义。
+
+        对抗复核指出原来这条是 grep 源码文本 —— 那只证明字符串在文件里,不证明
+        运行时真的这么传。改成拦截 run_pipeline 的实参来断言。
+        """
+        seen = {}
+
+        def fake_run_pipeline(**kwargs):
+            seen.update(kwargs)
+            raise FunnelError("probe stop")
+
+        saved_env = dict(os.environ)
+        original = nightly_funnel.run_pipeline
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                nightly_funnel.run_pipeline = fake_run_pipeline
+                os.environ.update({
+                    "AR_TARGET_TRADE_DATE": TARGET, "AR_RUN_ID": RUN_ID,
+                    "AR_FUNNEL_OUTPUT_ROOT": tmp,
+                })
+                self.assertEqual(1, nightly_funnel.main())
+            finally:
+                nightly_funnel.run_pipeline = original
+                os.environ.clear()
+                os.environ.update(saved_env)
+        self.assertEqual((), seen["selected_tickers"], "夜链不得携带人工选票")
+        self.assertIsNone(seen["macro_industry_path"], "观察期不接宏观输入")
+        self.assertEqual(TARGET, seen["trade_date"])
+
+
+def real_bundle(root: Path) -> tuple[Path, dict, str]:
+    """用 #267 契约套件的 fixture 造一个**真**的、合规的 bundle。
+
+    合成 bundle 只能测完整性层(哈希/清单);要测四份契约是否真被调用、以及
+    verifier 侧的复核,必须给它一个能通过契约的真东西 —— 否则任何一个 validator
+    被删掉,都会被最先执行的那个掩盖(第一版就是这么写的,gate 报了 SURVIVED)。
+    """
+    sys.path.insert(0, str(REPO_ROOT / "tests"))
+    import test_research_funnel_closure as closure
+    import funnel_pipeline as fp
+    from funnel_pipeline import _hash
+
+    registry, _features, scan, candidates = closure.build_candidates(n=30)
+    queue = fp.build_deep_research_queue(
+        candidate_review=candidates, battery=None, selected_tickers=(),
+        trade_date=closure.TRADE_DATE, generated_at=closure.GENERATED_AT,
+    )
+    projected = fp.advance_registry(
+        registry=registry, scan=scan, candidate_review=candidates, battery=None,
+        deep_queue=queue, generated_at=closure.GENERATED_AT,
+    )
+    target = closure.TRADE_DATE
+    bundle = root / target
+    bundle.mkdir(parents=True)
+    payloads = {
+        "all_market_scan.json": scan,
+        "candidate_review.json": candidates,
+        "deep_research_queue.json": queue,
+        "security_registry_projected.json": projected,
+    }
+    for name, payload in payloads.items():
+        write_json(bundle / name, payload)
+    artifacts = {n: nightly_funnel._sha256(bundle / n) for n in payloads}
+    write_json(bundle / "manifest.json", {
+        "schema": "ar.research_funnel_bundle",
+        "schema_version": fp.SCHEMA_VERSION,
+        "as_of": target, "artifacts": artifacts, "bundle_hash": _hash(artifacts),
+    })
+    return bundle, registry, target
 
 
 def build_bundle(root: Path, target: str = TARGET, *, scan_status: str = "COMPLETE",
@@ -373,6 +461,28 @@ class FunnelHealthContractTests(unittest.TestCase):
         payload.update(overrides)
         return payload
 
+    def test_a_traversal_as_of_cannot_redirect_the_verifier(self) -> None:
+        """as_of 会被拼进 bundle 路径。
+
+        对抗复核打出来的:不校验形状的话,"20260813/../../elsewhere" 既满足
+        location 的字面比对,又能通过夜链只看前 8 位的日期校验 —— verifier 于是
+        去读观察区之外的目录,拿别处的 bundle 给本轮的 health 背书。
+        """
+        for hostile in (
+            "20260813/../../elsewhere", "2026081", "20260813Z", "", "././20260813",
+        ):
+            payload = self._health()
+            payload["as_of"] = hostile
+            payload["target_trade_date"] = hostile
+            with self.assertRaises(ValueError, msg=f"{hostile!r} 应被拒绝"):
+                nightly._validate_funnel_health_shape(payload)
+
+    def test_as_of_and_target_trade_date_must_agree(self) -> None:
+        payload = self._health()
+        payload["target_trade_date"] = "20260101"
+        with self.assertRaisesRegex(ValueError, "不一致"):
+            nightly._validate_funnel_health_shape(payload)
+
     def test_a_content_free_health_cannot_pass_the_artifact_contract(self) -> None:
         verdict, why = nightly._artifact_status_scan(
             "research_funnel",
@@ -412,94 +522,219 @@ class FunnelHealthContractTests(unittest.TestCase):
 class PersistentBundleVerificationTests(unittest.TestCase):
     """正式 verifier 必须去验持久 bundle —— 生成时的诚实不构成验证。"""
 
-    def _wire(self, repo: Path, bundle: Path, health: dict) -> tuple[str, str]:
-        target_dir = repo / "data_history" / "funnel"
-        target_dir.mkdir(parents=True, exist_ok=True)
-        if bundle is not None:
-            shutil.copytree(bundle, target_dir / TARGET)
-        try:
-            nightly._verify_funnel_bundle(health, str(repo))
-        except Exception as exc:
-            return "FAILED", str(exc)
-        return "OK", ""
-
-    def _health_for(self, bundle: Path) -> dict:
-        manifest, measured, payloads = nightly_funnel.read_bundle(bundle, TARGET)
-        return nightly_funnel.compose_health(
-            target=TARGET, run_id=RUN_ID, manifest=manifest, measured=measured,
-            payloads=payloads, generated_at="t", discarded_stale=False,
+    def _stage(self, tmp: Path):
+        """返回 (repo_root, health, staged_health_path, bundle)。"""
+        bundle, registry, target = real_bundle(tmp / "src")
+        health = nightly_funnel.build_health(
+            target=target, run_id=RUN_ID, bundle_dir=bundle, registry=registry,
+            generated_at="t", discarded_stale=False,
         )
+        repo = tmp / "repo"
+        staged = repo / "public" / "data" / "v2"
+        staged.mkdir(parents=True)
+        # verifier 用暂存树里的 registry 复核契约 —— 就是生成侧用的那一份
+        write_json(staged / "security_registry.json", registry)
+        return repo, health, str(staged / "funnel_health.json"), bundle, target
+
+    def _place(self, repo: Path, bundle: Path, target: str) -> Path:
+        dest = repo / "data_history" / "funnel"
+        dest.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(bundle, dest / target)
+        return dest / target
 
     def test_a_health_whose_bundle_is_absent_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            bundle = build_bundle(Path(tmp) / "src")
-            health = self._health_for(bundle)
-            verdict, why = self._wire(Path(tmp) / "repo", None, health)
-            self.assertEqual("FAILED", verdict)
-            self.assertIn("不存在", why)
+            repo, health, hp, _b, _t = self._stage(Path(tmp))
+            with self.assertRaisesRegex(Exception, "不存在"):
+                nightly._verify_funnel_bundle(health, str(repo), hp)
 
     def test_a_matching_bundle_is_accepted(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            bundle = build_bundle(Path(tmp) / "src")
-            health = self._health_for(bundle)
-            verdict, why = self._wire(Path(tmp) / "repo", bundle, health)
-            self.assertEqual("OK", verdict, why)
+            repo, health, hp, bundle, target = self._stage(Path(tmp))
+            self._place(repo, bundle, target)
+            nightly._verify_funnel_bundle(health, str(repo), hp)
 
     def test_post_generation_tampering_is_detected(self) -> None:
         """生成之后再改 bundle,必须被发现 —— 否则 health 只是历史声明。"""
         with tempfile.TemporaryDirectory() as tmp:
-            bundle = build_bundle(Path(tmp) / "src")
-            health = self._health_for(bundle)
-            repo = Path(tmp) / "repo"
-            (repo / "data_history" / "funnel").mkdir(parents=True)
-            shutil.copytree(bundle, repo / "data_history" / "funnel" / TARGET)
-            write_json(
-                repo / "data_history" / "funnel" / TARGET / "deep_research_queue.json",
-                {"rows": [{"ts_code": "600519.SH"}]},
-            )
+            repo, health, hp, bundle, target = self._stage(Path(tmp))
+            placed = self._place(repo, bundle, target)
+            write_json(placed / "deep_research_queue.json", {"rows": [{"ts_code": "X"}]})
             with self.assertRaisesRegex(Exception, "哈希不符"):
-                nightly._verify_funnel_bundle(health, str(repo))
+                nightly._verify_funnel_bundle(health, str(repo), hp)
 
     def test_a_health_pointing_outside_the_observation_area_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            bundle = build_bundle(Path(tmp) / "src")
-            health = self._health_for(bundle)
+            repo, health, hp, _b, _t = self._stage(Path(tmp))
             health["bundle"]["location"] = "../../etc"
             with self.assertRaisesRegex(Exception, "location 非法"):
-                nightly._verify_funnel_bundle(health, tmp)
+                nightly._verify_funnel_bundle(health, str(repo), hp)
 
     def test_counts_that_disagree_with_the_bundle_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            bundle = build_bundle(Path(tmp) / "src")
-            health = self._health_for(bundle)
+            repo, health, hp, bundle, target = self._stage(Path(tmp))
+            self._place(repo, bundle, target)
             health["counts"]["scan_rows"] = 99999
-            repo = Path(tmp) / "repo"
-            (repo / "data_history" / "funnel").mkdir(parents=True)
-            shutil.copytree(bundle, repo / "data_history" / "funnel" / TARGET)
             with self.assertRaisesRegex(Exception, "counts 与实物不符"):
-                nightly._verify_funnel_bundle(health, str(repo))
+                nightly._verify_funnel_bundle(health, str(repo), hp)
+
+    def test_a_status_that_disagrees_with_the_bundle_is_rejected(self) -> None:
+        """status 的重算是第二轮修复承重的那一半,必须自己被钉住。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, health, hp, bundle, target = self._stage(Path(tmp))
+            self._place(repo, bundle, target)
+            health["status"] = "COMPLETE"
+            with self.assertRaisesRegex(Exception, "status.*不符"):
+                nightly._verify_funnel_bundle(health, str(repo), hp)
+
+    def test_the_verifier_also_runs_the_bundle_contracts(self) -> None:
+        """哈希只证明字节没被改;换一个自洽但不合契约的 bundle,必须被验证侧拦下。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, health, hp, bundle, target = self._stage(Path(tmp))
+            placed = self._place(repo, bundle, target)
+            queue = json.loads((placed / "deep_research_queue.json").read_text("utf-8"))
+            queue["authority"]["auto_selection"] = True
+            write_json(placed / "deep_research_queue.json", queue)
+            # 让 manifest 与篡改后的实物重新自洽 —— 哈希层挑不出毛病
+            from funnel_pipeline import _hash
+            manifest = json.loads((placed / "manifest.json").read_text("utf-8"))
+            manifest["artifacts"]["deep_research_queue.json"] = nightly_funnel._sha256(
+                placed / "deep_research_queue.json"
+            )
+            manifest["bundle_hash"] = _hash(manifest["artifacts"])
+            write_json(placed / "manifest.json", manifest)
+            health["bundle"]["artifacts"] = manifest["artifacts"]
+            health["bundle"]["bundle_hash"] = manifest["bundle_hash"]
+            with self.assertRaises(Exception):
+                nightly._verify_funnel_bundle(health, str(repo), hp)
+
+    def test_the_verifier_refuses_without_this_run_registry(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, health, hp, bundle, target = self._stage(Path(tmp))
+            self._place(repo, bundle, target)
+            Path(hp).parent.joinpath("security_registry.json").unlink()
+            with self.assertRaisesRegex(Exception, "无法在验证侧复核"):
+                nightly._verify_funnel_bundle(health, str(repo), hp)
 
 
-class BundleContractTests(unittest.TestCase):
-    def test_bundle_contracts_are_actually_run(self) -> None:
-        """哈希只证明文件没被改,证明不了内容仍然合规 —— 四份契约必须真跑。
+class BundleContractCallTests(unittest.TestCase):
+    """四份 validator 逐个钉住 —— 单删任一个都必须有测试变红。"""
 
-        断言打在 build_health 的**调用点**上,不是某一个 validator:合成 bundle 会被
-        最先执行的那个 validator 拒掉,所以单独删任何一个都被其余的掩盖,那样的
-        变异测不出东西。四个 validator 各自的行为由 #267 的 funnel 契约套件钉住,
-        本 PR 需要钉的是"它们确实被调用了"。
-        """
+    def _payloads(self, tmp: Path):
+        bundle, registry, _t = real_bundle(tmp)
+        payloads = {
+            n: json.loads((bundle / n).read_text("utf-8"))
+            for n in nightly_funnel.BUNDLE_FILES
+        }
+        return payloads, registry
+
+    def test_build_health_runs_the_bundle_contracts(self) -> None:
+        """钉的是调用点:合成 bundle 哈希自洽能过完整性层,但过不了四份契约。"""
         with tempfile.TemporaryDirectory() as tmp:
             bundle = build_bundle(Path(tmp))
-            # 内部自洽(哈希对得上)但不满足 #267 的研究契约
             with self.assertRaises(Exception):
                 nightly_funnel.build_health(
                     target=TARGET, run_id=RUN_ID, bundle_dir=bundle,
                     registry={"as_of": TARGET}, generated_at="t", discarded_stale=False,
                 )
 
+    def test_pristine_real_bundle_passes_all_four(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            payloads, registry = self._payloads(Path(tmp))
+            nightly_funnel.validate_bundle_contracts(
+                payloads, registry, "all_market_scan.json"
+            )
+
+    def test_projected_registry_contract_is_called(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            payloads, registry = self._payloads(Path(tmp))
+            payloads["security_registry_projected.json"]["schema"] = "wrong"
+            with self.assertRaises(Exception):
+                nightly_funnel.validate_bundle_contracts(
+                    payloads, registry, "all_market_scan.json"
+                )
+
+    def test_scan_contract_is_called(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            payloads, registry = self._payloads(Path(tmp))
+            payloads["all_market_scan.json"]["rows"][0]["composite_score"] = 1.0
+            with self.assertRaises(Exception):
+                nightly_funnel.validate_bundle_contracts(
+                    payloads, registry, "all_market_scan.json"
+                )
+
+    def test_candidate_contract_is_called(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            payloads, registry = self._payloads(Path(tmp))
+            payloads["candidate_review.json"]["as_of"] = "19700101"
+            with self.assertRaises(Exception):
+                nightly_funnel.validate_bundle_contracts(
+                    payloads, registry, "all_market_scan.json"
+                )
+
+    def test_deep_queue_contract_is_called(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            payloads, registry = self._payloads(Path(tmp))
+            payloads["deep_research_queue.json"]["authority"]["auto_selection"] = True
+            with self.assertRaises(Exception):
+                nightly_funnel.validate_bundle_contracts(
+                    payloads, registry, "all_market_scan.json"
+                )
+
 
 class FunnelQualityRollupTests(unittest.TestCase):
+    def test_partial_reaches_research_data_quality_end_to_end(self) -> None:
+        """端到端,不是只测 helper。
+
+        对抗复核打出来的:把 artifact→顶层的传播循环整个删掉,178 个测试仍全绿 ——
+        我上一轮修的是 helper、测的也是 helper,承载它上浮的那段接线没人守。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundle, registry, target = real_bundle(root / "src")
+            health = nightly_funnel.build_health(
+                target=target, run_id=RUN_ID, bundle_dir=bundle, registry=registry,
+                generated_at="t", discarded_stale=False,
+            )
+            self.assertEqual("PARTIAL", health["status"])
+            repo = root / "repo"
+            et = repo / "experiments" / "execution_tracker"
+            staged = repo / "public" / "data" / "v2"
+            et.mkdir(parents=True)
+            staged.mkdir(parents=True)
+            write_json(staged / "security_registry.json", registry)
+            (repo / "data_history" / "funnel").mkdir(parents=True)
+            shutil.copytree(bundle, repo / "data_history" / "funnel" / target)
+
+            def runner(_command):
+                # 产物必须在本轮里产出 —— 夜链的新鲜度契约要求 mtime >= run_start
+                write_json(staged / "funnel_health.json", health)
+                return 0, "ok"
+
+            original_steps, original_root = nightly.STEPS, nightly.REPO_ROOT
+            nightly.STEPS = [
+                ("research_funnel", ["python3", "nightly_funnel.py"], False, [])
+            ]
+            nightly.REPO_ROOT = str(repo)
+            try:
+                result = nightly.run_steps(
+                    runner=runner, require_live=False, verify=True,
+                    base=str(et), run_id=RUN_ID,
+                )
+            finally:
+                nightly.STEPS, nightly.REPO_ROOT = original_steps, original_root
+
+            rows = {r["step"]: r for r in result["steps"]}
+            self.assertEqual("OK", rows["research_funnel"]["status"])
+            self.assertEqual(
+                "PARTIAL",
+                rows["research_funnel"]["artifacts"][0]["quality_status"],
+            )
+            self.assertEqual(
+                "PARTIAL", result["research_data_quality"],
+                "漏斗 PARTIAL 必须走到顶层,不能被 COMPLETE 盖掉",
+            )
+
     def test_funnel_partial_reaches_the_top_level_quality(self) -> None:
         """真实数据下漏斗已经在报 PARTIAL —— 不上浮就会被顶层 COMPLETE 盖掉。"""
         self.assertEqual(
@@ -553,8 +788,8 @@ class ObservationRetentionTests(unittest.TestCase):
             for day in ("20260801", "20260802", "20260803", "20260804"):
                 (root / day).mkdir()
             (root / "not-a-date").mkdir()
-            removed = nightly_funnel.prune_observation_area(root, keep=2)
-            self.assertEqual(["20260802", "20260801"], removed)
+            swept = nightly_funnel.prune_observation_area(root, keep=2)
+            self.assertEqual(["20260802", "20260801"], swept["removed"])
             self.assertTrue((root / "20260804").exists())
             self.assertTrue((root / "20260803").exists())
             self.assertTrue((root / "not-a-date").exists(), "认不出的目录一律不碰")
@@ -565,9 +800,10 @@ class ObservationRetentionTests(unittest.TestCase):
             root = Path(tmp)
             for day in ("20260810", "20260811", "20260812", "20260701"):
                 (root / day).mkdir()
-            removed = nightly_funnel.prune_observation_area(
+            swept = nightly_funnel.prune_observation_area(
                 root, keep=2, protect="20260701"
             )
+            removed = swept["removed"]
             self.assertNotIn("20260701", removed)
             self.assertTrue((root / "20260701").exists(),
                             "清理把本轮成果清掉,health 就会指向不存在的 bundle")

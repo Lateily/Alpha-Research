@@ -233,9 +233,9 @@ def _discard_failed_macro_outputs(base):
 FUNNEL_HEALTH_SCHEMA = "ar.research_funnel_health"
 
 
-def _validate_funnel_health(data):
+def _validate_funnel_health(data, artifact_path=None):
     _validate_funnel_health_shape(data)
-    _verify_funnel_bundle(data, REPO_ROOT)
+    _verify_funnel_bundle(data, REPO_ROOT, artifact_path)
 
 
 def _validate_funnel_health_shape(data):
@@ -249,6 +249,18 @@ def _validate_funnel_health_shape(data):
         raise ValueError("health 必须是对象")
     if data.get("schema") != FUNNEL_HEALTH_SCHEMA:
         raise ValueError(f"schema 非法: {data.get('schema')!r}")
+    # governance-mutation: FUNNEL_NIGHTLY_HEALTH_DATE_SHAPE
+    # as_of 会被拼进 bundle 路径。不校验形状的话,"20260813/../../elsewhere" 既能
+    # 满足 location 的字面比对,又能通过夜链只看前 8 位的日期校验 —— 于是 verifier
+    # 会去读观察区之外的目录。日期字段必须是 8 位数字,且两个字段必须一致。
+    for key in ("as_of", "target_trade_date"):
+        value = str(data.get(key) or "")
+        if not (len(value) == 8 and value.isdigit()):
+            raise ValueError(f"{key} 必须是 8 位日期: {value!r}")
+    if data["as_of"] != data["target_trade_date"]:
+        raise ValueError(
+            f"as_of={data['as_of']!r} 与 target_trade_date={data['target_trade_date']!r} 不一致"
+        )
     status = str(data.get("status") or "").upper()
     if status not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED"):
         raise ValueError(f"status 非法: {status!r}")
@@ -286,7 +298,7 @@ def _validate_funnel_health_shape(data):
         raise ValueError("观察期不得声称已接入宏观输入")
 
 
-def _verify_funnel_bundle(data, repo_root):
+def _verify_funnel_bundle(data, repo_root, artifact_path=None):
     """正式 verifier 必须去验持久 bundle,不能只看 health 自己说了什么。
 
     复审第二轮的 BLOCKER:格式完整但全自报的 health —— bundle 根本不存在 ——
@@ -337,10 +349,30 @@ def _verify_funnel_bundle(data, repo_root):
         str(scan.get("data_status") or scan.get("status") or "").upper(),
         str(candidates.get("status") or "").upper(),
     )
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_STATUS
     if str(data.get("status") or "").upper() != measured_status:
         raise ValueError(
             f"health 的 status={data.get('status')!r} 与实物推导 {measured_status} 不符"
         )
+
+    # 哈希只证明字节没被改,证明不了内容仍然合规:生成之后换一个"自洽但不合契约"
+    # 的 bundle,单靠哈希绑定是发现不了的。所以验证侧也要跑一遍 #267 的四份契约。
+    # registry 取本轮**暂存树**里的那一份 —— 就是生成侧用的那一份;取 live 的会
+    # 在发布前读到昨天的,造成假失败。
+    registry = None
+    if artifact_path:
+        candidate = os.path.join(
+            os.path.dirname(os.path.abspath(artifact_path)), "security_registry.json"
+        )
+        if os.path.isfile(candidate):
+            with open(candidate, encoding="utf-8") as fh:
+                registry = json.load(fh)
+    # governance-mutation: FUNNEL_NIGHTLY_VERIFIER_CONTRACTS
+    if registry is None:
+        raise ValueError("找不到本轮 registry,无法在验证侧复核 bundle 契约")
+    nightly_funnel.validate_bundle_contracts(
+        payloads, registry, "all_market_scan.json"
+    )
 
 
 def _discard_failed_funnel_outputs(base):
@@ -468,7 +500,7 @@ def _artifact_status_scan(step, data, artifact_path=None):
     if step in FUNNEL_DATA_STEPS:
         # governance-mutation: FUNNEL_NIGHTLY_HEALTH_CONTRACT
         try:
-            _validate_funnel_health(data)
+            _validate_funnel_health(data, artifact_path)
         except Exception as exc:
             return "FAILED", f"漏斗 health 契约校验失败: {exc}"
         return "OK", ""
@@ -712,6 +744,7 @@ def run_steps(
     report = "COMPLETE" if not non_ok else "INCOMPLETE"
     research_quality = []
     for entry in results:
+        # governance-mutation: FUNNEL_NIGHTLY_QUALITY_PROPAGATION
         for artifact in entry.get("artifacts", []):
             quality = artifact.get("quality_status")
             if quality and quality != "COMPLETE":
