@@ -1,0 +1,6 @@
+interface:
+  display_name: "AR Adversarial Review"
+  short_description: "Verify AR PR claims and failure paths before merge"
+  default_prompt: "Use $ar-adversarial-review to audit this PR and return a merge verdict with reproducible findings."
+policy:
+  allow_implicit_invocation: true

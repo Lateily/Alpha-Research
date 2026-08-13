@@ -2,6 +2,14 @@ node_modules
 dist
 .DS_Store
 *.log
+.ai-workspace/
+.codex-log/
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
 __pycache__/
 *.pyc
 __pycache__/

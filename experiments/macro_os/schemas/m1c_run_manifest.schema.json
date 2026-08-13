@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lateily.github.io/Alpha-Research/schemas/macro/m1c_run_manifest.schema.json",
+  "title": "AR Macro M1-C Runtime Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "report", "data_quality", "pipeline_status", "mode", "run_id", "target_trade_date", "as_of", "generated_at", "formula_version", "components", "artifacts", "degraded_components", "risk_budget_annotation", "policy", "disclaimer"],
+  "properties": {
+    "schema": {"const": "ar.macro.m1c_run_manifest"},
+    "schema_version": {"const": "1.0"},
+    "report": {"enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"]},
+    "data_quality": {"enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"]},
+    "pipeline_status": {"const": "OK"},
+    "mode": {"const": "CALIBRATING"},
+    "run_id": {"type": "string", "minLength": 1},
+    "target_trade_date": {"type": "string", "pattern": "^[0-9]{8}$"},
+    "as_of": {"type": "string", "format": "date-time"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "formula_version": {"const": "macro-m1c/1.0"},
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["m0b", "m0b3", "m1a", "m1b"],
+      "properties": {
+        "m0b": {"$ref": "#/$defs/component"},
+        "m0b3": {"$ref": "#/$defs/component"},
+        "m1a": {"$ref": "#/$defs/component"},
+        "m1b": {"$ref": "#/$defs/component"}
+      }
+    },
+    "artifacts": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "degraded_components": {"type": "array", "items": {"enum": ["m0b", "m0b3", "m1a", "m1b"]}, "uniqueItems": true},
+    "risk_budget_annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_state", "source_context", "new_position_ceiling", "research_priority", "enforceable", "formal_blocking_authority", "reason"],
+      "properties": {
+        "candidate_state": {"type": ["string", "null"]},
+        "source_context": {"type": ["string", "null"]},
+        "new_position_ceiling": {"enum": ["STARTER_CAPPED", "UNCHANGED"]},
+        "research_priority": {"enum": ["REVIEW_RISK_FIRST", "UNCHANGED"]},
+        "enforceable": {"const": false},
+        "formal_blocking_authority": {"const": false},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "policy": {"$ref": "state_rules.schema.json#/$defs/policy"},
+    "disclaimer": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pipeline_status", "status", "data_quality", "run_id", "reason", "artifacts"],
+      "properties": {
+        "pipeline_status": {"const": "OK"},
+        "status": {"type": "string", "minLength": 1},
+        "data_quality": {"enum": ["COMPLETE", "PARTIAL", "DATA_BLOCKED"]},
+        "run_id": {"type": ["string", "null"]},
+        "reason": {"type": "string", "minLength": 1},
+        "artifacts": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+      }
+    }
+  }
+}

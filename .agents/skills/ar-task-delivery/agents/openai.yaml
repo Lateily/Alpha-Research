@@ -1,0 +1,6 @@
+interface:
+  display_name: "AR Task Delivery"
+  short_description: "Deliver scoped AR work with tests and PR evidence"
+  default_prompt: "Use $ar-task-delivery to implement this scoped task through verification and a reviewable PR."
+policy:
+  allow_implicit_invocation: true

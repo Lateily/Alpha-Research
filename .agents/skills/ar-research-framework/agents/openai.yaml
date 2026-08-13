@@ -1,0 +1,6 @@
+interface:
+  display_name: "AR Research Framework"
+  short_description: "Build auditable AR research and Macro pipelines"
+  default_prompt: "Use $ar-research-framework to implement this research-engineering task with PIT, provenance, and degraded-state tests."
+policy:
+  allow_implicit_invocation: true

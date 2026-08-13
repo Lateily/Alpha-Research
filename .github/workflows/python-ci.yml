@@ -8,6 +8,7 @@ on:
       # R-015 账本是 .jsonl —— 不加这条,"只改账本数据"的 PR 根本不触发本工作流,
       # 而那正是第③层唯一要把关的 diff 形态(实测:.jsonl 不匹配 *.json)
       - "experiments/execution_tracker/event_ledger.jsonl*"
+      - "experiments/execution_tracker/publication_migration_events.jsonl*"
       - "scripts/**/*.py"
       - "scripts/llm/**/*.json"
       - "tests/**"
@@ -15,6 +16,14 @@ on:
       - "public/data/v2/**"
       - "docs/research/macro/**"
       - "docs/contracts/macro/**"
+      - ".agents/skills/**"
+      - "AGENTS.md"
+      - "experiments/AGENTS.md"
+      - "scripts/llm/AGENTS.md"
+      - "web/AGENTS.md"
+      - "config/team-ai-workspace.v1.json"
+      - "docs/team/TEAM_AI_WORKSPACE_V1.md"
+      - ".gitignore"
       - "api/**"
       - ".github/workflows/python-ci.yml"
   # 直推 main 也必须过闸 —— 0712 的 git-reset-hard 正是这个形态,
@@ -70,12 +79,22 @@ jobs:
       # 覆盖:registry 自检 · 两条注册路径确实打戳 · 账本挂掉时登记被拒且信号不落盘
       - name: Registry schema v2 + ledger wiring regression
         run: python3 tests/test_registry_schema_v2.py
+      # R-043:已发布 manifest 合法迁移。覆盖审批绑定、同锁、WAL 崩溃恢复、
+      # TOCTOU、双 manifest 留档与旧 run_id 拒绝。
+      - name: Publication manifest migration regression (offline)
+        run: |
+          python3 tests/test_publication_migration_offline.py
+          python3 experiments/execution_tracker/publication_migration.py --selftest
       # AIOS Harness A-013:provider-neutral AgentAdapter 契约(零网络、零成本)
       - name: Agent adapter contract regression (offline)
         run: python3 tests/test_agent_adapter_offline.py
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py
+      # Team AI Workspace:repo instructions, Skills, task compiler smoke,
+      # runtime baseline metadata, and redacted secret/local-state hygiene.
+      - name: Team AI Workspace contract and doctor regression (offline)
+        run: python3 tests/test_team_ai_workspace.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
@@ -94,6 +113,12 @@ jobs:
         run: python3 experiments/research_funnel/feature_store.py --selftest
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
+      # R-033/R-034/R-035:六通道独立并集、U0 状态投影、同池随机控制、
+      # 以及仅由 Junyan 显式选择生成的 U4 深研队列。
+      - name: Full-market research funnel closure regression (offline)
+        run: |
+          python3 experiments/research_funnel/funnel_pipeline.py --selftest
+          python3 tests/test_research_funnel_closure.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest
@@ -111,6 +136,9 @@ jobs:
       # ── Macro OS M1-B:行业敏感度 + 组合暴露 + 只读面板 ──
       - name: Macro OS M1-B industry and portfolio consumers (offline)
         run: python3 tests/test_macro_m1b_offline.py
+      # ── Macro OS M1-C:夜链接线 + 同轮输入 + 原子发布清单 + 校准权限 ──
+      - name: Macro OS M1-C production wiring (offline)
+        run: python3 tests/test_macro_m1c_offline.py
       # ── Macro OS M0-B3:官方 URL 发现 + 自适应调度 + 预期登记 WAL ──
       - name: Macro OS M0-B3 discovery and scheduler regression (offline)
         run: python3 tests/test_macro_m0b3_offline.py
