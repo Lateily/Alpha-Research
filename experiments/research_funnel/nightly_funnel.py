@@ -41,7 +41,11 @@ from funnel_pipeline import (  # noqa: E402
     _date8,
     _hash,
     run_pipeline,
+    validate_all_market_scan,
+    validate_candidate_review,
+    validate_deep_research_queue,
 )
+from security_registry import validate_registry  # noqa: E402
 
 HEALTH_SCHEMA = "ar.research_funnel_health"
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -118,8 +122,14 @@ def _discard_stale_bundle(bundle_dir: Path, output_root: Path, target: str) -> b
     return True
 
 
-def prune_observation_area(output_root: Path, keep: int) -> list[str]:
+def prune_observation_area(
+    output_root: Path, keep: int, protect: str | None = None
+) -> list[str]:
     """观察区约 30MB/交易日,不清理一年就是 7-8GB。只保留最近 keep 个日期目录。
+
+    `protect` 是本轮目标,永不删除。复审打出来的洞:重跑历史日期时,刚生成的那个
+    目录按日期排序落在末尾,会被当成过期数据删掉,随后发布一份指向不存在 bundle
+    的 health —— 清理把本轮成果清掉,是 retention 最典型的自伤。
 
     只认 8 位日期目录名,只删经 _bundle_dir 校验过的路径;认不出的东西一律不碰。
     """
@@ -133,6 +143,9 @@ def prune_observation_area(output_root: Path, keep: int) -> list[str]:
     )
     removed = []
     for name in dated[keep:]:
+        # governance-mutation: FUNNEL_NIGHTLY_RETENTION_PROTECT
+        if protect is not None and name == protect:
+            continue
         shutil.rmtree(_bundle_dir(output_root, name))
         removed.append(name)
     return removed
@@ -158,21 +171,24 @@ def _worst(*qualities: str) -> str:
     return max(seen, key=_QUALITY_ORDER.index)
 
 
-def build_health(
-    *, target: str, run_id: str, outputs: dict[str, Path], bundle_dir: Path,
-    generated_at: str, discarded_stale: bool,
-) -> dict:
-    """health 的每个字段都必须由 bundle 实物推导,不得是声称。
+def read_bundle(bundle_dir: Path, target: str) -> tuple[dict, dict[str, str], dict]:
+    """把 bundle 读成"经过完整性校验的证据",而不是"几个恰好在手边的路径"。
 
-    这条是复审打出来的洞:原来 status 写死 COMPLETE、u4_queue_empty 写死 True、
-    bundle_hash 原样抄 manifest —— 底层 DATA_BLOCKED、U4 非空、哈希伪造,health
-    照样报 COMPLETE(已实测)。一份把自己的结论硬编码进去的 health 不是证据。
+    只从 bundle_dir 里按固定文件名读 —— 复审第二轮打出来的洞之一是 build_health
+    从调用方传进来的 outputs 读 status/counts,那些路径可以指向 bundle 之外,
+    等于给"用别处的数据描述这个 bundle"留了门。
     """
     manifest = _load(bundle_dir / "manifest.json")
     # governance-mutation: FUNNEL_NIGHTLY_HEALTH_EVIDENCE
     if str(manifest.get("as_of") or "") != target:
         raise FunnelError(
             f"bundle manifest 的 as_of={manifest.get('as_of')!r} 与本轮 target {target} 不符"
+        )
+    if manifest.get("schema") != "ar.research_funnel_bundle":
+        raise FunnelError(f"bundle manifest schema 非法: {manifest.get('schema')!r}")
+    if manifest.get("schema_version") != SCHEMA_VERSION:
+        raise FunnelError(
+            f"bundle manifest 版本={manifest.get('schema_version')!r} 与本工具 {SCHEMA_VERSION} 不符"
         )
     declared = manifest.get("artifacts")
     if not isinstance(declared, dict) or set(declared) != set(BUNDLE_FILES):
@@ -183,10 +199,51 @@ def build_health(
         raise FunnelError(f"bundle 实物与 manifest 哈希不符: {drifted}")
     if manifest.get("bundle_hash") != _hash(declared):
         raise FunnelError("bundle_hash 与产物清单不自洽")
+    payloads = {name: _load(bundle_dir / name) for name in BUNDLE_FILES}
+    return manifest, measured, payloads
 
-    scan = _load(outputs["scan"])
-    candidates = _load(outputs["candidates"])
-    queue = _load(outputs["queue"])
+
+def validate_bundle_contracts(payloads: dict, registry: dict, scan_key: str) -> None:
+    """跑四份既有契约 validator。
+
+    复审第二轮:build_health 只核对了哈希,没让 bundle 过一遍 #267 合入的那四份
+    契约 —— 哈希只证明"文件没被改",证明不了"内容仍然合规"。
+    """
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_CONTRACTS
+    validate_registry(payloads["security_registry_projected.json"])
+    validate_all_market_scan(payloads[scan_key], registry)
+    validate_candidate_review(
+        payloads["candidate_review.json"], registry, payloads[scan_key]
+    )
+    validate_deep_research_queue(payloads["deep_research_queue.json"])
+
+
+def build_health(
+    *, target: str, run_id: str, bundle_dir: Path, registry: dict,
+    generated_at: str, discarded_stale: bool,
+) -> dict:
+    """health 的每个字段都必须由 bundle 实物推导,不得是声称。
+
+    这条是复审打出来的洞:原来 status 写死 COMPLETE、u4_queue_empty 写死 True、
+    bundle_hash 原样抄 manifest —— 底层 DATA_BLOCKED、U4 非空、哈希伪造,health
+    照样报 COMPLETE(已实测)。一份把自己的结论硬编码进去的 health 不是证据。
+    """
+    manifest, measured, payloads = read_bundle(bundle_dir, target)
+    validate_bundle_contracts(payloads, registry, "all_market_scan.json")
+    return compose_health(
+        target=target, run_id=run_id, manifest=manifest, measured=measured,
+        payloads=payloads, generated_at=generated_at, discarded_stale=discarded_stale,
+    )
+
+
+def compose_health(
+    *, target: str, run_id: str, manifest: dict, measured: dict[str, str],
+    payloads: dict, generated_at: str, discarded_stale: bool,
+) -> dict:
+    """把已校验的实物**转述**成 health。这一层只做推导,不做断言。"""
+    scan = payloads["all_market_scan.json"]
+    candidates = payloads["candidate_review.json"]
+    queue = payloads["deep_research_queue.json"]
     queue_rows = _row_count(queue)
     status = _worst(
         str(scan.get("data_status") or scan.get("status") or "").upper(),
@@ -260,10 +317,11 @@ def run(argv: list[str] | None = None) -> int:
         generated_at=generated_at,
     )
     health = build_health(
-        target=target, run_id=run_id, outputs=outputs, bundle_dir=bundle_dir,
+        target=target, run_id=run_id, bundle_dir=bundle_dir,
+        registry=_load(public_v2 / "security_registry.json"),
         generated_at=generated_at, discarded_stale=discarded,
     )
-    pruned = prune_observation_area(output_root, keep)
+    pruned = prune_observation_area(output_root, keep, protect=target)
     health["retention"] = {"keep_days": keep, "pruned": pruned}
     # health 最后写:它是本步的完成戳。中途死掉 ⇒ 契约判"产物不存在" ⇒ fail-closed。
     _atomic_write_json(public_v2 / "funnel_health.json", health)

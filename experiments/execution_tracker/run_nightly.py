@@ -179,7 +179,13 @@ def _research_quality(step, data):
     contract is publishable evidence with an explicit quality gap, not a process
     failure. Total E1 coverage loss is promoted to DATA_BLOCKED.
     """
-    if step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS or not isinstance(data, dict):
+    # 漏斗的 PARTIAL 必须上浮到顶层 research_data_quality —— 不上浮的话,真实数据下
+    # 已经在报 PARTIAL 的漏斗会被顶层的 COMPLETE 盖掉,那正是 pipeline_status ⊥
+    # data_quality 这条要防的混淆。承重的只有这个集合:漏斗的 status 字段与研究步
+    # 同形,下面的通用尾部本来就能正确转述,不需要再写一个分支。
+    # governance-mutation: FUNNEL_NIGHTLY_QUALITY_ROLLUP
+    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS
+            or not isinstance(data, dict)):
         return None
     if step in MACRO_DATA_STEPS:
         return _normalize_data_quality(data.get("data_quality"))
@@ -228,6 +234,11 @@ FUNNEL_HEALTH_SCHEMA = "ar.research_funnel_health"
 
 
 def _validate_funnel_health(data):
+    _validate_funnel_health_shape(data)
+    _verify_funnel_bundle(data, REPO_ROOT)
+
+
+def _validate_funnel_health_shape(data):
     """漏斗 health 的内容必须被校验,不能只看文件在不在。
 
     复审打出来的洞:原来三个字段的极简 JSON 就能通过产物契约 —— 只要日期与
@@ -271,6 +282,65 @@ def _validate_funnel_health(data):
         )
     if policy.get("u4_selection_supplied") is not False:
         raise ValueError("观察期不得携带人工选票")
+    if policy.get("macro_input_wired") is not False:
+        raise ValueError("观察期不得声称已接入宏观输入")
+
+
+def _verify_funnel_bundle(data, repo_root):
+    """正式 verifier 必须去验持久 bundle,不能只看 health 自己说了什么。
+
+    复审第二轮的 BLOCKER:格式完整但全自报的 health —— bundle 根本不存在 ——
+    照样通过 verify_step_artifacts;生成之后删改 bundle 也发现不了。上一轮我把
+    **生成时**的推导补上了,但生成时的诚实不构成验证:验证方必须自己去看实物。
+    """
+    research_dir = os.path.abspath(os.path.join(HERE, "..", "research_funnel"))
+    if research_dir not in sys.path:
+        sys.path.insert(0, research_dir)
+    import nightly_funnel
+
+    as_of = str(data.get("as_of") or "")
+    bundle = data.get("bundle") or {}
+    location = str(bundle.get("location") or "")
+    # location 必须逐字等于约定位置:否则可以指向任意目录来"找一个能对上的 bundle"
+    if location != f"data_history/funnel/{as_of}":
+        raise ValueError(f"bundle.location 非法: {location!r}")
+    bundle_dir = os.path.join(repo_root, "data_history", "funnel", as_of)
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_EXISTS
+    if not os.path.isdir(bundle_dir):
+        raise ValueError(f"health 声称的 bundle 不存在: {location}")
+
+    from pathlib import Path as _Path
+
+    # read_bundle 自己会核 manifest 的 as_of/schema/版本/逐产物哈希/bundle_hash 自洽
+    manifest, measured, payloads = nightly_funnel.read_bundle(_Path(bundle_dir), as_of)
+    if bundle.get("artifacts") != measured:
+        raise ValueError("health 登记的产物摘要与磁盘实物不符")
+    if bundle.get("bundle_hash") != manifest.get("bundle_hash"):
+        raise ValueError("health 的 bundle_hash 与 manifest 不符")
+
+    # status 与 counts 由实物重算,health 只是转述,不是权威
+    scan = payloads["all_market_scan.json"]
+    candidates = payloads["candidate_review.json"]
+    measured_counts = {
+        "scan_rows": nightly_funnel._row_count(scan),
+        "candidate_rows": nightly_funnel._row_count(candidates),
+        "deep_queue_rows": nightly_funnel._row_count(
+            payloads["deep_research_queue.json"]
+        ),
+    }
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_COUNTS
+    if data.get("counts") != measured_counts:
+        raise ValueError(
+            f"health 的 counts 与实物不符: {data.get('counts')} != {measured_counts}"
+        )
+    measured_status = nightly_funnel._worst(
+        str(scan.get("data_status") or scan.get("status") or "").upper(),
+        str(candidates.get("status") or "").upper(),
+    )
+    if str(data.get("status") or "").upper() != measured_status:
+        raise ValueError(
+            f"health 的 status={data.get('status')!r} 与实物推导 {measured_status} 不符"
+        )
 
 
 def _discard_failed_funnel_outputs(base):

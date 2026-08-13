@@ -1336,6 +1336,68 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_retention_refuses_a_non_positive_keep",
         rationale="A silently clamped retention window hides a misconfigured sweep.",
     ),
+    # ── 复审第二轮:verifier 不验持久 bundle / PARTIAL 不上浮 / retention 删本轮 /
+    #    契约未收口 ──
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_EXISTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if not os.path.isdir(bundle_dir):\n"
+            '        raise ValueError(f"health 声称的 bundle 不存在: {location}")'
+        ),
+        after="    if False:\n        pass",
+        expected_failure_marker="test_a_health_whose_bundle_is_absent_is_rejected",
+        rationale="A self-reported health with no bundle on disk is a claim, not evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_COUNTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    if data.get("counts") != measured_counts:',
+        after="    if False:",
+        expected_failure_marker="test_counts_that_disagree_with_the_bundle_are_rejected",
+        rationale="Counts must be recomputed from the bundle, never taken on the health's word.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_QUALITY_ROLLUP",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS\n"
+        ),
+        after=(
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS\n"
+        ),
+        expected_failure_marker="test_funnel_partial_reaches_the_top_level_quality",
+        rationale="A funnel PARTIAL that never reaches the rollup is hidden behind a top-level COMPLETE.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RETENTION_PROTECT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "        if protect is not None and name == protect:\n"
+            "            continue"
+        ),
+        after="        pass",
+        expected_failure_marker="test_retention_never_deletes_the_current_target",
+        rationale="Re-running a historical date must not let the sweep delete this run's own bundle.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_CONTRACTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_bundle_contracts(payloads, registry, "all_market_scan.json")',
+        after="    pass",
+        expected_failure_marker="test_bundle_contracts_are_actually_run",
+        rationale="Hashes prove the files did not change, not that their content is still compliant.",
+    ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",
         component="Governance mutation gate",

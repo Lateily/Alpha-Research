@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -278,7 +279,9 @@ def build_bundle(root: Path, target: str = TARGET, *, scan_status: str = "COMPLE
     artifacts = {
         name: nightly_funnel._sha256(bundle / name) for name in payloads
     }
+    from funnel_pipeline import SCHEMA_VERSION
     write_json(bundle / "manifest.json", {
+        "schema": "ar.research_funnel_bundle", "schema_version": SCHEMA_VERSION,
         "as_of": target, "artifacts": artifacts, "bundle_hash": _hash(artifacts),
     })
     return bundle
@@ -300,9 +303,10 @@ class FunnelHealthEvidenceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             bundle = build_bundle(root, scan_status="DATA_BLOCKED")
-            health = nightly_funnel.build_health(
-                target=TARGET, run_id=RUN_ID, outputs=bundle_outputs(bundle),
-                bundle_dir=bundle, generated_at="t", discarded_stale=False,
+            manifest, measured, payloads = nightly_funnel.read_bundle(bundle, TARGET)
+            health = nightly_funnel.compose_health(
+                target=TARGET, run_id=RUN_ID, manifest=manifest, measured=measured,
+                payloads=payloads, generated_at="t", discarded_stale=False,
             )
             self.assertEqual(
                 "DATA_BLOCKED", health["status"],
@@ -312,9 +316,10 @@ class FunnelHealthEvidenceTests(unittest.TestCase):
     def test_u4_emptiness_claim_must_match_measured_rows(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             bundle = build_bundle(Path(tmp), queue_rows=2)
-            health = nightly_funnel.build_health(
-                target=TARGET, run_id=RUN_ID, outputs=bundle_outputs(bundle),
-                bundle_dir=bundle, generated_at="t", discarded_stale=False,
+            manifest, measured, payloads = nightly_funnel.read_bundle(bundle, TARGET)
+            health = nightly_funnel.compose_health(
+                target=TARGET, run_id=RUN_ID, manifest=manifest, measured=measured,
+                payloads=payloads, generated_at="t", discarded_stale=False,
             )
             self.assertEqual(2, health["counts"]["deep_queue_rows"])
             self.assertFalse(
@@ -329,10 +334,7 @@ class FunnelHealthEvidenceTests(unittest.TestCase):
             write_json(bundle / "candidate_review.json", {"status": "COMPLETE",
                                                           "rows": [{"ts_code": "X"}]})
             with self.assertRaisesRegex(FunnelError, "哈希不符"):
-                nightly_funnel.build_health(
-                    target=TARGET, run_id=RUN_ID, outputs=bundle_outputs(bundle),
-                    bundle_dir=bundle, generated_at="t", discarded_stale=False,
-                )
+                nightly_funnel.read_bundle(bundle, TARGET)
 
     def test_health_refuses_a_manifest_from_another_trade_date(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -341,10 +343,7 @@ class FunnelHealthEvidenceTests(unittest.TestCase):
             manifest["as_of"] = "19700101"
             write_json(bundle / "manifest.json", manifest)
             with self.assertRaisesRegex(FunnelError, "不符"):
-                nightly_funnel.build_health(
-                    target=TARGET, run_id=RUN_ID, outputs=bundle_outputs(bundle),
-                    bundle_dir=bundle, generated_at="t", discarded_stale=False,
-                )
+                nightly_funnel.read_bundle(bundle, TARGET)
 
     def test_health_refuses_a_bundle_hash_that_is_not_self_consistent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -353,10 +352,7 @@ class FunnelHealthEvidenceTests(unittest.TestCase):
             manifest["bundle_hash"] = "0" * 64
             write_json(bundle / "manifest.json", manifest)
             with self.assertRaisesRegex(FunnelError, "不自洽"):
-                nightly_funnel.build_health(
-                    target=TARGET, run_id=RUN_ID, outputs=bundle_outputs(bundle),
-                    bundle_dir=bundle, generated_at="t", discarded_stale=False,
-                )
+                nightly_funnel.read_bundle(bundle, TARGET)
 
 
 class FunnelHealthContractTests(unittest.TestCase):
@@ -371,7 +367,8 @@ class FunnelHealthContractTests(unittest.TestCase):
             "counts": {"scan_rows": 1, "candidate_rows": 1, "deep_queue_rows": 0},
             "policy": {"nightly_mode": "OBSERVATION_ONLY_NOT_PUBLISHED",
                        "u4_selection_supplied": False,
-                       "u4_queue_empty_by_construction": True},
+                       "u4_queue_empty_by_construction": True,
+                       "macro_input_wired": False},
         }
         payload.update(overrides)
         return payload
@@ -383,28 +380,136 @@ class FunnelHealthContractTests(unittest.TestCase):
         )
         self.assertEqual("FAILED", verdict, why)
 
-    def test_contract_accepts_a_well_formed_health(self) -> None:
+    def test_shape_checks_accept_a_well_formed_health(self) -> None:
+        """只测形状层。整体 OK 需要磁盘上真有 bundle,那由下面的 bundle 校验层覆盖。"""
+        nightly._validate_funnel_health_shape(self._health())
+
+    def test_a_well_formed_health_still_fails_without_a_real_bundle(self) -> None:
+        """形状对不等于验过 —— 正式 verifier 必须去看持久 bundle 的实物。"""
         verdict, why = nightly._artifact_status_scan("research_funnel", self._health())
-        self.assertEqual("OK", verdict, why)
+        self.assertEqual("FAILED", verdict)
+        self.assertIn("bundle", why)
 
     def test_contract_rejects_a_u4_claim_that_contradicts_the_counts(self) -> None:
         payload = self._health()
         payload["counts"]["deep_queue_rows"] = 3
-        verdict, why = nightly._artifact_status_scan("research_funnel", payload)
-        self.assertEqual("FAILED", verdict)
-        self.assertIn("矛盾", why)
+        with self.assertRaisesRegex(ValueError, "矛盾"):
+            nightly._validate_funnel_health_shape(payload)
 
     def test_contract_rejects_a_health_claiming_publication(self) -> None:
         payload = self._health()
         payload["bundle"]["published"] = True
-        verdict, _ = nightly._artifact_status_scan("research_funnel", payload)
-        self.assertEqual("FAILED", verdict)
+        with self.assertRaises(ValueError):
+            nightly._validate_funnel_health_shape(payload)
 
     def test_contract_rejects_a_forged_non_sha256_digest(self) -> None:
         payload = self._health()
         payload["bundle"]["artifacts"] = {"a.json": "not-a-digest"}
-        verdict, _ = nightly._artifact_status_scan("research_funnel", payload)
-        self.assertEqual("FAILED", verdict)
+        with self.assertRaises(ValueError):
+            nightly._validate_funnel_health_shape(payload)
+
+
+class PersistentBundleVerificationTests(unittest.TestCase):
+    """正式 verifier 必须去验持久 bundle —— 生成时的诚实不构成验证。"""
+
+    def _wire(self, repo: Path, bundle: Path, health: dict) -> tuple[str, str]:
+        target_dir = repo / "data_history" / "funnel"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        if bundle is not None:
+            shutil.copytree(bundle, target_dir / TARGET)
+        try:
+            nightly._verify_funnel_bundle(health, str(repo))
+        except Exception as exc:
+            return "FAILED", str(exc)
+        return "OK", ""
+
+    def _health_for(self, bundle: Path) -> dict:
+        manifest, measured, payloads = nightly_funnel.read_bundle(bundle, TARGET)
+        return nightly_funnel.compose_health(
+            target=TARGET, run_id=RUN_ID, manifest=manifest, measured=measured,
+            payloads=payloads, generated_at="t", discarded_stale=False,
+        )
+
+    def test_a_health_whose_bundle_is_absent_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = build_bundle(Path(tmp) / "src")
+            health = self._health_for(bundle)
+            verdict, why = self._wire(Path(tmp) / "repo", None, health)
+            self.assertEqual("FAILED", verdict)
+            self.assertIn("不存在", why)
+
+    def test_a_matching_bundle_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = build_bundle(Path(tmp) / "src")
+            health = self._health_for(bundle)
+            verdict, why = self._wire(Path(tmp) / "repo", bundle, health)
+            self.assertEqual("OK", verdict, why)
+
+    def test_post_generation_tampering_is_detected(self) -> None:
+        """生成之后再改 bundle,必须被发现 —— 否则 health 只是历史声明。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = build_bundle(Path(tmp) / "src")
+            health = self._health_for(bundle)
+            repo = Path(tmp) / "repo"
+            (repo / "data_history" / "funnel").mkdir(parents=True)
+            shutil.copytree(bundle, repo / "data_history" / "funnel" / TARGET)
+            write_json(
+                repo / "data_history" / "funnel" / TARGET / "deep_research_queue.json",
+                {"rows": [{"ts_code": "600519.SH"}]},
+            )
+            with self.assertRaisesRegex(Exception, "哈希不符"):
+                nightly._verify_funnel_bundle(health, str(repo))
+
+    def test_a_health_pointing_outside_the_observation_area_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = build_bundle(Path(tmp) / "src")
+            health = self._health_for(bundle)
+            health["bundle"]["location"] = "../../etc"
+            with self.assertRaisesRegex(Exception, "location 非法"):
+                nightly._verify_funnel_bundle(health, tmp)
+
+    def test_counts_that_disagree_with_the_bundle_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = build_bundle(Path(tmp) / "src")
+            health = self._health_for(bundle)
+            health["counts"]["scan_rows"] = 99999
+            repo = Path(tmp) / "repo"
+            (repo / "data_history" / "funnel").mkdir(parents=True)
+            shutil.copytree(bundle, repo / "data_history" / "funnel" / TARGET)
+            with self.assertRaisesRegex(Exception, "counts 与实物不符"):
+                nightly._verify_funnel_bundle(health, str(repo))
+
+
+class BundleContractTests(unittest.TestCase):
+    def test_bundle_contracts_are_actually_run(self) -> None:
+        """哈希只证明文件没被改,证明不了内容仍然合规 —— 四份契约必须真跑。
+
+        断言打在 build_health 的**调用点**上,不是某一个 validator:合成 bundle 会被
+        最先执行的那个 validator 拒掉,所以单独删任何一个都被其余的掩盖,那样的
+        变异测不出东西。四个 validator 各自的行为由 #267 的 funnel 契约套件钉住,
+        本 PR 需要钉的是"它们确实被调用了"。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = build_bundle(Path(tmp))
+            # 内部自洽(哈希对得上)但不满足 #267 的研究契约
+            with self.assertRaises(Exception):
+                nightly_funnel.build_health(
+                    target=TARGET, run_id=RUN_ID, bundle_dir=bundle,
+                    registry={"as_of": TARGET}, generated_at="t", discarded_stale=False,
+                )
+
+
+class FunnelQualityRollupTests(unittest.TestCase):
+    def test_funnel_partial_reaches_the_top_level_quality(self) -> None:
+        """真实数据下漏斗已经在报 PARTIAL —— 不上浮就会被顶层 COMPLETE 盖掉。"""
+        self.assertEqual(
+            "PARTIAL", nightly._research_quality("research_funnel", {"status": "PARTIAL"})
+        )
+        self.assertEqual(
+            "DATA_BLOCKED",
+            nightly._research_quality("research_funnel", {"status": "DATA_BLOCKED"}),
+        )
+        self.assertIn("research_funnel", nightly.FUNNEL_DATA_STEPS)
 
 
 class IsolatedAlarmVisibilityTests(unittest.TestCase):
@@ -453,6 +558,20 @@ class ObservationRetentionTests(unittest.TestCase):
             self.assertTrue((root / "20260804").exists())
             self.assertTrue((root / "20260803").exists())
             self.assertTrue((root / "not-a-date").exists(), "认不出的目录一律不碰")
+
+    def test_retention_never_deletes_the_current_target(self) -> None:
+        """重跑历史日期时,刚生成的目录按日期排序落在末尾,会被当成过期数据删掉。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for day in ("20260810", "20260811", "20260812", "20260701"):
+                (root / day).mkdir()
+            removed = nightly_funnel.prune_observation_area(
+                root, keep=2, protect="20260701"
+            )
+            self.assertNotIn("20260701", removed)
+            self.assertTrue((root / "20260701").exists(),
+                            "清理把本轮成果清掉,health 就会指向不存在的 bundle")
+            self.assertEqual(["20260810"], removed)
 
     def test_retention_refuses_a_non_positive_keep(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
