@@ -380,13 +380,19 @@ class ResearchFunnelClosureTests(unittest.TestCase):
             self.assertTrue(all(row["triggered"] is False for row in rows))
 
     def test_u2_random_control_is_same_pool_stratified_and_reproducible(self) -> None:
-        registry, features, scan, first = build_candidates(n=90)
+        try:
+            registry, features, scan, first = build_candidates(n=90)
+        except fp.FunnelError as exc:
+            self.fail(f"valid random-control inputs must build cleanly: {exc}")
         shuffled = dict(reversed(list(features.items())))
-        second = fp.build_candidate_review(
-            registry=registry, scan=scan, features=shuffled,
-            trade_date=TRADE_DATE, generated_at="2026-08-12T07:00:00+00:00",
-            target_size=100, slow_bull_quota=3, contrarian_quota=3, control_quota=3,
-        )
+        try:
+            second = fp.build_candidate_review(
+                registry=registry, scan=scan, features=shuffled,
+                trade_date=TRADE_DATE, generated_at="2026-08-12T07:00:00+00:00",
+                target_size=100, slow_bull_quota=3, contrarian_quota=3, control_quota=3,
+            )
+        except fp.FunnelError as exc:
+            self.fail(f"input ordering must not invalidate the frozen control draw: {exc}")
         frame1 = first["control_sampling_frame"]
         frame2 = second["control_sampling_frame"]
         expected_universe_hash = fp._hash({
@@ -460,17 +466,20 @@ class ResearchFunnelClosureTests(unittest.TestCase):
 
     def test_u2_reserved_quota_floor_preserves_main_channel_capacity(self) -> None:
         registry, features, scan = build_scan(top_n=80, n=180)
-        candidates = fp.build_candidate_review(
-            registry=registry,
-            scan=scan,
-            features=features,
-            trade_date=TRADE_DATE,
-            generated_at=GENERATED_AT,
-            target_size=100,
-            slow_bull_quota=5,
-            contrarian_quota=5,
-            control_quota=5,
-        )
+        try:
+            candidates = fp.build_candidate_review(
+                registry=registry,
+                scan=scan,
+                features=features,
+                trade_date=TRADE_DATE,
+                generated_at=GENERATED_AT,
+                target_size=100,
+                slow_bull_quota=5,
+                contrarian_quota=5,
+                control_quota=5,
+            )
+        except fp.FunnelError as exc:
+            self.fail(f"valid quota floors must produce a valid candidate contract: {exc}")
         main_count = sum(
             row["review_status"] == "MAIN_CHANNEL" for row in candidates["rows"]
         )
@@ -496,7 +505,10 @@ class ResearchFunnelClosureTests(unittest.TestCase):
         self.assertEqual(candidates["status"], "PARTIAL")
 
     def test_red_flag_without_positive_channel_is_excluded_not_a_u2_candidate(self) -> None:
-        _, _, _, candidates = build_candidates()
+        try:
+            _, _, _, candidates = build_candidates()
+        except fp.FunnelError as exc:
+            self.fail(f"E1-only red flags must be represented as exclusions: {exc}")
         last = f"{30:06d}.SZ"
         row = next(row for row in candidates["rows"] if row["ts_code"] == last)
         self.assertEqual(row["review_status"], "EXCLUDED_RED_FLAG")

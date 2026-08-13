@@ -133,7 +133,10 @@ class GovernanceMutationGateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "source.py").write_text("guard = True\n", encoding="utf-8")
-            (root / "test_source.py").write_text("# fixture\n", encoding="utf-8")
+            (root / "test_source.py").write_text(
+                "def synthetic():\n    pass\n",
+                encoding="utf-8",
+            )
             for relative in (*gate.K1_GOVERNANCE_PATHS, *gate.R043_GOVERNANCE_PATHS):
                 marker_path = root / relative
                 marker_path.parent.mkdir(parents=True, exist_ok=True)
