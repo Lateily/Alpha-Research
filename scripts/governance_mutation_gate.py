@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
+import json
 import os
 import re
 import shutil
@@ -23,14 +25,94 @@ from typing import Iterable, Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-INFRA_FAILURE_MARKERS = (
-    "SyntaxError",
-    "ModuleNotFoundError",
-    "ImportError",
-    "No such file or directory",
-)
-TEST_FAILURE_MARKERS = ("AssertionError", "FAILED (", "FAIL:")
 SECRET_NAME_PARTS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL")
+SINGLE_TEST_RUNNER = """
+import json
+import runpy
+import sys
+import unittest
+from pathlib import Path
+
+MODULE_NAME = "mutation_gate_target"
+script, name, kind, class_name, receipt_path = sys.argv[1:6]
+sys.argv = [script]
+scope = runpy.run_path(script, run_name=MODULE_NAME)
+
+def is_expected_runtime_target(value, expected_name):
+    return (
+        getattr(value, "__module__", None) == MODULE_NAME
+        and getattr(value, "__name__", None) == expected_name
+    )
+
+if kind == "function":
+    target = scope.get(name)
+    if (
+        not callable(target)
+        or not is_expected_runtime_target(target, name)
+    ):
+        raise LookupError(f"local function target changed identity: {name}")
+    failures = []
+    errors = []
+    skipped = []
+    expected_failures = []
+    unexpected_successes = []
+    try:
+        target()
+    except unittest.SkipTest as exc:
+        skipped.append(str(exc))
+    except AssertionError as exc:
+        failures.append(repr(exc))
+    except BaseException as exc:
+        errors.append(f"{type(exc).__name__}: {exc}")
+    tests_run = 1
+else:
+    target_class = scope.get(class_name)
+    if (
+        not isinstance(target_class, type)
+        or not issubclass(target_class, unittest.TestCase)
+        or not is_expected_runtime_target(target_class, class_name)
+        or name not in target_class.__dict__
+        or not is_expected_runtime_target(target_class.__dict__.get(name), name)
+    ):
+        raise LookupError(f"local TestCase target changed identity: {class_name}.{name}")
+    result = unittest.TestResult()
+    unittest.TestSuite([target_class(name)]).run(result)
+    tests_run = result.testsRun
+    failures = [trace for _test, trace in result.failures]
+    errors = [trace for _test, trace in result.errors]
+    skipped = [reason for _test, reason in result.skipped]
+    expected_failures = [trace for _test, trace in result.expectedFailures]
+    unexpected_successes = [str(test) for test in result.unexpectedSuccesses]
+
+receipt = {
+    "schema": "ar-governance-test-receipt.v1",
+    "target": name,
+    "kind": kind,
+    "class_name": class_name or None,
+    "tests_run": tests_run,
+    "failures": len(failures),
+    "errors": len(errors),
+    "skipped": len(skipped),
+    "expected_failures": len(expected_failures),
+    "unexpected_successes": len(unexpected_successes),
+    "diagnostics": {
+        "failures": failures,
+        "errors": errors,
+        "skipped": skipped,
+        "expected_failures": expected_failures,
+        "unexpected_successes": unexpected_successes,
+    },
+}
+Path(receipt_path).write_text(
+    json.dumps(receipt, ensure_ascii=True, sort_keys=True),
+    encoding="utf-8",
+)
+raise SystemExit(
+    1
+    if failures or errors or unexpected_successes
+    else 0
+)
+"""
 GOVERNANCE_MARKER_RE = re.compile(
     r"^\s*# governance-mutation: (?P<mutation_id>[A-Z0-9_]+)\s*$"
 )
@@ -678,6 +760,100 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_validate_manifest_enforces_r043_marker_coverage",
         rationale="The mutation manifest must not silently stop enforcing R-043 marker coverage.",
     ),
+    MutationCase(
+        mutation_id="GOVERNANCE_LOCAL_TARGET_REQUIRED",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "    if not candidates:\n"
+            "        raise MutationGateError(\n"
+            '            f"exactly one local test target required: {name}; found 0"\n'
+            "        )\n"
+        ),
+        after=(
+            "    if not candidates:\n"
+            '        return LocalTestTarget(name=name, kind="function")\n'
+        ),
+        expected_failure_marker="test_manifest_rejects_imported_and_ambiguous_targets",
+        rationale="An imported symbol cannot substitute for a missing local test definition.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_LOCAL_TARGET_UNIQUENESS",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "    if len(candidates) > 1:\n"
+            "        raise MutationGateError(\n"
+            '            f"exactly one local test target required: {name}; found {len(candidates)}"\n'
+            "        )\n"
+        ),
+        after=(
+            "    if len(candidates) > 1:\n"
+            "        return candidates[0]\n"
+        ),
+        expected_failure_marker="test_manifest_rejects_imported_and_ambiguous_targets",
+        rationale="A declared test target must have exactly one local definition.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_DYNAMIC_TARGET_OWNERSHIP",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "def is_expected_runtime_target(value, expected_name):\n"
+            "    return (\n"
+            '        getattr(value, "__module__", None) == MODULE_NAME\n'
+            '        and getattr(value, "__name__", None) == expected_name\n'
+            "    )\n"
+        ),
+        after=(
+            "def is_expected_runtime_target(value, expected_name):\n"
+            "    return True\n"
+        ),
+        expected_failure_marker="test_runner_rejects_imported_target_identity",
+        rationale="Runtime rebinding cannot replace a local test with an imported object.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_ASSERTION_ONLY_KILL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "    if (\n"
+            "        receipt.errors\n"
+            "        or receipt.skipped\n"
+            "        or receipt.expected_failures\n"
+            "        or receipt.unexpected_successes\n"
+            "    ):\n"
+        ),
+        after="    if False:\n",
+        expected_failure_marker="test_classifier_rejects_error_and_skip_receipts",
+        rationale="Errors, skips, and expected failures cannot masquerade as mutation kills.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_BASELINE_CLEAN_PASS",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "        result.returncode != 0\n"
+            "        or receipt.failures\n"
+            "        or receipt.errors\n"
+            "        or receipt.skipped\n"
+            "        or receipt.expected_failures\n"
+        ),
+        after=(
+            "        result.returncode != 0\n"
+            "        or receipt.failures\n"
+            "        or receipt.errors\n"
+            "        or False\n"
+            "        or receipt.expected_failures\n"
+        ),
+        expected_failure_marker="test_baseline_requires_one_clean_pass",
+        rationale="A skipped baseline is not evidence that the declared test executes cleanly.",
+    ),
 )
 
 
@@ -685,6 +861,117 @@ MUTATIONS: tuple[MutationCase, ...] = (
 class CommandResult:
     returncode: int
     output: str
+    receipt: "TestReceipt | None" = None
+
+
+@dataclass(frozen=True)
+class LocalTestTarget:
+    name: str
+    kind: str
+    class_name: str | None = None
+
+
+@dataclass(frozen=True)
+class TestReceipt:
+    schema: str
+    target: str
+    kind: str
+    class_name: str | None
+    tests_run: int
+    failures: int
+    errors: int
+    skipped: int
+    expected_failures: int
+    unexpected_successes: int
+    diagnostics: dict[str, list[str]]
+
+
+def _local_test_target(test_script: Path, name: str) -> LocalTestTarget:
+    tree = ast.parse(test_script.read_text(encoding="utf-8"), filename=str(test_script))
+    candidates: list[LocalTestTarget] = []
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            candidates.append(LocalTestTarget(name=name, kind="function"))
+        elif isinstance(node, ast.AsyncFunctionDef) and node.name == name:
+            raise MutationGateError(f"async test targets are unsupported: {name}")
+        elif isinstance(node, ast.ClassDef):
+            for member in node.body:
+                if isinstance(member, ast.FunctionDef) and member.name == name:
+                    candidates.append(
+                        LocalTestTarget(name=name, kind="method", class_name=node.name)
+                    )
+                elif isinstance(member, ast.AsyncFunctionDef) and member.name == name:
+                    raise MutationGateError(f"async test targets are unsupported: {node.name}.{name}")
+    if not candidates:
+        raise MutationGateError(
+            f"exactly one local test target required: {name}; found 0"
+        )
+    if len(candidates) > 1:
+        raise MutationGateError(
+            f"exactly one local test target required: {name}; found {len(candidates)}"
+        )
+    return candidates[0]
+
+
+def _parse_receipt(path: Path) -> TestReceipt:
+    if not path.is_file():
+        raise MutationGateError("test subprocess did not produce a structured receipt")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise MutationGateError("test subprocess produced an invalid receipt") from exc
+    required = {
+        "schema",
+        "target",
+        "kind",
+        "class_name",
+        "tests_run",
+        "failures",
+        "errors",
+        "skipped",
+        "expected_failures",
+        "unexpected_successes",
+        "diagnostics",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise MutationGateError("test receipt shape is invalid")
+    if payload["schema"] != "ar-governance-test-receipt.v1":
+        raise MutationGateError("test receipt schema is invalid")
+    if payload["kind"] not in {"function", "method"}:
+        raise MutationGateError("test receipt target kind is invalid")
+    if not isinstance(payload["target"], str) or not payload["target"]:
+        raise MutationGateError("test receipt target is invalid")
+    if payload["class_name"] is not None and not isinstance(payload["class_name"], str):
+        raise MutationGateError("test receipt class name is invalid")
+    for field in (
+        "tests_run",
+        "failures",
+        "errors",
+        "skipped",
+        "expected_failures",
+        "unexpected_successes",
+    ):
+        value = payload[field]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise MutationGateError(f"test receipt count is invalid: {field}")
+    diagnostics = payload["diagnostics"]
+    if not isinstance(diagnostics, dict) or set(diagnostics) != {
+        "failures",
+        "errors",
+        "skipped",
+        "expected_failures",
+        "unexpected_successes",
+    }:
+        raise MutationGateError("test receipt diagnostics are invalid")
+    if any(
+        not isinstance(values, list) or not all(isinstance(item, str) for item in values)
+        for values in diagnostics.values()
+    ):
+        raise MutationGateError("test receipt diagnostics must contain string lists")
+    for field in diagnostics:
+        if len(diagnostics[field]) != payload[field]:
+            raise MutationGateError(f"test receipt diagnostic count mismatch: {field}")
+    return TestReceipt(**payload)
 
 
 def replace_exact(text: str, before: str, after: str, mutation_id: str) -> str:
@@ -718,16 +1005,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
         if not source.is_file() or not test_script.is_file():
             raise MutationGateError(f"{case.mutation_id}: source or test script is missing")
         replace_exact(source.read_text(encoding="utf-8"), case.before, case.after, case.mutation_id)
-        if case.test_function is not None:
-            functions = {
-                node.name
-                for node in ast.parse(test_script.read_text(encoding="utf-8")).body
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-            }
-            if case.test_function not in functions:
-                raise MutationGateError(
-                    f"{case.mutation_id}: test function is missing: {case.test_function}"
-                )
+        _local_test_target(test_script, _target_test(case))
     validate_k1_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
 
@@ -857,22 +1135,27 @@ def run_test_script(
     sandbox: Path,
     guard: Path,
     script: str,
-    test_function: str | None = None,
+    test_function: str,
 ) -> CommandResult:
-    command = [sys.executable, "-B", script]
-    if test_function is not None:
-        command = [
-            sys.executable,
-            "-B",
-            "-c",
-            (
-                "import runpy,sys; "
-                "scope=runpy.run_path(sys.argv[1], run_name='mutation_gate_target'); "
-                "scope[sys.argv[2]]()"
-            ),
-            script,
-            test_function,
-        ]
+    test_script = _resolved_under(sandbox, script)
+    target = _local_test_target(test_script, test_function)
+    receipt_id = hashlib.sha256(
+        f"{script}\0{test_function}".encode("utf-8")
+    ).hexdigest()
+    receipt_path = guard / "receipts" / f"{os.getpid()}-{receipt_id}.json"
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    receipt_path.unlink(missing_ok=True)
+    command = [
+        sys.executable,
+        "-B",
+        "-c",
+        SINGLE_TEST_RUNNER,
+        script,
+        target.name,
+        target.kind,
+        target.class_name or "",
+        str(receipt_path),
+    ]
     try:
         completed = subprocess.run(
             command,
@@ -885,32 +1168,64 @@ def run_test_script(
         )
     except subprocess.TimeoutExpired as exc:
         raise MutationGateError(f"test timed out: {script}") from exc
+    receipt = _parse_receipt(receipt_path) if receipt_path.exists() else None
+    if receipt is not None and (
+        receipt.target != target.name
+        or receipt.kind != target.kind
+        or receipt.class_name != target.class_name
+    ):
+        raise MutationGateError("test receipt does not match the resolved local target")
     return CommandResult(
         returncode=completed.returncode,
         output=(completed.stdout or "") + (completed.stderr or ""),
+        receipt=receipt,
     )
 
 
 def classify_mutation(case: MutationCase, result: CommandResult) -> None:
-    if result.returncode == 0:
-        raise MutationGateError(f"{case.mutation_id}: SURVIVED; tests stayed green")
-    if any(marker in result.output for marker in INFRA_FAILURE_MARKERS):
+    receipt = result.receipt
+    if receipt is None:
+        raise MutationGateError(f"{case.mutation_id}: missing structured test receipt")
+    if receipt.target != _target_test(case):
+        raise MutationGateError(f"{case.mutation_id}: test receipt target mismatch")
+    if receipt.tests_run != 1:
+        raise MutationGateError(f"{case.mutation_id}: expected exactly one test execution")
+    if (
+        receipt.errors
+        or receipt.skipped
+        or receipt.expected_failures
+        or receipt.unexpected_successes
+    ):
         raise MutationGateError(
-            f"{case.mutation_id}: invalid kill caused by infrastructure failure"
+            f"{case.mutation_id}: invalid kill; only assertion failures count"
         )
-    if not any(marker in result.output for marker in TEST_FAILURE_MARKERS):
-        raise MutationGateError(
-            f"{case.mutation_id}: nonzero exit lacked a behavioral test failure marker"
-        )
-    if case.expected_failure_marker not in result.output:
-        raise MutationGateError(
-            f"{case.mutation_id}: wrong test failed; expected "
-            f"{case.expected_failure_marker}"
-        )
+    if receipt.failures < 1 or result.returncode != 1:
+        raise MutationGateError(f"{case.mutation_id}: SURVIVED; declared test did not fail")
+
+
+def validate_baseline_result(script: str, target: str, result: CommandResult) -> None:
+    receipt = result.receipt
+    if receipt is None:
+        raise MutationGateError(f"baseline missing structured receipt: {script}::{target}")
+    if receipt.target != target or receipt.tests_run != 1:
+        raise MutationGateError(f"baseline target receipt mismatch: {script}::{target}")
+    if (
+        result.returncode != 0
+        or receipt.failures
+        or receipt.errors
+        or receipt.skipped
+        or receipt.expected_failures
+        or receipt.unexpected_successes
+    ):
+        raise MutationGateError(f"baseline test was not one clean pass: {script}::{target}")
 
 
 def _tail(output: str, lines: int = 30) -> str:
     return "\n".join(output.splitlines()[-lines:])
+
+
+def _target_test(case: MutationCase) -> str:
+    return case.test_function or case.expected_failure_marker
 
 
 def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) -> None:
@@ -922,17 +1237,17 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
         shutil.copytree(root, sandbox, ignore=_copy_ignore)
         _write_network_guard(guard)
 
-        targets = tuple(
-            dict.fromkeys((case.test_script, case.test_function) for case in cases)
-        )
+        targets = tuple(dict.fromkeys((case.test_script, _target_test(case)) for case in cases))
         for script, test_function in targets:
             result = run_test_script(sandbox, guard, script, test_function)
-            if result.returncode != 0:
+            try:
+                validate_baseline_result(script, test_function, result)
+            except MutationGateError as exc:
                 raise MutationGateError(
-                    f"baseline failed before mutation: {script}"
-                    f"::{test_function or 'all'}\n{_tail(result.output)}"
-                )
-            print(f"BASELINE PASS  {script}::{test_function or 'all'}")
+                    f"baseline failed before mutation: {script}::{test_function}: {exc}\n"
+                    f"{_tail(result.output)}"
+                ) from exc
+            print(f"BASELINE PASS  {script}::{test_function}")
 
         for case in cases:
             target = _resolved_under(sandbox, case.source_path)
@@ -945,7 +1260,7 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
                     sandbox,
                     guard,
                     case.test_script,
-                    case.test_function,
+                    _target_test(case),
                 )
                 classify_mutation(case, result)
             except MutationGateError as exc:
