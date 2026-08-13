@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-12T09:42:17.483247+00:00",
+  "generated_at": "2026-08-13T03:34:11.785344+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -8,203 +8,6 @@
     "caution": []
   },
   "scores": [
-    {
-      "ticker": "603233.SH",
-      "score": 17,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "BULLISH",
-      "regime": "NEUTRAL",
-      "model_state": "NORMAL_OBSERVATION_MODE",
-      "vp_score": 50.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 2,
-        "bearish": 0
-      },
-      "contributing": [
-        {
-          "type": "MA20_BOUNCE",
-          "base_weight": 12,
-          "decay": 0.8,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": 9.6,
-          "final_contribution": 9.6
-        },
-        {
-          "type": "KDJ_GOLDEN_CROSS",
-          "base_weight": 10,
-          "decay": 0.75,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": 7.5,
-          "final_contribution": 7.5
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "MA20_BOUNCE",
-          "contribution": 9.6
-        },
-        {
-          "type": "KDJ_GOLDEN_CROSS",
-          "contribution": 7.5
-        }
-      ],
-      "rationale_e": "Bullish: Ma20 Bounce, Kdj Golden Cross | RSI 57 | Price vs MA20 +1.1% | VP 50",
-      "rationale_z": "多头：MA20支撑反弹、KDJ金叉 | RSI 57 | 距MA20 +1.1% | VP 50",
-      "signal_types": [
-        "MA20_BOUNCE",
-        "KDJ_GOLDEN_CROSS"
-      ],
-      "computed_at": "2026-08-12T09:42:17.482780+00:00"
-    },
-    {
-      "ticker": "688120.SH",
-      "score": 9,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "NEUTRAL",
-      "model_state": "NORMAL_OBSERVATION_MODE",
-      "vp_score": 45.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 3,
-        "bearish": 1
-      },
-      "contributing": [
-        {
-          "type": "DEATH_CROSS",
-          "base_weight": -18,
-          "decay": 0.93,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": -16.8,
-          "final_contribution": -16.8
-        },
-        {
-          "type": "MA20_BOUNCE",
-          "base_weight": 12,
-          "decay": 0.8,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": 9.6,
-          "final_contribution": 9.6
-        },
-        {
-          "type": "MA60_BOUNCE",
-          "base_weight": 16,
-          "decay": 0.86,
-          "independence_factor": 0.4,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": 5.5,
-          "final_contribution": 5.5
-        },
-        {
-          "type": "MACD_GOLDEN_CROSS",
-          "base_weight": 12,
-          "decay": 0.9,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": 10.8,
-          "final_contribution": 10.8
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "DEATH_CROSS",
-          "contribution": -16.8
-        },
-        {
-          "type": "MACD_GOLDEN_CROSS",
-          "contribution": 10.8
-        },
-        {
-          "type": "MA20_BOUNCE",
-          "contribution": 9.6
-        },
-        {
-          "type": "MA60_BOUNCE",
-          "contribution": 5.5
-        }
-      ],
-      "rationale_e": "Bullish: Macd Golden Cross, Ma20 Bounce | Bearish: Death Cross | RSI 52 | Price vs MA20 +4.3% | VP 45",
-      "rationale_z": "多头：MACD金叉、MA20支撑反弹 | 空头：死亡交叉 | RSI 52 | 距MA20 +4.3% | VP 45",
-      "signal_types": [
-        "DEATH_CROSS",
-        "MA20_BOUNCE",
-        "MA60_BOUNCE",
-        "MACD_GOLDEN_CROSS"
-      ],
-      "computed_at": "2026-08-12T09:42:17.483065+00:00"
-    },
-    {
-      "ticker": "300308.SZ",
-      "score": 6,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "BEARISH",
-      "regime": "PERMISSIVE",
-      "model_state": "NORMAL_OBSERVATION_MODE",
-      "vp_score": 48.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 1,
-        "bearish": 0
-      },
-      "contributing": [
-        {
-          "type": "RSI_RECOVERING",
-          "base_weight": 7,
-          "decay": 0.75,
-          "independence_factor": 1.0,
-          "regime_mult": 1.2,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": 6.3,
-          "final_contribution": 6.3
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "RSI_RECOVERING",
-          "contribution": 6.3
-        }
-      ],
-      "rationale_e": "Bullish: Rsi Recovering | RSI 41 | Price vs MA20 -10.3% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "多头：RSI回升 | RSI 41 | 距MA20 -10.3% | 政策顺风 | VP 48",
-      "signal_types": [
-        "RSI_RECOVERING"
-      ],
-      "computed_at": "2026-08-12T09:42:17.482646+00:00"
-    },
     {
       "ticker": "002594.SZ",
       "score": 0,
@@ -223,10 +26,10 @@
       },
       "contributing": [],
       "contributing_signals": [],
-      "rationale_e": "RSI 47 | Price vs MA20 -2.8% | Regime: PERMISSIVE | VP 48",
-      "rationale_z": "RSI 47 | 距MA20 -2.8% | 政策顺风 | VP 48",
+      "rationale_e": "RSI 47 | Price vs MA20 -2.4% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "RSI 47 | 距MA20 -2.4% | 政策顺风 | VP 48",
       "signal_types": [],
-      "computed_at": "2026-08-12T09:42:17.482282+00:00"
+      "computed_at": "2026-08-13T03:34:11.784436+00:00"
     },
     {
       "ticker": "175.HK",
@@ -269,7 +72,53 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-08-12T09:42:17.482410+00:00"
+      "computed_at": "2026-08-13T03:34:11.784564+00:00"
+    },
+    {
+      "ticker": "300308.SZ",
+      "score": 0,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "BEARISH",
+      "regime": "PERMISSIVE",
+      "model_state": "NORMAL_OBSERVATION_MODE",
+      "vp_score": 48.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 0,
+        "bearish": 0
+      },
+      "contributing": [],
+      "contributing_signals": [],
+      "rationale_e": "RSI 44 | Price vs MA20 -5.7% | Regime: PERMISSIVE | VP 48",
+      "rationale_z": "RSI 44 | 距MA20 -5.7% | 政策顺风 | VP 48",
+      "signal_types": [],
+      "computed_at": "2026-08-13T03:34:11.784772+00:00"
+    },
+    {
+      "ticker": "603233.SH",
+      "score": 0,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "NEUTRAL",
+      "regime": "NEUTRAL",
+      "model_state": "NORMAL_OBSERVATION_MODE",
+      "vp_score": 50.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 0,
+        "bearish": 0
+      },
+      "contributing": [],
+      "contributing_signals": [],
+      "rationale_e": "RSI 49 | Price vs MA20 -2.4% | VP 50",
+      "rationale_z": "RSI 49 | 距MA20 -2.4% | VP 50",
+      "signal_types": [],
+      "computed_at": "2026-08-13T03:34:11.784898+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -346,7 +195,7 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-08-12T09:42:17.482904+00:00"
+      "computed_at": "2026-08-13T03:34:11.785035+00:00"
     },
     {
       "ticker": "700.HK",
@@ -369,7 +218,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-08-12T09:42:17.483158+00:00"
+      "computed_at": "2026-08-13T03:34:11.785248+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -392,7 +241,67 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-08-12T09:42:17.483234+00:00"
+      "computed_at": "2026-08-13T03:34:11.785331+00:00"
+    },
+    {
+      "ticker": "688120.SH",
+      "score": -3,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "NEUTRAL",
+      "regime": "NEUTRAL",
+      "model_state": "NORMAL_OBSERVATION_MODE",
+      "vp_score": 45.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 1,
+        "bearish": 1
+      },
+      "contributing": [
+        {
+          "type": "DEATH_CROSS",
+          "base_weight": -18,
+          "decay": 0.93,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "flow_role": "other",
+          "policy_gate": null,
+          "raw_contribution_before_policy": -16.8,
+          "final_contribution": -16.8
+        },
+        {
+          "type": "MA60_BOUNCE",
+          "base_weight": 16,
+          "decay": 0.86,
+          "independence_factor": 1.0,
+          "regime_mult": 1.0,
+          "staleness": 1.0,
+          "flow_role": "other",
+          "policy_gate": null,
+          "raw_contribution_before_policy": 13.7,
+          "final_contribution": 13.7
+        }
+      ],
+      "contributing_signals": [
+        {
+          "type": "DEATH_CROSS",
+          "contribution": -16.8
+        },
+        {
+          "type": "MA60_BOUNCE",
+          "contribution": 13.7
+        }
+      ],
+      "rationale_e": "Bullish: Ma60 Bounce | Bearish: Death Cross | RSI 54 | Price vs MA20 +6.6% | VP 45",
+      "rationale_z": "多头：MA60强支撑反弹 | 空头：死亡交叉 | RSI 54 | 距MA20 +6.6% | VP 45",
+      "signal_types": [
+        "DEATH_CROSS",
+        "MA60_BOUNCE"
+      ],
+      "computed_at": "2026-08-13T03:34:11.785158+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -430,12 +339,12 @@
           "contribution": -8.0
         }
       ],
-      "rationale_e": "Bearish: Kdj Overbought | RSI 50 | Price vs MA20 +5.5% | VP 47",
-      "rationale_z": "空头：KDJ极度超买(J>100) | RSI 50 | 距MA20 +5.5% | VP 47",
+      "rationale_e": "Bearish: Kdj Overbought | RSI 52 | Price vs MA20 +7.0% | VP 47",
+      "rationale_z": "空头：KDJ极度超买(J>100) | RSI 52 | 距MA20 +7.0% | VP 47",
       "signal_types": [
         "KDJ_OVERBOUGHT"
       ],
-      "computed_at": "2026-08-12T09:42:17.482530+00:00"
+      "computed_at": "2026-08-13T03:34:11.784683+00:00"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "ticker": "688120.SH",
-  "generated_at": "2026-08-12",
-  "price": 268.33,
+  "generated_at": "2026-08-13",
+  "price": 273.33,
   "zone": "NEUTRAL",
   "entry_zone": true,
   "exit_zone": true,
@@ -9,71 +9,51 @@
     {
       "type": "DEATH_CROSS",
       "strength": "strong",
-      "date": "20260811",
+      "date": "20260812",
       "bullish": false,
       "description": {
-        "e": "MA20 (257.2) crossed below MA60 (261.8) — bearish trend shift",
-        "z": "MA20(257.2)下穿MA60(261.8)死叉看跌"
-      }
-    },
-    {
-      "type": "MA20_BOUNCE",
-      "strength": "moderate",
-      "date": "20260811",
-      "bullish": true,
-      "description": {
-        "e": "Price bounced off MA20 (259.3) — near-term support held",
-        "z": "股价从MA20(259.3)附近反弹，短期支撑有效"
+        "e": "MA20 (256.4) crossed below MA60 (261.7) — bearish trend shift",
+        "z": "MA20(256.4)下穿MA60(261.7)死叉看跌"
       }
     },
     {
       "type": "MA60_BOUNCE",
       "strength": "strong",
-      "date": "20260811",
+      "date": "20260812",
       "bullish": true,
       "description": {
-        "e": "Price bounced off MA60 (261.9) — major support held",
-        "z": "股价从MA60(261.9)附近反弹，主要支撑有效"
-      }
-    },
-    {
-      "type": "MACD_GOLDEN_CROSS",
-      "strength": "moderate",
-      "date": "20260811",
-      "bullish": true,
-      "description": {
-        "e": "MACD DIF(-4.697) crossed above DEA(-5.585) below zero — bullish momentum",
-        "z": "MACD DIF(-4.697)上穿DEA(-5.585)零轴下方金叉看涨"
+        "e": "Price bounced off MA60 (261.8) — major support held",
+        "z": "股价从MA60(261.8)附近反弹，主要支撑有效"
       }
     }
   ],
   "signal_count": {
-    "bullish": 3,
+    "bullish": 1,
     "bearish": 1,
-    "total": 4
+    "total": 2
   },
   "indicators": {
-    "ma5": 255.75,
-    "ma20": 257.22,
-    "ma60": 261.79,
-    "rsi14": 52.4,
-    "vol_ma20": 178075,
-    "vol_ratio": 0.91,
-    "price_vs_ma20": 4.32,
-    "price_vs_ma60": 2.5,
-    "change_1d": 1.82,
-    "change_5d": 17.63,
-    "change_20d": -13.16,
-    "macd_dif": -4.6966,
-    "macd_dea": -5.5854,
-    "macd_hist": 1.7776,
-    "bb_upper": 290.34,
-    "bb_mid": 257.22,
-    "bb_lower": 224.1,
-    "bb_bandwidth": 25.75,
-    "kdj_k": 46.8,
-    "kdj_d": 40.2,
-    "kdj_j": 60.0,
+    "ma5": 261.82,
+    "ma20": 256.39,
+    "ma60": 261.72,
+    "rsi14": 53.8,
+    "vol_ma20": 174732,
+    "vol_ratio": 0.63,
+    "price_vs_ma20": 6.61,
+    "price_vs_ma60": 4.44,
+    "change_1d": 1.86,
+    "change_5d": 12.48,
+    "change_20d": -5.74,
+    "macd_dif": -3.0525,
+    "macd_dea": -5.0789,
+    "macd_hist": 4.0526,
+    "bb_upper": 286.9,
+    "bb_mid": 256.39,
+    "bb_lower": 225.87,
+    "bb_bandwidth": 23.8,
+    "kdj_k": 52.9,
+    "kdj_d": 44.4,
+    "kdj_j": 69.9,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
