@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-14T03:32:15.092161+00:00",
+  "generated_at": "2026-08-14T09:39:32.834708+00:00",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "tickers_scored": 9,
   "summary": {
@@ -49,7 +49,7 @@
       "signal_types": [
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-08-14T03:32:15.091721+00:00"
+      "computed_at": "2026-08-14T09:39:32.834344+00:00"
     },
     {
       "ticker": "002594.SZ",
@@ -72,7 +72,7 @@
       "rationale_e": "RSI 46 | Price vs MA20 -2.9% | Regime: PERMISSIVE | VP 48",
       "rationale_z": "RSI 46 | 距MA20 -2.9% | 政策顺风 | VP 48",
       "signal_types": [],
-      "computed_at": "2026-08-14T03:32:15.091386+00:00"
+      "computed_at": "2026-08-14T09:39:32.834082+00:00"
     },
     {
       "ticker": "175.HK",
@@ -115,7 +115,7 @@
       "signal_types": [
         "KDJ_OVERSOLD"
       ],
-      "computed_at": "2026-08-14T03:32:15.091508+00:00"
+      "computed_at": "2026-08-14T09:39:32.834185+00:00"
     },
     {
       "ticker": "300054.SZ",
@@ -135,10 +135,10 @@
       },
       "contributing": [],
       "contributing_signals": [],
-      "rationale_e": "RSI 49 | Price vs MA20 +3.1% | VP 47",
-      "rationale_z": "RSI 49 | 距MA20 +3.1% | VP 47",
+      "rationale_e": "RSI 48 | Price vs MA20 +3.1% | VP 47",
+      "rationale_z": "RSI 48 | 距MA20 +3.1% | VP 47",
       "signal_types": [],
-      "computed_at": "2026-08-14T03:32:15.091592+00:00"
+      "computed_at": "2026-08-14T09:39:32.834258+00:00"
     },
     {
       "ticker": "603233.SH",
@@ -161,7 +161,7 @@
       "rationale_e": "RSI 47 | Price vs MA20 -3.2% | VP 50",
       "rationale_z": "RSI 47 | 距MA20 -3.2% | VP 50",
       "signal_types": [],
-      "computed_at": "2026-08-14T03:32:15.091806+00:00"
+      "computed_at": "2026-08-14T09:39:32.834425+00:00"
     },
     {
       "ticker": "6160.HK",
@@ -238,7 +238,30 @@
         "MA60_BOUNCE",
         "MACD_GOLDEN_CROSS"
       ],
-      "computed_at": "2026-08-14T03:32:15.091921+00:00"
+      "computed_at": "2026-08-14T09:39:32.834524+00:00"
+    },
+    {
+      "ticker": "688120.SH",
+      "score": 0,
+      "action": "NEUTRAL",
+      "action_zh": "信号中性，等待",
+      "zone": "NEUTRAL",
+      "regime": "NEUTRAL",
+      "model_state": "NORMAL_OBSERVATION_MODE",
+      "vp_score": 45.0,
+      "vp_signal_type": null,
+      "vp_adjustment": null,
+      "staleness_factor": 1.0,
+      "signal_count": {
+        "bullish": 0,
+        "bearish": 0
+      },
+      "contributing": [],
+      "contributing_signals": [],
+      "rationale_e": "RSI 50 | Price vs MA20 +2.5% | VP 45",
+      "rationale_z": "RSI 50 | 距MA20 +2.5% | VP 45",
+      "signal_types": [],
+      "computed_at": "2026-08-14T09:39:32.834589+00:00"
     },
     {
       "ticker": "700.HK",
@@ -261,7 +284,7 @@
       "rationale_e": "RSI 41 | Price vs MA20 -3.5%",
       "rationale_z": "RSI 41 | 距MA20 -3.5%",
       "signal_types": [],
-      "computed_at": "2026-08-14T03:32:15.092090+00:00"
+      "computed_at": "2026-08-14T09:39:32.834649+00:00"
     },
     {
       "ticker": "9999.HK",
@@ -284,50 +307,7 @@
       "rationale_e": "RSI 56 | Price vs MA20 +2.8%",
       "rationale_z": "RSI 56 | 距MA20 +2.8%",
       "signal_types": [],
-      "computed_at": "2026-08-14T03:32:15.092151+00:00"
-    },
-    {
-      "ticker": "688120.SH",
-      "score": -17,
-      "action": "NEUTRAL",
-      "action_zh": "信号中性，等待",
-      "zone": "NEUTRAL",
-      "regime": "NEUTRAL",
-      "model_state": "NORMAL_OBSERVATION_MODE",
-      "vp_score": 45.0,
-      "vp_signal_type": null,
-      "vp_adjustment": null,
-      "staleness_factor": 1.0,
-      "signal_count": {
-        "bullish": 0,
-        "bearish": 1
-      },
-      "contributing": [
-        {
-          "type": "DEATH_CROSS",
-          "base_weight": -18,
-          "decay": 0.93,
-          "independence_factor": 1.0,
-          "regime_mult": 1.0,
-          "staleness": 1.0,
-          "flow_role": "other",
-          "policy_gate": null,
-          "raw_contribution_before_policy": -16.8,
-          "final_contribution": -16.8
-        }
-      ],
-      "contributing_signals": [
-        {
-          "type": "DEATH_CROSS",
-          "contribution": -16.8
-        }
-      ],
-      "rationale_e": "Bearish: Death Cross | RSI 50 | Price vs MA20 +2.5% | VP 45",
-      "rationale_z": "空头：死亡交叉 | RSI 50 | 距MA20 +2.5% | VP 45",
-      "signal_types": [
-        "DEATH_CROSS"
-      ],
-      "computed_at": "2026-08-14T03:32:15.092015+00:00"
+      "computed_at": "2026-08-14T09:39:32.834698+00:00"
     }
   ]
 }
