@@ -261,6 +261,9 @@ def _validate_funnel_health_shape(data):
         raise ValueError(
             f"as_of={data['as_of']!r} 与 target_trade_date={data['target_trade_date']!r} 不一致"
         )
+    run_id = str(data.get("run_id") or "")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", run_id):
+        raise ValueError(f"run_id 不能安全地作为路径组件: {run_id!r}")
     status = str(data.get("status") or "").upper()
     if status not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED"):
         raise ValueError(f"status 非法: {status!r}")
@@ -269,6 +272,8 @@ def _validate_funnel_health_shape(data):
         raise ValueError("缺少 bundle 段")
     if bundle.get("published") is not False:
         raise ValueError("观察期产物不得声称已发布")
+    if bundle.get("immutable") is not True:
+        raise ValueError("观察期 bundle 必须使用不可覆盖的运行级地址")
     artifacts = bundle.get("artifacts")
     if not isinstance(artifacts, dict) or not artifacts:
         raise ValueError("bundle.artifacts 缺失")
@@ -331,18 +336,23 @@ def _verify_funnel_bundle(data, repo_root, artifact_path=None):
     import nightly_funnel
 
     as_of = str(data.get("as_of") or "")
+    run_id = str(data.get("run_id") or "")
     bundle = data.get("bundle") or {}
     location = str(bundle.get("location") or "")
     # location 必须逐字等于约定位置:否则可以指向任意目录来"找一个能对上的 bundle"
-    if location != f"data_history/funnel/{as_of}":
+    if location != f"data_history/funnel/{as_of}/{run_id}":
         raise ValueError(f"bundle.location 非法: {location!r}")
     funnel_root = os.path.join(repo_root, "data_history", "funnel")
-    bundle_dir = os.path.join(funnel_root, as_of)
+    date_dir = os.path.join(funnel_root, as_of)
+    bundle_dir = os.path.join(date_dir, run_id)
     # os.path.isdir 会跟随符号链接:观察区里种一个指向区外的链接,verifier 就会
     # 拿别处的 bundle 给本轮 health 背书。用与生成侧同一套容器化判据。
     # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_SYMLINK
-    if os.path.islink(bundle_dir) or os.path.realpath(bundle_dir) != os.path.join(
-        os.path.realpath(funnel_root), as_of
+    if (os.path.islink(funnel_root) or os.path.islink(date_dir) or
+            os.path.islink(bundle_dir) or
+            os.path.realpath(bundle_dir) != os.path.join(
+                os.path.realpath(funnel_root), as_of, run_id
+            )
     ):
         raise ValueError(f"bundle 目录越界或为符号链接: {os.path.realpath(bundle_dir)}")
     # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_EXISTS

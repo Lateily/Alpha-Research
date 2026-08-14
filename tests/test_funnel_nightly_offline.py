@@ -192,17 +192,19 @@ class FunnelRunnerBoundaryTests(unittest.TestCase):
             os.environ.update(saved)
 
     def test_bundle_directory_is_pinned_under_the_observation_root(self) -> None:
-        """target 来自环境变量,拼进路径再 rmtree 是删错目录的经典写法。"""
+        """target/run_id 都来自环境变量,必须只能形成根内的两级路径。"""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            # 刻意不 resolve:resolve 会把根这一层的链接归一化掉,而那正是要检测的
             self.assertEqual(
-                Path(os.path.abspath(root)) / TARGET,
-                nightly_funnel._bundle_dir(root, TARGET),
+                Path(os.path.abspath(root)) / TARGET / RUN_ID,
+                nightly_funnel._bundle_dir(root, TARGET, RUN_ID),
             )
             for hostile in ("../escape", "2026081", "/etc", "20260813/../..", ""):
                 with self.assertRaises(FunnelError, msg=f"{hostile!r} 应被拒绝"):
-                    nightly_funnel._bundle_dir(root, hostile)
+                    nightly_funnel._bundle_dir(root, hostile, RUN_ID)
+            for hostile in ("../escape", "/tmp/x", "a/b", "", ".", "中文"):
+                with self.assertRaises(FunnelError, msg=f"{hostile!r} 应被拒绝"):
+                    nightly_funnel._bundle_dir(root, TARGET, hostile)
 
     def test_bundle_directory_refuses_a_symlink_that_escapes_the_root(self) -> None:
         """8 位日期挡不住的那一类:目录名合法,但它是指向别处的符号链接。
@@ -215,44 +217,54 @@ class FunnelRunnerBoundaryTests(unittest.TestCase):
             outside = Path(tmp) / "outside"
             root.mkdir()
             outside.mkdir()
-            (root / TARGET).symlink_to(outside, target_is_directory=True)
+            (root / TARGET).mkdir()
+            (root / TARGET / RUN_ID).symlink_to(outside, target_is_directory=True)
             with self.assertRaisesRegex(FunnelError, "越界"):
-                nightly_funnel._bundle_dir(root, TARGET)
+                nightly_funnel._bundle_dir(root, TARGET, RUN_ID)
 
-    def test_reserve_refuses_a_directory_it_did_not_validate(self) -> None:
+    def test_date_container_symlink_is_also_refused(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            stray = root / "not-the-target"
-            stray.mkdir()
-            with self.assertRaises(FunnelError):
-                nightly_funnel._reserve_stale_bundle(stray, root, TARGET)
-            self.assertTrue(stray.exists(), "未经校验的目录不得被移动")
+            outside = root / "outside"
+            outside.mkdir()
+            observation = root / "observation"
+            observation.mkdir()
+            (observation / TARGET).symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(FunnelError, "越界"):
+                nightly_funnel._bundle_dir(observation, TARGET, RUN_ID)
 
-    def test_a_stale_bundle_is_reserved_not_destroyed(self) -> None:
-        """本轮失败时,上一轮已发布 health 指向的 bundle 必须还在。"""
+    def test_same_trade_date_runs_never_share_a_bundle_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            bundle = root / TARGET
-            bundle.mkdir()
-            (bundle / "keep.json").write_text("{}", encoding="utf-8")
-            reserved = nightly_funnel._reserve_stale_bundle(bundle, root, TARGET)
-            self.assertIsNotNone(reserved)
-            self.assertFalse(bundle.exists(), "目标位置要腾出来给本轮")
-            self.assertTrue((reserved / "keep.json").exists(), "旧产物不得被销毁")
-            nightly_funnel._restore_reserved(reserved, bundle)
-            self.assertTrue((bundle / "keep.json").exists(), "失败必须能原样还原")
-            self.assertFalse(reserved.exists())
+            first = nightly_funnel._bundle_dir(root, TARGET, RUN_ID)
+            second = nightly_funnel._bundle_dir(root, TARGET, RUN_ID + "_retry")
+            self.assertNotEqual(first, second)
+            self.assertEqual(first.parent, second.parent)
 
-    def test_a_stray_file_at_the_target_path_self_heals(self) -> None:
-        """位置上的杂散文件会把这个日期永久卡死:目录建不出来,retention 又只认目录。"""
+    def test_same_run_id_can_never_overwrite_an_existing_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / TARGET).write_text("junk", encoding="utf-8")
-            reserved = nightly_funnel._reserve_stale_bundle(root / TARGET, root, TARGET)
-            self.assertIsNotNone(reserved)
-            self.assertFalse((root / TARGET).exists())
-            nightly_funnel._drop_reserved(reserved)
-            self.assertFalse(reserved.exists())
+            existing = nightly_funnel._bundle_dir(root, TARGET, RUN_ID)
+            existing.mkdir(parents=True)
+            sentinel = existing / "original.json"
+            sentinel.write_text("{}", encoding="utf-8")
+            called = []
+            original = nightly_funnel.run_pipeline
+            saved_env = dict(os.environ)
+            try:
+                nightly_funnel.run_pipeline = lambda **_kwargs: called.append(True)
+                os.environ.update({
+                    "AR_TARGET_TRADE_DATE": TARGET,
+                    "AR_RUN_ID": RUN_ID,
+                    "AR_FUNNEL_OUTPUT_ROOT": str(root),
+                })
+                self.assertEqual(1, nightly_funnel.main())
+            finally:
+                nightly_funnel.run_pipeline = original
+                os.environ.clear()
+                os.environ.update(saved_env)
+            self.assertEqual([], called, "已存在地址必须在进入引擎前就拒绝")
+            self.assertTrue(sentinel.exists(), "同一 run_id 重试不得改写原 bundle")
 
 
 class FunnelPublicationBoundaryTests(unittest.TestCase):
@@ -387,6 +399,20 @@ def bundle_outputs(bundle: Path) -> dict:
 class FunnelHealthEvidenceTests(unittest.TestCase):
     """health 的每个字段都必须由 bundle 实物推导,不得是声称。"""
 
+    def test_health_location_is_run_scoped_and_immutable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = build_bundle(Path(tmp))
+            manifest, measured, payloads = nightly_funnel.read_bundle(bundle, TARGET)
+            health = nightly_funnel.compose_health(
+                target=TARGET, run_id=RUN_ID, manifest=manifest, measured=measured,
+                payloads=payloads, generated_at="t",
+            )
+            self.assertEqual(
+                f"data_history/funnel/{TARGET}/{RUN_ID}",
+                health["bundle"]["location"],
+            )
+            self.assertIs(True, health["bundle"]["immutable"])
+
     def test_status_is_derived_from_the_bundle_not_asserted(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -394,7 +420,7 @@ class FunnelHealthEvidenceTests(unittest.TestCase):
             manifest, measured, payloads = nightly_funnel.read_bundle(bundle, TARGET)
             health = nightly_funnel.compose_health(
                 target=TARGET, run_id=RUN_ID, manifest=manifest, measured=measured,
-                payloads=payloads, generated_at="t", discarded_stale=False,
+                payloads=payloads, generated_at="t",
             )
             self.assertEqual(
                 "DATA_BLOCKED", health["status"],
@@ -407,7 +433,7 @@ class FunnelHealthEvidenceTests(unittest.TestCase):
             manifest, measured, payloads = nightly_funnel.read_bundle(bundle, TARGET)
             health = nightly_funnel.compose_health(
                 target=TARGET, run_id=RUN_ID, manifest=manifest, measured=measured,
-                payloads=payloads, generated_at="t", discarded_stale=False,
+                payloads=payloads, generated_at="t",
             )
             self.assertEqual(2, health["counts"]["deep_queue_rows"])
             self.assertFalse(
@@ -451,7 +477,10 @@ class FunnelHealthContractTests(unittest.TestCase):
             "schema": "ar.research_funnel_health",
             "status": "COMPLETE",
             "as_of": TARGET, "target_trade_date": TARGET, "run_id": RUN_ID,
-            "bundle": {"published": False, "artifacts": {"a.json": "a" * 64}},
+            "bundle": {
+                "published": False, "immutable": True,
+                "artifacts": {"a.json": "a" * 64},
+            },
             "counts": {"scan_rows": 1, "candidate_rows": 1, "deep_queue_rows": 0},
             "policy": {"nightly_mode": "OBSERVATION_ONLY_NOT_PUBLISHED",
                        "u4_selection_supplied": False,
@@ -527,7 +556,7 @@ class PersistentBundleVerificationTests(unittest.TestCase):
         bundle, registry, target = real_bundle(tmp / "src")
         health = nightly_funnel.build_health(
             target=target, run_id=RUN_ID, bundle_dir=bundle, registry=registry,
-            generated_at="t", discarded_stale=False,
+            generated_at="t",
         )
         repo = tmp / "repo"
         staged = repo / "public" / "data" / "v2"
@@ -537,10 +566,10 @@ class PersistentBundleVerificationTests(unittest.TestCase):
         return repo, health, str(staged / "funnel_health.json"), bundle, target
 
     def _place(self, repo: Path, bundle: Path, target: str) -> Path:
-        dest = repo / "data_history" / "funnel"
+        dest = repo / "data_history" / "funnel" / target
         dest.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(bundle, dest / target)
-        return dest / target
+        shutil.copytree(bundle, dest / RUN_ID)
+        return dest / RUN_ID
 
     def test_a_health_whose_bundle_is_absent_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -595,8 +624,10 @@ class PersistentBundleVerificationTests(unittest.TestCase):
             outside = root / "outside"
             shutil.copytree(bundle, outside)
             funnel_root = repo / "data_history" / "funnel"
-            funnel_root.mkdir(parents=True)
-            (funnel_root / target).symlink_to(outside, target_is_directory=True)
+            (funnel_root / target).mkdir(parents=True)
+            (funnel_root / target / RUN_ID).symlink_to(
+                outside, target_is_directory=True
+            )
             with self.assertRaisesRegex(Exception, "越界或为符号链接"):
                 nightly._verify_funnel_bundle(health, str(repo), hp)
 
@@ -657,7 +688,7 @@ class BundleContractCallTests(unittest.TestCase):
             with self.assertRaises(Exception):
                 nightly_funnel.build_health(
                     target=TARGET, run_id=RUN_ID, bundle_dir=bundle,
-                    registry={"as_of": TARGET}, generated_at="t", discarded_stale=False,
+                    registry={"as_of": TARGET}, generated_at="t",
                 )
 
     def test_pristine_real_bundle_passes_all_four(self) -> None:
@@ -736,11 +767,12 @@ class TransactionalSafetyTests(unittest.TestCase):
             os.environ.clear()
             os.environ.update(saved_env)
 
-    def test_backup_is_dropped_only_after_the_completion_stamp(self) -> None:
-        """行为断言,不是源码位置断言。
+    def test_outer_publication_failure_keeps_the_bundle_referenced_by_live_health(self) -> None:
+        """子步骤成功不等于整轮已发布。
 
-        成功一轮之后备份必须已经丢弃(目标位是本轮产物、备份位为空);而丢弃发生在
-        完成戳之后这件事,由下面那条"落盘失败必须还原"的测试从反面守住。
+        funnel health 先写进 staging,真正的公开提交点是随后才运行的
+        nightly_publish.publish_stage。若后者失败,live health 仍是旧文件,它引用的
+        bundle 必须保持逐字不变;不能因为子步骤已经成功就覆盖并删除旧证据。
         """
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -749,24 +781,53 @@ class TransactionalSafetyTests(unittest.TestCase):
             old = obs / TARGET
             old.mkdir()
             (old / "old_evidence.json").write_text("{}", encoding="utf-8")
-            staged = root / "public" / "data" / "v2"
-            staged.mkdir(parents=True)
-            # run() 会读它传给 build_health —— 即便 build_health 被替身接管
-            write_json(staged / "security_registry.json", {"as_of": TARGET})
+
+            live_public = root / "live" / "public" / "data" / "v2"
+            staged_public = root / "stage" / "public" / "data" / "v2"
+            live_health = {
+                "run_id": "OLD_RUN",
+                "bundle": {"location": f"data_history/funnel/{TARGET}"},
+            }
+            write_json(live_public / "funnel_health.json", live_health)
+            staged_public.mkdir(parents=True)
+            write_json(staged_public / "security_registry.json", {"as_of": TARGET})
+
             rc = self._run_with(
-                obs, staged, root,
-                lambda **_k: {"status": "PARTIAL", "counts": {}, "degraded_channels": {}},
+                obs, staged_public, root / "stage",
+                lambda **_k: {
+                    "status": "PARTIAL", "counts": {}, "degraded_channels": {},
+                    "bundle": {
+                        "location": f"data_history/funnel/{TARGET}/{RUN_ID}"
+                    },
+                },
             )
             self.assertEqual(0, rc)
-            self.assertTrue((staged / "funnel_health.json").exists(), "完成戳应已落地")
-            self.assertFalse(
-                (obs / f"{TARGET}.superseded").exists(),
-                "完成戳落地之后,备份必须被丢弃",
+            self.assertTrue((staged_public / "funnel_health.json").exists())
+            staged_health = json.loads(
+                (staged_public / "funnel_health.json").read_text(encoding="utf-8")
             )
-            self.assertTrue((old / "new.json").exists(), "目标位应是本轮产物")
+            self.assertEqual(
+                f"data_history/funnel/{TARGET}/{RUN_ID}",
+                staged_health["bundle"]["location"],
+                "新 health 必须精确绑定本轮不可覆盖的 bundle 地址",
+            )
 
-    def test_a_failure_at_the_stamp_restores_the_old_evidence(self) -> None:
-        """落盘那一步失败:旧证据必须回来 —— 这是"丢弃发生在戳之后"的反面。"""
+            # 注入外层 publish_stage 失败:live health 没有被新 staging health 替换。
+            self.assertEqual(
+                live_health,
+                json.loads((live_public / "funnel_health.json").read_text(encoding="utf-8")),
+            )
+            self.assertTrue(
+                (old / "old_evidence.json").exists(),
+                "外层发布失败时,旧 live health 引用的 bundle 不得被子步骤覆盖",
+            )
+            self.assertTrue(
+                (obs / TARGET / RUN_ID / "new.json").exists(),
+                "本轮 bundle 应留在自己的不可变地址,等待外层决定是否发布 health",
+            )
+
+    def test_a_failure_at_the_stamp_never_touches_the_old_evidence(self) -> None:
+        """health 落盘失败只留下未引用的新 bundle,不得改写旧证据。"""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             obs = root / "obs"
@@ -794,12 +855,13 @@ class TransactionalSafetyTests(unittest.TestCase):
                 nightly_funnel._atomic_write_json = original_write
             self.assertEqual(1, rc)
             self.assertTrue(
-                (old / "old_evidence.json").exists(), "戳失败必须还原旧证据"
+                (old / "old_evidence.json").exists(), "戳失败不得触碰旧证据"
             )
+            self.assertTrue((obs / TARGET / RUN_ID / "new.json").exists())
             self.assertFalse((staged / "funnel_health.json").exists())
 
-    def test_a_failure_after_the_bundle_restores_the_old_evidence(self) -> None:
-        """注入"落盘前失败":旧证据必须回来,新 bundle 不得留下无戳残骸。"""
+    def test_a_failure_after_the_bundle_never_replaces_old_evidence(self) -> None:
+        """health 推导失败时,旧地址保持不变;新运行地址可以作为未引用诊断证据保留。"""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             obs = root / "obs"
@@ -847,38 +909,47 @@ class TransactionalSafetyTests(unittest.TestCase):
                 (old / "old_evidence.json").exists(),
                 "已发布 health 指向的旧 bundle 必须还在",
             )
-            self.assertFalse(
-                (old / "new.json").exists(), "失败那轮的半成品不得留在目标位"
-            )
+            self.assertTrue((obs / TARGET / RUN_ID / "new.json").exists())
             self.assertFalse(
                 (staged / "funnel_health.json").exists(), "失败不得留下完成戳"
             )
 
-    def test_a_crashed_reserve_is_never_overwritten(self) -> None:
-        """SIGKILL 留下的 .superseded 是最后一份有效证据,不能被下一轮删掉。"""
+    def test_retention_protects_the_date_referenced_by_live_health(self) -> None:
+        """外层发布前,retention 必须同时保护旧 live 指针与本轮目标。"""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / TARGET).mkdir()
-            backup = root / f"{TARGET}.superseded"
-            backup.mkdir()
-            (backup / "only_copy.json").write_text("{}", encoding="utf-8")
-            with self.assertRaisesRegex(FunnelError, "备份位已被占用"):
-                nightly_funnel._reserve_stale_bundle(root / TARGET, root, TARGET)
-            self.assertTrue((backup / "only_copy.json").exists())
-
-    def test_a_crashed_reserve_is_rolled_forward(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            wreck = root / TARGET
-            wreck.mkdir()
-            (wreck / "half_written.json").write_text("{}", encoding="utf-8")
-            backup = root / f"{TARGET}.superseded"
-            backup.mkdir()
-            (backup / "only_copy.json").write_text("{}", encoding="utf-8")
-            self.assertTrue(nightly_funnel.recover_crashed_reserve(root, TARGET))
-            self.assertTrue((wreck / "only_copy.json").exists(), "备份必须被还原")
-            self.assertFalse((wreck / "half_written.json").exists(), "半成品必须丢弃")
-            self.assertFalse(backup.exists())
+            obs = root / "obs"
+            obs.mkdir()
+            old_date = "20260701"
+            for day in (old_date, "20260810", "20260811", "20260812"):
+                (obs / day).mkdir()
+            (obs / old_date / "old_evidence.json").write_text("{}", encoding="utf-8")
+            staged = root / "public" / "data" / "v2"
+            staged.mkdir(parents=True)
+            write_json(staged / "security_registry.json", {"as_of": TARGET})
+            write_json(staged / "funnel_health.json", {
+                "as_of": old_date,
+                "bundle": {"location": f"data_history/funnel/{old_date}/OLD_RUN"},
+            })
+            saved_keep = os.environ.get("AR_FUNNEL_RETENTION_DAYS")
+            os.environ["AR_FUNNEL_RETENTION_DAYS"] = "2"
+            try:
+                rc = self._run_with(
+                    obs, staged, root,
+                    lambda **_k: {
+                        "status": "PARTIAL", "counts": {}, "degraded_channels": {}
+                    },
+                )
+            finally:
+                if saved_keep is None:
+                    os.environ.pop("AR_FUNNEL_RETENTION_DAYS", None)
+                else:
+                    os.environ["AR_FUNNEL_RETENTION_DAYS"] = saved_keep
+            self.assertEqual(0, rc)
+            self.assertTrue(
+                (obs / old_date / "old_evidence.json").exists(),
+                "外层尚未提交时不得清理 live health 仍在引用的日期",
+            )
 
 
 class ObservationAuthorityTests(unittest.TestCase):
@@ -888,7 +959,10 @@ class ObservationAuthorityTests(unittest.TestCase):
         return {
             "schema": "ar.research_funnel_health", "status": "COMPLETE",
             "as_of": TARGET, "target_trade_date": TARGET, "run_id": RUN_ID,
-            "bundle": {"published": False, "artifacts": {"a.json": "a" * 64}},
+            "bundle": {
+                "published": False, "immutable": True,
+                "artifacts": {"a.json": "a" * 64},
+            },
             "counts": {"scan_rows": 1, "candidate_rows": 1, "deep_queue_rows": 0},
             "policy": {"nightly_mode": "OBSERVATION_ONLY_NOT_PUBLISHED",
                        "u4_selection_supplied": False,
@@ -929,7 +1003,7 @@ class FunnelQualityRollupTests(unittest.TestCase):
             bundle, registry, target = real_bundle(root / "src")
             health = nightly_funnel.build_health(
                 target=target, run_id=RUN_ID, bundle_dir=bundle, registry=registry,
-                generated_at="t", discarded_stale=False,
+                generated_at="t",
             )
             self.assertEqual("PARTIAL", health["status"])
             repo = root / "repo"
@@ -939,7 +1013,9 @@ class FunnelQualityRollupTests(unittest.TestCase):
             staged.mkdir(parents=True)
             write_json(staged / "security_registry.json", registry)
             (repo / "data_history" / "funnel").mkdir(parents=True)
-            shutil.copytree(bundle, repo / "data_history" / "funnel" / target)
+            shutil.copytree(
+                bundle, repo / "data_history" / "funnel" / target / RUN_ID
+            )
 
             def runner(_command):
                 # 产物必须在本轮里产出 —— 夜链的新鲜度契约要求 mtime >= run_start
@@ -1069,7 +1145,7 @@ class ObservationRootTests(unittest.TestCase):
             with self.assertRaisesRegex(FunnelError, "符号链接"):
                 nightly_funnel.observation_root(str(link))
             with self.assertRaisesRegex(FunnelError, "符号链接"):
-                nightly_funnel._bundle_dir(link, TARGET)
+                nightly_funnel._bundle_dir(link, TARGET, RUN_ID)
             self.assertTrue(keepsake.exists(), "仓库外的数据不得被触碰")
 
     def test_a_real_root_is_accepted_and_absolute(self) -> None:

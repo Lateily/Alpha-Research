@@ -5,7 +5,8 @@
 必须走持久路径穿透 staging 拆除,而**可验证产物**是发布树里的一个小 health 文件:
 
   · 完整 bundle(scan/candidates/queue/projected registry,约 30MB)
-    → `AR_FUNNEL_OUTPUT_ROOT/<target>/`,即 live 的 data_history/funnel/<target>/。
+    → `AR_FUNNEL_OUTPUT_ROOT/<target>/<run_id>/`,即 live 的
+      data_history/funnel/<target>/<run_id>/。
       该目录不入库(.gitignore 已排除 data_history/),也不在 nightly_publish 的采集
       范围内(它只收 stage_public 的 .json 与 samples/reports/model_fund)。
   · health 摘要(约 1KB)
@@ -25,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -88,19 +90,15 @@ def observation_root(raw: str) -> Path:
     return root
 
 
-def _bundle_dir(output_root: Path, target: str) -> Path:
-    """把 bundle 目录钉死在 output_root/<target> 之下。
-
-    target 来自环境变量,直接拼进路径再 rmtree 是删错目录的经典写法。这里同时挡
-    三件事:根这一层被换成链接、子目录被换成链接、以及解析后跑出根之外。
-    """
+def _date_dir(output_root: Path, target: str) -> Path:
+    """把日期容器钉死在 output_root/<target> 之下。"""
     if not (len(target) == 8 and target.isdigit()):
         raise FunnelError(f"target_trade_date 必须是 8 位日期: {target!r}")
     root = Path(os.path.abspath(output_root))
     if root.is_symlink():
         raise FunnelError(f"观察区根本身是符号链接,拒绝使用: {root}")
     candidate = root / target
-    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_PATH_GUARD
+    # governance-mutation: FUNNEL_NIGHTLY_DATE_PATH_GUARD
     if candidate.is_symlink() or os.path.realpath(candidate) != os.path.join(
         os.path.realpath(root), target
     ):
@@ -108,85 +106,40 @@ def _bundle_dir(output_root: Path, target: str) -> Path:
     return candidate
 
 
-def _reserve_stale_bundle(bundle_dir: Path, output_root: Path, target: str) -> Path | None:
-    """产物契约要求本轮重写,所以同日残留必须先让位;但**不能直接删**。
+def _bundle_dir(output_root: Path, target: str, run_id: str) -> Path:
+    """每轮 bundle 都有不可覆盖的 run-scoped 地址。
 
-    对抗复核打出来的:原来在 run_pipeline 之前就 rmtree,一旦本轮随后失败,上一轮
-    已发布的 health 指向的 bundle 就没了 —— 清理把别人正在引用的东西删掉。改成
-    先重命名挪开,成功后再删,失败则原样还原。后缀不是 8 位日期,retention 的
-    扫描认不出它,不会被误清。
+    子步骤的 health 只写进 staging,真正公开提交点在外层 publish_stage。固定日期目录
+    会迫使子步骤在外层提交前覆盖旧证据;一旦 publish_stage 失败,live health 仍是旧
+    文件却已经找不到旧 bundle。运行级不可变路径从结构上消除这段回滚窗口。
     """
-    if not bundle_dir.exists() and not bundle_dir.is_symlink():
-        return None
-    if bundle_dir != _bundle_dir(output_root, target):
-        raise FunnelError("拒绝移动未经校验的漏斗产物目录")
-    if bundle_dir.is_file():
-        # 该位置上的杂散文件会把这个日期永久卡死:目录建不出来,retention 又只认
-        # 目录。就地移走,让它自愈而不是每晚重复失败。
-        reserved = bundle_dir.with_name(f"{target}.superseded-file")
-    else:
-        reserved = bundle_dir.with_name(f"{target}.superseded")
-    if reserved.exists() or reserved.is_symlink():
-        raise FunnelError(
-            f"备份位已被占用,拒绝覆盖: {reserved.name} —— 它是上一轮崩溃留下的"
-            "最后一份有效证据,必须先由 recover_crashed_reserve 回滚"
-        )
-    # governance-mutation: FUNNEL_NIGHTLY_STALE_RESERVE
-    os.replace(bundle_dir, reserved)
-    return reserved
-
-
-def recover_crashed_reserve(output_root: Path, target: str) -> bool:
-    """上一轮在 reserve 与 drop 之间被 SIGKILL:`.superseded` 是最后一份有效证据。
-
-    终审复核打出来的:原来无条件 rmtree 既有 `.superseded`,等于崩溃一次之后,
-    下一轮把唯一的旧证据也删了。正确做法是**先回滚**:把备份还原回目标位置
-    (连同丢弃崩溃那轮留下的半成品),再让本轮正常 reserve。
-    """
-    bundle_dir = _bundle_dir(output_root, target)
-    recovered = False
-    for suffix in (".superseded", ".superseded-file"):
-        reserved = bundle_dir.with_name(f"{target}{suffix}")
-        if not (reserved.exists() or reserved.is_symlink()):
-            continue
-        # governance-mutation: FUNNEL_NIGHTLY_CRASH_RECOVERY
-        _restore_reserved(reserved, bundle_dir)
-        recovered = True
-    return recovered
-
-
-def _drop_reserved(reserved: Path | None) -> bool:
-    if reserved is None:
-        return False
-    if reserved.is_dir() and not reserved.is_symlink():
-        shutil.rmtree(reserved)
-    else:
-        reserved.unlink()
-    return True
-
-
-def _restore_reserved(reserved: Path | None, bundle_dir: Path) -> None:
-    if reserved is None:
-        return
-    if bundle_dir.exists() or bundle_dir.is_symlink():
-        shutil.rmtree(bundle_dir, ignore_errors=True)
-    os.replace(reserved, bundle_dir)
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", run_id or ""):
+        raise FunnelError(f"run_id 不能安全地作为路径组件: {run_id!r}")
+    date_dir = _date_dir(output_root, target)
+    candidate = date_dir / run_id
+    # governance-mutation: FUNNEL_NIGHTLY_IMMUTABLE_RUN_PATH
+    if candidate.is_symlink() or os.path.realpath(candidate) != os.path.join(
+        os.path.realpath(date_dir), run_id
+    ):
+        raise FunnelError(f"漏斗运行目录越界: {os.path.realpath(candidate)}")
+    return candidate
 
 
 def prune_observation_area(
-    output_root: Path, keep: int, protect: str | None = None
-) -> list[str]:
+    output_root: Path, keep: int, protect: str | set[str] | None = None
+) -> dict[str, list[str]]:
     """观察区约 30MB/交易日,不清理一年就是 7-8GB。只保留最近 keep 个日期目录。
 
-    `protect` 是本轮目标,永不删除。复审打出来的洞:重跑历史日期时,刚生成的那个
-    目录按日期排序落在末尾,会被当成过期数据删掉,随后发布一份指向不存在 bundle
-    的 health —— 清理把本轮成果清掉,是 retention 最典型的自伤。
+    `protect` 同时包含本轮目标和 staging 中既有 live health 引用的日期。后者必须
+    保护到外层 publish_stage 成功之后;否则本轮尚未公开,清理却先删了线上仍在引用
+    的证据。
 
-    只认 8 位日期目录名,只删经 _bundle_dir 校验过的路径;认不出的东西一律不碰。
+    只认 8 位日期目录名,只删经 _date_dir 校验过的路径;认不出的东西一律不碰。
     """
     # governance-mutation: FUNNEL_NIGHTLY_RETENTION
     if keep < 1:
         raise FunnelError(f"观察区保留天数必须 >= 1: {keep}")
+    protected = ({protect} if isinstance(protect, str) else set(protect or ()))
     dated, skipped = [], []
     for entry in output_root.iterdir():
         if not (len(entry.name) == 8 and entry.name.isdigit()):
@@ -201,11 +154,30 @@ def prune_observation_area(
     removed = []
     for name in dated[keep:]:
         # governance-mutation: FUNNEL_NIGHTLY_RETENTION_PROTECT
-        if protect is not None and name == protect:
+        if name in protected:
             continue
-        shutil.rmtree(_bundle_dir(output_root, name))
+        shutil.rmtree(_date_dir(output_root, name))
         removed.append(name)
     return {"removed": removed, "skipped_not_a_directory": sorted(skipped)}
+
+
+def published_bundle_date(public_v2: Path) -> str | None:
+    """返回 staging 中现有 live health 正在引用的日期,供 retention 保护。
+
+    staging 是 live 的副本。文件存在却无法证明其引用落在本观察区时必须拒绝清理,
+    不能把损坏的旧指针当成"没有引用"。
+    """
+    path = public_v2 / "funnel_health.json"
+    if not path.exists():
+        return None
+    data = _load(path)
+    as_of = _date8(str(data.get("as_of") or ""))
+    location = str((data.get("bundle") or {}).get("location") or "")
+    prefix = f"data_history/funnel/{as_of}"
+    if location != prefix and not location.startswith(prefix + "/"):
+        raise FunnelError(f"既有 funnel health 的 bundle.location 非法: {location!r}")
+    # governance-mutation: FUNNEL_NIGHTLY_PUBLISHED_RETENTION_PROTECT
+    return as_of
 
 
 def _sha256(path: Path) -> str:
@@ -281,7 +253,7 @@ def validate_bundle_contracts(payloads: dict, registry: dict, scan_key: str) -> 
 
 def build_health(
     *, target: str, run_id: str, bundle_dir: Path, registry: dict,
-    generated_at: str, discarded_stale: bool,
+    generated_at: str,
 ) -> dict:
     """health 的每个字段都必须由 bundle 实物推导,不得是声称。
 
@@ -293,13 +265,13 @@ def build_health(
     validate_bundle_contracts(payloads, registry, "all_market_scan.json")
     return compose_health(
         target=target, run_id=run_id, manifest=manifest, measured=measured,
-        payloads=payloads, generated_at=generated_at, discarded_stale=discarded_stale,
+        payloads=payloads, generated_at=generated_at,
     )
 
 
 def compose_health(
     *, target: str, run_id: str, manifest: dict, measured: dict[str, str],
-    payloads: dict, generated_at: str, discarded_stale: bool,
+    payloads: dict, generated_at: str,
 ) -> dict:
     """把已校验的实物**转述**成 health。这一层只做推导,不做断言。"""
     scan = payloads["all_market_scan.json"]
@@ -322,8 +294,10 @@ def compose_health(
         "generated_at": generated_at,
         "bundle": {
             # 只登记相对位置:bundle 在 untracked 观察区,发布树不得依赖它的绝对路径
-            "location": f"data_history/funnel/{target}",
+            # governance-mutation: FUNNEL_NIGHTLY_IMMUTABLE_HEALTH_LOCATION
+            "location": f"data_history/funnel/{target}/{run_id}",
             "published": False,
+            "immutable": True,
             "bundle_hash": manifest["bundle_hash"],
             "artifacts": measured,
         },
@@ -346,7 +320,6 @@ def compose_health(
         "degraded_channels": dict(
             (scan.get("coverage") or {}).get("blocked_by_channel") or {}
         ),
-        "stale_bundle_discarded": discarded_stale,
         "disclaimer": DISCLAIMER,
     }
 
@@ -366,45 +339,42 @@ def run(argv: list[str] | None = None) -> int:
     )
     public_v2 = staged_root / "public" / "data" / "v2"
 
-    bundle_dir = _bundle_dir(output_root, target)
-    # 上一轮若在 reserve 与 drop 之间崩溃,先把备份回滚,再正常 reserve
-    recovered = recover_crashed_reserve(output_root, target)
-    # 同日残留先挪开而不是直接删:本轮若失败,上一轮已发布的 health 指向的 bundle
-    # 必须还在。成功才丢弃,失败原样还原。
-    reserved = _reserve_stale_bundle(bundle_dir, output_root, target)
+    # governance-mutation: FUNNEL_NIGHTLY_RUN_SCOPED_OUTPUT
+    bundle_dir = _bundle_dir(output_root, target, run_id)
+    # governance-mutation: FUNNEL_NIGHTLY_OUTPUT_NO_OVERWRITE
+    if os.path.lexists(bundle_dir):
+        raise FunnelError(f"本轮漏斗 bundle 已存在,拒绝覆盖: {bundle_dir}")
+    previously_published_date = published_bundle_date(public_v2)
 
     generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    try:
-        run_pipeline(
-            registry_path=public_v2 / "security_registry.json",
-            e1_path=public_v2 / "e1_event_layer.json",
-            feature_db=feature_db,
-            output_dir=bundle_dir,
-            trade_date=target,
-            rotation_path=public_v2 / "rotation_panel.json",
-            battery_path=public_v2 / "battery.json",
-            # macro 输入与 u4 选票都不接:见模块 docstring
-            macro_industry_path=None,
-            selected_tickers=(),
-            generated_at=generated_at,
-        )
-        health = build_health(
-            target=target, run_id=run_id, bundle_dir=bundle_dir,
-            registry=_load(public_v2 / "security_registry.json"),
-            generated_at=generated_at, discarded_stale=reserved is not None,
-        )
-        health["crashed_reserve_recovered"] = recovered
-        pruned = prune_observation_area(output_root, keep, protect=target)
-        health["retention"] = dict(pruned, keep_days=keep)
-        # health 是本步的完成戳,必须先落盘。终审复核打出来的:原来在 retention 与
-        # 落盘**之前**就丢弃了备份 —— 后面任一步失败,旧证据已经没了,而新 bundle
-        # 又没有完成戳,两头落空。备份只有在完成戳落地之后才可以丢。
-        _atomic_write_json(public_v2 / "funnel_health.json", health)
-    except BaseException:
-        _restore_reserved(reserved, bundle_dir)
-        raise
-    # governance-mutation: FUNNEL_NIGHTLY_DROP_AFTER_STAMP
-    _drop_reserved(reserved)
+    run_pipeline(
+        registry_path=public_v2 / "security_registry.json",
+        e1_path=public_v2 / "e1_event_layer.json",
+        feature_db=feature_db,
+        output_dir=bundle_dir,
+        trade_date=target,
+        rotation_path=public_v2 / "rotation_panel.json",
+        battery_path=public_v2 / "battery.json",
+        # macro 输入与 u4 选票都不接:见模块 docstring
+        macro_industry_path=None,
+        selected_tickers=(),
+        generated_at=generated_at,
+    )
+    health = build_health(
+        target=target, run_id=run_id, bundle_dir=bundle_dir,
+        registry=_load(public_v2 / "security_registry.json"),
+        generated_at=generated_at,
+    )
+    protected_dates = {target}
+    if previously_published_date:
+        protected_dates.add(previously_published_date)
+    pruned = prune_observation_area(output_root, keep, protect=protected_dates)
+    health["retention"] = dict(
+        pruned, keep_days=keep, protected_dates=sorted(protected_dates)
+    )
+    # health 仍只是 staging 完成戳。bundle 使用不可覆盖的 run-scoped 地址,所以即使
+    # 外层 publish_stage 随后失败,live health 引用的旧证据也不会被本步改写。
+    _atomic_write_json(public_v2 / "funnel_health.json", health)
     print(json.dumps({
         "step": "research_funnel",
         "target_trade_date": target,

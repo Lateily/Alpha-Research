@@ -1242,7 +1242,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Without freshness the funnel can report OK every night on yesterday's summary.",
     ),
     MutationCase(
-        mutation_id="FUNNEL_NIGHTLY_BUNDLE_PATH_GUARD",
+        mutation_id="FUNNEL_NIGHTLY_DATE_PATH_GUARD",
         component="Nightly funnel wiring runner",
         source_path="experiments/research_funnel/nightly_funnel.py",
         test_script="tests/test_funnel_nightly_offline.py",
@@ -1252,8 +1252,22 @@ MUTATIONS: tuple[MutationCase, ...] = (
             "    ):"
         ),
         after="    if False:",
+        expected_failure_marker="test_date_container_symlink_is_also_refused",
+        rationale="The date container must not escape the observation root through a symlink.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_IMMUTABLE_RUN_PATH",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if candidate.is_symlink() or os.path.realpath(candidate) != os.path.join(\n"
+            "        os.path.realpath(date_dir), run_id\n"
+            "    ):"
+        ),
+        after="    if False:",
         expected_failure_marker="test_bundle_directory_refuses_a_symlink_that_escapes_the_root",
-        rationale="target comes from the environment; an unvalidated path is later handed to rmtree.",
+        rationale="Every run bundle must remain an immutable child of its validated date container.",
     ),
     MutationCase(
         mutation_id="FUNNEL_NIGHTLY_RUN_CONTEXT",
@@ -1381,7 +1395,7 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/research_funnel/nightly_funnel.py",
         test_script="tests/test_funnel_nightly_offline.py",
         before=(
-            "        if protect is not None and name == protect:\n"
+            "        if name in protected:\n"
             "            continue"
         ),
         after="        pass",
@@ -1455,17 +1469,37 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Re-deriving status is the load-bearing half of making health a transcript.",
     ),
     MutationCase(
-        mutation_id="FUNNEL_NIGHTLY_STALE_RESERVE",
+        mutation_id="FUNNEL_NIGHTLY_RUN_SCOPED_OUTPUT",
         component="Nightly funnel wiring runner",
         source_path="experiments/research_funnel/nightly_funnel.py",
         test_script="tests/test_funnel_nightly_offline.py",
-        before="    os.replace(bundle_dir, reserved)\n    return reserved",
-        after=(
-            "    shutil.rmtree(bundle_dir, ignore_errors=True)\n"
-            "    return reserved"
+        before="    bundle_dir = _bundle_dir(output_root, target, run_id)",
+        after="    bundle_dir = _date_dir(output_root, target)",
+        expected_failure_marker="test_outer_publication_failure_keeps_the_bundle_referenced_by_live_health",
+        rationale="A fixed-date output overwrites evidence before the outer publication transaction commits.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_OUTPUT_NO_OVERWRITE",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if os.path.lexists(bundle_dir):\n"
+            '        raise FunnelError(f"本轮漏斗 bundle 已存在,拒绝覆盖: {bundle_dir}")'
         ),
-        expected_failure_marker="test_a_stale_bundle_is_reserved_not_destroyed",
-        rationale="Destroying the prior bundle before this run succeeds orphans a published health.",
+        after="    if False:\n        pass",
+        expected_failure_marker="test_same_run_id_can_never_overwrite_an_existing_bundle",
+        rationale="The run-scoped address is immutable only if retries cannot overwrite it.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_IMMUTABLE_HEALTH_LOCATION",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='            "location": f"data_history/funnel/{target}/{run_id}",',
+        after='            "location": f"data_history/funnel/{target}",',
+        expected_failure_marker="test_health_location_is_run_scoped_and_immutable",
+        rationale="The staged health must bind the exact immutable run bundle, not a mutable date alias.",
     ),
     MutationCase(
         mutation_id="FUNNEL_NIGHTLY_CONTRACT_REGISTRY",
@@ -1507,26 +1541,16 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_deep_queue_contract_is_called",
         rationale="The U4 authority boundary must be re-checked, not assumed.",
     ),
-    # ── 终审复核第四轮:事务顺序 / 无交易权限 / 降级明细 / symlink / 崩溃备份 ──
+    # ── 终审复核第四轮:无交易权限 / 降级明细 / symlink;外层发布事务复核 ──
     MutationCase(
-        mutation_id="FUNNEL_NIGHTLY_DROP_AFTER_STAMP",
+        mutation_id="FUNNEL_NIGHTLY_PUBLISHED_RETENTION_PROTECT",
         component="Nightly funnel wiring runner",
         source_path="experiments/research_funnel/nightly_funnel.py",
         test_script="tests/test_funnel_nightly_offline.py",
-        before="    _drop_reserved(reserved)",
-        after="    pass",
-        expected_failure_marker="test_backup_is_dropped_only_after_the_completion_stamp",
-        rationale="Dropping the backup before the completion stamp loses both old and new evidence.",
-    ),
-    MutationCase(
-        mutation_id="FUNNEL_NIGHTLY_CRASH_RECOVERY",
-        component="Nightly funnel wiring runner",
-        source_path="experiments/research_funnel/nightly_funnel.py",
-        test_script="tests/test_funnel_nightly_offline.py",
-        before="        _restore_reserved(reserved, bundle_dir)\n        recovered = True",
-        after="        recovered = True",
-        expected_failure_marker="test_a_crashed_reserve_is_rolled_forward",
-        rationale="A crashed reserve holds the last valid evidence and must be rolled forward.",
+        before="    return as_of",
+        after="    return None",
+        expected_failure_marker="test_retention_protects_the_date_referenced_by_live_health",
+        rationale="Retention must derive the live pointer it protects rather than accepting an arbitrary path.",
     ),
     MutationCase(
         mutation_id="FUNNEL_NIGHTLY_HEALTH_NO_TRADE",
@@ -1554,8 +1578,11 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/execution_tracker/run_nightly.py",
         test_script="tests/test_funnel_nightly_offline.py",
         before=(
-            "    if os.path.islink(bundle_dir) or os.path.realpath(bundle_dir) != os.path.join(\n"
-            "        os.path.realpath(funnel_root), as_of\n"
+            "    if (os.path.islink(funnel_root) or os.path.islink(date_dir) or\n"
+            "            os.path.islink(bundle_dir) or\n"
+            "            os.path.realpath(bundle_dir) != os.path.join(\n"
+            "                os.path.realpath(funnel_root), as_of, run_id\n"
+            "            )\n"
             "    ):"
         ),
         after="    if False:",
