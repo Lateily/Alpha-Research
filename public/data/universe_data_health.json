@@ -1,9 +1,9 @@
 {
   "verdict": "PASS",
-  "as_of": "2026-08-14T03:26:47.306310+00:00",
+  "as_of": "2026-08-14T09:34:05.473173+00:00",
   "max_age_days": 2,
   "meta": {
-    "fetched_at": "2026-08-13T09:37:42.483827",
+    "fetched_at": "2026-08-14T09:33:03.994165",
     "count": 5540,
     "version": "4.2",
     "scorer": "barra_lite_v1"
@@ -16,32 +16,32 @@
   },
   "factor_summaries": {
     "value": {
-      "coverage": 0.9882671480144405,
-      "unique": 953,
-      "stdev": 24.476441,
-      "median": 54.9
+      "coverage": 0.9879061371841156,
+      "unique": 960,
+      "stdev": 24.487113,
+      "median": 54.8
     },
     "quality": {
-      "coverage": 0.9882671480144405,
+      "coverage": 0.9879061371841156,
       "unique": 973,
-      "stdev": 28.523021,
+      "stdev": 28.522815,
       "median": 50.0
     },
     "momentum": {
-      "coverage": 0.9882671480144405,
+      "coverage": 0.9879061371841156,
       "unique": 1001,
-      "stdev": 28.458634,
+      "stdev": 28.461037,
       "median": 50.0
     },
     "size": {
-      "coverage": 0.9882671480144405,
+      "coverage": 0.9879061371841156,
       "unique": 1001,
-      "stdev": 28.87287,
+      "stdev": 28.872848,
       "median": 50.0
     },
     "low_vol": {
-      "coverage": 0.9882671480144405,
-      "unique": 1000,
+      "coverage": 0.9879061371841156,
+      "unique": 1001,
       "stdev": 28.873023,
       "median": 50.0
     }
