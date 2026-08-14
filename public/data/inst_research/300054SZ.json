@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-13T09:40:51Z",
+  "fetched_at": "2026-08-14T03:29:08Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -1141,40 +1141,12 @@
       "inst_count": 3,
       "surv_type": "特定对象调研",
       "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260515",
-      "fund_visitors": "--",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "吴红德,陈美玲,方志伟,韦瑶瑶,励特特,黄依明,赵兵兵,李晓磊,张雪峰,孟东晖,张菁,许雅淞,康晶晶,徐赛,李海根,朱希民,谢理达,杨越昊,孙秋波,乔世俊,张晨,曹锐钢,王若楠,肖康,齐津,宋焱,张雨溪",
-      "org_type": "--",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 27,
-      "surv_type": "特定对象调研",
-      "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260515",
-      "fund_visitors": "王鹏,高铮,田佳禾,宋巍巍,凌艺丹,朱瑶琪,邱慧轩",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "中欧基金",
-      "org_type": "基金管理公司",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 8,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
-    "total_30d": 31,
-    "total_90d": 83,
-    "unique_inst_30d": 88,
+    "total_30d": 18,
+    "total_90d": 81,
+    "unique_inst_30d": 59,
     "latest_date": "2026-07-28"
   }
 }
