@@ -1,25 +1,25 @@
 {
-  "fetched_at": "2026-08-13T09:38:38.995476",
+  "fetched_at": "2026-08-14T03:26:47.100194",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-08-13"
+    "updated": "2026-08-14"
   },
   "southbound": {
     "latest_net_flow": 36.6694,
     "5d_cumulative": 6.2765,
     "20d_cumulative": -58.1847,
     "trend": "inflow",
-    "updated": "2026-08-13"
+    "updated": "2026-08-14"
   },
   "dragon_tiger": [
     {
       "code": "000506",
       "name": "招金黄金",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -29,7 +29,7 @@
       "code": "000506",
       "name": "招金黄金",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -229,7 +229,7 @@
       "code": "000887",
       "name": "中鼎股份",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -239,7 +239,7 @@
       "code": "000887",
       "name": "中鼎股份",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -269,6 +269,16 @@
       "code": "001258",
       "name": "立新能源",
       "date": "",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "001258",
+      "name": "立新能源",
+      "date": "",
       "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
@@ -280,16 +290,6 @@
       "name": "立新能源",
       "date": "",
       "reason": "日振幅值达到15%的前5只证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "001258",
-      "name": "立新能源",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
