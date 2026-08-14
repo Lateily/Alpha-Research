@@ -8,7 +8,7 @@
     "no_position_mutation": true,
     "run_date": "2026-08-14",
     "pilot_start_date": "2026-06-08",
-    "generated_at": "2026-08-14T03:32:15.242885+00:00",
+    "generated_at": "2026-08-14T09:39:32.955845+00:00",
     "fresh_pilot": true,
     "legacy_paper_positions_inherited": false,
     "sources": [
@@ -265,8 +265,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 45.7,
-            "macd_hist": -1.0141,
+            "rsi14": 45.8,
+            "macd_hist": -1.0049,
             "price_vs_ma20": -2.89,
             "price_vs_ma60": -0.82,
             "change_5d": 0.29,
@@ -342,8 +342,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 48.6,
-            "macd_hist": 2.139,
+            "rsi14": 48.5,
+            "macd_hist": 2.1196,
             "price_vs_ma20": 3.14,
             "price_vs_ma60": -5.5,
             "change_5d": -2.45,
@@ -378,7 +378,7 @@
           },
           "key_indicators": {
             "rsi14": 43.8,
-            "macd_hist": 0.8245,
+            "macd_hist": 0.7676,
             "price_vs_ma20": -4.77,
             "price_vs_ma60": -17.22,
             "change_5d": -3.56,
@@ -389,7 +389,7 @@
               "type": "MACD_GOLDEN_CROSS",
               "strength": "moderate",
               "bullish": true,
-              "desc": "MACD DIF(-56.091) crossed above DEA(-56.504) below zero — bullish momentum"
+              "desc": "MACD DIF(-56.033) crossed above DEA(-56.417) below zero — bullish momentum"
             }
           ]
         },
@@ -419,8 +419,8 @@
             "total": 0
           },
           "key_indicators": {
-            "rsi14": 47.2,
-            "macd_hist": -0.2708,
+            "rsi14": 47.4,
+            "macd_hist": -0.2736,
             "price_vs_ma20": -3.16,
             "price_vs_ma60": 3.53,
             "change_5d": 0.17,
@@ -493,36 +493,29 @@
         "sleeve": "quant_swing",
         "state": "SETUP_WATCH",
         "signal_class": "no_trade_signal",
-        "setup_type": "death_cross",
-        "bias": "bearish",
+        "setup_type": "no_signal",
+        "bias": "neutral",
         "why_not_active": "confluence verdict is NEUTRAL — no active swing trade today",
-        "trigger_to_activate": "confluence upgrade to non-neutral, or a volume-confirmed breakdown (current vol_ratio 0.63).",
-        "risk_rule": "Bearish read negated on a volume-backed reclaim of MA20 (256.61).",
+        "trigger_to_activate": "confluence upgrade to non-neutral; no technical signal firing yet.",
+        "risk_rule": "No setup yet — watch MA20 (256.61) / MA60 (261.13) for the first directional signal.",
         "technical": {
           "zone": "NEUTRAL",
           "entry_zone": false,
-          "exit_zone": true,
+          "exit_zone": false,
           "signal_count": {
             "bullish": 0,
-            "bearish": 1,
-            "total": 1
+            "bearish": 0,
+            "total": 0
           },
           "key_indicators": {
-            "rsi14": 50.3,
-            "macd_hist": 4.0571,
+            "rsi14": 50.2,
+            "macd_hist": 4.0462,
             "price_vs_ma20": 2.48,
             "price_vs_ma60": 0.71,
             "change_5d": 7.52,
             "vol_ratio": 0.63
           },
-          "signals": [
-            {
-              "type": "DEATH_CROSS",
-              "strength": "strong",
-              "bullish": false,
-              "desc": "MA20 (256.6) crossed below MA60 (261.1) — bearish trend shift"
-            }
-          ]
+          "signals": []
         },
         "as_of": "2026-08-14",
         "validation_status": "unvalidated_pilot",
