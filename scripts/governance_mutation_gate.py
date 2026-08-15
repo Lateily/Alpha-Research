@@ -126,6 +126,7 @@ R043_GOVERNANCE_PATHS = (
 )
 FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/funnel_pipeline.py",
+    "experiments/research_funnel/r035_evaluation.py",
 )
 # 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
 # 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
@@ -1168,6 +1169,185 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_validate_manifest_enforces_funnel_marker_coverage",
         rationale="The mutation manifest must not silently stop enforcing funnel marker coverage.",
+    ),
+    # R-035 keeps discovery-vs-control and battery-separation scoring distinct.
+    # These mutations pin the outcome-blind input, preregistered return basis,
+    # descriptive statistics, and the permanently blocked claim boundary.
+    MutationCase(
+        mutation_id="R035_CANDIDATE_OUTCOME_BLIND",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if any(row.get("aligned_return") is not None for row in candidates["rows"]):\n'
+        '        raise EvaluationError("candidate bundle already contains outcome data")',
+        after='    if False:\n'
+        '        raise EvaluationError("candidate bundle already contains outcome data")',
+        expected_failure_marker="test_candidate_bundle_must_remain_outcome_blind",
+        rationale="U2 candidates must not receive outcome data before R-035 evaluates them.",
+    ),
+    MutationCase(
+        mutation_id="R035_BUNDLE_HASH_BINDING",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if declared != measured or manifest.get("bundle_hash") != _hash(declared):\n'
+        '        raise EvaluationError("funnel bundle manifest or artifact hash drift")',
+        after='    if False:\n'
+        '        raise EvaluationError("funnel bundle manifest or artifact hash drift")',
+        expected_failure_marker="test_bundle_artifact_hash_drift_is_rejected",
+        rationale="Standalone R-035 evaluation must independently bind every immutable bundle artifact.",
+    ),
+    MutationCase(
+        mutation_id="R035_CONTROL_FRAME_BINDING",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if batch_id != f"CTRL_{as_of}_v1":\n'
+        '        raise EvaluationError("control batch is not bound to the candidate as_of")',
+        after='    if False:\n'
+        '        raise EvaluationError("control batch is not bound to the candidate as_of")',
+        expected_failure_marker="test_control_frame_must_be_bound_to_candidate_asof",
+        rationale="Random controls must remain bound to the same registered U2 batch.",
+    ),
+    MutationCase(
+        mutation_id="R035_COMMON_T0_REQUIRED",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='            if not by_code[code] or by_code[code][0]["trade_date"] != as_of:\n'
+        '                # governance-mutation: R035_COMMON_T0_REQUIRED\n'
+        '                raise EvaluationError(f"candidate lacks the common U2 t0 close: {code}")',
+        after='            if not by_code[code]:\n'
+        '                # governance-mutation: R035_COMMON_T0_REQUIRED\n'
+        '                raise EvaluationError(f"candidate lacks the common U2 t0 close: {code}")',
+        expected_failure_marker="test_missing_common_t0_fails_closed",
+        rationale="Every scored security must use the same U2 as-of settled close.",
+    ),
+    MutationCase(
+        mutation_id="R035_ATOMIC_SOURCE_BATCH",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='        if partial_dates:\n'
+        '            raise EvaluationError(f"feature store contains partial source batches: {partial_dates}")',
+        after='        if False:\n'
+        '            raise EvaluationError(f"feature store contains partial source batches: {partial_dates}")',
+        expected_failure_marker="test_partial_feature_store_batch_fails_closed",
+        rationale="R-035 may score only dates committed atomically across every R-008 source endpoint.",
+    ),
+    MutationCase(
+        mutation_id="R035_COMMITTED_PRICE_DATES",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='            if row["trade_date"] not in endpoints_by_date:\n'
+        '                raise EvaluationError(\n'
+        '                    f"price evidence is not backed by an atomic source batch: {row[\'trade_date\']}"\n'
+        '                )',
+        after='            if False:\n'
+        '                raise EvaluationError(\n'
+        '                    f"price evidence is not backed by an atomic source batch: {row[\'trade_date\']}"\n'
+        '                )',
+        expected_failure_marker="test_price_rows_without_a_committed_source_batch_are_rejected",
+        rationale="Aligned returns may use only price rows backed by a committed R-008 source date.",
+    ),
+    MutationCase(
+        mutation_id="R035_ALIGNED_HORIZON",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='                value = observed["adjusted_close"] / t0["adjusted_close"] - 1.0',
+        after='                value = 0.0',
+        expected_failure_marker="test_aligned_returns_use_one_t0_and_all_preregistered_horizons",
+        rationale="Aligned returns must be calculated from the common t0, never fabricated as zero.",
+    ),
+    MutationCase(
+        mutation_id="R035_TWO_LAYER_SEPARATION",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='        "u3_battery_separation": _test_result(\n'
+        '            rows, field="u3_group", groups=U3_GROUPS\n'
+        '        ),',
+        after='        "u3_battery_separation": _test_result(\n'
+        '            rows, field="u1_u2_group", groups=U12_GROUPS\n'
+        '        ),',
+        expected_failure_marker="test_u12_and_u3_statistics_are_separate_and_batch_bound",
+        rationale="U1/U2 discovery and U3 battery separation are different tests and cannot be blended.",
+    ),
+    MutationCase(
+        mutation_id="R035_NO_TRADE_AUTHORITY",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if offending:\n'
+        '        raise EvaluationError(f"R-035 receipt contains trade authority: {sorted(offending)}")',
+        after='    if False:\n'
+        '        raise EvaluationError(f"R-035 receipt contains trade authority: {sorted(offending)}")',
+        expected_failure_marker="test_trade_or_blocking_authority_is_rejected",
+        rationale="R-035 is a research evaluator and can never emit trade or blocking authority.",
+    ),
+    MutationCase(
+        mutation_id="R035_POLICY_FROZEN",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if (\n'
+        '        policy.get("entry_basis") != "U2_AS_OF_SETTLED_CLOSE"',
+        after='    if False and (\n'
+        '        policy.get("entry_basis") != "U2_AS_OF_SETTLED_CLOSE"',
+        expected_failure_marker="test_preregistered_policy_and_top_level_status_are_recomputed",
+        rationale="The registered entry basis, horizons, price basis, and test method cannot drift.",
+    ),
+    MutationCase(
+        mutation_id="R035_LAYER_ROW_SEPARATION",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='        if row.get("u1_u2_group") == "RANDOM_CONTROL" and (\n'
+        '            row.get("u3_group") is not None or row.get("u3_group_reason") is not None\n'
+        '        ):\n'
+        '            raise EvaluationError("R-035 random controls cannot enter the U3 test")',
+        after='        if False:\n'
+        '            raise EvaluationError("R-035 random controls cannot enter the U3 test")',
+        expected_failure_marker="test_random_controls_cannot_enter_the_u3_test",
+        rationale="Random controls cannot be recycled into the battery-separation test.",
+    ),
+    MutationCase(
+        mutation_id="R035_STATISTICS_RECOMPUTED",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if payload.get("tests") != _tests_from_rows(rows):\n'
+        '        raise EvaluationError("R-035 test statistics do not match scored rows")',
+        after='    if False:\n'
+        '        raise EvaluationError("R-035 test statistics do not match scored rows")',
+        expected_failure_marker="test_statistics_are_recomputed_from_rows",
+        rationale="Published descriptive statistics must be recomputed from the scored rows.",
+    ),
+    MutationCase(
+        mutation_id="R035_STATUS_RECOMPUTED",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if payload.get("status") != expected_status:\n'
+        '        raise EvaluationError("R-035 top-level status does not match observed coverage")',
+        after='    if False:\n'
+        '        raise EvaluationError("R-035 top-level status does not match observed coverage")',
+        expected_failure_marker="test_preregistered_policy_and_top_level_status_are_recomputed",
+        rationale="Missing outcomes or open windows must remain visible as PARTIAL.",
+    ),
+    MutationCase(
+        mutation_id="R035_CLAIM_BLOCKED",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if (\n'
+        '        claim.get("status") != "BLOCKED"',
+        after='    if False and (\n'
+        '        claim.get("status") != "BLOCKED"',
+        expected_failure_marker="test_claim_cannot_be_unlocked_by_sample_count",
+        rationale="R-035 sample counts cannot unlock a claim before prospective causal-cluster governance.",
     ),
     # ── 研究漏斗夜链接入(观察期隔离)──
     # 守的是**接入方式**,不是漏斗自己的研究契约:隔离、销毁、不进发布树。
