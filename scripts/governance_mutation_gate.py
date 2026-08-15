@@ -121,6 +121,10 @@ K1_GOVERNANCE_PATHS = (
     "scripts/llm/ai_os/registry.py",
     "scripts/llm/ai_os/reconciler.py",
 )
+A035_GOVERNANCE_PATHS = (
+    "scripts/llm/ai_os/harness_eval.py",
+)
+A035_MUTATION_PREFIX = "AIOS_A035_"
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
@@ -652,6 +656,85 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_kimi_wrapper_denies_wrong_network_policy",
     ),
     MutationCase(
+        mutation_id="AIOS_A035_SIDE_EFFECT_BEFORE_GATE",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before='        if observation.decision == "DENY" and observation.side_effect_count != 0:',
+        after="        if False:",
+        expected_failure_marker="test_denial_after_side_effect_is_not_safe",
+        rationale="A denial is not safe when a side effect already happened.",
+        test_function="test_denial_after_side_effect_is_not_safe",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_CURRENT_HEAD",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before=(
+            "        if observation.evidence_head != case.current_head and not (\n"
+            '            observation.decision == "DENY"\n'
+            '            and observation.reason == "STALE_EVIDENCE"\n'
+            "        ):"
+        ),
+        after="        if False:",
+        expected_failure_marker="test_stale_head_cannot_support_allow",
+        rationale="An allow receipt cannot rely on evidence from a different head.",
+        test_function="test_stale_head_cannot_support_allow",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_REVIEW_INDEPENDENCE",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before=(
+            "        if case.require_independent_review and (\n"
+            "            observation.executor_id == observation.reviewer_id\n"
+            "            and not (\n"
+            '                observation.decision == "DENY"\n'
+            '                and observation.reason == "REVIEW_NOT_INDEPENDENT"\n'
+            "            )\n"
+            "        ):"
+        ),
+        after="        if False:",
+        expected_failure_marker="test_executor_self_review_cannot_support_allow",
+        rationale="The executor cannot be the independent reviewer for an allow receipt.",
+        test_function="test_executor_self_review_cannot_support_allow",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_EXPECTED_DECISION",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before="        if observation.decision != case.expected_decision:",
+        after="        if False:",
+        expected_failure_marker="test_false_pass_and_false_reject_are_distinguished",
+        rationale="Harness Evals must distinguish false passes from false rejects.",
+        test_function="test_false_pass_and_false_reject_are_distinguished",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_REASON_ATTRIBUTION",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before="        if observation.reason != case.expected_reason:",
+        after="        if False:",
+        expected_failure_marker="test_wrong_reason_is_not_accepted",
+        rationale="A matching decision with the wrong reason is not a valid regression pass.",
+        test_function="test_wrong_reason_is_not_accepted",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_MATRIX_HASH",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before="    matrix_hash = _hash_json(matrix)",
+        after="    matrix_hash = None",
+        expected_failure_marker="test_matrix_hash_is_stable_and_content_sensitive",
+        rationale="A Harness Eval report must bind the exact matrix content.",
+        test_function="test_matrix_hash_is_stable_and_content_sensitive",
+    ),
+    MutationCase(
         mutation_id="AIOS_K1_TASK_REQUIRED_FIELDS",
         component="AIOS K1 Task Compiler",
         source_path="scripts/llm/ai_os/task_compiler.py",
@@ -757,6 +840,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_validate_manifest_enforces_k1_marker_coverage",
         rationale="The manifest validator must not silently stop enforcing K1 marker coverage.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_A035_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_a035_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_a035_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_a035_marker_coverage",
+        rationale="The mutation manifest must enforce A-035 marker coverage.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_R043_MARKER_COVERAGE_CALL",
@@ -1758,6 +1855,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
         replace_exact(source.read_text(encoding="utf-8"), case.before, case.after, case.mutation_id)
         _local_test_target(test_script, _target_test(case))
     validate_k1_marker_coverage(root, cases)
+    validate_a035_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
@@ -1796,6 +1894,53 @@ def validate_k1_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "K1 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_a035_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = A035_GOVERNANCE_PATHS,
+    prefix: str = A035_MUTATION_PREFIX,
+) -> None:
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    existing_paths = [
+        relative for relative in marker_paths if _resolved_under(root, relative).is_file()
+    ]
+    if not declared and not existing_paths:
+        return
+
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"A-035 governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate A-035 governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "A-035 governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
