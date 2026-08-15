@@ -127,6 +127,15 @@ R043_GOVERNANCE_PATHS = (
 FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/funnel_pipeline.py",
 )
+# 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
+# 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
+# run_nightly.py 同时承载 Macro 的 marker,而那条规则是双向精确配对的。这里按
+# **ID 前缀**配对,只管 FUNNEL_NIGHTLY_*,不动同文件里别的治理族。
+FUNNEL_NIGHTLY_GOVERNANCE_PATHS = (
+    "experiments/research_funnel/nightly_funnel.py",
+    "experiments/execution_tracker/run_nightly.py",
+)
+FUNNEL_NIGHTLY_MUTATION_PREFIX = "FUNNEL_NIGHTLY_"
 
 
 class MutationGateError(RuntimeError):
@@ -1155,6 +1164,447 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_validate_manifest_enforces_funnel_marker_coverage",
         rationale="The mutation manifest must not silently stop enforcing funnel marker coverage.",
     ),
+    # ── 研究漏斗夜链接入(观察期隔离)──
+    # 守的是**接入方式**,不是漏斗自己的研究契约:隔离、销毁、不进发布树。
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ISOLATION",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            '        if name in ISOLATED_CALIBRATION_STEPS and status != "OK":'
+        ),
+        after='        if name == "macro_m1c" and status != "OK":',
+        expected_failure_marker="test_funnel_failure_cannot_stop_unrelated_publication",
+        rationale="A funnel crash must never veto NAV, ledger, or unrelated research publication.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DISCARD",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if not os.path.isfile(stage_health):\n"
+            "        return []\n"
+            "    os.remove(stage_health)"
+        ),
+        after=(
+            "    if not os.path.isfile(stage_health):\n"
+            "        return []\n"
+        ),
+        expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
+        rationale="Isolation without discard republishes yesterday's summary as today's output.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DISCARD_DISPATCH",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    "research_funnel": _discard_failed_funnel_outputs,',
+        after='    "research_funnel": _discard_failed_macro_outputs,',
+        expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
+        rationale="Two isolated steps share one branch; a funnel failure must not wipe Macro outputs.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DISCARD_POLICY_REQUIRED",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if discard is None:\n"
+            "        raise RuntimeError(\n"
+            '            f"isolated step {step} has no declared output discard policy"\n'
+            "        )"
+        ),
+        after=(
+            "    if discard is None:\n"
+            "        return []"
+        ),
+        expected_failure_marker="test_an_isolated_step_without_a_discard_policy_fails_closed",
+        rationale="A new isolated step must declare how its staged outputs are destroyed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ARTIFACT_FRESHNESS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '                                             "funnel_health.json"),\n'
+            '                                "as_of", True)],'
+        ),
+        after=(
+            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '                                             "funnel_health.json"),\n'
+            '                                "as_of", False)],'
+        ),
+        expected_failure_marker="test_funnel_health_artifact_is_bound_to_this_run",
+        rationale="Without freshness the funnel can report OK every night on yesterday's summary.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DATE_PATH_GUARD",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if candidate.is_symlink() or os.path.realpath(candidate) != os.path.join(\n"
+            "        os.path.realpath(root), target\n"
+            "    ):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_date_container_symlink_is_also_refused",
+        rationale="The date container must not escape the observation root through a symlink.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_IMMUTABLE_RUN_PATH",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if candidate.is_symlink() or os.path.realpath(candidate) != os.path.join(\n"
+            "        os.path.realpath(date_dir), run_id\n"
+            "    ):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_bundle_directory_refuses_a_symlink_that_escapes_the_root",
+        rationale="Every run bundle must remain an immutable child of its validated date container.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RUN_CONTEXT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if not value:\n"
+            '        raise FunnelError(f"缺少必需环境变量 {name} '
+            '—— 拒绝在无本轮上下文时产出漏斗产物")'
+        ),
+        after="    if False:\n        pass",
+        expected_failure_marker="test_runner_refuses_without_run_context",
+        rationale="Producing a bundle without run context lets an unbound artifact claim this run.",
+    ),
+    # ── 复审(#269 第一轮)打出来的三条:health 可伪造 / 根 symlink 越界删除 /
+    #    隔离失败在运维层静默。外加观察区 retention。
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ROOT_SYMLINK",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if root.is_symlink():\n"
+            "        raise FunnelError(\n"
+            '            f"观察区根本身是符号链接,拒绝使用: {root} -> {os.path.realpath(root)}"\n'
+            "        )"
+        ),
+        after="    pass",
+        expected_failure_marker="test_a_symlinked_observation_root_is_refused",
+        rationale="A symlinked observation root turns the retention sweep into arbitrary deletion.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_EVIDENCE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            '    if str(manifest.get("as_of") or "") != target:'
+        ),
+        after="    if False:",
+        expected_failure_marker="test_health_refuses_a_manifest_from_another_trade_date",
+        rationale="Health must be derived from the bundle it claims to describe.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_CONTRACT",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "        try:\n"
+            "            _validate_funnel_health(data, artifact_path)\n"
+            "        except Exception as exc:\n"
+            '            return "FAILED", f"漏斗 health 契约校验失败: {exc}"'
+        ),
+        after='        pass',
+        expected_failure_marker="test_a_content_free_health_cannot_pass_the_artifact_contract",
+        rationale="Health is this step's only verifiable artifact; unvalidated means unverified.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ISOLATED_ALARM",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='        if res["report"] == "COMPLETE" and not isolated:',
+        after='        if res["report"] == "COMPLETE":',
+        expected_failure_marker="test_isolated_degradation_still_raises_the_ops_alarm",
+        rationale="Isolation means not vetoing others, never that the failure goes unnoticed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RETENTION",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if keep < 1:\n"
+            '        raise FunnelError(f"观察区保留天数必须 >= 1: {keep}")'
+        ),
+        after="    keep = max(keep, 1)",
+        expected_failure_marker="test_retention_refuses_a_non_positive_keep",
+        rationale="A silently clamped retention window hides a misconfigured sweep.",
+    ),
+    # ── 复审第二轮:verifier 不验持久 bundle / PARTIAL 不上浮 / retention 删本轮 /
+    #    契约未收口 ──
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_EXISTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if not os.path.isdir(bundle_dir):\n"
+            '        raise ValueError(f"health 声称的 bundle 不存在: {location}")'
+        ),
+        after="    if False:\n        pass",
+        expected_failure_marker="test_a_health_whose_bundle_is_absent_is_rejected",
+        rationale="A self-reported health with no bundle on disk is a claim, not evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_COUNTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    if data.get("counts") != measured_counts:',
+        after="    if False:",
+        expected_failure_marker="test_counts_that_disagree_with_the_bundle_are_rejected",
+        rationale="Counts must be recomputed from the bundle, never taken on the health's word.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_QUALITY_ROLLUP",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS\n"
+        ),
+        after=(
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS\n"
+        ),
+        expected_failure_marker="test_funnel_partial_reaches_the_top_level_quality",
+        rationale="A funnel PARTIAL that never reaches the rollup is hidden behind a top-level COMPLETE.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RETENTION_PROTECT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "        if name in protected:\n"
+            "            continue"
+        ),
+        after="        pass",
+        expected_failure_marker="test_retention_never_deletes_the_current_target",
+        rationale="Re-running a historical date must not let the sweep delete this run's own bundle.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_CONTRACTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_bundle_contracts(payloads, registry, "all_market_scan.json")',
+        after="    pass",
+        expected_failure_marker="test_build_health_runs_the_bundle_contracts",
+        rationale="Hashes prove the files did not change, not that their content is still compliant.",
+    ),
+    # ── 对抗复核第三轮:rollup 只钉 helper 未钉传播 / as_of 未校形状 /
+    #    verifier 不跑契约 / status 重算未钉 / 陈旧 bundle 被直接删 ──
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_QUALITY_PROPAGATION",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='        for artifact in entry.get("artifacts", []):',
+        after="        for artifact in []:",
+        expected_failure_marker="test_partial_reaches_research_data_quality_end_to_end",
+        rationale="Pinning the helper is not pinning the wiring that carries its answer upward.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_DATE_SHAPE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    for key in (\"as_of\", \"target_trade_date\"):\n"
+            "        value = str(data.get(key) or \"\")\n"
+            "        if not (len(value) == 8 and value.isdigit()):"
+        ),
+        after=(
+            "    for key in ():\n"
+            "        value = str(data.get(key) or \"\")\n"
+            "        if not (len(value) == 8 and value.isdigit()):"
+        ),
+        expected_failure_marker="test_a_traversal_as_of_cannot_redirect_the_verifier",
+        rationale="as_of is joined into a filesystem path; an unshaped value redirects the verifier.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_VERIFIER_CONTRACTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if registry is None:\n"
+            '        raise ValueError("找不到本轮 registry,无法在验证侧复核 bundle 契约")\n'
+            "    nightly_funnel.validate_bundle_contracts(\n"
+            '        payloads, registry, "all_market_scan.json"\n'
+            "    )"
+        ),
+        after="    pass",
+        expected_failure_marker="test_the_verifier_also_runs_the_bundle_contracts",
+        rationale="Hashes prove the bytes are unchanged, not that the content is still compliant.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_STATUS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    if str(data.get("status") or "").upper() != measured_status:',
+        after="    if False:",
+        expected_failure_marker="test_a_status_that_disagrees_with_the_bundle_is_rejected",
+        rationale="Re-deriving status is the load-bearing half of making health a transcript.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RUN_SCOPED_OUTPUT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="    bundle_dir = _bundle_dir(output_root, target, run_id)",
+        after="    bundle_dir = _date_dir(output_root, target)",
+        expected_failure_marker="test_outer_publication_failure_keeps_the_bundle_referenced_by_live_health",
+        rationale="A fixed-date output overwrites evidence before the outer publication transaction commits.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_OUTPUT_NO_OVERWRITE",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if os.path.lexists(bundle_dir):\n"
+            '        raise FunnelError(f"本轮漏斗 bundle 已存在,拒绝覆盖: {bundle_dir}")'
+        ),
+        after="    if False:\n        pass",
+        expected_failure_marker="test_same_run_id_can_never_overwrite_an_existing_bundle",
+        rationale="The run-scoped address is immutable only if retries cannot overwrite it.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_IMMUTABLE_HEALTH_LOCATION",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='            "location": f"data_history/funnel/{target}/{run_id}",',
+        after='            "location": f"data_history/funnel/{target}",',
+        expected_failure_marker="test_health_location_is_run_scoped_and_immutable",
+        rationale="The staged health must bind the exact immutable run bundle, not a mutable date alias.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_REGISTRY",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_registry(payloads["security_registry_projected.json"])',
+        after="    pass",
+        expected_failure_marker="test_projected_registry_contract_is_called",
+        rationale="The projected registry must still satisfy its own contract.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_SCAN",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_all_market_scan(payloads[scan_key], registry)',
+        after="    pass",
+        expected_failure_marker="test_scan_contract_is_called",
+        rationale="A scan carrying a composite score must be refused, not merely hashed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_CANDIDATES",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_candidate_review(\n        payloads["candidate_review.json"], registry, payloads[scan_key]\n    )',
+        after="    pass",
+        expected_failure_marker="test_candidate_contract_is_called",
+        rationale="Candidate review must stay bound to the same U0/U1 as_of.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_QUEUE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_deep_research_queue(payloads["deep_research_queue.json"])',
+        after="    pass",
+        expected_failure_marker="test_deep_queue_contract_is_called",
+        rationale="The U4 authority boundary must be re-checked, not assumed.",
+    ),
+    # ── 终审复核第四轮:无交易权限 / 降级明细 / symlink;外层发布事务复核 ──
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_PUBLISHED_RETENTION_PROTECT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="    return as_of",
+        after="    return None",
+        expected_failure_marker="test_retention_protects_the_date_referenced_by_live_health",
+        rationale="Retention must derive the live pointer it protects rather than accepting an arbitrary path.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_NO_TRADE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="    offending = fp.FORBIDDEN_ACTION_KEYS.intersection(fp._walk_keys(data))",
+        after="    offending = set()",
+        expected_failure_marker="test_health_cannot_carry_a_trade_action",
+        rationale="An observation artifact carrying trade_action or blocking authority crosses the platform's red line.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_DEGRADED",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    if data.get("degraded_channels") != measured_degraded:',
+        after="    if False:",
+        expected_failure_marker="test_degraded_channels_that_disagree_are_rejected",
+        rationale="The degradation breakdown is the only actionable part of a perpetual PARTIAL.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_SYMLINK",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if (os.path.islink(funnel_root) or os.path.islink(date_dir) or\n"
+            "            os.path.islink(bundle_dir) or\n"
+            "            os.path.realpath(bundle_dir) != os.path.join(\n"
+            "                os.path.realpath(funnel_root), as_of, run_id\n"
+            "            )\n"
+            "    ):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_a_symlinked_bundle_pointing_outside_is_rejected",
+        rationale="os.path.isdir follows symlinks; a link out of the observation area borrows someone else's bundle.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_funnel_nightly_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_funnel_nightly_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker=(
+            "test_validate_manifest_enforces_funnel_nightly_marker_coverage"
+        ),
+        rationale="The manifest must not silently stop enforcing nightly wiring marker coverage.",
+    ),
 )
 
 
@@ -1310,6 +1760,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
     validate_k1_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
+    validate_funnel_nightly_marker_coverage(root, cases)
 
 
 def validate_k1_marker_coverage(
@@ -1425,6 +1876,55 @@ def validate_funnel_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "funnel governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_funnel_nightly_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = FUNNEL_NIGHTLY_GOVERNANCE_PATHS,
+    prefix: str = FUNNEL_NIGHTLY_MUTATION_PREFIX,
+) -> None:
+    """夜链接入的治理规则必须逐条带 marker,双向配对。
+
+    与上面那条的差别只有一个:按 mutation_id 前缀筛,不按 component 前缀。
+    原因是 run_nightly.py 同时承载 Macro 的 marker —— 按文件精确配对会把不相干的
+    治理族卷进来。前缀配对让两条规则互不干扰,同时谁都逃不掉。
+    """
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(
+                f"funnel nightly governance marker source is missing: {relative}"
+            )
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate funnel nightly governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "funnel nightly governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
