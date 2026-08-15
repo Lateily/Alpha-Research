@@ -136,6 +136,11 @@ FUNNEL_NIGHTLY_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/run_nightly.py",
 )
 FUNNEL_NIGHTLY_MUTATION_PREFIX = "FUNNEL_NIGHTLY_"
+NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS = (
+    "experiments/execution_tracker/nightly_acceptance.py",
+    "experiments/execution_tracker/run_nightly.py",
+)
+NIGHTLY_ACCEPTANCE_MUTATION_PREFIX = "NIGHTLY_ACCEPTANCE_"
 
 
 class MutationGateError(RuntimeError):
@@ -1590,6 +1595,110 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="os.path.isdir follows symlinks; a link out of the observation area borrows someone else's bundle.",
     ),
     MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_ENTRYPOINT",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before=(
+            '    if payload.get("ProgramArguments") != expected_args:\n'
+            '        raise AcceptanceError("launchd ProgramArguments do not bind the expected wrapper and runner")'
+        ),
+        after="    if False:\n        raise AcceptanceError(\"launchd ProgramArguments do not bind the expected wrapper and runner\")",
+        expected_failure_marker="test_plist_must_use_wrapper_and_exact_runner",
+        rationale="A successful engine run is not launchd acceptance when the installed job bypasses the wrapper or points elsewhere.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_LAUNCHD_ADVANCED",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="    if runs <= inputs.runs_before:",
+        after="    if False:",
+        expected_failure_marker="test_launchd_counter_must_advance_and_exit_zero",
+        rationale="Filesystem output alone cannot prove the scheduled job was invoked; the launchd run counter must advance.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_LAUNCHD_EXIT",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="    if last_exit != 0:",
+        after="    if False:",
+        expected_failure_marker="test_launchd_nonzero_exit_is_rejected_after_counter_advanced",
+        rationale="An advanced launchd counter with a nonzero terminal status is not a successful scheduled run.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_PERSISTENT_BUNDLE",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="    run_nightly._validate_funnel_health(health, str(health_path))",
+        after="    pass",
+        expected_failure_marker="test_funnel_health_must_survive_the_production_bundle_verifier",
+        rationale="The health summary cannot attest to its own immutable bundle; the production verifier must inspect the persisted bytes.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_EXACT_LOG_SEGMENT",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before='    if not re.search(r"(?m)^research_funnel: OK\\s*$", tail):',
+        after="    if False:",
+        expected_failure_marker="test_old_funnel_ok_before_exact_run_marker_cannot_pass",
+        rationale="An OK line from an older append-only log segment must not certify the current scheduled run.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_LOG_RUN_BOUNDARY",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before='    if next_run:\n        tail = tail[:len(marker) + next_run.start()]',
+        after='    if False:\n        tail = tail[:len(marker) + next_run.start()]',
+        expected_failure_marker="test_later_run_cannot_supply_evidence_for_the_expected_run",
+        rationale="A later launchd run cannot supply funnel or report evidence for the expected run marker.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_NO_ALARM",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="    if inputs.alarm_path.exists():",
+        after="    if False:",
+        expected_failure_marker="test_alarm_flag_is_never_accepted_as_a_clean_run",
+        rationale="The incomplete flag is an explicit terminal contradiction and cannot coexist with a PASS receipt.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_RUN_CONTEXT_LOG",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before=(
+            '    print(\n'
+            '        f"[run] run_id={res.get(\'run_id\')} "\n'
+            '        f"target_trade_date={res.get(\'target_trade_date\')}"\n'
+            '    )'
+        ),
+        after='    print("[run] context unavailable")',
+        expected_failure_marker="test_terminal_report_emits_run_marker_before_step_lines",
+        rationale="A reusable launchd log needs an exact run boundary before any step status can be accepted.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_NIGHTLY_ACCEPTANCE_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_nightly_acceptance_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_nightly_acceptance_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker=(
+            "test_validate_manifest_enforces_nightly_acceptance_marker_coverage"
+        ),
+        rationale="The gate must not silently stop enforcing acceptance-verifier marker coverage.",
+    ),
+    MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",
         component="Governance mutation gate",
         source_path="scripts/governance_mutation_gate.py",
@@ -1761,6 +1870,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
     validate_r043_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
+    validate_nightly_acceptance_marker_coverage(root, cases)
 
 
 def validate_k1_marker_coverage(
@@ -1925,6 +2035,48 @@ def validate_funnel_nightly_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "funnel nightly governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_nightly_acceptance_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS,
+    prefix: str = NIGHTLY_ACCEPTANCE_MUTATION_PREFIX,
+) -> None:
+    """The acceptance verifier's fail-closed checks must be mutation-pinned."""
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(
+                f"nightly acceptance governance marker source is missing: {relative}"
+            )
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate nightly acceptance governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    missing_mutations = sorted(set(marked) - declared)
+    missing_markers = sorted(declared - set(marked))
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "nightly acceptance governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
