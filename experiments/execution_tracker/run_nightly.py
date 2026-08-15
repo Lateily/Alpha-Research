@@ -89,6 +89,16 @@ STEPS = [
     # 其他无关契约 PARTIAL 不应卡死 Macro。M1-C 自己强校验组合 run_id/date,
     # 因此 export 若没产出本轮组合,Macro 会 fail-closed,不会读取旧契约冒充。
     ("macro_m1c", ["python3", "../macro_os/m1c.py"], False, []),
+    # ── 研究漏斗 U1→U4:观察期,隔离接入 ──
+    # 全新代码首次进生产。给它阻断发布的权力,等于让一个未经生产验证的模块能停掉
+    # 整条夜链,所以先隔离:失败记 DATA_BLOCKED,不否决 NAV/账本/其余研究。
+    # 产物分工见 nightly_funnel.py —— 30MB 级 bundle 落 untracked 的 data_history
+    # 观察区(不入库、不进发布清单),发布树只收一个 1KB 的 funnel_health.json。
+    # 依赖显式声明:漏斗读 registry/feature/e1 与 rotation/battery 的**本轮**产物,
+    # 排在它们后面才不会拿昨天的证据算今天的候选池。
+    ("research_funnel", ["python3", "../research_funnel/nightly_funnel.py"], False,
+     ["security_registry", "feature_store", "e1_event_layer", "rotation_panel",
+      "full_battery"]),
 ]
 
 # ── 产物契约(B2/B3/B4):步骤状态由**产物实物**判定,不再猜 stdout ──
@@ -129,6 +139,13 @@ ARTIFACTS = {
     "macro_m1c":             [(os.path.join("..", "..", "public", "data", "v2", "macro",
                                              "m1c_run_manifest.json"),
                                 "target_trade_date", True)],
+    # 漏斗的可验证产物是 health 摘要,不是 30MB 的 bundle 本身 —— bundle 在
+    # untracked 观察区,不入发布清单。health 携带 run_id/target_trade_date,
+    # 因此本轮绑定与新鲜度都由通用契约校验,漏斗拿不到"自证"的余地。
+    # governance-mutation: FUNNEL_NIGHTLY_ARTIFACT_FRESHNESS
+    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",
+                                             "funnel_health.json"),
+                                "as_of", True)],
 }
 
 # 状态精度(越大越糟);步骤终态 = max(进程判定, 各产物判定)
@@ -136,15 +153,22 @@ _SEVERITY = {"OK": 0, "PARTIAL": 1, "DATA_BLOCKED": 2, "STALE_OUTPUT": 3,
              "DATE_MISMATCH": 4, "FAILED": 5}
 RESEARCH_DATA_STEPS = {"security_registry", "feature_store", "e1_event_layer"}
 MACRO_DATA_STEPS = {"macro_m1c"}
-ISOLATED_CALIBRATION_STEPS = frozenset({"macro_m1c"})
+FUNNEL_DATA_STEPS = {"research_funnel"}
+ISOLATED_CALIBRATION_STEPS = frozenset({"macro_m1c", "research_funnel"})
 RUN_CONTEXT_EXTERNAL_STEPS = set(RESEARCH_DATA_STEPS)
 
 
 def _validate_isolated_calibration_steps():
-    """Keep advisory failure isolation narrower than the business pipeline."""
-    if ISOLATED_CALIBRATION_STEPS != frozenset({"macro_m1c"}):
+    """Keep advisory failure isolation narrower than the business pipeline.
+
+    这份名单是夜链唯一的 fail-closed 豁免通道,所以用精确相等而不是包含判断:
+    往里加成员必须改这个字面量,并且改动会被 mutation gate 逐条钉住。
+    research_funnel 在观察期内隔离 —— 见 STEPS 里的说明。
+    """
+    if ISOLATED_CALIBRATION_STEPS != frozenset({"macro_m1c", "research_funnel"}):
         raise RuntimeError(
-            "isolated calibration allowlist may contain only macro_m1c"
+            "isolated calibration allowlist may contain only "
+            "macro_m1c and research_funnel"
         )
 
 
@@ -155,7 +179,13 @@ def _research_quality(step, data):
     contract is publishable evidence with an explicit quality gap, not a process
     failure. Total E1 coverage loss is promoted to DATA_BLOCKED.
     """
-    if step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS or not isinstance(data, dict):
+    # 漏斗的 PARTIAL 必须上浮到顶层 research_data_quality —— 不上浮的话,真实数据下
+    # 已经在报 PARTIAL 的漏斗会被顶层的 COMPLETE 盖掉,那正是 pipeline_status ⊥
+    # data_quality 这条要防的混淆。承重的只有这个集合:漏斗的 status 字段与研究步
+    # 同形,下面的通用尾部本来就能正确转述,不需要再写一个分支。
+    # governance-mutation: FUNNEL_NIGHTLY_QUALITY_ROLLUP
+    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS
+            or not isinstance(data, dict)):
         return None
     if step in MACRO_DATA_STEPS:
         return _normalize_data_quality(data.get("data_quality"))
@@ -198,6 +228,237 @@ def _discard_failed_macro_outputs(base):
         os.path.join(base, "..", "..", "public", "data", "v2")
     )
     return nightly_publish.reset_staged_macro_outputs(stage_public)
+
+
+FUNNEL_HEALTH_SCHEMA = "ar.research_funnel_health"
+
+
+def _validate_funnel_health(data, artifact_path=None):
+    _validate_funnel_health_shape(data)
+    _verify_funnel_bundle(data, REPO_ROOT, artifact_path)
+
+
+def _validate_funnel_health_shape(data):
+    """漏斗 health 的内容必须被校验,不能只看文件在不在。
+
+    复审打出来的洞:原来三个字段的极简 JSON 就能通过产物契约 —— 只要日期与
+    run_id 对得上,内容爱写什么写什么。health 是这一步唯一的可验证产物,它自己
+    不被校验,等于这一步没被校验。
+    """
+    if not isinstance(data, dict):
+        raise ValueError("health 必须是对象")
+    if data.get("schema") != FUNNEL_HEALTH_SCHEMA:
+        raise ValueError(f"schema 非法: {data.get('schema')!r}")
+    # governance-mutation: FUNNEL_NIGHTLY_HEALTH_DATE_SHAPE
+    # as_of 会被拼进 bundle 路径。不校验形状的话,"20260813/../../elsewhere" 既能
+    # 满足 location 的字面比对,又能通过夜链只看前 8 位的日期校验 —— 于是 verifier
+    # 会去读观察区之外的目录。日期字段必须是 8 位数字,且两个字段必须一致。
+    for key in ("as_of", "target_trade_date"):
+        value = str(data.get(key) or "")
+        if not (len(value) == 8 and value.isdigit()):
+            raise ValueError(f"{key} 必须是 8 位日期: {value!r}")
+    if data["as_of"] != data["target_trade_date"]:
+        raise ValueError(
+            f"as_of={data['as_of']!r} 与 target_trade_date={data['target_trade_date']!r} 不一致"
+        )
+    run_id = str(data.get("run_id") or "")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", run_id):
+        raise ValueError(f"run_id 不能安全地作为路径组件: {run_id!r}")
+    status = str(data.get("status") or "").upper()
+    if status not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED"):
+        raise ValueError(f"status 非法: {status!r}")
+    bundle = data.get("bundle")
+    if not isinstance(bundle, dict):
+        raise ValueError("缺少 bundle 段")
+    if bundle.get("published") is not False:
+        raise ValueError("观察期产物不得声称已发布")
+    if bundle.get("immutable") is not True:
+        raise ValueError("观察期 bundle 必须使用不可覆盖的运行级地址")
+    artifacts = bundle.get("artifacts")
+    if not isinstance(artifacts, dict) or not artifacts:
+        raise ValueError("bundle.artifacts 缺失")
+    for name, digest in artifacts.items():
+        if not (isinstance(digest, str) and len(digest) == 64 and
+                all(c in "0123456789abcdef" for c in digest)):
+            raise ValueError(f"产物摘要不是 sha256: {name}")
+    counts = data.get("counts")
+    if not isinstance(counts, dict) or not all(
+        isinstance(counts.get(k), int) for k in
+        ("scan_rows", "candidate_rows", "deep_queue_rows")
+    ):
+        raise ValueError("counts 缺失或非整数")
+    policy = data.get("policy") or {}
+    if policy.get("nightly_mode") != "OBSERVATION_ONLY_NOT_PUBLISHED":
+        raise ValueError("观察期 nightly_mode 被改写")
+    # 声称与实测必须自洽:说队列是空的,行数就得是 0
+    if policy.get("u4_queue_empty_by_construction") is not (
+        counts["deep_queue_rows"] == 0
+    ):
+        raise ValueError(
+            "u4_queue_empty_by_construction 与 deep_queue_rows 矛盾"
+        )
+    if policy.get("u4_selection_supplied") is not False:
+        raise ValueError("观察期不得携带人工选票")
+    if policy.get("macro_input_wired") is not False:
+        raise ValueError("观察期不得声称已接入宏观输入")
+    _refuse_funnel_action_keys(data)
+
+
+def _refuse_funnel_action_keys(data):
+    """health 里不得出现任何交易动作或阻断权限字段。
+
+    终审复核打出来的:形状层逐字段校验得很细,却从没问过"有没有多出不该有的
+    字段"。观察期产物混进 trade_action=BUY 或 formal_blocking_authority=true,
+    照样能通过 —— 而这两样正是整个平台的红线。复用 #267 漏斗自己的禁字集合,
+    两边不会各写一份而漂移。
+    """
+    research_dir = os.path.abspath(os.path.join(HERE, "..", "research_funnel"))
+    if research_dir not in sys.path:
+        sys.path.insert(0, research_dir)
+    import funnel_pipeline as fp
+
+    # governance-mutation: FUNNEL_NIGHTLY_HEALTH_NO_TRADE
+    offending = fp.FORBIDDEN_ACTION_KEYS.intersection(fp._walk_keys(data))
+    if offending:
+        raise ValueError(f"health 携带交易或阻断权限字段: {sorted(offending)}")
+
+
+def _verify_funnel_bundle(data, repo_root, artifact_path=None):
+    """正式 verifier 必须去验持久 bundle,不能只看 health 自己说了什么。
+
+    复审第二轮的 BLOCKER:格式完整但全自报的 health —— bundle 根本不存在 ——
+    照样通过 verify_step_artifacts;生成之后删改 bundle 也发现不了。上一轮我把
+    **生成时**的推导补上了,但生成时的诚实不构成验证:验证方必须自己去看实物。
+    """
+    research_dir = os.path.abspath(os.path.join(HERE, "..", "research_funnel"))
+    if research_dir not in sys.path:
+        sys.path.insert(0, research_dir)
+    import nightly_funnel
+
+    as_of = str(data.get("as_of") or "")
+    run_id = str(data.get("run_id") or "")
+    bundle = data.get("bundle") or {}
+    location = str(bundle.get("location") or "")
+    # location 必须逐字等于约定位置:否则可以指向任意目录来"找一个能对上的 bundle"
+    if location != f"data_history/funnel/{as_of}/{run_id}":
+        raise ValueError(f"bundle.location 非法: {location!r}")
+    funnel_root = os.path.join(repo_root, "data_history", "funnel")
+    date_dir = os.path.join(funnel_root, as_of)
+    bundle_dir = os.path.join(date_dir, run_id)
+    # os.path.isdir 会跟随符号链接:观察区里种一个指向区外的链接,verifier 就会
+    # 拿别处的 bundle 给本轮 health 背书。用与生成侧同一套容器化判据。
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_SYMLINK
+    if (os.path.islink(funnel_root) or os.path.islink(date_dir) or
+            os.path.islink(bundle_dir) or
+            os.path.realpath(bundle_dir) != os.path.join(
+                os.path.realpath(funnel_root), as_of, run_id
+            )
+    ):
+        raise ValueError(f"bundle 目录越界或为符号链接: {os.path.realpath(bundle_dir)}")
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_EXISTS
+    if not os.path.isdir(bundle_dir):
+        raise ValueError(f"health 声称的 bundle 不存在: {location}")
+
+    from pathlib import Path as _Path
+
+    # read_bundle 自己会核 manifest 的 as_of/schema/版本/逐产物哈希/bundle_hash 自洽
+    manifest, measured, payloads = nightly_funnel.read_bundle(_Path(bundle_dir), as_of)
+    if bundle.get("artifacts") != measured:
+        raise ValueError("health 登记的产物摘要与磁盘实物不符")
+    if bundle.get("bundle_hash") != manifest.get("bundle_hash"):
+        raise ValueError("health 的 bundle_hash 与 manifest 不符")
+
+    # status 与 counts 由实物重算,health 只是转述,不是权威
+    scan = payloads["all_market_scan.json"]
+    candidates = payloads["candidate_review.json"]
+    measured_counts = {
+        "scan_rows": nightly_funnel._row_count(scan),
+        "candidate_rows": nightly_funnel._row_count(candidates),
+        "deep_queue_rows": nightly_funnel._row_count(
+            payloads["deep_research_queue.json"]
+        ),
+    }
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_COUNTS
+    if data.get("counts") != measured_counts:
+        raise ValueError(
+            f"health 的 counts 与实物不符: {data.get('counts')} != {measured_counts}"
+        )
+    measured_degraded = dict(
+        (scan.get("coverage") or {}).get("blocked_by_channel") or {}
+    )
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_DEGRADED
+    if data.get("degraded_channels") != measured_degraded:
+        raise ValueError(
+            f"health 的 degraded_channels 与实物不符: "
+            f"{data.get('degraded_channels')} != {measured_degraded}"
+        )
+    measured_status = nightly_funnel._worst(
+        str(scan.get("data_status") or scan.get("status") or "").upper(),
+        str(candidates.get("status") or "").upper(),
+    )
+    # governance-mutation: FUNNEL_NIGHTLY_BUNDLE_STATUS
+    if str(data.get("status") or "").upper() != measured_status:
+        raise ValueError(
+            f"health 的 status={data.get('status')!r} 与实物推导 {measured_status} 不符"
+        )
+
+    # 哈希只证明字节没被改,证明不了内容仍然合规:生成之后换一个"自洽但不合契约"
+    # 的 bundle,单靠哈希绑定是发现不了的。所以验证侧也要跑一遍 #267 的四份契约。
+    # registry 取本轮**暂存树**里的那一份 —— 就是生成侧用的那一份;取 live 的会
+    # 在发布前读到昨天的,造成假失败。
+    registry = None
+    if artifact_path:
+        candidate = os.path.join(
+            os.path.dirname(os.path.abspath(artifact_path)), "security_registry.json"
+        )
+        if os.path.isfile(candidate):
+            with open(candidate, encoding="utf-8") as fh:
+                registry = json.load(fh)
+    # governance-mutation: FUNNEL_NIGHTLY_VERIFIER_CONTRACTS
+    if registry is None:
+        raise ValueError("找不到本轮 registry,无法在验证侧复核 bundle 契约")
+    nightly_funnel.validate_bundle_contracts(
+        payloads, registry, "all_market_scan.json"
+    )
+
+
+def _discard_failed_funnel_outputs(base):
+    """漏斗隔离失败后,移除本轮暂存的 health 摘要。
+
+    staging 是 live 发布树的副本,所以昨天的 funnel_health.json 会躺在里面。
+    不删掉它,本轮发布清单就会收录昨天的摘要并把它当作今天的输出 —— 隔离机制
+    要防的正是这件事。删的是 staging 副本,live 文件不动;它只是不出现在本轮
+    发布清单里,除非漏斗自己重新产出。
+    30MB 的 bundle 不在这里处理:它落在 untracked 观察区、本就不进发布清单,
+    而且 run_pipeline 是 staging+os.replace 原子落地,不会留下半成品。
+    """
+    stage_health = os.path.abspath(
+        os.path.join(base, "..", "..", "public", "data", "v2", "funnel_health.json")
+    )
+    # governance-mutation: FUNNEL_NIGHTLY_DISCARD
+    if not os.path.isfile(stage_health):
+        return []
+    os.remove(stage_health)
+    return ["public/data/v2/funnel_health.json"]
+
+
+# 每个隔离步骤都必须声明自己的产物销毁方式。隔离 = 失败照样记账、暂存产物照样
+# 销毁,只是不牵连别人;缺了销毁,隔离就退化成"失败被无视,昨天的产物冒充今天"。
+_ISOLATED_DISCARD = {
+    "macro_m1c": _discard_failed_macro_outputs,
+    # governance-mutation: FUNNEL_NIGHTLY_DISCARD_DISPATCH
+    "research_funnel": _discard_failed_funnel_outputs,
+}
+
+
+def _discard_failed_isolated_outputs(step, base):
+    discard = _ISOLATED_DISCARD.get(step)
+    # governance-mutation: FUNNEL_NIGHTLY_DISCARD_POLICY_REQUIRED
+    if discard is None:
+        raise RuntimeError(
+            f"isolated step {step} has no declared output discard policy"
+        )
+    return discard(base)
 
 
 def _normalize_data_quality(value):
@@ -282,6 +543,13 @@ def _artifact_status_scan(step, data, artifact_path=None):
         quality = _research_quality(step, data)
         if quality not in ("COMPLETE", "PARTIAL", "DATA_BLOCKED"):
             return "FAILED", f"Macro M1-C data_quality 非法: {quality}"
+        return "OK", ""
+    if step in FUNNEL_DATA_STEPS:
+        # governance-mutation: FUNNEL_NIGHTLY_HEALTH_CONTRACT
+        try:
+            _validate_funnel_health(data, artifact_path)
+        except Exception as exc:
+            return "FAILED", f"漏斗 health 契约校验失败: {exc}"
         return "OK", ""
     if step == "export_contracts":
         return _export_contract_status(data)
@@ -420,6 +688,7 @@ def run_steps(
     run_id=None,
     persistent_feature_db=None,
     persistent_macro_db=None,
+    persistent_funnel_root=None,
 ):
     """verify=True(正式路径):步骤终态 = max(进程判定, 产物实物判定)。
     COMPLETE 从此必须由实物背书 —— 进程退 0 + 免责声明不再等于成功(B2/B3)。"""
@@ -451,6 +720,10 @@ def run_steps(
                 env["AR_FEATURE_STORE_DB"] = persistent_feature_db
             if persistent_macro_db:
                 env["AR_MACRO_DB"] = persistent_macro_db
+            if persistent_funnel_root:
+                # 引擎跑在 staging 里,staging 拆了产物就没了。漏斗的 30MB bundle
+                # 必须落在 live 观察区才留得住 —— 和 feature store DB 同一模式。
+                env["AR_FUNNEL_OUTPUT_ROOT"] = persistent_funnel_root
             if target:
                 env["AR_TARGET_TRADE_DATE"] = target
             else:
@@ -474,6 +747,7 @@ def run_steps(
             entry["status"] = status
         entry["blocks_publication"] = True
         # governance-mutation: MACRO_M1C_FAILURE_ISOLATION
+        # governance-mutation: FUNNEL_NIGHTLY_ISOLATION
         if name in ISOLATED_CALIBRATION_STEPS and status != "OK":
             # A calibration module may fail closed on its own evidence, but it
             # cannot veto unrelated NAV, ledger, or research publication.  The
@@ -483,7 +757,7 @@ def run_steps(
             entry["blocks_publication"] = False
             entry["why"] = entry.get("why") or "CALIBRATION_COMPONENT_FAILED_ISOLATED"
             entry["discarded_artifacts"] = (
-                _discard_failed_macro_outputs(base) if verify else []
+                _discard_failed_isolated_outputs(name, base) if verify else []
             )
             status = "DATA_BLOCKED"
             entry["status"] = status
@@ -517,6 +791,7 @@ def run_steps(
     report = "COMPLETE" if not non_ok else "INCOMPLETE"
     research_quality = []
     for entry in results:
+        # governance-mutation: FUNNEL_NIGHTLY_QUALITY_PROPAGATION
         for artifact in entry.get("artifacts", []):
             quality = artifact.get("quality_status")
             if quality and quality != "COMPLETE":
@@ -567,18 +842,34 @@ def _subprocess_runner(cmd, cwd=None, env=None):
 
 
 def _alarm(res):
-    """终态非 COMPLETE:落旗 + 桌面通知(best-effort,失败不影响退出码)。"""
+    """终态非 COMPLETE 或存在隔离降级:落旗 + 桌面通知。
+
+    隔离步骤失败时 report 仍是 COMPLETE、退出码仍是 0 —— 这是隔离的本意,不能改。
+    但原来这里会因 report==COMPLETE 直接清旗返回,于是隔离失败在运维层完全无声:
+    没有旗、没有通知、退出 0,而 isolated_steps 只存在于 JSON 里没人看。
+    隔离的意思是"不牵连别人",不是"没人知道"。所以隔离降级照样报警,只是用不同
+    的标题区分,且**不改变退出码**。
+    """
     try:
-        if res["report"] == "COMPLETE":
+        isolated = res.get("isolated_steps") or []
+        # governance-mutation: FUNNEL_NIGHTLY_ISOLATED_ALARM
+        if res["report"] == "COMPLETE" and not isolated:
             if os.path.exists(ALARM_FLAG):
                 os.remove(ALARM_FLAG)
             return
+        degraded_only = res["report"] == "COMPLETE" and bool(isolated)
         with open(ALARM_FLAG, "w", encoding="utf-8") as fh:
-            json.dump({"at": res["generated_at"], "non_ok": res["non_ok_steps"]}, fh,
+            json.dump({"at": res["generated_at"], "non_ok": res["non_ok_steps"],
+                       "isolated": isolated, "degraded_only": degraded_only}, fh,
                       ensure_ascii=False)
-        bad = ",".join(f"{s['step']}={s['status']}" for s in res["non_ok_steps"][:4])
+        if degraded_only:
+            title = "AR 夜链 COMPLETE(隔离降级)"
+            bad = ",".join(f"{s['step']}={s['status']}" for s in isolated[:4])
+        else:
+            title = "AR 夜链 INCOMPLETE"
+            bad = ",".join(f"{s['step']}={s['status']}" for s in res["non_ok_steps"][:4])
         subprocess.run(["osascript", "-e",
-                        f'display notification "{bad}" with title "AR 夜链 INCOMPLETE"'],
+                        f'display notification "{bad}" with title "{title}"'],
                        capture_output=True, timeout=10)
     except Exception:
         pass
@@ -1132,6 +1423,9 @@ def _execute_nightly():
             ),
             persistent_macro_db=os.path.join(
                 REPO_ROOT, "data_history", "macro_os.sqlite3"
+            ),
+            persistent_funnel_root=os.path.join(
+                REPO_ROOT, "data_history", "funnel"
             ),
         )
         res["preflight"] = {"pass": True, "warns": pf["warns"]}

@@ -122,6 +122,9 @@ jobs:
         run: |
           python3 experiments/research_funnel/funnel_pipeline.py --selftest
           python3 tests/test_research_funnel_closure.py
+      # ── 漏斗夜链接入(观察期隔离):守的是接入方式,不是研究契约本身 ──
+      - name: Research funnel nightly wiring regression (offline)
+        run: python3 tests/test_funnel_nightly_offline.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest
