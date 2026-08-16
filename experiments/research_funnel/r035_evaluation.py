@@ -49,6 +49,9 @@ DISCLAIMER = "不是买卖指令；研究信号，human executes."
 
 U12_GROUPS = ("MAIN_CANDIDATE", "RANDOM_CONTROL")
 U3_GROUPS = ("BATTERY_PASS", "BATTERY_NON_PASS")
+RESERVED_U12_TREATMENT = (
+    "EXCLUDED_FROM_U1_U2_DISCOVERY_NOT_POOLED_WITH_MAIN_OR_CONTROL"
+)
 RETURN_STATUSES = {"SETTLED", "TRUNCATED", "WINDOW_OPEN"}
 
 
@@ -484,6 +487,7 @@ def build_evaluation(
             "missing_target_bar": "LAST_AVAILABLE_SETTLED_CLOSE_WITH_TRUNCATED_TRUE",
             "u1_u2_groups": list(U12_GROUPS),
             "u3_groups": list(U3_GROUPS),
+            "reserved_quota_u1_u2_treatment": RESERVED_U12_TREATMENT,
             "test_method": TEST_METHOD,
             "cross_batch_mixing": "FORBIDDEN",
         },
@@ -541,6 +545,8 @@ def validate_evaluation(payload: Mapping[str, Any]) -> None:
         or policy.get("test_method") != TEST_METHOD
         or policy.get("u1_u2_groups") != list(U12_GROUPS)
         or policy.get("u3_groups") != list(U3_GROUPS)
+        or policy.get("reserved_quota_u1_u2_treatment")
+        != RESERVED_U12_TREATMENT
         or policy.get("cross_batch_mixing") != "FORBIDDEN"
     ):
         raise EvaluationError("R-035 preregistered policy drift")

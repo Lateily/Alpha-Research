@@ -219,7 +219,8 @@ class R035EvaluationTests(unittest.TestCase):
 
     def test_u12_and_u3_statistics_are_separate_and_batch_bound(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            receipt = R035Fixture(Path(tmp)).evaluate()
+            fixture = R035Fixture(Path(tmp))
+            receipt = fixture.evaluate()
             self.assertEqual(
                 ["MAIN_CANDIDATE", "RANDOM_CONTROL"],
                 receipt["tests"]["u1_u2_discovery"]["groups"],
@@ -236,6 +237,21 @@ class R035EvaluationTests(unittest.TestCase):
                 row["u3_group"] for row in receipt["rows"]
                 if row["u1_u2_group"] == "RANDOM_CONTROL"
             ))
+            self.assertEqual(
+                r035.RESERVED_U12_TREATMENT,
+                receipt["policy"]["reserved_quota_u1_u2_treatment"],
+            )
+            reserved_codes = {
+                row["ts_code"] for row in fixture.candidates["rows"]
+                if row["review_status"]
+                in {"RESERVED_SLOW_BULL", "RESERVED_CONTRARIAN"}
+            }
+            reserved_rows = [
+                row for row in receipt["rows"] if row["ts_code"] in reserved_codes
+            ]
+            self.assertTrue(reserved_rows)
+            self.assertTrue(all(row["u1_u2_group"] is None for row in reserved_rows))
+            self.assertTrue(all(row["u3_group"] in r035.U3_GROUPS for row in reserved_rows))
 
     def test_missing_battery_is_excluded_and_reported_not_silently_failed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -351,6 +367,10 @@ class R035EvaluationTests(unittest.TestCase):
             policy_mutation["policy"]["entry_basis"] = "SIGNAL_DAY_CLOSE"
             with self.assertRaisesRegex(r035.EvaluationError, "policy drift"):
                 r035.validate_evaluation(policy_mutation)
+            reserved_mutation = copy.deepcopy(receipt)
+            reserved_mutation["policy"]["reserved_quota_u1_u2_treatment"] = "POOLED"
+            with self.assertRaisesRegex(r035.EvaluationError, "policy drift"):
+                r035.validate_evaluation(reserved_mutation)
             status_mutation = copy.deepcopy(receipt)
             status_mutation["status"] = "PARTIAL"
             with self.assertRaisesRegex(r035.EvaluationError, "top-level status"):
