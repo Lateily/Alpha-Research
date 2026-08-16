@@ -2,18 +2,20 @@
   "schema": "ai-task.v1",
   "task_id": "RESEARCH-CLOSURE-OFFLINE-001",
   "source_issue": null,
-  "architecture_block": ["research-framework", "U1-U5-offline-closure"],
-  "objective": "Deliver a deterministic offline replay that binds the U1/U2 random control, same-day U3 evidence, Junyan-scoped U4 review receipt, and an explicitly blocked U5 handoff.",
+  "architecture_block": ["research-framework", "U1-to-paper-offline-closure"],
+  "objective": "Deliver a deterministic offline replay that binds U1-U4 evidence to a qualified thesis, dual-ticket timing gate, the existing paper-fund fill engine, mechanical outcome review, and a hash-bound human postmortem.",
   "non_goals": [
     "Do not modify or run the production nightly chain",
     "Do not write a production ledger, manifest, current_run pointer, NAV, or runtime data",
     "Do not claim alpha, win rate, funnel effectiveness, or production authorization",
-    "Do not automate Junyan's U4 selection"
+    "Do not automate Junyan's U4 selection or postmortem attribution",
+    "Do not generate research facts, thesis content, or timing evidence",
+    "Do not treat a completed offline replay as production deployment"
   ],
   "human_owner": "Junyan",
   "reviewer": "Junyan",
   "executor_candidates": ["Codex"],
-  "dependencies": ["PR #267 merged", "PR #269 remains independent"],
+  "dependencies": ["PR #267 merged", "PR #269 merged", "R-035 evaluation merged"],
   "authority_docs": [
     "AGENTS.md",
     "experiments/AGENTS.md",
@@ -22,7 +24,9 @@
   ],
   "file_scope": [
     "experiments/research_funnel/closure_experiment.py",
+    "experiments/research_funnel/research_cycle.py",
     "tests/test_research_closure_experiment.py",
+    "tests/test_research_cycle.py",
     "scripts/governance_mutation_gate.py",
     "tests/test_governance_mutation_gate.py",
     "tests/test_no_network_guard.py",
@@ -40,16 +44,22 @@
   "input_contracts": [
     "ar.research_funnel_bundle.v1.0",
     "same-day six-dimensional battery",
-    "ar.u4_review_receipt.v1.0"
+    "ar.u4_review_receipt.v1.0",
+    "qualified Core Thesis Factory research core",
+    "Research Decision Pack",
+    "offline settled-bar fixture"
   ],
   "output_artifacts": [
     "ar.u4_review_packet.v1.0",
     "offline deep_research_queue",
     "ar.research_closure_experiment.v1.0",
-    "independently verifiable ar.research_closure_bundle.v1.0"
+    "independently verifiable ar.research_cycle_bundle.v1.0",
+    "hash-bound ar.research_cycle_review_receipt.v1.0",
+    "independently verifiable ar.research_cycle_reviewed_bundle.v1.0"
   ],
   "acceptance_tests": [
     "python3 tests/test_research_closure_experiment.py",
+    "python3 tests/test_research_cycle.py",
     "python3 tests/test_research_funnel_closure.py",
     "python3 scripts/governance_mutation_gate.py",
     "python3 tests/test_no_network_guard.py",

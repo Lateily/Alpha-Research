@@ -128,6 +128,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/funnel_pipeline.py",
     "experiments/research_funnel/r035_evaluation.py",
     "experiments/research_funnel/closure_experiment.py",
+    "experiments/research_funnel/research_cycle.py",
 )
 # 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
 # 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
@@ -1348,6 +1349,174 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '            raise ClosureError(f"result artifact hash mismatch: {name}")',
         expected_failure_marker="test_result_bundle_verifier_rejects_artifact_mutation",
         rationale="A result artifact cannot change bytes while retaining the frozen manifest digest.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_CASE_HASH",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if case.get("case_hash") != _hash(_without_hash(case, "case_hash")):\n'
+        '        raise CycleError("research case hash mismatch")',
+        after='    if False:\n'
+        '        raise CycleError("research case hash mismatch")',
+        expected_failure_marker="test_case_hash_must_cover_every_prospective_input",
+        rationale="Every prospective research input must freeze before settled outcomes exist.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_NO_OVERWRITE",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if os.path.lexists(path):\n'
+        '        raise CycleError(f"output already exists; refusing overwrite: {path}")',
+        after='    if False:\n'
+        '        raise CycleError(f"output already exists; refusing overwrite: {path}")',
+        expected_failure_marker="test_cli_runs_the_entire_u4_to_reviewed_chain",
+        rationale="A retry cannot overwrite a prospectively sealed case, bars file, or review receipt.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_FACTPACK_E1",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if "E1" not in tiers:\n'
+        '        raise CycleError("factpack lacks load-bearing E1 evidence")',
+        after='    if False:\n'
+        '        raise CycleError("factpack lacks load-bearing E1 evidence")',
+        expected_failure_marker="test_factpack_without_e1_is_rejected",
+        rationale="A deep thesis cannot advance on inference alone.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_SOURCE_BINDING",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if refs != expected_refs:\n'
+        '        raise CycleError("research case is not bound to the exact U4 evidence chain")',
+        after='    if False:\n'
+        '        raise CycleError("research case is not bound to the exact U4 evidence chain")',
+        expected_failure_marker="test_case_must_bind_exact_u4_source",
+        rationale="A case cannot swap the reviewed U4 selection or evidence bundle.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_THESIS_QUALIFICATION",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if errors:\n'
+        '        raise CycleError(f"thesis core is not qualified: {errors[:3]}")',
+        after='    if False:\n'
+        '        raise CycleError(f"thesis core is not qualified: {errors[:3]}")',
+        expected_failure_marker="test_unqualified_thesis_is_rejected",
+        rationale="The orchestrator must reuse the qualified Core Thesis Factory contract.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_REDTEAM_BINDING",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if red_team_invalid:\n'
+        '        raise CycleError("red-team PASS is not bound to the qualified thesis core")',
+        after='    if False:\n'
+        '        raise CycleError("red-team PASS is not bound to the qualified thesis core")',
+        expected_failure_marker="test_red_team_must_bind_exact_core",
+        rationale="A PASS for one thesis cannot authorize a rewritten thesis.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_DUAL_TICKET_LEVELS",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if levels_diverge:\n'
+        '        raise CycleError("thesis, timing, and paper-plan levels are not identical")',
+        after='    if False:\n'
+        '        raise CycleError("thesis, timing, and paper-plan levels are not identical")',
+        expected_failure_marker="test_dual_ticket_levels_cannot_diverge",
+        rationale="The timing layer cannot silently rewrite the reviewed paper levels.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_TIMING_EVIDENCE",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if timing_evidence_invalid:\n'
+        '        raise CycleError("a PASS timing ticket lacks settled market/sector/flow/structure/portfolio evidence")',
+        after='    if False:\n'
+        '        raise CycleError("a PASS timing ticket lacks settled market/sector/flow/structure/portfolio evidence")',
+        expected_failure_marker="test_pass_timing_ticket_requires_all_five_evidence_gates",
+        rationale="A PASS timing ticket must be backed by every settled execution gate.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_NO_LOOKAHEAD_BARS",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if bars_invalid:\n'
+        '        raise CycleError("settled bars are unordered, duplicated, or pre-registration")',
+        after='    if False:\n'
+        '        raise CycleError("settled bars are unordered, duplicated, or pre-registration")',
+        expected_failure_marker="test_pre_registration_settled_bar_is_rejected",
+        rationale="Outcome evidence must remain later than the prospectively sealed case.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_PAPER_ONLY_AUTHORITY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if paper_boundary_broken:\n'
+        '        raise CycleError("offline paper replay acquired authority or unlocked a claim")',
+        after='    if False:\n'
+        '        raise CycleError("offline paper replay acquired authority or unlocked a claim")',
+        expected_failure_marker="test_replay_rejects_paper_engine_authority_drift",
+        rationale="One replay cannot gain real-capital authority or unlock a performance claim.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_DETERMINISTIC_VERIFY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if projection_changed:\n'
+        '        raise CycleError("cycle bundle is not the deterministic projection of its evidence")',
+        after='    if False:\n'
+        '        raise CycleError("cycle bundle is not the deterministic projection of its evidence")',
+        expected_failure_marker="test_cycle_verifier_rebuilds_outputs_after_self_consistent_rehash",
+        rationale="Self-consistent rehashing cannot rewrite the mechanical outcome.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_MANIFEST_AUTHORITY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if manifest_boundary_invalid:\n'
+        '        raise CycleError("cycle bundle manifest is invalid")',
+        after='    if False:\n'
+        '        raise CycleError("cycle bundle manifest is invalid")',
+        expected_failure_marker="test_cycle_manifest_cannot_rewrite_paper_authority",
+        rationale="A cycle manifest cannot rewrite the paper-only boundary beside valid artifact hashes.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_FINAL_MANIFEST_AUTHORITY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if final_manifest_boundary_invalid:\n'
+        '        raise CycleError("reviewed-cycle manifest is invalid")',
+        after='    if False:\n'
+        '        raise CycleError("reviewed-cycle manifest is invalid")',
+        expected_failure_marker="test_final_manifest_cannot_rewrite_paper_authority",
+        rationale="A reviewed bundle manifest cannot erase its no-trade boundary.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_POSTMORTEM_BINDING",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if receipt_unbound:\n'
+        '        raise CycleError("postmortem receipt is not bound to the mechanical outcome")',
+        after='    if False:\n'
+        '        raise CycleError("postmortem receipt is not bound to the mechanical outcome")',
+        expected_failure_marker="test_postmortem_receipt_must_bind_outcome_hash",
+        rationale="Human attribution must occur after and bind the exact mechanical result.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_MARKER_COVERAGE_CALL",
