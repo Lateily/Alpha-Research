@@ -112,6 +112,38 @@ def test_malformed_request_is_spec_blocked_without_plan() -> None:
         json.dumps(result.to_dict())
 
 
+def test_path_control_and_format_characters_are_spec_blocked() -> None:
+    unsafe_paths = (
+        "docs/llm/line\nspoof.md",
+        "docs/llm/tab\tspoof.md",
+        "docs/llm/c1\x85spoof.md",
+        "docs/llm/bidi\u202espoof.md",
+    )
+
+    for path in unsafe_paths:
+        result = build_isolation_plan(request(target_paths=(path,)))
+        assert result.status is IsolationStatus.SPEC_BLOCKED
+        assert result.plan is None
+        assert result.reasons == ("target_paths must contain safe relative paths",)
+
+
+def test_target_paths_cannot_overlap_or_use_equivalent_aliases() -> None:
+    cases = (
+        ("docs/llm", "docs/llm/file.md"),
+        ("docs/llm/File.md", "docs/llm/file.md"),
+        ("docs/llm/Ａ.md", "docs/llm/A.md"),
+    )
+
+    for target_paths in cases:
+        result = build_isolation_plan(request(target_paths=target_paths))
+        assert result.status is IsolationStatus.SPEC_BLOCKED
+        assert result.plan is None
+        assert result.reasons in (
+            ("target_paths must not contain overlapping paths",),
+            ("target_paths must not contain duplicate paths",),
+        )
+
+
 def test_timeout_must_be_a_positive_integer() -> None:
     for value in (0, -1, True, 1.5, "300"):
         result = build_isolation_plan(request(timeout_seconds=value))
@@ -202,6 +234,45 @@ def test_block_reasons_do_not_echo_untrusted_values() -> None:
 
     assert result.status is IsolationStatus.SPEC_BLOCKED
     assert untrusted not in serialized
+
+
+def test_secret_like_values_are_blocked_without_echo_across_request_fields() -> None:
+    synthetic_secret = "ghp_" + ("A" * 24)
+    cases = (
+        request(task_id=synthetic_secret),
+        request(run_id=synthetic_secret),
+        request(branch=f"codex/{synthetic_secret}"),
+        request(
+            file_scope=(f"docs/{synthetic_secret}",),
+            target_paths=(f"docs/{synthetic_secret}/file.md",),
+        ),
+        request(target_paths=(f"docs/llm/{synthetic_secret}.md",)),
+        request(allowed_tools=frozenset({"read_file", synthetic_secret})),
+        request(
+            requested_tools=frozenset({synthetic_secret}),
+            allowed_tools=frozenset({synthetic_secret}),
+        ),
+    )
+
+    for item in cases:
+        result = build_isolation_plan(item)
+        serialized = json.dumps(result.to_dict())
+        assert result.status is IsolationStatus.SPEC_BLOCKED
+        assert result.plan is None
+        assert "request contains a secret-like value" in result.reasons
+        assert synthetic_secret not in serialized
+
+
+def test_ordinary_secret_related_words_are_not_false_positive_blocked() -> None:
+    result = build_isolation_plan(
+        request(
+            file_scope=("docs/llm",),
+            target_paths=("docs/llm/sk-learning-guide.md",),
+        )
+    )
+
+    assert result.status is IsolationStatus.READY
+    assert result.plan is not None
 
 
 def test_planner_has_zero_network_and_filesystem_write_surface() -> None:

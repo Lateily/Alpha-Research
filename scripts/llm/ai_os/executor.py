@@ -24,6 +24,19 @@ from typing import Any
 
 COMMIT_SHA_RE = re.compile(r"[0-9a-f]{40}\Z")
 IDENTIFIER_RE = re.compile(r"[A-Za-z0-9#._-]+\Z")
+SECRET_LIKE_PATTERNS = (
+    re.compile(r"(?i)\bsk(?:_live)?[-_][a-z0-9_-]{20,}\b"),
+    re.compile(r"(?i)\bgh[opsu]_[a-z0-9_]{20,}\b"),
+    re.compile(r"(?i)\bgithub_pat_[a-z0-9_]{20,}\b"),
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+    re.compile(r"\bAIza[0-9A-Za-z_-]{20,}\b"),
+    re.compile(r"(?i)\bxox[baprs]-[a-z0-9-]{20,}\b"),
+    re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC |DSA |)PRIVATE KEY-----"),
+    re.compile(
+        r"(?i)\b[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|API_KEY)\s*=\s*"
+        r"[\"'][^\"'\r\n]{16,}[\"']"
+    ),
+)
 PROTECTED_BRANCHES = {"main", "master", "refs/heads/main", "refs/heads/master"}
 FORBIDDEN_SCOPES = (".git", "experiments/execution_tracker")
 WORKTREE_ROOT = ".ar/ai-os/worktrees"
@@ -52,6 +65,22 @@ class IsolationRequest:
 
     def spec_errors(self) -> tuple[str, ...]:
         errors: list[str] = []
+        if _contains_secret_like_value(
+            (
+                self.task_id,
+                self.run_id,
+                self.branch,
+                self.commit_sha,
+                self.file_scope,
+                self.target_paths,
+                self.allowed_tools,
+                self.requested_tools,
+                self.network_policy,
+                self.risk_level,
+                self.mode,
+            )
+        ):
+            errors.append("request contains a secret-like value")
         if not _safe_identifier(self.task_id):
             errors.append("task_id must be a safe non-empty identifier")
         if not _safe_identifier(self.run_id):
@@ -64,7 +93,14 @@ class IsolationRequest:
             errors.append("commit_sha must be a lowercase full commit SHA")
 
         errors.extend(_path_collection_errors("file_scope", self.file_scope, False))
-        errors.extend(_path_collection_errors("target_paths", self.target_paths, False))
+        errors.extend(
+            _path_collection_errors(
+                "target_paths",
+                self.target_paths,
+                False,
+                reject_overlaps=True,
+            )
+        )
         errors.extend(_tool_collection_errors("allowed_tools", self.allowed_tools))
         errors.extend(_tool_collection_errors("requested_tools", self.requested_tools))
 
@@ -222,7 +258,13 @@ def build_isolation_plan(request: IsolationRequest) -> IsolationResult:
     )
 
 
-def _path_collection_errors(name: str, value: Any, allow_empty: bool) -> list[str]:
+def _path_collection_errors(
+    name: str,
+    value: Any,
+    allow_empty: bool,
+    *,
+    reject_overlaps: bool = False,
+) -> list[str]:
     if not isinstance(value, tuple) or (not allow_empty and not value):
         return [f"{name} must be a non-empty tuple"]
     if not all(_safe_relative_path(item) for item in value):
@@ -230,6 +272,8 @@ def _path_collection_errors(name: str, value: Any, allow_empty: bool) -> list[st
     normalized = [_comparison_path(item) for item in value]
     if len(normalized) != len(set(normalized)):
         return [f"{name} must not contain duplicate paths"]
+    if reject_overlaps and _contains_overlapping_paths(normalized):
+        return [f"{name} must not contain overlapping paths"]
     return []
 
 
@@ -275,6 +319,8 @@ def _safe_relative_path(value: Any) -> bool:
     if not isinstance(value, str) or not value or value != value.strip():
         return False
     normalized = unicodedata.normalize("NFKC", value).replace("\\", "/")
+    if _contains_unsafe_unicode(normalized):
+        return False
     if normalized.startswith("/") or "\x00" in normalized or "%" in normalized:
         return False
     if ":" in normalized:
@@ -303,6 +349,32 @@ def _safe_tool_name(value: Any) -> bool:
         and value == value.strip()
         and not any(char.isspace() or ord(char) < 32 for char in value)
     )
+
+
+def _contains_unsafe_unicode(value: str) -> bool:
+    return any(unicodedata.category(char).startswith("C") for char in value)
+
+
+def _contains_overlapping_paths(paths: list[str]) -> bool:
+    return any(
+        _paths_overlap(left, right)
+        for index, left in enumerate(paths)
+        for right in paths[index + 1 :]
+    )
+
+
+def _contains_secret_like_value(value: Any) -> bool:
+    if isinstance(value, str):
+        return any(pattern.search(value) for pattern in SECRET_LIKE_PATTERNS)
+    if isinstance(value, dict):
+        return any(
+            _contains_secret_like_value(item)
+            for pair in value.items()
+            for item in pair
+        )
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return any(_contains_secret_like_value(item) for item in value)
+    return False
 
 
 def _contains_forbidden_scope(paths: tuple[str, ...]) -> bool:
