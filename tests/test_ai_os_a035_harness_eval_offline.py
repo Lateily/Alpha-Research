@@ -62,6 +62,10 @@ def observation(observations, case_id):
     return next(item for item in observations if item["case_id"] == case_id)
 
 
+def synthetic_secret(*parts):
+    return "".join(parts)
+
+
 def test_versioned_four_domain_fixture_passes_expected_negative_cases_offline() -> None:
     original_socket = socket.socket
 
@@ -160,6 +164,52 @@ def test_display_names_and_unsafe_tokens_are_spec_blocked() -> None:
     assert any("safe case token" in error for error in report.errors)
 
 
+def test_github_case_alias_cannot_claim_independent_review() -> None:
+    matrix = matrix_fixture()
+    observations = passing_observations(matrix)
+    target = observation(observations, "done-evidence-ready-allow")
+    target["executor_id"] = "github:jason"
+    target["reviewer_id"] = "github:Jason"
+
+    report = evaluate_harness_matrix(matrix, observations)
+
+    assert report.status == SPEC_BLOCKED
+    assert any("principal IDs" in error for error in report.errors)
+
+
+def test_rejected_identifiers_never_echo_secret_like_values() -> None:
+    secret_like = synthetic_secret("gh", "p_", "notarealcredential123")
+    matrix = matrix_fixture()
+    observations = passing_observations(matrix)
+    observations.append(
+        {
+            "case_id": secret_like,
+            "decision": "ALLOW",
+            "reason": "OK",
+            "evidence_head": "a" * 40,
+            "executor_id": "github:executor",
+            "reviewer_id": "github:reviewer",
+            "side_effect_count": 0,
+        }
+    )
+
+    unknown = evaluate_harness_matrix(matrix, observations)
+    serialized_unknown = json.dumps(unknown.to_dict(), ensure_ascii=False)
+
+    secret_matrix = matrix_fixture()
+    secret_matrix["cases"][0]["case_id"] = secret_like
+    malformed = evaluate_harness_matrix(
+        secret_matrix,
+        passing_observations(secret_matrix),
+    )
+    serialized_malformed = json.dumps(malformed.to_dict(), ensure_ascii=False)
+
+    assert unknown.status == SPEC_BLOCKED
+    assert malformed.status == SPEC_BLOCKED
+    assert secret_like not in serialized_unknown
+    assert secret_like not in serialized_malformed
+
+
 def test_unknown_contract_fields_are_spec_blocked() -> None:
     matrix = matrix_fixture()
     matrix["cases"][0]["hidden_override"] = "ALLOW"
@@ -194,6 +244,41 @@ def test_matrix_hash_is_stable_and_content_sensitive() -> None:
 
     assert first.matrix_hash == same.matrix_hash
     assert first.matrix_hash != changed.matrix_hash
+
+
+def test_observations_hash_is_stable_and_content_sensitive() -> None:
+    matrix = matrix_fixture()
+    first_observations = passing_observations(matrix)
+    same_observations = copy.deepcopy(first_observations)
+    changed_observations = copy.deepcopy(first_observations)
+    changed_observations[0]["executor_id"] = "github:another-executor"
+
+    first = evaluate_harness_matrix(matrix, first_observations)
+    same = evaluate_harness_matrix(matrix, same_observations)
+    changed = evaluate_harness_matrix(matrix, changed_observations)
+
+    assert first.status == EVAL_PASS
+    assert same.status == EVAL_PASS
+    assert changed.status == EVAL_PASS
+    assert first.observations_hash is not None
+    assert first.observations_hash == same.observations_hash
+    assert first.observations_hash != changed.observations_hash
+
+
+def test_matrix_cannot_disable_done_allow_independence() -> None:
+    matrix = matrix_fixture()
+    target_case = next(
+        case for case in matrix["cases"] if case["case_id"] == "done-evidence-ready-allow"
+    )
+    target_case["require_independent_review"] = False
+    observations = passing_observations(matrix)
+    target = observation(observations, "done-evidence-ready-allow")
+    target["reviewer_id"] = target["executor_id"]
+
+    report = evaluate_harness_matrix(matrix, observations)
+
+    assert report.status == SPEC_BLOCKED
+    assert any("must be true for DONE ALLOW" in error for error in report.errors)
 
 
 def test_false_pass_and_false_reject_are_distinguished() -> None:

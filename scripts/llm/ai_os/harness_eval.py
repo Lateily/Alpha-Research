@@ -24,8 +24,18 @@ VERSION_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 CASE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 REASON_RE = re.compile(r"^[A-Z][A-Z0-9_]{0,127}$")
 PRINCIPAL_ID_RE = re.compile(
-    r"^[a-z][a-z0-9_-]{0,31}:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    r"^(?P<scheme>[a-z][a-z0-9_-]{0,31}):(?P<subject>[A-Za-z0-9][A-Za-z0-9._-]{0,127})$"
 )
+GITHUB_PRINCIPAL_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,38})$")
+SECRET_LIKE_PATTERNS = (
+    re.compile(r"(?i)\bgh[opsur]_[a-z0-9_]{8,}\b"),
+    re.compile(r"(?i)\bgithub_pat_[a-z0-9_]{20,}\b"),
+    re.compile(r"(?i)\bsk(?:_live)?[-_][a-z0-9_-]{8,}\b"),
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+    re.compile(r"(?i)\bxox[baprs]-[a-z0-9-]{8,}\b"),
+    re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC |DSA |)PRIVATE KEY-----"),
+)
+INDEPENDENT_REVIEW_CASES = {("DONE", "ALLOW")}
 MATRIX_FIELDS = {"schema", "version", "cases"}
 CASE_FIELDS = {
     "case_id",
@@ -66,6 +76,17 @@ class Observation:
     reviewer_id: str
     side_effect_count: int
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "case_id": self.case_id,
+            "decision": self.decision,
+            "reason": self.reason,
+            "evidence_head": self.evidence_head,
+            "executor_id": self.executor_id,
+            "reviewer_id": self.reviewer_id,
+            "side_effect_count": self.side_effect_count,
+        }
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -86,6 +107,7 @@ class HarnessEvalReport:
     status: str
     matrix_version: str | None
     matrix_hash: str | None
+    observations_hash: str | None
     evaluated_cases: int
     findings: tuple[Finding, ...]
     errors: tuple[str, ...]
@@ -96,6 +118,7 @@ class HarnessEvalReport:
             "status": self.status,
             "matrix_version": self.matrix_version,
             "matrix_hash": self.matrix_hash,
+            "observations_hash": self.observations_hash,
             "evaluated_cases": self.evaluated_cases,
             "findings": [finding.to_dict() for finding in self.findings],
             "errors": list(self.errors),
@@ -110,7 +133,7 @@ def evaluate_harness_matrix(
 
     cases, matrix_version, errors = _compile_matrix(matrix)
     if errors:
-        return HarnessEvalReport(SPEC_BLOCKED, matrix_version, None, 0, (), errors)
+        return HarnessEvalReport(SPEC_BLOCKED, matrix_version, None, None, 0, (), errors)
 
     # governance-mutation: AIOS_A035_MATRIX_HASH
     matrix_hash = _hash_json(matrix)
@@ -123,10 +146,18 @@ def evaluate_harness_matrix(
             SPEC_BLOCKED,
             matrix_version,
             matrix_hash,
+            None,
             0,
             (),
             observation_errors,
         )
+
+    canonical_observations = [
+        observation.to_dict()
+        for observation in sorted(parsed_observations, key=lambda item: item.case_id)
+    ]
+    # governance-mutation: AIOS_A035_OBSERVATIONS_HASH
+    observations_hash = _hash_json(canonical_observations)
 
     findings: list[Finding] = []
     by_id = {observation.case_id: observation for observation in parsed_observations}
@@ -205,6 +236,7 @@ def evaluate_harness_matrix(
         EVAL_FAIL if findings else EVAL_PASS,
         matrix_version,
         matrix_hash,
+        observations_hash,
         len(cases),
         tuple(findings),
         (),
@@ -222,14 +254,22 @@ def _compile_matrix(
         errors.append("matrix fields must match the v1 contract exactly")
     if matrix.get("schema") != SCHEMA:
         errors.append(f"schema must be {SCHEMA}")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version):
+    if (
+        not isinstance(version, str)
+        or not VERSION_RE.fullmatch(version)
+        or _contains_secret_like(version)
+    ):
         errors.append("version must be a safe version token")
     raw_cases = matrix.get("cases")
     if not isinstance(raw_cases, list) or not raw_cases:
         errors.append("cases must be a non-empty list")
         safe_version = (
             version
-            if isinstance(version, str) and VERSION_RE.fullmatch(version)
+            if (
+                isinstance(version, str)
+                and VERSION_RE.fullmatch(version)
+                and not _contains_secret_like(version)
+            )
             else None
         )
         return (), safe_version, tuple(errors)
@@ -251,8 +291,11 @@ def _compile_matrix(
         independent = raw.get("require_independent_review")
         if not isinstance(case_id, str) or not CASE_ID_RE.fullmatch(case_id):
             errors.append(f"{prefix}.case_id must be a safe case token")
+        # governance-mutation: AIOS_A035_SECRET_CASE_ID_BLOCK
+        elif _contains_secret_like(case_id):
+            errors.append(f"{prefix}.case_id contains secret-like data")
         elif case_id in seen:
-            errors.append(f"duplicate case_id: {case_id}")
+            errors.append(f"{prefix}.case_id duplicates an earlier case")
         else:
             seen.add(case_id)
         if domain not in DOMAINS:
@@ -265,6 +308,14 @@ def _compile_matrix(
             errors.append(f"{prefix}.current_head must be a lowercase 40-char SHA")
         if not isinstance(independent, bool):
             errors.append(f"{prefix}.require_independent_review must be boolean")
+        # governance-mutation: AIOS_A035_REQUIRED_INDEPENDENCE
+        if (
+            (domain, expected_decision) in INDEPENDENT_REVIEW_CASES
+            and independent is not True
+        ):
+            errors.append(
+                f"{prefix}.require_independent_review must be true for DONE ALLOW"
+            )
         if not any(message.startswith(prefix) for message in errors):
             cases.append(
                 EvalCase(
@@ -283,7 +334,15 @@ def _compile_matrix(
         errors.append(f"matrix must cover all required domains; missing={missing}")
     return (
         tuple(cases),
-        version if isinstance(version, str) and VERSION_RE.fullmatch(version) else None,
+        (
+            version
+            if (
+                isinstance(version, str)
+                and VERSION_RE.fullmatch(version)
+                and not _contains_secret_like(version)
+            )
+            else None
+        ),
         tuple(errors),
     )
 
@@ -314,7 +373,7 @@ def _compile_observations(
         if not isinstance(case_id, str) or not CASE_ID_RE.fullmatch(case_id):
             errors.append(f"{prefix}.case_id must be a safe case token")
         elif case_id in seen:
-            errors.append(f"duplicate observation case_id: {case_id}")
+            errors.append(f"{prefix}.case_id duplicates an earlier observation")
         else:
             seen.add(case_id)
         if decision not in DECISIONS:
@@ -323,12 +382,9 @@ def _compile_observations(
             errors.append(f"{prefix}.reason must be a stable reason code")
         if not isinstance(evidence_head, str) or not SHA_RE.fullmatch(evidence_head):
             errors.append(f"{prefix}.evidence_head must be a lowercase 40-char SHA")
-        if (
-            not isinstance(executor_id, str)
-            or not PRINCIPAL_ID_RE.fullmatch(executor_id)
-            or not isinstance(reviewer_id, str)
-            or not PRINCIPAL_ID_RE.fullmatch(reviewer_id)
-        ):
+        canonical_executor = _canonical_principal_id(executor_id)
+        canonical_reviewer = _canonical_principal_id(reviewer_id)
+        if canonical_executor is None or canonical_reviewer is None:
             errors.append(f"{prefix} actor IDs must be explicit principal IDs")
         if (
             isinstance(side_effect_count, bool)
@@ -343,8 +399,8 @@ def _compile_observations(
                     decision=decision,
                     reason=reason.strip(),
                     evidence_head=evidence_head,
-                    executor_id=executor_id.strip(),
-                    reviewer_id=reviewer_id.strip(),
+                    executor_id=canonical_executor,
+                    reviewer_id=canonical_reviewer,
                     side_effect_count=side_effect_count,
                 )
             )
@@ -352,12 +408,33 @@ def _compile_observations(
     missing = sorted(expected_ids - seen)
     unknown = sorted(seen - expected_ids)
     if missing:
-        errors.append(f"missing observations: {missing}")
+        errors.append(f"missing observations: count={len(missing)}")
     if unknown:
-        errors.append(f"unknown observations: {unknown}")
+        # governance-mutation: AIOS_A035_ERROR_ID_REDACTION
+        errors.append(f"unknown observations: count={len(unknown)}")
     return tuple(parsed), tuple(errors)
 
 
-def _hash_json(value: Mapping[str, Any]) -> str:
+def _canonical_principal_id(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    match = PRINCIPAL_ID_RE.fullmatch(value)
+    if match is None:
+        return None
+    scheme = match.group("scheme")
+    subject = match.group("subject")
+    if scheme != "github" or not GITHUB_PRINCIPAL_RE.fullmatch(subject.casefold()):
+        return None
+    # governance-mutation: AIOS_A035_PRINCIPAL_CANONICALIZATION
+    if subject != subject.casefold():
+        return None
+    return f"github:{subject}"
+
+
+def _contains_secret_like(value: str) -> bool:
+    return any(pattern.search(value) for pattern in SECRET_LIKE_PATTERNS)
+
+
+def _hash_json(value: Any) -> str:
     payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return "sha256:" + sha256(payload.encode("utf-8")).hexdigest()

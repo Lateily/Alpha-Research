@@ -15,9 +15,9 @@ future Authority, Context, P5, and DONE gates. It detects:
 
 The committed matrix is versioned and covers normal and negative cases across
 all four domains. Matrix and receipt validation fail closed as `SPEC_BLOCKED`.
-Unknown fields are rejected. Reports bind both `matrix_version` and a canonical
-`matrix_hash`; evaluation findings are machine-readable and use stable reason
-codes.
+Unknown fields are rejected. Reports bind `matrix_version`, a canonical
+`matrix_hash`, and a canonical `observations_hash`; evaluation findings are
+machine-readable and use stable reason codes.
 
 ## Boundary
 
@@ -27,8 +27,11 @@ Harness is wired. In particular, open PRs #250 and #265 are not imported or
 modified by this work. Each producer still needs a later adapter that emits the
 receipt fields defined here.
 
-`executor_id` and `reviewer_id` are control-plane principal IDs. Display names,
-model labels, and arbitrary aliases are not proof of reviewer independence.
+`executor_id` and `reviewer_id` are control-plane principal IDs. Phase 1 accepts
+only canonical lowercase `github:<username>` identities and rejects unknown
+schemes. GitHub subject comparison is case-safe, so a casing alias cannot act as
+an independent reviewer. Display names, model labels, and arbitrary aliases are
+not proof of reviewer independence.
 
 No model API, external network, live data, or production ledger is used. Cost
 for the offline suite is CNY 0.
@@ -49,6 +52,9 @@ An observation receipt contains:
 - `executor_id` and `reviewer_id`; and
 - `side_effect_count`.
 
+`DONE + ALLOW` always requires an independent reviewer. This is an evaluator
+invariant, not a matrix option: changing the fixture flag cannot turn it off.
+
 ## Verification
 
 Run:
@@ -66,9 +72,10 @@ guard makes its designated behavioral regression fail by assertion.
 
 - Producer adapters for Authority, Context, P5, Runtime, and Review are not in
   this slice.
-- Phase 1 compares canonical principal IDs but does not resolve two different
-  aliases to the same underlying human/provider/model. That identity resolution
-  must come from the future Authority identity registry before production use.
+- Phase 1 compares canonical GitHub principal IDs but does not prove that two
+  different accounts, providers, or models are controlled by different
+  underlying actors. Cross-account/provider/model identity resolution must come
+  from the future Authority identity registry before production use.
 - The matrix uses deterministic golden expectations; an LLM judge is neither
   required nor treated as final authority.
 - Capability admission, production evaluation, and human calibration remain
