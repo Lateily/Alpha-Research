@@ -129,6 +129,9 @@ jobs:
       # ── 漏斗夜链接入(观察期隔离):守的是接入方式,不是研究契约本身 ──
       - name: Research funnel nightly wiring regression (offline)
         run: python3 tests/test_funnel_nightly_offline.py
+      # ── 三段子 DAG:候选清单 → 逐票电池/DATA_BLOCKED → 集合相等后 U3/U4 ──
+      - name: Research funnel candidate-battery DAG regression (offline)
+        run: python3 tests/test_funnel_dag_offline.py
       # launchd 首轮验收不能靠旧日志里残留的 OK 行。验收器绑定安装入口、
       # launchctl 计数/退出码、精确 run 日志段、持久 bundle 与报警旗,全程只读。
       - name: Scheduled nightly production acceptance regression (offline)

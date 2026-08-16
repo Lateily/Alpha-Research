@@ -96,9 +96,18 @@ STEPS = [
     # 观察区(不入库、不进发布清单),发布树只收一个 1KB 的 funnel_health.json。
     # 依赖显式声明:漏斗读 registry/feature/e1 与 rotation/battery 的**本轮**产物,
     # 排在它们后面才不会拿昨天的证据算今天的候选池。
-    ("research_funnel", ["python3", "../research_funnel/nightly_funnel.py"], False,
-     ["security_registry", "feature_store", "e1_event_layer", "rotation_panel",
-      "full_battery"]),
+    # 三段子 DAG(Junyan 批准的方案 C 变体):网络副作用只在中段,两头纯计算可复现。
+    #   funnel_candidates  纯计算 U0/U1/U2 → 不可变候选清单
+    #   candidate_battery  唯一网络步:绑候选 hash 逐票六维电池,整体失败也逐票 DATA_BLOCKED
+    #   funnel_finalize    纯计算:校验电池覆盖集合==候选清单,再生成 U3/U4 与 health
+    # 三段同 as_of/run_id/bundle,后段读前段的 stage manifest 并核 hash。任一段挂,
+    # 三段整体隔离(不否决发布)。full_battery --from-watchlist 保留给 court/promoter。
+    ("funnel_candidates", ["python3", "../research_funnel/funnel_dag.py", "candidates"], False,
+     ["security_registry", "feature_store", "e1_event_layer", "rotation_panel"]),
+    ("candidate_battery", ["python3", "../research_funnel/funnel_dag.py", "battery"], True,
+     ["funnel_candidates"]),
+    ("funnel_finalize", ["python3", "../research_funnel/funnel_dag.py", "finalize"], False,
+     ["funnel_candidates", "candidate_battery"]),
 ]
 
 # ── 产物契约(B2/B3/B4):步骤状态由**产物实物**判定,不再猜 stdout ──
@@ -143,7 +152,15 @@ ARTIFACTS = {
     # untracked 观察区,不入发布清单。health 携带 run_id/target_trade_date,
     # 因此本轮绑定与新鲜度都由通用契约校验,漏斗拿不到"自证"的余地。
     # governance-mutation: FUNNEL_NIGHTLY_ARTIFACT_FRESHNESS
-    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",
+    # 前两段的实物在 untracked 观察区,发布树只收 ~300B 的 stage receipt(转述
+    # stage_hash,不含研究内容);finalize 写 health 并把三份 receipt 的 hash 链起来核。
+    "funnel_candidates":     [(os.path.join("..", "..", "public", "data", "v2",
+                                             "funnel_stage_candidates.json"),
+                                "as_of", True)],
+    "candidate_battery":     [(os.path.join("..", "..", "public", "data", "v2",
+                                             "funnel_stage_battery.json"),
+                                "as_of", True)],
+    "funnel_finalize":       [(os.path.join("..", "..", "public", "data", "v2",
                                              "funnel_health.json"),
                                 "as_of", True)],
 }
@@ -153,8 +170,11 @@ _SEVERITY = {"OK": 0, "PARTIAL": 1, "DATA_BLOCKED": 2, "STALE_OUTPUT": 3,
              "DATE_MISMATCH": 4, "FAILED": 5}
 RESEARCH_DATA_STEPS = {"security_registry", "feature_store", "e1_event_layer"}
 MACRO_DATA_STEPS = {"macro_m1c"}
-FUNNEL_DATA_STEPS = {"research_funnel"}
-ISOLATED_CALIBRATION_STEPS = frozenset({"macro_m1c", "research_funnel"})
+FUNNEL_DATA_STEPS = {"funnel_finalize"}
+FUNNEL_STAGE_STEPS = {"funnel_candidates", "candidate_battery"}
+ISOLATED_CALIBRATION_STEPS = frozenset({
+    "macro_m1c", "funnel_candidates", "candidate_battery", "funnel_finalize",
+})
 RUN_CONTEXT_EXTERNAL_STEPS = set(RESEARCH_DATA_STEPS)
 
 
@@ -165,10 +185,12 @@ def _validate_isolated_calibration_steps():
     往里加成员必须改这个字面量,并且改动会被 mutation gate 逐条钉住。
     research_funnel 在观察期内隔离 —— 见 STEPS 里的说明。
     """
-    if ISOLATED_CALIBRATION_STEPS != frozenset({"macro_m1c", "research_funnel"}):
+    if ISOLATED_CALIBRATION_STEPS != frozenset({
+        "macro_m1c", "funnel_candidates", "candidate_battery", "funnel_finalize",
+    }):
         raise RuntimeError(
-            "isolated calibration allowlist may contain only "
-            "macro_m1c and research_funnel"
+            "isolated calibration allowlist may contain only macro_m1c and the "
+            "three funnel DAG stages"
         )
 
 
@@ -432,14 +454,19 @@ def _discard_failed_funnel_outputs(base):
     30MB 的 bundle 不在这里处理:它落在 untracked 观察区、本就不进发布清单,
     而且 run_pipeline 是 staging+os.replace 原子落地,不会留下半成品。
     """
-    stage_health = os.path.abspath(
-        os.path.join(base, "..", "..", "public", "data", "v2", "funnel_health.json")
-    )
-    # governance-mutation: FUNNEL_NIGHTLY_DISCARD
-    if not os.path.isfile(stage_health):
-        return []
-    os.remove(stage_health)
-    return ["public/data/v2/funnel_health.json"]
+    public_v2 = os.path.abspath(os.path.join(base, "..", "..", "public", "data", "v2"))
+    removed = []
+    # 三段任一挂,三份都清:昨天的 health 和两份 stage receipt 一起躺在 staging 里,
+    # 留任何一份都会被本轮发布清单当成今天的输出。
+    for name in ("funnel_health.json", "funnel_stage_candidates.json",
+                 "funnel_stage_battery.json"):
+        stage_file = os.path.join(public_v2, name)
+        # governance-mutation: FUNNEL_NIGHTLY_DISCARD
+        if not os.path.isfile(stage_file):
+            continue
+        os.remove(stage_file)
+        removed.append(f"public/data/v2/{name}")
+    return removed
 
 
 # 每个隔离步骤都必须声明自己的产物销毁方式。隔离 = 失败照样记账、暂存产物照样
@@ -447,7 +474,9 @@ def _discard_failed_funnel_outputs(base):
 _ISOLATED_DISCARD = {
     "macro_m1c": _discard_failed_macro_outputs,
     # governance-mutation: FUNNEL_NIGHTLY_DISCARD_DISPATCH
-    "research_funnel": _discard_failed_funnel_outputs,
+    "funnel_candidates": _discard_failed_funnel_outputs,
+    "candidate_battery": _discard_failed_funnel_outputs,
+    "funnel_finalize": _discard_failed_funnel_outputs,
 }
 
 
@@ -702,9 +731,21 @@ def run_steps(
     for name, cmd, needs_token, deps in STEPS:
         bad = [d for d in deps if status_by.get(d) != "OK"]
         if bad:
-            status_by[name] = "SKIPPED_STALE_INPUT"
-            results.append({"step": name, "status": "SKIPPED_STALE_INPUT",
-                            "why": f"上游非OK: {','.join(bad)}"})
+            entry = {"step": name, "status": "SKIPPED_STALE_INPUT",
+                     "why": f"上游非OK: {','.join(bad)}"}
+            # governance-mutation: FUNNEL_DAG_SKIP_STAYS_ISOLATED
+            if name in ISOLATED_CALIBRATION_STEPS:
+                # 隔离步依赖隔离步:上游隔离了,下游被跳过时也必须隔离。否则段 1
+                # 不否决发布,段 2/3 却因"上游非 OK"从后门否决 —— 隔离形同虚设。
+                # 三段的 staging 产物统一由段 1 的 discard 清理,这里不重复。
+                entry["isolated_status"] = "SKIPPED_STALE_INPUT"
+                entry["blocks_publication"] = False
+                entry["status"] = "DATA_BLOCKED"
+                entry["why"] = f"CALIBRATION_COMPONENT_SKIPPED_ISOLATED: 上游非OK {','.join(bad)}"
+                status_by[name] = "DATA_BLOCKED"
+            else:
+                status_by[name] = "SKIPPED_STALE_INPUT"
+            results.append(entry)
             continue
         if needs_token and require_live and not os.environ.get("TUSHARE_TOKEN", "").strip():
             status_by[name] = "DATA_BLOCKED"

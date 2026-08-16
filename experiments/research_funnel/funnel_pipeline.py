@@ -1241,6 +1241,133 @@ def run_pipeline(
     return outputs
 
 
+CANDIDATE_MANIFEST_SCHEMA = "ar.research_funnel_candidate_manifest"
+BATTERY_U2_SCHEMA = "ar.research_funnel_candidate_battery"
+BATTERY_DIMENSIONS = ("行情", "资金", "基本面", "技术面", "消息面", "估值")
+
+
+def build_candidate_manifest(
+    *, candidate_review: Mapping[str, Any], scan: Mapping[str, Any], run_id: str,
+) -> dict[str, Any]:
+    """U2 之后、电池之前的**不可变候选清单**。
+
+    三段子 DAG 的绑定锚点:funnel_candidates 产出它,candidate_battery 绑定它的
+    hash 逐票跑电池,funnel_finalize 校验电池覆盖的集合与它完全相等。
+    只列非红旗候选 —— 红旗票不进 U3/U4,自然也不消耗电池配额。
+    """
+    codes = sorted({
+        str(row.get("ts_code") or "")
+        for row in candidate_review.get("rows", [])
+        if isinstance(row, dict) and row.get("review_status") != "EXCLUDED_RED_FLAG"
+    })
+    if not codes:
+        raise FunnelError("candidate manifest is empty: no non-red-flag candidates to battery")
+    if any(not code for code in codes):
+        raise FunnelError("candidate manifest contains an empty ts_code")
+    payload = {
+        "schema": CANDIDATE_MANIFEST_SCHEMA,
+        "schema_version": SCHEMA_VERSION,
+        "rule_version": RULE_VERSION,
+        "as_of": candidate_review["as_of"],
+        "run_id": run_id,
+        "candidate_rows_hash": candidate_review["rows_hash"],
+        "scan_rows_hash": scan["rows_hash"],
+        "expected_count": len(codes),
+        "ts_codes": codes,
+        "policy": {
+            "source": "U2_CANDIDATE_REVIEW_SAME_RUN",
+            "excludes": ["EXCLUDED_RED_FLAG"],
+            "t_minus_1_fallback": "FORBIDDEN",
+            "watchlist_fallback": "FORBIDDEN",
+        },
+        "disclaimer": DISCLAIMER,
+    }
+    payload["manifest_hash"] = _hash({
+        k: v for k, v in payload.items() if k not in ("manifest_hash",)
+    })
+    return payload
+
+
+def validate_candidate_manifest(payload: Mapping[str, Any]) -> None:
+    if payload.get("schema") != CANDIDATE_MANIFEST_SCHEMA or payload.get("schema_version") != SCHEMA_VERSION:
+        raise FunnelError("candidate manifest schema/version mismatch")
+    codes = payload.get("ts_codes")
+    if not isinstance(codes, list) or not codes:
+        raise FunnelError("candidate manifest ts_codes must be a non-empty list")
+    if codes != sorted(set(codes)):
+        raise FunnelError("candidate manifest ts_codes must be sorted and unique")
+    # governance-mutation: FUNNEL_MANIFEST_COUNT_FROM_LIST
+    if payload.get("expected_count") != len(codes):
+        raise FunnelError("candidate manifest expected_count does not match ts_codes")
+    policy = payload.get("policy") or {}
+    if (
+        policy.get("t_minus_1_fallback") != "FORBIDDEN"
+        or policy.get("watchlist_fallback") != "FORBIDDEN"
+        or policy.get("source") != "U2_CANDIDATE_REVIEW_SAME_RUN"
+    ):
+        raise FunnelError("candidate manifest fallback policy drift")
+    if not str(payload.get("run_id") or "").strip():
+        raise FunnelError("candidate manifest lacks run_id")
+    body = {k: v for k, v in payload.items() if k != "manifest_hash"}
+    if payload.get("manifest_hash") != _hash(body):
+        raise FunnelError("candidate manifest hash mismatch")
+
+
+def validate_candidate_battery(
+    battery: Mapping[str, Any], manifest: Mapping[str, Any],
+) -> dict[str, int]:
+    """U3 完整性:电池覆盖的集合必须与候选清单**完全相等**。
+
+    顺序可以不同,集合不能差一只:缺行 = 静默缺席,多行 = 来源不明。
+    每票六维必须齐全 —— 缺数据可以,但必须以 DATA_BLOCKED 出现,不能少一维。
+    返回覆盖统计,供 health 上浮。
+    """
+    if battery.get("schema") != BATTERY_U2_SCHEMA or battery.get("schema_version") != SCHEMA_VERSION:
+        raise FunnelError("candidate battery schema/version mismatch")
+    # governance-mutation: FUNNEL_BATTERY_MANIFEST_BINDING
+    if battery.get("manifest_hash") != manifest.get("manifest_hash"):
+        raise FunnelError("candidate battery is not bound to this candidate manifest")
+    if battery.get("as_of") != manifest.get("as_of") or battery.get("run_id") != manifest.get("run_id"):
+        raise FunnelError("candidate battery as_of/run_id differ from the manifest")
+    rows = battery.get("results")
+    if not isinstance(rows, list):
+        raise FunnelError("candidate battery results must be a list")
+    observed = [str(r.get("ts_code") or "") for r in rows if isinstance(r, dict)]
+    if len(observed) != len(rows) or len(observed) != len(set(observed)):
+        raise FunnelError("candidate battery rows are invalid or duplicated")
+    expected = set(manifest["ts_codes"])
+    # governance-mutation: FUNNEL_BATTERY_SET_EQUALITY
+    if set(observed) != expected:
+        missing = sorted(expected - set(observed))
+        extra = sorted(set(observed) - expected)
+        raise FunnelError(
+            f"candidate battery coverage != manifest: missing={missing[:5]} extra={extra[:5]}"
+        )
+    blocked_rows = 0
+    for row in rows:
+        dims = row.get("dims")
+        if not isinstance(dims, dict):
+            raise FunnelError(f"battery row lacks dims: {row.get('ts_code')}")
+        # governance-mutation: FUNNEL_BATTERY_SIX_DIMS
+        if tuple(dims.keys()) != BATTERY_DIMENSIONS and set(dims.keys()) != set(BATTERY_DIMENSIONS):
+            raise FunnelError(
+                f"battery row must carry all six dimensions: {row.get('ts_code')} has {sorted(dims)}"
+            )
+        completeness = row.get("completeness") or {}
+        if completeness.get("of") != 6 or "verdict" not in completeness:
+            raise FunnelError(f"battery row completeness stamp is malformed: {row.get('ts_code')}")
+        if completeness.get("verdict") != "COMPLETE":
+            blocked_rows += 1
+    if battery.get("rows_hash") != _hash(rows):
+        raise FunnelError("candidate battery rows_hash mismatch")
+    return {
+        "expected": len(expected),
+        "observed": len(observed),
+        "data_blocked_rows": blocked_rows,
+        "complete_rows": len(observed) - blocked_rows,
+    }
+
+
 def _selftest() -> int:
     # The behavioral suite carries the adversarial coverage.  This smoke test
     # keeps the CLI dependency-free and catches import/argument drift.
