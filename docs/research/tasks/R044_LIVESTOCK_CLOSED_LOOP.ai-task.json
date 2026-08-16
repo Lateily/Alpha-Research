@@ -1,0 +1,105 @@
+{
+  "status": "SPEC_READY",
+  "manifest": {
+    "schema": "ai-task.v1",
+    "task_id": "R044-LIVESTOCK-CLOSED-LOOP-FOUNDATION",
+    "source_issue": null,
+    "architecture_block": [
+      "research-os",
+      "single-industry-pilot",
+      "paper-only-closed-loop"
+    ],
+    "objective": "Build the first offline, auditable single-industry research loop for A-share hog breeding: one Junyan-selected U4 name enters factpack, thesis, paper timing, a paper sleeve unit, outcome attribution, and review without granting the system trading authority or making profitability claims.",
+    "non_goals": [
+      "Do not fetch live data or scrape external sources",
+      "Do not auto-select U4 names or auto-promote a security",
+      "Do not write production ledgers, nightly artifacts, portfolio state, orders, or public data",
+      "Do not emit buy, sell, add, reduce, close, or sizing instructions",
+      "Do not claim alpha, win rate, expectancy, or guaranteed profitability",
+      "Do not claim that a self-reported approval reference proves Junyan's identity",
+      "Do not modify R-035 control quota or U3 battery coverage"
+    ],
+    "human_owner": "Junyan",
+    "reviewer": "Junyan",
+    "executor_candidates": [
+      "Codex",
+      "Claude"
+    ],
+    "dependencies": [
+      "PR #269 immutable research funnel bundle",
+      "PR #274 R-035 aligned-return evaluator",
+      "R-008 point-in-time feature store",
+      "existing Research Decision Pack and thesis protocol"
+    ],
+    "authority_docs": [
+      "AGENTS.md",
+      "experiments/AGENTS.md",
+      "docs/team/PLATFORM_BUILD_GUIDE_v1.md",
+      "docs/research/THESIS_PROTOCOL.md",
+      "docs/research/INVESTMENT_FRAMEWORK.md",
+      "docs/research/WEEKLY_RESEARCH_FACTORY.md",
+      "docs/strategy/PORTFOLIO_THESIS_ALIGNMENT_RULES.md"
+    ],
+    "file_scope": [
+      "docs/research/INDUSTRY_CLOSED_LOOP_PILOT.md",
+      "docs/research/sectors/LIVESTOCK_SECTOR_OS.md",
+      "docs/research/tasks/R044_LIVESTOCK_CLOSED_LOOP.source.json",
+      "docs/research/tasks/R044_LIVESTOCK_CLOSED_LOOP.ai-task.json",
+      "docs/research/RESEARCH_ENGINEERING_BACKLOG.md",
+      "experiments/research_closed_loop",
+      "tests/test_industry_closed_loop.py",
+      "scripts/governance_mutation_gate.py",
+      ".github/workflows/python-ci.yml"
+    ],
+    "forbidden_scope": [
+      "experiments/execution_tracker",
+      "experiments/research_funnel",
+      "experiments/macro_os",
+      "public/data/v2",
+      "data_history",
+      "run_nightly.py",
+      "launchd and LaunchAgents",
+      "production portfolio and order files"
+    ],
+    "input_contracts": [
+      "research_funnel_bundle.v1 immutable evidence",
+      "human U4 selection receipt",
+      "E1-E4 graded factpack fixture",
+      "Research Decision Pack eight-section contract",
+      "paper outcome observations at T+1/T+3/T+5/T+10"
+    ],
+    "output_artifacts": [
+      "industry_closed_loop.v1 validation receipt",
+      "livestock factor and monitoring dictionary",
+      "paper-only portfolio sleeve classification",
+      "review queue with explicit DATA_BLOCKED and INSUFFICIENT_SAMPLE states",
+      "behavior-level negative regressions",
+      "reviewable pull request"
+    ],
+    "acceptance_tests": [
+      "AR_OFFLINE=1 python3 tests/test_industry_closed_loop.py",
+      "PYTHONPYCACHEPREFIX=/private/tmp/pycache-r044 python3 -m py_compile experiments/research_closed_loop/industry_pilot.py tests/test_industry_closed_loop.py",
+      "python3 scripts/llm/ai_os/cli.py compile --input docs/research/tasks/R044_LIVESTOCK_CLOSED_LOOP.source.json",
+      "python3 tests/test_no_network_guard.py",
+      "python3 scripts/governance_mutation_gate.py",
+      "git diff --check"
+    ],
+    "risk_level": "MEDIUM",
+    "network_policy": "OFFLINE",
+    "budget": {
+      "max_cny": "0",
+      "max_minutes": 240
+    },
+    "approval_gates": [
+      "JUNYAN_U4_SELECTION",
+      "JUNYAN_DEEP_RESEARCH_REVIEW",
+      "JUNYAN_PORTFOLIO_POLICY_APPROVAL",
+      "PR_REVIEW",
+      "JUNYAN_MERGE",
+      "SEPARATE_PRODUCTION_WIRING_APPROVAL"
+    ],
+    "created_at": "2026-08-16T08:45:20+00:00",
+    "source_hash": "sha256:1d4de4f7c20a15733e4c270f3fb457aa040742d0a3d0efe7f5d57b7663c26477"
+  },
+  "errors": []
+}
