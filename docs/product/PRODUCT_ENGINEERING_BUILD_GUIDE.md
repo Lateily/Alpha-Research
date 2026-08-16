@@ -1,6 +1,12 @@
 # AR Product OS:产品工程与产品管理搭建指南 v0
 
-> Owner:Better。产品与研究方向:Junyan。AI 接口:Reed。架构/代码复核:Claude/Codex。
+> **ROLE MIGRATION（2026-08-16）：**Product OS、Product Manager、`web/`、BFF 与
+> Contract Client Owner 调整为 Reed；AI 接口 Owner 调整为 Better；项目集成由 Simon
+> 负责，Evals/Safety 由 Jason 复核。详细边界以
+> `docs/team/TEAM_CHARTER_v4.md` 为准。本文尚未完成逐段改名，后文出现的
+> “Better 负责产品”应解释为“Reed 负责产品”，不得据此继续给 Better 分配产品主责。
+>
+> Owner:Reed。产品与研究方向:Junyan。AI 接口:Better。项目集成:Simon。安全复核:Jason。
 > 本指南把 Better 的角色定义为 Product Engineer / Product Manager:既负责产品做什么、
 > 为谁解决什么问题,也负责把它变成稳定、可用、可测试、可发布的前后端载体。
 > 当前状态:`APPROVED / DESIGN`。指南存在不代表产品工程已经完成。

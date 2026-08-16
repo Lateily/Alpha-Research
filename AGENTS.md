@@ -105,13 +105,20 @@ A task is complete only when:
 | Area | Human owner | Default scope |
 |---|---|---|
 | Research methodology and final decisions | Junyan | `docs/research/`, research contracts |
-| Product architecture and daily coordination | Simon | roadmap, architecture, task decomposition |
-| AIOS and Agent Harness | Reed and Jason | `scripts/llm/`, `docs/llm/`, AI evaluations |
-| Product and frontend engineering | Better | `web/`, product contracts, presentation layer |
+| Project supervision and AIOS control plane | Simon | H2 Constitution, H3 Task Lifecycle, H4 Workflow Digital Twin, roadmap and integration |
+| Product OS, frontend, product management and AIOS product bridge | Reed | `web/`, `docs/product/`, BFF/contract client, H7 task/role UX, H4 user-flow support |
+| Context, repository intelligence, Router, Agent and Skills | Better | H6 Context Broker, H8 Router/Agent/Skill, H5 engineering interface, relevant `scripts/llm/` |
+| Evals, safety, policy and independent review | Jason | H9 Evals/Quality, H11 Safety/Human Gate, adversarial verification |
+| Runtime, observability and Harness memory | Eric | H1 Runtime, H10 Observability, H12 Memory/Learning and their contracts |
 | Final PR and methodology approval | Junyan | all areas |
 
 Ownership defines review responsibility, not permission to bypass task scope.
 Cross-boundary changes must be declared in the PR.
+The detailed role boundary, first deliverables, learning path, and cross-review
+matrix are defined in `docs/team/TEAM_CHARTER_v4.md`. Junyan does not participate
+in daily AIOS implementation; LOW/MEDIUM scoped work proceeds through normal
+Issue/branch/PR review, while core, HIGH, CONSTITUTIONAL, production, and final
+merge decisions remain Junyan gates.
 
 ## Local Versus Shared State
 
