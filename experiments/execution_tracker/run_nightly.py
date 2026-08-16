@@ -875,6 +875,30 @@ def _alarm(res):
         pass
 
 
+def _print_terminal_report(res, output_path=OUT):
+    """Emit one run-scoped log segment for launchd acceptance.
+
+    launchd appends to the same stdout file.  The run marker therefore has to
+    precede every step line; an acceptance reader can ignore an older funnel OK
+    instead of treating it as evidence for the latest run.
+    """
+    # governance-mutation: NIGHTLY_ACCEPTANCE_RUN_CONTEXT_LOG
+    print(
+        f"[run] run_id={res.get('run_id')} "
+        f"target_trade_date={res.get('target_trade_date')}"
+    )
+    for step in res["steps"]:
+        print(f"{step['step']}: {step['status']}")
+    print(
+        f"[report] {res['report']}  data_quality={res.get('data_quality')}  "
+        f"run_id={res.get('run_id')}  target={res.get('target_trade_date')}  "
+        f"[written] {output_path}"
+    )
+    if res.get("degraded_sources"):
+        print(f"  degraded: {res['degraded_sources']}")
+    print("不是买卖指令;研究信号,human executes.")
+
+
 def selftest():
     checks = []
 
@@ -1477,13 +1501,7 @@ def _execute_nightly():
 
         _atomic_write(OUT, res)
         _atomic_write(os.path.join(run_dir, "result.json"), res)
-        for s in res["steps"]:
-            print(f"{s['step']}: {s['status']}")
-        print(f"[report] {res['report']}  data_quality={res.get('data_quality')}  "
-              f"run_id={run_id}  target={res.get('target_trade_date')}  [written] {OUT}")
-        if res.get("degraded_sources"):
-            print(f"  degraded: {res['degraded_sources']}")
-        print("不是买卖指令;研究信号,human executes.")
+        _print_terminal_report(res)
         _alarm(res)
         _prune_runs()
         terminal_written = True
