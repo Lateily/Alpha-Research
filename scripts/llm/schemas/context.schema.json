@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/scripts/llm/schemas/context.schema.json",
+  "$comment": "Documentation contract for ai-context.v1. Runtime validation is implemented in scripts/llm/ai_os/context_builder.py and guarded by offline tests.",
+  "title": "AIOS Context Packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "context_hash",
+    "schema",
+    "task_id",
+    "source_hash",
+    "manifest_hash",
+    "commit_sha",
+    "loaded_at",
+    "data_cutoff",
+    "freshness",
+    "read_order",
+    "files",
+    "external_inputs",
+    "untrusted_external_input",
+    "excluded_conflicts"
+  ],
+  "properties": {
+    "context_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "schema": {"const": "ai-context.v1"},
+    "task_id": {"type": "string", "minLength": 1},
+    "source_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "manifest_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "commit_sha": {"type": ["string", "null"]},
+    "loaded_at": {"type": "string", "minLength": 1},
+    "data_cutoff": {"type": ["string", "null"]},
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason"],
+      "properties": {
+        "status": {"enum": ["PINNED", "UNKNOWN"]},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "read_order": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "role",
+          "exists",
+          "content_hash",
+          "git_blob",
+          "mtime_utc",
+          "size_bytes"
+        ],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "role": {"type": "string", "minLength": 1},
+          "exists": {"type": "boolean"},
+          "content_hash": {"type": ["string", "null"]},
+          "git_blob": {"type": ["string", "null"]},
+          "mtime_utc": {"type": ["string", "null"]},
+          "size_bytes": {"type": ["integer", "null"], "minimum": 0}
+        }
+      }
+    },
+    "external_inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "kind", "content_hash", "trust"],
+        "properties": {
+          "label": {"type": "string"},
+          "kind": {"type": "string", "minLength": 1},
+          "content_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "trust": {"const": "UNTRUSTED"}
+        }
+      }
+    },
+    "untrusted_external_input": {"type": "boolean"},
+    "excluded_conflicts": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

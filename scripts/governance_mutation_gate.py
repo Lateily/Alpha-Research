@@ -121,6 +121,9 @@ K1_GOVERNANCE_PATHS = (
     "scripts/llm/ai_os/registry.py",
     "scripts/llm/ai_os/reconciler.py",
 )
+A010_GOVERNANCE_PATHS = (
+    "scripts/llm/ai_os/context_builder.py",
+)
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
@@ -669,6 +672,17 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_task_manifest_missing_acceptance_fails_closed",
     ),
     MutationCase(
+        mutation_id="AIOS_K1_CANONICAL_MANIFEST_HASH",
+        component="AIOS K1 Task Compiler",
+        source_path="scripts/llm/ai_os/task_compiler.py",
+        test_script="tests/test_ai_os_k1_offline.py",
+        before='    if candidate["manifest_hash"] != expected_hash:\n',
+        after="    if False:\n",
+        expected_failure_marker="test_compiled_manifest_validator_detects_canonical_content_drift",
+        rationale="Canonical task manifests must not be accepted when fields drift from their digest.",
+        test_function="test_compiled_manifest_validator_detects_canonical_content_drift",
+    ),
+    MutationCase(
         mutation_id="AIOS_K1_STATE_TRANSITION",
         component="AIOS K1 Registry",
         source_path="scripts/llm/ai_os/registry.py",
@@ -763,6 +777,50 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_validate_manifest_enforces_k1_marker_coverage",
         rationale="The manifest validator must not silently stop enforcing K1 marker coverage.",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A010_SAFE_PATH_BLOCK",
+        component="AIOS A-010 Context Builder",
+        source_path="scripts/llm/ai_os/context_builder.py",
+        test_script="tests/test_ai_os_a010_context_offline.py",
+        before="        if safe_path is None:\n",
+        after="        if safe_path is None:\n            continue\n",
+        expected_failure_marker="test_context_builder_blocks_unsafe_manifest_paths",
+        rationale="Unsafe context paths must block instead of being skipped or loaded.",
+        test_function="test_context_builder_blocks_unsafe_manifest_paths",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A010_GITHUB_TOKEN_FAMILY",
+        component="AIOS A-010 Context Builder",
+        source_path="scripts/llm/ai_os/context_builder.py",
+        test_script="tests/test_ai_os_a010_context_offline.py",
+        before='    re.compile(r"\\bgh[porus]_[A-Za-z0-9_]{12,}\\b", re.IGNORECASE),\n',
+        after='    re.compile(r"\\bghp_[A-Za-z0-9_]{12,}\\b", re.IGNORECASE),\n',
+        expected_failure_marker="test_context_builder_rejects_secret_like_external_metadata_without_echoing_secret",
+        rationale="All documented GitHub token families must remain blocked without echoing values.",
+        test_function="test_context_builder_rejects_secret_like_external_metadata_without_echoing_secret",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A010_MISSING_CONTEXT_BLOCK",
+        component="AIOS A-010 Context Builder",
+        source_path="scripts/llm/ai_os/context_builder.py",
+        test_script="tests/test_ai_os_a010_context_offline.py",
+        before="        if not absolute.exists() or not absolute.is_file():\n",
+        after="        if not absolute.exists() or not absolute.is_file():\n            continue\n",
+        expected_failure_marker="test_context_builder_blocks_missing_authority_docs",
+        rationale="Missing authority or input files must block context construction.",
+        test_function="test_context_builder_blocks_missing_authority_docs",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A010_CONFLICT_MARKER_BLOCK",
+        component="AIOS A-010 Context Builder",
+        source_path="scripts/llm/ai_os/context_builder.py",
+        test_script="tests/test_ai_os_a010_context_offline.py",
+        before="        if _has_conflict_marker(text):\n",
+        after="        if False:\n",
+        expected_failure_marker="test_context_builder_blocks_conflict_markers_in_authority_file",
+        rationale="Authority files with merge conflict markers must block context construction.",
+        test_function="test_context_builder_blocks_conflict_markers_in_authority_file",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_R043_MARKER_COVERAGE_CALL",
@@ -2047,6 +2105,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
         replace_exact(source.read_text(encoding="utf-8"), case.before, case.after, case.mutation_id)
         _local_test_target(test_script, _target_test(case))
     validate_k1_marker_coverage(root, cases)
+    validate_a010_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
@@ -2086,6 +2145,46 @@ def validate_k1_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "K1 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_a010_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = A010_GOVERNANCE_PATHS,
+) -> None:
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"A-010 governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate A-010 governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    declared = {
+        case.mutation_id
+        for case in cases
+        if case.component.startswith("AIOS A-010 Context Builder")
+    }
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "A-010 governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )

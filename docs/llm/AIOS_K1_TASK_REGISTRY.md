@@ -30,6 +30,22 @@ contract:
 Without this contract, adding more models only makes the work faster to become
 messy.
 
+Every compiled task carries two distinct digests:
+
+- `source_hash` identifies the original task source before compiler defaults and
+  whitespace normalization. It cannot be recomputed from the compiled manifest.
+- `manifest_hash` identifies the canonical compiled `ai-task.v1` fields. Downstream
+  control-plane components call `validate_compiled_manifest()` and fail closed if
+  those fields drift without a matching digest update.
+
+The repository does not persist pre-A-010 compiled manifests. This contract
+upgrade therefore has no stored-manifest migration in Phase 1; downstream tools
+must consume freshly compiled manifests.
+
+`manifest_hash` is an integrity checksum, not a signature or human approval.
+Later Evidence and Human Gates must bind the manifest hash to task ID, commit SHA,
+reviewer identity, and the approved decision record.
+
 ## Local Commands
 
 Compile one task source JSON:
@@ -69,8 +85,8 @@ C:\Users\19463\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\p
 ## Current Offline Verification
 
 ```text
-ALL AIOS K1 OFFLINE TESTS PASS (15 tests, 0 network calls)
-ALL AGENT ADAPTER OFFLINE TESTS PASS (36 tests, 0 network calls)
+ALL AIOS K1 OFFLINE TESTS PASS (25 tests, 0 network calls)
+ALL AGENT ADAPTER OFFLINE TESTS PASS (56 tests, 0 network calls)
 ```
 
 Not a trading instruction; research signal, human executes.
