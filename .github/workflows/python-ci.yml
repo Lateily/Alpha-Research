@@ -119,6 +119,10 @@ jobs:
         run: |
           python3 experiments/research_funnel/funnel_pipeline.py --selftest
           python3 tests/test_research_funnel_closure.py
+      # R-035 只读不可变漏斗 bundle、同日电池与本地特征仓。U1/U2 随机对照
+      # 和 U3 电池分离度必须分开检验,收益不得写回候选池,claim 永久关闭。
+      - name: Research funnel R-035 aligned-return evaluation (offline)
+        run: python3 tests/test_research_funnel_r035.py
       # ── 漏斗夜链接入(观察期隔离):守的是接入方式,不是研究契约本身 ──
       - name: Research funnel nightly wiring regression (offline)
         run: python3 tests/test_funnel_nightly_offline.py
