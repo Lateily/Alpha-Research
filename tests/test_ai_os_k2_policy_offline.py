@@ -7,6 +7,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -19,6 +20,7 @@ from ai_os.policy_engine import (  # noqa: E402
     SPEC_BLOCKED,
     evaluate_policy,
 )
+from ai_os.task_compiler import SPEC_READY, compile_task_manifest  # noqa: E402
 
 
 def valid_manifest(**overrides):
@@ -44,7 +46,7 @@ def valid_manifest(**overrides):
         "budget": {"max_cny": "0", "max_minutes": 60},
         "approval_gates": ["PR_REVIEW", "JUNYAN_MERGE"],
         "created_at": "2026-08-09T04:00:00+00:00",
-        "source_hash": "sha256:test",
+        "source_hash": "sha256:" + ("a" * 64),
     }
     manifest.update(overrides)
     return manifest
@@ -87,6 +89,22 @@ def test_policy_allows_safe_offline_shadow_route_request() -> None:
     }
 
 
+def test_policy_accepts_real_k1_compiler_output() -> None:
+    source = valid_manifest()
+    source.pop("created_at")
+    source.pop("source_hash")
+    compiled = compile_task_manifest(
+        source,
+        now=datetime(2026, 8, 17, tzinfo=timezone.utc),
+    )
+
+    assert compiled.status == SPEC_READY
+    assert compiled.manifest is not None
+    decision = evaluate_policy(compiled.manifest, **policy_kwargs())
+    assert decision.policy_status == POLICY_ALLOWED
+    assert decision.route_request is not None
+
+
 def test_policy_spec_blocks_missing_noncanonical_task_type_and_bad_mode() -> None:
     decision = evaluate_policy(
         valid_manifest(),
@@ -118,6 +136,52 @@ def test_policy_spec_blocks_incomplete_task_manifest_contract() -> None:
         decision = evaluate_policy(manifest, **policy_kwargs())
         assert decision.policy_status == SPEC_BLOCKED
         assert decision.route_request is None
+
+
+def test_policy_rejects_noncanonical_compiled_manifest() -> None:
+    missing = valid_manifest()
+    del missing["architecture_block"]
+    extra = valid_manifest(unexpected_field="not compiler output")
+    malformed = (
+        valid_manifest(created_at="not-a-time"),
+        valid_manifest(source_hash="sha256:not-a-digest"),
+        valid_manifest(source_issue=True),
+        valid_manifest(non_goals="not-a-list"),
+        missing,
+        extra,
+    )
+
+    for manifest in malformed:
+        decision = evaluate_policy(manifest, **policy_kwargs())
+        assert decision.policy_status == SPEC_BLOCKED
+        assert decision.route_request is None
+        assert "task_manifest.invalid" in reason_codes(decision)
+
+
+def test_policy_requires_source_issue_for_routing() -> None:
+    decision = evaluate_policy(
+        valid_manifest(source_issue=None),
+        **policy_kwargs(),
+    )
+
+    assert decision.policy_status == SPEC_BLOCKED
+    assert decision.route_request is None
+    assert "source_issue.missing" in reason_codes(decision)
+
+
+def test_policy_spec_blocks_unsafe_serialized_identifiers() -> None:
+    unsafe = "bidi\u202espoof"
+    cases = (
+        (valid_manifest(task_id=unsafe), policy_kwargs()),
+        (valid_manifest(), policy_kwargs(required_tools=[unsafe])),
+        (valid_manifest(), policy_kwargs(reviewer_agent=unsafe)),
+    )
+
+    for manifest, kwargs in cases:
+        decision = evaluate_policy(manifest, **kwargs)
+        assert decision.policy_status == SPEC_BLOCKED
+        assert decision.route_request is None
+        assert unsafe not in json.dumps(decision.to_dict(), ensure_ascii=False)
 
 
 def test_policy_spec_blocks_bad_budget_shapes() -> None:
@@ -344,7 +408,7 @@ def test_policy_blocks_secret_like_and_external_instruction_inputs() -> None:
         **policy_kwargs(
             external_texts=[
                 "payment token "
-                + synthetic_secret("sk", "_live_", "testvalue123456")
+                + synthetic_secret("sk", "_live_", "T" * 24)
             ]
         ),
     )
@@ -361,12 +425,14 @@ def test_policy_blocks_secret_like_and_external_instruction_inputs() -> None:
 
     assert secret.policy_status == POLICY_BLOCKED
     assert "secret_like_input.blocked" in reason_codes(secret)
-    assert injection.policy_status == POLICY_BLOCKED
-    assert "external_instruction.untrusted" in reason_codes(injection)
+    assert injection.policy_status == POLICY_ALLOWED
+    assert injection.external_input_status == "UNTRUSTED_IGNORED"
+    assert injection.route_request is not None
     assert broad_secret.policy_status == POLICY_BLOCKED
     assert "secret_like_input.blocked" in reason_codes(broad_secret)
     assert stripe_secret.policy_status == POLICY_BLOCKED
     assert "secret_like_input.blocked" in reason_codes(stripe_secret)
+    assert stripe_secret.external_input_status == "BLOCKED_SECRET_LIKE"
     assert aws_secret_name.policy_status == POLICY_BLOCKED
     assert "secret_like_input.blocked" in reason_codes(aws_secret_name)
     assert synthetic_secret("AKIA", "1234567890ABCDEF") not in json.dumps(
@@ -375,16 +441,76 @@ def test_policy_blocks_secret_like_and_external_instruction_inputs() -> None:
     )
 
 
-def test_policy_decision_hash_binds_task_id_and_decision_payload() -> None:
+def test_secret_like_values_never_echo_from_spec_or_policy_blocks() -> None:
+    synthetic_refresh = synthetic_secret("ghr_", "R" * 24)
+    malformed = valid_manifest(task_id=synthetic_refresh)
+    del malformed["architecture_block"]
+    spec_blocked = evaluate_policy(malformed, **policy_kwargs())
+    secret_key_manifest = valid_manifest()
+    secret_key_manifest[synthetic_refresh] = "unexpected"
+    secret_key_blocked = evaluate_policy(secret_key_manifest, **policy_kwargs())
+    policy_blocked = evaluate_policy(
+        valid_manifest(),
+        **policy_kwargs(target_paths=[f"web/{synthetic_refresh}.txt"]),
+    )
+
+    for decision in (spec_blocked, secret_key_blocked, policy_blocked):
+        serialized = json.dumps(decision.to_dict(), ensure_ascii=False)
+        assert decision.policy_status in {SPEC_BLOCKED, POLICY_BLOCKED}
+        assert decision.route_request is None
+        assert "secret_like_input.blocked" in reason_codes(decision)
+        assert synthetic_refresh not in serialized
+    assert spec_blocked.manifest_hash is None
+    assert secret_key_blocked.manifest_hash is None
+
+
+def test_policy_rejects_control_and_bidi_path_characters_without_echo() -> None:
+    unsafe_paths = (
+        "scripts/llm/line\nspoof.py",
+        "scripts/llm/tab\tspoof.py",
+        "scripts/llm/nul\x00spoof.py",
+        "scripts/llm/bidi\u202espoof.py",
+        "scripts/llm/zero\u200bwidth.py",
+    )
+
+    for path in unsafe_paths:
+        decision = evaluate_policy(
+            valid_manifest(file_scope=["scripts/llm"]),
+            **policy_kwargs(target_paths=[path]),
+        )
+        serialized = json.dumps(decision.to_dict(), ensure_ascii=False)
+        assert decision.policy_status == POLICY_BLOCKED
+        assert reason_codes(decision) == ["target_path.unsafe"]
+        assert path not in serialized
+
+
+def test_policy_decision_hash_binds_task_manifest_and_policy_inputs() -> None:
     first = evaluate_policy(valid_manifest(), **policy_kwargs()).to_dict()
     second = evaluate_policy(
         valid_manifest(task_id="A-009-policy-engine-copy"),
         **policy_kwargs(),
     ).to_dict()
+    changed_authority = evaluate_policy(
+        valid_manifest(
+            objective="A different policy objective.",
+            authority_docs=["docs/llm/AI_OS_BUILD_GUIDE.md"],
+        ),
+        **policy_kwargs(),
+    ).to_dict()
+    changed_external_evidence = evaluate_policy(
+        valid_manifest(),
+        **policy_kwargs(external_texts=["A quoted, untrusted source sentence."]),
+    ).to_dict()
 
     assert first["task_id"] == "A-009-policy-engine"
     assert second["task_id"] == "A-009-policy-engine-copy"
     assert first["policy_decision_hash"] != second["policy_decision_hash"]
+    assert first["manifest_hash"] != changed_authority["manifest_hash"]
+    assert first["policy_decision_hash"] != changed_authority["policy_decision_hash"]
+    assert first["policy_input_hash"] != changed_external_evidence["policy_input_hash"]
+    assert first["policy_decision_hash"] != changed_external_evidence[
+        "policy_decision_hash"
+    ]
     assert list(first["route_request"]) == [
         "task_type",
         "mode",

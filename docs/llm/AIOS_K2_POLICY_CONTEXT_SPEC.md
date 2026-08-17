@@ -1,6 +1,6 @@
 # AIOS-K2 Policy And Context Spec
 
-> Owner: Reed. Reviewer: Junyan. Partner: Jason.
+> Owner: Jason (A-009 / H11). Reviewers: Reed, Simon, Junyan.
 > Status: DRAFT / POLICY GATE V0.
 > Scope: A-009 Policy Engine, A-010 Context Builder, A-011 Scheduler contract,
 > A-012 Lease/heartbeat/file lock contract.
@@ -41,7 +41,10 @@ Required fields from the task manifest:
 | Field | Why K2 needs it |
 |---|---|
 | `task_id` | Stable audit id and idempotency key |
+| `source_issue` | Issue provenance when the task is issue-backed |
+| `architecture_block` | Declared AIOS architecture scope |
 | `objective` | Checks whether the task is specific enough to run |
+| `non_goals` | Explicit exclusions that constrain the task |
 | `human_owner` | Accountable human |
 | `reviewer` | Review and approval owner |
 | `file_scope` | Maximum allowed read/write file boundary |
@@ -53,6 +56,7 @@ Required fields from the task manifest:
 | `budget.max_cny` | Hard upper cost bound |
 | `approval_gates` | Human gates that must exist before risky execution |
 | `created_at` | Freshness and stale-task checks |
+| `source_hash` | Digest-shaped identity of the original compiler input |
 
 Missing, malformed, contradictory, or unsupported required fields produce
 `SPEC_BLOCKED`. K2 must not infer missing authority from chat memory.
@@ -82,6 +86,9 @@ K2 produces one envelope. Router may run only when `policy_status` is
   "schema": "aios-policy-context-envelope.v1",
   "task_id": "A-009-example",
   "policy_status": "POLICY_ALLOWED",
+  "manifest_hash": "sha256:...",
+  "policy_input_hash": "sha256:...",
+  "external_input_status": "NOT_PROVIDED",
   "policy_decision_hash": "sha256:...",
   "policy_reasons": [],
   "context_status": "CONTEXT_READY",
@@ -276,24 +283,15 @@ spec.
 | Active overlapping CLAIM exists | Scheduler blocked |
 | Circular dependency exists | Scheduler blocked |
 
-## 10. Reed And Jason Split
+## 10. AIOS v4 Ownership Handoff
 
-Reed owns K2 Policy/Context:
+Issue #278 assigns H11 Safety/Governance and A-009 Policy Gate to Jason. Better
+owns A-010 Context Builder and H8 Router/Agent/Skill. Reed may independently
+review this work but no longer implements A-009.
 
-- Task policy envelope.
-- Context manifest and authority hash.
-- Fail-closed fixtures.
-- Scheduler and lease contract.
-
-Jason owns Router integration:
-
-- Capability records.
-- RouteRequest consumption.
-- Agent selection rules.
-- Router negative tests from #246 review.
-
-The handoff line is strict: K2 says whether Router is allowed to run and gives a
-validated `RouteRequest`. Router picks the Agent only inside that boundary.
+The boundary remains strict: K2 decides whether Router is allowed to run and
+constructs a validated `RouteRequest`; it never chooses an Agent. Context
+assembly and Router selection remain separate modules and PRs.
 
 ## 11. Implementation Sequence
 
@@ -309,7 +307,11 @@ This PR is now A-009 Policy Gate Phase 1:
   forbidden scope, secret-like strings, and external-instruction handling.
 - Keep `LIVE_DATA` blocked until Junyan chooses a mapping.
 - Keep `ALLOWLIST` blocked until a trusted provider allowlist registry is wired.
-- Bind each decision to `task_id` with a stable `policy_decision_hash`.
+- Bind each decision to the complete canonical manifest and safe policy-input
+  evidence hashes, then derive a stable `policy_decision_hash`.
+- Treat external text as `UNTRUSTED_IGNORED`: scan it for secret-like material,
+  but never execute its instructions or reject a task merely because a safety
+  document quotes an attack phrase.
 - Register critical K2 gates in the governance mutation gate.
 - Keep the branch free of model calls, GitHub writes, Router calls, scheduler
   execution, and production data mutation.
@@ -344,9 +346,11 @@ Phase 3 connects to Router after #246 is merged and its contract is stable:
 
 ## 13. Acceptance For This A-009 Policy Gate PR
 
-- The document stays under Reed's boundary `docs/llm/`.
+- The document stays inside Jason's H11 A-009 boundary under `docs/llm/`.
 - The deterministic Policy Gate implementation stays under `scripts/llm/ai_os/`.
-- The output contract is documented under `scripts/llm/schemas/`.
+- The Phase 1 output contract is the versioned `PolicyDecision` structure in
+  `policy_engine.py` and this document. A standalone JSON Schema is not claimed
+  by this PR.
 - Offline tests cover required manifest fields, budget, mode, network, path
   scope, forbidden scope, unsafe scope definitions, secret-like input, external
   instruction handling, risk gates, approval evidence, and decision hashing.

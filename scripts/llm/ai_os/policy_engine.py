@@ -16,13 +16,17 @@ from hashlib import sha256
 from pathlib import PurePosixPath
 from typing import Any, Mapping, Sequence
 
+try:  # Support package imports and direct CLI execution from this directory.
+    from .task_compiler import validate_compiled_manifest
+except ImportError:  # pragma: no cover - exercised by the standalone CLI path.
+    from task_compiler import validate_compiled_manifest
+
 
 SCHEMA = "aios-policy-decision.v1"
 POLICY_ALLOWED = "POLICY_ALLOWED"
 POLICY_BLOCKED = "POLICY_BLOCKED"
 SPEC_BLOCKED = "SPEC_BLOCKED"
 MODES = {"SHADOW", "PRODUCTION"}
-RISK_LEVELS = {"LOW", "MEDIUM", "HIGH", "CONSTITUTIONAL"}
 ROUTER_NETWORK_POLICIES = {
     "OFFLINE": "deny",
 }
@@ -30,50 +34,19 @@ LIVE_DATA_POLICY = "LIVE_DATA"
 BLOCKED_PATH_PREFIX = "experiments/execution_tracker"
 TASK_TYPE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 SECRET_PATTERNS = (
-    re.compile(r"(?i)\b(?:moonshot|deepseek|progress|github|openai|api)[\w-]*(?:key|token|secret)\b"),
-    re.compile(r"(?i)\bsk(?:_live)?-[a-z0-9_-]{8,}\b"),
-    re.compile(r"(?i)\bsk_live_[a-z0-9_-]{8,}\b"),
-    re.compile(r"(?i)\bgh[opsu]_[a-z0-9_]{8,}\b"),
+    re.compile(
+        r"(?i)\b(?:moonshot|deepseek|progress|github|openai|api)"
+        r"[\w-]*(?:key|token|secret)\b"
+    ),
+    re.compile(r"(?i)\bsk(?:_live)?-[a-z0-9_-]{20,}\b"),
+    re.compile(r"(?i)\bsk_live_[a-z0-9_-]{20,}\b"),
+    re.compile(r"(?i)\bgh[opsur]_[a-z0-9_]{20,}\b"),
     re.compile(r"(?i)\bgithub_pat_[a-z0-9_]{20,}\b"),
     re.compile(r"(?i)\baws[_-]*secret[_-]*access[_-]*key\b"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\bAIza[0-9A-Za-z_-]{20,}\b"),
-    re.compile(r"(?i)\bxox[baprs]-[a-z0-9-]{8,}\b"),
+    re.compile(r"(?i)\bxox[baprs]-[a-z0-9-]{20,}\b"),
     re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC |DSA |)PRIVATE KEY-----"),
-)
-EXTERNAL_INJECTION_MARKERS = (
-    "ignore previous instructions",
-    "ignore all previous instructions",
-    "disregard previous instructions",
-    "system prompt",
-    "system:",
-    "developer:",
-    "忽略以上",
-    "忽略之前",
-)
-TASK_MANIFEST_SCHEMA = "ai-task.v1"
-REQUIRED_TASK_STRING_FIELDS = (
-    "schema",
-    "task_id",
-    "objective",
-    "human_owner",
-    "reviewer",
-    "risk_level",
-    "network_policy",
-    "created_at",
-)
-REQUIRED_TASK_LIST_FIELDS = (
-    "authority_docs",
-    "file_scope",
-    "acceptance_tests",
-    "approval_gates",
-)
-OPTIONAL_TASK_LIST_FIELDS = (
-    "forbidden_scope",
-    "executor_candidates",
-    "dependencies",
-    "input_contracts",
-    "output_artifacts",
 )
 
 
@@ -92,6 +65,9 @@ class PolicyDecision:
     task_id: str | None
     policy_reasons: tuple[PolicyReason, ...]
     route_request: dict[str, Any] | None
+    manifest_hash: str | None = None
+    policy_input_hash: str | None = None
+    external_input_status: str = "NOT_PROVIDED"
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
@@ -100,6 +76,9 @@ class PolicyDecision:
             "policy_status": self.policy_status,
             "policy_reasons": [reason.to_dict() for reason in self.policy_reasons],
             "route_request": self.route_request,
+            "manifest_hash": self.manifest_hash,
+            "policy_input_hash": self.policy_input_hash,
+            "external_input_status": self.external_input_status,
         }
         return {
             **payload,
@@ -123,6 +102,7 @@ def evaluate_policy(
 
     spec_reasons: list[PolicyReason] = []
     policy_reasons: list[PolicyReason] = []
+    external_input_status = _external_input_status(external_texts)
 
     if not isinstance(task_manifest, Mapping):
         return PolicyDecision(
@@ -130,28 +110,90 @@ def evaluate_policy(
             None,
             (PolicyReason("task_manifest.invalid", "task_manifest must be a mapping"),),
             None,
+            external_input_status=external_input_status,
         )
 
-    task_id = _string_or_none(task_manifest.get("task_id"))
-    for field_name in REQUIRED_TASK_STRING_FIELDS:
-        _require_string(task_manifest, field_name, spec_reasons)
-    for field_name in OPTIONAL_TASK_LIST_FIELDS:
-        _optional_string_list(task_manifest, field_name, spec_reasons)
-    if task_manifest.get("schema") != TASK_MANIFEST_SCHEMA:
+    raw_policy_inputs = {
+        "mode": mode,
+        "task_type": task_type,
+        "required_tools": required_tools,
+        "target_paths": target_paths,
+        "reviewer_agent": reviewer_agent,
+        "approval_evidence": approval_evidence,
+        "allowlist_evidence": allowlist_evidence,
+        "external_texts": external_texts,
+    }
+    manifest_has_secret = _contains_secret_like_value(task_manifest)
+    external_has_secret = _contains_secret_like_value(external_texts)
+    secret_like_input = manifest_has_secret or _contains_secret_like_value(
+        raw_policy_inputs
+    )
+    if external_has_secret:
+        external_input_status = "BLOCKED_SECRET_LIKE"
+    task_id = _safe_output_task_id(task_manifest.get("task_id"))
+
+    manifest_errors = validate_compiled_manifest(task_manifest)
+    # governance-mutation: AIOS_K2_CANONICAL_MANIFEST
+    if manifest_errors:
+        if manifest_has_secret:
+            spec_reasons.append(
+                PolicyReason(
+                    "task_manifest.invalid",
+                    "manifest contract invalid and unsafe to detail",
+                )
+            )
+        else:
+            spec_reasons.extend(
+                PolicyReason(
+                    "task_manifest.invalid",
+                    f"manifest contract invalid: {error}",
+                )
+                for error in manifest_errors
+            )
+    elif not task_manifest.get("authority_docs"):
         spec_reasons.append(
-            PolicyReason("schema.unsupported", f"schema must be {TASK_MANIFEST_SCHEMA}")
+            PolicyReason(
+                "authority_docs.missing",
+                "authority_docs must identify at least one task authority",
+            )
         )
-    file_scope = _require_string_list(task_manifest, "file_scope", spec_reasons)
-    forbidden_scope = _optional_string_list(task_manifest, "forbidden_scope", spec_reasons)
-    for field_name in ("authority_docs", "acceptance_tests", "approval_gates"):
-        _require_string_list(task_manifest, field_name, spec_reasons)
+    if task_manifest.get("source_issue") is None:
+        spec_reasons.append(
+            PolicyReason(
+                "source_issue.missing",
+                "source_issue must identify the task's GitHub Issue",
+            )
+        )
+    if task_id is None and not manifest_has_secret:
+        spec_reasons.append(
+            PolicyReason(
+                "task_id.unsafe",
+                "task_id cannot be safely serialized",
+            )
+        )
+
+    manifest_hash = (
+        None if manifest_errors or manifest_has_secret else _hash_json(task_manifest)
+    )
+    policy_input_hash = _policy_input_hash(
+        raw_policy_inputs,
+        secret_like=secret_like_input,
+    )
+    manifest_file_scope = task_manifest.get("file_scope")
+    manifest_forbidden_scope = task_manifest.get("forbidden_scope")
+    file_scope = list(manifest_file_scope) if isinstance(manifest_file_scope, list) else []
+    forbidden_scope = (
+        list(manifest_forbidden_scope)
+        if isinstance(manifest_forbidden_scope, list)
+        else []
+    )
     budget = _validate_budget(task_manifest.get("budget"))
     if isinstance(budget, PolicyReason):
         spec_reasons.append(budget)
 
     cleaned_mode = _clean_required_string(mode, "mode", spec_reasons)
     cleaned_task_type = _clean_task_type(task_type, spec_reasons)
-    cleaned_tools = _clean_required_string_list(
+    cleaned_tools = _clean_required_identifier_list(
         required_tools,
         "required_tools",
         spec_reasons,
@@ -161,17 +203,33 @@ def evaluate_policy(
         "target_paths",
         spec_reasons,
     )
+    reviewer = _clean_optional_identifier(
+        reviewer_agent,
+        "reviewer_agent",
+        spec_reasons,
+    )
 
     risk_level = task_manifest.get("risk_level")
-    if risk_level not in RISK_LEVELS:
-        spec_reasons.append(
-            PolicyReason("risk_level.unsupported", "risk_level is not supported")
-        )
     if cleaned_mode is not None and cleaned_mode not in MODES:
         spec_reasons.append(PolicyReason("mode.unsupported", "mode is not supported"))
 
     if spec_reasons:
-        return PolicyDecision(SPEC_BLOCKED, task_id, tuple(spec_reasons), None)
+        if secret_like_input:
+            spec_reasons.append(
+                PolicyReason(
+                    "secret_like_input.blocked",
+                    "secret-like strings are not allowed in K2 policy inputs",
+                )
+            )
+        return PolicyDecision(
+            SPEC_BLOCKED,
+            task_id,
+            tuple(spec_reasons),
+            None,
+            manifest_hash=manifest_hash,
+            policy_input_hash=policy_input_hash,
+            external_input_status=external_input_status,
+        )
 
     router_network = _map_network_policy(
         str(task_manifest["network_policy"]),
@@ -197,13 +255,20 @@ def evaluate_policy(
             )
         )
     if spec_reasons:
-        return PolicyDecision(SPEC_BLOCKED, task_id, tuple(spec_reasons), None)
+        return PolicyDecision(
+            SPEC_BLOCKED,
+            task_id,
+            tuple(spec_reasons),
+            None,
+            manifest_hash=manifest_hash,
+            policy_input_hash=policy_input_hash,
+            external_input_status=external_input_status,
+        )
 
-    for index, target in enumerate(normalized_targets):
-        original = cleaned_targets[index]
+    for target in normalized_targets:
         if target is None:
             policy_reasons.append(
-                PolicyReason("target_path.unsafe", f"target_path is unsafe: {original}")
+                PolicyReason("target_path.unsafe", "target_path is unsafe")
             )
             continue
         if _is_inside(target, BLOCKED_PATH_PREFIX):
@@ -217,18 +282,17 @@ def evaluate_policy(
             policy_reasons.append(
                 PolicyReason(
                     "target_path.outside_file_scope",
-                    f"target_path is outside file_scope: {original}",
+                    "target_path is outside file_scope",
                 )
             )
         if any(scope and _is_inside(target, scope) for scope in normalized_forbidden):
             policy_reasons.append(
                 PolicyReason(
                     "target_path.forbidden_scope",
-                    f"target_path is inside forbidden_scope: {original}",
+                    "target_path is inside forbidden_scope",
                 )
             )
 
-    reviewer = _string_or_none(reviewer_agent)
     if risk_level in {"HIGH", "CONSTITUTIONAL"}:
         policy_reasons.append(
             PolicyReason(
@@ -252,17 +316,7 @@ def evaluate_policy(
             )
         )
 
-    if _contains_secret_like_value(task_manifest) or _contains_secret_like_value(
-        {
-            "task_type": cleaned_task_type,
-            "required_tools": cleaned_tools,
-            "target_paths": cleaned_targets,
-            "reviewer_agent": reviewer,
-            "approval_evidence": approval_evidence,
-            "allowlist_evidence": allowlist_evidence,
-            "external_texts": external_texts,
-        }
-    ):
+    if secret_like_input:
         policy_reasons.append(
             PolicyReason(
                 "secret_like_input.blocked",
@@ -270,16 +324,16 @@ def evaluate_policy(
             )
         )
 
-    if _contains_external_instruction(external_texts):
-        policy_reasons.append(
-            PolicyReason(
-                "external_instruction.untrusted",
-                "external instructions are untrusted and cannot modify AIOS policy",
-            )
-        )
-
     if policy_reasons:
-        return PolicyDecision(POLICY_BLOCKED, task_id, tuple(policy_reasons), None)
+        return PolicyDecision(
+            POLICY_BLOCKED,
+            task_id,
+            tuple(policy_reasons),
+            None,
+            manifest_hash=manifest_hash,
+            policy_input_hash=policy_input_hash,
+            external_input_status=external_input_status,
+        )
 
     route_request = {
         "task_type": cleaned_task_type,
@@ -291,50 +345,15 @@ def evaluate_policy(
         "budget_max_cny": budget,
         "reviewer_agent": reviewer,
     }
-    return PolicyDecision(POLICY_ALLOWED, task_id, (), route_request)
-
-
-def _require_string(
-    source: Mapping[str, Any],
-    field_name: str,
-    reasons: list[PolicyReason],
-) -> str | None:
-    return _clean_required_string(source.get(field_name), field_name, reasons)
-
-
-def _require_string_list(
-    source: Mapping[str, Any],
-    field_name: str,
-    reasons: list[PolicyReason],
-) -> list[str]:
-    return _clean_required_string_list(source.get(field_name), field_name, reasons)
-
-
-def _optional_string_list(
-    source: Mapping[str, Any],
-    field_name: str,
-    reasons: list[PolicyReason],
-) -> list[str]:
-    value = source.get(field_name, [])
-    if value is None:
-        return []
-    if not isinstance(value, list):
-        reasons.append(
-            PolicyReason(
-                f"{field_name}.invalid",
-                f"{field_name} must be a string list when present",
-            )
-        )
-        return []
-    cleaned = [item.strip() for item in value if isinstance(item, str) and item.strip()]
-    if len(cleaned) != len(value):
-        reasons.append(
-            PolicyReason(
-                f"{field_name}.invalid",
-                f"{field_name} must contain only non-empty strings",
-            )
-        )
-    return cleaned
+    return PolicyDecision(
+        POLICY_ALLOWED,
+        task_id,
+        (),
+        route_request,
+        manifest_hash=manifest_hash,
+        policy_input_hash=policy_input_hash,
+        external_input_status=external_input_status,
+    )
 
 
 def _clean_required_string(
@@ -392,6 +411,49 @@ def _clean_required_string_list(
     return cleaned
 
 
+def _clean_required_identifier_list(
+    value: Any,
+    field_name: str,
+    reasons: list[PolicyReason],
+) -> list[str]:
+    cleaned = _clean_required_string_list(value, field_name, reasons)
+    if cleaned and not all(_safe_serialized_identifier(item) for item in cleaned):
+        reasons.append(
+            PolicyReason(
+                f"{field_name}.unsafe",
+                f"{field_name} contains an unsafe identifier",
+            )
+        )
+        return []
+    return cleaned
+
+
+def _clean_optional_identifier(
+    value: Any,
+    field_name: str,
+    reasons: list[PolicyReason],
+) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value or value != value.strip():
+        reasons.append(
+            PolicyReason(
+                f"{field_name}.invalid",
+                f"{field_name} must be a canonical string when present",
+            )
+        )
+        return None
+    if not _safe_serialized_identifier(value):
+        reasons.append(
+            PolicyReason(
+                f"{field_name}.unsafe",
+                f"{field_name} contains an unsafe identifier",
+            )
+        )
+        return None
+    return value
+
+
 def _validate_budget(value: Any) -> str | PolicyReason:
     if not isinstance(value, Mapping):
         return PolicyReason("budget.invalid", "budget must be a mapping")
@@ -444,6 +506,8 @@ def _normalize_path(value: str) -> str | None:
     cleaned = unicodedata.normalize("NFKC", value.strip()).replace("\\", "/")
     if not cleaned or cleaned.startswith("/") or ":" in cleaned or "%" in cleaned:
         return None
+    if _contains_unsafe_unicode(cleaned):
+        return None
     parts = PurePosixPath(cleaned).parts
     if any(
         part in {"", ".", ".."} or part.endswith(".")
@@ -463,10 +527,21 @@ def _path_key(value: str) -> str:
     return unicodedata.normalize("NFKC", value).casefold()
 
 
-def _string_or_none(value: Any) -> str | None:
-    if isinstance(value, str) and value.strip():
-        return value.strip()
-    return None
+def _safe_output_task_id(value: Any) -> str | None:
+    if not isinstance(value, str) or not value or value != value.strip():
+        return None
+    if _contains_secret_like_value(value) or _contains_unsafe_unicode(value):
+        return None
+    return value
+
+
+def _safe_serialized_identifier(value: str) -> bool:
+    normalized = unicodedata.normalize("NFKC", value)
+    return not _contains_unsafe_unicode(normalized)
+
+
+def _contains_unsafe_unicode(value: str) -> bool:
+    return any(unicodedata.category(char).startswith("C") for char in value)
 
 
 def _has_junyan_approval(value: Any) -> bool:
@@ -491,7 +566,8 @@ def _has_junyan_approval(value: Any) -> bool:
 
 def _contains_secret_like_value(value: Any) -> bool:
     if isinstance(value, str):
-        return any(pattern.search(value) for pattern in SECRET_PATTERNS)
+        normalized = unicodedata.normalize("NFKC", value)
+        return any(pattern.search(normalized) for pattern in SECRET_PATTERNS)
     if isinstance(value, Mapping):
         return any(
             _contains_secret_like_value(item)
@@ -503,19 +579,55 @@ def _contains_secret_like_value(value: Any) -> bool:
     return False
 
 
-def _contains_external_instruction(value: Any) -> bool:
-    if isinstance(value, str):
-        lowered = unicodedata.normalize("NFKC", value).casefold()
-        return any(marker in lowered for marker in EXTERNAL_INJECTION_MARKERS)
+def _external_input_status(value: Any) -> str:
+    if value is None or value == [] or value == {} or value == ():
+        return "NOT_PROVIDED"
+    return "UNTRUSTED_IGNORED"
+
+
+def _policy_input_hash(value: Mapping[str, Any], *, secret_like: bool) -> str:
+    if secret_like:
+        return _hash_json({"policy_inputs": "REDACTED_SECRET_LIKE"})
+    return _hash_json(_audit_value(value))
+
+
+def _audit_value(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, bool)):
+        return value
+    if isinstance(value, float):
+        return {"float": repr(value)}
     if isinstance(value, Mapping):
-        return any(
-            _contains_external_instruction(item)
-            for pair in value.items()
-            for item in pair
-        )
-    if isinstance(value, (list, tuple, set, frozenset)):
-        return any(_contains_external_instruction(item) for item in value)
-    return False
+        items = [
+            [_audit_value(key), _audit_value(item)]
+            for key, item in value.items()
+        ]
+        return {
+            "mapping": sorted(
+                items,
+                key=lambda item: json.dumps(
+                    item[0],
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+            )
+        }
+    if isinstance(value, (list, tuple)):
+        return [_audit_value(item) for item in value]
+    if isinstance(value, (set, frozenset)):
+        items = [_audit_value(item) for item in value]
+        return {
+            "set": sorted(
+                items,
+                key=lambda item: json.dumps(
+                    item,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+            )
+        }
+    return {"unsupported_type": type(value).__name__}
 
 
 def _has_allowlist_evidence(value: Any) -> bool:
@@ -536,6 +648,6 @@ def _allowlist_registry_is_unwired() -> bool:
     return True
 
 
-def _hash_json(value: Mapping[str, Any]) -> str:
+def _hash_json(value: Any) -> str:
     payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return "sha256:" + sha256(payload.encode("utf-8")).hexdigest()
