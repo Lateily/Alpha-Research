@@ -1,0 +1,78 @@
+{
+  "schema": "ai-harness-eval-matrix.v1",
+  "version": "a035-phase1-2026-08-16",
+  "cases": [
+    {
+      "case_id": "authority-conflict-deny",
+      "domain": "AUTHORITY",
+      "expected_decision": "DENY",
+      "expected_reason": "AUTHORITY_CONFLICT",
+      "current_head": "1111111111111111111111111111111111111111",
+      "require_independent_review": false
+    },
+    {
+      "case_id": "authority-resolved-allow",
+      "domain": "AUTHORITY",
+      "expected_decision": "ALLOW",
+      "expected_reason": "AUTHORITY_RESOLVED",
+      "current_head": "1111111111111111111111111111111111111111",
+      "require_independent_review": false
+    },
+    {
+      "case_id": "context-missing-deny",
+      "domain": "CONTEXT",
+      "expected_decision": "DENY",
+      "expected_reason": "CONTEXT_INCOMPLETE",
+      "current_head": "2222222222222222222222222222222222222222",
+      "require_independent_review": false
+    },
+    {
+      "case_id": "context-current-allow",
+      "domain": "CONTEXT",
+      "expected_decision": "ALLOW",
+      "expected_reason": "CONTEXT_READY",
+      "current_head": "2222222222222222222222222222222222222222",
+      "require_independent_review": false
+    },
+    {
+      "case_id": "p5-scope-escalation-deny",
+      "domain": "P5",
+      "expected_decision": "DENY",
+      "expected_reason": "POLICY_SCOPE_ESCALATION",
+      "current_head": "3333333333333333333333333333333333333333",
+      "require_independent_review": false
+    },
+    {
+      "case_id": "p5-bounded-allow",
+      "domain": "P5",
+      "expected_decision": "ALLOW",
+      "expected_reason": "P5_BOUNDED",
+      "current_head": "3333333333333333333333333333333333333333",
+      "require_independent_review": false
+    },
+    {
+      "case_id": "done-stale-evidence-deny",
+      "domain": "DONE",
+      "expected_decision": "DENY",
+      "expected_reason": "STALE_EVIDENCE",
+      "current_head": "4444444444444444444444444444444444444444",
+      "require_independent_review": true
+    },
+    {
+      "case_id": "done-self-review-deny",
+      "domain": "DONE",
+      "expected_decision": "DENY",
+      "expected_reason": "REVIEW_NOT_INDEPENDENT",
+      "current_head": "4444444444444444444444444444444444444444",
+      "require_independent_review": true
+    },
+    {
+      "case_id": "done-evidence-ready-allow",
+      "domain": "DONE",
+      "expected_decision": "ALLOW",
+      "expected_reason": "DONE_EVIDENCE_READY",
+      "current_head": "4444444444444444444444444444444444444444",
+      "require_independent_review": true
+    }
+  ]
+}
