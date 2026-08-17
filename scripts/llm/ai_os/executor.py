@@ -26,7 +26,7 @@ COMMIT_SHA_RE = re.compile(r"[0-9a-f]{40}\Z")
 IDENTIFIER_RE = re.compile(r"[A-Za-z0-9#._-]+\Z")
 SECRET_LIKE_PATTERNS = (
     re.compile(r"(?i)\bsk(?:_live)?[-_][a-z0-9_-]{20,}\b"),
-    re.compile(r"(?i)\bgh[opsu]_[a-z0-9_]{20,}\b"),
+    re.compile(r"(?i)\bgh[opsur]_[a-z0-9_]{20,}\b"),
     re.compile(r"(?i)\bgithub_pat_[a-z0-9_]{20,}\b"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\bAIza[0-9A-Za-z_-]{20,}\b"),
@@ -36,6 +36,10 @@ SECRET_LIKE_PATTERNS = (
         r"(?i)\b[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|API_KEY)\s*=\s*"
         r"[\"'][^\"'\r\n]{16,}[\"']"
     ),
+)
+WINDOWS_RESERVED_COMPONENT_RE = re.compile(
+    r"(?i)(?:CON|PRN|AUX|NUL|CONIN\$|CONOUT\$|COM[1-9]|LPT[1-9])"
+    r"(?:\..*)?\Z"
 )
 PROTECTED_BRANCHES = {"main", "master", "refs/heads/main", "refs/heads/master"}
 FORBIDDEN_SCOPES = (".git", "experiments/execution_tracker")
@@ -296,6 +300,8 @@ def _safe_identifier(value: Any) -> bool:
 def _valid_branch(value: Any) -> bool:
     if not isinstance(value, str) or not value or value != value.strip():
         return False
+    if _contains_unsafe_serialized_identifier(value):
+        return False
     if value.startswith("/") or value.endswith(("/", ".")):
         return False
     if ".." in value or "@{" in value or "\\" in value:
@@ -330,6 +336,8 @@ def _safe_relative_path(value: Any) -> bool:
         return False
     if any(part != part.rstrip(" .") for part in parts):
         return False
+    if any(_is_windows_reserved_component(part) for part in parts):
+        return False
     path = PurePosixPath(normalized)
     return not path.is_absolute()
 
@@ -348,11 +356,21 @@ def _safe_tool_name(value: Any) -> bool:
         and bool(value)
         and value == value.strip()
         and not any(char.isspace() or ord(char) < 32 for char in value)
+        and not _contains_unsafe_serialized_identifier(value)
     )
 
 
 def _contains_unsafe_unicode(value: str) -> bool:
     return any(unicodedata.category(char).startswith("C") for char in value)
+
+
+def _contains_unsafe_serialized_identifier(value: str) -> bool:
+    normalized = unicodedata.normalize("NFKC", value)
+    return _contains_unsafe_unicode(normalized)
+
+
+def _is_windows_reserved_component(value: str) -> bool:
+    return bool(WINDOWS_RESERVED_COMPONENT_RE.fullmatch(value))
 
 
 def _contains_overlapping_paths(paths: list[str]) -> bool:
@@ -365,7 +383,8 @@ def _contains_overlapping_paths(paths: list[str]) -> bool:
 
 def _contains_secret_like_value(value: Any) -> bool:
     if isinstance(value, str):
-        return any(pattern.search(value) for pattern in SECRET_LIKE_PATTERNS)
+        normalized = unicodedata.normalize("NFKC", value)
+        return any(pattern.search(normalized) for pattern in SECRET_LIKE_PATTERNS)
     if isinstance(value, dict):
         return any(
             _contains_secret_like_value(item)

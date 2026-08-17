@@ -127,6 +127,49 @@ def test_path_control_and_format_characters_are_spec_blocked() -> None:
         assert result.reasons == ("target_paths must contain safe relative paths",)
 
 
+def test_branch_and_tool_control_format_characters_are_spec_blocked() -> None:
+    unsafe_identifiers = ("bidi\u202espoof", "zero\u200bwidth")
+
+    for value in unsafe_identifiers:
+        branch_result = build_isolation_plan(request(branch=f"codex/{value}"))
+        tool_result = build_isolation_plan(
+            request(
+                allowed_tools=frozenset({value}),
+                requested_tools=frozenset({value}),
+            )
+        )
+        for result in (branch_result, tool_result):
+            assert result.status is IsolationStatus.SPEC_BLOCKED
+            assert result.plan is None
+
+
+def test_windows_reserved_path_components_are_spec_blocked() -> None:
+    reserved_components = (
+        "CON",
+        "nul",
+        "AUX.txt",
+        "PRN",
+        "COM1",
+        "LPT9",
+        "ＣＯＮ",
+    )
+
+    for component in reserved_components:
+        result = build_isolation_plan(
+            request(target_paths=(f"docs/llm/{component}/report.md",))
+        )
+        assert result.status is IsolationStatus.SPEC_BLOCKED
+        assert result.plan is None
+        assert result.reasons == ("target_paths must contain safe relative paths",)
+
+    for portable_component in ("CONSOLE", "COM10", "LPT0"):
+        result = build_isolation_plan(
+            request(target_paths=(f"docs/llm/{portable_component}/report.md",))
+        )
+        assert result.status is IsolationStatus.READY
+        assert result.plan is not None
+
+
 def test_target_paths_cannot_overlap_or_use_equivalent_aliases() -> None:
     cases = (
         ("docs/llm", "docs/llm/file.md"),
@@ -261,6 +304,17 @@ def test_secret_like_values_are_blocked_without_echo_across_request_fields() -> 
         assert result.plan is None
         assert "request contains a secret-like value" in result.reasons
         assert synthetic_secret not in serialized
+
+
+def test_github_refresh_token_is_blocked_without_echo() -> None:
+    synthetic_refresh_token = "ghr_" + ("R" * 24)
+    result = build_isolation_plan(request(task_id=synthetic_refresh_token))
+    serialized = json.dumps(result.to_dict())
+
+    assert result.status is IsolationStatus.SPEC_BLOCKED
+    assert result.plan is None
+    assert result.reasons == ("request contains a secret-like value",)
+    assert synthetic_refresh_token not in serialized
 
 
 def test_ordinary_secret_related_words_are_not_false_positive_blocked() -> None:
