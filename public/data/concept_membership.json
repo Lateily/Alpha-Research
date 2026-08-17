@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-08-17T02:24:06Z",
+  "fetched_at": "2026-08-17T09:09:10Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -1866,6 +1866,16 @@
       ]
     },
     {
+      "ts_code": "883959.TI",
+      "name": "近期并购",
+      "type": "S",
+      "total_count": 262.0,
+      "member_count": 1,
+      "members": [
+        "300308.SZ"
+      ]
+    },
+    {
       "ts_code": "883966.TI",
       "name": "机构月调研前十",
       "type": "S",
@@ -2503,7 +2513,8 @@
       "700309.TI",
       "700340.TI",
       "883913.TI",
-      "883926.TI"
+      "883926.TI",
+      "883959.TI"
     ],
     "002594.SZ": [
       "700001.TI",
@@ -2802,7 +2813,7 @@
       "883426.TI"
     ]
   },
-  "total_concepts": 224,
-  "total_memberships": 384,
+  "total_concepts": 225,
+  "total_memberships": 385,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }
