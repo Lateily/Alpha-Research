@@ -713,9 +713,11 @@ def build_mrg(
             "gates": gates,
             "candidate_state": candidate,
             "formal_state": None,
-            "risk_budget_context": "REDUCED_REVIEW_BUDGET" if candidate in {
-                "CREDIT_STRESS_CANDIDATE", "MACRO_PARTIAL"
-            } else "NORMAL_REVIEW_BUDGET",
+            # Missing evidence is not risk evidence.  Only observed credit
+            # stress may tighten the calibration risk-budget context.
+            "risk_budget_context": "REDUCED_REVIEW_BUDGET"
+            if candidate == "CREDIT_STRESS_CANDIDATE"
+            else "NORMAL_REVIEW_BUDGET",
             "enforceable": False,
         },
         "policy": dict(POLICY),
@@ -869,6 +871,14 @@ def validate_mrg(payload: Mapping[str, Any]) -> None:
         raise M1AError("MRG cannot acquire formal blocking authority during calibration")
     if data["candidate_state"] == "CREDIT_STRESS_CANDIDATE" and data["gates"]["G4"]["status"] != "RED":
         raise M1AError("credit-stress candidate requires G4 red")
+    expected_budget = (
+        "REDUCED_REVIEW_BUDGET"
+        if data["candidate_state"] == "CREDIT_STRESS_CANDIDATE"
+        else "NORMAL_REVIEW_BUDGET"
+    )
+    # governance-mutation: MACRO_M1A_RISK_BUDGET_EVIDENCE
+    if data["risk_budget_context"] != expected_budget:
+        raise M1AError("risk-budget context must come from observed credit stress, not missing evidence")
 
 
 def validate_events(payload: Mapping[str, Any]) -> None:

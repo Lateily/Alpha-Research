@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
+import json
 import os
 import re
 import shutil
@@ -23,14 +25,94 @@ from typing import Iterable, Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-INFRA_FAILURE_MARKERS = (
-    "SyntaxError",
-    "ModuleNotFoundError",
-    "ImportError",
-    "No such file or directory",
-)
-TEST_FAILURE_MARKERS = ("AssertionError", "FAILED (", "FAIL:")
 SECRET_NAME_PARTS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL")
+SINGLE_TEST_RUNNER = """
+import json
+import runpy
+import sys
+import unittest
+from pathlib import Path
+
+MODULE_NAME = "mutation_gate_target"
+script, name, kind, class_name, receipt_path = sys.argv[1:6]
+sys.argv = [script]
+scope = runpy.run_path(script, run_name=MODULE_NAME)
+
+def is_expected_runtime_target(value, expected_name):
+    return (
+        getattr(value, "__module__", None) == MODULE_NAME
+        and getattr(value, "__name__", None) == expected_name
+    )
+
+if kind == "function":
+    target = scope.get(name)
+    if (
+        not callable(target)
+        or not is_expected_runtime_target(target, name)
+    ):
+        raise LookupError(f"local function target changed identity: {name}")
+    failures = []
+    errors = []
+    skipped = []
+    expected_failures = []
+    unexpected_successes = []
+    try:
+        target()
+    except unittest.SkipTest as exc:
+        skipped.append(str(exc))
+    except AssertionError as exc:
+        failures.append(repr(exc))
+    except BaseException as exc:
+        errors.append(f"{type(exc).__name__}: {exc}")
+    tests_run = 1
+else:
+    target_class = scope.get(class_name)
+    if (
+        not isinstance(target_class, type)
+        or not issubclass(target_class, unittest.TestCase)
+        or not is_expected_runtime_target(target_class, class_name)
+        or name not in target_class.__dict__
+        or not is_expected_runtime_target(target_class.__dict__.get(name), name)
+    ):
+        raise LookupError(f"local TestCase target changed identity: {class_name}.{name}")
+    result = unittest.TestResult()
+    unittest.TestSuite([target_class(name)]).run(result)
+    tests_run = result.testsRun
+    failures = [trace for _test, trace in result.failures]
+    errors = [trace for _test, trace in result.errors]
+    skipped = [reason for _test, reason in result.skipped]
+    expected_failures = [trace for _test, trace in result.expectedFailures]
+    unexpected_successes = [str(test) for test in result.unexpectedSuccesses]
+
+receipt = {
+    "schema": "ar-governance-test-receipt.v1",
+    "target": name,
+    "kind": kind,
+    "class_name": class_name or None,
+    "tests_run": tests_run,
+    "failures": len(failures),
+    "errors": len(errors),
+    "skipped": len(skipped),
+    "expected_failures": len(expected_failures),
+    "unexpected_successes": len(unexpected_successes),
+    "diagnostics": {
+        "failures": failures,
+        "errors": errors,
+        "skipped": skipped,
+        "expected_failures": expected_failures,
+        "unexpected_successes": unexpected_successes,
+    },
+}
+Path(receipt_path).write_text(
+    json.dumps(receipt, ensure_ascii=True, sort_keys=True),
+    encoding="utf-8",
+)
+raise SystemExit(
+    1
+    if failures or errors or unexpected_successes
+    else 0
+)
+"""
 GOVERNANCE_MARKER_RE = re.compile(
     r"^\s*# governance-mutation: (?P<mutation_id>[A-Z0-9_]+)\s*$"
 )
@@ -42,6 +124,24 @@ K1_GOVERNANCE_PATHS = (
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
+FUNNEL_GOVERNANCE_PATHS = (
+    "experiments/research_funnel/funnel_pipeline.py",
+    "experiments/research_funnel/r035_evaluation.py",
+)
+# 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
+# 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
+# run_nightly.py 同时承载 Macro 的 marker,而那条规则是双向精确配对的。这里按
+# **ID 前缀**配对,只管 FUNNEL_NIGHTLY_*,不动同文件里别的治理族。
+FUNNEL_NIGHTLY_GOVERNANCE_PATHS = (
+    "experiments/research_funnel/nightly_funnel.py",
+    "experiments/execution_tracker/run_nightly.py",
+)
+FUNNEL_NIGHTLY_MUTATION_PREFIX = "FUNNEL_NIGHTLY_"
+NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS = (
+    "experiments/execution_tracker/nightly_acceptance.py",
+    "experiments/execution_tracker/run_nightly.py",
+)
+NIGHTLY_ACCEPTANCE_MUTATION_PREFIX = "NIGHTLY_ACCEPTANCE_"
 
 
 class MutationGateError(RuntimeError):
@@ -101,6 +201,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Expired official observations cannot emit current factor signals.",
     ),
     MutationCase(
+        mutation_id="MACRO_M1A_RISK_BUDGET_EVIDENCE",
+        component="Macro M1-A",
+        source_path="experiments/macro_os/m1a.py",
+        test_script="tests/test_macro_m1a_offline.py",
+        before='    if data["risk_budget_context"] != expected_budget:\n'
+        '        raise M1AError("risk-budget context must come from observed credit stress, not missing evidence")',
+        after='    if False:\n'
+        '        raise M1AError("risk-budget context must come from observed credit stress, not missing evidence")',
+        expected_failure_marker="test_missing_evidence_cannot_tighten_risk_budget",
+        rationale="Missing Macro evidence cannot be reinterpreted as a risk-budget tightening signal.",
+    ),
+    MutationCase(
         mutation_id="MACRO_M1B_FORBIDDEN_OUTPUT",
         component="Macro M1-B",
         source_path="experiments/macro_os/m1b.py",
@@ -135,6 +247,56 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise M1BError("portfolio score cannot become a ranking input")',
         expected_failure_marker="test_current_context_contributions_scores_and_ranking_are_recomputed",
         rationale="Calibration-only portfolio context cannot become a ranking input.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M1C_FAILURE_ISOLATION",
+        component="Macro M1-C nightly boundary",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before='        if name in ISOLATED_CALIBRATION_STEPS and status != "OK":',
+        after='        if False:',
+        expected_failure_marker="test_macro_failure_is_isolated_and_cannot_stop_unrelated_publication",
+        rationale="A calibration-only Macro failure cannot veto unrelated nightly publication.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M1C_ISOLATION_ALLOWLIST",
+        component="Macro M1-C nightly boundary",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before="    _validate_isolated_calibration_steps()",
+        after="    pass  # mutation: skip isolation allowlist validation",
+        expected_failure_marker="test_business_steps_cannot_enter_macro_isolation_allowlist",
+        rationale="Business-critical steps must never acquire calibration failure isolation.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M1C_FAILURE_VISIBILITY",
+        component="Macro M1-C nightly observability",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before='        if not entry.get("blocks_publication", True):',
+        after="        if False:",
+        expected_failure_marker="test_failed_macro_step_discards_partial_outputs_but_keeps_inputs",
+        rationale="An isolated Macro failure must remain visible in top-level data quality during production verification.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M1C_RUN_AUTHORITY_CALL",
+        component="Macro M1-C runtime boundary",
+        source_path="experiments/macro_os/m1c.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before="    _walk_authority(manifest)",
+        after="    pass  # mutation: skip pre-write authority validation",
+        expected_failure_marker="test_run_calls_authority_validator_before_writing_manifest",
+        rationale="The runtime must invoke the calibration authority validator before writing its manifest.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M1C_VALIDATE_AUTHORITY_CALL",
+        component="Macro M1-C validation boundary",
+        source_path="experiments/macro_os/m1c.py",
+        test_script="tests/test_macro_m1c_offline.py",
+        before="    _walk_authority(payload)",
+        after="    pass  # mutation: skip published-manifest authority validation",
+        expected_failure_marker="test_validate_run_calls_authority_validator",
+        rationale="Published M1-C manifests must pass the calibration authority validator.",
     ),
     MutationCase(
         mutation_id="AIOS_REQUEST_SPEC_BLOCK",
@@ -697,6 +859,1122 @@ MUTATIONS: tuple[MutationCase, ...] = (
         expected_failure_marker="test_validate_manifest_enforces_r043_marker_coverage",
         rationale="The mutation manifest must not silently stop enforcing R-043 marker coverage.",
     ),
+    MutationCase(
+        mutation_id="GOVERNANCE_LOCAL_TARGET_REQUIRED",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "    if not candidates:\n"
+            "        raise MutationGateError(\n"
+            '            f"exactly one local test target required: {name}; found 0"\n'
+            "        )\n"
+        ),
+        after=(
+            "    if not candidates:\n"
+            '        return LocalTestTarget(name=name, kind="function")\n'
+        ),
+        expected_failure_marker="test_manifest_rejects_imported_and_ambiguous_targets",
+        rationale="An imported symbol cannot substitute for a missing local test definition.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_LOCAL_TARGET_UNIQUENESS",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "    if len(candidates) > 1:\n"
+            "        raise MutationGateError(\n"
+            '            f"exactly one local test target required: {name}; found {len(candidates)}"\n'
+            "        )\n"
+        ),
+        after=(
+            "    if len(candidates) > 1:\n"
+            "        return candidates[0]\n"
+        ),
+        expected_failure_marker="test_manifest_rejects_imported_and_ambiguous_targets",
+        rationale="A declared test target must have exactly one local definition.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_DYNAMIC_TARGET_OWNERSHIP",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "def is_expected_runtime_target(value, expected_name):\n"
+            "    return (\n"
+            '        getattr(value, "__module__", None) == MODULE_NAME\n'
+            '        and getattr(value, "__name__", None) == expected_name\n'
+            "    )\n"
+        ),
+        after=(
+            "def is_expected_runtime_target(value, expected_name):\n"
+            "    return True\n"
+        ),
+        expected_failure_marker="test_runner_rejects_imported_target_identity",
+        rationale="Runtime rebinding cannot replace a local test with an imported object.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_ASSERTION_ONLY_KILL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "    if (\n"
+            "        receipt.errors\n"
+            "        or receipt.skipped\n"
+            "        or receipt.expected_failures\n"
+            "        or receipt.unexpected_successes\n"
+            "    ):\n"
+        ),
+        after="    if False:\n",
+        expected_failure_marker="test_classifier_rejects_error_and_skip_receipts",
+        rationale="Errors, skips, and expected failures cannot masquerade as mutation kills.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_BASELINE_CLEAN_PASS",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=(
+            "        result.returncode != 0\n"
+            "        or receipt.failures\n"
+            "        or receipt.errors\n"
+            "        or receipt.skipped\n"
+            "        or receipt.expected_failures\n"
+        ),
+        after=(
+            "        result.returncode != 0\n"
+            "        or receipt.failures\n"
+            "        or receipt.errors\n"
+            "        or False\n"
+            "        or receipt.expected_failures\n"
+        ),
+        expected_failure_marker="test_baseline_requires_one_clean_pass",
+        rationale="A skipped baseline is not evidence that the declared test executes cleanly.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U0_NONEMPTY_ELIGIBLE",
+        component="Research funnel U0 eligibility",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if not rows:\n'
+        '        raise FunnelError("U0 has no U1-eligible securities")',
+        after='    if False:\n'
+        '        raise FunnelError("U0 has no U1-eligible securities")',
+        expected_failure_marker="test_u0_zero_eligible_universe_fails_closed",
+        rationale="An empty eligible universe cannot be published as a successful zero-row scan.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_EVIDENCE_DATE_NORMALIZATION",
+        component="Research funnel PIT date parsing",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="        return _date8(raw)",
+        after="        return str(value)",
+        expected_failure_marker="test_evidence_dates_normalize_iso_without_lexical_bypass",
+        rationale="ISO-formatted evidence dates cannot bypass point-in-time checks through lexical ordering.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_E1_SCHEMA_ASOF",
+        component="Research funnel E1 boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if payload.get("schema") != "ar.e1_event_layer" or payload_as_of != as_of:\n'
+        '        raise FunnelError("E1 event layer schema/as_of mismatch")',
+        after='    if False:\n'
+        '        raise FunnelError("E1 event layer schema/as_of mismatch")',
+        expected_failure_marker="test_e1_schema_and_asof_are_bound_to_the_scan",
+        rationale="The E1 input must use the expected schema and the same PIT date as U1.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_E1_ROWS_HASH",
+        component="Research funnel E1 integrity",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if payload.get("rows_hash") != _hash(rows):\n'
+        '        raise FunnelError("E1 event rows_hash mismatch")',
+        after='    if False:\n'
+        '        raise FunnelError("E1 event rows_hash mismatch")',
+        expected_failure_marker="test_e1_rows_hash_is_recomputed",
+        rationale="The funnel cannot trust an E1 payload whose rows no longer match its hash.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_E1_VERDICT",
+        component="Research funnel E1 vocabulary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if verdict not in {"RED_FLAG", "NO_RED_FLAG_FOUND", "DATA_BLOCKED"}:\n'
+        '            raise FunnelError("E1 event verdict is invalid")',
+        after='        if False:\n'
+        '            raise FunnelError("E1 event verdict is invalid")',
+        expected_failure_marker="test_e1_verdict_enum_is_fail_closed",
+        rationale="Unknown E1 verdicts cannot become clean funnel evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_E1_EVIDENCE_ASOF",
+        component="Research funnel E1 PIT boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if normalized_latest is not None and normalized_latest > as_of:\n'
+        '            raise FunnelError("E1 event evidence exceeds scan as_of")',
+        after='        if False:\n'
+        '            raise FunnelError("E1 event evidence exceeds scan as_of")',
+        expected_failure_marker="test_e1_future_evidence_is_rejected",
+        rationale="Evidence published after the scan date cannot enter a point-in-time U1 row.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_ROTATION_DATE_BINDING",
+        component="Research funnel rotation boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if target and target != as_of:\n'
+        '        raise FunnelError("rotation panel is not from the requested trade date")',
+        after='    if False:\n'
+        '        raise FunnelError("rotation panel is not from the requested trade date")',
+        expected_failure_marker="test_rotation_panel_date_is_bound_to_scan_date",
+        rationale="A stale rotation panel cannot be presented as same-day industry evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_MACRO_CALIBRATING",
+        component="Research funnel Macro authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if payload.get("mode") != "CALIBRATING":\n'
+        '        raise FunnelError("Macro industry input must remain CALIBRATING")',
+        after='    if False:\n'
+        '        raise FunnelError("Macro industry input must remain CALIBRATING")',
+        expected_failure_marker="test_macro_input_must_remain_calibrating",
+        rationale="Macro context cannot silently graduate from calibration inside the funnel.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_MACRO_NO_BLOCK_AUTHORITY",
+        component="Research funnel Macro authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if policy.get("formal_blocking_authority") is not False:\n'
+        '        raise FunnelError("Macro industry input acquired formal blocking authority")',
+        after='    if False:\n'
+        '        raise FunnelError("Macro industry input acquired formal blocking authority")',
+        expected_failure_marker="test_macro_input_cannot_acquire_formal_blocking_authority",
+        rationale="Calibration-only Macro context cannot veto or direct research flow.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_NO_COMPOSITE_SCORE",
+        component="Research funnel U1",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if FORBIDDEN_AGGREGATE_KEYS.intersection(_walk_keys(payload)):\n'
+        '        raise FunnelError("cross-channel aggregate score is forbidden")',
+        after='    if False:\n'
+        '        raise FunnelError("cross-channel aggregate score is forbidden")',
+        expected_failure_marker="test_u1_rejects_composite_score_and_missing_channel",
+        rationale="U1 channels cannot be combined into a score that offsets contrary evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_NO_TRADE_AUTHORITY",
+        component="Research funnel U1 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if FORBIDDEN_ACTION_KEYS.intersection(_walk_keys(payload)):\n'
+        '        raise FunnelError("trade or blocking authority field is forbidden")',
+        after='    if False:\n'
+        '        raise FunnelError("trade or blocking authority field is forbidden")',
+        expected_failure_marker="test_u1_rejects_trade_or_blocking_authority_fields",
+        rationale="The scan layer cannot emit a trade action or formal blocking authority.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_SOURCE_ASOF",
+        component="Research funnel U1 PIT boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if normalized_source_as_of is not None and normalized_source_as_of > as_of:\n'
+        '            raise FunnelError("all_market_scan source evidence is from the future")',
+        after='        if False:\n'
+        '            raise FunnelError("all_market_scan source evidence is from the future")',
+        expected_failure_marker="test_u1_rejects_future_source_evidence_after_iso_normalization",
+        rationale="No channel may carry source evidence newer than the U1 scan date.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_DATA_STATUS",
+        component="Research funnel U1 data quality",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if row["data_status"] not in VALID_DATA_STATUS:\n'
+        '            raise FunnelError("invalid channel data_status")',
+        after='        if False:\n'
+        '            raise FunnelError("invalid channel data_status")',
+        expected_failure_marker="test_u1_rejects_unknown_data_status",
+        rationale="Unknown status labels cannot bypass visible DATA_BLOCKED/PARTIAL semantics.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U1_SIX_CHANNEL_COVERAGE",
+        component="Research funnel U1",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if set(seen) != eligible or any(channels != set(CHANNELS) for channels in seen.values()):\n'
+        '        raise FunnelError("every eligible security must have exactly six channel rows")',
+        after='    if False:\n'
+        '        raise FunnelError("every eligible security must have exactly six channel rows")',
+        expected_failure_marker="test_u1_rejects_composite_score_and_missing_channel",
+        rationale="A full-market scan cannot silently omit one of the six independent channels.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_QUOTA_FLOOR",
+        component="Research funnel U2 reserved quota",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="    main_capacity = target_size - reserved_total",
+        after="    main_capacity = target_size",
+        expected_failure_marker="test_u2_reserved_quota_floor_preserves_main_channel_capacity",
+        rationale="Main-channel intake must leave capacity for slow-bull, contrarian and control floors.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_CONTROL_ALGORITHM",
+        component="Research funnel U2 random control",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if frame.get("algo") != CONTROL_ALGO:\n'
+        '        raise FunnelError("random control algorithm drift")',
+        after='    if False:\n'
+        '        raise FunnelError("random control algorithm drift")',
+        expected_failure_marker="test_u2_rejects_untraceable_reason_and_algorithm_drift",
+        rationale="The preregistered random-control algorithm cannot drift after outcomes become visible.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_CONTROL_SEED",
+        component="Research funnel U2 random control",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="    rng = random.Random(int(seed_hex[:16], 16))",
+        after="    rng = random.Random(0)",
+        expected_failure_marker="test_u2_random_control_is_same_pool_stratified_and_reproducible",
+        rationale="The preregistered seed must determine the actual draw, not merely its label.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_RED_FLAG_NOT_POSITIVE",
+        component="Research funnel U2 red-flag boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before="    selected_main: set[str] = set()",
+        after="    selected_main: set[str] = set(red_flag_codes)",
+        expected_failure_marker="test_red_flag_without_positive_channel_is_excluded_not_a_u2_candidate",
+        rationale="An E1 red flag is an exclusion fact, not a positive candidate signal.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U2_EXACT_EVIDENCE_PROJECTION",
+        component="Research funnel U2 evidence boundary",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='        if row.get("source_channels") != expected_channels or row.get("entry_reasons") != expected_reasons:\n'
+        '            raise FunnelError("candidate U1 channel/reason projection is not exact")',
+        after='        if False:\n'
+        '            raise FunnelError("candidate U1 channel/reason projection is not exact")',
+        expected_failure_marker="test_u2_rejects_untraceable_reason_and_algorithm_drift",
+        rationale="U2 must be an exact projection of the same-day U1 channel evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_AUTHORITY_BOUNDARY",
+        component="Research funnel U4 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if (\n'
+        '        authority.get("auto_selection") is not False\n'
+        '        or authority.get("human_selection_required") is not True\n'
+        '        or authority.get("selection_owner") != "Junyan"\n'
+        '    ):\n'
+        '        raise FunnelError("U4 authority boundary changed")',
+        after='    if False:\n'
+        '        raise FunnelError("U4 authority boundary changed")',
+        expected_failure_marker="test_u4_authority_boundary_is_not_covered_only_by_rows_hash",
+        rationale="Only Junyan may select U4; sibling authority fields need their own fail-closed guard.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_SAME_DAY_BATTERY",
+        component="Research funnel U4 evidence freshness",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if trade_date is not None and target != _date8(trade_date):\n'
+        '        raise FunnelError("U3 battery is not from the requested trade date")',
+        after='    if False:\n'
+        '        raise FunnelError("U3 battery is not from the requested trade date")',
+        expected_failure_marker="test_u4_rejects_stale_u3_battery",
+        rationale="U4 and U0 cannot advance a candidate using a stale U3 battery artifact.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_HUMAN_SELECTION_SIZE",
+        component="Research funnel U4 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if selected and not 3 <= len(selected) <= 5:\n'
+        '        raise FunnelError("U4 human selection must contain 3..5 securities")',
+        after='    if False:\n'
+        '        raise FunnelError("U4 human selection must contain 3..5 securities")',
+        expected_failure_marker="test_u4_selection_size_is_human_governance_gate",
+        rationale="The weekly U4 queue must remain an explicit human-selected 3..5-name decision.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_NO_TRADE_AUTHORITY",
+        component="Research funnel U4 authority",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if FORBIDDEN_ACTION_KEYS.intersection(_walk_keys(payload)):\n'
+        '        raise FunnelError("U4 queue cannot contain trade or blocking authority")',
+        after='    if False:\n'
+        '        raise FunnelError("U4 queue cannot contain trade or blocking authority")',
+        expected_failure_marker="test_u4_requires_explicit_human_selection_and_never_emits_action",
+        rationale="U4 can queue research work but cannot emit an order or acquire blocking authority.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_U4_RESEARCH_QUESTION",
+        component="Research funnel U4 entry gate",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_research_funnel_closure.py",
+        before='    if missing_questions:\n'
+        '        raise FunnelError(f"U4 selection lacks a clear research question: {missing_questions}")',
+        after='    if False:\n'
+        '        raise FunnelError(f"U4 selection lacks a clear research question: {missing_questions}")',
+        expected_failure_marker="test_u4_requires_an_explicit_research_question",
+        rationale="A U3 name cannot enter deep research without a concrete question to answer.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_FUNNEL_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_funnel_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_funnel_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_funnel_marker_coverage",
+        rationale="The mutation manifest must not silently stop enforcing funnel marker coverage.",
+    ),
+    # R-035 keeps discovery-vs-control and battery-separation scoring distinct.
+    # These mutations pin the outcome-blind input, preregistered return basis,
+    # descriptive statistics, and the permanently blocked claim boundary.
+    MutationCase(
+        mutation_id="R035_CANDIDATE_OUTCOME_BLIND",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if any(row.get("aligned_return") is not None for row in candidates["rows"]):\n'
+        '        raise EvaluationError("candidate bundle already contains outcome data")',
+        after='    if False:\n'
+        '        raise EvaluationError("candidate bundle already contains outcome data")',
+        expected_failure_marker="test_candidate_bundle_must_remain_outcome_blind",
+        rationale="U2 candidates must not receive outcome data before R-035 evaluates them.",
+    ),
+    MutationCase(
+        mutation_id="R035_BUNDLE_HASH_BINDING",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if declared != measured or manifest.get("bundle_hash") != _hash(declared):\n'
+        '        raise EvaluationError("funnel bundle manifest or artifact hash drift")',
+        after='    if False:\n'
+        '        raise EvaluationError("funnel bundle manifest or artifact hash drift")',
+        expected_failure_marker="test_bundle_artifact_hash_drift_is_rejected",
+        rationale="Standalone R-035 evaluation must independently bind every immutable bundle artifact.",
+    ),
+    MutationCase(
+        mutation_id="R035_CONTROL_FRAME_BINDING",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if batch_id != f"CTRL_{as_of}_v1":\n'
+        '        raise EvaluationError("control batch is not bound to the candidate as_of")',
+        after='    if False:\n'
+        '        raise EvaluationError("control batch is not bound to the candidate as_of")',
+        expected_failure_marker="test_control_frame_must_be_bound_to_candidate_asof",
+        rationale="Random controls must remain bound to the same registered U2 batch.",
+    ),
+    MutationCase(
+        mutation_id="R035_COMMON_T0_REQUIRED",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='            if not by_code[code] or by_code[code][0]["trade_date"] != as_of:\n'
+        '                # governance-mutation: R035_COMMON_T0_REQUIRED\n'
+        '                raise EvaluationError(f"candidate lacks the common U2 t0 close: {code}")',
+        after='            if not by_code[code]:\n'
+        '                # governance-mutation: R035_COMMON_T0_REQUIRED\n'
+        '                raise EvaluationError(f"candidate lacks the common U2 t0 close: {code}")',
+        expected_failure_marker="test_missing_common_t0_fails_closed",
+        rationale="Every scored security must use the same U2 as-of settled close.",
+    ),
+    MutationCase(
+        mutation_id="R035_ATOMIC_SOURCE_BATCH",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='        if partial_dates:\n'
+        '            raise EvaluationError(f"feature store contains partial source batches: {partial_dates}")',
+        after='        if False:\n'
+        '            raise EvaluationError(f"feature store contains partial source batches: {partial_dates}")',
+        expected_failure_marker="test_partial_feature_store_batch_fails_closed",
+        rationale="R-035 may score only dates committed atomically across every R-008 source endpoint.",
+    ),
+    MutationCase(
+        mutation_id="R035_COMMITTED_PRICE_DATES",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='            if row["trade_date"] not in endpoints_by_date:\n'
+        '                raise EvaluationError(\n'
+        '                    f"price evidence is not backed by an atomic source batch: {row[\'trade_date\']}"\n'
+        '                )',
+        after='            if False:\n'
+        '                raise EvaluationError(\n'
+        '                    f"price evidence is not backed by an atomic source batch: {row[\'trade_date\']}"\n'
+        '                )',
+        expected_failure_marker="test_price_rows_without_a_committed_source_batch_are_rejected",
+        rationale="Aligned returns may use only price rows backed by a committed R-008 source date.",
+    ),
+    MutationCase(
+        mutation_id="R035_ALIGNED_HORIZON",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='                value = observed["adjusted_close"] / t0["adjusted_close"] - 1.0',
+        after='                value = 0.0',
+        expected_failure_marker="test_aligned_returns_use_one_t0_and_all_preregistered_horizons",
+        rationale="Aligned returns must be calculated from the common t0, never fabricated as zero.",
+    ),
+    MutationCase(
+        mutation_id="R035_TWO_LAYER_SEPARATION",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='        "u3_battery_separation": _test_result(\n'
+        '            rows, field="u3_group", groups=U3_GROUPS\n'
+        '        ),',
+        after='        "u3_battery_separation": _test_result(\n'
+        '            rows, field="u1_u2_group", groups=U12_GROUPS\n'
+        '        ),',
+        expected_failure_marker="test_u12_and_u3_statistics_are_separate_and_batch_bound",
+        rationale="U1/U2 discovery and U3 battery separation are different tests and cannot be blended.",
+    ),
+    MutationCase(
+        mutation_id="R035_NO_TRADE_AUTHORITY",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if offending:\n'
+        '        raise EvaluationError(f"R-035 receipt contains trade authority: {sorted(offending)}")',
+        after='    if False:\n'
+        '        raise EvaluationError(f"R-035 receipt contains trade authority: {sorted(offending)}")',
+        expected_failure_marker="test_trade_or_blocking_authority_is_rejected",
+        rationale="R-035 is a research evaluator and can never emit trade or blocking authority.",
+    ),
+    MutationCase(
+        mutation_id="R035_POLICY_FROZEN",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if (\n'
+        '        policy.get("entry_basis") != "U2_AS_OF_SETTLED_CLOSE"',
+        after='    if False and (\n'
+        '        policy.get("entry_basis") != "U2_AS_OF_SETTLED_CLOSE"',
+        expected_failure_marker="test_preregistered_policy_and_top_level_status_are_recomputed",
+        rationale="The registered entry basis, horizons, price basis, and test method cannot drift.",
+    ),
+    MutationCase(
+        mutation_id="R035_LAYER_ROW_SEPARATION",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='        if row.get("u1_u2_group") == "RANDOM_CONTROL" and (\n'
+        '            row.get("u3_group") is not None or row.get("u3_group_reason") is not None\n'
+        '        ):\n'
+        '            raise EvaluationError("R-035 random controls cannot enter the U3 test")',
+        after='        if False:\n'
+        '            raise EvaluationError("R-035 random controls cannot enter the U3 test")',
+        expected_failure_marker="test_random_controls_cannot_enter_the_u3_test",
+        rationale="Random controls cannot be recycled into the battery-separation test.",
+    ),
+    MutationCase(
+        mutation_id="R035_STATISTICS_RECOMPUTED",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if payload.get("tests") != _tests_from_rows(rows):\n'
+        '        raise EvaluationError("R-035 test statistics do not match scored rows")',
+        after='    if False:\n'
+        '        raise EvaluationError("R-035 test statistics do not match scored rows")',
+        expected_failure_marker="test_statistics_are_recomputed_from_rows",
+        rationale="Published descriptive statistics must be recomputed from the scored rows.",
+    ),
+    MutationCase(
+        mutation_id="R035_STATUS_RECOMPUTED",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if payload.get("status") != expected_status:\n'
+        '        raise EvaluationError("R-035 top-level status does not match observed coverage")',
+        after='    if False:\n'
+        '        raise EvaluationError("R-035 top-level status does not match observed coverage")',
+        expected_failure_marker="test_preregistered_policy_and_top_level_status_are_recomputed",
+        rationale="Missing outcomes or open windows must remain visible as PARTIAL.",
+    ),
+    MutationCase(
+        mutation_id="R035_CLAIM_BLOCKED",
+        component="Research funnel R-035 evaluation",
+        source_path="experiments/research_funnel/r035_evaluation.py",
+        test_script="tests/test_research_funnel_r035.py",
+        before='    if (\n'
+        '        claim.get("status") != "BLOCKED"',
+        after='    if False and (\n'
+        '        claim.get("status") != "BLOCKED"',
+        expected_failure_marker="test_claim_cannot_be_unlocked_by_sample_count",
+        rationale="R-035 sample counts cannot unlock a claim before prospective causal-cluster governance.",
+    ),
+    # ── 研究漏斗夜链接入(观察期隔离)──
+    # 守的是**接入方式**,不是漏斗自己的研究契约:隔离、销毁、不进发布树。
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ISOLATION",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            '        if name in ISOLATED_CALIBRATION_STEPS and status != "OK":'
+        ),
+        after='        if name == "macro_m1c" and status != "OK":',
+        expected_failure_marker="test_funnel_failure_cannot_stop_unrelated_publication",
+        rationale="A funnel crash must never veto NAV, ledger, or unrelated research publication.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DISCARD",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if not os.path.isfile(stage_health):\n"
+            "        return []\n"
+            "    os.remove(stage_health)"
+        ),
+        after=(
+            "    if not os.path.isfile(stage_health):\n"
+            "        return []\n"
+        ),
+        expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
+        rationale="Isolation without discard republishes yesterday's summary as today's output.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DISCARD_DISPATCH",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    "research_funnel": _discard_failed_funnel_outputs,',
+        after='    "research_funnel": _discard_failed_macro_outputs,',
+        expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
+        rationale="Two isolated steps share one branch; a funnel failure must not wipe Macro outputs.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DISCARD_POLICY_REQUIRED",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if discard is None:\n"
+            "        raise RuntimeError(\n"
+            '            f"isolated step {step} has no declared output discard policy"\n'
+            "        )"
+        ),
+        after=(
+            "    if discard is None:\n"
+            "        return []"
+        ),
+        expected_failure_marker="test_an_isolated_step_without_a_discard_policy_fails_closed",
+        rationale="A new isolated step must declare how its staged outputs are destroyed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ARTIFACT_FRESHNESS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '                                             "funnel_health.json"),\n'
+            '                                "as_of", True)],'
+        ),
+        after=(
+            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '                                             "funnel_health.json"),\n'
+            '                                "as_of", False)],'
+        ),
+        expected_failure_marker="test_funnel_health_artifact_is_bound_to_this_run",
+        rationale="Without freshness the funnel can report OK every night on yesterday's summary.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_DATE_PATH_GUARD",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if candidate.is_symlink() or os.path.realpath(candidate) != os.path.join(\n"
+            "        os.path.realpath(root), target\n"
+            "    ):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_date_container_symlink_is_also_refused",
+        rationale="The date container must not escape the observation root through a symlink.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_IMMUTABLE_RUN_PATH",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if candidate.is_symlink() or os.path.realpath(candidate) != os.path.join(\n"
+            "        os.path.realpath(date_dir), run_id\n"
+            "    ):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_bundle_directory_refuses_a_symlink_that_escapes_the_root",
+        rationale="Every run bundle must remain an immutable child of its validated date container.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RUN_CONTEXT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if not value:\n"
+            '        raise FunnelError(f"缺少必需环境变量 {name} '
+            '—— 拒绝在无本轮上下文时产出漏斗产物")'
+        ),
+        after="    if False:\n        pass",
+        expected_failure_marker="test_runner_refuses_without_run_context",
+        rationale="Producing a bundle without run context lets an unbound artifact claim this run.",
+    ),
+    # ── 复审(#269 第一轮)打出来的三条:health 可伪造 / 根 symlink 越界删除 /
+    #    隔离失败在运维层静默。外加观察区 retention。
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ROOT_SYMLINK",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if root.is_symlink():\n"
+            "        raise FunnelError(\n"
+            '            f"观察区根本身是符号链接,拒绝使用: {root} -> {os.path.realpath(root)}"\n'
+            "        )"
+        ),
+        after="    pass",
+        expected_failure_marker="test_a_symlinked_observation_root_is_refused",
+        rationale="A symlinked observation root turns the retention sweep into arbitrary deletion.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_EVIDENCE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            '    if str(manifest.get("as_of") or "") != target:'
+        ),
+        after="    if False:",
+        expected_failure_marker="test_health_refuses_a_manifest_from_another_trade_date",
+        rationale="Health must be derived from the bundle it claims to describe.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_CONTRACT",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "        try:\n"
+            "            _validate_funnel_health(data, artifact_path)\n"
+            "        except Exception as exc:\n"
+            '            return "FAILED", f"漏斗 health 契约校验失败: {exc}"'
+        ),
+        after='        pass',
+        expected_failure_marker="test_a_content_free_health_cannot_pass_the_artifact_contract",
+        rationale="Health is this step's only verifiable artifact; unvalidated means unverified.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_ISOLATED_ALARM",
+        component="Nightly funnel wiring isolation",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='        if res["report"] == "COMPLETE" and not isolated:',
+        after='        if res["report"] == "COMPLETE":',
+        expected_failure_marker="test_isolated_degradation_still_raises_the_ops_alarm",
+        rationale="Isolation means not vetoing others, never that the failure goes unnoticed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RETENTION",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if keep < 1:\n"
+            '        raise FunnelError(f"观察区保留天数必须 >= 1: {keep}")'
+        ),
+        after="    keep = max(keep, 1)",
+        expected_failure_marker="test_retention_refuses_a_non_positive_keep",
+        rationale="A silently clamped retention window hides a misconfigured sweep.",
+    ),
+    # ── 复审第二轮:verifier 不验持久 bundle / PARTIAL 不上浮 / retention 删本轮 /
+    #    契约未收口 ──
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_EXISTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if not os.path.isdir(bundle_dir):\n"
+            '        raise ValueError(f"health 声称的 bundle 不存在: {location}")'
+        ),
+        after="    if False:\n        pass",
+        expected_failure_marker="test_a_health_whose_bundle_is_absent_is_rejected",
+        rationale="A self-reported health with no bundle on disk is a claim, not evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_COUNTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    if data.get("counts") != measured_counts:',
+        after="    if False:",
+        expected_failure_marker="test_counts_that_disagree_with_the_bundle_are_rejected",
+        rationale="Counts must be recomputed from the bundle, never taken on the health's word.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_QUALITY_ROLLUP",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS | FUNNEL_DATA_STEPS\n"
+        ),
+        after=(
+            "    if (step not in RESEARCH_DATA_STEPS | MACRO_DATA_STEPS\n"
+        ),
+        expected_failure_marker="test_funnel_partial_reaches_the_top_level_quality",
+        rationale="A funnel PARTIAL that never reaches the rollup is hidden behind a top-level COMPLETE.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RETENTION_PROTECT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "        if name in protected:\n"
+            "            continue"
+        ),
+        after="        pass",
+        expected_failure_marker="test_retention_never_deletes_the_current_target",
+        rationale="Re-running a historical date must not let the sweep delete this run's own bundle.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_CONTRACTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_bundle_contracts(payloads, registry, "all_market_scan.json")',
+        after="    pass",
+        expected_failure_marker="test_build_health_runs_the_bundle_contracts",
+        rationale="Hashes prove the files did not change, not that their content is still compliant.",
+    ),
+    # ── 对抗复核第三轮:rollup 只钉 helper 未钉传播 / as_of 未校形状 /
+    #    verifier 不跑契约 / status 重算未钉 / 陈旧 bundle 被直接删 ──
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_QUALITY_PROPAGATION",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='        for artifact in entry.get("artifacts", []):',
+        after="        for artifact in []:",
+        expected_failure_marker="test_partial_reaches_research_data_quality_end_to_end",
+        rationale="Pinning the helper is not pinning the wiring that carries its answer upward.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_DATE_SHAPE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    for key in (\"as_of\", \"target_trade_date\"):\n"
+            "        value = str(data.get(key) or \"\")\n"
+            "        if not (len(value) == 8 and value.isdigit()):"
+        ),
+        after=(
+            "    for key in ():\n"
+            "        value = str(data.get(key) or \"\")\n"
+            "        if not (len(value) == 8 and value.isdigit()):"
+        ),
+        expected_failure_marker="test_a_traversal_as_of_cannot_redirect_the_verifier",
+        rationale="as_of is joined into a filesystem path; an unshaped value redirects the verifier.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_VERIFIER_CONTRACTS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if registry is None:\n"
+            '        raise ValueError("找不到本轮 registry,无法在验证侧复核 bundle 契约")\n'
+            "    nightly_funnel.validate_bundle_contracts(\n"
+            '        payloads, registry, "all_market_scan.json"\n'
+            "    )"
+        ),
+        after="    pass",
+        expected_failure_marker="test_the_verifier_also_runs_the_bundle_contracts",
+        rationale="Hashes prove the bytes are unchanged, not that the content is still compliant.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_STATUS",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    if str(data.get("status") or "").upper() != measured_status:',
+        after="    if False:",
+        expected_failure_marker="test_a_status_that_disagrees_with_the_bundle_is_rejected",
+        rationale="Re-deriving status is the load-bearing half of making health a transcript.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_RUN_SCOPED_OUTPUT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="    bundle_dir = _bundle_dir(output_root, target, run_id)",
+        after="    bundle_dir = _date_dir(output_root, target)",
+        expected_failure_marker="test_outer_publication_failure_keeps_the_bundle_referenced_by_live_health",
+        rationale="A fixed-date output overwrites evidence before the outer publication transaction commits.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_OUTPUT_NO_OVERWRITE",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if os.path.lexists(bundle_dir):\n"
+            '        raise FunnelError(f"本轮漏斗 bundle 已存在,拒绝覆盖: {bundle_dir}")'
+        ),
+        after="    if False:\n        pass",
+        expected_failure_marker="test_same_run_id_can_never_overwrite_an_existing_bundle",
+        rationale="The run-scoped address is immutable only if retries cannot overwrite it.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_IMMUTABLE_HEALTH_LOCATION",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='            "location": f"data_history/funnel/{target}/{run_id}",',
+        after='            "location": f"data_history/funnel/{target}",',
+        expected_failure_marker="test_health_location_is_run_scoped_and_immutable",
+        rationale="The staged health must bind the exact immutable run bundle, not a mutable date alias.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_REGISTRY",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_registry(payloads["security_registry_projected.json"])',
+        after="    pass",
+        expected_failure_marker="test_projected_registry_contract_is_called",
+        rationale="The projected registry must still satisfy its own contract.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_SCAN",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_all_market_scan(payloads[scan_key], registry)',
+        after="    pass",
+        expected_failure_marker="test_scan_contract_is_called",
+        rationale="A scan carrying a composite score must be refused, not merely hashed.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_CANDIDATES",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_candidate_review(\n        payloads["candidate_review.json"], registry, payloads[scan_key]\n    )',
+        after="    pass",
+        expected_failure_marker="test_candidate_contract_is_called",
+        rationale="Candidate review must stay bound to the same U0/U1 as_of.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_CONTRACT_QUEUE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    validate_deep_research_queue(payloads["deep_research_queue.json"])',
+        after="    pass",
+        expected_failure_marker="test_deep_queue_contract_is_called",
+        rationale="The U4 authority boundary must be re-checked, not assumed.",
+    ),
+    # ── 终审复核第四轮:无交易权限 / 降级明细 / symlink;外层发布事务复核 ──
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_PUBLISHED_RETENTION_PROTECT",
+        component="Nightly funnel wiring runner",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="    return as_of",
+        after="    return None",
+        expected_failure_marker="test_retention_protects_the_date_referenced_by_live_health",
+        rationale="Retention must derive the live pointer it protects rather than accepting an arbitrary path.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_HEALTH_NO_TRADE",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before="    offending = fp.FORBIDDEN_ACTION_KEYS.intersection(fp._walk_keys(data))",
+        after="    offending = set()",
+        expected_failure_marker="test_health_cannot_carry_a_trade_action",
+        rationale="An observation artifact carrying trade_action or blocking authority crosses the platform's red line.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_DEGRADED",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before='    if data.get("degraded_channels") != measured_degraded:',
+        after="    if False:",
+        expected_failure_marker="test_degraded_channels_that_disagree_are_rejected",
+        rationale="The degradation breakdown is the only actionable part of a perpetual PARTIAL.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_NIGHTLY_BUNDLE_SYMLINK",
+        component="Nightly funnel wiring artifact contract",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_nightly_offline.py",
+        before=(
+            "    if (os.path.islink(funnel_root) or os.path.islink(date_dir) or\n"
+            "            os.path.islink(bundle_dir) or\n"
+            "            os.path.realpath(bundle_dir) != os.path.join(\n"
+            "                os.path.realpath(funnel_root), as_of, run_id\n"
+            "            )\n"
+            "    ):"
+        ),
+        after="    if False:",
+        expected_failure_marker="test_a_symlinked_bundle_pointing_outside_is_rejected",
+        rationale="os.path.isdir follows symlinks; a link out of the observation area borrows someone else's bundle.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_ENTRYPOINT",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before=(
+            '    if payload.get("ProgramArguments") != expected_args:\n'
+            '        raise AcceptanceError("launchd ProgramArguments do not bind the expected wrapper and runner")'
+        ),
+        after="    if False:\n        raise AcceptanceError(\"launchd ProgramArguments do not bind the expected wrapper and runner\")",
+        expected_failure_marker="test_plist_must_use_wrapper_and_exact_runner",
+        rationale="A successful engine run is not launchd acceptance when the installed job bypasses the wrapper or points elsewhere.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_LAUNCHD_ADVANCED",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="    if runs <= inputs.runs_before:",
+        after="    if False:",
+        expected_failure_marker="test_launchd_counter_must_advance_and_exit_zero",
+        rationale="Filesystem output alone cannot prove the scheduled job was invoked; the launchd run counter must advance.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_LAUNCHD_EXIT",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="    if last_exit != 0:",
+        after="    if False:",
+        expected_failure_marker="test_launchd_nonzero_exit_is_rejected_after_counter_advanced",
+        rationale="An advanced launchd counter with a nonzero terminal status is not a successful scheduled run.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_PERSISTENT_BUNDLE",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="    run_nightly._validate_funnel_health(health, str(health_path))",
+        after="    pass",
+        expected_failure_marker="test_funnel_health_must_survive_the_production_bundle_verifier",
+        rationale="The health summary cannot attest to its own immutable bundle; the production verifier must inspect the persisted bytes.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_EXACT_LOG_SEGMENT",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before='    if not re.search(r"(?m)^research_funnel: OK\\s*$", tail):',
+        after="    if False:",
+        expected_failure_marker="test_old_funnel_ok_before_exact_run_marker_cannot_pass",
+        rationale="An OK line from an older append-only log segment must not certify the current scheduled run.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_LOG_RUN_BOUNDARY",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before='    if next_run:\n        tail = tail[:len(marker) + next_run.start()]',
+        after='    if False:\n        tail = tail[:len(marker) + next_run.start()]',
+        expected_failure_marker="test_later_run_cannot_supply_evidence_for_the_expected_run",
+        rationale="A later launchd run cannot supply funnel or report evidence for the expected run marker.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_NO_ALARM",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/nightly_acceptance.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before="    if inputs.alarm_path.exists():",
+        after="    if False:",
+        expected_failure_marker="test_alarm_flag_is_never_accepted_as_a_clean_run",
+        rationale="The incomplete flag is an explicit terminal contradiction and cannot coexist with a PASS receipt.",
+    ),
+    MutationCase(
+        mutation_id="NIGHTLY_ACCEPTANCE_RUN_CONTEXT_LOG",
+        component="Nightly production acceptance",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_nightly_acceptance_offline.py",
+        before=(
+            '    print(\n'
+            '        f"[run] run_id={res.get(\'run_id\')} "\n'
+            '        f"target_trade_date={res.get(\'target_trade_date\')}"\n'
+            '    )'
+        ),
+        after='    print("[run] context unavailable")',
+        expected_failure_marker="test_terminal_report_emits_run_marker_before_step_lines",
+        rationale="A reusable launchd log needs an exact run boundary before any step status can be accepted.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_NIGHTLY_ACCEPTANCE_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_nightly_acceptance_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_nightly_acceptance_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker=(
+            "test_validate_manifest_enforces_nightly_acceptance_marker_coverage"
+        ),
+        rationale="The gate must not silently stop enforcing acceptance-verifier marker coverage.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_funnel_nightly_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_funnel_nightly_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker=(
+            "test_validate_manifest_enforces_funnel_nightly_marker_coverage"
+        ),
+        rationale="The manifest must not silently stop enforcing nightly wiring marker coverage.",
+    ),
 )
 
 
@@ -704,6 +1982,117 @@ MUTATIONS: tuple[MutationCase, ...] = (
 class CommandResult:
     returncode: int
     output: str
+    receipt: "TestReceipt | None" = None
+
+
+@dataclass(frozen=True)
+class LocalTestTarget:
+    name: str
+    kind: str
+    class_name: str | None = None
+
+
+@dataclass(frozen=True)
+class TestReceipt:
+    schema: str
+    target: str
+    kind: str
+    class_name: str | None
+    tests_run: int
+    failures: int
+    errors: int
+    skipped: int
+    expected_failures: int
+    unexpected_successes: int
+    diagnostics: dict[str, list[str]]
+
+
+def _local_test_target(test_script: Path, name: str) -> LocalTestTarget:
+    tree = ast.parse(test_script.read_text(encoding="utf-8"), filename=str(test_script))
+    candidates: list[LocalTestTarget] = []
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            candidates.append(LocalTestTarget(name=name, kind="function"))
+        elif isinstance(node, ast.AsyncFunctionDef) and node.name == name:
+            raise MutationGateError(f"async test targets are unsupported: {name}")
+        elif isinstance(node, ast.ClassDef):
+            for member in node.body:
+                if isinstance(member, ast.FunctionDef) and member.name == name:
+                    candidates.append(
+                        LocalTestTarget(name=name, kind="method", class_name=node.name)
+                    )
+                elif isinstance(member, ast.AsyncFunctionDef) and member.name == name:
+                    raise MutationGateError(f"async test targets are unsupported: {node.name}.{name}")
+    if not candidates:
+        raise MutationGateError(
+            f"exactly one local test target required: {name}; found 0"
+        )
+    if len(candidates) > 1:
+        raise MutationGateError(
+            f"exactly one local test target required: {name}; found {len(candidates)}"
+        )
+    return candidates[0]
+
+
+def _parse_receipt(path: Path) -> TestReceipt:
+    if not path.is_file():
+        raise MutationGateError("test subprocess did not produce a structured receipt")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise MutationGateError("test subprocess produced an invalid receipt") from exc
+    required = {
+        "schema",
+        "target",
+        "kind",
+        "class_name",
+        "tests_run",
+        "failures",
+        "errors",
+        "skipped",
+        "expected_failures",
+        "unexpected_successes",
+        "diagnostics",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise MutationGateError("test receipt shape is invalid")
+    if payload["schema"] != "ar-governance-test-receipt.v1":
+        raise MutationGateError("test receipt schema is invalid")
+    if payload["kind"] not in {"function", "method"}:
+        raise MutationGateError("test receipt target kind is invalid")
+    if not isinstance(payload["target"], str) or not payload["target"]:
+        raise MutationGateError("test receipt target is invalid")
+    if payload["class_name"] is not None and not isinstance(payload["class_name"], str):
+        raise MutationGateError("test receipt class name is invalid")
+    for field in (
+        "tests_run",
+        "failures",
+        "errors",
+        "skipped",
+        "expected_failures",
+        "unexpected_successes",
+    ):
+        value = payload[field]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise MutationGateError(f"test receipt count is invalid: {field}")
+    diagnostics = payload["diagnostics"]
+    if not isinstance(diagnostics, dict) or set(diagnostics) != {
+        "failures",
+        "errors",
+        "skipped",
+        "expected_failures",
+        "unexpected_successes",
+    }:
+        raise MutationGateError("test receipt diagnostics are invalid")
+    if any(
+        not isinstance(values, list) or not all(isinstance(item, str) for item in values)
+        for values in diagnostics.values()
+    ):
+        raise MutationGateError("test receipt diagnostics must contain string lists")
+    for field in diagnostics:
+        if len(diagnostics[field]) != payload[field]:
+            raise MutationGateError(f"test receipt diagnostic count mismatch: {field}")
+    return TestReceipt(**payload)
 
 
 def replace_exact(text: str, before: str, after: str, mutation_id: str) -> str:
@@ -737,18 +2126,12 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
         if not source.is_file() or not test_script.is_file():
             raise MutationGateError(f"{case.mutation_id}: source or test script is missing")
         replace_exact(source.read_text(encoding="utf-8"), case.before, case.after, case.mutation_id)
-        if case.test_function is not None:
-            functions = {
-                node.name
-                for node in ast.parse(test_script.read_text(encoding="utf-8")).body
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-            }
-            if case.test_function not in functions:
-                raise MutationGateError(
-                    f"{case.mutation_id}: test function is missing: {case.test_function}"
-                )
+        _local_test_target(test_script, _target_test(case))
     validate_k1_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
+    validate_funnel_marker_coverage(root, cases)
+    validate_funnel_nightly_marker_coverage(root, cases)
+    validate_nightly_acceptance_marker_coverage(root, cases)
 
 
 def validate_k1_marker_coverage(
@@ -829,6 +2212,137 @@ def validate_r043_marker_coverage(
         )
 
 
+def validate_funnel_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = FUNNEL_GOVERNANCE_PATHS,
+) -> None:
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"funnel governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate funnel governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    declared = {
+        case.mutation_id
+        for case in cases
+        if case.component.startswith("Research funnel")
+    }
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "funnel governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_funnel_nightly_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = FUNNEL_NIGHTLY_GOVERNANCE_PATHS,
+    prefix: str = FUNNEL_NIGHTLY_MUTATION_PREFIX,
+) -> None:
+    """夜链接入的治理规则必须逐条带 marker,双向配对。
+
+    与上面那条的差别只有一个:按 mutation_id 前缀筛,不按 component 前缀。
+    原因是 run_nightly.py 同时承载 Macro 的 marker —— 按文件精确配对会把不相干的
+    治理族卷进来。前缀配对让两条规则互不干扰,同时谁都逃不掉。
+    """
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(
+                f"funnel nightly governance marker source is missing: {relative}"
+            )
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate funnel nightly governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "funnel nightly governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_nightly_acceptance_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS,
+    prefix: str = NIGHTLY_ACCEPTANCE_MUTATION_PREFIX,
+) -> None:
+    """The acceptance verifier's fail-closed checks must be mutation-pinned."""
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(
+                f"nightly acceptance governance marker source is missing: {relative}"
+            )
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate nightly acceptance governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    missing_mutations = sorted(set(marked) - declared)
+    missing_markers = sorted(declared - set(marked))
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "nightly acceptance governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
 def _copy_ignore(_directory: str, names: list[str]) -> set[str]:
     ignored = {".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", ".mypy_cache"}
     return {name for name in names if name in ignored or name.endswith((".pyc", ".pyo"))}
@@ -876,22 +2390,27 @@ def run_test_script(
     sandbox: Path,
     guard: Path,
     script: str,
-    test_function: str | None = None,
+    test_function: str,
 ) -> CommandResult:
-    command = [sys.executable, "-B", script]
-    if test_function is not None:
-        command = [
-            sys.executable,
-            "-B",
-            "-c",
-            (
-                "import runpy,sys; "
-                "scope=runpy.run_path(sys.argv[1], run_name='mutation_gate_target'); "
-                "scope[sys.argv[2]]()"
-            ),
-            script,
-            test_function,
-        ]
+    test_script = _resolved_under(sandbox, script)
+    target = _local_test_target(test_script, test_function)
+    receipt_id = hashlib.sha256(
+        f"{script}\0{test_function}".encode("utf-8")
+    ).hexdigest()
+    receipt_path = guard / "receipts" / f"{os.getpid()}-{receipt_id}.json"
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    receipt_path.unlink(missing_ok=True)
+    command = [
+        sys.executable,
+        "-B",
+        "-c",
+        SINGLE_TEST_RUNNER,
+        script,
+        target.name,
+        target.kind,
+        target.class_name or "",
+        str(receipt_path),
+    ]
     try:
         completed = subprocess.run(
             command,
@@ -904,32 +2423,64 @@ def run_test_script(
         )
     except subprocess.TimeoutExpired as exc:
         raise MutationGateError(f"test timed out: {script}") from exc
+    receipt = _parse_receipt(receipt_path) if receipt_path.exists() else None
+    if receipt is not None and (
+        receipt.target != target.name
+        or receipt.kind != target.kind
+        or receipt.class_name != target.class_name
+    ):
+        raise MutationGateError("test receipt does not match the resolved local target")
     return CommandResult(
         returncode=completed.returncode,
         output=(completed.stdout or "") + (completed.stderr or ""),
+        receipt=receipt,
     )
 
 
 def classify_mutation(case: MutationCase, result: CommandResult) -> None:
-    if result.returncode == 0:
-        raise MutationGateError(f"{case.mutation_id}: SURVIVED; tests stayed green")
-    if any(marker in result.output for marker in INFRA_FAILURE_MARKERS):
+    receipt = result.receipt
+    if receipt is None:
+        raise MutationGateError(f"{case.mutation_id}: missing structured test receipt")
+    if receipt.target != _target_test(case):
+        raise MutationGateError(f"{case.mutation_id}: test receipt target mismatch")
+    if receipt.tests_run != 1:
+        raise MutationGateError(f"{case.mutation_id}: expected exactly one test execution")
+    if (
+        receipt.errors
+        or receipt.skipped
+        or receipt.expected_failures
+        or receipt.unexpected_successes
+    ):
         raise MutationGateError(
-            f"{case.mutation_id}: invalid kill caused by infrastructure failure"
+            f"{case.mutation_id}: invalid kill; only assertion failures count"
         )
-    if not any(marker in result.output for marker in TEST_FAILURE_MARKERS):
-        raise MutationGateError(
-            f"{case.mutation_id}: nonzero exit lacked a behavioral test failure marker"
-        )
-    if case.expected_failure_marker not in result.output:
-        raise MutationGateError(
-            f"{case.mutation_id}: wrong test failed; expected "
-            f"{case.expected_failure_marker}"
-        )
+    if receipt.failures < 1 or result.returncode != 1:
+        raise MutationGateError(f"{case.mutation_id}: SURVIVED; declared test did not fail")
+
+
+def validate_baseline_result(script: str, target: str, result: CommandResult) -> None:
+    receipt = result.receipt
+    if receipt is None:
+        raise MutationGateError(f"baseline missing structured receipt: {script}::{target}")
+    if receipt.target != target or receipt.tests_run != 1:
+        raise MutationGateError(f"baseline target receipt mismatch: {script}::{target}")
+    if (
+        result.returncode != 0
+        or receipt.failures
+        or receipt.errors
+        or receipt.skipped
+        or receipt.expected_failures
+        or receipt.unexpected_successes
+    ):
+        raise MutationGateError(f"baseline test was not one clean pass: {script}::{target}")
 
 
 def _tail(output: str, lines: int = 30) -> str:
     return "\n".join(output.splitlines()[-lines:])
+
+
+def _target_test(case: MutationCase) -> str:
+    return case.test_function or case.expected_failure_marker
 
 
 def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) -> None:
@@ -941,17 +2492,17 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
         shutil.copytree(root, sandbox, ignore=_copy_ignore)
         _write_network_guard(guard)
 
-        targets = tuple(
-            dict.fromkeys((case.test_script, case.test_function) for case in cases)
-        )
+        targets = tuple(dict.fromkeys((case.test_script, _target_test(case)) for case in cases))
         for script, test_function in targets:
             result = run_test_script(sandbox, guard, script, test_function)
-            if result.returncode != 0:
+            try:
+                validate_baseline_result(script, test_function, result)
+            except MutationGateError as exc:
                 raise MutationGateError(
-                    f"baseline failed before mutation: {script}"
-                    f"::{test_function or 'all'}\n{_tail(result.output)}"
-                )
-            print(f"BASELINE PASS  {script}::{test_function or 'all'}")
+                    f"baseline failed before mutation: {script}::{test_function}: {exc}\n"
+                    f"{_tail(result.output)}"
+                ) from exc
+            print(f"BASELINE PASS  {script}::{test_function}")
 
         for case in cases:
             target = _resolved_under(sandbox, case.source_path)
@@ -964,7 +2515,7 @@ def run_gate(root: Path = REPO_ROOT, cases: Sequence[MutationCase] = MUTATIONS) 
                     sandbox,
                     guard,
                     case.test_script,
-                    case.test_function,
+                    _target_test(case),
                 )
                 classify_mutation(case, result)
             except MutationGateError as exc:

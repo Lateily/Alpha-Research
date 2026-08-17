@@ -115,6 +115,23 @@ jobs:
         run: python3 experiments/research_funnel/feature_store.py --selftest
       - name: Full-market E1 event layer contract selftest
         run: python3 experiments/research_funnel/e1_event_layer.py --selftest
+      # R-033/R-034/R-035:六通道独立并集、U0 状态投影、同池随机控制、
+      # 以及仅由 Junyan 显式选择生成的 U4 深研队列。
+      - name: Full-market research funnel closure regression (offline)
+        run: |
+          python3 experiments/research_funnel/funnel_pipeline.py --selftest
+          python3 tests/test_research_funnel_closure.py
+      # R-035 只读不可变漏斗 bundle、同日电池与本地特征仓。U1/U2 随机对照
+      # 和 U3 电池分离度必须分开检验,收益不得写回候选池,claim 永久关闭。
+      - name: Research funnel R-035 aligned-return evaluation (offline)
+        run: python3 tests/test_research_funnel_r035.py
+      # ── 漏斗夜链接入(观察期隔离):守的是接入方式,不是研究契约本身 ──
+      - name: Research funnel nightly wiring regression (offline)
+        run: python3 tests/test_funnel_nightly_offline.py
+      # launchd 首轮验收不能靠旧日志里残留的 OK 行。验收器绑定安装入口、
+      # launchctl 计数/退出码、精确 run 日志段、持久 bundle 与报警旗,全程只读。
+      - name: Scheduled nightly production acceptance regression (offline)
+        run: python3 tests/test_nightly_acceptance_offline.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest
@@ -132,6 +149,9 @@ jobs:
       # ── Macro OS M1-B:行业敏感度 + 组合暴露 + 只读面板 ──
       - name: Macro OS M1-B industry and portfolio consumers (offline)
         run: python3 tests/test_macro_m1b_offline.py
+      # ── Macro OS M1-C:夜链接线 + 同轮输入 + 原子发布清单 + 校准权限 ──
+      - name: Macro OS M1-C production wiring (offline)
+        run: python3 tests/test_macro_m1c_offline.py
       # ── Macro OS M0-B3:官方 URL 发现 + 自适应调度 + 预期登记 WAL ──
       - name: Macro OS M0-B3 discovery and scheduler regression (offline)
         run: python3 tests/test_macro_m0b3_offline.py

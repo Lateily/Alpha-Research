@@ -58,6 +58,8 @@ from experiments.macro_os import m0b2 as macro_m0b2  # noqa: E402,F401
 from experiments.macro_os import storage as macro_storage  # noqa: E402,F401
 from experiments.macro_os import m0b3 as macro_m0b3  # noqa: E402,F401
 from experiments.macro_os import m1a as macro_m1a  # noqa: E402,F401
+from experiments.macro_os import m1b as macro_m1b  # noqa: E402,F401
+from experiments.macro_os import m1c as macro_m1c  # noqa: E402,F401
 from experiments.macro_os import expectation_registry as macro_expectations  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
@@ -102,6 +104,17 @@ macro_m1b_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(macro_m1b_tests.MacroM1BTests)
 )
 assert macro_m1b_result.wasSuccessful(), "Macro M1-B suite failed under socket guard"
+import test_macro_m1c_offline as macro_m1c_tests  # noqa: E402
+macro_m1c_suite = unittest.TestSuite((
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        macro_m1c_tests.MacroM1CRuntimeTests
+    ),
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        macro_m1c_tests.MacroM1CNightlyWiringTests
+    ),
+))
+macro_m1c_result = unittest.TextTestRunner(verbosity=0).run(macro_m1c_suite)
+assert macro_m1c_result.wasSuccessful(), "Macro M1-C suite failed under socket guard"
 import test_publication_migration_offline as publication_migration_tests  # noqa: E402
 publication_migration_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
