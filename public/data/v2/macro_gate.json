@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-14T09:39:01Z",
+  "generated_at": "2026-08-17T02:26:31Z",
   "mode": "review_context_only",
   "_contract": "v1 第一版:不预测方向、不改仓位 — 仅作复盘/研究的宏观上下文原料。任何用本文件自动调仓的行为都超出契约。",
   "_status": "PARTIAL",
@@ -14,7 +14,7 @@
       "previous": 5.0,
       "as_of": "2026Q1",
       "previous_as_of": "2025Q4",
-      "freshness_days": 166
+      "freshness_days": 169
     },
     {
       "endpoint": "cn_cpi",
@@ -26,7 +26,7 @@
       "previous": 1.0,
       "as_of": "202607",
       "previous_as_of": "202606",
-      "freshness_days": 44
+      "freshness_days": 47
     },
     {
       "endpoint": "cn_ppi",
@@ -38,7 +38,7 @@
       "previous": 4.1,
       "as_of": "202607",
       "previous_as_of": "202606",
-      "freshness_days": 44
+      "freshness_days": 47
     },
     {
       "endpoint": "cn_pmi",
@@ -50,7 +50,7 @@
       "previous": 50.3,
       "as_of": "202607",
       "previous_as_of": "202606",
-      "freshness_days": 44,
+      "freshness_days": 47,
       "detail": {
         "制造业PMI": 49.2,
         "非制造业PMI": 49.0,
@@ -67,7 +67,7 @@
       "previous": 1.3991,
       "as_of": "20260814",
       "previous_as_of": "20260813",
-      "freshness_days": 0,
+      "freshness_days": 3,
       "detail": {
         "on": 1.363,
         "1w": 1.39,
@@ -81,14 +81,14 @@
       "headline": "2s10s",
       "unit": "pct_points",
       "_status": "OK",
-      "actual": 0.48,
+      "actual": 0.51,
       "previous": 0.48,
-      "as_of": "20260813",
-      "previous_as_of": "20260812",
-      "freshness_days": 1,
+      "as_of": "20260814",
+      "previous_as_of": "20260813",
+      "freshness_days": 3,
       "detail": {
-        "y2": 4.15,
-        "y10": 4.63
+        "y2": 4.17,
+        "y10": 4.68
       }
     }
   ],
