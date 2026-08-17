@@ -117,6 +117,30 @@ button {
   color: var(--color-amber);
 }
 
+.bridge-nav-link {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.bridge-nav-link:hover {
+  border-color: var(--color-amber);
+  color: var(--color-text);
+}
+
+.bridge-nav-link span {
+  color: var(--color-amber);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
 .evidence-note {
   margin: auto 8px 0;
   color: var(--color-text-muted);

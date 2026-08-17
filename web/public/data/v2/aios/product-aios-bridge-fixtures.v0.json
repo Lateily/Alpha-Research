@@ -1,0 +1,245 @@
+{
+  "schema": "product-aios-bridge.fixtures.v0",
+  "fixtures": {
+    "COMPLETE": {
+      "schema": "product-aios-bridge.v0",
+      "generated_at": "2026-08-17T09:30:00+08:00",
+      "status": "COMPLETE",
+      "task": {
+        "schema": "ai-task.v1",
+        "task_id": "product-bridge-demo-001",
+        "objective": "把产品需求转换成可审核的 AIOS 任务结果展示。",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "state": "REVIEWING"
+      },
+      "run": {
+        "run_id": "shadow-run-001",
+        "executor": "Codex",
+        "state": "REVIEWING",
+        "mode": "SHADOW",
+        "network_policy": "OFFLINE",
+        "cost_cny": "0"
+      },
+      "freshness": {
+        "status": "CURRENT",
+        "data_cutoff": "2026-08-17T09:00:00+08:00",
+        "checked_at": "2026-08-17T09:30:00+08:00"
+      },
+      "artifact": {
+        "summary": "离线样例已生成结构化结果，等待 Junyan 的最终合并裁决。",
+        "evidence_refs": ["fixture:product-brief-v1", "fixture:ai-task-v1"],
+        "missing_evidence": [],
+        "warnings": ["Human Review 通过不等于最终合并授权。"],
+        "blocking_reasons": [],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "no_trade_flag": true
+      },
+      "human_review": {
+        "state": "APPROVED",
+        "reviewer": "Jason",
+        "decision_ref": "fixture:review-001",
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "memory_candidate": {
+        "state": "CANDIDATE",
+        "memory_id": "memory-candidate-001",
+        "promoted": false
+      },
+      "error_code": null
+    },
+    "PARTIAL": {
+      "schema": "product-aios-bridge.v0",
+      "generated_at": "2026-08-17T09:30:00+08:00",
+      "status": "PARTIAL",
+      "task": {
+        "schema": "ai-task.v1",
+        "task_id": "product-bridge-demo-001",
+        "objective": "把产品需求转换成可审核的 AIOS 任务结果展示。",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "state": "VERIFYING"
+      },
+      "run": {
+        "run_id": "shadow-run-002",
+        "executor": "Codex",
+        "state": "VERIFYING",
+        "mode": "SHADOW",
+        "network_policy": "OFFLINE",
+        "cost_cny": "0"
+      },
+      "freshness": {
+        "status": "CURRENT",
+        "data_cutoff": "2026-08-17T09:00:00+08:00",
+        "checked_at": "2026-08-17T09:30:00+08:00"
+      },
+      "artifact": {
+        "summary": "任务已产出部分证据，但缺少独立 reviewer 的验证记录。",
+        "evidence_refs": ["fixture:product-brief-v1"],
+        "missing_evidence": ["独立 reviewer 的 exact-head 验证记录"],
+        "warnings": ["Human Review 通过不等于最终合并授权。"],
+        "blocking_reasons": [],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "no_trade_flag": true
+      },
+      "human_review": {
+        "state": "PENDING",
+        "reviewer": "Jason",
+        "decision_ref": null,
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "memory_candidate": {
+        "state": "NONE",
+        "memory_id": null,
+        "promoted": false
+      },
+      "error_code": null
+    },
+    "STALE": {
+      "schema": "product-aios-bridge.v0",
+      "generated_at": "2026-08-17T09:30:00+08:00",
+      "status": "STALE",
+      "task": {
+        "schema": "ai-task.v1",
+        "task_id": "product-bridge-demo-001",
+        "objective": "把产品需求转换成可审核的 AIOS 任务结果展示。",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "state": "RUNNING"
+      },
+      "run": {
+        "run_id": "shadow-run-003",
+        "executor": "Codex",
+        "state": "RUNNING",
+        "mode": "SHADOW",
+        "network_policy": "OFFLINE",
+        "cost_cny": "0"
+      },
+      "freshness": {
+        "status": "STALE",
+        "data_cutoff": "2026-08-14T09:00:00+08:00",
+        "checked_at": "2026-08-17T09:30:00+08:00"
+      },
+      "artifact": {
+        "summary": "任务结果存在，但数据截止时间已经过期，不能继续作为当前证据。",
+        "evidence_refs": ["fixture:product-brief-v1", "fixture:ai-task-v1"],
+        "missing_evidence": [],
+        "warnings": ["数据已过期；刷新前不得升级状态。"],
+        "blocking_reasons": [],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "no_trade_flag": true
+      },
+      "human_review": {
+        "state": "NOT_REQUESTED",
+        "reviewer": null,
+        "decision_ref": null,
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "memory_candidate": {
+        "state": "NONE",
+        "memory_id": null,
+        "promoted": false
+      },
+      "error_code": null
+    },
+    "BLOCKED": {
+      "schema": "product-aios-bridge.v0",
+      "generated_at": "2026-08-17T09:30:00+08:00",
+      "status": "BLOCKED",
+      "task": {
+        "schema": "ai-task.v1",
+        "task_id": "product-bridge-demo-001",
+        "objective": "把产品需求转换成可审核的 AIOS 任务结果展示。",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "state": "SPEC_BLOCKED"
+      },
+      "run": {
+        "run_id": "shadow-run-004",
+        "executor": "Codex",
+        "state": "SPEC_BLOCKED",
+        "mode": "SHADOW",
+        "network_policy": "OFFLINE",
+        "cost_cny": "0"
+      },
+      "freshness": {
+        "status": "UNKNOWN",
+        "data_cutoff": "2026-08-17T09:00:00+08:00",
+        "checked_at": "2026-08-17T09:30:00+08:00"
+      },
+      "artifact": {
+        "summary": "任务合同缺少 acceptance tests，系统拒绝进入执行阶段。",
+        "evidence_refs": [],
+        "missing_evidence": [],
+        "warnings": ["Human Review 通过不等于最终合并授权。"],
+        "blocking_reasons": ["ai-task.v1 缺少 acceptance_tests"],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "no_trade_flag": true
+      },
+      "human_review": {
+        "state": "NOT_REQUESTED",
+        "reviewer": null,
+        "decision_ref": null,
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "memory_candidate": {
+        "state": "NONE",
+        "memory_id": null,
+        "promoted": false
+      },
+      "error_code": null
+    },
+    "ERROR": {
+      "schema": "product-aios-bridge.v0",
+      "generated_at": "2026-08-17T09:30:00+08:00",
+      "status": "ERROR",
+      "task": {
+        "schema": "ai-task.v1",
+        "task_id": "product-bridge-demo-001",
+        "objective": "把产品需求转换成可审核的 AIOS 任务结果展示。",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "state": "FAILED"
+      },
+      "run": {
+        "run_id": "shadow-run-005",
+        "executor": "Codex",
+        "state": "FAILED",
+        "mode": "SHADOW",
+        "network_policy": "OFFLINE",
+        "cost_cny": "0"
+      },
+      "freshness": {
+        "status": "CURRENT",
+        "data_cutoff": "2026-08-17T09:00:00+08:00",
+        "checked_at": "2026-08-17T09:30:00+08:00"
+      },
+      "artifact": {
+        "summary": "离线投影器无法解析结构化 artifact，结果未展示为成功。",
+        "evidence_refs": [],
+        "missing_evidence": [],
+        "warnings": ["错误被显式保留，未降级为 COMPLETE。"],
+        "blocking_reasons": [],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "no_trade_flag": true
+      },
+      "human_review": {
+        "state": "NOT_REQUESTED",
+        "reviewer": null,
+        "decision_ref": null,
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "memory_candidate": {
+        "state": "NONE",
+        "memory_id": null,
+        "promoted": false
+      },
+      "error_code": "ARTIFACT_SCHEMA_INVALID"
+    }
+  }
+}

@@ -1,5 +1,6 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import './App.css'
+import ProductAiosBridgePage from './pages/ProductAiosBridge/ProductAiosBridge.tsx'
 import { theme } from './theme'
 
 const pages = [
@@ -41,7 +42,18 @@ const cssVariables = {
 
 function App() {
   const [activePage, setActivePage] = useState<(typeof pages)[number]['id']>('model')
+  const [hashPath, setHashPath] = useState(window.location.hash || '#/')
   const currentPage = pages.find((page) => page.id === activePage) ?? pages[0]
+
+  useEffect(() => {
+    const onHashChange = () => setHashPath(window.location.hash || '#/')
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  if (hashPath === '#/aios/bridge') {
+    return <ProductAiosBridgePage />
+  }
 
   return (
     <div className="app-shell" style={cssVariables}>
@@ -68,6 +80,11 @@ function App() {
             </button>
           ))}
         </nav>
+
+        <a className="bridge-nav-link" href="#/aios/bridge">
+          <span>AI</span>
+          AIOS 任务审核
+        </a>
 
         <p className="evidence-note">只展示研究证据与信号 · human executes</p>
       </aside>
