@@ -1,0 +1,261 @@
+{
+  "schema": "industry_closed_loop_input.v1",
+  "fixture_only": true,
+  "run_id": "fixture-livestock-cycle-001",
+  "as_of": "20260816",
+  "registered_trade_date": "20260810",
+  "selection": {
+    "selected_by": "Junyan",
+    "selected_at": "2026-08-10T16:10:00+08:00",
+    "authority": "HUMAN_ONLY_JUNYAN",
+    "approval_ref": "session:fixture-human-selection",
+    "auto_selection": false,
+    "source_bundle_as_of": "20260810",
+    "source_bundle_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "tickers": [
+      "FIX001.TEST"
+    ]
+  },
+  "factors": [
+    {
+      "factor_id": "HOG_SPOT_PRICE",
+      "status": "AVAILABLE",
+      "as_of": "20260814",
+      "value": 18.2,
+      "unit": "fixture_cny_per_kg",
+      "evidence_grade": "E1",
+      "source_ref": "fixture:E1/hog-spot"
+    },
+    {
+      "factor_id": "BREEDING_SOW_INVENTORY",
+      "status": "AVAILABLE",
+      "as_of": "20260731",
+      "value": 101.0,
+      "unit": "fixture_index",
+      "evidence_grade": "E1",
+      "source_ref": "fixture:E1/sow-inventory"
+    },
+    {
+      "factor_id": "FEED_COST_BASKET",
+      "status": "AVAILABLE",
+      "as_of": "20260814",
+      "value": 97.0,
+      "unit": "fixture_index",
+      "evidence_grade": "E3",
+      "source_ref": "fixture:E3/feed-basket"
+    },
+    {
+      "factor_id": "COMPANY_SALES_VOLUME",
+      "status": "AVAILABLE",
+      "as_of": "20260731",
+      "value": 12.0,
+      "unit": "fixture_volume",
+      "evidence_grade": "E1",
+      "source_ref": "fixture:E1/monthly-sales-volume"
+    },
+    {
+      "factor_id": "COMPANY_SALES_PRICE",
+      "status": "AVAILABLE",
+      "as_of": "20260731",
+      "value": 18.0,
+      "unit": "fixture_price",
+      "evidence_grade": "E1",
+      "source_ref": "fixture:E1/monthly-sales-price"
+    },
+    {
+      "factor_id": "UNIT_COST_OR_PROXY",
+      "status": "AVAILABLE",
+      "as_of": "20260630",
+      "value": 14.0,
+      "unit": "fixture_cost",
+      "evidence_grade": "E1",
+      "source_ref": "fixture:E1/unit-cost"
+    },
+    {
+      "factor_id": "BALANCE_SHEET_BUFFER",
+      "status": "AVAILABLE",
+      "as_of": "20260630",
+      "value": 2.0,
+      "unit": "fixture_liquidity_ratio",
+      "evidence_grade": "E1",
+      "source_ref": "fixture:E1/balance-sheet"
+    },
+    {
+      "factor_id": "NORMALIZED_VALUATION",
+      "status": "AVAILABLE",
+      "as_of": "20260814",
+      "value": 11.0,
+      "unit": "fixture_normalized_pe",
+      "evidence_grade": "E4",
+      "source_ref": "fixture:E4/normalized-valuation"
+    }
+  ],
+  "companies": [
+    {
+      "ticker": "FIX001.TEST",
+      "name": "Synthetic Hog Operator",
+      "cluster_id": "CLUSTER-LIVESTOCK-CYCLE-001",
+      "cluster_object_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "prospective": true,
+      "factpack": [
+        {
+          "claim": "Synthetic monthly sales volume is reported in the fixture.",
+          "as_of": "20260731",
+          "evidence_grade": "E1",
+          "source_ref": "fixture:E1/company-sales",
+          "load_bearing": true
+        },
+        {
+          "claim": "Synthetic unit cost is reported in the fixture.",
+          "as_of": "20260630",
+          "evidence_grade": "E1",
+          "source_ref": "fixture:E1/company-cost",
+          "load_bearing": true
+        },
+        {
+          "claim": "Synthetic balance-sheet buffer is reported in the fixture.",
+          "as_of": "20260630",
+          "evidence_grade": "E1",
+          "source_ref": "fixture:E1/company-balance-sheet",
+          "load_bearing": true
+        },
+        {
+          "claim": "Synthetic consensus narrative is non-load-bearing context.",
+          "as_of": "20260808",
+          "evidence_grade": "E2",
+          "source_ref": "fixture:E2/consensus",
+          "load_bearing": false
+        }
+      ],
+      "thesis": {
+        "thesis_id": "THESIS-FIX001-LT-001",
+        "catalyst": "Synthetic cost spread becomes visible in the next disclosure window.",
+        "mechanism_chain": [
+          "Synthetic feed cost falls while selling price holds.",
+          "Synthetic unit margin expands on reported volume.",
+          "Synthetic normalized earnings and valuation bridge are re-tested."
+        ],
+        "proves_right_if": [
+          "Synthetic unit cost remains below the preregistered threshold."
+        ],
+        "proves_wrong_if": [
+          "Synthetic unit cost exceeds the preregistered invalidation threshold."
+        ]
+      },
+      "holding_policy": {
+        "style": "LONG_TERM",
+        "horizon_days": 180,
+        "normalized_earnings_anchor": "fixture:mid-cycle margin",
+        "valuation_review_condition": "fixture:normalized valuation exits its preregistered band",
+        "fundamental_invalidation": "fixture:unit cost and balance-sheet wrong-if",
+        "review_cadence_days": 30
+      },
+      "decision_pack": {
+        "variant_view": {
+          "stance": "VARIANT",
+          "market_believes": "Synthetic margin improvement is temporary.",
+          "we_believe": "Synthetic cost evidence can persist through the review window.",
+          "measured_by": "Synthetic unit cost and sales-price spread.",
+          "edge_source": "fixture-only point-in-time evidence"
+        },
+        "clean_valuation": {
+          "caliber": "hog-cycle normalized earnings bridge",
+          "earnings_position": "mid-cycle fixture",
+          "normalized_bridge": 11.0
+        },
+        "catalyst_map": [
+          {
+            "window": "1m",
+            "event": "Synthetic monthly disclosure",
+            "verifies": "Synthetic volume, price, and unit cost"
+          }
+        ],
+        "risk_mitigation": [
+          {
+            "risk": "Synthetic cost rebound",
+            "wrong_if": "Synthetic unit cost breaches the preregistered fixture threshold"
+          }
+        ],
+        "execution_gate": {
+          "posture": "HOLD_OBSERVE",
+          "levels": {
+            "support": 90.0,
+            "review": 100.0,
+            "realization": 130.0
+          }
+        },
+        "portfolio_impact": {
+          "single_beta_overlap": true,
+          "correlation_note": "single-industry sleeve; diversification not claimed",
+          "paper_risk_budget": "fixture_unit_0.25"
+        },
+        "paper_plan": {
+          "entry_review": 100.0,
+          "stop_reference": 90.0,
+          "take_profit_reference": 130.0,
+          "invalidation": 89.0,
+          "no_trade_flag": true
+        },
+        "self_audit": [
+          "no capital instruction",
+          "no profitability claim",
+          "E1 load-bearing facts separated",
+          "single-industry concentration disclosed",
+          "fixture contributes zero to claim gate"
+        ]
+      },
+      "human_review": {
+        "status": "PASS",
+        "reviewer": "Junyan",
+        "reviewed_at": "2026-08-10T16:20:00+08:00",
+        "review_ref": "session:fixture-deep-review"
+      }
+    }
+  ],
+  "paper_portfolio": {
+    "mode": "PAPER_ONLY",
+    "capital_authority": false,
+    "approved_by": "Junyan",
+    "approved_at": "2026-08-10T16:25:00+08:00",
+    "approval_ref": "session:fixture-paper-sleeve",
+    "sleeve_risk_unit_cap": 1.0,
+    "single_name_risk_unit_cap": 0.5,
+    "allocations": [
+      {
+        "ticker": "FIX001.TEST",
+        "style": "LONG_TERM",
+        "paper_risk_units": 0.25
+      }
+    ]
+  },
+  "outcomes": [
+    {
+      "thesis_id": "THESIS-FIX001-LT-001",
+      "horizon": "T+1",
+      "status": "SETTLED",
+      "observed_as_of": "20260811",
+      "return": 0.01,
+      "source_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    {
+      "thesis_id": "THESIS-FIX001-LT-001",
+      "horizon": "T+5",
+      "status": "SETTLED",
+      "observed_as_of": "20260816",
+      "return": 0.04,
+      "source_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    }
+  ],
+  "reviews": [
+    {
+      "thesis_id": "THESIS-FIX001-LT-001",
+      "reviewed_by": "Junyan",
+      "reviewed_at": "2026-08-16T16:00:00+08:00",
+      "thesis_outcome": "MIXED",
+      "timing_outcome": "ALIGNED",
+      "root_cause": "Synthetic fixture does not establish an external causal result.",
+      "lesson": "Keep the factor dictionary and paper timing separate until real prospective evidence accumulates.",
+      "automatic_policy_change": false
+    }
+  ]
+}

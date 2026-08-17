@@ -131,6 +131,7 @@ R043_GOVERNANCE_PATHS = (
 FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/funnel_pipeline.py",
     "experiments/research_funnel/r035_evaluation.py",
+    "experiments/research_closed_loop/industry_pilot.py",
 )
 # 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
 # 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
@@ -1326,6 +1327,100 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_validate_manifest_enforces_funnel_marker_coverage",
         rationale="The mutation manifest must not silently stop enforcing funnel marker coverage.",
+    ),
+    # R-044 keeps the first single-industry cycle paper-only, point-in-time, and
+    # subordinate to Junyan's U4 and review authority.
+    MutationCase(
+        mutation_id="R044_FORBIDDEN_ACTION_FIELDS",
+        component="Research funnel R-044 closed loop",
+        source_path="experiments/research_closed_loop/industry_pilot.py",
+        test_script="tests/test_industry_closed_loop.py",
+        before="    _reject_forbidden_keys(payload)",
+        after="    pass  # mutation: action-field scan removed",
+        expected_failure_marker="test_nested_trading_authority_field_is_rejected",
+        rationale="A research packet cannot acquire an action field through a nested object.",
+    ),
+    MutationCase(
+        mutation_id="R044_AUTHORITY_FALSE_FIELDS",
+        component="Research funnel R-044 closed loop",
+        source_path="experiments/research_closed_loop/industry_pilot.py",
+        test_script="tests/test_industry_closed_loop.py",
+        before='            if key in AUTHORITY_FALSE_KEYS and child is not False and not declared_paper_capital:\n'
+        '                raise ClosedLoopError(f"authority field must remain false at {path}.{key}")',
+        after='            if False:\n'
+        '                raise ClosedLoopError(f"authority field must remain false at {path}.{key}")',
+        expected_failure_marker="test_nested_formal_blocking_authority_must_stay_false",
+        rationale="Nested configuration cannot grant formal blocking or another authority bit.",
+    ),
+    MutationCase(
+        mutation_id="R044_APPROVAL_EVIDENCE_STRENGTH",
+        component="Research funnel R-044 closed loop",
+        source_path="experiments/research_closed_loop/industry_pilot.py",
+        test_script="tests/test_industry_closed_loop.py",
+        before='    if selection.get("approval_evidence_strength") != APPROVAL_EVIDENCE_STRENGTH:\n'
+        '        raise ClosedLoopError("selection identity evidence strength is overstated")',
+        after='    if False:\n'
+        '        raise ClosedLoopError("selection identity evidence strength is overstated")',
+        expected_failure_marker="test_receipt_tampering_cannot_unlock_authority_or_claim",
+        rationale="A reference-only approval must not be relabeled as verified identity.",
+    ),
+    MutationCase(
+        mutation_id="R044_BEIJING_TIME_NORMALIZATION",
+        component="Research funnel R-044 closed loop",
+        source_path="experiments/research_closed_loop/industry_pilot.py",
+        test_script="tests/test_industry_closed_loop.py",
+        before="    return parsed.astimezone(OPERATIONAL_TIMEZONE)",
+        after="    return parsed  # mutation: compare the submitter's wall date",
+        expected_failure_marker="test_approval_dates_are_compared_in_beijing_time",
+        rationale="Approval chronology must use the Beijing operational date on every host.",
+    ),
+    MutationCase(
+        mutation_id="R044_CLAIM_LOCK",
+        component="Research funnel R-044 closed loop",
+        source_path="experiments/research_closed_loop/industry_pilot.py",
+        test_script="tests/test_industry_closed_loop.py",
+        before='    if claim_gate.get("claim_allowed") is not False:\n'
+        '        raise ClosedLoopError("claim_allowed must remain false during pilot")',
+        after='    if False:\n'
+        '        raise ClosedLoopError("claim_allowed must remain false during pilot")',
+        expected_failure_marker="test_receipt_tampering_cannot_unlock_authority_or_claim",
+        rationale="A reviewed fixture cycle still cannot unlock a performance claim.",
+    ),
+    MutationCase(
+        mutation_id="R044_U4_HUMAN_AUTHORITY",
+        component="Research funnel R-044 closed loop",
+        source_path="experiments/research_closed_loop/industry_pilot.py",
+        test_script="tests/test_industry_closed_loop.py",
+        before='    if selection.get("selected_by") != "Junyan":\n'
+        '        raise ClosedLoopError("selection.selected_by must be Junyan")',
+        after='    if False:\n'
+        '        raise ClosedLoopError("selection.selected_by must be Junyan")',
+        expected_failure_marker="test_u4_selection_cannot_be_automated_or_impersonated",
+        rationale="Only Junyan may choose the single U4 name used by the pilot.",
+    ),
+    MutationCase(
+        mutation_id="R044_POST_REGISTRATION_EVIDENCE",
+        component="Research funnel R-044 closed loop",
+        source_path="experiments/research_closed_loop/industry_pilot.py",
+        test_script="tests/test_industry_closed_loop.py",
+        before='            if fact_as_of > registered_date:\n'
+        '                raise ClosedLoopError(f"post-registration fact in factpack for {ticker}")',
+        after='            if False:\n'
+        '                raise ClosedLoopError(f"post-registration fact in factpack for {ticker}")',
+        expected_failure_marker="test_factpack_cannot_use_post_registration_evidence",
+        rationale="A deep-research factpack cannot be completed with evidence learned after registration.",
+    ),
+    MutationCase(
+        mutation_id="R044_PAPER_CAPITAL_AUTHORITY",
+        component="Research funnel R-044 closed loop",
+        source_path="experiments/research_closed_loop/industry_pilot.py",
+        test_script="tests/test_industry_closed_loop.py",
+        before='    if portfolio.get("capital_authority") is not False:\n'
+        '        raise ClosedLoopError("paper_portfolio.capital_authority must be false")',
+        after='    if False:\n'
+        '        raise ClosedLoopError("paper_portfolio.capital_authority must be false")',
+        expected_failure_marker="test_portfolio_is_paper_only_and_cannot_exceed_caps",
+        rationale="The paper sleeve must never become a real-capital portfolio through configuration.",
     ),
     # R-035 keeps discovery-vs-control and battery-separation scoring distinct.
     # These mutations pin the outcome-blind input, preregistered return basis,

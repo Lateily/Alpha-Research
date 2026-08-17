@@ -1,0 +1,93 @@
+{
+  "schema": "livestock_industry_pilot_spec.v1",
+  "industry_id": "CN_A_HOG_BREEDING",
+  "industry_name": "农林牧渔/生猪养殖",
+  "mode": "CALIBRATING",
+  "permissions": {
+    "auto_select_u4": false,
+    "trading_authority": false,
+    "order_authority": false,
+    "formal_blocking_authority": false,
+    "profitability_claim_allowed": false
+  },
+  "required_factor_ids": [
+    "HOG_SPOT_PRICE",
+    "BREEDING_SOW_INVENTORY",
+    "FEED_COST_BASKET",
+    "COMPANY_SALES_VOLUME",
+    "COMPANY_SALES_PRICE",
+    "UNIT_COST_OR_PROXY",
+    "BALANCE_SHEET_BUFFER",
+    "NORMALIZED_VALUATION"
+  ],
+  "factor_catalog": {
+    "HOG_SPOT_PRICE": {
+      "category": "PRICE",
+      "max_age_days": 7,
+      "allowed_grades": ["E1", "E2"]
+    },
+    "BREEDING_SOW_INVENTORY": {
+      "category": "SUPPLY",
+      "max_age_days": 45,
+      "allowed_grades": ["E1"]
+    },
+    "FEED_COST_BASKET": {
+      "category": "COST",
+      "max_age_days": 7,
+      "allowed_grades": ["E1", "E2", "E3"]
+    },
+    "COMPANY_SALES_VOLUME": {
+      "category": "OPERATIONS",
+      "max_age_days": 45,
+      "allowed_grades": ["E1"]
+    },
+    "COMPANY_SALES_PRICE": {
+      "category": "OPERATIONS",
+      "max_age_days": 45,
+      "allowed_grades": ["E1"]
+    },
+    "UNIT_COST_OR_PROXY": {
+      "category": "COST",
+      "max_age_days": 135,
+      "allowed_grades": ["E1", "E4"]
+    },
+    "BALANCE_SHEET_BUFFER": {
+      "category": "FINANCIAL_RISK",
+      "max_age_days": 135,
+      "allowed_grades": ["E1"]
+    },
+    "NORMALIZED_VALUATION": {
+      "category": "VALUATION",
+      "max_age_days": 7,
+      "allowed_grades": ["E1", "E3", "E4"]
+    }
+  },
+  "holding_styles": {
+    "SWING": {
+      "min_horizon_days": 1,
+      "max_horizon_days": 60,
+      "required_fields": [
+        "sector_confirmation",
+        "entry_condition",
+        "structural_invalidation",
+        "time_stop_days"
+      ]
+    },
+    "LONG_TERM": {
+      "min_horizon_days": 90,
+      "max_horizon_days": 730,
+      "required_fields": [
+        "normalized_earnings_anchor",
+        "valuation_review_condition",
+        "fundamental_invalidation",
+        "review_cadence_days"
+      ]
+    }
+  },
+  "primary_review_horizon": "T+5",
+  "claim_gate": {
+    "minimum_independent_clusters": 30,
+    "historical_or_fixture_contribution": 0,
+    "direction_separation_required": true
+  }
+}

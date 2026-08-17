@@ -80,6 +80,7 @@
 | R-018 | 新闻与信息面可信边界 | `IN_PROGRESS` | Reed+Claude | **PR #206 已合并**:major_news 消费器 + 实体闸门 + 不可信输入隔离;正式公告 `anns_d` 与部分实时新闻仍无权限 | **部分达成 2026-08-05**:已有 = 实体闸门(仅当实体确认才挂 ticker)· 来源健康 · 去重 · 外部正文按不可信数据只取标题/时间/来源 · major_news 消费器 · R-036 顶层已将 `anns_d` 明示为 DATA_BLOCKED 且拒绝用 E2 新闻冒充 E1。**残留 = ①E 级标签未落到新闻链**(E 级只在 `api/research.js`/`research-multi.js`)②仍未取得正式公告权限或建设经验证的 E1 替代源 |
 | R-019 | 行业 OS 持续填数 | `APPROVED` | Junyan+Sector Agents | 半导体、医药已有 v0,但锚点日期、缺失 E1、关系边和指标更新节奏没有统一 SLA | 每个 Sector OS 有指标字典、E1/E2 数据源、关系边、公司覆盖、催化剂、wrong-if、更新时间;过期自动提醒 |
 | R-020 | 宏观到行业和组合的暴露矩阵 | `VALIDATING` | Macro Agent+Portfolio Agent | **#252 + #256 已合并并经 2026-08-15 手动生产 canary**:`m1b.py` 只读 M1-A 哈希核验包与 `model_portfolio_state.v2.2`,同轮生成 31 个申万一级行业敏感度、组合暴露和 `macro_panel`,再由 M1-C 原子发布。未知主题仍显式 `DATA_BLOCKED`,组合权重仍是契约名义金额/NAV 代理 | 完成首次 launchd 自动轮并积累连续运行证据;补齐可验证的逐仓权重口径;校准期只改变标签、研究优先级和风险预算语境,不得生成交易动作或正式阻断 |
+| R-044 | 单行业研究闭环 Pilot(生猪养殖) | `DELIVERED_UNWIRED` | Codex+Research Agent | **本 PR 交付离线 `industry_closed_loop.v1`**:把 Junyan 单一 U4 选择、行业八因子、公司 E1 factpack、深研、SWING/LONG_TERM 分账、paper timing、行业 paper sleeve 单元、T+1/3/5/10 outcome 与复盘串成一条可拒绝的链。合成 fixture 可走到 `CYCLE_REVIEWED`,但 fixture/历史贡献恒为 0,claim 仍 `INSUFFICIENT_SAMPLE`;不接夜链、不写真实组合或订单 | 先完成 2026-08-17 launchd 自动轮验收;再从不可变 bundle 由 Junyan 选 1 个真实 U4 对象,走首轮 prospective cycle。R-035 控制配额 `10<30`、U3 电池覆盖和生产接线分别单开 PR;30 个前瞻独立簇且方向分列前不得声称赚钱、alpha 或胜率 |
 
 ## 5. P2:治理、契约与可持续运行
 
