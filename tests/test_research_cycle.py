@@ -43,7 +43,9 @@ def build_closure_bundle(root: Path) -> tuple[Path, list[str], dict, dict, dict]
         generated_at="2026-08-13T10:06:00+00:00",
     )
     output = root / "closure-result"
-    closure._write_replay_outputs(output, packet, receipt, queue, report)
+    closure._write_replay_outputs(
+        output, source_bundle, battery, packet, receipt, queue, report,
+    )
     return output, codes[:3], packet, receipt, queue
 
 

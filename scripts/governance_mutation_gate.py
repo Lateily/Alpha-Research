@@ -1260,6 +1260,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A self-consistent but rewritten packet must not replace the projection of frozen inputs.",
     ),
     MutationCase(
+        mutation_id="FUNNEL_CLOSURE_REPLAY_CHRONOLOGY",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if replay_at < reviewed_at:\n'
+        '        raise ClosureError("replay generated_at cannot predate its review receipt")',
+        after='    if False:\n'
+        '        raise ClosureError("replay generated_at cannot predate its review receipt")',
+        expected_failure_marker="test_replay_timestamp_cannot_predate_review_receipt",
+        rationale="A U4 replay cannot appear to exist before the human review text it consumes.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_CLOSURE_REPORT_HASH",
         component="Research funnel offline closure",
         source_path="experiments/research_funnel/closure_experiment.py",
@@ -1349,6 +1361,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '            raise ClosureError(f"result artifact hash mismatch: {name}")',
         expected_failure_marker="test_result_bundle_verifier_rejects_artifact_mutation",
         rationale="A result artifact cannot change bytes while retaining the frozen manifest digest.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_RESULT_DETERMINISTIC",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if packet != expected_packet or queue != expected_queue or report != expected_report:\n'
+        '        raise ClosureError("result bundle is not the deterministic projection of frozen evidence")',
+        after='    if False:\n'
+        '        raise ClosureError("result bundle is not the deterministic projection of frozen evidence")',
+        expected_failure_marker="test_result_bundle_verifier_rebuilds_outputs_from_frozen_evidence",
+        rationale="A self-consistently rehashed result must still reproduce from its frozen U1-U3 evidence.",
     ),
     MutationCase(
         mutation_id="RESEARCH_CYCLE_CASE_HASH",

@@ -335,6 +335,22 @@ class ResearchClosureExperimentTests(unittest.TestCase):
             with self.assertRaisesRegex(closure.ClosureError, "evidence chain is broken"):
                 closure.validate_closure_report(report, packet, receipt, queue)
 
+    def test_replay_timestamp_cannot_predate_review_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle, battery, codes = build_bundle(Path(tmp))
+            packet = closure.build_review_packet(
+                bundle_dir=bundle, battery=battery, generated_at=GENERATED_AT,
+            )
+            receipt = receipt_for(packet, codes[:3])
+            with self.assertRaisesRegex(closure.ClosureError, "cannot predate"):
+                closure.run_offline_replay(
+                    bundle_dir=bundle,
+                    battery=battery,
+                    packet=packet,
+                    receipt=receipt,
+                    generated_at="2026-08-13T09:00:00+00:00",
+                )
+
     def test_result_bundle_is_self_contained_and_refuses_overwrite(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -351,14 +367,13 @@ class ResearchClosureExperimentTests(unittest.TestCase):
                 generated_at="2026-08-13T10:06:00+00:00",
             )
             output = root / "result"
-            closure._write_replay_outputs(output, packet, receipt, queue, report)
+            closure._write_replay_outputs(
+                output, bundle, battery, packet, receipt, queue, report,
+            )
             manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(
                 set(manifest["artifacts"]),
-                {
-                    "review_packet.json", "review_receipt.json",
-                    "deep_research_queue.json", "closure_report.json",
-                },
+                closure.RESULT_ARTIFACTS,
             )
             for name, digest in manifest["artifacts"].items():
                 self.assertEqual(hashlib.sha256((output / name).read_bytes()).hexdigest(), digest)
@@ -369,7 +384,9 @@ class ResearchClosureExperimentTests(unittest.TestCase):
             self.assertEqual(verified["status"], "VERIFIED")
             self.assertEqual(verified["u5_status"], "DATA_BLOCKED")
             with self.assertRaisesRegex(closure.ClosureError, "already exists"):
-                closure._write_replay_outputs(output, packet, receipt, queue, report)
+                closure._write_replay_outputs(
+                    output, bundle, battery, packet, receipt, queue, report,
+                )
 
     def test_result_bundle_verifier_rejects_artifact_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -387,12 +404,50 @@ class ResearchClosureExperimentTests(unittest.TestCase):
                 generated_at="2026-08-13T10:06:00+00:00",
             )
             output = root / "result"
-            closure._write_replay_outputs(output, packet, receipt, queue, report)
+            closure._write_replay_outputs(
+                output, bundle, battery, packet, receipt, queue, report,
+            )
             report_path = output / "closure_report.json"
             report_path.write_text(
                 report_path.read_text(encoding="utf-8") + " ", encoding="utf-8",
             )
             with self.assertRaisesRegex(closure.ClosureError, "artifact hash mismatch"):
+                closure.verify_result_bundle(output)
+
+    def test_result_bundle_verifier_rebuilds_outputs_from_frozen_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundle, battery, codes = build_bundle(root)
+            packet = closure.build_review_packet(
+                bundle_dir=bundle, battery=battery, generated_at=GENERATED_AT,
+            )
+            receipt = receipt_for(packet, codes[:3])
+            queue, report = closure.run_offline_replay(
+                bundle_dir=bundle,
+                battery=battery,
+                packet=packet,
+                receipt=receipt,
+                generated_at="2026-08-13T10:06:00+00:00",
+            )
+            output = root / "result"
+            closure._write_replay_outputs(
+                output, bundle, battery, packet, receipt, queue, report,
+            )
+            report_path = output / "closure_report.json"
+            rewritten = json.loads(report_path.read_text(encoding="utf-8"))
+            rewritten["experiment_verdict"] = "SELF_CONSISTENT_REWRITE"
+            rewritten["report_hash"] = funnel._hash(
+                closure._without_hash(rewritten, "report_hash")
+            )
+            write_json(report_path, rewritten)
+            manifest_path = output / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["artifacts"][report_path.name] = hashlib.sha256(
+                report_path.read_bytes()
+            ).hexdigest()
+            manifest["bundle_hash"] = funnel._hash(manifest["artifacts"])
+            write_json(manifest_path, manifest)
+            with self.assertRaisesRegex(closure.ClosureError, "deterministic projection"):
                 closure.verify_result_bundle(output)
 
     def test_result_bundle_verifier_rejects_manifest_bundle_hash_mutation(self) -> None:
@@ -411,7 +466,9 @@ class ResearchClosureExperimentTests(unittest.TestCase):
                 generated_at="2026-08-13T10:06:00+00:00",
             )
             output = root / "result"
-            closure._write_replay_outputs(output, packet, receipt, queue, report)
+            closure._write_replay_outputs(
+                output, bundle, battery, packet, receipt, queue, report,
+            )
             manifest_path = output / "manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest["bundle_hash"] = "0" * 64
@@ -435,7 +492,9 @@ class ResearchClosureExperimentTests(unittest.TestCase):
                 generated_at="2026-08-13T10:06:00+00:00",
             )
             output = root / "result"
-            closure._write_replay_outputs(output, packet, receipt, queue, report)
+            closure._write_replay_outputs(
+                output, bundle, battery, packet, receipt, queue, report,
+            )
             manifest_path = output / "manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest["trade_action"] = "BUY"

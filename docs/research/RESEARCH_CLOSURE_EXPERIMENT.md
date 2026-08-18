@@ -35,8 +35,10 @@ The receipt is evidence of the supplied text, not cryptographic proof of human
 identity.
 
 `ar.research_closure_experiment.v1.0` records the full hash chain and the
-expected U5 block. The result bundle preserves the packet, receipt, U4 queue,
-report, and a byte-level manifest together. It structurally fixes
+expected U5 block. The result bundle preserves the frozen funnel bundle and
+battery beside the packet, receipt, U4 queue, report, and byte-level manifest.
+Verification rebuilds the packet, queue, and report from those frozen inputs;
+a self-consistently rehashed output rewrite is rejected. It structurally fixes
 `claim_allowed=false`, `no_trade_flag=true`, and `production_authority=false`.
 
 ## Commands
@@ -116,10 +118,11 @@ This offline slice is complete only when:
 
 1. The frozen random draw is reproducible and any draw mutation fails closed.
 2. A stale or differently hashed packet cannot reuse a receipt.
-3. U4 selections are a three-to-five-name subset of the same-day ready pool.
-4. The report can neither unlock a claim nor acquire trading authority.
-5. U5 remains visibly blocked instead of being silently skipped.
-6. The behavioral suite and governance mutations pass with sockets disabled.
+3. Replay time cannot predate the packet-bound human review receipt.
+4. U4 selections are a three-to-five-name subset of the same-day ready pool.
+5. The report can neither unlock a claim nor acquire trading authority.
+6. U5 remains visibly blocked instead of being silently skipped.
+7. The behavioral suite and governance mutations pass with sockets disabled.
 
 Production funnel observation was deployed separately under PR #269. The
 offline closure in this document is not wired to that production runtime.

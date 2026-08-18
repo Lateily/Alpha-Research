@@ -47,6 +47,12 @@ RESULT_ARTIFACTS = {
     "review_receipt.json",
     "deep_research_queue.json",
     "closure_report.json",
+    "frozen_battery.json",
+    "frozen_funnel_bundle/manifest.json",
+    "frozen_funnel_bundle/all_market_scan.json",
+    "frozen_funnel_bundle/candidate_review.json",
+    "frozen_funnel_bundle/deep_research_queue.json",
+    "frozen_funnel_bundle/security_registry_projected.json",
 }
 RESULT_MANIFEST_FIELDS = {
     "schema", "schema_version", "as_of", "mode", "artifacts", "bundle_hash",
@@ -96,6 +102,16 @@ def _without_hash(payload: Mapping[str, Any], field: str) -> dict[str, Any]:
 def _require_exact_keys(payload: Mapping[str, Any], expected: set[str], label: str) -> None:
     if set(payload) != expected:
         raise ClosureError(f"{label} fields are not exact")
+
+
+def _iso(value: Any, label: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ClosureError(f"{label} must be ISO-8601") from exc
+    if parsed.tzinfo is None:
+        raise ClosureError(f"{label} must be timezone-aware")
+    return parsed
 
 
 def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
@@ -294,12 +310,9 @@ def validate_review_receipt(receipt: Mapping[str, Any], packet: Mapping[str, Any
         or not ("离线" in authorization or "offline" in authorization.casefold())
     ):
         raise ClosureError("review receipt authorization text is not packet-bound and offline-scoped")
-    try:
-        reviewed_at = datetime.fromisoformat(str(receipt.get("reviewed_at") or "").replace("Z", "+00:00"))
-        packet_at = datetime.fromisoformat(str(packet.get("generated_at") or "").replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise ClosureError("review receipt timestamps must be ISO-8601") from exc
-    if reviewed_at.tzinfo is None or packet_at.tzinfo is None or reviewed_at < packet_at:
+    reviewed_at = _iso(receipt.get("reviewed_at"), "review receipt reviewed_at")
+    packet_at = _iso(packet.get("generated_at"), "review packet generated_at")
+    if reviewed_at < packet_at:
         raise ClosureError("review receipt must be timezone-aware and no earlier than its packet")
     selections = receipt.get("selections")
     if not isinstance(selections, list) or not 3 <= len(selections) <= 5:
@@ -355,6 +368,11 @@ def run_offline_replay(
         "ready_pool_hash": funnel._hash(packet["ready_pool"]),
     }:
         raise ClosureError("review packet source references do not match replay inputs")
+    replay_at = _iso(generated_at, "replay generated_at")
+    reviewed_at = _iso(receipt.get("reviewed_at"), "review receipt reviewed_at")
+    # governance-mutation: FUNNEL_CLOSURE_REPLAY_CHRONOLOGY
+    if replay_at < reviewed_at:
+        raise ClosureError("replay generated_at cannot predate its review receipt")
     selections = receipt["selections"]
     selected = [row["ts_code"] for row in selections]
     questions = {row["ts_code"]: row["research_question"] for row in selections}
@@ -471,7 +489,16 @@ def verify_result_bundle(output_dir: Path) -> dict[str, Any]:
         raise ClosureError("result bundle must be a real directory")
     manifest = _load_object(output_dir / "manifest.json")
     artifacts = manifest.get("artifacts")
-    entries = {entry.name for entry in output_dir.iterdir()}
+    frozen_bundle_dir = output_dir / "frozen_funnel_bundle"
+    if not frozen_bundle_dir.is_dir() or frozen_bundle_dir.is_symlink():
+        raise ClosureError("result bundle frozen source must be a real directory")
+    entries = {
+        path.relative_to(output_dir).as_posix()
+        for path in output_dir.rglob("*")
+        if path.is_file()
+    }
+    if any(path.is_symlink() for path in output_dir.rglob("*")):
+        raise ClosureError("result bundle cannot contain symlinks")
     # governance-mutation: FUNNEL_CLOSURE_RESULT_MANIFEST_FIELDS
     if set(manifest) != RESULT_MANIFEST_FIELDS:
         raise ClosureError("result bundle manifest fields are not exact")
@@ -499,14 +526,27 @@ def verify_result_bundle(output_dir: Path) -> dict[str, Any]:
     receipt = _load_object(output_dir / "review_receipt.json")
     queue = _load_object(output_dir / "deep_research_queue.json")
     report = _load_object(output_dir / "closure_report.json")
-    validate_review_packet(packet)
-    validate_review_receipt(receipt, packet)
-    try:
-        funnel.validate_deep_research_queue(queue)
-    except funnel.FunnelError as exc:
-        raise ClosureError(f"result U4 queue contract is invalid: {exc}") from exc
-    validate_closure_report(report, packet, receipt, queue)
-    if manifest.get("as_of") != report.get("as_of"):
+    battery = _load_object(output_dir / "frozen_battery.json")
+    frozen_bundle = load_bundle(frozen_bundle_dir)
+    expected_packet = build_review_packet(
+        bundle_dir=frozen_bundle_dir,
+        battery=battery,
+        generated_at=str(packet.get("generated_at") or ""),
+    )
+    expected_queue, expected_report = run_offline_replay(
+        bundle_dir=frozen_bundle_dir,
+        battery=battery,
+        packet=packet,
+        receipt=receipt,
+        generated_at=str(report.get("generated_at") or ""),
+    )
+    # governance-mutation: FUNNEL_CLOSURE_RESULT_DETERMINISTIC
+    if packet != expected_packet or queue != expected_queue or report != expected_report:
+        raise ClosureError("result bundle is not the deterministic projection of frozen evidence")
+    if (
+        manifest.get("as_of") != report.get("as_of")
+        or manifest.get("as_of") != frozen_bundle["manifest"].get("as_of")
+    ):
         raise ClosureError("result bundle as_of does not match closure report")
     return {
         "status": "VERIFIED",
@@ -520,14 +560,21 @@ def verify_result_bundle(output_dir: Path) -> dict[str, Any]:
 
 
 def _write_replay_outputs(
-    output_dir: Path, packet: Mapping[str, Any], receipt: Mapping[str, Any],
-    queue: Mapping[str, Any], report: Mapping[str, Any],
+    output_dir: Path, source_bundle_dir: Path, battery: Mapping[str, Any],
+    packet: Mapping[str, Any], receipt: Mapping[str, Any], queue: Mapping[str, Any],
+    report: Mapping[str, Any],
 ) -> None:
     if os.path.lexists(output_dir):
         raise ClosureError(f"output directory already exists: {output_dir}")
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=f".{output_dir.name}.", dir=output_dir.parent))
     try:
+        load_bundle(source_bundle_dir)
+        frozen_bundle_dir = staging / "frozen_funnel_bundle"
+        frozen_bundle_dir.mkdir()
+        for name in sorted(BUNDLE_ARTIFACTS | {"manifest.json"}):
+            shutil.copyfile(source_bundle_dir / name, frozen_bundle_dir / name)
+        _atomic_write_json(staging / "frozen_battery.json", dict(battery))
         payloads = {
             "review_packet.json": dict(packet),
             "review_receipt.json": dict(receipt),
@@ -536,9 +583,7 @@ def _write_replay_outputs(
         }
         for name, payload in payloads.items():
             _atomic_write_json(staging / name, payload)
-        artifacts = {
-            name: _sha256_path(staging / name) for name in sorted(payloads)
-        }
+        artifacts = {name: _sha256_path(staging / name) for name in sorted(RESULT_ARTIFACTS)}
         manifest = {
             "schema": "ar.research_closure_bundle",
             "schema_version": SCHEMA_VERSION,
@@ -622,7 +667,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 bundle_dir=Path(args.bundle), battery=battery, packet=packet,
                 receipt=receipt, generated_at=args.generated_at,
             )
-            _write_replay_outputs(Path(args.output_dir), packet, receipt, queue, report)
+            _write_replay_outputs(
+                Path(args.output_dir), Path(args.bundle), battery,
+                packet, receipt, queue, report,
+            )
     except (ClosureError, ValueError) as exc:
         print(f"REFUSED: {exc}")
         return 1
