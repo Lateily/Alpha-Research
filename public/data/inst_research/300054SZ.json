@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-17T09:09:20Z",
+  "fetched_at": "2026-08-18T02:20:25Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -1113,39 +1113,11 @@
       "inst_count": 7,
       "surv_type": "特定对象调研",
       "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260519",
-      "fund_visitors": "冯昱祺,龚嘉斌",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "国寿养老",
-      "org_type": "寿险公司",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 3,
-      "surv_type": "特定对象调研",
-      "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260519",
-      "fund_visitors": "胡园园,包悦",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "兴业证券",
-      "org_type": "证券公司",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 3,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 17,
-    "total_90d": 81,
+    "total_90d": 79,
     "unique_inst_30d": 53,
     "latest_date": "2026-07-28"
   }
