@@ -137,6 +137,15 @@ assert closure_result.wasSuccessful(), (
     "offline research closure suite failed under socket guard"
 )
 import test_research_cycle as research_cycle_tests  # noqa: E402
+import test_research_method as research_method_tests  # noqa: E402
+research_method_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        research_method_tests.ResearchMethodTests
+    )
+)
+assert research_method_result.wasSuccessful(), (
+    "offline research method suite failed under socket guard"
+)
 research_cycle_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
         research_cycle_tests.ResearchCycleTests

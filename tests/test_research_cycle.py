@@ -24,7 +24,9 @@ import decision_pack as decision_pack_contract  # noqa: E402
 import decision_sheet as decision_sheet_contract  # noqa: E402
 import funnel_pipeline as funnel  # noqa: E402
 import research_cycle as cycle  # noqa: E402
+import research_method as method  # noqa: E402
 import test_research_closure_experiment as closure_fixtures  # noqa: E402
+import test_research_method as method_fixtures  # noqa: E402
 
 
 def build_closure_bundle(root: Path) -> tuple[Path, list[str], dict, dict, dict]:
@@ -77,13 +79,14 @@ def build_case_draft(closure_bundle: Path, ticker: str) -> dict:
         "counting_eligible": False,
     }
     cluster["object_hash"] = funnel._hash(cluster)
-    return {
+    draft = {
         "schema": cycle.CASE_SCHEMA,
         "schema_version": cycle.SCHEMA_VERSION,
         "generated_at": "2026-08-13T10:10:00+00:00",
         "ticker": ticker,
         "name": "闭环样本",
         "theme": "闭环行业",
+        "industry_code": "SEMICONDUCTOR",
         "source_refs": {
             "closure_bundle_hash": closure_manifest["bundle_hash"],
             "u4_receipt_hash": receipt["receipt_hash"],
@@ -163,6 +166,25 @@ def build_case_draft(closure_bundle: Path, ticker: str) -> dict:
         "production_authority": False,
         "disclaimer": cycle.DISCLAIMER,
     }
+    registration_draft, _, _, _ = method_fixtures.registration_draft()
+    registration_draft["ticker"] = ticker
+    registration_draft["as_of"] = "20260811"
+    registration_draft["thesis_core_hash"] = funnel._hash(core)
+    registration_draft["timing_ticket_hash"] = funnel._hash(draft["timing_ticket"])
+    registration_draft["decision_pack_hash"] = funnel._hash(pack)
+    wrong_if = core["wrong_if"]["triggers"]
+    registration_draft["wrong_if_hash"] = funnel._hash(wrong_if)
+    registration_draft["thesis_expectations"][2]["wrong_if_trigger_hash"] = funnel._hash(wrong_if[0])
+    registration_draft["thesis_expectations"][3]["wrong_if_trigger_hash"] = funnel._hash(wrong_if[1])
+    registration_draft["valuation"]["scenario_band_hash"] = funnel._hash(
+        core["valuation_target_range"]
+    )
+    registration_draft["smc"]["thesis_line_hash"] = funnel._hash(wrong_if)
+    draft["method_registration"] = method.seal_registration(
+        registration_draft, thesis_core=core, timing_ticket=draft["timing_ticket"],
+        decision_pack=pack,
+    )
+    return draft
 
 
 def build_bar_draft(ticker: str) -> dict:
@@ -185,15 +207,47 @@ def build_replay(root: Path):
     closure_bundle, codes, _, _, _ = build_closure_bundle(root)
     case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
     bars = cycle.seal_bars(build_bar_draft(codes[0]), case)
+    outcomes = method.seal_outcomes(
+        method_fixtures.outcome_draft(case["method_registration"]),
+        case["method_registration"],
+    )
     outputs = cycle.run_cycle(
         bundle_dir=closure_bundle,
         case=case,
         bars=bars,
+        outcomes=outcomes,
         generated_at="2026-08-17T16:10:00+00:00",
     )
     cycle_bundle = root / "cycle-result"
-    cycle._write_cycle_outputs(cycle_bundle, closure_bundle, case, bars, *outputs)
-    return closure_bundle, cycle_bundle, case, bars, outputs
+    cycle._write_cycle_outputs(
+        cycle_bundle, closure_bundle, case, bars, outcomes, *outputs
+    )
+    return closure_bundle, cycle_bundle, case, bars, outcomes, outputs
+
+
+def build_review_draft(trace: dict, review: dict, *, bound: bool = True) -> dict:
+    return {
+        "schema": cycle.REVIEW_RECEIPT_SCHEMA,
+        "schema_version": cycle.SCHEMA_VERSION,
+        "research_cycle_id": trace["research_cycle_id"],
+        "mechanical_review_hash": review["review_hash"] if bound else "0" * 64,
+        "machine_attribution": review["machine_attribution"],
+        "review_disposition": "CONFIRM",
+        "human_attribution": review["machine_attribution"],
+        "disagreement_reason": None,
+        "evidence_refs": [f"method_scorecard:{review['method_scorecard_hash']}"],
+        "claimed_reviewer": "Junyan",
+        "identity_verification": "UNAVAILABLE",
+        "production_authority": False,
+        "reviewed_at": "2026-08-17T16:20:00+00:00",
+        "authorization_text": (
+            f"批准离线 paper 复盘，绑定 review_hash {review['review_hash'][:12]}，"
+            "不产生生产权限。"
+        ),
+        "lessons": ["全链证据和机器归因已复核。"],
+        "rule_change_proposals": [],
+        "disclaimer": cycle.DISCLAIMER,
+    }
 
 
 class ResearchCycleTests(unittest.TestCase):
@@ -205,19 +259,27 @@ class ResearchCycleTests(unittest.TestCase):
             case_path = root / "case.json"
             bars_draft = root / "bars-draft.json"
             bars_path = root / "bars.json"
+            outcomes_draft = root / "outcomes-draft.json"
+            outcomes_path = root / "outcomes.json"
             cycle_bundle = root / "cycle"
             postmortem_draft = root / "postmortem-draft.json"
             postmortem = root / "postmortem.json"
             reviewed_bundle = root / "reviewed"
-            closure_fixtures.write_json(case_draft, build_case_draft(closure_bundle, codes[0]))
+            case_payload = build_case_draft(closure_bundle, codes[0])
+            closure_fixtures.write_json(case_draft, case_payload)
             closure_fixtures.write_json(bars_draft, build_bar_draft(codes[0]))
+            closure_fixtures.write_json(
+                outcomes_draft,
+                method_fixtures.outcome_draft(case_payload["method_registration"]),
+            )
             script = ROOT / "experiments" / "research_funnel" / "research_cycle.py"
             env = {**os.environ, "AR_OFFLINE": "1", "PYTHONPYCACHEPREFIX": str(root / "pycache")}
 
             commands = [
                 [sys.executable, str(script), "seal-case", "--closure-bundle", str(closure_bundle), "--input", str(case_draft), "--output", str(case_path)],
                 [sys.executable, str(script), "seal-bars", "--closure-bundle", str(closure_bundle), "--case", str(case_path), "--input", str(bars_draft), "--output", str(bars_path)],
-                [sys.executable, str(script), "replay", "--closure-bundle", str(closure_bundle), "--case", str(case_path), "--bars", str(bars_path), "--generated-at", "2026-08-17T16:10:00+00:00", "--output-dir", str(cycle_bundle)],
+                [sys.executable, str(script), "seal-outcomes", "--closure-bundle", str(closure_bundle), "--case", str(case_path), "--input", str(outcomes_draft), "--output", str(outcomes_path)],
+                [sys.executable, str(script), "replay", "--closure-bundle", str(closure_bundle), "--case", str(case_path), "--bars", str(bars_path), "--outcomes", str(outcomes_path), "--generated-at", "2026-08-17T16:10:00+00:00", "--output-dir", str(cycle_bundle)],
                 [sys.executable, str(script), "verify", "--closure-bundle", str(closure_bundle), "--output-dir", str(cycle_bundle)],
             ]
             for command in commands:
@@ -232,21 +294,7 @@ class ResearchCycleTests(unittest.TestCase):
 
             trace = json.loads((cycle_bundle / "cycle_trace.json").read_text())
             review = json.loads((cycle_bundle / "mechanical_review.json").read_text())
-            closure_fixtures.write_json(postmortem_draft, {
-                "schema": cycle.REVIEW_RECEIPT_SCHEMA,
-                "schema_version": cycle.SCHEMA_VERSION,
-                "research_cycle_id": trace["research_cycle_id"],
-                "mechanical_review_hash": review["review_hash"],
-                "claimed_reviewer": "Junyan",
-                "identity_verification": "UNAVAILABLE",
-                "production_authority": False,
-                "reviewed_at": "2026-08-17T16:20:00+00:00",
-                "authorization_text": f"批准离线 paper 复盘，绑定 review_hash {review['review_hash'][:12]}，不产生生产权限。",
-                "primary_attribution": "PROCESS_OK",
-                "lessons": ["CLI 全链按预注册规则执行。"],
-                "rule_change_proposals": [],
-                "disclaimer": cycle.DISCLAIMER,
-            })
+            closure_fixtures.write_json(postmortem_draft, build_review_draft(trace, review))
             final_commands = [
                 [sys.executable, str(script), "seal-review", "--cycle-bundle", str(cycle_bundle), "--input", str(postmortem_draft), "--output", str(postmortem)],
                 [sys.executable, str(script), "finalize-review", "--closure-bundle", str(closure_bundle), "--cycle-bundle", str(cycle_bundle), "--receipt", str(postmortem), "--output-dir", str(reviewed_bundle)],
@@ -263,7 +311,7 @@ class ResearchCycleTests(unittest.TestCase):
     def test_full_cycle_uses_t1_fill_and_reaches_reviewed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            closure_bundle, cycle_bundle, _, _, (trace, fund, review) = build_replay(root)
+            closure_bundle, cycle_bundle, _, _, _, (trace, fund, scorecard, review) = build_replay(root)
             verified = cycle.verify_cycle_bundle(cycle_bundle, closure_bundle)
             order = fund["orders"][0]
             self.assertEqual(trace["final_state"], "REVIEW_READY")
@@ -273,21 +321,8 @@ class ResearchCycleTests(unittest.TestCase):
             self.assertFalse(fund["performance"]["claim_allowed"])
             self.assertEqual(verified["status"], "VERIFIED")
 
-            draft = {
-                "schema": cycle.REVIEW_RECEIPT_SCHEMA,
-                "schema_version": cycle.SCHEMA_VERSION,
-                "research_cycle_id": trace["research_cycle_id"],
-                "mechanical_review_hash": review["review_hash"],
-                "claimed_reviewer": "Junyan",
-                "identity_verification": "UNAVAILABLE",
-                "production_authority": False,
-                "reviewed_at": "2026-08-17T16:20:00+00:00",
-                "authorization_text": f"批准离线 paper 复盘，绑定 review_hash {review['review_hash'][:12]}，不产生生产权限。",
-                "primary_attribution": "PROCESS_OK",
-                "lessons": ["全链证据和 T+1 结算规则均按预注册执行。"],
-                "rule_change_proposals": [],
-                "disclaimer": cycle.DISCLAIMER,
-            }
+            self.assertEqual(scorecard["machine_attribution"], "THESIS_RIGHT_TIMING_RIGHT")
+            draft = build_review_draft(trace, review)
             receipt = cycle.seal_review_receipt(draft, review)
             final = cycle.finalize_review(cycle_bundle, closure_bundle, receipt)
             final_bundle = root / "final"
@@ -303,6 +338,14 @@ class ResearchCycleTests(unittest.TestCase):
             case["theme"] = "rewritten after sealing"
             with self.assertRaisesRegex(cycle.CycleError, "case hash mismatch"):
                 cycle.validate_case(case, closure_bundle)
+
+    def test_case_industry_must_match_registered_valuation_adapter(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))
+            draft = build_case_draft(closure_bundle, codes[0])
+            draft["industry_code"] = "INNOVATIVE_DRUG"
+            with self.assertRaisesRegex(cycle.CycleError, "valuation industry differs"):
+                cycle.seal_case(draft, closure_bundle)
 
     def test_case_must_bind_exact_u4_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -378,31 +421,36 @@ class ResearchCycleTests(unittest.TestCase):
             draft["timing_ticket"]["posture"] = "HOLD_OBSERVE"
             draft["decision_pack"]["execution_gate"]["posture"] = "HOLD_OBSERVE"
             draft["paper_order"]["gate_state"] = "HOLD_OBSERVE"
+            registration_draft, core, _, _ = method_fixtures.registration_draft()
+            registration_draft["ticker"] = draft["ticker"]
+            registration_draft["thesis_core_hash"] = funnel._hash(draft["thesis_core"])
+            registration_draft["timing_ticket_hash"] = funnel._hash(draft["timing_ticket"])
+            registration_draft["decision_pack_hash"] = funnel._hash(draft["decision_pack"])
+            registration_draft["valuation"]["scenario_band_hash"] = funnel._hash(
+                draft["thesis_core"]["valuation_target_range"]
+            )
+            registration_draft["smc"]["status"] = "WAIT"
+            draft["method_registration"] = method.seal_registration(
+                registration_draft, thesis_core=draft["thesis_core"],
+                timing_ticket=draft["timing_ticket"], decision_pack=draft["decision_pack"],
+            )
             case = cycle.seal_case(draft, closure_bundle)
             bars = cycle.seal_bars(build_bar_draft(codes[0]), case)
-            trace, fund, review = cycle.run_cycle(
+            outcomes = method.seal_outcomes(
+                method_fixtures.outcome_draft(case["method_registration"]),
+                case["method_registration"],
+            )
+            trace, fund, scorecard, review = cycle.run_cycle(
                 bundle_dir=closure_bundle, case=case, bars=bars,
+                outcomes=outcomes,
                 generated_at="2026-08-17T16:10:00+00:00",
             )
             self.assertEqual(trace["final_state"], "NO_TRADE")
             self.assertEqual(fund["orders"], [])
             self.assertEqual(review["paper_state"], "NO_TRADE")
-            receipt = cycle.seal_review_receipt({
-                "schema": cycle.REVIEW_RECEIPT_SCHEMA,
-                "schema_version": cycle.SCHEMA_VERSION,
-                "research_cycle_id": trace["research_cycle_id"],
-                "mechanical_review_hash": review["review_hash"],
-                "claimed_reviewer": "Junyan",
-                "identity_verification": "UNAVAILABLE",
-                "production_authority": False,
-                "reviewed_at": "2026-08-17T16:20:00+00:00",
-                "authorization_text": f"批准离线 NO_TRADE 复盘，绑定 review_hash {review['review_hash'][:12]}。",
-                "primary_attribution": "PROCESS_OK",
-                "lessons": ["没有满足择时门也是完整结果。"],
-                "rule_change_proposals": [],
-                "disclaimer": cycle.DISCLAIMER,
-            }, review)
+            receipt = cycle.seal_review_receipt(build_review_draft(trace, review), review)
             self.assertEqual(receipt["research_cycle_id"], trace["research_cycle_id"])
+            self.assertEqual(scorecard["timing"]["status"], "NO_TRADE")
 
     def test_same_bar_stop_and_target_uses_conservative_stop(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -417,8 +465,16 @@ class ResearchCycleTests(unittest.TestCase):
             }
             draft["generated_at"] = "2026-08-14T16:00:00+00:00"
             bars = cycle.seal_bars(draft, case)
-            _, fund, review = cycle.run_cycle(
+            outcomes_draft = method_fixtures.outcome_draft(case["method_registration"])
+            outcomes_draft["generated_at"] = "2026-08-14T16:00:00+00:00"
+            outcomes_draft["scoring_as_of"] = "20260814"
+            for fact in outcomes_draft["facts"]:
+                fact["observed_at"] = "20260814"
+            outcomes_draft["facts_hash"] = funnel._hash(outcomes_draft["facts"])
+            outcomes = method.seal_outcomes(outcomes_draft, case["method_registration"])
+            _, fund, scorecard, review = cycle.run_cycle(
                 bundle_dir=closure_bundle, case=case, bars=bars,
+                outcomes=outcomes,
                 generated_at="2026-08-14T16:10:00+00:00",
             )
             order = fund["orders"][0]
@@ -426,6 +482,7 @@ class ResearchCycleTests(unittest.TestCase):
             self.assertEqual(order["exit_reason"], "stop_and_target_same_bar->stop")
             self.assertEqual(order["exit_price"], 95.0)
             self.assertEqual(review["realized_R"], -1.0)
+            self.assertEqual(scorecard["machine_attribution"], "THESIS_RIGHT_TIMING_WRONG")
 
     def test_pre_registration_settled_bar_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -454,6 +511,28 @@ class ResearchCycleTests(unittest.TestCase):
             with self.assertRaisesRegex(cycle.CycleError, "not yet closed"):
                 cycle.seal_bars(draft, case)
 
+    def test_scoring_as_of_must_equal_last_settled_bar(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            closure_bundle, codes, _, _, _ = build_closure_bundle(root)
+            case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
+            bars_draft = build_bar_draft(codes[0])
+            bars_draft["rows"].append(
+                {"date": "20260818", "open": 115.0, "high": 118.0, "low": 112.0, "close": 116.0}
+            )
+            bars_draft["generated_at"] = "2026-08-18T16:00:00+00:00"
+            bars = cycle.seal_bars(bars_draft, case)
+            outcomes_draft = method_fixtures.outcome_draft(case["method_registration"])
+            outcomes_draft["generated_at"] = "2026-08-18T16:05:00+00:00"
+            outcomes = method.seal_outcomes(
+                outcomes_draft, case["method_registration"]
+            )
+            with self.assertRaisesRegex(cycle.CycleError, "one scoring as_of"):
+                cycle.run_cycle(
+                    bundle_dir=closure_bundle, case=case, bars=bars,
+                    outcomes=outcomes, generated_at="2026-08-18T16:10:00+00:00",
+                )
+
     def test_case_cannot_acquire_production_authority(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))
@@ -465,7 +544,7 @@ class ResearchCycleTests(unittest.TestCase):
     def test_cycle_verifier_rejects_artifact_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            closure_bundle, cycle_bundle, _, _, _ = build_replay(root)
+            closure_bundle, cycle_bundle, _, _, _, _ = build_replay(root)
             review_path = cycle_bundle / "mechanical_review.json"
             review = json.loads(review_path.read_text())
             review["claim_allowed"] = True
@@ -476,7 +555,7 @@ class ResearchCycleTests(unittest.TestCase):
     def test_cycle_manifest_cannot_rewrite_paper_authority(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            closure_bundle, cycle_bundle, _, _, _ = build_replay(root)
+            closure_bundle, cycle_bundle, _, _, _, _ = build_replay(root)
             manifest_path = cycle_bundle / "manifest.json"
             manifest = json.loads(manifest_path.read_text())
             manifest["no_trade_flag"] = False
@@ -488,7 +567,7 @@ class ResearchCycleTests(unittest.TestCase):
     def test_cycle_verifier_rebuilds_outputs_after_self_consistent_rehash(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            closure_bundle, cycle_bundle, _, _, _ = build_replay(root)
+            closure_bundle, cycle_bundle, _, _, _, _ = build_replay(root)
             review_path = cycle_bundle / "mechanical_review.json"
             review = json.loads(review_path.read_text())
             review["human_attribution_status"] = "REVIEWED_WITHOUT_RECEIPT"
@@ -510,6 +589,10 @@ class ResearchCycleTests(unittest.TestCase):
             closure_bundle, codes, _, _, _ = build_closure_bundle(root)
             case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
             bars = cycle.seal_bars(build_bar_draft(codes[0]), case)
+            outcomes = method.seal_outcomes(
+                method_fixtures.outcome_draft(case["method_registration"]),
+                case["method_registration"],
+            )
             original = cycle.paper_fund.compute_performance
             try:
                 cycle.paper_fund.compute_performance = lambda *_args, **_kwargs: {
@@ -519,6 +602,7 @@ class ResearchCycleTests(unittest.TestCase):
                 with self.assertRaisesRegex(cycle.CycleError, "unlocked a claim"):
                     cycle.run_cycle(
                         bundle_dir=closure_bundle, case=case, bars=bars,
+                        outcomes=outcomes,
                         generated_at="2026-08-17T16:10:00+00:00",
                     )
             finally:
@@ -527,22 +611,8 @@ class ResearchCycleTests(unittest.TestCase):
     def test_postmortem_receipt_must_bind_outcome_hash(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            _, cycle_bundle, _, _, (trace, _, review) = build_replay(root)
-            draft = {
-                "schema": cycle.REVIEW_RECEIPT_SCHEMA,
-                "schema_version": cycle.SCHEMA_VERSION,
-                "research_cycle_id": trace["research_cycle_id"],
-                "mechanical_review_hash": "0" * 64,
-                "claimed_reviewer": "Junyan",
-                "identity_verification": "UNAVAILABLE",
-                "production_authority": False,
-                "reviewed_at": "2026-08-17T16:20:00+00:00",
-                "authorization_text": f"批准离线复盘，绑定 review_hash {review['review_hash'][:12]}，不产生生产权限。",
-                "primary_attribution": "PROCESS_OK",
-                "lessons": ["闭环证据完整。"],
-                "rule_change_proposals": [],
-                "disclaimer": cycle.DISCLAIMER,
-            }
+            _, cycle_bundle, _, _, _, (trace, _, _, review) = build_replay(root)
+            draft = build_review_draft(trace, review, bound=False)
             with self.assertRaisesRegex(cycle.CycleError, "not bound"):
                 cycle.seal_review_receipt(draft, review)
 
@@ -558,50 +628,53 @@ class ResearchCycleTests(unittest.TestCase):
             ]
             bar_draft["generated_at"] = "2026-08-14T16:00:00+00:00"
             bars = cycle.seal_bars(bar_draft, case)
-            trace, _, review = cycle.run_cycle(
+            outcomes_draft = method_fixtures.outcome_draft(case["method_registration"])
+            outcomes_draft["generated_at"] = "2026-08-14T16:00:00+00:00"
+            outcomes_draft["scoring_as_of"] = "20260814"
+            for fact in outcomes_draft["facts"]:
+                fact["observed_at"] = "20260814"
+            outcomes_draft["facts_hash"] = funnel._hash(outcomes_draft["facts"])
+            outcomes = method.seal_outcomes(outcomes_draft, case["method_registration"])
+            trace, _, _, review = cycle.run_cycle(
                 bundle_dir=closure_bundle,
                 case=case,
                 bars=bars,
+                outcomes=outcomes,
                 generated_at="2026-08-14T16:10:00+00:00",
             )
             self.assertEqual(review["paper_state"], "PENDING")
-            draft = {
-                "schema": cycle.REVIEW_RECEIPT_SCHEMA,
-                "schema_version": cycle.SCHEMA_VERSION,
-                "research_cycle_id": trace["research_cycle_id"],
-                "mechanical_review_hash": review["review_hash"],
-                "claimed_reviewer": "Junyan",
-                "identity_verification": "UNAVAILABLE",
-                "production_authority": False,
-                "reviewed_at": "2026-08-14T16:20:00+00:00",
-                "authorization_text": f"批准离线复盘，绑定 review_hash {review['review_hash'][:12]}，不产生生产权限。",
-                "primary_attribution": "PROCESS_OK",
-                "lessons": ["窗口尚未结束，不能归因。"],
-                "rule_change_proposals": [],
-                "disclaimer": cycle.DISCLAIMER,
-            }
+            draft = build_review_draft(trace, review)
+            draft["reviewed_at"] = "2026-08-14T16:20:00+00:00"
             with self.assertRaisesRegex(cycle.CycleError, "outcome is incomplete"):
                 cycle.seal_review_receipt(draft, review)
+
+    def test_human_dispute_requires_evidence_and_preserves_machine_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            closure_bundle, cycle_bundle, _, _, _, (trace, _, _, review) = build_replay(root)
+            draft = build_review_draft(trace, review)
+            draft["review_disposition"] = "DISPUTE"
+            draft["human_attribution"] = "THESIS_RIGHT_TIMING_WRONG"
+            draft["disagreement_reason"] = "The registered target touch followed a same-day event gap, not the timing setup."
+            draft["evidence_refs"].append("settled_bars:20260817")
+            receipt = cycle.seal_review_receipt(draft, review)
+            final = cycle.finalize_review(cycle_bundle, closure_bundle, receipt)
+            self.assertEqual(final["machine_attribution"], "THESIS_RIGHT_TIMING_RIGHT")
+            self.assertEqual(final["human_attribution"], "THESIS_RIGHT_TIMING_WRONG")
+            self.assertEqual(final["review_disposition"], "DISPUTE")
+
+            invalid = build_review_draft(trace, review)
+            invalid["review_disposition"] = "DISPUTE"
+            invalid["human_attribution"] = "THESIS_RIGHT_TIMING_WRONG"
+            invalid["disagreement_reason"] = ""
+            with self.assertRaisesRegex(cycle.CycleError, "lacks bound evidence"):
+                cycle.seal_review_receipt(invalid, review)
 
     def test_final_manifest_cannot_rewrite_paper_authority(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            closure_bundle, cycle_bundle, _, _, (trace, _, review) = build_replay(root)
-            draft = {
-                "schema": cycle.REVIEW_RECEIPT_SCHEMA,
-                "schema_version": cycle.SCHEMA_VERSION,
-                "research_cycle_id": trace["research_cycle_id"],
-                "mechanical_review_hash": review["review_hash"],
-                "claimed_reviewer": "Junyan",
-                "identity_verification": "UNAVAILABLE",
-                "production_authority": False,
-                "reviewed_at": "2026-08-17T16:20:00+00:00",
-                "authorization_text": f"批准离线复盘，绑定 review_hash {review['review_hash'][:12]}，不产生生产权限。",
-                "primary_attribution": "PROCESS_OK",
-                "lessons": ["闭环证据完整。"],
-                "rule_change_proposals": [],
-                "disclaimer": cycle.DISCLAIMER,
-            }
+            closure_bundle, cycle_bundle, _, _, _, (trace, _, _, review) = build_replay(root)
+            draft = build_review_draft(trace, review)
             receipt = cycle.seal_review_receipt(draft, review)
             final = cycle.finalize_review(cycle_bundle, closure_bundle, receipt)
             final_bundle = root / "final"

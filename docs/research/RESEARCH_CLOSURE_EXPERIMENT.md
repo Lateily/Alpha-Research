@@ -166,14 +166,22 @@ The research case is sealed before outcome bars are supplied. It must bind:
 - a same-day timing ticket whose market, sector, settled flow, structure, and
   portfolio gates all support `RECLAIM_REVIEW`;
 - an existing eight-section Research Decision Pack;
+- a sealed `ar.research_method_registration` containing scoreable thesis
+  expectations, an industry valuation adapter, and manual settled-E3 SMC
+  evidence whose levels and confirmations exactly match the timing ticket and
+  Decision Pack; the case industry must match the valuation adapter;
 - one prospective causal-cluster object, marked non-counting for this offline
   replay;
 - a paper risk budget inside the Model Paper Fund policy range.
 
-Outcome bars are a second, later artifact. Any pre-registration, duplicate,
-unordered, malformed, or differently hashed bar is rejected. Intraday evidence
-remains non-sample-eligible; official replay changes state only through settled
-bars.
+Outcome bars and `ar.research_method_outcomes` are separate, later artifacts.
+Any pre-registration, duplicate, unordered, malformed, wrong-period,
+wrong-source, weakly sourced, or differently hashed evidence is rejected.
+Manual outcome receipts bind evidence bytes but do not claim automatic source
+identity verification. Outcome facts and the final settled bar must share one
+`scoring_as_of`. Intraday evidence remains
+non-sample-eligible; official replay changes state only through settled bars
+and scoreable facts that bind the prospective registration hash.
 
 ### Commands
 
@@ -186,9 +194,9 @@ AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py seal-case \
   --output /tmp/research-case.json
 ```
 
-After settled bars exist, seal them separately and replay the paper cycle. A
-bar is accepted only after its session has closed in the operational +08:00
-timezone; a future or still-open session fails closed:
+After settled bars and outcome facts exist, seal both separately and replay the
+paper cycle. A bar is accepted only after its session has closed in the
+operational +08:00 timezone; a future or still-open session fails closed:
 
 ```bash
 AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py seal-bars \
@@ -197,25 +205,35 @@ AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py seal-bars \
   --input /tmp/settled-bars-draft.json \
   --output /tmp/settled-bars.json
 
+AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py seal-outcomes \
+  --closure-bundle /tmp/research-closure-result \
+  --case /tmp/research-case.json \
+  --input /tmp/method-outcomes-draft.json \
+  --output /tmp/method-outcomes.json
+
 AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py replay \
   --closure-bundle /tmp/research-closure-result \
   --case /tmp/research-case.json \
   --bars /tmp/settled-bars.json \
+  --outcomes /tmp/method-outcomes.json \
   --generated-at 2026-08-17T16:10:00+00:00 \
   --output-dir /tmp/research-cycle-result
 ```
 
 The result directory is immutable and independently rebuildable from its
-prospective case and settled bars. It contains the transition trace, paper fund
-snapshot, NAV/P&L, T+1/3/5/10 windows, and an `AWAITING_HUMAN_REVIEW` mechanical
-review.
+prospective case, later facts, and settled bars. It contains the transition
+trace, paper fund snapshot, six-ledger method scorecard, NAV/P&L, T+1/3/5/10
+windows, and an `AWAITING_HUMAN_REVIEW` mechanical review.
 
 The postmortem is authored only after the mechanical state reaches
 `REVIEW_READY` or `NO_TRADE`; pending and filled-but-open cycles remain visibly
-incomplete and cannot be attributed. Its text must quote
-the mechanical review hash and choose one attribution from `PROCESS_OK`,
-`THESIS_ERROR`, `TIMING_ERROR`, `SIZING_ERROR`, `MARKET_SHOCK`, or `DATA_GAP`.
-Rule-change proposals are recorded but become effective only for future cases.
+incomplete and cannot be attributed. Its text must quote the mechanical review
+hash. The machine first derives one thesis/timing quadrant
+without consulting P&L. Junyan then either `CONFIRM`s that label or `DISPUTE`s it
+with a different human label, a reason, and evidence references. Both labels
+remain in the final artifact. Rule-change proposals are recorded but become
+effective only for future cases. Full method semantics live in
+`RESEARCH_METHOD_AND_ATTRIBUTION_V1.md`.
 
 ```bash
 AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py seal-review \
@@ -247,7 +265,8 @@ normalizing them.
 5. Self-consistently rehashed output tampering is caught by deterministic
    rebuild, not only by byte hashes.
 6. A postmortem cannot predate, detach from, or precede completion of its
-   mechanical outcome.
+   mechanical outcome; a human dispute cannot erase the machine result or omit
+   its evidence.
 7. All artifacts keep `claim_allowed=false`, `production_authority=false`, and
    `no_trade_flag=true`.
 8. Every load-bearing gate has a mutation test and the complete suite passes
