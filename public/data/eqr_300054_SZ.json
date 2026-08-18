@@ -1,6 +1,6 @@
 {
   "ticker": "300054.SZ",
-  "generated_at": "2026-08-17T09:06:46.235019+00:00",
+  "generated_at": "2026-08-18T02:18:24.363791+00:00",
   "overall": "MED",
   "sections": {
     "business_model": {
@@ -49,9 +49,9 @@
     "⚠️ Consensus estimates are 999 days old — expectation gap may be stale"
   ],
   "data_freshness": {
-    "financials": "2026-05-19",
-    "price": "2026-08-17",
+    "financials": "2026-05-20",
+    "price": "2026-08-18",
     "consensus": null,
-    "news": "2026-08-17"
+    "news": "2026-08-18"
   }
 }
