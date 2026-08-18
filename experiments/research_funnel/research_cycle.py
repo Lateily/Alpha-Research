@@ -17,7 +17,7 @@ import os
 import shutil
 import sys
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -78,6 +78,8 @@ PASS_TIMING_EVIDENCE = {
     "technical_state": {"STRUCTURE_VALID"},
     "portfolio_state": {"WITHIN_LIMITS"},
 }
+OPERATIONAL_TIMEZONE = timezone(timedelta(hours=8))
+SETTLED_BAR_CUTOFF_HOUR = 15
 
 
 class CycleError(RuntimeError):
@@ -383,7 +385,8 @@ def validate_bars(payload: Mapping[str, Any], case: Mapping[str, Any]) -> None:
     rows = payload.get("rows")
     if not isinstance(rows, list) or not rows or payload.get("rows_hash") != _hash(rows):
         raise CycleError("settled bars rows/hash mismatch")
-    if _iso(payload.get("generated_at"), "bars.generated_at") < _iso(case.get("generated_at"), "case.generated_at"):
+    bars_generated_at = _iso(payload.get("generated_at"), "bars.generated_at")
+    if bars_generated_at < _iso(case.get("generated_at"), "case.generated_at"):
         raise CycleError("settled bars were generated before the prospective case")
     dates: list[str] = []
     for index, row in enumerate(rows):
@@ -401,6 +404,14 @@ def validate_bars(payload: Mapping[str, Any], case: Mapping[str, Any]) -> None:
     # governance-mutation: RESEARCH_CYCLE_NO_LOOKAHEAD_BARS
     if bars_invalid:
         raise CycleError("settled bars are unordered, duplicated, or pre-registration")
+    last_session_cutoff = datetime.strptime(dates[-1], "%Y%m%d").replace(
+        hour=SETTLED_BAR_CUTOFF_HOUR,
+        tzinfo=OPERATIONAL_TIMEZONE,
+    )
+    bars_not_yet_settled = bars_generated_at < last_session_cutoff
+    # governance-mutation: RESEARCH_CYCLE_BARS_SETTLEMENT_TIME
+    if bars_not_yet_settled:
+        raise CycleError("settled bars include a session not yet closed at bars.generated_at")
 
 
 def seal_bars(draft: Mapping[str, Any], case: Mapping[str, Any]) -> dict[str, Any]:
@@ -642,6 +653,10 @@ def validate_review_receipt(receipt: Mapping[str, Any], review: Mapping[str, Any
     # governance-mutation: RESEARCH_CYCLE_POSTMORTEM_BINDING
     if receipt_unbound:
         raise CycleError("postmortem receipt is not bound to the mechanical outcome")
+    outcome_incomplete = review.get("paper_state") not in {"REVIEW_READY", "NO_TRADE"}
+    # governance-mutation: RESEARCH_CYCLE_POSTMORTEM_OUTCOME_REQUIRED
+    if outcome_incomplete:
+        raise CycleError("postmortem refused because the paper outcome is incomplete")
     if (
         receipt.get("claimed_reviewer") != "Junyan"
         or receipt.get("identity_verification") != "UNAVAILABLE"

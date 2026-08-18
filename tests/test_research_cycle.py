@@ -387,6 +387,22 @@ class ResearchCycleTests(unittest.TestCase):
             self.assertEqual(trace["final_state"], "NO_TRADE")
             self.assertEqual(fund["orders"], [])
             self.assertEqual(review["paper_state"], "NO_TRADE")
+            receipt = cycle.seal_review_receipt({
+                "schema": cycle.REVIEW_RECEIPT_SCHEMA,
+                "schema_version": cycle.SCHEMA_VERSION,
+                "research_cycle_id": trace["research_cycle_id"],
+                "mechanical_review_hash": review["review_hash"],
+                "claimed_reviewer": "Junyan",
+                "identity_verification": "UNAVAILABLE",
+                "production_authority": False,
+                "reviewed_at": "2026-08-17T16:20:00+00:00",
+                "authorization_text": f"批准离线 NO_TRADE 复盘，绑定 review_hash {review['review_hash'][:12]}。",
+                "primary_attribution": "PROCESS_OK",
+                "lessons": ["没有满足择时门也是完整结果。"],
+                "rule_change_proposals": [],
+                "disclaimer": cycle.DISCLAIMER,
+            }, review)
+            self.assertEqual(receipt["research_cycle_id"], trace["research_cycle_id"])
 
     def test_same_bar_stop_and_target_uses_conservative_stop(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -418,6 +434,24 @@ class ResearchCycleTests(unittest.TestCase):
             draft = build_bar_draft(codes[0])
             draft["rows"][0]["date"] = "20260812"
             with self.assertRaisesRegex(cycle.CycleError, "pre-registration"):
+                cycle.seal_bars(draft, case)
+
+    def test_bar_session_after_generated_at_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))
+            case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
+            draft = build_bar_draft(codes[0])
+            draft["rows"][-1]["date"] = "20260818"
+            with self.assertRaisesRegex(cycle.CycleError, "not yet closed"):
+                cycle.seal_bars(draft, case)
+
+    def test_same_session_bar_before_close_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            closure_bundle, codes, _, _, _ = build_closure_bundle(Path(tmp))
+            case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
+            draft = build_bar_draft(codes[0])
+            draft["generated_at"] = "2026-08-17T06:59:59+00:00"
+            with self.assertRaisesRegex(cycle.CycleError, "not yet closed"):
                 cycle.seal_bars(draft, case)
 
     def test_case_cannot_acquire_production_authority(self) -> None:
@@ -510,6 +544,43 @@ class ResearchCycleTests(unittest.TestCase):
                 "disclaimer": cycle.DISCLAIMER,
             }
             with self.assertRaisesRegex(cycle.CycleError, "not bound"):
+                cycle.seal_review_receipt(draft, review)
+
+    def test_postmortem_requires_closed_or_no_trade_outcome(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            closure_bundle, codes, _, _, _ = build_closure_bundle(root)
+            case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
+            bar_draft = build_bar_draft(codes[0])
+            bar_draft["rows"] = [
+                {"date": "20260813", "open": 97.0, "high": 99.0, "low": 96.0, "close": 98.0},
+                {"date": "20260814", "open": 98.0, "high": 99.0, "low": 97.0, "close": 98.5},
+            ]
+            bar_draft["generated_at"] = "2026-08-14T16:00:00+00:00"
+            bars = cycle.seal_bars(bar_draft, case)
+            trace, _, review = cycle.run_cycle(
+                bundle_dir=closure_bundle,
+                case=case,
+                bars=bars,
+                generated_at="2026-08-14T16:10:00+00:00",
+            )
+            self.assertEqual(review["paper_state"], "PENDING")
+            draft = {
+                "schema": cycle.REVIEW_RECEIPT_SCHEMA,
+                "schema_version": cycle.SCHEMA_VERSION,
+                "research_cycle_id": trace["research_cycle_id"],
+                "mechanical_review_hash": review["review_hash"],
+                "claimed_reviewer": "Junyan",
+                "identity_verification": "UNAVAILABLE",
+                "production_authority": False,
+                "reviewed_at": "2026-08-14T16:20:00+00:00",
+                "authorization_text": f"批准离线复盘，绑定 review_hash {review['review_hash'][:12]}，不产生生产权限。",
+                "primary_attribution": "PROCESS_OK",
+                "lessons": ["窗口尚未结束，不能归因。"],
+                "rule_change_proposals": [],
+                "disclaimer": cycle.DISCLAIMER,
+            }
+            with self.assertRaisesRegex(cycle.CycleError, "outcome is incomplete"):
                 cycle.seal_review_receipt(draft, review)
 
     def test_final_manifest_cannot_rewrite_paper_authority(self) -> None:

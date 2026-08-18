@@ -186,7 +186,9 @@ AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py seal-case \
   --output /tmp/research-case.json
 ```
 
-After settled bars exist, seal them separately and replay the paper cycle:
+After settled bars exist, seal them separately and replay the paper cycle. A
+bar is accepted only after its session has closed in the operational +08:00
+timezone; a future or still-open session fails closed:
 
 ```bash
 AR_OFFLINE=1 python3 experiments/research_funnel/research_cycle.py seal-bars \
@@ -208,7 +210,9 @@ prospective case and settled bars. It contains the transition trace, paper fund
 snapshot, NAV/P&L, T+1/3/5/10 windows, and an `AWAITING_HUMAN_REVIEW` mechanical
 review.
 
-The postmortem is authored only after that result exists. Its text must quote
+The postmortem is authored only after the mechanical state reaches
+`REVIEW_READY` or `NO_TRADE`; pending and filled-but-open cycles remain visibly
+incomplete and cannot be attributed. Its text must quote
 the mechanical review hash and choose one attribution from `PROCESS_OK`,
 `THESIS_ERROR`, `TIMING_ERROR`, `SIZING_ERROR`, `MARKET_SHOCK`, or `DATA_GAP`.
 Rule-change proposals are recorded but become effective only for future cases.
@@ -242,7 +246,8 @@ normalizing them.
 4. Pre-registration outcome bars fail closed.
 5. Self-consistently rehashed output tampering is caught by deterministic
    rebuild, not only by byte hashes.
-6. A postmortem cannot predate or detach from its mechanical outcome.
+6. A postmortem cannot predate, detach from, or precede completion of its
+   mechanical outcome.
 7. All artifacts keep `claim_allowed=false`, `production_authority=false`, and
    `no_trade_flag=true`.
 8. Every load-bearing gate has a mutation test and the complete suite passes

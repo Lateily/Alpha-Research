@@ -1483,6 +1483,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Outcome evidence must remain later than the prospectively sealed case.",
     ),
     MutationCase(
+        mutation_id="RESEARCH_CYCLE_BARS_SETTLEMENT_TIME",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if bars_not_yet_settled:\n'
+        '        raise CycleError("settled bars include a session not yet closed at bars.generated_at")',
+        after='    if False:\n'
+        '        raise CycleError("settled bars include a session not yet closed at bars.generated_at")',
+        expected_failure_marker="test_bar_session_after_generated_at_is_rejected",
+        rationale="A future or still-open session cannot be sealed as settled outcome evidence.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_CYCLE_PAPER_ONLY_AUTHORITY",
         component="Research funnel full paper cycle",
         source_path="experiments/research_funnel/research_cycle.py",
@@ -1541,6 +1553,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise CycleError("postmortem receipt is not bound to the mechanical outcome")',
         expected_failure_marker="test_postmortem_receipt_must_bind_outcome_hash",
         rationale="Human attribution must occur after and bind the exact mechanical result.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_POSTMORTEM_OUTCOME_REQUIRED",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if outcome_incomplete:\n'
+        '        raise CycleError("postmortem refused because the paper outcome is incomplete")',
+        after='    if False:\n'
+        '        raise CycleError("postmortem refused because the paper outcome is incomplete")',
+        expected_failure_marker="test_postmortem_requires_closed_or_no_trade_outcome",
+        rationale="Attribution requires a closed or explicitly no-trade mechanical outcome.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_MARKER_COVERAGE_CALL",
