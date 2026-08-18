@@ -304,6 +304,17 @@ class ResearchMethodTests(unittest.TestCase):
                 draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
             )
 
+    def test_wrong_if_trigger_maps_to_only_one_invalidation_claim(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        duplicate = copy.deepcopy(draft["thesis_expectations"][2])
+        duplicate["claim_id"] = "INVALID_GM_CONFLICTING_DUPLICATE"
+        duplicate["threshold"] = 25.0
+        draft["thesis_expectations"].append(duplicate)
+        with self.assertRaisesRegex(method.MethodError, "exactly one invalidation"):
+            method.seal_registration(
+                draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
+            )
+
     def test_semiconductor_valuation_must_be_derived_from_inputs(self) -> None:
         draft, core, timing, pack = registration_draft()
         draft["valuation"]["model_output"]["computed_base_low"] = 94.0
@@ -430,6 +441,18 @@ class ResearchMethodTests(unittest.TestCase):
             generated_at="2026-08-17T16:10:00+00:00",
         )
         self.assertEqual(scorecard["thesis"]["status"], "DATA_BLOCKED")
+
+    def test_outcome_chronology_normalizes_registered_date(self) -> None:
+        draft, core, timing, pack = registration_draft()
+        draft["registered_at"] = "2026-08-13"
+        registration = method.seal_registration(
+            draft, thesis_core=core, timing_ticket=timing, decision_pack=pack
+        )
+        outcomes = outcome_draft(registration)
+        outcomes["facts"][0]["observed_at"] = "20260812"
+        outcomes["facts_hash"] = funnel._hash(outcomes["facts"])
+        with self.assertRaisesRegex(method.MethodError, "chronology"):
+            method.seal_outcomes(outcomes, registration)
 
     def test_outcomes_bind_each_fact_to_registered_period_and_source(self) -> None:
         registration = valid_registration()

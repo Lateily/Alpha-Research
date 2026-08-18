@@ -1761,6 +1761,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Each mechanized thesis invalidation must be individually represented in the registered scoreable claims.",
     ),
     MutationCase(
+        mutation_id="RESEARCH_METHOD_WRONG_IF_ONE_TO_ONE",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if duplicate_trigger_mapping:\n'
+        '        raise MethodError("each thesis wrong-if trigger must map to exactly one invalidation claim")',
+        after='    if False:\n'
+        '        raise MethodError("each thesis wrong-if trigger must map to exactly one invalidation claim")',
+        expected_failure_marker="test_wrong_if_trigger_maps_to_only_one_invalidation_claim",
+        rationale="Conflicting duplicate invalidation claims cannot share one registered wrong-if trigger.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_METHOD_VALUATION_DERIVATION",
         component="Research funnel method valuation",
         source_path="experiments/research_funnel/research_method.py",
@@ -1867,6 +1879,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise MethodError("method outcomes hash mismatch")',
         expected_failure_marker="test_outcome_hash_covers_every_later_fact",
         rationale="Later facts cannot be rewritten after the scoring artifact is sealed.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_OUTCOME_REGISTERED_DATE",
+        component="Research funnel method outcomes",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before=('    # governance-mutation: RESEARCH_METHOD_OUTCOME_REGISTERED_DATE\n'
+                '    registered_at = _date8(registration.get("registered_at"), "registration.registered_at")'),
+        after=('    # governance-mutation: RESEARCH_METHOD_OUTCOME_REGISTERED_DATE\n'
+               '    registered_at = str(registration.get("registered_at"))'),
+        expected_failure_marker="test_outcome_chronology_normalizes_registered_date",
+        rationale="Accepted registration date spellings must be normalized before every point-in-time comparison.",
     ),
     MutationCase(
         mutation_id="RESEARCH_METHOD_FACT_BINDING",

@@ -248,13 +248,18 @@ def _validate_claims(
     if not kinds.intersection({"CATALYST", "FUNDAMENTAL"}) or "INVALIDATION" not in kinds:
         raise MethodError("claims need positive/fundamental expectations and an invalidation")
     required_hashes = {_hash(trigger) for trigger in wrong_if_triggers}
-    observed_hashes = {
+    observed_trigger_hashes = [
         str(claim["wrong_if_trigger_hash"])
         for claim in claims if claim["kind"] == "INVALIDATION"
-    }
+    ]
+    observed_hashes = set(observed_trigger_hashes)
     # governance-mutation: RESEARCH_METHOD_WRONG_IF_COVERAGE
     if observed_hashes != required_hashes:
         raise MethodError("structured invalidation claims do not exactly cover thesis wrong-if triggers")
+    duplicate_trigger_mapping = len(observed_trigger_hashes) != len(observed_hashes)
+    # governance-mutation: RESEARCH_METHOD_WRONG_IF_ONE_TO_ONE
+    if duplicate_trigger_mapping:
+        raise MethodError("each thesis wrong-if trigger must map to exactly one invalidation claim")
 
 
 def _validate_valuation(value: Any, core: Mapping[str, Any], registered_at: str) -> None:
@@ -536,7 +541,10 @@ def validate_outcomes(outcomes: Mapping[str, Any], registration: Mapping[str, An
         raise MethodError("method outcomes are not bound to this registration")
     scoring_as_of = _date8(outcomes.get("scoring_as_of"), "outcomes.scoring_as_of")
     generated_date = _date8(outcomes.get("generated_at"), "outcomes.generated_at")
-    if scoring_as_of < registration.get("registered_at") or generated_date < scoring_as_of:
+    # governance-mutation: RESEARCH_METHOD_OUTCOME_REGISTERED_DATE
+    registered_at = _date8(registration.get("registered_at"), "registration.registered_at")
+    outcome_chronology_invalid = scoring_as_of < registered_at or generated_date < scoring_as_of
+    if outcome_chronology_invalid:
         raise MethodError("method outcome chronology is invalid")
     if outcomes.get("production_authority") is not False or outcomes.get("disclaimer") != DISCLAIMER:
         raise MethodError("method outcomes authority boundary changed")
@@ -552,7 +560,7 @@ def validate_outcomes(outcomes: Mapping[str, Any], registration: Mapping[str, An
             raise MethodError(f"fact id is unknown or duplicated: {claim_id}")
         seen.add(claim_id)
         observed_at = _date8(item.get("observed_at"), f"fact {claim_id}.observed_at")
-        if observed_at < registration.get("registered_at") or observed_at > scoring_as_of:
+        if observed_at < registered_at or observed_at > scoring_as_of:
             raise MethodError(f"fact {claim_id} chronology is invalid")
         expected = valid_ids[claim_id]
         if item.get("evidence_tier") not in EVIDENCE_TIERS:
