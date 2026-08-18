@@ -454,6 +454,22 @@ class ResearchMethodTests(unittest.TestCase):
         with self.assertRaisesRegex(method.MethodError, "chronology"):
             method.seal_outcomes(outcomes, registration)
 
+    def test_scorecard_normalizes_scoring_date_before_due_fact_classification(self) -> None:
+        registration = valid_registration()
+        draft = outcome_draft(registration)
+        draft["scoring_as_of"] = "2026-08-17"
+        draft["facts"] = [
+            fact for fact in draft["facts"] if fact["claim_id"] != "CATALYST_H1"
+        ]
+        draft["facts_hash"] = funnel._hash(draft["facts"])
+        outcomes = method.seal_outcomes(draft, registration)
+        scorecard = method.build_scorecard(
+            registration, outcomes, order=closed_order(), bars=settled_bars(),
+            fund_snapshot={"fund": {"initial_capital": 1_000_000.0}},
+            generated_at="2026-08-17T16:10:00+00:00",
+        )
+        self.assertEqual(scorecard["thesis"]["status"], "DATA_BLOCKED")
+
     def test_outcomes_bind_each_fact_to_registered_period_and_source(self) -> None:
         registration = valid_registration()
         draft = outcome_draft(registration)

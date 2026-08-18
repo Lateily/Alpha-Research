@@ -813,7 +813,8 @@ def build_scorecard(
 ) -> dict[str, Any]:
     validate_outcomes(outcomes, registration)
     facts = {str(item["claim_id"]): item for item in outcomes["facts"]}
-    scoring_as_of = str(outcomes["scoring_as_of"])
+    # governance-mutation: RESEARCH_METHOD_SCORING_DATE_NORMALIZATION
+    scoring_as_of = _date8(outcomes["scoring_as_of"], "outcomes.scoring_as_of")
     thesis = _score_thesis(registration, facts, scoring_as_of)
     valuation = _score_valuation(registration, facts, scoring_as_of)
     timing = _score_timing(registration, order, bars)

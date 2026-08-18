@@ -191,9 +191,9 @@ The scorecard contains independent ledgers:
 
 | Ledger | Question | Example output |
 |---|---|---|
-| Thesis | Did catalysts/fundamentals occur, and did invalidation trigger? | `RIGHT`, `WRONG`, `PARTIAL`, `DATA_BLOCKED` |
-| Valuation | Did forecast facts land inside registered ranges? | `IN_RANGE`, `MODEL_MISS` |
-| Timing | Did the registered setup reach target or structure stop? | `RIGHT`, `WRONG`, `UNRESOLVED` |
+| Thesis | Did catalysts/fundamentals occur, and did invalidation trigger? | `RIGHT`, `WRONG`, `PARTIAL`, `UNRESOLVED`, `DATA_BLOCKED` |
+| Valuation | Did forecast facts land inside registered ranges? | `IN_RANGE`, `MODEL_MISS`, `UNRESOLVED`, `DATA_BLOCKED` |
+| Timing | Did the registered setup reach target or structure stop? | `RIGHT`, `WRONG`, `UNRESOLVED`, `NO_TRADE`, `NO_FILL` |
 | Execution | Did actual paper fields equal registered fields? | `COMPLIANT`, `VIOLATION` |
 | Portfolio | Did risk and notional stay inside policy? | `WITHIN_REGISTERED_LIMITS`, `VIOLATION` |
 | P&L | What did the paper position earn or lose? | `PROFIT`, `LOSS`, `FLAT` |
@@ -229,8 +229,8 @@ single-trade thesis scoring, timing scoring, win rate, or alpha proof.
 
 ## Deliberate Boundaries And Next Methods
 
-V1 is offline and stacked on the unmerged #272 cycle. It is not deployed to the
-nightly runtime. The following remain separate future slices:
+V1 is offline and builds on the #272 cycle now merged into `main`. It is not
+deployed to the nightly runtime. The following remain separate future slices:
 
 1. Event adapters that populate outcome facts from E1 evidence without analyst
    copy/paste and upgrade source identity from manual binding to machine-checked

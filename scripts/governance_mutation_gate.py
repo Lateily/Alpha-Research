@@ -1893,6 +1893,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Accepted registration date spellings must be normalized before every point-in-time comparison.",
     ),
     MutationCase(
+        mutation_id="RESEARCH_METHOD_SCORING_DATE_NORMALIZATION",
+        component="Research funnel method scorecard",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before=('    # governance-mutation: RESEARCH_METHOD_SCORING_DATE_NORMALIZATION\n'
+                '    scoring_as_of = _date8(outcomes["scoring_as_of"], "outcomes.scoring_as_of")'),
+        after=('    # governance-mutation: RESEARCH_METHOD_SCORING_DATE_NORMALIZATION\n'
+               '    scoring_as_of = str(outcomes["scoring_as_of"])'),
+        expected_failure_marker="test_scorecard_normalizes_scoring_date_before_due_fact_classification",
+        rationale="Due missing facts must remain DATA_BLOCKED for every accepted scoring date spelling.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_METHOD_FACT_BINDING",
         component="Research funnel method outcomes",
         source_path="experiments/research_funnel/research_method.py",

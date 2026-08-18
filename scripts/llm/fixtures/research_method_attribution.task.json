@@ -14,7 +14,7 @@
   "human_owner": "Junyan",
   "reviewer": "Junyan",
   "executor_candidates": ["Codex"],
-  "dependencies": ["PR #272 head 23ab853927cded953504f1dc87b906d95997e9fe"],
+  "dependencies": ["PR #272 merged as 79bbc3e21d4829edceff38df7368197cc505ecf2"],
   "authority_docs": [
     "AGENTS.md",
     "experiments/AGENTS.md",
