@@ -133,6 +133,14 @@ jobs:
       # launchctl 计数/退出码、精确 run 日志段、持久 bundle 与报警旗,全程只读。
       - name: Scheduled nightly production acceptance regression (offline)
         run: python3 tests/test_nightly_acceptance_offline.py
+      # U1-U5 离线闭环:冻结随机对照、同日 U3、packet-bound U4 人工复审,
+      # 且 U5 在 factpack/wrong-if/因果簇完成前必须保持 DATA_BLOCKED。
+      - name: Offline research closure experiment
+        run: python3 tests/test_research_closure_experiment.py
+      # U4 之后的完整离线链:研究核心、红队、双票、唯一 paper 成交引擎、
+      # 结算复盘与绑定结果哈希的人类归因;不触碰生产账本。
+      - name: Offline U4-to-paper research cycle
+        run: python3 tests/test_research_cycle.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest

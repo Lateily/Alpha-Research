@@ -15,6 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, ".."))
 sys.path.insert(0, os.path.join(HERE, "..", "experiments", "execution_tracker"))
+sys.path.insert(0, os.path.join(HERE, "..", "experiments", "research_funnel"))
 
 
 class NetworkAttempt(RuntimeError):
@@ -61,6 +62,8 @@ from experiments.macro_os import m1a as macro_m1a  # noqa: E402,F401
 from experiments.macro_os import m1b as macro_m1b  # noqa: E402,F401
 from experiments.macro_os import m1c as macro_m1c  # noqa: E402,F401
 from experiments.macro_os import expectation_registry as macro_expectations  # noqa: E402,F401
+from experiments.research_funnel import closure_experiment  # noqa: E402,F401
+from experiments.research_funnel import research_cycle  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
 import test_engines_offline as teo        # noqa: E402
@@ -123,6 +126,24 @@ publication_migration_result = unittest.TextTestRunner(verbosity=0).run(
 )
 assert publication_migration_result.wasSuccessful(), (
     "R-043 publication migration suite failed under socket guard"
+)
+import test_research_closure_experiment as closure_tests  # noqa: E402
+closure_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        closure_tests.ResearchClosureExperimentTests
+    )
+)
+assert closure_result.wasSuccessful(), (
+    "offline research closure suite failed under socket guard"
+)
+import test_research_cycle as research_cycle_tests  # noqa: E402
+research_cycle_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        research_cycle_tests.ResearchCycleTests
+    )
+)
+assert research_cycle_result.wasSuccessful(), (
+    "offline U4-to-paper research cycle suite failed under socket guard"
 )
 try:
     macro_collectors.UrllibTransport().fetch(
