@@ -33,6 +33,7 @@ import decision_pack as decision_pack_contract  # noqa: E402
 import decision_sheet as decision_sheet_contract  # noqa: E402
 import funnel_pipeline as funnel  # noqa: E402
 import model_paper_fund as paper_fund  # noqa: E402
+import research_method as method_contract  # noqa: E402
 from security_registry import _atomic_write_json  # noqa: E402
 
 
@@ -49,15 +50,18 @@ DISCLAIMER = "不是买卖指令；研究信号，human executes."
 CYCLE_ARTIFACTS = {
     "prospective_case.json",
     "settled_bars.json",
+    "method_outcomes.json",
     "cycle_trace.json",
     "paper_fund_snapshot.json",
+    "method_scorecard.json",
     "mechanical_review.json",
 }
 FINAL_ARTIFACTS = {"review_receipt.json", "reviewed_cycle.json"}
 CASE_KEYS = {
     "schema", "schema_version", "generated_at", "ticker", "name", "theme",
     "source_refs", "factpack", "thesis_core", "red_team", "thesis_ticket",
-    "timing_ticket", "decision_pack", "causal_cluster", "paper_order",
+    "timing_ticket", "decision_pack", "method_registration", "industry_code",
+    "causal_cluster", "paper_order",
     "no_trade_flag", "production_authority", "disclaimer", "case_hash",
 }
 CASE_DRAFT_KEYS = CASE_KEYS - {"case_hash"}
@@ -67,9 +71,10 @@ FORBIDDEN_KEYS = {
 }
 RED_TEAM_AXES = {"evidence", "variant", "valuation", "catalyst", "wrong_if"}
 ATTRIBUTIONS = {
-    "PROCESS_OK", "THESIS_ERROR", "TIMING_ERROR", "SIZING_ERROR",
-    "MARKET_SHOCK", "DATA_GAP",
+    "THESIS_RIGHT_TIMING_RIGHT", "THESIS_RIGHT_TIMING_WRONG",
+    "THESIS_WRONG_TIMING_RIGHT", "THESIS_WRONG_TIMING_WRONG", "UNRESOLVED",
 }
+REVIEW_DISPOSITIONS = {"CONFIRM", "DISPUTE"}
 HORIZONS = (1, 3, 5, 10)
 PASS_TIMING_EVIDENCE = {
     "market_state": {"RISK_ON", "WEAK_REPAIR", "STYLE_ROTATION"},
@@ -347,6 +352,20 @@ def validate_case(case: Mapping[str, Any], bundle_dir: Path) -> dict[str, Any]:
     if timing_evidence_invalid:
         raise CycleError("a PASS timing ticket lacks settled market/sector/flow/structure/portfolio evidence")
 
+    registration = case.get("method_registration")
+    if not isinstance(registration, dict):
+        raise CycleError("method_registration must be a sealed object")
+    try:
+        method_contract.validate_registration(
+            registration, thesis_core=core, timing_ticket=timing_ticket,
+            decision_pack=decision_pack,
+        )
+    except method_contract.MethodError as exc:
+        raise CycleError(f"registered research method is invalid: {exc}") from exc
+    # governance-mutation: RESEARCH_CYCLE_INDUSTRY_BINDING
+    if registration["valuation"]["industry"] != case.get("industry_code"):
+        raise CycleError("registered valuation industry differs from the research case")
+
     order = case.get("paper_order") or {}
     if set(order) != {"registered_at", "risk_pct", "setup", "reason", "invalid_if", "gate_state"}:
         raise CycleError("paper_order fields are not exact")
@@ -446,13 +465,23 @@ def _mechanical_horizons(order: Mapping[str, Any], rows: list[dict[str, Any]]) -
 
 
 def run_cycle(
-    *, bundle_dir: Path, case: Mapping[str, Any], bars: Mapping[str, Any], generated_at: str,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    *, bundle_dir: Path, case: Mapping[str, Any], bars: Mapping[str, Any],
+    outcomes: Mapping[str, Any], generated_at: str,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
     source = validate_case(case, bundle_dir)
     validate_bars(bars, case)
+    try:
+        method_contract.validate_outcomes(outcomes, case["method_registration"])
+    except method_contract.MethodError as exc:
+        raise CycleError(f"method outcomes are invalid: {exc}") from exc
     run_at = _iso(generated_at, "cycle.generated_at")
     if run_at < _iso(bars["generated_at"], "bars.generated_at"):
         raise CycleError("cycle output predates its settled-bar evidence")
+    if _iso(outcomes["generated_at"], "method_outcomes.generated_at") < _iso(bars["generated_at"], "bars.generated_at"):
+        raise CycleError("method outcomes predate the settled-bar evidence")
+    # governance-mutation: RESEARCH_CYCLE_SCORING_ASOF
+    if outcomes["scoring_as_of"] != bars["rows"][-1]["date"]:
+        raise CycleError("method outcomes and settled bars do not share one scoring as_of")
     cycle_id = _hash({"source_refs": case["source_refs"], "ticker": case["ticker"], "case_hash": case["case_hash"]})[:24]
     transitions = [
         _transition(1, "U4_SELECTED", case["generated_at"], source["queue"]["rows_hash"]),
@@ -527,7 +556,10 @@ def run_cycle(
         "schema": TRACE_SCHEMA, "schema_version": SCHEMA_VERSION,
         "research_cycle_id": cycle_id, "ticker": case["ticker"], "as_of": source["verified"]["as_of"],
         "generated_at": generated_at, "final_state": final_state, "transitions": transitions,
-        "source_refs": {**case["source_refs"], "case_hash": case["case_hash"], "bars_hash": bars["rows_hash"]},
+        "source_refs": {
+            **case["source_refs"], "case_hash": case["case_hash"],
+            "bars_hash": bars["rows_hash"], "outcome_hash": outcomes["outcome_hash"],
+        },
         "no_trade_flag": True, "production_authority": False, "claim_allowed": False,
         "disclaimer": DISCLAIMER,
     }
@@ -540,6 +572,14 @@ def run_cycle(
         "disclaimer": DISCLAIMER,
     }
     fund_snapshot["snapshot_hash"] = _hash(fund_snapshot)
+    try:
+        scorecard = method_contract.build_scorecard(
+            case["method_registration"], outcomes, order=order,
+            bars=list(bars["rows"]), fund_snapshot=fund_snapshot,
+            generated_at=generated_at,
+        )
+    except method_contract.MethodError as exc:
+        raise CycleError(f"method scorecard cannot be built: {exc}") from exc
     order_for_review = order or {}
     review: dict[str, Any] = {
         "schema": REVIEW_SCHEMA, "schema_version": SCHEMA_VERSION,
@@ -549,16 +589,22 @@ def run_cycle(
         "paper_return": order_for_review.get("paper_return"), "realized_R": order_for_review.get("realized_R"),
         "pnl_cny": order_for_review.get("pnl_cny"),
         "horizons": _mechanical_horizons(order_for_review, list(bars["rows"])),
+        "method_scorecard_hash": scorecard["scorecard_hash"],
+        "machine_attribution": scorecard["machine_attribution"],
         "human_attribution_status": "AWAITING_HUMAN_REVIEW",
         "allowed_attributions": sorted(ATTRIBUTIONS),
         "claim_allowed": False, "no_trade_flag": True, "production_authority": False,
         "disclaimer": DISCLAIMER,
     }
     review["review_hash"] = _hash(review)
-    return trace, fund_snapshot, review
+    return trace, fund_snapshot, scorecard, review
 
 
-def _write_cycle_outputs(output_dir: Path, closure_bundle: Path, case: Mapping[str, Any], bars: Mapping[str, Any], trace: Mapping[str, Any], fund: Mapping[str, Any], review: Mapping[str, Any]) -> None:
+def _write_cycle_outputs(
+    output_dir: Path, closure_bundle: Path, case: Mapping[str, Any],
+    bars: Mapping[str, Any], outcomes: Mapping[str, Any], trace: Mapping[str, Any],
+    fund: Mapping[str, Any], scorecard: Mapping[str, Any], review: Mapping[str, Any],
+) -> None:
     if os.path.lexists(output_dir):
         raise CycleError(f"output directory already exists: {output_dir}")
     output_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -566,7 +612,9 @@ def _write_cycle_outputs(output_dir: Path, closure_bundle: Path, case: Mapping[s
     try:
         payloads = {
             "prospective_case.json": dict(case), "settled_bars.json": dict(bars),
+            "method_outcomes.json": dict(outcomes),
             "cycle_trace.json": dict(trace), "paper_fund_snapshot.json": dict(fund),
+            "method_scorecard.json": dict(scorecard),
             "mechanical_review.json": dict(review),
         }
         for name, payload in payloads.items():
@@ -614,13 +662,15 @@ def verify_cycle_bundle(bundle_dir: Path, closure_bundle: Path) -> dict[str, Any
             raise CycleError(f"cycle artifact hash mismatch: {name}")
     case = _load_object(bundle_dir / "prospective_case.json")
     bars = _load_object(bundle_dir / "settled_bars.json")
+    outcomes = _load_object(bundle_dir / "method_outcomes.json")
     stored = (
         _load_object(bundle_dir / "cycle_trace.json"),
         _load_object(bundle_dir / "paper_fund_snapshot.json"),
+        _load_object(bundle_dir / "method_scorecard.json"),
         _load_object(bundle_dir / "mechanical_review.json"),
     )
     rebuilt = run_cycle(
-        bundle_dir=closure_bundle, case=case, bars=bars,
+        bundle_dir=closure_bundle, case=case, bars=bars, outcomes=outcomes,
         generated_at=stored[0]["generated_at"],
     )
     projection_changed = rebuilt != stored
@@ -639,8 +689,10 @@ def verify_cycle_bundle(bundle_dir: Path, closure_bundle: Path) -> dict[str, Any
 def validate_review_receipt(receipt: Mapping[str, Any], review: Mapping[str, Any]) -> None:
     expected = {
         "schema", "schema_version", "research_cycle_id", "mechanical_review_hash",
+        "machine_attribution", "review_disposition", "human_attribution",
+        "disagreement_reason", "evidence_refs",
         "claimed_reviewer", "identity_verification", "production_authority", "reviewed_at",
-        "authorization_text", "primary_attribution", "lessons", "rule_change_proposals",
+        "authorization_text", "lessons", "rule_change_proposals",
         "receipt_hash", "disclaimer",
     }
     if set(receipt) != expected or receipt.get("schema") != REVIEW_RECEIPT_SCHEMA or receipt.get("schema_version") != SCHEMA_VERSION:
@@ -648,6 +700,7 @@ def validate_review_receipt(receipt: Mapping[str, Any], review: Mapping[str, Any
     receipt_unbound = (
         receipt.get("research_cycle_id") != review.get("research_cycle_id")
         or receipt.get("mechanical_review_hash") != review.get("review_hash")
+        or receipt.get("machine_attribution") != review.get("machine_attribution")
         or receipt.get("receipt_hash") != _hash(_without_hash(receipt, "receipt_hash"))
     )
     # governance-mutation: RESEARCH_CYCLE_POSTMORTEM_BINDING
@@ -661,12 +714,30 @@ def validate_review_receipt(receipt: Mapping[str, Any], review: Mapping[str, Any
         receipt.get("claimed_reviewer") != "Junyan"
         or receipt.get("identity_verification") != "UNAVAILABLE"
         or receipt.get("production_authority") is not False
-        or receipt.get("primary_attribution") not in ATTRIBUTIONS
+        or receipt.get("review_disposition") not in REVIEW_DISPOSITIONS
+        or receipt.get("human_attribution") not in ATTRIBUTIONS
+        or not isinstance(receipt.get("evidence_refs"), list)
+        or not receipt["evidence_refs"]
+        or any(not str(ref).strip() for ref in receipt["evidence_refs"])
         or not isinstance(receipt.get("lessons"), list) or not receipt["lessons"]
         or not isinstance(receipt.get("rule_change_proposals"), list)
         or receipt.get("disclaimer") != DISCLAIMER
     ):
         raise CycleError("postmortem receipt authority or content boundary changed")
+    confirmed = receipt.get("review_disposition") == "CONFIRM"
+    dispute_invalid = (
+        (confirmed and (
+            receipt.get("human_attribution") != receipt.get("machine_attribution")
+            or receipt.get("disagreement_reason") is not None
+        ))
+        or (not confirmed and (
+            receipt.get("human_attribution") == receipt.get("machine_attribution")
+            or not str(receipt.get("disagreement_reason") or "").strip()
+        ))
+    )
+    # governance-mutation: RESEARCH_METHOD_HUMAN_REVIEW_EVIDENCE
+    if dispute_invalid:
+        raise CycleError("human attribution confirmation/dispute lacks bound evidence semantics")
     reviewed_at = _iso(receipt.get("reviewed_at"), "postmortem.reviewed_at")
     if reviewed_at < _iso(review.get("generated_at"), "mechanical_review.generated_at"):
         raise CycleError("postmortem predates the mechanical outcome")
@@ -694,7 +765,12 @@ def finalize_review(cycle_bundle: Path, closure_bundle: Path, receipt: Mapping[s
         "research_cycle_id": trace["research_cycle_id"], "status": "REVIEWED",
         "cycle_bundle_hash": _load_object(cycle_bundle / "manifest.json")["bundle_hash"],
         "mechanical_review_hash": review["review_hash"], "review_receipt_hash": receipt["receipt_hash"],
-        "reviewed_at": receipt["reviewed_at"], "primary_attribution": receipt["primary_attribution"],
+        "reviewed_at": receipt["reviewed_at"],
+        "machine_attribution": receipt["machine_attribution"],
+        "review_disposition": receipt["review_disposition"],
+        "human_attribution": receipt["human_attribution"],
+        "disagreement_reason": receipt["disagreement_reason"],
+        "evidence_refs": receipt["evidence_refs"],
         "lessons": receipt["lessons"], "rule_change_proposals": receipt["rule_change_proposals"],
         "rule_changes_effective_prospectively_only": True,
         "claim_allowed": False, "no_trade_flag": True, "production_authority": False,
@@ -761,7 +837,7 @@ def verify_final_bundle(output_dir: Path, cycle_bundle: Path, closure_bundle: Pa
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("seal-case", "seal-bars"):
+    for name in ("seal-case", "seal-bars", "seal-outcomes"):
         sub = commands.add_parser(name)
         sub.add_argument("--closure-bundle", required=True)
         sub.add_argument("--input", required=True)
@@ -769,7 +845,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         sub.add_argument("--output", required=True)
     replay = commands.add_parser("replay")
     replay.add_argument("--closure-bundle", required=True); replay.add_argument("--case", required=True)
-    replay.add_argument("--bars", required=True); replay.add_argument("--generated-at", required=True); replay.add_argument("--output-dir", required=True)
+    replay.add_argument("--bars", required=True); replay.add_argument("--outcomes", required=True)
+    replay.add_argument("--generated-at", required=True); replay.add_argument("--output-dir", required=True)
     verify = commands.add_parser("verify")
     verify.add_argument("--closure-bundle", required=True); verify.add_argument("--output-dir", required=True)
     seal_review = commands.add_parser("seal-review")
@@ -788,10 +865,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                 raise CycleError("seal-bars requires --case")
             payload = seal_bars(_load_object(Path(args.input)), _load_object(Path(args.case)))
             _write_new_json(Path(args.output), payload)
+        elif args.command == "seal-outcomes":
+            if not args.case:
+                raise CycleError("seal-outcomes requires --case")
+            case = _load_object(Path(args.case))
+            payload = method_contract.seal_outcomes(
+                _load_object(Path(args.input)), case["method_registration"]
+            )
+            _write_new_json(Path(args.output), payload)
         elif args.command == "replay":
             case = _load_object(Path(args.case)); bars = _load_object(Path(args.bars))
-            outputs = run_cycle(bundle_dir=Path(args.closure_bundle), case=case, bars=bars, generated_at=args.generated_at)
-            _write_cycle_outputs(Path(args.output_dir), Path(args.closure_bundle), case, bars, *outputs)
+            outcomes = _load_object(Path(args.outcomes))
+            outputs = run_cycle(
+                bundle_dir=Path(args.closure_bundle), case=case, bars=bars,
+                outcomes=outcomes, generated_at=args.generated_at,
+            )
+            _write_cycle_outputs(
+                Path(args.output_dir), Path(args.closure_bundle), case, bars,
+                outcomes, *outputs,
+            )
             verify_cycle_bundle(Path(args.output_dir), Path(args.closure_bundle))
         elif args.command == "verify":
             print(json.dumps(verify_cycle_bundle(Path(args.output_dir), Path(args.closure_bundle)), ensure_ascii=False, sort_keys=True))
@@ -805,7 +897,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             verify_final_bundle(Path(args.output_dir), Path(args.cycle_bundle), Path(args.closure_bundle))
         else:
             print(json.dumps(verify_final_bundle(Path(args.output_dir), Path(args.cycle_bundle), Path(args.closure_bundle)), ensure_ascii=False, sort_keys=True))
-    except (CycleError, closure.ClosureError, ValueError) as exc:
+    except (CycleError, closure.ClosureError, method_contract.MethodError, ValueError) as exc:
         print(f"REFUSED: {exc}")
         return 1
     print(DISCLAIMER)

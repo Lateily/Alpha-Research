@@ -1,0 +1,74 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "RESEARCH-METHOD-ATTRIBUTION-001",
+  "source_issue": null,
+  "architecture_block": ["research-framework", "registered-method-and-attribution"],
+  "objective": "Add prospectively sealed thesis expectations, industry valuation adapters, manually authored SMC timing, later outcome facts, six independent scoring ledgers, machine thesis/timing attribution, and evidence-bound Junyan confirmation or dispute to the offline U4-to-paper cycle.",
+  "non_goals": [
+    "Do not modify or run the production nightly chain",
+    "Do not write production ledgers, manifests, current_run pointers, NAV, or public data",
+    "Do not automate SMC detection, U4 selection, real orders, or Junyan's final review",
+    "Do not use P&L to rewrite thesis or timing correctness",
+    "Do not claim profitability, win rate, alpha, calibration, or production authority"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["PR #272 head 23ab853927cded953504f1dc87b906d95997e9fe"],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",
+    "docs/research/THESIS_PROTOCOL.md"
+  ],
+  "file_scope": [
+    "experiments/research_funnel/research_method.py",
+    "experiments/research_funnel/research_cycle.py",
+    "tests/test_research_method.py",
+    "tests/test_research_cycle.py",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_governance_mutation_gate.py",
+    "tests/test_no_network_guard.py",
+    ".github/workflows/python-ci.yml",
+    "docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",
+    "scripts/llm/fixtures/research_method_attribution.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "experiments/execution_tracker/model_fund",
+    "experiments/execution_tracker/run_nightly.py",
+    "public/data/v2"
+  ],
+  "input_contracts": [
+    "ar.research_cycle_case.v1.0",
+    "qualified Core Thesis Factory research core",
+    "Research Decision Pack",
+    "offline settled-bar fixture",
+    "later E1/E2 outcome facts"
+  ],
+  "output_artifacts": [
+    "ar.research_method_registration.v1.0",
+    "ar.research_method_outcomes.v1.0",
+    "ar.research_method_scorecard.v1.0",
+    "evidence-bound human confirmation or dispute"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_research_method.py",
+    "python3 tests/test_research_cycle.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 tests/test_no_network_guard.py",
+    "python3 -c task contract compiles through scripts.llm.ai_os.task_compiler.compile_task_manifest",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": [
+    "PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_PRODUCTION_DEPLOY_APPROVAL"
+  ],
+  "created_at": "2026-08-18T09:00:00+08:00"
+}

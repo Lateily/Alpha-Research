@@ -133,6 +133,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/r035_evaluation.py",
     "experiments/research_funnel/closure_experiment.py",
     "experiments/research_funnel/research_cycle.py",
+    "experiments/research_funnel/research_method.py",
 )
 # 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
 # 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
@@ -1628,6 +1629,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A PASS timing ticket must be backed by every settled execution gate.",
     ),
     MutationCase(
+        mutation_id="RESEARCH_CYCLE_INDUSTRY_BINDING",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if registration["valuation"]["industry"] != case.get("industry_code"):\n'
+        '        raise CycleError("registered valuation industry differs from the research case")',
+        after='    if False:\n'
+        '        raise CycleError("registered valuation industry differs from the research case")',
+        expected_failure_marker="test_case_industry_must_match_registered_valuation_adapter",
+        rationale="A research case cannot borrow a valuation adapter from a different industry method.",
+    ),
+    MutationCase(
         mutation_id="RESEARCH_CYCLE_NO_LOOKAHEAD_BARS",
         component="Research funnel full paper cycle",
         source_path="experiments/research_funnel/research_cycle.py",
@@ -1650,6 +1663,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise CycleError("settled bars include a session not yet closed at bars.generated_at")',
         expected_failure_marker="test_bar_session_after_generated_at_is_rejected",
         rationale="A future or still-open session cannot be sealed as settled outcome evidence.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_SCORING_ASOF",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if outcomes["scoring_as_of"] != bars["rows"][-1]["date"]:\n'
+        '        raise CycleError("method outcomes and settled bars do not share one scoring as_of")',
+        after='    if False:\n'
+        '        raise CycleError("method outcomes and settled bars do not share one scoring as_of")',
+        expected_failure_marker="test_scoring_as_of_must_equal_last_settled_bar",
+        rationale="Facts and price-path scoring must close on the same settled observation date.",
     ),
     MutationCase(
         mutation_id="RESEARCH_CYCLE_PAPER_ONLY_AUTHORITY",
@@ -1722,6 +1747,190 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise CycleError("postmortem refused because the paper outcome is incomplete")',
         expected_failure_marker="test_postmortem_requires_closed_or_no_trade_outcome",
         rationale="Attribution requires a closed or explicitly no-trade mechanical outcome.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_WRONG_IF_COVERAGE",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if observed_hashes != required_hashes:\n'
+        '        raise MethodError("structured invalidation claims do not exactly cover thesis wrong-if triggers")',
+        after='    if False:\n'
+        '        raise MethodError("structured invalidation claims do not exactly cover thesis wrong-if triggers")',
+        expected_failure_marker="test_wrong_if_coverage_is_exact_not_a_count",
+        rationale="Each mechanized thesis invalidation must be individually represented in the registered scoreable claims.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_VALUATION_DERIVATION",
+        component="Research funnel method valuation",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if output.get("calculation_status") != "MANUAL_UNVALIDATED" or declared != computed:\n'
+        '        raise MethodError("valuation output is not derived from its adapter inputs")',
+        after='    if False:\n'
+        '        raise MethodError("valuation output is not derived from its adapter inputs")',
+        expected_failure_marker="test_semiconductor_valuation_must_be_derived_from_inputs",
+        rationale="An industry valuation label cannot legitimize an output that was not calculated from its frozen inputs.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_VALUATION_FORECAST_COVERAGE",
+        component="Research funnel method valuation",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if not required_metrics.issubset(metrics):\n'
+        '        raise MethodError("valuation forecasts omit a load-bearing adapter input")',
+        after='    if False:\n'
+        '        raise MethodError("valuation forecasts omit a load-bearing adapter input")',
+        expected_failure_marker="test_valuation_forecasts_cover_the_load_bearing_adapter_input",
+        rationale="An industry adapter must register a later fact capable of testing its load-bearing modeled input.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_STOP_DERIVATION",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if abs(stop - expected_stop) > 1e-8:\n'
+        '        raise MethodError("SMC structure_stop is not derived from invalidation - ATR buffer")',
+        after='    if False:\n'
+        '        raise MethodError("SMC structure_stop is not derived from invalidation - ATR buffer")',
+        expected_failure_marker="test_smc_stop_is_derived_and_dual_ticket_levels_cannot_drift",
+        rationale="A paper stop must be derived from the registered structure invalidation and ATR buffer.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_PASS_EVIDENCE",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if status == "PASS" and not pass_evidence:\n'
+        '        raise MethodError("SMC PASS lacks structure, discount, volume, flow, or sector evidence")',
+        after='    if False:\n'
+        '        raise MethodError("SMC PASS lacks structure, discount, volume, flow, or sector evidence")',
+        expected_failure_marker="test_smc_pass_requires_all_manual_confirmation_evidence",
+        rationale="Manual SMC cannot report PASS while any required settled confirmation is missing.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_POI_BINDING",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if entry_high < poi_low or poi_high < entry_low:\n'
+        '        raise MethodError("SMC entry zone does not overlap the registered point of interest")',
+        after='    if False:\n'
+        '        raise MethodError("SMC entry zone does not overlap the registered point of interest")',
+        expected_failure_marker="test_smc_entry_zone_must_overlap_registered_point_of_interest",
+        rationale="A manual SMC entry cannot cite a point of interest located somewhere else on the chart.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_TIMING_BINDING",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if not timing_evidence:\n'
+        '        raise MethodError("SMC confirmations and timing ticket evidence disagree")',
+        after='    if False:\n'
+        '        raise MethodError("SMC confirmations and timing ticket evidence disagree")',
+        expected_failure_marker="test_smc_and_timing_ticket_must_share_settled_confirmation_evidence",
+        rationale="The timing ticket cannot contradict the settled flow, sector, or structure evidence registered by SMC.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_LEVEL_BINDING",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if levels != expected_levels or pack_levels != expected_levels:\n'
+        '        raise MethodError("timing ticket and paper plan are not derived from SMC/valuation references")',
+        after='    if False:\n'
+        '        raise MethodError("timing ticket and paper plan are not derived from SMC/valuation references")',
+        expected_failure_marker="test_smc_levels_must_bind_both_timing_ticket_and_decision_pack",
+        rationale="Timing and paper-order layers cannot silently rewrite registered SMC and valuation levels.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_REGISTRATION_HASH",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if registration.get("registration_hash") != _hash(_without(registration, "registration_hash")):\n'
+        '        raise MethodError("method registration hash mismatch")',
+        after='    if False:\n'
+        '        raise MethodError("method registration hash mismatch")',
+        expected_failure_marker="test_registration_hash_covers_every_method_input",
+        rationale="A registered method must freeze every thesis, valuation, and timing input before outcomes exist.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_OUTCOME_HASH",
+        component="Research funnel method outcomes",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if outcomes.get("outcome_hash") != _hash(_without(outcomes, "outcome_hash")):\n'
+        '        raise MethodError("method outcomes hash mismatch")',
+        after='    if False:\n'
+        '        raise MethodError("method outcomes hash mismatch")',
+        expected_failure_marker="test_outcome_hash_covers_every_later_fact",
+        rationale="Later facts cannot be rewritten after the scoring artifact is sealed.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_FACT_BINDING",
+        component="Research funnel method outcomes",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before=('        if (\n'
+                '            item.get("measurement_period") != expected.get("measurement_period")\n'
+                '            or item.get("source_ref") != expected.get("source_ref")\n'
+                '            or item.get("verification_status") != "MANUAL_EVIDENCE_BOUND_UNVERIFIED_IDENTITY"\n'
+                '        ):\n'
+                '            raise MethodError(f"fact {claim_id} is not bound to its registered period/source")'),
+        after=('        if False:\n'
+               '            raise MethodError(f"fact {claim_id} is not bound to its registered period/source")'),
+        expected_failure_marker="test_outcomes_bind_each_fact_to_registered_period_and_source",
+        rationale="A later number cannot score a different reporting period or source than the prospectively registered claim.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_ATTRIBUTION_RULE",
+        component="Research funnel method attribution",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='        return f"THESIS_{thesis}_TIMING_{timing}"',
+        after='        return "UNRESOLVED"',
+        expected_failure_marker="test_machine_attribution_separates_thesis_timing_and_pnl",
+        rationale="Machine attribution must preserve the thesis/timing quadrant and remain independent of profit or loss.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SCORECARD_CHRONOLOGY",
+        component="Research funnel method attribution",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before=('    if _iso(scorecard.get("generated_at"), "scorecard.generated_at") < _iso(\n'
+                '        outcomes.get("generated_at"), "outcomes.generated_at"\n'
+                '    ):\n'
+                '        raise MethodError("method scorecard predates its outcomes")'),
+        after=('    if False:\n'
+               '        raise MethodError("method scorecard predates its outcomes")'),
+        expected_failure_marker="test_scorecard_cannot_predate_outcome_evidence",
+        rationale="A scorecard cannot exist before the later facts it claims to score.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_ATTRIBUTION_DERIVATION",
+        component="Research funnel method attribution",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if scorecard.get("machine_attribution") != expected:\n'
+        '        raise MethodError("machine attribution is not derived from thesis and timing ledgers")',
+        after='    if False:\n'
+        '        raise MethodError("machine attribution is not derived from thesis and timing ledgers")',
+        expected_failure_marker="test_scorecard_tampering_and_authority_injection_are_rejected",
+        rationale="A self-consistently rehashed scorecard cannot rewrite the machine attribution label.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_HUMAN_REVIEW_EVIDENCE",
+        component="Research funnel method human review",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if dispute_invalid:\n'
+        '        raise CycleError("human attribution confirmation/dispute lacks bound evidence semantics")',
+        after='    if False:\n'
+        '        raise CycleError("human attribution confirmation/dispute lacks bound evidence semantics")',
+        expected_failure_marker="test_human_dispute_requires_evidence_and_preserves_machine_result",
+        rationale="Junyan may supersede machine attribution, but the disagreement must remain explicit and evidence-bound.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_MARKER_COVERAGE_CALL",
