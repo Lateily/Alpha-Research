@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-18T02:22:47.793637+00:00",
+  "generated_at": "2026-08-18T09:06:07.803028+00:00",
   "date": "2026-08-18",
   "model_state": "NORMAL_OBSERVATION_MODE",
   "brief_e": "1 Exposure Review",
@@ -13,13 +13,13 @@
         "action": "REVIEW_TRIM",
         "priority": "MEDIUM",
         "confidence": 12,
-        "pnl_pct": 45.25,
+        "pnl_pct": 45.02,
         "holding_days": 161,
         "weight_pct": 52.9,
         "vp_score": 48,
         "confluence": 12,
-        "reason_e": "Large unrealised gain +45.2% after 161d. Signal still NEUTRAL (score 12). Exposure-review condition (sizable unrealised gain).",
-        "reason_z": "浮盈+45.2%（持有161天），信号12仍属信号中性，等待，敞口复核条件（浮盈较大）。",
+        "reason_e": "Large unrealised gain +45.0% after 161d. Signal still NEUTRAL (score 12). Exposure-review condition (sizable unrealised gain).",
+        "reason_z": "浮盈+45.0%（持有161天），信号12仍属信号中性，等待，敞口复核条件（浮盈较大）。",
         "entry_target": null,
         "exit_trigger": "P&L > 25.0% → exposure-review condition",
         "execution_posture": null
@@ -85,13 +85,13 @@
         "action": "HOLD",
         "priority": "LOW",
         "confidence": 9,
-        "pnl_pct": -6.18,
+        "pnl_pct": -6.93,
         "holding_days": 139,
-        "weight_pct": 3.9,
+        "weight_pct": 3.8,
         "vp_score": 48,
         "confluence": 9,
-        "reason_e": "Signal neutral (score 9). P&L -6.2% after 139d. Paper-hold — no new review trigger. Bullish: Kdj Golden Cross | RSI 47 | Price vs MA20 -2.2% | Regime: PERMISSIVE | VP 48.",
-        "reason_z": "信号中性（评分9），浮盈-6.2%，持有139天，无新触发条件。多头：KDJ金叉 | RSI 47 | 距MA20 -2.2% | 政策顺风 | VP 48。",
+        "reason_e": "Signal neutral (score 9). P&L -6.9% after 139d. Paper-hold — no new review trigger. Bullish: Kdj Golden Cross | RSI 47 | Price vs MA20 -2.2% | Regime: PERMISSIVE | VP 48.",
+        "reason_z": "信号中性（评分9），浮盈-6.9%，持有139天，无新触发条件。多头：KDJ金叉 | RSI 47 | 距MA20 -2.2% | 政策顺风 | VP 48。",
         "entry_target": null,
         "exit_trigger": "Score ≤ -60 OR P&L ≤ -10.0%",
         "execution_posture": null
@@ -175,7 +175,7 @@
   "buy_watches": [],
   "portfolio_risk": [
     "⚠️ CONCENTRATION: 300308.SZ (中际旭创) = 53% of portfolio — above 40.0% limit",
-    "PROFIT REVIEW: 300308.SZ +45.2% — exposure-review condition (sizable unrealised gain)"
+    "PROFIT REVIEW: 300308.SZ +45.0% — exposure-review condition (sizable unrealised gain)"
   ],
   "wrongif_alerts": [
     {
@@ -184,10 +184,10 @@
       "status": "CLEAR",
       "wrongIf_e": "1.6T mass production delayed beyond Q3 2026 OR NVDA+MSFT+GOOGL stock prices collectively drop >25% from ATH within 1 quarter (hyperscaler CapEx pullback proxy)",
       "wrongIf_z": "1.6T量产推迟至2026年Q3后，或英伟达/微软/谷歌股价集体较ATH下跌>25%（超大规模CapEx削减代理指标）",
-      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = 6.2 (threshold 25.0)",
-      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = 6.2（阈值25.0）",
+      "note_e": "✅ Clear: hyperscaler_basket_drawdown_pct = nan (threshold 25.0)",
+      "note_z": "✅ 正常：hyperscaler_basket_drawdown_pct = nan（阈值25.0）",
       "indicator": "hyperscaler_basket_drawdown_pct",
-      "actual": 6.2,
+      "actual": NaN,
       "threshold": 25.0
     },
     {
