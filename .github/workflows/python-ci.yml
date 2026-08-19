@@ -5,6 +5,7 @@ on:
       - "experiments/**/*.py"
       - "experiments/execution_tracker/**/*.json"
       - "experiments/macro_os/**/*.json"
+      - "experiments/research_funnel/**/*.json"
       # R-015 账本是 .jsonl —— 不加这条,"只改账本数据"的 PR 根本不触发本工作流,
       # 而那正是第③层唯一要把关的 diff 形态(实测:.jsonl 不匹配 *.json)
       - "experiments/execution_tracker/event_ledger.jsonl*"
@@ -132,6 +133,10 @@ jobs:
       # ── 三段子 DAG:候选清单 → 逐票电池/DATA_BLOCKED → 集合相等后 U3/U4 ──
       - name: Research funnel candidate-battery DAG regression (offline)
         run: python3 tests/test_funnel_dag_offline.py
+      # 全市场行业 Cohort OS:所有 U0 行业保留、跨源别名显式、行业排序无 U4
+      # 权限、代表由当期 U1 动态重算、相对锚与不可变历史均 fail-closed。
+      - name: Industry cohort foundation regression (offline)
+        run: python3 tests/test_industry_cohort_offline.py
       # launchd 首轮验收不能靠旧日志里残留的 OK 行。验收器绑定安装入口、
       # launchctl 计数/退出码、精确 run 日志段、持久 bundle 与报警旗,全程只读。
       - name: Scheduled nightly production acceptance regression (offline)

@@ -1,0 +1,36 @@
+{
+  "schema": "ar.industry_taxonomy",
+  "schema_version": "1.0",
+  "rule_version": "industry_taxonomy_v1",
+  "policy": {
+    "coverage": "ALL_U0_INDUSTRIES",
+    "unmapped_source_behavior": "IDENTITY_ONLY",
+    "ranking_authority": "RESEARCH_REFRESH_ONLY",
+    "u4_selection_authority": false,
+    "production_authority": false
+  },
+  "mappings": [
+    {
+      "canonical_id": "SEMICONDUCTOR",
+      "display_name": "半导体",
+      "source_industry_keys": [
+        "半导体"
+      ],
+      "rotation_aliases": [
+        "AI芯片",
+        "半导体",
+        "半导体材料",
+        "第三代半导体",
+        "第四代半导体",
+        "集成电路制造",
+        "集成电路封测",
+        "模拟芯片设计",
+        "先进封装"
+      ],
+      "mapping_status": "EXPLICIT",
+      "sector_os": "docs/research/sectors/SEMICONDUCTOR_SECTOR_OS.md",
+      "evidence_ref": "Junyan-approved Semiconductor Sector OS; aliases remain research-context mappings, not issuer membership claims"
+    }
+  ],
+  "mappings_hash": "b7f923685b20473b238a6a6dc85dee411a17fef1c29d8c383877bc8f1b2dde4b"
+}
