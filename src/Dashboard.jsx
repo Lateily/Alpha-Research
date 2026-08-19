@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import React from "react";
 import { Search, SearchX, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3, Flame, Sparkles,
          Shield, Zap, Globe, Eye, Target, Filter, Radio, Crosshair,
@@ -299,6 +299,56 @@ const PORTFOLIO = {
     { name:'EV/Auto', pct:18 },
   ],
 };
+
+const DEFAULT_FOCUS_CONFIG = {
+  '300308.SZ': { name_en:'Innolight',  name_zh:'中际旭创', sector:'AI Infra',          vp_seed:{ vp:79, expectation_gap:72, fundamental_accel:80, narrative_shift:72, low_coverage:50, catalyst_prox:80 } },
+  '002594.SZ': { name_en:'BYD',        name_zh:'比亚迪',   sector:'EV/Auto',           vp_seed:{ vp:52, expectation_gap:55, fundamental_accel:60, narrative_shift:38, low_coverage:32, catalyst_prox:45 } },
+  '175.HK':    { name_en:'Geely Auto', name_zh:'吉利汽车', sector:'EV/Auto',           vp_seed:{ vp:50, expectation_gap:50, fundamental_accel:50, narrative_shift:50, low_coverage:50, catalyst_prox:50 } },
+  '603233.SH': { name_en:'Da Shenlin', name_zh:'大参林',   sector:'Healthcare Retail', vp_seed:{ vp:50, expectation_gap:50, fundamental_accel:50, narrative_shift:50, low_coverage:50, catalyst_prox:50 } },
+};
+
+const safeTickerId = ticker => ticker.replace('.', '_');
+
+function buildWatchlistStock(ticker, cfg = {}) {
+  const seed = cfg.vp_seed || {};
+  const pending = { e:'Current research profile pending.', z:'当前研究档案待更新。' };
+  const dimension = key => ({ s:seed[key] ?? 50, e:'', z:'' });
+
+  return {
+    name: cfg.name_zh || cfg.name_en || ticker,
+    en: cfg.name_en || ticker,
+    sector: cfg.sector || 'Unclassified',
+    dir: 'WATCH',
+    vp: seed.vp ?? 50,
+    price: '—',
+    mktcap: '—',
+    pulse: pending,
+    biz: { problem:pending, mechanism:pending, moneyFlow:pending },
+    variant: {
+      marketBelieves:pending,
+      weBelieve:pending,
+      mechanism:pending,
+      rightIf:pending,
+      wrongIf: {
+        e: seed.wrongIf_e || pending.e,
+        z: seed.wrongIf_z || pending.z,
+      },
+    },
+    catalysts: [],
+    decomp: {
+      expectation_gap:dimension('expectation_gap'),
+      fundamental_acc:dimension('fundamental_accel'),
+      narrative_shift:dimension('narrative_shift'),
+      low_coverage:dimension('low_coverage'),
+      catalyst_prox:dimension('catalyst_prox'),
+    },
+    risks: [],
+    pricing: { level:'N/A', crowd:pending },
+    nextActions: [],
+    fin: { rev:'—', revGr:'—', gm:'—', pe:null, ev_ebitda:null, fcf:'—' },
+    peerAvg: { pe:null, ev_ebitda:null, gm:'—' },
+  };
+}
 
 const STOCKS = {
   '300308.SZ': {
@@ -2504,19 +2554,18 @@ function SwingSignalDetail({ signals, C, L, lk }) {
   );
 }
 
-function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsMacro, newsPortfolio, newsLoading, newsLastFetched, onOpenArticle, liveData, universeA, universeHK, signalsData, vpScores }) {
+function Scanner({ L, lk, open, toggle, C, stressData, regimeData, macroInsight, insightLoading, onGenerateInsight, newsMacro, newsPortfolio, newsLoading, newsLastFetched, onOpenArticle, liveData, universeA, universeHK, signalsData, vpScores, focusStocks }) {
   const colors = [C.blue, C.gold, C.green, C.red, C.blue];
   const sectorColors = [C.blue, '#7B6BA5', C.gold, C.green, C.red];
 
   // ── Live data derivation ────────────────────────────────────────────────
   // VP Score seed values (fallback only — overridden by vp_snapshot.json + localStorage)
-  const FOCUS_SEED = [
-    { id:'300308.SZ', name:'Innolight', sector:'AI Infra',  vp:79 },
-    { id:'700.HK',    name:'Tencent',   sector:'Internet',  vp:65 },
-    { id:'9999.HK',   name:'NetEase',   sector:'Gaming',    vp:58 },
-    { id:'6160.HK',   name:'BeiGene',   sector:'Biotech',   vp:65 },
-    { id:'002594.SZ', name:'BYD',       sector:'EV/Auto',   vp:61 },
-  ];
+  const FOCUS_SEED = Object.entries(focusStocks || {}).map(([id, stock]) => ({
+    id,
+    name: stock.en || stock.name || id,
+    sector: stock.sector || 'Unclassified',
+    vp: stock.vp ?? 50,
+  }));
   // FOCUS uses live VP scores: localStorage (most recent DeepResearch) > vp_snapshot.json > seed
   const FOCUS = FOCUS_SEED.map(f => {
     const lsKey = `ar_research_${f.id}`;
@@ -3981,8 +4030,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
   const eqr      = eqrData?.[ticker]  || null;
   const rdcf     = rdcfData?.[ticker] || null;
   const scissors = scissorsData?.[ticker] || null;
-  // Deep Research stocks have no live data files — only AI-generated fields
-  const isDynamic = !STOCKS[ticker] && !!allS[ticker];
+  // Stocks outside the current watchlist have no guaranteed live data files.
+  const isDynamic = !s._isFocus;
 
   const decompEntries = Object.entries(s.decomp || {});
   const decompData = decompEntries.map(([k,v])=>({name:k.replace(/_/g,' '), value:v.s}));
@@ -5625,8 +5674,8 @@ function Research({ L, lk, ticker, stocks: stocksMap, open, toggle, C, liveData,
                    'AI生成的财务数据已显示在上方财务卡片中。')}
           </div>
           <div style={{lineHeight:1.7}}>
-            {L('Live technical analysis, K-line charts, financial statements and company profile are only available for the 5 Focus Stocks (300308.SZ, 002594.SZ, 700.HK, 9999.HK, 6160.HK). To get live data for this stock, add it to FOCUS_TICKERS in fetch_data.py.',
-               '实时技术分析、K线图、财务报表和公司概况仅支持5只Focus股票。如需此股票的实时数据，请将其加入 fetch_data.py 的 FOCUS_TICKERS。')}
+            {L('Live technical analysis, K-line charts, financial statements and company profile are available for tickers in watchlist.json.',
+               '实时技术分析、K线图、财务报表和公司概况适用于 watchlist.json 中的股票。')}
           </div>
           {/* Still show AI technical posture */}
           {s.pricing && (
@@ -7231,7 +7280,7 @@ function SystemTab({ L, C }) {
 }
 
 /* ── DEEP RESEARCH PANEL ─────────────────────────────────────────────────── */
-function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentData }) {
+function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentData, focusStocks }) {
   const [query, setQuery]           = useState('');
   const [drTicker, setDrTicker]     = useState('');
   const [drCompany, setDrCompany]   = useState('');   // resolved company name
@@ -7251,14 +7300,15 @@ function DeepResearchPanel({ L, lk, onComplete, C, universeStocks, enrichmentDat
     const qn = q.toLowerCase().replace(/[.\s]/g, '');
 
     // Focus stocks always at top if they match
-    const focusKeys = Object.keys(STOCKS);
+    const focusMap = focusStocks || {};
+    const focusKeys = Object.keys(focusMap);
     const focusMatches = focusKeys
       .filter(tk => {
-        const s = STOCKS[tk];
+        const s = focusMap[tk];
         return tk.toLowerCase().replace(/\./g,'').includes(qn)
           || s.name.includes(q) || s.en.toLowerCase().includes(q.toLowerCase());
       })
-      .map(tk => ({ ticker: tk, name: STOCKS[tk].name, en: STOCKS[tk].en, isFocus: true }));
+      .map(tk => ({ ticker: tk, name: focusMap[tk].name, en: focusMap[tk].en, isFocus: true }));
 
     // Universe search
     const univMatches = (universeStocks || [])
@@ -10493,6 +10543,7 @@ export default function Dashboard() {
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState({factors:true, funnel:true, pairs:false, macro:true, macroImpact:true, leading:true, biz:true, variant:true, vp:true, cats:true, risks:false, fin:false, consensus:true, ta:true, kline:true, statements:false, company:false, actions:true, rdcf:true, debate:false, regime:true, exclusiveInsight:true, newsPanel:true});
   const [dynamicStocks, setDynamicStocks] = useState({});
+  const [focusConfig, setFocusConfig] = useState(DEFAULT_FOCUS_CONFIG);
   const [showDeepResearch, setShowDeepResearch] = useState(false);
   const [liveData, setLiveData] = useState(null);
   const [universeA, setUniverseA] = useState(null);
@@ -10545,11 +10596,23 @@ export default function Dashboard() {
   const [egapScores, setEgapScores] = useState({});  // { ticker: expectation_gap }
   const [scissorsData, setScissorsData] = useState({});  // profit_scissors.json tickers dict
   const [liData, setLiData]             = useState({});  // leading_indicators.json
+  const focusTickers = useMemo(() => Object.keys(focusConfig), [focusConfig]);
+  const focusIds = useMemo(() => focusTickers.map(safeTickerId), [focusTickers]);
   // Jason: Live clock for Bloomberg-style terminal header
   const [nowTime, setNowTime] = useState(new Date());
   useEffect(() => {
     const t = setInterval(() => setNowTime(new Date()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  /* watchlist.json is the single source of truth for the monitored universe. */
+  useEffect(() => {
+    fetch(DATA_BASE + 'data/watchlist.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.tickers && Object.keys(d.tickers).length > 0) setFocusConfig(d.tickers);
+      })
+      .catch(() => {});
   }, []);
 
   /* Fetch prediction log on mount */
@@ -10564,7 +10627,7 @@ export default function Dashboard() {
   /* Fetch EQR ratings on mount */
   useEffect(() => {
     const base = DATA_BASE;
-    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
+    const ids = focusIds;
     Promise.all(
       ids.map(id =>
         fetch(base + `data/eqr_${id}.json`)
@@ -10583,12 +10646,12 @@ export default function Dashboard() {
       });
       setEqrData(map);
     });
-  }, []);
+  }, [focusIds]);
 
   /* FC.5 — Fetch thesis fact-check reports on mount */
   useEffect(() => {
     const base = DATA_BASE;
-    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
+    const ids = focusIds;
     Promise.all(
       ids.map(id =>
         fetch(base + `data/thesis_factcheck/${id}.json`)
@@ -10606,7 +10669,7 @@ export default function Dashboard() {
       });
       setFactcheckData(map);
     });
-  }, []);
+  }, [focusIds]);
 
   /* Bridge-8 (2026-05-11) — Fetch paper-trade summary + per-ticker
      paper_trades and thesis_outcomes on mount. Updated daily by pipeline
@@ -10618,7 +10681,7 @@ export default function Dashboard() {
       .then(s => { if (s) setPaperTradeSummary(s); })
       .catch(() => {});
 
-    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
+    const ids = focusIds;
     Promise.all(ids.map(id =>
       fetch(base + `data/paper_trades/${id}.json`).then(r => r.ok ? r.json() : null).catch(() => null),
     )).then(results => {
@@ -10646,12 +10709,12 @@ export default function Dashboard() {
       });
       setThesisOutcomes(map);
     });
-  }, []);
+  }, [focusIds]);
 
   /* Fetch Reverse DCF data on mount */
   useEffect(() => {
     const base = DATA_BASE;
-    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
+    const ids = focusIds;
     Promise.all(
       ids.map(id =>
         fetch(base + `data/rdcf_${id}.json`)
@@ -10669,13 +10732,13 @@ export default function Dashboard() {
       });
       setRdcfData(map);
     });
-  }, []);
+  }, [focusIds]);
 
   /* Fetch swing signals on mount */
   const [signalsData, setSignalsData] = useState({});
   useEffect(() => {
     const base = DATA_BASE;
-    const ids = ['300308_SZ','002594_SZ','175_HK','603233_SH'];
+    const ids = focusIds;
     Promise.all(
       ids.map(id =>
         fetch(base + `data/signals_${id}.json`)
@@ -10687,7 +10750,7 @@ export default function Dashboard() {
       results.forEach(d => { if (d?.ticker) map[d.ticker] = d; });
       setSignalsData(map);
     });
-  }, []);
+  }, [focusIds]);
 
   /* Fetch profit scissors data on mount */
   useEffect(() => {
@@ -10866,7 +10929,24 @@ export default function Dashboard() {
       .catch(() => {});
   }, []);
 
-  const allStocks = { ...STOCKS, ...dynamicStocks };
+  const focusStocks = useMemo(() => Object.fromEntries(
+    focusTickers.map(tk => {
+      const cfg = focusConfig[tk] || {};
+      const stock = dynamicStocks[tk] || STOCKS[tk] || buildWatchlistStock(tk, cfg);
+      return [tk, {
+        ...stock,
+        name: cfg.name_zh || stock.name || cfg.name_en || tk,
+        en: cfg.name_en || stock.en || tk,
+        sector: cfg.sector || stock.sector || 'Unclassified',
+        vp: dynamicStocks[tk]?.vp ?? cfg.vp_seed?.vp ?? stock.vp ?? 50,
+        _isFocus: true,
+      }];
+    })
+  ), [dynamicStocks, focusConfig, focusTickers]);
+  const allStocks = useMemo(
+    () => ({ ...dynamicStocks, ...focusStocks }),
+    [focusStocks, dynamicStocks],
+  );
 
   /* Build searchable universe index from A+HK data */
   const universeStocks = (() => {
@@ -11506,7 +11586,7 @@ export default function Dashboard() {
         {/* Content area */}
         <div style={{flex:1, overflowY:'auto', padding:`14px 20px ${dark?'36px':'14px'} 20px`, background:C.bg}}>
           {tab==='desk'     && <TradingDesk L={L} lk={lk} C={C}/>}
-          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK} signalsData={signalsData} vpScores={vpScores}/>}
+          {tab==='scanner'  && <Scanner L={L} lk={lk} open={open} toggle={toggle} C={C} stressData={stressData} regimeData={regimeData} macroInsight={macroInsight} insightLoading={insightLoading} onGenerateInsight={handleGenerateInsight} newsMacro={newsMacro} newsPortfolio={newsPortfolio} newsLoading={newsLoading} newsLastFetched={newsLastFetched} onOpenArticle={handleOpenArticle} liveData={liveData} universeA={universeA} universeHK={universeHK} signalsData={signalsData} vpScores={vpScores} focusStocks={focusStocks}/>}
           {(tab==='browse' || tab==='screener') && <Screener L={L} lk={lk} stocks={allStocks} onSelect={goStock} C={C} liveData={liveData} universeA={universeA} universeHK={universeHK}/>}
           {tab==='flow'     && (
             <div>
@@ -11541,14 +11621,14 @@ export default function Dashboard() {
             if (showDeepResearch || (!ticker && !isFocus)) return (
               <div>
                 {isFocus && <div style={{marginBottom:16}}><Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} factcheckData={factcheckData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} onGenerateResearch={tk => { setSearch(tk); setTicker(tk); setShowDeepResearch(true); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/></div>}
-                <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>
+                <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }} focusStocks={focusStocks}/>
               </div>
             );
             if (isFocus) return <Research L={L} lk={lk} ticker={ticker} stocks={allStocks} open={open} toggle={toggle} C={C} liveData={liveData} eqrData={eqrData} rdcfData={rdcfData} factcheckData={factcheckData} pulse={pulseData[ticker]} pulseLoading={!!pulseLoading[ticker]} onRunPulse={tk => { setPulseData(p=>({...p,[tk]:null})); runPulse(tk); }} onGenerateResearch={tk => { setSearch(tk); setTicker(tk); setShowDeepResearch(true); }} signalsData={signalsData} scissorsData={scissorsData} liData={liData} egapScores={egapScores}/>;
             if (isUniverse) return <UniverseStockView ticker={ticker} universeStocks={universeStocks} liveData={liveData} L={L} lk={lk} C={C} onDeepResearch={(tk)=>{setSearch(tk); setShowDeepResearch(true);}}/>;
-            return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }}/>;
+            return <DeepResearchPanel L={L} lk={lk} onComplete={handleDeepResearchComplete} C={C} universeStocks={universeStocks} enrichmentData={{ liveData, newsPortfolio, regimeData, predictions }} focusStocks={focusStocks}/>;
           })()}
-          {tab==='morning'  && <MorningReportPage L={L} lk={lk} C={C} reportData={morningReport} reportLoading={morningReportLoading} onGenerate={handleGenerateMorningReport} liveData={liveData} newsPortfolio={newsPortfolio} newsMacro={newsMacro} regimeData={regimeData} predictions={predictions} allStocks={allStocks}/>}
+          {tab==='morning'  && <MorningReportPage L={L} lk={lk} C={C} reportData={morningReport} reportLoading={morningReportLoading} onGenerate={handleGenerateMorningReport} liveData={liveData} newsPortfolio={newsPortfolio} newsMacro={newsMacro} regimeData={regimeData} predictions={predictions} allStocks={focusStocks}/>}
           {tab==='tracker'  && <Tracker L={L} stocks={allStocks} C={C} predictions={predictions} paperTradeSummary={paperTradeSummary} paperTrades={paperTrades} thesisOutcomes={thesisOutcomes}/>}
           {/* 'watchlist' tab DELETED 2026-05-02 — duplicate of 'desk'. Watchlist 5 持仓 is shown in TradingDesk. */}
           {tab==='system'   && <SystemTab L={L} C={C}/>}
@@ -11579,7 +11659,7 @@ export default function Dashboard() {
             AUTO-SYNC 08:30 & 16:30 HKT
           </span>
           <span style={{fontSize:8, fontFamily:MONO, color:C.mid}}>
-            FOCUS: 5 STOCKS · A+HK
+            FOCUS: {focusTickers.length} STOCKS · A+HK
           </span>
         </div>
       )}

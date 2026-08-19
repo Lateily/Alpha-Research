@@ -334,6 +334,14 @@ jobs:
           python3 scripts/backfill_thesis_direction.py  || echo "backfill skipped (non-fatal)"
           python3 scripts/portfolio_thesis_alignment.py || echo "alignment skipped (non-fatal)"
 
+      # Read-only Trade Decision Stack artifacts. Each generator snapshots the
+      # protected paper-state files and aborts if it mutates them.
+      - name: Regenerate decision-support artifacts
+        run: |
+          python3 scripts/portfolio_risk_packet.py
+          python3 scripts/trade_candidate_board.py
+          python3 scripts/human_review_queue.py
+
       - name: Commit and push data
         run: |
           git config user.name "github-actions[bot]"
@@ -351,6 +359,9 @@ jobs:
             public/data/analytics.json \
             public/data/snapshots.json \
             public/data/portfolio_thesis_alignment.json \
+            public/data/portfolio_risk_packet.json \
+            public/data/trade_candidate_board.json \
+            public/data/human_review_queue.json \
             public/data/thesis_direction_backfill.json \
             public/data/backtest_results.json \
             public/data/stress_test.json \

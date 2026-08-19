@@ -50,7 +50,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": "2026-05-30T00:00:00Z",
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "in portfolio_risk_packet.risk_blockers (e.g. over-concentration / hard conflict)",
       "source": [
@@ -79,7 +79,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": "2026-05-30T00:00:00Z",
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -107,7 +107,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": "2026-05-30T00:00:00Z",
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -135,7 +135,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": "2026-05-30T00:00:00Z",
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -163,7 +163,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": "2026-05-30T00:00:00Z",
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -191,7 +191,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": "2026-05-30T00:00:00Z",
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -214,7 +214,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -237,7 +237,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -260,7 +260,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -283,7 +283,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -306,7 +306,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -329,7 +329,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -352,7 +352,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -375,7 +375,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -398,7 +398,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -421,7 +421,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -444,7 +444,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -467,7 +467,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -490,7 +490,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -513,7 +513,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -536,7 +536,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -559,7 +559,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -582,7 +582,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -605,7 +605,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -628,7 +628,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -651,7 +651,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": "screen RUN_THESIS but no registered directional thesis -> research needed",
       "source": [
@@ -674,7 +674,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -697,7 +697,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -720,7 +720,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -743,7 +743,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -766,7 +766,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -789,7 +789,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -812,7 +812,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -835,7 +835,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -858,7 +858,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -881,7 +881,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -904,7 +904,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -927,7 +927,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -950,7 +950,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -973,7 +973,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -996,7 +996,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1019,7 +1019,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1042,7 +1042,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1065,7 +1065,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1088,7 +1088,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1111,7 +1111,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1134,7 +1134,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1157,7 +1157,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1180,7 +1180,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1203,7 +1203,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1226,7 +1226,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1249,7 +1249,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1272,7 +1272,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1295,7 +1295,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1318,7 +1318,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1341,7 +1341,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": null,
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [
@@ -1366,7 +1366,7 @@
       "data_freshness": {
         "screen_as_of": "20260526",
         "thesis_registered_at": "2026-05-30T00:00:00Z",
-        "theme_residual": "fresh"
+        "theme_residual": "theme_residual_stale"
       },
       "current_blocker": null,
       "source": [

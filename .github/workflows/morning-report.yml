@@ -28,13 +28,22 @@ jobs:
           python3 - << 'PYEOF'
           import json, urllib.request, os
 
-          TICKERS = {
-            '700.HK':    {'yf': '0700.HK',  'en': 'Tencent',   'vp': 65, 'dir': 'LONG', 'sector': 'Internet'},
-            '9999.HK':   {'yf': '9999.HK',  'en': 'NetEase',   'vp': 58, 'dir': 'LONG', 'sector': 'Gaming'},
-            '6160.HK':   {'yf': '6160.HK',  'en': 'BeiGene',   'vp': 65, 'dir': 'LONG', 'sector': 'Biotech'},
-            '002594.SZ': {'yf': '002594.SZ','en': 'BYD',       'vp': 61, 'dir': 'LONG', 'sector': 'EV/Auto'},
-            '300308.SZ': {'yf': '300308.SZ','en': 'Innolight', 'vp': 72, 'dir': 'LONG', 'sector': 'AI Infra'},
-          }
+          with open('public/data/watchlist.json', encoding='utf-8') as f:
+            watchlist = json.load(f)
+
+          TICKERS = {}
+          for ticker, cfg in watchlist.get('tickers', {}).items():
+            seed = cfg.get('vp_seed', {})
+            TICKERS[ticker] = {
+              'yf': cfg.get('yahoo', ticker),
+              'en': cfg.get('name_en', ticker),
+              'vp': seed.get('vp', 50),
+              'dir': 'WATCH',
+              'sector': cfg.get('sector', 'Unclassified'),
+            }
+
+          if not TICKERS:
+            raise RuntimeError('watchlist.json contains no tickers')
 
           portfolio = []
           for ticker, meta in TICKERS.items():

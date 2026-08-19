@@ -20,6 +20,7 @@
       "exchange": "SZ",
       "name_en": "Innolight",
       "name_zh": "中际旭创",
+      "sector": "AI Infra",
       "vp_seed": {
         "vp": 79,
         "expectation_gap": 72,
@@ -50,6 +51,7 @@
       "exchange": "SZ",
       "name_en": "BYD",
       "name_zh": "比亚迪",
+      "sector": "EV/Auto",
       "vp_seed": {
         "vp": 52,
         "expectation_gap": 55,
@@ -81,6 +83,7 @@
       "exchange": "HK",
       "name_en": "Geely Auto",
       "name_zh": "吉利汽车",
+      "sector": "EV/Auto",
       "vp_seed": {
         "vp": 50,
         "expectation_gap": 50,
@@ -111,6 +114,7 @@
       "exchange": "SH",
       "name_en": "Da Shenlin",
       "name_zh": "大参林",
+      "sector": "Healthcare Retail",
       "vp_seed": {
         "vp": 50,
         "expectation_gap": 50,

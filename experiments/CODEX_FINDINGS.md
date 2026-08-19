@@ -227,8 +227,6 @@ High.
 
 Open.
 
----
-
 ## 2026-05-31 — CORE Alpha Factory v0 independent validation
 
 **Scope**
@@ -608,3 +606,102 @@ Medium.
 **Status**
 
 Open.
+
+## 2026-07-08 - Positive capital-flow prediction quarantine in churn regime
+
+**Finding**
+
+The current Layer 2 signal stack does not separate flow facts from forward
+prediction. `scripts/swing_signals.py` emits positive flow/price observations
+such as `CONTROLLED_ADVANCE`, `VOLUME_BREAKOUT`, and `CVD_FLOOR_FORMED`;
+`scripts/signal_confluence.py` then gives those signals positive weights that
+can contribute to `ENTRY_CANDIDATE`. In a fast rotation regime, Junyan's scored
+nowcast sample shows positive destination prediction at coin-flip level
+(14 scored, hit rate 0.50). That makes positive-flow continuation an
+unestablished forecast, not entry evidence.
+
+Negative signatures are asymmetric. Distribution / fake-strength / failed
+reclaim calls have a plausible persistence mechanism: inventory overhang,
+trapped holders, supply from failed breakouts, and sector-anchor weakness.
+They should remain eligible for `WARNING` / `DE_RISK_REVIEW` style risk gates,
+but not be described as calibrated alpha without the n>=30 paper-signal court.
+
+**Proposed fix**
+
+Add an execution-regime policy layer before any production promotion:
+
+- split each signal into `fact_state` and `forecast_state`
+- in `CHURN_MODE`, set positive-flow entry contribution to zero
+- keep positive-flow observations visible and paper-scored
+- keep negative-flow signatures active as risk-review gates
+- require 2-3 week persistence + sector-anchor confirmation + forward paper
+  evidence before positive-flow setups can clear beyond `PAPER_REVIEW_ONLY`
+
+Experimental artifacts:
+
+- `experiments/flow_regime_policy.py`
+- `experiments/MODEL_ROTATION_POLICY_2026-07-08.md`
+
+**Validation run**
+
+`python3 experiments/flow_regime_policy.py --selftest`
+
+**Status**
+
+Ready for Claude review, not production. Production changes would touch
+`scripts/signal_confluence.py`, `scripts/daily_decision.py`, and a new
+paper-signal ledger; Junyan approval required.
+
+## 2026-07-09 - PM research operating system for weekly review loop
+
+**Finding**
+
+Junyan's new requirement is not only a reporting task. It exposes a governance
+gap: portfolio state, model changes, sector-rotation hypotheses, industry
+research, and paper-signal outcomes are currently discussed in the same chat
+stream but not bound into one weekly decision ledger.
+
+**Proposed operating fix**
+
+Create a weekly PM/research operating system that lets the senior collaborator
+review progress as a project manager and investment-logic challenger:
+
+- weekly report with portfolio snapshot, trade/paper reasoning, model changes,
+  capability/practice/target, and reviewer questions
+- Notion-style databases for weekly reports, model iterations, paper signals,
+  thesis queue, review requests, and industry maps
+- explicit split between attention/flow screens and value-chain variant
+  research
+- one-month paper tracker for pre-registered signals and post-outcome scoring
+
+Experimental artifacts:
+
+- `experiments/pm_research_ops_2026_07/README.md`
+- `experiments/pm_research_ops_2026_07/SENIOR_PM_ROLE_AND_NOTION_OS.md`
+- `experiments/pm_research_ops_2026_07/WEEKLY_REPORT_TEMPLATE.md`
+- `experiments/pm_research_ops_2026_07/PREDICTIVE_RESEARCH_UPGRADE_PLAN.md`
+- `experiments/pm_research_ops_2026_07/PAPER_TRADING_TRACKER_SPEC.md`
+
+**Causal status**
+
+Causal logic is valid because pre-registration plus weekly review reduces
+hindsight bias and forces every model improvement to name its intended
+measurement. The value-chain research line is also causally valid in principle:
+if a company controls a scarce value-chain bottleneck and that node can be tied
+to order evidence, margin translation, and a dated catalyst, the thesis is more
+forward-looking than a pure flow dashboard.
+
+Positive sector-destination prediction remains unestablished. The proposed
+rotation lab changes the prediction object from "where money goes tomorrow" to
+"which market conditions make sector persistence or unwind more likely."
+
+**Numeric status**
+
+Specific cadence choices, initial horizons, setup taxonomy, and review limits
+are unvalidated workflow intuitions. Any hit-rate, expectancy, or threshold
+claim must wait for forward paper samples or point-in-time historical tests.
+
+**Status**
+
+Experimental documentation complete. Production migration would require Claude
+approval to update `docs/team/`, tracker scripts, and any public data outputs.

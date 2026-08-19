@@ -24,7 +24,7 @@
 //   market_mood: "RISK-ON | NEUTRAL | RISK-OFF",
 //   portfolio_flags: [{ ticker, company, status, note_e, note_z, action_required }],
 //   top_story: { title, source, impact_e, impact_z, tickers_affected },
-//   trade_ideas: [{ ticker, idea_e, idea_z, entry, urgency }],
+//   trade_ideas: [{ ticker, idea_e, idea_z, entry, urgency }],  // review notes; entry is an observed reference only
 //   event_radar: [{ event, date, ticker, impact }],
 //   prediction_updates: [{ id, ticker, action, reason }],
 //   regime_notes: "string",
@@ -38,11 +38,10 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ─── DEFAULT PORTFOLIO (used when no portfolio passed in body) ────────────────
 const DEFAULT_PORTFOLIO = [
-  { ticker: '700.HK',    company: 'Tencent',   sector: 'Internet',   vp: 65, dir: 'LONG' },
-  { ticker: '9999.HK',   company: 'NetEase',   sector: 'Gaming',     vp: 58, dir: 'LONG' },
-  { ticker: '6160.HK',   company: 'BeiGene',   sector: 'Biotech',    vp: 65, dir: 'LONG' },
-  { ticker: '002594.SZ', company: 'BYD',       sector: 'EV/Auto',    vp: 61, dir: 'LONG' },
-  { ticker: '300308.SZ', company: 'Innolight', sector: 'AI Infra',   vp: 72, dir: 'LONG' },
+  { ticker: '300308.SZ', company: 'Innolight', sector: 'AI Infra',          vp: 79, dir: 'WATCH' },
+  { ticker: '002594.SZ', company: 'BYD',       sector: 'EV/Auto',           vp: 52, dir: 'WATCH' },
+  { ticker: '175.HK',    company: 'Geely Auto',sector: 'EV/Auto',           vp: 50, dir: 'WATCH' },
+  { ticker: '603233.SH', company: 'Da Shenlin',sector: 'Healthcare Retail', vp: 50, dir: 'WATCH' },
 ];
 
 // ─── PROMPT BUILDER ───────────────────────────────────────────────────────────
@@ -138,8 +137,9 @@ Write a morning brief that answers: What happened overnight? What do I need to a
 Use the SIGNAL CONFLUENCE section to anchor trade_ideas and portfolio_flags — the quant signal layer has already processed all technical indicators; your role is to synthesise with macro news and fundamental context.
 
 RULES:
+- CRITICAL — DECISION-SUPPORT ONLY, NOT TRADE ADVICE: you produce review notes for a human, never recommendations. NEVER use the words buy, sell, add, trim, accumulate, enter/entry trigger, target price, position size, overweight/underweight, or "urgent trade". No action imperatives — the human makes all trade decisions.
 - Cite specific news items by their reference [M1], [P1] etc. where relevant
-- For trade_ideas: only include if there is a specific, actionable entry condition today
+- For trade_ideas (these are REVIEW NOTES, not trade calls): include a name only if it genuinely warrants human review today; describe WHAT TO REVIEW and the risk/watch condition — never an action to take. "entry" is an OBSERVED reference price level only, explicitly NOT an entry trigger. "urgency" is the HUMAN-REVIEW priority, not trade urgency.
 - For portfolio_flags: every stock gets a status — CLEAR (no new information), WATCH (monitor closely), ACTION (requires decision today), ALERT (thesis event occurred)
 - prediction_updates: only include OPEN predictions that are directly addressed by today's news
 - Be bilingual: all narrative fields need both English (e) and Chinese (z)
@@ -174,10 +174,10 @@ Return ONLY this JSON object:
   "trade_ideas": [
     {
       "ticker": "string",
-      "idea_e": "string (specific entry thesis)",
+      "idea_e": "string (what to REVIEW + the risk/watch condition — an observation, NOT an action; no buy/sell/entry/size words)",
       "idea_z": "string",
-      "entry": "string (e.g. HK$385-395 on weakness, good for 2-3 weeks)",
-      "urgency": "HIGH | MED | LOW"
+      "entry": "string (OBSERVED reference price level only, NOT an entry trigger, e.g. 'trading around HK$385-395')",
+      "urgency": "HIGH | MED | LOW (human-review priority, NOT trade urgency)"
     }
   ],
   "event_radar": [
@@ -272,7 +272,7 @@ function buildEmailHtml(report, date, alignment) {
         </div>
         <div style="font-size:11px; color:#333; line-height:1.5; margin-bottom:4px">${t.idea_e}</div>
         <div style="font-size:10px; color:#888; margin-bottom:4px">${t.idea_z || ''}</div>
-        ${t.entry ? `<div style="font-size:10px; color:#2563eb; font-weight:600">📍 ${t.entry}</div>` : ''}
+        ${t.entry ? `<div style="font-size:10px; color:#888; font-weight:600">observed ref (not an entry): ${t.entry}</div>` : ''}
       </div>`;
   }).join('');
 
@@ -349,9 +349,9 @@ function buildEmailHtml(report, date, alignment) {
   ${buildAlignmentQueueHtml(alignment)}
 
   ${tradeRows ? `
-  <!-- Trade Ideas -->
+  <!-- Review Notes -->
   <div style="background:#ffffff; border:1px solid #e5e7eb; padding:16px 24px; margin-bottom:2px">
-    <div style="font-size:10px; font-weight:700; color:#6b7280; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px">💡 Today's Trade Ideas</div>
+    <div style="font-size:10px; font-weight:700; color:#6b7280; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px">Review Notes (decision-support, not recommendations)</div>
     ${tradeRows}
   </div>` : ''}
 
@@ -388,6 +388,61 @@ function buildEmailHtml(report, date, alignment) {
 </html>`;
 }
 
+// ─── DETERMINISTIC FALLBACK ──────────────────────────────────────────────────
+// Keep the scheduled report available when the model returns truncated or
+// malformed JSON. The fallback contains review prompts only and never trades.
+export function buildFallbackReport(body, reason = 'llm_json_parse_failed') {
+  const portfolio = Array.isArray(body?.portfolio) && body.portfolio.length
+    ? body.portfolio
+    : DEFAULT_PORTFOLIO;
+  const macroNews = Array.isArray(body?.macro_news) ? body.macro_news : [];
+  const portfolioNews = Array.isArray(body?.portfolio_news) ? body.portfolio_news : [];
+  const firstStory = portfolioNews[0] || macroNews[0] || null;
+
+  const flags = portfolio.map(s => ({
+    ticker: s.ticker || '',
+    company: s.company || s.name || s.ticker || '',
+    status: 'WATCH',
+    note_e: 'Fallback report: model output was not valid JSON, so review the deterministic data and human-review queue manually.',
+    note_z: '降级日报：模型输出不是合法 JSON，请人工查看确定性数据和持仓/研究冲突队列。',
+    action_required: true,
+  }));
+
+  const macroTitles = macroNews.slice(0, 3).map(n => n.title).filter(Boolean);
+  const portfolioTitles = portfolioNews.slice(0, 3).map(n => n.title).filter(Boolean);
+
+  return {
+    headline: 'Morning report generated in fallback mode; review portfolio conflicts and source data manually.',
+    market_mood: 'NEUTRAL',
+    macro_summary: {
+      e: macroTitles.length
+        ? `Fallback mode. Top macro headlines: ${macroTitles.join(' | ')}.`
+        : 'Fallback mode. Macro news was unavailable or could not be summarized.',
+      z: macroTitles.length
+        ? `降级模式。宏观头条：${macroTitles.join(' | ')}。`
+        : '降级模式。宏观新闻不可用或无法总结。',
+    },
+    portfolio_flags: flags,
+    top_story: {
+      title: firstStory?.title || 'Fallback report',
+      source: firstStory?.source || 'system',
+      impact_e: portfolioTitles.length
+        ? `Portfolio headlines to review manually: ${portfolioTitles.join(' | ')}.`
+        : 'No portfolio-specific story was summarized. Review raw inputs manually.',
+      impact_z: portfolioTitles.length
+        ? `需人工查看的持仓相关新闻：${portfolioTitles.join(' | ')}。`
+        : '没有生成持仓相关新闻摘要，请人工查看原始输入。',
+      tickers_affected: firstStory?.ticker ? [firstStory.ticker] : [],
+    },
+    trade_ideas: [],
+    event_radar: [],
+    prediction_updates: [],
+    regime_notes: 'Fallback mode. No regime interpretation was produced.',
+    fallback_used: true,
+    fallback_reason: reason,
+  };
+}
+
 // ─── MAIN HANDLER ─────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin',  '*');
@@ -409,7 +464,7 @@ export default async function handler(req, res) {
 
     const message = await client.messages.create({
       model:      'claude-sonnet-4-6',
-      max_tokens: 2500,
+      max_tokens: 4096,
       messages:   [{ role: 'user', content: prompt }],
     });
 
@@ -421,8 +476,13 @@ export default async function handler(req, res) {
     let report;
     try {
       report = JSON.parse(jsonStr.trim());
-    } catch {
-      return res.status(502).json({ error: 'Claude returned invalid JSON', raw: text.slice(0, 300) });
+    } catch (parseErr) {
+      console.warn('[morning-report] Claude returned invalid JSON, using deterministic fallback', {
+        error: parseErr?.message,
+        raw_start: text.slice(0, 240),
+      });
+      report = buildFallbackReport(body, 'llm_json_parse_failed');
+      report.model_raw_excerpt = text.slice(0, 500);
     }
 
     // Build HTML email. body.thesis_alignment (contents of
