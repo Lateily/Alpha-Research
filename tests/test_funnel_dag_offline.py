@@ -27,6 +27,7 @@ sys.path.insert(0, str(REPO_ROOT / "experiments" / "research_funnel"))
 
 import funnel_dag as dag  # noqa: E402
 import funnel_pipeline as fp  # noqa: E402
+import nightly_funnel  # noqa: E402
 import run_nightly as nightly  # noqa: E402
 import test_research_funnel_closure as closure  # noqa: E402
 from funnel_pipeline import FunnelError  # noqa: E402
@@ -133,11 +134,31 @@ class BatteryCoverageTests(unittest.TestCase):
             with self.assertRaisesRegex(FunnelError, "as_of/run_id"):
                 fp.validate_candidate_battery(payload, self.manifest)
 
+    def test_a_prior_day_row_cannot_be_repacked_as_same_day_battery(self) -> None:
+        rows = [complete_row(tk) for tk in self.codes]
+        rows[0]["checked_at"] = "20260810"
+        with self.assertRaisesRegex(FunnelError, "row is not from the manifest trade date"):
+            fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
+
     def test_a_row_missing_a_dimension_is_refused_not_tolerated(self) -> None:
         """缺维必须显式 DATA_BLOCKED 出现,不能少一维。"""
         rows = [complete_row(tk) for tk in self.codes]
         del rows[0]["dims"]["估值"]
         with self.assertRaisesRegex(FunnelError, "all six dimensions"):
+            fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
+
+    def test_an_empty_dimension_is_not_complete_evidence(self) -> None:
+        rows = [complete_row(tk) for tk in self.codes]
+        rows[0]["dims"][fp.BATTERY_DIMENSIONS[0]] = {}
+        with self.assertRaisesRegex(FunnelError, "dimension lacks evidence"):
+            fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
+
+    def test_an_unknown_dimension_status_is_not_complete_evidence(self) -> None:
+        rows = [complete_row(tk) for tk in self.codes]
+        rows[0]["dims"][fp.BATTERY_DIMENSIONS[0]] = {
+            "status": "SOURCE_DOWN", "err": "unrecognized state",
+        }
+        with self.assertRaisesRegex(FunnelError, "unknown status"):
             fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
 
     def test_explicit_data_blocked_rows_are_counted_not_dropped(self) -> None:
@@ -146,6 +167,15 @@ class BatteryCoverageTests(unittest.TestCase):
         cov = fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
         self.assertEqual(1, cov["data_blocked_rows"])
         self.assertEqual(len(self.codes), cov["observed"])
+
+    def test_completeness_is_recomputed_from_dimensions_not_self_reported(self) -> None:
+        rows = [complete_row(tk) for tk in self.codes]
+        rows[0] = dag._blocked_row(self.codes[0], TARGET, "provider down")
+        rows[0]["completeness"] = {
+            "covered": 6, "of": 6, "missing": [], "verdict": "COMPLETE",
+        }
+        with self.assertRaisesRegex(FunnelError, "completeness does not match"):
+            fp.validate_candidate_battery(battery_for(self.manifest, rows), self.manifest)
 
 
 class ProviderFailureTests(unittest.TestCase):
@@ -303,6 +333,78 @@ class FinalizeEndToEndTests(unittest.TestCase):
                 self.assertEqual(RUN_ID, receipt["run_id"])
                 self.assertEqual(TARGET, receipt["as_of"])
 
+    def test_final_bundle_pins_candidate_manifest_and_battery_bytes(self) -> None:
+        self.assertEqual(
+            nightly_funnel.BUNDLE_FILES + nightly_funnel.DAG_EVIDENCE_FILES,
+            dag._final_bundle_files(),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _pv, obs = self._run_stages(root, "candidates", "battery", "finalize")
+            bundle = obs / TARGET / RUN_ID
+            top = json.loads((bundle / "manifest.json").read_text("utf-8"))
+            self.assertEqual(
+                set(nightly_funnel.BUNDLE_FILES + nightly_funnel.DAG_EVIDENCE_FILES),
+                set(top["artifacts"]),
+            )
+            battery_path = bundle / "candidate_battery.json"
+            battery = json.loads(battery_path.read_text("utf-8"))
+            battery["provider_state"] = "FORGED_AFTER_FINALIZE"
+            write_json(battery_path, battery)
+            with self.assertRaisesRegex(FunnelError, "manifest 哈希不符"):
+                nightly_funnel.read_bundle(bundle, TARGET)
+
+    def test_final_bundle_revalidates_dag_bindings_not_only_file_hashes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _pv, obs = self._run_stages(root, "candidates", "battery", "finalize")
+            bundle = obs / TARGET / RUN_ID
+            top_path = bundle / "manifest.json"
+            top = json.loads(top_path.read_text("utf-8"))
+            top["dag"]["candidate_manifest_hash"] = "f" * 64
+            top["bundle_hash"] = fp._hash(top["artifacts"])
+            write_json(top_path, top)
+            with self.assertRaisesRegex(FunnelError, "DAG bundle evidence"):
+                nightly_funnel.read_bundle(bundle, TARGET)
+
+    def test_production_verifier_recomputes_health_battery_coverage(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, obs = self._run_stages(root, "candidates", "battery", "finalize")
+            source = obs / TARGET / RUN_ID
+            durable = root / "data_history" / "funnel" / TARGET / RUN_ID
+            durable.parent.mkdir(parents=True)
+            shutil.copytree(source, durable)
+            health_path = pv / "funnel_health.json"
+            health = json.loads(health_path.read_text("utf-8"))
+            health["battery_coverage"]["observed"] -= 1
+            with self.assertRaisesRegex(ValueError, "battery_coverage 与实物不符"):
+                nightly._verify_funnel_bundle(health, str(root), str(health_path))
+
+    def test_production_verifier_rejects_dag_evidence_downgrade(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pv, obs = self._run_stages(root, "candidates", "battery", "finalize")
+            source = obs / TARGET / RUN_ID
+            top_path = source / "manifest.json"
+            top = json.loads(top_path.read_text("utf-8"))
+            top.pop("dag")
+            top.pop("run_id")
+            for name in nightly_funnel.DAG_EVIDENCE_FILES:
+                top["artifacts"].pop(name)
+                (source / name).unlink()
+            top["bundle_hash"] = fp._hash(top["artifacts"])
+            write_json(top_path, top)
+            durable = root / "data_history" / "funnel" / TARGET / RUN_ID
+            durable.parent.mkdir(parents=True)
+            shutil.copytree(source, durable)
+            health_path = pv / "funnel_health.json"
+            health = json.loads(health_path.read_text("utf-8"))
+            health["bundle"]["artifacts"] = top["artifacts"]
+            health["bundle"]["bundle_hash"] = top["bundle_hash"]
+            with self.assertRaisesRegex(ValueError, "缺少 DAG evidence"):
+                nightly._verify_funnel_bundle(health, str(root), str(health_path))
+
     def test_finalize_refuses_when_battery_coverage_drifts(self) -> None:
         """段 2 完成后有人改了电池实物 —— finalize 必须拒绝,不能拿残缺电池算 U3/U4。"""
         with tempfile.TemporaryDirectory() as tmp:
@@ -356,16 +458,45 @@ class FinalizeEndToEndTests(unittest.TestCase):
 
 
 class NightlyWiringTests(unittest.TestCase):
-    def test_three_stages_are_wired_in_order_with_single_network_step(self) -> None:
+    def test_three_stages_are_wired_in_order_with_token_optional_network_step(self) -> None:
         names = [s[0] for s in nightly.STEPS]
         i1, i2, i3 = (names.index(n) for n in ("funnel_candidates", "candidate_battery", "funnel_finalize"))
         self.assertLess(i1, i2)
         self.assertLess(i2, i3)
         tokens = {s[0]: s[2] for s in nightly.STEPS}
         self.assertFalse(tokens["funnel_candidates"], "纯计算段不得要 token")
-        self.assertTrue(tokens["candidate_battery"], "电池段是唯一网络步")
+        self.assertFalse(
+            tokens["candidate_battery"],
+            "电池段必须在无 token 时仍启动并逐票落 DATA_BLOCKED",
+        )
         self.assertFalse(tokens["funnel_finalize"], "纯计算段不得要 token")
         self.assertNotIn("research_funnel", names, "旧单步已被三段替代")
+
+    def test_live_orchestrator_runs_battery_without_token_for_explicit_rows(self) -> None:
+        original_steps = nightly.STEPS
+        original_env = dict(os.environ)
+        by_name = {step[0]: step for step in original_steps}
+        called = []
+        nightly.STEPS = [
+            ("funnel_candidates", by_name["funnel_candidates"][1], False, []),
+            by_name["candidate_battery"],
+            by_name["funnel_finalize"],
+        ]
+        try:
+            os.environ.pop("TUSHARE_TOKEN", None)
+            result = nightly.run_steps(
+                runner=lambda cmd: (called.append(tuple(cmd)) or (0, "OK")),
+                require_live=True,
+                verify=False,
+            )
+        finally:
+            nightly.STEPS = original_steps
+            os.environ.clear()
+            os.environ.update(original_env)
+        rows = {row["step"]: row for row in result["steps"]}
+        self.assertTrue(any(cmd[-1] == "battery" for cmd in called))
+        self.assertEqual("OK", rows["candidate_battery"]["status"])
+        self.assertEqual("COMPLETE", result["report"])
 
     def test_finalize_depends_on_both_prior_stages(self) -> None:
         deps = {s[0]: s[3] for s in nightly.STEPS}

@@ -104,7 +104,12 @@ STEPS = [
     # 三段整体隔离(不否决发布)。full_battery --from-watchlist 保留给 court/promoter。
     ("funnel_candidates", ["python3", "../research_funnel/funnel_dag.py", "candidates"], False,
      ["security_registry", "feature_store", "e1_event_layer", "rotation_panel"]),
-    ("candidate_battery", ["python3", "../research_funnel/funnel_dag.py", "battery"], True,
+    # governance-mutation: FUNNEL_DAG_TOKENLESS_DEGRADATION
+    # This step is network-capable, but the token is deliberately optional: when it is
+    # absent the runner must still execute and emit one explicit DATA_BLOCKED row per
+    # candidate.  Marking it token-required here would let the generic preflight skip
+    # the process before that evidence can be materialized.
+    ("candidate_battery", ["python3", "../research_funnel/funnel_dag.py", "battery"], False,
      ["funnel_candidates"]),
     ("funnel_finalize", ["python3", "../research_funnel/funnel_dag.py", "finalize"], False,
      ["funnel_candidates", "candidate_battery"]),
@@ -389,6 +394,23 @@ def _verify_funnel_bundle(data, repo_root, artifact_path=None):
         raise ValueError("health 登记的产物摘要与磁盘实物不符")
     if bundle.get("bundle_hash") != manifest.get("bundle_hash"):
         raise ValueError("health 的 bundle_hash 与 manifest 不符")
+    # A DAG health receipt cannot be downgraded to the legacy four-file bundle.
+    # Legacy production receipts have no battery_coverage field, so they remain readable.
+    # governance-mutation: FUNNEL_DAG_NO_LEGACY_DOWNGRADE
+    if "battery_coverage" in data and "candidate_battery.json" not in payloads:
+        raise ValueError("health 声称 candidate battery coverage,但持久 bundle 缺少 DAG evidence")
+    if "candidate_battery.json" in payloads:
+        candidate_battery = payloads["candidate_battery.json"]
+        measured_battery = nightly_funnel.validate_candidate_battery(
+            candidate_battery, payloads["candidate_manifest.json"]
+        )
+        measured_battery["provider_state"] = candidate_battery.get("provider_state")
+        # governance-mutation: FUNNEL_DAG_HEALTH_COVERAGE_RECOMPUTED
+        if data.get("battery_coverage") != measured_battery:
+            raise ValueError(
+                f"health 的 battery_coverage 与实物不符: "
+                f"{data.get('battery_coverage')} != {measured_battery}"
+            )
 
     # status 与 counts 由实物重算,health 只是转述,不是权威
     scan = payloads["all_market_scan.json"]

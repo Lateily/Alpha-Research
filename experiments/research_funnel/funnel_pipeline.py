@@ -1345,6 +1345,11 @@ def validate_candidate_battery(
         )
     blocked_rows = 0
     for row in rows:
+        # governance-mutation: FUNNEL_BATTERY_ROW_SAME_DAY
+        if _date8(str(row.get("checked_at") or "")) != _date8(str(manifest.get("as_of") or "")):
+            raise FunnelError(
+                f"battery row is not from the manifest trade date: {row.get('ts_code')}"
+            )
         dims = row.get("dims")
         if not isinstance(dims, dict):
             raise FunnelError(f"battery row lacks dims: {row.get('ts_code')}")
@@ -1353,10 +1358,41 @@ def validate_candidate_battery(
             raise FunnelError(
                 f"battery row must carry all six dimensions: {row.get('ts_code')} has {sorted(dims)}"
             )
+        for name, evidence in dims.items():
+            # governance-mutation: FUNNEL_BATTERY_DIMENSION_EVIDENCE
+            if not isinstance(evidence, dict) or not evidence:
+                raise FunnelError(
+                    f"battery dimension lacks evidence: {row.get('ts_code')} {name}"
+                )
+            status = evidence.get("status")
+            # governance-mutation: FUNNEL_BATTERY_DIMENSION_STATUS
+            if status is not None and status not in {"DATA_BLOCKED", "NOT_RUN"}:
+                raise FunnelError(
+                    f"battery dimension has unknown status: {row.get('ts_code')} {name}={status}"
+                )
+            if status in {"DATA_BLOCKED", "NOT_RUN"} and not str(evidence.get("err") or "").strip():
+                raise FunnelError(
+                    f"blocked battery dimension lacks a reason: {row.get('ts_code')} {name}"
+                )
         completeness = row.get("completeness") or {}
         if completeness.get("of") != 6 or "verdict" not in completeness:
             raise FunnelError(f"battery row completeness stamp is malformed: {row.get('ts_code')}")
-        if completeness.get("verdict") != "COMPLETE":
+        blocked_dims = [
+            name for name, evidence in dims.items()
+            if isinstance(evidence, dict)
+            and evidence.get("status") in {"DATA_BLOCKED", "NOT_RUN"}
+        ]
+        expected_verdict = "PARTIAL" if blocked_dims else "COMPLETE"
+        # governance-mutation: FUNNEL_BATTERY_COMPLETENESS_RECOMPUTED
+        if (
+            completeness.get("covered") != 6 - len(blocked_dims)
+            or set(completeness.get("missing") or []) != set(blocked_dims)
+            or completeness.get("verdict") != expected_verdict
+        ):
+            raise FunnelError(
+                f"battery row completeness does not match six dimensions: {row.get('ts_code')}"
+            )
+        if expected_verdict != "COMPLETE":
             blocked_rows += 1
     if battery.get("rows_hash") != _hash(rows):
         raise FunnelError("candidate battery rows_hash mismatch")

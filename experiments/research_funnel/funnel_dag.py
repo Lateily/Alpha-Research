@@ -57,6 +57,8 @@ from funnel_pipeline import (  # noqa: E402
     validate_candidate_manifest,
 )
 from nightly_funnel import (  # noqa: E402
+    BUNDLE_FILES,
+    DAG_EVIDENCE_FILES,
     DEFAULT_RETENTION_DAYS,
     REPO_ROOT,
     _bundle_dir,
@@ -343,6 +345,11 @@ def run_battery() -> int:
 
 # ── 段 3:funnel_finalize(纯计算)──────────────────────────────────────────
 
+def _final_bundle_files() -> tuple[str, ...]:
+    # governance-mutation: FUNNEL_DAG_FINAL_MANIFEST_EVIDENCE
+    return BUNDLE_FILES + DAG_EVIDENCE_FILES
+
+
 def run_finalize() -> int:
     target, run_id, output_root, bundle_dir, public_v2 = _context()
     keep = int(os.environ.get("AR_FUNNEL_RETENTION_DAYS") or DEFAULT_RETENTION_DAYS)
@@ -384,13 +391,12 @@ def run_finalize() -> int:
                "battery_rows_hash": battery["rows_hash"]},
     )
     # 顶层 bundle manifest:与 #269 的 read_bundle 契约兼容(四个核心文件 + 哈希)
-    core = {name: _sha256(bundle_dir / name) for name in (
-        "all_market_scan.json", "candidate_review.json",
-        "deep_research_queue.json", "security_registry_projected.json",
-    )}
+    final_files = _final_bundle_files()
+    core = {name: _sha256(bundle_dir / name) for name in final_files}
     top = {
         "schema": "ar.research_funnel_bundle", "schema_version": SCHEMA_VERSION,
-        "rule_version": RULE_VERSION, "as_of": target, "generated_at": generated_at,
+        "rule_version": RULE_VERSION, "as_of": target, "run_id": run_id,
+        "generated_at": generated_at,
         "artifacts": core, "dag": {
             "stages": ["candidates", "battery", "finalize"],
             "candidate_manifest_hash": manifest["manifest_hash"],
