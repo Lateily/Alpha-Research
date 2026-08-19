@@ -1,10 +1,10 @@
 {
   "ticker": "002594.SZ",
-  "fetched_at": "2026-08-18T09:02:41Z",
-  "trade_date": "20260818",
+  "fetched_at": "2026-08-19T02:22:07Z",
+  "trade_date": "20260819",
   "_status": "ok",
   "api_used": "cyq_chips",
-  "as_of": "20260817",
+  "as_of": "20260818",
   "fallback_days": 1,
   "chips": [
     {
@@ -237,43 +237,43 @@
     },
     {
       "price": 78.0,
-      "percent": 1.6
+      "percent": 1.58
     },
     {
       "price": 79.3,
-      "percent": 2.0
+      "percent": 1.98
     },
     {
       "price": 80.6,
-      "percent": 1.07
+      "percent": 1.06
     },
     {
       "price": 81.9,
-      "percent": 1.69
+      "percent": 1.67
     },
     {
       "price": 83.2,
-      "percent": 1.94
+      "percent": 1.92
     },
     {
       "price": 84.5,
-      "percent": 2.17
+      "percent": 2.14
     },
     {
       "price": 85.8,
-      "percent": 4.3
+      "percent": 4.25
     },
     {
       "price": 87.1,
-      "percent": 5.53
+      "percent": 5.46
     },
     {
       "price": 88.4,
-      "percent": 6.77
+      "percent": 6.83
     },
     {
       "price": 89.7,
-      "percent": 11.92
+      "percent": 12.66
     },
     {
       "price": 91.0,
@@ -281,51 +281,51 @@
     },
     {
       "price": 92.3,
-      "percent": 8.73
+      "percent": 8.62
     },
     {
       "price": 93.6,
-      "percent": 9.22
+      "percent": 9.1
     },
     {
       "price": 94.9,
-      "percent": 8.85
+      "percent": 8.74
     },
     {
       "price": 96.2,
-      "percent": 4.25
+      "percent": 4.2
     },
     {
       "price": 97.5,
-      "percent": 1.98
+      "percent": 1.96
     },
     {
       "price": 98.8,
-      "percent": 2.68
+      "percent": 2.65
     },
     {
       "price": 100.1,
-      "percent": 2.25
+      "percent": 2.22
     },
     {
       "price": 101.4,
-      "percent": 1.99
+      "percent": 1.97
     },
     {
       "price": 102.7,
-      "percent": 2.58
+      "percent": 2.55
     },
     {
       "price": 104.0,
-      "percent": 1.87
+      "percent": 1.85
     },
     {
       "price": 105.3,
-      "percent": 1.24
+      "percent": 1.23
     },
     {
       "price": 106.6,
-      "percent": 0.7
+      "percent": 0.69
     },
     {
       "price": 107.9,
@@ -420,5 +420,5 @@
       "percent": 0.06
     }
   ],
-  "_note": "requested trade_date=20260818 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260817"
+  "_note": "requested trade_date=20260819 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260818"
 }
