@@ -1,194 +1,12 @@
 {
-  "fetched_at": "2026-08-18T09:02:38Z",
-  "trade_date": "20260818",
+  "fetched_at": "2026-08-19T02:22:04Z",
+  "trade_date": "20260819",
   "tier": 15000,
   "_status": "partial",
   "hot_concepts": [],
   "cold_concepts": [],
-  "hot_industries": [
-    {
-      "name": "农林牧渔",
-      "ts_code": "BK0433.DC",
-      "net_inflow_yuan": 36342021760000.0,
-      "pct_chg": 4.81
-    },
-    {
-      "name": "农业种植",
-      "ts_code": "BK0888.DC",
-      "net_inflow_yuan": 26316001120000.0,
-      "pct_chg": 4.81
-    },
-    {
-      "name": "光学光电子",
-      "ts_code": "BK1038.DC",
-      "net_inflow_yuan": 19578334720000.0,
-      "pct_chg": 1.18
-    },
-    {
-      "name": "乡村振兴",
-      "ts_code": "BK0834.DC",
-      "net_inflow_yuan": 18552092160000.0,
-      "pct_chg": 1.3
-    },
-    {
-      "name": "粮食概念",
-      "ts_code": "BK1086.DC",
-      "net_inflow_yuan": 16254713120000.0,
-      "pct_chg": 7.45
-    },
-    {
-      "name": "种植业",
-      "ts_code": "BK1261.DC",
-      "net_inflow_yuan": 16147588960000.0,
-      "pct_chg": 11.83
-    },
-    {
-      "name": "面板",
-      "ts_code": "BK1335.DC",
-      "net_inflow_yuan": 15962618880000.0,
-      "pct_chg": 1.93
-    },
-    {
-      "name": "减速器",
-      "ts_code": "BK1100.DC",
-      "net_inflow_yuan": 13729502720000.0,
-      "pct_chg": 0.97
-    },
-    {
-      "name": "土地流转",
-      "ts_code": "BK0632.DC",
-      "net_inflow_yuan": 12856488320000.0,
-      "pct_chg": 2.82
-    },
-    {
-      "name": "MicroLED",
-      "ts_code": "BK0948.DC",
-      "net_inflow_yuan": 12406520320000.0,
-      "pct_chg": 1.21
-    },
-    {
-      "name": "机器人执行器",
-      "ts_code": "BK1145.DC",
-      "net_inflow_yuan": 11933973920000.0,
-      "pct_chg": 1.63
-    },
-    {
-      "name": "化学原料",
-      "ts_code": "BK1019.DC",
-      "net_inflow_yuan": 11933627360000.0,
-      "pct_chg": 0.53
-    },
-    {
-      "name": "煤化工概念",
-      "ts_code": "BK0492.DC",
-      "net_inflow_yuan": 10917172800000.0,
-      "pct_chg": 0.89
-    },
-    {
-      "name": "猪肉概念",
-      "ts_code": "BK0882.DC",
-      "net_inflow_yuan": 10454967040000.0,
-      "pct_chg": 3.09
-    },
-    {
-      "name": "国有大型银行Ⅲ",
-      "ts_code": "BK1611.DC",
-      "net_inflow_yuan": 10132012000000.0,
-      "pct_chg": 1.51
-    },
-    {
-      "name": "红利股",
-      "ts_code": "BK1641.DC",
-      "net_inflow_yuan": 9638704640000.0,
-      "pct_chg": 0.33
-    },
-    {
-      "name": "钙钛矿电池",
-      "ts_code": "BK1094.DC",
-      "net_inflow_yuan": 9260321280000.0,
-      "pct_chg": -0.07
-    },
-    {
-      "name": "种子",
-      "ts_code": "BK1518.DC",
-      "net_inflow_yuan": 9242173600000.0,
-      "pct_chg": 14.55
-    },
-    {
-      "name": "转基因",
-      "ts_code": "BK0907.DC",
-      "net_inflow_yuan": 9119858720000.0,
-      "pct_chg": 8.27
-    },
-    {
-      "name": "红利破净股",
-      "ts_code": "BK1636.DC",
-      "net_inflow_yuan": 8687701280000.0,
-      "pct_chg": 0.35
-    }
-  ],
-  "cold_industries": [
-    {
-      "name": "融资融券",
-      "ts_code": "BK0596.DC",
-      "net_inflow_yuan": -629553152000000.0,
-      "pct_chg": -0.03
-    },
-    {
-      "name": "富时罗素",
-      "ts_code": "BK0867.DC",
-      "net_inflow_yuan": -453066342400000.0,
-      "pct_chg": -0.36
-    },
-    {
-      "name": "MSCI中国",
-      "ts_code": "BK0821.DC",
-      "net_inflow_yuan": -437954682880000.0,
-      "pct_chg": -0.15
-    },
-    {
-      "name": "深股通",
-      "ts_code": "BK0804.DC",
-      "net_inflow_yuan": -414816256000000.0,
-      "pct_chg": -0.42
-    },
-    {
-      "name": "2026中报预增",
-      "ts_code": "BK1749.DC",
-      "net_inflow_yuan": -368673669120000.0,
-      "pct_chg": -0.33
-    },
-    {
-      "name": "深成500",
-      "ts_code": "BK0568.DC",
-      "net_inflow_yuan": -332842680320000.0,
-      "pct_chg": -0.4
-    },
-    {
-      "name": "标准普尔",
-      "ts_code": "BK0879.DC",
-      "net_inflow_yuan": -331584225280000.0,
-      "pct_chg": -0.24
-    },
-    {
-      "name": "大盘股",
-      "ts_code": "BK1663.DC",
-      "net_inflow_yuan": -329148088320000.0,
-      "pct_chg": -0.1
-    },
-    {
-      "name": "HS300_",
-      "ts_code": "BK0500.DC",
-      "net_inflow_yuan": -289971650560000.0,
-      "pct_chg": -0.2
-    },
-    {
-      "name": "通信技术",
-      "ts_code": "BK1650.DC",
-      "net_inflow_yuan": -287924715520000.0,
-      "pct_chg": -0.4
-    }
-  ],
+  "hot_industries": [],
+  "cold_industries": [],
   "concept_meta": {
     "api_used": null,
     "_attempted_endpoints": [
@@ -205,7 +23,7 @@
     "_attempted_endpoints": [
       "moneyflow_ind_dc"
     ],
-    "row_count": 1031,
+    "row_count": 0,
     "_status": "ok"
   }
 }
