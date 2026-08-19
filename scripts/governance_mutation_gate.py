@@ -2181,13 +2181,13 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/execution_tracker/run_nightly.py",
         test_script="tests/test_funnel_nightly_offline.py",
         before=(
-            "    if not os.path.isfile(stage_health):\n"
-            "        return []\n"
-            "    os.remove(stage_health)"
+            "        if not os.path.isfile(stage_file):\n"
+            "            continue\n"
+            "        os.remove(stage_file)"
         ),
         after=(
-            "    if not os.path.isfile(stage_health):\n"
-            "        return []\n"
+            "        if not os.path.isfile(stage_file):\n"
+            "            continue\n"
         ),
         expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
         rationale="Isolation without discard republishes yesterday's summary as today's output.",
@@ -2197,8 +2197,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Nightly funnel wiring isolation",
         source_path="experiments/execution_tracker/run_nightly.py",
         test_script="tests/test_funnel_nightly_offline.py",
-        before='    "research_funnel": _discard_failed_funnel_outputs,',
-        after='    "research_funnel": _discard_failed_macro_outputs,',
+        before='    "funnel_finalize": _discard_failed_funnel_outputs,',
+        after='    "funnel_finalize": _discard_failed_macro_outputs,',
         expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
         rationale="Two isolated steps share one branch; a funnel failure must not wipe Macro outputs.",
     ),
@@ -2226,12 +2226,12 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/execution_tracker/run_nightly.py",
         test_script="tests/test_funnel_nightly_offline.py",
         before=(
-            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '    "funnel_finalize":       [(os.path.join("..", "..", "public", "data", "v2",\n'
             '                                             "funnel_health.json"),\n'
             '                                "as_of", True)],'
         ),
         after=(
-            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '    "funnel_finalize":       [(os.path.join("..", "..", "public", "data", "v2",\n'
             '                                             "funnel_health.json"),\n'
             '                                "as_of", False)],'
         ),
@@ -2689,6 +2689,195 @@ MUTATIONS: tuple[MutationCase, ...] = (
             "test_validate_manifest_enforces_nightly_acceptance_marker_coverage"
         ),
         rationale="The gate must not silently stop enforcing acceptance-verifier marker coverage.",
+    ),
+    # ── 三段子 DAG:候选清单 / 电池覆盖 / 段间绑定 ──
+    MutationCase(
+        mutation_id="FUNNEL_MANIFEST_COUNT_FROM_LIST",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if payload.get("expected_count") != len(codes):',
+        after="    if False:",
+        expected_failure_marker="test_expected_count_is_derived_from_the_list_not_hardcoded",
+        rationale="The candidate count must be derived from the manifest list, never hardcoded.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_MANIFEST_BINDING",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if battery.get("manifest_hash") != manifest.get("manifest_hash"):',
+        after="    if False:",
+        expected_failure_marker="test_battery_bound_to_another_manifest_is_refused",
+        rationale="A battery not bound to this run's candidate manifest is evidence for another run.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_SET_EQUALITY",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    if set(observed) != expected:",
+        after="    if False:",
+        expected_failure_marker="test_one_missing_row_is_a_silent_absence_and_refused",
+        rationale="expected == observed as sets; one silent absence is one candidate never batteried.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_SIX_DIMS",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            "        if tuple(dims.keys()) != BATTERY_DIMENSIONS and set(dims.keys()) != set(BATTERY_DIMENSIONS):"
+        ),
+        after="        if False:",
+        expected_failure_marker="test_a_row_missing_a_dimension_is_refused_not_tolerated",
+        rationale="A missing dimension must appear as explicit DATA_BLOCKED, never be absent.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_ROW_SAME_DAY",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='        if _date8(str(row.get("checked_at") or "")) != _date8(str(manifest.get("as_of") or "")):',
+        after="        if False:",
+        expected_failure_marker="test_a_prior_day_row_cannot_be_repacked_as_same_day_battery",
+        rationale="Every battery row must come from the same trade date as the immutable candidate manifest.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_COMPLETENESS_RECOMPUTED",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            '        if (\n'
+            '            completeness.get("covered") != 6 - len(blocked_dims)\n'
+            '            or set(completeness.get("missing") or []) != set(blocked_dims)\n'
+            '            or completeness.get("verdict") != expected_verdict\n'
+            '        ):'
+        ),
+        after='        if False:',
+        expected_failure_marker="test_completeness_is_recomputed_from_dimensions_not_self_reported",
+        rationale="A row cannot self-report COMPLETE when its six dimensions contain blocked evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_DIMENSION_EVIDENCE",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='            if not isinstance(evidence, dict) or not evidence:',
+        after='            if False:',
+        expected_failure_marker="test_an_empty_dimension_is_not_complete_evidence",
+        rationale="A named dimension must contain evidence; an empty object is not COMPLETE.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_DIMENSION_STATUS",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='            if status is not None and status not in {"DATA_BLOCKED", "NOT_RUN"}:',
+        after='            if False:',
+        expected_failure_marker="test_an_unknown_dimension_status_is_not_complete_evidence",
+        rationale="Unknown dimension states cannot be treated as successfully measured evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_TOKENLESS_DEGRADATION",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    ("candidate_battery", ["python3", "../research_funnel/funnel_dag.py", "battery"], False,',
+        after='    ("candidate_battery", ["python3", "../research_funnel/funnel_dag.py", "battery"], True,',
+        expected_failure_marker="test_live_orchestrator_runs_battery_without_token_for_explicit_rows",
+        rationale="The live orchestrator must run the battery stage without a token so it can materialize per-ticket DATA_BLOCKED rows.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_FINAL_MANIFEST_EVIDENCE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    return BUNDLE_FILES + DAG_EVIDENCE_FILES",
+        after="    return BUNDLE_FILES",
+        expected_failure_marker="test_final_bundle_pins_candidate_manifest_and_battery_bytes",
+        rationale="The final immutable manifest must pin the candidate manifest and per-ticket battery bytes.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_FINAL_CONTRACT",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='            or dag.get("candidate_manifest_hash") != candidate_manifest.get("manifest_hash")',
+        after="            or False",
+        expected_failure_marker="test_final_bundle_revalidates_dag_bindings_not_only_file_hashes",
+        rationale="Hash integrity is insufficient; the final verifier must re-check all cross-artifact DAG bindings.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_HEALTH_COVERAGE_RECOMPUTED",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='        if data.get("battery_coverage") != measured_battery:',
+        after="        if False:",
+        expected_failure_marker="test_production_verifier_recomputes_health_battery_coverage",
+        rationale="The production verifier must derive 105/105 and blocked-row counts from immutable battery evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_NO_LEGACY_DOWNGRADE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if "battery_coverage" in data and "candidate_battery.json" not in payloads:',
+        after='    if False:',
+        expected_failure_marker="test_production_verifier_rejects_dag_evidence_downgrade",
+        rationale="A DAG health receipt cannot be reinterpreted as a legacy four-file bundle.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_STAGE_NO_OVERWRITE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="        if os.path.lexists(bundle_dir / name):\n            raise FunnelError(f\"stage {stage} 产物已存在,拒绝覆盖: {name}\")",
+        after="        if False:\n            pass",
+        expected_failure_marker="test_a_stage_refuses_to_overwrite_its_own_outputs",
+        rationale="Re-running a stage under the same run_id must not silently replace evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_STAGE_BINDING",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if manifest.get("as_of") != as_of or manifest.get("run_id") != run_id:',
+        after="    if False:",
+        expected_failure_marker="test_write_then_read_stage_binds_run_and_verifies_bytes",
+        rationale="A later stage must refuse a prior stage that belongs to another run or day.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_FINALIZE_COVERAGE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    coverage = validate_candidate_battery(battery, manifest)\n    scan, candidates = p1",
+        after="    coverage = {\"expected\": 0, \"observed\": 0, \"data_blocked_rows\": 0, \"complete_rows\": 0}\n    scan, candidates = p1",
+        expected_failure_marker="test_three_stages_run_end_to_end_without_token",
+        rationale="Finalize must publish coverage measured from the candidate battery, not a fabricated receipt.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_RECEIPT_CHAIN",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='                or receipt.get("stage_hash") != stage_manifest["stage_hash"]):',
+        after="                or False):",
+        expected_failure_marker="test_finalize_refuses_a_swapped_stage_receipt",
+        rationale="Published stage receipts must match the observation-area stage manifests byte for byte.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_SKIP_STAYS_ISOLATED",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="            if name in ISOLATED_CALIBRATION_STEPS:\n                # 隔离步依赖隔离步",
+        after="            if False:\n                # 隔离步依赖隔离步",
+        expected_failure_marker="test_a_skipped_downstream_stage_stays_isolated",
+        rationale="A skipped isolated stage must not veto publication through the dependency back door.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",
