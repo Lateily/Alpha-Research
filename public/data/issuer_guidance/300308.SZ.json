@@ -1,15 +1,15 @@
 {
   "ticker": "300308.SZ",
-  "fetched_at": "2026-08-19T09:04:14Z",
+  "fetched_at": "2026-08-20T02:21:01Z",
   "_semantics": "issuer_guidance = 公司业绩预告(forecast) + 业绩快报(express) — 发行人自披露,NOT broker consensus. 卖方预测见 broker_recommend (report_rc, E2).",
   "disclaimer": "不是买卖指令;研究信号,human executes.",
-  "_status": "OK",
+  "_status": "PARTIAL",
   "as_of": "20260228",
   "dimensions": {
     "forecast": {
-      "row_count": 4,
-      "_status": "OK",
-      "as_of": "20260131"
+      "row_count": 0,
+      "_status": "EMPTY_VALID",
+      "as_of": null
     },
     "express": {
       "row_count": 2,
@@ -33,48 +33,6 @@
       "summary": null
     },
     {
-      "source": "forecast",
-      "ann_date": "20260131",
-      "end_date": "20251231",
-      "type": "预增",
-      "net_profit": 10800000000.0,
-      "net_profit_min": 9800000000.0,
-      "net_profit_max": 11800000000.0,
-      "p_change_min": 89.5,
-      "p_change_max": 128.17,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润980000-1180000"
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20250716",
-      "end_date": "20250630",
-      "type": "预增",
-      "net_profit": 4000000000.0,
-      "net_profit_min": 3600000000.0,
-      "net_profit_max": 4400000000.0,
-      "p_change_min": 52.64,
-      "p_change_max": 86.57,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润360000-440000"
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20250410",
-      "end_date": "20250331",
-      "type": "预增",
-      "net_profit": 1550000000.0,
-      "net_profit_min": 1400000000.0,
-      "net_profit_max": 1700000000.0,
-      "p_change_min": 38.71,
-      "p_change_max": 68.44,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润140000-170000"
-    },
-    {
       "source": "express",
       "ann_date": "20250228",
       "end_date": "20241231",
@@ -87,20 +45,6 @@
       "eps": 4.71,
       "revenue": 23861489011.49,
       "summary": null
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20250124",
-      "end_date": "20241231",
-      "type": "预增",
-      "net_profit": 5200000000.0,
-      "net_profit_min": 4600000000.0,
-      "net_profit_max": 5800000000.0,
-      "p_change_min": 111.64,
-      "p_change_max": 166.85,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润460000-580000"
     }
   ],
   "forecasts": [
@@ -119,48 +63,6 @@
       "summary": null
     },
     {
-      "source": "forecast",
-      "ann_date": "20260131",
-      "end_date": "20251231",
-      "type": "预增",
-      "net_profit": 10800000000.0,
-      "net_profit_min": 9800000000.0,
-      "net_profit_max": 11800000000.0,
-      "p_change_min": 89.5,
-      "p_change_max": 128.17,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润980000-1180000"
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20250716",
-      "end_date": "20250630",
-      "type": "预增",
-      "net_profit": 4000000000.0,
-      "net_profit_min": 3600000000.0,
-      "net_profit_max": 4400000000.0,
-      "p_change_min": 52.64,
-      "p_change_max": 86.57,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润360000-440000"
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20250410",
-      "end_date": "20250331",
-      "type": "预增",
-      "net_profit": 1550000000.0,
-      "net_profit_min": 1400000000.0,
-      "net_profit_max": 1700000000.0,
-      "p_change_min": 38.71,
-      "p_change_max": 68.44,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润140000-170000"
-    },
-    {
       "source": "express",
       "ann_date": "20250228",
       "end_date": "20241231",
@@ -173,20 +75,6 @@
       "eps": 4.71,
       "revenue": 23861489011.49,
       "summary": null
-    },
-    {
-      "source": "forecast",
-      "ann_date": "20250124",
-      "end_date": "20241231",
-      "type": "预增",
-      "net_profit": 5200000000.0,
-      "net_profit_min": 4600000000.0,
-      "net_profit_max": 5800000000.0,
-      "p_change_min": 111.64,
-      "p_change_max": 166.85,
-      "eps": null,
-      "revenue": null,
-      "summary": "预计:净利润460000-580000"
     }
   ]
 }
