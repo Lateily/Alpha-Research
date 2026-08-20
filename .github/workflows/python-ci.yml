@@ -84,6 +84,7 @@ jobs:
           python3 tests/test_h7_task_ux_contract.py
           python3 tests/test_h7_task_ux_ui_contract.py
           python3 tests/test_h7_product_aios_bridge_phase3.py
+          python3 tests/test_h7_product_aios_bridge_phase4.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
