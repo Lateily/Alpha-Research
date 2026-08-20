@@ -117,6 +117,15 @@
             }
           }
         }
+      },
+      "else": {
+        "properties": {
+          "projection": {
+            "properties": {
+              "error_code": {"type": "null"}
+            }
+          }
+        }
       }
     },
     {
@@ -128,6 +137,22 @@
               "state": {"const": "PENDING"},
               "decision_ref": {"type": "null"}
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "human_review": {
+            "properties": {"state": {"const": "PENDING"}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "human_review": {
+            "properties": {"decision_ref": {"type": "null"}}
           }
         }
       }
@@ -245,8 +270,37 @@
         "error_code"
       ],
       "properties": {
-        "task_state": {"type": "string", "minLength": 1},
-        "run_state": {"type": ["string", "null"], "minLength": 1},
+        "task_state": {
+          "enum": [
+            "DISCOVERED",
+            "TRIAGED",
+            "SPEC_READY",
+            "CLAIMED",
+            "RUNNING",
+            "VERIFYING",
+            "REVIEWING",
+            "AWAITING_APPROVAL",
+            "DONE",
+            "SPEC_BLOCKED",
+            "BLOCKED",
+            "FAILED"
+          ]
+        },
+        "run_state": {
+          "type": ["string", "null"],
+          "enum": [
+            "SPEC_READY",
+            "RUNNING",
+            "VERIFYING",
+            "REVIEWING",
+            "AWAITING_APPROVAL",
+            "DONE",
+            "SPEC_BLOCKED",
+            "BLOCKED",
+            "FAILED",
+            null
+          ]
+        },
         "freshness": {"enum": ["CURRENT", "STALE", "UNKNOWN"]},
         "model": {"const": "offline-fixture"},
         "prompt_version": {"const": "h7.announcement-fact-extraction.v0"},
