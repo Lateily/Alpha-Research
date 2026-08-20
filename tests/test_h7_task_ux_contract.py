@@ -5,15 +5,22 @@ from __future__ import annotations
 import copy
 import json
 import re
+import sys
 import unittest
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
-from scripts.llm.ai_os.task_compiler import SPEC_BLOCKED, SPEC_READY, compile_task_manifest
-
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from scripts.llm.ai_os.task_compiler import (  # noqa: E402
+    SPEC_BLOCKED,
+    SPEC_READY,
+    compile_task_manifest,
+)
+
+
 FIXTURES_PATH = (
     ROOT
     / "docs"
