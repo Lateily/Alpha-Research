@@ -162,7 +162,11 @@
         "source_id": {"type": "string", "minLength": 1},
         "source_kind": {"const": "ANNOUNCEMENT"},
         "locator": {"type": "string", "minLength": 1},
-        "publish_date": {"type": "string", "format": "date"},
+        "publish_date": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
         "data_cutoff": {"$ref": "#/$defs/aware_timestamp"},
         "trust": {"const": "UNTRUSTED_DATA"}
       }
@@ -242,7 +246,7 @@
       ],
       "properties": {
         "task_state": {"type": "string", "minLength": 1},
-        "run_state": {"type": ["string", "null"]},
+        "run_state": {"type": ["string", "null"], "minLength": 1},
         "freshness": {"enum": ["CURRENT", "STALE", "UNKNOWN"]},
         "model": {"const": "offline-fixture"},
         "prompt_version": {"const": "h7.announcement-fact-extraction.v0"},
@@ -252,7 +256,7 @@
         "warnings": {"$ref": "#/$defs/string_array"},
         "blocking_reasons": {"$ref": "#/$defs/string_array"},
         "external_content_trust": {"const": "UNTRUSTED_DATA"},
-        "error_code": {"type": ["string", "null"]}
+        "error_code": {"type": ["string", "null"], "minLength": 1}
       }
     },
     "human_review": {
@@ -267,8 +271,8 @@
       ],
       "properties": {
         "state": {"enum": ["NOT_REQUESTED", "PENDING", "APPROVED", "REVISE", "REJECTED"]},
-        "reviewer": {"type": ["string", "null"]},
-        "decision_ref": {"type": ["string", "null"]},
+        "reviewer": {"type": ["string", "null"], "minLength": 1},
+        "decision_ref": {"type": ["string", "null"], "minLength": 1},
         "final_merge_authority": {"const": "Junyan"},
         "final_merge_authorized": {"const": false}
       }
