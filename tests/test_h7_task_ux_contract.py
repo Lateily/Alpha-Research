@@ -34,6 +34,31 @@ STATUSES = {
     "ERROR",
     "AWAITING_HUMAN_REVIEW",
 }
+TASK_STATES = {
+    "DISCOVERED",
+    "TRIAGED",
+    "SPEC_READY",
+    "CLAIMED",
+    "RUNNING",
+    "VERIFYING",
+    "REVIEWING",
+    "AWAITING_APPROVAL",
+    "DONE",
+    "SPEC_BLOCKED",
+    "BLOCKED",
+    "FAILED",
+}
+RUN_STATES = {
+    "SPEC_READY",
+    "RUNNING",
+    "VERIFYING",
+    "REVIEWING",
+    "AWAITING_APPROVAL",
+    "DONE",
+    "SPEC_BLOCKED",
+    "BLOCKED",
+    "FAILED",
+}
 ROOT_KEYS = {
     "schema",
     "workflow_type",
@@ -270,10 +295,11 @@ def validate_packet(packet: Any) -> list[str]:
     if not isinstance(projection, Mapping) or set(projection) != PROJECTION_KEYS:
         errors.append("projection fields are invalid")
     else:
-        if not _non_empty_string(projection.get("task_state")):
+        if projection.get("task_state") not in TASK_STATES:
             errors.append("projection task_state is invalid")
-        if projection.get("run_state") is not None and not _non_empty_string(
-            projection.get("run_state")
+        if (
+            projection.get("run_state") is not None
+            and projection.get("run_state") not in RUN_STATES
         ):
             errors.append("projection run_state is invalid")
         if projection.get("freshness") not in {"CURRENT", "STALE", "UNKNOWN"}:
@@ -315,6 +341,23 @@ def validate_packet(packet: Any) -> list[str]:
                     "CONFLICTING",
                 }:
                     errors.append("evidence verification status is invalid")
+            if isinstance(user_input, Mapping):
+                refs_by_id = {
+                    ref.get("source_id"): ref
+                    for ref in user_input.get("announcement_refs", [])
+                    if isinstance(ref, Mapping)
+                }
+                for item in evidence:
+                    if not isinstance(item, Mapping):
+                        continue
+                    source_ref = refs_by_id.get(item.get("source_id"))
+                    if source_ref is None:
+                        errors.append("evidence source is not in user input")
+                    elif (
+                        item.get("publish_date") != source_ref.get("publish_date")
+                        or item.get("data_cutoff") != source_ref.get("data_cutoff")
+                    ):
+                        errors.append("evidence provenance does not match source reference")
 
     review = packet.get("human_review")
     if not isinstance(review, Mapping) or set(review) != REVIEW_KEYS:
@@ -336,6 +379,10 @@ def validate_packet(packet: Any) -> list[str]:
             review.get("decision_ref")
         ):
             errors.append("human review decision_ref is invalid")
+        if review.get("state") in {"NOT_REQUESTED", "PENDING"} and review.get(
+            "decision_ref"
+        ) is not None:
+            errors.append("unreviewed output cannot carry a decision_ref")
         if review.get("final_merge_authority") != "Junyan":
             errors.append("final merge authority is invalid")
         if review.get("final_merge_authorized") is not False:
@@ -378,6 +425,8 @@ def validate_packet(packet: Any) -> list[str]:
             errors.append("BLOCKED requires blocking reasons")
         if status == "ERROR" and not projection.get("error_code"):
             errors.append("ERROR requires an error code")
+        if status != "ERROR" and projection.get("error_code") is not None:
+            errors.append("error_code is only allowed for ERROR")
         if status == "AWAITING_HUMAN_REVIEW" and (
             review.get("state") != "PENDING" or review.get("decision_ref") is not None
         ):
@@ -496,6 +545,24 @@ class H7TaskUxContractTests(unittest.TestCase):
             "AWAITING_HUMAN_REVIEW must remain pending",
             validate_packet(packet),
         )
+
+    def test_evidence_must_reference_submitted_source(self) -> None:
+        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet["projection"]["evidence"][0]["source_id"] = "unknown-source"
+        self.assertIn("evidence source is not in user input", validate_packet(packet))
+
+    def test_evidence_provenance_must_match_source(self) -> None:
+        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet["projection"]["evidence"][0]["publish_date"] = "2026-08-19"
+        self.assertIn(
+            "evidence provenance does not match source reference",
+            validate_packet(packet),
+        )
+
+    def test_non_error_cannot_carry_error_code(self) -> None:
+        packet = copy.deepcopy(self.fixtures["PARTIAL"])
+        packet["projection"]["error_code"] = "MISLEADING_ERROR"
+        self.assertIn("error_code is only allowed for ERROR", validate_packet(packet))
 
 
 if __name__ == "__main__":
