@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/contracts/product/h7-task-ux-ui.v0.schema.json",
+  "title": "H7 Task UX UI View Model v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_packet_schema",
+    "workflow_type",
+    "rendered_at",
+    "layout",
+    "actions",
+    "state_views",
+    "audit",
+    "no_trade_flag"
+  ],
+  "properties": {
+    "schema": {"const": "h7-task-ux-ui.v0"},
+    "source_packet_schema": {"const": "h7-task-ux.v0"},
+    "workflow_type": {"const": "ANNOUNCEMENT_FACT_EXTRACTION"},
+    "rendered_at": {
+      "type": "string",
+      "pattern": "^(?:\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?)(?:Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "layout": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "enum": [
+          "request_summary",
+          "task_manifest_preview",
+          "aios_state",
+          "evidence_table",
+          "missing_or_blocked_items",
+          "human_review",
+          "audit_strip"
+        ]
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/action"}
+    },
+    "state_views": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/state_view"}
+    },
+    "audit": {"$ref": "#/$defs/audit"},
+    "no_trade_flag": {"const": true}
+  },
+  "$defs": {
+    "status": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "STALE",
+        "BLOCKED",
+        "ERROR",
+        "AWAITING_HUMAN_REVIEW"
+      ]
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "enabled_when",
+        "requires_human",
+        "calls_model",
+        "writes_github",
+        "writes_production",
+        "writes_memory",
+        "can_authorize_final_merge"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "CREATE_TASK_PREVIEW",
+            "EDIT_REQUEST",
+            "REFRESH_CONTEXT_REQUEST",
+            "REQUEST_HUMAN_REVIEW",
+            "VIEW_EVIDENCE",
+            "COPY_TASK_ID"
+          ]
+        },
+        "label": {"type": "string", "minLength": 1, "maxLength": 80},
+        "enabled_when": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/status"}
+        },
+        "requires_human": {"type": "boolean"},
+        "calls_model": {"const": false},
+        "writes_github": {"const": false},
+        "writes_production": {"const": false},
+        "writes_memory": {"const": false},
+        "can_authorize_final_merge": {"const": false}
+      }
+    },
+    "state_view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "tone",
+        "headline",
+        "primary_message",
+        "required_sections",
+        "visible_controls",
+        "disabled_controls",
+        "must_show_fields"
+      ],
+      "properties": {
+        "status": {"$ref": "#/$defs/status"},
+        "tone": {
+          "enum": ["complete", "warning", "stale", "blocked", "error", "review"]
+        },
+        "headline": {"type": "string", "minLength": 1, "maxLength": 120},
+        "primary_message": {"type": "string", "minLength": 1, "maxLength": 240},
+        "required_sections": {
+          "type": "array",
+          "minItems": 4,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "visible_controls": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "disabled_controls": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "must_show_fields": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "external_content_trust",
+        "final_merge_authority",
+        "human_review_required",
+        "memory_write_allowed",
+        "provider_call_allowed"
+      ],
+      "properties": {
+        "external_content_trust": {"const": "UNTRUSTED_DATA"},
+        "final_merge_authority": {"const": "Junyan"},
+        "human_review_required": {"const": true},
+        "memory_write_allowed": {"const": false},
+        "provider_call_allowed": {"const": false}
+      }
+    }
+  }
+}

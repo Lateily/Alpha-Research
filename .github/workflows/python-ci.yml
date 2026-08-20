@@ -12,6 +12,8 @@ on:
       - "scripts/llm/**/*.json"
       - "tests/**"
       - "docs/llm/**"
+      - "docs/product/**"
+      - "docs/contracts/product/**"
       - "public/data/v2/**"
       - "docs/research/macro/**"
       - "docs/contracts/macro/**"
@@ -76,6 +78,11 @@ jobs:
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py
+      # H7 Product-AIOS bridge: product request -> ai-task preview -> UI states.
+      - name: H7 Task UX contract regression (offline)
+        run: |
+          python3 tests/test_h7_task_ux_contract.py
+          python3 tests/test_h7_task_ux_ui_contract.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──
