@@ -1,0 +1,96 @@
+{
+  "schema": "h7-product-aios-bridge-phase3.fixtures.v0",
+  "page": {
+    "route": "/aios/product-bridge",
+    "title": "Product-AIOS Bridge",
+    "source_packet_schema": "h7-task-ux.v0",
+    "ui_view_schema": "h7-task-ux-ui.v0",
+    "regions": [
+      "request_header",
+      "task_preview",
+      "run_projection",
+      "evidence_table",
+      "gap_panel",
+      "human_review_dock",
+      "audit_strip"
+    ],
+    "responsive_targets": ["desktop", "mobile_390"],
+    "forbidden_runtime_actions": [
+      "provider_model_call",
+      "agent_execution",
+      "router_request",
+      "context_retrieval",
+      "policy_decision",
+      "github_write",
+      "memory_write",
+      "production_write",
+      "final_merge_authorization"
+    ],
+    "no_trade_flag": true
+  },
+  "acceptance_cases": [
+    {
+      "case_id": "happy_path_reviewed",
+      "input_status": "COMPLETE",
+      "expected_tone": "complete",
+      "primary_user_action": "VIEW_EVIDENCE",
+      "must_show": ["evidence_table", "human_review_dock", "audit_strip", "decision_ref"],
+      "must_not_show_as_success": false
+    },
+    {
+      "case_id": "missing_amount",
+      "input_status": "PARTIAL",
+      "expected_tone": "warning",
+      "primary_user_action": "EDIT_REQUEST",
+      "must_show": ["gap_panel", "missing_evidence", "audit_strip"],
+      "must_not_show_as_success": true
+    },
+    {
+      "case_id": "expired_cutoff",
+      "input_status": "STALE",
+      "expected_tone": "stale",
+      "primary_user_action": "REQUEST_CONTEXT_REFRESH",
+      "must_show": ["data_cutoff", "freshness", "audit_strip"],
+      "must_not_show_as_success": true
+    },
+    {
+      "case_id": "bad_request",
+      "input_status": "BLOCKED",
+      "expected_tone": "blocked",
+      "primary_user_action": "EDIT_REQUEST",
+      "must_show": ["blocking_reasons", "task_manifest_null", "audit_strip"],
+      "must_not_show_as_success": true
+    },
+    {
+      "case_id": "projection_failed",
+      "input_status": "ERROR",
+      "expected_tone": "error",
+      "primary_user_action": "EDIT_REQUEST",
+      "must_show": ["error_code", "audit_strip"],
+      "must_not_show_as_success": true
+    },
+    {
+      "case_id": "needs_review",
+      "input_status": "AWAITING_HUMAN_REVIEW",
+      "expected_tone": "review",
+      "primary_user_action": "REQUEST_HUMAN_REVIEW",
+      "must_show": ["reviewer", "decision_ref_null", "audit_strip"],
+      "must_not_show_as_success": true
+    }
+  ],
+  "responsive_acceptance": {
+    "desktop": [
+      "request_header_visible",
+      "task_preview_visible",
+      "run_projection_visible",
+      "evidence_columns_readable",
+      "audit_strip_visible"
+    ],
+    "mobile_390": [
+      "no_horizontal_text_overflow",
+      "evidence_rows_stack",
+      "primary_action_below_current_state",
+      "audit_strip_before_human_review"
+    ]
+  }
+}
