@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-19T09:04:57Z",
+  "fetched_at": "2026-08-20T02:21:49Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -1085,39 +1085,11 @@
       "inst_count": 2,
       "surv_type": "特定对象调研",
       "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260521",
-      "fund_visitors": "吕兰兰",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "华泰证券",
-      "org_type": "证券公司",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 2,
-      "surv_type": "特定对象调研",
-      "description": null
-    },
-    {
-      "ts_code": "300054.SZ",
-      "name": "鼎龙股份",
-      "surv_date": "20260521",
-      "fund_visitors": "胡杰,潘中宁,卢少强,张雪韬,贾静雯,马新凯",
-      "rece_place": "公司9楼会议室",
-      "rece_mode": "特定对象调研",
-      "rece_org": "华夏基金",
-      "org_type": "基金管理公司",
-      "comp_rece": "董事会秘书 杨平彩",
-      "inst_count": 7,
-      "surv_type": "特定对象调研",
-      "description": null
     }
   ],
   "summary": {
     "total_30d": 17,
-    "total_90d": 79,
+    "total_90d": 77,
     "unique_inst_30d": 53,
     "latest_date": "2026-07-28"
   }
