@@ -23,20 +23,17 @@ import tempfile
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from funnel_pipeline import (  # noqa: E402
     CHANNELS,
     DISCLAIMER,
-    FORBIDDEN_ACTION_KEYS,
-    FORBIDDEN_AGGREGATE_KEYS,
     FunnelError,
     _date8,
     _evidence_date,
     _hash,
-    _walk_keys,
     validate_all_market_scan,
     validate_candidate_review,
 )
@@ -80,17 +77,33 @@ COHORT_STATES = {
     "ABSOLUTE_EVIDENCE_PRESENT",
     "RELATIVE_RESEARCH_ONLY",
     "DATA_BLOCKED",
-}
-COHORT_FORBIDDEN_KEYS = FORBIDDEN_ACTION_KEYS | FORBIDDEN_AGGREGATE_KEYS | {
-    "u4_selected",
-    "paper_order",
-    "entry_price",
-    "stop_price",
-    "target_price",
+    "NO_POSITIVE_EVIDENCE",
 }
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 RESEARCH_ONLY_U4_READY = False
 EXCLUDE_RED_FLAGS = True
+COHORT_NEXT_GATE = "U3_BATTERY_AND_JUNYAN_U4_REVIEW_IN_A_SEPARATE_SLICE"
+
+TAXONOMY_FIELDS = frozenset({
+    "schema", "schema_version", "rule_version", "policy", "mappings", "mappings_hash",
+})
+INDUSTRY_REGISTRY_FIELDS = frozenset({
+    "schema", "schema_version", "rule_version", "status", "as_of", "generated_at",
+    "policy", "input_refs", "coverage", "rows", "rows_hash", "disclaimer",
+})
+INDUSTRY_SNAPSHOT_FIELDS = INDUSTRY_REGISTRY_FIELDS
+INDUSTRY_COHORT_FIELDS = INDUSTRY_REGISTRY_FIELDS | {"next_gate"}
+REGISTRY_INPUT_REF_FIELDS = frozenset({
+    "security_registry_hash", "eligible_universe_hash", "taxonomy_hash",
+})
+SNAPSHOT_INPUT_REF_FIELDS = frozenset({
+    "industry_registry_rows_hash", "scan_rows_hash", "rotation_hash",
+})
+COHORT_INPUT_REF_FIELDS = frozenset({
+    "industry_registry_rows_hash", "industry_snapshot_rows_hash", "scan_rows_hash",
+    "candidate_review_rows_hash",
+})
+ROTATION_USABLE_QUALITY = {"COMPLETE", "PARTIAL"}
 
 REGISTRY_POLICY = {
     "coverage": "ALL_U0_INDUSTRIES",
@@ -160,6 +173,52 @@ def _string_list(value: Any, field: str) -> list[str]:
     return output
 
 
+def _require_exact_fields(
+    payload: Mapping[str, Any], expected: frozenset[str] | set[str], label: str,
+) -> None:
+    actual = set(payload)
+    if actual != set(expected):
+        raise FunnelError(
+            f"{label} fields are not exact; missing={sorted(set(expected) - actual)} "
+            f"unexpected={sorted(actual - set(expected))}"
+        )
+
+
+def _require_disclaimer(payload: Mapping[str, Any], label: str) -> None:
+    if payload.get("disclaimer") != DISCLAIMER:
+        raise FunnelError(f"{label} disclaimer changed")
+
+
+def _median(values: Sequence[float]) -> float | None:
+    if not values:
+        return None
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) / 2.0
+
+
+def _industry_relative_price_evidence(
+    codes: Sequence[str], scan_by_code: Mapping[str, Mapping[str, Mapping[str, Any]]],
+) -> tuple[float | None, dict[str, float], int]:
+    observed: dict[str, float] = {}
+    for code in codes:
+        row = scan_by_code[code]["PRICE_VOLUME"]
+        value = _finite((row.get("feature_values") or {}).get("return_20d"))
+        if row.get("data_status") == "COMPLETE" and value is not None:
+            observed[code] = value
+    benchmark = _median(list(observed.values()))
+    if benchmark is None:
+        return None, {}, 0
+    positive = {
+        code: value - benchmark
+        for code, value in observed.items()
+        if value - benchmark > 0
+    }
+    return benchmark, positive, len(observed)
+
+
 # governance-mutation: INDUSTRY_COHORT_EVIDENCE_STATUS
 def _validate_evidence_status(
     payload: Mapping[str, Any], *, expected_status: str,
@@ -186,7 +245,12 @@ def _registry_coverage(rows: Sequence[Mapping[str, Any]]) -> dict[str, int]:
 
 
 def _snapshot_status(rows: Sequence[Mapping[str, Any]]) -> str:
-    return "PARTIAL" if any(row["data_gap_channels"] for row in rows) else "COMPLETE"
+    # governance-mutation: INDUSTRY_COHORT_PARTIAL_STATUS
+    return (
+        "PARTIAL"
+        if any(row["data_gap_channels"] or row["data_partial_channels"] for row in rows)
+        else "COMPLETE"
+    )
 
 
 def _snapshot_coverage(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -216,6 +280,9 @@ def _cohort_coverage(rows: Sequence[Mapping[str, Any]]) -> dict[str, int]:
         "absolute_industries": sum(row["cohort_state"] == "ABSOLUTE_EVIDENCE_PRESENT" for row in rows),
         "relative_only_industries": sum(row["cohort_state"] == "RELATIVE_RESEARCH_ONLY" for row in rows),
         "data_blocked_industries": sum(row["cohort_state"] == "DATA_BLOCKED" for row in rows),
+        "no_positive_evidence_industries": sum(
+            row["cohort_state"] == "NO_POSITIVE_EVIDENCE" for row in rows
+        ),
     }
 
 
@@ -247,14 +314,14 @@ def _eligible_registry_rows(registry: Mapping[str, Any]) -> list[dict[str, Any]]
 
 
 def validate_taxonomy(payload: Mapping[str, Any]) -> None:
+    # governance-mutation: INDUSTRY_COHORT_TAXONOMY_CLOSED_WORLD
+    _require_exact_fields(payload, TAXONOMY_FIELDS, "industry taxonomy")
     if (
         payload.get("schema") != TAXONOMY_SCHEMA
         or payload.get("schema_version") != SCHEMA_VERSION
         or payload.get("rule_version") != "industry_taxonomy_v1"
     ):
         raise FunnelError("industry taxonomy schema/version mismatch")
-    if COHORT_FORBIDDEN_KEYS.intersection(_walk_keys(payload)):
-        raise FunnelError("industry taxonomy contains forbidden authority fields")
     policy = payload.get("policy")
     expected_policy = {
         "coverage": "ALL_U0_INDUSTRIES",
@@ -263,6 +330,7 @@ def validate_taxonomy(payload: Mapping[str, Any]) -> None:
         "u4_selection_authority": False,
         "production_authority": False,
     }
+    # governance-mutation: INDUSTRY_COHORT_TAXONOMY_POLICY
     if policy != expected_policy:
         raise FunnelError("industry taxonomy policy changed")
     mappings = payload.get("mappings")
@@ -344,7 +412,8 @@ def _derive_industry_registry_rows(
             canonical_id = f"TUSHARE_IDENTITY::{source_key}"
             display_name = source_key
             mapping_status = "IDENTITY_ONLY"
-            rotation_aliases = [source_key]
+            # governance-mutation: INDUSTRY_COHORT_IDENTITY_NO_ROTATION
+            rotation_aliases = []
             sector_os = None
             evidence_ref = "tushare.stock_basic.industry"
         row = grouped.setdefault(
@@ -413,16 +482,18 @@ def build_industry_registry(
 def validate_industry_registry(
     payload: Mapping[str, Any], registry: Mapping[str, Any], taxonomy: Mapping[str, Any],
 ) -> None:
+    # governance-mutation: INDUSTRY_COHORT_REGISTRY_CLOSED_WORLD
+    _require_exact_fields(payload, INDUSTRY_REGISTRY_FIELDS, "industry registry")
     if (
         payload.get("schema") != INDUSTRY_REGISTRY_SCHEMA
         or payload.get("schema_version") != SCHEMA_VERSION
         or payload.get("rule_version") != RULE_VERSION
     ):
         raise FunnelError("industry registry schema/version mismatch")
-    if COHORT_FORBIDDEN_KEYS.intersection(_walk_keys(payload)):
-        raise FunnelError("industry registry contains forbidden authority fields")
+    # governance-mutation: INDUSTRY_COHORT_REGISTRY_POLICY
     if payload.get("policy") != REGISTRY_POLICY:
         raise FunnelError("industry registry authority or coverage policy changed")
+    _require_disclaimer(payload, "industry registry")
     if payload.get("as_of") != registry.get("as_of"):
         raise FunnelError("industry registry is not bound to the U0 as_of")
     expected_rows = _derive_industry_registry_rows(registry, taxonomy)
@@ -435,6 +506,7 @@ def validate_industry_registry(
         expected_coverage=_registry_coverage(expected_rows), label="industry registry",
     )
     refs = payload.get("input_refs") or {}
+    _require_exact_fields(refs, REGISTRY_INPUT_REF_FIELDS, "industry registry input_refs")
     if (
         refs.get("security_registry_hash") != registry.get("registry_hash")
         or refs.get("eligible_universe_hash") != registry.get("eligible_universe_hash")
@@ -459,12 +531,37 @@ def _security_industry_index(
     return output
 
 
+def _validate_rotation_wrapper(
+    payload: Mapping[str, Any], data: Mapping[str, Any], as_of: str,
+) -> None:
+    nested_as_of = _evidence_date(data.get("as_of"), "rotation data as_of")
+    nested_target = _evidence_date(
+        data.get("target_trade_date"), "rotation data target_trade_date",
+    )
+    if (
+        payload.get("contract") != "rotation_panel"
+        or not payload.get("schema_version")
+        or payload.get("pipeline_status") != "OK"
+        or payload.get("status") not in {None, "OK"}
+        or payload.get("data_quality") not in ROTATION_USABLE_QUALITY
+        or nested_as_of != as_of
+        or nested_target != as_of
+        or not payload.get("run_id")
+        or data.get("run_id") != payload.get("run_id")
+    ):
+        raise FunnelError("rotation panel wrapper is stale, blocked, or not bound to its data")
+
+
 def _rotation_rows(payload: Mapping[str, Any], as_of: str) -> list[dict[str, Any]]:
     raw_target = payload.get("target_trade_date") or payload.get("as_of")
     target = _evidence_date(raw_target, "rotation panel date") if raw_target else None
     if target != as_of:
         raise FunnelError("rotation panel is not bound to the industry snapshot as_of")
-    data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+    wrapped = isinstance(payload.get("data"), dict)
+    data = payload.get("data") if wrapped else payload
+    if wrapped:
+        # governance-mutation: INDUSTRY_COHORT_ROTATION_FRESHNESS
+        _validate_rotation_wrapper(payload, data, as_of)
     bucket_status = {
         "inflow_cont": "INFLOW_CONT",
         "warming": "WARMING",
@@ -557,7 +654,6 @@ def _derive_snapshot_rows(
         channel_evidence: dict[str, dict[str, Any]] = {}
         red_flags: set[str] = set()
         positive_codes: set[str] = set()
-        relative_positive: set[str] = set()
         for channel in CHANNELS:
             channel_rows = [scan_by_code[code][channel] for code in codes]
             triggered = sorted(row["ts_code"] for row in channel_rows if row["triggered"])
@@ -574,16 +670,23 @@ def _derive_snapshot_rows(
                 red_flags.update(triggered)
             elif channel in POSITIVE_CHANNELS:
                 positive_codes.update(triggered)
-        for code in codes:
-            row = scan_by_code[code]["PRICE_VOLUME"]
-            value = _finite((row.get("feature_values") or {}).get("return_20d"))
-            if row["data_status"] == "COMPLETE" and value is not None and value > 0:
-                relative_positive.add(code)
+        # governance-mutation: INDUSTRY_COHORT_RELATIVE_BENCHMARK
+        relative_benchmark, relative_excess, relative_sample_count = _industry_relative_price_evidence(
+            codes, scan_by_code,
+        )
+        relative_positive = set(relative_excess)
         positive_codes.difference_update(red_flags)
         relative_positive.difference_update(red_flags)
         data_gap_channels = [
             channel for channel in CHANNELS
             if channel_evidence[channel]["complete_count"] == 0
+        ]
+        data_partial_channels = [
+            channel for channel in CHANNELS
+            if (
+                channel_evidence[channel]["complete_count"] > 0
+                and channel_evidence[channel]["degraded_count"] > 0
+            )
         ]
         # governance-mutation: INDUSTRY_COHORT_ROTATION_ALIAS
         rotation_context = _rotation_context(industry["rotation_aliases"], rotation_rows)
@@ -606,7 +709,13 @@ def _derive_snapshot_rows(
                 "absolute_positive_ts_codes_hash": _hash(sorted(positive_codes)),
                 "relative_positive_count": len(relative_positive),
                 "relative_positive_ts_codes_hash": _hash(sorted(relative_positive)),
+                "relative_price_benchmark": {
+                    "method": "WITHIN_INDUSTRY_MEDIAN_RETURN_20D",
+                    "sample_count": relative_sample_count,
+                    "median_return_20d": relative_benchmark,
+                },
                 "data_gap_channels": data_gap_channels,
+                "data_partial_channels": data_partial_channels,
                 "priority_band": band,
                 "research_priority_rank": 0,
             }
@@ -667,17 +776,18 @@ def validate_industry_snapshot(
     registry: Mapping[str, Any], taxonomy: Mapping[str, Any],
     scan: Mapping[str, Any], rotation: Mapping[str, Any],
 ) -> None:
+    # governance-mutation: INDUSTRY_COHORT_NO_AUTHORITY
+    _require_exact_fields(payload, INDUSTRY_SNAPSHOT_FIELDS, "industry snapshot")
     if (
         payload.get("schema") != INDUSTRY_SNAPSHOT_SCHEMA
         or payload.get("schema_version") != SCHEMA_VERSION
         or payload.get("rule_version") != RULE_VERSION
     ):
         raise FunnelError("industry snapshot schema/version mismatch")
-    # governance-mutation: INDUSTRY_COHORT_NO_AUTHORITY
-    if COHORT_FORBIDDEN_KEYS.intersection(_walk_keys(payload)):
-        raise FunnelError("industry snapshot contains trade, U4, or aggregate-score authority")
+    # governance-mutation: INDUSTRY_COHORT_SNAPSHOT_POLICY
     if payload.get("policy") != SNAPSHOT_POLICY:
         raise FunnelError("industry snapshot acquired selection or production authority")
+    _require_disclaimer(payload, "industry snapshot")
     validate_industry_registry(industry_registry, registry, taxonomy)
     validate_all_market_scan(scan, registry)
     if payload.get("as_of") != scan.get("as_of"):
@@ -693,6 +803,7 @@ def validate_industry_snapshot(
         expected_coverage=_snapshot_coverage(expected_rows), label="industry snapshot",
     )
     refs = payload.get("input_refs") or {}
+    _require_exact_fields(refs, SNAPSHOT_INPUT_REF_FIELDS, "industry snapshot input_refs")
     if (
         refs.get("industry_registry_rows_hash") != industry_registry.get("rows_hash")
         or refs.get("scan_rows_hash") != scan.get("rows_hash")
@@ -790,7 +901,15 @@ def _derive_cohort_rows(
                 code,
             )
         )
-        relative = [code for code in price_ranked if code not in absolute][
+        # governance-mutation: INDUSTRY_COHORT_RELATIVE_COHORT
+        relative_benchmark, relative_excess, _ = _industry_relative_price_evidence(
+            selectable, scan_by_code,
+        )
+        relative_ranked = sorted(
+            relative_excess,
+            key=lambda code: (-relative_excess[code], code),
+        )
+        relative = [code for code in relative_ranked if code not in absolute][
             : min(relative_anchor_limit, max(0, max_representatives - len(absolute)))
         ]
         representatives: list[dict[str, Any]] = []
@@ -825,6 +944,8 @@ def _derive_cohort_rows(
                     "admission_state": "RELATIVE_RESEARCH_ONLY",
                     "source_channels": ["PRICE_VOLUME"],
                     "price_rank_within_industry": price_ranked.index(code) + 1,
+                    "industry_benchmark_return_20d": relative_benchmark,
+                    "industry_excess_return_20d": relative_excess[code],
                     "global_u2_status": (candidate_by_code.get(code) or {}).get("review_status"),
                     "ready_for_u4": RESEARCH_ONLY_U4_READY,
                     "next_gate": "BUILD_ABSOLUTE_U1_EVIDENCE",
@@ -853,16 +974,21 @@ def _derive_cohort_rows(
                 "seed_hex": seed_hex,
                 "ready_for_u4": RESEARCH_ONLY_U4_READY,
             }
+        blocked_codes = [
+            code for code in selectable
+            if any(
+                scan_by_code[code][channel]["data_status"] != "COMPLETE"
+                for channel in COMPANY_SELECTION_CHANNELS
+            )
+        ]
         if absolute:
             state = "ABSOLUTE_EVIDENCE_PRESENT"
         elif relative:
             state = "RELATIVE_RESEARCH_ONLY"
-        else:
+        elif blocked_codes:
             state = "DATA_BLOCKED"
-        blocked_codes = [
-            code for code in selectable
-            if all(scan_by_code[code][channel]["data_status"] != "COMPLETE" for channel in COMPANY_SELECTION_CHANNELS)
-        ]
+        else:
+            state = "NO_POSITIVE_EVIDENCE"
         output.append(
             {
                 "canonical_id": canonical_id,
@@ -919,7 +1045,7 @@ def build_industry_cohort(
         "coverage": _cohort_coverage(rows),
         "rows": rows,
         "rows_hash": _hash(rows),
-        "next_gate": "U3_BATTERY_AND_JUNYAN_U4_REVIEW_IN_A_SEPARATE_SLICE",
+        "next_gate": COHORT_NEXT_GATE,
         "disclaimer": DISCLAIMER,
     }
     validate_industry_cohort(
@@ -936,15 +1062,17 @@ def validate_industry_cohort(
     taxonomy: Mapping[str, Any], scan: Mapping[str, Any], rotation: Mapping[str, Any],
     candidate_review: Mapping[str, Any],
 ) -> None:
+    # governance-mutation: INDUSTRY_COHORT_NO_TRADE_OR_U4_AUTHORITY
+    _require_exact_fields(payload, INDUSTRY_COHORT_FIELDS, "industry cohort")
     if (
         payload.get("schema") != INDUSTRY_COHORT_SCHEMA
         or payload.get("schema_version") != SCHEMA_VERSION
         or payload.get("rule_version") != RULE_VERSION
     ):
         raise FunnelError("industry cohort schema/version mismatch")
-    # governance-mutation: INDUSTRY_COHORT_NO_TRADE_OR_U4_AUTHORITY
-    if COHORT_FORBIDDEN_KEYS.intersection(_walk_keys(payload)):
-        raise FunnelError("industry cohort contains forbidden trade, U4, or score fields")
+    # governance-mutation: INDUSTRY_COHORT_FIXED_GATE_TEXT
+    if payload.get("next_gate") != COHORT_NEXT_GATE or payload.get("disclaimer") != DISCLAIMER:
+        raise FunnelError("industry cohort next gate or disclaimer changed")
     policy = payload.get("policy") or {}
     try:
         max_representatives = int(policy.get("max_representatives", 0))
@@ -979,6 +1107,7 @@ def validate_industry_cohort(
         expected_coverage=_cohort_coverage(expected_rows), label="industry cohort",
     )
     refs = payload.get("input_refs") or {}
+    _require_exact_fields(refs, COHORT_INPUT_REF_FIELDS, "industry cohort input_refs")
     if (
         refs.get("industry_registry_rows_hash") != industry_registry.get("rows_hash")
         or refs.get("industry_snapshot_rows_hash") != industry_snapshot.get("rows_hash")

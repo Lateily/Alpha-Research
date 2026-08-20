@@ -43,8 +43,17 @@ def research_inputs(*, semiconductor_at_end: bool = False) -> dict[str, dict]:
     e1 = fixtures.e1_fixture(registry)
     features = fixtures.features_fixture(registry)
     rotation = {
+        "contract": "rotation_panel",
+        "schema_version": "v2.2",
         "target_trade_date": fixtures.TRADE_DATE,
+        "pipeline_status": "OK",
+        "data_quality": "COMPLETE",
+        "status": "OK",
+        "run_id": "FIXTURE_RUN",
         "data": {
+            "as_of": fixtures.TRADE_DATE,
+            "target_trade_date": fixtures.TRADE_DATE,
+            "run_id": "FIXTURE_RUN",
             "inflow_cont": [
                 {"sector": "BANK", "status": "INFLOW_CONT", "streak": 4, "seq": "-++++"}
             ],
@@ -80,6 +89,7 @@ def research_inputs(*, semiconductor_at_end: bool = False) -> dict[str, dict]:
         "scan": scan,
         "rotation": rotation,
         "candidates": candidates,
+        "features": features,
         "taxonomy": taxonomy_fixture(),
     }
 
@@ -171,30 +181,39 @@ class IndustryCohortOfflineTests(unittest.TestCase):
 
     def test_forbidden_authority_fields_fail_closed(self) -> None:
         inputs, contracts = build_contracts()
-        snapshot = copy.deepcopy(contracts["industry_snapshot.json"])
-        snapshot["trade_action"] = "BUY"
-        with self.assertRaisesRegex(fp.FunnelError, "trade, U4, or aggregate-score authority"):
-            ic.validate_industry_snapshot(
-                snapshot,
-                industry_registry=contracts["industry_registry.json"],
-                registry=inputs["registry"],
-                taxonomy=inputs["taxonomy"],
-                scan=inputs["scan"],
-                rotation=inputs["rotation"],
-            )
-        cohort = copy.deepcopy(contracts["industry_cohort.json"])
-        cohort["trade_action"] = "BUY"
-        with self.assertRaisesRegex(fp.FunnelError, "forbidden trade, U4, or score fields"):
-            ic.validate_industry_cohort(
-                cohort,
-                industry_registry=contracts["industry_registry.json"],
-                industry_snapshot=contracts["industry_snapshot.json"],
-                registry=inputs["registry"],
-                taxonomy=inputs["taxonomy"],
-                scan=inputs["scan"],
-                rotation=inputs["rotation"],
-                candidate_review=inputs["candidates"],
-            )
+        injected = {
+            "trade_action": "BUY",
+            "recommended_action": "BUY",
+            "production_authority": True,
+            "u4_selection_authority": True,
+        }
+        for field, value in injected.items():
+            with self.subTest(contract="snapshot", field=field):
+                snapshot = copy.deepcopy(contracts["industry_snapshot.json"])
+                snapshot[field] = value
+                with self.assertRaisesRegex(fp.FunnelError, "fields are not exact"):
+                    ic.validate_industry_snapshot(
+                        snapshot,
+                        industry_registry=contracts["industry_registry.json"],
+                        registry=inputs["registry"],
+                        taxonomy=inputs["taxonomy"],
+                        scan=inputs["scan"],
+                        rotation=inputs["rotation"],
+                    )
+            with self.subTest(contract="cohort", field=field):
+                cohort = copy.deepcopy(contracts["industry_cohort.json"])
+                cohort[field] = value
+                with self.assertRaisesRegex(fp.FunnelError, "fields are not exact"):
+                    ic.validate_industry_cohort(
+                        cohort,
+                        industry_registry=contracts["industry_registry.json"],
+                        industry_snapshot=contracts["industry_snapshot.json"],
+                        registry=inputs["registry"],
+                        taxonomy=inputs["taxonomy"],
+                        scan=inputs["scan"],
+                        rotation=inputs["rotation"],
+                        candidate_review=inputs["candidates"],
+                    )
         cohort = copy.deepcopy(contracts["industry_cohort.json"])
         cohort["policy"]["u4_selection_authority"] = True
         with self.assertRaisesRegex(fp.FunnelError, "authority boundary changed"):
@@ -208,6 +227,27 @@ class IndustryCohortOfflineTests(unittest.TestCase):
                 rotation=inputs["rotation"],
                 candidate_review=inputs["candidates"],
             )
+
+    def test_cohort_next_gate_and_disclaimer_are_fixed(self) -> None:
+        inputs, contracts = build_contracts()
+        for field, value in (
+            ("next_gate", "AUTO_REGISTER_AND_EXECUTE"),
+            ("disclaimer", ""),
+        ):
+            with self.subTest(field=field):
+                cohort = copy.deepcopy(contracts["industry_cohort.json"])
+                cohort[field] = value
+                with self.assertRaisesRegex(fp.FunnelError, "next gate or disclaimer changed"):
+                    ic.validate_industry_cohort(
+                        cohort,
+                        industry_registry=contracts["industry_registry.json"],
+                        industry_snapshot=contracts["industry_snapshot.json"],
+                        registry=inputs["registry"],
+                        taxonomy=inputs["taxonomy"],
+                        scan=inputs["scan"],
+                        rotation=inputs["rotation"],
+                        candidate_review=inputs["candidates"],
+                    )
 
     def test_status_and_coverage_are_recomputed_from_rows(self) -> None:
         inputs, contracts = build_contracts()
@@ -229,6 +269,165 @@ class IndustryCohortOfflineTests(unittest.TestCase):
                 rotation=inputs["rotation"],
                 candidate_review=inputs["candidates"],
             )
+
+    def test_partial_security_data_makes_snapshot_partial(self) -> None:
+        inputs, contracts = build_contracts()
+        scan = copy.deepcopy(inputs["scan"])
+        for row in scan["rows"]:
+            row["data_status"] = "COMPLETE"
+        pharma_codes = {
+            row["ts_code"] for row in inputs["registry"]["rows"]
+            if row["industry_key"] == "PHARMA"
+        }
+        target = next(
+            row for row in scan["rows"]
+            if row["ts_code"] in pharma_codes and row["channel"] == "PRICE_VOLUME"
+        )
+        target["data_status"] = "DATA_BLOCKED"
+        target["triggered"] = False
+        target["entry_reasons"] = []
+        target["channel_rank"] = None
+        target["reason_codes"] = ["TEST_PARTIAL_SECURITY"]
+        scan["rows_hash"] = fp._hash(scan["rows"])
+        snapshot = ic.build_industry_snapshot(
+            industry_registry=contracts["industry_registry.json"],
+            registry=inputs["registry"],
+            taxonomy=inputs["taxonomy"],
+            scan=scan,
+            rotation=inputs["rotation"],
+            generated_at=fixtures.GENERATED_AT,
+        )
+        pharma = row_by_id(snapshot, "TUSHARE_IDENTITY::PHARMA")
+        self.assertEqual("PARTIAL", snapshot["status"])
+        self.assertIn("PRICE_VOLUME", pharma["data_partial_channels"])
+        self.assertNotIn("PRICE_VOLUME", pharma["data_gap_channels"])
+
+    def test_taxonomy_policy_guard_is_behaviorally_pinned(self) -> None:
+        taxonomy = taxonomy_fixture()
+        taxonomy["policy"]["production_authority"] = True
+        with self.assertRaisesRegex(fp.FunnelError, "taxonomy policy changed"):
+            ic.validate_taxonomy(taxonomy)
+
+    def test_registry_policy_guard_is_behaviorally_pinned(self) -> None:
+        inputs, contracts = build_contracts()
+        registry = copy.deepcopy(contracts["industry_registry.json"])
+        registry["policy"]["production_authority"] = True
+        with self.assertRaisesRegex(fp.FunnelError, "registry authority or coverage policy changed"):
+            ic.validate_industry_registry(registry, inputs["registry"], inputs["taxonomy"])
+
+    def test_snapshot_policy_guard_is_behaviorally_pinned(self) -> None:
+        inputs, contracts = build_contracts()
+        snapshot = copy.deepcopy(contracts["industry_snapshot.json"])
+        snapshot["policy"]["macro_selection_authority"] = True
+        with self.assertRaisesRegex(fp.FunnelError, "acquired selection or production authority"):
+            ic.validate_industry_snapshot(
+                snapshot,
+                industry_registry=contracts["industry_registry.json"],
+                registry=inputs["registry"],
+                taxonomy=inputs["taxonomy"],
+                scan=inputs["scan"],
+                rotation=inputs["rotation"],
+            )
+
+    def test_taxonomy_and_registry_contracts_are_closed_world(self) -> None:
+        taxonomy = taxonomy_fixture()
+        taxonomy["approval_authority"] = "AUTO"
+        with self.assertRaisesRegex(fp.FunnelError, "taxonomy fields are not exact"):
+            ic.validate_taxonomy(taxonomy)
+
+        inputs, contracts = build_contracts()
+        registry = copy.deepcopy(contracts["industry_registry.json"])
+        registry["recommended_action"] = "BUY"
+        with self.assertRaisesRegex(fp.FunnelError, "registry fields are not exact"):
+            ic.validate_industry_registry(registry, inputs["registry"], inputs["taxonomy"])
+
+    def test_stale_or_blocked_rotation_wrapper_is_rejected(self) -> None:
+        inputs, contracts = build_contracts()
+        stale = copy.deepcopy(inputs["rotation"])
+        stale["pipeline_status"] = "STALE_INPUT"
+        stale["data_quality"] = "DATA_BLOCKED"
+        stale["data"]["as_of"] = "20260810"
+        stale["data"]["target_trade_date"] = "20260810"
+        with self.assertRaisesRegex(fp.FunnelError, "stale, blocked, or not bound"):
+            ic.build_industry_snapshot(
+                industry_registry=contracts["industry_registry.json"],
+                registry=inputs["registry"],
+                taxonomy=inputs["taxonomy"],
+                scan=inputs["scan"],
+                rotation=stale,
+                generated_at=fixtures.GENERATED_AT,
+            )
+
+    def test_relative_evidence_uses_within_industry_median(self) -> None:
+        inputs = research_inputs()
+        pharma_codes = sorted(
+            row["ts_code"] for row in inputs["registry"]["rows"]
+            if row["industry_key"] == "PHARMA"
+        )
+        for row in inputs["scan"]["rows"]:
+            if row["ts_code"] not in pharma_codes:
+                continue
+            row["data_status"] = "COMPLETE"
+            row["triggered"] = False
+            row["entry_reasons"] = []
+            row["channel_rank"] = None
+            row["reason_codes"] = []
+            if row["channel"] == "PRICE_VOLUME":
+                row["feature_values"]["return_20d"] = -0.20
+        inputs["scan"]["rows_hash"] = fp._hash(inputs["scan"]["rows"])
+        inputs["candidates"] = fp.build_candidate_review(
+            registry=inputs["registry"], scan=inputs["scan"], features=inputs["features"],
+            trade_date=fixtures.TRADE_DATE, generated_at=fixtures.GENERATED_AT,
+            target_size=100, slow_bull_quota=1, contrarian_quota=1, control_quota=1,
+        )
+        equal_contracts = ic.build_contracts(
+            registry=inputs["registry"], taxonomy=inputs["taxonomy"], scan=inputs["scan"],
+            rotation=inputs["rotation"], candidate_review=inputs["candidates"],
+            generated_at=fixtures.GENERATED_AT, max_representatives=5,
+            relative_anchor_limit=3,
+        )
+        equal_snapshot = row_by_id(
+            equal_contracts["industry_snapshot.json"], "TUSHARE_IDENTITY::PHARMA",
+        )
+        equal_cohort = row_by_id(
+            equal_contracts["industry_cohort.json"], "TUSHARE_IDENTITY::PHARMA",
+        )
+        self.assertEqual("P5_COLD", equal_snapshot["priority_band"])
+        self.assertEqual(0, equal_snapshot["relative_positive_count"])
+        self.assertEqual("NO_POSITIVE_EVIDENCE", equal_cohort["cohort_state"])
+        self.assertEqual([], equal_cohort["representatives"])
+
+        leader = pharma_codes[0]
+        price_row = next(
+            row for row in inputs["scan"]["rows"]
+            if row["ts_code"] == leader and row["channel"] == "PRICE_VOLUME"
+        )
+        price_row["feature_values"]["return_20d"] = -0.10
+        inputs["scan"]["rows_hash"] = fp._hash(inputs["scan"]["rows"])
+        inputs["candidates"] = fp.build_candidate_review(
+            registry=inputs["registry"], scan=inputs["scan"], features=inputs["features"],
+            trade_date=fixtures.TRADE_DATE, generated_at=fixtures.GENERATED_AT,
+            target_size=100, slow_bull_quota=1, contrarian_quota=1, control_quota=1,
+        )
+        relative_contracts = ic.build_contracts(
+            registry=inputs["registry"], taxonomy=inputs["taxonomy"], scan=inputs["scan"],
+            rotation=inputs["rotation"], candidate_review=inputs["candidates"],
+            generated_at=fixtures.GENERATED_AT, max_representatives=5,
+            relative_anchor_limit=3,
+        )
+        relative_snapshot = row_by_id(
+            relative_contracts["industry_snapshot.json"], "TUSHARE_IDENTITY::PHARMA",
+        )
+        relative_cohort = row_by_id(
+            relative_contracts["industry_cohort.json"], "TUSHARE_IDENTITY::PHARMA",
+        )
+        self.assertEqual("P3_RELATIVE_RESEARCH", relative_snapshot["priority_band"])
+        self.assertEqual(1, relative_snapshot["relative_positive_count"])
+        self.assertEqual("RELATIVE_RESEARCH_ONLY", relative_cohort["cohort_state"])
+        self.assertEqual(leader, relative_cohort["representatives"][0]["ts_code"])
+        self.assertAlmostEqual(
+            0.10, relative_cohort["representatives"][0]["industry_excess_return_20d"],
+        )
 
     def test_cohort_membership_recomputes_from_u1(self) -> None:
         inputs, contracts = build_contracts()
@@ -260,7 +459,10 @@ class IndustryCohortOfflineTests(unittest.TestCase):
         _, contracts = build_contracts()
         bank = row_by_id(contracts["industry_registry.json"], "TUSHARE_IDENTITY::BANK")
         self.assertEqual("IDENTITY_ONLY", bank["mapping_status"])
-        self.assertEqual(["BANK"], bank["rotation_aliases"])
+        self.assertEqual([], bank["rotation_aliases"])
+        snapshot = row_by_id(contracts["industry_snapshot.json"], "TUSHARE_IDENTITY::BANK")
+        self.assertEqual("DATA_BLOCKED", snapshot["rotation_context"]["state"])
+        self.assertEqual([], snapshot["rotation_context"]["matched_aliases"])
 
     def test_duplicate_taxonomy_alias_is_rejected(self) -> None:
         taxonomy = taxonomy_fixture()

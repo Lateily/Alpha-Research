@@ -1318,6 +1318,74 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A U3 name cannot enter deep research without a concrete question to answer.",
     ),
     MutationCase(
+        mutation_id="INDUSTRY_COHORT_PARTIAL_STATUS",
+        component="Research funnel industry partial-data honesty",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    return (\n'
+        '        "PARTIAL"\n'
+        '        if any(row["data_gap_channels"] or row["data_partial_channels"] for row in rows)\n'
+        '        else "COMPLETE"\n'
+        '    )',
+        after='    return "COMPLETE"',
+        expected_failure_marker="test_partial_security_data_makes_snapshot_partial",
+        rationale="One degraded security must make the snapshot PARTIAL even when the rest of the channel is usable.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_TAXONOMY_CLOSED_WORLD",
+        component="Research funnel industry taxonomy shape",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    _require_exact_fields(payload, TAXONOMY_FIELDS, "industry taxonomy")',
+        after='    pass',
+        expected_failure_marker="test_taxonomy_and_registry_contracts_are_closed_world",
+        rationale="Undeclared taxonomy fields cannot smuggle authority into an otherwise valid mapping file.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_TAXONOMY_POLICY",
+        component="Research funnel industry taxonomy authority policy",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if policy != expected_policy:\n'
+        '        raise FunnelError("industry taxonomy policy changed")',
+        after='    if False:\n'
+        '        raise FunnelError("industry taxonomy policy changed")',
+        expected_failure_marker="test_taxonomy_policy_guard_is_behaviorally_pinned",
+        rationale="The taxonomy cannot acquire production or U4 authority during a refactor.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_IDENTITY_NO_ROTATION",
+        component="Research funnel unreviewed industry mapping boundary",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='            rotation_aliases = []',
+        after='            rotation_aliases = [source_key]',
+        expected_failure_marker="test_identity_only_does_not_guess_cross_source_aliases",
+        rationale="An unreviewed exact-name coincidence cannot become rotation confirmation.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_REGISTRY_CLOSED_WORLD",
+        component="Research funnel industry registry shape",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    _require_exact_fields(payload, INDUSTRY_REGISTRY_FIELDS, "industry registry")',
+        after='    pass',
+        expected_failure_marker="test_taxonomy_and_registry_contracts_are_closed_world",
+        rationale="The registry contract cannot carry undeclared action or authority fields.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_REGISTRY_POLICY",
+        component="Research funnel industry registry authority policy",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if payload.get("policy") != REGISTRY_POLICY:\n'
+        '        raise FunnelError("industry registry authority or coverage policy changed")',
+        after='    if False:\n'
+        '        raise FunnelError("industry registry authority or coverage policy changed")',
+        expected_failure_marker="test_registry_policy_guard_is_behaviorally_pinned",
+        rationale="The all-industry registry must retain its no-selection and no-production boundary.",
+    ),
+    MutationCase(
         mutation_id="INDUSTRY_COHORT_ALL_INDUSTRIES",
         component="Research funnel industry U0 coverage",
         source_path="experiments/research_funnel/industry_cohort.py",
@@ -1328,6 +1396,28 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise FunnelError("industry registry rows do not cover the U0 taxonomy exactly")',
         expected_failure_marker="test_all_u0_industries_are_retained_and_tamper_rejected",
         rationale="Every eligible U0 industry must remain represented even when its mapping is identity-only.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_ROTATION_FRESHNESS",
+        component="Research funnel industry rotation point-in-time binding",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='        _validate_rotation_wrapper(payload, data, as_of)',
+        after='        pass',
+        expected_failure_marker="test_stale_or_blocked_rotation_wrapper_is_rejected",
+        rationale="A stale or blocked rotation body cannot borrow a current wrapper date and confirm P1.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_RELATIVE_BENCHMARK",
+        component="Research funnel industry-relative snapshot evidence",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='        relative_benchmark, relative_excess, relative_sample_count = _industry_relative_price_evidence(\n'
+        '            codes, scan_by_code,\n'
+        '        )',
+        after='        relative_benchmark, relative_excess, relative_sample_count = None, {}, 0',
+        expected_failure_marker="test_relative_evidence_uses_within_industry_median",
+        rationale="Relative evidence must be positive excess over the current industry's median, not raw return.",
     ),
     MutationCase(
         mutation_id="INDUSTRY_COHORT_ROTATION_ALIAS",
@@ -1368,24 +1458,56 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Research funnel industry snapshot authority boundary",
         source_path="experiments/research_funnel/industry_cohort.py",
         test_script="tests/test_industry_cohort_offline.py",
-        before='    if COHORT_FORBIDDEN_KEYS.intersection(_walk_keys(payload)):\n'
-        '        raise FunnelError("industry snapshot contains trade, U4, or aggregate-score authority")',
-        after='    if False:\n'
-        '        raise FunnelError("industry snapshot contains trade, U4, or aggregate-score authority")',
+        before='    _require_exact_fields(payload, INDUSTRY_SNAPSHOT_FIELDS, "industry snapshot")',
+        after='    pass',
         expected_failure_marker="test_forbidden_authority_fields_fail_closed",
-        rationale="An industry ranking artifact cannot acquire trade, U4, or composite-score authority.",
+        rationale="A closed snapshot contract cannot acquire undeclared trade, U4, or score authority.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_SNAPSHOT_POLICY",
+        component="Research funnel industry snapshot authority policy",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if payload.get("policy") != SNAPSHOT_POLICY:\n'
+        '        raise FunnelError("industry snapshot acquired selection or production authority")',
+        after='    if False:\n'
+        '        raise FunnelError("industry snapshot acquired selection or production authority")',
+        expected_failure_marker="test_snapshot_policy_guard_is_behaviorally_pinned",
+        rationale="A structurally valid snapshot still cannot change its macro, U4, or production policy.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_RELATIVE_COHORT",
+        component="Research funnel industry-relative cohort membership",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='        relative_benchmark, relative_excess, _ = _industry_relative_price_evidence(\n'
+        '            selectable, scan_by_code,\n'
+        '        )',
+        after='        relative_benchmark, relative_excess, _ = None, {}, 0',
+        expected_failure_marker="test_relative_evidence_uses_within_industry_median",
+        rationale="Relative representatives must be chosen from the same explicit median-excess evidence as the snapshot.",
     ),
     MutationCase(
         mutation_id="INDUSTRY_COHORT_NO_TRADE_OR_U4_AUTHORITY",
         component="Research funnel industry cohort authority boundary",
         source_path="experiments/research_funnel/industry_cohort.py",
         test_script="tests/test_industry_cohort_offline.py",
-        before='    if COHORT_FORBIDDEN_KEYS.intersection(_walk_keys(payload)):\n'
-        '        raise FunnelError("industry cohort contains forbidden trade, U4, or score fields")',
-        after='    if False:\n'
-        '        raise FunnelError("industry cohort contains forbidden trade, U4, or score fields")',
+        before='    _require_exact_fields(payload, INDUSTRY_COHORT_FIELDS, "industry cohort")',
+        after='    pass',
         expected_failure_marker="test_forbidden_authority_fields_fail_closed",
-        rationale="A representative cohort is research context and must never emit trade or U4 authority.",
+        rationale="A closed cohort contract is research context and cannot emit undeclared trade or U4 authority.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_FIXED_GATE_TEXT",
+        component="Research funnel industry next-gate boundary",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if payload.get("next_gate") != COHORT_NEXT_GATE or payload.get("disclaimer") != DISCLAIMER:\n'
+        '        raise FunnelError("industry cohort next gate or disclaimer changed")',
+        after='    if False:\n'
+        '        raise FunnelError("industry cohort next gate or disclaimer changed")',
+        expected_failure_marker="test_cohort_next_gate_and_disclaimer_are_fixed",
+        rationale="A valid rows hash cannot legitimize an automatic execution gate or erase the research-only disclaimer.",
     ),
     MutationCase(
         mutation_id="INDUSTRY_COHORT_RECOMPUTE",

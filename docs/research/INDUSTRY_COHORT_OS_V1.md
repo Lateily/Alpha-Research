@@ -36,7 +36,8 @@ It does not claim that every issuer in a broad `通信设备` or `元器件` ind
 to the semiconductor value chain.
 
 All other U0 industries remain visible as `IDENTITY_ONLY`. The engine never drops
-an unmapped industry and never guesses a cross-source alias. If an identity key
+an unmapped industry and gives it no rotation alias until a mapping is explicitly
+reviewed. Exact-name coincidence across providers is not evidence. If an identity key
 collides with an explicit alias, construction fails until the mapping is reviewed.
 
 ## 4. Industry ranking
@@ -54,7 +55,10 @@ gate. It uses non-compensatory priority bands:
 
 Ranking within a band uses observable counts and deterministic identifiers. There
 is no weighted or composite cross-channel score. Lower-ranked industries stay in
-the artifact and continue receiving refreshes.
+the artifact and continue receiving refreshes. "Industry-relative" means positive
+20-day excess over the current industry's median return; raw positive return is not
+used as a substitute. A channel with any degraded security makes the snapshot
+`PARTIAL`, while wholly unavailable and partially degraded channels remain separate.
 
 ## 5. Dynamic representatives
 
@@ -67,8 +71,10 @@ house names and are not selected from a static watchlist.
 3. Industry and Macro context can prioritize research but cannot independently pick
    a company. Macro remains calibration-only.
 4. Remaining capacity may hold a small number of price-ranked relative research
-   anchors. They are labeled `RELATIVE_RESEARCH_ONLY` and must build absolute U1
-   evidence before any later U4 review.
+   anchors with positive excess over the same-industry median. They are labeled
+   `RELATIVE_RESEARCH_ONLY` and must build absolute U1 evidence before any later U4
+   review. An industry with complete inputs but no positive evidence is explicitly
+   `NO_POSITIVE_EVIDENCE`, not `DATA_BLOCKED`.
 5. A deterministic per-industry random control is kept separate from representatives.
 
 All representative rows carry `ready_for_u4=false`. U3 battery coverage and Junyan's
@@ -85,6 +91,8 @@ snapshots, not rewriting a cohort whenever a headline arrives:
   while CALIBRATING.
 - Intraday E3 observations remain `sample_eligible=false`.
 - A formal cohort snapshot freezes one `as_of`, one `run_id`, and all upstream hashes.
+- Rotation evidence is consumed only when the wrapper and nested body are same-day,
+  status `OK`, and quality `COMPLETE` or `PARTIAL`; stale or blocked wrappers fail closed.
 
 The same engine can therefore cover every industry while each Sector OS supplies
 only its own taxonomy aliases, value-chain map, leading indicators, catalysts, and
@@ -105,15 +113,18 @@ and same-day public registry/rotation contracts. Outputs were written only under
 | Check | Observed result |
 |---|---|
 | U0 coverage | 5,547 eligible securities across all 110 observed industries |
-| Cohort coverage | 347 representatives; 17 absolute-evidence industries, 91 relative-only, 2 blocked |
+| Cohort coverage | 327 representatives; 17 absolute-evidence industries, 90 relative-only, 1 blocked, 2 with no positive evidence |
 | Honest status | `PARTIAL` |
-| Determinism | Two run IDs with identical inputs and timestamp produced byte-identical contracts |
+| Determinism | The same frozen run ID, inputs, and timestamp produced byte-identical bundles in two isolated output roots |
+| Identity-only boundary | 109 identity-only industries received zero rotation aliases or matches |
 | U4 authority | Every representative retained `ready_for_u4=false` |
 
-The semiconductor cohort contained 197 eligible securities. It ranked 23rd in
+The semiconductor cohort contained 197 eligible securities. It ranked 22nd in
 `P3_RELATIVE_RESEARCH`: mapped rotation aliases were both `OUTFLOW_CONT`, 25 E1
-red flags were excluded, and four U1 channels were wholly unavailable. Its three
-rows were therefore emitted only as relative research anchors, each with the next
-gate `BUILD_ABSOLUTE_U1_EVIDENCE`. They are not a recommendation or a U4 selection.
+red flags were excluded, and four U1 channels were wholly unavailable. Its
+within-industry 20-day median was about 1.8%; the three emitted rows exceeded the
+eligible non-red-flag median but remained only relative research anchors. Each
+retained the next gate `BUILD_ABSOLUTE_U1_EVIDENCE`. They are not a recommendation
+or a U4 selection.
 
 不是买卖指令；研究信号，human executes.

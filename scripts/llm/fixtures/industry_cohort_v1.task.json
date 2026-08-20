@@ -33,6 +33,7 @@
     "experiments/research_funnel/industry_taxonomy.v1.json",
     "tests/test_industry_cohort_offline.py",
     "scripts/governance_mutation_gate.py",
+    "tests/test_no_network_guard.py",
     ".github/workflows/python-ci.yml",
     "docs/research/INDUSTRY_COHORT_OS_V1.md",
     "scripts/llm/fixtures/industry_cohort_v1.task.json"
