@@ -431,12 +431,12 @@ class H7TaskUxContractTests(unittest.TestCase):
         self.assertNotIn("workflow_type", packet["task_manifest"])
 
     def test_secret_like_value_fails_without_echo(self) -> None:
-        token = "gho_1234567890abcdef"
+        synthetic_value = "gho_1234567890abcdef"
         packet = copy.deepcopy(self.fixtures["COMPLETE"])
-        packet["user_input"]["goal"] = token
+        packet["user_input"]["goal"] = synthetic_value
         errors = validate_packet(packet)
         self.assertIn("packet contains secret-like data", errors)
-        self.assertNotIn(token, json.dumps(errors))
+        self.assertNotIn(synthetic_value, json.dumps(errors))
 
     def test_naive_timestamp_fails_closed(self) -> None:
         packet = copy.deepcopy(self.fixtures["COMPLETE"])
