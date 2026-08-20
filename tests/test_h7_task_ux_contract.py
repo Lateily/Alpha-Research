@@ -6,7 +6,7 @@ import copy
 import json
 import re
 import unittest
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -119,6 +119,28 @@ def _aware_timestamp(value: Any) -> bool:
     return parsed.tzinfo is not None
 
 
+def _non_empty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip()) and value == value.strip()
+
+
+def _string_list(value: Any, *, allow_empty: bool = True) -> bool:
+    return (
+        isinstance(value, list)
+        and (allow_empty or bool(value))
+        and all(_non_empty_string(item) for item in value)
+    )
+
+
+def _valid_date(value: Any) -> bool:
+    if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return False
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
 def _contains_secret(value: Any) -> bool:
     if isinstance(value, str):
         return any(pattern.search(value) for pattern in SECRET_PATTERNS)
@@ -204,10 +226,23 @@ def validate_packet(packet: Any) -> list[str]:
     if not isinstance(user_input, Mapping) or set(user_input) != USER_INPUT_KEYS:
         errors.append("user_input fields are invalid")
     else:
+        for field in ("request_id", "goal", "human_owner", "reviewer"):
+            if not _non_empty_string(user_input.get(field)):
+                errors.append(f"user_input.{field} is invalid")
+        source_issue = user_input.get("source_issue")
+        if isinstance(source_issue, bool) or not isinstance(source_issue, int) or source_issue <= 0:
+            errors.append("source_issue is invalid")
         if not _aware_timestamp(user_input.get("data_cutoff")):
             errors.append("data_cutoff is invalid")
         if not _aware_timestamp(user_input.get("submitted_at")):
             errors.append("submitted_at is invalid")
+        if not isinstance(user_input.get("max_cny"), str) or not re.fullmatch(
+            r"\d+(?:\.\d+)?", user_input["max_cny"]
+        ):
+            errors.append("max_cny is invalid")
+        max_minutes = user_input.get("max_minutes")
+        if isinstance(max_minutes, bool) or not isinstance(max_minutes, int) or max_minutes <= 0:
+            errors.append("max_minutes is invalid")
         refs = user_input.get("announcement_refs")
         if not isinstance(refs, list) or not refs:
             errors.append("announcement_refs are invalid")
@@ -216,26 +251,47 @@ def validate_packet(packet: Any) -> list[str]:
                 if not isinstance(ref, Mapping) or set(ref) != SOURCE_REF_KEYS:
                     errors.append("announcement_ref fields are invalid")
                     continue
+                for field in ("source_id", "locator"):
+                    if not _non_empty_string(ref.get(field)):
+                        errors.append(f"announcement_ref.{field} is invalid")
+                if ref.get("source_kind") != "ANNOUNCEMENT":
+                    errors.append("announcement_ref source_kind is invalid")
+                if not _valid_date(ref.get("publish_date")):
+                    errors.append("announcement_ref publish_date is invalid")
                 if ref.get("trust") != "UNTRUSTED_DATA":
                     errors.append("announcement_ref trust is invalid")
                 if not _aware_timestamp(ref.get("data_cutoff")):
                     errors.append("announcement_ref cutoff is invalid")
         facts = user_input.get("fact_fields")
-        if packet.get("status") != "BLOCKED" and (
-            not isinstance(facts, list) or not facts
-        ):
+        if not _string_list(facts, allow_empty=packet.get("status") == "BLOCKED"):
             errors.append("fact_fields are required")
 
     projection = packet.get("projection")
     if not isinstance(projection, Mapping) or set(projection) != PROJECTION_KEYS:
         errors.append("projection fields are invalid")
     else:
+        if not _non_empty_string(projection.get("task_state")):
+            errors.append("projection task_state is invalid")
+        if projection.get("run_state") is not None and not _non_empty_string(
+            projection.get("run_state")
+        ):
+            errors.append("projection run_state is invalid")
+        if projection.get("freshness") not in {"CURRENT", "STALE", "UNKNOWN"}:
+            errors.append("projection freshness is invalid")
         if projection.get("external_content_trust") != "UNTRUSTED_DATA":
             errors.append("external content trust is invalid")
         if projection.get("model") != "offline-fixture":
             errors.append("fixture model label is invalid")
         if projection.get("prompt_version") != "h7.announcement-fact-extraction.v0":
             errors.append("prompt version is invalid")
+        if not _non_empty_string(projection.get("summary")):
+            errors.append("projection summary is invalid")
+        for field in ("missing_evidence", "warnings", "blocking_reasons"):
+            if not _string_list(projection.get(field)):
+                errors.append(f"projection {field} is invalid")
+        error_code = projection.get("error_code")
+        if error_code is not None and not _non_empty_string(error_code):
+            errors.append("projection error_code is invalid")
         evidence = projection.get("evidence")
         if not isinstance(evidence, list):
             errors.append("evidence must be a list")
@@ -244,8 +300,21 @@ def validate_packet(packet: Any) -> list[str]:
                 if not isinstance(item, Mapping) or set(item) != EVIDENCE_KEYS:
                     errors.append("evidence fields are invalid")
                     continue
+                for field in ("source_id", "locator", "fact"):
+                    if not _non_empty_string(item.get(field)):
+                        errors.append(f"evidence {field} is invalid")
+                if not _valid_date(item.get("publish_date")):
+                    errors.append("evidence publish_date is invalid")
                 if not _aware_timestamp(item.get("data_cutoff")):
                     errors.append("evidence cutoff is invalid")
+                if item.get("evidence_tier") not in {"E1", "E2", "E3", "E4"}:
+                    errors.append("evidence tier is invalid")
+                if item.get("verification_status") not in {
+                    "VERIFIED",
+                    "UNVERIFIED",
+                    "CONFLICTING",
+                }:
+                    errors.append("evidence verification status is invalid")
 
     review = packet.get("human_review")
     if not isinstance(review, Mapping) or set(review) != REVIEW_KEYS:
@@ -259,6 +328,14 @@ def validate_packet(packet: Any) -> list[str]:
             "REJECTED",
         }:
             errors.append("human review state is invalid")
+        if review.get("reviewer") is not None and not _non_empty_string(
+            review.get("reviewer")
+        ):
+            errors.append("human reviewer is invalid")
+        if review.get("decision_ref") is not None and not _non_empty_string(
+            review.get("decision_ref")
+        ):
+            errors.append("human review decision_ref is invalid")
         if review.get("final_merge_authority") != "Junyan":
             errors.append("final merge authority is invalid")
         if review.get("final_merge_authorized") is not False:
@@ -365,6 +442,24 @@ class H7TaskUxContractTests(unittest.TestCase):
         packet = copy.deepcopy(self.fixtures["COMPLETE"])
         packet["user_input"]["data_cutoff"] = "2026-08-20T09:00:00"
         self.assertIn("data_cutoff is invalid", validate_packet(packet))
+
+    def test_bad_publish_date_fails_closed(self) -> None:
+        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet["user_input"]["announcement_refs"][0]["publish_date"] = "tomorrow"
+        self.assertIn(
+            "announcement_ref publish_date is invalid",
+            validate_packet(packet),
+        )
+
+    def test_bad_evidence_tier_fails_closed(self) -> None:
+        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet["projection"]["evidence"][0]["evidence_tier"] = "E9"
+        self.assertIn("evidence tier is invalid", validate_packet(packet))
+
+    def test_empty_summary_fails_closed(self) -> None:
+        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet["projection"]["summary"] = ""
+        self.assertIn("projection summary is invalid", validate_packet(packet))
 
     def test_complete_cannot_hide_missing_evidence(self) -> None:
         packet = copy.deepcopy(self.fixtures["COMPLETE"])
