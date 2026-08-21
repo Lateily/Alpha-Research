@@ -1,0 +1,78 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "PAPER-EXECUTION-REALISM-001",
+  "source_issue": null,
+  "architecture_block": ["research-framework", "prospective-paper-execution"],
+  "objective": "Audit and harden the offline prospective paper-cycle execution model so workflow-debug samples use raw settled bars, A-share T+1 sell discipline, explicit price-limit and liquidity facts, registered no-chase bounds, conservative costs, and a machine-readable realism receipt.",
+  "non_goals": [
+    "Do not modify or run the production nightly chain",
+    "Do not write production fund, event, signal, NAV, manifest, current_run, or public-data state",
+    "Do not create real orders or grant trading authority",
+    "Do not treat the first semiconductor workflow-debug cycles as claim-eligible samples",
+    "Do not claim win rate, alpha, profitability, calibration, or method validity"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [
+    "PR #272 research closure cycle",
+    "PR #283 registered method and attribution"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/strategy/MODEL_PAPER_FUND_POLICY.md",
+    "docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md"
+  ],
+  "file_scope": [
+    "experiments/execution_tracker/paper_portfolio.py",
+    "experiments/execution_tracker/model_paper_fund.py",
+    "experiments/research_funnel/research_cycle.py",
+    "experiments/research_funnel/research_method.py",
+    "tests/test_paper_execution_realism.py",
+    "tests/test_research_cycle.py",
+    "tests/test_research_method.py",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_governance_mutation_gate.py",
+    "tests/test_no_network_guard.py",
+    ".github/workflows/python-ci.yml",
+    "docs/research/PAPER_EXECUTION_REALISM_AUDIT_V1.md",
+    "docs/strategy/MODEL_PAPER_FUND_POLICY.md",
+    "scripts/llm/fixtures/paper_execution_realism_v1.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "experiments/execution_tracker/model_fund",
+    "experiments/execution_tracker/run_nightly.py",
+    "public/data/v2"
+  ],
+  "input_contracts": [
+    "ar.research_cycle_case.v1.0",
+    "raw unadjusted settled OHLC and explicit execution facts",
+    "registered SMC entry zone and paper levels"
+  ],
+  "output_artifacts": [
+    "paper execution realism receipt",
+    "cost-aware workflow-debug paper fills",
+    "explicit execution blockers and non-claim sample classification"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_paper_execution_realism.py",
+    "python3 tests/test_research_cycle.py",
+    "python3 tests/test_research_method.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 tests/test_no_network_guard.py",
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_execution_realism_v1.task.json",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 300},
+  "approval_gates": [
+    "PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_PRODUCTION_DEPLOY_APPROVAL"
+  ],
+  "created_at": "2026-08-21T22:30:00+08:00"
+}

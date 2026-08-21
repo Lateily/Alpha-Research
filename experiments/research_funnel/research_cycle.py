@@ -409,14 +409,13 @@ def validate_bars(payload: Mapping[str, Any], case: Mapping[str, Any]) -> None:
         raise CycleError("settled bars were generated before the prospective case")
     dates: list[str] = []
     for index, row in enumerate(rows):
-        if not isinstance(row, dict) or set(row) != {"date", "open", "high", "low", "close"}:
-            raise CycleError(f"settled bar {index} fields are not exact")
+        if not isinstance(row, dict) or set(row) != paper_fund.pp.REALISTIC_BAR_FIELDS:
+            raise CycleError(f"settled execution bar {index} fields are not exact")
         date = _date8(row.get("date"), f"settled_bars[{index}].date")
-        values = [row.get(key) for key in ("open", "high", "low", "close")]
-        if any(not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0 for value in values):
-            raise CycleError(f"settled bar {index} contains invalid OHLC")
-        if row["high"] < max(row["open"], row["low"], row["close"]) or row["low"] > min(row["open"], row["high"], row["close"]):
-            raise CycleError(f"settled bar {index} has impossible OHLC")
+        try:
+            paper_fund.pp.validate_realistic_bar(row)
+        except ValueError as exc:
+            raise CycleError(f"settled execution bar {index} is invalid: {exc}") from exc
         dates.append(date)
     registered_at = case["paper_order"]["registered_at"]
     bars_invalid = dates != sorted(set(dates)) or dates[0] < registered_at
@@ -512,6 +511,10 @@ def run_cycle(
             target=plan["take_profit_reference"], risk_pct=case["paper_order"]["risk_pct"],
             reason=case["paper_order"]["reason"], invalid_if=case["paper_order"]["invalid_if"],
             gate_state=case["paper_order"]["gate_state"], marks=None,
+            max_fill_price=case["method_registration"]["smc"]["entry_zone"]["high"],
+            cost_model=paper_fund.WORKFLOW_DEBUG_COST_MODEL,
+            max_volume_participation=paper_fund.MAX_VOLUME_PARTICIPATION,
+            execution_mode=paper_fund.pp.EXECUTION_MODEL_VERSION,
         )
         if order is None:
             refusal = message
@@ -531,6 +534,7 @@ def run_cycle(
                 events.extend(paper_fund.process_day(
                     fund, orders, decisions, token=None,
                     series_fn=lambda *_args, p=prefix: p,
+                    require_realistic=True,
                 ))
                 paper_fund.update_nav(
                     fund, orders, nav_history, row["date"],
@@ -545,7 +549,28 @@ def run_cycle(
                         order,
                     ))
     performance = paper_fund.compute_performance(fund, orders, nav_history)
-    paper_boundary_broken = fund.get("paper_only") is not True or performance.get("claim_allowed") is not False or any(order_row.get("no_trade_flag") is not True for order_row in orders)
+    realism = (
+        paper_fund.execution_realism_receipt(order)
+        if order is not None else {
+            "schema": "ar.paper_execution_realism_receipt",
+            "schema_version": "1.0",
+            "status": "NO_TRADE",
+            "checks": {},
+            "cost_verification_status": None,
+            "known_residuals": [],
+            "method_claim_sample_eligible": False,
+            "portfolio_promotion_eligible": False,
+            "no_trade_flag": True,
+        }
+    )
+    paper_boundary_broken = (
+        fund.get("paper_only") is not True
+        or performance.get("claim_allowed") is not False
+        or realism.get("status") not in {"PASS_WORKFLOW_DEBUG", "NO_TRADE"}
+        or realism.get("method_claim_sample_eligible") is not False
+        or realism.get("portfolio_promotion_eligible") is not False
+        or any(order_row.get("no_trade_flag") is not True for order_row in orders)
+    )
     # governance-mutation: RESEARCH_CYCLE_PAPER_ONLY_AUTHORITY
     if paper_boundary_broken:
         raise CycleError("offline paper replay acquired authority or unlocked a claim")
@@ -568,6 +593,7 @@ def run_cycle(
         "schema": FUND_SCHEMA, "schema_version": SCHEMA_VERSION, "research_cycle_id": cycle_id,
         "fund": fund, "orders": orders, "decision_log": decisions, "nav_history": nav_history,
         "events": events, "performance": performance, "refusal": refusal,
+        "execution_realism": realism,
         "no_trade_flag": True, "production_authority": False, "claim_allowed": False,
         "disclaimer": DISCLAIMER,
     }

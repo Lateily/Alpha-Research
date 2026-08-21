@@ -187,6 +187,24 @@ def build_case_draft(closure_bundle: Path, ticker: str) -> dict:
     return draft
 
 
+def execution_row(
+    date: str, open_: float, high: float, low: float, close: float,
+    *, pre_close: float | None = None, volume_shares: float = 10_000_000.0,
+    amount_cny: float = 1_000_000_000.0, suspended: bool = False,
+) -> dict:
+    reference = float(pre_close if pre_close is not None else open_)
+    return {
+        "date": date, "open": open_, "high": high, "low": low, "close": close,
+        "pre_close": reference,
+        "up_limit": round(reference * 1.2, 4),
+        "down_limit": round(reference * 0.8, 4),
+        "volume_shares": volume_shares, "amount_cny": amount_cny,
+        "suspended": suspended, "settled": True,
+        "price_basis": "RAW_UNADJUSTED",
+        "source": "OFFLINE_FIXTURE_SETTLED_V2",
+    }
+
+
 def build_bar_draft(ticker: str) -> dict:
     return {
         "schema": cycle.BARS_SCHEMA,
@@ -195,9 +213,9 @@ def build_bar_draft(ticker: str) -> dict:
         "source": "OFFLINE_FIXTURE_SETTLED",
         "generated_at": "2026-08-17T16:00:00+00:00",
         "rows": [
-            {"date": "20260813", "open": 98.0, "high": 101.0, "low": 97.0, "close": 100.0},
-            {"date": "20260814", "open": 99.0, "high": 102.0, "low": 98.0, "close": 101.0},
-            {"date": "20260817", "open": 110.0, "high": 116.0, "low": 108.0, "close": 115.0},
+            execution_row("20260813", 98.0, 101.0, 97.0, 100.0),
+            execution_row("20260814", 99.0, 102.0, 98.0, 101.0, pre_close=100.0),
+            execution_row("20260817", 110.0, 116.0, 108.0, 115.0, pre_close=101.0),
         ],
         "production_authority": False,
     }
@@ -452,17 +470,16 @@ class ResearchCycleTests(unittest.TestCase):
             self.assertEqual(receipt["research_cycle_id"], trace["research_cycle_id"])
             self.assertEqual(scorecard["timing"]["status"], "NO_TRADE")
 
-    def test_same_bar_stop_and_target_uses_conservative_stop(self) -> None:
+    def test_fill_day_cannot_exit_under_a_share_t1(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             closure_bundle, codes, _, _, _ = build_closure_bundle(root)
             case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
             draft = build_bar_draft(codes[0])
             draft["rows"] = draft["rows"][:2]
-            draft["rows"][1] = {
-                "date": "20260814", "open": 99.0, "high": 116.0,
-                "low": 94.0, "close": 100.0,
-            }
+            draft["rows"][1] = execution_row(
+                "20260814", 99.0, 116.0, 94.0, 100.0, pre_close=100.0,
+            )
             draft["generated_at"] = "2026-08-14T16:00:00+00:00"
             bars = cycle.seal_bars(draft, case)
             outcomes_draft = method_fixtures.outcome_draft(case["method_registration"])
@@ -479,10 +496,35 @@ class ResearchCycleTests(unittest.TestCase):
             )
             order = fund["orders"][0]
             self.assertEqual(order["fill_date"], "20260814")
+            self.assertEqual(order["status"], "filled")
+            self.assertIsNone(order["exit_date"])
+            self.assertEqual(review["paper_state"], "FILLED")
+            self.assertEqual(scorecard["timing"]["status"], "UNRESOLVED")
+
+    def test_later_same_bar_stop_and_target_uses_conservative_stop(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            closure_bundle, codes, _, _, _ = build_closure_bundle(root)
+            case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
+            draft = build_bar_draft(codes[0])
+            draft["rows"][2] = execution_row(
+                "20260817", 99.0, 116.0, 94.0, 100.0, pre_close=101.0,
+            )
+            bars = cycle.seal_bars(draft, case)
+            outcomes = method.seal_outcomes(
+                method_fixtures.outcome_draft(case["method_registration"]),
+                case["method_registration"],
+            )
+            _, fund, scorecard, review = cycle.run_cycle(
+                bundle_dir=closure_bundle, case=case, bars=bars,
+                outcomes=outcomes, generated_at="2026-08-17T16:10:00+00:00",
+            )
+            order = fund["orders"][0]
+            self.assertEqual(order["fill_date"], "20260814")
             self.assertEqual(order["exit_reason"], "stop_and_target_same_bar->stop")
-            self.assertEqual(order["exit_price"], 95.0)
-            self.assertEqual(review["realized_R"], -1.0)
+            self.assertLess(order["exit_price"], 95.0)
             self.assertEqual(scorecard["machine_attribution"], "THESIS_RIGHT_TIMING_WRONG")
+            self.assertEqual(review["paper_state"], "REVIEW_READY")
 
     def test_pre_registration_settled_bar_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -518,7 +560,7 @@ class ResearchCycleTests(unittest.TestCase):
             case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
             bars_draft = build_bar_draft(codes[0])
             bars_draft["rows"].append(
-                {"date": "20260818", "open": 115.0, "high": 118.0, "low": 112.0, "close": 116.0}
+                execution_row("20260818", 115.0, 118.0, 112.0, 116.0, pre_close=115.0)
             )
             bars_draft["generated_at"] = "2026-08-18T16:00:00+00:00"
             bars = cycle.seal_bars(bars_draft, case)
@@ -623,8 +665,8 @@ class ResearchCycleTests(unittest.TestCase):
             case = cycle.seal_case(build_case_draft(closure_bundle, codes[0]), closure_bundle)
             bar_draft = build_bar_draft(codes[0])
             bar_draft["rows"] = [
-                {"date": "20260813", "open": 97.0, "high": 99.0, "low": 96.0, "close": 98.0},
-                {"date": "20260814", "open": 98.0, "high": 99.0, "low": 97.0, "close": 98.5},
+                execution_row("20260813", 97.0, 99.0, 96.0, 98.0),
+                execution_row("20260814", 98.0, 99.0, 97.0, 98.5, pre_close=98.0),
             ]
             bar_draft["generated_at"] = "2026-08-14T16:00:00+00:00"
             bars = cycle.seal_bars(bar_draft, case)

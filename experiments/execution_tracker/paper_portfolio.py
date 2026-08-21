@@ -29,7 +29,9 @@ Long-only v1 (A-share). Needs TUSHARE_TOKEN for --update (`source ~/.zprofile`).
   python3 paper_portfolio.py --summary
 """
 import argparse
+import datetime as dt
 import json
+import math
 import os
 import sys
 
@@ -40,6 +42,12 @@ import fund_source as fs   # noqa: E402
 PORTFOLIO_PATH = os.path.join(HERE, "paper_portfolio.json")
 MIN_CLOSED_FOR_CLAIM = 30
 R_R_BAR = 2.0   # constitution: R/R < 2:1 defaults to WATCH (flagged, not blocked)
+EXECUTION_MODEL_VERSION = "a-share-daily-realism-v1"
+REALISTIC_BAR_FIELDS = {
+    "date", "open", "high", "low", "close", "pre_close",
+    "up_limit", "down_limit", "volume_shares", "amount_cny",
+    "suspended", "settled", "price_basis", "source",
+}
 
 
 def load_portfolio(path=PORTFOLIO_PATH):
@@ -102,33 +110,187 @@ def qfq_ohlc_series(ticker, token, start_date):
     return out
 
 
-def _advance(entry, bars):
+def execution_ohlc_series(ticker, token, start_date):
+    """Raw settled A-share bars with explicit execution facts.
+
+    Registered entry/stop/target levels are authored in contemporaneous raw-price
+    space, so adjusted history is not a valid execution surface. Tushare ``vol``
+    is reported in hands and ``amount`` in thousand CNY; normalize both here so
+    downstream participation checks never need to guess units.
+    """
+    daily = fs._tushare_call(
+        "daily", token, {"ts_code": ticker, "start_date": start_date},
+        "trade_date,open,high,low,close,pre_close,vol,amount",
+    )
+    limits = fs._tushare_call(
+        "stk_limit", token, {"ts_code": ticker, "start_date": start_date},
+        "trade_date,up_limit,down_limit",
+    )
+    fields = daily.get("fields", [])
+    limit_fields = limits.get("fields", [])
+    limit_rows = {
+        str(row.get("trade_date")): row
+        for item in limits.get("items", [])
+        for row in (dict(zip(limit_fields, item)),)
+    }
+    rows = []
+    for item in daily.get("items", []):
+        row = dict(zip(fields, item))
+        trade_date = str(row.get("trade_date"))
+        limit = limit_rows.get(trade_date) or {}
+        rows.append({
+            "date": trade_date,
+            "open": row.get("open"),
+            "high": row.get("high"),
+            "low": row.get("low"),
+            "close": row.get("close"),
+            "pre_close": row.get("pre_close"),
+            "up_limit": limit.get("up_limit"),
+            "down_limit": limit.get("down_limit"),
+            "volume_shares": float(row.get("vol") or 0) * 100.0,
+            "amount_cny": float(row.get("amount") or 0) * 1000.0,
+            "suspended": False,
+            "settled": True,
+            "price_basis": "RAW_UNADJUSTED",
+            "source": "TUSHARE_DAILY_STK_LIMIT",
+        })
+    return sorted(rows, key=lambda row: row["date"])
+
+
+def _number(value):
+    return isinstance(value, (int, float)) and math.isfinite(float(value))
+
+
+def _execution_date(value):
+    value = str(value or "")
+    if len(value) != 8 or not value.isdigit():
+        raise ValueError("execution date must be YYYYMMDD")
+    try:
+        dt.datetime.strptime(value, "%Y%m%d")
+    except ValueError as exc:
+        raise ValueError("execution date must be a real calendar date") from exc
+    return value
+
+
+def validate_realistic_bar(bar):
+    if not isinstance(bar, dict) or set(bar) != REALISTIC_BAR_FIELDS:
+        raise ValueError("realistic execution bar fields are not exact")
+    # governance-mutation: PAPER_EXECUTION_RAW_SETTLED_BARS
+    if bar.get("price_basis") != "RAW_UNADJUSTED" or bar.get("settled") is not True:
+        raise ValueError("execution bar must be raw, unadjusted, and settled")
+    if bar.get("source") not in {"TUSHARE_DAILY_STK_LIMIT", "OFFLINE_FIXTURE_SETTLED_V2"}:
+        raise ValueError("execution bar source is not approved")
+    _execution_date(bar.get("date"))
+    if not isinstance(bar.get("suspended"), bool):
+        raise ValueError("execution bar suspended flag must be boolean")
+    required_prices = ("open", "high", "low", "close", "pre_close", "up_limit", "down_limit")
+    if any(not _number(bar.get(key)) or float(bar[key]) <= 0 for key in required_prices):
+        raise ValueError("execution bar contains invalid price facts")
+    if any(not _number(bar.get(key)) or float(bar[key]) < 0 for key in ("volume_shares", "amount_cny")):
+        raise ValueError("execution bar contains invalid liquidity facts")
+    if not bar["suspended"] and (bar["volume_shares"] <= 0 or bar["amount_cny"] <= 0):
+        raise ValueError("tradable execution bar lacks positive liquidity facts")
+    if bar["high"] < max(bar["open"], bar["low"], bar["close"]):
+        raise ValueError("execution bar high is impossible")
+    if bar["low"] > min(bar["open"], bar["high"], bar["close"]):
+        raise ValueError("execution bar low is impossible")
+    return bar
+
+
+def _record_block(entry, bar, reason):
+    block = {"date": bar["date"], "reason": reason}
+    blocks = entry.setdefault("execution_blocks", [])
+    if block not in blocks:
+        blocks.append(block)
+    entry["last_execution_blocker"] = reason
+
+
+def _one_price_at(bar, field):
+    level = float(bar[field])
+    return all(abs(float(bar[key]) - level) <= 1e-8 for key in ("open", "high", "low", "close"))
+
+
+def _participation_ok(entry, bar):
+    shares = entry.get("shares")
+    cap = entry.get("max_volume_participation")
+    if not _number(shares) or not _number(cap) or not (0 < float(cap) <= 0.01):
+        raise ValueError("realistic execution needs shares and max participation <= 1%")
+    return float(shares) <= float(bar["volume_shares"]) * float(cap)
+
+
+def _advance(entry, bars, *, require_realistic=False):
     """Advance one entry through pending->filled->closed. Returns True if state changed.
 
-    NO LOOK-AHEAD: only bars STRICTLY AFTER registered_at are eligible to fill; exits
-    are scanned from the fill bar (inclusive) onward.
+    NO LOOK-AHEAD: only bars STRICTLY AFTER registered_at are eligible to fill;
+    A-share exits are scanned strictly after the fill date.
     """
     changed = False
+    if require_realistic:
+        for bar in bars:
+            validate_realistic_bar(bar)
+        dates = [bar["date"] for bar in bars]
+        # governance-mutation: PAPER_EXECUTION_DATE_SEQUENCE
+        if dates != sorted(set(dates)):
+            raise ValueError("realistic execution bars must be strictly ordered and unique")
+        _execution_date(entry.get("registered_at"))
     eligible = [b for b in bars if b["date"] > entry["registered_at"]]
 
     if entry["status"] == "pending":
         for b in eligible:
+            if require_realistic and b["suspended"]:
+                _record_block(entry, b, "SUSPENDED")
+                continue
             if b["high"] >= entry["entry_review_price"]:           # long trigger reached
-                fill = (b["open"] if b["open"] > entry["entry_review_price"]
-                        else entry["entry_review_price"])          # gap-up fills worse
+                # governance-mutation: PAPER_EXECUTION_LIMIT_UP_NO_BUY
+                if require_realistic and _one_price_at(b, "up_limit"):
+                    _record_block(entry, b, "ONE_PRICE_LIMIT_UP_NO_BUY")
+                    continue
+                # governance-mutation: PAPER_EXECUTION_LIQUIDITY_CAP
+                if require_realistic and not _participation_ok(entry, b):
+                    _record_block(entry, b, "LIQUIDITY_PARTICIPATION_EXCEEDED")
+                    continue
+                base_fill = (b["open"] if b["open"] > entry["entry_review_price"]
+                             else entry["entry_review_price"])
+                slippage = float(entry.get("slippage_bps") or 0) / 10_000.0
+                fill = min(float(b["high"]), float(base_fill) * (1.0 + slippage))
+                max_fill = entry.get("max_fill_price")
+                # The registered ceiling includes modeled slippage. Checking only
+                # the pre-slippage price lets a nominally legal fill exceed both
+                # the frozen SMC zone and the cash reserved at registration.
+                # governance-mutation: PAPER_EXECUTION_NO_CHASE_LIMIT
+                if require_realistic and (not _number(max_fill) or fill > float(max_fill)):
+                    _record_block(entry, b, "FILL_ABOVE_REGISTERED_ENTRY_LIMIT")
+                    continue
                 entry["fill_date"] = b["date"]
                 entry["fill_price"] = round(fill, 4)
+                entry["fill_execution_quality"] = (
+                    EXECUTION_MODEL_VERSION if require_realistic else "LEGACY_DAILY_BAR"
+                )
                 entry["status"] = "filled"
                 changed = True
                 break
 
     if entry["status"] == "filled":
-        for b in (x for x in eligible if x["date"] >= entry["fill_date"]):
+        # A-share cash equities bought on T cannot be sold on T. This strict
+        # comparison is the sell-side half of T+1; the old inclusive scan could
+        # manufacture an impossible fill-and-exit on the same daily bar.
+        # governance-mutation: PAPER_EXECUTION_T1_SELL
+        for b in (x for x in eligible if x["date"] > entry["fill_date"]):
+            if require_realistic and b["suspended"]:
+                _record_block(entry, b, "SUSPENDED")
+                continue
             stop_hit = b["low"] <= entry["stop_reference"]
             tgt_hit = b["high"] >= entry["take_profit_reference"]
             if stop_hit:                                           # stop wins a same-bar tie
+                # governance-mutation: PAPER_EXECUTION_LIMIT_DOWN_NO_SELL
+                if require_realistic and _one_price_at(b, "down_limit"):
+                    _record_block(entry, b, "ONE_PRICE_LIMIT_DOWN_NO_SELL")
+                    continue
                 px = (b["open"] if b["open"] < entry["stop_reference"]
                       else entry["stop_reference"])                # gap-down exits worse
+                if require_realistic:
+                    slippage = float(entry.get("slippage_bps") or 0) / 10_000.0
+                    px = max(float(b["low"]), float(px) * (1.0 - slippage))
                 reason = "stop_and_target_same_bar->stop" if tgt_hit else "stop"
             elif tgt_hit:
                 # CAPPED AT TARGET even when price gaps above it — taking the open on a
@@ -141,6 +303,9 @@ def _advance(entry, bars):
             entry["exit_date"] = b["date"]
             entry["exit_price"] = round(px, 4)
             entry["exit_reason"] = reason
+            entry["exit_execution_quality"] = (
+                EXECUTION_MODEL_VERSION if require_realistic else "LEGACY_DAILY_BAR"
+            )
             entry["status"] = "closed"
             entry["paper_return"] = round(px / entry["fill_price"] - 1.0, 4)
             entry["realized_R"] = round(
@@ -150,22 +315,27 @@ def _advance(entry, bars):
     return changed
 
 
-def update_portfolio(portfolio, token, series_fn=None):
+def update_portfolio(portfolio, token, series_fn=None, *, require_realistic=False):
     """Pull settled bars per ticker and advance every open entry. Idempotent."""
-    series_fn = series_fn or qfq_ohlc_series
+    series_fn = series_fn or (
+        execution_ohlc_series if require_realistic else qfq_ohlc_series
+    )
     cache, changes = {}, 0
     for entry in portfolio:
         if entry["status"] == "closed":
             continue
         if entry["ticker"] not in cache:
             cache[entry["ticker"]] = series_fn(entry["ticker"], token, entry["registered_at"])
-        if _advance(entry, cache[entry["ticker"]]):
+        if _advance(entry, cache[entry["ticker"]], require_realistic=require_realistic):
             changes += 1
     return changes
 
 
 def summarize(portfolio):
-    closed = [e for e in portfolio if e["status"] == "closed"]
+    closed_all = [e for e in portfolio if e["status"] == "closed"]
+    # Workflow-debug fills remain useful execution evidence, but they cannot
+    # leak into the method-claim denominator.
+    closed = [e for e in closed_all if e.get("sample_eligible") is True]
     n = len(closed)
     rets = [e["paper_return"] for e in closed]
     rs = [e["realized_R"] for e in closed]
@@ -174,7 +344,9 @@ def summarize(portfolio):
         "n_registered": len(portfolio),
         "n_pending": sum(1 for e in portfolio if e["status"] == "pending"),
         "n_open_filled": sum(1 for e in portfolio if e["status"] == "filled"),
-        "n_closed": n,
+        "n_closed": len(closed_all),
+        "n_claim_eligible": n,
+        "n_workflow_debug_closed": len(closed_all) - n,
         "win_rate": round(wins / n, 3) if n else None,
         "avg_paper_return": round(sum(rets) / n, 4) if n else None,
         "avg_realized_R": round(sum(rs) / n, 3) if n else None,
