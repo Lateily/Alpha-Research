@@ -358,6 +358,71 @@ class IndustryCohortOfflineTests(unittest.TestCase):
                 generated_at=fixtures.GENERATED_AT,
             )
 
+    def test_rotation_payload_without_governed_wrapper_is_rejected(self) -> None:
+        inputs, contracts = build_contracts()
+        raw_rotation = copy.deepcopy(inputs["rotation"]["data"])
+        with self.assertRaisesRegex(fp.FunnelError, "governed wrapper"):
+            ic.build_industry_snapshot(
+                industry_registry=contracts["industry_registry.json"],
+                registry=inputs["registry"],
+                taxonomy=inputs["taxonomy"],
+                scan=inputs["scan"],
+                rotation=raw_rotation,
+                generated_at=fixtures.GENERATED_AT,
+            )
+
+    def test_partial_snapshot_cannot_be_hidden_by_absolute_cohort_rows(self) -> None:
+        inputs = research_inputs()
+        scan = copy.deepcopy(inputs["scan"])
+        first_code_by_industry: dict[str, str] = {}
+        for source in inputs["registry"]["rows"]:
+            first_code_by_industry.setdefault(source["industry_key"], source["ts_code"])
+        for code in first_code_by_industry.values():
+            row = next(
+                source for source in scan["rows"]
+                if source["ts_code"] == code and source["channel"] == "PRICE_VOLUME"
+            )
+            row.update({
+                "data_status": "COMPLETE",
+                "triggered": True,
+                "entry_reasons": [{
+                    "channel": "PRICE_VOLUME", "metric": "fixture_trigger",
+                    "value": 1, "threshold": 0,
+                }],
+                "channel_rank": 1,
+                "reason_codes": [],
+            })
+        blocked = next(
+            source for source in scan["rows"]
+            if source["ts_code"] not in set(first_code_by_industry.values())
+            and source["channel"] == "FUND_FLOW_CHIPS"
+        )
+        blocked.update({
+            "data_status": "DATA_BLOCKED", "triggered": False,
+            "entry_reasons": [], "channel_rank": None,
+            "reason_codes": ["FIXTURE_PARTIAL_SECURITY"],
+        })
+        scan["rows_hash"] = fp._hash(scan["rows"])
+        scan["status"] = "PARTIAL"
+        candidates = fp.build_candidate_review(
+            registry=inputs["registry"], scan=scan, features=inputs["features"],
+            trade_date=fixtures.TRADE_DATE, generated_at=fixtures.GENERATED_AT,
+            target_size=100, slow_bull_quota=1, contrarian_quota=1,
+            control_quota=1,
+        )
+        contracts = ic.build_contracts(
+            registry=inputs["registry"], taxonomy=inputs["taxonomy"], scan=scan,
+            rotation=inputs["rotation"], candidate_review=candidates,
+            generated_at=fixtures.GENERATED_AT, max_representatives=5,
+            relative_anchor_limit=3,
+        )
+        self.assertEqual("PARTIAL", contracts["industry_snapshot.json"]["status"])
+        self.assertTrue(all(
+            row["cohort_state"] == "ABSOLUTE_EVIDENCE_PRESENT"
+            for row in contracts["industry_cohort.json"]["rows"]
+        ))
+        self.assertEqual("PARTIAL", contracts["industry_cohort.json"]["status"])
+
     def test_relative_evidence_uses_within_industry_median(self) -> None:
         inputs = research_inputs()
         pharma_codes = sorted(

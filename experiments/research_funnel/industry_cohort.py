@@ -264,7 +264,12 @@ def _snapshot_coverage(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _cohort_status(rows: Sequence[Mapping[str, Any]]) -> str:
+def _cohort_status(
+    rows: Sequence[Mapping[str, Any]], *, industry_snapshot_status: Any,
+) -> str:
+    # governance-mutation: INDUSTRY_COHORT_UPSTREAM_QUALITY
+    if industry_snapshot_status != "COMPLETE":
+        return "PARTIAL"
     return (
         "PARTIAL"
         if any(row["cohort_state"] != "ABSOLUTE_EVIDENCE_PRESENT" for row in rows)
@@ -553,14 +558,13 @@ def _validate_rotation_wrapper(
 
 
 def _rotation_rows(payload: Mapping[str, Any], as_of: str) -> list[dict[str, Any]]:
-    raw_target = payload.get("target_trade_date") or payload.get("as_of")
-    target = _evidence_date(raw_target, "rotation panel date") if raw_target else None
-    if target != as_of:
-        raise FunnelError("rotation panel is not bound to the industry snapshot as_of")
     wrapped = isinstance(payload.get("data"), dict)
     data = payload.get("data") if wrapped else payload
+    # governance-mutation: INDUSTRY_COHORT_ROTATION_WRAPPER_REQUIRED
+    if not wrapped:
+        raise FunnelError("rotation panel must use the governed wrapper contract")
+    # governance-mutation: INDUSTRY_COHORT_ROTATION_FRESHNESS
     if wrapped:
-        # governance-mutation: INDUSTRY_COHORT_ROTATION_FRESHNESS
         _validate_rotation_wrapper(payload, data, as_of)
     bucket_status = {
         "inflow_cont": "INFLOW_CONT",
@@ -1032,7 +1036,9 @@ def build_industry_cohort(
         "schema": INDUSTRY_COHORT_SCHEMA,
         "schema_version": SCHEMA_VERSION,
         "rule_version": RULE_VERSION,
-        "status": _cohort_status(rows),
+        "status": _cohort_status(
+            rows, industry_snapshot_status=industry_snapshot.get("status"),
+        ),
         "as_of": scan["as_of"],
         "generated_at": generated_at,
         "policy": _cohort_policy(max_representatives, relative_anchor_limit),
@@ -1103,7 +1109,10 @@ def validate_industry_cohort(
     if rows != expected_rows or payload.get("rows_hash") != _hash(expected_rows):
         raise FunnelError("industry cohort membership or evidence does not recompute")
     _validate_evidence_status(
-        payload, expected_status=_cohort_status(expected_rows),
+        payload,
+        expected_status=_cohort_status(
+            expected_rows, industry_snapshot_status=industry_snapshot.get("status"),
+        ),
         expected_coverage=_cohort_coverage(expected_rows), label="industry cohort",
     )
     refs = payload.get("input_refs") or {}

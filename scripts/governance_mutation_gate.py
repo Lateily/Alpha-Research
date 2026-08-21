@@ -1408,6 +1408,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A stale or blocked rotation body cannot borrow a current wrapper date and confirm P1.",
     ),
     MutationCase(
+        mutation_id="INDUSTRY_COHORT_ROTATION_WRAPPER_REQUIRED",
+        component="Research funnel industry rotation provenance",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if not wrapped:\n'
+        '        raise FunnelError("rotation panel must use the governed wrapper contract")',
+        after='    if False:\n'
+        '        raise FunnelError("rotation panel must use the governed wrapper contract")',
+        expected_failure_marker="test_rotation_payload_without_governed_wrapper_is_rejected",
+        rationale="Raw rotation rows cannot bypass wrapper status, quality, date, and run provenance.",
+    ),
+    MutationCase(
         mutation_id="INDUSTRY_COHORT_RELATIVE_BENCHMARK",
         component="Research funnel industry-relative snapshot evidence",
         source_path="experiments/research_funnel/industry_cohort.py",
@@ -1535,6 +1547,18 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise FunnelError(f"{label} status/coverage do not recompute from evidence")',
         expected_failure_marker="test_status_and_coverage_are_recomputed_from_rows",
         rationale="A contract cannot self-report COMPLETE or inflate coverage independently of its rows.",
+    ),
+    MutationCase(
+        mutation_id="INDUSTRY_COHORT_UPSTREAM_QUALITY",
+        component="Research funnel industry cohort quality propagation",
+        source_path="experiments/research_funnel/industry_cohort.py",
+        test_script="tests/test_industry_cohort_offline.py",
+        before='    if industry_snapshot_status != "COMPLETE":\n'
+        '        return "PARTIAL"',
+        after='    if False:\n'
+        '        return "PARTIAL"',
+        expected_failure_marker="test_partial_snapshot_cannot_be_hidden_by_absolute_cohort_rows",
+        rationale="Absolute representatives cannot hide partial upstream evidence in the cohort status.",
     ),
     MutationCase(
         mutation_id="INDUSTRY_COHORT_IMMUTABLE_BUNDLE",
