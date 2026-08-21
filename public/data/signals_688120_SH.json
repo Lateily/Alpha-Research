@@ -1,7 +1,7 @@
 {
   "ticker": "688120.SH",
-  "generated_at": "2026-08-20",
-  "price": 271.54,
+  "generated_at": "2026-08-21",
+  "price": 280.5,
   "zone": "BULLISH",
   "entry_zone": true,
   "exit_zone": false,
@@ -9,41 +9,51 @@
     {
       "type": "GOLDEN_CROSS",
       "strength": "strong",
-      "date": "20260819",
+      "date": "20260820",
       "bullish": true,
       "description": {
-        "e": "MA20 (260.9) crossed above MA60 (260.4) — bullish trend shift",
-        "z": "MA20(260.9)上穿MA60(260.4)金叉看涨"
+        "e": "MA20 (262.0) crossed above MA60 (260.4) — bullish trend shift",
+        "z": "MA20(262.0)上穿MA60(260.4)金叉看涨"
+      }
+    },
+    {
+      "type": "BULLISH_ALIGNMENT",
+      "strength": "strong",
+      "date": "20260820",
+      "bullish": true,
+      "description": {
+        "e": "MA5(276.3) > MA20(262.0) > MA60(260.4), price above all — full bullish alignment",
+        "z": "MA5(276.3)>MA20(262.0)>MA60(260.4)，均线多头排列，趋势强"
       }
     }
   ],
   "signal_count": {
-    "bullish": 1,
+    "bullish": 2,
     "bearish": 0,
-    "total": 1
+    "total": 2
   },
   "indicators": {
-    "ma5": 272.81,
-    "ma20": 260.86,
-    "ma60": 260.38,
-    "rsi14": 51.8,
-    "vol_ma20": 153225,
-    "vol_ratio": 0.88,
-    "price_vs_ma20": 4.09,
-    "price_vs_ma60": 4.29,
-    "change_1d": -5.94,
-    "change_5d": -0.65,
-    "change_20d": -0.53,
-    "macd_dif": 2.1983,
-    "macd_dea": -0.8729,
-    "macd_hist": 6.1422,
-    "bb_upper": 290.74,
-    "bb_mid": 260.86,
-    "bb_lower": 230.97,
-    "bb_bandwidth": 22.91,
-    "kdj_k": 76.3,
-    "kdj_d": 71.0,
-    "kdj_j": 87.0,
+    "ma5": 276.32,
+    "ma20": 261.96,
+    "ma60": 260.36,
+    "rsi14": 54.5,
+    "vol_ma20": 150381,
+    "vol_ratio": 0.63,
+    "price_vs_ma20": 7.08,
+    "price_vs_ma60": 7.74,
+    "change_1d": 3.3,
+    "change_5d": 6.66,
+    "change_20d": 8.49,
+    "macd_dif": 3.0482,
+    "macd_dea": -0.0886,
+    "macd_hist": 6.2737,
+    "bb_upper": 293.01,
+    "bb_mid": 261.96,
+    "bb_lower": 230.9,
+    "bb_bandwidth": 23.71,
+    "kdj_k": 75.6,
+    "kdj_d": 72.5,
+    "kdj_j": 81.8,
     "cvd_latest": null,
     "cvd_slope_5d": null,
     "cvd_chg_1d": null,
