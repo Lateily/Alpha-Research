@@ -94,6 +94,9 @@ jobs:
       # AIOS A-035 Phase 1:Authority/Context/P5/DONE receipt 负例与归因矩阵
       - name: AIOS A-035 Harness evaluation regression (offline)
         run: python3 tests/test_ai_os_a035_harness_eval_offline.py
+      # AIOS A-020a:结构化人类裁决、精确 HEAD/产物绑定与防自签
+      - name: AIOS A-020a Human Decision Gate regression (offline)
+        run: python3 tests/test_ai_os_a020_human_gate_offline.py
       # Team AI Workspace:repo instructions, Skills, task compiler smoke,
       # runtime baseline metadata, and redacted secret/local-state hygiene.
       - name: Team AI Workspace contract and doctor regression (offline)
