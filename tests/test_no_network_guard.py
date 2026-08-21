@@ -15,6 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, ".."))
 sys.path.insert(0, os.path.join(HERE, "..", "experiments", "execution_tracker"))
+sys.path.insert(0, os.path.join(HERE, "..", "experiments", "research_funnel"))
 
 
 class NetworkAttempt(RuntimeError):
@@ -51,13 +52,18 @@ import full_battery            # noqa: E402,F401
 import attribution_audit       # noqa: E402,F401
 import export_contracts        # noqa: E402,F401
 import run_post_close_report   # noqa: E402,F401
+import publication_migration   # noqa: E402,F401
 from experiments.macro_os import contracts as macro_contracts  # noqa: E402
 from experiments.macro_os import collectors as macro_collectors  # noqa: E402
 from experiments.macro_os import m0b2 as macro_m0b2  # noqa: E402,F401
 from experiments.macro_os import storage as macro_storage  # noqa: E402,F401
 from experiments.macro_os import m0b3 as macro_m0b3  # noqa: E402,F401
 from experiments.macro_os import m1a as macro_m1a  # noqa: E402,F401
+from experiments.macro_os import m1b as macro_m1b  # noqa: E402,F401
+from experiments.macro_os import m1c as macro_m1c  # noqa: E402,F401
 from experiments.macro_os import expectation_registry as macro_expectations  # noqa: E402,F401
+from experiments.research_funnel import closure_experiment  # noqa: E402,F401
+from experiments.research_funnel import research_cycle  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
 import test_engines_offline as teo        # noqa: E402
@@ -101,6 +107,53 @@ macro_m1b_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(macro_m1b_tests.MacroM1BTests)
 )
 assert macro_m1b_result.wasSuccessful(), "Macro M1-B suite failed under socket guard"
+import test_macro_m1c_offline as macro_m1c_tests  # noqa: E402
+macro_m1c_suite = unittest.TestSuite((
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        macro_m1c_tests.MacroM1CRuntimeTests
+    ),
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        macro_m1c_tests.MacroM1CNightlyWiringTests
+    ),
+))
+macro_m1c_result = unittest.TextTestRunner(verbosity=0).run(macro_m1c_suite)
+assert macro_m1c_result.wasSuccessful(), "Macro M1-C suite failed under socket guard"
+import test_publication_migration_offline as publication_migration_tests  # noqa: E402
+publication_migration_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        publication_migration_tests.PublicationMigrationTests
+    )
+)
+assert publication_migration_result.wasSuccessful(), (
+    "R-043 publication migration suite failed under socket guard"
+)
+import test_research_closure_experiment as closure_tests  # noqa: E402
+closure_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        closure_tests.ResearchClosureExperimentTests
+    )
+)
+assert closure_result.wasSuccessful(), (
+    "offline research closure suite failed under socket guard"
+)
+import test_research_cycle as research_cycle_tests  # noqa: E402
+import test_research_method as research_method_tests  # noqa: E402
+research_method_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        research_method_tests.ResearchMethodTests
+    )
+)
+assert research_method_result.wasSuccessful(), (
+    "offline research method suite failed under socket guard"
+)
+research_cycle_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        research_cycle_tests.ResearchCycleTests
+    )
+)
+assert research_cycle_result.wasSuccessful(), (
+    "offline U4-to-paper research cycle suite failed under socket guard"
+)
 try:
     macro_collectors.UrllibTransport().fetch(
         macro_collectors._cboe_builder(

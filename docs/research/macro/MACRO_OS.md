@@ -1,6 +1,6 @@
 # Macro OS v0:全组合宏观研究操作系统
 
-> 状态:`M1-A + M1-B DELIVERED_UNWIRED / CALIBRATING`。M0-A 至 M0-B3 的代码与契约已进入 main,尚未形成日常运行链;M1-A 已实现双区域状态、MRG 候选态和事件上下文;M1-B 已实现全申万一级行业敏感度、组合宏观暴露和只读面板。两层均未接夜链或获得阻断权。
+> 状态:`M1-C VALIDATING / CALIBRATING`。M0-A 至 M1-B 已形成可执行链,M1-C 在代码层把官方采集、调度检查、双区域状态、行业/组合消费者和夜链 staged publish 串成同轮运行;尚未合并部署或完成真实夜跑,也没有正式阻断权。
 > 目标:提前识别宏观环境、预期和跨资产定价的变化,将其映射到全组合、行业和个股研究优先级。
 
 ## 1. MRG 在系统中的位置
@@ -175,16 +175,19 @@ Macro OS 不止给一个大盘标签。它必须产生两次下钻:
 | 里程碑 | 已合并实物 | 当前状态 | 下一道门 |
 |---|---|---|---|
 | M0-A | #240:契约、schema、事件层级与来源注册表 | `DELIVERED_UNWIRED / CALIBRATING` | 由运行时生成不可变事实快照 |
-| M0-B | #245:SQLite 历史仓、官方采集器、来源身份与新鲜度记录 | `DELIVERED_UNWIRED / CALIBRATING` | 持续调度与真实运行证据 |
-| M0-B2 | #247:发布日历、双源共识门与系统时钟登记 | `DELIVERED_UNWIRED / CALIBRATING` | 扩充共识覆盖并接正式调度 |
-| M0-B3 | #249:URL 发现、自适应调度、延迟监控与 launchd 模板 | `DELIVERED_UNWIRED / CALIBRATING` | 安装调度并发布首批正式产物 |
-| M1-A | #251:GLOBAL/US 与 CHINA 四轴状态、MRG 候选态、事件上下文 | `DELIVERED_UNWIRED / CALIBRATING` | M1-C 接夜链/盘前帧并开始判分 |
-| M1-B | #252:行业敏感度、组合暴露、只读 Macro 面板 | `DELIVERED_UNWIRED / CALIBRATING` | M1-C 接正式消费者与发布链 |
-| M1-C | 尚无生产实物 | 待办 | 串起 M0-B3→M1-A→M1-B,统一 freshness/report 失败上浮 |
+| M0-B | #245:SQLite 历史仓、官方采集器、来源身份与新鲜度记录 | `VALIDATING / CALIBRATING` | M1-C 部署后的持续采集与真实运行证据 |
+| M0-B2 | #247:发布日历、双源共识门与系统时钟登记 | `DELIVERED_UNWIRED / CALIBRATING` | 校验器已交付;补官方日历抓取与物化入口 |
+| M0-B3 | #249:URL 发现、自适应调度、延迟监控与 launchd 模板 | `VALIDATING / CALIBRATING` | M1-C 已复用同一锁;待部署后验证真实 due/reuse 轮 |
+| M1-A | #251:GLOBAL/US 与 CHINA 四轴状态、MRG 候选态、事件上下文 | `VALIDATING / CALIBRATING` | 已接 M1-C;待正式产物与判分 |
+| M1-B | #252:行业敏感度、组合暴露、只读 Macro 面板 | `VALIDATING / CALIBRATING` | 已接 M1-C;待正式发布与前端消费 |
+| M1-C | 同轮编排器、manifest、夜链步骤与 staged publish | `VALIDATING / CALIBRATING` | 合并、安全部署、真实夜跑和发布哈希验收;日历缺失保持显式阻断 |
 
-“代码已交付”只说明可执行器、schema 和测试已经进入 `main`;“已接入生产”还要求
-调度安装、正式产物、消费者接线与真实运行证据。当前仓库的 `run_nightly.py` 没有
-Macro 步,`public/data/v2/macro/` 也没有正式产物,因此不得把 M1-A/M1-B 写成已上线。
+“代码已接线”不等于“已接入生产”;后者还要求合并、安全部署、调度执行、正式产物、
+消费者接线与真实运行证据。M1-C 已加入 `run_nightly.py`,但 `public/data/v2/macro/`
+仍没有正式运行产物,因此不得把 M1-A/M1-B/M1-C 写成已上线。
+依赖审计另确认:M0-B2/M0-B3 之间尚缺官方发布日历的生产物化器。这个缺口不会阻止
+M1-A/M1-B 生成诚实的校准包,但会让 M0-B3 保持 `DATA_BLOCKED`;在物化器交付前不得
+声称发布调度闭环已经完成。
 #253 已把代表性 Macro 治理门纳入 mutation-gate CI;AIOS K1 扩展由独立 PR 处理,
 不属于本里程碑的已完成项。
 
@@ -207,7 +210,7 @@ M1 状态闭环:
 - 生成 `macro_events/macro_state/macro_risk_gate` 三契约。
 - GLOBAL/US 与 CHINA 各自使用 Growth/Inflation/Liquidity/Risk 四轴,不得求平均抵消。
 - 所有阈值为 `UNVALIDATED_V0`;正式状态保持 null,只输出 `*_CANDIDATE`。
-- 夜链与盘前帧消费 report/freshness(尚未接线)。
+- 夜链已消费 report/freshness 并上浮 data quality;盘前帧尚未接线。
 - 关键源阻断时进入 MACRO_PARTIAL。
 
 M2 研究下钻:
