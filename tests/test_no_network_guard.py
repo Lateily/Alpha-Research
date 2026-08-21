@@ -63,6 +63,7 @@ from experiments.macro_os import m1b as macro_m1b  # noqa: E402,F401
 from experiments.macro_os import m1c as macro_m1c  # noqa: E402,F401
 from experiments.macro_os import expectation_registry as macro_expectations  # noqa: E402,F401
 from experiments.research_funnel import closure_experiment  # noqa: E402,F401
+from experiments.research_funnel import industry_cohort  # noqa: E402,F401
 from experiments.research_funnel import research_cycle  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
@@ -135,6 +136,15 @@ closure_result = unittest.TextTestRunner(verbosity=0).run(
 )
 assert closure_result.wasSuccessful(), (
     "offline research closure suite failed under socket guard"
+)
+import test_industry_cohort_offline as industry_cohort_tests  # noqa: E402
+industry_cohort_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        industry_cohort_tests.IndustryCohortOfflineTests
+    )
+)
+assert industry_cohort_result.wasSuccessful(), (
+    "offline industry cohort suite failed under socket guard"
 )
 import test_research_cycle as research_cycle_tests  # noqa: E402
 import test_research_method as research_method_tests  # noqa: E402

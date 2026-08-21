@@ -1,0 +1,79 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "R-INDUSTRY-COHORT-V1",
+  "source_issue": null,
+  "architecture_block": [
+    "A Core Research Funnel",
+    "U0 Industry Registry",
+    "U1 Intra-Industry Evidence Scan",
+    "Dynamic Industry Cohort"
+  ],
+  "objective": "Add an offline, point-in-time industry cohort foundation that ranks every industry for research priority and derives dynamic representative roles from each industry's six independent U1 evidence channels without granting selection or trade authority.",
+  "non_goals": [
+    "Do not wire the new artifacts into run_nightly.py or launchd.",
+    "Do not change U4 human approval, registered trading, portfolio construction, or capital rules.",
+    "Do not lower the existing global U2 thresholds or force semiconductor names into U2.",
+    "Do not add network collection, macro repair, news ingestion, or production writes."
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": [
+    "PR #267 U1-U4 funnel contracts",
+    "PR #279 candidate-battery DAG",
+    "PR #283 research method attribution"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/sectors/SEMICONDUCTOR_SECTOR_OS.md"
+  ],
+  "file_scope": [
+    "experiments/research_funnel/industry_cohort.py",
+    "experiments/research_funnel/industry_taxonomy.v1.json",
+    "tests/test_industry_cohort_offline.py",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_no_network_guard.py",
+    ".github/workflows/python-ci.yml",
+    "docs/research/INDUSTRY_COHORT_OS_V1.md",
+    "scripts/llm/fixtures/industry_cohort_v1.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/run_nightly.py",
+    "experiments/execution_tracker/paper_signal_log.json",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "public/data/v2",
+    "web"
+  ],
+  "input_contracts": [
+    "ar.security_registry.v1",
+    "ar.all_market_scan.v1",
+    "ar.candidate_review.v1",
+    "ar.rotation_panel existing contract"
+  ],
+  "output_artifacts": [
+    "ar.industry_registry.v1",
+    "ar.industry_snapshot.v1",
+    "ar.industry_cohort.v1",
+    "Semiconductor 20260819 offline replay receipt"
+  ],
+  "acceptance_tests": [
+    "AR_OFFLINE=1 python3 -m unittest tests.test_industry_cohort_offline",
+    "AR_OFFLINE=1 python3 scripts/governance_mutation_gate.py",
+    "Replay the 20260819 production-data copy and prove exact semiconductor taxonomy visibility, per-channel DATA_BLOCKED propagation, deterministic cohort roles, and zero U4 or trade authority.",
+    "Removing or weakening a high-risk industry gate must make its dedicated mutation test fail."
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 240
+  },
+  "approval_gates": [
+    "Junyan approves the dynamic industry cohort architecture.",
+    "Independent PR review is required before merge.",
+    "Nightly wiring requires a separate explicit approval and PR."
+  ],
+  "created_at": "2026-08-20T00:00:00+08:00"
+}
