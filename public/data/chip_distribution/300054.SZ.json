@@ -1,10 +1,10 @@
 {
   "ticker": "300054.SZ",
-  "fetched_at": "2026-08-20T09:05:22Z",
-  "trade_date": "20260820",
+  "fetched_at": "2026-08-21T02:27:11Z",
+  "trade_date": "20260821",
   "_status": "ok",
   "api_used": "cyq_chips",
-  "as_of": "20260819",
+  "as_of": "20260820",
   "fallback_days": 1,
   "chips": [
     {
@@ -281,99 +281,99 @@
     },
     {
       "price": 63.0,
-      "percent": 0.51
+      "percent": 0.48
     },
     {
       "price": 63.9,
-      "percent": 1.3
+      "percent": 1.21
     },
     {
       "price": 64.8,
-      "percent": 1.7
+      "percent": 1.59
     },
     {
       "price": 65.7,
-      "percent": 2.03
+      "percent": 1.89
     },
     {
       "price": 66.6,
-      "percent": 2.5
+      "percent": 2.33
     },
     {
       "price": 67.5,
-      "percent": 2.61
+      "percent": 2.44
     },
     {
       "price": 68.4,
-      "percent": 2.15
+      "percent": 2.01
     },
     {
       "price": 69.3,
-      "percent": 1.97
+      "percent": 1.84
     },
     {
       "price": 70.2,
-      "percent": 2.42
+      "percent": 2.26
     },
     {
       "price": 71.1,
-      "percent": 2.74
+      "percent": 2.56
     },
     {
       "price": 72.0,
-      "percent": 3.74
+      "percent": 3.7
     },
     {
       "price": 72.9,
-      "percent": 4.48
+      "percent": 5.84
     },
     {
       "price": 73.8,
-      "percent": 3.76
+      "percent": 6.41
     },
     {
       "price": 74.7,
-      "percent": 4.07
+      "percent": 5.45
     },
     {
       "price": 75.6,
-      "percent": 8.99
+      "percent": 8.59
     },
     {
       "price": 76.5,
-      "percent": 12.92
+      "percent": 12.04
     },
     {
       "price": 77.4,
-      "percent": 15.93
+      "percent": 14.85
     },
     {
       "price": 78.3,
-      "percent": 6.84
+      "percent": 6.37
     },
     {
       "price": 79.2,
-      "percent": 3.93
+      "percent": 3.67
     },
     {
       "price": 80.1,
-      "percent": 4.06
+      "percent": 3.79
     },
     {
       "price": 81.0,
-      "percent": 4.47
+      "percent": 4.16
     },
     {
       "price": 81.9,
-      "percent": 2.27
+      "percent": 2.12
     },
     {
       "price": 82.8,
-      "percent": 0.42
+      "percent": 0.39
     },
     {
       "price": 83.7,
-      "percent": 0.11
+      "percent": 0.1
     },
     {
       "price": 84.6,
@@ -381,51 +381,51 @@
     },
     {
       "price": 85.5,
-      "percent": 0.08
+      "percent": 0.07
     },
     {
       "price": 86.4,
-      "percent": 0.12
+      "percent": 0.11
     },
     {
       "price": 87.3,
-      "percent": 0.15
+      "percent": 0.14
     },
     {
       "price": 88.2,
-      "percent": 0.19
+      "percent": 0.18
     },
     {
       "price": 89.1,
-      "percent": 0.28
-    },
-    {
-      "price": 90.0,
-      "percent": 0.34
-    },
-    {
-      "price": 90.9,
-      "percent": 0.32
-    },
-    {
-      "price": 91.8,
       "percent": 0.26
     },
     {
+      "price": 90.0,
+      "percent": 0.32
+    },
+    {
+      "price": 90.9,
+      "percent": 0.3
+    },
+    {
+      "price": 91.8,
+      "percent": 0.24
+    },
+    {
       "price": 92.7,
-      "percent": 0.25
+      "percent": 0.23
     },
     {
       "price": 93.6,
-      "percent": 0.22
+      "percent": 0.21
     },
     {
       "price": 94.5,
-      "percent": 0.15
+      "percent": 0.14
     },
     {
       "price": 95.4,
-      "percent": 0.1
+      "percent": 0.09
     },
     {
       "price": 96.3,
@@ -445,7 +445,7 @@
     },
     {
       "price": 99.9,
-      "percent": 0.08
+      "percent": 0.07
     },
     {
       "price": 100.8,
@@ -477,7 +477,7 @@
     },
     {
       "price": 107.1,
-      "percent": 0.08
+      "percent": 0.07
     },
     {
       "price": 108.0,
@@ -496,5 +496,5 @@
       "percent": 0.02
     }
   ],
-  "_note": "requested trade_date=20260820 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260819"
+  "_note": "requested trade_date=20260821 was empty (cyq_chips is T+1); fell back to most recent non-empty day 20260820"
 }
