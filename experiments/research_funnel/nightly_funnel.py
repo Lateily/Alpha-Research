@@ -44,6 +44,8 @@ from funnel_pipeline import (  # noqa: E402
     _hash,
     run_pipeline,
     validate_all_market_scan,
+    validate_candidate_battery,
+    validate_candidate_manifest,
     validate_candidate_review,
     validate_deep_research_queue,
 )
@@ -56,6 +58,10 @@ BUNDLE_FILES = (
     "candidate_review.json",
     "deep_research_queue.json",
     "security_registry_projected.json",
+)
+DAG_EVIDENCE_FILES = (
+    "candidate_manifest.json",
+    "candidate_battery.json",
 )
 DEFAULT_RETENTION_DAYS = 14
 _QUALITY_ORDER = ("COMPLETE", "PARTIAL", "DATA_BLOCKED")
@@ -220,15 +226,33 @@ def read_bundle(bundle_dir: Path, target: str) -> tuple[dict, dict[str, str], di
             f"bundle manifest 版本={manifest.get('schema_version')!r} 与本工具 {SCHEMA_VERSION} 不符"
         )
     declared = manifest.get("artifacts")
-    if not isinstance(declared, dict) or set(declared) != set(BUNDLE_FILES):
+    expected_files = BUNDLE_FILES + (DAG_EVIDENCE_FILES if manifest.get("dag") is not None else ())
+    if not isinstance(declared, dict) or set(declared) != set(expected_files):
         raise FunnelError(f"bundle manifest 的产物清单不完整: {sorted(declared or {})}")
-    measured = {name: _sha256(bundle_dir / name) for name in BUNDLE_FILES}
-    drifted = sorted(n for n in BUNDLE_FILES if declared[n] != measured[n])
+    measured = {name: _sha256(bundle_dir / name) for name in expected_files}
+    drifted = sorted(n for n in expected_files if declared[n] != measured[n])
     if drifted:
         raise FunnelError(f"bundle 实物与 manifest 哈希不符: {drifted}")
     if manifest.get("bundle_hash") != _hash(declared):
         raise FunnelError("bundle_hash 与产物清单不自洽")
-    payloads = {name: _load(bundle_dir / name) for name in BUNDLE_FILES}
+    payloads = {name: _load(bundle_dir / name) for name in expected_files}
+    if manifest.get("dag") is not None:
+        candidate_manifest = payloads["candidate_manifest.json"]
+        candidate_battery = payloads["candidate_battery.json"]
+        validate_candidate_manifest(candidate_manifest)
+        validate_candidate_battery(candidate_battery, candidate_manifest)
+        dag = manifest.get("dag") or {}
+        # governance-mutation: FUNNEL_DAG_FINAL_CONTRACT
+        if (
+            manifest.get("run_id") != candidate_manifest.get("run_id")
+            or dag.get("candidate_manifest_hash") != candidate_manifest.get("manifest_hash")
+            or dag.get("battery_rows_hash") != candidate_battery.get("rows_hash")
+            or candidate_manifest.get("candidate_rows_hash")
+            != payloads["candidate_review.json"].get("rows_hash")
+            or candidate_manifest.get("scan_rows_hash")
+            != payloads["all_market_scan.json"].get("rows_hash")
+        ):
+            raise FunnelError("DAG bundle evidence is not bound to its final manifest")
     return manifest, measured, payloads
 
 
@@ -262,6 +286,8 @@ def build_health(
     照样报 COMPLETE(已实测)。一份把自己的结论硬编码进去的 health 不是证据。
     """
     manifest, measured, payloads = read_bundle(bundle_dir, target)
+    if manifest.get("dag") is not None and manifest.get("run_id") != run_id:
+        raise FunnelError("DAG bundle manifest belongs to another nightly run")
     validate_bundle_contracts(payloads, registry, "all_market_scan.json")
     return compose_health(
         target=target, run_id=run_id, manifest=manifest, measured=measured,

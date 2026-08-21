@@ -41,13 +41,13 @@ class FunnelIsolationTests(unittest.TestCase):
         original = nightly.STEPS
         nightly.STEPS = [
             ("core", ["python3", "core.py"], False, []),
-            ("research_funnel", ["python3", "nightly_funnel.py"], False, []),
+            ("funnel_finalize", ["python3", "funnel_dag.py", "finalize"], False, []),
         ]
         try:
             result = nightly.run_steps(
                 runner=lambda command: (
                     (1, "REFUSED: injected funnel crash")
-                    if command[1] == "nightly_funnel.py" else (0, "OK")
+                    if command[1] == "funnel_dag.py" else (0, "OK")
                 ),
                 require_live=False, verify=False,
             )
@@ -56,11 +56,11 @@ class FunnelIsolationTests(unittest.TestCase):
         rows = {row["step"]: row for row in result["steps"]}
         self.assertEqual("COMPLETE", result["report"])
         self.assertEqual([], result["non_ok_steps"])
-        self.assertEqual("DATA_BLOCKED", rows["research_funnel"]["status"])
-        self.assertEqual("FAILED", rows["research_funnel"]["isolated_status"])
-        self.assertFalse(rows["research_funnel"]["blocks_publication"])
+        self.assertEqual("DATA_BLOCKED", rows["funnel_finalize"]["status"])
+        self.assertEqual("FAILED", rows["funnel_finalize"]["isolated_status"])
+        self.assertFalse(rows["funnel_finalize"]["blocks_publication"])
         self.assertIn(
-            {"step": "research_funnel", "status": "DATA_BLOCKED",
+            {"step": "funnel_finalize", "status": "DATA_BLOCKED",
              "original_status": "FAILED"},
             result["isolated_steps"],
         )
@@ -68,7 +68,7 @@ class FunnelIsolationTests(unittest.TestCase):
     def test_funnel_failure_stays_visible_and_is_not_silently_swallowed(self) -> None:
         """隔离不等于安静。天天挂而没人看见,正是隔离最危险的失败模式。"""
         original = nightly.STEPS
-        nightly.STEPS = [("research_funnel", ["python3", "nightly_funnel.py"], False, [])]
+        nightly.STEPS = [("funnel_finalize", ["python3", "funnel_dag.py", "finalize"], False, [])]
         try:
             result = nightly.run_steps(
                 runner=lambda _command: (1, "REFUSED: injected funnel crash"),
@@ -79,13 +79,13 @@ class FunnelIsolationTests(unittest.TestCase):
         self.assertTrue(result["isolated_steps"], "隔离失败必须出现在 isolated_steps")
         rows = {row["step"]: row for row in result["steps"]}
         self.assertEqual(
-            "CALIBRATION_COMPONENT_FAILED_ISOLATED", rows["research_funnel"]["why"]
+            "CALIBRATION_COMPONENT_FAILED_ISOLATED", rows["funnel_finalize"]["why"]
         )
 
     def test_a_business_step_cannot_enter_the_isolation_allowlist(self) -> None:
         original = nightly.ISOLATED_CALIBRATION_STEPS
         nightly.ISOLATED_CALIBRATION_STEPS = frozenset(
-            {"macro_m1c", "research_funnel", "fund_daily_mark"}
+            {"macro_m1c", "funnel_finalize", "fund_daily_mark"}
         )
         try:
             with self.assertRaisesRegex(RuntimeError, "isolated calibration allowlist"):
@@ -117,7 +117,7 @@ class FunnelIsolationTests(unittest.TestCase):
             write_json(public_v2 / "funnel_health.json", {"as_of": "20260812"})
             write_json(public_v2 / "macro" / "macro_panel.json", {"run_id": "YESTERDAY"})
             original = nightly.STEPS
-            nightly.STEPS = [("research_funnel", ["python3", "nightly_funnel.py"], False, [])]
+            nightly.STEPS = [("funnel_finalize", ["python3", "funnel_dag.py", "finalize"], False, [])]
             try:
                 result = nightly.run_steps(
                     runner=lambda _command: (1, "REFUSED: injected funnel crash"),
@@ -126,9 +126,9 @@ class FunnelIsolationTests(unittest.TestCase):
             finally:
                 nightly.STEPS = original
             rows = {row["step"]: row for row in result["steps"]}
-            self.assertEqual(
-                ["public/data/v2/funnel_health.json"],
-                rows["research_funnel"]["discarded_artifacts"],
+            self.assertIn(
+                "public/data/v2/funnel_health.json",
+                rows["funnel_finalize"]["discarded_artifacts"],
             )
             self.assertFalse(
                 (public_v2 / "funnel_health.json").exists(),
@@ -143,7 +143,7 @@ class FunnelIsolationTests(unittest.TestCase):
         """产物契约必须要求本轮重写 —— 否则漏斗可以天天靠昨天的 health 报 OK。"""
         contract = dict(
             (path, (date_key, fresh))
-            for path, date_key, fresh in nightly.ARTIFACTS["research_funnel"]
+            for path, date_key, fresh in nightly.ARTIFACTS["funnel_finalize"]
         )
         (path,) = list(contract)
         self.assertTrue(path.endswith("funnel_health.json"))
@@ -151,7 +151,7 @@ class FunnelIsolationTests(unittest.TestCase):
         self.assertEqual("as_of", date_key)
         self.assertTrue(fresh_required)
         self.assertNotIn(
-            "research_funnel", nightly.RUN_CONTEXT_EXTERNAL_STEPS,
+            "funnel_finalize", nightly.RUN_CONTEXT_EXTERNAL_STEPS,
             "漏斗不是外部数据步,必须接受 run_id 绑定校验",
         )
 
@@ -276,7 +276,7 @@ class FunnelPublicationBoundaryTests(unittest.TestCase):
             nightly.REPO_ROOT and os.path.isabs(nightly.REPO_ROOT),
             "REPO_ROOT 必须是绝对路径,持久根由它派生",
         )
-        health_contract = nightly.ARTIFACTS["research_funnel"][0][0]
+        health_contract = nightly.ARTIFACTS["funnel_finalize"][0][0]
         self.assertIn("public", health_contract)
         self.assertNotIn("data_history", health_contract)
 
@@ -514,7 +514,7 @@ class FunnelHealthContractTests(unittest.TestCase):
 
     def test_a_content_free_health_cannot_pass_the_artifact_contract(self) -> None:
         verdict, why = nightly._artifact_status_scan(
-            "research_funnel",
+            "funnel_finalize",
             {"as_of": TARGET, "run_id": RUN_ID, "target_trade_date": TARGET},
         )
         self.assertEqual("FAILED", verdict, why)
@@ -525,7 +525,7 @@ class FunnelHealthContractTests(unittest.TestCase):
 
     def test_a_well_formed_health_still_fails_without_a_real_bundle(self) -> None:
         """形状对不等于验过 —— 正式 verifier 必须去看持久 bundle 的实物。"""
-        verdict, why = nightly._artifact_status_scan("research_funnel", self._health())
+        verdict, why = nightly._artifact_status_scan("funnel_finalize", self._health())
         self.assertEqual("FAILED", verdict)
         self.assertIn("bundle", why)
 
@@ -1024,7 +1024,7 @@ class FunnelQualityRollupTests(unittest.TestCase):
 
             original_steps, original_root = nightly.STEPS, nightly.REPO_ROOT
             nightly.STEPS = [
-                ("research_funnel", ["python3", "nightly_funnel.py"], False, [])
+                ("funnel_finalize", ["python3", "funnel_dag.py", "finalize"], False, [])
             ]
             nightly.REPO_ROOT = str(repo)
             try:
@@ -1036,10 +1036,10 @@ class FunnelQualityRollupTests(unittest.TestCase):
                 nightly.STEPS, nightly.REPO_ROOT = original_steps, original_root
 
             rows = {r["step"]: r for r in result["steps"]}
-            self.assertEqual("OK", rows["research_funnel"]["status"])
+            self.assertEqual("OK", rows["funnel_finalize"]["status"])
             self.assertEqual(
                 "PARTIAL",
-                rows["research_funnel"]["artifacts"][0]["quality_status"],
+                rows["funnel_finalize"]["artifacts"][0]["quality_status"],
             )
             self.assertEqual(
                 "PARTIAL", result["research_data_quality"],
@@ -1049,13 +1049,13 @@ class FunnelQualityRollupTests(unittest.TestCase):
     def test_funnel_partial_reaches_the_top_level_quality(self) -> None:
         """真实数据下漏斗已经在报 PARTIAL —— 不上浮就会被顶层 COMPLETE 盖掉。"""
         self.assertEqual(
-            "PARTIAL", nightly._research_quality("research_funnel", {"status": "PARTIAL"})
+            "PARTIAL", nightly._research_quality("funnel_finalize", {"status": "PARTIAL"})
         )
         self.assertEqual(
             "DATA_BLOCKED",
-            nightly._research_quality("research_funnel", {"status": "DATA_BLOCKED"}),
+            nightly._research_quality("funnel_finalize", {"status": "DATA_BLOCKED"}),
         )
-        self.assertIn("research_funnel", nightly.FUNNEL_DATA_STEPS)
+        self.assertIn("funnel_finalize", nightly.FUNNEL_DATA_STEPS)
 
 
 class IsolatedAlarmVisibilityTests(unittest.TestCase):
@@ -1077,12 +1077,12 @@ class IsolatedAlarmVisibilityTests(unittest.TestCase):
     def test_isolated_degradation_still_raises_the_ops_alarm(self) -> None:
         raised, payload = self._run_alarm({
             "report": "COMPLETE", "generated_at": "t", "non_ok_steps": [],
-            "isolated_steps": [{"step": "research_funnel", "status": "DATA_BLOCKED",
+            "isolated_steps": [{"step": "funnel_finalize", "status": "DATA_BLOCKED",
                                 "original_status": "FAILED"}],
         })
         self.assertTrue(raised, "隔离降级不落旗 = 运维层完全无声")
         self.assertTrue(payload["degraded_only"])
-        self.assertEqual("research_funnel", payload["isolated"][0]["step"])
+        self.assertEqual("funnel_finalize", payload["isolated"][0]["step"])
 
     def test_a_fully_green_run_clears_the_alarm(self) -> None:
         raised, _ = self._run_alarm({
