@@ -121,12 +121,19 @@ K1_GOVERNANCE_PATHS = (
     "scripts/llm/ai_os/registry.py",
     "scripts/llm/ai_os/reconciler.py",
 )
+A035_GOVERNANCE_PATHS = (
+    "scripts/llm/ai_os/harness_eval.py",
+)
+A035_MUTATION_PREFIX = "AIOS_A035_"
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
 FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/funnel_pipeline.py",
     "experiments/research_funnel/r035_evaluation.py",
+    "experiments/research_funnel/closure_experiment.py",
+    "experiments/research_funnel/research_cycle.py",
+    "experiments/research_funnel/research_method.py",
 )
 # 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
 # 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
@@ -839,6 +846,145 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_windows_reserved_path_components_are_spec_blocked",
     ),
     MutationCase(
+        mutation_id="AIOS_A035_SIDE_EFFECT_BEFORE_GATE",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before='        if observation.decision == "DENY" and observation.side_effect_count != 0:',
+        after="        if False:",
+        expected_failure_marker="test_denial_after_side_effect_is_not_safe",
+        rationale="A denial is not safe when a side effect already happened.",
+        test_function="test_denial_after_side_effect_is_not_safe",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_CURRENT_HEAD",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before=(
+            "        if observation.evidence_head != case.current_head and not (\n"
+            '            observation.decision == "DENY"\n'
+            '            and observation.reason == "STALE_EVIDENCE"\n'
+            "        ):"
+        ),
+        after="        if False:",
+        expected_failure_marker="test_stale_head_cannot_support_allow",
+        rationale="An allow receipt cannot rely on evidence from a different head.",
+        test_function="test_stale_head_cannot_support_allow",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_REVIEW_INDEPENDENCE",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before=(
+            "        if case.require_independent_review and (\n"
+            "            observation.executor_id == observation.reviewer_id\n"
+            "            and not (\n"
+            '                observation.decision == "DENY"\n'
+            '                and observation.reason == "REVIEW_NOT_INDEPENDENT"\n'
+            "            )\n"
+            "        ):"
+        ),
+        after="        if False:",
+        expected_failure_marker="test_executor_self_review_cannot_support_allow",
+        rationale="The executor cannot be the independent reviewer for an allow receipt.",
+        test_function="test_executor_self_review_cannot_support_allow",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_EXPECTED_DECISION",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before="        if observation.decision != case.expected_decision:",
+        after="        if False:",
+        expected_failure_marker="test_false_pass_and_false_reject_are_distinguished",
+        rationale="Harness Evals must distinguish false passes from false rejects.",
+        test_function="test_false_pass_and_false_reject_are_distinguished",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_REASON_ATTRIBUTION",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before="        if observation.reason != case.expected_reason:",
+        after="        if False:",
+        expected_failure_marker="test_wrong_reason_is_not_accepted",
+        rationale="A matching decision with the wrong reason is not a valid regression pass.",
+        test_function="test_wrong_reason_is_not_accepted",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_MATRIX_HASH",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before="    matrix_hash = _hash_json(matrix)",
+        after="    matrix_hash = None",
+        expected_failure_marker="test_matrix_hash_is_stable_and_content_sensitive",
+        rationale="A Harness Eval report must bind the exact matrix content.",
+        test_function="test_matrix_hash_is_stable_and_content_sensitive",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_OBSERVATIONS_HASH",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before="    observations_hash = _hash_json(canonical_observations)",
+        after="    observations_hash = matrix_hash",
+        expected_failure_marker="test_observations_hash_is_stable_and_content_sensitive",
+        rationale="A Harness Eval report must bind the exact normalized observations.",
+        test_function="test_observations_hash_is_stable_and_content_sensitive",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_PRINCIPAL_CANONICALIZATION",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before="    if subject != subject.casefold():",
+        after="    if False:",
+        expected_failure_marker="test_github_case_alias_cannot_claim_independent_review",
+        rationale="Case aliases of one GitHub principal cannot satisfy independent review.",
+        test_function="test_github_case_alias_cannot_claim_independent_review",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_REQUIRED_INDEPENDENCE",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before=(
+            "        if (\n"
+            "            (domain, expected_decision) in INDEPENDENT_REVIEW_CASES\n"
+            "            and independent is not True\n"
+            "        ):"
+        ),
+        after="        if False:",
+        expected_failure_marker="test_matrix_cannot_disable_done_allow_independence",
+        rationale="A matrix cannot switch off the DONE allow independent-review invariant.",
+        test_function="test_matrix_cannot_disable_done_allow_independence",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_SECRET_CASE_ID_BLOCK",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before="        elif _contains_secret_like(case_id):",
+        after="        elif False:",
+        expected_failure_marker="test_rejected_identifiers_never_echo_secret_like_values",
+        rationale="Secret-like matrix identifiers must fail closed before entering reports.",
+        test_function="test_rejected_identifiers_never_echo_secret_like_values",
+    ),
+    MutationCase(
+        mutation_id="AIOS_A035_ERROR_ID_REDACTION",
+        component="AIOS A-035 Harness Eval",
+        source_path="scripts/llm/ai_os/harness_eval.py",
+        test_script="tests/test_ai_os_a035_harness_eval_offline.py",
+        before='        errors.append(f"unknown observations: count={len(unknown)}")',
+        after='        errors.append(f"unknown observations: {unknown}")',
+        expected_failure_marker="test_rejected_identifiers_never_echo_secret_like_values",
+        rationale="Rejected observation identifiers cannot be copied into logs or reports.",
+        test_function="test_rejected_identifiers_never_echo_secret_like_values",
+    ),
+    MutationCase(
         mutation_id="AIOS_K1_TASK_REQUIRED_FIELDS",
         component="AIOS K1 Task Compiler",
         source_path="scripts/llm/ai_os/task_compiler.py",
@@ -944,6 +1090,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_validate_manifest_enforces_k1_marker_coverage",
         rationale="The manifest validator must not silently stop enforcing K1 marker coverage.",
+    ),
+    MutationCase(
+        mutation_id="GOVERNANCE_A035_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_a035_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_a035_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_a035_marker_coverage",
+        rationale="The mutation manifest must enforce A-035 marker coverage.",
     ),
     MutationCase(
         mutation_id="GOVERNANCE_R043_MARKER_COVERAGE_CALL",
@@ -1338,6 +1498,658 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A U3 name cannot enter deep research without a concrete question to answer.",
     ),
     MutationCase(
+        mutation_id="FUNNEL_CLOSURE_BUNDLE_HASH",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if manifest.get("bundle_hash") != funnel._hash(artifacts):\n'
+        '        raise ClosureError("bundle manifest bundle_hash mismatch")',
+        after='    if False:\n'
+        '        raise ClosureError("bundle manifest bundle_hash mismatch")',
+        expected_failure_marker="test_bundle_hash_must_match_manifest_artifacts",
+        rationale="A self-consistent artifact list must remain bound to the frozen bundle hash.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_DUPLICATE_JSON_KEYS",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='        if key in value:\n'
+        '            raise ClosureError(f"duplicate JSON key: {key}")',
+        after='        if False:\n'
+        '            raise ClosureError(f"duplicate JSON key: {key}")',
+        expected_failure_marker="test_duplicate_json_keys_are_rejected",
+        rationale="A duplicated receipt or manifest field cannot present one value to a human and another to the parser.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_HASH",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if packet.get("packet_hash") != funnel._hash(_without_hash(packet, "packet_hash")):\n'
+        '        raise ClosureError("review packet hash mismatch")',
+        after='    if False:\n'
+        '        raise ClosureError("review packet hash mismatch")',
+        expected_failure_marker="test_packet_hash_must_cover_packet",
+        rationale="The review packet cannot be edited after its evidence hash is frozen.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_U3_FULL_BATTERY",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='        if (\n'
+        '            not isinstance(dims, dict)\n'
+        '            or set(dims) != BATTERY_DIMENSIONS\n'
+        '            or completeness.get("covered") != 6\n'
+        '            or completeness.get("of") != 6\n'
+        '            or completeness.get("missing") != []\n'
+        '            or any(\n'
+        '                not isinstance(value, dict)\n'
+        '                or value.get("status") in {"DATA_BLOCKED", "NOT_RUN"}\n'
+        '                for value in dims.values()\n'
+        '            )\n'
+        '        ):\n'
+        '            raise ClosureError(f"U3 battery claims COMPLETE without six complete dimensions: {code}")',
+        after='        if False:\n'
+        '            raise ClosureError(f"U3 battery claims COMPLETE without six complete dimensions: {code}")',
+        expected_failure_marker="test_u3_complete_stamp_requires_six_complete_dimensions",
+        rationale="A self-reported COMPLETE stamp cannot replace the six actual U3 dimensions.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_RECEIPT_PACKET_BINDING",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if receipt.get("packet_hash") != packet.get("packet_hash"):\n'
+        '        raise ClosureError("review receipt is not bound to this packet")',
+        after='    if False:\n'
+        '        raise ClosureError("review receipt is not bound to this packet")',
+        expected_failure_marker="test_receipt_must_bind_exact_packet",
+        rationale="A review receipt cannot be replayed against a different candidate packet.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_RECEIPT_AUTHORITY",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if (\n'
+        '        receipt.get("decision") != RECEIPT_DECISION\n'
+        '        or receipt.get("claimed_reviewer") != "Junyan"\n'
+        '        or receipt.get("identity_verification") != "UNAVAILABLE"\n'
+        '        or receipt.get("production_authority") is not False\n'
+        '        or receipt.get("receipt_class") != RECEIPT_CLASS\n'
+        '    ):\n'
+        '        raise ClosureError("review receipt authority boundary changed")',
+        after='    if False:\n'
+        '        raise ClosureError("review receipt authority boundary changed")',
+        expected_failure_marker="test_receipt_cannot_claim_verified_identity_or_production_authority",
+        rationale="A JSON receipt records supplied review text but cannot prove identity or grant production authority.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_REBUILD",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if packet != expected_packet:\n'
+        '        raise ClosureError("review packet is not the deterministic projection of replay inputs")',
+        after='    if False:\n'
+        '        raise ClosureError("review packet is not the deterministic projection of replay inputs")',
+        expected_failure_marker="test_replay_rebuilds_packet_from_frozen_inputs",
+        rationale="A self-consistent but rewritten packet must not replace the projection of frozen inputs.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_REPLAY_CHRONOLOGY",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if replay_at < reviewed_at:\n'
+        '        raise ClosureError("replay generated_at cannot predate its review receipt")',
+        after='    if False:\n'
+        '        raise ClosureError("replay generated_at cannot predate its review receipt")',
+        expected_failure_marker="test_replay_timestamp_cannot_predate_review_receipt",
+        rationale="A U4 replay cannot appear to exist before the human review text it consumes.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_REPORT_HASH",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if report.get("report_hash") != funnel._hash(_without_hash(report, "report_hash")):\n'
+        '        raise ClosureError("closure report hash mismatch")',
+        after='    if False:\n'
+        '        raise ClosureError("closure report hash mismatch")',
+        expected_failure_marker="test_report_hash_must_cover_report",
+        rationale="The closure verdict must remain byte-bound to the reviewed evidence chain.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_REPORT_EVIDENCE",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if (\n'
+        '        refs.get("bundle_hash") != (packet.get("source_refs") or {}).get("bundle_hash")\n'
+        '        or refs.get("packet_hash") != packet.get("packet_hash")\n'
+        '        or refs.get("receipt_hash") != receipt.get("receipt_hash")\n'
+        '        or refs.get("u4_rows_hash") != queue.get("rows_hash")\n'
+        '        or discovery.get("control_batch_id") != packet_control.get("control_batch_id")\n'
+        '        or discovery.get("algo") != packet_control.get("algo")\n'
+        '        or discovery.get("seed_hex") != packet_control.get("seed_hex")\n'
+        '        or discovery.get("drawn_hash") != packet_control.get("drawn_hash")\n'
+        '        or u3.get("battery_hash") != (packet.get("source_refs") or {}).get("battery_hash")\n'
+        '        or u3.get("selected_count") != len(queue.get("rows") or [])\n'
+        '        or u4.get("selected_count") != len(queue.get("rows") or [])\n'
+        '    ):\n'
+        '        raise ClosureError("closure report evidence chain is broken")',
+        after='    if False:\n'
+        '        raise ClosureError("closure report evidence chain is broken")',
+        expected_failure_marker="test_report_rejects_rewritten_control_evidence_even_with_new_hash",
+        rationale="A freshly rehashed report cannot rewrite the packet-bound control or battery evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_NO_CLAIM_OR_AUTHORITY",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if (\n'
+        '        report.get("claim_allowed") is not False\n'
+        '        or report.get("no_trade_flag") is not True\n'
+        '        or report.get("status") != "PARTIAL"\n'
+        '        or (report.get("u5_handoff") or {}).get("status") != "DATA_BLOCKED"\n'
+        '        or (report.get("u4_review") or {}).get("production_authority") is not False\n'
+        '        or funnel.FORBIDDEN_ACTION_KEYS.intersection(funnel._walk_keys(report))\n'
+        '    ):\n'
+        '        raise ClosureError("offline closure report acquired claim or trading authority")',
+        after='    if False:\n'
+        '        raise ClosureError("offline closure report acquired claim or trading authority")',
+        expected_failure_marker="test_report_rejects_claim_or_trade_authority",
+        rationale="An offline replay cannot unlock a claim, U5 handoff, or trading authority.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_RESULT_BUNDLE_HASH",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if manifest.get("bundle_hash") != funnel._hash(artifacts):\n'
+        '        raise ClosureError("result bundle_hash mismatch")',
+        after='    if False:\n'
+        '        raise ClosureError("result bundle_hash mismatch")',
+        expected_failure_marker="test_result_bundle_verifier_rejects_manifest_bundle_hash_mutation",
+        rationale="An independently verified closure result must remain byte-bound to its artifact map.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_RESULT_MANIFEST_FIELDS",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if set(manifest) != RESULT_MANIFEST_FIELDS:\n'
+        '        raise ClosureError("result bundle manifest fields are not exact")',
+        after='    if False:\n'
+        '        raise ClosureError("result bundle manifest fields are not exact")',
+        expected_failure_marker="test_result_bundle_manifest_rejects_extra_authority_field",
+        rationale="A result manifest cannot smuggle an undeclared authority or action field beside valid hashes.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_RESULT_ARTIFACT_HASH",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='        if not path.is_file() or path.is_symlink() or _sha256_path(path) != expected_hash:\n'
+        '            raise ClosureError(f"result artifact hash mismatch: {name}")',
+        after='        if False:\n'
+        '            raise ClosureError(f"result artifact hash mismatch: {name}")',
+        expected_failure_marker="test_result_bundle_verifier_rejects_artifact_mutation",
+        rationale="A result artifact cannot change bytes while retaining the frozen manifest digest.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_RESULT_DETERMINISTIC",
+        component="Research funnel offline closure",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before='    if packet != expected_packet or queue != expected_queue or report != expected_report:\n'
+        '        raise ClosureError("result bundle is not the deterministic projection of frozen evidence")',
+        after='    if False:\n'
+        '        raise ClosureError("result bundle is not the deterministic projection of frozen evidence")',
+        expected_failure_marker="test_result_bundle_verifier_rebuilds_outputs_from_frozen_evidence",
+        rationale="A self-consistently rehashed result must still reproduce from its frozen U1-U3 evidence.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_CASE_HASH",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if case.get("case_hash") != _hash(_without_hash(case, "case_hash")):\n'
+        '        raise CycleError("research case hash mismatch")',
+        after='    if False:\n'
+        '        raise CycleError("research case hash mismatch")',
+        expected_failure_marker="test_case_hash_must_cover_every_prospective_input",
+        rationale="Every prospective research input must freeze before settled outcomes exist.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_NO_OVERWRITE",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if os.path.lexists(path):\n'
+        '        raise CycleError(f"output already exists; refusing overwrite: {path}")',
+        after='    if False:\n'
+        '        raise CycleError(f"output already exists; refusing overwrite: {path}")',
+        expected_failure_marker="test_cli_runs_the_entire_u4_to_reviewed_chain",
+        rationale="A retry cannot overwrite a prospectively sealed case, bars file, or review receipt.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_FACTPACK_E1",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if "E1" not in tiers:\n'
+        '        raise CycleError("factpack lacks load-bearing E1 evidence")',
+        after='    if False:\n'
+        '        raise CycleError("factpack lacks load-bearing E1 evidence")',
+        expected_failure_marker="test_factpack_without_e1_is_rejected",
+        rationale="A deep thesis cannot advance on inference alone.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_SOURCE_BINDING",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if refs != expected_refs:\n'
+        '        raise CycleError("research case is not bound to the exact U4 evidence chain")',
+        after='    if False:\n'
+        '        raise CycleError("research case is not bound to the exact U4 evidence chain")',
+        expected_failure_marker="test_case_must_bind_exact_u4_source",
+        rationale="A case cannot swap the reviewed U4 selection or evidence bundle.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_THESIS_QUALIFICATION",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if errors:\n'
+        '        raise CycleError(f"thesis core is not qualified: {errors[:3]}")',
+        after='    if False:\n'
+        '        raise CycleError(f"thesis core is not qualified: {errors[:3]}")',
+        expected_failure_marker="test_unqualified_thesis_is_rejected",
+        rationale="The orchestrator must reuse the qualified Core Thesis Factory contract.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_REDTEAM_BINDING",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if red_team_invalid:\n'
+        '        raise CycleError("red-team PASS is not bound to the qualified thesis core")',
+        after='    if False:\n'
+        '        raise CycleError("red-team PASS is not bound to the qualified thesis core")',
+        expected_failure_marker="test_red_team_must_bind_exact_core",
+        rationale="A PASS for one thesis cannot authorize a rewritten thesis.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_DUAL_TICKET_LEVELS",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if levels_diverge:\n'
+        '        raise CycleError("thesis, timing, and paper-plan levels are not identical")',
+        after='    if False:\n'
+        '        raise CycleError("thesis, timing, and paper-plan levels are not identical")',
+        expected_failure_marker="test_dual_ticket_levels_cannot_diverge",
+        rationale="The timing layer cannot silently rewrite the reviewed paper levels.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_TIMING_EVIDENCE",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if timing_evidence_invalid:\n'
+        '        raise CycleError("a PASS timing ticket lacks settled market/sector/flow/structure/portfolio evidence")',
+        after='    if False:\n'
+        '        raise CycleError("a PASS timing ticket lacks settled market/sector/flow/structure/portfolio evidence")',
+        expected_failure_marker="test_pass_timing_ticket_requires_all_five_evidence_gates",
+        rationale="A PASS timing ticket must be backed by every settled execution gate.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_INDUSTRY_BINDING",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if registration["valuation"]["industry"] != case.get("industry_code"):\n'
+        '        raise CycleError("registered valuation industry differs from the research case")',
+        after='    if False:\n'
+        '        raise CycleError("registered valuation industry differs from the research case")',
+        expected_failure_marker="test_case_industry_must_match_registered_valuation_adapter",
+        rationale="A research case cannot borrow a valuation adapter from a different industry method.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_NO_LOOKAHEAD_BARS",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if bars_invalid:\n'
+        '        raise CycleError("settled bars are unordered, duplicated, or pre-registration")',
+        after='    if False:\n'
+        '        raise CycleError("settled bars are unordered, duplicated, or pre-registration")',
+        expected_failure_marker="test_pre_registration_settled_bar_is_rejected",
+        rationale="Outcome evidence must remain later than the prospectively sealed case.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_BARS_SETTLEMENT_TIME",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if bars_not_yet_settled:\n'
+        '        raise CycleError("settled bars include a session not yet closed at bars.generated_at")',
+        after='    if False:\n'
+        '        raise CycleError("settled bars include a session not yet closed at bars.generated_at")',
+        expected_failure_marker="test_bar_session_after_generated_at_is_rejected",
+        rationale="A future or still-open session cannot be sealed as settled outcome evidence.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_SCORING_ASOF",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if outcomes["scoring_as_of"] != bars["rows"][-1]["date"]:\n'
+        '        raise CycleError("method outcomes and settled bars do not share one scoring as_of")',
+        after='    if False:\n'
+        '        raise CycleError("method outcomes and settled bars do not share one scoring as_of")',
+        expected_failure_marker="test_scoring_as_of_must_equal_last_settled_bar",
+        rationale="Facts and price-path scoring must close on the same settled observation date.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_PAPER_ONLY_AUTHORITY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if paper_boundary_broken:\n'
+        '        raise CycleError("offline paper replay acquired authority or unlocked a claim")',
+        after='    if False:\n'
+        '        raise CycleError("offline paper replay acquired authority or unlocked a claim")',
+        expected_failure_marker="test_replay_rejects_paper_engine_authority_drift",
+        rationale="One replay cannot gain real-capital authority or unlock a performance claim.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_DETERMINISTIC_VERIFY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if projection_changed:\n'
+        '        raise CycleError("cycle bundle is not the deterministic projection of its evidence")',
+        after='    if False:\n'
+        '        raise CycleError("cycle bundle is not the deterministic projection of its evidence")',
+        expected_failure_marker="test_cycle_verifier_rebuilds_outputs_after_self_consistent_rehash",
+        rationale="Self-consistent rehashing cannot rewrite the mechanical outcome.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_MANIFEST_AUTHORITY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if manifest_boundary_invalid:\n'
+        '        raise CycleError("cycle bundle manifest is invalid")',
+        after='    if False:\n'
+        '        raise CycleError("cycle bundle manifest is invalid")',
+        expected_failure_marker="test_cycle_manifest_cannot_rewrite_paper_authority",
+        rationale="A cycle manifest cannot rewrite the paper-only boundary beside valid artifact hashes.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_FINAL_MANIFEST_AUTHORITY",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if final_manifest_boundary_invalid:\n'
+        '        raise CycleError("reviewed-cycle manifest is invalid")',
+        after='    if False:\n'
+        '        raise CycleError("reviewed-cycle manifest is invalid")',
+        expected_failure_marker="test_final_manifest_cannot_rewrite_paper_authority",
+        rationale="A reviewed bundle manifest cannot erase its no-trade boundary.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_POSTMORTEM_BINDING",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if receipt_unbound:\n'
+        '        raise CycleError("postmortem receipt is not bound to the mechanical outcome")',
+        after='    if False:\n'
+        '        raise CycleError("postmortem receipt is not bound to the mechanical outcome")',
+        expected_failure_marker="test_postmortem_receipt_must_bind_outcome_hash",
+        rationale="Human attribution must occur after and bind the exact mechanical result.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_CYCLE_POSTMORTEM_OUTCOME_REQUIRED",
+        component="Research funnel full paper cycle",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if outcome_incomplete:\n'
+        '        raise CycleError("postmortem refused because the paper outcome is incomplete")',
+        after='    if False:\n'
+        '        raise CycleError("postmortem refused because the paper outcome is incomplete")',
+        expected_failure_marker="test_postmortem_requires_closed_or_no_trade_outcome",
+        rationale="Attribution requires a closed or explicitly no-trade mechanical outcome.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_WRONG_IF_COVERAGE",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if observed_hashes != required_hashes:\n'
+        '        raise MethodError("structured invalidation claims do not exactly cover thesis wrong-if triggers")',
+        after='    if False:\n'
+        '        raise MethodError("structured invalidation claims do not exactly cover thesis wrong-if triggers")',
+        expected_failure_marker="test_wrong_if_coverage_is_exact_not_a_count",
+        rationale="Each mechanized thesis invalidation must be individually represented in the registered scoreable claims.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_WRONG_IF_ONE_TO_ONE",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if duplicate_trigger_mapping:\n'
+        '        raise MethodError("each thesis wrong-if trigger must map to exactly one invalidation claim")',
+        after='    if False:\n'
+        '        raise MethodError("each thesis wrong-if trigger must map to exactly one invalidation claim")',
+        expected_failure_marker="test_wrong_if_trigger_maps_to_only_one_invalidation_claim",
+        rationale="Conflicting duplicate invalidation claims cannot share one registered wrong-if trigger.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_VALUATION_DERIVATION",
+        component="Research funnel method valuation",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if output.get("calculation_status") != "MANUAL_UNVALIDATED" or declared != computed:\n'
+        '        raise MethodError("valuation output is not derived from its adapter inputs")',
+        after='    if False:\n'
+        '        raise MethodError("valuation output is not derived from its adapter inputs")',
+        expected_failure_marker="test_semiconductor_valuation_must_be_derived_from_inputs",
+        rationale="An industry valuation label cannot legitimize an output that was not calculated from its frozen inputs.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_VALUATION_FORECAST_COVERAGE",
+        component="Research funnel method valuation",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if not required_metrics.issubset(metrics):\n'
+        '        raise MethodError("valuation forecasts omit a load-bearing adapter input")',
+        after='    if False:\n'
+        '        raise MethodError("valuation forecasts omit a load-bearing adapter input")',
+        expected_failure_marker="test_valuation_forecasts_cover_the_load_bearing_adapter_input",
+        rationale="An industry adapter must register a later fact capable of testing its load-bearing modeled input.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_STOP_DERIVATION",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if abs(stop - expected_stop) > 1e-8:\n'
+        '        raise MethodError("SMC structure_stop is not derived from invalidation - ATR buffer")',
+        after='    if False:\n'
+        '        raise MethodError("SMC structure_stop is not derived from invalidation - ATR buffer")',
+        expected_failure_marker="test_smc_stop_is_derived_and_dual_ticket_levels_cannot_drift",
+        rationale="A paper stop must be derived from the registered structure invalidation and ATR buffer.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_PASS_EVIDENCE",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if status == "PASS" and not pass_evidence:\n'
+        '        raise MethodError("SMC PASS lacks structure, discount, volume, flow, or sector evidence")',
+        after='    if False:\n'
+        '        raise MethodError("SMC PASS lacks structure, discount, volume, flow, or sector evidence")',
+        expected_failure_marker="test_smc_pass_requires_all_manual_confirmation_evidence",
+        rationale="Manual SMC cannot report PASS while any required settled confirmation is missing.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_POI_BINDING",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if entry_high < poi_low or poi_high < entry_low:\n'
+        '        raise MethodError("SMC entry zone does not overlap the registered point of interest")',
+        after='    if False:\n'
+        '        raise MethodError("SMC entry zone does not overlap the registered point of interest")',
+        expected_failure_marker="test_smc_entry_zone_must_overlap_registered_point_of_interest",
+        rationale="A manual SMC entry cannot cite a point of interest located somewhere else on the chart.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_TIMING_BINDING",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if not timing_evidence:\n'
+        '        raise MethodError("SMC confirmations and timing ticket evidence disagree")',
+        after='    if False:\n'
+        '        raise MethodError("SMC confirmations and timing ticket evidence disagree")',
+        expected_failure_marker="test_smc_and_timing_ticket_must_share_settled_confirmation_evidence",
+        rationale="The timing ticket cannot contradict the settled flow, sector, or structure evidence registered by SMC.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SMC_LEVEL_BINDING",
+        component="Research funnel method manual SMC",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if levels != expected_levels or pack_levels != expected_levels:\n'
+        '        raise MethodError("timing ticket and paper plan are not derived from SMC/valuation references")',
+        after='    if False:\n'
+        '        raise MethodError("timing ticket and paper plan are not derived from SMC/valuation references")',
+        expected_failure_marker="test_smc_levels_must_bind_both_timing_ticket_and_decision_pack",
+        rationale="Timing and paper-order layers cannot silently rewrite registered SMC and valuation levels.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_REGISTRATION_HASH",
+        component="Research funnel method registration",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if registration.get("registration_hash") != _hash(_without(registration, "registration_hash")):\n'
+        '        raise MethodError("method registration hash mismatch")',
+        after='    if False:\n'
+        '        raise MethodError("method registration hash mismatch")',
+        expected_failure_marker="test_registration_hash_covers_every_method_input",
+        rationale="A registered method must freeze every thesis, valuation, and timing input before outcomes exist.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_OUTCOME_HASH",
+        component="Research funnel method outcomes",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if outcomes.get("outcome_hash") != _hash(_without(outcomes, "outcome_hash")):\n'
+        '        raise MethodError("method outcomes hash mismatch")',
+        after='    if False:\n'
+        '        raise MethodError("method outcomes hash mismatch")',
+        expected_failure_marker="test_outcome_hash_covers_every_later_fact",
+        rationale="Later facts cannot be rewritten after the scoring artifact is sealed.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_OUTCOME_REGISTERED_DATE",
+        component="Research funnel method outcomes",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before=('    # governance-mutation: RESEARCH_METHOD_OUTCOME_REGISTERED_DATE\n'
+                '    registered_at = _date8(registration.get("registered_at"), "registration.registered_at")'),
+        after=('    # governance-mutation: RESEARCH_METHOD_OUTCOME_REGISTERED_DATE\n'
+               '    registered_at = str(registration.get("registered_at"))'),
+        expected_failure_marker="test_outcome_chronology_normalizes_registered_date",
+        rationale="Accepted registration date spellings must be normalized before every point-in-time comparison.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SCORING_DATE_NORMALIZATION",
+        component="Research funnel method scorecard",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before=('    # governance-mutation: RESEARCH_METHOD_SCORING_DATE_NORMALIZATION\n'
+                '    scoring_as_of = _date8(outcomes["scoring_as_of"], "outcomes.scoring_as_of")'),
+        after=('    # governance-mutation: RESEARCH_METHOD_SCORING_DATE_NORMALIZATION\n'
+               '    scoring_as_of = str(outcomes["scoring_as_of"])'),
+        expected_failure_marker="test_scorecard_normalizes_scoring_date_before_due_fact_classification",
+        rationale="Due missing facts must remain DATA_BLOCKED for every accepted scoring date spelling.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_FACT_BINDING",
+        component="Research funnel method outcomes",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before=('        if (\n'
+                '            item.get("measurement_period") != expected.get("measurement_period")\n'
+                '            or item.get("source_ref") != expected.get("source_ref")\n'
+                '            or item.get("verification_status") != "MANUAL_EVIDENCE_BOUND_UNVERIFIED_IDENTITY"\n'
+                '        ):\n'
+                '            raise MethodError(f"fact {claim_id} is not bound to its registered period/source")'),
+        after=('        if False:\n'
+               '            raise MethodError(f"fact {claim_id} is not bound to its registered period/source")'),
+        expected_failure_marker="test_outcomes_bind_each_fact_to_registered_period_and_source",
+        rationale="A later number cannot score a different reporting period or source than the prospectively registered claim.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_ATTRIBUTION_RULE",
+        component="Research funnel method attribution",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='        return f"THESIS_{thesis}_TIMING_{timing}"',
+        after='        return "UNRESOLVED"',
+        expected_failure_marker="test_machine_attribution_separates_thesis_timing_and_pnl",
+        rationale="Machine attribution must preserve the thesis/timing quadrant and remain independent of profit or loss.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_SCORECARD_CHRONOLOGY",
+        component="Research funnel method attribution",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before=('    if _iso(scorecard.get("generated_at"), "scorecard.generated_at") < _iso(\n'
+                '        outcomes.get("generated_at"), "outcomes.generated_at"\n'
+                '    ):\n'
+                '        raise MethodError("method scorecard predates its outcomes")'),
+        after=('    if False:\n'
+               '        raise MethodError("method scorecard predates its outcomes")'),
+        expected_failure_marker="test_scorecard_cannot_predate_outcome_evidence",
+        rationale="A scorecard cannot exist before the later facts it claims to score.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_ATTRIBUTION_DERIVATION",
+        component="Research funnel method attribution",
+        source_path="experiments/research_funnel/research_method.py",
+        test_script="tests/test_research_method.py",
+        before='    if scorecard.get("machine_attribution") != expected:\n'
+        '        raise MethodError("machine attribution is not derived from thesis and timing ledgers")',
+        after='    if False:\n'
+        '        raise MethodError("machine attribution is not derived from thesis and timing ledgers")',
+        expected_failure_marker="test_scorecard_tampering_and_authority_injection_are_rejected",
+        rationale="A self-consistently rehashed scorecard cannot rewrite the machine attribution label.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_METHOD_HUMAN_REVIEW_EVIDENCE",
+        component="Research funnel method human review",
+        source_path="experiments/research_funnel/research_cycle.py",
+        test_script="tests/test_research_cycle.py",
+        before='    if dispute_invalid:\n'
+        '        raise CycleError("human attribution confirmation/dispute lacks bound evidence semantics")',
+        after='    if False:\n'
+        '        raise CycleError("human attribution confirmation/dispute lacks bound evidence semantics")',
+        expected_failure_marker="test_human_dispute_requires_evidence_and_preserves_machine_result",
+        rationale="Junyan may supersede machine attribution, but the disagreement must remain explicit and evidence-bound.",
+    ),
+    MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_MARKER_COVERAGE_CALL",
         component="Governance mutation gate",
         source_path="scripts/governance_mutation_gate.py",
@@ -1550,13 +2362,13 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/execution_tracker/run_nightly.py",
         test_script="tests/test_funnel_nightly_offline.py",
         before=(
-            "    if not os.path.isfile(stage_health):\n"
-            "        return []\n"
-            "    os.remove(stage_health)"
+            "        if not os.path.isfile(stage_file):\n"
+            "            continue\n"
+            "        os.remove(stage_file)"
         ),
         after=(
-            "    if not os.path.isfile(stage_health):\n"
-            "        return []\n"
+            "        if not os.path.isfile(stage_file):\n"
+            "            continue\n"
         ),
         expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
         rationale="Isolation without discard republishes yesterday's summary as today's output.",
@@ -1566,8 +2378,8 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="Nightly funnel wiring isolation",
         source_path="experiments/execution_tracker/run_nightly.py",
         test_script="tests/test_funnel_nightly_offline.py",
-        before='    "research_funnel": _discard_failed_funnel_outputs,',
-        after='    "research_funnel": _discard_failed_macro_outputs,',
+        before='    "funnel_finalize": _discard_failed_funnel_outputs,',
+        after='    "funnel_finalize": _discard_failed_macro_outputs,',
         expected_failure_marker="test_funnel_failure_discards_its_own_health_not_macro_outputs",
         rationale="Two isolated steps share one branch; a funnel failure must not wipe Macro outputs.",
     ),
@@ -1595,12 +2407,12 @@ MUTATIONS: tuple[MutationCase, ...] = (
         source_path="experiments/execution_tracker/run_nightly.py",
         test_script="tests/test_funnel_nightly_offline.py",
         before=(
-            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '    "funnel_finalize":       [(os.path.join("..", "..", "public", "data", "v2",\n'
             '                                             "funnel_health.json"),\n'
             '                                "as_of", True)],'
         ),
         after=(
-            '    "research_funnel":       [(os.path.join("..", "..", "public", "data", "v2",\n'
+            '    "funnel_finalize":       [(os.path.join("..", "..", "public", "data", "v2",\n'
             '                                             "funnel_health.json"),\n'
             '                                "as_of", False)],'
         ),
@@ -2059,6 +2871,195 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         rationale="The gate must not silently stop enforcing acceptance-verifier marker coverage.",
     ),
+    # ── 三段子 DAG:候选清单 / 电池覆盖 / 段间绑定 ──
+    MutationCase(
+        mutation_id="FUNNEL_MANIFEST_COUNT_FROM_LIST",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if payload.get("expected_count") != len(codes):',
+        after="    if False:",
+        expected_failure_marker="test_expected_count_is_derived_from_the_list_not_hardcoded",
+        rationale="The candidate count must be derived from the manifest list, never hardcoded.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_MANIFEST_BINDING",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if battery.get("manifest_hash") != manifest.get("manifest_hash"):',
+        after="    if False:",
+        expected_failure_marker="test_battery_bound_to_another_manifest_is_refused",
+        rationale="A battery not bound to this run's candidate manifest is evidence for another run.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_SET_EQUALITY",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    if set(observed) != expected:",
+        after="    if False:",
+        expected_failure_marker="test_one_missing_row_is_a_silent_absence_and_refused",
+        rationale="expected == observed as sets; one silent absence is one candidate never batteried.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_SIX_DIMS",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            "        if tuple(dims.keys()) != BATTERY_DIMENSIONS and set(dims.keys()) != set(BATTERY_DIMENSIONS):"
+        ),
+        after="        if False:",
+        expected_failure_marker="test_a_row_missing_a_dimension_is_refused_not_tolerated",
+        rationale="A missing dimension must appear as explicit DATA_BLOCKED, never be absent.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_ROW_SAME_DAY",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='        if _date8(str(row.get("checked_at") or "")) != _date8(str(manifest.get("as_of") or "")):',
+        after="        if False:",
+        expected_failure_marker="test_a_prior_day_row_cannot_be_repacked_as_same_day_battery",
+        rationale="Every battery row must come from the same trade date as the immutable candidate manifest.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_COMPLETENESS_RECOMPUTED",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before=(
+            '        if (\n'
+            '            completeness.get("covered") != 6 - len(blocked_dims)\n'
+            '            or set(completeness.get("missing") or []) != set(blocked_dims)\n'
+            '            or completeness.get("verdict") != expected_verdict\n'
+            '        ):'
+        ),
+        after='        if False:',
+        expected_failure_marker="test_completeness_is_recomputed_from_dimensions_not_self_reported",
+        rationale="A row cannot self-report COMPLETE when its six dimensions contain blocked evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_DIMENSION_EVIDENCE",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='            if not isinstance(evidence, dict) or not evidence:',
+        after='            if False:',
+        expected_failure_marker="test_an_empty_dimension_is_not_complete_evidence",
+        rationale="A named dimension must contain evidence; an empty object is not COMPLETE.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_BATTERY_DIMENSION_STATUS",
+        component="Research funnel candidate battery",
+        source_path="experiments/research_funnel/funnel_pipeline.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='            if status is not None and status not in {"DATA_BLOCKED", "NOT_RUN"}:',
+        after='            if False:',
+        expected_failure_marker="test_an_unknown_dimension_status_is_not_complete_evidence",
+        rationale="Unknown dimension states cannot be treated as successfully measured evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_TOKENLESS_DEGRADATION",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    ("candidate_battery", ["python3", "../research_funnel/funnel_dag.py", "battery"], False,',
+        after='    ("candidate_battery", ["python3", "../research_funnel/funnel_dag.py", "battery"], True,',
+        expected_failure_marker="test_live_orchestrator_runs_battery_without_token_for_explicit_rows",
+        rationale="The live orchestrator must run the battery stage without a token so it can materialize per-ticket DATA_BLOCKED rows.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_FINAL_MANIFEST_EVIDENCE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    return BUNDLE_FILES + DAG_EVIDENCE_FILES",
+        after="    return BUNDLE_FILES",
+        expected_failure_marker="test_final_bundle_pins_candidate_manifest_and_battery_bytes",
+        rationale="The final immutable manifest must pin the candidate manifest and per-ticket battery bytes.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_FINAL_CONTRACT",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/nightly_funnel.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='            or dag.get("candidate_manifest_hash") != candidate_manifest.get("manifest_hash")',
+        after="            or False",
+        expected_failure_marker="test_final_bundle_revalidates_dag_bindings_not_only_file_hashes",
+        rationale="Hash integrity is insufficient; the final verifier must re-check all cross-artifact DAG bindings.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_HEALTH_COVERAGE_RECOMPUTED",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='        if data.get("battery_coverage") != measured_battery:',
+        after="        if False:",
+        expected_failure_marker="test_production_verifier_recomputes_health_battery_coverage",
+        rationale="The production verifier must derive 105/105 and blocked-row counts from immutable battery evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_NO_LEGACY_DOWNGRADE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if "battery_coverage" in data and "candidate_battery.json" not in payloads:',
+        after='    if False:',
+        expected_failure_marker="test_production_verifier_rejects_dag_evidence_downgrade",
+        rationale="A DAG health receipt cannot be reinterpreted as a legacy four-file bundle.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_STAGE_NO_OVERWRITE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="        if os.path.lexists(bundle_dir / name):\n            raise FunnelError(f\"stage {stage} 产物已存在,拒绝覆盖: {name}\")",
+        after="        if False:\n            pass",
+        expected_failure_marker="test_a_stage_refuses_to_overwrite_its_own_outputs",
+        rationale="Re-running a stage under the same run_id must not silently replace evidence.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_STAGE_BINDING",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='    if manifest.get("as_of") != as_of or manifest.get("run_id") != run_id:',
+        after="    if False:",
+        expected_failure_marker="test_write_then_read_stage_binds_run_and_verifies_bytes",
+        rationale="A later stage must refuse a prior stage that belongs to another run or day.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_FINALIZE_COVERAGE",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="    coverage = validate_candidate_battery(battery, manifest)\n    scan, candidates = p1",
+        after="    coverage = {\"expected\": 0, \"observed\": 0, \"data_blocked_rows\": 0, \"complete_rows\": 0}\n    scan, candidates = p1",
+        expected_failure_marker="test_three_stages_run_end_to_end_without_token",
+        rationale="Finalize must publish coverage measured from the candidate battery, not a fabricated receipt.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_RECEIPT_CHAIN",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/research_funnel/funnel_dag.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before='                or receipt.get("stage_hash") != stage_manifest["stage_hash"]):',
+        after="                or False):",
+        expected_failure_marker="test_finalize_refuses_a_swapped_stage_receipt",
+        rationale="Published stage receipts must match the observation-area stage manifests byte for byte.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_DAG_SKIP_STAYS_ISOLATED",
+        component="Nightly funnel wiring DAG",
+        source_path="experiments/execution_tracker/run_nightly.py",
+        test_script="tests/test_funnel_dag_offline.py",
+        before="            if name in ISOLATED_CALIBRATION_STEPS:\n                # 隔离步依赖隔离步",
+        after="            if False:\n                # 隔离步依赖隔离步",
+        expected_failure_marker="test_a_skipped_downstream_stage_stays_isolated",
+        rationale="A skipped isolated stage must not veto publication through the dependency back door.",
+    ),
     MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_NIGHTLY_MARKER_COVERAGE_CALL",
         component="Governance mutation gate",
@@ -2228,6 +3229,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
         replace_exact(source.read_text(encoding="utf-8"), case.before, case.after, case.mutation_id)
         _local_test_target(test_script, _target_test(case))
     validate_k1_marker_coverage(root, cases)
+    validate_a035_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
@@ -2267,6 +3269,53 @@ def validate_k1_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "K1 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_a035_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = A035_GOVERNANCE_PATHS,
+    prefix: str = A035_MUTATION_PREFIX,
+) -> None:
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    existing_paths = [
+        relative for relative in marker_paths if _resolved_under(root, relative).is_file()
+    ]
+    if not declared and not existing_paths:
+        return
+
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"A-035 governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate A-035 governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "A-035 governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )
