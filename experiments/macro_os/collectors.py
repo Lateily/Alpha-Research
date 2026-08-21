@@ -5,7 +5,7 @@ Supported adapters:
   * BLS Public Data API (official E1): labor and inflation series
   * BEA Public API (official E1): GDP and core-PCE tables
   * Cboe official VIX history download (official E1)
-  * FRED/ALFRED (E2 mirror): Treasury, real-yield, and credit series
+  * FRED current-vintage export (E2 mirror): Treasury, real-yield, and credit series
   * U.S. Census Economic Indicators (official E1): retail sales
 
 Collection writes raw bytes and observations into the append-only SQLite store.
@@ -44,7 +44,7 @@ from experiments.macro_os.storage import (
 )
 
 
-COLLECTOR_VERSION = "macro-m0b/1.0"
+COLLECTOR_VERSION = "macro-m0b/1.1"
 DEFAULT_HEALTH = Path("public/data/v2/macro/source_health.json")
 DISCLAIMER = "不是买卖指令;研究信号,human executes."
 FAILURE_STATUSES = {"DATA_BLOCKED", "SOURCE_DOWN", "DATA_INVALID"}

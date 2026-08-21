@@ -655,6 +655,11 @@ class MacroM0BTests(unittest.TestCase):
         self.assertEqual("OK", result[0]["status"])
         self.assertEqual(1, transport.calls)
         self.assertEqual(1, self.store.counts()["raw_snapshots"])
+        with self.store.connect() as conn:
+            snapshot = conn.execute(
+                "SELECT collector_version FROM raw_snapshots"
+            ).fetchone()
+        self.assertEqual("macro-m0b/1.1", snapshot["collector_version"])
         source, _registry_hash = source_row("fred_alfred")
         self.assertFalse(source["official"])
         self.assertEqual("E2", source["evidence_level"])
