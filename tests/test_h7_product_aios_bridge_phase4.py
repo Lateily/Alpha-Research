@@ -24,6 +24,13 @@ PHASE4_FIXTURE = (
     / "fixtures"
     / "h7-product-aios-bridge-phase4.v0.json"
 )
+PHASE4_SCHEMA = (
+    ROOT
+    / "docs"
+    / "contracts"
+    / "product"
+    / "h7-product-aios-bridge-phase4.v0.schema.json"
+)
 
 STATUSES = {
     "COMPLETE",
@@ -89,6 +96,12 @@ FORBIDDEN_TRACE_SOURCES = {
     "browser_local_storage",
     "unreviewed_external_instructions",
 }
+AUDIT_STRIP_PROPS = {
+    "traceId",
+    "noTradeFlag",
+    "externalContentTrust",
+    "finalMergeAuthority",
+}
 
 
 def _load_json(path: Path) -> Any:
@@ -104,6 +117,14 @@ class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.phase1 = _load_json(PHASE1_FIXTURES)["fixtures"]
         cls.fixture = _load_json(PHASE4_FIXTURE)
+        cls.schema = _load_json(PHASE4_SCHEMA)
+
+    def test_fixture_has_closed_world_schema(self) -> None:
+        self.assertEqual(self.schema["title"], "H7 Product-AIOS Bridge Phase 4 UI Handoff v0")
+        self.assertFalse(self.schema["additionalProperties"])
+        self.assertFalse(self.schema["properties"]["page"]["additionalProperties"])
+        state_schema = self.schema["properties"]["state_component_map"]["items"]
+        self.assertFalse(state_schema["additionalProperties"])
 
     def test_page_is_fixture_only_and_no_trade(self) -> None:
         page = self.fixture["page"]
@@ -125,17 +146,39 @@ class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
             for item in self.fixture["page"]["components"]
         }
         self.assertIn("bridgeTrace", components["BridgeShell"])
-        self.assertIn("traceId", components["AuditStrip"])
+        self.assertEqual(components["AuditStrip"], AUDIT_STRIP_PROPS)
+
+    def test_audit_strip_security_props_are_load_bearing(self) -> None:
+        components = {
+            item["id"]: set(item["required_props"])
+            for item in self.fixture["page"]["components"]
+        }
+        for prop in AUDIT_STRIP_PROPS:
+            with self.subTest(prop=prop):
+                mutated = set(components["AuditStrip"])
+                mutated.remove(prop)
+                self.assertNotEqual(mutated, AUDIT_STRIP_PROPS)
 
     def test_bridge_trace_is_bound_to_contract_sources_only(self) -> None:
         trace = self.fixture["page"]["bridge_trace"]
         self.assertEqual(trace["trace_id_source"], "packet.user_input.request_id")
+        self.assertEqual(trace["resolved_trace_id_source"], "packet.user_input.request_id")
         self.assertEqual(trace["stage_order"], TRACE_STAGES)
         self.assertEqual(set(trace["must_bind_sources"]), TRACE_BIND_SOURCES)
         self.assertEqual(set(trace["must_not_bind_sources"]), FORBIDDEN_TRACE_SOURCES)
         self.assertTrue(
             set(trace["must_bind_sources"]).isdisjoint(trace["must_not_bind_sources"])
         )
+
+    def test_forbidden_trace_source_cannot_be_resolved(self) -> None:
+        trace = dict(self.fixture["page"]["bridge_trace"])
+        for source in FORBIDDEN_TRACE_SOURCES:
+            with self.subTest(source=source):
+                trace["resolved_trace_id_source"] = source
+                self.assertNotEqual(
+                    trace["resolved_trace_id_source"],
+                    "packet.user_input.request_id",
+                )
 
     def test_actions_are_allowlisted_and_forbidden_actions_are_visible(self) -> None:
         page = self.fixture["page"]

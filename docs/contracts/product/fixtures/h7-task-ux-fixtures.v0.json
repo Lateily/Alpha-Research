@@ -95,8 +95,8 @@
         "source_hash": "sha256:4b9c16ff41cbe11609b23e2adbd5d94fcda57179f9470168d3f9cb32ba33ec66"
       },
       "projection": {
-        "task_state": "REVIEWING",
-        "run_state": "VERIFYING",
+        "task_state": "DONE",
+        "run_state": "DONE",
         "freshness": "CURRENT",
         "model": "offline-fixture",
         "prompt_version": "h7.announcement-fact-extraction.v0",
@@ -154,7 +154,18 @@
         "final_merge_authority": "Junyan",
         "final_merge_authorized": false
       },
-      "no_trade_flag": true
+      "no_trade_flag": true,
+      "human_gate_receipt": {
+        "schema": "human-gate-receipt.v0",
+        "receipt_id": "fixture:human-review-001",
+        "trace_id": "h7-announcement-fact-001",
+        "actor": "Jason",
+        "decision": "APPROVED",
+        "decision_ref": "fixture:human-review-001",
+        "reviewed_artifact_id": "projection:h7-announcement-fact-001",
+        "reviewed_artifact_hash": "sha256:daf2c838fd64f28bdf5aeda6fa880a012c7b94137949ab0c2ef6fcb513d2732f",
+        "decided_at": "2026-08-20T09:25:00+08:00"
+      }
     },
     "PARTIAL": {
       "schema": "h7-task-ux.v0",
@@ -294,7 +305,8 @@
         "final_merge_authority": "Junyan",
         "final_merge_authorized": false
       },
-      "no_trade_flag": true
+      "no_trade_flag": true,
+      "human_gate_receipt": null
     },
     "STALE": {
       "schema": "h7-task-ux.v0",
@@ -449,7 +461,8 @@
         "final_merge_authority": "Junyan",
         "final_merge_authorized": false
       },
-      "no_trade_flag": true
+      "no_trade_flag": true,
+      "human_gate_receipt": null
     },
     "BLOCKED": {
       "schema": "h7-task-ux.v0",
@@ -502,7 +515,8 @@
         "final_merge_authority": "Junyan",
         "final_merge_authorized": false
       },
-      "no_trade_flag": true
+      "no_trade_flag": true,
+      "human_gate_receipt": null
     },
     "ERROR": {
       "schema": "h7-task-ux.v0",
@@ -620,7 +634,8 @@
         "final_merge_authority": "Junyan",
         "final_merge_authorized": false
       },
-      "no_trade_flag": true
+      "no_trade_flag": true,
+      "human_gate_receipt": null
     },
     "AWAITING_HUMAN_REVIEW": {
       "schema": "h7-task-ux.v0",
@@ -775,7 +790,8 @@
         "final_merge_authority": "Junyan",
         "final_merge_authorized": false
       },
-      "no_trade_flag": true
+      "no_trade_flag": true,
+      "human_gate_receipt": null
     }
   }
 }

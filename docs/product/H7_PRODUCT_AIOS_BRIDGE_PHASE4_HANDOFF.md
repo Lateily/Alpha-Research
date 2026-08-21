@@ -34,7 +34,8 @@ Components must receive already-validated contract data. They must not parse raw
 model text, infer approval from free text, or call AIOS services directly.
 
 `BridgeShell` must also receive `bridgeTrace`. The trace is derived only from
-the validated H7 packet and UI view model:
+the validated H7 packet and UI view model, and `resolved_trace_id_source` must
+remain `packet.user_input.request_id`:
 
 - `packet.user_input`
 - `packet.task_manifest`
@@ -48,6 +49,10 @@ Forbidden trace sources:
 - raw model text;
 - browser local storage;
 - unreviewed external instructions.
+
+`AuditStrip` props are safety-critical. `traceId`, `noTradeFlag`,
+`externalContentTrust`, and `finalMergeAuthority` must all be present together;
+removing any one of them invalidates the handoff fixture.
 
 ## 3. Action Rules
 
@@ -76,7 +81,8 @@ Forbidden visible actions:
 
 The page must render all six H7 states from fixture data:
 
-- `COMPLETE`: evidence and review ref visible, still no final merge authority.
+- `COMPLETE`: evidence and trusted Human Gate receipt visible, still no final
+  merge authority.
 - `PARTIAL`: missing evidence visible and page tone not complete.
 - `STALE`: cutoff visible and refresh request available.
 - `BLOCKED`: no runnable task preview, blocking reasons visible.
@@ -91,6 +97,8 @@ Inputs:
 
 - `docs/contracts/product/h7-task-ux.v0.schema.json`
 - `docs/contracts/product/h7-task-ux-ui.v0.schema.json`
+- `docs/contracts/product/h7-product-aios-bridge-phase3.v0.schema.json`
+- `docs/contracts/product/h7-product-aios-bridge-phase4.v0.schema.json`
 - `docs/contracts/product/fixtures/h7-task-ux-fixtures.v0.json`
 - `docs/contracts/product/fixtures/h7-task-ux-ui-fixtures.v0.json`
 - `docs/contracts/product/fixtures/h7-product-aios-bridge-phase3.v0.json`
@@ -104,7 +112,8 @@ Rules:
 3. Do not invent `task_type`; `workflow_type` remains UI metadata only.
 4. Render all six states from fixture data.
 5. Keep `PARTIAL`, `STALE`, `BLOCKED`, `ERROR`, and
-   `AWAITING_HUMAN_REVIEW` visibly non-complete.
+   `AWAITING_HUMAN_REVIEW` visibly non-complete. A non-empty approval-looking
+   string must not be rendered as Human Review completion.
 6. Keep `no_trade_flag`, `UNTRUSTED_DATA`, and `Junyan final merge authority`
    visible in every state.
 7. Keep `trace_id` visible in every state, including error and blocked states.
@@ -127,8 +136,8 @@ Phase 4 is done when:
 3. Better handoff prompt exists.
 4. Fixture proves all six states map to components and required fields.
 5. Offline tests prove no forbidden action or runtime write path appears.
-6. Offline tests prove trace props are present and cannot be sourced from
-   chat history, raw model text, local storage, or unreviewed external
-   instructions.
+6. Offline tests prove trace props are present, AuditStrip safety props are
+   load-bearing, and trace data cannot be sourced from chat history, raw model
+   text, local storage, or unreviewed external instructions.
 
 Not a trading instruction; AI produces evidence only, human decides.

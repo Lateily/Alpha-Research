@@ -76,7 +76,7 @@ Each acceptance case binds one H7 packet status to one visible user outcome:
 
 ## 6. Bridge Trace Contract
 
-Every case must render one continuous trace:
+Every case must render one continuous, versioned `bridge_trace`:
 
 `product_request -> ai_task_preview -> agent_output_packet -> human_review -> page_display`
 
@@ -84,10 +84,22 @@ The trace id comes from `packet.user_input.request_id`. The UI may display a
 short copyable id, but it must not generate a new id from chat history, raw
 model text, browser local storage, or unreviewed external instructions.
 
+Each trace stage binds the visible stage name to a concrete artifact:
+
+- `artifact_id`
+- `artifact_hash`
+- `source_contract`
+- `parent_artifact_hash`
+- `receipt_id` when the stage is backed by a Human Gate receipt
+
+The hash must bind the loaded contract artifact, not a stage label. Changing
+the agent output packet, human review receipt, or page display fixture must make
+the trace invalid until the fixture is regenerated and reviewed.
+
 Trace guards:
 
 - `COMPLETE` may show a complete tone only when the H7 packet is complete and
-  human review has a decision ref.
+  human review has a trusted `human_gate_receipt`.
 - `PARTIAL`, `STALE`, `BLOCKED`, `ERROR`, and `AWAITING_HUMAN_REVIEW` must keep
   `can_show_complete=false`.
 - No case can authorize final merge.
@@ -122,7 +134,8 @@ Phase 3 is done when:
 5. Responsive acceptance is stated for desktop and 390px mobile.
 6. Offline tests prove the fixture cannot silently turn partial/stale/blocked
    cases into success.
-7. Offline tests prove every case preserves the same Product-AIOS trace id and
-   cannot bind trace data from chat history or raw model output.
+7. Offline tests prove every case preserves the same Product-AIOS trace id,
+   binds every stage to an artifact hash, rejects packet tampering, and cannot
+   bind trace data from chat history or raw model output.
 
 Not a trading instruction; AI produces evidence only, human decides.

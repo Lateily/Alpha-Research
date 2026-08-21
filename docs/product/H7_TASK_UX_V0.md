@@ -35,9 +35,11 @@ Memory behavior.
 5. Missing or invalid fields produce `BLOCKED`; no runnable manifest is shown.
 6. Downstream AIOS states are projected as `PARTIAL`, `STALE`, `ERROR`, or
    `AWAITING_HUMAN_REVIEW` without being presented as success.
-7. `COMPLETE` requires evidence and an independent Human Review. It still does
-   not mean Junyan approved merge, deployment, production use, or Memory
-   promotion.
+7. `COMPLETE` requires evidence, terminal `DONE/DONE` task/run states, and a
+   trusted `human_gate_receipt` that binds the reviewed output hash. Free text,
+   model text, chat text, or a non-empty `decision_ref` alone cannot complete
+   the packet. It still does not mean Junyan approved merge, deployment,
+   production use, or Memory promotion.
 
 ## 3. User Fields
 
@@ -80,7 +82,7 @@ This explicit gap is safer than hiding `task_type` inside `objective`,
 
 | State | What the user sees | Fail-closed requirement |
 |---|---|---|
-| `COMPLETE` | Evidence and independent review are complete | Evidence non-empty; missing evidence empty; review approved |
+| `COMPLETE` | Evidence and independent review are complete | Evidence non-empty; missing evidence empty; task/run are `DONE/DONE`; review approved with trusted receipt |
 | `PARTIAL` | Some evidence exists, but required facts are missing | Missing evidence remains visible |
 | `STALE` | Evidence exists but is outside the accepted cutoff | Freshness must be `STALE` |
 | `BLOCKED` | The request cannot become a canonical task | No task manifest; blocking reasons visible |
@@ -101,9 +103,15 @@ The artifact also carries `model`, `prompt_version`, `missing_evidence`,
 `warnings`, `external_content_trust = "UNTRUSTED_DATA"`, and
 `no_trade_flag = true`.
 
-Human Review is independent from execution. An approved review requires a
-decision reference and the reviewer named by the task. It never sets
+Human Review is independent from execution. An approved review requires the
+reviewer named by the task and a structured `human_gate_receipt`. The receipt
+binds actor, decision, trace id, decision reference, reviewed artifact id,
+reviewed artifact hash, and decision time. It never sets
 `final_merge_authorized` to true; that authority remains with Junyan.
+
+Until a real Human Gate service exists, only the offline receipt fixture can
+represent a completed review. Arbitrary text such as "agent says Jason
+approved" must keep the packet in `AWAITING_HUMAN_REVIEW` or fail validation.
 
 ## 7. Interface Confirmations
 
@@ -123,8 +131,9 @@ decision reference and the reviewer named by the task. It never sets
 2. Non-blocked fixtures compile to the embedded canonical `ai-task.v1`
    manifest; blocked input does not produce a manifest.
 3. Unknown fields, malformed timestamps, secret-like content, missing evidence,
-   stale false-passes, self-review, and false final authority fail offline
-   tests without echoing supplied secret values.
+   stale false-passes, self-review, false final authority, fake approval text,
+   missing Human Gate receipts, and post-review projection tampering fail
+   offline tests without echoing supplied secret values.
 4. `workflow_type` is never copied into the task manifest as an invented
    `task_type`.
 5. No provider call, external data call, GitHub write, production write, or

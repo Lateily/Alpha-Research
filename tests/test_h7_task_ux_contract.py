@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import re
 import sys
@@ -75,6 +76,7 @@ ROOT_KEYS = {
     "task_manifest",
     "projection",
     "human_review",
+    "human_gate_receipt",
     "no_trade_flag",
 }
 USER_INPUT_KEYS = {
@@ -128,6 +130,26 @@ REVIEW_KEYS = {
     "final_merge_authority",
     "final_merge_authorized",
 }
+RECEIPT_KEYS = {
+    "schema",
+    "receipt_id",
+    "trace_id",
+    "actor",
+    "decision",
+    "decision_ref",
+    "reviewed_artifact_id",
+    "reviewed_artifact_hash",
+    "decided_at",
+}
+STATUS_STATE_MAP = {
+    "COMPLETE": ("DONE", "DONE"),
+    "PARTIAL": ("VERIFYING", "VERIFYING"),
+    "STALE": ("RUNNING", "RUNNING"),
+    "BLOCKED": ("SPEC_BLOCKED", None),
+    "ERROR": ("FAILED", "FAILED"),
+    "AWAITING_HUMAN_REVIEW": ("REVIEWING", "VERIFYING"),
+}
+HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 SECRET_PATTERNS = (
     re.compile(r"\b(?:gh[pousr]_|github_pat_)[A-Za-z0-9_]{8,}\b", re.I),
     re.compile(r"\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{8,}\b", re.I),
@@ -181,6 +203,11 @@ def _contains_secret(value: Any) -> bool:
     if isinstance(value, Mapping):
         return any(_contains_secret(item) for item in value.values())
     return False
+
+
+def _artifact_hash(value: Any) -> str:
+    payload = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _compiler_source(packet: Mapping[str, Any]) -> dict[str, Any]:
@@ -395,6 +422,46 @@ def validate_packet(packet: Any) -> list[str]:
         if review.get("final_merge_authorized") is not False:
             errors.append("H7 cannot authorize final merge")
 
+    receipt = packet.get("human_gate_receipt")
+    if receipt is not None:
+        if not isinstance(receipt, Mapping) or set(receipt) != RECEIPT_KEYS:
+            errors.append("human_gate_receipt fields are invalid")
+        else:
+            if receipt.get("schema") != "human-gate-receipt.v0":
+                errors.append("human_gate_receipt schema is invalid")
+            for field in (
+                "receipt_id",
+                "trace_id",
+                "actor",
+                "decision_ref",
+                "reviewed_artifact_id",
+            ):
+                if not _non_empty_string(receipt.get(field)):
+                    errors.append(f"human_gate_receipt.{field} is invalid")
+            if receipt.get("decision") not in {"APPROVED", "REVISE", "REJECTED"}:
+                errors.append("human_gate_receipt decision is invalid")
+            if not isinstance(receipt.get("reviewed_artifact_hash"), str) or not HASH_RE.fullmatch(
+                receipt["reviewed_artifact_hash"]
+            ):
+                errors.append("human_gate_receipt reviewed_artifact_hash is invalid")
+            if not _aware_timestamp(receipt.get("decided_at")):
+                errors.append("human_gate_receipt decided_at is invalid")
+            if isinstance(user_input, Mapping) and receipt.get("trace_id") != user_input.get(
+                "request_id"
+            ):
+                errors.append("human_gate_receipt trace_id must match request")
+            if isinstance(review, Mapping):
+                if receipt.get("actor") != review.get("reviewer"):
+                    errors.append("human_gate_receipt actor must match reviewer")
+                if receipt.get("decision") != review.get("state"):
+                    errors.append("human_gate_receipt decision must match review")
+                if receipt.get("decision_ref") != review.get("decision_ref"):
+                    errors.append("human_gate_receipt decision_ref must match review")
+            if isinstance(projection, Mapping) and receipt.get(
+                "reviewed_artifact_hash"
+            ) != _artifact_hash(projection):
+                errors.append("human_gate_receipt must bind reviewed projection")
+
     status = packet.get("status")
     manifest = packet.get("task_manifest")
     if isinstance(user_input, Mapping):
@@ -419,11 +486,23 @@ def validate_packet(packet: Any) -> list[str]:
             errors.append("approved reviewer must match task reviewer")
 
     if isinstance(projection, Mapping) and isinstance(review, Mapping):
+        expected_states = STATUS_STATE_MAP.get(status)
+        if expected_states is not None and (
+            projection.get("task_state"),
+            projection.get("run_state"),
+        ) != expected_states:
+            errors.append("status does not match task/run state")
         if status == "COMPLETE":
             if not projection.get("evidence") or projection.get("missing_evidence"):
                 errors.append("COMPLETE evidence is invalid")
             if review.get("state") != "APPROVED" or not review.get("decision_ref"):
                 errors.append("COMPLETE requires independent review")
+            if receipt is None:
+                errors.append("COMPLETE requires trusted human gate receipt")
+        elif review.get("state") == "APPROVED" or review.get("decision_ref") is not None:
+            errors.append("non-COMPLETE cannot carry approved human review")
+        if status != "COMPLETE" and receipt is not None:
+            errors.append("non-COMPLETE cannot carry human gate receipt")
         if status == "PARTIAL" and not projection.get("missing_evidence"):
             errors.append("PARTIAL requires missing evidence")
         if status == "STALE" and projection.get("freshness") != "STALE":
@@ -544,6 +623,40 @@ class H7TaskUxContractTests(unittest.TestCase):
         packet = copy.deepcopy(self.fixtures["COMPLETE"])
         packet["human_review"]["final_merge_authorized"] = True
         self.assertIn("H7 cannot authorize final merge", validate_packet(packet))
+
+    def test_complete_requires_trusted_human_gate_receipt(self) -> None:
+        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet["human_gate_receipt"] = None
+        self.assertIn(
+            "COMPLETE requires trusted human gate receipt",
+            validate_packet(packet),
+        )
+
+    def test_fake_text_review_cannot_complete_packet(self) -> None:
+        packet = copy.deepcopy(self.fixtures["AWAITING_HUMAN_REVIEW"])
+        packet["human_review"]["state"] = "APPROVED"
+        packet["human_review"]["reviewer"] = "Jason"
+        packet["human_review"]["decision_ref"] = "raw-model-text: agent claims Jason approved"
+        errors = validate_packet(packet)
+        self.assertIn("non-COMPLETE cannot carry approved human review", errors)
+        self.assertIn(
+            "AWAITING_HUMAN_REVIEW must remain pending",
+            errors,
+        )
+
+    def test_receipt_must_bind_reviewed_projection(self) -> None:
+        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet["projection"]["summary"] = "Tampered after review."
+        self.assertIn(
+            "human_gate_receipt must bind reviewed projection",
+            validate_packet(packet),
+        )
+
+    def test_complete_status_requires_done_states(self) -> None:
+        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet["projection"]["task_state"] = "REVIEWING"
+        packet["projection"]["run_state"] = "VERIFYING"
+        self.assertIn("status does not match task/run state", validate_packet(packet))
 
     def test_pending_review_cannot_carry_decision(self) -> None:
         packet = copy.deepcopy(self.fixtures["AWAITING_HUMAN_REVIEW"])

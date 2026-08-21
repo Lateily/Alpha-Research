@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import unittest
 from pathlib import Path
 from typing import Any, Mapping
@@ -32,6 +33,13 @@ BRIDGE_FIXTURE = (
     / "fixtures"
     / "h7-product-aios-bridge-phase3.v0.json"
 )
+BRIDGE_SCHEMA = (
+    ROOT
+    / "docs"
+    / "contracts"
+    / "product"
+    / "h7-product-aios-bridge-phase3.v0.schema.json"
+)
 
 STATUSES = {
     "COMPLETE",
@@ -58,6 +66,24 @@ TRACE_STAGES = [
     "human_review",
     "page_display",
 ]
+BRIDGE_TRACE_KEYS = {"schema", "trace_id", "resolved_trace_id_source", "stages"}
+TRACE_STAGE_KEYS = {
+    "stage",
+    "artifact_id",
+    "artifact_hash",
+    "source_contract",
+    "parent_artifact_hash",
+    "receipt_id",
+}
+TRACE_SOURCE = "packet.user_input.request_id"
+SOURCE_CONTRACTS = {
+    "product_request": "h7-task-ux.v0:user_input",
+    "ai_task_preview": "ai-task.v1",
+    "agent_output_packet": "h7-task-ux.v0:projection",
+    "human_review": "human-gate-receipt.v0-or-h7-task-ux.v0:human_review",
+    "page_display": "h7-product-aios-bridge-phase3.case.v0",
+}
+HASH_PREFIX = "sha256:"
 FORBIDDEN_RUNTIME_ACTIONS = {
     "provider_model_call",
     "agent_execution",
@@ -79,12 +105,50 @@ def _case_by_status(cases: list[Mapping[str, Any]]) -> dict[str, Mapping[str, An
     return {case["input_status"]: case for case in cases}
 
 
+def _artifact_hash(value: Any) -> str:
+    payload = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return HASH_PREFIX + hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _page_display_artifact(case: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "case_id": case["case_id"],
+        "input_status": case["input_status"],
+        "expected_tone": case["expected_tone"],
+        "must_show": case["must_show"],
+        "must_not_show_as_success": case["must_not_show_as_success"],
+        "display_guards": case["display_guards"],
+    }
+
+
+def _expected_stage_hash(packet: Mapping[str, Any], case: Mapping[str, Any], stage: str) -> str:
+    if stage == "product_request":
+        return _artifact_hash(packet["user_input"])
+    if stage == "ai_task_preview":
+        return _artifact_hash(packet["task_manifest"])
+    if stage == "agent_output_packet":
+        return _artifact_hash(packet["projection"])
+    if stage == "human_review":
+        return _artifact_hash(packet["human_gate_receipt"] or packet["human_review"])
+    if stage == "page_display":
+        return _artifact_hash(_page_display_artifact(case))
+    raise AssertionError(f"unexpected trace stage: {stage}")
+
+
 class H7ProductAiosBridgePhase3Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.phase1 = _load_json(PHASE1_FIXTURES)["fixtures"]
         cls.ui = _load_json(UI_FIXTURES)["view_model"]
         cls.bridge = _load_json(BRIDGE_FIXTURE)
+        cls.schema = _load_json(BRIDGE_SCHEMA)
+
+    def test_fixture_has_closed_world_schema(self) -> None:
+        self.assertEqual(self.schema["title"], "H7 Product-AIOS Bridge Phase 3 Fixtures v0")
+        self.assertFalse(self.schema["additionalProperties"])
+        self.assertEqual(self.schema["properties"]["page"]["additionalProperties"], False)
+        case_schema = self.schema["properties"]["acceptance_cases"]["items"]
+        self.assertFalse(case_schema["additionalProperties"])
 
     def test_page_contract_points_to_h7_contracts(self) -> None:
         page = self.bridge["page"]
@@ -133,6 +197,47 @@ class H7ProductAiosBridgePhase3Tests(unittest.TestCase):
                 self.assertIn("user_input", packet)
                 self.assertIn("projection", packet)
                 self.assertIn("human_review", packet)
+                trace = case["bridge_trace"]
+                self.assertEqual(set(trace), BRIDGE_TRACE_KEYS)
+                self.assertEqual(trace["schema"], "bridge-trace.v0")
+                self.assertEqual(trace["trace_id"], packet["user_input"]["request_id"])
+                self.assertEqual(trace["resolved_trace_id_source"], TRACE_SOURCE)
+                self.assertEqual(
+                    [stage["stage"] for stage in trace["stages"]],
+                    TRACE_STAGES,
+                )
+                previous_hash = None
+                for stage in trace["stages"]:
+                    self.assertEqual(set(stage), TRACE_STAGE_KEYS)
+                    stage_name = stage["stage"]
+                    self.assertEqual(stage["source_contract"], SOURCE_CONTRACTS[stage_name])
+                    self.assertEqual(
+                        stage["artifact_hash"],
+                        _expected_stage_hash(packet, case, stage_name),
+                    )
+                    self.assertEqual(stage["parent_artifact_hash"], previous_hash)
+                    previous_hash = stage["artifact_hash"]
+                human_stage = trace["stages"][3]
+                receipt = packet["human_gate_receipt"]
+                self.assertEqual(
+                    human_stage["receipt_id"],
+                    receipt["receipt_id"] if receipt else None,
+                )
+
+    def test_trace_rejects_packet_tampering(self) -> None:
+        case = copy_case = dict(_case_by_status(self.bridge["acceptance_cases"])["COMPLETE"])
+        packet = json.loads(json.dumps(self.phase1["COMPLETE"]))
+        packet["projection"]["summary"] = "Tampered after trace was built."
+        agent_stage = copy_case["bridge_trace"]["stages"][2]
+        self.assertNotEqual(
+            agent_stage["artifact_hash"],
+            _expected_stage_hash(packet, copy_case, "agent_output_packet"),
+        )
+
+    def test_trace_source_is_closed_world(self) -> None:
+        case = json.loads(json.dumps(self.bridge["acceptance_cases"][0]))
+        case["bridge_trace"]["resolved_trace_id_source"] = "chat_history"
+        self.assertNotEqual(case["bridge_trace"]["resolved_trace_id_source"], TRACE_SOURCE)
 
     def test_display_guards_cannot_grant_runtime_or_authority(self) -> None:
         for case in self.bridge["acceptance_cases"]:

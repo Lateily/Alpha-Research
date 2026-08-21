@@ -47,6 +47,7 @@
     ],
     "bridge_trace": {
       "trace_id_source": "packet.user_input.request_id",
+      "resolved_trace_id_source": "packet.user_input.request_id",
       "stage_order": [
         "product_request",
         "ai_task_preview",

@@ -13,6 +13,7 @@
     "task_manifest",
     "projection",
     "human_review",
+    "human_gate_receipt",
     "no_trade_flag"
   ],
   "properties": {
@@ -38,6 +39,12 @@
     },
     "projection": {"$ref": "#/$defs/projection"},
     "human_review": {"$ref": "#/$defs/human_review"},
+    "human_gate_receipt": {
+      "oneOf": [
+        {"$ref": "#/$defs/human_gate_receipt"},
+        {"type": "null"}
+      ]
+    },
     "no_trade_flag": {"const": true}
   },
   "allOf": [
@@ -70,6 +77,8 @@
         "properties": {
           "projection": {
             "properties": {
+              "task_state": {"const": "DONE"},
+              "run_state": {"const": "DONE"},
               "evidence": {"minItems": 1},
               "missing_evidence": {"maxItems": 0}
             }
@@ -79,6 +88,9 @@
               "state": {"const": "APPROVED"},
               "decision_ref": {"type": "string", "minLength": 1}
             }
+          },
+          "human_gate_receipt": {
+            "$ref": "#/$defs/human_gate_receipt"
           }
         }
       }
@@ -137,6 +149,9 @@
               "state": {"const": "PENDING"},
               "decision_ref": {"type": "null"}
             }
+          },
+          "human_gate_receipt": {
+            "type": "null"
           }
         }
       }
@@ -329,6 +344,35 @@
         "decision_ref": {"type": ["string", "null"], "minLength": 1},
         "final_merge_authority": {"const": "Junyan"},
         "final_merge_authorized": {"const": false}
+      }
+    },
+    "human_gate_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "receipt_id",
+        "trace_id",
+        "actor",
+        "decision",
+        "decision_ref",
+        "reviewed_artifact_id",
+        "reviewed_artifact_hash",
+        "decided_at"
+      ],
+      "properties": {
+        "schema": {"const": "human-gate-receipt.v0"},
+        "receipt_id": {"type": "string", "minLength": 1},
+        "trace_id": {"type": "string", "minLength": 1},
+        "actor": {"type": "string", "minLength": 1},
+        "decision": {"enum": ["APPROVED", "REVISE", "REJECTED"]},
+        "decision_ref": {"type": "string", "minLength": 1},
+        "reviewed_artifact_id": {"type": "string", "minLength": 1},
+        "reviewed_artifact_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "decided_at": {"$ref": "#/$defs/aware_timestamp"}
       }
     }
   }
