@@ -15,6 +15,13 @@
       "audit_strip"
     ],
     "responsive_targets": ["desktop", "mobile_390"],
+    "trace_stage_order": [
+      "product_request",
+      "ai_task_preview",
+      "agent_output_packet",
+      "human_review",
+      "page_display"
+    ],
     "forbidden_runtime_actions": [
       "provider_model_call",
       "agent_execution",
@@ -34,6 +41,20 @@
       "input_status": "COMPLETE",
       "expected_tone": "complete",
       "primary_user_action": "VIEW_EVIDENCE",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": true,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
       "must_show": ["evidence_table", "human_review_dock", "audit_strip", "decision_ref"],
       "must_not_show_as_success": false
     },
@@ -42,6 +63,20 @@
       "input_status": "PARTIAL",
       "expected_tone": "warning",
       "primary_user_action": "EDIT_REQUEST",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
       "must_show": ["gap_panel", "missing_evidence", "audit_strip"],
       "must_not_show_as_success": true
     },
@@ -50,6 +85,20 @@
       "input_status": "STALE",
       "expected_tone": "stale",
       "primary_user_action": "REQUEST_CONTEXT_REFRESH",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
       "must_show": ["data_cutoff", "freshness", "audit_strip"],
       "must_not_show_as_success": true
     },
@@ -58,6 +107,20 @@
       "input_status": "BLOCKED",
       "expected_tone": "blocked",
       "primary_user_action": "EDIT_REQUEST",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
       "must_show": ["blocking_reasons", "task_manifest_null", "audit_strip"],
       "must_not_show_as_success": true
     },
@@ -66,6 +129,20 @@
       "input_status": "ERROR",
       "expected_tone": "error",
       "primary_user_action": "EDIT_REQUEST",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
       "must_show": ["error_code", "audit_strip"],
       "must_not_show_as_success": true
     },
@@ -74,6 +151,20 @@
       "input_status": "AWAITING_HUMAN_REVIEW",
       "expected_tone": "review",
       "primary_user_action": "REQUEST_HUMAN_REVIEW",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
       "must_show": ["reviewer", "decision_ref_null", "audit_strip"],
       "must_not_show_as_success": true
     }

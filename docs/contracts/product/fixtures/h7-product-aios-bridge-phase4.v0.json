@@ -7,7 +7,7 @@
       {
         "id": "BridgeShell",
         "responsibility": "Page shell for the Product-AIOS Bridge workbench",
-        "required_props": ["viewModel", "packet", "responsiveMode"]
+        "required_props": ["viewModel", "packet", "bridgeTrace", "responsiveMode"]
       },
       {
         "id": "RequestHeader",
@@ -42,9 +42,32 @@
       {
         "id": "AuditStrip",
         "responsibility": "Show no-trade, untrusted-data, and final authority markers",
-        "required_props": ["noTradeFlag", "externalContentTrust", "finalMergeAuthority"]
+        "required_props": ["traceId", "noTradeFlag", "externalContentTrust", "finalMergeAuthority"]
       }
     ],
+    "bridge_trace": {
+      "trace_id_source": "packet.user_input.request_id",
+      "stage_order": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "must_bind_sources": [
+        "packet.user_input",
+        "packet.task_manifest",
+        "packet.projection",
+        "packet.human_review",
+        "view_model.state_views"
+      ],
+      "must_not_bind_sources": [
+        "chat_history",
+        "raw_model_text",
+        "browser_local_storage",
+        "unreviewed_external_instructions"
+      ]
+    },
     "allowed_actions": [
       "EDIT_REQUEST",
       "REQUEST_CONTEXT_REFRESH",
@@ -77,32 +100,32 @@
     {
       "status": "COMPLETE",
       "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "EvidenceTable", "HumanReviewDock", "AuditStrip"],
-      "must_show_fields": ["decision_ref", "no_trade_flag", "final_merge_authority"]
+      "must_show_fields": ["trace_id", "decision_ref", "no_trade_flag", "final_merge_authority"]
     },
     {
       "status": "PARTIAL",
       "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "EvidenceTable", "GapPanel", "AuditStrip"],
-      "must_show_fields": ["missing_evidence", "no_trade_flag", "external_content_trust"]
+      "must_show_fields": ["trace_id", "missing_evidence", "no_trade_flag", "external_content_trust"]
     },
     {
       "status": "STALE",
       "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "EvidenceTable", "GapPanel", "AuditStrip"],
-      "must_show_fields": ["data_cutoff", "freshness", "no_trade_flag"]
+      "must_show_fields": ["trace_id", "data_cutoff", "freshness", "no_trade_flag"]
     },
     {
       "status": "BLOCKED",
       "required_components": ["RequestHeader", "RunProjectionPanel", "GapPanel", "AuditStrip"],
-      "must_show_fields": ["blocking_reasons", "task_manifest_null", "no_trade_flag"]
+      "must_show_fields": ["trace_id", "blocking_reasons", "task_manifest_null", "no_trade_flag"]
     },
     {
       "status": "ERROR",
       "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "GapPanel", "AuditStrip"],
-      "must_show_fields": ["error_code", "no_trade_flag", "external_content_trust"]
+      "must_show_fields": ["trace_id", "error_code", "no_trade_flag", "external_content_trust"]
     },
     {
       "status": "AWAITING_HUMAN_REVIEW",
       "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "EvidenceTable", "HumanReviewDock", "AuditStrip"],
-      "must_show_fields": ["reviewer", "decision_ref_null", "final_merge_authority"]
+      "must_show_fields": ["trace_id", "reviewer", "decision_ref_null", "final_merge_authority"]
     }
   ],
   "responsive_qa": {

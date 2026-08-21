@@ -51,6 +51,13 @@ REQUIRED_REGIONS = {
     "human_review_dock",
     "audit_strip",
 }
+TRACE_STAGES = [
+    "product_request",
+    "ai_task_preview",
+    "agent_output_packet",
+    "human_review",
+    "page_display",
+]
 FORBIDDEN_RUNTIME_ACTIONS = {
     "provider_model_call",
     "agent_execution",
@@ -89,6 +96,9 @@ class H7ProductAiosBridgePhase3Tests(unittest.TestCase):
     def test_required_regions_are_exactly_declared(self) -> None:
         self.assertEqual(set(self.bridge["page"]["regions"]), REQUIRED_REGIONS)
 
+    def test_trace_stage_order_is_declared(self) -> None:
+        self.assertEqual(self.bridge["page"]["trace_stage_order"], TRACE_STAGES)
+
     def test_forbidden_runtime_actions_are_explicit(self) -> None:
         self.assertEqual(
             set(self.bridge["page"]["forbidden_runtime_actions"]),
@@ -106,10 +116,36 @@ class H7ProductAiosBridgePhase3Tests(unittest.TestCase):
             with self.subTest(status=status):
                 self.assertIs(cases[status]["must_not_show_as_success"], True)
                 self.assertNotEqual(cases[status]["expected_tone"], "complete")
+                self.assertIs(
+                    cases[status]["display_guards"]["can_show_complete"],
+                    False,
+                )
+
+    def test_every_case_binds_the_full_bridge_trace(self) -> None:
+        for case in self.bridge["acceptance_cases"]:
+            packet = self.phase1[case["input_status"]]
+            with self.subTest(status=case["input_status"]):
+                self.assertEqual(
+                    case["trace_id"],
+                    packet["user_input"]["request_id"],
+                )
+                self.assertEqual(case["required_trace_stages"], TRACE_STAGES)
+                self.assertIn("user_input", packet)
+                self.assertIn("projection", packet)
+                self.assertIn("human_review", packet)
+
+    def test_display_guards_cannot_grant_runtime_or_authority(self) -> None:
+        for case in self.bridge["acceptance_cases"]:
+            guards = case["display_guards"]
+            with self.subTest(status=case["input_status"]):
+                self.assertIs(guards["can_authorize_merge"], False)
+                self.assertIs(guards["can_promote_memory"], False)
+                self.assertIs(guards["must_preserve_untrusted_data"], True)
 
     def test_complete_case_still_keeps_junyan_authority_visible(self) -> None:
         complete = _case_by_status(self.bridge["acceptance_cases"])["COMPLETE"]
         self.assertIn("audit_strip", complete["must_show"])
+        self.assertIs(complete["display_guards"]["can_show_complete"], True)
         complete_packet = self.phase1["COMPLETE"]
         self.assertEqual(
             complete_packet["human_review"]["final_merge_authority"],

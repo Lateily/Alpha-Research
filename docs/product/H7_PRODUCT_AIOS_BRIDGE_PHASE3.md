@@ -74,7 +74,27 @@ Each acceptance case binds one H7 packet status to one visible user outcome:
 | `projection_failed` | `ERROR` | Error code is visible; no success fallback |
 | `needs_review` | `AWAITING_HUMAN_REVIEW` | Reviewer and missing decision ref are visible |
 
-## 6. Responsive Acceptance
+## 6. Bridge Trace Contract
+
+Every case must render one continuous trace:
+
+`product_request -> ai_task_preview -> agent_output_packet -> human_review -> page_display`
+
+The trace id comes from `packet.user_input.request_id`. The UI may display a
+short copyable id, but it must not generate a new id from chat history, raw
+model text, browser local storage, or unreviewed external instructions.
+
+Trace guards:
+
+- `COMPLETE` may show a complete tone only when the H7 packet is complete and
+  human review has a decision ref.
+- `PARTIAL`, `STALE`, `BLOCKED`, `ERROR`, and `AWAITING_HUMAN_REVIEW` must keep
+  `can_show_complete=false`.
+- No case can authorize final merge.
+- No case can promote Memory.
+- Every case must preserve `UNTRUSTED_DATA` and `no_trade_flag=true`.
+
+## 7. Responsive Acceptance
 
 Desktop view:
 
@@ -91,7 +111,7 @@ Desktop view:
 - primary action stays below the current state, not above the evidence;
 - audit strip remains visible before any Human Review action.
 
-## 7. Phase 3 Done
+## 8. Phase 3 Done
 
 Phase 3 is done when:
 
@@ -102,5 +122,7 @@ Phase 3 is done when:
 5. Responsive acceptance is stated for desktop and 390px mobile.
 6. Offline tests prove the fixture cannot silently turn partial/stale/blocked
    cases into success.
+7. Offline tests prove every case preserves the same Product-AIOS trace id and
+   cannot bind trace data from chat history or raw model output.
 
 Not a trading instruction; AI produces evidence only, human decides.

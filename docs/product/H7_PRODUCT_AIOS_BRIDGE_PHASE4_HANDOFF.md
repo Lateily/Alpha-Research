@@ -21,17 +21,33 @@ Context, Policy, Scheduler, Executor, or permissions.
 
 | Component | Responsibility | Required props |
 |---|---|---|
-| `BridgeShell` | Page shell for `/aios/product-bridge` | `viewModel`, `packet`, `responsiveMode` |
+| `BridgeShell` | Page shell for `/aios/product-bridge` | `viewModel`, `packet`, `bridgeTrace`, `responsiveMode` |
 | `RequestHeader` | Workflow, owner, reviewer, issue, generated time | `workflowType`, `owner`, `reviewer`, `sourceIssue`, `generatedAt` |
 | `TaskPreviewPanel` | Canonical `ai-task.v1` preview | `taskId`, `riskLevel`, `networkPolicy`, `budget`, `fileScope`, `forbiddenScope` |
 | `RunProjectionPanel` | H7 status, task state, run state, freshness | `status`, `tone`, `taskState`, `runState`, `freshness` |
 | `EvidenceTable` | Cited evidence rows | `evidence`, `missingEvidence`, `freshness` |
 | `GapPanel` | Missing evidence, blocking reasons, error code | `status`, `missingEvidence`, `blockingReasons`, `errorCode` |
 | `HumanReviewDock` | Human review state and decision ref | `reviewer`, `state`, `decisionRef`, `finalMergeAuthority` |
-| `AuditStrip` | Safety and authority markers | `noTradeFlag`, `externalContentTrust`, `finalMergeAuthority` |
+| `AuditStrip` | Safety and authority markers | `traceId`, `noTradeFlag`, `externalContentTrust`, `finalMergeAuthority` |
 
 Components must receive already-validated contract data. They must not parse raw
 model text, infer approval from free text, or call AIOS services directly.
+
+`BridgeShell` must also receive `bridgeTrace`. The trace is derived only from
+the validated H7 packet and UI view model:
+
+- `packet.user_input`
+- `packet.task_manifest`
+- `packet.projection`
+- `packet.human_review`
+- `view_model.state_views`
+
+Forbidden trace sources:
+
+- chat history;
+- raw model text;
+- browser local storage;
+- unreviewed external instructions.
 
 ## 3. Action Rules
 
@@ -91,7 +107,8 @@ Rules:
    `AWAITING_HUMAN_REVIEW` visibly non-complete.
 6. Keep `no_trade_flag`, `UNTRUSTED_DATA`, and `Junyan final merge authority`
    visible in every state.
-7. Validate desktop and 390px mobile layout. Long owner/reviewer/status text
+7. Keep `trace_id` visible in every state, including error and blocked states.
+8. Validate desktop and 390px mobile layout. Long owner/reviewer/status text
    must not overflow.
 
 Deliverables:
@@ -110,5 +127,8 @@ Phase 4 is done when:
 3. Better handoff prompt exists.
 4. Fixture proves all six states map to components and required fields.
 5. Offline tests prove no forbidden action or runtime write path appears.
+6. Offline tests prove trace props are present and cannot be sourced from
+   chat history, raw model text, local storage, or unreviewed external
+   instructions.
 
 Not a trading instruction; AI produces evidence only, human decides.

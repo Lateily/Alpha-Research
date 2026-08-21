@@ -69,6 +69,26 @@ RUNTIME_CONNECTIONS = {
     "memory_write",
     "production_write",
 }
+TRACE_STAGES = [
+    "product_request",
+    "ai_task_preview",
+    "agent_output_packet",
+    "human_review",
+    "page_display",
+]
+TRACE_BIND_SOURCES = {
+    "packet.user_input",
+    "packet.task_manifest",
+    "packet.projection",
+    "packet.human_review",
+    "view_model.state_views",
+}
+FORBIDDEN_TRACE_SOURCES = {
+    "chat_history",
+    "raw_model_text",
+    "browser_local_storage",
+    "unreviewed_external_instructions",
+}
 
 
 def _load_json(path: Path) -> Any:
@@ -99,6 +119,24 @@ class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
                 self.assertTrue(component["responsibility"])
                 self.assertTrue(component["required_props"])
 
+    def test_bridge_shell_and_audit_strip_receive_trace_props(self) -> None:
+        components = {
+            item["id"]: set(item["required_props"])
+            for item in self.fixture["page"]["components"]
+        }
+        self.assertIn("bridgeTrace", components["BridgeShell"])
+        self.assertIn("traceId", components["AuditStrip"])
+
+    def test_bridge_trace_is_bound_to_contract_sources_only(self) -> None:
+        trace = self.fixture["page"]["bridge_trace"]
+        self.assertEqual(trace["trace_id_source"], "packet.user_input.request_id")
+        self.assertEqual(trace["stage_order"], TRACE_STAGES)
+        self.assertEqual(set(trace["must_bind_sources"]), TRACE_BIND_SOURCES)
+        self.assertEqual(set(trace["must_not_bind_sources"]), FORBIDDEN_TRACE_SOURCES)
+        self.assertTrue(
+            set(trace["must_bind_sources"]).isdisjoint(trace["must_not_bind_sources"])
+        )
+
     def test_actions_are_allowlisted_and_forbidden_actions_are_visible(self) -> None:
         page = self.fixture["page"]
         self.assertEqual(set(page["allowed_actions"]), ALLOWED_ACTIONS)
@@ -119,6 +157,7 @@ class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
         for item in self.fixture["state_component_map"]:
             with self.subTest(status=item["status"]):
                 self.assertIn("AuditStrip", item["required_components"])
+                self.assertIn("trace_id", item["must_show_fields"])
 
     def test_non_complete_states_keep_reason_fields_visible(self) -> None:
         required = {
