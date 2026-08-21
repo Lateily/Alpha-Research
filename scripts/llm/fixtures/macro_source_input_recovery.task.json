@@ -1,0 +1,70 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "MACRO-SOURCE-INPUT-RECOVERY-001",
+  "source_issue": null,
+  "architecture_block": ["Macro OS", "M0-B source collection", "M1-A calibration inputs"],
+  "objective": "Restore the five existing FRED market-series inputs when no FRED API key is configured by using the provider's credential-free CSV export, preserving source identity, point-in-time storage, explicit degradation, and CALIBRATING-only downstream authority.",
+  "non_goals": [
+    "Do not install credentials, print secrets, or weaken response redaction",
+    "Do not claim that BLS, BEA, Census, China NBS, PBOC, consensus, or news inputs are repaired",
+    "Do not promote FRED mirror evidence to official E1 actuals",
+    "Do not change M1-A factor formulas, thresholds, portfolio logic, or formal blocking authority",
+    "Do not modify or run the production nightly chain or write under /Users/years/ar-live"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Macro M0-B through M1-C merged", "FRED source remains E2 mirror evidence"],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/contracts/macro/M0B_DATA_PIPELINE.md",
+    "docs/research/macro/MACRO_OS.md"
+  ],
+  "file_scope": [
+    "experiments/macro_os/collectors.py",
+    "experiments/macro_os/specs/source_registry.v1.json",
+    "tests/test_macro_m0b_offline.py",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_no_network_guard.py",
+    "docs/contracts/macro/M0B_DATA_PIPELINE.md",
+    "scripts/llm/fixtures/macro_source_input_recovery.task.json"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/run_nightly.py",
+    "experiments/macro_os/m1a.py",
+    "experiments/macro_os/m1b.py",
+    "experiments/macro_os/m1c.py",
+    "experiments/macro_os/specs/state_rules.v1.json",
+    "public/data/v2",
+    "data_history"
+  ],
+  "input_contracts": [
+    "ar.macro.source_registry v1",
+    "FRED credentialed observations JSON",
+    "FRED credential-free fredgraph CSV"
+  ],
+  "output_artifacts": [
+    "append-only FRED observations in a temporary MacroHistoryStore",
+    "ar.macro.source_health with five restored FRED rows",
+    "real-source sandbox acceptance receipt"
+  ],
+  "acceptance_tests": [
+    "AR_OFFLINE=1 python3 -m unittest tests.test_macro_m0b_offline",
+    "AR_OFFLINE=1 python3 tests/test_no_network_guard.py",
+    "AR_OFFLINE=1 python3 scripts/governance_mutation_gate.py",
+    "Run an allowlisted FRED-only collection into /private/tmp without FRED_API_KEY and verify five current rows, SQLite integrity, and zero secret bytes",
+    "Run M1-A against the temporary store and verify liquidity/risk evidence appears while mode remains CALIBRATING and formal_regime remains null",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "ALLOWLIST",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": [
+    "INDEPENDENT_PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_PRODUCTION_SYNC_AND_CANARY_APPROVAL"
+  ],
+  "created_at": "2026-08-20T07:20:00+00:00"
+}

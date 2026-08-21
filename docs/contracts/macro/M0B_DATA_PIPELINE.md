@@ -7,7 +7,7 @@
 M0-A 规定了谁是官方来源、谁只是镜像,但没有证明一次具体抓取真的来自那个上游,也没有保存修订前的历史版本。M0-B 第一批增加四件实物:
 
 1. `storage.py`:SQLite 历史仓,脱敏后响应快照、观测值、抓取尝试和来源身份全部只追加。
-2. `collectors.py`:BLS、BEA、Cboe 与 FRED/ALFRED 适配器。
+2. `collectors.py`:BLS、BEA、Cboe 与 FRED 适配器。
 3. 来源绑定:provider、`independence_group`、E 级和角色只从经 M0-A 校验的注册表读取;采集器无权自报。
 4. `source_health.json`:每项数据同时报告观测日期、最近检查时间、两种新鲜度、快照数、vintage 数和修订期数。
 
@@ -30,7 +30,7 @@ M0-A 规定了谁是官方来源、谁只是镜像,但没有证明一次具体�
 
 完整历史文件每次都保存原始快照和抓取尝试;规范观测只在首次出现或数值/属性发生变化时追加。这避免 Cboe/FRED 每天返回完整历史时,把数千条未变记录重复投影进 SQLite。
 
-本批的版本历史从每个来源首次成功抓取时开始。它会保留此后看到的修订,但未批量回灌 ALFRED/BLS/BEA 在平台上线前的全部发布时点;源注册表的 `vintage_support` 表示上游能力,不表示本地历史已经回填完整。
+本批的版本历史从每个来源首次成功抓取时开始。它会保留此后看到的修订,但未批量回灌 ALFRED/BLS/BEA 在平台上线前的全部发布时点;源注册表的 `vintage_support` 表示当前适配器实际保存的能力,不表示上游机构理论能力或本地历史已经回填完整。FRED 的无密钥 CSV 是当前值导出,因此注册表明确标为 `LIMITED`,不声称拥有 ALFRED 历史 vintage。
 
 ## 3. 首批采集覆盖
 
@@ -39,7 +39,7 @@ M0-A 规定了谁是官方来源、谁只是镜像,但没有证明一次具体�
 | BLS Public Data API | 非农、失业率、时薪、CPI、PPI、JOLTS | 官方 E1 | 可匿名;`BLS_API_KEY` 可选 |
 | BEA Public API | 实际 GDP、核心 PCE 价格指数 | 官方 E1 | `BEA_API_KEY` 必需 |
 | Cboe VIX history | VIX 日收盘 | 官方 E1 | 无 |
-| FRED/ALFRED | 2Y、10Y、10Y 实际利率、IG/HY OAS | E2 镜像/市场序列,不得冒充 BLS/财政部原发布 | `FRED_API_KEY` 必需 |
+| FRED | 2Y、10Y、10Y 实际利率、IG/HY OAS | E2 镜像/市场序列,不得冒充 BLS/财政部原发布 | key 可选;有 key 走 observations JSON,无 key 走官方 graph CSV |
 
 参考实现只使用来源机构文档:[BLS API v2](https://www.bls.gov/developers/api_signature_v2.htm)、[BEA API](https://apps.bea.gov/api/signup/)、[FRED observations](https://fred.stlouisfed.org/docs/api/fred/series_observations.html)、[Cboe VIX](https://www.cboe.com/tradable_products/vix/vix_historical_data/)。
 
@@ -80,14 +80,17 @@ Census key 同样进入这条字节级脱敏链。国家统计局、人民银行
 
 2026-08-07 真实源冒烟结果:Cboe 官方 CSV 成功入库 9,245 个历史观测,同一正文第二次检查时观测行数保持 9,245、抓取尝试增加为 2;BLS 官方 API 在当前出口返回 HTTP 403,按 `SOURCE_DOWN` 留痕。BEA/FRED 密钥源本轮未做在线冒烟,缺密钥路径已离线验证为 `DATA_BLOCKED`。
 
+2026-08-20 生产健康表复核显示 15 项中仅 Cboe VIX 为 `OK`:BLS 六项仍被当前出口的官方 CDN 以 HTTP 403 拒绝,BEA 两项与 Census 一项缺各自凭证,FRED 五项则只是因为旧适配器把 key 当成必需。FRED 已增加同一提供方的无密钥 graph CSV 路径;它仍绑定 `fred_alfred` 的 E2 身份,只恢复市场序列,不替代 BLS/BEA/Census 的 E1 实际值。BEA、Census、BLS、国家统计局、人民银行、共识与新闻输入在各自完成凭证或官方发布页验收前继续显式降级,不得因 FRED 恢复而宣称 Macro 输入完整。
+
 ## 5. 运行
 
-只跑无需密钥的首批官方源:
+只跑无需密钥的首批来源(Cboe 为官方 E1;FRED 为 E2 市场序列):
 
 ```bash
 python3 experiments/macro_os/collectors.py \
   --source bls_public_api \
-  --source cboe_vix
+  --source cboe_vix \
+  --source fred_alfred
 ```
 
 指定本地数据库和健康输出:
@@ -157,6 +160,8 @@ python3 experiments/macro_os/official_releases.py --request nbs_cpi
 这不是说明文字,而是后续消费者必须检查的机器字段。M0-B3 即使部署,也只允许面板标注和风险预算上下文;当前没有消费者可以依据本文件改变晋级、下单或持仓状态。
 
 ## 7. 后续工程
+
+2026-08-20 非生产沙箱验收:在未设置 `FRED_API_KEY` 的进程里,5/5 个 FRED 请求成功,写入 5 个脱敏快照与 9,542 条规范观测;历史仓完整性复验为零问题,公开 locator、响应 URL 与错误字段中零 `api_key`。M1-A 读取同一临时仓后,GLOBAL_US 的 LIQUIDITY 轴由 2Y/10Y/10Y 实际利率三项得到 `CURRENT`,RISK 轴由 IG/HY OAS 得到 `PARTIAL`;总状态仍为 `DATA_BLOCKED/CALIBRATING`,`formal_regime=null`,交易动作与正式阻断继续不可能。其余官方实际值、共识与中国宏观输入没有因本次验收被补绿。
 
 1. M0-B3 部署验收:合并后安全同步运行目录,安装 launchd,完成真实基线轮与到期轮;验收前不得标生产在线。
 2. M1-A:代码已交付未接线;在校准规则下生成 GLOBAL/US 与 CHINA 两套 `macro_state` 及 MRG 候选态。G2/G3 的市场特征生产者仍是显式工程债,缺失时保持 `DATA_BLOCKED`。

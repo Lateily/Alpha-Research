@@ -1,8 +1,8 @@
 {
   "schema": "ar.macro.source_registry",
   "schema_version": "1.0",
-  "policy_version": "macro-m0b2/1.0",
-  "effective_from": "20260807",
+  "policy_version": "macro-m0b2/1.1",
+  "effective_from": "20260820",
   "status": "APPROVED_SPEC",
   "coverage_policy": {
     "market_series": {
@@ -57,11 +57,11 @@
       "region": "GLOBAL_US",
       "official": false,
       "evidence_level": "E2",
-      "roles": ["VINTAGE_MIRROR", "MARKET_SERIES"],
+      "roles": ["MARKET_SERIES"],
       "transport": "API",
       "status": "AVAILABLE_EXISTING",
-      "vintage_support": "FULL",
-      "base_url": "https://api.stlouisfed.org/fred",
+      "vintage_support": "LIMITED",
+      "base_url": "https://fred.stlouisfed.org",
       "series": [
         "us_treasury_curve",
         "real_yields",
@@ -275,5 +275,5 @@
       ]
     }
   ],
-  "registry_hash": "6a62c4208ea3551c3df401b1b2a44feba4b1fd83051b662133e8377af2ccb91a"
+  "registry_hash": "9d22125c82f0c76f0a4cabc22889fd8cccc7b14b93b2943a3716507d4e7082a1"
 }

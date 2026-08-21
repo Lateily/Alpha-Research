@@ -171,6 +171,54 @@ class MutationCase:
 
 MUTATIONS: tuple[MutationCase, ...] = (
     MutationCase(
+        mutation_id="MACRO_M0B_FRED_KEYLESS_ROUTE",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '        # governance-mutation: MACRO_M0B_FRED_KEYLESS_ROUTE\n'
+            "        if key:"
+        ),
+        after=(
+            '        # governance-mutation: MACRO_M0B_FRED_KEYLESS_ROUTE\n'
+            "        if True:"
+        ),
+        expected_failure_marker="test_fred_without_credentials_uses_e2_official_csv_export",
+        rationale="A missing FRED key must select the credential-free official CSV transport.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_FRED_CSV_SERIES_BINDING",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '    # governance-mutation: MACRO_M0B_FRED_CSV_SERIES_BINDING\n'
+            "    if reader.fieldnames != expected_header:"
+        ),
+        after=(
+            '    # governance-mutation: MACRO_M0B_FRED_CSV_SERIES_BINDING\n'
+            "    if False:"
+        ),
+        expected_failure_marker="test_fred_csv_header_is_bound_to_requested_series",
+        rationale="A FRED CSV response must be bound to the exact requested native series.",
+    ),
+    MutationCase(
+        mutation_id="MACRO_M0B_TIMEOUT_TRANSLATION",
+        component="Macro M0-B collection",
+        source_path="experiments/macro_os/collectors.py",
+        test_script="tests/test_macro_m0b_offline.py",
+        before=(
+            '            # governance-mutation: MACRO_M0B_TIMEOUT_TRANSLATION\n'
+            '            raise CollectionError("SOURCE_DOWN", "TIMEOUT", "source request timed out") from exc'
+        ),
+        after=(
+            '            # governance-mutation: MACRO_M0B_TIMEOUT_TRANSLATION\n'
+            '            raise CollectionError("DATA_INVALID", "TIMEOUT", "source request timed out") from exc'
+        ),
+        expected_failure_marker="test_socket_timeout_is_reported_as_source_down",
+        rationale="Transport timeouts must become structured SOURCE_DOWN evidence instead of escaping.",
+    ),
+    MutationCase(
         mutation_id="MACRO_M0B3_RULES_HASH",
         component="Macro M0-B3",
         source_path="experiments/macro_os/m0b3.py",
