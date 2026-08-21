@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-08-20T09:03:42.588800",
+  "fetched_at": "2026-08-21T02:25:30.907661",
   "northbound": {
     "latest_net_flow": null,
     "5d_cumulative": 0.0,
     "20d_cumulative": 0.0,
     "trend": "outflow",
-    "updated": "2026-08-20"
+    "updated": "2026-08-21"
   },
   "southbound": {
-    "latest_net_flow": -106.2078,
-    "5d_cumulative": 88.0874,
-    "20d_cumulative": -79.4212,
-    "trend": "inflow",
-    "updated": "2026-08-20"
+    "latest_net_flow": -104.1207,
+    "5d_cumulative": -52.7027,
+    "20d_cumulative": -141.2807,
+    "trend": "outflow",
+    "updated": "2026-08-21"
   },
   "dragon_tiger": [
     {
@@ -39,7 +39,7 @@
       "code": "000505",
       "name": "京粮控股",
       "date": "",
-      "reason": "日涨幅偏离值达到7%的前5只证券",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -49,17 +49,7 @@
       "code": "000505",
       "name": "京粮控股",
       "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
-      "buy_amt": null,
-      "sell_amt": null,
-      "net_amt": null,
-      "focus": false
-    },
-    {
-      "code": "000523",
-      "name": "红棉股份",
-      "date": "",
-      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
+      "reason": "日涨幅偏离值达到7%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -70,6 +60,16 @@
       "name": "红棉股份",
       "date": "",
       "reason": "日振幅值达到15%的前5只证券",
+      "buy_amt": null,
+      "sell_amt": null,
+      "net_amt": null,
+      "focus": false
+    },
+    {
+      "code": "000523",
+      "name": "红棉股份",
+      "date": "",
+      "reason": "连续三个交易日内，涨幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -179,7 +179,7 @@
       "code": "000802",
       "name": "北京文化",
       "date": "",
-      "reason": "日换手率达到20%的前5只证券",
+      "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -189,7 +189,7 @@
       "code": "000802",
       "name": "北京文化",
       "date": "",
-      "reason": "连续三个交易日内，跌幅偏离值累计达到20%的证券",
+      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -369,7 +369,7 @@
       "code": "002172",
       "name": "澳洋健康",
       "date": "",
-      "reason": "日振幅值达到15%的前5只证券",
+      "reason": "日换手率达到20%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
@@ -379,7 +379,7 @@
       "code": "002172",
       "name": "澳洋健康",
       "date": "",
-      "reason": "日换手率达到20%的前5只证券",
+      "reason": "日振幅值达到15%的前5只证券",
       "buy_amt": null,
       "sell_amt": null,
       "net_amt": null,
