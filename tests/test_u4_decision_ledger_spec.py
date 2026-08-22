@@ -119,6 +119,26 @@ def _errors(value: Any, schema: Mapping[str, Any], path: str = "$") -> list[str]
     return errors
 
 
+def _contract_errors(value: Mapping[str, Any]) -> list[str]:
+    """Validate JSON shape plus cross-field chronology the schema cannot express."""
+    errors = _errors(value, SCHEMA)
+    try:
+        registered = datetime.fromisoformat(
+            str(value["registered_at"]).replace("Z", "+00:00")
+        )
+        decided = datetime.fromisoformat(
+            str(value["human_decision"]["decided_at"]).replace("Z", "+00:00")
+        )
+        if registered.tzinfo is None or decided.tzinfo is None:
+            raise ValueError("timezone missing")
+        if registered < decided:
+            errors.append("$.registered_at: durable registration predates claimed decision")
+    except (KeyError, TypeError, ValueError):
+        if not errors:
+            errors.append("$: decision chronology is not verifiable")
+    return errors
+
+
 def _event(decision: str = "SELECT") -> dict[str, Any]:
     missing = ["E1_EVENT_EVIDENCE"] if decision == "DATA_BLOCKED" else []
     question = "Can evidence support a falsifiable semiconductor thesis?" if decision == "SELECT" else None
@@ -139,6 +159,9 @@ def _event(decision: str = "SELECT") -> dict[str, Any]:
         "decision_id": "u4d_" + "b" * 32,
         "decision_revision": 1,
         "supersedes_decision_id": None,
+        "method_version": "WORKFLOW_DEBUG_V0",
+        "registered_at": "2026-08-22T09:31:00+08:00",
+        "registration_source": "R015_EVENT_LEDGER_TS",
         "candidate": {
             "ts_code": "688001.SH",
             "display_name": "Fixture Semiconductor",
@@ -179,10 +202,10 @@ def _event(decision: str = "SELECT") -> dict[str, Any]:
 
 class U4DecisionLedgerSpecTests(unittest.TestCase):
     def assertValid(self, value: Mapping[str, Any]) -> None:
-        self.assertEqual(_errors(value, SCHEMA), [])
+        self.assertEqual(_contract_errors(value), [])
 
     def assertInvalid(self, value: Mapping[str, Any], fragment: str) -> None:
-        errors = _errors(value, SCHEMA)
+        errors = _contract_errors(value)
         self.assertTrue(any(fragment in error for error in errors), errors)
 
     def test_all_five_decisions_are_closed_world_and_valid(self) -> None:
@@ -233,6 +256,22 @@ class U4DecisionLedgerSpecTests(unittest.TestCase):
         row["human_decision"]["decided_at"] = "20260822"
         self.assertInvalid(row, "invalid date-time")
 
+    def test_durable_registration_time_is_not_self_reported_or_backdated(self) -> None:
+        row = _event()
+        row["registration_source"] = "CALLER_SUPPLIED"
+        self.assertInvalid(row, "expected const")
+        row = _event()
+        row["registered_at"] = "2026-08-22T09:29:59+08:00"
+        self.assertInvalid(row, "durable registration predates claimed decision")
+
+    def test_method_version_is_required_and_closed_to_versioned_tokens(self) -> None:
+        row = _event()
+        del row["method_version"]
+        self.assertInvalid(row, "missing method_version")
+        row = _event()
+        row["method_version"] = "unversioned draft"
+        self.assertInvalid(row, "pattern mismatch")
+
     def test_revisions_and_hash_chain_are_append_only_shaped(self) -> None:
         row = _event("DEFER")
         row["decision_revision"] = 2
@@ -259,6 +298,11 @@ class U4DecisionLedgerSpecTests(unittest.TestCase):
         self.assertIn("specification only", text)
         self.assertIn("does not add a writer", text)
         self.assertIn("Historical U4 choices are not reconstructed", text)
+        self.assertEqual(
+            SCHEMA["x-ar-packet-closure"]["selected_count_allowed"],
+            [0, 3, 4, 5],
+        )
+        self.assertIn("prospective anchor", text)
 
 
 if __name__ == "__main__":

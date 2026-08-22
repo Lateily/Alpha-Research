@@ -15,6 +15,9 @@
     "decision_id",
     "decision_revision",
     "supersedes_decision_id",
+    "method_version",
+    "registered_at",
+    "registration_source",
     "candidate",
     "source",
     "decision",
@@ -46,6 +49,17 @@
         {"type": "string", "pattern": "^u4d_[0-9a-f]{32}$"}
       ]
     },
+    "method_version": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$"
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time",
+      "minLength": 1,
+      "description": "Durable append timestamp stamped by the writer. It must not precede human_decision.decided_at."
+    },
+    "registration_source": {"const": "R015_EVENT_LEDGER_TS"},
     "candidate": {
       "type": "object",
       "additionalProperties": false,
@@ -139,6 +153,11 @@
       }
     },
     "record_hash": {"$ref": "#/$defs/sha256"}
+  },
+  "x-ar-packet-closure": {
+    "selected_count_allowed": [0, 3, 4, 5],
+    "zero_selection_outcome": "NO_TRADE_NO_QUEUE",
+    "selected_outcome": "PROJECT_EXISTING_U4_REVIEW_RECEIPT"
   },
   "allOf": [
     {

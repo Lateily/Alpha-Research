@@ -37,6 +37,11 @@ closed-world reason code and a free-text note.
   `claim_allowed=false`, and `no_trade_flag=true` are constants.
 - `SELECT` authorizes deep research only. It cannot register, size, submit, or
   recommend an order.
+- `human_decision.decided_at` is a claimed decision time. It is not the
+  prospective anchor.
+- `registered_at` is stamped from the outer R-015 event-ledger timestamp and
+  must be no earlier than `human_decision.decided_at`. Downstream prospective
+  scoring uses `registered_at`, never the claimed time by itself.
 
 ## Evidence Binding
 
@@ -44,9 +49,11 @@ Each event binds one candidate to the exact same-day chain:
 
 `U2 bundle -> U2 candidate row -> U3 six-dimension battery -> U4 review packet`
 
-The event also records `as_of`, `run_id`, industry cohort, and causal-cluster
-identity. A future implementation must reject a cross-date, cross-run,
-cross-packet, or differently hashed substitution.
+The event also records `as_of`, `run_id`, industry cohort, causal-cluster
+identity, and `method_version`. Method version is mandatory so workflow-debug
+observations and every later frozen method version can be counted separately.
+A future implementation must reject a cross-date, cross-run, cross-packet, or
+differently hashed substitution.
 
 ## Append-Only Ledger Semantics
 
@@ -57,6 +64,9 @@ The future writer and verifier must implement all of these rules together:
 2. Append exactly one event at the next `sequence` and bind its
    `previous_event_hash` to the prior event's `record_hash`.
 3. Compute `record_hash = sha256(canonical_json(event without record_hash))`.
+   Canonical JSON must reuse R-015's key-sorted UTF-8 serialization with
+   `separators=(",", ":")`, non-finite values refused, and its existing float
+   normalization. A second canonicalization is not permitted.
 4. Require globally unique `decision_id` and a contiguous sequence.
 5. Use `(u4_packet_hash, ts_code)` as the decision subject. Revision 1 has no
    predecessor. Revision N must be N-1 plus one and must name the exact prior
@@ -81,7 +91,8 @@ formulas without introducing a second interpretation:
 
 ```text
 decision_id = "u4d_" + sha256(canonical_json({
-  u4_packet_hash, ts_code, decision_revision, decision, decided_at
+  u4_packet_hash, ts_code, method_version, decision_revision, decision,
+  decided_at, registered_at
 }))[0:32]
 
 record_hash = "sha256:" + sha256(canonical_json(event_without_record_hash))
@@ -97,6 +108,8 @@ implementation PR must therefore emit a packet-closure receipt containing:
 - exact `u4_packet_hash` and reviewed-candidate set hash;
 - current decision-id set hash;
 - counts by all five decisions;
+- `selected_count` exactly in `{0, 3, 4, 5}`. Zero means `NO_TRADE` and no U4
+  queue; three to five may project the existing packet-bound U4 review receipt;
 - zero missing and zero extra candidate IDs;
 - ledger tail sequence/hash;
 - `claim_allowed=false`, `production_authority=false`, and

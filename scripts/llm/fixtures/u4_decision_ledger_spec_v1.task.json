@@ -3,7 +3,7 @@
   "task_id": "U4-DECISION-LEDGER-SPEC-001",
   "source_issue": null,
   "architecture_block": ["research-framework", "u4-human-decision-ledger"],
-  "objective": "Freeze a machine-readable, append-only U4 decision event contract that preserves SELECT, REJECT, DEFER, NO_TRADE, and DATA_BLOCKED decisions, including rejected samples and missing evidence, while keeping Junyan as the sole U4 selection authority.",
+  "objective": "Freeze a machine-readable, append-only U4 decision event contract that preserves SELECT, REJECT, DEFER, NO_TRADE, and DATA_BLOCKED decisions, including rejected samples, missing evidence, method version, and a durable registration boundary, while keeping Junyan as the sole U4 selection authority.",
   "non_goals": [
     "Do not implement a ledger writer, replay engine, migration, API, CLI, or production wiring",
     "Do not select U4 candidates or create trading instructions",
@@ -37,7 +37,9 @@
   "input_contracts": [
     "U2 immutable candidate bundle hash",
     "U4 human review evidence",
-    "Junyan decision authority"
+    "Junyan decision authority",
+    "R-015 durable event timestamp",
+    "versioned research method identity"
   ],
   "output_artifacts": [
     "ar.u4_decision_event.v1 JSON Schema",
