@@ -1,0 +1,6 @@
+interface:
+  display_name: "AR Divergent Reasoning"
+  short_description: "Challenge echoing with evidence-backed alternatives"
+  default_prompt: "Use $ar-divergent-reasoning to test this conclusion against distinct alternative explanations."
+policy:
+  allow_implicit_invocation: true
