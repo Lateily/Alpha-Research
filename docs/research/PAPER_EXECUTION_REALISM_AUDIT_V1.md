@@ -12,7 +12,7 @@ promotion claims.
 
 The inherited daily-bar engine already prevented registration-day fills,
 penalized adverse gaps, and resolved later same-bar stop/target ambiguity
-conservatively. It still had six load-bearing realism gaps:
+conservatively. It still had seven load-bearing realism gaps:
 
 1. It scanned exits on the fill date, allowing an A-share cash-equity purchase
    and sale on the same day.
@@ -23,6 +23,9 @@ conservatively. It still had six load-bearing realism gaps:
 5. It could chase any gap above the registered entry trigger.
 6. Cash and P&L were gross of commission, transfer fee, stamp duty, and
    slippage.
+7. A split, dividend, or other corporate action could break the raw-price
+   chain while leaving the registered nominal entry, stop, and target
+   unchanged. The stale stop could then manufacture a large paper loss.
 
 Any one of these can make a paper result look better or more executable than
 the evidence permits. They were blockers for the first cycle batch.
@@ -44,6 +47,10 @@ The fill engine then enforces:
 - order size at or below 1% of settled daily share volume;
 - no fill above the prospectively registered SMC entry-zone high;
 - adverse entry/stop slippage and a declared cost proxy;
+- chain continuity between each prior close and the next bar's previous close;
+  a discontinuity records `CORPORATE_ACTION_BREAK`, freezes the paper order,
+  blocks official NAV output, and requires manual re-registration instead of
+  manufacturing a fill, exit, or mark-to-market loss;
 - STAR quantity minimum of 200 shares, with one-share increments thereafter;
 - later same-bar stop/target ambiguity resolves to stop.
 
@@ -53,6 +60,8 @@ slippage. Stamp duty and exchange/transfer references are based on the current
 official notices from the tax authority and the Shanghai/Shenzhen exchanges.
 The broker commission and slippage assumptions are not bound to Junyan's actual
 broker statement and therefore remain `PROXY_UNVERIFIED`.
+Transaction-side tokens are exact (`buy` or `sell`); an unknown or differently
+cased token is rejected instead of silently dropping sell-side stamp duty.
 
 Primary references:
 

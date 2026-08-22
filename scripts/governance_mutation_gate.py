@@ -1991,6 +1991,54 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Direct fill-engine callers cannot reorder or duplicate settlement sessions.",
     ),
     MutationCase(
+        mutation_id="PAPER_EXECUTION_CORPORATE_ACTION_FREEZE",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_CORPORATE_ACTION_FREEZE\n'
+            '    if detail is not None:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_CORPORATE_ACTION_FREEZE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_corporate_action_price_chain_break_freezes_without_false_exit",
+        rationale="A raw-price discontinuity cannot apply stale nominal levels across a corporate action.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_FROZEN_STAYS_FROZEN",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_FROZEN_STAYS_FROZEN\n'
+            '        if entry.get("execution_frozen") is True:'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_FROZEN_STAYS_FROZEN\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_corporate_action_price_chain_break_freezes_without_false_exit",
+        rationale="A frozen paper order cannot resume against stale nominal levels on a shorter replay window.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_FROZEN_NAV_BLOCK",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_FROZEN_NAV_BLOCK\n'
+            '    if frozen_positions:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_FROZEN_NAV_BLOCK\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_corporate_action_price_chain_break_freezes_without_false_exit",
+        rationale="A frozen filled position cannot emit a false NAV from stale shares and post-action prices.",
+    ),
+    MutationCase(
         mutation_id="PAPER_EXECUTION_LIMIT_UP_NO_BUY",
         component="Research funnel paper execution realism",
         source_path="experiments/execution_tracker/paper_portfolio.py",
@@ -2085,6 +2133,22 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_costs_reduce_cash_and_net_pnl",
         rationale="Workflow-debug PnL must remain net of the declared conservative cost proxy.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_COST_SIDE_ENUM",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_SIDE_ENUM\n'
+            '    if side not in ("buy", "sell"):'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_SIDE_ENUM\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_transaction_cost_rejects_unknown_or_noncanonical_side",
+        rationale="An unknown side cannot silently fall through to the cheaper buy-side fee path.",
     ),
     MutationCase(
         mutation_id="PAPER_EXECUTION_COST_MODEL_FROZEN",

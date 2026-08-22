@@ -48,6 +48,8 @@ REALISTIC_BAR_FIELDS = {
     "up_limit", "down_limit", "volume_shares", "amount_cny",
     "suspended", "settled", "price_basis", "source",
 }
+PRICE_CHAIN_REL_TOL = 1e-4
+PRICE_CHAIN_ABS_TOL = 0.01
 
 
 def load_portfolio(path=PORTFOLIO_PATH):
@@ -205,6 +207,41 @@ def _record_block(entry, bar, reason):
     entry["last_execution_blocker"] = reason
 
 
+def _price_chain_breaks(bars, registered_at):
+    """Map post-registration bars whose raw-price chain is discontinuous."""
+    breaks = {}
+    for previous, current in zip(bars, bars[1:]):
+        if current["date"] <= registered_at:
+            continue
+        prior_close = float(previous["close"])
+        current_pre_close = float(current["pre_close"])
+        if not math.isclose(
+            current_pre_close,
+            prior_close,
+            rel_tol=PRICE_CHAIN_REL_TOL,
+            abs_tol=PRICE_CHAIN_ABS_TOL,
+        ):
+            breaks[current["date"]] = {
+                "previous_date": previous["date"],
+                "previous_close": prior_close,
+                "current_pre_close": current_pre_close,
+            }
+    return breaks
+
+
+def _freeze_on_corporate_action_break(entry, bar, price_chain_breaks):
+    detail = price_chain_breaks.get(bar["date"])
+    # governance-mutation: PAPER_EXECUTION_CORPORATE_ACTION_FREEZE
+    if detail is not None:
+        _record_block(entry, bar, "CORPORATE_ACTION_BREAK")
+        entry["execution_frozen"] = True
+        entry["execution_freeze_reason"] = "CORPORATE_ACTION_BREAK"
+        entry["execution_freeze_date"] = bar["date"]
+        entry["execution_freeze_evidence"] = detail
+        return True
+    return False
+
+
 def _one_price_at(bar, field):
     level = float(bar[field])
     return all(abs(float(bar[key]) - level) <= 1e-8 for key in ("open", "high", "low", "close"))
@@ -226,6 +263,9 @@ def _advance(entry, bars, *, require_realistic=False):
     """
     changed = False
     if require_realistic:
+        # governance-mutation: PAPER_EXECUTION_FROZEN_STAYS_FROZEN
+        if entry.get("execution_frozen") is True:
+            return False
         for bar in bars:
             validate_realistic_bar(bar)
         dates = [bar["date"] for bar in bars]
@@ -233,10 +273,17 @@ def _advance(entry, bars, *, require_realistic=False):
         if dates != sorted(set(dates)):
             raise ValueError("realistic execution bars must be strictly ordered and unique")
         _execution_date(entry.get("registered_at"))
+        price_chain_breaks = _price_chain_breaks(bars, entry["registered_at"])
+    else:
+        price_chain_breaks = {}
     eligible = [b for b in bars if b["date"] > entry["registered_at"]]
 
     if entry["status"] == "pending":
         for b in eligible:
+            if require_realistic and _freeze_on_corporate_action_break(
+                entry, b, price_chain_breaks,
+            ):
+                return True
             if require_realistic and b["suspended"]:
                 _record_block(entry, b, "SUSPENDED")
                 continue
@@ -276,6 +323,10 @@ def _advance(entry, bars, *, require_realistic=False):
         # manufacture an impossible fill-and-exit on the same daily bar.
         # governance-mutation: PAPER_EXECUTION_T1_SELL
         for b in (x for x in eligible if x["date"] > entry["fill_date"]):
+            if require_realistic and _freeze_on_corporate_action_break(
+                entry, b, price_chain_breaks,
+            ):
+                return True
             if require_realistic and b["suspended"]:
                 _record_block(entry, b, "SUSPENDED")
                 continue

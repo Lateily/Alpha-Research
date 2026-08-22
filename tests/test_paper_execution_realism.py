@@ -32,7 +32,13 @@ def bar(
     }
 
 
-def registered_order(*, ticker: str = "600001.SH", max_fill: float = 101.0):
+def registered_order(
+    *, ticker: str = "600001.SH", entry: float = 100.0,
+    stop: float = 95.0, target: float = 115.0,
+    max_fill: float | None = None,
+):
+    if max_fill is None:
+        max_fill = entry + 1.0
     fund = {
         "initial_capital": 1_000_000.0, "cash": 1_000_000.0,
         "created": "20260820", "policy": "test", "paper_only": True,
@@ -43,7 +49,7 @@ def registered_order(*, ticker: str = "600001.SH", max_fill: float = 101.0):
         fund, orders, decisions,
         ticker=ticker, name="Execution Fixture", theme="SEMICONDUCTOR",
         setup="SWEEP_RECLAIM", registered_at="20260820",
-        entry=100.0, stop=95.0, target=115.0, risk_pct=0.01,
+        entry=entry, stop=stop, target=target, risk_pct=0.01,
         reason="execution realism fixture", gate_state="RECLAIM_REVIEW",
         max_fill_price=max_fill,
         cost_model=copy.deepcopy(fund_engine.WORKFLOW_DEBUG_COST_MODEL),
@@ -111,7 +117,7 @@ class PaperExecutionRealismTests(unittest.TestCase):
             bar("20260821", 99.0, 102.0, 98.0, 101.0),
             bar(
                 "20260824", 90.0, 90.0, 90.0, 90.0,
-                pre_close=100.0, up_limit=110.0, down_limit=90.0,
+                pre_close=101.0, up_limit=110.0, down_limit=90.0,
             ),
         ]
         fund_engine.process_day(
@@ -178,6 +184,84 @@ class PaperExecutionRealismTests(unittest.TestCase):
         model["commission_rate"] = 0.0
         with self.assertRaisesRegex(ValueError, "exactly match the frozen proxy"):
             fund_engine._validate_cost_model(model)
+
+    def test_transaction_cost_rejects_unknown_or_noncanonical_side(self) -> None:
+        model = copy.deepcopy(fund_engine.WORKFLOW_DEBUG_COST_MODEL)
+        self.assertEqual(fund_engine.transaction_cost(100_000, "buy", model), 31.0)
+        self.assertEqual(fund_engine.transaction_cost(100_000, "sell", model), 81.0)
+        for side in ("BUY", "SELL", "hold", "", None, ["sell"]):
+            with self.subTest(side=side):
+                with self.assertRaisesRegex(ValueError, "exactly buy or sell"):
+                    fund_engine.transaction_cost(100_000, side, model)
+
+    def test_corporate_action_price_chain_break_freezes_without_false_exit(self) -> None:
+        fund, orders, decisions, order = registered_order(
+            entry=10.0, stop=9.5, target=12.0, max_fill=10.1,
+        )
+        rows = [
+            bar("20260820", 10.0, 10.2, 9.8, 10.0, pre_close=10.0),
+            bar("20260821", 9.9, 10.2, 9.8, 10.0, pre_close=10.0),
+            # A 10-for-10 stock dividend creates a raw-price discontinuity.
+            # The old engine interpreted the stale nominal stop as a 49% loss.
+            bar(
+                "20260824", 5.1, 5.3, 5.0, 5.2,
+                pre_close=5.05, up_limit=6.06, down_limit=4.04,
+            ),
+        ]
+        events = fund_engine.process_day(
+            fund, orders, decisions, None,
+            series_fn=lambda *_: rows, require_realistic=True,
+        )
+        self.assertEqual(order["status"], "filled")
+        self.assertTrue(order["execution_frozen"])
+        self.assertEqual(order["execution_freeze_reason"], "CORPORATE_ACTION_BREAK")
+        self.assertEqual(order["execution_freeze_date"], "20260824")
+        self.assertEqual(order["execution_freeze_evidence"]["previous_close"], 10.0)
+        self.assertEqual(order["execution_freeze_evidence"]["current_pre_close"], 5.05)
+        self.assertIsNone(order["exit_date"])
+        self.assertIsNone(order["paper_return"])
+        self.assertTrue(any(event.startswith("FREEZE ") for event in events))
+        self.assertEqual(decisions[-1]["action"], "PAPER_EXECUTION_FROZEN")
+        self.assertEqual(
+            fund_engine.execution_realism_receipt(order)["status"],
+            "DATA_BLOCKED",
+        )
+        with self.assertRaisesRegex(
+            fund_engine.CorporateActionUnresolved,
+            "拒绝计算 NAV",
+        ):
+            fund_engine.update_nav(
+                fund, orders, [], "20260824",
+                marks={order["ticker"]: 5.2}, require_complete_marks=True,
+            )
+
+        # A frozen order cannot resume against stale nominal levels merely
+        # because a later caller supplies a shorter post-break bar window.
+        later = [bar("20260825", 5.2, 13.0, 5.1, 12.0, pre_close=5.2)]
+        replay_events = fund_engine.process_day(
+            fund, orders, decisions, None,
+            series_fn=lambda *_: later, require_realistic=True,
+        )
+        self.assertEqual(replay_events, [])
+        self.assertEqual(order["status"], "filled")
+        self.assertIsNone(order["exit_date"])
+
+    def test_price_chain_rounding_tolerance_does_not_false_freeze(self) -> None:
+        fund, orders, decisions, order = registered_order(
+            entry=10.0, stop=9.5, target=12.0, max_fill=10.1,
+        )
+        rows = [
+            bar("20260820", 10.0, 10.2, 9.8, 10.0, pre_close=10.0),
+            bar("20260821", 9.9, 10.2, 9.8, 10.0, pre_close=10.005),
+            bar("20260824", 11.5, 12.1, 11.4, 12.0, pre_close=10.0),
+        ]
+        fund_engine.process_day(
+            fund, orders, decisions, None,
+            series_fn=lambda *_: rows, require_realistic=True,
+        )
+        self.assertEqual(order["status"], "closed")
+        self.assertIsNot(order.get("execution_frozen"), True)
+        self.assertEqual(order["exit_reason"], "target")
 
     def test_workflow_debug_receipt_never_becomes_claim_sample(self) -> None:
         _, _, _, order = registered_order()

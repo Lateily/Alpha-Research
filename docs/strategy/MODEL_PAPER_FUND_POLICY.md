@@ -57,7 +57,12 @@ a refused order is itself a decision-log entry.
 7. Workflow-debug cash and P&L include the declared cost proxy. The proxy is
    `PROXY_UNVERIFIED` until bound to a broker statement, so these cycles remain
    excluded from method claims and portfolio promotion.
-8. Marks/fills/exits use **settled Tushare bars only** (定盘). Intraday is
+8. A post-registration discontinuity between a raw bar's `pre_close` and the
+   preceding raw close freezes the paper order as `CORPORATE_ACTION_BREAK`.
+   Stale nominal levels are never applied across a split, dividend, or other
+   corporate action, and official NAV output is blocked until manual
+   re-registration resolves both share count and price basis.
+9. Marks/fills/exits use **settled Tushare bars only** (定盘). Intraday is
    observation/nowcast, never a fill source.
 
 ## 4. Posture → allowed fund action

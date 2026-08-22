@@ -125,6 +125,9 @@ def _validate_cost_model(model):
 
 def transaction_cost(notional, side, model):
     model = _validate_cost_model(model)
+    # governance-mutation: PAPER_EXECUTION_COST_SIDE_ENUM
+    if side not in ("buy", "sell"):
+        raise ValueError("paper transaction side must be exactly buy or sell")
     commission = max(
         float(model["minimum_commission_cny"]),
         float(notional) * float(model["commission_rate"]),
@@ -155,6 +158,14 @@ class NavMarksIncomplete(Exception):
         super().__init__(f"缺目标日定盘价: {self.missing}")
 
 
+class CorporateActionUnresolved(Exception):
+    """A frozen filled position has no trustworthy share/price basis for NAV."""
+
+    def __init__(self, tickers):
+        self.tickers = list(tickers)
+        super().__init__(f"企业行动待人工重注册,拒绝计算 NAV: {self.tickers}")
+
+
 def _usable_mark(value):
     try:
         value = float(value)
@@ -169,10 +180,18 @@ def current_nav(fund, orders, marks=None, *, require_complete_marks=False):
     require_complete_marks=True(官方 NAV 路径必须用):任一 filled 持仓缺目标日
     定盘价即抛 NavMarksIncomplete,绝不产出混合口径。
     默认 False 只供 --status 一类的**只读估算**,其结果不得写入 nav_history。
+    两种路径都拒绝给企业行动冻结中的持仓估值,因为旧股数与新价格不可比。
     """
     marks = marks or {}
     valid_marks = {ticker: mark for ticker, raw in marks.items()
                    if (mark := _usable_mark(raw)) is not None}
+    frozen_positions = [
+        o["ticker"] for o in orders
+        if o["status"] == "filled" and o.get("execution_frozen") is True
+    ]
+    # governance-mutation: PAPER_EXECUTION_FROZEN_NAV_BLOCK
+    if frozen_positions:
+        raise CorporateActionUnresolved(frozen_positions)
     missing = [o["ticker"] for o in orders
                if o["status"] == "filled" and o["ticker"] not in valid_marks]
     if require_complete_marks and missing:
@@ -307,6 +326,7 @@ def process_day(fund, orders, decision_log, token, series_fn=None, *,
         if o["ticker"] not in cache:
             cache[o["ticker"]] = series_fn(o["ticker"], token, o["registered_at"])
         was = o["status"]
+        was_frozen = o.get("execution_frozen") is True
         changed = pp._advance(
             o, cache[o["ticker"]], require_realistic=require_realistic,
         )
@@ -323,6 +343,19 @@ def process_day(fund, orders, decision_log, token, series_fn=None, *,
                                  "ticker": o["ticker"], "price": o["fill_price"],
                                  "shares": o["shares"], "fees_cny": fee,
                                  "no_trade_flag": True})
+        if not was_frozen and o.get("execution_frozen") is True:
+            events.append(
+                f"FREEZE {o['name']} [{o['execution_freeze_reason']}] "
+                f"({o['execution_freeze_date']})"
+            )
+            decision_log.append({
+                "date": o["execution_freeze_date"],
+                "action": "PAPER_EXECUTION_FROZEN",
+                "ticker": o["ticker"],
+                "reason": o["execution_freeze_reason"],
+                "evidence": o["execution_freeze_evidence"],
+                "no_trade_flag": True,
+            })
         if o["status"] == "closed":
             gross = round(o["shares"] * o["exit_price"], 2)
             fee = transaction_cost(gross, "sell", o["cost_model"]) if require_realistic else 0.0
@@ -367,6 +400,9 @@ def execution_realism_receipt(order):
             order.get("max_volume_participation") == MAX_VOLUME_PARTICIPATION
         ),
         "costs_recorded": cost_model_valid,
+        "corporate_action_price_chain_intact": (
+            order.get("execution_frozen") is not True
+        ),
         "workflow_debug_sample_excluded": order.get("sample_eligible") is False,
     }
     all_ready = all(checks.values())
