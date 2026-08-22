@@ -1019,6 +1019,20 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="The mutation manifest must enforce A-035 marker coverage.",
     ),
     MutationCase(
+        mutation_id="GOVERNANCE_H7_MARKER_COVERAGE_CALL",
+        component="Governance mutation gate",
+        source_path="scripts/governance_mutation_gate.py",
+        test_script="tests/test_governance_mutation_gate.py",
+        before=("    validate_h7_" "marker_coverage(root, cases)"),
+        after=(
+            "    if False:\n"
+            "        validate_h7_"
+            "marker_coverage(root, cases)"
+        ),
+        expected_failure_marker="test_validate_manifest_enforces_h7_marker_coverage",
+        rationale="The mutation manifest must not silently stop enforcing H7 marker coverage.",
+    ),
+    MutationCase(
         mutation_id="GOVERNANCE_R043_MARKER_COVERAGE_CALL",
         component="Governance mutation gate",
         source_path="scripts/governance_mutation_gate.py",
