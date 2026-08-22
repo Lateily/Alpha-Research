@@ -23,6 +23,7 @@ on:
       - "scripts/llm/AGENTS.md"
       - "web/AGENTS.md"
       - "config/team-ai-workspace.v1.json"
+      - "config/aios-skills.v1.json"
       - "docs/team/TEAM_AI_WORKSPACE_V1.md"
       - ".gitignore"
       - "api/**"
@@ -99,6 +100,8 @@ jobs:
       # runtime baseline metadata, and redacted secret/local-state hygiene.
       - name: Team AI Workspace contract and doctor regression (offline)
         run: python3 tests/test_team_ai_workspace.py
+      - name: AIOS shared skill registry regression (offline)
+        run: python3 tests/test_skill_registry.py
       - name: Transactional forward-return backfill selftest
         run: python3 experiments/execution_tracker/run_post_close_report.py --selftest
       # ── 夜链 v3:进程级入口 + 静态未定义名 + 产物校验 + 崩溃回滚 ──

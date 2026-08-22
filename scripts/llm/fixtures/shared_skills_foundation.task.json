@@ -25,6 +25,7 @@
     ".agents/skills/ar-video-evidence",
     "config/team-ai-workspace.v1.json",
     "config/aios-skills.v1.json",
+    ".github/workflows/python-ci.yml",
     "scripts/llm/ai_os/skill_registry.py",
     "scripts/llm/fixtures/shared_skills_foundation.task.json",
     "tests/test_team_ai_workspace.py",
@@ -51,6 +52,7 @@
   "acceptance_tests": [
     "python3 tests/test_team_ai_workspace.py",
     "python3 tests/test_skill_registry.py",
+    "python3 tests/test_nightly_v4_adversarial.py CiCoverageTest.test_every_python_test_file_is_registered_in_ci",
     "python3 scripts/team_ai_workspace.py doctor",
     "git diff --check"
   ],
