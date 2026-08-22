@@ -3939,6 +3939,55 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Idempotency accepts only exact retry; it cannot authorize a rewritten decision set.",
     ),
     MutationCase(
+        mutation_id="U4_LEDGER_SHARED_READ_LOCK",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_SHARED_READ_LOCK\n'
+            '            fcntl.flock(lock_file, fcntl.LOCK_SH)'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_SHARED_READ_LOCK\n'
+            '            if False:\n'
+            '                fcntl.flock(lock_file, fcntl.LOCK_SH)'
+        ),
+        expected_failure_marker="test_verifier_waits_for_atomic_ledger_and_anchor_snapshot",
+        rationale="Readers must not observe the ledger replacement before its matching anchor commit.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_EXISTING_SNAPSHOT",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_EXISTING_SNAPSHOT\n'
+            '    with _ledger_read_snapshot(path):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_EXISTING_SNAPSHOT\n'
+            '    with nullcontext():'
+        ),
+        expected_failure_marker="test_exact_retry_waits_for_atomic_ledger_and_anchor_snapshot",
+        rationale="Idempotent retry must verify and read events from one shared-lock snapshot.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_VERIFY_SNAPSHOT",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_VERIFY_SNAPSHOT\n'
+            '        with _ledger_read_snapshot(ledger_path):'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_VERIFY_SNAPSHOT\n'
+            '        with nullcontext():'
+        ),
+        expected_failure_marker="test_verifier_waits_for_atomic_ledger_and_anchor_snapshot",
+        rationale="Public verification must read the event chain and anchor under the same snapshot lock.",
+    ),
+    MutationCase(
         mutation_id="U4_LEDGER_DEDICATED_EVENT_KIND",
         component="Research funnel U4 decision ledger",
         source_path="experiments/research_funnel/u4_decision_ledger.py",
