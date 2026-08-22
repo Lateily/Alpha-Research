@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import copy
-import fcntl
 import json
 import re
 import sys
@@ -33,11 +32,22 @@ from experiments.execution_tracker import event_ledger
 from experiments.research_funnel import closure_experiment as closure
 from experiments.research_funnel import funnel_pipeline as funnel
 
+try:
+    import fcntl as _fcntl
+except ImportError:  # Windows
+    _fcntl = None
+
+try:
+    import msvcrt as _msvcrt
+except ImportError:  # POSIX
+    _msvcrt = None
+
 
 BATCH_SCHEMA = "ar.u4_decision_batch"
 BATCH_VERSION = "1.0"
 EVENT_KIND = "u4_decision"
 MODE = "OFFLINE_RESEARCH_REPLAY"
+REGISTRATION_SOURCE = "R015_EVENT_LEDGER_TS"
 HUMAN_ORIGIN = "JUNYAN_REVIEW_UNVERIFIED_IDENTITY"
 MACHINE_ORIGIN = "MACHINE_GATE"
 SELECTED_OUTCOME = "SELECTED_FOR_OFFLINE_RESEARCH"
@@ -72,6 +82,8 @@ BATCH_FIELDS = {
     "mode",
     "packet_hash",
     "ready_pool_hash",
+    "method_version",
+    "registration_source",
     "reviewed_at",
     "claimed_reviewer",
     "identity_verification",
@@ -94,6 +106,7 @@ BATCH_FIELDS = {
     "batch_hash",
 }
 DRAFT_FIELDS = {
+    "method_version",
     "reviewed_at",
     "claimed_reviewer",
     "identity_verification",
@@ -110,6 +123,7 @@ DRAFT_DECISION_FIELDS = {
 }
 TICKER_RE = re.compile(r"^[0-9]{6}\.(?:SH|SZ|BJ)$")
 REASON_CODE_RE = re.compile(r"^[A-Z][A-Z0-9_]{2,63}$")
+METHOD_VERSION_RE = re.compile(r"^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$")
 FORBIDDEN_AUTHORITY_KEYS = set(funnel.FORBIDDEN_ACTION_KEYS) | {
     "formal_blocking_authority",
     "execution_authority",
@@ -128,11 +142,21 @@ def _ledger_read_snapshot(path: Path) -> Iterator[None]:
         path.parent.mkdir(parents=True, exist_ok=True)
         with Path(f"{path}.lock").open("a+", encoding="utf-8") as lock_file:
             # governance-mutation: U4_LEDGER_SHARED_READ_LOCK
-            fcntl.flock(lock_file, fcntl.LOCK_SH)
+            if _fcntl is not None:
+                _fcntl.flock(lock_file, _fcntl.LOCK_SH)
+            elif _msvcrt is not None:
+                lock_file.seek(0)
+                _msvcrt.locking(lock_file.fileno(), _msvcrt.LK_LOCK, 1)
+            else:
+                raise OSError("no supported file-lock implementation on this platform")
             try:
                 yield
             finally:
-                fcntl.flock(lock_file, fcntl.LOCK_UN)
+                if _fcntl is not None:
+                    _fcntl.flock(lock_file, _fcntl.LOCK_UN)
+                elif _msvcrt is not None:
+                    lock_file.seek(0)
+                    _msvcrt.locking(lock_file.fileno(), _msvcrt.LK_UNLCK, 1)
     except OSError as exc:
         raise DecisionLedgerError(f"cannot lock decision ledger snapshot: {exc}") from exc
 
@@ -230,6 +254,11 @@ def _ready_pool(packet: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 def _validate_authority(draft: Mapping[str, Any], packet: Mapping[str, Any]) -> None:
     _require_exact_keys(draft, DRAFT_FIELDS, "decision draft")
+    # governance-mutation: U4_LEDGER_METHOD_VERSION
+    if not isinstance(draft.get("method_version"), str) or not METHOD_VERSION_RE.fullmatch(
+        draft["method_version"]
+    ):
+        raise DecisionLedgerError("decision draft method_version must be a versioned method token")
     # governance-mutation: U4_LEDGER_AUTHORITY_BOUNDARY
     if (
         draft.get("claimed_reviewer") != "Junyan"
@@ -377,6 +406,8 @@ def seal_decision_batch(draft: Mapping[str, Any], packet: Mapping[str, Any]) -> 
         "mode": MODE,
         "packet_hash": packet["packet_hash"],
         "ready_pool_hash": packet["source_refs"]["ready_pool_hash"],
+        "method_version": draft["method_version"],
+        "registration_source": REGISTRATION_SOURCE,
         "reviewed_at": draft["reviewed_at"],
         "claimed_reviewer": draft["claimed_reviewer"],
         "identity_verification": draft["identity_verification"],
@@ -411,6 +442,13 @@ def validate_decision_batch(batch: Mapping[str, Any], packet: Mapping[str, Any])
         raise DecisionLedgerError("decision batch schema/version mismatch")
     if batch.get("mode") != MODE:
         raise DecisionLedgerError("decision batch mode is invalid")
+    # governance-mutation: U4_LEDGER_REGISTRATION_SOURCE
+    if (
+        not isinstance(batch.get("method_version"), str)
+        or not METHOD_VERSION_RE.fullmatch(batch["method_version"])
+        or batch.get("registration_source") != REGISTRATION_SOURCE
+    ):
+        raise DecisionLedgerError("decision batch method version or registration source is invalid")
     # governance-mutation: U4_LEDGER_BATCH_PACKET_BINDING
     if (
         batch.get("packet_hash") != packet.get("packet_hash")
@@ -418,6 +456,7 @@ def validate_decision_batch(batch: Mapping[str, Any], packet: Mapping[str, Any])
     ):
         raise DecisionLedgerError("decision batch is not bound to this packet")
     authority_view = {
+        "method_version": batch.get("method_version"),
         "reviewed_at": batch.get("reviewed_at"),
         "claimed_reviewer": batch.get("claimed_reviewer"),
         "identity_verification": batch.get("identity_verification"),

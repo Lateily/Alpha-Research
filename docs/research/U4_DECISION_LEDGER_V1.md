@@ -11,6 +11,12 @@ The ledger is offline and append-only. It does not select securities, verify a
 human identity, create an order, grant portfolio authority, or count a method
 sample.
 
+The authority contract is
+`docs/research/U4_DECISION_LEDGER_SPEC_V1.md`. This implementation records a
+packet-level sealed batch so U4 can close the full reviewed candidate set in
+one append-only event; it does not replace the spec's authority, decision
+enum, no-trade boundary, or future packet-closure receipt requirements.
+
 ## Decision Set
 
 Every row in the packet `ready_pool` appears exactly once in the sealed batch.
@@ -41,6 +47,10 @@ One packet hash may have one decision batch.
 - The event kind is `u4_decision`.
 - The event id is the packet hash.
 - The event payload contains the full packet and full sealed batch.
+- The batch carries `method_version` so workflow-debug observations and later
+  frozen methods cannot be mixed in attribution.
+- The batch carries `registration_source=R015_EVENT_LEDGER_TS`; the durable
+  registration time is the outer event-ledger timestamp, not caller text.
 - An exact retry is idempotent.
 - A different batch for the same packet is a refused rewrite.
 - The event-ledger timestamp is the registration boundary and cannot predate

@@ -121,6 +121,7 @@ def draft_for(packet: dict, decisions: dict[str, str] | None = None) -> dict:
             ),
         })
     return {
+        "method_version": "WORKFLOW_DEBUG_V0",
         "reviewed_at": REVIEWED_AT,
         "claimed_reviewer": "Junyan",
         "identity_verification": "UNAVAILABLE",
@@ -145,6 +146,8 @@ class U4DecisionLedgerTests(unittest.TestCase):
         packet = packet_fixture()
         batch = ledger.seal_decision_batch(draft_for(packet), packet)
         self.assertEqual(len(batch["decisions"]), len(packet["ready_pool"]))
+        self.assertEqual(batch["method_version"], "WORKFLOW_DEBUG_V0")
+        self.assertEqual(batch["registration_source"], ledger.REGISTRATION_SOURCE)
         self.assertEqual(batch["selected_count"], 3)
         self.assertEqual(batch["machine_blocked_count"], 2)
         blocked = {row["ts_code"]: row for row in batch["decisions"] if not row["source_ready"]}
@@ -254,6 +257,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
             ("claimed_reviewer", "NotJunyan", "authority boundary"),
             ("identity_verification", "VERIFIED", "authority boundary"),
             ("production_authority", True, "authority boundary"),
+            ("method_version", "unversioned draft", "method_version"),
             ("reviewed_at", "2026-08-21T23:59:00+08:00", "cannot predate"),
             ("authorization_text", "批准离线，但未绑定哈希。", "packet-bound"),
         ):
@@ -273,6 +277,14 @@ class U4DecisionLedgerTests(unittest.TestCase):
         draft["authorization_text"] = ["not", "verbatim", "text"]
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "verbatim text"):
             ledger.seal_decision_batch(draft, packet)
+
+    def test_registration_source_cannot_be_caller_supplied(self) -> None:
+        packet = packet_fixture()
+        batch = ledger.seal_decision_batch(draft_for(packet), packet)
+        batch["registration_source"] = "CALLER_SUPPLIED"
+        rehash_batch(batch)
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "registration source"):
+            ledger.validate_decision_batch(batch, packet)
 
     def test_batch_packet_binding_is_independent_of_receipt_projection(self) -> None:
         packet = packet_fixture()

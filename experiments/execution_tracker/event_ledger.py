@@ -23,6 +23,16 @@ fail-closed:任何无法解析、无法核验的情形一律 FAIL,不得当作�
 """
 import os, sys, json, hashlib, datetime, subprocess
 
+try:
+    import fcntl as _fcntl
+except ImportError:  # Windows
+    _fcntl = None
+
+try:
+    import msvcrt as _msvcrt
+except ImportError:  # POSIX
+    _msvcrt = None
+
 GENESIS_PREV = "0" * 64
 OPERATIONAL_TIMEZONE = datetime.timezone(datetime.timedelta(hours=8), name="Asia/Shanghai")
 DEFAULT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "event_ledger.jsonl")
@@ -39,6 +49,40 @@ UNIQUE_KINDS = {"register", "genesis",
                 "u4_decision",
                 "publication_migration_intent", "publication_migration_commit",
                 "publication_migration_abort"}
+
+
+def _lock_handle(handle):
+    """Cross-platform exclusive lock for the single local ledger lock file."""
+    if _fcntl is not None:
+        _fcntl.flock(handle, _fcntl.LOCK_EX)
+        return
+    if _msvcrt is not None:
+        handle.seek(0)
+        _msvcrt.locking(handle.fileno(), _msvcrt.LK_LOCK, 1)
+        return
+    raise OSError("no supported file-lock implementation on this platform")
+
+
+def _unlock_handle(handle):
+    if _fcntl is not None:
+        _fcntl.flock(handle, _fcntl.LOCK_UN)
+        return
+    if _msvcrt is not None:
+        handle.seek(0)
+        _msvcrt.locking(handle.fileno(), _msvcrt.LK_UNLCK, 1)
+        return
+
+
+def _fsync_parent_dir(path):
+    """Best-effort directory fsync; Windows cannot open directories this way."""
+    try:
+        dir_fd = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
+    except (OSError, PermissionError):
+        return
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
 
 
 def _runtime_timestamp():
@@ -150,11 +194,7 @@ def write_anchor(path, n, head):
                   fh, ensure_ascii=False)
         fh.flush(); os.fsync(fh.fileno())
     os.replace(tmp, p)
-    dir_fd = os.open(os.path.dirname(os.path.abspath(p)), os.O_RDONLY)
-    try:
-        os.fsync(dir_fd)
-    finally:
-        os.close(dir_fd)
+    _fsync_parent_dir(p)
 
 
 def verify_anchor(path=DEFAULT_PATH):
@@ -241,10 +281,9 @@ def verify_append_only(path=DEFAULT_PATH, ref="HEAD"):
 # ────────────────────────────── 写入 ──────────────────────────────
 def append(kind, rec_id, payload, path=DEFAULT_PATH, now=None):
     """持排他 flock 追加。写前链与锚点都必须过,否则拒写(不在坏账本上叠加)。"""
-    import fcntl
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    with open(path + ".lock", "w") as lf:
-        fcntl.flock(lf, fcntl.LOCK_EX)
+    with open(path + ".lock", "a+") as lf:
+        _lock_handle(lf)
         try:
             st = verify(path)
             if not st["ok"]:
@@ -275,15 +314,11 @@ def append(kind, rec_id, payload, path=DEFAULT_PATH, now=None):
                 fh.write(line + "\n")
                 fh.flush(); os.fsync(fh.fileno())
             os.replace(tmp, path)
-            dir_fd = os.open(os.path.dirname(os.path.abspath(path)), os.O_RDONLY)
-            try:
-                os.fsync(dir_fd)
-            finally:
-                os.close(dir_fd)
+            _fsync_parent_dir(path)
             write_anchor(path, st["n"] + 1, rec["hash"])
             return rec
         finally:
-            fcntl.flock(lf, fcntl.LOCK_UN)
+            _unlock_handle(lf)
 
 
 # ────────────────────────────── selftest ──────────────────────────────

@@ -3787,6 +3787,24 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="A local JSON draft cannot verify identity or grant production authority.",
     ),
     MutationCase(
+        mutation_id="U4_LEDGER_METHOD_VERSION",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_METHOD_VERSION\n'
+            '    if not isinstance(draft.get("method_version"), str) or not METHOD_VERSION_RE.fullmatch(\n'
+            '        draft["method_version"]\n'
+            '    ):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_METHOD_VERSION\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_authority_chronology_and_packet_binding_fail_closed",
+        rationale="U4 workflow-debug decisions must remain tied to a versioned research method token.",
+    ),
+    MutationCase(
         mutation_id="U4_LEDGER_REVIEW_CHRONOLOGY",
         component="Research funnel U4 decision ledger",
         source_path="experiments/research_funnel/u4_decision_ledger.py",
@@ -3838,6 +3856,26 @@ MUTATIONS: tuple[MutationCase, ...] = (
         ),
         expected_failure_marker="test_batch_packet_binding_is_independent_of_receipt_projection",
         rationale="A rehashed batch cannot migrate its decisions to another review packet.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_REGISTRATION_SOURCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_REGISTRATION_SOURCE\n'
+            '    if (\n'
+            '        not isinstance(batch.get("method_version"), str)\n'
+            '        or not METHOD_VERSION_RE.fullmatch(batch["method_version"])\n'
+            '        or batch.get("registration_source") != REGISTRATION_SOURCE\n'
+            '    ):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_REGISTRATION_SOURCE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_registration_source_cannot_be_caller_supplied",
+        rationale="Durable U4 registration time must come from the R-015 event timestamp, not caller text.",
     ),
     MutationCase(
         mutation_id="U4_LEDGER_MACHINE_REJECTION_PRESERVED",
@@ -3945,12 +3983,17 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_script="tests/test_u4_decision_ledger.py",
         before=(
             '            # governance-mutation: U4_LEDGER_SHARED_READ_LOCK\n'
-            '            fcntl.flock(lock_file, fcntl.LOCK_SH)'
+            '            if _fcntl is not None:\n'
+            '                _fcntl.flock(lock_file, _fcntl.LOCK_SH)\n'
+            '            elif _msvcrt is not None:\n'
+            '                lock_file.seek(0)\n'
+            '                _msvcrt.locking(lock_file.fileno(), _msvcrt.LK_LOCK, 1)\n'
+            '            else:\n'
+            '                raise OSError("no supported file-lock implementation on this platform")'
         ),
         after=(
             '            # governance-mutation: U4_LEDGER_SHARED_READ_LOCK\n'
-            '            if False:\n'
-            '                fcntl.flock(lock_file, fcntl.LOCK_SH)'
+            '            pass'
         ),
         expected_failure_marker="test_verifier_waits_for_atomic_ledger_and_anchor_snapshot",
         rationale="Readers must not observe the ledger replacement before its matching anchor commit.",
