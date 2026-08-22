@@ -65,6 +65,7 @@ from experiments.macro_os import expectation_registry as macro_expectations  # n
 from experiments.research_funnel import closure_experiment  # noqa: E402,F401
 from experiments.research_funnel import industry_cohort  # noqa: E402,F401
 from experiments.research_funnel import research_cycle  # noqa: E402,F401
+from experiments.research_funnel import five_axis_attribution  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
 import test_engines_offline as teo        # noqa: E402
@@ -149,6 +150,7 @@ assert industry_cohort_result.wasSuccessful(), (
 import test_research_cycle as research_cycle_tests  # noqa: E402
 import test_research_method as research_method_tests  # noqa: E402
 import test_paper_execution_realism as execution_realism_tests  # noqa: E402
+import test_five_axis_attribution as five_axis_tests  # noqa: E402
 execution_realism_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
         execution_realism_tests.PaperExecutionRealismTests
@@ -172,6 +174,14 @@ research_cycle_result = unittest.TextTestRunner(verbosity=0).run(
 )
 assert research_cycle_result.wasSuccessful(), (
     "offline U4-to-paper research cycle suite failed under socket guard"
+)
+five_axis_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        five_axis_tests.FiveAxisAttributionTests
+    )
+)
+assert five_axis_result.wasSuccessful(), (
+    "offline five-axis attribution suite failed under socket guard"
 )
 try:
     macro_collectors.UrllibTransport().fetch(
