@@ -35,6 +35,8 @@ UNIQUE_KINDS = {"register", "genesis",
                 "register_intent", "register_commit", "register_abort",
                 "evaluation",
                 "evaluation_intent", "evaluation_commit", "evaluation_abort",
+                # governance-mutation: U4_LEDGER_EVENT_KIND_UNIQUE
+                "u4_decision",
                 "publication_migration_intent", "publication_migration_commit",
                 "publication_migration_abort"}
 
