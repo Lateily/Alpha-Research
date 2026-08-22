@@ -65,6 +65,7 @@ from experiments.macro_os import expectation_registry as macro_expectations  # n
 from experiments.research_funnel import closure_experiment  # noqa: E402,F401
 from experiments.research_funnel import industry_cohort  # noqa: E402,F401
 from experiments.research_funnel import research_cycle  # noqa: E402,F401
+import paper_execution_audit  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
 import test_engines_offline as teo        # noqa: E402
@@ -148,6 +149,15 @@ assert industry_cohort_result.wasSuccessful(), (
 )
 import test_research_cycle as research_cycle_tests  # noqa: E402
 import test_research_method as research_method_tests  # noqa: E402
+import test_paper_execution_audit as paper_execution_audit_tests  # noqa: E402
+paper_execution_audit_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        paper_execution_audit_tests.PaperExecutionAuditTests
+    )
+)
+assert paper_execution_audit_result.wasSuccessful(), (
+    "paper execution audit suite failed under socket guard"
+)
 research_method_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
         research_method_tests.ResearchMethodTests
