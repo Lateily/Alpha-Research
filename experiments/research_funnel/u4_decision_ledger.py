@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import argparse
 import copy
+import fcntl
 import json
 import re
 import sys
+from contextlib import contextmanager, nullcontext
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterator, Mapping, Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -117,6 +119,22 @@ FORBIDDEN_AUTHORITY_KEYS = set(funnel.FORBIDDEN_ACTION_KEYS) | {
 
 class DecisionLedgerError(RuntimeError):
     pass
+
+
+@contextmanager
+def _ledger_read_snapshot(path: Path) -> Iterator[None]:
+    """Hold the R-015 ledger lock while reading the chain and its anchor."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with Path(f"{path}.lock").open("a+", encoding="utf-8") as lock_file:
+            # governance-mutation: U4_LEDGER_SHARED_READ_LOCK
+            fcntl.flock(lock_file, fcntl.LOCK_SH)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
+    except OSError as exc:
+        raise DecisionLedgerError(f"cannot lock decision ledger snapshot: {exc}") from exc
 
 
 def _require_exact_keys(value: Mapping[str, Any], expected: set[str], label: str) -> None:
@@ -524,13 +542,15 @@ def _read_events(path: Path) -> list[dict[str, Any]]:
 
 
 def _existing_for_packet(path: Path, packet_hash: str) -> dict[str, Any] | None:
-    verified = verify_decision_ledger(path)
-    if not verified["ok"]:
-        raise DecisionLedgerError(f"existing decision ledger is invalid: {verified['errors']}")
-    matches = [
-        row for row in _read_events(path)
-        if row.get("kind") == EVENT_KIND and row.get("id") == packet_hash
-    ]
+    # governance-mutation: U4_LEDGER_EXISTING_SNAPSHOT
+    with _ledger_read_snapshot(path):
+        verified = _verify_decision_ledger_unlocked(path)
+        if not verified["ok"]:
+            raise DecisionLedgerError(f"existing decision ledger is invalid: {verified['errors']}")
+        matches = [
+            row for row in _read_events(path)
+            if row.get("kind") == EVENT_KIND and row.get("id") == packet_hash
+        ]
     if len(matches) > 1:
         raise DecisionLedgerError("decision ledger contains duplicate packet decisions")
     return matches[0] if matches else None
@@ -566,7 +586,7 @@ def append_decision_batch(
     return {"status": "APPENDED", "event": event}
 
 
-def verify_decision_ledger(ledger_path: Path) -> dict[str, Any]:
+def _verify_decision_ledger_unlocked(ledger_path: Path) -> dict[str, Any]:
     chain = event_ledger.verify(str(ledger_path))
     anchor = event_ledger.verify_anchor(str(ledger_path))
     errors = list(chain.get("errors") or []) + list(anchor.get("errors") or [])
@@ -597,6 +617,15 @@ def verify_decision_ledger(ledger_path: Path) -> dict[str, Any]:
             errors.append(f"event {index}: {exc}")
             break
     return {"ok": not errors, "n": len(events), "errors": errors}
+
+
+def verify_decision_ledger(ledger_path: Path) -> dict[str, Any]:
+    try:
+        # governance-mutation: U4_LEDGER_VERIFY_SNAPSHOT
+        with _ledger_read_snapshot(ledger_path):
+            return _verify_decision_ledger_unlocked(ledger_path)
+    except DecisionLedgerError as exc:
+        return {"ok": False, "n": 0, "errors": [str(exc)]}
 
 
 def _load_json(path: Path) -> dict[str, Any]:

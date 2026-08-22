@@ -49,8 +49,11 @@ One packet hash may have one decision batch.
   duplicate packet ids, chain damage, and anchor damage.
 
 The implementation reuses the R-015 event ledger for flock locking, canonical
-serialization, hash chaining, atomic replace, and local anchor checks. The CLI
-requires an explicit `--ledger` path and has no production default.
+serialization, hash chaining, atomic replace, and local anchor checks. Readers
+take a shared lock on that same lock file while verifying the chain, anchor,
+and event rows as one snapshot; they cannot classify the short interval between
+ledger replacement and anchor commit as corruption. The CLI requires an
+explicit `--ledger` path and has no production default.
 
 ## Honest Boundaries
 
