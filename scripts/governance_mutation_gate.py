@@ -125,6 +125,12 @@ A035_GOVERNANCE_PATHS = (
     "scripts/llm/ai_os/harness_eval.py",
 )
 A035_MUTATION_PREFIX = "AIOS_A035_"
+H7_GOVERNANCE_PATHS = (
+    "tests/test_h7_task_ux_contract.py",
+    "tests/test_h7_product_aios_bridge_phase3.py",
+    "tests/test_h7_product_aios_bridge_phase4.py",
+)
+H7_MUTATION_PREFIX = "H7_"
 R043_GOVERNANCE_PATHS = (
     "experiments/execution_tracker/publication_migration.py",
 )
@@ -759,13 +765,11 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="H7 Product-AIOS Bridge",
         source_path="tests/test_h7_task_ux_contract.py",
         test_script="tests/test_h7_task_ux_contract.py",
-        before='            if receipt is None:\n'
-        '                errors.append("COMPLETE requires trusted human gate receipt")',
-        after="            if False:\n"
-        "                pass",
-        expected_failure_marker="test_complete_requires_trusted_human_gate_receipt",
-        rationale="A complete H7 packet cannot be approved by free text without a Human Gate receipt.",
-        test_function="test_complete_requires_trusted_human_gate_receipt",
+        before='            errors.append("COMPLETE requires A-020 Authority Resolver")',
+        after="            pass",
+        expected_failure_marker="test_complete_requires_a020_authority_resolver",
+        rationale="H7 cannot complete a packet without the A-020 Authority Resolver trust anchor.",
+        test_function="test_complete_requires_a020_authority_resolver",
     ),
     MutationCase(
         mutation_id="H7_FAKE_APPROVAL_TEXT_BLOCK",
@@ -785,11 +789,22 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="H7 Product-AIOS Bridge",
         source_path="docs/contracts/product/fixtures/h7-task-ux-fixtures.v0.json",
         test_script="tests/test_h7_product_aios_bridge_phase3.py",
-        before='"summary": "All required facts have E1 references and independent review is complete."',
+        before='"summary": "Issuer and event date are cited; event type and amount remain unverified."',
         after='"summary": "Tampered after trace creation."',
         expected_failure_marker="test_every_case_binds_the_full_bridge_trace",
         rationale="Bridge trace hashes must bind stage artifacts, not only stage names.",
         test_function="test_every_case_binds_the_full_bridge_trace",
+    ),
+    MutationCase(
+        mutation_id="H7_PHASE3_SCHEMA_CLOSED_WORLD",
+        component="H7 Product-AIOS Bridge",
+        source_path="tests/test_h7_product_aios_bridge_phase3.py",
+        test_script="tests/test_h7_product_aios_bridge_phase3.py",
+        before='            _assert_closed_world(mutated, resolve_refs(schema))',
+        after="            pass",
+        expected_failure_marker="test_phase3_fixture_rejects_unknown_case_fields",
+        rationale="Phase 3 schema must be executed, not merely read as documentation.",
+        test_function="test_phase3_fixture_rejects_unknown_case_fields",
     ),
     MutationCase(
         mutation_id="H7_TRACE_SOURCE_CLOSED_WORLD",
@@ -807,11 +822,31 @@ MUTATIONS: tuple[MutationCase, ...] = (
         component="H7 Product-AIOS Bridge",
         source_path="docs/contracts/product/fixtures/h7-product-aios-bridge-phase4.v0.json",
         test_script="tests/test_h7_product_aios_bridge_phase4.py",
-        before='"required_props": ["traceId", "noTradeFlag", "externalContentTrust", "finalMergeAuthority"]',
-        after='"required_props": ["traceId", "externalContentTrust", "finalMergeAuthority"]',
+        before='        "required_props": [\n'
+        '          "traceId",\n'
+        '          "noTradeFlag",\n'
+        '          "externalContentTrust",\n'
+        '          "finalMergeAuthority"\n'
+        "        ]",
+        after='        "required_props": [\n'
+        '          "traceId",\n'
+        '          "externalContentTrust",\n'
+        '          "finalMergeAuthority"\n'
+        "        ]",
         expected_failure_marker="test_bridge_shell_and_audit_strip_receive_trace_props",
         rationale="AuditStrip safety props must be load-bearing in the UI handoff fixture.",
         test_function="test_bridge_shell_and_audit_strip_receive_trace_props",
+    ),
+    MutationCase(
+        mutation_id="H7_PHASE4_SCHEMA_CLOSED_WORLD",
+        component="H7 Product-AIOS Bridge",
+        source_path="tests/test_h7_product_aios_bridge_phase4.py",
+        test_script="tests/test_h7_product_aios_bridge_phase4.py",
+        before='            _assert_closed_world(mutated, resolve_refs(schema))',
+        after="            pass",
+        expected_failure_marker="test_phase4_fixture_rejects_unknown_trace_source_fields",
+        rationale="Phase 4 schema must reject undeclared trace-source fields.",
+        test_function="test_phase4_fixture_rejects_unknown_trace_source_fields",
     ),
     MutationCase(
         mutation_id="AIOS_A035_PRINCIPAL_CANONICALIZATION",
@@ -3108,6 +3143,7 @@ def validate_manifest(root: Path, cases: Sequence[MutationCase]) -> None:
         _local_test_target(test_script, _target_test(case))
     validate_k1_marker_coverage(root, cases)
     validate_a035_marker_coverage(root, cases)
+    validate_h7_marker_coverage(root, cases)
     validate_r043_marker_coverage(root, cases)
     validate_funnel_marker_coverage(root, cases)
     validate_funnel_nightly_marker_coverage(root, cases)
@@ -3194,6 +3230,53 @@ def validate_a035_marker_coverage(
     if missing_mutations or missing_markers:
         raise MutationGateError(
             "A-035 governance marker drift: "
+            f"markers_without_mutations={missing_mutations}; "
+            f"mutations_without_markers={missing_markers}"
+        )
+
+
+def validate_h7_marker_coverage(
+    root: Path,
+    cases: Sequence[MutationCase],
+    marker_paths: Sequence[str] = H7_GOVERNANCE_PATHS,
+    prefix: str = H7_MUTATION_PREFIX,
+) -> None:
+    declared = {
+        case.mutation_id for case in cases if case.mutation_id.startswith(prefix)
+    }
+    existing_paths = [
+        relative for relative in marker_paths if _resolved_under(root, relative).is_file()
+    ]
+    if not declared and not existing_paths:
+        return
+
+    marked: dict[str, str] = {}
+    for relative in marker_paths:
+        source = _resolved_under(root, relative)
+        if not source.is_file():
+            raise MutationGateError(f"H7 governance marker source is missing: {relative}")
+        for line_number, line in enumerate(
+            source.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            match = GOVERNANCE_MARKER_RE.fullmatch(line)
+            if not match:
+                continue
+            mutation_id = match.group("mutation_id")
+            if not mutation_id.startswith(prefix):
+                continue
+            if mutation_id in marked:
+                raise MutationGateError(
+                    f"duplicate H7 governance marker: {mutation_id} at "
+                    f"{marked[mutation_id]} and {relative}:{line_number}"
+                )
+            marked[mutation_id] = f"{relative}:{line_number}"
+
+    marker_ids = set(marked)
+    missing_mutations = sorted(marker_ids - declared)
+    missing_markers = sorted(declared - marker_ids)
+    if missing_mutations or missing_markers:
+        raise MutationGateError(
+            "H7 governance marker drift: "
             f"markers_without_mutations={missing_mutations}; "
             f"mutations_without_markers={missing_markers}"
         )

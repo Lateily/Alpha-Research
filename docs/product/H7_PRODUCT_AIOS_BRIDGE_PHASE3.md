@@ -33,10 +33,10 @@ It is not a research conclusion page and not a trading page.
 
 | Region | Purpose | Required states |
 |---|---|---|
-| Request Header | Identify workflow, owner, reviewer, source issue, generated time | complete, stale, blocked |
+| Request Header | Identify workflow, owner, reviewer, source issue, generated time | partial, stale, blocked |
 | Task Preview | Show canonical `ai-task.v1` fields without inventing Router fields | ready, blocked |
-| Run Projection | Show AIOS task/run/freshness status from the H7 packet | complete, partial, stale, blocked, error, review |
-| Evidence Table | Show cited facts, tiers, source dates, cutoffs, verification | complete, partial, stale, review |
+| Run Projection | Show AIOS task/run/freshness status from the H7 packet | partial, stale, blocked, error, review |
+| Evidence Table | Show cited facts, tiers, source dates, cutoffs, verification | partial, stale, review |
 | Gap Panel | Keep missing evidence, blocking reasons, and error codes visible | partial, stale, blocked, error |
 | Human Review Dock | Show reviewer, pending/approved/revise/rejected state, decision ref | pending, approved, revise, rejected |
 | Audit Strip | Show no-trade flag, untrusted-data flag, final merge authority | always |
@@ -67,12 +67,15 @@ Each acceptance case binds one H7 packet status to one visible user outcome:
 
 | Case | Input status | Expected user outcome |
 |---|---|---|
-| `happy_path_reviewed` | `COMPLETE` | Evidence and review ref are visible; final merge remains Junyan-only |
 | `missing_amount` | `PARTIAL` | Missing evidence remains visible; no complete tone |
 | `expired_cutoff` | `STALE` | Refresh request is available; review remains blocked |
 | `bad_request` | `BLOCKED` | No runnable task preview; edit request is primary |
 | `projection_failed` | `ERROR` | Error code is visible; no success fallback |
 | `needs_review` | `AWAITING_HUMAN_REVIEW` | Reviewer and missing decision ref are visible |
+
+`COMPLETE` is excluded from the current acceptance matrix until A-020 Authority
+Resolver provides a trusted Human Gate receipt. A reviewed-looking string or a
+locally constructed receipt must not become a complete product state.
 
 ## 6. Bridge Trace Contract
 
@@ -98,8 +101,7 @@ the trace invalid until the fixture is regenerated and reviewed.
 
 Trace guards:
 
-- `COMPLETE` may show a complete tone only when the H7 packet is complete and
-  human review has a trusted `human_gate_receipt`.
+- `COMPLETE` cannot be shown in this phase.
 - `PARTIAL`, `STALE`, `BLOCKED`, `ERROR`, and `AWAITING_HUMAN_REVIEW` must keep
   `can_show_complete=false`.
 - No case can authorize final merge.
@@ -128,8 +130,8 @@ Desktop view:
 Phase 3 is done when:
 
 1. A Product-AIOS Bridge page contract exists.
-2. Six acceptance cases cover the H7 states.
-3. Every non-complete case visibly explains why it is not complete.
+2. Five acceptance cases cover the current H7 states.
+3. Every case visibly explains why it is not complete.
 4. Human Review and final merge authority remain human-only.
 5. Responsive acceptance is stated for desktop and 390px mobile.
 6. Offline tests prove the fixture cannot silently turn partial/stale/blocked

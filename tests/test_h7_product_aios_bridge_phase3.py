@@ -41,15 +41,13 @@ BRIDGE_SCHEMA = (
     / "h7-product-aios-bridge-phase3.v0.schema.json"
 )
 
-STATUSES = {
-    "COMPLETE",
+ACTIVE_STATUSES = {
     "PARTIAL",
     "STALE",
     "BLOCKED",
     "ERROR",
     "AWAITING_HUMAN_REVIEW",
 }
-NON_COMPLETE = STATUSES - {"COMPLETE"}
 REQUIRED_REGIONS = {
     "request_header",
     "task_preview",
@@ -105,6 +103,52 @@ def _case_by_status(cases: list[Mapping[str, Any]]) -> dict[str, Mapping[str, An
     return {case["input_status"]: case for case in cases}
 
 
+def _assert_closed_world(instance: Any, schema: Mapping[str, Any], path: str = "$") -> None:
+    if "$ref" in schema:
+        raise AssertionError(f"unresolved schema ref at {path}")
+    if "const" in schema and instance != schema["const"]:
+        raise AssertionError(f"{path} does not match const")
+    if "enum" in schema and instance not in schema["enum"]:
+        raise AssertionError(f"{path} is not in enum")
+    expected_type = schema.get("type")
+    if isinstance(expected_type, str):
+        type_map = {
+            "object": Mapping,
+            "array": list,
+            "string": str,
+            "boolean": bool,
+            "null": type(None),
+        }
+        if expected_type in type_map and not isinstance(instance, type_map[expected_type]):
+            raise AssertionError(f"{path} has wrong type")
+    if schema.get("type") == "object":
+        if not isinstance(instance, Mapping):
+            raise AssertionError(f"{path} must be object")
+        if schema.get("additionalProperties") is False:
+            allowed = set(schema.get("properties", {}))
+            extra = set(instance) - allowed
+            if extra:
+                raise AssertionError(f"{path} has unknown fields: {sorted(extra)}")
+        for key in schema.get("required", []):
+            if key not in instance:
+                raise AssertionError(f"{path} missing required field: {key}")
+        for key, child_schema in schema.get("properties", {}).items():
+            if key in instance:
+                _assert_closed_world(instance[key], child_schema, f"{path}.{key}")
+    elif schema.get("type") == "array":
+        if not isinstance(instance, list):
+            raise AssertionError(f"{path} must be array")
+        prefix = schema.get("prefixItems")
+        if prefix is not None:
+            if schema.get("items") is False and len(instance) != len(prefix):
+                raise AssertionError(f"{path} length must equal prefixItems")
+            for index, child_schema in enumerate(prefix):
+                _assert_closed_world(instance[index], child_schema, f"{path}[{index}]")
+        elif "items" in schema and isinstance(schema["items"], Mapping):
+            for index, item in enumerate(instance):
+                _assert_closed_world(item, schema["items"], f"{path}[{index}]")
+
+
 def _artifact_hash(value: Any) -> str:
     payload = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
     return HASH_PREFIX + hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -150,6 +194,40 @@ class H7ProductAiosBridgePhase3Tests(unittest.TestCase):
         case_schema = self.schema["properties"]["acceptance_cases"]["items"]
         self.assertFalse(case_schema["additionalProperties"])
 
+    def test_phase3_fixture_executes_closed_world_schema(self) -> None:
+        schema = json.loads(json.dumps(self.schema))
+        defs = schema.pop("$defs")
+
+        def resolve_refs(node: Any) -> Any:
+            if isinstance(node, Mapping):
+                if "$ref" in node:
+                    return resolve_refs(defs[node["$ref"].removeprefix("#/$defs/")])
+                return {key: resolve_refs(value) for key, value in node.items()}
+            if isinstance(node, list):
+                return [resolve_refs(item) for item in node]
+            return node
+
+        _assert_closed_world(self.bridge, resolve_refs(schema))
+
+    # governance-mutation: H7_PHASE3_SCHEMA_CLOSED_WORLD
+    def test_phase3_fixture_rejects_unknown_case_fields(self) -> None:
+        schema = json.loads(json.dumps(self.schema))
+        defs = schema.pop("$defs")
+
+        def resolve_refs(node: Any) -> Any:
+            if isinstance(node, Mapping):
+                if "$ref" in node:
+                    return resolve_refs(defs[node["$ref"].removeprefix("#/$defs/")])
+                return {key: resolve_refs(value) for key, value in node.items()}
+            if isinstance(node, list):
+                return [resolve_refs(item) for item in node]
+            return node
+
+        mutated = json.loads(json.dumps(self.bridge))
+        mutated["acceptance_cases"][0]["shadow_trace_id_source"] = "chat_history"
+        with self.assertRaisesRegex(AssertionError, "unknown fields"):
+            _assert_closed_world(mutated, resolve_refs(schema))
+
     def test_page_contract_points_to_h7_contracts(self) -> None:
         page = self.bridge["page"]
         self.assertEqual(page["route"], "/aios/product-bridge")
@@ -172,11 +250,11 @@ class H7ProductAiosBridgePhase3Tests(unittest.TestCase):
     def test_acceptance_cases_cover_every_h7_status(self) -> None:
         statuses = {case["input_status"] for case in self.bridge["acceptance_cases"]}
         self.assertEqual(statuses, set(self.phase1))
-        self.assertEqual(statuses, STATUSES)
+        self.assertEqual(statuses, ACTIVE_STATUSES)
 
     def test_non_complete_cases_cannot_be_success(self) -> None:
         cases = _case_by_status(self.bridge["acceptance_cases"])
-        for status in NON_COMPLETE:
+        for status in ACTIVE_STATUSES:
             with self.subTest(status=status):
                 self.assertIs(cases[status]["must_not_show_as_success"], True)
                 self.assertNotEqual(cases[status]["expected_tone"], "complete")
@@ -224,9 +302,10 @@ class H7ProductAiosBridgePhase3Tests(unittest.TestCase):
                     receipt["receipt_id"] if receipt else None,
                 )
 
+    # governance-mutation: H7_TRACE_ARTIFACT_HASH_BOUND
     def test_trace_rejects_packet_tampering(self) -> None:
-        case = copy_case = dict(_case_by_status(self.bridge["acceptance_cases"])["COMPLETE"])
-        packet = json.loads(json.dumps(self.phase1["COMPLETE"]))
+        case = copy_case = dict(_case_by_status(self.bridge["acceptance_cases"])["PARTIAL"])
+        packet = json.loads(json.dumps(self.phase1["PARTIAL"]))
         packet["projection"]["summary"] = "Tampered after trace was built."
         agent_stage = copy_case["bridge_trace"]["stages"][2]
         self.assertNotEqual(
@@ -247,16 +326,11 @@ class H7ProductAiosBridgePhase3Tests(unittest.TestCase):
                 self.assertIs(guards["can_promote_memory"], False)
                 self.assertIs(guards["must_preserve_untrusted_data"], True)
 
-    def test_complete_case_still_keeps_junyan_authority_visible(self) -> None:
-        complete = _case_by_status(self.bridge["acceptance_cases"])["COMPLETE"]
-        self.assertIn("audit_strip", complete["must_show"])
-        self.assertIs(complete["display_guards"]["can_show_complete"], True)
-        complete_packet = self.phase1["COMPLETE"]
-        self.assertEqual(
-            complete_packet["human_review"]["final_merge_authority"],
-            "Junyan",
-        )
-        self.assertIs(complete_packet["human_review"]["final_merge_authorized"], False)
+    def test_no_current_case_can_show_complete_before_a020(self) -> None:
+        for case in self.bridge["acceptance_cases"]:
+            with self.subTest(status=case["input_status"]):
+                self.assertIs(case["display_guards"]["can_show_complete"], False)
+                self.assertNotEqual(case["expected_tone"], "complete")
 
     def test_bridge_cases_align_with_ui_tones(self) -> None:
         tones = {view["status"]: view["tone"] for view in self.ui["state_views"]}

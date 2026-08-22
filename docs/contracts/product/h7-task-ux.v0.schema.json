@@ -17,11 +17,14 @@
     "no_trade_flag"
   ],
   "properties": {
-    "schema": {"const": "h7-task-ux.v0"},
-    "workflow_type": {"const": "ANNOUNCEMENT_FACT_EXTRACTION"},
+    "schema": {
+      "const": "h7-task-ux.v0"
+    },
+    "workflow_type": {
+      "const": "ANNOUNCEMENT_FACT_EXTRACTION"
+    },
     "status": {
       "enum": [
-        "COMPLETE",
         "PARTIAL",
         "STALE",
         "BLOCKED",
@@ -29,103 +32,129 @@
         "AWAITING_HUMAN_REVIEW"
       ]
     },
-    "generated_at": {"$ref": "#/$defs/aware_timestamp"},
-    "user_input": {"$ref": "#/$defs/user_input"},
+    "generated_at": {
+      "$ref": "#/$defs/aware_timestamp"
+    },
+    "user_input": {
+      "$ref": "#/$defs/user_input"
+    },
     "task_manifest": {
       "oneOf": [
-        {"$ref": "../../../scripts/llm/schemas/task.schema.json"},
-        {"type": "null"}
+        {
+          "$ref": "../../../scripts/llm/schemas/task.schema.json"
+        },
+        {
+          "type": "null"
+        }
       ]
     },
-    "projection": {"$ref": "#/$defs/projection"},
-    "human_review": {"$ref": "#/$defs/human_review"},
+    "projection": {
+      "$ref": "#/$defs/projection"
+    },
+    "human_review": {
+      "$ref": "#/$defs/human_review"
+    },
     "human_gate_receipt": {
-      "oneOf": [
-        {"$ref": "#/$defs/human_gate_receipt"},
-        {"type": "null"}
-      ]
+      "type": "null"
     },
-    "no_trade_flag": {"const": true}
+    "no_trade_flag": {
+      "const": true
+    }
   },
   "allOf": [
     {
-      "if": {"properties": {"status": {"const": "BLOCKED"}}},
+      "if": {
+        "properties": {
+          "status": {
+            "const": "BLOCKED"
+          }
+        }
+      },
       "then": {
         "properties": {
-          "task_manifest": {"type": "null"},
+          "task_manifest": {
+            "type": "null"
+          },
           "projection": {
             "properties": {
-              "blocking_reasons": {"minItems": 1}
+              "blocking_reasons": {
+                "minItems": 1
+              }
             }
           }
         }
       },
       "else": {
         "properties": {
-          "task_manifest": {"$ref": "../../../scripts/llm/schemas/task.schema.json"},
+          "task_manifest": {
+            "$ref": "../../../scripts/llm/schemas/task.schema.json"
+          },
           "user_input": {
             "properties": {
-              "fact_fields": {"minItems": 1}
+              "fact_fields": {
+                "minItems": 1
+              }
             }
           }
         }
       }
     },
     {
-      "if": {"properties": {"status": {"const": "COMPLETE"}}},
-      "then": {
+      "if": {
         "properties": {
-          "projection": {
-            "properties": {
-              "task_state": {"const": "DONE"},
-              "run_state": {"const": "DONE"},
-              "evidence": {"minItems": 1},
-              "missing_evidence": {"maxItems": 0}
-            }
-          },
-          "human_review": {
-            "properties": {
-              "state": {"const": "APPROVED"},
-              "decision_ref": {"type": "string", "minLength": 1}
-            }
-          },
-          "human_gate_receipt": {
-            "$ref": "#/$defs/human_gate_receipt"
+          "status": {
+            "const": "PARTIAL"
           }
         }
-      }
-    },
-    {
-      "if": {"properties": {"status": {"const": "PARTIAL"}}},
+      },
       "then": {
         "properties": {
           "projection": {
             "properties": {
-              "missing_evidence": {"minItems": 1}
+              "missing_evidence": {
+                "minItems": 1
+              }
             }
           }
         }
       }
     },
     {
-      "if": {"properties": {"status": {"const": "STALE"}}},
+      "if": {
+        "properties": {
+          "status": {
+            "const": "STALE"
+          }
+        }
+      },
       "then": {
         "properties": {
           "projection": {
             "properties": {
-              "freshness": {"const": "STALE"}
+              "freshness": {
+                "const": "STALE"
+              }
             }
           }
         }
       }
     },
     {
-      "if": {"properties": {"status": {"const": "ERROR"}}},
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ERROR"
+          }
+        }
+      },
       "then": {
         "properties": {
           "projection": {
             "properties": {
-              "error_code": {"type": "string", "minLength": 1}
+              "error_code": {
+                "type": "string",
+                "minLength": 1
+              }
             }
           }
         }
@@ -134,20 +163,32 @@
         "properties": {
           "projection": {
             "properties": {
-              "error_code": {"type": "null"}
+              "error_code": {
+                "type": "null"
+              }
             }
           }
         }
       }
     },
     {
-      "if": {"properties": {"status": {"const": "AWAITING_HUMAN_REVIEW"}}},
+      "if": {
+        "properties": {
+          "status": {
+            "const": "AWAITING_HUMAN_REVIEW"
+          }
+        }
+      },
       "then": {
         "properties": {
           "human_review": {
             "properties": {
-              "state": {"const": "PENDING"},
-              "decision_ref": {"type": "null"}
+              "state": {
+                "const": "PENDING"
+              },
+              "decision_ref": {
+                "type": "null"
+              }
             }
           },
           "human_gate_receipt": {
@@ -160,14 +201,22 @@
       "if": {
         "properties": {
           "human_review": {
-            "properties": {"state": {"const": "PENDING"}}
+            "properties": {
+              "state": {
+                "const": "PENDING"
+              }
+            }
           }
         }
       },
       "then": {
         "properties": {
           "human_review": {
-            "properties": {"decision_ref": {"type": "null"}}
+            "properties": {
+              "decision_ref": {
+                "type": "null"
+              }
+            }
           }
         }
       }
@@ -181,11 +230,17 @@
     "non_empty_string_array": {
       "type": "array",
       "minItems": 1,
-      "items": {"type": "string", "minLength": 1}
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "string_array": {
       "type": "array",
-      "items": {"type": "string", "minLength": 1}
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "announcement_ref": {
       "type": "object",
@@ -199,16 +254,28 @@
         "trust"
       ],
       "properties": {
-        "source_id": {"type": "string", "minLength": 1},
-        "source_kind": {"const": "ANNOUNCEMENT"},
-        "locator": {"type": "string", "minLength": 1},
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_kind": {
+          "const": "ANNOUNCEMENT"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
         "publish_date": {
           "type": "string",
           "format": "date",
           "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
         },
-        "data_cutoff": {"$ref": "#/$defs/aware_timestamp"},
-        "trust": {"const": "UNTRUSTED_DATA"}
+        "data_cutoff": {
+          "$ref": "#/$defs/aware_timestamp"
+        },
+        "trust": {
+          "const": "UNTRUSTED_DATA"
+        }
       }
     },
     "user_input": {
@@ -228,21 +295,50 @@
         "submitted_at"
       ],
       "properties": {
-        "request_id": {"type": "string", "minLength": 1},
-        "source_issue": {"type": "integer", "minimum": 1},
-        "goal": {"type": "string", "minLength": 1},
-        "human_owner": {"type": "string", "minLength": 1},
-        "reviewer": {"type": "string", "minLength": 1},
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_issue": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "goal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "human_owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewer": {
+          "type": "string",
+          "minLength": 1
+        },
         "announcement_refs": {
           "type": "array",
           "minItems": 1,
-          "items": {"$ref": "#/$defs/announcement_ref"}
+          "items": {
+            "$ref": "#/$defs/announcement_ref"
+          }
         },
-        "fact_fields": {"$ref": "#/$defs/string_array"},
-        "data_cutoff": {"$ref": "#/$defs/aware_timestamp"},
-        "max_cny": {"type": "string", "pattern": "^[0-9]+(?:\\.[0-9]+)?$"},
-        "max_minutes": {"type": "integer", "minimum": 1},
-        "submitted_at": {"$ref": "#/$defs/aware_timestamp"}
+        "fact_fields": {
+          "$ref": "#/$defs/string_array"
+        },
+        "data_cutoff": {
+          "$ref": "#/$defs/aware_timestamp"
+        },
+        "max_cny": {
+          "type": "string",
+          "pattern": "^[0-9]+(?:\\.[0-9]+)?$"
+        },
+        "max_minutes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "submitted_at": {
+          "$ref": "#/$defs/aware_timestamp"
+        }
       }
     },
     "evidence": {
@@ -258,13 +354,40 @@
         "verification_status"
       ],
       "properties": {
-        "source_id": {"type": "string", "minLength": 1},
-        "locator": {"type": "string", "minLength": 1},
-        "publish_date": {"type": "string", "format": "date"},
-        "data_cutoff": {"$ref": "#/$defs/aware_timestamp"},
-        "evidence_tier": {"enum": ["E1", "E2", "E3", "E4"]},
-        "fact": {"type": "string", "minLength": 1},
-        "verification_status": {"enum": ["VERIFIED", "UNVERIFIED", "CONFLICTING"]}
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publish_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "data_cutoff": {
+          "$ref": "#/$defs/aware_timestamp"
+        },
+        "evidence_tier": {
+          "enum": [
+            "E1",
+            "E2",
+            "E3",
+            "E4"
+          ]
+        },
+        "fact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verification_status": {
+          "enum": [
+            "VERIFIED",
+            "UNVERIFIED",
+            "CONFLICTING"
+          ]
+        }
       }
     },
     "projection": {
@@ -302,7 +425,10 @@
           ]
         },
         "run_state": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "enum": [
             "SPEC_READY",
             "RUNNING",
@@ -316,16 +442,48 @@
             null
           ]
         },
-        "freshness": {"enum": ["CURRENT", "STALE", "UNKNOWN"]},
-        "model": {"const": "offline-fixture"},
-        "prompt_version": {"const": "h7.announcement-fact-extraction.v0"},
-        "summary": {"type": "string", "minLength": 1},
-        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
-        "missing_evidence": {"$ref": "#/$defs/string_array"},
-        "warnings": {"$ref": "#/$defs/string_array"},
-        "blocking_reasons": {"$ref": "#/$defs/string_array"},
-        "external_content_trust": {"const": "UNTRUSTED_DATA"},
-        "error_code": {"type": ["string", "null"], "minLength": 1}
+        "freshness": {
+          "enum": [
+            "CURRENT",
+            "STALE",
+            "UNKNOWN"
+          ]
+        },
+        "model": {
+          "const": "offline-fixture"
+        },
+        "prompt_version": {
+          "const": "h7.announcement-fact-extraction.v0"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "missing_evidence": {
+          "$ref": "#/$defs/string_array"
+        },
+        "warnings": {
+          "$ref": "#/$defs/string_array"
+        },
+        "blocking_reasons": {
+          "$ref": "#/$defs/string_array"
+        },
+        "external_content_trust": {
+          "const": "UNTRUSTED_DATA"
+        },
+        "error_code": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
       }
     },
     "human_review": {
@@ -339,40 +497,35 @@
         "final_merge_authorized"
       ],
       "properties": {
-        "state": {"enum": ["NOT_REQUESTED", "PENDING", "APPROVED", "REVISE", "REJECTED"]},
-        "reviewer": {"type": ["string", "null"], "minLength": 1},
-        "decision_ref": {"type": ["string", "null"], "minLength": 1},
-        "final_merge_authority": {"const": "Junyan"},
-        "final_merge_authorized": {"const": false}
-      }
-    },
-    "human_gate_receipt": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "schema",
-        "receipt_id",
-        "trace_id",
-        "actor",
-        "decision",
-        "decision_ref",
-        "reviewed_artifact_id",
-        "reviewed_artifact_hash",
-        "decided_at"
-      ],
-      "properties": {
-        "schema": {"const": "human-gate-receipt.v0"},
-        "receipt_id": {"type": "string", "minLength": 1},
-        "trace_id": {"type": "string", "minLength": 1},
-        "actor": {"type": "string", "minLength": 1},
-        "decision": {"enum": ["APPROVED", "REVISE", "REJECTED"]},
-        "decision_ref": {"type": "string", "minLength": 1},
-        "reviewed_artifact_id": {"type": "string", "minLength": 1},
-        "reviewed_artifact_hash": {
-          "type": "string",
-          "pattern": "^sha256:[0-9a-f]{64}$"
+        "state": {
+          "enum": [
+            "NOT_REQUESTED",
+            "PENDING",
+            "APPROVED",
+            "REVISE",
+            "REJECTED"
+          ]
         },
-        "decided_at": {"$ref": "#/$defs/aware_timestamp"}
+        "reviewer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "decision_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "final_merge_authority": {
+          "const": "Junyan"
+        },
+        "final_merge_authorized": {
+          "const": false
+        }
       }
     }
   }

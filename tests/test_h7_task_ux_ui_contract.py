@@ -29,15 +29,14 @@ UI_FIXTURES = (
 )
 UI_SCHEMA = ROOT / "docs" / "contracts" / "product" / "h7-task-ux-ui.v0.schema.json"
 
-STATUSES = {
-    "COMPLETE",
+ACTIVE_STATUSES = {
     "PARTIAL",
     "STALE",
     "BLOCKED",
     "ERROR",
     "AWAITING_HUMAN_REVIEW",
 }
-NON_COMPLETE = STATUSES - {"COMPLETE"}
+STATUS_ENUM = ACTIVE_STATUSES
 LAYOUT_SECTIONS = {
     "request_summary",
     "task_manifest_preview",
@@ -134,7 +133,7 @@ def validate_view_model(view_model: Any) -> list[str]:
             if (
                 not isinstance(enabled, list)
                 or not enabled
-                or any(status not in STATUSES for status in enabled)
+                or any(status not in ACTIVE_STATUSES for status in enabled)
             ):
                 errors.append("action enabled states are invalid")
             if action.get("id") == "REQUEST_HUMAN_REVIEW" and not action.get(
@@ -156,7 +155,7 @@ def validate_view_model(view_model: Any) -> list[str]:
         errors.append("state views must be a list")
     else:
         seen = [item.get("status") for item in state_views if isinstance(item, Mapping)]
-        if set(seen) != STATUSES or len(seen) != len(STATUSES):
+        if set(seen) != ACTIVE_STATUSES or len(seen) != len(ACTIVE_STATUSES):
             errors.append("state view inventory is invalid")
         for item in state_views:
             if not isinstance(item, Mapping):
@@ -164,9 +163,9 @@ def validate_view_model(view_model: Any) -> list[str]:
                 continue
             status = item.get("status")
             tone = item.get("tone")
-            if status not in STATUSES:
+            if status not in ACTIVE_STATUSES:
                 errors.append("state status is unsupported")
-            if status in NON_COMPLETE and tone == "complete":
+            if tone == "complete":
                 errors.append("non-complete states cannot use complete tone")
             if not _non_empty_string(item.get("headline")):
                 errors.append("state headline is invalid")
@@ -219,7 +218,7 @@ class H7TaskUxUiContractTests(unittest.TestCase):
         cls.ui = _load_json(UI_FIXTURES)["view_model"]
 
     def test_ui_fixture_inventory_matches_phase1_statuses(self) -> None:
-        self.assertEqual(set(self.phase1), STATUSES)
+        self.assertEqual(set(self.phase1), ACTIVE_STATUSES)
         self.assertEqual(
             {view["status"] for view in self.ui["state_views"]},
             set(self.phase1),
@@ -227,8 +226,11 @@ class H7TaskUxUiContractTests(unittest.TestCase):
 
     def test_schema_declares_the_same_status_inventory(self) -> None:
         status_enum = self.schema["$defs"]["status"]["enum"]
-        self.assertEqual(set(status_enum), STATUSES)
+        self.assertEqual(set(status_enum), STATUS_ENUM)
         self.assertFalse(self.schema["additionalProperties"])
+
+    def test_ui_fixture_does_not_render_complete_before_a020(self) -> None:
+        self.assertNotIn("COMPLETE", {view["status"] for view in self.ui["state_views"]})
 
     def test_view_model_validates(self) -> None:
         self.assertEqual(validate_view_model(self.ui), [])

@@ -34,7 +34,14 @@ SCHEMA_PATH = (
     ROOT / "docs" / "contracts" / "product" / "h7-task-ux.v0.schema.json"
 )
 
-STATUSES = {
+ACTIVE_STATUSES = {
+    "PARTIAL",
+    "STALE",
+    "BLOCKED",
+    "ERROR",
+    "AWAITING_HUMAN_REVIEW",
+}
+RUNTIME_STATUS_ENUM = {
     "COMPLETE",
     "PARTIAL",
     "STALE",
@@ -260,6 +267,29 @@ def _compiler_source(packet: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _synthetic_complete_attempt(fixtures: Mapping[str, Any]) -> dict[str, Any]:
+    packet = copy.deepcopy(fixtures["AWAITING_HUMAN_REVIEW"])
+    packet["status"] = "COMPLETE"
+    packet["projection"]["task_state"] = "DONE"
+    packet["projection"]["run_state"] = "DONE"
+    packet["projection"]["missing_evidence"] = []
+    packet["projection"]["summary"] = "Agent claims output is reviewed."
+    packet["human_review"]["state"] = "APPROVED"
+    packet["human_review"]["decision_ref"] = "raw-model-text: agent claims Jason approved"
+    packet["human_gate_receipt"] = {
+        "schema": "human-gate-receipt.v0",
+        "receipt_id": "raw-model-text: agent claims Jason approved",
+        "trace_id": packet["user_input"]["request_id"],
+        "actor": packet["human_review"]["reviewer"],
+        "decision": "APPROVED",
+        "decision_ref": packet["human_review"]["decision_ref"],
+        "reviewed_artifact_id": "projection:" + packet["user_input"]["request_id"],
+        "reviewed_artifact_hash": _artifact_hash(packet["projection"]),
+        "decided_at": "2026-08-20T09:25:00+08:00",
+    }
+    return packet
+
+
 def validate_packet(packet: Any) -> list[str]:
     """Validate the H7 product boundary without returning supplied values."""
 
@@ -274,7 +304,7 @@ def validate_packet(packet: Any) -> list[str]:
         errors.append("schema is unsupported")
     if packet.get("workflow_type") != "ANNOUNCEMENT_FACT_EXTRACTION":
         errors.append("workflow_type is unsupported")
-    if packet.get("status") not in STATUSES:
+    if packet.get("status") not in RUNTIME_STATUS_ENUM:
         errors.append("status is unsupported")
     if not _aware_timestamp(packet.get("generated_at")):
         errors.append("generated_at is invalid")
@@ -424,6 +454,7 @@ def validate_packet(packet: Any) -> list[str]:
 
     receipt = packet.get("human_gate_receipt")
     if receipt is not None:
+        errors.append("H7 cannot trust human_gate_receipt before A-020")
         if not isinstance(receipt, Mapping) or set(receipt) != RECEIPT_KEYS:
             errors.append("human_gate_receipt fields are invalid")
         else:
@@ -493,6 +524,7 @@ def validate_packet(packet: Any) -> list[str]:
         ) != expected_states:
             errors.append("status does not match task/run state")
         if status == "COMPLETE":
+            errors.append("COMPLETE requires A-020 Authority Resolver")
             if not projection.get("evidence") or projection.get("missing_evidence"):
                 errors.append("COMPLETE evidence is invalid")
             if review.get("state") != "APPROVED" or not review.get("decision_ref"):
@@ -531,12 +563,16 @@ class H7TaskUxContractTests(unittest.TestCase):
 
     def test_fixture_inventory_is_exact(self) -> None:
         self.assertEqual(self.fixture_set["schema"], "h7-task-ux.fixtures.v0")
-        self.assertEqual(set(self.fixtures), STATUSES)
+        self.assertEqual(set(self.fixtures), ACTIVE_STATUSES)
+
+    def test_no_offline_fixture_claims_complete_before_a020(self) -> None:
+        self.assertNotIn("COMPLETE", self.fixtures)
 
     def test_schema_and_runtime_required_fields_match(self) -> None:
         self.assertFalse(self.schema["additionalProperties"])
         self.assertEqual(set(self.schema["required"]), ROOT_KEYS)
-        self.assertEqual(set(self.schema["properties"]["status"]["enum"]), STATUSES)
+        self.assertEqual(set(self.schema["properties"]["status"]["enum"]), ACTIVE_STATUSES)
+        self.assertEqual(self.schema["properties"]["human_gate_receipt"], {"type": "null"})
 
     def test_all_sanitized_fixtures_validate(self) -> None:
         for status, packet in self.fixtures.items():
@@ -556,30 +592,30 @@ class H7TaskUxContractTests(unittest.TestCase):
                     self.assertEqual(result.manifest, packet["task_manifest"])
 
     def test_unknown_field_fails_closed(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = copy.deepcopy(self.fixtures["PARTIAL"])
         packet["user_input"]["router_task_type"] = "announcement"
         self.assertIn("user_input fields are invalid", validate_packet(packet))
 
     def test_workflow_type_never_enters_ai_task(self) -> None:
-        packet = self.fixtures["COMPLETE"]
+        packet = self.fixtures["PARTIAL"]
         self.assertNotIn("task_type", packet["task_manifest"])
         self.assertNotIn("workflow_type", packet["task_manifest"])
 
     def test_secret_like_value_fails_without_echo(self) -> None:
         synthetic_value = "gho_" + "1234567890abcdef"
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = copy.deepcopy(self.fixtures["PARTIAL"])
         packet["user_input"]["goal"] = synthetic_value
         errors = validate_packet(packet)
         self.assertIn("packet contains secret-like data", errors)
         self.assertNotIn(synthetic_value, json.dumps(errors))
 
     def test_naive_timestamp_fails_closed(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = copy.deepcopy(self.fixtures["PARTIAL"])
         packet["user_input"]["data_cutoff"] = "2026-08-20T09:00:00"
         self.assertIn("data_cutoff is invalid", validate_packet(packet))
 
     def test_bad_publish_date_fails_closed(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = copy.deepcopy(self.fixtures["PARTIAL"])
         packet["user_input"]["announcement_refs"][0]["publish_date"] = "tomorrow"
         self.assertIn(
             "announcement_ref publish_date is invalid",
@@ -587,17 +623,17 @@ class H7TaskUxContractTests(unittest.TestCase):
         )
 
     def test_bad_evidence_tier_fails_closed(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = copy.deepcopy(self.fixtures["PARTIAL"])
         packet["projection"]["evidence"][0]["evidence_tier"] = "E9"
         self.assertIn("evidence tier is invalid", validate_packet(packet))
 
     def test_empty_summary_fails_closed(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = copy.deepcopy(self.fixtures["PARTIAL"])
         packet["projection"]["summary"] = ""
         self.assertIn("projection summary is invalid", validate_packet(packet))
 
     def test_complete_cannot_hide_missing_evidence(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = _synthetic_complete_attempt(self.fixtures)
         packet["projection"]["missing_evidence"] = ["disclosed_amount"]
         self.assertIn("COMPLETE evidence is invalid", validate_packet(packet))
 
@@ -607,12 +643,12 @@ class H7TaskUxContractTests(unittest.TestCase):
         self.assertIn("STALE requires stale freshness", validate_packet(packet))
 
     def test_executor_cannot_self_review(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = _synthetic_complete_attempt(self.fixtures)
         packet["human_review"]["reviewer"] = "Codex"
         self.assertIn("executor cannot review its own output", validate_packet(packet))
 
     def test_approved_reviewer_must_match_task(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = _synthetic_complete_attempt(self.fixtures)
         packet["human_review"]["reviewer"] = "Simon"
         self.assertIn(
             "approved reviewer must match task reviewer",
@@ -620,18 +656,27 @@ class H7TaskUxContractTests(unittest.TestCase):
         )
 
     def test_h7_cannot_claim_final_merge_authority(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = _synthetic_complete_attempt(self.fixtures)
         packet["human_review"]["final_merge_authorized"] = True
         self.assertIn("H7 cannot authorize final merge", validate_packet(packet))
 
+    # governance-mutation: H7_HUMAN_GATE_RECEIPT_REQUIRED
+    def test_complete_requires_a020_authority_resolver(self) -> None:
+        packet = _synthetic_complete_attempt(self.fixtures)
+        self.assertIn(
+            "COMPLETE requires A-020 Authority Resolver",
+            validate_packet(packet),
+        )
+
     def test_complete_requires_trusted_human_gate_receipt(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = _synthetic_complete_attempt(self.fixtures)
         packet["human_gate_receipt"] = None
         self.assertIn(
             "COMPLETE requires trusted human gate receipt",
             validate_packet(packet),
         )
 
+    # governance-mutation: H7_FAKE_APPROVAL_TEXT_BLOCK
     def test_fake_text_review_cannot_complete_packet(self) -> None:
         packet = copy.deepcopy(self.fixtures["AWAITING_HUMAN_REVIEW"])
         packet["human_review"]["state"] = "APPROVED"
@@ -644,8 +689,14 @@ class H7TaskUxContractTests(unittest.TestCase):
             errors,
         )
 
+    def test_consistent_fake_review_and_receipt_do_not_complete(self) -> None:
+        packet = _synthetic_complete_attempt(self.fixtures)
+        errors = validate_packet(packet)
+        self.assertIn("COMPLETE requires A-020 Authority Resolver", errors)
+        self.assertIn("H7 cannot trust human_gate_receipt before A-020", errors)
+
     def test_receipt_must_bind_reviewed_projection(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = _synthetic_complete_attempt(self.fixtures)
         packet["projection"]["summary"] = "Tampered after review."
         self.assertIn(
             "human_gate_receipt must bind reviewed projection",
@@ -653,7 +704,7 @@ class H7TaskUxContractTests(unittest.TestCase):
         )
 
     def test_complete_status_requires_done_states(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = _synthetic_complete_attempt(self.fixtures)
         packet["projection"]["task_state"] = "REVIEWING"
         packet["projection"]["run_state"] = "VERIFYING"
         self.assertIn("status does not match task/run state", validate_packet(packet))
@@ -667,12 +718,12 @@ class H7TaskUxContractTests(unittest.TestCase):
         )
 
     def test_evidence_must_reference_submitted_source(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = copy.deepcopy(self.fixtures["PARTIAL"])
         packet["projection"]["evidence"][0]["source_id"] = "unknown-source"
         self.assertIn("evidence source is not in user input", validate_packet(packet))
 
     def test_evidence_provenance_must_match_source(self) -> None:
-        packet = copy.deepcopy(self.fixtures["COMPLETE"])
+        packet = copy.deepcopy(self.fixtures["PARTIAL"])
         packet["projection"]["evidence"][0]["publish_date"] = "2026-08-19"
         self.assertIn(
             "evidence provenance does not match source reference",

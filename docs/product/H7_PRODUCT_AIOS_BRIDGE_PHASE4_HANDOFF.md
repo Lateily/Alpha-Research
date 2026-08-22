@@ -79,15 +79,16 @@ Forbidden visible actions:
 
 ## 4. State Acceptance
 
-The page must render all six H7 states from fixture data:
+The page must render all current H7 states from fixture data:
 
-- `COMPLETE`: evidence and trusted Human Gate receipt visible, still no final
-  merge authority.
 - `PARTIAL`: missing evidence visible and page tone not complete.
 - `STALE`: cutoff visible and refresh request available.
 - `BLOCKED`: no runnable task preview, blocking reasons visible.
 - `ERROR`: error code visible, no success fallback.
 - `AWAITING_HUMAN_REVIEW`: reviewer visible and decision ref still null.
+
+`COMPLETE` is reserved for the future A-020 Authority Resolver integration. It
+must not appear in the current fixture-driven handoff.
 
 ## 5. Better Implementation Prompt
 
@@ -110,10 +111,11 @@ Rules:
 2. Do not connect to models, Router, Context, Policy, Scheduler, Executor,
    GitHub write APIs, Memory, or production data.
 3. Do not invent `task_type`; `workflow_type` remains UI metadata only.
-4. Render all six states from fixture data.
+4. Render all five current states from fixture data.
 5. Keep `PARTIAL`, `STALE`, `BLOCKED`, `ERROR`, and
    `AWAITING_HUMAN_REVIEW` visibly non-complete. A non-empty approval-looking
-   string must not be rendered as Human Review completion.
+   string must not be rendered as Human Review completion, and no fixture may
+   render `COMPLETE` before A-020.
 6. Keep `no_trade_flag`, `UNTRUSTED_DATA`, and `Junyan final merge authority`
    visible in every state.
 7. Keep `trace_id` visible in every state, including error and blocked states.
@@ -124,7 +126,7 @@ Deliverables:
 
 - fixture-driven page or component prototype;
 - screenshot or written QA for desktop and 390px mobile;
-- state coverage evidence for all six states;
+- state coverage evidence for all five current states;
 - list of any fields missing from Reed's contract.
 
 ## 6. Phase 4 Done
@@ -134,7 +136,7 @@ Phase 4 is done when:
 1. Component inventory is explicit.
 2. Allowed and forbidden actions are explicit.
 3. Better handoff prompt exists.
-4. Fixture proves all six states map to components and required fields.
+4. Fixture proves all current states map to components and required fields.
 5. Offline tests prove no forbidden action or runtime write path appears.
 6. Offline tests prove trace props are present, AuditStrip safety props are
    load-bearing, and trace data cannot be sourced from chat history, raw model

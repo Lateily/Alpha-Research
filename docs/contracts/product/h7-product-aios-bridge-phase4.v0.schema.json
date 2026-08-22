@@ -4,9 +4,16 @@
   "title": "H7 Product-AIOS Bridge Phase 4 UI Handoff v0",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "page", "state_component_map", "responsive_qa"],
+  "required": [
+    "schema",
+    "page",
+    "state_component_map",
+    "responsive_qa"
+  ],
   "properties": {
-    "schema": {"const": "h7-product-aios-bridge-phase4.fixtures.v0"},
+    "schema": {
+      "const": "h7-product-aios-bridge-phase4.fixtures.v0"
+    },
     "page": {
       "type": "object",
       "additionalProperties": false,
@@ -21,12 +28,35 @@
         "no_trade_flag"
       ],
       "properties": {
-        "route": {"const": "/aios/product-bridge"},
-        "mode": {"const": "fixture_only"},
-        "components": {"type": "array", "items": {"$ref": "#/$defs/component"}},
-        "bridge_trace": {"$ref": "#/$defs/bridge_trace"},
-        "allowed_actions": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "forbidden_actions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "route": {
+          "const": "/aios/product-bridge"
+        },
+        "mode": {
+          "const": "fixture_only"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        },
+        "bridge_trace": {
+          "$ref": "#/$defs/bridge_trace"
+        },
+        "allowed_actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbidden_actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "runtime_connections": {
           "type": "object",
           "additionalProperties": false,
@@ -42,18 +72,38 @@
             "production_write"
           ],
           "properties": {
-            "model_provider": {"const": false},
-            "router": {"const": false},
-            "context": {"const": false},
-            "policy": {"const": false},
-            "scheduler": {"const": false},
-            "executor": {"const": false},
-            "github_write": {"const": false},
-            "memory_write": {"const": false},
-            "production_write": {"const": false}
+            "model_provider": {
+              "const": false
+            },
+            "router": {
+              "const": false
+            },
+            "context": {
+              "const": false
+            },
+            "policy": {
+              "const": false
+            },
+            "scheduler": {
+              "const": false
+            },
+            "executor": {
+              "const": false
+            },
+            "github_write": {
+              "const": false
+            },
+            "memory_write": {
+              "const": false
+            },
+            "production_write": {
+              "const": false
+            }
           }
         },
-        "no_trade_flag": {"const": true}
+        "no_trade_flag": {
+          "const": true
+        }
       }
     },
     "state_component_map": {
@@ -61,23 +111,60 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "required_components", "must_show_fields"],
+        "required": [
+          "status",
+          "required_components",
+          "must_show_fields"
+        ],
         "properties": {
           "status": {
-            "enum": ["COMPLETE", "PARTIAL", "STALE", "BLOCKED", "ERROR", "AWAITING_HUMAN_REVIEW"]
+            "enum": [
+              "PARTIAL",
+              "STALE",
+              "BLOCKED",
+              "ERROR",
+              "AWAITING_HUMAN_REVIEW"
+            ]
           },
-          "required_components": {"type": "array", "items": {"type": "string", "minLength": 1}},
-          "must_show_fields": {"type": "array", "items": {"type": "string", "minLength": 1}}
+          "required_components": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "must_show_fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       }
     },
     "responsive_qa": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["desktop", "mobile_390"],
+      "required": [
+        "desktop",
+        "mobile_390"
+      ],
       "properties": {
-        "desktop": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "mobile_390": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        "desktop": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "mobile_390": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     }
   },
@@ -85,11 +172,27 @@
     "component": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "responsibility", "required_props"],
+      "required": [
+        "id",
+        "responsibility",
+        "required_props"
+      ],
       "properties": {
-        "id": {"type": "string", "minLength": 1},
-        "responsibility": {"type": "string", "minLength": 1},
-        "required_props": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "responsibility": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_props": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "bridge_trace": {
@@ -103,21 +206,47 @@
         "must_not_bind_sources"
       ],
       "properties": {
-        "trace_id_source": {"const": "packet.user_input.request_id"},
-        "resolved_trace_id_source": {"const": "packet.user_input.request_id"},
+        "trace_id_source": {
+          "const": "packet.user_input.request_id"
+        },
+        "resolved_trace_id_source": {
+          "const": "packet.user_input.request_id"
+        },
         "stage_order": {
           "type": "array",
           "prefixItems": [
-            {"const": "product_request"},
-            {"const": "ai_task_preview"},
-            {"const": "agent_output_packet"},
-            {"const": "human_review"},
-            {"const": "page_display"}
+            {
+              "const": "product_request"
+            },
+            {
+              "const": "ai_task_preview"
+            },
+            {
+              "const": "agent_output_packet"
+            },
+            {
+              "const": "human_review"
+            },
+            {
+              "const": "page_display"
+            }
           ],
           "items": false
         },
-        "must_bind_sources": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "must_not_bind_sources": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        "must_bind_sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "must_not_bind_sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     }
   }

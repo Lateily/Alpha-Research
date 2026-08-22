@@ -7,42 +7,85 @@
       {
         "id": "BridgeShell",
         "responsibility": "Page shell for the Product-AIOS Bridge workbench",
-        "required_props": ["viewModel", "packet", "bridgeTrace", "responsiveMode"]
+        "required_props": [
+          "viewModel",
+          "packet",
+          "bridgeTrace",
+          "responsiveMode"
+        ]
       },
       {
         "id": "RequestHeader",
         "responsibility": "Show workflow, owner, reviewer, issue, and generated time",
-        "required_props": ["workflowType", "owner", "reviewer", "sourceIssue", "generatedAt"]
+        "required_props": [
+          "workflowType",
+          "owner",
+          "reviewer",
+          "sourceIssue",
+          "generatedAt"
+        ]
       },
       {
         "id": "TaskPreviewPanel",
         "responsibility": "Show canonical ai-task.v1 preview without Router fields",
-        "required_props": ["taskId", "riskLevel", "networkPolicy", "budget", "fileScope", "forbiddenScope"]
+        "required_props": [
+          "taskId",
+          "riskLevel",
+          "networkPolicy",
+          "budget",
+          "fileScope",
+          "forbiddenScope"
+        ]
       },
       {
         "id": "RunProjectionPanel",
         "responsibility": "Show H7 status, tone, task state, run state, and freshness",
-        "required_props": ["status", "tone", "taskState", "runState", "freshness"]
+        "required_props": [
+          "status",
+          "tone",
+          "taskState",
+          "runState",
+          "freshness"
+        ]
       },
       {
         "id": "EvidenceTable",
         "responsibility": "Show cited evidence rows and missing evidence",
-        "required_props": ["evidence", "missingEvidence", "freshness"]
+        "required_props": [
+          "evidence",
+          "missingEvidence",
+          "freshness"
+        ]
       },
       {
         "id": "GapPanel",
         "responsibility": "Show missing evidence, blocking reasons, and error code",
-        "required_props": ["status", "missingEvidence", "blockingReasons", "errorCode"]
+        "required_props": [
+          "status",
+          "missingEvidence",
+          "blockingReasons",
+          "errorCode"
+        ]
       },
       {
         "id": "HumanReviewDock",
         "responsibility": "Show reviewer, human decision state, and decision reference",
-        "required_props": ["reviewer", "state", "decisionRef", "finalMergeAuthority"]
+        "required_props": [
+          "reviewer",
+          "state",
+          "decisionRef",
+          "finalMergeAuthority"
+        ]
       },
       {
         "id": "AuditStrip",
         "responsibility": "Show no-trade, untrusted-data, and final authority markers",
-        "required_props": ["traceId", "noTradeFlag", "externalContentTrust", "finalMergeAuthority"]
+        "required_props": [
+          "traceId",
+          "noTradeFlag",
+          "externalContentTrust",
+          "finalMergeAuthority"
+        ]
       }
     ],
     "bridge_trace": {
@@ -99,34 +142,86 @@
   },
   "state_component_map": [
     {
-      "status": "COMPLETE",
-      "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "EvidenceTable", "HumanReviewDock", "AuditStrip"],
-      "must_show_fields": ["trace_id", "decision_ref", "no_trade_flag", "final_merge_authority"]
-    },
-    {
       "status": "PARTIAL",
-      "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "EvidenceTable", "GapPanel", "AuditStrip"],
-      "must_show_fields": ["trace_id", "missing_evidence", "no_trade_flag", "external_content_trust"]
+      "required_components": [
+        "RequestHeader",
+        "TaskPreviewPanel",
+        "RunProjectionPanel",
+        "EvidenceTable",
+        "GapPanel",
+        "AuditStrip"
+      ],
+      "must_show_fields": [
+        "trace_id",
+        "missing_evidence",
+        "no_trade_flag",
+        "external_content_trust"
+      ]
     },
     {
       "status": "STALE",
-      "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "EvidenceTable", "GapPanel", "AuditStrip"],
-      "must_show_fields": ["trace_id", "data_cutoff", "freshness", "no_trade_flag"]
+      "required_components": [
+        "RequestHeader",
+        "TaskPreviewPanel",
+        "RunProjectionPanel",
+        "EvidenceTable",
+        "GapPanel",
+        "AuditStrip"
+      ],
+      "must_show_fields": [
+        "trace_id",
+        "data_cutoff",
+        "freshness",
+        "no_trade_flag"
+      ]
     },
     {
       "status": "BLOCKED",
-      "required_components": ["RequestHeader", "RunProjectionPanel", "GapPanel", "AuditStrip"],
-      "must_show_fields": ["trace_id", "blocking_reasons", "task_manifest_null", "no_trade_flag"]
+      "required_components": [
+        "RequestHeader",
+        "RunProjectionPanel",
+        "GapPanel",
+        "AuditStrip"
+      ],
+      "must_show_fields": [
+        "trace_id",
+        "blocking_reasons",
+        "task_manifest_null",
+        "no_trade_flag"
+      ]
     },
     {
       "status": "ERROR",
-      "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "GapPanel", "AuditStrip"],
-      "must_show_fields": ["trace_id", "error_code", "no_trade_flag", "external_content_trust"]
+      "required_components": [
+        "RequestHeader",
+        "TaskPreviewPanel",
+        "RunProjectionPanel",
+        "GapPanel",
+        "AuditStrip"
+      ],
+      "must_show_fields": [
+        "trace_id",
+        "error_code",
+        "no_trade_flag",
+        "external_content_trust"
+      ]
     },
     {
       "status": "AWAITING_HUMAN_REVIEW",
-      "required_components": ["RequestHeader", "TaskPreviewPanel", "RunProjectionPanel", "EvidenceTable", "HumanReviewDock", "AuditStrip"],
-      "must_show_fields": ["trace_id", "reviewer", "decision_ref_null", "final_merge_authority"]
+      "required_components": [
+        "RequestHeader",
+        "TaskPreviewPanel",
+        "RunProjectionPanel",
+        "EvidenceTable",
+        "HumanReviewDock",
+        "AuditStrip"
+      ],
+      "must_show_fields": [
+        "trace_id",
+        "reviewer",
+        "decision_ref_null",
+        "final_merge_authority"
+      ]
     }
   ],
   "responsive_qa": {

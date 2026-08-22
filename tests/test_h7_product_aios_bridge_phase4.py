@@ -32,8 +32,7 @@ PHASE4_SCHEMA = (
     / "h7-product-aios-bridge-phase4.v0.schema.json"
 )
 
-STATUSES = {
-    "COMPLETE",
+ACTIVE_STATUSES = {
     "PARTIAL",
     "STALE",
     "BLOCKED",
@@ -112,6 +111,52 @@ def _state_map(items: list[Mapping[str, Any]]) -> dict[str, Mapping[str, Any]]:
     return {item["status"]: item for item in items}
 
 
+def _assert_closed_world(instance: Any, schema: Mapping[str, Any], path: str = "$") -> None:
+    if "$ref" in schema:
+        raise AssertionError(f"unresolved schema ref at {path}")
+    if "const" in schema and instance != schema["const"]:
+        raise AssertionError(f"{path} does not match const")
+    if "enum" in schema and instance not in schema["enum"]:
+        raise AssertionError(f"{path} is not in enum")
+    expected_type = schema.get("type")
+    if isinstance(expected_type, str):
+        type_map = {
+            "object": Mapping,
+            "array": list,
+            "string": str,
+            "boolean": bool,
+            "null": type(None),
+        }
+        if expected_type in type_map and not isinstance(instance, type_map[expected_type]):
+            raise AssertionError(f"{path} has wrong type")
+    if schema.get("type") == "object":
+        if not isinstance(instance, Mapping):
+            raise AssertionError(f"{path} must be object")
+        if schema.get("additionalProperties") is False:
+            allowed = set(schema.get("properties", {}))
+            extra = set(instance) - allowed
+            if extra:
+                raise AssertionError(f"{path} has unknown fields: {sorted(extra)}")
+        for key in schema.get("required", []):
+            if key not in instance:
+                raise AssertionError(f"{path} missing required field: {key}")
+        for key, child_schema in schema.get("properties", {}).items():
+            if key in instance:
+                _assert_closed_world(instance[key], child_schema, f"{path}.{key}")
+    elif schema.get("type") == "array":
+        if not isinstance(instance, list):
+            raise AssertionError(f"{path} must be array")
+        prefix = schema.get("prefixItems")
+        if prefix is not None:
+            if schema.get("items") is False and len(instance) != len(prefix):
+                raise AssertionError(f"{path} length must equal prefixItems")
+            for index, child_schema in enumerate(prefix):
+                _assert_closed_world(instance[index], child_schema, f"{path}[{index}]")
+        elif "items" in schema and isinstance(schema["items"], Mapping):
+            for index, item in enumerate(instance):
+                _assert_closed_world(item, schema["items"], f"{path}[{index}]")
+
+
 class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -125,6 +170,40 @@ class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
         self.assertFalse(self.schema["properties"]["page"]["additionalProperties"])
         state_schema = self.schema["properties"]["state_component_map"]["items"]
         self.assertFalse(state_schema["additionalProperties"])
+
+    def test_phase4_fixture_executes_closed_world_schema(self) -> None:
+        schema = json.loads(json.dumps(self.schema))
+        defs = schema.pop("$defs")
+
+        def resolve_refs(node: Any) -> Any:
+            if isinstance(node, Mapping):
+                if "$ref" in node:
+                    return resolve_refs(defs[node["$ref"].removeprefix("#/$defs/")])
+                return {key: resolve_refs(value) for key, value in node.items()}
+            if isinstance(node, list):
+                return [resolve_refs(item) for item in node]
+            return node
+
+        _assert_closed_world(self.fixture, resolve_refs(schema))
+
+    # governance-mutation: H7_PHASE4_SCHEMA_CLOSED_WORLD
+    def test_phase4_fixture_rejects_unknown_trace_source_fields(self) -> None:
+        schema = json.loads(json.dumps(self.schema))
+        defs = schema.pop("$defs")
+
+        def resolve_refs(node: Any) -> Any:
+            if isinstance(node, Mapping):
+                if "$ref" in node:
+                    return resolve_refs(defs[node["$ref"].removeprefix("#/$defs/")])
+                return {key: resolve_refs(value) for key, value in node.items()}
+            if isinstance(node, list):
+                return [resolve_refs(item) for item in node]
+            return node
+
+        mutated = json.loads(json.dumps(self.fixture))
+        mutated["page"]["bridge_trace"]["shadow_trace_id_source"] = "chat_history"
+        with self.assertRaisesRegex(AssertionError, "unknown fields"):
+            _assert_closed_world(mutated, resolve_refs(schema))
 
     def test_page_is_fixture_only_and_no_trade(self) -> None:
         page = self.fixture["page"]
@@ -140,6 +219,7 @@ class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
                 self.assertTrue(component["responsibility"])
                 self.assertTrue(component["required_props"])
 
+    # governance-mutation: H7_AUDIT_STRIP_PROPS_BOUND
     def test_bridge_shell_and_audit_strip_receive_trace_props(self) -> None:
         components = {
             item["id"]: set(item["required_props"])
@@ -159,6 +239,7 @@ class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
                 mutated.remove(prop)
                 self.assertNotEqual(mutated, AUDIT_STRIP_PROPS)
 
+    # governance-mutation: H7_TRACE_SOURCE_CLOSED_WORLD
     def test_bridge_trace_is_bound_to_contract_sources_only(self) -> None:
         trace = self.fixture["page"]["bridge_trace"]
         self.assertEqual(trace["trace_id_source"], "packet.user_input.request_id")
@@ -194,7 +275,7 @@ class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
     def test_state_map_covers_phase1_statuses(self) -> None:
         mapped = {item["status"] for item in self.fixture["state_component_map"]}
         self.assertEqual(mapped, set(self.phase1))
-        self.assertEqual(mapped, STATUSES)
+        self.assertEqual(mapped, ACTIVE_STATUSES)
 
     def test_every_state_renders_audit_strip(self) -> None:
         for item in self.fixture["state_component_map"]:
@@ -221,15 +302,9 @@ class H7ProductAiosBridgePhase4Tests(unittest.TestCase):
         self.assertIn("task_manifest_null", blocked["must_show_fields"])
         self.assertIsNone(self.phase1["BLOCKED"]["task_manifest"])
 
-    def test_complete_state_still_cannot_authorize_merge(self) -> None:
-        complete_packet = self.phase1["COMPLETE"]
-        complete_view = _state_map(self.fixture["state_component_map"])["COMPLETE"]
-        self.assertIn("final_merge_authority", complete_view["must_show_fields"])
-        self.assertEqual(
-            complete_packet["human_review"]["final_merge_authority"],
-            "Junyan",
-        )
-        self.assertIs(complete_packet["human_review"]["final_merge_authorized"], False)
+    def test_no_current_state_renders_complete_before_a020(self) -> None:
+        mapped = _state_map(self.fixture["state_component_map"])
+        self.assertNotIn("COMPLETE", mapped)
 
     def test_responsive_qa_covers_desktop_and_mobile(self) -> None:
         responsive = self.fixture["responsive_qa"]

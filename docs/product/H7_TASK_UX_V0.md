@@ -35,11 +35,12 @@ Memory behavior.
 5. Missing or invalid fields produce `BLOCKED`; no runnable manifest is shown.
 6. Downstream AIOS states are projected as `PARTIAL`, `STALE`, `ERROR`, or
    `AWAITING_HUMAN_REVIEW` without being presented as success.
-7. `COMPLETE` requires evidence, terminal `DONE/DONE` task/run states, and a
-   trusted `human_gate_receipt` that binds the reviewed output hash. Free text,
-   model text, chat text, or a non-empty `decision_ref` alone cannot complete
-   the packet. It still does not mean Junyan approved merge, deployment,
-   production use, or Memory promotion.
+7. `COMPLETE` is intentionally unavailable in H7 v0. Until A-020 Authority
+   Resolver exists, H7 cannot trust any `human_gate_receipt`, approval-looking
+   text, model text, chat text, or non-empty `decision_ref`. Reviewed-looking
+   output must remain `AWAITING_HUMAN_REVIEW` or fail validation. It still does
+   not mean Junyan approved merge, deployment, production use, or Memory
+   promotion.
 
 ## 3. User Fields
 
@@ -82,12 +83,15 @@ This explicit gap is safer than hiding `task_type` inside `objective`,
 
 | State | What the user sees | Fail-closed requirement |
 |---|---|---|
-| `COMPLETE` | Evidence and independent review are complete | Evidence non-empty; missing evidence empty; task/run are `DONE/DONE`; review approved with trusted receipt |
 | `PARTIAL` | Some evidence exists, but required facts are missing | Missing evidence remains visible |
 | `STALE` | Evidence exists but is outside the accepted cutoff | Freshness must be `STALE` |
 | `BLOCKED` | The request cannot become a canonical task | No task manifest; blocking reasons visible |
 | `ERROR` | Contract or projection processing failed | Stable error code; never downgraded to success |
 | `AWAITING_HUMAN_REVIEW` | Output exists but no independent decision exists | Review remains `PENDING`; no approval reference |
+
+Future `COMPLETE` support belongs to A-020 Authority Resolver. This phase keeps
+the field `human_gate_receipt=null` in every fixture so H7 cannot create its own
+trust anchor.
 
 ## 6. Evidence And Review
 
@@ -103,14 +107,12 @@ The artifact also carries `model`, `prompt_version`, `missing_evidence`,
 `warnings`, `external_content_trust = "UNTRUSTED_DATA"`, and
 `no_trade_flag = true`.
 
-Human Review is independent from execution. An approved review requires the
-reviewer named by the task and a structured `human_gate_receipt`. The receipt
-binds actor, decision, trace id, decision reference, reviewed artifact id,
-reviewed artifact hash, and decision time. It never sets
-`final_merge_authorized` to true; that authority remains with Junyan.
+Human Review is independent from execution. In this phase, H7 may show a
+pending review request, but it cannot create an approved review or a trusted
+Human Gate receipt. `human_gate_receipt` must remain `null`, and
+`final_merge_authorized` must remain false; that authority remains with Junyan.
 
-Until a real Human Gate service exists, only the offline receipt fixture can
-represent a completed review. Arbitrary text such as "agent says Jason
+Until A-020 Authority Resolver exists, arbitrary text such as "agent says Jason
 approved" must keep the packet in `AWAITING_HUMAN_REVIEW` or fail validation.
 
 ## 7. Interface Confirmations
@@ -118,7 +120,7 @@ approved" must keep the packet in `AWAITING_HUMAN_REVIEW` or fail validation.
 | Interface | H7 assumption | Owner confirmation required before runtime wiring |
 |---|---|---|
 | H3 Task lifecycle | `ai-task.v1` remains the only task manifest | Simon confirms mapping and state names |
-| H4 Workflow twin | Six H7 product states map to Task/Run/Review states | Simon confirms transition semantics |
+| H4 Workflow twin | Five current H7 product states map to Task/Run/Review states; `COMPLETE` waits for A-020 | Simon confirms transition semantics |
 | H6 Context | Source references and cutoff are inputs, not retrieved content | Better confirms Context Pack handoff |
 | H8 Router | H7 does not supply canonical `task_type` yet | Better confirms future task-type vocabulary |
 | H9 Eval | User failures become eval cases | Jason confirms fixture-to-eval handoff |
@@ -127,12 +129,12 @@ approved" must keep the packet in `AWAITING_HUMAN_REVIEW` or fail validation.
 
 ## 8. Acceptance
 
-1. Exactly six sanitized fixtures cover all states in section 5.
+1. Exactly five sanitized fixtures cover the current states in section 5.
 2. Non-blocked fixtures compile to the embedded canonical `ai-task.v1`
    manifest; blocked input does not produce a manifest.
 3. Unknown fields, malformed timestamps, secret-like content, missing evidence,
    stale false-passes, self-review, false final authority, fake approval text,
-   missing Human Gate receipts, and post-review projection tampering fail
+   synthetic Human Gate receipts, and post-review projection tampering fail
    offline tests without echoing supplied secret values.
 4. `workflow_type` is never copied into the task manifest as an invented
    `task_type`.

@@ -18,7 +18,9 @@
       {
         "id": "CREATE_TASK_PREVIEW",
         "label": "Create task preview",
-        "enabled_when": ["BLOCKED"],
+        "enabled_when": [
+          "BLOCKED"
+        ],
         "requires_human": true,
         "calls_model": false,
         "writes_github": false,
@@ -29,7 +31,12 @@
       {
         "id": "EDIT_REQUEST",
         "label": "Edit request",
-        "enabled_when": ["PARTIAL", "STALE", "BLOCKED", "ERROR"],
+        "enabled_when": [
+          "PARTIAL",
+          "STALE",
+          "BLOCKED",
+          "ERROR"
+        ],
         "requires_human": true,
         "calls_model": false,
         "writes_github": false,
@@ -40,7 +47,10 @@
       {
         "id": "REFRESH_CONTEXT_REQUEST",
         "label": "Request context refresh",
-        "enabled_when": ["STALE", "ERROR"],
+        "enabled_when": [
+          "STALE",
+          "ERROR"
+        ],
         "requires_human": true,
         "calls_model": false,
         "writes_github": false,
@@ -51,7 +61,9 @@
       {
         "id": "REQUEST_HUMAN_REVIEW",
         "label": "Request human review",
-        "enabled_when": ["AWAITING_HUMAN_REVIEW"],
+        "enabled_when": [
+          "AWAITING_HUMAN_REVIEW"
+        ],
         "requires_human": true,
         "calls_model": false,
         "writes_github": false,
@@ -62,7 +74,11 @@
       {
         "id": "VIEW_EVIDENCE",
         "label": "View evidence",
-        "enabled_when": ["COMPLETE", "PARTIAL", "STALE", "AWAITING_HUMAN_REVIEW"],
+        "enabled_when": [
+          "PARTIAL",
+          "STALE",
+          "AWAITING_HUMAN_REVIEW"
+        ],
         "requires_human": false,
         "calls_model": false,
         "writes_github": false,
@@ -73,7 +89,12 @@
       {
         "id": "COPY_TASK_ID",
         "label": "Copy task id",
-        "enabled_when": ["COMPLETE", "PARTIAL", "STALE", "ERROR", "AWAITING_HUMAN_REVIEW"],
+        "enabled_when": [
+          "PARTIAL",
+          "STALE",
+          "ERROR",
+          "AWAITING_HUMAN_REVIEW"
+        ],
         "requires_human": false,
         "calls_model": false,
         "writes_github": false,
@@ -84,64 +105,143 @@
     ],
     "state_views": [
       {
-        "status": "COMPLETE",
-        "tone": "complete",
-        "headline": "Evidence packet is complete",
-        "primary_message": "All required facts are cited and independent review is recorded.",
-        "required_sections": ["request_summary", "task_manifest_preview", "evidence_table", "human_review", "audit_strip"],
-        "visible_controls": ["VIEW_EVIDENCE", "COPY_TASK_ID"],
-        "disabled_controls": ["CREATE_TASK_PREVIEW", "EDIT_REQUEST", "REFRESH_CONTEXT_REQUEST", "REQUEST_HUMAN_REVIEW"],
-        "must_show_fields": ["no_trade_flag", "final_merge_authority", "decision_ref"]
-      },
-      {
         "status": "PARTIAL",
         "tone": "warning",
         "headline": "Evidence is incomplete",
         "primary_message": "Some facts are cited, but missing evidence remains visible.",
-        "required_sections": ["request_summary", "task_manifest_preview", "evidence_table", "missing_or_blocked_items", "audit_strip"],
-        "visible_controls": ["EDIT_REQUEST", "VIEW_EVIDENCE", "COPY_TASK_ID"],
-        "disabled_controls": ["CREATE_TASK_PREVIEW", "REFRESH_CONTEXT_REQUEST", "REQUEST_HUMAN_REVIEW"],
-        "must_show_fields": ["missing_evidence", "no_trade_flag", "external_content_trust"]
+        "required_sections": [
+          "request_summary",
+          "task_manifest_preview",
+          "evidence_table",
+          "missing_or_blocked_items",
+          "audit_strip"
+        ],
+        "visible_controls": [
+          "EDIT_REQUEST",
+          "VIEW_EVIDENCE",
+          "COPY_TASK_ID"
+        ],
+        "disabled_controls": [
+          "CREATE_TASK_PREVIEW",
+          "REFRESH_CONTEXT_REQUEST",
+          "REQUEST_HUMAN_REVIEW"
+        ],
+        "must_show_fields": [
+          "missing_evidence",
+          "no_trade_flag",
+          "external_content_trust"
+        ]
       },
       {
         "status": "STALE",
         "tone": "stale",
         "headline": "Evidence is stale",
         "primary_message": "The packet needs refreshed context before review can proceed.",
-        "required_sections": ["request_summary", "task_manifest_preview", "evidence_table", "missing_or_blocked_items", "audit_strip"],
-        "visible_controls": ["EDIT_REQUEST", "REFRESH_CONTEXT_REQUEST", "VIEW_EVIDENCE", "COPY_TASK_ID"],
-        "disabled_controls": ["CREATE_TASK_PREVIEW", "REQUEST_HUMAN_REVIEW"],
-        "must_show_fields": ["data_cutoff", "freshness", "no_trade_flag"]
+        "required_sections": [
+          "request_summary",
+          "task_manifest_preview",
+          "evidence_table",
+          "missing_or_blocked_items",
+          "audit_strip"
+        ],
+        "visible_controls": [
+          "EDIT_REQUEST",
+          "REFRESH_CONTEXT_REQUEST",
+          "VIEW_EVIDENCE",
+          "COPY_TASK_ID"
+        ],
+        "disabled_controls": [
+          "CREATE_TASK_PREVIEW",
+          "REQUEST_HUMAN_REVIEW"
+        ],
+        "must_show_fields": [
+          "data_cutoff",
+          "freshness",
+          "no_trade_flag"
+        ]
       },
       {
         "status": "BLOCKED",
         "tone": "blocked",
         "headline": "Request is blocked",
         "primary_message": "The request cannot become a canonical task until blocking reasons are fixed.",
-        "required_sections": ["request_summary", "aios_state", "missing_or_blocked_items", "audit_strip"],
-        "visible_controls": ["CREATE_TASK_PREVIEW", "EDIT_REQUEST"],
-        "disabled_controls": ["VIEW_EVIDENCE", "COPY_TASK_ID", "REFRESH_CONTEXT_REQUEST", "REQUEST_HUMAN_REVIEW"],
-        "must_show_fields": ["blocking_reasons", "task_manifest_null", "no_trade_flag"]
+        "required_sections": [
+          "request_summary",
+          "aios_state",
+          "missing_or_blocked_items",
+          "audit_strip"
+        ],
+        "visible_controls": [
+          "CREATE_TASK_PREVIEW",
+          "EDIT_REQUEST"
+        ],
+        "disabled_controls": [
+          "VIEW_EVIDENCE",
+          "COPY_TASK_ID",
+          "REFRESH_CONTEXT_REQUEST",
+          "REQUEST_HUMAN_REVIEW"
+        ],
+        "must_show_fields": [
+          "blocking_reasons",
+          "task_manifest_null",
+          "no_trade_flag"
+        ]
       },
       {
         "status": "ERROR",
         "tone": "error",
         "headline": "Projection failed",
         "primary_message": "The error stays visible and cannot be downgraded to success.",
-        "required_sections": ["request_summary", "task_manifest_preview", "aios_state", "missing_or_blocked_items", "audit_strip"],
-        "visible_controls": ["EDIT_REQUEST", "REFRESH_CONTEXT_REQUEST", "COPY_TASK_ID"],
-        "disabled_controls": ["CREATE_TASK_PREVIEW", "VIEW_EVIDENCE", "REQUEST_HUMAN_REVIEW"],
-        "must_show_fields": ["error_code", "no_trade_flag", "external_content_trust"]
+        "required_sections": [
+          "request_summary",
+          "task_manifest_preview",
+          "aios_state",
+          "missing_or_blocked_items",
+          "audit_strip"
+        ],
+        "visible_controls": [
+          "EDIT_REQUEST",
+          "REFRESH_CONTEXT_REQUEST",
+          "COPY_TASK_ID"
+        ],
+        "disabled_controls": [
+          "CREATE_TASK_PREVIEW",
+          "VIEW_EVIDENCE",
+          "REQUEST_HUMAN_REVIEW"
+        ],
+        "must_show_fields": [
+          "error_code",
+          "no_trade_flag",
+          "external_content_trust"
+        ]
       },
       {
         "status": "AWAITING_HUMAN_REVIEW",
         "tone": "review",
         "headline": "Human review is pending",
         "primary_message": "Facts and evidence exist, but no independent human decision is recorded.",
-        "required_sections": ["request_summary", "task_manifest_preview", "evidence_table", "human_review", "audit_strip"],
-        "visible_controls": ["REQUEST_HUMAN_REVIEW", "VIEW_EVIDENCE", "COPY_TASK_ID"],
-        "disabled_controls": ["CREATE_TASK_PREVIEW", "EDIT_REQUEST", "REFRESH_CONTEXT_REQUEST"],
-        "must_show_fields": ["reviewer", "decision_ref_null", "final_merge_authority"]
+        "required_sections": [
+          "request_summary",
+          "task_manifest_preview",
+          "evidence_table",
+          "human_review",
+          "audit_strip"
+        ],
+        "visible_controls": [
+          "REQUEST_HUMAN_REVIEW",
+          "VIEW_EVIDENCE",
+          "COPY_TASK_ID"
+        ],
+        "disabled_controls": [
+          "CREATE_TASK_PREVIEW",
+          "EDIT_REQUEST",
+          "REFRESH_CONTEXT_REQUEST"
+        ],
+        "must_show_fields": [
+          "reviewer",
+          "decision_ref_null",
+          "final_merge_authority"
+        ]
       }
     ],
     "audit": {

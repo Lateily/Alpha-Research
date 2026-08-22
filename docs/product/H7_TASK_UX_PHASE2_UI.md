@@ -29,9 +29,9 @@ viewport:
 1. Request summary: workflow, owner, reviewer, budget, cutoff, source issue.
 2. Canonical task preview: task id, risk, network policy, file scope, forbidden
    scope, budget, acceptance checks.
-3. AIOS state: one of the six H7 statuses from Phase 1.
+3. AIOS state: one of the five current H7 statuses from Phase 1.
 4. Evidence table: source, tier, publish date, data cutoff, fact, verification.
-5. Missing or blocked items: visible for every non-complete state.
+5. Missing or blocked items: visible for every current state.
 6. Human Review dock: pending, approved, revise, or rejected. Human approval is
    never inferred from model text or comments.
 7. Audit strip: no trade flag, untrusted external content, generated time,
@@ -41,7 +41,6 @@ viewport:
 
 | H7 status | UI tone | Primary user action | Must stay visible |
 |---|---|---|---|
-| `COMPLETE` | `complete` | View evidence and review reference | no_trade_flag, final merge authority |
 | `PARTIAL` | `warning` | Fill missing evidence | missing_evidence |
 | `STALE` | `stale` | Refresh context before review | data cutoff and stale warning |
 | `BLOCKED` | `blocked` | Edit request | blocking_reasons; no runnable task |
@@ -50,7 +49,8 @@ viewport:
 
 The UI must not color `PARTIAL`, `STALE`, `BLOCKED`, `ERROR`, or
 `AWAITING_HUMAN_REVIEW` as success. HTTP 200, file existence, or non-empty model
-text is not enough to show `COMPLETE`.
+text is not enough to show `COMPLETE`. `COMPLETE` is a future A-020 state and
+is not present in the Phase 2 fixtures.
 
 ## 4. Allowed Controls
 
@@ -88,11 +88,11 @@ None of these controls may:
 
 ## 6. Acceptance
 
-1. Six UI state fixtures exist, exactly matching the six Phase 1 statuses.
+1. Five UI state fixtures exist, exactly matching the current Phase 1 statuses.
 2. Every fixture references a Phase 1 packet status and preserves
    `no_trade_flag=true`.
-3. Non-complete states cannot expose a `success` tone or hide the reason they
-   are not complete.
+3. Current states cannot expose a `success` tone or hide the reason they are
+   not complete.
 4. Human Review controls cannot create final merge authorization.
 5. All controls are offline view-model controls: no provider call, no GitHub
    write, no production write, no Memory write.
