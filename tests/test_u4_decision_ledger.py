@@ -12,6 +12,8 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from threading import Event
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -392,6 +394,126 @@ class U4DecisionLedgerTests(unittest.TestCase):
                 outcomes = list(pool.map(append_conflict, (selected, no_trade)))
             self.assertEqual(sorted(outcomes), ["APPENDED", "REFUSED"])
             self.assertEqual(ledger.verify_decision_ledger(path), {"ok": True, "n": 1, "errors": []})
+
+    def test_verifier_waits_for_atomic_ledger_and_anchor_snapshot(self) -> None:
+        packet = packet_fixture()
+        batch = ledger.seal_decision_batch(draft_for(packet), packet)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            anchor_reached = Event()
+            release_anchor = Event()
+            verifier_started = Event()
+            verifier_entered = Event()
+            original_write_anchor = event_ledger.write_anchor
+            original_verify = ledger._verify_decision_ledger_unlocked
+
+            def delayed_anchor(*args, **kwargs):
+                anchor_reached.set()
+                if not release_anchor.wait(timeout=5):
+                    raise AssertionError("test did not release the delayed anchor write")
+                return original_write_anchor(*args, **kwargs)
+
+            def observed_verify(ledger_path: Path) -> dict:
+                verifier_entered.set()
+                return original_verify(ledger_path)
+
+            def run_verifier() -> dict:
+                verifier_started.set()
+                return ledger.verify_decision_ledger(path)
+
+            with patch.object(event_ledger, "write_anchor", side_effect=delayed_anchor):
+                with ThreadPoolExecutor(max_workers=2) as pool:
+                    writer = pool.submit(
+                        ledger.append_decision_batch,
+                        packet=packet,
+                        batch=batch,
+                        ledger_path=path,
+                        now="2026-08-22T00:16:00",
+                    )
+                    self.assertTrue(anchor_reached.wait(timeout=5))
+                    try:
+                        with patch.object(
+                            ledger,
+                            "_verify_decision_ledger_unlocked",
+                            side_effect=observed_verify,
+                        ):
+                            reader = pool.submit(run_verifier)
+                            self.assertTrue(verifier_started.wait(timeout=5))
+                            self.assertFalse(
+                                verifier_entered.wait(timeout=0.2),
+                                "verifier observed the ledger before its anchor commit",
+                            )
+                            release_anchor.set()
+                            self.assertEqual(
+                                reader.result(timeout=5),
+                                {"ok": True, "n": 1, "errors": []},
+                            )
+                    finally:
+                        release_anchor.set()
+                    self.assertEqual(writer.result(timeout=5)["status"], "APPENDED")
+
+    def test_exact_retry_waits_for_atomic_ledger_and_anchor_snapshot(self) -> None:
+        packet = packet_fixture()
+        batch = ledger.seal_decision_batch(draft_for(packet), packet)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            anchor_reached = Event()
+            release_anchor = Event()
+            retry_started = Event()
+            retry_verify_entered = Event()
+            original_write_anchor = event_ledger.write_anchor
+            original_verify = ledger._verify_decision_ledger_unlocked
+
+            def delayed_anchor(*args, **kwargs):
+                anchor_reached.set()
+                if not release_anchor.wait(timeout=5):
+                    raise AssertionError("test did not release the delayed anchor write")
+                return original_write_anchor(*args, **kwargs)
+
+            def observed_verify(ledger_path: Path) -> dict:
+                retry_verify_entered.set()
+                return original_verify(ledger_path)
+
+            def run_retry() -> dict:
+                retry_started.set()
+                return ledger.append_decision_batch(
+                    packet=packet,
+                    batch=batch,
+                    ledger_path=path,
+                    now="2026-08-22T00:17:00",
+                )
+
+            with patch.object(event_ledger, "write_anchor", side_effect=delayed_anchor):
+                with ThreadPoolExecutor(max_workers=2) as pool:
+                    first = pool.submit(
+                        ledger.append_decision_batch,
+                        packet=packet,
+                        batch=batch,
+                        ledger_path=path,
+                        now="2026-08-22T00:16:00",
+                    )
+                    self.assertTrue(anchor_reached.wait(timeout=5))
+                    try:
+                        with patch.object(
+                            ledger,
+                            "_verify_decision_ledger_unlocked",
+                            side_effect=observed_verify,
+                        ):
+                            retry = pool.submit(run_retry)
+                            self.assertTrue(retry_started.wait(timeout=5))
+                            self.assertFalse(
+                                retry_verify_entered.wait(timeout=0.2),
+                                "idempotent retry read a half-committed ledger/anchor pair",
+                            )
+                            release_anchor.set()
+                            self.assertEqual(retry.result(timeout=5)["status"], "IDEMPOTENT")
+                    finally:
+                        release_anchor.set()
+                    self.assertEqual(first.result(timeout=5)["status"], "APPENDED")
+            self.assertEqual(
+                ledger.verify_decision_ledger(path),
+                {"ok": True, "n": 1, "errors": []},
+            )
 
     def test_u4_decision_event_kind_is_unique_in_shared_chain(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
