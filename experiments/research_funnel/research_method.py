@@ -722,7 +722,11 @@ def _expected_paper_levels(registration: Mapping[str, Any]) -> tuple[float, floa
 
 def _score_execution(registration: Mapping[str, Any], order: Mapping[str, Any] | None) -> dict[str, Any]:
     if order is None:
-        return {"status": "NO_TRADE", "violations": []}
+        return {
+            "status": "NO_TRADE", "violations": [],
+            "execution_model": None, "cost_verification_status": None,
+            "method_claim_sample_eligible": False,
+        }
     expected = _expected_paper_levels(registration)
     observed = (
         order.get("entry_review_price"), order.get("stop_reference"),
@@ -733,7 +737,22 @@ def _score_execution(registration: Mapping[str, Any], order: Mapping[str, Any] |
         violations.append("REGISTERED_LEVELS_DRIFTED")
     if order.get("no_trade_flag") is not True:
         violations.append("NO_TRADE_BOUNDARY_BROKEN")
-    return {"status": "COMPLIANT" if not violations else "VIOLATION", "violations": violations}
+    if order.get("execution_mode") != "a-share-daily-realism-v1":
+        violations.append("REALISTIC_EXECUTION_MODEL_MISSING")
+    cost_model = order.get("cost_model") or {}
+    if cost_model.get("verification_status") != "PROXY_UNVERIFIED":
+        violations.append("COST_MODEL_STATUS_CHANGED")
+    if order.get("sample_eligible") is not False:
+        violations.append("WORKFLOW_DEBUG_SAMPLE_BECAME_CLAIM_ELIGIBLE")
+    return {
+        "status": "COMPLIANT_WORKFLOW_DEBUG" if not violations else "VIOLATION",
+        "violations": violations,
+        "execution_model": order.get("execution_mode"),
+        "cost_verification_status": cost_model.get("verification_status"),
+        "method_claim_sample_eligible": False,
+        "entry_fees_cny": order.get("entry_fees_cny"),
+        "exit_fees_cny": order.get("exit_fees_cny"),
+    }
 
 
 def _score_portfolio(order: Mapping[str, Any] | None, fund_snapshot: Mapping[str, Any]) -> dict[str, Any]:

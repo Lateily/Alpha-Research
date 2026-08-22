@@ -135,6 +135,8 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/research_cycle.py",
     "experiments/research_funnel/research_method.py",
     "experiments/research_funnel/industry_cohort.py",
+    "experiments/execution_tracker/paper_portfolio.py",
+    "experiments/execution_tracker/model_paper_fund.py",
 )
 # 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
 # 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
@@ -1955,6 +1957,262 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise CycleError("registered valuation industry differs from the research case")',
         expected_failure_marker="test_case_industry_must_match_registered_valuation_adapter",
         rationale="A research case cannot borrow a valuation adapter from a different industry method.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_RAW_SETTLED_BARS",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_RAW_SETTLED_BARS\n'
+            '    if bar.get("price_basis") != "RAW_UNADJUSTED" or bar.get("settled") is not True:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_RAW_SETTLED_BARS\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_adjusted_or_unsettled_bar_is_rejected",
+        rationale="Adjusted or unsettled bars cannot serve as executable-price evidence.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_DATE_SEQUENCE",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_DATE_SEQUENCE\n'
+            '        if dates != sorted(set(dates)):'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_DATE_SEQUENCE\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_realistic_bar_dates_must_be_ordered_unique_calendar_dates",
+        rationale="Direct fill-engine callers cannot reorder or duplicate settlement sessions.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_CORPORATE_ACTION_FREEZE",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_CORPORATE_ACTION_FREEZE\n'
+            '    if detail is not None:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_CORPORATE_ACTION_FREEZE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_corporate_action_price_chain_break_freezes_without_false_exit",
+        rationale="A raw-price discontinuity cannot apply stale nominal levels across a corporate action.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_FROZEN_STAYS_FROZEN",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_FROZEN_STAYS_FROZEN\n'
+            '        if entry.get("execution_frozen") is True:'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_FROZEN_STAYS_FROZEN\n'
+            '        if False:'
+        ),
+        expected_failure_marker="test_corporate_action_price_chain_break_freezes_without_false_exit",
+        rationale="A frozen paper order cannot resume against stale nominal levels on a shorter replay window.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_FROZEN_NAV_BLOCK",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_FROZEN_NAV_BLOCK\n'
+            '    if frozen_positions:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_FROZEN_NAV_BLOCK\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_corporate_action_price_chain_break_freezes_without_false_exit",
+        rationale="A frozen filled position cannot emit a false NAV from stale shares and post-action prices.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_LIMIT_UP_NO_BUY",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '                # governance-mutation: PAPER_EXECUTION_LIMIT_UP_NO_BUY\n'
+            '                if require_realistic and _one_price_at(b, "up_limit"):'
+        ),
+        after=(
+            '                # governance-mutation: PAPER_EXECUTION_LIMIT_UP_NO_BUY\n'
+            '                if False:'
+        ),
+        expected_failure_marker="test_one_price_limit_up_does_not_fill",
+        rationale="A one-price limit-up bar cannot be treated as an available buy fill.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_LIQUIDITY_CAP",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '                # governance-mutation: PAPER_EXECUTION_LIQUIDITY_CAP\n'
+            '                if require_realistic and not _participation_ok(entry, b):'
+        ),
+        after=(
+            '                # governance-mutation: PAPER_EXECUTION_LIQUIDITY_CAP\n'
+            '                if False:'
+        ),
+        expected_failure_marker="test_liquidity_participation_cap_blocks_fill",
+        rationale="A paper order cannot consume more than the registered share of settled volume.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_NO_CHASE_LIMIT",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '                # governance-mutation: PAPER_EXECUTION_NO_CHASE_LIMIT\n'
+            '                if require_realistic and (not _number(max_fill) or fill > float(max_fill)):'
+        ),
+        after=(
+            '                # governance-mutation: PAPER_EXECUTION_NO_CHASE_LIMIT\n'
+            '                if False:'
+        ),
+        expected_failure_marker="test_registered_no_chase_limit_blocks_large_gap",
+        rationale="A gap above the prospectively registered entry zone cannot be chased after the fact.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_T1_SELL",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_T1_SELL\n'
+            '        for b in (x for x in eligible if x["date"] > entry["fill_date"]):'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_T1_SELL\n'
+            '        for b in (x for x in eligible if x["date"] >= entry["fill_date"]):'
+        ),
+        expected_failure_marker="test_fill_day_stop_and_target_cannot_sell_under_t1",
+        rationale="A-share cash-equity fills cannot be sold on their purchase date.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_LIMIT_DOWN_NO_SELL",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/paper_portfolio.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '                # governance-mutation: PAPER_EXECUTION_LIMIT_DOWN_NO_SELL\n'
+            '                if require_realistic and _one_price_at(b, "down_limit"):'
+        ),
+        after=(
+            '                # governance-mutation: PAPER_EXECUTION_LIMIT_DOWN_NO_SELL\n'
+            '                if False:'
+        ),
+        expected_failure_marker="test_one_price_limit_down_does_not_fake_stop_exit",
+        rationale="A one-price limit-down bar cannot manufacture an available stop exit.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_COSTS_APPLIED",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_COSTS_APPLIED\n'
+            '    return round(commission + transfer + stamp, 2)'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_COSTS_APPLIED\n'
+            '    return 0.0'
+        ),
+        expected_failure_marker="test_costs_reduce_cash_and_net_pnl",
+        rationale="Workflow-debug PnL must remain net of the declared conservative cost proxy.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_COST_SIDE_ENUM",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_SIDE_ENUM\n'
+            '    if side not in ("buy", "sell"):'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_SIDE_ENUM\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_transaction_cost_rejects_unknown_or_noncanonical_side",
+        rationale="An unknown side cannot silently fall through to the cheaper buy-side fee path.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_COST_MODEL_FROZEN",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_MODEL_FROZEN\n'
+            '    if model != WORKFLOW_DEBUG_COST_MODEL:'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_COST_MODEL_FROZEN\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_cost_model_cannot_be_silently_zeroed",
+        rationale="A caller cannot zero a fee while retaining the approved cost-model label.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_DEBUG_NOT_CLAIM_SAMPLE",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_DEBUG_NOT_CLAIM_SAMPLE\n'
+            '        "sample_eligible": False if realistic else True,'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_DEBUG_NOT_CLAIM_SAMPLE\n'
+            '        "sample_eligible": True,'
+        ),
+        expected_failure_marker="test_workflow_debug_receipt_never_becomes_claim_sample",
+        rationale="The first workflow-debug cycles cannot enter the 30-sample method claim set.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_RECEIPT_NO_CLAIM",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '        # governance-mutation: PAPER_EXECUTION_RECEIPT_NO_CLAIM\n'
+            '        "method_claim_sample_eligible": False,'
+        ),
+        after=(
+            '        # governance-mutation: PAPER_EXECUTION_RECEIPT_NO_CLAIM\n'
+            '        "method_claim_sample_eligible": True,'
+        ),
+        expected_failure_marker="test_workflow_debug_receipt_never_becomes_claim_sample",
+        rationale="A realism receipt must never promote workflow-debug fills into claim evidence.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_EXECUTION_CLAIM_COUNT_EXCLUDES_DEBUG",
+        component="Research funnel paper execution realism",
+        source_path="experiments/execution_tracker/model_paper_fund.py",
+        test_script="tests/test_paper_execution_realism.py",
+        before=(
+            '    # governance-mutation: PAPER_EXECUTION_CLAIM_COUNT_EXCLUDES_DEBUG\n'
+            '    closed = [o for o in closed_all if o.get("sample_eligible") is True]'
+        ),
+        after=(
+            '    # governance-mutation: PAPER_EXECUTION_CLAIM_COUNT_EXCLUDES_DEBUG\n'
+            '    closed = list(closed_all)'
+        ),
+        expected_failure_marker="test_thirty_workflow_debug_closures_do_not_unlock_claims",
+        rationale="Thirty workflow-debug closures cannot masquerade as the independent claim set.",
     ),
     MutationCase(
         mutation_id="RESEARCH_CYCLE_NO_LOOKAHEAD_BARS",

@@ -150,6 +150,7 @@ jobs:
       # 结算复盘与带证据的人类确认/争议;不触碰生产账本。
       - name: Offline U4-to-paper research cycle
         run: |
+          python3 tests/test_paper_execution_realism.py
           python3 tests/test_research_method.py
           python3 tests/test_research_cycle.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──

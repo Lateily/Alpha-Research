@@ -148,6 +148,15 @@ assert industry_cohort_result.wasSuccessful(), (
 )
 import test_research_cycle as research_cycle_tests  # noqa: E402
 import test_research_method as research_method_tests  # noqa: E402
+import test_paper_execution_realism as execution_realism_tests  # noqa: E402
+execution_realism_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        execution_realism_tests.PaperExecutionRealismTests
+    )
+)
+assert execution_realism_result.wasSuccessful(), (
+    "paper execution realism suite failed under socket guard"
+)
 research_method_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
         research_method_tests.ResearchMethodTests
