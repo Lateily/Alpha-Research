@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
@@ -63,6 +64,7 @@ MANIFEST_ORDER = (
     "created_at",
     "source_hash",
 )
+SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
 @dataclass(frozen=True)
@@ -155,6 +157,86 @@ def compile_task_manifest(
     }
     ordered = {key: manifest[key] for key in MANIFEST_ORDER}
     return CompileResult(SPEC_READY, ordered, ())
+
+
+def validate_compiled_manifest(manifest: Mapping[str, Any]) -> tuple[str, ...]:
+    """Validate one canonical current-contract compiler output.
+
+    ``source_hash`` identifies the original task source but cannot be
+    recomputed from the normalized manifest alone.  This validator therefore
+    enforces its digest shape while consumers bind the complete manifest bytes
+    separately in their own receipts.
+    """
+
+    if not isinstance(manifest, Mapping):
+        return ("manifest must be a mapping",)
+
+    candidate = dict(manifest)
+    errors: list[str] = []
+    if any(not isinstance(field, str) for field in candidate):
+        return ("manifest keys must be strings",)
+    missing = [field for field in MANIFEST_ORDER if field not in candidate]
+    unexpected = sorted(set(candidate) - set(MANIFEST_ORDER))
+    if missing:
+        errors.append("manifest missing fields: " + ", ".join(missing))
+    if unexpected:
+        errors.append("manifest has unexpected fields")
+    if missing or unexpected:
+        return tuple(errors)
+
+    for field in STRING_FIELDS:
+        value = candidate.get(field)
+        if not _non_empty_string(value):
+            errors.append(f"{field} must be a non-empty string")
+        elif value != value.strip():
+            errors.append(f"{field} must be canonical without surrounding whitespace")
+
+    for field in (*LIST_FIELDS, *OPTIONAL_LIST_FIELDS):
+        value = candidate.get(field)
+        if not isinstance(value, list) or not all(
+            _non_empty_string(item) for item in value
+        ):
+            errors.append(f"{field} must be a canonical string list")
+        elif any(item != item.strip() for item in value):
+            errors.append(f"{field} must not contain surrounding whitespace")
+    for field in LIST_FIELDS:
+        if isinstance(candidate.get(field), list) and not candidate[field]:
+            errors.append(f"{field} must be a non-empty string list")
+
+    if candidate.get("schema") != SCHEMA:
+        errors.append(f"schema must be {SCHEMA}")
+    if candidate.get("risk_level") not in RISK_LEVELS:
+        errors.append("risk_level is not supported")
+    if candidate.get("network_policy") not in NETWORK_POLICIES:
+        errors.append("network_policy is not supported")
+
+    source_issue = candidate.get("source_issue")
+    if source_issue is not None and (
+        isinstance(source_issue, bool)
+        or not isinstance(source_issue, int)
+        or source_issue <= 0
+    ):
+        errors.append("source_issue must be a positive integer when present")
+
+    budget = _normalize_budget(candidate.get("budget"))
+    if isinstance(budget, str):
+        errors.append(budget)
+    elif budget != candidate.get("budget"):
+        errors.append("budget must use canonical compiler formatting")
+
+    created_at = _normalize_created_at(
+        candidate.get("created_at"),
+        datetime.now(timezone.utc),
+    )
+    if isinstance(created_at, str) and created_at.startswith("created_at "):
+        errors.append(created_at)
+    elif created_at != candidate.get("created_at"):
+        errors.append("created_at must use canonical UTC formatting")
+
+    source_hash = candidate.get("source_hash")
+    if not isinstance(source_hash, str) or not SHA256_RE.fullmatch(source_hash):
+        errors.append("source_hash must be a sha256 digest")
+    return tuple(errors)
 
 
 def _normalize_budget(value: Any) -> dict[str, Any] | str:

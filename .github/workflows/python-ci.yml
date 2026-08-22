@@ -92,6 +92,8 @@ jobs:
       # AIOS-K1:A-006/A-007/A-008 任务合同、状态重放、只读对账
       - name: AIOS K1 task registry regression (offline)
         run: python3 tests/test_ai_os_k1_offline.py
+      - name: AIOS K2 policy gate regression (offline)
+        run: python3 tests/test_ai_os_k2_policy_offline.py
       # AIOS A-035 Phase 1:Authority/Context/P5/DONE receipt 负例与归因矩阵
       - name: AIOS A-035 Harness evaluation regression (offline)
         run: python3 tests/test_ai_os_a035_harness_eval_offline.py
