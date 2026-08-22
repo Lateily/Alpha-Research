@@ -138,6 +138,15 @@ closure_result = unittest.TextTestRunner(verbosity=0).run(
 assert closure_result.wasSuccessful(), (
     "offline research closure suite failed under socket guard"
 )
+import test_u4_decision_ledger as u4_decision_tests  # noqa: E402
+u4_decision_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        u4_decision_tests.U4DecisionLedgerTests
+    )
+)
+assert u4_decision_result.wasSuccessful(), (
+    "offline U4 decision-ledger suite failed under socket guard"
+)
 import test_industry_cohort_offline as industry_cohort_tests  # noqa: E402
 industry_cohort_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
