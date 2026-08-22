@@ -1,6 +1,11 @@
 # AR Product Engineering 永久工程总账
 
-> Owner:Better。产品批准:Junyan。AI 接口:Reed。工程复核:Claude/Codex。
+> **ROLE MIGRATION（2026-08-16）：**本总账全部 Product OS / Product Manager / Web
+> 主责转移给 Reed；Better 转为 AIOS H6 Context 与 H8 Router/Agent/Skill Owner。
+> 历史表格中尚未逐行迁移的 Better Owner 字段，以
+> `docs/team/TEAM_CHARTER_v4.md` 为准。
+>
+> Owner:Reed。产品批准:Junyan。AI 接口:Better。项目集成:Simon。安全复核:Jason。
 > 状态:`PROPOSED/APPROVED/IN_PROGRESS/BLOCKED/DELIVERED_UNWIRED/VALIDATING/DONE/RETIRED`。
 > 所有产品需求和技术债必须有 PE-ID;不得静默删除或只留在聊天、设计稿和临时网站。
 

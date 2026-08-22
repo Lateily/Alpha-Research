@@ -1,8 +1,24 @@
 # AR AI OS 永久工程总账
 
-> Owner:Reed。最终验收:Junyan。本文档是 AI 系统工程的永久清单。
+> Program Owner:Simon。模块 Owner:Better / Jason / Eric / Reed。最终验收:Junyan。
+> 2026-08-16 起，Owner 分配以 `docs/team/TEAM_CHARTER_v4.md` 和下表为准；
+> 本文后续历史表格中仍写 Reed 的 Owner 字段在迁移完成前视为 superseded，不得据此认领。
 > 状态枚举沿用研究工程总账:`PROPOSED/APPROVED/IN_PROGRESS/BLOCKED/DELIVERED_UNWIRED/VALIDATING/DONE/RETIRED`。
 > 任务不得静默删除;停止时必须写 RETIRED、原因和替代项。
+
+## 0. 2026-08-16 Owner 覆盖表
+
+| 系统面 | A-ID / Harness | Primary | Support / Reviewer |
+|---|---|---|---|
+| Constitution / Task / Workflow | A-006~A-008,A-011,A-012 / H2-H4 | Simon | Reed（用户流）、Jason（Authority）、Eric（lease/runtime） |
+| Context / Repo Intelligence / Router / Skills | A-010,A-013,A-014 / H5,H6,H8 | Better | Jason（上岗/安全）、Eric（runtime 接口）、Reed（产品输出） |
+| Policy / Evals / Verification / Human Gate | A-009,A-018~A-020,A-027 / H9,H11 | Jason | Simon（状态语义）、Reed（用户失败）、Junyan（最终门） |
+| Runtime / Run Evidence / Health / Memory | A-015~A-017,A-021~A-025 / H1,H10,H12 | Eric | Better（Router/H6）、Jason（隔离/报警）、Simon（总账） |
+| Prompt / Role / Product Bridge | A-026 / H7 + Product OS | Reed | Better（Skill 接口）、Jason（回归）、Simon（Workflow） |
+
+边界：Better/H6 决定当前任务加载什么；Eric/H12 决定运行后哪些证据成为带
+provenance/version/owner/TTL 的候选长期 Memory。H12 向 H6 提供检索候选，不能自动
+修改宪法或强制进入当前上下文。
 
 ## 1. 已有地基
 
