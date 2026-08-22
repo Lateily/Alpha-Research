@@ -27,6 +27,10 @@ If the checkout has uncommitted work, stop before pulling or switching branches.
 Preserve the work and report the branch plus changed paths; do not reset it to
 make onboarding pass.
 
+An existing valid clone may remain at its already approved path during v1
+onboarding. The `AR/` layout is the default for new installations and future
+worktrees, not a reason to duplicate or silently move a working repository.
+
 Windows PowerShell example for an existing checkout:
 
 ```powershell
@@ -42,6 +46,13 @@ py -3.11 .\scripts\team_ai_workspace.py doctor
 
 Use `python .\scripts\team_ai_workspace.py doctor` only when `py -3.11` is
 unavailable and `python --version` confirms Python 3.11 or newer.
+
+On Windows, Codex Desktop may be usable even when its packaged `codex.exe`
+cannot be launched from PowerShell (`Access is denied`). The doctor reports this
+as `WARN CODEX_CLI_UNAVAILABLE`, with `tools.codex.reason` preserving the local
+cause. This warning does not invalidate an otherwise clean repository, Skills,
+or task compiler. A task that specifically requires the Codex CLI must declare
+and enforce that dependency separately.
 
 Use a fresh clone only when the teammate has no valid clone. Never copy another
 member's dirty working tree:
@@ -71,6 +82,15 @@ nearest module instructions, and Skills under `.agents/skills/`.
   role. This exception does not authorize Better or another teammate to run
   production data collectors, market engines, or ledger writers under
   `scripts/`.
+
+### Active-Session Permission Reset
+
+An older AI conversation may still contain a direct human rule such as "never
+run anything under scripts/". Repository text cannot silently revoke a direct
+instruction already active in that conversation. Junyan must explicitly state
+that the old blanket ban is withdrawn and replaced by
+`config/team-command-policy.v1.json`. Until that statement appears in the same
+conversation, refusal is correct.
 
 ## Daily Synchronization
 
@@ -145,3 +165,14 @@ During the group onboarding session, record for each member:
 - whether Alpha Research is isolated under the single `AR/` container.
 
 Store only the redacted doctor report. Never paste keys or environment values.
+
+Onboarding acceptance is one of:
+
+- `PASS`; or
+- `WARN` with `CODEX_CLI_UNAVAILABLE` as the only warning, plus a successful
+  Codex Desktop smoke that opens this repository and reads the root
+  `AGENTS.md` without editing files.
+
+The second state authorizes repository-scoped Desktop work but not a task whose
+acceptance commands require the Codex CLI. Any other warning or failure remains
+unresolved until reviewed.
