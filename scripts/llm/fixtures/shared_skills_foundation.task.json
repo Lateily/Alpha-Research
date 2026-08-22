@@ -1,0 +1,61 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "AIOS-SKILLS-001",
+  "source_issue": null,
+  "architecture_block": ["team-ai-workspace", "aios-skill-context"],
+  "objective": "Deliver a repository-scoped, fail-closed shared skill foundation and the first three AR skills for divergent analysis, source-grounded architecture maps, and video evidence handling.",
+  "non_goals": [
+    "Do not install or integrate T3 Code or OpenWork control planes",
+    "Do not change product frontend behavior or research methodology",
+    "Do not call live model, video, market-data, or production services",
+    "Do not auto-install external system dependencies or copy unreviewed upstream repositories"
+  ],
+  "human_owner": "Jason",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex", "Claude"],
+  "dependencies": [],
+  "authority_docs": [
+    "AGENTS.md",
+    "scripts/llm/AGENTS.md",
+    "docs/team/TEAM_AI_WORKSPACE_V1.md"
+  ],
+  "file_scope": [
+    ".agents/skills/ar-divergent-reasoning",
+    ".agents/skills/ar-architecture-map",
+    ".agents/skills/ar-video-evidence",
+    "config/team-ai-workspace.v1.json",
+    "config/aios-skills.v1.json",
+    "scripts/llm/ai_os/skill_registry.py",
+    "scripts/llm/fixtures/shared_skills_foundation.task.json",
+    "tests/test_team_ai_workspace.py",
+    "tests/test_skill_registry.py"
+  ],
+  "forbidden_scope": [
+    "web",
+    "experiments",
+    "data_history",
+    "public/data",
+    "scripts/llm/adapters",
+    "scripts/llm/ai_os/registry.py"
+  ],
+  "input_contracts": [
+    "scripts/llm/schemas/task.schema.json",
+    "config/team-ai-workspace.v1.json"
+  ],
+  "output_artifacts": [
+    "three validated repository skills",
+    "versioned fail-closed AIOS skill registry",
+    "offline positive and negative regression tests",
+    "reviewable diff and pull request"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_team_ai_workspace.py",
+    "python3 tests/test_skill_registry.py",
+    "python3 scripts/team_ai_workspace.py doctor",
+    "git diff --check"
+  ],
+  "risk_level": "MEDIUM",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": ["PR_REVIEW", "JUNYAN_MERGE"]
+}

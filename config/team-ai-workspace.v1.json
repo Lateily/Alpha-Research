@@ -13,7 +13,8 @@
   "required_workspace_files": [
     "docs/team/TEAM_AI_WORKSPACE_V1.md",
     "docs/team/LOCAL_WORKSPACE_CONTRACT_V1.md",
-    "scripts/llm/fixtures/team_task_source.example.json"
+    "scripts/llm/fixtures/team_task_source.example.json",
+    "config/aios-skills.v1.json"
   ],
   "workspace_layout": {
     "root_container": "AR",
@@ -41,7 +42,10 @@
     "ar-research-framework",
     "ar-aios-engineering",
     "ar-product-engineering",
-    "ar-workspace-sync"
+    "ar-workspace-sync",
+    "ar-divergent-reasoning",
+    "ar-architecture-map",
+    "ar-video-evidence"
   ],
   "runtime_baseline": {
     "python_minimum": "3.11",

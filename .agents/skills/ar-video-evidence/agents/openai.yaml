@@ -1,0 +1,6 @@
+interface:
+  display_name: "AR Video Evidence"
+  short_description: "Analyze video evidence with timestamps and provenance"
+  default_prompt: "Use $ar-video-evidence to analyze this video as timestamped evidence."
+policy:
+  allow_implicit_invocation: true
