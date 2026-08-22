@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/research/contracts/u4_decision_ledger.v1.schema.json",
+  "title": "AR U4 Decision Event v1",
+  "description": "Append-only human U4 decision event. SELECT enters deep research only and never grants trade or production authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "event_version",
+    "event_kind",
+    "ledger_id",
+    "sequence",
+    "previous_event_hash",
+    "decision_id",
+    "decision_revision",
+    "supersedes_decision_id",
+    "method_version",
+    "registered_at",
+    "registration_source",
+    "candidate",
+    "source",
+    "decision",
+    "reason_codes",
+    "reason_note",
+    "missing_evidence",
+    "research_question",
+    "human_decision",
+    "authority",
+    "record_hash"
+  ],
+  "properties": {
+    "schema": {"const": "ar.u4_decision_event.v1"},
+    "event_version": {"const": "1.0"},
+    "event_kind": {"const": "U4_DECISION"},
+    "ledger_id": {"type": "string", "pattern": "^u4-ledger:[0-9]{8}:[0-9a-f]{12}$"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "previous_event_hash": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/sha256"}
+      ]
+    },
+    "decision_id": {"type": "string", "pattern": "^u4d_[0-9a-f]{32}$"},
+    "decision_revision": {"type": "integer", "minimum": 1},
+    "supersedes_decision_id": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^u4d_[0-9a-f]{32}$"}
+      ]
+    },
+    "method_version": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,63}_V[0-9]+$"
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time",
+      "minLength": 1,
+      "description": "Durable append timestamp stamped by the writer. It must not precede human_decision.decided_at."
+    },
+    "registration_source": {"const": "R015_EVENT_LEDGER_TS"},
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts_code", "display_name", "industry_code", "cohort_id", "causal_cluster_id"],
+      "properties": {
+        "ts_code": {"type": "string", "pattern": "^[0-9A-Z]+\\.[A-Z]+$"},
+        "display_name": {"type": "string", "minLength": 1},
+        "industry_code": {"type": "string", "minLength": 1},
+        "cohort_id": {"type": "string", "minLength": 1},
+        "causal_cluster_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "as_of",
+        "run_id",
+        "u2_bundle_hash",
+        "u2_candidate_row_hash",
+        "u3_battery_hash",
+        "u4_packet_hash"
+      ],
+      "properties": {
+        "as_of": {"type": "string", "pattern": "^[0-9]{8}$"},
+        "run_id": {"type": "string", "minLength": 1},
+        "u2_bundle_hash": {"$ref": "#/$defs/sha256"},
+        "u2_candidate_row_hash": {"$ref": "#/$defs/sha256"},
+        "u3_battery_hash": {"$ref": "#/$defs/sha256"},
+        "u4_packet_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "decision": {
+      "enum": ["SELECT", "REJECT", "DEFER", "NO_TRADE", "DATA_BLOCKED"]
+    },
+    "reason_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/reason_code"}
+    },
+    "reason_note": {"type": "string", "minLength": 1},
+    "missing_evidence": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/missing_evidence_code"}
+    },
+    "research_question": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "minLength": 1}
+      ]
+    },
+    "human_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claimed_decision_owner",
+        "identity_verification",
+        "decided_at",
+        "authorization_text",
+        "authorization_evidence_ref"
+      ],
+      "properties": {
+        "claimed_decision_owner": {"const": "Junyan"},
+        "identity_verification": {"const": "UNAVAILABLE"},
+        "decided_at": {"type": "string", "format": "date-time", "minLength": 1},
+        "authorization_text": {"type": "string", "minLength": 8},
+        "authorization_evidence_ref": {
+          "type": "string",
+          "pattern": "^(conversation|pr|commit):.+$"
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "u4_selection_authority",
+        "production_authority",
+        "trade_authority",
+        "claim_allowed",
+        "no_trade_flag"
+      ],
+      "properties": {
+        "u4_selection_authority": {"const": "HUMAN_JUNYAN_ONLY"},
+        "production_authority": {"const": false},
+        "trade_authority": {"const": false},
+        "claim_allowed": {"const": false},
+        "no_trade_flag": {"const": true}
+      }
+    },
+    "record_hash": {"$ref": "#/$defs/sha256"}
+  },
+  "x-ar-packet-closure": {
+    "selected_count_allowed": [0, 3, 4, 5],
+    "zero_selection_outcome": "NO_TRADE_NO_QUEUE",
+    "selected_outcome": "PROJECT_EXISTING_U4_REVIEW_RECEIPT"
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"decision": {"const": "SELECT"}}, "required": ["decision"]},
+      "then": {
+        "properties": {
+          "missing_evidence": {"maxItems": 0},
+          "research_question": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"const": "DATA_BLOCKED"}}, "required": ["decision"]},
+      "then": {"properties": {"missing_evidence": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"decision_revision": {"const": 1}}, "required": ["decision_revision"]},
+      "then": {"properties": {"supersedes_decision_id": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"decision_revision": {"minimum": 2}}, "required": ["decision_revision"]},
+      "then": {
+        "properties": {
+          "supersedes_decision_id": {"type": "string", "pattern": "^u4d_[0-9a-f]{32}$"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"sequence": {"const": 1}}, "required": ["sequence"]},
+      "then": {"properties": {"previous_event_hash": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"sequence": {"minimum": 2}}, "required": ["sequence"]},
+      "then": {"properties": {"previous_event_hash": {"$ref": "#/$defs/sha256"}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "reason_code": {
+      "enum": [
+        "EVIDENCE_CHAIN_COMPLETE",
+        "RESEARCH_PRIORITY_HIGH",
+        "CROSS_CHANNEL_CONFIRMATION",
+        "CONTROL_SAMPLE",
+        "U2_NOT_ELIGIBLE",
+        "U3_INCOMPLETE",
+        "RED_FLAG_ACTIVE",
+        "E1_EVIDENCE_MISSING",
+        "THESIS_NOT_FALSIFIABLE",
+        "VALUATION_NOT_DECISION_USEFUL",
+        "TIMING_NOT_READY",
+        "RISK_REWARD_INSUFFICIENT",
+        "PORTFOLIO_CONFLICT",
+        "DUPLICATE_CAUSAL_CLUSTER",
+        "QUEUE_CAPACITY",
+        "RESEARCH_PRIORITY_LOWER",
+        "NO_ACTIONABLE_SETUP",
+        "HUMAN_JUDGMENT",
+        "OTHER_WITH_NOTE"
+      ]
+    },
+    "missing_evidence_code": {
+      "enum": [
+        "U2_CANDIDATE_ROW",
+        "U3_SIX_DIMENSION_BATTERY",
+        "E1_EVENT_EVIDENCE",
+        "FINANCIAL_HISTORY",
+        "VALUATION_INPUT",
+        "TECHNICAL_STRUCTURE",
+        "MARKET_CONTEXT",
+        "MACRO_CONTEXT",
+        "SOURCE_FRESHNESS",
+        "CAUSAL_CLUSTER_ID",
+        "OTHER_WITH_NOTE"
+      ]
+    }
+  }
+}
