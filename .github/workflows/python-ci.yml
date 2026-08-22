@@ -95,6 +95,10 @@ jobs:
       # AIOS A-035 Phase 1:Authority/Context/P5/DONE receipt 负例与归因矩阵
       - name: AIOS A-035 Harness evaluation regression (offline)
         run: python3 tests/test_ai_os_a035_harness_eval_offline.py
+      # AIOS H7 Phase 1:product request -> canonical ai-task.v1 preview,
+      # six product states, evidence provenance, and Human Review boundaries.
+      - name: AIOS H7 Task UX contract regression (offline)
+        run: python3 tests/test_h7_task_ux_contract.py
       # Team AI Workspace:repo instructions, Skills, task compiler smoke,
       # runtime baseline metadata, and redacted secret/local-state hygiene.
       - name: Team AI Workspace contract and doctor regression (offline)
