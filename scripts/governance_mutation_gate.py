@@ -2543,6 +2543,247 @@ MUTATIONS: tuple[MutationCase, ...] = (
         rationale="Junyan may supersede machine attribution, but the disagreement must remain explicit and evidence-bound.",
     ),
     MutationCase(
+        mutation_id="FIVE_AXIS_BETA_BENCHMARK_BINDING",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_BETA_BENCHMARK_BINDING\n'
+            '    if beta.get("benchmark_id") != market_id:\n'
+            '        raise AttributionError("beta estimate market benchmark differs")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_BETA_BENCHMARK_BINDING\n'
+            '    if False:\n'
+            '        raise AttributionError("beta estimate market benchmark differs")'
+        ),
+        expected_failure_marker="test_beta_samples_are_bound_to_the_market_benchmark",
+        rationale="A beta estimate for another market benchmark cannot be reused for this cycle.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_BETA_ASSET_BINDING",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_BETA_ASSET_BINDING\n'
+            '    if beta.get("asset_id") != registration.get("ticker"):\n'
+            '        raise AttributionError("beta estimate asset differs from cycle ticker")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_BETA_ASSET_BINDING\n'
+            '    if False:\n'
+            '        raise AttributionError("beta estimate asset differs from cycle ticker")'
+        ),
+        expected_failure_marker="test_beta_samples_are_bound_to_the_cycle_ticker",
+        rationale="A beta estimate for another security cannot be reused for this paper cycle.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_BETA_POINT_IN_TIME",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_BETA_POINT_IN_TIME\n'
+            '    if not start < end <= registered <= method_as_of <= method_registered:\n'
+            '        raise AttributionError("beta estimate is not point-in-time registered evidence")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_BETA_POINT_IN_TIME\n'
+            '    if False:\n'
+            '        raise AttributionError("beta estimate is not point-in-time registered evidence")'
+        ),
+        expected_failure_marker="test_beta_estimate_must_be_point_in_time",
+        rationale="A paper-cycle beta must be frozen before the method registration and cannot consume later returns.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_BETA_RECOMPUTATION",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_BETA_RECOMPUTATION\n'
+            '    if not math.isclose(value_number, computed, rel_tol=0.0, abs_tol=1e-10):\n'
+            '        raise AttributionError("beta estimate is not derived from frozen return samples")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_BETA_RECOMPUTATION\n'
+            '    if False:\n'
+            '        raise AttributionError("beta estimate is not derived from frozen return samples")'
+        ),
+        expected_failure_marker="test_beta_is_recomputed_from_frozen_return_samples",
+        rationale="The declared beta must be recomputed from the frozen point-in-time return sample instead of trusted as a label.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_MARKET_SOURCE_BINDING",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_MARKET_SOURCE_BINDING\n'
+            '    if any(market.get(key) != value for key, value in expected.items()):\n'
+            '        raise AttributionError("market evidence is not bound to the exact cycle and order")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_MARKET_SOURCE_BINDING\n'
+            '    if False:\n'
+            '        raise AttributionError("market evidence is not bound to the exact cycle and order")'
+        ),
+        expected_failure_marker="test_market_evidence_is_bound_to_exact_cycle_and_order",
+        rationale="Market evidence from another cycle or order cannot be reused for this attribution.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_EXECUTION_ORDER_BINDING",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_EXECUTION_ORDER_BINDING\n'
+            '    if any(receipt.get(key) != value for key, value in expected.items()):\n'
+            '        raise AttributionError("execution evidence is not bound to the exact cycle and order")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_EXECUTION_ORDER_BINDING\n'
+            '    if False:\n'
+            '        raise AttributionError("execution evidence is not bound to the exact cycle and order")'
+        ),
+        expected_failure_marker="test_execution_evidence_is_bound_to_exact_order",
+        rationale="An execution audit cannot be borrowed from a different paper order.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_EXECUTION_SOURCE_RECEIPT",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '        # governance-mutation: FIVE_AXIS_EXECUTION_SOURCE_RECEIPT\n'
+            '        raise AttributionError("execution wrapper is not bound to its full source receipt")'
+        ),
+        after=(
+            '        # governance-mutation: FIVE_AXIS_EXECUTION_SOURCE_RECEIPT\n'
+            '        pass'
+        ),
+        expected_failure_marker="test_execution_wrapper_freezes_the_full_source_receipt",
+        rationale="The wrapper must freeze the complete execution-realism receipt instead of accepting copied pass labels.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_EXECUTION_DEBUG_BOUNDARY",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_EXECUTION_DEBUG_BOUNDARY\n'
+            '    if status == "PASS_WORKFLOW_DEBUG" and not all(checks.values()):\n'
+            '        raise AttributionError("PASS_WORKFLOW_DEBUG execution evidence has failed checks")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_EXECUTION_DEBUG_BOUNDARY\n'
+            '    if False:\n'
+            '        raise AttributionError("PASS_WORKFLOW_DEBUG execution evidence has failed checks")'
+        ),
+        expected_failure_marker="test_execution_pass_requires_every_realism_check",
+        rationale="A workflow-debug execution pass cannot contain a failed realism check.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_MISSING_EXECUTION_VISIBLE",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '        # governance-mutation: FIVE_AXIS_MISSING_EXECUTION_VISIBLE\n'
+            '        status = "DATA_BLOCKED"'
+        ),
+        after=(
+            '        # governance-mutation: FIVE_AXIS_MISSING_EXECUTION_VISIBLE\n'
+            '        status = "WORKFLOW_DEBUG_ONLY"'
+        ),
+        expected_failure_marker="test_missing_evidence_stays_visible_and_does_not_block_other_axes",
+        rationale="Missing execution-realism evidence must remain visible instead of becoming a debug pass.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_EXECUTION_WORKFLOW_ONLY",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '        # governance-mutation: FIVE_AXIS_EXECUTION_WORKFLOW_ONLY\n'
+            '        status = "WORKFLOW_DEBUG_ONLY"'
+        ),
+        after=(
+            '        # governance-mutation: FIVE_AXIS_EXECUTION_WORKFLOW_ONLY\n'
+            '        status = "COMPLIANT"'
+        ),
+        expected_failure_marker="test_workflow_debug_execution_never_becomes_method_sample",
+        rationale="A realism receipt in the first debug cycles cannot be relabeled as validated execution skill.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_MISSING_MARKET_VISIBLE",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '            # governance-mutation: FIVE_AXIS_MISSING_MARKET_VISIBLE\n'
+            '            "status": "DATA_BLOCKED",'
+        ),
+        after=(
+            '            # governance-mutation: FIVE_AXIS_MISSING_MARKET_VISIBLE\n'
+            '            "status": "ATTRIBUTED_DIAGNOSTIC",'
+        ),
+        expected_failure_marker="test_missing_evidence_stays_visible_and_does_not_block_other_axes",
+        rationale="Missing market evidence cannot silently become a beta attribution.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_MARKET_BETA_DERIVATION",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '            # governance-mutation: FIVE_AXIS_MARKET_BETA_DERIVATION\n'
+            '            values = {'
+        ),
+        after=(
+            '            # governance-mutation: FIVE_AXIS_MARKET_BETA_DERIVATION\n'
+            '            contribution = 0.0\n'
+            '            values = {'
+        ),
+        expected_failure_marker="test_market_beta_is_derived_and_never_called_alpha",
+        rationale="Market-beta contribution and residual must be derived from the registered beta and same-window market return.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_DERIVED_NO_CLAIM",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '        # governance-mutation: FIVE_AXIS_DERIVED_NO_CLAIM\n'
+            '        "method_sample_eligible": False,'
+        ),
+        after=(
+            '        # governance-mutation: FIVE_AXIS_DERIVED_NO_CLAIM\n'
+            '        "method_sample_eligible": True,'
+        ),
+        expected_failure_marker="test_derived_receipt_hardcodes_the_no_claim_boundary",
+        rationale="Workflow-debug attribution must remain excluded from the 30-sample method gate by construction.",
+    ),
+    MutationCase(
+        mutation_id="FIVE_AXIS_DETERMINISTIC_PROJECTION",
+        component="Five-axis paper attribution",
+        source_path="experiments/research_funnel/five_axis_attribution.py",
+        test_script="tests/test_five_axis_attribution.py",
+        before=(
+            '    # governance-mutation: FIVE_AXIS_DETERMINISTIC_PROJECTION\n'
+            '    if dict(receipt) != expected:\n'
+            '        raise AttributionError("five-axis attribution is not the deterministic evidence projection")'
+        ),
+        after=(
+            '    # governance-mutation: FIVE_AXIS_DETERMINISTIC_PROJECTION\n'
+            '    if False:\n'
+            '        raise AttributionError("five-axis attribution is not the deterministic evidence projection")'
+        ),
+        expected_failure_marker="test_receipt_is_a_deterministic_projection",
+        rationale="A self-rehashed receipt cannot rewrite any axis away from its verified sources.",
+    ),
+    MutationCase(
         mutation_id="GOVERNANCE_FUNNEL_MARKER_COVERAGE_CALL",
         component="Governance mutation gate",
         source_path="scripts/governance_mutation_gate.py",

@@ -153,6 +153,10 @@ jobs:
           python3 tests/test_paper_execution_realism.py
           python3 tests/test_research_method.py
           python3 tests/test_research_cycle.py
+      # 终局 paper cycle 五轴归因:thesis/valuation/timing/execution/market beta
+      # 独立判定;beta 从冻结样本重算,相对收益不得升格为 alpha。
+      - name: Offline five-axis paper-cycle attribution
+        run: python3 tests/test_five_axis_attribution.py
       # ── Macro OS M0-A:源身份/事件分级/双时间点预判/共识冲突语义 ──
       - name: Macro OS M0-A contract selftest
         run: python3 experiments/macro_os/contracts.py --selftest
