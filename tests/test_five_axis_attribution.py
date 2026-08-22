@@ -411,7 +411,7 @@ class FiveAxisAttributionTests(unittest.TestCase):
 
     def test_market_beta_is_derived_and_never_called_alpha(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            closure, bundle, _, _, market, execution = sealed_evidence(Path(tmp))
+            closure, bundle, _, outputs, market, execution = sealed_evidence(Path(tmp))
             receipt = attribution.build_attribution(
                 bundle,
                 closure,
@@ -420,13 +420,17 @@ class FiveAxisAttributionTests(unittest.TestCase):
                 generated_at="2026-08-17T16:30:00+00:00",
             )
             axis = receipt["axes"]["market_beta"]
-            self.assertAlmostEqual(axis["gross_stock_return"], 0.15)
+            order = outputs[1]["orders"][0]
+            self.assertAlmostEqual(order["fill_price"], 100.05)
+            self.assertAlmostEqual(order["exit_price"], 115.0)
+            expected_gross = order["exit_price"] / order["fill_price"] - 1.0
+            self.assertAlmostEqual(axis["gross_stock_return"], expected_gross)
             self.assertAlmostEqual(axis["market_return"], 0.02)
             self.assertAlmostEqual(axis["industry_return"], 0.05)
             self.assertAlmostEqual(axis["market_beta_contribution"], 0.03)
-            self.assertAlmostEqual(axis["beta_residual_return"], 0.12)
-            self.assertAlmostEqual(axis["market_excess_return"], 0.13)
-            self.assertAlmostEqual(axis["industry_excess_return"], 0.10)
+            self.assertAlmostEqual(axis["beta_residual_return"], expected_gross - 0.03)
+            self.assertAlmostEqual(axis["market_excess_return"], expected_gross - 0.02)
+            self.assertAlmostEqual(axis["industry_excess_return"], expected_gross - 0.05)
             self.assertEqual(axis["interpretation"], "DIAGNOSTIC_NOT_ALPHA")
             self.assertNotIn("alpha", set(all_keys(receipt)))
 

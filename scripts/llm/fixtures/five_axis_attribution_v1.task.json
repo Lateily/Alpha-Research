@@ -22,7 +22,7 @@
   ],
   "dependencies": [
     "research_method.py on main",
-    "paper execution realism receipt remains optional until its separate PR is merged"
+    "paper execution realism receipt from merged PR #291; absence remains explicitly DATA_BLOCKED"
   ],
   "authority_docs": [
     "AGENTS.md",
@@ -52,7 +52,7 @@
     "ar.research_method_scorecard.v1.0",
     "closed paper order evidence",
     "ar.paper_cycle_market_evidence.v1.0",
-    "optional ar.paper_execution_realism_receipt.v1.0"
+    "ar.paper_execution_realism_receipt.v1.0 or explicit DATA_BLOCKED absence"
   ],
   "output_artifacts": [
     "ar.paper_cycle_five_axis_attribution.v1.0"
