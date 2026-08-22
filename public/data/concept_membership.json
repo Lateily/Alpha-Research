@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-08-05T11:18:49Z",
+  "fetched_at": "2026-08-21T09:07:49Z",
   "_status": "ok",
   "api_used": "ths_index+ths_member",
   "scope": "watchlist_only",
@@ -1716,6 +1716,16 @@
       ]
     },
     {
+      "ts_code": "883426.TI",
+      "name": "同花顺拟回购指数",
+      "type": "S",
+      "total_count": 115.0,
+      "member_count": 1,
+      "members": [
+        "300054.SZ"
+      ]
+    },
+    {
       "ts_code": "883433.TI",
       "name": "先进制造",
       "type": "S",
@@ -1853,6 +1863,16 @@
       "member_count": 1,
       "members": [
         "300054.SZ"
+      ]
+    },
+    {
+      "ts_code": "883959.TI",
+      "name": "近期并购",
+      "type": "S",
+      "total_count": 262.0,
+      "member_count": 1,
+      "members": [
+        "300308.SZ"
       ]
     },
     {
@@ -2493,7 +2513,8 @@
       "700309.TI",
       "700340.TI",
       "883913.TI",
-      "883926.TI"
+      "883926.TI",
+      "883959.TI"
     ],
     "002594.SZ": [
       "700001.TI",
@@ -2788,10 +2809,11 @@
       "886110.TI",
       "886111.TI",
       "700302.TI",
-      "700802.TI"
+      "700802.TI",
+      "883426.TI"
     ]
   },
-  "total_concepts": 223,
-  "total_memberships": 383,
+  "total_concepts": 225,
+  "total_memberships": 385,
   "disclaimer": "不是买卖指令;研究信号,human executes."
 }

@@ -1,7 +1,7 @@
 {
   "_status": "ok",
   "ticker": "002594.SZ",
-  "fetched_at": "2026-08-05T11:18:50Z",
+  "fetched_at": "2026-08-21T09:07:51Z",
   "api_used": "stk_surv",
   "_attempted_endpoints": [
     "stk_surv"
@@ -91,110 +91,12 @@
       "inst_count": 1,
       "surv_type": "2025年度股东会&高管面对面交流会",
       "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260512",
-      "fund_visitors": "--",
-      "rece_place": "深圳",
-      "rece_mode": "路演活动",
-      "rece_org": "State Street",
-      "org_type": "外资银行",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 1,
-      "surv_type": "路演活动",
-      "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260512",
-      "fund_visitors": "--",
-      "rece_place": "深圳",
-      "rece_mode": "路演活动",
-      "rece_org": "Mirae Asset",
-      "org_type": "基金管理公司",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 1,
-      "surv_type": "路演活动",
-      "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260512",
-      "fund_visitors": "--",
-      "rece_place": "深圳",
-      "rece_mode": "路演活动",
-      "rece_org": "Invesco Ltd.",
-      "org_type": "其它",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 1,
-      "surv_type": "路演活动",
-      "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260512",
-      "fund_visitors": "--",
-      "rece_place": "深圳",
-      "rece_mode": "路演活动",
-      "rece_org": "Hillhouse",
-      "org_type": "其它",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 1,
-      "surv_type": "路演活动",
-      "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260512",
-      "fund_visitors": "--",
-      "rece_place": "深圳",
-      "rece_mode": "路演活动",
-      "rece_org": "FIL International",
-      "org_type": "--",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 1,
-      "surv_type": "路演活动",
-      "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260512",
-      "fund_visitors": "--",
-      "rece_place": "深圳",
-      "rece_mode": "路演活动",
-      "rece_org": "CPPIB",
-      "org_type": "--",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 1,
-      "surv_type": "路演活动",
-      "description": null
-    },
-    {
-      "ts_code": "002594.SZ",
-      "name": "比亚迪",
-      "surv_date": "20260512",
-      "fund_visitors": "--",
-      "rece_place": "深圳",
-      "rece_mode": "路演活动",
-      "rece_org": "Amundi AM",
-      "org_type": "--",
-      "comp_rece": "吴越,黄悦",
-      "inst_count": 1,
-      "surv_type": "路演活动",
-      "description": null
     }
   ],
   "summary": {
-    "total_30d": 2,
-    "total_90d": 13,
-    "unique_inst_30d": 4,
+    "total_30d": 0,
+    "total_90d": 6,
+    "unique_inst_30d": null,
     "latest_date": "2026-07-09"
   }
 }
