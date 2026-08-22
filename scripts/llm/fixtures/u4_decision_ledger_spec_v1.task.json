@@ -1,0 +1,63 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "U4-DECISION-LEDGER-SPEC-001",
+  "source_issue": null,
+  "architecture_block": ["research-framework", "u4-human-decision-ledger"],
+  "objective": "Freeze a machine-readable, append-only U4 decision event contract that preserves SELECT, REJECT, DEFER, NO_TRADE, and DATA_BLOCKED decisions, including rejected samples, missing evidence, method version, and a durable registration boundary, while keeping Junyan as the sole U4 selection authority.",
+  "non_goals": [
+    "Do not implement a ledger writer, replay engine, migration, API, CLI, or production wiring",
+    "Do not select U4 candidates or create trading instructions",
+    "Do not rewrite or backfill historical U4 decisions",
+    "Do not modify the nightly chain, funnel runtime, execution engine, or production data",
+    "Do not claim win rate, alpha, profitability, or method validity"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Current U2 candidate bundle and U4 human-review boundary"],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md"
+  ],
+  "file_scope": [
+    "docs/research/U4_DECISION_LEDGER_SPEC_V1.md",
+    "docs/research/contracts/u4_decision_ledger.v1.schema.json",
+    "tests/test_u4_decision_ledger_spec.py",
+    "scripts/llm/fixtures/u4_decision_ledger_spec_v1.task.json",
+    ".github/workflows/python-ci.yml"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker",
+    "experiments/research_funnel",
+    "public/data/v2",
+    "scripts/governance_mutation_gate.py"
+  ],
+  "input_contracts": [
+    "U2 immutable candidate bundle hash",
+    "U4 human review evidence",
+    "Junyan decision authority",
+    "R-015 durable event timestamp",
+    "versioned research method identity"
+  ],
+  "output_artifacts": [
+    "ar.u4_decision_event.v1 JSON Schema",
+    "U4 decision ledger append-only and replay specification"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_u4_decision_ledger_spec.py",
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/u4_decision_ledger_spec_v1.task.json",
+    "git diff --check"
+  ],
+  "risk_level": "CONSTITUTIONAL",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 180},
+  "approval_gates": [
+    "PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_IMPLEMENTATION_APPROVAL",
+    "SEPARATE_PRODUCTION_DEPLOY_APPROVAL"
+  ],
+  "created_at": "2026-08-22T09:00:00+08:00"
+}
