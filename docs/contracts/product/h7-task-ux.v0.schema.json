@@ -1,0 +1,532 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Lateily/Alpha-Research/docs/contracts/product/h7-task-ux.v0.schema.json",
+  "title": "H7 Task UX Packet v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "workflow_type",
+    "status",
+    "generated_at",
+    "user_input",
+    "task_manifest",
+    "projection",
+    "human_review",
+    "human_gate_receipt",
+    "no_trade_flag"
+  ],
+  "properties": {
+    "schema": {
+      "const": "h7-task-ux.v0"
+    },
+    "workflow_type": {
+      "const": "ANNOUNCEMENT_FACT_EXTRACTION"
+    },
+    "status": {
+      "enum": [
+        "PARTIAL",
+        "STALE",
+        "BLOCKED",
+        "ERROR",
+        "AWAITING_HUMAN_REVIEW"
+      ]
+    },
+    "generated_at": {
+      "$ref": "#/$defs/aware_timestamp"
+    },
+    "user_input": {
+      "$ref": "#/$defs/user_input"
+    },
+    "task_manifest": {
+      "oneOf": [
+        {
+          "$ref": "../../../scripts/llm/schemas/task.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "projection": {
+      "$ref": "#/$defs/projection"
+    },
+    "human_review": {
+      "$ref": "#/$defs/human_review"
+    },
+    "human_gate_receipt": {
+      "type": "null"
+    },
+    "no_trade_flag": {
+      "const": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "BLOCKED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "task_manifest": {
+            "type": "null"
+          },
+          "projection": {
+            "properties": {
+              "blocking_reasons": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "task_manifest": {
+            "$ref": "../../../scripts/llm/schemas/task.schema.json"
+          },
+          "user_input": {
+            "properties": {
+              "fact_fields": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "PARTIAL"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "projection": {
+            "properties": {
+              "missing_evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "STALE"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "projection": {
+            "properties": {
+              "freshness": {
+                "const": "STALE"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ERROR"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "projection": {
+            "properties": {
+              "error_code": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "projection": {
+            "properties": {
+              "error_code": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "AWAITING_HUMAN_REVIEW"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "human_review": {
+            "properties": {
+              "state": {
+                "const": "PENDING"
+              },
+              "decision_ref": {
+                "type": "null"
+              }
+            }
+          },
+          "human_gate_receipt": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "human_review": {
+            "properties": {
+              "state": {
+                "const": "PENDING"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "human_review": {
+            "properties": {
+              "decision_ref": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "aware_timestamp": {
+      "type": "string",
+      "pattern": "^(?:\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?)(?:Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "string_array": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "announcement_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_kind",
+        "locator",
+        "publish_date",
+        "data_cutoff",
+        "trust"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_kind": {
+          "const": "ANNOUNCEMENT"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publish_date": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "data_cutoff": {
+          "$ref": "#/$defs/aware_timestamp"
+        },
+        "trust": {
+          "const": "UNTRUSTED_DATA"
+        }
+      }
+    },
+    "user_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "source_issue",
+        "goal",
+        "human_owner",
+        "reviewer",
+        "announcement_refs",
+        "fact_fields",
+        "data_cutoff",
+        "max_cny",
+        "max_minutes",
+        "submitted_at"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_issue": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "goal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "human_owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "announcement_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/announcement_ref"
+          }
+        },
+        "fact_fields": {
+          "$ref": "#/$defs/string_array"
+        },
+        "data_cutoff": {
+          "$ref": "#/$defs/aware_timestamp"
+        },
+        "max_cny": {
+          "type": "string",
+          "pattern": "^[0-9]+(?:\\.[0-9]+)?$"
+        },
+        "max_minutes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "submitted_at": {
+          "$ref": "#/$defs/aware_timestamp"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "locator",
+        "publish_date",
+        "data_cutoff",
+        "evidence_tier",
+        "fact",
+        "verification_status"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publish_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "data_cutoff": {
+          "$ref": "#/$defs/aware_timestamp"
+        },
+        "evidence_tier": {
+          "enum": [
+            "E1",
+            "E2",
+            "E3",
+            "E4"
+          ]
+        },
+        "fact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verification_status": {
+          "enum": [
+            "VERIFIED",
+            "UNVERIFIED",
+            "CONFLICTING"
+          ]
+        }
+      }
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_state",
+        "run_state",
+        "freshness",
+        "model",
+        "prompt_version",
+        "summary",
+        "evidence",
+        "missing_evidence",
+        "warnings",
+        "blocking_reasons",
+        "external_content_trust",
+        "error_code"
+      ],
+      "properties": {
+        "task_state": {
+          "enum": [
+            "DISCOVERED",
+            "TRIAGED",
+            "SPEC_READY",
+            "CLAIMED",
+            "RUNNING",
+            "VERIFYING",
+            "REVIEWING",
+            "AWAITING_APPROVAL",
+            "DONE",
+            "SPEC_BLOCKED",
+            "BLOCKED",
+            "FAILED"
+          ]
+        },
+        "run_state": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "SPEC_READY",
+            "RUNNING",
+            "VERIFYING",
+            "REVIEWING",
+            "AWAITING_APPROVAL",
+            "DONE",
+            "SPEC_BLOCKED",
+            "BLOCKED",
+            "FAILED",
+            null
+          ]
+        },
+        "freshness": {
+          "enum": [
+            "CURRENT",
+            "STALE",
+            "UNKNOWN"
+          ]
+        },
+        "model": {
+          "const": "offline-fixture"
+        },
+        "prompt_version": {
+          "const": "h7.announcement-fact-extraction.v0"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "missing_evidence": {
+          "$ref": "#/$defs/string_array"
+        },
+        "warnings": {
+          "$ref": "#/$defs/string_array"
+        },
+        "blocking_reasons": {
+          "$ref": "#/$defs/string_array"
+        },
+        "external_content_trust": {
+          "const": "UNTRUSTED_DATA"
+        },
+        "error_code": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      }
+    },
+    "human_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "reviewer",
+        "decision_ref",
+        "final_merge_authority",
+        "final_merge_authorized"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "NOT_REQUESTED",
+            "PENDING",
+            "APPROVED",
+            "REVISE",
+            "REJECTED"
+          ]
+        },
+        "reviewer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "decision_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "final_merge_authority": {
+          "const": "Junyan"
+        },
+        "final_merge_authorized": {
+          "const": false
+        }
+      }
+    }
+  }
+}

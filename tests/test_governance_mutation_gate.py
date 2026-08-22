@@ -124,6 +124,45 @@ class GovernanceMutationGateTests(unittest.TestCase):
             ):
                 gate.validate_manifest(root, [case])
 
+    def test_validate_manifest_enforces_h7_marker_coverage(self) -> None:
+        case = gate.MutationCase(
+            mutation_id="H7_SYNTHETIC_GATE",
+            component="H7 synthetic",
+            source_path="source.py",
+            test_script="test_source.py",
+            before="guard = True",
+            after="guard = False",
+            expected_failure_marker="synthetic",
+            rationale="Synthetic case proving H7 marker coverage is load-bearing.",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source.py").write_text("guard = True\n", encoding="utf-8")
+            (root / "test_source.py").write_text(
+                "def synthetic():\n"
+                "    return None\n",
+                encoding="utf-8",
+            )
+            for relative in (
+                *gate.K1_GOVERNANCE_PATHS,
+                *gate.R043_GOVERNANCE_PATHS,
+                *gate.FUNNEL_GOVERNANCE_PATHS,
+                *gate.FUNNEL_NIGHTLY_GOVERNANCE_PATHS,
+                *gate.NIGHTLY_ACCEPTANCE_GOVERNANCE_PATHS,
+            ):
+                marker_path = root / relative
+                marker_path.parent.mkdir(parents=True, exist_ok=True)
+                marker_path.write_text("# no relevant markers\n", encoding="utf-8")
+            for relative in gate.H7_GOVERNANCE_PATHS:
+                marker_path = root / relative
+                marker_path.parent.mkdir(parents=True, exist_ok=True)
+                marker_path.write_text("# missing marker\n", encoding="utf-8")
+            with self.assertRaisesRegex(
+                gate.MutationGateError,
+                "mutations_without_markers.*H7_SYNTHETIC_GATE",
+            ):
+                gate.validate_manifest(root, [case])
+
     def test_validate_manifest_enforces_r043_marker_coverage(self) -> None:
         case = gate.MutationCase(
             mutation_id="R043_SYNTHETIC_GATE",

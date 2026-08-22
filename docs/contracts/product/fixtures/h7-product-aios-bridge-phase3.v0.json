@@ -1,0 +1,422 @@
+{
+  "schema": "h7-product-aios-bridge-phase3.fixtures.v0",
+  "page": {
+    "route": "/aios/product-bridge",
+    "title": "Product-AIOS Bridge",
+    "source_packet_schema": "h7-task-ux.v0",
+    "ui_view_schema": "h7-task-ux-ui.v0",
+    "regions": [
+      "request_header",
+      "task_preview",
+      "run_projection",
+      "evidence_table",
+      "gap_panel",
+      "human_review_dock",
+      "audit_strip"
+    ],
+    "responsive_targets": [
+      "desktop",
+      "mobile_390"
+    ],
+    "trace_stage_order": [
+      "product_request",
+      "ai_task_preview",
+      "agent_output_packet",
+      "human_review",
+      "page_display"
+    ],
+    "forbidden_runtime_actions": [
+      "provider_model_call",
+      "agent_execution",
+      "router_request",
+      "context_retrieval",
+      "policy_decision",
+      "github_write",
+      "memory_write",
+      "production_write",
+      "final_merge_authorization"
+    ],
+    "no_trade_flag": true
+  },
+  "acceptance_cases": [
+    {
+      "case_id": "missing_amount",
+      "input_status": "PARTIAL",
+      "expected_tone": "warning",
+      "primary_user_action": "EDIT_REQUEST",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
+      "must_show": [
+        "gap_panel",
+        "missing_evidence",
+        "audit_strip"
+      ],
+      "must_not_show_as_success": true,
+      "bridge_trace": {
+        "schema": "bridge-trace.v0",
+        "trace_id": "h7-announcement-fact-001",
+        "resolved_trace_id_source": "packet.user_input.request_id",
+        "stages": [
+          {
+            "stage": "product_request",
+            "artifact_id": "product_request:h7-announcement-fact-001",
+            "artifact_hash": "sha256:fc08ea1c02af78101bd96fd0fa23595e3eb3b494ef0f5e5837facbc4c6aefab3",
+            "source_contract": "h7-task-ux.v0:user_input",
+            "parent_artifact_hash": null,
+            "receipt_id": null
+          },
+          {
+            "stage": "ai_task_preview",
+            "artifact_id": "ai_task_preview:h7-announcement-fact-001",
+            "artifact_hash": "sha256:2eaf06e26fc1cb6187b1d49a67e6d965343986a7215f50f6ba4fddc268e0838e",
+            "source_contract": "ai-task.v1",
+            "parent_artifact_hash": "sha256:fc08ea1c02af78101bd96fd0fa23595e3eb3b494ef0f5e5837facbc4c6aefab3",
+            "receipt_id": null
+          },
+          {
+            "stage": "agent_output_packet",
+            "artifact_id": "agent_output_packet:h7-announcement-fact-001",
+            "artifact_hash": "sha256:8ab2096bb7efc205388faac99e525c758e8fe9d63f7bbc152cc510911085669a",
+            "source_contract": "h7-task-ux.v0:projection",
+            "parent_artifact_hash": "sha256:2eaf06e26fc1cb6187b1d49a67e6d965343986a7215f50f6ba4fddc268e0838e",
+            "receipt_id": null
+          },
+          {
+            "stage": "human_review",
+            "artifact_id": "human_review:h7-announcement-fact-001",
+            "artifact_hash": "sha256:6e161d5f92845b2755513dd70cb55dd8b1b2f4500f730b5325f547c43ad0a6e6",
+            "source_contract": "human-gate-receipt.v0-or-h7-task-ux.v0:human_review",
+            "parent_artifact_hash": "sha256:8ab2096bb7efc205388faac99e525c758e8fe9d63f7bbc152cc510911085669a",
+            "receipt_id": null
+          },
+          {
+            "stage": "page_display",
+            "artifact_id": "page_display:h7-announcement-fact-001",
+            "artifact_hash": "sha256:77fde366e38f6b1318eca8458df272fcdd0fbc003a62d80775b79708b8afc4bb",
+            "source_contract": "h7-product-aios-bridge-phase3.case.v0",
+            "parent_artifact_hash": "sha256:6e161d5f92845b2755513dd70cb55dd8b1b2f4500f730b5325f547c43ad0a6e6",
+            "receipt_id": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "expired_cutoff",
+      "input_status": "STALE",
+      "expected_tone": "stale",
+      "primary_user_action": "REQUEST_CONTEXT_REFRESH",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
+      "must_show": [
+        "data_cutoff",
+        "freshness",
+        "audit_strip"
+      ],
+      "must_not_show_as_success": true,
+      "bridge_trace": {
+        "schema": "bridge-trace.v0",
+        "trace_id": "h7-announcement-fact-001",
+        "resolved_trace_id_source": "packet.user_input.request_id",
+        "stages": [
+          {
+            "stage": "product_request",
+            "artifact_id": "product_request:h7-announcement-fact-001",
+            "artifact_hash": "sha256:fc08ea1c02af78101bd96fd0fa23595e3eb3b494ef0f5e5837facbc4c6aefab3",
+            "source_contract": "h7-task-ux.v0:user_input",
+            "parent_artifact_hash": null,
+            "receipt_id": null
+          },
+          {
+            "stage": "ai_task_preview",
+            "artifact_id": "ai_task_preview:h7-announcement-fact-001",
+            "artifact_hash": "sha256:2eaf06e26fc1cb6187b1d49a67e6d965343986a7215f50f6ba4fddc268e0838e",
+            "source_contract": "ai-task.v1",
+            "parent_artifact_hash": "sha256:fc08ea1c02af78101bd96fd0fa23595e3eb3b494ef0f5e5837facbc4c6aefab3",
+            "receipt_id": null
+          },
+          {
+            "stage": "agent_output_packet",
+            "artifact_id": "agent_output_packet:h7-announcement-fact-001",
+            "artifact_hash": "sha256:8201b4995bf1f3d8666eb037b27bd130a450ae6f03bfeef0cf976f1ed28d42dd",
+            "source_contract": "h7-task-ux.v0:projection",
+            "parent_artifact_hash": "sha256:2eaf06e26fc1cb6187b1d49a67e6d965343986a7215f50f6ba4fddc268e0838e",
+            "receipt_id": null
+          },
+          {
+            "stage": "human_review",
+            "artifact_id": "human_review:h7-announcement-fact-001",
+            "artifact_hash": "sha256:b91eb33717b49261e19d8e29995b74f9d1b590b2087a16d394f5e0f13018f775",
+            "source_contract": "human-gate-receipt.v0-or-h7-task-ux.v0:human_review",
+            "parent_artifact_hash": "sha256:8201b4995bf1f3d8666eb037b27bd130a450ae6f03bfeef0cf976f1ed28d42dd",
+            "receipt_id": null
+          },
+          {
+            "stage": "page_display",
+            "artifact_id": "page_display:h7-announcement-fact-001",
+            "artifact_hash": "sha256:b19c58bf5903c22297775f9c4c2eca055c56e7d20a5e20c823125c0b69d2f8ec",
+            "source_contract": "h7-product-aios-bridge-phase3.case.v0",
+            "parent_artifact_hash": "sha256:b91eb33717b49261e19d8e29995b74f9d1b590b2087a16d394f5e0f13018f775",
+            "receipt_id": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "bad_request",
+      "input_status": "BLOCKED",
+      "expected_tone": "blocked",
+      "primary_user_action": "EDIT_REQUEST",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
+      "must_show": [
+        "blocking_reasons",
+        "task_manifest_null",
+        "audit_strip"
+      ],
+      "must_not_show_as_success": true,
+      "bridge_trace": {
+        "schema": "bridge-trace.v0",
+        "trace_id": "h7-announcement-fact-001",
+        "resolved_trace_id_source": "packet.user_input.request_id",
+        "stages": [
+          {
+            "stage": "product_request",
+            "artifact_id": "product_request:h7-announcement-fact-001",
+            "artifact_hash": "sha256:d655b670cac4b13d9fcfc10f04146df93b7987ad573ebf51cef989ec41f47d82",
+            "source_contract": "h7-task-ux.v0:user_input",
+            "parent_artifact_hash": null,
+            "receipt_id": null
+          },
+          {
+            "stage": "ai_task_preview",
+            "artifact_id": "ai_task_preview:h7-announcement-fact-001",
+            "artifact_hash": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+            "source_contract": "ai-task.v1",
+            "parent_artifact_hash": "sha256:d655b670cac4b13d9fcfc10f04146df93b7987ad573ebf51cef989ec41f47d82",
+            "receipt_id": null
+          },
+          {
+            "stage": "agent_output_packet",
+            "artifact_id": "agent_output_packet:h7-announcement-fact-001",
+            "artifact_hash": "sha256:39973c02740942653155be25f1faac2bebcd908033f7b74fd8b8013c0e2c85d5",
+            "source_contract": "h7-task-ux.v0:projection",
+            "parent_artifact_hash": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+            "receipt_id": null
+          },
+          {
+            "stage": "human_review",
+            "artifact_id": "human_review:h7-announcement-fact-001",
+            "artifact_hash": "sha256:b91eb33717b49261e19d8e29995b74f9d1b590b2087a16d394f5e0f13018f775",
+            "source_contract": "human-gate-receipt.v0-or-h7-task-ux.v0:human_review",
+            "parent_artifact_hash": "sha256:39973c02740942653155be25f1faac2bebcd908033f7b74fd8b8013c0e2c85d5",
+            "receipt_id": null
+          },
+          {
+            "stage": "page_display",
+            "artifact_id": "page_display:h7-announcement-fact-001",
+            "artifact_hash": "sha256:2e13e03df5c0de0c82809aa8cba6cbcffb1c843201805a7ff78463aa2a574e42",
+            "source_contract": "h7-product-aios-bridge-phase3.case.v0",
+            "parent_artifact_hash": "sha256:b91eb33717b49261e19d8e29995b74f9d1b590b2087a16d394f5e0f13018f775",
+            "receipt_id": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "projection_failed",
+      "input_status": "ERROR",
+      "expected_tone": "error",
+      "primary_user_action": "EDIT_REQUEST",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
+      "must_show": [
+        "error_code",
+        "audit_strip"
+      ],
+      "must_not_show_as_success": true,
+      "bridge_trace": {
+        "schema": "bridge-trace.v0",
+        "trace_id": "h7-announcement-fact-001",
+        "resolved_trace_id_source": "packet.user_input.request_id",
+        "stages": [
+          {
+            "stage": "product_request",
+            "artifact_id": "product_request:h7-announcement-fact-001",
+            "artifact_hash": "sha256:fc08ea1c02af78101bd96fd0fa23595e3eb3b494ef0f5e5837facbc4c6aefab3",
+            "source_contract": "h7-task-ux.v0:user_input",
+            "parent_artifact_hash": null,
+            "receipt_id": null
+          },
+          {
+            "stage": "ai_task_preview",
+            "artifact_id": "ai_task_preview:h7-announcement-fact-001",
+            "artifact_hash": "sha256:2eaf06e26fc1cb6187b1d49a67e6d965343986a7215f50f6ba4fddc268e0838e",
+            "source_contract": "ai-task.v1",
+            "parent_artifact_hash": "sha256:fc08ea1c02af78101bd96fd0fa23595e3eb3b494ef0f5e5837facbc4c6aefab3",
+            "receipt_id": null
+          },
+          {
+            "stage": "agent_output_packet",
+            "artifact_id": "agent_output_packet:h7-announcement-fact-001",
+            "artifact_hash": "sha256:6560189e4b6b7f5c1fdbaec004c9d846495d607901197fbde9ecfbe416e1f329",
+            "source_contract": "h7-task-ux.v0:projection",
+            "parent_artifact_hash": "sha256:2eaf06e26fc1cb6187b1d49a67e6d965343986a7215f50f6ba4fddc268e0838e",
+            "receipt_id": null
+          },
+          {
+            "stage": "human_review",
+            "artifact_id": "human_review:h7-announcement-fact-001",
+            "artifact_hash": "sha256:b91eb33717b49261e19d8e29995b74f9d1b590b2087a16d394f5e0f13018f775",
+            "source_contract": "human-gate-receipt.v0-or-h7-task-ux.v0:human_review",
+            "parent_artifact_hash": "sha256:6560189e4b6b7f5c1fdbaec004c9d846495d607901197fbde9ecfbe416e1f329",
+            "receipt_id": null
+          },
+          {
+            "stage": "page_display",
+            "artifact_id": "page_display:h7-announcement-fact-001",
+            "artifact_hash": "sha256:7de8c83ac8ec07e7aeb1d1f121ddafd918868a481bd5ebeb9448ff102b656281",
+            "source_contract": "h7-product-aios-bridge-phase3.case.v0",
+            "parent_artifact_hash": "sha256:b91eb33717b49261e19d8e29995b74f9d1b590b2087a16d394f5e0f13018f775",
+            "receipt_id": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "needs_review",
+      "input_status": "AWAITING_HUMAN_REVIEW",
+      "expected_tone": "review",
+      "primary_user_action": "REQUEST_HUMAN_REVIEW",
+      "trace_id": "h7-announcement-fact-001",
+      "required_trace_stages": [
+        "product_request",
+        "ai_task_preview",
+        "agent_output_packet",
+        "human_review",
+        "page_display"
+      ],
+      "display_guards": {
+        "can_show_complete": false,
+        "can_authorize_merge": false,
+        "can_promote_memory": false,
+        "must_preserve_untrusted_data": true
+      },
+      "must_show": [
+        "reviewer",
+        "decision_ref_null",
+        "audit_strip"
+      ],
+      "must_not_show_as_success": true,
+      "bridge_trace": {
+        "schema": "bridge-trace.v0",
+        "trace_id": "h7-announcement-fact-001",
+        "resolved_trace_id_source": "packet.user_input.request_id",
+        "stages": [
+          {
+            "stage": "product_request",
+            "artifact_id": "product_request:h7-announcement-fact-001",
+            "artifact_hash": "sha256:fc08ea1c02af78101bd96fd0fa23595e3eb3b494ef0f5e5837facbc4c6aefab3",
+            "source_contract": "h7-task-ux.v0:user_input",
+            "parent_artifact_hash": null,
+            "receipt_id": null
+          },
+          {
+            "stage": "ai_task_preview",
+            "artifact_id": "ai_task_preview:h7-announcement-fact-001",
+            "artifact_hash": "sha256:2eaf06e26fc1cb6187b1d49a67e6d965343986a7215f50f6ba4fddc268e0838e",
+            "source_contract": "ai-task.v1",
+            "parent_artifact_hash": "sha256:fc08ea1c02af78101bd96fd0fa23595e3eb3b494ef0f5e5837facbc4c6aefab3",
+            "receipt_id": null
+          },
+          {
+            "stage": "agent_output_packet",
+            "artifact_id": "agent_output_packet:h7-announcement-fact-001",
+            "artifact_hash": "sha256:ce4e712137105f4f667ca974c26f131aa6962fad786ab90821bf6a033e584752",
+            "source_contract": "h7-task-ux.v0:projection",
+            "parent_artifact_hash": "sha256:2eaf06e26fc1cb6187b1d49a67e6d965343986a7215f50f6ba4fddc268e0838e",
+            "receipt_id": null
+          },
+          {
+            "stage": "human_review",
+            "artifact_id": "human_review:h7-announcement-fact-001",
+            "artifact_hash": "sha256:6e161d5f92845b2755513dd70cb55dd8b1b2f4500f730b5325f547c43ad0a6e6",
+            "source_contract": "human-gate-receipt.v0-or-h7-task-ux.v0:human_review",
+            "parent_artifact_hash": "sha256:ce4e712137105f4f667ca974c26f131aa6962fad786ab90821bf6a033e584752",
+            "receipt_id": null
+          },
+          {
+            "stage": "page_display",
+            "artifact_id": "page_display:h7-announcement-fact-001",
+            "artifact_hash": "sha256:2acea765c24ba35e3f2020aa4879d4808acc4ee66ae7d0862aa3dbcae90a68e3",
+            "source_contract": "h7-product-aios-bridge-phase3.case.v0",
+            "parent_artifact_hash": "sha256:6e161d5f92845b2755513dd70cb55dd8b1b2f4500f730b5325f547c43ad0a6e6",
+            "receipt_id": null
+          }
+        ]
+      }
+    }
+  ],
+  "responsive_acceptance": {
+    "desktop": [
+      "request_header_visible",
+      "task_preview_visible",
+      "run_projection_visible",
+      "evidence_columns_readable",
+      "audit_strip_visible"
+    ],
+    "mobile_390": [
+      "no_horizontal_text_overflow",
+      "evidence_rows_stack",
+      "primary_action_below_current_state",
+      "audit_strip_before_human_review"
+    ]
+  }
+}

@@ -1,0 +1,631 @@
+{
+  "schema": "h7-task-ux.fixtures.v0",
+  "fixtures": {
+    "PARTIAL": {
+      "schema": "h7-task-ux.v0",
+      "workflow_type": "ANNOUNCEMENT_FACT_EXTRACTION",
+      "status": "PARTIAL",
+      "generated_at": "2026-08-20T09:30:00+08:00",
+      "user_input": {
+        "request_id": "h7-announcement-fact-001",
+        "source_issue": 287,
+        "goal": "Extract issuer, event date, event type, and disclosed amount from the supplied announcement references with citations and visible gaps.",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "announcement_refs": [
+          {
+            "source_id": "fixture-announcement-001",
+            "source_kind": "ANNOUNCEMENT",
+            "locator": "fixture:announcement-001",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "trust": "UNTRUSTED_DATA"
+          }
+        ],
+        "fact_fields": [
+          "issuer",
+          "event_date",
+          "event_type",
+          "disclosed_amount"
+        ],
+        "data_cutoff": "2026-08-20T09:00:00+08:00",
+        "max_cny": "0",
+        "max_minutes": 20,
+        "submitted_at": "2026-08-20T09:05:00+08:00"
+      },
+      "task_manifest": {
+        "schema": "ai-task.v1",
+        "task_id": "h7-announcement-fact-001",
+        "source_issue": 287,
+        "architecture_block": [
+          "H7",
+          "Product-AIOS Bridge"
+        ],
+        "objective": "Extract issuer, event date, event type, and disclosed amount from the supplied announcement references with citations and visible gaps.",
+        "non_goals": [
+          "No investment conclusion",
+          "No buy or sell instruction",
+          "No production write"
+        ],
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "executor_candidates": [
+          "Codex"
+        ],
+        "dependencies": [
+          "#280"
+        ],
+        "authority_docs": [
+          "docs/team/TEAM_CHARTER_v4.md",
+          "docs/product/H7_TASK_UX_V0.md"
+        ],
+        "file_scope": [
+          "docs/product/",
+          "docs/contracts/product/"
+        ],
+        "forbidden_scope": [
+          "experiments/execution_tracker/",
+          "public/data/"
+        ],
+        "input_contracts": [
+          "h7-task-ux.v0",
+          "announcement-ref:fixture-announcement-001",
+          "data-cutoff:2026-08-20T09:00:00+08:00"
+        ],
+        "output_artifacts": [
+          "product-aios-bridge.v0"
+        ],
+        "acceptance_tests": [
+          "Extract issuer with a source citation.",
+          "Extract event_date with a source citation.",
+          "Extract event_type with a source citation.",
+          "Extract disclosed_amount with a source citation."
+        ],
+        "risk_level": "LOW",
+        "network_policy": "OFFLINE",
+        "budget": {
+          "max_cny": "0",
+          "max_minutes": 20
+        },
+        "approval_gates": [
+          "Independent Human Review",
+          "Junyan final merge authority"
+        ],
+        "created_at": "2026-08-20T01:05:00+00:00",
+        "source_hash": "sha256:4b9c16ff41cbe11609b23e2adbd5d94fcda57179f9470168d3f9cb32ba33ec66"
+      },
+      "projection": {
+        "task_state": "VERIFYING",
+        "run_state": "VERIFYING",
+        "freshness": "CURRENT",
+        "model": "offline-fixture",
+        "prompt_version": "h7.announcement-fact-extraction.v0",
+        "summary": "Issuer and event date are cited; event type and amount remain unverified.",
+        "evidence": [
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#issuer",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "Issuer name appears in the announcement header.",
+            "verification_status": "VERIFIED"
+          },
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#event-date",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "The disclosed event date is 2026-08-19.",
+            "verification_status": "VERIFIED"
+          }
+        ],
+        "missing_evidence": [
+          "event_type",
+          "disclosed_amount"
+        ],
+        "warnings": [
+          "Human Review does not authorize final merge or deployment."
+        ],
+        "blocking_reasons": [],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "error_code": null
+      },
+      "human_review": {
+        "state": "PENDING",
+        "reviewer": "Jason",
+        "decision_ref": null,
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "no_trade_flag": true,
+      "human_gate_receipt": null
+    },
+    "STALE": {
+      "schema": "h7-task-ux.v0",
+      "workflow_type": "ANNOUNCEMENT_FACT_EXTRACTION",
+      "status": "STALE",
+      "generated_at": "2026-08-20T09:30:00+08:00",
+      "user_input": {
+        "request_id": "h7-announcement-fact-001",
+        "source_issue": 287,
+        "goal": "Extract issuer, event date, event type, and disclosed amount from the supplied announcement references with citations and visible gaps.",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "announcement_refs": [
+          {
+            "source_id": "fixture-announcement-001",
+            "source_kind": "ANNOUNCEMENT",
+            "locator": "fixture:announcement-001",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "trust": "UNTRUSTED_DATA"
+          }
+        ],
+        "fact_fields": [
+          "issuer",
+          "event_date",
+          "event_type",
+          "disclosed_amount"
+        ],
+        "data_cutoff": "2026-08-20T09:00:00+08:00",
+        "max_cny": "0",
+        "max_minutes": 20,
+        "submitted_at": "2026-08-20T09:05:00+08:00"
+      },
+      "task_manifest": {
+        "schema": "ai-task.v1",
+        "task_id": "h7-announcement-fact-001",
+        "source_issue": 287,
+        "architecture_block": [
+          "H7",
+          "Product-AIOS Bridge"
+        ],
+        "objective": "Extract issuer, event date, event type, and disclosed amount from the supplied announcement references with citations and visible gaps.",
+        "non_goals": [
+          "No investment conclusion",
+          "No buy or sell instruction",
+          "No production write"
+        ],
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "executor_candidates": [
+          "Codex"
+        ],
+        "dependencies": [
+          "#280"
+        ],
+        "authority_docs": [
+          "docs/team/TEAM_CHARTER_v4.md",
+          "docs/product/H7_TASK_UX_V0.md"
+        ],
+        "file_scope": [
+          "docs/product/",
+          "docs/contracts/product/"
+        ],
+        "forbidden_scope": [
+          "experiments/execution_tracker/",
+          "public/data/"
+        ],
+        "input_contracts": [
+          "h7-task-ux.v0",
+          "announcement-ref:fixture-announcement-001",
+          "data-cutoff:2026-08-20T09:00:00+08:00"
+        ],
+        "output_artifacts": [
+          "product-aios-bridge.v0"
+        ],
+        "acceptance_tests": [
+          "Extract issuer with a source citation.",
+          "Extract event_date with a source citation.",
+          "Extract event_type with a source citation.",
+          "Extract disclosed_amount with a source citation."
+        ],
+        "risk_level": "LOW",
+        "network_policy": "OFFLINE",
+        "budget": {
+          "max_cny": "0",
+          "max_minutes": 20
+        },
+        "approval_gates": [
+          "Independent Human Review",
+          "Junyan final merge authority"
+        ],
+        "created_at": "2026-08-20T01:05:00+00:00",
+        "source_hash": "sha256:4b9c16ff41cbe11609b23e2adbd5d94fcda57179f9470168d3f9cb32ba33ec66"
+      },
+      "projection": {
+        "task_state": "RUNNING",
+        "run_state": "RUNNING",
+        "freshness": "STALE",
+        "model": "offline-fixture",
+        "prompt_version": "h7.announcement-fact-extraction.v0",
+        "summary": "Facts exist, but the accepted data cutoff has expired.",
+        "evidence": [
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#issuer",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "Issuer name appears in the announcement header.",
+            "verification_status": "VERIFIED"
+          },
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#event-date",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "The disclosed event date is 2026-08-19.",
+            "verification_status": "VERIFIED"
+          },
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#event-type",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "The announcement describes a signed supply agreement.",
+            "verification_status": "VERIFIED"
+          },
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#amount",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "The disclosed contract amount is CNY 120 million.",
+            "verification_status": "VERIFIED"
+          }
+        ],
+        "missing_evidence": [],
+        "warnings": [
+          "Evidence is stale and cannot be promoted before refresh."
+        ],
+        "blocking_reasons": [],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "error_code": null
+      },
+      "human_review": {
+        "state": "NOT_REQUESTED",
+        "reviewer": null,
+        "decision_ref": null,
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "no_trade_flag": true,
+      "human_gate_receipt": null
+    },
+    "BLOCKED": {
+      "schema": "h7-task-ux.v0",
+      "workflow_type": "ANNOUNCEMENT_FACT_EXTRACTION",
+      "status": "BLOCKED",
+      "generated_at": "2026-08-20T09:30:00+08:00",
+      "user_input": {
+        "request_id": "h7-announcement-fact-001",
+        "source_issue": 287,
+        "goal": "Extract issuer, event date, event type, and disclosed amount from the supplied announcement references with citations and visible gaps.",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "announcement_refs": [
+          {
+            "source_id": "fixture-announcement-001",
+            "source_kind": "ANNOUNCEMENT",
+            "locator": "fixture:announcement-001",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "trust": "UNTRUSTED_DATA"
+          }
+        ],
+        "fact_fields": [],
+        "data_cutoff": "2026-08-20T09:00:00+08:00",
+        "max_cny": "0",
+        "max_minutes": 20,
+        "submitted_at": "2026-08-20T09:05:00+08:00"
+      },
+      "task_manifest": null,
+      "projection": {
+        "task_state": "SPEC_BLOCKED",
+        "run_state": null,
+        "freshness": "UNKNOWN",
+        "model": "offline-fixture",
+        "prompt_version": "h7.announcement-fact-extraction.v0",
+        "summary": "No fact fields were selected, so no canonical task was created.",
+        "evidence": [],
+        "missing_evidence": [],
+        "warnings": [],
+        "blocking_reasons": [
+          "fact_fields must contain at least one required fact"
+        ],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "error_code": null
+      },
+      "human_review": {
+        "state": "NOT_REQUESTED",
+        "reviewer": null,
+        "decision_ref": null,
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "no_trade_flag": true,
+      "human_gate_receipt": null
+    },
+    "ERROR": {
+      "schema": "h7-task-ux.v0",
+      "workflow_type": "ANNOUNCEMENT_FACT_EXTRACTION",
+      "status": "ERROR",
+      "generated_at": "2026-08-20T09:30:00+08:00",
+      "user_input": {
+        "request_id": "h7-announcement-fact-001",
+        "source_issue": 287,
+        "goal": "Extract issuer, event date, event type, and disclosed amount from the supplied announcement references with citations and visible gaps.",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "announcement_refs": [
+          {
+            "source_id": "fixture-announcement-001",
+            "source_kind": "ANNOUNCEMENT",
+            "locator": "fixture:announcement-001",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "trust": "UNTRUSTED_DATA"
+          }
+        ],
+        "fact_fields": [
+          "issuer",
+          "event_date",
+          "event_type",
+          "disclosed_amount"
+        ],
+        "data_cutoff": "2026-08-20T09:00:00+08:00",
+        "max_cny": "0",
+        "max_minutes": 20,
+        "submitted_at": "2026-08-20T09:05:00+08:00"
+      },
+      "task_manifest": {
+        "schema": "ai-task.v1",
+        "task_id": "h7-announcement-fact-001",
+        "source_issue": 287,
+        "architecture_block": [
+          "H7",
+          "Product-AIOS Bridge"
+        ],
+        "objective": "Extract issuer, event date, event type, and disclosed amount from the supplied announcement references with citations and visible gaps.",
+        "non_goals": [
+          "No investment conclusion",
+          "No buy or sell instruction",
+          "No production write"
+        ],
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "executor_candidates": [
+          "Codex"
+        ],
+        "dependencies": [
+          "#280"
+        ],
+        "authority_docs": [
+          "docs/team/TEAM_CHARTER_v4.md",
+          "docs/product/H7_TASK_UX_V0.md"
+        ],
+        "file_scope": [
+          "docs/product/",
+          "docs/contracts/product/"
+        ],
+        "forbidden_scope": [
+          "experiments/execution_tracker/",
+          "public/data/"
+        ],
+        "input_contracts": [
+          "h7-task-ux.v0",
+          "announcement-ref:fixture-announcement-001",
+          "data-cutoff:2026-08-20T09:00:00+08:00"
+        ],
+        "output_artifacts": [
+          "product-aios-bridge.v0"
+        ],
+        "acceptance_tests": [
+          "Extract issuer with a source citation.",
+          "Extract event_date with a source citation.",
+          "Extract event_type with a source citation.",
+          "Extract disclosed_amount with a source citation."
+        ],
+        "risk_level": "LOW",
+        "network_policy": "OFFLINE",
+        "budget": {
+          "max_cny": "0",
+          "max_minutes": 20
+        },
+        "approval_gates": [
+          "Independent Human Review",
+          "Junyan final merge authority"
+        ],
+        "created_at": "2026-08-20T01:05:00+00:00",
+        "source_hash": "sha256:4b9c16ff41cbe11609b23e2adbd5d94fcda57179f9470168d3f9cb32ba33ec66"
+      },
+      "projection": {
+        "task_state": "FAILED",
+        "run_state": "FAILED",
+        "freshness": "CURRENT",
+        "model": "offline-fixture",
+        "prompt_version": "h7.announcement-fact-extraction.v0",
+        "summary": "The offline projection failed contract validation and was not displayed as success.",
+        "evidence": [],
+        "missing_evidence": [],
+        "warnings": [
+          "Failure remains visible; there is no success fallback."
+        ],
+        "blocking_reasons": [],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "error_code": "H7_PROJECTION_INVALID"
+      },
+      "human_review": {
+        "state": "NOT_REQUESTED",
+        "reviewer": null,
+        "decision_ref": null,
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "no_trade_flag": true,
+      "human_gate_receipt": null
+    },
+    "AWAITING_HUMAN_REVIEW": {
+      "schema": "h7-task-ux.v0",
+      "workflow_type": "ANNOUNCEMENT_FACT_EXTRACTION",
+      "status": "AWAITING_HUMAN_REVIEW",
+      "generated_at": "2026-08-20T09:30:00+08:00",
+      "user_input": {
+        "request_id": "h7-announcement-fact-001",
+        "source_issue": 287,
+        "goal": "Extract issuer, event date, event type, and disclosed amount from the supplied announcement references with citations and visible gaps.",
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "announcement_refs": [
+          {
+            "source_id": "fixture-announcement-001",
+            "source_kind": "ANNOUNCEMENT",
+            "locator": "fixture:announcement-001",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "trust": "UNTRUSTED_DATA"
+          }
+        ],
+        "fact_fields": [
+          "issuer",
+          "event_date",
+          "event_type",
+          "disclosed_amount"
+        ],
+        "data_cutoff": "2026-08-20T09:00:00+08:00",
+        "max_cny": "0",
+        "max_minutes": 20,
+        "submitted_at": "2026-08-20T09:05:00+08:00"
+      },
+      "task_manifest": {
+        "schema": "ai-task.v1",
+        "task_id": "h7-announcement-fact-001",
+        "source_issue": 287,
+        "architecture_block": [
+          "H7",
+          "Product-AIOS Bridge"
+        ],
+        "objective": "Extract issuer, event date, event type, and disclosed amount from the supplied announcement references with citations and visible gaps.",
+        "non_goals": [
+          "No investment conclusion",
+          "No buy or sell instruction",
+          "No production write"
+        ],
+        "human_owner": "Reed",
+        "reviewer": "Jason",
+        "executor_candidates": [
+          "Codex"
+        ],
+        "dependencies": [
+          "#280"
+        ],
+        "authority_docs": [
+          "docs/team/TEAM_CHARTER_v4.md",
+          "docs/product/H7_TASK_UX_V0.md"
+        ],
+        "file_scope": [
+          "docs/product/",
+          "docs/contracts/product/"
+        ],
+        "forbidden_scope": [
+          "experiments/execution_tracker/",
+          "public/data/"
+        ],
+        "input_contracts": [
+          "h7-task-ux.v0",
+          "announcement-ref:fixture-announcement-001",
+          "data-cutoff:2026-08-20T09:00:00+08:00"
+        ],
+        "output_artifacts": [
+          "product-aios-bridge.v0"
+        ],
+        "acceptance_tests": [
+          "Extract issuer with a source citation.",
+          "Extract event_date with a source citation.",
+          "Extract event_type with a source citation.",
+          "Extract disclosed_amount with a source citation."
+        ],
+        "risk_level": "LOW",
+        "network_policy": "OFFLINE",
+        "budget": {
+          "max_cny": "0",
+          "max_minutes": 20
+        },
+        "approval_gates": [
+          "Independent Human Review",
+          "Junyan final merge authority"
+        ],
+        "created_at": "2026-08-20T01:05:00+00:00",
+        "source_hash": "sha256:4b9c16ff41cbe11609b23e2adbd5d94fcda57179f9470168d3f9cb32ba33ec66"
+      },
+      "projection": {
+        "task_state": "REVIEWING",
+        "run_state": "VERIFYING",
+        "freshness": "CURRENT",
+        "model": "offline-fixture",
+        "prompt_version": "h7.announcement-fact-extraction.v0",
+        "summary": "Required facts and evidence are present; an independent human decision is pending.",
+        "evidence": [
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#issuer",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "Issuer name appears in the announcement header.",
+            "verification_status": "VERIFIED"
+          },
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#event-date",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "The disclosed event date is 2026-08-19.",
+            "verification_status": "VERIFIED"
+          },
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#event-type",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "The announcement describes a signed supply agreement.",
+            "verification_status": "VERIFIED"
+          },
+          {
+            "source_id": "fixture-announcement-001",
+            "locator": "fixture:announcement-001#amount",
+            "publish_date": "2026-08-20",
+            "data_cutoff": "2026-08-20T09:00:00+08:00",
+            "evidence_tier": "E1",
+            "fact": "The disclosed contract amount is CNY 120 million.",
+            "verification_status": "VERIFIED"
+          }
+        ],
+        "missing_evidence": [],
+        "warnings": [
+          "Human Review does not authorize final merge or deployment."
+        ],
+        "blocking_reasons": [],
+        "external_content_trust": "UNTRUSTED_DATA",
+        "error_code": null
+      },
+      "human_review": {
+        "state": "PENDING",
+        "reviewer": "Jason",
+        "decision_ref": null,
+        "final_merge_authority": "Junyan",
+        "final_merge_authorized": false
+      },
+      "no_trade_flag": true,
+      "human_gate_receipt": null
+    }
+  }
+}
