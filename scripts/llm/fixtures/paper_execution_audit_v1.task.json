@@ -1,0 +1,69 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "PAPER-EXECUTION-AUDIT-001",
+  "source_issue": null,
+  "architecture_block": ["research-framework", "paper-execution-audit"],
+  "objective": "Add a strictly read-only, offline audit of the inherited paper execution engine, bind its findings to engine and ledger snapshot hashes, and project all existing simulated outcomes as UNVERIFIED_SIMULATION without rewriting history.",
+  "non_goals": [
+    "Do not modify paper_portfolio.py or model_paper_fund.py",
+    "Do not fix execution behavior or start the PR-B engine hardening line",
+    "Do not rewrite, migrate, backfill, or append to historical production ledgers",
+    "Do not run the production nightly chain or read a default production path",
+    "Do not create real orders or claim win rate, alpha, profitability, or method validity"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": ["Codex"],
+  "dependencies": ["Current main paper execution engine and committed ledger snapshots"],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/strategy/MODEL_PAPER_FUND_POLICY.md"
+  ],
+  "file_scope": [
+    "experiments/execution_tracker/paper_execution_audit.py",
+    "tests/test_paper_execution_audit.py",
+    "docs/research/PAPER_EXECUTION_AUDIT_V1.md",
+    "scripts/llm/fixtures/paper_execution_audit_v1.task.json",
+    "scripts/governance_mutation_gate.py",
+    "tests/test_no_network_guard.py",
+    ".github/workflows/python-ci.yml"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker/paper_portfolio.py",
+    "experiments/execution_tracker/model_paper_fund.py",
+    "experiments/execution_tracker/event_ledger.jsonl",
+    "experiments/execution_tracker/model_fund",
+    "experiments/execution_tracker/paper_signal_log.json",
+    "experiments/execution_tracker/run_nightly.py",
+    "public/data/v2"
+  ],
+  "input_contracts": [
+    "explicit repository root",
+    "explicit model-fund orders/fund/NAV paths",
+    "explicit paper signal snapshot path",
+    "current paper execution engine source"
+  ],
+  "output_artifacts": [
+    "ar.paper_execution_audit_receipt.v1",
+    "hash-bound non-mutating order and signal audit projections"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_paper_execution_audit.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 tests/test_no_network_guard.py",
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_execution_audit_v1.task.json",
+    "git diff --check"
+  ],
+  "risk_level": "HIGH",
+  "network_policy": "OFFLINE",
+  "budget": {"max_cny": "0", "max_minutes": 240},
+  "approval_gates": [
+    "PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_PR_B_APPROVAL",
+    "SEPARATE_PRODUCTION_DEPLOY_APPROVAL"
+  ],
+  "created_at": "2026-08-22T09:00:00+08:00"
+}

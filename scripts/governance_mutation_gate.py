@@ -135,6 +135,7 @@ FUNNEL_GOVERNANCE_PATHS = (
     "experiments/research_funnel/research_cycle.py",
     "experiments/research_funnel/research_method.py",
     "experiments/research_funnel/industry_cohort.py",
+    "experiments/execution_tracker/paper_execution_audit.py",
 )
 # 夜链接入方式(隔离 / 产物销毁 / 不进发布树)同样是漏斗治理,必须同样被 marker
 # 覆盖 —— 否则新的 wiring 规则可以靠改组件名绕开检查。但它不能并进上面那条规则:
@@ -1955,6 +1956,55 @@ MUTATIONS: tuple[MutationCase, ...] = (
         '        raise CycleError("registered valuation industry differs from the research case")',
         expected_failure_marker="test_case_industry_must_match_registered_valuation_adapter",
         rationale="A research case cannot borrow a valuation adapter from a different industry method.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_AUDIT_BEHAVIORAL_PROBES",
+        component="Research funnel paper execution read-only audit",
+        source_path="experiments/execution_tracker/paper_execution_audit.py",
+        test_script="tests/test_paper_execution_audit.py",
+        before=(
+            "    # governance-mutation: PAPER_AUDIT_BEHAVIORAL_PROBES\n"
+            "    cases = _run_capability_probes()"
+        ),
+        after=(
+            "    # governance-mutation: PAPER_AUDIT_BEHAVIORAL_PROBES\n"
+            '    cases = [{"case_id": "DECLARED_ONLY", "requirement": "none", '
+            '"status": "PASS", "observed": {}}]'
+        ),
+        expected_failure_marker="test_behavioral_probe_matrix_executes_against_current_engine",
+        rationale="The audit must execute the engine probes instead of accepting an empty or declared capability matrix.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_AUDIT_HISTORY_UNVERIFIED",
+        component="Research funnel paper execution read-only audit",
+        source_path="experiments/execution_tracker/paper_execution_audit.py",
+        test_script="tests/test_paper_execution_audit.py",
+        before=(
+            "        # governance-mutation: PAPER_AUDIT_HISTORY_UNVERIFIED\n"
+            "        status = HISTORICAL_STATUS"
+        ),
+        after=(
+            "        # governance-mutation: PAPER_AUDIT_HISTORY_UNVERIFIED\n"
+            '        status = "VERIFIED_SIMULATION"'
+        ),
+        expected_failure_marker="test_history_is_projected_unverified_without_rewrite",
+        rationale="An audit of the current engine cannot retroactively validate fills generated without realism facts.",
+    ),
+    MutationCase(
+        mutation_id="PAPER_AUDIT_NO_CLAIM_AUTHORITY",
+        component="Research funnel paper execution read-only audit",
+        source_path="experiments/execution_tracker/paper_execution_audit.py",
+        test_script="tests/test_paper_execution_audit.py",
+        before=(
+            "    # governance-mutation: PAPER_AUDIT_NO_CLAIM_AUTHORITY\n"
+            "    claim_allowed = False"
+        ),
+        after=(
+            "    # governance-mutation: PAPER_AUDIT_NO_CLAIM_AUTHORITY\n"
+            "    claim_allowed = True"
+        ),
+        expected_failure_marker="test_receipt_never_grants_claim_or_production_authority",
+        rationale="The audit receipt cannot grant method claims or production authority.",
     ),
     MutationCase(
         mutation_id="RESEARCH_CYCLE_NO_LOOKAHEAD_BARS",
