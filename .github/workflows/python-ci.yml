@@ -148,12 +148,19 @@ jobs:
       # 且 U5 在 factpack/wrong-if/因果簇完成前必须保持 DATA_BLOCKED。
       - name: Offline research closure experiment
         run: python3 tests/test_research_closure_experiment.py
+      # Every U4-ready candidate receives one explicit decision. Machine-gate
+      # rejects remain visible, zero selections become NO_TRADE, and selected
+      # rows only project the existing offline review receipt.
+      - name: Offline U4 complete-decision ledger
+        run: python3 tests/test_u4_decision_ledger.py
       # U4 之后的完整离线链:研究核心、红队、双票、唯一 paper 成交引擎、
       # 产业估值、人工 SMC 注册、多账本事实评分、唯一 paper 成交引擎、
       # 结算复盘与带证据的人类确认/争议;不触碰生产账本。
       - name: Offline U4-to-paper research cycle
         run: |
           python3 tests/test_paper_execution_realism.py
+          python3 tests/test_paper_execution_audit.py
+          python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/paper_execution_audit_v1.task.json
           python3 tests/test_research_method.py
           python3 tests/test_research_cycle.py
       # 终局 paper cycle 五轴归因:thesis/valuation/timing/execution/market beta

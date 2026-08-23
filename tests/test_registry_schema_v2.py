@@ -66,7 +66,7 @@ class RegistrySchemaV2Test(unittest.TestCase):
             with mock.patch.object(event_ledger.datetime, "datetime", FrozenDateTime):
                 rec = event_ledger.append("register", "new", {}, path=ledger)
 
-            self.assertEqual(rec["ts"], "2026-08-11T23:42:32")
+            self.assertEqual(rec["ts"], "2026-08-11T23:42:32.000000")
             self.assertTrue(event_ledger.verify(ledger)["ok"])
         finally:
             shutil.rmtree(tmp, ignore_errors=True)

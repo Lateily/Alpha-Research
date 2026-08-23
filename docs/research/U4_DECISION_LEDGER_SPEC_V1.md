@@ -1,14 +1,15 @@
 # U4 Decision Ledger Specification v1
 
-Status: `SPEC_READY / IMPLEMENTATION_UNWIRED`
+Status: `DELIVERED_UNWIRED / OFFLINE_ONLY`
 
 This document freezes the second research-closure gate: every reviewed U2/U3
 candidate must leave a durable U4 decision, including candidates that Junyan
 rejects or cannot decide because evidence is missing. The schema is
 `docs/research/contracts/u4_decision_ledger.v1.schema.json`.
 
-This PR is specification only. It does not add a writer, replay engine, API,
-CLI, migration, historical backfill, nightly step, or production file.
+PR #295 froze this specification. PR #292 implements its offline writer,
+verifier, replay, closure receipt, and CLI without adding a nightly step,
+production default path, migration, or historical backfill.
 
 ## Decision Set
 
@@ -49,15 +50,47 @@ Each event binds one candidate to the exact same-day chain:
 
 `U2 bundle -> U2 candidate row -> U3 six-dimension battery -> U4 review packet`
 
+The writer enforces the complete point-in-time order before any WAL append:
+every frozen bundle artifact `generated_at` must be no later than the packet
+`generated_at`; the human `decided_at` must be no earlier than the packet; and
+the R-015 `registered_at` must be no earlier than the decision. Rebuilding a
+packet with a caller-supplied timestamp that predates its evidence is refused.
+
+`source.u3_battery_hash` binds the complete frozen U3 battery artifact, while
+`source.u3_battery_row_hash` binds that candidate's row inside the artifact.
+The typed R-015 append boundary must receive and revalidate the immutable
+bundle for every intent, decision, and closure append; internal hashes alone
+are not source evidence.
+It must canonicalize the builder payload once and use that same isolated
+snapshot for typed validation, hashing, and persistence; validating one
+caller-owned state and appending another is forbidden.
+
 The event also records `as_of`, `run_id`, industry cohort, causal-cluster
 identity, and `method_version`. Method version is mandatory so workflow-debug
 observations and every later frozen method version can be counted separately.
-A future implementation must reject a cross-date, cross-run, cross-packet, or
-differently hashed substitution.
+The v1.1 review packet is required at the decision-ledger boundary; previously
+emitted v1.0 packets remain valid for their original offline replay but do not
+carry enough provenance to enter this ledger. The implementation rejects a
+cross-date, cross-run, cross-packet, or differently hashed substitution.
+
+The current six-artifact funnel DAG does not freeze the separately produced
+Industry Cohort OS artifact. Therefore this offline implementation records
+`cohort_id=UNAVAILABLE`; it must not copy the raw U2 `industry_key` into that
+field. Such an event may support offline deep-research workflow debugging, but
+it cannot enter a cohort-specific denominator or support a method claim. A
+future packet version may replace the sentinel only after it binds the exact
+point-in-time cohort artifact and canonical cohort identity.
+
+At U4 admission time the prospective causal cluster may still be
+`UNAVAILABLE`, because assigning it is one of the deep-research outputs after
+selection. That explicit pending value does not prevent admission to offline
+deep research. It does prevent the candidate from entering U5 registration,
+independent-cluster denominators, or any claim until a reviewed prospective
+cluster object exists. The ledger never invents a cluster id.
 
 ## Append-Only Ledger Semantics
 
-The future writer and verifier must implement all of these rules together:
+The writer and verifier implement all of these rules together:
 
 1. Parse strict JSON: duplicate keys, non-finite values, malformed UTF-8, and
    unknown fields fail closed.
@@ -86,7 +119,7 @@ The future writer and verifier must implement all of these rules together:
 
 ## Identity And Hash Formulas
 
-The implementation PR must use deterministic canonical JSON and publish these
+The implementation uses deterministic canonical JSON and publishes these
 formulas without introducing a second interpretation:
 
 ```text
@@ -102,8 +135,8 @@ record_hash = "sha256:" + sha256(canonical_json(event_without_record_hash))
 
 ## Packet Closure Receipt
 
-The event schema alone cannot prove set equality across a file. The separate
-implementation PR must therefore emit a packet-closure receipt containing:
+The event schema alone cannot prove set equality across a file. The
+implementation therefore emits a packet-closure receipt containing:
 
 - exact `u4_packet_hash` and reviewed-candidate set hash;
 - current decision-id set hash;
@@ -115,8 +148,7 @@ implementation PR must therefore emit a packet-closure receipt containing:
 - `claim_allowed=false`, `production_authority=false`, and
   `no_trade_flag=true`.
 
-That receipt is required before a U4 queue is built. It does not exist in this
-specification PR.
+That receipt is required before a U4 queue is built.
 
 ## Deliberate Non-Backfill
 
@@ -127,8 +159,8 @@ mutation tests, and Junyan deployment approval are delivered.
 
 ## Next Gate
 
-A separate implementation PR may add an append-only writer, verifier, replay,
-packet closure receipt, negative-path tests, and mutation cases. Production
-wiring remains another separately approved step.
+Production wiring remains a separately approved step. Before wiring, an
+independent review must confirm the offline implementation, R-015 binding,
+concurrency behavior, and mutation coverage on the exact merged commit.
 
 不是买卖指令；研究信号，human executes.

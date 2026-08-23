@@ -66,6 +66,7 @@ from experiments.research_funnel import closure_experiment  # noqa: E402,F401
 from experiments.research_funnel import industry_cohort  # noqa: E402,F401
 from experiments.research_funnel import research_cycle  # noqa: E402,F401
 from experiments.research_funnel import five_axis_attribution  # noqa: E402,F401
+import paper_execution_audit  # noqa: E402,F401
 
 # ── 在守卫下跑完整离线套件入口(任何隐藏外呼 → NetworkAttempt 崩溃)──
 import test_engines_offline as teo        # noqa: E402
@@ -138,6 +139,15 @@ closure_result = unittest.TextTestRunner(verbosity=0).run(
 assert closure_result.wasSuccessful(), (
     "offline research closure suite failed under socket guard"
 )
+import test_u4_decision_ledger as u4_decision_tests  # noqa: E402
+u4_decision_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        u4_decision_tests.U4DecisionLedgerTests
+    )
+)
+assert u4_decision_result.wasSuccessful(), (
+    "offline U4 decision-ledger suite failed under socket guard"
+)
 import test_industry_cohort_offline as industry_cohort_tests  # noqa: E402
 industry_cohort_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
@@ -158,6 +168,15 @@ execution_realism_result = unittest.TextTestRunner(verbosity=0).run(
 )
 assert execution_realism_result.wasSuccessful(), (
     "paper execution realism suite failed under socket guard"
+)
+import test_paper_execution_audit as paper_execution_audit_tests  # noqa: E402
+paper_execution_audit_result = unittest.TextTestRunner(verbosity=0).run(
+    unittest.defaultTestLoader.loadTestsFromTestCase(
+        paper_execution_audit_tests.PaperExecutionAuditTests
+    )
+)
+assert paper_execution_audit_result.wasSuccessful(), (
+    "paper execution audit suite failed under socket guard"
 )
 research_method_result = unittest.TextTestRunner(verbosity=0).run(
     unittest.defaultTestLoader.loadTestsFromTestCase(
