@@ -46,10 +46,10 @@ U4_TYPED_KINDS = frozenset({
 })
 
 
-def _runtime_timestamp():
-    """Return the ledger's legacy naive timestamp in the fixed platform timezone."""
+def _runtime_timestamp(*, timespec="seconds"):
+    """Return a naive platform timestamp at the requested storage precision."""
     return (datetime.datetime.now(OPERATIONAL_TIMEZONE)
-            .replace(tzinfo=None).isoformat(timespec="seconds"))
+            .replace(tzinfo=None).isoformat(timespec=timespec))
 
 
 def canonical(obj):
@@ -350,7 +350,8 @@ def append_u4_stamped(kind, build, *, bundle_dir, path=DEFAULT_PATH):
         fcntl.flock(lf, fcntl.LOCK_EX)
         try:
             st, lines = _append_preflight(path)
-            ts = _runtime_timestamp()
+            # governance-mutation: U4_LEDGER_RUNTIME_TIMESTAMP_PRECISION
+            ts = _runtime_timestamp(timespec="microseconds")
             built = build(ts)
             if not isinstance(built, tuple) or len(built) != 2:
                 raise ValueError("U4 stamped event builder must return (id, payload)")

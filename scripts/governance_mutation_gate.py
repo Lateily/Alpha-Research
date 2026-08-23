@@ -4464,6 +4464,27 @@ MUTATIONS = MUTATIONS + (
         rationale="The only public U4 append path must validate the exact next typed outer record.",
     ),
     MutationCase(
+        mutation_id="U4_LEDGER_RUNTIME_TIMESTAMP_PRECISION",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_RUNTIME_TIMESTAMP_PRECISION\n'
+            '            ts = _runtime_timestamp(timespec="microseconds")'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_RUNTIME_TIMESTAMP_PRECISION\n'
+            '            ts = _runtime_timestamp()'
+        ),
+        expected_failure_marker=(
+            "test_typed_u4_runtime_stamp_does_not_round_behind_same_second_decision"
+        ),
+        rationale=(
+            "Typed U4 registration must preserve subsecond ordering when the human "
+            "decision and append occur during the same wall-clock second."
+        ),
+    ),
+    MutationCase(
         mutation_id="U4_LEDGER_PACKET_SOURCE_EQUALITY",
         component="Research funnel U4 decision ledger",
         source_path="experiments/research_funnel/u4_decision_ledger.py",

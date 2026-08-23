@@ -340,6 +340,47 @@ class U4DecisionLedgerTests(unittest.TestCase):
             all(event["registered_at"] == expected_registered_at for event in events)
         )
 
+    def test_typed_u4_runtime_stamp_does_not_round_behind_same_second_decision(self) -> None:
+        decided_at = "2026-08-22T00:15:00.500+08:00"
+        runtime_at = "2026-08-22T00:15:00.600"
+        packet = packet_fixture()
+        draft = draft_for(packet, decided_at=decided_at)
+
+        def runtime_clock(*, timespec: str = "seconds") -> str:
+            return runtime_at if timespec == "microseconds" else "2026-08-22T00:15:00"
+
+        self.assertRegex(
+            event_ledger._runtime_timestamp(timespec="microseconds"),
+            r"\.\d{6}$",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            try:
+                with patch.object(
+                    event_ledger, "_runtime_timestamp", side_effect=runtime_clock
+                ) as clock:
+                    ledger.append_decision_batch(
+                        packet=packet,
+                        draft=draft,
+                        bundle_dir=SOURCE_BUNDLE,
+                        ledger_path=path,
+                    )
+            except ledger.DecisionLedgerError as exc:
+                self.fail(f"typed U4 runtime timestamp lost subsecond ordering: {exc}")
+            events = ledger.current_packet_decisions(path, packet["packet_hash"])
+
+        self.assertTrue(events)
+        self.assertTrue(
+            all(
+                event["registered_at"] == "2026-08-22T00:15:00.600000+08:00"
+                for event in events
+            )
+        )
+        self.assertTrue(clock.call_args_list)
+        self.assertTrue(
+            all(call.kwargs == {"timespec": "microseconds"} for call in clock.call_args_list)
+        )
+
     def test_registration_cannot_predate_human_decision(self) -> None:
         packet = packet_fixture()
         with tempfile.TemporaryDirectory() as tmp:
