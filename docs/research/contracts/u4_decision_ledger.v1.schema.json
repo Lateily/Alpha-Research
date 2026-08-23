@@ -68,7 +68,11 @@
         "ts_code": {"type": "string", "pattern": "^[0-9A-Z]+\\.[A-Z]+$"},
         "display_name": {"type": "string", "minLength": 1},
         "industry_code": {"type": "string", "minLength": 1},
-        "cohort_id": {"type": "string", "minLength": 1},
+        "cohort_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Point-in-time canonical cohort identity, or UNAVAILABLE when no frozen cohort artifact is bound. A raw industry code must not be copied here."
+        },
         "causal_cluster_id": {"type": "string", "minLength": 1}
       }
     },
@@ -81,6 +85,7 @@
         "u2_bundle_hash",
         "u2_candidate_row_hash",
         "u3_battery_hash",
+        "u3_battery_row_hash",
         "u4_packet_hash"
       ],
       "properties": {
@@ -89,6 +94,7 @@
         "u2_bundle_hash": {"$ref": "#/$defs/sha256"},
         "u2_candidate_row_hash": {"$ref": "#/$defs/sha256"},
         "u3_battery_hash": {"$ref": "#/$defs/sha256"},
+        "u3_battery_row_hash": {"$ref": "#/$defs/sha256"},
         "u4_packet_hash": {"$ref": "#/$defs/sha256"}
       }
     },

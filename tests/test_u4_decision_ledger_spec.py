@@ -14,6 +14,26 @@ from typing import Any, Mapping
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "docs/research/contracts/u4_decision_ledger.v1.schema.json"
 DOC_PATH = ROOT / "docs/research/U4_DECISION_LEDGER_SPEC_V1.md"
+TASK_PATH = ROOT / "scripts/llm/fixtures/u4_decision_ledger_v1.task.json"
+DELIVERED_FILE_SCOPE = {
+    ".github/workflows/python-ci.yml",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",
+    "docs/research/U4_DECISION_LEDGER_SPEC_V1.md",
+    "docs/research/U4_DECISION_LEDGER_V1.md",
+    "docs/research/contracts/u4_decision_ledger.v1.schema.json",
+    "experiments/execution_tracker/event_ledger.py",
+    "experiments/research_funnel/closure_experiment.py",
+    "experiments/research_funnel/u4_decision_ledger.py",
+    "scripts/governance_mutation_gate.py",
+    "scripts/llm/fixtures/research_closure_offline.task.json",
+    "scripts/llm/fixtures/u4_decision_ledger_v1.task.json",
+    "tests/test_no_network_guard.py",
+    "tests/test_governance_mutation_gate.py",
+    "tests/test_registry_schema_v2.py",
+    "tests/test_research_closure_experiment.py",
+    "tests/test_u4_decision_ledger.py",
+    "tests/test_u4_decision_ledger_spec.py",
+}
 
 
 def _strict_object(pairs):
@@ -175,6 +195,7 @@ def _event(decision: str = "SELECT") -> dict[str, Any]:
             "u2_bundle_hash": "sha256:" + "1" * 64,
             "u2_candidate_row_hash": "sha256:" + "2" * 64,
             "u3_battery_hash": "sha256:" + "3" * 64,
+            "u3_battery_row_hash": "sha256:" + "4" * 64,
             "u4_packet_hash": "sha256:" + "a" * 64,
         },
         "decision": decision,
@@ -207,6 +228,12 @@ class U4DecisionLedgerSpecTests(unittest.TestCase):
     def assertInvalid(self, value: Mapping[str, Any], fragment: str) -> None:
         errors = _contract_errors(value)
         self.assertTrue(any(fragment in error for error in errors), errors)
+
+    def test_implementation_task_scope_matches_delivered_surface(self) -> None:
+        task = json.loads(
+            TASK_PATH.read_text(encoding="utf-8"), object_pairs_hook=_strict_object
+        )
+        self.assertEqual(set(task["file_scope"]), DELIVERED_FILE_SCOPE)
 
     def test_all_five_decisions_are_closed_world_and_valid(self) -> None:
         for decision in ("SELECT", "REJECT", "DEFER", "NO_TRADE", "DATA_BLOCKED"):
@@ -272,6 +299,14 @@ class U4DecisionLedgerSpecTests(unittest.TestCase):
         row["method_version"] = "unversioned draft"
         self.assertInvalid(row, "pattern mismatch")
 
+    def test_full_and_row_battery_hashes_are_both_required_by_contract(self) -> None:
+        row = _event()
+        del row["source"]["u3_battery_hash"]
+        self.assertInvalid(row, "missing u3_battery_hash")
+        row = _event()
+        del row["source"]["u3_battery_row_hash"]
+        self.assertInvalid(row, "missing u3_battery_row_hash")
+
     def test_revisions_and_hash_chain_are_append_only_shaped(self) -> None:
         row = _event("DEFER")
         row["decision_revision"] = 2
@@ -292,11 +327,14 @@ class U4DecisionLedgerSpecTests(unittest.TestCase):
         row["missing_evidence"] = ["UNKNOWN_FEED"]
         self.assertInvalid(row, "outside enum")
 
-    def test_spec_explicitly_preserves_rejections_and_defers_implementation(self) -> None:
+    def test_spec_preserves_all_outcomes_and_the_unwired_boundary(self) -> None:
         text = DOC_PATH.read_text(encoding="utf-8")
         self.assertIn("retain `REJECT`, `DEFER`, `NO_TRADE`, and `DATA_BLOCKED`", text)
-        self.assertIn("specification only", text)
-        self.assertIn("does not add a writer", text)
+        self.assertIn("DELIVERED_UNWIRED / OFFLINE_ONLY", text)
+        self.assertIn("without adding a nightly step", text)
+        self.assertIn("Production wiring remains a separately approved step", text)
+        self.assertIn("v1.0 packets remain valid", text)
+        self.assertIn("prospective causal cluster may still be", text)
         self.assertIn("Historical U4 choices are not reconstructed", text)
         self.assertEqual(
             SCHEMA["x-ar-packet-closure"]["selected_count_allowed"],

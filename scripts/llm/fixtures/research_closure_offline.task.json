@@ -50,7 +50,7 @@
     "offline settled-bar fixture"
   ],
   "output_artifacts": [
-    "ar.u4_review_packet.v1.0",
+    "ar.u4_review_packet.v1.1",
     "offline deep_research_queue",
     "ar.research_closure_experiment.v1.0",
     "independently verifiable ar.research_cycle_bundle.v1.0",
