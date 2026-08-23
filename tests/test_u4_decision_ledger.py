@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import inspect
 import json
+import shutil
 import sys
 import tempfile
 import unittest
@@ -27,96 +29,174 @@ from experiments.execution_tracker import event_ledger  # noqa: E402
 from experiments.research_funnel import closure_experiment as closure  # noqa: E402
 from experiments.research_funnel import funnel_pipeline as funnel  # noqa: E402
 from experiments.research_funnel import u4_decision_ledger as ledger  # noqa: E402
+import test_research_funnel_closure as funnel_fixtures  # noqa: E402
 import test_u4_decision_ledger_spec as frozen_spec  # noqa: E402
 
 
 GENERATED_AT = "2026-08-22T00:10:00+08:00"
 DECIDED_AT = "2026-08-22T00:15:00+08:00"
 REGISTERED_AT = "2026-08-22T00:16:00"
+SOURCE_RUN_ID = "FIXTURE_RUN_20260811"
 
 
-def ready_row(code: str, *, ready: bool, reasons: list[str] | None = None) -> dict:
-    reasons = list(reasons or [])
-    return {
-        "ts_code": code,
-        "ready": ready,
-        "industry_key": "SEMICONDUCTOR",
-        "sector_os_status": "AVAILABLE",
-        "candidate_status": "MAIN_CHANNEL",
-        "battery_verdict": "PARTIAL" if "U3_BATTERY_INCOMPLETE" in reasons else "COMPLETE",
-        "blocked_reasons": reasons,
+def _write_json(path: Path, value: dict) -> None:
+    path.write_text(
+        json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _build_source_evidence(root: Path) -> tuple[Path, dict, dict, dict[str, tuple[str, ...] | str]]:
+    registry, _, scan, candidates = funnel_fixtures.build_candidates(n=9)
+    candidate_rows = candidates["rows"]
+    clean_codes = sorted(
+        row["ts_code"] for row in candidate_rows if "RED_FLAG" not in row["flags"]
+    )
+    red_codes = sorted(
+        row["ts_code"] for row in candidate_rows if "RED_FLAG" in row["flags"]
+    )
+    if len(clean_codes) != 7 or len(red_codes) != 2:
+        raise AssertionError("U4 source fixture no longer has 7 clean and 2 red-flag rows")
+    for row in candidate_rows:
+        row["cluster_id"] = f"cluster-{row['ts_code'].replace('.', '-').lower()}"
+    candidates["rows_hash"] = funnel._hash(candidate_rows)
+    candidate_manifest = funnel.build_candidate_manifest(
+        candidate_review=candidates,
+        scan=scan,
+        run_id=SOURCE_RUN_ID,
+    )
+    blocked_code = clean_codes[-1]
+    results = []
+    for code in sorted(clean_codes + red_codes):
+        dims = {
+            name: {"fixture": True} for name in funnel.BATTERY_DIMENSIONS
+        }
+        if code == blocked_code:
+            dims["基本面"] = {"status": "DATA_BLOCKED", "err": "fixture evidence unavailable"}
+        missing = [name for name, evidence in dims.items() if evidence.get("status") == "DATA_BLOCKED"]
+        results.append({
+            "ts_code": code,
+            "checked_at": funnel_fixtures.TRADE_DATE,
+            "dims": dims,
+            "completeness": {
+                "covered": 6 - len(missing),
+                "of": 6,
+                "missing": missing,
+                "verdict": "PARTIAL" if missing else "COMPLETE",
+            },
+        })
+    battery = {
+        "schema": funnel.BATTERY_U2_SCHEMA,
+        "schema_version": funnel.SCHEMA_VERSION,
+        "rule_version": funnel.RULE_VERSION,
+        "as_of": funnel_fixtures.TRADE_DATE,
+        "target_trade_date": funnel_fixtures.TRADE_DATE,
+        "checked_at": funnel_fixtures.TRADE_DATE,
+        "run_id": SOURCE_RUN_ID,
+        "generated_at": funnel_fixtures.GENERATED_AT,
+        "manifest_hash": candidate_manifest["manifest_hash"],
+        "provider_state": "FIXTURE",
+        "results": results,
+        "disclaimer": funnel.DISCLAIMER,
     }
-
-
-def packet_fixture() -> dict:
-    rows = [
-        ready_row("600001.SH", ready=True),
-        ready_row("600002.SH", ready=True),
-        ready_row("600003.SH", ready=True),
-        ready_row("600004.SH", ready=True),
-        ready_row("600005.SH", ready=True),
-        ready_row("600006.SH", ready=True),
-        ready_row("600007.SH", ready=False, reasons=["U3_BATTERY_INCOMPLETE"]),
-        ready_row("600008.SH", ready=False, reasons=["E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW"]),
-    ]
-    packet = {
-        "schema": closure.PACKET_SCHEMA,
-        "schema_version": closure.SCHEMA_VERSION,
-        "mode": "OFFLINE_RESEARCH_REPLAY",
-        "status": "AWAITING_JUNYAN_REVIEW",
-        "as_of": "20260821",
-        "generated_at": GENERATED_AT,
-        "source_refs": {
-            "bundle_hash": "1" * 64,
-            "scan_rows_hash": "2" * 64,
-            "candidate_rows_hash": "3" * 64,
-            "battery_hash": "4" * 64,
-            "ready_pool_hash": funnel._hash(rows),
-        },
-        "random_control": {
-            "control_batch_id": "CTRL_20260821_TEST",
-            "eligible_universe_hash": "5" * 64,
-            "seed_hex": "6" * 64,
-            "algo": funnel.CONTROL_ALGO,
-            "drawn_hash": "7" * 64,
-            "replay_verified": True,
-        },
-        "authority": {
-            "selection_owner": "Junyan",
-            "identity_verification": "UNAVAILABLE",
-            "production_authority": False,
-            "required_selection_size": {"min": 3, "max": 5},
-        },
-        "ready_pool": rows,
-        "claim_allowed": False,
-        "next_gate": "JUNYAN_REVIEW_RECEIPT_BOUND_TO_PACKET_HASH",
-        "disclaimer": closure.DISCLAIMER,
+    battery["rows_hash"] = funnel._hash(results)
+    funnel.validate_candidate_battery(battery, candidate_manifest)
+    queue = funnel.build_deep_research_queue(
+        candidate_review=candidates,
+        battery=battery,
+        selected_tickers=(),
+        trade_date=funnel_fixtures.TRADE_DATE,
+        generated_at=funnel_fixtures.GENERATED_AT,
+    )
+    projected = funnel.advance_registry(
+        registry=registry,
+        scan=scan,
+        candidate_review=candidates,
+        battery=battery,
+        deep_queue=queue,
+        generated_at=funnel_fixtures.GENERATED_AT,
+    )
+    bundle = root / "bundle"
+    bundle.mkdir()
+    payloads = {
+        "all_market_scan.json": scan,
+        "candidate_review.json": candidates,
+        "candidate_manifest.json": candidate_manifest,
+        "candidate_battery.json": battery,
+        "deep_research_queue.json": queue,
+        "security_registry_projected.json": projected,
     }
-    packet["packet_hash"] = funnel._hash(packet)
-    closure.validate_review_packet(packet)
-    return packet
+    for name, value in payloads.items():
+        _write_json(bundle / name, value)
+    artifacts = {
+        name: hashlib.sha256((bundle / name).read_bytes()).hexdigest()
+        for name in sorted(payloads)
+    }
+    manifest = {
+        "schema": "ar.research_funnel_bundle",
+        "schema_version": funnel.SCHEMA_VERSION,
+        "rule_version": funnel.RULE_VERSION,
+        "as_of": funnel_fixtures.TRADE_DATE,
+        "run_id": SOURCE_RUN_ID,
+        "generated_at": funnel_fixtures.GENERATED_AT,
+        "artifacts": artifacts,
+        "dag": {
+            "stages": ["candidates", "battery", "finalize"],
+            "candidate_manifest_hash": candidate_manifest["manifest_hash"],
+            "battery_rows_hash": battery["rows_hash"],
+        },
+    }
+    manifest["bundle_hash"] = funnel._hash(artifacts)
+    _write_json(bundle / "manifest.json", manifest)
+    packet = closure.build_review_packet(
+        bundle_dir=bundle,
+        battery=None,
+        generated_at=GENERATED_AT,
+    )
+    semantics: dict[str, tuple[str, ...] | str] = {
+        "selected": tuple(clean_codes[:3]),
+        "reject": clean_codes[3],
+        "defer": clean_codes[4],
+        "no_trade": clean_codes[5],
+        "blocked": blocked_code,
+        "red_flags": tuple(red_codes),
+        "ready": tuple(clean_codes[:6]),
+    }
+    return bundle, battery, packet, semantics
+
+
+_SOURCE_TMP = tempfile.TemporaryDirectory(prefix="ar-u4-source-")
+SOURCE_BUNDLE, SOURCE_BATTERY, _PACKET_TEMPLATE, _SEMANTICS = _build_source_evidence(
+    Path(_SOURCE_TMP.name)
+)
+SELECT_CODES = tuple(_SEMANTICS["selected"])
+REJECT_CODE = str(_SEMANTICS["reject"])
+DEFER_CODE = str(_SEMANTICS["defer"])
+NO_TRADE_CODE = str(_SEMANTICS["no_trade"])
+BLOCKED_CODE = str(_SEMANTICS["blocked"])
+RED_FLAG_CODES = tuple(_SEMANTICS["red_flags"])
+READY_CODES = tuple(_SEMANTICS["ready"])
+TOTAL_ROWS = len(_PACKET_TEMPLATE["ready_pool"])
+
+
+def packet_fixture(*, generated_at: str = GENERATED_AT) -> dict:
+    if generated_at == GENERATED_AT:
+        return copy.deepcopy(_PACKET_TEMPLATE)
+    return closure.build_review_packet(
+        bundle_dir=SOURCE_BUNDLE,
+        battery=None,
+        generated_at=generated_at,
+    )
 
 
 DEFAULT_DECISIONS = {
-    "600001.SH": "SELECT",
-    "600002.SH": "SELECT",
-    "600003.SH": "SELECT",
-    "600004.SH": "REJECT",
-    "600005.SH": "DEFER",
-    "600006.SH": "NO_TRADE",
-    "600007.SH": "DATA_BLOCKED",
-    "600008.SH": "REJECT",
+    **{code: "SELECT" for code in SELECT_CODES},
+    REJECT_CODE: "REJECT",
+    DEFER_CODE: "DEFER",
+    NO_TRADE_CODE: "NO_TRADE",
+    BLOCKED_CODE: "DATA_BLOCKED",
+    **{code: "REJECT" for code in RED_FLAG_CODES},
 }
-
-
-def candidate(code: str) -> dict:
-    return {
-        "ts_code": code,
-        "display_name": f"Fixture {code}",
-        "industry_code": "SEMICONDUCTOR",
-        "cohort_id": "cohort-semiconductor-20260821",
-        "causal_cluster_id": f"cluster-{code.replace('.', '-').lower()}",
-    }
 
 
 def decision_row(
@@ -133,11 +213,11 @@ def decision_row(
         "NO_TRADE": "NO_ACTIONABLE_SETUP",
         "DATA_BLOCKED": "U3_INCOMPLETE",
     }[decision]
-    if code == "600008.SH":
+    if code in RED_FLAG_CODES:
         reason = "RED_FLAG_ACTIVE"
     missing = ["U3_SIX_DIMENSION_BATTERY"] if decision == "DATA_BLOCKED" else []
     return {
-        "candidate": candidate(code),
+        "ts_code": code,
         "decision": decision,
         "reason_codes": [reason],
         "reason_note": f"Frozen offline U4 decision for {code}: {decision}.",
@@ -192,6 +272,7 @@ def append_fixture(
 
 
 def append_batch(*, now: str = REGISTERED_AT, **kwargs) -> dict:
+    kwargs.setdefault("bundle_dir", SOURCE_BUNDLE)
     with patch.object(event_ledger, "_runtime_timestamp", return_value=now):
         return ledger.append_decision_batch(**kwargs)
 
@@ -207,7 +288,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertEqual({event["decision"] for event in events}, ledger.DECISIONS)
         self.assertEqual(len(events), len(packet["ready_pool"]))
         self.assertTrue(all(frozen_spec._contract_errors(event) == [] for event in events))
-        self.assertEqual(verified["n"], 8)
+        self.assertEqual(verified["n"], TOTAL_ROWS)
         self.assertEqual(verified["closures"], 1)
         self.assertEqual(verified["pending_packets"], [])
 
@@ -244,8 +325,8 @@ class U4DecisionLedgerTests(unittest.TestCase):
         item = ledger._intent_from_draft(
             packet,
             draft_for(packet),
-            draft_rows["600001.SH"],
-            ready_by_code["600001.SH"],
+            draft_rows[SELECT_CODES[0]],
+            ready_by_code[SELECT_CODES[0]],
         )
         backdated = ledger._build_event(
             item,
@@ -295,7 +376,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
 
     def test_selection_count_is_only_zero_or_three_to_five(self) -> None:
         packet = packet_fixture()
-        ready_codes = [f"60000{index}.SH" for index in range(1, 7)]
+        ready_codes = list(READY_CODES)
         for count in (1, 2, 6):
             decisions = dict(DEFAULT_DECISIONS)
             for index, code in enumerate(ready_codes):
@@ -318,7 +399,8 @@ class U4DecisionLedgerTests(unittest.TestCase):
 
     def test_ready_pool_machine_source_and_hash_are_recomputed(self) -> None:
         packet = packet_fixture()
-        packet["ready_pool"][0]["blocked_reasons"] = ["U3_BATTERY_INCOMPLETE"]
+        ready_row = next(row for row in packet["ready_pool"] if row["ready"])
+        ready_row["blocked_reasons"] = ["U3_BATTERY_INCOMPLETE"]
         packet["source_refs"]["ready_pool_hash"] = funnel._hash(packet["ready_pool"])
         packet["packet_hash"] = funnel._hash({key: value for key, value in packet.items() if key != "packet_hash"})
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "contradicts blocked_reasons"):
@@ -330,14 +412,118 @@ class U4DecisionLedgerTests(unittest.TestCase):
             ledger._ready_rows(packet)
         packet = packet_fixture()
         draft = draft_for(packet)
-        draft["decisions"][0]["candidate"]["ts_code"] = "699999.SH"
+        draft["decisions"][0]["ts_code"] = "699999.SH"
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "candidate set"):
             ledger._validate_draft(packet, draft)
+
+    def test_event_candidate_and_source_are_derived_only_from_the_packet(self) -> None:
+        packet = packet_fixture()
+        rows, decisions = ledger._validate_draft(packet, draft_for(packet))
+        intent = ledger._build_packet_intent(
+            packet, draft_for(packet), decisions, rows
+        )
+        first = intent["candidate_intents"][0]
+        packet_row = packet["ready_pool"][0]
+        self.assertEqual(first["candidate"], ledger._candidate_for(packet_row))
+        self.assertEqual(first["source"], ledger._source_for(packet, packet_row))
+        tampered = copy.deepcopy(intent)
+        tampered["candidate_intents"][0]["candidate"]["display_name"] = "Invented Name"
+        tampered["intent_hash"] = ledger._intent_hash(tampered)
+        tampered["intent_id"] = ledger._packet_intent_id(tampered)
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "packet-bound provenance"):
+            ledger.validate_packet_intent(tampered)
+
+    def test_writer_rebuilds_packet_from_immutable_u2_u3_evidence_before_wal(self) -> None:
+        for mutate in ("run_id", "candidate"):
+            packet = packet_fixture()
+            if mutate == "run_id":
+                packet["source_refs"]["run_id"] = "FORGED_RUN"
+            else:
+                packet["ready_pool"][0]["display_name"] = "Fabricated Candidate"
+                packet["source_refs"]["ready_pool_hash"] = funnel._hash(packet["ready_pool"])
+            packet["packet_hash"] = funnel._hash({
+                key: value for key, value in packet.items() if key != "packet_hash"
+            })
+            closure.validate_review_packet(packet)
+            with self.subTest(mutate=mutate), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / "events.jsonl"
+                with self.assertRaisesRegex(
+                    ledger.DecisionLedgerError, "deterministic projection"
+                ):
+                    append_batch(
+                        packet=packet,
+                        draft=draft_for(packet),
+                        ledger_path=path,
+                    )
+                self.assertFalse(path.exists())
+
+    def test_writer_rejects_drifted_dag_bundle_before_wal(self) -> None:
+        packet = packet_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundle = root / "bundle"
+            shutil.copytree(SOURCE_BUNDLE, bundle)
+            battery_path = bundle / "candidate_battery.json"
+            battery_path.write_text(
+                battery_path.read_text(encoding="utf-8") + " ", encoding="utf-8"
+            )
+            path = root / "events.jsonl"
+            with self.assertRaisesRegex(
+                ledger.DecisionLedgerError, "bundle artifact hash mismatch"
+            ):
+                append_batch(
+                    packet=packet,
+                    draft=draft_for(packet),
+                    ledger_path=path,
+                    bundle_dir=bundle,
+                )
+            self.assertFalse(path.exists())
+
+    def test_dag_manifest_cannot_relabel_the_bound_u2_candidate_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp) / "bundle"
+            shutil.copytree(SOURCE_BUNDLE, bundle)
+            candidate_manifest_path = bundle / "candidate_manifest.json"
+            candidate_manifest = json.loads(candidate_manifest_path.read_text(encoding="utf-8"))
+            candidate_manifest["candidate_rows_hash"] = "0" * 64
+            candidate_manifest["manifest_hash"] = funnel._hash({
+                key: value
+                for key, value in candidate_manifest.items()
+                if key != "manifest_hash"
+            })
+            _write_json(candidate_manifest_path, candidate_manifest)
+            battery_path = bundle / "candidate_battery.json"
+            battery = json.loads(battery_path.read_text(encoding="utf-8"))
+            battery["manifest_hash"] = candidate_manifest["manifest_hash"]
+            _write_json(battery_path, battery)
+            manifest_path = bundle / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["artifacts"]["candidate_manifest.json"] = hashlib.sha256(
+                candidate_manifest_path.read_bytes()
+            ).hexdigest()
+            manifest["artifacts"]["candidate_battery.json"] = hashlib.sha256(
+                battery_path.read_bytes()
+            ).hexdigest()
+            manifest["dag"]["candidate_manifest_hash"] = candidate_manifest["manifest_hash"]
+            manifest["bundle_hash"] = funnel._hash(manifest["artifacts"])
+            _write_json(manifest_path, manifest)
+            with self.assertRaisesRegex(closure.ClosureError, "DAG bundle evidence"):
+                closure.load_bundle(bundle)
+
+    def test_missing_packet_bound_causal_cluster_forces_data_blocked(self) -> None:
+        packet = packet_fixture()
+        packet["ready_pool"][0]["causal_cluster_id"] = "UNAVAILABLE"
+        packet["source_refs"]["ready_pool_hash"] = funnel._hash(packet["ready_pool"])
+        packet["packet_hash"] = funnel._hash({
+            key: value for key, value in packet.items() if key != "packet_hash"
+        })
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "causal cluster"):
+            ledger._validate_draft(packet, draft_for(packet))
 
     def test_machine_blocked_rows_cannot_be_silently_selected_or_deferred(self) -> None:
         packet = packet_fixture()
         draft = draft_for(packet)
-        blocked = next(row for row in draft["decisions"] if row["candidate"]["ts_code"] == "600007.SH")
+        blocked = next(row for row in draft["decisions"] if row["ts_code"] == BLOCKED_CODE)
         blocked.update({
             "decision": "DEFER",
             "reason_codes": ["QUEUE_CAPACITY"],
@@ -346,7 +532,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "explicit DATA_BLOCKED"):
             ledger._validate_draft(packet, draft)
         draft = draft_for(packet)
-        flagged = next(row for row in draft["decisions"] if row["candidate"]["ts_code"] == "600008.SH")
+        flagged = next(row for row in draft["decisions"] if row["ts_code"] == RED_FLAG_CODES[0])
         flagged.update({"decision": "SELECT", "reason_codes": ["EVIDENCE_CHAIN_COMPLETE"], "research_question": "Why?"})
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "explicit REJECT"):
             ledger._validate_draft(packet, draft)
@@ -463,7 +649,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
             state = ledger._snapshot_state(path)
         packet_ref = ledger._packet_hash_ref(packet)
         intent = state["intents"][(packet_ref, 1)]
-        event = copy.deepcopy(state["current"][(packet_ref, "600001.SH")])
+        event = copy.deepcopy(min(state["current"].values(), key=lambda item: item["sequence"]))
         event["reason_note"] = "A self-consistent event that was never in the frozen packet intent."
         event["record_hash"] = ledger._record_hash(event)
         records = [
@@ -519,7 +705,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
     def test_zero_selection_commits_no_trade_and_never_projects_a_queue_receipt(self) -> None:
         packet = packet_fixture()
         decisions = dict(DEFAULT_DECISIONS)
-        for code in [f"60000{index}.SH" for index in range(1, 7)]:
+        for code in READY_CODES:
             decisions[code] = "NO_TRADE"
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
@@ -539,7 +725,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
     def test_no_trade_retires_a_stale_derived_projection_after_commit(self) -> None:
         packet = packet_fixture()
         decisions = dict(DEFAULT_DECISIONS)
-        for code in [f"60000{index}.SH" for index in range(1, 7)]:
+        for code in READY_CODES:
             decisions[code] = "NO_TRADE"
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
@@ -565,7 +751,13 @@ class U4DecisionLedgerTests(unittest.TestCase):
             )
             receipt_path = Path(result["projection_path"])
             written = json.loads(receipt_path.read_text(encoding="utf-8"))
-        closure.validate_review_receipt(written, packet)
+            ledger.validate_projection_envelope(written, packet)
+            ledger.validate_current_projection(path, written, packet)
+            tampered = copy.deepcopy(written)
+            tampered["current_decision_set_hash"] = "sha256:" + "0" * 64
+            with self.assertRaisesRegex(ledger.DecisionLedgerError, "projection hash"):
+                ledger.validate_projection_envelope(tampered, packet)
+        closure.validate_review_receipt(written["review_receipt"], packet)
         self.assertEqual(result["closure"]["selected_count"], 3)
         self.assertEqual(result["projected_receipt"], written)
 
@@ -599,6 +791,9 @@ class U4DecisionLedgerTests(unittest.TestCase):
                     _fail_after_decisions=3,
                 )
             interrupted = ledger.verify_decision_ledger(path)
+            visible_while_pending = ledger.current_packet_decisions(
+                path, packet["packet_hash"]
+            )
             resumed = append_batch(
                 packet=packet,
                 draft=draft,
@@ -609,8 +804,9 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertTrue(interrupted["ok"])
         self.assertEqual(interrupted["n"], 3)
         self.assertEqual(len(interrupted["pending_packets"]), 1)
-        self.assertEqual(resumed["decision_events_appended"], 5)
-        self.assertEqual(final["n"], 8)
+        self.assertEqual(visible_while_pending, [])
+        self.assertEqual(resumed["decision_events_appended"], TOTAL_ROWS - 3)
+        self.assertEqual(final["n"], TOTAL_ROWS)
         self.assertEqual(final["closures"], 1)
         self.assertEqual(final["pending_packets"], [])
 
@@ -626,7 +822,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
             (
                 copy.deepcopy(event)
                 for (subject_packet, code), event in state["current"].items()
-                if subject_packet == packet_ref and code in {"600001.SH", "600002.SH", "600003.SH"}
+                if subject_packet == packet_ref and code in set(SELECT_CODES)
             ),
             key=lambda event: event["candidate"]["ts_code"],
         )
@@ -676,14 +872,45 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertEqual(verified["intents"], 1)
         self.assertEqual(len(verified["pending_packets"]), 1)
 
+    def test_partial_later_revision_keeps_the_prior_closure_public(self) -> None:
+        packet = packet_fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            append_batch(packet=packet, draft=draft_for(packet), ledger_path=path)
+            committed = ledger.current_packet_decisions(path, packet["packet_hash"])
+            supersedes = {
+                event["candidate"]["ts_code"]: event["decision_id"]
+                for event in committed
+            }
+            revised_decisions = dict(DEFAULT_DECISIONS)
+            revised_decisions[REJECT_CODE] = "NO_TRADE"
+            revised = draft_for(
+                packet,
+                revised_decisions,
+                revision=2,
+                supersedes=supersedes,
+                decided_at="2026-08-22T00:20:00+08:00",
+            )
+            with self.assertRaisesRegex(ledger.DecisionLedgerError, "injected interruption"):
+                append_batch(
+                    packet=packet,
+                    draft=revised,
+                    ledger_path=path,
+                    now="2026-08-22T00:21:00",
+                    _fail_after_decisions=3,
+                )
+            visible = ledger.current_packet_decisions(path, packet["packet_hash"])
+            state = ledger._snapshot_state(path)
+        self.assertTrue(all(event["decision_revision"] == 1 for event in visible))
+        self.assertEqual(visible, committed)
+        self.assertTrue(any(
+            event["decision_revision"] == 2
+            for event in state["staged_current"].values()
+        ))
+
     def test_exact_retry_after_unrelated_packet_recovers_projection_without_wal_append(self) -> None:
         packet_a = packet_fixture()
-        packet_b = packet_fixture()
-        packet_b["source_refs"]["bundle_hash"] = "8" * 64
-        packet_b["packet_hash"] = funnel._hash({
-            key: value for key, value in packet_b.items() if key != "packet_hash"
-        })
-        closure.validate_review_packet(packet_b)
+        packet_b = packet_fixture(generated_at="2026-08-22T00:11:00+08:00")
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
             result_a = append_batch(packet=packet_a, draft=draft_for(packet_a), ledger_path=path)
@@ -749,10 +976,11 @@ class U4DecisionLedgerTests(unittest.TestCase):
             first = append_batch(packet=packet, draft=draft_for(packet), ledger_path=path)
             projection_path = Path(first["projection_path"])
             self.assertTrue(projection_path.exists())
+            stale_projection = json.loads(projection_path.read_text(encoding="utf-8"))
             current = ledger.current_packet_decisions(path, packet["packet_hash"])
             supersedes = {event["candidate"]["ts_code"]: event["decision_id"] for event in current}
             no_selection = dict(DEFAULT_DECISIONS)
-            for code in [f"60000{index}.SH" for index in range(1, 7)]:
+            for code in READY_CODES:
                 no_selection[code] = "NO_TRADE"
             revised = draft_for(
                 packet,
@@ -769,6 +997,10 @@ class U4DecisionLedgerTests(unittest.TestCase):
             )
             verified = ledger.verify_decision_ledger(path)
             projection_retired = not projection_path.exists()
+            with self.assertRaisesRegex(ledger.DecisionLedgerError, "stale or revoked"):
+                ledger.validate_current_projection(path, stale_projection, packet)
+            self.assertIsNone(ledger.load_current_projection(path, packet))
+            closure.validate_review_receipt(stale_projection["review_receipt"], packet)
         self.assertEqual(second["closure"]["selected_count"], 0)
         self.assertEqual(second["closure"]["outcome"], "NO_TRADE_NO_QUEUE")
         self.assertTrue(projection_retired)
@@ -787,6 +1019,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
                         packet=packet,
                         draft=draft,
                         ledger_path=path,
+                        bundle_dir=SOURCE_BUNDLE,
                     )["status"]
                 except (ledger.DecisionLedgerError, ValueError):
                     return "REFUSED"
@@ -797,7 +1030,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
             verified = ledger.verify_decision_ledger(path)
         self.assertEqual(statuses.count("APPENDED"), 1)
         self.assertEqual(statuses.count("IDEMPOTENT"), 7)
-        self.assertEqual(verified["n"], 8)
+        self.assertEqual(verified["n"], TOTAL_ROWS)
         self.assertEqual(verified["closures"], 1)
 
     def test_concurrent_conflicting_retries_have_one_winner(self) -> None:
@@ -814,6 +1047,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
                         packet=packet,
                         draft=draft,
                         ledger_path=path,
+                        bundle_dir=SOURCE_BUNDLE,
                     )["status"]
                 except ledger.DecisionLedgerError:
                     return "REFUSED"
@@ -833,7 +1067,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
             original = ledger.current_packet_decisions(path, packet["packet_hash"])
             supersedes = {event["candidate"]["ts_code"]: event["decision_id"] for event in original}
             revised_decisions = dict(DEFAULT_DECISIONS)
-            revised_decisions["600004.SH"] = "NO_TRADE"
+            revised_decisions[REJECT_CODE] = "NO_TRADE"
             revised = draft_for(
                 packet,
                 revised_decisions,
@@ -849,10 +1083,10 @@ class U4DecisionLedgerTests(unittest.TestCase):
             )
             current = ledger.current_packet_decisions(path, packet["packet_hash"])
             verified = ledger.verify_decision_ledger(path)
-        self.assertEqual(len(original), 8)
-        self.assertEqual(len(current), 8)
+        self.assertEqual(len(original), TOTAL_ROWS)
+        self.assertEqual(len(current), TOTAL_ROWS)
         self.assertTrue(all(event["decision_revision"] == 2 for event in current))
-        self.assertEqual(verified["n"], 16)
+        self.assertEqual(verified["n"], TOTAL_ROWS * 2)
         self.assertEqual(verified["closures"], 2)
 
     def test_stale_or_cross_subject_revision_is_refused(self) -> None:
@@ -871,7 +1105,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
             append_fixture(path, packet=packet)
             verified = ledger.verify_decision_ledger(path)
         self.assertTrue(verified["ok"])
-        self.assertEqual(verified["n"], 8)
+        self.assertEqual(verified["n"], TOTAL_ROWS)
 
     def test_verifier_detects_payload_tampering_even_when_outer_chain_is_rehashed(self) -> None:
         packet = packet_fixture()
@@ -937,7 +1171,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
         invalid_count = copy.deepcopy(state["intents"][(packet_ref, 1)])
         item = next(
             candidate_intent for candidate_intent in invalid_count["candidate_intents"]
-            if candidate_intent["candidate"]["ts_code"] == "600003.SH"
+            if candidate_intent["candidate"]["ts_code"] == SELECT_CODES[2]
         )
         item["decision"] = "DEFER"
         item["reason_codes"] = ["QUEUE_CAPACITY"]
@@ -994,14 +1228,37 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertFalse(verified["ok"])
         self.assertIn("outer R-015 id/timestamp", verified["errors"][0])
 
-    def test_all_three_u4_outer_event_kinds_are_unique_in_the_shared_wal(self) -> None:
+    def test_u4_kinds_are_reserved_from_raw_and_generic_stamped_writers(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "events.jsonl"
             for kind in (ledger.INTENT_KIND, ledger.EVENT_KIND, ledger.CLOSURE_KIND):
                 with self.subTest(kind=kind):
-                    event_ledger.append(kind, kind, {}, path=str(path), now=REGISTERED_AT)
-                    with self.assertRaisesRegex(ValueError, "拒绝重复登记"):
+                    with self.assertRaisesRegex(ValueError, "typed-only"):
                         event_ledger.append(kind, kind, {}, path=str(path), now=REGISTERED_AT)
+                    with self.assertRaisesRegex(ValueError, "typed-only"):
+                        event_ledger.append_stamped(
+                            kind, lambda _ts: (kind, {}), path=str(path)
+                        )
+                    with self.assertRaises(ledger.DecisionLedgerError):
+                        event_ledger.append_u4_stamped(
+                            kind, lambda _ts: (kind, {}), path=str(path)
+                        )
+            self.assertFalse(path.exists())
+
+    def test_r015_u4_kind_uniqueness_is_independent_of_typed_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            for kind in (ledger.INTENT_KIND, ledger.EVENT_KIND, ledger.CLOSURE_KIND):
+                path = str(Path(tmp) / f"{kind}.jsonl")
+                state, lines = event_ledger._append_preflight(path)
+                event_ledger._append_verified(
+                    kind, "same-id", {}, path, REGISTERED_AT, state, lines
+                )
+                state, lines = event_ledger._append_preflight(path)
+                with self.subTest(kind=kind):
+                    with self.assertRaisesRegex(ValueError, "拒绝重复登记"):
+                        event_ledger._append_verified(
+                            kind, "same-id", {}, path, REGISTERED_AT, state, lines
+                        )
 
     def test_verifier_waits_for_atomic_ledger_anchor_snapshot(self) -> None:
         packet = packet_fixture()
@@ -1044,6 +1301,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
                             packet=packet,
                             draft=draft,
                             ledger_path=path,
+                            bundle_dir=SOURCE_BUNDLE,
                         )
                         self.assertTrue(anchor_reached.wait(timeout=5))
                         with patch.object(ledger, "_replay_records", side_effect=observed_replay):
@@ -1084,6 +1342,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
                 "--packet", str(packet_path),
                 "--draft", str(draft_path),
                 "--ledger", str(ledger_path),
+                "--bundle-dir", str(SOURCE_BUNDLE),
             ]
             output = StringIO()
             with redirect_stdout(output):
@@ -1113,6 +1372,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
                     "--packet", str(packet_path),
                     "--draft", str(draft_path),
                     "--ledger", str(ledger_path),
+                    "--bundle-dir", str(SOURCE_BUNDLE),
                 ])
         self.assertEqual(rc, 1)
         self.assertIn("REFUSED", stderr.getvalue())

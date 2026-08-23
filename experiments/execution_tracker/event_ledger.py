@@ -41,6 +41,9 @@ UNIQUE_KINDS = {"register", "genesis",
                 "u4_decision", "u4_decision_closure",
                 "publication_migration_intent", "publication_migration_commit",
                 "publication_migration_abort"}
+U4_TYPED_KINDS = frozenset({
+    "u4_decision_intent", "u4_decision", "u4_decision_closure",
+})
 
 
 def _runtime_timestamp():
@@ -285,6 +288,9 @@ def _append_preflight(path):
 
 def append(kind, rec_id, payload, path=DEFAULT_PATH, now=None):
     """持排他 flock 追加。写前链与锚点都必须过,否则拒写(不在坏账本上叠加)。"""
+    # governance-mutation: U4_LEDGER_RAW_APPEND_RESERVED
+    if kind in U4_TYPED_KINDS:
+        raise ValueError(f"{kind} is typed-only; raw append is forbidden")
     import fcntl
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     with open(path + ".lock", "w") as lf:
@@ -305,6 +311,9 @@ def append_stamped(kind, build, path=DEFAULT_PATH):
     payload)``. This is the only supported path for payload contracts whose own
     ``registered_at`` field must equal the outer ledger timestamp.
     """
+    # governance-mutation: U4_LEDGER_GENERIC_STAMPED_RESERVED
+    if kind in U4_TYPED_KINDS:
+        raise ValueError(f"{kind} is typed-only; generic stamped append is forbidden")
     import fcntl
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     with open(path + ".lock", "w") as lf:
@@ -318,6 +327,41 @@ def append_stamped(kind, build, path=DEFAULT_PATH):
             rec_id, payload = built
             if not isinstance(rec_id, str) or not rec_id:
                 raise ValueError("stamped event id must be non-empty")
+            return _append_verified(kind, rec_id, payload, path, ts, st, lines)
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
+
+
+def append_u4_stamped(kind, build, path=DEFAULT_PATH):
+    """Append one U4 outer record through its schema-aware, runtime-clock path.
+
+    Generic append APIs reject these kinds.  This path has no ``now`` argument,
+    builds a preview under the R-015 lock, and asks the U4 replay validator to
+    prove that the exact next outer record is legal before it reaches disk.
+    """
+    if kind not in U4_TYPED_KINDS:
+        raise ValueError(f"{kind} is not a U4 typed kind")
+    import fcntl
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path + ".lock", "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        try:
+            st, lines = _append_preflight(path)
+            ts = _runtime_timestamp()
+            built = build(ts)
+            if not isinstance(built, tuple) or len(built) != 2:
+                raise ValueError("U4 stamped event builder must return (id, payload)")
+            rec_id, payload = built
+            if not isinstance(rec_id, str) or not rec_id:
+                raise ValueError("U4 stamped event id must be non-empty")
+            preview = {
+                "seq": st["n"], "kind": kind, "id": rec_id, "payload": payload,
+                "ts": ts, "prev": st["head"] or GENESIS_PREV,
+            }
+            preview["hash"] = record_hash(preview)
+            from experiments.research_funnel import u4_decision_ledger
+            # governance-mutation: U4_LEDGER_TYPED_APPEND_VALIDATION
+            u4_decision_ledger.validate_typed_outer_append(path, preview)
             return _append_verified(kind, rec_id, payload, path, ts, st, lines)
         finally:
             fcntl.flock(lf, fcntl.LOCK_UN)

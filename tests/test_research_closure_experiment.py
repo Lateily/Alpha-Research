@@ -40,6 +40,7 @@ def build_bundle(root: Path) -> tuple[Path, dict, list[str]]:
         if "RED_FLAG" not in row["flags"] and row["review_status"] != "RANDOM_CONTROL"
     ][:8]
     battery = fixtures.battery_fixture(clean_codes)
+    battery["run_id"] = "FIXTURE_RUN_20260813"
     for row in battery["data"]["results"]:
         row["dims"] = {name: {"fixture": True} for name in closure.BATTERY_DIMENSIONS}
         row["completeness"] = {
@@ -145,6 +146,42 @@ class ResearchClosureExperimentTests(unittest.TestCase):
             packet["claim_allowed"] = True
             with self.assertRaisesRegex(closure.ClosureError, "packet hash mismatch"):
                 closure.validate_review_packet(packet)
+
+    def test_packet_projects_exact_run_and_candidate_evidence_from_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle, battery, _ = build_bundle(Path(tmp))
+            packet = closure.build_review_packet(
+                bundle_dir=bundle, battery=battery, generated_at=GENERATED_AT,
+            )
+            candidates = json.loads(
+                (bundle / "candidate_review.json").read_text(encoding="utf-8")
+            )
+            registry = json.loads(
+                (bundle / "security_registry_projected.json").read_text(encoding="utf-8")
+            )
+            candidate_by_code = {row["ts_code"]: row for row in candidates["rows"]}
+            registry_by_code = {row["ts_code"]: row for row in registry["rows"]}
+            battery_by_code = funnel._battery_rows(battery, packet["as_of"])
+            row = packet["ready_pool"][0]
+            code = row["ts_code"]
+        self.assertEqual(packet["source_refs"]["run_id"], battery["run_id"])
+        self.assertEqual(row["display_name"], registry_by_code[code]["name"])
+        self.assertEqual(row["cohort_id"], candidate_by_code[code]["industry_key"])
+        self.assertEqual(
+            row["causal_cluster_id"],
+            str(candidate_by_code[code].get("cluster_id") or "UNAVAILABLE"),
+        )
+        self.assertEqual(row["u2_candidate_row_hash"], funnel._hash(candidate_by_code[code]))
+        self.assertEqual(row["u3_battery_row_hash"], funnel._hash(battery_by_code[code]))
+
+    def test_packet_refuses_a_battery_without_an_exact_run_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle, battery, _ = build_bundle(Path(tmp))
+            battery.pop("run_id")
+            with self.assertRaisesRegex(closure.ClosureError, "exact U3 run_id"):
+                closure.build_review_packet(
+                    bundle_dir=bundle, battery=battery, generated_at=GENERATED_AT,
+                )
 
     def test_u3_complete_stamp_requires_six_complete_dimensions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

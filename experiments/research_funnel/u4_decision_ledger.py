@@ -100,6 +100,11 @@ READY_ROW_FIELDS = {
     "candidate_status",
     "battery_verdict",
     "blocked_reasons",
+    "display_name",
+    "cohort_id",
+    "causal_cluster_id",
+    "u2_candidate_row_hash",
+    "u3_battery_row_hash",
 }
 DRAFT_FIELDS = {
     "method_version",
@@ -111,7 +116,7 @@ DRAFT_FIELDS = {
     "decisions",
 }
 DRAFT_ROW_FIELDS = {
-    "candidate",
+    "ts_code",
     "decision",
     "reason_codes",
     "reason_note",
@@ -234,6 +239,13 @@ CLOSURE_FIELDS = {
     "trade_authority",
     "no_trade_flag",
     "closure_hash",
+}
+PROJECTION_SCHEMA = "ar.u4_decision_projection.v1"
+PROJECTION_VERSION = "1.0"
+PROJECTION_FIELDS = {
+    "schema", "projection_version", "closure_id", "closure_revision",
+    "intent_hash", "current_decision_set_hash", "review_receipt",
+    "projection_hash",
 }
 
 
@@ -445,30 +457,34 @@ def _ready_rows(packet: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 def _source_for(packet: Mapping[str, Any], ready_row: Mapping[str, Any]) -> dict[str, Any]:
     refs = packet.get("source_refs") or {}
-    packet_hash = str(packet.get("packet_hash") or "")
     return {
         "as_of": str(packet.get("as_of") or ""),
-        # The frozen v1 review packet has no production run_id.  Do not invent
-        # one: use a deterministic packet-scoped offline review identifier.
-        "run_id": f"u4-review-{packet_hash[:16]}",
+        "run_id": str(refs.get("run_id") or ""),
         "u2_bundle_hash": _sha_ref(refs.get("bundle_hash"), "U2 bundle hash"),
-        "u2_candidate_row_hash": _sha_value(ready_row),
-        "u3_battery_hash": _sha_ref(refs.get("battery_hash"), "U3 battery hash"),
+        "u2_candidate_row_hash": _sha_ref(
+            ready_row.get("u2_candidate_row_hash"), "U2 candidate row hash"
+        ),
+        "u3_battery_hash": _sha_ref(
+            ready_row.get("u3_battery_row_hash"), "U3 battery row hash"
+        ),
         "u4_packet_hash": _packet_hash_ref(packet),
     }
 
 
-def _validate_candidate(candidate: Mapping[str, Any], ready_row: Mapping[str, Any]) -> None:
-    _require_exact_keys(candidate, CANDIDATE_FIELDS, "decision candidate")
-    if TICKER_RE.fullmatch(str(candidate.get("ts_code") or "")) is None:
+def _candidate_for(ready_row: Mapping[str, Any]) -> dict[str, Any]:
+    candidate = {
+        "ts_code": str(ready_row.get("ts_code") or ""),
+        "display_name": str(ready_row.get("display_name") or ""),
+        "industry_code": str(ready_row.get("industry_key") or ""),
+        "cohort_id": str(ready_row.get("cohort_id") or ""),
+        "causal_cluster_id": str(ready_row.get("causal_cluster_id") or ""),
+    }
+    _require_exact_keys(candidate, CANDIDATE_FIELDS, "packet-bound decision candidate")
+    if TICKER_RE.fullmatch(candidate["ts_code"]) is None:
         raise DecisionLedgerError("candidate ticker is invalid")
-    if candidate.get("ts_code") != ready_row.get("ts_code"):
-        raise DecisionLedgerError("candidate ticker is not bound to the packet row")
-    if candidate.get("industry_code") != ready_row.get("industry_key"):
-        raise DecisionLedgerError("candidate industry is not bound to the packet row")
-    for key in CANDIDATE_FIELDS - {"ts_code"}:
-        if not isinstance(candidate.get(key), str) or not str(candidate[key]).strip():
-            raise DecisionLedgerError(f"candidate {key} must be non-empty")
+    if any(not candidate[key].strip() for key in CANDIDATE_FIELDS - {"ts_code"}):
+        raise DecisionLedgerError("packet-bound candidate provenance is missing")
+    return candidate
 
 
 def _validate_reason_list(value: Any, allowed: set[str], label: str, *, nonempty: bool) -> list[str]:
@@ -520,13 +536,10 @@ def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tupl
         if not isinstance(raw, Mapping):
             raise DecisionLedgerError("decision row must be an object")
         _require_exact_keys(raw, DRAFT_ROW_FIELDS, "decision row")
-        candidate = raw.get("candidate")
-        if not isinstance(candidate, Mapping):
-            raise DecisionLedgerError("decision candidate must be an object")
-        code = str(candidate.get("ts_code") or "")
+        code = str(raw.get("ts_code") or "")
         if code not in packet_by_code or code in decisions:
             raise DecisionLedgerError("decision subjects must equal the packet candidate set")
-        _validate_candidate(candidate, packet_by_code[code])
+        candidate = _candidate_for(packet_by_code[code])
         decision = raw.get("decision")
         if decision not in DECISIONS:
             raise DecisionLedgerError("decision is outside the closed enum")
@@ -545,6 +558,13 @@ def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tupl
             raise DecisionLedgerError("SELECT requires a research question and no missing evidence")
         if decision == "DATA_BLOCKED" and not missing:
             raise DecisionLedgerError("DATA_BLOCKED requires explicit missing evidence")
+        # governance-mutation: U4_LEDGER_CAUSAL_CLUSTER_EVIDENCE
+        if candidate["causal_cluster_id"] == "UNAVAILABLE" and (
+            decision != "DATA_BLOCKED" or "CAUSAL_CLUSTER_ID" not in missing
+        ):
+            raise DecisionLedgerError(
+                "candidate without a packet-bound causal cluster must remain DATA_BLOCKED"
+            )
         blocked = set(packet_by_code[code]["blocked_reasons"])
         if "U3_BATTERY_INCOMPLETE" in blocked:
             if decision != "DATA_BLOCKED" or "U3_SIX_DIMENSION_BATTERY" not in missing or "U3_INCOMPLETE" not in reason_codes:
@@ -620,7 +640,7 @@ def _intent_from_draft(
         "decision_revision": raw["decision_revision"],
         "supersedes_decision_id": raw["supersedes_decision_id"],
         "method_version": draft["method_version"],
-        "candidate": copy.deepcopy(raw["candidate"]),
+        "candidate": _candidate_for(ready_row),
         "source": _source_for(packet, ready_row),
         "decision": raw["decision"],
         "reason_codes": list(raw["reason_codes"]),
@@ -688,7 +708,9 @@ def _validate_candidate_intent(
     source = item.get("source")
     if not isinstance(candidate, Mapping) or not isinstance(source, Mapping):
         raise DecisionLedgerError("candidate intent identity/source is not an object")
-    _validate_candidate(candidate, ready_row)
+    # governance-mutation: U4_LEDGER_PACKET_CANDIDATE_PROVENANCE
+    if dict(candidate) != _candidate_for(ready_row):
+        raise DecisionLedgerError("candidate intent is not the exact packet-bound provenance")
     if source != _source_for(packet, ready_row):
         raise DecisionLedgerError("candidate intent source is not bound to the frozen packet")
     human = item.get("human_decision")
@@ -959,6 +981,60 @@ def _project_review_receipt(events: Sequence[Mapping[str, Any]], packet_hash: st
     return receipt
 
 
+def _projection_hash(projection: Mapping[str, Any]) -> str:
+    return _sha_value({
+        key: value for key, value in projection.items() if key != "projection_hash"
+    })
+
+
+def _build_projection(
+    *, closure_id: str, closure_revision: int, intent_hash: str,
+    current_decision_set_hash: str, review_receipt: Mapping[str, Any] | None,
+) -> dict[str, Any] | None:
+    if review_receipt is None:
+        return None
+    projection: dict[str, Any] = {
+        "schema": PROJECTION_SCHEMA,
+        "projection_version": PROJECTION_VERSION,
+        "closure_id": closure_id,
+        "closure_revision": closure_revision,
+        "intent_hash": intent_hash,
+        "current_decision_set_hash": current_decision_set_hash,
+        "review_receipt": copy.deepcopy(dict(review_receipt)),
+        "projection_hash": "",
+    }
+    projection["projection_hash"] = _projection_hash(projection)
+    return projection
+
+
+def validate_projection_envelope(
+    projection: Mapping[str, Any], packet: Mapping[str, Any],
+) -> None:
+    _require_exact_keys(projection, PROJECTION_FIELDS, "U4 projection envelope")
+    if (
+        projection.get("schema") != PROJECTION_SCHEMA
+        or projection.get("projection_version") != PROJECTION_VERSION
+        or not isinstance(projection.get("closure_revision"), int)
+        or isinstance(projection.get("closure_revision"), bool)
+        or projection["closure_revision"] < 1
+        or not isinstance(projection.get("closure_id"), str)
+        or CLOSURE_ID_RE.fullmatch(projection["closure_id"]) is None
+        or SHA_RE.fullmatch(str(projection.get("intent_hash") or "")) is None
+        or SHA_RE.fullmatch(str(projection.get("current_decision_set_hash") or "")) is None
+    ):
+        raise DecisionLedgerError("U4 projection envelope identity is invalid")
+    receipt = projection.get("review_receipt")
+    if not isinstance(receipt, Mapping):
+        raise DecisionLedgerError("U4 projection review receipt is missing")
+    try:
+        closure.validate_review_receipt(receipt, packet)
+    except closure.ClosureError as exc:
+        raise DecisionLedgerError(f"U4 projection review receipt is invalid: {exc}") from exc
+    # governance-mutation: U4_LEDGER_PROJECTION_HASH
+    if projection.get("projection_hash") != _projection_hash(projection):
+        raise DecisionLedgerError("U4 projection hash mismatch")
+
+
 def _build_closure(
     packet: Mapping[str, Any], events: Sequence[Mapping[str, Any]], intent: Mapping[str, Any],
     *, tail_sequence: int, tail_hash: str,
@@ -968,7 +1044,7 @@ def _build_closure(
     ids = [event["decision_id"] for event in ordered]
     counts = {decision: sum(event["decision"] == decision for event in ordered) for decision in sorted(DECISIONS)}
     selected_count = counts["SELECT"]
-    projected = _project_review_receipt(ordered, _packet_hash_ref(packet))
+    review_receipt = _project_review_receipt(ordered, _packet_hash_ref(packet))
     receipt: dict[str, Any] = {
         "schema": CLOSURE_SCHEMA,
         "closure_version": CLOSURE_VERSION,
@@ -993,8 +1069,8 @@ def _build_closure(
         "ledger_tail_sequence": tail_sequence,
         "ledger_tail_hash": tail_hash,
         "outcome": "NO_TRADE_NO_QUEUE" if selected_count == 0 else "PROJECT_EXISTING_U4_REVIEW_RECEIPT",
-        "projected_receipt": projected,
-        "projected_receipt_hash": projected["receipt_hash"] if projected is not None else None,
+        "projected_receipt": None,
+        "projected_receipt_hash": None,
         "claim_allowed": False,
         "production_authority": False,
         "trade_authority": False,
@@ -1009,6 +1085,17 @@ def _build_closure(
         "ledger_tail_hash": receipt["ledger_tail_hash"],
     }
     receipt["closure_id"] = "u4c_" + hashlib.sha256(_canonical(closure_identity).encode("utf-8")).hexdigest()[:32]
+    projected = _build_projection(
+        closure_id=receipt["closure_id"],
+        closure_revision=receipt["closure_revision"],
+        intent_hash=receipt["intent_hash"],
+        current_decision_set_hash=receipt["current_decision_set_hash"],
+        review_receipt=review_receipt,
+    )
+    receipt["projected_receipt"] = projected
+    receipt["projected_receipt_hash"] = (
+        projected["projection_hash"] if projected is not None else None
+    )
     receipt["closure_hash"] = _closure_hash(receipt)
     return receipt
 
@@ -1078,16 +1165,24 @@ def validate_packet_closure(
         or receipt.get("ledger_tail_hash") != tail_hash
     ):
         raise DecisionLedgerError("U4 closure is not bound to the decision-ledger tail")
-    expected_projection = _project_review_receipt(packet_events, packet_hash)
+    expected_projection = _build_projection(
+        closure_id=receipt["closure_id"],
+        closure_revision=revision,
+        intent_hash=intent["intent_hash"],
+        current_decision_set_hash=_sha_value(ids),
+        review_receipt=_project_review_receipt(packet_events, packet_hash),
+    )
     expected_outcome = "NO_TRADE_NO_QUEUE" if selected_count == 0 else "PROJECT_EXISTING_U4_REVIEW_RECEIPT"
     if (
         receipt.get("outcome") != expected_outcome
         or receipt.get("projected_receipt") != expected_projection
         or receipt.get("projected_receipt_hash") != (
-            expected_projection["receipt_hash"] if expected_projection is not None else None
+            expected_projection["projection_hash"] if expected_projection is not None else None
         )
     ):
         raise DecisionLedgerError("U4 closure projection is inconsistent")
+    if expected_projection is not None:
+        validate_projection_envelope(expected_projection, intent["review_packet"])
     # governance-mutation: U4_LEDGER_CLOSURE_NO_AUTHORITY
     if (
         receipt.get("claim_allowed") is not False
@@ -1115,10 +1210,18 @@ def _read_outer_records(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in event_ledger._read_lines(str(path))]
 
 
+def validate_typed_outer_append(path: str, preview: Mapping[str, Any]) -> None:
+    """Validate the exact next U4 R-015 record while its outer lock is held."""
+    if preview.get("kind") not in {INTENT_KIND, EVENT_KIND, CLOSURE_KIND}:
+        raise DecisionLedgerError("typed U4 append received an unsupported kind")
+    _replay_records([*_read_outer_records(Path(path)), copy.deepcopy(dict(preview))])
+
+
 def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     intents: dict[tuple[str, int], dict[str, Any]] = {}
     decisions: list[dict[str, Any]] = []
-    current: dict[tuple[str, str], dict[str, Any]] = {}
+    staged_current: dict[tuple[str, str], dict[str, Any]] = {}
+    committed_current: dict[tuple[str, str], dict[str, Any]] = {}
     closures: dict[str, list[dict[str, Any]]] = {}
     intent_ids: set[str] = set()
     decision_ids: set[str] = set()
@@ -1149,7 +1252,7 @@ def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             expected_revision = prior_closures[-1]["closure_revision"] + 1 if prior_closures else 1
             if revision != expected_revision:
                 raise DecisionLedgerError("U4 packet intent revision does not follow the committed closure")
-            _validate_intent_revision(intent, current)
+            _validate_intent_revision(intent, committed_current)
             intents[key] = copy.deepcopy(dict(intent))
             intent_ids.add(intent["intent_id"])
         elif outer.get("kind") == EVENT_KIND:
@@ -1176,7 +1279,7 @@ def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             # governance-mutation: U4_LEDGER_DECISION_INTENT_MATCH
             if _event_intent(event) != expected_intents.get(subject[1]):
                 raise DecisionLedgerError("U4 decision differs from its frozen packet intent")
-            prior = current.get(subject)
+            prior = staged_current.get(subject)
             if prior is None:
                 if event["decision_revision"] != 1 or event["supersedes_decision_id"] is not None:
                     raise DecisionLedgerError("first U4 subject event must be revision 1")
@@ -1187,7 +1290,7 @@ def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
                 raise DecisionLedgerError("U4 revision chain is not append-only and contiguous")
             event_copy = copy.deepcopy(dict(event))
             decisions.append(event_copy)
-            current[subject] = event_copy
+            staged_current[subject] = event_copy
             decision_ids.add(event["decision_id"])
             previous_hash = event["record_hash"]
         elif outer.get("kind") == CLOSURE_KIND:
@@ -1203,7 +1306,7 @@ def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
                 raise DecisionLedgerError("U4 closure lacks its preceding packet intent")
             validate_packet_closure(
                 receipt,
-                current,
+                staged_current,
                 intent,
                 tail_sequence=len(decisions),
                 tail_hash=previous_hash or "",
@@ -1214,11 +1317,17 @@ def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             if not prior_closures and receipt["closure_revision"] != 1:
                 raise DecisionLedgerError("first U4 closure must be revision 1")
             prior_closures.append(copy.deepcopy(dict(receipt)))
+            # governance-mutation: U4_LEDGER_CLOSURE_ATOMIC_VISIBILITY
+            for code in intent["packet_candidate_ids"]:
+                subject = (packet_hash, code)
+                committed_current[subject] = copy.deepcopy(staged_current[subject])
             closure_ids.add(receipt["closure_id"])
     return {
         "intents": intents,
         "decisions": decisions,
-        "current": current,
+        # governance-mutation: U4_LEDGER_COMMITTED_REPLAY_VIEW
+        "current": committed_current,
+        "staged_current": staged_current,
         "closures": closures,
         "tail_sequence": len(decisions),
         "tail_hash": previous_hash,
@@ -1311,11 +1420,38 @@ def _reconcile_projection(path: Path, projection: Mapping[str, Any] | None) -> N
         _fsync_parent(path)
 
 
+def _validate_packet_source(
+    packet: Mapping[str, Any], bundle_dir: Path,
+) -> None:
+    """Rebuild the packet from the immutable U2/U3 DAG bundle before WAL use."""
+    try:
+        bundle = closure.load_bundle(bundle_dir)
+        if "battery" not in bundle:
+            raise DecisionLedgerError(
+                "U4 ledger writes require a final DAG bundle with embedded U3 battery evidence"
+            )
+        expected = closure.build_review_packet(
+            bundle_dir=bundle_dir,
+            battery=None,
+            generated_at=str(packet.get("generated_at") or ""),
+        )
+    except closure.ClosureError as exc:
+        raise DecisionLedgerError(f"U4 immutable source evidence is invalid: {exc}") from exc
+    # governance-mutation: U4_LEDGER_PACKET_SOURCE_EQUALITY
+    if dict(packet) != expected:
+        raise DecisionLedgerError(
+            "U4 review packet is not the deterministic projection of its immutable U2/U3 evidence"
+        )
+
+
 def append_decision_batch(
     *, packet: Mapping[str, Any], draft: Mapping[str, Any], ledger_path: Path,
+    bundle_dir: Path,
     _fail_after_decisions: int | None = None,
 ) -> dict[str, Any]:
     """Append/resume one frozen packet transaction and reconcile its derived receipt."""
+    # governance-mutation: U4_LEDGER_PACKET_SOURCE_REBUILD
+    _validate_packet_source(packet, bundle_dir)
     ready_rows, draft_rows = _validate_draft(packet, draft)
     packet_ref = _packet_hash_ref(packet)
     expected_intent = _build_packet_intent(packet, draft, draft_rows, ready_rows)
@@ -1366,7 +1502,7 @@ def append_decision_batch(
                     raise DecisionLedgerError("U4 packet intent was registered before its human decision")
                 return expected_intent["intent_id"], expected_intent
 
-            event_ledger.append_stamped(INTENT_KIND, build_intent, path=str(ledger_path))
+            event_ledger.append_u4_stamped(INTENT_KIND, build_intent, path=str(ledger_path))
             intent_appended = True
             state = _snapshot_state(ledger_path)
             existing_intent = state["intents"].get(intent_key)
@@ -1398,7 +1534,7 @@ def append_decision_batch(
         for code in expected_intent["packet_candidate_ids"]:
             candidate_intent = expected_by_code[code]
             subject = (packet_ref, code)
-            prior = state["current"].get(subject)
+            prior = state["staged_current"].get(subject)
             if prior is not None and prior["decision_revision"] == revision:
                 if _event_intent(prior) != candidate_intent:
                     raise DecisionLedgerError("same U4 subject revision already exists with different content")
@@ -1419,22 +1555,19 @@ def append_decision_batch(
                     previous_hash=state["tail_hash"],
                     registered_at=_registered_at_from_outer(outer_ts),
                 )
-                # governance-mutation: U4_LEDGER_PREAPPEND_VALIDATE
-                validate_decision_event(
-                    event,
-                    expected_sequence=state["tail_sequence"] + 1,
-                    expected_previous_hash=state["tail_hash"],
-                )
                 return event["decision_id"], event
 
-            event_ledger.append_stamped(EVENT_KIND, build_event, path=str(ledger_path))
+            event_ledger.append_u4_stamped(EVENT_KIND, build_event, path=str(ledger_path))
             decisions_appended += 1
             if _fail_after_decisions is not None and decisions_appended == _fail_after_decisions:
                 raise DecisionLedgerError("injected interruption after candidate decision")
             state = _snapshot_state(ledger_path)
         state = _snapshot_state(ledger_path)
         packet_events = sorted(
-            (event for (subject_packet, _), event in state["current"].items() if subject_packet == packet_ref),
+            (
+                event for (subject_packet, _), event in state["staged_current"].items()
+                if subject_packet == packet_ref
+            ),
             key=lambda event: event["candidate"]["ts_code"],
         )
         if [event["candidate"]["ts_code"] for event in packet_events] != expected_intent["packet_candidate_ids"]:
@@ -1450,7 +1583,7 @@ def append_decision_batch(
         )
         validate_packet_closure(
             receipt,
-            state["current"],
+            state["staged_current"],
             expected_intent,
             tail_sequence=state["tail_sequence"],
             tail_hash=state["tail_hash"] or "",
@@ -1459,10 +1592,9 @@ def append_decision_batch(
         expected_revision = prior_closures[-1]["closure_revision"] + 1 if prior_closures else 1
         if receipt["closure_revision"] != expected_revision:
             raise DecisionLedgerError("U4 closure revision does not follow the committed revision")
-        event_ledger.append(
+        event_ledger.append_u4_stamped(
             CLOSURE_KIND,
-            receipt["closure_id"],
-            receipt,
+            lambda _outer_ts: (receipt["closure_id"], receipt),
             path=str(ledger_path),
         )
         committed = receipt
@@ -1496,11 +1628,46 @@ def current_packet_decisions(path: Path, packet_hash: str) -> list[dict[str, Any
     )
 
 
+def validate_current_projection(
+    path: Path, projection: Mapping[str, Any], packet: Mapping[str, Any],
+) -> None:
+    """Validate a projection against the latest committed packet closure.
+
+    The nested legacy review receipt proves packet membership only. Currentness
+    comes from this ledger-aware check; a cached receipt or envelope cannot
+    survive a later committed revision.
+    """
+    validate_projection_envelope(projection, packet)
+    packet_ref = _packet_hash_ref(packet)
+    state = _snapshot_state(path)
+    packet_closures = state["closures"].get(packet_ref, [])
+    if not packet_closures:
+        raise DecisionLedgerError("U4 projection has no committed packet closure")
+    latest = packet_closures[-1]
+    # governance-mutation: U4_LEDGER_PROJECTION_CURRENT_CLOSURE
+    if latest.get("projected_receipt") is None or dict(projection) != latest["projected_receipt"]:
+        raise DecisionLedgerError("U4 projection is stale or revoked by the latest closure")
+
+
+def load_current_projection(path: Path, packet: Mapping[str, Any]) -> dict[str, Any] | None:
+    projection_path = projection_path_for(path, _packet_hash_ref(packet))
+    state = _snapshot_state(path)
+    packet_closures = state["closures"].get(_packet_hash_ref(packet), [])
+    if not packet_closures or packet_closures[-1].get("projected_receipt") is None:
+        if projection_path.exists() or projection_path.is_symlink():
+            raise DecisionLedgerError("revoked U4 projection still exists on disk")
+        return None
+    projection = _load_json(projection_path)
+    validate_current_projection(path, projection, packet)
+    return projection
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--packet", required=True, type=Path)
     parser.add_argument("--draft", required=True, type=Path)
     parser.add_argument("--ledger", required=True, type=Path)
+    parser.add_argument("--bundle-dir", type=Path)
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args(argv)
     try:
@@ -1508,10 +1675,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = verify_decision_ledger(args.ledger)
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
             return 0 if result["ok"] else 1
+        if args.bundle_dir is None:
+            raise DecisionLedgerError("--bundle-dir is required for U4 ledger writes")
         result = append_decision_batch(
             packet=_load_json(args.packet),
             draft=_load_json(args.draft),
             ledger_path=args.ledger,
+            bundle_dir=args.bundle_dir,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0

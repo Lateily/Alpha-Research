@@ -14,6 +14,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 from datetime import datetime
@@ -38,10 +39,15 @@ BUNDLE_ARTIFACTS = {
     "deep_research_queue.json",
     "security_registry_projected.json",
 }
+DAG_BUNDLE_ARTIFACTS = BUNDLE_ARTIFACTS | {
+    "candidate_manifest.json",
+    "candidate_battery.json",
+}
 BUNDLE_MANIFEST_FIELDS = {
     "schema", "schema_version", "rule_version", "as_of", "generated_at",
     "artifacts", "bundle_hash",
 }
+DAG_BUNDLE_MANIFEST_FIELDS = BUNDLE_MANIFEST_FIELDS | {"run_id", "dag"}
 RESULT_ARTIFACTS = {
     "review_packet.json",
     "review_receipt.json",
@@ -61,6 +67,15 @@ RESULT_MANIFEST_FIELDS = {
 RECEIPT_DECISION = "APPROVED_FOR_OFFLINE_RESEARCH_REPLAY"
 RECEIPT_CLASS = "HUMAN_PROVIDED_UNVERIFIED_IDENTITY"
 BATTERY_DIMENSIONS = {"行情", "资金", "基本面", "技术面", "消息面", "估值"}
+PACKET_SOURCE_REF_FIELDS = {
+    "run_id", "bundle_hash", "scan_rows_hash", "candidate_rows_hash",
+    "battery_hash", "ready_pool_hash",
+}
+PACKET_READY_ROW_FIELDS = {
+    "ts_code", "ready", "industry_key", "sector_os_status", "candidate_status",
+    "battery_verdict", "blocked_reasons", "display_name", "cohort_id",
+    "causal_cluster_id", "u2_candidate_row_hash", "u3_battery_row_hash",
+}
 DISCLAIMER = "不是买卖指令；研究信号，human executes."
 
 
@@ -121,12 +136,17 @@ def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
     manifest_path = bundle_dir / "manifest.json"
     manifest = _load_object(manifest_path)
     artifacts = manifest.get("artifacts")
+    is_dag_bundle = manifest.get("dag") is not None
+    expected_manifest_fields = (
+        DAG_BUNDLE_MANIFEST_FIELDS if is_dag_bundle else BUNDLE_MANIFEST_FIELDS
+    )
+    expected_artifacts = DAG_BUNDLE_ARTIFACTS if is_dag_bundle else BUNDLE_ARTIFACTS
     if (
-        set(manifest) != BUNDLE_MANIFEST_FIELDS
+        set(manifest) != expected_manifest_fields
         or manifest.get("schema") != "ar.research_funnel_bundle"
         or manifest.get("schema_version") != funnel.SCHEMA_VERSION
         or not isinstance(artifacts, dict)
-        or set(artifacts) != BUNDLE_ARTIFACTS
+        or set(artifacts) != expected_artifacts
     ):
         raise ClosureError("bundle manifest schema/artifact set is invalid")
     # governance-mutation: FUNNEL_CLOSURE_BUNDLE_HASH
@@ -146,6 +166,22 @@ def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
         funnel.validate_all_market_scan(scan, registry)
         funnel.validate_candidate_review(candidates, registry, scan)
         funnel.validate_deep_research_queue(queue)
+        if is_dag_bundle:
+            candidate_manifest = _load_object(bundle_dir / "candidate_manifest.json")
+            candidate_battery = _load_object(bundle_dir / "candidate_battery.json")
+            funnel.validate_candidate_manifest(candidate_manifest)
+            funnel.validate_candidate_battery(candidate_battery, candidate_manifest)
+            dag = manifest.get("dag") or {}
+            # governance-mutation: FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING
+            if (
+                manifest.get("run_id") != candidate_manifest.get("run_id")
+                or dag.get("candidate_manifest_hash")
+                != candidate_manifest.get("manifest_hash")
+                or dag.get("battery_rows_hash") != candidate_battery.get("rows_hash")
+                or candidate_manifest.get("candidate_rows_hash") != candidates.get("rows_hash")
+                or candidate_manifest.get("scan_rows_hash") != scan.get("rows_hash")
+            ):
+                raise ClosureError("DAG bundle evidence is not bound to its final manifest")
     except (ValueError, funnel.FunnelError) as exc:
         raise ClosureError(f"bundle contract validation failed: {exc}") from exc
     as_of = str(manifest.get("as_of") or "")
@@ -154,13 +190,17 @@ def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
     # A review packet must start before any U4 selection is materialized.
     if queue.get("rows"):
         raise ClosureError("review packet source bundle already contains a U4 selection")
-    return {
+    result = {
         "manifest": manifest,
         "registry": registry,
         "scan": scan,
         "candidates": candidates,
         "queue": queue,
     }
+    if is_dag_bundle:
+        result["candidate_manifest"] = candidate_manifest
+        result["battery"] = candidate_battery
+    return result
 
 
 def validate_battery_evidence(battery: Mapping[str, Any], as_of: str) -> None:
@@ -193,10 +233,17 @@ def validate_battery_evidence(battery: Mapping[str, Any], as_of: str) -> None:
 
 
 def build_review_packet(
-    *, bundle_dir: Path, battery: Mapping[str, Any], generated_at: str,
+    *, bundle_dir: Path, battery: Mapping[str, Any] | None, generated_at: str,
 ) -> dict[str, Any]:
     bundle = load_bundle(bundle_dir)
     as_of = str(bundle["manifest"]["as_of"])
+    bundled_battery = bundle.get("battery")
+    if bundled_battery is not None:
+        if battery is not None and dict(battery) != bundled_battery:
+            raise ClosureError("external U3 battery differs from the immutable DAG bundle")
+        battery = bundled_battery
+    if battery is None:
+        raise ClosureError("review packet requires U3 battery evidence")
     validate_battery_evidence(battery, as_of)
     try:
         waiting_queue = funnel.build_deep_research_queue(
@@ -208,7 +255,39 @@ def build_review_packet(
         )
     except funnel.FunnelError as exc:
         raise ClosureError(f"cannot build U4 ready pool: {exc}") from exc
-    ready_pool = waiting_queue["ready_pool"]
+    run_id = str(
+        battery.get("run_id")
+        or ((battery.get("data") or {}).get("run_id") if isinstance(battery.get("data"), dict) else "")
+        or ""
+    ).strip()
+    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID
+    if not run_id:
+        raise ClosureError("U4 review packet requires the exact U3 run_id")
+    candidate_by_code = {
+        str(row["ts_code"]): row for row in bundle["candidates"]["rows"]
+    }
+    registry_by_code = {
+        str(row["ts_code"]): row for row in bundle["registry"]["rows"]
+    }
+    battery_by_code = funnel._battery_rows(battery, as_of)
+    ready_pool: list[dict[str, Any]] = []
+    for projected in waiting_queue["ready_pool"]:
+        code = str(projected["ts_code"])
+        candidate = candidate_by_code.get(code)
+        registry_row = registry_by_code.get(code)
+        battery_row = battery_by_code.get(code)
+        if candidate is None or registry_row is None or battery_row is None:
+            raise ClosureError(f"U4 packet evidence row is missing: {code}")
+        enriched = dict(projected)
+        enriched.update({
+            # governance-mutation: FUNNEL_CLOSURE_PACKET_CANDIDATE_EVIDENCE
+            "display_name": str(registry_row.get("name") or "UNAVAILABLE"),
+            "cohort_id": str(candidate.get("industry_key") or "UNAVAILABLE"),
+            "causal_cluster_id": str(candidate.get("cluster_id") or "UNAVAILABLE"),
+            "u2_candidate_row_hash": funnel._hash(candidate),
+            "u3_battery_row_hash": funnel._hash(battery_row),
+        })
+        ready_pool.append(enriched)
     control_frame = bundle["candidates"]["control_sampling_frame"]
     packet: dict[str, Any] = {
         "schema": PACKET_SCHEMA,
@@ -218,6 +297,7 @@ def build_review_packet(
         "as_of": as_of,
         "generated_at": generated_at,
         "source_refs": {
+            "run_id": run_id,
             "bundle_hash": bundle["manifest"]["bundle_hash"],
             "scan_rows_hash": bundle["scan"]["rows_hash"],
             "candidate_rows_hash": bundle["candidates"]["rows_hash"],
@@ -259,6 +339,33 @@ def validate_review_packet(packet: Mapping[str, Any]) -> None:
         raise ClosureError("review packet schema/version mismatch")
     if packet.get("mode") != "OFFLINE_RESEARCH_REPLAY" or packet.get("status") != "AWAITING_JUNYAN_REVIEW":
         raise ClosureError("review packet mode/status is invalid")
+    refs = packet.get("source_refs")
+    if not isinstance(refs, dict) or set(refs) != PACKET_SOURCE_REF_FIELDS:
+        raise ClosureError("review packet source references are not exact")
+    if not str(refs.get("run_id") or "").strip():
+        raise ClosureError("review packet run_id is missing")
+    if any(
+        not isinstance(refs.get(key), str)
+        or re.fullmatch(r"[0-9a-f]{64}", str(refs[key])) is None
+        for key in PACKET_SOURCE_REF_FIELDS - {"run_id"}
+    ):
+        raise ClosureError("review packet source digest is invalid")
+    ready_pool = packet.get("ready_pool")
+    if not isinstance(ready_pool, list):
+        raise ClosureError("review packet ready_pool must be a list")
+    for row in ready_pool:
+        if not isinstance(row, dict) or set(row) != PACKET_READY_ROW_FIELDS:
+            raise ClosureError("review packet ready row fields are not exact")
+        if any(
+            not isinstance(row.get(key), str) or not str(row[key]).strip()
+            for key in ("display_name", "cohort_id", "causal_cluster_id")
+        ):
+            raise ClosureError("review packet candidate provenance is missing")
+        if any(
+            re.fullmatch(r"[0-9a-f]{64}", str(row.get(key) or "")) is None
+            for key in ("u2_candidate_row_hash", "u3_battery_row_hash")
+        ):
+            raise ClosureError("review packet candidate evidence digest is invalid")
     # governance-mutation: FUNNEL_CLOSURE_PACKET_HASH
     if packet.get("packet_hash") != funnel._hash(_without_hash(packet, "packet_hash")):
         raise ClosureError("review packet hash mismatch")
@@ -361,6 +468,11 @@ def run_offline_replay(
         raise ClosureError("review packet is not the deterministic projection of replay inputs")
     validate_review_receipt(receipt, packet)
     if packet["source_refs"] != {
+        "run_id": str(
+            battery.get("run_id")
+            or ((battery.get("data") or {}).get("run_id") if isinstance(battery.get("data"), dict) else "")
+            or ""
+        ).strip(),
         "bundle_hash": bundle["manifest"]["bundle_hash"],
         "scan_rows_hash": bundle["scan"]["rows_hash"],
         "candidate_rows_hash": bundle["candidates"]["rows_hash"],

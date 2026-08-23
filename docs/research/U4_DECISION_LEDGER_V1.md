@@ -31,8 +31,11 @@ closure references that intent id/hash and contains the reviewed-candidate set
 hash, current-decision-id set hash, counts for all five outcomes, selected
 count, missing/extra sets, and the inner U4 decision-chain tail. A
 self-consistent subset can therefore never close a larger packet. A partial WAL
-with no closure is visible as a pending packet and is resumed only when the
-entire submitted intent matches byte for byte.
+with no closure is visible only as a pending packet. Candidate events remain
+staged and cannot appear through the current-decision reader until the exact
+closure commits; a partial later revision likewise leaves the prior committed
+revision public. Recovery resumes only when the entire submitted intent
+matches byte for byte.
 
 ## Complete Decision Denominator
 
@@ -76,26 +79,34 @@ filters its own three kinds after verifying the complete outer chain.
 
 The projected review receipt is not an authority source. Its path is derived
 from the explicit ledger path and full packet digest; callers cannot redirect
-it. Every exact retry reconciles it from the committed closure. This repairs a
-crash after closure commit but before projection write, and removes an older
-selected receipt when a later committed revision selects zero candidates.
+it. The file is a closure-bound envelope containing the closure id/revision,
+intent hash, current-decision-set hash, and the legacy packet receipt. A queue
+consumer must validate that envelope against the latest committed ledger
+closure; validating the nested legacy receipt alone proves packet membership,
+not currentness. Every exact retry reconciles the envelope from the committed
+closure. This repairs a crash after closure commit but before projection write,
+and makes a cached older selection fail after a later zero-selection revision.
 
 ## Evidence Mapping Boundary
 
-The frozen `ar.u4_review_packet.v1.0` does not expose a production `run_id`, a
-display name, a cohort id, or a causal-cluster id. This implementation does not
-pretend otherwise:
+The review packet now projects its evidence identity from the immutable funnel
+bundle and exact U3 input before the human draft exists. A ledger write accepts
+only the final three-stage DAG bundle whose top manifest includes and hashes
+`candidate_manifest.json` and `candidate_battery.json`. Before any intent is
+written, the writer reloads that bundle, verifies the U2/U3/run bindings,
+rebuilds the full review packet, and requires byte-for-byte equality with the
+submitted packet. A packet's own self-reported hashes are never sufficient.
+The packet carries the U3
+`run_id`; exact U2 candidate-row and U3 battery-row hashes; registry display
+name; industry cohort; and the prospective causal-cluster id. Decision drafts
+contain only the ticker plus judgment fields, so they cannot author or relabel
+those provenance values. If the upstream candidate has no causal cluster, the
+packet records `UNAVAILABLE` and the decision must remain `DATA_BLOCKED` with
+`CAUSAL_CLUSTER_ID`; the implementation does not synthesize a cluster.
 
-- `source.run_id` is a deterministic offline id,
-  `u4-review-<packet-hash-prefix>`;
-- `u2_candidate_row_hash` binds the exact frozen ready-pool projection visible
-  to this reviewer;
-- display name, cohort id, and causal-cluster id are explicit decision-draft
-  fields, bound immutably after validation;
-- industry code must equal the packet row's `industry_key`.
-
-A later upstream contract may expose richer production provenance. That is a
-separate schema revision, not grounds for filling v1 with invented values.
+All event candidate/source fields are derived from that packet and replay
+recomputes the same projection. Cross-run, cross-row, or caller-authored
+substitutions therefore fail before the first candidate append.
 
 ## Authority Boundary
 
@@ -122,6 +133,7 @@ ledger is a real-capital action.
 python3 experiments/research_funnel/u4_decision_ledger.py \
   --packet /path/to/review_packet.json \
   --draft /path/to/u4_decisions.json \
+  --bundle-dir /path/to/data_history/funnel/YYYYMMDD/run_id \
   --ledger /path/to/offline_r015_events.jsonl
 ```
 
@@ -129,5 +141,10 @@ The optional projection is written beside the ledger as
 `<ledger>.u4-<full-packet-sha256>.receipt.json`. There is no production default
 path. The implementation is not imported by the nightly runner and has not
 been deployed to `~/ar-live`.
+
+R-015 reserves the three U4 outer kinds from both generic append APIs. The only
+supported route is its U4 typed append, which chooses the runtime timestamp
+under the shared R-015 lock and replays the exact preview record through this
+contract before writing it. There is no public U4 clock override.
 
 不是买卖指令；研究信号，human executes.

@@ -4160,31 +4160,6 @@ MUTATIONS = MUTATIONS + (
         rationale="A partial retry must match the complete packet intent frozen before its first candidate event.",
     ),
     MutationCase(
-        mutation_id="U4_LEDGER_PREAPPEND_VALIDATE",
-        component="Research funnel U4 decision ledger",
-        source_path="experiments/research_funnel/u4_decision_ledger.py",
-        test_script="tests/test_u4_decision_ledger.py",
-        before=(
-            '                # governance-mutation: U4_LEDGER_PREAPPEND_VALIDATE\n'
-            '                validate_decision_event(\n'
-            '                    event,\n'
-            '                    expected_sequence=state["tail_sequence"] + 1,\n'
-            '                    expected_previous_hash=state["tail_hash"],\n'
-            '                )'
-        ),
-        after=(
-            '                # governance-mutation: U4_LEDGER_PREAPPEND_VALIDATE\n'
-            '                if False:\n'
-            '                    validate_decision_event(\n'
-            '                        event,\n'
-            '                        expected_sequence=state["tail_sequence"] + 1,\n'
-            '                        expected_previous_hash=state["tail_hash"],\n'
-            '                    )'
-        ),
-        expected_failure_marker="test_malformed_candidate_is_rejected_before_its_wal_append",
-        rationale="No malformed or backdated candidate event may reach the append-only WAL first.",
-    ),
-    MutationCase(
         mutation_id="U4_LEDGER_SHARED_READ_LOCK",
         component="Research funnel U4 decision ledger",
         source_path="experiments/research_funnel/u4_decision_ledger.py",
@@ -4214,7 +4189,7 @@ MUTATIONS = MUTATIONS + (
             '                # governance-mutation: U4_LEDGER_INTENT_KIND_UNIQUE\n'
             '                # U4 packet-intent uniqueness removed by mutation'
         ),
-        expected_failure_marker="test_all_three_u4_outer_event_kinds_are_unique_in_the_shared_wal",
+        expected_failure_marker="test_r015_u4_kind_uniqueness_is_independent_of_typed_validation",
         rationale="R-015 must reject duplicate full-packet intents before candidate replay begins.",
     ),
     MutationCase(
@@ -4230,8 +4205,254 @@ MUTATIONS = MUTATIONS + (
             '                # governance-mutation: U4_LEDGER_EVENT_KIND_UNIQUE\n'
             '                # U4 uniqueness removed by mutation'
         ),
-        expected_failure_marker="test_all_three_u4_outer_event_kinds_are_unique_in_the_shared_wal",
+        expected_failure_marker="test_r015_u4_kind_uniqueness_is_independent_of_typed_validation",
         rationale="R-015 must reject duplicate candidate events and duplicate packet commits.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_COMMITTED_REPLAY_VIEW",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_COMMITTED_REPLAY_VIEW\n'
+            '        "current": committed_current,'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_COMMITTED_REPLAY_VIEW\n'
+            '        "current": staged_current,'
+        ),
+        expected_failure_marker="test_interruption_after_intent_events_resumes_to_one_closure",
+        rationale="Pending candidate writes cannot become current before the packet closure commits.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_CLOSURE_ATOMIC_VISIBILITY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_CLOSURE_ATOMIC_VISIBILITY\n'
+            '            for code in intent["packet_candidate_ids"]:\n'
+            '                subject = (packet_hash, code)\n'
+            '                committed_current[subject] = copy.deepcopy(staged_current[subject])'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_CLOSURE_ATOMIC_VISIBILITY\n'
+            '            if False:\n'
+            '                for code in intent["packet_candidate_ids"]:\n'
+            '                    subject = (packet_hash, code)\n'
+            '                    committed_current[subject] = copy.deepcopy(staged_current[subject])'
+        ),
+        expected_failure_marker="test_all_five_outcomes_are_persisted_as_individual_295_events",
+        rationale="A valid closure must atomically promote its exact packet revision to current.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PROJECTION_CURRENT_CLOSURE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PROJECTION_CURRENT_CLOSURE\n'
+            '    if latest.get("projected_receipt") is None or dict(projection) != latest["projected_receipt"]:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PROJECTION_CURRENT_CLOSURE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_selected_revision_to_zero_selection_retires_committed_projection",
+        rationale="A cached SELECT projection must be revoked by the latest zero-selection closure.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PROJECTION_HASH",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PROJECTION_HASH\n'
+            '    if projection.get("projection_hash") != _projection_hash(projection):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PROJECTION_HASH\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_three_selected_rows_project_the_existing_packet_bound_receipt",
+        rationale="A projection envelope must bind its closure identity and nested receipt bytes.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PACKET_CANDIDATE_PROVENANCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PACKET_CANDIDATE_PROVENANCE\n'
+            '    if dict(candidate) != _candidate_for(ready_row):'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PACKET_CANDIDATE_PROVENANCE\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_event_candidate_and_source_are_derived_only_from_the_packet",
+        rationale="Display, cohort, cluster, and industry must be packet-bound rather than draft-authored.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_CAUSAL_CLUSTER_EVIDENCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_CAUSAL_CLUSTER_EVIDENCE\n'
+            '        if candidate["causal_cluster_id"] == "UNAVAILABLE" and ('
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_CAUSAL_CLUSTER_EVIDENCE\n'
+            '        if False and ('
+        ),
+        expected_failure_marker="test_missing_packet_bound_causal_cluster_forces_data_blocked",
+        rationale="An absent causal cluster must stay explicit DATA_BLOCKED rather than becoming SELECT.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_RAW_APPEND_RESERVED",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_RAW_APPEND_RESERVED\n'
+            '    if kind in U4_TYPED_KINDS:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_RAW_APPEND_RESERVED\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_u4_kinds_are_reserved_from_raw_and_generic_stamped_writers",
+        rationale="Caller-controlled raw timestamps and malformed U4 payloads must not enter R-015.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_GENERIC_STAMPED_RESERVED",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_GENERIC_STAMPED_RESERVED\n'
+            '    if kind in U4_TYPED_KINDS:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_GENERIC_STAMPED_RESERVED\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_u4_kinds_are_reserved_from_raw_and_generic_stamped_writers",
+        rationale="A generic stamped builder cannot bypass the U4 typed validator.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_TYPED_APPEND_VALIDATION",
+        component="Research funnel R-015 typed U4 transport",
+        source_path="experiments/execution_tracker/event_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_TYPED_APPEND_VALIDATION\n'
+            '            u4_decision_ledger.validate_typed_outer_append(path, preview)'
+        ),
+        after=(
+            '            # governance-mutation: U4_LEDGER_TYPED_APPEND_VALIDATION\n'
+            '            if False:\n'
+            '                u4_decision_ledger.validate_typed_outer_append(path, preview)'
+        ),
+        expected_failure_marker="test_u4_kinds_are_reserved_from_raw_and_generic_stamped_writers",
+        rationale="The only public U4 append path must validate the exact next typed outer record.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PACKET_SOURCE_EQUALITY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PACKET_SOURCE_EQUALITY\n'
+            '    if dict(packet) != expected:'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PACKET_SOURCE_EQUALITY\n'
+            '    if False:'
+        ),
+        expected_failure_marker=(
+            "test_writer_rebuilds_packet_from_immutable_u2_u3_evidence_before_wal"
+        ),
+        rationale=(
+            "An internally self-consistent packet must still equal the packet rebuilt from "
+            "the immutable U2/U3 artifacts."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PACKET_SOURCE_REBUILD",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PACKET_SOURCE_REBUILD\n'
+            '    _validate_packet_source(packet, bundle_dir)'
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PACKET_SOURCE_REBUILD\n'
+            '    if False:\n'
+            '        _validate_packet_source(packet, bundle_dir)'
+        ),
+        expected_failure_marker=(
+            "test_writer_rebuilds_packet_from_immutable_u2_u3_evidence_before_wal"
+        ),
+        rationale=(
+            "The writer must rebuild the submitted packet from the immutable final DAG bundle "
+            "before any R-015 intent is appended."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING\n'
+            '            if ('
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING\n'
+            '            if False and ('
+        ),
+        expected_failure_marker=(
+            "test_dag_manifest_cannot_relabel_the_bound_u2_candidate_rows"
+        ),
+        rationale=(
+            "A self-consistent top manifest cannot relabel which exact U2 rows and U3 battery "
+            "belong to the final run."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_RUN_ID",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID\n'
+            '    if not run_id:'
+        ),
+        after=(
+            '    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID\n'
+            '    if False:'
+        ),
+        expected_failure_marker="test_packet_refuses_a_battery_without_an_exact_run_id",
+        rationale="The U4 packet cannot invent a run id when the exact U3 run is absent.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_CANDIDATE_EVIDENCE",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_PACKET_CANDIDATE_EVIDENCE\n'
+            '            "display_name": str(registry_row.get("name") or "UNAVAILABLE"),'
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_PACKET_CANDIDATE_EVIDENCE\n'
+            '            "display_name": "INVENTED_BY_MUTATION",'
+        ),
+        expected_failure_marker="test_packet_projects_exact_run_and_candidate_evidence_from_bundle",
+        rationale="Candidate identity must project the immutable registry row, not an invented label.",
     ),
 )
 
