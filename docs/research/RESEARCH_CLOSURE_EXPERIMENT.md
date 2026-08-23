@@ -25,9 +25,14 @@ The replay order is:
 
 ## Replay Artifacts
 
-`ar.u4_review_packet.v1.0` binds the immutable funnel bundle, U1/U2 hashes,
+`ar.u4_review_packet.v1.1` binds the immutable funnel bundle, U1/U2 hashes,
 same-day battery, ready pool, and random-control frame. Its status is always
 `AWAITING_JUNYAN_REVIEW`.
+
+Previously emitted v1.0 packets remain valid and replayable with their original
+five source references and legacy ready-row shape. New packets use v1.1; the U4
+decision ledger accepts only v1.1 because v1.0 lacks the run and per-candidate
+provenance needed for a durable decision event.
 
 `ar.u4_review_receipt.v1.0` binds exactly one packet and three to five ready
 securities. Every selection needs a research question and a selection reason.

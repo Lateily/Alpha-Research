@@ -22,7 +22,6 @@ sys.path.insert(0, str(ROOT / "tests"))
 import closure_experiment as closure  # noqa: E402
 import funnel_pipeline as funnel  # noqa: E402
 import test_research_funnel_closure as fixtures  # noqa: E402
-import test_u4_decision_ledger as u4_fixtures  # noqa: E402
 
 
 GENERATED_AT = "2026-08-13T10:00:00+00:00"
@@ -152,9 +151,12 @@ class ResearchClosureExperimentTests(unittest.TestCase):
     def test_packet_projects_exact_run_and_candidate_evidence_from_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             bundle, battery, _ = build_bundle(Path(tmp))
-            packet = closure.build_review_packet(
-                bundle_dir=bundle, battery=battery, generated_at=GENERATED_AT,
-            )
+            try:
+                packet = closure.build_review_packet(
+                    bundle_dir=bundle, battery=battery, generated_at=GENERATED_AT,
+                )
+            except closure.ClosureError as exc:
+                self.fail(f"default v1.1 packet construction failed: {exc}")
             candidates = json.loads(
                 (bundle / "candidate_review.json").read_text(encoding="utf-8")
             )
@@ -166,6 +168,7 @@ class ResearchClosureExperimentTests(unittest.TestCase):
             battery_by_code = funnel._battery_rows(battery, packet["as_of"])
             row = packet["ready_pool"][0]
             code = row["ts_code"]
+        self.assertEqual(packet["schema_version"], closure.PACKET_SCHEMA_VERSION)
         self.assertEqual(packet["source_refs"]["run_id"], battery["run_id"])
         self.assertEqual(row["display_name"], registry_by_code[code]["name"])
         self.assertEqual(row["cohort_id"], candidate_by_code[code]["industry_key"])
@@ -175,6 +178,35 @@ class ResearchClosureExperimentTests(unittest.TestCase):
         )
         self.assertEqual(row["u2_candidate_row_hash"], funnel._hash(candidate_by_code[code]))
         self.assertEqual(row["u3_battery_row_hash"], funnel._hash(battery_by_code[code]))
+
+    def test_legacy_v1_packet_remains_valid_and_replayable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle, battery, codes = build_bundle(Path(tmp))
+            try:
+                packet = closure.build_review_packet(
+                    bundle_dir=bundle,
+                    battery=battery,
+                    generated_at=GENERATED_AT,
+                    packet_version=closure.LEGACY_PACKET_SCHEMA_VERSION,
+                )
+                receipt = receipt_for(packet, codes[:3])
+                closure.validate_review_packet(packet)
+                queue, report = closure.run_offline_replay(
+                    bundle_dir=bundle,
+                    battery=battery,
+                    packet=packet,
+                    receipt=receipt,
+                    generated_at="2026-08-13T10:06:00+00:00",
+                )
+            except closure.ClosureError as exc:
+                self.fail(f"legacy v1.0 packet compatibility regressed: {exc}")
+        self.assertEqual(packet["schema_version"], "1.0")
+        self.assertEqual(set(packet["source_refs"]), closure.LEGACY_PACKET_SOURCE_REF_FIELDS)
+        self.assertTrue(
+            all(set(row) == closure.LEGACY_PACKET_READY_ROW_FIELDS for row in packet["ready_pool"])
+        )
+        self.assertEqual(len(queue["rows"]), 3)
+        self.assertEqual(report["u5_handoff"]["status"], "DATA_BLOCKED")
 
     def test_packet_refuses_a_battery_without_an_exact_run_id(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -428,6 +460,8 @@ class ResearchClosureExperimentTests(unittest.TestCase):
                 )
 
     def test_result_bundle_freezes_and_verifies_the_complete_dag_source(self) -> None:
+        import test_u4_decision_ledger as u4_fixtures
+
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             bundle = root / "dag-bundle"

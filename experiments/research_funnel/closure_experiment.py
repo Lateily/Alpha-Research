@@ -33,6 +33,8 @@ PACKET_SCHEMA = "ar.u4_review_packet"
 RECEIPT_SCHEMA = "ar.u4_review_receipt"
 REPORT_SCHEMA = "ar.research_closure_experiment"
 SCHEMA_VERSION = "1.0"
+LEGACY_PACKET_SCHEMA_VERSION = "1.0"
+PACKET_SCHEMA_VERSION = "1.1"
 BUNDLE_ARTIFACTS = {
     "all_market_scan.json",
     "candidate_review.json",
@@ -73,9 +75,17 @@ RESULT_MANIFEST_FIELDS = {
 RECEIPT_DECISION = "APPROVED_FOR_OFFLINE_RESEARCH_REPLAY"
 RECEIPT_CLASS = "HUMAN_PROVIDED_UNVERIFIED_IDENTITY"
 BATTERY_DIMENSIONS = {"行情", "资金", "基本面", "技术面", "消息面", "估值"}
+LEGACY_PACKET_SOURCE_REF_FIELDS = {
+    "bundle_hash", "scan_rows_hash", "candidate_rows_hash", "battery_hash",
+    "ready_pool_hash",
+}
 PACKET_SOURCE_REF_FIELDS = {
     "run_id", "bundle_hash", "scan_rows_hash", "candidate_rows_hash",
     "battery_hash", "ready_pool_hash",
+}
+LEGACY_PACKET_READY_ROW_FIELDS = {
+    "ts_code", "ready", "industry_key", "sector_os_status", "candidate_status",
+    "battery_verdict", "blocked_reasons",
 }
 PACKET_READY_ROW_FIELDS = {
     "ts_code", "ready", "industry_key", "sector_os_status", "candidate_status",
@@ -250,7 +260,10 @@ def validate_battery_evidence(battery: Mapping[str, Any], as_of: str) -> None:
 
 def build_review_packet(
     *, bundle_dir: Path, battery: Mapping[str, Any] | None, generated_at: str,
+    packet_version: str = PACKET_SCHEMA_VERSION,
 ) -> dict[str, Any]:
+    if packet_version not in {LEGACY_PACKET_SCHEMA_VERSION, PACKET_SCHEMA_VERSION}:
+        raise ClosureError("unsupported review packet version")
     bundle = load_bundle(bundle_dir)
     as_of = str(bundle["manifest"]["as_of"])
     bundled_battery = bundle.get("battery")
@@ -276,9 +289,6 @@ def build_review_packet(
         or ((battery.get("data") or {}).get("run_id") if isinstance(battery.get("data"), dict) else "")
         or ""
     ).strip()
-    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID
-    if not run_id:
-        raise ClosureError("U4 review packet requires the exact U3 run_id")
     candidate_by_code = {
         str(row["ts_code"]): row for row in bundle["candidates"]["rows"]
     }
@@ -288,6 +298,9 @@ def build_review_packet(
     battery_by_code = funnel._battery_rows(battery, as_of)
     ready_pool: list[dict[str, Any]] = []
     for projected in waiting_queue["ready_pool"]:
+        if packet_version == LEGACY_PACKET_SCHEMA_VERSION:
+            ready_pool.append(dict(projected))
+            continue
         code = str(projected["ts_code"])
         candidate = candidate_by_code.get(code)
         registry_row = registry_by_code.get(code)
@@ -307,13 +320,14 @@ def build_review_packet(
     control_frame = bundle["candidates"]["control_sampling_frame"]
     packet: dict[str, Any] = {
         "schema": PACKET_SCHEMA,
-        "schema_version": SCHEMA_VERSION,
+        # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_DEFAULT
+        "schema_version": packet_version,
         "mode": "OFFLINE_RESEARCH_REPLAY",
         "status": "AWAITING_JUNYAN_REVIEW",
         "as_of": as_of,
         "generated_at": generated_at,
         "source_refs": {
-            "run_id": run_id,
+            **({"run_id": run_id} if packet_version == PACKET_SCHEMA_VERSION else {}),
             "bundle_hash": bundle["manifest"]["bundle_hash"],
             "scan_rows_hash": bundle["scan"]["rows_hash"],
             "candidate_rows_hash": bundle["candidates"]["rows_hash"],
@@ -351,27 +365,44 @@ def validate_review_packet(packet: Mapping[str, Any]) -> None:
         "next_gate", "disclaimer", "packet_hash",
     }
     _require_exact_keys(packet, expected, "review packet")
-    if packet.get("schema") != PACKET_SCHEMA or packet.get("schema_version") != SCHEMA_VERSION:
+    version = packet.get("schema_version")
+    # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY
+    if packet.get("schema") != PACKET_SCHEMA or version not in {
+        LEGACY_PACKET_SCHEMA_VERSION, PACKET_SCHEMA_VERSION,
+    }:
         raise ClosureError("review packet schema/version mismatch")
     if packet.get("mode") != "OFFLINE_RESEARCH_REPLAY" or packet.get("status") != "AWAITING_JUNYAN_REVIEW":
         raise ClosureError("review packet mode/status is invalid")
     refs = packet.get("source_refs")
-    if not isinstance(refs, dict) or set(refs) != PACKET_SOURCE_REF_FIELDS:
+    source_fields = (
+        PACKET_SOURCE_REF_FIELDS
+        if version == PACKET_SCHEMA_VERSION
+        else LEGACY_PACKET_SOURCE_REF_FIELDS
+    )
+    ready_fields = (
+        PACKET_READY_ROW_FIELDS
+        if version == PACKET_SCHEMA_VERSION
+        else LEGACY_PACKET_READY_ROW_FIELDS
+    )
+    if not isinstance(refs, dict) or set(refs) != source_fields:
         raise ClosureError("review packet source references are not exact")
-    if not str(refs.get("run_id") or "").strip():
-        raise ClosureError("review packet run_id is missing")
+    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID
+    if version == PACKET_SCHEMA_VERSION and not str(refs.get("run_id") or "").strip():
+        raise ClosureError("U4 review packet requires the exact U3 run_id")
     if any(
         not isinstance(refs.get(key), str)
         or re.fullmatch(r"[0-9a-f]{64}", str(refs[key])) is None
-        for key in PACKET_SOURCE_REF_FIELDS - {"run_id"}
+        for key in source_fields - {"run_id"}
     ):
         raise ClosureError("review packet source digest is invalid")
     ready_pool = packet.get("ready_pool")
     if not isinstance(ready_pool, list):
         raise ClosureError("review packet ready_pool must be a list")
     for row in ready_pool:
-        if not isinstance(row, dict) or set(row) != PACKET_READY_ROW_FIELDS:
+        if not isinstance(row, dict) or set(row) != ready_fields:
             raise ClosureError("review packet ready row fields are not exact")
+        if version == LEGACY_PACKET_SCHEMA_VERSION:
+            continue
         if any(
             not isinstance(row.get(key), str) or not str(row[key]).strip()
             for key in ("display_name", "cohort_id", "causal_cluster_id")
@@ -478,23 +509,26 @@ def run_offline_replay(
         bundle_dir=bundle_dir,
         battery=battery,
         generated_at=str(packet.get("generated_at") or ""),
+        packet_version=str(packet.get("schema_version") or ""),
     )
     # governance-mutation: FUNNEL_CLOSURE_PACKET_REBUILD
     if packet != expected_packet:
         raise ClosureError("review packet is not the deterministic projection of replay inputs")
     validate_review_receipt(receipt, packet)
-    if packet["source_refs"] != {
-        "run_id": str(
-            battery.get("run_id")
-            or ((battery.get("data") or {}).get("run_id") if isinstance(battery.get("data"), dict) else "")
-            or ""
-        ).strip(),
+    expected_source_refs = {
         "bundle_hash": bundle["manifest"]["bundle_hash"],
         "scan_rows_hash": bundle["scan"]["rows_hash"],
         "candidate_rows_hash": bundle["candidates"]["rows_hash"],
         "battery_hash": funnel._hash(battery),
         "ready_pool_hash": funnel._hash(packet["ready_pool"]),
-    }:
+    }
+    if packet.get("schema_version") == PACKET_SCHEMA_VERSION:
+        expected_source_refs["run_id"] = str(
+            battery.get("run_id")
+            or ((battery.get("data") or {}).get("run_id") if isinstance(battery.get("data"), dict) else "")
+            or ""
+        ).strip()
+    if packet["source_refs"] != expected_source_refs:
         raise ClosureError("review packet source references do not match replay inputs")
     replay_at = _iso(generated_at, "replay generated_at")
     reviewed_at = _iso(receipt.get("reviewed_at"), "review receipt reviewed_at")
@@ -663,6 +697,7 @@ def verify_result_bundle(output_dir: Path) -> dict[str, Any]:
         bundle_dir=frozen_bundle_dir,
         battery=battery,
         generated_at=str(packet.get("generated_at") or ""),
+        packet_version=str(packet.get("schema_version") or ""),
     )
     expected_queue, expected_report = run_offline_replay(
         bundle_dir=frozen_bundle_dir,

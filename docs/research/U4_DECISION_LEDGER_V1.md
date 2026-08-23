@@ -96,16 +96,23 @@ only the final three-stage DAG bundle whose top manifest includes and hashes
 written, the writer reloads that bundle, verifies the U2/U3/run bindings,
 rebuilds the full review packet, and requires byte-for-byte equality with the
 submitted packet. A packet's own self-reported hashes are never sufficient.
-The packet carries the U3
+The expanded `ar.u4_review_packet.v1.1` carries the U3
 `run_id`; the complete U3 battery hash; exact U2 candidate-row and U3
 battery-row hashes; registry display name; industry cohort; and the prospective
 causal-cluster id. The complete battery and candidate-row digests remain
 separate fields so neither whole-artifact nor row-level provenance can be
 mislabelled. Decision drafts contain only the ticker plus judgment fields, so
 they cannot author or relabel those provenance values. If the upstream
-candidate has no causal cluster, the packet records `UNAVAILABLE` and the
-decision must remain `DATA_BLOCKED` with `CAUSAL_CLUSTER_ID`; the implementation
-does not synthesize a cluster.
+candidate has no causal cluster, the packet records `UNAVAILABLE`. Because
+cluster assignment is a post-selection U4 deep-research output, that pending
+identity may still be selected for offline research, but it cannot pass U5,
+count as an independent cluster, or support a claim. The implementation does
+not synthesize a cluster. Legacy `ar.u4_review_packet.v1.0` artifacts remain
+valid for their original replay path; the decision ledger requires v1.1.
+
+When U3 incompleteness and an E1 red flag apply to the same candidate, the
+durable `DATA_BLOCKED` event must preserve both `U3_INCOMPLETE` and
+`RED_FLAG_ACTIVE`. One blocker cannot hide the other.
 
 All event candidate/source fields are derived from that packet and replay
 recomputes the same projection. Cross-run, cross-row, or caller-authored

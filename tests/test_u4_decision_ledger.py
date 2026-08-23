@@ -57,21 +57,19 @@ def _build_source_evidence(root: Path) -> tuple[Path, dict, dict, dict[str, tupl
     )
     if len(clean_codes) != 7 or len(red_codes) != 2:
         raise AssertionError("U4 source fixture no longer has 7 clean and 2 red-flag rows")
-    for row in candidate_rows:
-        row["cluster_id"] = f"cluster-{row['ts_code'].replace('.', '-').lower()}"
-    candidates["rows_hash"] = funnel._hash(candidate_rows)
     candidate_manifest = funnel.build_candidate_manifest(
         candidate_review=candidates,
         scan=scan,
         run_id=SOURCE_RUN_ID,
     )
     blocked_code = clean_codes[-1]
+    dual_blocked_code = red_codes[0]
     results = []
     for code in sorted(clean_codes + red_codes):
         dims = {
             name: {"fixture": True} for name in funnel.BATTERY_DIMENSIONS
         }
-        if code == blocked_code:
+        if code in {blocked_code, dual_blocked_code}:
             dims["基本面"] = {"status": "DATA_BLOCKED", "err": "fixture evidence unavailable"}
         missing = [name for name, evidence in dims.items() if evidence.get("status") == "DATA_BLOCKED"]
         results.append({
@@ -159,6 +157,7 @@ def _build_source_evidence(root: Path) -> tuple[Path, dict, dict, dict[str, tupl
         "defer": clean_codes[4],
         "no_trade": clean_codes[5],
         "blocked": blocked_code,
+        "dual_blocked": dual_blocked_code,
         "red_flags": tuple(red_codes),
         "ready": tuple(clean_codes[:6]),
     }
@@ -174,7 +173,9 @@ REJECT_CODE = str(_SEMANTICS["reject"])
 DEFER_CODE = str(_SEMANTICS["defer"])
 NO_TRADE_CODE = str(_SEMANTICS["no_trade"])
 BLOCKED_CODE = str(_SEMANTICS["blocked"])
+DUAL_BLOCKED_CODE = str(_SEMANTICS["dual_blocked"])
 RED_FLAG_CODES = tuple(_SEMANTICS["red_flags"])
+PLAIN_RED_FLAG_CODE = next(code for code in RED_FLAG_CODES if code != DUAL_BLOCKED_CODE)
 READY_CODES = tuple(_SEMANTICS["ready"])
 TOTAL_ROWS = len(_PACKET_TEMPLATE["ready_pool"])
 
@@ -195,7 +196,8 @@ DEFAULT_DECISIONS = {
     DEFER_CODE: "DEFER",
     NO_TRADE_CODE: "NO_TRADE",
     BLOCKED_CODE: "DATA_BLOCKED",
-    **{code: "REJECT" for code in RED_FLAG_CODES},
+    DUAL_BLOCKED_CODE: "DATA_BLOCKED",
+    PLAIN_RED_FLAG_CODE: "REJECT",
 }
 
 
@@ -206,20 +208,22 @@ def decision_row(
     revision: int = 1,
     supersedes: str | None = None,
 ) -> dict:
-    reason = {
+    reason_codes = [{
         "SELECT": "EVIDENCE_CHAIN_COMPLETE",
         "REJECT": "HUMAN_JUDGMENT",
         "DEFER": "QUEUE_CAPACITY",
         "NO_TRADE": "NO_ACTIONABLE_SETUP",
         "DATA_BLOCKED": "U3_INCOMPLETE",
-    }[decision]
+    }[decision]]
     if code in RED_FLAG_CODES:
-        reason = "RED_FLAG_ACTIVE"
+        reason_codes = ["RED_FLAG_ACTIVE"]
+        if decision == "DATA_BLOCKED":
+            reason_codes.insert(0, "U3_INCOMPLETE")
     missing = ["U3_SIX_DIMENSION_BATTERY"] if decision == "DATA_BLOCKED" else []
     return {
         "ts_code": code,
         "decision": decision,
-        "reason_codes": [reason],
+        "reason_codes": reason_codes,
         "reason_note": f"Frozen offline U4 decision for {code}: {decision}.",
         "missing_evidence": missing,
         "research_question": (
@@ -312,6 +316,29 @@ class U4DecisionLedgerTests(unittest.TestCase):
         self.assertNotIn("_test_now", parameters)
         self.assertNotIn("registered_at", parameters)
         self.assertNotIn("receipt_path", parameters)
+
+    def test_fractional_decision_time_is_preserved_at_the_r015_boundary(self) -> None:
+        decided_at = "2026-08-22T00:15:00.500+08:00"
+        expected_registered_at = "2026-08-22T00:15:00.500000+08:00"
+        self.assertEqual(
+            ledger._registered_at_from_outer(decided_at),
+            expected_registered_at,
+        )
+        packet = packet_fixture()
+        draft = draft_for(packet, decided_at=decided_at)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            append_batch(
+                packet=packet,
+                draft=draft,
+                ledger_path=path,
+                now=decided_at,
+            )
+            events = ledger.current_packet_decisions(path, packet["packet_hash"])
+        self.assertTrue(events)
+        self.assertTrue(
+            all(event["registered_at"] == expected_registered_at for event in events)
+        )
 
     def test_registration_cannot_predate_human_decision(self) -> None:
         packet = packet_fixture()
@@ -547,34 +574,67 @@ class U4DecisionLedgerTests(unittest.TestCase):
             with self.assertRaisesRegex(closure.ClosureError, "exact projection"):
                 closure.load_bundle(bundle)
 
-    def test_missing_packet_bound_causal_cluster_forces_data_blocked(self) -> None:
+    def test_normal_pipeline_candidates_keep_pending_clusters_without_blocking_u4(self) -> None:
         packet = packet_fixture()
-        packet["ready_pool"][0]["causal_cluster_id"] = "UNAVAILABLE"
-        packet["source_refs"]["ready_pool_hash"] = funnel._hash(packet["ready_pool"])
-        packet["packet_hash"] = funnel._hash({
-            key: value for key, value in packet.items() if key != "packet_hash"
-        })
-        with self.assertRaisesRegex(ledger.DecisionLedgerError, "causal cluster"):
+        candidates = json.loads(
+            (SOURCE_BUNDLE / "candidate_review.json").read_text(encoding="utf-8")
+        )
+        self.assertTrue(all(row["cluster_id"] is None for row in candidates["rows"]))
+        self.assertTrue(all(row["causal_cluster_id"] == "UNAVAILABLE" for row in packet["ready_pool"]))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            result = append_batch(
+                packet=packet,
+                draft=draft_for(packet),
+                ledger_path=path,
+            )
+            events = ledger.current_packet_decisions(path, packet["packet_hash"])
+        self.assertEqual(result["closure"]["selected_count"], 3)
+        self.assertEqual(sum(event["decision"] == "SELECT" for event in events), 3)
+        self.assertTrue(all(event["candidate"]["causal_cluster_id"] == "UNAVAILABLE" for event in events))
+        self.assertTrue(all(event["authority"]["production_authority"] is False for event in events))
+
+    def test_legacy_review_packet_is_valid_but_cannot_enter_the_v1_ledger(self) -> None:
+        packet = closure.build_review_packet(
+            bundle_dir=SOURCE_BUNDLE,
+            battery=None,
+            generated_at=GENERATED_AT,
+            packet_version=closure.LEGACY_PACKET_SCHEMA_VERSION,
+        )
+        closure.validate_review_packet(packet)
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "requires review packet v1.1"):
             ledger._validate_draft(packet, draft_for(packet))
 
-    def test_persisted_event_rechecks_missing_causal_cluster_semantics(self) -> None:
+    def test_dual_u3_and_red_flag_block_preserves_both_evidence_reasons(self) -> None:
         packet = packet_fixture()
-        rows, decisions = ledger._validate_draft(packet, draft_for(packet))
-        intent = ledger._build_packet_intent(packet, draft_for(packet), decisions, rows)
-        selected = next(
-            item for item in intent["candidate_intents"] if item["decision"] == "SELECT"
+        draft = draft_for(packet)
+        dual = next(row for row in draft["decisions"] if row["ts_code"] == DUAL_BLOCKED_CODE)
+        self.assertEqual(dual["decision"], "DATA_BLOCKED")
+        self.assertEqual(set(dual["reason_codes"]), {"U3_INCOMPLETE", "RED_FLAG_ACTIVE"})
+        ledger._validate_draft(packet, draft)
+
+        attack = copy.deepcopy(draft)
+        attacked = next(row for row in attack["decisions"] if row["ts_code"] == DUAL_BLOCKED_CODE)
+        attacked["reason_codes"] = ["U3_INCOMPLETE"]
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "preserve both evidence"):
+            ledger._validate_draft(packet, attack)
+
+        rows, decisions = ledger._validate_draft(packet, draft)
+        intent = ledger._build_packet_intent(packet, draft, decisions, rows)
+        item = next(
+            candidate for candidate in intent["candidate_intents"]
+            if candidate["candidate"]["ts_code"] == DUAL_BLOCKED_CODE
         )
-        attack = copy.deepcopy(selected)
-        attack["candidate"]["causal_cluster_id"] = "UNAVAILABLE"
-        event = ledger._build_event(
-            attack,
-            sequence=1,
-            previous_hash=None,
-            registered_at=ledger._registered_at_from_outer(REGISTERED_AT),
-        )
-        with self.assertRaisesRegex(ledger.DecisionLedgerError, "causal cluster"):
-            ledger.validate_decision_event(
-                event, expected_sequence=1, expected_previous_hash=None,
+        ready_row = next(row for row in rows if row["ts_code"] == DUAL_BLOCKED_CODE)
+        item["reason_codes"] = ["U3_INCOMPLETE"]
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "hides the E1 side"):
+            ledger._validate_candidate_intent(
+                item,
+                packet,
+                ready_row,
+                revision=int(intent["decision_revision"]),
+                method_version=str(intent["method_version"]),
+                ledger_id=str(intent["ledger_id"]),
             )
 
     def test_machine_blocked_rows_cannot_be_silently_selected_or_deferred(self) -> None:
@@ -589,7 +649,7 @@ class U4DecisionLedgerTests(unittest.TestCase):
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "explicit DATA_BLOCKED"):
             ledger._validate_draft(packet, draft)
         draft = draft_for(packet)
-        flagged = next(row for row in draft["decisions"] if row["ts_code"] == RED_FLAG_CODES[0])
+        flagged = next(row for row in draft["decisions"] if row["ts_code"] == PLAIN_RED_FLAG_CODE)
         flagged.update({"decision": "SELECT", "reason_codes": ["EVIDENCE_CHAIN_COMPLETE"], "research_question": "Why?"})
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "explicit REJECT"):
             ledger._validate_draft(packet, draft)

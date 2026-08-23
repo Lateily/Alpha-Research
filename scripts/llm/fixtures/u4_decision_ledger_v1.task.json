@@ -50,7 +50,7 @@
     "public/data/v2"
   ],
   "input_contracts": [
-    "ar.u4_review_packet.v1.0",
+    "ar.u4_review_packet.v1.1",
     "ar.u4_decision_event.v1",
     "explicit Junyan-authored U4 decision draft"
   ],

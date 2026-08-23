@@ -301,11 +301,14 @@ class U4DecisionLedgerSpecTests(unittest.TestCase):
         row["missing_evidence"] = ["UNKNOWN_FEED"]
         self.assertInvalid(row, "outside enum")
 
-    def test_spec_explicitly_preserves_rejections_and_defers_implementation(self) -> None:
+    def test_spec_preserves_all_outcomes_and_the_unwired_boundary(self) -> None:
         text = DOC_PATH.read_text(encoding="utf-8")
         self.assertIn("retain `REJECT`, `DEFER`, `NO_TRADE`, and `DATA_BLOCKED`", text)
-        self.assertIn("specification only", text)
-        self.assertIn("does not add a writer", text)
+        self.assertIn("DELIVERED_UNWIRED / OFFLINE_ONLY", text)
+        self.assertIn("without adding a nightly step", text)
+        self.assertIn("Production wiring remains a separately approved step", text)
+        self.assertIn("v1.0 packets remain valid", text)
+        self.assertIn("prospective causal cluster may still be", text)
         self.assertIn("Historical U4 choices are not reconstructed", text)
         self.assertEqual(
             SCHEMA["x-ar-packet-closure"]["selected_count_allowed"],

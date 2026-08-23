@@ -4329,41 +4329,68 @@ MUTATIONS = MUTATIONS + (
         rationale="Display, cohort, cluster, and industry must be packet-bound rather than draft-authored.",
     ),
     MutationCase(
-        mutation_id="U4_LEDGER_CAUSAL_CLUSTER_EVIDENCE",
+        mutation_id="U4_LEDGER_PACKET_VERSION_BOUNDARY",
         component="Research funnel U4 decision ledger",
         source_path="experiments/research_funnel/u4_decision_ledger.py",
         test_script="tests/test_u4_decision_ledger.py",
         before=(
-            '        # governance-mutation: U4_LEDGER_CAUSAL_CLUSTER_EVIDENCE\n'
-            '        if candidate["causal_cluster_id"] == "UNAVAILABLE" and ('
+            '    # governance-mutation: U4_LEDGER_PACKET_VERSION_BOUNDARY\n'
+            '    if packet.get("schema_version") != closure.PACKET_SCHEMA_VERSION:'
         ),
         after=(
-            '        # governance-mutation: U4_LEDGER_CAUSAL_CLUSTER_EVIDENCE\n'
-            '        if False and ('
+            '    # governance-mutation: U4_LEDGER_PACKET_VERSION_BOUNDARY\n'
+            '    if False:'
         ),
-        expected_failure_marker="test_missing_packet_bound_causal_cluster_forces_data_blocked",
-        rationale="An absent causal cluster must stay explicit DATA_BLOCKED rather than becoming SELECT.",
+        expected_failure_marker="test_legacy_review_packet_is_valid_but_cannot_enter_the_v1_ledger",
+        rationale="The new ledger must require the expanded packet version without invalidating legacy replay.",
     ),
     MutationCase(
-        mutation_id="U4_LEDGER_PERSISTED_CAUSAL_CLUSTER",
+        mutation_id="U4_LEDGER_REGISTRATION_PRECISION",
         component="Research funnel U4 decision ledger",
         source_path="experiments/research_funnel/u4_decision_ledger.py",
         test_script="tests/test_u4_decision_ledger.py",
         before=(
-            '    # governance-mutation: U4_LEDGER_PERSISTED_CAUSAL_CLUSTER\n'
-            '    if candidate["causal_cluster_id"] == "UNAVAILABLE" and ('
+            '    # governance-mutation: U4_LEDGER_REGISTRATION_PRECISION\n'
+            '    timespec = "microseconds" if localized.microsecond else "seconds"'
         ),
         after=(
-            '    # governance-mutation: U4_LEDGER_PERSISTED_CAUSAL_CLUSTER\n'
-            '    if False and ('
+            '    # governance-mutation: U4_LEDGER_REGISTRATION_PRECISION\n'
+            '    timespec = "seconds"'
         ),
-        expected_failure_marker=(
-            "test_persisted_event_rechecks_missing_causal_cluster_semantics"
+        expected_failure_marker="test_fractional_decision_time_is_preserved_at_the_r015_boundary",
+        rationale="Fractional decision instants cannot be rounded backward before R-015 chronology validation.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_DUAL_BLOCK_EVIDENCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: U4_LEDGER_DUAL_BLOCK_EVIDENCE\n'
+            '            if "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked and "RED_FLAG_ACTIVE" not in reason_codes:'
         ),
-        rationale=(
-            "The durable event validator must independently keep a missing causal cluster "
-            "DATA_BLOCKED even if a caller bypasses draft validation."
+        after=(
+            '            # governance-mutation: U4_LEDGER_DUAL_BLOCK_EVIDENCE\n'
+            '            if False:'
         ),
+        expected_failure_marker="test_dual_u3_and_red_flag_block_preserves_both_evidence_reasons",
+        rationale="A U3 block cannot hide a simultaneous E1 red flag in the human decision record.",
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_PERSISTED_DUAL_BLOCK_EVIDENCE",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_PERSISTED_DUAL_BLOCK_EVIDENCE\n'
+            '        if ('
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_PERSISTED_DUAL_BLOCK_EVIDENCE\n'
+            '        if False and ('
+        ),
+        expected_failure_marker="test_dual_u3_and_red_flag_block_preserves_both_evidence_reasons",
+        rationale="Intent replay must independently preserve both machine blockers before durable append.",
     ),
     MutationCase(
         mutation_id="U4_LEDGER_VERIFY_REQUIRES_LEDGER",
@@ -4536,13 +4563,45 @@ MUTATIONS = MUTATIONS + (
         rationale="The replay verifier must derive its frozen source set from the embedded manifest.",
     ),
     MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_VERSION_DEFAULT",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '        # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_DEFAULT\n'
+            '        "schema_version": packet_version,'
+        ),
+        after=(
+            '        # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_DEFAULT\n'
+            '        "schema_version": LEGACY_PACKET_SCHEMA_VERSION,'
+        ),
+        expected_failure_marker="test_packet_projects_exact_run_and_candidate_evidence_from_bundle",
+        rationale="New packets must identify the expanded provenance contract as v1.1.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY",
+        component="Research funnel U4 review packet compatibility",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '    # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY\n'
+            '    if packet.get("schema") != PACKET_SCHEMA or version not in {'
+        ),
+        after=(
+            '    # governance-mutation: FUNNEL_CLOSURE_PACKET_VERSION_COMPATIBILITY\n'
+            '    if packet.get("schema") != PACKET_SCHEMA or version != PACKET_SCHEMA_VERSION or version not in {'
+        ),
+        expected_failure_marker="test_legacy_v1_packet_remains_valid_and_replayable",
+        rationale="Previously emitted v1.0 packets must remain valid and replayable after v1.1 ships.",
+    ),
+    MutationCase(
         mutation_id="FUNNEL_CLOSURE_PACKET_RUN_ID",
         component="Research funnel U4 review packet",
         source_path="experiments/research_funnel/closure_experiment.py",
         test_script="tests/test_research_closure_experiment.py",
         before=(
             '    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID\n'
-            '    if not run_id:'
+            '    if version == PACKET_SCHEMA_VERSION and not str(refs.get("run_id") or "").strip():'
         ),
         after=(
             '    # governance-mutation: FUNNEL_CLOSURE_PACKET_RUN_ID\n'

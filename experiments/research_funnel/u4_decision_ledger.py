@@ -323,7 +323,10 @@ def _registered_at_from_outer(value: Any) -> str:
         raise DecisionLedgerError("R-015 event timestamp must be ISO-8601") from exc
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=event_ledger.OPERATIONAL_TIMEZONE)
-    return parsed.astimezone(event_ledger.OPERATIONAL_TIMEZONE).isoformat(timespec="seconds")
+    localized = parsed.astimezone(event_ledger.OPERATIONAL_TIMEZONE)
+    # governance-mutation: U4_LEDGER_REGISTRATION_PRECISION
+    timespec = "microseconds" if localized.microsecond else "seconds"
+    return localized.isoformat(timespec=timespec)
 
 
 def _ledger_id(packet: Mapping[str, Any]) -> str:
@@ -414,6 +417,11 @@ def _ready_rows(packet: Mapping[str, Any]) -> list[dict[str, Any]]:
         closure.validate_review_packet(packet)
     except closure.ClosureError as exc:
         raise DecisionLedgerError(f"invalid review packet: {exc}") from exc
+    # governance-mutation: U4_LEDGER_PACKET_VERSION_BOUNDARY
+    if packet.get("schema_version") != closure.PACKET_SCHEMA_VERSION:
+        raise DecisionLedgerError(
+            f"U4 decision ledger requires review packet v{closure.PACKET_SCHEMA_VERSION}"
+        )
     raw_rows = packet.get("ready_pool")
     if not isinstance(raw_rows, list):
         raise DecisionLedgerError("review packet ready_pool must be a list")
@@ -544,7 +552,6 @@ def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tupl
         code = str(raw.get("ts_code") or "")
         if code not in packet_by_code or code in decisions:
             raise DecisionLedgerError("decision subjects must equal the packet candidate set")
-        candidate = _candidate_for(packet_by_code[code])
         decision = raw.get("decision")
         if decision not in DECISIONS:
             raise DecisionLedgerError("decision is outside the closed enum")
@@ -563,17 +570,15 @@ def _validate_draft(packet: Mapping[str, Any], draft: Mapping[str, Any]) -> tupl
             raise DecisionLedgerError("SELECT requires a research question and no missing evidence")
         if decision == "DATA_BLOCKED" and not missing:
             raise DecisionLedgerError("DATA_BLOCKED requires explicit missing evidence")
-        # governance-mutation: U4_LEDGER_CAUSAL_CLUSTER_EVIDENCE
-        if candidate["causal_cluster_id"] == "UNAVAILABLE" and (
-            decision != "DATA_BLOCKED" or "CAUSAL_CLUSTER_ID" not in missing
-        ):
-            raise DecisionLedgerError(
-                "candidate without a packet-bound causal cluster must remain DATA_BLOCKED"
-            )
         blocked = set(packet_by_code[code]["blocked_reasons"])
         if "U3_BATTERY_INCOMPLETE" in blocked:
             if decision != "DATA_BLOCKED" or "U3_SIX_DIMENSION_BATTERY" not in missing or "U3_INCOMPLETE" not in reason_codes:
                 raise DecisionLedgerError("U3-incomplete candidate must remain explicit DATA_BLOCKED")
+            # governance-mutation: U4_LEDGER_DUAL_BLOCK_EVIDENCE
+            if "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked and "RED_FLAG_ACTIVE" not in reason_codes:
+                raise DecisionLedgerError(
+                    "candidate blocked by U3 and E1 must preserve both evidence reasons"
+                )
         elif "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked:
             if decision != "REJECT" or "RED_FLAG_ACTIVE" not in reason_codes:
                 raise DecisionLedgerError("E1 red-flag candidate must remain an explicit REJECT")
@@ -736,6 +741,14 @@ def _validate_candidate_intent(
             or "U3_INCOMPLETE" not in item.get("reason_codes", [])
         ):
             raise DecisionLedgerError("persisted intent hides a U3-incomplete candidate")
+        # governance-mutation: U4_LEDGER_PERSISTED_DUAL_BLOCK_EVIDENCE
+        if (
+            "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked
+            and "RED_FLAG_ACTIVE" not in item.get("reason_codes", [])
+        ):
+            raise DecisionLedgerError(
+                "persisted intent hides the E1 side of a dual-blocked candidate"
+            )
     elif "E1_RED_FLAG_REQUIRES_SEPARATE_REVIEW" in blocked:
         if item.get("decision") != "REJECT" or "RED_FLAG_ACTIVE" not in item.get("reason_codes", []):
             raise DecisionLedgerError("persisted intent hides an E1 red-flag candidate")
@@ -936,13 +949,6 @@ def validate_decision_event(
         raise DecisionLedgerError("persisted SELECT semantics are invalid")
     if event["decision"] == "DATA_BLOCKED" and not missing:
         raise DecisionLedgerError("persisted DATA_BLOCKED lacks missing evidence")
-    # governance-mutation: U4_LEDGER_PERSISTED_CAUSAL_CLUSTER
-    if candidate["causal_cluster_id"] == "UNAVAILABLE" and (
-        event["decision"] != "DATA_BLOCKED" or "CAUSAL_CLUSTER_ID" not in missing
-    ):
-        raise DecisionLedgerError(
-            "persisted decision without a causal cluster must remain explicit DATA_BLOCKED"
-        )
     revision = event.get("decision_revision")
     predecessor = event.get("supersedes_decision_id")
     if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
