@@ -48,18 +48,24 @@ BUNDLE_MANIFEST_FIELDS = {
     "artifacts", "bundle_hash",
 }
 DAG_BUNDLE_MANIFEST_FIELDS = BUNDLE_MANIFEST_FIELDS | {"run_id", "dag"}
-RESULT_ARTIFACTS = {
+RESULT_BASE_ARTIFACTS = {
     "review_packet.json",
     "review_receipt.json",
     "deep_research_queue.json",
     "closure_report.json",
     "frozen_battery.json",
-    "frozen_funnel_bundle/manifest.json",
-    "frozen_funnel_bundle/all_market_scan.json",
-    "frozen_funnel_bundle/candidate_review.json",
-    "frozen_funnel_bundle/deep_research_queue.json",
-    "frozen_funnel_bundle/security_registry_projected.json",
 }
+
+
+def _result_artifact_names(source_artifacts: set[str]) -> set[str]:
+    return RESULT_BASE_ARTIFACTS | {
+        "frozen_funnel_bundle/manifest.json",
+        *(f"frozen_funnel_bundle/{name}" for name in source_artifacts),
+    }
+
+
+# Compatibility name for the original four-artifact fixture bundle.
+RESULT_ARTIFACTS = _result_artifact_names(BUNDLE_ARTIFACTS)
 RESULT_MANIFEST_FIELDS = {
     "schema", "schema_version", "as_of", "mode", "artifacts", "bundle_hash",
     "production_authority", "claim_allowed", "disclaimer",
@@ -170,6 +176,16 @@ def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
             candidate_manifest = _load_object(bundle_dir / "candidate_manifest.json")
             candidate_battery = _load_object(bundle_dir / "candidate_battery.json")
             funnel.validate_candidate_manifest(candidate_manifest)
+            expected_candidate_manifest = funnel.build_candidate_manifest(
+                candidate_review=candidates,
+                scan=scan,
+                run_id=str(manifest.get("run_id") or ""),
+            )
+            # governance-mutation: FUNNEL_CLOSURE_DAG_CANDIDATE_PROJECTION
+            if candidate_manifest != expected_candidate_manifest:
+                raise ClosureError(
+                    "candidate manifest is not the exact projection of the frozen U2 rows"
+                )
             funnel.validate_candidate_battery(candidate_battery, candidate_manifest)
             dag = manifest.get("dag") or {}
             # governance-mutation: FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING
@@ -604,6 +620,10 @@ def verify_result_bundle(output_dir: Path) -> dict[str, Any]:
     frozen_bundle_dir = output_dir / "frozen_funnel_bundle"
     if not frozen_bundle_dir.is_dir() or frozen_bundle_dir.is_symlink():
         raise ClosureError("result bundle frozen source must be a real directory")
+    frozen_bundle = load_bundle(frozen_bundle_dir)
+    source_artifacts = set(frozen_bundle["manifest"]["artifacts"])
+    # governance-mutation: FUNNEL_CLOSURE_RESULT_SOURCE_ARTIFACT_SET
+    expected_result_artifacts = _result_artifact_names(source_artifacts)
     entries = {
         path.relative_to(output_dir).as_posix()
         for path in output_dir.rglob("*")
@@ -619,8 +639,8 @@ def verify_result_bundle(output_dir: Path) -> dict[str, Any]:
         or manifest.get("schema_version") != SCHEMA_VERSION
         or manifest.get("mode") != "OFFLINE_FIXTURE_REPLAY"
         or not isinstance(artifacts, dict)
-        or set(artifacts) != RESULT_ARTIFACTS
-        or entries != RESULT_ARTIFACTS | {"manifest.json"}
+        or set(artifacts) != expected_result_artifacts
+        or entries != expected_result_artifacts | {"manifest.json"}
         or manifest.get("production_authority") is not False
         or manifest.get("claim_allowed") is not False
     ):
@@ -639,7 +659,6 @@ def verify_result_bundle(output_dir: Path) -> dict[str, Any]:
     queue = _load_object(output_dir / "deep_research_queue.json")
     report = _load_object(output_dir / "closure_report.json")
     battery = _load_object(output_dir / "frozen_battery.json")
-    frozen_bundle = load_bundle(frozen_bundle_dir)
     expected_packet = build_review_packet(
         bundle_dir=frozen_bundle_dir,
         battery=battery,
@@ -681,10 +700,13 @@ def _write_replay_outputs(
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=f".{output_dir.name}.", dir=output_dir.parent))
     try:
-        load_bundle(source_bundle_dir)
+        source_bundle = load_bundle(source_bundle_dir)
+        source_artifacts = set(source_bundle["manifest"]["artifacts"])
+        expected_result_artifacts = _result_artifact_names(source_artifacts)
         frozen_bundle_dir = staging / "frozen_funnel_bundle"
         frozen_bundle_dir.mkdir()
-        for name in sorted(BUNDLE_ARTIFACTS | {"manifest.json"}):
+        # governance-mutation: FUNNEL_CLOSURE_FREEZE_SOURCE_ARTIFACTS
+        for name in sorted(source_artifacts | {"manifest.json"}):
             shutil.copyfile(source_bundle_dir / name, frozen_bundle_dir / name)
         _atomic_write_json(staging / "frozen_battery.json", dict(battery))
         payloads = {
@@ -695,7 +717,10 @@ def _write_replay_outputs(
         }
         for name, payload in payloads.items():
             _atomic_write_json(staging / name, payload)
-        artifacts = {name: _sha256_path(staging / name) for name in sorted(RESULT_ARTIFACTS)}
+        artifacts = {
+            name: _sha256_path(staging / name)
+            for name in sorted(expected_result_artifacts)
+        }
         manifest = {
             "schema": "ar.research_closure_bundle",
             "schema_version": SCHEMA_VERSION,

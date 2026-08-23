@@ -28,8 +28,10 @@
   ],
   "file_scope": [
     "experiments/research_funnel/u4_decision_ledger.py",
+    "experiments/research_funnel/closure_experiment.py",
     "experiments/execution_tracker/event_ledger.py",
     "tests/test_u4_decision_ledger.py",
+    "tests/test_research_closure_experiment.py",
     "scripts/governance_mutation_gate.py",
     "tests/test_governance_mutation_gate.py",
     "tests/test_no_network_guard.py",

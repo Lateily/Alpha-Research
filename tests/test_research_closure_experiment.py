@@ -7,6 +7,7 @@ import copy
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -21,6 +22,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 import closure_experiment as closure  # noqa: E402
 import funnel_pipeline as funnel  # noqa: E402
 import test_research_funnel_closure as fixtures  # noqa: E402
+import test_u4_decision_ledger as u4_fixtures  # noqa: E402
 
 
 GENERATED_AT = "2026-08-13T10:00:00+00:00"
@@ -424,6 +426,46 @@ class ResearchClosureExperimentTests(unittest.TestCase):
                 closure._write_replay_outputs(
                     output, bundle, battery, packet, receipt, queue, report,
                 )
+
+    def test_result_bundle_freezes_and_verifies_the_complete_dag_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundle = root / "dag-bundle"
+            shutil.copytree(u4_fixtures.SOURCE_BUNDLE, bundle)
+            battery = copy.deepcopy(u4_fixtures.SOURCE_BATTERY)
+            packet = closure.build_review_packet(
+                bundle_dir=bundle,
+                battery=None,
+                generated_at=GENERATED_AT,
+            )
+            receipt = receipt_for(packet, list(u4_fixtures.SELECT_CODES))
+            queue, report = closure.run_offline_replay(
+                bundle_dir=bundle,
+                battery=battery,
+                packet=packet,
+                receipt=receipt,
+                generated_at="2026-08-13T10:06:00+00:00",
+            )
+            output = root / "result"
+            try:
+                closure._write_replay_outputs(
+                    output, bundle, battery, packet, receipt, queue, report,
+                )
+            except (closure.ClosureError, OSError) as exc:
+                self.fail(f"valid DAG source was not frozen as a replay bundle: {exc}")
+            source_names = set(
+                json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))["artifacts"]
+            )
+            result_manifest = json.loads(
+                (output / "manifest.json").read_text(encoding="utf-8")
+            )
+            expected = closure._result_artifact_names(source_names)
+            self.assertEqual(set(result_manifest["artifacts"]), expected)
+            self.assertTrue({
+                "frozen_funnel_bundle/candidate_manifest.json",
+                "frozen_funnel_bundle/candidate_battery.json",
+            }.issubset(expected))
+            self.assertEqual(closure.verify_result_bundle(output)["status"], "VERIFIED")
 
     def test_result_bundle_verifier_rejects_artifact_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

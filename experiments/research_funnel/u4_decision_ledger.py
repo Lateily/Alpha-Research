@@ -931,6 +931,13 @@ def validate_decision_event(
         raise DecisionLedgerError("persisted SELECT semantics are invalid")
     if event["decision"] == "DATA_BLOCKED" and not missing:
         raise DecisionLedgerError("persisted DATA_BLOCKED lacks missing evidence")
+    # governance-mutation: U4_LEDGER_PERSISTED_CAUSAL_CLUSTER
+    if candidate["causal_cluster_id"] == "UNAVAILABLE" and (
+        event["decision"] != "DATA_BLOCKED" or "CAUSAL_CLUSTER_ID" not in missing
+    ):
+        raise DecisionLedgerError(
+            "persisted decision without a causal cluster must remain explicit DATA_BLOCKED"
+        )
     revision = event.get("decision_revision")
     predecessor = event.get("supersedes_decision_id")
     if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
@@ -1334,7 +1341,15 @@ def _replay_records(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _snapshot_state(path: Path) -> dict[str, Any]:
+def _snapshot_state(path: Path, *, allow_missing: bool = False) -> dict[str, Any]:
+    if not os.path.lexists(path):
+        _anchor, anchor_status = event_ledger.read_anchor(str(path))
+        if allow_missing and anchor_status == "absent":
+            return _replay_records([])
+        # governance-mutation: U4_LEDGER_VERIFY_REQUIRES_LEDGER
+        raise DecisionLedgerError("R-015 decision ledger does not exist")
+    if path.is_symlink() or not path.is_file():
+        raise DecisionLedgerError("R-015 decision ledger must be a regular file")
     with _ledger_read_snapshot(path):
         chain = event_ledger.verify(str(path))
         anchor = event_ledger.verify_anchor(str(path))
@@ -1463,7 +1478,7 @@ def append_decision_batch(
     decisions_appended = 0
     closure_appended = False
     with _u4_write_lock(ledger_path):
-        state = _snapshot_state(ledger_path)
+        state = _snapshot_state(ledger_path, allow_missing=True)
         packet_intent_revisions = sorted(
             subject_revision for (subject_packet, subject_revision) in state["intents"]
             if subject_packet == packet_ref
@@ -1664,8 +1679,8 @@ def load_current_projection(path: Path, packet: Mapping[str, Any]) -> dict[str, 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--packet", required=True, type=Path)
-    parser.add_argument("--draft", required=True, type=Path)
+    parser.add_argument("--packet", type=Path)
+    parser.add_argument("--draft", type=Path)
     parser.add_argument("--ledger", required=True, type=Path)
     parser.add_argument("--bundle-dir", type=Path)
     parser.add_argument("--verify", action="store_true")
@@ -1675,6 +1690,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = verify_decision_ledger(args.ledger)
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
             return 0 if result["ok"] else 1
+        if args.packet is None or args.draft is None:
+            raise DecisionLedgerError("--packet and --draft are required for U4 ledger writes")
         if args.bundle_dir is None:
             raise DecisionLedgerError("--bundle-dir is required for U4 ledger writes")
         result = append_decision_batch(

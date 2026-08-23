@@ -479,23 +479,42 @@ class U4DecisionLedgerTests(unittest.TestCase):
                 )
             self.assertFalse(path.exists())
 
-    def test_dag_manifest_cannot_relabel_the_bound_u2_candidate_rows(self) -> None:
+    def test_dag_manifest_cannot_relabel_embedded_stage_hashes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp) / "bundle"
+            shutil.copytree(SOURCE_BUNDLE, bundle)
+            manifest_path = bundle / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["dag"]["candidate_manifest_hash"] = "0" * 64
+            manifest["dag"]["battery_rows_hash"] = "1" * 64
+            _write_json(manifest_path, manifest)
+            with self.assertRaisesRegex(closure.ClosureError, "DAG bundle evidence"):
+                closure.load_bundle(bundle)
+
+    def test_dag_candidate_manifest_cannot_self_consistently_omit_a_u2_row(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             bundle = Path(tmp) / "bundle"
             shutil.copytree(SOURCE_BUNDLE, bundle)
             candidate_manifest_path = bundle / "candidate_manifest.json"
             candidate_manifest = json.loads(candidate_manifest_path.read_text(encoding="utf-8"))
-            candidate_manifest["candidate_rows_hash"] = "0" * 64
+            omitted = candidate_manifest["ts_codes"].pop()
+            candidate_manifest["expected_count"] = len(candidate_manifest["ts_codes"])
             candidate_manifest["manifest_hash"] = funnel._hash({
                 key: value
                 for key, value in candidate_manifest.items()
                 if key != "manifest_hash"
             })
             _write_json(candidate_manifest_path, candidate_manifest)
+
             battery_path = bundle / "candidate_battery.json"
             battery = json.loads(battery_path.read_text(encoding="utf-8"))
+            battery["results"] = [
+                row for row in battery["results"] if row["ts_code"] != omitted
+            ]
+            battery["rows_hash"] = funnel._hash(battery["results"])
             battery["manifest_hash"] = candidate_manifest["manifest_hash"]
             _write_json(battery_path, battery)
+
             manifest_path = bundle / "manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest["artifacts"]["candidate_manifest.json"] = hashlib.sha256(
@@ -505,9 +524,11 @@ class U4DecisionLedgerTests(unittest.TestCase):
                 battery_path.read_bytes()
             ).hexdigest()
             manifest["dag"]["candidate_manifest_hash"] = candidate_manifest["manifest_hash"]
+            manifest["dag"]["battery_rows_hash"] = battery["rows_hash"]
             manifest["bundle_hash"] = funnel._hash(manifest["artifacts"])
             _write_json(manifest_path, manifest)
-            with self.assertRaisesRegex(closure.ClosureError, "DAG bundle evidence"):
+
+            with self.assertRaisesRegex(closure.ClosureError, "exact projection"):
                 closure.load_bundle(bundle)
 
     def test_missing_packet_bound_causal_cluster_forces_data_blocked(self) -> None:
@@ -519,6 +540,26 @@ class U4DecisionLedgerTests(unittest.TestCase):
         })
         with self.assertRaisesRegex(ledger.DecisionLedgerError, "causal cluster"):
             ledger._validate_draft(packet, draft_for(packet))
+
+    def test_persisted_event_rechecks_missing_causal_cluster_semantics(self) -> None:
+        packet = packet_fixture()
+        rows, decisions = ledger._validate_draft(packet, draft_for(packet))
+        intent = ledger._build_packet_intent(packet, draft_for(packet), decisions, rows)
+        selected = next(
+            item for item in intent["candidate_intents"] if item["decision"] == "SELECT"
+        )
+        attack = copy.deepcopy(selected)
+        attack["candidate"]["causal_cluster_id"] = "UNAVAILABLE"
+        event = ledger._build_event(
+            attack,
+            sequence=1,
+            previous_hash=None,
+            registered_at=ledger._registered_at_from_outer(REGISTERED_AT),
+        )
+        with self.assertRaisesRegex(ledger.DecisionLedgerError, "causal cluster"):
+            ledger.validate_decision_event(
+                event, expected_sequence=1, expected_previous_hash=None,
+            )
 
     def test_machine_blocked_rows_cannot_be_silently_selected_or_deferred(self) -> None:
         packet = packet_fixture()
@@ -1348,12 +1389,43 @@ class U4DecisionLedgerTests(unittest.TestCase):
             with redirect_stdout(output):
                 self.assertEqual(ledger.main(args), 0)
                 self.assertEqual(ledger.main(args), 0)
-                self.assertEqual(ledger.main(["--packet", str(packet_path), "--draft", str(draft_path), "--ledger", str(ledger_path), "--verify"]), 0)
+                self.assertEqual(
+                    ledger.main(["--ledger", str(ledger_path), "--verify"]), 0
+                )
             lines = [json.loads(line) for line in output.getvalue().splitlines()]
         self.assertEqual(lines[0]["status"], "APPENDED")
         self.assertEqual(lines[1]["status"], "IDEMPOTENT")
         self.assertEqual(lines[0]["projection_path"], lines[1]["projection_path"])
         self.assertTrue(lines[2]["ok"])
+
+    def test_missing_ledger_is_not_a_clean_verification_or_cli_success(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "missing.jsonl"
+            result = ledger.verify_decision_ledger(path)
+            self.assertFalse(result["ok"])
+            self.assertIn("does not exist", result["errors"][0])
+            self.assertFalse(Path(f"{path}.lock").exists())
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                self.assertEqual(
+                    ledger.main(["--ledger", str(path), "--verify"]), 1
+                )
+            self.assertFalse(json.loads(stdout.getvalue())["ok"])
+
+    def test_cli_write_requires_packet_and_draft_after_verify_dispatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            stderr = StringIO()
+            with redirect_stderr(stderr):
+                self.assertEqual(
+                    ledger.main([
+                        "--ledger", str(path),
+                        "--bundle-dir", str(SOURCE_BUNDLE),
+                    ]),
+                    1,
+                )
+            self.assertIn("--packet and --draft", stderr.getvalue())
+            self.assertFalse(path.exists())
 
     def test_cli_refuses_bad_contract_without_writing(self) -> None:
         packet = packet_fixture()

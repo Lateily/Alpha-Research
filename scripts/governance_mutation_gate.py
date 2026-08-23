@@ -4310,6 +4310,45 @@ MUTATIONS = MUTATIONS + (
         rationale="An absent causal cluster must stay explicit DATA_BLOCKED rather than becoming SELECT.",
     ),
     MutationCase(
+        mutation_id="U4_LEDGER_PERSISTED_CAUSAL_CLUSTER",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: U4_LEDGER_PERSISTED_CAUSAL_CLUSTER\n'
+            '    if candidate["causal_cluster_id"] == "UNAVAILABLE" and ('
+        ),
+        after=(
+            '    # governance-mutation: U4_LEDGER_PERSISTED_CAUSAL_CLUSTER\n'
+            '    if False and ('
+        ),
+        expected_failure_marker=(
+            "test_persisted_event_rechecks_missing_causal_cluster_semantics"
+        ),
+        rationale=(
+            "The durable event validator must independently keep a missing causal cluster "
+            "DATA_BLOCKED even if a caller bypasses draft validation."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_VERIFY_REQUIRES_LEDGER",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_VERIFY_REQUIRES_LEDGER\n'
+            '        raise DecisionLedgerError("R-015 decision ledger does not exist")'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_VERIFY_REQUIRES_LEDGER\n'
+            '        return _replay_records([])'
+        ),
+        expected_failure_marker=(
+            "test_missing_ledger_is_not_a_clean_verification_or_cli_success"
+        ),
+        rationale="A typo or missing ledger path cannot verify as an empty clean ledger.",
+    ),
+    MutationCase(
         mutation_id="U4_LEDGER_RAW_APPEND_RESERVED",
         component="Research funnel R-015 typed U4 transport",
         source_path="experiments/execution_tracker/event_ledger.py",
@@ -4415,12 +4454,69 @@ MUTATIONS = MUTATIONS + (
             '            if False and ('
         ),
         expected_failure_marker=(
-            "test_dag_manifest_cannot_relabel_the_bound_u2_candidate_rows"
+            "test_dag_manifest_cannot_relabel_embedded_stage_hashes"
         ),
         rationale=(
             "A self-consistent top manifest cannot relabel which exact U2 rows and U3 battery "
             "belong to the final run."
         ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_DAG_CANDIDATE_PROJECTION",
+        component="Research funnel immutable U2/U3 bundle",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_CANDIDATE_PROJECTION\n'
+            '            if candidate_manifest != expected_candidate_manifest:'
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_CANDIDATE_PROJECTION\n'
+            '            if False:'
+        ),
+        expected_failure_marker=(
+            "test_dag_candidate_manifest_cannot_self_consistently_omit_a_u2_row"
+        ),
+        rationale=(
+            "A self-consistent candidate manifest and battery cannot silently omit an "
+            "eligible row from the frozen U2 review."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_FREEZE_SOURCE_ARTIFACTS",
+        component="Research funnel closure immutable replay bundle",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '        # governance-mutation: FUNNEL_CLOSURE_FREEZE_SOURCE_ARTIFACTS\n'
+            '        for name in sorted(source_artifacts | {"manifest.json"}):'
+        ),
+        after=(
+            '        # governance-mutation: FUNNEL_CLOSURE_FREEZE_SOURCE_ARTIFACTS\n'
+            '        for name in sorted(BUNDLE_ARTIFACTS | {"manifest.json"}):'
+        ),
+        expected_failure_marker=(
+            "test_result_bundle_freezes_and_verifies_the_complete_dag_source"
+        ),
+        rationale="A DAG replay must freeze all six source artifacts, not the legacy four.",
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_RESULT_SOURCE_ARTIFACT_SET",
+        component="Research funnel closure immutable replay verifier",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_research_closure_experiment.py",
+        before=(
+            '    # governance-mutation: FUNNEL_CLOSURE_RESULT_SOURCE_ARTIFACT_SET\n'
+            '    expected_result_artifacts = _result_artifact_names(source_artifacts)'
+        ),
+        after=(
+            '    # governance-mutation: FUNNEL_CLOSURE_RESULT_SOURCE_ARTIFACT_SET\n'
+            '    expected_result_artifacts = RESULT_ARTIFACTS'
+        ),
+        expected_failure_marker=(
+            "test_result_bundle_freezes_and_verifies_the_complete_dag_source"
+        ),
+        rationale="The replay verifier must derive its frozen source set from the embedded manifest.",
     ),
     MutationCase(
         mutation_id="FUNNEL_CLOSURE_PACKET_RUN_ID",
