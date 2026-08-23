@@ -4960,6 +4960,80 @@ MUTATIONS = MUTATIONS + (
             "identity when that artifact is not frozen in the packet source."
         ),
     ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_HUMAN_AUTHORITY",
+        component="Research Closed Loop V1 authority",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "paper_registration_authority": "HUMAN_JUNYAN_ONLY",\n'
+            '    "production_authority": false,\n'
+            '    "trade_authority": false,'
+        ),
+        after=(
+            '    "paper_registration_authority": "AUTOMATED_MODEL",\n'
+            '    "production_authority": false,\n'
+            '    "trade_authority": true,'
+        ),
+        expected_failure_marker="test_authority_cannot_be_promoted",
+        rationale="V1 cannot silently grant an automated system paper-registration or trade authority.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_WORKFLOW_DEBUG_EXCLUSION",
+        component="Research Closed Loop V1 first-wave eligibility",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "first_wave_sample_eligible": false,\n'
+            '    "first_wave_method_claim_sample_eligible": false,\n'
+            '    "first_wave_portfolio_promotion_eligible": false,'
+        ),
+        after=(
+            '    "first_wave_sample_eligible": true,\n'
+            '    "first_wave_method_claim_sample_eligible": true,\n'
+            '    "first_wave_portfolio_promotion_eligible": true,'
+        ),
+        expected_failure_marker="test_workflow_debug_samples_cannot_enter_claims_or_portfolio",
+        rationale="The first semiconductor cycles debug the workflow and cannot enter method or portfolio denominators.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_THIRTY_CLUSTER_GATE",
+        component="Research Closed Loop V1 evidence threshold",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='    "minimum_independent_clusters_for_method_claim": 30,',
+        after='    "minimum_independent_clusters_for_method_claim": 5,',
+        expected_failure_marker="test_method_gate_requires_thirty_independent_clusters_and_replication",
+        rationale="A small workflow-debug batch cannot be relabeled as a validated method sample.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_COMPLETE_U4_DENOMINATOR",
+        component="Research Closed Loop V1 complete U4 denominator",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before=(
+            '    "required_decisions": ["SELECT", "REJECT", "DEFER", "NO_TRADE", "DATA_BLOCKED"],\n'
+            '    "selected_count_allowed": [0, 3, 4, 5],\n'
+            '    "rejected_and_blocked_rows_retained": true'
+        ),
+        after=(
+            '    "required_decisions": ["SELECT"],\n'
+            '    "selected_count_allowed": [1, 2, 3, 4, 5],\n'
+            '    "rejected_and_blocked_rows_retained": false'
+        ),
+        expected_failure_marker="test_reject_defer_no_trade_and_data_blocked_remain_in_denominator",
+        rationale="Selection-only logging would erase the negative-decision denominator and weaken the U4 gate.",
+    ),
+    MutationCase(
+        mutation_id="RESEARCH_V1_CROSS_INDUSTRY_PROMOTION",
+        component="Research Closed Loop V1 portfolio promotion",
+        source_path="docs/research/contracts/research_closed_loop.v1.json",
+        test_script="tests/test_research_closed_loop_v1.py",
+        before='    "cross_industry_replication_required_for_portfolio": true',
+        after='    "cross_industry_replication_required_for_portfolio": false',
+        expected_failure_marker="test_method_gate_requires_thirty_independent_clusters_and_replication",
+        rationale="A method cannot enter portfolio construction after working in only one industry.",
+    ),
 )
 
 

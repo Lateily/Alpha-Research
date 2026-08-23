@@ -1,0 +1,83 @@
+{
+  "schema": "ai-task.v1",
+  "task_id": "RESEARCH-CLOSED-LOOP-V1-001",
+  "source_issue": null,
+  "architecture_block": [
+    "research-framework",
+    "prospective-paper-cycle",
+    "method-learning"
+  ],
+  "objective": "Freeze one machine-verifiable Research Closed Loop V1 assembly contract over the existing funnel, U4 decision ledger, research method, paper execution, and five-axis attribution modules, without creating a parallel engine or granting production or trading authority.",
+  "non_goals": [
+    "Do not modify research, execution, nightly, macro, or publication runtime code",
+    "Do not select U4 securities or author a thesis, valuation, timing setup, or order",
+    "Do not write production ledgers, manifests, current pointers, NAV, or runtime data",
+    "Do not claim win rate, alpha, profitability, method validity, or portfolio readiness",
+    "Do not count the first five to ten semiconductor workflow-debug cycles toward the thirty independent-cluster method gate"
+  ],
+  "human_owner": "Junyan",
+  "reviewer": "Junyan",
+  "executor_candidates": [
+    "Codex"
+  ],
+  "dependencies": [
+    "PR #297 inherited-order eligibility correction",
+    "merged U1-U4 funnel and decision-ledger contracts",
+    "merged research-method, paper-execution, and five-axis attribution contracts"
+  ],
+  "authority_docs": [
+    "AGENTS.md",
+    "experiments/AGENTS.md",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",
+    "docs/research/RESEARCH_METHOD_AND_ATTRIBUTION_V1.md",
+    "docs/research/FIVE_AXIS_ATTRIBUTION_V1.md",
+    "docs/research/U4_DECISION_LEDGER_SPEC_V1.md"
+  ],
+  "file_scope": [
+    "docs/research/RESEARCH_CLOSED_LOOP_V1.md",
+    "docs/research/contracts/research_closed_loop.v1.json",
+    "tests/test_research_closed_loop_v1.py",
+    "scripts/llm/fixtures/research_closed_loop_v1.task.json",
+    "scripts/governance_mutation_gate.py",
+    ".github/workflows/python-ci.yml"
+  ],
+  "forbidden_scope": [
+    "/Users/years/ar-live",
+    "experiments/execution_tracker",
+    "experiments/research_funnel",
+    "public/data/v2",
+    "data_history"
+  ],
+  "input_contracts": [
+    "immutable same-run U2 candidate bundle",
+    "same-run U3 battery row or explicit DATA_BLOCKED for every candidate",
+    "append-only U4 decision closure containing every reviewed candidate",
+    "prospectively sealed research-method registration",
+    "execution-realism-bound paper receipt",
+    "settled later facts and five-axis attribution"
+  ],
+  "output_artifacts": [
+    "ar.research_closed_loop_manifest.v1",
+    "Research Closed Loop V1 human-readable frozen assembly contract"
+  ],
+  "acceptance_tests": [
+    "python3 tests/test_research_closed_loop_v1.py",
+    "python3 scripts/governance_mutation_gate.py",
+    "python3 scripts/llm/ai_os/cli.py compile --input scripts/llm/fixtures/research_closed_loop_v1.task.json",
+    "git diff --check"
+  ],
+  "risk_level": "CONSTITUTIONAL",
+  "network_policy": "OFFLINE",
+  "budget": {
+    "max_cny": "0",
+    "max_minutes": 240
+  },
+  "approval_gates": [
+    "PR_REVIEW",
+    "JUNYAN_MERGE",
+    "SEPARATE_FIRST_CYCLE_AUTHORIZATION",
+    "SEPARATE_PRODUCTION_DEPLOY_APPROVAL",
+    "SEPARATE_METHOD_PROMOTION_APPROVAL"
+  ],
+  "created_at": "2026-08-23T21:45:00+08:00"
+}
