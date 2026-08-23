@@ -36,9 +36,12 @@
     "tests/test_governance_mutation_gate.py",
     "tests/test_no_network_guard.py",
     ".github/workflows/python-ci.yml",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",
     "docs/research/U4_DECISION_LEDGER_SPEC_V1.md",
     "docs/research/U4_DECISION_LEDGER_V1.md",
     "docs/research/contracts/u4_decision_ledger.v1.schema.json",
+    "scripts/llm/fixtures/research_closure_offline.task.json",
+    "tests/test_registry_schema_v2.py",
     "tests/test_u4_decision_ledger_spec.py",
     "scripts/llm/fixtures/u4_decision_ledger_v1.task.json"
   ],

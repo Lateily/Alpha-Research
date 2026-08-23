@@ -4592,6 +4592,65 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
+        mutation_id="FUNNEL_CLOSURE_DAG_METADATA",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_METADATA\n'
+            '            if (\n'
+            '                not isinstance(dag, Mapping)'
+        ),
+        after=(
+            '            # governance-mutation: FUNNEL_CLOSURE_DAG_METADATA\n'
+            '            if False and (\n'
+            '                not isinstance(dag, Mapping)'
+        ),
+        expected_failure_marker=(
+            "test_dag_manifest_metadata_is_exact_and_version_bound"
+        ),
+        rationale=(
+            "The immutable source must declare exactly the canonical three-stage DAG and no "
+            "unhashed metadata aliases."
+        ),
+    ),
+    MutationCase(
+        mutation_id="FUNNEL_CLOSURE_MANIFEST_RULE_VERSION",
+        component="Research funnel U4 review packet",
+        source_path="experiments/research_funnel/closure_experiment.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '    # governance-mutation: FUNNEL_CLOSURE_MANIFEST_RULE_VERSION\n'
+            '    if manifest.get("rule_version") != funnel.RULE_VERSION:'
+        ),
+        after=(
+            '    # governance-mutation: FUNNEL_CLOSURE_MANIFEST_RULE_VERSION\n'
+            '    if False:'
+        ),
+        expected_failure_marker=(
+            "test_dag_manifest_metadata_is_exact_and_version_bound"
+        ),
+        rationale=(
+            "A final immutable bundle cannot relabel the screening rule version while retaining "
+            "the same artifact bytes."
+        ),
+    ),
+    MutationCase(
+        mutation_id="U4_LEDGER_TASK_SCOPE_COMPLETE",
+        component="Research U4 task contract",
+        source_path="scripts/llm/fixtures/u4_decision_ledger_v1.task.json",
+        test_script="tests/test_u4_decision_ledger_spec.py",
+        before='    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",\n',
+        after="",
+        expected_failure_marker=(
+            "test_implementation_task_scope_matches_delivered_surface"
+        ),
+        rationale=(
+            "The machine-readable task scope must name every delivered file so review authority "
+            "does not silently narrow beneath the actual patch."
+        ),
+    ),
+    MutationCase(
         mutation_id="FUNNEL_CLOSURE_DAG_CANDIDATE_PROJECTION",
         component="Research funnel immutable U2/U3 bundle",
         source_path="experiments/research_funnel/closure_experiment.py",

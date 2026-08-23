@@ -579,6 +579,26 @@ class U4DecisionLedgerTests(unittest.TestCase):
             with self.assertRaisesRegex(closure.ClosureError, "DAG bundle evidence"):
                 closure.load_bundle(bundle)
 
+    def test_dag_manifest_metadata_is_exact_and_version_bound(self) -> None:
+        mutations = (
+            ("stages", lambda manifest: manifest["dag"].__setitem__("stages", ["finalize"])),
+            ("unknown", lambda manifest: manifest["dag"].__setitem__("invented", True)),
+            ("rule_version", lambda manifest: manifest.__setitem__("rule_version", "RELABELLED_V999")),
+        )
+        for label, mutate in mutations:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
+                bundle = Path(tmp) / "bundle"
+                shutil.copytree(SOURCE_BUNDLE, bundle)
+                manifest_path = bundle / "manifest.json"
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                mutate(manifest)
+                _write_json(manifest_path, manifest)
+                with self.assertRaisesRegex(
+                    closure.ClosureError,
+                    "canonical three-stage contract|rule_version mismatch",
+                ):
+                    closure.load_bundle(bundle)
+
     def test_dag_candidate_manifest_cannot_self_consistently_omit_a_u2_row(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             bundle = Path(tmp) / "bundle"

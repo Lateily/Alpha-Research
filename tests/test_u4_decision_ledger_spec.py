@@ -14,6 +14,26 @@ from typing import Any, Mapping
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "docs/research/contracts/u4_decision_ledger.v1.schema.json"
 DOC_PATH = ROOT / "docs/research/U4_DECISION_LEDGER_SPEC_V1.md"
+TASK_PATH = ROOT / "scripts/llm/fixtures/u4_decision_ledger_v1.task.json"
+DELIVERED_FILE_SCOPE = {
+    ".github/workflows/python-ci.yml",
+    "docs/research/RESEARCH_CLOSURE_EXPERIMENT.md",
+    "docs/research/U4_DECISION_LEDGER_SPEC_V1.md",
+    "docs/research/U4_DECISION_LEDGER_V1.md",
+    "docs/research/contracts/u4_decision_ledger.v1.schema.json",
+    "experiments/execution_tracker/event_ledger.py",
+    "experiments/research_funnel/closure_experiment.py",
+    "experiments/research_funnel/u4_decision_ledger.py",
+    "scripts/governance_mutation_gate.py",
+    "scripts/llm/fixtures/research_closure_offline.task.json",
+    "scripts/llm/fixtures/u4_decision_ledger_v1.task.json",
+    "tests/test_no_network_guard.py",
+    "tests/test_governance_mutation_gate.py",
+    "tests/test_registry_schema_v2.py",
+    "tests/test_research_closure_experiment.py",
+    "tests/test_u4_decision_ledger.py",
+    "tests/test_u4_decision_ledger_spec.py",
+}
 
 
 def _strict_object(pairs):
@@ -208,6 +228,12 @@ class U4DecisionLedgerSpecTests(unittest.TestCase):
     def assertInvalid(self, value: Mapping[str, Any], fragment: str) -> None:
         errors = _contract_errors(value)
         self.assertTrue(any(fragment in error for error in errors), errors)
+
+    def test_implementation_task_scope_matches_delivered_surface(self) -> None:
+        task = json.loads(
+            TASK_PATH.read_text(encoding="utf-8"), object_pairs_hook=_strict_object
+        )
+        self.assertEqual(set(task["file_scope"]), DELIVERED_FILE_SCOPE)
 
     def test_all_five_decisions_are_closed_world_and_valid(self) -> None:
         for decision in ("SELECT", "REJECT", "DEFER", "NO_TRADE", "DATA_BLOCKED"):

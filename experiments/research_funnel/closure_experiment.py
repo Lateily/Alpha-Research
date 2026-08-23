@@ -50,6 +50,10 @@ BUNDLE_MANIFEST_FIELDS = {
     "artifacts", "bundle_hash",
 }
 DAG_BUNDLE_MANIFEST_FIELDS = BUNDLE_MANIFEST_FIELDS | {"run_id", "dag"}
+DAG_METADATA_FIELDS = {
+    "stages", "candidate_manifest_hash", "battery_rows_hash",
+}
+DAG_STAGES = ["candidates", "battery", "finalize"]
 RESULT_BASE_ARTIFACTS = {
     "review_packet.json",
     "review_receipt.json",
@@ -165,6 +169,9 @@ def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
         or set(artifacts) != expected_artifacts
     ):
         raise ClosureError("bundle manifest schema/artifact set is invalid")
+    # governance-mutation: FUNNEL_CLOSURE_MANIFEST_RULE_VERSION
+    if manifest.get("rule_version") != funnel.RULE_VERSION:
+        raise ClosureError("bundle manifest rule_version mismatch")
     # governance-mutation: FUNNEL_CLOSURE_BUNDLE_HASH
     if manifest.get("bundle_hash") != funnel._hash(artifacts):
         raise ClosureError("bundle manifest bundle_hash mismatch")
@@ -198,6 +205,13 @@ def load_bundle(bundle_dir: Path) -> dict[str, dict[str, Any]]:
                 )
             funnel.validate_candidate_battery(candidate_battery, candidate_manifest)
             dag = manifest.get("dag") or {}
+            # governance-mutation: FUNNEL_CLOSURE_DAG_METADATA
+            if (
+                not isinstance(dag, Mapping)
+                or set(dag) != DAG_METADATA_FIELDS
+                or dag.get("stages") != DAG_STAGES
+            ):
+                raise ClosureError("DAG bundle metadata is not the canonical three-stage contract")
             # governance-mutation: FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING
             if (
                 manifest.get("run_id") != candidate_manifest.get("run_id")
