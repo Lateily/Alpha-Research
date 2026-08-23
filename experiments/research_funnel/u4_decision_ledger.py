@@ -1508,6 +1508,25 @@ def _validate_packet_source(
             raise DecisionLedgerError(
                 "U4 ledger writes require a final DAG bundle with embedded U3 battery evidence"
             )
+        packet_at = _parse_time(packet.get("generated_at"), "review packet generated_at")
+        evidence_times = {
+            label: _parse_time(payload.get("generated_at"), f"frozen {label} generated_at")
+            for label, payload in (
+                ("manifest", bundle["manifest"]),
+                ("registry", bundle["registry"]),
+                ("scan", bundle["scan"]),
+                ("candidates", bundle["candidates"]),
+                ("battery", bundle["battery"]),
+                ("queue", bundle["queue"]),
+            )
+        }
+        # governance-mutation: U4_LEDGER_PACKET_EVIDENCE_CHRONOLOGY
+        if any(packet_at < evidence_at for evidence_at in evidence_times.values()):
+            latest_label, latest_at = max(evidence_times.items(), key=lambda item: item[1])
+            raise DecisionLedgerError(
+                "review packet generated_at predates frozen evidence "
+                f"({latest_label}={latest_at.isoformat()})"
+            )
         expected = closure.build_review_packet(
             bundle_dir=bundle_dir,
             battery=None,

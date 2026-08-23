@@ -50,6 +50,12 @@ Each event binds one candidate to the exact same-day chain:
 
 `U2 bundle -> U2 candidate row -> U3 six-dimension battery -> U4 review packet`
 
+The writer enforces the complete point-in-time order before any WAL append:
+every frozen bundle artifact `generated_at` must be no later than the packet
+`generated_at`; the human `decided_at` must be no earlier than the packet; and
+the R-015 `registered_at` must be no earlier than the decision. Rebuilding a
+packet with a caller-supplied timestamp that predates its evidence is refused.
+
 `source.u3_battery_hash` binds the complete frozen U3 battery artifact, while
 `source.u3_battery_row_hash` binds that candidate's row inside the artifact.
 The typed R-015 append boundary must receive and revalidate the immutable

@@ -4571,6 +4571,27 @@ MUTATIONS = MUTATIONS + (
         ),
     ),
     MutationCase(
+        mutation_id="U4_LEDGER_PACKET_EVIDENCE_CHRONOLOGY",
+        component="Research funnel U4 decision ledger",
+        source_path="experiments/research_funnel/u4_decision_ledger.py",
+        test_script="tests/test_u4_decision_ledger.py",
+        before=(
+            '        # governance-mutation: U4_LEDGER_PACKET_EVIDENCE_CHRONOLOGY\n'
+            '        if any(packet_at < evidence_at for evidence_at in evidence_times.values()):'
+        ),
+        after=(
+            '        # governance-mutation: U4_LEDGER_PACKET_EVIDENCE_CHRONOLOGY\n'
+            '        if False:'
+        ),
+        expected_failure_marker=(
+            "test_packet_and_human_decision_cannot_predate_frozen_evidence"
+        ),
+        rationale=(
+            "A caller-chosen packet timestamp must not make a human decision appear to "
+            "precede the immutable U2/U3 evidence it reviewed."
+        ),
+    ),
+    MutationCase(
         mutation_id="FUNNEL_CLOSURE_DAG_EVIDENCE_BINDING",
         component="Research funnel U4 review packet",
         source_path="experiments/research_funnel/closure_experiment.py",

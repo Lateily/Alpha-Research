@@ -95,7 +95,11 @@ only the final three-stage DAG bundle whose top manifest includes and hashes
 `candidate_manifest.json` and `candidate_battery.json`. Before any intent is
 written, the writer reloads that bundle, verifies the U2/U3/run bindings,
 rebuilds the full review packet, and requires byte-for-byte equality with the
-submitted packet. A packet's own self-reported hashes are never sufficient.
+submitted packet. It also requires every frozen evidence `generated_at` to be
+no later than the packet time; together with the existing decision and R-015
+checks, the enforced order is evidence <= packet <= human decision <= durable
+registration. A packet's own self-reported hashes or caller-chosen clock are
+never sufficient.
 The expanded `ar.u4_review_packet.v1.1` carries the U3
 `run_id`; the complete U3 battery hash; exact U2 candidate-row and U3
 battery-row hashes; registry display name; an explicit cohort-identity state;

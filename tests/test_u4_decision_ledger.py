@@ -545,6 +545,26 @@ class U4DecisionLedgerTests(unittest.TestCase):
                     )
                 self.assertFalse(path.exists())
 
+    def test_packet_and_human_decision_cannot_predate_frozen_evidence(self) -> None:
+        packet = closure.build_review_packet(
+            bundle_dir=SOURCE_BUNDLE,
+            battery=None,
+            generated_at="2026-08-11T00:30:00+00:00",
+        )
+        draft = draft_for(packet, decided_at="2026-08-11T01:00:00+00:00")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "events.jsonl"
+            with self.assertRaisesRegex(
+                ledger.DecisionLedgerError, "predates frozen evidence"
+            ):
+                append_batch(
+                    packet=packet,
+                    draft=draft,
+                    ledger_path=path,
+                    now="2026-08-22T00:16:00",
+                )
+            self.assertFalse(path.exists())
+
     def test_writer_rejects_drifted_dag_bundle_before_wal(self) -> None:
         packet = packet_fixture()
         with tempfile.TemporaryDirectory() as tmp:
