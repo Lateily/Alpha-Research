@@ -419,6 +419,37 @@ MUTATIONS: tuple[MutationCase, ...] = (
         test_function="test_network_requirement_cannot_exceed_task_policy",
     ),
     MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_PREFLIGHT",
+        component="AIOS shared skill runtime",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before=(
+            "            request, skill_refs = _bind_repository_skills("
+            "request, skill_selection)"
+        ),
+        after="            request, skill_refs = request, ()",
+        expected_failure_marker="test_tampered_runtime_skill_is_blocked_before_worker",
+        rationale="A selected repository skill must pass registry verification before any worker executes.",
+        test_function="test_tampered_runtime_skill_is_blocked_before_worker",
+    ),
+    MutationCase(
+        mutation_id="AIOS_SKILL_RUNTIME_CONTEXT_BUDGET",
+        component="AIOS shared skill runtime",
+        source_path="scripts/llm/adapters/base.py",
+        test_script="tests/test_agent_adapter_offline.py",
+        before=(
+            "    if not rendered or len(rendered) > _MAX_SKILL_CONTEXT_CHARS:\n"
+            '        raise ValueError("repository skill context size is invalid")'
+        ),
+        after=(
+            "    if not rendered:\n"
+            '        raise ValueError("repository skill context size is invalid")'
+        ),
+        expected_failure_marker="test_oversized_verified_skill_context_is_blocked_before_worker",
+        rationale="Hash-valid skill content cannot silently exceed the fixed prompt and cost budget.",
+        test_function="test_oversized_verified_skill_context_is_blocked_before_worker",
+    ),
+    MutationCase(
         mutation_id="R015_PUBLICATION_MIGRATION_EVENT_UNIQUENESS",
         component="R-015 event ledger",
         source_path="experiments/execution_tracker/event_ledger.py",
